@@ -1,0 +1,16 @@
+{
+  "world": "minimal-pro",
+  "master": "Minimal Pro: a beautifully precise calm architectural drafting workspace with graphite matte surfaces, one pale ivory desk positioned on the right, blank cream paper and diffuse daylight from a simple skylight. Almost monochrome with nuanced warm/cool greys and subtle paper texture. No characters, neon, decorative plants, sculptures or clutter. A broad empty softly shaded graphite wall occupies the left and centre; the right desk and skylight form a restrained geometric focal arrangement. Delicate refined architectural drawing/painting, believable perspective, editorial design quality, not a corporate office photograph. Gentle shadows do not cut across the heading zone. Original landscape16:9 architectural environment illustration for a premium local creative workspace skin. Target3840x2160 if natively supported; do not print dimensions. Keep the middle-left60% low-detail and low-contrast for real HTML headings, interesting subject nearx.78,y.65 with12% edge overscan. No text, letters, numbers, interface, buttons, icons, logos, watermarks, people or fake status elements. One finished scene, not a collage.",
+  "edits": [
+    {
+      "world": "minimal-pro",
+      "type": "quiet",
+      "prompt": "Edit this exact minimal-pro workspace into a quieter diffuse-daylight alternative. Preserve EXACT camera, perspective, composition, architecture, every object and silhouette. Only relight: cooler soft overcast light instead of the warm skylight patch, gentle even grey ivory tones, reduced shadow contrast. Do not redesign, move, add or remove objects. No text or UI. Registration is the priority. Match original16:9 dimensions."
+    },
+    {
+      "world": "minimal-pro",
+      "type": "wall",
+      "prompt": "Create a3:2 low-detail panel wall adaptation from this exact minimal-pro workspace. Same place, materials and palette. Almost entire image should be a calm matte graphite-grey/ivory plaster wall with only a subtle skylight bevel at the extreme upper-right. Central70% empty and very low contrast; no desk, instruments, furniture, shadows or crossing structural seams there. Keep decorative details at outer15% margins. No text, labels, buttons, icons, numbers, UI, logos or people. Target2400x1600 if supported. Refined subtle background for real HTML panels."
+    }
+  ]
+}

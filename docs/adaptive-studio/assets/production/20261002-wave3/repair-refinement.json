@@ -1,0 +1,12 @@
+{
+  "asset_id": "workflow-repair",
+  "candidate": 2,
+  "filename": "workflow-repair--1448x1086--candidate-2.png",
+  "output_id": "exec-0a7b7dab-8093-41d3-911d-71e60cb4b286",
+  "prompt_key": "workflow_repair_refine",
+  "prompt": "Remove only the gold sparkle/star and its little dots above the framed fabric seam. Leave a quiet plain background there. This picture illustrates inspection of a local repair area, so no success or magical-improvement symbol should appear. Preserve the exact frame, fabric, stitches, magnified round study, connector line, palette, lighting, composition, paper grain and empty bottom third. No other changes.",
+  "input_filenames": [
+    "workflow-repair--1448x1086--candidate-1.png"
+  ],
+  "anchor_ids": []
+}

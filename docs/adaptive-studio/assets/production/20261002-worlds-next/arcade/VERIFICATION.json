@@ -1,0 +1,23 @@
+{
+  "world": "arcade",
+  "status": "pass",
+  "originals_unchanged": 3,
+  "logical_asset_ids": 6,
+  "encoded_budget_passes": 11,
+  "transformations_independently_reconstructed": 13,
+  "decoded_and_hashed_inventory_files": 21,
+  "json_files_parsed": 15,
+  "checks": [
+    "All recorded files decode, match SHA-256 and byte count.",
+    "PNG crops match exact source pixels.",
+    "WebP files reproduce byte-for-byte from original with recorded crop/resize/encoder settings.",
+    "All encodes meet profile budget; no upscaling or nonuniform scaling.",
+    "Original prompt-record bytes unchanged.",
+    "Runtime and release remain unqualified/unselected."
+  ],
+  "limitations": [
+    "This verification covers source identity, deterministic transformation, decode and file budgets only.",
+    "No actual app-slot, accessibility, contrast, memory, workload or crossfade qualification.",
+    "Larger profile target dimensions remain intentionally unfulfilled."
+  ]
+}

@@ -1,0 +1,170 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "art-reviewed",
+  "requested_asset_id": "arcade-quiet",
+  "brief_revision": "4ef2d9742084c7f506ef0df413021c129fd76dbe",
+  "production": {
+    "method": "edit",
+    "provider": "OpenAI",
+    "tool_action": "image_gen.imagegen",
+    "execution_surface": "dot-run",
+    "reported_model": null,
+    "seed": null,
+    "output_id": null,
+    "produced_at": null,
+    "prompt_record": "generation-prompts.json#/edits/0/prompt",
+    "input_anchors": [
+      {
+        "asset_id": "arcade-master",
+        "relative_path": "originals/arcade-master--candidate-1.png",
+        "sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb",
+        "role": "exact input image"
+      }
+    ],
+    "orchestration_handle": "exec-668bc162-f9c3-4f04-97e6-570929364e18",
+    "orchestration_handle_is_provider_job_id": false
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "provenance-recorded; source/license clearance not asserted"
+  },
+  "files": [
+    {
+      "relative_path": "originals/arcade-quiet--candidate-1.png",
+      "sha256": "f0128ddb44923e1192922f3d7f71e0fe114f010a5b5a12620828dfa402f5c83a",
+      "bytes": 2454678,
+      "width": 1672,
+      "height": 941,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "renditions/arcade-quiet--1280x720--preview.webp",
+      "sha256": "1f8e9d8539d8e088d8c3b66da1c597a8e2ceec3a9a0822203df4c6f4e48ce5fd",
+      "bytes": 175224,
+      "width": 1280,
+      "height": 720,
+      "format": "WEBP",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": 307200,
+      "budget_pass": true
+    },
+    {
+      "relative_path": "renditions/arcade-quiet--960x540--preview.webp",
+      "sha256": "efc1e6c833f1231c80090bd3822c1cb3b5fffbb13c00953199338372f0614764",
+      "bytes": 110060,
+      "width": 960,
+      "height": 540,
+      "format": "WEBP",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": 307200,
+      "budget_pass": true
+    }
+  ],
+  "transformations": [
+    {
+      "asset_id": "arcade-quiet",
+      "input_path": "originals/arcade-quiet--candidate-1.png",
+      "input_sha256": "f0128ddb44923e1192922f3d7f71e0fe114f010a5b5a12620828dfa402f5c83a",
+      "output_path": "renditions/arcade-quiet--1280x720--preview.webp",
+      "output_sha256": "1f8e9d8539d8e088d8c3b66da1c597a8e2ceec3a9a0822203df4c6f4e48ce5fd",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1280,
+        720
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "arcade-quiet",
+      "input_path": "originals/arcade-quiet--candidate-1.png",
+      "input_sha256": "f0128ddb44923e1192922f3d7f71e0fe114f010a5b5a12620828dfa402f5c83a",
+      "output_path": "renditions/arcade-quiet--960x540--preview.webp",
+      "output_sha256": "efc1e6c833f1231c80090bd3822c1cb3b5fffbb13c00953199338372f0614764",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        960,
+        540
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    }
+  ],
+  "art_review": {
+    "status": "source-art-selected-with-caveats",
+    "reviewer": "independent QA assistant; lead assistant visual selection",
+    "notes": "Same-room daylight alternative; strong diagonal sun/shadow bands cross the left wall. The requested diffuse light and low-contrast heading zone are not fully met. Use a separate solid heading surface pending real-slot review.",
+    "selection_record": "Lead assistant reviewed both six-ID contact sheets and selected all twelve source-art IDs on 2026-10-02. This is not runtime or release selection."
+  },
+  "rendition_review": {
+    "status": "encoded-size-and-budget-checks-passed-with-target-shortfalls",
+    "checks": [
+      "Every listed image decodes at its recorded dimensions.",
+      "All 11 encoded variants meet individual profile budgets.",
+      "Crops preserve aspect ratio; no upscaling or nonuniform scaling.",
+      "Native source and large hero/card-master targets remain unmet as recorded."
+    ]
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "Provider model/build, seed, provider output/job ID and generation timestamp were not exposed.",
+    "Source terms/license clearance is not asserted.",
+    "No actual slot, text contrast, accessibility, memory/loading, active inference or crossfade test was performed."
+  ]
+}

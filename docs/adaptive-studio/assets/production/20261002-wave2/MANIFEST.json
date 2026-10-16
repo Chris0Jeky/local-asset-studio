@@ -1,0 +1,181 @@
+{
+  "schema": "studio.theme-asset.delivery/v1-proposed",
+  "production_batch": "20261002-wave2",
+  "created_at": "2026-10-02T09:43:28Z",
+  "repository_reference": {
+    "repository": "Chris0Jeky/local-asset-studio",
+    "pr": 1269,
+    "read_head": "6645f7d61b2bfdbca4853ea92b5fde6d6b0c8164"
+  },
+  "files": [
+    {
+      "relative_path": "inbox/workflow-combine--1448x1086--candidate-1.png",
+      "sha256": "5edcaaef0d15f2bf4e4dd3ddb29aadf5e4fe3b8f5eec12b8f05435caa898fa5b",
+      "bytes": 1648790,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original",
+      "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+    },
+    {
+      "relative_path": "review-renditions/workflow-combine--1448x1086--candidate-1--600x450.webp",
+      "sha256": "6cd042e622ed91e5880641fb65ba234bb92186661b1220a986cbc4baba783606",
+      "bytes": 12882,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition",
+      "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+    },
+    {
+      "relative_path": "inbox/workflow-pose--1448x1086--candidate-1.png",
+      "sha256": "9587382ab53b9a4dfed0d970e916589d159d7783a6ec8beef7d31a197f01696e",
+      "bytes": 1494052,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original",
+      "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+    },
+    {
+      "relative_path": "review-renditions/workflow-pose--1448x1086--candidate-1--600x450.webp",
+      "sha256": "68f3adc213001322c1878d00f2adafaf8d4962c186f84a3445b11b1e8784f41b",
+      "bytes": 10522,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition",
+      "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+    },
+    {
+      "relative_path": "inbox/workflow-recover--1448x1086--candidate-1.png",
+      "sha256": "3db913c0ffb6e1882be954de3d01d57d462a63abcaa76ee5590ed2acbff5ba43",
+      "bytes": 1514086,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original",
+      "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+    },
+    {
+      "relative_path": "review-renditions/workflow-recover--1448x1086--candidate-1--600x450.webp",
+      "sha256": "34fe747b396f14a8219b8b791e6acbf19f57660d675b21d9dad54415170e3164",
+      "bytes": 10032,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition",
+      "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+    },
+    {
+      "relative_path": "inbox/reference-outfit--1024x1536--candidate-1.png",
+      "sha256": "bcfd8e797e8d4a1764583d44600b1b046f1d6cd34f02468c4202988955d4955c",
+      "bytes": 1746036,
+      "width": 1024,
+      "height": 1536,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original",
+      "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+    },
+    {
+      "relative_path": "review-renditions/reference-outfit--1024x1536--candidate-1--213x320.webp",
+      "sha256": "b1039c65030eef1afac6bfb4b4338bed54c18c9206e8f411c5e14550e8e2ca65",
+      "bytes": 5600,
+      "width": 213,
+      "height": 320,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition",
+      "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+    },
+    {
+      "relative_path": "inbox/workflow-recover--1448x1086--candidate-2.png",
+      "sha256": "19aec23fd4e750429af5d1ffa0cd0c56cce88cdce3a4b107c6e636ec5190d0f8",
+      "bytes": 1337064,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original",
+      "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+    },
+    {
+      "relative_path": "review-renditions/workflow-recover--1448x1086--candidate-2--600x450.webp",
+      "sha256": "d9132a3b3d6ac960ab44f239f48cce651be8a5460f0d6b8d49374a3f6ffb6fe6",
+      "bytes": 9282,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition",
+      "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+    },
+    {
+      "relative_path": "review/contact-sheet.jpg",
+      "sha256": "b30a660b626109e5ab42f3d4773d0433cef73033a0a43dae7edaf67d61fa6a4a",
+      "bytes": 176040,
+      "width": 1260,
+      "height": 1132,
+      "format": "jpeg",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "labeled contact sheet; review composition, no asset pixel edits"
+    }
+  ],
+  "gates": {
+    "source": "provenance-recorded-terms-not-reviewed",
+    "art": "4-accepted-under-owner-delegation; 1-unselected-alternatives-preserved",
+    "rendition": "mechanical-and-visual-review-passed-with-source-caveats",
+    "owner": "delegated-art-choice-satisfied-for-4-selected-candidates",
+    "runtime": "not-qualified",
+    "release": "not-selected"
+  },
+  "archive": {
+    "filename": "las-art-wave2-candidates.zip",
+    "maximum_bytes_exclusive": 10485760,
+    "hash_record": "External archive-record.json; excluded here to avoid a circular checksum"
+  },
+  "notes": [
+    "Generated originals are preserved without modification.",
+    "The contact sheet labels and background are review presentation only. It pastes workflow and outfit WebPs at their native review dimensions.",
+    "No GitHub mutation, browser operation, application integration or heavy CI was performed."
+  ],
+  "art_selection_update": {
+    "recorded_at": "2026-10-02T11:21:46Z",
+    "manifest_path": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json",
+    "previous_art_and_owner_gates": {
+      "art": "four-recommended-for-owner-review-one-superseded-review-alternative",
+      "owner": "pending-all-five-new-candidates"
+    },
+    "scope": "Later art decision only; frozen archive contents, source, rendition, runtime and release gates are unchanged."
+  }
+}

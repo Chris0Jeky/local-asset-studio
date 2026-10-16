@@ -1,0 +1,66 @@
+[
+  {
+    "file": "arcade-20261002-sources.zip",
+    "bytes": 6718972,
+    "sha256": "857e19da779636dedbf0ace51786f43009e17bc2acddad93462dcdf4abb7b365",
+    "contents": [
+      "originals",
+      "metadata"
+    ],
+    "file_count": 24,
+    "checksum_manifest": "arcade-source-art-20261002/CHECKSUMS-sources.sha256",
+    "limit_bytes": 10485760,
+    "below_limit": true,
+    "testzip_pass": true,
+    "per_entry_hashes_pass": true
+  },
+  {
+    "file": "arcade-20261002-renditions-review.zip",
+    "bytes": 5341662,
+    "sha256": "4ca8f5f54de638eb55f4865ff741b35acad9e291b1ae73357b2900b5e381a23f",
+    "contents": [
+      "masters",
+      "renditions",
+      "review",
+      "metadata"
+    ],
+    "file_count": 39,
+    "checksum_manifest": "arcade-source-art-20261002/CHECKSUMS-renditions-review.sha256",
+    "limit_bytes": 10485760,
+    "below_limit": true,
+    "testzip_pass": true,
+    "per_entry_hashes_pass": true
+  },
+  {
+    "file": "sakura-20261002-sources.zip",
+    "bytes": 7480561,
+    "sha256": "f61237ea5ba3cb0a0384333815c0104d13fcd8d69bbea7c1984cb05efde635bf",
+    "contents": [
+      "originals",
+      "metadata"
+    ],
+    "file_count": 24,
+    "checksum_manifest": "sakura-source-art-20261002/CHECKSUMS-sources.sha256",
+    "limit_bytes": 10485760,
+    "below_limit": true,
+    "testzip_pass": true,
+    "per_entry_hashes_pass": true
+  },
+  {
+    "file": "sakura-20261002-renditions-review.zip",
+    "bytes": 6669450,
+    "sha256": "78bcc55e038b78bc01efea63af8effa3fb2c4ee2f0d0c30795c9187c292b7b5a",
+    "contents": [
+      "masters",
+      "renditions",
+      "review",
+      "metadata"
+    ],
+    "file_count": 38,
+    "checksum_manifest": "sakura-source-art-20261002/CHECKSUMS-renditions-review.sha256",
+    "limit_bytes": 10485760,
+    "below_limit": true,
+    "testzip_pass": true,
+    "per_entry_hashes_pass": true
+  }
+]

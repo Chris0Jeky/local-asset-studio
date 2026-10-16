@@ -1,0 +1,264 @@
+{
+  "asset_outputs": {
+    "sci-fi-noir-master": [
+      {
+        "relative_path": "originals/sci-fi-noir-master--candidate-1.png",
+        "sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+        "bytes": 2471153,
+        "width": 1672,
+        "height": 941,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "renditions/sci-fi-noir-master--1280x720--preview.webp",
+        "sha256": "5309de0cc6b0e1b2022018859f0a1044ef4bbac4262c3622f40ed41b86ed0491",
+        "bytes": 170324,
+        "width": 1280,
+        "height": 720,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 307200,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/sci-fi-noir-master--960x540--preview.webp",
+        "sha256": "f6d1610acc1352c3121147e860eab547f419829aeef5b9bc1c59a888e22bd723",
+        "bytes": 102864,
+        "width": 960,
+        "height": 540,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 307200,
+        "budget_pass": true
+      }
+    ],
+    "sci-fi-noir-quiet": [
+      {
+        "relative_path": "originals/sci-fi-noir-quiet--candidate-1.png",
+        "sha256": "3f6321021ec780f55242cc2589e2b2b6b103e97bb5c9af792067eddfc0bb6403",
+        "bytes": 2496182,
+        "width": 1672,
+        "height": 941,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "renditions/sci-fi-noir-quiet--1280x720--preview.webp",
+        "sha256": "51ed517507211f87fcb52ea01abe3b9dca60f451fdd366e672025285cf30355a",
+        "bytes": 176068,
+        "width": 1280,
+        "height": 720,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 307200,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/sci-fi-noir-quiet--960x540--preview.webp",
+        "sha256": "99773094f002c8dd88301f985e9a8a7e0e515bce6db987f15dad2711eb8568d9",
+        "bytes": 110480,
+        "width": 960,
+        "height": 540,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 307200,
+        "budget_pass": true
+      }
+    ],
+    "sci-fi-noir-wall": [
+      {
+        "relative_path": "originals/sci-fi-noir-wall--candidate-1.png",
+        "sha256": "6984c250a4330120989cf378fbf6cab57afdf4b3b55d1654ba70dea30583a4ad",
+        "bytes": 2847597,
+        "width": 1536,
+        "height": 1024,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "renditions/sci-fi-noir-wall--1200x800--panel.webp",
+        "sha256": "988b693651071832df39c140c7e140b3bbd218f166bb225128546aef22256d97",
+        "bytes": 153632,
+        "width": 1200,
+        "height": 800,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 184320,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/sci-fi-noir-wall--600x400--panel.webp",
+        "sha256": "8e4d3815bb6b8c7f7cec5807127fa988168894fda1d92e4e212998b369f50039",
+        "bytes": 48732,
+        "width": 600,
+        "height": 400,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 184320,
+        "budget_pass": true
+      }
+    ],
+    "sci-fi-noir-hero": [
+      {
+        "relative_path": "masters/sci-fi-noir-hero--1668x695--native-wide-crop.png",
+        "sha256": "4ce739768d11d0c0e09e4c9eaf0545be119865afee1c72ad846b2810dfa04ba3",
+        "bytes": 1783727,
+        "width": 1668,
+        "height": 695,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": null,
+        "budget_pass": null
+      },
+      {
+        "relative_path": "renditions/sci-fi-noir-hero--960x400--wide.webp",
+        "sha256": "d872eccaab34da0a12b1178c8602575ddaed553cd36a6812dcdf8488106982d1",
+        "bytes": 75470,
+        "width": 960,
+        "height": 400,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 256000,
+        "budget_pass": true
+      }
+    ],
+    "sci-fi-noir-poster": [
+      {
+        "relative_path": "renditions/sci-fi-noir-poster--1280x720--fallback.webp",
+        "sha256": "5309de0cc6b0e1b2022018859f0a1044ef4bbac4262c3622f40ed41b86ed0491",
+        "bytes": 170324,
+        "width": 1280,
+        "height": 720,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 225280,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/sci-fi-noir-poster--640x360--fallback.webp",
+        "sha256": "2c1d989dda0bcedcf4d88ebc20d547a06cb02ea72d4d000ff60709bce1664bb9",
+        "bytes": 46342,
+        "width": 640,
+        "height": 360,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 92160,
+        "budget_pass": true
+      }
+    ],
+    "sci-fi-noir-card": [
+      {
+        "relative_path": "masters/sci-fi-noir-card--941x941--native-square-crop.png",
+        "sha256": "d276a1c37cc4ce3a02ff65b87420b59c6ffd6759a110b2b69383ab3022e4f953",
+        "bytes": 1375938,
+        "width": 941,
+        "height": 941,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": null,
+        "budget_pass": null
+      },
+      {
+        "relative_path": "renditions/sci-fi-noir-card--512x512--picker.webp",
+        "sha256": "b43fae7e5d54dfa5bbbd2e8fc3f5b7b836fc60f6fce7a352d4ed7a3f8255028d",
+        "bytes": 60848,
+        "width": 512,
+        "height": 512,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 81920,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/sci-fi-noir-card--256x256--picker.webp",
+        "sha256": "2ff8d12d8084f46051cc8900d91c2bafc6bba5d0b2c32ac8601944e83baa9e9c",
+        "bytes": 16832,
+        "width": 256,
+        "height": 256,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 30720,
+        "budget_pass": true
+      }
+    ]
+  },
+  "review_files": [
+    {
+      "relative_path": "review/sci-fi-noir-composition.jpg",
+      "sha256": "b9784226235924e783413c30c605499432d76b80e07464942a66c485bb549011",
+      "bytes": 272864,
+      "width": 1254,
+      "height": 706,
+      "format": "JPEG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "review/sci-fi-noir-contact-sheet.jpg",
+      "sha256": "677db777d423816a90fd7055cef57f9e25a5c41066308fc543f7e611dbb50530",
+      "bytes": 327479,
+      "width": 1280,
+      "height": 1240,
+      "format": "JPEG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "review/sci-fi-noir-quiet-edge-overlay.jpg",
+      "sha256": "b4c2cc8f3485979be4b31409d9acd5ed88a2b8c75ff499575c925ae8d6b1e20a",
+      "bytes": 1059504,
+      "width": 1672,
+      "height": 941,
+      "format": "JPEG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "review/sci-fi-noir-quiet-landmarks.jpg",
+      "sha256": "111fca6b76bd9d3c626b928bb21261b794b7ba1b2e098ed57ea06ba01d60d1ef",
+      "bytes": 253751,
+      "width": 1672,
+      "height": 515,
+      "format": "JPEG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    }
+  ]
+}

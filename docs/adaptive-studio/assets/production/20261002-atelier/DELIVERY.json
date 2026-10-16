@@ -1,0 +1,28 @@
+{
+  "status": "prepared-locally-not-uploaded",
+  "archives": [
+    {
+      "filename": "atelier-source-art-20261002-originals.zip",
+      "bytes": 7382553,
+      "MiB": 7.0406,
+      "sha256": "ad60199fd79f2424dec9ec4b3be0f148f902f644133a074d5f74fd887db0715b",
+      "zip_integrity": "pass",
+      "contents_hash_roundtrip": "pass",
+      "delivery_url": null
+    },
+    {
+      "filename": "atelier-source-art-20261002-renditions-review.zip",
+      "bytes": 6161559,
+      "MiB": 5.8761,
+      "sha256": "f3a8eb38d6c42bc42eafbd96911c52f3ff0757a882b9bdbd553af5082fb2c062",
+      "zip_integrity": "pass",
+      "contents_hash_roundtrip": "pass",
+      "delivery_url": null
+    }
+  ],
+  "preview_relative_path": "atelier-source-art-20261002/review/atelier-contact-sheet.jpg",
+  "unpack": "Extract both archives to the same parent directory. They share one top-level folder.",
+  "archive_integrity_note": "DELIVERY.json and ARCHIVE-SHA256SUMS.txt remain outside the ZIPs to avoid recursive archive hashes.",
+  "runtime_qualified": false,
+  "selected_for_release": false
+}

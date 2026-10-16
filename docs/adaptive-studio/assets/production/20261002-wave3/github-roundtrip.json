@@ -1,0 +1,23 @@
+[
+  {
+    "filename": "las-art-wave3-candidates-part-1.zip",
+    "bytes": 9578850,
+    "sha256": "829c5188793135174ce13fab6b973030c3343338e2cd25ed71f632d35f95e8cb",
+    "github_roundtrip": "matched",
+    "verified_at": "2026-10-02T10:06:00Z"
+  },
+  {
+    "filename": "las-art-wave3-candidates-part-2.zip",
+    "bytes": 8957782,
+    "sha256": "1df469f31df12f83e9f1fda19e38db7ded0f9df23739190432ebd1b96e9e0826",
+    "github_roundtrip": "matched",
+    "verified_at": "2026-10-02T10:06:00Z"
+  },
+  {
+    "filename": "las-art-wave3-candidates-part-3.zip",
+    "bytes": 8654928,
+    "sha256": "cfc6627bbdf43fe30bf35c4bbd6245874c8fb4d33f74747932fc557ebfd0c91e",
+    "github_roundtrip": "matched",
+    "verified_at": "2026-10-02T10:06:00Z"
+  }
+]

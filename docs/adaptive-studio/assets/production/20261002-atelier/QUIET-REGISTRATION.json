@@ -1,0 +1,381 @@
+{
+  "method": "20 manually chosen architectural/object landmarks; 41x41 grayscale high-pass templates (Gaussian sigma 3), normalized cross-correlation in ±12 px search on unscaled originals. No warping, rotation or resampling. Coordinates and measured shifts are integer pixels.",
+  "dimensions": [
+    1672,
+    941
+  ],
+  "summary": {
+    "landmarks": 20,
+    "median_shift_px": 0.0,
+    "max_shift_px": 0.0,
+    "median_ncc": 0.90569,
+    "min_ncc": 0.64772
+  },
+  "landmarks": [
+    {
+      "name": "Left pot rim",
+      "master_xy": [
+        99,
+        687
+      ],
+      "quiet_best_xy": [
+        99,
+        687
+      ],
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.92722,
+      "identity_ncc": 0.92722
+    },
+    {
+      "name": "Left pot shoulder",
+      "master_xy": [
+        133,
+        720
+      ],
+      "quiet_best_xy": [
+        133,
+        720
+      ],
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.64772,
+      "identity_ncc": 0.64772
+    },
+    {
+      "name": "Left leaf tip",
+      "master_xy": [
+        210,
+        365
+      ],
+      "quiet_best_xy": [
+        210,
+        365
+      ],
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.92429,
+      "identity_ncc": 0.92429
+    },
+    {
+      "name": "Wall-floor left corner",
+      "master_xy": [
+        247,
+        773
+      ],
+      "quiet_best_xy": [
+        247,
+        773
+      ],
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.89517,
+      "identity_ncc": 0.89517
+    },
+    {
+      "name": "Window top-left hinge",
+      "master_xy": [
+        1236,
+        46
+      ],
+      "quiet_best_xy": [
+        1236,
+        46
+      ],
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.92456,
+      "identity_ncc": 0.92456
+    },
+    {
+      "name": "Window horizontal mullion",
+      "master_xy": [
+        1291,
+        189
+      ],
+      "quiet_best_xy": [
+        1291,
+        189
+      ],
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.8354,
+      "identity_ncc": 0.8354
+    },
+    {
+      "name": "Window centre mullion",
+      "master_xy": [
+        1291,
+        302
+      ],
+      "quiet_best_xy": [
+        1291,
+        302
+      ],
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.88401,
+      "identity_ncc": 0.88401
+    },
+    {
+      "name": "Lamp arm elbow",
+      "master_xy": [
+        1081,
+        377
+      ],
+      "quiet_best_xy": [
+        1081,
+        377
+      ],
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.86207,
+      "identity_ncc": 0.86207
+    },
+    {
+      "name": "Lamp shade neck",
+      "master_xy": [
+        1192,
+        326
+      ],
+      "quiet_best_xy": [
+        1192,
+        326
+      ],
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.86399,
+      "identity_ncc": 0.86399
+    },
+    {
+      "name": "Desk top left corner",
+      "master_xy": [
+        958,
+        530
+      ],
+      "quiet_best_xy": [
+        958,
+        530
+      ],
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.96473,
+      "identity_ncc": 0.96473
+    },
+    {
+      "name": "Paper left corner",
+      "master_xy": [
+        1090,
+        520
+      ],
+      "quiet_best_xy": [
+        1090,
+        520
+      ],
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.96278,
+      "identity_ncc": 0.96278
+    },
+    {
+      "name": "Rolled paper opening",
+      "master_xy": [
+        1422,
+        528
+      ],
+      "quiet_best_xy": [
+        1422,
+        528
+      ],
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.92951,
+      "identity_ncc": 0.92951
+    },
+    {
+      "name": "Desk right corner",
+      "master_xy": [
+        1550,
+        500
+      ],
+      "quiet_best_xy": [
+        1550,
+        500
+      ],
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.91026,
+      "identity_ncc": 0.91026
+    },
+    {
+      "name": "Stool seat left",
+      "master_xy": [
+        1114,
+        624
+      ],
+      "quiet_best_xy": [
+        1114,
+        624
+      ],
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.91107,
+      "identity_ncc": 0.91107
+    },
+    {
+      "name": "Stool crossbar",
+      "master_xy": [
+        1183,
+        749
+      ],
+      "quiet_best_xy": [
+        1183,
+        749
+      ],
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.95969,
+      "identity_ncc": 0.95969
+    },
+    {
+      "name": "Basket rim",
+      "master_xy": [
+        1551,
+        670
+      ],
+      "quiet_best_xy": [
+        1551,
+        670
+      ],
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.82276,
+      "identity_ncc": 0.82276
+    },
+    {
+      "name": "Door lower hinge",
+      "master_xy": [
+        1335,
+        618
+      ],
+      "quiet_best_xy": [
+        1335,
+        618
+      ],
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.91769,
+      "identity_ncc": 0.91769
+    },
+    {
+      "name": "Desk foot left",
+      "master_xy": [
+        1000,
+        744
+      ],
+      "quiet_best_xy": [
+        1000,
+        744
+      ],
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.89376,
+      "identity_ncc": 0.89376
+    },
+    {
+      "name": "Desk foot right",
+      "master_xy": [
+        1451,
+        803
+      ],
+      "quiet_best_xy": [
+        1451,
+        803
+      ],
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.90113,
+      "identity_ncc": 0.90113
+    },
+    {
+      "name": "Courtyard stone corner",
+      "master_xy": [
+        1619,
+        478
+      ],
+      "quiet_best_xy": [
+        1619,
+        478
+      ],
+      "shift_xy_px": [
+        0,
+        0
+      ],
+      "shift_distance_px": 0.0,
+      "ncc": 0.81288,
+      "identity_ncc": 0.81288
+    }
+  ],
+  "limits": [
+    "Local template test samples named points, not every pixel; lighting changes and generative local redraw prevent a claim of pixel identity.",
+    "The source images have matching canvas dimensions, and exact registration is not guaranteed beyond the measured samples.",
+    "The production plan asks for pixel-for-pixel registration for crossfades. Sampled zero-shift matches support same-camera still selection but do not fulfill a whole-image pixel-registration/runtime crossfade gate."
+  ]
+}

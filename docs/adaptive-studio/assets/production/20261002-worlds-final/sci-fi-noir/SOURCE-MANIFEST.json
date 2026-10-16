@@ -1,0 +1,74 @@
+{
+  "schema": "studio.theme-asset.source-pack/v1",
+  "pack": "sci-fi-noir",
+  "prepared_at": "2026-10-02T15:40:40Z",
+  "requested_asset_ids": [
+    "sci-fi-noir-master",
+    "sci-fi-noir-quiet",
+    "sci-fi-noir-wall",
+    "sci-fi-noir-hero",
+    "sci-fi-noir-poster",
+    "sci-fi-noir-card"
+  ],
+  "source_count": 3,
+  "independent_generations": 1,
+  "reference_edits": 2,
+  "deterministic_derivative_ids": [
+    "sci-fi-noir-hero",
+    "sci-fi-noir-poster",
+    "sci-fi-noir-card"
+  ],
+  "sources": [
+    {
+      "relative_path": "originals/sci-fi-noir-master--candidate-1.png",
+      "sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+      "bytes": 2471153,
+      "width": 1672,
+      "height": 941,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "originals/sci-fi-noir-quiet--candidate-1.png",
+      "sha256": "3f6321021ec780f55242cc2589e2b2b6b103e97bb5c9af792067eddfc0bb6403",
+      "bytes": 2496182,
+      "width": 1672,
+      "height": 941,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "originals/sci-fi-noir-wall--candidate-1.png",
+      "sha256": "6984c250a4330120989cf378fbf6cab57afdf4b3b55d1654ba70dea30583a4ad",
+      "bytes": 2847597,
+      "width": 1536,
+      "height": 1024,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    }
+  ],
+  "input_confirmation": {
+    "sci-fi-noir-quiet": {
+      "input_id": "sci-fi-noir-master",
+      "input_sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+      "source": "Parent generation record: exact candidate-1 master supplied as image edit input."
+    },
+    "sci-fi-noir-wall": {
+      "input_id": "sci-fi-noir-master",
+      "input_sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+      "source": "Parent generation record: exact candidate-1 master supplied as image edit input."
+    }
+  },
+  "source_art_recommendation": "All six IDs selected as source art by lead assistant on 2026-10-02, retaining documented caveats.",
+  "runtime_qualified": false,
+  "selected_for_release": false,
+  "planning_files_modified": false,
+  "source_art_selection": "accepted-by-delegated-assistant",
+  "selection_record": "SELECTION.json"
+}

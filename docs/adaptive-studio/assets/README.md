@@ -1,6 +1,8 @@
 # Frontend asset production kit
 
-**154 planned requests. No art has been produced, cleared or installed by this kit.** The owner lifted the artwork deferral on 27 September 2026; [PRODUCTION-PLAN.md](PRODUCTION-PLAN.md) routes every request and names the first wave. The only bytes so far are 71 permissively licensed downloads (icons, fonts, textures) kept local-only and listed in [acquired/MANIFEST.json](acquired/MANIFEST.json).
+**Art-selection update, 2 October 2026:** [Twenty-three workflow/reference choices](production/20261002-art-selection/README.md) are recorded after visual review. Two anchors retain direct-owner acceptance; the other 21 choices are accepted under the owner's task-scoped delegation to the assistant. These selections no longer await another owner art-choice round. Future generated samples require independent QA and a separate explicit selection by the lead assistant within the delegation. Source/license, runtime and release gates remain separate, and existing accepted Night Shift artwork is preserved.
+
+**154 planned requests. The workflow/reference production now has 34 preserved candidates and 23 recorded art selections.** The owner lifted the artwork deferral on 27 September 2026; [PRODUCTION-PLAN.md](PRODUCTION-PLAN.md) routes every request and names the first wave. The earlier 71 permissively licensed downloads (icons, fonts, textures) remain local-only and are listed in [acquired/MANIFEST.json](acquired/MANIFEST.json).
 
 This is a production wishlist, not 154 image-generation prompts to execute in one batch. It includes scene masters, derivatives, code/vector work, real tutorial captures and optional sound. Shared profiles supply delivery targets; every catalogue row adds an individual subject, placement, production method, dependency and acceptance test.
 
@@ -13,7 +15,7 @@ python docs/adaptive-studio/assets/brief.py show retro-anime-master
 python docs/adaptive-studio/assets/test_brief.py
 ```
 
-The reader is standard-library Python, reads only this directory and prints text. It has no model, network, media conversion, installation, registration or GitHub action. `show` assembles the complete brief with inherited world/profile requirements. Actual production remains a separately selected future session.
+The reader is standard-library Python, reads only this directory and prints text. It has no model, network, media conversion, installation, registration or GitHub action. `show` assembles the complete brief with inherited world/profile requirements. The reader itself performs no production; completed candidate batches and current art decisions are linked above.
 
 | File | Purpose |
 | --- | --- |

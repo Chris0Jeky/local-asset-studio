@@ -1,0 +1,25 @@
+{
+  "scope": "source art only",
+  "decision_date": "2026-10-02",
+  "reviewer": "lead assistant acting within the owner’s task-scoped artwork delegation",
+  "accepted_ids": [
+    "sci-fi-noir-master",
+    "sci-fi-noir-quiet",
+    "sci-fi-noir-wall",
+    "sci-fi-noir-hero",
+    "sci-fi-noir-poster",
+    "sci-fi-noir-card"
+  ],
+  "decision_record": "Lead viewed both full six-ID contact sheets and explicitly selected all twelve choices on 2026-10-02.",
+  "conditions": [
+    "Weathered steel texture and horizontal seam prevent an unqualified full-left60% text-safe claim.",
+    "Use only the documented conservative heading/control proposals until actual slot/contrast tests.",
+    "Sampled quiet offsets and relighting do not meet a pixel-exact registration or runtime crossfade gate.",
+    "Native-size shortfalls remain: source1672x941/wall1536x1024, hero1668x695, card941x941; no upscaling.",
+    "Hero1920x800 intentionally absent.",
+    "Source/license clearance, runtime qualification and release selection remain separate."
+  ],
+  "source_license_review": "not-cleared",
+  "runtime_review": "not-qualified",
+  "release_selection": "not-selected"
+}

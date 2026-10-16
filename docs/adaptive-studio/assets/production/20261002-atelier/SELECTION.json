@@ -1,0 +1,25 @@
+{
+  "scope": "source art only",
+  "decision_date": "2026-10-02",
+  "reviewer": "lead assistant acting within the owner’s task-scoped artwork delegation",
+  "accepted_ids": [
+    "atelier-master",
+    "atelier-quiet",
+    "atelier-wall",
+    "atelier-hero",
+    "atelier-poster",
+    "atelier-card"
+  ],
+  "recommended_derivative_ids": [],
+  "conditions": [
+    "Actual native dimensions retained; not native 4K.",
+    "Master heading zone is narrower than the requested left 60%; see CROP-PLAN.json.",
+    "Quiet has zero integer-pixel shift at 20 sampled landmarks, not guaranteed full-image pixel registration.",
+    "Hero 1920x800 omitted rather than upscaled.",
+    "No runtime or release acceptance."
+  ],
+  "source_license_review": "not cleared by this selection",
+  "runtime_review": "not-qualified",
+  "release_selection": "not-selected",
+  "decision_evidence": "The lead explicitly selected the three originals and then confirmed hero/poster/card crops after viewing the complete six-ID contact sheet on 2026-10-02."
+}

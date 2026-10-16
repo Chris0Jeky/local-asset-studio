@@ -1,0 +1,80 @@
+{
+  "coordinate_convention": "Normalized source-canvas regions; crops use original pixel edges, right/bottom exclusive.",
+  "source_dimensions": [
+    1672,
+    941
+  ],
+  "focal_point": {
+    "x": 0.78,
+    "y": 0.68
+  },
+  "scene_and_poster_crop": [
+    0,
+    0.25,
+    1672,
+    940.75
+  ],
+  "scene_crop_note": "Remove 0.25 source pixel from each vertical edge for exact 16:9, then one isotropic LANCZOS downsample; original untouched.",
+  "hero_crop": [
+    2,
+    155,
+    1670,
+    850
+  ],
+  "hero_focal_point": [
+    0.7806714628297362,
+    0.6976690647482015
+  ],
+  "card_crop": [
+    731,
+    0,
+    1672,
+    941
+  ],
+  "heading_zone": {
+    "box_xyxy": [
+      0.08,
+      0.18,
+      0.5,
+      0.64
+    ],
+    "status": "Conservative visual proposal; contrast, HTML controls and actual slots untested."
+  },
+  "wall_control_zone": {
+    "box_xyxy": [
+      0.1,
+      0.24,
+      0.7,
+      0.82
+    ],
+    "status": "Conservative visual proposal only; tactile texture and illumination remain, so actual control contrast requires testing."
+  },
+  "portrait_plan": {
+    "status": "Plan only; no portrait asset shipped or tested.",
+    "art_only_crop_3_by_4_xyxy": [
+      942,
+      0,
+      1647.75,
+      941
+    ],
+    "native_extent": [
+      705.75,
+      941
+    ],
+    "proposed_small_output": [
+      600,
+      800
+    ],
+    "composition": "Keeps most of the desk/chair and the skylight corner. The right desktop and some floor are deliberately cropped; left heading space is absent.",
+    "heading": "Place actual heading above the artwork on a solid theme surface; the art-only crop has no left heading zone.",
+    "390x844_note": "Use a bounded artwork region, not a full viewport cover. Actual slot needs testing."
+  },
+  "quiet_note": "Cooler and more evenly lit still preserves the same room and object layout. Sampled local offsets reach 3.1623px around a paper edge; small generative geometry/detail changes remain, so no pixel-exact registration or crossfade acceptance.",
+  "caveats": [
+    "The actual palette is warm grey stone/ivory with a wooden chair, lighter and warmer than the requested matte graphite; fine plaster texture is visible.",
+    "The conservative heading proposal is x=.08-.50, y=.18-.64 (42% of width), not an automatic full-left60% claim; brighter diagonal skylight falloff lies to its right.",
+    "The wall retains tactile plaster and soft skylight illumination. Its top-right bevel and stronger bright area should remain outside real controls.",
+    "Full 12% overscan is not met: desk right edge and chair legs approach or intersect the canvas. Hero retains the desk/chair core but deliberately crops lower legs and much of the skylight.",
+    "Any CSS scrim or solid heading surface is a recommendation only, not tested contrast."
+  ]
+}

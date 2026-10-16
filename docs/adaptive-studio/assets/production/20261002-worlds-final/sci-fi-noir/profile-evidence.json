@@ -1,0 +1,98 @@
+{
+  "reference_commit": "4ef2d9742084c7f506ef0df413021c129fd76dbe",
+  "reference_url": "https://github.com/Chris0Jeky/local-asset-studio/blob/4ef2d9742084c7f506ef0df413021c129fd76dbe/docs/adaptive-studio/assets/profiles.json",
+  "profiles": {
+    "scene": {
+      "master": "3840x2160 landscape target; confirm actual provider size support before generation.",
+      "deliverables": [
+        "Lossless approved scene master",
+        "1280x720 and 960x540 WebP/AVIF previews",
+        "Composition notes and normalized focal point"
+      ],
+      "safe_zone": "Keep the middle-left 60% low-detail and low-contrast. Main interest lives near the right edge; allow 12% crop overscan.",
+      "fallback": "CSS token surface until an accepted local poster exists.",
+      "budget": "Runtime preview <=300 KiB; master retained outside the runtime bundle.",
+      "motion": "Still. No status text, UI buttons, glyphs or logos."
+    },
+    "hero": {
+      "master": "3840x1600 wide crop/extension target from the approved scene, not an unrelated composition.",
+      "deliverables": [
+        "Wide lossless master",
+        "1920x800 and 960x400 encoded variants",
+        "Separate portrait crop plan"
+      ],
+      "safe_zone": "Left 60% for real HTML heading. Protect focal subject at normalized x=.78; never crop essential anatomy.",
+      "fallback": "Accepted local poster then token-only header.",
+      "budget": "Visible rendition <=250 KiB.",
+      "motion": "Still; no baked titles."
+    },
+    "wall": {
+      "master": "2400x1600 panel-wall adaptation target from the approved master.",
+      "deliverables": [
+        "Wall master",
+        "1200x800 and 600x400 low-detail renditions"
+      ],
+      "safe_zone": "Central 70% quiet; edge motifs only. No fake gauges, chart values or active controls.",
+      "fallback": "Theme background token.",
+      "budget": "Runtime <=180 KiB.",
+      "motion": "Still; texture must not reduce text contrast."
+    },
+    "quiet": {
+      "master": "3840x2160 edit target, same lens/architecture as scene anchor.",
+      "deliverables": [
+        "Quiet/daylight alternative",
+        "1280x720 local poster",
+        "Registration comparison against anchor"
+      ],
+      "safe_zone": "Preserve anchor focal zones and silhouette positions; quiet must not look like an error.",
+      "fallback": "Theme token surface.",
+      "budget": "Runtime <=300 KiB.",
+      "motion": "Still; offline-capable, also selectable while connected."
+    },
+    "poster": {
+      "master": "Extract a representative frame/crop from the approved scene or loop; do not generate independently.",
+      "deliverables": [
+        "1280x720 WebP",
+        "640x360 lightweight fallback",
+        "Focal point and source identity"
+      ],
+      "safe_zone": "Match the loop camera and object placement so fallback does not jump.",
+      "fallback": "Theme token surface with unchanged layout.",
+      "budget": "Large <=220 KiB; small <=90 KiB.",
+      "motion": "Still, suitable for reduced motion and active generation."
+    },
+    "card": {
+      "master": "1024x1024 square crop target of accepted scene; retain a distinct silhouette.",
+      "deliverables": [
+        "512x512 WebP preview",
+        "256x256 thumbnail"
+      ],
+      "safe_zone": "No text; tiny-size contrast and coherent crop across skins.",
+      "fallback": "Theme swatch plus HTML skin name.",
+      "budget": "512px <=80 KiB; 256px <=30 KiB.",
+      "motion": "Still."
+    }
+  },
+  "reference_files": [
+    {
+      "path": "profiles.json",
+      "sha256": "64d7c35dd611272b1eac70f91b7937d2d9d86eb5164e929c1145b4afcaaf0643",
+      "source_url": "https://github.com/Chris0Jeky/local-asset-studio/blob/4ef2d9742084c7f506ef0df413021c129fd76dbe/docs/adaptive-studio/assets/profiles.json"
+    },
+    {
+      "path": "catalog.csv",
+      "sha256": "1779d157e0f4f7b9088e29b8288995dcf06ad60e16230bbd3000e82d547c52a1",
+      "source_url": "https://github.com/Chris0Jeky/local-asset-studio/blob/4ef2d9742084c7f506ef0df413021c129fd76dbe/docs/adaptive-studio/assets/catalog.csv"
+    },
+    {
+      "path": "DELIVERY-SPEC.md",
+      "sha256": "fd170fd56cce754a592155569b36c59ef997741da1935e7a9029cc1520df81b3",
+      "source_url": "https://github.com/Chris0Jeky/local-asset-studio/blob/4ef2d9742084c7f506ef0df413021c129fd76dbe/docs/adaptive-studio/assets/DELIVERY-SPEC.md"
+    },
+    {
+      "path": "PRODUCTION-PLAN.md",
+      "sha256": "d8495f720960b93bb327116e8255e0ed83d81c8085b0f9d2984c674d98315d0f",
+      "source_url": "https://github.com/Chris0Jeky/local-asset-studio/blob/4ef2d9742084c7f506ef0df413021c129fd76dbe/docs/adaptive-studio/assets/PRODUCTION-PLAN.md"
+    }
+  ]
+}

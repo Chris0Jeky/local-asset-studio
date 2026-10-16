@@ -1,0 +1,15 @@
+{
+  "status": "passed-offline-artifact-checks-with-documented-shortfalls",
+  "scope": "Source-art files, metadata and ZIP integrity only. No app/runtime checks.",
+  "counts": {
+    "originals": 6,
+    "lossless_native_crops": 4,
+    "webp_renditions": 22,
+    "review_images": 8,
+    "replayed_derivatives": 26
+  },
+  "archive_count": 4,
+  "all_archives_under_10MiB": true,
+  "reference_planning_files_unchanged": true,
+  "repo_text_file_count": 50
+}

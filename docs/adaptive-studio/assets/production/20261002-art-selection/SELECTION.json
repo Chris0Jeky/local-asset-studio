@@ -1,0 +1,1298 @@
+{
+  "schema": "studio.theme-asset.art-selection/v1-proposed",
+  "status": "art-selection-recorded",
+  "recorded_at": "2026-10-02T11:21:46Z",
+  "repository_reference": {
+    "repository": "Chris0Jeky/local-asset-studio",
+    "pr": 1269,
+    "read_head": "571396b6d3faa717b606c03e91b9fa13c88ddb0c"
+  },
+  "authority": {
+    "kind": "owner-delegated-assistant-art-selection",
+    "delegated_on": "2026-10-02",
+    "delegated_at": "2026-10-02T11:16:00Z",
+    "timestamp_precision": "Minute-level delegation record",
+    "scope": "Choose the best candidates for the current LAS workflow-illustration and reference-example task, using completed visual reviews. This is art judgment only.",
+    "exclusions": [
+      "Source or license clearance",
+      "Runtime qualification",
+      "Release selection",
+      "Merge",
+      "Deployment"
+    ]
+  },
+  "counts": {
+    "selected_asset_ids": 23,
+    "workflow_ids": 16,
+    "reference_ids": 7,
+    "direct_owner_acceptances_preserved": 2,
+    "delegated_art_acceptances": 21,
+    "unselected_candidates_preserved": 11,
+    "total_candidates_preserved": 34
+  },
+  "selected": [
+    {
+      "asset_id": "reference-background",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/reference-background--1254x1254--candidate-1.json",
+      "receipt_sha256": "d667b5433dceec5678b3183b52f3f454b65acff4c5b15af1f5027e08f0371967",
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "original": {
+        "relative_path": "inbox/reference-background--1254x1254--candidate-1.png",
+        "sha256": "d19f39fb462a46324bf32d5ec548bbe20f6e08d6ba262ae2c11bdda5205d95ae",
+        "bytes": 2317765,
+        "width": 1254,
+        "height": 1254,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/reference-background--1254x1254--candidate-1--longedge320.webp",
+          "sha256": "a21dae323a089efe2af92d33cf1cdf312136ba587cf324965860b0525698110b",
+          "bytes": 19724,
+          "width": 320,
+          "height": 320,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "PR delivery attachments; binary files are not committed in this text-only publication",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_relative_path_base": "Root after extracting all three las-art-candidates-part-XX-of-03.zip files together",
+        "path_rules": {
+          "inbox/": "Unaltered original in delivery archive; may also be placed in the ignored repository assets/inbox directory",
+          "review-renditions/": "Attachment-only binary path relative to extracted delivery archive root, not the repository assets root",
+          "transformations.output_relative_path": "Same attachment-only delivery base as review-renditions/"
+        }
+      },
+      "justification": "The empty platform provides usable foreground space and a legible setting without competing character content.",
+      "retained_caveats": [
+        "Main perspective lines enter from the lower right, rather than the requested lower left."
+      ]
+    },
+    {
+      "asset_id": "reference-composition",
+      "candidate": 2,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/reference-composition--1254x1254--candidate-2.json",
+      "receipt_sha256": "1eb37b5bc783d6b85a62ef3ed18c60a1062365b0568ff8e4518ae5593397efa8",
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "original": {
+        "relative_path": "inbox/reference-composition--1254x1254--candidate-2.png",
+        "sha256": "f790e59c3454f97ab00a65f6170d5ada9236d19c22e35c485a9374d2e073934b",
+        "bytes": 1442857,
+        "width": 1254,
+        "height": 1254,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/reference-composition--1254x1254--candidate-2--longedge320.webp",
+          "sha256": "08e4d033ea462fab7f04daa82ea87e359895d5b979f2022cf7ae064120a008a4",
+          "bytes": 2292,
+          "width": 320,
+          "height": 320,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "PR delivery attachments; binary files are not committed in this text-only publication",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_relative_path_base": "Root after extracting all three las-art-candidates-part-XX-of-03.zip files together",
+        "path_rules": {
+          "inbox/": "Unaltered original in delivery archive; may also be placed in the ignored repository assets/inbox directory",
+          "review-renditions/": "Attachment-only binary path relative to extracted delivery archive root, not the repository assets root",
+          "transformations.output_relative_path": "Same attachment-only delivery base as review-renditions/"
+        }
+      },
+      "justification": "Candidate 2 has the stronger foreground, middle-ground and background hierarchy and clearer mass separation at thumbnail size. That teaching value outweighs its documented horizon-position deviation.",
+      "retained_caveats": [
+        "The horizon is approximately 39% from the top, not exactly one-third. Candidate 3 is approximately 27%; no candidate is claimed to meet the exact one-third target."
+      ]
+    },
+    {
+      "asset_id": "reference-identity",
+      "candidate": 3,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/reference-identity--1024x1536--candidate-3.json",
+      "receipt_sha256": "1efd337d5a2a94804f7b4047e2d9e3a3958407ee05cba43a848305abd8cca8de",
+      "art_review_status": "accepted",
+      "acceptance_basis": "direct-owner-acceptance-preserved",
+      "original": {
+        "relative_path": "inbox/reference-identity--1024x1536--candidate-3.png",
+        "sha256": "ea29ef505b512ccb1148893a2bdf27b30769b43b8c741cc783e1e0491e912a9b",
+        "bytes": 1889270,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/reference-identity--1024x1536--candidate-3--longedge320.webp",
+          "sha256": "f68e891f99352a8948545f7c70cd599e4740cf3dcfcaafab3ecfb8934ce26ff6",
+          "bytes": 11134,
+          "width": 213,
+          "height": 320,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "PR delivery attachments; binary files are not committed in this text-only publication",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_relative_path_base": "Root after extracting all three las-art-candidates-part-XX-of-03.zip files together",
+        "path_rules": {
+          "inbox/": "Unaltered original in delivery archive; may also be placed in the ignored repository assets/inbox directory",
+          "review-renditions/": "Attachment-only binary path relative to extracted delivery archive root, not the repository assets root",
+          "transformations.output_relative_path": "Same attachment-only delivery base as review-renditions/"
+        }
+      },
+      "justification": "Retains the directly accepted adult explorer: dark-teal bob, silver streak, amber eyes and olive high collar provide the established character anchor.",
+      "retained_caveats": [
+        "Character art acceptance does not establish tested model identity consistency."
+      ]
+    },
+    {
+      "asset_id": "reference-lighting",
+      "candidate": 2,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/reference-lighting--1254x1254--candidate-2.json",
+      "receipt_sha256": "6ae0aa3c5ac59b0fd1117b867e8631c61e8e0494bf011634179b2d40e3ca43f6",
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "original": {
+        "relative_path": "inbox/reference-lighting--1254x1254--candidate-2.png",
+        "sha256": "65ac03353702d9a4ea968a32baaf1a8bc1a952df08b1386da79442fbddece73f",
+        "bytes": 1805697,
+        "width": 1254,
+        "height": 1254,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/reference-lighting--1254x1254--candidate-2--longedge320.webp",
+          "sha256": "2604a28e1d7a7bfcb210814b56f416cba612e8af890665ad382b29fe6f592ff8",
+          "bytes": 4208,
+          "width": 320,
+          "height": 320,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "PR delivery attachments; binary files are not committed in this text-only publication",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_relative_path_base": "Root after extracting all three las-art-candidates-part-XX-of-03.zip files together",
+        "path_rules": {
+          "inbox/": "Unaltered original in delivery archive; may also be placed in the ignored repository assets/inbox directory",
+          "review-renditions/": "Attachment-only binary path relative to extracted delivery archive root, not the repository assets root",
+          "transformations.output_relative_path": "Same attachment-only delivery base as review-renditions/"
+        }
+      },
+      "justification": "Candidate 2 gives the clearer hard-edged cast shadow from upper-left illumination, strengthening its value as a directional-light study.",
+      "retained_caveats": [
+        "This is a generated neutral plaster-face study without an independent originality or identity audit."
+      ]
+    },
+    {
+      "asset_id": "reference-outfit",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/reference-outfit--1024x1536--candidate-1.json",
+      "receipt_sha256": "d9ae26979b0eb4b89cd353673ea6c83857c0a6e543d8a44537edfdfd5b72804f",
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "original": {
+        "relative_path": "inbox/reference-outfit--1024x1536--candidate-1.png",
+        "sha256": "bcfd8e797e8d4a1764583d44600b1b046f1d6cd34f02468c4202988955d4955c",
+        "bytes": 1746036,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original",
+        "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/reference-outfit--1024x1536--candidate-1--213x320.webp",
+          "sha256": "b1039c65030eef1afac6bfb4b4338bed54c18c9206e8f411c5e14550e8e2ca65",
+          "bytes": 5600,
+          "width": 213,
+          "height": 320,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition",
+          "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "Delivery archive attachments only; binaries are not in the text-only repository file list",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_filename": "las-art-wave2-candidates.zip",
+        "archive_relative_path_base": "Extracted archive root",
+        "input_anchors": "Anchor paths refer to the prior delivery; anchors are not duplicated in this archive."
+      },
+      "justification": "Headless neutral dress form cleanly separates clothing from identity. The olive high-collar jacket matches the anchor and the full belt/pouches, trousers, satchel and boots are visible.",
+      "retained_caveats": [
+        "Painterly anime shading, neutral gray background and frontal visibility are coherent with the accepted identity anchor.",
+        "No person, lettering, watermark, brand or obvious garment/strap fusion was observed.",
+        "The top finial has a narrow but intact margin. At 213x320, all clothing and both boots remain visible; garment details are necessarily reduced.",
+        "Trousers, boots, belt and satchel elaborate beyond the portrait anchor, which did not show them; they are newly generated outfit choices, not previously owner-approved canon."
+      ]
+    },
+    {
+      "asset_id": "reference-pose",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/reference-pose--1024x1536--candidate-1.json",
+      "receipt_sha256": "d7182a488819acffede71557f913976112c981256117410bf3417ae253bc3ecb",
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "original": {
+        "relative_path": "inbox/reference-pose--1024x1536--candidate-1.png",
+        "sha256": "526c988b621534eea50f08ba0666247cbd13a8f45e82d36502c20bf940c5b984",
+        "bytes": 1908246,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/reference-pose--1024x1536--candidate-1--longedge320.webp",
+          "sha256": "32b7e7d37400622cac6404bd651fea03abb6df4511023f68778326e11a1975b4",
+          "bytes": 4932,
+          "width": 213,
+          "height": 320,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "PR delivery attachments; binary files are not committed in this text-only publication",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_relative_path_base": "Root after extracting all three las-art-candidates-part-XX-of-03.zip files together",
+        "path_rules": {
+          "inbox/": "Unaltered original in delivery archive; may also be placed in the ignored repository assets/inbox directory",
+          "review-renditions/": "Attachment-only binary path relative to extracted delivery archive root, not the repository assets root",
+          "transformations.output_relative_path": "Same attachment-only delivery base as review-renditions/"
+        }
+      },
+      "justification": "The asymmetrical mannequin separates pose from identity and keeps hands and feet visible; it is a useful geometry example at review size.",
+      "retained_caveats": [
+        "Crossed-leg geometry is approximate; this is not a skeleton-accuracy claim."
+      ]
+    },
+    {
+      "asset_id": "reference-style",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/reference-style--1254x1254--candidate-1.json",
+      "receipt_sha256": "59d135e8aae655a88d5330e4f8e8bf447bce1030f325ec02a297164c93d47cd6",
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "original": {
+        "relative_path": "inbox/reference-style--1254x1254--candidate-1.png",
+        "sha256": "82bc4b7c8d299967be2432fed8d889ae5044b6a1a9909264898f44d40353d11c",
+        "bytes": 3491860,
+        "width": 1254,
+        "height": 1254,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/reference-style--1254x1254--candidate-1--longedge320.webp",
+          "sha256": "96c08935133750476fd2826604b3810866f615b4921412984818dbd8211b23b9",
+          "bytes": 39060,
+          "width": 320,
+          "height": 320,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "PR delivery attachments; binary files are not committed in this text-only publication",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_relative_path_base": "Root after extracting all three las-art-candidates-part-XX-of-03.zip files together",
+        "path_rules": {
+          "inbox/": "Unaltered original in delivery archive; may also be placed in the ignored repository assets/inbox directory",
+          "review-renditions/": "Attachment-only binary path relative to extracted delivery archive root, not the repository assets root",
+          "transformations.output_relative_path": "Same attachment-only delivery base as review-renditions/"
+        }
+      },
+      "justification": "The ink hillside study makes linework, hatching and architectural treatment clear without introducing character identity.",
+      "retained_caveats": [
+        "The scene is more elaborate than a simple street-corner study."
+      ]
+    },
+    {
+      "asset_id": "workflow-animate",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-animate--1448x1086--candidate-1.json",
+      "receipt_sha256": "eb0d42510f0c2ee596f0143683cdcbade62d031e8de50db77f5133c9fe4e31ee",
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "original": {
+        "relative_path": "inbox/workflow-animate--1448x1086--candidate-1.png",
+        "archive_filename": "las-art-wave3-candidates-part-1.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "5c2aceb42cac3a6608a9893ecfc4ca4c61511355b4118e6a69453d81e4a9947f",
+        "bytes": 1617300,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/workflow-animate--1448x1086--candidate-1--600x450.webp",
+          "archive_filename": "las-art-wave3-candidates-part-1.zip",
+          "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+          "sha256": "2370d9dbc1131c8050f9f055567feb75c43505825a9f74b6868028a5c648b935",
+          "bytes": 9262,
+          "width": 600,
+          "height": 450,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "PR attachment archives only; not repository source",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_filename": "las-art-wave3-candidates-part-1.zip",
+        "archive_relative_path_base": "Extracted named archive root",
+        "input_anchors": "Prior accepted anchors are not duplicated. Candidate-1 refinement inputs are included in the same ZIP part as their candidate-2 output."
+      },
+      "justification": "A single bird still and three progressively translucent bird positions trace a short arc, communicating potential motion without a functioning player.",
+      "retained_caveats": [
+        "All three motion positions can be distinguished at 600x450, though the gray and rose positions are deliberately low contrast.",
+        "An additional plain flat card is inherited from the style anchor and was not requested; it is neutral decoration, not another generated result.",
+        "No play button, timeline, frame-rate, speed label, text or success icon was observed."
+      ]
+    },
+    {
+      "asset_id": "workflow-combine",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-combine--1448x1086--candidate-1.json",
+      "receipt_sha256": "96e21ecb5d14c1aabf73244aa6f010b8f771312967b9bb01cd9fd0536a8a46ae",
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "original": {
+        "relative_path": "inbox/workflow-combine--1448x1086--candidate-1.png",
+        "sha256": "5edcaaef0d15f2bf4e4dd3ddb29aadf5e4fe3b8f5eec12b8f05435caa898fa5b",
+        "bytes": 1648790,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original",
+        "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/workflow-combine--1448x1086--candidate-1--600x450.webp",
+          "sha256": "6cd042e622ed91e5880641fb65ba234bb92186661b1220a986cbc4baba783606",
+          "bytes": 12882,
+          "width": 600,
+          "height": 450,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition",
+          "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "Delivery archive attachments only; binaries are not in the text-only repository file list",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_filename": "las-art-wave2-candidates.zip",
+        "archive_relative_path_base": "Extracted archive root",
+        "input_anchors": "Anchor paths refer to the prior delivery; anchors are not duplicated in this archive."
+      },
+      "justification": "Three differently proportioned and tinted input frames connect to one visibly empty central frame. Clear combine metaphor, faithful paper/graphite style, ample quiet lower third.",
+      "retained_caveats": [
+        "The connections are amber and more prominent than the prompt's word faint, but stay thin and preserve distinct input roles.",
+        "No text, brand, character, fake UI, extra source frame or finished result was observed.",
+        "At 600x450, all three sources remain distinct and the blank destination remains legible."
+      ]
+    },
+    {
+      "asset_id": "workflow-compare",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-compare--1448x1086--candidate-1.json",
+      "receipt_sha256": "07abbdc659186b06248ff07f52be7cafb7b30f4cb7b8a667b4650e3c64871780",
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "original": {
+        "relative_path": "inbox/workflow-compare--1448x1086--candidate-1.png",
+        "archive_filename": "las-art-wave3-candidates-part-3.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "29f90fda086c86238706b8279f5638a5f132dfbeb731c6630e00fc21d5f74d53",
+        "bytes": 1589319,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/workflow-compare--1448x1086--candidate-1--600x450.webp",
+          "archive_filename": "las-art-wave3-candidates-part-3.zip",
+          "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+          "sha256": "7d7196b65ae85c7d983ffc189142a6a115e16e58c8ebaeabae2503f518f611dd",
+          "bytes": 10156,
+          "width": 600,
+          "height": 450,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "PR attachment archives only; not repository source",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_filename": "las-art-wave3-candidates-part-3.zip",
+        "archive_relative_path_base": "Extracted named archive root",
+        "input_anchors": "Prior accepted anchors are not duplicated. Candidate-1 refinement inputs are included in the same ZIP part as their candidate-2 output."
+      },
+      "justification": "Two equally prominent, similarly lit abstract frames share one source card and balanced branching connectors. Neither reads as a winner.",
+      "retained_caveats": [
+        "Matching frame size, palette and lighting preserve equal emphasis at 600x450.",
+        "Different abstract arrangements are readily distinguishable while remaining comparable.",
+        "No star, trophy, checkmark, score, preference highlight or brighter result was observed."
+      ]
+    },
+    {
+      "asset_id": "workflow-create",
+      "candidate": 3,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-create--1448x1086--candidate-3.json",
+      "receipt_sha256": "cde02493e8921f53c5b0a815c5fb2373ce4be48d36dc3d0a1b0a8dc41c7dd19a",
+      "art_review_status": "accepted",
+      "acceptance_basis": "direct-owner-acceptance-preserved",
+      "original": {
+        "relative_path": "inbox/workflow-create--1448x1086--candidate-3.png",
+        "sha256": "2ede30c76170eae87181979633b9d49a8c2ea71e0f2a66ea57c617eca9a1b1f2",
+        "bytes": 1512700,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/workflow-create--1448x1086--candidate-3--600x450.webp",
+          "sha256": "6e69e19d64567b2ab2b7692a6c7b278665168c56536f8c4c79d3214f1eccfe24",
+          "bytes": 7274,
+          "width": 600,
+          "height": 450,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "PR delivery attachments; binary files are not committed in this text-only publication",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_relative_path_base": "Root after extracting all three las-art-candidates-part-XX-of-03.zip files together",
+        "path_rules": {
+          "inbox/": "Unaltered original in delivery archive; may also be placed in the ignored repository assets/inbox directory",
+          "review-renditions/": "Attachment-only binary path relative to extracted delivery archive root, not the repository assets root",
+          "transformations.output_relative_path": "Same attachment-only delivery base as review-renditions/"
+        }
+      },
+      "justification": "Retains the directly accepted blank standing frame and single cyan folio, with a calm caption area and the established graphite, ivory and amber series direction.",
+      "retained_caveats": [
+        "The amber star is part of the accepted style anchor, not a functional status indicator."
+      ]
+    },
+    {
+      "asset_id": "workflow-edit",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-edit--1448x1086--candidate-1.json",
+      "receipt_sha256": "8a5a6d97353720bb67313c1431ac02e147484a6bedeb4db78616243bfaf2285c",
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "original": {
+        "relative_path": "inbox/workflow-edit--1448x1086--candidate-1.png",
+        "archive_filename": "las-art-wave3-candidates-part-1.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "b21b193142367b356b060c21bd6dbbdf199499e1529db8dc208bec3059baa67f",
+        "bytes": 1563291,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/workflow-edit--1448x1086--candidate-1--600x450.webp",
+          "archive_filename": "las-art-wave3-candidates-part-1.zip",
+          "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+          "sha256": "9b246a11839efb9df1dd0db0eab3682ba87e013967f64272a848a037c8482320",
+          "bytes": 8150,
+          "width": 600,
+          "height": 450,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "PR attachment archives only; not repository source",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_filename": "las-art-wave3-candidates-part-1.zip",
+        "archive_relative_path_base": "Extracted named archive root",
+        "input_anchors": "Prior accepted anchors are not duplicated. Candidate-1 refinement inputs are included in the same ZIP part as their candidate-2 output."
+      },
+      "justification": "One standing landscape frame has a small cyan-tinted rectangle around its tree. The local-change concept is clear, restrained and consistent with the accepted workflow style.",
+      "retained_caveats": [
+        "At 600x450, both the tree and its highlighted area remain legible; most of the landscape remains untinted.",
+        "No lock, shield, brush, cursor, selection handles, text or imitation interface was observed.",
+        "This is conceptual artwork; surrounding untinted pixels are not evidence of model-enforced pixel protection."
+      ]
+    },
+    {
+      "asset_id": "workflow-export",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-export--1448x1086--candidate-1.json",
+      "receipt_sha256": "b8c0db77d3f5a95fbfa40ea7a0daa9ddd3609d8708d82ca6a91ed560aafe72f8",
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "original": {
+        "relative_path": "inbox/workflow-export--1448x1086--candidate-1.png",
+        "archive_filename": "las-art-wave3-candidates-part-3.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "6eef32ae89fe78aa2ada4b2c7b04d7a30915956165240cf8caf4d9a0615e1c84",
+        "bytes": 1745358,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/workflow-export--1448x1086--candidate-1--600x450.webp",
+          "archive_filename": "las-art-wave3-candidates-part-3.zip",
+          "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+          "sha256": "031fee47a027c7969e8b242d53a7988b6aabc83a1bd66e7b4096c76578def6f3",
+          "bytes": 14084,
+          "width": 600,
+          "height": 450,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "PR attachment archives only; not repository source",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_filename": "las-art-wave3-candidates-part-3.zip",
+        "archive_relative_path_base": "Extracted named archive root",
+        "input_anchors": "Prior accepted anchors are not duplicated. Candidate-1 refinement inputs are included in the same ZIP part as their candidate-2 output."
+      },
+      "justification": "Three coordinated abstract picture frames sit visibly within an open folio. Their organized grouping remains clear at review size.",
+      "retained_caveats": [
+        "A gold decorative sparkle is inherited from the accepted style anchor. It should be treated as decoration only, not proof of successful export or delivery.",
+        "The pictures contain small arrangements of multiple shapes rather than literally one shape each; this does not obscure the coherent set.",
+        "No file-format logo, download arrow, checkmark, stamp, text or imitation control was observed."
+      ]
+    },
+    {
+      "asset_id": "workflow-model",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-model--1448x1086--candidate-1.json",
+      "receipt_sha256": "27db9d796e02939002ec9e7fd28034693124a57bc3bffb5d3af922219cfa3fc6",
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "original": {
+        "relative_path": "inbox/workflow-model--1448x1086--candidate-1.png",
+        "archive_filename": "las-art-wave3-candidates-part-2.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "1ceeea4eff4a8e092bc7e8112a0432ca1237a5e41ff0b5242778e72dee96c8c2",
+        "bytes": 1555082,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/workflow-model--1448x1086--candidate-1--600x450.webp",
+          "archive_filename": "las-art-wave3-candidates-part-2.zip",
+          "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+          "sha256": "676d3748ba745587e3179a206fab0be85a275001d6d8e37d58d6e222ae636378",
+          "bytes": 6372,
+          "width": 600,
+          "height": 450,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "PR attachment archives only; not repository source",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_filename": "las-art-wave3-candidates-part-2.zip",
+        "archive_relative_path_base": "Extracted named archive root",
+        "input_anchors": "Prior accepted anchors are not duplicated. Candidate-1 refinement inputs are included in the same ZIP part as their candidate-2 output."
+      },
+      "justification": "One ivory core, a cyan disk and a rose triangular guide remain clearly separated. Their relation is conceptual rather than a physical compatibility claim.",
+      "retained_caveats": [
+        "Visible gaps remain between every module at 600x450; no plugs, connector standards, brands, lettering or status lamps were observed.",
+        "The central core is clearly dominant and the two guides are distinct in both shape and color.",
+        "A decorative gold sparkle and overhead glow remain above the core; they are stylistic, not evidence that a model is installed, ready or compatible."
+      ]
+    },
+    {
+      "asset_id": "workflow-pose",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-pose--1448x1086--candidate-1.json",
+      "receipt_sha256": "17e17405108b65b5aacfff057cb7acb39465bcedf5a5a2541eb512408991875e",
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "original": {
+        "relative_path": "inbox/workflow-pose--1448x1086--candidate-1.png",
+        "sha256": "9587382ab53b9a4dfed0d970e916589d159d7783a6ec8beef7d31a197f01696e",
+        "bytes": 1494052,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original",
+        "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/workflow-pose--1448x1086--candidate-1--600x450.webp",
+          "sha256": "68f3adc213001322c1878d00f2adafaf8d4962c186f84a3445b11b1e8784f41b",
+          "bytes": 10522,
+          "width": 600,
+          "height": 450,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition",
+          "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "Delivery archive attachments only; binaries are not in the text-only repository file list",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_filename": "las-art-wave2-candidates.zip",
+        "archive_relative_path_base": "Extracted archive root",
+        "input_anchors": "Anchor paths refer to the prior delivery; anchors are not duplicated in this archive."
+      },
+      "justification": "Filled standing silhouette and separate asymmetric stick-and-joint drawing read as different identity and geometry inputs. Clean linework and a quiet lower third.",
+      "retained_caveats": [
+        "The raised frame treatment and ivory/graphite/amber color family are consistent with the accepted workflow anchor. Rose/cyan accents are absent; this is a minor palette variation, not a semantic defect.",
+        "No facial detail, clothing detail, lettering, realistic person or imitation UI was observed.",
+        "At 600x450, the leaning pose, joints and filled-vs-line distinction remain visible."
+      ]
+    },
+    {
+      "asset_id": "workflow-recover",
+      "candidate": 2,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-recover--1448x1086--candidate-2.json",
+      "receipt_sha256": "10e1ec5fdec6e46f109c353c5767c99f8707089076c257e147679da86098d4b6",
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "original": {
+        "relative_path": "inbox/workflow-recover--1448x1086--candidate-2.png",
+        "sha256": "19aec23fd4e750429af5d1ffa0cd0c56cce88cdce3a4b107c6e636ec5190d0f8",
+        "bytes": 1337064,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original",
+        "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/workflow-recover--1448x1086--candidate-2--600x450.webp",
+          "sha256": "d9132a3b3d6ac960ab44f239f48cce651be8a5460f0d6b8d49374a3f6ffb6fe6",
+          "bytes": 9282,
+          "width": 600,
+          "height": 450,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition",
+          "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "Delivery archive attachments only; binaries are not in the text-only repository file list",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_filename": "las-art-wave2-candidates.zip",
+        "archive_relative_path_base": "Extracted archive root",
+        "input_anchors": "Anchor paths refer to the prior delivery; anchors are not duplicated in this archive."
+      },
+      "justification": "The receipt now lies flat and is visibly retained by the intact folio, removing the print/eject reading while preserving the calm series style. Stronger than candidate 1.",
+      "retained_caveats": [
+        "The receipt overlaps safely inside the folder edge; upward motion strokes and billowing paper are absent.",
+        "At 600x450 the folio, retained slip and quiet lower third remain legible.",
+        "No broken objects, retry arrows, warnings, lettering, fake UI or destructive imagery was observed.",
+        "Recommended review candidate for this asset ID. This recommendation is not owner acceptance or release selection."
+      ]
+    },
+    {
+      "asset_id": "workflow-repair",
+      "candidate": 2,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-repair--1448x1086--candidate-2.json",
+      "receipt_sha256": "5b32269b649f75f2a6887ede52207a47bf80a6da36492b4683f93841960edf4d",
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "original": {
+        "relative_path": "inbox/workflow-repair--1448x1086--candidate-2.png",
+        "archive_filename": "las-art-wave3-candidates-part-2.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "714da5bc7c3f294dcf219afabee25be18a3807ac3e8c97c7720e7811f237c2c1",
+        "bytes": 1600951,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/workflow-repair--1448x1086--candidate-2--600x450.webp",
+          "archive_filename": "las-art-wave3-candidates-part-2.zip",
+          "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+          "sha256": "809e34b9cfec501a1a309f4a4d350d75bff1abac291f43230a7972147391e0ea",
+          "bytes": 15180,
+          "width": 600,
+          "height": 450,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "PR attachment archives only; not repository source",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_filename": "las-art-wave3-candidates-part-2.zip",
+        "archive_relative_path_base": "Extracted named archive root",
+        "input_anchors": "Prior accepted anchors are not duplicated. Candidate-1 refinement inputs are included in the same ZIP part as their candidate-2 output."
+      },
+      "justification": "The local seam and magnified study remain clear, with the success-like sparkle removed. This is the stronger neutral inspection illustration.",
+      "retained_caveats": [
+        "Candidate 2 is recommended over candidate 1. Seam, continuous surrounding fabric and connector are legible at 600x450.",
+        "No brush, cursor, selection handles, controls, success mark or before/after comparison was observed.",
+        "The edit regenerated fabric microdetail; it is not a pixel-identical local edit or evidence that a functioning repair tool preserves surrounding pixels."
+      ]
+    },
+    {
+      "asset_id": "workflow-review",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-review--1448x1086--candidate-1.json",
+      "receipt_sha256": "6048c59107e0c1cecb90a75315a13153c410f90115dc0c45a3dd66343f4c7fcc",
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "original": {
+        "relative_path": "inbox/workflow-review--1448x1086--candidate-1.png",
+        "archive_filename": "las-art-wave3-candidates-part-1.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "5af8b937b107ee6624104f60b56407e99685e0a6f0bc474f07fa738b6c8d2728",
+        "bytes": 1534919,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/workflow-review--1448x1086--candidate-1--600x450.webp",
+          "archive_filename": "las-art-wave3-candidates-part-1.zip",
+          "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+          "sha256": "106c9ab9ad040f5ae16c9ff5787939fc538a49d09f5ed9aec483b264927c9bcc",
+          "bytes": 9114,
+          "width": 600,
+          "height": 450,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "PR attachment archives only; not repository source",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_filename": "las-art-wave3-candidates-part-1.zip",
+        "archive_relative_path_base": "Extracted named archive root",
+        "input_anchors": "Prior accepted anchors are not duplicated. Candidate-1 refinement inputs are included in the same ZIP part as their candidate-2 output."
+      },
+      "justification": "A framed landscape and a paper checklist with exactly four empty boxes communicate inspection awaiting a decision.",
+      "retained_caveats": [
+        "All four empty squares and corresponding plain rules remain clear at 600x450.",
+        "No tick, cross, stamp, badge, text or rating was observed. The motif does not declare automatic approval.",
+        "The calm lower third and standing frame treatment fit the series."
+      ]
+    },
+    {
+      "asset_id": "workflow-sequence",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-sequence--1448x1086--candidate-1.json",
+      "receipt_sha256": "05187b542be3ae34d1dceeed7b8960aa16b864fc510b25a9682e5e7ce26f671c",
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "original": {
+        "relative_path": "inbox/workflow-sequence--1448x1086--candidate-1.png",
+        "archive_filename": "las-art-wave3-candidates-part-2.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "b2e5847b612c95488f362aa321e9b9ea1bc6a7576f4c49be2fffb347b3ace60d",
+        "bytes": 1660218,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/workflow-sequence--1448x1086--candidate-1--600x450.webp",
+          "archive_filename": "las-art-wave3-candidates-part-2.zip",
+          "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+          "sha256": "fb4907eb2a7a01b12a5f39b0420da88d1c65679d904b7f5ce06a643c9253f822",
+          "bytes": 12306,
+          "width": 600,
+          "height": 450,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "PR attachment archives only; not repository source",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_filename": "las-art-wave3-candidates-part-2.zip",
+        "archive_relative_path_base": "Extracted named archive root",
+        "input_anchors": "Prior accepted anchors are not duplicated. Candidate-1 refinement inputs are included in the same ZIP part as their candidate-2 output."
+      },
+      "justification": "Three equal frames show a coherent landscape moving from sunset through dusk to night. Left-to-right ordering and a blank paper ribbon remain clear at review size.",
+      "retained_caveats": [
+        "The ribbon runs behind the lower portions of the frames rather than strictly beneath them; the ordered sequence remains clear.",
+        "The illustrated sky progression is conceptual, not generated timing or performance evidence. Real timing labels must stay in HTML.",
+        "No timecode, numbered step, player control, text or quality rating was observed."
+      ]
+    },
+    {
+      "asset_id": "workflow-sheet",
+      "candidate": 2,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-sheet--1448x1086--candidate-2.json",
+      "receipt_sha256": "8231fcce215aae9dd74f3f19709943a6696043e760af5244f2d44e5b971523c8",
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "original": {
+        "relative_path": "inbox/workflow-sheet--1448x1086--candidate-2.png",
+        "archive_filename": "las-art-wave3-candidates-part-1.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "502e81ed0b7e8d18e547fe4936935b393b48054a0adaf3f1a6ddc5939181320a",
+        "bytes": 1873389,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/workflow-sheet--1448x1086--candidate-2--600x450.webp",
+          "archive_filename": "las-art-wave3-candidates-part-1.zip",
+          "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+          "sha256": "bccf959afdbb5db0b9990bf063e0f7900845e23f036cc4f9a7e376eb807b8e8d",
+          "bytes": 23150,
+          "width": 600,
+          "height": 450,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "PR attachment archives only; not repository source",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_filename": "las-art-wave3-candidates-part-1.zip",
+        "archive_relative_path_base": "Extracted named archive root",
+        "input_anchors": "Prior accepted anchors are not duplicated. Candidate-1 refinement inputs are included in the same ZIP part as their candidate-2 output."
+      },
+      "justification": "Three equal standing ivory frames now restore the graphite tabletop vignette family while preserving the explorer front/side/rear order and ample quiet lower space.",
+      "retained_caveats": [
+        "Candidate 2 resolves the flat-panel issue and is recommended over candidate 1.",
+        "Dark-teal bob, silver streak and olive jacket remain recognizable at 600x450. The front eyebrow scar is a fine native-image detail, not reliably legible at thumbnail size.",
+        "The character views remain bust/upper-torso studies rather than a clearly visible waist-up study. The front is slightly turned, and the profile is mildly three-quarter. These are illustrative views, not an orthographic consistency test.",
+        "The framing edit regenerated image content; no pixel-perfect preservation claim is made. No labels, ratings or success symbols were observed."
+      ]
+    },
+    {
+      "asset_id": "workflow-upscale",
+      "candidate": 2,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-upscale--1448x1086--candidate-2.json",
+      "receipt_sha256": "72e5654f3eee88ec494f7acc77c0d35411da465fbef0f7dd3c0b81d915cdad18",
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "original": {
+        "relative_path": "inbox/workflow-upscale--1448x1086--candidate-2.png",
+        "archive_filename": "las-art-wave3-candidates-part-3.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "5ee2050366936e441872ccd79ddcea369185df8877d1880c21f705ade17d31b5",
+        "bytes": 1427472,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/workflow-upscale--1448x1086--candidate-2--600x450.webp",
+          "archive_filename": "las-art-wave3-candidates-part-3.zip",
+          "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+          "sha256": "ad14d12ff5cab520e08fd59a68e88a81fba897cfa0eb2fb6ec975bbbec254d8e",
+          "bytes": 9478,
+          "width": 600,
+          "height": 450,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "PR attachment archives only; not repository source",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_filename": "las-art-wave3-candidates-part-3.zip",
+        "archive_relative_path_base": "Extracted named archive root",
+        "input_anchors": "Prior accepted anchors are not duplicated. Candidate-1 refinement inputs are included in the same ZIP part as their candidate-2 output."
+      },
+      "justification": "The two matching geometric arrangements now share neutral lighting. Removing the sparkle eliminates the material quality-win implication while retaining size and guide-line relationships.",
+      "retained_caveats": [
+        "Candidate 2 is recommended over candidate 1. Both frame sizes and their contents remain readable at 600x450.",
+        "The larger frame is simply larger, with no reward badge, stronger spotlight, ratings, labels or controls.",
+        "The lighting edit is a generated revision, not proof that every untargeted source pixel was preserved."
+      ]
+    },
+    {
+      "asset_id": "workflow-voice-3d",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-voice-3d--1448x1086--candidate-1.json",
+      "receipt_sha256": "4b4621df1cad177c291c0cefa7000d01cd3a21738c3ad673a31384c9b4e70173",
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "original": {
+        "relative_path": "inbox/workflow-voice-3d--1448x1086--candidate-1.png",
+        "archive_filename": "las-art-wave3-candidates-part-3.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "c563483fc0144248f7d00a79f80286633e16ba7e60cda41233897838a828f5a0",
+        "bytes": 1555414,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/workflow-voice-3d--1448x1086--candidate-1--600x450.webp",
+          "archive_filename": "las-art-wave3-candidates-part-3.zip",
+          "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+          "sha256": "7463fff75c1d5d60a1182a55ab1b4f9133276b87a7232cb67bb3edd7e46281f9",
+          "bytes": 7688,
+          "width": 600,
+          "height": 450,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "PR attachment archives only; not repository source",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_filename": "las-art-wave3-candidates-part-3.zip",
+        "archive_relative_path_base": "Extracted named archive root",
+        "input_anchors": "Prior accepted anchors are not duplicated. Candidate-1 refinement inputs are included in the same ZIP part as their candidate-2 output."
+      },
+      "justification": "A simple unlabelled waveform card and a faceted pale sphere on a plinth read as two separate tool concepts with balanced visual weight.",
+      "retained_caveats": [
+        "At 600x450 the waveform and polygon facets remain distinct, with clear space between the two objects.",
+        "No connecting controls, play button, shared generation panel, text, human or character was observed.",
+        "The pale geometric study has stylized paper grain consistent with the illustration family, not a material-map or texture-generation claim."
+      ]
+    },
+    {
+      "asset_id": "workflow-workflow",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-workflow--1448x1086--candidate-1.json",
+      "receipt_sha256": "c2d641d4b5b9ec84b1d0bc2b924310cdd78fb059f9fb1d25d1c1bb8b738888c4",
+      "art_review_status": "accepted",
+      "acceptance_basis": "owner-delegated-assistant-art-selection",
+      "original": {
+        "relative_path": "inbox/workflow-workflow--1448x1086--candidate-1.png",
+        "archive_filename": "las-art-wave3-candidates-part-2.zip",
+        "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+        "sha256": "b7d225ae6e5c12068e01cc4fa7d15850d229300edb2f3dc0ec633b5304270b0d",
+        "bytes": 1568375,
+        "width": 1448,
+        "height": 1086,
+        "format": "png",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null,
+        "role": "unaltered generated original"
+      },
+      "review_renditions": [
+        {
+          "relative_path": "review-renditions/workflow-workflow--1448x1086--candidate-1--600x450.webp",
+          "archive_filename": "las-art-wave3-candidates-part-2.zip",
+          "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+          "sha256": "4c1595b469bc2e25fb8b6759e15562c9b13e85a21fdd49e7779682fc3ba24a95",
+          "bytes": 7768,
+          "width": 600,
+          "height": 450,
+          "format": "webp",
+          "alpha": false,
+          "duration_seconds": null,
+          "codec": null,
+          "role": "review-only rendition"
+        }
+      ],
+      "delivery_base": {
+        "binary_storage": "PR attachment archives only; not repository source",
+        "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+        "archive_filename": "las-art-wave3-candidates-part-2.zip",
+        "archive_relative_path_base": "Extracted named archive root",
+        "input_anchors": "Prior accepted anchors are not duplicated. Candidate-1 refinement inputs are included in the same ZIP part as their candidate-2 output."
+      },
+      "justification": "Three simple physical geometric blocks connect through two curved cords. The cyan link is visibly distinct from the neutral link.",
+      "retained_caveats": [
+        "The cord collars are physical object details, not a reproduced ComfyUI node schema. There are no labels, settings panels or UI controls.",
+        "The selected-link metaphor survives at 600x450, with ample quiet lower space.",
+        "A decorative gold sparkle above the middle block is inherited from the style anchor; it is not evidence of a validated or executable graph."
+      ]
+    }
+  ],
+  "unselected": [
+    {
+      "asset_id": "reference-composition",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/reference-composition--1254x1254--candidate-1.json",
+      "original_sha256": "0cac73cd6c36fba2c9e4a36ca702c640d3f8cf29ced6652d69e686514da23819",
+      "art_selection": "not-selected",
+      "preservation": "Original and receipt retained unchanged",
+      "selected_candidate_for_asset": 2
+    },
+    {
+      "asset_id": "reference-composition",
+      "candidate": 3,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/reference-composition--1254x1254--candidate-3.json",
+      "original_sha256": "0c1f22ca98e46a07bc13eaa1d062b9d46b85fdfe8d6f46f69d9dd3b5e4fcb249",
+      "art_selection": "not-selected",
+      "preservation": "Original and receipt retained unchanged",
+      "selected_candidate_for_asset": 2
+    },
+    {
+      "asset_id": "reference-identity",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/reference-identity--1024x1536--candidate-1.json",
+      "original_sha256": "78eb4db22ef497eb4388d2b5c2aad4425e31983a5da268c79a4f867383d308a4",
+      "art_selection": "not-selected",
+      "preservation": "Original and receipt retained unchanged",
+      "selected_candidate_for_asset": 3
+    },
+    {
+      "asset_id": "reference-identity",
+      "candidate": 2,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/reference-identity--1024x1536--candidate-2.json",
+      "original_sha256": "4e0b04cb4d1d295852b6b1146e2261adce2d8b694e2d051a9e9d1c2d6e922986",
+      "art_selection": "not-selected",
+      "preservation": "Original and receipt retained unchanged",
+      "selected_candidate_for_asset": 3
+    },
+    {
+      "asset_id": "reference-lighting",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/reference-lighting--1254x1254--candidate-1.json",
+      "original_sha256": "678b05f2e06884872fbf560d2141bb069ea4d2581471ec99686e4df6f488d95a",
+      "art_selection": "not-selected",
+      "preservation": "Original and receipt retained unchanged",
+      "selected_candidate_for_asset": 2
+    },
+    {
+      "asset_id": "workflow-create",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-create--1448x1086--candidate-1.json",
+      "original_sha256": "72c198b81e5e79cd29ca2606420b8750ab8e4c1c2c7d9cc20f3ecc04cd5090ca",
+      "art_selection": "not-selected",
+      "preservation": "Original and receipt retained unchanged",
+      "selected_candidate_for_asset": 3
+    },
+    {
+      "asset_id": "workflow-create",
+      "candidate": 2,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-create--1448x1086--candidate-2.json",
+      "original_sha256": "acb9740ffa7214fa46515efdd6c8fdda834aa31c03dc760ce6dc6b9fe7c79af7",
+      "art_selection": "not-selected",
+      "preservation": "Original and receipt retained unchanged",
+      "selected_candidate_for_asset": 3
+    },
+    {
+      "asset_id": "workflow-recover",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-recover--1448x1086--candidate-1.json",
+      "original_sha256": "3db913c0ffb6e1882be954de3d01d57d462a63abcaa76ee5590ed2acbff5ba43",
+      "art_selection": "not-selected",
+      "preservation": "Original and receipt retained unchanged",
+      "selected_candidate_for_asset": 2
+    },
+    {
+      "asset_id": "workflow-repair",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-repair--1448x1086--candidate-1.json",
+      "original_sha256": "dc51d918ffef64e4c10a737373554aad865142a38cfe7ec24ad3c90c42b0a635",
+      "art_selection": "not-selected",
+      "preservation": "Original and receipt retained unchanged",
+      "selected_candidate_for_asset": 2
+    },
+    {
+      "asset_id": "workflow-sheet",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-sheet--1448x1086--candidate-1.json",
+      "original_sha256": "f33143b19f8a775c50a921c53ff1f0bc0b7c1f75fe845465f2edead02f74fd69",
+      "art_selection": "not-selected",
+      "preservation": "Original and receipt retained unchanged",
+      "selected_candidate_for_asset": 2
+    },
+    {
+      "asset_id": "workflow-upscale",
+      "candidate": 1,
+      "receipt_path": "docs/adaptive-studio/assets/receipts/workflow-upscale--1448x1086--candidate-1.json",
+      "original_sha256": "756e0fde3661c53c1331cb7ee5b141741680685b62e7a2fa536aa4dad6ec68da",
+      "art_selection": "not-selected",
+      "preservation": "Original and receipt retained unchanged",
+      "selected_candidate_for_asset": 2
+    }
+  ],
+  "gates": {
+    "art": "23-selected-and-accepted; 2-direct-owner-anchors-plus-21-owner-delegated-decisions",
+    "source_license": "Unchanged from each receipt; no additional clearance is asserted",
+    "rendition": "Unchanged from each receipt; review renditions are not runtime assets",
+    "runtime": "not-qualified",
+    "release": "not-selected"
+  },
+  "boundaries": [
+    "Selection is specific to the candidate hashes listed here, not every output sharing an asset ID.",
+    "All generated originals, superseded candidates, prompts and attachment archives are preserved. Frozen archive receipts may retain the earlier review state; repository receipts and this manifest carry the later art decision.",
+    "The original direct-owner acceptance entries for workflow-create 3 and reference-identity 3 are retained unchanged.",
+    "Existing accepted Night Shift artwork is outside this selection and remains unchanged.",
+    "Future generated samples need independent visual QA and a separate explicit selection by the lead assistant acting within the owner delegation; no automatic acceptance transfers from these anchors.",
+    "No merge, deployment, runtime integration, licensing decision or release selection is authorized by this art record."
+  ]
+}

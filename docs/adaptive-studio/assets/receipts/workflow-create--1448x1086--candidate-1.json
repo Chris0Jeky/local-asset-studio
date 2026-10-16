@@ -1,0 +1,89 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "workflow-create",
+  "brief_revision": "production/20261001-cloud-art/generation-prompts-complete.json#workflow_create sha256:c94569bde50136f7307f342693ae78fa3d660e70f3e2929f1bb761a787f64846",
+  "production": {
+    "method": "generate",
+    "provider": "OpenAI image_gen.imagegen (dot-run)",
+    "tool_action": "image_gen.imagegen: generate",
+    "reported_model": null,
+    "output_id": "exec-f3659316-e5fc-4959-99df-41eef1b2b4ee",
+    "produced_at": null,
+    "prompt_record": {
+      "relative_path": "production/20261001-cloud-art/generation-prompts-complete.json",
+      "json_key": "workflow_create",
+      "sha256": "c94569bde50136f7307f342693ae78fa3d660e70f3e2929f1bb761a787f64846",
+      "hash_scope": "Exact prompt string encoded as UTF-8, no added newline",
+      "text": "Create an original, quiet conceptual illustration for a creative software's \"start from a written idea\" step.\n\nSubject: a single blank picture frame standing upright on a plain work surface, receiving a small, soft pool of warm light from above, as if an idea is about to become an image. The frame is empty: no picture, no scribbles, no example artwork inside it.\n\nStyle: clean hand-drawn line work with soft flat colour fills and a faint paper grain, like a calm editorial spot illustration. Uniform medium line weight. Seen from a slightly raised, front three-quarter viewpoint. Simple geometric shapes: frame, folio sheet, a small four-pointed star as the only decorative motif.\n\nPalette: graphite and warm ivory for most surfaces; small accents of desaturated rose and muted cyan; the light is a small warm amber glow. Background is a plain, very light warm grey.\n\nComposition: aspect ratio 4:3 landscape (if only 3:2 is offered, use 3:2 and keep the outer left and right edges empty so it can be cropped to 4:3). Keep the subject compact and centred slightly above the middle. Leave the bottom third of the image calm and nearly empty, because a caption will sit there.\n\nDo not include: any text, letters, numbers, labels, logos, watermarks, user-interface elements, buttons, cursors, screens, people, hands or characters.",
+      "relative_path_base": "docs/adaptive-studio/assets (repository asset root)"
+    },
+    "input_anchors": [],
+    "reported_seed": null,
+    "output_id_kind": "local dot tool output handle; not a provider job ID",
+    "provider_job_id": null
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "not-reviewed"
+  },
+  "files": [
+    {
+      "relative_path": "inbox/workflow-create--1448x1086--candidate-1.png",
+      "sha256": "72c198b81e5e79cd29ca2606420b8750ab8e4c1c2c7d9cc20f3ecc04cd5090ca",
+      "bytes": 1993771,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    }
+  ],
+  "transformations": [],
+  "art_review": {
+    "status": "not-reviewed",
+    "reviewer": null,
+    "notes": null
+  },
+  "rendition_review": {
+    "status": "not-reviewed",
+    "checks": []
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "produced_at is unknown: the file time records local save/copy, not generation time.",
+    "reported_model and reported_seed are unknown: image_gen.imagegen did not expose a verified model build or seed.",
+    "source terms evidence has not been independently captured; no license determination is made here.",
+    "No provider job ID, source item/page, creator credit or retrieval timestamp was reported for these locally saved generated candidates.",
+    "duration_seconds and codec are null because these files are still-image PNG/WebP renditions; format identifies their container."
+  ],
+  "intake": {
+    "received_at": "2026-10-02T00:03:11Z",
+    "candidate": 1
+  },
+  "delivery_base": {
+    "binary_storage": "PR delivery attachments; binary files are not committed in this text-only publication",
+    "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+    "archive_relative_path_base": "Root after extracting all three las-art-candidates-part-XX-of-03.zip files together",
+    "path_rules": {
+      "inbox/": "Unaltered original in delivery archive; may also be placed in the ignored repository assets/inbox directory",
+      "review-renditions/": "Attachment-only binary path relative to extracted delivery archive root, not the repository assets root",
+      "transformations.output_relative_path": "Same attachment-only delivery base as review-renditions/"
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "master": {
+    "whole_image_8bit_luma_mean": 137.068,
+    "heading_region_8bit_luma_mean": 133.356,
+    "heading_region_8bit_luma_stddev": 13.33,
+    "heading_region_8bit_luma_p05_p95": [
+      115.0,
+      158.0
+    ]
+  },
+  "quiet": {
+    "whole_image_8bit_luma_mean": 149.883,
+    "heading_region_8bit_luma_mean": 151.732,
+    "heading_region_8bit_luma_stddev": 11.407,
+    "heading_region_8bit_luma_p05_p95": [
+      135.0,
+      170.0
+    ]
+  },
+  "method": "Pillow RGB-to-L 8-bit grayscale summary of unchanged originals and conservative heading rectangle; not physical luminance, WCAG contrast, or real HTML readability.",
+  "heading_region_normalized_xyxy": [
+    0.08,
+    0.18,
+    0.5,
+    0.64
+  ]
+}

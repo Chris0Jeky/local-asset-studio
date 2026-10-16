@@ -1,0 +1,204 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "sci-fi-noir-card",
+  "brief_revision": "4ef2d9742084c7f506ef0df413021c129fd76dbe",
+  "production": {
+    "method": "derive",
+    "provider": "local deterministic image processing",
+    "tool_action": "Pillow crop/resize/WebP encode",
+    "execution_surface": "dot cloud workspace",
+    "reported_model": null,
+    "seed": null,
+    "output_id": null,
+    "produced_at": null,
+    "prompt_record": null,
+    "input_anchors": [
+      {
+        "asset_id": "sci-fi-noir-master",
+        "relative_path": "originals/sci-fi-noir-master--candidate-1.png",
+        "sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+        "role": "exact deterministic source"
+      }
+    ],
+    "orchestration_handle": null,
+    "orchestration_handle_is_provider_job_id": false
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "provenance-recorded; source/license clearance not asserted"
+  },
+  "files": [
+    {
+      "relative_path": "masters/sci-fi-noir-card--941x941--native-square-crop.png",
+      "sha256": "d276a1c37cc4ce3a02ff65b87420b59c6ffd6759a110b2b69383ab3022e4f953",
+      "bytes": 1375938,
+      "width": 941,
+      "height": 941,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": null,
+      "budget_pass": null
+    },
+    {
+      "relative_path": "renditions/sci-fi-noir-card--512x512--picker.webp",
+      "sha256": "b43fae7e5d54dfa5bbbd2e8fc3f5b7b836fc60f6fce7a352d4ed7a3f8255028d",
+      "bytes": 60848,
+      "width": 512,
+      "height": 512,
+      "format": "WEBP",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": 81920,
+      "budget_pass": true
+    },
+    {
+      "relative_path": "renditions/sci-fi-noir-card--256x256--picker.webp",
+      "sha256": "2ff8d12d8084f46051cc8900d91c2bafc6bba5d0b2c32ac8601944e83baa9e9c",
+      "bytes": 16832,
+      "width": 256,
+      "height": 256,
+      "format": "WEBP",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": 30720,
+      "budget_pass": true
+    }
+  ],
+  "transformations": [
+    {
+      "asset_id": "sci-fi-noir-card",
+      "input_path": "originals/sci-fi-noir-master--candidate-1.png",
+      "input_sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+      "output_path": "masters/sci-fi-noir-card--941x941--native-square-crop.png",
+      "output_sha256": "d276a1c37cc4ce3a02ff65b87420b59c6ffd6759a110b2b69383ab3022e4f953",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        731,
+        0,
+        1672,
+        941
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        941,
+        941
+      ],
+      "operation": "integer crop without resampling",
+      "resample": null,
+      "encoding": {
+        "format": "PNG",
+        "lossless": true,
+        "optimize": true,
+        "quality": null
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "sci-fi-noir-card",
+      "input_path": "originals/sci-fi-noir-master--candidate-1.png",
+      "input_sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+      "output_path": "renditions/sci-fi-noir-card--512x512--picker.webp",
+      "output_sha256": "b43fae7e5d54dfa5bbbd2e8fc3f5b7b836fc60f6fce7a352d4ed7a3f8255028d",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        731,
+        0,
+        1672,
+        941
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        512,
+        512
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "sci-fi-noir-card",
+      "input_path": "originals/sci-fi-noir-master--candidate-1.png",
+      "input_sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+      "output_path": "renditions/sci-fi-noir-card--256x256--picker.webp",
+      "output_sha256": "2ff8d12d8084f46051cc8900d91c2bafc6bba5d0b2c32ac8601944e83baa9e9c",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        731,
+        0,
+        1672,
+        941
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        256,
+        256
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    }
+  ],
+  "art_review": {
+    "status": "accepted-by-delegated-assistant",
+    "reviewer": "lead assistant",
+    "scope": "source art only",
+    "notes": "Selected after visual review of the full six-ID contact sheet on 2026-10-02. Weathered steel texture and horizontal seam prevent an unqualified full-left60% text-safe claim. Keep crop, heading-zone, registration and native-size caveats."
+  },
+  "rendition_review": {
+    "status": "encoded-size-and-budget-checks-passed-with-target-shortfalls",
+    "checks": [
+      "Every listed image decodes at its recorded dimensions.",
+      "All 11 encoded variants meet individual profile budgets.",
+      "Crops preserve aspect ratio; no upscaling or nonuniform scaling.",
+      "Native source and large hero/card-master targets remain unmet as recorded."
+    ]
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "Provider model/build, seed, provider output/job ID and generation timestamp were not exposed.",
+    "Source terms/license clearance is not asserted.",
+    "No actual slot, text contrast, accessibility, memory/loading, active inference or crossfade test was performed."
+  ]
+}

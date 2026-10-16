@@ -1,8 +1,10 @@
 # Asset production plan
 
+**Art-selection update, 2 October 2026:** [Twenty-three workflow/reference choices](production/20261002-art-selection/README.md) are recorded after visual review. Two anchors retain direct-owner acceptance; the other 21 choices are accepted under the owner's task-scoped delegation to the assistant. These selections no longer await another owner art-choice round. Future generated samples require independent QA and a separate explicit selection by the lead assistant within the delegation. Source/license, runtime and release gates remain separate, and existing accepted Night Shift artwork is preserved.
+
 Written 27 September 2026, after the owner lifted the artwork deferral (`adaptive-pilot-world` in `HUMAN_TODO.md`). This plan
 routes all 154 catalogue requests to one production route each, orders them into small waves and names the first one. It
-adds no art. Art acceptance stays the owner's call at every stage; a route or a receipt is never acceptance.
+adds no art. Art acceptance requires a direct owner decision or a specifically delegated art decision; a route, generation result or provenance receipt alone is never acceptance. The current 23 selections use the dated scope above.
 
 **Assumption:** the pilot world is Retro Anime / Night Shift with a same-camera Quiet Morning still, as the kit proposes.
 Reason: the owner lifted the deferral without naming a world, and every existing pilot document assumes this one.
@@ -197,5 +199,4 @@ ChatGPT results land in `docs/adaptive-studio/assets/inbox/` (gitignored) and `p
 receipts --provider chatgpt` writes one tracked receipt per file under `receipts/` (see the prompt pack); any other
 producer's files need their own `--provider` value, and without one the provider is recorded as unknown. Downloads are listed in
 `acquired/MANIFEST.json`; `intake.py verify` checks them and `intake.py fetch` restores them on another clone. Receipt
-status stays `candidate-produced` until the owner records art review; source review, rendition checks and runtime
-qualification remain separate stages (DELIVERY-SPEC).
+status records `candidate-produced`, while the separate `art_review` records direct-owner or explicitly delegated acceptance. Source review, rendition checks, runtime qualification and release selection remain separate stages (DELIVERY-SPEC).

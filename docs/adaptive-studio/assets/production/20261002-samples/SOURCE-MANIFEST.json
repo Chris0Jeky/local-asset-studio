@@ -1,0 +1,122 @@
+[
+  {
+    "source_key": "portrait",
+    "copied_from_local_path": "las-wave2/anchors/reference-identity--1024x1536--candidate-3.png",
+    "file": {
+      "relative_path": "inputs/reference-identity--1024x1536--candidate-3.png",
+      "sha256": "ea29ef505b512ccb1148893a2bdf27b30769b43b8c741cc783e1e0491e912a9b",
+      "bytes": 1889270,
+      "width": 1024,
+      "height": 1536,
+      "format": "png",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    "method": "Unaltered byte-for-byte copy of prior selected/generated reference",
+    "source_terms_review": "not-reviewed",
+    "prior_receipt_relative_path": "receipts/reference-identity--1024x1536--candidate-3.json",
+    "prior_receipt_scope": "Prior reference production and selection; this pack does not change its gates"
+  },
+  {
+    "source_key": "pose",
+    "copied_from_local_path": "las-firstwave-recovered/inbox/reference-pose--1024x1536--candidate-1.png",
+    "file": {
+      "relative_path": "inputs/reference-pose--1024x1536--candidate-1.png",
+      "sha256": "526c988b621534eea50f08ba0666247cbd13a8f45e82d36502c20bf940c5b984",
+      "bytes": 1908246,
+      "width": 1024,
+      "height": 1536,
+      "format": "png",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    "method": "Unaltered byte-for-byte copy of prior selected/generated reference",
+    "source_terms_review": "not-reviewed",
+    "prior_receipt_relative_path": "receipts/reference-pose--1024x1536--candidate-1.json",
+    "prior_receipt_scope": "Prior reference production and selection; this pack does not change its gates"
+  },
+  {
+    "source_key": "light_left",
+    "copied_from_local_path": "las-firstwave-recovered/inbox/reference-lighting--1254x1254--candidate-2.png",
+    "file": {
+      "relative_path": "inputs/reference-lighting--1254x1254--candidate-2.png",
+      "sha256": "65ac03353702d9a4ea968a32baaf1a8bc1a952df08b1386da79442fbddece73f",
+      "bytes": 1805697,
+      "width": 1254,
+      "height": 1254,
+      "format": "png",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    "method": "Unaltered byte-for-byte copy of prior selected/generated reference",
+    "source_terms_review": "not-reviewed",
+    "prior_receipt_relative_path": "receipts/reference-lighting--1254x1254--candidate-2.json",
+    "prior_receipt_scope": "Prior reference production and selection; this pack does not change its gates"
+  },
+  {
+    "source_key": "composition",
+    "copied_from_local_path": "las-firstwave-recovered/inbox/reference-composition--1254x1254--candidate-2.png",
+    "file": {
+      "relative_path": "inputs/reference-composition--1254x1254--candidate-2.png",
+      "sha256": "f790e59c3454f97ab00a65f6170d5ada9236d19c22e35c485a9374d2e073934b",
+      "bytes": 1442857,
+      "width": 1254,
+      "height": 1254,
+      "format": "png",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    "method": "Unaltered byte-for-byte copy of prior selected/generated reference",
+    "source_terms_review": "not-reviewed",
+    "prior_receipt_relative_path": "receipts/reference-composition--1254x1254--candidate-2.json",
+    "prior_receipt_scope": "Prior reference production and selection; this pack does not change its gates"
+  },
+  {
+    "source_key": "outfit_reference",
+    "copied_from_local_path": "las-wave2/originals/reference-outfit--1024x1536--candidate-1.png",
+    "file": {
+      "relative_path": "inputs/reference-outfit--1024x1536--candidate-1.png",
+      "sha256": "bcfd8e797e8d4a1764583d44600b1b046f1d6cd34f02468c4202988955d4955c",
+      "bytes": 1746036,
+      "width": 1024,
+      "height": 1536,
+      "format": "png",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    "method": "Unaltered byte-for-byte copy of prior selected/generated reference",
+    "source_terms_review": "not-reviewed",
+    "prior_receipt_relative_path": "receipts/reference-outfit--1024x1536--candidate-1.json",
+    "prior_receipt_scope": "Prior reference production and selection; this pack does not change its gates"
+  },
+  {
+    "source_key": "background_reference",
+    "copied_from_local_path": "las-firstwave-recovered/inbox/reference-background--1254x1254--candidate-1.png",
+    "file": {
+      "relative_path": "inputs/reference-background--1254x1254--candidate-1.png",
+      "sha256": "d19f39fb462a46324bf32d5ec548bbe20f6e08d6ba262ae2c11bdda5205d95ae",
+      "bytes": 2317765,
+      "width": 1254,
+      "height": 1254,
+      "format": "png",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    "method": "Unaltered byte-for-byte copy of prior selected/generated reference",
+    "source_terms_review": "not-reviewed",
+    "prior_receipt_relative_path": "receipts/reference-background--1254x1254--candidate-1.json",
+    "prior_receipt_scope": "Prior reference production and selection; this pack does not change its gates"
+  }
+]

@@ -1,0 +1,461 @@
+{
+  "schema": "studio.theme-asset.transformations/v1",
+  "prepared_at": "2026-10-02T15:40:40Z",
+  "reference_commit": "4ef2d9742084c7f506ef0df413021c129fd76dbe",
+  "software": {
+    "Pillow": "12.3.0",
+    "WebP_encoder": "1.6.0"
+  },
+  "transformations": [
+    {
+      "asset_id": "sci-fi-noir-master",
+      "input_path": "originals/sci-fi-noir-master--candidate-1.png",
+      "input_sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+      "output_path": "renditions/sci-fi-noir-master--1280x720--preview.webp",
+      "output_sha256": "5309de0cc6b0e1b2022018859f0a1044ef4bbac4262c3622f40ed41b86ed0491",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1280,
+        720
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "sci-fi-noir-master",
+      "input_path": "originals/sci-fi-noir-master--candidate-1.png",
+      "input_sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+      "output_path": "renditions/sci-fi-noir-master--960x540--preview.webp",
+      "output_sha256": "f6d1610acc1352c3121147e860eab547f419829aeef5b9bc1c59a888e22bd723",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        960,
+        540
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "sci-fi-noir-quiet",
+      "input_path": "originals/sci-fi-noir-quiet--candidate-1.png",
+      "input_sha256": "3f6321021ec780f55242cc2589e2b2b6b103e97bb5c9af792067eddfc0bb6403",
+      "output_path": "renditions/sci-fi-noir-quiet--1280x720--preview.webp",
+      "output_sha256": "51ed517507211f87fcb52ea01abe3b9dca60f451fdd366e672025285cf30355a",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1280,
+        720
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "sci-fi-noir-quiet",
+      "input_path": "originals/sci-fi-noir-quiet--candidate-1.png",
+      "input_sha256": "3f6321021ec780f55242cc2589e2b2b6b103e97bb5c9af792067eddfc0bb6403",
+      "output_path": "renditions/sci-fi-noir-quiet--960x540--preview.webp",
+      "output_sha256": "99773094f002c8dd88301f985e9a8a7e0e515bce6db987f15dad2711eb8568d9",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        960,
+        540
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "sci-fi-noir-hero",
+      "input_path": "originals/sci-fi-noir-master--candidate-1.png",
+      "input_sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+      "output_path": "masters/sci-fi-noir-hero--1668x695--native-wide-crop.png",
+      "output_sha256": "4ce739768d11d0c0e09e4c9eaf0545be119865afee1c72ad846b2810dfa04ba3",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        2,
+        55,
+        1670,
+        750
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1668,
+        695
+      ],
+      "operation": "integer crop without resampling",
+      "resample": null,
+      "encoding": {
+        "format": "PNG",
+        "lossless": true,
+        "optimize": true,
+        "quality": null
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "sci-fi-noir-hero",
+      "input_path": "originals/sci-fi-noir-master--candidate-1.png",
+      "input_sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+      "output_path": "renditions/sci-fi-noir-hero--960x400--wide.webp",
+      "output_sha256": "d872eccaab34da0a12b1178c8602575ddaed553cd36a6812dcdf8488106982d1",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        2,
+        55,
+        1670,
+        750
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        960,
+        400
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "sci-fi-noir-wall",
+      "input_path": "originals/sci-fi-noir-wall--candidate-1.png",
+      "input_sha256": "6984c250a4330120989cf378fbf6cab57afdf4b3b55d1654ba70dea30583a4ad",
+      "output_path": "renditions/sci-fi-noir-wall--1200x800--panel.webp",
+      "output_sha256": "988b693651071832df39c140c7e140b3bbd218f166bb225128546aef22256d97",
+      "source_canvas": [
+        1536,
+        1024
+      ],
+      "crop_box_xyxy": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1200,
+        800
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 85,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "sci-fi-noir-wall",
+      "input_path": "originals/sci-fi-noir-wall--candidate-1.png",
+      "input_sha256": "6984c250a4330120989cf378fbf6cab57afdf4b3b55d1654ba70dea30583a4ad",
+      "output_path": "renditions/sci-fi-noir-wall--600x400--panel.webp",
+      "output_sha256": "8e4d3815bb6b8c7f7cec5807127fa988168894fda1d92e4e212998b369f50039",
+      "source_canvas": [
+        1536,
+        1024
+      ],
+      "crop_box_xyxy": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        600,
+        400
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "sci-fi-noir-poster",
+      "input_path": "originals/sci-fi-noir-master--candidate-1.png",
+      "input_sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+      "output_path": "renditions/sci-fi-noir-poster--1280x720--fallback.webp",
+      "output_sha256": "5309de0cc6b0e1b2022018859f0a1044ef4bbac4262c3622f40ed41b86ed0491",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1280,
+        720
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "sci-fi-noir-poster",
+      "input_path": "originals/sci-fi-noir-master--candidate-1.png",
+      "input_sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+      "output_path": "renditions/sci-fi-noir-poster--640x360--fallback.webp",
+      "output_sha256": "2c1d989dda0bcedcf4d88ebc20d547a06cb02ea72d4d000ff60709bce1664bb9",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        640,
+        360
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "sci-fi-noir-card",
+      "input_path": "originals/sci-fi-noir-master--candidate-1.png",
+      "input_sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+      "output_path": "masters/sci-fi-noir-card--941x941--native-square-crop.png",
+      "output_sha256": "d276a1c37cc4ce3a02ff65b87420b59c6ffd6759a110b2b69383ab3022e4f953",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        731,
+        0,
+        1672,
+        941
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        941,
+        941
+      ],
+      "operation": "integer crop without resampling",
+      "resample": null,
+      "encoding": {
+        "format": "PNG",
+        "lossless": true,
+        "optimize": true,
+        "quality": null
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "sci-fi-noir-card",
+      "input_path": "originals/sci-fi-noir-master--candidate-1.png",
+      "input_sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+      "output_path": "renditions/sci-fi-noir-card--512x512--picker.webp",
+      "output_sha256": "b43fae7e5d54dfa5bbbd2e8fc3f5b7b836fc60f6fce7a352d4ed7a3f8255028d",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        731,
+        0,
+        1672,
+        941
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        512,
+        512
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "sci-fi-noir-card",
+      "input_path": "originals/sci-fi-noir-master--candidate-1.png",
+      "input_sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+      "output_path": "renditions/sci-fi-noir-card--256x256--picker.webp",
+      "output_sha256": "2ff8d12d8084f46051cc8900d91c2bafc6bba5d0b2c32ac8601944e83baa9e9c",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        731,
+        0,
+        1672,
+        941
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        256,
+        256
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    }
+  ],
+  "unfulfilled_targets": [
+    {
+      "asset_id": "sci-fi-noir-master",
+      "requested": "3840x2160",
+      "actual": "1672x941",
+      "reason": "Actual native provider dimensions; no upscaling."
+    },
+    {
+      "asset_id": "sci-fi-noir-quiet",
+      "requested": "3840x2160",
+      "actual": "1672x941",
+      "reason": "Actual native provider dimensions; no upscaling."
+    },
+    {
+      "asset_id": "sci-fi-noir-wall",
+      "requested": "2400x1600",
+      "actual": "1536x1024",
+      "reason": "Actual native provider dimensions; no upscaling."
+    },
+    {
+      "asset_id": "sci-fi-noir-hero",
+      "requested": "3840x1600 lossless and 1920x800 encoded",
+      "actual": "1668x695 lossless crop and 960x400 encoded",
+      "reason": "Actual native provider dimensions; no upscaling."
+    },
+    {
+      "asset_id": "sci-fi-noir-card",
+      "requested": "1024x1024 master",
+      "actual": "941x941 lossless crop; 512/256 targets fulfilled",
+      "reason": "Actual native provider dimensions; no upscaling."
+    }
+  ],
+  "scope": "Deterministic local source-art derivatives; no runtime integration.",
+  "source_color": "Original RGB values retained; no ICC profile reported by PNGs, and no color conversion applied."
+}

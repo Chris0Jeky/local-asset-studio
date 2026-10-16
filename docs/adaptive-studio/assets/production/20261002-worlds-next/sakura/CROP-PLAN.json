@@ -1,0 +1,79 @@
+{
+  "coordinate_convention": "Normalized source-canvas regions; crops use original pixel edges, right/bottom exclusive.",
+  "source_dimensions": [
+    1672,
+    941
+  ],
+  "focal_point": {
+    "x": 0.78,
+    "y": 0.65
+  },
+  "scene_and_poster_crop": [
+    0,
+    0.25,
+    1672,
+    940.75
+  ],
+  "scene_crop_note": "Remove 0.25 source pixel from each vertical edge for exact 16:9, then one isotropic LANCZOS downsample; original untouched.",
+  "hero_crop": [
+    2,
+    100,
+    1670,
+    795
+  ],
+  "hero_focal_point": [
+    0.7806714628297362,
+    0.7361870503597122
+  ],
+  "card_crop": [
+    731,
+    0,
+    1672,
+    941
+  ],
+  "heading_zone": {
+    "box_xyxy": [
+      0.16,
+      0.13,
+      0.49,
+      0.48
+    ],
+    "status": "Conservative visual proposal; contrast, HTML controls and actual slots untested."
+  },
+  "wall_control_zone": {
+    "box_xyxy": [
+      0.12,
+      0.1,
+      0.79,
+      0.82
+    ],
+    "status": "Conservative visual proposal; central texture/seams remain."
+  },
+  "portrait_plan": {
+    "status": "Plan only; no portrait asset shipped or tested.",
+    "art_only_crop_3_by_4_xyxy": [
+      936,
+      0,
+      1641.75,
+      941
+    ],
+    "native_extent": [
+      705.75,
+      941
+    ],
+    "proposed_small_output": [
+      600,
+      800
+    ],
+    "composition": "Keeps pen cup, blank paper, chair and courtyard/blossoms, while deliberately losing most quiet wall and part of the desktop.",
+    "heading": "Place actual heading above the artwork on a solid theme surface; the art-only crop has no left heading zone.",
+    "390x844_note": "Use a bounded artwork region, not a full viewport cover. Actual slot needs testing."
+  },
+  "quiet_note": "Subtle brighter daylight edit with the same main furniture and architecture. Fine texture and reflected light differ; no pixel-identity or runtime crossfade claim.",
+  "caveats": [
+    "The conservative heading proposal spans 33% of source width, not the requested 60%; left blossoms, texture and right vase/desk intrude beyond it.",
+    "The wall has visible tactile plaster texture and daylight falloff; real controls may require a solid or translucent surface.",
+    "Full 12% overscan is not met: blossoms, right desktop and foreground furniture are intentionally cropped.",
+    "Any CSS scrim or solid heading surface is a recommendation only, not tested contrast."
+  ]
+}

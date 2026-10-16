@@ -1,0 +1,180 @@
+{
+  "sample-character-canon": {
+    "method": "reference-conditioned generation",
+    "provider": "OpenAI image_gen.imagegen (dot-run)",
+    "tool_action": "image_gen.imagegen",
+    "reported_model": null,
+    "reported_seed": null,
+    "provider_job_id": null,
+    "output_id": "exec-19ec7c8d-0f12-4b90-a2b9-7d3f25f3aada",
+    "output_id_kind": "Local dot tool output handle; not a provider job ID",
+    "produced_at": null,
+    "prompt_record": {
+      "relative_path": "production/20261002-samples/generation-prompts.json",
+      "relative_path_base": "docs/adaptive-studio/assets (repository asset root)",
+      "json_key": "sample_character_canon",
+      "text": "Create a full-body character-canon source asset with a genuine transparent background. Image1 is the accepted original adult explorer identity; image2 is her selected outfit on a dress form. Draw that SAME woman, clearly in her early thirties, wearing that olive field jacket with high collar over a dark tank top, practical brown belt/pouches, sturdy trousers, lace-up boots and canvas shoulder satchel. Keep her short asymmetric dark-teal bob, one silver streak at HER LEFT temple, amber eyes and small scar through HER LEFT eyebrow.\nNeutral relaxed standing pose facing the viewer in slight three-quarter turn; arms relaxed slightly away from body so both hands and the outer silhouette are legible; adult natural proportions. Full head-to-toe, feet and hair entirely inside a 2:3 portrait canvas with margins. Clean contemporary anime drawing, precise hands and boots, painterly soft shading, soft even frontal light. Character only, isolated alpha; no floor, shadow puddle, border, stand, mannequin, text, lettering, watermark, logo, UI or extra person. This is an original illustrative input asset, not a demonstration of a local model.",
+      "sha256": "b8a9298a12293d2cf19b335b7942fc2dff18e65d0ade5f10b3ccc70ecae95534",
+      "hash_scope": "Exact prompt string encoded as UTF-8, no added newline"
+    },
+    "input_anchors": [
+      {
+        "asset_role": "identity",
+        "relative_path": "inputs/reference-identity--1024x1536--candidate-3.png",
+        "sha256": "ea29ef505b512ccb1148893a2bdf27b30769b43b8c741cc783e1e0491e912a9b",
+        "bytes": 1889270,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "asset_role": "clothing_reference",
+        "relative_path": "inputs/reference-outfit--1024x1536--candidate-1.png",
+        "sha256": "bcfd8e797e8d4a1764583d44600b1b046f1d6cd34f02468c4202988955d4955c",
+        "bytes": 1746036,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      }
+    ],
+    "input_evidence": {
+      "status": "confirmed",
+      "evidence": "Root confirmed these exact source files were supplied to all four generation calls in the 2026-10-02 sample-preparation conversation. This records source-input identity only, not source/license clearance."
+    }
+  },
+  "sample-outfit-study": {
+    "method": "reference-conditioned edit",
+    "provider": "OpenAI image_gen.imagegen (dot-run)",
+    "tool_action": "image_gen.imagegen",
+    "reported_model": null,
+    "reported_seed": null,
+    "provider_job_id": null,
+    "output_id": "exec-3ec9b029-9271-4439-b8af-51803f4702a4",
+    "output_id_kind": "Local dot tool output handle; not a provider job ID",
+    "produced_at": null,
+    "prompt_record": {
+      "relative_path": "production/20261002-samples/generation-prompts.json",
+      "relative_path_base": "docs/adaptive-studio/assets (repository asset root)",
+      "json_key": "sample_outfit_study",
+      "text": "Edit only the clothing of the original adult explorer in image1, preserving her exact identity, adult proportions, short dark-teal asymmetric bob, silver streak and eyebrow scar on her left, amber eyes, pose, hand positions, full-body framing and clean anime illustration style. Create a clearly different second practical outfit: tidy slate-blue cropped work jacket over a high-neck cream knit top, straight charcoal trousers, simple low brown ankle boots, and a small dark crossbody utility bag. Original unbranded clothes, no lettering. Keep her fully clothed with a professional everyday silhouette.\nKeep the genuine transparent background, complete head and feet inside the canvas, soft even light. Do not change face, hair, age, body pose or hands. No environmental scene, floor shadow, text, logos, watermark or UI. This is an illustrative wardrobe comparison source, not measured model capability.",
+      "sha256": "7e373719682a8864b10d877f75a7465a0ed18dcf5843b2fe234288027c05c827",
+      "hash_scope": "Exact prompt string encoded as UTF-8, no added newline"
+    },
+    "input_anchors": [
+      {
+        "asset_role": "edit_source",
+        "relative_path": "originals/sample-character-canon--1024x1536--candidate-1.png",
+        "sha256": "c1c96a6517fc0e1b185b2ed4e77a7a39891e247e8deb26dafecc8e8e954a3172",
+        "bytes": 1673341,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "mode": "RGBA",
+        "alpha": true,
+        "duration_seconds": null,
+        "codec": null
+      }
+    ],
+    "input_evidence": {
+      "status": "confirmed",
+      "evidence": "Root confirmed these exact source files were supplied to all four generation calls in the 2026-10-02 sample-preparation conversation. This records source-input identity only, not source/license clearance."
+    }
+  },
+  "sample-lighting-pair": {
+    "method": "reference-conditioned edit",
+    "provider": "OpenAI image_gen.imagegen (dot-run)",
+    "tool_action": "image_gen.imagegen",
+    "reported_model": null,
+    "reported_seed": null,
+    "provider_job_id": null,
+    "output_id": "exec-92a2ee59-2e91-4b1e-b3fe-681d548326f4",
+    "output_id_kind": "Local dot tool output handle; not a provider job ID",
+    "produced_at": null,
+    "prompt_record": {
+      "relative_path": "production/20261002-samples/generation-prompts.json",
+      "relative_path_base": "docs/adaptive-studio/assets (repository asset root)",
+      "json_key": "sample_lighting_pair",
+      "text": "This is the selected neutral plaster study for an illustrative lighting pair. Change ONLY the light direction: illuminate the same head and plinth with a small hard light from the upper RIGHT, about45degrees to the side and above. The lit planes and crisp cast shadow must change consistently, with the cast shadow falling to the LEFT. Preserve the exact generic original plaster head, face, pose, camera, framing, plinth, grey wall, material and monochrome palette. Do not mirror or rotate the head, change facial geometry, add fill/rim light, or move objects. No text, labels, watermark or UI. Output same square composition.",
+      "sha256": "284155d7484332f92ddd970fa09b57ffa797a480f239108e294bf14346c40bb9",
+      "hash_scope": "Exact prompt string encoded as UTF-8, no added newline"
+    },
+    "input_anchors": [
+      {
+        "asset_role": "edit_source",
+        "relative_path": "inputs/reference-lighting--1254x1254--candidate-2.png",
+        "sha256": "65ac03353702d9a4ea968a32baaf1a8bc1a952df08b1386da79442fbddece73f",
+        "bytes": 1805697,
+        "width": 1254,
+        "height": 1254,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      }
+    ],
+    "input_evidence": {
+      "status": "confirmed",
+      "evidence": "Root confirmed these exact source files were supplied to all four generation calls in the 2026-10-02 sample-preparation conversation. This records source-input identity only, not source/license clearance."
+    }
+  },
+  "sample-sequence-strip": {
+    "method": "reference-conditioned generation",
+    "provider": "OpenAI image_gen.imagegen (dot-run)",
+    "tool_action": "image_gen.imagegen",
+    "reported_model": null,
+    "reported_seed": null,
+    "provider_job_id": null,
+    "output_id": "exec-1a36f0e7-7e8e-48ec-995f-09b312fe912e",
+    "output_id_kind": "Local dot tool output handle; not a provider job ID",
+    "produced_at": null,
+    "prompt_record": {
+      "relative_path": "production/20261002-samples/generation-prompts.json",
+      "relative_path_base": "docs/adaptive-studio/assets (repository asset root)",
+      "json_key": "sample_sequence_strip",
+      "text": "Create an original four-panel storyboard source sheet, a precise 2 by 2 grid of equal square panels separated by narrow plain white gutters. Target2048x2048square. Image1 is the selected adult explorer canon in her olive field outfit; image2 is the selected empty railway platform environment. Preserve the same original adult woman, dark teal short asymmetric bob, one silver streak at her left temple and left-eyebrow scar, olive field jacket, dark tank top, cargo trousers, brown boots and canvas satchel. Match the clean anime/painterly style and dusk blue-violet lighting with warm canopy lamps.\nAll four panels use the SAME fixed eye-level camera, SAME stationary background geometry (canopy, columns, blank sign, platform and distant hills), SAME scale and lighting, with the explorer full body in the left foreground on the platform safely behind the edge.\nRead left-to-right then down:\nTop-left: relaxed standing, looking ahead.\nTop-right: she lightly adjusts the shoulder satchel strap with one hand.\nBottom-left: she glances toward the distant track while keeping her feet in place.\nBottom-right: she returns to a calm forward gaze, hands relaxed.\nVery restrained movement, all feet and head inside every panel, adult natural anatomy. No train, other people, words, letters, panel numbers, captions, logos, watermarks, speech bubbles, UI, arrows or decorative borders. This is an illustrative controlled storyboard, not a claim of measured temporal consistency.",
+      "sha256": "79642f6ffd8fce6dbeb581b774f3b58249bb750de897b63fe0e89c9f2f5e12a4",
+      "hash_scope": "Exact prompt string encoded as UTF-8, no added newline"
+    },
+    "input_anchors": [
+      {
+        "asset_role": "identity_outfit_reference",
+        "relative_path": "originals/sample-character-canon--1024x1536--candidate-1.png",
+        "sha256": "c1c96a6517fc0e1b185b2ed4e77a7a39891e247e8deb26dafecc8e8e954a3172",
+        "bytes": 1673341,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "mode": "RGBA",
+        "alpha": true,
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "asset_role": "environment_reference",
+        "relative_path": "inputs/reference-background--1254x1254--candidate-1.png",
+        "sha256": "d19f39fb462a46324bf32d5ec548bbe20f6e08d6ba262ae2c11bdda5205d95ae",
+        "bytes": 2317765,
+        "width": 1254,
+        "height": 1254,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      }
+    ],
+    "input_evidence": {
+      "status": "confirmed",
+      "evidence": "Root confirmed these exact source files were supplied to all four generation calls in the 2026-10-02 sample-preparation conversation. This records source-input identity only, not source/license clearance."
+    }
+  }
+}

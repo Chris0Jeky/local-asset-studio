@@ -1,0 +1,159 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "art-reviewed",
+  "requested_asset_id": "sakura-hero",
+  "brief_revision": "4ef2d9742084c7f506ef0df413021c129fd76dbe",
+  "production": {
+    "method": "derive",
+    "provider": "local deterministic image processing",
+    "tool_action": "Pillow crop/resize/WebP encode",
+    "execution_surface": "dot cloud workspace",
+    "reported_model": null,
+    "seed": null,
+    "output_id": null,
+    "produced_at": null,
+    "prompt_record": null,
+    "input_anchors": [
+      {
+        "asset_id": "sakura-master",
+        "relative_path": "originals/sakura-master--candidate-1.png",
+        "sha256": "f2b8cbfdbb2a512ffe0b00508ded0d5d4a0ac45ad67b877feb7bd3164dd61f5e",
+        "role": "exact deterministic source"
+      }
+    ],
+    "orchestration_handle": null,
+    "orchestration_handle_is_provider_job_id": false
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "provenance-recorded; source/license clearance not asserted"
+  },
+  "files": [
+    {
+      "relative_path": "masters/sakura-hero--1668x695--native-wide-crop.png",
+      "sha256": "0f4c835759339f521f6cad05d10aefb3818c0a0bc58c4767e9d0f68e0cf2b2f4",
+      "bytes": 1896059,
+      "width": 1668,
+      "height": 695,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": null,
+      "budget_pass": null
+    },
+    {
+      "relative_path": "renditions/sakura-hero--960x400--wide.webp",
+      "sha256": "a040c8637048307c5f92d3ce037ab50d5b3364473b653cb2c814afc1cd729dca",
+      "bytes": 89442,
+      "width": 960,
+      "height": 400,
+      "format": "WEBP",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": 256000,
+      "budget_pass": true
+    }
+  ],
+  "transformations": [
+    {
+      "asset_id": "sakura-hero",
+      "input_path": "originals/sakura-master--candidate-1.png",
+      "input_sha256": "f2b8cbfdbb2a512ffe0b00508ded0d5d4a0ac45ad67b877feb7bd3164dd61f5e",
+      "output_path": "masters/sakura-hero--1668x695--native-wide-crop.png",
+      "output_sha256": "0f4c835759339f521f6cad05d10aefb3818c0a0bc58c4767e9d0f68e0cf2b2f4",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        2,
+        100,
+        1670,
+        795
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1668,
+        695
+      ],
+      "operation": "integer crop without resampling",
+      "resample": null,
+      "encoding": {
+        "format": "PNG",
+        "lossless": true,
+        "optimize": true,
+        "quality": null
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "sakura-hero",
+      "input_path": "originals/sakura-master--candidate-1.png",
+      "input_sha256": "f2b8cbfdbb2a512ffe0b00508ded0d5d4a0ac45ad67b877feb7bd3164dd61f5e",
+      "output_path": "renditions/sakura-hero--960x400--wide.webp",
+      "output_sha256": "a040c8637048307c5f92d3ce037ab50d5b3364473b653cb2c814afc1cd729dca",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        2,
+        100,
+        1670,
+        795
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        960,
+        400
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    }
+  ],
+  "art_review": {
+    "status": "source-art-selected-with-caveats",
+    "reviewer": "independent QA assistant; lead assistant visual selection",
+    "notes": "Selected as source art by the lead assistant after preview review, with native-size, crop and safe-zone caveats.",
+    "selection_record": "Lead assistant reviewed both six-ID contact sheets and selected all twelve source-art IDs on 2026-10-02. This is not runtime or release selection."
+  },
+  "rendition_review": {
+    "status": "encoded-size-and-budget-checks-passed-with-target-shortfalls",
+    "checks": [
+      "Every listed image decodes at its recorded dimensions.",
+      "All 11 encoded variants meet individual profile budgets.",
+      "Crops preserve aspect ratio; no upscaling or nonuniform scaling.",
+      "Native source and large hero/card-master targets remain unmet as recorded."
+    ]
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "Provider model/build, seed, provider output/job ID and generation timestamp were not exposed.",
+    "Source terms/license clearance is not asserted.",
+    "No actual slot, text contrast, accessibility, memory/loading, active inference or crossfade test was performed."
+  ]
+}

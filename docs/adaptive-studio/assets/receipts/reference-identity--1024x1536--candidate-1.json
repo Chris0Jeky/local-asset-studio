@@ -1,0 +1,89 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "reference-identity",
+  "brief_revision": "production/20261001-cloud-art/generation-prompts-complete.json#reference_identity sha256:a5261f89172e6676bc5dba45a1d5c9e33faefeca79974fc4dd901412663b9aba",
+  "production": {
+    "method": "generate",
+    "provider": "OpenAI image_gen.imagegen (dot-run)",
+    "tool_action": "image_gen.imagegen: generate",
+    "reported_model": null,
+    "output_id": "exec-ac9eb5b6-2cd8-429a-ae7c-d73cc0009cd0",
+    "produced_at": null,
+    "prompt_record": {
+      "relative_path": "production/20261001-cloud-art/generation-prompts-complete.json",
+      "json_key": "reference_identity",
+      "sha256": "a5261f89172e6676bc5dba45a1d5c9e33faefeca79974fc4dd901412663b9aba",
+      "hash_scope": "Exact prompt string encoded as UTF-8, no added newline",
+      "text": "Create an original character portrait to serve as a reference picture that teaches \"this is who the character is\".\n\nSubject: an original adult woman explorer, clearly in her early thirties, head and shoulders, facing the viewer in a relaxed three-quarter turn. Distinctive, easy-to-recognise features: a short asymmetric dark-teal bob with one silver streak over her left temple, amber eyes, a small scar through her left eyebrow, a calm confident expression. She wears an olive field jacket with a high collar. She is not based on any real person, celebrity or existing franchise character.\n\nStyle: clean contemporary anime illustration with painterly soft shading, clear readable silhouette of face and hair.\n\nLighting and background: soft, even frontal light; a plain neutral mid-grey studio background with no objects.\n\nComposition: portrait aspect ratio 2:3. Head and shoulders fill the upper two-thirds; the full hair silhouette is visible and not cropped.\n\nDo not include: any text, letters, numbers, logos, watermarks, badges, jewellery with lettering, user-interface elements, other people or props.",
+      "relative_path_base": "docs/adaptive-studio/assets (repository asset root)"
+    },
+    "input_anchors": [],
+    "reported_seed": null,
+    "output_id_kind": "local dot tool output handle; not a provider job ID",
+    "provider_job_id": null
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "not-reviewed"
+  },
+  "files": [
+    {
+      "relative_path": "inbox/reference-identity--1024x1536--candidate-1.png",
+      "sha256": "78eb4db22ef497eb4388d2b5c2aad4425e31983a5da268c79a4f867383d308a4",
+      "bytes": 2319925,
+      "width": 1024,
+      "height": 1536,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    }
+  ],
+  "transformations": [],
+  "art_review": {
+    "status": "not-reviewed",
+    "reviewer": null,
+    "notes": null
+  },
+  "rendition_review": {
+    "status": "not-reviewed",
+    "checks": []
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "produced_at is unknown: the file time records local save/copy, not generation time.",
+    "reported_model and reported_seed are unknown: image_gen.imagegen did not expose a verified model build or seed.",
+    "source terms evidence has not been independently captured; no license determination is made here.",
+    "No provider job ID, source item/page, creator credit or retrieval timestamp was reported for these locally saved generated candidates.",
+    "duration_seconds and codec are null because these files are still-image PNG/WebP renditions; format identifies their container."
+  ],
+  "intake": {
+    "received_at": "2026-10-02T00:03:11Z",
+    "candidate": 1
+  },
+  "delivery_base": {
+    "binary_storage": "PR delivery attachments; binary files are not committed in this text-only publication",
+    "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+    "archive_relative_path_base": "Root after extracting all three las-art-candidates-part-XX-of-03.zip files together",
+    "path_rules": {
+      "inbox/": "Unaltered original in delivery archive; may also be placed in the ignored repository assets/inbox directory",
+      "review-renditions/": "Attachment-only binary path relative to extracted delivery archive root, not the repository assets root",
+      "transformations.output_relative_path": "Same attachment-only delivery base as review-renditions/"
+    }
+  }
+}

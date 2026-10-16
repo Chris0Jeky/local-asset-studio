@@ -1,0 +1,523 @@
+{
+  "state-blank--candidate-1": {
+    "original": {
+      "range": [
+        0,
+        254
+      ],
+      "zero_alpha_pixels": 1135031,
+      "fully_opaque_pixels": 0,
+      "partial_alpha_pixels": 437833,
+      "unique_values": 255,
+      "threshold_bounding_boxes": {
+        "1": [
+          0,
+          0,
+          1464,
+          940
+        ],
+        "8": [
+          165,
+          154,
+          1285,
+          917
+        ],
+        "32": [
+          165,
+          155,
+          1285,
+          917
+        ],
+        "128": [
+          166,
+          155,
+          1284,
+          917
+        ],
+        "250": [
+          167,
+          157,
+          1282,
+          914
+        ]
+      },
+      "threshold_box_semantics": "Bounding box of alpha >= threshold, exclusive right/bottom. For measurements only; no threshold applied to asset.",
+      "edge_alpha_max": {
+        "top": 1,
+        "right": 0,
+        "bottom": 0,
+        "left": 1
+      },
+      "alpha_sha256": "271aed32a279999614d0602a90b831746946e38f74c2912967347413a0457af6"
+    },
+    "derivatives": {
+      "768x512": {
+        "range": [
+          0,
+          255
+        ],
+        "zero_alpha_pixels": 283618,
+        "fully_opaque_pixels": 1205,
+        "partial_alpha_pixels": 108393,
+        "unique_values": 256,
+        "threshold_bounding_boxes": {
+          "1": [
+            0,
+            0,
+            645,
+            467
+          ],
+          "8": [
+            82,
+            77,
+            643,
+            459
+          ],
+          "32": [
+            82,
+            77,
+            643,
+            459
+          ],
+          "128": [
+            83,
+            78,
+            642,
+            458
+          ],
+          "250": [
+            84,
+            78,
+            641,
+            458
+          ]
+        },
+        "threshold_box_semantics": "Bounding box of alpha >= threshold, exclusive right/bottom. For measurements only; no threshold applied to asset.",
+        "edge_alpha_max": {
+          "top": 1,
+          "right": 0,
+          "bottom": 0,
+          "left": 1
+        },
+        "alpha_sha256": "a9af451adab407d08f17fe4ee45332626a1d3b9cb1b125321f9987851a4f382e",
+        "alpha_encode_roundtrip_identical": true
+      },
+      "384x256": {
+        "range": [
+          0,
+          255
+        ],
+        "zero_alpha_pixels": 70350,
+        "fully_opaque_pixels": 748,
+        "partial_alpha_pixels": 27206,
+        "unique_values": 254,
+        "threshold_bounding_boxes": {
+          "1": [
+            28,
+            0,
+            324,
+            232
+          ],
+          "8": [
+            41,
+            38,
+            322,
+            230
+          ],
+          "32": [
+            41,
+            38,
+            321,
+            230
+          ],
+          "128": [
+            41,
+            39,
+            321,
+            229
+          ],
+          "250": [
+            42,
+            39,
+            320,
+            229
+          ]
+        },
+        "threshold_box_semantics": "Bounding box of alpha >= threshold, exclusive right/bottom. For measurements only; no threshold applied to asset.",
+        "edge_alpha_max": {
+          "top": 1,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "alpha_sha256": "269376aa5e3fb3187ee935f0484aece964e6922871280b2e02df318a26b38eb9",
+        "alpha_encode_roundtrip_identical": true
+      }
+    }
+  },
+  "state-no-match--candidate-1": {
+    "original": {
+      "range": [
+        0,
+        254
+      ],
+      "zero_alpha_pixels": 933830,
+      "fully_opaque_pixels": 0,
+      "partial_alpha_pixels": 639034,
+      "unique_values": 255,
+      "threshold_bounding_boxes": {
+        "1": [
+          0,
+          23,
+          1506,
+          1024
+        ],
+        "8": [
+          156,
+          144,
+          1394,
+          840
+        ],
+        "32": [
+          157,
+          144,
+          1394,
+          839
+        ],
+        "128": [
+          157,
+          145,
+          1393,
+          839
+        ],
+        "250": [
+          159,
+          146,
+          1392,
+          838
+        ]
+      },
+      "threshold_box_semantics": "Bounding box of alpha >= threshold, exclusive right/bottom. For measurements only; no threshold applied to asset.",
+      "edge_alpha_max": {
+        "top": 0,
+        "right": 0,
+        "bottom": 1,
+        "left": 1
+      },
+      "alpha_sha256": "887564d2eace552db4e769b5cd4924ab146c0b09b02284dcfcf0f97fc7e794ab"
+    },
+    "derivatives": {}
+  },
+  "state-no-match--candidate-2": {
+    "original": {
+      "range": [
+        0,
+        254
+      ],
+      "zero_alpha_pixels": 918298,
+      "fully_opaque_pixels": 0,
+      "partial_alpha_pixels": 654566,
+      "unique_values": 255,
+      "threshold_bounding_boxes": {
+        "1": [
+          30,
+          19,
+          1502,
+          954
+        ],
+        "8": [
+          32,
+          174,
+          1500,
+          838
+        ],
+        "32": [
+          33,
+          175,
+          1500,
+          838
+        ],
+        "128": [
+          33,
+          175,
+          1499,
+          837
+        ],
+        "250": [
+          35,
+          176,
+          1498,
+          836
+        ]
+      },
+      "threshold_box_semantics": "Bounding box of alpha >= threshold, exclusive right/bottom. For measurements only; no threshold applied to asset.",
+      "edge_alpha_max": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "alpha_sha256": "66510a9c30ee7e445adaf66ebabf6361e94e88bfc74cc2de18b796f81823cab6"
+    },
+    "derivatives": {
+      "768x512": {
+        "range": [
+          0,
+          255
+        ],
+        "zero_alpha_pixels": 260390,
+        "fully_opaque_pixels": 1612,
+        "partial_alpha_pixels": 131214,
+        "unique_values": 256,
+        "threshold_bounding_boxes": {
+          "1": [
+            51,
+            35,
+            715,
+            454
+          ],
+          "8": [
+            53,
+            104,
+            713,
+            403
+          ],
+          "32": [
+            53,
+            104,
+            713,
+            403
+          ],
+          "128": [
+            54,
+            105,
+            712,
+            402
+          ],
+          "250": [
+            55,
+            105,
+            712,
+            401
+          ]
+        },
+        "threshold_box_semantics": "Bounding box of alpha >= threshold, exclusive right/bottom. For measurements only; no threshold applied to asset.",
+        "edge_alpha_max": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "alpha_sha256": "45d8139ff1c6148be5803d28970485de18f708389c1f45e3277ade8b631fbd20",
+        "alpha_encode_roundtrip_identical": true
+      },
+      "384x256": {
+        "range": [
+          0,
+          255
+        ],
+        "zero_alpha_pixels": 64304,
+        "fully_opaque_pixels": 902,
+        "partial_alpha_pixels": 33098,
+        "unique_values": 255,
+        "threshold_bounding_boxes": {
+          "1": [
+            24,
+            18,
+            358,
+            227
+          ],
+          "8": [
+            26,
+            52,
+            356,
+            202
+          ],
+          "32": [
+            26,
+            52,
+            356,
+            201
+          ],
+          "128": [
+            26,
+            52,
+            356,
+            201
+          ],
+          "250": [
+            27,
+            53,
+            355,
+            200
+          ]
+        },
+        "threshold_box_semantics": "Bounding box of alpha >= threshold, exclusive right/bottom. For measurements only; no threshold applied to asset.",
+        "edge_alpha_max": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "alpha_sha256": "39e8f0f101acf10dd71ce86ab640224462152cf328f8a29bbcfd785fd631170a",
+        "alpha_encode_roundtrip_identical": true
+      }
+    }
+  },
+  "state-source-required--candidate-1": {
+    "original": {
+      "range": [
+        0,
+        254
+      ],
+      "zero_alpha_pixels": 1044776,
+      "fully_opaque_pixels": 0,
+      "partial_alpha_pixels": 528088,
+      "unique_values": 255,
+      "threshold_bounding_boxes": {
+        "1": [
+          0,
+          38,
+          1338,
+          984
+        ],
+        "8": [
+          422,
+          99,
+          1218,
+          937
+        ],
+        "32": [
+          422,
+          99,
+          1218,
+          937
+        ],
+        "128": [
+          423,
+          100,
+          1218,
+          936
+        ],
+        "250": [
+          424,
+          101,
+          1216,
+          935
+        ]
+      },
+      "threshold_box_semantics": "Bounding box of alpha >= threshold, exclusive right/bottom. For measurements only; no threshold applied to asset.",
+      "edge_alpha_max": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 1
+      },
+      "alpha_sha256": "0eaaa1166f6278a7259996b44aa8e0d141805cad89c7f5919a69cfda13ecbe32"
+    },
+    "derivatives": {
+      "768x512": {
+        "range": [
+          0,
+          255
+        ],
+        "zero_alpha_pixels": 261141,
+        "fully_opaque_pixels": 1092,
+        "partial_alpha_pixels": 130983,
+        "unique_values": 256,
+        "threshold_bounding_boxes": {
+          "1": [
+            0,
+            47,
+            611,
+            492
+          ],
+          "8": [
+            211,
+            49,
+            609,
+            469
+          ],
+          "32": [
+            211,
+            49,
+            609,
+            469
+          ],
+          "128": [
+            211,
+            50,
+            609,
+            468
+          ],
+          "250": [
+            212,
+            51,
+            608,
+            467
+          ]
+        },
+        "threshold_box_semantics": "Bounding box of alpha >= threshold, exclusive right/bottom. For measurements only; no threshold applied to asset.",
+        "edge_alpha_max": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 1
+        },
+        "alpha_sha256": "20bc89f83253dc95225ee4fc6280567d3d535d2ea580f08942b034b184487733",
+        "alpha_encode_roundtrip_identical": true
+      },
+      "384x256": {
+        "range": [
+          0,
+          255
+        ],
+        "zero_alpha_pixels": 64725,
+        "fully_opaque_pixels": 720,
+        "partial_alpha_pixels": 32859,
+        "unique_values": 251,
+        "threshold_bounding_boxes": {
+          "1": [
+            17,
+            22,
+            307,
+            237
+          ],
+          "8": [
+            105,
+            24,
+            305,
+            235
+          ],
+          "32": [
+            105,
+            25,
+            305,
+            234
+          ],
+          "128": [
+            106,
+            25,
+            304,
+            234
+          ],
+          "250": [
+            106,
+            26,
+            304,
+            233
+          ]
+        },
+        "threshold_box_semantics": "Bounding box of alpha >= threshold, exclusive right/bottom. For measurements only; no threshold applied to asset.",
+        "edge_alpha_max": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "alpha_sha256": "e9aeaeac783badbdca3edba1a3199fbeeaf382883643cb3a96a0512d24c4ea09",
+        "alpha_encode_roundtrip_identical": true
+      }
+    }
+  }
+}

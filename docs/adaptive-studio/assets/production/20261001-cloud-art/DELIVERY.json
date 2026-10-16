@@ -1,0 +1,29 @@
+{
+  "original_count": 14,
+  "receipt_count": 14,
+  "review_webp_count": 8,
+  "all_gates_pending": true,
+  "archive_parts": [
+    {
+      "file": "las-art-candidates-part-01-of-03.zip",
+      "bytes": 9366282,
+      "sha256": "e8bc4f6141452d61626ca974f5f734bc7fb74d7473b5e35e89f79f7a6924c86a",
+      "download_url": "https://github.com/user-attachments/files/32938292/las-art-candidates-part-01-of-03.zip"
+    },
+    {
+      "file": "las-art-candidates-part-02-of-03.zip",
+      "bytes": 9220551,
+      "sha256": "9e0af9b0ab719b68bb07a62f19368015f2c195869edecf9dd6b22d5dd43aba03",
+      "download_url": "https://github.com/user-attachments/files/32938294/las-art-candidates-part-02-of-03.zip"
+    },
+    {
+      "file": "las-art-candidates-part-03-of-03.zip",
+      "bytes": 8740758,
+      "sha256": "6f6cb8b4339ac7af87afdfd754ec3ab222ca7e7deb066cee22bc2c545bdc5f29",
+      "download_url": "https://github.com/user-attachments/files/32938295/las-art-candidates-part-03-of-03.zip"
+    }
+  ],
+  "verification": "All archive members extracted to temporary directory; all SHA256SUMS entries checked successfully; no duplicate or unsafe paths.",
+  "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269#issuecomment-5943078591",
+  "publication_note": "Source delivery and contact sheet were published and verified in the linked PR comment. Frozen archive bytes and hashes are unchanged."
+}

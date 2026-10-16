@@ -1,0 +1,20 @@
+[
+  {
+    "file": "las-art-candidates-part-01-of-03.zip",
+    "sha256": "e8bc4f6141452d61626ca974f5f734bc7fb74d7473b5e35e89f79f7a6924c86a",
+    "bytes": 9366282,
+    "github_download_matches": true
+  },
+  {
+    "file": "las-art-candidates-part-02-of-03.zip",
+    "sha256": "9e0af9b0ab719b68bb07a62f19368015f2c195869edecf9dd6b22d5dd43aba03",
+    "bytes": 9220551,
+    "github_download_matches": true
+  },
+  {
+    "file": "las-art-candidates-part-03-of-03.zip",
+    "sha256": "6f6cb8b4339ac7af87afdfd754ec3ab222ca7e7deb066cee22bc2c545bdc5f29",
+    "bytes": 8740758,
+    "github_download_matches": true
+  }
+]

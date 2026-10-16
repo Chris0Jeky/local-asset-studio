@@ -1,0 +1,74 @@
+[
+  {
+    "asset_id": "state-blank",
+    "candidate": 1,
+    "filename": "state-blank--candidate-1.png",
+    "sha256": "38b62c95bb06dc3f0d422f2d4c56929979885e7068acc009b58170231fbc0562",
+    "bytes": 1409941,
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "output_handle": "exec-d1dbea39-0296-4c57-bc68-662d63d38a9b",
+    "output_handle_kind": "local tool handle; not provider identifier",
+    "provider_job_id": null,
+    "prompt_key": "state-blank",
+    "candidate_art_selection": true,
+    "selected_rendition_padding": null
+  },
+  {
+    "asset_id": "state-no-match",
+    "candidate": 1,
+    "filename": "state-no-match--candidate-1.png",
+    "sha256": "aa3e4273894bb6d807d9cc9b376bcc244924a9b9c8101d5afc52050b33b27a1e",
+    "bytes": 1613219,
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "output_handle": "exec-8ec168c4-00d4-4645-94d1-e799bcf9c942",
+    "output_handle_kind": "local tool handle; not provider identifier",
+    "provider_job_id": null,
+    "prompt_key": "state-no-match",
+    "candidate_art_selection": false,
+    "selected_rendition_padding": null
+  },
+  {
+    "asset_id": "state-no-match",
+    "candidate": 2,
+    "filename": "state-no-match--candidate-2.png",
+    "sha256": "ee92f916018332c9c0a031b7efa72f9c36739ed66e446e90e533da8808f03e90",
+    "bytes": 1556522,
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "output_handle": "exec-7319cffc-9b0c-415e-9589-4b4e92707aa1",
+    "output_handle_kind": "local tool handle; not provider identifier",
+    "provider_job_id": null,
+    "prompt_key": "state-no-match--candidate-2",
+    "candidate_art_selection": true,
+    "selected_rendition_padding": "nominal90-percent-fit"
+  },
+  {
+    "asset_id": "state-source-required",
+    "candidate": 1,
+    "filename": "state-source-required--candidate-1.png",
+    "sha256": "3f08fc87f564f137412fdd4fdc0a6408d48a788d2ca1f31cb8d62c341122f3f2",
+    "bytes": 1386799,
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "mode": "RGBA",
+    "output_handle": "exec-cd5575cb-35cd-418c-aad1-2693ae59fc36",
+    "output_handle_kind": "local tool handle; not provider identifier",
+    "provider_job_id": null,
+    "prompt_key": "state-source-required",
+    "candidate_art_selection": true,
+    "selected_rendition_padding": null
+  }
+]

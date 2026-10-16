@@ -1,0 +1,74 @@
+[
+  {
+    "id": "sakura-master",
+    "pack": "sakura",
+    "category": "environment",
+    "placement": "environment-window",
+    "profile": "scene",
+    "wave": "P2",
+    "method": "generate",
+    "anchor": "",
+    "subject": "dark timber illustration room looking onto a blossom courtyard after rain",
+    "acceptance": "Petals are sparse, architecture readable and the left wall nearly empty."
+  },
+  {
+    "id": "sakura-hero",
+    "pack": "sakura",
+    "category": "environment",
+    "placement": "workspace-header",
+    "profile": "hero",
+    "wave": "P2",
+    "method": "derive",
+    "anchor": "sakura-master",
+    "subject": "Wide header adaptation of dark timber illustration room looking onto a blossom courtyard after rain",
+    "acceptance": "Preserve the approved world and empty heading zone at desktop and narrow crops."
+  },
+  {
+    "id": "sakura-wall",
+    "pack": "sakura",
+    "category": "environment",
+    "placement": "sidebar-wall",
+    "profile": "wall",
+    "wave": "P2",
+    "method": "edit",
+    "anchor": "sakura-master",
+    "subject": "Quiet panel wall extracted from the approved environment",
+    "acceptance": "No high-contrast edge crosses a control; center stays low-detail."
+  },
+  {
+    "id": "sakura-quiet",
+    "pack": "sakura",
+    "category": "environment",
+    "placement": "still-alternative",
+    "profile": "quiet",
+    "wave": "P2",
+    "method": "edit",
+    "anchor": "sakura-master",
+    "subject": "Quiet morning counterpart of the same room with unchanged camera",
+    "acceptance": "Switching to this still does not imply a failed connection or a different location."
+  },
+  {
+    "id": "sakura-poster",
+    "pack": "sakura",
+    "category": "environment",
+    "placement": "media-fallback",
+    "profile": "poster",
+    "wave": "P2",
+    "method": "derive",
+    "anchor": "sakura-master",
+    "subject": "Local still fallback for the accepted environment",
+    "acceptance": "Matches the anchor composition; requires no remote resource."
+  },
+  {
+    "id": "sakura-card",
+    "pack": "sakura",
+    "category": "environment",
+    "placement": "skin-picker",
+    "profile": "card",
+    "wave": "P2",
+    "method": "derive",
+    "anchor": "sakura-master",
+    "subject": "Recognizable thumbnail crop of the approved world",
+    "acceptance": "Readable at 96px without overlaid text or imitation UI."
+  }
+]

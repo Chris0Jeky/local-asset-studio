@@ -1,0 +1,288 @@
+{
+  "version": 1,
+  "source_art_selected": true,
+  "runtime_qualified": false,
+  "mappings": [
+    {
+      "semantic_name": "create",
+      "glyph": "photo-plus",
+      "html_label": "Create",
+      "path": "icons/tabler/photo-plus.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "edit",
+      "glyph": "photo-edit",
+      "html_label": "Edit",
+      "path": "icons/tabler/photo-edit.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "combine",
+      "glyph": "stack-2",
+      "html_label": "Combine",
+      "path": "icons/tabler/stack-2.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "pose",
+      "glyph": "stretching",
+      "html_label": "Pose",
+      "path": "icons/tabler/stretching.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "character-sheet",
+      "glyph": "layout-grid",
+      "html_label": "Character sheet",
+      "path": "icons/tabler/layout-grid.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "repair",
+      "glyph": "bandage",
+      "html_label": "Repair",
+      "path": "icons/tabler/bandage.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "upscale",
+      "glyph": "arrows-maximize",
+      "html_label": "Upscale",
+      "path": "icons/tabler/arrows-maximize.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "animate",
+      "glyph": "movie",
+      "html_label": "Animate",
+      "path": "icons/tabler/movie.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "sequence",
+      "glyph": "timeline",
+      "html_label": "Sequence",
+      "path": "icons/tabler/timeline.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "compare",
+      "glyph": "columns-2",
+      "html_label": "Compare",
+      "path": "icons/tabler/columns-2.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "review",
+      "glyph": "checklist",
+      "html_label": "Review",
+      "path": "icons/tabler/checklist.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "export",
+      "glyph": "package-export",
+      "html_label": "Export",
+      "path": "icons/tabler/package-export.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "workflow",
+      "glyph": "schema",
+      "html_label": "Workflow",
+      "path": "icons/tabler/schema.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "model",
+      "glyph": "box-model",
+      "html_label": "Model",
+      "path": "icons/tabler/box-model.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "adapter",
+      "glyph": "puzzle",
+      "html_label": "Adapter",
+      "path": "icons/tabler/puzzle.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "backend",
+      "glyph": "cpu",
+      "html_label": "Backend",
+      "path": "icons/tabler/cpu.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "recover",
+      "glyph": "receipt",
+      "html_label": "Recovery records",
+      "path": "icons/tabler/receipt.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "voice",
+      "glyph": "wave-sine",
+      "html_label": "Voice",
+      "path": "icons/tabler/wave-sine.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "three-dimensional",
+      "glyph": "cube-3d-sphere",
+      "html_label": "3D",
+      "path": "icons/tabler/cube-3d-sphere.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "home",
+      "glyph": "home",
+      "html_label": "Home",
+      "path": "icons/tabler/home.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "library",
+      "glyph": "library-photo",
+      "html_label": "Library",
+      "path": "icons/tabler/library-photo.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "files",
+      "glyph": "folder",
+      "html_label": "Files",
+      "path": "icons/tabler/folder.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "settings",
+      "glyph": "settings",
+      "html_label": "Settings",
+      "path": "icons/tabler/settings.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "search",
+      "glyph": "search",
+      "html_label": "Search",
+      "path": "icons/tabler/search.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "upload",
+      "glyph": "upload",
+      "html_label": "Upload",
+      "path": "icons/tabler/upload.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "download",
+      "glyph": "download",
+      "html_label": "Download",
+      "path": "icons/tabler/download.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "crop",
+      "glyph": "crop",
+      "html_label": "Crop",
+      "path": "icons/tabler/crop.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "mask",
+      "glyph": "mask",
+      "html_label": "Mask",
+      "path": "icons/tabler/mask.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "erase",
+      "glyph": "eraser",
+      "html_label": "Erase",
+      "path": "icons/tabler/eraser.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "brush",
+      "glyph": "brush",
+      "html_label": "Brush",
+      "path": "icons/tabler/brush.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "play",
+      "glyph": "player-play",
+      "html_label": "Play",
+      "path": "icons/tabler/player-play.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "pause",
+      "glyph": "player-pause",
+      "html_label": "Pause",
+      "path": "icons/tabler/player-pause.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "stop",
+      "glyph": "player-stop",
+      "html_label": "Stop",
+      "path": "icons/tabler/player-stop.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "preview",
+      "glyph": "eye",
+      "html_label": "Preview",
+      "path": "icons/tabler/eye.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "information",
+      "glyph": "info-circle",
+      "html_label": "Information",
+      "path": "icons/tabler/info-circle.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "keyboard",
+      "glyph": "keyboard",
+      "html_label": "Keyboard shortcuts",
+      "path": "icons/tabler/keyboard.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "close",
+      "glyph": "x",
+      "html_label": "Close",
+      "path": "icons/tabler/x.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "refresh",
+      "glyph": "refresh",
+      "html_label": "Refresh",
+      "path": "icons/tabler/refresh.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "privacy",
+      "glyph": "lock",
+      "html_label": "Privacy",
+      "path": "icons/tabler/lock.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    },
+    {
+      "semantic_name": "delete",
+      "glyph": "trash",
+      "html_label": "Delete",
+      "path": "icons/tabler/trash.svg",
+      "embedding": "inline SVG; aria-hidden=true; focusable=false; label on native HTML control"
+    }
+  ],
+  "alternatives": "Remaining bundled glyphs are reference alternatives, not additional semantic requirements."
+}

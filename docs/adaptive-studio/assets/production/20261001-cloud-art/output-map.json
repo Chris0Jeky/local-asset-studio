@@ -1,0 +1,100 @@
+[
+  {
+    "asset_id": "workflow-create",
+    "candidate": 1,
+    "prompt_key": "workflow_create",
+    "output_id": "exec-f3659316-e5fc-4959-99df-41eef1b2b4ee",
+    "input_candidate": null
+  },
+  {
+    "asset_id": "workflow-create",
+    "candidate": 2,
+    "prompt_key": "workflow_create_refine",
+    "output_id": "exec-e4ca6792-5edb-4606-adf4-1f265c3787a5",
+    "input_candidate": 1
+  },
+  {
+    "asset_id": "workflow-create",
+    "candidate": 3,
+    "prompt_key": "workflow_create_refine2",
+    "output_id": "exec-3294c6ee-513e-4bac-9438-c279f8a48e40",
+    "input_candidate": 2
+  },
+  {
+    "asset_id": "reference-identity",
+    "candidate": 1,
+    "prompt_key": "reference_identity",
+    "output_id": "exec-ac9eb5b6-2cd8-429a-ae7c-d73cc0009cd0",
+    "input_candidate": null
+  },
+  {
+    "asset_id": "reference-identity",
+    "candidate": 2,
+    "prompt_key": "reference_identity_refine",
+    "output_id": "exec-7e5dd31d-b770-429b-a4ff-dcd32282416d",
+    "input_candidate": 1
+  },
+  {
+    "asset_id": "reference-identity",
+    "candidate": 3,
+    "prompt_key": "reference_identity_refine2",
+    "output_id": "exec-376b2cc3-7c39-417f-a258-6e2411e1970e",
+    "input_candidate": 2
+  },
+  {
+    "asset_id": "reference-pose",
+    "candidate": 1,
+    "prompt_key": "reference_pose",
+    "output_id": "exec-04ec3474-8b26-40bc-b21c-98a7318db036",
+    "input_candidate": null
+  },
+  {
+    "asset_id": "reference-style",
+    "candidate": 1,
+    "prompt_key": "reference_style",
+    "output_id": "exec-88e5b474-d029-42bf-bf28-92bda958ec3a",
+    "input_candidate": null
+  },
+  {
+    "asset_id": "reference-composition",
+    "candidate": 1,
+    "prompt_key": "reference_composition",
+    "output_id": "exec-d7903746-c4b8-4545-a40f-62b01886cd76",
+    "input_candidate": null
+  },
+  {
+    "asset_id": "reference-composition",
+    "candidate": 2,
+    "prompt_key": "reference_composition_refine",
+    "output_id": "exec-ef3718f7-1d0b-46e3-ad46-c929ea6fa83c",
+    "input_candidate": 1
+  },
+  {
+    "asset_id": "reference-composition",
+    "candidate": 3,
+    "prompt_key": "reference_composition_refine2",
+    "output_id": "exec-69a7d8bc-8bf8-45e1-aca7-0bb62476e51d",
+    "input_candidate": 2
+  },
+  {
+    "asset_id": "reference-lighting",
+    "candidate": 1,
+    "prompt_key": "reference_lighting",
+    "output_id": "exec-027ae0e3-6fe2-47e5-916c-c01f4c55b135",
+    "input_candidate": null
+  },
+  {
+    "asset_id": "reference-lighting",
+    "candidate": 2,
+    "prompt_key": "reference_lighting_refine",
+    "output_id": "exec-f84ad725-7841-41b6-b49d-e9b78cb5976a",
+    "input_candidate": 1
+  },
+  {
+    "asset_id": "reference-background",
+    "candidate": 1,
+    "prompt_key": "reference_background",
+    "output_id": "exec-0c4b776b-ad39-4801-96e4-b0700ab4f62d",
+    "input_candidate": null
+  }
+]

@@ -1,0 +1,461 @@
+{
+  "schema": "studio.theme-asset.transformations/v1",
+  "prepared_at": "2026-10-02T15:40:40Z",
+  "reference_commit": "4ef2d9742084c7f506ef0df413021c129fd76dbe",
+  "software": {
+    "Pillow": "12.3.0",
+    "WebP_encoder": "1.6.0"
+  },
+  "transformations": [
+    {
+      "asset_id": "minimal-pro-master",
+      "input_path": "originals/minimal-pro-master--candidate-1.png",
+      "input_sha256": "d1cc54c514ad7ec3227bde6e9705f727be0f79746fc83e438180fc26e3bc7fc2",
+      "output_path": "renditions/minimal-pro-master--1280x720--preview.webp",
+      "output_sha256": "3aa12559e457c9a6e2f1bdca69e4c25b148050f019900ad743da64e369758efb",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1280,
+        720
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "minimal-pro-master",
+      "input_path": "originals/minimal-pro-master--candidate-1.png",
+      "input_sha256": "d1cc54c514ad7ec3227bde6e9705f727be0f79746fc83e438180fc26e3bc7fc2",
+      "output_path": "renditions/minimal-pro-master--960x540--preview.webp",
+      "output_sha256": "eec231998e5ec540e104f158658fdaeaa9e5c36f3dd3d2282b356d64bb60b981",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        960,
+        540
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "minimal-pro-quiet",
+      "input_path": "originals/minimal-pro-quiet--candidate-1.png",
+      "input_sha256": "3d1637bc05b6611f0d027ef834c16fdb57ff7c974d13f1290ded2d98e32e367a",
+      "output_path": "renditions/minimal-pro-quiet--1280x720--preview.webp",
+      "output_sha256": "9c7e7e6b1690acbe52e07b1a32e703c180eb8eb354d6af95786ea850b50ce9ed",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1280,
+        720
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "minimal-pro-quiet",
+      "input_path": "originals/minimal-pro-quiet--candidate-1.png",
+      "input_sha256": "3d1637bc05b6611f0d027ef834c16fdb57ff7c974d13f1290ded2d98e32e367a",
+      "output_path": "renditions/minimal-pro-quiet--960x540--preview.webp",
+      "output_sha256": "1506509c345bc141cbf5ec87dea5f51819a28ef598b7a3baa0e22d1578cb07eb",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        960,
+        540
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "minimal-pro-hero",
+      "input_path": "originals/minimal-pro-master--candidate-1.png",
+      "input_sha256": "d1cc54c514ad7ec3227bde6e9705f727be0f79746fc83e438180fc26e3bc7fc2",
+      "output_path": "masters/minimal-pro-hero--1668x695--native-wide-crop.png",
+      "output_sha256": "b9256b3da3e4fab0414d415690313b294212476afb6516cbac13cd85037f1202",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        2,
+        155,
+        1670,
+        850
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1668,
+        695
+      ],
+      "operation": "integer crop without resampling",
+      "resample": null,
+      "encoding": {
+        "format": "PNG",
+        "lossless": true,
+        "optimize": true,
+        "quality": null
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "minimal-pro-hero",
+      "input_path": "originals/minimal-pro-master--candidate-1.png",
+      "input_sha256": "d1cc54c514ad7ec3227bde6e9705f727be0f79746fc83e438180fc26e3bc7fc2",
+      "output_path": "renditions/minimal-pro-hero--960x400--wide.webp",
+      "output_sha256": "1997de949393798644d749d4f76d6cbef8f64c10f8f8b93dc0a57ca7aa2d7eed",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        2,
+        155,
+        1670,
+        850
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        960,
+        400
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "minimal-pro-wall",
+      "input_path": "originals/minimal-pro-wall--candidate-1.png",
+      "input_sha256": "f4a66e99df0f4cdc3cb033e5bfe65dc8343e2f785fc289711440d6617d22e0c3",
+      "output_path": "renditions/minimal-pro-wall--1200x800--panel.webp",
+      "output_sha256": "1015a195243877500de6d4e03b203d937fb0bdf5d9cb89dbd0595715bfd6ee09",
+      "source_canvas": [
+        1536,
+        1024
+      ],
+      "crop_box_xyxy": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1200,
+        800
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "minimal-pro-wall",
+      "input_path": "originals/minimal-pro-wall--candidate-1.png",
+      "input_sha256": "f4a66e99df0f4cdc3cb033e5bfe65dc8343e2f785fc289711440d6617d22e0c3",
+      "output_path": "renditions/minimal-pro-wall--600x400--panel.webp",
+      "output_sha256": "e8704c431b9d818a795a7558c659fe71355a46baa40fac82f63bf90596001516",
+      "source_canvas": [
+        1536,
+        1024
+      ],
+      "crop_box_xyxy": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        600,
+        400
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "minimal-pro-poster",
+      "input_path": "originals/minimal-pro-master--candidate-1.png",
+      "input_sha256": "d1cc54c514ad7ec3227bde6e9705f727be0f79746fc83e438180fc26e3bc7fc2",
+      "output_path": "renditions/minimal-pro-poster--1280x720--fallback.webp",
+      "output_sha256": "3aa12559e457c9a6e2f1bdca69e4c25b148050f019900ad743da64e369758efb",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1280,
+        720
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "minimal-pro-poster",
+      "input_path": "originals/minimal-pro-master--candidate-1.png",
+      "input_sha256": "d1cc54c514ad7ec3227bde6e9705f727be0f79746fc83e438180fc26e3bc7fc2",
+      "output_path": "renditions/minimal-pro-poster--640x360--fallback.webp",
+      "output_sha256": "340f3f3e27878208f4bd40c82d773f4312972a10048feef42925f1850124cea1",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        640,
+        360
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "minimal-pro-card",
+      "input_path": "originals/minimal-pro-master--candidate-1.png",
+      "input_sha256": "d1cc54c514ad7ec3227bde6e9705f727be0f79746fc83e438180fc26e3bc7fc2",
+      "output_path": "masters/minimal-pro-card--941x941--native-square-crop.png",
+      "output_sha256": "3a65b478acf3df6c09fc90389c5a2e1255a7f17f3c84f61b15e11a03f4816552",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        731,
+        0,
+        1672,
+        941
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        941,
+        941
+      ],
+      "operation": "integer crop without resampling",
+      "resample": null,
+      "encoding": {
+        "format": "PNG",
+        "lossless": true,
+        "optimize": true,
+        "quality": null
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "minimal-pro-card",
+      "input_path": "originals/minimal-pro-master--candidate-1.png",
+      "input_sha256": "d1cc54c514ad7ec3227bde6e9705f727be0f79746fc83e438180fc26e3bc7fc2",
+      "output_path": "renditions/minimal-pro-card--512x512--picker.webp",
+      "output_sha256": "f2d2218ece7a91d8b54ac1d34ab8e1fd8dec16ad8b994d9d3354110460701c4c",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        731,
+        0,
+        1672,
+        941
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        512,
+        512
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "minimal-pro-card",
+      "input_path": "originals/minimal-pro-master--candidate-1.png",
+      "input_sha256": "d1cc54c514ad7ec3227bde6e9705f727be0f79746fc83e438180fc26e3bc7fc2",
+      "output_path": "renditions/minimal-pro-card--256x256--picker.webp",
+      "output_sha256": "aaaff71116449cd40b985c11fbda653b5883c54a8d59f0801aecc978b478e96b",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        731,
+        0,
+        1672,
+        941
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        256,
+        256
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    }
+  ],
+  "unfulfilled_targets": [
+    {
+      "asset_id": "minimal-pro-master",
+      "requested": "3840x2160",
+      "actual": "1672x941",
+      "reason": "Actual native provider dimensions; no upscaling."
+    },
+    {
+      "asset_id": "minimal-pro-quiet",
+      "requested": "3840x2160",
+      "actual": "1672x941",
+      "reason": "Actual native provider dimensions; no upscaling."
+    },
+    {
+      "asset_id": "minimal-pro-wall",
+      "requested": "2400x1600",
+      "actual": "1536x1024",
+      "reason": "Actual native provider dimensions; no upscaling."
+    },
+    {
+      "asset_id": "minimal-pro-hero",
+      "requested": "3840x1600 lossless and 1920x800 encoded",
+      "actual": "1668x695 lossless crop and 960x400 encoded",
+      "reason": "Actual native provider dimensions; no upscaling."
+    },
+    {
+      "asset_id": "minimal-pro-card",
+      "requested": "1024x1024 master",
+      "actual": "941x941 lossless crop; 512/256 targets fulfilled",
+      "reason": "Actual native provider dimensions; no upscaling."
+    }
+  ],
+  "scope": "Deterministic local source-art derivatives; no runtime integration.",
+  "source_color": "Original RGB values retained; no ICC profile reported by PNGs, and no color conversion applied."
+}

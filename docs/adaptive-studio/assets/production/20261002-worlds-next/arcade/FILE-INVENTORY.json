@@ -1,0 +1,275 @@
+{
+  "asset_outputs": {
+    "arcade-master": [
+      {
+        "relative_path": "originals/arcade-master--candidate-1.png",
+        "sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb",
+        "bytes": 2131780,
+        "width": 1672,
+        "height": 941,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "renditions/arcade-master--1280x720--preview.webp",
+        "sha256": "dc5c24909e0e72810d3aff554d36d742c0e25eaed7ac9c296c2c0a38b041f5f5",
+        "bytes": 102314,
+        "width": 1280,
+        "height": 720,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 307200,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/arcade-master--960x540--preview.webp",
+        "sha256": "414c4d8974222e7058f351960cd19454ba64ee8863d048c2cfdf1df78466bd96",
+        "bytes": 62958,
+        "width": 960,
+        "height": 540,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 307200,
+        "budget_pass": true
+      }
+    ],
+    "arcade-quiet": [
+      {
+        "relative_path": "originals/arcade-quiet--candidate-1.png",
+        "sha256": "f0128ddb44923e1192922f3d7f71e0fe114f010a5b5a12620828dfa402f5c83a",
+        "bytes": 2454678,
+        "width": 1672,
+        "height": 941,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "renditions/arcade-quiet--1280x720--preview.webp",
+        "sha256": "1f8e9d8539d8e088d8c3b66da1c597a8e2ceec3a9a0822203df4c6f4e48ce5fd",
+        "bytes": 175224,
+        "width": 1280,
+        "height": 720,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 307200,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/arcade-quiet--960x540--preview.webp",
+        "sha256": "efc1e6c833f1231c80090bd3822c1cb3b5fffbb13c00953199338372f0614764",
+        "bytes": 110060,
+        "width": 960,
+        "height": 540,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 307200,
+        "budget_pass": true
+      }
+    ],
+    "arcade-wall": [
+      {
+        "relative_path": "originals/arcade-wall--candidate-1.png",
+        "sha256": "61cb9a90c68dcae37a49c1f7196b2b48d797a19d2c0df61d6d63749901db2d83",
+        "bytes": 2195088,
+        "width": 1536,
+        "height": 1024,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "renditions/arcade-wall--1200x800--panel.webp",
+        "sha256": "5facdc3aafda9fc9d03cb553598660d4779d98c9a2c1baa6a52ce936dfe48ad1",
+        "bytes": 72576,
+        "width": 1200,
+        "height": 800,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 184320,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/arcade-wall--600x400--panel.webp",
+        "sha256": "f3fd5181bf183789d3bbbfd30151877a31eb220d0af4baf666502739d558d3c4",
+        "bytes": 15282,
+        "width": 600,
+        "height": 400,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 184320,
+        "budget_pass": true
+      }
+    ],
+    "arcade-hero": [
+      {
+        "relative_path": "masters/arcade-hero--1668x695--native-wide-crop.png",
+        "sha256": "0eab593529c5fe036bc82f90a4edadad3adc9f70ef9ee3f4c0b195a3e4996d31",
+        "bytes": 1520694,
+        "width": 1668,
+        "height": 695,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": null,
+        "budget_pass": null
+      },
+      {
+        "relative_path": "renditions/arcade-hero--960x400--wide.webp",
+        "sha256": "c51e10d1a8a05d4e425c847dab43fd88291ea2c8644d64b374d6943ae7d24b5e",
+        "bytes": 45192,
+        "width": 960,
+        "height": 400,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 256000,
+        "budget_pass": true
+      }
+    ],
+    "arcade-poster": [
+      {
+        "relative_path": "renditions/arcade-poster--1280x720--fallback.webp",
+        "sha256": "dc5c24909e0e72810d3aff554d36d742c0e25eaed7ac9c296c2c0a38b041f5f5",
+        "bytes": 102314,
+        "width": 1280,
+        "height": 720,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 225280,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/arcade-poster--640x360--fallback.webp",
+        "sha256": "b151c9a3b970f5629bc470ff5bc3d2103a5868bb1accafd815159f17430459ad",
+        "bytes": 29564,
+        "width": 640,
+        "height": 360,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 92160,
+        "budget_pass": true
+      }
+    ],
+    "arcade-card": [
+      {
+        "relative_path": "masters/arcade-card--941x941--native-square-crop.png",
+        "sha256": "40bd180d460dd8e03e06533a1aebfd7fb7ad105450a5ba73f5a7ec2b36d7858b",
+        "bytes": 1269251,
+        "width": 941,
+        "height": 941,
+        "format": "PNG",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": null,
+        "budget_pass": null
+      },
+      {
+        "relative_path": "renditions/arcade-card--512x512--picker.webp",
+        "sha256": "687eaaedb346608a521086b08343551d9054fb14de65da9df134c9316d84bd62",
+        "bytes": 50128,
+        "width": 512,
+        "height": 512,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 81920,
+        "budget_pass": true
+      },
+      {
+        "relative_path": "renditions/arcade-card--256x256--picker.webp",
+        "sha256": "86077e02861fafe144517590548f8c52eecd54bd0d9c0cad5ec1df83b12165db",
+        "bytes": 14126,
+        "width": 256,
+        "height": 256,
+        "format": "WEBP",
+        "mode": "RGB",
+        "duration_seconds": null,
+        "codec": null,
+        "budget_bytes": 30720,
+        "budget_pass": true
+      }
+    ]
+  },
+  "review_files": [
+    {
+      "relative_path": "review/arcade-composition.jpg",
+      "sha256": "e0dd82d8edb861cb2aff11a78231243aa2ab089c9d7fe5a4d5a934b81cfa2d42",
+      "bytes": 208107,
+      "width": 1254,
+      "height": 706,
+      "format": "JPEG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "review/arcade-contact-sheet.jpg",
+      "sha256": "e727085e1619b20be85614d4960f9d71f5fb564b7ef4d177220623e37b1b317c",
+      "bytes": 276788,
+      "width": 1280,
+      "height": 1240,
+      "format": "JPEG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "review/arcade-quiet-edge-overlay.jpg",
+      "sha256": "ea5d1bbe37c3db3051b645b3e69dffe418f60e4aacb8979ca197f0ab3fd9b74f",
+      "bytes": 999226,
+      "width": 1672,
+      "height": 941,
+      "format": "JPEG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "review/arcade-quiet-landmarks.jpg",
+      "sha256": "94213caa2f8cd0dbe2a1030f667120135b882423d9adac08cdb430e2e8c5c96e",
+      "bytes": 226706,
+      "width": 1672,
+      "height": 515,
+      "format": "JPEG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "review/arcade-screen-detail.jpg",
+      "sha256": "68a1c4d336b0d6bc7037b0388997fa02ff20805916864998a576f67966dc4ff2",
+      "bytes": 25215,
+      "width": 600,
+      "height": 320,
+      "format": "JPEG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    }
+  ]
+}

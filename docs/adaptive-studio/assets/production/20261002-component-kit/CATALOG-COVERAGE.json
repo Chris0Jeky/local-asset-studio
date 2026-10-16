@@ -1,0 +1,26 @@
+{
+  "catalog_ids": [
+    "foundation-tokens",
+    "foundation-buttons",
+    "foundation-fields",
+    "foundation-cards",
+    "foundation-tabs",
+    "foundation-badges",
+    "foundation-dialogs",
+    "foundation-patterns",
+    "foundation-skeletons",
+    "motion-disclose",
+    "motion-crossfade",
+    "motion-focus",
+    "motion-load",
+    "motion-pause",
+    "promo-readme"
+  ],
+  "count": 15,
+  "status": "source design candidates, not runtime-complete assets",
+  "art_selection": "selected under owner-delegated design judgment",
+  "implementation_scope": "isolated source specimens and pure reference policy only; no app runtime imports",
+  "runtime": "not-qualified",
+  "release": "not-selected",
+  "dialog_and_tabs": "visual specimens only, no modal focus or ARIA tab behaviour claim"
+}

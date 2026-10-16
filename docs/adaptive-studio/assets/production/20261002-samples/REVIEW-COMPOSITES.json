@@ -1,0 +1,712 @@
+[
+  {
+    "kind": "per-sample review contact sheet",
+    "purpose": "Review presentation only; never an independent source component or runtime evidence",
+    "output": {
+      "relative_path": "contact-sheets/sample-character-canon.jpg",
+      "sha256": "6099e7a526d2081d0f31ef465d95a85a52893195de997c736d430dd530d93694",
+      "bytes": 201874,
+      "width": 1232,
+      "height": 692,
+      "format": "jpeg",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    "inputs": [
+      {
+        "relative_path": "inputs/reference-identity--1024x1536--candidate-3.png",
+        "sha256": "ea29ef505b512ccb1148893a2bdf27b30769b43b8c741cc783e1e0491e912a9b",
+        "bytes": 1889270,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "originals/sample-character-canon--1024x1536--candidate-1.png",
+        "sha256": "c1c96a6517fc0e1b185b2ed4e77a7a39891e247e8deb26dafecc8e8e954a3172",
+        "bytes": 1673341,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "mode": "RGBA",
+        "alpha": true,
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "components/sample-character-canon--silhouette--1024x1536.png",
+        "sha256": "678aa839c05835880c2769b8921b44eb99b4f367f18b326db3e2df71dee436fd",
+        "bytes": 110009,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "mode": "RGBA",
+        "alpha": true,
+        "duration_seconds": null,
+        "codec": null
+      }
+    ],
+    "method": "Decode source; alpha-composite RGBA onto a light checker if needed; aspect-preserving downscale only; place into a labeled RGB grid",
+    "checker": {
+      "cell_size_in_source_pixels": 32,
+      "colors_rgb": [
+        [
+          245,
+          245,
+          245
+        ],
+        [
+          204,
+          208,
+          214
+        ]
+      ]
+    },
+    "encoder": {
+      "format": "JPEG",
+      "quality": 90,
+      "subsampling": 0
+    },
+    "exact_layout_source": {
+      "relative_path": "production/20261002-samples/build_samples.py",
+      "relative_path_base": "docs/adaptive-studio/assets",
+      "sha256": "1f64a7da5d6365fb28efdd5ceff47ee8c0f43a89e04748f0a29c713ac9c099a8"
+    },
+    "source_function": "make_contact"
+  },
+  {
+    "kind": "alpha visual QA comparison",
+    "purpose": "View original alpha over two backdrops without changing the source",
+    "output": {
+      "relative_path": "qa/sample-character-canon--1024x1536--candidate-1--alpha-check.jpg",
+      "sha256": "45a79b4e61fe838ecd9077ac44d1ee4814f1e9e9edf72c9d264471a77628e37d",
+      "bytes": 204965,
+      "width": 1040,
+      "height": 830,
+      "format": "jpeg",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    "inputs": [
+      {
+        "relative_path": "originals/sample-character-canon--1024x1536--candidate-1.png",
+        "sha256": "c1c96a6517fc0e1b185b2ed4e77a7a39891e247e8deb26dafecc8e8e954a3172",
+        "bytes": 1673341,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "mode": "RGBA",
+        "alpha": true,
+        "duration_seconds": null,
+        "codec": null
+      }
+    ],
+    "method": "Alpha-composite original RGBA over full-size light and dark checkerboards; downscale each to 512x768; place side-by-side with labels on 1040x830 RGB canvas",
+    "checker": {
+      "cell_size_in_source_pixels": 32,
+      "light_colors_rgb": [
+        [
+          245,
+          245,
+          245
+        ],
+        [
+          204,
+          208,
+          214
+        ]
+      ],
+      "dark_colors_rgb": [
+        [
+          26,
+          31,
+          42
+        ],
+        [
+          64,
+          72,
+          88
+        ]
+      ]
+    },
+    "encoder": {
+      "format": "JPEG",
+      "quality": 92,
+      "subsampling": 0
+    },
+    "exact_layout_source": {
+      "relative_path": "production/20261002-samples/build_samples.py",
+      "relative_path_base": "docs/adaptive-studio/assets",
+      "sha256": "1f64a7da5d6365fb28efdd5ceff47ee8c0f43a89e04748f0a29c713ac9c099a8"
+    },
+    "source_functions": [
+      "checker",
+      "flatten",
+      "QA_ALPHA build loop"
+    ]
+  },
+  {
+    "kind": "per-sample review contact sheet",
+    "purpose": "Review presentation only; never an independent source component or runtime evidence",
+    "output": {
+      "relative_path": "contact-sheets/sample-pose-pair.jpg",
+      "sha256": "b62bfbf3181e375af34fbdfc08764738208e0776580ef6eaeee221c152730ce6",
+      "bytes": 121642,
+      "width": 832,
+      "height": 692,
+      "format": "jpeg",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    "inputs": [
+      {
+        "relative_path": "originals/sample-character-canon--1024x1536--candidate-1.png",
+        "sha256": "c1c96a6517fc0e1b185b2ed4e77a7a39891e247e8deb26dafecc8e8e954a3172",
+        "bytes": 1673341,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "mode": "RGBA",
+        "alpha": true,
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "inputs/reference-pose--1024x1536--candidate-1.png",
+        "sha256": "526c988b621534eea50f08ba0666247cbd13a8f45e82d36502c20bf940c5b984",
+        "bytes": 1908246,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      }
+    ],
+    "method": "Decode source; alpha-composite RGBA onto a light checker if needed; aspect-preserving downscale only; place into a labeled RGB grid",
+    "checker": {
+      "cell_size_in_source_pixels": 32,
+      "colors_rgb": [
+        [
+          245,
+          245,
+          245
+        ],
+        [
+          204,
+          208,
+          214
+        ]
+      ]
+    },
+    "encoder": {
+      "format": "JPEG",
+      "quality": 90,
+      "subsampling": 0
+    },
+    "exact_layout_source": {
+      "relative_path": "production/20261002-samples/build_samples.py",
+      "relative_path_base": "docs/adaptive-studio/assets",
+      "sha256": "1f64a7da5d6365fb28efdd5ceff47ee8c0f43a89e04748f0a29c713ac9c099a8"
+    },
+    "source_function": "make_contact"
+  },
+  {
+    "kind": "per-sample review contact sheet",
+    "purpose": "Review presentation only; never an independent source component or runtime evidence",
+    "output": {
+      "relative_path": "contact-sheets/sample-outfit-study.jpg",
+      "sha256": "4605d27f575d9091278e008c74b5a6c2bca77d382cdc82e619fafdc66a682156",
+      "bytes": 153930,
+      "width": 832,
+      "height": 692,
+      "format": "jpeg",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    "inputs": [
+      {
+        "relative_path": "originals/sample-character-canon--1024x1536--candidate-1.png",
+        "sha256": "c1c96a6517fc0e1b185b2ed4e77a7a39891e247e8deb26dafecc8e8e954a3172",
+        "bytes": 1673341,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "mode": "RGBA",
+        "alpha": true,
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "originals/sample-outfit-study--1024x1536--candidate-1.png",
+        "sha256": "190e73ef4c3314014f241a544f042c31caa16466b7e3d3d54504a7ff672262e1",
+        "bytes": 1562922,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "mode": "RGBA",
+        "alpha": true,
+        "duration_seconds": null,
+        "codec": null
+      }
+    ],
+    "method": "Decode source; alpha-composite RGBA onto a light checker if needed; aspect-preserving downscale only; place into a labeled RGB grid",
+    "checker": {
+      "cell_size_in_source_pixels": 32,
+      "colors_rgb": [
+        [
+          245,
+          245,
+          245
+        ],
+        [
+          204,
+          208,
+          214
+        ]
+      ]
+    },
+    "encoder": {
+      "format": "JPEG",
+      "quality": 90,
+      "subsampling": 0
+    },
+    "exact_layout_source": {
+      "relative_path": "production/20261002-samples/build_samples.py",
+      "relative_path_base": "docs/adaptive-studio/assets",
+      "sha256": "1f64a7da5d6365fb28efdd5ceff47ee8c0f43a89e04748f0a29c713ac9c099a8"
+    },
+    "source_function": "make_contact"
+  },
+  {
+    "kind": "alpha visual QA comparison",
+    "purpose": "View original alpha over two backdrops without changing the source",
+    "output": {
+      "relative_path": "qa/sample-outfit-study--1024x1536--candidate-1--alpha-check.jpg",
+      "sha256": "71f01ea2e5de86129097fc325b68cd8a6342a819fd7c4bc01e44dc5c09972071",
+      "bytes": 185308,
+      "width": 1040,
+      "height": 830,
+      "format": "jpeg",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    "inputs": [
+      {
+        "relative_path": "originals/sample-outfit-study--1024x1536--candidate-1.png",
+        "sha256": "190e73ef4c3314014f241a544f042c31caa16466b7e3d3d54504a7ff672262e1",
+        "bytes": 1562922,
+        "width": 1024,
+        "height": 1536,
+        "format": "png",
+        "mode": "RGBA",
+        "alpha": true,
+        "duration_seconds": null,
+        "codec": null
+      }
+    ],
+    "method": "Alpha-composite original RGBA over full-size light and dark checkerboards; downscale each to 512x768; place side-by-side with labels on 1040x830 RGB canvas",
+    "checker": {
+      "cell_size_in_source_pixels": 32,
+      "light_colors_rgb": [
+        [
+          245,
+          245,
+          245
+        ],
+        [
+          204,
+          208,
+          214
+        ]
+      ],
+      "dark_colors_rgb": [
+        [
+          26,
+          31,
+          42
+        ],
+        [
+          64,
+          72,
+          88
+        ]
+      ]
+    },
+    "encoder": {
+      "format": "JPEG",
+      "quality": 92,
+      "subsampling": 0
+    },
+    "exact_layout_source": {
+      "relative_path": "production/20261002-samples/build_samples.py",
+      "relative_path_base": "docs/adaptive-studio/assets",
+      "sha256": "1f64a7da5d6365fb28efdd5ceff47ee8c0f43a89e04748f0a29c713ac9c099a8"
+    },
+    "source_functions": [
+      "checker",
+      "flatten",
+      "QA_ALPHA build loop"
+    ]
+  },
+  {
+    "kind": "per-sample review contact sheet",
+    "purpose": "Review presentation only; never an independent source component or runtime evidence",
+    "output": {
+      "relative_path": "contact-sheets/sample-lighting-pair.jpg",
+      "sha256": "3be2444d27fbcbe467847774aa84b2e4e3d4eadd640d6dbe234a4e1ac1b456fb",
+      "bytes": 58445,
+      "width": 832,
+      "height": 552,
+      "format": "jpeg",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    "inputs": [
+      {
+        "relative_path": "inputs/reference-lighting--1254x1254--candidate-2.png",
+        "sha256": "65ac03353702d9a4ea968a32baaf1a8bc1a952df08b1386da79442fbddece73f",
+        "bytes": 1805697,
+        "width": 1254,
+        "height": 1254,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "originals/sample-lighting-pair--1254x1254--candidate-1.png",
+        "sha256": "db2ccb617cc14598865c7f3e4e70ddb719368eab7d68c36717bdebc339ad10a9",
+        "bytes": 1761387,
+        "width": 1254,
+        "height": 1254,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      }
+    ],
+    "method": "Decode source; alpha-composite RGBA onto a light checker if needed; aspect-preserving downscale only; place into a labeled RGB grid",
+    "checker": {
+      "cell_size_in_source_pixels": 32,
+      "colors_rgb": [
+        [
+          245,
+          245,
+          245
+        ],
+        [
+          204,
+          208,
+          214
+        ]
+      ]
+    },
+    "encoder": {
+      "format": "JPEG",
+      "quality": 90,
+      "subsampling": 0
+    },
+    "exact_layout_source": {
+      "relative_path": "production/20261002-samples/build_samples.py",
+      "relative_path_base": "docs/adaptive-studio/assets",
+      "sha256": "1f64a7da5d6365fb28efdd5ceff47ee8c0f43a89e04748f0a29c713ac9c099a8"
+    },
+    "source_function": "make_contact"
+  },
+  {
+    "kind": "per-sample review contact sheet",
+    "purpose": "Review presentation only; never an independent source component or runtime evidence",
+    "output": {
+      "relative_path": "contact-sheets/sample-composition-pair.jpg",
+      "sha256": "c81d7f07562efbf48cc3d7092c83bb1b912e0fc9fc547f5c78ff99d23fe547ce",
+      "bytes": 52002,
+      "width": 832,
+      "height": 552,
+      "format": "jpeg",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    "inputs": [
+      {
+        "relative_path": "inputs/reference-composition--1254x1254--candidate-2.png",
+        "sha256": "f790e59c3454f97ab00a65f6170d5ada9236d19c22e35c485a9374d2e073934b",
+        "bytes": 1442857,
+        "width": 1254,
+        "height": 1254,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "components/sample-composition-pair--crop--1024x1024.png",
+        "sha256": "30210a7983f0f5faa63c8eca7ed9ef39f880351013a757cf5fcd0874a38a77b7",
+        "bytes": 943587,
+        "width": 1024,
+        "height": 1024,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      }
+    ],
+    "method": "Decode source; alpha-composite RGBA onto a light checker if needed; aspect-preserving downscale only; place into a labeled RGB grid",
+    "checker": {
+      "cell_size_in_source_pixels": 32,
+      "colors_rgb": [
+        [
+          245,
+          245,
+          245
+        ],
+        [
+          204,
+          208,
+          214
+        ]
+      ]
+    },
+    "encoder": {
+      "format": "JPEG",
+      "quality": 90,
+      "subsampling": 0
+    },
+    "exact_layout_source": {
+      "relative_path": "production/20261002-samples/build_samples.py",
+      "relative_path_base": "docs/adaptive-studio/assets",
+      "sha256": "1f64a7da5d6365fb28efdd5ceff47ee8c0f43a89e04748f0a29c713ac9c099a8"
+    },
+    "source_function": "make_contact"
+  },
+  {
+    "kind": "per-sample review contact sheet",
+    "purpose": "Review presentation only; never an independent source component or runtime evidence",
+    "output": {
+      "relative_path": "contact-sheets/sample-sequence-strip.jpg",
+      "sha256": "6ab961af5be7ca359aefb5c16cf64deab67db4a2cc5cee2073800f259c563e1b",
+      "bytes": 366211,
+      "width": 1232,
+      "height": 992,
+      "format": "jpeg",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    "inputs": [
+      {
+        "relative_path": "originals/sample-sequence-strip--1254x1254--candidate-1.png",
+        "sha256": "c7ada63ad97d514b34f9e932b801d3b0d6d78d55b7059e51a7ba9a53ecec2f10",
+        "bytes": 2693639,
+        "width": 1254,
+        "height": 1254,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "components/sample-sequence-strip--panel-01--621x621.png",
+        "sha256": "4fd4868199029bfcb4272c9037ccfac17892c7330d333e7cc35e3b0ef1ff1293",
+        "bytes": 663670,
+        "width": 621,
+        "height": 621,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "components/sample-sequence-strip--panel-02--621x621.png",
+        "sha256": "062d941795f7e7cc37e94650949bc16b63be93ab7456b914f60f180fd6de00f3",
+        "bytes": 659408,
+        "width": 621,
+        "height": 621,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "components/sample-sequence-strip--panel-03--621x621.png",
+        "sha256": "6923dc560ba8f6663d1d9cf7c167140a3d76203ffaf1057d1ad9eddd20b87e40",
+        "bytes": 657401,
+        "width": 621,
+        "height": 621,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "components/sample-sequence-strip--panel-04--621x621.png",
+        "sha256": "0ba0de0d41268d5639b998fdf3b954c7c7cd9c8c0097b8908281a308a01c74be",
+        "bytes": 656003,
+        "width": 621,
+        "height": 621,
+        "format": "png",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      }
+    ],
+    "method": "Decode source; alpha-composite RGBA onto a light checker if needed; aspect-preserving downscale only; place into a labeled RGB grid",
+    "checker": {
+      "cell_size_in_source_pixels": 32,
+      "colors_rgb": [
+        [
+          245,
+          245,
+          245
+        ],
+        [
+          204,
+          208,
+          214
+        ]
+      ]
+    },
+    "encoder": {
+      "format": "JPEG",
+      "quality": 90,
+      "subsampling": 0
+    },
+    "exact_layout_source": {
+      "relative_path": "production/20261002-samples/build_samples.py",
+      "relative_path_base": "docs/adaptive-studio/assets",
+      "sha256": "1f64a7da5d6365fb28efdd5ceff47ee8c0f43a89e04748f0a29c713ac9c099a8"
+    },
+    "source_function": "make_contact"
+  },
+  {
+    "kind": "six-sample overview contact sheet",
+    "purpose": "Review overview only, assembled from per-sample contact sheets",
+    "output": {
+      "relative_path": "contact-sheets/six-samples-overview.jpg",
+      "sha256": "ad929d2fb55a3cde59733988fd13f17e10cb9b339287dffc94c23b99c295a95c",
+      "bytes": 299464,
+      "width": 1440,
+      "height": 1230,
+      "format": "jpeg",
+      "mode": "RGB",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null
+    },
+    "inputs": [
+      {
+        "relative_path": "contact-sheets/sample-character-canon.jpg",
+        "sha256": "6099e7a526d2081d0f31ef465d95a85a52893195de997c736d430dd530d93694",
+        "bytes": 201874,
+        "width": 1232,
+        "height": 692,
+        "format": "jpeg",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "contact-sheets/sample-pose-pair.jpg",
+        "sha256": "b62bfbf3181e375af34fbdfc08764738208e0776580ef6eaeee221c152730ce6",
+        "bytes": 121642,
+        "width": 832,
+        "height": 692,
+        "format": "jpeg",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "contact-sheets/sample-outfit-study.jpg",
+        "sha256": "4605d27f575d9091278e008c74b5a6c2bca77d382cdc82e619fafdc66a682156",
+        "bytes": 153930,
+        "width": 832,
+        "height": 692,
+        "format": "jpeg",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "contact-sheets/sample-lighting-pair.jpg",
+        "sha256": "3be2444d27fbcbe467847774aa84b2e4e3d4eadd640d6dbe234a4e1ac1b456fb",
+        "bytes": 58445,
+        "width": 832,
+        "height": 552,
+        "format": "jpeg",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "contact-sheets/sample-composition-pair.jpg",
+        "sha256": "c81d7f07562efbf48cc3d7092c83bb1b912e0fc9fc547f5c78ff99d23fe547ce",
+        "bytes": 52002,
+        "width": 832,
+        "height": 552,
+        "format": "jpeg",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      },
+      {
+        "relative_path": "contact-sheets/sample-sequence-strip.jpg",
+        "sha256": "6ab961af5be7ca359aefb5c16cf64deab67db4a2cc5cee2073800f259c563e1b",
+        "bytes": 366211,
+        "width": 1232,
+        "height": 992,
+        "format": "jpeg",
+        "mode": "RGB",
+        "alpha": false,
+        "duration_seconds": null,
+        "codec": null
+      }
+    ],
+    "method": "Aspect-preserving downscale of six contact sheets to maximum 450x510; RGB layout 1440x1230; labels added separately",
+    "encoder": {
+      "format": "JPEG",
+      "quality": 90,
+      "subsampling": 0
+    },
+    "exact_layout_source": {
+      "relative_path": "production/20261002-samples/build_samples.py",
+      "relative_path_base": "docs/adaptive-studio/assets",
+      "sha256": "1f64a7da5d6365fb28efdd5ceff47ee8c0f43a89e04748f0a29c713ac9c099a8"
+    },
+    "source_function": "six-sample overview build block"
+  }
+]

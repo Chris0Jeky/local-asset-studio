@@ -1,0 +1,159 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "sci-fi-noir-poster",
+  "brief_revision": "4ef2d9742084c7f506ef0df413021c129fd76dbe",
+  "production": {
+    "method": "derive",
+    "provider": "local deterministic image processing",
+    "tool_action": "Pillow crop/resize/WebP encode",
+    "execution_surface": "dot cloud workspace",
+    "reported_model": null,
+    "seed": null,
+    "output_id": null,
+    "produced_at": null,
+    "prompt_record": null,
+    "input_anchors": [
+      {
+        "asset_id": "sci-fi-noir-master",
+        "relative_path": "originals/sci-fi-noir-master--candidate-1.png",
+        "sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+        "role": "exact deterministic source"
+      }
+    ],
+    "orchestration_handle": null,
+    "orchestration_handle_is_provider_job_id": false
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "provenance-recorded; source/license clearance not asserted"
+  },
+  "files": [
+    {
+      "relative_path": "renditions/sci-fi-noir-poster--1280x720--fallback.webp",
+      "sha256": "5309de0cc6b0e1b2022018859f0a1044ef4bbac4262c3622f40ed41b86ed0491",
+      "bytes": 170324,
+      "width": 1280,
+      "height": 720,
+      "format": "WEBP",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": 225280,
+      "budget_pass": true
+    },
+    {
+      "relative_path": "renditions/sci-fi-noir-poster--640x360--fallback.webp",
+      "sha256": "2c1d989dda0bcedcf4d88ebc20d547a06cb02ea72d4d000ff60709bce1664bb9",
+      "bytes": 46342,
+      "width": 640,
+      "height": 360,
+      "format": "WEBP",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": 92160,
+      "budget_pass": true
+    }
+  ],
+  "transformations": [
+    {
+      "asset_id": "sci-fi-noir-poster",
+      "input_path": "originals/sci-fi-noir-master--candidate-1.png",
+      "input_sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+      "output_path": "renditions/sci-fi-noir-poster--1280x720--fallback.webp",
+      "output_sha256": "5309de0cc6b0e1b2022018859f0a1044ef4bbac4262c3622f40ed41b86ed0491",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1280,
+        720
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "sci-fi-noir-poster",
+      "input_path": "originals/sci-fi-noir-master--candidate-1.png",
+      "input_sha256": "4f31d6b62de9bd883267303980d0aa5f041fe17e25e6b7f02c483f5b773b3075",
+      "output_path": "renditions/sci-fi-noir-poster--640x360--fallback.webp",
+      "output_sha256": "2c1d989dda0bcedcf4d88ebc20d547a06cb02ea72d4d000ff60709bce1664bb9",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        640,
+        360
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    }
+  ],
+  "art_review": {
+    "status": "accepted-by-delegated-assistant",
+    "reviewer": "lead assistant",
+    "scope": "source art only",
+    "notes": "Selected after visual review of the full six-ID contact sheet on 2026-10-02. Weathered steel texture and horizontal seam prevent an unqualified full-left60% text-safe claim. Keep crop, heading-zone, registration and native-size caveats."
+  },
+  "rendition_review": {
+    "status": "encoded-size-and-budget-checks-passed-with-target-shortfalls",
+    "checks": [
+      "Every listed image decodes at its recorded dimensions.",
+      "All 11 encoded variants meet individual profile budgets.",
+      "Crops preserve aspect ratio; no upscaling or nonuniform scaling.",
+      "Native source and large hero/card-master targets remain unmet as recorded."
+    ]
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "Provider model/build, seed, provider output/job ID and generation timestamp were not exposed.",
+    "Source terms/license clearance is not asserted.",
+    "No actual slot, text contrast, accessibility, memory/loading, active inference or crossfade test was performed."
+  ]
+}

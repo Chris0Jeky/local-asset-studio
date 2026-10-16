@@ -1,0 +1,33 @@
+{
+  "comment_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269#issuecomment-5956006393",
+  "archives": [
+    {
+      "filename": "arcade-20261002-sources.zip",
+      "bytes": 6718972,
+      "sha256": "857e19da779636dedbf0ace51786f43009e17bc2acddad93462dcdf4abb7b365",
+      "url": "https://github.com/user-attachments/files/32969389/arcade-20261002-sources.zip",
+      "roundtrip_verified": true
+    },
+    {
+      "filename": "arcade-20261002-renditions-review.zip",
+      "bytes": 5341662,
+      "sha256": "4ca8f5f54de638eb55f4865ff741b35acad9e291b1ae73357b2900b5e381a23f",
+      "url": "https://github.com/user-attachments/files/32969390/arcade-20261002-renditions-review.zip",
+      "roundtrip_verified": true
+    },
+    {
+      "filename": "sakura-20261002-sources.zip",
+      "bytes": 7480561,
+      "sha256": "f61237ea5ba3cb0a0384333815c0104d13fcd8d69bbea7c1984cb05efde635bf",
+      "url": "https://github.com/user-attachments/files/32969392/sakura-20261002-sources.zip",
+      "roundtrip_verified": true
+    },
+    {
+      "filename": "sakura-20261002-renditions-review.zip",
+      "bytes": 6669450,
+      "sha256": "78bcc55e038b78bc01efea63af8effa3fb2c4ee2f0d0c30795c9187c292b7b5a",
+      "url": "https://github.com/user-attachments/files/32969393/sakura-20261002-renditions-review.zip",
+      "roundtrip_verified": true
+    }
+  ]
+}

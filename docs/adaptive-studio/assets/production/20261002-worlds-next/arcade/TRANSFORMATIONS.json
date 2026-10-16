@@ -1,0 +1,460 @@
+{
+  "schema": "studio.theme-asset.transformations/v1",
+  "prepared_at": "2026-10-02T15:40:40Z",
+  "reference_commit": "4ef2d9742084c7f506ef0df413021c129fd76dbe",
+  "software": {
+    "Pillow": "12.3.0",
+    "WebP_encoder": "1.6.0"
+  },
+  "transformations": [
+    {
+      "asset_id": "arcade-master",
+      "input_path": "originals/arcade-master--candidate-1.png",
+      "input_sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb",
+      "output_path": "renditions/arcade-master--1280x720--preview.webp",
+      "output_sha256": "dc5c24909e0e72810d3aff554d36d742c0e25eaed7ac9c296c2c0a38b041f5f5",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1280,
+        720
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "arcade-master",
+      "input_path": "originals/arcade-master--candidate-1.png",
+      "input_sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb",
+      "output_path": "renditions/arcade-master--960x540--preview.webp",
+      "output_sha256": "414c4d8974222e7058f351960cd19454ba64ee8863d048c2cfdf1df78466bd96",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        960,
+        540
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "arcade-quiet",
+      "input_path": "originals/arcade-quiet--candidate-1.png",
+      "input_sha256": "f0128ddb44923e1192922f3d7f71e0fe114f010a5b5a12620828dfa402f5c83a",
+      "output_path": "renditions/arcade-quiet--1280x720--preview.webp",
+      "output_sha256": "1f8e9d8539d8e088d8c3b66da1c597a8e2ceec3a9a0822203df4c6f4e48ce5fd",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1280,
+        720
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "arcade-quiet",
+      "input_path": "originals/arcade-quiet--candidate-1.png",
+      "input_sha256": "f0128ddb44923e1192922f3d7f71e0fe114f010a5b5a12620828dfa402f5c83a",
+      "output_path": "renditions/arcade-quiet--960x540--preview.webp",
+      "output_sha256": "efc1e6c833f1231c80090bd3822c1cb3b5fffbb13c00953199338372f0614764",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        960,
+        540
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "arcade-hero",
+      "input_path": "originals/arcade-master--candidate-1.png",
+      "input_sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb",
+      "output_path": "masters/arcade-hero--1668x695--native-wide-crop.png",
+      "output_sha256": "0eab593529c5fe036bc82f90a4edadad3adc9f70ef9ee3f4c0b195a3e4996d31",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        2,
+        130,
+        1670,
+        825
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1668,
+        695
+      ],
+      "operation": "integer crop without resampling",
+      "resample": null,
+      "encoding": {
+        "format": "PNG",
+        "lossless": true,
+        "optimize": true,
+        "quality": null
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "arcade-hero",
+      "input_path": "originals/arcade-master--candidate-1.png",
+      "input_sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb",
+      "output_path": "renditions/arcade-hero--960x400--wide.webp",
+      "output_sha256": "c51e10d1a8a05d4e425c847dab43fd88291ea2c8644d64b374d6943ae7d24b5e",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        2,
+        130,
+        1670,
+        825
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        960,
+        400
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "arcade-wall",
+      "input_path": "originals/arcade-wall--candidate-1.png",
+      "input_sha256": "61cb9a90c68dcae37a49c1f7196b2b48d797a19d2c0df61d6d63749901db2d83",
+      "output_path": "renditions/arcade-wall--1200x800--panel.webp",
+      "output_sha256": "5facdc3aafda9fc9d03cb553598660d4779d98c9a2c1baa6a52ce936dfe48ad1",
+      "source_canvas": [
+        1536,
+        1024
+      ],
+      "crop_box_xyxy": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1200,
+        800
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "arcade-wall",
+      "input_path": "originals/arcade-wall--candidate-1.png",
+      "input_sha256": "61cb9a90c68dcae37a49c1f7196b2b48d797a19d2c0df61d6d63749901db2d83",
+      "output_path": "renditions/arcade-wall--600x400--panel.webp",
+      "output_sha256": "f3fd5181bf183789d3bbbfd30151877a31eb220d0af4baf666502739d558d3c4",
+      "source_canvas": [
+        1536,
+        1024
+      ],
+      "crop_box_xyxy": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        600,
+        400
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "arcade-poster",
+      "input_path": "originals/arcade-master--candidate-1.png",
+      "input_sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb",
+      "output_path": "renditions/arcade-poster--1280x720--fallback.webp",
+      "output_sha256": "dc5c24909e0e72810d3aff554d36d742c0e25eaed7ac9c296c2c0a38b041f5f5",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1280,
+        720
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "arcade-poster",
+      "input_path": "originals/arcade-master--candidate-1.png",
+      "input_sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb",
+      "output_path": "renditions/arcade-poster--640x360--fallback.webp",
+      "output_sha256": "b151c9a3b970f5629bc470ff5bc3d2103a5868bb1accafd815159f17430459ad",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        640,
+        360
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "arcade-card",
+      "input_path": "originals/arcade-master--candidate-1.png",
+      "input_sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb",
+      "output_path": "masters/arcade-card--941x941--native-square-crop.png",
+      "output_sha256": "40bd180d460dd8e03e06533a1aebfd7fb7ad105450a5ba73f5a7ec2b36d7858b",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        731,
+        0,
+        1672,
+        941
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        941,
+        941
+      ],
+      "operation": "integer crop without resampling",
+      "resample": null,
+      "encoding": {
+        "format": "PNG",
+        "lossless": true,
+        "optimize": true,
+        "quality": null
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "arcade-card",
+      "input_path": "originals/arcade-master--candidate-1.png",
+      "input_sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb",
+      "output_path": "renditions/arcade-card--512x512--picker.webp",
+      "output_sha256": "687eaaedb346608a521086b08343551d9054fb14de65da9df134c9316d84bd62",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        731,
+        0,
+        1672,
+        941
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        512,
+        512
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "arcade-card",
+      "input_path": "originals/arcade-master--candidate-1.png",
+      "input_sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb",
+      "output_path": "renditions/arcade-card--256x256--picker.webp",
+      "output_sha256": "86077e02861fafe144517590548f8c52eecd54bd0d9c0cad5ec1df83b12165db",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        731,
+        0,
+        1672,
+        941
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        256,
+        256
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    }
+  ],
+  "unfulfilled_targets": [
+    {
+      "asset_id": "arcade-master",
+      "requested": "3840x2160",
+      "actual": "1672x941",
+      "reason": "Actual native provider dimensions; no upscaling."
+    },
+    {
+      "asset_id": "arcade-quiet",
+      "requested": "3840x2160",
+      "actual": "1672x941",
+      "reason": "Actual native provider dimensions; no upscaling."
+    },
+    {
+      "asset_id": "arcade-wall",
+      "requested": "2400x1600",
+      "actual": "1536x1024",
+      "reason": "Actual native provider dimensions; no upscaling."
+    },
+    {
+      "asset_id": "arcade-hero",
+      "requested": "3840x1600 lossless and 1920x800 encoded",
+      "actual": "1668x695 lossless crop and 960x400 encoded",
+      "reason": "Actual native provider dimensions; no upscaling."
+    },
+    {
+      "asset_id": "arcade-card",
+      "requested": "1024x1024 master",
+      "actual": "941x941 lossless crop; 512/256 targets fulfilled",
+      "reason": "Actual native provider dimensions; no upscaling."
+    }
+  ],
+  "scope": "Deterministic local source-art derivatives; no runtime integration."
+}

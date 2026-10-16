@@ -1,0 +1,33 @@
+{
+  "comment_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269#issuecomment-5956103630",
+  "archives": [
+    {
+      "filename": "minimal-pro-source-art-20261002-originals.zip",
+      "bytes": 6729303,
+      "sha256": "42b2362297ecae2b2b60c5c612e2dd2d5eff1d99beb91d2266054634467c3a07",
+      "url": "https://github.com/user-attachments/files/32969516/minimal-pro-source-art-20261002-originals.zip",
+      "roundtrip_verified": true
+    },
+    {
+      "filename": "minimal-pro-source-art-20261002-renditions-review.zip",
+      "bytes": 4573501,
+      "sha256": "d56430e6a3ec822ed1c0a0f65022a2161da85606f23f3cb343fe43fb2eee7228",
+      "url": "https://github.com/user-attachments/files/32969517/minimal-pro-source-art-20261002-renditions-review.zip",
+      "roundtrip_verified": true
+    },
+    {
+      "filename": "sci-fi-noir-source-art-20261002-originals.zip",
+      "bytes": 7772777,
+      "sha256": "76ee9d5c9c24c888bdcbec7b9d21a010296bf0450f93b13a66442d9a5fbae281",
+      "url": "https://github.com/user-attachments/files/32969520/sci-fi-noir-source-art-20261002-originals.zip",
+      "roundtrip_verified": true
+    },
+    {
+      "filename": "sci-fi-noir-source-art-20261002-renditions-review.zip",
+      "bytes": 6198918,
+      "sha256": "50bac378d35610573cee7ed88e798cd855e703aba05ffed6f2124986c817491d",
+      "url": "https://github.com/user-attachments/files/32969521/sci-fi-noir-source-art-20261002-renditions-review.zip",
+      "roundtrip_verified": true
+    }
+  ]
+}

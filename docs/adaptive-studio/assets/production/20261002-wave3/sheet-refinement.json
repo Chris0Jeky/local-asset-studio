@@ -1,0 +1,15 @@
+{
+  "asset_id": "workflow-sheet",
+  "candidate": 2,
+  "filename": "workflow-sheet--1448x1086--candidate-2.png",
+  "output_id": "exec-6d3b96ee-835f-4a04-9160-30f3f0f696a8",
+  "prompt_key": "workflow_sheet_refine",
+  "prompt": "Change only the display framing of this three-view character sheet: place the three existing portraits inside three equal ivory standing picture frames on a plain tabletop, using the graphite outlined beveled frame construction and raised three-quarter perspective of the second reference image. Keep the character portraits' front/side/back identities, colours, hair, scar, jacket and order. Scale the framed group smaller so the whole group sits above the empty lower third, matching the editorial workflow vignette family. Soft paper-grain background and calm flat ivory palette. No text or new objects.",
+  "input_filenames": [
+    "workflow-sheet--1448x1086--candidate-1.png",
+    "../las-wave2/anchors/workflow-create--1448x1086--candidate-3.png"
+  ],
+  "anchor_ids": [
+    "workflow-create"
+  ]
+}

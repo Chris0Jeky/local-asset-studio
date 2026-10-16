@@ -1,0 +1,937 @@
+{
+  "catalog_snapshot_ref": "6dadd41f91ff087437d2e1bd7a3cb5cba9241092",
+  "counts": {
+    "source-candidate-or-prior-source-record": 97,
+    "owner-deferred": 44,
+    "actual-execution-evidence-pending": 12,
+    "dependency-deferred": 1
+  },
+  "total_ids": 154,
+  "interpretation": "Source coverage is not acceptance of runtime, release, source terms, responsive UI or original resolution targets. Includes six prior acquired/accepted sources outside this production run. New PR source-candidate coverage is91 IDs.",
+  "entries": [
+    {
+      "id": "atelier-master",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "atelier-hero",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "atelier-wall",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "atelier-quiet",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "atelier-poster",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "atelier-layer-far",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "atelier-layer-mid",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "atelier-layer-near",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "atelier-loop",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "atelier-card",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "arcade-master",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "arcade-hero",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "arcade-wall",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "arcade-quiet",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "arcade-poster",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "arcade-layer-far",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "arcade-layer-mid",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "arcade-layer-near",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "arcade-loop",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "arcade-card",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sakura-master",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sakura-hero",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sakura-wall",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sakura-quiet",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sakura-poster",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sakura-layer-far",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sakura-layer-mid",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sakura-layer-near",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sakura-loop",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sakura-card",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "retro-anime-master",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "retro-anime-hero",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "retro-anime-wall",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "retro-anime-quiet",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "retro-anime-poster",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "retro-anime-layer-far",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "retro-anime-layer-mid",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "retro-anime-layer-near",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "retro-anime-loop",
+      "category": "environment",
+      "phase": "actual-execution-evidence-pending",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "retro-anime-card",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "minimal-pro-master",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "minimal-pro-hero",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "minimal-pro-wall",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "minimal-pro-quiet",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "minimal-pro-poster",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "minimal-pro-layer-far",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "minimal-pro-layer-mid",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "minimal-pro-layer-near",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "minimal-pro-loop",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "minimal-pro-card",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sci-fi-noir-master",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sci-fi-noir-hero",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sci-fi-noir-wall",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sci-fi-noir-quiet",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sci-fi-noir-poster",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sci-fi-noir-layer-far",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sci-fi-noir-layer-mid",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sci-fi-noir-layer-near",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sci-fi-noir-loop",
+      "category": "environment",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sci-fi-noir-card",
+      "category": "environment",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "workflow-create",
+      "category": "workflow",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "workflow-edit",
+      "category": "workflow",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "workflow-combine",
+      "category": "workflow",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "workflow-pose",
+      "category": "workflow",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "workflow-sheet",
+      "category": "workflow",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "workflow-repair",
+      "category": "workflow",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "workflow-upscale",
+      "category": "workflow",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "workflow-animate",
+      "category": "workflow",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "workflow-sequence",
+      "category": "workflow",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "workflow-compare",
+      "category": "workflow",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "workflow-review",
+      "category": "workflow",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "workflow-export",
+      "category": "workflow",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "workflow-workflow",
+      "category": "workflow",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "workflow-model",
+      "category": "workflow",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "workflow-recover",
+      "category": "workflow",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "workflow-voice-3d",
+      "category": "workflow",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "state-blank",
+      "category": "state",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "state-no-match",
+      "category": "state",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "state-loading",
+      "category": "state",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "state-internet-absent",
+      "category": "state",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "state-api-unavailable",
+      "category": "state",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "state-backend-missing",
+      "category": "state",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "state-model-missing",
+      "category": "state",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "state-adapter-missing",
+      "category": "state",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "state-source-required",
+      "category": "state",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "state-media-failed",
+      "category": "state",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "state-uncertain",
+      "category": "state",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "state-conflict",
+      "category": "state",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "state-complete",
+      "category": "state",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "state-failure",
+      "category": "state",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "reference-identity",
+      "category": "reference",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "reference-pose",
+      "category": "reference",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "reference-style",
+      "category": "reference",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "reference-outfit",
+      "category": "reference",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "reference-composition",
+      "category": "reference",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "reference-lighting",
+      "category": "reference",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "reference-background",
+      "category": "reference",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "reference-mask",
+      "category": "reference",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "foundation-icons",
+      "category": "foundation",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "foundation-tokens",
+      "category": "foundation",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "foundation-buttons",
+      "category": "foundation",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "foundation-fields",
+      "category": "foundation",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "foundation-cards",
+      "category": "foundation",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "foundation-tabs",
+      "category": "foundation",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "foundation-badges",
+      "category": "foundation",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "foundation-dialogs",
+      "category": "foundation",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "foundation-patterns",
+      "category": "foundation",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "foundation-skeletons",
+      "category": "foundation",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "guide-neutral",
+      "category": "guide",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "guide-welcome",
+      "category": "guide",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "guide-point",
+      "category": "guide",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "guide-think",
+      "category": "guide",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "guide-question",
+      "category": "guide",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "guide-review",
+      "category": "guide",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "guide-rest",
+      "category": "guide",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "guide-celebrate",
+      "category": "guide",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "tutorial-first-run",
+      "category": "tutorial",
+      "phase": "actual-execution-evidence-pending",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "tutorial-reference",
+      "category": "tutorial",
+      "phase": "actual-execution-evidence-pending",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "tutorial-pose",
+      "category": "tutorial",
+      "phase": "actual-execution-evidence-pending",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "tutorial-recipe-change",
+      "category": "tutorial",
+      "phase": "actual-execution-evidence-pending",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "tutorial-adapters",
+      "category": "tutorial",
+      "phase": "actual-execution-evidence-pending",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "tutorial-compare",
+      "category": "tutorial",
+      "phase": "actual-execution-evidence-pending",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "tutorial-continue",
+      "category": "tutorial",
+      "phase": "actual-execution-evidence-pending",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "tutorial-recover",
+      "category": "tutorial",
+      "phase": "actual-execution-evidence-pending",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "tutorial-workflow",
+      "category": "tutorial",
+      "phase": "actual-execution-evidence-pending",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "tutorial-export",
+      "category": "tutorial",
+      "phase": "actual-execution-evidence-pending",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "promo-hero",
+      "category": "promotion",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "promo-offline",
+      "category": "promotion",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "promo-workflow",
+      "category": "promotion",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "promo-skins",
+      "category": "promotion",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "promo-social",
+      "category": "promotion",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "promo-release",
+      "category": "promotion",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "promo-readme",
+      "category": "promotion",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "promo-showcase",
+      "category": "promotion",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "audio-confirm",
+      "category": "audio",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "audio-complete",
+      "category": "audio",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "audio-attention",
+      "category": "audio",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "audio-navigate",
+      "category": "audio",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "audio-room",
+      "category": "audio",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "audio-rain",
+      "category": "audio",
+      "phase": "owner-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "motion-disclose",
+      "category": "motion",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "motion-crossfade",
+      "category": "motion",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "motion-parallax",
+      "category": "motion",
+      "phase": "dependency-deferred",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "motion-focus",
+      "category": "motion",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "motion-load",
+      "category": "motion",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "motion-pause",
+      "category": "motion",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sample-character-canon",
+      "category": "sample",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sample-pose-pair",
+      "category": "sample",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sample-outfit-study",
+      "category": "sample",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sample-lighting-pair",
+      "category": "sample",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sample-composition-pair",
+      "category": "sample",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sample-repair-pair",
+      "category": "sample",
+      "phase": "actual-execution-evidence-pending",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sample-sequence-strip",
+      "category": "sample",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    },
+    {
+      "id": "sample-material-board",
+      "category": "sample",
+      "phase": "source-candidate-or-prior-source-record",
+      "runtime_qualified_by_this_pr": false
+    }
+  ]
+}

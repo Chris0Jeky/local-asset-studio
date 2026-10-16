@@ -1,0 +1,21 @@
+{
+  "status": "passed-source-checks",
+  "node_contract_tests": 32,
+  "token_contrast_pairs": 336,
+  "minimum_normal_text_contrast": 5.191,
+  "skins": 6,
+  "maximum_skin_override_count": 7,
+  "execution_review_semantics_fixed": true,
+  "html_unique_ids": 30,
+  "labelled_fields": 18,
+  "disabled_reason_links": 6,
+  "explicit_type_button": 60,
+  "external_resources": 0,
+  "scripts_in_specimen": 0,
+  "test_first_evidence": "Initial missing behavior failed; visibility cases failed3, preference cases failed4, static-transition case failed1 before fixes; final32 pass",
+  "independent_review": "29 initial tests plus170 invalid-value and10 malformed-input probes passed; nonblocking CSS static-mode gap fixed with new failing regression then pass",
+  "browser_layout": "not-run; cloud local preview address blocked",
+  "runtime_accessibility": "not-qualified",
+  "source_render": "SVG previews rendered locally with Sharp; explicitly design illustrations, not app screenshots",
+  "font_render_note": "Initial local font-cache warnings resolved using writable temporary cache; final image rendering completed without that warning"
+}

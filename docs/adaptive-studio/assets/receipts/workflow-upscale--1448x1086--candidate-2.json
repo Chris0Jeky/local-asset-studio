@@ -1,0 +1,263 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "workflow-upscale",
+  "brief_revision": "production/20261002-wave3/generation-prompts.json#workflow_upscale_refine sha256:c19d8e170842b767ce30fcbf90fa058bb913e60458923221463bcb3271585aed",
+  "production": {
+    "method": "edit-with-image-references",
+    "provider": "OpenAI image_gen.imagegen (dot-run)",
+    "tool_action": "image_gen.imagegen: edit with actual referenced images",
+    "reported_model": null,
+    "output_id": "exec-ce56c90b-5361-474b-9b4c-23783d6c84cb",
+    "produced_at": null,
+    "prompt_record": {
+      "relative_path": "production/20261002-wave3/generation-prompts.json",
+      "relative_path_base": "docs/adaptive-studio/assets (repository asset root)",
+      "json_key": "workflow_upscale_refine",
+      "sha256": "c19d8e170842b767ce30fcbf90fa058bb913e60458923221463bcb3271585aed",
+      "hash_scope": "Exact prompt string encoded as UTF-8, no added newline",
+      "text": "Change only the lighting emphasis in this conceptual upscale illustration. Remove the gold sparkle/star and its surrounding dots above the large frame, and make the lighting neutral and evenly shared by both frames so the larger image does not look like a superior or magically improved result. Keep both frame sizes, exact matching geometric contents, line clarity, guide lines, perspective, background, paper grain and empty lower third unchanged. No new symbols, text or objects."
+    },
+    "input_anchors": [
+      {
+        "asset_id": "workflow-upscale",
+        "candidate": 1,
+        "relative_path": "inbox/workflow-upscale--1448x1086--candidate-1.png",
+        "archive_filename": "las-art-wave3-candidates-part-3.zip",
+        "relative_path_base": "Extracted named current delivery archive root",
+        "sha256": "756e0fde3661c53c1331cb7ee5b141741680685b62e7a2fa536aa4dad6ec68da",
+        "owner_acceptance": {
+          "status": "pending"
+        },
+        "note": "Actual unaccepted generated candidate supplied to this refinement."
+      }
+    ],
+    "reported_seed": null,
+    "output_id_kind": "Local dot tool output handle; not a provider job ID",
+    "provider_job_id": null,
+    "accepted_anchor_lineage": [
+      {
+        "asset_id": "workflow-create",
+        "candidate": 3,
+        "relative_path": "inbox/workflow-create--1448x1086--candidate-3.png",
+        "relative_path_base": "Previous delivery archive; not duplicated in this wave",
+        "sha256": "2ede30c76170eae87181979633b9d49a8c2ea71e0f2a66ea57c617eca9a1b1f2",
+        "owner_acceptance": {
+          "status": "accepted-as-series-anchor",
+          "decision_at": "2026-10-02T09:27:00Z",
+          "timestamp_precision": "Minute-level owner response record",
+          "evidence": "Owner accepted these two input anchors and continuation at approximately 09:27 UTC; private response text is not reproduced.",
+          "scope": "Accepted as an input style/canon anchor only; approval does not transfer to new candidates."
+        },
+        "note": "Actual accepted PNG inspected and hashed locally. Initial candidate inputs are recorded in output-map.json; refinements name actual inputs separately."
+      }
+    ]
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "provenance-recorded-terms-not-reviewed",
+    "provenance_check": "Exact prompt, output handle, actual input hashes and output byte hashes recorded. This is not a license determination."
+  },
+  "files": [
+    {
+      "relative_path": "inbox/workflow-upscale--1448x1086--candidate-2.png",
+      "archive_filename": "las-art-wave3-candidates-part-3.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "5ee2050366936e441872ccd79ddcea369185df8877d1880c21f705ade17d31b5",
+      "bytes": 1427472,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    },
+    {
+      "relative_path": "review-renditions/workflow-upscale--1448x1086--candidate-2--600x450.webp",
+      "archive_filename": "las-art-wave3-candidates-part-3.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "ad14d12ff5cab520e08fd59a68e88a81fba897cfa0eb2fb6ec975bbbec254d8e",
+      "bytes": 9478,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition"
+    }
+  ],
+  "transformations": [
+    {
+      "operation": "review-only downscale and WebP encode",
+      "tool": "Pillow 12.3.0",
+      "libwebp": "1.6.0",
+      "input_relative_path": "inbox/workflow-upscale--1448x1086--candidate-2.png",
+      "input_sha256": "5ee2050366936e441872ccd79ddcea369185df8877d1880c21f705ade17d31b5",
+      "output_relative_path": "review-renditions/workflow-upscale--1448x1086--candidate-2--600x450.webp",
+      "output_sha256": "ad14d12ff5cab520e08fd59a68e88a81fba897cfa0eb2fb6ec975bbbec254d8e",
+      "relative_path_base": "Extracted named delivery archive root",
+      "from_dimensions": [
+        1448,
+        1086
+      ],
+      "to_dimensions": [
+        600,
+        450
+      ],
+      "resampling": "Lanczos",
+      "crop": false,
+      "upscale": false,
+      "aspect_ratio": "Exact 4:3 preserved",
+      "encoder": {
+        "format": "WebP",
+        "quality": 85,
+        "method": 6,
+        "lossless": false
+      },
+      "color_conversion": "Pillow RGB conversion before downscale; generated originals unchanged",
+      "metadata": "No EXIF or ICC metadata copied to review rendition",
+      "purpose": "Review only; not a runtime-qualified or selected release asset"
+    }
+  ],
+  "art_review": {
+    "status": "accepted",
+    "reviewer": "dot (owner-delegated art selector)",
+    "accepted_at": "2026-10-02T11:21:46Z",
+    "timestamp_meaning": "Time this delegated art-selection record was prepared",
+    "authority": {
+      "kind": "owner-delegated-assistant-art-selection",
+      "delegated_on": "2026-10-02",
+      "delegated_at": "2026-10-02T11:16:00Z",
+      "timestamp_precision": "Minute-level delegation record",
+      "scope": "Choose the best candidates for the current LAS workflow-illustration and reference-example task, using completed visual reviews. This is art judgment only.",
+      "exclusions": [
+        "Source or license clearance",
+        "Runtime qualification",
+        "Release selection",
+        "Merge",
+        "Deployment"
+      ]
+    },
+    "justification": "The two matching geometric arrangements now share neutral lighting. Removing the sparkle eliminates the material quality-win implication while retaining size and guide-line relationships.",
+    "retained_caveats": [
+      "Candidate 2 is recommended over candidate 1. Both frame sizes and their contents remain readable at 600x450.",
+      "The larger frame is simply larger, with no reward badge, stronger spotlight, ratings, labels or controls.",
+      "The lighting edit is a generated revision, not proof that every untargeted source pixel was preserved."
+    ],
+    "prior_review": {
+      "status": "reviewed-recommended-for-owner-review",
+      "reviewer": "dot independent visual QA",
+      "reviewed_at": "2026-10-02T09:54:20Z",
+      "inspected": [
+        "Actual full original PNG",
+        "Actual 600x450 WebP at native review dimensions",
+        "Actual input PNGs and accepted anchor lineage"
+      ],
+      "notes": "The two matching geometric arrangements now share neutral lighting. Removing the sparkle eliminates the material quality-win implication while retaining size and guide-line relationships.",
+      "observations": [
+        "Candidate 2 is recommended over candidate 1. Both frame sizes and their contents remain readable at 600x450.",
+        "The larger frame is simply larger, with no reward badge, stronger spotlight, ratings, labels or controls.",
+        "The lighting edit is a generated revision, not proof that every untargeted source pixel was preserved."
+      ],
+      "owner_acceptance_implied": false
+    },
+    "evidence": {
+      "selection_manifest": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json",
+      "decision": "Selected after completed visual reviews under task-scoped owner delegation"
+    }
+  },
+  "rendition_review": {
+    "status": "reviewed",
+    "technical_status": "mechanical-checks-passed",
+    "visual_status": "reviewed-readable",
+    "checks": [
+      {
+        "check": "dimensions",
+        "actual": [
+          600,
+          450
+        ],
+        "passed": true
+      },
+      {
+        "check": "byte-budget",
+        "actual": 9478,
+        "maximum_inclusive": 102400,
+        "passed": true
+      },
+      {
+        "check": "no-crop-no-upscale",
+        "passed": true
+      },
+      {
+        "check": "decode-WebP",
+        "passed": true
+      },
+      {
+        "check": "native-size-visual-inspection",
+        "passed": true
+      }
+    ]
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": [],
+    "note": "No application integration, browser check, runtime qualification or CI was performed in this preparation."
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "Provider model, seed, provider job ID and generation timestamp were not exposed; related fields remain null.",
+    "File save/copy times are not provider generation timestamps.",
+    "Source page/item, creator credit, retrieval timestamp and independently captured terms evidence were not reported; no license determination is made.",
+    "Duration and codec are null for these still images; format records PNG or WebP.",
+    "Source/license review, application runtime qualification and release selection remain separate unresolved gates; art acceptance is recorded under owner delegation."
+  ],
+  "catalog_reference": {
+    "url": "https://github.com/Chris0Jeky/local-asset-studio/blob/6645f7d61b2bfdbca4853ea92b5fde6d6b0c8164/docs/adaptive-studio/assets/catalog.csv",
+    "git_commit": "6645f7d61b2bfdbca4853ea92b5fde6d6b0c8164",
+    "subject": "One small square and a larger structured detail frame",
+    "acceptance_constraint": "No invented before/after quality improvement claim."
+  },
+  "owner_acceptance": {
+    "status": "satisfied-by-owner-delegated-art-selection",
+    "accepted_by": "dot (owner-delegated art selector)",
+    "accepted_at": "2026-10-02T11:21:46Z",
+    "evidence": {
+      "delegation_date": "2026-10-02",
+      "selection_manifest": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json"
+    },
+    "note": "This is a delegated assistant art decision, not a claim that the owner directly reviewed this candidate. It does not clear source, runtime or release gates."
+  },
+  "intake": {
+    "received_at": "2026-10-02T09:54:20Z",
+    "timestamp_meaning": "Local review/preparation time, not provider generation time",
+    "candidate": 2
+  },
+  "delivery_base": {
+    "binary_storage": "PR attachment archives only; not repository source",
+    "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+    "archive_filename": "las-art-wave3-candidates-part-3.zip",
+    "archive_relative_path_base": "Extracted named archive root",
+    "input_anchors": "Prior accepted anchors are not duplicated. Candidate-1 refinement inputs are included in the same ZIP part as their candidate-2 output."
+  },
+  "art_selection": {
+    "status": "selected",
+    "selected_by": "dot (owner-delegated art selector)",
+    "recorded_at": "2026-10-02T11:21:46Z",
+    "acceptance_basis": "owner-delegated-assistant-art-selection",
+    "manifest_path": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json",
+    "justification": "The two matching geometric arrangements now share neutral lighting. Removing the sparkle eliminates the material quality-win implication while retaining size and guide-line relationships.",
+    "scope": "Art selection only; source, rendition, runtime and release gates remain unchanged."
+  }
+}

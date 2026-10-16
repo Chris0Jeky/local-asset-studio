@@ -1,0 +1,74 @@
+{
+  "coordinate_convention": "Normalized source-canvas coordinates for regions; crop boxes use original pixel edges, right/bottom exclusive.",
+  "source_dimensions": [
+    1672,
+    941
+  ],
+  "focal_point": {
+    "x": 0.78,
+    "y": 0.65,
+    "subject": "drafting desk"
+  },
+  "scene_and_poster_crop": [
+    0,
+    0.25,
+    1672,
+    940.75
+  ],
+  "scene_crop_note": "Minimal exact 16:9 crop: remove 0.25 source pixel from top and bottom, then single-step isotropic LANCZOS downsampling. 99.9469% of source area retained. Original PNG unchanged.",
+  "hero_crop": [
+    2,
+    155,
+    1670,
+    850
+  ],
+  "hero_focal_point": [
+    0.7806714628297362,
+    0.6570503597122301
+  ],
+  "card_crop": [
+    731,
+    0,
+    1672,
+    941
+  ],
+  "heading_zone": {
+    "x0": 0.16,
+    "y0": 0.18,
+    "x1": 0.48,
+    "y1": 0.62,
+    "status": "Conservative visual proposal; no HTML/control or contrast test."
+  },
+  "wall_control_zone": {
+    "x0": 0.1,
+    "y0": 0.1,
+    "x1": 0.78,
+    "y1": 0.8,
+    "status": "Conservative visual proposal avoiding doorway and skirting."
+  },
+  "portrait_plan": {
+    "status": "Plan only; no portrait asset shipped or tested.",
+    "art_only_crop_3_by_4_xyxy": [
+      943,
+      0,
+      1648.75,
+      941
+    ],
+    "native_crop_extent": [
+      705.75,
+      941
+    ],
+    "proposed_small_output": [
+      600,
+      800
+    ],
+    "composition": "Keeps lamp, paper, stool and desk/basket core; near-full desk width leaves little horizontal overscan.",
+    "heading": "Put real HTML heading above artwork on a solid theme surface. This crop cannot provide the master’s left heading zone.",
+    "390x844_note": "Do not stretch or cover the whole viewport with this portrait crop. Prefer a bounded artwork region below the separate heading. Actual slot and contrast still need runtime testing."
+  },
+  "caveats": [
+    "Full middle-left 60% target is not met: left foliage, diagonal shadows and plaster texture occupy part of it.",
+    "The full 12% overscan request is not met around all objects: desk/basket sit near the right edge; plant and rug are intentionally cropped.",
+    "A local CSS scrim or solid heading surface may help at runtime; this is only a recommendation, not a tested contrast result."
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "source": "docs/adaptive-studio/assets/catalog.csv (existing local reference snapshot)",
+  "rows": [
+    {
+      "id": "sample-character-canon",
+      "pack": "shared",
+      "category": "sample",
+      "placement": "learning-library",
+      "profile": "sample",
+      "wave": "P2",
+      "method": "generate",
+      "anchor": "reference-identity",
+      "subject": "Original adult explorer canon with portrait, full body and silhouette",
+      "acceptance": "Shared anchors and actual source identity retained; label illustrative examples, not measured route capability."
+    },
+    {
+      "id": "sample-pose-pair",
+      "pack": "shared",
+      "category": "sample",
+      "placement": "learning-library",
+      "profile": "sample",
+      "wave": "P2",
+      "method": "generate",
+      "anchor": "reference-pose",
+      "subject": "Identity source plus deliberately different full-body geometric reference",
+      "acceptance": "Shared anchors and actual source identity retained; label illustrative examples, not measured route capability."
+    },
+    {
+      "id": "sample-outfit-study",
+      "pack": "shared",
+      "category": "sample",
+      "placement": "learning-library",
+      "profile": "sample",
+      "wave": "P2",
+      "method": "generate",
+      "anchor": "reference-identity",
+      "subject": "Same canon wearing two original adult outfits with clear differences",
+      "acceptance": "Shared anchors and actual source identity retained; label illustrative examples, not measured route capability."
+    },
+    {
+      "id": "sample-lighting-pair",
+      "pack": "shared",
+      "category": "sample",
+      "placement": "learning-library",
+      "profile": "sample",
+      "wave": "P2",
+      "method": "generate",
+      "anchor": "reference-lighting",
+      "subject": "Same scene under two directionally distinct lighting setups",
+      "acceptance": "Shared anchors and actual source identity retained; label illustrative examples, not measured route capability."
+    },
+    {
+      "id": "sample-composition-pair",
+      "pack": "shared",
+      "category": "sample",
+      "placement": "learning-library",
+      "profile": "sample",
+      "wave": "P2",
+      "method": "generate",
+      "anchor": "reference-composition",
+      "subject": "Same simple subject in two camera framings",
+      "acceptance": "Shared anchors and actual source identity retained; label illustrative examples, not measured route capability."
+    },
+    {
+      "id": "sample-sequence-strip",
+      "pack": "shared",
+      "category": "sample",
+      "placement": "learning-library",
+      "profile": "sample",
+      "wave": "P2",
+      "method": "generate",
+      "anchor": "reference-identity",
+      "subject": "Four controlled storyboard stills with stable environment and subject",
+      "acceptance": "Shared anchors and actual source identity retained; label illustrative examples, not measured route capability."
+    }
+  ],
+  "method_note": "Catalog is a plan. Actual receipt methods distinguish generation, curation and deterministic crop."
+}

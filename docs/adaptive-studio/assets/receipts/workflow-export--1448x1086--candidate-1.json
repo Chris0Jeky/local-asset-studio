@@ -1,0 +1,249 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "workflow-export",
+  "brief_revision": "production/20261002-wave3/generation-prompts.json#workflow_export sha256:4ad9448e7cb462fd0f870f4e74ad20ed8e3bc6d59272354e3b7fb711028b86d1",
+  "production": {
+    "method": "generate-with-image-reference",
+    "provider": "OpenAI image_gen.imagegen (dot-run)",
+    "tool_action": "image_gen.imagegen with accepted reference image(s)",
+    "reported_model": null,
+    "output_id": "exec-b6df942e-3492-40b8-ac50-114491e27481",
+    "produced_at": null,
+    "prompt_record": {
+      "relative_path": "production/20261002-wave3/generation-prompts.json",
+      "relative_path_base": "docs/adaptive-studio/assets (repository asset root)",
+      "json_key": "workflow_export",
+      "sha256": "4ad9448e7cb462fd0f870f4e74ad20ed8e3bc6d59272354e3b7fb711028b86d1",
+      "hash_scope": "Exact prompt string encoded as UTF-8, no added newline",
+      "text": "Use the attached accepted image as the STYLE anchor: quiet hand-drawn graphite outlines, soft flat ivory fills, faint paper grain, small desaturated rose and muted cyan accents, restrained amber light, raised front three-quarter viewpoint, very light warm-grey background. 4:3 landscape, compact subject slightly above centre and empty calm bottom third for HTML caption. No text, letters, numbers, logos, watermark, buttons, screens or UI. Subject: a coherent set of three small picture frames resting safely inside an open paper folio on a tabletop, as one organized deliverable. Each frame contains one simple original abstract shape; they share palette and proportions. No file-format logos, download arrow, checkmark, stamp or unsupported delivery claim."
+    },
+    "input_anchors": [
+      {
+        "asset_id": "workflow-create",
+        "candidate": 3,
+        "relative_path": "inbox/workflow-create--1448x1086--candidate-3.png",
+        "relative_path_base": "Previous delivery archive; not duplicated in this wave",
+        "sha256": "2ede30c76170eae87181979633b9d49a8c2ea71e0f2a66ea57c617eca9a1b1f2",
+        "owner_acceptance": {
+          "status": "accepted-as-series-anchor",
+          "decision_at": "2026-10-02T09:27:00Z",
+          "timestamp_precision": "Minute-level owner response record",
+          "evidence": "Owner accepted these two input anchors and continuation at approximately 09:27 UTC; private response text is not reproduced.",
+          "scope": "Accepted as an input style/canon anchor only; approval does not transfer to new candidates."
+        },
+        "note": "Actual accepted PNG inspected and hashed locally. Initial candidate inputs are recorded in output-map.json; refinements name actual inputs separately."
+      }
+    ],
+    "reported_seed": null,
+    "output_id_kind": "Local dot tool output handle; not a provider job ID",
+    "provider_job_id": null
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "provenance-recorded-terms-not-reviewed",
+    "provenance_check": "Exact prompt, output handle, actual input hashes and output byte hashes recorded. This is not a license determination."
+  },
+  "files": [
+    {
+      "relative_path": "inbox/workflow-export--1448x1086--candidate-1.png",
+      "archive_filename": "las-art-wave3-candidates-part-3.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "6eef32ae89fe78aa2ada4b2c7b04d7a30915956165240cf8caf4d9a0615e1c84",
+      "bytes": 1745358,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original"
+    },
+    {
+      "relative_path": "review-renditions/workflow-export--1448x1086--candidate-1--600x450.webp",
+      "archive_filename": "las-art-wave3-candidates-part-3.zip",
+      "relative_path_base": "Extracted named delivery archive root; binary attachment only",
+      "sha256": "031fee47a027c7969e8b242d53a7988b6aabc83a1bd66e7b4096c76578def6f3",
+      "bytes": 14084,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition"
+    }
+  ],
+  "transformations": [
+    {
+      "operation": "review-only downscale and WebP encode",
+      "tool": "Pillow 12.3.0",
+      "libwebp": "1.6.0",
+      "input_relative_path": "inbox/workflow-export--1448x1086--candidate-1.png",
+      "input_sha256": "6eef32ae89fe78aa2ada4b2c7b04d7a30915956165240cf8caf4d9a0615e1c84",
+      "output_relative_path": "review-renditions/workflow-export--1448x1086--candidate-1--600x450.webp",
+      "output_sha256": "031fee47a027c7969e8b242d53a7988b6aabc83a1bd66e7b4096c76578def6f3",
+      "relative_path_base": "Extracted named delivery archive root",
+      "from_dimensions": [
+        1448,
+        1086
+      ],
+      "to_dimensions": [
+        600,
+        450
+      ],
+      "resampling": "Lanczos",
+      "crop": false,
+      "upscale": false,
+      "aspect_ratio": "Exact 4:3 preserved",
+      "encoder": {
+        "format": "WebP",
+        "quality": 85,
+        "method": 6,
+        "lossless": false
+      },
+      "color_conversion": "Pillow RGB conversion before downscale; generated originals unchanged",
+      "metadata": "No EXIF or ICC metadata copied to review rendition",
+      "purpose": "Review only; not a runtime-qualified or selected release asset"
+    }
+  ],
+  "art_review": {
+    "status": "accepted",
+    "reviewer": "dot (owner-delegated art selector)",
+    "accepted_at": "2026-10-02T11:21:46Z",
+    "timestamp_meaning": "Time this delegated art-selection record was prepared",
+    "authority": {
+      "kind": "owner-delegated-assistant-art-selection",
+      "delegated_on": "2026-10-02",
+      "delegated_at": "2026-10-02T11:16:00Z",
+      "timestamp_precision": "Minute-level delegation record",
+      "scope": "Choose the best candidates for the current LAS workflow-illustration and reference-example task, using completed visual reviews. This is art judgment only.",
+      "exclusions": [
+        "Source or license clearance",
+        "Runtime qualification",
+        "Release selection",
+        "Merge",
+        "Deployment"
+      ]
+    },
+    "justification": "Three coordinated abstract picture frames sit visibly within an open folio. Their organized grouping remains clear at review size.",
+    "retained_caveats": [
+      "A gold decorative sparkle is inherited from the accepted style anchor. It should be treated as decoration only, not proof of successful export or delivery.",
+      "The pictures contain small arrangements of multiple shapes rather than literally one shape each; this does not obscure the coherent set.",
+      "No file-format logo, download arrow, checkmark, stamp, text or imitation control was observed."
+    ],
+    "prior_review": {
+      "status": "reviewed-recommended-for-owner-review-with-caveats",
+      "reviewer": "dot independent visual QA",
+      "reviewed_at": "2026-10-02T09:54:20Z",
+      "inspected": [
+        "Actual full original PNG",
+        "Actual 600x450 WebP at native review dimensions",
+        "Actual input PNGs and accepted anchor lineage"
+      ],
+      "notes": "Three coordinated abstract picture frames sit visibly within an open folio. Their organized grouping remains clear at review size.",
+      "observations": [
+        "A gold decorative sparkle is inherited from the accepted style anchor. It should be treated as decoration only, not proof of successful export or delivery.",
+        "The pictures contain small arrangements of multiple shapes rather than literally one shape each; this does not obscure the coherent set.",
+        "No file-format logo, download arrow, checkmark, stamp, text or imitation control was observed."
+      ],
+      "owner_acceptance_implied": false
+    },
+    "evidence": {
+      "selection_manifest": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json",
+      "decision": "Selected after completed visual reviews under task-scoped owner delegation"
+    }
+  },
+  "rendition_review": {
+    "status": "reviewed",
+    "technical_status": "mechanical-checks-passed",
+    "visual_status": "reviewed-readable-with-source-caveats",
+    "checks": [
+      {
+        "check": "dimensions",
+        "actual": [
+          600,
+          450
+        ],
+        "passed": true
+      },
+      {
+        "check": "byte-budget",
+        "actual": 14084,
+        "maximum_inclusive": 102400,
+        "passed": true
+      },
+      {
+        "check": "no-crop-no-upscale",
+        "passed": true
+      },
+      {
+        "check": "decode-WebP",
+        "passed": true
+      },
+      {
+        "check": "native-size-visual-inspection",
+        "passed": true
+      }
+    ]
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": [],
+    "note": "No application integration, browser check, runtime qualification or CI was performed in this preparation."
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "Provider model, seed, provider job ID and generation timestamp were not exposed; related fields remain null.",
+    "File save/copy times are not provider generation timestamps.",
+    "Source page/item, creator credit, retrieval timestamp and independently captured terms evidence were not reported; no license determination is made.",
+    "Duration and codec are null for these still images; format records PNG or WebP.",
+    "Source/license review, application runtime qualification and release selection remain separate unresolved gates; art acceptance is recorded under owner delegation."
+  ],
+  "catalog_reference": {
+    "url": "https://github.com/Chris0Jeky/local-asset-studio/blob/6645f7d61b2bfdbca4853ea92b5fde6d6b0c8164/docs/adaptive-studio/assets/catalog.csv",
+    "git_commit": "6645f7d61b2bfdbca4853ea92b5fde6d6b0c8164",
+    "subject": "A coherent set of frames placed inside an open folio",
+    "acceptance_constraint": "No fake file format logos or unsupported delivery claim."
+  },
+  "owner_acceptance": {
+    "status": "satisfied-by-owner-delegated-art-selection",
+    "accepted_by": "dot (owner-delegated art selector)",
+    "accepted_at": "2026-10-02T11:21:46Z",
+    "evidence": {
+      "delegation_date": "2026-10-02",
+      "selection_manifest": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json"
+    },
+    "note": "This is a delegated assistant art decision, not a claim that the owner directly reviewed this candidate. It does not clear source, runtime or release gates."
+  },
+  "intake": {
+    "received_at": "2026-10-02T09:54:20Z",
+    "timestamp_meaning": "Local review/preparation time, not provider generation time",
+    "candidate": 1
+  },
+  "delivery_base": {
+    "binary_storage": "PR attachment archives only; not repository source",
+    "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+    "archive_filename": "las-art-wave3-candidates-part-3.zip",
+    "archive_relative_path_base": "Extracted named archive root",
+    "input_anchors": "Prior accepted anchors are not duplicated. Candidate-1 refinement inputs are included in the same ZIP part as their candidate-2 output."
+  },
+  "art_selection": {
+    "status": "selected",
+    "selected_by": "dot (owner-delegated art selector)",
+    "recorded_at": "2026-10-02T11:21:46Z",
+    "acceptance_basis": "owner-delegated-assistant-art-selection",
+    "manifest_path": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json",
+    "justification": "Three coordinated abstract picture frames sit visibly within an open folio. Their organized grouping remains clear at review size.",
+    "scope": "Art selection only; source, rendition, runtime and release gates remain unchanged."
+  }
+}

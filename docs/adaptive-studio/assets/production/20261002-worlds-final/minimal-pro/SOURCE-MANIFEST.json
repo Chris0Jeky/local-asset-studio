@@ -1,0 +1,74 @@
+{
+  "schema": "studio.theme-asset.source-pack/v1",
+  "pack": "minimal-pro",
+  "prepared_at": "2026-10-02T15:40:40Z",
+  "requested_asset_ids": [
+    "minimal-pro-master",
+    "minimal-pro-quiet",
+    "minimal-pro-wall",
+    "minimal-pro-hero",
+    "minimal-pro-poster",
+    "minimal-pro-card"
+  ],
+  "source_count": 3,
+  "independent_generations": 1,
+  "reference_edits": 2,
+  "deterministic_derivative_ids": [
+    "minimal-pro-hero",
+    "minimal-pro-poster",
+    "minimal-pro-card"
+  ],
+  "sources": [
+    {
+      "relative_path": "originals/minimal-pro-master--candidate-1.png",
+      "sha256": "d1cc54c514ad7ec3227bde6e9705f727be0f79746fc83e438180fc26e3bc7fc2",
+      "bytes": 2211080,
+      "width": 1672,
+      "height": 941,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "originals/minimal-pro-quiet--candidate-1.png",
+      "sha256": "3d1637bc05b6611f0d027ef834c16fdb57ff7c974d13f1290ded2d98e32e367a",
+      "bytes": 1963528,
+      "width": 1672,
+      "height": 941,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    },
+    {
+      "relative_path": "originals/minimal-pro-wall--candidate-1.png",
+      "sha256": "f4a66e99df0f4cdc3cb033e5bfe65dc8343e2f785fc289711440d6617d22e0c3",
+      "bytes": 2680616,
+      "width": 1536,
+      "height": 1024,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null
+    }
+  ],
+  "input_confirmation": {
+    "minimal-pro-quiet": {
+      "input_id": "minimal-pro-master",
+      "input_sha256": "d1cc54c514ad7ec3227bde6e9705f727be0f79746fc83e438180fc26e3bc7fc2",
+      "source": "Parent generation record: exact candidate-1 master supplied as image edit input."
+    },
+    "minimal-pro-wall": {
+      "input_id": "minimal-pro-master",
+      "input_sha256": "d1cc54c514ad7ec3227bde6e9705f727be0f79746fc83e438180fc26e3bc7fc2",
+      "source": "Parent generation record: exact candidate-1 master supplied as image edit input."
+    }
+  },
+  "source_art_recommendation": "All six IDs selected as source art by lead assistant on 2026-10-02, retaining documented caveats.",
+  "runtime_qualified": false,
+  "selected_for_release": false,
+  "planning_files_modified": false,
+  "source_art_selection": "accepted-by-delegated-assistant",
+  "selection_record": "SELECTION.json"
+}

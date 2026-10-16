@@ -1,0 +1,159 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "art-reviewed",
+  "requested_asset_id": "arcade-hero",
+  "brief_revision": "4ef2d9742084c7f506ef0df413021c129fd76dbe",
+  "production": {
+    "method": "derive",
+    "provider": "local deterministic image processing",
+    "tool_action": "Pillow crop/resize/WebP encode",
+    "execution_surface": "dot cloud workspace",
+    "reported_model": null,
+    "seed": null,
+    "output_id": null,
+    "produced_at": null,
+    "prompt_record": null,
+    "input_anchors": [
+      {
+        "asset_id": "arcade-master",
+        "relative_path": "originals/arcade-master--candidate-1.png",
+        "sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb",
+        "role": "exact deterministic source"
+      }
+    ],
+    "orchestration_handle": null,
+    "orchestration_handle_is_provider_job_id": false
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "provenance-recorded; source/license clearance not asserted"
+  },
+  "files": [
+    {
+      "relative_path": "masters/arcade-hero--1668x695--native-wide-crop.png",
+      "sha256": "0eab593529c5fe036bc82f90a4edadad3adc9f70ef9ee3f4c0b195a3e4996d31",
+      "bytes": 1520694,
+      "width": 1668,
+      "height": 695,
+      "format": "PNG",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": null,
+      "budget_pass": null
+    },
+    {
+      "relative_path": "renditions/arcade-hero--960x400--wide.webp",
+      "sha256": "c51e10d1a8a05d4e425c847dab43fd88291ea2c8644d64b374d6943ae7d24b5e",
+      "bytes": 45192,
+      "width": 960,
+      "height": 400,
+      "format": "WEBP",
+      "mode": "RGB",
+      "duration_seconds": null,
+      "codec": null,
+      "budget_bytes": 256000,
+      "budget_pass": true
+    }
+  ],
+  "transformations": [
+    {
+      "asset_id": "arcade-hero",
+      "input_path": "originals/arcade-master--candidate-1.png",
+      "input_sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb",
+      "output_path": "masters/arcade-hero--1668x695--native-wide-crop.png",
+      "output_sha256": "0eab593529c5fe036bc82f90a4edadad3adc9f70ef9ee3f4c0b195a3e4996d31",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        2,
+        130,
+        1670,
+        825
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        1668,
+        695
+      ],
+      "operation": "integer crop without resampling",
+      "resample": null,
+      "encoding": {
+        "format": "PNG",
+        "lossless": true,
+        "optimize": true,
+        "quality": null
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "arcade-hero",
+      "input_path": "originals/arcade-master--candidate-1.png",
+      "input_sha256": "1a7fbabcc7cb1625343adfb7d1b587a6cefaae71b3173c9ed4c55f434d176edb",
+      "output_path": "renditions/arcade-hero--960x400--wide.webp",
+      "output_sha256": "c51e10d1a8a05d4e425c847dab43fd88291ea2c8644d64b374d6943ae7d24b5e",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        2,
+        130,
+        1670,
+        825
+      ],
+      "crop_coordinates": "Original pixel edges; right and bottom exclusive. Fractional edges preserve exact aspect ratio in a single resampling operation.",
+      "output_dimensions": [
+        960,
+        400
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    }
+  ],
+  "art_review": {
+    "status": "source-art-selected-with-caveats",
+    "reviewer": "independent QA assistant; lead assistant visual selection",
+    "notes": "Selected as source art by the lead assistant after preview review, with native-size, crop and safe-zone caveats.",
+    "selection_record": "Lead assistant reviewed both six-ID contact sheets and selected all twelve source-art IDs on 2026-10-02. This is not runtime or release selection."
+  },
+  "rendition_review": {
+    "status": "encoded-size-and-budget-checks-passed-with-target-shortfalls",
+    "checks": [
+      "Every listed image decodes at its recorded dimensions.",
+      "All 11 encoded variants meet individual profile budgets.",
+      "Crops preserve aspect ratio; no upscaling or nonuniform scaling.",
+      "Native source and large hero/card-master targets remain unmet as recorded."
+    ]
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": []
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "Provider model/build, seed, provider output/job ID and generation timestamp were not exposed.",
+    "Source terms/license clearance is not asserted.",
+    "No actual slot, text contrast, accessibility, memory/loading, active inference or crossfade test was performed."
+  ]
+}

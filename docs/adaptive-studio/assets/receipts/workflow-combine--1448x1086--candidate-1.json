@@ -1,0 +1,240 @@
+{
+  "schema": "studio.theme-asset.receipt/v1-proposed",
+  "status": "candidate-produced",
+  "requested_asset_id": "workflow-combine",
+  "brief_revision": "production/20261002-wave2/generation-prompts.json#workflow_combine sha256:35e8eb36d3986e475d57d9ca75ccb42c867fd0da2e730cf62c963f0a01bf134e",
+  "production": {
+    "method": "generate-with-image-reference",
+    "provider": "OpenAI image_gen.imagegen (dot-run)",
+    "tool_action": "image_gen.imagegen with an attached accepted image reference",
+    "reported_model": null,
+    "output_id": "exec-6b9447c5-fdda-4930-8472-49a1fbbd6feb",
+    "produced_at": null,
+    "prompt_record": {
+      "relative_path": "production/20261002-wave2/generation-prompts.json",
+      "relative_path_base": "docs/adaptive-studio/assets (repository asset root)",
+      "json_key": "workflow_combine",
+      "sha256": "35e8eb36d3986e475d57d9ca75ccb42c867fd0da2e730cf62c963f0a01bf134e",
+      "hash_scope": "Exact prompt string encoded as UTF-8, no added newline",
+      "text": "The attached image is the accepted style anchor for a series of conceptual illustrations. Create a new illustration in exactly the same style: same line weight, same flat fills with faint paper grain, same raised front three-quarter viewpoint, same palette (graphite, warm ivory, small desaturated rose and muted cyan accents, a small amber glow) and the same plain very light warm grey background.\n\nSubject, for the \"combine several source pictures\" step: three distinct picture frames, clearly different from one another in shape and tint (one tall, one square, one wide), angled towards a single empty destination frame in the centre. The three frames hold only simple abstract shapes, not pictures. Faint lines connect each source frame to the empty destination. The destination frame is empty; nothing suggests a finished result.\n\nComposition: aspect ratio 4:3 landscape (or 3:2 with empty outer edges). Subject centred slightly above the middle; the bottom third calm and nearly empty for a caption.\n\nDo not include: any text, letters, numbers, labels, logos, watermarks, user-interface elements, buttons, screens, people or characters."
+    },
+    "input_anchors": [
+      {
+        "asset_id": "workflow-create",
+        "candidate": 3,
+        "relative_path": "inbox/workflow-create--1448x1086--candidate-3.png",
+        "relative_path_base": "Previous delivery archive, not included again in this wave",
+        "sha256": "2ede30c76170eae87181979633b9d49a8c2ea71e0f2a66ea57c617eca9a1b1f2",
+        "owner_acceptance": {
+          "status": "accepted-as-series-anchor",
+          "decision_at": "2026-10-02T09:27:00Z",
+          "timestamp_precision": "minute-level owner response record",
+          "evidence": "Owner accepted the two input anchors and continuation on 2026-10-02 at approximately 09:27 UTC; this historical anchor approval does not transfer to derivatives.",
+          "scope": "This candidate is accepted as an input style/canon anchor; approval does not transfer to new candidates."
+        },
+        "note": "Actual PNG supplied to image generation; locally inspected and SHA-256 matched to the prior repository receipt."
+      }
+    ],
+    "reported_seed": null,
+    "output_id_kind": "local dot tool output handle; not a provider job ID",
+    "provider_job_id": null
+  },
+  "source": {
+    "item_id": null,
+    "original_page": null,
+    "creator_credit": null,
+    "terms_evidence": null,
+    "retrieved_at": null,
+    "review_status": "provenance-recorded-terms-not-reviewed",
+    "provenance_check": "Generated output handle, exact prompt, actual anchor hash and original byte hash recorded; this is not a license determination."
+  },
+  "files": [
+    {
+      "relative_path": "inbox/workflow-combine--1448x1086--candidate-1.png",
+      "sha256": "5edcaaef0d15f2bf4e4dd3ddb29aadf5e4fe3b8f5eec12b8f05435caa898fa5b",
+      "bytes": 1648790,
+      "width": 1448,
+      "height": 1086,
+      "format": "png",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "unaltered generated original",
+      "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+    },
+    {
+      "relative_path": "review-renditions/workflow-combine--1448x1086--candidate-1--600x450.webp",
+      "sha256": "6cd042e622ed91e5880641fb65ba234bb92186661b1220a986cbc4baba783606",
+      "bytes": 12882,
+      "width": 600,
+      "height": 450,
+      "format": "webp",
+      "alpha": false,
+      "duration_seconds": null,
+      "codec": null,
+      "role": "review-only rendition",
+      "relative_path_base": "Extracted las-art-wave2-candidates.zip root; attachment-only binary, not repository text"
+    }
+  ],
+  "transformations": [
+    {
+      "operation": "review-only downscale and WebP encode",
+      "tool": "Pillow 12.3.0",
+      "libwebp": "1.6.0",
+      "input_relative_path": "inbox/workflow-combine--1448x1086--candidate-1.png",
+      "input_sha256": "5edcaaef0d15f2bf4e4dd3ddb29aadf5e4fe3b8f5eec12b8f05435caa898fa5b",
+      "output_relative_path": "review-renditions/workflow-combine--1448x1086--candidate-1--600x450.webp",
+      "output_sha256": "6cd042e622ed91e5880641fb65ba234bb92186661b1220a986cbc4baba783606",
+      "relative_path_base": "Extracted delivery archive root",
+      "from_dimensions": [
+        1448,
+        1086
+      ],
+      "to_dimensions": [
+        600,
+        450
+      ],
+      "resampling": "Lanczos",
+      "crop": false,
+      "upscale": false,
+      "aspect_ratio": "Preserved to nearest integer output dimension; reference-outfit 213x320 rounds 213.333px width",
+      "encoder": {
+        "format": "WebP",
+        "quality": 85,
+        "method": 6,
+        "lossless": false
+      },
+      "metadata": "No EXIF or ICC metadata copied to review rendition",
+      "purpose": "Review only; not runtime-qualified or selected for release"
+    }
+  ],
+  "art_review": {
+    "status": "accepted",
+    "reviewer": "dot (owner-delegated art selector)",
+    "accepted_at": "2026-10-02T11:21:46Z",
+    "timestamp_meaning": "Time this delegated art-selection record was prepared",
+    "authority": {
+      "kind": "owner-delegated-assistant-art-selection",
+      "delegated_on": "2026-10-02",
+      "delegated_at": "2026-10-02T11:16:00Z",
+      "timestamp_precision": "Minute-level delegation record",
+      "scope": "Choose the best candidates for the current LAS workflow-illustration and reference-example task, using completed visual reviews. This is art judgment only.",
+      "exclusions": [
+        "Source or license clearance",
+        "Runtime qualification",
+        "Release selection",
+        "Merge",
+        "Deployment"
+      ]
+    },
+    "justification": "Three differently proportioned and tinted input frames connect to one visibly empty central frame. Clear combine metaphor, faithful paper/graphite style, ample quiet lower third.",
+    "retained_caveats": [
+      "The connections are amber and more prominent than the prompt's word faint, but stay thin and preserve distinct input roles.",
+      "No text, brand, character, fake UI, extra source frame or finished result was observed.",
+      "At 600x450, all three sources remain distinct and the blank destination remains legible."
+    ],
+    "prior_review": {
+      "status": "reviewed-recommended-for-owner-review",
+      "reviewer": "dot independent visual QA",
+      "reviewed_at": "2026-10-02T09:43:28Z",
+      "inspected": [
+        "actual original PNG at native dimensions",
+        "actual WebP review rendition at native dimensions",
+        "actual accepted input anchor PNG"
+      ],
+      "notes": "Three differently proportioned and tinted input frames connect to one visibly empty central frame. Clear combine metaphor, faithful paper/graphite style, ample quiet lower third.",
+      "observations": [
+        "The connections are amber and more prominent than the prompt's word faint, but stay thin and preserve distinct input roles.",
+        "No text, brand, character, fake UI, extra source frame or finished result was observed.",
+        "At 600x450, all three sources remain distinct and the blank destination remains legible."
+      ],
+      "owner_acceptance_implied": false
+    },
+    "evidence": {
+      "selection_manifest": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json",
+      "decision": "Selected after completed visual reviews under task-scoped owner delegation"
+    }
+  },
+  "rendition_review": {
+    "status": "reviewed",
+    "technical_status": "mechanical-checks-passed",
+    "visual_status": "reviewed-readable",
+    "checks": [
+      {
+        "check": "dimensions",
+        "actual": [
+          600,
+          450
+        ],
+        "pass": true
+      },
+      {
+        "check": "byte-budget",
+        "actual": 12882,
+        "maximum_inclusive": 102400,
+        "pass": true
+      },
+      {
+        "check": "no-upscale-no-crop",
+        "pass": true
+      },
+      {
+        "check": "decode-WebP",
+        "pass": true
+      },
+      {
+        "check": "native-size-pixel-inspection",
+        "pass": true
+      }
+    ]
+  },
+  "runtime_review": {
+    "status": "not-qualified",
+    "app_commit": null,
+    "device": null,
+    "checks": [],
+    "note": "No application integration, runtime test, browser check or CI was performed."
+  },
+  "release_selection": {
+    "status": "not-selected",
+    "selected_by": null
+  },
+  "unknowns": [
+    "produced_at is unknown: file save/copy time is not a provider generation timestamp.",
+    "reported_model, reported_seed and provider_job_id were not exposed by the image tool and remain null.",
+    "source item/page, creator credit, retrieval timestamp and independently captured terms evidence were not reported; no license determination is made.",
+    "duration_seconds and codec are null because these are still-image files; format records PNG/WebP.",
+    "Source/license review, application runtime qualification and release selection remain separate unresolved gates; art acceptance is recorded under owner delegation."
+  ],
+  "owner_acceptance": {
+    "status": "satisfied-by-owner-delegated-art-selection",
+    "accepted_by": "dot (owner-delegated art selector)",
+    "accepted_at": "2026-10-02T11:21:46Z",
+    "evidence": {
+      "delegation_date": "2026-10-02",
+      "selection_manifest": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json"
+    },
+    "note": "This is a delegated assistant art decision, not a claim that the owner directly reviewed this candidate. It does not clear source, runtime or release gates."
+  },
+  "intake": {
+    "received_at": "2026-10-02T09:43:28Z",
+    "timestamp_meaning": "Local receipt preparation, not provider generation time",
+    "candidate": 1
+  },
+  "delivery_base": {
+    "binary_storage": "Delivery archive attachments only; binaries are not in the text-only repository file list",
+    "source_discussion_url": "https://github.com/Chris0Jeky/local-asset-studio/pull/1269",
+    "archive_filename": "las-art-wave2-candidates.zip",
+    "archive_relative_path_base": "Extracted archive root",
+    "input_anchors": "Anchor paths refer to the prior delivery; anchors are not duplicated in this archive."
+  },
+  "art_selection": {
+    "status": "selected",
+    "selected_by": "dot (owner-delegated art selector)",
+    "recorded_at": "2026-10-02T11:21:46Z",
+    "acceptance_basis": "owner-delegated-assistant-art-selection",
+    "manifest_path": "docs/adaptive-studio/assets/production/20261002-art-selection/SELECTION.json",
+    "justification": "Three differently proportioned and tinted input frames connect to one visibly empty central frame. Clear combine metaphor, faithful paper/graphite style, ample quiet lower third.",
+    "scope": "Art selection only; source, rendition, runtime and release gates remain unchanged."
+  }
+}

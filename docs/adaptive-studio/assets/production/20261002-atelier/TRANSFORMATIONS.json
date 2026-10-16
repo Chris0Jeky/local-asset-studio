@@ -1,0 +1,467 @@
+{
+  "schema": "studio.theme-asset.transformations/v1",
+  "prepared_at": "2026-10-02T15:29:33Z",
+  "reference_commit": "4ef2d9742084c7f506ef0df413021c129fd76dbe",
+  "software": {
+    "Pillow": "12.3.0",
+    "WebP_encoder": "1.6.0"
+  },
+  "scope": "Source-art candidates and offline crops/encodes only. No runtime integration or qualification.",
+  "source_color": "Original RGB pixel values retained; no ICC profile was reported by source file and no color conversion was applied.",
+  "transformations": [
+    {
+      "asset_id": "atelier-master",
+      "input_path": "originals/atelier-master--candidate-1.png",
+      "input_sha256": "9dee9f396c1f51281cc1d557febddc5878b2d775f798a626042bf58f60b40e31",
+      "output_path": "renditions/atelier-master--1280x720--preview.webp",
+      "output_sha256": "dcead9b11b9e04e1eed8c82fff932138c9a98404111dc260b9b043ce5258ca27",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Pixel edges in original; right/bottom exclusive. Fractional coordinates allowed for exact-aspect resampling.",
+      "output_dimensions": [
+        1280,
+        720
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "atelier-master",
+      "input_path": "originals/atelier-master--candidate-1.png",
+      "input_sha256": "9dee9f396c1f51281cc1d557febddc5878b2d775f798a626042bf58f60b40e31",
+      "output_path": "renditions/atelier-master--960x540--preview.webp",
+      "output_sha256": "2dbebeb065851242c7fb65f27cc0ab152df53f3685f487ae8a67fc6bfa2fc587",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Pixel edges in original; right/bottom exclusive. Fractional coordinates allowed for exact-aspect resampling.",
+      "output_dimensions": [
+        960,
+        540
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "atelier-quiet",
+      "input_path": "originals/atelier-quiet--candidate-1.png",
+      "input_sha256": "3145515f3ee1e7c4d3da4d40a78ba59e23da51833d7be4cc4508822a59854e34",
+      "output_path": "renditions/atelier-quiet--1280x720--preview.webp",
+      "output_sha256": "3a200469ca52086e80a003eab27c380c8241ff788859f3b77a1ee33d53901892",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Pixel edges in original; right/bottom exclusive. Fractional coordinates allowed for exact-aspect resampling.",
+      "output_dimensions": [
+        1280,
+        720
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "atelier-quiet",
+      "input_path": "originals/atelier-quiet--candidate-1.png",
+      "input_sha256": "3145515f3ee1e7c4d3da4d40a78ba59e23da51833d7be4cc4508822a59854e34",
+      "output_path": "renditions/atelier-quiet--960x540--preview.webp",
+      "output_sha256": "077172de5b15e68d6e0bc263e02a4b97d831f9f0336f92a4924130a90ac9050c",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Pixel edges in original; right/bottom exclusive. Fractional coordinates allowed for exact-aspect resampling.",
+      "output_dimensions": [
+        960,
+        540
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "atelier-hero",
+      "input_path": "originals/atelier-master--candidate-1.png",
+      "input_sha256": "9dee9f396c1f51281cc1d557febddc5878b2d775f798a626042bf58f60b40e31",
+      "output_path": "masters/atelier-hero--1668x695--native-wide-crop.png",
+      "output_sha256": "bf43096399fe77f9467df3c24baf91e12bcfde435a385723c6e407ab5f47ccd0",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        2,
+        155,
+        1670,
+        850
+      ],
+      "crop_coordinates": "Pixel edges in original; right/bottom exclusive. Fractional coordinates allowed for exact-aspect resampling.",
+      "output_dimensions": [
+        1668,
+        695
+      ],
+      "operation": "integer crop without resampling",
+      "resample": null,
+      "encoding": {
+        "format": "PNG",
+        "lossless": true,
+        "optimize": true,
+        "quality": null
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "atelier-hero",
+      "input_path": "originals/atelier-master--candidate-1.png",
+      "input_sha256": "9dee9f396c1f51281cc1d557febddc5878b2d775f798a626042bf58f60b40e31",
+      "output_path": "renditions/atelier-hero--960x400--wide.webp",
+      "output_sha256": "86533ff607c40a974344614ffe28dd25031782620e286c9f22e0a5e9e4e92776",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        2,
+        155,
+        1670,
+        850
+      ],
+      "crop_coordinates": "Pixel edges in original; right/bottom exclusive. Fractional coordinates allowed for exact-aspect resampling.",
+      "output_dimensions": [
+        960,
+        400
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "atelier-wall",
+      "input_path": "originals/atelier-wall--candidate-1.png",
+      "input_sha256": "3df639a17ecdd264b62d1dbdd7c1dc2580ce9b52135f34dcfdd89d710594a164",
+      "output_path": "renditions/atelier-wall--1200x800--panel.webp",
+      "output_sha256": "a544835325e3344641a5d818ce7afd1a1ae2cb43bf97ab2bf36f602fdcc5d0dc",
+      "source_canvas": [
+        1536,
+        1024
+      ],
+      "crop_box_xyxy": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "crop_coordinates": "Pixel edges in original; right/bottom exclusive. Fractional coordinates allowed for exact-aspect resampling.",
+      "output_dimensions": [
+        1200,
+        800
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "atelier-wall",
+      "input_path": "originals/atelier-wall--candidate-1.png",
+      "input_sha256": "3df639a17ecdd264b62d1dbdd7c1dc2580ce9b52135f34dcfdd89d710594a164",
+      "output_path": "renditions/atelier-wall--600x400--panel.webp",
+      "output_sha256": "2eb6e502f607a6123342df29d791da994c1722e87c2d8a51c8db2c0a60eccff8",
+      "source_canvas": [
+        1536,
+        1024
+      ],
+      "crop_box_xyxy": [
+        0,
+        0,
+        1536,
+        1024
+      ],
+      "crop_coordinates": "Pixel edges in original; right/bottom exclusive. Fractional coordinates allowed for exact-aspect resampling.",
+      "output_dimensions": [
+        600,
+        400
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "atelier-poster",
+      "input_path": "originals/atelier-master--candidate-1.png",
+      "input_sha256": "9dee9f396c1f51281cc1d557febddc5878b2d775f798a626042bf58f60b40e31",
+      "output_path": "renditions/atelier-poster--1280x720--fallback.webp",
+      "output_sha256": "dcead9b11b9e04e1eed8c82fff932138c9a98404111dc260b9b043ce5258ca27",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Pixel edges in original; right/bottom exclusive. Fractional coordinates allowed for exact-aspect resampling.",
+      "output_dimensions": [
+        1280,
+        720
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "atelier-poster",
+      "input_path": "originals/atelier-master--candidate-1.png",
+      "input_sha256": "9dee9f396c1f51281cc1d557febddc5878b2d775f798a626042bf58f60b40e31",
+      "output_path": "renditions/atelier-poster--640x360--fallback.webp",
+      "output_sha256": "abe1600fa9b8f04b5669203753e11165aed3bada98e3ffec84a14902928d3d32",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        0,
+        0.25,
+        1672,
+        940.75
+      ],
+      "crop_coordinates": "Pixel edges in original; right/bottom exclusive. Fractional coordinates allowed for exact-aspect resampling.",
+      "output_dimensions": [
+        640,
+        360
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "atelier-card",
+      "input_path": "originals/atelier-master--candidate-1.png",
+      "input_sha256": "9dee9f396c1f51281cc1d557febddc5878b2d775f798a626042bf58f60b40e31",
+      "output_path": "masters/atelier-card--941x941--native-square-crop.png",
+      "output_sha256": "81522894f843158c44804feb82440a525141d3c416dd5d0d87f5d3791626004f",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        731,
+        0,
+        1672,
+        941
+      ],
+      "crop_coordinates": "Pixel edges in original; right/bottom exclusive. Fractional coordinates allowed for exact-aspect resampling.",
+      "output_dimensions": [
+        941,
+        941
+      ],
+      "operation": "integer crop without resampling",
+      "resample": null,
+      "encoding": {
+        "format": "PNG",
+        "lossless": true,
+        "optimize": true,
+        "quality": null
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "atelier-card",
+      "input_path": "originals/atelier-master--candidate-1.png",
+      "input_sha256": "9dee9f396c1f51281cc1d557febddc5878b2d775f798a626042bf58f60b40e31",
+      "output_path": "renditions/atelier-card--512x512--picker.webp",
+      "output_sha256": "334a41c5320093ce9b7a9e76d500cd96d146cce908ff12f0a4dd9fc2f48d11a6",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        731,
+        0,
+        1672,
+        941
+      ],
+      "crop_coordinates": "Pixel edges in original; right/bottom exclusive. Fractional coordinates allowed for exact-aspect resampling.",
+      "output_dimensions": [
+        512,
+        512
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    },
+    {
+      "asset_id": "atelier-card",
+      "input_path": "originals/atelier-master--candidate-1.png",
+      "input_sha256": "9dee9f396c1f51281cc1d557febddc5878b2d775f798a626042bf58f60b40e31",
+      "output_path": "renditions/atelier-card--256x256--picker.webp",
+      "output_sha256": "4f1b89e47ab0675e709a57b1b63f267c1de5c03ae10cae5f8d642b2518d592e7",
+      "source_canvas": [
+        1672,
+        941
+      ],
+      "crop_box_xyxy": [
+        731,
+        0,
+        1672,
+        941
+      ],
+      "crop_coordinates": "Pixel edges in original; right/bottom exclusive. Fractional coordinates allowed for exact-aspect resampling.",
+      "output_dimensions": [
+        256,
+        256
+      ],
+      "operation": "single crop-and-downsample directly from original",
+      "resample": "Pillow LANCZOS",
+      "encoding": {
+        "format": "WebP",
+        "lossless": false,
+        "quality": 88,
+        "method": 6
+      },
+      "upscaled": false,
+      "distorted": false
+    }
+  ],
+  "unfulfilled_targets": [
+    {
+      "asset_id": "atelier-master",
+      "requested": "3840x2160",
+      "actual": "1672x941",
+      "reason": "Actual provider output; no upscaling."
+    },
+    {
+      "asset_id": "atelier-quiet",
+      "requested": "3840x2160",
+      "actual": "1672x941",
+      "reason": "Actual provider output; no upscaling."
+    },
+    {
+      "asset_id": "atelier-wall",
+      "requested": "2400x1600",
+      "actual": "1536x1024",
+      "reason": "Actual provider output; no upscaling."
+    },
+    {
+      "asset_id": "atelier-hero",
+      "requested": [
+        "3840x1600 lossless",
+        "1920x800 encoded"
+      ],
+      "actual": [
+        "1668x695 native lossless",
+        "960x400 encoded"
+      ],
+      "reason": "Original width 1672 cannot supply target without upscaling; larger targets intentionally absent."
+    },
+    {
+      "asset_id": "atelier-card",
+      "requested": "1024x1024 square master",
+      "actual": "941x941 native square crop",
+      "reason": "Original height 941 limits square crop; encoded 512/256 targets fulfilled."
+    }
+  ]
+}

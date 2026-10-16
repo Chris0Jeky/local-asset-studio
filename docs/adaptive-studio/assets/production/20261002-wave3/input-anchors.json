@@ -1,0 +1,32 @@
+[
+  {
+    "asset_id": "workflow-create",
+    "candidate": 3,
+    "relative_path": "inbox/workflow-create--1448x1086--candidate-3.png",
+    "relative_path_base": "Previous delivery archive; not duplicated in this wave",
+    "sha256": "2ede30c76170eae87181979633b9d49a8c2ea71e0f2a66ea57c617eca9a1b1f2",
+    "owner_acceptance": {
+      "status": "accepted-as-series-anchor",
+      "decision_at": "2026-10-02T09:27:00Z",
+      "timestamp_precision": "Minute-level owner response record",
+      "evidence": "Owner accepted these two input anchors and continuation at approximately 09:27 UTC; private response text is not reproduced.",
+      "scope": "Accepted as an input style/canon anchor only; approval does not transfer to new candidates."
+    },
+    "note": "Actual accepted PNG inspected and hashed locally. Initial candidate inputs are recorded in output-map.json; refinements name actual inputs separately."
+  },
+  {
+    "asset_id": "reference-identity",
+    "candidate": 3,
+    "relative_path": "inbox/reference-identity--1024x1536--candidate-3.png",
+    "relative_path_base": "Previous delivery archive; not duplicated in this wave",
+    "sha256": "ea29ef505b512ccb1148893a2bdf27b30769b43b8c741cc783e1e0491e912a9b",
+    "owner_acceptance": {
+      "status": "accepted-as-series-anchor",
+      "decision_at": "2026-10-02T09:27:00Z",
+      "timestamp_precision": "Minute-level owner response record",
+      "evidence": "Owner accepted these two input anchors and continuation at approximately 09:27 UTC; private response text is not reproduced.",
+      "scope": "Accepted as an input style/canon anchor only; approval does not transfer to new candidates."
+    },
+    "note": "Actual accepted PNG inspected and hashed locally. Initial candidate inputs are recorded in output-map.json; refinements name actual inputs separately."
+  }
+]

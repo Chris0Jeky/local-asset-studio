@@ -1,0 +1,147 @@
+{
+  "reviewed_at": "2026-10-02T09:54:20Z",
+  "reviewer": "dot independent visual QA",
+  "inspection_basis": "Actual full original PNGs, actual native 600x450 WebP renditions, both accepted anchor PNGs, exact generation prompts and repository catalog constraints",
+  "candidates": {
+    "workflow-edit:1": {
+      "status": "reviewed-recommended-for-owner-review",
+      "summary": "One standing landscape frame has a small cyan-tinted rectangle around its tree. The local-change concept is clear, restrained and consistent with the accepted workflow style.",
+      "observations": [
+        "At 600x450, both the tree and its highlighted area remain legible; most of the landscape remains untinted.",
+        "No lock, shield, brush, cursor, selection handles, text or imitation interface was observed.",
+        "This is conceptual artwork; surrounding untinted pixels are not evidence of model-enforced pixel protection."
+      ]
+    },
+    "workflow-sheet:1": {
+      "status": "reviewed-superseded-review-alternative",
+      "summary": "Front, side and rear explorer views strongly resemble the accepted character canon, but the three panels are flat portrait boxes rather than the requested standing frames.",
+      "observations": [
+        "The flat layout loses the raised three-quarter tabletop/frame treatment that unifies the workflow family. Standing-frame refinement is recommended.",
+        "Dark-teal asymmetric bob, silver temple streak, olive high collar and amber eyes are visible. The front eyebrow scar is tiny at 600x450 and should not be claimed as clearly resolved in the thumbnail.",
+        "The views are bust/upper-torso portraits rather than a clearly visible waist-up study. The front is slightly turned rather than strictly orthographic.",
+        "The three views are illustrative source artwork, not evidence of tested character consistency. No labels, ratings or success marks were observed.",
+        "Candidate 2 resolves the material refinement issue and is recommended instead. Candidate 1 is retained unchanged for traceability."
+      ]
+    },
+    "workflow-repair:1": {
+      "status": "reviewed-superseded-review-alternative",
+      "summary": "The continuous woven swatch, seam and separate enlarged seam study communicate local inspection clearly. A gold sparkle over the main frame creates an avoidable success implication.",
+      "observations": [
+        "The magnified seam and connector remain legible at 600x450. The fabric is continuous around the seam.",
+        "No brush, cursor, selection handles, controls or before/after comparison was observed.",
+        "Recommend removing the gold sparkle to honor the prompt's no-success-badge boundary; the underlying local-repair composition is sound.",
+        "Candidate 2 resolves the material refinement issue and is recommended instead. Candidate 1 is retained unchanged for traceability."
+      ]
+    },
+    "workflow-upscale:1": {
+      "status": "reviewed-superseded-review-alternative",
+      "summary": "Small and large frames contain matching geometric arrangements with similar clarity, but only the larger frame receives a gold sparkle and prominent overhead glow.",
+      "observations": [
+        "The sparkle/lighting makes the larger result look rewarded or improved, creating a quality-win implication the catalog explicitly excludes.",
+        "Recommend removing the sparkle and balancing the lighting while keeping the same geometry, guide lines and equal clarity.",
+        "At 600x450 both arrangements are readable; there are no labels, arrows, ratings or controls. The larger frame is not merely a sharpened photograph.",
+        "Candidate 2 resolves the material refinement issue and is recommended instead. Candidate 1 is retained unchanged for traceability."
+      ]
+    },
+    "workflow-animate:1": {
+      "status": "reviewed-recommended-for-owner-review",
+      "summary": "A single bird still and three progressively translucent bird positions trace a short arc, communicating potential motion without a functioning player.",
+      "observations": [
+        "All three motion positions can be distinguished at 600x450, though the gray and rose positions are deliberately low contrast.",
+        "An additional plain flat card is inherited from the style anchor and was not requested; it is neutral decoration, not another generated result.",
+        "No play button, timeline, frame-rate, speed label, text or success icon was observed."
+      ]
+    },
+    "workflow-sequence:1": {
+      "status": "reviewed-recommended-for-owner-review",
+      "summary": "Three equal frames show a coherent landscape moving from sunset through dusk to night. Left-to-right ordering and a blank paper ribbon remain clear at review size.",
+      "observations": [
+        "The ribbon runs behind the lower portions of the frames rather than strictly beneath them; the ordered sequence remains clear.",
+        "The illustrated sky progression is conceptual, not generated timing or performance evidence. Real timing labels must stay in HTML.",
+        "No timecode, numbered step, player control, text or quality rating was observed."
+      ]
+    },
+    "workflow-compare:1": {
+      "status": "reviewed-recommended-for-owner-review",
+      "summary": "Two equally prominent, similarly lit abstract frames share one source card and balanced branching connectors. Neither reads as a winner.",
+      "observations": [
+        "Matching frame size, palette and lighting preserve equal emphasis at 600x450.",
+        "Different abstract arrangements are readily distinguishable while remaining comparable.",
+        "No star, trophy, checkmark, score, preference highlight or brighter result was observed."
+      ]
+    },
+    "workflow-review:1": {
+      "status": "reviewed-recommended-for-owner-review",
+      "summary": "A framed landscape and a paper checklist with exactly four empty boxes communicate inspection awaiting a decision.",
+      "observations": [
+        "All four empty squares and corresponding plain rules remain clear at 600x450.",
+        "No tick, cross, stamp, badge, text or rating was observed. The motif does not declare automatic approval.",
+        "The calm lower third and standing frame treatment fit the series."
+      ]
+    },
+    "workflow-export:1": {
+      "status": "reviewed-recommended-for-owner-review-with-caveats",
+      "summary": "Three coordinated abstract picture frames sit visibly within an open folio. Their organized grouping remains clear at review size.",
+      "observations": [
+        "A gold decorative sparkle is inherited from the accepted style anchor. It should be treated as decoration only, not proof of successful export or delivery.",
+        "The pictures contain small arrangements of multiple shapes rather than literally one shape each; this does not obscure the coherent set.",
+        "No file-format logo, download arrow, checkmark, stamp, text or imitation control was observed."
+      ]
+    },
+    "workflow-workflow:1": {
+      "status": "reviewed-recommended-for-owner-review-with-caveats",
+      "summary": "Three simple physical geometric blocks connect through two curved cords. The cyan link is visibly distinct from the neutral link.",
+      "observations": [
+        "The cord collars are physical object details, not a reproduced ComfyUI node schema. There are no labels, settings panels or UI controls.",
+        "The selected-link metaphor survives at 600x450, with ample quiet lower space.",
+        "A decorative gold sparkle above the middle block is inherited from the style anchor; it is not evidence of a validated or executable graph."
+      ]
+    },
+    "workflow-model:1": {
+      "status": "reviewed-recommended-for-owner-review-with-caveats",
+      "summary": "One ivory core, a cyan disk and a rose triangular guide remain clearly separated. Their relation is conceptual rather than a physical compatibility claim.",
+      "observations": [
+        "Visible gaps remain between every module at 600x450; no plugs, connector standards, brands, lettering or status lamps were observed.",
+        "The central core is clearly dominant and the two guides are distinct in both shape and color.",
+        "A decorative gold sparkle and overhead glow remain above the core; they are stylistic, not evidence that a model is installed, ready or compatible."
+      ]
+    },
+    "workflow-voice-3d:1": {
+      "status": "reviewed-recommended-for-owner-review",
+      "summary": "A simple unlabelled waveform card and a faceted pale sphere on a plinth read as two separate tool concepts with balanced visual weight.",
+      "observations": [
+        "At 600x450 the waveform and polygon facets remain distinct, with clear space between the two objects.",
+        "No connecting controls, play button, shared generation panel, text, human or character was observed.",
+        "The pale geometric study has stylized paper grain consistent with the illustration family, not a material-map or texture-generation claim."
+      ]
+    },
+    "workflow-sheet:2": {
+      "status": "reviewed-recommended-for-owner-review-with-caveats",
+      "summary": "Three equal standing ivory frames now restore the graphite tabletop vignette family while preserving the explorer front/side/rear order and ample quiet lower space.",
+      "observations": [
+        "Candidate 2 resolves the flat-panel issue and is recommended over candidate 1.",
+        "Dark-teal bob, silver streak and olive jacket remain recognizable at 600x450. The front eyebrow scar is a fine native-image detail, not reliably legible at thumbnail size.",
+        "The character views remain bust/upper-torso studies rather than a clearly visible waist-up study. The front is slightly turned, and the profile is mildly three-quarter. These are illustrative views, not an orthographic consistency test.",
+        "The framing edit regenerated image content; no pixel-perfect preservation claim is made. No labels, ratings or success symbols were observed."
+      ]
+    },
+    "workflow-upscale:2": {
+      "status": "reviewed-recommended-for-owner-review",
+      "summary": "The two matching geometric arrangements now share neutral lighting. Removing the sparkle eliminates the material quality-win implication while retaining size and guide-line relationships.",
+      "observations": [
+        "Candidate 2 is recommended over candidate 1. Both frame sizes and their contents remain readable at 600x450.",
+        "The larger frame is simply larger, with no reward badge, stronger spotlight, ratings, labels or controls.",
+        "The lighting edit is a generated revision, not proof that every untargeted source pixel was preserved."
+      ]
+    },
+    "workflow-repair:2": {
+      "status": "reviewed-recommended-for-owner-review",
+      "summary": "The local seam and magnified study remain clear, with the success-like sparkle removed. This is the stronger neutral inspection illustration.",
+      "observations": [
+        "Candidate 2 is recommended over candidate 1. Seam, continuous surrounding fabric and connector are legible at 600x450.",
+        "No brush, cursor, selection handles, controls, success mark or before/after comparison was observed.",
+        "The edit regenerated fabric microdetail; it is not a pixel-identical local edit or evidence that a functioning repair tool preserves surrounding pixels."
+      ]
+    }
+  }
+}

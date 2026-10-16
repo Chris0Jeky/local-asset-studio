@@ -1,0 +1,23 @@
+{
+  "catalog_ids": [
+    "foundation-icons",
+    "state-loading",
+    "state-internet-absent",
+    "state-api-unavailable",
+    "state-backend-missing",
+    "state-model-missing",
+    "state-adapter-missing",
+    "state-media-failed",
+    "state-uncertain",
+    "state-conflict",
+    "state-complete",
+    "state-failure",
+    "reference-mask"
+  ],
+  "count": 13,
+  "status": "selected-source-candidates-delivered",
+  "selection_authority": "Owner-delegated art and design selection",
+  "runtime": "not-qualified",
+  "release": "not-selected",
+  "notes": "An icon family plus 11 state helper SVGs and one synthetic mask diagram; other foundations and motion are not completed by this pack."
+}
