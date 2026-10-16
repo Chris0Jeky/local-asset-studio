@@ -45,7 +45,7 @@ MARKER_SEPARATION_SECONDS = 0.25
 # thread, not at import time in the parent or focused in-process tests.
 COROUTINE_ORIGIN_DEPTH = 8
 # Per-module mean seconds per test from a complete hosted Windows run's END lines.
-# Refresh from the three shard logs of a later run when shards drift toward the
+# Refresh from the shard logs of a later run when shards drift toward the
 # budget; modules added since weigh the recorded mean.
 SHARD_SECONDS = Path(__file__).with_name("full_suite_shard_seconds.json")
 
