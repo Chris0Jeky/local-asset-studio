@@ -23,7 +23,7 @@ v2 saw in its sandbox, plus the later waves: #1459 durable submission saves, #14
 
 | # | v1 problem | v3 | Evidence |
 | --- | --- | --- | --- |
-| 1 | Make pictures vanish from default library | FIXED | Live library: "77 assets - 1426 agent runs hidden"; the first six Mine cards are "Make - ..." assets (WAI Auto Face Detail, WAI v17 illustration). workspace.js:23 exempts the "Make - " prefix. |
+| 1 | Make pictures vanish from default library | FIXED | Live library: "77 assets - 1426 agent runs hidden"; the first six Mine cards are "Make · ..." assets (WAI Auto Face Detail, WAI v17 illustration). workspace.js:23 exempts the "Make · " prefix. |
 | 2 | No model or LoRA choice in Make | FIXED | Tune this look: base model, adapters with strength sliders, steps, sampler, negative, seed (section 4). Friction in N2. |
 | 3 | Cannot tweak a result in place | PARTLY | Edit and re-run, Make the final, Same words another look work in Make, but only for the last 6 runs of this browser (make.js:44-45). Library route still the old handoff (N3). |
 | 4 | Disabled buttons without a reason | FIXED | Fix or upscale preselects Upscale 2x and prints one reason line per unavailable fix; run cards show reasons. |
@@ -101,8 +101,8 @@ time and index; wrap to two lines; title attribute. S.
 
 **N6 MEDIUM. "Your pictures" is per browser.** The shelf is rebuilt from `studio.make` in localStorage, last 6 runs
 (make.js:44-45, 812-816). A new browser, profile or cleared storage shows the empty line although the library holds the
-Make pictures (six, "Make - ..." labelled). Keep, Fix, Make this my character and Make the final are gone with it. Fix:
-seed the shelf from library assets whose `run_label` starts "Make - " (already identified in workspace.js:23). M.
+Make pictures (six, "Make · ..." labelled). Keep, Fix, Make this my character and Make the final are gone with it. Fix:
+seed the shelf from library assets whose `run_label` starts "Make · " (already identified in workspace.js:23). M.
 
 **N7 MEDIUM. Compare cannot compare models, LoRA strengths or steps** (v2 N6 unchanged). The flagship tweak loop (same
 words and seed, model A vs B, LoRA 0.4 vs 0.8) is still generate, look, repeat (make.js:759-760). Fix: a compare axis
