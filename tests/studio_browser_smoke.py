@@ -201,9 +201,9 @@ def run(screenshots):
             finder.keyboard.press('Control+k');finder.fill('#studioCommandSearch',next(l['name'] for l in json.loads((ROOT/'presets/looks.json').read_text(encoding='utf-8'))['looks'] if l['id']=='look-wai-fantasy-portrait'));finder.wait_for_selector('#studioCommandResults [data-make-look="look-wai-fantasy-portrait"]')
             check(finder.locator('#studioCommandResults [data-make-look="look-wai-fantasy-portrait"]').get_attribute('data-make-goal')=='character','look names resolve to their Make goal');finder.close()
             page.evaluate("localStorage.removeItem('studio.make')");page.reload();page.wait_for_selector('#makeGoals [data-make-goal]')
-            page.keyboard.press('Control+k');page.fill('#studioCommandSearch','Overview');page.click('#studioCommandResults a');page.wait_for_selector('#homeView',state='visible')
-            check(page.url.endswith('#home'),'Overview remains reachable through the command palette')
-            page.evaluate("showView('home')");page.wait_for_selector('#uxRecent .ux-recent-card');page.wait_for_function('!!selected && schemaAvailable');page.wait_for_timeout(500)
+            page.keyboard.press('Control+k');page.fill('#studioCommandSearch','Overview');check(page.locator('#studioCommandResults a').count()==0,'Overview is no longer offered in the command palette (#18)');page.keyboard.press('Escape')
+            page.goto(origin+'/#home');page.wait_for_selector('#makeView',state='visible');check(page.url.endswith('#make') and page.locator('#homeView').is_hidden(),'#home lands on Make, not the retired Overview (#18)')
+            page.evaluate("showView('make')");page.wait_for_function('!!selected && schemaAvailable');page.wait_for_timeout(500)
             check(not [post for post in POSTS if post['path']=='/api/jobs'],'startup has zero generation mutations')
             check(not errors,'no browser boot exceptions: '+str(errors))
             page.evaluate("showView('create')")
@@ -234,7 +234,8 @@ def run(screenshots):
             page.evaluate("showView('home')")
             if screenshots:page.screenshot(path=str(screenshots/'overview-desktop.png'),full_page=True)
             page.keyboard.press('Control+k');check(page.locator('#studioCommandDialog').is_visible(),'Ctrl+K opens finder');page.fill('#studioCommandSearch','voice');check(page.locator('#studioCommandResults a').count()==1,'finder filters tools');page.keyboard.press('Escape');check(not page.locator('#studioCommandDialog').is_visible(),'Escape closes finder')
-            page.click('[data-ux-intent="edit"]');page.wait_for_selector('#createView:not([hidden])');check(page.evaluate('selected.continuation_capability.consumes_source'),'intent chooses compatible recipe')
+            # #18: the Overview intent picker left the navigation with the Overview; Full editor opens by its own route and the later steps pick recipes explicitly.
+            page.evaluate("showView('create')");page.wait_for_selector('#createView:not([hidden])');page.wait_for_function('!!selected');check(page.locator('#homeView').is_hidden(),'Full editor opens without the retired Overview view')
             page.evaluate("selectPreset('qwen-1ref')");check(page.locator('#generate').is_disabled(),'empty required slots block generation')
             page.click('#uxPullAsset');page.wait_for_selector('[data-ux-pull="asset-0"]');page.click('[data-ux-pull="asset-0"]');page.wait_for_function('uploaded === "'+('a'*32)+'_fixture.png"');check(page.evaluate('parentAssets[0]')=='asset-0','picker preserves lineage');check(page.locator('#generate').is_enabled(),'filled required slot becomes ready');check(page.locator('#gallery .reference-output').count()==1,'output actions consolidate to one handoff');check(all(x['path']!='/api/jobs' for x in POSTS),'source picker does not generate')
             page.fill('#positive','A saved workflow draft');page.wait_for_timeout(500);check(page.evaluate('Object.keys(localStorage).some(k=>k.includes("qwen-1ref"))'),'edited draft is persisted')
@@ -307,13 +308,13 @@ def run(screenshots):
             check(models.locator('#modelsView').is_visible(),'Make blocker opens only the needed file')
             check(all(x['path'] not in ['/api/jobs','/api/models/install'] for x in POSTS),'model navigation and filtering never submit or install')
             models.close()
-            FAIL_WORKSPACE=True;page.evaluate("showView('home')");page.wait_for_function('document.querySelector("#uxHomeHealth").textContent.includes("unavailable")');check('—' in page.locator('#uxStats').inner_text(),'unavailable workspace is not reported as zero');FAIL_WORKSPACE=False
+            # #18: the Overview stats left the navigation with the Overview itself, so the unavailable-workspace check no longer has a surface here.
             page.goto(origin+'/prompt-lab.html');page.wait_for_selector('#profile option',state='attached');page.click('#compile');page.wait_for_selector('#studioSendPrompt:not([disabled])');page.click('#studioSendPrompt');page.wait_for_selector('#uxTransfer:not([hidden])');check('lantern' in page.locator('#uxTransferPreview').inner_text(),'Prompt Lab transfers explicit text draft');page.wait_for_function('!!selected');page.click('#uxApplyPrompt');check('lantern' in page.locator('#positive').input_value(),'text is applied only after explicit click');check(all(x['path']!='/api/jobs' for x in POSTS),'prompt transfer never generates')
             for tool in ['av.html','voice.html','review.html']:
                 page.goto(origin+'/'+tool);page.wait_for_selector('.studio-sidebar');check(page.locator('#studioJump').is_visible(),tool+' has shared navigation')
-            page.goto(origin+'/#home');page.wait_for_selector('#uxRecent .ux-recent-card');page.set_viewport_size({'width':390,'height':844});page.wait_for_timeout(150);check(page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),'mobile overview has no horizontal overflow')
+            page.goto(origin+'/#home');page.wait_for_selector('#makeView',state='visible');page.set_viewport_size({'width':390,'height':844});page.wait_for_timeout(150);check(page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),'mobile landing (#home resolves to Make) has no horizontal overflow')
             check(page.locator('#studioQuickCreate').get_attribute('href')=='/#make' and page.locator('#studioQuickCreate').inner_text()=='Make','mobile header points at Make')
-            check(page.locator('#studioQuickCreate').get_attribute('aria-current') is None,'mobile Make is inactive on Overview')
+            check(page.locator('#studioQuickCreate').get_attribute('aria-current')=='page','mobile Make is the landing view')
             page.click('#studioQuickCreate');page.wait_for_selector('#makeView',state='visible')
             check(page.locator('#studioQuickCreate').get_attribute('aria-current')=='page','mobile Make is highlighted only on Make');page.evaluate("showView('home')")
             if screenshots:page.screenshot(path=str(screenshots/'overview-mobile.png'),full_page=True)
@@ -338,10 +339,7 @@ def run(screenshots):
             reachable="([s,d])=>{const r=document.querySelector(s).getBoundingClientRect(),b=document.querySelector(d).getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;return r.height>0&&r.top>=Math.max(0,b.top)&&r.bottom<=Math.min(innerHeight,b.bottom)&&document.querySelector(s).contains(document.elementFromPoint(x,y))}"
             hit="sel=>[...document.querySelectorAll(sel)].filter(el=>el.getClientRects().length).map(el=>{const r=el.getBoundingClientRect();return {name:(el.innerText||'').replace(/[^ -~]/g,'').replace(/\\s+/g,' ').trim(),w:r.width,h:r.height}})"
             for width,height in ((1440,900),(390,844)):
-                v=browser.new_page(viewport={'width':width,'height':height});v.goto(origin+'/#home');v.wait_for_selector('#homeView .section-title a');v.wait_for_selector('#homeView .ux-tool-links a')
-                for sel in ('#homeView .section-title a','#homeView .ux-tool-links a'):
-                    boxes=v.evaluate(hit,sel);check(len(boxes)==3,f'{sel} has 3 links at {width}x{height}')
-                    for box in boxes:check(box['w']>=24 and box['h']>=24,f"{box['name']} pointer target is {box['w']:.1f}x{box['h']:.1f} at {width}x{height}")
+                v=browser.new_page(viewport={'width':width,'height':height});v.goto(origin+'/#home');v.wait_for_selector('#makeView',state='visible')
                 v.goto(origin+'/#create');v.wait_for_function('!!selected && schemaAvailable')
                 looks=v.evaluate(hit,'details.ux-looks > summary')
                 if not looks:print(f'NOTE: details.ux-looks > summary is not in the DOM at {width}x{height}',flush=True)
