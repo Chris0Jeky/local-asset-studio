@@ -119,3 +119,144 @@ test('putting the source back keeps a Vary carry-failure block on the same conti
   assert.notEqual(box.continuationState.reference_file, claim.reference_file, 'the claim follows the fresh copy');
   assert.ok(box.readinessItems().items.some(item => item.code === 'vary'), 'Generate stays blocked after Put the source back');
 });
+
+// #1497 Vary from Make: StudioWorkbench.vary sends the prepared round as one job and leaves Create alone.
+const SC = require('../app/static/continuation-core.js');
+// The catalog's own wai-vary route; continuation_capability is computed by the server from the graph, so it is stated here.
+const authored = JSON.parse(fs.readFileSync(path.join(__dirname, '../presets/catalog.json'), 'utf8')).presets.find(p => p.id === 'wai-vary');
+const catalogPresets = [
+  {id: 'wai', name: 'WAI', seed: ['5', 'seed'], defaults: {}, continuation_capability: {operation: 'new-image'}},
+  {id: 'plain', name: 'Plain', seed: ['5', 'seed'], continuation_capability: {operation: 'new-image'}},
+  {...authored, continuation_capability: {consumes_source: true, operation: 'image-to-image', prompt_role: 'description', requires_mask: false, template_sha256: 'd'.repeat(64)}},
+];
+const makeVarySource = between('  function varyPlanFor(', '\n  // Rebuilt only when') + '\n' + between('  const makeVaryBusy=new Set();', '\n  Object.assign(globalThis.StudioWorkbench,{polish,polishPlan,vary});');
+const SHA = 'a'.repeat(64), FILE = 'b'.repeat(32) + '_copy.png';
+const sourceContext = {version: 1, asset_id: 'asset-1', sha256: SHA, preset_id: 'wai', prompt_role: 'description', prompt_origin: 'submitted-output', positive: 'a knight in a garden', negative: 'lowres', width: 832, height: 1216};
+function makeVaryBox(extra) {
+  const box = {
+    StudioContinuation: SC, catalog: {presets: catalogPresets}, missingByPreset: {}, installedLoras: [],
+    assetState: {assets: [{id: 'asset-1', media_type: 'image', trashed_at: null}]},
+    jobs: [{id: 'job-1', preset_id: 'wai', status: 'completed', controls: {lora: 0.8, lora_name: 'style.safetensors', lora2: 0, lora2_name: 'none.safetensors', sampler: 'euler', scheduler: 'normal', cfg: 6, steps: 28}}],
+    calls: [], sent: [], context: sourceContext, recipePreset: 'wai',
+    crypto: {getRandomValues: (array) => { array[0] = 41; return array; }},
+    async readSource() { box.calls.push('context'); return box.context; },
+    async api(url) { box.calls.push(url); return {preset_id: box.recipePreset, controls: {positive: 'a lantern', seed: 4}}; },
+    async post(url, body) {
+      box.calls.push(url);
+      if (url === '/api/assets/reference') return {file: FILE, sha256: SHA, parent_asset: body.id, context: box.context};
+      if (url === '/api/recipe-check') return {template_sha256: 'c'.repeat(64)};
+      box.sent.push(body); if (box.postJobs) return box.postJobs(body); return {id: 'job-' + box.sent.length, status: 'queued'};
+    },
+    // Create must stay untouched: any of these firing fails the test.
+    beginContinuation() { throw Error('touched Create'); }, applySaved() { throw Error('touched Create'); }, selectPreset() { throw Error('touched Create'); },
+    window: {confirm() { throw Error('asked to overwrite Create'); }},
+  };
+  Object.assign(box, extra || {});
+  vm.createContext(box);
+  vm.runInContext(makeVarySource + '\nthis.vary=vary;this.varyPlanFor=varyPlanFor;', box);
+  return box;
+}
+
+test('Make Vary posts one prepared img2img round with the carried stack and leaves Create alone (#1497)', async () => {
+  const box = makeVaryBox();
+  const job = await box.vary('asset-1', 'wai', 'job-1', 'strong');
+  assert.equal(job.id, 'job-1');
+  assert.deepEqual(box.calls, ['context', '/api/assets/reference', '/api/jobs']);
+  assert.equal(box.sent.length, 1, 'one press, one job');
+  const sent = box.sent[0], route = catalogPresets.find(p => p.id === 'wai-vary');
+  assert.equal(sent.preset_id, 'wai-vary');
+  assert.equal(sent.label, 'Make · Vary strong');
+  assert.equal(sent.batch_count, 2, 'no timing yet: the round Vary prepares is 2');
+  assert.equal(JSON.stringify(sent.parent_assets), '["asset-1"]');
+  assert.equal(sent.continuation.reference_file, FILE);
+  assert.equal(sent.continuation.source_asset_id, 'asset-1');
+  assert.equal(sent.continuation.template_sha256, route.continuation_capability.template_sha256);
+  assert.equal(sent.controls.reference, FILE);
+  assert.equal(sent.controls.denoise, route.vary.strong.controls.denoise);
+  assert.equal(sent.controls.lora_name, 'style.safetensors', 'the picture own adapters are kept');
+  assert.equal(sent.controls.steps, 28);
+  assert.equal(sent.controls.seed, 41);
+  assert.match(sent.controls.positive, /a knight in a garden/);
+});
+
+test('Make Vary new seeds checks the recipe and sends one round (#1497)', async () => {
+  const reseed = catalogPresets.find(p => p.id === 'plain');
+  const box = makeVaryBox({jobs: [{id: 'job-1', preset_id: reseed.id, status: 'completed', controls: {}}], recipePreset: reseed.id});
+  assert.equal(box.varyPlanFor(reseed.id, 'job-1', 'asset-1').kind, 'reseed');
+  await assert.rejects(box.vary('asset-1', reseed.id, 'job-1', 'subtle'), /out of date/);
+  assert.equal(box.sent.length, 0, 'a stale button sends nothing');
+  await box.vary('asset-1', reseed.id, 'job-1', 'reseed');
+  assert.deepEqual(box.calls, ['/api/jobs/job-1/recipe', '/api/recipe-check', '/api/jobs']);
+  assert.equal(box.sent.length, 1);
+  assert.equal(box.sent[0].preset_id, reseed.id);
+  assert.equal(box.sent[0].expected_template_sha256, 'c'.repeat(64));
+  assert.equal(box.sent[0].controls.seed, 41);
+  assert.equal(box.sent[0].controls.positive, 'a lantern');
+  assert.equal(box.sent[0].label, 'Make · Vary');
+});
+
+test('a second Make Vary press while the first is sending posts nothing more (#1497)', async () => {
+  let release; const box = makeVaryBox({postJobs: () => release ? {id: 'job-y'} : new Promise(r => { release = r; })});
+  const first = box.vary('asset-1', 'wai', 'job-1', 'subtle');
+  await assert.rejects(box.vary('asset-1', 'wai', 'job-1', 'strong'), /already being sent/);
+  for (let i = 0; !release && i < 50; i++) await new Promise(r => setImmediate(r));
+  assert.ok(release, "the first press reached /api/jobs");
+  release({id: 'job-x'}); await first;
+  assert.equal(box.sent.length, 1);
+  await box.vary('asset-1', 'wai', 'job-1', 'subtle');
+  assert.equal(box.sent.length, 2, 'the latch clears once the first post settles');
+});
+
+test('a failed Make Vary post is reported, not sent again (#1497)', async () => {
+  const box = makeVaryBox({postJobs: () => { throw Error('connection reset'); }});
+  await assert.rejects(box.vary('asset-1', 'wai', 'job-1', 'subtle'), /connection reset/);
+  assert.equal(box.sent.length, 1, 'no retry of an uncertain submission');
+});
+
+test('a Make Vary post with no HTTP answer is flagged uncertain; an HTTP refusal is not (Codex P1 on #1500)', async () => {
+  const lost = makeVaryBox({postJobs: () => { throw TypeError('Failed to fetch'); }});
+  await assert.rejects(lost.vary('asset-1', 'wai', 'job-1', 'subtle'), error => error.uncertain === true);
+  const refused = makeVaryBox({postJobs: () => { const e = Error('Unsupported sampler'); e.status = 400; throw e; }});
+  await assert.rejects(refused.vary('asset-1', 'wai', 'job-1', 'subtle'), error => !error.uncertain);
+});
+
+test('Make Vary refuses with its reason before copying anything (#1497)', async () => {
+  const binned = makeVaryBox({assetState: {assets: [{id: 'asset-1', media_type: 'image', trashed_at: 1}]}});
+  await assert.rejects(binned.vary('asset-1', 'wai', 'job-1', 'subtle'), /in the bin/);
+  assert.deepEqual(binned.calls, []);
+  const wordless = makeVaryBox({context: {...sourceContext, prompt_origin: 'unknown', positive: ''}});
+  await assert.rejects(wordless.vary('asset-1', 'wai', 'job-1', 'subtle'), /No description was kept/);
+  assert.deepEqual(wordless.calls, ['context'], 'no copy and no job');
+});
+
+// make.js side: one press calls StudioWorkbench.vary once, adds the run and polls it; a failure only says so.
+const makeSource = fs.readFileSync(path.join(__dirname, '../app/static/make.js'), 'utf8');
+const varyPictureStart = makeSource.indexOf('  async function varyPicture(button){');
+const varyPictureSource = makeSource.slice(varyPictureStart, makeSource.indexOf('\n  // shortcut: Comfy outputs have no auxiliary role;', varyPictureStart));
+function makeCard(vary) {
+  const box = {VARY_HELD: 'held', state: {varying: new Set(), varyHeld: new Set(), runs: [{job: {id: 'run-1', outputs: [{asset_id: 'asset-1'}]}, look: 'Pearly', lookId: 'look-p', goal: 'character'}]}, said: [], polled: [],
+    renderRuns() {}, remember() {}, poll(id) { box.polled.push(id); }, say(text) { box.said.push(text); }, window: {StudioWorkbench: {vary}}};
+  vm.createContext(box); vm.runInContext(varyPictureSource + '\nthis.varyPicture=varyPicture;', box); return box;
+}
+test('Make card Vary is wired to one StudioWorkbench.vary call per press (#1497)', async () => {
+  assert.notEqual(varyPictureStart, -1, 'make.js has a Make-side Vary');
+  assert.doesNotMatch(makeSource, /Prepare variations in the full editor/, 'the card no longer sends the owner to the full editor');
+  assert.match(makeSource, /closest\('\[data-make-vary\]'\);if\(varying&&!varying\.disabled\)\{void varyPicture\(varying\)/);
+  let calls = 0, release; const box = makeCard((...args) => { calls++; assert.deepEqual(args, ['asset-1', 'wai', 'job-1', 'subtle']); return new Promise(r => { release = r; }); });
+  const button = {dataset: {asset: 'asset-1', preset: 'wai', job: 'job-1', makeVary: 'subtle'}};
+  const first = box.varyPicture(button); await box.varyPicture(button);
+  assert.equal(calls, 1, 'a double press sends once');
+  assert.ok(box.state.varying.has('asset-1'), 'busy while sending');
+  release({id: 'vary-1', status: 'queued'}); await first;
+  assert.equal(box.state.varying.size, 0);
+  assert.equal(box.state.runs[0].job.id, 'vary-1'); assert.equal(box.state.runs[0].look, 'Vary subtle · Pearly');
+  assert.deepEqual(box.polled, ['vary-1']);
+  const failing = makeCard(async () => { throw Error('Vary uses X. Missing here'); });
+  await failing.varyPicture(button);
+  assert.equal(failing.state.varying.size, 0); assert.equal(failing.polled.length, 0); assert.match(failing.said.at(-1), /Missing here/);
+  assert.equal(failing.state.varyHeld.size, 0, 'a known refusal leaves Vary pressable');
+  let lostCalls = 0; const lost = makeCard(async () => { lostCalls++; throw Object.assign(TypeError('Failed to fetch'), {uncertain: true}); });
+  await lost.varyPicture(button); await lost.varyPicture(button);
+  assert.equal(lostCalls, 1, 'an uncertain Vary is never sent again from this page');
+  assert.ok(lost.state.varyHeld.has('asset-1')); assert.equal(lost.said.at(-1), 'held');
+});

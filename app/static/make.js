@@ -39,7 +39,7 @@
   const licence=p=>nonCommercial(p)?'<small class="make-licence" title="'+escape(p.commercial_note)+'">Non-commercial</small>':'';
   const FINAL=['completed','failed','partial','uncertain','not_submitted','cancelled','abandoned'];
   const POLISH={face:'Fix face',details:'Fix hands and details',upscale:'Upscale 2\u00d7'};
-  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',poseRoute:'copy',pose:null,posePicking:false,compare:false,compareLooks:[],characters:[],character:null,allPictures:false,charSave:null,charEdit:null,charMigrate:null,charStale:false,charForm:{},openers:new Set(),noteGone:false};
+  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),varying:new Set(),varyHeld:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',poseRoute:'copy',pose:null,posePicking:false,compare:false,compareLooks:[],characters:[],character:null,allPictures:false,charSave:null,charEdit:null,charMigrate:null,charStale:false,charForm:{},openers:new Set(),noteGone:false};
   // Round 5 (#1492): Anima pictures send Fix face and Fix hands to one WAI face-then-hand repaint, so they are one button, and say what that costs.
   const MERGED='Fix face and hands',FIX_HINT='Repaints with a WAI model and can change this look’s face finish — keep the original and compare.',UP_HINT='Smooths fine texture; upscale the version you chose.';
   const merged=id=>{const f=state.polish[id+':face'],d=state.polish[id+':details'];return !!(f?.ok&&d?.ok&&f.preset_id&&f.preset_id===d.preset_id);};
@@ -448,7 +448,9 @@
   function actions(job,output){
     const a=output.asset_id;if(!a)return'<small class="muted">Saving to the library…</small>';
     const varyBox=document.createElement('div');varyBox.innerHTML=window.StudioWorkbench?.varyMarkup?.(job.preset_id,job.id,a)||'';
-    if(varyBox.querySelector('button:disabled'))varyBox.innerHTML='';else for(const hint of varyBox.querySelectorAll('small[id]'))hint.textContent='Prepare variations in the full editor; Generate there starts them.';const vary=varyBox.innerHTML;
+    // #1497: Vary runs from here as Fix and Upscale do (one press, one prepared round sent); a Vary that cannot run is left out.
+    if(varyBox.querySelector('button:disabled'))varyBox.innerHTML='';else{const busy=state.varying.has(a),held=state.varyHeld.has(a);for(const b of varyBox.querySelectorAll('[data-ux-vary]')){b.dataset.makeVary=b.dataset.uxVary;b.removeAttribute('data-ux-vary');b.disabled=busy||held;}
+      if(busy||held)for(const hint of varyBox.querySelectorAll('small[id]'))hint.textContent=held?VARY_HELD:'Starting the variations for this picture. Please wait.';}const vary=varyBox.innerHTML;
     // Next steps open Make's own picture goals with this picture chosen; other fixes still go through the full handoff.
     const hand=(intent,label)=>'<button type="button" data-ux-handoff="'+escape(a)+'" data-ux-handoff-intent="'+intent+'">'+label+'</button>',from=(intent,label)=>'<button type="button" data-make-from="'+intent+'" data-asset="'+escape(a)+'">'+label+'</button>';
     // A fix that cannot run stays on screen, disabled, with its reason beside it (one line per distinct reason), as the Fix or upscale goal does.
@@ -574,6 +576,16 @@
       say(polishName(id,kind)+' started. The result appears at the top of your pictures.');}
     catch(error){say(error.message);}
     finally{state.polishing.delete(key);renderRuns();}
+  }
+  // A Vary whose /api/jobs answer never came back may have started: never offer it again in this page (no resubmission).
+  const VARY_HELD='The last Vary for this picture got no answer, so it may have started. Check Your pictures and the library; reload the page to press Vary again.';
+  async function varyPicture(button){
+    const {asset:id,preset,job:jobId,makeVary:strength}=button.dataset,name=strength==='reseed'?'Vary':'Vary '+strength;if(state.varying.has(id)||state.varyHeld.has(id))return;
+    const source=state.runs.find(r=>(r.job.outputs||[]).some(o=>o.asset_id===id));state.varying.add(id);renderRuns();
+    try{const job=await window.StudioWorkbench.vary(id,preset,jobId,strength);state.runs.unshift({job,look:name+(source?' · '+source.look:''),lookId:source?.lookId,goal:source?.goal,scene:null});remember();poll(job.id);
+      say(name+' started. The new pictures appear at the top of your pictures.');}
+    catch(error){if(error.uncertain){state.varyHeld.add(id);say(VARY_HELD);}else say(error.message);}
+    finally{state.varying.delete(id);renderRuns();}
   }
   // shortcut: Comfy outputs have no auxiliary role; match filename tokens until outputs declare one (Workspace keeps source.filename).
   const picture=o=>(!o.media_type||o.media_type==='image')&&!/(?:^|[/_\\-])(mask|matte)(?:[_.-]|$)/i.test(o.source?.filename||o.filename||'');
@@ -954,6 +966,7 @@
     const recovering=e.target.closest('[data-make-resume],[data-make-stop]');if(recovering&&!recovering.disabled){void recover(recovering);return;}
     const verdict=e.target.closest('[data-make-review]');if(verdict){void review(verdict);return;}
     const polishing=e.target.closest('[data-make-polish]');if(polishing&&!polishing.disabled){void polishPicture(polishing);return;}
+    const varying=e.target.closest('[data-make-vary]');if(varying&&!varying.disabled){void varyPicture(varying);return;}
     if(e.target.closest('#makeGenerate'))void submit();
     if(e.target.closest('#makeEditor'))void openInEditor();
     if(e.target.closest('[data-make-retry]'))void load();

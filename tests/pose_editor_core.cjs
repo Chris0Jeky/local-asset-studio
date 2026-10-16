@@ -178,8 +178,12 @@ test('the workbench sends the drawing to the guide endpoint and to no generation
   assert.match(workbench,/if\(poseLoading\)return 'The attached pose guide’s drawing is loading into the editor\.';/,'Use this pose waits for an in-flight read');
   assert.match(workbench,/const edited=!StudioPoseEditor\.holds\(posePoints,poseCanvas,before\)/,'an edit made during the read wins over the late stored drawing');
   assert.match(workbench,/combineSwitchReason\(selected,target,referenceRecords\)/,'ordinary engine switches retain their representation guard');
-  // S3: the one generation the workbench sends is Make's explicit one-press Polish (tests/make_polish_browser.py); the pose path sends none.
-  assert.deepEqual(workbench.match(/post\('\/api\/jobs'/g),["post('/api/jobs'"],'the workbench submits no generation of its own beyond Polish');
+  // S3: the generations the workbench sends are Make's explicit one-press Polish (tests/make_polish_browser.py) and Make's
+  // one-press Vary (#1497, tests/vary_prepare_latch.cjs: one post per strategy); the pose path sends none.
+  assert.equal(workbench.match(/post\('\/api\/jobs'/g).length,2,'the workbench submits no generation of its own beyond Polish and Make Vary');
+  assert.match(workbench,/const sendVary=body=>post\('\/api\/jobs',body\)/,'the other one is Make Vary\'s single sender');
+  const makeVary=workbench.slice(workbench.indexOf('  async function vary(assetId,presetId,jobId,strength){'),workbench.indexOf('  Object.assign(globalThis.StudioWorkbench,{polish,polishPlan,vary});'));
+  assert.equal(makeVary.match(/sendVary\(/g)?.length,2,'Make Vary sends through it on two paths (new seeds or img2img), one press each');
   assert.match(workbench,/return await post\('\/api\/jobs',\{preset_id:preset\.id,continuation:prepared\.claim,/,'that one is the Polish runner');
   const html=fs.readFileSync(path.join(__dirname,'../app/static/index.html'),'utf8');
   assert.ok(html.indexOf('/static/pose-editor-core.js')>=0,'the page loads the geometry module');
