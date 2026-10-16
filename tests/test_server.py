@@ -158,6 +158,29 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(clamped.idle_release_minutes,0.0)
         self.assertEqual(clamped.config_warnings,[])
 
+    def test_config_decimal_strings_preserve_fractional_release_intervals(self):
+        for raw in ('45.25', ' 45.25 ', '4.525e1', 45.25):
+            with self.subTest(raw=raw):
+                (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy'),
+                    'commit_gate_release_seconds':raw,'idle_cache_release_minutes':raw}))
+                studio=self.studio()
+                self.assertEqual((studio.commit_release_seconds,studio.idle_release_minutes),(45.25,45.25))
+                self.assertEqual(studio.config_warnings,[])
+
+    def test_health_route_exposes_invalid_config_warnings_online_and_offline(self):
+        (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy'),
+            'commit_gate_release_seconds':'NaN','idle_cache_release_minutes':False}))
+        for online, replies in ((False,[URLError('offline')]), (True,[{},{}])):
+            with self.subTest(online=online), patch('sys.stderr', new_callable=io.StringIO):
+                handler=server.Handler.__new__(server.Handler);handler.studio=FakeStudio(self.root,replies)
+                handler.headers={'Host':'127.0.0.1:8191'};handler.path='/api/health';sent=[]
+                handler._json=lambda status,obj:sent.append((status,obj))
+                handler.do_GET()
+                self.assertEqual(sent[0][0],200);self.assertEqual(sent[0][1]['online'],online)
+                warnings=sent[0][1]['config_warnings'];self.assertEqual(len(warnings),2)
+                for key, default in (('commit_gate_release_seconds','0.0'), ('idle_cache_release_minutes','10.0')):
+                    self.assertTrue(any(key in warning and 'keeping ' + default in warning for warning in warnings))
+
     def test_bad_config_numbers_warn_once_per_key_and_keep_defaults(self):
         for raw in ('nope', None, True, 'NaN', 'Infinity', '1e10000'):
             with self.subTest(raw=raw):
