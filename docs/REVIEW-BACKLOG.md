@@ -101,3 +101,20 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   commercial use) — record-only, not clearance. Its writer's 11 UX findings fed Make wave 5.
 - [ ] **Lab round 3 queued** (poses through "Character in a new pose", LoRA pairings on Petiflow, game-item recipes):
   findings will land in docs/looks/LOOK-LAB-2026-10-16.md; settings-kb.json changes only as proposals.
+- [ ] **Make wave 5** (#1462): an uncertain or partial run card offers *Resume observation* and *Stop tracking…* (reason
+  required, same routes and conditions as the Full editor; nothing is resent). Restored runs survive a failed first
+  read ("Lost contact", checked again with back-off; only a 404 drops one). Picture goals snapshot the pose, style look
+  and clip at the press (a real race: a mid-flight pick sent the wrong picture).
+- [ ] **Speed labels from measurements** (#1462, #1448): this PC's finished runs of the look as made, else the lab
+  median, else "Speed not measured yet". Fast < 45 s, Medium < 3 min, Slow otherwise. Night Shift now reads
+  "Medium · ~163 s". Reverse in `speed()`.
+- [ ] **"Stay with <look>"** replaces "Keep <look>" in the look gallery (and "Keep <picture>" in the picture grid), so
+  "Keep" means only "keep this picture". Reverse: two strings in make.js.
+- [ ] **Draft first** offered when a look has 10+ steps or is Slow (Night Shift has none: its time is encoding).
+- [ ] **"Best for" lines** on 9 lab-tested looks live in make.js (the looks schema refuses unknown fields); a
+  **non-commercial** tag shows only where a recipe's `commercial_note` records it (Petiflow's records nothing, so no tag).
+- [ ] **Fix buttons that cannot run stay visible, disabled, with the reason**; Make card/choice borders 3.2:1.
+- [ ] **Resume keeps a failed receipt failed** (#1460): after a ComfyUI restart, Resume used to turn a known execution
+  failure into "outcome unknown". Wedged mid-batch uncertain jobs (#1458) get an "abandon the unknown tail" exit next.
+- [ ] **Character cards v1 in progress** (#1205): "Make this my character…" on a kept picture; pickers show "Your
+  characters" first and fill who/clothes. Canon = one chosen keeper portrait (owner, 27 Sep).
