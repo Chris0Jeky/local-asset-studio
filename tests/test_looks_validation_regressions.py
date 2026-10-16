@@ -46,12 +46,33 @@ class LookValidationTests(unittest.TestCase):
                 fixture.looks.validate_body(dict(fixture.BODY, controls={key: bad}), preset)
         good = {'steps': '30', 'seed': 0, 'cfg': 7.5, 'lora': 1.2, 'lora_name': 'style.safetensors', 'width': 832 - 832 % 64, 'sampler': 'euler'}
         self.assertEqual(fixture.looks.validate_body(dict(fixture.BODY, controls=good), preset)['controls'], good)
-        self.assertIsNone(fixture.looks.control_problem(dict(preset, choices={}), 'sampler', 'anything'), 'unknown choices are checked at /api/jobs')
+        self.assertIsNotNone(fixture.looks.control_problem(dict(preset, choices={}), 'sampler', 'anything'), 'jobs refuse a choice when none are offered')
         card = self.create()
         self.studio.catalog = lambda: {'presets': [dict(fixture.TEXT, dimension_limits=[256, 1024])]}
         with self.assertRaisesRegex(fixture.WorkspaceError, 'width must be'):
             fixture.looks.prepare(self.studio, {'id': card['id'], 'scene': 'a quiet room'})
         self.assertEqual((self.studio.jobs, self.requests), ({}, []))
+
+    def test_every_numeric_control_refuses_text_and_nonfinite_values_at_save(self):
+        ranges = dict(fixture.looks.NUMBER_RANGES, width=(64, 1536, True), height=(64, 1536, True))
+        self.assertEqual(set(ranges), fixture.looks.CONTROL_KEYS - {'sampler', 'scheduler', *(key for key in fixture.looks.CONTROL_KEYS if key.endswith('_name'))})
+        for key, (lo, hi, integer) in ranges.items():
+            preset = dict(fixture.TEXT, **{key: ['1', 'steps']})
+            for bad in ('many', '100 ms', 'NaN', 'Infinity', '-Infinity', True, lo - 1, hi + 1, *([1.5] if integer else [])):
+                with self.subTest(key=key, bad=bad), self.assertRaisesRegex(fixture.WorkspaceError, key):
+                    fixture.looks.validate_body(dict(fixture.BODY, controls={key: bad}), preset)
+            good = str(512 if key in ('width', 'height') else lo)
+            self.assertEqual(fixture.looks.validate_body(dict(fixture.BODY, controls={key: good}), preset)['controls'], {key: good})
+
+    def test_saved_sampler_and_scheduler_require_an_offered_choice(self):
+        for key, value in (('sampler', 'euler'), ('scheduler', 'normal')):
+            for choices in (None, {}, {key: []}, {key: ['other']}):
+                preset = dict(fixture.TEXT, **{key: ['1', key]})
+                if choices is not None: preset['choices'] = choices
+                with self.subTest(key=key, choices=choices), self.assertRaisesRegex(fixture.WorkspaceError, key):
+                    fixture.looks.validate_body(dict(fixture.BODY, controls={key: value}), preset)
+            preset['choices'] = {key: [value]}
+            self.assertEqual(fixture.looks.validate_body(dict(fixture.BODY, controls={key: value}), preset)['controls'], {key: value})
 
     def test_a_filename_is_a_lora_slot_value_only_where_the_recipe_slot_holds_a_filename(self):
         # /api/jobs takes a filename for a slot only when the graph input it binds holds one (older presets); a strength slot refuses it.
@@ -174,8 +195,8 @@ class LookValidationTests(unittest.TestCase):
         self.assertIs(fixture.looks.validate_lineage(kept), kept)
 
     def test_body_rejects_a_control_string_over_300_chars(self):
-        # A text-valued setting (a sampler with no fixed choices); numeric ones such as seed are now refused as non-numbers first.
-        preset = dict(fixture.TEXT, sampler=['1', 'sampler_name'])
+        # A text-valued setting; numeric ones such as seed are refused as non-numbers first.
+        preset = dict(fixture.TEXT, sampler=['1', 'sampler_name'], choices={'sampler': ['x' * 300]})
         with self.assertRaises(fixture.WorkspaceError) as caught:
             fixture.looks.validate_body(dict(fixture.BODY, controls={'sampler': 'x' * 301}), preset)
         self.assertEqual(str(caught.exception), 'sampler must be up to 300 characters')
