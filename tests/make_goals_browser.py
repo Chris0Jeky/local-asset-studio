@@ -442,6 +442,15 @@ def run(shots):
         before = len(jobs()); page.locator('#makeGenerate').click()
         page.wait_for_function('document.querySelector("#makeStatus")?.textContent.startsWith("Started 1 of 3")', timeout=8000); FAIL_LABEL.clear()
         assert len(jobs()) == before + 1 and 'the rest were not sent' in page.locator('#makeStatus').inner_text(), page.locator('#makeStatus').inner_text()
+        # A kept picture on a Compare card offers "Make this my character" like any other card (Codex review of #1466); an already-canon one names its character.
+        assert page.locator('.make-compare .make-canon').count() >= 3 and not page.locator('.make-compare [data-make-character-save]').count(), 'a canon picture is named, not offered again'
+        saved_characters = list(CHARACTERS); no_characters(); kept_review = fixture.ASSETS[0]['review']; fixture.ASSETS[0]['review'] = 'selected'
+        page.reload(); page.wait_for_selector('.make-compare figure img', timeout=8000); page.wait_for_function('!!assetState?.assets?.length'); page.evaluate('StudioMake.refresh()')
+        page.wait_for_selector('.make-compare [data-make-character-save]', timeout=8000)
+        before = len(jobs()); page.locator('.make-compare [data-make-character-save]').first.click()
+        assert page.locator('.make-compare .make-character-form').count() >= 1 and len(jobs()) == before, 'the form opens on the compare card and submits nothing'
+        page.locator('.make-compare [data-make-character-cancel]').first.click(); assert not page.locator('.make-character-form').count()
+        CHARACTERS.extend(saved_characters); fixture.ASSETS[0]['review'] = kept_review
         # A picture goal whose copied reference does not match the verified source sends nothing.
         page.route('**/api/assets/reference', lambda route: route.fulfill(json={'file': 'x' * 32 + '_ref.png', 'sha256': '0' * 64, 'parent_asset': 'asset-1', 'context': {}}))
         goal('edit'); page.locator('#makeF-change').fill('give her a hat'); before = len(jobs())
