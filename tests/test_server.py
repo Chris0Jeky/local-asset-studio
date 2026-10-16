@@ -844,6 +844,12 @@ class ServerTests(unittest.TestCase):
     def test_unreadable_workflow_stays_visible_without_recovery_or_writes(self):
         self.unreadable_run_record('workflow.json')
 
+    def test_unreadable_workflow_with_odd_prompt_ids_does_not_break_loading(self):
+        studio,bad=self.uncertain_known_job(FakeStudio(self.root,[]));directory=studio.runs/bad['id']
+        state=json.loads((directory/'state.json').read_text(encoding='utf-8'));state['prompt_ids']=5
+        (directory/'state.json').write_text(json.dumps(state),encoding='utf-8');(directory/'workflow.json').write_bytes(b'{broken')
+        job=FakeStudio(self.root,[]).jobs[bad['id']];self.assertIn('workflow.json',job['record_error']);self.assertNotIn('Known ComfyUI prompt IDs',job['message'])
+
     def test_unreadable_run_encoding_and_non_object_records_stay_visible(self):
         for filename in ('state.json','workflow.json'):
             for corrupt in (b'\xff',b'[]'):

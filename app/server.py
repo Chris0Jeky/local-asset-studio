@@ -1670,8 +1670,8 @@ class Studio:
                         data = record
                     else: graph = record
             except (OSError, ValueError) as exc:
-                reason = f"{path.name}: {exc}"; known = read_json(state_path, {}) if path != state_path else {}
-                ids = [i for i in (known.get("prompt_ids") or []) if isinstance(i, str)] if isinstance(known, dict) else []
+                reason = f"{path.name}: {exc}"; known = data.get("prompt_ids") if path != state_path else None   # state.json parsed first, so data is this run's
+                ids = [i for i in known if isinstance(i, str)] if isinstance(known, list) else []
                 # Missing evidence collections cannot prove non-submission or authorize a disposition.
                 self.jobs[state_path.parent.name] = {"id": state_path.parent.name, "status": "uncertain", "created_at": 0,
                     "preset_name": "Unreadable run record", "controls": {}, "outputs": [], "run_path": str(state_path.parent),
