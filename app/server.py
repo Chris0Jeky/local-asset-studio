@@ -95,7 +95,7 @@ COMMIT_RELEASE_FLOOR_BYTES = COMMIT_RELEASE_TRANSIENT_BYTES + COMMIT_RELEASE_MAR
 COMMIT_RELEASE_FLOOR_NOTE = f'a release first moves GPU weights into RAM and needs more than {COMMIT_RELEASE_FLOOR_BYTES // 1024**3} GiB of headroom to do it safely'
 
 def commit_release_blocked(available):
-    """The one floor rule for every /free the Studio sends on its own (the gate release and the idle release, #1167); an unknown reading blocks."""
+    """The one floor rule for every /free the Studio sends on its own (gate, idle and pre-submit release); an unknown reading blocks."""
     return not isinstance(available, int) or isinstance(available, bool) or available <= COMMIT_RELEASE_FLOOR_BYTES
 LORA_NAME_KEYS = tuple(k + "_name" for k in LORA_SLOTS)
 # Plain numeric controls and their accepted range; app/looks.py keeps the same table for saved looks (parity test).
@@ -700,7 +700,10 @@ class Studio:
             if not isinstance(queue, dict) or queue.get("queue_running") or queue.get("queue_pending"): record['outcome'] = 'skipped: ComfyUI queue busy'
             elif (before := torch_reserved()) is not None and before <= 1024 ** 3:
                 record['torch_reserved_before'] = before; record['outcome'] = 'nothing resident'
+            elif commit_release_blocked((commit := self.host_commit_reading(refresh=True)).get('available_bytes')):
+                record['before_available_bytes'] = commit.get('available_bytes'); record['outcome'] = 'skipped: ' + COMMIT_RELEASE_FLOOR_NOTE
             else:
+                record['before_available_bytes'] = commit.get('available_bytes')
                 record['torch_reserved_before'] = before
                 self._request("/free", method="POST", data={"unload_models": True}, timeout=30, allow_empty=True)
                 # The flag is read between prompts: a prompt posted before the worker wakes would run with the old models still loaded.
