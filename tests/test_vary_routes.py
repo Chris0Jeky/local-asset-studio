@@ -224,6 +224,18 @@ class CarryContract(unittest.TestCase):
         self.edits["wai-vary"] = [lambda graph: graph["3"]["inputs"].update(clip=["1", 1])]
         self.assertTrue(any("does not feed" in p for p in self.problems()), self.problems())
 
+    def test_every_sampler_must_receive_the_carried_model(self):
+        for model, reason in ((["1", 0], "does not feed"), (["unknown", 0], "cannot determine")):
+            with self.subTest(model=model):
+                def second(graph):
+                    graph["30"] = copy.deepcopy(graph["5"]); graph["30"]["inputs"]["model"] = model
+                self.edits["wai-vary"] = [second]
+                self.assertTrue(any(reason in p for p in self.problems()), self.problems())
+
+    def test_two_samplers_through_the_carried_loras_are_accepted(self):
+        self.edits["wai-vary"] = [lambda graph: graph.update({"30": copy.deepcopy(graph["5"])})]
+        self.assertEqual(self.problems(), [])
+
     def test_unknown_or_missing_graph_shape_is_reported(self):
         def unknown(graph):
             graph["20"] = {"class_type": "UnknownModelWrapper", "inputs": {"model": ["9", 0]}}
