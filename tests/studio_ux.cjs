@@ -5,8 +5,13 @@ const fs = require('node:fs');
 const path = require('node:path');
 const U = require('../app/static/studio-core.js');
 const catalog = JSON.parse(fs.readFileSync(path.join(__dirname, '../presets/catalog.json'))).presets;
+const vm = require('node:vm');
 let count = 0;
 function test(name, fn) { fn(); count++; console.log('PASS: ' + name); }
+test('finder goal names, hints and look membership match Make',()=>{
+  const goals=(file,name)=>vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../app/static',file),'utf8').match(new RegExp('const '+name+'=(\\[[\\s\\S]*?\\n  \\]);'))[1]);
+  assert.equal(JSON.stringify(goals('studio-shell.js','makeGoals')),JSON.stringify(goals('make.js','GOALS')));
+});
 const image = {media_type:'image',filename:'source.png'};
 const audio = {media_type:'audio',filename:'voice.wav'};
 const draft = () => ({version:1,updatedAt:123,recipe:{preset:'qwen-1ref',controls:{positive:'A study',seed:42},batch:1,parent_assets:['source'],references:[]}});
