@@ -8,6 +8,17 @@ const catalog = JSON.parse(fs.readFileSync(path.join(__dirname, '../presets/cata
 const vm = require('node:vm');
 let count = 0;
 function test(name, fn) { fn(); count++; console.log('PASS: ' + name); }
+test('picture goals share the visible subgroup name inside the one radiogroup',()=>{
+  const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),box={};
+  const GOALS=vm.runInNewContext(make.match(/const GOALS=(\[[\s\S]*?\n  \]);/)[1]);
+  const render=make.slice(make.indexOf('  function renderGoals(){'),make.indexOf('  // Once a look is chosen'));
+  vm.runInNewContext(render+';renderGoals();',{q:()=>box,GOALS,state:{goal:'restyle'},escape:s=>s});
+  assert.match(box.innerHTML,/<div[^>]*role="group"[^>]*aria-labelledby="makePictureGoals"[^>]*><span[^>]*id="makePictureGoals"[^>]*>From a picture you have<\/span>/);
+  const pictureGroup=box.innerHTML.slice(box.innerHTML.indexOf('role="group"'));
+  for(const goal of GOALS.filter(g=>g.intent))assert.ok(pictureGroup.includes('data-make-goal="'+goal.id+'"'));
+  assert.equal((box.innerHTML.match(/role="radio"/g)||[]).length,GOALS.length);
+  assert.equal((box.innerHTML.match(/tabindex="0"/g)||[]).length,1);
+});
 test('finder goal names, hints and look membership match Make',()=>{
   const goals=(file,name)=>vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../app/static',file),'utf8').match(new RegExp('const '+name+'=(\\[[\\s\\S]*?\\n  \\]);'))[1]);
   assert.equal(JSON.stringify(goals('studio-shell.js','makeGoals')),JSON.stringify(goals('make.js','GOALS')));

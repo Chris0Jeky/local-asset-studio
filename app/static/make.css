@@ -4,6 +4,7 @@
 .make-view{max-width:1240px}
 .make-heading h1{margin:10px 0 8px}.make-heading p{color:var(--muted);margin:0 0 22px;max-width:640px}
 .make-goals{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:26px;align-items:stretch}
+.make-goal-group{display:flex;flex-wrap:wrap;gap:8px;flex-basis:100%}
 .make-goals button{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:10px 14px;min-height:44px;background:var(--panel);border:1px solid var(--make-edge);border-radius:10px}
 .make-goals button b{font-size:13px;font-weight:600}.make-goals button small{font-size:11px;color:var(--muted)}
 .make-goals button[aria-checked="true"]{border-color:var(--accent);background:#2b3c2c;box-shadow:inset 0 0 0 1px var(--accent)}
