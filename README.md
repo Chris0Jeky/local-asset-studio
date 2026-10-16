@@ -288,6 +288,7 @@ Open work is tracked in [GitHub issues](https://github.com/Chris0Jeky/local-asse
 ## Documentation
 
 - [Start here: first image walkthrough](docs/START-HERE.md)
+- [Make a high-end anime picture: Make, looks, tuning, finishing](docs/guides/MAKE-A-HIGH-END-ANIME-PICTURE.md)
 - [Product direction](docs/PRODUCT_DIRECTION.md) and [strategy bundle](docs/strategy/README.md)
 - [Status by goal](docs/STATUS.md) and [current state](CURRENT_STATE.md)
 - [Owner choices and open actions](HUMAN_TODO.md)

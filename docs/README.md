@@ -11,6 +11,7 @@ folder come first: [`README.md`](../README.md) (what the Studio is), [`CURRENT_S
 | Page | What it is |
 | --- | --- |
 | [START-HERE.md](START-HERE.md) | Your first image, the four words that matter, editing an image, finding your work |
+| [guides/MAKE-A-HIGH-END-ANIME-PICTURE.md](guides/MAKE-A-HIGH-END-ANIME-PICTURE.md) | The Make journey for an anime picture: pick a look, tune model and adapters, tweak, finish, troubleshoot |
 | [WORKFLOW-LAB.md](WORKFLOW-LAB.md) | The views, folder map, variants and the image-to-video/3D paths |
 | [WORKSPACE.md](WORKSPACE.md) | Collect, tag, favourite, compare and restore outputs |
 | [EXPERIMENTS.md](EXPERIMENTS.md) | Bounded comparisons and native finishing plans |
