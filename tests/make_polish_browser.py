@@ -11,6 +11,10 @@ from http.server import ThreadingHTTPServer
 from playwright.sync_api import sync_playwright
 import studio_browser_smoke as fixture
 
+LOOKS = [dict(id=id, name=name, kind='look', revision=0, body=dict(preset_id='zimage-fast', controls={}, scene_example='A quiet garden')) for id, name in [('look-wai-fantasy-portrait', 'First look'), ('look-anima-fantasy-portrait', 'Second look')]]
+MAKE_JOBS = {}
+RESTORE_DELAY = 0
+
 WAI = 'asset-1'  # its context says it was made by the WAI recipe; asset-0 stays the fixture's Anima picture
 
 
@@ -21,13 +25,23 @@ def context(asset_id):
 
 class Handler(fixture.Handler):
     def do_GET(self):
+        if self.path == '/api/looks': return self.json({'looks': LOOKS})
+        if self.path.startswith('/api/jobs/make-'):
+            if RESTORE_DELAY: time.sleep(RESTORE_DELAY)
+            return self.json(MAKE_JOBS[self.path.split('/')[-1]])
         if self.path.startswith('/api/assets/') and self.path.endswith('/context'): return self.json(context(self.path.split('/')[3]))
         return super().do_GET()
 
     def do_POST(self):
+        if self.path == '/api/looks/prepare':
+            data = json.loads(self.rfile.read(int(self.headers.get('Content-Length', '0')))); time.sleep(0.3)
+            return self.json({'preset_id': 'zimage-fast', 'controls': {'positive': data['scene']}})
         if self.path not in ('/api/jobs', '/api/assets/reference'): return super().do_POST()
         data = json.loads(self.rfile.read(int(self.headers.get('Content-Length', '0'))))
         fixture.POSTS.append({'path': self.path, 'data': data})
+        if self.path == '/api/jobs' and data.get('label', '').startswith('Make \u00b7 '):
+            time.sleep(0.2); job = dict(id='make-'+str(len(MAKE_JOBS)), status='queued', created_at=1789228800, outputs=[], **data); MAKE_JOBS[job['id']] = job
+            return self.json(job)
         if self.path == '/api/jobs': return self.json({'id': 'polish-'+str(len(fixture.POSTS)), 'status': 'queued', 'message': 'Queued (fixture, no model run)'})
         time.sleep(0.3)  # a second press lands while the first copy is still in flight
         return self.json({'file': 'a'*32+'_fixture.png', 'sha256': 'a'*64, 'width': 512, 'height': 768, 'parent_asset': data['id'], 'context': context(data['id'])})
@@ -35,6 +49,114 @@ class Handler(fixture.Handler):
 
 def jobs():
     return [p['data'] for p in fixture.POSTS if p['path'] == '/api/jobs']
+
+
+def make_checks(browser, origin):
+    page = browser.new_page(); errors = []; page.on('pageerror', lambda e: errors.append(str(e)))
+    page.goto(origin+'/#make'); page.wait_for_selector('[data-make-look]')
+    assert page.locator('#makeRuns .make-run').count() == 0, 'agent proofs must not become Your pictures'
+    page.locator('[data-make-look]').first.click()
+    page.locator('#makeGenerate').click()
+    assert page.locator('#makeScene').get_attribute('aria-invalid') == 'true'
+    assert page.locator('#makeScene').get_attribute('aria-describedby') == 'makeStatus'
+    assert page.locator('#makeScene').evaluate('(e)=>e===document.activeElement')
+    # No width in the Look or prepare result: catalog dimensions still reach the exact estimate and submit.
+    page.evaluate("()=>{const p=catalog.presets.find(p=>p.id==='zimage-fast');p.defaults.width=1024;p.defaults.height=1024;p.dimension_multiple=64;}")
+    for shape, size in [('portrait', [832, 1280]), ('landscape', [1280, 832]), ('square', [1024, 1024])]:
+        page.locator('#makeScene').fill('A quiet garden'); page.locator('#makeShape').select_option(shape)
+        page.wait_for_timeout(100)
+        estimate = next(p['data'] for p in reversed(fixture.POSTS) if p['path'] == '/api/estimate')
+        before = len(jobs())
+        page.evaluate("()=>{document.querySelector('#makeGenerate').click();document.querySelector('#makeGenerate').click();document.querySelector('#makeEditor').click();}")
+        page.wait_for_function("!document.querySelector('#makeGenerate').disabled")
+        assert len(jobs()) == before+1, 'double press and editor share one latch'
+        sent = jobs()[-1]; assert sent['label'] == 'Make \u00b7 First look', sent
+        assert [sent['controls'][k] for k in ('width', 'height')] == size, sent
+        assert [estimate['controls'][k] for k in ('width', 'height')] == size, estimate
+        assert page.locator('#makeView').is_visible(), 'editor must not navigate during Generate'
+    for setup, reason in [("workerAlive=false", 'worker has stopped'), ("workerAlive=true;online=false", 'not reachable'), ("online=true;schemaAvailable=true;missingByPreset={'zimage-fast':['missing.safetensors']}", 'model file')]:
+        page.evaluate('()=>{'+setup+';StudioMake.refresh();}')
+        assert page.locator('#makeGenerate').is_disabled()
+        assert reason in page.locator('#makeWhy').inner_text()
+        before = len(jobs()); page.locator('#makeScene').fill('Blocked request'); page.locator('#makeScene').press('Control+Enter')
+        assert len(jobs()) == before and reason in page.locator('#makeStatus').inner_text()
+    page.evaluate("()=>{missingByPreset={};StudioMake.refresh();}")
+    page.locator('#makeScene').fill('Keep feedback while switching')
+    before = len(jobs()); page.locator('#makeGenerate').click()
+    page.locator('[data-make-change]').click(); page.locator('[data-make-look]').nth(1).click()
+    assert page.locator('#makeGenerate').is_disabled() and page.locator('#makeEditor').is_disabled()
+    page.wait_for_function("!document.querySelector('#makeGenerate').disabled")
+    assert len(jobs()) == before+1
+    assert 'Started' in page.locator('#makeStatus').inner_text()
+    assert page.locator('#makeRuns').get_attribute('aria-live') == 'polite'
+    assert page.locator('#makeGoals [role=radio][tabindex="0"]').count() == 1
+    page.locator('#makeGoals [role=radio][tabindex="0"]').focus(); page.keyboard.press('ArrowRight')
+    assert page.locator('#makeGoals [role=radio][aria-checked=true]').get_attribute('data-make-goal') == 'scene'
+    page.keyboard.press('End'); assert page.locator('#makeGoals [aria-checked=true]').get_attribute('data-make-goal') == 'mesh'
+    page.keyboard.press('Home'); assert page.locator('#makeGoals [aria-checked=true]').get_attribute('data-make-goal') == 'character'
+    assert page.locator('#makeGoals [aria-checked=true]').evaluate('(e)=>e===document.activeElement')
+    # The look gallery keeps radio selection and focus together under the arrow keys.
+    page.locator('[data-make-goal="scene"]').click(); page.locator('[data-make-goal="character"]').click(); page.locator('[data-make-look]').first.click(); page.locator('[data-make-change]').click()
+    page.locator('.make-looks [tabindex="0"]').focus(); page.keyboard.press('ArrowLeft')
+    assert page.locator('.make-looks [aria-checked=true]').evaluate('(e)=>e===document.activeElement&&e.tabIndex===0')
+    # Editor-first also owns the latch. No job can be sent while its prepare is pending.
+    page.locator('[data-make-keep-look]').click(); page.locator('#makeScene').fill('Editor only')
+    before = len(jobs())
+    page.evaluate("()=>{document.querySelector('#makeEditor').click();document.querySelector('#makeGenerate').click();}")
+    page.wait_for_selector('#createView', state='visible'); assert len(jobs()) == before
+    # Saved IDs survive remember() while restoration is still in flight; six is the deliberate limit.
+    global RESTORE_DELAY
+    saved = [dict(id='make-restore-'+str(i), look='First look', lookId=LOOKS[0]['id'], goal='character', scene='A quiet garden') for i in range(6)]
+    for r in saved: MAKE_JOBS[r['id']] = dict(id=r['id'], status='running', outputs=[], created_at=1789228800)
+    RESTORE_DELAY = 0.8
+    page.evaluate('(runs)=>localStorage.setItem("studio.make",JSON.stringify({goal:"character",look:null,runs}))', saved)
+    page.goto(origin+'/?restore-test#make'); page.wait_for_selector('[data-make-look]'); page.locator('[data-make-goal="scene"]').click()
+    assert page.evaluate('JSON.parse(localStorage.getItem("studio.make")).runs.map(r=>r.id)') == [r['id'] for r in saved]
+    page.wait_for_function('document.querySelectorAll("#makeRuns .make-run").length===6'); RESTORE_DELAY = 0
+    # Preserve the actual More node and focus when another card updates; restore them when its own card changes.
+    page.evaluate("()=>{window.pendingPolish=[];StudioWorkbench.polishPlan=()=>new Promise(r=>pendingPolish.push(r));}")
+    MAKE_JOBS[saved[0]['id']]['outputs'] = [dict(filename='Anime-Face-Mask_00001_.png', asset_id='mask', media_type='image'), dict(filename='portrait.png', asset_id=WAI, media_type='image')]
+    page.wait_for_selector('#makeRuns [data-more="asset-1"]')
+    assert page.locator('#makeRuns img').count() == 1
+    assert page.locator('#makeRuns img').get_attribute('src').endswith('/1'), 'filter must preserve the real output index'
+    summary = page.locator('[data-more="asset-1"] summary'); summary.click(); summary.focus()
+    page.evaluate('()=>window.originalMore=document.querySelector("[data-more=asset-1]")')
+    MAKE_JOBS[saved[1]['id']]['message'] = 'Changed other run'
+    page.wait_for_timeout(2800)
+    assert page.evaluate('originalMore===document.querySelector("[data-more=asset-1]")&&originalMore.open&&originalMore.contains(document.activeElement)')
+    page.evaluate('()=>pendingPolish.splice(0).forEach(r=>r({ok:false,reason:"Does not apply to this picture"}))')
+    page.wait_for_function('!document.querySelector("[data-make-polish]")')
+    assert page.locator('[data-more="asset-1"]').evaluate('(e)=>e.open&&e.contains(document.activeElement)')
+    assert page.locator('#makeRuns button:disabled').count() == 0, 'unavailable actions are hidden, not unexplained disabled buttons'
+    MAKE_JOBS[saved[0]['id']]['status'] = 'completed'
+    page.wait_for_function('document.querySelector(".make-run-state.completed")')
+    assert page.locator('[data-more="asset-1"]').evaluate('(e)=>e.open&&e.contains(document.activeElement)')
+    assert 'A quiet garden' in page.locator('#makeRuns .make-run header b').first.inner_text()
+    assert page.evaluate('new Date(1789228800*1000).toLocaleDateString()') in page.locator('#makeRuns .make-run header b').first.inner_text()
+    page.evaluate('()=>{assetState.assets.find(a=>a.id==="asset-1").review="selected";StudioMake.refresh();}')
+    assert 'Kept' in page.locator('[data-make-review="selected"]').inner_text()
+    assert page.locator('#experimentDialog').get_attribute('aria-labelledby') == 'experimentTitle'
+    assert page.locator('#newCollection').get_attribute('aria-label') == 'Create collection'
+    assert page.locator('.hero-art').get_attribute('role') == 'group'
+    # A disabled finishing action has one visible reason; unavailable actions disappear once planned.
+    page.evaluate('()=>{window.finishPolish=null;StudioWorkbench.polish=()=>new Promise(r=>finishPolish=r);StudioWorkbench.polishPlan=()=>Promise.resolve({ok:true});StudioWorkbench.varyMarkup=(p,j,a)=>\'<button type="button" data-ux-vary="subtle">Vary</button><small id="varyFixture\'+a+\'">Use Prepare new seed</small>\';}')
+    MAKE_JOBS[saved[1]['id']]['outputs'] = [dict(filename='forest.png', asset_id='asset-0', media_type='image')]
+    page.wait_for_selector('[data-make-polish=upscale][data-asset=asset-0]')
+    assert page.locator('#varyFixtureasset-0').is_visible()
+    assert page.locator('#varyFixtureasset-0').inner_text() == 'Prepare variations in the full editor; Generate there starts them.'
+    page.locator('[data-make-polish=upscale][data-asset=asset-0]').click()
+    assert page.locator('[data-make-polish=upscale][data-asset=asset-0]').is_disabled()
+    assert page.locator('.make-action-reason').count() == 1 and page.locator('.make-action-reason').is_visible()
+    assert 'Please wait' in page.locator('.make-action-reason').inner_text()
+    page.evaluate('()=>finishPolish({id:"fixture-finish",status:"completed",outputs:[]})')
+    # Workspace masks carry the same filename in source; titles use prompt excerpt and date.
+    assets = [dict(fixture.ASSETS[0], id='mask', filename='opaque.png', source={'filename':'Anime-Face-Mask_00001_.png'}), dict(fixture.ASSETS[1], prompt_excerpt='A moonlit garden')]
+    page.route('**/api/workspace', lambda route: route.fulfill(json={'assets': assets}))
+    page.locator('[data-make-goal="repair"]').click(); page.wait_for_selector('#makePictures button')
+    assert page.locator('#makePictures button').count() == 1
+    assert 'A moonlit garden' in page.locator('#makePictures').inner_text()
+    assert not errors, errors
+    page.close()
 
 
 def run():
@@ -68,11 +190,12 @@ def run():
             assert refused and len(jobs()) == 2, refused
             after = page.evaluate('()=>({preset:selected.id,positive:document.querySelector("#positive").value,parents:[...parentAssets],uploaded,claim:continuationState||null,view})')
             assert after == before, (before, after)
+            make_checks(browser, origin)
             browser.close()
     finally:
         server.shutdown(); server.server_close()
     assert not errors, errors
-    print(json.dumps({'jobs_posted': len(jobs()), 'double_press_posts': 1, 'create_unchanged': True, 'page_errors': errors}))
+    print(json.dumps({'synthetic_jobs_posted': len(jobs()), 'real_generation_submissions': 0, 'double_press_posts': 1, 'make_checks_passed': True, 'create_unchanged': True, 'page_errors': errors}))
 
 
 if __name__ == '__main__':
