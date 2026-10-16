@@ -226,6 +226,9 @@ function addTrigger(key, auto) {
 function dropAutoTrigger(key) {
   const fragment = autoTriggers[key], field = $('#positive'); delete autoTriggers[key];
   if (!fragment || !field) return '';
+  // Another enabled slot still needs the same trigger: hand the fragment over instead of removing it.
+  const trigger = fragment.replace(/^[, ]+|[, ]+$/g, ''), other = activeLoraSlots().find(k => k !== key && Number(getControl(k)?.value) > 0 && loraEntry(getControl(loraNameKey(k))?.value)?.trigger === trigger);
+  if (other) { autoTriggers[other] = fragment; return ''; }
   // Still a whole token where it was put: a leading fragment at the very start, a trailing one before a comma or the end.
   const literal = fragment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), token = fragment.endsWith(', ') ? RegExp('^' + literal) : RegExp(literal + '(?=\\s*(,|$))');
   if (!token.test(field.value)) return '';
@@ -234,7 +237,7 @@ function dropAutoTrigger(key) {
 }
 function chooseLora(key) {
   const removed = dropAutoTrigger(key), entry = loraEntry(getControl(loraNameKey(key))?.value), input = getControl(key), strength = recommendedStrength(key, entry);
-  if (input) input.value = String(strength);
+  if (input) { input.value = String(strength); input.dispatchEvent?.(new Event('input', {bubbles: true})); }   // the draft bridge saves on input/change
   return [removed, 'Strength set to ' + strength + (Number(entry?.default) > 0 ? ' (recommended).' : ' (no recommended strength recorded).'), addTrigger(key, true)].filter(Boolean).join(' ');
 }
 function updateLoraHints() {

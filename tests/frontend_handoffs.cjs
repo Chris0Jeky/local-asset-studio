@@ -1784,6 +1784,13 @@ async function fullEditorLoraSlotsUseTheKnowledgeBase() {
   assert.equal(element('#positive').value, 'A fox at dusk.');
   element('#positive').value = 'a fox, m4ng41nk'; run('autoTriggers={}');
   assert.equal(element('#positive').value, 'a fox, m4ng41nk');
+  // Two enabled slots on the same adapter share its trigger: turning one off hands the trigger over instead of removing it.
+  element('#positive').value = 'a fox'; run('autoTriggers={}');
+  choose('lora', 'ink.safetensors'); choose('lora2', 'ink.safetensors');
+  element('[data-key="lora"]').value = '0'; run(`$('#loraSlots').onchange({target:{dataset:{key:'lora'},value:'0'}})`);
+  assert.equal(element('#positive').value, 'a fox, m4ng41nk', 'the trigger stays while another enabled slot still needs it');
+  element('[data-key="lora2"]').value = '0'; run(`$('#loraSlots').onchange({target:{dataset:{key:'lora2'},value:'0'}})`);
+  assert.equal(element('#positive').value, 'a fox', 'the last slot to need it takes the trigger back out');
   // The server binds strengths with number(value, key, 0, 2): every value the page can set stays in range.
   for (const entry of Object.values(JSON.parse(fs.readFileSync(path.join(__dirname, '../presets/settings-kb.json'), 'utf8')).loras)) {
     const value = run(`recommendedStrength('lora',${JSON.stringify(entry)})`);
