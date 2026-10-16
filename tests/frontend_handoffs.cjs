@@ -1685,6 +1685,8 @@ async function parallaxLateRepliesKeepCreateEdits() {
   await seamlessTileSubmitsTheServerPlan();
   await parallaxStagesAreTwoOwnerPresses();
   await parallaxLateRepliesKeepCreateEdits();
+  await fullEditorLoraSlotsUseTheKnowledgeBase();
+  recipePickerIsGroupedAndPlain();
   console.log('Gallery handoff contracts passed: lineage and role metadata survive save and submission, and a swapped reference drops the stale source.');
 })().catch(error => {console.error(error); process.exitCode = 1;});
 
@@ -1729,4 +1731,97 @@ async function windowsInventoryStatusMatchesCaseAndSeparators() {
     false,
     'A POSIX backslash remains a literal filename character rather than a path separator'
   );
+}
+
+// #278 J1 (16 Oct 2026 audit): the adapter hint read "place it at the anywhere of the prompt", a newly chosen adapter
+// stayed at strength 0, and its trigger was never added. (Hoisted: available to the runner above.)
+async function fullEditorLoraSlotsUseTheKnowledgeBase() {
+  const {element, run} = sandbox({}, {});
+  run(`Event=class{constructor(type){this.type=type;}};
+    knowledge={loras:{'ink.safetensors':{trigger:'m4ng41nk',trigger_position:'anywhere',strength:[0.6,1.0],default:0.8},
+      'lead.safetensors':{trigger:'lead tag',trigger_position:'start of prompt',strength:[1,1.25],default:1},
+      'off.safetensors':{trigger:'',trigger_position:'none',strength:[0,1],default:0,label:'Disabled in recipes'}}};
+    catalog.presets.push({id:'lora-recipe',name:'lora-recipe',modality:'image',positive:['1','text'],lora:['8','strength_model'],lora_name:['8','lora_name'],
+      lora2:['9','strength_model'],lora2_name:['9','lora_name'],defaults:{positive:'a fox, ',lora:0,lora_name:'ink.safetensors',lora2:0.5,lora2_name:'lead.safetensors'}});
+    selectPreset('lora-recipe');`);
+  element('#positive').dispatchEvent = () => true;
+  const places = [['anywhere', 'put it anywhere in the prompt'], ['start', 'put it at the start of the prompt'], ['end', 'put it at the end of the prompt'],
+    ['start of prompt', 'put it at the start of the prompt'], ['none', ''], ['', ''], ['middle', 'placement: middle']];
+  for (const [position, words] of places) assert.equal(run(`triggerPlace(${JSON.stringify(position)})`), words, 'placement wording for ' + JSON.stringify(position));
+  run('updateLoraHints()');
+  const hint = element('[data-hint="lora"]').innerHTML;
+  assert.doesNotMatch(hint, /at the anywhere/, 'the broken template is gone');
+  assert.match(hint, /Trigger: m4ng41nk · put it anywhere in the prompt · recommended 0\.8/);
+  assert.match(hint, /data-lora-trigger="lora"[^>]*>Add trigger to prompt/, 'one-click trigger insertion is offered');
+  assert.match(hint, /data-lora-use="lora"[^>]*>Use 0\.8/, 'an off slot offers its recommended strength');
+  assert.equal(element('[data-range="lora"]').textContent, '· 0.6–1', 'the recorded range sits beside Strength');
+  const choose = (key, file) => { element('[data-key="' + key + '_name"]').value = file; run(`$('#loraSlots').onchange({target:{dataset:{key:'${key}_name'},value:'${file}'}})`); };
+  choose('lora', 'ink.safetensors');
+  assert.equal(element('[data-key="lora"]').value, '0.8', 'a newly chosen adapter starts at its recommended strength, not 0');
+  assert.equal(element('#positive').value, 'a fox, m4ng41nk', 'the known trigger is appended once');
+  assert.match(element('#status').textContent, /Strength set to 0\.8 \(recommended\)\. Added the trigger m4ng41nk/);
+  choose('lora', 'ink.safetensors');
+  assert.equal(element('#positive').value, 'a fox, m4ng41nk', 'choosing again never duplicates the trigger');
+  element('#positive').value = 'a fox';
+  run('autoTriggers={}'); choose('lora', 'off.safetensors');
+  assert.equal(element('[data-key="lora"]').value, '1', 'a recorded 0 is not a recommendation: 1.0 within the range');
+  assert.match(element('#status').textContent, /no recommended strength recorded/);
+  element('#positive').value = 'a fox'; run('autoTriggers={}');
+  choose('lora2', 'lead.safetensors');
+  assert.equal(element('#positive').value, 'lead tag, a fox', 'a start-placed trigger goes first');
+  choose('lora2', 'off.safetensors');
+  assert.equal(element('#positive').value, 'a fox', 'changing the adapter removes the exact trigger this page added');
+  assert.equal(element('[data-key="lora2"]').value, '0.5', 'no recommendation: the slot keeps its authored strength');
+  choose('lora', 'ink.safetensors');
+  element('#positive').value = element('#positive').value.replace('m4ng41nk', 'm4ng41nk style');
+  element('[data-key="lora"]').value = '0'; run(`$('#loraSlots').onchange({target:{dataset:{key:'lora'},value:'0'}})`);
+  assert.equal(element('#positive').value, 'a fox, m4ng41nk style', 'turning the slot off removes the trigger only while it is exactly as added');
+  element('#positive').value = 'a fox, m4ng41nk'; run('autoTriggers={}');
+  assert.match(run(`addTrigger('lora',false)`), /already in the prompt/);
+  element('#positive').value = 'A fox at dusk.'; run('autoTriggers={}'); run(`addTrigger('lora',true)`);
+  assert.equal(element('#positive').value, 'A fox at dusk. m4ng41nk', 'after a full stop the trigger follows a space, not a comma');
+  assert.match(run(`dropAutoTrigger('lora')`), /Removed the trigger m4ng41nk added/);
+  assert.equal(element('#positive').value, 'A fox at dusk.');
+  element('#positive').value = 'a fox, m4ng41nk'; run('autoTriggers={}');
+  assert.equal(element('#positive').value, 'a fox, m4ng41nk');
+  // The server binds strengths with number(value, key, 0, 2): every value the page can set stays in range.
+  for (const entry of Object.values(JSON.parse(fs.readFileSync(path.join(__dirname, '../presets/settings-kb.json'), 'utf8')).loras)) {
+    const value = run(`recommendedStrength('lora',${JSON.stringify(entry)})`);
+    assert.ok(value > 0 && value <= 2 && Number.isFinite(Number(String(value))), 'recommended strength stays a valid 0-2 number: ' + value);
+  }
+}
+
+// #278 audit item 24: the picker groups by what a recipe makes, shows one plain line, a committed recipe-default
+// thumbnail (never an adult-tagged recipe's), a speed badge and Needs download; the "review separate" chips are gone.
+function recipePickerIsGroupedAndPlain() {
+  const {element, run} = sandbox({}, {});
+  element('#categorySelect').value = 'All'; element('#presetSearch').value = '';
+  run(`catalog={presets:[
+      {id:'wai',name:'WAI',modality:'image',category:'Characters',family:'WAI',verified:true,description:'Close variations of a WAI picture (#1202; owner decision 27 September 2026, "Yes"). Measured details follow here.'},
+      {id:'clip',name:'Clip',modality:'video',category:'Video',description:'Short motion study.'},
+      {id:'mesh',name:'Mesh',modality:'3d',category:'3D',description:'Draft mesh.'},
+      {id:'fix',name:'Fix',modality:'image',reference:['4','image'],category:'Image editing',description:'Change one thing in a picture, in about 20-35 seconds warm.'},
+      {id:'pixel-lora',name:'Pixel',modality:'image',category:'Pixel art',description:'Pixel sprite.'},
+      {id:'krea-environment',name:'Env',modality:'image',category:'Anime flagship',description:'Environment study.'},
+      {id:'realvis',name:'Real',modality:'image',category:'Products & websites',description:'Realistic product photography.'}]};
+    mode='all'; selected=null; missingByPreset={realvis:['checkpoints/real.safetensors']};
+    atelierRecipes=[{id:'wai-adult',preset_id:'wai',tags:['adult-illustration'],status:'executed',evidence:{seconds:20.1}},
+      {id:'wai-portrait',preset_id:'wai',tags:['portrait'],status:'executed',evidence:{seconds:45}},
+      {id:'krea-adult',preset_id:'krea-environment',tags:['hentai']},{id:'real-intake',preset_id:'realvis',tags:['realism']}];
+    showcaseExamples={'wai-adult':{url:'/api/examples/recipe-thumbs-20260927/adult.jpg'},'wai-portrait':{url:'/api/examples/recipe-thumbs-20260927/wai.jpg'},
+      'krea-adult':{url:'/api/examples/recipe-thumbs-20260927/x.jpg'},'real-intake':{url:'/api/examples/civitai-intake/real.jpg'}};
+    renderPresets();`);
+  const html = element('#presetList').innerHTML;
+  const order = [...html.matchAll(/data-group="([^"]+)"/g)].map(m => m[1]);
+  assert.deepEqual(order, ['character', 'scene', 'photo', 'game', 'edit', 'video', '3d'], 'groups follow what each recipe makes');
+  const groupOf = id => { const before = html.slice(0, html.indexOf('data-id="' + id + '"')); return [...before.matchAll(/data-group="([^"]+)"/g)].pop()?.[1]; };
+  assert.deepEqual(['wai', 'krea-environment', 'realvis', 'pixel-lora', 'fix', 'clip', 'mesh'].map(groupOf), order);
+  assert.match(html, /data-id="wai"><img class="preset-thumb" src="\/api\/examples\/recipe-thumbs-20260927\/wai\.jpg"/, 'the recipe-default thumbnail of a non-adult recipe');
+  assert.doesNotMatch(html, /adult\.jpg|x\.jpg|civitai-intake/, 'never an adult-tagged or intake picture');
+  assert.match(html, /<span>Close variations of a WAI picture\.<\/span>/, 'one plain sentence without the decision aside');
+  assert.doesNotMatch(html, /#1202|owner decision|review separate|Measured details/);
+  assert.match(html, /data-id="wai"[\s\S]*?badge pace fast[^>]*>about 20 s</, 'speed from the fastest recorded run');
+  assert.match(html, /data-id="fix"[\s\S]*?badge pace fast" title="Timing stated in the recipe description">about 20 s</, 'else the recipe wording');
+  assert.match(html, /data-id="realvis"[\s\S]*?title="checkpoints\/real\.safetensors">Needs download</);
+  assert.equal((html.match(/Needs download/g) || []).length, 1, 'only recipes with missing models say so');
 }
