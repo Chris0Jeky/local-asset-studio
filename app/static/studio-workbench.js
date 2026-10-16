@@ -1055,6 +1055,8 @@
   // one job without touching Create's form, so the #1213 overwrite question has nothing to protect. One press posts
   // /api/jobs once; a failed or uncertain post is reported, never sent again.
   const makeVaryBusy=new Set();
+  // No HTTP answer (a dropped connection, an unreadable reply) means the job may exist: flag it so Make holds this Vary.
+  const sendVary=body=>post('/api/jobs',body).catch(error=>{if(error.status===undefined)error.uncertain=true;throw error;});
   async function vary(assetId,presetId,jobId,strength){
     if(makeVaryBusy.has(assetId))throw Error('Vary is already being sent for this picture. Wait for it.');
     makeVaryBusy.add(assetId);
@@ -1067,7 +1069,7 @@
         const recipe=await api('/api/jobs/'+encodeURIComponent(jobId)+'/recipe');
         if(recipe?.preset_id!==route.id)throw Error('This run no longer records '+route.name+'. Nothing was sent.');
         const check=await post('/api/recipe-check',recipe);
-        return await post('/api/jobs',{...base,controls:{...(recipe.controls||{}),...(route.seed?{seed}:{})},expected_template_sha256:check.template_sha256});
+        return await sendVary({...base,controls:{...(recipe.controls||{}),...(route.seed?{seed}:{})},expected_template_sha256:check.template_sha256});
       }
       if(StudioContinuation.sourceInput(route.continuation_capability)!=='reference')throw Error(route.name+' needs more than this picture. Use Continue with this.');
       let source;try{source=await readSource(assetId);}catch(error){throw Error('Could not read this picture. '+error.message);}
@@ -1080,7 +1082,7 @@
       const prepared=StudioContinuation.initial(result.context,route,'edit',result.file);
       const controls={reference:result.file,...(StudioContinuation.canvasFor(result.context,route)||{}),...(plan.carry||{}),...plan.strengths[strength].controls};
       if(route.positive)controls.positive=prepared.positive;if(route.negative)controls.negative=prepared.negative;if(route.seed)controls.seed=seed;
-      return await post('/api/jobs',{...base,continuation:prepared.claim,controls});
+      return await sendVary({...base,continuation:prepared.claim,controls});
     }finally{makeVaryBusy.delete(assetId);}
   }
   Object.assign(globalThis.StudioWorkbench,{polish,polishPlan,vary});

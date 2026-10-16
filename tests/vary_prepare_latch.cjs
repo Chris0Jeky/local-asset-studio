@@ -213,6 +213,13 @@ test('a failed Make Vary post is reported, not sent again (#1497)', async () => 
   assert.equal(box.sent.length, 1, 'no retry of an uncertain submission');
 });
 
+test('a Make Vary post with no HTTP answer is flagged uncertain; an HTTP refusal is not (Codex P1 on #1500)', async () => {
+  const lost = makeVaryBox({postJobs: () => { throw TypeError('Failed to fetch'); }});
+  await assert.rejects(lost.vary('asset-1', 'wai', 'job-1', 'subtle'), error => error.uncertain === true);
+  const refused = makeVaryBox({postJobs: () => { const e = Error('Unsupported sampler'); e.status = 400; throw e; }});
+  await assert.rejects(refused.vary('asset-1', 'wai', 'job-1', 'subtle'), error => !error.uncertain);
+});
+
 test('Make Vary refuses with its reason before copying anything (#1497)', async () => {
   const binned = makeVaryBox({assetState: {assets: [{id: 'asset-1', media_type: 'image', trashed_at: 1}]}});
   await assert.rejects(binned.vary('asset-1', 'wai', 'job-1', 'subtle'), /in the bin/);
@@ -227,7 +234,7 @@ const makeSource = fs.readFileSync(path.join(__dirname, '../app/static/make.js')
 const varyPictureStart = makeSource.indexOf('  async function varyPicture(button){');
 const varyPictureSource = makeSource.slice(varyPictureStart, makeSource.indexOf('\n  // shortcut: Comfy outputs have no auxiliary role;', varyPictureStart));
 function makeCard(vary) {
-  const box = {state: {varying: new Set(), runs: [{job: {id: 'run-1', outputs: [{asset_id: 'asset-1'}]}, look: 'Pearly', lookId: 'look-p', goal: 'character'}]}, said: [], polled: [],
+  const box = {VARY_HELD: 'held', state: {varying: new Set(), varyHeld: new Set(), runs: [{job: {id: 'run-1', outputs: [{asset_id: 'asset-1'}]}, look: 'Pearly', lookId: 'look-p', goal: 'character'}]}, said: [], polled: [],
     renderRuns() {}, remember() {}, poll(id) { box.polled.push(id); }, say(text) { box.said.push(text); }, window: {StudioWorkbench: {vary}}};
   vm.createContext(box); vm.runInContext(varyPictureSource + '\nthis.varyPicture=varyPicture;', box); return box;
 }
@@ -247,4 +254,9 @@ test('Make card Vary is wired to one StudioWorkbench.vary call per press (#1497)
   const failing = makeCard(async () => { throw Error('Vary uses X. Missing here'); });
   await failing.varyPicture(button);
   assert.equal(failing.state.varying.size, 0); assert.equal(failing.polled.length, 0); assert.match(failing.said.at(-1), /Missing here/);
+  assert.equal(failing.state.varyHeld.size, 0, 'a known refusal leaves Vary pressable');
+  let lostCalls = 0; const lost = makeCard(async () => { lostCalls++; throw Object.assign(TypeError('Failed to fetch'), {uncertain: true}); });
+  await lost.varyPicture(button); await lost.varyPicture(button);
+  assert.equal(lostCalls, 1, 'an uncertain Vary is never sent again from this page');
+  assert.ok(lost.state.varyHeld.has('asset-1')); assert.equal(lost.said.at(-1), 'held');
 });
