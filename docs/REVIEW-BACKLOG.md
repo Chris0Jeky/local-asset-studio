@@ -195,3 +195,9 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 - [ ] **Review hygiene**: a sweep found 20 Codex review threads on tonight's merged PRs that nobody had answered (my
   merge script checked CI only). Six were already fixed or out of date and got replies; the real ones are in one
   follow-up PR; the merge script now holds a PR while a bot thread is unanswered.
+- [ ] **Codex review follow-ups** (#1491): Compare runs now get Resume/Stop tracking; Compare outputs offer "Make this
+  my character…"; a failed characters load keeps the list and says so; Line-up survives a put-away canon with a live
+  copy; an unreadable run record has no Recipe button; a malformed model pin offers no copy-path actions; the
+  Skip-to-workspace focus ring stays on screen; three doc corrections.
+- [ ] **GPU admission** (#1490): a VRAM counter above the card (+128 MiB) now reads as unknown (admission waits)
+  instead of being subtracted as if measured.
