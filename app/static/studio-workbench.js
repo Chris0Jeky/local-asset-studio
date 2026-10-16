@@ -1020,6 +1020,33 @@
     finally{varyBusy=false;syncReady();}
   }
   document.addEventListener('click',e=>{const button=e.target.closest('[data-ux-vary]');if(!button||button.disabled)return;e.preventDefault();void prepareVary(button);});
+  // S3 one-press Polish (Fix face, Fix hands and details, Upscale) for Make: the same staged copy, claim and prepared wording as
+  // Continue with this, sent as one job without touching Create's form. polishPlan only reads; polish posts /api/jobs once.
+  const polishBusy=new Set();
+  async function polishRoute(assetId,kind){
+    if(!catalog)return{ok:false,reason:'Recipes are still loading.'};
+    let source;try{source=await readSource(assetId);}catch(error){return{ok:false,reason:'Could not read this picture. '+error.message};}
+    if(source?.asset_id!==assetId)return{ok:false,reason:'This picture’s record could not be verified. Refresh and try again.'};
+    return{...StudioContinuation.polishRoute(kind,catalog.presets,source,missingByPreset),source};
+  }
+  async function polishPlan(assetId,kind){
+    const route=await polishRoute(assetId,kind),timing=route.ok?StudioContinuation.combineTiming(jobs,route.preset.id):null;
+    return{ok:!!route.ok,preset_id:route.preset?.id||null,reason:route.reason||'',...(timing?{seconds:timing.seconds}:{})};
+  }
+  async function polish(assetId,kind){
+    const key=assetId+':'+kind;if(polishBusy.has(key))throw Error('This polish is already being sent. Wait for it.');
+    polishBusy.add(key);
+    try{
+      const route=await polishRoute(assetId,kind);if(!route.ok)throw Error(route.reason);
+      const {preset,source}=route,result=await post('/api/assets/reference',{id:assetId});
+      if(result?.parent_asset!==assetId||result.sha256!==source.sha256||result.context?.asset_id!==assetId||JSON.stringify(result.context)!==JSON.stringify(source))throw Error('The picture changed while it was being copied. Nothing was sent.');
+      const prepared=StudioContinuation.initial(result.context,preset,'repair',result.file),controls={reference:result.file};
+      if(preset.positive)controls.positive=prepared.positive;if(preset.negative)controls.negative=prepared.negative;
+      if(preset.seed)controls.seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647;
+      return await post('/api/jobs',{preset_id:preset.id,continuation:prepared.claim,controls,batch_count:1,parent_assets:[assetId],references:[],label:'Make · '+StudioContinuation.POLISH[kind]});
+    }finally{polishBusy.delete(key);}
+  }
+  Object.assign(globalThis.StudioWorkbench,{polish,polishPlan});
   // #1220 Make seamless: square, flat textures only. The server says whether this picture qualifies and a disabled button
   // carries its reason. Prepare rolls the texture and attaches its seam cross to the tile recipe; Generate stays the owner's press.
   let tileBusy=false,tileRead=0;

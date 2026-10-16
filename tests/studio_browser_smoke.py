@@ -220,6 +220,7 @@ def run(screenshots):
             check(models.locator('#modelsView').is_visible(),'Show everything clears a query need filter too')
             models.goto(origin+'/#make');models.wait_for_selector('[data-make-look="look-wai-fantasy-portrait"]');models.locator('[data-make-look="look-wai-fantasy-portrait"]').click()
             check(models.locator('#makeWhy a').get_attribute('href')=='/#models?need=wai','composer blocker links to the preset files')
+            models.locator('[data-make-change]').click()  # choosing a look folds the gallery (S1); open it again to see the cards
             card_link=models.locator('.make-look').filter(has=models.locator('[data-make-look="look-wai-fantasy-portrait"]')).locator('a')
             check(card_link.get_attribute('href')=='/#models?need=wai' and card_link.locator('xpath=ancestor::button').count()==0,'look blocker is a real link outside its select button')
             card_link.click();models.wait_for_function('document.querySelectorAll("#modelCards .model-card").length===1')

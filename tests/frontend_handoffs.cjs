@@ -1282,6 +1282,7 @@ async function recentRunsHeldLineCountsAFinishedRun() {
   await s.poll([recentJob('r1'), recentJob('clip', 1, 'video')]);
   assert.equal(s.writes, writes, 'The gallery still waits for the clip');
   assert.equal(line.textContent, '1 run finished, shown when the clip stops', 'The finished run is announced instead of vanishing');
+  assert.equal(line.title, line.textContent, 'The full waiting message is available when a narrow column truncates it');
   await s.poll([runningJob('r2'), recentJob('r1'), recentJob('clip', 1, 'video')]);
   assert.equal(line.textContent, '1 run finished · 1 new run, shown when the clip stops', 'Each kind of change is counted');
   await s.poll([recentJob('r3'), recentJob('r2'), recentJob('r1'), recentJob('clip', 1, 'video')]);
@@ -1310,6 +1311,21 @@ async function recentRunsHeldLineCountsPartialOutputs() {
   await s.poll([{...seeded, status: 'uncertain', message: 'Three kept', outputs: outputs('seed', 3)}, batch(3), {id: 'bad', preset_name: 'Bad', status: 'failed', message: 'OOM', outputs: [], prompt_ids: [], created_at: 3, can_put_away: true, put_away: false}, recentJob('clip', 1, 'video')]);
   assert.equal(line.textContent, '3 new outputs, shown when the clip stops', 'A failure with no outputs stays off the line');
   assert.ok(s.nodes().includes(video) && !video.paused, 'The playing clip is untouched');
+}
+
+async function recentRunsHeldLineCountsRunningToPartialOutputs() {
+  const s = recentRunsSandbox(), line = heldLine(s), running = {...runningJob('batch'), controls: {positive: 'prompt batch'}};
+  await s.poll([running, recentJob('clip', 1, 'video')]);
+  s.nodes().find(node => node.tagName === 'VIDEO').paused = false;
+  const writes = s.writes;
+  await s.poll([{...running, status: 'partial', outputs: recentJob('batch', 3).outputs}, recentJob('clip', 1, 'video')]);
+  assert.equal(s.writes, writes, 'The partial outputs wait for the playing clip');
+  assert.equal(line.textContent, '3 new outputs, shown when the clip stops');
+}
+
+function recentRunsHeldRegionStaysVisibleWhenEmpty() {
+  const css = fs.readFileSync(path.join(__dirname, '../app/static/style.css'), 'utf8');
+  assert.doesNotMatch(css, /\.recentHeld:empty\s*\{[^}]*visibility\s*:\s*hidden/, 'The empty live region remains available for its first announcement');
 }
 
 // #1215: a running card removed while held, then restored to the same key, is still missing until the clip stops.
@@ -1386,6 +1402,7 @@ async function recentRunsHeldLineClearsOnEveryRelease() {
     video.listeners[event][0]();
     assert.equal(s.writes, writes + 1, event + ' re-renders the gallery once');
     assert.equal(line.textContent, '', event + ' clears the line');
+    assert.equal(line.title, '', event + ' clears the tooltip too');
   }
 }
 
@@ -1393,15 +1410,27 @@ async function recentRunsHeldLineClearsOnEveryRelease() {
 // renderJobs without force. A playing clip must keep the gallery and the waiting count.
 async function recentRunsHeldLineSurvivesAnAssetRefresh() {
   const s = recentRunsSandbox(), line = heldLine(s);
-  await s.poll([runningJob('r1'), recentJob('clip', 1, 'video')]);
+  await s.poll([runningJob('r1'), recentJob('kept'), recentJob('clip', 1, 'video')]);
+  assert.match(s.element('#gallery').innerHTML, /data-output="kept:0"/, 'The output to trash starts on screen');
   s.nodes().find(node => node.tagName === 'VIDEO').paused = false;
   const writes = s.writes;
-  await s.poll([recentJob('r1'), recentJob('clip', 1, 'video')]);
+  await s.poll([recentJob('r1'), recentJob('kept'), recentJob('clip', 1, 'video')]);
   const waiting = line.textContent;
   assert.equal(waiting, '1 run finished, shown when the clip stops');
-  s.run('jobsSignature="";renderJobs();');
+  s.run('renderAssets=()=>{};renderLibraryRecovery=()=>{};');
+  s.context.fetch = async url => {
+    assert.equal(url, '/api/workspace');
+    return {ok: true, json: async () => ({workspace_id: 'workspace', assets: [{id: 'kept-0', trashed_at: 1}], collections: []})};
+  };
+  assert.equal(await s.run('refreshAssets()'), true, 'The real workspace refresh reads a trashed-output snapshot');
+  assert.equal(s.run('jobsSignature'), '', 'The workspace path resets the jobs signature');
   assert.equal(s.writes, writes, 'An asset refresh does not write the gallery while a clip plays');
-  assert.equal(line.textContent, waiting, 'The waiting count survives the asset refresh');
+  assert.equal(line.textContent, '1 run finished · 1 other change, shown when the clip stops', 'The waiting line includes the trashed output');
+  const video = s.nodes().find(node => node.tagName === 'VIDEO');
+  video.paused = true; video.listeners.pause[0]();
+  assert.equal(line.textContent, '', 'Release clears the waiting line after trash');
+  assert.doesNotMatch(s.element('#gallery').innerHTML, /data-output="kept:0"/, 'The released gallery omits the trashed output');
+  assert.match(s.element('#gallery').innerHTML, /data-output="r1:0"/, 'The finished run appears on release');
 }
 
 async function recentRunsHeldLineIgnoresUnchangedPolls() {
@@ -1604,8 +1633,10 @@ async function parallaxLateRepliesKeepCreateEdits() {
   await recentRunsHeldProblemsInsideTheGalleryKeepTheirCard();
   await recentRunsHeldProblemsReplaceTheGalleryProblems();
   await recentRunsHostHeldProblemsDropTheStaleGalleryProblems();
+  recentRunsHeldRegionStaysVisibleWhenEmpty();
   await recentRunsHeldLineCountsAFinishedRun();
   await recentRunsHeldLineCountsPartialOutputs();
+  await recentRunsHeldLineCountsRunningToPartialOutputs();
   await recentRunsHeldLineCountsAReturnedRun();
   renderJobsSliceRendersTheEmptyGallery();
   await recentRunsHeldLineClearsOnRelease();
