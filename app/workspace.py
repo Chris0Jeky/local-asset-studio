@@ -231,8 +231,10 @@ class AssetWorkspace:
                 return asset_id
         if not Path(source).is_file():
             return None
+        try: output = job["outputs"][index]
+        except (IndexError, KeyError, TypeError): output = None
+        if not isinstance(output, dict): raise WorkspaceError("That job output index is invalid; nothing was registered")
         path, digest, size = self.snapshot_file(source)
-        output = job["outputs"][index]
         label = job.get("label") if isinstance(job.get("label"), str) and job.get("label") else None
         with self.connection() as db:
             inserted = db.execute("""INSERT OR IGNORE INTO assets
