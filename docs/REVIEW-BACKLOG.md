@@ -88,3 +88,16 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   ~24 s), Night Shift (fast scene), Krea Watercolor (airy scene, ~6 min), Inkwork / Oil (painting), Lenovo (photo);
   no game-item look qualified.
 
+- [ ] **Ctrl+K finds looks by model, family and recipe words** (#1454); "lora", "adapter" or "tune" offers *Tune a look*;
+  a model name with no look leads to Models & setup (declined narrowing that: every model file lives there). The Full
+  editor heading "Follow the idea." became "Full editor — every setting for one recipe"; "saved look" became "look".
+  Reverse: revert #1454.
+- [ ] **Full editor triggers match whole words** (#1456): `pixel art` is no longer "present" in `pixel artwork`; removal
+  is case-insensitive and keeps ownership until it really removes; strengths clamp to the knowledge-base range.
+  **A look whose sampler/scheduler its recipe does not offer is now refused at save** and listed as unusable with the
+  reason (it already failed every Generate). Reverse: restore `not choices or` in `app/looks.py` `control_problem`.
+- [ ] **User guide for the flagship journey** (#1455, docs/guides/MAKE-A-HIGH-END-ANIME-PICTURE.md): written from the
+  code and lab evidence, not clicked through. It includes a licences section (Anima non-commercial, NoobAI excludes
+  commercial use) — record-only, not clearance. Its writer's 11 UX findings fed Make wave 5.
+- [ ] **Lab round 3 queued** (poses through "Character in a new pose", LoRA pairings on Petiflow, game-item recipes):
+  findings will land in docs/looks/LOOK-LAB-2026-10-16.md; settings-kb.json changes only as proposals.
