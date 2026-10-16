@@ -19,7 +19,7 @@ class Element {
   addEventListener(type,handler){this.listeners[type]=handler;}
   append(...children){this.children.push(...children);}
   replaceChildren(...children){this.children=children;}
-  setAttribute(name,value){this[name]=value;}
+  setAttribute(name,value){this[name]=value;}after(node){this.error=node;}removeAttribute(name){delete this[name];}
   focus(){}
   querySelector(selector){return walk(this,node=>node.tag===selector);}
   querySelectorAll(){return [];}
