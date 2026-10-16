@@ -1,5 +1,11 @@
 # Current state — 13 October 2026
 
+## GPU Look lab Round 5 - 16 October 2026
+
+22 serial jobs / 23 files (one mask): 13 KEEP, 9 FIXABLE; Anima face buttons use the same WAI repaint, Petiflow loses softness, upscales are neutral, restyles retain pose with drift, new icon strict KEEP 1/6 (one item 6/6). [Report](docs/looks/LOOK-LAB-2026-10-16.md#round-5-finishing-chains-restyle-tweaks-and-game-icon-reliability).
+
+61 Look tests passed; final validator/audit results are in the report. Preserve ignored .runtime/lab-20261016e/; receipts/journal in docs/looks. HUMAN_TODO.md unchanged; first upscale admission 64.8%, round peak recorded in receipts. No commit/push or runtime change; coordinator owns integration.
+
 ## GPU Look lab Round 4 - 16 October 2026
 
 21 serial jobs: 15 KEEP, 4 FIXABLE, 1 REJECT, 1 skipped; Anima Copy Pose 3/3 per pair, Z-Image/Krea both-item candidates, Petiflow medium 2/2 and full body 1/2 KEEP. [Report and exact controls](docs/looks/LOOK-LAB-2026-10-16.md#round-4-pose-reliability-other-source-families-items-and-framing).
