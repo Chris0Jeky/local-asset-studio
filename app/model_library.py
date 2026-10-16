@@ -1,7 +1,6 @@
 """Local model inventory and checksum-pinned, explicit asset installation."""
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import re
@@ -11,7 +10,7 @@ import threading
 import time
 import uuid
 from urllib.request import Request
-from download_contracts import InstallLease, asset_id as checked_id, download_source_provider, file_identity, open_download as urlopen, publish_verified, relative_model_path, validate_pins, validate_response
+from download_contracts import InstallLease, asset_id as checked_id, download_source_provider, file_identity, open_download as urlopen, publish_verified, sha256, relative_model_path, validate_pins, validate_response
 
 from studio_workflow.model_contracts import FOLDERS, SUFFIXES
 INSTALL_SUFFIX = ".safetensors"
@@ -23,14 +22,6 @@ def load(path, default=None):
         return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return default
-
-
-def sha256(path):
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(8 * 1024**2), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 LINKED_ROW_NOTE = ("This file's folder is a link (symlink or junction). The Studio does not install or verify through links, "
@@ -240,7 +231,7 @@ class ModelLibrary:
         # Reporting a disk/path failure must not mask it or strand the worker gate.
         done=None;partial=None
         try:
-            part=self.partial_path(self.destination(asset));partial=str(part)
+            part=getattr(exc,'partial_path',None) or self.partial_path(self.destination(asset));partial=str(part)
             done=part.stat().st_size if part.is_file() else 0
         except (OSError,ValueError):pass
         try:self._record(asset['id'],status='failed',bytes_done=done,bytes_total=asset['bytes'],
@@ -276,16 +267,26 @@ class ModelLibrary:
                 try:os.link(local,target)
                 except OSError:
                     if target.exists() or target.is_symlink():raise ValueError('Destination appeared during installation; original preserved')
-                    if shutil.disk_usage(target.parent).free<expected_size+RESERVE_BYTES:raise ValueError('More disk space is needed to preserve 20 GiB of working headroom')
                     part=self.partial_path(target)
-                    if part.exists():part=part.with_name(part.name+'.'+uuid.uuid4().hex+'.tmp')
-                    with part.open('xb') as output,local.open('rb') as source:
-                        while chunk:=source.read(4*1024**2):
-                            if output.tell()+len(chunk)>expected_size:raise ValueError('Browser file grew during copy; partial preserved')
-                            if shutil.disk_usage(target.parent).free<len(chunk)+RESERVE_BYTES:raise ValueError('Insufficient disk space during copy; partial preserved')
-                            output.write(chunk)
-                        output.flush();os.fsync(output.fileno())
-                    identity=publish_verified(part,target,self._verify(part,asset))
+                    if part.exists():
+                        for previous in part.parent.iterdir():
+                            if not re.fullmatch(re.escape(part.name)+r'\.[0-9a-f]{32}\.tmp',previous.name):continue
+                            self._check_path(previous)
+                            if not previous.is_file() or previous.stat().st_nlink!=1:raise ValueError('Temporary copy must be an unshared regular file; original preserved')
+                            previous.unlink()
+                        part=part.with_name(part.name+'.'+uuid.uuid4().hex+'.tmp')
+                    if shutil.disk_usage(target.parent).free<expected_size+RESERVE_BYTES:raise ValueError('More disk space is needed to preserve 20 GiB of working headroom')
+                    try:
+                        with part.open('xb') as output,local.open('rb') as source:
+                            while chunk:=source.read(4*1024**2):
+                                if output.tell()+len(chunk)>expected_size:raise ValueError('Browser file grew during copy; partial preserved')
+                                if shutil.disk_usage(target.parent).free<len(chunk)+RESERVE_BYTES:raise ValueError('Insufficient disk space during copy; partial preserved')
+                                output.write(chunk)
+                            output.flush();os.fsync(output.fileno())
+                        identity=publish_verified(part,target,self._verify(part,asset),expected_hash)
+                    except Exception as exc:
+                        exc.partial_path=part
+                        raise
                 else:
                     identity=file_identity(target)
                     if any(identity[k]!=verified[k] for k in ('device','inode','size','mtime_ns')):
@@ -338,4 +339,4 @@ class ModelLibrary:
         self._record(asset["id"], status="verifying", bytes_done=offset, bytes_total=size, message="Checking SHA-256 before installation")
         identity=self._verify(part,asset)
         self._check_path(target)
-        return publish_verified(part,target,identity)
+        return publish_verified(part,target,identity,asset["sha256"])
