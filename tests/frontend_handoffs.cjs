@@ -951,7 +951,9 @@ async function modelShopCards() {
     },
     async () => {
       run(`modelLooks[1].body.controls={lora_name:'unknown-adapter',lora:0.5};library.inventory=[];renderCuratedModels()`);
-      assert.match(element('#modelLooks').innerHTML, /Needs a download<\/h4>[\s\S]*Look B[\s\S]*unknown-adapter/, 'an unknown extension-less adapter blocks readiness even with an empty inventory');
+      assert.doesNotMatch(element('#modelLooks').innerHTML, /unknown-adapter/, 'with no disk inventory reported yet an unlisted adapter is unknown, not missing');
+      run(`library.inventory=[{file:'loras/other.safetensors',bytes:8}];renderCuratedModels()`);
+      assert.match(element('#modelLooks').innerHTML, /Needs a download<\/h4>[\s\S]*Look B[\s\S]*unknown-adapter/, 'an unknown extension-less adapter blocks readiness once an inventory is reported');
       run(`modelLooks[1].body.controls.lora='0.5';library.inventory=[{file:'loras/unknown-adapter',bytes:8}];renderCuratedModels()`);
       assert.match(element('#modelLooks').innerHTML, /Ready now<\/h4>[\s\S]*Look B/, 'an adapter on disk is ready and a string strength is not a file');
     },
