@@ -28,12 +28,12 @@ def run_owning_descendants(command, timeout, env):
         except subprocess.TimeoutExpired:
             try:
                 descendants = psutil.Process(process.pid).children(recursive=True)
-            except psutil.NoSuchProcess:
+            except psutil.Error:  # NoSuchProcess or AccessDenied: never block the wrapper kill below
                 descendants = []
             for child in descendants:
                 try:
                     child.kill()
-                except psutil.NoSuchProcess:
+                except psutil.Error:  # NoSuchProcess or AccessDenied: never block the wrapper kill below
                     pass
             process.kill()
             process.communicate()
