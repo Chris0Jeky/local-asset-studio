@@ -27,7 +27,7 @@
   const POLISH={face:'Fix face',details:'Fix hands and details',upscale:'Upscale 2\u00d7'};
   const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',pose:null,posePicking:false,compare:false,compareLooks:[]};
   try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(GOALS.some(g=>g.id===saved.goal))state.goal=saved.goal;if(typeof saved.look==='string')state.look=saved.look;}catch{}
-  const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,...r})=>({...r,job:{id}}))]).slice(0,6).map(({job,look,lookId,goal,scene,tune,tuned,group})=>({id:job.id,look,lookId,goal,scene,tune,tuned,group}))}));}catch{}};
+  const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,...r})=>({...r,job:{id}}))]).slice(0,6).map(({job,look,lookId,goal,scene,tune,tuned,group,title})=>({id:job.id,look,lookId,goal,scene,tune,tuned,group,title}))}));}catch{}};
   let restoredRuns=false,savedRuns=[];try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(Array.isArray(saved.runs))savedRuns=saved.runs.filter(r=>r&&typeof r.id==='string').slice(0,6);}catch{}
   const presets=()=>typeof catalog!=='undefined'&&catalog?.presets||[];
   const presetFor=look=>presets().find(p=>p.id===look?.body?.preset_id);
@@ -356,8 +356,8 @@
         return '<article class="make-run make-compare" data-run="'+escape(id)+'"><header><div><b>Compare looks · '+escape(pictureTitle(first.scene,first.job.created_at))+'</b><small>'+runs.length+' looks, one picture each'+(runs.every(r=>r.job.controls?.seed!=null&&r.job.controls.seed===first.job.controls?.seed)?', same seed':'')+'</small></div><span class="make-run-state '+(done===runs.length?'completed':'running')+'">'+(done===runs.length?'Done':done+' of '+runs.length+' done')+'</span></header><div class="make-compare-grid">'
           +runs.map(({job,look})=>'<figure><figcaption><b>'+escape(look)+'</b><small class="make-run-state '+escape(job.status)+'">'+escape(words(job))+'</small></figcaption>'+(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')
             +(job.outputs||[]).map((o,i)=>picture(o)?img(job,o,i,look)+(o.asset_id?'<div class="make-actions">'+marks(o.asset_id)+'</div>':'<small class="muted">Saving to the library…</small>'):'').join('')+pending(job,1)+'</figure>').join('')+'</div></article>';}
-      const {job,look,scene,tuned}=runs[0];
-      return '<article class="make-run" data-run="'+escape(job.id)+'"><header><div><b>'+escape(pictureTitle(scene||job.controls?.positive||look,job.created_at))+'</b>'+(scene?'<small>'+escape(scene)+'</small>':look&&!scene?'<small>'+escape(look)+'</small>':'')+(tuned?'<small class="make-tuned">'+escape(tuned)+'</small>':'')+'</div><span class="make-run-state '+escape(job.status)+'">'+escape(words(job))+'</span></header>'
+      const {job,look,scene,tuned,title}=runs[0];
+      return '<article class="make-run" data-run="'+escape(job.id)+'"><header><div><b>'+escape(pictureTitle(scene||title||job.controls?.positive||look,job.created_at))+'</b>'+(scene?'<small>'+escape(scene)+'</small>':look&&!scene?'<small>'+escape(look)+'</small>':'')+(tuned?'<small class="make-tuned">'+escape(tuned)+'</small>':'')+'</div><span class="make-run-state '+escape(job.status)+'">'+escape(words(job))+'</span></header>'
       +(scene?'<div class="make-run-tools"><button type="button" data-make-rerun="'+escape(job.id)+'">Edit and re-run</button><button type="button" data-make-another="'+escape(job.id)+'">Same words, another look</button></div>':'')
       +(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')
       +'<div class="make-outputs">'+(job.outputs||[]).map((o,i)=>!picture(o)?other(o):'<figure>'+img(job,o,i,look)+actions(job,o)+'</figure>').join('')+pending(job)+'</div></article>';});
@@ -536,7 +536,7 @@
         say('Sending to ComfyUI…');
         job=await json('/api/jobs',{preset_id:p.id,continuation:prepared.claim,controls,batch_count:1,parent_assets:[...new Set([a.id,...board.map(r=>r.parent_asset).filter(Boolean)])],references:p.reference_slots?.length?SC().combineReferences(p,board):[],label:'Make · '+g.name});
       }
-      state.runs.unshift({job,look:g.intent==='repair'?POLISH[state.fix]:g.name,lookId:null,goal:g.id,scene:null});remember();
+      state.runs.unshift({job,look:g.intent==='repair'?POLISH[state.fix]:g.name,lookId:null,goal:g.id,scene:null,title:String(form[{edit:'change',animate:'motion',combine:'who'}[g.intent]]||'').trim()||pictureLabel(a)});remember();
       say('Started. The result appears in Your pictures as it finishes; you can leave this page.');renderRuns();poll(job.id);
       if(typeof refresh==='function')void refresh();
     }catch(error){say(error.message);}
@@ -608,7 +608,8 @@
     if(t.dataset.makeFix){state.fix=t.dataset.makeFix;redraw('#makeFix-'+state.fix);return;}
     if(t.dataset.makeStyle){state.styleLook=t.dataset.makeStyle;q('#makeStyleLooks')?.removeAttribute('aria-invalid');return;}
     if(t.dataset.makePoseMode){state.poseMode=t.dataset.makePoseMode;state.posePicking=false;redraw('#makePoseMode-'+state.poseMode);return;}
-    if(t.dataset.makeFigure){const fig=PE().PRESETS.find(x=>x.id===t.dataset.makeFigure);state.pose={figure:fig.id,mirror:!!state.pose?.mirror};if(!String(state.form.pose||'').trim())state.form.pose=fig.label.toLowerCase();redraw('#makeFigure-'+fig.id);return;}
+    // A new figure is a new pose: its words replace the pose answer (Create clears it the same way, #492); edit them freely.
+    if(t.dataset.makeFigure){const fig=PE().PRESETS.find(x=>x.id===t.dataset.makeFigure);state.pose={figure:fig.id,mirror:!!state.pose?.mirror};state.form.pose=fig.label.toLowerCase();redraw('#makeFigure-'+fig.id);return;}
     if('makeMirror' in t.dataset&&state.pose?.figure){state.pose.mirror=t.checked;redraw('#makeMirror');}});
   view.addEventListener('click',e=>{
     if(e.target.closest('#makeTune')&&tuneClick(e.target))return;
