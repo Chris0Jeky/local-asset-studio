@@ -1,0 +1,89 @@
+{
+  "verification": "Unverified historical archive measurements. These files are absent from the repository; their bytes and SHA-256 could not be re-derived. This record does not establish that the external archive remains available.",
+  "files": {
+    "01-initial.png": {
+      "bytes": 67766,
+      "sha256": "a493ccefee4301dd51b745cf4b284eb6a8a14eb8cf0a1e8cbd45ff3dc8bb0c3a"
+    },
+    "02-review.png": {
+      "bytes": 116852,
+      "sha256": "530e6991541b173cbaa0541951a00a338ccd614ba37ec4534e0b1f40796cc6bc"
+    },
+    "03-cancel-preserved.png": {
+      "bytes": 61853,
+      "sha256": "6d8329162343c4928f0dd953b227f0d3a6250ef68476f6f7b1426c8eef27d048"
+    },
+    "04-review-again.png": {
+      "bytes": 116852,
+      "sha256": "530e6991541b173cbaa0541951a00a338ccd614ba37ec4534e0b1f40796cc6bc"
+    },
+    "05-consent.png": {
+      "bytes": 128314,
+      "sha256": "6efc2310e8175d446d7cb063724af25216858b6ce6dfafac90220a330394d7be"
+    },
+    "06-applied.png": {
+      "bytes": 87175,
+      "sha256": "4123d0e246ff73cea97470555a33b271b2f07fb4bbbda6ffcc5e00dd3ec4537b"
+    },
+    "decoded-01.png": {
+      "bytes": 219972,
+      "sha256": "3d010e59a445ef83ae42c6cd811d33f490eefea5a18a9f1bdfa0dc74883f4f66"
+    },
+    "decoded-06.png": {
+      "bytes": 240368,
+      "sha256": "c54556388907c652a93c51a4357cefc8167e3b2fe0f66e27c7fedea266c7db30"
+    },
+    "decoded-11.png": {
+      "bytes": 193166,
+      "sha256": "b5136da40f9dafcfd547f679a43be6ccce6fbaa7f5d815c788e9110aa7e53ac5"
+    },
+    "decoded-16.png": {
+      "bytes": 468422,
+      "sha256": "826f1cb0a633e2136005f615b900b2586523a6da8c45c92560ad8cb878d3dc2c"
+    },
+    "decoded-19.png": {
+      "bytes": 247333,
+      "sha256": "672f1fef38d0625e90de9edabe7ea89ed7244a024eb1b2ce08001f6bc01026a6"
+    },
+    "decoded-24.png": {
+      "bytes": 302064,
+      "sha256": "c9fc7a150c3c45e1068b5ad9c059946f474cd006d4491842c5f90e4d413ded8b"
+    },
+    "decoded-27.png": {
+      "bytes": 313458,
+      "sha256": "ba774316128d3d18d56c042ea0684b7874ae15cf9866b2e96169ba69b681f6d7"
+    },
+    "http-audit.json": {
+      "bytes": 8332,
+      "sha256": "894baa75ea9193428691c90a5f399d4e7f6ad1e1820f52aca659c9f6e42bb7e5"
+    },
+    "index.html": {
+      "bytes": 1783,
+      "sha256": "880673a6c9c82c14719493da2b5c7745dde63dad9cc754daad3a8889efc74879"
+    },
+    "phone-real-create.png": {
+      "bytes": 25985,
+      "sha256": "534c183b0c18fb7a043149cf90d4ca57dae8f47731a7a93b969dcd9416bc85de"
+    },
+    "player-1280.png": {
+      "bytes": 114466,
+      "sha256": "a39368e1bce08a0f5951b3a57cf8d84dcdd72b135b122d752683316f54b14297"
+    },
+    "player-390.png": {
+      "bytes": 76636,
+      "sha256": "facd4bbb7bb471428aeb16d95d8bce0c8197e0c7260dc4a260b0fbb99da0f5d6"
+    },
+    "poster.png": {
+      "bytes": 87175,
+      "sha256": "4123d0e246ff73cea97470555a33b271b2f07fb4bbbda6ffcc5e00dd3ec4537b"
+    },
+    "tutorial-recipe-change.mp4": {
+      "bytes": 781514,
+      "sha256": "dfc625625c2a17c513e2b31421570e8ee38ed0db31eeaf9ce3b090e522439351"
+    },
+    "raw/page@fbc09a2118f30039d8e3472a609e96c2.webm": {
+      "bytes": 2423665,
+      "sha256": "4598c30d0cea42069b951f3bf7ecc24e69bd4850c059bdf34dfbe988306eda7e"
+    }
+  }
+}

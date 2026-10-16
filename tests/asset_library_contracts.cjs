@@ -251,5 +251,20 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
     assert.equal(s.writes.length,1);assert.equal(s.confirmations(),1);assert.equal(s.run('assetSelection.size'),2);
     assert.match(s.el('#assetMessage').textContent,/Export cancelled/);
   });
+  await test('Decorative placeholder glyphs are hidden and the detail audio player is named',()=>{
+    const s=library();
+    assert.equal(s.run(`assetPreview({url:'/take.wav',media_type:'audio',title:'Take <1>'},true)`),'<audio controls aria-label="Play Take &lt;1&gt;" src="/take.wav"></audio>');
+    assert.equal(s.run(`assetPreview({url:'/take.wav',media_type:'audio',title:'Take'})`),'<span class="asset-type-placeholder"><span aria-hidden="true">♫</span><small>Audio</small></span>');
+    assert.equal(s.run(`assetPreview({url:'/m.glb',media_type:'3d',title:'Mesh'})`),'<span class="asset-type-placeholder"><span aria-hidden="true">◇</span><small>3D model</small></span>');
+    assert.equal(s.run(`assetPreview({title:'Gone',media_type:'image'})`),'<span class="asset-type-placeholder"><span aria-hidden="true">▨</span><small>No preview · file missing</small></span>');
+  });
+  await test('Attaching a source scrolls to the recipe instantly when reduced motion is requested',async()=>{
+    const s=library();
+    s.run("post=async()=>({id:'a0',width:512,height:768});catalog={presets:[{id:'gentle-variation',name:'Gentle',modality:'image',reference:true}]};beginContinuation=()=>{};showView=()=>{};");
+    const scrolls=[];s.el('#selectedPreset').scrollIntoView=options=>scrolls.push(options);
+    s.run("globalThis.matchMedia=query=>({matches:true})");await s.run(`handoffAsset('a0','gentle-variation')`);
+    s.run("globalThis.matchMedia=query=>({matches:false})");await s.run(`handoffAsset('a0','gentle-variation')`);
+    assert.deepEqual(scrolls.map(options=>options.behavior),['auto','smooth']);assert.equal(scrolls[0].block,'start');
+  });
   console.log(`Asset library contracts: ${passed} passed, ${failed} failed`);if(failed)process.exitCode=1;
 })().catch(e=>{console.error(e);process.exitCode=1;});

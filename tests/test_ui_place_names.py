@@ -17,6 +17,15 @@ class PlaceNames(unittest.TestCase):
             for retired in RETIRED:
                 self.assertNotIn(retired, text, f'{name} still shows "{retired}"')
 
+    def test_full_editor_uses_plain_heading_and_look_names(self):
+        index = (STATIC / 'index.html').read_text(encoding='utf-8')
+        self.assertIn('<h1>Full editor — every setting for one recipe</h1>', index)
+        self.assertIn('<h1>Full editor — every setting for one recipe</h1>', (STATIC / 'studio-workbench.js').read_text(encoding='utf-8'))
+        for name in ('app.js', 'looks.js'):
+            text = (STATIC / name).read_text(encoding='utf-8')
+            self.assertNotIn('saved look', text.lower())
+        self.assertIn('Use a look <small>', (STATIC / 'looks.js').read_text(encoding='utf-8'))
+
     def test_page_labels_match_the_sidebar(self):
         shell = (STATIC / 'studio-shell.js').read_text(encoding='utf-8')
         for label in ('Library', 'Compare &amp; review' if 'Compare &amp; review' in shell else 'Compare & review'):

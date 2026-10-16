@@ -386,6 +386,56 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(job['submissions'][0]['prompt_id'],'  prompt-1  ')
         self.assertNotIn('pending_submission',job)
 
+    # #1459: the marker before POST /prompt and the receipt after it go through the fsyncing observation_state.publish barrier.
+    DONE=staticmethod(lambda pid:{pid:{'status':{'status_str':'success'},'outputs':{}}})
+
+    def test_submission_marker_and_receipt_are_published_durably_around_the_post(self):
+        s=FakeStudio(self.root,[self.IDLE,{'prompt_id':'p1'},self.DONE('p1')]);job=s.jobs[s.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+        real=server.observation_state.publish;calls=[]
+        def spy(path,value,*args):
+            calls.append((path.name,len(s.requests),'pending_submission' in value,list(value.get('prompt_ids') or [])));return real(path,value,*args)
+        with patch.object(server.observation_state,'publish',side_effect=spy):s._run(job)
+        self.assertEqual(job['status'],'completed');self.assertEqual([args[0] for args,_ in s.requests if args],['/queue','/prompt','/history/p1'])
+        # Marker: workflow.json + state.json synced after /queue, before /prompt. Receipt: both synced right after /prompt.
+        self.assertEqual(calls,[('workflow.json',1,False,[]),('state.json',1,True,[]),('workflow.json',2,False,[]),('state.json',2,False,['p1'])])
+
+    def test_marker_publish_failure_sends_no_prompt_and_leaves_a_clear_not_sent_state(self):
+        for error in (OSError('disk full'),ValueError('Out of range float values are not JSON compliant')):
+            with self.subTest(error=type(error).__name__):
+                s=FakeStudio(self.root,[self.IDLE,{'prompt_id':'never'}]);job=s.jobs[s.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+                with patch.object(server.observation_state,'publish',side_effect=error):s._run(job)
+                self.assertEqual([args[0] for args,_ in s.requests if args],['/queue'])
+                self.assertEqual(job['status'],'failed');self.assertNotIn('pending_submission',job);self.assertEqual(job['prompt_ids'],[])
+                self.assertIn('could not be saved durably',job['message']);self.assertIn('No prompt was submitted for output 1',job['message'])
+                restored=self.studio().jobs[job['id']];self.assertEqual(restored['status'],'failed');self.assertNotIn('pending_submission',restored)
+
+    def test_receipt_publish_failure_never_resubmits_and_keeps_the_prompt_id_uncertain(self):
+        for fallback_fails in (False,True):
+            with self.subTest(fallback_fails=fallback_fails):
+                s=FakeStudio(self.root,[self.IDLE,{'prompt_id':'first'},self.DONE('first'),{'prompt_id':'second'},self.DONE('second')])
+                job=s.jobs[s.create_job({'preset_id':'demo','controls':{'seed':40},'batch_count':2},enqueue=False)['id']]
+                real=server.observation_state.publish
+                def publish(path,value,*args):
+                    if path.name=='state.json' and value.get('prompt_ids'):raise OSError('disk full')
+                    return real(path,value,*args)
+                atomic=server.Studio._write_json_atomic
+                def plain(self_,path,value):
+                    if fallback_fails and path.name=='state.json' and value.get('prompt_ids'):raise OSError('disk full')
+                    return atomic(self_,path,value)
+                with patch.object(server.observation_state,'publish',side_effect=publish),patch.object(server.Studio,'_write_json_atomic',plain):s._run(job)
+                self.assertEqual([args[0] for args,_ in s.requests if args],['/queue','/prompt'])
+                self.assertEqual(job['status'],'uncertain');self.assertEqual(job['prompt_ids'],['first']);self.assertEqual(job['submissions'][0]['prompt_id'],'first')
+                self.assertIn('will not be resubmitted',job['message']);self.assertNotIn('pending_submission',job)
+                self.assertIsNone(s._observation_error(job))   # Resume observation is offered for the retained prompt ID
+                restored=self.studio().jobs[job['id']];self.assertEqual(restored['status'],'uncertain')
+                self.assertFalse(server.submission_evidence.never_submitted(restored))
+
+    def test_durable_save_writes_non_finite_readings_as_null(self):
+        s=self.studio();job=s.jobs[s.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+        job['gpu_spill']={'shared_bytes':float('nan'),'ratio':[float('inf'),1.5]};s._save(job,durable=True)
+        state=json.loads((s.runs/job['id']/'state.json').read_text(encoding='utf-8'),parse_constant=lambda c:self.fail(c))
+        self.assertEqual(state['gpu_spill'],{'shared_bytes':None,'ratio':[None,1.5]});self.assertTrue(job['gpu_spill']['shared_bytes']!=job['gpu_spill']['shared_bytes'])
+
     def test_a_failed_history_read_is_read_again_and_the_batch_continues(self):
         """#1113: one unreadable /history poll is retried after a backoff; the prompt is never resubmitted and the next member is sent."""
         done=lambda pid:{pid:{'status':{'status_str':'success'},'outputs':{}}}
@@ -757,6 +807,53 @@ class ServerTests(unittest.TestCase):
         s=self.studio(); job=s.create_job({"preset_id":"demo","controls":{}}); live=s.jobs[job["id"]]; live["status"]="running"; s._save(live)
         recovered=self.studio().jobs[job["id"]]
         self.assertEqual(recovered["status"],"uncertain"); self.assertIn("not resubmitted",recovered["message"])
+
+    def unreadable_run_record(self, filename, corrupt=b'{broken'):
+        studio,bad=self.uncertain_known_job(FakeStudio(self.root,[]))
+        good=studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)
+        directory=studio.runs/bad['id'];(directory/filename).write_bytes(corrupt)
+        before={p.name:p.read_bytes() for p in directory.iterdir() if p.is_file()}
+        restored=FakeStudio(self.root,[])
+        self.assertIn(bad['id'],restored.jobs)
+        job=restored.jobs[bad['id']];public=restored.public(job)
+        self.assertEqual(public['status'],'uncertain');self.assertNotIn('graph',job)
+        self.assertFalse(public['prompt_ids']);self.assertEqual(public['submissions'],[])
+        self.assertEqual(public['run_path'],str(directory))
+        self.assertIn('The run record could not be read ('+filename+': ',public['message'])
+        self.assertIn('Nothing was resubmitted.',public['message']);self.assertIn('Inspect experiments/runs/'+bad['id']+'/ before deleting it.',public['message'])
+        # A readable state.json still tells the owner which ComfyUI prompts are known; a broken one cannot.
+        self.assertEqual('Known ComfyUI prompt IDs: '+', '.join(bad['prompt_ids']) in public['message'],filename=='workflow.json')
+        for key in ('never_submitted','can_stop_tracking','can_resume_tracking','can_abandon','can_put_away','can_cancel'):
+            self.assertFalse(public[key],key)
+        self.assertFalse(server.submission_evidence.never_submitted(job))
+        self.assertEqual(restored.jobs[good['id']]['graph'],GRAPH)
+        self.assertEqual(restored.jobs[good['id']]['status'],'not_submitted')
+        self.assertEqual({p.name:p.read_bytes() for p in directory.iterdir() if p.is_file()},before)
+        for command in (lambda:restored.resume_job(bad['id']),lambda:restored.stop_tracking(bad['id'],'Keep the evidence'),
+                        lambda:restored.abandon_job(bad['id'],'Missing evidence',True),lambda:restored.put_away_job(bad['id'],True),
+                        lambda:restored.cancel_job(bad['id']),lambda:restored._save(job),lambda:restored.export_recipe(job)):
+            with self.assertRaises(server.StudioError):command()
+            self.assertEqual({p.name:p.read_bytes() for p in directory.iterdir() if p.is_file()},before)
+            self.assertEqual(restored.queue.qsize(),0);self.assertEqual(restored.requests,[])
+            self.assertEqual(job['status'],'uncertain')
+        self.assertIn(bad['id'],FakeStudio(self.root,[]).jobs)
+
+    def test_unreadable_state_stays_visible_without_recovery_or_writes(self):
+        self.unreadable_run_record('state.json')
+
+    def test_unreadable_workflow_stays_visible_without_recovery_or_writes(self):
+        self.unreadable_run_record('workflow.json')
+
+    def test_unreadable_workflow_with_odd_prompt_ids_does_not_break_loading(self):
+        studio,bad=self.uncertain_known_job(FakeStudio(self.root,[]));directory=studio.runs/bad['id']
+        state=json.loads((directory/'state.json').read_text(encoding='utf-8'));state['prompt_ids']=5
+        (directory/'state.json').write_text(json.dumps(state),encoding='utf-8');(directory/'workflow.json').write_bytes(b'{broken')
+        job=FakeStudio(self.root,[]).jobs[bad['id']];self.assertIn('workflow.json',job['record_error']);self.assertNotIn('Known ComfyUI prompt IDs',job['message'])
+
+    def test_unreadable_run_encoding_and_non_object_records_stay_visible(self):
+        for filename in ('state.json','workflow.json'):
+            for corrupt in (b'\xff',b'[]'):
+                with self.subTest(filename=filename,corrupt=corrupt):self.unreadable_run_record(filename,corrupt)
 
     def uncertain_known_job(self, studio=None):
         studio=studio or self.studio()
@@ -1661,6 +1758,18 @@ class ServerTests(unittest.TestCase):
         job.update(status='partial',message=reason,prompt_ids=['p0'],submissions=[{'index':0,'prompt_id':'p0','seed':1,'graph':job['graph'],'status':'completed'}])
         studio.resume_job(job['id']);studio.queue.get();studio._resume(job)
         self.assertEqual(job['status'],'partial');self.assertEqual(job['message'],reason);self.assertEqual([args[0] for args,_ in studio.requests if args],[])
+
+    def test_resuming_a_failed_receipt_keeps_comfyuis_verdict_without_rereading_history(self):
+        # A ComfyUI restart clears /history: re-reading a failed receipt would end as "uncertain" (Muse bug hunt, 16 Oct).
+        for receipts,expected in ((['failed'],'failed'),(['completed','failed'],'partial')):
+            with self.subTest(receipts=receipts):
+                studio=FakeStudio(self.root,[]);studio.worker_available=lambda:True
+                job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{},'batch_count':len(receipts)},enqueue=False)['id']]
+                reason='ComfyUI reported an execution error: KSampler: boom'
+                job.update(status=expected,message=reason,prompt_ids=['p%d'%i for i in range(len(receipts))],submissions=[{'index':i,'prompt_id':'p%d'%i,'seed':1,'graph':job['graph'],'status':r} for i,r in enumerate(receipts)])
+                studio.resume_job(job['id']);studio.queue.get();studio._resume(job)
+                self.assertEqual(job['status'],expected);self.assertEqual(job['message'],reason)
+                self.assertEqual([args[0] for args,_ in studio.requests if args],[])
 
     def test_an_unrecognized_queue_entry_shape_counts_as_listed(self):
         replies=[{'queue_running':[],'queue_pending':[]},{'prompt_id':'p'}]

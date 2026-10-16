@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import sys
 import tempfile
+import types
 import unittest
 from unittest.mock import patch
 
@@ -125,6 +126,22 @@ class ModelLibraryTests(unittest.TestCase):
             with self.subTest(raw=raw):
                 (self.root/'models/library.json').write_bytes(raw)
                 with self.assertRaisesRegex(ValueError,'models/library.json'):self.lib.snapshot()
+
+
+    def test_one_malformed_pin_is_its_own_invalid_row_and_the_rest_still_render(self):
+        bad_file={'id':'bad-file','file':'../escape.safetensors','bytes':3,'sha256':'0'*64}
+        no_hash={'id':'no-hash','file':'loras/nohash.safetensors','bytes':3}
+        (self.root/'models/library.json').write_text(json.dumps({'assets':[bad_file,no_hash,self.asset]}))
+        rows={a['id']:a for a in self.lib.snapshot()['assets']}
+        self.assertEqual(rows['bad-file']['status'],'invalid_pin');self.assertIn('portable relative path',rows['bad-file']['install_note']);self.assertEqual(rows['bad-file']['path'],'');self.assertFalse(rows['bad-file']['installable'])
+        self.assertEqual(rows['no-hash']['status'],'invalid_pin');self.assertIn('SHA-256',rows['no-hash']['install_note'])
+        self.assertNotIn('status',rows['demo']);self.assertFalse(rows['demo']['verified']);self.assertEqual(rows['demo']['verification'],'missing')
+
+    def test_open_folder_refuses_on_non_windows_before_creating_the_folder(self):
+        target=self.lib.folder('input')
+        with patch.object(models,'os',types.SimpleNamespace(name='posix')):
+            with self.assertRaisesRegex(ValueError,'Open folder is available on Windows'):self.lib.open_folder('input')
+        self.assertFalse(target.exists())
 
 
 class PinOnlyFolderTests(unittest.TestCase):

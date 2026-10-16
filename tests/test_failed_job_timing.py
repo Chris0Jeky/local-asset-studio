@@ -38,9 +38,11 @@ class FailedJobTimingTests(unittest.TestCase):
         job = studio.jobs[created["id"]]; job.update(started_at=100.0, submissions=[{"prompt_id": "prompt", "status": "observing"}]); studio._save(job)
         with patch.object(server.time, "time", return_value=160.0), self.assertRaises(Exception): studio._resume(job)
         first = (job["finished_at"], job["elapsed_seconds"])
-        studio.replies = iter([{"prompt": {"status": {"status_str": "error"}}}])
-        with patch.object(server.time, "time", return_value=170.0), self.assertRaises(Exception): studio._resume(job)
+        # A failed receipt is terminal: a second Resume reconciles from the record and reads no history.
+        studio.replies = iter([]); studio.requests.clear()
+        with patch.object(server.time, "time", return_value=170.0): studio._resume(job)
         self.assertEqual((job["finished_at"], job["elapsed_seconds"]), first)
+        self.assertEqual(job["status"], "failed"); self.assertEqual(studio.requests, [])
         self.assertEqual(job["submissions"][0]["status"], "failed")
 
     def test_legacy_or_uncertain_observation_keeps_timing_unknown(self):
@@ -79,8 +81,9 @@ class FailedJobTimingTests(unittest.TestCase):
             self.assertEqual(state["state"]["status"], "failed"); self.assertEqual(job["elapsed_seconds"], 60.0)
             self.assertEqual(state["stages"][0]["job"]["finished_at"], 160.0)
             self.assertEqual(len([x for x in studio.requests if x[0][0] == "/prompt"]), 1)
-            studio.replies = iter([{ "production-failed": {"status": {"status_str": "error"}}}])
-            with self.assertRaises(Exception): studio._resume(job)
+            studio.replies = iter([])
+            studio._resume(job)   # the failed receipt is reconciled from the record, never re-read or reposted
+            self.assertEqual(job["status"], "failed")
             self.assertEqual(len([x for x in studio.requests if x[0][0] == "/prompt"]), 1)
 
 

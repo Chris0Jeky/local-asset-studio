@@ -1,5 +1,29 @@
 # UX use-case matrix
 
+## Make wave 7: your pictures first, partial adapter names, Make from the Library — 16 October 2026
+
+Third live audit (PR #1484, `docs/ux-qa/JOURNEY-AUDIT-2026-10-16-v3.md`), N1-N6 and N8, plus the wave 6 pose-route ask.
+
+- **Pickers show your pictures** (N1): Make's picture and pose grids leave out agent runs the way the Library's Mine does
+  (`assetIsAgentRun`; Make runs count as yours). *Show all pictures (N more from agent runs)* brings them back, search
+  included; a search that only matches agent pictures says how many do.
+- **Add an adapter by part of its name** (N2): any case, file name or label. One match is added; several are offered as
+  buttons; Enter in the field presses Add. `make-anime-look-chosen-model-and-lora` now types `koukouya` and presses Enter:
+  **8 → 7 clicks**, the same 12 steps.
+- **Library dialog opens Make first** (N3): *In Make: Change it / Fix or upscale / Restyle / New pose* open that goal with
+  the picture chosen; *Full editor: Continue with this / Find recipes* stay as the second row. The dialog's unsaved-changes
+  question still applies. *Same recipe, new seed* is unchanged.
+- **Compare looks** (N4): from the second chosen look the scene box scrolls into view (instant with reduced motion) and
+  takes the keyboard. Clicks unchanged.
+- **Picture cards** (N5): a second line with the look or recipe, how long ago and the seed; the full prompt is the tooltip.
+- **Your pictures on a new browser** (N6): an empty list starts from the library's six newest `Make · ` runs (Keep, fixes and
+  More work; *Edit and re-run* needs the words, which the library does not keep).
+- **Edit and re-run on picture goals** (wave 6): a goal run keeps its picture, answers, pose and route (Copy Pose or Replace);
+  the button puts them back without sending.
+- **Models & setup** (N8): the looks panel holds its place while files are checked (a placeholder, then a *Checking* row per
+  look); missing files a look needs lead, and missing files nothing uses fold under *Optional*.
+- Not done: Compare cannot vary model, adapter strength or steps (N7, a larger feature).
+
 ## Make: picture goals stay in Make, and Compare looks — 16 October 2026
 
 Owner ask (16 October 2026): "the user should be able to do it without much confusion". Live journey audit items #5, #6,
@@ -13,9 +37,13 @@ Owner ask (16 October 2026): "the user should be able to do it without much conf
     (`restyle-klein-picture`). *Describe the look in words instead* switches to `restyle-klein`, with the finish sentence
     ready to edit.
   - **Character in a new pose**: two labelled slots. **Character picture** is the one you picked. **Pose** is either a
-    picture from your library (`combine-klein-9b-copypose`) or a drawn figure, Standing or Bent forward, with a mirror
-    option (`combine-klein-9b-skeleton`, drawn by `/api/pose/render`). The recipe's bracketed fills are plain named fields
-    (Who is in the character picture / What they wear, with colours / The pose, in a few words). No bracket and no recipe
+    picture from your library or a drawn figure, Standing or Bent forward, with a mirror option
+    (`combine-klein-9b-skeleton`, drawn by `/api/pose/render`; a hint says hands and gaze follow the words weakly). A
+    picture offers two choices, each saying what it keeps (lab round 3, PR #1481): **Keep my character as it is**
+    (`combine-klein-9b-copypose`, the default) or **Put my character into this picture's scene**
+    (`combine-klein-9b-replace`). Make never picks depth or plain 9B; with Copy Pose not ready it uses the next picture
+    route and says why. The recipe's bracketed fills are plain named fields (Who is in the character picture / What they
+    wear, with colours / The pose, in a few words, with the lab's tested wording as placeholder). No bracket and no recipe
     example that names a person reaches the page.
   - **Change one thing** (`flux-edit`): one field. **Fix or upscale**: Fix face, Fix hands and details or Upscale 2×. These
     are the existing one-press polish routes, and a route that does not fit the picture gives its reason. **Animate**
@@ -100,8 +128,8 @@ Refs #278 (16 October 2026 live journey audit, J1 and item 24).
 ## Make: a goal-first way in — 15 October 2026
 
 Owner ask (15 October 2026): the Studio was too clunky; someone who wants, say, a high-end anime picture should get there
-without knowing models, adapters or quality tags. **Make** is now the first screen (`#make`; the sidebar's first entry, and
-Overview stays one press away).
+without knowing models, adapters or quality tags. **Make** is now the first screen (`#make`; the sidebar's first entry).
+Overview has left the navigation: `#home` and `#overview` open Make (#18).
 
 - **Goals by outcome**: Anime character, Scene or background, Painted illustration, Photo, Game item or icon; and, from a
   picture you have: Change a picture, Fix or upscale, Restyle, Character in a new pose, Animate, Picture to 3D.
@@ -324,6 +352,14 @@ stay blocked with the reason, not half-applied, until Vary is pressed again or t
 `python tests/studio_use_cases.py` passed **20/20** with zero generation submissions and zero page errors (9 intents,
 4 clicks for this journey). These are fixture screens; no model ran.
 
+### Vary asks before replacing Create — 16 October 2026
+
+Refs #1213 (item 2). Vary replaces the Create setup, as Use this look and Start from this picture do, so it now asks first when Create
+holds your own wording (different from the recipe default) or a staged picture, and otherwise prepares at once with no extra step.
+Declining says "Nothing changed" and touches nothing. The journey `vary-a-keeper` agrees to the question on its later presses;
+its click count is unchanged (9 intents, 4 clicks). Reverse it by deleting the `window.confirm` guard in `prepareVary`.
+Items 3 to 5 of #1213 were already fixed on main (`6d60d6b8`, `ac2efb9f`, `tests/vary_prepare_latch.cjs`).
+
 ## Combine runs beside their pictures — 27 September 2026
 
 Refs #422, design handoff J4/D7. Before this change, at 1440×900 the pair sat at y≈854 and the result strip at y≈3499, with
@@ -473,6 +509,7 @@ PASS means the journey completed in the interface — not that the result would 
 ### Per-case notes against the success condition
 
 - **`first-image-from-brief`** — recipe chosen, brief typed, run control enabled, nothing submitted.
+  Starts on Make (`#make`). Before 16 Oct 2026 its driver began on Overview (`#home`), which is retired (#18).
   One dead end: the "what to avoid" field could not be typed into (below).
 - **`reference-edit-one-source`** — the deliberate wrong turn happened first: a text-only recipe was
   chosen, and the attempt to bring in a source found nothing to press. Recovery worked: search,

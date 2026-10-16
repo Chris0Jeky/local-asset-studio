@@ -1,5 +1,6 @@
 import importlib.util
 import json
+from contextlib import contextmanager
 import tempfile
 import time
 import unittest
@@ -46,6 +47,21 @@ class WorkspaceTests(unittest.TestCase):
         self.store.collection({'id':a['id'],'action':'delete'})
         self.assertEqual(self.store.snapshot()['assets'][0]['collections'],[b['id']])
         self.assertTrue(self.source.exists()); self.assertTrue(self.store.file(self.asset).exists())
+
+    def test_collection_commands_bump_only_rows_whose_membership_changed(self):
+        col=self.store.collection({'name':'Look'}); other=self.store.collection({'name':'Other'})
+        self.write(self.store, {'ids':[self.asset],'action':'add_collection','collection_id':col['id']})
+        rev=self.store.get(self.asset)['metadata_revision']
+        receipt=self.write(self.store, {'ids':[self.asset],'action':'add_collection','collection_id':col['id']})
+        self.assertEqual(self.store.get(self.asset)['metadata_revision'], rev)
+        self.assertEqual(receipt['unchanged'], [self.asset]); self.assertEqual(receipt['revisions'][self.asset], rev)
+        self.write(self.store, {'ids':[self.asset],'action':'remove_collection','collection_id':other['id']})
+        self.assertEqual(self.store.get(self.asset)['metadata_revision'], rev)
+        second=self.store.register(dict(self.job, id='job-2'), 0, self.source)
+        receipt=self.write(self.store, {'ids':[self.asset,second],'action':'add_collection','collection_id':col['id']})
+        self.assertEqual(self.store.get(self.asset)['metadata_revision'], rev)
+        self.assertEqual(self.store.get(second)['metadata_revision'], 1)
+        self.assertEqual(receipt['unchanged'], [self.asset])
 
     def test_edit_trash_restore_and_restart_preserve_metadata(self):
         self.write(self.store, {'ids':[self.asset],'action':'edit','title':'My ink study','tags':['ink','ink','pose'],'review':'needs_work','notes':'Fix the hand','favorite':True})
@@ -140,6 +156,27 @@ class WorkspaceTests(unittest.TestCase):
             self.store.save_setup({'action': 'delete'})
         self.assertEqual(self.store.setups(), before)
         self.assertEqual([s['id'] for s in self.store.setups()], [kept['id']])
+
+    def test_save_setup_conflicts_when_the_winning_row_vanishes_mid_save(self):
+        # The ignored INSERT sees a live row, but both reads of it miss: the winner was deleted in between.
+        recipe = {'preset': 'test'}
+        self.store.save_setup({'id': 'raced-setup', 'name': 'Raced', 'recipe': recipe})
+        real_connection = self.store.connection
+        class Empty:
+            rowcount = 0
+            def fetchone(self): return None
+        class HiddenReads:
+            def __init__(self, db): self.db = db
+            def __getattr__(self, name): return getattr(self.db, name)
+            def execute(self, sql, params=()):
+                return Empty() if sql.startswith('SELECT name,recipe FROM setups') else self.db.execute(sql, params)
+        @contextmanager
+        def connection():
+            with real_connection() as db: yield HiddenReads(db)
+        with patch.object(self.store, 'connection', connection):
+            with self.assertRaisesRegex(workspace.WorkspaceError, 'changed while it was being saved'):
+                self.store.save_setup({'id': 'raced-setup', 'name': 'Raced', 'recipe': recipe})
+        self.assertEqual([s['name'] for s in self.store.setups()], ['Raced'])
 
     def test_save_setup_validation_rejects_invalid_without_storing(self):
         self.assertEqual(self.store.setups(),[])
@@ -358,6 +395,20 @@ class WorkspaceTests(unittest.TestCase):
                     self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'tags': [bad]})
                 self.assertEqual(self.store.get(self.asset), before)
                 self.assertEqual(self._receipt_count(), receipts)
+
+    def test_update_drops_blank_tags_and_refuses_an_all_blank_list(self):
+        with self.subTest(case='blank entries among real tags'):
+            self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'tags': ['  ink  ', ' ', '\t']})
+            self.assertEqual(self.store.get(self.asset)['tags'], ['ink'])
+        with self.subTest(case='every entry blank'):
+            before = self.store.get(self.asset); receipts = self._receipt_count()
+            with self.assertRaisesRegex(workspace.WorkspaceError, 'non-blank tag'):
+                self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'tags': ['   ', '']})
+            self.assertEqual(self.store.get(self.asset), before)
+            self.assertEqual(self._receipt_count(), receipts)
+        with self.subTest(case='empty list still clears'):
+            self.write(self.store, {'ids': [self.asset], 'action': 'edit', 'tags': []})
+            self.assertEqual(self.store.get(self.asset)['tags'], [])
 
     def test_update_request_reuse(self):
         rev = self.store.get(self.asset)['metadata_revision']

@@ -84,6 +84,7 @@
     return receipt;
   }
   function failureKind(error){return error && Number.isInteger(error.status) && error.status>=400 && error.status<500?'refused':'unconfirmed';}
+  function reducedMotion(){try{return typeof globalThis.matchMedia==='function'&&!!globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(error){return false;}}
   function randomId(cryptoObject){
     if(!cryptoObject?.getRandomValues)throw Error('Secure request identities are unavailable in this browser.');
     const bytes=new Uint8Array(16);cryptoObject.getRandomValues(bytes);return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
@@ -168,7 +169,7 @@
       });
       if(draft){const box=doc.createElement('span');box.className='figure-split-box is-draft';box.style.left=draft.x/BASIS*100+'%';box.style.top=draft.y/BASIS*100+'%';box.style.width=draft.width/BASIS*100+'%';box.style.height=draft.height/BASIS*100+'%';overlay.append(box);}
     }
-    function rowInput(rect,index,key){return '<label><span>'+key+'</span><input data-figure-field="'+key+'" data-figure-index="'+index+'" type="number" min="'+(key==='width'||key==='height'?1:0)+'" max="10000" step="1" value="'+rect[key]+'"></label>';}
+    function rowInput(rect,index,key){return '<label><span>'+key+'</span><input aria-label="Figure '+(index+1)+' '+key+'" data-figure-field="'+key+'" data-figure-index="'+index+'" type="number" min="'+(key==='width'||key==='height'?1:0)+'" max="10000" step="1" value="'+rect[key]+'"></label>';}
     function render(keepStatus=false){
       if(!session)return;
       const rectangles=values();list.innerHTML=rectangles.map((rect,index)=>'<li data-figure-row="'+index+'"><b>Figure '+(index+1)+'</b><div class="figure-split-row-fields">'+fields.map(key=>rowInput(rect,index,key)).join('')+'</div><div><button type="button" data-figure-move="-1" data-figure-index="'+index+'" '+(index===0?'disabled':'')+'>Move earlier</button><button type="button" data-figure-move="1" data-figure-index="'+index+'" '+(index===rectangles.length-1?'disabled':'')+'>Move later</button><button type="button" data-figure-remove data-figure-index="'+index+'">Remove</button></div></li>').join('');
@@ -190,7 +191,7 @@
         session={asset:{id:asset.id,sha256:asset.sha256,workspace_id:asset.workspace_id,url:asset.url,title:asset.title},history:createHistory(pending?.rectangles||[]),pending,receipt:null};
       }
       image.src=asset.url;image.alt='Split figures from '+asset.title;panel.querySelector('#figureSplitSource').textContent=asset.title+' · '+asset.sha256.slice(0,12)+'… · coordinates are retained as basis points';
-      panel.hidden=false;children.innerHTML='';render();panel.scrollIntoView({block:'start',behavior:'smooth'});
+      panel.hidden=false;children.innerHTML='';render();panel.scrollIntoView({block:'start',behavior:reducedMotion()?'auto':'smooth'});
     }
     function closeEditor(){panel.hidden=true;drag=null;renderOverlay();}
     function add(rect){

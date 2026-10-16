@@ -319,10 +319,10 @@ class RouteTests(unittest.TestCase):
         Studio can stop between the two saves. The link must hold in memory, and Finish tile must restore it after a restart."""
         studio = self.studio(); prepared = tiles.prepare(studio, {"asset_id": self.source(studio)["id"]})
         original = server.Studio._save
-        def flaky(this, job):
+        def flaky(this, job, **kwargs):
             if job.get("tile_finish", {}).get("job_id") and not getattr(flaky, "failed", False):
                 flaky.failed = True; raise OSError("record_write_locked")
-            return original(this, job)
+            return original(this, job, **kwargs)
         with patch.object(server.Studio, "_save", flaky):
             job = self.run_repaint(studio, prepared, tiles.roll_half(lit_texture()))
         identifier = tiles.finish_id(job["id"])

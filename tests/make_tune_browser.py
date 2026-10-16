@@ -63,10 +63,31 @@ def run():
             page.click('[data-make-goal="character"]'); page.click('[data-make-look="%s"]' % LOOK)
             assert page.evaluate('!document.querySelector("#makeTune").open'), 'Tune is folded shut by default'
             page.click('#makeTune > summary')
+            # Lab round 3 (PR #1481): an adapter measured with Petiflow as made starts at the lab's neutral strength and shows what the lab saw;
+            # an adapter the lab did not test keeps the knowledge base's default (asserted below for ADDED).
+            xilmo = 'anima-xilmo-000020.safetensors'; assert KNOWLEDGE['loras'][xilmo]['default'] == 0.7
+            # Part of the name, any case, and Enter in the field adds it (audit v3 N2): "Xilmo" names one adapter for this model type.
+            page.fill('#makeLoraSearch', 'Xilmo'); page.press('#makeLoraSearch', 'Enter')
+            assert page.input_value('[data-tune-strength=lora2]') == '0.35' and page.text_content('[data-slot=lora2] .make-lab') == 'Lab with Petiflow: at 0.35 kept the scene; at 0.7 changed the plant.', page.text_content('[data-slot=lora2]')
+            assert page.text_content('[data-slot=lora2] b') == page.evaluate('(f) => knowledge.loras[f].label || f.replace(/\\.safetensors$/, "")', xilmo)
+            page.click('[data-tune-reset]'); assert not page.query_selector('[data-slot=lora2]') and not posted('/api/jobs')
+            # Several matches are offered as choices; choosing one adds exactly that one.
+            page.fill('#makeLoraSearch', 'anima'); page.click('[data-tune-add]')
+            choices = page.eval_on_selector_all('#makeLoraChoices [data-tune-pick]', 'b => b.map(x => x.dataset.tunePick)')
+            assert len(choices) > 1 and not page.query_selector('[data-slot=lora2]') and 'adapters match' in page.text_content('#makeStatus'), (choices, page.text_content('#makeStatus'))
+            assert page.evaluate('document.activeElement.dataset.tunePick') == choices[0], 'the keyboard lands on the first choice'
+            page.click('#makeLoraChoices [data-tune-pick="%s"]' % choices[1])
+            assert page.query_selector('[data-slot=lora2]') and page.evaluate('(n) => document.querySelector("[data-slot=lora2] b").textContent === (knowledge.loras[n].label || n.replace(/\\.safetensors$/, ""))', choices[1])
+            page.fill('#makeLoraSearch', 'no-such-adapter-zz'); page.press('#makeLoraSearch', 'Enter')
+            assert 'is not an installed adapter for this model type' in page.text_content('#makeStatus'), page.text_content('#makeStatus')
+            page.click('[data-tune-reset]'); assert not page.query_selector('[data-slot=lora2]') and not posted('/api/jobs')
             offered = page.eval_on_selector_all('#makeModel option', 'o => o.map(x => x.value)')
             assert offered[0] == BASE and SWITCH in offered and 'oneobsession-anima-v20-baseline' in offered, offered
             for wrong in ('anima-artist-stack', 'janima-v1-baseline', 'anima-portrait', 'wai', 'krea-anime-atelier'):
                 assert wrong not in offered, (wrong, offered)  # same file, too few slots, no adapter slots, other model types
+            # A recorded non-commercial licence (the recipe's commercial_note) is tagged on its option; an unrecorded one is not.
+            labels = dict(zip(offered, page.eval_on_selector_all('#makeModel option', 'o => o.map(x => x.textContent)')))
+            assert 'non-commercial' in labels[SWITCH] and 'non-commercial' not in labels[BASE], labels
             page.select_option('#makeModel', SWITCH)
             assert 'Tuned: model Pearly Anima Mix' in page.text_content('#makeTuneSum'), page.text_content('#makeTuneSum')
             # Style strength folds into Tune while Tune shows adapters (audit N3): one multiplier, beside the strengths it scales.
@@ -84,6 +105,11 @@ def run():
             assert 'not an installed adapter for this model type' in page.text_content('#makeStatus') and not page.query_selector('[data-slot=lora2]')
             page.fill('#makeLoraSearch', ADDED); page.click('[data-tune-add]')
             assert page.query_selector('[data-slot=lora2]') and '@40u40uya' in page.text_content('[data-slot=lora2] small'), 'added row shows its trigger'
+            page.fill('#makeLoraSearch', ADDED); page.click('[data-tune-add]')
+            assert 'already added' in page.text_content('#makeStatus'), page.text_content('#makeStatus')
+            assert page.eval_on_selector_all('.make-tune-row b', 'n=>n.length') == 2, 'a second Add of the same adapter adds nothing'
+            # A look whose recipe is missing from the catalog says it cannot be tuned instead of breaking Make.
+            assert page.evaluate('''(id)=>{const p=catalog.presets,i=p.findIndex(x=>x.id===id),saved=p[i];p.splice(i,1);StudioMake.refresh();const text=document.querySelector("#makeTuneBody").textContent;p.splice(i,0,saved);StudioMake.refresh();return text}''', BASE).startswith('This look')
             page.select_option('[data-tune=steps]', index=1)
             page.fill('#makeNegative', 'extra hands')
             page.uncheck('#makeNewSeed'); page.fill('#makeSeed', '1234')

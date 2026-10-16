@@ -136,6 +136,9 @@ class EntryPoints(unittest.TestCase):
                 self.assertTrue(self.page.locator('.studio-skip').evaluate('(n)=>n===document.activeElement'))
                 self.page.keyboard.press('Enter')
                 self.assertTrue(self.page.locator('main').evaluate('(n)=>n===document.activeElement'))
+                # <main> is page-tall: its focus ring is drawn inside it, so the top, left and right edges are on screen, not below the fold (Codex review of #1461).
+                self.assertLess(self.page.locator('main').evaluate('(n)=>parseFloat(getComputedStyle(n).outlineOffset)'), 0)
+                self.assertGreater(self.page.locator('main').evaluate('(n)=>parseFloat(getComputedStyle(n).outlineWidth)'), 0)
 
     def test_mobile_menu_closes_after_focus_passes_its_toggle(self):
         self.page.set_viewport_size({'width':390, 'height':844})

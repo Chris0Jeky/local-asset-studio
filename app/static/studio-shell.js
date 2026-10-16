@@ -11,7 +11,7 @@
     {id:'scene',name:'Scene or background',hint:'A place, no main character',looks:['look-night-shift-retro-anime','look-noob-fantasy-scene','look-krea-watercolor-anime']},
     {id:'painting',name:'Painted illustration',hint:'Oil, ink, watercolour, book cover',looks:['look-anima-painterly-artist-tags','look-krea-style-emerald-tarot','look-krea-style-inkwork-darkbrush','look-krea-style-airy-softwatercolor','look-krea-oil-fantasy','look-krea-atelier-target-stack','look-krea-witch-nijisis']},
     {id:'photo',name:'Photo',hint:'Realistic people, places, products',looks:['look-preset-zimage-fast','look-preset-realvis','look-krea-realistic-snapshot','look-krea-lenovo-ultrareal']},
-    {id:'game',name:'Game item or icon',hint:'Props, pixel art',looks:['look-preset-stylized-prop','look-preset-pixel-lora']},
+    {id:'game',name:'Game item or icon',hint:'Props, pixel art',looks:['look-zimage-game-icon','look-preset-stylized-prop','look-preset-pixel-lora']},
     {id:'edit',name:'Change a picture',hint:'Keep it, change one thing',intent:'edit'},
     {id:'repair',name:'Fix or upscale',hint:'Faces, hands, resolution',intent:'repair'},
     {id:'restyle',name:'Restyle a picture',hint:'Same picture, another look',intent:'restyle'},
@@ -22,7 +22,7 @@
   const synonyms={repair:'upscale fix face fix hands',combine:'pose',mesh:'3d',animate:'animate video',restyle:'restyle style'};
   const keywords={models:'download install',assets:'library pictures keepers',production:'compare',create:'full editor recipe seed'};
   const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  let looks=[];
+  let looks=[],presets=[],catalogRequest=null;
   document.body.classList.add('studio-shell',isMain?'studio-main':'studio-tool');
   if(!main.id)main.id='studioMain';main.tabIndex=-1;
   const sidebar=document.createElement('aside');sidebar.id='studioSidebar';sidebar.className='studio-sidebar';
@@ -60,10 +60,15 @@
     const entry=links.find(x=>x[0]===id);$('#studioPageTitle').textContent=entry?.[1]||(id==='review'?'Review desk':'Overview');document.querySelectorAll('[data-studio-route]').forEach(a=>{const active=a.dataset.studioRoute===id;a.classList.toggle('active',active);if(active){a.setAttribute('aria-current','page');const group=a.closest('details');if(group)group.open=true;}else a.removeAttribute('aria-current');});closeNav();}
   function commands(){
     const q=$('#studioCommandSearch').value.trim().toLowerCase();
-    const entries=[...makeGoals.map(g=>({label:g.name,description:g.hint,href:'/#make',goal:g.id,search:synonyms[g.id]||''})),...looks.map(l=>{const g=makeGoals.find(g=>g.looks?.includes(l.id));return{label:l.name,description:g?'Look - Make':'Look - open Make to choose a look',href:'/#make',look:g?l.id:null,goal:g?.id,search:l.id==='look-preset-pixel-lora'?'pixel':''};}),...links.map(([id,label,description,href])=>({label,description,href,search:id+' '+(keywords[id]||'')}))];
-    $('#studioCommandResults').innerHTML=entries.filter(x=>(x.label+' '+x.description+' '+x.search).toLowerCase().includes(q)).sort((a,b)=>Number(!!q&&(' '+b.search+' ').includes(' '+q+' '))-Number(!!q&&(' '+a.search+' ').includes(' '+q+' '))).map(x=>'<a href="'+escape(x.href)+'"'+(x.goal?' data-make-goal="'+escape(x.goal)+'"':'')+(x.look?' data-make-look="'+escape(x.look)+'"':'')+'><b>'+escape(x.label)+'</b><small>'+escape(x.description)+'</small><span aria-hidden="true">&#8599;</span></a>').join('')||'<p>No match. Try anime, upscale, pose, pixel, compare or download.</p>';
+    // #23: adapters come from the catalog's lora choices (the installed inventory Make's Tune reads). Listed only once something is typed, so the empty finder keeps its shape.
+    const loraNames=[...new Set(presets.flatMap(p=>Object.entries(p.choices||{}).filter(([k])=>/^lora\d*_name$/.test(k)).flatMap(([,v])=>Array.isArray(v)?v:[])).filter(n=>typeof n==='string'&&n))].sort();
+    const adapters=q?loraNames.map(name=>({label:'Use '+name+' in Tune',description:'Adapter - add it under Tune this look in Make',href:'/#make',search:name})):[];
+    const entries=[...makeGoals.map(g=>({label:g.name,description:g.hint,href:'/#make',goal:g.id,search:synonyms[g.id]||''})),{label:'Tune a look',description:'Open Tune this look under the composer',href:'/#make',search:'lora adapter tune'},...looks.map(l=>{const g=makeGoals.find(g=>g.looks?.includes(l.id)),p=presets.find(p=>p.id===l.body?.preset_id);return{label:l.name,description:g?'Look - Make':'Look - open Make to choose a look',href:'/#make',look:g?l.id:null,goal:g?.id,search:[p?.name,p?.family,p?.model?.file,l.id==='look-preset-pixel-lora'?'pixel':''].filter(Boolean).join(' ')};}),...adapters,...links.filter(x=>!x[6]).map(([id,label,description,href])=>({label,description,href,search:id+' '+(keywords[id]||'')+(id==='models'?' '+presets.map(p=>[p.name,p.family,p.model?.file].filter(Boolean).join(' ')).join(' '):'')}))];
+    $('#studioCommandResults').innerHTML=entries.filter(x=>(x.label+' '+x.description+' '+x.search).toLowerCase().includes(q)).sort((a,b)=>Number(!!q&&(' '+b.search.toLowerCase()+' ').includes(' '+q+' '))-Number(!!q&&(' '+a.search.toLowerCase()+' ').includes(' '+q+' '))).map(x=>'<a href="'+escape(x.href)+'"'+(x.goal?' data-make-goal="'+escape(x.goal)+'"':'')+(x.look?' data-make-look="'+escape(x.look)+'"':'')+'><b>'+escape(x.label)+'</b><small>'+escape(x.description)+'</small><span aria-hidden="true">&#8599;</span></a>').join('')||'<p>No match. Try anime, upscale, pose, pixel, compare or download.</p>';
   }
-  async function loadLooks(){try{const r=await fetch('/api/looks');if(!r.ok)return;const data=await r.json();looks=(data.looks||data.cards||[]).filter(l=>!l.trashed_at&&(l.kind==='look'||l.body)&&typeof l.id==='string'&&typeof l.name==='string');if(dialog.open&&!$('#studioCommandResults').contains(document.activeElement))commands();}catch{}}
+  const refresh=()=>{if(dialog.open&&!$('#studioCommandResults').contains(document.activeElement))commands();};
+  // The catalog only widens search words; looks show without waiting for it.
+  async function loadLooks(){catalogRequest||=fetch('/api/catalog').then(r=>r.ok?r.json():{}).catch(()=>({})).then(c=>{presets=c.presets||[];refresh();});try{const r=await fetch('/api/looks');if(!r.ok)return;const data=await r.json();looks=(data.looks||data.cards||[]).filter(l=>!l.trashed_at&&(l.kind==='look'||l.body)&&typeof l.id==='string'&&typeof l.name==='string');refresh();}catch{}}
   function openCommands(){opener=document.activeElement;$('#studioCommandSearch').value='';commands();dialog.showModal();loadLooks();$('#studioCommandSearch').focus();}
   $('#studioJump').onclick=openCommands;$('#studioCommandSearch').oninput=commands;
   $('#studioCommandSearch').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();$('#studioCommandResults a')?.click();}};

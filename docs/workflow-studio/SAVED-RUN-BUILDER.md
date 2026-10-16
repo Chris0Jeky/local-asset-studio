@@ -96,7 +96,8 @@ Optional browser test:
 python tests/workflow_saved_runs_browser.py --chromium /path/to/chromium
 ```
 
-This full-page test binds an unused container loopback port 8191 and uses actual
+This full-page test binds a free loopback port (`--port N` fixes one; it never
+needs 8191) and uses actual
 Studio HTTP routes/SQLite with temporary synthetic catalog/nodes; its worker does
 not run. It exercises import, save, dirty gating, preparation, history selection,
 an intervening agent edit/rejected stale preparation, original-ticket execution

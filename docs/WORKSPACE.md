@@ -139,5 +139,5 @@ are migrated on first load. Deleting a saved setup requires its id and does not
 delete the setup's past outputs.
 
 The launcher uses a cheap Studio identity check, so opening it again reuses the
-server. Model/node discovery is cached for two minutes. **Models & folders →
+server. Model/node discovery is cached for two minutes. **Models & setup →
 Refresh inventory** also refreshes the node schema after manual model or node changes.

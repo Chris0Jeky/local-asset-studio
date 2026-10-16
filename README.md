@@ -36,13 +36,13 @@ Agents can plan, compare and inspect work through the same surfaces. They cannot
 
 ## Start here: Make
 
-Make is the first screen: pick what you want, not a model. (Shipped once PR #1400 merges; until then Create is the first screen.)
+Make is the first screen. Pick what you want, not a model. The full walkthrough is [Start here](docs/START-HERE.md).
 
-1. **Goal.** Choose an outcome, for example a character, a background or an edit of an existing picture.
-2. **Look.** Pick a look by its example picture. Each shows a plain name, speed, whether it has run on this PC, and any blockers.
-3. **One sentence.** Type what you want, or use the example.
+1. **Goal.** Choose an outcome. Five goals start from words: anime character, scene or background, painted illustration, photo, and game item or icon. Six start from a picture you already have: change a picture, fix or upscale, restyle, character in a new pose, animate, and picture to 3D.
+2. **Look.** Pick a look by its example picture. Each card shows a plain name and a speed such as "Fast" or "Medium" with a measured time, and where they apply Tested well, Best for, Non-commercial and Run on this PC before. A look that cannot run yet shows what it needs.
+3. **One sentence.** Type what you want, or use the example. **Tune this look**, folded shut by default, shows and changes the look's model, adapters, steps, words to leave out and seed.
 4. **Generate.** This is the only press that submits; nothing runs on load. It prepares the request and queues one job labelled `Make · <look>`.
-5. **Next steps.** Results appear in place with Vary subtle or strong, Fix details or upscale, and Review and keep. *More* has change one thing, restyle, new pose and animate. *Open in the full editor instead* loads the same request into Create (the Full editor) without running it.
+5. **Your pictures.** Results appear in place. Each picture has Keep and Not this (the library's review marks), Vary where offered, Fix face, Fix hands and details, Upscale 2×, and a *More* menu: open full size, other fixes, change one thing, restyle, put in a new pose, animate, make it 3D. Each run card has Edit and re-run and Same words, another look, and Make the final after a draft. A run whose outcome is unknown offers Resume observation and Stop tracking on its card and is never sent again. *Open in the full editor instead* loads the same request into the Full editor without running it.
 
 ## Features
 
@@ -55,7 +55,7 @@ Everything below exists in the code. Where a feature is only partly proven, the 
 - Prompt wildcards, LoRA slots, seed reuse and saved output metadata.
 - Explicit switches between local environments: the primary ComfyUI on `8188` and three isolated ones on `8192` (HiDream O1), `8194` (MiniMax H3) and `8196` (Qwen-Image 2.1). Switches never upgrade packages.
 - Before a checkpoint change, the Studio unloads the previous model from ComfyUI's GPU memory. An idle model cache is released after a configurable number of minutes.
-- Owner cancel for a Create job (`POST /api/jobs/<id>/cancel`). A job that has not been sent is removed. A prompt waiting in ComfyUI's queue is deleted, and a running one is interrupted. Nothing is resubmitted.
+- Owner cancel for a Full editor job (`POST /api/jobs/<id>/cancel`). A job that has not been sent is removed. A prompt waiting in ComfyUI's queue is deleted, and a running one is interrupted. Nothing is resubmitted.
 - An uncertain submission is recorded as uncertain and is not resubmitted automatically. See [Operations](docs/OPERATIONS.md).
 
 ### References and poses
@@ -244,7 +244,7 @@ Adding a preset is described in [Operations](docs/OPERATIONS.md#add-another-pres
 
 This is an active personal project. It is not a hosted service, and the numbers in its docs are machine-specific evidence, not universal performance claims.
 
-- **Working:** the guided Create routes, reference and Combine routes, the Krita and Godot paths, the backend switches and the evidence records. The offline suite and `validate-repo.py` run in CI on every push and pull request. As of 12 October 2026, 51 of the 92 catalog entries are `verified: true`.
+- **Working:** the guided Make and Full editor routes, reference and Combine routes, the Krita and Godot paths, the backend switches and the evidence records. The offline suite and `validate-repo.py` run in CI on every push and pull request. As of 12 October 2026, 51 of the 92 catalog entries are `verified: true`.
 - **Verified for bounded runs:** many routes have a completed, inspected Studio job. Those are execution records. They are not art acceptance, and they do not show that identity, pose or anatomy were accepted.
 - **Not working or not proven:** video (the inspected Wan 2.2 outputs failed inspection, per the 24 September status). Automatic hand repair (`anime-detail-fix` did not fix a hand in any recorded run). Edited Workflow Studio graphs cannot run yet (#122). Spoken Briefs passes CI, but no real workstation narration is recorded.
 - **Not yet built:** in-betweens, two-character interaction and unusual poses as product features.
@@ -287,7 +287,8 @@ Open work is tracked in [GitHub issues](https://github.com/Chris0Jeky/local-asse
 
 ## Documentation
 
-- [Start here: first image walkthrough](docs/START-HERE.md)
+- [Start here: your first picture in Make](docs/START-HERE.md)
+- [Make a high-end anime picture: Make, looks, tuning, finishing](docs/guides/MAKE-A-HIGH-END-ANIME-PICTURE.md)
 - [Product direction](docs/PRODUCT_DIRECTION.md) and [strategy bundle](docs/strategy/README.md)
 - [Status by goal](docs/STATUS.md) and [current state](CURRENT_STATE.md)
 - [Owner choices and open actions](HUMAN_TODO.md)

@@ -57,6 +57,7 @@ import pose_guide
 import tiles
 import parallax
 import looks
+import characters
 from studio_prompt.http_extension import extend_handler
 from i2v_diagnostics import artifact_path as i2v_artifact_path
 from i2v_diagnostics import build_report as build_i2v_report
@@ -72,6 +73,7 @@ HISTORY_OBSERVATION_SECONDS = 4 * 3600  # ceiling while ComfyUI still lists the 
 HISTORY_QUEUE_CHECK_EVERY = 5            # empty history polls (2 s apart) between /queue liveness reads
 HISTORY_UNLISTED_STRIKES = 3             # consecutive unlisted queue reads before the prompt is declared gone
 HISTORY_READ_STRIKES = 3                 # consecutive failed /history reads before observation ends uncertain (#1113); only reads are retried
+TERMINAL_RECEIPTS = ("completed", "failed", "cancelled")  # receipt statuses Resume reconciles from the record, never re-reads
 HISTORY_READ_BACKOFF_SECONDS = 2         # wait after the n-th consecutive failed read: n times this (2 s, then 4 s)
 HISTORY_READ_ERRORS_KEPT = 20            # failed reads recorded per submission; history_read_error_count keeps the total
 GPU_SAMPLE_EVERY = 5                    # empty history polls between merges of the sampler thread's GPU memory peaks (app/gpu_memory.py)
@@ -913,6 +915,7 @@ class Studio:
     def public(self, job):
         allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label", "cancellation", "commit_releases", "host_commit_windows", "tile", "tile_finish", "parallax", "parallax_finish")
         result = {k: job.get(k) for k in allowed}
+        if "record_error" in job: result.update(record_error=job["record_error"], run_path=job["run_path"])
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
         result["can_stop_tracking"] = Studio._stop_tracking_error(self, job) is None
@@ -1122,6 +1125,7 @@ class Studio:
                              "node_count": target["node_count"], "references": target["references"], "modality": target["modality"]}}
 
     def export_recipe(self, job):
+        if "record_error" in job: raise StudioError("An unreadable run record has no recipe to export; inspect its folder first")
         return {"version": 2, "preset_id": job["preset_id"], "controls": job["controls"],
                 "batch_count": job["batch_count"], "created_at": job["created_at"],
                 "workflow": job["graph"], "submissions": job.get("submissions", []),
@@ -1361,7 +1365,16 @@ class Studio:
     def _write_observation_state(self, path, value):
         return observation_state.publish(path, value, self._sync_parent_directory)
 
-    def _save(self, job):
+    @staticmethod
+    def _finite_state(value):
+        """Non-finite floats become null in a durable copy: ComfyUI JSON may carry NaN into optional readings (#1459)."""
+        if isinstance(value, float) and not math.isfinite(value): return None
+        if isinstance(value, dict): return {k: Studio._finite_state(v) for k, v in value.items()}
+        if isinstance(value, (list, tuple)): return [Studio._finite_state(v) for v in value]
+        return value
+
+    def _save(self, job, durable=False):
+        if "record_error" in job: raise StudioError("An unreadable run record cannot be saved; inspect its folder first")
         directory = self.runs / job["id"]
         recipe = {"preset_id": job["preset_id"], "controls": job["controls"], "batch_count": job["batch_count"], "graph_path": job["graph_path"], "created_at": job["created_at"]}
         recipe.update(references=job.get("references", []), parent_assets=job.get("parent_assets", []))
@@ -1369,8 +1382,10 @@ class Studio:
         if job.get("tile") is not None: recipe["tile"] = job["tile"]
         if job.get("parallax") is not None: recipe["parallax"] = job["parallax"]
         self._write_json_atomic(directory / "recipe.json", recipe)
-        self._write_json_atomic(directory / "workflow.json", job["graph"])
-        state = {k:v for k,v in job.items() if k != "graph"}; self._write_json_atomic(directory / "state.json", state)
+        state = {k:v for k,v in job.items() if k != "graph"}
+        if durable:   # #1459: restart (_load_jobs) reads workflow.json and state.json; both must survive an OS crash at the marker and receipt
+            self._write_observation_state(directory / "workflow.json", job["graph"]); self._write_observation_state(directory / "state.json", self._finite_state(state)); return
+        self._write_json_atomic(directory / "workflow.json", job["graph"]); self._write_json_atomic(directory / "state.json", state)
 
     @staticmethod
     def _tracking_stopped(job):
@@ -1647,8 +1662,22 @@ class Studio:
 
     def _load_jobs(self):
         for state_path in self.runs.glob("*/state.json"):
-            data = read_json(state_path)
-            graph = read_json(state_path.parent / "workflow.json")
+            try:
+                for path in (state_path, state_path.parent / "workflow.json"):
+                    record = json.loads(path.read_text(encoding="utf-8"))
+                    if not isinstance(record, dict): raise ValueError("Expected a JSON object")
+                    if path == state_path:
+                        if not record.get("id"): raise ValueError("Missing job ID")
+                        data = record
+                    else: graph = record
+            except (OSError, ValueError) as exc:
+                reason = f"{path.name}: {exc}"; known = data.get("prompt_ids") if path != state_path else None   # state.json parsed first, so data is this run's
+                ids = [i for i in known if isinstance(i, str)] if isinstance(known, list) else []
+                # Missing evidence collections cannot prove non-submission or authorize a disposition.
+                self.jobs[state_path.parent.name] = {"id": state_path.parent.name, "status": "uncertain", "created_at": 0,
+                    "preset_name": "Unreadable run record", "controls": {}, "outputs": [], "run_path": str(state_path.parent),
+                    "record_error": reason, "message": f"The run record could not be read ({reason}). Nothing was resubmitted." + (f" Known ComfyUI prompt IDs: {', '.join(ids[:8])}." if ids else "") + f" Inspect experiments/runs/{state_path.parent.name}/ before deleting it."}
+                continue
             if isinstance(data, dict) and isinstance(graph, dict) and data.get("id"):
                 data["graph"] = graph
                 data.setdefault('comfy_root', str(self.comfy_root))
@@ -2101,7 +2130,13 @@ class Studio:
             with self.lock:
                 # Last point before the POST: a cancel that arrived during the wait or the eviction sends nothing.
                 if self._cancel_checkpoint(job): return
-                job["status"] = "submitting"; job["message"] = f"Submitting output {i + 1} of {job['batch_count']}"; job["pending_submission"] = {"index": i, "seed": seed, "graph": graph, "marked_at": time.time()}; self._save(job)
+                job["status"] = "submitting"; job["message"] = f"Submitting output {i + 1} of {job['batch_count']}"; job["pending_submission"] = {"index": i, "seed": seed, "graph": graph, "marked_at": time.time()}
+                try: self._save(job, durable=True)
+                except (OSError, ValueError) as exc:
+                    # Fail safe (#1459): without a durable marker the POST is never sent.
+                    job.pop("pending_submission", None); job["status"] = "partial" if job.get("prompt_ids") else "failed"
+                    job["message"] = "The submission marker could not be saved durably (" + (str(exc) or type(exc).__name__)[:200] + "). No prompt was submitted for output " + str(i + 1) + "."
+                    self._stamp_finished(job); self._save(job); return
             self._resource_observation_event('intent', job, index=i, graph=graph)
             try: response = self._request("/prompt", "POST", {"prompt": graph, "client_id": "asset-studio"}, timeout=30, base_url=job.get('comfy_url'))
             except HTTPError as exc:
@@ -2126,7 +2161,14 @@ class Studio:
                 job['status']='uncertain';job['message']='No prompt ID was returned. Submission intent is retained and will not be retried.';self._save(job);return
             self._resource_observation_event('accepted', job, index=i, prompt_id=prompt_id)
             submission = {"index": i, "prompt_id": prompt_id, "seed": seed, "graph": graph, "status": "observing"}
-            job["prompt_ids"].append(prompt_id); job.setdefault("submissions", []).append(submission); job.pop("pending_submission", None); job["status"] = "running"; job["message"] = f"Generating output {i + 1} of {job['batch_count']}"; self._save(job)
+            job["prompt_ids"].append(prompt_id); job.setdefault("submissions", []).append(submission); job.pop("pending_submission", None); job["status"] = "running"; job["message"] = f"Generating output {i + 1} of {job['batch_count']}"
+            try: self._save(job, durable=True)
+            except (OSError, ValueError) as exc:
+                # The prompt is queued: keep its receipt in memory, never treat the job as unsubmitted, never send another member (#1459).
+                job["status"] = "uncertain"; job["message"] = "Prompt " + prompt_id[:80] + " was accepted, but its receipt could not be saved durably (" + (str(exc) or type(exc).__name__)[:200] + "). It will not be resubmitted; use Resume observation."
+                try: self._save(job)
+                except (OSError, ValueError): pass   # the durable marker on disk still restarts as uncertain, never not_submitted
+                return
             if not self._wait_history(job, submission): return
         job["status"] = "completed"; job["message"] = "Complete"
         if job.get('gpu_spill'): job["message"] = self.spill_message(job)
@@ -2272,7 +2314,7 @@ class Studio:
             self.require_worker()
             raise StudioError(error)
         if self._tracking_stopped(job): return self._resume_tracking(job)
-        pending = [s for s in job["submissions"] if s.get("status") != "completed"]
+        pending = [s for s in job["submissions"] if s.get("status") not in TERMINAL_RECEIPTS]
         prospective = dict(job)
         if not pending:
             prospective["reconciliation"] = {"status": job.get("status"), "message": job.get("message")}
@@ -2307,12 +2349,16 @@ class Studio:
                 raise StudioError('An abandoned or unknown submission cannot be resumed as a known prompt')
             prior = job.pop("reconciliation", None) or {}
             prior_status, prior_message = prior.get("status", job.get("status")), prior.get("message", job.get("message"))
-            unresolved = any(s.get("status") != "completed" for s in job.get("submissions", []))
+            unresolved = any(s.get("status") not in TERMINAL_RECEIPTS for s in job.get("submissions", []))
             job["status"] = "running"; job["message"] = "Resuming observation of known ComfyUI prompt IDs"; self._save(job)
         for submission in job.get("submissions", []):
-            if submission.get("status") not in ("completed", "cancelled") and not self._wait_history(job, submission): return
+            if submission.get("status") not in TERMINAL_RECEIPTS and not self._wait_history(job, submission): return
         observed = len(job.get("submissions", []))
-        if observed < job["batch_count"]:
+        # A failed receipt is ComfyUI's own verdict: re-reading it after a restart would only find no history and call it uncertain.
+        if any(s.get("status") == "failed" for s in job.get("submissions", [])):
+            status = "partial" if any(s.get("status") == "completed" for s in job["submissions"]) else "failed"
+            message = "ComfyUI reported a failure for a submitted prompt; it was not resubmitted."
+        elif observed < job["batch_count"]:
             status = "partial"; message = f"Observed {observed} of {job['batch_count']} requested images. Remaining images were not submitted; start a new job for those."
         else:
             status = "completed"; message = "Complete"
@@ -2560,6 +2606,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, self.studio.assets.metadata(path.split("/")[3], self._asset_query_scope()))
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
             if path == "/api/looks": return self._json(200, looks.listing(self.studio))
+            if path == "/api/characters": return self._json(200, characters.listing(self.studio))
             if path == '/api/production': return self._json(200,self.studio.production.list())
             if path.startswith('/api/production/campaigns/') and len(path.split('/'))==5:
                 return self._json(200,self.studio.production.edit_campaign(path.split('/')[4]))
@@ -2731,6 +2778,8 @@ class Handler(BaseHTTPRequestHandler):
             # Looks (#1221): save/edit/put away, and prepare Create's fields from a look and a scene. Neither creates a job.
             if self.path == "/api/looks": return self._json(200, looks.command(self.studio, self._body_json()))
             if self.path == "/api/looks/prepare": return self._json(200, looks.prepare(self.studio, self._body_json()))
+            # Characters (#1205): save/edit/put away a character card from a keeper. Never creates a job.
+            if self.path == "/api/characters": return self._json(200, characters.command(self.studio, self._body_json()))
             if self.path == "/api/assets/reference": return self._json(200, self.studio.asset_reference(self._body_object().get("id")))
             if self.path == "/api/assets/export": return self._json(201, self.studio.export_assets(self._body_object()))
             if self.path == "/api/recipe-check": return self._json(200, self.studio.check_recipe(self._body_json()))

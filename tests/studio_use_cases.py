@@ -281,6 +281,8 @@ def live_allows(action, navigation, control_id='', label='', attributes=(), subm
     reason = deny_reason(control_id, label, attributes, submits, local)
     if reason: return reason
     if action in ('goto', 'fill', 'type'): return ''
+    # Enter in Tune's adapter search only adds an adapter row on the page; it never submits (make.js keydown handler).
+    if action == 'press' and selector == '#makeLoraSearch': return ''
     if action in CLICK_ACTIONS and (navigation or local): return ''
     return 'live mode is read-only: ' + action + ' is not navigation or typing'
 
@@ -632,6 +634,7 @@ class CaseRun:
             if action == 'click': locator.click(timeout=timeout)
             elif action == 'fill': locator.fill(typed or '', timeout=timeout)
             elif action == 'select': locator.select_option(typed, timeout=timeout)
+            elif action == 'press': locator.press(typed, timeout=timeout)
             elif action == 'check': locator.check(timeout=timeout)
             else: raise ValueError('Unknown action: ' + action)
             record['performed'] = True
@@ -669,7 +672,7 @@ class CaseRun:
         return self._finish(record)
 
     # -- helpers used by drivers --------------------------------------------------------
-    def boot(self, route='#home'):
+    def boot(self, route='#make'):
         self.page.goto(self.origin + '/' + route)
         self.page.wait_for_function('!!window.selected || !!document.querySelector("#homeView")', timeout=15000)
         self.page.wait_for_timeout(400)
@@ -799,8 +802,8 @@ BRIEF = ('A lanternkeeper of the deep wood: a young elf with silver-grey hair, a
 
 @driver('first-image-from-brief')
 def _first_image(c):
-    c.boot('#home')
-    c.act('#uxJourneys, #uxRecent', 'read', note='overview starting points')
+    c.boot('#make')
+    c.act('#makeGoals', 'read', note='Make starting points')
     c.act('[data-nav-group="Advanced"] summary', note='open advanced tools', supplementary=True)
     c.act('[data-studio-route="create"]', navigation=True)
     c.act('#workshopRecipeChange', note='open the recipe picker', supplementary=True)
@@ -1315,8 +1318,11 @@ def _vary(c):
                              elapsed_seconds=31, controls=dict(wai_controls, lora='not-a-number'),
                              outputs=[dict(filename='wai-broken.png', asset_id='asset-5', media_type='image', seed=12)]))
     fixture.JOBS[:0] = added
+    asked = []
+    def agree(dialog): asked.append(dialog.message); dialog.accept()
     try:
         c.boot('#create')
+        c.page.on('dialog', agree)  # #1213: Vary asks before replacing a staged picture or the owner's wording; the journey agrees
         c.page.wait_for_timeout(600)
         c.act('#workshopResults > summary', note='open recent runs', supplementary=True)
         keeper = '#gallery [data-ux-vary="subtle"]' + ('' if c.live else '[data-job="vary-krea-keeper"]')
@@ -1359,10 +1365,12 @@ def _vary(c):
                and 'Nothing was generated' in third['notice'])
         wai = wai and blocked['generate'] and 'Vary could not keep lora = not-a-number' in blocked['blocker']
         disabled = 'No Studio recipe is recorded' in why
-        return img2img and reseed and wai and disabled, 'vary subtle: %s; fallback: %s; wai strong: %s; asset panel: %s' % (
+        asks = bool(asked) and all('Vary replaces the current Create setup' in text and 'Nothing will be generated' in text for text in asked)
+        return img2img and reseed and wai and disabled and asks, 'vary subtle: %s; fallback: %s; wai strong: %s; asset panel: %s; replace questions: %d' % (
             {k: first[k] for k in ('preset', 'source', 'parents', 'denoise', 'batch')}, {k: second[k] for k in ('preset', 'parents', 'batch')},
-            dict({k: third[k] for k in ('preset', 'parents', 'denoise', 'batch', 'kept')}, unapplied=blocked), why or 'no disabled reason')
+            dict({k: third[k] for k in ('preset', 'parents', 'denoise', 'batch', 'kept')}, unapplied=blocked), why or 'no disabled reason', len(asked))
     finally:
+        c.page.remove_listener('dialog', agree)
         for job in added: fixture.JOBS.remove(job)
 
 
@@ -1563,8 +1571,8 @@ def _make_chosen(c):
     c.act('#makeModel', 'read', note=c.page.evaluate("[...document.querySelectorAll('#makeModel option')].map(o => o.textContent).join(' | ')")[:200])
     offered = c.page.evaluate("[...document.querySelectorAll('#makeModel option')].map(o => o.value)")
     c.act('#makeModel', 'select', typed=switch, note='switch to Pearly Anima Mix, same model type')
-    c.act('#makeLoraSearch', 'fill', typed=added, note='search the installed adapters for koukouya')
-    c.act('[data-tune-add]', note='add it')
+    c.act('#makeLoraSearch', 'fill', typed='koukouya', note='type part of the adapter name, koukouya')
+    c.act('#makeLoraSearch', 'press', typed='Enter', note='press Enter: the one match is added (audit v3 N2)')
     row = c.page.evaluate("document.querySelector('[data-slot=lora2] small')?.textContent || ''")
     c.act('[data-tune=steps]', 'select', typed=c.page.evaluate("document.querySelectorAll('[data-tune=steps] option')[2]?.value || ''"), note='ask for finer quality')
     c.act('#makeNewSeed', note='turn off different pictures each time')

@@ -79,5 +79,48 @@ vm.runInContext(`productionPlans=${JSON.stringify([plan])};productionId=${JSON.s
   const typed=updates.length;
   if(typeof listen==='function')await listen(key({tagName:'TEXTAREA',id:'productionNotes',closest:s=>s==='article.candidate'||s==='.candidate'?candidate:null}));
   assert.equal(updates.length,typed,'a key typed in a notes/input target does not save');
+  // Blind comparison: the recipe and full-plan downloads carry the settings, so they stay hidden until Reveal.
+  assetState.assets.find(a=>a.id==='asset-b').tags=[];
+  const blindHtml=$('#productionDetail').innerHTML;
+  assert.equal((blindHtml.match(/data-job-recipe=/g)||[]).length,0,'blind: no candidate recipe download is offered');
+  assert.equal((blindHtml.match(/Recipe hidden while comparing blind/g)||[]).length,3,'blind: each candidate says why its recipe is hidden');
+  assert.doesNotMatch(blindHtml,/plan\.json\?download/,'blind: the full plan download is hidden too');
+  assert.match(blindHtml,/Full plan hidden while comparing blind/);
+  // Muse B: a second Keeper press on one candidate while its save is in flight records no second update and no false failure.
+  const beforeKeeper=updates.length;let releaseKeeper;mutateGate=new Promise(resolve=>{releaseKeeper=resolve;});
+  const keeper={dataset:{candidateReview:'selected',candidateAsset:'asset-b'}};
+  const pressKeeper=()=>$('#productionDetail').onclick({target:{closest:s=>s==='[data-candidate-review]'?keeper:null}});
+  const keeperFirst=pressKeeper(),keeperSecond=pressKeeper();
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(updates.length,beforeKeeper+1,'a second Keeper press while the first save is pending records no update');
+  assert.equal($('#productionMessage').textContent,'Still saving the last mark for this candidate. Press again in a moment. Nothing was changed.');
+  releaseKeeper();mutateGate=null;await keeperFirst;await keeperSecond;
+  assert.match($('#productionMessage').textContent,/Marked as a keeper in your Workspace/,'the first save reports its own success');
+  assert.doesNotMatch($('#productionMessage').textContent,/Still saving|Resolve the earlier library update/,'no failure is reported for the save that succeeded');
+  await pressKeeper();
+  assert.equal(updates.length,beforeKeeper+2,'a Keeper press after the save settles records its own update');
+  assetState.assets.find(a=>a.id==='asset-b').tags=[];
+  // Muse C: an overlapping plan action says so instead of doing nothing.
+  const startButton={dataset:{projectAction:'start'},disabled:false};
+  vm.runInContext('productionActionPending=true;',context);
+  const sentBefore=requests.length;$('#productionMessage').textContent='';
+  await $('#productionDetail').onclick({target:{closest:s=>s==='[data-project-action]'?startButton:null}});
+  assert.equal($('#productionMessage').textContent,'Wait for the current action to finish. Nothing was sent.','an overlapping plan action is explained, not swallowed');
+  assert.equal(requests.length,sentBefore,'the overlapping action sends nothing');
+  assert.equal(startButton.disabled,false,'the overlapping action leaves the running button alone');
+  vm.runInContext('productionActionPending=false;',context);
+  // Muse D: a candidate video has an accessible name that matches its visible heading and never leaks the hidden settings.
+  const videoPlan={...plan,id:'d'.repeat(32),stages:[1,2].map(n=>({label:n===1?'A':'B',operation:'generate',job:{id:'job-v'+n,preset_id:'anima-portrait',status:'completed',outputs:[{asset_id:'asset-v'+n,media_type:'video'}]}}))};
+  vm.runInContext(`productionPlans=${JSON.stringify([videoPlan])};productionId=${JSON.stringify(videoPlan.id)};renderProduction();`,context);
+  let videoHtml=$('#productionDetail').innerHTML;
+  assert.match(videoHtml,/<video src="\/api\/assets\/asset-v1\/file" controls preload="metadata" aria-label="Candidate A"><\/video>/,'candidate video is named like its heading');
+  assert.match(videoHtml,/<video src="\/api\/assets\/asset-v2\/file" controls preload="metadata" aria-label="Candidate B"><\/video>/);
+  assert.doesNotMatch(videoHtml,/cfg 3\.5|cfg 5/,'blind: the video name does not reveal the varied setting');
+  // Reveal restores the recipe and full-plan downloads.
+  vm.runInContext('blindComparison=false;renderProduction();',context);
+  videoHtml=$('#productionDetail').innerHTML;
+  assert.equal((videoHtml.match(/data-job-recipe="job-v\d"/g)||[]).length,2,'revealed: each candidate recipe is offered again');
+  assert.match(videoHtml,/plan\.json\?download/,'revealed: the full plan download is offered again');
+  vm.runInContext('blindComparison=true;',context);
   console.log('Comparison quick checks save one owner answer per press and count them per candidate.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

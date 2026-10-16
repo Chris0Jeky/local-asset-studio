@@ -260,9 +260,10 @@ CAPACITY_REASON = "GPU process memory counters exceed the card's capacity"
 
 
 def _over_card(value, capacity):
-    """True when a source counter is past the card plus the sampling headroom used for adapter agreement."""
+    """True when a source counter is past the card plus small sampling headroom."""
     if capacity is None or isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value): return False
-    return value > capacity * RECONCILE_RATIO + RECONCILE_SLOP_BYTES
+    # 128 MiB covers the 80 MiB gap from ComfyUI's 16,304 MiB to a full 16 GiB card, plus 48 MiB sampling slack.
+    return value > capacity + 128 * 1024 ** 2
 
 
 def others_for_admission(reading, pid, capacity_bytes=None):

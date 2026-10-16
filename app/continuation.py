@@ -133,6 +133,12 @@ def _models(graph):
             if (key in keys or key == "model_name" and node.get("class_type") == "HiDreamO1ModelLoader") and isinstance(value, str)}
 
 
+# Single-input nodes that forward the same MODEL / CLIP and neither add nor drop an adapter (#1243). Each is shipped
+# between a LoRA and its consumer: ModelSampling* on Qwen, RescaleCFG on Trellis, CLIPSetLastLayer on Pony. Anything else
+# (a merge, a switch, a Reroute pack, an unseen patch) stays an unknown shape and is refused.
+PASS_THROUGH = {"model": {"ModelSamplingAuraFlow", "ModelSamplingSD3", "RescaleCFG"}, "clip": {"CLIPSetLastLayer"}}
+
+
 def _lora_feeds(graph, start, target, field):
     """Trace a MODEL/CLIP input back through known LoRA outputs; None means an unknown graph shape."""
     if graph.get(start, {}).get("class_type") != "LoraLoader": return None
@@ -148,6 +154,8 @@ def _lora_feeds(graph, start, target, field):
         kind = node.get("class_type")
         if kind in ("LoraLoader", "LoraLoaderModelOnly"):
             if port != output or kind == "LoraLoaderModelOnly" and field == "clip": return False
+        elif kind in PASS_THROUGH[field]:
+            if port != 0: return None
         elif kind in ("CheckpointLoaderSimple", "ImageOnlyCheckpointLoader", "UNETLoader", "UnetLoaderGGUF", "CLIPLoader", "HiDreamO1ModelLoader"): return False
         else: return None
     return False
@@ -187,10 +195,10 @@ def _carry_problems(preset, graph, vary, sources, graph_of, bound):
     for node in sorted(carried_nodes):
         model_paths = [_lora_feeds(graph, node, target, "model") for target in sorted(samplers)]
         clip_paths = [_lora_feeds(graph, node, target, "clip") for target in sorted(encoders)]
-        if not samplers or not encoders or (True not in model_paths and None in model_paths) or None in clip_paths:
-            problems.append("%s: vary cannot determine whether adapter node %s feeds the sampler model and all text encoder clip inputs (missing nodes, invalid links or unknown graph shape)" % (name, node))
-        elif True not in model_paths or not all(clip_paths):
-            problems.append("%s: vary adapter node %s does not feed the sampler and the text encoders through its MODEL/CLIP outputs" % (name, node))
+        if not samplers or not encoders or None in model_paths or None in clip_paths:
+            problems.append("%s: vary cannot determine whether adapter node %s feeds all sampler model and text encoder clip inputs (missing nodes, invalid links or unknown graph shape)" % (name, node))
+        elif not all(model_paths) or not all(clip_paths):
+            problems.append("%s: vary adapter node %s does not feed all samplers and text encoders through its MODEL/CLIP outputs" % (name, node))
     for node in sorted(_lora_nodes(graph) - carried_nodes):
         problems.append("%s: vary route has an adapter it does not take from the source (node %s); it would change the picture's LoRA stack" % (name, node))
     models = _models(graph)

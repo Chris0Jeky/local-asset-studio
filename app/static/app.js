@@ -207,31 +207,34 @@ const loraRange = entry => Array.isArray(entry?.strength) ? entry.strength.filte
 function recommendedStrength(key, entry) {
   if (Number(entry?.default) > 0) return Number(entry.default);
   const authored = Number(selected?.defaults?.[key]), top = Math.max(...loraRange(entry), 0);
-  return authored > 0 ? authored : top > 0 ? Math.min(1, top) : 1;
+  const value = authored > 0 ? authored : 1, range = loraRange(entry);
+  return range.length ? Math.max(Math.min(...range), Math.min(value, top)) : value;
 }
 let autoTriggers = {}; // slot key -> the exact fragment this page added to the prompt for that slot
-const promptHas = (text, trigger) => String(text).toLowerCase().includes(String(trigger).toLowerCase());
+const promptToken = trigger => '(?<![\\p{L}\\p{N}_])' + String(trigger).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\p{L}\\p{N}_])';
+const promptHas = (text, trigger) => RegExp(promptToken(trigger), 'iu').test(String(text));
 function addTrigger(key, auto) {
   const field = $('#positive'), entry = loraEntry(getControl(loraNameKey(key))?.value), trigger = entry?.trigger;
   if (!field || !selected?.positive || !trigger) return '';
   if (promptHas(field.value, trigger)) return 'The trigger ' + trigger + ' is already in the prompt.';
   const text = field.value.replace(/[\s,]+$/, ''), start = /^start/i.test(String(entry.trigger_position || '').trim());
   const fragment = start ? trigger + (text ? ', ' : '') : (!text ? '' : /[.!?;:]$/.test(text) ? ' ' : ', ') + trigger;
-  field.value = start ? fragment + field.value : text + fragment;
+  field.value = start ? fragment + text : text + fragment;
   if (auto) autoTriggers[key] = fragment;
   field.dispatchEvent(new Event('input', {bubbles: true}));
   return 'Added the trigger ' + trigger + ' to the ' + (start ? 'start' : 'end') + ' of the prompt.';
 }
 // Only the exact fragment added for this slot is removed; text the user edited around it stays as typed.
 function dropAutoTrigger(key) {
-  const fragment = autoTriggers[key], field = $('#positive'); delete autoTriggers[key];
+  const fragment = autoTriggers[key], field = $('#positive');
   if (!fragment || !field) return '';
   // Another enabled slot still needs the same trigger: hand the fragment over instead of removing it.
-  const trigger = fragment.replace(/^[, ]+|[, ]+$/g, ''), other = activeLoraSlots().find(k => k !== key && Number(getControl(k)?.value) > 0 && loraEntry(getControl(loraNameKey(k))?.value)?.trigger === trigger);
-  if (other) { autoTriggers[other] = fragment; return ''; }
+  const trigger = fragment.replace(/^[, ]+|[, ]+$/g, ''), other = activeLoraSlots().find(k => k !== key && Number(getControl(k)?.value) > 0 && String(loraEntry(getControl(loraNameKey(k))?.value)?.trigger || '').toLowerCase() === trigger.toLowerCase());
+  if (other) { autoTriggers[other] = fragment; delete autoTriggers[key]; return ''; }
   // Still a whole token where it was put: a leading fragment at the very start, a trailing one before a comma or the end.
-  const literal = fragment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), token = fragment.endsWith(', ') ? RegExp('^' + literal) : RegExp(literal + '(?=\\s*(,|$))');
+  const literal = fragment.split(trigger).map(text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join(promptToken(trigger)), token = fragment.endsWith(', ') ? RegExp('^' + literal, 'iu') : RegExp(literal + '(?=\\s*(,|$))', 'iu');
   if (!token.test(field.value)) return '';
+  delete autoTriggers[key];
   field.value = field.value.replace(token, ''); field.dispatchEvent(new Event('input', {bubbles: true}));
   return 'Removed the trigger ' + fragment.replace(/^[, ]+|[, ]+$/g, '') + ' added for the previous adapter.';
 }
@@ -575,7 +578,7 @@ function renderJobs(signature=JSON.stringify(jobs),force=false) {
       const abandon=job.can_abandon?'<div class="abandonJobControls"><label>Reason for abandoning this local job<input data-abandon-reason maxlength="1000" required></label>'+(job.abandon_requires_acknowledgement?'<label><input type="checkbox" data-abandon-ack> I understand the remote outcome is unknown and this does not cancel remote work.</label>':'')+'<p><small>Keep the recipe, evidence and spent reservations. This job will not be retried. Backend switching still checks every live queue.</small></p><button class="abandonJob" data-job="'+esc(job.id)+'">Abandon local job</button></div>':'';
       const problem=['failed','partial','uncertain','abandoned'].includes(job.status);
       const putAway=!problem?'':job.put_away?(job.put_away_basis==='owner'?'<p class="putAwayNote"><small>Put away '+esc(new Date(job.put_away_at*1000).toLocaleString())+'. Status, prompt IDs, outputs and reservations are unchanged.</small></p>':'<p class="putAwayNote"><small>Off your desk because tracking was stopped. Resume observation brings it back.</small></p>')+(job.can_bring_back?'<button class="putAway" data-job="'+esc(job.id)+'" data-put-away="false">Bring back</button>':''):job.can_put_away?'<button class="putAway" data-job="'+esc(job.id)+'" data-put-away="true" title="Hide from Problems and your desk. Nothing is retried, cancelled or deleted.">Put away</button>':job.status==='uncertain'?'<p class="putAwayNote"><small>'+esc(job.can_stop_tracking?'Stop tracking before putting this away; its resume path stays open until then.':'Resolve or abandon this uncertain job before putting it away.')+'</small></p>':'';
-      const html='<article class="jobStatus '+esc(job.status)+'" data-problem="'+esc(job.id)+'"><b>'+esc(job.preset_name)+' · '+esc(job.status)+'</b><p>'+esc(job.message)+'</p>'+failurePanel+(promptIds?'<p><small>Known prompt IDs: '+esc(promptIds)+'</small></p>':'')+stoppedNote+abandonNote+renderCancel(job)+resume+stop+abandon+renderMixedBatch(job)+'<button class="recipe" data-job="'+esc(job.id)+'">Recipe</button>'+putAway+'</article>';
+      const html='<article class="jobStatus '+esc(job.status)+'" data-problem="'+esc(job.id)+'"><b>'+esc(job.preset_name)+' · '+esc(job.status)+'</b><p>'+esc(job.message)+'</p>'+failurePanel+(promptIds?'<p><small>Known prompt IDs: '+esc(promptIds)+'</small></p>':'')+stoppedNote+abandonNote+renderCancel(job)+resume+stop+abandon+renderMixedBatch(job)+(job.record_error?'':'<button class="recipe" data-job="'+esc(job.id)+'">Recipe</button>')+putAway+'</article>';
       if(problem)problems.push({job,html});else cards.push(html);
     }else if(['too_late','refused','unresolved'].includes(job.cancellation?.state)){
       // A finished run whose cancel did not take effect still says so (#1160 review); its outputs follow as usual.
@@ -694,15 +697,16 @@ function inventoryNeedsAction(m,assets,root){const windows=libraryRootIsWindows(
 function renderInventory(){if(!library)return;const q=$('#modelSearch').value.toLowerCase(),top=($('#curatedModelSearch')?.value||'').toLowerCase(),status=currentModelStatus(),assets=library.assets||[];const rows=library.inventory.filter(m=>m.file.toLowerCase().includes(q)&&m.file.toLowerCase().includes(top)&&(status==='all'||(status==='action'?inventoryNeedsAction(m,assets):!inventoryNeedsAction(m,assets))));$('#inventory').innerHTML=rows.map(m=>'<div class="inventory-row"><code>'+esc(m.file)+'</code><span>'+gib(m.bytes)+'</span></div>').join('')||'<p class="muted">No matching installed weights.</p>';const count=$('#modelCount');if(count)count.textContent=rows.length+' of '+library.inventory.length+(status==='action'?' need action':status==='installed'?' installed':' shown');}
 // What each model file unlocks: looks (/api/looks) and recipes (/api/recipes), joined through the recipe's own file requirements
 // (/api/inspect/<recipe>, cached per page) and the adapter names in its controls. Read-only; until it loads the cards carry no "Used by" line.
-let modelLooks=null,modelReqs=new Map(),modelExamples={},modelUseBusy=false;
+let modelLooks=null,modelReqs=new Map(),modelReqRetry=new Map(),modelExamples={},modelUseBusy=false;
 async function loadModelUse(){
   if(modelUseBusy)return;modelUseBusy=true;
   try{
     // Looks are re-read on every visit (one GET): a look made, renamed or trashed since the last visit must show here.
-    const listing=await api('/api/looks');modelLooks=Array.isArray(listing?.looks)?listing.looks.filter(l=>l&&l.kind==='look'&&!l.trashed_at&&l.body?.preset_id):null;
+    try{const listing=await api('/api/looks');if(Array.isArray(listing?.looks))modelLooks=listing.looks.filter(l=>l&&l.kind==='look'&&!l.trashed_at&&l.body?.preset_id);}catch{}
     if(!Object.keys(modelExamples).length)try{modelExamples=(await import('/static/bundle-showcase.js')).default?.examples||{};}catch{}
-    const ids=[...new Set([...(modelLooks||[]).map(l=>l.body.preset_id),...(atelierRecipes||[]).map(r=>r?.preset_id)].filter(id=>typeof id==='string'&&id&&!modelReqs.has(id)))];   // a failed inspect stays null until the page reloads, not retried every poll
-    for(let i=0;i<ids.length;i+=4)await Promise.all(ids.slice(i,i+4).map(async id=>{try{const r=await api('/api/inspect/'+encodeURIComponent(id));modelReqs.set(id,Array.isArray(r?.requirements)?r.requirements:null);}catch{modelReqs.set(id,null);}}));
+    if(modelLooks&&library)renderCuratedModels();   // the looks show at once as "Checking", so the files below do not jump later
+    const ids=[...new Set([...(modelLooks||[]).map(l=>l.body.preset_id),...(atelierRecipes||[]).map(r=>r?.preset_id)].filter(id=>typeof id==='string'&&id&&(!modelReqs.has(id)||modelReqs.get(id)===null&&Date.now()>=(modelReqRetry.get(id)||0))))];   // retry failed inspections after two minutes, not every poll
+    for(let i=0;i<ids.length;i+=4)await Promise.all(ids.slice(i,i+4).map(async id=>{try{const r=await api('/api/inspect/'+encodeURIComponent(id));modelReqs.set(id,Array.isArray(r?.requirements)?r.requirements:null);}catch{modelReqs.set(id,null);}if(modelReqs.get(id)===null)modelReqRetry.set(id,Date.now()+120000);else modelReqRetry.delete(id);}));
     if(modelLooks||ids.length)renderCuratedModels();
   }catch{}finally{modelUseBusy=false;}
 }
@@ -711,10 +715,10 @@ function modelUsage(assets,windows){
   const byId=new Map(assets.map(a=>[a.id,a])),byFile=new Map(assets.map(a=>[canonicalModelRel(a.file,windows),a])),byBase=new Map(assets.map(a=>[modelBase(a.file),a])),use=new Map(),states=[];
   const add=(a,kind,item)=>{let u=use.get(a.id);if(!u)use.set(a.id,u={looks:[],recipes:[]});if(!u[kind].some(x=>x.id===item.id))u[kind].push(item);};
   const resolve=r=>byId.get(r.asset_id)||byFile.get(canonicalModelRel(r.file,windows))||null;
-  // An adapter the curated library does not list still counts when the inventory has the file; one found nowhere is missing
-  // (only when a disk inventory was reported at all).
+  // An adapter the curated library does not list still counts when the inventory has the file; one found nowhere is missing.
+  // Only once a disk inventory is reported: before that an unlisted adapter is unknown, not missing. An extension-less name counts too.
   const onDisk=new Set((library?.inventory||[]).map(m=>modelBase(m.file)));
-  const loras=c=>Object.entries(c||{}).filter(([k,v])=>/^lora\d*(_name)?$/.test(k)&&typeof v==='string'&&/\.(safetensors|ckpt|pt|bin|gguf)$/i.test(v)).map(([,v])=>byBase.get(modelBase(v))||(onDisk.has(modelBase(v))||!onDisk.size?null:{file:'loras/'+String(v).split(/[\\/]/).pop(),present:false,unlisted:true})).filter(Boolean);
+  const loras=c=>Object.entries(c||{}).filter(([k,v])=>/^lora\d*(_name)?$/.test(k)&&typeof v==='string'&&v.trim()&&(/_name$/.test(k)||!Number.isFinite(Number(v)))).map(([,v])=>byBase.get(modelBase(v))||(onDisk.has(modelBase(v))||!onDisk.size?null:{file:'loras/'+String(v).split(/[\\/]/).pop(),present:false,unlisted:true})).filter(Boolean);
   const join=(kind,item,presetId,controls)=>{const missing=[];for(const r of modelReqs.get(presetId)||[]){const a=resolve(r);if(a)add(a,kind,item);if(r.present!==true)missing.push(a||r);}for(const a of loras(controls)){if(!a.unlisted)add(a,kind,item);if(a.present===false)missing.push(a);}return missing;};
   for(const l of modelLooks||[]){const missing=join('looks',{id:l.id,name:l.name},l.body.preset_id,l.body.controls);states.push({look:l,known:!!modelReqs.get(l.body.preset_id),missing:[...new Map(missing.map(m=>[m.file,m])).values()]});}
   for(const r of atelierRecipes||[])if(r?.id)join('recipes',{id:r.id,name:r.name||r.id},r.preset_id,r.controls);
@@ -724,12 +728,15 @@ function modelUsage(assets,windows){
 function modelLookThumb(l){const m=(l.lineage||[]).map(x=>/^presets\/recipes\.json · (\S+)/.exec(x.evidence||'')).find(Boolean),proof=['look-preset-stylized-prop','look-preset-pixel-lora','look-preset-realvis','look-preset-zimage-fast'];return m&&modelExamples[m[1]]?.url||(l.anchor_asset_id?'/api/assets/'+encodeURIComponent(l.anchor_asset_id)+'/thumb':proof.includes(l.id)?'/api/examples/make-looks-20261015/'+l.id+'.jpg':null);}
 function modelLooksMarkup(states,query){
   const known=states.filter(s=>s.known&&s.look.usable!==false),need=known.filter(s=>s.missing.length),ready=known.filter(s=>!s.missing.length);
-  if(!known.length)return'';
+  // A look whose recipe is still being inspected holds its row (audit v3 N8): the panel keeps its height when the answers arrive.
+  const checking=states.filter(s=>!s.known&&s.look.usable!==false&&!modelReqs.has(s.look.body.preset_id));
+  if(!known.length&&!checking.length)return'';
   const match=s=>!query||[s.look.name,s.look.preset_name,...s.missing.map(m=>m.file)].some(v=>String(v||'').toLowerCase().includes(query));
   const thumb=l=>{const url=modelLookThumb(l);return url?'<img src="'+esc(url)+'" alt="" loading="lazy">':'<span class="look-thumb"></span>';};
   const names=l=>'<b>'+esc(l.name)+'</b><small>'+esc(l.preset_name||l.body.preset_id)+'</small>';
   const rows=need.filter(match).map(s=>'<li class="model-look needs">'+thumb(s.look)+'<span>'+names(s.look)+'<small>Needs: '+esc(s.missing.map(m=>modelBase(m.file)).join(', '))+'</small></span><a href="/#models?need='+encodeURIComponent(s.look.body.preset_id)+'">'+s.missing.length+' file'+(s.missing.length===1?'':'s')+' to get →</a></li>').join(''),ok=ready.filter(match).map(s=>'<li class="model-look ready">'+thumb(s.look)+'<span>'+names(s.look)+'</span></li>').join('');
-  return'<div class="section-title"><h3>What you can make</h3><small>'+ready.length+' of '+known.length+' looks ready now · '+need.length+' need'+(need.length===1?'s':'')+' a download</small></div>'+(rows?'<section><h4>Needs a download</h4><ul class="model-look-list">'+rows+'</ul></section>':'')+(ok?'<section><h4>Ready now</h4><ul class="model-look-list">'+ok+'</ul></section>':'')+(!ok&&!rows?'<p class="muted">No look matches this search.</p>':'');
+  const wait=checking.filter(match).map(s=>'<li class="model-look checking">'+thumb(s.look)+'<span>'+names(s.look)+'<small>Checking its files…</small></span></li>').join('');
+  return'<div class="section-title"><h3>What you can make</h3><small>'+ready.length+' of '+known.length+' looks ready now · '+need.length+' need'+(need.length===1?'s':'')+' a download'+(checking.length?' · '+checking.length+' still being checked':'')+'</small></div>'+(wait?'<section><h4>Checking</h4><ul class="model-look-list">'+wait+'</ul></section>':'')+(rows?'<section><h4>Needs a download</h4><ul class="model-look-list">'+rows+'</ul></section>':'')+(ok?'<section><h4>Ready now</h4><ul class="model-look-list">'+ok+'</ul></section>':'')+(!ok&&!rows&&!wait?'<p class="muted">No look matches this search.</p>':'');
 }
 function renderCuratedModels(){
   if(!library)return;const params=new URLSearchParams(location.hash.split('?')[1]||''),need=StudioUX.normalizeView(location.hash)==='models'?(params.get('need')||new URLSearchParams(location.search).get('need')):null;
@@ -739,7 +746,7 @@ function renderCuratedModels(){
   const cardStatus=currentModelStatus(),shownCards=library.assets.filter(a=>(need?!a.present&&missing.some(file=>{const key=canonicalModelRel(a.file,windows),required=canonicalModelRel(file,windows);return key===required||key.endsWith('/'+required);}):modelStatusMatch(a,cardStatus))&&[a.name,a.family,a.file,...(use.get(a.id)?.looks||[]).map(x=>x.name),...(use.get(a.id)?.recipes||[]).map(x=>x.name)].some(v=>String(v||'').toLowerCase().includes(query))),hiddenCards=library.assets.length-shownCards.length;
   const card=a=>{
       const d=a.download||{},active=['queued','downloading','verifying'].includes(d.status)&&Date.now()/1000-d.updated_at<180,u=use.get(a.id);
-      const pinOnly=a.installable!==true,dir=String(a.path||'').replace(/[\\/][^\\/]*$/,'')||(library.model_root?library.model_root+'/'+String(a.file||'').replace(/\/?[^/]*$/,''):'');
+      const pinOnly=a.installable!==true,dir=a.status==='invalid_pin'?'':String(a.path||'').replace(/[\\/][^\\/]*$/,'')||(library.model_root?library.model_root+'/'+String(a.file||'').replace(/\/?[^/]*$/,''):'');
       const state=a.verified?'SHA-256 verified':a.verification==='linked-path-refused'?'Linked folder · not managed':pinOnly?(a.present?'Present · pin only':'Pin only · not installed'):a.present?'Present · verify file':active?d.status:'Not installed';
       let host='';try{host=new URL(a.source).hostname;}catch{}
       const usedBy=u&&(u.looks.length||u.recipes.length)?'<p class="model-used" title="'+esc([...u.looks.map(x=>x.name),...u.recipes.map(x=>'recipe: '+x.name)].join('\n'))+'">Used by: '+[u.looks.length?listed(u.looks,4):'',u.recipes.length?'recipes '+listed(u.recipes,3):''].filter(Boolean).join(' · ')+'</p>':'';
@@ -750,8 +757,10 @@ function renderCuratedModels(){
     };
   const group=(name,items,collapsed=false,hint='')=>collapsed?'<details class="model-group"'+(query?' open':'')+'><summary>'+name+' ('+items.length+')</summary>'+(hint?'<p class="muted">'+hint+'</p>':'')+'<div class="model-cards">'+items.map(card).join('')+'</div></details>':'<section><h3>'+name+' ('+items.length+')</h3><div class="model-cards">'+items.map(card).join('')+'</div></section>';
   $('#curatedModelTitle').textContent=need?'Files needed for '+(preset?.name||need):'Model files';
-  const looksHtml=need?'':modelLooksMarkup(states,query),box=$('#modelLooks');if(box){box.innerHTML=looksHtml;box.hidden=!looksHtml;}
-  $('#modelCards').innerHTML=(need?'<p><a href="/#models" data-models-all>Show everything</a></p>':'')+group('Missing',shownCards.filter(a=>!a.present&&!a.verified))+group('Needs a check',shownCards.filter(a=>a.present&&!a.verified),true,'Present on disk. Verify hashes a file and compares it with its pinned SHA-256.')+group('Installed',shownCards.filter(a=>a.verified),true)+(!shownCards.length?'<p class="muted">'+(need?'No missing curated files for this preset match.':'No matching curated models.')+'</p>':'')+(!need&&hiddenCards?'<p class="muted model-filter-note">'+hiddenCards+' curated model'+(hiddenCards===1?' is':'s are')+' hidden by the active filters. <button type="button" data-model-status-all>Show everything</button></p>':'');
+  const looksHtml=need?'':modelLooks===null?'<div class="section-title"><h3>What you can make</h3><small>Reading your looks…</small></div><div class="model-looks-wait" aria-hidden="true"></div>':modelLooksMarkup(states,query),box=$('#modelLooks');if(box){box.innerHTML=looksHtml;box.hidden=!looksHtml;box.setAttribute?.('aria-busy',String(!need&&(modelLooks===null||/model-look checking/.test(looksHtml))));}
+  // Missing files a look needs lead; ones only a recipe uses follow; ones nothing uses fold under Optional (audit v3 N8). A ?need= list stays whole.
+  const usedBy=a=>use.get(a.id)?.looks.length?0:use.get(a.id)?.recipes.length?1:2,missingCards=shownCards.filter(a=>!a.present&&!a.verified).sort((a,b)=>usedBy(a)-usedBy(b)),settled=modelLooks!==null&&[...modelLooks.map(l=>l.body.preset_id),...(atelierRecipes||[]).map(r=>r?.preset_id)].filter(id=>typeof id==='string'&&id).every(id=>Array.isArray(modelReqs.get(id))),optional=need||!settled?[]:missingCards.filter(a=>usedBy(a)===2);   // folded only once every inspection succeeded; a failed one keeps its files under Missing
+  $('#modelCards').innerHTML=(need?'<p><a href="/#models" data-models-all>Show everything</a></p>':'')+group('Missing',missingCards.filter(a=>!optional.includes(a)))+(optional.length?group('Optional · not used by any look or recipe',optional,true,'Not installed, and nothing in Make or the recipe library needs them now.'):'')+group('Needs a check',shownCards.filter(a=>a.present&&!a.verified),true,'Present on disk. Verify hashes a file and compares it with its pinned SHA-256.')+group('Installed',shownCards.filter(a=>a.verified),true)+(!shownCards.length?'<p class="muted">'+(need?'No missing curated files for this preset match.':'No matching curated models.')+'</p>':'')+(!need&&hiddenCards?'<p class="muted model-filter-note">'+hiddenCards+' curated model'+(hiddenCards===1?' is':'s are')+' hidden by the active filters. <button type="button" data-model-status-all>Show everything</button></p>':'');
   const reset=()=>{$('#curatedModelSearch').value='';$('#modelStatus').value='all';writeStoredModelStatus('all');renderCuratedModels();renderInventory();};
   $('#modelCards').querySelector('[data-model-status-all]')?.addEventListener('click',reset);
   // A need given as a page query (?need=) is cleared too; the shell routes the /#models link in place and keeps location.search.
@@ -768,7 +777,7 @@ async function refreshLibrary(){
   }catch(e){$('#downloadStatus').textContent=e.message;}
 }
 const installing=new Set(); // Per model: a repeat click on the same model is dropped; another model still reaches the server's install lock.
-async function install(id){if(installing.has(id))return;installing.add(id);try{const data=await post('/api/models/install',{id});$('#downloadStatus').textContent=data.message;message('Model installation started. Progress is in Models & folders.');await refreshLibrary();}catch(e){$('#downloadStatus').textContent=e.message;message(e.message,true);}finally{installing.delete(id);}}
+async function install(id){if(installing.has(id))return;installing.add(id);try{const data=await post('/api/models/install',{id});$('#downloadStatus').textContent=data.message;message('Model installation started. Progress is in Models & setup.');await refreshLibrary();}catch(e){$('#downloadStatus').textContent=e.message;message(e.message,true);}finally{installing.delete(id);}}
 function saved(){return serverSetups.map(s=>({...s.recipe,name:s.name,id:s.id}));}
 async function loadSetups(){
   serverSetups=await api('/api/setups');
@@ -791,7 +800,7 @@ function staleTilePlan(s,target){return s.tile!=null&&(!target?.tile_route||type
 function applySaved(s,{guessLegacyParent=false}={}){
   if(!s||!catalog.presets.some(p=>p.id===s.preset))throw Error('This recipe uses an unavailable preset');
   if(s.continuation!=null&&(!StudioContinuation.normalize(s.continuation)||s.continuation.preset_id!==s.preset))throw Error('Invalid saved continuation.');
-  if(s.look_application!=null&&(typeof StudioLooks==='undefined'||!StudioLooks.normalizeApplication(s.look_application,s.preset)))throw Error('Invalid saved Look application state.');
+  if(s.look_application!=null&&(typeof StudioLooks==='undefined'||!StudioLooks.normalizeApplication(s.look_application,s.preset)))throw Error('Invalid look application state.');
   const target=catalog.presets.find(p=>p.id===s.preset);
   const droppedTile=s.tileDropped||staleTilePlan(s,target);
   const prepared=typeof StudioUX!=='undefined'?StudioUX.normalizePrepared(droppedTile?{...s,tile:null}:s):(s.tile!=null||s.parallax!=null?null:{});

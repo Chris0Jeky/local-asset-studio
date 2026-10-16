@@ -1,0 +1,3824 @@
+{
+  "round": 4,
+  "evidence_root": ".runtime/lab-20261016d/",
+  "transport": {
+    "base_url": "http://127.0.0.1:8191",
+    "origin": "http://127.0.0.1:8191",
+    "serial": true
+  },
+  "historical_reference": "origin/lab/round3-poses-loras-20261016",
+  "historical_copy_pose_baselines": [
+    {
+      "trial": "combine-klein-9b-copypose-0-picture",
+      "section": "poses",
+      "source_asset": "a14af12cbbfe5c50b170c71875f7a114",
+      "source_look": "Petiflow",
+      "pose_mode": "picture",
+      "fill_answers": {
+        "who": "an adult botanical illustrator aged forty with copper curly hair",
+        "clothes": "a full length cream dress with long sleeves and a green apron",
+        "outfit": "long teal hanfu",
+        "pose": "holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot"
+      },
+      "request": {
+        "preset_id": "combine-klein-9b-copypose",
+        "controls": {
+          "last_reference": "6971b19f3d004f829c050d253fa22204_Anima-v1-Baseline_00047_.png.png",
+          "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult botanical illustrator aged forty with copper curly hair; keep that character's face, hair and rendering style and the clothes with their colours (a full length cream dress with long sleeves and a green apron); only the pose and framing change, to image 2's: holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+          "seed": 202610160401
+        },
+        "continuation": {
+          "intent": "combine",
+          "preset_id": "combine-klein-9b-copypose",
+          "reference_file": "6971b19f3d004f829c050d253fa22204_Anima-v1-Baseline_00047_.png.png",
+          "source_asset_id": "a14af12cbbfe5c50b170c71875f7a114",
+          "source_sha256": "6020c3b91f67f61a3d4cd642730f1528fc7ac217f82529d3cafcc26477096ea5",
+          "template_sha256": "b31203a55df458649c2abc92314e60704d63a770e5577a5ee6aa7ca295d46956",
+          "version": 1
+        },
+        "references": [
+          {
+            "role": "pose",
+            "contribution": "",
+            "avoid": "",
+            "file": "296b1070eb744cc3b567cef7a52d6d81_OneObsession-Anima-v20-Baseline_00007_.png.png",
+            "sha256": "37a28fc8a4fd46462bfca4824d323927d5825a7d44f25fbb02e0ea870788ae10",
+            "bytes": 1422801,
+            "width": 832,
+            "height": 1216,
+            "parent_asset": "2847242877545599b04e0b7682899d6c"
+          }
+        ],
+        "parent_assets": [
+          "a14af12cbbfe5c50b170c71875f7a114",
+          "2847242877545599b04e0b7682899d6c"
+        ],
+        "label": "Lab 1016c · combine-klein-9b-copypose-0-picture",
+        "batch_count": 1
+      },
+      "job_id": "4a3d728b-34ee-445b-90a8-e92dbe06635e",
+      "preset": "combine-klein-9b-copypose",
+      "controls": {
+        "last_reference": "6971b19f3d004f829c050d253fa22204_Anima-v1-Baseline_00047_.png.png",
+        "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult botanical illustrator aged forty with copper curly hair; keep that character's face, hair and rendering style and the clothes with their colours (a full length cream dress with long sleeves and a green apron); only the pose and framing change, to image 2's: holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+        "seed": 202610160401
+      },
+      "seed": 202610160401,
+      "host_commit": {
+        "available_bytes": 47847174144,
+        "limit_bytes": 102784090112,
+        "committed_bytes": 54936915968,
+        "unknown_reason": null
+      },
+      "prompt_id": "66c4a687-71a2-423b-b3eb-aaeadac8e463",
+      "status": "completed",
+      "verdict": "keep",
+      "seconds": 125.09704780578613,
+      "message": "Complete. GPU memory overflowed 2.5 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards. The largest other GPU user was dwm.exe (the Windows desktop) with 2.7 GB.",
+      "outputs": [
+        {
+          "image": ".runtime\\lab-20261016c\\4a3d728b-34ee-445b-90a8-e92dbe06635e-0.png",
+          "sha256": "838a6c3697a8b3688035bcb2d794a710a57979c4bec2549872341013758dbd9b",
+          "metadata": {
+            "filename": "Klein-9B-copypose_00008_.png",
+            "subfolder": "Combine",
+            "type": "output",
+            "seed": 202610160401,
+            "prompt_id": "66c4a687-71a2-423b-b3eb-aaeadac8e463",
+            "media_type": "image",
+            "asset_id": "4a869698e95f5270805318e9ebdfa563"
+          },
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1986718,
+          "rgb_colours": 168091
+        }
+      ],
+      "job_timing": {
+        "elapsed_seconds": 125.09704780578613
+      },
+      "pose_held": "yes",
+      "identity_held": "yes",
+      "look_style_held": "yes",
+      "scores": {
+        "adherence": 4,
+        "anatomy": 4,
+        "style": 5,
+        "technical": 5,
+        "composition": 5,
+        "control": 4
+      },
+      "blind": false,
+      "judged_at": "2026-10-16T11:50:59.074051",
+      "crops": [
+        [
+          0,
+          0,
+          900,
+          1100
+        ]
+      ],
+      "note": "Horizontal two-hand flute pose adopted; copper curls, grey-green eyes, cream blouse, dark green apron, greenhouse composition and flat shaded detailed curls retained. Mild face/proportion drift and unrequested ring, but no repair needed for this illustration. Face and both hand crops inspected at native size, digits readable. One source/seed only; not exact pixel identity.",
+      "resolved_controls": {
+        "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult botanical illustrator aged forty with copper curly hair; keep that character's face, hair and rendering style and the clothes with their colours (a full length cream dress with long sleeves and a green apron); only the pose and framing change, to image 2's: holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+        "width": 1024,
+        "height": 1536,
+        "seed": 202610160401,
+        "steps": 6,
+        "cfg": 1.0,
+        "last_reference": "6971b19f3d004f829c050d253fa22204_Anima-v1-Baseline_00047_.png.png",
+        "lora": 1.0,
+        "lora_name": "KleinBase9B_PoseTransfer.safetensors"
+      },
+      "recipe_sha256": "dbec06e39f90e04b8a4d0755fe582cb4d7cf7de2907ad9ddc56fb81f1ec4cf63",
+      "workflow_sha256": "e45e6d62dcb1c864eac84a879ac701d506ec3e32a2e9580e71a7cb925a41374f",
+      "pruned_control_keys": []
+    },
+    {
+      "trial": "combine-klein-9b-copypose-1-picture",
+      "section": "poses",
+      "source_asset": "2847242877545599b04e0b7682899d6c",
+      "source_look": "One Obsession",
+      "pose_mode": "picture",
+      "fill_answers": {
+        "who": "an adult musician aged forty with black hair in a bun",
+        "clothes": "long teal hanfu",
+        "outfit": "a full length cream dress and green apron",
+        "pose": "both hands supporting one small potted fern at waist height, upright torso, front view, medium shot"
+      },
+      "request": {
+        "preset_id": "combine-klein-9b-copypose",
+        "controls": {
+          "last_reference": "296b1070eb744cc3b567cef7a52d6d81_OneObsession-Anima-v20-Baseline_00007_.png.png",
+          "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult musician aged forty with black hair in a bun; keep that character's face, hair and rendering style and the clothes with their colours (long teal hanfu); only the pose and framing change, to image 2's: both hands supporting one small potted fern at waist height, upright torso, front view, medium shot. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+          "seed": 202610160401
+        },
+        "continuation": {
+          "intent": "combine",
+          "preset_id": "combine-klein-9b-copypose",
+          "reference_file": "296b1070eb744cc3b567cef7a52d6d81_OneObsession-Anima-v20-Baseline_00007_.png.png",
+          "source_asset_id": "2847242877545599b04e0b7682899d6c",
+          "source_sha256": "37a28fc8a4fd46462bfca4824d323927d5825a7d44f25fbb02e0ea870788ae10",
+          "template_sha256": "b31203a55df458649c2abc92314e60704d63a770e5577a5ee6aa7ca295d46956",
+          "version": 1
+        },
+        "references": [
+          {
+            "role": "pose",
+            "contribution": "",
+            "avoid": "",
+            "file": "6971b19f3d004f829c050d253fa22204_Anima-v1-Baseline_00047_.png.png",
+            "sha256": "6020c3b91f67f61a3d4cd642730f1528fc7ac217f82529d3cafcc26477096ea5",
+            "bytes": 1313178,
+            "width": 832,
+            "height": 1216,
+            "parent_asset": "a14af12cbbfe5c50b170c71875f7a114"
+          }
+        ],
+        "parent_assets": [
+          "2847242877545599b04e0b7682899d6c",
+          "a14af12cbbfe5c50b170c71875f7a114"
+        ],
+        "label": "Lab 1016c · combine-klein-9b-copypose-1-picture",
+        "batch_count": 1
+      },
+      "job_id": "f07fa669-f74b-45bf-b859-44c1197658ec",
+      "preset": "combine-klein-9b-copypose",
+      "controls": {
+        "last_reference": "296b1070eb744cc3b567cef7a52d6d81_OneObsession-Anima-v20-Baseline_00007_.png.png",
+        "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult musician aged forty with black hair in a bun; keep that character's face, hair and rendering style and the clothes with their colours (long teal hanfu); only the pose and framing change, to image 2's: both hands supporting one small potted fern at waist height, upright torso, front view, medium shot. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+        "seed": 202610160401
+      },
+      "seed": 202610160401,
+      "host_commit": {
+        "available_bytes": 47756398592,
+        "limit_bytes": 102784090112,
+        "committed_bytes": 55027691520,
+        "unknown_reason": null
+      },
+      "prompt_id": "db3daf7f-256a-4dd3-a6d3-fe7884280add",
+      "status": "completed",
+      "verdict": "keep",
+      "seconds": 118.32248377799988,
+      "message": "Complete. GPU memory overflowed 2.5 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards. The largest other GPU user was dwm.exe (the Windows desktop) with 2.7 GB.",
+      "outputs": [
+        {
+          "image": ".runtime\\lab-20261016c\\f07fa669-f74b-45bf-b859-44c1197658ec-0.png",
+          "sha256": "f6fe4ca7d3cc60194353e26f204ddf14470c3d5dbc1b4686e5a3b1c1b5024416",
+          "metadata": {
+            "filename": "Klein-9B-copypose_00009_.png",
+            "subfolder": "Combine",
+            "type": "output",
+            "seed": 202610160401,
+            "prompt_id": "db3daf7f-256a-4dd3-a6d3-fe7884280add",
+            "media_type": "image",
+            "asset_id": "d3950080c0b2595b87f2a64e6f7301ad"
+          },
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 2300063,
+          "rgb_colours": 244606
+        }
+      ],
+      "job_timing": {
+        "elapsed_seconds": 118.32248377799988
+      },
+      "pose_held": "yes",
+      "identity_held": "yes",
+      "look_style_held": "yes",
+      "scores": {
+        "adherence": 4,
+        "anatomy": 4,
+        "style": 4,
+        "technical": 5,
+        "composition": 5,
+        "control": 4
+      },
+      "blind": false,
+      "judged_at": "2026-10-16T11:55:23.780418",
+      "crops": [
+        [
+          100,
+          100,
+          900,
+          1050
+        ],
+        [
+          150,
+          950,
+          850,
+          1500
+        ]
+      ],
+      "note": "Bun, ornate hairpiece, teal embroidered hanfu, moon gate and glossy detailed anime finish retained; hands support the single fern pot in the new pose. Face is more frontal, eyes larger and eye colour slightly lighter, so identity is recognisable rather than exact. Native face and both hand crops inspected; readable thumbs and curled supporting digits, no clear extra digit. No mandatory repair seen.",
+      "resolved_controls": {
+        "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult musician aged forty with black hair in a bun; keep that character's face, hair and rendering style and the clothes with their colours (long teal hanfu); only the pose and framing change, to image 2's: both hands supporting one small potted fern at waist height, upright torso, front view, medium shot. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+        "width": 1024,
+        "height": 1536,
+        "seed": 202610160401,
+        "steps": 6,
+        "cfg": 1.0,
+        "last_reference": "296b1070eb744cc3b567cef7a52d6d81_OneObsession-Anima-v20-Baseline_00007_.png.png",
+        "lora": 1.0,
+        "lora_name": "KleinBase9B_PoseTransfer.safetensors"
+      },
+      "recipe_sha256": "9df51281037a7f8960b9086b45d67bd46f5ab19b48f2589631a3b19f39144517",
+      "workflow_sha256": "43735ee4388851a19b6793224e1bffac4dd4688049684f7ccb3ec8aef750c718",
+      "pruned_control_keys": []
+    }
+  ],
+  "jobs": [
+    {
+      "trial": "copy-one-obsession-202610160501",
+      "section": "copy-reliability",
+      "request": {
+        "preset_id": "combine-klein-9b-copypose",
+        "controls": {
+          "last_reference": "296b1070eb744cc3b567cef7a52d6d81_OneObsession-Anima-v20-Baseline_00007_.png.png",
+          "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult musician aged forty with black hair in a bun; keep that character's face, hair and rendering style and the clothes with their colours (long teal hanfu); only the pose and framing change, to image 2's: both hands supporting one small potted fern at waist height, upright torso, front view, medium shot. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+          "seed": 202610160501
+        },
+        "continuation": {
+          "intent": "combine",
+          "preset_id": "combine-klein-9b-copypose",
+          "reference_file": "296b1070eb744cc3b567cef7a52d6d81_OneObsession-Anima-v20-Baseline_00007_.png.png",
+          "source_asset_id": "2847242877545599b04e0b7682899d6c",
+          "source_sha256": "37a28fc8a4fd46462bfca4824d323927d5825a7d44f25fbb02e0ea870788ae10",
+          "template_sha256": "b31203a55df458649c2abc92314e60704d63a770e5577a5ee6aa7ca295d46956",
+          "version": 1
+        },
+        "references": [
+          {
+            "role": "pose",
+            "contribution": "",
+            "avoid": "",
+            "file": "6971b19f3d004f829c050d253fa22204_Anima-v1-Baseline_00047_.png.png",
+            "sha256": "6020c3b91f67f61a3d4cd642730f1528fc7ac217f82529d3cafcc26477096ea5",
+            "bytes": 1313178,
+            "width": 832,
+            "height": 1216,
+            "parent_asset": "a14af12cbbfe5c50b170c71875f7a114"
+          }
+        ],
+        "parent_assets": [
+          "2847242877545599b04e0b7682899d6c",
+          "a14af12cbbfe5c50b170c71875f7a114"
+        ],
+        "label": "Lab 1016d · copy-one-obsession-202610160501",
+        "batch_count": 1
+      },
+      "source_look": "One Obsession",
+      "fill_answers": {
+        "who": "an adult musician aged forty with black hair in a bun",
+        "clothes": "long teal hanfu",
+        "outfit": "a full length cream dress and green apron",
+        "pose": "both hands supporting one small potted fern at waist height, upright torso, front view, medium shot"
+      },
+      "heavy": true,
+      "status": "completed",
+      "admission": {
+        "host_commit": {
+          "available_bytes": 48136245248,
+          "limit_bytes": 102784090112,
+          "committed_bytes": 54647844864,
+          "unknown_reason": null
+        },
+        "gpu_memory": {
+          "pid": 26376,
+          "adapter": "0x00000000_0x00015b6d_0",
+          "dedicated_bytes": 2010939392,
+          "shared_bytes": 82563072,
+          "spilled": false,
+          "unknown_reason": null
+        },
+        "vram_guard": {
+          "installed": true,
+          "reason": null,
+          "pid": 26376
+        }
+      },
+      "job_id": "cb57a0f7-d2c2-402a-bebe-93ab96ef4cad",
+      "prompt_ids": [
+        "b2ab4033-7051-429a-b325-890c28a4fe5d"
+      ],
+      "seconds": 97.1786322593689,
+      "message": "Complete. GPU memory overflowed 2.3 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards. The largest other GPU user was dwm.exe (the Windows desktop) with 2.9 GB.",
+      "outputs": [
+        {
+          "image": ".runtime/lab-20261016d/copy-one-obsession-202610160501-0.png",
+          "sha256": "bb01ade6a65f6dcfd9e83a3b8d17168ee68dfcb83728faea393b4c5a65fe3078",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "metadata": {
+            "filename": "Klein-9B-copypose_00012_.png",
+            "subfolder": "Combine",
+            "type": "output",
+            "seed": 202610160501,
+            "prompt_id": "b2ab4033-7051-429a-b325-890c28a4fe5d",
+            "media_type": "image",
+            "asset_id": "0ce9c78a1b045e50925294dedd0e2b76"
+          }
+        }
+      ],
+      "recipe_sha256": "54991eb9b26a444659b284df8d3bee78c33fe3690007cd8ee0f82dbe817c1688",
+      "image": ".runtime/lab-20261016d/copy-one-obsession-202610160501-0.png",
+      "sha256": "bb01ade6a65f6dcfd9e83a3b8d17168ee68dfcb83728faea393b4c5a65fe3078",
+      "prompt_id": "b2ab4033-7051-429a-b325-890c28a4fe5d",
+      "judge": "lab",
+      "blind": false,
+      "judged_at": "2026-10-16T14:03:44.927359",
+      "scores": {
+        "adherence": 4,
+        "anatomy": 4,
+        "style": 4,
+        "technical": 5,
+        "composition": 5,
+        "control": 4
+      },
+      "verdict": "keep",
+      "worst_defect": "No mandatory repair seen",
+      "fix": null,
+      "note": "Native face, both supporting hands and plant crops inspected. Keeps black bun, ornate hairpiece, embroidered teal hanfu, glossy anime finish and moon gate; one pot supported in both hands. More frontal face with slightly larger eyes and lighter eye colour; recognisable rather than exact. Fern-like divided fronds stylized, not botanical-detail proof.",
+      "crops": [
+        {
+          "box": [
+            220,
+            90,
+            850,
+            820
+          ],
+          "image": ".runtime/lab-20261016d/copy-one-obsession-202610160501-crop-0.png",
+          "sha256": "045cc5b0bdbdd4166157d853de0d5491913b65da9b98d146ffd6ddfb33a464ba"
+        },
+        {
+          "box": [
+            130,
+            950,
+            900,
+            1510
+          ],
+          "image": ".runtime/lab-20261016d/copy-one-obsession-202610160501-crop-1.png",
+          "sha256": "9d6adb8a132ef835ce6bffb0e52f45acce7b706931ac54f08136b8f4ce1f7c01"
+        }
+      ],
+      "pose_held": "yes",
+      "identity_held": "yes, mild drift",
+      "look_style_held": "yes",
+      "resolved_controls": {
+        "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult musician aged forty with black hair in a bun; keep that character's face, hair and rendering style and the clothes with their colours (long teal hanfu); only the pose and framing change, to image 2's: both hands supporting one small potted fern at waist height, upright torso, front view, medium shot. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+        "seed": 202610160501,
+        "steps": 6,
+        "cfg": 1.0,
+        "width": 1024,
+        "height": 1536,
+        "last_reference": "296b1070eb744cc3b567cef7a52d6d81_OneObsession-Anima-v20-Baseline_00007_.png.png",
+        "lora": 1.0,
+        "lora_name": "KleinBase9B_PoseTransfer.safetensors"
+      },
+      "workflow_sha256": "c7e2fa75ecb46bce8088931dd19c65fbb77fd4f497db599d7611ff7f46b0fbe8",
+      "models": [
+        {
+          "class_type": "UnetLoaderGGUF",
+          "inputs": {
+            "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+          }
+        },
+        {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_8b_fp8mixed.safetensors"
+          }
+        },
+        {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "flux2-vae.safetensors"
+          }
+        },
+        {
+          "class_type": "LoraLoaderModelOnly",
+          "inputs": {
+            "lora_name": "KleinBase9B_PoseTransfer.safetensors"
+          }
+        }
+      ]
+    },
+    {
+      "trial": "copy-one-obsession-202610160502",
+      "section": "copy-reliability",
+      "request": {
+        "preset_id": "combine-klein-9b-copypose",
+        "controls": {
+          "last_reference": "296b1070eb744cc3b567cef7a52d6d81_OneObsession-Anima-v20-Baseline_00007_.png.png",
+          "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult musician aged forty with black hair in a bun; keep that character's face, hair and rendering style and the clothes with their colours (long teal hanfu); only the pose and framing change, to image 2's: both hands supporting one small potted fern at waist height, upright torso, front view, medium shot. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+          "seed": 202610160502
+        },
+        "continuation": {
+          "intent": "combine",
+          "preset_id": "combine-klein-9b-copypose",
+          "reference_file": "296b1070eb744cc3b567cef7a52d6d81_OneObsession-Anima-v20-Baseline_00007_.png.png",
+          "source_asset_id": "2847242877545599b04e0b7682899d6c",
+          "source_sha256": "37a28fc8a4fd46462bfca4824d323927d5825a7d44f25fbb02e0ea870788ae10",
+          "template_sha256": "b31203a55df458649c2abc92314e60704d63a770e5577a5ee6aa7ca295d46956",
+          "version": 1
+        },
+        "references": [
+          {
+            "role": "pose",
+            "contribution": "",
+            "avoid": "",
+            "file": "6971b19f3d004f829c050d253fa22204_Anima-v1-Baseline_00047_.png.png",
+            "sha256": "6020c3b91f67f61a3d4cd642730f1528fc7ac217f82529d3cafcc26477096ea5",
+            "bytes": 1313178,
+            "width": 832,
+            "height": 1216,
+            "parent_asset": "a14af12cbbfe5c50b170c71875f7a114"
+          }
+        ],
+        "parent_assets": [
+          "2847242877545599b04e0b7682899d6c",
+          "a14af12cbbfe5c50b170c71875f7a114"
+        ],
+        "label": "Lab 1016d · copy-one-obsession-202610160502",
+        "batch_count": 1
+      },
+      "source_look": "One Obsession",
+      "fill_answers": {
+        "who": "an adult musician aged forty with black hair in a bun",
+        "clothes": "long teal hanfu",
+        "outfit": "a full length cream dress and green apron",
+        "pose": "both hands supporting one small potted fern at waist height, upright torso, front view, medium shot"
+      },
+      "heavy": true,
+      "status": "completed",
+      "admission": {
+        "host_commit": {
+          "available_bytes": 50815414272,
+          "limit_bytes": 102784090112,
+          "committed_bytes": 51968675840,
+          "unknown_reason": null
+        },
+        "gpu_memory": {
+          "pid": 26376,
+          "adapter": "0x00000000_0x00015b6d_0",
+          "dedicated_bytes": 2010939392,
+          "shared_bytes": 82563072,
+          "spilled": false,
+          "unknown_reason": null
+        },
+        "vram_guard": {
+          "installed": true,
+          "reason": null,
+          "pid": 26376
+        }
+      },
+      "job_id": "5ef06714-0085-494b-a5b5-c8050760d81c",
+      "prompt_ids": [
+        "87e9b97a-1cc2-45df-8b0a-4e075b2a2659"
+      ],
+      "seconds": 93.33033490180969,
+      "message": "Complete. GPU memory overflowed 2.5 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards. The largest other GPU user was dwm.exe (the Windows desktop) with 2.9 GB.",
+      "outputs": [
+        {
+          "image": ".runtime/lab-20261016d/copy-one-obsession-202610160502-0.png",
+          "sha256": "0daae8b9ae5f850fffe6c9d657bc6df700e0bb2ae6c2d3da9e641c35bfaf51ac",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "metadata": {
+            "filename": "Klein-9B-copypose_00013_.png",
+            "subfolder": "Combine",
+            "type": "output",
+            "seed": 202610160502,
+            "prompt_id": "87e9b97a-1cc2-45df-8b0a-4e075b2a2659",
+            "media_type": "image",
+            "asset_id": "379d6cafa68450d4ad639e0c1db94d38"
+          }
+        }
+      ],
+      "recipe_sha256": "b8c61b706b2d545114b26e69538533b0a34103c3790cea39665e6bddf3211761",
+      "image": ".runtime/lab-20261016d/copy-one-obsession-202610160502-0.png",
+      "sha256": "0daae8b9ae5f850fffe6c9d657bc6df700e0bb2ae6c2d3da9e641c35bfaf51ac",
+      "prompt_id": "87e9b97a-1cc2-45df-8b0a-4e075b2a2659",
+      "judge": "lab",
+      "blind": false,
+      "judged_at": "2026-10-16T14:07:45.692245",
+      "scores": {
+        "adherence": 4,
+        "anatomy": 4,
+        "style": 4,
+        "technical": 5,
+        "composition": 5,
+        "control": 4
+      },
+      "verdict": "keep",
+      "worst_defect": "No mandatory repair seen",
+      "fix": null,
+      "note": "Face, both supporting hands and plant inspected at native size. Single fern pot held at waist, black bun/ornament, teal embroidery, moon gate and glossy anime finish retained. Face more frontal with larger eyes and changed fringe shape; mild drift but recognisable. No mandatory repair; occluded fingertips not a full digit-certification claim.",
+      "crops": [
+        {
+          "box": [
+            200,
+            80,
+            850,
+            800
+          ],
+          "image": ".runtime/lab-20261016d/copy-one-obsession-202610160502-crop-0.png",
+          "sha256": "3fce3cd2db2ddf3e583db3a378b22c9deeec4ffc556f259a3d9b9d79d7176cd6"
+        },
+        {
+          "box": [
+            130,
+            920,
+            900,
+            1510
+          ],
+          "image": ".runtime/lab-20261016d/copy-one-obsession-202610160502-crop-1.png",
+          "sha256": "80f5ae5620ab9d20e2f77d74dff2b0dfa468e73a70314c936b128a94b9ee3344"
+        }
+      ],
+      "pose_held": "yes",
+      "identity_held": "yes, mild drift",
+      "look_style_held": "yes",
+      "resolved_controls": {
+        "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult musician aged forty with black hair in a bun; keep that character's face, hair and rendering style and the clothes with their colours (long teal hanfu); only the pose and framing change, to image 2's: both hands supporting one small potted fern at waist height, upright torso, front view, medium shot. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+        "seed": 202610160502,
+        "steps": 6,
+        "cfg": 1.0,
+        "width": 1024,
+        "height": 1536,
+        "last_reference": "296b1070eb744cc3b567cef7a52d6d81_OneObsession-Anima-v20-Baseline_00007_.png.png",
+        "lora": 1.0,
+        "lora_name": "KleinBase9B_PoseTransfer.safetensors"
+      },
+      "workflow_sha256": "0ae805e353cfb1a163eec35b84b47db7e7f718ad282bdff36a1363ec7d738008",
+      "models": [
+        {
+          "class_type": "UnetLoaderGGUF",
+          "inputs": {
+            "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+          }
+        },
+        {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_8b_fp8mixed.safetensors"
+          }
+        },
+        {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "flux2-vae.safetensors"
+          }
+        },
+        {
+          "class_type": "LoraLoaderModelOnly",
+          "inputs": {
+            "lora_name": "KleinBase9B_PoseTransfer.safetensors"
+          }
+        }
+      ]
+    },
+    {
+      "trial": "copy-petiflow-202610160501",
+      "section": "copy-reliability",
+      "request": {
+        "preset_id": "combine-klein-9b-copypose",
+        "controls": {
+          "last_reference": "6971b19f3d004f829c050d253fa22204_Anima-v1-Baseline_00047_.png.png",
+          "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult botanical illustrator aged forty with copper curly hair; keep that character's face, hair and rendering style and the clothes with their colours (a full length cream dress with long sleeves and a green apron); only the pose and framing change, to image 2's: holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+          "seed": 202610160501
+        },
+        "continuation": {
+          "intent": "combine",
+          "preset_id": "combine-klein-9b-copypose",
+          "reference_file": "6971b19f3d004f829c050d253fa22204_Anima-v1-Baseline_00047_.png.png",
+          "source_asset_id": "a14af12cbbfe5c50b170c71875f7a114",
+          "source_sha256": "6020c3b91f67f61a3d4cd642730f1528fc7ac217f82529d3cafcc26477096ea5",
+          "template_sha256": "b31203a55df458649c2abc92314e60704d63a770e5577a5ee6aa7ca295d46956",
+          "version": 1
+        },
+        "references": [
+          {
+            "role": "pose",
+            "contribution": "",
+            "avoid": "",
+            "file": "296b1070eb744cc3b567cef7a52d6d81_OneObsession-Anima-v20-Baseline_00007_.png.png",
+            "sha256": "37a28fc8a4fd46462bfca4824d323927d5825a7d44f25fbb02e0ea870788ae10",
+            "bytes": 1422801,
+            "width": 832,
+            "height": 1216,
+            "parent_asset": "2847242877545599b04e0b7682899d6c"
+          }
+        ],
+        "parent_assets": [
+          "a14af12cbbfe5c50b170c71875f7a114",
+          "2847242877545599b04e0b7682899d6c"
+        ],
+        "label": "Lab 1016d · copy-petiflow-202610160501",
+        "batch_count": 1
+      },
+      "source_look": "Petiflow",
+      "fill_answers": {
+        "who": "an adult botanical illustrator aged forty with copper curly hair",
+        "clothes": "a full length cream dress with long sleeves and a green apron",
+        "outfit": "long teal hanfu",
+        "pose": "holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot"
+      },
+      "heavy": true,
+      "status": "completed",
+      "admission": {
+        "host_commit": {
+          "available_bytes": 44641710080,
+          "limit_bytes": 102784090112,
+          "committed_bytes": 58142380032,
+          "unknown_reason": null
+        },
+        "gpu_memory": {
+          "pid": 26376,
+          "adapter": "0x00000000_0x00015b6d_0",
+          "dedicated_bytes": 2928525312,
+          "shared_bytes": 82563072,
+          "spilled": false,
+          "unknown_reason": null
+        },
+        "vram_guard": {
+          "installed": true,
+          "reason": null,
+          "pid": 26376
+        }
+      },
+      "job_id": "530d2bd6-1f6b-4442-9eb5-7727b1b64aac",
+      "prompt_ids": [
+        "22f02fe5-9d14-4f70-bc20-8a0a4943208b"
+      ],
+      "seconds": 109.26294684410095,
+      "message": "Complete. GPU memory overflowed 2.3 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards. The largest other GPU user was dwm.exe (the Windows desktop) with 2.9 GB.",
+      "outputs": [
+        {
+          "image": ".runtime/lab-20261016d/copy-petiflow-202610160501-0.png",
+          "sha256": "fb9e8f134d047cae4b7b247ba330135d7970647cc03784cc80102f3ff1efc74d",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "metadata": {
+            "filename": "Klein-9B-copypose_00010_.png",
+            "subfolder": "Combine",
+            "type": "output",
+            "seed": 202610160501,
+            "prompt_id": "22f02fe5-9d14-4f70-bc20-8a0a4943208b",
+            "media_type": "image",
+            "asset_id": "e24537a9ba8e55519bfa8285cdceb9b3"
+          }
+        }
+      ],
+      "recipe_sha256": "3432a6259219fffecdbac414aa4d90025de20c012b71f3850b056722661524ad",
+      "image": ".runtime/lab-20261016d/copy-petiflow-202610160501-0.png",
+      "sha256": "fb9e8f134d047cae4b7b247ba330135d7970647cc03784cc80102f3ff1efc74d",
+      "prompt_id": "22f02fe5-9d14-4f70-bc20-8a0a4943208b",
+      "judge": "lab",
+      "blind": false,
+      "judged_at": "2026-10-16T13:57:04.054498",
+      "scores": {
+        "adherence": 4,
+        "anatomy": 4,
+        "style": 5,
+        "technical": 5,
+        "composition": 5,
+        "control": 4
+      },
+      "verdict": "keep",
+      "worst_defect": "No mandatory repair seen",
+      "fix": null,
+      "note": "Native face and both grip crops inspected. Copper curls, grey-green eyes, cream collar, green apron and greenhouse retained. Two-hand flute pose follows the picture; mild freckles/face drift, no mandatory repair. Recognisable, not exact identity.",
+      "crops": [
+        {
+          "box": [
+            220,
+            70,
+            800,
+            720
+          ],
+          "image": ".runtime/lab-20261016d/copy-petiflow-202610160501-crop-0.png",
+          "sha256": "aab5d2a91f6d31c39bd31b9d2e05ef07ed0ffb46365ebd99b57eaf25fc6efca7"
+        },
+        {
+          "box": [
+            70,
+            470,
+            450,
+            850
+          ],
+          "image": ".runtime/lab-20261016d/copy-petiflow-202610160501-crop-1.png",
+          "sha256": "bea50000ee4b95a363b72c915490b5709e742feae68d3ed1e9859eea5c38310c"
+        }
+      ],
+      "pose_held": "yes",
+      "identity_held": "yes, mild drift",
+      "look_style_held": "yes",
+      "resolved_controls": {
+        "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult botanical illustrator aged forty with copper curly hair; keep that character's face, hair and rendering style and the clothes with their colours (a full length cream dress with long sleeves and a green apron); only the pose and framing change, to image 2's: holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+        "seed": 202610160501,
+        "steps": 6,
+        "cfg": 1.0,
+        "width": 1024,
+        "height": 1536,
+        "last_reference": "6971b19f3d004f829c050d253fa22204_Anima-v1-Baseline_00047_.png.png",
+        "lora": 1.0,
+        "lora_name": "KleinBase9B_PoseTransfer.safetensors"
+      },
+      "workflow_sha256": "955e08a98e5c212b43dcff373a7268a2c03070c4204098b97de90204920cc1ce",
+      "models": [
+        {
+          "class_type": "UnetLoaderGGUF",
+          "inputs": {
+            "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+          }
+        },
+        {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_8b_fp8mixed.safetensors"
+          }
+        },
+        {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "flux2-vae.safetensors"
+          }
+        },
+        {
+          "class_type": "LoraLoaderModelOnly",
+          "inputs": {
+            "lora_name": "KleinBase9B_PoseTransfer.safetensors"
+          }
+        }
+      ]
+    },
+    {
+      "trial": "copy-petiflow-202610160502",
+      "section": "copy-reliability",
+      "request": {
+        "preset_id": "combine-klein-9b-copypose",
+        "controls": {
+          "last_reference": "6971b19f3d004f829c050d253fa22204_Anima-v1-Baseline_00047_.png.png",
+          "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult botanical illustrator aged forty with copper curly hair; keep that character's face, hair and rendering style and the clothes with their colours (a full length cream dress with long sleeves and a green apron); only the pose and framing change, to image 2's: holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+          "seed": 202610160502
+        },
+        "continuation": {
+          "intent": "combine",
+          "preset_id": "combine-klein-9b-copypose",
+          "reference_file": "6971b19f3d004f829c050d253fa22204_Anima-v1-Baseline_00047_.png.png",
+          "source_asset_id": "a14af12cbbfe5c50b170c71875f7a114",
+          "source_sha256": "6020c3b91f67f61a3d4cd642730f1528fc7ac217f82529d3cafcc26477096ea5",
+          "template_sha256": "b31203a55df458649c2abc92314e60704d63a770e5577a5ee6aa7ca295d46956",
+          "version": 1
+        },
+        "references": [
+          {
+            "role": "pose",
+            "contribution": "",
+            "avoid": "",
+            "file": "296b1070eb744cc3b567cef7a52d6d81_OneObsession-Anima-v20-Baseline_00007_.png.png",
+            "sha256": "37a28fc8a4fd46462bfca4824d323927d5825a7d44f25fbb02e0ea870788ae10",
+            "bytes": 1422801,
+            "width": 832,
+            "height": 1216,
+            "parent_asset": "2847242877545599b04e0b7682899d6c"
+          }
+        ],
+        "parent_assets": [
+          "a14af12cbbfe5c50b170c71875f7a114",
+          "2847242877545599b04e0b7682899d6c"
+        ],
+        "label": "Lab 1016d · copy-petiflow-202610160502",
+        "batch_count": 1
+      },
+      "source_look": "Petiflow",
+      "fill_answers": {
+        "who": "an adult botanical illustrator aged forty with copper curly hair",
+        "clothes": "a full length cream dress with long sleeves and a green apron",
+        "outfit": "long teal hanfu",
+        "pose": "holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot"
+      },
+      "heavy": true,
+      "status": "completed",
+      "admission": {
+        "host_commit": {
+          "available_bytes": 45148581888,
+          "limit_bytes": 102784090112,
+          "committed_bytes": 57635508224,
+          "unknown_reason": null
+        },
+        "gpu_memory": {
+          "pid": 26376,
+          "adapter": "0x00000000_0x00015b6d_0",
+          "dedicated_bytes": 2010939392,
+          "shared_bytes": 82563072,
+          "spilled": false,
+          "unknown_reason": null
+        },
+        "vram_guard": {
+          "installed": true,
+          "reason": null,
+          "pid": 26376
+        }
+      },
+      "job_id": "a3282fb4-0980-4c27-897f-3576dc9a2f25",
+      "prompt_ids": [
+        "c251072e-13b1-4b44-91f3-5c4684e96984"
+      ],
+      "seconds": 114.62127089500427,
+      "message": "Complete. GPU memory overflowed 2.6 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards. The largest other GPU user was dwm.exe (the Windows desktop) with 2.9 GB.",
+      "outputs": [
+        {
+          "image": ".runtime/lab-20261016d/copy-petiflow-202610160502-0.png",
+          "sha256": "5dafd87843754ce7c1a232c718b746c59ffa2d184a6758e842a8f01b859f0184",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "metadata": {
+            "filename": "Klein-9B-copypose_00011_.png",
+            "subfolder": "Combine",
+            "type": "output",
+            "seed": 202610160502,
+            "prompt_id": "c251072e-13b1-4b44-91f3-5c4684e96984",
+            "media_type": "image",
+            "asset_id": "2dbb9427ea765b89a89e2d90fd5998f3"
+          }
+        }
+      ],
+      "recipe_sha256": "268021e5f1ea92d5c5645bb35607c609e43a1c89eaa6b25651942902b2b0d1a4",
+      "image": ".runtime/lab-20261016d/copy-petiflow-202610160502-0.png",
+      "sha256": "5dafd87843754ce7c1a232c718b746c59ffa2d184a6758e842a8f01b859f0184",
+      "prompt_id": "c251072e-13b1-4b44-91f3-5c4684e96984",
+      "judge": "lab",
+      "blind": false,
+      "judged_at": "2026-10-16T14:00:30.163797",
+      "scores": {
+        "adherence": 4,
+        "anatomy": 4,
+        "style": 4,
+        "technical": 5,
+        "composition": 5,
+        "control": 4
+      },
+      "verdict": "keep",
+      "worst_defect": "No mandatory repair seen",
+      "fix": null,
+      "note": "Face and both grips inspected at native resolution. Retains copper curls, grey-green eyes, cream blouse, dark green apron, greenhouse and flat shaded finish. Flute pose follows; face slightly narrower, simplified curls and freckles added. Readable bent fingers with partly occluded thumbs; no required repair.",
+      "crops": [
+        {
+          "box": [
+            200,
+            60,
+            850,
+            730
+          ],
+          "image": ".runtime/lab-20261016d/copy-petiflow-202610160502-crop-0.png",
+          "sha256": "f08ffc0d8998facd1c19aadcbb5cc0a2cd828ec8701d395de7a77c1aa2355b34"
+        },
+        {
+          "box": [
+            0,
+            400,
+            520,
+            980
+          ],
+          "image": ".runtime/lab-20261016d/copy-petiflow-202610160502-crop-1.png",
+          "sha256": "c10cc4337e58b017615cced2d2788828877009111bbd7ae84b5ce30ed5666de4"
+        }
+      ],
+      "pose_held": "yes",
+      "identity_held": "yes, mild drift",
+      "look_style_held": "yes, mild simplification",
+      "resolved_controls": {
+        "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult botanical illustrator aged forty with copper curly hair; keep that character's face, hair and rendering style and the clothes with their colours (a full length cream dress with long sleeves and a green apron); only the pose and framing change, to image 2's: holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+        "seed": 202610160502,
+        "steps": 6,
+        "cfg": 1.0,
+        "width": 1024,
+        "height": 1536,
+        "last_reference": "6971b19f3d004f829c050d253fa22204_Anima-v1-Baseline_00047_.png.png",
+        "lora": 1.0,
+        "lora_name": "KleinBase9B_PoseTransfer.safetensors"
+      },
+      "workflow_sha256": "781975323298baa953c9cc9436037d99de20791a8a10c401fdfcd75454e67cdb",
+      "models": [
+        {
+          "class_type": "UnetLoaderGGUF",
+          "inputs": {
+            "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+          }
+        },
+        {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_8b_fp8mixed.safetensors"
+          }
+        },
+        {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "flux2-vae.safetensors"
+          }
+        },
+        {
+          "class_type": "LoraLoaderModelOnly",
+          "inputs": {
+            "lora_name": "KleinBase9B_PoseTransfer.safetensors"
+          }
+        }
+      ]
+    },
+    {
+      "trial": "item-krea-potion",
+      "section": "game-items",
+      "request": {
+        "preset_id": "krea-anime-atelier",
+        "controls": {
+          "positive": "stylized hand painted game inventory icon, soft cel shading, one round teal glass potion bottle with a brass stopper, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing, soft diffused light, pale sand and sea green palette, airy anime watercolor style",
+          "steps": 8,
+          "cfg": 1,
+          "sampler": "euler",
+          "scheduler": "simple",
+          "width": 768,
+          "height": 1152,
+          "seed": 202610160403,
+          "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+          "lora": 1.0,
+          "lora2": 0,
+          "lora3": 0,
+          "lora4_name": "fal-krea2-airy-anime-watercolor.safetensors",
+          "lora4": 1.0
+        },
+        "label": "Lab 1016d · item-krea-potion",
+        "batch_count": 1
+      },
+      "model": "krea",
+      "object": "potion",
+      "scene": "stylized hand painted game inventory icon, soft cel shading, one round teal glass potion bottle with a brass stopper, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+      "heavy": true,
+      "status": "completed",
+      "admission": {
+        "host_commit": {
+          "available_bytes": 42364436480,
+          "limit_bytes": 102784090112,
+          "committed_bytes": 60419653632,
+          "unknown_reason": null
+        },
+        "gpu_memory": {
+          "pid": 26376,
+          "adapter": "0x00000000_0x00015b6d_0",
+          "dedicated_bytes": 10983849984,
+          "shared_bytes": 82563072,
+          "spilled": false,
+          "unknown_reason": null
+        },
+        "vram_guard": {
+          "installed": true,
+          "reason": null,
+          "pid": 26376
+        }
+      },
+      "job_id": "cd3ae821-f0b0-4668-ac0c-b7866197a6e6",
+      "prompt_ids": [
+        "0a1e5678-b880-4009-93f1-6e54f0cbbf5d"
+      ],
+      "seconds": 465.73542881011963,
+      "message": "Complete. GPU memory overflowed 1.9 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards.",
+      "outputs": [
+        {
+          "image": ".runtime/lab-20261016d/item-krea-potion-0.png",
+          "sha256": "1c23e8d628cff6c86a23b4a8d7e47733affa399f5db1731fe8e7d0cc701bf7b6",
+          "dimensions": [
+            768,
+            1152
+          ],
+          "metadata": {
+            "filename": "krea-anime-atelier_00039_.png",
+            "subfolder": "Studio",
+            "type": "output",
+            "seed": 202610160403,
+            "prompt_id": "0a1e5678-b880-4009-93f1-6e54f0cbbf5d",
+            "media_type": "image",
+            "asset_id": "7e36a091c87e5581bb43a06741519557"
+          }
+        }
+      ],
+      "recipe_sha256": "ff5e2fb571d4d8a6f636e45111b4fc8243167f99d3333b4fb09d37b2bdc9fc4f",
+      "image": ".runtime/lab-20261016d/item-krea-potion-0.png",
+      "sha256": "1c23e8d628cff6c86a23b4a8d7e47733affa399f5db1731fe8e7d0cc701bf7b6",
+      "prompt_id": "0a1e5678-b880-4009-93f1-6e54f0cbbf5d",
+      "judge": "lab",
+      "blind": false,
+      "judged_at": "2026-10-16T14:42:07.851922",
+      "scores": {
+        "adherence": 4,
+        "anatomy": null,
+        "style": 5,
+        "technical": 5,
+        "composition": 4,
+        "control": null
+      },
+      "verdict": "keep",
+      "worst_defect": "No mandatory repair seen",
+      "fix": null,
+      "note": "Whole frame and full native bottle/stopper crop inspected. One round teal glass bottle with a gold/brass-coloured closure; airy watercolor shading retained, no text, duplicate, frame or scenery. It is tilted and small (roughly a third of canvas height), but centred with ample white-looking margin and still readable as a single item. Not a transparent export or a small-icon-size usability proof.",
+      "crops": [
+        {
+          "box": [
+            170,
+            170,
+            600,
+            790
+          ],
+          "image": ".runtime/lab-20261016d/item-krea-potion-crop-0.png",
+          "sha256": "8b740cf73333e97751af5da0208183b7882af914a6542594399ff049836b3804"
+        }
+      ],
+      "single_object": true,
+      "plain_white_background": "visually yes",
+      "framing_limit": "small item on tall canvas",
+      "resolved_controls": {
+        "positive": "stylized hand painted game inventory icon, soft cel shading, one round teal glass potion bottle with a brass stopper, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing, soft diffused light, pale sand and sea green palette, airy anime watercolor style",
+        "width": 768,
+        "height": 1152,
+        "seed": 202610160403,
+        "steps": 8,
+        "cfg": 1.0,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "lora": 1.0,
+        "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+        "lora4": 1.0,
+        "lora4_name": "fal-krea2-airy-anime-watercolor.safetensors"
+      },
+      "workflow_sha256": "3c4403ea2c935a8b54db2224b8d6c6a36126d842db25604f6f110900fd067d37",
+      "models": [
+        {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "krea2_turbo_fp8_scaled.safetensors"
+          }
+        },
+        {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen3vl_4b_fp8_scaled.safetensors"
+          }
+        },
+        {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "qwen_image_vae.safetensors"
+          }
+        },
+        {
+          "class_type": "LoraLoaderModelOnly",
+          "inputs": {
+            "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors"
+          }
+        },
+        {
+          "class_type": "LoraLoaderModelOnly",
+          "inputs": {
+            "lora_name": "fal-krea2-airy-anime-watercolor.safetensors"
+          }
+        }
+      ]
+    },
+    {
+      "trial": "item-krea-sword",
+      "section": "game-items",
+      "request": {
+        "preset_id": "krea-anime-atelier",
+        "controls": {
+          "positive": "stylized hand painted game inventory icon, soft cel shading, one short steel sword with a brown leather grip and straight brass crossguard, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing, soft diffused light, pale sand and sea green palette, airy anime watercolor style",
+          "steps": 8,
+          "cfg": 1,
+          "sampler": "euler",
+          "scheduler": "simple",
+          "width": 768,
+          "height": 1152,
+          "seed": 202610160403,
+          "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+          "lora": 1.0,
+          "lora2": 0,
+          "lora3": 0,
+          "lora4_name": "fal-krea2-airy-anime-watercolor.safetensors",
+          "lora4": 1.0
+        },
+        "label": "Lab 1016d · item-krea-sword",
+        "batch_count": 1
+      },
+      "model": "krea",
+      "object": "sword",
+      "scene": "stylized hand painted game inventory icon, soft cel shading, one short steel sword with a brown leather grip and straight brass crossguard, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+      "heavy": true,
+      "status": "completed",
+      "admission": {
+        "host_commit": {
+          "available_bytes": 42596601856,
+          "limit_bytes": 102784090112,
+          "committed_bytes": 60187488256,
+          "unknown_reason": null
+        },
+        "gpu_memory": {
+          "pid": 26376,
+          "adapter": "0x00000000_0x00015b6d_0",
+          "dedicated_bytes": 2990874624,
+          "shared_bytes": 82563072,
+          "spilled": false,
+          "unknown_reason": null
+        },
+        "vram_guard": {
+          "installed": true,
+          "reason": null,
+          "pid": 26376
+        }
+      },
+      "job_id": "3d1cbf05-d638-4e3f-bf2f-d298d78efc73",
+      "prompt_ids": [
+        "dacd54da-e731-43ad-aa74-180c7dfb05e5"
+      ],
+      "seconds": 501.10958981513977,
+      "message": "Complete, but slowly: GPU memory spilled 4.5 GB into system RAM and 1.5 GB was still there after the job, so the next job will page too. The largest other GPU user was dwm.exe (the Windows desktop) with 2.9 GB. The Studio unloads ComfyUI's models before the next job; if the spill stays, close GPU-heavy apps or restart ComfyUI.",
+      "outputs": [
+        {
+          "image": ".runtime/lab-20261016d/item-krea-sword-0.png",
+          "sha256": "e6051d8b1503c9e504186b8d645aa8d7e89fbe87a1d6fc55a75225744888e7ca",
+          "dimensions": [
+            768,
+            1152
+          ],
+          "metadata": {
+            "filename": "krea-anime-atelier_00040_.png",
+            "subfolder": "Studio",
+            "type": "output",
+            "seed": 202610160403,
+            "prompt_id": "dacd54da-e731-43ad-aa74-180c7dfb05e5",
+            "media_type": "image",
+            "asset_id": "830fdf7be29d5fca82d45b2a57e4ce50"
+          }
+        }
+      ],
+      "recipe_sha256": "ed9e19a7bc43ca9f82b733163a182bb36747c65345198c169d5b75477dc65e84",
+      "image": ".runtime/lab-20261016d/item-krea-sword-0.png",
+      "sha256": "e6051d8b1503c9e504186b8d645aa8d7e89fbe87a1d6fc55a75225744888e7ca",
+      "prompt_id": "dacd54da-e731-43ad-aa74-180c7dfb05e5",
+      "judge": "lab",
+      "blind": false,
+      "judged_at": "2026-10-16T14:54:11.574824",
+      "scores": {
+        "adherence": 4,
+        "anatomy": null,
+        "style": 5,
+        "technical": 5,
+        "composition": 4,
+        "control": null
+      },
+      "verdict": "keep",
+      "worst_defect": "No mandatory repair seen",
+      "fix": null,
+      "note": "Whole frame and complete sword crop inspected at native resolution. One complete short sword with brown wrapped leather grip and straight gold/brass crossguard; pale sea-green/white highlights still read as a steel blade in watercolor. No sheath, duplicate, text, frame or scenery. Item is centred but small on a tall white-looking canvas; not a transparent export or small-icon-size proof.",
+      "crops": [
+        {
+          "box": [
+            120,
+            220,
+            680,
+            920
+          ],
+          "image": ".runtime/lab-20261016d/item-krea-sword-crop-0.png",
+          "sha256": "cf9e46d0d68ecabfe16b94070cee194cfc1f2250016ceb029d4727ed75c1457e"
+        }
+      ],
+      "single_object": true,
+      "plain_white_background": "visually yes",
+      "framing_limit": "small item on tall canvas",
+      "resolved_controls": {
+        "positive": "stylized hand painted game inventory icon, soft cel shading, one short steel sword with a brown leather grip and straight brass crossguard, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing, soft diffused light, pale sand and sea green palette, airy anime watercolor style",
+        "width": 768,
+        "height": 1152,
+        "seed": 202610160403,
+        "steps": 8,
+        "cfg": 1.0,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "lora": 1.0,
+        "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+        "lora4": 1.0,
+        "lora4_name": "fal-krea2-airy-anime-watercolor.safetensors"
+      },
+      "workflow_sha256": "1dc840105ee916b672e1688861d165469e6d546cb82906ab3ec5d2c87f3657f9",
+      "models": [
+        {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "krea2_turbo_fp8_scaled.safetensors"
+          }
+        },
+        {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen3vl_4b_fp8_scaled.safetensors"
+          }
+        },
+        {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "qwen_image_vae.safetensors"
+          }
+        },
+        {
+          "class_type": "LoraLoaderModelOnly",
+          "inputs": {
+            "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors"
+          }
+        },
+        {
+          "class_type": "LoraLoaderModelOnly",
+          "inputs": {
+            "lora_name": "fal-krea2-airy-anime-watercolor.safetensors"
+          }
+        }
+      ]
+    },
+    {
+      "trial": "item-wai-potion",
+      "section": "game-items",
+      "request": {
+        "preset_id": "wai",
+        "controls": {
+          "positive": "no humans, stylized hand painted game inventory icon, soft cel shading, one round teal glass potion bottle with a brass stopper, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing, masterpiece, best quality, amazing quality",
+          "negative": "multiple objects, duplicates, grid, sprite sheet, panels, text, lettering, watermark, frame, cropped, scenery, hands, person, bad quality, worst quality, worst detail",
+          "seed": 202610160403,
+          "width": 1024,
+          "height": 1024,
+          "steps": 26,
+          "cfg": 6,
+          "denoise": 1.0,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "lora": 0,
+          "lora2": 0
+        },
+        "label": "Lab 1016d · item-wai-potion",
+        "batch_count": 1
+      },
+      "model": "wai",
+      "object": "potion",
+      "scene": "stylized hand painted game inventory icon, soft cel shading, one round teal glass potion bottle with a brass stopper, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+      "heavy": false,
+      "status": "completed",
+      "admission": {
+        "host_commit": {
+          "available_bytes": 32524800000,
+          "limit_bytes": 102784090112,
+          "committed_bytes": 70259290112,
+          "unknown_reason": null
+        },
+        "gpu_memory": {
+          "pid": 26376,
+          "adapter": "0x00000000_0x00015b6d_0",
+          "dedicated_bytes": 9393111040,
+          "shared_bytes": 82563072,
+          "spilled": false,
+          "unknown_reason": null
+        },
+        "vram_guard": {
+          "installed": true,
+          "reason": null,
+          "pid": 26376
+        }
+      },
+      "job_id": "a5f31c2b-9be4-46b4-87ef-af6ad2c0cd74",
+      "prompt_ids": [
+        "7ccb5e65-e104-460c-9393-e72974a5f348"
+      ],
+      "seconds": 33.33192992210388,
+      "message": "Complete",
+      "outputs": [
+        {
+          "image": ".runtime/lab-20261016d/item-wai-potion-0.png",
+          "sha256": "38369970b82b288a024ac0b5ce5fb6247c0342777ef096bb72366b8c9c3bb3af",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "metadata": {
+            "filename": "WAI-Illustration_00061_.png",
+            "subfolder": "Studio",
+            "type": "output",
+            "seed": 202610160403,
+            "prompt_id": "7ccb5e65-e104-460c-9393-e72974a5f348",
+            "media_type": "image",
+            "asset_id": "1588a97dcc4158328570bcdd03d472c0"
+          }
+        }
+      ],
+      "recipe_sha256": "02eb76cd260c9c81c41ed430f267be0e54b17d9fb08f2b4cad7f4fa41b21c452",
+      "image": ".runtime/lab-20261016d/item-wai-potion-0.png",
+      "sha256": "38369970b82b288a024ac0b5ce5fb6247c0342777ef096bb72366b8c9c3bb3af",
+      "prompt_id": "7ccb5e65-e104-460c-9393-e72974a5f348",
+      "judge": "lab",
+      "blind": false,
+      "judged_at": "2026-10-16T14:47:28.021273",
+      "scores": {
+        "adherence": 3,
+        "anatomy": null,
+        "style": 4,
+        "technical": 3,
+        "composition": 3,
+        "control": null
+      },
+      "verdict": "fixable",
+      "worst_defect": "Large bottle icon/number plus an unrequested price placard",
+      "fix": "Mask/remove the bottle icon/number, price placard and reflective floor; not performed",
+      "note": "Whole frame and bottle/placard text crops inspected. One round bottle and brass closure are readable, but it adds a large white icon/number on the bottle plus an unrequested price-style placard and reflective floor. It does not meet the no-writing/no-other-objects asset brief. Calibration correction: the added number/placard is legible rather than garbled, so technical is 3 and verdict FIXABLE; adherence/composition still fail the brief. Earlier journal judgement is retained.",
+      "crops": [
+        {
+          "box": [
+            400,
+            600,
+            650,
+            800
+          ],
+          "image": ".runtime/lab-20261016d/item-wai-potion-crop-0.png",
+          "sha256": "4d208588d61dadd2b36fcc8cdfd3d3563c97035f64faf4e2cb96d64f85f8891c"
+        },
+        {
+          "box": [
+            660,
+            730,
+            900,
+            920
+          ],
+          "image": ".runtime/lab-20261016d/item-wai-potion-crop-1.png",
+          "sha256": "3cd37e64a7644894f479a1bbaa67706eb63b9796d6a9faf9e39a73fa70d80f00"
+        }
+      ],
+      "single_object": false,
+      "plain_white_background": "no; reflective floor",
+      "supersedes_judgement_at": "2026-10-16T14:33:53.768109",
+      "resolved_controls": {
+        "positive": "no humans, stylized hand painted game inventory icon, soft cel shading, one round teal glass potion bottle with a brass stopper, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing, masterpiece, best quality, amazing quality",
+        "negative": "multiple objects, duplicates, grid, sprite sheet, panels, text, lettering, watermark, frame, cropped, scenery, hands, person, bad quality, worst quality, worst detail",
+        "width": 1024,
+        "height": 1024,
+        "seed": 202610160403,
+        "steps": 26,
+        "cfg": 6.0,
+        "denoise": 1.0,
+        "sampler": "euler_ancestral",
+        "scheduler": "normal"
+      },
+      "workflow_sha256": "c0deeb31ae3117dbd21054f82c54fb7c97181e2327e3f8eec6c033a4cee36d10",
+      "models": [
+        {
+          "class_type": "CheckpointLoaderSimple",
+          "inputs": {
+            "ckpt_name": "waiIllustriousSDXL_v170.safetensors"
+          }
+        }
+      ]
+    },
+    {
+      "trial": "item-wai-sword",
+      "section": "game-items",
+      "request": {
+        "preset_id": "wai",
+        "controls": {
+          "positive": "no humans, stylized hand painted game inventory icon, soft cel shading, one short steel sword with a brown leather grip and straight brass crossguard, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing, masterpiece, best quality, amazing quality",
+          "negative": "multiple objects, duplicates, grid, sprite sheet, panels, text, lettering, watermark, frame, cropped, scenery, hands, person, bad quality, worst quality, worst detail",
+          "seed": 202610160403,
+          "width": 1024,
+          "height": 1024,
+          "steps": 26,
+          "cfg": 6,
+          "denoise": 1.0,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "lora": 0,
+          "lora2": 0
+        },
+        "label": "Lab 1016d · item-wai-sword",
+        "batch_count": 1
+      },
+      "model": "wai",
+      "object": "sword",
+      "scene": "stylized hand painted game inventory icon, soft cel shading, one short steel sword with a brown leather grip and straight brass crossguard, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+      "heavy": false,
+      "status": "completed",
+      "admission": {
+        "host_commit": {
+          "available_bytes": 42319855616,
+          "limit_bytes": 102784090112,
+          "committed_bytes": 60464234496,
+          "unknown_reason": null
+        },
+        "gpu_memory": {
+          "pid": 26376,
+          "adapter": "0x00000000_0x00015b6d_0",
+          "dedicated_bytes": 10983849984,
+          "shared_bytes": 82563072,
+          "spilled": false,
+          "unknown_reason": null
+        },
+        "vram_guard": {
+          "installed": true,
+          "reason": null,
+          "pid": 26376
+        }
+      },
+      "job_id": "93986ba3-deb2-4962-8f1f-55b04b431a9a",
+      "prompt_ids": [
+        "c16a1582-90e6-4bb6-ac0d-bdc9707ccac7"
+      ],
+      "seconds": 8.257909774780273,
+      "message": "Complete",
+      "outputs": [
+        {
+          "image": ".runtime/lab-20261016d/item-wai-sword-0.png",
+          "sha256": "5b49bd44a7390037091816b453c39631af874c6b0854f19a82e3d788794510f9",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "metadata": {
+            "filename": "WAI-Illustration_00062_.png",
+            "subfolder": "Studio",
+            "type": "output",
+            "seed": 202610160403,
+            "prompt_id": "c16a1582-90e6-4bb6-ac0d-bdc9707ccac7",
+            "media_type": "image",
+            "asset_id": "21259d3516505f17813a43fc651d822d"
+          }
+        }
+      ],
+      "recipe_sha256": "54211f51a9a78d7c49c8c3e40cee65910d0b5b33f1e1dcdba4cca22c491d8896",
+      "image": ".runtime/lab-20261016d/item-wai-sword-0.png",
+      "sha256": "5b49bd44a7390037091816b453c39631af874c6b0854f19a82e3d788794510f9",
+      "prompt_id": "c16a1582-90e6-4bb6-ac0d-bdc9707ccac7",
+      "judge": "lab",
+      "blind": false,
+      "judged_at": "2026-10-16T14:33:53.799383",
+      "scores": {
+        "adherence": 1,
+        "anatomy": null,
+        "style": 4,
+        "technical": 2,
+        "composition": 2,
+        "control": null
+      },
+      "verdict": "reject",
+      "worst_defect": "Two sword views and garbled labels instead of one blank single item",
+      "fix": "New configuration; not a crop-only repair",
+      "note": "Whole frame, central label and blade writing inspected. Two sword views, one sheathed, appear side by side with garbled lettering and a red UI-like mark. Crossguard is curved/dark rather than straight brass. Neither the count nor blank-asset brief holds.",
+      "crops": [
+        {
+          "box": [
+            420,
+            290,
+            650,
+            450
+          ],
+          "image": ".runtime/lab-20261016d/item-wai-sword-crop-0.png",
+          "sha256": "c87f16c9c2073b1bf54e2418c58037194de6ae8c4c199e334de177d8fb75b53a"
+        },
+        {
+          "box": [
+            200,
+            540,
+            350,
+            760
+          ],
+          "image": ".runtime/lab-20261016d/item-wai-sword-crop-1.png",
+          "sha256": "4a0c0c24c3a537e0660271ba356718d56c47b9ae530839d1c67bf2ce10d25288"
+        }
+      ],
+      "single_object": false,
+      "plain_white_background": "near-white, but sheet layout",
+      "resolved_controls": {
+        "positive": "no humans, stylized hand painted game inventory icon, soft cel shading, one short steel sword with a brown leather grip and straight brass crossguard, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing, masterpiece, best quality, amazing quality",
+        "negative": "multiple objects, duplicates, grid, sprite sheet, panels, text, lettering, watermark, frame, cropped, scenery, hands, person, bad quality, worst quality, worst detail",
+        "width": 1024,
+        "height": 1024,
+        "seed": 202610160403,
+        "steps": 26,
+        "cfg": 6.0,
+        "denoise": 1.0,
+        "sampler": "euler_ancestral",
+        "scheduler": "normal"
+      },
+      "workflow_sha256": "d7708e6a1a3173999bb9051a5dc53f8b703ad7d9d72f394d560fa623acc8bf38",
+      "models": [
+        {
+          "class_type": "CheckpointLoaderSimple",
+          "inputs": {
+            "ckpt_name": "waiIllustriousSDXL_v170.safetensors"
+          }
+        }
+      ]
+    },
+    {
+      "trial": "item-zimage-potion",
+      "section": "game-items",
+      "request": {
+        "preset_id": "zimage-fast",
+        "controls": {
+          "positive": "stylized hand painted game inventory icon, soft cel shading, one round teal glass potion bottle with a brass stopper, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+          "width": 1024,
+          "height": 1024,
+          "seed": 202610160403,
+          "steps": 8,
+          "cfg": 1.0,
+          "denoise": 1.0
+        },
+        "label": "Lab 1016d · item-zimage-potion",
+        "batch_count": 1
+      },
+      "model": "zimage",
+      "object": "potion",
+      "scene": "stylized hand painted game inventory icon, soft cel shading, one round teal glass potion bottle with a brass stopper, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+      "heavy": false,
+      "status": "completed",
+      "admission": {
+        "host_commit": {
+          "available_bytes": 38738907136,
+          "limit_bytes": 102784090112,
+          "committed_bytes": 64045182976,
+          "unknown_reason": null
+        },
+        "gpu_memory": {
+          "pid": 26376,
+          "adapter": "0x00000000_0x00015b6d_0",
+          "dedicated_bytes": 2010939392,
+          "shared_bytes": 82563072,
+          "spilled": false,
+          "unknown_reason": null
+        },
+        "vram_guard": {
+          "installed": true,
+          "reason": null,
+          "pid": 26376
+        }
+      },
+      "job_id": "8ab33602-3d7d-4b5a-8d69-88cb2f7688c4",
+      "prompt_ids": [
+        "6a6846f9-30d5-4257-920a-eaa45628a690"
+      ],
+      "seconds": 110.8202440738678,
+      "message": "Complete",
+      "outputs": [
+        {
+          "image": ".runtime/lab-20261016d/item-zimage-potion-0.png",
+          "sha256": "b442c3949632e90da0312a47f6ecde5d0fab6f1a9aa81c3aee8c363bd8f55187",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "metadata": {
+            "filename": "Z-Image-Fast_00038_.png",
+            "subfolder": "Studio",
+            "type": "output",
+            "seed": 202610160403,
+            "prompt_id": "6a6846f9-30d5-4257-920a-eaa45628a690",
+            "media_type": "image",
+            "asset_id": "ac7b36684e2055359df24daba6c7eb8d"
+          }
+        }
+      ],
+      "recipe_sha256": "403f29b0d02fac9018b44bcab5dfc6554e27fd4493fbaa363bf9d160a75144c7",
+      "image": ".runtime/lab-20261016d/item-zimage-potion-0.png",
+      "sha256": "b442c3949632e90da0312a47f6ecde5d0fab6f1a9aa81c3aee8c363bd8f55187",
+      "prompt_id": "6a6846f9-30d5-4257-920a-eaa45628a690",
+      "judge": "lab",
+      "blind": false,
+      "judged_at": "2026-10-16T14:31:57.380506",
+      "scores": {
+        "adherence": 4,
+        "anatomy": null,
+        "style": 5,
+        "technical": 5,
+        "composition": 5,
+        "control": null
+      },
+      "verdict": "keep",
+      "worst_defect": "No mandatory repair seen",
+      "fix": null,
+      "note": "Whole frame, bottle surface and complete stopper crops inspected at native size. One complete centred round teal glass bottle with a gold/brass-coloured highlighted stopper; clean hand-painted cel-shaded silhouette, no text, border, extra bottle or scenery. White-looking canvas has near-white tinted pixels (corners around 248-251), so not an exact RGB-white or transparency guarantee. Stylized gold material is plausible, not a physical-metal certification.",
+      "crops": [
+        {
+          "box": [
+            350,
+            50,
+            700,
+            340
+          ],
+          "image": ".runtime/lab-20261016d/item-zimage-potion-crop-0.png",
+          "sha256": "ddd623638e8f9c78200005b3d508fa9d95ff53acbe0231ea92bfb1b7963b61a7"
+        },
+        {
+          "box": [
+            290,
+            200,
+            740,
+            850
+          ],
+          "image": ".runtime/lab-20261016d/item-zimage-potion-crop-1.png",
+          "sha256": "043b447a7826e631afcba6bae754b77fc93cb81c964aa6da07bbcd89f2ad6477"
+        }
+      ],
+      "single_object": true,
+      "plain_white_background": "visually yes; near-white pixels",
+      "material_read": "stylized gold/brass",
+      "resolved_controls": {
+        "positive": "stylized hand painted game inventory icon, soft cel shading, one round teal glass potion bottle with a brass stopper, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+        "width": 1024,
+        "height": 1024,
+        "seed": 202610160403,
+        "steps": 8,
+        "cfg": 1.0,
+        "denoise": 1.0
+      },
+      "workflow_sha256": "603ca8e985bc43a27a124ccc8bf8f5728476123d1797d2bc7d00827de48a1485",
+      "models": [
+        {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors"
+          }
+        },
+        {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_4b.safetensors"
+          }
+        },
+        {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "ae.safetensors"
+          }
+        }
+      ]
+    },
+    {
+      "trial": "item-zimage-sword",
+      "section": "game-items",
+      "request": {
+        "preset_id": "zimage-fast",
+        "controls": {
+          "positive": "stylized hand painted game inventory icon, soft cel shading, one short steel sword with a brown leather grip and straight brass crossguard, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+          "width": 1024,
+          "height": 1024,
+          "seed": 202610160403,
+          "steps": 8,
+          "cfg": 1.0,
+          "denoise": 1.0
+        },
+        "label": "Lab 1016d · item-zimage-sword",
+        "batch_count": 1
+      },
+      "model": "zimage",
+      "object": "sword",
+      "scene": "stylized hand painted game inventory icon, soft cel shading, one short steel sword with a brown leather grip and straight brass crossguard, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+      "heavy": false,
+      "status": "completed",
+      "admission": {
+        "host_commit": {
+          "available_bytes": 33229971456,
+          "limit_bytes": 102784090112,
+          "committed_bytes": 69554118656,
+          "unknown_reason": null
+        },
+        "gpu_memory": {
+          "pid": 26376,
+          "adapter": "0x00000000_0x00015b6d_0",
+          "dedicated_bytes": 9393111040,
+          "shared_bytes": 82563072,
+          "spilled": false,
+          "unknown_reason": null
+        },
+        "vram_guard": {
+          "installed": true,
+          "reason": null,
+          "pid": 26376
+        }
+      },
+      "job_id": "9006f8d7-1f84-4f3f-9d21-72041ed8c8cd",
+      "prompt_ids": [
+        "62b1d7f1-d1f9-4eb4-be42-235bbfdfa650"
+      ],
+      "seconds": 91.9100980758667,
+      "message": "Complete",
+      "outputs": [
+        {
+          "image": ".runtime/lab-20261016d/item-zimage-sword-0.png",
+          "sha256": "4e1487e46a6a559a709f7b3ba53a86a92cabc5ecd5f197efdc932aaf33dfc82c",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "metadata": {
+            "filename": "Z-Image-Fast_00039_.png",
+            "subfolder": "Studio",
+            "type": "output",
+            "seed": 202610160403,
+            "prompt_id": "62b1d7f1-d1f9-4eb4-be42-235bbfdfa650",
+            "media_type": "image",
+            "asset_id": "6381ebf746085247bf8b23d4fbd9e6d0"
+          }
+        }
+      ],
+      "recipe_sha256": "449912015a91dcb350e225ce0761a573c198dd1fce546dadaaa77b01fab45aa8",
+      "image": ".runtime/lab-20261016d/item-zimage-sword-0.png",
+      "sha256": "4e1487e46a6a559a709f7b3ba53a86a92cabc5ecd5f197efdc932aaf33dfc82c",
+      "prompt_id": "62b1d7f1-d1f9-4eb4-be42-235bbfdfa650",
+      "judge": "lab",
+      "blind": false,
+      "judged_at": "2026-10-16T14:33:53.742296",
+      "scores": {
+        "adherence": 5,
+        "anatomy": null,
+        "style": 5,
+        "technical": 5,
+        "composition": 5,
+        "control": null
+      },
+      "verdict": "keep",
+      "worst_defect": "No mandatory repair seen",
+      "fix": null,
+      "note": "Whole image, hilt/crossguard and blade-tip crops inspected at native size. One complete centred short steel sword, brown cross-laced leather grip, straight gold/brass guard with flared terminals and adequate white margin. Hand-painted faceted shading, no duplicate, border, label or lettering. Near-white canvas, not transparency or exact RGB-white proof.",
+      "crops": [
+        {
+          "box": [
+            160,
+            140,
+            520,
+            540
+          ],
+          "image": ".runtime/lab-20261016d/item-zimage-sword-crop-0.png",
+          "sha256": "f6252425bcc2c3d2b5c3f64ac639011dcb2fb81f6da0ced1de9dfa3217aa7630"
+        },
+        {
+          "box": [
+            490,
+            580,
+            830,
+            940
+          ],
+          "image": ".runtime/lab-20261016d/item-zimage-sword-crop-1.png",
+          "sha256": "48107500934d04c3125787c4e5b9574f3e7e1e2da03fd3b18603dbef2af00985"
+        }
+      ],
+      "single_object": true,
+      "plain_white_background": "visually yes; near-white pixels",
+      "resolved_controls": {
+        "positive": "stylized hand painted game inventory icon, soft cel shading, one short steel sword with a brown leather grip and straight brass crossguard, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+        "width": 1024,
+        "height": 1024,
+        "seed": 202610160403,
+        "steps": 8,
+        "cfg": 1.0,
+        "denoise": 1.0
+      },
+      "workflow_sha256": "7c5cc9398dfcd1bc96c23ae07cc1147f1a149ec8971e64b4a1d9dd08fc404ee5",
+      "models": [
+        {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors"
+          }
+        },
+        {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_4b.safetensors"
+          }
+        },
+        {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "ae.safetensors"
+          }
+        }
+      ]
+    },
+    {
+      "trial": "petiflow-full-body-202610160504",
+      "section": "petiflow-framing",
+      "request": {
+        "preset_id": "anima-v1-baseline",
+        "controls": {
+          "positive": "pearlypetif, masterpiece, best quality, good quality, score_9, score_8, (flat colors:1.4), adult original character, one clearly mature adult botanical illustrator aged forty-five with copper curly hair, wearing a full length cream dress with long sleeves, a dark green apron and brown boots, both hands supporting one small terracotta pot with a fern at waist height, standing in a sunlit greenhouse, full body from head to boots, entire standing figure and both shoes visible, distant camera, generous space above the head and below the boots, no writing, face focus, upper body, close up, looking at viewer",
+          "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+          "width": 832,
+          "height": 1216,
+          "seed": 202610160504,
+          "steps": 25,
+          "cfg": 5,
+          "sampler": "euler",
+          "scheduler": "simple",
+          "denoise": 1.0,
+          "lora_name": "pearly_petiflow2.safetensors",
+          "lora": 1.0,
+          "lora2": 0,
+          "lora3": 0,
+          "lora4": 0,
+          "lora5": 0,
+          "lora6": 0
+        },
+        "label": "Lab 1016d · petiflow-full-body-202610160504",
+        "batch_count": 1
+      },
+      "look_id": "look-anima-pearly-petiflow",
+      "scene": "one clearly mature adult botanical illustrator aged forty-five with copper curly hair, wearing a full length cream dress with long sleeves, a dark green apron and brown boots, both hands supporting one small terracotta pot with a fern at waist height, standing in a sunlit greenhouse, full body from head to boots, entire standing figure and both shoes visible, distant camera, generous space above the head and below the boots, no writing",
+      "framing": "full-body",
+      "heavy": false,
+      "status": "completed",
+      "admission": {
+        "host_commit": {
+          "available_bytes": 38736330752,
+          "limit_bytes": 102784090112,
+          "committed_bytes": 64047759360,
+          "unknown_reason": null
+        },
+        "gpu_memory": {
+          "pid": 26376,
+          "adapter": "0x00000000_0x00015b6d_0",
+          "dedicated_bytes": 6943039488,
+          "shared_bytes": 82563072,
+          "spilled": false,
+          "unknown_reason": null
+        },
+        "vram_guard": {
+          "installed": true,
+          "reason": null,
+          "pid": 26376
+        }
+      },
+      "job_id": "471e4621-245d-4db1-a40d-1761b8b2819a",
+      "prompt_ids": [
+        "d4debe4e-1ccc-4b7d-9f4b-efde5c468d9b"
+      ],
+      "seconds": 16.27134132385254,
+      "message": "Complete",
+      "outputs": [
+        {
+          "image": ".runtime/lab-20261016d/petiflow-full-body-202610160504-0.png",
+          "sha256": "ae3973f147e6832434faafea444a14f2debac84e2ffcc93020d52a65f362edab",
+          "dimensions": [
+            832,
+            1216
+          ],
+          "metadata": {
+            "filename": "Anima-v1-Baseline_00062_.png",
+            "subfolder": "Studio",
+            "type": "output",
+            "seed": 202610160504,
+            "prompt_id": "d4debe4e-1ccc-4b7d-9f4b-efde5c468d9b",
+            "media_type": "image",
+            "asset_id": "6780cdf8b61557aa9d92bbeb0c4f746f"
+          }
+        }
+      ],
+      "recipe_sha256": "9ac2e585c9c0ddad61de62fabb5356958dc0bb2f660967e2333b0f0918362709",
+      "image": ".runtime/lab-20261016d/petiflow-full-body-202610160504-0.png",
+      "sha256": "ae3973f147e6832434faafea444a14f2debac84e2ffcc93020d52a65f362edab",
+      "prompt_id": "d4debe4e-1ccc-4b7d-9f4b-efde5c468d9b",
+      "judge": "lab",
+      "blind": false,
+      "judged_at": "2026-10-16T14:57:37.001992",
+      "scores": {
+        "adherence": 5,
+        "anatomy": 4,
+        "style": 5,
+        "technical": 5,
+        "composition": 5,
+        "control": null
+      },
+      "verdict": "keep",
+      "worst_defect": "No mandatory repair seen",
+      "fix": null,
+      "note": "Native face, both hands, plant and both boot crops inspected. Entire standing figure from head to complete brown boots with top/bottom margin; both hands support one fern pot. Flat pastel shading, copper curls and cream/green wardrobe hold outside close-up. Smaller face remains readable, no clear digit/foot defect. Dress conceals legs, so hidden knee geometry is not certified.",
+      "crops": [
+        {
+          "box": [
+            310,
+            100,
+            530,
+            310
+          ],
+          "image": ".runtime/lab-20261016d/petiflow-full-body-202610160504-crop-0.png",
+          "sha256": "dacc8eaaf7eb20bb8aa207d9edfea479f4b0c03e229c359f8542241225a2fd74"
+        },
+        {
+          "box": [
+            270,
+            470,
+            560,
+            650
+          ],
+          "image": ".runtime/lab-20261016d/petiflow-full-body-202610160504-crop-1.png",
+          "sha256": "e06747e8d65d67031ea26e9f5c431634ffc6e8b3c05a403466aac30fb866bf93"
+        },
+        {
+          "box": [
+            310,
+            1030,
+            530,
+            1216
+          ],
+          "image": ".runtime/lab-20261016d/petiflow-full-body-202610160504-crop-2.png",
+          "sha256": "05dfe414f8123a970f856cde7f934f554668e7ac3685bae1e347eb3d3cbac877"
+        }
+      ],
+      "requested_framing": "full body",
+      "actual_framing": "head to boots with margin",
+      "framing_held": true,
+      "look_held": true,
+      "resolved_controls": {
+        "positive": "pearlypetif, masterpiece, best quality, good quality, score_9, score_8, (flat colors:1.4), adult original character, one clearly mature adult botanical illustrator aged forty-five with copper curly hair, wearing a full length cream dress with long sleeves, a dark green apron and brown boots, both hands supporting one small terracotta pot with a fern at waist height, standing in a sunlit greenhouse, full body from head to boots, entire standing figure and both shoes visible, distant camera, generous space above the head and below the boots, no writing, face focus, upper body, close up, looking at viewer",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+        "width": 832,
+        "height": 1216,
+        "seed": 202610160504,
+        "steps": 25,
+        "cfg": 5.0,
+        "denoise": 1.0,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "lora": 1.0,
+        "lora_name": "pearly_petiflow2.safetensors"
+      },
+      "workflow_sha256": "66548ccfb91ca2f373230693c62370293c8d5f8fb81c76d009243c750dca0da7",
+      "models": [
+        {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "anima-base-v1.0.safetensors"
+          }
+        },
+        {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_06b_base.safetensors"
+          }
+        },
+        {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "qwen_image_vae.safetensors"
+          }
+        },
+        {
+          "class_type": "LoraLoaderModelOnly",
+          "inputs": {
+            "lora_name": "pearly_petiflow2.safetensors"
+          }
+        }
+      ]
+    },
+    {
+      "trial": "petiflow-full-body-202610160505",
+      "section": "petiflow-framing",
+      "request": {
+        "preset_id": "anima-v1-baseline",
+        "controls": {
+          "positive": "pearlypetif, masterpiece, best quality, good quality, score_9, score_8, (flat colors:1.4), adult original character, one clearly mature adult botanical illustrator aged forty-five with copper curly hair, wearing a full length cream dress with long sleeves, a dark green apron and brown boots, both hands supporting one small terracotta pot with a fern at waist height, standing in a sunlit greenhouse, full body from head to boots, entire standing figure and both shoes visible, distant camera, generous space above the head and below the boots, no writing, face focus, upper body, close up, looking at viewer",
+          "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+          "width": 832,
+          "height": 1216,
+          "seed": 202610160505,
+          "steps": 25,
+          "cfg": 5,
+          "sampler": "euler",
+          "scheduler": "simple",
+          "denoise": 1.0,
+          "lora_name": "pearly_petiflow2.safetensors",
+          "lora": 1.0,
+          "lora2": 0,
+          "lora3": 0,
+          "lora4": 0,
+          "lora5": 0,
+          "lora6": 0
+        },
+        "label": "Lab 1016d · petiflow-full-body-202610160505",
+        "batch_count": 1
+      },
+      "look_id": "look-anima-pearly-petiflow",
+      "scene": "one clearly mature adult botanical illustrator aged forty-five with copper curly hair, wearing a full length cream dress with long sleeves, a dark green apron and brown boots, both hands supporting one small terracotta pot with a fern at waist height, standing in a sunlit greenhouse, full body from head to boots, entire standing figure and both shoes visible, distant camera, generous space above the head and below the boots, no writing",
+      "framing": "full-body",
+      "heavy": false,
+      "status": "completed",
+      "admission": {
+        "host_commit": {
+          "available_bytes": 39195738112,
+          "limit_bytes": 102784090112,
+          "committed_bytes": 63588352000,
+          "unknown_reason": null
+        },
+        "gpu_memory": {
+          "pid": 26376,
+          "adapter": "0x00000000_0x00015b6d_0",
+          "dedicated_bytes": 8138448896,
+          "shared_bytes": 82563072,
+          "spilled": false,
+          "unknown_reason": null
+        },
+        "vram_guard": {
+          "installed": true,
+          "reason": null,
+          "pid": 26376
+        }
+      },
+      "job_id": "62d80555-7e6f-4d11-b2d8-aa9133dee82e",
+      "prompt_ids": [
+        "35733a28-3036-4b70-8ccb-61faeaba41d7"
+      ],
+      "seconds": 16.25843858718872,
+      "message": "Complete",
+      "outputs": [
+        {
+          "image": ".runtime/lab-20261016d/petiflow-full-body-202610160505-0.png",
+          "sha256": "6f4e852578c9966d55dceaa4ecc1fdd3c50090e217c3c08d42b5f751e60a458f",
+          "dimensions": [
+            832,
+            1216
+          ],
+          "metadata": {
+            "filename": "Anima-v1-Baseline_00063_.png",
+            "subfolder": "Studio",
+            "type": "output",
+            "seed": 202610160505,
+            "prompt_id": "35733a28-3036-4b70-8ccb-61faeaba41d7",
+            "media_type": "image",
+            "asset_id": "4eb9676df90358f49327831fbf5a7e1c"
+          }
+        }
+      ],
+      "recipe_sha256": "cf1a938238c1e4c971b2d624bdaaca2ab08a9e4952f66c4074099df0f61bdf31",
+      "image": ".runtime/lab-20261016d/petiflow-full-body-202610160505-0.png",
+      "sha256": "6f4e852578c9966d55dceaa4ecc1fdd3c50090e217c3c08d42b5f751e60a458f",
+      "prompt_id": "35733a28-3036-4b70-8ccb-61faeaba41d7",
+      "judge": "lab",
+      "blind": false,
+      "judged_at": "2026-10-16T14:57:37.046429",
+      "scores": {
+        "adherence": 3,
+        "anatomy": 4,
+        "style": 5,
+        "technical": 5,
+        "composition": 3,
+        "control": null
+      },
+      "verdict": "fixable",
+      "worst_defect": "Several unrequested camera-like fixtures clutter both sides of the greenhouse",
+      "fix": "Mask/remove background fixtures; alternate framing wording is an untested new configuration",
+      "note": "Face, both supporting grips, both boots and left/right background fixtures inspected at native resolution. Full head-to-boots framing and flat pastel finish hold, with one fern pot. Several unrequested camera-like fixtures flank the figure and clutter the greenhouse. The scene says distant camera, but no wording ablation proves that caused the fixtures.",
+      "crops": [
+        {
+          "box": [
+            280,
+            50,
+            570,
+            300
+          ],
+          "image": ".runtime/lab-20261016d/petiflow-full-body-202610160505-crop-0.png",
+          "sha256": "d1a36342a64d1410c6fce92b40db14fc47e7463a98ea18df177beff083b1d6c9"
+        },
+        {
+          "box": [
+            240,
+            460,
+            590,
+            640
+          ],
+          "image": ".runtime/lab-20261016d/petiflow-full-body-202610160505-crop-1.png",
+          "sha256": "a5eb12ca40bf6ca002616b661968e6a9900207a011f05546ff88b0087aa0287d"
+        },
+        {
+          "box": [
+            300,
+            1020,
+            530,
+            1216
+          ],
+          "image": ".runtime/lab-20261016d/petiflow-full-body-202610160505-crop-2.png",
+          "sha256": "93de72b272ee76d80e5d478d3329d19e1fac9bec89160c57a3c11f09d1a0e9f8"
+        },
+        {
+          "box": [
+            0,
+            320,
+            180,
+            580
+          ],
+          "image": ".runtime/lab-20261016d/petiflow-full-body-202610160505-crop-3.png",
+          "sha256": "0e661ecfe5363dfcd30994bf76cdece35bec594e31957859c844acead2a7126c"
+        },
+        {
+          "box": [
+            660,
+            320,
+            832,
+            580
+          ],
+          "image": ".runtime/lab-20261016d/petiflow-full-body-202610160505-crop-4.png",
+          "sha256": "be0e7f84659c510aeec219e7a2cd87a680278244213f508843347a93937c0a07"
+        }
+      ],
+      "requested_framing": "full body",
+      "actual_framing": "head to boots with margin",
+      "framing_held": true,
+      "look_held": true,
+      "resolved_controls": {
+        "positive": "pearlypetif, masterpiece, best quality, good quality, score_9, score_8, (flat colors:1.4), adult original character, one clearly mature adult botanical illustrator aged forty-five with copper curly hair, wearing a full length cream dress with long sleeves, a dark green apron and brown boots, both hands supporting one small terracotta pot with a fern at waist height, standing in a sunlit greenhouse, full body from head to boots, entire standing figure and both shoes visible, distant camera, generous space above the head and below the boots, no writing, face focus, upper body, close up, looking at viewer",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+        "width": 832,
+        "height": 1216,
+        "seed": 202610160505,
+        "steps": 25,
+        "cfg": 5.0,
+        "denoise": 1.0,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "lora": 1.0,
+        "lora_name": "pearly_petiflow2.safetensors"
+      },
+      "workflow_sha256": "bde42edcb0df217f982d4b8911275a6f5ca48e3474c42ea876792781a9be2dc5",
+      "models": [
+        {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "anima-base-v1.0.safetensors"
+          }
+        },
+        {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_06b_base.safetensors"
+          }
+        },
+        {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "qwen_image_vae.safetensors"
+          }
+        },
+        {
+          "class_type": "LoraLoaderModelOnly",
+          "inputs": {
+            "lora_name": "pearly_petiflow2.safetensors"
+          }
+        }
+      ]
+    },
+    {
+      "trial": "petiflow-medium-202610160504",
+      "section": "petiflow-framing",
+      "request": {
+        "preset_id": "anima-v1-baseline",
+        "controls": {
+          "positive": "pearlypetif, masterpiece, best quality, good quality, score_9, score_8, (flat colors:1.4), adult original character, one clearly mature adult botanical illustrator aged forty-five with copper curly hair, wearing a full length cream dress with long sleeves, a dark green apron and brown boots, both hands supporting one small terracotta pot with a fern at waist height, standing in a sunlit greenhouse, medium shot from head to hips, camera pulled back to show the waist and both elbows, no writing, face focus, upper body, close up, looking at viewer",
+          "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+          "width": 832,
+          "height": 1216,
+          "seed": 202610160504,
+          "steps": 25,
+          "cfg": 5,
+          "sampler": "euler",
+          "scheduler": "simple",
+          "denoise": 1.0,
+          "lora_name": "pearly_petiflow2.safetensors",
+          "lora": 1.0,
+          "lora2": 0,
+          "lora3": 0,
+          "lora4": 0,
+          "lora5": 0,
+          "lora6": 0
+        },
+        "label": "Lab 1016d · petiflow-medium-202610160504",
+        "batch_count": 1
+      },
+      "look_id": "look-anima-pearly-petiflow",
+      "scene": "one clearly mature adult botanical illustrator aged forty-five with copper curly hair, wearing a full length cream dress with long sleeves, a dark green apron and brown boots, both hands supporting one small terracotta pot with a fern at waist height, standing in a sunlit greenhouse, medium shot from head to hips, camera pulled back to show the waist and both elbows, no writing",
+      "framing": "medium",
+      "heavy": false,
+      "status": "completed",
+      "admission": {
+        "host_commit": {
+          "available_bytes": 5336252416,
+          "limit_bytes": 102784090112,
+          "committed_bytes": 97447837696,
+          "unknown_reason": null
+        },
+        "gpu_memory": {
+          "pid": 26376,
+          "adapter": "0x00000000_0x00015b6d_0",
+          "dedicated_bytes": 10389889024,
+          "shared_bytes": 1611386880,
+          "spilled": true,
+          "unknown_reason": null
+        },
+        "vram_guard": {
+          "installed": true,
+          "reason": null,
+          "pid": 26376
+        }
+      },
+      "job_id": "86aa52ce-48bc-4408-9b3f-e7747b21823e",
+      "prompt_ids": [
+        "a44c261d-fc46-45d5-8c3e-5f1060a663e8"
+      ],
+      "seconds": 46.15451169013977,
+      "message": "Complete",
+      "outputs": [
+        {
+          "image": ".runtime/lab-20261016d/petiflow-medium-202610160504-0.png",
+          "sha256": "9fe71e7bb15f213f67837926ca8ca666c73c0e50d665c474dc2cd402035e33e9",
+          "dimensions": [
+            832,
+            1216
+          ],
+          "metadata": {
+            "filename": "Anima-v1-Baseline_00060_.png",
+            "subfolder": "Studio",
+            "type": "output",
+            "seed": 202610160504,
+            "prompt_id": "a44c261d-fc46-45d5-8c3e-5f1060a663e8",
+            "media_type": "image",
+            "asset_id": "ccb54e70619658a897e99584cf1fb780"
+          }
+        }
+      ],
+      "recipe_sha256": "fd0c52d26724d81e245d22d71fefe079508edb232475401acc82fb6d0e485f3a",
+      "image": ".runtime/lab-20261016d/petiflow-medium-202610160504-0.png",
+      "sha256": "9fe71e7bb15f213f67837926ca8ca666c73c0e50d665c474dc2cd402035e33e9",
+      "prompt_id": "a44c261d-fc46-45d5-8c3e-5f1060a663e8",
+      "judge": "lab",
+      "blind": false,
+      "judged_at": "2026-10-16T14:57:36.925772",
+      "scores": {
+        "adherence": 4,
+        "anatomy": 4,
+        "style": 5,
+        "technical": 5,
+        "composition": 5,
+        "control": null
+      },
+      "verdict": "keep",
+      "worst_defect": "No mandatory repair seen",
+      "fix": null,
+      "note": "Face, both supporting hand grips and fern inspected at native size. Head-to-hips medium framing shows waist/elbows and complete pot; flat pastel finish, detailed copper curls, cream dress/green apron and greenhouse hold. No mandatory repair. Boots are outside the intentionally medium frame and are not certified.",
+      "crops": [
+        {
+          "box": [
+            230,
+            120,
+            620,
+            540
+          ],
+          "image": ".runtime/lab-20261016d/petiflow-medium-202610160504-crop-0.png",
+          "sha256": "30c00ea5e833ac297cae51255f08029283e1b33d36631a47e6e9df13c4ab70d1"
+        },
+        {
+          "box": [
+            200,
+            880,
+            620,
+            1130
+          ],
+          "image": ".runtime/lab-20261016d/petiflow-medium-202610160504-crop-1.png",
+          "sha256": "ad382655f0efeb35ec4d09466f1db3115879edb052fbc5a045a3c7a9c14bded6"
+        }
+      ],
+      "requested_framing": "medium",
+      "actual_framing": "medium, waist and both elbows visible",
+      "framing_held": true,
+      "look_held": true,
+      "resolved_controls": {
+        "positive": "pearlypetif, masterpiece, best quality, good quality, score_9, score_8, (flat colors:1.4), adult original character, one clearly mature adult botanical illustrator aged forty-five with copper curly hair, wearing a full length cream dress with long sleeves, a dark green apron and brown boots, both hands supporting one small terracotta pot with a fern at waist height, standing in a sunlit greenhouse, medium shot from head to hips, camera pulled back to show the waist and both elbows, no writing, face focus, upper body, close up, looking at viewer",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+        "width": 832,
+        "height": 1216,
+        "seed": 202610160504,
+        "steps": 25,
+        "cfg": 5.0,
+        "denoise": 1.0,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "lora": 1.0,
+        "lora_name": "pearly_petiflow2.safetensors"
+      },
+      "workflow_sha256": "ad9a0d8a815a5c3d0195c823dbf75920ba2a616261d440668e9cc2e46ab3b5e9",
+      "models": [
+        {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "anima-base-v1.0.safetensors"
+          }
+        },
+        {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_06b_base.safetensors"
+          }
+        },
+        {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "qwen_image_vae.safetensors"
+          }
+        },
+        {
+          "class_type": "LoraLoaderModelOnly",
+          "inputs": {
+            "lora_name": "pearly_petiflow2.safetensors"
+          }
+        }
+      ]
+    },
+    {
+      "trial": "petiflow-medium-202610160505",
+      "section": "petiflow-framing",
+      "request": {
+        "preset_id": "anima-v1-baseline",
+        "controls": {
+          "positive": "pearlypetif, masterpiece, best quality, good quality, score_9, score_8, (flat colors:1.4), adult original character, one clearly mature adult botanical illustrator aged forty-five with copper curly hair, wearing a full length cream dress with long sleeves, a dark green apron and brown boots, both hands supporting one small terracotta pot with a fern at waist height, standing in a sunlit greenhouse, medium shot from head to hips, camera pulled back to show the waist and both elbows, no writing, face focus, upper body, close up, looking at viewer",
+          "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+          "width": 832,
+          "height": 1216,
+          "seed": 202610160505,
+          "steps": 25,
+          "cfg": 5,
+          "sampler": "euler",
+          "scheduler": "simple",
+          "denoise": 1.0,
+          "lora_name": "pearly_petiflow2.safetensors",
+          "lora": 1.0,
+          "lora2": 0,
+          "lora3": 0,
+          "lora4": 0,
+          "lora5": 0,
+          "lora6": 0
+        },
+        "label": "Lab 1016d · petiflow-medium-202610160505",
+        "batch_count": 1
+      },
+      "look_id": "look-anima-pearly-petiflow",
+      "scene": "one clearly mature adult botanical illustrator aged forty-five with copper curly hair, wearing a full length cream dress with long sleeves, a dark green apron and brown boots, both hands supporting one small terracotta pot with a fern at waist height, standing in a sunlit greenhouse, medium shot from head to hips, camera pulled back to show the waist and both elbows, no writing",
+      "framing": "medium",
+      "heavy": false,
+      "status": "completed",
+      "admission": {
+        "host_commit": {
+          "available_bytes": 41531600896,
+          "limit_bytes": 102784090112,
+          "committed_bytes": 61252489216,
+          "unknown_reason": null
+        },
+        "gpu_memory": {
+          "pid": 26376,
+          "adapter": "0x00000000_0x00015b6d_0",
+          "dedicated_bytes": 14345682944,
+          "shared_bytes": 351035392,
+          "spilled": false,
+          "unknown_reason": null
+        },
+        "vram_guard": {
+          "installed": true,
+          "reason": null,
+          "pid": 26376
+        }
+      },
+      "job_id": "71c792b6-b8b2-4cce-b415-06fa139a46d4",
+      "prompt_ids": [
+        "4591c71c-ff0e-4a74-8122-ee1f23189d4f"
+      ],
+      "seconds": 18.31533122062683,
+      "message": "Complete",
+      "outputs": [
+        {
+          "image": ".runtime/lab-20261016d/petiflow-medium-202610160505-0.png",
+          "sha256": "dadb5f7b8ad29d7601b7574a821ce01d6f0e3ed5447bd377ecae22933f8aa6c5",
+          "dimensions": [
+            832,
+            1216
+          ],
+          "metadata": {
+            "filename": "Anima-v1-Baseline_00061_.png",
+            "subfolder": "Studio",
+            "type": "output",
+            "seed": 202610160505,
+            "prompt_id": "4591c71c-ff0e-4a74-8122-ee1f23189d4f",
+            "media_type": "image",
+            "asset_id": "090b0a6f83b251468ef49258c0cecb3b"
+          }
+        }
+      ],
+      "recipe_sha256": "b54e5c09d2786160fe671b0d87208abdb94f1d21cda9f2ea2f9d830e70ebdcbd",
+      "image": ".runtime/lab-20261016d/petiflow-medium-202610160505-0.png",
+      "sha256": "dadb5f7b8ad29d7601b7574a821ce01d6f0e3ed5447bd377ecae22933f8aa6c5",
+      "prompt_id": "4591c71c-ff0e-4a74-8122-ee1f23189d4f",
+      "judge": "lab",
+      "blind": false,
+      "judged_at": "2026-10-16T14:57:36.968512",
+      "scores": {
+        "adherence": 4,
+        "anatomy": 4,
+        "style": 5,
+        "technical": 5,
+        "composition": 5,
+        "control": null
+      },
+      "verdict": "keep",
+      "worst_defect": "No mandatory repair seen",
+      "fix": null,
+      "note": "Native face, both supporting hands and fern inspected. Medium framing extends slightly below hips, showing waist, elbows and pot, with flat shaded curls/skin and the pastel greenhouse finish intact. Readable supporting thumbs and occluded curled digits; no required repair. Full-body anatomy/boots not judged from this frame.",
+      "crops": [
+        {
+          "box": [
+            230,
+            100,
+            620,
+            500
+          ],
+          "image": ".runtime/lab-20261016d/petiflow-medium-202610160505-crop-0.png",
+          "sha256": "8d64504d775d9f006fcb3a6522dddfa1e442d274ae44fe68fa7397a191fc9774"
+        },
+        {
+          "box": [
+            180,
+            810,
+            650,
+            1050
+          ],
+          "image": ".runtime/lab-20261016d/petiflow-medium-202610160505-crop-1.png",
+          "sha256": "37c1addc99b6c174ac5fd345f57bdfeccf3dcafba40088cda71ebb804b8141f5"
+        }
+      ],
+      "requested_framing": "medium",
+      "actual_framing": "medium to below hips, waist/elbows visible",
+      "framing_held": true,
+      "look_held": true,
+      "resolved_controls": {
+        "positive": "pearlypetif, masterpiece, best quality, good quality, score_9, score_8, (flat colors:1.4), adult original character, one clearly mature adult botanical illustrator aged forty-five with copper curly hair, wearing a full length cream dress with long sleeves, a dark green apron and brown boots, both hands supporting one small terracotta pot with a fern at waist height, standing in a sunlit greenhouse, medium shot from head to hips, camera pulled back to show the waist and both elbows, no writing, face focus, upper body, close up, looking at viewer",
+        "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+        "width": 832,
+        "height": 1216,
+        "seed": 202610160505,
+        "steps": 25,
+        "cfg": 5.0,
+        "denoise": 1.0,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "lora": 1.0,
+        "lora_name": "pearly_petiflow2.safetensors"
+      },
+      "workflow_sha256": "40be9dcf4597d61ca60df10efa71557119938ad07cc181a8448dd634913e75f0",
+      "models": [
+        {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "anima-base-v1.0.safetensors"
+          }
+        },
+        {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_06b_base.safetensors"
+          }
+        },
+        {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "qwen_image_vae.safetensors"
+          }
+        },
+        {
+          "class_type": "LoraLoaderModelOnly",
+          "inputs": {
+            "lora_name": "pearly_petiflow2.safetensors"
+          }
+        }
+      ]
+    },
+    {
+      "trial": "source-wai-older",
+      "section": "non-anima-sources",
+      "look_id": "look-wai-fantasy-portrait",
+      "scene": "one clearly older adult man aged fifty-five, short salt-and-pepper hair, a neat full grey beard, weathered mature face with smile lines, wearing a long brown travelling coat over a high-collared cream shirt and grey trousers, both empty hands resting together at waist, standing in a quiet walled garden, no writing, fully clothed",
+      "heavy": false,
+      "request": {
+        "preset_id": "wai",
+        "controls": {
+          "positive": "original character, one clearly older adult man aged fifty-five, short salt-and-pepper hair, a neat full grey beard, weathered mature face with smile lines, wearing a long brown travelling coat over a high-collared cream shirt and grey trousers, both empty hands resting together at waist, standing in a quiet walled garden, no writing, fully clothed, backlighting, light rays, floating particles, depth of field, cowboy shot, fantasy, masterpiece, best quality, amazing quality",
+          "negative": "bad quality, worst quality, worst detail, sketch, censor",
+          "steps": 26,
+          "cfg": 6,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "width": 832,
+          "height": 1216,
+          "seed": 202610160506,
+          "denoise": 1.0
+        },
+        "label": "Lab 1016d · source-wai-older",
+        "batch_count": 1
+      },
+      "status": "completed",
+      "admission": {
+        "host_commit": {
+          "available_bytes": 30091517952,
+          "limit_bytes": 102784090112,
+          "committed_bytes": 72692572160,
+          "unknown_reason": null
+        },
+        "gpu_memory": {
+          "pid": 26376,
+          "adapter": "0x00000000_0x00015b6d_0",
+          "dedicated_bytes": 9916399616,
+          "shared_bytes": 82563072,
+          "spilled": false,
+          "unknown_reason": null
+        },
+        "vram_guard": {
+          "installed": true,
+          "reason": null,
+          "pid": 26376
+        }
+      },
+      "job_id": "7cf3db2d-8aa4-4403-a29e-5b335ce4c4e3",
+      "prompt_ids": [
+        "0153754f-e15a-4647-b768-54271c7177de"
+      ],
+      "seconds": 41.21894025802612,
+      "message": "Complete",
+      "outputs": [
+        {
+          "image": ".runtime/lab-20261016d/source-wai-older-0.png",
+          "sha256": "1dd2311e725ea8f0103a2561d3dc64e3b8cfe7b75afc2302c4f6d93cdcf40b62",
+          "dimensions": [
+            832,
+            1216
+          ],
+          "metadata": {
+            "filename": "WAI-Illustration_00060_.png",
+            "subfolder": "Studio",
+            "type": "output",
+            "seed": 202610160506,
+            "prompt_id": "0153754f-e15a-4647-b768-54271c7177de",
+            "media_type": "image",
+            "asset_id": "26fb675eb78a5c7daa540b414a7b2929"
+          }
+        }
+      ],
+      "recipe_sha256": "e8556d1a6f71817e4297e4f404362a40dc4b0741b898067652b5a5ebbee68fa6",
+      "image": ".runtime/lab-20261016d/source-wai-older-0.png",
+      "sha256": "1dd2311e725ea8f0103a2561d3dc64e3b8cfe7b75afc2302c4f6d93cdcf40b62",
+      "prompt_id": "0153754f-e15a-4647-b768-54271c7177de",
+      "judge": "lab",
+      "blind": false,
+      "judged_at": "2026-10-16T14:12:06.959022",
+      "scores": {
+        "adherence": 4,
+        "anatomy": 4,
+        "style": 5,
+        "technical": 5,
+        "composition": 5,
+        "control": null
+      },
+      "verdict": "keep",
+      "worst_defect": "No mandatory repair seen",
+      "fix": null,
+      "note": "Clearly older adult man. Native face and both hand crops inspected: grey hair and beard, smile lines, closed eyes, readable overlapping fingers; cream/tan coat and shirt with grey trousers. Brown wording becomes pale tan in backlight; minor colour deviation, no mandatory repair for the character-reference task.",
+      "crops": [
+        {
+          "box": [
+            230,
+            40,
+            580,
+            400
+          ],
+          "image": ".runtime/lab-20261016d/source-wai-older-crop-0.png",
+          "sha256": "8a5a723aef61aa8be9dbe81b7d3051c3bb321b3a7563843e7392e27c714f3136"
+        },
+        {
+          "box": [
+            210,
+            870,
+            540,
+            1060
+          ],
+          "image": ".runtime/lab-20261016d/source-wai-older-crop-1.png",
+          "sha256": "8a65b7c4e58b92612f1a0ae41aa20cce602deb7d8e617557e86e1d25ae3dd108"
+        }
+      ],
+      "source_usable_for_identity": true,
+      "resolved_controls": {
+        "positive": "original character, one clearly older adult man aged fifty-five, short salt-and-pepper hair, a neat full grey beard, weathered mature face with smile lines, wearing a long brown travelling coat over a high-collared cream shirt and grey trousers, both empty hands resting together at waist, standing in a quiet walled garden, no writing, fully clothed, backlighting, light rays, floating particles, depth of field, cowboy shot, fantasy, masterpiece, best quality, amazing quality",
+        "negative": "bad quality, worst quality, worst detail, sketch, censor",
+        "width": 832,
+        "height": 1216,
+        "seed": 202610160506,
+        "steps": 26,
+        "cfg": 6.0,
+        "denoise": 1.0,
+        "sampler": "euler_ancestral",
+        "scheduler": "normal"
+      },
+      "workflow_sha256": "135d757ad7398eeb2de1c5d42cd1be71bf1e97c24814bfc3e4e73020c1868dba",
+      "models": [
+        {
+          "class_type": "CheckpointLoaderSimple",
+          "inputs": {
+            "ckpt_name": "waiIllustriousSDXL_v170.safetensors"
+          }
+        }
+      ]
+    },
+    {
+      "trial": "source-wai",
+      "section": "non-anima-sources",
+      "look_id": "look-wai-fantasy-portrait",
+      "scene": "one clearly mature adult woman aged forty-five, short auburn pixie hair, amber eyes, long-sleeved navy travelling coat with brass buttons over a high-collared cream blouse, grey trousers, both empty hands relaxed together at waist, standing in a quiet walled garden, no writing, fully clothed",
+      "heavy": false,
+      "request": {
+        "preset_id": "wai",
+        "controls": {
+          "positive": "original character, one clearly mature adult woman aged forty-five, short auburn pixie hair, amber eyes, long-sleeved navy travelling coat with brass buttons over a high-collared cream blouse, grey trousers, both empty hands relaxed together at waist, standing in a quiet walled garden, no writing, fully clothed, backlighting, light rays, floating particles, depth of field, cowboy shot, fantasy, masterpiece, best quality, amazing quality",
+          "negative": "bad quality, worst quality, worst detail, sketch, censor",
+          "steps": 26,
+          "cfg": 6,
+          "sampler": "euler_ancestral",
+          "scheduler": "normal",
+          "width": 832,
+          "height": 1216,
+          "seed": 202610160503,
+          "denoise": 1.0
+        },
+        "label": "Lab 1016d · source-wai",
+        "batch_count": 1
+      },
+      "status": "completed",
+      "admission": {
+        "host_commit": {
+          "available_bytes": 39291731968,
+          "limit_bytes": 102784090112,
+          "committed_bytes": 63492358144,
+          "unknown_reason": null
+        },
+        "gpu_memory": {
+          "pid": 26376,
+          "adapter": "0x00000000_0x00015b6d_0",
+          "dedicated_bytes": 2010939392,
+          "shared_bytes": 82563072,
+          "spilled": false,
+          "unknown_reason": null
+        },
+        "vram_guard": {
+          "installed": true,
+          "reason": null,
+          "pid": 26376
+        }
+      },
+      "job_id": "a91f6dd8-eac9-49ac-bf20-ea7ccc15c339",
+      "prompt_ids": [
+        "bdb528c4-5e53-4939-a049-30838cc57d4a"
+      ],
+      "seconds": 26.42293405532837,
+      "message": "Complete",
+      "outputs": [
+        {
+          "image": ".runtime/lab-20261016d/source-wai-0.png",
+          "sha256": "0ea303a350eca99056c74786b85261f59c07c8365732735ea8ad1692d100945b",
+          "dimensions": [
+            832,
+            1216
+          ],
+          "metadata": {
+            "filename": "WAI-Illustration_00059_.png",
+            "subfolder": "Studio",
+            "type": "output",
+            "seed": 202610160503,
+            "prompt_id": "bdb528c4-5e53-4939-a049-30838cc57d4a",
+            "media_type": "image",
+            "asset_id": "49357fc79f34558887ed6c00cb60da4b"
+          }
+        }
+      ],
+      "recipe_sha256": "93018e92a5bfdc70c3972d86b435b9ec8b3ef6df6b5a045d27afa96c180e725c",
+      "verdict": "skipped",
+      "reason": "Youthful-looking relative to mature-adult brief at initial screening; no crops, score or reuse.",
+      "judged_at": "2026-10-16T14:08:19.357781",
+      "blind": false,
+      "resolved_controls": {
+        "positive": "original character, one clearly mature adult woman aged forty-five, short auburn pixie hair, amber eyes, long-sleeved navy travelling coat with brass buttons over a high-collared cream blouse, grey trousers, both empty hands relaxed together at waist, standing in a quiet walled garden, no writing, fully clothed, backlighting, light rays, floating particles, depth of field, cowboy shot, fantasy, masterpiece, best quality, amazing quality",
+        "negative": "bad quality, worst quality, worst detail, sketch, censor",
+        "width": 832,
+        "height": 1216,
+        "seed": 202610160503,
+        "steps": 26,
+        "cfg": 6.0,
+        "denoise": 1.0,
+        "sampler": "euler_ancestral",
+        "scheduler": "normal"
+      },
+      "workflow_sha256": "05cef821ca5f3526b15251ec07c164340408f490218896f41b5a194863e64a28",
+      "models": [
+        {
+          "class_type": "CheckpointLoaderSimple",
+          "inputs": {
+            "ckpt_name": "waiIllustriousSDXL_v170.safetensors"
+          }
+        }
+      ]
+    },
+    {
+      "trial": "source-zimage",
+      "section": "non-anima-sources",
+      "look_id": "look-preset-zimage-fast",
+      "scene": "A realistic colour photograph of one clearly mature adult man aged fifty, short salt-and-pepper hair and a neat salt-and-pepper beard, wearing a brown wool jacket over a white collared shirt and dark trousers, standing in a quiet conservatory, medium shot from head to thighs, both empty hands resting at his waist, soft daylight, fully clothed, no writing",
+      "heavy": false,
+      "request": {
+        "preset_id": "zimage-fast",
+        "controls": {
+          "positive": "A realistic colour photograph of one clearly mature adult man aged fifty, short salt-and-pepper hair and a neat salt-and-pepper beard, wearing a brown wool jacket over a white collared shirt and dark trousers, standing in a quiet conservatory, medium shot from head to thighs, both empty hands resting at his waist, soft daylight, fully clothed, no writing",
+          "width": 1024,
+          "height": 1024,
+          "seed": 202610160503,
+          "steps": 8,
+          "cfg": 1.0,
+          "denoise": 1.0
+        },
+        "label": "Lab 1016d · source-zimage",
+        "batch_count": 1
+      },
+      "status": "completed",
+      "admission": {
+        "host_commit": {
+          "available_bytes": 42186248192,
+          "limit_bytes": 102784090112,
+          "committed_bytes": 60597841920,
+          "unknown_reason": null
+        },
+        "gpu_memory": {
+          "pid": 26376,
+          "adapter": "0x00000000_0x00015b6d_0",
+          "dedicated_bytes": 10443284480,
+          "shared_bytes": 82563072,
+          "spilled": false,
+          "unknown_reason": null
+        },
+        "vram_guard": {
+          "installed": true,
+          "reason": null,
+          "pid": 26376
+        }
+      },
+      "job_id": "d486a53b-e8c6-470f-9ae9-a390fc580f45",
+      "prompt_ids": [
+        "15330955-a1f3-4242-bdc6-a71d1f2f625e"
+      ],
+      "seconds": 137.61910486221313,
+      "message": "Complete",
+      "outputs": [
+        {
+          "image": ".runtime/lab-20261016d/source-zimage-0.png",
+          "sha256": "10eeaa586cc1eecc137756dac155a456845c498ac09d4628e0b85cee463bd683",
+          "dimensions": [
+            1024,
+            1024
+          ],
+          "metadata": {
+            "filename": "Z-Image-Fast_00037_.png",
+            "subfolder": "Studio",
+            "type": "output",
+            "seed": 202610160503,
+            "prompt_id": "15330955-a1f3-4242-bdc6-a71d1f2f625e",
+            "media_type": "image",
+            "asset_id": "d5e42ef499a85c04ae6e3e13cea4b624"
+          }
+        }
+      ],
+      "recipe_sha256": "89bd07cf53750d8b2111ed5d14f3e61ae954a7c79192ca94da9c30a292997b9e",
+      "image": ".runtime/lab-20261016d/source-zimage-0.png",
+      "sha256": "10eeaa586cc1eecc137756dac155a456845c498ac09d4628e0b85cee463bd683",
+      "prompt_id": "15330955-a1f3-4242-bdc6-a71d1f2f625e",
+      "judge": "lab",
+      "blind": false,
+      "judged_at": "2026-10-16T14:11:28.192013",
+      "scores": {
+        "adherence": 3,
+        "anatomy": 4,
+        "style": 5,
+        "technical": 5,
+        "composition": 5,
+        "control": null
+      },
+      "verdict": "fixable",
+      "worst_defect": "Both hands hang beside thighs instead of resting at waist",
+      "fix": "Change stance wording or reseed if the source pose matters",
+      "note": "Clearly mature adult source. Native face and both hand crops inspected; readable fingers, natural greying hair/beard and realistic conservative clothing. Hands hang at the thighs rather than rest at the waist. Usable identity reference; source prompt adherence is FIXABLE, not promoted as a clean source recipe.",
+      "crops": [
+        {
+          "box": [
+            380,
+            10,
+            650,
+            315
+          ],
+          "image": ".runtime/lab-20261016d/source-zimage-crop-0.png",
+          "sha256": "0755d78a25fa438d43c27c32ab0ec3f66d75603b4e3665a4f61202896982e604"
+        },
+        {
+          "box": [
+            260,
+            850,
+            420,
+            1024
+          ],
+          "image": ".runtime/lab-20261016d/source-zimage-crop-1.png",
+          "sha256": "1a51c9a95c8d8d1bc7d8d3bc601791db190073b44900c62495f244e0eb59a079"
+        },
+        {
+          "box": [
+            650,
+            840,
+            810,
+            1024
+          ],
+          "image": ".runtime/lab-20261016d/source-zimage-crop-2.png",
+          "sha256": "50f2116def9797ed17b56b971a7c8f106fe4a70c004505c238aa2248d47a9325"
+        }
+      ],
+      "source_usable_for_identity": true,
+      "resolved_controls": {
+        "positive": "A realistic colour photograph of one clearly mature adult man aged fifty, short salt-and-pepper hair and a neat salt-and-pepper beard, wearing a brown wool jacket over a white collared shirt and dark trousers, standing in a quiet conservatory, medium shot from head to thighs, both empty hands resting at his waist, soft daylight, fully clothed, no writing",
+        "width": 1024,
+        "height": 1024,
+        "seed": 202610160503,
+        "steps": 8,
+        "cfg": 1.0,
+        "denoise": 1.0
+      },
+      "workflow_sha256": "c20304d2d77549a70b088a01e31b9621311db05f5a95e66428de5fae7652fdcb",
+      "models": [
+        {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors"
+          }
+        },
+        {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_4b.safetensors"
+          }
+        },
+        {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "ae.safetensors"
+          }
+        }
+      ]
+    },
+    {
+      "trial": "transfer-wai-copy",
+      "section": "non-anima-transfer",
+      "family": "wai",
+      "source_trial": "source-wai-older",
+      "source_asset": "26fb675eb78a5c7daa540b414a7b2929",
+      "pose_asset": "2847242877545599b04e0b7682899d6c",
+      "fill_answers": {
+        "who": "an older adult man aged fifty-five with short swept-back grey hair, a neat full grey beard and closed smiling eyes",
+        "clothes": "a long pale tan travelling coat over a cream collared shirt and grey trousers",
+        "pose": "holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot",
+        "outfit": "long teal hanfu"
+      },
+      "heavy": true,
+      "request": {
+        "preset_id": "combine-klein-9b-copypose",
+        "controls": {
+          "last_reference": "b2908e0c28494ef0b3044903126f4f85_WAI-Illustration_00060_.png.png",
+          "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an older adult man aged fifty-five with short swept-back grey hair, a neat full grey beard and closed smiling eyes; keep that character's face, hair and rendering style and the clothes with their colours (a long pale tan travelling coat over a cream collared shirt and grey trousers); only the pose and framing change, to image 2's: holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+          "seed": 202610160507
+        },
+        "continuation": {
+          "intent": "combine",
+          "preset_id": "combine-klein-9b-copypose",
+          "reference_file": "b2908e0c28494ef0b3044903126f4f85_WAI-Illustration_00060_.png.png",
+          "source_asset_id": "26fb675eb78a5c7daa540b414a7b2929",
+          "source_sha256": "1dd2311e725ea8f0103a2561d3dc64e3b8cfe7b75afc2302c4f6d93cdcf40b62",
+          "template_sha256": "b31203a55df458649c2abc92314e60704d63a770e5577a5ee6aa7ca295d46956",
+          "version": 1
+        },
+        "references": [
+          {
+            "role": "pose",
+            "contribution": "",
+            "avoid": "",
+            "file": "296b1070eb744cc3b567cef7a52d6d81_OneObsession-Anima-v20-Baseline_00007_.png.png",
+            "sha256": "37a28fc8a4fd46462bfca4824d323927d5825a7d44f25fbb02e0ea870788ae10",
+            "bytes": 1422801,
+            "width": 832,
+            "height": 1216,
+            "parent_asset": "2847242877545599b04e0b7682899d6c"
+          }
+        ],
+        "parent_assets": [
+          "26fb675eb78a5c7daa540b414a7b2929",
+          "2847242877545599b04e0b7682899d6c"
+        ],
+        "label": "Lab 1016d · transfer-wai-copy",
+        "batch_count": 1
+      },
+      "status": "completed",
+      "admission": {
+        "host_commit": {
+          "available_bytes": 49887404032,
+          "limit_bytes": 102784090112,
+          "committed_bytes": 52896686080,
+          "unknown_reason": null
+        },
+        "gpu_memory": {
+          "pid": 26376,
+          "adapter": "0x00000000_0x00015b6d_0",
+          "dedicated_bytes": 2897633280,
+          "shared_bytes": 82563072,
+          "spilled": false,
+          "unknown_reason": null
+        },
+        "vram_guard": {
+          "installed": true,
+          "reason": null,
+          "pid": 26376
+        }
+      },
+      "job_id": "8f88e30f-ed79-47da-b077-76c90e9a9799",
+      "prompt_ids": [
+        "890a1207-550a-484b-a182-0f5eef9d9c2f"
+      ],
+      "seconds": 90.58821892738342,
+      "message": "Complete. GPU memory overflowed 2.6 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards. The largest other GPU user was dwm.exe (the Windows desktop) with 2.9 GB.",
+      "outputs": [
+        {
+          "image": ".runtime/lab-20261016d/transfer-wai-copy-0.png",
+          "sha256": "cc109f7e0025c11aa7b9edc397deff330b41dd39df808c390001bcbdb06c9c64",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "metadata": {
+            "filename": "Klein-9B-copypose_00014_.png",
+            "subfolder": "Combine",
+            "type": "output",
+            "seed": 202610160507,
+            "prompt_id": "890a1207-550a-484b-a182-0f5eef9d9c2f",
+            "media_type": "image",
+            "asset_id": "3c8cb9be91015217905aa710b1595dcf"
+          }
+        }
+      ],
+      "recipe_sha256": "c3107b4eddc7e216a5c203dfff3c8926db875be489ceac4e4ff6a37caafb7c53",
+      "image": ".runtime/lab-20261016d/transfer-wai-copy-0.png",
+      "sha256": "cc109f7e0025c11aa7b9edc397deff330b41dd39df808c390001bcbdb06c9c64",
+      "prompt_id": "890a1207-550a-484b-a182-0f5eef9d9c2f",
+      "judge": "lab",
+      "blind": false,
+      "judged_at": "2026-10-16T14:17:05.291219",
+      "scores": {
+        "adherence": 4,
+        "anatomy": 3,
+        "style": 5,
+        "technical": 5,
+        "composition": 5,
+        "control": 4
+      },
+      "verdict": "fixable",
+      "worst_defect": "Foreground flute hand has an elongated, awkwardly splayed grip",
+      "fix": "Masked hand repair or a new seed; not performed",
+      "note": "Face and both flute-hand crops inspected at native size against the WAI source and One Obsession pose picture. Grey swept hair, beard, closed-eye smile, tan coat, cream shirt, garden arch and warm cel shading retained. Flute/body pose transfers, but foreground grip has unnaturally elongated/splayed fingers and an awkward curled lower finger. Five visible digits, not a claimed extra-finger count.",
+      "crops": [
+        {
+          "box": [
+            200,
+            40,
+            780,
+            680
+          ],
+          "image": ".runtime/lab-20261016d/transfer-wai-copy-crop-0.png",
+          "sha256": "9fcac88ab7555f6acb1693e55f12187b1aeba46d5d1a093acdba925a4e8a1c3b"
+        },
+        {
+          "box": [
+            120,
+            490,
+            520,
+            920
+          ],
+          "image": ".runtime/lab-20261016d/transfer-wai-copy-crop-1.png",
+          "sha256": "09de8cdf8697efe9f85a7dcdf6b562a8e19756ea4be3e5678f82315ba7997165"
+        }
+      ],
+      "pose_held": "yes, grip differs",
+      "identity_held": "yes",
+      "identity_score": 4,
+      "source_look_held": "yes",
+      "source_look_score": 5,
+      "destination_look_held": "not required",
+      "resolved_controls": {
+        "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an older adult man aged fifty-five with short swept-back grey hair, a neat full grey beard and closed smiling eyes; keep that character's face, hair and rendering style and the clothes with their colours (a long pale tan travelling coat over a cream collared shirt and grey trousers); only the pose and framing change, to image 2's: holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+        "seed": 202610160507,
+        "steps": 6,
+        "cfg": 1.0,
+        "width": 1024,
+        "height": 1536,
+        "last_reference": "b2908e0c28494ef0b3044903126f4f85_WAI-Illustration_00060_.png.png",
+        "lora": 1.0,
+        "lora_name": "KleinBase9B_PoseTransfer.safetensors"
+      },
+      "workflow_sha256": "88f7d0c93aa42ece920780f668c48171f6b04572c6af3a99523a117e470dc1f5",
+      "models": [
+        {
+          "class_type": "UnetLoaderGGUF",
+          "inputs": {
+            "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+          }
+        },
+        {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_8b_fp8mixed.safetensors"
+          }
+        },
+        {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "flux2-vae.safetensors"
+          }
+        },
+        {
+          "class_type": "LoraLoaderModelOnly",
+          "inputs": {
+            "lora_name": "KleinBase9B_PoseTransfer.safetensors"
+          }
+        }
+      ]
+    },
+    {
+      "trial": "transfer-wai-replace",
+      "section": "non-anima-transfer",
+      "family": "wai",
+      "source_trial": "source-wai-older",
+      "source_asset": "26fb675eb78a5c7daa540b414a7b2929",
+      "pose_asset": "2847242877545599b04e0b7682899d6c",
+      "fill_answers": {
+        "who": "an older adult man aged fifty-five with short swept-back grey hair, a neat full grey beard and closed smiling eyes",
+        "clothes": "a long pale tan travelling coat over a cream collared shirt and grey trousers",
+        "pose": "holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot",
+        "outfit": "long teal hanfu"
+      },
+      "heavy": true,
+      "request": {
+        "preset_id": "combine-klein-9b-replace",
+        "controls": {
+          "last_reference": "b2908e0c28494ef0b3044903126f4f85_WAI-Illustration_00060_.png.png",
+          "positive": "Replace the person in image 1 with the character in image 2, keeping image 1's pose, action, camera angle, composition, background and lighting (holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot). The character in image 2 is an older adult man aged fifty-five with short swept-back grey hair, a neat full grey beard and closed smiling eyes; keep that face, hair and expression exactly as in image 2. The character wears image 1's clothes: long teal hanfu. Keep image 1's rendering style and its background. One figure only, nobody else in the picture.",
+          "seed": 202610160507
+        },
+        "continuation": {
+          "intent": "combine",
+          "preset_id": "combine-klein-9b-replace",
+          "reference_file": "b2908e0c28494ef0b3044903126f4f85_WAI-Illustration_00060_.png.png",
+          "source_asset_id": "26fb675eb78a5c7daa540b414a7b2929",
+          "source_sha256": "1dd2311e725ea8f0103a2561d3dc64e3b8cfe7b75afc2302c4f6d93cdcf40b62",
+          "template_sha256": "cc40e0e6f8b561b622c6faa3cdc140dfa3f3fa64b63a58981e3e60e7993d58bf",
+          "version": 1
+        },
+        "references": [
+          {
+            "role": "composition",
+            "contribution": "",
+            "avoid": "",
+            "file": "296b1070eb744cc3b567cef7a52d6d81_OneObsession-Anima-v20-Baseline_00007_.png.png",
+            "sha256": "37a28fc8a4fd46462bfca4824d323927d5825a7d44f25fbb02e0ea870788ae10",
+            "bytes": 1422801,
+            "width": 832,
+            "height": 1216,
+            "parent_asset": "2847242877545599b04e0b7682899d6c"
+          }
+        ],
+        "parent_assets": [
+          "26fb675eb78a5c7daa540b414a7b2929",
+          "2847242877545599b04e0b7682899d6c"
+        ],
+        "label": "Lab 1016d · transfer-wai-replace",
+        "batch_count": 1
+      },
+      "status": "completed",
+      "admission": {
+        "host_commit": {
+          "available_bytes": 50813194240,
+          "limit_bytes": 102784090112,
+          "committed_bytes": 51970895872,
+          "unknown_reason": null
+        },
+        "gpu_memory": {
+          "pid": 26376,
+          "adapter": "0x00000000_0x00015b6d_0",
+          "dedicated_bytes": 2010939392,
+          "shared_bytes": 82563072,
+          "spilled": false,
+          "unknown_reason": null
+        },
+        "vram_guard": {
+          "installed": true,
+          "reason": null,
+          "pid": 26376
+        }
+      },
+      "job_id": "e37a3141-9c33-487a-bec0-5538b4a7d224",
+      "prompt_ids": [
+        "70ba1eb3-e33e-48a0-aab2-478179af949f"
+      ],
+      "seconds": 100.75873589515686,
+      "message": "Complete. GPU memory overflowed 2.5 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards. The largest other GPU user was dwm.exe (the Windows desktop) with 2.9 GB.",
+      "outputs": [
+        {
+          "image": ".runtime/lab-20261016d/transfer-wai-replace-0.png",
+          "sha256": "95bf002354ba67b0dc2a159a8ff69194f86da8cf8133607602b74486b4ad8892",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "metadata": {
+            "filename": "Klein-9B-replace_00006_.png",
+            "subfolder": "Combine",
+            "type": "output",
+            "seed": 202610160507,
+            "prompt_id": "70ba1eb3-e33e-48a0-aab2-478179af949f",
+            "media_type": "image",
+            "asset_id": "ca8e1c8624515a0ba43cc3987141bff1"
+          }
+        }
+      ],
+      "recipe_sha256": "86bb20e416f963459790555de317f4a7158c85a6e6945dc0d01454b4e29995fb",
+      "image": ".runtime/lab-20261016d/transfer-wai-replace-0.png",
+      "sha256": "95bf002354ba67b0dc2a159a8ff69194f86da8cf8133607602b74486b4ad8892",
+      "prompt_id": "70ba1eb3-e33e-48a0-aab2-478179af949f",
+      "judge": "lab",
+      "blind": false,
+      "judged_at": "2026-10-16T14:20:55.984959",
+      "scores": {
+        "adherence": 4,
+        "anatomy": 4,
+        "style": 5,
+        "technical": 5,
+        "composition": 5,
+        "control": 4
+      },
+      "verdict": "keep",
+      "worst_defect": "No mandatory repair seen",
+      "fix": null,
+      "note": "Native face and complete flute grips inspected. Grey swept hair, full beard and closed smiling eyes transfer recognisably; slightly longer face and deeper smile lines. Destination flute grip, teal embroidered hanfu, glossy finish and moon gate retained as requested. Long stylized fingers remain readable, no clear extra digit or mandatory repair. Source tan clothes/warm garden intentionally replaced.",
+      "crops": [
+        {
+          "box": [
+            270,
+            100,
+            830,
+            750
+          ],
+          "image": ".runtime/lab-20261016d/transfer-wai-replace-crop-0.png",
+          "sha256": "da4989dd5371d17a210d5c1e7607bb057a8c3097548f58262f6e1187aff12596"
+        },
+        {
+          "box": [
+            70,
+            490,
+            430,
+            850
+          ],
+          "image": ".runtime/lab-20261016d/transfer-wai-replace-crop-1.png",
+          "sha256": "7cc73906b9169bcc2f72a56c1be22602f20eca45070a84298980f510948b2c9f"
+        }
+      ],
+      "pose_held": "yes",
+      "identity_held": "yes, mild drift",
+      "identity_score": 4,
+      "source_look_held": "partly; changed intentionally",
+      "source_look_score": 3,
+      "destination_look_held": "yes",
+      "destination_look_score": 5,
+      "resolved_controls": {
+        "positive": "Replace the person in image 1 with the character in image 2, keeping image 1's pose, action, camera angle, composition, background and lighting (holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot). The character in image 2 is an older adult man aged fifty-five with short swept-back grey hair, a neat full grey beard and closed smiling eyes; keep that face, hair and expression exactly as in image 2. The character wears image 1's clothes: long teal hanfu. Keep image 1's rendering style and its background. One figure only, nobody else in the picture.",
+        "seed": 202610160507,
+        "steps": 6,
+        "cfg": 1.0,
+        "width": 1024,
+        "height": 1536,
+        "last_reference": "b2908e0c28494ef0b3044903126f4f85_WAI-Illustration_00060_.png.png",
+        "lora": 1.0,
+        "lora_name": "replace_character_v1_klein.safetensors"
+      },
+      "workflow_sha256": "5b103e3e9fae7120ea08d8c79d3121381b630c60965c86e82cf7197b03f7fd53",
+      "models": [
+        {
+          "class_type": "UnetLoaderGGUF",
+          "inputs": {
+            "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+          }
+        },
+        {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_8b_fp8mixed.safetensors"
+          }
+        },
+        {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "flux2-vae.safetensors"
+          }
+        },
+        {
+          "class_type": "LoraLoaderModelOnly",
+          "inputs": {
+            "lora_name": "replace_character_v1_klein.safetensors"
+          }
+        }
+      ]
+    },
+    {
+      "trial": "transfer-zimage-copy",
+      "section": "non-anima-transfer",
+      "family": "zimage",
+      "source_trial": "source-zimage",
+      "source_asset": "d5e42ef499a85c04ae6e3e13cea4b624",
+      "pose_asset": "2847242877545599b04e0b7682899d6c",
+      "fill_answers": {
+        "who": "an adult man aged fifty with short salt-and-pepper hair, a full salt-and-pepper beard and a serious expression",
+        "clothes": "a brown jacket over a white collared shirt and dark trousers",
+        "pose": "holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot",
+        "outfit": "long teal hanfu"
+      },
+      "heavy": true,
+      "request": {
+        "preset_id": "combine-klein-9b-copypose",
+        "controls": {
+          "last_reference": "c73bb446edd6440bb01f941b6ec895f0_Z-Image-Fast_00037_.png.png",
+          "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult man aged fifty with short salt-and-pepper hair, a full salt-and-pepper beard and a serious expression; keep that character's face, hair and rendering style and the clothes with their colours (a brown jacket over a white collared shirt and dark trousers); only the pose and framing change, to image 2's: holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+          "seed": 202610160507
+        },
+        "continuation": {
+          "intent": "combine",
+          "preset_id": "combine-klein-9b-copypose",
+          "reference_file": "c73bb446edd6440bb01f941b6ec895f0_Z-Image-Fast_00037_.png.png",
+          "source_asset_id": "d5e42ef499a85c04ae6e3e13cea4b624",
+          "source_sha256": "10eeaa586cc1eecc137756dac155a456845c498ac09d4628e0b85cee463bd683",
+          "template_sha256": "b31203a55df458649c2abc92314e60704d63a770e5577a5ee6aa7ca295d46956",
+          "version": 1
+        },
+        "references": [
+          {
+            "role": "pose",
+            "contribution": "",
+            "avoid": "",
+            "file": "296b1070eb744cc3b567cef7a52d6d81_OneObsession-Anima-v20-Baseline_00007_.png.png",
+            "sha256": "37a28fc8a4fd46462bfca4824d323927d5825a7d44f25fbb02e0ea870788ae10",
+            "bytes": 1422801,
+            "width": 832,
+            "height": 1216,
+            "parent_asset": "2847242877545599b04e0b7682899d6c"
+          }
+        ],
+        "parent_assets": [
+          "d5e42ef499a85c04ae6e3e13cea4b624",
+          "2847242877545599b04e0b7682899d6c"
+        ],
+        "label": "Lab 1016d · transfer-zimage-copy",
+        "batch_count": 1
+      },
+      "status": "completed",
+      "admission": {
+        "host_commit": {
+          "available_bytes": 50673512448,
+          "limit_bytes": 102784090112,
+          "committed_bytes": 52110577664,
+          "unknown_reason": null
+        },
+        "gpu_memory": {
+          "pid": 26376,
+          "adapter": "0x00000000_0x00015b6d_0",
+          "dedicated_bytes": 2010939392,
+          "shared_bytes": 82563072,
+          "spilled": false,
+          "unknown_reason": null
+        },
+        "vram_guard": {
+          "installed": true,
+          "reason": null,
+          "pid": 26376
+        }
+      },
+      "job_id": "b33ee614-c29a-40ac-b364-6c6276623457",
+      "prompt_ids": [
+        "5665c332-3f4e-40aa-aeee-aed570c2915b"
+      ],
+      "seconds": 103.03022766113281,
+      "message": "Complete. GPU memory overflowed 2.6 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards. The largest other GPU user was dwm.exe (the Windows desktop) with 2.9 GB.",
+      "outputs": [
+        {
+          "image": ".runtime/lab-20261016d/transfer-zimage-copy-0.png",
+          "sha256": "47935ab88fb352d37ea7f9c7e3cb2c9d0ff1aac62474fb20ac2e171948cac2c2",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "metadata": {
+            "filename": "Klein-9B-copypose_00015_.png",
+            "subfolder": "Combine",
+            "type": "output",
+            "seed": 202610160507,
+            "prompt_id": "5665c332-3f4e-40aa-aeee-aed570c2915b",
+            "media_type": "image",
+            "asset_id": "05dbc81c34275fd3a52d3d7802398172"
+          }
+        }
+      ],
+      "recipe_sha256": "04a9ac35e47cacbe616b8222009b644b61dd62523f1eef5240e40d512a51c41d",
+      "image": ".runtime/lab-20261016d/transfer-zimage-copy-0.png",
+      "sha256": "47935ab88fb352d37ea7f9c7e3cb2c9d0ff1aac62474fb20ac2e171948cac2c2",
+      "prompt_id": "5665c332-3f4e-40aa-aeee-aed570c2915b",
+      "judge": "lab",
+      "blind": false,
+      "judged_at": "2026-10-16T14:25:25.705763",
+      "scores": {
+        "adherence": 4,
+        "anatomy": 4,
+        "style": 5,
+        "technical": 5,
+        "composition": 5,
+        "control": 4
+      },
+      "verdict": "keep",
+      "worst_defect": "No mandatory repair seen",
+      "fix": null,
+      "note": "Native face and complete grip crops inspected against the Z-Image source and flute pose picture. Photographic skin/hair/beard, serious expression, brown jacket, white shirt, dark trousers and conservatory retained. New hair strands and deeper wrinkles make identity recognisable rather than exact. Both hands contact the flute; lower little finger is splayed but joints/digits remain readable, no mandatory repair seen.",
+      "crops": [
+        {
+          "box": [
+            260,
+            100,
+            800,
+            750
+          ],
+          "image": ".runtime/lab-20261016d/transfer-zimage-copy-crop-0.png",
+          "sha256": "dcdc45f0fc95d70992e354a329234996c3dcfb54bc225e4c51cfa2ab59bc010c"
+        },
+        {
+          "box": [
+            130,
+            520,
+            500,
+            950
+          ],
+          "image": ".runtime/lab-20261016d/transfer-zimage-copy-crop-1.png",
+          "sha256": "22a38c41d2a8895f0346386d62e27e7416f9639f390aee0dd47b5ce53c9ef889"
+        }
+      ],
+      "pose_held": "yes",
+      "identity_held": "yes, age/detail drift",
+      "identity_score": 4,
+      "source_look_held": "yes",
+      "source_look_score": 5,
+      "destination_look_held": "not required",
+      "resolved_controls": {
+        "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult man aged fifty with short salt-and-pepper hair, a full salt-and-pepper beard and a serious expression; keep that character's face, hair and rendering style and the clothes with their colours (a brown jacket over a white collared shirt and dark trousers); only the pose and framing change, to image 2's: holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+        "seed": 202610160507,
+        "steps": 6,
+        "cfg": 1.0,
+        "width": 1024,
+        "height": 1536,
+        "last_reference": "c73bb446edd6440bb01f941b6ec895f0_Z-Image-Fast_00037_.png.png",
+        "lora": 1.0,
+        "lora_name": "KleinBase9B_PoseTransfer.safetensors"
+      },
+      "workflow_sha256": "301bcbf0f96d9c6f1185238e546e4f78542ef0d87f48eda820a1855886da7a76",
+      "models": [
+        {
+          "class_type": "UnetLoaderGGUF",
+          "inputs": {
+            "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+          }
+        },
+        {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_8b_fp8mixed.safetensors"
+          }
+        },
+        {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "flux2-vae.safetensors"
+          }
+        },
+        {
+          "class_type": "LoraLoaderModelOnly",
+          "inputs": {
+            "lora_name": "KleinBase9B_PoseTransfer.safetensors"
+          }
+        }
+      ]
+    },
+    {
+      "trial": "transfer-zimage-replace",
+      "section": "non-anima-transfer",
+      "family": "zimage",
+      "source_trial": "source-zimage",
+      "source_asset": "d5e42ef499a85c04ae6e3e13cea4b624",
+      "pose_asset": "2847242877545599b04e0b7682899d6c",
+      "fill_answers": {
+        "who": "an adult man aged fifty with short salt-and-pepper hair, a full salt-and-pepper beard and a serious expression",
+        "clothes": "a brown jacket over a white collared shirt and dark trousers",
+        "pose": "holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot",
+        "outfit": "long teal hanfu"
+      },
+      "heavy": true,
+      "request": {
+        "preset_id": "combine-klein-9b-replace",
+        "controls": {
+          "last_reference": "c73bb446edd6440bb01f941b6ec895f0_Z-Image-Fast_00037_.png.png",
+          "positive": "Replace the person in image 1 with the character in image 2, keeping image 1's pose, action, camera angle, composition, background and lighting (holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot). The character in image 2 is an adult man aged fifty with short salt-and-pepper hair, a full salt-and-pepper beard and a serious expression; keep that face, hair and expression exactly as in image 2. The character wears image 1's clothes: long teal hanfu. Keep image 1's rendering style and its background. One figure only, nobody else in the picture.",
+          "seed": 202610160507
+        },
+        "continuation": {
+          "intent": "combine",
+          "preset_id": "combine-klein-9b-replace",
+          "reference_file": "c73bb446edd6440bb01f941b6ec895f0_Z-Image-Fast_00037_.png.png",
+          "source_asset_id": "d5e42ef499a85c04ae6e3e13cea4b624",
+          "source_sha256": "10eeaa586cc1eecc137756dac155a456845c498ac09d4628e0b85cee463bd683",
+          "template_sha256": "cc40e0e6f8b561b622c6faa3cdc140dfa3f3fa64b63a58981e3e60e7993d58bf",
+          "version": 1
+        },
+        "references": [
+          {
+            "role": "composition",
+            "contribution": "",
+            "avoid": "",
+            "file": "296b1070eb744cc3b567cef7a52d6d81_OneObsession-Anima-v20-Baseline_00007_.png.png",
+            "sha256": "37a28fc8a4fd46462bfca4824d323927d5825a7d44f25fbb02e0ea870788ae10",
+            "bytes": 1422801,
+            "width": 832,
+            "height": 1216,
+            "parent_asset": "2847242877545599b04e0b7682899d6c"
+          }
+        ],
+        "parent_assets": [
+          "d5e42ef499a85c04ae6e3e13cea4b624",
+          "2847242877545599b04e0b7682899d6c"
+        ],
+        "label": "Lab 1016d · transfer-zimage-replace",
+        "batch_count": 1
+      },
+      "status": "completed",
+      "admission": {
+        "host_commit": {
+          "available_bytes": 49433628672,
+          "limit_bytes": 102784090112,
+          "committed_bytes": 53350461440,
+          "unknown_reason": null
+        },
+        "gpu_memory": {
+          "pid": 26376,
+          "adapter": "0x00000000_0x00015b6d_0",
+          "dedicated_bytes": 2010939392,
+          "shared_bytes": 82563072,
+          "spilled": false,
+          "unknown_reason": null
+        },
+        "vram_guard": {
+          "installed": true,
+          "reason": null,
+          "pid": 26376
+        }
+      },
+      "job_id": "31dd6d2f-5da5-4042-b648-ebd976b684ad",
+      "prompt_ids": [
+        "45276c2f-5bc1-44b6-9810-e76f2f66888f"
+      ],
+      "seconds": 105.40035939216614,
+      "message": "Complete. GPU memory overflowed 2.6 GB into system RAM while it ran, which slows the steps it touches; it drained afterwards. The largest other GPU user was dwm.exe (the Windows desktop) with 2.9 GB.",
+      "outputs": [
+        {
+          "image": ".runtime/lab-20261016d/transfer-zimage-replace-0.png",
+          "sha256": "8dacba4474bfdf308ab5e7e73c6fbce9a926b7ab80811a9803746cc8513f2778",
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "metadata": {
+            "filename": "Klein-9B-replace_00007_.png",
+            "subfolder": "Combine",
+            "type": "output",
+            "seed": 202610160507,
+            "prompt_id": "45276c2f-5bc1-44b6-9810-e76f2f66888f",
+            "media_type": "image",
+            "asset_id": "ed396578f111579c9469280b045a0a58"
+          }
+        }
+      ],
+      "recipe_sha256": "f5910bf6efd8ca3b73e27b69899b5357bc093b3735f058332d5dfea86d5b6bd6",
+      "image": ".runtime/lab-20261016d/transfer-zimage-replace-0.png",
+      "sha256": "8dacba4474bfdf308ab5e7e73c6fbce9a926b7ab80811a9803746cc8513f2778",
+      "prompt_id": "45276c2f-5bc1-44b6-9810-e76f2f66888f",
+      "judge": "lab",
+      "blind": false,
+      "judged_at": "2026-10-16T14:28:44.547533",
+      "scores": {
+        "adherence": 4,
+        "anatomy": 4,
+        "style": 4,
+        "technical": 5,
+        "composition": 5,
+        "control": 4
+      },
+      "verdict": "keep",
+      "worst_defect": "No mandatory repair seen",
+      "fix": null,
+      "note": "Native face and complete grips inspected against the photo source and anime destination. Grey quiff, beard, angular brows and serious expression transfer recognisably but become an illustrated, more angular and heavily lined face. Destination flute pose, embroidered teal hanfu and moon gate retained. Source photographic finish and brown jacket intentionally replaced. Long digits readable, no clear extra digit or mandatory hand repair.",
+      "crops": [
+        {
+          "box": [
+            270,
+            80,
+            850,
+            750
+          ],
+          "image": ".runtime/lab-20261016d/transfer-zimage-replace-crop-0.png",
+          "sha256": "33f65d90b4354c9fb51c025485fde58fb738b4997ceb941255f33b51f0385192"
+        },
+        {
+          "box": [
+            50,
+            500,
+            450,
+            950
+          ],
+          "image": ".runtime/lab-20261016d/transfer-zimage-replace-crop-1.png",
+          "sha256": "cc899f260bd3d1c24f174336bb48d33bd82a18c997304e459288d80b8efedb58"
+        }
+      ],
+      "pose_held": "yes",
+      "identity_held": "yes, stylized/age drift",
+      "identity_score": 4,
+      "source_look_held": "no; intentionally changes to illustration",
+      "source_look_score": 1,
+      "destination_look_held": "yes, more comic-like face",
+      "destination_look_score": 4,
+      "resolved_controls": {
+        "positive": "Replace the person in image 1 with the character in image 2, keeping image 1's pose, action, camera angle, composition, background and lighting (holding one bamboo flute horizontally with both hands at chest height, torso turned slightly, front view, medium shot). The character in image 2 is an adult man aged fifty with short salt-and-pepper hair, a full salt-and-pepper beard and a serious expression; keep that face, hair and expression exactly as in image 2. The character wears image 1's clothes: long teal hanfu. Keep image 1's rendering style and its background. One figure only, nobody else in the picture.",
+        "seed": 202610160507,
+        "steps": 6,
+        "cfg": 1.0,
+        "width": 1024,
+        "height": 1536,
+        "last_reference": "c73bb446edd6440bb01f941b6ec895f0_Z-Image-Fast_00037_.png.png",
+        "lora": 1.0,
+        "lora_name": "replace_character_v1_klein.safetensors"
+      },
+      "workflow_sha256": "7bad643ad7f10c55b52b9b2f28dd9ee04fba68b201476eb242d5345cad169b59",
+      "models": [
+        {
+          "class_type": "UnetLoaderGGUF",
+          "inputs": {
+            "unet_name": "flux-2-klein-9b-Q6_K.gguf"
+          }
+        },
+        {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen_3_8b_fp8mixed.safetensors"
+          }
+        },
+        {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "flux2-vae.safetensors"
+          }
+        },
+        {
+          "class_type": "LoraLoaderModelOnly",
+          "inputs": {
+            "lora_name": "replace_character_v1_klein.safetensors"
+          }
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "jobs": 21,
+    "completed": 21,
+    "outputs": 21,
+    "verdicts": {
+      "keep": 15,
+      "fixable": 4,
+      "reject": 1,
+      "skipped": 1
+    },
+    "serial_intervals": true,
+    "all_hashes_match": true,
+    "human_todo_unchanged": true,
+    "verified_at": "2026-10-16T15:03:56.401627"
+  },
+  "game_item_candidate": {
+    "status": "candidate for coordinator proposal, not a shipped look",
+    "preset_id": "zimage-fast",
+    "template": "stylized hand painted game inventory icon, soft cel shading, {scene}, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+    "negative": null,
+    "controls": {
+      "width": 1024,
+      "height": 1024,
+      "steps": 8,
+      "cfg": 1.0,
+      "denoise": 1.0,
+      "seed": 202610160403
+    },
+    "authored_graph_controls": {
+      "sampler": "res_multistep",
+      "scheduler": "simple",
+      "shift": 3.0
+    },
+    "objects": [
+      "one round teal glass potion bottle with a brass stopper",
+      "one short steel sword with a brown leather grip and straight brass crossguard"
+    ],
+    "keep_jobs": [
+      "8ab33602-3d7d-4b5a-8d69-88cb2f7688c4",
+      "9006f8d7-1f84-4f3f-9d21-72041ed8c8cd"
+    ],
+    "limits": [
+      "one seed per object",
+      "agent-judged only",
+      "not a transparent-background route",
+      "near-white canvas not exact RGB-white guarantee",
+      "models not licence-cleared"
+    ]
+  },
+  "game_item_qualifying_routes": [
+    {
+      "status": "candidate for coordinator proposal, not a shipped look",
+      "preset_id": "zimage-fast",
+      "template": "stylized hand painted game inventory icon, soft cel shading, {scene}, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+      "negative": null,
+      "controls": {
+        "width": 1024,
+        "height": 1024,
+        "steps": 8,
+        "cfg": 1.0,
+        "denoise": 1.0,
+        "seed": 202610160403
+      },
+      "authored_graph_controls": {
+        "sampler": "res_multistep",
+        "scheduler": "simple",
+        "shift": 3.0
+      },
+      "objects": [
+        "one round teal glass potion bottle with a brass stopper",
+        "one short steel sword with a brown leather grip and straight brass crossguard"
+      ],
+      "keep_jobs": [
+        "8ab33602-3d7d-4b5a-8d69-88cb2f7688c4",
+        "9006f8d7-1f84-4f3f-9d21-72041ed8c8cd"
+      ],
+      "limits": [
+        "one seed per object",
+        "agent-judged only",
+        "not a transparent-background route",
+        "near-white canvas not exact RGB-white guarantee",
+        "models not licence-cleared"
+      ]
+    },
+    {
+      "status": "alternate candidate, not shipped",
+      "preset_id": "krea-anime-atelier",
+      "template": "stylized hand painted game inventory icon, soft cel shading, {scene}, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing, soft diffused light, pale sand and sea green palette, airy anime watercolor style",
+      "negative": null,
+      "controls": {
+        "steps": 8,
+        "cfg": 1,
+        "sampler": "euler",
+        "scheduler": "simple",
+        "width": 768,
+        "height": 1152,
+        "seed": 202610160403,
+        "lora_name": "Krea2_TextFusion_Refusal_Reduction.safetensors",
+        "lora": 1.0,
+        "lora2": 0,
+        "lora3": 0,
+        "lora4_name": "fal-krea2-airy-anime-watercolor.safetensors",
+        "lora4": 1.0
+      },
+      "objects": [
+        "one round teal glass potion bottle with a brass stopper",
+        "one short steel sword with a brown leather grip and straight brass crossguard"
+      ],
+      "keep_jobs": [
+        "cd3ae821-f0b0-4668-ac0c-b7866197a6e6",
+        "3d1cbf05-d638-4e3f-bf2f-d298d78efc73"
+      ],
+      "limits": [
+        "one seed per object",
+        "small objects on tall canvas",
+        "agent-judged only",
+        "not transparency or licence clearance"
+      ]
+    }
+  ],
+  "acceptance": "agent-judged only; human acceptance and licences remain open",
+  "verification": {
+    "look_tests": {
+      "command": "python -m unittest discover -s tests -p \"test_looks*.py\"",
+      "result": "61 passed; 22.207 s",
+      "tool_session": 59372
+    },
+    "validator": {
+      "command": "python scripts/validate-repo.py",
+      "exit_code": 0,
+      "output": "Local-only media: 728 manifest entries, 102 references checked.\nPASS: 92 preset graphs/bindings; 176 pinned assets; 4031 tracked paths checked.\nLoRA names checked: 158\n"
+    },
+    "diff_check": "git diff --check passed",
+    "receipt_audit": "21 exact requests/recipe exports, image and 43 crop hashes/pixels, seed-only reliability requests, unchanged Petiflow fixed controls, 10 admissions below 0.60, nonoverlapping intervals, JSONL parse, source hashes, unchanged HUMAN_TODO"
+  },
+  "worktree": {
+    "root": "C:\\Users\\jekyt\\wt-las\\lab4",
+    "branch": "lab/round4-reliability-20261016",
+    "head": "d2973fa0fdcf113378717dffa63464ace4a6b4f3",
+    "publication": "not committed or pushed; coordinator owns integration"
+  },
+  "final_state": {
+    "at": "2026-10-16T15:08:01.063556",
+    "online": true,
+    "worker_alive": true,
+    "active_jobs": [],
+    "historical_uncertain_count": 5,
+    "services": "left running unchanged by this agent"
+  }
+}
