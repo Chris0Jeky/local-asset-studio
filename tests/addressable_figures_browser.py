@@ -161,6 +161,9 @@ async def scenario_late_response_binding(browser):
 async def scenario_pointer_threshold(browser):
     page, errors = await page_for(browser)
     await page.click("[data-figure-split-open]")
+    # The stage is pointer-only; keyboard users use the per-row fields. A focusable
+    # stage would be a dead tab stop, so it must sit outside the tab order (tabIndex -1).
+    assert await page.locator("#figureSplitStage").evaluate("el => el.tabIndex") == -1, "stage is a dead tab stop"
     stage = await page.locator("#figureSplitStage").bounding_box()
     assert stage, "figure stage unavailable"
     x, y = stage["x"] + stage["width"] / 2, stage["y"] + stage["height"] / 2
