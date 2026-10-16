@@ -401,8 +401,10 @@ function parallaxNote(job,output){
   const failed=job.parallax_finish?.error?'Layers not split: '+job.parallax_finish.error+' ':'';
   if(done)return '<p class="disabledReason"><small>'+esc(failed||'Both edits are in; the layers are not split yet.')+'</small></p><button class="parallaxFinish" data-job="'+id+'" title="Register both edits, build the far, mid and near layers, measure the recomposite error and make the strip. Nothing is generated.">Split layers</button>';
   if(live)return '<p class="tileNote"><small>The '+name[other]+' edit is '+esc(live.status)+'; the layers split when it completes.</small></p>';
-  const parallaxAvailable=typeof window!=='undefined'&&!!window.StudioParallaxRecovery?.mounted;
-  if(!parallaxAvailable)return '<p class="disabledReason"><small>This '+name[claim.stage]+' has no '+name[other]+' edit yet.</small></p><p class="disabledReason"><small>Parallax staging is unavailable: reload the page.</small></p><button class="parallaxStage" data-job="'+id+'" data-stage="'+other+'" disabled title="Parallax staging is unavailable: reload the page.">Load the '+name[other]+' edit</button>';
+  const recovery=typeof window!=='undefined'?window.StudioParallaxRecovery:null,parallaxAvailable=!!recovery?.mounted;
+  // Until the recovery controller mounts (it loads after the page), say it is loading; only a failed mount asks for a reload.
+  const parallaxWhy=recovery?.failed||(!recovery&&typeof document!=='undefined'&&document.readyState==='complete'&&performance.now()>15000)?'Parallax staging is unavailable: reload the page.':'Parallax staging is still loading.';
+  if(!parallaxAvailable)return '<p class="disabledReason"><small>This '+name[claim.stage]+' has no '+name[other]+' edit yet.</small></p><p class="disabledReason"><small>'+parallaxWhy+'</small></p><button class="parallaxStage" data-job="'+id+'" data-stage="'+other+'" disabled title="'+parallaxWhy+'">Load the '+name[other]+' edit</button>';
   return '<p class="disabledReason"><small>This '+name[claim.stage]+' has no '+name[other]+' edit yet.</small></p><button class="parallaxStage" data-job="'+id+'" data-stage="'+other+'" title="Load the '+name[other]+' words for this picture into Create. Nothing runs until you press Generate.">Load the '+name[other]+' edit</button>';
 }
 function renderCompare() { $('#compare').hidden=!pinned.length; $('#compareImages').innerHTML=pinned.map(p=>'<img src="/api/image/'+esc(p.job)+'/'+esc(p.index)+'" alt="Pinned comparison">').join(''); }

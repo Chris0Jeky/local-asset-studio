@@ -78,7 +78,10 @@
     const gallery=root.document?.querySelector('#gallery');
     if(!gallery||gallery.dataset.parallaxRecovery==='mounted')return;
     if(!root.StudioSetupDraft||typeof root.parallaxNote!=='function'){
+      // Dependencies can arrive after DOMContentLoaded: retry once after load, then say so instead of waiting forever.
       if(root.document.readyState==='loading')root.document.addEventListener('DOMContentLoaded',()=>mount(root),{once:true});
+      else if(!api.retried){api.retried=true;if(root.document.readyState==='complete')root.setTimeout(()=>mount(root),1000);else root.addEventListener('load',()=>mount(root),{once:true});}
+      else{api.failed=true;if(typeof jobsSignature!=='undefined'){jobsSignature='';renderJobs();}}
       return;
     }
     const owner=root.StudioSetupDraft;
@@ -113,6 +116,6 @@
     // normal focus/media preservation applies; no polling or mutation observer.
     jobsSignature='';renderJobs();
   }
-  const api={create,render,mount,readJobList,mounted:false};
+  const api={create,render,mount,readJobList,mounted:false,retried:false,failed:false};
   return api;
 });

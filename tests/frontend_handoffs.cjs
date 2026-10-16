@@ -1553,8 +1553,11 @@ async function parallaxStagesAreTwoOwnerPresses() {
   run(`jobs=[]`);
   await element('#gallery').onclick({target: {closest: selector => selector === '.parallaxFinish' ? {dataset: {job: 'plate-job'}} : null}});
   assert.deepEqual(requests.filter(r => r.url === '/api/parallax/finish').map(r => r.data), [{job_id: 'plate-job'}]);
-  assert.match(card(plate), /disabled[^>]*title="Parallax staging is unavailable: reload the page\."/, 'without the controller the stage button is disabled with its reason in the title');
-  assert.match(card(plate), /Parallax staging is unavailable: reload the page\./, 'without the controller the disabled reason is visible');
+  assert.match(card(plate), /disabled[^>]*title="Parallax staging is still loading\."/, 'before the controller mounts the stage button waits and says so');
+  run(`window.StudioParallaxRecovery={mounted:false,failed:true}`);
+  assert.match(card(plate), /disabled[^>]*title="Parallax staging is unavailable: reload the page\."/, 'only a failed mount asks for a reload');
+  run(`delete window.StudioParallaxRecovery`);
+  assert.match(card(plate), /Parallax staging is still loading\./, 'without the controller the disabled reason is visible');
   const stagePosts = requests.filter(r => r.url === '/api/parallax/stage').length;
   await element('#gallery').onclick({target: {closest: selector => selector === '.parallaxStage' ? {dataset: {job: 'plate-job', stage: 'isolate'}} : null}});
   assert.equal(requests.filter(r => r.url === '/api/parallax/stage').length, stagePosts, 'without the controller a stage click POSTs nothing');
@@ -1572,8 +1575,8 @@ async function parallaxStageWithoutControllerPostsNothing() {
   const plate = {id: 'plate-job', status: 'completed', controls: {}, preset_name: 'Parallax layers', parallax: {...plan, stage: 'plate'}};
   run(`jobs=[]`);
   const html = run(`mediaCard(${JSON.stringify(plate)},0,{media_type:'image',asset_id:'edit'})`);
-  assert.match(html, /class="parallaxStage"[^>]*disabled[^>]*title="Parallax staging is unavailable: reload the page\."/, 'without the controller the stage button is disabled with its reason in the title');
-  assert.match(html, /Parallax staging is unavailable: reload the page\./, 'without the controller the disabled reason is visible');
+  assert.match(html, /class="parallaxStage"[^>]*disabled[^>]*title="Parallax staging is still loading\."/, 'without the controller the stage button is disabled with its reason in the title');
+  assert.match(html, /Parallax staging is still loading\./, 'without the controller the disabled reason is visible');
   const before = requests.filter(r => r.url === '/api/parallax/stage').length;
   await element('#gallery').onclick({target: {closest: selector => selector === '.parallaxStage' ? {dataset: {job: 'plate-job', stage: 'isolate'}} : null}});
   assert.equal(requests.filter(r => r.url === '/api/parallax/stage').length, before, 'clicking the disabled stage button POSTs nothing');
