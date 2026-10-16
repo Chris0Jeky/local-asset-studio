@@ -977,6 +977,9 @@
     const plan=varyPlanFor(button.dataset.preset,button.dataset.job,assetId);
     if(plan.kind==='none'){announce(plan.reason,true);return;}
     if(plan.kind==='reseed'?strength!=='reseed':!['subtle','strong'].includes(strength)){announce('This Vary button is out of date. Nothing was prepared; press Vary again.',true);syncGalleryVary();return;}
+    // #1213: Vary replaces the Create setup, so ask first when it holds the owner's own wording or a staged picture (the pattern of Use this look and Start from this picture). Declining changes nothing.
+    const own=key=>{const typed=String(q('#'+key)?.value||'').trim();return!!typed&&typed!==String(selected?.defaults?.[key]||'').trim();},ownWords=own('positive')||own('negative'),staged=stagedPicture();
+    if((ownWords||staged)&&!window.confirm('Vary replaces the current Create setup'+(ownWords&&staged?' (your wording and the staged picture)':ownWords?' (your wording)':' (the staged picture)')+' with a prepared round of variations. Continue? Nothing will be generated.')){announce('Nothing changed. Vary was not prepared and your Create setup is kept.');return;}
     varyBusy=true;
     try{
       syncReady();

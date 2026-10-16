@@ -324,6 +324,14 @@ stay blocked with the reason, not half-applied, until Vary is pressed again or t
 `python tests/studio_use_cases.py` passed **20/20** with zero generation submissions and zero page errors (9 intents,
 4 clicks for this journey). These are fixture screens; no model ran.
 
+### Vary asks before replacing Create — 16 October 2026
+
+Refs #1213 (item 2). Vary replaces the Create setup, as Use this look and Start from this picture do, so it now asks first when Create
+holds your own wording (different from the recipe default) or a staged picture, and otherwise prepares at once with no extra step.
+Declining says "Nothing changed" and touches nothing. The journey `vary-a-keeper` agrees to the question on its later presses;
+its click count is unchanged (9 intents, 4 clicks). Reverse it by deleting the `window.confirm` guard in `prepareVary`.
+Items 3 to 5 of #1213 were already fixed on main (`6d60d6b8`, `ac2efb9f`, `tests/vary_prepare_latch.cjs`).
+
 ## Combine runs beside their pictures — 27 September 2026
 
 Refs #422, design handoff J4/D7. Before this change, at 1440×900 the pair sat at y≈854 and the result strip at y≈3499, with
