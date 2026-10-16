@@ -18,6 +18,22 @@ function planDisplayName(p){
   const change=p.axis==='variants'?(values.length?values.length+' planned variants':''):p.axis&&values.length?p.axis+' = '+values.join(', '):'';
   return [readable,change,planDate(p.created_at)].filter(Boolean).join(' · ');
 }
+// S7: machine-built study names (Combine and character imports bake the engine,
+// the axes and the seeds into the stored name) read as noise in the list. The stored
+// name is never rewritten: a machine-like name gets a short human title up front,
+// with the full stored name kept in the second line and the title attribute.
+// Anything the owner actually named keeps its display name untouched.
+function planKindNoun(p){return p?.kind==='comparison'?'Comparison':p?.kind==='av'?'Scene':p?.kind==='voice'?'Voice take':p?.kind==='native'||p?.kind==='articulated'?'Export':String(p?.kind||'Plan');}
+// Provenance, not wording: Combine builds its plan name from engines and seeds (the plan carries its combine record); every
+// other plan keeps the name it was given, whatever characters it contains (#1415 review).
+function planIsMachineName(name,p){return !!(p&&p.combine&&typeof p.combine==='object');}
+function planHumanTitle(p){
+  const stored=String(p?.name||'').trim();
+  if(stored&&!planIsMachineName(stored,p))return planDisplayName(p);
+  const count=p?.kind==='comparison'?((p.stages||[]).length+' candidate'+((p.stages||[]).length===1?'':'s')):'',date=planDate(p?.created_at);
+  return [planKindNoun(p),count,date].filter(Boolean).join(' · ')||'Untitled plan';
+}
+function planMachineDetail(p){const stored=String(p?.name||'').trim();return stored&&planIsMachineName(stored,p)?stored:'';}
 const productionMessage=(text,error=false)=>{$('#productionMessage').textContent=text;$('#productionMessage').classList.toggle('error',error);};
 async function refreshProduction(force=false){
   if(productionRefreshing)return;productionRefreshing=true;
@@ -56,7 +72,10 @@ function setPlanFilter(next,focus=false){planFilter=cleanPlanFilter({...planFilt
   // Show all lives inside the list it re-renders; hand keyboard focus to the Status select instead of losing it.
   if(focus)$('#planStatus')?.focus?.();}
 function restorePlanFilter(){try{planFilter=cleanPlanFilter(JSON.parse(localStorage.getItem(PLAN_FILTER_KEY)||'{}'));}catch(err){}syncPlanFilter();}
-function planButton(p){return '<button class="production-plan '+(p.id===productionId?'chosen':'')+'" data-project="'+p.id+'" title="'+esc(p.name)+'"><b>'+esc(planDisplayName(p))+'</b><small>'+esc(String(p.state?.status||'').replaceAll('_',' '))+' · '+(p.kind==='comparison'?(p.stages||[]).length+' candidates':p.kind==='av'?'scene':p.kind==='voice'?'voice take':'native export')+(p.put_away?' · put away':'')+'</small></button>';}
+// An awaiting-review plan carries its existing review desk entry point with it:
+// the same /review.html link the detail view offers, so Review now opens it.
+function planReviewNow(p){return p?.state?.status==='awaiting_review'?'<a class="primary artifact-download plan-review-now" href="/review.html?project='+p.id+'">Review now</a>':'';}
+function planButton(p){const machine=planMachineDetail(p);return '<button class="production-plan '+(p.id===productionId?'chosen':'')+'" data-project="'+p.id+'" title="'+esc(p.name)+'"><b>'+esc(planHumanTitle(p))+'</b><small>'+esc(String(p.state?.status||'').replaceAll('_',' '))+' · '+(p.kind==='comparison'?(p.stages||[]).length+' candidates':p.kind==='av'?'scene':p.kind==='voice'?'voice take':'native export')+(p.put_away?' · put away':'')+'</small>'+(machine?'<small class="plan-machine">'+esc(machine)+'</small>':'')+'</button>'+planReviewNow(p);}
 // #940: the owner can put a settled plan away. Only its put_away marker changes (server-side Production.put_away);
 // nothing is started, stopped, retried or deleted, and a later status change brings it back on its own.
 function planPutAway(p){
@@ -64,7 +83,18 @@ function planPutAway(p){
   if(p.can_put_away)return '<p class="plan-put-away"><button data-plan-put-away="true">Put away</button> <small>Takes it off your desk and the in-progress list. Nothing is started, stopped or deleted; Show all still lists it.</small></p>';
   return '';
 }
+const PLAN_RUNNING=['queued','submitting','running','waiting','observing','rendering'];
+// One terse line above the plans: what needs the owner first. Counts follow the
+// type filter; older folds the same Older group the list shows. Never submits.
+function renderPlanSummary(){
+  const el=$('#planSummary');if(!el)return;
+  const kinds=PLAN_TYPES[planFilter.type],typed=productionPlans.filter(p=>!kinds||kinds.includes(p.kind)),desk=typed.filter(p=>p.put_away!==true);
+  const review=desk.filter(p=>p?.state?.status==='awaiting_review').length,running=desk.filter(p=>PLAN_RUNNING.includes(p?.state?.status)).length,older=planGroups(productionPlans).older.length;
+  const parts=[];if(review)parts.push(review+' waiting for your review');if(running)parts.push(running+' running');if(older)parts.push(older+' older');
+  el.textContent=parts.length?parts.join(' · '):(typed.length?typed.length+' '+PLAN_TYPE_NOUNS[planFilter.type]+' · nothing waiting':'');
+}
 function renderPlanList(){
+  renderPlanSummary();
   const list=$('#productionList');if(!productionPlans.length){list.innerHTML=PRODUCTION_EMPTY;return;}
   const groups=planGroups(productionPlans),shown=groups.recent.length+groups.older.length,showAll='<button data-plan-show-all>Show all</button>';
   const olderOpen=list.querySelector?.('.plan-older')?.open||groups.older.some(p=>p.id===productionId);
@@ -98,12 +128,12 @@ function renderProduction(){
   renderPlanList();
   const p=productionPlans.find(p=>p.id===productionId);if(!p)return;
   if(p.kind==='av'){
-    writeProductionDetail(p.id,'<div class="section-title"><div><span class="eyebrow">SCENE</span><h2 title="'+esc(p.name)+'">'+esc(planDisplayName(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p><p><a class="primary artifact-download" href="/av.html?project='+encodeURIComponent(p.id)+'">Open Scene editor</a> <span class="muted">Edit sources and timing, then render explicitly from the Scene editor.</span></p>'+planPutAway(p));
+    writeProductionDetail(p.id,'<div class="section-title"><div><span class="eyebrow">SCENE</span><h2 title="'+esc(p.name)+'">'+esc(planHumanTitle(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p><p><a class="primary artifact-download" href="/av.html?project='+encodeURIComponent(p.id)+'">Open Scene editor</a> <span class="muted">Edit sources and timing, then render explicitly from the Scene editor.</span></p>'+planPutAway(p));
     return;
   }
   const terminalReconciliation=p.can_reconcile_tracking===true||p.can_reconcile_batch===true,active=['queued','running','observing'].includes(p.state.status),trackingRecoveryPending=!terminalReconciliation&&(p.stages||[]).some(s=>{const d=s.job?.tracking_disposition;return (d?.status==='stopped'||d?.history?.some(event=>event.status==='stopped'))&&s.job?.status!=='completed';}),resumable=(p.kind==='voice'?p.voice_resume?.eligible===true:['interrupted','uncertain','stopped'].includes(p.state.status));
   const resume=resumable?'<button data-project-action="resume" '+(trackingRecoveryPending?'disabled':'')+'>'+(terminalReconciliation?'Reconcile outcome only':p.kind==='voice'?'Resume unstarted take':'Reconcile and resume')+'</button>':'';
-  let html='<div class="section-title"><div><span class="eyebrow">'+esc(p.kind)+'</span><h2 title="'+esc(p.name)+'">'+esc(planDisplayName(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p>'+(terminalReconciliation?'<p class="callout">Record the retained failed/partial outcome or local batch disposition. No retry or later stage will start; repairs require an explicit branch.</p>':'')+(trackingRecoveryPending?'<p class="muted">Resume is unavailable until the retained prompt observation reaches a terminal record. Its execution record and reservation remain available for inspection.</p>':'')+'<div class="production-actions">'+(p.state.status==='planned'?'<button class="primary" data-project-action="start">Start '+(p.kind==='comparison'?'comparison':p.kind==='voice'?'voice take':'export')+'</button>':'')+(active?'<button data-project-action="stop">Stop after current stage</button>':'')+resume+(p.kind==='comparison'&&!p.combine?'<button data-project-action="branch">Branch this study</button>':'')+'<a href="/api/production/'+p.id+'/files/plan.json?download" download>Full plan</a></div>';
+  let html='<div class="section-title"><div><span class="eyebrow">'+esc(p.kind)+'</span><h2 title="'+esc(p.name)+'">'+esc(planHumanTitle(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p>'+(terminalReconciliation?'<p class="callout">Record the retained failed/partial outcome or local batch disposition. No retry or later stage will start; repairs require an explicit branch.</p>':'')+(trackingRecoveryPending?'<p class="muted">Resume is unavailable until the retained prompt observation reaches a terminal record. Its execution record and reservation remain available for inspection.</p>':'')+'<div class="production-actions">'+(p.state.status==='planned'?'<button class="primary" data-project-action="start">Start '+(p.kind==='comparison'?'comparison':p.kind==='voice'?'voice take':'export')+'</button>':'')+(active?'<button data-project-action="stop">Stop after current stage</button>':'')+resume+(p.kind==='comparison'&&!p.combine?'<button data-project-action="branch">Branch this study</button>':'')+'<a href="/api/production/'+p.id+'/files/plan.json?download" download>Full plan</a></div>';
   if(p.kind==='comparison'){
     const clock=p.state.time_budget;
     if(clock&&!p.state.time_budget_error){
@@ -277,12 +307,13 @@ function planFromEmptyState(){
   if(typeof selected!=='undefined'&&selected)$('#planComparison')?.click?.();
   else productionMessage('Choose a recipe in Create first, then press Plan comparison.');
 }
-// Remembering the orientation block is a per-browser convenience; a storage that
-// refuses to answer must never stop the view from rendering.
+// The orientation block stays closed so the plans show first; remembering the
+// choice is a per-browser convenience, and a storage that refuses to answer must
+// never stop the view from rendering.
 const PRODUCTION_INTRO_KEY='studio.production.intro';
 function restoreProductionIntro(){
   const intro=$('#productionIntro');if(!intro)return;
-  try{intro.open=localStorage.getItem(PRODUCTION_INTRO_KEY)!=='closed';}catch(err){}
+  try{intro.open=localStorage.getItem(PRODUCTION_INTRO_KEY)==='open';}catch(err){}
   intro.ontoggle=()=>{try{localStorage.setItem(PRODUCTION_INTRO_KEY,intro.open?'open':'closed');}catch(err){}};
 }
 restoreProductionIntro();restorePlanFilter();
