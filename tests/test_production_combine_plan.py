@@ -52,7 +52,9 @@ class CombinePlanTests(unittest.TestCase):
         self.patches = [patch.object(threading.Thread, "start", lambda *_: None),
                         patch.object(server.Studio, "production_preflight", lambda s, *a: {"test_bundle": True, "comfy_url": s.comfy_url, "comfy_root": str(s.comfy_root)}),
                         patch.object(server.Studio, "check_production_bundle", lambda *a: None),
-                        patch.object(server.Studio, "validate_graph", lambda *a: None)]
+                        patch.object(server.Studio, "validate_graph", lambda *a: None),
+                        # SWAP scripts the model swap's /free; the commit floor before it (#1180) gets ample headroom on any host.
+                        patch.object(server.host_memory, "read", return_value={"available_bytes": 60 * 1024**3, "limit_bytes": 95 * 1024**3, "committed_bytes": 35 * 1024**3, "unknown_reason": None})]
         for item in self.patches: item.start(); self.addCleanup(item.stop)
         self.studio = self.fresh([])
         created = self.studio.create_job({"preset_id": "create", "controls": {}}, enqueue=False)
