@@ -915,6 +915,7 @@ class Studio:
     def public(self, job):
         allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label", "cancellation", "commit_releases", "host_commit_windows", "tile", "tile_finish", "parallax", "parallax_finish")
         result = {k: job.get(k) for k in allowed}
+        if "record_error" in job: result.update(record_error=job["record_error"], run_path=job["run_path"])
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
         result["can_stop_tracking"] = Studio._stop_tracking_error(self, job) is None
@@ -1372,6 +1373,7 @@ class Studio:
         return value
 
     def _save(self, job, durable=False):
+        if "record_error" in job: raise StudioError("An unreadable run record cannot be saved; inspect its folder first")
         directory = self.runs / job["id"]
         recipe = {"preset_id": job["preset_id"], "controls": job["controls"], "batch_count": job["batch_count"], "graph_path": job["graph_path"], "created_at": job["created_at"]}
         recipe.update(references=job.get("references", []), parent_assets=job.get("parent_assets", []))
@@ -1659,8 +1661,21 @@ class Studio:
 
     def _load_jobs(self):
         for state_path in self.runs.glob("*/state.json"):
-            data = read_json(state_path)
-            graph = read_json(state_path.parent / "workflow.json")
+            try:
+                for path in (state_path, state_path.parent / "workflow.json"):
+                    record = json.loads(path.read_text(encoding="utf-8"))
+                    if not isinstance(record, dict): raise ValueError("Expected a JSON object")
+                    if path == state_path:
+                        if not record.get("id"): raise ValueError("Missing job ID")
+                        data = record
+                    else: graph = record
+            except (OSError, ValueError) as exc:
+                reason = f"{path.name}: {exc}"
+                # Missing evidence collections cannot prove non-submission or authorize a disposition.
+                self.jobs[state_path.parent.name] = {"id": state_path.parent.name, "status": "uncertain", "created_at": 0,
+                    "preset_name": "Unreadable run record", "controls": {}, "outputs": [], "run_path": str(state_path.parent),
+                    "record_error": reason, "message": f"The run record could not be read ({reason}). Nothing was resubmitted. Inspect experiments/runs/{state_path.parent.name}/ before deleting it."}
+                continue
             if isinstance(data, dict) and isinstance(graph, dict) and data.get("id"):
                 data["graph"] = graph
                 data.setdefault('comfy_root', str(self.comfy_root))
