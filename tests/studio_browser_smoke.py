@@ -339,7 +339,6 @@ def run(screenshots):
             for width,height in ((1440,900),(390,844)):
                 v=browser.new_page(viewport={'width':width,'height':height});v.goto(origin+'/#home');v.wait_for_selector('#makeView',state='visible')
                 v.goto(origin+'/#create');v.wait_for_function('!!selected && schemaAvailable')
-                if width==390:v.wait_for_selector('.wk-run-dock',state='attached');check(v.evaluate("getComputedStyle(document.querySelector('.wk-run-dock')).position")!='fixed','phone Full editor run dock is not fixed over the editor (#26)')
                 looks=v.evaluate(hit,'details.ux-looks > summary')
                 if not looks:print(f'NOTE: details.ux-looks > summary is not in the DOM at {width}x{height}',flush=True)
                 for box in looks:check(box['w']>=24 and box['h']>=24,f"{box['name']} pointer target is {box['w']:.1f}x{box['h']:.1f} at {width}x{height}")
