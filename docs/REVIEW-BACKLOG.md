@@ -162,3 +162,14 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   models, Petiflow beyond close-ups.
 - [ ] **Live Studio restarted** at 13:52 on main d2973fa0 (no Studio work active) so tonight's Python changes load
   (character routes, resume fix, durable saves, workspace/model-library hardening).
+- [ ] **Make wave 6: pose routes from the lab** (#1482): "Character in a new pose" from a picture now asks "What to
+  keep": *Keep my character as it is* (Copy Pose, default) or *Put my character into this picture's scene* (Replace
+  character). Depth and plain Klein 9B are never picked in Make (still in the Full editor); a missing Copy Pose falls
+  back to Klein 4B with the reason. The drawn figure warns that hands and gaze follow words weakly. Tune starts Xilmo
+  and Ke-ta at 0.35 and NEWANIMASTYLE at 0.5 *only on Petiflow's own model*, with the lab note; Kieed shows a warning.
+  Reverse: `POSE_ROUTE`/`POSE_OFF`/`LAB` in make.js.
+- [ ] **Third UX audit** (#1484): of the first audit's 27 problems, 17 fixed, 10 partly, none regressed; the
+  flagship takes 6 clicks + 2 typed, all in Make. New top problems (lab pictures flooding the pickers, adapter search
+  needing the exact file name, Library tweaks still ending in the Full editor) are Make wave 7, in progress.
+- [ ] **Every sampler must carry the source's LoRAs** (#1483): a Vary route with a second sampler outside the adapter
+  branch is refused (none ship today).
