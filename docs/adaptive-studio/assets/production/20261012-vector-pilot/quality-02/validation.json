@@ -25,7 +25,9 @@
       "layers": 12,
       "nativeFilters": [
         "feGaussianBlur"
-      ]
+      ],
+      "preserved": false,
+      "verification": "Source was not preserved in the repository and was not found in git log --all -- *lantern-counter-vignette-v2.svg. Historical bytes, sha256, layers and nativeFilters cannot be re-derived from the missing source."
     }
   ],
   "checks": [

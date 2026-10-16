@@ -224,6 +224,18 @@ class CarryContract(unittest.TestCase):
         self.edits["wai-vary"] = [lambda graph: graph["3"]["inputs"].update(clip=["1", 1])]
         self.assertTrue(any("does not feed" in p for p in self.problems()), self.problems())
 
+    def test_every_sampler_must_receive_the_carried_model(self):
+        for model, reason in ((["1", 0], "does not feed"), (["unknown", 0], "cannot determine")):
+            with self.subTest(model=model):
+                def second(graph):
+                    graph["30"] = copy.deepcopy(graph["5"]); graph["30"]["inputs"]["model"] = model
+                self.edits["wai-vary"] = [second]
+                self.assertTrue(any(reason in p for p in self.problems()), self.problems())
+
+    def test_two_samplers_through_the_carried_loras_are_accepted(self):
+        self.edits["wai-vary"] = [lambda graph: graph.update({"30": copy.deepcopy(graph["5"])})]
+        self.assertEqual(self.problems(), [])
+
     def test_unknown_or_missing_graph_shape_is_reported(self):
         def unknown(graph):
             graph["20"] = {"class_type": "UnknownModelWrapper", "inputs": {"model": ["9", 0]}}
@@ -234,6 +246,69 @@ class CarryContract(unittest.TestCase):
             with self.subTest(edit=edit):
                 self.edits["wai-vary"] = [edit]
                 self.assertTrue(any("cannot determine" in p for p in self.problems()), self.problems())
+
+    def _forward(self, kind, field, source="9", out=0):
+        """Insert one node between `source` (the carried LoRA by default) and the sampler (model) or both encoders (clip)."""
+        def edit(graph):
+            graph["20"] = {"class_type": kind, "inputs": {field: [source, 0 if field == "model" else 1]}}
+            for key, name in (("5", "model"),) if field == "model" else (("2", "clip"), ("3", "clip")):
+                graph[key]["inputs"][name] = ["20", out]
+        return edit
+
+    def test_allowlisted_pass_through_nodes_between_the_lora_and_its_consumers_are_accepted(self):
+        # PASS_THROUGH mirrors shipped wiring (qwen: ModelSamplingAuraFlow, trellis: RescaleCFG, pony: CLIPSetLastLayer).
+        allowed = {"model": {"ModelSamplingAuraFlow", "ModelSamplingSD3", "RescaleCFG"}, "clip": {"CLIPSetLastLayer"}}
+        for field, kinds in allowed.items():
+            for kind in sorted(kinds):
+                with self.subTest(kind=kind):
+                    self.edits["wai-vary"] = [self._forward(kind, field)]
+                    self.assertEqual(self.problems(), [])
+        self.edits["wai-vary"] = [self._forward("ModelSamplingSD3", "model"), lambda g: g.update({"20b": {"class_type": "RescaleCFG", "inputs": {"model": ["9", 0]}}}),
+                                  lambda g: g["20"]["inputs"].update(model=["20b", 0])]
+        self.assertEqual(self.problems(), [], "a chain of pass-throughs is followed")
+        self.assertEqual(continuation.PASS_THROUGH, allowed, "the allowlist is exactly what the tests cover")
+
+    def test_a_pass_through_that_bypasses_the_lora_does_not_feed_it(self):
+        for field, kind in (("model", "ModelSamplingAuraFlow"), ("clip", "CLIPSetLastLayer")):
+            with self.subTest(kind=kind):
+                self.edits["wai-vary"] = [self._forward(kind, field, "1")]
+                self.assertTrue(any("does not feed" in p for p in self.problems()), self.problems())
+
+    def test_a_pass_through_is_refused_off_its_allowlist_or_on_the_wrong_wire(self):
+        cases = [("ModelMergeSimple", "model", 0), ("Reroute", "model", 0), ("CFGOverride", "model", 0), ("CLIPMergeSimple", "clip", 0),
+                 ("CLIPSetLastLayer", "model", 0), ("ModelSamplingSD3", "clip", 0),   # right node, wrong kind of wire
+                 ("RescaleCFG", "model", 1)]                                          # allowlisted, but its consumer reads a port it does not have
+        for kind, field, out in cases:
+            with self.subTest(kind=kind, field=field, out=out):
+                self.edits["wai-vary"] = [self._forward(kind, field, out=out)]
+                self.assertTrue(any("cannot determine" in p for p in self.problems()), self.problems())
+
+    def test_a_route_without_a_ksampler_is_refused_with_a_reason_not_a_crash(self):
+        # Evidence for #1243 item (b): no shipped Vary route draws without KSampler; SamplerCustomAdvanced and HiDream
+        # pipelines are not image-to-image under capability(), so a carry there stays refused rather than guessed.
+        for kind in ("KSamplerAdvanced", "SamplerCustomAdvanced", "HiDreamO1Sampler"):
+            with self.subTest(kind=kind):
+                self.edits["wai-vary"] = [lambda graph: graph["5"].update(class_type=kind)]
+                problems = self.problems()
+                self.assertTrue(any("image-to-image" in p for p in problems), problems)
+
+    def test_every_shipped_graph_traces_to_a_verdict_and_every_recipe_declares_or_is_refused(self):
+        verdicts = {True, False, None}
+        for preset in CATALOG:
+            try: graph = graph_of(preset)
+            except (KeyError, OSError, ValueError): continue
+            if not isinstance(graph, dict): continue
+            nodes = {str(k): v for k, v in graph.items() if isinstance(v, dict)}
+            for start in [k for k, v in nodes.items() if v.get("class_type") == "LoraLoader"]:
+                for target, v in nodes.items():
+                    for prefix, field in (("KSampler", "model"), ("CLIPTextEncode", "clip")):
+                        if str(v.get("class_type") or "").startswith(prefix):
+                            self.assertIn(continuation._lora_feeds(nodes, start, target, field), verdicts, (preset["id"], start, target))
+            # Declare the WAI carry on this recipe: only wai-vary itself may come back clean, every other recipe is refused in words.
+            probe = copy.deepcopy(preset); probe["vary"] = copy.deepcopy(self.route["vary"]); probe["vary"]["sources"] = ["wai"]
+            problems = continuation.vary_problems(probe, graph, self.presets, graph_of)
+            self.assertTrue(all(isinstance(p, str) and p for p in problems), preset["id"])
+            if preset["id"] != "wai-vary": self.assertTrue(problems, preset["id"] + " must not pass as a WAI carry route")
 
     def test_alternate_loader_fields_compare_exactly_without_counting_auxiliary_models(self):
         for loader, field in (("HiDreamO1ModelLoader", "model_name"), ("UnetLoaderGGUF", "gguf_name")):
