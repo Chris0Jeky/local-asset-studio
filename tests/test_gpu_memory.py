@@ -289,6 +289,22 @@ class GpuMemoryTests(unittest.TestCase):
         full = reading_with_totals({DGPU.format(40): 15 * GIB, DGPU.format(2304): GIB}, {DGPU_ADAPTER: 16 * GIB + 80 * MIB})
         self.assertEqual(gpu_memory.others_for_admission(full, 40, capacity_bytes=16 * GIB), (GIB + 80 * MIB, None))
 
+    def test_admission_rejects_over_capacity_adapter_total(self):
+        sample = reading_with_totals({DGPU.format(40): 15 * GIB}, {DGPU_ADAPTER: 18 * GIB})
+        self.assertEqual(gpu_memory.others_for_admission(sample, 40, capacity_bytes=16 * GIB), (None, gpu_memory.CAPACITY_REASON))
+
+    def test_admission_rejects_over_capacity_own_counter(self):
+        for sample in (reading({DGPU.format(40): 17 * GIB, DGPU.format(2304): GIB}),
+                       reading_with_totals({DGPU.format(40): 17 * GIB}, {DGPU_ADAPTER: 17 * GIB})):
+            with self.subTest(sample=sample):
+                self.assertEqual(gpu_memory.others_for_admission(sample, 40, capacity_bytes=16 * GIB), (None, gpu_memory.CAPACITY_REASON))
+
+    def test_admission_measures_physical_full_card_and_normal_usage(self):
+        for total, own, others in ((16 * GIB, 15 * GIB, GIB), (11 * GIB, 8 * GIB, 3 * GIB)):
+            with self.subTest(total=total):
+                sample = reading_with_totals({DGPU.format(40): own}, {DGPU_ADAPTER: total})
+                self.assertEqual(gpu_memory.others_for_admission(sample, 40, capacity_bytes=16304 * MIB), (others, None))
+
     def test_anomalies_are_bounded_evidence_rows(self):
         sample = reading_with_totals({DGPU.format(40): 2 * GIB, DGPU.format(2304): DWM_ANOMALY, DGPU.format(30868): 812 * MIB},
                                      {DGPU_ADAPTER: 4 * GIB})
