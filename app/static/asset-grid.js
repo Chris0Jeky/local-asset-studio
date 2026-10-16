@@ -9,7 +9,7 @@
   const selectors={check:'[data-asset-check]',favorite:'.asset-star',title:'.asset-card-title',preview:'.asset-open'};
   function mediaKey(asset){return JSON.stringify([asset.media_type,asset.url,asset.sha256]);}
   // The run label is displayed (a chip in the tag row), so marking a source must repaint the card (#939).
-  function displayKey(asset,selected){return JSON.stringify([mediaKey(asset),asset.title,asset.preset_name,asset.review,!!asset.favorite,asset.tags.slice(0,4),asset.run_label??null,selected]);}
+  function displayKey(asset,selected){return JSON.stringify([mediaKey(asset),asset.title,asset.preset_name,asset.review,!!asset.favorite,asset.tags.slice(0,4),asset.run_label??null,asset.prompt_excerpt??null,selected]);}
   // Group controls: review buttons keep their bare review value as the key (focusGroup callers pass it); source buttons are 'source:<mode>'.
   function actionKey(node){const data=node?.dataset||{};return data.groupReview!=null?data.groupReview:data.groupSource!=null?'source:'+data.groupSource:null;}
   function groupButtons(section){return [...section.actions.querySelectorAll('[data-group-review]'),...section.tools.querySelectorAll('[data-group-source]')];}
@@ -52,11 +52,12 @@
     const preview=node.querySelector(selectors.preview),freshPreview=fresh.querySelector(selectors.preview);
     preview.setAttribute('aria-label',freshPreview.getAttribute('aria-label'));
     const key=mediaKey(asset);
+    const display=typeof options.cardTitle==='function'?options.cardTitle(asset):asset.title;
     if(row.media!==key){releaseMedia(preview);preview.innerHTML=freshPreview.innerHTML;}
     else{
       // Labels are mutable metadata, not part of source identity.
-      for(const image of preview.querySelectorAll('img'))image.alt=asset.title;
-      for(const video of preview.querySelectorAll('video'))video.setAttribute('aria-label',asset.title);
+      for(const image of preview.querySelectorAll('img'))image.alt=display;
+      for(const video of preview.querySelectorAll('video'))video.setAttribute('aria-label',display);
     }
     for(const selector of [selectors.check,selectors.favorite]){
       const target=node.querySelector(selector),source=fresh.querySelector(selector);
@@ -64,7 +65,7 @@
       if(selector===selectors.check)target.checked=selected;
       else {target.className=source.className;target.textContent=source.textContent;}
     }
-    node.querySelector(selectors.title).textContent=asset.title;
+    node.querySelector(selectors.title).textContent=display;
     node.querySelector('.asset-kind').textContent=asset.media_type;
     for(const selector of ['.asset-card-meta','.asset-tags'])copyHTML(node.querySelector(selector),fresh.querySelector(selector));
     row.signature=signature;row.media=key;

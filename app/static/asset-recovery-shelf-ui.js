@@ -58,7 +58,7 @@ function assetShelfInspect(record){
 }
 (function installAssetRecoveryShelf(){
   const library=document.createElement('div');library.className='asset-shelf-launch';
-  library.innerHTML='<button type="button" id="openAssetRecoveryShelf">Local recovery shelf</button><small id="assetShelfLocalStatus" role="status">Device persistence is optional. The existing tab journal remains active.</small>';
+  library.innerHTML='<details id="assetRecoveryDisclosure"><summary>Recovery</summary><div><button type="button" id="openAssetRecoveryShelf">Local recovery shelf</button><small id="assetShelfLocalStatus" role="status">Device persistence is optional. The existing tab journal remains active.</small></div></details>';
   document.getElementById('assetCommandRecovery').before(library);
   const detail=document.createElement('div');detail.className='asset-shelf-launch';
   detail.innerHTML='<button type="button" id="openAssetRecoveryShelfDetails">Local recovery shelf</button><small id="assetShelfDetailStatus" role="status">Keep a device checkpoint before closing this tab.</small>';
@@ -144,3 +144,5 @@ function assetShelfInspect(record){
   try{if(sessionStorage.getItem(assetShelfOptKey)==='1'){document.getElementById('assetShelfEnabled').checked=true;void assetShelfSession.enable().catch(error=>assetShelfStatus(error.message,true));}}
   catch(error){assetShelfStatus('Device preference is unavailable. The session journal remains separate.',true);}
 })();
+// The library launch sits behind a Recovery disclosure, closed unless something waits to be recovered.
+const baseRenderLibraryRecovery=renderLibraryRecovery;renderLibraryRecovery=function(){baseRenderLibraryRecovery();const panel=document.getElementById('assetRecoveryDisclosure');if(panel&&!panel.open)panel.open=!!(assetLibraryPending||assetRetainedDetail||assetRecoveryError)||assetShelfRecords.length>0;};
