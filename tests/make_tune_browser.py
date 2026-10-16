@@ -148,6 +148,16 @@ def run():
             page.reload(); page.wait_for_function('catalog?.presets?.length && knowledge?.loras && document.querySelector("#makeModel")')
             assert page.input_value('#makeModel') == SWITCH and page.query_selector('[data-slot=lora2]') and page.input_value('#makeStrength') == '50', 'the tune came back after a reload'
             assert 'model Pearly Anima Mix' in page.text_content('#makeTuneSum') and len(posted('/api/jobs')) == 1, 'a restored tune never submits'
+            # An added adapter that has since been uninstalled drops the stored tune, never submitting an unknown file (#1453 review).
+            page.evaluate('''(id) => { const all = JSON.parse(localStorage.getItem("studio.make.tune")); const t = all[id];
+                t.rows = t.rows.map(r => r.added ? {...r, name: "ghost-uninstalled.safetensors"} : r);
+                if (!t.rows.some(r => r.added)) t.rows.push({slot: "lora6", name: "ghost-uninstalled.safetensors", strength: 0.5, on: true, added: true});
+                localStorage.setItem("studio.make.tune", JSON.stringify(all)); }''', LOOK)
+            page.reload(); page.wait_for_function('catalog?.presets?.length && document.querySelector("#makeModel") && installedLoras.length')
+            before = len(posted('/api/jobs')); page.fill('#makeScene', 'a lantern keeper at dusk'); page.click('#makeGenerate')
+            page.wait_for_timeout(1500)
+            sent = posted('/api/jobs')[before:]
+            assert sent and 'ghost-uninstalled.safetensors' not in json.dumps(sent[-1]), 'an uninstalled added adapter is left out, never submitted'
             page.evaluate('(id) => localStorage.setItem("studio.make.tune", JSON.stringify({[id]: {rev: 0, preset: "wai", rows: "x", cleared: []}}))', LOOK)
             page.reload(); page.wait_for_function('catalog?.presets?.length && document.querySelector("#makeModel")')
             assert page.input_value('#makeModel') == BASE and not page.query_selector('[data-slot=lora2]'), 'a damaged tune is dropped'

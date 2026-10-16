@@ -294,6 +294,9 @@
     const field=q('#makeScene'),scene=field.value.trim();if(!scene){field.setAttribute('aria-invalid','true');field.setAttribute('aria-describedby','makeStatus');field.focus();throw Error(SCENE_FIRST);}
     const options=Object.fromEntries([...view.querySelectorAll('[data-make-option]')].map(i=>[i.dataset.makeOption,i.checked]));
     const shape=q('#makeShape').value,p=presetFor(look),[w,h]=shapeSize(p,look,shape),batch_count=Number(q('#makeCount').value);
+    // An adapter added in an earlier session may have been uninstalled since: leave it out and say so, never send an unknown file.
+    const inv=typeof installedLoras!=='undefined'&&installedLoras.length?new Set(installedLoras):null,gone=inv?(tuneOf(look).rows||[]).filter(r=>r.added&&!inv.has(r.name)):[];
+    if(gone.length){const live=tuneOf(look);live.rows=live.rows.filter(r=>!gone.includes(r));tuneChanged(false);say('Left out '+gone.map(r=>r.name.replace(/\.safetensors$/,'')).join(', ')+': no longer installed.');}
     const t=structuredClone(tuneOf(look)),reseed=t.reseed,tp=byId(t.preset)||p;if(!reseed&&t.seed!=null&&!(Number.isSafeInteger(t.seed)&&t.seed>=0))throw Error('The seed must be a whole number, 0 or more.');
     const result=await json('/api/looks/prepare',{id:look.id,scene,...(look.body.options?.length?{options}:{}),expected_revision:look.revision});
     const controls={...result.controls};
