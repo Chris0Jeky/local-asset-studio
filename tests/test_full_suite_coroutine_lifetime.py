@@ -9,12 +9,41 @@ import tempfile
 import textwrap
 import unittest
 
+import psutil
+
 
 HERE = Path(__file__).resolve().parent
 
 
+def run_owning_descendants(command, timeout, env):
+    """subprocess.run, except a timeout also kills the wrapper's own descendants (#1322).
+
+    The wrapper starts the lifetime worker; killing only the wrapper would leave that
+    worker running until its own 600-second guard. Descendants are listed before the
+    wrapper dies, because an orphan is no longer reachable from its parent.
+    """
+    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env) as process:
+        try:
+            stdout, stderr = process.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            try:
+                descendants = psutil.Process(process.pid).children(recursive=True)
+            except psutil.NoSuchProcess:
+                descendants = []
+            for child in descendants:
+                try:
+                    child.kill()
+                except psutil.NoSuchProcess:
+                    pass
+            process.kill()
+            process.communicate()
+            psutil.wait_procs(descendants, timeout=5)
+            raise
+    return subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
+
+
 class CoroutineLifetimeTests(unittest.TestCase):
-    def run_fixture(self, body: str, *, suppress_warnings: bool = False):
+    def run_fixture(self, body: str, *, suppress_warnings: bool = False, timeout: float = 30, extra_env=None):
         with tempfile.TemporaryDirectory() as directory:
             fixture = Path(directory) / "test_coroutine_fixture.py"
             fixture.write_text(textwrap.dedent(body), encoding="utf-8")
@@ -41,10 +70,29 @@ class CoroutineLifetimeTests(unittest.TestCase):
                 env["PYTHONWARNINGS"] = "ignore::RuntimeWarning"
             else:
                 env.pop("PYTHONWARNINGS", None)
-            return subprocess.run(
-                [sys.executable, "-c", launch, str(HERE), directory],
-                capture_output=True, text=True, timeout=30, env=env,
-            )
+            env.update(extra_env or {})
+            return run_owning_descendants([sys.executable, "-c", launch, str(HERE), directory], timeout, env)
+
+    def test_outer_timeout_leaves_no_lifetime_worker_behind(self):
+        with tempfile.TemporaryDirectory() as directory:
+            marker = Path(directory) / "worker.pid"
+            with self.assertRaises(subprocess.TimeoutExpired):
+                self.run_fixture("""
+                    import os, time, unittest
+                    class Fixture(unittest.TestCase):
+                        def test_body(self):
+                            with open(os.environ["STALLED_WORKER_PID"], "w") as stream:
+                                stream.write(str(os.getpid()))
+                            time.sleep(120)
+                """, timeout=5, extra_env={"STALLED_WORKER_PID": str(marker)})
+            # Each fixture above finishes in under half a second on the hosted
+            # Windows runner, so five seconds reaches the stalled test body.
+            self.assertTrue(marker.exists(), "the lifetime worker never reached the stalled test")
+            pid = int(marker.read_text())
+            gone, alive = psutil.wait_procs([psutil.Process(pid)] if psutil.pid_exists(pid) else [], timeout=5)
+            for process in alive:
+                process.kill()
+            self.assertEqual(alive, [], "the outer timeout left the lifetime worker running")
 
     def test_unawaited_work_during_passing_test_fails_parent(self):
         result = self.run_fixture("""
