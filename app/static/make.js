@@ -356,7 +356,7 @@
     const preset_id=applyTune(controls,look,t),tuned=tuneSummary(look,t);
     // The run keeps its own settings, seed locked, so Edit and re-run changes only what you change next.
     const composer={shape,count:batch_count,options};
-    return{preset_id,controls,batch_count,scene,tuned,tune:{...t,reseed:controls.seed==null&&t.reseed,seed:controls.seed??t.seed,composer}};
+    return{preset_id,controls,batch_count,scene,tuned,notice:(result.notices||[]).join(' '),tune:{...t,reseed:controls.seed==null&&t.reseed,seed:controls.seed??t.seed,composer}};
   }
   let estimateEpoch=0;
   async function estimate(retry=false){
@@ -386,8 +386,8 @@
     state.busy=true;say('Preparing\u2026');
     try{
       const request=await prepared(look);say('Sending to ComfyUI…');
-      const {scene,tune,tuned,...submit}=request;const job=await json('/api/jobs',{...submit,label:'Make · '+look.name});
-      state.runs.unshift({job,look:look.name,lookId:look.id,goal:runGoal,scene,tune,tuned});remember();say('Started. Your pictures appear in Your pictures as they finish; you can leave this page.');
+      const {scene,tune,tuned,notice,...submit}=request;const job=await json('/api/jobs',{...submit,label:'Make · '+look.name});
+      state.runs.unshift({job,look:look.name,lookId:look.id,goal:runGoal,scene,tune,tuned});remember();say('Started. Your pictures appear in Your pictures as they finish; you can leave this page.'+(notice?' '+notice:''));
       renderRuns();showRun(job.id);poll(job.id);
       if(typeof refresh==='function')void refresh();
     }catch(error){if(error.message===SCENE_FIRST)sayMissing(error.message);else say(error.message);}
@@ -396,7 +396,7 @@
   async function openInEditor(){
     const look=current();if(!look||state.busy)return;
     state.busy=true;say('Preparing…');
-    try{const request=await prepared(look);applySaved({preset:request.preset_id,controls:request.controls,batch_count:request.batch_count,parent_assets:[],references:[]},{});showView('create');say('Ready in the full editor.');}
+    try{const request=await prepared(look);applySaved({preset:request.preset_id,controls:request.controls,batch_count:request.batch_count,parent_assets:[],references:[]},{});showView('create');say('Ready in the full editor.'+(request.notice?' '+request.notice:''));}
     catch(error){say(error.message);}
     finally{state.busy=false;syncOperation();}
   }
@@ -860,18 +860,18 @@
     if(state.busy)return;const list=compareList(),why=compareBlocker();if(why){say(why);return;}
     const field=q('#makeScene'),scene=field.value.trim();if(!scene){field.setAttribute('aria-invalid','true');field.setAttribute('aria-describedby','makeStatus');field.focus();sayMissing(SCENE_FIRST);return;}
     state.busy=true;say('Preparing…');
-    const seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647,group='compare-'+Date.now().toString(36),runGoal=state.goal;let started=0;
+    const seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647,group='compare-'+Date.now().toString(36),runGoal=state.goal;let started=0;const notes=[];
     try{
       for(const look of list){
         const result=await json('/api/looks/prepare',{id:look.id,scene,...(look.body.options?.length?{options:Object.fromEntries(look.body.options.map(o=>[o.id,!!o.default]))}:{}),expected_revision:look.revision});
-        const p=presetFor(look),controls={...result.controls},[w,h]=shapeSize(p,look,'design');
+        notes.push(...(result.notices||[]));const p=presetFor(look),controls={...result.controls},[w,h]=shapeSize(p,look,'design');
         if('width' in controls||p?.width)Object.assign(controls,{width:w,height:h});
         if(bound(p,'seed'))controls.seed=seed;
         say('Sending '+(started+1)+' of '+list.length+' to ComfyUI…');
         const job=await json('/api/jobs',{preset_id:p?.id||look.body.preset_id,controls,batch_count:1,label:'Make · Compare · '+look.name});
         state.runs.splice(started++,0,{job,look:look.name,lookId:look.id,goal:runGoal,scene,group});remember();renderRuns();poll(job.id);
       }
-      say('Started '+list.length+' pictures, one per look. They appear side by side in Your pictures.');
+      say('Started '+list.length+' pictures, one per look. They appear side by side in Your pictures.'+notes.map(n=>' '+n).join(''));
       if(typeof refresh==='function')void refresh();
     }catch(error){say((started?'Started '+started+' of '+list.length+'; the rest were not sent. ':'')+error.message);}
     finally{state.busy=false;syncOperation();}

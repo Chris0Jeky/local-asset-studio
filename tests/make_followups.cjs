@@ -19,6 +19,18 @@ test('Tune seeds follow the target recipe, including extra bindings and locked z
   }
 });
 
+test('a swapped sampler or scheduler reaches Make as one plain notice (owner, 16 Oct 2026)',async()=>{
+  for(const [notices,expected] of [[['Sampler a swapped.','Scheduler b swapped.'],'Sampler a swapped. Scheduler b swapped.'],[undefined,'']]){
+    const p={id:'p'},look={id:'look',revision:0,body:{controls:{}}},tune={preset:p.id,reseed:false,seed:null,rows:[],cleared:[]};
+    const context={structuredClone,Uint32Array,crypto:{},presets:()=>[p],presetFor:()=>p,tuneOf:()=>tune,tuneSummary:()=>'',shapeSize:()=>[512,512],SLOTS:[],
+      q:s=>({value:s==='#makeScene'?'a room':s==='#makeShape'?'square':'1'}),view:{querySelectorAll:()=>[]},json:async()=>({controls:{positive:'a room',sampler:'euler'},...(notices?{notices}:{})})};
+    const prepared=vm.runInNewContext(make.match(/  const NAMED=.*\n/)[0]+between('  function applyTune(','  function renderTune(')+between('  async function prepared(','  let estimateEpoch=')+';prepared',context);
+    const result=await prepared(look);
+    assert.equal(result.notice,expected);assert.equal(result.controls.sampler,'euler');
+  }
+  assert.match(make,/const \{scene,tune,tuned,notice,\.\.\.submit\}=request;/,'the notice is never sent on to /api/jobs');
+});
+
 function restoreHarness(failure){
   const requests=[],queue=[],saved=[],state={runs:[]};let response=failure;
   const context={state,savedRuns:[{id:'saved',look:'My look',scene:'a room',tune:{seed:0}}],restoredRuns:false,

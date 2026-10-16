@@ -82,6 +82,14 @@ def control_problem(preset, key, value):
     return None
 
 
+def _offered_default(preset, key, value):
+    """(default, notice) when a saved sampler/scheduler is no longer offered and the recipe's authored default is (owner, 16 Oct 2026:
+    swap it and say so), else None: a recipe with no offered default keeps the plain refusal from control_problem."""
+    default, choices = (preset.get("defaults") or {}).get(key), (preset.get("choices") or {}).get(key)
+    if key not in ("sampler", "scheduler") or control_problem(preset, key, value) is None or not isinstance(default, str) or not choices or default not in choices: return None
+    return default, f"This look's {key} {value} is no longer offered by {preset.get('name') or preset.get('id')}; using the recipe's default {default}."
+
+
 def _text(value, name, maximum, required=False):
     if value is None and not required: return ""
     if not isinstance(value, str) or len(value) > maximum: raise WorkspaceError(f"{name} must be text up to {maximum} characters")
@@ -149,8 +157,9 @@ def _options(value, template):
     return result
 
 
-def validate_body(body, preset):
-    """The look body, normalized, for this catalog preset; WorkspaceError with a plain reason otherwise."""
+def validate_body(body, preset, notices=None):
+    """The look body, normalized, for this catalog preset; WorkspaceError with a plain reason otherwise. An unoffered sampler or
+    scheduler becomes the recipe's default and, when `notices` is a list, its plain notice is appended."""
     if not isinstance(body, dict): raise WorkspaceError("A look must be an object")
     if set(body) - BODY_FIELDS: raise WorkspaceError("Unknown look fields: " + ", ".join(sorted(set(body) - BODY_FIELDS)))
     if body.get("preset_id") != preset.get("id"): raise WorkspaceError("A look names the recipe it was made on")
@@ -171,6 +180,10 @@ def validate_body(body, preset):
         if isinstance(value, bool) or not isinstance(value, (int, float, str)) or (isinstance(value, float) and not math.isfinite(value)):
             raise WorkspaceError(f"{key} must be a finite number or text")
         if isinstance(value, str) and len(value) > 300: raise WorkspaceError(f"{key} must be up to 300 characters")
+        swapped = _offered_default(preset, key, value)
+        if swapped:
+            value = swapped[0]
+            if notices is not None: notices.append(swapped[1])
         problem = control_problem(preset, key, value)
         if problem: raise WorkspaceError(problem)
         clean[key] = value
@@ -250,6 +263,7 @@ def ensure_seeds(studio):
 
 
 def listing(studio):
+    # A swapped sampler/scheduler is a notice for Prepare, not a reason to list the look as unusable.
     errors = ensure_seeds(studio); presets = _presets(studio); result = []
     for card in studio.assets.cards(KIND):
         preset = presets.get(card["body"].get("preset_id"))
@@ -271,7 +285,7 @@ def listing(studio):
 
 def command(studio, payload):
     """Create, edit, put away or restore a look. Bodies are checked against the recipe they name; the anchor comes from the Workspace."""
-    ensure_seeds(studio)
+    ensure_seeds(studio); notices = []
     if not isinstance(payload, dict): raise WorkspaceError("Look command must be an object")
     payload, action = dict(payload), payload.get("action")
     if action == "create" and payload.get("kind") != KIND: raise WorkspaceError("This route saves looks; the card kind must be " + KIND)
@@ -279,7 +293,7 @@ def command(studio, payload):
     if "body" in payload:
         preset = _presets(studio).get((payload["body"] or {}).get("preset_id") if isinstance(payload["body"], dict) else None)
         if preset is None: raise WorkspaceError("A look names a recipe from the recipe library")
-        payload["body"] = validate_body(payload["body"], preset)
+        payload["body"] = validate_body(payload["body"], preset, notices)
     anchor_id = payload.pop("anchor_asset_id", None)
     if anchor_id is not None:
         if action != "create": raise WorkspaceError("The anchor picture is recorded when the look is saved")
@@ -287,7 +301,8 @@ def command(studio, payload):
         payload["lineage"] = [{"role": "anchor", "asset_id": asset["id"], "sha256": asset["sha256"], "job_id": asset["job_id"],
                                **({"preset_id": asset["preset_id"]} if asset.get("preset_id") else {})}, *(payload.get("lineage") or [])]
     if "lineage" in payload: validate_lineage(payload["lineage"])
-    return studio.assets.card_command(payload)
+    card = studio.assets.card_command(payload)
+    return dict(card, notices=notices) if notices else card
 
 
 def prepare(studio, payload):
@@ -302,8 +317,9 @@ def prepare(studio, payload):
     if card["trashed_at"]: raise WorkspaceError("This look is put away. Restore it to use it.")
     preset = _presets(studio).get(card["body"].get("preset_id"))
     if preset is None: raise WorkspaceError("This look's recipe is not in the recipe library")
-    body = validate_body(card["body"], preset)
+    notices = []; body = validate_body(card["body"], preset, notices)
     options = body.get("options", []); on = chosen_options(options, payload.get("options"))
     controls = {"positive": compose(body["template"], payload.get("scene"), options, on), **({"negative": body["negative"]} if preset.get("negative") else {}), **body["controls"]}
     return {"preset_id": preset["id"], "preset_name": preset.get("name"), "controls": controls,
-            "look": {"id": card["id"], "name": card["name"], "revision": card["revision"], **({"options": on} if options else {})}, "generation_submitted": False}
+            "look": {"id": card["id"], "name": card["name"], "revision": card["revision"], **({"options": on} if options else {})},
+            **({"notices": notices} if notices else {}), "generation_submitted": False}

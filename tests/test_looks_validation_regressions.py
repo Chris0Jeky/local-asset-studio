@@ -9,6 +9,7 @@ import test_looks as fixture
 class LookValidationTests(unittest.TestCase):
     setUp = fixture.LookTests.setUp
     create = fixture.LookTests.create
+    route = fixture.LookTests.route
 
     def test_metadata_keys_are_never_treated_as_bound_controls(self):
         for key in ('graph', 'defaults', 'choices', 'description', 'backend'):
@@ -73,6 +74,63 @@ class LookValidationTests(unittest.TestCase):
                     fixture.looks.validate_body(dict(fixture.BODY, controls={key: value}), preset)
             preset['choices'] = {key: [value]}
             self.assertEqual(fixture.looks.validate_body(dict(fixture.BODY, controls={key: value}), preset)['controls'], {key: value})
+
+    def sampler_recipe(self, sampler=('euler', 'dpmpp_2m'), scheduler=('normal', 'karras')):
+        """Rewrite the catalog on disk: a recipe whose graph authors euler/normal and which offers the given choices (#1456 reversal)."""
+        graph = {'1': {'inputs': dict(fixture.GRAPH['1']['inputs'], sampler_name='euler', scheduler='normal')}}
+        preset = dict(fixture.TEXT, sampler=['1', 'sampler_name'], scheduler=['1', 'scheduler'], choices={'sampler': list(sampler), 'scheduler': list(scheduler)})
+        (self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph))
+        (self.root/'presets/catalog.json').write_text(json.dumps({'presets': [preset]}))
+
+    def test_an_unoffered_sampler_or_scheduler_becomes_the_recipe_default_with_a_notice(self):
+        # Owner, 16 Oct 2026: swap it for the recipe's authored default on Prepare and say so; the look stays usable.
+        self.sampler_recipe()
+        self.assertEqual(self.studio.catalog()['presets'][0]['defaults']['sampler'], 'euler', 'the default is the graph value Studio.catalog reads back')
+        card = fixture.looks.command(self.studio, {'action': 'create', 'kind': 'look', 'name': 'Swap', 'body': dict(fixture.BODY, controls={'seed': 77, 'steps': 12, 'sampler': 'dpmpp_2m', 'scheduler': 'karras'})})
+        self.assertNotIn('notices', card, 'offered choices raise no notice')
+        self.sampler_recipe(sampler=('euler', 'heun'), scheduler=('normal',))
+        listed = next(row for row in fixture.looks.listing(self.studio)['looks'] if row['id'] == card['id'])
+        self.assertTrue(listed['usable'], listed['unusable_reason'])
+        prepared = fixture.looks.prepare(self.studio, {'id': card['id'], 'scene': 'a quiet room'})
+        self.assertEqual((prepared['controls']['sampler'], prepared['controls']['scheduler']), ('euler', 'normal'))
+        self.assertEqual((prepared['controls']['seed'], prepared['controls']['steps']), (77, 12))
+        self.assertEqual(prepared['notices'], ["This look's sampler dpmpp_2m is no longer offered by Text only; using the recipe's default euler.",
+                                               "This look's scheduler karras is no longer offered by Text only; using the recipe's default normal."])
+        self.assertEqual(self.studio.assets.card(card['id'])['revision'], card['revision'], 'Prepare reads only')
+        status, body = self.route('POST', '/api/looks/prepare', {'id': card['id'], 'scene': 'a quiet room'})
+        self.assertEqual((status, body['controls']['sampler'], len(body['notices'])), (200, 'euler', 2))
+        self.assertEqual((self.studio.jobs, self.requests), ({}, []))
+        # An offered choice is left alone and carries no notice.
+        self.sampler_recipe()
+        self.assertNotIn('notices', fixture.looks.prepare(self.studio, {'id': card['id'], 'scene': 'a quiet room'}))
+
+    def test_saving_an_unoffered_sampler_stores_the_default_and_returns_the_notice(self):
+        self.sampler_recipe()
+        body = dict(fixture.BODY, controls={'seed': 77, 'sampler': 'dpmpp_3m'})
+        card = fixture.looks.command(self.studio, {'action': 'create', 'kind': 'look', 'name': 'Saved', 'body': body})
+        self.assertEqual(card['body']['controls'], {'seed': 77, 'sampler': 'euler'})
+        self.assertEqual(card['notices'], ["This look's sampler dpmpp_3m is no longer offered by Text only; using the recipe's default euler."])
+        self.assertEqual(self.studio.assets.card(card['id'])['body']['controls']['sampler'], 'euler')
+        edited = fixture.looks.command(self.studio, {'action': 'edit', 'id': card['id'], 'expected_revision': card['revision'], 'body': dict(body, controls={'scheduler': 'exponential'})})
+        self.assertEqual((edited['body']['controls'], len(edited['notices'])), ({'scheduler': 'normal'}, 1))
+
+    def test_other_control_validation_stays_strict_next_to_a_swapped_sampler(self):
+        self.sampler_recipe()
+        for controls in ({'sampler': 'gone', 'steps': 0}, {'sampler': 'gone', 'seed': -1}, {'scheduler': 'gone', 'lora_name': 'x.ckpt'}):
+            with self.subTest(controls=controls), self.assertRaises(fixture.WorkspaceError):
+                fixture.looks.command(self.studio, {'action': 'create', 'kind': 'look', 'name': 'Bad', 'body': dict(fixture.BODY, controls=controls)})
+        self.assertEqual(self.studio.assets.cards('look'), [])
+
+    def test_no_swap_when_the_recipe_default_is_not_itself_offered(self):
+        # Without an authored default that is offered, the swap would only move the jobs refusal: keep the plain reason.
+        base = dict(fixture.TEXT, sampler=['1', 'sampler_name'], choices={'sampler': ['euler']})
+        for defaults in (None, {}, {'sampler': ''}, {'sampler': 'ghost'}, {'sampler': 5}):
+            preset = dict(base, **({'defaults': defaults} if defaults is not None else {}))
+            with self.subTest(defaults=defaults), self.assertRaisesRegex(fixture.WorkspaceError, 'sampler dpmpp is not offered'):
+                fixture.looks.validate_body(dict(fixture.BODY, controls={'sampler': 'dpmpp'}), preset)
+        notices = []
+        kept = fixture.looks.validate_body(dict(fixture.BODY, controls={'sampler': 'dpmpp'}), dict(base, defaults={'sampler': 'euler'}), notices)
+        self.assertEqual((kept['controls'], len(notices)), ({'sampler': 'euler'}, 1))
 
     def test_a_filename_is_a_lora_slot_value_only_where_the_recipe_slot_holds_a_filename(self):
         # /api/jobs takes a filename for a slot only when the graph input it binds holds one (older presets); a strength slot refuses it.
