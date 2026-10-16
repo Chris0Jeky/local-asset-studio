@@ -21,6 +21,7 @@ from urllib.parse import urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'app')); sys.path.insert(0, str(ROOT))  # app/ modules import studio_workflow from the repo root
 import continuation
+import looks
 import wan_capacity
 POSTS = []
 FAIL_WORKSPACE = False
@@ -34,6 +35,7 @@ for preset in CATALOG['presets']:
     preset['defaults'] = {k: graph[str(v[0])]['inputs'].get(str(v[1]), '') for k, v in preset.items()
                           if isinstance(v, list) and len(v) == 2 and str(v[0]) in graph and isinstance(v[1], str)}
     preset['choices'] = {'sampler': ['euler', 'dpmpp_2m'], 'scheduler': ['normal', 'karras']}
+    preset['model'] = looks.model_of(graph)
     preset['continuation_capability'] = continuation.capability(preset, graph)
     preset['continuation_capability']['template_sha256'] = hashlib.sha256((ROOT / preset['graph']).read_bytes()).hexdigest()
 ASSETS = []
