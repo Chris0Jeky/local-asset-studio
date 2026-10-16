@@ -181,7 +181,9 @@ class ModelLibrary:
         if self.models.is_dir():
             for path in self.models.rglob("*"):
                 if path.is_file() and path.suffix.lower() in SUFFIXES and path.resolve().is_relative_to(self.models):
-                    inventory.append({"file": path.relative_to(self.models).as_posix(), "bytes": path.stat().st_size, "folder": path.relative_to(self.models).parts[0]})
+                    try:size=path.stat().st_size
+                    except OSError:continue
+                    inventory.append({"file": path.relative_to(self.models).as_posix(), "bytes": size, "folder": path.relative_to(self.models).parts[0]})
         disk = shutil.disk_usage(self.models if self.models.exists() else self.root)
         return {"assets": assets, "collections": manifest.get("collections", []), "folders": folders,
                 "inventory": inventory, "storage": {"free_bytes": disk.free, "total_bytes": disk.total, "reserve_bytes": RESERVE_BYTES},

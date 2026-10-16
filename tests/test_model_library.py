@@ -100,6 +100,18 @@ class ModelLibraryTests(unittest.TestCase):
             request.assert_not_called()
         self.assertEqual(target.read_bytes(),b'someone else');self.assertEqual(local.read_bytes(),self.body)
 
+    def test_inventory_skips_a_file_deleted_before_stat(self):
+        target=self.lib.destination(self.asset);target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(self.body)
+        extra=target.parent/'vanished.safetensors';extra.write_bytes(self.body)
+        real_stat=Path.stat
+        def raced(self,*args,**kwargs):
+            if self==extra:raise FileNotFoundError(str(self))
+            return real_stat(self,*args,**kwargs)
+        with patch.object(Path,'stat',raced):
+            snapshot=self.lib.snapshot()
+        names={row['file'] for row in snapshot['inventory']}
+        self.assertIn('loras/demo.safetensors',names);self.assertNotIn('loras/vanished.safetensors',names)
+
     def test_a_manifest_of_the_wrong_shape_is_a_clear_error(self):
         for bad in ([],{'assets':{}},{'assets':[1]},{'assets':[],'collections':{}}):
             with self.subTest(manifest=bad):

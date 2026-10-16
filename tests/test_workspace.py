@@ -335,6 +335,12 @@ class WorkspaceTests(unittest.TestCase):
         self.assertEqual(self.store.get(self.asset)['title'], 'Reuse title')
         self.assertEqual(self.store.get(self.asset)['metadata_revision'], rev + 1)
 
+    def test_register_with_a_bad_output_index_raises_without_snapshotting(self):
+        other=self.root/'other.png';other.write_bytes(b'unregistered bytes')
+        before=set(p.name for p in self.store.media.iterdir())
+        with self.assertRaisesRegex(workspace.WorkspaceError,'job output'):self.store.register(self.job,7,other)
+        self.assertEqual(set(p.name for p in self.store.media.iterdir()),before)
+
     def test_register_returns_stored_id_on_conflict(self):
         # Normal path: a fresh (job_id, output_index) registers under its uuid5 id.
         fresh_source = self.root / 'fresh.png'
