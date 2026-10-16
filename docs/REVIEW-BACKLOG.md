@@ -55,4 +55,12 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   LoRAs you add. "Good for / Not for" was not invented because looks carry no such data.
 - [ ] **Looks Prepare refuses to half-apply** (#1434): if a saved LoRA, sampler or scheduler is no longer offered,
   Prepare stops, names it and restores the Full editor as it was.
+- [ ] **Full editor LoRA slots** (#1437): picking a LoRA file resets its strength to the recommended value and adds
+  its trigger once (start or end per the knowledge base); strength 0 counts as "removed" and takes the auto-added
+  trigger back out. Make looks never inject triggers.
+- [ ] **Recipe picker** (#1437): grouped by what it makes, one plain sentence per card, pictures only from committed
+  recipe renders (15 of 92; adult-tagged recipes excluded), speed badges only where a run or the author states one,
+  the "Untested" chip dropped as noise.
+- [ ] **Large-job preparation journal rotates** (#1435) with tombstones for action receipts, instead of locking up
+  after 32 requests.
 
