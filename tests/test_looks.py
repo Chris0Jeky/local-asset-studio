@@ -164,6 +164,60 @@ class LookTests(unittest.TestCase):
             with self.subTest(payload=repr(payload)), self.assertRaises(WorkspaceError): looks.prepare(self.studio, payload)
         self.assertEqual(self.studio.jobs, {})
 
+    # ------------------------------------------------------------------ guards found untested (Muse test-gaps lens)
+    def foreign_card(self):
+        """A card whose stored kind is not look: the Workspace creates only looks today, so the kind is changed in place."""
+        card = self.create()
+        with self.studio.assets.connection() as db: db.execute("UPDATE cards SET kind=? WHERE id=?", ("character", card["id"]))
+        return card["id"]
+
+    def test_every_picture_route_key_refuses_a_look_not_only_reference(self):
+        """Looks are words on one text-to-image recipe: a recipe that takes a picture through any route key is refused."""
+        for key, value in (("reference", ["1", "text"]), ("last_reference", ["1", "text"]), ("reference_slots", [{"role": "pose", "binding": ["1", "image"]}])):
+            picture = dict(TEXT, **{key: value})
+            with self.subTest(route=key):
+                reason = looks.recipe_problem(picture)
+                self.assertIsNotNone(reason, "a picture route must be refused by recipe_problem")
+                self.assertIn("picture", reason)
+                with self.assertRaisesRegex(WorkspaceError, "picture"): looks.validate_body(dict(BODY, preset_id="text-only"), picture)
+
+    def test_edit_trash_and_restore_refuse_a_card_that_is_not_a_look(self):
+        foreign = self.foreign_card()
+        for payload in ({"action": "edit", "body": BODY}, {"action": "trash"}, {"action": "restore"}):
+            with self.subTest(action=payload["action"]), self.assertRaisesRegex(WorkspaceError, "That card is not a look"):
+                looks.command(self.studio, dict(payload, id=foreign, expected_revision=0))
+        card = self.studio.assets.card(foreign)
+        self.assertEqual((card["revision"], card["trashed_at"]), (0, None), "a refused command changes nothing")
+        with self.assertRaises(WorkspaceError): looks.command(self.studio, {"action": "trash", "id": "missing-card", "expected_revision": 0})
+
+    def test_an_anchor_picture_is_recorded_only_when_a_look_is_saved(self):
+        source = self.root / "anchor.png"; source.write_bytes(b"anchor picture bytes")
+        asset = self.studio.assets.register({"id": "job-anchor", "preset_id": "text-only", "outputs": [{"filename": "anchor.png"}]}, 0, source)
+        card = self.create()
+        with self.assertRaisesRegex(WorkspaceError, "recorded when the look is saved"):
+            looks.command(self.studio, {"action": "edit", "id": card["id"], "expected_revision": 0, "anchor_asset_id": asset})
+        stored = self.studio.assets.card(card["id"])
+        self.assertEqual((stored["revision"], stored["lineage"]), (0, []), "the lineage is not rewritten by an edit")
+
+    def test_prepare_refuses_a_card_that_is_not_a_look(self):
+        foreign = self.foreign_card()
+        with self.assertRaisesRegex(WorkspaceError, "That card is not a look"): looks.prepare(self.studio, {"id": foreign, "scene": "a hall"})
+        self.assertEqual((self.studio.jobs, self.requests), ({}, []))
+
+    def test_compose_needs_exactly_one_scene_slot_in_the_wording(self):
+        for template in ("no slot at all", "{scene} and {scene}"):
+            with self.subTest(template=template), self.assertRaisesRegex(WorkspaceError, "wording has no single"): looks.compose(template, "a hall")
+        # An enabled line that writes a second slot is refused at compose; the same line off leaves the one slot.
+        twin = dict(WALL, text="{scene}")
+        self.assertEqual(looks.compose(OPTIONAL["template"], "a hall", [twin]), "No people. Painted background of a hall. Amber accents.")
+        with self.assertRaisesRegex(WorkspaceError, "optional lines leave no single"): looks.compose(OPTIONAL["template"], "a hall", [twin], {"quiet_wall": True})
+
+    def test_a_look_naming_a_recipe_outside_the_library_is_refused_at_save(self):
+        for body in (dict(BODY, preset_id="missing"), "text", None):
+            with self.subTest(body=repr(body)), self.assertRaisesRegex(WorkspaceError, "A look names a recipe from the recipe library"):
+                looks.command(self.studio, {"action": "create", "kind": "look", "name": "Lost", "body": body})
+        self.assertEqual(self.studio.assets.cards("look"), [], "nothing is stored for a refused look")
+
     # ------------------------------------------------------------------ routes
     def test_routes_list_save_and_prepare_without_creating_a_job(self):
         status, created = self.route("POST", "/api/looks", {"action": "create", "kind": "look", "name": "Night Shift", "body": BODY})
