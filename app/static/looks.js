@@ -212,7 +212,7 @@
       catch(error){if(!currentRequest()){stale();return;}throw error;}
       if(!currentRequest()){stale();return;}
       // Application is synchronous; release before it renders an actual recovery hold.
-      L.finishPreparation(token);if(apply(result))status(q('#lookStatus').textContent+' Prepared. Press Ctrl+Enter again (or Generate) to run it.');
+      L.finishPreparation(token);if(apply(result))status(q('#lookStatus').textContent+' Prepared. Press Ctrl+Enter again (or Generate) to run it.'+(result.notices||[]).map(n=>' '+n).join(''));
     }finally{L.finishPreparation(token);updateReady();}
   });
   q('#lookReset').onclick=()=>{if(busy)return;selectPreset(selected.id);status('Recipe reset without the look. Review its defaults before generating.');};
@@ -220,7 +220,7 @@
   q('#lookSaveButton').onclick=()=>act(async()=>{
     const body={preset_id:selected.id,template:q('#positive').value,controls:L.saveControls(values())};if(selected.negative)body.negative=q('#negative').value;
     const anchor=anchorAsset(),saved=await post('/api/looks',{action:'create',kind:'look',name:q('#lookName').value.trim(),body,...(anchor?{anchor_asset_id:anchor}:{})});
-    q('#lookName').value='';await load(saved.id);status(saved.name+' saved in your Workspace. Type a scene and prepare to use it.');
+    q('#lookName').value='';await load(saved.id);status(saved.name+' saved in your Workspace. Type a scene and prepare to use it.'+(saved.notices||[]).map(n=>' '+n).join(''));
   });
   load();
 })();
