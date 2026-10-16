@@ -244,8 +244,27 @@ def run(shots):
         assert job['controls']['last_reference'] == job['continuation']['reference_file'] and job['references'][0]['role'] == 'pose', job
         assert set(job['parent_assets']) == {'asset-1', 'asset-2'} and '[' not in job['controls']['positive'] and 'the lantern keeper' in job['controls']['positive'], job
         clicks['combine'] = 4  # goal, character, pose picture, Generate (+3 fields typed)
+        # Route from lab round 3 (PR #1481): Copy Pose is the default, "Put my character into this picture's scene" is Replace character;
+        # each says what it keeps, and the pose field shows the lab's tested wording as its placeholder (never prefilled).
+        assert page.is_checked('#makePoseRoute-copy') and 'face, clothes, background' in page.locator('#makePoseRouteHint-copy').inner_text()
+        assert 'outfit, setting' in page.locator('#makePoseRouteHint-scene').inner_text() and page.locator('label:has(#makePoseRoute-scene)').inner_text().strip() == 'Put my character into this picture’s scene'
+        assert page.get_attribute('#makeF-pose', 'placeholder') == 'holding one bamboo flute with both hands at chest height, front view, medium shot'
+        page.locator('label:has(#makePoseRoute-scene)').click(); page.wait_for_selector('#makeF-outfit')
+        assert page.is_checked('#makePoseRoute-scene') and 'only the person changes' in page.locator('#makePoseSlot').inner_text()
+        page.locator('#makeF-outfit').fill('a long teal hanfu'); job = generate()[0]; no_modal()
+        assert job['preset_id'] == 'combine-klein-9b-replace' and job['references'][0]['role'] == 'composition' and 'a long teal hanfu' in job['controls']['positive'], job
+        page.locator('label:has(#makePoseRoute-copy)').click(); assert page.is_checked('#makePoseRoute-copy') and not page.locator('#makePoseFallback').count()
+        # Copy Pose's model missing: the next picture route Make offers (never depth or plain 9B), and the page says why.
+        page.route('**/api/health', lambda route: route.fulfill(json=dict(online=True, schema_available=True, missing_models={'combine-klein-9b-copypose': ['diffusion_models/copy-pose.safetensors']}, devices=[])))
+        page.evaluate('health()'); page.wait_for_function('!!missingByPreset["combine-klein-9b-copypose"]')
+        page.locator('label:has(#makePoseRoute-scene)').click(); page.locator('label:has(#makePoseRoute-copy)').click()
+        why = page.locator('#makePoseFallback').inner_text()
+        assert 'Copy Pose needs 1 model file first' in why and 'Klein 4B' in why and page.locator('#makePoseFallback a[href*="combine-klein-9b-copypose"]').count() == 1, why
+        job = generate()[0]; assert job['preset_id'] == 'combine-klein', job
+        page.unroute('**/api/health'); page.evaluate('health()'); page.wait_for_function('!missingByPreset["combine-klein-9b-copypose"]')
         page.locator('label:has([data-make-pose-mode="figure"])').click(); page.locator('label:has([data-make-figure="standing"])').click()
         assert page.locator('#makeF-pose').input_value() == 'standing'
+        assert 'crossed legs on the bent figure' in page.locator('#makeFigureHint').inner_text() and not page.locator('#makePoseRoute-copy').count(), 'the figure route keeps its own hint, no picture routes'
         for key, words in (('who', 'the lantern keeper'), ('clothes', 'a green cloak')):
             if page.locator('#makeF-' + key).count() and not page.locator('#makeF-' + key).input_value(): page.locator('#makeF-' + key).fill(words)
         shot('goal-combine-figure')

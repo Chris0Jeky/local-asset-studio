@@ -63,6 +63,12 @@ def run():
             page.click('[data-make-goal="character"]'); page.click('[data-make-look="%s"]' % LOOK)
             assert page.evaluate('!document.querySelector("#makeTune").open'), 'Tune is folded shut by default'
             page.click('#makeTune > summary')
+            # Lab round 3 (PR #1481): an adapter measured with Petiflow as made starts at the lab's neutral strength and shows what the lab saw;
+            # an adapter the lab did not test keeps the knowledge base's default (asserted below for ADDED).
+            xilmo = 'anima-xilmo-000020.safetensors'; assert KNOWLEDGE['loras'][xilmo]['default'] == 0.7
+            page.fill('#makeLoraSearch', xilmo); page.click('[data-tune-add]')
+            assert page.input_value('[data-tune-strength=lora2]') == '0.35' and page.text_content('[data-slot=lora2] .make-lab') == 'Lab with Petiflow: at 0.35 kept the scene; at 0.7 changed the plant.', page.text_content('[data-slot=lora2]')
+            page.click('[data-tune-reset]'); assert not page.query_selector('[data-slot=lora2]') and not posted('/api/jobs')
             offered = page.eval_on_selector_all('#makeModel option', 'o => o.map(x => x.value)')
             assert offered[0] == BASE and SWITCH in offered and 'oneobsession-anima-v20-baseline' in offered, offered
             for wrong in ('anima-artist-stack', 'janima-v1-baseline', 'anima-portrait', 'wai', 'krea-anime-atelier'):

@@ -13,9 +13,13 @@ Owner ask (16 October 2026): "the user should be able to do it without much conf
     (`restyle-klein-picture`). *Describe the look in words instead* switches to `restyle-klein`, with the finish sentence
     ready to edit.
   - **Character in a new pose**: two labelled slots. **Character picture** is the one you picked. **Pose** is either a
-    picture from your library (`combine-klein-9b-copypose`) or a drawn figure, Standing or Bent forward, with a mirror
-    option (`combine-klein-9b-skeleton`, drawn by `/api/pose/render`). The recipe's bracketed fills are plain named fields
-    (Who is in the character picture / What they wear, with colours / The pose, in a few words). No bracket and no recipe
+    picture from your library or a drawn figure, Standing or Bent forward, with a mirror option
+    (`combine-klein-9b-skeleton`, drawn by `/api/pose/render`; a hint says hands and gaze follow the words weakly). A
+    picture offers two choices, each saying what it keeps (lab round 3, PR #1481): **Keep my character as it is**
+    (`combine-klein-9b-copypose`, the default) or **Put my character into this picture's scene**
+    (`combine-klein-9b-replace`). Make never picks depth or plain 9B; with Copy Pose not ready it uses the next picture
+    route and says why. The recipe's bracketed fills are plain named fields (Who is in the character picture / What they
+    wear, with colours / The pose, in a few words, with the lab's tested wording as placeholder). No bracket and no recipe
     example that names a person reaches the page.
   - **Change one thing** (`flux-edit`): one field. **Fix or upscale**: Fix face, Fix hands and details or Upscale 2×. These
     are the existing one-press polish routes, and a route that does not fit the picture gives its reason. **Animate**
