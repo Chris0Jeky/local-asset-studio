@@ -56,9 +56,18 @@ class Handler(fixture.Handler):
             return self.json({'preset_id': look['body']['preset_id'], 'controls': {**look['body']['controls'], 'positive': look['body']['template'].replace('{scene}', data['scene'])}})
         if self.path == '/api/characters':
             data = json.loads(self.rfile.read(length)); fixture.POSTS.append({'path': self.path, 'data': data})
-            card = dict(id='character-%d' % len(CHARACTERS), kind='character', name=data['name'], body=data['body'], revision=0, trashed_at=None,
-                        lineage=[{'role': 'canon', 'asset_id': data['canon_asset_id'], 'sha256': 'a' * 64}], usable=True, unusable_reason=None, canon_asset_id=data['canon_asset_id'])
-            CHARACTERS.append(card); return self.json(card)
+            if data['action'] == 'create':
+                card = dict(id='character-%d' % len(CHARACTERS), kind='character', name=data['name'], body=data['body'], revision=0, trashed_at=None,
+                            lineage=[{'role': 'canon', 'asset_id': data['canon_asset_id'], 'sha256': 'a' * 64}], usable=True, unusable_reason=None, canon_asset_id=data['canon_asset_id'])
+                CHARACTERS.append(card); return self.json(card)
+            card = next(c for c in CHARACTERS if c['id'] == data['id'])   # edit / trash / restore name the revision they read, as Workspace.card_command checks
+            if data['expected_revision'] != card['revision']:
+                return self.json({'error': 'This card changed since you read it; nothing changed. Reload it and try again.', 'code': 'card_revision_conflict'}, 409)
+            if data['action'] == 'edit': card.update(name=data['name'], body=data['body'])
+            else:
+                away = data['action'] == 'trash'
+                card.update(trashed_at=1789228800 if away else None, usable=not away, unusable_reason='This character is put away. Restore it to use it.' if away else None)
+            card['revision'] += 1; return self.json(card)
         if self.path == '/api/jobs':
             data = json.loads(self.rfile.read(length))
             if any(data.get('label', '').endswith(x) for x in FAIL_LABEL): return self.json({'error': 'Fixture refusal'}, 400)
@@ -68,6 +77,8 @@ class Handler(fixture.Handler):
         return super().do_POST()
 
 
+def fixture_card(i): return CHARACTERS[i]   # run() assigns its own CHARACTERS (look ids), so the fixture list is reached from here
+def no_characters(): CHARACTERS.clear()
 def jobs(): return [p['data'] for p in fixture.POSTS if p['path'] == '/api/jobs']
 def posted(path): return [p['data'] for p in fixture.POSTS if p['path'] == path]
 
@@ -272,6 +283,77 @@ def run(shots):
         assert 'Mira, a lantern keeper with silver hair' in job['controls']['positive'] and 'a moss-green cloak with brass buttons' in job['controls']['positive'], job['controls']['positive']
         clicks['character'] = 4  # goal, Change picture, the character, Generate (the pose kept or one word typed)
 
+        # Manage characters (#1205 v2): Edit, Put away / Restore (revision-checked: a 409 reloads and changes nothing), and a read-only
+        # Line-up per character, canon pinned first, then kept pictures that descend from it. None of it submits.
+        before_manage = len(jobs()); kept_state = [(a['review'], a['lineage']) for a in fixture.ASSETS]
+        fixture.ASSETS[4].update(review='selected', lineage=['asset-0'])   # a kept picture made from the canon
+        fixture.ASSETS[3].update(review='selected', lineage=['asset-4'])   # a kept edit of that one: listed after it, so the chain needs a second pass
+        fixture.ASSETS[2].update(lineage=['asset-0'])                      # made from the canon but needs work: not kept, not in the line-up
+
+        def open_picker():
+            page.locator('[data-make-goal="combine"]').click(); page.wait_for_selector('#makePoseSlot,[data-make-pick]')
+            if page.locator('#makeComposer [data-make-repick]').count(): page.locator('#makeComposer [data-make-repick]').click()
+            page.wait_for_selector('.make-characters')
+        open_picker(); sc = '[data-open-key="lineup:character-0"]'
+        assert page.locator(sc).count() == 1 and not page.locator(sc).evaluate('e=>e.open'), 'the line-up is a closed disclosure'
+        page.locator(sc + ' summary').click(); page.wait_for_selector(sc + ' .make-lineup-item')
+        page.wait_for_function('s=>[...document.querySelectorAll(s+" img")].every(i=>i.complete&&i.naturalWidth>0)', arg=sc)
+        order = page.eval_on_selector_all(sc + ' .make-lineup-item', 'n=>n.map(e=>e.dataset.uxOpenAsset)')
+        assert order == ['asset-0', 'asset-3', 'asset-4'], order   # canon first, then kept descendants newest first; asset-1 (unrelated) and asset-2 (not kept) stay out
+        heights = page.eval_on_selector_all(sc + ' .make-lineup-item img', 'n=>n.map(e=>Math.round(e.getBoundingClientRect().height))')
+        assert len(set(heights)) == 1 and heights[0] > 0, heights
+        assert page.locator(sc + ' .make-lineup-item').first.inner_text().strip() == 'Canon'; shot('character-lineup', '.make-characters')
+        page.locator(sc + ' .make-lineup-item').nth(1).click(); page.wait_for_function('document.querySelector("#assetDialog")?.open', timeout=5000)
+        page.evaluate('document.querySelector("#assetDialog").close()')
+        # Bounded at 24 kept pictures behind the canon, with the rest named.
+        extra = [dict(fixture.ASSETS[0], id='lineup-%02d' % i, title='Lineup %02d' % i, filename='l%02d.png' % i, created_at=1789000000 + i, review='selected', lineage=['asset-0'], tags=[]) for i in range(26)]
+        fixture.ASSETS.extend(extra); open_picker()
+        page.wait_for_function('s=>document.querySelectorAll(s+" .make-lineup-item").length===25', arg=sc)
+        assert '4 older kept pictures not shown' in page.locator(sc).inner_text(), page.locator(sc).inner_text()
+        del fixture.ASSETS[-26:]
+        assert len(jobs()) == before_manage, 'the line-up submits nothing'
+        # Edit: the words and the avoid words; a stale revision (changed elsewhere) reloads the card and saves nothing.
+        page.locator('[data-make-character-edit="character-0"]').click(); form = page.locator('.make-characters .make-character-form')
+        assert [form.locator('[data-make-char="%s"]' % k).input_value() for k in ('name', 'who', 'clothes', 'avoid')] == ['Mira', 'Mira, a lantern keeper with silver hair', 'a moss-green cloak with brass buttons', ''], 'Edit shows the stored words'
+        form.locator('[data-make-char="avoid"]').fill('glasses, hat'); shot('character-edit', '.make-characters')
+        form.locator('[data-make-character-cancel]').click(); assert not page.locator('.make-character-form').count() and len(posted('/api/characters')) == 1, 'Cancel saves nothing'
+        assert page.evaluate('document.activeElement.dataset.makeCharacterEdit') == 'character-0'
+        page.locator('[data-make-character-edit="character-0"]').click(); form = page.locator('.make-characters .make-character-form')
+        form.locator('[data-make-char="avoid"]').fill('glasses, hat'); fixture_card(0).update(name='Mira (renamed elsewhere)', revision=1)
+        form.locator('[type=submit]').click(); page.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("changed somewhere else")')
+        assert posted('/api/characters')[-1]['expected_revision'] == 0 and fixture_card(0)['body'].get('avoid') is None, 'a stale edit changes nothing'
+        assert not page.locator('.make-character-form').count() and 'Mira (renamed elsewhere)' in page.locator('[data-make-character="character-0"]').inner_text(), 'the card is reloaded'
+        page.locator('[data-make-character-edit="character-0"]').click(); form = page.locator('.make-characters .make-character-form')
+        form.locator('[data-make-char="name"]').fill('Mira'); form.locator('[data-make-char="clothes"]').fill('a moss-green cloak, brass buttons, mud on the hem'); form.locator('[data-make-char="avoid"]').fill('glasses, hat')
+        form.locator('[type=submit]').click(); page.wait_for_function('document.querySelector("#makeStatus")?.textContent.startsWith("Saved the changes")')
+        assert posted('/api/characters')[-1] == {'action': 'edit', 'id': 'character-0', 'expected_revision': 1, 'name': 'Mira', 'body': {'who': 'Mira, a lantern keeper with silver hair', 'clothes': 'a moss-green cloak, brass buttons, mud on the hem', 'avoid': 'glasses, hat'}}, posted('/api/characters')[-1]
+        assert 'glasses' not in page.locator('.make-characters').inner_text(), 'avoid words are stored, not shown'
+        assert page.evaluate('document.activeElement.dataset.makeCharacterEdit') == 'character-0'
+        # Avoid words ride only where the goal's request already has a negative field.
+        page.locator('[data-make-character="character-0"]').click(); page.wait_for_selector('#makePoseSlot')
+        if page.locator('#makeF-pose').count() and not page.input_value('#makeF-pose'): page.locator('#makeF-pose').fill('standing')
+        job = generate()[0]
+        assert 'negative' not in job['controls'] and 'glasses' not in json.dumps(job), 'this goal’s request has no negative field: the avoid words stay unused, silently'
+        # No Make goal's recipe carries a negative today (one does when it binds a negative and continues from the source's description),
+        # so give this one both, page-side only, to prove the append.
+        page.evaluate("()=>{const p=catalog.presets.find(p=>p.id==='combine-klein-9b-skeleton');window.keepRole=p.continuation_capability.prompt_role;p.negative=['9','text'];p.continuation_capability.prompt_role='description';}")
+        job = generate()[0]; page.evaluate("()=>{const p=catalog.presets.find(p=>p.id==='combine-klein-9b-skeleton');delete p.negative;p.continuation_capability.prompt_role=window.keepRole;}")
+        assert job['controls']['negative'] == 'blur, glasses, hat' and 'glasses' not in job['controls']['positive'], job['controls']
+        # Put away hides it from the chooser; Restore (under "Put away (n)") brings it back. A stale revision changes nothing.
+        open_picker(); fixture_card(0)['revision'] += 1
+        page.locator('[data-make-character-away="character-0"]').click(); page.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("changed somewhere else")')
+        assert fixture_card(0)['trashed_at'] is None and page.locator('[data-make-character="character-0"]').count() == 1, 'a stale Put away changes nothing'
+        page.locator('[data-make-character-away="character-0"]').click(); page.wait_for_function('document.querySelectorAll("[data-make-character]").length===0')
+        assert posted('/api/characters')[-1] == {'action': 'trash', 'id': 'character-0', 'expected_revision': 3}, posted('/api/characters')[-1]
+        assert 'All your characters are put away' in page.locator('.make-characters').inner_text() and page.locator('.make-away summary').inner_text() == 'Put away (1)'
+        assert page.evaluate('document.activeElement.tagName') == 'SUMMARY', 'focus lands on the Put away disclosure'
+        page.locator('.make-away summary').click(); shot('character-away', '.make-characters')
+        page.locator('[data-make-character-restore="character-0"]').click(); page.wait_for_selector('[data-make-character="character-0"]')
+        assert posted('/api/characters')[-1] == {'action': 'restore', 'id': 'character-0', 'expected_revision': 4} and not page.locator('.make-away').count()
+        assert page.evaluate('document.activeElement.dataset.makeCharacter') == 'character-0'
+        assert len(jobs()) == before_manage + 2, 'managing characters submitted nothing (the two jobs are the avoid-words checks)'
+        for a, (review, lineage) in zip(fixture.ASSETS, kept_state): a.update(review=review, lineage=lineage)
+
         # Change one thing.
         goal('edit'); page.locator('#makeF-change').fill('give her a red scarf'); shot('goal-edit')
         job = generate()[0]; assert job['preset_id'] == 'flux-edit' and 'give her a red scarf' in job['controls']['positive'] and '[' not in job['controls']['positive'], job
@@ -316,7 +398,7 @@ def run(shots):
         assert page.locator('#makeGenerate').inner_text() == 'Generate 3 pictures'
         shot('compare-composer')
         before = len(jobs()); page.locator('#makeGenerate').click()
-        page.wait_for_function('n=>document.querySelector("#makeStatus").textContent.startsWith("Started 3")', timeout=8000)
+        page.wait_for_function('n=>document.querySelector("#makeStatus")?.textContent.startsWith("Started 3")', timeout=8000)
         sent = jobs()[before:]; assert len(sent) == 3 and all(j['label'].startswith('Make · Compare · ') and j['batch_count'] == 1 for j in sent), sent
         seeds = {j['controls'].get('seed') for j in sent if 'seed' in j['controls']}; assert len(seeds) == 1, seeds
         page.wait_for_function('document.querySelectorAll(".make-compare figure [data-make-review=selected]").length===3', timeout=8000)
@@ -326,12 +408,12 @@ def run(shots):
         # A refusal mid-compare says how many started and that the rest were not sent.
         FAIL_LABEL.append(page.eval_on_selector_all('[data-make-look][aria-checked=true]', 'n=>n.map(e=>e.closest(".make-look").querySelector("b").textContent)')[1])
         before = len(jobs()); page.locator('#makeGenerate').click()
-        page.wait_for_function('document.querySelector("#makeStatus").textContent.startsWith("Started 1 of 3")', timeout=8000); FAIL_LABEL.clear()
+        page.wait_for_function('document.querySelector("#makeStatus")?.textContent.startsWith("Started 1 of 3")', timeout=8000); FAIL_LABEL.clear()
         assert len(jobs()) == before + 1 and 'the rest were not sent' in page.locator('#makeStatus').inner_text(), page.locator('#makeStatus').inner_text()
         # A picture goal whose copied reference does not match the verified source sends nothing.
         page.route('**/api/assets/reference', lambda route: route.fulfill(json={'file': 'x' * 32 + '_ref.png', 'sha256': '0' * 64, 'parent_asset': 'asset-1', 'context': {}}))
         goal('edit'); page.locator('#makeF-change').fill('give her a hat'); before = len(jobs())
-        page.locator('#makeGenerate').click(); page.wait_for_function('document.querySelector("#makeStatus").textContent.includes("Nothing was sent")', timeout=5000)
+        page.locator('#makeGenerate').click(); page.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("Nothing was sent")', timeout=5000)
         assert len(jobs()) == before, 'a mismatched copy sends no job'
         page.unroute('**/api/assets/reference')
         assert all(p['path'] != '/api/jobs' or p['data'].get('label', '').startswith('Make') for p in fixture.POSTS)
@@ -347,6 +429,33 @@ def run(shots):
         page.locator('[data-make-search="makePictures"]').fill('lighthouse')
         page.wait_for_function('document.querySelectorAll("#makePictures [data-make-pick]").length===1')
         assert page.locator('#makePictures [data-make-pick="old-00"]').count() == 1
+        # One-time migration (#1205 v2): Combine's old who / clothes answers live in one browser's localStorage (studio-fills:<picture>). When no
+        # character exists, a dismissible note offers to save one from a kept picture that still has them. Never automatic; dismissal is remembered.
+        no_characters(); legacy = {'@who': 'the lantern keeper, a young elf', '@clothes': 'a green cloak'}
+        seed = "localStorage.setItem('studio-fills:asset-1', %s);localStorage.setItem('studio-fills:asset-0', %s)" % (json.dumps(json.dumps(legacy)), json.dumps(json.dumps(legacy)))  # asset-0 is not kept
+
+        def note_page():
+            extra = browser.new_page(viewport={'width': 1440, 'height': 900}); extra.on('pageerror', lambda e: errors.append(str(e))); extra.add_init_script(seed)
+            extra.goto(origin + '/#make'); extra.wait_for_function('!!catalog?.presets?.length&&!!window.StudioWorkbench?.polish'); extra.locator('[data-make-goal="edit"]').click()
+            extra.wait_for_selector('[data-make-pick]'); return extra
+        before_note = len(jobs()); fresh = note_page(); fresh.wait_for_selector('#makeCharNote .make-note')
+        assert fresh.locator('[data-make-migrate]').evaluate_all('n=>n.map(e=>e.dataset.makeMigrate)') == ['asset-1'], 'only a kept picture with remembered answers is offered'
+        assert not fresh.locator('.make-characters').count(), 'no character yet'
+        fresh.locator('[data-make-migrate="asset-1"]').click(); nform = fresh.locator('#makeCharNote .make-character-form')
+        assert (nform.locator('[data-make-char="who"]').input_value(), nform.locator('[data-make-char="clothes"]').input_value()) == (legacy['@who'], legacy['@clothes'])
+        posts_before = len(posted('/api/characters')); nform.locator('[type=submit]').click()
+        fresh.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("Name the character first")'); assert len(posted('/api/characters')) == posts_before
+        nform.locator('[data-make-char="name"]').fill('Wren'); nform.locator('[type=submit]').click(); fresh.wait_for_function('document.querySelector("#makeStatus")?.textContent.startsWith("Saved")')
+        assert posted('/api/characters')[-1] == {'action': 'create', 'kind': 'character', 'name': 'Wren', 'canon_asset_id': 'asset-1', 'body': {'who': legacy['@who'], 'clothes': legacy['@clothes']}}
+        assert not fresh.locator('.make-note').count() and fresh.locator('[data-make-character="character-0"]').count() == 1, 'saved: the note goes and the character is listed'
+        fresh.close()
+        no_characters(); fresh = note_page(); fresh.wait_for_selector('#makeCharNote .make-note')
+        fresh.locator('[data-make-note-dismiss]').click(); assert not fresh.locator('.make-note').count()
+        assert fresh.evaluate('localStorage.getItem("studio.make.character-note")') == 'dismissed'
+        fresh.locator('[data-make-goal="restyle"]').click(); fresh.wait_for_selector('[data-make-pick]'); fresh.reload(); fresh.wait_for_selector('[data-make-goal="edit"]'); fresh.locator('[data-make-goal="edit"]').click(); fresh.wait_for_selector('[data-make-pick]'); fresh.wait_for_timeout(300)
+        assert not fresh.locator('.make-note').count(), 'a dismissed note is not offered again'
+        assert len(jobs()) == before_note, 'the migration note submits nothing'
+        fresh.close()
         assert not errors, errors
         browser.close()
     server.shutdown()
