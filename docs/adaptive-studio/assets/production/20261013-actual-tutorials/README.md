@@ -21,3 +21,7 @@ Desktop source pixels and decoded frames were inspected. Replacement consent and
 Validation is documentary/media verification plus the real action receipts and repository validator; the app and catalogue are unchanged, so a local full application suite was not rerun. Hosted gates for this new draft remain pending. Existing #1351 head `2ac1cf638fdddfdabf881a0ffc68e097cee29072` has completed successful hosted workflows, including Check studio `38336426787`; the coordinating assistant verified all 44 check runs passing at the recorded head. This automated technical verification implies no new owner acceptance. The four earlier drafts had no new inline threads or comments at this continuation's review.
 
 Existing `HUMAN_TODO.md` creative/licensing choices, installed-runtime/native-media/performance and physical Android/TalkBack qualification remain. Accepted MA, artwork candidates, 44 specific deferrals and the blocked combined Alibi startup budget are unchanged. No merge or deployment.
+
+## Repository manifest correction
+
+`FILES.json` records sizes and SHA-256 for normalized committed repository bytes. Media absent from Git is listed separately in `ARCHIVE-FILES.json` as unverified historical archive measurements; its bytes could not be re-derived for this correction. Earlier archive-preservation claims above are historical and have not been reverified. The historical recording was not rerun.

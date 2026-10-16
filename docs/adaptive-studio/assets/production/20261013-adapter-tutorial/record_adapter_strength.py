@@ -7,6 +7,11 @@ import argparse, hashlib, importlib.util, json, shutil, subprocess, time
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
+def require_workspace(identity, repo):
+    workspace=identity.get('workspace')
+    if identity.get('app')!='local-asset-studio' or not isinstance(workspace,str) or not workspace or Path(workspace).resolve()!=repo.resolve():
+        raise ValueError(f"Studio identity workspace {workspace!r} does not match --repo-root {str(repo)!r}; refusing to record")
+
 parser=argparse.ArgumentParser()
 parser.add_argument('--repo-root',type=Path,required=True)
 parser.add_argument('--output',type=Path,required=True)
@@ -20,6 +25,9 @@ audit=[];errors=[];failed=[];events=[]
 with sync_playwright() as pw:
     browser=pw.chromium.launch()
     context=browser.new_context(viewport={'width':1280,'height':720},record_video_dir=str(out/'raw'),record_video_size={'width':1280,'height':720})
+    identity_response=context.request.get(base+'/api/identity')
+    if not identity_response.ok: raise RuntimeError('Cannot verify Studio workspace: GET /api/identity failed')
+    require_workspace(identity_response.json(),repo)
     page=context.new_page();video_origin=time.monotonic()
     page.on('request',lambda r:audit.append({'method':r.method,'path':r.url.replace(base,'')}))
     page.on('pageerror',lambda e:errors.append(str(e)))

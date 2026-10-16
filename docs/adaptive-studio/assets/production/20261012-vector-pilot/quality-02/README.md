@@ -16,6 +16,10 @@ Native gradients and native SVG Gaussian-blur filters soften light and shadows. 
 
 `night-shift-pixel-v2.svg` uses 13 named layers on a 384×216 native grid. It replaces arbitrary wall dots with structured facade banks, CRT case/phosphor shading, keycap clusters, restrained grain and localized reflection clusters. Selective two-colour dithering belongs only to the light transition. It is a deliberate pixel interpretation rather than a texture overlay on the smooth vector scene.
 
+## Source preservation correction
+
+`validation.json` also records historical measurements for `lantern-counter-vignette-v2.svg`. That source was not preserved in this repository; a search of the checkout and `git log --all -- '*lantern-counter-vignette-v2.svg'` found no copy. Its recorded size, SHA-256, layer count and filters cannot be re-derived. The historical browser-check claims below have not been rerun by this correction.
+
 ## Comparison and limits
 
 `review.html` places preserved version 1 and version 2 side by side, with the unchanged accepted MA evidence panel. Actual Chromium renders were inspected at full and 390px phone widths; the comparison/lifecycle probe passes 36 checks across LAS and Alibi. These counts do not establish artistic acceptance.
