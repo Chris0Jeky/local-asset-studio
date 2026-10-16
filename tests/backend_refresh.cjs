@@ -176,9 +176,9 @@ function domNode(tag){
 function slotSelects(html){
   const out=[],re=/<select data-key="([^"]*)">([\s\S]*?)<\/select>/g;let match;
   while((match=re.exec(html))){
-    const options=[...match[2].matchAll(/<option([^>]*)>([^<]*)<\/option>/g)].map(option=>({selected:/\bselected\b/.test(option[1]),text:option[2]}));
+    const options=[...match[2].matchAll(/<option([^>]*)>([^<]*)<\/option>/g)].map(option=>({selected:/\bselected\b/.test(option[1]),text:option[2],value:option[1].match(/value="([^"]*)"/)?.[1]??option[2]}));
     const chosen=options.find(option=>option.selected)||options[0];
-    out.push({dataset:{key:match[1]},value:chosen?chosen.text:''});
+    out.push({dataset:{key:match[1]},value:chosen?chosen.value:''});
   }
   return out;
 }
@@ -212,14 +212,16 @@ test('a backend switch rebuilds adapter slots and enables Vary for adapters the 
   assert.match(staleSlots,/qwen-only\.safetensors/);assert.doesNotMatch(staleSlots,/primary-only\.safetensors/);
   assert.match(staleGallery,/\bdisabled\b/);assert.match(staleGallery,/Missing here/);assert.match(staleGallery,/primary-only\.safetensors/);
   assert.match(staleAsset,/\bdisabled\b/);assert.doesNotMatch(staleAsset,/data-ux-vary="subtle"/);
+  box.innerHTML='<select data-key="lora_name"><option selected>shared.safetensors</option></select>';
   const {work}=await begin(f);
   f.pending[1].resolve({presets:[f.a,f.b,wai,vary]});await f.tick();
   assert.equal(f.pending[2].url,'/api/options');
-  f.pending[2].resolve({loras:['primary-only.safetensors','primary-two.safetensors']});await f.tick();
+  f.pending[2].resolve({loras:['primary-only.safetensors','primary-two.safetensors','shared.safetensors']});await f.tick();
   assert.equal(f.pending[3].url,'/api/knowledge');f.pending[3].resolve({});await f.tick();
   assert.equal(f.pending[4].url,'/api/recipes');f.pending[4].resolve({recipes:[]});
   await work;
   assert.match(box.innerHTML,/primary-only\.safetensors/);assert.match(box.innerHTML,/primary-two\.safetensors/);
+  assert.equal(slotSelects(box.innerHTML)[0].value,'shared.safetensors','switch completion keeps a choice still installed on the new backend');
   const galleryNow=card.querySelector('.ux-vary').innerHTML,assetNow=holder.querySelector('.ux-vary').innerHTML;
   assert.match(galleryNow,/data-ux-vary="subtle"/);assert.match(galleryNow,/data-ux-vary="strong"/);assert.doesNotMatch(galleryNow,/\bdisabled\b/);assert.doesNotMatch(galleryNow,/Missing here/);
   assert.match(assetNow,/data-ux-vary="subtle"/);assert.doesNotMatch(assetNow,/\bdisabled\b/);
@@ -253,4 +255,38 @@ for(const stage of ['options','knowledge','recipes'])for(const failed of [false,
  await older;
  assert.deepEqual(Array.from(f.context.installedLoras),['B.safetensors']);assert.equal(f.context.knowledge?.backend,'B');assert.equal(f.context.atelierRecipes[0]?.id,'B');
  assert.equal(f.node('#activeBackend').textContent,'B');assert.equal(f.node('#positive').value,'new B wording');assert.equal(f.node('[data-key="seed"]').value,'');assert.equal(f.writes.length,0);
+});
+
+function loraFixture(){
+ const f=fixture(),app=fs.readFileSync(path.join(__dirname,'../app/static/app.js'),'utf8'),box=f.node('#loraSlots');
+ let html='';Object.defineProperty(box,'innerHTML',{get(){return html;},set(value){html=String(value);f.node('[data-key="lora"]').value='';}});
+ f.a.lora_name=['8','lora_name'];f.a.defaults.lora_name='authored.safetensors';f.a.choices={lora_name:['stale.safetensors']};
+ f.context.installedLoras=['authored.safetensors'];f.context.atelierReadEpoch=0;
+ box.querySelectorAll=sel=>sel==='select[data-key]'?slotSelects(box.innerHTML):[];
+ vm.runInContext(cut(app,'const loraSlotKeys = ','const controlKeys = ')+cut(app,'const activeLoraSlots = () =>','function updateLoraHints')+cut(app,'async function loadAtelier(','const NEGATIVE_COLLAPSE_KEY'),f.context);
+ return {...f,box,app};
+}
+test('rebuilding slots keeps a recorded unlisted file with an explicit label and its exact value',()=>{
+ const f=loraFixture();
+ f.box.innerHTML='<select data-key="lora_name"><option selected>recorded.safetensors</option></select>';
+ f.context.renderLoraSlots();
+ assert.match(f.box.innerHTML,/recorded\.safetensors \(recorded, not in the list\)/);
+ assert.equal(slotSelects(f.box.innerHTML)[0].value,'recorded.safetensors');
+ f.context.renderLoraSlots();assert.equal(slotSelects(f.box.innerHTML)[0].value,'recorded.safetensors','the label never becomes the submitted filename');
+ f.context.installedLoras=[];f.context.renderLoraSlots();assert.doesNotMatch(f.box.innerHTML,/stale\.safetensors/,'an empty refreshed inventory must not resurrect old catalogue choices');
+});
+test('Models refresh reloads options, redraws slots and Vary, and retains the installed choice and zero strength',async()=>{
+ const f=loraFixture();
+ f.box.innerHTML='<select data-key="lora_name"><option selected>keep.safetensors</option></select>';
+ f.node('[data-key="lora"]').value='0';f.context.updateLoraHints=()=>{};
+ let vary=0;f.context.refreshCarriedVary=()=>{vary++;};
+ vm.runInContext(cut(f.app,"$('#refreshModels').onclick=",";$('#modelSearch')")+';',f.context);
+ const work=f.node('#refreshModels').onclick();
+ assert.equal(f.pending.at(-1).url,'/api/health?refresh');f.pending.at(-1).resolve({});await f.tick();
+ assert.equal(f.pending.at(-1).url,'/api/options');f.pending.at(-1).resolve({loras:['keep.safetensors','new.safetensors']});await f.tick();
+ f.pending.at(-1).resolve({});await f.tick();f.pending.at(-1).resolve({recipes:[]});await work;
+ assert.deepEqual(Array.from(f.context.installedLoras),['keep.safetensors','new.safetensors']);
+ assert.match(f.box.innerHTML,/new\.safetensors/);assert.doesNotMatch(f.box.innerHTML,/stale\.safetensors/);
+ assert.equal(slotSelects(f.box.innerHTML)[0].value,'keep.safetensors');assert.doesNotMatch(f.box.innerHTML,/keep\.safetensors \(recorded/);
+ assert.equal(f.node('[data-key="lora"]').value,'0');assert.equal(vary,1);assert.equal(f.writes.length,0);
 });
