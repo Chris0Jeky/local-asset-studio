@@ -665,7 +665,7 @@ function applySaved(s,{guessLegacyParent=false}={}){
   if(selected.reference_slots)restoreReferenceSlots(s.references);
   if (s.controls?.mode) applyI2VMode(s.controls.mode, false);
   Object.entries(s.controls||{}).forEach(([k,v])=>{if(k==='mode')return;const el=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(el)el.value=v;});
-  renderNsfwIntel({saved:true});
+  if(typeof renderNsfwIntel==='function')renderNsfwIntel({saved:true});
   if(selected.reference&&typeof s.controls?.reference==='string')uploaded=s.controls.reference;
   if(selected.last_reference&&typeof s.controls?.last_reference==='string')lastUploaded=s.controls.last_reference;
   // A saved setup round-trips each role record's parent_asset and each supported named-input mapping.
