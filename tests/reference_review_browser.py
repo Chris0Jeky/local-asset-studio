@@ -54,6 +54,7 @@ def run(output):
         for i, source in enumerate(fixture.images):
             file = folder / f'renamed-{i}.png'; file.write_bytes(base64.b64decode(source['media_base64'])); originals.append(str(file))
         wrong = folder / 'wrong.png'; wrong.write_bytes(base64.b64decode(fixture.images[0]['media_base64']) + b'replaced')
+        oversized = folder / 'oversized.json'; oversized.write_text(' ' * (128 * 1024 + 1))
         server = browser_server(Handler)
         thread = threading.Thread(target=server.serve_forever); thread.start()
         try:
@@ -68,13 +69,40 @@ def run(output):
                         page.locator('#profile option').first.wait_for(state='attached')
                         initial = page.locator('#brief').input_value()
                         before = len(POSTS)
+                        page.locator('#rr-analysis').set_input_files(str(oversized))
+                        expect(page.locator('#rr-analysis')).to_have_attribute('aria-invalid', 'true')
+                        expect(page.locator('#rr-analysis')).to_have_attribute('aria-describedby', 'rr-analysis-error')
+                        expect(page.locator('#rr-analysis-error')).to_contain_text('128 KiB')
                         page.locator('#rr-analysis').set_input_files(str(analysis))
                         expect(page.locator('#rr-summary')).to_have_text(fixture.report['answer']['summary'], timeout=4000)
+                        assert page.locator('#rr-analysis').get_attribute('aria-invalid') is None
+                        assert page.locator('#rr-analysis').get_attribute('aria-describedby') is None
+                        expect(page.locator('#rr-analysis-error')).to_be_hidden()
+                        page.locator('#rr-cards details').evaluate_all('(nodes)=>nodes.forEach(node=>node.open=true)')
+                        expect(page.locator('#rr-cards fieldset > legend')).to_have_text(['Traits to transfer', 'Suggested tags and unknowns'] * 2)
+                        expect(page.get_by_role('group', name='Traits to transfer', exact=True)).to_have_count(2)
+                        expect(page.get_by_role('group', name='Suggested tags and unknowns', exact=True)).to_have_count(2)
+                        for checkbox in page.locator('#rr-cards .rr-trait input[type=checkbox]').all():
+                            label = checkbox.locator('..'); bounds = label.bounding_box()
+                            assert bounds['width'] >= 24 and bounds['height'] >= 24, bounds
+                            assert label.evaluate('(node)=>{const css=getComputedStyle(node);return parseFloat(css.minWidth)>=24&&parseFloat(css.minHeight)>=24}'), 'The minimum target must not depend on font metrics or native checkbox padding'
+                            checked = checkbox.is_checked()
+                            label.click(position={'x': bounds['width'] - 2, 'y': bounds['height'] - 2})
+                            assert checkbox.is_checked() != checked, 'Clicking the label edge must toggle its checkbox'
+                            checkbox.set_checked(checked)
+                        for status in ('rr-source-status', 'rr-change-summary'):
+                            expect(page.locator('#' + status)).to_have_attribute('role', 'status')
+                            expect(page.locator('#' + status)).to_have_attribute('aria-live', 'polite')
                         expect(page.locator('#rr-cards b')).to_have_count(0)  # Descriptions must be inert text.
                         expect(page.locator('#rr-preview')).to_be_disabled()
                         page.locator('#rr-originals').set_input_files(originals[::-1])
                         expect(page.locator('#rr-preview')).to_be_enabled()
                         expect(page.locator('#rr-source-status')).to_contain_text('2 originals matched')
+                        page.evaluate('''() => {window.rrMutations=[];window.rrObserver=new MutationObserver(rows=>rrMutations.push(...rows));
+                            for(const id of ['rr-source-status','rr-change-summary'])rrObserver.observe(document.getElementById(id),{childList:true,characterData:true,subtree:true});}''')
+                        page.locator('#rr-originals').set_input_files(originals[::-1])
+                        expect(page.locator('#rr-preview')).to_be_enabled()
+                        assert page.evaluate('rrMutations.length') == 0, 'Unchanged source match text was rewritten'
                         style = page.locator('[data-reference="picture-1"] [data-facet="style"] textarea')
                         style.fill('bold expressive ink')
                         selected = page.locator('[data-reference="picture-1"] [data-facet="style"] input')
@@ -82,6 +110,9 @@ def run(output):
                         page.locator('#rr-preview').focus(); page.keyboard.press('Enter')
                         expect(page.locator('#rr-apply')).to_be_enabled()
                         expect(page.locator('#rr-change-summary')).to_contain_text('2 reference')
+                        page.evaluate('rrMutations=[]')
+                        page.locator('#rr-preview').click(); expect(page.locator('#rr-apply')).to_be_enabled()
+                        assert page.evaluate('rrMutations.length') == 0, 'Unchanged change count was rewritten'
                         expect(page.locator('#brief')).to_have_value(initial)
                         # Every manual edit invalidates the prepared result, not only a save.
                         page.locator('#brief').fill('A newer instruction')
@@ -123,7 +154,17 @@ def run(output):
                             expect(page.locator('#style')).to_have_value('Manual edit after apply')
                         page.locator('#rr-originals').set_input_files([str(wrong), originals[1]])
                         expect(page.locator('#rr-status')).to_contain_text('exact original')
+                        expect(page.locator('#rr-originals')).to_have_attribute('aria-invalid', 'true')
+                        expect(page.locator('#rr-originals')).to_have_attribute('aria-describedby', 'rr-originals-error')
+                        expect(page.locator('#rr-originals-error')).to_contain_text('exact original')
                         expect(page.locator('#rr-preview')).to_be_disabled()
+                        page.locator('#rr-adopt').check()
+                        expect(page.locator('#rr-originals-error')).to_contain_text('exact original')
+                        page.locator('#rr-originals').set_input_files(originals)
+                        expect(page.locator('#rr-preview')).to_be_enabled()
+                        assert page.locator('#rr-originals').get_attribute('aria-invalid') is None
+                        assert page.locator('#rr-originals').get_attribute('aria-describedby') is None
+                        expect(page.locator('#rr-originals-error')).to_be_hidden()
                         # No horizontal overflow at either width, including 200% text zoom.
                         page.locator('#rr-help').evaluate('(e)=>e.open=true')
                         page.screenshot(path=str(output / f'refusal-{width}.png'), full_page=True)

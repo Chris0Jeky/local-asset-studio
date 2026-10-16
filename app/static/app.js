@@ -116,6 +116,35 @@ function claimInputParent(input, id) { releaseInputParent(input); if(!id)return;
 function replaceParentAsset(input, previous, id) { releaseParentAsset(previous); claimInputParent(input, id); }
 // A handoff declares the whole lineage: this run descends from one source, on one input.
 function setHandoffParent(input, id) { parentAssets=[]; parentByInput={}; claimInputParent(input, id); }
+// Recipe picker (#278 audit item 24): grouped by what a recipe makes, one plain line, a picture, speed and download badges.
+const PICKER_GROUPS = [['character','Characters & illustration'],['scene','Scenes & backgrounds'],['photo','Photo & product'],['game','Game art'],['edit','Edit or fix a picture'],['video','Video'],['3d','3D']];
+const INTENT_GROUP = {edit:'edit', repair:'edit', restyle:'edit', combine:'edit', animate:'video', mesh:'3d'};
+function presetGroup(p) {
+  const modality = p.modality || 'image', intent = typeof StudioUX !== 'undefined' ? StudioUX.INTENTS.find(i => i.accept(p))?.id : null;
+  const group = INTENT_GROUP[intent] || (modality === 'video' ? 'video' : modality === '3d' ? '3d' : p.reference ? 'edit' : null);
+  if (group) return group;
+  const words = [p.id, p.name, p.category, p.collection].join(' ');
+  return /pixel|sprite|prop\b|game/i.test(words) ? 'game' : /photo|realvis|realis|product|banner/i.test(words) ? 'photo' : /environment|scene|landscape|background|abstract/i.test(words) ? 'scene' : 'character';
+}
+// First sentence without decision/issue asides; the full text stays in the editor's recipe card.
+function plainLine(text) {
+  let line = String(text || '').replace(/\s*\([^)]*(#\d|decision|owner)[^)]*\)/gi, '').replace(/\s+/g, ' ').trim();
+  const cut = line.search(/\.\s(?=[A-Z])/); if (cut > 0) line = line.slice(0, cut + 1);
+  return line.length > 140 ? line.slice(0, line.lastIndexOf(' ', 136)) + '…' : line;
+}
+let showcaseExamples = {};
+// Thumbnails come only from the committed recipe-default renders (examples/recipe-thumbs-*, the set Make shows), never adult-tagged recipes.
+function presetThumb(p) {
+  const recipe = atelierRecipes.find(r => r.preset_id === p.id && /\/recipe-thumbs-/.test(showcaseExamples[r.id]?.url || '') && !(r.tags || []).some(t => /adult-illustration|hentai|nsfw/i.test(t)));
+  return recipe ? showcaseExamples[recipe.id].url : '';
+}
+// Speed: the fastest recorded local run of this recipe, else the recipe's own "about N s/min" wording; nothing when neither exists.
+function presetPace(p) {
+  const runs = atelierRecipes.filter(r => r.preset_id === p.id && r.status === 'executed' && Number(r.evidence?.seconds) > 0).map(r => Number(r.evidence.seconds));
+  let seconds = runs.length ? Math.min(...runs) : null, basis = 'Fastest recorded local run of this recipe';
+  if (!seconds) { const m = /\babout (\d+(?:\.\d+)?)(?:\s*[-–]\s*\d+)?\s*(s|seconds|min|minutes)\b/i.exec(String(p.description || '')); if (m) { seconds = Number(m[1]) * (/^m/i.test(m[2]) ? 60 : 1); basis = 'Timing stated in the recipe description'; } }
+  return seconds ? [seconds < 60 ? 'fast' : seconds > 300 ? 'slow' : 'medium', 'about ' + durationLabel(seconds), basis] : null;
+}
 function renderPresets() {
   if (!catalog) return;
   const query = $('#presetSearch').value.toLowerCase(), category = $('#categorySelect').value;
@@ -123,11 +152,15 @@ function renderPresets() {
   $('#filteredCount').textContent = list.length;
   // Rebuilding the list must not drop keyboard focus: a picked recipe keeps it on its own rebuilt button (#772).
   const focused = document.activeElement?.closest?.('#presetList [data-id]')?.dataset.id;
-  $('#presetList').innerHTML = list.map(p => {
-    const pins = Array.isArray(pinMismatchByPreset[p.id]) ? pinMismatchByPreset[p.id] : [];
+  const card = p => {
+    const pins = Array.isArray(pinMismatchByPreset[p.id]) ? pinMismatchByPreset[p.id] : [], missing = missingByPreset[p.id] || [], thumb = presetThumb(p), pace = presetPace(p);
     const pinBadge = pins.length ? '<em class="badge" title="' + esc(pins.join(', ')) + '">Model verification needs attention</em>' : '';
-    return '<button class="preset ' + (selected?.id === p.id ? 'chosen' : '') + '" data-id="' + esc(p.id) + '"><b>' + esc(p.name) + '</b><span>' + esc(p.description) + '</span><div class="recipe-meta"><span>' + esc(p.family || p.category) + '</span><em class="badge ' + (p.verified ? 'tested' : '') + '">' + (p.verified ? 'Run recorded · review separate' : 'Experimental · review separate') + '</em>' + pinBadge + '</div></button>';
-  }).join('') || '<p class="muted">No recipes match. Try another collection or search.</p>';
+    return '<button class="preset ' + (selected?.id === p.id ? 'chosen' : '') + '" data-id="' + esc(p.id) + '">' + (thumb ? '<img class="preset-thumb" src="' + esc(thumb) + '" alt="" loading="lazy">' : '') + '<b>' + esc(p.name) + '</b><span>' + esc(plainLine(p.description)) + '</span><div class="recipe-meta"><span>' + esc(p.family || p.category) + '</span>'
+      + (pace ? '<em class="badge pace ' + pace[0] + '" title="' + esc(pace[2]) + '">' + esc(pace[1]) + '</em>' : '')
+      + (missing.length ? '<em class="badge need" title="' + esc(missing.join(', ')) + '">Needs download</em>' : '') + pinBadge + '</div></button>';
+  };
+  $('#presetList').innerHTML = PICKER_GROUPS.map(([id, label]) => [id, label, list.filter(p => presetGroup(p) === id)]).filter(g => g[2].length)
+    .map(([id, label, items]) => '<section class="preset-group" data-group="' + id + '"><h3>' + esc(label) + '</h3><div class="preset-group-items">' + items.map(card).join('') + '</div></section>').join('') || '<p class="muted">No recipes match. Try another collection or search.</p>';
   if (focused) ([...$('#presetList').querySelectorAll('[data-id]')].find(button => button.dataset.id === focused) || $('#presetSearch'))?.focus({preventScroll:true});
 }
 function updateReady() {
@@ -159,15 +192,66 @@ function renderLoraSlots() {
       const list = extra && !base.includes(extra) ? [extra, ...base] : base;
       const chosen = extra || authored;
       return '<div class="lora-slot"><label class="lora-file"><span>Slot ' + (index + 1) + '</span><select data-key="' + nameKey + '">' + (list.length ? '' : '<option value="">No installed adapter found</option>') + list.map(v => '<option value="' + esc(v) + '"' + (v === chosen ? ' selected' : '') + '>' + esc(v) + (v === extra && !options.includes(v) ? ' (recorded, not in the list)' : '') + '</option>').join('') + '</select></label>'
-        + '<label class="lora-strength"><span>Strength</span><input data-key="' + key + '" type="number" min="0" max="2" step="0.05"></label>'
+        + '<label class="lora-strength"><span>Strength <small class="lora-range" title="Recommended strength range" data-range="' + esc(key) + '"></small></span><input data-key="' + key + '" type="number" min="0" max="2" step="0.05"></label>'
         + '<small class="lora-hint" data-hint="' + esc(key) + '"></small></div>';
     }).join('');
 }
+// #278 J1: settings-kb trigger_position is start / end / anywhere / none (one entry says "start of prompt").
+function triggerPlace(position) {
+  const raw = String(position || '').trim(), p = raw.toLowerCase().replace(/\s+of\s+(the\s+)?prompt$/, '');
+  return !p || p === 'none' ? '' : ({start:'put it at the start of the prompt', end:'put it at the end of the prompt', anywhere:'put it anywhere in the prompt'})[p] || 'placement: ' + raw;
+}
+const loraRange = entry => Array.isArray(entry?.strength) ? entry.strength.filter(Number.isFinite) : [];
+// A newly chosen adapter starts at the knowledge base's recommended strength; a recorded 0 means "off in recipes", not a
+// recommendation, so it falls back to the slot's authored strength, else 1.0, kept inside the recorded range.
+function recommendedStrength(key, entry) {
+  if (Number(entry?.default) > 0) return Number(entry.default);
+  const authored = Number(selected?.defaults?.[key]), top = Math.max(...loraRange(entry), 0);
+  return authored > 0 ? authored : top > 0 ? Math.min(1, top) : 1;
+}
+let autoTriggers = {}; // slot key -> the exact fragment this page added to the prompt for that slot
+const promptHas = (text, trigger) => String(text).toLowerCase().includes(String(trigger).toLowerCase());
+function addTrigger(key, auto) {
+  const field = $('#positive'), entry = loraEntry(getControl(loraNameKey(key))?.value), trigger = entry?.trigger;
+  if (!field || !selected?.positive || !trigger) return '';
+  if (promptHas(field.value, trigger)) return 'The trigger ' + trigger + ' is already in the prompt.';
+  const text = field.value.replace(/[\s,]+$/, ''), start = /^start/i.test(String(entry.trigger_position || '').trim());
+  const fragment = start ? trigger + (text ? ', ' : '') : (!text ? '' : /[.!?;:]$/.test(text) ? ' ' : ', ') + trigger;
+  field.value = start ? fragment + field.value : text + fragment;
+  if (auto) autoTriggers[key] = fragment;
+  field.dispatchEvent(new Event('input', {bubbles: true}));
+  return 'Added the trigger ' + trigger + ' to the ' + (start ? 'start' : 'end') + ' of the prompt.';
+}
+// Only the exact fragment added for this slot is removed; text the user edited around it stays as typed.
+function dropAutoTrigger(key) {
+  const fragment = autoTriggers[key], field = $('#positive'); delete autoTriggers[key];
+  if (!fragment || !field) return '';
+  // Another enabled slot still needs the same trigger: hand the fragment over instead of removing it.
+  const trigger = fragment.replace(/^[, ]+|[, ]+$/g, ''), other = activeLoraSlots().find(k => k !== key && Number(getControl(k)?.value) > 0 && loraEntry(getControl(loraNameKey(k))?.value)?.trigger === trigger);
+  if (other) { autoTriggers[other] = fragment; return ''; }
+  // Still a whole token where it was put: a leading fragment at the very start, a trailing one before a comma or the end.
+  const literal = fragment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), token = fragment.endsWith(', ') ? RegExp('^' + literal) : RegExp(literal + '(?=\\s*(,|$))');
+  if (!token.test(field.value)) return '';
+  field.value = field.value.replace(token, ''); field.dispatchEvent(new Event('input', {bubbles: true}));
+  return 'Removed the trigger ' + fragment.replace(/^[, ]+|[, ]+$/g, '') + ' added for the previous adapter.';
+}
+function chooseLora(key) {
+  const removed = dropAutoTrigger(key), entry = loraEntry(getControl(loraNameKey(key))?.value), input = getControl(key), strength = recommendedStrength(key, entry);
+  if (input) { input.value = String(strength); input.dispatchEvent?.(new Event('input', {bubbles: true})); }   // the draft bridge saves on input/change
+  return [removed, 'Strength set to ' + strength + (Number(entry?.default) > 0 ? ' (recommended).' : ' (no recommended strength recorded).'), addTrigger(key, true)].filter(Boolean).join(' ');
+}
 function updateLoraHints() {
   activeLoraSlots().forEach(key => {
-    const hint = document.querySelector('[data-hint="' + key + '"]'); if (!hint) return;
-    const entry = loraEntry(getControl(loraNameKey(key))?.value);
-    hint.textContent = !entry ? '' : entry.trigger ? 'Trigger: ' + entry.trigger + (entry.trigger_position && entry.trigger_position !== 'none' ? ' · place it at the ' + entry.trigger_position + ' of the prompt' : '') : (entry.label || 'No trigger word');
+    const hint = document.querySelector('[data-hint="' + key + '"]'), range = document.querySelector('[data-range="' + key + '"]'); if (!hint) return;
+    const entry = loraEntry(getControl(loraNameKey(key))?.value), span = loraRange(entry), place = triggerPlace(entry?.trigger_position);
+    if (range) range.textContent = span.length ? '· ' + (span[0] === span[1] ? span[0] : span[0] + '–' + span[1]) : '';
+    if (!entry) { hint.innerHTML = ''; return; }
+    const recommended = Number(entry.default) > 0 ? Number(entry.default) : null, off = Number(getControl(key)?.value) === 0;
+    const present = entry.trigger && promptHas($('#positive')?.value || '', entry.trigger);
+    const words = (entry.trigger ? 'Trigger: ' + entry.trigger + (present ? ' · in the prompt' : place ? ' · ' + place : '') : (entry.label || 'No trigger word')) + (recommended ? ' · recommended ' + recommended : '');
+    hint.innerHTML = '<span>' + esc(words) + '</span>'
+      + (entry.trigger && !present && selected?.positive ? ' <button type="button" class="subtle" data-lora-trigger="' + esc(key) + '">Add trigger to prompt</button>' : '')
+      + (off ? ' <button type="button" class="subtle" data-lora-use="' + esc(key) + '">Use ' + esc(recommendedStrength(key, entry)) + '</button>' : '');
   });
 }
 function familyRecipes() { return atelierRecipes.filter(r => r.preset_id === selected?.id); }
@@ -197,6 +281,7 @@ function applyRecipe(recipe) {
   Object.entries(controls).forEach(([k,v]) => { if(k==='mode')return;const el = k === 'positive' ? $('#positive') : k === 'negative' ? $('#negative') : getControl(k); if (el) el.value = v; });
   $('#batch').value = recipe.batch_count || 1; updateLoraHints(); updateReady();
   const index = familyRecipes().findIndex(r => r.id === recipe.id); if (index >= 0) $('#recipeSelect').value = String(index);
+  renderNsfwIntel(recipe);
   $('#recipeNotes').innerHTML = describeRecipe(recipe) + (continuationState ? '<p>Only the setup changed. Your source and wording are retained; the recorded execution used the original example, not this image.</p>' : '');
   message(recipe.name + ' loaded. Review the settings before generating.' + (recipe.missing?.length ? ' Some adapters are not installed.' : ''));
   scheduleTimeEstimate(); recipeChanged();
@@ -211,6 +296,8 @@ async function loadAtelier(current = () => true) {
   try { recipes = (await api('/api/recipes')).recipes || []; } catch (e) {}
   if (epoch !== atelierReadEpoch || !current()) return;
   installedLoras = loras; knowledge = nextKnowledge; atelierRecipes = recipes;
+  // Picker thumbnails only; the list renders without them and fills them in when the showcase arrives.
+  try { import('/static/bundle-showcase.js').then(m => { showcaseExamples = m.default?.examples || {}; renderPresets(); }).catch(() => {}); } catch (e) {}
 }
 const NEGATIVE_COLLAPSE_KEY = 'studio-negative-collapsed';
 function negativeCollapsed() { try { return sessionStorage.getItem(NEGATIVE_COLLAPSE_KEY) === '1'; } catch (e) { return false; } }
@@ -239,13 +326,15 @@ function renderWildcardChips() {
   host.innerHTML = '<p class="muted">Insert a wildcard. Server expands __name__ from presets/wildcards at Generate, one line per batch member.</p>'
     + list.map(item => '<button type="button" data-wildcard="' + esc(item.name) + '" title="' + esc(item.count) + ' options">' + esc(item.name) + '</button>').join('');
 }
-function renderNsfwIntel() {
+function renderNsfwIntel(recipe=null) {
   const box = $('#nsfwIntel'), body = $('#nsfwIntelBody');
   if (!box || !body) return;
   const lab = knowledge?.nsfw_lab;
   const family = selected?.family || '';
   const entry = lab?.families?.[family];
-  if (!selected?.positive || !lab || !entry) { box.hidden = true; body.innerHTML = ''; return; }
+  // Adult-lab notes show for adult recipes and for a restored saved setup (its recipe classification is not stored); not on ordinary recipes.
+  const adult=/\b(nsfw|hentai|explicit)\b/i.test([selected?.id,selected?.name,...(recipe?.tags||[]),recipe?.name].join(' '));
+  if (!selected?.positive || !lab || !entry || (!adult && !recipe?.saved)) { box.hidden = true; body.innerHTML = ''; return; }
   box.hidden = false;
   const wild = (lab.wildcards || []).map(w => '<li><code>__' + esc(w.name) + '__</code> — ' + esc(w.use) + '</li>').join('');
   body.innerHTML = '<p class="muted">' + esc(lab.caveat || '') + '</p>'
@@ -285,7 +374,7 @@ function renderSelected() {
     if (key === 'lora' && typeof selected.defaults?.lora === 'string') { type='text'; attrs=''; label='LoRA filename'; }
     return '<label>' + label + '<input data-key="' + key + '" type="' + type + '" ' + attrs + '>' + (key === 'frames' ? '<small>' + (selected.family==='MiniMax H3'?'24fps · 124 ≈ 5.2s · use 17k+5 frames':'24fps · 81 ≈ 3.4s · use 4k+1 frames') + '</small>' : '') + '</label>';
   }).join('');
-  renderLoraSlots();
+  renderLoraSlots(); autoTriggers = {};
   controlKeys.forEach(k => { const input=getControl(k); if (input) input.value=selected.defaults?.[k] ?? ''; });
   if (selected.i2v_modes?.length) applyI2VMode(selected.i2v_default_mode || selected.i2v_modes[0].id, false);
   updateLoraHints(); renderRecipeChoices();
@@ -342,14 +431,14 @@ async function inspectSelected() {
   }
 }
 
-function selectPreset(id, reset=true, transition=false) {
+function selectPreset(id, reset=true, transition=false, blankPrompt=false) {
   const next=catalog.presets.find(p=>p.id===id);if(!next)throw Error('This preset is unavailable.');
   if(continuationState&&!transition&&(id!==selected?.id||reset))throw Error('You are continuing an image. Use “Leave this continuation” before loading a different recipe, or reopen Continue with this asset to choose another route.');
   if(transition){continuationState=null;continuationSource=null;}
   if(reset||id!==selected?.id){tileState=null;parallaxState=null;}
   recipeTemplateHash=null;
   if(typeof StudioLooks!=='undefined')StudioLooks.clearApplication();
-  selected=next; recipeChanged();
+  selected=blankPrompt?{...next,defaults:{...next.defaults,positive:'',negative:''}}:next; recipeChanged();
   if(reset) clearReference(); $('#batch').value=1; renderPresets(); renderSelected(); recipeChanged(); // Refresh targets against the rendered recipe, after early invalidation.
   message(selected.runtime_block || 'Recipe loaded. Change a setting or choose a variation, then generate when ready.',!!selected.runtime_block);
 }
@@ -405,7 +494,7 @@ function parallaxNote(job,output){
   // Until the recovery controller mounts (it loads after the page), say it is loading; only a failed mount asks for a reload.
   const parallaxWhy=recovery?.failed||(!recovery&&typeof document!=='undefined'&&document.readyState==='complete'&&performance.now()>15000)?'Parallax staging is unavailable: reload the page.':'Parallax staging is still loading.';
   if(!parallaxAvailable)return '<p class="disabledReason"><small>This '+name[claim.stage]+' has no '+name[other]+' edit yet.</small></p><p class="disabledReason"><small>'+parallaxWhy+'</small></p><button class="parallaxStage" data-job="'+id+'" data-stage="'+other+'" disabled title="'+parallaxWhy+'">Load the '+name[other]+' edit</button>';
-  return '<p class="disabledReason"><small>This '+name[claim.stage]+' has no '+name[other]+' edit yet.</small></p><button class="parallaxStage" data-job="'+id+'" data-stage="'+other+'" title="Load the '+name[other]+' words for this picture into Create. Nothing runs until you press Generate.">Load the '+name[other]+' edit</button>';
+  return '<p class="disabledReason"><small>This '+name[claim.stage]+' has no '+name[other]+' edit yet.</small></p><button class="parallaxStage" data-job="'+id+'" data-stage="'+other+'" title="Load the '+name[other]+' words for this picture into Full editor. Nothing runs until you press Generate.">Load the '+name[other]+' edit</button>';
 }
 function renderCompare() { $('#compare').hidden=!pinned.length; $('#compareImages').innerHTML=pinned.map(p=>'<img src="/api/image/'+esc(p.job)+'/'+esc(p.index)+'" alt="Pinned comparison">').join(''); }
 const mixedBatchCommands = new Map(), mixedBatchBusy = new Set();
@@ -697,12 +786,15 @@ async function loadSetups(){
   renderSaved();
 }
 function renderSaved(){$('#savedList').innerHTML=saved().map((s,i)=>'<span class="saved-chip"><button data-load="'+i+'">'+esc(s.name)+'</button><button data-delete-setup="'+esc(s.id)+'" aria-label="Delete '+esc(s.name)+' setup">×</button></span>').join('')||'<small>Save a variation once it is worth coming back to.</small>';}
+// A saved, drafted or imported Make seamless plan is kept only while it still matches the recipe it rides with (#1230).
+function staleTilePlan(s,target){return s.tile!=null&&(!target?.tile_route||typeof StudioUX==='undefined'||!StudioUX.normalizePrepared({preset:s.preset,tile:s.tile})||(s.controls?.reference&&s.controls.reference!==s.tile.rolled_file)||!Array.isArray(s.parent_assets)||!s.parent_assets.includes(s.tile.source_asset_id));}
 function applySaved(s,{guessLegacyParent=false}={}){
   if(!s||!catalog.presets.some(p=>p.id===s.preset))throw Error('This recipe uses an unavailable preset');
   if(s.continuation!=null&&(!StudioContinuation.normalize(s.continuation)||s.continuation.preset_id!==s.preset))throw Error('Invalid saved continuation.');
   if(s.look_application!=null&&(typeof StudioLooks==='undefined'||!StudioLooks.normalizeApplication(s.look_application,s.preset)))throw Error('Invalid saved Look application state.');
-  const prepared=typeof StudioUX!=='undefined'?StudioUX.normalizePrepared(s):(s.tile!=null||s.parallax!=null?null:{});
   const target=catalog.presets.find(p=>p.id===s.preset);
+  const droppedTile=s.tileDropped||staleTilePlan(s,target);
+  const prepared=typeof StudioUX!=='undefined'?StudioUX.normalizePrepared(droppedTile?{...s,tile:null}:s):(s.tile!=null||s.parallax!=null?null:{});
   if(!prepared||prepared.tile&&!target.tile_route||prepared.parallax&&!target.parallax_route)throw Error('Invalid saved prepared plan for this recipe. Prepare it again from the Library.');
   selectPreset(s.preset);
   tileState=prepared.tile||null;parallaxState=prepared.parallax||null;
@@ -713,6 +805,7 @@ function applySaved(s,{guessLegacyParent=false}={}){
   if(selected.reference_slots)restoreReferenceSlots(s.references);
   if (s.controls?.mode) applyI2VMode(s.controls.mode, false);
   Object.entries(s.controls||{}).forEach(([k,v])=>{if(k==='mode')return;const el=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(el)el.value=v;});
+  if(typeof renderNsfwIntel==='function')renderNsfwIntel({saved:true});
   if(selected.reference&&typeof s.controls?.reference==='string')uploaded=s.controls.reference;
   if(selected.last_reference&&typeof s.controls?.last_reference==='string')lastUploaded=s.controls.last_reference;
   // A saved setup round-trips each role record's parent_asset and each supported named-input mapping.
@@ -734,7 +827,7 @@ function applySaved(s,{guessLegacyParent=false}={}){
   const slotOccupied=typeof referenceRecords!=='undefined'&&referenceRecords.some(r=>r&&(r.file||r.parent_asset));
   if(mapped)parentByInput=Object.fromEntries(filled.filter(([input])=>(!selected.reference_slots?.length||input==='lastReference')&&parentAssets.includes(mapped[input])).map(([input])=>[input,mapped[input]]));
   else if(guessLegacyParent&&s.attribution_recorded!==true&&parentAssets.length===1&&filled.length===1&&!slotOccupied)parentByInput={[filled[0][0]]:parentAssets[0]};
-  $('#batch').value=s.batch_count||s.batch||1;updateReady();message('Recipe loaded. Review the settings before generating.');recipeChanged();
+  $('#batch').value=s.batch_count||s.batch||1;updateReady();message(droppedTile?'Seamless plan dropped because it no longer matches this setup. Use Make seamless again.':'Recipe loaded. Review the settings before generating.');recipeChanged();
 }
 function continuationPayload(){return continuationState?{continuation:{...continuationState}}:{};}
 function tilePayload(){return tileState&&selected?.id===tileState.preset_id?{tile:{...tileState}}:{};}
@@ -758,7 +851,7 @@ function beginParallax(result){
 async function afterParallaxSubmit(job,claim,stamp){
   if(claim.stage!=='plate'){message('Isolate edit queued. The Studio splits the layers when both edits complete; nothing else runs.');return;}
   const next=await post('/api/parallax/stage',{job_id:job.id,stage:'isolate'});
-  if(!stamp||window.StudioSetupDraft?.stamp()!==stamp||selected?.id!==claim.preset_id||parallaxState?.plan_id!==claim.plan_id||parallaxState?.stage!==claim.stage){message('Clean plate queued. Current Create inputs were kept. Use Load the isolate edit on the clean plate card when ready.');return;}
+  if(!stamp||window.StudioSetupDraft?.stamp()!==stamp||selected?.id!==claim.preset_id||parallaxState?.plan_id!==claim.plan_id||parallaxState?.stage!==claim.stage){message('Clean plate queued. Current Full editor inputs were kept. Use Load the isolate edit on the clean plate card when ready.');return;}
   beginParallax(next);message('Clean plate queued. The isolate edit is loaded: check its words, then press Generate.');
 }
 // Prepare from the library's Make seamless: the rolled seam cross becomes this recipe's picture, the source its parent.
@@ -813,7 +906,7 @@ function beginContinuation(result,presetId,intent='edit'){
 }
 function leaveContinuation(){
   if(!continuationState)return;
-  if(!window.confirm('Leave this source-bound task? The original stays in your library. Save or export this draft first to keep these edits. Create will reset to the recipe defaults.'))return;
+  if(!window.confirm('Leave this source-bound task? The original stays in your library. Save or export this draft first to keep these edits. Full editor will reset to the recipe defaults.'))return;
   selectPreset(selected.id,true,true);message('Continuation ended. Choose a new recipe or reopen Continue with an asset.');
 }
 async function exportRecipe(id){const data=await api('/api/jobs/'+encodeURIComponent(id)+'/recipe'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='asset-studio-recipe.json';a.click();URL.revokeObjectURL(a.href);}
@@ -828,8 +921,10 @@ $('#wildcardChips')?.addEventListener('click', e => {
 $('#variants').onclick=e=>{const i=e.target.closest('[data-variant]')?.dataset.variant;if(i===undefined)return;const v=(selected.variants||[{name:'3-seed audition',batch_count:3}])[i];const controls=selected.reference?StudioContinuation.settings(selected,v.controls,values()):(v.controls||{});Object.entries(controls).forEach(([k,val])=>{const input=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(input)input.value=val;});$('#batch').value=v.batch_count||1;updateLoraHints();updateReady();scheduleTimeEstimate();message(v.name+' loaded. Press Generate to run.');recipeChanged();};
 $('#controls').oninput=()=>updateReady();
 $('#controls').onchange=e=>{if(e.target.id==='i2vMode')applyI2VMode(e.target.value);else updateReady();};
-  $('#loraSlots').onchange=updateLoraHints;
-  document.addEventListener('input',e=>{if(e.target===$('#positive'))updateReady();else if(e.target.closest('#createView'))scheduleTimeEstimate();});
+  // Choosing an adapter file sets its recommended strength and adds its known trigger; strength 0 (off) drops a trigger this page added.
+  $('#loraSlots').onchange=e=>{const key=e.target.dataset?.key||'',slot=loraSlotKeys.find(k=>key===loraNameKey(k));if(slot)message(chooseLora(slot));else if(loraSlotKeys.includes(key)&&Number(e.target.value)===0){const note=dropAutoTrigger(key);if(note)message(note);}updateLoraHints();updateReady();};
+  $('#loraSlots').onclick=e=>{const add=e.target.closest('[data-lora-trigger]'),use=e.target.closest('[data-lora-use]');if(add)message(addTrigger(add.dataset.loraTrigger,false)||'This adapter has no recorded trigger word.');else if(use)message(chooseLora(use.dataset.loraUse));else return;updateLoraHints();updateReady();};
+  document.addEventListener('input',e=>{if(e.target===$('#positive')){updateReady();updateLoraHints();}else if(e.target.closest('#createView'))scheduleTimeEstimate();});
   document.addEventListener('change',e=>{if(e.target===$('#positive'))updateReady();else if(e.target.closest('#createView'))scheduleTimeEstimate();});
   document.addEventListener('click',e=>{if(e.target.closest('#createView')){if(typeof setTimeout==='function')setTimeout(scheduleTimeEstimate,0);else scheduleTimeEstimate();}});
 const recipeDefaultSettings=()=>Object.fromEntries(Object.entries(selected.defaults||{}).filter(([key])=>!['positive','negative','reference','last_reference'].includes(key)));
@@ -855,7 +950,7 @@ $('#generate').onclick=async()=>{
 // intent snapshot still decide. A held key repeats keydown; a repeat never submits. A blocked button explains itself (#772).
 function generateShortcutBlocker(button){
   if(submitting)return 'A run is already being submitted. Wait for it to finish.';
-  if(!button.disabled)return 'Generate is not on screen. Open Create, then press Ctrl+Enter again.';
+  if(!button.disabled)return 'Generate is not on screen. Open Full editor, then press Ctrl+Enter again.';
   return String($('#uxBlockers .ux-blocker p')?.textContent||'').trim()||'Generate is not available yet. Review the readiness checks.';
 }
 function generateShortcut(e){
@@ -870,7 +965,7 @@ function generateShortcut(e){
   button.click();return 'clicked';
 }
 if(typeof document!=='undefined')document.addEventListener?.('keydown',generateShortcut);
-if(typeof navigator!=='undefined'&&/Mac|iPhone|iPad/.test(navigator.platform||'')){const hint=$('#generateShortcut');if(hint){hint.textContent='⌘ Enter';hint.title='Press Cmd+Enter anywhere in Create to generate';}}
+if(typeof navigator!=='undefined'&&/Mac|iPhone|iPad/.test(navigator.platform||'')){const hint=$('#generateShortcut');if(hint){hint.textContent='⌘ Enter';hint.title='Press Cmd+Enter anywhere in Full editor to generate';}}
 const jobActions=new Set();
 async function jobAction(key,run){if(jobActions.has(key))return;jobActions.add(key);try{await run();}finally{jobActions.delete(key);}}
 $('#gallery').onclick=async e=>{
@@ -931,7 +1026,7 @@ function setupMessage(text,error=false){message(text,error);$('#setupStatus').te
 let savingSetup=false; // A double click stored two setups: each save without an id gets a fresh one.
 $('#save').onclick=async()=>{if(!selected||savingSetup)return;const name=$('#saveName').value.trim();if(!name){setupMessage('Give this setup a name first.');return;}savingSetup=true;$('#save').disabled=true;try{await post('/api/setups',{name,recipe:{preset:selected.id,...continuationPayload(),...tilePayload(),...parallaxPayload(),controls:checkedSetupControls(),batch:$('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},attribution_recorded:true,references:attachedReferencePayload()}});$('#saveName').value='';await loadSetups();setupMessage('Setup saved in your workspace, available in every browser.');}catch(e){setupMessage(e.message,true);}finally{savingSetup=false;$('#save').disabled=false;}};
 $('#savedList').onclick=async e=>{try{if(e.target.dataset.load!==undefined)applySaved(saved()[e.target.dataset.load],{guessLegacyParent:true});if(e.target.dataset.deleteSetup){await post('/api/setups',{action:'delete',id:e.target.dataset.deleteSetup});await loadSetups();}}catch(err){message(err.message,true);}};
-$('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Recipe must be under 1 MiB');const recipe=JSON.parse(await file.text());const check=await post('/api/recipe-check',recipe);applySaved({preset:recipe.preset_id,continuation:recipe.continuation,tile:recipe.tile,parallax:recipe.parallax,controls:recipe.controls,batch_count:recipe.batch_count,parent_assets:recipe.parent_assets,references:recipe.references});recipeTemplateHash=check.template_sha256;message('Recipe loaded: embedded workflow matches this preset. Referenced inputs and model files remain local dependencies.');}catch(err){message('Could not import recipe: '+err.message,true);}finally{e.target.value='';}};
+$('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Recipe must be under 1 MiB');let recipe=JSON.parse(await file.text());const tileDropped=staleTilePlan({preset:recipe.preset_id,tile:recipe.tile,controls:recipe.controls,parent_assets:recipe.parent_assets},catalog.presets.find(p=>p.id===recipe.preset_id));if(tileDropped)recipe={...recipe,tile:null};const check=await post('/api/recipe-check',recipe);applySaved({preset:recipe.preset_id,tileDropped,continuation:recipe.continuation,tile:recipe.tile,parallax:recipe.parallax,controls:recipe.controls,batch_count:recipe.batch_count,parent_assets:recipe.parent_assets,references:recipe.references});recipeTemplateHash=check.template_sha256;if(!tileDropped&&(recipe.tile==null||tileState))message('Recipe loaded: embedded workflow matches this preset. Referenced inputs and model files remain local dependencies.');}catch(err){message('Could not import recipe: '+err.message,true);}finally{e.target.value='';}};
 $('#refreshModels').onclick=async()=>{
   await api('/api/health?refresh');await health();await loadAtelier();
   if(selected){
@@ -971,7 +1066,7 @@ $('#importWorkflow').onchange=async e=>{
   try{
     catalog=await api('/api/catalog');await loadAtelier();$('#recipeCount').textContent=catalog.presets.length+' editable recipes';
     $('#categorySelect').innerHTML=['All',...new Set(catalog.presets.map(p=>p.category||'Other'))].map(c=>'<option>'+esc(c)+'</option>').join('');
-    selectPreset(catalog.presets.find(p=>p.id==='anima-portrait')?.id||catalog.presets[0].id);
+    selectPreset(catalog.presets.find(p=>p.id==='anima-portrait')?.id||catalog.presets[0].id,true,false,true);
   }catch(e){message(e.message,true);return;}
   // Each later stage is independent: one failing read (saved setups, a legacy migration) must not leave
   // health, jobs, the library and polling unstarted until a reload. The first failure stays on screen.

@@ -24,7 +24,7 @@ class Cases(unittest.TestCase):
         self.assertEqual(CASES['version'], 1)
         self.assertEqual(CASES['refs'], '#278')
         self.assertIsInstance(CASES['starting_views'], list)
-        self.assertTrue(8 <= len(CASES['cases']) <= 24, 'the original journeys plus Restyle, Combine, the same-pair experiment loop, the drawn pose, the several-recipe plan, Vary, a new scene in a saved look, Make seamless and Make parallax layers')
+        self.assertTrue(8 <= len(CASES['cases']) <= 26, 'the original journeys plus Restyle, Combine, the same-pair experiment loop, the drawn pose, the several-recipe plan, Vary, a new scene in a saved look, Make seamless, Make parallax layers, and the 16 Oct Make tune, compare and Full editor adapter journeys')
 
     def test_unique_ids(self):
         ids = [case['id'] for case in CASES['cases']]
@@ -310,12 +310,15 @@ class LiveOutcomes(unittest.TestCase):
         self.assertTrue(runner.verdict({'mode': 'fixture', 'rows': [row], 'generation_submissions': 0, 'page_errors': []}))
 
     def test_journeys_that_named_fixture_ids_resolve_live_ones_and_stop_before_writing(self):
-        for driver in (runner._one_reference, runner._three_references, runner._review, runner._reuse, runner._native_export):
+        # Since 16 Oct 2026 restyle and combine stay in Make: they pick live pictures with c.pick and never write.
+        for driver in (runner._one_reference, runner._three_references, runner._review, runner._reuse, runner._native_export, runner._restyle, runner._make_combine):
             self.assertIn('c.pick(', inspect.getsource(driver), driver.__name__)
-        for driver in (runner._restyle, runner._combine, runner._draw_pose):
+        for driver in (runner._combine, runner._draw_pose):
             self.assertIn('c.pick_output()', inspect.getsource(driver), driver.__name__)
+        for driver in (runner._restyle, runner._make_combine):
+            self.assertNotIn("act('#makeGenerate', 'click'", inspect.getsource(driver), driver.__name__)
         for driver in (runner._one_reference, runner._three_references, runner._compare, runner._review, runner._reuse,
-                       runner._native_export, runner._restyle, runner._combine, runner._draw_pose):
+                       runner._native_export, runner._combine, runner._draw_pose):
             self.assertIn('c.stop_before(', inspect.getsource(driver), driver.__name__)
         self.assertNotIn("== 'asset-1'", inspect.getsource(runner._reuse))
 

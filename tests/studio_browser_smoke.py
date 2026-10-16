@@ -155,6 +155,36 @@ def run(screenshots):
                 page.goto(origin+'/#'+route);page.wait_for_selector(f'[data-studio-route="{route}"][aria-current="page"]')
                 check(page.locator(f'[data-nav-group="{section}"]').evaluate('(el)=>el.open'),section+' opens for its bookmarked route')
                 page.evaluate("showView('make')");page.locator(f'[data-nav-group="{section}"] summary').click()
+            page.wait_for_function('!!selected && schemaAvailable')
+            check(page.locator('#positive').input_value()=='','Full editor starts with an empty prompt')
+            check(page.locator('#positive').get_attribute('placeholder')=='Describe the picture','Full editor has a neutral prompt placeholder')
+            for query,label,href,goal in [('anime','Anime character','/#make','character'),('upscale','Fix or upscale','/#make','repair'),('download','Models & setup','/#models',None),('pose','Character in a new pose','/#make','combine')]:
+                page.keyboard.press('Control+k');page.fill('#studioCommandSearch',query)
+                result=page.locator('#studioCommandResults a').filter(has=page.locator('b',has_text=label)).first
+                check(result.get_attribute('href')==href,'finder: '+query+' has the right destination')
+                if goal:
+                    check(result.get_attribute('data-make-goal')==goal,'finder: '+query+' selects the right Make goal')
+                    result.focus();page.keyboard.press('Enter');page.wait_for_selector('#makeGoals [data-make-goal="'+goal+'"][aria-checked="true"]')
+                    check(page.evaluate('JSON.parse(localStorage.getItem("studio.make")).goal')==goal,'finder: '+query+' survives the Make reload')
+                else:
+                    page.fill('#studioCommandSearch',query);page.keyboard.press('ArrowDown');page.keyboard.press('Enter');page.wait_for_selector('#modelsView',state='visible')
+            page.keyboard.press('Control+k');page.fill('#studioCommandSearch','no-such-place')
+            check('Try anime, upscale, pose' in page.locator('#studioCommandResults').inner_text(),'empty finder suggests real queries');page.keyboard.press('Escape')
+            finder=browser.new_page();finder.route('**/api/looks',lambda route:route.fulfill(json=json.loads((ROOT/'presets/looks.json').read_text(encoding='utf-8'))))
+            finder.goto(origin+'/#make');finder.wait_for_selector('#makeGoals [data-make-goal]')
+            for query,goal in [('fix face','repair'),('fix hands','repair'),('3d','mesh'),('video','animate'),('style','restyle')]:
+                finder.keyboard.press('Control+k');finder.fill('#studioCommandSearch',query)
+                check(finder.locator('#studioCommandResults a').first.get_attribute('data-make-goal')==goal,'finder synonym: '+query);finder.keyboard.press('Escape')
+            for query,href in [('pictures','/#assets'),('keepers','/#assets'),('compare','/#production'),('seed','/#create')]:
+                finder.keyboard.press('Control+k');finder.fill('#studioCommandSearch',query)
+                check(finder.locator('#studioCommandResults a').first.get_attribute('href')==href,'finder keyword: '+query);finder.keyboard.press('Escape')
+            finder.keyboard.press('Control+k');finder.fill('#studioCommandSearch','pixel');finder.wait_for_selector('#studioCommandResults [data-make-look="look-preset-pixel-lora"]')
+            check(finder.locator('#studioCommandResults a').first.get_attribute('data-make-look')=='look-preset-pixel-lora','pixel search leads to the pixel-art look')
+            finder.keyboard.press('ArrowDown');finder.keyboard.press('ArrowDown');finder.keyboard.press('ArrowUp');finder.keyboard.press('Enter')
+            finder.wait_for_selector('.make-chosen');check(finder.evaluate('JSON.parse(localStorage.getItem("studio.make")).look')=='look-preset-pixel-lora','look selection reloads Make with the chosen pixel look')
+            finder.keyboard.press('Control+k');finder.fill('#studioCommandSearch',next(l['name'] for l in json.loads((ROOT/'presets/looks.json').read_text(encoding='utf-8'))['looks'] if l['id']=='look-wai-fantasy-portrait'));finder.wait_for_selector('#studioCommandResults [data-make-look="look-wai-fantasy-portrait"]')
+            check(finder.locator('#studioCommandResults [data-make-look="look-wai-fantasy-portrait"]').get_attribute('data-make-goal')=='character','look names resolve to their Make goal');finder.close()
+            page.evaluate("localStorage.removeItem('studio.make')");page.reload();page.wait_for_selector('#makeGoals [data-make-goal]')
             page.keyboard.press('Control+k');page.fill('#studioCommandSearch','Overview');page.click('#studioCommandResults a');page.wait_for_selector('#homeView',state='visible')
             check(page.url.endswith('#home'),'Overview remains reachable through the command palette')
             page.evaluate("showView('home')");page.wait_for_selector('#uxRecent .ux-recent-card');page.wait_for_function('!!selected && schemaAvailable');page.wait_for_timeout(500)
@@ -264,6 +294,10 @@ def run(screenshots):
             for tool in ['av.html','voice.html','review.html']:
                 page.goto(origin+'/'+tool);page.wait_for_selector('.studio-sidebar');check(page.locator('#studioJump').is_visible(),tool+' has shared navigation')
             page.goto(origin+'/#home');page.wait_for_selector('#uxRecent .ux-recent-card');page.set_viewport_size({'width':390,'height':844});page.wait_for_timeout(150);check(page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),'mobile overview has no horizontal overflow')
+            check(page.locator('#studioQuickCreate').get_attribute('href')=='/#make' and page.locator('#studioQuickCreate').inner_text()=='Make','mobile header points at Make')
+            check(page.locator('#studioQuickCreate').get_attribute('aria-current') is None,'mobile Make is inactive on Overview')
+            page.click('#studioQuickCreate');page.wait_for_selector('#makeView',state='visible')
+            check(page.locator('#studioQuickCreate').get_attribute('aria-current')=='page','mobile Make is highlighted only on Make');page.evaluate("showView('home')")
             if screenshots:page.screenshot(path=str(screenshots/'overview-mobile.png'),full_page=True)
             page.locator('[data-nav-group="Advanced"]').evaluate('(el)=>el.open=false')
             page.click('#studioNavToggle');check(page.locator('#studioNavToggle').get_attribute('aria-expanded')=='true','mobile navigation is expandable');page.click('[data-nav-group="Advanced"] summary');page.click('[data-studio-route="create"]');check(page.locator('#studioNavToggle').get_attribute('aria-expanded')=='false','navigation closes after route change');check(page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),'mobile create has no horizontal overflow')

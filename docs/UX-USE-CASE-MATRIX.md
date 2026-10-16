@@ -1,5 +1,54 @@
 # UX use-case matrix
 
+## Make: picture goals stay in Make, and Compare looks — 16 October 2026
+
+Owner ask (16 October 2026): "the user should be able to do it without much confusion". Live journey audit items #5, #6,
+#7 and #16. Refs #278.
+
+- **Picture goals no longer leave Make.** Before, a goal tile led to a picture grid, then the *Where should it go next?*
+  dialog asked the task again, then *Prepare in Create* opened the full editor, with other words, the prompt below the
+  fold and Generate renamed. Now each goal goes: pick the picture (a search box over your newest 60 pictures; masks stay
+  hidden), fill a short composer for that goal, then press Make's own **Generate**.
+  - **Restyle**: choose the new look by its picture from Make's looks; that picture becomes the look board
+    (`restyle-klein-picture`). *Describe the look in words instead* switches to `restyle-klein`, with the finish sentence
+    ready to edit.
+  - **Character in a new pose**: two labelled slots. **Character picture** is the one you picked. **Pose** is either a
+    picture from your library (`combine-klein-9b-copypose`) or a drawn figure, Standing or Bent forward, with a mirror
+    option (`combine-klein-9b-skeleton`, drawn by `/api/pose/render`). The recipe's bracketed fills are plain named fields
+    (Who is in the character picture / What they wear, with colours / The pose, in a few words). No bracket and no recipe
+    example that names a person reaches the page.
+  - **Change one thing** (`flux-edit`): one field. **Fix or upscale**: Fix face, Fix hands and details or Upscale 2×. These
+    are the existing one-press polish routes, and a route that does not fit the picture gives its reason. **Animate**
+    (`wan22-i2v`): a motion field and a length (Short, 17 frames, about 0.7 s; Longer, 33 frames, about 1.4 s; held modes are
+    not offered). **Picture to 3D** (`trellis-auto-cutout`): nothing to fill in.
+  - Every goal keeps *Open in the full editor instead*, which opens the old dialog. A result's *More* menu (Change one
+    thing, Restyle, Put in a new pose, Animate, Make it 3D) now opens that goal in Make with the picture already chosen.
+- **The same submission rules.** Generate is the only press that submits. It sends the request the dialog would have
+  prepared: the source is copied through `/api/assets/reference` and checked against its `/context`, the claim comes from
+  `StudioContinuation.initial`, a look picture is staged through `/api/assets/reference` (or `/api/upload` for an example
+  image), and the server re-checks the claim, graph hash, files and fills. No server route or input was added.
+- **Compare looks** (#16): a toggle on the look gallery. Choose two or three looks and type one scene; before Generate the
+  page shows the count and the total estimate. One press sends one picture per look, as made, at its own shape, all with
+  the same seed where the recipe takes one. The results sit side by side in one card, with Keep / Not this on each picture.
+
+Clicks to Generate, Generate included (fixture mode; the journeys read Generate and never press it):
+
+| Journey | Before | After | Measured by |
+| --- | --- | --- | --- |
+| Restyle with a look (`restyle-recent-output-with-a-look`) | 4 clicks + Generate, 2 view switches, 566 words read, look in words only (Create: recent output, dialog, Restyle, Prepare). With a look *picture*, about 7 clicks: change the destination, Prepare, picker, slot, picture, fill the colour bracket. | 3 clicks + Generate, 0 switches, 135 words; the look is chosen by its picture | use-case journey |
+| Character in a new pose (`combine-character-with-another-pose`) | 6 clicks + 3 bracket fills + Generate, 4 switches, 584 words | 3 clicks + 3 plain fields + Generate, 0 switches, 134 words | use-case journey |
+| Compare looks (`make-compare-looks`, new) | not possible in Make (a Runs & review comparison varies one setting of one recipe) | 5 clicks + 1 scene + Generate (goal, Compare looks, 3 looks) | use-case journey |
+| Animate a picture | 3 clicks (tile, picture, Prepare in Create) + motion typed in Create + Generate | 2 clicks + motion + Generate | `tests/make_goals_browser.py` |
+| Picture to 3D | 3 clicks + Generate | 2 clicks + Generate | `tests/make_goals_browser.py` |
+| Change one thing | 3 clicks + fill the bracket in the prompt + Generate | 2 clicks + one field + Generate | `tests/make_goals_browser.py` |
+| Fix or upscale | 3 clicks + Generate in Create (or the result card's one-press buttons) | 3 clicks (tile, picture, fix) + Generate | `tests/make_goals_browser.py` |
+
+The use-case suite holds its cap of 24. Restyle and Combine were rewritten to the Make flow, and `make-compare-looks` is
+the 24th case. Animate, 3D, edit and repair are measured by `tests/make_goals_browser.py`, which presses Generate against
+a fixture `/api/jobs`. For every goal it asserts the exact recipe, continuation claim, source input, board reference,
+parent assets and wording. It also asserts that the handoff dialog never opens, and it saves 1440×900 and 390×844
+screenshots to `.runtime/make-goals/`.
+
 ## Make: Tune this look, and tweak a result in place — 16 October 2026
 
 Owner ask (16 October 2026): a high-end anime picture needs specific models and adapters, then tweaking, without confusion.
@@ -29,6 +78,24 @@ koukouya, asks for finer steps, locks seed 4242 and opens the full editor. There
 in slot 2, its trigger in the words, more than 25 steps and the seed. `tests/make_tune_browser.py` presses Generate against a
 fixture `/api/jobs`. It asserts the exact controls sent, the run card summary and the restore on Edit and re-run, including the
 seed lock after a run with new seeds.
+
+## Full editor adapters and a scannable recipe picker — 16 October 2026
+
+Refs #278 (16 October 2026 live journey audit, J1 and item 24).
+
+- **Adapter slots** (Fine-tune the recipe): the hint reads the trigger's placement in plain words (*put it anywhere in the
+  prompt*; it said *place it at the anywhere of the prompt*). Choosing an adapter file sets its recorded recommended strength
+  (settings-kb `default`; a recorded 0 falls back to the slot's authored strength, else 1.0), shows the recorded range beside
+  Strength, and adds its trigger to the prompt once, saying so in the status line. Changing the file, or turning the slot to 0,
+  removes only the exact trigger the page added. *Add trigger to prompt* and *Use 0.8* cover the manual path.
+- **Change recipe**: search and results come first (the list starts at y≈360 of 900, was ≈680), with the task, kind and
+  collection filters on one row. Cards are grouped by what they make, show one plain sentence, a committed recipe-default
+  picture where one exists, a speed badge (fastest recorded run, else the recipe's own stated timing) and *Needs download*.
+  The bundle launcher now uses the dark theme.
+
+`python tests/studio_use_cases.py` passed **23/23** journeys with **zero generation submissions and zero page errors**. The new
+`specific-lora-in-full-editor` journey finds WAI in the picker, chooses the manga ink adapter and asserts strength 0.8, range
+0.6–1, the trigger added once and removed again when the slot switches to an adapter without a trigger.
 
 ## Make: a goal-first way in — 15 October 2026
 
