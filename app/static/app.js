@@ -186,12 +186,12 @@ function renderLoraSlots() {
     + (missing.length ? '<p class="lora-missing">Authored adapters not installed: ' + esc(missing.join(', ')) + '</p>' : '')
     + slots.map((key,index) => {
       const nameKey = loraNameKey(key), authored = selected.defaults?.[nameKey] || '';
-      const options = selected.choices?.[nameKey]?.length ? selected.choices[nameKey] : installedLoras;
+      const options = installedLoras;
       const base = !options.length ? (authored ? [authored] : []) : authored && !options.includes(authored) ? [authored, ...options] : options;
       const extra = kept[nameKey];
       const list = extra && !base.includes(extra) ? [extra, ...base] : base;
       const chosen = extra || authored;
-      return '<div class="lora-slot"><label class="lora-file"><span>Slot ' + (index + 1) + '</span><select data-key="' + nameKey + '">' + (list.length ? '' : '<option value="">No installed adapter found</option>') + list.map(v => '<option' + (v === chosen ? ' selected' : '') + '>' + esc(v) + '</option>').join('') + '</select></label>'
+      return '<div class="lora-slot"><label class="lora-file"><span>Slot ' + (index + 1) + '</span><select data-key="' + nameKey + '">' + (list.length ? '' : '<option value="">No installed adapter found</option>') + list.map(v => '<option value="' + esc(v) + '"' + (v === chosen ? ' selected' : '') + '>' + esc(v) + (v === extra && !options.includes(v) ? ' (recorded, not in the list)' : '') + '</option>').join('') + '</select></label>'
         + '<label class="lora-strength"><span>Strength <small class="lora-range" title="Recommended strength range" data-range="' + esc(key) + '"></small></span><input data-key="' + key + '" type="number" min="0" max="2" step="0.05"></label>'
         + '<small class="lora-hint" data-hint="' + esc(key) + '"></small></div>';
     }).join('');
@@ -286,12 +286,12 @@ function applyRecipe(recipe) {
   message(recipe.name + ' loaded. Review the settings before generating.' + (recipe.missing?.length ? ' Some adapters are not installed.' : ''));
   scheduleTimeEstimate(); recipeChanged();
 }
-async function loadAtelier(current = () => true) {
+async function loadAtelier(current = () => true, refresh = false) {
   // /api/options also warms the server's node schema, so the catalog's own
   // per-preset choices fill in on the next poll; until then this is the list.
   const epoch = ++atelierReadEpoch;
   let loras = [], nextKnowledge = null, recipes = [];
-  try { loras = (await api('/api/options')).loras || []; } catch (e) {}
+  try { loras = (await api('/api/options' + (refresh ? '?refresh' : ''))).loras || []; } catch (e) {}   // ?refresh skips the server's 120 s options cache
   try { nextKnowledge = await api('/api/knowledge'); } catch (e) {}
   try { recipes = (await api('/api/recipes')).recipes || []; } catch (e) {}
   if (epoch !== atelierReadEpoch || !current()) return;
@@ -1027,7 +1027,17 @@ let savingSetup=false; // A double click stored two setups: each save without an
 $('#save').onclick=async()=>{if(!selected||savingSetup)return;const name=$('#saveName').value.trim();if(!name){setupMessage('Give this setup a name first.');return;}savingSetup=true;$('#save').disabled=true;try{await post('/api/setups',{name,recipe:{preset:selected.id,...continuationPayload(),...tilePayload(),...parallaxPayload(),controls:checkedSetupControls(),batch:$('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},attribution_recorded:true,references:attachedReferencePayload()}});$('#saveName').value='';await loadSetups();setupMessage('Setup saved in your workspace, available in every browser.');}catch(e){setupMessage(e.message,true);}finally{savingSetup=false;$('#save').disabled=false;}};
 $('#savedList').onclick=async e=>{try{if(e.target.dataset.load!==undefined)applySaved(saved()[e.target.dataset.load],{guessLegacyParent:true});if(e.target.dataset.deleteSetup){await post('/api/setups',{action:'delete',id:e.target.dataset.deleteSetup});await loadSetups();}}catch(err){message(err.message,true);}};
 $('#importRecipe').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Recipe must be under 1 MiB');let recipe=JSON.parse(await file.text());const tileDropped=staleTilePlan({preset:recipe.preset_id,tile:recipe.tile,controls:recipe.controls,parent_assets:recipe.parent_assets},catalog.presets.find(p=>p.id===recipe.preset_id));if(tileDropped)recipe={...recipe,tile:null};const check=await post('/api/recipe-check',recipe);applySaved({preset:recipe.preset_id,tileDropped,continuation:recipe.continuation,tile:recipe.tile,parallax:recipe.parallax,controls:recipe.controls,batch_count:recipe.batch_count,parent_assets:recipe.parent_assets,references:recipe.references});recipeTemplateHash=check.template_sha256;if(!tileDropped&&(recipe.tile==null||tileState))message('Recipe loaded: embedded workflow matches this preset. Referenced inputs and model files remain local dependencies.');}catch(err){message('Could not import recipe: '+err.message,true);}finally{e.target.value='';}};
-$('#refreshModels').onclick=async()=>{await api('/api/health?refresh');await health();await refreshLibrary();};$('#modelSearch').oninput=renderInventory;$('#curatedModelSearch').oninput=()=>{renderCuratedModels();renderInventory();};$('#modelStatus').onchange=async()=>{writeStoredModelStatus($('#modelStatus').value);await refreshLibrary();};restoreModelStatus();
+$('#refreshModels').onclick=async()=>{
+  await api('/api/health?refresh');await health();await loadAtelier(undefined,true);
+  // Newly installed adapters clear each recipe's missing_loras; copy the fresh readiness onto the presets in use so Vary and warnings update.
+  api('/api/catalog').then(fresh=>{for(const p of fresh?.presets||[]){const own=catalog.presets.find(x=>x.id===p.id);if(own)own.missing_loras=p.missing_loras;if(selected?.id===p.id)selected.missing_loras=p.missing_loras;}updateLoraHints();if(typeof refreshCarriedVary==='function')refreshCarriedVary();}).catch(()=>{});
+  if(selected){
+    const strengths=activeLoraSlots().map(key=>[key,getControl(key)?.value]);renderLoraSlots();
+    for(const [key,value] of strengths){const input=getControl(key);if(input&&value!==undefined)input.value=value;}
+    updateLoraHints();
+  }
+  if(typeof refreshCarriedVary==='function')refreshCarriedVary();await refreshLibrary();
+};$('#modelSearch').oninput=renderInventory;$('#curatedModelSearch').oninput=()=>{renderCuratedModels();renderInventory();};$('#modelStatus').onchange=async()=>{writeStoredModelStatus($('#modelStatus').value);await refreshLibrary();};restoreModelStatus();
 function configureReadPolling(){
   if(!window.ReadPoller||readPoller)return;
   readPoller=new window.ReadPoller();window.StudioReadPoller=readPoller;
