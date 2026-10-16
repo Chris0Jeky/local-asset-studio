@@ -913,6 +913,11 @@ async function modelShopCards() {
   assert.match(element('#modelLooks').innerHTML, /Ready now<\/h4>[\s\S]*Look B/);
   run(`modelReqs.set('p2',[{file:'vae/shared.safetensors',asset_id:'shared'}]);renderCuratedModels()`);
   assert.match(element('#modelLooks').innerHTML, /Needs a download<\/h4>[\s\S]*Look B/, 'an unresolved requirement blocks, as the server does');
+  // An adapter named in a look but listed nowhere (library or disk) is missing, not silently ignored; one on disk is fine.
+  run(`modelReqs.set('p2',[{file:'vae/shared.safetensors',asset_id:'shared',present:true}]);modelLooks[1].body.controls={lora_name:'ghost.safetensors'};renderCuratedModels()`);
+  assert.match(element('#modelLooks').innerHTML, /Needs a download<\/h4>[\s\S]*Look B[\s\S]*ghost\.safetensors/);
+  run(`library.inventory=[{file:'loras/ghost.safetensors',bytes:8}];renderCuratedModels()`);
+  assert.match(element('#modelLooks').innerHTML, /Ready now<\/h4>[\s\S]*Look B/);
 }
 
 async function modelStatusFilter() {

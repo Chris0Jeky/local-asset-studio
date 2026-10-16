@@ -607,7 +607,7 @@ async function loadModelUse(){
     // Looks are re-read on every visit (one GET): a look made, renamed or trashed since the last visit must show here.
     const listing=await api('/api/looks');modelLooks=Array.isArray(listing?.looks)?listing.looks.filter(l=>l&&l.kind==='look'&&!l.trashed_at&&l.body?.preset_id):null;
     if(!Object.keys(modelExamples).length)try{modelExamples=(await import('/static/bundle-showcase.js')).default?.examples||{};}catch{}
-    const ids=[...new Set([...(modelLooks||[]).map(l=>l.body.preset_id),...(atelierRecipes||[]).map(r=>r?.preset_id)].filter(id=>typeof id==='string'&&id&&!modelReqs.get(id)))];
+    const ids=[...new Set([...(modelLooks||[]).map(l=>l.body.preset_id),...(atelierRecipes||[]).map(r=>r?.preset_id)].filter(id=>typeof id==='string'&&id&&!modelReqs.has(id)))];   // a failed inspect stays null until the page reloads, not retried every poll
     for(let i=0;i<ids.length;i+=4)await Promise.all(ids.slice(i,i+4).map(async id=>{try{const r=await api('/api/inspect/'+encodeURIComponent(id));modelReqs.set(id,Array.isArray(r?.requirements)?r.requirements:null);}catch{modelReqs.set(id,null);}}));
     if(modelLooks||ids.length)renderCuratedModels();
   }catch{}finally{modelUseBusy=false;}
@@ -617,8 +617,10 @@ function modelUsage(assets,windows){
   const byId=new Map(assets.map(a=>[a.id,a])),byFile=new Map(assets.map(a=>[canonicalModelRel(a.file,windows),a])),byBase=new Map(assets.map(a=>[modelBase(a.file),a])),use=new Map(),states=[];
   const add=(a,kind,item)=>{let u=use.get(a.id);if(!u)use.set(a.id,u={looks:[],recipes:[]});if(!u[kind].some(x=>x.id===item.id))u[kind].push(item);};
   const resolve=r=>byId.get(r.asset_id)||byFile.get(canonicalModelRel(r.file,windows))||null;
-  const loras=c=>Object.entries(c||{}).filter(([k,v])=>/^lora\d*(_name)?$/.test(k)&&typeof v==='string'&&v).map(([,v])=>byBase.get(modelBase(v))).filter(Boolean);
-  const join=(kind,item,presetId,controls)=>{const missing=[];for(const r of modelReqs.get(presetId)||[]){const a=resolve(r);if(a)add(a,kind,item);if(r.present!==true)missing.push(a||r);}for(const a of loras(controls)){add(a,kind,item);if(a.present===false)missing.push(a);}return missing;};
+  // An adapter the curated library does not list still counts when the inventory has the file; one found nowhere is missing.
+  const onDisk=new Set((library?.inventory||[]).map(m=>modelBase(m.file)));
+  const loras=c=>Object.entries(c||{}).filter(([k,v])=>/^lora\d*(_name)?$/.test(k)&&typeof v==='string'&&/\.(safetensors|ckpt|pt|bin|gguf)$/i.test(v)).map(([,v])=>byBase.get(modelBase(v))||(onDisk.has(modelBase(v))?null:{file:'loras/'+String(v).split(/[\\/]/).pop(),present:false,unlisted:true})).filter(Boolean);
+  const join=(kind,item,presetId,controls)=>{const missing=[];for(const r of modelReqs.get(presetId)||[]){const a=resolve(r);if(a)add(a,kind,item);if(r.present!==true)missing.push(a||r);}for(const a of loras(controls)){if(!a.unlisted)add(a,kind,item);if(a.present===false)missing.push(a);}return missing;};
   for(const l of modelLooks||[]){const missing=join('looks',{id:l.id,name:l.name},l.body.preset_id,l.body.controls);states.push({look:l,known:!!modelReqs.get(l.body.preset_id),missing:[...new Map(missing.map(m=>[m.file,m])).values()]});}
   for(const r of atelierRecipes||[])if(r?.id)join('recipes',{id:r.id,name:r.name||r.id},r.preset_id,r.controls);
   return{use,states};
