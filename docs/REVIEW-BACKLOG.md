@@ -49,4 +49,8 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   generates, so it never runs with the Full editor's old words. Reverse: make Ctrl+Enter generate straight away.
 - [ ] **The Full editor opens with an empty prompt** (#1433), and adult-content notes appear only on adult recipes.
   Ctrl+K and the mobile header now lead to Make. Reverse: restore the authored default prompt on first open.
+- [ ] **Tune this look** (#1424) treats every SDXL checkpoint as one model type, so an Illustrious look can switch to
+  Pony V6 (each choice is labelled with its family). LoRAs that settings-kb.json does not know (about 30 of 100
+  installed) are not offered. Edit and re-run fixes the run's seed by default. Trigger words are auto-added only for
+  LoRAs you add. "Good for / Not for" was not invented because looks carry no such data.
 
