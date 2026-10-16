@@ -1531,6 +1531,7 @@ async function seamlessPlanRecovery() {
       assert.equal(s.run('JSON.stringify(tileState)'),change?'null':JSON.stringify(plan),route+': '+change);
       assert.equal(s.element('#positive').value,'Texture',route+' keeps the other settings');
       if(change)assert.match(s.element('#status').textContent,/Seamless plan dropped.*Make seamless/,route+' reports the dropped plan');
+      if(route==='import'&&change)assert.equal(s.requests.find(r=>r.url==='/api/recipe-check').data.tile,null,'a stale plan is stripped before the server recipe check, so the rest still imports');
       assert.equal(s.requests.some(r=>r.url==='/api/jobs'),false,'Recovery never submits a generation');
     }
   }
