@@ -13,6 +13,15 @@ from asset_detail_browser import inert_page
 ROOT = Path(__file__).resolve().parents[1]
 
 
+async def reset(page, recipe):
+    # The reset itself settles (an in-page trace logged its last line), yet CDP's awaitPromise
+    # on the evaluated promise was reported as garbage collected under load (#1132). Hold the
+    # outcome on window and wait for that flag instead of awaiting the evaluated promise.
+    await page.evaluate("id=>{window.__choiceResetDone=false;window.__choiceResetRun=window.__choiceReset(id).then(()=>{window.__choiceResetDone=true},error=>{window.__choiceResetDone=String(error)})}", recipe)
+    done=await (await page.wait_for_function('window.__choiceResetDone')).json_value()
+    if done is not True:raise RuntimeError('Choice reset failed: '+done)
+
+
 async def exercise_source_choices(page, check):
     await page.evaluate("""() => {
       window.__choiceCalls=[];window.__choiceFailure=false;window.__choiceDelay=false;
@@ -52,7 +61,7 @@ async def exercise_source_choices(page, check):
     }""")
 
     async def offer(recipe='qwen-3ref'):
-        await page.evaluate('(id)=>window.__choiceReset(id)', recipe)
+        await reset(page, recipe)
         await page.locator('#uxPullAsset').click()
         await page.locator('[data-ux-pull="asset-1"]').wait_for(state='visible')
         await page.select_option('#uxSourceSlot', '0')
@@ -122,7 +131,7 @@ async def exercise_source_choices(page, check):
     await page.evaluate('__choiceUploadDelay=false')
 
     # Reordering keeps field ownership on the same record, never its old index.
-    await page.evaluate("__choiceReset('qwen-3ref')")
+    await reset(page, 'qwen-3ref')
     await page.locator('[data-ref-avoid="1"]').fill('Follow this reference record')
     await page.evaluate("document.querySelector('[data-ref-down=\"1\"]').click()")
     check('reference field focus follows its record through reorder', await page.locator('[data-ref-avoid="2"]').evaluate('(n)=>n===document.activeElement && n.value==="Follow this reference record"'))
@@ -160,7 +169,7 @@ async def exercise_source_choices(page, check):
     check('accepted replacement fills the real role slot, not only the hidden mirror', await page.evaluate("continuationState===null && referenceRecords[0].file===uploaded && parentAssets.length===1 && parentAssets[0]==='asset-1' && referenceRecords.slice(1).every(r=>!r.file)"))
 
     # Existing target metadata is explicit and replacement still needs confirmation.
-    await page.evaluate("__choiceReset('qwen-3ref')")
+    await reset(page, 'qwen-3ref')
     await page.evaluate("attachReferenceAsset(1,'asset-2')")
     await page.locator('#uxPullAsset').click()
     await page.locator('[data-ux-pull="asset-1"]').wait_for(state='visible')
@@ -225,6 +234,7 @@ async def main(args):
             await page.wait_for_function("!!selected && schemaAvailable && assetState.assets.length>0",timeout=20000)
             await exercise_source_choices(page,check)
             check('no generation, installation or environment switching', all(row['path'] in {'/api/assets/reference','/api/estimate','/api/references/check'} for row in fixture.POSTS))
+            if errors:print('JavaScript exceptions:',json.dumps(errors),flush=True)  # #1306: the hosted failure kept no message
             check('no page exceptions',not errors)
             await browser.close()
     finally:

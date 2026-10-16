@@ -251,6 +251,7 @@ async def run(args):
                 }""")
                 check('stale availability does not invalidate a newly uploaded copy of the same bytes', await page.evaluate("!referenceRecords[0].missing && referencesReady() && referencePending===0 && parentByInput.lastReference==='asset-0'"))
                 check('no generation submission', not await page.evaluate("window.__writes.includes('/api/jobs')"))
+                if errors:print('JavaScript exceptions:',json.dumps(errors),flush=True)  # #1306: the hosted failure kept no message
                 check('no JavaScript exceptions', not errors)
                 await page.screenshot(path=str(args.out/'final.png'), full_page=True)
                 completed = True
