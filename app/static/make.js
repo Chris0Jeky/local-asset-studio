@@ -25,7 +25,7 @@
   const SHAPES={design:'As designed',portrait:'Portrait',landscape:'Landscape',square:'Square'};
   const FINAL=['completed','failed','partial','uncertain','not_submitted','cancelled','abandoned'];
   const POLISH={face:'Fix face',details:'Fix hands and details',upscale:'Upscale 2\u00d7'};
-  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),tune:{},tuneOpen:false};
+  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),tune:{},tuneOpen:false};
   try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(GOALS.some(g=>g.id===saved.goal))state.goal=saved.goal;if(typeof saved.look==='string')state.look=saved.look;}catch{}
   const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,...r})=>({...r,job:{id}}))]).slice(0,6).map(({job,look,lookId,goal,scene,tune,tuned})=>({id:job.id,look,lookId,goal,scene,tune,tuned}))}));}catch{}};
   let restoredRuns=false,savedRuns=[];try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(Array.isArray(saved.runs))savedRuns=saved.runs.filter(r=>r&&typeof r.id==='string').slice(0,6);}catch{}
@@ -151,7 +151,7 @@
     const look=current();if(!look)return false;
     const remove=target.closest('[data-tune-remove]');if(remove){const t=tuneOf(look),s=remove.dataset.tuneRemove;t.rows=t.rows.filter(r=>r.slot!==s);if(!t.cleared.includes(s))t.cleared.push(s);tuneChanged();q('#makeLoraSearch')?.focus();return true;}
     if(target.closest('[data-tune-add]')){const t=tuneOf(look),input=q('#makeLoraSearch'),name=input?.value.trim(),slot=freeSlot(look,t),status=q('#makeStatus');
-      if(!compatible(look).includes(name)){if(status)status.textContent=name?'Choose an adapter from the list: '+name+' is not an installed adapter for this model type.':'Type part of an adapter name, then choose it from the list.';input?.focus();return true;}
+      if(!compatible(look).includes(name)){say(name?'Choose an adapter from the list: '+name+' is not an installed adapter for this model type.':'Type part of an adapter name, then choose it from the list.');input?.focus();return true;}
       if(!slot||t.rows.some(r=>r.name===name))return true;
       t.rows.push({slot,name,strength:clamp(entry(name)?.default??1),on:true,added:true});t.cleared=t.cleared.filter(s=>s!==slot);tuneChanged();q('[data-tune-strength="'+slot+'"]')?.focus();return true;}
     if(target.closest('[data-tune-reset]')){const reseed=state.tune[look.id]?.reseed??true;delete state.tune[look.id];tuneOf(look).reseed=reseed;tuneChanged();return true;}
@@ -160,11 +160,12 @@
 
   view.innerHTML='<div class="make-heading"><span class="eyebrow">MAKE</span><h1 id="makeTitle" tabindex="-1">What are you making?</h1><p>Pick a goal, pick a look by its picture, describe your idea. The look brings the right model, adapters and settings.</p></div>'
     +'<div class="make-goals" role="radiogroup" aria-labelledby="makeTitle" id="makeGoals"></div>'
-    +'<div id="makeSplit" class="make-split"><div id="makeBody"></div><section class="make-runs" aria-labelledby="makeRunsTitle"><div class="section-title"><h2 id="makeRunsTitle">Your pictures</h2><a href="/#assets">Open the library ↗</a></div><div id="makeRuns" class="make-run-list"></div></section></div>'
+    +'<p id="makeStatus" class="make-status" role="status"></p>'
+    +'<div id="makeSplit" class="make-split"><div id="makeBody"></div><section class="make-runs" aria-labelledby="makeRunsTitle"><div class="section-title"><h2 id="makeRunsTitle">Your pictures</h2><a href="/#assets">Open the library ↗</a></div><div id="makeRuns" class="make-run-list" aria-live="polite" aria-relevant="additions text"></div></section></div>'
     +'<p class="make-advanced">Need every setting? <a href="/#create">Open the full editor</a> · <a href="/prompt-lab.html">Prompt Lab</a> · <a href="/#production">Compare settings side by side</a></p>';
 
   function renderGoals(){
-    q('#makeGoals').innerHTML=GOALS.map((g,i)=>(i===5?'<span class="make-goal-break">From a picture you have</span>':'')+'<button type="button" role="radio" aria-checked="'+(g.id===state.goal)+'" data-make-goal="'+g.id+'"><b>'+escape(g.name)+'</b><small>'+escape(g.hint)+'</small></button>').join('');
+    q('#makeGoals').innerHTML=GOALS.map((g,i)=>(i===5?'<span class="make-goal-break">From a picture you have</span>':'')+'<button type="button" role="radio" tabindex="'+(g.id===state.goal?'0':'-1')+'" aria-checked="'+(g.id===state.goal)+'" data-make-goal="'+g.id+'"><b>'+escape(g.name)+'</b><small>'+escape(g.hint)+'</small></button>').join('');
   }
   // Once a look is chosen the gallery folds to one line and the results sit beside the words, so Generate and its pictures share a screen.
   function layout(){const focused=!goal().intent&&!!current()&&!state.picking;q('#makeSplit').classList.toggle('make-has-look',focused);view.classList.toggle('make-focused',focused);}
@@ -174,13 +175,13 @@
     if(state.error){body.innerHTML='<p class="make-error" role="alert">'+escape(state.error)+' <button type="button" data-make-retry>Try again</button></p>';return;}
     if(!state.looks){body.innerHTML='<p class="muted">Loading looks…</p>';return;}
     const list=lookList();if(!list.some(l=>l.id===state.look))state.look=null;
-    const cards=list.map(l=>{const p=presetFor(l),[pace,label]=speed(p),thumb=thumbOf(l),why=blocker(l);return '<article class="make-look'+(l.id===state.look?' active':'')+'"><button type="button" class="make-look-select" data-make-look="'+escape(l.id)+'" aria-pressed="'+(l.id===state.look)+'">'
+    const cards=list.map(l=>{const p=presetFor(l),[pace,label]=speed(p),thumb=thumbOf(l),why=blocker(l);return '<article class="make-look'+(l.id===state.look?' active':'')+'"><button type="button" class="make-look-select" data-make-look="'+escape(l.id)+'" role="radio" tabindex="'+(l.id===(state.look||list[0]?.id)?'0':'-1')+'" aria-checked="'+(l.id===state.look)+'">'
       +(thumb?'<img src="'+escape(thumb)+'" alt="" loading="lazy">':'<span class="make-look-blank" aria-hidden="true">✦</span>')
       +'<span class="make-look-text"><b>'+escape(l.name)+'</b><small class="make-pace '+pace+'">'+escape(label)+'</small>'+(tried(l)?'<small>Run on this PC before</small>':'')+'</span></button>'+(why?'<small class="make-warn make-look-text">'+blockerMarkup(l,why)+'</small>':'')+'</article>';}).join('');
     const chosen=current();
     if(chosen&&!state.picking){const p=presetFor(chosen),thumb=thumbOf(chosen);
       body.innerHTML='<div class="make-chosen">'+(thumb?'<img src="'+escape(thumb)+'" alt="">':'<span class="make-look-blank" aria-hidden="true">✦</span>')+'<div><small>Look</small><b>'+escape(chosen.name)+'</b><small class="make-pace '+speed(p)[0]+'">'+escape(speed(p)[1])+'</small></div><button type="button" data-make-change>Change look</button></div><div id="makeComposer"></div>';}
-    else body.innerHTML='<div class="make-step"><span>1</span><h2>Choose a look</h2>'+(chosen?'<button type="button" class="make-link" data-make-keep-look>Keep '+escape(chosen.name)+'</button>':'')+'</div><div class="make-looks">'+cards+'</div><div id="makeComposer"></div>';
+    else body.innerHTML='<div class="make-step"><span>1</span><h2>Choose a look</h2>'+(chosen?'<button type="button" class="make-link" data-make-keep-look>Keep '+escape(chosen.name)+'</button>':'')+'</div><div class="make-looks" role="radiogroup" aria-label="Look">'+cards+'</div><div id="makeComposer"></div>';
     renderComposer();layout();
   }
   function shapeSize(preset,look,shape){
@@ -214,9 +215,10 @@
       +(adapters(look).length?'<p><b>Adapters:</b></p><ul>'+adapters(look).map(a=>'<li>'+escape(short(a.name==='built-in adapter'?'':a.name))+' at '+escape(a.strength)+(entry(a.name)?.trigger?' \u00b7 trigger <code>'+escape(entry(a.name).trigger)+'</code>':'')+'</li>').join('')+'</ul>':'<p>No style adapters: the model and the wording carry this look.</p>')
       +(example?'<p><b>Example:</b> '+escape(example)+'</p>':'')
       +(look.body.notes?'<details class="make-maint"><summary>Details for maintainers</summary><p class="muted">'+escape(look.body.notes)+'</p></details>':'')+'</details>'
-      +'</div></div><p id="makeStatus" class="make-status" role="status"></p>';
+      +'</div></div>';
+    syncOperation();
     const scene=q('#makeScene');try{scene.value=sessionStorage.getItem('studio.make.scene.'+state.goal)||'';}catch{}
-    scene.oninput=()=>{try{sessionStorage.setItem('studio.make.scene.'+state.goal,scene.value);}catch{}};
+    scene.oninput=()=>{scene.removeAttribute('aria-invalid');scene.removeAttribute('aria-describedby');try{sessionStorage.setItem('studio.make.scene.'+state.goal,scene.value);}catch{}};
     if(q('#makeUseExample'))q('#makeUseExample').onclick=()=>{scene.value=example;scene.oninput();scene.focus();};
     q('#makeShape').onchange=q('#makeCount').onchange=()=>estimate();estimate();
     const strength=q('#makeStrength');if(strength)strength.oninput=()=>{q('#makeStrengthOut').textContent=strength.value+'%';};
@@ -231,7 +233,7 @@
   }
   async function prepared(look){
     // Every form value is read before the first await: a click on another look mid-request must not change this one.
-    const scene=q('#makeScene').value.trim();if(!scene)throw Error('Describe your picture first, or press Use the example.');
+    const field=q('#makeScene'),scene=field.value.trim();if(!scene){field.setAttribute('aria-invalid','true');field.setAttribute('aria-describedby','makeStatus');field.focus();throw Error('Describe your picture first, or press Use the example.');}
     const options=Object.fromEntries([...view.querySelectorAll('[data-make-option]')].map(i=>[i.dataset.makeOption,i.checked]));
     const shape=q('#makeShape').value,strength=q('#makeStrength')?.value??null,p=presetFor(look),[w,h]=shapeSize(p,look,shape),reseed=q('#makeNewSeed').checked,batch_count=Number(q('#makeCount').value),scale=Number(strength??100)/100;
     const t={...structuredClone(tuneOf(look)),reseed};if(!reseed&&t.seed!=null&&!(Number.isSafeInteger(t.seed)&&t.seed>=0))throw Error('The seed must be a whole number, 0 or more.');
@@ -254,23 +256,30 @@
     catch{if(epoch===estimateEpoch&&!retry)setTimeout(()=>{if(epoch===estimateEpoch)estimate(true);},1500);}
   }
   const duration=s=>s<90?Math.round(s)+' s':Math.round(s/60)+' min';
+  function syncOperation(){
+    q('#makeStatus').textContent=state.status;
+    const generate=q('#makeGenerate'),editor=q('#makeEditor');if(generate)generate.disabled=state.busy||!!(current()&&blocker(current()));if(editor)editor.disabled=state.busy;
+  }
+  const say=text=>{state.status=text;syncOperation();};
   async function generate(){
-    const look=current(),status=q('#makeStatus');if(!look||state.busy)return;
-    const why=blocker(look);if(why){status.textContent=why;return;}
-    state.busy=true;q('#makeGenerate').disabled=true;status.textContent='Preparing…';
+    const look=current(),runGoal=state.goal;if(!look||state.busy)return;
+    const why=blocker(look);if(why){say(why);return;}
+    state.busy=true;say('Preparing\u2026');
     try{
-      const request=await prepared(look);status.textContent='Sending to ComfyUI…';
-      const {scene,tune,tuned,...submit}=request;const job=await json('/api/jobs',{...submit,label:'Make · '+look.name});
-      state.runs.unshift({job,look:look.name,lookId:look.id,goal:state.goal,scene,tune,tuned});remember();status.textContent='Started. Your pictures appear below as they finish; you can leave this page.';
+      const request=await prepared(look);say('Sending to ComfyUI\u2026');
+      const {scene,tune,tuned,...submit}=request;const job=await json('/api/jobs',{...submit,label:'Make \u00b7 '+look.name});
+      state.runs.unshift({job,look:look.name,lookId:look.id,goal:runGoal,scene,tune,tuned});remember();say('Started. Your pictures appear below as they finish; you can leave this page.');
       renderRuns();poll(job.id);
       if(typeof refresh==='function')void refresh();
-    }catch(error){status.textContent=error.message;status.classList.add('make-warn');setTimeout(()=>status.classList.remove('make-warn'),4000);}
-    finally{state.busy=false;const button=q('#makeGenerate');if(button)button.disabled=!!blocker(look);}
+    }catch(error){say(error.message);}
+    finally{state.busy=false;syncOperation();}
   }
   async function openInEditor(){
-    const look=current(),status=q('#makeStatus');if(!look)return;
-    try{const request=await prepared(look);applySaved({preset:request.preset_id,controls:request.controls,batch_count:request.batch_count,parent_assets:[],references:[]},{});showView('create');}
-    catch(error){status.textContent=error.message;}
+    const look=current();if(!look||state.busy)return;
+    state.busy=true;say('Preparing\u2026');
+    try{const request=await prepared(look);delete request.scene;applySaved({preset:request.preset_id,controls:request.controls,batch_count:request.batch_count,parent_assets:[],references:[]},{});showView('create');say('Ready in the full editor.');}
+    catch(error){say(error.message);}
+    finally{state.busy=false;syncOperation();}
   }
   // Keep / Not this: the library's own review field, one press, pressing again clears it.
   // Keep / Not this: the library's own review field. Saves run one after another (the library takes one command at a
@@ -282,8 +291,8 @@
     try{if(await refreshAssets(true)===false){await new Promise(r=>setTimeout(r,600));await refreshAssets(true);}
       delete state.review[id];const value=reviewOf(id)===button.dataset.makeReview?'unreviewed':button.dataset.makeReview;
       await mutateAssets({action:'edit',ids:[id],review:value});state.review[id]=value;renderRuns();
-      if(status)status.textContent=value==='selected'?'Kept. Your keepers are in the library under Keepers.':value==='rejected'?'Marked: not this one.':'Decision cleared.';}
-    catch(error){button.disabled=false;if(status)status.textContent='Could not save that: '+error.message;}
+      if(status)say(value==='selected'?'Kept. Your keepers are in the library under Keepers.':value==='rejected'?'Marked: not this one.':'Decision cleared.');}
+    catch(error){button.disabled=false;if(status)say('Could not save that: '+error.message);}
   }
   const reviewOf=id=>state.review[id]??(typeof assetState!=='undefined'&&assetState?.assets?.find(x=>x.id===id)?.review)??'unreviewed';
   const timers=new Map();
@@ -298,19 +307,20 @@
   function words(job){return({queued:'Waiting its turn',waiting:'Waiting for memory',submitting:'Sending',running:'Painting',observing:'Painting',completed:'Done',failed:'Did not finish',partial:'Some pictures did not finish',uncertain:'Outcome unknown: check Runs & review',cancelled:'Cancelled',not_submitted:'Not sent'})[job.status]||job.status;}
   function actions(job,output){
     const a=output.asset_id;if(!a)return'<small class="muted">Saving to the library…</small>';
-    const vary=window.StudioWorkbench?.varyMarkup?.(job.preset_id,job.id,a)||'';
+    const varyBox=document.createElement('div');varyBox.innerHTML=window.StudioWorkbench?.varyMarkup?.(job.preset_id,job.id,a)||'';
+    if(varyBox.querySelector('button:disabled'))varyBox.innerHTML='';else for(const hint of varyBox.querySelectorAll('small[id]'))hint.textContent='Prepare variations in the full editor; Generate there starts them.';const vary=varyBox.innerHTML;
     const hand=(intent,label)=>'<button type="button" data-ux-handoff="'+escape(a)+'" data-ux-handoff-intent="'+intent+'">'+label+'</button>';
-    const review=reviewOf(a),mark=(value,label)=>'<button type="button" data-make-review="'+value+'" data-asset="'+escape(a)+'" aria-pressed="'+(review===value)+'">'+label+'</button>';
+    const review=reviewOf(a),mark=(value,label)=>'<button type="button" data-make-review="'+value+'" data-asset="'+escape(a)+'" aria-pressed="'+(review===value)+'">'+(review===value?'\u2713 '+(value==='selected'?'Kept':'Marked: not this'):label)+'</button>';
     const polish=kind=>{const plan=state.polish[a+':'+kind],why=plan&&!plan.ok?plan.reason:'',busy=state.polishing.has(a+':'+kind);
-      return '<button type="button" data-make-polish="'+kind+'" data-asset="'+escape(a)+'"'+(why||busy?' disabled':'')+(why?' title="'+escape(why)+'"':'')+'>'+POLISH[kind]+(plan?.seconds?' <small>~'+duration(plan.seconds)+'</small>':'')+(busy?' …':'')+'</button>';};
-    return '<div class="make-actions">'+mark('selected','\u2605 Keep')+mark('rejected','Not this')+vary+polish('face')+polish('details')+polish('upscale')
-      +'<details class="make-more"><summary>More</summary><button type="button" data-ux-open-asset="'+escape(a)+'">Open full size</button>'+hand('repair','Other fixes\u2026')+hand('edit','Change one thing')+hand('restyle','Restyle')+hand('combine','Put in a new pose')+hand('animate','Animate')+'</details></div>';
+      if(why)return'';return '<button type="button" data-make-polish="'+kind+'" data-asset="'+escape(a)+'"'+(busy?' disabled':'')+'>'+POLISH[kind]+(plan?.seconds?' <small>~'+duration(plan.seconds)+'</small>':'')+(busy?' …':'')+'</button>';};
+    return '<div class="make-actions">'+mark('selected','\u2605 Keep')+mark('rejected','Not this')+vary+polish('face')+polish('details')+polish('upscale')+(Object.keys(POLISH).some(k=>state.polishing.has(a+':'+k))?'<small class="make-action-reason">Starting the finishing pass for this picture. Please wait.</small>':'')
+      +'<details class="make-more" data-more="'+escape(a)+'"><summary>More</summary><button type="button" data-ux-open-asset="'+escape(a)+'">Open full size</button>'+hand('repair','Other fixes\u2026')+hand('edit','Change one thing')+hand('restyle','Restyle')+hand('combine','Put in a new pose')+hand('animate','Animate')+'</details></div>';
   }
   // Polish plans only read (studio-workbench.js polishPlan); each picture is asked once per kind.
   const planning=new Set();
   function planPolish(list){
     const api=window.StudioWorkbench;if(!api?.polishPlan)return;
-    for(const {job} of list)for(const o of job.outputs||[])if(o.asset_id&&(!o.media_type||o.media_type==='image'))for(const kind of Object.keys(POLISH)){
+    for(const {job} of list)for(const o of job.outputs||[])if(o.asset_id&&picture(o))for(const kind of Object.keys(POLISH)){
       const key=o.asset_id+':'+kind;if(planning.has(key))continue;planning.add(key);
       api.polishPlan(o.asset_id,kind).then(plan=>{state.polish[key]=plan;scheduleRuns();},error=>{state.polish[key]={ok:false,reason:error.message};planning.delete(key);setTimeout(()=>{delete state.polish[key];scheduleRuns();},15000);scheduleRuns();});}
   }
@@ -319,27 +329,35 @@
     const id=button.dataset.asset,kind=button.dataset.makePolish,key=id+':'+kind,status=q('#makeStatus');if(state.polishing.has(key))return;
     const source=state.runs.find(r=>(r.job.outputs||[]).some(o=>o.asset_id===id));state.polishing.add(key);renderRuns();
     try{const job=await window.StudioWorkbench.polish(id,kind);state.runs.unshift({job,look:POLISH[kind]+(source?' \u00b7 '+source.look:''),lookId:source?.lookId,goal:source?.goal,scene:null});remember();poll(job.id);
-      if(status)status.textContent=POLISH[kind]+' started. The result appears at the top of your pictures.';}
-    catch(error){if(status)status.textContent=error.message;}
+      if(status)say(POLISH[kind]+' started. The result appears at the top of your pictures.');}
+    catch(error){if(status)say(error.message);}
     finally{state.polishing.delete(key);renderRuns();}
   }
+  // shortcut: Comfy outputs have no auxiliary role; match filename tokens until outputs declare one (Workspace keeps source.filename).
+  const picture=o=>(!o.media_type||o.media_type==='image')&&!/(?:^|[/_\\-])(mask|matte)(?:[_.-]|$)/i.test(o.source?.filename||o.filename||'');
+  const pictureTitle=(scene,date)=>String(scene||'Picture').slice(0,100)+(date?' \u00b7 '+new Date(Number(date)*1000).toLocaleDateString():'');
   function renderRuns(){
     const box=q('#makeRuns');if(!box)return;
-    const mine=state.runs,others=(typeof jobs!=='undefined'?jobs:[]).filter(j=>!mine.some(r=>r.job.id===j.id)&&j.outputs?.length&&!j.put_away).slice(0,mine.length?0:3).map(job=>({job,look:job.label||job.preset_name}));
-    const list=[...mine,...others].slice(0,6);planPolish(list);
+    const list=state.runs.slice(0,6);planPolish(list);
     if(!list.length){box.innerHTML='<p class="muted">Pictures you make here show up in this space, with one-press next steps.</p>';return;}
-    box.innerHTML=list.map(({job,look,scene,tuned})=>'<article class="make-run"><header><div><b>'+escape(look)+'</b>'+(scene?'<small>'+escape(scene)+'</small>':'')+(tuned?'<small class="make-tuned">'+escape(tuned)+'</small>':'')+'</div><span class="make-run-state '+escape(job.status)+'">'+escape(words(job))+'</span></header>'
+    const markup=list.map(({job,look,scene,tuned})=>'<article class="make-run" data-run="'+escape(job.id)+'"><header><div><b>'+escape(pictureTitle(scene||job.controls?.positive,job.created_at))+'</b>'+(scene?'<small>'+escape(scene)+'</small>':'')+(tuned?'<small class="make-tuned">'+escape(tuned)+'</small>':'')+'</div><span class="make-run-state '+escape(job.status)+'">'+escape(words(job))+'</span></header>'
       +(scene?'<div class="make-run-tools"><button type="button" data-make-rerun="'+escape(job.id)+'">Edit and re-run</button><button type="button" data-make-another="'+escape(job.id)+'">Same words, another look</button></div>':'')
       +(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')
-      +'<div class="make-outputs">'+(job.outputs||[]).map((o,i)=>(o.media_type&&o.media_type!=='image')?'':'<figure>'+(o.asset_id?'<button type="button" class="make-open" data-ux-open-asset="'+escape(o.asset_id)+'" aria-label="Open picture '+(i+1)+' full size">':'')+'<img src="/api/image/'+encodeURIComponent(job.id)+'/'+i+'" alt="Picture '+(i+1)+' from '+escape(look)+'" loading="lazy">'+(o.asset_id?'</button>':'')+actions(job,o)+'</figure>').join('')
-      +(FINAL.includes(job.status)?'':Array.from({length:Math.max(0,(job.batch_count||1)-(job.outputs||[]).length)},()=>'<figure class="make-pending" aria-hidden="true"><span></span></figure>').join(''))+'</div></article>').join('');
+      +'<div class="make-outputs">'+(job.outputs||[]).map((o,i)=>!picture(o)?'':'<figure>'+(o.asset_id?'<button type="button" class="make-open" data-ux-open-asset="'+escape(o.asset_id)+'" aria-label="Open picture '+(i+1)+' full size">':'')+'<img src="/api/image/'+encodeURIComponent(job.id)+'/'+i+'" alt="Picture '+(i+1)+' from '+escape(look)+'" loading="lazy">'+(o.asset_id?'</button>':'')+actions(job,o)+'</figure>').join('')
+      +(FINAL.includes(job.status)?'':Array.from({length:Math.max(0,(job.batch_count||1)-(job.outputs||[]).length)},()=>'<figure class="make-pending" aria-hidden="true"><span></span></figure>').join(''))+'</div></article>');
+    const focus=document.activeElement,key=e=>(e.closest('[data-run]')?.dataset.run||'')+'|'+e.tagName+'|'+JSON.stringify({...e.dataset})+'|'+e.textContent,focusKey=box.contains(focus)?key(focus):null,open=[...box.querySelectorAll('details[open]')].map(e=>e.dataset.more);
+    const next=document.createElement('div');next.innerHTML=markup.join('');
+    const ids=new Set(list.map(r=>r.job.id));for(const old of [...box.children])if(!ids.has(old.dataset.run))old.remove();
+    for(const [i,card] of [...next.children].entries()){const old=[...box.children].find(e=>e.dataset.run===card.dataset.run);if(old&&old.dataset.markup===card.outerHTML)continue;card.dataset.markup=card.outerHTML;if(old)old.replaceWith(card);else box.insertBefore(card,box.children[i]||null);}
+    for(const menu of box.querySelectorAll('details'))menu.open=open.includes(menu.dataset.more);
+    if(focusKey&&document.activeElement!==focus)[...box.querySelectorAll('button,summary,a')].find(e=>key(e)===focusKey)?.focus();
   }
   async function renderPictures(g){
     const body=q('#makeBody');
     body.innerHTML='<div class="make-step"><span>1</span><h2>Pick the picture</h2></div><p class="make-hint">'+escape(g.name)+': choose one of your pictures. The next screen suggests the best recipe for it and keeps your picture as the source. <a href="/#assets">Import a picture</a> first if it is not here.</p><div id="makePictures" class="make-pictures"><p class="muted">Loading your pictures…</p></div>';
-    try{if(!state.pictures){const data=await json('/api/workspace');state.pictures=(data.assets||[]).filter(a=>a.media_type==='image'&&!a.trashed_at).sort((a,b)=>(b.created_at||0)-(a.created_at||0)).slice(0,24);}
+    try{if(!state.pictures){const data=await json('/api/workspace');state.pictures=(data.assets||[]).filter(a=>a.media_type==='image'&&picture(a)&&!a.trashed_at).sort((a,b)=>(b.created_at||0)-(a.created_at||0)).slice(0,24);}
       if(goal()!==g)return;const box=q('#makePictures');
-      box.innerHTML=state.pictures.length?state.pictures.map(a=>'<button type="button" data-ux-handoff="'+escape(a.id)+'" data-ux-handoff-intent="'+g.intent+'"><img src="/api/assets/'+encodeURIComponent(a.id)+'/thumb" alt="" loading="lazy"><small>'+escape(a.title||'Picture')+'</small></button>').join(''):'<p class="muted">No pictures yet. Make one first, or import one in the library.</p>';}
+      box.innerHTML=state.pictures.length?state.pictures.map(a=>'<button type="button" data-ux-handoff="'+escape(a.id)+'" data-ux-handoff-intent="'+g.intent+'"><img src="/api/assets/'+encodeURIComponent(a.id)+'/thumb" alt="" loading="lazy"><small>'+escape(pictureTitle(a.prompt_excerpt||(!a.job_id&&a.title),a.created_at))+'</small></button>').join(''):'<p class="muted">No pictures yet. Make one first, or import one in the library.</p>';}
     catch(error){if(goal()===g)q('#makePictures').innerHTML='<p class="make-error">'+escape(error.message)+'</p>';}
   }
   async function load(){
@@ -356,14 +374,12 @@
     state.runs=[...state.runs,...restored.filter(r=>r&&!state.runs.some(x=>x.job.id===r.id)).map(({id,...r})=>r)];
     restoredRuns=true;
     for(const r of state.runs)if(!FINAL.includes(r.job.status))poll(r.job.id);
-    // With no Make runs yet, recent pictures come from the job list app.js loads; wait for it briefly.
-    for(let i=0;i<40&&!state.runs.length&&!(typeof jobs!=='undefined'&&jobs.length);i++)await new Promise(r=>setTimeout(r,250));
     renderRuns();
   }
   view.addEventListener('input',e=>{if(e.target.closest('#makeTune'))tuneInput(e.target);});
   view.addEventListener('click',e=>{
     if(e.target.closest('#makeTune')&&tuneClick(e.target))return;
-    const g=e.target.closest('[data-make-goal]');if(g){state.goal=g.dataset.makeGoal;state.pictures=null;remember();render();return;}
+    const g=e.target.closest('[data-make-goal]');if(g){state.goal=g.dataset.makeGoal;state.pictures=null;remember();render();q('[data-make-goal="'+state.goal+'"]')?.focus();return;}
     const l=e.target.closest('[data-make-look]');if(l){state.look=l.dataset.makeLook;state.picking=false;remember();renderLooks();q('#makeScene')?.focus();return;}
     if(e.target.closest('[data-make-change]')){state.picking=true;renderLooks();q('.make-look.active [data-make-look]')?.focus();return;}
     if(e.target.closest('[data-make-keep-look]')){state.picking=false;renderLooks();q('#makeScene')?.focus();return;}
@@ -378,7 +394,9 @@
     if(e.target.closest('#makeEditor'))void openInEditor();
     if(e.target.closest('[data-make-retry]'))void load();
   });
-  view.addEventListener('keydown',e=>{if(e.target.id==='makeScene'&&(e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();if(!e.repeat)void generate();}});
+  view.addEventListener('keydown',e=>{const radio=e.target.closest('[role="radio"]'),group=radio?.closest('[role="radiogroup"]');if(group&&['ArrowRight','ArrowDown','ArrowLeft','ArrowUp','Home','End'].includes(e.key)){
+    e.preventDefault();const items=[...group.querySelectorAll('[role="radio"]')],i=items.indexOf(radio),next=items[e.key==='Home'?0:e.key==='End'?items.length-1:(i+(['ArrowRight','ArrowDown'].includes(e.key)?1:items.length-1))%items.length],attr=next.hasAttribute('data-make-goal')?'data-make-goal':'data-make-look',value=next.getAttribute(attr);if(attr==='data-make-goal'){state.goal=value;state.pictures=null;remember();render();}else{state.look=value;state.picking=true;remember();renderLooks();}q('['+attr+'="'+value+'"]')?.focus();return;
+  }if(e.target.id==='makeScene'&&(e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();if(!e.repeat)void generate();}});
   let loaded=false;
   window.StudioMake={refresh(){if(!loaded){loaded=true;void load();}else render();}};
   if(!view.hidden)window.StudioMake.refresh();
