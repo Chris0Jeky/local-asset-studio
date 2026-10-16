@@ -847,7 +847,7 @@ async function performLibraryCommand(operation,observe=false) {
         if(['edit','trash','restore'].includes(command.action)&&!result.unchanged?.includes(id))Object.assign(asset,result.applied);
       }
     }
-    void refreshAssets(true);assetMessage('Library update confirmed.');return result;
+    assetReceiptEpoch++;void refreshAssets(true);assetMessage('Library update confirmed.');return result;   // an overlapping read re-reads instead of restoring the pre-update snapshot
   } catch(error) {
     if(current() && !observe && error.data?.code!=='asset_workspace_conflict' && error.status>=400 && error.status<500){throw Error('This attempt was refused. '+error.message+' The exact command and complete selection remain retained. Check its receipt or explicitly discard local recovery before a different update.');}
     throw Error('Library update not confirmed. '+error.message+' No automatic retry was sent.');
