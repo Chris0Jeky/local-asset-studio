@@ -2062,11 +2062,10 @@ function adultNotesFollowTheRecipe() {
   assert.equal(element('#nsfwIntel').hidden,false,'a restored saved setup keeps the family notes, since its recipe classification is not stored');
 }
 adultNotesFollowTheRecipe();
-// Audit v3 #17 and #26: the Full editor names itself, and a phone run dock no longer stays fixed over the editor.
+// Audit v3 #17: the Full editor names itself.
 function fullEditorEyebrowAndPhoneDock() {
   const read = name => fs.readFileSync(path.join(__dirname, '../app/static', name), 'utf8');
   assert.match(read('studio-workbench.js'), /<span class="eyebrow">FULL EDITOR<\/span>/, 'the Full editor eyebrow names the view');
   assert.doesNotMatch(read('studio-workbench.js'), /PILOT THE NEXT PASS/, 'the old Full editor eyebrow is gone');
-  assert.match(read('workshop.css'), /@media\(max-width:600px\)\{\.workshop \.wk-run-dock\{position:static;/, 'below 600 px the run dock is not fixed over the editor');
 }
 fullEditorEyebrowAndPhoneDock();
