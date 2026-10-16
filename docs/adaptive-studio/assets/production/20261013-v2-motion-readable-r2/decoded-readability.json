@@ -1,0 +1,27 @@
+{
+  "asset": "las",
+  "decoded_frames": 32,
+  "display_width": 320,
+  "video_sha256": "4131ce90cc954453a4f1d9bb7755d51aaa0ac797c56e4842405bc0f560bfe0d3",
+  "regions": {
+    "window": {
+      "max_changed_fraction_threshold6": 0.10508620689655172,
+      "required_minimum": 0.025,
+      "max_mean_rgb": 7.211293103448276,
+      "passes": true
+    },
+    "falling_rain": {
+      "max_changed_fraction_threshold6": 0.041020408163265305,
+      "required_minimum": 0.0035,
+      "max_mean_rgb": 1.91843537414966,
+      "passes": true
+    },
+    "train_band": {
+      "max_changed_fraction_threshold6": 0.53875,
+      "required_minimum": 0.06,
+      "max_mean_rgb": 41.73458333333334,
+      "passes": true
+    }
+  },
+  "human_visual_acceptance": "separate gate; these thresholds reject still/near-still delivery only"
+}
