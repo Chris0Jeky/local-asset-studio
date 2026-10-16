@@ -1125,6 +1125,7 @@ class Studio:
                              "node_count": target["node_count"], "references": target["references"], "modality": target["modality"]}}
 
     def export_recipe(self, job):
+        if "record_error" in job: raise StudioError("An unreadable run record has no recipe to export; inspect its folder first")
         return {"version": 2, "preset_id": job["preset_id"], "controls": job["controls"],
                 "batch_count": job["batch_count"], "created_at": job["created_at"],
                 "workflow": job["graph"], "submissions": job.get("submissions", []),

@@ -312,6 +312,10 @@ def run(shots):
         # Manage characters (#1205 v2): Edit, Put away / Restore (revision-checked: a 409 reloads and changes nothing), and a read-only
         # Line-up per character, canon pinned first, then kept pictures that descend from it. None of it submits.
         before_manage = len(jobs()); kept_state = [(a['review'], a['lineage']) for a in fixture.ASSETS]
+        # Real pictures differ in bytes; the fixture gives them one hash, which would make every picture a copy of the canon.
+        kept_shas = [a['sha256'] for a in fixture.ASSETS]
+        for i, a in enumerate(fixture.ASSETS): a['sha256'] = '%064x' % (i + 1)
+        fixture_card(0)['lineage'][0]['sha256'] = fixture.ASSETS[0]['sha256']
         fixture.ASSETS[4].update(review='selected', lineage=['asset-0'])   # a kept picture made from the canon
         fixture.ASSETS[3].update(review='selected', lineage=['asset-4'])   # a kept edit of that one: listed after it, so the chain needs a second pass
         fixture.ASSETS[2].update(lineage=['asset-0'])                      # made from the canon but needs work: not kept, not in the line-up
@@ -338,23 +342,46 @@ def run(shots):
         assert '4 older kept pictures not shown' in page.locator(sc).inner_text(), page.locator(sc).inner_text()
         del fixture.ASSETS[-26:]
         assert len(jobs()) == before_manage, 'the line-up submits nothing'
+        # The recorded canon put away, an identical live copy standing in (characters.py canon_asset): the line-up follows the copy and still
+        # finds the kept pictures made from the recorded asset (Codex review of #1472).
+        copy = dict(fixture.ASSETS[0], id='canon-copy', title='Canon copy', filename='copy.png', created_at=1789000500, review='unreviewed', lineage=[], tags=[])
+        was_away = fixture.ASSETS[0].get('trashed_at'); fixture.ASSETS[0]['trashed_at'] = 1; fixture.ASSETS.append(copy); fixture_card(0)['canon_asset_id'] = 'canon-copy'
+        def resync():   # a stale Put away answers 409, which reloads the character list without changing anything
+            page.locator('[data-make-character-away="character-0"]').click(); page.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("changed somewhere else")')
+        fixture_card(0)['revision'] += 1; resync(); open_picker()
+        if not page.locator(sc).evaluate('e=>e.open'): page.locator(sc + ' summary').click()
+        page.wait_for_selector(sc + ' .make-lineup-item')
+        order = page.eval_on_selector_all(sc + ' .make-lineup-item', 'n=>n.map(e=>e.dataset.uxOpenAsset)')
+        assert order == ['canon-copy', 'asset-3', 'asset-4'], order
+        fixture.ASSETS.remove(copy); fixture.ASSETS[0]['trashed_at'] = was_away; fixture_card(0)['canon_asset_id'] = 'asset-0'
+        for a, sha in zip(fixture.ASSETS, kept_shas): a['sha256'] = sha
+        fixture_card(0)['lineage'][0]['sha256'] = 'a' * 64
+        fixture_card(0)['revision'] -= 1; resync(); open_picker()
+        character_posts = len(posted('/api/characters'))
         # Edit: the words and the avoid words; a stale revision (changed elsewhere) reloads the card and saves nothing.
         page.locator('[data-make-character-edit="character-0"]').click(); form = page.locator('.make-characters .make-character-form')
         assert [form.locator('[data-make-char="%s"]' % k).input_value() for k in ('name', 'who', 'clothes', 'avoid')] == ['Mira', 'Mira, a lantern keeper with silver hair', 'a moss-green cloak with brass buttons', ''], 'Edit shows the stored words'
         form.locator('[data-make-char="avoid"]').fill('glasses, hat'); shot('character-edit', '.make-characters')
-        form.locator('[data-make-character-cancel]').click(); assert not page.locator('.make-character-form').count() and len(posted('/api/characters')) == 1, 'Cancel saves nothing'
+        form.locator('[data-make-character-cancel]').click(); assert not page.locator('.make-character-form').count() and len(posted('/api/characters')) == character_posts, 'Cancel saves nothing'
         assert page.evaluate('document.activeElement.dataset.makeCharacterEdit') == 'character-0'
         page.locator('[data-make-character-edit="character-0"]').click(); form = page.locator('.make-characters .make-character-form')
         form.locator('[data-make-char="avoid"]').fill('glasses, hat'); fixture_card(0).update(name='Mira (renamed elsewhere)', revision=1)
-        form.locator('[type=submit]').click(); page.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("changed somewhere else")')
+        form.locator('[type=submit]').click(); page.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("Your edit was not saved")')
         assert posted('/api/characters')[-1]['expected_revision'] == 0 and fixture_card(0)['body'].get('avoid') is None, 'a stale edit changes nothing'
         assert not page.locator('.make-character-form').count() and 'Mira (renamed elsewhere)' in page.locator('[data-make-character="character-0"]').inner_text(), 'the card is reloaded'
+        # A chosen character is edited from the picker; staying with it shows the edited words, not the ones copied when it was chosen (Codex review of #1472).
+        page.locator('[data-make-character="character-0"]').click(); page.wait_for_selector('#makePoseSlot')
+        assert page.input_value('#makeF-clothes') == 'a moss-green cloak with brass buttons'
+        page.locator('#makeComposer [data-make-repick]').click(); page.wait_for_selector('[data-make-character-edit="character-0"]')
         page.locator('[data-make-character-edit="character-0"]').click(); form = page.locator('.make-characters .make-character-form')
         form.locator('[data-make-char="name"]').fill('Mira'); form.locator('[data-make-char="clothes"]').fill('a moss-green cloak, brass buttons, mud on the hem'); form.locator('[data-make-char="avoid"]').fill('glasses, hat')
         form.locator('[type=submit]').click(); page.wait_for_function('document.querySelector("#makeStatus")?.textContent.startsWith("Saved the changes")')
         assert posted('/api/characters')[-1] == {'action': 'edit', 'id': 'character-0', 'expected_revision': 1, 'name': 'Mira', 'body': {'who': 'Mira, a lantern keeper with silver hair', 'clothes': 'a moss-green cloak, brass buttons, mud on the hem', 'avoid': 'glasses, hat'}}, posted('/api/characters')[-1]
         assert 'glasses' not in page.locator('.make-characters').inner_text(), 'avoid words are stored, not shown'
         assert page.evaluate('document.activeElement.dataset.makeCharacterEdit') == 'character-0'
+        page.locator('[data-make-keep-picture]').click(); page.wait_for_selector('#makeF-clothes')
+        assert page.input_value('#makeF-clothes') == 'a moss-green cloak, brass buttons, mud on the hem', page.input_value('#makeF-clothes')
+        page.locator('#makeComposer [data-make-repick]').click(); page.wait_for_selector('[data-make-character="character-0"]')
         # Avoid words ride only where the goal's request already has a negative field.
         page.locator('[data-make-character="character-0"]').click(); page.wait_for_selector('#makePoseSlot')
         if page.locator('#makeF-pose').count() and not page.input_value('#makeF-pose'): page.locator('#makeF-pose').fill('standing')
@@ -377,6 +404,16 @@ def run(shots):
         page.locator('[data-make-character-restore="character-0"]').click(); page.wait_for_selector('[data-make-character="character-0"]')
         assert posted('/api/characters')[-1] == {'action': 'restore', 'id': 'character-0', 'expected_revision': 4} and not page.locator('.make-away').count()
         assert page.evaluate('document.activeElement.dataset.makeCharacter') == 'character-0'
+        # A failed list read keeps the list already shown and says so, after the command's own saying (Codex review of #1466).
+        page.route('**/api/characters', lambda route: route.fulfill(status=500, json={'error': 'fixture outage'}) if route.request.method == 'GET' else route.continue_())
+        page.locator('[data-make-character-away="character-0"]').click(); page.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("could not be refreshed")')
+        assert page.locator('[data-make-character="character-0"]').count() == 1 and fixture_card(0)['trashed_at'], 'the list shown is kept although the server put it away'
+        assert page.locator('#makeStatus').inner_text().startswith('Put'), page.locator('#makeStatus').inner_text()
+        page.unroute('**/api/characters')
+        page.locator('[data-make-character-away="character-0"]').click(); page.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("changed somewhere else")')
+        assert 'could not be refreshed' not in page.locator('#makeStatus').inner_text() and page.locator('[data-make-character]').count() == 0, 'a good read replaces the list'
+        if not page.locator('[data-make-character-restore="character-0"]').is_visible(): page.locator('.make-away summary').click()
+        page.locator('[data-make-character-restore="character-0"]').click(); page.wait_for_selector('[data-make-character="character-0"]')
         assert len(jobs()) == before_manage + 2, 'managing characters submitted nothing (the two jobs are the avoid-words checks)'
         for a, (review, lineage) in zip(fixture.ASSETS, kept_state): a.update(review=review, lineage=lineage)
 
@@ -442,6 +479,15 @@ def run(shots):
         before = len(jobs()); page.locator('#makeGenerate').click()
         page.wait_for_function('document.querySelector("#makeStatus")?.textContent.startsWith("Started 1 of 3")', timeout=8000); FAIL_LABEL.clear()
         assert len(jobs()) == before + 1 and 'the rest were not sent' in page.locator('#makeStatus').inner_text(), page.locator('#makeStatus').inner_text()
+        # A kept picture on a Compare card offers "Make this my character" like any other card (Codex review of #1466); an already-canon one names its character.
+        assert page.locator('.make-compare .make-canon').count() >= 3 and not page.locator('.make-compare [data-make-character-save]').count(), 'a canon picture is named, not offered again'
+        saved_characters = list(CHARACTERS); no_characters(); kept_review = fixture.ASSETS[0]['review']; fixture.ASSETS[0]['review'] = 'selected'
+        page.reload(); page.wait_for_selector('.make-compare figure img', timeout=8000); page.wait_for_function('!!assetState?.assets?.length'); page.evaluate('StudioMake.refresh()')
+        page.wait_for_selector('.make-compare [data-make-character-save]', timeout=8000)
+        before = len(jobs()); page.locator('.make-compare [data-make-character-save]').first.click()
+        assert page.locator('.make-compare .make-character-form').count() >= 1 and len(jobs()) == before, 'the form opens on the compare card and submits nothing'
+        page.locator('.make-compare [data-make-character-cancel]').first.click(); assert not page.locator('.make-character-form').count()
+        CHARACTERS.extend(saved_characters); fixture.ASSETS[0]['review'] = kept_review
         # A picture goal whose copied reference does not match the verified source sends nothing.
         page.route('**/api/assets/reference', lambda route: route.fulfill(json={'file': 'x' * 32 + '_ref.png', 'sha256': '0' * 64, 'parent_asset': 'asset-1', 'context': {}}))
         goal('edit'); page.locator('#makeF-change').fill('give her a hat'); before = len(jobs())

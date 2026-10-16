@@ -256,6 +256,17 @@ def recovery_checks(browser, origin):
     page.wait_for_function('document.querySelector("#makeStatus").textContent.startsWith("Tracking stopped")')
     assert next(p for p in fixture.POSTS if p['path'] == '/api/jobs/make-unsure/stop-tracking')['data'] == {'reason': 'ComfyUI was restarted'}
     assert len(jobs()) == before and card.locator('[data-make-resume]').count() == 1, 'after stopping, Resume stays offered'
+    # A Compare card's looks get the same recovery controls on their own figure (Codex review of #1462): an uncertain one is not a dead end.
+    MAKE_JOBS['make-gunsure'] = dict(MAKE_JOBS['make-unsure'], id='make-gunsure', status='uncertain', prompt_ids=['p-2'], can_stop_tracking=True, tracking_disposition=None)
+    MAKE_JOBS['make-gdone'] = dict(id='make-gdone', status='completed', outputs=[], created_at=1789228800)
+    group = [dict(id=i, look='First look', lookId=LOOKS[0]['id'], goal='character', scene='Compare recovery', group='cmp-1') for i in ('make-gunsure', 'make-gdone')]
+    page.goto(origin+'/#make'); page.evaluate('(runs)=>localStorage.setItem("studio.make",JSON.stringify({goal:"character",look:null,runs}))', group)
+    page.goto(origin+'/?group#make'); page.wait_for_selector('[data-run="cmp-1"]'); card = page.locator('[data-run="cmp-1"]')
+    assert card.locator('[data-make-resume]').count() == 1 and card.locator('[data-make-stop]').count() == 1, 'only the uncertain look of a Compare card offers recovery'
+    assert card.locator('figure').nth(1).locator('.make-recover').count() == 0, 'the finished look offers none'
+    before = len(jobs()); card.locator('[data-make-resume]').click()
+    page.wait_for_function('document.querySelector("#makeStatus").textContent.startsWith("Checking ComfyUI again")')
+    assert any(p['path'] == '/api/jobs/make-gunsure/resume' for p in fixture.POSTS) and len(jobs()) == before, 'Resume on a Compare look reads again; it never posts a job'
     assert not errors, errors
     page.close()
 
