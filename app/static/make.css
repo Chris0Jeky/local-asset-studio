@@ -13,7 +13,10 @@
 .make-look-blank{display:grid;place-items:center;font-size:42px;color:var(--accent)}
 .make-look-text{display:flex;flex-direction:column;gap:4px;padding:11px 12px 13px}.make-look-text b{font-size:13px;font-weight:600;line-height:1.3}.make-look-text small{font-size:11px;color:var(--muted)}
 .make-look:hover{border-color:#6f8a5c}.make-look.active{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
-.make-pace.slow{color:#e3c27a!important}.make-pace.fast{color:#a5d6cd!important}
+.make-pace.slow{color:#e3c27a!important}.make-pace.fast{color:#a5d6cd!important}.make-pace.medium{color:#d3d68f!important}
+.make-look-text small.make-licence,.make-chosen small.make-licence{align-self:flex-start;color:#e0a98a;border:1px solid #6b4a3c;border-radius:999px;padding:1px 8px;font-size:11px}.make-best{font-style:italic}
+.make-recover{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:-4px 0 12px}.make-recover p{flex-basis:100%;margin:0;font-size:12px}.make-recover button{font-size:11px;padding:6px 10px;min-height:32px}.make-recover label{display:flex;flex-direction:column;gap:4px;font-size:12px}
+.make-polish-why{display:block;flex-basis:100%;font-size:11px}
 .make-look-text small.make-tested,.make-chosen small.make-tested{align-self:flex-start;color:#a9d68f;border:1px solid #4d6b3c;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:600}
 #makeDraftBox{display:flex;flex-direction:column;gap:2px}#makeDraftBox:empty{display:none}
 .make-warn{color:#f0a69b!important}.make-error{color:#f0a69b}

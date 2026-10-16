@@ -119,11 +119,30 @@ def run(shots):
         page.set_viewport_size({'width': 1440, 'height': 900})
         chips = page.evaluate('()=>[...document.querySelectorAll("[data-make-goal]")].map(e=>e.getBoundingClientRect().right)')
         assert len(chips) == 11 and max(chips) <= page.evaluate('document.documentElement.clientWidth'), chips
+        # Honest speed (#1448): the lab's measured median per picture, not the recipe's hopes; a Best for line where the lab backs one;
+        # a non-commercial tag only where the recipe's own commercial_note records it.
+        card = lambda look: page.locator('.make-look:has([data-make-look="%s"])' % look)
+        looks_of('character')
+        assert card('look-anima-pearly-petiflow').locator('.make-pace').inner_text() == 'Fast · ~31 s'
+        assert 'look lab' in card('look-anima-pearly-petiflow').locator('.make-pace').get_attribute('title')
+        assert card('look-anima-pearly-petiflow').locator('.make-best').inner_text().startswith('Best for: Close-ups')
+        assert card('look-oneobsession-anima-v20-showcase').locator('.make-licence').inner_text() == 'Non-commercial' and not card('look-anima-pearly-petiflow').locator('.make-licence').count()
+        # This PC's finished runs of the look as made outrank the lab; a draft run (other steps) does not count.
+        history = [dict(id='h%d' % i, label='Make · Flat pastel close-up', preset_id='anima-v1-baseline', status='completed', elapsed_seconds=secs, batch_count=2, controls=dict(steps=steps)) for i, (secs, steps) in enumerate(((240, 25), (260, 25), (20, 13)))]
+        label = page.evaluate('(h)=>{jobs=h;StudioMake.refresh();return document.querySelector(\'.make-look:has([data-make-look="look-anima-pearly-petiflow"]) .make-pace\').textContent}', history)
+        assert label == 'Medium · ~125 s', label
+        page.evaluate('()=>{jobs=[];StudioMake.refresh();}')
         pick_look('look-anima-pearly-petiflow'); assert page.locator('.make-chosen .make-tested').count() == 1 and page.input_value('#makeShape') == 'portrait'
-        assert not page.locator('#makeDraft').count(), 'Draft first is for slow looks only'
+        assert 'Draft first · 13 steps' in page.locator('#makeDraftBox').inner_text(), 'a 25-step look offers a draft too'
+        page.locator('[data-make-change]').click(); assert page.locator('[data-make-keep-look]').inner_text() == 'Stay with Flat pastel close-up', 'the gallery never says Keep'
+        page.locator('[data-make-keep-look]').click()
         painting = looks_of('painting')
         assert painting[0] == 'look-anima-painterly-artist-tags' and {'look-krea-atelier-target-stack', 'look-krea-witch-nijisis'} <= set(painting) and painting[-1] == 'look-krea-witch-nijisis', painting
         assert looks_of('scene') == ['look-night-shift-retro-anime', 'look-noob-fantasy-scene', 'look-krea-watercolor-anime']
+        assert card('look-night-shift-retro-anime').locator('.make-pace').inner_text() == 'Medium · ~163 s', 'Night Shift is not Fast (#1448)'
+        assert card('look-krea-watercolor-anime').locator('.make-pace').inner_text() == 'Slow · ~6 min'
+        assert card('look-noob-fantasy-scene').locator('.make-licence').count() == 1, 'NoobAI terms exclude commercial use'
+        pick_look('look-night-shift-retro-anime'); assert not page.locator('#makeDraft').count(), 'an 8-step look that is not slow offers no draft'
         pick_look('look-noob-fantasy-scene'); assert page.input_value('#makeShape') == 'landscape', 'a scene is wide by default'
         assert 'As designed · 832×1216' in page.locator('#makeShape option[value=design]').inner_text(), 'As designed stays available'
         page.locator('#makeScene').fill('a misty harbour at dawn'); job = generate()[0]

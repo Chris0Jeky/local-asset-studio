@@ -32,11 +32,18 @@ class Handler(fixture.Handler):
             if RESTORE_DELAY: time.sleep(RESTORE_DELAY)
             READS.append(self.path.split('/')[-1])
             if self.path.split('/')[-1] in FAILING: return self.json({'error': 'fixture outage'}, 500)
+            if self.path.split('/')[-1] not in MAKE_JOBS: return self.json({'error': 'Unknown job'}, 404)
             return self.json(MAKE_JOBS[self.path.split('/')[-1]])
         if self.path.startswith('/api/assets/') and self.path.endswith('/context'): return self.json(context(self.path.split('/')[3]))
         return super().do_GET()
 
     def do_POST(self):
+        if self.path.startswith('/api/jobs/make-') and self.path.endswith(('/resume', '/stop-tracking')):
+            data = json.loads(self.rfile.read(int(self.headers.get('Content-Length', '0'))) or b'{}'); fixture.POSTS.append({'path': self.path, 'data': data})
+            job = MAKE_JOBS[self.path.split('/')[3]]
+            if self.path.endswith('/resume'): job.update(status='queued', message='Queued to resume observation; no image will be resubmitted.')
+            else: job.update(tracking_disposition={'status': 'stopped', 'reason': data['reason']}, can_stop_tracking=False, can_resume_tracking=True)
+            return self.json(job, 202)
         if self.path == '/api/looks/prepare':
             data = json.loads(self.rfile.read(int(self.headers.get('Content-Length', '0')))); time.sleep(0.3)
             return self.json({'preset_id': 'zimage-fast', 'controls': {'positive': data['scene']}})
@@ -130,9 +137,13 @@ def make_checks(browser, origin):
     page.wait_for_timeout(2800)
     assert page.evaluate('originalMore===document.querySelector("[data-more=asset-1]")&&originalMore.open&&originalMore.contains(document.activeElement)')
     page.evaluate('()=>pendingPolish.splice(0).forEach(r=>r({ok:false,reason:"Does not apply to this picture"}))')
-    page.wait_for_function('!document.querySelector("[data-make-polish]")')
+    page.wait_for_function('document.querySelectorAll("[data-make-polish][data-asset=asset-1]:disabled").length===3')
     assert page.locator('[data-more="asset-1"]').evaluate('(e)=>e.open&&e.contains(document.activeElement)')
-    assert page.locator('#makeRuns button:disabled').count() == 0, 'unavailable actions are hidden, not unexplained disabled buttons'
+    # A fix that cannot run stays, disabled, and names its reason once (aria-describedby), as the Fix or upscale goal does.
+    why = page.locator('[data-make-polish=face][data-asset=asset-1]').get_attribute('aria-describedby')
+    assert why and page.locator('#' + why).inner_text() == 'Does not apply to this picture' and page.locator('#' + why).is_visible()
+    assert page.locator('[data-run] .make-polish-why').count() == 1, 'one line per distinct reason'
+    assert all(page.locator('#makeRuns button:disabled').nth(i).get_attribute('aria-describedby') for i in range(page.locator('#makeRuns button:disabled').count())), 'no unexplained disabled button'
     MAKE_JOBS[saved[0]['id']]['status'] = 'completed'
     page.wait_for_function('document.querySelector(".make-run-state.completed")')
     assert page.locator('[data-more="asset-1"]').evaluate('(e)=>e.open&&e.contains(document.activeElement)')
@@ -185,6 +196,40 @@ def make_checks(browser, origin):
     assets.append(dict(fixture.ASSETS[1], id='asset-fresh', prompt_excerpt='A fresh lantern', created_at=1789228900))
     MAKE_JOBS[saved[4]['id']].update(status='completed', outputs=[dict(filename='fresh.png', asset_id='asset-fresh', media_type='image')])
     page.wait_for_selector('#makePictures [data-make-pick="asset-fresh"]', timeout=6000)
+    recovery_checks(browser, origin)
+    assert not errors, errors
+    page.close()
+
+
+def recovery_checks(browser, origin):
+    # Restore (#1438): a run whose first read fails is kept and checked again; one the Studio says is gone (404) is dropped.
+    # An uncertain run offers Resume observation and Stop tracking on its own card; neither sends a picture again.
+    MAKE_JOBS['make-unsure'] = dict(id='make-unsure', status='uncertain', outputs=[], created_at=1789228800, prompt_ids=['p-1'], has_pending_submission=False, can_stop_tracking=True, can_resume_tracking=False, message='Outcome unknown')
+    MAKE_JOBS['make-flaky'] = dict(id='make-flaky', status='running', outputs=[], created_at=1789228800)
+    FAILING.add('make-flaky')
+    saved = [dict(id=i, look='First look', lookId=LOOKS[0]['id'], goal='character', scene='Recovery '+i) for i in ('make-unsure', 'make-flaky', 'make-gone')]
+    page = browser.new_page(); errors = []; page.on('pageerror', lambda e: errors.append(str(e)))
+    page.goto(origin+'/#make'); page.evaluate('(runs)=>localStorage.setItem("studio.make",JSON.stringify({goal:"character",look:null,runs}))', saved)
+    page.goto(origin+'/?recovery#make'); page.wait_for_selector('[data-run="make-flaky"]')
+    assert page.locator('[data-run="make-flaky"] .make-run-state').inner_text().startswith('Lost contact'), 'a failed first read keeps the run'
+    assert page.locator('[data-run="make-gone"]').count() == 0, 'a 404 run is dropped'
+    assert page.evaluate('JSON.parse(localStorage.getItem("studio.make")).runs.map(r=>r.id)') == ['make-unsure', 'make-flaky'], 'the kept run stays saved'
+    FAILING.discard('make-flaky')
+    page.wait_for_function('!document.querySelector(`[data-run="make-flaky"] .make-run-state`).textContent.startsWith("Lost contact")', timeout=12000)
+    card = page.locator('[data-run="make-unsure"]')
+    assert 'nothing was sent again' in card.locator('.make-run-state').inner_text() and 'Compare & review' not in card.inner_text()
+    before = len(jobs()); card.locator('summary').click(); card.locator('[data-make-stop]').click()
+    assert 'reason' in page.locator('#makeStatus').inner_text() and not any(p['path'].endswith('/stop-tracking') for p in fixture.POSTS), 'no reason, no request'
+    card.locator('[data-make-resume]').click()
+    page.wait_for_function('document.querySelector("#makeStatus").textContent.startsWith("Checking ComfyUI again")')
+    assert any(p['path'] == '/api/jobs/make-unsure/resume' for p in fixture.POSTS) and len(jobs()) == before, 'Resume reads again; it never posts a job'
+    MAKE_JOBS['make-unsure'].update(status='uncertain')
+    page.wait_for_selector('[data-run="make-unsure"] [data-make-stop]', state='attached', timeout=8000)
+    assert card.locator('details').evaluate('(e)=>e.open'), 'an open Stop tracking menu stays open across a redraw'
+    card.locator('[data-make-stop-reason]').fill('ComfyUI was restarted'); card.locator('[data-make-stop]').click()
+    page.wait_for_function('document.querySelector("#makeStatus").textContent.startsWith("Tracking stopped")')
+    assert next(p for p in fixture.POSTS if p['path'] == '/api/jobs/make-unsure/stop-tracking')['data'] == {'reason': 'ComfyUI was restarted'}
+    assert len(jobs()) == before and card.locator('[data-make-resume]').count() == 1, 'after stopping, Resume stays offered'
     assert not errors, errors
     page.close()
 

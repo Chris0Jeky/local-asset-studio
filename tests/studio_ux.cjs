@@ -26,6 +26,15 @@ test('Make orders each goal by lab evidence, files painting styles under Painted
   assert.deepEqual(Object.keys(tested).sort(),['look-anima-painterly-artist-tags','look-anima-pearly-petiflow','look-krea-lenovo-ultrareal','look-krea-oil-fantasy','look-krea-realistic-snapshot','look-krea-style-inkwork-darkbrush','look-krea-watercolor-anime','look-night-shift-retro-anime']);
   assert.deepEqual(shapes,{character:'portrait',scene:'landscape',game:'square'});
 });
+test('Make speed and Best for come from the look lab doc',()=>{
+  const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),grab=re=>JSON.parse(JSON.stringify(vm.runInNewContext('('+make.match(re)[1]+')')));
+  const doc=fs.readFileSync(path.join(__dirname,'../docs/looks/LOOK-LAB-2026-10-16.md'),'utf8'),rows={};
+  for(const m of doc.matchAll(/^\| (look-[\w-]+) \|[^|]*\|[^|]*\| ([\d.]+) \|/gm))rows[m[1]]=Number(m[2]);
+  const lab=grab(/const LAB_SECONDS=(\{[^}]*\});/),best=grab(/const BEST_FOR=(\{[^}]*\});/),ids=new Set(JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/looks.json'))).looks.map(l=>l.id));
+  assert.ok(Object.keys(rows).length>=20,'the R1 table parses');assert.deepEqual(lab,rows,'LAB_SECONDS is the doc R1 "Median s/image" column');
+  for(const id of Object.keys(best)){assert.ok(ids.has(id)&&id in rows,id);assert.ok(best[id].length<=80,id);}
+  assert.ok(lab['look-night-shift-retro-anime']>=45,'Night Shift is not Fast (#1448)');
+});
 const image = {media_type:'image',filename:'source.png'};
 const audio = {media_type:'audio',filename:'voice.wav'};
 const draft = () => ({version:1,updatedAt:123,recipe:{preset:'qwen-1ref',controls:{positive:'A study',seed:42},batch:1,parent_assets:['source'],references:[]}});

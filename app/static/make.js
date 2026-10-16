@@ -7,7 +7,7 @@
   'use strict';
   const view=document.querySelector('#makeView');if(!view)return;
   const q=s=>view.querySelector(s),escape=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-  const json=async(path,body)=>{const r=await fetch(path,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await r.json().catch(()=>({}));if(!r.ok)throw Error(data.error||data.message||('Request failed ('+r.status+')'));return data;};
+  const json=async(path,body)=>{const r=await fetch(path,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(Error(data.error||data.message||('Request failed ('+r.status+')')),{status:r.status});return data;};
   // Curated, not generated: a goal lists looks by id in the order a newcomer should meet them (proven first, slow last).
   const GOALS=[
     {id:'character',name:'Anime character',hint:'A person or creature, drawn',looks:['look-anima-pearly-petiflow','look-oneobsession-anima-v20-showcase','look-anifox-ringeko','look-pearly-anima-mix-v10-showcase','look-wai-fantasy-portrait','look-anima-fantasy-portrait','look-animagine-fantasy-portrait']},
@@ -30,6 +30,13 @@
   // Kept in at least 3 of 4 test pictures, or 2 of 2 where only two were made (docs/looks/LOOK-LAB-2026-10-16.md, rounds 1-2).
   const TESTED={'look-anima-pearly-petiflow':'4 of 4','look-anima-painterly-artist-tags':'2 of 2','look-night-shift-retro-anime':'3 of 4','look-krea-watercolor-anime':'2 of 2','look-krea-oil-fantasy':'2 of 2','look-krea-style-inkwork-darkbrush':'2 of 2','look-krea-realistic-snapshot':'2 of 2','look-krea-lenovo-ultrareal':'2 of 2'};
   const tested=l=>TESTED[l.id]?'<small class="make-tested" title="'+escape(TESTED[l.id]+' test pictures on this PC were kept (16 Oct 2026, judged by an agent, not art approval).')+'">Tested well</small>':'';
+  // Best for (lab rounds 1-2, docs/looks/LOOK-LAB-2026-10-16.md "Ranked best look per goal" and R3): what each tested look carried.
+  // Kept here, not in presets/looks.json, because a look body takes only the fields app/looks.py allows.
+  const BEST_FOR={'look-anima-pearly-petiflow':'Close-ups and upper-body portraits holding one thing','look-anifox-ringeko':'A character holding an animal, readable faces; avoid books and lettering','look-night-shift-retro-anime':'Quiet, empty interiors with a few named props','look-anima-painterly-artist-tags':'A painted travel scene with one figure, quickly','look-krea-watercolor-anime':'Airy painted scenes','look-krea-style-inkwork-darkbrush':'Black-and-white buildings and interiors','look-krea-oil-fantasy':'Dark, colourful fantasy places','look-krea-style-airy-softwatercolor':'Pale flowery rooms; avoid written labels','look-krea-lenovo-ultrareal':'Natural phone-photo people and rooms'};
+  const bestFor=l=>BEST_FOR[l.id]?'<small class="make-best">Best for: '+escape(BEST_FOR[l.id])+'</small>':'';
+  // Recorded, never inferred: only a recipe whose own commercial_note names non-commercial terms (presets/catalog.json) is tagged.
+  const nonCommercial=p=>/non-?commercial|prohibit commerciali/i.test(p?.commercial_note||'');
+  const licence=p=>nonCommercial(p)?'<small class="make-licence" title="'+escape(p.commercial_note)+'">Non-commercial</small>':'';
   const FINAL=['completed','failed','partial','uncertain','not_submitted','cancelled','abandoned'];
   const POLISH={face:'Fix face',details:'Fix hands and details',upscale:'Upscale 2\u00d7'};
   const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',pose:null,posePicking:false,compare:false,compareLooks:[]};
@@ -50,8 +57,22 @@
     return SLOTS.filter(k=>Number(c[k])>0&&(typeof c[k+'_name']==='string'&&c[k+'_name']||p&&!bound(k+'_name'))).map(k=>({key:k,name:c[k+'_name']||'built-in adapter',strength:Number(c[k])}));};
   const lookList=()=>{const g=goal();if(!g?.looks||!state.looks)return[];return g.looks.map(id=>state.looks.find(l=>l.id===id)).filter(l=>l&&!l.trashed_at);};
   const current=()=>state.looks?.find(l=>l.id===state.look&&!l.trashed_at)||null;
-  // A family is named for what it means to the user: speed and the kind of picture, not the checkpoint.
-  function speed(preset){const id=preset?.id||'';if(/krea/.test(id))return['slow','Finest detail · slow, about 10–17 min'];if(/zimage-fast|pixel|stylized|realvis/.test(id))return['fast','Fast'];return['fast','Fast · about half a minute'];}
+  // Honest speed (#1448): median seconds per picture measured in the 16 Oct look lab (docs/looks/LOOK-LAB-2026-10-16.md, R1 table,
+  // "Median s/image": load, encode, sample and decode on this PC; two pictures each, cold and warm mixed). Update from the doc, not by hand.
+  const LAB_SECONDS={'look-night-shift-retro-anime':163.2,'look-krea-atelier-target-stack':1757,'look-krea-witch-nijisis':812.2,'look-anima-painterly-artist-tags':31.7,'look-anima-fantasy-portrait':37.1,'look-wai-fantasy-portrait':25.4,'look-animagine-fantasy-portrait':41.5,'look-pearly-anima-mix-v10-showcase':29.8,'look-oneobsession-anima-v20-showcase':30.8,'look-anima-pearly-petiflow':30.6,'look-anifox-ringeko':44.9,'look-noob-fantasy-scene':36.7,'look-krea-watercolor-anime':375,'look-krea-oil-fantasy':643.1,'look-krea-style-emerald-tarot':466.8,'look-krea-style-inkwork-darkbrush':434,'look-krea-style-airy-softwatercolor':430,'look-krea-realistic-snapshot':342.7,'look-krea-lenovo-ultrareal':357.2,'look-preset-stylized-prop':43.3,'look-preset-pixel-lora':47.9,'look-preset-realvis':86.7,'look-preset-zimage-fast':102.4};
+  // This PC's finished Make runs of the look as made (its recipe and steps; drafts and model switches left out) come first, then the lab.
+  // ponytail: picture size is not matched; a reshaped run counts like a designed one.
+  function lookTiming(look){
+    const seen=new Map(),names=['Make · '+look.name,'Make · Compare · '+look.name],steps=look.body.controls?.steps;
+    for(const j of [...(typeof jobs!=='undefined'&&Array.isArray(jobs)?jobs:[]),...state.runs.map(r=>r.job)])if(j?.id&&names.includes(j.label)&&(steps==null||Number(j.controls?.steps)===Number(steps)))seen.set(j.id,j);
+    const mine=window.StudioContinuation?.combineTiming?.([...seen.values()],look.body.preset_id);
+    return mine?{seconds:mine.seconds,source:'Median of '+mine.count+' finished run'+(mine.count>1?'s':'')+' of this look on this PC.'}:LAB_SECONDS[look.id]?{seconds:LAB_SECONDS[look.id],source:'Median of two test pictures in the 16 Oct look lab on this PC.'}:null;
+  }
+  // Fast under 45 s, Medium under 3 min, Slow otherwise. A look never measured says so; only a Krea recipe is known slow without a number.
+  function speed(look){const t=look&&lookTiming(look),s=t&&Math.round(t.seconds);
+    if(!t)return /krea/.test(look?.body?.preset_id||'')?['slow','Slow · several minutes','Krea 2 recipes took 6 to 37 minutes per picture in the 16 Oct look lab.']:['unknown','Speed not measured yet','No timing for this look on this PC yet.'];
+    return s<45?['fast','Fast · ~'+s+' s',t.source]:s<180?['medium','Medium · ~'+s+' s',t.source]:['slow','Slow · ~'+Math.round(s/60)+' min',t.source];}
+  const pace=look=>{const [kind,label,source]=speed(look);return '<small class="make-pace '+kind+'" title="'+escape(source)+'">'+escape(label)+'</small>';};
   // The same runtime facts the full editor gates on (app.js globals); unknown (null) health does not block.
   function runtimeBlocker(){if(typeof backendSwitching!=='undefined'&&backendSwitching)return'A model environment switch is running. Wait for it to finish.';if(typeof workerAlive!=='undefined'&&workerAlive===false)return'The Studio worker has stopped. Restart the Studio before generating.';if(typeof online!=='undefined'&&online===false)return'ComfyUI is not reachable. Start it, then try again.';if(typeof online!=='undefined'&&online===true&&typeof schemaAvailable!=='undefined'&&!schemaAvailable)return'ComfyUI is still starting up. Try again in a moment.';return'';}
   function blocker(look,p=tunedPreset(look)){const runtime=runtimeBlocker();if(runtime)return runtime;if(look.usable===false)return look.unusable_reason||'This look cannot be used now.';if(!p)return'This look’s recipe is not in the library.';if(p.runtime_block)return p.runtime_block;const missing=typeof missingByPreset!=='undefined'&&missingByPreset[p.id];if(Array.isArray(missing)&&missing.length)return'Needs '+missing.length+' model file'+(missing.length>1?'s':'')+' first: open Models & setup.';return'';}
@@ -116,10 +137,11 @@
   // A word already in the prompt as a whole token is not added again (audit N11: "masterpiece" three times).
   const hasToken=(text,word)=>new RegExp('(^|[^\\p{L}\\p{N}_])'+word.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'($|[^\\p{L}\\p{N}_])','iu').test(text);
   const freeSlot=(look,t)=>SLOTS.find(s=>bound(presetFor(look),s)&&bound(presetFor(look),NAMED(s))&&!t.rows.some(r=>r.slot===s));
-  // Draft first (audit #12): Tune's own Draft step count (half the look's steps), offered only where the recipe binds steps.
+  // Draft first (audit #12): Tune's own Draft step count (half the look's steps), offered where the recipe binds steps and the draft
+  // saves real time: ten steps or more, or a slow look. A fast few-step model (Night Shift's 8) spends its time outside sampling.
   const halve=n=>Math.max(1,Math.round(n/2)),fullSteps=(look,tp)=>Number(look.body.controls?.steps||tp?.defaults?.steps)||0;
   const draftOf=(look,tp=tunedPreset(look))=>{const n=fullSteps(look,tp);return bound(tp,'steps')&&n>=2?halve(n):0;};
-  function draftMarkup(look){const tp=tunedPreset(look),n=speed(presetFor(look))[0]==='slow'?draftOf(look,tp):0,t=state.tune[look.id];if(!n)return'';
+  function draftMarkup(look){const tp=tunedPreset(look),full=fullSteps(look,tp),n=full>=10||speed(look)[0]==='slow'?draftOf(look,tp):0,t=state.tune[look.id];if(!n)return'';
     return '<label class="make-check"><input type="checkbox" id="makeDraft" data-steps="'+n+'"'+(t?.steps===n?' checked':'')+' aria-describedby="makeDraftHint"> Draft first · '+n+' steps, rougher but quicker</label><small id="makeDraftHint" class="muted">Then “Make the final” on the draft reruns it at the full '+fullSteps(look,tp)+' steps.</small>';}
   const draftRun=run=>{const look=state.looks?.find(l=>l.id===run.lookId);return!!look&&run.scene&&run.tune?.steps!=null&&FINAL.includes(run.job.status)&&(run.job.outputs||[]).length>0&&run.tune.steps===draftOf(look,byId(run.tune.preset)||presetFor(look));};
   const clamp=v=>Math.min(2,Math.max(0,Math.round((Number(v)||0)*20)/20));
@@ -159,8 +181,8 @@
         +(r.name?'<button type="button" class="make-link" data-tune-remove="'+r.slot+'">Remove</button>':'')+'<small>'+escape(why)+'</small></div>';};
     const all=[p,...list],made=files.filter(f=>fits(look,f)).length,other=files.length-made;
     box.innerHTML='<div class="make-tune-group"><h3>Model</h3>'
-      +'<label>Base model<select id="makeModel" data-tune="model">'+option(p.id,'As made · '+modelLabel(p,all)+(missingFor(p).length?' · needs download':''),tp===p)+list.map(m=>option(m.id,modelLabel(m,all)+(missingFor(m).length?' · needs download':''),tp===m)).join('')+'</select></label>'
-      +'<small class="muted">'+escape(tp?.model?.file||tp?.name||'')+(list.length?' · Same model type: the look’s words and adapters carry over; pictures will differ.':' · No other model in the library takes this look’s words and adapters.')+'</small>'
+      +'<label>Base model<select id="makeModel" data-tune="model">'+option(p.id,'As made · '+modelLabel(p,all)+(nonCommercial(p)?' · non-commercial':'')+(missingFor(p).length?' · needs download':''),tp===p)+list.map(m=>option(m.id,modelLabel(m,all)+(nonCommercial(m)?' · non-commercial':'')+(missingFor(m).length?' · needs download':''),tp===m)).join('')+'</select></label>'
+      +'<small class="muted">'+escape(tp?.model?.file||tp?.name||'')+(nonCommercial(tp)?' · '+escape(tp.commercial_note):'')+(list.length?' · Same model type: the look’s words and adapters carry over; pictures will differ.':' · No other model in the library takes this look’s words and adapters.')+'</small>'
       +(missing.length?'<p class="make-warn" id="makeTuneWhy">Needs '+missing.length+' model file'+(missing.length>1?'s':'')+' first. <a href="/#models?need='+escape(encodeURIComponent(tp.id))+'">Open Models & setup</a></p>':'')+'</div>'
       +'<div class="make-tune-group"><h3>Adapters (LoRAs)</h3>'
       +(t.rows.length?'<label class="make-tune-scale">All adapters × <output id="makeTuneScaleOut">'+scaleOf(t)+'%</output><input type="range" id="makeTuneScale" data-tune="scale" min="0" max="150" step="10" value="'+scaleOf(t)+'" aria-describedby="makeTuneScaleHint"></label><small id="makeTuneScaleHint" class="muted">Multiplies every strength below; the arrow shows what is sent. 100% sends them as set.</small>'+t.rows.map(row).join(''):'<p class="muted">None: the model and the words carry this look.</p>')
@@ -233,13 +255,13 @@
     // Compare looks (#16) turns the gallery into checkboxes: two or three looks, one scene, one picture each.
     const compare=state.compare;if(compare)state.compareLooks=state.compareLooks.filter(id=>list.some(l=>l.id===id));
     const on=l=>compare?state.compareLooks.includes(l.id):l.id===state.look;
-    const cards=list.map(l=>{const p=presetFor(l),[pace,label]=speed(p),thumb=thumbOf(l),why=compare?blocker(l,p):blocker(l);return '<article class="make-look'+(on(l)?' active':'')+'"><button type="button" class="make-look-select" data-make-look="'+escape(l.id)+'" role="'+(compare?'checkbox':'radio')+'" tabindex="'+(compare||l.id===(state.look||list[0]?.id)?'0':'-1')+'" aria-checked="'+on(l)+'">'
+    const cards=list.map(l=>{const p=presetFor(l),thumb=thumbOf(l),why=compare?blocker(l,p):blocker(l);return '<article class="make-look'+(on(l)?' active':'')+'"><button type="button" class="make-look-select" data-make-look="'+escape(l.id)+'" role="'+(compare?'checkbox':'radio')+'" tabindex="'+(compare||l.id===(state.look||list[0]?.id)?'0':'-1')+'" aria-checked="'+on(l)+'">'
       +(thumb?'<img src="'+escape(thumb)+'" alt="" loading="lazy">':'<span class="make-look-blank" aria-hidden="true">✦</span>')
-      +'<span class="make-look-text"><b>'+escape(l.name)+'</b><small class="make-pace '+pace+'">'+escape(label)+'</small>'+tested(l)+(tried(l)?'<small>Run on this PC before</small>':'')+'</span></button>'+(why?'<small class="make-warn make-look-text">'+blockerMarkup(l,why)+'</small>':'')+'</article>';}).join('');
+      +'<span class="make-look-text"><b>'+escape(l.name)+'</b>'+pace(l)+tested(l)+licence(p)+bestFor(l)+(tried(l)?'<small>Run on this PC before</small>':'')+'</span></button>'+(why?'<small class="make-warn make-look-text">'+blockerMarkup(l,why)+'</small>':'')+'</article>';}).join('');
     const chosen=current();
     if(chosen&&!state.picking&&!compare){const p=presetFor(chosen),thumb=thumbOf(chosen);
-      body.innerHTML='<div class="make-chosen">'+(thumb?'<img src="'+escape(thumb)+'" alt="">':'<span class="make-look-blank" aria-hidden="true">✦</span>')+'<div><small>Look</small><b>'+escape(chosen.name)+'</b><small class="make-pace '+speed(p)[0]+'">'+escape(speed(p)[1])+'</small>'+tested(chosen)+'</div><button type="button" data-make-change>Change look</button></div><div id="makeComposer"></div>';}
-    else body.innerHTML='<div class="make-step"><span>1</span><h2>'+(compare?'Choose two or three looks to compare':'Choose a look')+'</h2>'+(chosen&&!compare?'<button type="button" class="make-link" data-make-keep-look>Keep '+escape(chosen.name)+'</button>':'')+(list.length>1?'<button type="button" class="make-link" data-make-compare aria-pressed="'+compare+'">'+(compare?'Back to one look':'Compare looks')+'</button>':'')+'</div><div class="make-looks" role="'+(compare?'group':'radiogroup')+'" aria-label="'+(compare?'Looks to compare':'Look')+'">'+cards+'</div><div id="makeComposer"></div>';
+      body.innerHTML='<div class="make-chosen">'+(thumb?'<img src="'+escape(thumb)+'" alt="">':'<span class="make-look-blank" aria-hidden="true">✦</span>')+'<div><small>Look</small><b>'+escape(chosen.name)+'</b>'+pace(chosen)+tested(chosen)+licence(p)+bestFor(chosen)+'</div><button type="button" data-make-change>Change look</button></div><div id="makeComposer"></div>';}
+    else body.innerHTML='<div class="make-step"><span>1</span><h2>'+(compare?'Choose two or three looks to compare':'Choose a look')+'</h2>'+(chosen&&!compare?'<button type="button" class="make-link" data-make-keep-look>Stay with '+escape(chosen.name)+'</button>':'')+(list.length>1?'<button type="button" class="make-link" data-make-compare aria-pressed="'+compare+'">'+(compare?'Back to one look':'Compare looks')+'</button>':'')+'</div><div class="make-looks" role="'+(compare?'group':'radiogroup')+'" aria-label="'+(compare?'Looks to compare':'Look')+'">'+cards+'</div><div id="makeComposer"></div>';
     renderComposer();layout();
   }
   function shapeSize(preset,look,shape){
@@ -254,7 +276,7 @@
     const box=q('#makeComposer'),look=current();if(!box)return;if(state.compare){renderCompareComposer();return;}
     if(!look){box.innerHTML='<p class="make-hint">Choose a look above. Each picture is one real run of that look on this PC; yours will differ.</p>';placeStatus();return;}
     // A slow look starts at one picture: four Krea pictures are about forty minutes, which nobody should get by default.
-    const p=presetFor(look),why=blocker(look),example=look.body.scene_example||'',options=look.body.options||[],slow=speed(p)[0]==='slow';
+    const p=presetFor(look),why=blocker(look),example=look.body.scene_example||'',options=look.body.options||[],slow=speed(look)[0]==='slow';
     box.innerHTML='<div class="make-step"><span>2</span><h2>Describe your picture</h2></div><div class="make-composer"><div class="make-compose-main">'
       +'<label for="makeScene">'+escape(state.goal==='scene'?'Where is it, and what is there?':state.goal==='game'?'What is the item?':'Who or what, doing what, where?')+'</label>'
       +'<textarea id="makeScene" rows="3" maxlength="1000" placeholder="'+escape(example)+'"></textarea>'
@@ -377,7 +399,23 @@
     catch{if(!state.runs.includes(run)){timers.delete(id);return;}if(!run.lost){run.lost=true;renderRuns();}poll(id,misses+1);}},Math.min(POLL_MAX,POLL*2**Math.min(misses,4))));}
   // A finished run's pictures join an open picture grid at once, so the next goal can start from them.
   function refreshPickers(){const g=goal();if(!g.intent)return;for(const [id,attr] of [['makePictures','data-make-pick'],['makePosePictures','data-make-pose-pick']])if(q('#'+id))void fillPictures(g,id,attr);}
-  function words(job){return({queued:'Waiting its turn',waiting:'Waiting for memory',submitting:'Sending',running:'Painting',observing:'Painting',completed:'Done',failed:'Did not finish',partial:'Some pictures did not finish',uncertain:'Outcome unknown: check Compare & review',cancelled:'Cancelled',not_submitted:'Not sent'})[job.status]||job.status;}
+  function words(job){return({queued:'Waiting its turn',waiting:'Waiting for memory',submitting:'Sending',running:'Painting',observing:'Painting',completed:'Done',failed:'Did not finish',partial:'Some pictures did not finish',uncertain:'Outcome unknown: nothing was sent again',cancelled:'Cancelled',not_submitted:'Not sent'})[job.status]||job.status;}
+  // An uncertain or partial run offers what the full editor's Problems list offers, on its own card: Resume observation reads
+  // ComfyUI again for the retained prompt IDs, Stop tracking records a reason. Neither ever sends the picture again.
+  function recovery(job){
+    const stopped=job.tracking_disposition?.status==='stopped',resume=stopped?job.can_resume_tracking:!job.has_pending_submission&&['uncertain','partial'].includes(job.status)&&job.prompt_ids?.length,id=escape(job.id);
+    if(!resume&&!job.can_stop_tracking)return'';
+    return '<div class="make-recover"><p class="muted">'+(job.status==='partial'?'ComfyUI may still hold the missing pictures.':'ComfyUI may still have finished it.')+' Resume checks again; nothing is sent again.</p>'+(resume?'<button type="button" data-make-resume="'+id+'">Resume observation</button>':'')
+      +(job.can_stop_tracking?'<details class="make-more" data-more="stop:'+id+'"><summary>Stop tracking\u2026</summary><label>Reason for stopping<input data-make-stop-reason="'+id+'" maxlength="1000"></label><button type="button" data-make-stop="'+id+'">Stop tracking</button><small class="muted">ComfyUI keeps a finished prompt only in memory: after a ComfyUI restart Resume cannot collect it. Resume first if you may want it.</small></details>':'')+'</div>';
+  }
+  async function recover(button){
+    const action=button.dataset.makeResume?'resume':'stop-tracking',id=button.dataset.makeResume||button.dataset.makeStop,run=state.runs.find(r=>r.job.id===id);if(!run)return;
+    let body={};if(action==='stop-tracking'){const field=q('[data-make-stop-reason="'+CSS.escape(id)+'"]'),reason=field?.value.trim();if(!reason){field?.setAttribute('aria-invalid','true');field?.focus();say('Give a reason before stopping tracking.');return;}body={reason};}
+    button.disabled=true;
+    try{const job=await json('/api/jobs/'+encodeURIComponent(id)+'/'+action,body);run.job={...run.job,...job};run.lost=false;renderRuns();if(!FINAL.includes(run.job.status))poll(id);
+      say(action==='resume'?'Checking ComfyUI again for this run. Nothing is sent again.':'Tracking stopped. Its record and any pictures stay in the library.');}
+    catch(error){button.disabled=false;say(error.message);}
+  }
   const marks=a=>{const review=reviewOf(a),mark=(value,label)=>'<button type="button" data-make-review="'+value+'" data-asset="'+escape(a)+'" aria-pressed="'+(review===value)+'">'+(review===value?'✓ '+(value==='selected'?'Kept':'Marked: not this'):label)+'</button>';return mark('selected','★ Keep')+mark('rejected','Not this');};
   function actions(job,output){
     const a=output.asset_id;if(!a)return'<small class="muted">Saving to the library…</small>';
@@ -385,9 +423,11 @@
     if(varyBox.querySelector('button:disabled'))varyBox.innerHTML='';else for(const hint of varyBox.querySelectorAll('small[id]'))hint.textContent='Prepare variations in the full editor; Generate there starts them.';const vary=varyBox.innerHTML;
     // Next steps open Make's own picture goals with this picture chosen; other fixes still go through the full handoff.
     const hand=(intent,label)=>'<button type="button" data-ux-handoff="'+escape(a)+'" data-ux-handoff-intent="'+intent+'">'+label+'</button>',from=(intent,label)=>'<button type="button" data-make-from="'+intent+'" data-asset="'+escape(a)+'">'+label+'</button>';
-    const polish=kind=>{const plan=state.polish[a+':'+kind],why=plan&&!plan.ok?plan.reason:'',busy=state.polishing.has(a+':'+kind);
-      if(why)return'';return '<button type="button" data-make-polish="'+kind+'" data-asset="'+escape(a)+'"'+(busy?' disabled':'')+'>'+POLISH[kind]+(plan?.seconds?' <small>~'+duration(plan.seconds)+'</small>':'')+(busy?' …':'')+'</button>';};
-    return '<div class="make-actions">'+marks(a)+vary+polish('face')+polish('details')+polish('upscale')+(Object.keys(POLISH).some(k=>state.polishing.has(a+':'+k))?'<small class="make-action-reason">Starting the finishing pass for this picture. Please wait.</small>':'')
+    // A fix that cannot run stays on screen, disabled, with its reason beside it (one line per distinct reason), as the Fix or upscale goal does.
+    const reasons=[...new Set(Object.keys(POLISH).map(k=>state.polish[a+':'+k]).filter(x=>x&&!x.ok).map(x=>inMake(x.reason)))],whyId=r=>'makePolishWhy-'+escape(a)+'-'+reasons.indexOf(r);
+    const polish=kind=>{const plan=state.polish[a+':'+kind],why=plan&&!plan.ok?inMake(plan.reason):'',busy=state.polishing.has(a+':'+kind);
+      return '<button type="button" data-make-polish="'+kind+'" data-asset="'+escape(a)+'"'+(busy||why?' disabled':'')+(why?' aria-describedby="'+whyId(why)+'"':'')+'>'+POLISH[kind]+(plan?.seconds?' <small>~'+duration(plan.seconds)+'</small>':'')+(busy?' …':'')+'</button>';};
+    return '<div class="make-actions">'+marks(a)+vary+polish('face')+polish('details')+polish('upscale')+(Object.keys(POLISH).some(k=>state.polishing.has(a+':'+k))?'<small class="make-action-reason">Starting the finishing pass for this picture. Please wait.</small>':'')+reasons.map(r=>'<small class="make-warn make-polish-why" id="'+whyId(r)+'">'+escape(r)+'</small>').join('')
       +'<details class="make-more" data-more="'+escape(a)+'"><summary>More</summary><button type="button" data-ux-open-asset="'+escape(a)+'">Open full size</button>'+hand('repair','Other fixes\u2026')+from('edit','Change one thing')+from('restyle','Restyle')+from('combine','Put in a new pose')+from('animate','Animate')+from('mesh','Make it 3D')+'</details></div>';
   }
   // Polish plans only read (studio-workbench.js polishPlan); each picture is asked once per kind.
@@ -432,7 +472,7 @@
       const {job,look,scene,tuned,title,lost}=runs[0];
       return '<article class="make-run" data-run="'+escape(job.id)+'"><header><div><b>'+escape(pictureTitle(scene||title||job.controls?.positive||look,job.created_at))+'</b>'+(scene?'<small>'+escape(scene)+'</small>':look&&!scene?'<small>'+escape(look)+'</small>':'')+(tuned?'<small class="make-tuned">'+escape(tuned)+'</small>':'')+'</div><span class="make-run-state '+escape(lost?'uncertain':job.status)+'">'+escape(lost?'Lost contact with this run; still checking':words(job))+'</span></header>'
       +(scene?'<div class="make-run-tools">'+(draftRun(runs[0])?'<button type="button" data-make-final="'+escape(job.id)+'">Make the final</button>':'')+'<button type="button" data-make-rerun="'+escape(job.id)+'">Edit and re-run</button><button type="button" data-make-another="'+escape(job.id)+'">Same words, another look</button></div>':'')
-      +(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')
+      +(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')+(lost?'':recovery(job))
       +'<div class="make-outputs">'+(job.outputs||[]).map((o,i)=>!picture(o)?other(o):'<figure>'+img(job,o,i,look)+actions(job,o)+'</figure>').join('')+pending(job)+'</div></article>';});
     const focus=document.activeElement,key=e=>(e.closest('[data-run]')?.dataset.run||'')+'|'+e.tagName+'|'+JSON.stringify({...e.dataset})+'|'+e.textContent,focusKey=box.contains(focus)?key(focus):null,open=[...box.querySelectorAll('details[open]')].map(e=>e.dataset.more);
     const next=document.createElement('div');next.innerHTML=markup.join('');
@@ -525,7 +565,7 @@
   async function renderPictures(g){
     const body=q('#makeBody'),a=state.pick;
     if(a&&!state.repicking){body.innerHTML=(g.intent==='combine'?'':'<div class="make-chosen make-picked"><img src="'+thumbUrl(a)+'" alt=""><div><small>Your picture</small><b>'+escape(pictureLabel(a))+'</b></div><button type="button" data-make-repick>Change picture</button></div>')+'<div id="makeComposer"></div>';renderGoalComposer(g);return;}
-    body.innerHTML='<div class="make-step"><span>1</span><h2>'+(g.intent==='combine'?'Pick the character picture':'Pick the picture')+'</h2>'+(a?'<button type="button" class="make-link" data-make-keep-picture>Keep '+escape(pictureLabel(a))+'</button>':'')+'</div><p class="make-hint">'+escape(PICK[g.intent])+' <a href="/#assets">Import a picture</a> first if it is not here.</p>'+pictureFinder('makePictures','data-make-pick');
+    body.innerHTML='<div class="make-step"><span>1</span><h2>'+(g.intent==='combine'?'Pick the character picture':'Pick the picture')+'</h2>'+(a?'<button type="button" class="make-link" data-make-keep-picture>Stay with '+escape(pictureLabel(a))+'</button>':'')+'</div><p class="make-hint">'+escape(PICK[g.intent])+' <a href="/#assets">Import a picture</a> first if it is not here.</p>'+pictureFinder('makePictures','data-make-pick');
     await fillPictures(g,'makePictures','data-make-pick');
   }
   const pictureFinder=(id,attr)=>'<input type="search" class="make-search" data-make-search="'+id+'" data-make-attr="'+attr+'" placeholder="Search your pictures" aria-label="Search your pictures" aria-controls="'+id+'" value="'+escape(state.queries[id]||'')+'"><div id="'+id+'" class="make-pictures"><p class="muted">Loading your pictures…</p></div>';
@@ -667,11 +707,12 @@
       state.looks=(listing.looks||listing.cards||[]).filter(l=>l.kind==='look'||l.body);
     }catch(error){state.error='Could not read the looks: '+error.message;}
     render();
-    // Earlier Make runs come back from their job records; one that is gone is dropped, one still running is followed again.
-    const restored=await Promise.all(savedRuns.map(async r=>{try{return{...r,job:await json('/api/jobs/'+encodeURIComponent(r.id))};}catch{return null;}}));
+    // Earlier Make runs come back from their job records; one the Studio says is gone (404) is dropped, one still running is followed
+    // again, and one whose read fails is kept and checked again with back-off (#1438), never taken for deleted.
+    const restored=await Promise.all(savedRuns.map(async r=>{try{return{...r,job:await json('/api/jobs/'+encodeURIComponent(r.id))};}catch(error){return error.status===404?null:{...r,job:{id:r.id,status:'',outputs:[]},lost:true};}}));
     state.runs=[...state.runs,...restored.filter(r=>r&&!state.runs.some(x=>x.job.id===r.id)).map(({id,...r})=>r)];
-    restoredRuns=true;
-    for(const r of state.runs)if(!FINAL.includes(r.job.status))poll(r.job.id);
+    restoredRuns=true;remember();
+    for(const r of state.runs)if(!FINAL.includes(r.job.status))poll(r.job.id,r.lost?1:0);
     renderRuns();
   }
   // The gallery folds away under the pointer: bring "Describe your picture" out from under the fixed bar (audit N8, make.css scroll-margin).
@@ -717,6 +758,7 @@
       if(final&&state.tune[run.lookId])state.tune[run.lookId].steps=null;try{sessionStorage.setItem('studio.make.scene.'+run.goal,run.scene);}catch{}remember();render();
       if(final){say('The final is set up: the same words and seed at full detail. Press Generate to make it.');q('#makeGenerate')?.focus();return;}
       const scene=q('#makeScene');if(scene&&!state.picking){scene.focus();scene.select();}else q('.make-look.active [data-make-look]')?.focus();return;}
+    const recovering=e.target.closest('[data-make-resume],[data-make-stop]');if(recovering&&!recovering.disabled){void recover(recovering);return;}
     const verdict=e.target.closest('[data-make-review]');if(verdict){void review(verdict);return;}
     const polishing=e.target.closest('[data-make-polish]');if(polishing&&!polishing.disabled){void polishPicture(polishing);return;}
     if(e.target.closest('#makeGenerate'))void submit();
