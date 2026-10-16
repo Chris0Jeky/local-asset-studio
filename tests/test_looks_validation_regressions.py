@@ -53,6 +53,19 @@ class LookValidationTests(unittest.TestCase):
             fixture.looks.prepare(self.studio, {'id': card['id'], 'scene': 'a quiet room'})
         self.assertEqual((self.studio.jobs, self.requests), ({}, []))
 
+    def test_a_filename_is_a_lora_slot_value_only_where_the_recipe_slot_holds_a_filename(self):
+        # /api/jobs takes a filename for a slot only when the graph input it binds holds one (older presets); a strength slot refuses it.
+        strength = dict(fixture.TEXT, lora=['1', 'steps'], defaults={'lora': 1.0})
+        with self.assertRaisesRegex(fixture.WorkspaceError, 'lora must be a number'):
+            fixture.looks.validate_body(dict(fixture.BODY, controls={'lora': 'style.safetensors'}), strength)
+        with self.assertRaisesRegex(fixture.WorkspaceError, 'lora must be a number'):
+            fixture.looks.validate_body(dict(fixture.BODY, controls={'lora': 'style.safetensors'}), dict(strength, defaults={}))
+        filename = dict(strength, defaults={'lora': 'authored.safetensors'})
+        self.assertEqual(fixture.looks.validate_body(dict(fixture.BODY, controls={'lora': 'style.safetensors'}), filename)['controls'], {'lora': 'style.safetensors'})
+        for bad in (0.5, '../x.safetensors', 'x.ckpt'):
+            with self.subTest(bad=bad), self.assertRaisesRegex(fixture.WorkspaceError, 'lora must be'):
+                fixture.looks.validate_body(dict(fixture.BODY, controls={'lora': bad}), filename)
+
     def test_saved_control_ranges_match_the_job_route(self):
         self.assertEqual({k: v for k, v in fixture.looks.NUMBER_RANGES.items() if k in dict((r[0], r) for r in fixture.server.NUMBER_RANGES)},
                          {r[0]: r[1:] for r in fixture.server.NUMBER_RANGES})

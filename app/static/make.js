@@ -58,11 +58,12 @@
   const family=p=>p?.family||p?.name||p?.id||'';
   const short=name=>entry(name)?.label||String(name||'built-in adapter').replace(/\.safetensors$/,'');
   // Same model type = same loader node and text encoders on the same backend (app/looks.py model_of): the look's wording and
-  // adapters carry over, so a switch never meets a graph that cannot take them; results will still differ.
+  // adapters carry over, so a switch never meets a graph that cannot take them; results will still differ. A recipe whose
+  // adapter file is fixed in its graph (a strength binding with no filename binding) offers no switch: that file cannot move.
   const kind=p=>p?.model?[p.model.loader,...p.model.encoders,p.backend_id||'primary'].join('|'):null;
   const textOnly=p=>(p.modality||'image')==='image'&&!!p.positive&&!p.reference&&!p.last_reference&&!p.reference_slots;
   function models(look){
-    const p=presetFor(look),k=kind(p);if(!k)return[];const c=look.body.controls||{},seen=new Set([p.model.file]);
+    const p=presetFor(look),k=kind(p);if(!k||SLOTS.some(s=>bound(p,s)&&!bound(p,NAMED(s))))return[];const c=look.body.controls||{},seen=new Set([p.model.file]);
     const need=[...Object.keys(c),...(look.body.negative?['negative']:[]),...SLOTS.flatMap(s=>[s,NAMED(s)]).filter(s=>bound(p,s))];
     const offers=(r,key)=>!(key in c)||!r.choices?.[key]?.length||r.choices[key].includes(c[key])||!p.choices?.[key]?.includes(c[key]);
     return presets().filter(r=>r!==p&&r.family&&textOnly(r)&&kind(r)===k&&need.every(n=>bound(r,n))&&offers(r,'sampler')&&offers(r,'scheduler')&&!seen.has(r.model.file)&&seen.add(r.model.file));
@@ -232,7 +233,7 @@
     // Every form value is read before the first await: a click on another look mid-request must not change this one.
     const scene=q('#makeScene').value.trim();if(!scene)throw Error('Describe your picture first, or press Use the example.');
     const options=Object.fromEntries([...view.querySelectorAll('[data-make-option]')].map(i=>[i.dataset.makeOption,i.checked]));
-    const p=presetFor(look),[w,h]=shapeSize(p,look,q('#makeShape').value),reseed=q('#makeNewSeed').checked,batch_count=Number(q('#makeCount').value),scale=Number(q('#makeStrength')?.value??100)/100;
+    const shape=q('#makeShape').value,strength=q('#makeStrength')?.value??null,p=presetFor(look),[w,h]=shapeSize(p,look,shape),reseed=q('#makeNewSeed').checked,batch_count=Number(q('#makeCount').value),scale=Number(strength??100)/100;
     const t={...structuredClone(tuneOf(look)),reseed};if(!reseed&&t.seed!=null&&!(Number.isSafeInteger(t.seed)&&t.seed>=0))throw Error('The seed must be a whole number, 0 or more.');
     const result=await json('/api/looks/prepare',{id:look.id,scene,...(look.body.options?.length?{options}:{}),expected_revision:look.revision});
     const controls={...result.controls};
@@ -242,7 +243,7 @@
     // Style strength scales the tuned adapters; two decimals, inside the server's 0-2 adapter range.
     const preset_id=applyTune(controls,look,t,scale),tuned=tuneSummary(look,t);
     // The run keeps its own settings, seed locked, so Edit and re-run changes only what you change next.
-    const composer={shape:q('#makeShape').value,count:batch_count,strength:q('#makeStrength')?.value??null,options};
+    const composer={shape,count:batch_count,strength,options};
     return{preset_id,controls,batch_count,scene,tuned,tune:{...t,reseed:controls.seed==null&&t.reseed,seed:controls.seed??t.seed,composer}};
   }
   let estimateEpoch=0;

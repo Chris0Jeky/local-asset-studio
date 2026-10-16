@@ -7,6 +7,7 @@ Fixture server from studio_browser_smoke (real frontend, synthetic API, real cat
 """
 import json
 import threading
+import time
 from urllib.parse import urlsplit
 
 from playwright.sync_api import sync_playwright
@@ -39,6 +40,7 @@ class Handler(fixture.Handler):
         data = json.loads(self.rfile.read(int(self.headers.get('Content-Length', '0'))))
         fixture.POSTS.append({'path': self.path, 'data': data})
         if self.path == '/api/jobs': return self.json(JOB)
+        if 'slow prepare' in data.get('scene', ''): time.sleep(1.0)  # a reply slow enough to change the form under it
         look = next(entry for entry in SHIPPED if entry['id'] == data['id'])
         return self.json({'preset_id': look['body']['preset_id'], 'controls': {'positive': looks.compose(look['body']['template'], data['scene']), **look['body']['controls']},
                           'look': {'id': look['id'], 'name': look['name'], 'revision': 0}, 'generation_submitted': False})
@@ -113,6 +115,19 @@ def run():
             page.click('[data-make-rerun="%s"]' % JOB['id'])
             assert not page.is_checked('#makeNewSeed') and page.input_value('#makeSeed') == str(used), (used, page.input_value('#makeSeed'))
             assert 'seed locked' in page.text_content('#makeStatus') and len(posted('/api/jobs')) == 1, page.text_content('#makeStatus')
+            # The run keeps the settings read when Generate was pressed, not ones changed while Prepare was answering.
+            page.fill('#makeScene', SCENE + ', slow prepare'); page.select_option('#makeShape', 'portrait'); fixture.POSTS.clear()
+            page.click('#makeGenerate'); page.select_option('#makeShape', 'landscape')
+            page.evaluate('() => { const r = document.querySelector("#makeStrength"); r.value = "120"; r.dispatchEvent(new Event("input")); }')
+            page.wait_for_function('document.querySelector("#makeStatus").textContent.startsWith("Started")')
+            page.click('[data-make-rerun="%s"]' % JOB['id'])
+            assert (page.input_value('#makeShape'), page.input_value('#makeStrength')) == ('portrait', '50'), (page.input_value('#makeShape'), page.input_value('#makeStrength'))
+            # An adapter whose file is fixed inside its recipe cannot move to another model: no switch is offered.
+            page.click('[data-make-goal="game"]')
+            if page.query_selector('[data-make-change]'): page.click('[data-make-change]')
+            page.click('[data-make-look="look-preset-pixel-lora"]')
+            if not page.evaluate('document.querySelector("#makeTune").open'): page.click('#makeTune > summary')
+            assert page.eval_on_selector_all('#makeModel option', 'o => o.map(x => x.value)') == ['pixel-lora'], page.eval_on_selector_all('#makeModel option', 'o => o.map(x => x.value)')
             # A slow look starts at one picture.
             page.click('[data-make-goal="painting"]')
             if page.query_selector('[data-make-change]'): page.click('[data-make-change]')

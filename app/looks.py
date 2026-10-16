@@ -66,7 +66,9 @@ def _adapter_file(value):
 
 def control_problem(preset, key, value):
     """Why a saved control value would be refused at /api/jobs, or None. Installed files and live choices are checked there."""
-    if key in LORA_SLOTS and _adapter_file(value): return None  # older presets bind `lora` to a filename input
+    # Older presets bind `lora` to a filename input: a filename is a slot value only where the authored input holds one.
+    if key in LORA_SLOTS and isinstance((preset.get("defaults") or {}).get(key), str):
+        return None if _adapter_file(value) else f"{key} must be a .safetensors adapter filename"
     if key in NUMBER_RANGES:
         lo, hi, integer = NUMBER_RANGES[key]
         return None if _number(value, lo, hi, integer) else f"{key} must be a{'n integer' if integer else ' number'} from {lo} to {hi}"
