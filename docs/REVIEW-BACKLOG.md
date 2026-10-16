@@ -130,3 +130,13 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 - [ ] **Library and model-inventory hardening** (#1465): collection no-ops burn no revision, blank tags are refused, a
   missing output file is marked on the job instead of silently skipped, one malformed model pin no longer blanks the
   whole Models inventory (that row shows "invalid pin").
+- [ ] **Vary asks before replacing your setup** (#1471): only when the Full editor holds your own positive or negative
+  wording (different from the recipe default) or a staged picture; otherwise it prepares at once. Declining changes
+  nothing. A loaded setup counts as your work (it asks). Reverse: drop the `window.confirm` guard in `prepareVary`.
+- [ ] **Models & setup: an unknown adapter is never Ready once an inventory is reported** (#1468); before the disk
+  inventory loads, an adapter the curated library does not list is "unknown", not "needs a download" (otherwise 12
+  looks falsely asked for downloads). Failed recipe inspections retry after two minutes.
+- [ ] **Full editor Vary block survives "Put the source back"** (#1467): three other draft "bugs" from a Muse hunt
+  were checked and found not real (cross-tab autosave already pauses; the server refuses a stale graph; a failed
+  availability check keeps lineage on purpose).
+- [ ] **Looks tests** (#1469) pin eight behaviours of app/looks.py; no product bug was found.
