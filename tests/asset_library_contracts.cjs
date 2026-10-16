@@ -84,6 +84,11 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
     assert.match(s.el('#assetVisibleCount').textContent,/^2 assets · 2 agent runs hidden$/);assert.match(s.el('#reviewNext').textContent,/2 unreviewed/);
     s.run('startReviewQueue()');assert.equal(s.run('JSON.stringify(assetQueue.ids)'),'["m1","m0"]');
   });
+  await test('Pictures made in Make stay in Mine although their run carries a Make label',()=>{
+    const s=sourced();s.run("assetState.assets[0].run_label='Make \u00b7 Clean anime portrait';assetState.assets[1].run_label='Make \u00b7 Fix face';renderAssets()");
+    assert.deepEqual(shown(s),['m1','m0']);assert.match(s.el('#assetVisibleCount').textContent,/^2 assets · 2 agent runs hidden$/);
+    s.run("chooseAssetSource('agent')");assert.deepEqual(shown(s),['g1','g0']);
+  });
   await test('The source choice persists like grouping and survives a missing store',()=>{
     const store=memory();let s=sourced({localStorage:store});s.el('#assetSource').value='agent';s.el('#assetSource').onchange();
     assert.deepEqual(shown(s),['g1','g0']);assert.equal(store.values.get('studio.assets.source'),'agent');assert.match(s.el('#assetVisibleCount').textContent,/2 of yours hidden/);
@@ -175,6 +180,10 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
     assert.deepEqual(JSON.parse(s.run("JSON.stringify(assetState.assets.map(a=>a.run_label??null))")),['Agent lab',null,'Agent lab']);
     assert.equal(s.run('assetSelection.size'),0);assert.equal(s.el('#assetSource').hidden,false);assert.deepEqual(shown(s),['a1']);
     assert.match(s.el('#assetMessage').textContent,/^Marked 2 as agent runs \(Agent lab\)\. The Mine view hides them.*Mark as mine reverses it/);
+  });
+  await test('Mark as agent run refuses the Make label prefix, so the action cannot contradict its result',async()=>{
+    const s=library();s.run("assetSelection=new Set(['a0'])");s.el('#bulkRunLabel').value='Make · nightly';await bulkClick(s,'agent_run');
+    assert.equal(s.writes.length,0);assert.match(s.el('#assetMessage').textContent,/kept for pictures made in Make/);
   });
   await test('Mark as mine clears the label; a typed label is trimmed and an unprintable one is never sent',async()=>{
     const s=library();s.run("assetState.assets.forEach(a=>{a.run_label='Agent lab';});chooseAssetSource('all');assetSelection=new Set(['a1'])");

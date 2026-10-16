@@ -17,7 +17,8 @@ const assetGroupModes = ['recipe','day','run'], assetGroupStorageKey = 'studio.a
 // Until the operator chooses, the library shows Mine once any labelled asset exists; with none, every source is shown.
 const assetSourceModes = ['mine','agent','all'], assetSourceStorageKey = 'studio.assets.source';
 let assetSourceMode = null;
-function assetIsAgentRun(asset){return typeof asset?.run_label==='string' && asset.run_label!=='';}
+// "Make · …" labels name the person's own Make runs (make.js; Fix and Upscale in studio-workbench.js), not agent runs.
+function assetIsAgentRun(asset){return typeof asset?.run_label==='string' && asset.run_label!=='' && !asset.run_label.startsWith('Make · ');}
 function assetSource(){return !assetState.assets.some(assetIsAgentRun)?'all':assetSourceModes.includes(assetSourceMode)?assetSourceMode:'mine';}
 function assetSourceFilter(list, source=assetSource()){return source==='all'?list:list.filter(a=>assetIsAgentRun(a)===(source==='agent'));}
 // Existing lab outputs carry no label, so the operator marks them (#939): a label makes an agent run, clearing it makes it
@@ -27,6 +28,7 @@ const assetDefaultRunLabel='Agent lab';
 function assetRunLabelChoice(){
   const text=String($('#bulkRunLabel').value??'').trim()||assetDefaultRunLabel;
   if([...text].length>80 || [...text].some(c=>c!==' ' && /[\p{C}\p{Z}]/u.test(c)))throw Error('Use a run label of 1 to 80 printable characters, without tabs or line breaks. Nothing was changed.');
+  if(text.startsWith('Make · '))throw Error('Run labels starting "Make · " are kept for pictures made in Make. Choose another label. Nothing was changed.');
   return text;
 }
 // A title still equal to the registered default ("<recipe> · N") says nothing; the prompt excerpt does.
