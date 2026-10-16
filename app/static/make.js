@@ -477,6 +477,8 @@
   const refreshCharacters=()=>{const g=goal();if(CHARACTER_GOALS.includes(g.intent)&&(!state.pick||state.repicking))void renderPictures(g);};
   function characterMarkup(job,a){
     if(!a)return'';
+    // A put-away picture cannot be a canon (the server refuses a trashed asset): say so instead of offering a form that fails.
+    if(typeof assetState!=='undefined'&&assetState?.assets?.find(x=>x.id===a)?.trashed_at)return'<small class="muted">Put away in the library. Restore it to make it a character.</small>';
     const owner=usableCharacters().find(c=>c.canon_asset_id===a);if(owner)return'<small class="make-canon">Canon of '+escape(owner.name)+'</small>';
     return state.charSave!==a?'<button type="button" data-make-character-save="'+escape(a)+'">Make this my character…</button>':characterForm(a,'create',CANON_NOTE);
   }

@@ -303,6 +303,9 @@ test('Make offers a character card on every saved picture regardless of review, 
   context.state.charSave='asset-0';assert.equal(context.characterMarkup({},'asset-0'),'<form>character</form>');
   context.characters=[{canon_asset_id:'asset-0',name:'Mira'}];assert.equal(context.characterMarkup({},'asset-0'),'<small class="make-canon">Canon of Mira</small>');
   assert.equal(context.characterMarkup({},null),'');
+  context.state.charSave=null;context.characters=[];context.assetState={assets:[{id:'asset-0',trashed_at:1}]};
+  assert.match(context.characterMarkup({},'asset-0'),/Put away in the library/,'a put-away picture says why instead of offering a form that can only fail');
+  assert.doesNotMatch(context.characterMarkup({},'asset-0'),/data-make-character-save/);
 });
 test('Make depth is explicit, Copy Pose remains default, missing choices fall back and plain 9B stays hidden',()=>{
   const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8');
