@@ -39,9 +39,9 @@
   const licence=p=>nonCommercial(p)?'<small class="make-licence" title="'+escape(p.commercial_note)+'">Non-commercial</small>':'';
   const FINAL=['completed','failed','partial','uncertain','not_submitted','cancelled','abandoned'];
   const POLISH={face:'Fix face',details:'Fix hands and details',upscale:'Upscale 2\u00d7'};
-  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',pose:null,posePicking:false,compare:false,compareLooks:[]};
+  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',pose:null,posePicking:false,compare:false,compareLooks:[],characters:[],character:null,charSave:null,charForm:{}};
   try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(GOALS.some(g=>g.id===saved.goal))state.goal=saved.goal;if(typeof saved.look==='string')state.look=saved.look;}catch{}
-  const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,...r})=>({...r,job:{id}}))]).slice(0,6).map(({job,look,lookId,goal,scene,tune,tuned,group,title})=>({id:job.id,look,lookId,goal,scene,tune,tuned,group,title}))}));}catch{}};
+  const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,...r})=>({...r,job:{id}}))]).slice(0,6).map(({job,look,lookId,goal,scene,tune,tuned,group,title,fills})=>({id:job.id,look,lookId,goal,scene,tune,tuned,group,title,fills}))}));}catch{}};
   let restoredRuns=false,savedRuns=[];try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(Array.isArray(saved.runs))savedRuns=saved.runs.filter(r=>r&&typeof r.id==='string').slice(0,6);}catch{}
   const presets=()=>typeof catalog!=='undefined'&&catalog?.presets||[];
   const presetFor=look=>presets().find(p=>p.id===look?.body?.preset_id);
@@ -432,9 +432,38 @@
     const reasons=[...new Set(Object.keys(POLISH).map(k=>state.polish[a+':'+k]).filter(x=>x&&!x.ok).map(x=>inMake(x.reason)))],whyId=r=>'makePolishWhy-'+escape(a)+'-'+reasons.indexOf(r);
     const polish=kind=>{const plan=state.polish[a+':'+kind],why=plan&&!plan.ok?inMake(plan.reason):'',busy=state.polishing.has(a+':'+kind);
       return '<button type="button" data-make-polish="'+kind+'" data-asset="'+escape(a)+'"'+(busy||why?' disabled':'')+(why?' aria-describedby="'+whyId(why)+'"':'')+'>'+POLISH[kind]+(plan?.seconds?' <small>~'+duration(plan.seconds)+'</small>':'')+(busy?' …':'')+'</button>';};
-    return '<div class="make-actions">'+marks(a)+vary+polish('face')+polish('details')+polish('upscale')+(Object.keys(POLISH).some(k=>state.polishing.has(a+':'+k))?'<small class="make-action-reason">Starting the finishing pass for this picture. Please wait.</small>':'')+reasons.map(r=>'<small class="make-warn make-polish-why" id="'+whyId(r)+'">'+escape(r)+'</small>').join('')
+    return '<div class="make-actions">'+marks(a)+characterMarkup(job,a)+vary+polish('face')+polish('details')+polish('upscale')+(Object.keys(POLISH).some(k=>state.polishing.has(a+':'+k))?'<small class="make-action-reason">Starting the finishing pass for this picture. Please wait.</small>':'')+reasons.map(r=>'<small class="make-warn make-polish-why" id="'+whyId(r)+'">'+escape(r)+'</small>').join('')
       +'<details class="make-more" data-more="'+escape(a)+'"><summary>More</summary><button type="button" data-ux-open-asset="'+escape(a)+'">Open full size</button>'+hand('repair','Other fixes\u2026')+from('edit','Change one thing')+from('restyle','Restyle')+from('combine','Put in a new pose')+from('animate','Animate')+from('mesh','Make it 3D')+'</details></div>';
   }
+  // My character (#1205 v1): a kept picture becomes a character's canon, with its words. Saving writes one Workspace card and
+  // never submits. The form keeps its answers in state, so a redraw of the runs list does not lose what was typed.
+  const usableCharacters=()=>(state.characters||[]).filter(c=>c.usable&&c.canon_asset_id);
+  function characterMarkup(job,a){
+    const owner=usableCharacters().find(c=>c.canon_asset_id===a);if(owner)return'<small class="make-canon">Canon of '+escape(owner.name)+'</small>';
+    if(reviewOf(a)!=='selected')return'';if(state.charSave!==a)return'<button type="button" data-make-character-save="'+escape(a)+'">Make this my character\u2026</button>';
+    const f=state.charForm,field=(key,label,max,area)=>'<label>'+label+(area?'<textarea data-make-char="'+key+'" rows="2" maxlength="'+max+'">'+escape(f[key])+'</textarea>':'<input data-make-char="'+key+'" maxlength="'+max+'" value="'+escape(f[key])+'">')+'</label>';
+    return '<form class="make-character-form" data-make-character-form="'+escape(a)+'">'+field('name','Name',120)+field('who','Who they are',600,true)+field('clothes','Clothes and colours',600,true)
+      +'<div class="make-row"><button type="submit">Save character</button><button type="button" class="make-link" data-make-character-cancel>Cancel</button></div><small class="muted">This picture becomes the character\u2019s canon. Saving makes no picture.</small></form>';
+  }
+  // Prefilled from the run where it is plain: a pose run's answers, else the scene as typed. A look run names its look.
+  function openCharacterForm(a,runId){const run=state.runs.find(r=>r.job.id===runId)||state.runs.find(r=>(r.job.outputs||[]).some(o=>o.asset_id===a));
+    state.charSave=a;state.charForm={name:'',who:String(run?.fills?.who||run?.scene||'').slice(0,600),clothes:String(run?.fills?.clothes||'').slice(0,600),look:run?.lookId||null};renderRuns();q('[data-make-char="name"]')?.focus();}
+  async function saveCharacter(form){
+    const a=form.dataset.makeCharacterForm,f={...state.charForm},name=String(f.name||'').trim(),who=String(f.who||'').trim();
+    const missing=!name?'name':!who?'who':null;if(missing){const el=q('[data-make-char="'+missing+'"]');if(el)markMissing(el);sayMissing(missing==='name'?'Name the character first.':'Say who they are first.');return;}
+    const button=form.querySelector('[type=submit]');if(button)button.disabled=true;
+    try{await json('/api/characters',{action:'create',kind:'character',name,canon_asset_id:a,body:{who,...(String(f.clothes||'').trim()?{clothes:f.clothes.trim()}:{}),...(f.look?{look_id:f.look}:{})}});
+      state.charSave=null;state.charForm={};await loadCharacters();renderRuns();say('Saved \u201c'+name+'\u201d. Choose it under Your characters in Character in a new pose.');}
+    catch(error){if(button)button.disabled=false;say('Could not save the character: '+error.message);}
+  }
+  async function loadCharacters(){try{state.characters=(await json('/api/characters')).characters||[];}catch{state.characters=[];}}
+  // Picture goals that take a character list the saved ones first. Choosing one picks its canon as it is and fills its words.
+  const CHARACTER_GOALS=['edit','repair','restyle','combine'];
+  function characterChooser(g){const list=usableCharacters();if(!CHARACTER_GOALS.includes(g.intent)||!list.length)return'';
+    return '<section class="make-characters" aria-labelledby="makeCharactersTitle"><h3 id="makeCharactersTitle">Your characters</h3><div class="make-pictures">'+list.map(c=>'<button type="button" data-make-character="'+escape(c.id)+'"><img src="'+thumbUrl({id:c.canon_asset_id})+'" alt="" loading="lazy"><small>'+escape(c.name)+'</small></button>').join('')+'</div></section>';}
+  function chooseCharacter(id){const c=usableCharacters().find(x=>x.id===id);if(!c)return;choosePicture(c.canon_asset_id);
+    state.character=c.id;state.form.who=c.body.who||'';state.form.clothes=c.body.clothes||'';}
+  const chosenCharacter=()=>{const c=usableCharacters().find(x=>x.id===state.character);return c&&c.canon_asset_id===state.pick?.id?c:null;};
   // Polish plans only read (studio-workbench.js polishPlan); each picture is asked once per kind.
   // A plan that could not be read is asked again only after a 15 s cool-down, never once per redraw (#1438).
   const planning=new Set(),PLAN_RETRY=15000;
@@ -570,8 +599,8 @@
   }
   async function renderPictures(g){
     const body=q('#makeBody'),a=state.pick;
-    if(a&&!state.repicking){body.innerHTML=(g.intent==='combine'?'':'<div class="make-chosen make-picked"><img src="'+thumbUrl(a)+'" alt=""><div><small>Your picture</small><b>'+escape(pictureLabel(a))+'</b></div><button type="button" data-make-repick>Change picture</button></div>')+'<div id="makeComposer"></div>';renderGoalComposer(g);return;}
-    body.innerHTML='<div class="make-step"><span>1</span><h2>'+(g.intent==='combine'?'Pick the character picture':'Pick the picture')+'</h2>'+(a?'<button type="button" class="make-link" data-make-keep-picture>Stay with '+escape(pictureLabel(a))+'</button>':'')+'</div><p class="make-hint">'+escape(PICK[g.intent])+' <a href="/#assets">Import a picture</a> first if it is not here.</p>'+pictureFinder('makePictures','data-make-pick');
+    if(a&&!state.repicking){body.innerHTML=(g.intent==='combine'?'':'<div class="make-chosen make-picked"><img src="'+thumbUrl(a)+'" alt=""><div><small>'+(chosenCharacter()?'Your character':'Your picture')+'</small><b>'+escape(chosenCharacter()?.name||pictureLabel(a))+'</b></div><button type="button" data-make-repick>Change picture</button></div>')+'<div id="makeComposer"></div>';renderGoalComposer(g);return;}
+    body.innerHTML='<div class="make-step"><span>1</span><h2>'+(g.intent==='combine'?'Pick the character picture':'Pick the picture')+'</h2>'+(a?'<button type="button" class="make-link" data-make-keep-picture>Stay with '+escape(pictureLabel(a))+'</button>':'')+'</div>'+characterChooser(g)+'<p class="make-hint">'+escape(PICK[g.intent])+' <a href="/#assets">Import a picture</a> first if it is not here.</p>'+pictureFinder('makePictures','data-make-pick');
     await fillPictures(g,'makePictures','data-make-pick');
   }
   const pictureFinder=(id,attr)=>'<input type="search" class="make-search" data-make-search="'+id+'" data-make-attr="'+attr+'" placeholder="Search your pictures" aria-label="Search your pictures" aria-controls="'+id+'" value="'+escape(state.queries[id]||'')+'"><div id="'+id+'" class="make-pictures"><p class="muted">Loading your pictures…</p></div>';
@@ -604,7 +633,7 @@
       else{if(f.look==null&&p)f.look=splitLook(SC().promptFor(p,null)||'')[0];main=field('look','Describe the new look','a soft watercolour illustration with loose ink lines',4,2000)+(lookPictures().length?'<button type="button" class="make-link" data-make-style-pictures>Pick a look by its picture instead</button>':'')+'<small class="muted">Your words carry the look. Your picture keeps its character, pose, clothes and layout.</small>';}}
     else if(g.intent==='combine'){
       const figure=state.poseMode==='figure',pose=state.pose,figures=(PE()?.PRESETS||[]).filter(x=>x.points),mode=(value,label)=>'<label class="make-check"><input type="radio" name="makePoseMode" id="makePoseMode-'+value+'" data-make-pose-mode="'+value+'"'+(state.poseMode===value?' checked':'')+'> '+label+'</label>';
-      main='<div class="make-slots"><section class="make-slot" aria-labelledby="makeSlotA"><h3 id="makeSlotA">Character picture</h3><img src="'+thumbUrl(a)+'" alt=""><small>'+escape(pictureLabel(a))+'</small><button type="button" data-make-repick>Change picture</button></section>'
+      main='<div class="make-slots"><section class="make-slot" aria-labelledby="makeSlotA"><h3 id="makeSlotA">Character picture</h3><img src="'+thumbUrl(a)+'" alt=""><small>'+escape(chosenCharacter()?'Your character '+chosenCharacter().name+' \u00b7 canon picture':pictureLabel(a))+'</small><button type="button" data-make-repick>Change picture</button></section>'
         +'<section class="make-slot" id="makePoseSlot" tabindex="-1" aria-labelledby="makeSlotB"><h3 id="makeSlotB">Pose</h3><div class="make-seg" role="group" aria-label="Where the pose comes from">'+mode('picture','A picture of the pose')+mode('figure','Draw the pose')+'</div>'
         +(figure?'<div class="make-figures">'+figures.map(x=>'<label class="make-figure"><input type="radio" name="makeFigure" id="makeFigure-'+x.id+'" data-make-figure="'+x.id+'"'+(pose?.figure===x.id?' checked':'')+'>'+figureSvg(x.points,pose?.figure===x.id&&pose.mirror)+'<span>'+escape(x.label)+'</span></label>').join('')+'</div><label class="make-check"><input type="checkbox" id="makeMirror" data-make-mirror'+(pose?.mirror?' checked':'')+(pose?.figure?'':' disabled')+'> Mirror left and right</label><small class="muted">A stick figure carries the pose and nothing else. To move single joints, open the full editor.</small>'
           :pose?.asset&&!state.posePicking?'<img src="'+thumbUrl(pose.asset)+'" alt=""><small>'+escape(pictureLabel(pose.asset))+'</small><button type="button" data-make-pose-change>Change pose picture</button><small class="muted">Only the body position is taken from it, not the person, clothes or colours.</small>'
@@ -659,7 +688,7 @@
         say('Sending to ComfyUI…');
         job=await json('/api/jobs',{preset_id:p.id,continuation:prepared.claim,controls,batch_count:1,parent_assets:[...new Set([a.id,...board.map(r=>r.parent_asset).filter(Boolean)])],references:p.reference_slots?.length?SC().combineReferences(p,board):[],label:'Make · '+g.name});
       }
-      state.runs.unshift({job,look:g.intent==='repair'?POLISH[sel.fix]:g.name,lookId:null,goal:g.id,scene:null,title:String(form[{edit:'change',animate:'motion',combine:'who'}[g.intent]]||'').trim()||pictureLabel(a)});remember();
+      state.runs.unshift({job,look:g.intent==='repair'?POLISH[sel.fix]:g.name,lookId:null,goal:g.id,scene:null,title:String(form[{edit:'change',animate:'motion',combine:'who'}[g.intent]]||'').trim()||pictureLabel(a),...(g.intent==='combine'?{fills:{who:String(form.who||'').trim(),clothes:String(form.clothes||'').trim()}}:{})});remember();
       say('Started. The result appears in Your pictures as it finishes; you can leave this page.');renderRuns();poll(job.id);
       if(typeof refresh==='function')void refresh();
     }catch(error){say(error.message);}
@@ -712,7 +741,7 @@
     // Speed, readiness and history read the recipe catalog that app.js loads; wait for it briefly instead of guessing.
     for(let i=0;i<40&&!presets().length;i++)await new Promise(r=>setTimeout(r,250));
     try{
-      const [listing]=await Promise.all([json('/api/looks'),import('/static/bundle-showcase.js').then(m=>{state.examples=m.default.examples||{};}).catch(()=>{})]);
+      const [listing]=await Promise.all([json('/api/looks'),loadCharacters(),import('/static/bundle-showcase.js').then(m=>{state.examples=m.default.examples||{};}).catch(()=>{})]);
       state.looks=(listing.looks||listing.cards||[]).filter(l=>l.kind==='look'||l.body);
     }catch(error){state.error='Could not read the looks: '+error.message;}
     render();
@@ -728,6 +757,7 @@
   function focusScene(){q('#makeComposer .make-step')?.scrollIntoView({block:'nearest'});q('#makeScene')?.focus({preventScroll:true});}
   view.addEventListener('input',e=>{const t=e.target;if(t.closest('#makeTune')){tuneInput(t);return;}
     if(t.dataset.makeField){state.form[t.dataset.makeField]=t.value;t.removeAttribute('aria-invalid');t.removeAttribute('aria-describedby');settleMissing();if(t.tagName==='SELECT')void goalEstimate(goal(),goalRoute(goal()));return;}
+    if(t.dataset.makeChar){state.charForm[t.dataset.makeChar]=t.value;t.removeAttribute('aria-invalid');t.removeAttribute('aria-describedby');settleMissing();return;}
     if(t.dataset.makeSearch){state.queries[t.dataset.makeSearch]=t.value;renderGrid(t.dataset.makeSearch,t.dataset.makeAttr);}});
   // Choices that change the composer redraw it and keep the keyboard on the control just used.
   view.addEventListener('change',e=>{const t=e.target,g=goal(),redraw=sel=>{renderGoalComposer(g);q(sel)?.focus();};
@@ -747,7 +777,11 @@
     if(l){state.look=l.dataset.makeLook;state.picking=false;remember();renderLooks();focusScene();return;}
     if(e.target.closest('[data-make-compare]')){state.compare=!state.compare;state.compareLooks=state.compare&&lookList().some(x=>x.id===state.look)?[state.look]:[];
       say(state.compare?'Compare looks: choose two or three looks, type one scene, then press Generate once.':'');renderLooks();q('[data-make-compare]')?.focus();return;}
-    const pick=e.target.closest('[data-make-pick]');if(pick){choosePicture(pick.dataset.makePick);renderPictures(goal());q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();return;}
+    const character=e.target.closest('[data-make-character]');if(character){chooseCharacter(character.dataset.makeCharacter);renderPictures(goal());
+      say('Your character is chosen: its canon picture as it is'+(goal().intent==='combine'?', with its words.':'.'));q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();return;}
+    const saveChar=e.target.closest('[data-make-character-save]');if(saveChar){openCharacterForm(saveChar.dataset.makeCharacterSave,saveChar.closest('[data-run]')?.dataset.run);return;}
+    if(e.target.closest('[data-make-character-cancel]')){const a=state.charSave;state.charSave=null;state.charForm={};renderRuns();q('[data-make-character-save="'+CSS.escape(a||'')+'"]')?.focus();return;}
+    const pick=e.target.closest('[data-make-pick]');if(pick){state.character=null;choosePicture(pick.dataset.makePick);renderPictures(goal());q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();return;}
     if(e.target.closest('[data-make-repick]')){state.repicking=true;renderPictures(goal());q('[data-make-search="makePictures"]')?.focus();return;}
     if(e.target.closest('[data-make-keep-picture]')){state.repicking=false;renderPictures(goal());return;}
     const posePick=e.target.closest('[data-make-pose-pick]');if(posePick){const a=state.pictures?.find(x=>x.id===posePick.dataset.makePosePick);if(a){state.pose={asset:a};state.posePicking=false;renderGoalComposer(goal());q('[data-make-pose-change]')?.focus();}return;}
@@ -755,7 +789,7 @@
     if(e.target.closest('[data-make-style-words]')){state.styleWords=true;renderGoalComposer(goal());q('#makeF-look')?.focus();return;}
     if(e.target.closest('[data-make-style-pictures]')){state.styleWords=false;renderGoalComposer(goal());q('[data-make-style]')?.focus();return;}
     // A result's next step opens that picture goal here with the picture already chosen.
-    const from=e.target.closest('[data-make-from]');if(from){const next=GOALS.find(x=>x.intent===from.dataset.makeFrom);if(!next)return;state.goal=next.id;state.compare=false;choosePicture(from.dataset.asset);remember();render();
+    const from=e.target.closest('[data-make-from]');if(from){const next=GOALS.find(x=>x.intent===from.dataset.makeFrom);if(!next)return;state.goal=next.id;state.compare=false;state.character=null;choosePicture(from.dataset.asset);remember();render();
       say(next.name+': your picture is chosen. Fill in what is asked, then press Generate.');(q('#makeComposer textarea,#makeComposer input')||q('#makeGenerate'))?.focus();return;}
     if(e.target.closest('[data-make-change]')){state.picking=true;renderLooks();q('.make-look.active [data-make-look]')?.focus();return;}
     if(e.target.closest('[data-make-keep-look]')){state.picking=false;renderLooks();focusScene();return;}
@@ -774,6 +808,7 @@
     if(e.target.closest('#makeEditor'))void openInEditor();
     if(e.target.closest('[data-make-retry]'))void load();
   });
+  view.addEventListener('submit',e=>{const form=e.target.closest('[data-make-character-form]');if(form){e.preventDefault();void saveCharacter(form);}});
   view.addEventListener('keydown',e=>{const radio=e.target.closest('[role="radio"]'),group=radio?.closest('[role="radiogroup"]');if(group&&['ArrowRight','ArrowDown','ArrowLeft','ArrowUp','Home','End'].includes(e.key)){
     e.preventDefault();const items=[...group.querySelectorAll('[role="radio"]')],i=items.indexOf(radio),next=items[e.key==='Home'?0:e.key==='End'?items.length-1:(i+(['ArrowRight','ArrowDown'].includes(e.key)?1:items.length-1))%items.length],attr=next.hasAttribute('data-make-goal')?'data-make-goal':'data-make-look',value=next.getAttribute(attr);if(attr==='data-make-goal'){state.goal=value;state.pictures=null;remember();render();}else{state.look=value;state.picking=true;remember();renderLooks();}q('['+attr+'="'+value+'"]')?.focus();return;
   }if((e.target.id==='makeScene'||e.target.dataset.makeField)&&(e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();if(!e.repeat)void submit();}});
