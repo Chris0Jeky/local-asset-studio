@@ -2,6 +2,8 @@
 const ASSET_THUMB_VERSION = 1;
 let assetState = {assets:[], collections:[]}, assetScope = 'all', assetSelection = new Set(), activeAsset = null, collectionEditing = null;
 let assetSignature = '', assetRefreshing = false, assetWorkspaceEpoch = 0, assetObservedWorkspace;
+// Bumped when a confirmed receipt advances a loaded record in place: a library read that overlapped it is stale (#1436).
+let assetReceiptEpoch = 0;
 // The tab journal retains drafts and exact commands; Workspace owns saved metadata.
 let assetDetailEpoch = 0, assetDetailBaseline = null, assetDetailBusy = false, assetDetailDiscarding = false, assetDiagnosticRequest = 0;
 let assetDetailPending = null, assetDetailConflict = null, assetLibraryPending = null, assetLibraryBusy = false;
@@ -265,7 +267,7 @@ async function performAssetSave(operation, observe=false) {
 function syncAssetAfterSave(operation,result) {
   const record=assetState.assets.find(a=>a.id===operation.id),revision=result.revisions[operation.id];
   if(!record || record.workspace_id!==operation.command.workspace_id || record.metadata_revision!==operation.command.expected_revisions[operation.id])return void refreshAssets(true);
-  Object.assign(record,result.unchanged?.includes(operation.id)?{}:result.applied,{metadata_revision:revision});
+  Object.assign(record,result.unchanged?.includes(operation.id)?{}:result.applied,{metadata_revision:revision});assetReceiptEpoch++;
   if(operation.kind==='trash')renderAssets();else updateAssetCard(record.id);
 }
 function applyAssetSaveReceipt(operation,result) {
@@ -343,7 +345,9 @@ async function refreshAssets(force=false) {
   if(assetRefreshing)return false;
   assetRefreshing=true;
   try {
-    const data=await api('/api/workspace'), signature=JSON.stringify(data);
+    let data,epoch;
+    do{epoch=assetReceiptEpoch;data=await api('/api/workspace');}while(epoch!==assetReceiptEpoch);
+    const signature=JSON.stringify(data);
     const previousScope=assetState.workspace_id;
     assetState=data;
     if(previousScope && previousScope!==data.workspace_id){assetSelection.clear();if(assetLibraryPending?.command.workspace_id===data.workspace_id)assetRetainedSelection=assetLibraryPending.selection;}
@@ -633,7 +637,7 @@ async function postAssetCommand(command) {
 function applyAssetReviewReceipt(command,result) {
   for(const id of command.ids){
     const record=assetState.assets.find(a=>a.id===id);
-    if(record && (!record.workspace_id || record.workspace_id===command.workspace_id) && record.metadata_revision===command.expected_revisions[id])Object.assign(record,result.unchanged?.includes(id)?{}:result.applied,{metadata_revision:result.revisions[id]});
+    if(record && (!record.workspace_id || record.workspace_id===command.workspace_id) && record.metadata_revision===command.expected_revisions[id])Object.assign(record,result.unchanged?.includes(id)?{}:result.applied,{metadata_revision:result.revisions[id]}),assetReceiptEpoch++;
   }
 }
 // Replacing a saved decision is not the same as reviewing a new asset: name what changes before any write.
