@@ -27,9 +27,9 @@ function context(extra) {
     submitting: false, handoffBusy: false, pickerBusy: false, restoring: false, pairActionBusy: false, poseBusy: false,
     referencePending: 0, varyBusy: false, catalog: {presets: [{id: 'plain', name: 'Plain'}]},
     draftDirty: false, recipeTemplateHash: null, selectedPositive: 'kept words',
-    calls: [], notices: [], asked: [], answer: true, typed: '', staged: false,
+    calls: [], notices: [], asked: [], answer: true, typed: '', negative: '', staged: false,
     window: {confirm(text) { sandbox.asked.push(text); return sandbox.answer; }}, stagedPicture: () => sandbox.staged,
-    q: (selector) => ({files: [], value: selector === '#positive' ? sandbox.typed : '1', textContent: '', open: false, close() {}}),
+    q: (selector) => ({files: [], value: selector === '#positive' ? sandbox.typed : selector === '#negative' ? sandbox.negative : '1', textContent: '', open: false, close() {}}),
     referencesReady: () => true, posePositionDirty: () => false, poseHeldArtifact: () => null, poseSizeHold: () => null,
     i2vModeBlocker: () => null, continuationBlockerItems: () => [],
     announce(message, error) { sandbox.notices.push({message, error}); },
@@ -97,6 +97,9 @@ test('Vary asks when a picture is staged, and not for the recipe default wording
   const plain = context({typed: 'recipe default', selected: {id: 'plain', name: 'Plain', defaults: {positive: 'recipe default'}}});
   await plain.prepareVary(press);
   assert.equal(plain.asked.length, 0, 'default wording and no picture is not owner work');
+  const negative = context({negative: 'no text, no watermark, my list', selected: {id: 'plain', name: 'Plain', defaults: {negative: 'lowres'}}});
+  await negative.prepareVary(press);
+  assert.equal(negative.asked.length, 1, 'a custom negative prompt is owner wording too');
   assert.ok(plain.calls.includes('/api/recipe-check'));
 });
 
