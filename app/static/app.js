@@ -116,6 +116,35 @@ function claimInputParent(input, id) { releaseInputParent(input); if(!id)return;
 function replaceParentAsset(input, previous, id) { releaseParentAsset(previous); claimInputParent(input, id); }
 // A handoff declares the whole lineage: this run descends from one source, on one input.
 function setHandoffParent(input, id) { parentAssets=[]; parentByInput={}; claimInputParent(input, id); }
+// Recipe picker (#278 audit item 24): grouped by what a recipe makes, one plain line, a picture, speed and download badges.
+const PICKER_GROUPS = [['character','Characters & illustration'],['scene','Scenes & backgrounds'],['photo','Photo & product'],['game','Game art'],['edit','Edit or fix a picture'],['video','Video'],['3d','3D']];
+const INTENT_GROUP = {edit:'edit', repair:'edit', restyle:'edit', combine:'edit', animate:'video', mesh:'3d'};
+function presetGroup(p) {
+  const modality = p.modality || 'image', intent = typeof StudioUX !== 'undefined' ? StudioUX.INTENTS.find(i => i.accept(p))?.id : null;
+  const group = INTENT_GROUP[intent] || (modality === 'video' ? 'video' : modality === '3d' ? '3d' : p.reference ? 'edit' : null);
+  if (group) return group;
+  const words = [p.id, p.name, p.category, p.collection].join(' ');
+  return /pixel|sprite|prop\b|game/i.test(words) ? 'game' : /photo|realvis|realis|product|banner/i.test(words) ? 'photo' : /environment|scene|landscape|background|abstract/i.test(words) ? 'scene' : 'character';
+}
+// First sentence without decision/issue asides; the full text stays in the editor's recipe card.
+function plainLine(text) {
+  let line = String(text || '').replace(/\s*\([^)]*(#\d|decision|owner)[^)]*\)/gi, '').replace(/\s+/g, ' ').trim();
+  const cut = line.search(/\.\s(?=[A-Z])/); if (cut > 0) line = line.slice(0, cut + 1);
+  return line.length > 140 ? line.slice(0, line.lastIndexOf(' ', 136)) + '…' : line;
+}
+let showcaseExamples = {};
+// Thumbnails come only from the committed recipe-default renders (examples/recipe-thumbs-*, the set Make shows), never adult-tagged recipes.
+function presetThumb(p) {
+  const recipe = atelierRecipes.find(r => r.preset_id === p.id && /\/recipe-thumbs-/.test(showcaseExamples[r.id]?.url || '') && !(r.tags || []).some(t => /adult-illustration|hentai|nsfw/i.test(t)));
+  return recipe ? showcaseExamples[recipe.id].url : '';
+}
+// Speed: the fastest recorded local run of this recipe, else the recipe's own "about N s/min" wording; nothing when neither exists.
+function presetPace(p) {
+  const runs = atelierRecipes.filter(r => r.preset_id === p.id && r.status === 'executed' && Number(r.evidence?.seconds) > 0).map(r => Number(r.evidence.seconds));
+  let seconds = runs.length ? Math.min(...runs) : null, basis = 'Fastest recorded local run of this recipe';
+  if (!seconds) { const m = /\babout (\d+(?:\.\d+)?)(?:\s*[-–]\s*\d+)?\s*(s|seconds|min|minutes)\b/i.exec(String(p.description || '')); if (m) { seconds = Number(m[1]) * (/^m/i.test(m[2]) ? 60 : 1); basis = 'Timing stated in the recipe description'; } }
+  return seconds ? [seconds < 60 ? 'fast' : seconds > 300 ? 'slow' : 'medium', 'about ' + durationLabel(seconds), basis] : null;
+}
 function renderPresets() {
   if (!catalog) return;
   const query = $('#presetSearch').value.toLowerCase(), category = $('#categorySelect').value;
@@ -123,11 +152,15 @@ function renderPresets() {
   $('#filteredCount').textContent = list.length;
   // Rebuilding the list must not drop keyboard focus: a picked recipe keeps it on its own rebuilt button (#772).
   const focused = document.activeElement?.closest?.('#presetList [data-id]')?.dataset.id;
-  $('#presetList').innerHTML = list.map(p => {
-    const pins = Array.isArray(pinMismatchByPreset[p.id]) ? pinMismatchByPreset[p.id] : [];
+  const card = p => {
+    const pins = Array.isArray(pinMismatchByPreset[p.id]) ? pinMismatchByPreset[p.id] : [], missing = missingByPreset[p.id] || [], thumb = presetThumb(p), pace = presetPace(p);
     const pinBadge = pins.length ? '<em class="badge" title="' + esc(pins.join(', ')) + '">Model verification needs attention</em>' : '';
-    return '<button class="preset ' + (selected?.id === p.id ? 'chosen' : '') + '" data-id="' + esc(p.id) + '"><b>' + esc(p.name) + '</b><span>' + esc(p.description) + '</span><div class="recipe-meta"><span>' + esc(p.family || p.category) + '</span><em class="badge ' + (p.verified ? 'tested' : '') + '">' + (p.verified ? 'Run recorded · review separate' : 'Experimental · review separate') + '</em>' + pinBadge + '</div></button>';
-  }).join('') || '<p class="muted">No recipes match. Try another collection or search.</p>';
+    return '<button class="preset ' + (selected?.id === p.id ? 'chosen' : '') + '" data-id="' + esc(p.id) + '">' + (thumb ? '<img class="preset-thumb" src="' + esc(thumb) + '" alt="" loading="lazy">' : '') + '<b>' + esc(p.name) + '</b><span>' + esc(plainLine(p.description)) + '</span><div class="recipe-meta"><span>' + esc(p.family || p.category) + '</span>'
+      + (pace ? '<em class="badge pace ' + pace[0] + '" title="' + esc(pace[2]) + '">' + esc(pace[1]) + '</em>' : '')
+      + (missing.length ? '<em class="badge need" title="' + esc(missing.join(', ')) + '">Needs download</em>' : '') + pinBadge + '</div></button>';
+  };
+  $('#presetList').innerHTML = PICKER_GROUPS.map(([id, label]) => [id, label, list.filter(p => presetGroup(p) === id)]).filter(g => g[2].length)
+    .map(([id, label, items]) => '<section class="preset-group" data-group="' + id + '"><h3>' + esc(label) + '</h3><div class="preset-group-items">' + items.map(card).join('') + '</div></section>').join('') || '<p class="muted">No recipes match. Try another collection or search.</p>';
   if (focused) ([...$('#presetList').querySelectorAll('[data-id]')].find(button => button.dataset.id === focused) || $('#presetSearch'))?.focus({preventScroll:true});
 }
 function updateReady() {
@@ -256,6 +289,8 @@ async function loadAtelier(current = () => true) {
   try { recipes = (await api('/api/recipes')).recipes || []; } catch (e) {}
   if (epoch !== atelierReadEpoch || !current()) return;
   installedLoras = loras; knowledge = nextKnowledge; atelierRecipes = recipes;
+  // Picker thumbnails only; the list renders without them and fills them in when the showcase arrives.
+  try { import('/static/bundle-showcase.js').then(m => { showcaseExamples = m.default?.examples || {}; renderPresets(); }).catch(() => {}); } catch (e) {}
 }
 const NEGATIVE_COLLAPSE_KEY = 'studio-negative-collapsed';
 function negativeCollapsed() { try { return sessionStorage.getItem(NEGATIVE_COLLAPSE_KEY) === '1'; } catch (e) { return false; } }

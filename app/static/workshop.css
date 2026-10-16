@@ -150,12 +150,29 @@ body.workshop-active #workshopRecipeDialog .setup {position:static;padding:0;max
 #workshopRecipeDialog input[type=search] {min-height:48px;width:100%;font-size:14px;padding:13px 16px;margin-top:6px}
 #workshopRecipeDialog #modalities {display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
 #workshopRecipeDialog #modalities button {font-size:12px}
-#workshopRecipeDialog #presetList {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-height:48vh;overflow:auto;scrollbar-gutter:stable;align-content:start;padding:3px}
-#workshopRecipeDialog .preset {padding:18px;min-height:112px;border-radius:12px;background:var(--wk-input);border-color:var(--line);min-width:0;white-space:normal;text-align:left}
+#workshopRecipeDialog #presetList {display:block;max-height:max(320px,calc(100dvh - 360px));overflow:auto;scrollbar-gutter:stable;padding:3px}
+#workshopRecipeDialog .preset-group+.preset-group {margin-top:18px}
+#workshopRecipeDialog .preset-group:not(:has(.preset:not([hidden]))) {display:none}
+#workshopRecipeDialog .preset-group h3 {font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+#workshopRecipeDialog .preset-group-items {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-content:start}
+#workshopRecipeDialog .wk-picker-filters {display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 12px;margin:0 0 14px}
+#workshopRecipeDialog .wk-picker-filters :is(.ux-intent-tools,.category-label) {margin:0;flex:1 1 180px;font-size:12px}
+#workshopRecipeDialog .wk-picker-filters #modalities {margin:0;flex:0 1 auto}
+#workshopRecipeDialog #uxIntentHint {display:none}
+#workshopRecipeDialog .search-label {margin-top:0}
+#workshopRecipeDialog #recipeShortlist,#workshopRecipeDialog #bundleLauncher {margin-top:16px}
+#workshopRecipeDialog .preset {padding:14px;min-height:0;border-radius:12px;background:var(--wk-input);border-color:var(--line);min-width:0;white-space:normal;text-align:left}
 #workshopRecipeDialog .preset:is(.active,.chosen) {border-color:var(--accent);background:var(--wk-soft)}
 #workshopRecipeDialog .preset b {font-size:13px;line-height:1.45;font-weight:600;display:block;overflow-wrap:anywhere}
 #workshopRecipeDialog .preset>span {font-size:12px;color:var(--muted);line-height:1.5;display:block;margin-top:8px}
 #workshopRecipeDialog .preset .recipe-meta {display:flex;flex-wrap:wrap;gap:5px;font-size:10px}
+#workshopRecipeDialog .preset>span {display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:4px}
+#workshopRecipeDialog .preset:has(.preset-thumb) {display:grid;grid-template-columns:56px minmax(0,1fr);column-gap:12px;align-content:start}
+#workshopRecipeDialog .preset:has(.preset-thumb)>:not(.preset-thumb) {grid-column:2}
+#workshopRecipeDialog .preset[hidden] {display:none}
+#workshopRecipeDialog .preset-thumb {grid-row:1/span 3;width:56px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+#workshopRecipeDialog .badge.pace.fast {color:var(--accent);border-color:#465b38}
+#workshopRecipeDialog .badge.pace.slow,#workshopRecipeDialog .badge.need {color:var(--danger);border-color:#6b4a3c}
 #workshopRecipeDialog .shortlist-panel {border-color:var(--line);background:var(--wk-input);color:var(--text)}
 @media(max-width:1100px) {
   body.workshop-active main {padding:24px 24px calc(var(--workshop-dock-space) + 24px)}
@@ -195,7 +212,7 @@ body.workshop-active #workshopRecipeDialog .setup {position:static;padding:0;max
   .workshop .wk-run-dock #status {font-size:10px;max-height:3em}
   body.workshop-active #workshopRecipeDialog {width:calc(100vw - 16px);max-width:none;height:calc(100dvh - 16px);max-height:none;padding:20px 16px;border-radius:16px}
   .wk-dialog-heading {gap:12px}.wk-dialog-heading h2 {font-size:25px}
-  #workshopRecipeDialog #presetList {grid-template-columns:1fr;max-height:48dvh}
+  #workshopRecipeDialog .preset-group-items {grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce) {
   .workshop * {scroll-behavior:auto!important;animation:none!important;transition:none!important}
