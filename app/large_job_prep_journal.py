@@ -46,13 +46,12 @@ class JournalMixin:
         else:
             if len(records) >= MAX_RECORDS:
                 for evict_index, candidate in enumerate(records):
-                    # An action intent is the only durable guard against replaying
-                    # /free or a restart after the request ID is retried.
-                    if candidate.get("state") in ("completed", "refused") and not candidate.get("actions"):
+                    # Keep unresolved action intents; terminal receipts rotate oldest-first.
+                    if candidate.get("state") in ("completed", "refused"):
                         del records[evict_index]
                         break
                 else:
-                    raise PreparationError("Large-job preparation receipt retention is full")
+                    raise PreparationError("Large-job preparation receipt retention is full: all retained receipts are unresolved or in progress")
             records.append(copy.deepcopy(receipt))
         _canonical(receipt, MAX_RECEIPT_BYTES)
         _canonical(journal, MAX_JOURNAL_BYTES)

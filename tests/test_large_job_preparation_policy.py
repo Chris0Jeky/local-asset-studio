@@ -326,7 +326,7 @@ class LargeJobPreparationPolicyTests(LargeJobPreparationTestCase):
         self.assertNotIn("rotate-03", ids)
         self.assertIn("rotate-new", ids)
 
-    def test_terminal_action_receipt_is_not_evicted(self):
+    def test_completed_action_receipt_rotates_oldest_first(self):
         from large_job_prep_common import MAX_RECORDS
         studio = Studio(self.root, [])
         controller = self.controller(studio)
@@ -335,10 +335,10 @@ class LargeJobPreparationPolicyTests(LargeJobPreparationTestCase):
         studio._write_json_atomic(controller.path, journal)
         controller._persist(journal, self._fake_receipt("rotate-new", "in_progress"))
         ids = [record["request_id"] for record in controller._load()["records"]]
-        self.assertIn("rotate-00", ids)
-        self.assertNotIn("rotate-01", ids)
+        self.assertNotIn("rotate-00", ids)
+        self.assertIn("rotate-01", ids)
 
-    def test_full_action_journal_refuses_new_request(self):
+    def test_full_action_journal_rotates_for_new_request(self):
         from large_job_prep_common import MAX_RECORDS
         studio = Studio(self.root, [])
         controller = self.controller(studio)
@@ -346,10 +346,45 @@ class LargeJobPreparationPolicyTests(LargeJobPreparationTestCase):
         for record in journal["records"]:
             record["actions"] = [{"kind": "free", "state": "measured"}]
         studio._write_json_atomic(controller.path, journal)
+        controller._persist(journal, self._fake_receipt("rotate-new", "in_progress"))
+        ids = [record["request_id"] for record in controller._load()["records"]]
+        self.assertEqual(len(ids), MAX_RECORDS)
+        self.assertEqual(ids, ["rotate-%02d" % index for index in range(1, MAX_RECORDS)] + ["rotate-new"])
+
+    def test_requests_past_retention_bound_keep_ambiguous_receipts(self):
+        from large_job_prep_common import MAX_RECORDS
+        count = MAX_RECORDS + 2
+        studio = Studio(self.root, [reading for _ in range(count)
+                                   for reading in (observation(commit=20 * GIB), observation(commit=40 * GIB))])
+        controller = self.controller(studio)
+        journal = self._fill_journal(controller, studio, ["in_progress", "unknown"] + ["completed"] * (MAX_RECORDS - 2))
+        protected = journal["records"][:2]
+        for index in range(count):
+            result = controller.run(self.request(request_id="new-%02d" % index))
+            self.assertEqual(result["state"], "completed")
+            self.assertEqual(result["phase"], "ready_after_release")
+            self.assertEqual(len(result["actions"]), 1)
+        retained = controller._load()["records"]
+        self.assertEqual(len(retained), MAX_RECORDS)
+        self.assertEqual(retained[:2], protected)
+        self.assertEqual([record["request_id"] for record in retained[2:]],
+                         ["new-%02d" % index for index in range(count - (MAX_RECORDS - 2), count)])
+        replay = controller.run(self.request(request_id="new-%02d" % (count - 1)))
+        self.assertTrue(replay["replayed"])
+        self.assertEqual(replay["receipt_sha256"], result["receipt_sha256"])
+        self.assertEqual(len(studio.free_calls), count)
+
+    def test_all_in_progress_refuses_clearly_without_changing_journal(self):
+        from large_job_prep_common import MAX_RECORDS
+        studio = Studio(self.root, [])
+        controller = self.controller(studio)
+        self._fill_journal(controller, studio, ["in_progress"] * MAX_RECORDS)
         before = controller.path.read_bytes()
-        with self.assertRaisesRegex(PreparationError, "retention is full"):
-            controller._persist(journal, self._fake_receipt("rotate-new", "in_progress"))
+        with self.assertRaisesRegex(PreparationError, "retention is full.*in progress"):
+            controller.run(self.request())
         self.assertEqual(controller.path.read_bytes(), before)
+        self.assertEqual(studio.prepare_calls, 0)
+        self.assertEqual(studio.free_calls, [])
 
     def test_full_protected_journal_fails_closed_intact(self):
         from large_job_prep_common import MAX_RECORDS

@@ -326,7 +326,10 @@ class RuntimeMixin:
         deferred = getattr(self.studio, "prepare_for_large_job_preparation", None)
         if callable(deferred):
             return deferred(payload)
-        return self.studio.prepare(payload)
+        try:
+            return self.studio.prepare(payload)
+        except ValueError as exc:
+            raise PreparationError(str(exc) or type(exc).__name__) from exc
 
     @staticmethod
     def _with_host_commit_floor(evaluation: dict[str, Any], observation: dict[str, Any],
