@@ -906,6 +906,13 @@ async function modelShopCards() {
   // The top search narrows the file table too.
   run(`library.inventory=[{file:'loras/lonely.safetensors',bytes:8},{file:'vae/shared.safetensors',bytes:8}];renderInventory()`);
   assert.match(element('#inventory').innerHTML, /lonely/); assert.doesNotMatch(element('#inventory').innerHTML, /shared/);
+  // Readiness follows the preset's own root (the inspect requirement), not the active library's copy of the asset:
+  // after an environment switch the library describes another backend.
+  element('#curatedModelSearch').value = '';
+  run(`modelReqs.set('p2',[{file:'checkpoints/base.safetensors',asset_id:'base',present:true}]);renderCuratedModels()`);
+  assert.match(element('#modelLooks').innerHTML, /Ready now<\/h4>[\s\S]*Look B/);
+  run(`modelReqs.set('p2',[{file:'vae/shared.safetensors',asset_id:'shared'}]);renderCuratedModels()`);
+  assert.match(element('#modelLooks').innerHTML, /Needs a download<\/h4>[\s\S]*Look B/, 'an unresolved requirement blocks, as the server does');
 }
 
 async function modelStatusFilter() {
