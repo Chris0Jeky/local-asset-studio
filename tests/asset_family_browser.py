@@ -11,6 +11,8 @@ from unittest.mock import patch
 
 from playwright.sync_api import sync_playwright
 import studio_browser_smoke as fixture
+import io
+from PIL import Image
 from test_server import server, png
 from studio_workflow.asset_read_http import extend_handler
 
@@ -30,7 +32,9 @@ def build_family_studio(root):
     with patch.object(threading.Thread, 'start', lambda *_: None):
         studio = server.Studio(root)
     studio._request = lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError('Model request forbidden'))
-    source = root/'synthetic.png'; source.write_bytes(png())
+    # A portrait-sized picture, so the layout check measures a realistic preview rather than an 8x12 pixel fixture.
+    stream = io.BytesIO(); Image.new('RGB', (768, 1152), 'purple').save(stream, 'PNG')
+    source = root/'synthetic.png'; source.write_bytes(stream.getvalue())
     ids = []
     for index, name in enumerate(('Draft', 'Refine', 'Repair', 'Upscale')):
         _, graph, _, controls, _ = studio.prepare({'preset_id': preset['id'], 'controls': {'positive': 'A forest at dusk', 'seed': 10}, 'batch_count': 1})
@@ -80,7 +84,7 @@ def exercise(out, browser_executable=None):
     out = Path(out); out.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
         studio, ids = build_family_studio(tmp); posts = []
-        controls = {'hold': False, 'entered': threading.Event(), 'release': threading.Event()}
+        controls = {'hold': False, 'confirm': 'accept', 'entered': threading.Event(), 'release': threading.Event()}
         http = browser_server(build_handler(studio, posts, controls))
         thread = threading.Thread(target=http.serve_forever, daemon=True); thread.start()
         origin = 'http://127.0.0.1:'+str(http.server_port)
@@ -89,16 +93,29 @@ def exercise(out, browser_executable=None):
             with sync_playwright() as playwright:
                 browser = playwright.chromium.launch(headless=True, executable_path=browser_executable)
                 for width in (1440, 390):
-                    context = browser.new_context(viewport={'width': width, 'height': 1000}, reduced_motion='reduce')
+                    context = browser.new_context(viewport={'width': width, 'height': 900 if width == 1440 else 1000}, reduced_motion='reduce')
                     page = context.new_page(); page.set_default_timeout(10000)
                     page.on('pageerror', lambda e: errors.append(str(e)))
-                    page.on('dialog', lambda dialog: dialog.accept())
+                    page.on('dialog', lambda dialog: dialog.accept() if controls['confirm'] == 'accept' else dialog.dismiss())
                     try:
                         page.goto(origin+'/#assets', wait_until='domcontentloaded')
                         page.wait_for_function('window.StudioSetupDraft&&backendActive==="primary"&&catalog?.presets?.some(p=>p.id==="anima-portrait")')
                         page.locator('#assetGrid .asset-open[data-asset-open="'+ids[-1]+'"]').click()
                         page.wait_for_function('document.querySelectorAll("#assetFamily [data-family-step]").length===4')
                         assert page.locator('#assetFamily [data-family-step]').evaluate_all('(els)=>els.map(e=>e.dataset.familyStep)') == ids
+                        if width == 1440:
+                            # Layout: the picture and the next-step actions sit in the first 900 px viewport, above the form.
+                            picture = page.locator('#assetDetailMedia img').bounding_box()
+                            assert picture and picture['y'] + picture['height'] <= 900, picture
+                            for name, locator in (('continue', page.locator('#assetHandoffs [data-ux-handoff]')),
+                                                  ('vary', page.locator('.asset-next-steps [data-ux-vary]')),
+                                                  ('same-recipe', page.locator('[data-family-recall="new"]'))):
+                                if name == 'vary' and locator.count() == 0:
+                                    checks.append({'width': width, 'vary_control_present': False}); continue
+                                box = locator.bounding_box()
+                                assert box and box['y'] + box['height'] <= 900, (name, box)
+                            steps = page.locator('#assetNextSteps').bounding_box(); title = page.locator('#assetTitle').bounding_box()
+                            assert steps and title and steps['y'] + steps['height'] <= title['y'], (steps, title)
                         page.locator('#assetFamily [data-family-open="'+ids[1]+'"]').click()
                         page.wait_for_function('(id)=>activeAsset.id===id', arg=ids[1])
                         page.wait_for_function('document.querySelectorAll("#assetFamily [data-family-step]").length===2')
@@ -121,7 +138,20 @@ def exercise(out, browser_executable=None):
                         page.evaluate('(id)=>{showView("assets");openAsset(id)}', ids[-1])
                         page.locator('[data-family-recall="new"]').click()
                         page.wait_for_function('!document.querySelector("#assetDialog").open')
+                        # Same recipe, new seed: Create opens with the recipe loaded and a changed seed; no job is posted.
+                        assert page.evaluate('location.hash') == '#create' and page.locator('#createView').is_visible()
+                        assert page.locator('#positive').input_value() == 'A forest at dusk'
                         assert page.locator('[data-key="seed"]').input_value() != '12'
+                        assert 'New seed' in page.locator('#status').inner_text()
+                        assert '/api/jobs' not in posts, posts
+                        # A declined confirmation is visible and leaves the dialog and Create untouched.
+                        page.evaluate('(id)=>{showView("assets");openAsset(id)}', ids[-1])
+                        controls['confirm'] = 'dismiss'
+                        page.locator('[data-family-recall="new"]').click()
+                        page.wait_for_function('document.querySelector("#assetFamilyStatus").textContent.includes("confirmation was declined")')
+                        assert page.locator('#assetDialog').evaluate('(d)=>d.open') and page.evaluate('location.hash') == '#assets'
+                        assert '/api/jobs' not in posts, posts
+                        controls['confirm'] = 'accept'
                         # One delayed check must not overwrite newer typing.
                         page.evaluate('(id)=>{showView("assets");openAsset(id)}', ids[-1])
                         controls['hold'] = True; controls['entered'].clear(); controls['release'].clear()
@@ -150,7 +180,7 @@ def exercise(out, browser_executable=None):
                             '(els)=>els.map(el=>{const r=el.getBoundingClientRect();return {left:r.left,right:r.right,viewport:innerWidth}})')
                         assert all(r['left'] >= -1 and r['right'] <= r['viewport']+1 for r in bounds), bounds
                         page.screenshot(path=str(out/('family-'+str(width)+'.png')), full_page=True)
-                        checks.append({'width': width, 'four_steps': True, 'navigation': True, 'recall': True, 'new_seed': True, 'draft_retained': True, 'stale_refused': True, 'source_picker_no_copy': True, 'keyboard_focus': True, 'zoom': 2})
+                        checks.append({'width': width, 'four_steps': True, 'navigation': True, 'recall': True, 'new_seed': True, 'declined_confirm_visible': True, 'draft_retained': True, 'stale_refused': True, 'source_picker_no_copy': True, 'keyboard_focus': True, 'zoom': 2})
                     except Exception as error:
                         evidence = {'status': 'failed', 'width': width, 'error': str(error)[:4000],
                                     'page_errors': errors[:30], 'post_routes': sorted(set(posts)),
