@@ -246,7 +246,9 @@ function renderNsfwIntel(recipe=null) {
   const lab = knowledge?.nsfw_lab;
   const family = selected?.family || '';
   const entry = lab?.families?.[family];
-  if (!selected?.positive || !lab || !entry || !/\b(nsfw|hentai|explicit)\b/i.test([selected.id,selected.name,...(recipe?.tags||[]),recipe?.name].join(' '))) { box.hidden = true; body.innerHTML = ''; return; }
+  // Adult-lab notes show for adult recipes and for a restored saved setup (its recipe classification is not stored); not on ordinary recipes.
+  const adult=/\b(nsfw|hentai|explicit)\b/i.test([selected?.id,selected?.name,...(recipe?.tags||[]),recipe?.name].join(' '));
+  if (!selected?.positive || !lab || !entry || (!adult && !recipe?.saved)) { box.hidden = true; body.innerHTML = ''; return; }
   box.hidden = false;
   const wild = (lab.wildcards || []).map(w => '<li><code>__' + esc(w.name) + '__</code> — ' + esc(w.use) + '</li>').join('');
   body.innerHTML = '<p class="muted">' + esc(lab.caveat || '') + '</p>'
@@ -663,6 +665,7 @@ function applySaved(s,{guessLegacyParent=false}={}){
   if(selected.reference_slots)restoreReferenceSlots(s.references);
   if (s.controls?.mode) applyI2VMode(s.controls.mode, false);
   Object.entries(s.controls||{}).forEach(([k,v])=>{if(k==='mode')return;const el=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(el)el.value=v;});
+  renderNsfwIntel({saved:true});
   if(selected.reference&&typeof s.controls?.reference==='string')uploaded=s.controls.reference;
   if(selected.last_reference&&typeof s.controls?.last_reference==='string')lastUploaded=s.controls.last_reference;
   // A saved setup round-trips each role record's parent_asset and each supported named-input mapping.

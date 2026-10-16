@@ -1744,5 +1744,7 @@ function adultNotesFollowTheRecipe() {
   assert.equal(element('#positive').value,'Explicit saved wording','explicit recipe wording is retained');
   run("applyRecipe({preset_id:'notes-test',name:'Neutral recipe',controls:{positive:'Neutral saved wording'}})");
   assert.equal(element('#nsfwIntel').hidden,true,'switching back hides adult notes');
+  run("applySaved({preset:'notes-test',controls:{positive:'Restored words'},batch:1,parent_assets:[],references:[]})");
+  assert.equal(element('#nsfwIntel').hidden,false,'a restored saved setup keeps the family notes, since its recipe classification is not stored');
 }
 adultNotesFollowTheRecipe();
