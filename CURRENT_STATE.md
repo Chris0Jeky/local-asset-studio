@@ -1,5 +1,11 @@
 # Current state — 13 October 2026
 
+## GPU Look lab Round 4 - 16 October 2026
+
+21 serial jobs: 15 KEEP, 4 FIXABLE, 1 REJECT, 1 skipped; Anima Copy Pose 3/3 per pair, Z-Image/Krea both-item candidates, Petiflow medium 2/2 and full body 1/2 KEEP. [Report and exact controls](docs/looks/LOOK-LAB-2026-10-16.md#round-4-pose-reliability-other-source-families-items-and-framing).
+
+Receipts/journal are in docs/looks; preserve/copy ignored .runtime/lab-20261016d/ before removal. 61 Look tests and validator pass; HUMAN_TODO.md remains open/unchanged. No commit/push or runtime change; coordinator owns integration.
+
 ## GPU Look lab Round 2 - 16 October 2026
 
 Round 3: 36 jobs / 42 outputs; Copy Pose and face replacement kept both Anima sources; see [the report](docs/looks/LOOK-LAB-2026-10-16.md#round-3-poses-lora-pairings-game-items).
