@@ -30,6 +30,9 @@ async def exercise_wildcards(page, checks, posts):
             await page.evaluate('window.scrollTo(0,0)')
             for selector in ('#generate', '#workshopReadiness', '#workshopEta'):
                 box = await page.locator(selector).bounding_box()
+                # #1495: with nothing blocking Generate the phone dock folds its readiness line away; when it shows, it must fit.
+                if selector == '#workshopReadiness' and width <= 600 and await page.locator('.wk-dock-info').evaluate("n=>n.classList.contains('wk-clear')"):
+                    assert box is None and await page.locator('#generate').is_enabled(), (width, layout, box); continue
                 assert box and 0 <= box['y'] and box['y'] + box['height'] <= height, (width, layout, selector, box)
             assert await page.evaluate('document.documentElement.scrollWidth <= innerWidth'), (width, layout)
             # Count native focus movements, not tabIndex values of invisible descendants.
