@@ -133,6 +133,12 @@ def _models(graph):
             if (key in keys or key == "model_name" and node.get("class_type") == "HiDreamO1ModelLoader") and isinstance(value, str)}
 
 
+# Single-input nodes that forward the same MODEL / CLIP and neither add nor drop an adapter (#1243). Each is shipped
+# between a LoRA and its consumer: ModelSampling* on Qwen, RescaleCFG on Trellis, CLIPSetLastLayer on Pony. Anything else
+# (a merge, a switch, a Reroute pack, an unseen patch) stays an unknown shape and is refused.
+PASS_THROUGH = {"model": {"ModelSamplingAuraFlow", "ModelSamplingSD3", "RescaleCFG"}, "clip": {"CLIPSetLastLayer"}}
+
+
 def _lora_feeds(graph, start, target, field):
     """Trace a MODEL/CLIP input back through known LoRA outputs; None means an unknown graph shape."""
     if graph.get(start, {}).get("class_type") != "LoraLoader": return None
@@ -148,6 +154,8 @@ def _lora_feeds(graph, start, target, field):
         kind = node.get("class_type")
         if kind in ("LoraLoader", "LoraLoaderModelOnly"):
             if port != output or kind == "LoraLoaderModelOnly" and field == "clip": return False
+        elif kind in PASS_THROUGH[field]:
+            if port != 0: return None
         elif kind in ("CheckpointLoaderSimple", "ImageOnlyCheckpointLoader", "UNETLoader", "UnetLoaderGGUF", "CLIPLoader", "HiDreamO1ModelLoader"): return False
         else: return None
     return False
