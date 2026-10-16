@@ -112,11 +112,11 @@
     const heroArt = el('div', 'wk-hero-art'); heroArt.setAttribute('aria-hidden','true');
     hero.append(heroCopy, heroArt);
 
-    const modebar = el('nav', 'wk-modebar'); modebar.setAttribute('aria-label','Create workspace routes');
+    const modebar = el('nav', 'wk-modebar'); modebar.setAttribute('aria-label','Full editor workspace routes');
     const currentMode = el('button', 'active', 'Generate'); currentMode.type = 'button'; currentMode.setAttribute('aria-current','page');
     currentMode.addEventListener('click', () => q('#positive')?.focus({preventScroll:true}));
     const route = (label, href) => { const link = el('a', '', label); link.href = href; return link; };
-    modebar.append(currentMode, route('Guided workflows','/workflow-studio.html'), route('Prompt Lab','/prompt-lab.html'), route('Asset library','/#assets'), route('Runs & review','/#production'));
+    modebar.append(currentMode, route('Guided workflows','/workflow-studio.html'), route('Prompt Lab','/prompt-lab.html'), route('Asset library','/#assets'), route('Compare & review','/#production'));
 
     const toolbar = el('div', 'wk-toolbar');
     const preferenceNotice = el('p', 'wk-preference-notice'); preferenceNotice.setAttribute('role','status');

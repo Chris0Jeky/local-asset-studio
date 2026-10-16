@@ -3,7 +3,7 @@
   'use strict';
   const q=id=>document.getElementById(id);
   if(!q('export-result'))return;
-  const section=document.createElement('section');section.className='ux-prompt-transfer';section.innerHTML='<h3>Use this text in Create</h3><p>This carries the reviewed positive and negative text into Create and opens it there. References, model bindings and sampling settings are not carried: choose a matching recipe and reattach sources yourself.</p><button id="studioSendPrompt" type="button" disabled>Open Create with this prompt →</button><p id="studioPromptReason" class="pl-reason"></p><p id="studioPromptStatus" role="status"></p>';q('fields').parentElement.append(section);
+  const section=document.createElement('section');section.className='ux-prompt-transfer';section.innerHTML='<h3>Use this text in the Full editor</h3><p>This carries the reviewed positive and negative text into Create and opens it there. References, model bindings and sampling settings are not carried: choose a matching recipe and reattach sources yourself.</p><button id="studioSendPrompt" type="button" disabled>Open the Full editor with this prompt →</button><p id="studioPromptReason" class="pl-reason"></p><p id="studioPromptStatus" role="status"></p>';q('fields').parentElement.append(section);
   const button=q('studioSendPrompt'),reason=q('studioPromptReason');
   // Never a bare disabled control: the reason a transfer is locked is rendered next to the button.
   function sync(){const blockers=StudioUX.promptBlockers(result).filter(x=>x.blocking),transfer=StudioUX.promptTransfer(result);

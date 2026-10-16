@@ -281,6 +281,7 @@ function applyRecipe(recipe) {
   Object.entries(controls).forEach(([k,v]) => { if(k==='mode')return;const el = k === 'positive' ? $('#positive') : k === 'negative' ? $('#negative') : getControl(k); if (el) el.value = v; });
   $('#batch').value = recipe.batch_count || 1; updateLoraHints(); updateReady();
   const index = familyRecipes().findIndex(r => r.id === recipe.id); if (index >= 0) $('#recipeSelect').value = String(index);
+  renderNsfwIntel(recipe);
   $('#recipeNotes').innerHTML = describeRecipe(recipe) + (continuationState ? '<p>Only the setup changed. Your source and wording are retained; the recorded execution used the original example, not this image.</p>' : '');
   message(recipe.name + ' loaded. Review the settings before generating.' + (recipe.missing?.length ? ' Some adapters are not installed.' : ''));
   scheduleTimeEstimate(); recipeChanged();
@@ -325,13 +326,15 @@ function renderWildcardChips() {
   host.innerHTML = '<p class="muted">Insert a wildcard. Server expands __name__ from presets/wildcards at Generate, one line per batch member.</p>'
     + list.map(item => '<button type="button" data-wildcard="' + esc(item.name) + '" title="' + esc(item.count) + ' options">' + esc(item.name) + '</button>').join('');
 }
-function renderNsfwIntel() {
+function renderNsfwIntel(recipe=null) {
   const box = $('#nsfwIntel'), body = $('#nsfwIntelBody');
   if (!box || !body) return;
   const lab = knowledge?.nsfw_lab;
   const family = selected?.family || '';
   const entry = lab?.families?.[family];
-  if (!selected?.positive || !lab || !entry) { box.hidden = true; body.innerHTML = ''; return; }
+  // Adult-lab notes show for adult recipes and for a restored saved setup (its recipe classification is not stored); not on ordinary recipes.
+  const adult=/\b(nsfw|hentai|explicit)\b/i.test([selected?.id,selected?.name,...(recipe?.tags||[]),recipe?.name].join(' '));
+  if (!selected?.positive || !lab || !entry || (!adult && !recipe?.saved)) { box.hidden = true; body.innerHTML = ''; return; }
   box.hidden = false;
   const wild = (lab.wildcards || []).map(w => '<li><code>__' + esc(w.name) + '__</code> — ' + esc(w.use) + '</li>').join('');
   body.innerHTML = '<p class="muted">' + esc(lab.caveat || '') + '</p>'
@@ -428,14 +431,14 @@ async function inspectSelected() {
   }
 }
 
-function selectPreset(id, reset=true, transition=false) {
+function selectPreset(id, reset=true, transition=false, blankPrompt=false) {
   const next=catalog.presets.find(p=>p.id===id);if(!next)throw Error('This preset is unavailable.');
   if(continuationState&&!transition&&(id!==selected?.id||reset))throw Error('You are continuing an image. Use “Leave this continuation” before loading a different recipe, or reopen Continue with this asset to choose another route.');
   if(transition){continuationState=null;continuationSource=null;}
   if(reset||id!==selected?.id){tileState=null;parallaxState=null;}
   recipeTemplateHash=null;
   if(typeof StudioLooks!=='undefined')StudioLooks.clearApplication();
-  selected=next; recipeChanged();
+  selected=blankPrompt?{...next,defaults:{...next.defaults,positive:'',negative:''}}:next; recipeChanged();
   if(reset) clearReference(); $('#batch').value=1; renderPresets(); renderSelected(); recipeChanged(); // Refresh targets against the rendered recipe, after early invalidation.
   message(selected.runtime_block || 'Recipe loaded. Change a setting or choose a variation, then generate when ready.',!!selected.runtime_block);
 }
@@ -491,7 +494,7 @@ function parallaxNote(job,output){
   // Until the recovery controller mounts (it loads after the page), say it is loading; only a failed mount asks for a reload.
   const parallaxWhy=recovery?.failed||(!recovery&&typeof document!=='undefined'&&document.readyState==='complete'&&performance.now()>15000)?'Parallax staging is unavailable: reload the page.':'Parallax staging is still loading.';
   if(!parallaxAvailable)return '<p class="disabledReason"><small>This '+name[claim.stage]+' has no '+name[other]+' edit yet.</small></p><p class="disabledReason"><small>'+parallaxWhy+'</small></p><button class="parallaxStage" data-job="'+id+'" data-stage="'+other+'" disabled title="'+parallaxWhy+'">Load the '+name[other]+' edit</button>';
-  return '<p class="disabledReason"><small>This '+name[claim.stage]+' has no '+name[other]+' edit yet.</small></p><button class="parallaxStage" data-job="'+id+'" data-stage="'+other+'" title="Load the '+name[other]+' words for this picture into Create. Nothing runs until you press Generate.">Load the '+name[other]+' edit</button>';
+  return '<p class="disabledReason"><small>This '+name[claim.stage]+' has no '+name[other]+' edit yet.</small></p><button class="parallaxStage" data-job="'+id+'" data-stage="'+other+'" title="Load the '+name[other]+' words for this picture into Full editor. Nothing runs until you press Generate.">Load the '+name[other]+' edit</button>';
 }
 function renderCompare() { $('#compare').hidden=!pinned.length; $('#compareImages').innerHTML=pinned.map(p=>'<img src="/api/image/'+esc(p.job)+'/'+esc(p.index)+'" alt="Pinned comparison">').join(''); }
 const mixedBatchCommands = new Map(), mixedBatchBusy = new Set();
@@ -799,6 +802,7 @@ function applySaved(s,{guessLegacyParent=false}={}){
   if(selected.reference_slots)restoreReferenceSlots(s.references);
   if (s.controls?.mode) applyI2VMode(s.controls.mode, false);
   Object.entries(s.controls||{}).forEach(([k,v])=>{if(k==='mode')return;const el=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(el)el.value=v;});
+  if(typeof renderNsfwIntel==='function')renderNsfwIntel({saved:true});
   if(selected.reference&&typeof s.controls?.reference==='string')uploaded=s.controls.reference;
   if(selected.last_reference&&typeof s.controls?.last_reference==='string')lastUploaded=s.controls.last_reference;
   // A saved setup round-trips each role record's parent_asset and each supported named-input mapping.
@@ -844,7 +848,7 @@ function beginParallax(result){
 async function afterParallaxSubmit(job,claim,stamp){
   if(claim.stage!=='plate'){message('Isolate edit queued. The Studio splits the layers when both edits complete; nothing else runs.');return;}
   const next=await post('/api/parallax/stage',{job_id:job.id,stage:'isolate'});
-  if(!stamp||window.StudioSetupDraft?.stamp()!==stamp||selected?.id!==claim.preset_id||parallaxState?.plan_id!==claim.plan_id||parallaxState?.stage!==claim.stage){message('Clean plate queued. Current Create inputs were kept. Use Load the isolate edit on the clean plate card when ready.');return;}
+  if(!stamp||window.StudioSetupDraft?.stamp()!==stamp||selected?.id!==claim.preset_id||parallaxState?.plan_id!==claim.plan_id||parallaxState?.stage!==claim.stage){message('Clean plate queued. Current Full editor inputs were kept. Use Load the isolate edit on the clean plate card when ready.');return;}
   beginParallax(next);message('Clean plate queued. The isolate edit is loaded: check its words, then press Generate.');
 }
 // Prepare from the library's Make seamless: the rolled seam cross becomes this recipe's picture, the source its parent.
@@ -899,7 +903,7 @@ function beginContinuation(result,presetId,intent='edit'){
 }
 function leaveContinuation(){
   if(!continuationState)return;
-  if(!window.confirm('Leave this source-bound task? The original stays in your library. Save or export this draft first to keep these edits. Create will reset to the recipe defaults.'))return;
+  if(!window.confirm('Leave this source-bound task? The original stays in your library. Save or export this draft first to keep these edits. Full editor will reset to the recipe defaults.'))return;
   selectPreset(selected.id,true,true);message('Continuation ended. Choose a new recipe or reopen Continue with an asset.');
 }
 async function exportRecipe(id){const data=await api('/api/jobs/'+encodeURIComponent(id)+'/recipe'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='asset-studio-recipe.json';a.click();URL.revokeObjectURL(a.href);}
@@ -943,7 +947,7 @@ $('#generate').onclick=async()=>{
 // intent snapshot still decide. A held key repeats keydown; a repeat never submits. A blocked button explains itself (#772).
 function generateShortcutBlocker(button){
   if(submitting)return 'A run is already being submitted. Wait for it to finish.';
-  if(!button.disabled)return 'Generate is not on screen. Open Create, then press Ctrl+Enter again.';
+  if(!button.disabled)return 'Generate is not on screen. Open Full editor, then press Ctrl+Enter again.';
   return String($('#uxBlockers .ux-blocker p')?.textContent||'').trim()||'Generate is not available yet. Review the readiness checks.';
 }
 function generateShortcut(e){
@@ -958,7 +962,7 @@ function generateShortcut(e){
   button.click();return 'clicked';
 }
 if(typeof document!=='undefined')document.addEventListener?.('keydown',generateShortcut);
-if(typeof navigator!=='undefined'&&/Mac|iPhone|iPad/.test(navigator.platform||'')){const hint=$('#generateShortcut');if(hint){hint.textContent='⌘ Enter';hint.title='Press Cmd+Enter anywhere in Create to generate';}}
+if(typeof navigator!=='undefined'&&/Mac|iPhone|iPad/.test(navigator.platform||'')){const hint=$('#generateShortcut');if(hint){hint.textContent='⌘ Enter';hint.title='Press Cmd+Enter anywhere in Full editor to generate';}}
 const jobActions=new Set();
 async function jobAction(key,run){if(jobActions.has(key))return;jobActions.add(key);try{await run();}finally{jobActions.delete(key);}}
 $('#gallery').onclick=async e=>{
@@ -1051,7 +1055,7 @@ $('#importWorkflow').onchange=async e=>{
   try{
     catalog=await api('/api/catalog');await loadAtelier();$('#recipeCount').textContent=catalog.presets.length+' editable recipes';
     $('#categorySelect').innerHTML=['All',...new Set(catalog.presets.map(p=>p.category||'Other'))].map(c=>'<option>'+esc(c)+'</option>').join('');
-    selectPreset(catalog.presets.find(p=>p.id==='anima-portrait')?.id||catalog.presets[0].id);
+    selectPreset(catalog.presets.find(p=>p.id==='anima-portrait')?.id||catalog.presets[0].id,true,false,true);
   }catch(e){message(e.message,true);return;}
   // Each later stage is independent: one failing read (saved setups, a legacy migration) must not leave
   // health, jobs, the library and polling unstarted until a reload. The first failure stays on screen.
