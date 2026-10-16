@@ -780,7 +780,8 @@
     {
       "id": "look-preset-zimage-fast",
       "kind": "look",
-      "name": "Fast general picture, you describe it all",
+      "name": "Quick picture, any subject",
+      "supersedes": ["c4a416e34f39c0f3be272519851c167b8480420a1272e86c030c952a127be123"],
       "body": {
         "preset_id": "zimage-fast",
         "template": "{scene}",

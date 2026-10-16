@@ -93,6 +93,53 @@ def run(shots):
                 page.locator('[data-make-pick="%s"]' % asset).click()
             page.wait_for_selector('#makeComposer #makeGenerate')
 
+        # Looks are ordered by lab evidence, proven ones wear a badge, each goal opens on its usual shape, and the general look has a plain name
+        # (journey audit #12, #21, #24). The lab doc is docs/looks/LOOK-LAB-2026-10-16.md on branch lab/look-qualification-20261016.
+        def looks_of(goal_id):
+            page.locator('[data-make-goal="%s"]' % goal_id).click(); page.wait_for_selector('[data-make-look],#makeScene')
+            if page.locator('[data-make-change]').count(): page.locator('[data-make-change]').click()
+            return page.eval_on_selector_all('[data-make-look]', 'n=>n.map(e=>e.dataset.makeLook)')
+        def pick_look(look_id):
+            if page.locator('[data-make-change]').count(): page.locator('[data-make-change]').click()
+            page.locator('[data-make-look="%s"]' % look_id).click(); page.wait_for_selector('#makeScene')
+        CHARACTERS = ['look-anima-pearly-petiflow', 'look-oneobsession-anima-v20-showcase', 'look-anifox-ringeko', 'look-pearly-anima-mix-v10-showcase', 'look-wai-fantasy-portrait', 'look-anima-fantasy-portrait', 'look-animagine-fantasy-portrait']
+        assert looks_of('character') == CHARACTERS, 'proven first, rejects after them, no oil-paint look under Anime character'
+        shot('looks-character', '.make-looks')
+        badged = page.eval_on_selector_all('.make-look', 'n=>n.filter(e=>e.querySelector(".make-tested")).map(e=>e.querySelector("[data-make-look]").dataset.makeLook)')
+        assert badged == ['look-anima-pearly-petiflow'], badged  # kept in most test pictures (rounds 1-2); AniFox kept 0 of 2 new seeds
+        assert page.locator('.make-tested').first.inner_text() == 'Tested well' and '4 of 4' in page.locator('.make-tested').first.get_attribute('title')
+        pick_look('look-anima-pearly-petiflow'); assert page.locator('.make-chosen .make-tested').count() == 1 and page.input_value('#makeShape') == 'portrait'
+        assert not page.locator('#makeDraft').count(), 'Draft first is for slow looks only'
+        painting = looks_of('painting')
+        assert painting[0] == 'look-anima-painterly-artist-tags' and {'look-krea-atelier-target-stack', 'look-krea-witch-nijisis'} <= set(painting) and painting[-1] == 'look-krea-witch-nijisis', painting
+        assert looks_of('scene') == ['look-night-shift-retro-anime', 'look-noob-fantasy-scene', 'look-krea-watercolor-anime']
+        pick_look('look-noob-fantasy-scene'); assert page.input_value('#makeShape') == 'landscape', 'a scene is wide by default'
+        assert 'As designed · 832×1216' in page.locator('#makeShape option[value=design]').inner_text(), 'As designed stays available'
+        page.locator('#makeScene').fill('a misty harbour at dawn'); job = generate()[0]
+        assert (job['controls']['width'], job['controls']['height']) == (1216, 832), job['controls']
+        assert looks_of('game')[0] == 'look-preset-stylized-prop'; pick_look('look-preset-pixel-lora'); assert page.input_value('#makeShape') == 'square'
+        photo = looks_of('photo'); assert photo[:2] == ['look-preset-zimage-fast', 'look-preset-realvis'] and photo[-2:] == ['look-krea-realistic-snapshot', 'look-krea-lenovo-ultrareal'], photo
+        names = page.eval_on_selector_all('.make-look-text b', 'n=>n.map(e=>e.textContent)'); assert 'Quick picture, any subject' in names and not any('Fast general' in n for n in names), names
+        pick_look('look-preset-zimage-fast'); assert page.input_value('#makeShape') == 'design', 'a goal without a usual shape follows the look'
+
+        # Draft first (audit #12): a slow look offers a quick low-step draft; the draft's card offers "Make the final", which stages the same
+        # words and seed at the look's full steps and waits for Generate. Neither press submits anything but Generate.
+        looks_of('painting'); pick_look('look-krea-oil-fantasy'); assert page.input_value('#makeCount') == '1'
+        draft = page.locator('#makeDraft'); assert draft.count() == 1 and not draft.is_checked() and 'Draft first · 6 steps' in page.locator('#makeDraftBox').inner_text()
+        draft.check(); assert page.input_value('[data-tune=steps]') == '6' and 'draft 6 steps' in page.locator('#makeTuneSum').inner_text(), 'the draft is Tune’s own steps control'
+        page.locator('#makeScene').fill('a lone scholar on a bridge at dusk'); shot('draft-first'); before = len(jobs()); sent = generate(); no_modal()
+        assert len(sent) == 1 and sent[0]['controls']['steps'] == 6 and sent[0]['preset_id'] == 'krea-anime-atelier', sent
+        draft_job = sent[0]; page.wait_for_selector('[data-make-final]', timeout=8000)
+        assert page.locator('[data-make-final]').inner_text() == 'Make the final' and 'draft 6 steps' in page.locator('.make-run .make-tuned').first.inner_text()
+        page.locator('[data-make-final]').click(); assert len(jobs()) == before + 1, 'Make the final does not submit'
+        assert not page.locator('#makeDraft').is_checked() and page.input_value('[data-tune=steps]') == '' and page.input_value('#makeScene') == 'a lone scholar on a bridge at dusk'
+        assert not page.is_checked('#makeNewSeed') and page.input_value('#makeSeed') == str(draft_job['controls']['seed']), 'the seed is locked to the draft’s'
+        assert 'Press Generate' in page.locator('#makeStatus').inner_text() and page.evaluate('document.activeElement.id') == 'makeGenerate'
+        final = generate()[0]; assert final['controls']['steps'] == 12 and final['controls']['seed'] == draft_job['controls']['seed'], final['controls']
+        assert final['controls']['positive'] == draft_job['controls']['positive'] and final['controls']['width'] == draft_job['controls']['width'], 'same words, same shape'
+        page.wait_for_function('document.querySelectorAll(".make-run")[0].querySelector("[data-make-final]")===null'); assert page.locator('[data-make-final]').count() == 1, 'only the draft offers the final'
+        clicks['draft'] = 5  # goal, look, Draft first, Generate, then Make the final and Generate (+ the words typed)
+
         # Restyle: search, pick, choose a look by its picture, Generate. The look's picture is the style board.
         page.locator('[data-make-goal="restyle"]').click(); page.wait_for_selector('[data-make-pick]')
         page.locator('[data-make-search="makePictures"]').fill('forest')
