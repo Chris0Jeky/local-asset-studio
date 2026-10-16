@@ -500,7 +500,7 @@ function renderJobs(signature=JSON.stringify(jobs),force=false) {
   jobsRenderWait=null;jobsSignature=signature;problemsShown=problemMarkup;recentShownKeys=keys;recentHeldRemoved.clear();showRecentHeld('');
   const more=recentHidden?'<p class="recentMore"><small>'+recentHidden+' older output(s) not shown.</small> <button type="button" data-recent-more>Show '+Math.min(RECENT_STEP,recentHidden)+' more</button></p>':'';
   gallery.className=cards.length||(problems.length&&!host)?'gallery':'galleryEmpty';
-  gallery.innerHTML=(cards.length?cards.join('')+more:(problems.length&&!host)?'':'The next good idea starts here.<small>Generate your first output, or <a href="/#assets">open Asset library to import existing work</a>. Then choose Continue with this on an output to reuse it.</small>')+(host?'':problemMarkup);
+  gallery.innerHTML=(cards.length?cards.join('')+more:(problems.length&&!host)?'':'The next good idea starts here.<small>Generate your first output, or <a href="/#assets">open the Library to import existing work</a>. Then choose Continue with this on an output to reuse it.</small>')+(host?'':problemMarkup);
   if(host)host.innerHTML=problemMarkup;
   }
   for(const box of document.querySelectorAll('.mixedBatchControls')){const draft=mixedDrafts.get(box.dataset.job);if(draft){box.open=draft.open;if(draft.revision===box.dataset.revision){box.querySelector('[data-mixed-reason]').value=draft.reason||'';box.querySelector('[data-mixed-ack]').checked=!!draft.ack;}}}
@@ -641,7 +641,7 @@ function applySaved(s,{guessLegacyParent=false}={}){
   if(s.look_application!=null&&(typeof StudioLooks==='undefined'||!StudioLooks.normalizeApplication(s.look_application,s.preset)))throw Error('Invalid saved Look application state.');
   const prepared=typeof StudioUX!=='undefined'?StudioUX.normalizePrepared(s):(s.tile!=null||s.parallax!=null?null:{});
   const target=catalog.presets.find(p=>p.id===s.preset);
-  if(!prepared||prepared.tile&&!target.tile_route||prepared.parallax&&!target.parallax_route)throw Error('Invalid saved prepared plan for this recipe. Prepare it again from the Asset library.');
+  if(!prepared||prepared.tile&&!target.tile_route||prepared.parallax&&!target.parallax_route)throw Error('Invalid saved prepared plan for this recipe. Prepare it again from the Library.');
   selectPreset(s.preset);
   tileState=prepared.tile||null;parallaxState=prepared.parallax||null;
 
@@ -717,8 +717,8 @@ function continuationBlockerItems(){
   if(lookProblem)return [{code:'look',message:lookProblem}];
   // Both the original run button and the workbench consume this shared list.
   // Source-free text recipes need wording too; image-only recipes have no binding.
-  if(selected?.tile_route&&!tileState)return [{code:'tile',message:'Start from Make seamless on a square, flat texture in the Asset library.'}];
-  if(selected?.parallax_route&&!parallaxState)return [{code:'parallax',message:'Start from Make parallax layers on a picture in the Asset library.'}];
+  if(selected?.tile_route&&!tileState)return [{code:'tile',message:'Start from Make seamless on a square, flat texture in the Library.'}];
+  if(selected?.parallax_route&&!parallaxState)return [{code:'parallax',message:'Start from Make parallax layers on a picture in the Library.'}];
   if(tileState||parallaxState){const problem=StudioUX.preparedBlocker({preset:selected.id,...tilePayload(),...parallaxPayload(),controls:values(),parent_assets:parentAssets,batch:$('#batch').value});if(problem)return [{code:tileState?'tile':'parallax',message:problem}];}
   if(!continuationState)return selected?.positive&&!String($('#positive')?.value||'').trim()?[{code:'wording',message:'Add a prompt to generate.'}]:[];
   const controls=values();
@@ -859,11 +859,11 @@ function checkedSetupControls() {
   const inputs=[['reference','reference',selected?.reference_label||'Reference / first frame'],['lastReference','last_reference',selected?.last_reference_label||'Last frame']];
   const unstaged=inputs.filter(([input,key])=>selected?.[key]&&$('#'+input).files?.length&&!controls[key]);
   if(unstaged.length)throw Error('Setup not saved: '+unstaged.map(([, ,label])=>label).join(' and ')+
-    ' is selected only in this browser and is not uploaded. Import the file into Asset library, then use Pull from library to attach it before saving. Your selection and setup name are unchanged.');
+    ' is selected only in this browser and is not uploaded. Import the file into the Library, then use Pull from library to attach it before saving. Your selection and setup name are unchanged.');
   const pending=inputs
     .filter(([input,key])=>parentByInput[input]&&parentAssets.includes(parentByInput[input])&&!controls[key]);
   if(pending.length)throw Error('Setup not saved: reattach '+pending.map(([, ,label])=>label).join(' and ')+
-    ' using Pull from library. To use a new local file, import it into Asset library first. Its source link has no attached file. Your draft and setup name are unchanged.');
+    ' using Pull from library. To use a new local file, import it into the Library first. Its source link has no attached file. Your draft and setup name are unchanged.');
   return controls;
 }
 function setupMessage(text,error=false){message(text,error);$('#setupStatus').textContent=text;$('#setupStatus').classList.toggle('error',error);}
@@ -907,7 +907,7 @@ $('#importWorkflow').onchange=async e=>{
   // Each later stage is independent: one failing read (saved setups, a legacy migration) must not leave
   // health, jobs, the library and polling unstarted until a reload. The first failure stays on screen.
   const failed=[];
-  for(const [label,stage] of [['Saved setups',loadSetups],['Health',health],['Jobs',refresh],['Asset library',refreshAssets],['Models',refreshLibrary]]){
+  for(const [label,stage] of [['Saved setups',loadSetups],['Health',health],['Jobs',refresh],['Library',refreshAssets],['Models',refreshLibrary]]){
     try{await stage();}catch(e){failed.push(label+' could not load: '+e.message);}
   }
   const initial=location.hash.slice(1);if(['create','assets','production','models','learn'].includes(initial))showView(initial);

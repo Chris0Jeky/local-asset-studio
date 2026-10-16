@@ -791,6 +791,7 @@ BRIEF = ('A lanternkeeper of the deep wood: a young elf with silver-grey hair, a
 def _first_image(c):
     c.boot('#home')
     c.act('#uxJourneys, #uxRecent', 'read', note='overview starting points')
+    c.act('[data-nav-group="Advanced"] summary', note='open advanced tools', supplementary=True)
     c.act('[data-studio-route="create"]', navigation=True)
     c.act('#workshopRecipeChange', note='open the recipe picker', supplementary=True)
     c.act('#presetSearch', 'fill', typed='anima')
