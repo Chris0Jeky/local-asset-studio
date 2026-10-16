@@ -346,7 +346,8 @@ async function refreshAssets(force=false) {
   assetRefreshing=true;
   try {
     let data,epoch;
-    do{epoch=assetReceiptEpoch;data=await api('/api/workspace');}while(epoch!==assetReceiptEpoch);
+    let reads=0;do{epoch=assetReceiptEpoch;data=await api('/api/workspace');}while(epoch!==assetReceiptEpoch&&++reads<5);   // re-read while saves land, at most five times
+    if(epoch!==assetReceiptEpoch)return false;   // still racing saves: keep the newer local records; the next poll reads again
     const signature=JSON.stringify(data);
     const previousScope=assetState.workspace_id;
     assetState=data;
