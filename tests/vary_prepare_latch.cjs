@@ -71,3 +71,20 @@ test('prepare new seed checks the recipe against the current graph', async () =>
   assert.ok(box.calls.includes('/api/recipe-check'), box.calls);
   assert.equal(box.recipeTemplateHash, 'checked-graph');
 });
+
+test('putting the source back keeps a Vary carry-failure block on the same continuation', async () => {
+  const reattachSource = between('  async function reattachSource(){', '\n  // One slot, two pictures');
+  const claim = {version: 1, intent: 'edit', preset_id: 'plain', reference_file: 'a'.repeat(32) + '_old.png', source_asset_id: 'asset-1', source_sha256: 'b'.repeat(64), template_sha256: 'c'.repeat(64)};
+  const box = context({
+    continuationState: claim, secondPanel: {hidden: true}, selected: {id: 'plain', name: 'Plain', continuation_capability: {}},
+    varyUnapplied: {stamp: JSON.stringify(claim), message: 'Vary could not keep lora_name'},
+    async post() { return {file: 'd'.repeat(32) + '_new.png', sha256: claim.source_sha256, parent_asset: 'asset-1', context: {sha256: claim.source_sha256}}; },
+    attachContinuationSource() {}, pendingInputs: new Set(), tileBusy: false, parallaxBusy: false, continuationSource: {},
+    StudioContinuation: {normalize: value => ({...value}), sourceInput: () => 'reference', sourceLabel: () => 'Reference', unfilled: () => []},
+  });
+  vm.runInContext(reattachSource + '\nthis.reattachSource=reattachSource;', box);
+  assert.ok(box.readinessItems().items.some(item => item.code === 'vary'), 'blocked before');
+  await box.reattachSource();
+  assert.notEqual(box.continuationState.reference_file, claim.reference_file, 'the claim follows the fresh copy');
+  assert.ok(box.readinessItems().items.some(item => item.code === 'vary'), 'Generate stays blocked after Put the source back');
+});

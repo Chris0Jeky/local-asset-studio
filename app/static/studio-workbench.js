@@ -787,6 +787,8 @@
       if(result.sha256!==claim.source_sha256||result.parent_asset!==claim.source_asset_id||result.context?.sha256!==claim.source_sha256)throw Error('The library copy of the source changed. Reopen Continue with this asset.');
       // A fresh staged copy has a fresh name; the claim follows it, the identity (source hash) does not change.
       const renamed=StudioContinuation.normalize({...claim,reference_file:result.file});if(!renamed)throw Error('The staged copy could not be verified. Reopen Continue with this asset.');
+      // A Vary block on this continuation follows the renamed copy: putting the source back does not apply the carried stack.
+      if(varyUnapplied?.stamp===stamp)varyUnapplied={...varyUnapplied,stamp:JSON.stringify(renamed)};
       continuationState=renamed;continuationSource=result.context;secondPicture=null;secondPanel.hidden=true;
       attachContinuationSource(result,false);pendingInputs.delete(StudioContinuation.sourceInput(selected.continuation_capability)==='last_reference'?'lastReference':'reference');
       draftDirty=true;saveDraft();syncCreate();announce(StudioContinuation.sourceLabel(selected)+' holds the source again. No generation submitted.');
