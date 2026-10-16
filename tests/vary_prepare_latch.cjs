@@ -27,8 +27,9 @@ function context(extra) {
     submitting: false, handoffBusy: false, pickerBusy: false, restoring: false, pairActionBusy: false, poseBusy: false,
     referencePending: 0, varyBusy: false, catalog: {presets: [{id: 'plain', name: 'Plain'}]},
     draftDirty: false, recipeTemplateHash: null, selectedPositive: 'kept words',
-    calls: [], notices: [],
-    q: () => ({files: [], value: '1', textContent: '', open: false, close() {}}),
+    calls: [], notices: [], asked: [], answer: true, typed: '', staged: false,
+    window: {confirm(text) { sandbox.asked.push(text); return sandbox.answer; }}, stagedPicture: () => sandbox.staged,
+    q: (selector) => ({files: [], value: selector === '#positive' ? sandbox.typed : '1', textContent: '', open: false, close() {}}),
     referencesReady: () => true, posePositionDirty: () => false, poseHeldArtifact: () => null, poseSizeHold: () => null,
     i2vModeBlocker: () => null, continuationBlockerItems: () => [],
     announce(message, error) { sandbox.notices.push({message, error}); },
@@ -70,6 +71,33 @@ test('prepare new seed checks the recipe against the current graph', async () =>
   await box.prepareVary({dataset: {uxVary: 'reseed', asset: 'asset-1', preset: 'plain', job: 'job-1'}});
   assert.ok(box.calls.includes('/api/recipe-check'), box.calls);
   assert.equal(box.recipeTemplateHash, 'checked-graph');
+});
+
+const press = {dataset: {uxVary: 'reseed', asset: 'asset-1', preset: 'plain', job: 'job-1'}};
+
+test('Vary asks before replacing the owner own wording, and declining changes nothing (#1213)', async () => {
+  const box = context({typed: 'my own words', answer: false, applySaved() { throw Error('applied'); }});
+  await box.prepareVary(press);
+  assert.equal(box.asked.length, 1, 'one question');
+  assert.deepEqual(box.calls, [], 'nothing was fetched or posted');
+  assert.equal(box.varyBusy, false);
+  assert.match(box.notices.at(-1).message, /Nothing changed/);
+  assert.notEqual(box.notices.at(-1).error, true);
+  box.answer = true; box.applySaved = () => {};
+  await box.prepareVary(press);
+  assert.equal(box.asked.length, 2);
+  assert.ok(box.calls.includes('/api/recipe-check'), 'accepting prepares the round');
+});
+
+test('Vary asks when a picture is staged, and not for the recipe default wording on an empty setup (#1213)', async () => {
+  const staged = context({staged: true});
+  await staged.prepareVary(press);
+  assert.equal(staged.asked.length, 1);
+  assert.match(staged.asked[0], /staged picture/);
+  const plain = context({typed: 'recipe default', selected: {id: 'plain', name: 'Plain', defaults: {positive: 'recipe default'}}});
+  await plain.prepareVary(press);
+  assert.equal(plain.asked.length, 0, 'default wording and no picture is not owner work');
+  assert.ok(plain.calls.includes('/api/recipe-check'));
 });
 
 test('putting the source back keeps a Vary carry-failure block on the same continuation', async () => {
