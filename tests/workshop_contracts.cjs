@@ -242,6 +242,7 @@ test('workshop field borders reach 3:1 against field fill and panel in every ski
   const fs = require('node:fs');
   const path = require('node:path');
   const css = fs.readFileSync(path.join(__dirname, '../app/static/workshop.css'), 'utf8');
+  const immersive = fs.readFileSync(path.join(__dirname, '../app/static/workshop-immersive-core.css'), 'utf8');
   const channel = v => {
     const c = v / 255;
     return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
@@ -268,10 +269,11 @@ test('workshop field borders reach 3:1 against field fill and panel in every ski
   const fieldVar = (fieldRule[1].match(/border-color\s*:\s*var\((--[\w-]+)\)/) || [])[1];
   assert.ok(fieldVar, 'workshop field rule names no border-color token');
   const skins = {atelier: {...base}};
-  for (const [, skin, body] of css.matchAll(/body\.workshop-active\[data-workshop-skin="([^"]+)"\]\s*\{([^}]*)\}/g)) {
-    skins[skin] = {...base, ...tokensOf(body)};
+  // Skin palettes live in both stylesheets (Retro Anime's is in workshop-immersive-core.css); later files win, as in the page.
+  for (const sheet of [css, immersive]) for (const [, skin, body] of sheet.matchAll(/body\.workshop-active\[data-workshop-skin="([^"]+)"\]\s*\{([^}]*)\}/g)) {
+    skins[skin] = {...(skins[skin] || base), ...tokensOf(body)};
   }
-  assert.ok(Object.keys(skins).length >= 3, 'expected atelier plus arcade and sakura skins, got ' + Object.keys(skins).join(','));
+  assert.deepEqual(Object.keys(skins).filter(k => Object.hasOwn(W.SKINS, k)).sort(), Object.keys(W.SKINS).sort(), 'every registered skin needs its palette checked');
   for (const [skin, tokens] of Object.entries(skins)) {
     const border = tokens[fieldVar];
     const fill = tokens['--wk-input'];
