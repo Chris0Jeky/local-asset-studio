@@ -1670,11 +1670,12 @@ class Studio:
                         data = record
                     else: graph = record
             except (OSError, ValueError) as exc:
-                reason = f"{path.name}: {exc}"
+                reason = f"{path.name}: {exc}"; known = read_json(state_path, {}) if path != state_path else {}
+                ids = [i for i in (known.get("prompt_ids") or []) if isinstance(i, str)] if isinstance(known, dict) else []
                 # Missing evidence collections cannot prove non-submission or authorize a disposition.
                 self.jobs[state_path.parent.name] = {"id": state_path.parent.name, "status": "uncertain", "created_at": 0,
                     "preset_name": "Unreadable run record", "controls": {}, "outputs": [], "run_path": str(state_path.parent),
-                    "record_error": reason, "message": f"The run record could not be read ({reason}). Nothing was resubmitted. Inspect experiments/runs/{state_path.parent.name}/ before deleting it."}
+                    "record_error": reason, "message": f"The run record could not be read ({reason}). Nothing was resubmitted." + (f" Known ComfyUI prompt IDs: {', '.join(ids[:8])}." if ids else "") + f" Inspect experiments/runs/{state_path.parent.name}/ before deleting it."}
                 continue
             if isinstance(data, dict) and isinstance(graph, dict) and data.get("id"):
                 data["graph"] = graph

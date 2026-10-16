@@ -820,7 +820,9 @@ class ServerTests(unittest.TestCase):
         self.assertFalse(public['prompt_ids']);self.assertEqual(public['submissions'],[])
         self.assertEqual(public['run_path'],str(directory))
         self.assertIn('The run record could not be read ('+filename+': ',public['message'])
-        self.assertIn('Nothing was resubmitted. Inspect experiments/runs/'+bad['id']+'/ before deleting it.',public['message'])
+        self.assertIn('Nothing was resubmitted.',public['message']);self.assertIn('Inspect experiments/runs/'+bad['id']+'/ before deleting it.',public['message'])
+        # A readable state.json still tells the owner which ComfyUI prompts are known; a broken one cannot.
+        self.assertEqual('Known ComfyUI prompt IDs: '+', '.join(bad['prompt_ids']) in public['message'],filename=='workflow.json')
         for key in ('never_submitted','can_stop_tracking','can_resume_tracking','can_abandon','can_put_away','can_cancel'):
             self.assertFalse(public[key],key)
         self.assertFalse(server.submission_evidence.never_submitted(job))
