@@ -28,6 +28,7 @@ const assetDefaultRunLabel='Agent lab';
 function assetRunLabelChoice(){
   const text=String($('#bulkRunLabel').value??'').trim()||assetDefaultRunLabel;
   if([...text].length>80 || [...text].some(c=>c!==' ' && /[\p{C}\p{Z}]/u.test(c)))throw Error('Use a run label of 1 to 80 printable characters, without tabs or line breaks. Nothing was changed.');
+  if(text.startsWith('Make · '))throw Error('Run labels starting "Make · " are kept for pictures made in Make. Choose another label. Nothing was changed.');
   return text;
 }
 // A title still equal to the registered default ("<recipe> · N") says nothing; the prompt excerpt does.

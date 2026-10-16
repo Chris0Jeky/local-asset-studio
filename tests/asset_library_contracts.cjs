@@ -181,6 +181,10 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
     assert.equal(s.run('assetSelection.size'),0);assert.equal(s.el('#assetSource').hidden,false);assert.deepEqual(shown(s),['a1']);
     assert.match(s.el('#assetMessage').textContent,/^Marked 2 as agent runs \(Agent lab\)\. The Mine view hides them.*Mark as mine reverses it/);
   });
+  await test('Mark as agent run refuses the Make label prefix, so the action cannot contradict its result',async()=>{
+    const s=library();s.run("assetSelection=new Set(['a0'])");s.el('#bulkRunLabel').value='Make · nightly';await bulkClick(s,'agent_run');
+    assert.equal(s.writes.length,0);assert.match(s.el('#assetMessage').textContent,/kept for pictures made in Make/);
+  });
   await test('Mark as mine clears the label; a typed label is trimmed and an unprintable one is never sent',async()=>{
     const s=library();s.run("assetState.assets.forEach(a=>{a.run_label='Agent lab';});chooseAssetSource('all');assetSelection=new Set(['a1'])");
     let p=bulkClick(s,'mine');assert.deepEqual(s.metadata(0),{ids:['a1'],action:'edit',run_label:null});s.accept(0);await p;
