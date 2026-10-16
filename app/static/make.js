@@ -92,7 +92,7 @@
   const draftOf=(look,tp=tunedPreset(look))=>{const n=fullSteps(look,tp);return bound(tp,'steps')&&n>=2?halve(n):0;};
   function draftMarkup(look){const tp=tunedPreset(look),n=speed(presetFor(look))[0]==='slow'?draftOf(look,tp):0,t=state.tune[look.id];if(!n)return'';
     return '<label class="make-check"><input type="checkbox" id="makeDraft" data-steps="'+n+'"'+(t?.steps===n?' checked':'')+' aria-describedby="makeDraftHint"> Draft first · '+n+' steps, rougher but quicker</label><small id="makeDraftHint" class="muted">Then “Make the final” on the draft reruns it at the full '+fullSteps(look,tp)+' steps.</small>';}
-  const draftRun=run=>{const look=state.looks?.find(l=>l.id===run.lookId);return!!look&&run.scene&&run.tune?.steps!=null&&(run.job.outputs||[]).length>0&&run.tune.steps===draftOf(look,byId(run.tune.preset)||presetFor(look));};
+  const draftRun=run=>{const look=state.looks?.find(l=>l.id===run.lookId);return!!look&&run.scene&&run.tune?.steps!=null&&FINAL.includes(run.job.status)&&(run.job.outputs||[]).length>0&&run.tune.steps===draftOf(look,byId(run.tune.preset)||presetFor(look));};
   const clamp=v=>Math.min(2,Math.max(0,Math.round((Number(v)||0)*20)/20));
   function tuneSummary(look,t){
     const p=presetFor(look),base=Object.fromEntries(adapters(look).map(a=>[a.key,a])),parts=[];if(!t)return'';
