@@ -104,8 +104,8 @@ Refs #278 (16 October 2026 live journey audit, J1 and item 24).
 ## Make: a goal-first way in — 15 October 2026
 
 Owner ask (15 October 2026): the Studio was too clunky; someone who wants, say, a high-end anime picture should get there
-without knowing models, adapters or quality tags. **Make** is now the first screen (`#make`; the sidebar's first entry, and
-Overview stays one press away).
+without knowing models, adapters or quality tags. **Make** is now the first screen (`#make`; the sidebar's first entry).
+Overview has left the navigation: `#home` and `#overview` open Make (#18).
 
 - **Goals by outcome**: Anime character, Scene or background, Painted illustration, Photo, Game item or icon; and, from a
   picture you have: Change a picture, Fix or upscale, Restyle, Character in a new pose, Animate, Picture to 3D.
@@ -485,6 +485,7 @@ PASS means the journey completed in the interface — not that the result would 
 ### Per-case notes against the success condition
 
 - **`first-image-from-brief`** — recipe chosen, brief typed, run control enabled, nothing submitted.
+  Starts on Make (`#make`). Before 16 Oct 2026 its driver began on Overview (`#home`), which is retired (#18).
   One dead end: the "what to avoid" field could not be typed into (below).
 - **`reference-edit-one-source`** — the deliberate wrong turn happened first: a text-only recipe was
   chosen, and the attempt to bring in a source found nothing to press. Recovery worked: search,
