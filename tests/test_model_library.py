@@ -103,11 +103,13 @@ class ModelLibraryTests(unittest.TestCase):
     def test_inventory_skips_a_file_deleted_before_stat(self):
         target=self.lib.destination(self.asset);target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(self.body)
         extra=target.parent/'vanished.safetensors';extra.write_bytes(self.body)
-        real_stat=Path.stat
+        real_is_file=Path.is_file
         def raced(self,*args,**kwargs):
-            if self==extra:raise FileNotFoundError(str(self))
-            return real_stat(self,*args,**kwargs)
-        with patch.object(Path,'stat',raced):
+            # The file is there when is_file() looks and gone before the size stat: a real deletion, on any Python version.
+            found=real_is_file(self,*args,**kwargs)
+            if found and self==extra:self.unlink()
+            return found
+        with patch.object(Path,'is_file',raced):
             snapshot=self.lib.snapshot()
         names={row['file'] for row in snapshot['inventory']}
         self.assertIn('loras/demo.safetensors',names);self.assertNotIn('loras/vanished.safetensors',names)
