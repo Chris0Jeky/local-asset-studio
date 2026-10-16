@@ -1429,9 +1429,21 @@ class ServerTests(unittest.TestCase):
         graph=json.loads(json.dumps(GRAPH));graph['1']['inputs']['lora']='style.safetensors'
         (self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph));s=self.studio()
         for bad in (True,False):
-            with self.subTest(bad=bad),self.assertRaisesRegex(server.StudioError,'number or short text'):s.prepare({'preset_id':'demo','controls':{'lora':bad}})
+            with self.subTest(bad=bad),self.assertRaisesRegex(server.StudioError,'safetensors filename'):s.prepare({'preset_id':'demo','controls':{'lora':bad}})
         _,bound,_,_,_=s.prepare({'preset_id':'demo','controls':{'lora':'other.safetensors'}})
         self.assertEqual(bound['1']['inputs']['lora'],'other.safetensors')
+
+    def test_lora_slot_values_are_checked_whatever_the_bound_input_holds(self):
+        # A filename-bound slot takes only a bare .safetensors name, never a number or a path; any other binding, including an
+        # input the graph leaves unset, is a 0-2 strength. Raw text or 99 once reached the workflow and failed late in ComfyUI.
+        graph=json.loads(json.dumps(GRAPH));graph['1']['inputs']['lora']='style.safetensors'
+        (self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph));s=self.studio()
+        for bad in (99,0.5,'../escape.safetensors','x'*9000,'style.ckpt'):
+            with self.subTest(filename=bad),self.assertRaisesRegex(server.StudioError,'safetensors filename'):s.prepare({'preset_id':'demo','controls':{'lora':bad}})
+        del graph['1']['inputs']['lora'];(self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph));s=self.studio()
+        for bad in ('abc','style.safetensors',5,-1,float('nan')):
+            with self.subTest(unset=bad),self.assertRaisesRegex(server.StudioError,'lora must be'):s.prepare({'preset_id':'demo','controls':{'lora':bad}})
+        _,bound,_,_,_=s.prepare({'preset_id':'demo','controls':{'lora':'1.5'}});self.assertEqual(bound['1']['inputs']['lora'],1.5)
 
     def test_disabled_slots_leave_the_graph_and_rewire_model_edges(self):
         self.lora_stack(); s=self.studio()
