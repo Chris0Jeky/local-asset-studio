@@ -16,7 +16,7 @@
     const c=command(record);
     if(!c||receipt.workspace_id!==record.payload.workspace_id)throw Error('Receipt Workspace does not match retained evidence.');
     if(receipt.request_id!==c.request_id||!['unknown','applied'].includes(receipt.status))throw Error('Receipt request identity or status is invalid.');
-    if(receipt.status==='applied'&&(receipt.action!==c.action||!same(receipt.updated,c.ids)||!keys(receipt.revisions,c.ids)||c.ids.some(id=>receipt.revisions[id]!==c.expected_revisions[id]+(Array.isArray(receipt.unchanged)&&receipt.unchanged.includes(id)?0:1))))throw Error('Historical receipt does not match every retained target and revision.');
+    if(receipt.status==='applied'&&(receipt.action!==c.action||!same(receipt.updated,c.ids)||!keys(receipt.revisions,c.ids)||c.ids.some(id=>receipt.revisions[id]!==c.expected_revisions[id]+(['trash','restore'].includes(c.action)&&Array.isArray(receipt.unchanged)&&receipt.unchanged.includes(id)?0:1))))throw Error('Historical receipt does not match every retained target and revision.');
   }
   function validate(record,value){
     if(!keys(value,['format','workspace_id','observed_at','targets','collection','generation_submitted'])||value.format!==format||value.generation_submitted!==false||typeof value.observed_at!=='number'||!Number.isFinite(value.observed_at)||value.observed_at<0)throw Error('Invalid bounded lifecycle observation.');
