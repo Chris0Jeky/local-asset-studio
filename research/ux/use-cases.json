@@ -966,6 +966,26 @@
           "expect": "no Style strength control is offered there"
         }
       ]
+    },
+    {
+      "id": "make-anime-look-chosen-model-and-lora",
+      "goal": "Make a high-end anime picture on a model and adapter I choose, then tweak quality and the seed, without leaving Make or knowing the full editor's recipes.",
+      "starting_view": "make",
+      "success_condition": "Tune this look is folded shut until opened; it names the look's model and adapters in plain words, offers only models of the same type (not the look's own file again, not another model type), lists only installed adapters made for that model type, shows an added adapter's trigger word and writes it into the wording; steps and a locked seed carry into the prepared request; Open in the full editor loads the chosen model's recipe with the added adapter, finer steps and seed 4242; no generation is requested.",
+      "wrong_turn": false,
+      "steps": [
+        {"intent": "say this is an anime character", "expect": "looks are shown as example pictures"},
+        {"intent": "choose an Anima look that uses an adapter", "expect": "one description box and Generate, with Tune this look folded shut"},
+        {"intent": "open Tune this look", "expect": "the model and the look's adapters are named in plain words"},
+        {"intent": "see which models it can switch to", "expect": "only models of the same type; one that needs a download says so"},
+        {"intent": "switch to Pearly Anima Mix", "expect": "the summary says the model was tuned"},
+        {"intent": "search the installed adapters for koukouya", "expect": "the search lists only adapters made for this model type"},
+        {"intent": "add it", "expect": "a new adapter row with its strength and trigger word"},
+        {"intent": "ask for finer quality", "expect": "steps go up from the look's own count"},
+        {"intent": "turn off different pictures each time", "expect": "the seed field unlocks"},
+        {"intent": "lock seed 4242", "expect": "the summary says the seed is locked"},
+        {"intent": "open the prepared request in the full editor", "expect": "the chosen model's recipe with the added adapter, its trigger in the words, finer steps and seed 4242; nothing runs"}
+      ]
     }
   ]
 }
