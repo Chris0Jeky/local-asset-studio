@@ -377,6 +377,16 @@ def run(shots):
         page.locator('[data-make-character-restore="character-0"]').click(); page.wait_for_selector('[data-make-character="character-0"]')
         assert posted('/api/characters')[-1] == {'action': 'restore', 'id': 'character-0', 'expected_revision': 4} and not page.locator('.make-away').count()
         assert page.evaluate('document.activeElement.dataset.makeCharacter') == 'character-0'
+        # A failed list read keeps the list already shown and says so, after the command's own saying (Codex review of #1466).
+        page.route('**/api/characters', lambda route: route.fulfill(status=500, json={'error': 'fixture outage'}) if route.request.method == 'GET' else route.continue_())
+        page.locator('[data-make-character-away="character-0"]').click(); page.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("could not be refreshed")')
+        assert page.locator('[data-make-character="character-0"]').count() == 1 and fixture_card(0)['trashed_at'], 'the list shown is kept although the server put it away'
+        assert page.locator('#makeStatus').inner_text().startswith('Put'), page.locator('#makeStatus').inner_text()
+        page.unroute('**/api/characters')
+        page.locator('[data-make-character-away="character-0"]').click(); page.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("changed somewhere else")')
+        assert 'could not be refreshed' not in page.locator('#makeStatus').inner_text() and page.locator('[data-make-character]').count() == 0, 'a good read replaces the list'
+        if not page.locator('[data-make-character-restore="character-0"]').is_visible(): page.locator('.make-away summary').click()
+        page.locator('[data-make-character-restore="character-0"]').click(); page.wait_for_selector('[data-make-character="character-0"]')
         assert len(jobs()) == before_manage + 2, 'managing characters submitted nothing (the two jobs are the avoid-words checks)'
         for a, (review, lineage) in zip(fixture.ASSETS, kept_state): a.update(review=review, lineage=lineage)
 

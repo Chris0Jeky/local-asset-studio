@@ -39,7 +39,7 @@
   const licence=p=>nonCommercial(p)?'<small class="make-licence" title="'+escape(p.commercial_note)+'">Non-commercial</small>':'';
   const FINAL=['completed','failed','partial','uncertain','not_submitted','cancelled','abandoned'];
   const POLISH={face:'Fix face',details:'Fix hands and details',upscale:'Upscale 2\u00d7'};
-  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',poseRoute:'copy',pose:null,posePicking:false,compare:false,compareLooks:[],characters:[],character:null,allPictures:false,charSave:null,charEdit:null,charMigrate:null,charForm:{},openers:new Set(),noteGone:false};
+  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',poseRoute:'copy',pose:null,posePicking:false,compare:false,compareLooks:[],characters:[],character:null,allPictures:false,charSave:null,charEdit:null,charMigrate:null,charStale:false,charForm:{},openers:new Set(),noteGone:false};
   try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(GOALS.some(g=>g.id===saved.goal))state.goal=saved.goal;if(typeof saved.look==='string')state.look=saved.look;}catch{}
   const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,...r})=>({...r,job:{id}}))]).slice(0,6).map(({job,look,lookId,goal,scene,tune,tuned,group,title,fills,redo})=>({id:job.id,look,lookId,goal,scene,tune,tuned,group,title,fills,redo}))}));}catch{}};
   let restoredRuns=false,savedRuns=[];try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(Array.isArray(saved.runs))savedRuns=saved.runs.filter(r=>r&&typeof r.id==='string').slice(0,6);}catch{}
@@ -484,21 +484,24 @@
     try{
       if(mode==='edit'){const c=(state.characters||[]).find(x=>x.id===id);if(!c)throw Error('That character is no longer here.');
         await json('/api/characters',{action:'edit',id,expected_revision:c.revision,name,body:{who,...(clothes?{clothes}:{}),...(avoid?{avoid}:{}),...(c.body.look_id?{look_id:c.body.look_id}:{})}});
-        clearCharForms();await loadCharacters();refreshCharacters();q('[data-make-character-edit="'+CSS.escape(id)+'"]')?.focus();say('Saved the changes to “'+name+'”.');return;}
+        clearCharForms();await loadCharacters();refreshCharacters();q('[data-make-character-edit="'+CSS.escape(id)+'"]')?.focus();sayChars('Saved the changes to “'+name+'”.');return;}
       await json('/api/characters',{action:'create',kind:'character',name,canon_asset_id:id,body:{who,...(clothes?{clothes}:{}),...(f.look?{look_id:f.look}:{})}});
-      clearCharForms();await loadCharacters();renderRuns();refreshCharacters();say('Saved “'+name+'”. Choose it under Your characters in Character in a new pose.');}
+      clearCharForms();await loadCharacters();renderRuns();refreshCharacters();sayChars('Saved “'+name+'”. Choose it under Your characters in Character in a new pose.');}
     catch(error){if(button)button.disabled=false;
-      if(error.status===409&&mode==='edit'){clearCharForms();await loadCharacters();refreshCharacters();say('“'+name+'” changed somewhere else, so it was reloaded. Your edit was not saved; edit again if you still want it.');return;}
+      if(error.status===409&&mode==='edit'){clearCharForms();await loadCharacters();refreshCharacters();sayChars('“'+name+'” changed somewhere else, so it was reloaded. Your edit was not saved; edit again if you still want it.');return;}
       say('Could not save the character: '+error.message);}
   }
   // Put away and Restore name the revision they read. A 409 reloads the list and changes nothing.
   async function characterCommand(id,action){const c=(state.characters||[]).find(x=>x.id===id);if(!c)return;
     try{await json('/api/characters',{action,id,expected_revision:c.revision});if(state.character===id&&action==='trash')state.character=null;if(state.charEdit===id)clearCharForms();await loadCharacters();refreshCharacters();
-      if(action==='trash'){q('.make-away summary')?.focus();say('Put “'+c.name+'” away. It waits under Put away if you want it back.');}
-      else{q('[data-make-character="'+CSS.escape(id)+'"]')?.focus();say('Restored “'+c.name+'”.');}}
-    catch(error){if(error.status===409){await loadCharacters();refreshCharacters();say('“'+c.name+'” changed somewhere else, so it was reloaded. Nothing was changed.');return;}say('Could not '+(action==='trash'?'put it away':'restore it')+': '+error.message);}
+      if(action==='trash'){q('.make-away summary')?.focus();sayChars('Put “'+c.name+'” away. It waits under Put away if you want it back.');}
+      else{q('[data-make-character="'+CSS.escape(id)+'"]')?.focus();sayChars('Restored “'+c.name+'”.');}}
+    catch(error){if(error.status===409){await loadCharacters();refreshCharacters();sayChars('“'+c.name+'” changed somewhere else, so it was reloaded. Nothing was changed.');return;}say('Could not '+(action==='trash'?'put it away':'restore it')+': '+error.message);}
   }
-  async function loadCharacters(){try{state.characters=(await json('/api/characters')).characters||[];}catch{state.characters=[];}}
+  // A failed read keeps the list already shown and says so; the saying that follows a command appends it, so it is not overwritten.
+  const STALE=' Your characters could not be refreshed, so the list shown may be out of date.';
+  async function loadCharacters(){try{state.characters=(await json('/api/characters')).characters||[];state.charStale=false;}catch{state.charStale=true;say(STALE.trim());}}
+  const sayChars=text=>say(text+(state.charStale?STALE:''));
   // Picture goals that take a character list the saved ones first. Choosing one picks its canon as it is and fills its words.
   const CHARACTER_GOALS=['edit','repair','restyle','combine'];
   function characterChooser(g){const list=usableCharacters(),away=awayCharacters();if(!CHARACTER_GOALS.includes(g.intent)||!list.length&&!away.length)return'';
