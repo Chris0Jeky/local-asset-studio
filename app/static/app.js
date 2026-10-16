@@ -159,15 +159,60 @@ function renderLoraSlots() {
       const list = extra && !base.includes(extra) ? [extra, ...base] : base;
       const chosen = extra || authored;
       return '<div class="lora-slot"><label class="lora-file"><span>Slot ' + (index + 1) + '</span><select data-key="' + nameKey + '">' + (list.length ? '' : '<option value="">No installed adapter found</option>') + list.map(v => '<option' + (v === chosen ? ' selected' : '') + '>' + esc(v) + '</option>').join('') + '</select></label>'
-        + '<label class="lora-strength"><span>Strength</span><input data-key="' + key + '" type="number" min="0" max="2" step="0.05"></label>'
+        + '<label class="lora-strength"><span>Strength <small class="lora-range" title="Recommended strength range" data-range="' + esc(key) + '"></small></span><input data-key="' + key + '" type="number" min="0" max="2" step="0.05"></label>'
         + '<small class="lora-hint" data-hint="' + esc(key) + '"></small></div>';
     }).join('');
 }
+// #278 J1: settings-kb trigger_position is start / end / anywhere / none (one entry says "start of prompt").
+function triggerPlace(position) {
+  const raw = String(position || '').trim(), p = raw.toLowerCase().replace(/\s+of\s+(the\s+)?prompt$/, '');
+  return !p || p === 'none' ? '' : ({start:'put it at the start of the prompt', end:'put it at the end of the prompt', anywhere:'put it anywhere in the prompt'})[p] || 'placement: ' + raw;
+}
+const loraRange = entry => Array.isArray(entry?.strength) ? entry.strength.filter(Number.isFinite) : [];
+// A newly chosen adapter starts at the knowledge base's recommended strength; a recorded 0 means "off in recipes", not a
+// recommendation, so it falls back to the slot's authored strength, else 1.0, kept inside the recorded range.
+function recommendedStrength(key, entry) {
+  if (Number(entry?.default) > 0) return Number(entry.default);
+  const authored = Number(selected?.defaults?.[key]), top = Math.max(...loraRange(entry), 0);
+  return authored > 0 ? authored : top > 0 ? Math.min(1, top) : 1;
+}
+let autoTriggers = {}; // slot key -> the exact fragment this page added to the prompt for that slot
+const promptHas = (text, trigger) => String(text).toLowerCase().includes(String(trigger).toLowerCase());
+function addTrigger(key, auto) {
+  const field = $('#positive'), entry = loraEntry(getControl(loraNameKey(key))?.value), trigger = entry?.trigger;
+  if (!field || !selected?.positive || !trigger) return '';
+  if (promptHas(field.value, trigger)) return 'The trigger ' + trigger + ' is already in the prompt.';
+  const text = field.value.replace(/[\s,]+$/, ''), start = /^start/i.test(String(entry.trigger_position || '').trim());
+  const fragment = start ? trigger + (text ? ', ' : '') : (text ? ', ' : '') + trigger;
+  field.value = start ? fragment + field.value : text + fragment;
+  if (auto) autoTriggers[key] = fragment;
+  field.dispatchEvent(new Event('input', {bubbles: true}));
+  return 'Added the trigger ' + trigger + ' to the ' + (start ? 'start' : 'end') + ' of the prompt.';
+}
+// Only the exact fragment added for this slot is removed; text the user edited around it stays as typed.
+function dropAutoTrigger(key) {
+  const fragment = autoTriggers[key], field = $('#positive'); delete autoTriggers[key];
+  if (!fragment || !field || !field.value.includes(fragment)) return '';
+  field.value = field.value.replace(fragment, ''); field.dispatchEvent(new Event('input', {bubbles: true}));
+  return 'Removed the trigger ' + fragment.replace(/^, |, $/g, '') + ' added for the previous adapter.';
+}
+function chooseLora(key) {
+  const removed = dropAutoTrigger(key), entry = loraEntry(getControl(loraNameKey(key))?.value), input = getControl(key), strength = recommendedStrength(key, entry);
+  if (input) input.value = String(strength);
+  return [removed, 'Strength set to ' + strength + (Number(entry?.default) > 0 ? ' (recommended).' : ' (no recommended strength recorded).'), addTrigger(key, true)].filter(Boolean).join(' ');
+}
 function updateLoraHints() {
   activeLoraSlots().forEach(key => {
-    const hint = document.querySelector('[data-hint="' + key + '"]'); if (!hint) return;
-    const entry = loraEntry(getControl(loraNameKey(key))?.value);
-    hint.textContent = !entry ? '' : entry.trigger ? 'Trigger: ' + entry.trigger + (entry.trigger_position && entry.trigger_position !== 'none' ? ' · place it at the ' + entry.trigger_position + ' of the prompt' : '') : (entry.label || 'No trigger word');
+    const hint = document.querySelector('[data-hint="' + key + '"]'), range = document.querySelector('[data-range="' + key + '"]'); if (!hint) return;
+    const entry = loraEntry(getControl(loraNameKey(key))?.value), span = loraRange(entry), place = triggerPlace(entry?.trigger_position);
+    if (range) range.textContent = span.length ? '· ' + (span[0] === span[1] ? span[0] : span[0] + '–' + span[1]) : '';
+    if (!entry) { hint.innerHTML = ''; return; }
+    const recommended = Number(entry.default) > 0 ? Number(entry.default) : null, off = Number(getControl(key)?.value) === 0;
+    const present = entry.trigger && promptHas($('#positive')?.value || '', entry.trigger);
+    const words = (entry.trigger ? 'Trigger: ' + entry.trigger + (present ? ' · in the prompt' : place ? ' · ' + place : '') : (entry.label || 'No trigger word')) + (recommended ? ' · recommended ' + recommended : '');
+    hint.innerHTML = '<span>' + esc(words) + '</span>'
+      + (entry.trigger && !present && selected?.positive ? ' <button type="button" class="subtle" data-lora-trigger="' + esc(key) + '">Add trigger to prompt</button>' : '')
+      + (off ? ' <button type="button" class="subtle" data-lora-use="' + esc(key) + '">Use ' + esc(recommendedStrength(key, entry)) + '</button>' : '');
   });
 }
 function familyRecipes() { return atelierRecipes.filter(r => r.preset_id === selected?.id); }
@@ -285,7 +330,7 @@ function renderSelected() {
     if (key === 'lora' && typeof selected.defaults?.lora === 'string') { type='text'; attrs=''; label='LoRA filename'; }
     return '<label>' + label + '<input data-key="' + key + '" type="' + type + '" ' + attrs + '>' + (key === 'frames' ? '<small>' + (selected.family==='MiniMax H3'?'24fps · 124 ≈ 5.2s · use 17k+5 frames':'24fps · 81 ≈ 3.4s · use 4k+1 frames') + '</small>' : '') + '</label>';
   }).join('');
-  renderLoraSlots();
+  renderLoraSlots(); autoTriggers = {};
   controlKeys.forEach(k => { const input=getControl(k); if (input) input.value=selected.defaults?.[k] ?? ''; });
   if (selected.i2v_modes?.length) applyI2VMode(selected.i2v_default_mode || selected.i2v_modes[0].id, false);
   updateLoraHints(); renderRecipeChoices();
@@ -777,8 +822,10 @@ $('#wildcardChips')?.addEventListener('click', e => {
 $('#variants').onclick=e=>{const i=e.target.closest('[data-variant]')?.dataset.variant;if(i===undefined)return;const v=(selected.variants||[{name:'3-seed audition',batch_count:3}])[i];const controls=selected.reference?StudioContinuation.settings(selected,v.controls,values()):(v.controls||{});Object.entries(controls).forEach(([k,val])=>{const input=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(input)input.value=val;});$('#batch').value=v.batch_count||1;updateLoraHints();updateReady();scheduleTimeEstimate();message(v.name+' loaded. Press Generate to run.');recipeChanged();};
 $('#controls').oninput=()=>updateReady();
 $('#controls').onchange=e=>{if(e.target.id==='i2vMode')applyI2VMode(e.target.value);else updateReady();};
-  $('#loraSlots').onchange=updateLoraHints;
-  document.addEventListener('input',e=>{if(e.target===$('#positive'))updateReady();else if(e.target.closest('#createView'))scheduleTimeEstimate();});
+  // Choosing an adapter file sets its recommended strength and adds its known trigger; strength 0 (off) drops a trigger this page added.
+  $('#loraSlots').onchange=e=>{const key=e.target.dataset?.key||'',slot=loraSlotKeys.find(k=>key===loraNameKey(k));if(slot)message(chooseLora(slot));else if(loraSlotKeys.includes(key)&&Number(e.target.value)===0){const note=dropAutoTrigger(key);if(note)message(note);}updateLoraHints();updateReady();};
+  $('#loraSlots').onclick=e=>{const add=e.target.closest('[data-lora-trigger]'),use=e.target.closest('[data-lora-use]');if(add)message(addTrigger(add.dataset.loraTrigger,false)||'This adapter has no recorded trigger word.');else if(use)message(chooseLora(use.dataset.loraUse));else return;updateLoraHints();updateReady();};
+  document.addEventListener('input',e=>{if(e.target===$('#positive')){updateReady();updateLoraHints();}else if(e.target.closest('#createView'))scheduleTimeEstimate();});
   document.addEventListener('change',e=>{if(e.target===$('#positive'))updateReady();else if(e.target.closest('#createView'))scheduleTimeEstimate();});
   document.addEventListener('click',e=>{if(e.target.closest('#createView')){if(typeof setTimeout==='function')setTimeout(scheduleTimeEstimate,0);else scheduleTimeEstimate();}});
 const recipeDefaultSettings=()=>Object.fromEntries(Object.entries(selected.defaults||{}).filter(([key])=>!['positive','negative','reference','last_reference'].includes(key)));
