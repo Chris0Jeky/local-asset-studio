@@ -850,6 +850,14 @@
     }catch(error){say((started?'Started '+started+' of '+list.length+'; the rest were not sent. ':'')+error.message);}
     finally{state.busy=false;syncOperation();}
   }
+  // Your pictures lives in this browser; a new browser starts it from the library's Make pictures (audit v3 N6): the newest six
+  // Make runs by their "Make · " label, read back from their job records. Their words are not stored, so Edit and re-run is not offered.
+  async function seedRuns(){
+    try{const seen=new Set(),firsts=[];for(const a of await loadPictures()){if(!String(a.run_label||'').startsWith('Make · ')||typeof a.job_id!=='string'||seen.has(a.job_id))continue;seen.add(a.job_id);firsts.push(a);if(firsts.length===6)break;}
+      const runs=await Promise.all(firsts.map(async a=>{try{const job=await json('/api/jobs/'+encodeURIComponent(a.job_id)),name=a.run_label.replace(/^Make · (Compare · )?/,''),look=state.looks?.find(l=>l.name===name);
+        return{job,look:name,lookId:look?.id||null,goal:GOALS.find(g=>g.looks?.includes(look?.id))?.id||null,scene:null,title:a.prompt_excerpt||null};}catch{return null;}}));
+      return runs.filter(Boolean);}catch{return[];}
+  }
   async function load(){
     state.error='';
     // Speed, readiness and history read the recipe catalog that app.js loads; wait for it briefly instead of guessing.
@@ -863,6 +871,7 @@
     // again, and one whose read fails is kept and checked again with back-off (#1438), never taken for deleted.
     const restored=await Promise.all(savedRuns.map(async r=>{try{return{...r,job:await json('/api/jobs/'+encodeURIComponent(r.id))};}catch(error){return error.status===404?null:{...r,job:{id:r.id,status:'',outputs:[]},lost:true};}}));
     state.runs=[...state.runs,...restored.filter(r=>r&&!state.runs.some(x=>x.job.id===r.id)).map(({id,...r})=>r)];
+    if(!state.runs.length&&!savedRuns.length){const seeded=await seedRuns();if(!state.runs.length)state.runs=seeded;}
     restoredRuns=true;remember();
     for(const r of state.runs)if(!FINAL.includes(r.job.status))poll(r.job.id,r.lost?1:0);
     renderRuns();
