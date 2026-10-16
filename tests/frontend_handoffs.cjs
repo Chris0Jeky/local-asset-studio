@@ -1584,18 +1584,21 @@ async function seamlessPlanRecovery() {
   const captured=JSON.parse(saving.run('JSON.stringify(snapshot())'));
   assert.deepEqual(setup.tile,plan);assert.deepEqual(captured.recipe.tile,plan);
   for(const route of ['draft','setup','import']){
-    for(const change of [null,'reference','parent','preset',...(route==='draft'?['missing']:[])]){
+    for(const change of [null,'reference','parent','preset','noref',...(route==='draft'?['missing']:[])]){
       const s=fixture(change==='missing'),recipe=JSON.parse(JSON.stringify(setup));
       if(change==='reference')recipe.controls.reference='other.png';
       if(change==='parent')recipe.parent_assets=[];
+      if(change==='noref')delete recipe.controls.reference;
       if(change==='preset')recipe.tile.preset_id='other';
       if(route==='draft')await s.run(`restoreDraft(${JSON.stringify({...captured,recipe})})`);
       if(route==='setup'){s.run(`serverSetups=[{id:'tile',name:'Tile',recipe:${JSON.stringify(recipe)}}];`);await s.element('#savedList').onclick({target:{dataset:{load:'0'}}});}
       if(route==='import'){const exported={...recipe,preset_id:recipe.preset};await s.element('#importRecipe').onchange({target:{files:[{size:100,text:async()=>JSON.stringify(exported)}],value:'recipe.json'}});}
-      assert.equal(s.run('JSON.stringify(tileState)'),change?'null':JSON.stringify(plan),route+': '+change);
+      // A rolled file that is only missing locally is reattached later: the plan is kept (Muse review on #1441).
+      const dropped=!!change&&!['missing','noref'].includes(change);
+      assert.equal(s.run('JSON.stringify(tileState)'),dropped?'null':JSON.stringify(plan),route+': '+change);
       assert.equal(s.element('#positive').value,'Texture',route+' keeps the other settings');
-      if(change)assert.match(s.element('#status').textContent,/Seamless plan dropped.*Make seamless/,route+' reports the dropped plan');
-      if(route==='import'&&change)assert.equal(s.requests.find(r=>r.url==='/api/recipe-check').data.tile,null,'a stale plan is stripped before the server recipe check, so the rest still imports');
+      if(dropped)assert.match(s.element('#status').textContent,/Seamless plan dropped.*Make seamless/,route+' reports the dropped plan');
+      if(route==='import'&&dropped)assert.equal(s.requests.find(r=>r.url==='/api/recipe-check').data.tile,null,'a stale plan is stripped before the server recipe check, so the rest still imports');
       assert.equal(s.requests.some(r=>r.url==='/api/jobs'),false,'Recovery never submits a generation');
     }
   }

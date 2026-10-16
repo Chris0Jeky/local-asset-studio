@@ -697,7 +697,7 @@ async function loadSetups(){
 }
 function renderSaved(){$('#savedList').innerHTML=saved().map((s,i)=>'<span class="saved-chip"><button data-load="'+i+'">'+esc(s.name)+'</button><button data-delete-setup="'+esc(s.id)+'" aria-label="Delete '+esc(s.name)+' setup">×</button></span>').join('')||'<small>Save a variation once it is worth coming back to.</small>';}
 // A saved, drafted or imported Make seamless plan is kept only while it still matches the recipe it rides with (#1230).
-function staleTilePlan(s,target){return s.tile!=null&&(!target?.tile_route||typeof StudioUX==='undefined'||!StudioUX.normalizePrepared({preset:s.preset,tile:s.tile})||s.controls?.reference!==s.tile.rolled_file||!Array.isArray(s.parent_assets)||!s.parent_assets.includes(s.tile.source_asset_id));}
+function staleTilePlan(s,target){return s.tile!=null&&(!target?.tile_route||typeof StudioUX==='undefined'||!StudioUX.normalizePrepared({preset:s.preset,tile:s.tile})||(s.controls?.reference&&s.controls.reference!==s.tile.rolled_file)||!Array.isArray(s.parent_assets)||!s.parent_assets.includes(s.tile.source_asset_id));}
 function applySaved(s,{guessLegacyParent=false}={}){
   if(!s||!catalog.presets.some(p=>p.id===s.preset))throw Error('This recipe uses an unavailable preset');
   if(s.continuation!=null&&(!StudioContinuation.normalize(s.continuation)||s.continuation.preset_id!==s.preset))throw Error('Invalid saved continuation.');
