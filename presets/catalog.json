@@ -854,7 +854,7 @@
         ]
       },
       "vary": {
-        "status": "starting-value",
+        "status": "owner-approved",
         "sources": [
           "wai",
           "anime-wai-quality",
@@ -874,13 +874,13 @@
           "controls": {
             "denoise": 0.5
           },
-          "basis": "Starting value: the owner's SDXL gentle-variation subtle strength (0.5, owner in chat 27 September 2026, recorded by #1238), reused on WAI v17 because both are SDXL-architecture img2img. Not run on WAI on this PC and not judged by the owner as a WAI strength."
+          "basis": "Owner-approved on 16 October 2026 (overnight-session walkthrough, after vary-wai-sheet.jpg from experiments/curated/wrapup-20260927/), by the option whose text was, verbatim: \"Both right: Mark 0.5/0.7 owner-approved in presets/catalog.json and close wai-vary-look-1202.\" Proved 27 Sep 2026: subtle job 5a0b5775 (2 pictures) from WAI parent eaf24185 with the noirpopwave LoRA at 1.0; the LoRA and sampler carried. Started as the owner's SDXL subtle value (#1238)."
         },
         "strong": {
           "controls": {
             "denoise": 0.7
           },
-          "basis": "Starting value: the owner's SDXL gentle-variation strong strength (0.7, owner in chat 27 September 2026, recorded by #1238). Not run on WAI on this PC; expect the pose and composition to move at 0.7."
+          "basis": "Owner-approved on 16 October 2026 (overnight-session walkthrough, after vary-wai-sheet.jpg from experiments/curated/wrapup-20260927/), by the option whose text was, verbatim: \"Both right: Mark 0.5/0.7 owner-approved in presets/catalog.json and close wai-vary-look-1202.\" Proved 27 Sep 2026: strong job fe6462d2 (4 pictures) from the same WAI parent. Started as the owner's SDXL strong value (#1238)."
         }
       },
       "modality": "image",
