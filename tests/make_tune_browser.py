@@ -66,8 +66,20 @@ def run():
             # Lab round 3 (PR #1481): an adapter measured with Petiflow as made starts at the lab's neutral strength and shows what the lab saw;
             # an adapter the lab did not test keeps the knowledge base's default (asserted below for ADDED).
             xilmo = 'anima-xilmo-000020.safetensors'; assert KNOWLEDGE['loras'][xilmo]['default'] == 0.7
-            page.fill('#makeLoraSearch', xilmo); page.click('[data-tune-add]')
+            # Part of the name, any case, and Enter in the field adds it (audit v3 N2): "Xilmo" names one adapter for this model type.
+            page.fill('#makeLoraSearch', 'Xilmo'); page.press('#makeLoraSearch', 'Enter')
             assert page.input_value('[data-tune-strength=lora2]') == '0.35' and page.text_content('[data-slot=lora2] .make-lab') == 'Lab with Petiflow: at 0.35 kept the scene; at 0.7 changed the plant.', page.text_content('[data-slot=lora2]')
+            assert page.text_content('[data-slot=lora2] b') == page.evaluate('(f) => knowledge.loras[f].label || f.replace(/\\.safetensors$/, "")', xilmo)
+            page.click('[data-tune-reset]'); assert not page.query_selector('[data-slot=lora2]') and not posted('/api/jobs')
+            # Several matches are offered as choices; choosing one adds exactly that one.
+            page.fill('#makeLoraSearch', 'anima'); page.click('[data-tune-add]')
+            choices = page.eval_on_selector_all('#makeLoraChoices [data-tune-pick]', 'b => b.map(x => x.dataset.tunePick)')
+            assert len(choices) > 1 and not page.query_selector('[data-slot=lora2]') and 'adapters match' in page.text_content('#makeStatus'), (choices, page.text_content('#makeStatus'))
+            assert page.evaluate('document.activeElement.dataset.tunePick') == choices[0], 'the keyboard lands on the first choice'
+            page.click('#makeLoraChoices [data-tune-pick="%s"]' % choices[1])
+            assert page.query_selector('[data-slot=lora2]') and page.evaluate('(n) => document.querySelector("[data-slot=lora2] b").textContent === (knowledge.loras[n].label || n.replace(/\\.safetensors$/, ""))', choices[1])
+            page.fill('#makeLoraSearch', 'no-such-adapter-zz'); page.press('#makeLoraSearch', 'Enter')
+            assert 'is not an installed adapter for this model type' in page.text_content('#makeStatus'), page.text_content('#makeStatus')
             page.click('[data-tune-reset]'); assert not page.query_selector('[data-slot=lora2]') and not posted('/api/jobs')
             offered = page.eval_on_selector_all('#makeModel option', 'o => o.map(x => x.value)')
             assert offered[0] == BASE and SWITCH in offered and 'oneobsession-anima-v20-baseline' in offered, offered

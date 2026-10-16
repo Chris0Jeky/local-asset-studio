@@ -273,8 +273,10 @@ def run(screenshots):
             check(models.locator('#curatedModelTitle').inner_text()=='Files needed for '+next(p['name'] for p in CATALOG['presets'] if p['id']=='wai'),'need filter names the preset')
             check(models.locator('#modelCards .model-card h3').all_text_contents()==['Required model'],'need filter shows only missing required files')
             models.locator('[data-models-all]').click();models.wait_for_function('document.querySelectorAll("#modelCards .model-card").length===5')
-            check(models.locator('#modelCards h3').all_text_contents().count('Missing (2)')==1 and 'Needs a check (2)' in models.locator('#modelCards').inner_text(),'curated models group missing and pending or mismatched files with counts')
-            check(models.locator('#modelCards .model-group > summary').all_inner_texts()==['Needs a check (2)','Installed (1)'] and not any(models.locator('#modelCards .model-group').evaluate_all('(els)=>els.map(el=>el.open)')),'checked and unchecked groups have counts and start collapsed')
+            # A missing file no look or recipe uses folds under Optional once every inspection has answered (audit v3 N8).
+            models.wait_for_function('document.querySelector("#modelCards .model-group > summary")?.textContent.startsWith("Optional")')
+            check(models.locator('#modelCards h3').all_text_contents().count('Missing (1)')==1 and 'Needs a check (2)' in models.locator('#modelCards').inner_text(),'curated models group missing and pending or mismatched files with counts')
+            check(models.locator('#modelCards .model-group > summary').all_inner_texts()==['Optional · not used by any look or recipe (1)','Needs a check (2)','Installed (1)'] and not any(models.locator('#modelCards .model-group').evaluate_all('(els)=>els.map(el=>el.open)')),'checked and unchecked groups have counts and start collapsed')
             # Shop structure: looks ready or needing a file, per-file acquisition block, install only where eligible, search at the top that filters everything.
             models.wait_for_function('document.querySelector("#modelLooks .model-look")')
             check(models.locator('#modelLooks').is_visible() and 'needs a download' in models.locator('#modelLooks').inner_text().lower() and models.locator('#modelLooks .model-look.needs').inner_text().startswith(wai_look),'looks list names which look needs a download')

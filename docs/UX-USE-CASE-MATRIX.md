@@ -1,5 +1,29 @@
 # UX use-case matrix
 
+## Make wave 7: your pictures first, partial adapter names, Make from the Library — 16 October 2026
+
+Third live audit (PR #1484, `docs/ux-qa/JOURNEY-AUDIT-2026-10-16-v3.md`), N1-N6 and N8, plus the wave 6 pose-route ask.
+
+- **Pickers show your pictures** (N1): Make's picture and pose grids leave out agent runs the way the Library's Mine does
+  (`assetIsAgentRun`; Make runs count as yours). *Show all pictures (N more from agent runs)* brings them back, search
+  included; a search that only matches agent pictures says how many do.
+- **Add an adapter by part of its name** (N2): any case, file name or label. One match is added; several are offered as
+  buttons; Enter in the field presses Add. `make-anime-look-chosen-model-and-lora` now types `koukouya` and presses Enter:
+  **8 → 7 clicks**, the same 12 steps.
+- **Library dialog opens Make first** (N3): *In Make: Change it / Fix or upscale / Restyle / New pose* open that goal with
+  the picture chosen; *Full editor: Continue with this / Find recipes* stay as the second row. The dialog's unsaved-changes
+  question still applies. *Same recipe, new seed* is unchanged.
+- **Compare looks** (N4): from the second chosen look the scene box scrolls into view (instant with reduced motion) and
+  takes the keyboard. Clicks unchanged.
+- **Picture cards** (N5): a second line with the look or recipe, how long ago and the seed; the full prompt is the tooltip.
+- **Your pictures on a new browser** (N6): an empty list starts from the library's six newest `Make · ` runs (Keep, fixes and
+  More work; *Edit and re-run* needs the words, which the library does not keep).
+- **Edit and re-run on picture goals** (wave 6): a goal run keeps its picture, answers, pose and route (Copy Pose or Replace);
+  the button puts them back without sending.
+- **Models & setup** (N8): the looks panel holds its place while files are checked (a placeholder, then a *Checking* row per
+  look); missing files a look needs lead, and missing files nothing uses fold under *Optional*.
+- Not done: Compare cannot vary model, adapter strength or steps (N7, a larger feature).
+
 ## Make: picture goals stay in Make, and Compare looks — 16 October 2026
 
 Owner ask (16 October 2026): "the user should be able to do it without much confusion". Live journey audit items #5, #6,

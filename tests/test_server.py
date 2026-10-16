@@ -808,6 +808,53 @@ class ServerTests(unittest.TestCase):
         recovered=self.studio().jobs[job["id"]]
         self.assertEqual(recovered["status"],"uncertain"); self.assertIn("not resubmitted",recovered["message"])
 
+    def unreadable_run_record(self, filename, corrupt=b'{broken'):
+        studio,bad=self.uncertain_known_job(FakeStudio(self.root,[]))
+        good=studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)
+        directory=studio.runs/bad['id'];(directory/filename).write_bytes(corrupt)
+        before={p.name:p.read_bytes() for p in directory.iterdir() if p.is_file()}
+        restored=FakeStudio(self.root,[])
+        self.assertIn(bad['id'],restored.jobs)
+        job=restored.jobs[bad['id']];public=restored.public(job)
+        self.assertEqual(public['status'],'uncertain');self.assertNotIn('graph',job)
+        self.assertFalse(public['prompt_ids']);self.assertEqual(public['submissions'],[])
+        self.assertEqual(public['run_path'],str(directory))
+        self.assertIn('The run record could not be read ('+filename+': ',public['message'])
+        self.assertIn('Nothing was resubmitted.',public['message']);self.assertIn('Inspect experiments/runs/'+bad['id']+'/ before deleting it.',public['message'])
+        # A readable state.json still tells the owner which ComfyUI prompts are known; a broken one cannot.
+        self.assertEqual('Known ComfyUI prompt IDs: '+', '.join(bad['prompt_ids']) in public['message'],filename=='workflow.json')
+        for key in ('never_submitted','can_stop_tracking','can_resume_tracking','can_abandon','can_put_away','can_cancel'):
+            self.assertFalse(public[key],key)
+        self.assertFalse(server.submission_evidence.never_submitted(job))
+        self.assertEqual(restored.jobs[good['id']]['graph'],GRAPH)
+        self.assertEqual(restored.jobs[good['id']]['status'],'not_submitted')
+        self.assertEqual({p.name:p.read_bytes() for p in directory.iterdir() if p.is_file()},before)
+        for command in (lambda:restored.resume_job(bad['id']),lambda:restored.stop_tracking(bad['id'],'Keep the evidence'),
+                        lambda:restored.abandon_job(bad['id'],'Missing evidence',True),lambda:restored.put_away_job(bad['id'],True),
+                        lambda:restored.cancel_job(bad['id']),lambda:restored._save(job)):
+            with self.assertRaises(server.StudioError):command()
+            self.assertEqual({p.name:p.read_bytes() for p in directory.iterdir() if p.is_file()},before)
+            self.assertEqual(restored.queue.qsize(),0);self.assertEqual(restored.requests,[])
+            self.assertEqual(job['status'],'uncertain')
+        self.assertIn(bad['id'],FakeStudio(self.root,[]).jobs)
+
+    def test_unreadable_state_stays_visible_without_recovery_or_writes(self):
+        self.unreadable_run_record('state.json')
+
+    def test_unreadable_workflow_stays_visible_without_recovery_or_writes(self):
+        self.unreadable_run_record('workflow.json')
+
+    def test_unreadable_workflow_with_odd_prompt_ids_does_not_break_loading(self):
+        studio,bad=self.uncertain_known_job(FakeStudio(self.root,[]));directory=studio.runs/bad['id']
+        state=json.loads((directory/'state.json').read_text(encoding='utf-8'));state['prompt_ids']=5
+        (directory/'state.json').write_text(json.dumps(state),encoding='utf-8');(directory/'workflow.json').write_bytes(b'{broken')
+        job=FakeStudio(self.root,[]).jobs[bad['id']];self.assertIn('workflow.json',job['record_error']);self.assertNotIn('Known ComfyUI prompt IDs',job['message'])
+
+    def test_unreadable_run_encoding_and_non_object_records_stay_visible(self):
+        for filename in ('state.json','workflow.json'):
+            for corrupt in (b'\xff',b'[]'):
+                with self.subTest(filename=filename,corrupt=corrupt):self.unreadable_run_record(filename,corrupt)
+
     def uncertain_known_job(self, studio=None):
         studio=studio or self.studio()
         job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}})['id']]

@@ -51,7 +51,7 @@ function sandbox(attached, local, availability = null, diagnostic = null, boot =
   const element = selector => {
     if (!elements.has(selector)) elements.set(selector, {
       value: '', files: [], textContent: '', classList: {toggle() {}},
-      querySelectorAll() {return [];}, addEventListener(name, handler) {(this.listeners ||= {})[name] = handler;}, scrollIntoView() {}, focus() {this.focused=true;}, close() {this.open=false;}, showModal() {this.open=true;},
+      querySelectorAll() {return [];}, addEventListener(name, handler) {(this.listeners ||= {})[name] = handler;}, scrollIntoView() {}, setAttribute(name, value) {(this.attributes ||= {})[name] = String(value);}, focus() {this.focused=true;}, close() {this.open=false;}, showModal() {this.open=true;},
     });
     return elements.get(selector);
   };
@@ -921,6 +921,17 @@ async function modelShopCards() {
   assert.match(element('#modelLooks').innerHTML, /Needs a download<\/h4>[\s\S]*Look B[\s\S]*ghost\.safetensors/);
   run(`library.inventory=[{file:'loras/ghost.safetensors',bytes:8}];renderCuratedModels()`);
   assert.match(element('#modelLooks').innerHTML, /Ready now<\/h4>[\s\S]*Look B/);
+  // Missing files a look needs come first, recipe-only ones next, and files nothing uses fold under Optional (audit v3 N8).
+  run(`library.assets.unshift(${JSON.stringify(file('orphan', 'loras', {present: false}))},${JSON.stringify(file('rec', 'checkpoints', {present: false}))});atelierRecipes.push({id:'r2',name:'Recipe Two',preset_id:'p3',controls:{}});modelReqs.set('p3',[{file:'checkpoints/rec.safetensors',asset_id:'rec',present:false}]);renderCuratedModels()`);
+  assert.match(element('#modelCards').innerHTML, /<h3>Missing \(3\)<\/h3>[\s\S]*base model[\s\S]*enc model[\s\S]*rec model[\s\S]*<summary>Optional · not used by any look or recipe \(1\)<\/summary>[\s\S]*orphan model/);
+  run(`modelReqs.set('p3',null);renderCuratedModels()`);   // a failed inspection is not an answer: nothing folds (PR #1486 review)
+  assert.match(element('#modelCards').innerHTML, /<h3>Missing \(4\)<\/h3>/); assert.doesNotMatch(element('#modelCards').innerHTML, /Optional ·/);
+  // The looks panel holds its place (audit v3 N8): a placeholder before the looks arrive, a "Checking" row per look still being inspected.
+  run(`modelReqs.delete('p2');renderCuratedModels()`);
+  assert.match(element('#modelLooks').innerHTML, /1 still being checked[\s\S]*Checking<\/h4>[\s\S]*Look B[\s\S]*Checking its files/); assert.equal(element('#modelLooks').attributes['aria-busy'], 'true');
+  run(`globalThis.keptLooks=modelLooks;modelLooks=null;renderCuratedModels()`);
+  assert.match(element('#modelLooks').innerHTML, /Reading your looks/); assert.equal(element('#modelLooks').hidden, false);
+  run(`modelLooks=keptLooks;modelReqs.set('p2',[{file:'vae/shared.safetensors',asset_id:'shared',present:true}]);renderCuratedModels()`);
 
   // Independent regressions report every broken contract against the old app in one run.
   const regressions = await Promise.allSettled([

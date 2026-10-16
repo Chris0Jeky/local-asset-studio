@@ -253,6 +253,13 @@ def run(shots):
         assert page.is_checked('#makePoseRoute-scene') and 'only the person changes' in page.locator('#makePoseSlot').inner_text()
         page.locator('#makeF-outfit').fill('a long teal hanfu'); job = generate()[0]; no_modal()
         assert job['preset_id'] == 'combine-klein-9b-replace' and job['references'][0]['role'] == 'composition' and 'a long teal hanfu' in job['controls']['positive'], job
+        # Edit and re-run on a pose run puts back its picture, pose, answers and route (wave 6 ask), and sends nothing.
+        replace_id = list(JOBS)[-1]; page.wait_for_selector('[data-make-redo="%s"]' % replace_id); before = len(jobs())
+        page.locator('label:has(#makePoseRoute-copy)').click(); page.locator('#makeF-who').fill('someone else')
+        page.locator('[data-make-redo="%s"]' % replace_id).click(); page.wait_for_selector('#makeF-outfit')
+        assert page.is_checked('#makePoseRoute-scene') and page.input_value('#makeF-outfit') == 'a long teal hanfu' and page.input_value('#makeF-who') == 'the lantern keeper, a young elf', page.input_value('#makeF-who')
+        assert page.locator('#makePoseSlot [data-make-pose-change]').count() == 1 and len(jobs()) == before and 'answers are back' in page.locator('#makeStatus').inner_text()
+        assert page.evaluate('(id)=>JSON.parse(localStorage.getItem("studio.make")).runs.find(r=>r.id===id).redo.poseRoute', replace_id) == 'scene', 'the route is stored with the run'
         page.locator('label:has(#makePoseRoute-copy)').click(); assert page.is_checked('#makePoseRoute-copy') and not page.locator('#makePoseFallback').count()
         # Copy Pose's model missing: the next picture route Make offers (never depth or plain 9B), and the page says why.
         page.route('**/api/health', lambda route: route.fulfill(json=dict(online=True, schema_available=True, missing_models={'combine-klein-9b-copypose': ['diffusion_models/copy-pose.safetensors']}, devices=[])))
@@ -412,6 +419,12 @@ def run(shots):
         ids = page.eval_on_selector_all('[data-make-look]', 'n=>n.map(e=>e.dataset.makeLook)')
         for look in ids[:4]: page.locator('[data-make-look="%s"]' % look).click()
         assert page.locator('[data-make-look][aria-checked=true]').count() == 3 and 'at most' in page.locator('#makeStatus').inner_text()
+        # From the second look on, the scene box comes into view with the keyboard in it (audit v3 N4); unchoosing keeps focus on the card.
+        third = page.eval_on_selector_all('[data-make-look][aria-checked=true]', 'n=>n.map(e=>e.dataset.makeLook)')[-1]
+        page.locator('[data-make-look="%s"]' % third).click(); assert page.evaluate('document.activeElement.dataset.makeLook') == third
+        page.evaluate('window.scrollTo(0,0)'); page.locator('[data-make-look="%s"]' % third).click()
+        page.wait_for_function('document.activeElement.id==="makeScene"&&(r=>r.top>=0&&r.bottom<=innerHeight)(document.querySelector("#makeComposer .make-step").getBoundingClientRect())', timeout=3000)
+        assert 'Three looks chosen' in page.locator('#makeStatus').inner_text()
         page.locator('#makeScene').fill('A lantern keeper in a pine wood at dusk')
         page.wait_for_function('document.querySelector("#makeEstimate").textContent.includes("3 pictures")')
         assert page.locator('#makeGenerate').inner_text() == 'Generate 3 pictures'
@@ -448,6 +461,35 @@ def run(shots):
         page.locator('[data-make-search="makePictures"]').fill('lighthouse')
         page.wait_for_function('document.querySelectorAll("#makePictures [data-make-pick]").length===1')
         assert page.locator('#makePictures [data-make-pick="old-00"]').count() == 1
+        # Your pictures first (audit v3 N1): agent-run pictures (a run label not starting "Make · ") wait behind Show all, as the Library's Mine.
+        # Each card names its look or recipe, its age and seed (N5). A new browser starts Your pictures from the library's Make runs (N6).
+        now = int(time.time())
+        base = dict(fixture.ASSETS[0], media_type='image', trashed_at=None, tags=[], lineage=[])
+        mixed = [dict(base, id='mine-make', title='Make · 1', prompt_excerpt='pixel art inventory icon, a red potion', run_label='Make · Flat pastel close-up', job_id='seeded-1', created_at=now - 120, source={'seed': 7}),
+                 dict(base, id='mine-plain', title='Imported', prompt_excerpt='pixel art inventory icon, a red potion', created_at=now - 7200, source={'seed': 8})]
+        mixed += [dict(base, id='lab-%d' % i, title='Lab %d' % i, prompt_excerpt='pixel art inventory icon, lab sword %d' % i, run_label='Lab 1016c', created_at=now - i, source={'seed': i}) for i in range(5)]
+        seeded_job = dict(id='seeded-1', status='completed', label='Make · Flat pastel close-up', preset_id='anima-portrait', created_at=now - 120, batch_count=1, controls={'positive': 'pixel art inventory icon, a red potion', 'seed': 7},
+                          outputs=[dict(filename='out.png', asset_id='mine-make', media_type='image')])
+        other = browser.new_page(viewport={'width': 1440, 'height': 900}); other.on('pageerror', lambda e: errors.append(str(e)))
+        other.route('**/api/workspace', lambda route: route.fulfill(json={'assets': mixed}))
+        other.route('**/api/jobs/seeded-1', lambda route: route.fulfill(json=seeded_job))
+        other.goto(origin + '/#make'); other.wait_for_selector('.make-run[data-run="seeded-1"]', timeout=8000)
+        assert other.evaluate('JSON.parse(localStorage.getItem("studio.make")).runs.map(r=>r.id)') == ['seeded-1'], 'the seeded run is kept in this browser'
+        assert other.locator('.make-run[data-run="seeded-1"] [data-make-review]').count() == 2, 'Keep and Not this work on a seeded run'
+        other.click('[data-make-goal="edit"]'); other.wait_for_selector('#makePictures [data-make-pick]')
+        assert other.eval_on_selector_all('#makePictures [data-make-pick]', 'n=>n.map(e=>e.dataset.makePick)') == ['mine-make', 'mine-plain']
+        toggle = other.locator('[data-make-all="makePictures"]')
+        assert toggle.is_visible() and toggle.inner_text() == 'Show all pictures (5 more from agent runs)' and toggle.get_attribute('aria-pressed') == 'false'
+        meta = other.eval_on_selector_all('#makePictures .make-pic-meta', 'n=>n.map(e=>e.textContent)')
+        assert meta[0] == 'Flat pastel close-up · 2 min ago · seed 7' and meta[1] == 'Synthetic UX fixture · 2 h ago · seed 8', meta
+        assert 'pixel art inventory icon, a red potion' in other.get_attribute('[data-make-pick="mine-make"]', 'title')
+        other.fill('[data-make-search="makePictures"]', 'sword')
+        assert 'No picture matches' in other.locator('#makePictures').inner_text() and '5 from agent runs do' in other.locator('#makePictures').inner_text()
+        toggle.click(); other.wait_for_function('document.querySelectorAll("#makePictures [data-make-pick]").length===5')
+        assert toggle.inner_text() == 'Show only my pictures' and toggle.get_attribute('aria-pressed') == 'true' and other.evaluate('document.activeElement.dataset.makeAll') == 'makePictures'
+        other.fill('[data-make-search="makePictures"]', ''); other.wait_for_function('document.querySelectorAll("#makePictures [data-make-pick]").length===7')
+        toggle.click(); other.wait_for_function('document.querySelectorAll("#makePictures [data-make-pick]").length===2')
+        other.close()
         # One-time migration (#1205 v2): Combine's old who / clothes answers live in one browser's localStorage (studio-fills:<picture>). When no
         # character exists, a dismissible note offers to save one from a kept picture that still has them. Never automatic; dismissal is remembered.
         no_characters(); legacy = {'@who': 'the lantern keeper, a young elf', '@clothes': 'a green cloak'}
