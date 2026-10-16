@@ -289,8 +289,9 @@ body.workshop-active[data-workshop-skin="arcade"] :is(.eyebrow,.wk-recipe small)
   .workshop .wk-dock-info.wk-clear {display:none}
   .workshop .wk-run-dock .wk-dock-info {gap:0 6px}.workshop .wk-run-dock .wk-dock-info>button {grid-row:1;min-height:32px;padding:2px 8px}
   /* Typing keeps a one-line reason and message with the keyboard up (the dock grows past the idle 72px only when they have something to say). */
-  .workshop .wk-run-dock.wk-typing .wk-dock-info>button {display:none}
   .workshop .wk-run-dock.wk-typing :is(.wk-dock-info>strong,#status) {max-height:1.5em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  /* Review checks stays reachable while typing; it shrinks to the 24px minimum target (WCAG 2.5.8) instead of hiding. */
+  .workshop .wk-run-dock.wk-typing .wk-dock-info>button {min-height:24px;padding:0 6px;font-size:10px;line-height:1.2}
 }
 /* Settled summaries own their text so polling and new runs cannot erase them (run-outcome.js). */
 .run-outcome {grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap}

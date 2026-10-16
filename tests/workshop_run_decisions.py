@@ -14,14 +14,20 @@ class RunDecisions(entry.EntryPoints):
         for motion in ('no-preference', 'reduce'):
             self.page.emulate_media(reduced_motion=motion)
             self.page.set_viewport_size({'width': 390, 'height': 844})
+            # The phone arrangement is applied on the media query's change event; measure only after it ran.
+            self.page.wait_for_function('!document.querySelector("#workshopRunTools").hidden')
             for layout in ('focus', 'studio', 'immersive'):
                 with self.subTest(layout=layout, motion=motion):
                     self.page.select_option('#workshopLayout', layout, force=True)
                     self.page.evaluate('document.activeElement?.blur()')
+                    # Idle means no message either: the previous pass's Plan comparison press leaves one, and a message rightly grows the dock.
+                    self.page.evaluate("document.querySelector('#status').textContent=''")
+                    # Measure the settled idle dock: the typing class and the readiness line both clear asynchronously.
+                    self.page.wait_for_function("!document.querySelector('.wk-run-dock').classList.contains('wk-typing') && document.querySelector('.wk-dock-info').classList.contains('wk-clear')")
                     dock = self.page.locator('.wk-run-dock')
                     height = dock.bounding_box()['height']
                     print(f'Phone dock ({layout}, {motion}): {height:.2f}px', flush=True)
-                    self.assertLessEqual(height, 72)
+                    self.assertLessEqual(height, 72, self.page.evaluate("[document.querySelector('#status').textContent, document.querySelector('#workshopReadiness').textContent, document.querySelector('.wk-dock-info').className]"))
                     self.assertIn('~42s', self.page.locator('#workshopEta').inner_text())
                     self.assertTrue(self.page.locator('#generate').evaluate('(n)=>n===runOriginals.generate'))
                     if layout == 'focus' and motion == 'no-preference': self.page.screenshot(path=str(shots / 'closed.png'))
@@ -225,7 +231,8 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
                         self.assertGreaterEqual(result['top'], 0, result)
                         self.assertTrue(self.page.locator('#generate').is_visible())
                         # Idle, the phone dock stays at its 72px; with a reason or message it keeps both on one line each.
-                        if width <= 600: self.assertLessEqual(result['dock'], 72 if quiet else 112, 'the phone dock stays compact while typing')
+                        # 120px while a reason or message shows: one clipped line each plus a reachable 24px Review checks (#1515 CI: hiding it stranded keyboard users).
+                        if width <= 600: self.assertLessEqual(result['dock'], 72 if quiet else 120, 'the phone dock stays compact while typing')
                         if width <= 600 and not quiet: self.assertTrue(self.page.locator('#workshopReadiness').is_visible() and self.page.locator('#status').is_visible())
                         elif height <= 700: self.assertLess(result['dock'], before, 'a short dock compacts while typing')
                         self.page.evaluate("document.activeElement?.blur()")
