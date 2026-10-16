@@ -195,10 +195,10 @@ def _carry_problems(preset, graph, vary, sources, graph_of, bound):
     for node in sorted(carried_nodes):
         model_paths = [_lora_feeds(graph, node, target, "model") for target in sorted(samplers)]
         clip_paths = [_lora_feeds(graph, node, target, "clip") for target in sorted(encoders)]
-        if not samplers or not encoders or (True not in model_paths and None in model_paths) or None in clip_paths:
-            problems.append("%s: vary cannot determine whether adapter node %s feeds the sampler model and all text encoder clip inputs (missing nodes, invalid links or unknown graph shape)" % (name, node))
-        elif True not in model_paths or not all(clip_paths):
-            problems.append("%s: vary adapter node %s does not feed the sampler and the text encoders through its MODEL/CLIP outputs" % (name, node))
+        if not samplers or not encoders or None in model_paths or None in clip_paths:
+            problems.append("%s: vary cannot determine whether adapter node %s feeds all sampler model and text encoder clip inputs (missing nodes, invalid links or unknown graph shape)" % (name, node))
+        elif not all(model_paths) or not all(clip_paths):
+            problems.append("%s: vary adapter node %s does not feed all samplers and text encoders through its MODEL/CLIP outputs" % (name, node))
     for node in sorted(_lora_nodes(graph) - carried_nodes):
         problems.append("%s: vary route has an adapter it does not take from the source (node %s); it would change the picture's LoRA stack" % (name, node))
     models = _models(graph)
