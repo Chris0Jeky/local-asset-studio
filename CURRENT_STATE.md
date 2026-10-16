@@ -1,5 +1,11 @@
 # Current state — 13 October 2026
 
+## GPU Look lab Round 4 - 16 October 2026
+
+21 serial jobs: 15 KEEP, 4 FIXABLE, 1 REJECT, 1 skipped; Anima Copy Pose 3/3 per pair, Z-Image/Krea both-item candidates, Petiflow medium 2/2 and full body 1/2 KEEP. [Report and exact controls](docs/looks/LOOK-LAB-2026-10-16.md#round-4-pose-reliability-other-source-families-items-and-framing).
+
+Receipts/journal are in docs/looks; preserve/copy ignored .runtime/lab-20261016d/ before removal. 61 Look tests and validator pass; HUMAN_TODO.md remains open/unchanged. No commit/push or runtime change; coordinator owns integration.
+
 ## GPU Look lab Round 2 - 16 October 2026
 
 Executed 28 further serial Studio jobs: all nine deferred Krea looks twice (18 jobs), then two fixed-new-scene seeds for each of five round-1 leaders (10 jobs). All completed; no failed, uncertain or repeated submission. Round 2 agent judgements: 17 KEEP, 8 fixable, 1 reject, 2 youthful defaults skipped. Combined lab: 81 jobs / 91 image files; 36 KEEP, 28 fixable, 14 reject, 3 skipped. Studio host_commit admission, explicitly authorized by the owner, was below 60% before all Krea submissions; actual Krea elapsed times ranged 341-2,205 seconds. No CIM probe, runtime restart/stop/reconfiguration, model download, commit or push.
