@@ -21,10 +21,13 @@ SHIPPED = [dict(entry, origin='seed', revision=0, trashed_at=None, usable=True, 
            for entry in json.loads((ROOT / 'presets/looks.json').read_text(encoding='utf-8'))['looks']]
 JOBS = {}
 UPLOAD = 'f' * 32 + '_look.jpg'
+SLOW = []  # non-empty: the source context answers slowly, so the page can be changed while Generate runs
+FAIL_LABEL = []  # a Make job whose label ends with one of these is refused, as a Studio refusal mid-compare would be
 
 
 class Handler(fixture.Handler):
     def do_GET(self):
+        if SLOW and self.path.endswith('/context'): time.sleep(0.8)
         if self.path == '/api/looks': return self.json({'looks': SHIPPED, 'seed_errors': [], 'generation_submitted': False})
         if self.path.startswith('/api/assets/') and self.path.endswith('/thumb'):  # thumbnails for the screenshots
             asset = next((a for a in fixture.ASSETS if a['id'] == self.path.split('/')[3]), None)
@@ -50,7 +53,9 @@ class Handler(fixture.Handler):
             look = next(l for l in SHIPPED if l['id'] == data['id'])
             return self.json({'preset_id': look['body']['preset_id'], 'controls': {**look['body']['controls'], 'positive': look['body']['template'].replace('{scene}', data['scene'])}})
         if self.path == '/api/jobs':
-            data = json.loads(self.rfile.read(length)); fixture.POSTS.append({'path': self.path, 'data': data})
+            data = json.loads(self.rfile.read(length))
+            if any(data.get('label', '').endswith(x) for x in FAIL_LABEL): return self.json({'error': 'Fixture refusal'}, 400)
+            fixture.POSTS.append({'path': self.path, 'data': data})
             job = dict(data, id='goal-' + str(len(JOBS)), status='queued', created_at=1789228800, outputs=[]); JOBS[job['id']] = job
             return self.json(job)
         return super().do_POST()
@@ -119,11 +124,30 @@ def run(shots):
         page.set_viewport_size({'width': 1440, 'height': 900})
         chips = page.evaluate('()=>[...document.querySelectorAll("[data-make-goal]")].map(e=>e.getBoundingClientRect().right)')
         assert len(chips) == 11 and max(chips) <= page.evaluate('document.documentElement.clientWidth'), chips
+        # Honest speed (#1448): the lab's measured median per picture, not the recipe's hopes; a Best for line where the lab backs one;
+        # a non-commercial tag only where the recipe's own commercial_note records it.
+        card = lambda look: page.locator('.make-look:has([data-make-look="%s"])' % look)
+        looks_of('character')
+        assert card('look-anima-pearly-petiflow').locator('.make-pace').inner_text() == 'Fast · ~31 s'
+        assert 'look lab' in card('look-anima-pearly-petiflow').locator('.make-pace').get_attribute('title')
+        assert card('look-anima-pearly-petiflow').locator('.make-best').inner_text().startswith('Best for: Close-ups')
+        assert card('look-oneobsession-anima-v20-showcase').locator('.make-licence').inner_text() == 'Non-commercial' and not card('look-anima-pearly-petiflow').locator('.make-licence').count()
+        # This PC's finished runs of the look as made outrank the lab; a draft run (other steps) does not count.
+        history = [dict(id='h%d' % i, label='Make · Flat pastel close-up', preset_id='anima-v1-baseline', status='completed', elapsed_seconds=secs, batch_count=2, controls=dict(steps=steps)) for i, (secs, steps) in enumerate(((240, 25), (260, 25), (20, 13)))]
+        label = page.evaluate('(h)=>{jobs=h;StudioMake.refresh();return document.querySelector(\'.make-look:has([data-make-look="look-anima-pearly-petiflow"]) .make-pace\').textContent}', history)
+        assert label == 'Medium · ~125 s', label
+        page.evaluate('()=>{jobs=[];StudioMake.refresh();}')
         pick_look('look-anima-pearly-petiflow'); assert page.locator('.make-chosen .make-tested').count() == 1 and page.input_value('#makeShape') == 'portrait'
-        assert not page.locator('#makeDraft').count(), 'Draft first is for slow looks only'
+        assert 'Draft first · 13 steps' in page.locator('#makeDraftBox').inner_text(), 'a 25-step look offers a draft too'
+        page.locator('[data-make-change]').click(); assert page.locator('[data-make-keep-look]').inner_text() == 'Stay with Flat pastel close-up', 'the gallery never says Keep'
+        page.locator('[data-make-keep-look]').click()
         painting = looks_of('painting')
         assert painting[0] == 'look-anima-painterly-artist-tags' and {'look-krea-atelier-target-stack', 'look-krea-witch-nijisis'} <= set(painting) and painting[-1] == 'look-krea-witch-nijisis', painting
         assert looks_of('scene') == ['look-night-shift-retro-anime', 'look-noob-fantasy-scene', 'look-krea-watercolor-anime']
+        assert card('look-night-shift-retro-anime').locator('.make-pace').inner_text() == 'Medium · ~163 s', 'Night Shift is not Fast (#1448)'
+        assert card('look-krea-watercolor-anime').locator('.make-pace').inner_text() == 'Slow · ~6 min'
+        assert card('look-noob-fantasy-scene').locator('.make-licence').count() == 1, 'NoobAI terms exclude commercial use'
+        pick_look('look-night-shift-retro-anime'); assert not page.locator('#makeDraft').count(), 'an 8-step look that is not slow offers no draft'
         pick_look('look-noob-fantasy-scene'); assert page.input_value('#makeShape') == 'landscape', 'a scene is wide by default'
         assert 'As designed · 832×1216' in page.locator('#makeShape option[value=design]').inner_text(), 'As designed stays available'
         page.locator('#makeScene').fill('a misty harbour at dawn'); job = generate()[0]
@@ -163,8 +187,16 @@ def run(shots):
         page.locator('[data-make-pick="asset-1"]').click(); page.wait_for_selector('#makeStyleLooks')
         assert page.locator('[data-make-style="look-preset-realvis"]').count() == 1
         sent = generate(); assert not sent and 'Choose the look' in page.locator('#makeStatus').inner_text(), 'no look, no job'
+        # The missing answer is marked on the choices, not on their fieldset.
+        assert page.locator('#makeStyleLooks').get_attribute('aria-invalid') is None and page.locator('[data-make-style]').first.get_attribute('aria-invalid') == 'true'
         page.locator('label:has([data-make-style="look-preset-realvis"])').click(); shot('goal-restyle')
-        sent = generate(); no_modal(); assert len(sent) == 1, sent; job = sent[0]
+        assert page.locator('[data-make-style]').first.get_attribute('aria-invalid') is None
+        # A look picked while the request is on its way does not change it: the choices were read at the press.
+        SLOW.append(1); before = len(jobs()); page.locator('#makeGenerate').click()
+        page.locator('label:has([data-make-style="look-preset-zimage-fast"])').click()
+        page.wait_for_function('document.querySelector("#makeStatus").textContent.startsWith("Started")', timeout=8000); SLOW.clear(); page.wait_for_function('!document.querySelector("#makeGenerate").disabled')
+        sent = jobs()[before:]; no_modal(); assert len(sent) == 1 and posted('/api/upload')[-1]['filename'] == 'look-preset-realvis.jpg', posted('/api/upload')[-1]; job = sent[0]
+        page.locator('label:has([data-make-style="look-preset-realvis"])').click()
         assert job['preset_id'] == 'restyle-klein-picture' and job['continuation']['intent'] == 'restyle' and job['continuation']['source_asset_id'] == 'asset-1', job
         assert job['controls']['last_reference'] == job['continuation']['reference_file'] and job['references'][0]['file'] == UPLOAD and job['references'][0]['role'] == 'style', job
         assert '[' not in job['controls']['positive'] and posted('/api/upload')[-1]['filename'] == 'look-preset-realvis.jpg', job
@@ -254,6 +286,17 @@ def run(shots):
         assert page.locator('.make-compare').count() == 1 and page.locator('.make-compare [data-make-review=rejected]').count() == 3
         shot('compare-results', '.make-compare')
         clicks['compare'] = 6  # goal, Compare looks, 3 looks, Generate (+ one scene)
+        # A refusal mid-compare says how many started and that the rest were not sent.
+        FAIL_LABEL.append(page.eval_on_selector_all('[data-make-look][aria-checked=true]', 'n=>n.map(e=>e.closest(".make-look").querySelector("b").textContent)')[1])
+        before = len(jobs()); page.locator('#makeGenerate').click()
+        page.wait_for_function('document.querySelector("#makeStatus").textContent.startsWith("Started 1 of 3")', timeout=8000); FAIL_LABEL.clear()
+        assert len(jobs()) == before + 1 and 'the rest were not sent' in page.locator('#makeStatus').inner_text(), page.locator('#makeStatus').inner_text()
+        # A picture goal whose copied reference does not match the verified source sends nothing.
+        page.route('**/api/assets/reference', lambda route: route.fulfill(json={'file': 'x' * 32 + '_ref.png', 'sha256': '0' * 64, 'parent_asset': 'asset-1', 'context': {}}))
+        goal('edit'); page.locator('#makeF-change').fill('give her a hat'); before = len(jobs())
+        page.locator('#makeGenerate').click(); page.wait_for_function('document.querySelector("#makeStatus").textContent.includes("Nothing was sent")', timeout=5000)
+        assert len(jobs()) == before, 'a mismatched copy sends no job'
+        page.unroute('**/api/assets/reference')
         assert all(p['path'] != '/api/jobs' or p['data'].get('label', '').startswith('Make') for p in fixture.POSTS)
         # The whole library stays searchable: the grid shows the newest 60, and an older picture is found by searching (#1442 review).
         many = [dict(fixture.ASSETS[0], id='old-%02d' % i, title='Picture %02d' % i, prompt_excerpt='scene %02d' % i, filename='p%02d.png' % i, created_at=1000 + i, media_type='image', trashed_at=None, tags=[]) for i in range(65)]

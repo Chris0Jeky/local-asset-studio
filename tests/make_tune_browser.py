@@ -67,6 +67,9 @@ def run():
             assert offered[0] == BASE and SWITCH in offered and 'oneobsession-anima-v20-baseline' in offered, offered
             for wrong in ('anima-artist-stack', 'janima-v1-baseline', 'anima-portrait', 'wai', 'krea-anime-atelier'):
                 assert wrong not in offered, (wrong, offered)  # same file, too few slots, no adapter slots, other model types
+            # A recorded non-commercial licence (the recipe's commercial_note) is tagged on its option; an unrecorded one is not.
+            labels = dict(zip(offered, page.eval_on_selector_all('#makeModel option', 'o => o.map(x => x.textContent)')))
+            assert 'non-commercial' in labels[SWITCH] and 'non-commercial' not in labels[BASE], labels
             page.select_option('#makeModel', SWITCH)
             assert 'Tuned: model Pearly Anima Mix' in page.text_content('#makeTuneSum'), page.text_content('#makeTuneSum')
             # Style strength folds into Tune while Tune shows adapters (audit N3): one multiplier, beside the strengths it scales.
@@ -84,6 +87,11 @@ def run():
             assert 'not an installed adapter for this model type' in page.text_content('#makeStatus') and not page.query_selector('[data-slot=lora2]')
             page.fill('#makeLoraSearch', ADDED); page.click('[data-tune-add]')
             assert page.query_selector('[data-slot=lora2]') and '@40u40uya' in page.text_content('[data-slot=lora2] small'), 'added row shows its trigger'
+            page.fill('#makeLoraSearch', ADDED); page.click('[data-tune-add]')
+            assert 'already added' in page.text_content('#makeStatus'), page.text_content('#makeStatus')
+            assert page.eval_on_selector_all('.make-tune-row b', 'n=>n.length') == 2, 'a second Add of the same adapter adds nothing'
+            # A look whose recipe is missing from the catalog says it cannot be tuned instead of breaking Make.
+            assert page.evaluate('''(id)=>{const p=catalog.presets,i=p.findIndex(x=>x.id===id),saved=p[i];p.splice(i,1);StudioMake.refresh();const text=document.querySelector("#makeTuneBody").textContent;p.splice(i,0,saved);StudioMake.refresh();return text}''', BASE).startswith('This look')
             page.select_option('[data-tune=steps]', index=1)
             page.fill('#makeNegative', 'extra hands')
             page.uncheck('#makeNewSeed'); page.fill('#makeSeed', '1234')

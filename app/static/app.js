@@ -771,7 +771,7 @@ async function refreshLibrary(){
   }catch(e){$('#downloadStatus').textContent=e.message;}
 }
 const installing=new Set(); // Per model: a repeat click on the same model is dropped; another model still reaches the server's install lock.
-async function install(id){if(installing.has(id))return;installing.add(id);try{const data=await post('/api/models/install',{id});$('#downloadStatus').textContent=data.message;message('Model installation started. Progress is in Models & folders.');await refreshLibrary();}catch(e){$('#downloadStatus').textContent=e.message;message(e.message,true);}finally{installing.delete(id);}}
+async function install(id){if(installing.has(id))return;installing.add(id);try{const data=await post('/api/models/install',{id});$('#downloadStatus').textContent=data.message;message('Model installation started. Progress is in Models & setup.');await refreshLibrary();}catch(e){$('#downloadStatus').textContent=e.message;message(e.message,true);}finally{installing.delete(id);}}
 function saved(){return serverSetups.map(s=>({...s.recipe,name:s.name,id:s.id}));}
 async function loadSetups(){
   serverSetups=await api('/api/setups');
