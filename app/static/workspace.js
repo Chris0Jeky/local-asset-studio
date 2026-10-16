@@ -17,7 +17,8 @@ const assetGroupModes = ['recipe','day','run'], assetGroupStorageKey = 'studio.a
 // Until the operator chooses, the library shows Mine once any labelled asset exists; with none, every source is shown.
 const assetSourceModes = ['mine','agent','all'], assetSourceStorageKey = 'studio.assets.source';
 let assetSourceMode = null;
-function assetIsAgentRun(asset){return typeof asset?.run_label==='string' && asset.run_label!=='';}
+// "Make · …" labels name the person's own Make runs (make.js; Fix and Upscale in studio-workbench.js), not agent runs.
+function assetIsAgentRun(asset){return typeof asset?.run_label==='string' && asset.run_label!=='' && !asset.run_label.startsWith('Make · ');}
 function assetSource(){return !assetState.assets.some(assetIsAgentRun)?'all':assetSourceModes.includes(assetSourceMode)?assetSourceMode:'mine';}
 function assetSourceFilter(list, source=assetSource()){return source==='all'?list:list.filter(a=>assetIsAgentRun(a)===(source==='agent'));}
 // Existing lab outputs carry no label, so the operator marks them (#939): a label makes an agent run, clearing it makes it

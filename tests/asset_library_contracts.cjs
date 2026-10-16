@@ -84,6 +84,11 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
     assert.match(s.el('#assetVisibleCount').textContent,/^2 assets · 2 agent runs hidden$/);assert.match(s.el('#reviewNext').textContent,/2 unreviewed/);
     s.run('startReviewQueue()');assert.equal(s.run('JSON.stringify(assetQueue.ids)'),'["m1","m0"]');
   });
+  await test('Pictures made in Make stay in Mine although their run carries a Make label',()=>{
+    const s=sourced();s.run("assetState.assets[0].run_label='Make \u00b7 Clean anime portrait';assetState.assets[1].run_label='Make \u00b7 Fix face';renderAssets()");
+    assert.deepEqual(shown(s),['m1','m0']);assert.match(s.el('#assetVisibleCount').textContent,/^2 assets · 2 agent runs hidden$/);
+    s.run("chooseAssetSource('agent')");assert.deepEqual(shown(s),['g1','g0']);
+  });
   await test('The source choice persists like grouping and survives a missing store',()=>{
     const store=memory();let s=sourced({localStorage:store});s.el('#assetSource').value='agent';s.el('#assetSource').onchange();
     assert.deepEqual(shown(s),['g1','g0']);assert.equal(store.values.get('studio.assets.source'),'agent');assert.match(s.el('#assetVisibleCount').textContent,/2 of yours hidden/);
