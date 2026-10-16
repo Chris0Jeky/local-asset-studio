@@ -102,12 +102,12 @@ def run(shots):
         def pick_look(look_id):
             if page.locator('[data-make-change]').count(): page.locator('[data-make-change]').click()
             page.locator('[data-make-look="%s"]' % look_id).click(); page.wait_for_selector('#makeScene')
-        CHARACTERS = ['look-anifox-ringeko', 'look-pearly-anima-mix-v10-showcase', 'look-anima-pearly-petiflow', 'look-oneobsession-anima-v20-showcase', 'look-wai-fantasy-portrait', 'look-anima-fantasy-portrait', 'look-animagine-fantasy-portrait']
+        CHARACTERS = ['look-anima-pearly-petiflow', 'look-oneobsession-anima-v20-showcase', 'look-anifox-ringeko', 'look-pearly-anima-mix-v10-showcase', 'look-wai-fantasy-portrait', 'look-anima-fantasy-portrait', 'look-animagine-fantasy-portrait']
         assert looks_of('character') == CHARACTERS, 'proven first, rejects after them, no oil-paint look under Anime character'
         shot('looks-character', '.make-looks')
         badged = page.eval_on_selector_all('.make-look', 'n=>n.filter(e=>e.querySelector(".make-tested")).map(e=>e.querySelector("[data-make-look]").dataset.makeLook)')
-        assert badged == ['look-anifox-ringeko', 'look-anima-pearly-petiflow'], badged  # two keep verdicts, no more
-        assert page.locator('.make-tested').first.inner_text() == 'Tested well' and 'median score 4.8' in page.locator('.make-tested').first.get_attribute('title')
+        assert badged == ['look-anima-pearly-petiflow'], badged  # kept in most test pictures (rounds 1-2); AniFox kept 0 of 2 new seeds
+        assert page.locator('.make-tested').first.inner_text() == 'Tested well' and '4 of 4' in page.locator('.make-tested').first.get_attribute('title')
         # A look picked low in the gallery leaves "Describe your picture" in view below the fixed bar, and every goal chip
         # wraps on screen (audit N8).
         for (width, height), look in (((1440, 900), 'look-anifox-ringeko'), ((390, 844), 'look-wai-fantasy-portrait')):
@@ -119,7 +119,7 @@ def run(shots):
         page.set_viewport_size({'width': 1440, 'height': 900})
         chips = page.evaluate('()=>[...document.querySelectorAll("[data-make-goal]")].map(e=>e.getBoundingClientRect().right)')
         assert len(chips) == 11 and max(chips) <= page.evaluate('document.documentElement.clientWidth'), chips
-        pick_look('look-anifox-ringeko'); assert page.locator('.make-chosen .make-tested').count() == 1 and page.input_value('#makeShape') == 'portrait'
+        pick_look('look-anima-pearly-petiflow'); assert page.locator('.make-chosen .make-tested').count() == 1 and page.input_value('#makeShape') == 'portrait'
         assert not page.locator('#makeDraft').count(), 'Draft first is for slow looks only'
         painting = looks_of('painting')
         assert painting[0] == 'look-anima-painterly-artist-tags' and {'look-krea-atelier-target-stack', 'look-krea-witch-nijisis'} <= set(painting) and painting[-1] == 'look-krea-witch-nijisis', painting
