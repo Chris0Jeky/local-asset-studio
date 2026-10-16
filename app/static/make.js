@@ -41,7 +41,7 @@
   const POLISH={face:'Fix face',details:'Fix hands and details',upscale:'Upscale 2\u00d7'};
   const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',poseRoute:'copy',pose:null,posePicking:false,compare:false,compareLooks:[],characters:[],character:null,allPictures:false,charSave:null,charEdit:null,charMigrate:null,charForm:{},openers:new Set(),noteGone:false};
   try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(GOALS.some(g=>g.id===saved.goal))state.goal=saved.goal;if(typeof saved.look==='string')state.look=saved.look;}catch{}
-  const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,...r})=>({...r,job:{id}}))]).slice(0,6).map(({job,look,lookId,goal,scene,tune,tuned,group,title,fills})=>({id:job.id,look,lookId,goal,scene,tune,tuned,group,title,fills}))}));}catch{}};
+  const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,...r})=>({...r,job:{id}}))]).slice(0,6).map(({job,look,lookId,goal,scene,tune,tuned,group,title,fills,redo})=>({id:job.id,look,lookId,goal,scene,tune,tuned,group,title,fills,redo}))}));}catch{}};
   let restoredRuns=false,savedRuns=[];try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(Array.isArray(saved.runs))savedRuns=saved.runs.filter(r=>r&&typeof r.id==='string').slice(0,6);}catch{}
   const presets=()=>typeof catalog!=='undefined'&&catalog?.presets||[];
   const presetFor=look=>presets().find(p=>p.id===look?.body?.preset_id);
@@ -583,7 +583,7 @@
             +(job.outputs||[]).map((o,i)=>picture(o)?img(job,o,i,look)+(o.asset_id?'<div class="make-actions">'+marks(o.asset_id)+'</div>':'<small class="muted">Saving to the library…</small>'):'').join('')+pending(job,1)+'</figure>').join('')+'</div></article>';}
       const {job,look,scene,tuned,title,lost}=runs[0];
       return '<article class="make-run" data-run="'+escape(job.id)+'"><header><div><b>'+escape(pictureTitle(scene||title||job.controls?.positive||look,job.created_at))+'</b>'+(scene?'<small>'+escape(scene)+'</small>':look&&!scene?'<small>'+escape(look)+'</small>':'')+(tuned?'<small class="make-tuned">'+escape(tuned)+'</small>':'')+'</div><span class="make-run-state '+escape(lost?'uncertain':job.status)+'">'+escape(lost?'Lost contact with this run; still checking':words(job))+'</span></header>'
-      +(scene?'<div class="make-run-tools">'+(draftRun(runs[0])?'<button type="button" data-make-final="'+escape(job.id)+'">Make the final</button>':'')+'<button type="button" data-make-rerun="'+escape(job.id)+'">Edit and re-run</button><button type="button" data-make-another="'+escape(job.id)+'">Same words, another look</button></div>':'')
+      +(scene?'<div class="make-run-tools">'+(draftRun(runs[0])?'<button type="button" data-make-final="'+escape(job.id)+'">Make the final</button>':'')+'<button type="button" data-make-rerun="'+escape(job.id)+'">Edit and re-run</button><button type="button" data-make-another="'+escape(job.id)+'">Same words, another look</button></div>':runs[0].redo?'<div class="make-run-tools"><button type="button" data-make-redo="'+escape(job.id)+'">Edit and re-run</button></div>':'')
       +(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')+(lost?'':recovery(job))
       +'<div class="make-outputs">'+(job.outputs||[]).map((o,i)=>!picture(o)?other(o):'<figure>'+img(job,o,i,look)+actions(job,o)+'</figure>').join('')+pending(job)+'</div></article>';});
     const focus=document.activeElement,key=e=>(e.closest('[data-run]')?.dataset.run||'')+'|'+e.tagName+'|'+JSON.stringify({...e.dataset})+'|'+e.textContent,focusKey=box.contains(focus)?key(focus):null,open=[...box.querySelectorAll('details[open]')].map(e=>e.dataset.more);
@@ -766,11 +766,24 @@
   // aria-invalid belongs on inputs, not on a fieldset or section: a group of choices marks each choice (WCAG 4.1.2).
   function markMissing(el){const radios=el.matches('input,textarea,select')?[el]:[...el.querySelectorAll('input[type=radio]')],list=radios.length?radios:[...el.querySelectorAll('input')].slice(0,1);
     for(const f of list){f.setAttribute('aria-invalid','true');f.setAttribute('aria-describedby','makeStatus');}(list[0]||el).focus();}
+  // A picture goal's run keeps what it was made from (wave 6 ask): the picture, the answers, the pose and its route (Copy Pose or
+  // Replace), the look picture or the fix. Edit and re-run puts them back on screen; it never submits. Read back from this browser's
+  // storage, so every field is checked before use.
+  const redoOf=(a,form,sel)=>({pick:a.id,form:Object.fromEntries(Object.entries(form).filter(([,v])=>typeof v==='string')),styleLook:sel.styleLook,styleWords:!!sel.styleWords,poseMode:sel.poseMode,poseRoute:sel.poseRoute,
+    pose:sel.pose?.asset?{asset:sel.pose.asset.id}:sel.pose?.figure?{figure:sel.pose.figure,mirror:!!sel.pose.mirror}:null,fix:sel.fix});
+  function redoRun(run){const r=run.redo,g=GOALS.find(x=>x.id===run.goal);if(!g?.intent||!r||typeof r.pick!=='string')return false;
+    state.goal=g.id;state.compare=false;state.character=null;choosePicture(r.pick);
+    state.form=Object.fromEntries(Object.entries(r.form&&typeof r.form==='object'?r.form:{}).filter(([,v])=>typeof v==='string'&&v.length<=2000));
+    if(['picture','figure'].includes(r.poseMode))state.poseMode=r.poseMode;if(['copy','scene'].includes(r.poseRoute))state.poseRoute=r.poseRoute;
+    const find=id=>state.pictures?.find(x=>x.id===id)||(typeof assetState!=='undefined'&&assetState?.assets?.find(x=>x.id===id))||{id,title:''};
+    state.pose=typeof r.pose?.asset==='string'?{asset:find(r.pose.asset)}:PE()?.PRESETS?.some(x=>x.id===r.pose?.figure)?{figure:r.pose.figure,mirror:!!r.pose.mirror}:null;state.posePicking=false;
+    if(typeof r.styleLook==='string')state.styleLook=r.styleLook;state.styleWords=!!r.styleWords;if(POLISH[r.fix])state.fix=r.fix;
+    remember();render();return true;}
   async function goalGenerate(){
     const g=goal(),a=state.pick;if(!g.intent||!a||state.busy)return;
     const p=goalRoute(g),why=goalBlocker(g,p);if(why){say(why);return;}
     // Every answer is read before the first await: typing on while the copy runs does not change this request.
-    const form={...state.form},avoid=String(chosenCharacter()?.body.avoid||'').trim(),missing=goalMissing(g,p,form),sel={styleLook:state.styleLook,poseMode:state.poseMode,pose:state.pose&&{...state.pose},fix:state.fix};
+    const form={...state.form},avoid=String(chosenCharacter()?.body.avoid||'').trim(),missing=goalMissing(g,p,form),sel={styleLook:state.styleLook,styleWords:state.styleWords,poseMode:state.poseMode,poseRoute:state.poseRoute,pose:state.pose&&{...state.pose},fix:state.fix};
     if(missing){const el=q('#'+missing[0]);if(el)markMissing(el);sayMissing(missing[1]);return;}
     state.busy=true;say('Preparing…');
     try{
@@ -789,7 +802,7 @@
         say('Sending to ComfyUI…');
         job=await json('/api/jobs',{preset_id:p.id,continuation:prepared.claim,controls,batch_count:1,parent_assets:[...new Set([a.id,...board.map(r=>r.parent_asset).filter(Boolean)])],references:p.reference_slots?.length?SC().combineReferences(p,board):[],label:'Make · '+g.name});
       }
-      state.runs.unshift({job,look:g.intent==='repair'?POLISH[sel.fix]:g.name,lookId:null,goal:g.id,scene:null,title:String(form[{edit:'change',animate:'motion',combine:'who'}[g.intent]]||'').trim()||pictureLabel(a),...(g.intent==='combine'?{fills:{who:String(form.who||'').trim(),clothes:String(form.clothes||'').trim()}}:{})});remember();
+      state.runs.unshift({job,look:g.intent==='repair'?POLISH[sel.fix]:g.name,lookId:null,goal:g.id,scene:null,title:String(form[{edit:'change',animate:'motion',combine:'who'}[g.intent]]||'').trim()||pictureLabel(a),...(g.intent==='combine'?{fills:{who:String(form.who||'').trim(),clothes:String(form.clothes||'').trim()}}:{}),redo:redoOf(a,form,sel)});remember();
       say('Started. The result appears in Your pictures as it finishes; you can leave this page.');renderRuns();poll(job.id);
       if(typeof refresh==='function')void refresh();
     }catch(error){say(error.message);}
@@ -913,6 +926,8 @@
       if(final&&state.tune[run.lookId])state.tune[run.lookId].steps=null;try{sessionStorage.setItem('studio.make.scene.'+run.goal,run.scene);}catch{}remember();render();
       if(final){say('The final is set up: the same words and seed at full detail. Press Generate to make it.');q('#makeGenerate')?.focus();return;}
       const scene=q('#makeScene');if(scene&&!state.picking){scene.focus();scene.select();}else q('.make-look.active [data-make-look]')?.focus();return;}
+    const redo=e.target.closest('[data-make-redo]');if(redo){const run=state.runs.find(r=>r.job.id===redo.dataset.makeRedo);
+      if(run&&redoRun(run)){say('That run’s picture and answers are back. Change what you like, then press Generate.');(q('#makeComposer textarea,#makeComposer input:not([type=search])')||q('#makeGenerate'))?.focus();}return;}
     const recovering=e.target.closest('[data-make-resume],[data-make-stop]');if(recovering&&!recovering.disabled){void recover(recovering);return;}
     const verdict=e.target.closest('[data-make-review]');if(verdict){void review(verdict);return;}
     const polishing=e.target.closest('[data-make-polish]');if(polishing&&!polishing.disabled){void polishPicture(polishing);return;}
