@@ -10,9 +10,9 @@
   const json=async(path,body)=>{const r=await fetch(path,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await r.json().catch(()=>({}));if(!r.ok)throw Error(data.error||data.message||('Request failed ('+r.status+')'));return data;};
   // Curated, not generated: a goal lists looks by id in the order a newcomer should meet them (proven first, slow last).
   const GOALS=[
-    {id:'character',name:'Anime character',hint:'A person or creature, drawn',looks:['look-wai-fantasy-portrait','look-anima-fantasy-portrait','look-animagine-fantasy-portrait','look-anima-painterly-artist-tags','look-pearly-anima-mix-v10-showcase','look-oneobsession-anima-v20-showcase','look-anifox-ringeko','look-anima-pearly-petiflow','look-krea-atelier-target-stack','look-krea-witch-nijisis']},
-    {id:'scene',name:'Scene or background',hint:'A place, no main character',looks:['look-noob-fantasy-scene','look-night-shift-retro-anime','look-krea-watercolor-anime']},
-    {id:'painting',name:'Painted illustration',hint:'Oil, ink, watercolour, book cover',looks:['look-krea-style-emerald-tarot','look-krea-oil-fantasy','look-krea-style-inkwork-darkbrush','look-krea-style-airy-softwatercolor']},
+    {id:'character',name:'Anime character',hint:'A person or creature, drawn',looks:['look-anima-pearly-petiflow','look-oneobsession-anima-v20-showcase','look-anifox-ringeko','look-pearly-anima-mix-v10-showcase','look-wai-fantasy-portrait','look-anima-fantasy-portrait','look-animagine-fantasy-portrait']},
+    {id:'scene',name:'Scene or background',hint:'A place, no main character',looks:['look-night-shift-retro-anime','look-noob-fantasy-scene','look-krea-watercolor-anime']},
+    {id:'painting',name:'Painted illustration',hint:'Oil, ink, watercolour, book cover',looks:['look-anima-painterly-artist-tags','look-krea-style-emerald-tarot','look-krea-style-inkwork-darkbrush','look-krea-style-airy-softwatercolor','look-krea-oil-fantasy','look-krea-atelier-target-stack','look-krea-witch-nijisis']},
     {id:'photo',name:'Photo',hint:'Realistic people, places, products',looks:['look-preset-zimage-fast','look-preset-realvis','look-krea-realistic-snapshot','look-krea-lenovo-ultrareal']},
     {id:'game',name:'Game item or icon',hint:'Props, pixel art',looks:['look-preset-stylized-prop','look-preset-pixel-lora']},
     {id:'edit',name:'Change a picture',hint:'Keep it, change one thing',intent:'edit'},
@@ -23,6 +23,13 @@
     {id:'mesh',name:'Picture to 3D',hint:'A draft model to inspect',intent:'mesh'},
   ];
   const SHAPES={design:'As designed',portrait:'Portrait',landscape:'Landscape',square:'Square'};
+  // Audit #21: a goal's usual picture shape, preselected when the look can be reshaped; other goals follow the look's own design.
+  const SHAPE_FOR={character:'portrait',scene:'landscape',game:'square'};
+  // Lab evidence (docs/looks/LOOK-LAB-2026-10-16.md on branch lab/look-qualification-20261016): looks whose two lab runs were both
+  // judged keep, with the median score. Agent judgement on this PC, not art acceptance; update this map from the lab doc, not by hand.
+  // Kept in at least 3 of 4 test pictures, or 2 of 2 where only two were made (docs/looks/LOOK-LAB-2026-10-16.md, rounds 1-2).
+  const TESTED={'look-anima-pearly-petiflow':'4 of 4','look-anima-painterly-artist-tags':'2 of 2','look-night-shift-retro-anime':'3 of 4','look-krea-watercolor-anime':'2 of 2','look-krea-oil-fantasy':'2 of 2','look-krea-style-inkwork-darkbrush':'2 of 2','look-krea-realistic-snapshot':'2 of 2','look-krea-lenovo-ultrareal':'2 of 2'};
+  const tested=l=>TESTED[l.id]?'<small class="make-tested" title="'+escape(TESTED[l.id]+' test pictures on this PC were kept (16 Oct 2026, judged by an agent, not art approval).')+'">Tested well</small>':'';
   const FINAL=['completed','failed','partial','uncertain','not_submitted','cancelled','abandoned'];
   const POLISH={face:'Fix face',details:'Fix hands and details',upscale:'Upscale 2\u00d7'};
   const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',pose:null,posePicking:false,compare:false,compareLooks:[]};
@@ -81,13 +88,19 @@
     return files.filter(f=>entry(f)&&kinds.has(entry(f).family)).sort((a,b)=>(entry(b).family===p.family)-(entry(a).family===p.family)||short(a).localeCompare(short(b)));
   }
   const freeSlot=(look,t)=>SLOTS.find(s=>bound(presetFor(look),s)&&bound(presetFor(look),NAMED(s))&&!t.rows.some(r=>r.slot===s));
+  // Draft first (audit #12): Tune's own Draft step count (half the look's steps), offered only where the recipe binds steps.
+  const halve=n=>Math.max(1,Math.round(n/2)),fullSteps=(look,tp)=>Number(look.body.controls?.steps||tp?.defaults?.steps)||0;
+  const draftOf=(look,tp=tunedPreset(look))=>{const n=fullSteps(look,tp);return bound(tp,'steps')&&n>=2?halve(n):0;};
+  function draftMarkup(look){const tp=tunedPreset(look),n=speed(presetFor(look))[0]==='slow'?draftOf(look,tp):0,t=state.tune[look.id];if(!n)return'';
+    return '<label class="make-check"><input type="checkbox" id="makeDraft" data-steps="'+n+'"'+(t?.steps===n?' checked':'')+' aria-describedby="makeDraftHint"> Draft first · '+n+' steps, rougher but quicker</label><small id="makeDraftHint" class="muted">Then “Make the final” on the draft reruns it at the full '+fullSteps(look,tp)+' steps.</small>';}
+  const draftRun=run=>{const look=state.looks?.find(l=>l.id===run.lookId);return!!look&&run.scene&&run.tune?.steps!=null&&FINAL.includes(run.job.status)&&(run.job.outputs||[]).length>0&&run.tune.steps===draftOf(look,byId(run.tune.preset)||presetFor(look));};
   const clamp=v=>Math.min(2,Math.max(0,Math.round((Number(v)||0)*20)/20));
   function tuneSummary(look,t){
     const p=presetFor(look),base=Object.fromEntries(adapters(look).map(a=>[a.key,a])),parts=[];if(!t)return'';
     if(t.preset&&t.preset!==p?.id)parts.push('model '+family(byId(t.preset)));
     for(const r of t.rows){const a=base[r.slot];if(!a||(r.name&&r.name!==a.name))parts.push('+'+short(r.name)+(r.on?' '+r.strength:' off'));else if(!r.on)parts.push(short(a.name)+' off');else if(r.strength!==a.strength)parts.push(short(a.name)+' '+r.strength);}
     for(const a of Object.values(base))if(!t.rows.some(r=>r.slot===a.key))parts.push('−'+short(a.name));
-    if(t.steps!=null)parts.push(t.steps+' steps');if(t.sampler)parts.push(t.sampler);if(t.negative!=null)parts.push('own negative');if(!t.reseed&&t.seed!=null)parts.push('seed '+t.seed+' locked');
+    if(t.steps!=null)parts.push((t.steps===draftOf(look,byId(t.preset)||p)?'draft ':'')+t.steps+' steps');if(t.sampler)parts.push(t.sampler);if(t.negative!=null)parts.push('own negative');if(!t.reseed&&t.seed!=null)parts.push('seed '+t.seed+' locked');
     return parts.length?'Tuned: '+parts.join(' · '):'';
   }
   // The tune applied to the prepared controls. Every bound slot of a switched model is written (off or empty is 0), so the
@@ -108,7 +121,7 @@
   function renderTune(){
     const look=current(),box=q('#makeTuneBody');if(!look||!box)return;const t=tuneOf(look),p=presetFor(look),tp=tunedPreset(look),c=look.body.controls||{};
     const list=models(look),missing=missingFor(tp),files=compatible(look),slot=freeSlot(look,t),steps=Number(c.steps||tp?.defaults?.steps)||0;
-    const draft=Math.max(1,Math.round(steps/2)),fine=Math.min(150,Math.round(steps*1.5));
+    const draft=halve(steps),fine=Math.min(150,Math.round(steps*1.5));
     const option=(value,label,on)=>'<option value="'+escape(value)+'"'+(on?' selected':'')+'>'+escape(label)+'</option>';
     const row=r=>{const e=entry(r.name),why=e?.trigger?'Trigger: '+e.trigger+(r.added?' (added to your words)':''):r.name?'No trigger word':'Fixed in this recipe';
       return '<div class="make-tune-row" data-slot="'+r.slot+'"><label class="make-check"><input type="checkbox" data-tune-on="'+r.slot+'"'+(r.on?' checked':'')+'> <b>'+escape(short(r.name))+'</b></label>'
@@ -133,6 +146,7 @@
   function tuneChanged(redraw=true){
     const look=current();if(!look)return;if(redraw){renderTune();return;}
     const sum=q('#makeTuneSum'),why=blocker(look),button=q('#makeGenerate');if(sum)sum.textContent=tuneSummary(look,state.tune[look.id])||'Model, adapters, steps, seed';
+    const draftBox=q('#makeDraftBox');if(draftBox)draftBox.innerHTML=draftMarkup(look);
     if(button&&!state.busy){button.disabled=!!why;button.title=why;}const said=q('#makeWhy');if(said){said.innerHTML=blockerMarkup(look,why);said.hidden=!why;}estimate();
   }
   function tuneInput(target){
@@ -180,10 +194,10 @@
     const on=l=>compare?state.compareLooks.includes(l.id):l.id===state.look;
     const cards=list.map(l=>{const p=presetFor(l),[pace,label]=speed(p),thumb=thumbOf(l),why=compare?blocker(l,p):blocker(l);return '<article class="make-look'+(on(l)?' active':'')+'"><button type="button" class="make-look-select" data-make-look="'+escape(l.id)+'" role="'+(compare?'checkbox':'radio')+'" tabindex="'+(compare||l.id===(state.look||list[0]?.id)?'0':'-1')+'" aria-checked="'+on(l)+'">'
       +(thumb?'<img src="'+escape(thumb)+'" alt="" loading="lazy">':'<span class="make-look-blank" aria-hidden="true">✦</span>')
-      +'<span class="make-look-text"><b>'+escape(l.name)+'</b><small class="make-pace '+pace+'">'+escape(label)+'</small>'+(tried(l)?'<small>Run on this PC before</small>':'')+'</span></button>'+(why?'<small class="make-warn make-look-text">'+blockerMarkup(l,why)+'</small>':'')+'</article>';}).join('');
+      +'<span class="make-look-text"><b>'+escape(l.name)+'</b><small class="make-pace '+pace+'">'+escape(label)+'</small>'+tested(l)+(tried(l)?'<small>Run on this PC before</small>':'')+'</span></button>'+(why?'<small class="make-warn make-look-text">'+blockerMarkup(l,why)+'</small>':'')+'</article>';}).join('');
     const chosen=current();
     if(chosen&&!state.picking&&!compare){const p=presetFor(chosen),thumb=thumbOf(chosen);
-      body.innerHTML='<div class="make-chosen">'+(thumb?'<img src="'+escape(thumb)+'" alt="">':'<span class="make-look-blank" aria-hidden="true">✦</span>')+'<div><small>Look</small><b>'+escape(chosen.name)+'</b><small class="make-pace '+speed(p)[0]+'">'+escape(speed(p)[1])+'</small></div><button type="button" data-make-change>Change look</button></div><div id="makeComposer"></div>';}
+      body.innerHTML='<div class="make-chosen">'+(thumb?'<img src="'+escape(thumb)+'" alt="">':'<span class="make-look-blank" aria-hidden="true">✦</span>')+'<div><small>Look</small><b>'+escape(chosen.name)+'</b><small class="make-pace '+speed(p)[0]+'">'+escape(speed(p)[1])+'</small>'+tested(chosen)+'</div><button type="button" data-make-change>Change look</button></div><div id="makeComposer"></div>';}
     else body.innerHTML='<div class="make-step"><span>1</span><h2>'+(compare?'Choose two or three looks to compare':'Choose a look')+'</h2>'+(chosen&&!compare?'<button type="button" class="make-link" data-make-keep-look>Keep '+escape(chosen.name)+'</button>':'')+(list.length>1?'<button type="button" class="make-link" data-make-compare aria-pressed="'+compare+'">'+(compare?'Back to one look':'Compare looks')+'</button>':'')+'</div><div class="make-looks" role="'+(compare?'group':'radiogroup')+'" aria-label="'+(compare?'Looks to compare':'Look')+'">'+cards+'</div><div id="makeComposer"></div>';
     renderComposer();layout();
   }
@@ -194,6 +208,7 @@
     if(long===short){const a=round(Math.sqrt(area*1.5)),b=round(Math.sqrt(area/1.5));return shape==='portrait'?[b,a]:[a,b];}
     return shape==='portrait'?[short,long]:[long,short];
   }
+  const shapeDefault=look=>('width' in look.body.controls||presetFor(look)?.width)&&SHAPE_FOR[state.goal]||'design';
   function renderComposer(){
     const box=q('#makeComposer'),look=current();if(!box)return;if(state.compare){renderCompareComposer();return;}
     if(!look){box.innerHTML='<p class="make-hint">Choose a look above. Each picture is one real run of that look on this PC; yours will differ.</p>';return;}
@@ -206,10 +221,10 @@
       +options.map(o=>'<label class="make-check"><input type="checkbox" data-make-option="'+escape(o.id)+'"'+(o.default?' checked':'')+'> '+escape(o.label)+'</label>').join('')
       +'<details class="make-tune" id="makeTune"'+(state.tuneOpen?' open':'')+'><summary>Tune this look <small id="makeTuneSum"></small></summary><div id="makeTuneBody"></div></details>'
       +'</div><div class="make-compose-side">'
-      +'<div class="make-pair"><label>Shape<select id="makeShape">'+Object.entries(SHAPES).map(([k,v])=>'<option value="'+k+'">'+v+(k==='design'?' · '+escape(look.body.controls.width||'')+'×'+escape(look.body.controls.height||''):'')+'</option>').join('')+'</select></label>'
+      +'<div class="make-pair"><label>Shape<select id="makeShape">'+Object.entries(SHAPES).map(([k,v])=>'<option value="'+k+'"'+(k===shapeDefault(look)?' selected':'')+'>'+v+(k==='design'?' · '+escape(look.body.controls.width||'')+'×'+escape(look.body.controls.height||''):'')+'</option>').join('')+'</select></label>'
       +'<label>How many<select id="makeCount"><option value="1"'+(slow?' selected':'')+'>1 picture</option><option value="2">2 pictures</option><option value="4"'+(slow?'':' selected')+'>4 to choose from</option></select></label></div>'
       +(adapters(look).length?'<label>Style strength <output id="makeStrengthOut">100%</output><input type="range" id="makeStrength" min="0" max="150" step="10" value="100" aria-describedby="makeStrengthHint"><small id="makeStrengthHint" class="muted">How strongly the look\u2019s '+adapters(look).length+' style adapter'+(adapters(look).length>1?'s apply':' applies')+'. 100% is the look as made.</small></label>':'')
-      +'<label class="make-check"><input type="checkbox" id="makeNewSeed"'+(tuneOf(look).reseed?' checked':'')+'> Different pictures each time</label>'
+      +'<label class="make-check"><input type="checkbox" id="makeNewSeed"'+(tuneOf(look).reseed?' checked':'')+'> Different pictures each time</label><div id="makeDraftBox"></div>'
       +'<div class="make-go"><button type="button" id="makeGenerate" class="primary"'+(why?' disabled aria-describedby="makeWhy"':'')+'>Generate</button>'
       +'<p id="makeEstimate" class="muted" aria-live="polite"></p>'
       +(why?'<p id="makeWhy" class="make-warn">'+blockerMarkup(look,why)+'</p>':'')+'</div>'
@@ -358,7 +373,7 @@
             +(job.outputs||[]).map((o,i)=>picture(o)?img(job,o,i,look)+(o.asset_id?'<div class="make-actions">'+marks(o.asset_id)+'</div>':'<small class="muted">Saving to the library…</small>'):'').join('')+pending(job,1)+'</figure>').join('')+'</div></article>';}
       const {job,look,scene,tuned,title}=runs[0];
       return '<article class="make-run" data-run="'+escape(job.id)+'"><header><div><b>'+escape(pictureTitle(scene||title||job.controls?.positive||look,job.created_at))+'</b>'+(scene?'<small>'+escape(scene)+'</small>':look&&!scene?'<small>'+escape(look)+'</small>':'')+(tuned?'<small class="make-tuned">'+escape(tuned)+'</small>':'')+'</div><span class="make-run-state '+escape(job.status)+'">'+escape(words(job))+'</span></header>'
-      +(scene?'<div class="make-run-tools"><button type="button" data-make-rerun="'+escape(job.id)+'">Edit and re-run</button><button type="button" data-make-another="'+escape(job.id)+'">Same words, another look</button></div>':'')
+      +(scene?'<div class="make-run-tools">'+(draftRun(runs[0])?'<button type="button" data-make-final="'+escape(job.id)+'">Make the final</button>':'')+'<button type="button" data-make-rerun="'+escape(job.id)+'">Edit and re-run</button><button type="button" data-make-another="'+escape(job.id)+'">Same words, another look</button></div>':'')
       +(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')
       +'<div class="make-outputs">'+(job.outputs||[]).map((o,i)=>!picture(o)?other(o):'<figure>'+img(job,o,i,look)+actions(job,o)+'</figure>').join('')+pending(job)+'</div></article>';});
     const focus=document.activeElement,key=e=>(e.closest('[data-run]')?.dataset.run||'')+'|'+e.tagName+'|'+JSON.stringify({...e.dataset})+'|'+e.textContent,focusKey=box.contains(focus)?key(focus):null,open=[...box.querySelectorAll('details[open]')].map(e=>e.dataset.more);
@@ -606,6 +621,7 @@
     if(t.dataset.makeSearch){state.queries[t.dataset.makeSearch]=t.value;renderGrid(t.dataset.makeSearch,t.dataset.makeAttr);}});
   // Choices that change the composer redraw it and keep the keyboard on the control just used.
   view.addEventListener('change',e=>{const t=e.target,g=goal(),redraw=sel=>{renderGoalComposer(g);q(sel)?.focus();};
+    if(t.id==='makeDraft'){const look=current();if(look){tuneOf(look).steps=t.checked?Number(t.dataset.steps):null;tuneChanged();q('#makeDraft')?.focus();}return;}
     if(t.dataset.makeFix){state.fix=t.dataset.makeFix;redraw('#makeFix-'+state.fix);return;}
     if(t.dataset.makeStyle){state.styleLook=t.dataset.makeStyle;q('#makeStyleLooks')?.removeAttribute('aria-invalid');return;}
     if(t.dataset.makePoseMode){state.poseMode=t.dataset.makePoseMode;state.posePicking=false;redraw('#makePoseMode-'+state.poseMode);return;}
@@ -633,10 +649,13 @@
       say(next.name+': your picture is chosen. Fill in what is asked, then press Generate.');(q('#makeComposer textarea,#makeComposer input')||q('#makeGenerate'))?.focus();return;}
     if(e.target.closest('[data-make-change]')){state.picking=true;renderLooks();q('.make-look.active [data-make-look]')?.focus();return;}
     if(e.target.closest('[data-make-keep-look]')){state.picking=false;renderLooks();q('#makeScene')?.focus();return;}
-    const again=e.target.closest('[data-make-rerun],[data-make-another]');if(again){const run=state.runs.find(r=>r.job.id===(again.dataset.makeRerun||again.dataset.makeAnother));if(!run)return;
+    const again=e.target.closest('[data-make-rerun],[data-make-another],[data-make-final]');if(again){const run=state.runs.find(r=>r.job.id===(again.dataset.makeRerun||again.dataset.makeAnother||again.dataset.makeFinal)),final=!!again.dataset.makeFinal;if(!run)return;
       state.goal=run.goal;state.look=run.lookId;state.picking=!!again.dataset.makeAnother;state.compare=false;
       // Edit and re-run brings the run's tune back with its look; another look starts from that look as made.
-      if(!again.dataset.makeAnother){if(Array.isArray(run.tune?.rows)&&Array.isArray(run.tune.cleared)){state.tune[run.lookId]=structuredClone(run.tune);state.tuneOpen=state.tuneOpen||!!run.tuned;}else delete state.tune[run.lookId];}try{sessionStorage.setItem('studio.make.scene.'+run.goal,run.scene);}catch{}remember();render();
+      if(!again.dataset.makeAnother){if(Array.isArray(run.tune?.rows)&&Array.isArray(run.tune.cleared)){state.tune[run.lookId]=structuredClone(run.tune);state.tuneOpen=state.tuneOpen||(!!run.tuned&&!final);}else delete state.tune[run.lookId];}
+      // Make the final is Edit and re-run with the draft's steps put back to the look's own: the same words and seed, staged, never sent.
+      if(final&&state.tune[run.lookId])state.tune[run.lookId].steps=null;try{sessionStorage.setItem('studio.make.scene.'+run.goal,run.scene);}catch{}remember();render();
+      if(final){say('The final is set up: the same words and seed at full detail. Press Generate to make it.');q('#makeGenerate')?.focus();return;}
       const scene=q('#makeScene');if(scene&&!state.picking){scene.focus();scene.select();}else q('.make-look.active [data-make-look]')?.focus();return;}
     const verdict=e.target.closest('[data-make-review]');if(verdict){void review(verdict);return;}
     const polishing=e.target.closest('[data-make-polish]');if(polishing&&!polishing.disabled){void polishPicture(polishing);return;}

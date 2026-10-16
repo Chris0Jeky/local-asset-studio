@@ -23,6 +23,20 @@ test('finder indexes preset model and family metadata and offers Tune without ge
   for(const query of ['lora','adapter','tune']){input.value=query;vm.runInNewContext('commands()',context);assert.match(results.innerHTML,/href="\/#make"/);assert.match(results.innerHTML,/Open Tune this look under the composer/);}
   input.value='flux';vm.runInNewContext('commands()',context);assert.match(results.innerHTML,/href="\/#models"/);
 });
+test('Make orders each goal by lab evidence, files painting styles under Painted illustration and keeps Krea last',()=>{
+  const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),grab=re=>JSON.parse(JSON.stringify(vm.runInNewContext('('+make.match(re)[1]+')')));
+  const goals=grab(/const GOALS=(\[[\s\S]*?\n  \]);/),looks=id=>goals.find(g=>g.id===id).looks,ids=new Set(JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/looks.json'))).looks.map(l=>l.id));
+  // Lab rounds 1-2 (docs/looks/LOOK-LAB-2026-10-16.md): measured high scorers first, rejects after them, unmeasured slow Krea last.
+  assert.deepEqual(looks('character'),['look-anima-pearly-petiflow','look-oneobsession-anima-v20-showcase','look-anifox-ringeko','look-pearly-anima-mix-v10-showcase','look-wai-fantasy-portrait','look-anima-fantasy-portrait','look-animagine-fantasy-portrait']);
+  assert.deepEqual(looks('scene'),['look-night-shift-retro-anime','look-noob-fantasy-scene','look-krea-watercolor-anime']);
+  assert.deepEqual(looks('painting').slice(0,2),['look-anima-painterly-artist-tags','look-krea-style-emerald-tarot']);
+  assert.ok(['look-krea-atelier-target-stack','look-krea-witch-nijisis'].every(id=>looks('painting').includes(id)&&!looks('character').includes(id)),'oil-paint and Nijisis looks are paintings');
+  assert.deepEqual(looks('photo').slice(0,2),['look-preset-zimage-fast','look-preset-realvis']);assert.deepEqual(looks('game'),['look-preset-stylized-prop','look-preset-pixel-lora']);
+  for(const g of goals.filter(g=>g.looks)){const first=g.looks.findIndex(id=>/krea/.test(id));assert.ok(first<0||g.looks.slice(first).every(id=>/krea/.test(id)),g.id+' keeps Krea last');for(const id of g.looks)assert.ok(ids.has(id),id);}
+  const tested=grab(/const TESTED=(\{[^}]*\});/),shapes=grab(/const SHAPE_FOR=(\{[^}]*\});/);
+  assert.deepEqual(Object.keys(tested).sort(),['look-anima-painterly-artist-tags','look-anima-pearly-petiflow','look-krea-lenovo-ultrareal','look-krea-oil-fantasy','look-krea-realistic-snapshot','look-krea-style-inkwork-darkbrush','look-krea-watercolor-anime','look-night-shift-retro-anime']);
+  assert.deepEqual(shapes,{character:'portrait',scene:'landscape',game:'square'});
+});
 const image = {media_type:'image',filename:'source.png'};
 const audio = {media_type:'audio',filename:'voice.wav'};
 const draft = () => ({version:1,updatedAt:123,recipe:{preset:'qwen-1ref',controls:{positive:'A study',seed:42},batch:1,parent_assets:['source'],references:[]}});

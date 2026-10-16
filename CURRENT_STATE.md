@@ -1,5 +1,17 @@
 # Current state — 13 October 2026
 
+## GPU Look lab Round 2 - 16 October 2026
+
+Executed 28 further serial Studio jobs: all nine deferred Krea looks twice (18 jobs), then two fixed-new-scene seeds for each of five round-1 leaders (10 jobs). All completed; no failed, uncertain or repeated submission. Round 2 agent judgements: 17 KEEP, 8 fixable, 1 reject, 2 youthful defaults skipped. Combined lab: 81 jobs / 91 image files; 36 KEEP, 28 fixable, 14 reject, 3 skipped. Studio host_commit admission, explicitly authorized by the owner, was below 60% before all Krea submissions; actual Krea elapsed times ranged 341-2,205 seconds. No CIM probe, runtime restart/stop/reconfiguration, model download, commit or push.
+
+New-scene KEEP rates (two seeds each): Petiflow 2/2, Night Shift 1/2, One Obsession 1/2, AniFox/Ringeko 0/2 (book lettering), Pearly 0/2 (separate instruments instead of one shared astrolabe). All 23 Make thumbnail sources served images; zero missing-source JPEGs were required, with inventory documented in examples/make-looks-20261016/README.md. [The report](docs/looks/LOOK-LAB-2026-10-16.md), appended journal and 81-job receipt manifest contain timings, rubric judgements, recipes/output hashes and ranked goal guidance. Both queues were empty at handoff. The coordinator owns integration; preserve ignored .runtime/lab-20261016/ and .runtime/lab-20261016b/. HUMAN_TODO.md creative/licensing choices stay open and unchanged. Focused Look tests and repository validation pass; full app/native/browser acceptance and licence clearance were not run.
+
+## GPU Look lab - 16 October 2026
+
+Executed 53 serial Studio jobs, all completed, producing 63 image files: 28 baseline jobs across 14/23 shipped looks, 18 single-variable improvement jobs, four additional anime-stack auditions and three OpenPose jobs. Agent judgements: 19 keep, 20 fixable, 13 reject, one youthful-looking output skipped. Nine Krea looks remain unsubmitted because the required CIM memory-admission probe is denied in this sandbox; no alternate-probe clarification was received. No failed/uncertain lab submission, download, installation, runtime change, commit or push.
+
+No Look met the two-scene promotion rule; presets/looks.json is unchanged and no new Look or thumbnail was added. The five-configuration AniFox/Ringeko stack test tied within 0.3. A WAI OpenPose wording change to closed fists fixed the named glove defect at seed 2026101690 while retaining arm/stance control (job 9939e137-1213-4ef2-81c2-9f8bc3285851, prompt 79216f82-23a4-45cc-a217-dc2a4d9a97af, 64.52 seconds); this is one-seed body-pose evidence, not identity transfer or human acceptance. Full methods, all-look table, exact requests, scores, 63 output hashes and resume point: [Look lab report](docs/looks/LOOK-LAB-2026-10-16.md), journal and receipt manifest alongside it. Focused Look tests passed (38); repository validation passed with a process-local Git safe.directory setting. HUMAN_TODO.md is unchanged; art and licensing choices remain open. Existing uncertain/partial jobs are untouched; both services remain running by owner instruction.
+
 ## Motion perceptual repair R2 — 13 October 2026
 
 Chris reported the delivered LAS clip looked entirely still. R1 timing tests
