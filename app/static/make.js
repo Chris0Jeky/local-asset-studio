@@ -39,9 +39,9 @@
   const licence=p=>nonCommercial(p)?'<small class="make-licence" title="'+escape(p.commercial_note)+'">Non-commercial</small>':'';
   const FINAL=['completed','failed','partial','uncertain','not_submitted','cancelled','abandoned'];
   const POLISH={face:'Fix face',details:'Fix hands and details',upscale:'Upscale 2\u00d7'};
-  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',poseRoute:'copy',pose:null,posePicking:false,compare:false,compareLooks:[],characters:[],character:null,charSave:null,charEdit:null,charMigrate:null,charForm:{},openers:new Set(),noteGone:false};
+  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',poseRoute:'copy',pose:null,posePicking:false,compare:false,compareLooks:[],characters:[],character:null,allPictures:false,charSave:null,charEdit:null,charMigrate:null,charForm:{},openers:new Set(),noteGone:false};
   try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(GOALS.some(g=>g.id===saved.goal))state.goal=saved.goal;if(typeof saved.look==='string')state.look=saved.look;}catch{}
-  const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,...r})=>({...r,job:{id}}))]).slice(0,6).map(({job,look,lookId,goal,scene,tune,tuned,group,title,fills})=>({id:job.id,look,lookId,goal,scene,tune,tuned,group,title,fills}))}));}catch{}};
+  const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,...r})=>({...r,job:{id}}))]).slice(0,6).map(({job,look,lookId,goal,scene,tune,tuned,group,title,fills,redo})=>({id:job.id,look,lookId,goal,scene,tune,tuned,group,title,fills,redo}))}));}catch{}};
   let restoredRuns=false,savedRuns=[];try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(Array.isArray(saved.runs))savedRuns=saved.runs.filter(r=>r&&typeof r.id==='string').slice(0,6);}catch{}
   const presets=()=>typeof catalog!=='undefined'&&catalog?.presets||[];
   const presetFor=look=>presets().find(p=>p.id===look?.body?.preset_id);
@@ -197,7 +197,7 @@
       +(t.rows.length?'<label class="make-tune-scale">All adapters × <output id="makeTuneScaleOut">'+scaleOf(t)+'%</output><input type="range" id="makeTuneScale" data-tune="scale" min="0" max="150" step="10" value="'+scaleOf(t)+'" aria-describedby="makeTuneScaleHint"></label><small id="makeTuneScaleHint" class="muted">Multiplies every strength below; the arrow shows what is sent. 100% sends them as set.</small>'+t.rows.map(row).join(''):'<p class="muted">None: the model and the words carry this look.</p>')
       +(SLOTS.some(s=>bound(p,NAMED(s)))?(files.length?'<div class="make-tune-add"><label for="makeLoraSearch">Add an installed adapter</label><input id="makeLoraSearch" list="makeLoraList" placeholder="Search by name" autocomplete="off" aria-describedby="makeLoraFit'+(slot?'':' makeLoraFull')+'"'+(slot?'':' disabled')+'><datalist id="makeLoraList">'+files.filter(f=>!t.rows.some(r=>r.name===f)).map(f=>{const e=entry(f);return '<option value="'+escape(f)+'">'+escape(short(f)+(e.role?' · '+e.role:'')+' · '+(fits(look,f)?'made for this model':e.family+', may not suit'))+'</option>';}).join('')+'</datalist><button type="button" data-tune-add'+(slot?'':' disabled')+'>Add</button>'
         +'<small id="makeLoraFit">'+(made?made+' made for '+escape(family(p))+' come first.':'None is made for '+escape(family(p))+' itself.')+(other?' '+other+' from other families of this model type may not suit it.':'')+'</small>'
-        +(slot?'':'<small id="makeLoraFull">All adapter slots of this recipe are in use; remove one first.</small>')+'</div>':'<p class="muted">No installed adapter is known to fit this model type. Models & setup lists what can be installed.</p>'):'<p class="muted">This recipe has no adapter slots to fill.</p>')+'</div>'
+        +(slot?'':'<small id="makeLoraFull">All adapter slots of this recipe are in use; remove one first.</small>')+'<div id="makeLoraChoices" class="make-lora-choices" role="group" aria-label="Matching adapters"></div></div>':'<p class="muted">No installed adapter is known to fit this model type. Models & setup lists what can be installed.</p>'):'<p class="muted">This recipe has no adapter slots to fill.</p>')+'</div>'
       +((bound(tp,'steps')&&steps)||(bound(tp,'sampler')&&tp.choices?.sampler?.length)?'<div class="make-tune-group"><h3>Quality and speed</h3><div class="make-pair">'
         +(bound(tp,'steps')&&steps?'<label>Steps<select data-tune="steps">'+option('','As made · '+steps,t.steps==null)+option(draft,'Draft · '+draft+', faster',t.steps===draft)+option(fine,'Finer · '+fine+', slower',t.steps===fine)+'</select></label>':'')
         +(bound(tp,'sampler')&&tp.choices?.sampler?.length?'<label>Sampler<select data-tune="sampler">'+option('','As made'+(c.sampler?' · '+c.sampler:''),!t.sampler)+tp.choices.sampler.filter(s=>s!==c.sampler).map(s=>option(s,s,t.sampler===s)).join('')+'</select></label>':'')+'</div></div>':'')
@@ -227,14 +227,25 @@
     if(key==='seed')t.seed=target.value===''?null:Number(target.value);
     tuneChanged(false);return true;
   }
+  // Matches on the file name or the knowledge base's label, ignoring case: an exact name wins, else every typed word must appear.
+  function adapterMatches(look,text){const s=text.toLowerCase(),files=compatible(look),names=f=>[f,f.replace(/\.safetensors$/i,''),short(f)].map(x=>x.toLowerCase());
+    const exact=files.filter(f=>names(f).includes(s));if(exact.length)return exact;const words=s.split(/\s+/).filter(Boolean);return files.filter(f=>{const hay=names(f).join(' ');return words.every(w=>hay.includes(w));});}
+  function addAdapter(look,name){const t=tuneOf(look),slot=freeSlot(look,t);if(!slot||!compatible(look).includes(name)||t.rows.some(r=>r.name===name))return;
+    t.rows.push({slot,name,strength:clamp(labOf(look,name)?.[0]??entry(name)?.default??1),on:true,added:true});t.cleared=t.cleared.filter(s=>s!==slot);tuneChanged();q('[data-tune-strength="'+slot+'"]')?.focus();
+    say(fits(look,name)?'Added '+short(name)+'.':'Added '+short(name)+'. It was made for '+entry(name).family+', so it may not suit this model; check the first picture.');}
   function tuneClick(target){
     const look=current();if(!look)return false;
     const remove=target.closest('[data-tune-remove]');if(remove){const t=tuneOf(look),s=remove.dataset.tuneRemove;t.rows=t.rows.filter(r=>r.slot!==s);if(!t.cleared.includes(s))t.cleared.push(s);tuneChanged();q('#makeLoraSearch')?.focus();return true;}
-    if(target.closest('[data-tune-add]')){const t=tuneOf(look),input=q('#makeLoraSearch'),name=input?.value.trim(),slot=freeSlot(look,t);
-      if(!compatible(look).includes(name)){say(name?'Choose an adapter from the list: '+name+' is not an installed adapter for this model type.':'Type part of an adapter name, then choose it from the list.');input?.focus();return true;}
-      if(t.rows.some(r=>r.name===name)){say(short(name)+' is already added.');input?.focus();return true;}if(!slot)return true;
-      t.rows.push({slot,name,strength:clamp(labOf(look,name)?.[0]??entry(name)?.default??1),on:true,added:true});t.cleared=t.cleared.filter(s=>s!==slot);tuneChanged();q('[data-tune-strength="'+slot+'"]')?.focus();
-      say(fits(look,name)?'':'Added '+short(name)+'. It was made for '+entry(name).family+', so it may not suit this model; check the first picture.');return true;}
+    const pick=target.closest('[data-tune-pick]');if(pick){addAdapter(look,pick.dataset.tunePick);return true;}
+    if(target.closest('[data-tune-add]')){const input=q('#makeLoraSearch'),text=input?.value.trim()||'',t=tuneOf(look),choices=q('#makeLoraChoices');if(choices)choices.innerHTML='';
+      if(!text){say('Type part of an adapter name, then press Add.');input?.focus();return true;}
+      // A part of the name is enough (audit v3 N2): one match is added, several are offered as choices, none says why.
+      const found=adapterMatches(look,text),open=found.filter(f=>!t.rows.some(r=>r.name===f));
+      if(!found.length){say(text+' is not an installed adapter for this model type. Type part of its name, or choose one from the list.');input?.focus();return true;}
+      if(!open.length){say(short(found[0])+(found.length>1?' and the other matches are':' is')+' already added.');input?.focus();return true;}
+      if(open.length===1){addAdapter(look,open[0]);return true;}
+      if(choices){choices.innerHTML='<small>'+open.length+' adapters match “'+escape(text)+'”. Choose one:</small>'+open.slice(0,8).map(f=>'<button type="button" class="make-link" data-tune-pick="'+escape(f)+'">'+escape(short(f))+(fits(look,f)?'':' · '+escape(entry(f).family)+', may not suit')+'</button>').join('')+(open.length>8?'<small>'+(open.length-8)+' more: type more of the name.</small>':'');choices.querySelector('button')?.focus();}
+      say(open.length+' adapters match. Choose one.');return true;}
     if(target.closest('[data-tune-reset]')){const reseed=state.tune[look.id]?.reseed??true;delete state.tune[look.id];delete savedTunes[look.id];tuneOf(look).reseed=reseed;tuneChanged();return true;}
     return false;
   }
@@ -572,7 +583,7 @@
             +(job.outputs||[]).map((o,i)=>picture(o)?img(job,o,i,look)+(o.asset_id?'<div class="make-actions">'+marks(o.asset_id)+'</div>':'<small class="muted">Saving to the library…</small>'):'').join('')+pending(job,1)+'</figure>').join('')+'</div></article>';}
       const {job,look,scene,tuned,title,lost}=runs[0];
       return '<article class="make-run" data-run="'+escape(job.id)+'"><header><div><b>'+escape(pictureTitle(scene||title||job.controls?.positive||look,job.created_at))+'</b>'+(scene?'<small>'+escape(scene)+'</small>':look&&!scene?'<small>'+escape(look)+'</small>':'')+(tuned?'<small class="make-tuned">'+escape(tuned)+'</small>':'')+'</div><span class="make-run-state '+escape(lost?'uncertain':job.status)+'">'+escape(lost?'Lost contact with this run; still checking':words(job))+'</span></header>'
-      +(scene?'<div class="make-run-tools">'+(draftRun(runs[0])?'<button type="button" data-make-final="'+escape(job.id)+'">Make the final</button>':'')+'<button type="button" data-make-rerun="'+escape(job.id)+'">Edit and re-run</button><button type="button" data-make-another="'+escape(job.id)+'">Same words, another look</button></div>':'')
+      +(scene?'<div class="make-run-tools">'+(draftRun(runs[0])?'<button type="button" data-make-final="'+escape(job.id)+'">Make the final</button>':'')+'<button type="button" data-make-rerun="'+escape(job.id)+'">Edit and re-run</button><button type="button" data-make-another="'+escape(job.id)+'">Same words, another look</button></div>':runs[0].redo?'<div class="make-run-tools"><button type="button" data-make-redo="'+escape(job.id)+'">Edit and re-run</button></div>':'')
       +(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')+(lost?'':recovery(job))
       +'<div class="make-outputs">'+(job.outputs||[]).map((o,i)=>!picture(o)?other(o):'<figure>'+img(job,o,i,look)+actions(job,o)+'</figure>').join('')+pending(job)+'</div></article>';});
     const focus=document.activeElement,key=e=>(e.closest('[data-run]')?.dataset.run||'')+'|'+e.tagName+'|'+JSON.stringify({...e.dataset})+'|'+e.textContent,focusKey=box.contains(focus)?key(focus):null,open=[...box.querySelectorAll('details[open]')].map(e=>e.dataset.more);
@@ -588,6 +599,11 @@
   // the claim, the graph hash, every file and every bracketed fill again. No route or input is added for this.
   const SC=()=>window.StudioContinuation,PE=()=>window.StudioPoseEditor,thumbUrl=a=>'/api/assets/'+encodeURIComponent(a.id)+'/thumb';
   const pictureLabel=a=>pictureTitle(a.prompt_excerpt||(!a.job_id&&a.title)||a.title,a.created_at);
+  // Cards that share a prompt are told apart by a second line (audit v3 N5): the look or recipe, how long ago, the seed.
+  const ago=t=>{const s=Math.max(0,Date.now()/1000-Number(t||0));return !t?'':s<90?'just now':s<5400?Math.round(s/60)+' min ago':s<129600?Math.round(s/3600)+' h ago':Math.round(s/86400)+' days ago';};
+  const pictureMeta=a=>[String(a.run_label||'').startsWith('Make · ')?a.run_label.slice(7):a.preset_name,ago(a.created_at),a.source?.seed!=null?'seed '+a.source.seed:''].filter(Boolean).join(' · ');
+  // The pickers show your pictures, as the Library's Mine does (workspace.js assetIsAgentRun: Make runs are yours, #1421).
+  const agentRun=a=>typeof assetIsAgentRun==='function'&&assetIsAgentRun(a);
   const PICK={edit:'Choose the picture to change.',repair:'Choose the picture to fix or enlarge.',restyle:'Choose the picture to redraw in another look.',combine:'Choose the character. The pose comes next.',animate:'Choose the still to bring to life.',mesh:'Choose a picture of one object or character, ideally on a plain background.'};
   const HEAD={edit:'What should change?',repair:'What should be fixed?',restyle:'Choose the new look',combine:'Choose the pose',animate:'How should it move?',mesh:'Make a 3D model'};
   // A recipe's bracketed fills become plain fields named by what they mean; a recipe example that names a person is never shown.
@@ -679,8 +695,8 @@
     await fillPictures(g,'makePictures','data-make-pick');
     if(goal()===g){characterNote(g);void fillLineups();}
   }
-  const pictureFinder=(id,attr)=>'<input type="search" class="make-search" data-make-search="'+id+'" data-make-attr="'+attr+'" placeholder="Search your pictures" aria-label="Search your pictures" aria-controls="'+id+'" value="'+escape(state.queries[id]||'')+'"><div id="'+id+'" class="make-pictures"><p class="muted">Loading your pictures…</p></div>';
-  async function loadPictures(){if(!state.pictures){const data=await json('/api/workspace');state.pictures=(data.assets||[]).filter(a=>a.media_type==='image'&&picture(a)&&!a.trashed_at).sort((a,b)=>(b.created_at||0)-(a.created_at||0));}return state.pictures;}   // the whole library is searchable; the grid shows the newest 60 matches
+  const pictureFinder=(id,attr)=>'<div class="make-finder"><input type="search" class="make-search" data-make-search="'+id+'" data-make-attr="'+attr+'" placeholder="Search your pictures" aria-label="Search your pictures" aria-controls="'+id+'" value="'+escape(state.queries[id]||'')+'"><button type="button" class="make-link" data-make-all="'+id+'" aria-controls="'+id+'" aria-pressed="false" hidden></button></div><div id="'+id+'" class="make-pictures"><p class="muted">Loading your pictures…</p></div>';
+  async function loadPictures(){if(!state.pictures){const data=await json('/api/workspace');state.pictures=(data.assets||[]).filter(a=>a.media_type==='image'&&picture(a)&&!a.trashed_at).sort((a,b)=>(b.created_at||0)-(a.created_at||0));}return state.pictures;}   // your pictures by default, the whole library with Show all; the grid shows the newest 60 matches
   async function fillPictures(g,id,attr){
     try{await loadPictures();
       if(goal()===g)renderGrid(id,attr);}
@@ -689,9 +705,12 @@
   // Search reads the words people see on the card plus tags and file name; masks never reach this list.
   function renderGrid(id,attr){
     const box=q('#'+id);if(!box||!state.pictures)return;const terms=String(state.queries[id]||'').toLowerCase().split(/\s+/).filter(Boolean);
-    const list=state.pictures.filter(a=>{const text=[pictureLabel(a),a.title,a.prompt_excerpt,a.filename,...(a.tags||[])].join(' ').toLowerCase();return terms.every(t=>text.includes(t));});
-    const shown=list.slice(0,60),more=list.length-shown.length;
-    box.innerHTML=list.length?shown.map(a=>'<button type="button" '+attr+'="'+escape(a.id)+'"><img src="'+thumbUrl(a)+'" alt="'+escape(pictureLabel(a))+'" loading="lazy"><small aria-hidden="true">'+escape(pictureLabel(a))+'</small></button>').join('')+(more?'<p class="muted">'+more+' older picture'+(more===1?'':'s')+' match too. Search to narrow the list.</p>':''):state.pictures.length?'<p class="muted">No picture matches “'+escape(state.queries[id])+'”.</p>':'<p class="muted">No pictures yet. Make one first, or import one in the library.</p>';
+    const match=a=>{const text=[pictureLabel(a),pictureMeta(a),a.title,a.prompt_excerpt,a.filename,...(a.tags||[])].join(' ').toLowerCase();return terms.every(t=>text.includes(t));};
+    const agents=state.pictures.filter(agentRun).length,pool=state.allPictures||!agents?state.pictures:state.pictures.filter(a=>!agentRun(a)),list=pool.filter(match);
+    const shown=list.slice(0,60),more=list.length-shown.length,hidden=!state.allPictures&&agents&&terms.length?state.pictures.filter(a=>agentRun(a)&&match(a)).length:0;
+    const card=a=>{const label=pictureLabel(a),meta=pictureMeta(a);return '<button type="button" '+attr+'="'+escape(a.id)+'" title="'+escape(String(a.prompt_excerpt||a.title||label)+(meta?' · '+meta:''))+'"><img src="'+thumbUrl(a)+'" alt="'+escape(label)+'" loading="lazy"><small aria-hidden="true">'+escape(label)+'</small>'+(meta?'<small class="make-pic-meta">'+escape(meta)+'</small>':'')+'</button>';};
+    box.innerHTML=list.length?shown.map(card).join('')+(more?'<p class="muted">'+more+' older picture'+(more===1?'':'s')+' match too. Search to narrow the list.</p>':''):pool.length?'<p class="muted">No picture matches “'+escape(state.queries[id])+'”'+(hidden?'; '+hidden+' from agent runs do'+(hidden===1?'es':'')+'.':'.')+'</p>':state.pictures.length?'<p class="muted">None of your own pictures yet: everything here is from agent runs.</p>':'<p class="muted">No pictures yet. Make one first, or import one in the library.</p>';
+    const all=q('[data-make-all="'+id+'"]');if(all){all.hidden=!agents;all.setAttribute('aria-pressed',String(!!state.allPictures));all.textContent=state.allPictures?'Show only my pictures':'Show all pictures ('+agents+' more from agent runs)';}
   }
   function figureSvg(points,mirror){const P=PE(),at=i=>points[i]&&[Math.round((mirror?1-points[i][0]:points[i][0])*100),Math.round(points[i][1]*150)];
     return '<svg viewBox="0 0 100 150" aria-hidden="true">'+P.LIMBS.map(([a,b])=>{const s=at(a),e=at(b);return s&&e?'<line x1="'+s[0]+'" y1="'+s[1]+'" x2="'+e[0]+'" y2="'+e[1]+'" stroke="'+P.COLORS[b]+'"/>':'';}).join('')+'</svg>';}
@@ -747,11 +766,24 @@
   // aria-invalid belongs on inputs, not on a fieldset or section: a group of choices marks each choice (WCAG 4.1.2).
   function markMissing(el){const radios=el.matches('input,textarea,select')?[el]:[...el.querySelectorAll('input[type=radio]')],list=radios.length?radios:[...el.querySelectorAll('input')].slice(0,1);
     for(const f of list){f.setAttribute('aria-invalid','true');f.setAttribute('aria-describedby','makeStatus');}(list[0]||el).focus();}
+  // A picture goal's run keeps what it was made from (wave 6 ask): the picture, the answers, the pose and its route (Copy Pose or
+  // Replace), the look picture or the fix. Edit and re-run puts them back on screen; it never submits. Read back from this browser's
+  // storage, so every field is checked before use.
+  const redoOf=(a,form,sel)=>({pick:a.id,form:Object.fromEntries(Object.entries(form).filter(([,v])=>typeof v==='string')),styleLook:sel.styleLook,styleWords:!!sel.styleWords,poseMode:sel.poseMode,poseRoute:sel.poseRoute,
+    pose:sel.pose?.asset?{asset:sel.pose.asset.id}:sel.pose?.figure?{figure:sel.pose.figure,mirror:!!sel.pose.mirror}:null,fix:sel.fix});
+  function redoRun(run){const r=run.redo,g=GOALS.find(x=>x.id===run.goal);if(!g?.intent||!r||typeof r.pick!=='string')return false;
+    state.goal=g.id;state.compare=false;state.character=null;choosePicture(r.pick);
+    state.form=Object.fromEntries(Object.entries(r.form&&typeof r.form==='object'?r.form:{}).filter(([,v])=>typeof v==='string'&&v.length<=2000));
+    if(['picture','figure'].includes(r.poseMode))state.poseMode=r.poseMode;if(['copy','scene'].includes(r.poseRoute))state.poseRoute=r.poseRoute;
+    const find=id=>state.pictures?.find(x=>x.id===id)||(typeof assetState!=='undefined'&&assetState?.assets?.find(x=>x.id===id))||{id,title:''};
+    state.pose=typeof r.pose?.asset==='string'?{asset:find(r.pose.asset)}:PE()?.PRESETS?.some(x=>x.id===r.pose?.figure)?{figure:r.pose.figure,mirror:!!r.pose.mirror}:null;state.posePicking=false;
+    if(typeof r.styleLook==='string')state.styleLook=r.styleLook;state.styleWords=!!r.styleWords;if(POLISH[r.fix])state.fix=r.fix;
+    remember();render();return true;}
   async function goalGenerate(){
     const g=goal(),a=state.pick;if(!g.intent||!a||state.busy)return;
     const p=goalRoute(g),why=goalBlocker(g,p);if(why){say(why);return;}
     // Every answer is read before the first await: typing on while the copy runs does not change this request.
-    const form={...state.form},avoid=String(chosenCharacter()?.body.avoid||'').trim(),missing=goalMissing(g,p,form),sel={styleLook:state.styleLook,poseMode:state.poseMode,pose:state.pose&&{...state.pose},fix:state.fix};
+    const form={...state.form},avoid=String(chosenCharacter()?.body.avoid||'').trim(),missing=goalMissing(g,p,form),sel={styleLook:state.styleLook,styleWords:state.styleWords,poseMode:state.poseMode,poseRoute:state.poseRoute,pose:state.pose&&{...state.pose},fix:state.fix};
     if(missing){const el=q('#'+missing[0]);if(el)markMissing(el);sayMissing(missing[1]);return;}
     state.busy=true;say('Preparing…');
     try{
@@ -770,7 +802,7 @@
         say('Sending to ComfyUI…');
         job=await json('/api/jobs',{preset_id:p.id,continuation:prepared.claim,controls,batch_count:1,parent_assets:[...new Set([a.id,...board.map(r=>r.parent_asset).filter(Boolean)])],references:p.reference_slots?.length?SC().combineReferences(p,board):[],label:'Make · '+g.name});
       }
-      state.runs.unshift({job,look:g.intent==='repair'?POLISH[sel.fix]:g.name,lookId:null,goal:g.id,scene:null,title:String(form[{edit:'change',animate:'motion',combine:'who'}[g.intent]]||'').trim()||pictureLabel(a),...(g.intent==='combine'?{fills:{who:String(form.who||'').trim(),clothes:String(form.clothes||'').trim()}}:{})});remember();
+      state.runs.unshift({job,look:g.intent==='repair'?POLISH[sel.fix]:g.name,lookId:null,goal:g.id,scene:null,title:String(form[{edit:'change',animate:'motion',combine:'who'}[g.intent]]||'').trim()||pictureLabel(a),...(g.intent==='combine'?{fills:{who:String(form.who||'').trim(),clothes:String(form.clothes||'').trim()}}:{}),redo:redoOf(a,form,sel)});remember();
       say('Started. The result appears in Your pictures as it finishes; you can leave this page.');renderRuns();poll(job.id);
       if(typeof refresh==='function')void refresh();
     }catch(error){say(error.message);}
@@ -818,6 +850,14 @@
     }catch(error){say((started?'Started '+started+' of '+list.length+'; the rest were not sent. ':'')+error.message);}
     finally{state.busy=false;syncOperation();}
   }
+  // Your pictures lives in this browser; a new browser starts it from the library's Make pictures (audit v3 N6): the newest six
+  // Make runs by their "Make · " label, read back from their job records. Their words are not stored, so Edit and re-run is not offered.
+  async function seedRuns(){
+    try{const seen=new Set(),firsts=[];for(const a of await loadPictures()){if(!String(a.run_label||'').startsWith('Make · ')||typeof a.job_id!=='string'||seen.has(a.job_id))continue;seen.add(a.job_id);firsts.push(a);if(firsts.length===6)break;}
+      const runs=await Promise.all(firsts.map(async a=>{try{const job=await json('/api/jobs/'+encodeURIComponent(a.job_id)),name=a.run_label.replace(/^Make · (Compare · )?/,''),look=state.looks?.find(l=>l.name===name);
+        return{job,look:name,lookId:look?.id||null,goal:GOALS.find(g=>g.looks?.includes(look?.id))?.id||null,scene:null,title:a.prompt_excerpt||null};}catch{return null;}}));
+      return runs.filter(Boolean);}catch{return[];}
+  }
   async function load(){
     state.error='';
     // Speed, readiness and history read the recipe catalog that app.js loads; wait for it briefly instead of guessing.
@@ -831,6 +871,7 @@
     // again, and one whose read fails is kept and checked again with back-off (#1438), never taken for deleted.
     const restored=await Promise.all(savedRuns.map(async r=>{try{return{...r,job:await json('/api/jobs/'+encodeURIComponent(r.id))};}catch(error){return error.status===404?null:{...r,job:{id:r.id,status:'',outputs:[]},lost:true};}}));
     state.runs=[...state.runs,...restored.filter(r=>r&&!state.runs.some(x=>x.job.id===r.id)).map(({id,...r})=>r)];
+    if(!state.runs.length&&!savedRuns.length){const seeded=await seedRuns();if(!state.runs.length)state.runs=seeded;}
     restoredRuns=true;remember();
     for(const r of state.runs)if(!FINAL.includes(r.job.status))poll(r.job.id,r.lost?1:0);
     renderRuns();
@@ -856,7 +897,11 @@
     const g=e.target.closest('[data-make-goal]');if(g){state.goal=g.dataset.makeGoal;state.pictures=null;remember();render();q('[data-make-goal="'+state.goal+'"]')?.focus();return;}
     const l=e.target.closest('[data-make-look]');if(l&&state.compare){const id=l.dataset.makeLook,i=state.compareLooks.indexOf(id);
       if(i>=0)state.compareLooks.splice(i,1);else if(state.compareLooks.length>=3){say('Three looks at most: unselect one first.');return;}else state.compareLooks.push(id);
-      renderLooks();q('[data-make-look="'+id+'"]')?.focus();return;}
+      renderLooks();
+      // The scene box sits below the cards (audit v3 N4): from the second look on, bring it into view and put the keyboard there.
+      if(i<0&&state.compareLooks.length>=2){const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;q('#makeComposer .make-step')?.scrollIntoView({block:'start',behavior:reduce?'auto':'smooth'});q('#makeScene')?.focus({preventScroll:true});
+        say(state.compareLooks.length<3?'Two looks chosen. Type the scene, or scroll up to add a third look.':'Three looks chosen. Type the scene, then press Generate.');return;}
+      q('[data-make-look="'+id+'"]')?.focus();return;}
     if(l){state.look=l.dataset.makeLook;state.picking=false;remember();renderLooks();focusScene();return;}
     if(e.target.closest('[data-make-compare]')){state.compare=!state.compare;state.compareLooks=state.compare&&lookList().some(x=>x.id===state.look)?[state.look]:[];
       say(state.compare?'Compare looks: choose two or three looks, type one scene, then press Generate once.':'');renderLooks();q('[data-make-compare]')?.focus();return;}
@@ -870,6 +915,7 @@
     const migrate=e.target.closest('[data-make-migrate]');if(migrate){openMigration(migrate.dataset.makeMigrate);return;}
     if(e.target.closest('[data-make-note-dismiss]')){dismissNote();return;}
     const pick=e.target.closest('[data-make-pick]');if(pick){state.character=null;choosePicture(pick.dataset.makePick);renderPictures(goal());q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();return;}
+    const all=e.target.closest('[data-make-all]');if(all){state.allPictures=!state.allPictures;for(const [id,attr] of [['makePictures','data-make-pick'],['makePosePictures','data-make-pose-pick']])renderGrid(id,attr);q('[data-make-all="'+all.dataset.makeAll+'"]')?.focus();return;}
     if(e.target.closest('[data-make-repick]')){state.repicking=true;renderPictures(goal());q('[data-make-search="makePictures"]')?.focus();return;}
     if(e.target.closest('[data-make-keep-picture]')){state.repicking=false;renderPictures(goal());return;}
     const posePick=e.target.closest('[data-make-pose-pick]');if(posePick){const a=state.pictures?.find(x=>x.id===posePick.dataset.makePosePick);if(a){state.pose={asset:a};state.posePicking=false;renderGoalComposer(goal());q('[data-make-pose-change]')?.focus();}return;}
@@ -889,6 +935,8 @@
       if(final&&state.tune[run.lookId])state.tune[run.lookId].steps=null;try{sessionStorage.setItem('studio.make.scene.'+run.goal,run.scene);}catch{}remember();render();
       if(final){say('The final is set up: the same words and seed at full detail. Press Generate to make it.');q('#makeGenerate')?.focus();return;}
       const scene=q('#makeScene');if(scene&&!state.picking){scene.focus();scene.select();}else q('.make-look.active [data-make-look]')?.focus();return;}
+    const redo=e.target.closest('[data-make-redo]');if(redo){const run=state.runs.find(r=>r.job.id===redo.dataset.makeRedo);
+      if(run&&redoRun(run)){say('That run’s picture and answers are back. Change what you like, then press Generate.');(q('#makeComposer textarea,#makeComposer input:not([type=search])')||q('#makeGenerate'))?.focus();}return;}
     const recovering=e.target.closest('[data-make-resume],[data-make-stop]');if(recovering&&!recovering.disabled){void recover(recovering);return;}
     const verdict=e.target.closest('[data-make-review]');if(verdict){void review(verdict);return;}
     const polishing=e.target.closest('[data-make-polish]');if(polishing&&!polishing.disabled){void polishPicture(polishing);return;}
@@ -901,9 +949,17 @@
   view.addEventListener('submit',e=>{const form=e.target.closest('[data-make-character-form]');if(form){e.preventDefault();void saveCharacter(form);}});
   view.addEventListener('keydown',e=>{const radio=e.target.closest('[role="radio"]'),group=radio?.closest('[role="radiogroup"]');if(group&&['ArrowRight','ArrowDown','ArrowLeft','ArrowUp','Home','End'].includes(e.key)){
     e.preventDefault();const items=[...group.querySelectorAll('[role="radio"]')],i=items.indexOf(radio),next=items[e.key==='Home'?0:e.key==='End'?items.length-1:(i+(['ArrowRight','ArrowDown'].includes(e.key)?1:items.length-1))%items.length],attr=next.hasAttribute('data-make-goal')?'data-make-goal':'data-make-look',value=next.getAttribute(attr);if(attr==='data-make-goal'){state.goal=value;state.pictures=null;remember();render();}else{state.look=value;state.picking=true;remember();renderLooks();}q('['+attr+'="'+value+'"]')?.focus();return;
-  }if((e.target.id==='makeScene'||e.target.dataset.makeField)&&(e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();if(!e.repeat)void submit();}});
+  }if(e.target.id==='makeLoraSearch'&&e.key==='Enter'&&!e.isComposing){e.preventDefault();if(!e.repeat)q('[data-tune-add]')?.click();return;}
+  if((e.target.id==='makeScene'||e.target.dataset.makeField)&&(e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();if(!e.repeat)void submit();}});
   // Generate is one button for every mode: a look, a compare, or a picture goal.
   const submit=()=>goal().intent?goalGenerate():state.compare?generateCompare():generate();
+  // The Library's picture dialog opens Make's picture goals with that picture chosen (audit v3 N3); Continue with this stays beside
+  // them for the full editor. Leaving follows the dialog's own unsaved-changes rule; nothing is submitted.
+  document.addEventListener('click',e=>{const b=e.target.closest('#assetDialog [data-make-open]');if(!b)return;const next=GOALS.find(x=>x.intent===b.dataset.makeOpen);
+    if(!next||typeof assetDetailCanLeave==='function'&&!assetDetailCanLeave())return;
+    state.goal=next.id;state.compare=false;state.character=null;state.pictures=null;choosePicture(b.dataset.asset);remember();state.status=next.name+': your picture is chosen. Fill in what is asked, then press Generate.';state.missing='';
+    document.querySelector('#assetDialog')?.close();if(typeof showView==='function')showView('make');else window.StudioMake.refresh();
+    (q('#makeComposer textarea,#makeComposer input:not([type=search])')||q('#makeGenerate'))?.focus();});
   let loaded=false;
   window.StudioMake={refresh(){if(!loaded){loaded=true;void load();}else render();}};
   if(!view.hidden)window.StudioMake.refresh();

@@ -322,7 +322,7 @@ for(const id of ['assetTitle','assetTags','assetReview','assetNotes']) {
 }
 // Existing continuation/scene/recipe guards still own their handoffs. Do not leave during a write.
 document.addEventListener('click',e=>{
-  if((assetDetailBusy || assetDetailPending || assetDetailConflict) && $('#assetDialog').open && e.target.closest('[data-ux-handoff],[data-handoff],.ux-scene-link,#assetRecipe')){
+  if((assetDetailBusy || assetDetailPending || assetDetailConflict) && $('#assetDialog').open && e.target.closest('[data-ux-handoff],[data-handoff],[data-make-open],.ux-scene-link,#assetRecipe')){
     e.preventDefault();e.stopImmediatePropagation();assetDetailStatus('Finish the pending save before continuing with this asset.');
   }
 },true);
