@@ -1,4 +1,4 @@
-﻿"""Repository tutorial manifests describe Git bytes, not Windows checkout newlines."""
+"""Repository tutorial manifests describe Git bytes, not Windows checkout newlines."""
 import ast
 import hashlib
 import json
