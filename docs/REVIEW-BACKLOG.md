@@ -74,4 +74,8 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   painterly and Krea painting looks moved to "Painted illustration"; per-goal default shapes (character portrait,
   scene landscape, game square); "Fast general picture, you describe it all" renamed "Quick picture, any subject";
   an optional "Draft first" for slow looks, then "Make the final" at full steps with the same seed and words.
+- [ ] **Library save/refresh race fixed in product code** (#1449): a background refresh that started before a save
+  could overwrite the record with an older revision and cause a false "changed elsewhere" conflict on the next save.
+- [ ] **Browser tests move to free ports** (#1450): a test-only allowed host instead of 8191, never a weaker product
+  Host check.
 
