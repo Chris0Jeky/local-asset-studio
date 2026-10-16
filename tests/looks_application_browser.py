@@ -60,7 +60,7 @@ def main():
                     page.locator('#lookSelect').select_option(LOOK['id'])
                     page.locator('#lookScene').fill('quiet room')
                     page.locator('#positive').fill('My existing wording.')
-                    page.evaluate("getControl('seed').value='99';document.querySelector('#batch').value='3'")
+                    page.evaluate("getControl('seed').value='';document.querySelector('#batch').value='3'")   # an intentionally cleared seed
                     before = page.evaluate('StudioSetupDraft.capture()')
                     page.locator('#lookPrepare').click()
                     page.wait_for_function("!document.querySelector('#lookPrepare').disabled")
@@ -68,6 +68,7 @@ def main():
                     assert 'could not be applied' in status and 'sampler' in status, status
                     assert 'Prepare stopped' in status and 'press Generate' not in status, status
                     assert page.evaluate('StudioSetupDraft.capture()') == before, 'Failed Prepare must restore all Create values'
+                    assert page.locator('[data-key=seed]').input_value() == '', 'a cleared control stays cleared after the rollback'
                     assert 'edited shipped look' in page.locator('#lookSummary').inner_text()
                     # Switching to another recipe must roll back its wording, source and local File too.
                     page.evaluate("""selectPreset('restyle-klein');document.querySelector('#positive').value='Keep this source';

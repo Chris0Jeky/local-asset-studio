@@ -165,12 +165,16 @@
     if(typed&&typed!==String(selected?.defaults?.positive||'').trim()&&typed!==composed&&!confirm('This look replaces the wording in Create. Continue?')){status('Nothing changed.');return;}
     // Reload the recipe even when it is open: a setting the look does not store, or a parent picture, must not linger.
     const previous=StudioSetupDraft.capture(),files=['reference','lastReference'].map(id=>[id,[...(q('#'+id)?.files||[])]]),batch=q('#batch').value;
+    // values() drops empty controls, so keep every control's exact value (an intentionally cleared one included) for a rollback.
+    const exact=typeof document==='undefined'?[]:[...document.querySelectorAll('[data-key]')].map(el=>[el.dataset.key,el.value]),previousPreset=selected?.id;
     if(!previous)throw Error('Create could not be saved for recovery. Prepare stopped; current inputs are unchanged.');
     selectPreset(result.preset_id);q('#batch').value=batch;
     const problems=L.applyControls(result.controls,key=>key==='positive'?q('#positive'):key==='negative'?q('#negative'):getControl(key));
     if(problems.length){
       applySaved(previous.recipe);recipeTemplateHash=previous.templateHash;
       for(const [id,list] of files)if(list.length){const transfer=new DataTransfer();for(const file of list)transfer.items.add(file);q('#'+id).files=transfer.files;}
+      if(selected?.id===previousPreset)for(const [key,value] of exact){const el=getControl(key);if(el)el.value=value;}
+      for(const refresh of [typeof updateLoraHints==='function'&&updateLoraHints,typeof updateReady==='function'&&updateReady,typeof scheduleTimeEstimate==='function'&&scheduleTimeEstimate])if(refresh)refresh();   // restored files and cleared values fire no input events
       const details=problems.map(key=>/^lora\d*_name$/.test(key)?"LoRA '"+result.controls[key]+"' is not installed":(key==='scheduler'?'schedule':key.replaceAll('_',' '))+" '"+result.controls[key]+"' could not be applied").join('; ');
       const text="This look's "+details+'. Prepare stopped. Install missing LoRAs in Models & setup or pick another look. Create is unchanged.';message(text,true);status(text,true);return false;
     }
