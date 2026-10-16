@@ -183,3 +183,15 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   Game item or icon with a "2 of 2" badge — one seed per object, near-white (not transparent) background. Krea's
   watercolour route also qualified but takes ~8 min, so it was not shipped. Reverse: remove the look id from the game goal.
 - [ ] **Issue hygiene**: #1226 closed (every item was already on main); #1180 item 1 confirmed done earlier.
+- [ ] **Make wave 7** (#1486): picture pickers show *your* pictures first ("Show all pictures (N more from agent
+  runs)" brings the lab's back); typing part of an adapter name works and Enter adds it (several matches → buttons);
+  the Library dialog leads with "In Make: Change it / Fix or upscale / Restyle / New pose" (Full editor routes kept as
+  a second row; "Same recipe, new seed" still asks first); choosing a second look in Compare scrolls to the scene box;
+  picture cards show look, time ago and seed; an empty "Your pictures" fills from the library's newest Make runs;
+  picture-goal runs remember their route for "Edit and re-run"; Models & setup reserves space and folds unused missing
+  files under "Optional" (only after every file check succeeded). Skipped: comparing models/strengths/steps.
+- [ ] **Phone Full editor run dock kept fixed** (#1487): making it static pushed Generate off screen; audit #26 stays
+  "partly" until a compact phone dock is designed.
+- [ ] **Review hygiene**: a sweep found 20 Codex review threads on tonight's merged PRs that nobody had answered (my
+  merge script checked CI only). Six were already fixed or out of date and got replies; the real ones are in one
+  follow-up PR; the merge script now holds a PR while a bot thread is unanswered.
