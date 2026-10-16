@@ -193,6 +193,38 @@ class ExportTests(unittest.TestCase):
                     self.assertTrue(self.module.export_run(self.directory, format=format, ffmpeg=binary, ffmpeg_sha256=pin)['reused'])
 
 
+    @unittest.skipUnless(shutil.which('ffmpeg'), 'Installed FFmpeg required for independent MP3/M4B decode')
+    def test_mp3_and_m4b_decode_back_to_archival_duration_within_documented_tolerance(self):
+        import wave
+        binary = Path(shutil.which('ffmpeg')).resolve(); pin = digest_file(binary)
+        self.write_sine_master()
+        with wave.open(str(self.output), 'rb') as archival: archival_frames = archival.getnframes()
+        self.assertGreaterEqual(archival_frames, 48000)
+        for format in ('mp3', 'm4b'):
+            with self.subTest(format=format):
+                result = self.module.export_run(self.directory, format=format, ffmpeg=binary, ffmpeg_sha256=pin)
+                listening = Path(result['directory']) / ('listening.' + format)
+                decoded = Path(self.temp.name) / ('independent-' + format + '.wav')
+                subprocess.run([str(binary), '-hide_banner', '-nostdin', '-v', 'error', '-protocol_whitelist', 'file', '-i', str(listening),
+                    '-map', '0:a:0', '-vn', '-ac', '1', '-ar', '48000', '-c:a', 'pcm_s16le', '-f', 'wav', '-y', str(decoded)], check=True, capture_output=True, timeout=120)
+                with wave.open(str(decoded), 'rb') as wav:
+                    self.assertEqual((1, 2, 48000), (wav.getnchannels(), wav.getsampwidth(), wav.getframerate()))
+                    decoded_frames = wav.getnframes()
+                # LISTENING-EXPORTS.md: decoded duration within 2,400 samples / 50 ms of the archival master (codec padding). No RMS bound is documented.
+                self.assertLessEqual(abs(decoded_frames - archival_frames), 2400, (format, decoded_frames, archival_frames))
+
+    def write_sine_master(self):
+        import io, math, wave
+        entries = []
+        for segment in self.manifest['segments']:
+            stream = io.BytesIO()
+            with wave.open(stream, 'wb') as output:
+                output.setparams((1, 2, 48000, 0, 'NONE', ''))
+                output.writeframes(b''.join(int(12000 * math.sin(2 * math.pi * 440 * n / 48000)).to_bytes(2, 'little', signed=True) for n in range(12000)))
+            path = self.directory / 'segments' / (segment['id'] + '.wav'); path.write_bytes(stream.getvalue())
+            entries.append({'id': segment['id'], 'path': path, 'pause_after_ms': segment['pause_after_ms'], 'expected_sha256': digest_file(path)})
+        self.receipt['output'] = assemble_wav(entries, self.output); self.save_receipt()
+
     def test_staged_artifact_change_during_final_flush_blocks_publication(self):
         original = os.fsync; changed = False
         def change(descriptor):
