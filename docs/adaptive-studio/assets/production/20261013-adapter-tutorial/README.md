@@ -73,3 +73,7 @@ workaround, codec probe, cap increase, merge or deployment occurred.
 `ATTRIBUTION-CORRECTION.md` clarifies that driver-classification steering was from
 the coordinating assistant, not a new owner decision. Prior143 archive entries
 are preserved byte-for-byte; the correction is appended, not retroactively edited.
+
+## Repository manifest correction
+
+`FILES.json` records sizes and SHA-256 for normalized committed repository bytes. Media absent from Git is listed separately in `ARCHIVE-FILES.json` as unverified historical archive measurements; its bytes could not be re-derived for this correction. Earlier archive-preservation claims above are historical and have not been reverified. The recording source now includes a workspace identity guard; the historical recording was not rerun.
