@@ -115,3 +115,7 @@
 .make-composer:has(#makeTune[open] #makeTuneScale) .make-strength{display:none}
 .make-tune-scale{display:flex!important;flex-direction:row!important;flex-wrap:wrap;align-items:center;gap:4px 8px}.make-tune-scale input{flex:1;min-width:120px}.make-tune-scale output{color:var(--accent)}
 .make-split.make-has-look .make-composer>.make-go{align-self:stretch}@media(max-width:820px){.make-composer>.make-go{align-self:stretch}}
+/* My character (#1205 v1): the save form on a kept picture, and "Your characters" above the picture grid. */
+.make-character-form{flex-basis:100%;display:flex;flex-direction:column;gap:6px;border:1px solid var(--make-edge);border-radius:10px;padding:10px}.make-character-form label{display:flex;flex-direction:column;gap:4px;font-size:12px;margin:0}.make-character-form .make-row{margin:4px 0 0}.make-character-form small{font-size:11px}
+.make-canon{flex-basis:100%;font-size:11px;color:var(--accent)}
+.make-characters{margin:0 0 16px}.make-characters h3{margin:0 0 8px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}.make-characters .make-pictures{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}.make-characters img{aspect-ratio:3/4}

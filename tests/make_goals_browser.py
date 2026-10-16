@@ -22,6 +22,7 @@ SHIPPED = [dict(entry, origin='seed', revision=0, trashed_at=None, usable=True, 
 JOBS = {}
 UPLOAD = 'f' * 32 + '_look.jpg'
 SLOW = []  # non-empty: the source context answers slowly, so the page can be changed while Generate runs
+CHARACTERS = []  # character cards saved through POST /api/characters, listed as app/characters.py lists them
 FAIL_LABEL = []  # a Make job whose label ends with one of these is refused, as a Studio refusal mid-compare would be
 
 
@@ -29,6 +30,7 @@ class Handler(fixture.Handler):
     def do_GET(self):
         if SLOW and self.path.endswith('/context'): time.sleep(0.8)
         if self.path == '/api/looks': return self.json({'looks': SHIPPED, 'seed_errors': [], 'generation_submitted': False})
+        if self.path == '/api/characters': return self.json({'characters': CHARACTERS, 'generation_submitted': False})
         if self.path.startswith('/api/assets/') and self.path.endswith('/thumb'):  # thumbnails for the screenshots
             asset = next((a for a in fixture.ASSETS if a['id'] == self.path.split('/')[3]), None)
             if asset: self.path = '/api/assets/%s/file' % asset['id']
@@ -52,6 +54,11 @@ class Handler(fixture.Handler):
             data = json.loads(self.rfile.read(length)); fixture.POSTS.append({'path': self.path, 'data': data})
             look = next(l for l in SHIPPED if l['id'] == data['id'])
             return self.json({'preset_id': look['body']['preset_id'], 'controls': {**look['body']['controls'], 'positive': look['body']['template'].replace('{scene}', data['scene'])}})
+        if self.path == '/api/characters':
+            data = json.loads(self.rfile.read(length)); fixture.POSTS.append({'path': self.path, 'data': data})
+            card = dict(id='character-%d' % len(CHARACTERS), kind='character', name=data['name'], body=data['body'], revision=0, trashed_at=None,
+                        lineage=[{'role': 'canon', 'asset_id': data['canon_asset_id'], 'sha256': 'a' * 64}], usable=True, unusable_reason=None, canon_asset_id=data['canon_asset_id'])
+            CHARACTERS.append(card); return self.json(card)
         if self.path == '/api/jobs':
             data = json.loads(self.rfile.read(length))
             if any(data.get('label', '').endswith(x) for x in FAIL_LABEL): return self.json({'error': 'Fixture refusal'}, 400)
@@ -234,6 +241,36 @@ def run(shots):
         job = generate()[0]
         assert job['preset_id'] == 'combine-klein-9b-skeleton' and job['references'][0]['file'].endswith('_drawn-pose.png') and posted('/api/pose/render'), job
         assert job['parent_assets'] == ['asset-1'] and '[' not in job['controls']['positive'], job
+
+        # My character (#1205 v1): a kept picture becomes the canon of a saved character, its words prefilled from the pose run;
+        # saving makes no picture. Character in a new pose then lists it first, and choosing it sends the canon as it is with its words.
+        pose_card = page.locator('[data-run="%s"]' % list(JOBS)[-1]); pose_card.locator('[data-make-review="selected"][data-asset="asset-0"]').wait_for(timeout=8000)
+        assert not page.locator('[data-make-character-save]').count(), 'only a kept picture offers it'
+        page.evaluate('()=>{assetState.assets.find(a=>a.id==="asset-0").review="selected";StudioMake.refresh();}')
+        before = len(jobs()); pose_card.locator('[data-make-character-save="asset-0"]').click()
+        form = pose_card.locator('.make-character-form')
+        prefill = (form.locator('[data-make-char="who"]').input_value(), form.locator('[data-make-char="clothes"]').input_value())
+        assert prefill == ('the lantern keeper, a young elf', 'a green cloak'), prefill
+        form.locator('[type=submit]').click(); assert 'Name the character first' in page.locator('#makeStatus').inner_text() and not posted('/api/characters')
+        form.locator('[data-make-char="name"]').fill('Mira'); form.locator('[data-make-char="who"]').fill('Mira, a lantern keeper with silver hair')
+        form.locator('[data-make-char="clothes"]').fill('a moss-green cloak with brass buttons'); shot('character-save', '.make-character-form')
+        form.locator('[type=submit]').click(); page.wait_for_function('document.querySelector("#makeStatus").textContent.startsWith("Saved")')
+        assert posted('/api/characters') == [{'action': 'create', 'kind': 'character', 'name': 'Mira', 'canon_asset_id': 'asset-0',
+                                              'body': {'who': 'Mira, a lantern keeper with silver hair', 'clothes': 'a moss-green cloak with brass buttons'}}], posted('/api/characters')
+        assert len(jobs()) == before, 'saving a character submits nothing'
+        assert page.locator('.make-canon').first.inner_text() == 'Canon of Mira' and not page.locator('.make-character-form').count()
+        page.locator('[data-make-goal="combine"]').click(); page.wait_for_selector('#makePoseSlot'); page.locator('#makeComposer [data-make-repick]').click()
+        page.wait_for_selector('[data-make-character="character-0"]'); shot('character-pick', '.make-characters')
+        assert page.evaluate('document.querySelector(".make-characters").compareDocumentPosition(document.querySelector("#makePictures"))&Node.DOCUMENT_POSITION_FOLLOWING'), 'Your characters come first'
+        before = len(jobs()); page.locator('[data-make-character="character-0"]').click(); page.wait_for_selector('#makePoseSlot')
+        assert len(jobs()) == before, 'choosing a character submits nothing'
+        assert (page.input_value('#makeF-who'), page.input_value('#makeF-clothes')) == ('Mira, a lantern keeper with silver hair', 'a moss-green cloak with brass buttons')
+        assert 'Your character Mira' in page.locator('#makePoseSlot').evaluate('e=>e.previousElementSibling.textContent')
+        if page.locator('#makeF-pose').count() and not page.input_value('#makeF-pose'): page.locator('#makeF-pose').fill('standing')
+        job = generate()[0]; no_modal()
+        assert job['continuation']['source_asset_id'] == 'asset-0' and job['parent_assets'][0] == 'asset-0', job
+        assert 'Mira, a lantern keeper with silver hair' in job['controls']['positive'] and 'a moss-green cloak with brass buttons' in job['controls']['positive'], job['controls']['positive']
+        clicks['character'] = 4  # goal, Change picture, the character, Generate (the pose kept or one word typed)
 
         # Change one thing.
         goal('edit'); page.locator('#makeF-change').fill('give her a red scarf'); shot('goal-edit')

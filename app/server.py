@@ -57,6 +57,7 @@ import pose_guide
 import tiles
 import parallax
 import looks
+import characters
 from studio_prompt.http_extension import extend_handler
 from i2v_diagnostics import artifact_path as i2v_artifact_path
 from i2v_diagnostics import build_report as build_i2v_report
@@ -2565,6 +2566,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, self.studio.assets.metadata(path.split("/")[3], self._asset_query_scope()))
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
             if path == "/api/looks": return self._json(200, looks.listing(self.studio))
+            if path == "/api/characters": return self._json(200, characters.listing(self.studio))
             if path == '/api/production': return self._json(200,self.studio.production.list())
             if path.startswith('/api/production/campaigns/') and len(path.split('/'))==5:
                 return self._json(200,self.studio.production.edit_campaign(path.split('/')[4]))
@@ -2736,6 +2738,8 @@ class Handler(BaseHTTPRequestHandler):
             # Looks (#1221): save/edit/put away, and prepare Create's fields from a look and a scene. Neither creates a job.
             if self.path == "/api/looks": return self._json(200, looks.command(self.studio, self._body_json()))
             if self.path == "/api/looks/prepare": return self._json(200, looks.prepare(self.studio, self._body_json()))
+            # Characters (#1205): save/edit/put away a character card from a keeper. Never creates a job.
+            if self.path == "/api/characters": return self._json(200, characters.command(self.studio, self._body_json()))
             if self.path == "/api/assets/reference": return self._json(200, self.studio.asset_reference(self._body_object().get("id")))
             if self.path == "/api/assets/export": return self._json(201, self.studio.export_assets(self._body_object()))
             if self.path == "/api/recipe-check": return self._json(200, self.studio.check_recipe(self._body_json()))
