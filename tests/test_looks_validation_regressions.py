@@ -174,11 +174,13 @@ class LookValidationTests(unittest.TestCase):
         self.assertIs(fixture.looks.validate_lineage(kept), kept)
 
     def test_body_rejects_a_control_string_over_300_chars(self):
+        # A text-valued setting (a sampler with no fixed choices); numeric ones such as seed are now refused as non-numbers first.
+        preset = dict(fixture.TEXT, sampler=['1', 'sampler_name'])
         with self.assertRaises(fixture.WorkspaceError) as caught:
-            fixture.looks.validate_body(dict(fixture.BODY, controls={'seed': 'x' * 301}), fixture.TEXT)
-        self.assertEqual(str(caught.exception), 'seed must be up to 300 characters')
-        kept = fixture.looks.validate_body(dict(fixture.BODY, controls={'seed': 'x' * 300}), fixture.TEXT)
-        self.assertEqual(kept['controls'], {'seed': 'x' * 300})
+            fixture.looks.validate_body(dict(fixture.BODY, controls={'sampler': 'x' * 301}), preset)
+        self.assertEqual(str(caught.exception), 'sampler must be up to 300 characters')
+        kept = fixture.looks.validate_body(dict(fixture.BODY, controls={'sampler': 'x' * 300}), preset)
+        self.assertEqual(kept['controls'], {'sampler': 'x' * 300})
 
     def test_body_rejects_more_than_40_controls(self):
         controls = {'key%d' % index: index for index in range(41)}
