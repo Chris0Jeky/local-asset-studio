@@ -99,8 +99,8 @@ class BackendManager:
             try:record['online']=endpoint_ready(self.request(profile,'/system_stats',0.8))
             except (OSError,ValueError):record['online']=False
             record['active']=self.active==profile['id'];profiles.append(record)
-        with self.studio.lock:operation=copy.deepcopy(self.operation);last_launch_reserve=copy.deepcopy(self.last_launch_reserve)
-        return {'active':self.active,'busy':self.busy,'operation':operation,'profiles':profiles,'last_launch_reserve':last_launch_reserve}
+        with self.studio.lock:active=self.active;busy=self.busy;operation=copy.deepcopy(self.operation);last_launch_reserve=copy.deepcopy(self.last_launch_reserve)
+        return {'active':active,'busy':busy,'operation':operation,'profiles':profiles,'last_launch_reserve':last_launch_reserve}
 
     def _save(self):
         self.studio._write_json_atomic(self.state_path,{'active':self.active,'operation':self.operation})
