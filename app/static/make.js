@@ -39,7 +39,7 @@
   const licence=p=>nonCommercial(p)?'<small class="make-licence" title="'+escape(p.commercial_note)+'">Non-commercial</small>':'';
   const FINAL=['completed','failed','partial','uncertain','not_submitted','cancelled','abandoned'];
   const POLISH={face:'Fix face',details:'Fix hands and details',upscale:'Upscale 2\u00d7'};
-  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',pose:null,posePicking:false,compare:false,compareLooks:[],characters:[],character:null,charSave:null,charForm:{}};
+  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',pose:null,posePicking:false,compare:false,compareLooks:[],characters:[],character:null,charSave:null,charEdit:null,charMigrate:null,charForm:{},openers:new Set(),noteGone:false};
   try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(GOALS.some(g=>g.id===saved.goal))state.goal=saved.goal;if(typeof saved.look==='string')state.look=saved.look;}catch{}
   const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,...r})=>({...r,job:{id}}))]).slice(0,6).map(({job,look,lookId,goal,scene,tune,tuned,group,title,fills})=>({id:job.id,look,lookId,goal,scene,tune,tuned,group,title,fills}))}));}catch{}};
   let restoredRuns=false,savedRuns=[];try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(Array.isArray(saved.runs))savedRuns=saved.runs.filter(r=>r&&typeof r.id==='string').slice(0,6);}catch{}
@@ -435,32 +435,92 @@
     return '<div class="make-actions">'+marks(a)+characterMarkup(job,a)+vary+polish('face')+polish('details')+polish('upscale')+(Object.keys(POLISH).some(k=>state.polishing.has(a+':'+k))?'<small class="make-action-reason">Starting the finishing pass for this picture. Please wait.</small>':'')+reasons.map(r=>'<small class="make-warn make-polish-why" id="'+whyId(r)+'">'+escape(r)+'</small>').join('')
       +'<details class="make-more" data-more="'+escape(a)+'"><summary>More</summary><button type="button" data-ux-open-asset="'+escape(a)+'">Open full size</button>'+hand('repair','Other fixes\u2026')+from('edit','Change one thing')+from('restyle','Restyle')+from('combine','Put in a new pose')+from('animate','Animate')+from('mesh','Make it 3D')+'</details></div>';
   }
-  // My character (#1205 v1): a kept picture becomes a character's canon, with its words. Saving writes one Workspace card and
+  // My character (#1205): a kept picture becomes a character's canon, with its words. Saving writes one Workspace card and
   // never submits. The form keeps its answers in state, so a redraw of the runs list does not lose what was typed.
+  // v2: Edit and Put away / Restore (revision-checked: a 409 means the card changed elsewhere, so it is reloaded), a read-only
+  // Line-up per character, and a once-offered note that saves the old per-picture answers as a character. None of it submits.
   const usableCharacters=()=>(state.characters||[]).filter(c=>c.usable&&c.canon_asset_id);
+  const awayCharacters=()=>(state.characters||[]).filter(c=>c.trashed_at);
+  const charField=(key,label,max,area)=>{const v=escape(state.charForm[key]);return '<label>'+label+(area?'<textarea data-make-char="'+key+'" rows="2" maxlength="'+max+'">'+v+'</textarea>':'<input data-make-char="'+key+'" maxlength="'+max+'" value="'+v+'">')+'</label>';};
+  // mode "create" is named by the canon picture, "edit" by the card. Only Edit shows the avoid words: they are stored and used
+  // when a goal's request has a negative field (goalGenerate), nowhere else.
+  const characterForm=(id,mode,note)=>'<form class="make-character-form" data-make-character-form="'+escape(id)+'" data-mode="'+mode+'">'+charField('name','Name',120)+charField('who','Who they are',600,true)+charField('clothes','Clothes and colours',600,true)+(mode==='edit'?charField('avoid','Words to keep out of their pictures',600,true):'')
+    +'<div class="make-row"><button type="submit">Save character</button><button type="button" class="make-link" data-make-character-cancel>Cancel</button></div><small class="muted">'+note+'</small></form>';
+  const CANON_NOTE='This picture becomes the character’s canon. Saving makes no picture.';
+  const clearCharForms=()=>{state.charSave=state.charEdit=state.charMigrate=null;state.charForm={};};
+  // Redraw the picker only where it is showing (a chosen picture shows the composer instead).
+  const refreshCharacters=()=>{const g=goal();if(CHARACTER_GOALS.includes(g.intent)&&(!state.pick||state.repicking))void renderPictures(g);};
   function characterMarkup(job,a){
     const owner=usableCharacters().find(c=>c.canon_asset_id===a);if(owner)return'<small class="make-canon">Canon of '+escape(owner.name)+'</small>';
-    if(reviewOf(a)!=='selected')return'';if(state.charSave!==a)return'<button type="button" data-make-character-save="'+escape(a)+'">Make this my character\u2026</button>';
-    const f=state.charForm,field=(key,label,max,area)=>'<label>'+label+(area?'<textarea data-make-char="'+key+'" rows="2" maxlength="'+max+'">'+escape(f[key])+'</textarea>':'<input data-make-char="'+key+'" maxlength="'+max+'" value="'+escape(f[key])+'">')+'</label>';
-    return '<form class="make-character-form" data-make-character-form="'+escape(a)+'">'+field('name','Name',120)+field('who','Who they are',600,true)+field('clothes','Clothes and colours',600,true)
-      +'<div class="make-row"><button type="submit">Save character</button><button type="button" class="make-link" data-make-character-cancel>Cancel</button></div><small class="muted">This picture becomes the character\u2019s canon. Saving makes no picture.</small></form>';
+    if(reviewOf(a)!=='selected')return'';return state.charSave!==a?'<button type="button" data-make-character-save="'+escape(a)+'">Make this my character…</button>':characterForm(a,'create',CANON_NOTE);
   }
   // Prefilled from the run where it is plain: a pose run's answers, else the scene as typed. A look run names its look.
   function openCharacterForm(a,runId){const run=state.runs.find(r=>r.job.id===runId)||state.runs.find(r=>(r.job.outputs||[]).some(o=>o.asset_id===a));
-    state.charSave=a;state.charForm={name:'',who:String(run?.fills?.who||run?.scene||'').slice(0,600),clothes:String(run?.fills?.clothes||'').slice(0,600),look:run?.lookId||null};renderRuns();q('[data-make-char="name"]')?.focus();}
+    clearCharForms();state.charSave=a;state.charForm={name:'',who:String(run?.fills?.who||run?.scene||'').slice(0,600),clothes:String(run?.fills?.clothes||'').slice(0,600),look:run?.lookId||null};renderRuns();refreshCharacters();q('[data-make-char="name"]')?.focus();}
+  function openCharacterEdit(id){const c=(state.characters||[]).find(x=>x.id===id);if(!c)return;clearCharForms();state.charEdit=id;
+    state.charForm={name:c.name,who:c.body.who||'',clothes:c.body.clothes||'',avoid:c.body.avoid||''};renderRuns();refreshCharacters();q('[data-make-char="name"]')?.focus();}
   async function saveCharacter(form){
-    const a=form.dataset.makeCharacterForm,f={...state.charForm},name=String(f.name||'').trim(),who=String(f.who||'').trim();
+    const mode=form.dataset.mode,id=form.dataset.makeCharacterForm,f={...state.charForm},name=String(f.name||'').trim(),who=String(f.who||'').trim();
     const missing=!name?'name':!who?'who':null;if(missing){const el=q('[data-make-char="'+missing+'"]');if(el)markMissing(el);sayMissing(missing==='name'?'Name the character first.':'Say who they are first.');return;}
-    const button=form.querySelector('[type=submit]');if(button)button.disabled=true;
-    try{await json('/api/characters',{action:'create',kind:'character',name,canon_asset_id:a,body:{who,...(String(f.clothes||'').trim()?{clothes:f.clothes.trim()}:{}),...(f.look?{look_id:f.look}:{})}});
-      state.charSave=null;state.charForm={};await loadCharacters();renderRuns();say('Saved \u201c'+name+'\u201d. Choose it under Your characters in Character in a new pose.');}
-    catch(error){if(button)button.disabled=false;say('Could not save the character: '+error.message);}
+    const button=form.querySelector('[type=submit]');if(button)button.disabled=true;const clothes=String(f.clothes||'').trim(),avoid=String(f.avoid||'').trim();
+    try{
+      if(mode==='edit'){const c=(state.characters||[]).find(x=>x.id===id);if(!c)throw Error('That character is no longer here.');
+        await json('/api/characters',{action:'edit',id,expected_revision:c.revision,name,body:{who,...(clothes?{clothes}:{}),...(avoid?{avoid}:{}),...(c.body.look_id?{look_id:c.body.look_id}:{})}});
+        clearCharForms();await loadCharacters();refreshCharacters();q('[data-make-character-edit="'+CSS.escape(id)+'"]')?.focus();say('Saved the changes to “'+name+'”.');return;}
+      await json('/api/characters',{action:'create',kind:'character',name,canon_asset_id:id,body:{who,...(clothes?{clothes}:{}),...(f.look?{look_id:f.look}:{})}});
+      clearCharForms();await loadCharacters();renderRuns();refreshCharacters();say('Saved “'+name+'”. Choose it under Your characters in Character in a new pose.');}
+    catch(error){if(button)button.disabled=false;
+      if(error.status===409&&mode==='edit'){clearCharForms();await loadCharacters();refreshCharacters();say('“'+name+'” changed somewhere else, so it was reloaded. Your edit was not saved; edit again if you still want it.');return;}
+      say('Could not save the character: '+error.message);}
+  }
+  // Put away and Restore name the revision they read. A 409 reloads the list and changes nothing.
+  async function characterCommand(id,action){const c=(state.characters||[]).find(x=>x.id===id);if(!c)return;
+    try{await json('/api/characters',{action,id,expected_revision:c.revision});if(state.character===id&&action==='trash')state.character=null;if(state.charEdit===id)clearCharForms();await loadCharacters();refreshCharacters();
+      if(action==='trash'){q('.make-away summary')?.focus();say('Put “'+c.name+'” away. It waits under Put away if you want it back.');}
+      else{q('[data-make-character="'+CSS.escape(id)+'"]')?.focus();say('Restored “'+c.name+'”.');}}
+    catch(error){if(error.status===409){await loadCharacters();refreshCharacters();say('“'+c.name+'” changed somewhere else, so it was reloaded. Nothing was changed.');return;}say('Could not '+(action==='trash'?'put it away':'restore it')+': '+error.message);}
   }
   async function loadCharacters(){try{state.characters=(await json('/api/characters')).characters||[];}catch{state.characters=[];}}
   // Picture goals that take a character list the saved ones first. Choosing one picks its canon as it is and fills its words.
   const CHARACTER_GOALS=['edit','repair','restyle','combine'];
-  function characterChooser(g){const list=usableCharacters();if(!CHARACTER_GOALS.includes(g.intent)||!list.length)return'';
-    return '<section class="make-characters" aria-labelledby="makeCharactersTitle"><h3 id="makeCharactersTitle">Your characters</h3><div class="make-pictures">'+list.map(c=>'<button type="button" data-make-character="'+escape(c.id)+'"><img src="'+thumbUrl({id:c.canon_asset_id})+'" alt="" loading="lazy"><small>'+escape(c.name)+'</small></button>').join('')+'</div></section>';}
+  function characterChooser(g){const list=usableCharacters(),away=awayCharacters();if(!CHARACTER_GOALS.includes(g.intent)||!list.length&&!away.length)return'';
+    const open=k=>state.openers.has(k)?' open':'',editing=list.find(c=>c.id===state.charEdit),id=c=>escape(c.id);
+    return '<section class="make-characters" aria-labelledby="makeCharactersTitle"><h3 id="makeCharactersTitle" tabindex="-1">Your characters</h3>'
+      +(list.length?'<div class="make-pictures">'+list.map(c=>'<div class="make-char"><button type="button" data-make-character="'+id(c)+'"><img src="'+thumbUrl({id:c.canon_asset_id})+'" alt="" loading="lazy"><small>'+escape(c.name)+'</small></button>'
+        +'<div class="make-char-links"><button type="button" class="make-link" data-make-character-edit="'+id(c)+'" aria-label="Edit '+escape(c.name)+'">Edit</button><button type="button" class="make-link" data-make-character-away="'+id(c)+'" aria-label="Put away '+escape(c.name)+'">Put away</button></div></div>').join('')+'</div>':'<p class="muted">All your characters are put away.</p>')
+      +(editing?characterForm(editing.id,'edit','Saving changes the words only; the canon picture stays. Saving makes no picture.'):'')
+      +list.map(c=>'<details class="make-lineup" data-open-key="lineup:'+id(c)+'"'+open('lineup:'+c.id)+'><summary>Line-up: '+escape(c.name)+'</summary><div data-make-lineup="'+id(c)+'"><p class="muted">Reading your pictures…</p></div></details>').join('')
+      +(away.length?'<details class="make-away" data-open-key="away"'+open('away')+'><summary>Put away ('+away.length+')</summary>'+away.map(c=>'<div class="make-away-row"><span>'+escape(c.name)+'</span><button type="button" class="make-link" data-make-character-restore="'+id(c)+'" aria-label="Restore '+escape(c.name)+'">Restore</button></div>').join('')+'</details>':'')+'</section>';}
+  // The line-up (drift check): the canon pinned first, then kept pictures whose lineage reaches the canon, newest first, all at one
+  // height. It reads the Workspace list Make already loaded (each picture's lineage names its parent pictures): no new route, no
+  // generation. A parent that is put away or not a picture breaks the chain there. Direct children only would miss edits of edits.
+  const LINEUP_MAX=24;
+  function lineupMarkup(c){
+    const pics=state.pictures||[],canon=pics.find(a=>a.id===c.canon_asset_id)||{id:c.canon_asset_id},family=new Set([c.canon_asset_id]);
+    for(let grew=true;grew;){grew=false;for(const a of pics)if(!family.has(a.id)&&(a.lineage||[]).some(p=>family.has(p?.asset_id??p))){family.add(a.id);grew=true;}}
+    const kept=pics.filter(a=>a.id!==c.canon_asset_id&&family.has(a.id)&&(state.review[a.id]??a.review)==='selected'),shown=kept.slice(0,LINEUP_MAX);
+    const item=(a,canonTag)=>'<button type="button" class="make-lineup-item'+(canonTag?' make-lineup-canon':'')+'" data-ux-open-asset="'+escape(a.id)+'"><img src="'+thumbUrl(a)+'" alt="'+escape(canonTag?'Canon picture of '+c.name:pictureLabel(a))+'" loading="lazy">'+(canonTag?'<small class="make-lineup-tag">Canon</small>':'')+'</button>';
+    return '<div class="make-lineup-strip">'+item(canon,true)+shown.map(a=>item(a)).join('')+'</div>'+(kept.length?'':'<p class="muted">No kept picture comes from the canon yet. Keep one made from it and it appears here.</p>')
+      +(kept.length>shown.length?'<p class="muted">'+(kept.length-shown.length)+' older kept picture'+(kept.length-shown.length===1?'':'s')+' not shown. The line-up holds the newest '+LINEUP_MAX+'.</p>':'');
+  }
+  async function fillLineups(){const boxes=[...view.querySelectorAll('[data-make-lineup]')].filter(b=>b.closest('details').open);if(!boxes.length)return;
+    try{await loadPictures();}catch(error){for(const b of boxes)b.innerHTML='<p class="make-error">'+escape(error.message)+'</p>';return;}
+    for(const b of boxes){const c=usableCharacters().find(x=>x.id===b.dataset.makeLineup);if(c&&b.isConnected)b.innerHTML=lineupMarkup(c);}}
+  // One-time migration: Combine used to remember who / clothes per picture in this browser only (studio-fills:<picture>). When no
+  // character exists yet, kept pictures that still carry those answers can be saved as one. Offered, never automatic; "No thanks"
+  // is remembered here (a failing store just means it stays quiet for this visit).
+  const NOTE_KEY='studio.make.character-note';
+  const noteQuiet=()=>{if(state.noteGone)return true;try{return localStorage.getItem(NOTE_KEY)==='dismissed';}catch{return true;}};
+  function rememberedAnswers(){const found={};try{for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(!key||!key.startsWith('studio-fills:'))continue;
+    try{const v=JSON.parse(localStorage.getItem(key)||'{}'),who=typeof v['@who']==='string'?v['@who'].trim():'';if(who)found[key.slice(13)]={who:who.slice(0,600),clothes:typeof v['@clothes']==='string'?v['@clothes'].trim().slice(0,600):''};}catch{}}}catch{}return found;}
+  function characterNote(g){const box=q('#makeCharNote');if(!box)return;box.innerHTML='';
+    if(!CHARACTER_GOALS.includes(g.intent)||(state.characters||[]).length||!state.pictures||noteQuiet())return;
+    const saved=rememberedAnswers(),list=state.pictures.filter(a=>saved[a.id]&&(state.review[a.id]??a.review)==='selected').slice(0,6);if(!list.length)return;
+    box.innerHTML='<section class="make-note" aria-labelledby="makeNoteTitle"><h3 id="makeNoteTitle">Save your answers as a character?</h3><p>This browser remembers the who and clothes you typed for these kept pictures. A character keeps them with your pictures, on any browser.</p>'
+      +(state.charMigrate?characterForm(state.charMigrate,'create',CANON_NOTE):'<div class="make-pictures">'+list.map(a=>'<button type="button" data-make-migrate="'+escape(a.id)+'"><img src="'+thumbUrl(a)+'" alt="" loading="lazy"><small>'+escape(saved[a.id].who)+'</small></button>').join('')+'</div>')
+      +'<div class="make-row"><button type="button" class="make-link" data-make-note-dismiss>No thanks</button></div></section>';}
+  function openMigration(id){const saved=rememberedAnswers()[id];if(!saved)return;clearCharForms();state.charMigrate=id;state.charForm={name:'',who:saved.who,clothes:saved.clothes};characterNote(goal());q('#makeCharNote [data-make-char="name"]')?.focus();}
+  function dismissNote(){state.noteGone=true;try{localStorage.setItem(NOTE_KEY,'dismissed');}catch{}clearCharForms();characterNote(goal());q('.make-step h2')?.focus();say('Okay, you will not be asked again.');}
   function chooseCharacter(id){const c=usableCharacters().find(x=>x.id===id);if(!c)return;choosePicture(c.canon_asset_id);
     state.character=c.id;state.form.who=c.body.who||'';state.form.clothes=c.body.clothes||'';}
   const chosenCharacter=()=>{const c=usableCharacters().find(x=>x.id===state.character);return c&&c.canon_asset_id===state.pick?.id?c:null;};
@@ -600,12 +660,14 @@
   async function renderPictures(g){
     const body=q('#makeBody'),a=state.pick;
     if(a&&!state.repicking){body.innerHTML=(g.intent==='combine'?'':'<div class="make-chosen make-picked"><img src="'+thumbUrl(a)+'" alt=""><div><small>'+(chosenCharacter()?'Your character':'Your picture')+'</small><b>'+escape(chosenCharacter()?.name||pictureLabel(a))+'</b></div><button type="button" data-make-repick>Change picture</button></div>')+'<div id="makeComposer"></div>';renderGoalComposer(g);return;}
-    body.innerHTML='<div class="make-step"><span>1</span><h2>'+(g.intent==='combine'?'Pick the character picture':'Pick the picture')+'</h2>'+(a?'<button type="button" class="make-link" data-make-keep-picture>Stay with '+escape(pictureLabel(a))+'</button>':'')+'</div>'+characterChooser(g)+'<p class="make-hint">'+escape(PICK[g.intent])+' <a href="/#assets">Import a picture</a> first if it is not here.</p>'+pictureFinder('makePictures','data-make-pick');
+    body.innerHTML='<div class="make-step"><span>1</span><h2 tabindex="-1">'+(g.intent==='combine'?'Pick the character picture':'Pick the picture')+'</h2>'+(a?'<button type="button" class="make-link" data-make-keep-picture>Stay with '+escape(pictureLabel(a))+'</button>':'')+'</div><div id="makeCharNote"></div>'+characterChooser(g)+'<p class="make-hint">'+escape(PICK[g.intent])+' <a href="/#assets">Import a picture</a> first if it is not here.</p>'+pictureFinder('makePictures','data-make-pick');
     await fillPictures(g,'makePictures','data-make-pick');
+    if(goal()===g){characterNote(g);void fillLineups();}
   }
   const pictureFinder=(id,attr)=>'<input type="search" class="make-search" data-make-search="'+id+'" data-make-attr="'+attr+'" placeholder="Search your pictures" aria-label="Search your pictures" aria-controls="'+id+'" value="'+escape(state.queries[id]||'')+'"><div id="'+id+'" class="make-pictures"><p class="muted">Loading your pictures…</p></div>';
+  async function loadPictures(){if(!state.pictures){const data=await json('/api/workspace');state.pictures=(data.assets||[]).filter(a=>a.media_type==='image'&&picture(a)&&!a.trashed_at).sort((a,b)=>(b.created_at||0)-(a.created_at||0));}return state.pictures;}   // the whole library is searchable; the grid shows the newest 60 matches
   async function fillPictures(g,id,attr){
-    try{if(!state.pictures){const data=await json('/api/workspace');state.pictures=(data.assets||[]).filter(a=>a.media_type==='image'&&picture(a)&&!a.trashed_at).sort((a,b)=>(b.created_at||0)-(a.created_at||0));}   // the whole library is searchable; the grid shows the newest 60 matches
+    try{await loadPictures();
       if(goal()===g)renderGrid(id,attr);}
     catch(error){if(goal()===g&&q('#'+id))q('#'+id).innerHTML='<p class="make-error">'+escape(error.message)+'</p>';}
   }
@@ -669,7 +731,7 @@
     const g=goal(),a=state.pick;if(!g.intent||!a||state.busy)return;
     const p=goalRoute(g),why=goalBlocker(g,p);if(why){say(why);return;}
     // Every answer is read before the first await: typing on while the copy runs does not change this request.
-    const form={...state.form},missing=goalMissing(g,p,form),sel={styleLook:state.styleLook,poseMode:state.poseMode,pose:state.pose&&{...state.pose},fix:state.fix};
+    const form={...state.form},avoid=String(chosenCharacter()?.body.avoid||'').trim(),missing=goalMissing(g,p,form),sel={styleLook:state.styleLook,poseMode:state.poseMode,pose:state.pose&&{...state.pose},fix:state.fix};
     if(missing){const el=q('#'+missing[0]);if(el)markMissing(el);sayMissing(missing[1]);return;}
     state.busy=true;say('Preparing…');
     try{
@@ -681,7 +743,7 @@
         if(result?.parent_asset!==a.id||result.sha256!==source.sha256||result.context?.asset_id!==a.id||JSON.stringify(result.context)!==JSON.stringify(source))throw Error('The picture changed while it was being copied. Nothing was sent.');
         const prepared=SC().initial(result.context,p,g.intent,result.file),controls={[SC().sourceInput(p.continuation_capability)]:result.file,...goalExtras(g,p,result.context,form.clip)};
         if(p.positive)controls.positive=goalWords(g,p,prepared.positive,form);
-        if(p.negative&&prepared.negative)controls.negative=prepared.negative;
+        if(p.negative&&prepared.negative)controls.negative=avoid?prepared.negative+', '+avoid:prepared.negative;   // a chosen character's avoid words ride only where the request already has a negative
         if(p.seed||p.bindings_extra?.seed)controls.seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647;
         if(p.positive&&(!controls.positive.trim()||SC().unfilled(p,controls.positive).length))throw Error('Fill in every field, then press Generate again. Nothing was sent.');
         if(g.intent==='combine')rememberFills(a.id,form);
@@ -780,7 +842,12 @@
     const character=e.target.closest('[data-make-character]');if(character){chooseCharacter(character.dataset.makeCharacter);renderPictures(goal());
       say('Your character is chosen: its canon picture as it is'+(goal().intent==='combine'?', with its words.':'.'));q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();return;}
     const saveChar=e.target.closest('[data-make-character-save]');if(saveChar){openCharacterForm(saveChar.dataset.makeCharacterSave,saveChar.closest('[data-run]')?.dataset.run);return;}
-    if(e.target.closest('[data-make-character-cancel]')){const a=state.charSave;state.charSave=null;state.charForm={};renderRuns();q('[data-make-character-save="'+CSS.escape(a||'')+'"]')?.focus();return;}
+    if(e.target.closest('[data-make-character-cancel]')){const a=state.charSave,edit=state.charEdit,move=state.charMigrate;clearCharForms();renderRuns();refreshCharacters();q(edit?'[data-make-character-edit="'+CSS.escape(edit)+'"]':move?'[data-make-migrate="'+CSS.escape(move)+'"]':'[data-make-character-save="'+CSS.escape(a||'')+'"]')?.focus();return;}
+    const editChar=e.target.closest('[data-make-character-edit]');if(editChar){openCharacterEdit(editChar.dataset.makeCharacterEdit);return;}
+    const awayChar=e.target.closest('[data-make-character-away]');if(awayChar){void characterCommand(awayChar.dataset.makeCharacterAway,'trash');return;}
+    const restoreChar=e.target.closest('[data-make-character-restore]');if(restoreChar){void characterCommand(restoreChar.dataset.makeCharacterRestore,'restore');return;}
+    const migrate=e.target.closest('[data-make-migrate]');if(migrate){openMigration(migrate.dataset.makeMigrate);return;}
+    if(e.target.closest('[data-make-note-dismiss]')){dismissNote();return;}
     const pick=e.target.closest('[data-make-pick]');if(pick){state.character=null;choosePicture(pick.dataset.makePick);renderPictures(goal());q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();return;}
     if(e.target.closest('[data-make-repick]')){state.repicking=true;renderPictures(goal());q('[data-make-search="makePictures"]')?.focus();return;}
     if(e.target.closest('[data-make-keep-picture]')){state.repicking=false;renderPictures(goal());return;}
@@ -808,6 +875,8 @@
     if(e.target.closest('#makeEditor'))void openInEditor();
     if(e.target.closest('[data-make-retry]'))void load();
   });
+  // Which disclosures are open survives a redraw; opening a line-up reads the pictures (details fire toggle without bubbling).
+  view.addEventListener('toggle',e=>{const k=e.target.dataset?.openKey;if(!k)return;if(e.target.open){state.openers.add(k);if(k.startsWith('lineup:'))void fillLineups();}else state.openers.delete(k);},true);
   view.addEventListener('submit',e=>{const form=e.target.closest('[data-make-character-form]');if(form){e.preventDefault();void saveCharacter(form);}});
   view.addEventListener('keydown',e=>{const radio=e.target.closest('[role="radio"]'),group=radio?.closest('[role="radiogroup"]');if(group&&['ArrowRight','ArrowDown','ArrowLeft','ArrowUp','Home','End'].includes(e.key)){
     e.preventDefault();const items=[...group.querySelectorAll('[role="radio"]')],i=items.indexOf(radio),next=items[e.key==='Home'?0:e.key==='End'?items.length-1:(i+(['ArrowRight','ArrowDown'].includes(e.key)?1:items.length-1))%items.length],attr=next.hasAttribute('data-make-goal')?'data-make-goal':'data-make-look',value=next.getAttribute(attr);if(attr==='data-make-goal'){state.goal=value;state.pictures=null;remember();render();}else{state.look=value;state.picking=true;remember();renderLooks();}q('['+attr+'="'+value+'"]')?.focus();return;

@@ -119,3 +119,13 @@
 .make-character-form{flex-basis:100%;display:flex;flex-direction:column;gap:6px;border:1px solid var(--make-edge);border-radius:10px;padding:10px}.make-character-form label{display:flex;flex-direction:column;gap:4px;font-size:12px;margin:0}.make-character-form .make-row{margin:4px 0 0}.make-character-form small{font-size:11px}
 .make-canon{flex-basis:100%;font-size:11px;color:var(--accent)}
 .make-characters{margin:0 0 16px}.make-characters h3{margin:0 0 8px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}.make-characters .make-pictures{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}.make-characters img{aspect-ratio:3/4}
+/* My character v2 (#1205): Edit / Put away under each character, a Line-up strip (one height), the put-away list, the one-time note. */
+.make-char{display:flex;flex-direction:column;gap:2px;min-width:0}.make-char>button{flex:1}.make-char-links{display:flex;gap:12px}.make-char-links .make-link{font-size:11px;min-height:32px;display:inline-flex;align-items:center;background:none!important;border-radius:0;overflow:visible;padding:4px 0!important}
+.make-characters>.make-character-form,.make-note .make-character-form{margin:10px 0}
+.make-lineup,.make-away{margin:8px 0;border:1px solid var(--make-edge);border-radius:10px;padding:2px 12px}.make-lineup summary,.make-away summary{font-size:12px;cursor:pointer;padding:8px 0;min-height:32px}
+.make-lineup-strip{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px}
+.make-lineup-item{flex:none;position:relative;padding:0!important;border:1px solid var(--make-edge)!important;border-radius:8px;overflow:hidden;background:#11191a!important;line-height:0}
+.make-lineup-item img{height:160px;min-width:72px;width:auto;display:block}.make-lineup-canon{border-color:var(--accent)!important;box-shadow:0 0 0 1px var(--accent)}
+.make-lineup-tag{position:absolute;left:0;bottom:0;padding:2px 8px!important;font-size:11px;line-height:1.4;background:#13200f;color:var(--accent);border-top-right-radius:8px}
+.make-away-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 0;font-size:13px}
+.make-note{border:1px solid var(--make-edge);border-radius:12px;padding:10px 14px;margin:0 0 16px;background:var(--panel)}.make-note h3{margin:0 0 6px;font-size:14px}.make-note p{margin:0 0 8px;font-size:12px;color:var(--muted)}.make-note .make-row{margin-top:6px}
