@@ -171,7 +171,9 @@
     return tp.id;
   }
   function renderTune(){
-    const look=current(),box=q('#makeTuneBody');if(!look||!box)return;const t=tuneOf(look),p=presetFor(look),tp=tunedPreset(look),c=look.body.controls||{};
+    const look=current(),box=q('#makeTuneBody');if(!look||!box)return;
+    if(!presetFor(look)){box.innerHTML='<p class="muted">This look\u2019s recipe is not in the library, so it cannot be tuned here.</p>';tuneChanged(false);return;}
+    const t=tuneOf(look),p=presetFor(look),tp=tunedPreset(look),c=look.body.controls||{};
     const list=models(look),missing=missingFor(tp),files=compatible(look),slot=freeSlot(look,t),steps=Number(c.steps||tp?.defaults?.steps)||0;
     const draft=halve(steps),fine=Math.min(150,Math.round(steps*1.5));
     const option=(value,label,on)=>'<option value="'+escape(value)+'"'+(on?' selected':'')+'>'+escape(label)+'</option>';
@@ -202,7 +204,7 @@
     const look=current();if(!look)return;if(redraw){renderTune();return;}
     keepTune(look);const sum=q('#makeTuneSum'),why=blocker(look),button=q('#makeGenerate');if(sum)sum.textContent=tuneSummary(look,state.tune[look.id])||'Model, adapters, steps, seed';
     const draftBox=q('#makeDraftBox');if(draftBox)draftBox.innerHTML=draftMarkup(look);
-    if(button&&!state.busy){button.disabled=!!why;button.title=why;}const said=q('#makeWhy');if(said){said.innerHTML=blockerMarkup(look,why);said.hidden=!why;}estimate();
+    if(button&&!state.busy){button.disabled=!!why;button.title=why;}const said=q('#makeWhy');if(said){said.innerHTML=why?blockerMarkup(look,why):'';said.dataset.why=why;}estimate();
   }
   function tuneInput(target){
     const look=current();if(!look)return false;const t=tuneOf(look),row=s=>t.rows.find(r=>r.slot===s);
@@ -223,7 +225,7 @@
     const remove=target.closest('[data-tune-remove]');if(remove){const t=tuneOf(look),s=remove.dataset.tuneRemove;t.rows=t.rows.filter(r=>r.slot!==s);if(!t.cleared.includes(s))t.cleared.push(s);tuneChanged();q('#makeLoraSearch')?.focus();return true;}
     if(target.closest('[data-tune-add]')){const t=tuneOf(look),input=q('#makeLoraSearch'),name=input?.value.trim(),slot=freeSlot(look,t);
       if(!compatible(look).includes(name)){say(name?'Choose an adapter from the list: '+name+' is not an installed adapter for this model type.':'Type part of an adapter name, then choose it from the list.');input?.focus();return true;}
-      if(!slot||t.rows.some(r=>r.name===name))return true;
+      if(t.rows.some(r=>r.name===name)){say(short(name)+' is already added.');input?.focus();return true;}if(!slot)return true;
       t.rows.push({slot,name,strength:clamp(entry(name)?.default??1),on:true,added:true});t.cleared=t.cleared.filter(s=>s!==slot);tuneChanged();q('[data-tune-strength="'+slot+'"]')?.focus();
       say(fits(look,name)?'':'Added '+short(name)+'. It was made for '+entry(name).family+', so it may not suit this model; check the first picture.');return true;}
     if(target.closest('[data-tune-reset]')){const reseed=state.tune[look.id]?.reseed??true;delete state.tune[look.id];delete savedTunes[look.id];tuneOf(look).reseed=reseed;tuneChanged();return true;}
@@ -310,7 +312,7 @@
       say('That run\u2019s settings are back'+(tuneOf(look).reseed?'':', with its seed locked')+'. Change the words or a setting, then press Generate.');estimate();}
     renderTune();
   }
-  const goBar=(why,label='Generate')=>'<div class="make-go"><button type="button" id="makeGenerate" class="primary"'+(why?' disabled aria-describedby="makeWhy"':'')+'>'+label+'</button><p id="makeEstimate" class="muted" aria-live="polite"></p>'+(why?'<p id="makeWhy" class="make-warn">'+why+'</p>':'')+'</div>';
+  const goBar=(why,label='Generate')=>'<div class="make-go"><button type="button" id="makeGenerate" class="primary"'+(why?' disabled aria-describedby="makeWhy"':'')+'>'+label+'</button><p id="makeEstimate" class="muted" aria-live="polite"></p><p id="makeWhy" class="make-warn" role="status">'+why+'</p></div>';
   const SCENE_FIRST='Describe your picture first, or press Use the example.';
   async function prepared(look){
     // Every form value is read before the first await: a click on another look mid-request must not change this one.
@@ -345,6 +347,9 @@
     placeStatus();statusEl.textContent=state.status;
     const g=goal(),why=g.intent?goalBlocker(g,goalRoute(g)):state.compare?compareBlocker():current()&&blocker(current());
     const generate=q('#makeGenerate'),editor=q('#makeEditor');if(generate)generate.disabled=state.busy||!!why;if(editor)editor.disabled=state.busy;
+    // The blocker line stays in the page as a status region; it is rewritten only when the reason changes, so it is announced once.
+    if(generate){if(why)generate.setAttribute('aria-describedby','makeWhy');else generate.removeAttribute('aria-describedby');}
+    const said=q('#makeWhy');if(said&&said.dataset.why!==(why||'')){said.dataset.why=why||'';said.innerHTML=!why?'':g.intent?goalWhy(goalRoute(g),why):state.compare?escape(why):blockerMarkup(current(),why);}
   }
   const say=text=>{state.status=text;state.missing='';syncOperation();};
   // A refusal that names a missing answer clears itself once the answer is given (audit N10: a stale "Choose the pose first").
@@ -538,19 +543,20 @@
   }
   // The second picture: a look's picture (its library asset, else its example image uploaded as a reference), a pose
   // picture from the library, or a drawn stick figure rendered by /api/pose/render exactly as Create's pose editor does.
-  async function goalBoard(g,p){
+  // sel is the snapshot goalGenerate took before its first await: a pick made while the request runs never mixes into it.
+  async function goalBoard(g,p,sel){
     if(!p.reference_slots?.length)return[];
-    if(g.intent==='restyle'){const look=lookPictures().find(l=>l.id===state.styleLook);
+    if(g.intent==='restyle'){const look=lookPictures().find(l=>l.id===sel.styleLook);
       if(look.anchor_asset_id)return[await json('/api/assets/reference',{id:look.anchor_asset_id})];
       const r=await fetch(thumbOf(look));if(!r.ok)throw Error('Could not read the picture of '+look.name+'.');const blob=await r.blob();
       const sent=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':blob.type||'image/jpeg','X-Filename':look.id+(/png/.test(blob.type)?'.png':'.jpg')},body:blob}),data=await sent.json().catch(()=>({}));
       if(!sent.ok)throw Error(data.error||'Could not attach the look picture ('+sent.status+').');return[data];}
-    if(state.poseMode!=='figure')return[await json('/api/assets/reference',{id:state.pose.asset.id})];
-    const P=PE(),canvas={width:Number(p.defaults?.width)||1024,height:Number(p.defaults?.height)||1536};let points=P.fromPreset(state.pose.figure,canvas);if(state.pose.mirror)points=P.mirror(points,canvas);
+    if(sel.poseMode!=='figure')return[await json('/api/assets/reference',{id:sel.pose.asset.id})];
+    const P=PE(),canvas={width:Number(p.defaults?.width)||1024,height:Number(p.defaults?.height)||1536};let points=P.fromPreset(sel.pose.figure,canvas);if(sel.pose.mirror)points=P.mirror(points,canvas);
     const body=P.renderRequest(P.serialize(points,canvas),P.guideRenderer(p));return[P.guideResponse(await json('/api/pose/render',body),body)];
   }
-  function goalExtras(g,p,source){
-    if(g.intent==='animate'){const m=clips(p).find(x=>x.id===state.form.clip)||clips(p)[0];if(!m)return{};const {positive,negative,...c}=m.controls;return{...c,mode:m.id};}
+  function goalExtras(g,p,source,clip=state.form.clip){
+    if(g.intent==='animate'){const m=clips(p).find(x=>x.id===clip)||clips(p)[0];if(!m)return{};const {positive,negative,...c}=m.controls;return{...c,mode:m.id};}
     return p?.continuation_capability?.operation==='restyle'&&source&&SC().canvasFor(source,p)||{};
   }
   let goalEpoch=0;
@@ -627,21 +633,24 @@
     state.pick=a;state.repicking=false;
   }
   function rememberFills(id,form){try{const saved=JSON.parse(localStorage.getItem(fillsKey(id))||'{}');for(const k of ['who','clothes','pose'])if(String(form[k]||'').trim())saved['@'+k]=form[k].trim();localStorage.setItem(fillsKey(id),JSON.stringify(saved));}catch{}}
+  // aria-invalid belongs on inputs, not on a fieldset or section: a group of choices marks each choice (WCAG 4.1.2).
+  function markMissing(el){const radios=el.matches('input,textarea,select')?[el]:[...el.querySelectorAll('input[type=radio]')],list=radios.length?radios:[...el.querySelectorAll('input')].slice(0,1);
+    for(const f of list){f.setAttribute('aria-invalid','true');f.setAttribute('aria-describedby','makeStatus');}(list[0]||el).focus();}
   async function goalGenerate(){
     const g=goal(),a=state.pick;if(!g.intent||!a||state.busy)return;
     const p=goalRoute(g),why=goalBlocker(g,p);if(why){say(why);return;}
     // Every answer is read before the first await: typing on while the copy runs does not change this request.
-    const form={...state.form},missing=goalMissing(g,p,form);
-    if(missing){const [id,text]=missing,el=q('#'+id);if(el){el.setAttribute('aria-invalid','true');el.setAttribute('aria-describedby','makeStatus');el.focus();}sayMissing(text);return;}
+    const form={...state.form},missing=goalMissing(g,p,form),sel={styleLook:state.styleLook,poseMode:state.poseMode,pose:state.pose&&{...state.pose},fix:state.fix};
+    if(missing){const el=q('#'+missing[0]);if(el)markMissing(el);sayMissing(missing[1]);return;}
     state.busy=true;say('Preparing…');
     try{
       let job;
-      if(g.intent==='repair')job=await window.StudioWorkbench.polish(a.id,state.fix);
+      if(g.intent==='repair')job=await window.StudioWorkbench.polish(a.id,sel.fix);
       else{
         const source=await json('/api/assets/'+encodeURIComponent(a.id)+'/context');if(source?.version!==1||source.asset_id!==a.id)throw Error('This picture’s record could not be verified. Refresh and try again.');
-        const board=await goalBoard(g,p),result=await json('/api/assets/reference',{id:a.id});
+        const board=await goalBoard(g,p,sel),result=await json('/api/assets/reference',{id:a.id});
         if(result?.parent_asset!==a.id||result.sha256!==source.sha256||result.context?.asset_id!==a.id||JSON.stringify(result.context)!==JSON.stringify(source))throw Error('The picture changed while it was being copied. Nothing was sent.');
-        const prepared=SC().initial(result.context,p,g.intent,result.file),controls={[SC().sourceInput(p.continuation_capability)]:result.file,...goalExtras(g,p,result.context)};
+        const prepared=SC().initial(result.context,p,g.intent,result.file),controls={[SC().sourceInput(p.continuation_capability)]:result.file,...goalExtras(g,p,result.context,form.clip)};
         if(p.positive)controls.positive=goalWords(g,p,prepared.positive,form);
         if(p.negative&&prepared.negative)controls.negative=prepared.negative;
         if(p.seed||p.bindings_extra?.seed)controls.seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647;
@@ -650,7 +659,7 @@
         say('Sending to ComfyUI…');
         job=await json('/api/jobs',{preset_id:p.id,continuation:prepared.claim,controls,batch_count:1,parent_assets:[...new Set([a.id,...board.map(r=>r.parent_asset).filter(Boolean)])],references:p.reference_slots?.length?SC().combineReferences(p,board):[],label:'Make · '+g.name});
       }
-      state.runs.unshift({job,look:g.intent==='repair'?POLISH[state.fix]:g.name,lookId:null,goal:g.id,scene:null,title:String(form[{edit:'change',animate:'motion',combine:'who'}[g.intent]]||'').trim()||pictureLabel(a)});remember();
+      state.runs.unshift({job,look:g.intent==='repair'?POLISH[sel.fix]:g.name,lookId:null,goal:g.id,scene:null,title:String(form[{edit:'change',animate:'motion',combine:'who'}[g.intent]]||'').trim()||pictureLabel(a)});remember();
       say('Started. The result appears in Your pictures as it finishes; you can leave this page.');renderRuns();poll(job.id);
       if(typeof refresh==='function')void refresh();
     }catch(error){say(error.message);}
@@ -724,7 +733,7 @@
   view.addEventListener('change',e=>{const t=e.target,g=goal(),redraw=sel=>{renderGoalComposer(g);q(sel)?.focus();};
     if(t.id==='makeDraft'){const look=current();if(look){tuneOf(look).steps=t.checked?Number(t.dataset.steps):null;tuneChanged();q('#makeDraft')?.focus();}return;}
     if(t.dataset.makeFix){state.fix=t.dataset.makeFix;redraw('#makeFix-'+state.fix);return;}
-    if(t.dataset.makeStyle){state.styleLook=t.dataset.makeStyle;q('#makeStyleLooks')?.removeAttribute('aria-invalid');settleMissing();return;}
+    if(t.dataset.makeStyle){state.styleLook=t.dataset.makeStyle;for(const r of view.querySelectorAll('[data-make-style]')){r.removeAttribute('aria-invalid');r.removeAttribute('aria-describedby');}settleMissing();return;}
     if(t.dataset.makePoseMode){state.poseMode=t.dataset.makePoseMode;state.posePicking=false;redraw('#makePoseMode-'+state.poseMode);return;}
     // A new figure is a new pose: its words replace the pose answer (Create clears it the same way, #492); edit them freely.
     if(t.dataset.makeFigure){const fig=PE().PRESETS.find(x=>x.id===t.dataset.makeFigure);state.pose={figure:fig.id,mirror:!!state.pose?.mirror};state.form.pose=fig.label.toLowerCase();redraw('#makeFigure-'+fig.id);return;}

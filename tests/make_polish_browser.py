@@ -89,10 +89,12 @@ def make_checks(browser, origin):
     for setup, reason in [("workerAlive=false", 'worker has stopped'), ("workerAlive=true;online=false", 'not reachable'), ("online=true;schemaAvailable=true;missingByPreset={'zimage-fast':['missing.safetensors']}", 'model file')]:
         page.evaluate('()=>{'+setup+';StudioMake.refresh();}')
         assert page.locator('#makeGenerate').is_disabled()
-        assert reason in page.locator('#makeWhy').inner_text()
+        assert reason in page.locator('#makeWhy').inner_text() and page.locator('#makeWhy').get_attribute('role') == 'status'
+        assert page.locator('#makeGenerate').get_attribute('aria-describedby') == 'makeWhy', 'a blocked Generate names its reason'
         before = len(jobs()); page.locator('#makeScene').fill('Blocked request'); page.locator('#makeScene').press('Control+Enter')
         assert len(jobs()) == before and reason in page.locator('#makeStatus').inner_text()
     page.evaluate("()=>{missingByPreset={};StudioMake.refresh();}")
+    assert page.locator('#makeGenerate').get_attribute('aria-describedby') is None and page.locator('#makeWhy').inner_text() == '' and page.locator('#makeWhy').count() == 1, 'the status region stays, empty'
     page.locator('#makeScene').fill('Keep feedback while switching')
     before = len(jobs()); page.locator('#makeGenerate').click()
     page.locator('[data-make-change]').click(); page.locator('[data-make-look]').nth(1).click()
