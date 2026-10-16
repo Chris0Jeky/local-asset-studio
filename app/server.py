@@ -236,7 +236,7 @@ class Studio:
                 for key in CONTROL_KEYS:
                     binding = preset.get(key)
                     if binding: defaults[key] = graph[str(binding[0])]["inputs"].get(str(binding[1]), "")
-                preset["defaults"] = defaults
+                preset["defaults"] = defaults; preset["model"] = looks.model_of(graph)
                 capacity = wan_capacity.projection(preset, graph)
                 if capacity is not None: preset["wan_decode_capacity"] = capacity
                 preset["continuation_capability"] = dict(continuation.capability(preset, graph), template_sha256=hashlib.sha256(template_path.read_bytes()).hexdigest())

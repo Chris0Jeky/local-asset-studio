@@ -57,6 +57,18 @@ class LookValidationTests(unittest.TestCase):
         self.assertEqual({k: v for k, v in fixture.looks.NUMBER_RANGES.items() if k in dict((r[0], r) for r in fixture.server.NUMBER_RANGES)},
                          {r[0]: r[1:] for r in fixture.server.NUMBER_RANGES})
 
+    def test_model_of_names_the_one_loader_and_its_text_encoders(self):
+        # Make's Tune offers another model only when loader and encoders match; a graph with no or two loaders offers none.
+        graph = {'1': {'class_type': 'UNETLoader', 'inputs': {'unet_name': 'base.safetensors'}},
+                 '2': {'class_type': 'CLIPLoader', 'inputs': {'clip_name': 'te.safetensors', 'type': 'x'}},
+                 '3': {'class_type': 'DualCLIPLoader', 'inputs': {'clip_name1': 'b.safetensors', 'clip_name2': 'a.safetensors'}}}
+        self.assertEqual(fixture.looks.model_of(graph), {'file': 'base.safetensors', 'loader': 'UNETLoader', 'encoders': ['a.safetensors', 'b.safetensors', 'te.safetensors']})
+        self.assertEqual(fixture.looks.model_of({'1': {'class_type': 'CheckpointLoaderSimple', 'inputs': {'ckpt_name': 'sdxl.safetensors'}}})['encoders'], [])
+        for bad in ({}, {'1': {'class_type': 'UNETLoader', 'inputs': {'unet_name': ['9', 0]}}}, dict(graph, **{'4': {'class_type': 'CheckpointLoaderSimple', 'inputs': {'ckpt_name': 'x.safetensors'}}})):
+            with self.subTest(bad=bad): self.assertIsNone(fixture.looks.model_of(bad))
+        (self.root/'workflows/api/demo-api.json').write_text(json.dumps(dict(fixture.GRAPH, **graph)))
+        self.assertEqual(self.studio.catalog()['presets'][0]['model']['file'], 'base.safetensors')
+
     def test_each_bad_seed_is_reported_without_preventing_the_good_seed(self):
         good = {'id': 'look-good', 'kind': 'look', 'name': 'Good', 'body': copy.deepcopy(fixture.BODY)}
         bad = [dict(good, id='../bad'), dict(good, id=123), dict(good, name=''), dict(good, name=12),

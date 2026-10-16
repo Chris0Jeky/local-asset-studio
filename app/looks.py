@@ -96,6 +96,19 @@ def _bound(preset, key):
             and all(isinstance(part, str) and bool(part.strip()) for part in binding))
 
 
+MODEL_LOADERS = {"CheckpointLoaderSimple": "ckpt_name", "UNETLoader": "unet_name", "UnetLoaderGGUF": "unet_name"}
+
+
+def model_of(graph):
+    """A recipe's base model for Make's Tune this look: its file, loader node and text encoders, or None when the graph has
+    not exactly one model loader. Two recipes with the same loader and encoders take the same wording and adapters."""
+    nodes = [n for n in graph.values() if isinstance(n, dict) and isinstance(n.get("inputs"), dict)]
+    found = [(n["class_type"], n["inputs"].get(MODEL_LOADERS[n["class_type"]])) for n in nodes if n.get("class_type") in MODEL_LOADERS]
+    if len(found) != 1 or not isinstance(found[0][1], str): return None
+    encoders = sorted(v for n in nodes if "CLIPLoader" in str(n.get("class_type")) for k, v in n["inputs"].items() if k.startswith("clip_name") and isinstance(v, str))
+    return {"file": found[0][1], "loader": found[0][0], "encoders": encoders}
+
+
 def recipe_problem(preset):
     """Why this recipe cannot carry a look, or None. A look is words on the same model: one text-to-image recipe."""
     if (preset.get("modality") or "image") != "image": return "A look needs an image recipe; this one makes " + str(preset.get("modality")) + "."
