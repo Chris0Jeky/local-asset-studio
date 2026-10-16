@@ -118,3 +118,15 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   failure into "outcome unknown". (A reported "wedged mid-batch" case, #1458, was a false positive: app/mixed_batch.py already offers it a recovery.)
 - [ ] **Character cards v1 in progress** (#1205): "Make this my character…" on a kept picture; pickers show "Your
   characters" first and fill who/clothes. Canon = one chosen keeper portrait (owner, 27 Sep).
+- [ ] **Character cards v1** (#1466): only *kept* pictures offer "Make this my character…"; the form prefills from a
+  new-pose run's who/clothes answers (else the scene) and a look run's look becomes the preferred look; a canon
+  picture shows "Canon of <name>"; "Your characters" shows only in Change, Fix or upscale, Restyle and New pose, only
+  while picking; choosing one overwrites who/clothes and clears the other pose answers (as picking any picture does);
+  avoid words are stored but not yet shown. Remaining for #1205: Line-up view, localStorage migration, card as
+  reference/Vary source, edit/put away from the UI. Reverse each in make.js (`characterMarkup`, `chooseCharacter`).
+- [ ] **Library a11y** (#1463): decorative glyphs hidden from screen readers, the audio player is named, the
+  attach-source scroll respects reduced motion. Two audit findings were declined as not real (status was already a
+  live region; there is no per-field validation to associate).
+- [ ] **Library and model-inventory hardening** (#1465): collection no-ops burn no revision, blank tags are refused, a
+  missing output file is marked on the job instead of silently skipped, one malformed model pin no longer blanks the
+  whole Models inventory (that row shows "invalid pin").
