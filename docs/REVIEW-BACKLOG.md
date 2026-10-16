@@ -82,4 +82,9 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   about 16 fixed, 8 partly, 3 not; nothing regressed. The flagship (anime look, chosen model and LoRA, tweak) is
   4 clicks inside Make, down from 6 clicks and 3 typed steps in the Full editor. Remaining: status and Generate
   position, two strength controls that disagree, LoRA list without family grouping (Make wave 4 in progress).
+- [ ] **"Tested well" badge rule** (#1447 after lab round 2): kept in at least 3 of 4 test pictures, or 2 of 2 where
+  only two were made: Petiflow (4/4), painterly artist tags, Night Shift (3/4) and five Krea looks. AniFox lost its
+  badge (0 of 2 new seeds) and moved below Petiflow and One Obsession. Lab best per goal: Petiflow (anime character,
+  ~24 s), Night Shift (fast scene), Krea Watercolor (airy scene, ~6 min), Inkwork / Oil (painting), Lenovo (photo);
+  no game-item look qualified.
 
