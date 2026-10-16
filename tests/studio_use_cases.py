@@ -632,6 +632,7 @@ class CaseRun:
             if action == 'click': locator.click(timeout=timeout)
             elif action == 'fill': locator.fill(typed or '', timeout=timeout)
             elif action == 'select': locator.select_option(typed, timeout=timeout)
+            elif action == 'press': locator.press(typed, timeout=timeout)
             elif action == 'check': locator.check(timeout=timeout)
             else: raise ValueError('Unknown action: ' + action)
             record['performed'] = True
@@ -1568,8 +1569,8 @@ def _make_chosen(c):
     c.act('#makeModel', 'read', note=c.page.evaluate("[...document.querySelectorAll('#makeModel option')].map(o => o.textContent).join(' | ')")[:200])
     offered = c.page.evaluate("[...document.querySelectorAll('#makeModel option')].map(o => o.value)")
     c.act('#makeModel', 'select', typed=switch, note='switch to Pearly Anima Mix, same model type')
-    c.act('#makeLoraSearch', 'fill', typed=added, note='search the installed adapters for koukouya')
-    c.act('[data-tune-add]', note='add it')
+    c.act('#makeLoraSearch', 'fill', typed='koukouya', note='type part of the adapter name, koukouya')
+    c.act('#makeLoraSearch', 'press', typed='Enter', note='press Enter: the one match is added (audit v3 N2)')
     row = c.page.evaluate("document.querySelector('[data-slot=lora2] small')?.textContent || ''")
     c.act('[data-tune=steps]', 'select', typed=c.page.evaluate("document.querySelectorAll('[data-tune=steps] option')[2]?.value || ''"), note='ask for finer quality')
     c.act('#makeNewSeed', note='turn off different pictures each time')
