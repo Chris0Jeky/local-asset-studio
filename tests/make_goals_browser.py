@@ -108,6 +108,17 @@ def run(shots):
         badged = page.eval_on_selector_all('.make-look', 'n=>n.filter(e=>e.querySelector(".make-tested")).map(e=>e.querySelector("[data-make-look]").dataset.makeLook)')
         assert badged == ['look-anifox-ringeko', 'look-anima-pearly-petiflow'], badged  # two keep verdicts, no more
         assert page.locator('.make-tested').first.inner_text() == 'Tested well' and 'median score 4.8' in page.locator('.make-tested').first.get_attribute('title')
+        # A look picked low in the gallery leaves "Describe your picture" in view below the fixed bar, and every goal chip
+        # wraps on screen (audit N8).
+        for (width, height), look in (((1440, 900), 'look-anifox-ringeko'), ((390, 844), 'look-wai-fantasy-portrait')):
+            page.set_viewport_size({'width': width, 'height': height})
+            if page.locator('[data-make-change]').count(): page.locator('[data-make-change]').click()
+            page.evaluate('window.scrollTo(0,document.body.scrollHeight)'); page.locator('[data-make-look="%s"]' % look).click()
+            heading = page.evaluate('()=>[document.querySelector("#makeComposer .make-step").getBoundingClientRect().top,document.querySelector(".studio-globalbar").getBoundingClientRect().bottom]')
+            assert heading[0] >= heading[1], (width, heading)
+        page.set_viewport_size({'width': 1440, 'height': 900})
+        chips = page.evaluate('()=>[...document.querySelectorAll("[data-make-goal]")].map(e=>e.getBoundingClientRect().right)')
+        assert len(chips) == 11 and max(chips) <= page.evaluate('document.documentElement.clientWidth'), chips
         pick_look('look-anifox-ringeko'); assert page.locator('.make-chosen .make-tested').count() == 1 and page.input_value('#makeShape') == 'portrait'
         assert not page.locator('#makeDraft').count(), 'Draft first is for slow looks only'
         painting = looks_of('painting')
@@ -121,6 +132,11 @@ def run(shots):
         photo = looks_of('photo'); assert photo[:2] == ['look-preset-zimage-fast', 'look-preset-realvis'] and photo[-2:] == ['look-krea-realistic-snapshot', 'look-krea-lenovo-ultrareal'], photo
         names = page.eval_on_selector_all('.make-look-text b', 'n=>n.map(e=>e.textContent)'); assert 'Quick picture, any subject' in names and not any('Fast general' in n for n in names), names
         pick_look('look-preset-zimage-fast'); assert page.input_value('#makeShape') == 'design', 'a goal without a usual shape follows the look'
+        # On a phone the new card comes into view after Generate, and the status line is in the Generate bar (audit N2).
+        page.set_viewport_size({'width': 390, 'height': 844}); page.locator('#makeScene').fill('a red kite over a beach'); generate()
+        seen = page.evaluate('(id)=>{const r=document.querySelector(`[data-run="${id}"]`).getBoundingClientRect();return[r.top<innerHeight&&r.bottom>0,!!document.querySelector("#makeStatus").closest(".make-go")]}', list(JOBS)[-1])
+        assert seen == [True, True], seen
+        page.set_viewport_size({'width': 1440, 'height': 900})
 
         # Draft first (audit #12): a slow look offers a quick low-step draft; the draft's card offers "Make the final", which stages the same
         # words and seed at the look's full steps and waits for Generate. Neither press submits anything but Generate.
@@ -165,7 +181,10 @@ def run(shots):
         goal('combine'); page.wait_for_selector('#makePoseSlot')
         text = page.locator('#makeComposer').inner_text() + ' '.join(page.eval_on_selector_all('#makeComposer [placeholder]', 'n=>n.map(e=>e.placeholder)'))
         assert 'character picture' in text.lower() and 'pose' in text.lower() and '[' not in text and 'e.g.' not in text and 'Ellen' not in text, text
-        page.wait_for_selector('[data-make-pose-pick="asset-2"]'); page.locator('[data-make-pose-pick="asset-2"]').click()
+        page.wait_for_selector('[data-make-pose-pick="asset-2"]')
+        assert not generate() and 'Choose the pose first' in page.locator('#makeStatus').inner_text(), 'no pose, no job'
+        page.locator('[data-make-pose-pick="asset-2"]').click()
+        assert 'Choose the pose first' not in page.locator('#makeStatus').inner_text(), 'the pose reminder clears once the pose is chosen (audit N10)'
         sent = generate(); assert not sent and page.locator('#makeF-who').get_attribute('aria-invalid') == 'true', 'empty fields block before any request'
         for key, words in (('who', 'the lantern keeper, a young elf'), ('clothes', 'a green cloak'), ('pose', 'arms crossed')):
             if page.locator('#makeF-' + key).count(): page.locator('#makeF-' + key).fill(words)
@@ -189,7 +208,13 @@ def run(shots):
         job = generate()[0]; assert job['preset_id'] == 'flux-edit' and 'give her a red scarf' in job['controls']['positive'] and '[' not in job['controls']['positive'], job
         clicks['edit'] = 3
         # Fix or upscale: the one-press polish route.
-        goal('repair'); page.wait_for_selector('[data-make-fix="upscale"]'); page.locator('label:has([data-make-fix="upscale"])').click(); shot('goal-repair')
+        # A fix that cannot run here is not preselected, cannot be chosen, and its reason speaks Make's words (audit N9).
+        page.evaluate('''()=>{window.realPlan=StudioWorkbench.polishPlan;StudioWorkbench.polishPlan=(id,kind)=>kind==="face"&&id==="asset-1"?Promise.resolve({ok:false,reason:"Fix face repaints with an anime model, which does not match Z-Image. Use Continue with this."}):window.realPlan(id,kind);}''')
+        goal('repair'); page.wait_for_selector('#makeFixWhy-face')
+        assert page.is_checked('[data-make-fix="details"]') and page.is_disabled('[data-make-fix="face"]') and not page.is_disabled('#makeGenerate')
+        why = page.locator('#makeFixWhy-face').inner_text(); assert 'Continue with this' not in why and 'Change a picture' in why, why
+        page.evaluate('()=>{StudioWorkbench.polishPlan=window.realPlan;}')
+        page.wait_for_selector('[data-make-fix="upscale"]'); page.locator('label:has([data-make-fix="upscale"])').click(); shot('goal-repair')
         job = generate()[0]; assert job['preset_id'] == 'anime-esrgan' and job['continuation']['intent'] == 'repair', job
         clicks['repair'] = 4
         # Animate: motion words and a length with its duration.
