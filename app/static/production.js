@@ -5,7 +5,7 @@ let plannerWithheld=[], plannerNotice='', plannerRequestId=0;
 // Stored plan names are identity: the plan file, its fingerprint and every
 // receipt keep the name a study was created with.  These helpers only make the
 // list and the detail header readable, and never write a name back.
-const PRODUCTION_EMPTY='<div class="production-empty"><p><b>Nothing here yet.</b> Compare one change at a time across a few candidates, start explicitly, review blind, keep a winner.</p><p class="muted">You get here by planning a comparison from a recipe in Create, by branching a finished study, or by preparing an export, scene or voice job.</p><button class="primary" data-production-plan>Plan a comparison</button></div>';
+const PRODUCTION_EMPTY='<div class="production-empty"><p><b>Nothing here yet.</b> Compare one change at a time across a few candidates, start explicitly, review blind, keep a winner.</p><p class="muted">You get here by planning a comparison from a recipe in Full editor, by branching a finished study, or by preparing an export, scene or voice job.</p><button class="primary" data-production-plan>Plan a comparison</button></div>';
 function planDate(value){
   const seconds=Number(value);if(!Number.isFinite(seconds)||seconds<=0)return '';
   try{return new Date(seconds*1000).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});}catch(e){return '';}
@@ -252,7 +252,7 @@ function renderPlannerSummary(){
   const reserved=Number($('#experimentBudget').value)||0,per=measuredRunSeconds();
   const what=planned.length?planned.length+' planned variants from the settings library':axis&&values.length?'Compare '+axis+' = '+values.join(', '):'Choose one setting and the values to compare';
   const pending=estimatePending(),batch=Math.max(1,Number($('#batch')?.value)||1);
-  const time=!candidates?'':per?', about '+Math.max(1,Math.round(candidates*per/60))+' min at roughly '+(per/60).toFixed(1)+' min per run'+(batch>1?' (Create’s estimate for '+batch+' outputs, shared out)':' measured in Create'):pending?', timing still being measured':', no measured time for this recipe yet';
+  const time=!candidates?'':per?', about '+Math.max(1,Math.round(candidates*per/60))+' min at roughly '+(per/60).toFixed(1)+' min per run'+(batch>1?' (Create’s estimate for '+batch+' outputs, shared out)':' measured in Full editor'):pending?', timing still being measured':', no measured time for this recipe yet';
   summary.textContent=candidates?what+' on '+recipe+' → '+candidates+' graph run'+(candidates===1?'':'s')+time+'.':what+' on '+recipe+'.';
   // The estimator debounces and fetches; a summary opened mid-flight re-reads once it settles.
   if(typeof setTimeout==='function'){clearTimeout(plannerSummaryRetry);if(pending&&$('#experimentDialog')?.open!==false)plannerSummaryRetry=setTimeout(renderPlannerSummary,600);}
@@ -305,7 +305,7 @@ $('#experimentForm').onsubmit=async e=>{e.preventDefault();$('#prepareExperiment
 function planFromEmptyState(){
   try{document.dispatchEvent(new CustomEvent('studio:navigate',{detail:'create'}));}catch(err){showView('create');}
   if(typeof selected!=='undefined'&&selected)$('#planComparison')?.click?.();
-  else productionMessage('Choose a recipe in Create first, then press Plan comparison.');
+  else productionMessage('Choose a recipe in Full editor first, then press Plan comparison.');
 }
 // The orientation block stays closed so the plans show first; remembering the
 // choice is a per-browser convenience, and a storage that refuses to answer must
@@ -379,7 +379,7 @@ $('#productionDetail').onkeydown=async e=>{const index=globalThis.StudioReviewCh
 function renderNativeAssets(){
   $('#nativeAssetList').innerHTML=nativeAssets.map((a,i)=>'<div class="native-source"><span>'+esc(a.title)+'</span><button type="button" data-native-up="'+i+'" '+(!i?'disabled':'')+' aria-label="Move source '+(i+1)+' earlier">↑</button><button type="button" data-native-down="'+i+'" '+(i===nativeAssets.length-1?'disabled':'')+' aria-label="Move source '+(i+1)+' later">↓</button>'+(a.media_type==='image'?'<label>Duration ms<input type="number" min="1" max="60000" data-native-duration="'+a.id+'" value="'+a.duration+'"></label><label>Layer name<input data-native-layer="'+a.id+'" value="'+esc(a.layerName)+'"></label>':'<small>Optional GLB</small>')+'</div>').join('');
 }
-$('#nativeExport').onclick=()=>{nativeAssets=[...assetSelection].map(id=>assetState.assets.find(a=>a.id===id)).filter(Boolean).map(a=>({...a,duration:100,layerName:a.title}));if(!nativeAssets.length){assetMessage('Select the source images first.',true);return;}$('#nativeStatus').textContent='Prepare the export, then start it from Runs & review.';renderNativeAssets();$('#nativeDialog').showModal();};
+$('#nativeExport').onclick=()=>{nativeAssets=[...assetSelection].map(id=>assetState.assets.find(a=>a.id===id)).filter(Boolean).map(a=>({...a,duration:100,layerName:a.title}));if(!nativeAssets.length){assetMessage('Select the source images first.',true);return;}$('#nativeStatus').textContent='Prepare the export, then start it from Compare & review.';renderNativeAssets();$('#nativeDialog').showModal();};
 $('#cancelNative').onclick=()=>$('#nativeDialog').close();$('#nativeKind').onchange=()=>{$('#nativeEngineWrap').hidden=$('#nativeKind').value!=='godot';$('#nativeKritaWrap').hidden=$('#nativeKind').value!=='ora';};
 function readNativeInputs(){
   for(const input of $('#nativeAssetList').querySelectorAll('input')){

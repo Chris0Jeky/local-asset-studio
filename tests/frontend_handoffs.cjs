@@ -91,10 +91,13 @@ function sandbox(attached, local, availability = null, diagnostic = null, boot =
 async function aFailedStartupStageDoesNotStopTheRest() {
   const reply = (ok, data) => async () => ({ok, status: ok ? 200 : 500, json: async () => data});
   const {element, reads} = sandbox(null, null, null, null, {
-    '/api/catalog': reply(true, {presets: [{id: 'plain', name: 'plain', modality: 'image', positive: ['1', 'text'], defaults: {}}]}),
+    '/api/catalog': reply(true, {presets: [{id: 'plain', name: 'plain', modality: 'image', positive: ['1', 'text'], seed:['2','seed'], defaults: {positive:'An unrelated example',negative:'example avoidance',seed:42}}]}),
     '/api/setups': reply(false, {error: 'Setup store unreadable'}),
   });
   for (let i = 0; i < 50 && !reads.includes('/api/health'); i++) await new Promise(resolve => setImmediate(resolve));
+  assert.equal(element('#positive').value,'','fresh startup clears authored prompt text');
+  assert.equal(element('#negative').value,'','fresh startup clears authored negative text');
+  assert.equal(element('[data-key="seed"]').value,42,'fresh startup keeps authored non-text controls');
   assert.ok(reads.includes('/api/health'), 'health still starts after saved setups fail: ' + reads.join(', '));
   assert.match(element('#status').textContent + ' ' + element('#status').innerHTML, /Setup store unreadable|Saved setups/, 'the failed stage is reported');
 }
@@ -1820,3 +1823,18 @@ async function windowsInventoryStatusMatchesCaseAndSeparators() {
     'A POSIX backslash remains a literal filename character rather than a path separator'
   );
 }
+
+function adultNotesFollowTheRecipe() {
+  const {element,run}=sandbox();
+  run("knowledge={nsfw_lab:{families:{Test:{undress:'Adult notes'}}}};catalog.presets.push({id:'notes-test',name:'Ordinary portrait',family:'Test',positive:['1','text'],defaults:{positive:'Authored example'}});selectPreset('notes-test');");
+  assert.equal(element('#nsfwIntel').hidden,true,'ordinary recipes hide adult notes even in a supported model family');
+  assert.equal(element('#positive').value,'Authored example','explicit recipe selection retains authored text');
+  run("applyRecipe({preset_id:'notes-test',name:'Explicit recipe',tags:['hentai'],controls:{positive:'Explicit saved wording'}})");
+  assert.equal(element('#nsfwIntel').hidden,false,'adult recipe exposes its relevant notes');
+  assert.equal(element('#positive').value,'Explicit saved wording','explicit recipe wording is retained');
+  run("applyRecipe({preset_id:'notes-test',name:'Neutral recipe',controls:{positive:'Neutral saved wording'}})");
+  assert.equal(element('#nsfwIntel').hidden,true,'switching back hides adult notes');
+  run("applySaved({preset:'notes-test',controls:{positive:'Restored words'},batch:1,parent_assets:[],references:[]})");
+  assert.equal(element('#nsfwIntel').hidden,false,'a restored saved setup keeps the family notes, since its recipe classification is not stored');
+}
+adultNotesFollowTheRecipe();
