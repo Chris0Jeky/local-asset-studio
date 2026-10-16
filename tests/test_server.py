@@ -831,7 +831,7 @@ class ServerTests(unittest.TestCase):
         self.assertEqual({p.name:p.read_bytes() for p in directory.iterdir() if p.is_file()},before)
         for command in (lambda:restored.resume_job(bad['id']),lambda:restored.stop_tracking(bad['id'],'Keep the evidence'),
                         lambda:restored.abandon_job(bad['id'],'Missing evidence',True),lambda:restored.put_away_job(bad['id'],True),
-                        lambda:restored.cancel_job(bad['id']),lambda:restored._save(job)):
+                        lambda:restored.cancel_job(bad['id']),lambda:restored._save(job),lambda:restored.export_recipe(job)):
             with self.assertRaises(server.StudioError):command()
             self.assertEqual({p.name:p.read_bytes() for p in directory.iterdir() if p.is_file()},before)
             self.assertEqual(restored.queue.qsize(),0);self.assertEqual(restored.requests,[])

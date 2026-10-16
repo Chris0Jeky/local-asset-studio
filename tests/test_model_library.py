@@ -133,7 +133,7 @@ class ModelLibraryTests(unittest.TestCase):
         no_hash={'id':'no-hash','file':'loras/nohash.safetensors','bytes':3}
         (self.root/'models/library.json').write_text(json.dumps({'assets':[bad_file,no_hash,self.asset]}))
         rows={a['id']:a for a in self.lib.snapshot()['assets']}
-        self.assertEqual(rows['bad-file']['status'],'invalid_pin');self.assertIn('portable relative path',rows['bad-file']['install_note'])
+        self.assertEqual(rows['bad-file']['status'],'invalid_pin');self.assertIn('portable relative path',rows['bad-file']['install_note']);self.assertEqual(rows['bad-file']['path'],'');self.assertFalse(rows['bad-file']['installable'])
         self.assertEqual(rows['no-hash']['status'],'invalid_pin');self.assertIn('SHA-256',rows['no-hash']['install_note'])
         self.assertNotIn('status',rows['demo']);self.assertFalse(rows['demo']['verified']);self.assertEqual(rows['demo']['verification'],'missing')
 

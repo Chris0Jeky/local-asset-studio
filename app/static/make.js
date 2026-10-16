@@ -39,7 +39,7 @@
   const licence=p=>nonCommercial(p)?'<small class="make-licence" title="'+escape(p.commercial_note)+'">Non-commercial</small>':'';
   const FINAL=['completed','failed','partial','uncertain','not_submitted','cancelled','abandoned'];
   const POLISH={face:'Fix face',details:'Fix hands and details',upscale:'Upscale 2\u00d7'};
-  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',poseRoute:'copy',pose:null,posePicking:false,compare:false,compareLooks:[],characters:[],character:null,allPictures:false,charSave:null,charEdit:null,charMigrate:null,charForm:{},openers:new Set(),noteGone:false};
+  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',poseRoute:'copy',pose:null,posePicking:false,compare:false,compareLooks:[],characters:[],character:null,allPictures:false,charSave:null,charEdit:null,charMigrate:null,charStale:false,charForm:{},openers:new Set(),noteGone:false};
   try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(GOALS.some(g=>g.id===saved.goal))state.goal=saved.goal;if(typeof saved.look==='string')state.look=saved.look;}catch{}
   const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,...r})=>({...r,job:{id}}))]).slice(0,6).map(({job,look,lookId,goal,scene,tune,tuned,group,title,fills,redo})=>({id:job.id,look,lookId,goal,scene,tune,tuned,group,title,fills,redo}))}));}catch{}};
   let restoredRuns=false,savedRuns=[];try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(Array.isArray(saved.runs))savedRuns=saved.runs.filter(r=>r&&typeof r.id==='string').slice(0,6);}catch{}
@@ -484,21 +484,27 @@
     try{
       if(mode==='edit'){const c=(state.characters||[]).find(x=>x.id===id);if(!c)throw Error('That character is no longer here.');
         await json('/api/characters',{action:'edit',id,expected_revision:c.revision,name,body:{who,...(clothes?{clothes}:{}),...(avoid?{avoid}:{}),...(c.body.look_id?{look_id:c.body.look_id}:{})}});
-        clearCharForms();await loadCharacters();refreshCharacters();q('[data-make-character-edit="'+CSS.escape(id)+'"]')?.focus();say('Saved the changes to “'+name+'”.');return;}
+        clearCharForms();await loadCharacters();refreshCharacters();q('[data-make-character-edit="'+CSS.escape(id)+'"]')?.focus();sayChars('Saved the changes to “'+name+'”.');return;}
       await json('/api/characters',{action:'create',kind:'character',name,canon_asset_id:id,body:{who,...(clothes?{clothes}:{}),...(f.look?{look_id:f.look}:{})}});
-      clearCharForms();await loadCharacters();renderRuns();refreshCharacters();say('Saved “'+name+'”. Choose it under Your characters in Character in a new pose.');}
+      clearCharForms();await loadCharacters();renderRuns();refreshCharacters();sayChars('Saved “'+name+'”. Choose it under Your characters in Character in a new pose.');}
     catch(error){if(button)button.disabled=false;
-      if(error.status===409&&mode==='edit'){clearCharForms();await loadCharacters();refreshCharacters();say('“'+name+'” changed somewhere else, so it was reloaded. Your edit was not saved; edit again if you still want it.');return;}
+      if(error.status===409&&mode==='edit'){clearCharForms();await loadCharacters();refreshCharacters();sayChars('“'+name+'” changed somewhere else, so it was reloaded. Your edit was not saved; edit again if you still want it.');return;}
       say('Could not save the character: '+error.message);}
   }
   // Put away and Restore name the revision they read. A 409 reloads the list and changes nothing.
   async function characterCommand(id,action){const c=(state.characters||[]).find(x=>x.id===id);if(!c)return;
     try{await json('/api/characters',{action,id,expected_revision:c.revision});if(state.character===id&&action==='trash')state.character=null;if(state.charEdit===id)clearCharForms();await loadCharacters();refreshCharacters();
-      if(action==='trash'){q('.make-away summary')?.focus();say('Put “'+c.name+'” away. It waits under Put away if you want it back.');}
-      else{q('[data-make-character="'+CSS.escape(id)+'"]')?.focus();say('Restored “'+c.name+'”.');}}
-    catch(error){if(error.status===409){await loadCharacters();refreshCharacters();say('“'+c.name+'” changed somewhere else, so it was reloaded. Nothing was changed.');return;}say('Could not '+(action==='trash'?'put it away':'restore it')+': '+error.message);}
+      if(action==='trash'){q('.make-away summary')?.focus();sayChars('Put “'+c.name+'” away. It waits under Put away if you want it back.');}
+      else{q('[data-make-character="'+CSS.escape(id)+'"]')?.focus();sayChars('Restored “'+c.name+'”.');}}
+    catch(error){if(error.status===409){await loadCharacters();refreshCharacters();sayChars('“'+c.name+'” changed somewhere else, so it was reloaded. Nothing was changed.');return;}say('Could not '+(action==='trash'?'put it away':'restore it')+': '+error.message);}
   }
-  async function loadCharacters(){try{state.characters=(await json('/api/characters')).characters||[];}catch{state.characters=[];}}
+  // A failed read keeps the list already shown and says so; the saying that follows a command appends it, so it is not overwritten.
+  const STALE=' Your characters could not be refreshed, so the list shown may be out of date.';
+  // A chosen character whose words changed (edited here or elsewhere) refreshes the form's who and clothes, which were copied when it was chosen.
+  async function loadCharacters(){const was=(state.characters||[]).find(c=>c.id===state.character);
+    try{state.characters=(await json('/api/characters')).characters||[];state.charStale=false;}catch{state.charStale=true;say(STALE.trim());return;}
+    const now=state.characters.find(c=>c.id===state.character);if(was&&now&&(was.body.who!==now.body.who||was.body.clothes!==now.body.clothes)){state.form.who=now.body.who||'';state.form.clothes=now.body.clothes||'';}}
+  const sayChars=text=>say(text+(state.charStale?STALE:''));
   // Picture goals that take a character list the saved ones first. Choosing one picks its canon as it is and fills its words.
   const CHARACTER_GOALS=['edit','repair','restyle','combine'];
   function characterChooser(g){const list=usableCharacters(),away=awayCharacters();if(!CHARACTER_GOALS.includes(g.intent)||!list.length&&!away.length)return'';
@@ -514,7 +520,10 @@
   // generation. A parent that is put away or not a picture breaks the chain there. Direct children only would miss edits of edits.
   const LINEUP_MAX=24;
   function lineupMarkup(c){
-    const pics=state.pictures||[],canon=pics.find(a=>a.id===c.canon_asset_id)||{id:c.canon_asset_id},family=new Set([c.canon_asset_id]);
+    const pics=state.pictures||[],canon=pics.find(a=>a.id===c.canon_asset_id)||{id:c.canon_asset_id},family=new Set([c.canon_asset_id]),rec=(c.lineage||[]).find(l=>l?.role==='canon');
+    // Seeded from the recorded canon identity too: when the recorded asset is put away and a live copy of its bytes stands in (characters.py
+    // canon_asset), kept pictures still descend from the recorded asset or from any picture with the recorded sha256.
+    if(rec?.asset_id)family.add(rec.asset_id);if(rec?.sha256)for(const a of pics)if(a.sha256===rec.sha256)family.add(a.id);
     for(let grew=true;grew;){grew=false;for(const a of pics)if(!family.has(a.id)&&(a.lineage||[]).some(p=>family.has(p?.asset_id??p))){family.add(a.id);grew=true;}}
     const kept=pics.filter(a=>a.id!==c.canon_asset_id&&family.has(a.id)&&(state.review[a.id]??a.review)==='selected'),shown=kept.slice(0,LINEUP_MAX);
     const item=(a,canonTag)=>'<button type="button" class="make-lineup-item'+(canonTag?' make-lineup-canon':'')+'" data-ux-open-asset="'+escape(a.id)+'"><img src="'+thumbUrl(a)+'" alt="'+escape(canonTag?'Canon picture of '+c.name:pictureLabel(a))+'" loading="lazy">'+(canonTag?'<small class="make-lineup-tag">Canon</small>':'')+'</button>';
@@ -579,8 +588,8 @@
     const markup=list.map(({group,id,runs})=>{
       if(group){const done=runs.filter(r=>FINAL.includes(r.job.status)).length,first=runs[0];
         return '<article class="make-run make-compare" data-run="'+escape(id)+'"><header><div><b>Compare looks · '+escape(pictureTitle(first.scene,first.job.created_at))+'</b><small>'+runs.length+' looks, one picture each'+(runs.every(r=>r.job.controls?.seed!=null&&r.job.controls.seed===first.job.controls?.seed)?', same seed':'')+'</small></div><span class="make-run-state '+(done===runs.length?'completed':'running')+'">'+(done===runs.length?'Done':done+' of '+runs.length+' done')+'</span></header><div class="make-compare-grid">'
-          +runs.map(({job,look,lost})=>'<figure><figcaption><b>'+escape(look)+'</b><small class="make-run-state '+escape(lost?'uncertain':job.status)+'">'+escape(lost?'Lost contact; still checking':words(job))+'</small></figcaption>'+(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')
-            +(job.outputs||[]).map((o,i)=>picture(o)?img(job,o,i,look)+(o.asset_id?'<div class="make-actions">'+marks(o.asset_id)+'</div>':'<small class="muted">Saving to the library…</small>'):'').join('')+pending(job,1)+'</figure>').join('')+'</div></article>';}
+          +runs.map(({job,look,lost})=>'<figure><figcaption><b>'+escape(look)+'</b><small class="make-run-state '+escape(lost?'uncertain':job.status)+'">'+escape(lost?'Lost contact; still checking':words(job))+'</small></figcaption>'+(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')+(lost?'':recovery(job))
+            +(job.outputs||[]).map((o,i)=>picture(o)?img(job,o,i,look)+(o.asset_id?'<div class="make-actions">'+marks(o.asset_id)+characterMarkup(job,o.asset_id)+'</div>':'<small class="muted">Saving to the library…</small>'):'').join('')+pending(job,1)+'</figure>').join('')+'</div></article>';}
       const {job,look,scene,tuned,title,lost}=runs[0];
       return '<article class="make-run" data-run="'+escape(job.id)+'"><header><div><b>'+escape(pictureTitle(scene||title||job.controls?.positive||look,job.created_at))+'</b>'+(scene?'<small>'+escape(scene)+'</small>':look&&!scene?'<small>'+escape(look)+'</small>':'')+(tuned?'<small class="make-tuned">'+escape(tuned)+'</small>':'')+'</div><span class="make-run-state '+escape(lost?'uncertain':job.status)+'">'+escape(lost?'Lost contact with this run; still checking':words(job))+'</span></header>'
       +(scene?'<div class="make-run-tools">'+(draftRun(runs[0])?'<button type="button" data-make-final="'+escape(job.id)+'">Make the final</button>':'')+'<button type="button" data-make-rerun="'+escape(job.id)+'">Edit and re-run</button><button type="button" data-make-another="'+escape(job.id)+'">Same words, another look</button></div>':runs[0].redo?'<div class="make-run-tools"><button type="button" data-make-redo="'+escape(job.id)+'">Edit and re-run</button></div>':'')

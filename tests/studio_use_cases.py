@@ -672,7 +672,7 @@ class CaseRun:
         return self._finish(record)
 
     # -- helpers used by drivers --------------------------------------------------------
-    def boot(self, route='#home'):
+    def boot(self, route='#make'):
         self.page.goto(self.origin + '/' + route)
         self.page.wait_for_function('!!window.selected || !!document.querySelector("#homeView")', timeout=15000)
         self.page.wait_for_timeout(400)
@@ -802,8 +802,8 @@ BRIEF = ('A lanternkeeper of the deep wood: a young elf with silver-grey hair, a
 
 @driver('first-image-from-brief')
 def _first_image(c):
-    c.boot('#home')
-    c.act('#uxJourneys, #uxRecent', 'read', note='overview starting points')
+    c.boot('#make')
+    c.act('#makeGoals', 'read', note='Make starting points')
     c.act('[data-nav-group="Advanced"] summary', note='open advanced tools', supplementary=True)
     c.act('[data-studio-route="create"]', navigation=True)
     c.act('#workshopRecipeChange', note='open the recipe picker', supplementary=True)

@@ -861,6 +861,20 @@ async function linkedModelFolderIsOneRow() {
 
 // Models as a shop: looks and recipes are joined to the files they need; a missing file says where it comes from and where it goes,
 // and the install button is live only where the library marks the file installable. Rendering never installs.
+// A malformed pin (Codex review of #1465) keeps its reason but offers no folder or file path to copy or put the file in.
+async function malformedPinOffersNoPath() {
+  const {element, run} = sandbox({}, {});
+  const asset = {id: 'bad', name: 'bad model', family: 'Fam', bytes: 8, file: '../escape.safetensors', path: '', present: false, verified: false, installable: false, status: 'invalid_pin', verification: 'invalid-pin',
+    install_note: 'This pin is malformed and was not checked: file must be a portable relative path', source: 'https://example.com/bad', license: 'x', download: {}};
+  run(`library=${JSON.stringify({assets: [asset], inventory: [], storage: {}, folders: [], collections: [], model_root: 'C:/models'})};modelLooks=[];modelReqs=new Map();atelierRecipes=[];`);
+  element('#modelCards').querySelector = () => null;
+  element('#curatedModelSearch').value = '';
+  run('renderCuratedModels()');
+  const html = element('#modelCards').innerHTML;
+  assert.match(html, /\.\.\/escape\.safetensors/); assert.match(html, /malformed and was not checked/);
+  assert.doesNotMatch(html, /data-copy|Put it in|Copy folder|Copy file path/);
+}
+
 async function modelShopCards() {
   const {element, run} = sandbox({}, {});
   const file = (id, folder, extra) => ({id, name: id + ' model', family: 'Fam ' + id, bytes: 8, file: folder + '/' + id + '.safetensors', path: 'C:\\models\\' + folder + '\\' + id + '.safetensors',
@@ -1854,6 +1868,7 @@ async function parallaxLateRepliesKeepCreateEdits() {
   await aFailedStartupStageDoesNotStopTheRest();
   await linkedModelFolderIsOneRow();
   await modelShopCards();
+  await malformedPinOffersNoPath();
   await modelStatusFilter();
   await windowsInventoryStatusMatchesCaseAndSeparators();
   await seamlessTileSubmitsTheServerPlan();
@@ -2062,3 +2077,10 @@ function adultNotesFollowTheRecipe() {
   assert.equal(element('#nsfwIntel').hidden,false,'a restored saved setup keeps the family notes, since its recipe classification is not stored');
 }
 adultNotesFollowTheRecipe();
+// Audit v3 #17: the Full editor names itself.
+function fullEditorEyebrowAndPhoneDock() {
+  const read = name => fs.readFileSync(path.join(__dirname, '../app/static', name), 'utf8');
+  assert.match(read('studio-workbench.js'), /<span class="eyebrow">FULL EDITOR<\/span>/, 'the Full editor eyebrow names the view');
+  assert.doesNotMatch(read('studio-workbench.js'), /PILOT THE NEXT PASS/, 'the old Full editor eyebrow is gone');
+}
+fullEditorEyebrowAndPhoneDock();

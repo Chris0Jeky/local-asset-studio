@@ -31,7 +31,7 @@ Press Ctrl+K at any time for the tool finder. It searches goals, looks and tools
 - **Speed label.** It shows a measured median per picture: this PC's finished runs of the look, or if there are none, the lab. "Fast · ~31 s" is under 45 seconds, "Medium · ~N s" is under 3 minutes, and "Slow · ~N min" is 3 minutes or more. A look with no timing yet says "Speed not measured yet". A Krea look with no number says "Slow · several minutes". Hover the label for its source. In the lab, Krea pictures took 6 to 37 minutes, so treat Krea minutes as a floor.
 - **Tested well.** The look kept its named subject and props in at least 3 of 4 lab pictures, or 2 of 2 where only two were made. Hover the badge for the exact count. It means an agent liked how the lab pictures matched the brief. It is not art approval and not licence clearance. A look without the badge is not bad. It was not kept often enough, or it was not tested the same way.
 - **Best for.** A short line on the tested looks saying what that look carried in the lab, for example "Close-ups and upper-body portraits holding one thing". It is a note from the lab, not a promise.
-- **Non-commercial.** A tag on a look whose own recipe note names non-commercial terms (the Anima family and NoobAI, for example). It is copied from the catalog. It is not a licence check. See [Licences](#licences-read-this-before-selling-anything).
+- **Non-commercial.** A tag shown only on a look whose own recipe note (`commercial_note` in `presets/catalog.json`) names non-commercial terms, so it appears on some Anima-based looks and the NoobAI look but not on every look built on those models. For example, **Flat pastel close-up** carries no tag because its recipe note records no terms, even though its Anima model is non-commercial (see Licences). No tag is not clearance, and the tag is not a licence check. See [Licences](#licences-read-this-before-selling-anything).
 - **Run on this PC before.** The recipe behind the look has an executed record here.
 
 ### The Anime character looks, in the order Make lists them
@@ -99,6 +99,7 @@ If **Generate** is disabled and the reason says "Needs 2 model files first: open
 - If the Studio can install the file, the button reads **Install** with the size. Press it once. Progress shows on the card.
 - If it cannot, the card says **Manual install only**, shows the source link and the folder to put the file in, and has **Copy folder** and **Copy file path**. Download it yourself and copy it in. The card for the adapter you added in Tune appears the same way.
 - After copying a file, press **Refresh inventory** and check the card reads as present. **Verify** hashes the file and compares it with its pinned checksum.
+- Only `.safetensors` files can be installed or verified here. A file of another format, such as a GGUF, reads **Present · pin only** once copied in, and its button stays disabled as **Manual file**. The UI cannot hash it, so it never reads "SHA-256 verified"; compare its checksum with the pin in `models/library.json` yourself.
 - The top of **Models & setup** also lists **What you can make**: which looks are ready now and which need a download.
 
 A matching hash proves the bytes match the pinned file. It does not prove who made it or that you may use it commercially.
@@ -233,7 +234,7 @@ If the card reads **Outcome unknown: nothing was sent again**, the Studio lost t
 
 ## Licences: read this before selling anything
 
-The Studio records each model's and adapter's terms. It does not interpret them for you. A flag copied from a download page is not a clearance. Read the owner's page before commercial use. The terms are in `models/library.json` and on each card in **Models & setup**.
+The Studio records each model's and adapter's terms. It does not interpret them for you. A flag copied from a download page is not a clearance. Read the owner's page before commercial use. Each card in **Models & setup** shows the short licence line only. The longer terms the manifest records for a file (its `terms` field, such as a model card's licence name and revision) are in `models/library.json`, not on the card, so read them there.
 
 For the path in this guide:
 
