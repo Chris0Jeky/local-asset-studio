@@ -115,6 +115,6 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   **non-commercial** tag shows only where a recipe's `commercial_note` records it (Petiflow's records nothing, so no tag).
 - [ ] **Fix buttons that cannot run stay visible, disabled, with the reason**; Make card/choice borders 3.2:1.
 - [ ] **Resume keeps a failed receipt failed** (#1460): after a ComfyUI restart, Resume used to turn a known execution
-  failure into "outcome unknown". Wedged mid-batch uncertain jobs (#1458) get an "abandon the unknown tail" exit next.
+  failure into "outcome unknown". (A reported "wedged mid-batch" case, #1458, was a false positive: app/mixed_batch.py already offers it a recovery.)
 - [ ] **Character cards v1 in progress** (#1205): "Make this my character…" on a kept picture; pickers show "Your
   characters" first and fill who/clothes. Canon = one chosen keeper portrait (owner, 27 Sep).
