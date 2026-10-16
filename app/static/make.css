@@ -61,3 +61,10 @@
 .make-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}.make-pair label{display:flex;flex-direction:column;gap:5px;font-size:12px}
 .make-focused .make-heading p{display:none}.make-focused .make-heading h1{font-size:30px;margin:6px 0 12px}.make-focused .make-goals{margin-bottom:16px}.make-focused .make-goals button small{display:none}.make-split.make-has-look .make-composer{padding:16px;gap:12px}.make-split.make-has-look .make-compose-main textarea{min-height:84px}
 .make-split.make-has-look .make-step{margin:4px 0 10px}
+.make-tune{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.make-tune>summary{cursor:pointer;font-weight:600;font-size:13px}.make-tune>summary small{font-weight:400;color:var(--muted);margin-left:6px;font-size:11px}
+.make-tune-group{margin:12px 0;display:flex;flex-direction:column;gap:6px}.make-tune-group h3{margin:0;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}.make-tune-group>label,.make-tune-add label{display:flex;flex-direction:column;gap:4px;font-size:12px}.make-tune-group small{font-size:11px}.make-tune-group textarea{width:100%}
+.make-tune-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:4px 10px;padding:6px 0;border-bottom:1px solid var(--line)}.make-tune-row .make-check{margin:0;min-width:0}.make-tune-row b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.make-tune-row small{grid-column:1/-1;color:var(--muted)}
+.make-tune-strength{display:flex;align-items:center;gap:6px}.make-tune-strength input{width:110px}.make-tune-strength output{min-width:3ch;color:var(--accent);font-size:12px}
+.make-tune-add{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:end}.make-tune-add label{grid-column:1/-1}.make-tune-add small{grid-column:1/-1;color:var(--muted)}
+.make-run header small.make-tuned{color:var(--accent)}
+@media(max-width:520px){.make-tune-row{grid-template-columns:1fr}.make-tune-strength input{flex:1;width:auto;min-width:0}}

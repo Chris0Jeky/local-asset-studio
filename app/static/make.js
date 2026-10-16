@@ -25,9 +25,9 @@
   const SHAPES={design:'As designed',portrait:'Portrait',landscape:'Landscape',square:'Square'};
   const FINAL=['completed','failed','partial','uncertain','not_submitted','cancelled','abandoned'];
   const POLISH={face:'Fix face',details:'Fix hands and details',upscale:'Upscale 2\u00d7'};
-  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set()};
+  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),tune:{},tuneOpen:false};
   try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(GOALS.some(g=>g.id===saved.goal))state.goal=saved.goal;if(typeof saved.look==='string')state.look=saved.look;}catch{}
-  const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,...r})=>({...r,job:{id}}))]).slice(0,6).map(({job,look,lookId,goal,scene})=>({id:job.id,look,lookId,goal,scene}))}));}catch{}};
+  const remember=()=>{try{localStorage.setItem('studio.make',JSON.stringify({goal:state.goal,look:state.look,runs:(restoredRuns?state.runs:[...state.runs,...savedRuns.map(({id,...r})=>({...r,job:{id}}))]).slice(0,6).map(({job,look,lookId,goal,scene,tune,tuned})=>({id:job.id,look,lookId,goal,scene,tune,tuned}))}));}catch{}};
   let restoredRuns=false,savedRuns=[];try{const saved=JSON.parse(localStorage.getItem('studio.make')||'{}');if(Array.isArray(saved.runs))savedRuns=saved.runs.filter(r=>r&&typeof r.id==='string').slice(0,6);}catch{}
   const presets=()=>typeof catalog!=='undefined'&&catalog?.presets||[];
   const presetFor=look=>presets().find(p=>p.id===look?.body?.preset_id);
@@ -47,7 +47,114 @@
   function speed(preset){const id=preset?.id||'';if(/krea/.test(id))return['slow','Finest detail · slow, about 10–17 min'];if(/zimage-fast|pixel|stylized|realvis/.test(id))return['fast','Fast'];return['fast','Fast · about half a minute'];}
   // The same runtime facts the full editor gates on (app.js globals); unknown (null) health does not block.
   function runtimeBlocker(){if(typeof backendSwitching!=='undefined'&&backendSwitching)return'A model environment switch is running. Wait for it to finish.';if(typeof workerAlive!=='undefined'&&workerAlive===false)return'The Studio worker has stopped. Restart the Studio before generating.';if(typeof online!=='undefined'&&online===false)return'ComfyUI is not reachable. Start it, then try again.';if(typeof online!=='undefined'&&online===true&&typeof schemaAvailable!=='undefined'&&!schemaAvailable)return'ComfyUI is still starting up. Try again in a moment.';return'';}
-  function blocker(look){const runtime=runtimeBlocker();if(runtime)return runtime;if(look.usable===false)return look.unusable_reason||'This look cannot be used now.';const p=presetFor(look);if(!p)return'This look’s recipe is not in the library.';if(p.runtime_block)return p.runtime_block;const missing=typeof missingByPreset!=='undefined'&&missingByPreset[p.id];if(Array.isArray(missing)&&missing.length)return'Needs '+missing.length+' model file'+(missing.length>1?'s':'')+' first: open Models & setup.';return'';}
+  function blocker(look){const runtime=runtimeBlocker();if(runtime)return runtime;if(look.usable===false)return look.unusable_reason||'This look cannot be used now.';const p=tunedPreset(look);if(!p)return'This look’s recipe is not in the library.';if(p.runtime_block)return p.runtime_block;const missing=typeof missingByPreset!=='undefined'&&missingByPreset[p.id];if(Array.isArray(missing)&&missing.length)return'Needs '+missing.length+' model file'+(missing.length>1?'s':'')+' first: open Models & setup.';return'';}
+
+  // Tune this look (owner ask, 16 Oct 2026): see and change the look's model, adapters, steps, negative and seed without the
+  // full editor. Folded shut by default. Tuning only changes the controls Generate sends: the server's allow-list, adapter
+  // inventory and ranges still decide, and nothing here submits. A tune belongs to its look and travels with each run.
+  const NAMED=k=>k+'_name',bound=(p,k)=>!!(p?.[k]||p?.bindings_extra?.[k]),byId=id=>presets().find(p=>p.id===id);
+  const kb=()=>typeof knowledge!=='undefined'&&knowledge||{},entry=name=>name&&kb().loras?.[name]||null;
+  const family=p=>p?.family||p?.name||p?.id||'';
+  const short=name=>entry(name)?.label||String(name||'built-in adapter').replace(/\.safetensors$/,'');
+  // Same model type = same loader node and text encoders on the same backend (app/looks.py model_of): the look's wording and
+  // adapters carry over, so a switch never meets a graph that cannot take them; results will still differ.
+  const kind=p=>p?.model?[p.model.loader,...p.model.encoders,p.backend_id||'primary'].join('|'):null;
+  const textOnly=p=>(p.modality||'image')==='image'&&!!p.positive&&!p.reference&&!p.last_reference&&!p.reference_slots;
+  function models(look){
+    const p=presetFor(look),k=kind(p);if(!k)return[];const c=look.body.controls||{},seen=new Set([p.model.file]);
+    const need=[...Object.keys(c),...(look.body.negative?['negative']:[]),...SLOTS.flatMap(s=>[s,NAMED(s)]).filter(s=>bound(p,s))];
+    const offers=(r,key)=>!(key in c)||!r.choices?.[key]?.length||r.choices[key].includes(c[key])||!p.choices?.[key]?.includes(c[key]);
+    return presets().filter(r=>r!==p&&r.family&&textOnly(r)&&kind(r)===k&&need.every(n=>bound(r,n))&&offers(r,'sampler')&&offers(r,'scheduler')&&!seen.has(r.model.file)&&seen.add(r.model.file));
+  }
+  const missingFor=p=>{const m=typeof missingByPreset!=='undefined'&&missingByPreset[p?.id];return Array.isArray(m)?m:[];};
+  const tunedPreset=look=>byId(state.tune[look?.id]?.preset)||presetFor(look);
+  function tuneOf(look){
+    if(state.tune[look.id])return state.tune[look.id];const p=presetFor(look),c=look.body.controls||{};
+    return state.tune[look.id]={preset:p?.id,rows:adapters(look).map(a=>({slot:a.key,name:bound(p,NAMED(a.key))?c[NAMED(a.key)]:'',strength:a.strength,on:true})),cleared:[],steps:null,sampler:'',negative:null,seed:null,reseed:true};
+  }
+  // Installed adapters made for this model type: the knowledge base names each file's family; a file it does not know is not offered.
+  function compatible(look){
+    const p=presetFor(look),k=kind(p),chosen=SLOTS.map(s=>p?.choices?.[NAMED(s)]).find(x=>x?.length),files=chosen||(typeof installedLoras!=='undefined'?installedLoras:[]);
+    const kinds=new Set(presets().filter(r=>r.family&&kind(r)===k).map(r=>r.family));
+    return files.filter(f=>entry(f)&&kinds.has(entry(f).family)).sort((a,b)=>(entry(b).family===p.family)-(entry(a).family===p.family)||short(a).localeCompare(short(b)));
+  }
+  const freeSlot=(look,t)=>SLOTS.find(s=>bound(presetFor(look),s)&&bound(presetFor(look),NAMED(s))&&!t.rows.some(r=>r.slot===s));
+  const clamp=v=>Math.min(2,Math.max(0,Math.round((Number(v)||0)*20)/20));
+  function tuneSummary(look,t){
+    const p=presetFor(look),base=Object.fromEntries(adapters(look).map(a=>[a.key,a])),parts=[];if(!t)return'';
+    if(t.preset&&t.preset!==p?.id)parts.push('model '+family(byId(t.preset)));
+    for(const r of t.rows){const a=base[r.slot];if(!a||(r.name&&r.name!==a.name))parts.push('+'+short(r.name)+(r.on?' '+r.strength:' off'));else if(!r.on)parts.push(short(a.name)+' off');else if(r.strength!==a.strength)parts.push(short(a.name)+' '+r.strength);}
+    for(const a of Object.values(base))if(!t.rows.some(r=>r.slot===a.key))parts.push('−'+short(a.name));
+    if(t.steps!=null)parts.push(t.steps+' steps');if(t.sampler)parts.push(t.sampler);if(t.negative!=null)parts.push('own negative');if(!t.reseed&&t.seed!=null)parts.push('seed '+t.seed+' locked');
+    return parts.length?'Tuned: '+parts.join(' · '):'';
+  }
+  // The tune applied to the prepared controls. Every bound slot of a switched model is written (off or empty is 0), so the
+  // other recipe never keeps an authored adapter of its own; on the look's own model only changed slots are written.
+  function applyTune(controls,look,t,scale){
+    const p=presetFor(look),tp=byId(t.preset)||p,switched=tp!==p;
+    for(const s of SLOTS){if(!bound(tp,s))continue;const r=t.rows.find(x=>x.slot===s);
+      if(r){controls[s]=r.on?Math.min(2,Math.round(r.strength*scale*100)/100):0;if(r.name&&bound(tp,NAMED(s)))controls[NAMED(s)]=r.name;}
+      else if(switched||t.cleared.includes(s))controls[s]=0;}
+    if(t.steps!=null&&bound(tp,'steps'))controls.steps=t.steps;
+    if(t.sampler&&bound(tp,'sampler'))controls.sampler=t.sampler;
+    if(t.negative!=null&&bound(tp,'negative'))controls.negative=t.negative;
+    // A trigger word is written only for an adapter you added: the look's own wording already speaks for its own adapters.
+    if(typeof controls.positive==='string')for(const r of t.rows){const e=entry(r.name);if(!r.added||!r.on||!e?.trigger||controls.positive.toLowerCase().includes(e.trigger.toLowerCase()))continue;
+      controls.positive=e.trigger_position==='start'?e.trigger+', '+controls.positive:controls.positive+', '+e.trigger;}
+    return tp.id;
+  }
+  function renderTune(){
+    const look=current(),box=q('#makeTuneBody');if(!look||!box)return;const t=tuneOf(look),p=presetFor(look),tp=tunedPreset(look),c=look.body.controls||{};
+    const list=models(look),missing=missingFor(tp),files=compatible(look),slot=freeSlot(look,t),steps=Number(c.steps||tp?.defaults?.steps)||0;
+    const draft=Math.max(1,Math.round(steps/2)),fine=Math.min(150,Math.round(steps*1.5));
+    const option=(value,label,on)=>'<option value="'+escape(value)+'"'+(on?' selected':'')+'>'+escape(label)+'</option>';
+    const row=r=>{const e=entry(r.name),why=e?.trigger?'Trigger: '+e.trigger+(r.added?' (added to your words)':''):r.name?'No trigger word':'Fixed in this recipe';
+      return '<div class="make-tune-row" data-slot="'+r.slot+'"><label class="make-check"><input type="checkbox" data-tune-on="'+r.slot+'"'+(r.on?' checked':'')+'> <b>'+escape(short(r.name))+'</b></label>'
+        +'<span class="make-tune-strength"><input type="range" min="0" max="2" step="0.05" value="'+r.strength+'" data-tune-strength="'+r.slot+'" aria-label="Strength of '+escape(short(r.name))+'"><output>'+r.strength.toFixed(2)+'</output></span>'
+        +(r.name?'<button type="button" class="make-link" data-tune-remove="'+r.slot+'">Remove</button>':'')+'<small>'+escape(why)+'</small></div>';};
+    box.innerHTML='<div class="make-tune-group"><h3>Model</h3>'
+      +'<label>Base model<select id="makeModel" data-tune="model">'+option(p.id,'As made · '+family(p)+(missingFor(p).length?' · needs download':''),tp===p)+list.map(m=>option(m.id,family(m)+(missingFor(m).length?' · needs download':''),tp===m)).join('')+'</select></label>'
+      +'<small class="muted">'+escape(tp?.model?.file||tp?.name||'')+(list.length?' · Same model type: the look’s words and adapters carry over; pictures will differ.':' · No other model in the library takes this look’s words and adapters.')+'</small>'
+      +(missing.length?'<p class="make-warn" id="makeTuneWhy">Needs '+missing.length+' model file'+(missing.length>1?'s':'')+' first. <a href="/#models">Open Models & setup</a></p>':'')+'</div>'
+      +'<div class="make-tune-group"><h3>Adapters (LoRAs)</h3>'+(t.rows.length?t.rows.map(row).join(''):'<p class="muted">None: the model and the words carry this look.</p>')
+      +(SLOTS.some(s=>bound(p,NAMED(s)))?(files.length?'<div class="make-tune-add"><label for="makeLoraSearch">Add an installed adapter</label><input id="makeLoraSearch" list="makeLoraList" placeholder="Search by name" autocomplete="off"'+(slot?'':' disabled aria-describedby="makeLoraFull"')+'><datalist id="makeLoraList">'+files.filter(f=>!t.rows.some(r=>r.name===f)).map(f=>'<option value="'+escape(f)+'">'+escape(short(f)+' · '+entry(f).family)+'</option>').join('')+'</datalist><button type="button" data-tune-add'+(slot?'':' disabled')+'>Add</button>'
+        +(slot?'':'<small id="makeLoraFull">All adapter slots of this recipe are in use; remove one first.</small>')+'</div>':'<p class="muted">No installed adapter is known to fit this model type. Models & setup lists what can be installed.</p>'):'<p class="muted">This recipe has no adapter slots to fill.</p>')+'</div>'
+      +((bound(tp,'steps')&&steps)||(bound(tp,'sampler')&&tp.choices?.sampler?.length)?'<div class="make-tune-group"><h3>Quality and speed</h3><div class="make-pair">'
+        +(bound(tp,'steps')&&steps?'<label>Steps<select data-tune="steps">'+option('','As made · '+steps,t.steps==null)+option(draft,'Draft · '+draft+', faster',t.steps===draft)+option(fine,'Finer · '+fine+', slower',t.steps===fine)+'</select></label>':'')
+        +(bound(tp,'sampler')&&tp.choices?.sampler?.length?'<label>Sampler<select data-tune="sampler">'+option('','As made'+(c.sampler?' · '+c.sampler:''),!t.sampler)+tp.choices.sampler.filter(s=>s!==c.sampler).map(s=>option(s,s,t.sampler===s)).join('')+'</select></label>':'')+'</div></div>':'')
+      +(bound(tp,'negative')?'<div class="make-tune-group"><h3>Leave out</h3><textarea id="makeNegative" data-tune="negative" rows="2" maxlength="4000" aria-label="Negative prompt: things to leave out" placeholder="Things to keep out of the picture">'+escape(t.negative??look.body.negative??'')+'</textarea></div>':'')
+      +(bound(tp,'seed')?'<div class="make-tune-group"><label>Seed<input type="number" id="makeSeed" data-tune="seed" min="0" max="2147483646" step="1" inputmode="numeric" value="'+escape(t.seed??c.seed??'')+'"'+(t.reseed?' disabled':'')+' aria-describedby="makeSeedHint"></label><small id="makeSeedHint" class="muted">'+(t.reseed?'Turn off “Different pictures each time” to lock this seed.':'Locked: every run starts from this seed.')+'</small></div>':'')
+      +'<button type="button" class="make-link" data-tune-reset>Back to the look as made</button>';
+    tuneChanged(false);
+  }
+  // A tune change redraws only the summary, Generate's readiness and the estimate, so the scene being typed is never disturbed.
+  function tuneChanged(redraw=true){
+    const look=current();if(!look)return;if(redraw){renderTune();return;}
+    const sum=q('#makeTuneSum'),why=blocker(look),button=q('#makeGenerate');if(sum)sum.textContent=tuneSummary(look,state.tune[look.id])||'Model, adapters, steps, seed';
+    if(button&&!state.busy){button.disabled=!!why;button.title=why;}const said=q('#makeWhy');if(said){said.textContent=why;said.hidden=!why;}estimate();
+  }
+  function tuneInput(target){
+    const look=current();if(!look)return false;const t=tuneOf(look),row=s=>t.rows.find(r=>r.slot===s);
+    if(target.dataset.tuneOn){row(target.dataset.tuneOn).on=target.checked;tuneChanged(false);return true;}
+    if(target.dataset.tuneStrength){const r=row(target.dataset.tuneStrength);r.strength=clamp(target.value);target.nextElementSibling.textContent=r.strength.toFixed(2);tuneChanged(false);return true;}
+    const key=target.dataset.tune;if(!key)return false;
+    if(key==='model'){t.preset=target.value;const tp=tunedPreset(look);if(t.sampler&&!tp.choices?.sampler?.includes(t.sampler))t.sampler='';tuneChanged();return true;}
+    if(key==='steps')t.steps=target.value?Number(target.value):null;
+    if(key==='sampler')t.sampler=target.value;
+    if(key==='negative')t.negative=target.value===(look.body.negative||'')?null:target.value;
+    if(key==='seed')t.seed=target.value===''?null:Number(target.value);
+    tuneChanged(false);return true;
+  }
+  function tuneClick(target){
+    const look=current();if(!look)return false;
+    const remove=target.closest('[data-tune-remove]');if(remove){const t=tuneOf(look),s=remove.dataset.tuneRemove;t.rows=t.rows.filter(r=>r.slot!==s);if(!t.cleared.includes(s))t.cleared.push(s);tuneChanged();q('#makeLoraSearch')?.focus();return true;}
+    if(target.closest('[data-tune-add]')){const t=tuneOf(look),input=q('#makeLoraSearch'),name=input?.value.trim(),slot=freeSlot(look,t),status=q('#makeStatus');
+      if(!compatible(look).includes(name)){if(status)status.textContent=name?'Choose an adapter from the list: '+name+' is not an installed adapter for this model type.':'Type part of an adapter name, then choose it from the list.';input?.focus();return true;}
+      if(!slot||t.rows.some(r=>r.name===name))return true;
+      t.rows.push({slot,name,strength:clamp(entry(name)?.default??1),on:true,added:true});t.cleared=t.cleared.filter(s=>s!==slot);tuneChanged();q('[data-tune-strength="'+slot+'"]')?.focus();return true;}
+    if(target.closest('[data-tune-reset]')){const reseed=state.tune[look.id]?.reseed??true;delete state.tune[look.id];tuneOf(look).reseed=reseed;tuneChanged();return true;}
+    return false;
+  }
 
   view.innerHTML='<div class="make-heading"><span class="eyebrow">MAKE</span><h1 id="makeTitle" tabindex="-1">What are you making?</h1><p>Pick a goal, pick a look by its picture, describe your idea. The look brings the right model, adapters and settings.</p></div>'
     +'<div class="make-goals" role="radiogroup" aria-labelledby="makeTitle" id="makeGoals"></div>'
@@ -90,11 +197,12 @@
       +'<textarea id="makeScene" rows="3" maxlength="1000" placeholder="'+escape(example)+'"></textarea>'
       +'<div class="make-row">'+(example?'<button type="button" id="makeUseExample">Use the example</button>':'')+'<small>Plain words are fine. The look adds its own style and quality words.</small></div>'
       +options.map(o=>'<label class="make-check"><input type="checkbox" data-make-option="'+escape(o.id)+'"'+(o.default?' checked':'')+'> '+escape(o.label)+'</label>').join('')
+      +'<details class="make-tune" id="makeTune"'+(state.tuneOpen?' open':'')+'><summary>Tune this look <small id="makeTuneSum"></small></summary><div id="makeTuneBody"></div></details>'
       +'</div><div class="make-compose-side">'
       +'<div class="make-pair"><label>Shape<select id="makeShape">'+Object.entries(SHAPES).map(([k,v])=>'<option value="'+k+'">'+v+(k==='design'?' · '+escape(look.body.controls.width||'')+'×'+escape(look.body.controls.height||''):'')+'</option>').join('')+'</select></label>'
       +'<label>How many<select id="makeCount"><option value="1">1 picture</option><option value="2">2 pictures</option><option value="4" selected>4 to choose from</option></select></label></div>'
       +(adapters(look).length?'<label>Style strength <output id="makeStrengthOut">100%</output><input type="range" id="makeStrength" min="0" max="150" step="10" value="100" aria-describedby="makeStrengthHint"><small id="makeStrengthHint" class="muted">How strongly the look\u2019s '+adapters(look).length+' style adapter'+(adapters(look).length>1?'s apply':' applies')+'. 100% is the look as made.</small></label>':'')
-      +'<label class="make-check"><input type="checkbox" id="makeNewSeed" checked> Different pictures each time</label>'
+      +'<label class="make-check"><input type="checkbox" id="makeNewSeed"'+(tuneOf(look).reseed?' checked':'')+'> Different pictures each time</label>'
       +'<p id="makeEstimate" class="muted" aria-live="polite"></p>'
       +'<button type="button" id="makeGenerate" class="primary"'+(why?' disabled aria-describedby="makeWhy"':'')+'>Generate</button>'
       +(why?'<p id="makeWhy" class="make-warn">'+escape(why)+'</p>':'')
@@ -106,24 +214,28 @@
     if(q('#makeUseExample'))q('#makeUseExample').onclick=()=>{scene.value=example;scene.oninput();scene.focus();};
     q('#makeShape').onchange=q('#makeCount').onchange=()=>estimate();estimate();
     const strength=q('#makeStrength');if(strength)strength.oninput=()=>{q('#makeStrengthOut').textContent=strength.value+'%';};
+    q('#makeNewSeed').onchange=e=>{tuneOf(look).reseed=e.target.checked;tuneChanged();};
+    q('#makeTune').ontoggle=e=>{state.tuneOpen=e.target.open;};renderTune();
   }
   async function prepared(look){
     // Every form value is read before the first await: a click on another look mid-request must not change this one.
     const scene=q('#makeScene').value.trim();if(!scene)throw Error('Describe your picture first, or press Use the example.');
     const options=Object.fromEntries([...view.querySelectorAll('[data-make-option]')].map(i=>[i.dataset.makeOption,i.checked]));
     const p=presetFor(look),[w,h]=shapeSize(p,look,q('#makeShape').value),reseed=q('#makeNewSeed').checked,batch_count=Number(q('#makeCount').value),scale=Number(q('#makeStrength')?.value??100)/100;
+    const t={...structuredClone(tuneOf(look)),reseed};if(!reseed&&t.seed!=null&&!(Number.isSafeInteger(t.seed)&&t.seed>=0))throw Error('The seed must be a whole number, 0 or more.');
     const result=await json('/api/looks/prepare',{id:look.id,scene,...(look.body.options?.length?{options}:{}),expected_revision:look.revision});
     const controls={...result.controls};
     if('width' in controls||p?.width)Object.assign(controls,{width:w,height:h});
     if(reseed&&(p?.seed||p?.bindings_extra?.seed))controls.seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647;
-    // Two decimals, inside the server's 0-2 adapter range.
-    if(scale!==1)for(const a of adapters(look))controls[a.key]=Math.min(2,Math.round(a.strength*scale*100)/100);
-    return{preset_id:result.preset_id,controls,batch_count,scene};
+    else if(t.seed!=null&&(p?.seed||p?.bindings_extra?.seed))controls.seed=t.seed;
+    // Style strength scales the tuned adapters; two decimals, inside the server's 0-2 adapter range.
+    const preset_id=applyTune(controls,look,t,scale),tuned=tuneSummary(look,t);
+    return{preset_id,controls,batch_count,scene,tuned,tune:{...t,seed:controls.seed??t.seed}};
   }
   let estimateEpoch=0;
   async function estimate(retry=false){
-    const look=current(),out=q('#makeEstimate');if(!look||!out)return;const epoch=++estimateEpoch,p=presetFor(look),[w,h]=shapeSize(p,look,q('#makeShape').value);
-    try{const e=await json('/api/estimate',{preset_id:look.body.preset_id,controls:{...look.body.controls,width:w,height:h},batch_count:Number(q('#makeCount').value),reference_count:0});if(epoch!==estimateEpoch||!out.isConnected)return;
+    const look=current(),out=q('#makeEstimate');if(!look||!out)return;const epoch=++estimateEpoch,p=presetFor(look),[w,h]=shapeSize(p,look,q('#makeShape').value),t=state.tune[look.id];
+    try{const e=await json('/api/estimate',{preset_id:tunedPreset(look).id,controls:{...look.body.controls,width:w,height:h,...(t?.steps!=null?{steps:t.steps}:{})},batch_count:Number(q('#makeCount').value),reference_count:0});if(epoch!==estimateEpoch||!out.isConnected)return;
       out.textContent=e.estimate_seconds?'About '+duration(e.estimate_seconds)+' in total, from earlier runs on this PC.':'No timing yet: this look has not run here at this size.';}
     catch{if(epoch===estimateEpoch&&!retry)setTimeout(()=>{if(epoch===estimateEpoch)estimate(true);},1500);}
   }
@@ -134,8 +246,8 @@
     state.busy=true;q('#makeGenerate').disabled=true;status.textContent='Preparing…';
     try{
       const request=await prepared(look);status.textContent='Sending to ComfyUI…';
-      const {scene,...submit}=request;const job=await json('/api/jobs',{...submit,label:'Make · '+look.name});
-      state.runs.unshift({job,look:look.name,lookId:look.id,goal:state.goal,scene});remember();status.textContent='Started. Your pictures appear below as they finish; you can leave this page.';
+      const {scene,tune,tuned,...submit}=request;const job=await json('/api/jobs',{...submit,label:'Make · '+look.name});
+      state.runs.unshift({job,look:look.name,lookId:look.id,goal:state.goal,scene,tune,tuned});remember();status.textContent='Started. Your pictures appear below as they finish; you can leave this page.';
       renderRuns();poll(job.id);
       if(typeof refresh==='function')void refresh();
     }catch(error){status.textContent=error.message;status.classList.add('make-warn');setTimeout(()=>status.classList.remove('make-warn'),4000);}
@@ -143,7 +255,7 @@
   }
   async function openInEditor(){
     const look=current(),status=q('#makeStatus');if(!look)return;
-    try{const request=await prepared(look);delete request.scene;applySaved({preset:request.preset_id,controls:request.controls,batch_count:request.batch_count,parent_assets:[],references:[]},{});showView('create');}
+    try{const request=await prepared(look);applySaved({preset:request.preset_id,controls:request.controls,batch_count:request.batch_count,parent_assets:[],references:[]},{});showView('create');}
     catch(error){status.textContent=error.message;}
   }
   // Keep / Not this: the library's own review field, one press, pressing again clears it.
@@ -202,7 +314,7 @@
     const mine=state.runs,others=(typeof jobs!=='undefined'?jobs:[]).filter(j=>!mine.some(r=>r.job.id===j.id)&&j.outputs?.length&&!j.put_away).slice(0,mine.length?0:3).map(job=>({job,look:job.label||job.preset_name}));
     const list=[...mine,...others].slice(0,6);planPolish(list);
     if(!list.length){box.innerHTML='<p class="muted">Pictures you make here show up in this space, with one-press next steps.</p>';return;}
-    box.innerHTML=list.map(({job,look,scene})=>'<article class="make-run"><header><div><b>'+escape(look)+'</b>'+(scene?'<small>'+escape(scene)+'</small>':'')+'</div><span class="make-run-state '+escape(job.status)+'">'+escape(words(job))+'</span></header>'
+    box.innerHTML=list.map(({job,look,scene,tuned})=>'<article class="make-run"><header><div><b>'+escape(look)+'</b>'+(scene?'<small>'+escape(scene)+'</small>':'')+(tuned?'<small class="make-tuned">'+escape(tuned)+'</small>':'')+'</div><span class="make-run-state '+escape(job.status)+'">'+escape(words(job))+'</span></header>'
       +(scene?'<div class="make-run-tools"><button type="button" data-make-rerun="'+escape(job.id)+'">Edit and re-run</button><button type="button" data-make-another="'+escape(job.id)+'">Same words, another look</button></div>':'')
       +(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')
       +'<div class="make-outputs">'+(job.outputs||[]).map((o,i)=>(o.media_type&&o.media_type!=='image')?'':'<figure>'+(o.asset_id?'<button type="button" class="make-open" data-ux-open-asset="'+escape(o.asset_id)+'" aria-label="Open picture '+(i+1)+' full size">':'')+'<img src="/api/image/'+encodeURIComponent(job.id)+'/'+i+'" alt="Picture '+(i+1)+' from '+escape(look)+'" loading="lazy">'+(o.asset_id?'</button>':'')+actions(job,o)+'</figure>').join('')
@@ -234,13 +346,17 @@
     for(let i=0;i<40&&!state.runs.length&&!(typeof jobs!=='undefined'&&jobs.length);i++)await new Promise(r=>setTimeout(r,250));
     renderRuns();
   }
+  view.addEventListener('input',e=>{if(e.target.closest('#makeTune'))tuneInput(e.target);});
   view.addEventListener('click',e=>{
+    if(e.target.closest('#makeTune')&&tuneClick(e.target))return;
     const g=e.target.closest('[data-make-goal]');if(g){state.goal=g.dataset.makeGoal;state.pictures=null;remember();render();return;}
     const l=e.target.closest('[data-make-look]');if(l){state.look=l.dataset.makeLook;state.picking=false;remember();renderLooks();q('#makeScene')?.focus();return;}
     if(e.target.closest('[data-make-change]')){state.picking=true;renderLooks();q('.make-look.active')?.focus();return;}
     if(e.target.closest('[data-make-keep-look]')){state.picking=false;renderLooks();q('#makeScene')?.focus();return;}
     const again=e.target.closest('[data-make-rerun],[data-make-another]');if(again){const run=state.runs.find(r=>r.job.id===(again.dataset.makeRerun||again.dataset.makeAnother));if(!run)return;
-      state.goal=run.goal;state.look=run.lookId;state.picking=!!again.dataset.makeAnother;try{sessionStorage.setItem('studio.make.scene.'+run.goal,run.scene);}catch{}remember();render();
+      state.goal=run.goal;state.look=run.lookId;state.picking=!!again.dataset.makeAnother;
+      // Edit and re-run brings the run's tune back with its look; another look starts from that look as made.
+      if(!again.dataset.makeAnother){if(Array.isArray(run.tune?.rows)&&Array.isArray(run.tune.cleared)){state.tune[run.lookId]=structuredClone(run.tune);state.tuneOpen=state.tuneOpen||!!run.tuned;}else delete state.tune[run.lookId];}try{sessionStorage.setItem('studio.make.scene.'+run.goal,run.scene);}catch{}remember();render();
       const scene=q('#makeScene');if(scene&&!state.picking){scene.focus();scene.select();}else q('.make-look.active')?.focus();return;}
     const verdict=e.target.closest('[data-make-review]');if(verdict){void review(verdict);return;}
     const polishing=e.target.closest('[data-make-polish]');if(polishing&&!polishing.disabled){void polishPicture(polishing);return;}
