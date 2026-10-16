@@ -47,6 +47,15 @@ class ReadableMotionGate(unittest.TestCase):
         for name in LAS:
             self.assertLess(results[name]['moving_pair_fraction'], gate.SUSTAINED_FRACTION, name)
 
+    def test_clip_that_moves_for_the_first_third_then_freezes_fails(self):
+        # About a third of the pairs move (above the 25% share), but the last stretches are frozen.
+        images = clip([(6 * i) % 54 if i < 11 else 0 for i in range(32)])
+        results = gate.region_results(images, LAS)
+        self.assertFalse(gate.clip_passes(images, 32, LAS))
+        for name in LAS:
+            self.assertGreaterEqual(results[name]['moving_pair_fraction'], gate.SUSTAINED_FRACTION, name)
+            self.assertLess(results[name]['moving_windows'], gate.WINDOWS, name)
+
     def test_all_still_clip_fails(self):
         self.assertFalse(gate.clip_passes(clip([0] * 32), 32, LAS))
 

@@ -4,6 +4,7 @@ import argparse,json,hashlib,shutil,subprocess,tempfile
 from PIL import Image,ImageChops,ImageStat
 SAMPLE_FPS=4 # decode rate; the declared sample count is TIMELINE.json duration_seconds x this
 SUSTAINED_FRACTION=.25 # share of consecutive sample pairs that must each show the region's minimum change
+WINDOWS=4 # the clip is split into this many equal stretches; each must contain at least one moving pair (no frozen tail)
 TIMELINE=Path(__file__).with_name('TIMELINE.json')
 REGIONS={'las':{'window':((.675,.03,.988,.67),.025),'falling_rain':((.675,.03,.988,.30),.0035),'train_band':((.675,.35,.988,.44),.06)},'alibi':{'steam':((.72,.40,.83,.64),.04),'flame':((.36,.58,.44,.68),.025),'glass':((.29,.4,.52,.72),.015)}}
 def expected_samples(timeline=TIMELINE): return round(json.loads(Path(timeline).read_text(encoding='utf-8'))['duration_seconds']*SAMPLE_FPS)
@@ -17,7 +18,8 @@ def region_results(images,regions):
         box=tuple(round(v*(images[0].width if i%2==0 else images[0].height)) for i,v in enumerate(bounds))
         crops=[im.crop(box) for im in images];pairs=[changed(a,b) for a,b in zip(crops,crops[1:])]
         moving=sum(fraction>=minimum for fraction,_ in pairs);share=moving/len(pairs)
-        results[name]={'max_changed_fraction_threshold6':max(f for f,_ in pairs),'required_minimum':minimum,'moving_pairs':moving,'pairs':len(pairs),'moving_pair_fraction':share,'required_moving_pair_fraction':SUSTAINED_FRACTION,'max_mean_rgb':max(m for _,m in pairs),'passes':share>=SUSTAINED_FRACTION}
+        flags=[fraction>=minimum for fraction,_ in pairs];size=len(flags)/WINDOWS;windows=[any(flags[round(i*size):round((i+1)*size)]) for i in range(WINDOWS)]
+        results[name]={'max_changed_fraction_threshold6':max(f for f,_ in pairs),'required_minimum':minimum,'moving_pairs':moving,'pairs':len(pairs),'moving_pair_fraction':share,'required_moving_pair_fraction':SUSTAINED_FRACTION,'max_mean_rgb':max(m for _,m in pairs),'moving_windows':sum(windows),'windows':WINDOWS,'passes':share>=SUSTAINED_FRACTION and all(windows)}
     return results
 def clip_passes(images,expected,regions): return sample_count_ok(len(images),expected) and all(r['passes'] for r in region_results(images,regions).values())
 def main():
