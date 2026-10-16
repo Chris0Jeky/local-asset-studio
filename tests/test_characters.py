@@ -2,9 +2,11 @@
 Saving, editing and listing never reach ComfyUI or create a job."""
 import importlib.util
 import json
+import sqlite3
 import tempfile
 import threading
 import unittest
+from contextlib import closing
 from pathlib import Path
 from unittest.mock import patch
 
@@ -122,6 +124,76 @@ class CharacterTests(unittest.TestCase):
         status, refused = self.route("POST", "/api/characters", {"action": "create", "kind": "character", "name": "Mira", "body": {}, "canon_asset_id": self.canon})
         self.assertEqual(status, 400); self.assertIn("required", refused["error"])
         self.assertEqual((self.studio.jobs, self.requests), ({}, []))
+
+    def set_row(self, table, row_id, **values):
+        """Write stored columns directly, past every command, to model a row that never went through validation."""
+        assignments = ", ".join(column + "=?" for column in values)
+        with closing(sqlite3.connect(self.studio.assets.database)) as db, db: db.execute(f"UPDATE {table} SET {assignments} WHERE id=?", (*values.values(), row_id))
+
+    def clip(self):
+        source = self.root / "clip.mp4"; source.write_bytes(b"not really a picture")
+        return self.studio.assets.register({"id": "job-clip", "preset_id": "text-only", "preset_name": "Text only", "outputs": [{"filename": "clip.mp4", "media_type": "video"}]}, 0, source)
+
+    def test_a_canon_whose_recorded_digest_no_longer_matches_is_replaced_by_a_content_copy(self):
+        card = self.create()
+        self.set_row("assets", self.canon, sha256="0" * 64)   # the recorded picture no longer names the canon's bytes: ignored
+        entry = self.listed()[card["id"]]
+        self.assertEqual((entry["usable"], entry["canon_asset_id"]), (False, None))
+        self.assertIn("canon picture is no longer in the library", entry["unusable_reason"])
+        copy = self.picture("job-copy", b"canon keeper bytes")   # the same bytes, so the same sha256: the content copy is the canon
+        entry = self.listed()[card["id"]]
+        self.assertEqual((entry["usable"], entry["canon_asset_id"], entry["unusable_reason"]), (True, copy, None))
+        self.assertEqual(self.studio.assets.get(copy)["sha256"], card["lineage"][0]["sha256"])
+
+    def test_a_stored_body_that_was_never_validated_is_listed_unusable_with_its_reason(self):
+        card = self.create()
+        self.set_row("cards", card["id"], body=json.dumps({"clothes": "a green cloak"}))   # no who: written past the command
+        entry = self.listed()[card["id"]]
+        self.assertEqual((entry["usable"], entry["unusable_reason"], entry["canon_asset_id"]), (False, "Who they are is required", self.canon))
+
+    def test_a_canon_that_is_not_a_picture_is_listed_unusable(self):
+        clip = self.clip()
+        card = self.studio.assets.card_command({"action": "create", "kind": "character", "name": "Clip", "body": BODY,
+                                                "lineage": [{"role": "canon", "asset_id": clip, "sha256": self.studio.assets.get(clip)["sha256"], "job_id": "job-clip"}]})
+        entry = self.listed()[card["id"]]
+        self.assertEqual((entry["usable"], entry["unusable_reason"], entry["canon_asset_id"]), (False, "Its canon is not a picture.", clip))
+
+    def test_a_non_picture_canon_is_refused_and_nothing_is_stored(self):
+        with self.assertRaisesRegex(WorkspaceError, "A character's canon is a picture"):
+            characters.command(self.studio, {"action": "create", "kind": "character", "name": "Clip", "body": BODY, "canon_asset_id": self.clip()})
+        self.assertEqual(self.studio.assets.cards("character"), [])
+
+    def test_a_canon_cannot_be_named_when_a_character_is_put_away_or_restored(self):
+        card = self.create()
+        with self.assertRaisesRegex(WorkspaceError, "chosen when the character is saved or edited"):
+            characters.command(self.studio, {"action": "trash", "id": card["id"], "expected_revision": 0, "canon_asset_id": self.canon})
+        self.assertIsNone(self.studio.assets.card(card["id"])["trashed_at"])
+        trashed = characters.command(self.studio, {"action": "trash", "id": card["id"], "expected_revision": 0})
+        with self.assertRaisesRegex(WorkspaceError, "chosen when the character is saved or edited"):
+            characters.command(self.studio, {"action": "restore", "id": card["id"], "expected_revision": 1, "canon_asset_id": self.canon})
+        self.assertEqual((self.studio.assets.card(card["id"])["trashed_at"], self.studio.assets.card(card["id"])["revision"]), (trashed["trashed_at"], 1))
+
+    def test_the_canon_lineage_carries_a_preset_id_exactly_when_the_picture_has_one(self):
+        self.assertEqual(self.create()["lineage"][0]["preset_id"], "text-only")
+        bare_source = self.root / "bare.png"; bare_source.write_bytes(b"bare keeper")
+        bare = self.studio.assets.register({"id": "job-bare", "outputs": [{"filename": "bare.png"}]}, 0, bare_source)
+        self.assertIsNone(self.studio.assets.get(bare)["preset_id"])
+        bare_card = self.create(id="bare-character", canon_asset_id=bare)
+        self.assertEqual(bare_card["lineage"][0]["asset_id"], bare)
+        self.assertNotIn("preset_id", bare_card["lineage"][0])
+
+    def test_a_character_command_must_be_an_object(self):
+        for payload in ([], "x", None, 3):
+            with self.subTest(payload=repr(payload)), self.assertRaisesRegex(WorkspaceError, "Character command must be an object"):
+                characters.command(self.studio, payload)
+        self.assertEqual(self.studio.assets.cards("character"), [])
+
+    def test_canon_of_skips_entries_that_are_not_objects_and_is_none_without_a_canon(self):
+        canon = {"role": "canon", "asset_id": self.canon, "sha256": "a" * 64}
+        self.assertEqual(characters.canon_of({"lineage": ["junk", None, 7, ["canon"], canon]}), canon)
+        self.assertIsNone(characters.canon_of({"lineage": ["junk", {"role": "anchor"}]}))
+        self.assertIsNone(characters.canon_of({"lineage": []}))
+        self.assertIsNone(characters.canon_of({}))
 
 
 if __name__ == "__main__":
