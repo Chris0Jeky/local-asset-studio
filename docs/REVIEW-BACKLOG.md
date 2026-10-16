@@ -173,3 +173,13 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   needing the exact file name, Library tweaks still ending in the Full editor) are Make wave 7, in progress.
 - [ ] **Every sampler must carry the source's LoRAs** (#1483): a Vary route with a second sampler outside the adapter
   branch is refused (none ship today).
+- [ ] **The old Overview is retired** (#1487): `#home` and `#overview` open Make; the Overview's Ctrl+K entry and its
+  smoke checks are gone. Ctrl+K also lists installed adapters ("Use <adapter> in Tune"). The Full editor eyebrow reads
+  "FULL EDITOR"; on phones its run dock no longer sticks over a quarter of the screen. Reverse: drop the `home`/`overview`
+  mapping in `studio-core.js` `normalizeView`.
+- [ ] **Lab round 4** (#1488): Copy Pose 3/3 on each Anima pair; Z-Image sources also work with Copy Pose and Replace,
+  WAI needs hand repair; Petiflow holds at medium (2/2) and full body (1/2). Host commit peaked at 94.2% on a heavy job.
+- [ ] **First tested game-item look** (#1489): "Painted game icon" (Z-Image quick, 1024², 8 steps, no LoRA) is first in
+  Game item or icon with a "2 of 2" badge — one seed per object, near-white (not transparent) background. Krea's
+  watercolour route also qualified but takes ~8 min, so it was not shipped. Reverse: remove the look id from the game goal.
+- [ ] **Issue hygiene**: #1226 closed (every item was already on main); #1180 item 1 confirmed done earlier.
