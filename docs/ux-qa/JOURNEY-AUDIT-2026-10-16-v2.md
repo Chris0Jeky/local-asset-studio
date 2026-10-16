@@ -92,7 +92,7 @@ N11 LOW. Items 21, 22, 24 above; Tune shows two entries named "Anima" (different
 Server-side caveat: the per-recipe model field was present in my fresh Python; with the old process the Tune model list, labels and adapter filter would degrade. Not tested.
 
 ## 4. Verdict
-See the final message. Screenshots, scripts (j*.py, lib2.py, run_server.py) and server.log are in this folder.
+Of the first audit's 27 problems, about 16 are fixed, 8 partly and 3 not (items 21, 22, 24); nothing regressed. The audit's scripts and screenshots were working files and are not committed.
 
 ## Not verified
 Real generation; Vary and Fix face on a recipe-made picture; Library Same recipe, new seed accept path; a real Install download; run-history-based estimates; Create mobile sticky bar; browsers other than Chromium; a double-press on Generate.

@@ -12,15 +12,16 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 ### Review these first (biggest effect on how the Studio feels)
 
 1. **Make is the home and does the whole anime flow** (waves 1-7, #1427-#1486): goal → look → describe → Tune →
-   Generate in 6 clicks + 2 typed, Generate always in view; the third audit found 17 of 27 original problems fixed and
-   10 partly, none regressed. Look at it in the browser before anything else.
-2. **Looks ordered and badged by the lab** (#1447, #1494): Petiflow first for anime characters; "Tested well" only where
-   the lab kept ≥3/4 or 2/2.
+   Generate in 6 clicks + 2 typed, with Generate in view for a single look (Compare's composer is scrolled into view
+   since wave 7); the third audit (#1484) found 17 of the first audit's 27 problems fixed and 10 partly, none regressed. Look at it in the browser before anything else.
+2. **Looks ordered and badged by the lab** (#1447, #1494): Petiflow first for anime characters; since lab round 2,
+   "Tested well" only where the lab kept ≥3/4 or 2/2 (the game icon lost its badge after round 5).
 3. **Character in a new pose defaults to Copy Pose** (#1482): measured 3/3 per Anima pair; depth and plain Klein 9B are
    hidden from Make.
 4. **Character cards** (#1466, #1472): "Make this my character…", "Your characters", Line-up.
 5. **The old Overview is retired** (#1487): `#home` opens Make.
-6. **Lab pictures no longer flood your pickers** (#1486): agent-run pictures behind "Show all pictures".
+6. **Lab pictures no longer flood your pickers** (#1486): agent-run pictures behind "Show all pictures" (tested on
+   fixtures, not yet against the live library of ~1,500 pictures).
 7. **Durable submission saves** (#1477): the marker and prompt receipt are fsynced (~25-40 ms per image).
 8. **A sampler/scheduler a recipe does not offer is refused at save** (#1456); stored ones show as unusable.
 9. **Fix face and Fix hands merge into one button** where they run the same WAI repaint (#1494), with a warning.
@@ -97,7 +98,7 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   Host check.
 - [ ] **Second UX audit after the wave** (docs/ux-qa/JOURNEY-AUDIT-2026-10-16-v2.md): of the first audit's 27 problems,
   about 16 fixed, 8 partly, 3 not; nothing regressed. The flagship (anime look, chosen model and LoRA, tweak) is
-  4 clicks inside Make, down from 6 clicks and 3 typed steps in the Full editor. Remaining: status and Generate
+  4 clicks and 2 typed inside Make, down from 6 clicks and 3 typed in the Full editor. Remaining: status and Generate
   position, two strength controls that disagree, LoRA list without family grouping (Make wave 4 in progress).
 - [ ] **"Tested well" badge rule** (#1447 after lab round 2): kept in at least 3 of 4 test pictures, or 2 of 2 where
   only two were made: Petiflow (4/4), painterly artist tags, Night Shift (3/4) and five Krea looks. AniFox lost its
@@ -134,7 +135,7 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 - [ ] **Resume keeps a failed receipt failed** (#1460): after a ComfyUI restart, Resume used to turn a known execution
   failure into "outcome unknown". (A reported "wedged mid-batch" case, #1458, was a false positive: app/mixed_batch.py already offers it a recovery.)
 - [ ] **Character cards v1 in progress** (#1205): "Make this my character…" on a kept picture; pickers show "Your
-  characters" first and fill who/clothes. Canon = one chosen keeper portrait (owner, 27 Sep).
+  characters" first and fill who/clothes. Canon = one chosen keeper portrait (owner decision recorded on #1205, 27 Sep).
 - [ ] **Character cards v1** (#1466): only *kept* pictures offer "Make this my character…"; the form prefills from a
   new-pose run's who/clothes answers (else the scene) and a look run's look becomes the preferred look; a canon
   picture shows "Canon of <name>"; "Your characters" shows only in Change, Fix or upscale, Restyle and New pose, only
