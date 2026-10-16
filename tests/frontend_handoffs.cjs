@@ -1507,6 +1507,35 @@ async function seamlessTileSubmitsTheServerPlan() {
   assert.equal(requests.filter(r => r.url === '/api/jobs').length, 1, 'finishing never submits a generation');
 }
 
+// #1230: run the shipped save, draft and import entry points, including stale claims.
+async function seamlessPlanRecovery() {
+  const file='f'.repeat(32)+'_seam.png',plan={version:1,preset_id:'tile-route',source_asset_id:'source-asset',source_sha256:'a'.repeat(64),rolled_file:file,rolled_sha256:'d'.repeat(64),size:256,band_px:112,feather_px:12,flatten_sigma_px:24};
+  const workbench=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
+  const snapshot=workbench.match(/  function snapshot\(\).*\r?\n/)[0];
+  const restore=workbench.slice(workbench.indexOf('  async function restoreDraft('),workbench.indexOf("  q('#uxRestoreDraft').onclick="));
+  const fixture=(missing=false)=>{const s=sandbox(null,null,missing?{}:{[file]:'d'.repeat(64)});s.run(`catalog.presets.push({id:'tile-route',name:'Seamless tile',modality:'image',tile_route:true,reference:['11','image'],positive:['4','text'],defaults:{}});selectPreset('plain');const U=StudioUX,q=$;let pendingInputs=new Set(),restoring=false,draftDirty=false,selectionEpoch=0;const syncReady=()=>{},syncCreate=()=>{},announce=message;`+snapshot+restore);return s;};
+  const saving=fixture();saving.run(`applySaved(${JSON.stringify({preset:'tile-route',tile:plan,controls:{reference:file,positive:'Texture'},parent_assets:['source-asset'],batch:1})});`);
+  saving.element('#saveName').value='Tile';await saving.element('#save').onclick();
+  const setup=saving.requests.find(r=>r.url==='/api/setups').data.recipe;
+  const captured=JSON.parse(saving.run('JSON.stringify(snapshot())'));
+  assert.deepEqual(setup.tile,plan);assert.deepEqual(captured.recipe.tile,plan);
+  for(const route of ['draft','setup','import']){
+    for(const change of [null,'reference','parent','preset',...(route==='draft'?['missing']:[])]){
+      const s=fixture(change==='missing'),recipe=JSON.parse(JSON.stringify(setup));
+      if(change==='reference')recipe.controls.reference='other.png';
+      if(change==='parent')recipe.parent_assets=[];
+      if(change==='preset')recipe.tile.preset_id='other';
+      if(route==='draft')await s.run(`restoreDraft(${JSON.stringify({...captured,recipe})})`);
+      if(route==='setup'){s.run(`serverSetups=[{id:'tile',name:'Tile',recipe:${JSON.stringify(recipe)}}];`);await s.element('#savedList').onclick({target:{dataset:{load:'0'}}});}
+      if(route==='import'){const exported={...recipe,preset_id:recipe.preset};await s.element('#importRecipe').onchange({target:{files:[{size:100,text:async()=>JSON.stringify(exported)}],value:'recipe.json'}});}
+      assert.equal(s.run('JSON.stringify(tileState)'),change?'null':JSON.stringify(plan),route+': '+change);
+      assert.equal(s.element('#positive').value,'Texture',route+' keeps the other settings');
+      if(change)assert.match(s.element('#status').textContent,/Seamless plan dropped.*Make seamless/,route+' reports the dropped plan');
+      assert.equal(s.requests.some(r=>r.url==='/api/jobs'),false,'Recovery never submits a generation');
+    }
+  }
+}
+
 // Parallax layers (#1219): the parallax recipe refuses to run without the server's plan; beginParallax attaches the unchanged
 // source at its own size with the source as parent; the first Generate sends the plate claim and then only LOADS the isolate
 // stage, so the second edit is a second press; any recipe change drops the plan; a stage card offers the one next step.
@@ -1708,6 +1737,7 @@ async function parallaxLateRepliesKeepCreateEdits() {
   await modelStatusFilter();
   await windowsInventoryStatusMatchesCaseAndSeparators();
   await seamlessTileSubmitsTheServerPlan();
+  await seamlessPlanRecovery();
   await parallaxStagesAreTwoOwnerPresses();
   await parallaxStageWithoutControllerPostsNothing();
   await parallaxLateRepliesKeepCreateEdits();

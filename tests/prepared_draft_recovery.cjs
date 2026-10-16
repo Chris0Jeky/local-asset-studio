@@ -41,7 +41,7 @@ test('shipped saved-setup application restores the claim, source and lineage',()
   for(const [kind,claim] of [['tile',tile],['parallax',parallax]]){
     const state=applyFixture(recipe(kind,claim));assert.deepEqual(JSON.parse(JSON.stringify(state[kind+'State'])),claim);assert.equal(state.uploaded,claim.rolled_file||claim.source_file);assert.deepEqual(Array.from(state.parentAssets),['source']);
   }
-  assert.throws(()=>applyFixture({...recipe('tile',tile),preset:'plain'}),/prepared|plan/i);
+  assert.equal(applyFixture({...recipe('tile',tile),preset:'plain'}).tileState,null);
 });
 test('save, snapshot and checked recipe import carry both envelopes',()=>{
   const workbench=fs.readFileSync(require.resolve('../app/static/studio-workbench.js'),'utf8');
