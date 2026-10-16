@@ -23,6 +23,30 @@ test('finder indexes preset model and family metadata and offers Tune without ge
   for(const query of ['lora','adapter','tune']){input.value=query;vm.runInNewContext('commands()',context);assert.match(results.innerHTML,/href="\/#make"/);assert.match(results.innerHTML,/Open Tune this look under the composer/);}
   input.value='flux';vm.runInNewContext('commands()',context);assert.match(results.innerHTML,/href="\/#models"/);
 });
+test('finder reaches installed adapters and model files that no look uses (#23), and no longer offers Overview (#18)',()=>{
+  const shell=fs.readFileSync(path.join(__dirname,'../app/static/studio-shell.js'),'utf8');
+  const commands=shell.slice(shell.indexOf('  function commands(){'),shell.indexOf('  async function loadLooks()'));
+  const input={value:''},results={};
+  const context={$:s=>s==='#studioCommandSearch'?input:results,makeGoals:[{id:'character',looks:['look-test']}],synonyms:{},keywords:{},looks:[{id:'look-test',name:'Fantasy portrait',body:{preset_id:'test'}}],
+    presets:[{id:'test',name:'Portrait recipe',family:'WAI',model:{file:'wai-base.safetensors'},choices:{lora_name:['xilmo-style.safetensors','pearly-line.safetensors'],sampler:['euler']}},{id:'flux',name:'FLUX',family:'FLUX',model:{file:'flux-checkpoint.safetensors'},choices:{lora2_name:['pearly-line.safetensors']}}],
+    links:[['models','Models & setup','Install models','/#models'],['home','Overview','Attention, recent work and next steps','/#home','01','Workspace',true]],escape:s=>s};
+  vm.runInNewContext(commands+';commands();',context);
+  // The empty finder keeps its shape: no adapter rows until something is typed.
+  assert.doesNotMatch(results.innerHTML,/Use xilmo/);
+  input.value='xilmo';vm.runInNewContext('commands()',context);
+  assert.match(results.innerHTML,/<b>Use xilmo-style\.safetensors in Tune<\/b>/);assert.match(results.innerHTML,/Adapter - add it under Tune this look in Make/);
+  input.value='pearly';vm.runInNewContext('commands()',context);
+  assert.match(results.innerHTML,/<b>Use pearly-line\.safetensors in Tune<\/b>/);
+  // A checkpoint file with no look reaches Models & setup through that row's own file index, once.
+  input.value='flux-checkpoint';vm.runInNewContext('commands()',context);
+  assert.match(results.innerHTML,/<b>Models & setup<\/b>/);assert.equal((results.innerHTML.match(/href="\/#models"/g)||[]).length,1);
+  // A file a look already uses is found through that look.
+  input.value='wai-base';vm.runInNewContext('commands()',context);
+  assert.match(results.innerHTML,/data-make-look="look-test"/);
+  // Samplers are not adapters.
+  input.value='euler';vm.runInNewContext('commands()',context);assert.doesNotMatch(results.innerHTML,/Use euler/);
+  input.value='overview';vm.runInNewContext('commands()',context);assert.doesNotMatch(results.innerHTML,/href="\/#home"|Overview/);
+});
 test('Make orders each goal by lab evidence, files painting styles under Painted illustration and keeps Krea last',()=>{
   const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),grab=re=>JSON.parse(JSON.stringify(vm.runInNewContext('('+make.match(re)[1]+')')));
   const goals=grab(/const GOALS=(\[[\s\S]*?\n  \]);/),looks=id=>goals.find(g=>g.id===id).looks,ids=new Set(JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/looks.json'))).looks.map(l=>l.id));
@@ -50,10 +74,12 @@ const image = {media_type:'image',filename:'source.png'};
 const audio = {media_type:'audio',filename:'voice.wav'};
 const draft = () => ({version:1,updatedAt:123,recipe:{preset:'qwen-1ref',controls:{positive:'A study',seed:42},batch:1,parent_assets:['source'],references:[]}});
 const ready = overrides => U.readiness({preset:{id:'example'},online:true,schemaAvailable:true,...overrides});
-test('invalid routes normalize to overview', () => {
+test('invalid routes and the retired Overview route normalize to Make', () => {
   for (const route of [null,undefined,'#unknown','#../../models']) assert.equal(U.normalizeView(route),'make');
   assert.equal(U.normalizeView('#models?need=wai'),'models');
-  for (const route of U.VIEWS) assert.equal(U.normalizeView('#'+route),route);
+  // #18: #home and #overview left the navigation; both land on Make, the default view.
+  for (const route of ['#home','#overview','#home?x=1']) assert.equal(U.normalizeView(route),'make',route);
+  for (const route of U.VIEWS.filter(route => route !== 'home')) assert.equal(U.normalizeView('#'+route),route);
 });
 test('intent selection never mutates catalog order', () => {
   const before=JSON.stringify(catalog);U.recipesFor('edit',catalog);assert.equal(JSON.stringify(catalog),before);
