@@ -209,7 +209,7 @@
     finally{state.polishing.delete(key);renderRuns();}
   }
   // shortcut: Comfy outputs have no auxiliary role; match filename tokens until outputs declare one (Workspace keeps source.filename).
-  const picture=o=>(!o.media_type||o.media_type==='image')&&!/(?:^|[/_\\-])(mask|matte|depth|normal|preview)(?:[_.-]|$)/i.test(o.source?.filename||o.filename||'');
+  const picture=o=>(!o.media_type||o.media_type==='image')&&!/(?:^|[/_\\-])(mask|matte)(?:[_.-]|$)/i.test(o.source?.filename||o.filename||'');
   const pictureTitle=(scene,date)=>String(scene||'Picture').slice(0,100)+(date?' \u00b7 '+new Date(Number(date)*1000).toLocaleDateString():'');
   function renderRuns(){
     const box=q('#makeRuns');if(!box)return;
@@ -220,7 +220,7 @@
       +(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')
       +'<div class="make-outputs">'+(job.outputs||[]).map((o,i)=>!picture(o)?'':'<figure>'+(o.asset_id?'<button type="button" class="make-open" data-ux-open-asset="'+escape(o.asset_id)+'" aria-label="Open picture '+(i+1)+' full size">':'')+'<img src="/api/image/'+encodeURIComponent(job.id)+'/'+i+'" alt="Picture '+(i+1)+' from '+escape(look)+'" loading="lazy">'+(o.asset_id?'</button>':'')+actions(job,o)+'</figure>').join('')
       +(FINAL.includes(job.status)?'':Array.from({length:Math.max(0,(job.batch_count||1)-(job.outputs||[]).length)},()=>'<figure class="make-pending" aria-hidden="true"><span></span></figure>').join(''))+'</div></article>');
-    const focus=document.activeElement,key=e=>e.tagName+'|'+JSON.stringify({...e.dataset})+'|'+e.textContent,focusKey=box.contains(focus)?key(focus):null,open=[...box.querySelectorAll('details[open]')].map(e=>e.dataset.more);
+    const focus=document.activeElement,key=e=>(e.closest('[data-run]')?.dataset.run||'')+'|'+e.tagName+'|'+JSON.stringify({...e.dataset})+'|'+e.textContent,focusKey=box.contains(focus)?key(focus):null,open=[...box.querySelectorAll('details[open]')].map(e=>e.dataset.more);
     const next=document.createElement('div');next.innerHTML=markup.join('');
     const ids=new Set(list.map(r=>r.job.id));for(const old of [...box.children])if(!ids.has(old.dataset.run))old.remove();
     for(const [i,card] of [...next.children].entries()){const old=[...box.children].find(e=>e.dataset.run===card.dataset.run);if(old&&old.dataset.markup===card.outerHTML)continue;card.dataset.markup=card.outerHTML;if(old)old.replaceWith(card);else box.insertBefore(card,box.children[i]||null);}

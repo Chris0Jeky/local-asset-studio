@@ -131,10 +131,16 @@ def make_checks(browser, origin):
     MAKE_JOBS[saved[0]['id']]['status'] = 'completed'
     page.wait_for_function('document.querySelector(".make-run-state.completed")')
     assert page.locator('[data-more="asset-1"]').evaluate('(e)=>e.open&&e.contains(document.activeElement)')
+    # Focus restored after a card's own redraw stays on that card, not on the first card's identical More summary.
+    MAKE_JOBS[saved[2]['id']]['outputs'] = [dict(filename='second.png', asset_id='asset-second', media_type='image')]
+    page.wait_for_selector('#makeRuns [data-more="asset-second"]'); page.locator('[data-more="asset-second"] summary').focus()
+    MAKE_JOBS[saved[2]['id']]['status'] = 'completed'
+    page.wait_for_timeout(2800)
+    assert page.evaluate('document.activeElement.closest("[data-run]")?.dataset.run') == saved[2]['id'], 'focus moved to another card'
     assert 'A quiet garden' in page.locator('#makeRuns .make-run header b').first.inner_text()
     assert page.evaluate('new Date(1789228800*1000).toLocaleDateString()') in page.locator('#makeRuns .make-run header b').first.inner_text()
     page.evaluate('()=>{assetState.assets.find(a=>a.id==="asset-1").review="selected";StudioMake.refresh();}')
-    assert 'Kept' in page.locator('[data-make-review="selected"]').inner_text()
+    assert 'Kept' in page.locator('[data-make-review="selected"][data-asset="asset-1"]').inner_text()
     assert page.locator('#experimentDialog').get_attribute('aria-labelledby') == 'experimentTitle'
     assert page.locator('#newCollection').get_attribute('aria-label') == 'Create collection'
     assert page.locator('.hero-art').get_attribute('role') == 'group'
