@@ -48,8 +48,8 @@ RUN_LABEL_MAX = 80
 REVIEW_CHECKS = ("pose", "face", "outfit", "style", "clean", "anatomy", "composition")
 CHECK_TAG = re.compile(r"check:(%s)=(yes|no)" % "|".join(REVIEW_CHECKS))
 # Cards (#1221, #1205): named, revisioned Workspace records that are not pictures. `body` is the kind's JSON (a look's wording
-# template and recipe, app/looks.py), `lineage` the pictures it came from. A character card is a new kind here, not a migration.
-CARD_KINDS = ("look",)
+# template and recipe, app/looks.py; a character's words, app/characters.py), `lineage` the pictures it came from.
+CARD_KINDS = ("look", "character")
 CARD_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{2,127}")
 CARD_BODY_MAX = 64 * 1024
 CARD_LINEAGE_MAX = 20
