@@ -78,4 +78,8 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   could overwrite the record with an older revision and cause a false "changed elsewhere" conflict on the next save.
 - [ ] **Browser tests move to free ports** (#1450): a test-only allowed host instead of 8191, never a weaker product
   Host check.
+- [ ] **Second UX audit after the wave** (docs/ux-qa/JOURNEY-AUDIT-2026-10-16-v2.md): of the first audit's 27 problems,
+  about 16 fixed, 8 partly, 3 not; nothing regressed. The flagship (anime look, chosen model and LoRA, tweak) is
+  4 clicks inside Make, down from 6 clicks and 3 typed steps in the Full editor. Remaining: status and Generate
+  position, two strength controls that disagree, LoRA list without family grouping (Make wave 4 in progress).
 
