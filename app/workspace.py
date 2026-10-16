@@ -454,7 +454,8 @@ class AssetWorkspace:
                 raise WorkspaceError("Selected asset metadata changed or no longer exists; nothing changed in this batch",
                                      status=409, code="asset_revision_conflict", request_id=request_id,
                                      conflict_ids=conflicts, missing_ids=missing, current=current, workspace_id=identity)
-            if any(rows[i]["metadata_revision"] >= MAX_REVISION for i in ids):
+            changed_ids = [i for i in ids if (not rows[i]["trashed_at"]) == (action == "trash")] if action in ("trash", "restore") else ids
+            if any(rows[i]["metadata_revision"] >= MAX_REVISION for i in changed_ids):
                 raise WorkspaceError("Asset revision limit reached; nothing changed")
             applied = {}
             if action in ("add_collection", "remove_collection"):
@@ -508,12 +509,15 @@ class AssetWorkspace:
                 if not changes:
                     raise WorkspaceError("No changes supplied")
                 fields = ",".join(key + "=?" for key in changes)
-                db.execute(f"UPDATE assets SET {fields},metadata_revision=metadata_revision+1 WHERE id IN ({placeholders})", [*changes.values(), *ids])
-                applied = dict(changes)
+                if changed_ids:
+                    changed_placeholders = ",".join("?" for _ in changed_ids)
+                    db.execute(f"UPDATE assets SET {fields},metadata_revision=metadata_revision+1 WHERE id IN ({changed_placeholders})", [*changes.values(), *changed_ids])
+                applied = dict(changes) if changed_ids else {}
                 if "tags" in applied: applied["tags"] = json.loads(applied["tags"])
                 if "favorite" in applied: applied["favorite"] = bool(applied["favorite"])
             result = {"status": "applied", "request_id": request_id, "updated": ids, "action": action,
-                      "revisions": {i: expected[i] + 1 for i in ids}, "applied": applied}
+                      "revisions": {i: expected[i] + (i in changed_ids) for i in ids}, "applied": applied}
+            if len(changed_ids) < len(ids): result["unchanged"] = [i for i in ids if i not in changed_ids]   # a repeat trash/restore keeps these as they were (#1405)
             if scope is not None:
                 result["workspace_id"] = identity
             # Compact receipts retain changed fields and revisions, never N copies of media/notes.
@@ -640,6 +644,7 @@ class AssetWorkspace:
             if row is None: raise WorkspaceError("Card not found", status=404, code="card_not_found")
             if row["revision"] != expected:
                 raise WorkspaceError("This card changed since you read it; nothing changed. Reload it and try again.", status=409, code="card_revision_conflict", current=self._card(row))
+            if action in ("trash", "restore") and (not row["trashed_at"]) != (action == "trash"): return self._card(row)
             db.execute(f"UPDATE cards SET {','.join(k + '=?' for k in fields)},revision=revision+1,updated_at=? WHERE id=?", [*fields.values(), now, row["id"]])
             return self._card(db.execute("SELECT * FROM cards WHERE id=?", (row["id"],)).fetchone())
 

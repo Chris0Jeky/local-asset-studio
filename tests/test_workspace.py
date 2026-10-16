@@ -57,6 +57,58 @@ class WorkspaceTests(unittest.TestCase):
         self.assertEqual(result['tags'],['ink','pose']); self.assertEqual(result['notes'],'Fix the hand')
         self.assertEqual(result['review'],'needs_work'); self.assertTrue(result['favorite']); self.assertIsNone(result['trashed_at'])
 
+    def test_trash_restore_repeats_preserve_asset_state_and_receipts(self):
+        for action in ('restore', 'trash', 'restore'):
+            self.write(self.store, {'ids':[self.asset], 'action':action})
+            before = self.store.get(self.asset)
+            command = {'ids':[self.asset], 'action':action, 'request_id':uuid.uuid4().hex,
+                       'expected_revisions':{self.asset:before['metadata_revision']}}
+            result = self.store.update(command)
+            self.assertEqual(self.store.get(self.asset), before)
+            self.assertEqual(result['revisions'], {self.asset:before['metadata_revision']})
+            self.assertEqual(result['unchanged'], [self.asset])
+            self.assertEqual(self.store.update(command), result)
+            self.assertEqual(self.store.command_status(command['request_id']), result)
+            if before['metadata_revision']:
+                command = dict(command, request_id=uuid.uuid4().hex, expected_revisions={self.asset:before['metadata_revision']-1})
+                with self.assertRaises(workspace.WorkspaceError) as cm: self.store.update(command)
+                self.assertEqual((cm.exception.status, cm.exception.code), (409, 'asset_revision_conflict'))
+                self.assertEqual(self.store.get(self.asset), before)
+
+    def test_legacy_zero_trashed_at_counts_as_active_and_can_be_trashed(self):
+        with self.store.connection() as db: db.execute("UPDATE assets SET trashed_at=0 WHERE id=?", (self.asset,))
+        before = self.store.get(self.asset)
+        result = self.write(self.store, {'ids':[self.asset], 'action':'trash'})
+        after = self.store.get(self.asset)
+        self.assertNotIn('unchanged', result); self.assertGreater(after['trashed_at'], 0)
+        self.assertEqual(after['metadata_revision'], before['metadata_revision']+1)
+
+    def test_trash_restore_mixed_batch_changes_only_assets_needing_transition(self):
+        other = self.store.register(dict(self.job, id='job-2'), 0, self.source)
+        self.write(self.store, {'ids':[self.asset], 'action':'trash'})
+        for action, unchanged in (('trash', self.asset), ('restore', other)):
+            if action == 'restore': self.write(self.store, {'ids':[other], 'action':'restore'})
+            before = {i:self.store.get(i) for i in (self.asset, other)}
+            result = self.write(self.store, {'ids':[self.asset, other], 'action':action})
+            self.assertEqual(self.store.get(unchanged), before[unchanged])
+            changed = other if unchanged == self.asset else self.asset
+            self.assertEqual(self.store.get(changed)['metadata_revision'], before[changed]['metadata_revision']+1)
+            self.assertEqual(result['revisions'], {i:self.store.get(i)['metadata_revision'] for i in before})
+            self.assertEqual(result['unchanged'], [unchanged])
+
+    def test_card_trash_restore_repeats_preserve_state_and_stale_conflicts(self):
+        card = self.store.card_command({'action':'create', 'kind':'look', 'name':'Test', 'body':{}})
+        for action in ('restore', 'trash', 'restore'):
+            card = self.store.card_command({'action':action, 'id':card['id'], 'expected_revision':card['revision']})
+            command = {'action':action, 'id':card['id'], 'expected_revision':card['revision']}
+            self.assertEqual(self.store.card_command(command), card)
+            self.assertEqual(self.store.card(card['id']), card)
+            if card['revision']:
+                with self.assertRaises(workspace.WorkspaceError) as cm:
+                    self.store.card_command(dict(command, expected_revision=card['revision']-1))
+                self.assertEqual((cm.exception.status, cm.exception.code), (409, 'card_revision_conflict'))
+                self.assertEqual(self.store.card(card['id']), card)
+
     def test_bulk_edit_rejects_missing_asset_atomically(self):
         with self.assertRaises(workspace.WorkspaceError):
             self.write(self.store, {'ids':[self.asset,'missing'],'action':'trash'})
