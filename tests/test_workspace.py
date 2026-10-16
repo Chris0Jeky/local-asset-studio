@@ -47,6 +47,21 @@ class WorkspaceTests(unittest.TestCase):
         self.assertEqual(self.store.snapshot()['assets'][0]['collections'],[b['id']])
         self.assertTrue(self.source.exists()); self.assertTrue(self.store.file(self.asset).exists())
 
+    def test_collection_commands_bump_only_rows_whose_membership_changed(self):
+        col=self.store.collection({'name':'Look'}); other=self.store.collection({'name':'Other'})
+        self.write(self.store, {'ids':[self.asset],'action':'add_collection','collection_id':col['id']})
+        rev=self.store.get(self.asset)['metadata_revision']
+        receipt=self.write(self.store, {'ids':[self.asset],'action':'add_collection','collection_id':col['id']})
+        self.assertEqual(self.store.get(self.asset)['metadata_revision'], rev)
+        self.assertEqual(receipt['unchanged'], [self.asset]); self.assertEqual(receipt['revisions'][self.asset], rev)
+        self.write(self.store, {'ids':[self.asset],'action':'remove_collection','collection_id':other['id']})
+        self.assertEqual(self.store.get(self.asset)['metadata_revision'], rev)
+        second=self.store.register(dict(self.job, id='job-2'), 0, self.source)
+        receipt=self.write(self.store, {'ids':[self.asset,second],'action':'add_collection','collection_id':col['id']})
+        self.assertEqual(self.store.get(self.asset)['metadata_revision'], rev)
+        self.assertEqual(self.store.get(second)['metadata_revision'], 1)
+        self.assertEqual(receipt['unchanged'], [self.asset])
+
     def test_edit_trash_restore_and_restart_preserve_metadata(self):
         self.write(self.store, {'ids':[self.asset],'action':'edit','title':'My ink study','tags':['ink','ink','pose'],'review':'needs_work','notes':'Fix the hand','favorite':True})
         self.write(self.store, {'ids':[self.asset],'action':'trash'})

@@ -464,12 +464,17 @@ class AssetWorkspace:
                     raise WorkspaceError("Choose an existing collection")
                 if not db.execute("SELECT id FROM collections WHERE id=?", (collection_id,)).fetchone():
                     raise WorkspaceError("Choose an existing collection")
+                members = {r["asset_id"] for r in db.execute(f"SELECT asset_id FROM collection_assets WHERE collection_id=? AND asset_id IN ({placeholders})", [collection_id, *ids])}
+                # Only rows whose membership flips are changes: a repeat add or a remove of a non-member burns no revision (#1405 pattern).
+                changed_ids = [i for i in ids if (i not in members) == (action == "add_collection")]
                 if action == "add_collection":
                     db.executemany("INSERT OR IGNORE INTO collection_assets VALUES (?,?)", [(collection_id, i) for i in ids])
                 else:
                     db.executemany("DELETE FROM collection_assets WHERE collection_id=? AND asset_id=?", [(collection_id, i) for i in ids])
                 applied = {"collection_id": collection_id}
-                db.execute(f"UPDATE assets SET metadata_revision=metadata_revision+1 WHERE id IN ({placeholders})", ids)
+                if changed_ids:
+                    changed_placeholders = ",".join("?" for _ in changed_ids)
+                    db.execute(f"UPDATE assets SET metadata_revision=metadata_revision+1 WHERE id IN ({changed_placeholders})", changed_ids)
             else:
                 changes = {}
                 if action in ("trash", "restore"):
