@@ -460,7 +460,7 @@
     return '<div class="make-actions">'+marks(a)+characterMarkup(job,a)+vary+polishKinds(a).map(polish).join('')+(Object.keys(POLISH).some(k=>state.polishing.has(a+':'+k))?'<small class="make-action-reason">Starting the finishing pass for this picture. Please wait.</small>':'')+reasons.map(r=>'<small class="make-warn make-polish-why" id="'+whyId(r)+'">'+escape(r)+'</small>').join('')+(merged(a)?'<small class="muted make-polish-hint">'+FIX_HINT+'</small>':'')+(state.polish[a+':upscale']?.ok?'<small class="muted make-polish-hint">'+UP_HINT+'</small>':'')
       +'<details class="make-more" data-more="'+escape(a)+'"><summary>More</summary><button type="button" data-ux-open-asset="'+escape(a)+'">Open full size</button>'+hand('repair','Other fixes\u2026')+from('edit','Change one thing')+from('restyle','Restyle')+from('combine','Put in a new pose')+from('animate','Animate')+from('mesh','Make it 3D')+'</details></div>';
   }
-  // My character (#1205): a kept picture becomes a character's canon, with its words. Saving writes one Workspace card and
+  // My character (#1205): any finished picture can become a character's canon (owner, 16 Oct), with its words. Saving writes one Workspace card and
   // never submits. The form keeps its answers in state, so a redraw of the runs list does not lose what was typed.
   // v2: Edit and Put away / Restore (revision-checked: a 409 means the card changed elsewhere, so it is reloaded), a read-only
   // Line-up per character, and a once-offered note that saves the old per-picture answers as a character. None of it submits.
