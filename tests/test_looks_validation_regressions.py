@@ -211,6 +211,24 @@ class LookValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(fixture.WorkspaceError, 'up to 40'):
             fixture.looks.validate_body(dict(fixture.BODY, controls=['not-a-dict']), fixture.TEXT)
 
+    def test_free_text_fields_refuse_one_character_over_their_maxima_and_keep_the_maximum(self):
+        maxima = {'template': 4000, 'negative': 4000, 'scene_example': 1000, 'source_prompt': 8000, 'notes': 4000}
+        self.assertEqual(fixture.looks.TEXT_LIMITS, maxima)   # pinned literally: a changed constant must fail here, not move the test
+        for field, maximum in maxima.items():
+            fits = ('{scene}' + 'x' * (maximum - 7)) if field == 'template' else 'x' * maximum
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(fixture.WorkspaceError, f'up to {maximum} characters'):
+                    fixture.looks.validate_body(dict(fixture.BODY, preset_id='with-negative', **{field: 'x' * (maximum + 1)}), fixture.WITH_NEGATIVE)
+                kept = fixture.looks.validate_body(dict(fixture.BODY, preset_id='with-negative', **{field: fits}), fixture.WITH_NEGATIVE)
+                self.assertEqual(kept[field], fits)
+
+    def test_negative_last_reference_mode_and_positive_are_never_look_settings(self):
+        """NOT_CONTROLS is checked before binding: even a recipe that binds these keys cannot store them as look settings."""
+        preset = dict(fixture.WITH_NEGATIVE, bindings_extra={'mode': ['1', 'text'], 'last_reference': ['1', 'text']})
+        for key in ('negative', 'last_reference', 'mode', 'reference', 'positive'):
+            with self.subTest(key=key), self.assertRaisesRegex(fixture.WorkspaceError, f'^{key} is not a look setting$'):
+                fixture.looks.validate_body(dict(fixture.BODY, preset_id='with-negative', controls={key: 'x'}), preset)
+
     def test_body_rejects_a_non_string_control_key(self):
         with self.assertRaises(fixture.WorkspaceError) as caught:
             fixture.looks.validate_body(dict(fixture.BODY, controls={7: 1}), fixture.TEXT)
