@@ -17,11 +17,12 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
   budgeted, blind plan comparison: the values stay visible, and Keep and Make this my character work on every
   picture. Use Plan comparison for blind comparisons. Reverse: route the sweep through `app/production.py` plans.
 - [ ] **One action at a time across Create and Make, #1520:** while Generate, a plan, a Polish or a Vary is being sent,
-  every other send waits. That includes Polish or Vary on a *different* picture, about a second each. Vary and Polish
-  also refuse a source whose run has not completed. Reverse: drop `polishBusy` and `makeVaryBusy` from `combineBusy()`
-  in `studio-workbench.js`.
-- [ ] **Character with a put-away or broken look, #1509 / #1521:** the character stays usable and shows a note. Restyle
-  falls back to its first usable look. Assumption: that first look is "the goal's default". Polish ideas are in #1522.
+  every other send waits. That includes Polish or Vary on a *different* picture, about a second each. Create's unsent
+  draft state (a typed pose position, an upload in progress) blocks only Create, never Make or the library. Vary and
+  Polish also refuse a source whose run has not completed. Reverse: drop `polishBusy` and `makeVaryBusy` from
+  `sendBusy()` in `studio-workbench.js`.
+- [ ] **Character with a put-away or broken look, #1509 / #1521:** the character stays usable. In Restyle, the
+  note shows and Make falls back to its first usable look. Assumption: that first look is "the goal's default". Polish ideas are in #1522.
 - [ ] **Character from any finished picture, plus a third pose option, #1508:** this follows your "Keep, allow any
   picture" and "Keep, show depth too" answers. "Make this my character…" appears on any completed picture, and the
   depth route is a clearly labelled third option in Make.
