@@ -226,9 +226,10 @@ test('a cleared row is zeroed on the same model; an uncleared slot is left alone
 
 test('a switched model zeroes every bound slot and returns the new preset id', () => {
   const h = env([basePreset(), otherPreset()], KNOWLEDGE);
-  const {id, controls} = h.apply({lora: 0.8}, lookFor('base', {lora: 0.8}), tuneFor('other', []));
+  const {id, controls} = h.apply({lora: 0.8, lora2: 0.6}, lookFor('base', {lora: 0.8, lora2: 0.6}), tuneFor('other', []));
   assert.equal(id, 'other');
   assert.equal(controls.lora, 0);
+  assert.equal(controls.lora2, 0, 'every bound slot, not only the first');
 });
 
 test('applyTune preserves the prepared seed', () => {
