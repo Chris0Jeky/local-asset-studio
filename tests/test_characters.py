@@ -124,6 +124,31 @@ class CharacterTests(unittest.TestCase):
         with self.assertRaisesRegex(WorkspaceError, "not a look"): looks.command(self.studio, {"action": "trash", "id": card["id"], "expected_revision": 0})
         self.assertEqual([entry["id"] for entry in looks.listing(self.studio)["looks"]], [look["id"]])
 
+    def test_a_put_away_preferred_look_keeps_the_character_usable_with_a_note(self):
+        look = looks.command(self.studio, {"action": "create", "kind": "look", "name": "Plain", "body": {"preset_id": "text-only", "template": "A {scene}."}})
+        card = self.create(body=dict(BODY, look_id=look["id"]))
+        self.assertIsNone(self.listed()[card["id"]].get("look_note"))
+        looks.command(self.studio, {"action": "trash", "id": look["id"], "expected_revision": 0})
+        entry = self.listed()[card["id"]]
+        self.assertTrue(entry["usable"]); self.assertIsNone(entry["unusable_reason"])
+        self.assertEqual(entry.get("look_note"), "Its preferred look is put away; Make uses the goal's default look.")
+        self.assertEqual(entry["body"]["look_id"], look["id"])
+        looks.command(self.studio, {"action": "restore", "id": look["id"], "expected_revision": 1})
+        self.assertIsNone(self.listed()[card["id"]].get("look_note"))
+        self.assertEqual((self.studio.jobs, self.requests), ({}, []))
+
+    def test_a_preferred_look_without_a_usable_recipe_keeps_the_character_usable_with_a_note(self):
+        look = looks.command(self.studio, {"action": "create", "kind": "look", "name": "Plain", "body": {"preset_id": "text-only", "template": "A {scene}."}})
+        card = self.create(body=dict(BODY, look_id=look["id"]))
+        for preset_id in ("missing-recipe", "text-only"):
+            with self.subTest(preset_id=preset_id):
+                body = dict(look["body"], preset_id=preset_id, template="no scene slot" if preset_id == "text-only" else look["body"]["template"])
+                self.set_row("cards", look["id"], body=json.dumps(body))
+                entry = self.listed()[card["id"]]
+                self.assertTrue(entry["usable"]); self.assertIsNone(entry["unusable_reason"])
+                self.assertEqual(entry.get("look_note"), "Its preferred look's recipe is no longer usable; Make uses the goal's default look.")
+        self.assertEqual((self.studio.jobs, self.requests), ({}, []))
+
     def test_routes_list_and_save_without_creating_a_job(self):
         status, created = self.route("POST", "/api/characters", {"action": "create", "kind": "character", "name": "Mira", "body": BODY, "canon_asset_id": self.canon})
         self.assertEqual((status, created["revision"]), (200, 0))

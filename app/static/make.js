@@ -354,9 +354,13 @@
     else if(t.seed!=null&&bound(tp,'seed'))controls.seed=t.seed;
     // Style strength (t.scale) scales the tuned adapters; two decimals, inside the server's 0-2 adapter range.
     const preset_id=applyTune(controls,look,t),tuned=tuneSummary(look,t);
+    const notices=[...(result.notices||[])];
+    for(const key of ['sampler','scheduler']){const choices=tp.choices?.[key],value=controls[key],fallback=tp.defaults?.[key];
+      if(key in controls&&choices?.length&&!choices.includes(value)&&choices.includes(fallback)){
+        controls[key]=fallback;notices.push("This look's "+key+' '+value+' is not offered by '+(tp.name||tp.id)+'; using its default '+fallback+'.');}}
     // The run keeps its own settings, seed locked, so Edit and re-run changes only what you change next.
     const composer={shape,count:batch_count,options};
-    return{preset_id,controls,batch_count,scene,tuned,notice:(result.notices||[]).join(' '),tune:{...t,reseed:controls.seed==null&&t.reseed,seed:controls.seed??t.seed,composer}};
+    return{preset_id,controls,batch_count,scene,tuned,notice:notices.join(' '),tune:{...t,reseed:controls.seed==null&&t.reseed,seed:controls.seed??t.seed,composer}};
   }
   let estimateEpoch=0;
   async function estimate(retry=false){
@@ -559,7 +563,9 @@
   function openMigration(id){const saved=rememberedAnswers()[id];if(!saved)return;clearCharForms();state.charMigrate=id;state.charForm={name:'',who:saved.who,clothes:saved.clothes};characterNote(goal());q('#makeCharNote [data-make-char="name"]')?.focus();}
   function dismissNote(){state.noteGone=true;try{localStorage.setItem(NOTE_KEY,'dismissed');}catch{}clearCharForms();characterNote(goal());q('.make-step h2')?.focus();say('Okay, you will not be asked again.');}
   function chooseCharacter(id){const c=usableCharacters().find(x=>x.id===id);if(!c)return;choosePicture(c.canon_asset_id);
-    state.character=c.id;state.form.who=c.body.who||'';state.form.clothes=c.body.clothes||'';}
+    state.character=c.id;state.form.who=c.body.who||'';state.form.clothes=c.body.clothes||'';
+    if(goal().intent==='restyle'&&c.body.look_id){const list=lookPictures();state.styleLook=(!c.look_note&&list.find(l=>l.id===c.body.look_id)||list[0])?.id||null;state.styleWords=!list.length;}
+    return c.look_note;}
   const chosenCharacter=()=>{const c=usableCharacters().find(x=>x.id===state.character);return c&&c.canon_asset_id===state.pick?.id?c:null;};
   // Polish plans only read (studio-workbench.js polishPlan); each picture is asked once per kind.
   // A plan that could not be read is asked again only after a 15 s cool-down, never once per redraw (#1438).
@@ -934,8 +940,8 @@
     if(l){state.look=l.dataset.makeLook;state.picking=false;remember();renderLooks();focusScene();return;}
     if(e.target.closest('[data-make-compare]')){state.compare=!state.compare;state.compareLooks=state.compare&&lookList().some(x=>x.id===state.look)?[state.look]:[];
       say(state.compare?'Compare looks: choose two or three looks, type one scene, then press Generate once.':'');renderLooks();q('[data-make-compare]')?.focus();return;}
-    const character=e.target.closest('[data-make-character]');if(character){chooseCharacter(character.dataset.makeCharacter);renderPictures(goal());
-      say('Your character is chosen: its canon picture as it is'+(goal().intent==='combine'?', with its words.':'.'));q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();return;}
+    const character=e.target.closest('[data-make-character]');if(character){const note=chooseCharacter(character.dataset.makeCharacter);renderPictures(goal());
+      say('Your character is chosen: its canon picture as it is'+(goal().intent==='combine'?', with its words.':'.')+(note?' '+note:''));q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();return;}
     const saveChar=e.target.closest('[data-make-character-save]');if(saveChar){openCharacterForm(saveChar.dataset.makeCharacterSave,saveChar.closest('[data-run]')?.dataset.run);return;}
     if(e.target.closest('[data-make-character-cancel]')){const a=state.charSave,edit=state.charEdit,move=state.charMigrate;clearCharForms();renderRuns();refreshCharacters();q(edit?'[data-make-character-edit="'+CSS.escape(edit)+'"]':move?'[data-make-migrate="'+CSS.escape(move)+'"]':'[data-make-character-save="'+CSS.escape(a||'')+'"]')?.focus();return;}
     const editChar=e.target.closest('[data-make-character-edit]');if(editChar){openCharacterEdit(editChar.dataset.makeCharacterEdit);return;}

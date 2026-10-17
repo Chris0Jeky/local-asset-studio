@@ -31,6 +31,36 @@ test('a swapped sampler or scheduler reaches Make as one plain notice (owner, 16
   assert.match(make,/const \{scene,tune,tuned,notice,\.\.\.submit\}=request;/,'the notice is never sent on to /api/jobs');
 });
 
+test('a tuned recipe replaces inherited sampler and scheduler with its offered defaults',async()=>{
+  for(const sampler of ['inherited','offered','tuned'])for(const scheduler of ['inherited','offered']){
+    const original={id:'original'},target={id:'target',name:'Other recipe',sampler:['1','sampler_name'],choices:{sampler:['target-sampler','custom'],scheduler:['target-scheduler']},defaults:{sampler:'target-sampler',scheduler:'target-scheduler'}};
+    const look={id:'look',revision:0,body:{controls:{}}},tune={preset:target.id,reseed:false,rows:[],cleared:[],sampler:sampler==='tuned'?'custom':''};
+    const controls={sampler:sampler==='offered'?'target-sampler':'old-sampler',scheduler:scheduler==='offered'?'target-scheduler':'old-scheduler'};
+    const context={structuredClone,presets:()=>[original,target],presetFor:()=>original,tuneOf:()=>tune,tuneSummary:()=>'',shapeSize:()=>[512,512],SLOTS:[],
+      q:s=>({value:s==='#makeScene'?'a room':s==='#makeShape'?'square':'1'}),view:{querySelectorAll:()=>[]},json:async()=>({controls,notices:['Original recipe notice.']})};
+    const prepared=vm.runInNewContext(make.match(/  const NAMED=.*\n/)[0]+between('  function applyTune(','  function renderTune(')+between('  async function prepared(','  let estimateEpoch=')+';prepared',context);
+    const result=await prepared(look),notices=['Original recipe notice.'];
+    assert.equal(result.preset_id,target.id);assert.equal(result.controls.sampler,sampler==='tuned'?'custom':'target-sampler');assert.equal(result.controls.scheduler,'target-scheduler');
+    if(sampler==='inherited')notices.push("This look's sampler old-sampler is not offered by Other recipe; using its default target-sampler.");
+    if(scheduler==='inherited')notices.push("This look's scheduler old-scheduler is not offered by Other recipe; using its default target-scheduler.");
+    assert.equal(result.notice,notices.join(' '));
+  }
+});
+
+test('choosing a character uses a live preferred Restyle look or the default and shows its look note',()=>{
+  const fallback={id:'default'},preferred={id:'preferred'},note="Its preferred look is put away; Make uses the goal's default look.";
+  for(const [available,look_note,expected] of [[[fallback,preferred],null,'preferred'],[[fallback],note,'default'],[[fallback,preferred],note,'default'],[[fallback],"Its preferred look's recipe is no longer usable; Make uses the goal's default look.",'default'],[[],note,null]]){
+    const c={id:'mira',canon_asset_id:'canon',body:{who:'Mira',clothes:'green cloak',look_id:'preferred'},look_note},state={form:{},styleLook:'previous',styleWords:true};
+    let said='';const context={state,usableCharacters:()=>[c],lookPictures:()=>available,goal:()=>({intent:'restyle'}),choosePicture:id=>{state.pick={id};},renderPictures(){},say:text=>{said=text;},q:()=>null};
+    const choose=vm.runInNewContext(between('  function chooseCharacter(','  const chosenCharacter=')+';chooseCharacter',context);context.chooseCharacter=choose;
+    const click=vm.runInNewContext('(function(e){'+between("    const character=e.target.closest('[data-make-character]');","    const saveChar=e.target.closest(")+'})',context);
+    click({target:{closest:()=>({dataset:{makeCharacter:'mira'}})}});
+    assert.equal(state.character,'mira');assert.equal(state.pick.id,'canon');assert.equal(state.form.who,'Mira');assert.equal(state.form.clothes,'green cloak');
+    assert.equal(state.styleLook,expected);assert.equal(state.styleWords,!available.length);assert.ok(said.includes(look_note||'Your character is chosen'));
+    delete c.body.look_id;state.styleLook='own choice';choose('mira');assert.equal(state.styleLook,'own choice','no preferred look leaves the current choice alone');
+  }
+});
+
 function restoreHarness(failure){
   const requests=[],queue=[],saved=[],state={runs:[]};let response=failure;
   const context={state,savedRuns:[{id:'saved',look:'My look',scene:'a room',tune:{seed:0}}],restoredRuns:false,
