@@ -525,8 +525,9 @@
   function actions(job,output){
     const a=output.asset_id;if(!a)return'<small class="muted">Saving to the library…</small>';
     const varyBox=document.createElement('div');varyBox.innerHTML=window.StudioWorkbench?.varyMarkup?.(job.preset_id,job.id,a,job.status)||'';
-    // #1497: Vary runs from here as Fix and Upscale do (one press, one prepared round sent); a Vary that cannot run is left out.
-    if(varyBox.querySelector('button:disabled'))varyBox.innerHTML='';else{const busy=state.varying.has(a),held=state.varyHeld.has(a);for(const b of varyBox.querySelectorAll('[data-ux-vary]')){b.dataset.makeVary=b.dataset.uxVary;b.removeAttribute('data-ux-vary');b.disabled=busy||held;}
+    // Vary keeps its disabled button and linked reason, as Fix and Upscale do.
+    if(varyBox.querySelector('button:disabled'))for(const hint of varyBox.querySelectorAll('small[id]'))hint.textContent=inMake(hint.textContent);
+    else{const busy=state.varying.has(a),held=state.varyHeld.has(a);for(const b of varyBox.querySelectorAll('[data-ux-vary]')){b.dataset.makeVary=b.dataset.uxVary;b.removeAttribute('data-ux-vary');b.disabled=busy||held;}
       if(busy||held)for(const hint of varyBox.querySelectorAll('small[id]'))hint.textContent=held?VARY_HELD:'Starting the variations for this picture. Please wait.';}const vary=varyBox.innerHTML;
     // Next steps open Make's own picture goals with this picture chosen; other fixes still go through the full handoff.
     const hand=(intent,label)=>'<button type="button" data-ux-handoff="'+escape(a)+'" data-ux-handoff-intent="'+intent+'">'+label+'</button>',from=(intent,label)=>'<button type="button" data-make-from="'+intent+'" data-asset="'+escape(a)+'">'+label+'</button>';
@@ -637,7 +638,7 @@
   function dismissNote(){state.noteGone=true;try{localStorage.setItem(NOTE_KEY,'dismissed');}catch{}clearCharForms();characterNote(goal());q('.make-step h2')?.focus();say('Okay, you will not be asked again.');}
   function chooseCharacter(id){const c=usableCharacters().find(x=>x.id===id);if(!c)return;choosePicture(c.canon_asset_id);
     state.character=c.id;state.form.who=c.body.who||'';state.form.clothes=c.body.clothes||'';
-    if(goal().intent==='restyle'&&c.body.look_id){const list=lookPictures();state.styleLook=(!c.look_note&&list.find(l=>l.id===c.body.look_id)||list[0])?.id||null;state.styleWords=!list.length;}
+    if(goal().intent==='restyle'&&c.body.look_id){const list=lookPictures();state.styleLook=(!c.look_note&&list.find(l=>l.id===c.body.look_id)||list.find(l=>l.id===state.styleLook)||list[0])?.id||null;state.styleWords=!list.length;}
     return goal().intent==='restyle'&&c.body.look_id?c.look_note:null;}
   const chosenCharacter=()=>{const c=usableCharacters().find(x=>x.id===state.character);return c&&c.canon_asset_id===state.pick?.id?c:null;};
   // Polish plans only read (studio-workbench.js polishPlan); each picture is asked once per kind.
@@ -940,25 +941,25 @@
   function leaveWatch(){let left=false;const o=new MutationObserver(records=>{if(view.hidden||records.some(r=>r.oldValue!==null))left=true;});
     o.observe(view,{attributes:true,attributeFilter:['hidden'],attributeOldValue:true});return{stopped:()=>left||view.hidden||!view.isConnected,stop:()=>o.disconnect()};}
   async function generateSweep(look){
-    const runGoal=state.goal,group='compare-'+Date.now().toString(36),watch=leaveWatch(),swaps=new Set();let started=0,n=0;state.busy=true;say('Preparing\u2026');
+    const runGoal=state.goal,group='compare-'+Date.now().toString(36),watch=leaveWatch(),swaps=new Set();let started=0,n=0,sending=false;state.busy=true;say('Preparing\u2026');
     try{
       const request=await prepared(look,true),runs=request.variants;n=runs.length;
       for(const v of runs){
         if(watch.stopped())break;
         say('Sending '+(started+1)+' of '+n+' to ComfyUI\u2026');
-        const job=await json('/api/jobs',{preset_id:v.preset_id,controls:v.controls,batch_count:1,label:'Make · Compare · '+look.name});for(const n of v.notes||[])swaps.add(n);
+        sending=true;const job=await json('/api/jobs',{preset_id:v.preset_id,controls:v.controls,batch_count:1,label:'Make · Compare · '+look.name});sending=false;for(const n of v.notes||[])swaps.add(n);
         state.runs.splice(started++,0,{job,look:look.name,lookId:look.id,goal:runGoal,scene:request.scene,tune:v.tune,tuned:v.tuned,group,axis:request.axis,value:v.label});remember();renderRuns();poll(job.id);
       }
       say((started<n?'Started '+started+' of '+n+'; the rest were not sent because you left Make.':'Started '+n+' pictures, one per value of '+request.axis+'. They appear side by side in Your pictures.')+[request.notice,...swaps].filter(Boolean).map(x=>' '+x).join(''));
       if(started)showRun(group);if(typeof refresh==='function')void refresh();
-    }catch(error){if(error.message===SCENE_FIRST)sayMissing(error.message);else say((started?'Started '+started+' of '+n+'; the rest were not sent. ':'')+error.message);}
+    }catch(error){if(error.message===SCENE_FIRST)sayMissing(error.message);else say((sending&&error.status===undefined?'Started '+started+' of '+n+'; the last one may have started and is not shown here; check the library and Problems before trying again. ':started?'Started '+started+' of '+n+'; the rest were not sent. ':'')+error.message+[...swaps].map(n=>' '+n).join(''));}
     finally{watch.stop();state.busy=false;syncOperation();}
   }
   async function generateCompare(){
     if(state.busy)return;const list=compareList(),why=compareBlocker();if(why){say(why);return;}
     const field=q('#makeScene'),scene=field.value.trim();if(!scene){field.setAttribute('aria-invalid','true');field.setAttribute('aria-describedby','makeStatus');field.focus();sayMissing(SCENE_FIRST);return;}
     state.busy=true;say('Preparing…');
-    const seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647,group='compare-'+Date.now().toString(36),runGoal=state.goal,watch=leaveWatch(),stopped=watch.stopped;let started=0;const notes=[];
+    const seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647,group='compare-'+Date.now().toString(36),runGoal=state.goal,watch=leaveWatch(),stopped=watch.stopped;let started=0,sending=false;const notes=[];
     try{
       for(const look of list){
         if(stopped())break;
@@ -968,13 +969,13 @@
         if(bound(p,'seed'))controls.seed=seed;
         if(stopped())break;
         say('Sending '+(started+1)+' of '+list.length+' to ComfyUI…');
-        const job=await json('/api/jobs',{preset_id:p?.id||look.body.preset_id,controls,batch_count:1,label:'Make · Compare · '+look.name});
+        sending=true;const job=await json('/api/jobs',{preset_id:p?.id||look.body.preset_id,controls,batch_count:1,label:'Make · Compare · '+look.name});sending=false;
         state.runs.splice(started++,0,{job,look:look.name,lookId:look.id,goal:runGoal,scene,group});notes.push(...swaps);remember();renderRuns();poll(job.id);
       }
       const noted=notes.map(n=>' '+n).join('');
       say((started<list.length?'Started '+started+' of '+list.length+'; the rest were not sent because you left Make.':'Started '+list.length+' pictures, one per look. They appear side by side in Your pictures.')+noted);
       if(typeof refresh==='function')void refresh();
-    }catch(error){say((started?'Started '+started+' of '+list.length+'; the rest were not sent. ':'')+error.message+notes.map(n=>' '+n).join(''));}
+    }catch(error){say((sending&&error.status===undefined?'Started '+started+' of '+list.length+'; the last one may have started and is not shown here; check the library and Problems before trying again. ':started?'Started '+started+' of '+list.length+'; the rest were not sent. ':'')+error.message+notes.map(n=>' '+n).join(''));}
     finally{watch.stop();state.busy=false;syncOperation();}
   }
   // Your pictures lives in this browser; a new browser starts it from the library's Make pictures (audit v3 N6): the newest six

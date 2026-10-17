@@ -936,12 +936,24 @@
     if(plan.kind==='reseed')return '<button type="button" data-ux-vary="reseed" '+attrs+' aria-describedby="'+why+'">Vary · new seeds, same recipe</button>'+hint;
     return '<button type="button" data-ux-vary="subtle" '+attrs+' aria-describedby="'+why+'">Vary subtle</button><button type="button" data-ux-vary="strong" '+attrs+' aria-describedby="'+why+'">Vary strong</button>'+hint;
   }
-  function varyPlanFor(presetId,jobId,assetId,mediaType,status){
+  function varyPlanFor(presetId,jobId,assetId,mediaType,status,make){
     const asset=assetState.assets.find(a=>a.id===assetId);
     // Make passes its own, fresher reading of the source run; the shared jobs list can lag it by one refresh.
-    const known=status||jobs.find(j=>j.id===jobId)?.status;if(known&&known!=='completed')return{kind:'none',reason:'Wait for a completed source run before varying it. Inspect unresolved work in Problems.'};
+    const job=jobs.find(j=>j.id===jobId),known=status||job?.status;if(known&&!['completed','partial'].includes(known))return{kind:'none',reason:'Wait for a completed source run before varying it. Inspect unresolved work in Problems.'};
     if(!assetId)return{kind:'none',reason:'This output has no saved asset identity. Refresh the workspace before varying it.'};
-    return StudioContinuation.varyPlan({preset_id:presetId,job_id:jobId||null,media_type:asset?asset.media_type:mediaType||'image',trashed_at:asset?.trashed_at||null},catalog?.presets||[],jobs,missingByPreset,typeof installedLoras==='undefined'?[]:installedLoras);
+    const plan=StudioContinuation.varyPlan({preset_id:presetId,job_id:jobId||null,media_type:asset?asset.media_type:mediaType||'image',trashed_at:asset?.trashed_at||null},catalog?.presets||[],jobs,missingByPreset,typeof installedLoras==='undefined'?[]:installedLoras);
+    if(plan.kind!=='img2img')return plan;
+    if(asset?.bytes>20*1024*1024)return{kind:'none',reason:'This picture exceeds the 20 MiB reference limit. Use a smaller picture.'};
+    // Make sends Vary in one press, so it rules out missing wording first; Create prepares the form and lets you describe it.
+    if(!make)return plan;
+    const source=typeof job?.controls?.positive==='string'?{positive:job.controls.positive,prompt_role:plan.source.continuation_capability?.prompt_role,prompt_origin:'submitted-output'}:null;
+    const reason=varyProblem(plan,source);return reason?{kind:'none',reason}:plan;
+  }
+  function varyProblem(plan,source){
+    const route=plan.route;if(StudioContinuation.sourceInput(route.continuation_capability)!=='reference')return route.name+' needs more than this picture. Use Continue with this.';
+    const words=StudioContinuation.wording(route,source).positive;
+    if(source&&route.positive&&!words.trim())return 'No description was kept for this picture, and '+route.name+' needs one. Use Continue with this and describe it.';
+    return StudioContinuation.unfilled(route,words).length?route.name+' needs wording filled in. Use Continue with this.':'';
   }
   // Rebuilt only when its words change, so polling never steals focus from a Vary button.
   function placeVary(holder,after,markup){
@@ -969,7 +981,7 @@
   function refreshCarriedVary(){syncGalleryVary();syncOpenAssetVary();}
   globalThis.refreshCarriedVary=refreshCarriedVary;
   // Make (make.js) draws the same Vary buttons on its own results; the document click handler below prepares them.
-  globalThis.StudioWorkbench={varyMarkup:(presetId,jobId,assetId,status)=>varyMarkup(varyPlanFor(presetId,jobId,assetId,'image',status),'data-asset="'+escape(assetId)+'" data-preset="'+escape(presetId||'')+'" data-job="'+escape(jobId||'')+'"','uxVaryWhyMake-'+escape(assetId))};
+  globalThis.StudioWorkbench={varyMarkup:(presetId,jobId,assetId,status)=>varyMarkup(varyPlanFor(presetId,jobId,assetId,'image',status,true),'data-asset="'+escape(assetId)+'" data-preset="'+escape(presetId||'')+'" data-job="'+escape(jobId||'')+'"','uxVaryWhyMake-'+escape(assetId))};
   after('renderJobs',syncGalleryVary);after('renderAssets',syncGalleryVary);
   after('openAsset',syncOpenAssetVary);
   async function prepareVary(button){
@@ -1037,7 +1049,7 @@
     let source;try{source=await readSource(assetId);}catch(error){return{ok:false,reason:'Could not read this picture. '+error.message};}
     if(source?.asset_id!==assetId)return{ok:false,reason:'This picture’s record could not be verified. Refresh and try again.'};
     // Make retries rejected plans; a resolved refusal would stay cached after the source finishes.
-    const job=jobs.find(j=>j.id===source.job_id);if(job&&job.status!=='completed')throw Error('Wait for a completed source run before polishing it. Inspect unresolved work in Problems.');
+    const job=jobs.find(j=>j.id===source.job_id);if(job&&!['completed','partial'].includes(job.status))throw Error('Wait for a completed source run before polishing it. Inspect unresolved work in Problems.');
     return{...StudioContinuation.polishRoute(kind,catalog.presets,source,missingByPreset),source};
   }
   async function polishPlan(assetId,kind){
@@ -1072,7 +1084,7 @@
     try{
       syncReady();
       if(!catalog)throw Error('Recipes are still loading.');
-      const plan=varyPlanFor(presetId,jobId,assetId,'image',status);if(plan.kind==='none')throw Error(plan.reason);
+      const plan=varyPlanFor(presetId,jobId,assetId,'image',status,true);if(plan.kind==='none')throw Error(plan.reason);
       if(plan.kind==='reseed'?strength!=='reseed':!['subtle','strong'].includes(strength))throw Error('This Vary button is out of date. Nothing was sent; press Vary again.');
       const route=plan.route,seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647,base={preset_id:route.id,batch_count:plan.round.count,parent_assets:[assetId],references:[],label:'Make · '+(strength==='reseed'?'Vary':'Vary '+strength)};
       if(plan.kind==='reseed'){
@@ -1081,12 +1093,9 @@
         const check=await post('/api/recipe-check',recipe);
         return await sendVary({...base,controls:{...(recipe.controls||{}),...(route.seed?{seed}:{})},expected_template_sha256:check.template_sha256});
       }
-      if(StudioContinuation.sourceInput(route.continuation_capability)!=='reference')throw Error(route.name+' needs more than this picture. Use Continue with this.');
       let source;try{source=await readSource(assetId);}catch(error){throw Error('Could not read this picture. '+error.message);}
       if(source?.asset_id!==assetId)throw Error('This picture’s record could not be verified. Refresh and try again.');
-      const words=StudioContinuation.wording(route,source).positive;
-      if(route.positive&&!words.trim())throw Error('No description was kept for this picture, and '+route.name+' needs one. Use Continue with this and describe it.');
-      if(StudioContinuation.unfilled(route,words).length)throw Error(route.name+' needs wording filled in. Use Continue with this.');
+      const reason=varyProblem(plan,source);if(reason)throw Error(reason);
       const result=await post('/api/assets/reference',{id:assetId});
       if(result?.parent_asset!==assetId||result.sha256!==source.sha256||result.context?.asset_id!==assetId||JSON.stringify(result.context)!==JSON.stringify(source))throw Error('The picture changed while it was being copied. Nothing was sent.');
       const prepared=StudioContinuation.initial(result.context,route,'edit',result.file);

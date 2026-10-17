@@ -9,6 +9,7 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 ## 2026-10-17 session (agent judgment calls)
 
+- [ ] **#1524 saved pictures from partial runs may be varied and polished.** Agent judgment: a saved asset is usable even when other pictures in its run were not recovered. Queued, running, uncertain and failed runs remain refused; source identity and bytes are still checked when pressed. Synthetic status contracts cover both paths. Reverse by removing `partial` from the two source-status allow-lists in `app/static/studio-workbench.js`.
 - [ ] **Phone run dock, #1495 / #1515:** below 600 px, the batch size and the run tools fold into a "Run tools" panel. The
   status, Cancel and the outcome stay visible. The readiness line folds away when Generate is enabled. While you type,
   the dock may take up to 120 px, and Review checks stay visible (the rule that hid them was removed).

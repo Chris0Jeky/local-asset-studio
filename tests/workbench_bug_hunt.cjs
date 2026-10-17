@@ -110,18 +110,18 @@ test('a board handoff clears both native file inputs before attaching its source
   assert.equal(b.lastUploaded,'source.png');
 });
 
-test('Vary and Polish refuse known unsettled source jobs but allow completed or imported pictures',async()=>{
+test('Vary and Polish refuse unsettled jobs but allow saved partial, completed or imported pictures',async()=>{
   const b=box({readSource:async()=>({asset_id:'asset',job_id:'job'})});
-  b.StudioContinuation={...C,varyPlan:()=>({kind:'img2img'}),polishRoute:()=>({ok:true,preset:{id:'polish'}})};
+  b.StudioContinuation={...C,varyPlan:()=>({kind:'img2img',route:{id:'vary',name:'Vary'}}),polishRoute:()=>({ok:true,preset:{id:'polish'}})};
   vm.runInContext(section('  function varyPlanFor(','\n  // Rebuilt only when')+'\n'+polish+'\nthis.varyPlanFor=varyPlanFor;this.polishPlan=polishPlan;',b);
-  for(const status of ['queued','running','uncertain','partial','failed']){
+  for(const status of ['queued','running','uncertain','failed']){
     b.jobs=[{id:'job',status}];
     assert.equal(b.varyPlanFor('plain','job','asset').kind,'none',status+' Vary');
     // Make's own reading of the run wins over a shared jobs list that has not refreshed yet.
     if(status==='running')assert.equal(b.varyPlanFor('plain','job','asset','image','completed').kind,'img2img','Make status completed');
     await assert.rejects(b.polishPlan('asset','face'),/completed source run/,status+' Polish must be retryable, not cached');
   }
-  for(const jobs of [[{id:'job',status:'completed'}],[]]){
+  for(const jobs of [[{id:'job',status:'completed'}],[{id:'job',status:'partial'}],[]]){
     b.jobs=jobs;assert.equal(b.varyPlanFor('plain','job','asset').kind,'img2img');
     assert.equal((await b.polishPlan('asset','face')).ok,true);
   }

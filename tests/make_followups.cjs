@@ -53,7 +53,7 @@ test('a tuned recipe replaces inherited sampler and scheduler with its offered d
 
 test('choosing a character uses a live preferred Restyle look or the default and shows its look note',()=>{
   const fallback={id:'default'},preferred={id:'preferred'},note="Its preferred look is put away; Make uses the goal's default look.";
-  for(const [available,look_note,expected] of [[[fallback,preferred],null,'preferred'],[[fallback],note,'default'],[[fallback,preferred],note,'default'],[[fallback],"Its preferred look's recipe is no longer usable; Make uses the goal's default look.",'default'],[[],note,null]]){
+  for(const [available,look_note,expected] of [[[fallback,preferred],null,'preferred'],[[fallback],note,'default'],[[fallback,preferred],note,'default'],[[fallback],"Its preferred look's recipe is no longer usable; Make uses the goal's default look.",'default'],[[],note,null],[[fallback,{id:'previous'}],note,'previous']]){
     const c={id:'mira',canon_asset_id:'canon',body:{who:'Mira',clothes:'green cloak',look_id:'preferred'},look_note},state={form:{},styleLook:'previous',styleWords:true};
     let said='';const context={state,usableCharacters:()=>[c],lookPictures:()=>available,goal:()=>({intent:'restyle'}),choosePicture:id=>{state.pick={id};},renderPictures(){},say:text=>{said=text;},q:()=>null};
     const choose=vm.runInNewContext(between('  function chooseCharacter(','  const chosenCharacter=')+';chooseCharacter',context);context.chooseCharacter=choose;
@@ -123,13 +123,14 @@ test('a finished overflow Compare rolls off as a whole, while lost contact stays
   assert.deepEqual(h.saved().map(r=>r.id),h.state.runs.map(r=>r.job.id));assert.deepEqual(h.cleared,['a','b','stopped']);
 });
 
-function compareHarness(leaveAt){
+function compareHarness(leaveAt,failure){
   const state={goal:'character',busy:false,runs:[]},view={hidden:false,isConnected:true},requests=[],statuses=[],polled=[];let observer;
   const leave=()=>{view.hidden=true;observer?.callback([{oldValue:null}]);view.hidden=false;observer?.callback([{oldValue:''}]);};
   const context={state,view,Uint32Array,crypto:{getRandomValues:a=>a},compareList:()=>[1,2,3].map(id=>({id:'look-'+id,name:'Look '+id,body:{}})),compareBlocker:()=>'',q:()=>({value:'a room'}),say:s=>statuses.push(s),
     MutationObserver:class{constructor(callback){this.callback=callback;observer=this;}observe(){}disconnect(){this.disconnected=true;}},
     presetFor:()=>({id:'preset'}),shapeSize:()=>[512,512],bound:()=>false,remember(){},renderRuns(){},poll:id=>polled.push(id),syncOperation(){},
     json:async(url,body)=>{requests.push({url,body});if(url==='/api/looks/prepare'){if(leaveAt==='prepare')leave();return{controls:{},notices:['Swap '+body.id+'.']};}
+      if(failure&&requests.filter(r=>r.url==='/api/jobs').length===(failure.at||2)){const e=Error('Request refused');if(failure.status!==undefined)e.status=failure.status;throw e;}
       if(leaveAt==='job')leave();return{id:'job-'+requests.filter(r=>r.url==='/api/jobs').length,status:'queued'};}};
   const generate=vm.runInNewContext(between('  function leaveWatch(){','  // Your pictures lives')+';generateCompare',context);
   return{generate,state,requests,statuses,polled,disconnected:()=>observer?.disconnected};
@@ -147,6 +148,16 @@ test('Compare navigation during prepare sends zero; navigation during a job keep
 
 test('Compare still sends every look when Make stays visible',async()=>{
   const h=compareHarness();await h.generate();assert.equal(h.state.runs.length,3);assert.equal(h.polled.length,3);assert.match(h.statuses.at(-1),/^Started 3 pictures/);assert.equal(h.state.busy,false);
+});
+
+test('Compare distinguishes an uncertain last send from an HTTP refusal, without retrying',async()=>{
+  for(const at of [1,2])for(const status of [undefined,400]){
+    const h=compareHarness(null,{at,status});await h.generate();const said=h.statuses.at(-1);
+    assert.equal(h.requests.filter(r=>r.url==='/api/jobs').length,at);assert.equal(h.state.runs.length,at-1);assert.equal(h.state.busy,false);
+    if(status===undefined){assert.match(said,/the last one may have started and is not shown here; check the library and Problems before trying again/);assert.doesNotMatch(said,/were not sent|send.*again/);}
+    else if(at===2)assert.match(said,/Started 1 of 3; the rest were not sent/);
+    if(at===2)assert.match(said,/Swap look-1\./);assert.doesNotMatch(said,/Swap look-2\./);
+  }
 });
 
 test('uncertain restored runs keep polling reads until the job settles',async()=>{
