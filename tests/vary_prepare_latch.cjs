@@ -242,7 +242,7 @@ test('Make card Vary is wired to one StudioWorkbench.vary call per press (#1497)
   assert.notEqual(varyPictureStart, -1, 'make.js has a Make-side Vary');
   assert.doesNotMatch(makeSource, /Prepare variations in the full editor/, 'the card no longer sends the owner to the full editor');
   assert.match(makeSource, /closest\('\[data-make-vary\]'\);if\(varying&&!varying\.disabled\)\{void varyPicture\(varying\)/);
-  let calls = 0, release; const box = makeCard((...args) => { calls++; assert.deepEqual(args, ['asset-1', 'wai', 'job-1', 'subtle']); return new Promise(r => { release = r; }); });
+  let calls = 0, release; const box = makeCard((...args) => { calls++; assert.deepEqual(args, ['asset-1', 'wai', 'job-1', 'subtle', undefined]); return new Promise(r => { release = r; }); });
   const button = {dataset: {asset: 'asset-1', preset: 'wai', job: 'job-1', makeVary: 'subtle'}};
   const first = box.varyPicture(button); await box.varyPicture(button);
   assert.equal(calls, 1, 'a double press sends once');

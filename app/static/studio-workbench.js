@@ -934,9 +934,10 @@
     if(plan.kind==='reseed')return '<button type="button" data-ux-vary="reseed" '+attrs+' aria-describedby="'+why+'">Vary · new seeds, same recipe</button>'+hint;
     return '<button type="button" data-ux-vary="subtle" '+attrs+' aria-describedby="'+why+'">Vary subtle</button><button type="button" data-ux-vary="strong" '+attrs+' aria-describedby="'+why+'">Vary strong</button>'+hint;
   }
-  function varyPlanFor(presetId,jobId,assetId,mediaType){
+  function varyPlanFor(presetId,jobId,assetId,mediaType,status){
     const asset=assetState.assets.find(a=>a.id===assetId);
-    const job=jobs.find(j=>j.id===jobId);if(job&&job.status!=='completed')return{kind:'none',reason:'Wait for a completed source run before varying it. Inspect unresolved work in Problems.'};
+    // Make passes its own, fresher reading of the source run; the shared jobs list can lag it by one refresh.
+    const known=status||jobs.find(j=>j.id===jobId)?.status;if(known&&known!=='completed')return{kind:'none',reason:'Wait for a completed source run before varying it. Inspect unresolved work in Problems.'};
     if(!assetId)return{kind:'none',reason:'This output has no saved asset identity. Refresh the workspace before varying it.'};
     return StudioContinuation.varyPlan({preset_id:presetId,job_id:jobId||null,media_type:asset?asset.media_type:mediaType||'image',trashed_at:asset?.trashed_at||null},catalog?.presets||[],jobs,missingByPreset,typeof installedLoras==='undefined'?[]:installedLoras);
   }
@@ -966,7 +967,7 @@
   function refreshCarriedVary(){syncGalleryVary();syncOpenAssetVary();}
   globalThis.refreshCarriedVary=refreshCarriedVary;
   // Make (make.js) draws the same Vary buttons on its own results; the document click handler below prepares them.
-  globalThis.StudioWorkbench={varyMarkup:(presetId,jobId,assetId)=>varyMarkup(varyPlanFor(presetId,jobId,assetId,'image'),'data-asset="'+escape(assetId)+'" data-preset="'+escape(presetId||'')+'" data-job="'+escape(jobId||'')+'"','uxVaryWhyMake-'+escape(assetId))};
+  globalThis.StudioWorkbench={varyMarkup:(presetId,jobId,assetId,status)=>varyMarkup(varyPlanFor(presetId,jobId,assetId,'image',status),'data-asset="'+escape(assetId)+'" data-preset="'+escape(presetId||'')+'" data-job="'+escape(jobId||'')+'"','uxVaryWhyMake-'+escape(assetId))};
   after('renderJobs',syncGalleryVary);after('renderAssets',syncGalleryVary);
   after('openAsset',syncOpenAssetVary);
   async function prepareVary(button){
@@ -1062,14 +1063,14 @@
   const makeVaryBusy=new Set();
   // No HTTP answer (a dropped connection, an unreadable reply) means the job may exist: flag it so Make holds this Vary.
   const sendVary=body=>post('/api/jobs',body).catch(error=>{if(error.status===undefined)error.uncertain=true;throw error;});
-  async function vary(assetId,presetId,jobId,strength){
+  async function vary(assetId,presetId,jobId,strength,status){
     if(makeVaryBusy.has(assetId))throw Error('Vary is already being sent for this picture. Wait for it.');
     if(combineBusy()||tileBusy||parallaxBusy)throw Error('Wait for the current action to finish before varying this picture.');
     makeVaryBusy.add(assetId);
     try{
       syncReady();
       if(!catalog)throw Error('Recipes are still loading.');
-      const plan=varyPlanFor(presetId,jobId,assetId);if(plan.kind==='none')throw Error(plan.reason);
+      const plan=varyPlanFor(presetId,jobId,assetId,'image',status);if(plan.kind==='none')throw Error(plan.reason);
       if(plan.kind==='reseed'?strength!=='reseed':!['subtle','strong'].includes(strength))throw Error('This Vary button is out of date. Nothing was sent; press Vary again.');
       const route=plan.route,seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647,base={preset_id:route.id,batch_count:plan.round.count,parent_assets:[assetId],references:[],label:'Make · '+(strength==='reseed'?'Vary':'Vary '+strength)};
       if(plan.kind==='reseed'){

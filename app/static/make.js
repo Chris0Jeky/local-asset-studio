@@ -518,7 +518,7 @@
   const marks=a=>{const review=reviewOf(a),mark=(value,label)=>'<button type="button" data-make-review="'+value+'" data-asset="'+escape(a)+'" aria-pressed="'+(review===value)+'">'+(review===value?'✓ '+(value==='selected'?'Kept':'Marked: not this'):label)+'</button>';return mark('selected','★ Keep')+mark('rejected','Not this');};
   function actions(job,output){
     const a=output.asset_id;if(!a)return'<small class="muted">Saving to the library…</small>';
-    const varyBox=document.createElement('div');varyBox.innerHTML=window.StudioWorkbench?.varyMarkup?.(job.preset_id,job.id,a)||'';
+    const varyBox=document.createElement('div');varyBox.innerHTML=window.StudioWorkbench?.varyMarkup?.(job.preset_id,job.id,a,job.status)||'';
     // #1497: Vary runs from here as Fix and Upscale do (one press, one prepared round sent); a Vary that cannot run is left out.
     if(varyBox.querySelector('button:disabled'))varyBox.innerHTML='';else{const busy=state.varying.has(a),held=state.varyHeld.has(a);for(const b of varyBox.querySelectorAll('[data-ux-vary]')){b.dataset.makeVary=b.dataset.uxVary;b.removeAttribute('data-ux-vary');b.disabled=busy||held;}
       if(busy||held)for(const hint of varyBox.querySelectorAll('small[id]'))hint.textContent=held?VARY_HELD:'Starting the variations for this picture. Please wait.';}const vary=varyBox.innerHTML;
@@ -656,7 +656,7 @@
   async function varyPicture(button){
     const {asset:id,preset,job:jobId,makeVary:strength}=button.dataset,name=strength==='reseed'?'Vary':'Vary '+strength;if(state.varying.has(id)||state.varyHeld.has(id))return;
     const source=state.runs.find(r=>(r.job.outputs||[]).some(o=>o.asset_id===id));state.varying.add(id);renderRuns();
-    try{const job=await window.StudioWorkbench.vary(id,preset,jobId,strength);state.runs.unshift({job,look:name+(source?' · '+source.look:''),lookId:source?.lookId,goal:source?.goal,scene:null});remember();poll(job.id);
+    try{const job=await window.StudioWorkbench.vary(id,preset,jobId,strength,source?.job.status);state.runs.unshift({job,look:name+(source?' · '+source.look:''),lookId:source?.lookId,goal:source?.goal,scene:null});remember();poll(job.id);
       say(name+' started. The new pictures appear at the top of your pictures.');}
     catch(error){if(error.uncertain){state.varyHeld.add(id);say(VARY_HELD);}else say(error.message);}
     finally{state.varying.delete(id);renderRuns();}

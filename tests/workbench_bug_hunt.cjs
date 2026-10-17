@@ -107,6 +107,8 @@ test('Vary and Polish refuse known unsettled source jobs but allow completed or 
   for(const status of ['queued','running','uncertain','partial','failed']){
     b.jobs=[{id:'job',status}];
     assert.equal(b.varyPlanFor('plain','job','asset').kind,'none',status+' Vary');
+    // Make's own reading of the run wins over a shared jobs list that has not refreshed yet.
+    if(status==='running')assert.equal(b.varyPlanFor('plain','job','asset','image','completed').kind,'img2img','Make status completed');
     await assert.rejects(b.polishPlan('asset','face'),/completed source run/,status+' Polish must be retryable, not cached');
   }
   for(const jobs of [[{id:'job',status:'completed'}],[]]){
