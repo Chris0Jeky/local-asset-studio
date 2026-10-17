@@ -283,7 +283,9 @@
   function currentPair(){return{preset_id:selected?.id,controls:values(),continuation:continuationState,references:attachedReferencePayload()};}
   function pairKey(){const record=currentPair();return JSON.stringify([record.continuation?.source_sha256||record.controls.last_reference,(record.references||[]).filter(r=>r.file).map(r=>r.sha256||r.file)]);}
   function combineAnswers(){const saved=rememberedFills(),answers=Object.fromEntries(['who','pose','clothes','outfit'].map(key=>[key,saved['@'+key]||'']));for(const [placeholder,value]of Object.entries(fillValues())){const meaning=StudioContinuation.fillMeaning(placeholder);if(meaning)answers[meaning]=value;}return answers;}
-  function combineBusy(){return submitting||handoffBusy||pickerBusy||restoring||referencePending>0||pairActionBusy||poseBusy||posePositionDirty()||varyBusy||planBusy||polishBusy.size>0||makeVaryBusy.size>0;}
+  // sendBusy counts only requests in flight; Make and the library use it, since they cannot clear Create's draft state (a typed pose, an upload).
+  function sendBusy(){return submitting||handoffBusy||pickerBusy||restoring||pairActionBusy||poseBusy||varyBusy||planBusy||polishBusy.size>0||makeVaryBusy.size>0;}
+  function combineBusy(){return sendBusy()||referencePending>0||posePositionDirty();}
   // Each engine's time per picture: this PC's own completed runs of it first; otherwise the read-only local estimate
   // (POST /api/estimate reads timing history and runs nothing), asked once per engine and canvas; otherwise say so (K13).
   const engineEstimates=new Map();let engineEstimateQueue=Promise.resolve();
@@ -349,7 +351,7 @@
     if(planPreset!==selected.id){if(!planChoice.size)planChoice.add(selected.id);planPreset=selected.id;}
     // The seeds start from the open recipe's seed once per pair, so the field can be emptied and retyped (#1198).
     if(!planSeeded&&getControl('seed')?.value){planSeeded=true;if(!q('#uxPlanSeeds').value)q('#uxPlanSeeds').value=getControl('seed').value;}
-    const busy=combineBusy()||planBusy,options=planOptions();
+    const busy=combineBusy(),options=planOptions();
     const markup='<legend>Recipes</legend>'+options.map(({preset:p,reason})=>{const per=planPerPicture(p);
       return '<label class="ux-plan-engine"><input type="checkbox" data-ux-plan-engine="'+escape(p.id)+'" '+(planChoice.has(p.id)&&!reason?'checked ':'')+(reason||busy?'disabled ':'')+'title="'+escape(reason||p.name)+'"> <b>'+escape(StudioContinuation.combineEngineLabel(p))+'</b> <small>'+escape(reason||(per?'~'+durationLabel(per)+' per picture':'no timing yet'))+'</small></label>';}).join('');
     if(markup!==planEnginesMarkup){planEnginesMarkup=markup;q('#uxPlanEngines').innerHTML=markup;}
@@ -745,7 +747,7 @@
     const chip=tile.querySelectorAll('[data-ux-check]')[index];if(!chip)return;e.preventDefault();if(!chip.disabled){chip.focus();chip.click();}
   });
   after('renderJobs',()=>{syncCombineEngines();syncCombineResults();});after('renderAssets',()=>{syncCombineEngines();syncCombineResults();});
-  function workbenchStamp(){return JSON.stringify({backend:typeof backendActive==='undefined'?null:backendActive,preset:selected?.id,controls:values(),parents:parentAssets,references:attachedReferencePayload(),continuation:continuationState,batch:q('#batch').value,pending:['reference','lastReference'].map(id=>[...(q('#'+id).files||[])].map(f=>[f.name,f.size,f.lastModified]))});}
+  function workbenchStamp(){return JSON.stringify({backend:typeof backendActive==='undefined'?null:backendActive,switching:typeof backendSwitching!=='undefined'&&!!backendSwitching,preset:selected?.id,controls:values(),parents:parentAssets,references:attachedReferencePayload(),continuation:continuationState,batch:q('#batch').value,pending:['reference','lastReference'].map(id=>[...(q('#'+id).files||[])].map(f=>[f.name,f.size,f.lastModified]))});}
   // Slot and picker attachment preserves wording, so its guard compares attachment-relevant
   // state only: wording, lineage claims and batch must not refuse a copy that was already
   // verified against its own destination (#606 finding 3). Replace resets to the recipe
@@ -973,7 +975,7 @@
   async function prepareVary(button){
     const strength=button.dataset.uxVary,assetId=button.dataset.asset;
     if(varyBusy)return;
-    if(combineBusy()||tileBusy||parallaxBusy){announce('Wait for the current Create action to finish, then press Vary again. Nothing was prepared.',true);return;}
+    if(sendBusy()||referencePending>0||tileBusy||parallaxBusy){announce('Wait for the current Create action to finish, then press Vary again. Nothing was prepared.',true);return;}
     if(assetDetailsDirty()){warnUnsavedAsset();return;}
     if(!catalog){announce('Recipes are still loading.');return;}
     const plan=varyPlanFor(button.dataset.preset,button.dataset.job,assetId);
@@ -1044,7 +1046,7 @@
   }
   async function polish(assetId,kind,label){
     const key=assetId+':'+kind;if(polishBusy.has(key))throw Error('This polish is already being sent. Wait for it.');
-    if(combineBusy()||tileBusy||parallaxBusy)throw Error('Wait for the current action to finish before polishing this picture.');
+    if(sendBusy()||tileBusy||parallaxBusy)throw Error('Wait for the current action to finish before polishing this picture.');
     polishBusy.add(key);
     try{
       syncReady();
@@ -1065,7 +1067,7 @@
   const sendVary=body=>post('/api/jobs',body).catch(error=>{if(error.status===undefined)error.uncertain=true;throw error;});
   async function vary(assetId,presetId,jobId,strength,status){
     if(makeVaryBusy.has(assetId))throw Error('Vary is already being sent for this picture. Wait for it.');
-    if(combineBusy()||tileBusy||parallaxBusy)throw Error('Wait for the current action to finish before varying this picture.');
+    if(sendBusy()||tileBusy||parallaxBusy)throw Error('Wait for the current action to finish before varying this picture.');
     makeVaryBusy.add(assetId);
     try{
       syncReady();
@@ -1119,7 +1121,7 @@
   });
   async function prepareTile(button){
     const assetId=button.dataset.uxTile;if(tileBusy||!assetId)return;
-    if(combineBusy()||parallaxBusy){announce('Wait for the current Create action to finish, then press Make seamless again. Nothing was prepared.',true);return;}
+    if(sendBusy()||parallaxBusy){announce('Wait for the current Create action to finish, then press Make seamless again. Nothing was prepared.',true);return;}
     if(assetDetailsDirty()){warnUnsavedAsset();return;}
     const bandPx=U.tileBandPx(button.parentElement?.querySelector('[data-ux-tile-band]')?.value);
     tileBusy=true;button.disabled=true;syncReady();
@@ -1204,7 +1206,7 @@
   document.addEventListener('click',e=>{const clear=e.target.closest('[data-ux-parallax-clear]');if(!clear)return;const group=clear.closest('.ux-parallax');group.querySelector('#uxParallaxView').value='';syncParallax(group);});
   async function prepareParallax(button){
     const group=button.closest('.ux-parallax'),assetId=button.dataset.uxParallax;if(parallaxBusy||!assetId||!group)return;
-    if(combineBusy()||tileBusy){announce('Wait for the current Create action to finish, then press Make parallax layers again. Nothing was prepared.',true);return;}
+    if(sendBusy()||tileBusy){announce('Wait for the current Create action to finish, then press Make parallax layers again. Nothing was prepared.',true);return;}
     if(assetDetailsDirty()){warnUnsavedAsset();return;}
     const why=parallaxReason(group);if(why){announce(why,true);return;}
     parallaxBusy=true;button.disabled=true;syncReady();

@@ -15,7 +15,7 @@ function between(start, end) {
   return source.slice(first, last);
 }
 const readinessSource = between('  function readinessItems(){', '\n  function syncReady(){');
-const combineSource = between('  function combineBusy(){', '\n  // Each engine');
+const combineSource = between('  // sendBusy counts only', '\n  // Each engine');
 const prepareSource = between('  async function prepareVary(button){', "\n  document.addEventListener('click',e=>{const button=e.target.closest('[data-ux-vary]')");
 const U = require('../app/static/studio-core.js');
 
@@ -137,7 +137,7 @@ function makeVaryBox(extra) {
     StudioContinuation: SC, catalog: {presets: catalogPresets}, missingByPreset: {}, installedLoras: [],
     assetState: {assets: [{id: 'asset-1', media_type: 'image', trashed_at: null}]},
     jobs: [{id: 'job-1', preset_id: 'wai', status: 'completed', controls: {lora: 0.8, lora_name: 'style.safetensors', lora2: 0, lora2_name: 'none.safetensors', sampler: 'euler', scheduler: 'normal', cfg: 6, steps: 28}}],
-    calls: [], sent: [], context: sourceContext, recipePreset: 'wai', combineBusy: () => false, tileBusy: false, parallaxBusy: false, syncReady() {},
+    calls: [], sent: [], context: sourceContext, recipePreset: 'wai', combineBusy: () => false, sendBusy: () => false, tileBusy: false, parallaxBusy: false, syncReady() {},
     crypto: {getRandomValues: (array) => { array[0] = 41; return array; }},
     async readSource() { box.calls.push('context'); return box.context; },
     async api(url) { box.calls.push(url); return {preset_id: box.recipePreset, controls: {positive: 'a lantern', seed: 4}}; },

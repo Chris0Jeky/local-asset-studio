@@ -18,7 +18,7 @@ function box(extra={}){
   vm.createContext(b);return b;
 }
 const ready=section('  function readinessItems(){','\n  function syncReady(){');
-const busy=section('  function combineBusy(){','\n  // Each engine');
+const busy=section('  // sendBusy counts only','\n  // Each engine');
 const generate=section('  const generateFromCreate=', '\n  function parallaxBoxes(');
 
 test('plan and one-press sends block Generate readiness and its handler until settled',()=>{
@@ -39,6 +39,12 @@ test('Polish refuses a concurrent Create send before copying or posting',async()
   const b=box({submitting:true,readSource:async()=>{throw Error('should not read');}});
   vm.runInContext(busy+'\n'+polish+'\nthis.polish=polish;',b);
   await assert.rejects(b.polish('asset','face'),/Wait|finish|already/);
+});
+test('Create draft state (typed pose, pending upload) blocks Create but not a Make Polish',async()=>{
+  const b=box({posePositionDirty:()=>true,referencePending:1,readSource:async()=>{throw Error('read reached');}});
+  vm.runInContext(busy+'\n'+polish+'\nthis.polish=polish;this.combineBusy=combineBusy;',b);
+  assert.ok(b.combineBusy(),'Create stays blocked');
+  await assert.rejects(b.polish('asset','face'),/read reached/,'Make is not told to wait when nothing is in flight');
 });
 test('a held Polish send blocks Generate and another polish kind, then releases on error',async()=>{
   let rejectRead;const b=box({generated:0,readSource:()=>new Promise((_,reject)=>{rejectRead=reject;})});
@@ -63,6 +69,10 @@ test('backend change during Tile prepare refuses the late attachment',async()=>{
   const control=b.prepareTile({dataset:{uxTile:'asset'},parentElement:{querySelector:()=>null}});
   release({file:'rolled.png',plan:{source_asset_id:'asset',rolled_file:'rolled.png'}});await control;
   assert.equal(b.applied,1,'unchanged backend still permits preparation');
+  // A switch that has started but not finished leaves backendActive unchanged; the late reply is still refused.
+  const switching=b.prepareTile({dataset:{uxTile:'asset'},parentElement:{querySelector:()=>null}});
+  b.backendSwitching=true;release({file:'rolled.png',plan:{source_asset_id:'asset',rolled_file:'rolled.png'}});await switching;
+  assert.equal(b.applied,1,'a reply that lands mid-switch must not replace Create');
 });
 
 test('shipped Combine boards have no per-picture guidance editor (finding 4 guard)',()=>{
