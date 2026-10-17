@@ -7,9 +7,26 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
-## 2026-10-17 Make follow-ups
+## 2026-10-17 session (agent judgment calls)
 
 - [ ] **#1524 saved pictures from partial runs may be varied and polished.** Agent judgment: a saved asset is usable even when other pictures in its run were not recovered. Queued, running, uncertain and failed runs remain refused; source identity and bytes are still checked when pressed. Synthetic status contracts cover both paths. Reverse by removing `partial` from the two source-status allow-lists in `app/static/studio-workbench.js`.
+- [ ] **Phone run dock, #1495 / #1515:** below 600 px, the batch size and the run tools fold into a "Run tools" panel. The
+  status, Cancel and the outcome stay visible. The readiness line folds away when Generate is enabled. While you type,
+  the dock may take up to 120 px, and Review checks stay visible (the rule that hid them was removed).
+  Reverse: in `app/static/workshop.js` `phoneDock()`, move items back out of `#workshopRunTools`.
+- [ ] **Compare one setting, #1496 / #1518:** this is a client-side group of ordinary Make runs. It does not use the
+  budgeted, blind plan comparison: the values stay visible, and Keep and Make this my character work on every
+  picture. Use Plan comparison for blind comparisons. Reverse: route the sweep through `app/production.py` plans.
+- [ ] **One action at a time across Create and Make, #1520:** while Generate, a plan, a Polish or a Vary is being sent,
+  every other send waits. That includes Polish or Vary on a *different* picture, about a second each. Create's unsent
+  draft state (a typed pose position, an upload in progress) blocks only Create, never Make or the library. Vary and
+  Polish also refuse a source whose run has not completed. Reverse: drop `polishBusy` and `makeVaryBusy` from
+  `sendBusy()` in `studio-workbench.js`.
+- [ ] **Character with a put-away or broken look, #1509 / #1521:** the character stays usable. In Restyle, the
+  note shows and Make falls back to its first usable look. Assumption: that first look is "the goal's default". Polish ideas are in #1522.
+- [ ] **Character from any finished picture, plus a third pose option, #1508:** this follows your "Keep, allow any
+  picture" and "Keep, show depth too" answers. "Make this my character…" appears on any completed picture, and the
+  depth route is a clearly labelled third option in Make.
 
 ## 2026-10-16 overnight session
 
@@ -23,8 +40,11 @@ The owner answered these in the session's question picker; their chosen option i
   option). Follow-up being built.
 - #4 Character cards: "Keep, allow any picture" (offer "Make this my character…" on any finished picture, not only
   kept ones). Follow-up being built.
-- Not yet asked: #5 (Overview retired, part of #1), #8 (unoffered sampler refused at save), #10 (Petiflow Tune
-  starting strengths).
+- #8 unoffered sampler: "Auto-fix instead" (built in #1506: swap to the recipe's default and say so; #1521 does the
+  same after a Tune model switch). #10 Petiflow Tune strengths: "Use adapter defaults" (built in #1514). #5 is part of
+  #1, kept.
+- Six-card cap on Your pictures: "Keep running ones" (running cards stay past six, #1514). Compare when you leave Make:
+  "Stop on navigate" (#1514). Every other walkthrough group: "Keep all three".
 
 ### Review these first (biggest effect on how the Studio feels)
 
