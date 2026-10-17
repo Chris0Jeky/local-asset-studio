@@ -526,7 +526,8 @@
     const a=output.asset_id;if(!a)return'<small class="muted">Saving to the library…</small>';
     const varyBox=document.createElement('div');varyBox.innerHTML=window.StudioWorkbench?.varyMarkup?.(job.preset_id,job.id,a,job.status)||'';
     // Vary keeps its disabled button and linked reason, as Fix and Upscale do.
-    if(!varyBox.querySelector('button:disabled')){const busy=state.varying.has(a),held=state.varyHeld.has(a);for(const b of varyBox.querySelectorAll('[data-ux-vary]')){b.dataset.makeVary=b.dataset.uxVary;b.removeAttribute('data-ux-vary');b.disabled=busy||held;}
+    if(varyBox.querySelector('button:disabled'))for(const hint of varyBox.querySelectorAll('small[id]'))hint.textContent=inMake(hint.textContent);
+    else{const busy=state.varying.has(a),held=state.varyHeld.has(a);for(const b of varyBox.querySelectorAll('[data-ux-vary]')){b.dataset.makeVary=b.dataset.uxVary;b.removeAttribute('data-ux-vary');b.disabled=busy||held;}
       if(busy||held)for(const hint of varyBox.querySelectorAll('small[id]'))hint.textContent=held?VARY_HELD:'Starting the variations for this picture. Please wait.';}const vary=varyBox.innerHTML;
     // Next steps open Make's own picture goals with this picture chosen; other fixes still go through the full handoff.
     const hand=(intent,label)=>'<button type="button" data-ux-handoff="'+escape(a)+'" data-ux-handoff-intent="'+intent+'">'+label+'</button>',from=(intent,label)=>'<button type="button" data-make-from="'+intent+'" data-asset="'+escape(a)+'">'+label+'</button>';

@@ -936,7 +936,7 @@
     if(plan.kind==='reseed')return '<button type="button" data-ux-vary="reseed" '+attrs+' aria-describedby="'+why+'">Vary · new seeds, same recipe</button>'+hint;
     return '<button type="button" data-ux-vary="subtle" '+attrs+' aria-describedby="'+why+'">Vary subtle</button><button type="button" data-ux-vary="strong" '+attrs+' aria-describedby="'+why+'">Vary strong</button>'+hint;
   }
-  function varyPlanFor(presetId,jobId,assetId,mediaType,status){
+  function varyPlanFor(presetId,jobId,assetId,mediaType,status,make){
     const asset=assetState.assets.find(a=>a.id===assetId);
     // Make passes its own, fresher reading of the source run; the shared jobs list can lag it by one refresh.
     const job=jobs.find(j=>j.id===jobId),known=status||job?.status;if(known&&!['completed','partial'].includes(known))return{kind:'none',reason:'Wait for a completed source run before varying it. Inspect unresolved work in Problems.'};
@@ -944,7 +944,8 @@
     const plan=StudioContinuation.varyPlan({preset_id:presetId,job_id:jobId||null,media_type:asset?asset.media_type:mediaType||'image',trashed_at:asset?.trashed_at||null},catalog?.presets||[],jobs,missingByPreset,typeof installedLoras==='undefined'?[]:installedLoras);
     if(plan.kind!=='img2img')return plan;
     if(asset?.bytes>20*1024*1024)return{kind:'none',reason:'This picture exceeds the 20 MiB reference limit. Use a smaller picture.'};
-    // The local run can rule out missing wording; output-specific wording and bytes are verified by readSource on press.
+    // Make sends Vary in one press, so it rules out missing wording first; Create prepares the form and lets you describe it.
+    if(!make)return plan;
     const source=typeof job?.controls?.positive==='string'?{positive:job.controls.positive,prompt_role:plan.source.continuation_capability?.prompt_role,prompt_origin:'submitted-output'}:null;
     const reason=varyProblem(plan,source);return reason?{kind:'none',reason}:plan;
   }
@@ -980,7 +981,7 @@
   function refreshCarriedVary(){syncGalleryVary();syncOpenAssetVary();}
   globalThis.refreshCarriedVary=refreshCarriedVary;
   // Make (make.js) draws the same Vary buttons on its own results; the document click handler below prepares them.
-  globalThis.StudioWorkbench={varyMarkup:(presetId,jobId,assetId,status)=>varyMarkup(varyPlanFor(presetId,jobId,assetId,'image',status),'data-asset="'+escape(assetId)+'" data-preset="'+escape(presetId||'')+'" data-job="'+escape(jobId||'')+'"','uxVaryWhyMake-'+escape(assetId))};
+  globalThis.StudioWorkbench={varyMarkup:(presetId,jobId,assetId,status)=>varyMarkup(varyPlanFor(presetId,jobId,assetId,'image',status,true),'data-asset="'+escape(assetId)+'" data-preset="'+escape(presetId||'')+'" data-job="'+escape(jobId||'')+'"','uxVaryWhyMake-'+escape(assetId))};
   after('renderJobs',syncGalleryVary);after('renderAssets',syncGalleryVary);
   after('openAsset',syncOpenAssetVary);
   async function prepareVary(button){
@@ -1083,7 +1084,7 @@
     try{
       syncReady();
       if(!catalog)throw Error('Recipes are still loading.');
-      const plan=varyPlanFor(presetId,jobId,assetId,'image',status);if(plan.kind==='none')throw Error(plan.reason);
+      const plan=varyPlanFor(presetId,jobId,assetId,'image',status,true);if(plan.kind==='none')throw Error(plan.reason);
       if(plan.kind==='reseed'?strength!=='reseed':!['subtle','strong'].includes(strength))throw Error('This Vary button is out of date. Nothing was sent; press Vary again.');
       const route=plan.route,seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647,base={preset_id:route.id,batch_count:plan.round.count,parent_assets:[assetId],references:[],label:'Make · '+(strength==='reseed'?'Vary':'Vary '+strength)};
       if(plan.kind==='reseed'){

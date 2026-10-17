@@ -246,7 +246,9 @@ test('Vary render checks wording '+JSON.stringify(words)+' without reading the s
     const box=makeVaryBox();box.jobs[0].controls.positive=words;
     box.catalog={presets:catalogPresets.map(p=>p.id==='wai-vary'?{...p,positive:['1','text'],continuation_placeholder:'[place]'}:p)};
     vm.runInContext(between('  function varyMarkup(','  function varyPlanFor(')+'\nthis.markup=plan=>varyMarkup(plan,"","vary-why");',Object.assign(box,{escape:String}));
-    const plan=box.varyPlanFor('wai','job-1','asset-1'),html=box.markup(plan);
+    const plan=box.varyPlanFor('wai','job-1','asset-1','image',undefined,true),html=box.markup(plan);
+    // Create prepares the form and lets you describe the picture, so only Make (one press) pre-checks wording.
+    assert.equal(box.varyPlanFor('wai','job-1','asset-1').kind,'img2img','Create Vary is not pre-checked');
     if(reason){assert.equal(plan.kind,'none');assert.match(plan.reason,reason);assert.match(html,/disabled aria-describedby="vary-why"/);assert.ok(html.includes(plan.reason));}
     else{assert.equal(plan.kind,'img2img');assert.doesNotMatch(html,/disabled/);}
     assert.deepEqual(box.calls,[],'render never reads context or posts');
@@ -256,13 +258,13 @@ test('Vary locally refuses an oversized source or a route needing another pictur
   for(const oversized of [true,false]){
     const box=makeVaryBox();if(oversized)box.assetState.assets[0].bytes=20*1024*1024+1;
     else box.catalog={presets:catalogPresets.map(p=>p.id==='wai-vary'?{...p,continuation_capability:{...p.continuation_capability,source_input:'last_reference'}}:p)};
-    const plan=box.varyPlanFor('wai','job-1','asset-1');assert.equal(plan.kind,'none');assert.match(plan.reason,oversized?/20 MiB/:/more than this picture/);assert.deepEqual(box.calls,[]);
+    const plan=box.varyPlanFor('wai','job-1','asset-1','image',undefined,true);assert.equal(plan.kind,'none');assert.match(plan.reason,oversized?/20 MiB/:/more than this picture/);assert.deepEqual(box.calls,[]);
   }
 });
 
 test('an authored Vary placeholder is refused even without locally known source wording (#1510)',()=>{
   const box=makeVaryBox();box.catalog={presets:catalogPresets.map(p=>p.id==='wai-vary'?{...p,continuation_prompt:'Redraw in [place].',continuation_placeholder:'[place]'}:p)};
-  const plan=box.varyPlanFor('wai','job-1','asset-1');assert.equal(plan.kind,'none');assert.match(plan.reason,/wording filled in/);assert.deepEqual(box.calls,[]);
+  const plan=box.varyPlanFor('wai','job-1','asset-1','image',undefined,true);assert.equal(plan.kind,'none');assert.match(plan.reason,/wording filled in/);assert.deepEqual(box.calls,[]);
 });
 
 const varyPictureStart = makeSource.indexOf('  async function varyPicture(button){');
