@@ -44,6 +44,10 @@ test('a tuned recipe replaces inherited sampler and scheduler with its offered d
     if(sampler==='inherited')notices.push("This look's sampler old-sampler is not offered by Other recipe; using its default target-sampler.");
     if(scheduler==='inherited')notices.push("This look's scheduler old-scheduler is not offered by Other recipe; using its default target-scheduler.");
     assert.equal(result.notice,notices.join(' '));
+    assert.ok(!('notes' in result),'per-variant notes never ride into the /api/jobs body');
+    // A compare reports a variant's swap only when that variant is sent, never for the unsent base run.
+    context.sweepPlan=()=>({axis:{label:'Model'},runs:[{label:'Other recipe',tune}]});
+    const swept=await prepared(look,true);assert.equal(swept.notice,'Original recipe notice.');assert.equal(JSON.stringify(swept.variants[0].notes),JSON.stringify(notices.slice(1)));delete context.sweepPlan;
   }
 });
 
@@ -57,6 +61,7 @@ test('choosing a character uses a live preferred Restyle look or the default and
     click({target:{closest:()=>({dataset:{makeCharacter:'mira'}})}});
     assert.equal(state.character,'mira');assert.equal(state.pick.id,'canon');assert.equal(state.form.who,'Mira');assert.equal(state.form.clothes,'green cloak');
     assert.equal(state.styleLook,expected);assert.equal(state.styleWords,!available.length);assert.ok(said.includes(look_note||'Your character is chosen'));
+    context.goal=()=>({intent:'edit'});said='';click({target:{closest:()=>({dataset:{makeCharacter:'mira'}})}});assert.ok(!said.includes('preferred'),'the look note is for Restyle only');context.goal=()=>({intent:'restyle'});
     delete c.body.look_id;state.styleLook='own choice';choose('mira');assert.equal(state.styleLook,'own choice','no preferred look leaves the current choice alone');
   }
 });

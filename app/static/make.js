@@ -421,16 +421,16 @@
     const seed=reseed?crypto.getRandomValues(new Uint32Array(1))[0]%2147483647:t.seed;
     // The run keeps its own settings, seed locked, so Edit and re-run changes only what you change next.
     const composer={shape,count:batch_count,options};
-    const notices=new Set(result.notices||[]);
     const build=v=>{const controls=structuredClone(base);if(seed!=null&&bound(byId(v.preset)||p,'seed'))controls.seed=seed;
       // Style strength (v.scale) scales the tuned adapters; two decimals, inside the server's 0-2 adapter range.
-      const preset_id=applyTune(controls,look,v),tp=byId(v.preset)||p;
+      const preset_id=applyTune(controls,look,v),tp=byId(v.preset)||p,notes=[];
       // A switched model may not offer the look's sampler or scheduler: use its default and say so (#1506 follow-up).
       for(const key of ['sampler','scheduler']){const choices=tp.choices?.[key],value=controls[key],fallback=tp.defaults?.[key];
-        if(key in controls&&choices?.length&&!choices.includes(value)&&choices.includes(fallback)){controls[key]=fallback;notices.add("This look's "+key+' '+value+' is not offered by '+(tp.name||tp.id)+'; using its default '+fallback+'.');}}
-      return{preset_id,controls,tuned:tuneSummary(look,v),tune:{...v,reseed:controls.seed==null&&v.reseed,seed:controls.seed??v.seed,composer}};};
-    const first=build(t),variants=plan?plan.runs.map(r=>({...build(r.tune),label:r.label})):null;
-    return{...first,batch_count,scene,notice:[...notices].join(' '),...(plan?{axis:plan.axis.label,variants}:{})};
+        if(key in controls&&choices?.length&&!choices.includes(value)&&choices.includes(fallback)){controls[key]=fallback;notes.push("This look's "+key+' '+value+' is not offered by '+(tp.name||tp.id)+'; using its default '+fallback+'.');}}
+      return{preset_id,controls,notes,tuned:tuneSummary(look,v),tune:{...v,reseed:controls.seed==null&&v.reseed,seed:controls.seed??v.seed,composer}};};
+    // A compare reports a variant's swap only once that variant is sent (generateSweep); the base run is not sent then.
+    const {notes,...first}=build(t),variants=plan?plan.runs.map(r=>({...build(r.tune),label:r.label})):null;
+    return{...first,batch_count,scene,notice:[...new Set([...(result.notices||[]),...(plan?[]:notes)])].join(' '),...(plan?{axis:plan.axis.label,variants}:{})};
   }
   let estimateEpoch=0;
   async function estimate(retry=false){
@@ -638,7 +638,7 @@
   function chooseCharacter(id){const c=usableCharacters().find(x=>x.id===id);if(!c)return;choosePicture(c.canon_asset_id);
     state.character=c.id;state.form.who=c.body.who||'';state.form.clothes=c.body.clothes||'';
     if(goal().intent==='restyle'&&c.body.look_id){const list=lookPictures();state.styleLook=(!c.look_note&&list.find(l=>l.id===c.body.look_id)||list[0])?.id||null;state.styleWords=!list.length;}
-    return c.look_note;}
+    return goal().intent==='restyle'&&c.body.look_id?c.look_note:null;}
   const chosenCharacter=()=>{const c=usableCharacters().find(x=>x.id===state.character);return c&&c.canon_asset_id===state.pick?.id?c:null;};
   // Polish plans only read (studio-workbench.js polishPlan); each picture is asked once per kind.
   // A plan that could not be read is asked again only after a 15 s cool-down, never once per redraw (#1438).
@@ -940,16 +940,16 @@
   function leaveWatch(){let left=false;const o=new MutationObserver(records=>{if(view.hidden||records.some(r=>r.oldValue!==null))left=true;});
     o.observe(view,{attributes:true,attributeFilter:['hidden'],attributeOldValue:true});return{stopped:()=>left||view.hidden||!view.isConnected,stop:()=>o.disconnect()};}
   async function generateSweep(look){
-    const runGoal=state.goal,group='compare-'+Date.now().toString(36),watch=leaveWatch();let started=0,n=0;state.busy=true;say('Preparing\u2026');
+    const runGoal=state.goal,group='compare-'+Date.now().toString(36),watch=leaveWatch(),swaps=new Set();let started=0,n=0;state.busy=true;say('Preparing\u2026');
     try{
       const request=await prepared(look,true),runs=request.variants;n=runs.length;
       for(const v of runs){
         if(watch.stopped())break;
         say('Sending '+(started+1)+' of '+n+' to ComfyUI\u2026');
-        const job=await json('/api/jobs',{preset_id:v.preset_id,controls:v.controls,batch_count:1,label:'Make · Compare · '+look.name});
+        const job=await json('/api/jobs',{preset_id:v.preset_id,controls:v.controls,batch_count:1,label:'Make · Compare · '+look.name});for(const n of v.notes||[])swaps.add(n);
         state.runs.splice(started++,0,{job,look:look.name,lookId:look.id,goal:runGoal,scene:request.scene,tune:v.tune,tuned:v.tuned,group,axis:request.axis,value:v.label});remember();renderRuns();poll(job.id);
       }
-      say((started<n?'Started '+started+' of '+n+'; the rest were not sent because you left Make.':'Started '+n+' pictures, one per value of '+request.axis+'. They appear side by side in Your pictures.')+(request.notice?' '+request.notice:''));
+      say((started<n?'Started '+started+' of '+n+'; the rest were not sent because you left Make.':'Started '+n+' pictures, one per value of '+request.axis+'. They appear side by side in Your pictures.')+[request.notice,...swaps].filter(Boolean).map(x=>' '+x).join(''));
       if(started)showRun(group);if(typeof refresh==='function')void refresh();
     }catch(error){if(error.message===SCENE_FIRST)sayMissing(error.message);else say((started?'Started '+started+' of '+n+'; the rest were not sent. ':'')+error.message);}
     finally{watch.stop();state.busy=false;syncOperation();}
