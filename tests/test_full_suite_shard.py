@@ -7,7 +7,6 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
-import textwrap
 import unittest
 
 HERE = Path(__file__).resolve().parent
@@ -56,6 +55,23 @@ class ShardSelectionTests(unittest.TestCase):
                 self.assertCountEqual(flat, [id(module) for module in modules])
                 loads = [sum(module.countTestCases() for module in shard) for shard in picked]
                 self.assertLessEqual(max(loads) - min(loads), max(sizes))
+
+    def test_shards_balance_recorded_seconds_not_test_count(self):
+        def named(module, tests):
+            return unittest.TestSuite([unittest.TestSuite(type("C", (Case,), {"__module__": module})() for _ in range(tests))])
+        # Weights: many 10 s, few 0.2 s, each slow module 100 s, and the unrecorded module
+        # 60 x the recorded mean (210.2 s / 104 tests) = 121.3 s. Count balancing would give
+        # [many] and [the rest]; a flat 1 s for unrecorded tests would give [slow_a, unrecorded].
+        modules = [named("test_many", 100), named("test_few", 2), named("test_slow_a", 1), named("test_slow_b", 1),
+                   named("test_unrecorded", 60)]
+        seconds = {"test_many": 0.1, "test_few": 0.1, "test_slow_a": 100.0, "test_slow_b": 100.0}
+        shards = [list(worker.select_shard(unittest.TestSuite(modules), index, 2, seconds)) for index in (1, 2)]
+        self.assertEqual([modules.index(m) for m in shards[0]], [0, 1, 4])
+        self.assertEqual([modules.index(m) for m in shards[1]], [2, 3])
+        # The committed table is the worker's default and names real modules.
+        table = worker.load_shard_seconds()
+        self.assertGreater(len(table), 100)
+        self.assertTrue(all(name.startswith("test_") and value >= 0 for name, value in table.items()))
 
     def test_parent_passes_an_explicit_shard_and_scrubs_it_from_the_suite(self):
         self.assertIsNone(wrapper.shard({}))

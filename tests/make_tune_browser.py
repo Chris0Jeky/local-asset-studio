@@ -63,14 +63,19 @@ def run():
             page.click('[data-make-goal="character"]'); page.click('[data-make-look="%s"]' % LOOK)
             assert page.evaluate('!document.querySelector("#makeTune").open'), 'Tune is folded shut by default'
             page.click('#makeTune > summary')
-            # Lab round 3 (PR #1481): an adapter measured with Petiflow as made starts at the lab's neutral strength and shows what the lab saw;
-            # an adapter the lab did not test keeps the knowledge base's default (asserted below for ADDED).
+            # Owner decision, 16 Oct: knowledge defaults also apply to lab-tested Petiflow adapters; the lab note stays.
             xilmo = 'anima-xilmo-000020.safetensors'; assert KNOWLEDGE['loras'][xilmo]['default'] == 0.7
             # Part of the name, any case, and Enter in the field adds it (audit v3 N2): "Xilmo" names one adapter for this model type.
             page.fill('#makeLoraSearch', 'Xilmo'); page.press('#makeLoraSearch', 'Enter')
-            assert page.input_value('[data-tune-strength=lora2]') == '0.35' and page.text_content('[data-slot=lora2] .make-lab') == 'Lab with Petiflow: at 0.35 kept the scene; at 0.7 changed the plant.', page.text_content('[data-slot=lora2]')
+            assert page.input_value('[data-tune-strength=lora2]') == str(KNOWLEDGE['loras'][xilmo]['default']) and page.text_content('[data-slot=lora2] .make-lab') == 'Lab with Petiflow: at 0.35 kept the scene; at 0.7 changed the plant.', page.text_content('[data-slot=lora2]')
             assert page.text_content('[data-slot=lora2] b') == page.evaluate('(f) => knowledge.loras[f].label || f.replace(/\\.safetensors$/, "")', xilmo)
             page.click('[data-tune-reset]'); assert not page.query_selector('[data-slot=lora2]') and not posted('/api/jobs')
+            for name in ('anima-ke-ta_style_v1.safetensors', 'anima-newanimastyle-v1.safetensors', 'anima-kieed_v9_step6000.safetensors'):
+                page.fill('#makeLoraSearch', name); page.click('[data-tune-add]')
+                assert float(page.input_value('[data-tune-strength=lora2]')) == KNOWLEDGE['loras'][name]['default'], name
+                note = page.text_content('[data-slot=lora2] .make-lab'); assert 'Lab with Petiflow:' in note, note
+                if 'kieed' in name: assert 'flattened the face' in note, note
+                page.click('[data-tune-reset]')
             # Several matches are offered as choices; choosing one adds exactly that one.
             page.fill('#makeLoraSearch', 'anima'); page.click('[data-tune-add]')
             choices = page.eval_on_selector_all('#makeLoraChoices [data-tune-pick]', 'b => b.map(x => x.dataset.tunePick)')
