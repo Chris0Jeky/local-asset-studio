@@ -84,13 +84,13 @@ Open **Tune this look** under the words box. It is folded by default. The line n
 
 - Each row has a tick (on or off), the adapter name, a strength slider from 0 to 2, **Remove**, and a note: its trigger word, "No trigger word", or "Fixed in this recipe".
 - Strength 0 turns an adapter off. The Studio removes it from the picture's recipe.
-- **Add an installed adapter**: type part of a name, choose it from the list, press **Add**. Only adapters that are installed and known to fit this model type are listed. The strength starts at the adapter's usual value, or, for the Petiflow adapters the lab tested, at the lab's neutral value (see above).
+- **Add an installed adapter**: type part of a name, choose it from the list, press **Add**. Only adapters that are installed and known to fit this model type are listed. The strength starts at the adapter's knowledge-base recommended value, including the adapters tested with Petiflow.
 - If you add an adapter that has a trigger word, the Studio adds that word to your text for you (the row says "added to your words"). The look's own adapters already have theirs.
 - If all adapter slots are in use, **Add** is disabled and the page says "All adapter slots of this recipe are in use; remove one first."
 - **Style strength** (under **Shape** and **How many**; with **Tune this look** open, it sits above the adapters instead) scales all the look's adapters together. 100% is the look as made. It multiplies the per-adapter strengths above.
 - What the lab saw: PetiFlow at 1.0 and Ringeko at 0.6 and 0.8 worked. Adding a detail, lighting or hand adapter at 0.4 to 0.6 on top of Ringeko did not make a measurable difference on one clean scene. More tags and more adapters were not a proven fix for a missing prop. The lab never tried those extra adapters at 1.0.
 - **Adding style adapters to Flat pastel close-up.** On one fern scene (round 3, one seed), the lab added Anima style adapters to PetiFlow at 1.0. At low strength they were neutral: Ke-ta at 0.35 and 0.7, Xilmo at 0.35, NEWANIMASTYLE at 0.5. Ke-ta and Xilmo together, at 0.35 each, were neutral too. At their defaults they were not: Xilmo at 0.7 turned the fern into broad leaves, NEWANIMASTYLE at 1.0 changed the plant and the face, and Kieed at 0.5 (and at 0.25) flattened the face and changed the plant. Ke-ta at its default 0.7 was neutral.
-- Make starts the tested ones at the neutral strength and shows the lab note under the row. Kieed has no neutral value in the lab: both 0.5 (its usual start) and 0.25 harmed the face and plant, so leave it off unless you want to experiment.
+- Make starts every added adapter at its knowledge-base recommended strength and keeps the lab note under the row. Kieed has no neutral value in the lab: both 0.5 (its usual start) and 0.25 harmed the face and plant, so leave it off unless you want to experiment.
 - Neutral is not better. None of these adapters improved the picture in the lab. Prefer the untuned look unless you want a different flavour.
 
 **Quality and speed, Leave out, Seed**
@@ -138,7 +138,9 @@ The anime looks run in about 25 to 45 seconds a picture in the lab, so a draft e
 
 **Make this my character…** appears on every finished picture saved in the library, including Compare pictures, whether kept, unreviewed or marked **Not this**. Name the character and save: this picture becomes its canon without making another picture or changing its review. A canon picture says **Canon of** followed by the character's name. The character's **Line-up** keeps the canon first, then kept descendants.
 
-**Compare looks.** In the look gallery, press **Compare looks**. Choose two or three looks, type one scene, and press **Generate** (the button reads "Generate 3 pictures"). Each look runs once, as made, at its own shape, from one seed where its recipe takes a seed. The pictures share one card. If you already picked a look, press **Change look** first to get the gallery back, and **Back to one look** to leave. Compare ignores your Tune changes.
+**Compare looks.** In the look gallery, press **Compare looks**. Choose two or three looks, type one scene, and press **Generate** (the button reads "Generate 3 pictures"). Each look runs once, as made, at its own shape, from one seed where its recipe takes a seed. The pictures share one card. If you already picked a look, press **Change look** first to get the gallery back, and **Back to one look** to leave. Compare looks ignores your Tune changes.
+
+**Compare one setting.** To see what one setting does to one look, for example Petiflow alone against Petiflow with Ke-ta at 0.35, or 25 against 13 steps, choose the look and open **Compare one setting** under **Tune this look**. Pick the **Setting to vary**: **Steps**, an adapter's strength (0 turns it off), or **Model** (the models Tune offers for this look). Give two or three values; the first two are filled in for you. Press **Generate** (it reads "Generate 3 pictures"). Every picture uses the same words, shape, tune and seed; only that setting changes. They share one card, **Compare a setting**, and each picture is labelled with its value. Your Tune applies to every picture, so to compare an added adapter, add it in Tune first, then vary its strength. While **Compare one setting** is open, **How many** is one picture per value; fold it shut to make pictures as usual. Leaving Make while it sends stops the pictures not yet sent. These are not blind: for a budgeted, blind comparison use **Plan comparison** (section 6).
 
 **Vary.** The **Vary** buttons under a picture open the Full editor with new seeds or a nearby variation prepared. They do not run. Press **Generate** there.
 
@@ -233,6 +235,7 @@ Read the line under **Generate**. It says why. The same text is the button's too
 | The Studio worker has stopped. Restart the Studio before generating. | Close and reopen the Studio. Make sure nothing is running first. |
 | This look’s recipe is not in the library. | The look points at a recipe that is not installed. Pick another look. |
 | Choose at least two looks to compare. | Compare looks needs two or three. |
+| Compare one setting: choose the setting to vary. (or: give two or three values, give different values) | Finish **Compare one setting**, or fold it shut to make pictures as usual. |
 
 If Generate is enabled and you press it with an empty box, the page says "Describe your picture first, or press Use the example." and puts the cursor in the box.
 

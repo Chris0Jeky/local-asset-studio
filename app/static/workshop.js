@@ -358,6 +358,24 @@
     const compare = q('#planComparison'), newSeed = q('#randomSeed');
     for (const tool of [newSeed, compare]) if (tool) runTools.append(tool);
     actions.after(runTools);
+    const phonePanel = el('div', 'wk-phone-panel'), phoneTools = disclosure('workshopRunTools', 'Run tools', [phonePanel]);
+    const batchLabel = q('#batch')?.closest('label'), phoneWidth = w.matchMedia('(max-width:600px)');
+    // Phones fold only the secondary tools away; the blocker, status line, Cancel and run summary stay in view, because they say why Generate is off or what a run did.
+    phoneTools.hidden = true; actions.before(phoneTools);
+    phoneTools.addEventListener('keydown', e => { if (e.key === 'Escape' && phoneTools.open) { phoneTools.open = false; phoneTools.querySelector('summary').focus(); } });
+    const phoneDock = () => {
+      // Move the original controls, preserving their handlers; wide screens keep the original grid.
+      const held = d.activeElement && dock.contains(d.activeElement) ? d.activeElement : null;
+      if (phoneWidth.matches) {
+        dock.prepend(eta); actions.after(dockInfo); if (batchLabel) phonePanel.append(batchLabel); phonePanel.append(runTools);
+      } else {
+        dockInfo.insertBefore(eta, reviewButton); dock.prepend(dockInfo); if (batchLabel) actions.prepend(batchLabel);
+        actions.after(runTools); phoneTools.open = false;
+      }
+      phoneTools.hidden = !phoneWidth.matches;
+      if (held && held.isConnected && d.activeElement !== held) held.focus({preventScroll:true});
+    };
+    phoneWidth.addEventListener('change', phoneDock); phoneDock();
     // Remove only the now-empty legacy caption, not controls injected by another feature.
     const caption = [...editor.children].find(n => n.classList.contains('section-title'));
     if (caption && !caption.querySelector('button,input,select,textarea')) caption.hidden = true;
@@ -582,6 +600,7 @@
       const blocked = q('#generate').disabled, first = q('#uxBlockers .ux-blocker p')?.textContent;
       const readinessText = blocked ? first || 'Review readiness before generating.' : 'No blockers reported';
       const blockers = blocked ? [...d.querySelectorAll('#uxBlockers .ux-blocker')].filter(n => n.querySelector('p')?.textContent) : [];
+      dockInfo.classList.toggle('wk-clear', !blocked);
       text(readiness, readinessText + (blockers.length > 1 ? ' (+'+(blockers.length-1)+' more)' : ''));
       text(setupReadiness, blockers.length > 1 ? blockers.length+' things to fix before generating' : readinessText);
       renderBlockers(blockers);

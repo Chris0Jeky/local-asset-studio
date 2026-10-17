@@ -497,11 +497,94 @@ def run(shots):
         assert page.locator('.make-compare .make-canon').count() >= 3 and not page.locator('.make-compare [data-make-character-save]').count(), 'a canon picture is named, not offered again'
         saved_characters = list(CHARACTERS); no_characters(); kept_review = fixture.ASSETS[0]['review']; fixture.ASSETS[0]['review'] = 'unreviewed'
         page.reload(); page.wait_for_selector('.make-compare figure img', timeout=8000); page.wait_for_function('!!assetState?.assets?.length'); page.evaluate('StudioMake.refresh()')
+        page.locator('.make-compare').first.scroll_into_view_if_needed()
         page.wait_for_selector('.make-compare [data-make-character-save]', timeout=8000)
         before = len(jobs()); page.locator('.make-compare [data-make-character-save]').first.click()
         assert page.locator('.make-compare .make-character-form').count() >= 1 and len(jobs()) == before, 'the form opens on the compare card and submits nothing'
         page.locator('.make-compare [data-make-character-cancel]').first.click(); assert not page.locator('.make-character-form').count()
         CHARACTERS.extend(saved_characters); fixture.ASSETS[0]['review'] = kept_review
+        page.locator('[data-make-goal="character"]').click()
+        if page.locator('[data-make-change]').count(): page.locator('[data-make-change]').click()
+        page.locator('[data-make-compare]').first.click()
+        for look in ids[:3]: page.locator('[data-make-look="%s"]' % look).click()
+        page.locator('#makeScene').fill('An adult lantern keeper in a pine wood at dusk')
+        # Leaving Make during either awaited request stops the remaining looks, including a quick leave-and-return.
+        for phase, count, quick_return in (('prepare', 0, False), ('jobs', 1, False), ('jobs', 1, True)):
+            pattern = '**/api/looks/prepare' if phase == 'prepare' else '**/api/jobs'
+            def leave_make(route):
+                if route.request.method != 'POST': return route.continue_()
+                response = route.fetch()  # fixture response only; no ComfyUI
+                page.evaluate('showView("assets")' + (';showView("make")' if quick_return else ''))
+                route.fulfill(response=response)
+            page.route(pattern, leave_make)
+            before = len(jobs()); page.locator('#makeGenerate').click()
+            message = 'Started %d of 3; the rest were not sent because you left Make.' % count
+            page.wait_for_function('s=>document.querySelector("#makeStatus")?.textContent===s', arg=message, timeout=8000)
+            assert len(jobs()) == before + count, (phase, quick_return, jobs()[before:])
+            page.evaluate('showView("make")'); page.wait_for_timeout(200)
+            assert page.locator('#makeStatus').inner_text() == message and len(jobs()) == before + count
+            if count:
+                assert page.locator('.make-compare [data-make-review=selected]').count() >= 3, 'sent jobs remain on their cards'
+            page.unroute(pattern, leave_make)
+        # Compare one setting (#1496): one look with its Tune, one setting varied, words and seed held; one press sends one job per
+        # value into one card, and the jobs differ only in that setting.
+        page.locator('[data-make-compare]').first.click(); pick_look('look-anima-pearly-petiflow')
+        page.locator('#makeScene').fill('An adult lantern keeper in a pine wood at dusk')
+        assert page.locator('#makeGenerate').inner_text() == 'Generate' and page.locator('#makeCount').is_enabled()
+        page.locator('#makeSweep > summary').click(); page.wait_for_function('document.querySelector("#makeWhy").textContent.includes("choose the setting")')
+        assert page.locator('#makeGenerate').is_disabled() and 'choose the setting to vary' in page.locator('#makeWhy').inner_text(), page.locator('#makeWhy').inner_text()
+        assert page.locator('#makeCount').is_disabled() and page.locator('#makeCount').get_attribute('aria-describedby') == 'makeSweepOne' and page.locator('#makeSweepOne').is_visible()
+
+        def changed(a, b): return {k for k in set(a) | set(b) if a.get(k) != b.get(k)}
+
+        def press(n):
+            before = len(jobs()); page.locator('#makeGenerate').click()
+            page.wait_for_function('n=>document.querySelector("#makeStatus")?.textContent.startsWith("Started "+n+" pictures, one per value of")', arg=n, timeout=8000)
+            sent = jobs()[before:]; assert len(sent) == n, sent
+            assert all(j['label'].startswith('Make · Compare · ') and j['batch_count'] == 1 for j in sent) and len({j['controls']['seed'] for j in sent}) == 1, sent
+            assert len({j['controls']['positive'] for j in sent}) == 1, 'the words are held'
+            page.wait_for_function('n=>document.querySelector(".make-compare")?.querySelectorAll("figure").length===n', arg=n, timeout=8000)
+            return sent
+        page.select_option('#makeSweepAxis', 'steps')
+        assert [page.input_value('[data-sweep-value="%d"]' % i) for i in range(3)] == ['25', '13', ''], 'as made, then the draft count'
+        page.fill('[data-sweep-value="2"]', '13')
+        assert page.locator('#makeGenerate').is_disabled() and 'give different values' in page.locator('#makeWhy').inner_text()
+        page.fill('[data-sweep-value="2"]', '40')
+        page.wait_for_function('document.querySelector("#makeEstimate").textContent.startsWith("3 pictures, one per value")')
+        assert page.locator('#makeGenerate').inner_text() == 'Generate 3 pictures' and page.locator('#makeSweepSum').inner_text() == '25 steps vs 13 steps vs 40 steps'
+        shot('compare-setting-composer')
+        sent = press(3)
+        assert all(changed(sent[0]['controls'], j['controls']) <= {'steps'} for j in sent) and [j['controls']['steps'] for j in sent] == [25, 13, 40], sent
+        assert len({j['preset_id'] for j in sent}) == 1
+        card = page.locator('.make-compare').first
+        assert card.locator('figcaption b').all_inner_texts() == ['25 steps', '13 steps', '40 steps'] and 'Compare a setting' in card.locator('header b').inner_text()
+        assert '3 values of Steps' in card.locator('header small').inner_text(), card.locator('header small').inner_text()
+        shot('compare-setting-results', '.make-compare')
+        # Adapter strength, off included: only that adapter's strength differs.
+        page.select_option('#makeSweepAxis', 'adapter:lora')
+        assert [page.input_value('[data-sweep-value="%d"]' % i) for i in range(2)] == ['1', '0']
+        sent = press(2)
+        assert all(changed(sent[0]['controls'], j['controls']) <= {'lora'} for j in sent) and [j['controls']['lora'] for j in sent] == [1, 0], sent
+        assert page.locator('.make-compare').first.locator('figcaption b').all_inner_texts()[1].endswith(' off')
+        # Model: the same controls, another recipe of the same model type.
+        page.select_option('#makeSweepAxis', 'model')
+        sent = press(2)
+        assert all(changed(sent[0]['controls'], j['controls']) <= {'sampler'} for j in sent) and len({j['preset_id'] for j in sent}) == 2, sent
+        clicks['compare-setting'] = 4  # look, Compare one setting, the setting, Generate (+ one scene; values prefilled)
+        page.locator('#makeSweep > summary').click(); page.wait_for_function('document.querySelector("#makeGenerate").textContent==="Generate"')
+        assert page.locator('#makeGenerate').inner_text() == 'Generate' and page.locator('#makeCount').is_enabled(), 'folded shut, Make is as before'
+        before = len(jobs()); page.locator('#makeGenerate').click()
+        page.wait_for_function('document.querySelector("#makeStatus")?.textContent.startsWith("Started. ")', timeout=8000); assert len(jobs()) == before + 1
+        # Edit and re-run (like Make the final and Same words, another look) folds the look's sweep shut: Generate then sends one job (#1518 review).
+        page.locator('#makeSweep > summary').click(); page.wait_for_function('document.querySelector("#makeGenerate").textContent==="Generate 2 pictures"')
+        page.locator('.make-run:not(.make-compare) [data-make-rerun]').first.click(); page.wait_for_selector('#makeScene')
+        assert not page.evaluate('document.querySelector("#makeSweep").open') and page.locator('#makeGenerate').inner_text() == 'Generate' and page.locator('#makeCount').is_enabled()
+        before = len(jobs()); page.locator('#makeGenerate').click()
+        page.wait_for_function('document.querySelector("#makeStatus")?.textContent.startsWith("Started. ")', timeout=8000); page.wait_for_timeout(300); assert len(jobs()) == before + 1, jobs()[before:]
+        # Night Shift's recipe takes its step count from the graph (8): the served catalog's defaults carry it (Codex on #1518).
+        page.locator('[data-make-goal="scene"]').click(); pick_look('look-night-shift-retro-anime'); page.locator('#makeSweep > summary').click()
+        page.select_option('#makeSweepAxis', 'steps'); assert [page.input_value('[data-sweep-value="%d"]' % i) for i in range(2)] == ['8', '4']
+        page.locator('#makeSweep > summary').click(); page.wait_for_function('document.querySelector("#makeGenerate").textContent==="Generate"')
         # A picture goal whose copied reference does not match the verified source sends nothing.
         page.route('**/api/assets/reference', lambda route: route.fulfill(json={'file': 'x' * 32 + '_ref.png', 'sha256': '0' * 64, 'parent_asset': 'asset-1', 'context': {}}))
         goal('edit'); page.locator('#makeF-change').fill('give her a hat'); before = len(jobs())
@@ -577,6 +660,33 @@ def run(shots):
         assert not fresh.locator('.make-note').count(), 'a dismissed note is not offered again'
         assert len(jobs()) == before_note, 'the migration note submits nothing'
         fresh.close()
+        # Restore more than six runs: one Compare at the boundary, old completed cards, and ongoing overflow.
+        retained = [dict(id='retained-%d' % i, look='Look %d' % i, status='completed') for i in range(5)]
+        retained += [dict(id='retained-pair-%d' % i, look='Pair %d' % i, status='completed', group='retained-pair') for i in range(3)]
+        retained += [dict(id='retained-old', look='Old', status='completed'), dict(id='retained-queued', look='Queued', status='queued'),
+                     dict(id='retained-uncertain', look='Unknown', status='uncertain'), dict(id='retained-mix-a', look='Done', status='completed', group='retained-mix'),
+                     dict(id='retained-mix-b', look='Unknown', status='uncertain', group='retained-mix')]
+        records = {r['id']: dict(id=r['id'], status=r['status'], outputs=[], batch_count=1) for r in retained}; reads = []
+        history = browser.new_page(); history.on('pageerror', lambda e: errors.append(str(e)))
+        def read_run(route):
+            id = route.request.url.rsplit('/', 1)[-1]; reads.append(id); route.fulfill(json=records[id])
+        history.route('**/api/jobs/retained-*', read_run)
+        history.add_init_script("if(!localStorage.getItem('studio.make'))localStorage.setItem('studio.make', %s)" % json.dumps(json.dumps({'goal': 'character', 'runs': retained})))
+        history.goto(origin + '/#make'); history.wait_for_selector('[data-run="retained-mix"]')
+        assert history.locator('.make-run').count() == 9 and history.locator('[data-run="retained-pair"] figure').count() == 3
+        assert not history.locator('[data-run="retained-old"]').count()
+        assert history.locator('[data-run="retained-mix"] header .make-run-state').inner_text() == '1 of 2 done'
+        expected = [r['id'] for r in retained if r['id'] != 'retained-old']
+        assert history.evaluate("JSON.parse(localStorage.getItem('studio.make')).runs.map(r=>r.id)") == expected
+        history.reload(); history.wait_for_selector('[data-run="retained-mix"]')
+        assert history.locator('.make-run').count() == 9 and history.locator('[data-run="retained-pair"] figure').count() == 3
+        history.wait_for_function('document.querySelector("[data-run=retained-queued]")!==null')
+        history.wait_for_timeout(2800)
+        assert all(reads.count(id) >= 3 for id in ('retained-queued', 'retained-uncertain', 'retained-mix-b')), reads
+        records['retained-queued']['status'] = 'completed'
+        history.wait_for_selector('[data-run="retained-queued"]', state='detached', timeout=5000)
+        assert history.evaluate("JSON.parse(localStorage.getItem('studio.make')).runs.map(r=>r.id)") == [id for id in expected if id != 'retained-queued']
+        history.close()
         assert not errors, errors
         browser.close()
     server.shutdown()

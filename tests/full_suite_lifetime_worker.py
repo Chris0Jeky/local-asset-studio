@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import faulthandler
+import json
 import multiprocessing
 from pathlib import Path
 import sys
@@ -43,6 +44,10 @@ MARKER_SEPARATION_SECONDS = 0.25
 # Keep the origin bounded, and enable it only in the dedicated worker's main
 # thread, not at import time in the parent or focused in-process tests.
 COROUTINE_ORIGIN_DEPTH = 8
+# Per-module mean seconds per test from a complete hosted Windows run's END lines.
+# Refresh from the shard logs of a later run when shards drift toward the
+# budget; modules added since weigh the recorded mean.
+SHARD_SECONDS = Path(__file__).with_name("full_suite_shard_seconds.json")
 
 
 def emit_current_test(stream=sys.stderr, prefix: str = "LIFETIME") -> None:
@@ -180,22 +185,44 @@ def parse_shard(value: str) -> tuple[int, int]:
     return index, count
 
 
-def select_shard(suite: unittest.TestSuite, index: int, count: int) -> unittest.TestSuite:
-    """Keep whole test modules together and balance them across shards by test count.
+def load_shard_seconds(path: Path = SHARD_SECONDS) -> dict[str, float]:
+    """Recorded mean seconds per test by module; empty (count balancing) if absent."""
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))["seconds_per_test"]
+    except FileNotFoundError:
+        return {}
+
+
+def _tests(suite):
+    for item in suite:
+        if isinstance(item, unittest.TestSuite): yield from _tests(item)
+        else: yield item
+
+
+def select_shard(suite: unittest.TestSuite, index: int, count: int, seconds_per_test=None) -> unittest.TestSuite:
+    """Keep whole test modules together and balance them across shards by recorded time.
 
     Discovery yields one suite per module, so module and class fixtures stay in
-    one process. Largest modules are placed first on the lightest shard, ties by
-    position, so every shard of the same checkout selects the same disjoint set.
+    one process. Each test weighs its module's recorded mean seconds per test
+    (keyed by the test id's first component); a module with no record weighs the
+    mean of the recorded tests, so with no records at all this is count balancing.
+    Heaviest modules are placed first on the lightest shard, ties by position, so
+    every shard of the same checkout selects the same disjoint set (#1511).
     """
     modules = list(suite)
     if count == 1:
         return suite
-    order = sorted(range(len(modules)), key=lambda position: (-modules[position].countTestCases(), position))
-    loads, owner = [0] * count, {}
+    seconds_per_test = seconds_per_test or {}
+    names = [[test.id().split(".")[0] for test in _tests(module)] for module in modules]
+    known = [seconds_per_test[name] for module in names for name in module if name in seconds_per_test]
+    default = sum(known) / len(known) if known else 1.0
+    weights = [sum(seconds_per_test.get(name, default) for name in module) for module in names]
+    order = sorted(range(len(modules)), key=lambda position: (-weights[position], position))
+    loads, owner = [0.0] * count, {}
     for position in order:
         target = min(range(count), key=lambda shard: (loads[shard], shard))
         owner[position] = target
-        loads[target] += modules[position].countTestCases()
+        loads[target] += weights[position]
     return unittest.TestSuite(module for position, module in enumerate(modules) if owner[position] == index - 1)
 
 
@@ -232,7 +259,7 @@ def main(argv=None) -> int:
     work_observer.install()
     suite = unittest.defaultTestLoader.discover(str(start_dir), pattern=args.pattern)
     if args.shard != (1, 1):
-        suite = select_shard(suite, *args.shard)
+        suite = select_shard(suite, *args.shard, load_shard_seconds())
         print(
             f"LIFETIME SHARD {args.shard[0]}/{args.shard[1]}: "
             f"{len(list(suite))} modules, {suite.countTestCases()} tests",

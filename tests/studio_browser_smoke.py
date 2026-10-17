@@ -347,6 +347,8 @@ def run(screenshots):
                 looks=v.evaluate(hit,'details.ux-looks > summary')
                 if not looks:print(f'NOTE: details.ux-looks > summary is not in the DOM at {width}x{height}',flush=True)
                 for box in looks:check(box['w']>=24 and box['h']>=24,f"{box['name']} pointer target is {box['w']:.1f}x{box['h']:.1f} at {width}x{height}")
+                # On phones Plan a comparison lives in the run dock's Run tools disclosure (#1495).
+                if not v.locator('#planComparison').is_visible():v.click('#workshopRunTools > summary')
                 v.click('#planComparison');v.wait_for_selector('#experimentDialog[open]')
                 for control in ('#prepareExperiment','#cancelExperiment'):check(v.evaluate(reachable,[control,'#experimentDialog']),f'{control} is on screen when Plan a comparison opens at {width}x{height}')
                 v.keyboard.press('Escape');v.evaluate("showView('assets');openAsset('asset-1')");v.wait_for_selector('#assetDialog[open]');v.wait_for_timeout(200)

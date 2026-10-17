@@ -4,6 +4,7 @@ on:
     paths:
       - 'tests/check_full_suite_lifetime.py'
       - 'tests/full_suite_lifetime_worker.py'
+      - 'tests/full_suite_shard_seconds.json'
       - 'tests/runtime_observability.py'
       - 'tests/executor_work_observability.py'
       - 'tests/loopback_transport_audit.py'
@@ -15,6 +16,7 @@ on:
     paths:
       - 'tests/check_full_suite_lifetime.py'
       - 'tests/full_suite_lifetime_worker.py'
+      - 'tests/full_suite_shard_seconds.json'
       - 'tests/runtime_observability.py'
       - 'tests/executor_work_observability.py'
       - 'tests/loopback_transport_audit.py'
@@ -46,15 +48,18 @@ jobs:
     # One process for the whole suite outgrew any sane single-job budget on the
     # hosted Windows runner: run 36299263974 started 4,318 of about 5,140 tests in
     # its 1,500 s with no hung test (Linux check.yml runs all of them in about
-    # 700 s). Three disjoint shards keep every module under the same lifetime,
+    # 700 s). Four disjoint shards keep every module under the same lifetime,
     # thread, process and ResourceWarning checks; the worker keeps each module
-    # whole and balances modules by test count. END lines carry each test's
-    # duration, so a timed-out shard still shows where the time went.
-    name: windows-full-suite (shard ${{ matrix.shard }}/3)
+    # whole and balances modules by the recorded seconds in
+    # tests/full_suite_shard_seconds.json. Three time-balanced shards priced at
+    # about 700 s each (78% of 900), too little headroom for a growing suite;
+    # count balancing let one shard draw 865+ s (#1511). END lines carry each
+    # test's duration, so a timed-out shard still shows where the time went.
+    name: windows-full-suite (shard ${{ matrix.shard }}/4)
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        shard: [1, 2, 3, 4]
     runs-on: windows-latest
     timeout-minutes: 25
     steps:
@@ -67,4 +72,4 @@ jobs:
       - run: python tests/check_full_suite_lifetime.py
         env:
           FULL_SUITE_LIFETIME_BUDGET_SECONDS: '900'
-          FULL_SUITE_SHARD: '${{ matrix.shard }}/3'
+          FULL_SUITE_SHARD: '${{ matrix.shard }}/4'

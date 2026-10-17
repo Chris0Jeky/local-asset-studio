@@ -478,8 +478,8 @@ class LifetimeDiagnosticsTests(unittest.TestCase):
         )
         lane = workflow[workflow.index("  windows-full-suite:"):]
         self.assertIn(f"{wrapper.BUDGET_VARIABLE}: '900'", lane)
-        self.assertIn("shard: [1, 2, 3]", lane)
-        self.assertIn(f"{wrapper.SHARD_VARIABLE}: '${{{{ matrix.shard }}}}/3'", lane)
+        self.assertIn("shard: [1, 2, 3, 4]", lane)
+        self.assertIn(f"{wrapper.SHARD_VARIABLE}: '${{{{ matrix.shard }}}}/4'", lane)
         self.assertIn("timeout-minutes: 25", lane)
         self.assertNotIn("timeout-minutes: 25", workflow[: workflow.index("  windows-full-suite:")])
 
