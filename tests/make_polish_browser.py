@@ -118,7 +118,7 @@ def make_checks(browser, origin):
     before = len(jobs())
     page.evaluate("()=>{document.querySelector('#makeEditor').click();document.querySelector('#makeGenerate').click();}")
     page.wait_for_selector('#createView', state='visible'); assert len(jobs()) == before
-    # Saved IDs survive remember() while restoration is still in flight; six is the deliberate limit.
+    # All six ongoing runs survive remember() while restoration is still in flight.
     global RESTORE_DELAY
     saved = [dict(id='make-restore-'+str(i), look='First look', lookId=LOOKS[0]['id'], goal='character', scene='A quiet garden') for i in range(6)]
     for r in saved: MAKE_JOBS[r['id']] = dict(id=r['id'], status='running', outputs=[], created_at=1789228800)
@@ -185,10 +185,10 @@ def make_checks(browser, origin):
     assert page.locator('.make-action-reason').count() == 1 and page.locator('.make-action-reason').is_visible()
     assert 'Please wait' in page.locator('.make-action-reason').inner_text()
     page.evaluate('()=>finishPolish({id:"fixture-finish",status:"completed",outputs:[]})')
-    # Only shown runs are kept and polled (#1438): the polish run made a seventh card, so the oldest stops being read.
-    page.wait_for_function('document.querySelectorAll("#makeRuns .make-run").length===6'); page.wait_for_timeout(3000); READS.clear(); page.wait_for_timeout(3000)
+    # #1514 keeps ongoing cards beyond the six finished cards: the seventh card must not evict an active run.
+    page.wait_for_function('document.querySelectorAll("#makeRuns .make-run").length===7'); page.wait_for_timeout(3000); READS.clear(); page.wait_for_timeout(3000)
     shown = page.eval_on_selector_all('#makeRuns [data-run]', 'n=>n.map(e=>e.dataset.run)')
-    assert saved[5]['id'] not in shown and saved[5]['id'] not in READS and saved[4]['id'] in READS, (shown, READS)
+    assert saved[5]['id'] in shown and saved[5]['id'] in READS and saved[4]['id'] in READS, (shown, READS)
     # Workspace masks carry the same filename in source; titles use prompt excerpt and date.
     assets = [dict(fixture.ASSETS[0], id='mask', filename='opaque.png', source={'filename':'Anime-Face-Mask_00001_.png'}), dict(fixture.ASSETS[1], prompt_excerpt='A moonlit garden')]
     page.route('**/api/workspace', lambda route: route.fulfill(json={'assets': assets}))

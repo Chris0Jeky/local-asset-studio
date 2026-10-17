@@ -125,7 +125,7 @@ const SC = require('../app/static/continuation-core.js');
 // The catalog's own wai-vary route; continuation_capability is computed by the server from the graph, so it is stated here.
 const authored = JSON.parse(fs.readFileSync(path.join(__dirname, '../presets/catalog.json'), 'utf8')).presets.find(p => p.id === 'wai-vary');
 const catalogPresets = [
-  {id: 'wai', name: 'WAI', seed: ['5', 'seed'], defaults: {}, continuation_capability: {operation: 'new-image'}},
+  {id: 'wai', name: 'WAI', seed: ['5', 'seed'], defaults: {}, continuation_capability: {operation: 'new-image', prompt_role: 'description'}},
   {id: 'plain', name: 'Plain', seed: ['5', 'seed'], continuation_capability: {operation: 'new-image'}},
   {...authored, continuation_capability: {consumes_source: true, operation: 'image-to-image', prompt_role: 'description', requires_mask: false, template_sha256: 'd'.repeat(64)}},
 ];
@@ -231,6 +231,40 @@ test('Make Vary refuses with its reason before copying anything (#1497)', async 
 
 // make.js side: one press calls StudioWorkbench.vary once, adds the run and polls it; a failure only says so.
 const makeSource = fs.readFileSync(path.join(__dirname, '../app/static/make.js'), 'utf8');
+test('Make keeps disabled Vary visible with its linked reason (#1510)',()=>{
+  const markup='<button type="button" disabled aria-describedby="vary-why">Vary</button><small id="vary-why">Needs a source picture.</small>';
+  const box={state:{varying:new Set(),varyHeld:new Set(),polish:{},polishing:new Set()},escape:String,POLISH:{},
+    window:{StudioWorkbench:{varyMarkup:()=>markup}},document:{createElement:()=>({innerHTML:'',querySelector:()=>({disabled:true}),querySelectorAll:()=>[]})},
+    marks:()=>'',characterMarkup:()=>'',polishKinds:()=>[],merged:()=>false};
+  const start=makeSource.indexOf('  function actions('),end=makeSource.indexOf('\n  // My character',start);
+  const actions=vm.runInNewContext(makeSource.slice(start,end)+';actions',box),html=actions({id:'job'},{asset_id:'asset'});
+  assert.ok(html.includes(markup),'disabled Vary and its aria-describedby hint stay on the card');
+});
+
+for(const [words,reason] of [['',/No description was kept/],['a knight [place]',/wording filled in/],['a knight',null]])
+test('Vary render checks wording '+JSON.stringify(words)+' without reading the source (#1510)',()=>{
+    const box=makeVaryBox();box.jobs[0].controls.positive=words;
+    box.catalog={presets:catalogPresets.map(p=>p.id==='wai-vary'?{...p,positive:['1','text'],continuation_placeholder:'[place]'}:p)};
+    vm.runInContext(between('  function varyMarkup(','  function varyPlanFor(')+'\nthis.markup=plan=>varyMarkup(plan,"","vary-why");',Object.assign(box,{escape:String}));
+    const plan=box.varyPlanFor('wai','job-1','asset-1'),html=box.markup(plan);
+    if(reason){assert.equal(plan.kind,'none');assert.match(plan.reason,reason);assert.match(html,/disabled aria-describedby="vary-why"/);assert.ok(html.includes(plan.reason));}
+    else{assert.equal(plan.kind,'img2img');assert.doesNotMatch(html,/disabled/);}
+    assert.deepEqual(box.calls,[],'render never reads context or posts');
+});
+
+test('Vary locally refuses an oversized source or a route needing another picture (#1510)',()=>{
+  for(const oversized of [true,false]){
+    const box=makeVaryBox();if(oversized)box.assetState.assets[0].bytes=20*1024*1024+1;
+    else box.catalog={presets:catalogPresets.map(p=>p.id==='wai-vary'?{...p,continuation_capability:{...p.continuation_capability,source_input:'last_reference'}}:p)};
+    const plan=box.varyPlanFor('wai','job-1','asset-1');assert.equal(plan.kind,'none');assert.match(plan.reason,oversized?/20 MiB/:/more than this picture/);assert.deepEqual(box.calls,[]);
+  }
+});
+
+test('an authored Vary placeholder is refused even without locally known source wording (#1510)',()=>{
+  const box=makeVaryBox();box.catalog={presets:catalogPresets.map(p=>p.id==='wai-vary'?{...p,continuation_prompt:'Redraw in [place].',continuation_placeholder:'[place]'}:p)};
+  const plan=box.varyPlanFor('wai','job-1','asset-1');assert.equal(plan.kind,'none');assert.match(plan.reason,/wording filled in/);assert.deepEqual(box.calls,[]);
+});
+
 const varyPictureStart = makeSource.indexOf('  async function varyPicture(button){');
 const varyPictureSource = makeSource.slice(varyPictureStart, makeSource.indexOf('\n  // shortcut: Comfy outputs have no auxiliary role;', varyPictureStart));
 function makeCard(vary) {

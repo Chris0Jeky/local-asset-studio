@@ -133,3 +133,19 @@ test('the hint says an added adapter brings its trigger word only where it is on
     assert.match(h.sweepHint(h.look,{id:'adapter:lora',slot:'lora'}),/^The same look, words and seed/);}
   finally{delete KB.loras['keta.safetensors'].trigger;}
 });
+
+for(const status of [undefined,400])test('a failed sweep preserves sent swaps: '+(status||'no HTTP answer'),async()=>{
+  for(const at of [1,2,3]){
+    const state={goal:'character',runs:[]},said=[],sent=[],polled=[];
+    const context={state,SCENE_FIRST:'Describe the picture.',say:s=>said.push(s),sayMissing:s=>said.push(s),leaveWatch:()=>({stopped:()=>false,stop(){}}),
+      prepared:async()=>({axis:'Model',scene:'a room',variants:[1,2,3].map(i=>({preset_id:'p'+i,controls:{},notes:['Swap '+i+'.']}))}),
+      json:async(url,body)=>{sent.push(body);if(sent.length===at){const e=Error('Request refused');if(status!==undefined)e.status=status;throw e;}return{id:'job-'+sent.length};},
+      remember(){},renderRuns(){},poll:id=>polled.push(id),showRun(){},syncOperation(){}};
+    const generate=vm.runInNewContext(between('  async function generateSweep(','  async function generateCompare(')+';generateSweep',context);
+    await generate(LOOK);const message=said.at(-1);assert.equal(sent.length,at);assert.equal(state.runs.length,at-1);assert.equal(polled.length,at-1);assert.equal(state.busy,false);
+    if(status===undefined){assert.match(message,/the last one may have started; check Your pictures before trying again/);assert.doesNotMatch(message,/were not sent|send.*again/);}
+    else if(at>1)assert.match(message,new RegExp('Started '+(at-1)+' of 3; the rest were not sent'));
+    for(let i=1;i<at;i++)assert.ok(message.includes('Swap '+i+'.'),'keeps every sent variant swap');
+    assert.ok(!message.includes('Swap '+at+'.'),'no swap for the refused or uncertain variant');
+  }
+});

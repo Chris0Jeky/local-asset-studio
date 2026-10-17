@@ -939,9 +939,20 @@
   function varyPlanFor(presetId,jobId,assetId,mediaType,status){
     const asset=assetState.assets.find(a=>a.id===assetId);
     // Make passes its own, fresher reading of the source run; the shared jobs list can lag it by one refresh.
-    const known=status||jobs.find(j=>j.id===jobId)?.status;if(known&&known!=='completed')return{kind:'none',reason:'Wait for a completed source run before varying it. Inspect unresolved work in Problems.'};
+    const job=jobs.find(j=>j.id===jobId),known=status||job?.status;if(known&&!['completed','partial'].includes(known))return{kind:'none',reason:'Wait for a completed source run before varying it. Inspect unresolved work in Problems.'};
     if(!assetId)return{kind:'none',reason:'This output has no saved asset identity. Refresh the workspace before varying it.'};
-    return StudioContinuation.varyPlan({preset_id:presetId,job_id:jobId||null,media_type:asset?asset.media_type:mediaType||'image',trashed_at:asset?.trashed_at||null},catalog?.presets||[],jobs,missingByPreset,typeof installedLoras==='undefined'?[]:installedLoras);
+    const plan=StudioContinuation.varyPlan({preset_id:presetId,job_id:jobId||null,media_type:asset?asset.media_type:mediaType||'image',trashed_at:asset?.trashed_at||null},catalog?.presets||[],jobs,missingByPreset,typeof installedLoras==='undefined'?[]:installedLoras);
+    if(plan.kind!=='img2img')return plan;
+    if(asset?.bytes>20*1024*1024)return{kind:'none',reason:'This picture exceeds the 20 MiB reference limit. Use a smaller picture.'};
+    // The local run can rule out missing wording; output-specific wording and bytes are verified by readSource on press.
+    const source=typeof job?.controls?.positive==='string'?{positive:job.controls.positive,prompt_role:plan.source.continuation_capability?.prompt_role,prompt_origin:'submitted-output'}:null;
+    const reason=varyProblem(plan,source);return reason?{kind:'none',reason}:plan;
+  }
+  function varyProblem(plan,source){
+    const route=plan.route;if(StudioContinuation.sourceInput(route.continuation_capability)!=='reference')return route.name+' needs more than this picture. Use Continue with this.';
+    const words=StudioContinuation.wording(route,source).positive;
+    if(source&&route.positive&&!words.trim())return 'No description was kept for this picture, and '+route.name+' needs one. Use Continue with this and describe it.';
+    return StudioContinuation.unfilled(route,words).length?route.name+' needs wording filled in. Use Continue with this.':'';
   }
   // Rebuilt only when its words change, so polling never steals focus from a Vary button.
   function placeVary(holder,after,markup){
@@ -1037,7 +1048,7 @@
     let source;try{source=await readSource(assetId);}catch(error){return{ok:false,reason:'Could not read this picture. '+error.message};}
     if(source?.asset_id!==assetId)return{ok:false,reason:'This picture’s record could not be verified. Refresh and try again.'};
     // Make retries rejected plans; a resolved refusal would stay cached after the source finishes.
-    const job=jobs.find(j=>j.id===source.job_id);if(job&&job.status!=='completed')throw Error('Wait for a completed source run before polishing it. Inspect unresolved work in Problems.');
+    const job=jobs.find(j=>j.id===source.job_id);if(job&&!['completed','partial'].includes(job.status))throw Error('Wait for a completed source run before polishing it. Inspect unresolved work in Problems.');
     return{...StudioContinuation.polishRoute(kind,catalog.presets,source,missingByPreset),source};
   }
   async function polishPlan(assetId,kind){
@@ -1081,12 +1092,9 @@
         const check=await post('/api/recipe-check',recipe);
         return await sendVary({...base,controls:{...(recipe.controls||{}),...(route.seed?{seed}:{})},expected_template_sha256:check.template_sha256});
       }
-      if(StudioContinuation.sourceInput(route.continuation_capability)!=='reference')throw Error(route.name+' needs more than this picture. Use Continue with this.');
       let source;try{source=await readSource(assetId);}catch(error){throw Error('Could not read this picture. '+error.message);}
       if(source?.asset_id!==assetId)throw Error('This picture’s record could not be verified. Refresh and try again.');
-      const words=StudioContinuation.wording(route,source).positive;
-      if(route.positive&&!words.trim())throw Error('No description was kept for this picture, and '+route.name+' needs one. Use Continue with this and describe it.');
-      if(StudioContinuation.unfilled(route,words).length)throw Error(route.name+' needs wording filled in. Use Continue with this.');
+      const reason=varyProblem(plan,source);if(reason)throw Error(reason);
       const result=await post('/api/assets/reference',{id:assetId});
       if(result?.parent_asset!==assetId||result.sha256!==source.sha256||result.context?.asset_id!==assetId||JSON.stringify(result.context)!==JSON.stringify(source))throw Error('The picture changed while it was being copied. Nothing was sent.');
       const prepared=StudioContinuation.initial(result.context,route,'edit',result.file);
