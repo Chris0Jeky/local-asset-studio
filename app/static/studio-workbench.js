@@ -179,7 +179,7 @@
     const sourceKey=selected?.last_reference?'lastReference':selected?.reference?'reference':null;
     // On the continuation route the continuation's own blocker names the detached source (Put the source back); do not double it.
     const sourceMissing=!continuationState&&!!sourceKey&&!!(selected.reference_board&&selected.last_reference||selected.continuation_operation)&&!(sourceKey==='lastReference'?lastUploaded:uploaded)&&!q('#'+sourceKey)?.files?.length;
-    const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:submitting||handoffBusy||pickerBusy||restoring||pairActionBusy||poseBusy||varyBusy||tileBusy||parallaxBusy,unfilled,sourceMissing});
+    const items=U.readinessItems({preset:selected,online,schemaAvailable,workerAlive,missing:missingByPreset[selected?.id]||[],referencesReady:referencesReady()&&!required.length,switching:typeof backendSwitching!=='undefined'&&backendSwitching,backend:typeof backendActive!=='undefined'?backendActive:null,busy:combineBusy()||tileBusy||parallaxBusy,unfilled,sourceMissing});
     if(posePositionDirty())items.push({code:'pose-position',message:'Set the typed joint position or reset its fields before continuing.',action:'pose-position'});
     poseHeldShown=poseHeldArtifact();const staleGuide=poseSizeHold();if(staleGuide)items.push({code:'pose-size',message:staleGuide,action:'pose-size'});
     const modeBlock=i2vModeBlocker();if(modeBlock)items.push({code:'motion',message:modeBlock,action:'parameters'});
@@ -283,7 +283,7 @@
   function currentPair(){return{preset_id:selected?.id,controls:values(),continuation:continuationState,references:attachedReferencePayload()};}
   function pairKey(){const record=currentPair();return JSON.stringify([record.continuation?.source_sha256||record.controls.last_reference,(record.references||[]).filter(r=>r.file).map(r=>r.sha256||r.file)]);}
   function combineAnswers(){const saved=rememberedFills(),answers=Object.fromEntries(['who','pose','clothes','outfit'].map(key=>[key,saved['@'+key]||'']));for(const [placeholder,value]of Object.entries(fillValues())){const meaning=StudioContinuation.fillMeaning(placeholder);if(meaning)answers[meaning]=value;}return answers;}
-  function combineBusy(){return submitting||handoffBusy||pickerBusy||restoring||referencePending>0||pairActionBusy||poseBusy||posePositionDirty()||varyBusy;}
+  function combineBusy(){return submitting||handoffBusy||pickerBusy||restoring||referencePending>0||pairActionBusy||poseBusy||posePositionDirty()||varyBusy||planBusy||polishBusy.size>0||makeVaryBusy.size>0;}
   // Each engine's time per picture: this PC's own completed runs of it first; otherwise the read-only local estimate
   // (POST /api/estimate reads timing history and runs nothing), asked once per engine and canvas; otherwise say so (K13).
   const engineEstimates=new Map();let engineEstimateQueue=Promise.resolve();
@@ -386,17 +386,17 @@
       if(['reference','lastReference'].some(id=>q('#'+id).files?.length))throw Error('Finish attaching the chosen picture before preparing a plan.');
       const engines=planEngines(),{seeds,error}=planSeeds();if(error)throw Error(error);if(!engines.length)throw Error('Tick at least one recipe.');
       const intent=planIntent(engines,seeds),stamp=JSON.stringify(intent);
-      planBusy=true;planPrepared=null;syncCombinePlan();planStatus('Checking every recipe, its models and the pictures. Nothing is submitted.');
+      planBusy=true;planPrepared=null;syncReady();syncCombinePlan();planStatus('Checking every recipe, its models and the pictures. Nothing is submitted.');
       const project=await post('/api/production',intent),estimate=project.combine?.estimate||{};
       planPrepared={project,stamp,message:'Prepared '+project.stages.length+' pictures: expected about '+planTime(estimate.total_seconds)+(estimate.total_upper_seconds?' (up to about '+planTime(estimate.total_upper_seconds)+')':'')+', '+(estimate.confidence||'no')+' confidence. Nothing has run. Press Start plan to run it.'};
       planStatus(planPrepared.message);
       if(typeof refreshProduction==='function')void refreshProduction(true);
     }catch(error){planStatus(error.message);announce(error.message,true);}
-    finally{planBusy=false;syncCombinePlan();}
+    finally{planBusy=false;syncReady();syncCombinePlan();}
   };
   q('#uxPlanStart').onclick=async()=>{
     const prepared=planPrepared;if(planBusy||combineBusy()||!prepared||prepared.started||prepared.stamp!==planStamp())return;
-    planBusy=true;prepared.started=true;syncCombinePlan();
+    planBusy=true;prepared.started=true;syncReady();syncCombinePlan();
     // Once the Start request returns, the plan has started: a failed refresh after it must not offer Start again (#1198).
     let begun=false;
     try{
@@ -404,7 +404,7 @@
       planStatus('Started. '+project.state.message+'. Each picture appears under Runs for these pictures as it finishes; the plan is in Compare & review.');
       await refresh();
     }catch(error){if(begun)announce('The plan started; the page could not refresh: '+error.message,true);else{prepared.started=false;prepared.failure=error.message;planStatus(error.message);announce(error.message,true);}}
-    finally{planBusy=false;syncCombinePlan();}
+    finally{planBusy=false;syncReady();syncCombinePlan();}
   };
   // #1203: this PC's owner answers for every picture the recipe made, e.g. "pose 3/4 · face 1/4"; none reads as such (K14).
   function engineChecks(preset){return StudioReviewChecks.summary(assetState.assets.filter(a=>a.preset_id===preset.id),StudioReviewChecks.forPreset(preset))||'Not checked yet';}
@@ -745,7 +745,7 @@
     const chip=tile.querySelectorAll('[data-ux-check]')[index];if(!chip)return;e.preventDefault();if(!chip.disabled){chip.focus();chip.click();}
   });
   after('renderJobs',()=>{syncCombineEngines();syncCombineResults();});after('renderAssets',()=>{syncCombineEngines();syncCombineResults();});
-  function workbenchStamp(){return JSON.stringify({preset:selected?.id,controls:values(),parents:parentAssets,references:attachedReferencePayload(),continuation:continuationState,batch:q('#batch').value,pending:['reference','lastReference'].map(id=>[...(q('#'+id).files||[])].map(f=>[f.name,f.size,f.lastModified]))});}
+  function workbenchStamp(){return JSON.stringify({backend:typeof backendActive==='undefined'?null:backendActive,preset:selected?.id,controls:values(),parents:parentAssets,references:attachedReferencePayload(),continuation:continuationState,batch:q('#batch').value,pending:['reference','lastReference'].map(id=>[...(q('#'+id).files||[])].map(f=>[f.name,f.size,f.lastModified]))});}
   // Slot and picker attachment preserves wording, so its guard compares attachment-relevant
   // state only: wording, lineage claims and batch must not refuse a copy that was already
   // verified against its own destination (#606 finding 3). Replace resets to the recipe
@@ -936,6 +936,7 @@
   }
   function varyPlanFor(presetId,jobId,assetId,mediaType){
     const asset=assetState.assets.find(a=>a.id===assetId);
+    const job=jobs.find(j=>j.id===jobId);if(job&&job.status!=='completed')return{kind:'none',reason:'Wait for a completed source run before varying it. Inspect unresolved work in Problems.'};
     if(!assetId)return{kind:'none',reason:'This output has no saved asset identity. Refresh the workspace before varying it.'};
     return StudioContinuation.varyPlan({preset_id:presetId,job_id:jobId||null,media_type:asset?asset.media_type:mediaType||'image',trashed_at:asset?.trashed_at||null},catalog?.presets||[],jobs,missingByPreset,typeof installedLoras==='undefined'?[]:installedLoras);
   }
@@ -971,7 +972,7 @@
   async function prepareVary(button){
     const strength=button.dataset.uxVary,assetId=button.dataset.asset;
     if(varyBusy)return;
-    if(submitting||handoffBusy||pickerBusy||restoring||referencePending>0||pairActionBusy||poseBusy){announce('Wait for the current Create action to finish, then press Vary again. Nothing was prepared.',true);return;}
+    if(combineBusy()||tileBusy||parallaxBusy){announce('Wait for the current Create action to finish, then press Vary again. Nothing was prepared.',true);return;}
     if(assetDetailsDirty()){warnUnsavedAsset();return;}
     if(!catalog){announce('Recipes are still loading.');return;}
     const plan=varyPlanFor(button.dataset.preset,button.dataset.job,assetId);
@@ -1032,6 +1033,8 @@
     if(!catalog)return{ok:false,reason:'Recipes are still loading.'};
     let source;try{source=await readSource(assetId);}catch(error){return{ok:false,reason:'Could not read this picture. '+error.message};}
     if(source?.asset_id!==assetId)return{ok:false,reason:'This picture’s record could not be verified. Refresh and try again.'};
+    // Make retries rejected plans; a resolved refusal would stay cached after the source finishes.
+    const job=jobs.find(j=>j.id===source.job_id);if(job&&job.status!=='completed')throw Error('Wait for a completed source run before polishing it. Inspect unresolved work in Problems.');
     return{...StudioContinuation.polishRoute(kind,catalog.presets,source,missingByPreset),source};
   }
   async function polishPlan(assetId,kind){
@@ -1040,8 +1043,10 @@
   }
   async function polish(assetId,kind,label){
     const key=assetId+':'+kind;if(polishBusy.has(key))throw Error('This polish is already being sent. Wait for it.');
+    if(combineBusy()||tileBusy||parallaxBusy)throw Error('Wait for the current action to finish before polishing this picture.');
     polishBusy.add(key);
     try{
+      syncReady();
       const route=await polishRoute(assetId,kind);if(!route.ok)throw Error(route.reason);
       const {preset,source}=route,result=await post('/api/assets/reference',{id:assetId});
       if(result?.parent_asset!==assetId||result.sha256!==source.sha256||result.context?.asset_id!==assetId||JSON.stringify(result.context)!==JSON.stringify(source))throw Error('The picture changed while it was being copied. Nothing was sent.');
@@ -1049,7 +1054,7 @@
       if(preset.positive)controls.positive=prepared.positive;if(preset.negative)controls.negative=prepared.negative;
       if(preset.seed)controls.seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647;
       return await post('/api/jobs',{preset_id:preset.id,continuation:prepared.claim,controls,batch_count:1,parent_assets:[assetId],references:[],label:'Make · '+(typeof label==='string'&&label?label:StudioContinuation.POLISH[kind])});   // Make passes the name it showed (e.g. a merged face-and-hands pass)
-    }finally{polishBusy.delete(key);}
+    }finally{polishBusy.delete(key);syncReady();}
   }
   // #1497 Vary from Make: the round prepareVary sets up (same plan, wording, carried stack, strength and round size), sent as
   // one job without touching Create's form, so the #1213 overwrite question has nothing to protect. One press posts
@@ -1059,8 +1064,10 @@
   const sendVary=body=>post('/api/jobs',body).catch(error=>{if(error.status===undefined)error.uncertain=true;throw error;});
   async function vary(assetId,presetId,jobId,strength){
     if(makeVaryBusy.has(assetId))throw Error('Vary is already being sent for this picture. Wait for it.');
+    if(combineBusy()||tileBusy||parallaxBusy)throw Error('Wait for the current action to finish before varying this picture.');
     makeVaryBusy.add(assetId);
     try{
+      syncReady();
       if(!catalog)throw Error('Recipes are still loading.');
       const plan=varyPlanFor(presetId,jobId,assetId);if(plan.kind==='none')throw Error(plan.reason);
       if(plan.kind==='reseed'?strength!=='reseed':!['subtle','strong'].includes(strength))throw Error('This Vary button is out of date. Nothing was sent; press Vary again.');
@@ -1083,7 +1090,7 @@
       const controls={reference:result.file,...(StudioContinuation.canvasFor(result.context,route)||{}),...(plan.carry||{}),...plan.strengths[strength].controls};
       if(route.positive)controls.positive=prepared.positive;if(route.negative)controls.negative=prepared.negative;if(route.seed)controls.seed=seed;
       return await sendVary({...base,continuation:prepared.claim,controls});
-    }finally{makeVaryBusy.delete(assetId);}
+    }finally{makeVaryBusy.delete(assetId);syncReady();}
   }
   Object.assign(globalThis.StudioWorkbench,{polish,polishPlan,vary});
   // #1220 Make seamless: square, flat textures only. The server says whether this picture qualifies and a disabled button
@@ -1111,7 +1118,7 @@
   });
   async function prepareTile(button){
     const assetId=button.dataset.uxTile;if(tileBusy||!assetId)return;
-    if(submitting||handoffBusy||pickerBusy||restoring||varyBusy||poseBusy||parallaxBusy){announce('Wait for the current Create action to finish, then press Make seamless again. Nothing was prepared.',true);return;}
+    if(combineBusy()||parallaxBusy){announce('Wait for the current Create action to finish, then press Make seamless again. Nothing was prepared.',true);return;}
     if(assetDetailsDirty()){warnUnsavedAsset();return;}
     const bandPx=U.tileBandPx(button.parentElement?.querySelector('[data-ux-tile-band]')?.value);
     tileBusy=true;button.disabled=true;syncReady();
@@ -1136,7 +1143,7 @@
   let parallaxBusy=false,parallaxRead=0,parallaxDrag=null;
   const generateFromCreate=q('#generate').onclick;
   q('#generate').onclick=function(...args){
-    if(tileBusy||parallaxBusy){announce('Wait for picture preparation to finish before pressing Generate. Nothing was submitted.',true);return;}
+    if(combineBusy()||tileBusy||parallaxBusy){announce('Wait for the current action to finish before pressing Generate. Nothing was submitted.',true);return;}
     return generateFromCreate.apply(this,args);
   };
   function parallaxBoxes(text){
@@ -1196,7 +1203,7 @@
   document.addEventListener('click',e=>{const clear=e.target.closest('[data-ux-parallax-clear]');if(!clear)return;const group=clear.closest('.ux-parallax');group.querySelector('#uxParallaxView').value='';syncParallax(group);});
   async function prepareParallax(button){
     const group=button.closest('.ux-parallax'),assetId=button.dataset.uxParallax;if(parallaxBusy||!assetId||!group)return;
-    if(submitting||handoffBusy||pickerBusy||restoring||varyBusy||poseBusy||tileBusy){announce('Wait for the current Create action to finish, then press Make parallax layers again. Nothing was prepared.',true);return;}
+    if(combineBusy()||tileBusy){announce('Wait for the current Create action to finish, then press Make parallax layers again. Nothing was prepared.',true);return;}
     if(assetDetailsDirty()){warnUnsavedAsset();return;}
     const why=parallaxReason(group);if(why){announce(why,true);return;}
     parallaxBusy=true;button.disabled=true;syncReady();
