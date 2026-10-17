@@ -55,7 +55,10 @@ class RunDecisions(entry.EntryPoints):
                         self.assertGreaterEqual(box['y'], 0)
                         self.assertLessEqual(box['y']+box['height'], 844)
                     # Escape inside the open panel closes it and returns focus to its summary.
+                    self.page.evaluate("window.escBubbled=0;document.addEventListener('keydown',e=>{if(e.key==='Escape')escBubbled++},{once:true})")
                     self.page.locator('#randomSeed').focus(); self.page.keyboard.press('Escape')
+                    self.assertEqual(self.page.evaluate('escBubbled'), 0, 'Escape that closes Run tools stops there')
+                    self.page.evaluate("document.dispatchEvent(new KeyboardEvent('keydown',{key:'x'}))")
                     self.assertFalse(self.page.locator('#workshopRunTools').evaluate('(n)=>n.open'))
                     self.assertTrue(toggle.evaluate('(n)=>n===document.activeElement'), 'Escape returns focus to Run tools')
                     self.assertLessEqual(dock.bounding_box()['height'], 72)
@@ -66,6 +69,15 @@ class RunDecisions(entry.EntryPoints):
             for identity in tools:
                 self.assertTrue(self.page.locator('#'+identity).is_visible(), identity)
                 self.assertTrue(self.page.locator('#'+identity).evaluate('(n)=>!n.closest("#workshopRunTools")'), identity)
+            # Narrowing to a phone while a run tool has focus opens Run tools around it instead of stranding focus (Muse a11y-dock2).
+            self.page.locator('#randomSeed').focus()
+            self.page.set_viewport_size({'width': 390, 'height': 844})
+            self.page.wait_for_function('!document.querySelector("#workshopRunTools").hidden')
+            self.assertTrue(self.page.locator('#randomSeed').evaluate('(n)=>n===document.activeElement'), 'focus stays on the moved run tool')
+            self.assertTrue(self.page.locator('#workshopRunTools').evaluate('(n)=>n.open'))
+            self.page.keyboard.press('Escape'); self.page.evaluate('document.activeElement?.blur()')
+            self.page.set_viewport_size({'width': 1440, 'height': 900})
+            self.page.wait_for_function('document.querySelector("#workshopRunTools").hidden')
         self.assertEqual(self.page.evaluate('submitted'), 0)
 
     def make_idle(self):
