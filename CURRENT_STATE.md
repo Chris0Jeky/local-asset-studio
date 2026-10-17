@@ -1,5 +1,9 @@
 # Current state — 13 October 2026
 
+## GPU Look lab Round 6 - 16-17 October 2026
+
+Painted game icon wording repairs (#1498): 32 serial Studio jobs / 32 images (plus 5 never-sent queue-busy refusals) over four wordings, four objects and two seeds; strict KEEP control 1/8, no-frame words 2/8, object-first 3/8, object-first without "floating" 4/8 (round shield and unframed crystal 4/4, key 0/2 KEEP), item wording 1/5. No variant reached 3/4, so `presets/looks.json` is unchanged and "Tested well" stays off. Agent verdicts, not art acceptance. [Report](docs/looks/LOOK-LAB-2026-10-16.md#round-6-wording-repairs-for-the-painted-game-icon-1498), [curated entry](experiments/curated/lab-round6-20261016/). Preserve ignored `.runtime/lab-20261016f/` (full-size PNGs and per-job JSON).
+
 ## GPU Look lab Round 5 - 16 October 2026
 
 22 serial jobs / 23 files (one mask): 13 KEEP, 9 FIXABLE; Anima face buttons use the same WAI repaint, Petiflow loses softness, upscales are neutral, restyles retain pose with drift, new icon strict KEEP 1/6 (one item 6/6). [Report](docs/looks/LOOK-LAB-2026-10-16.md#round-5-finishing-chains-restyle-tweaks-and-game-icon-reliability).

@@ -237,6 +237,7 @@ The owner answered these in the session's question picker; their chosen option i
   face finish (neutral elsewhere); Upscale 2× smooths fine texture; Restyle keeps identity recognisably (watercolour
   transferred better than ink). The new game-icon look drew one item 6/6 but kept only 1/6 strictly (shape drift,
   added frames). The agent rule now treats ESRGAN upscales as heavy (admitted only below 60% host commit).
+- [ ] **Lab round 6, game-icon wording** (#1498): object-first wording ("{scene}, the object's own outline is the whole icon shape, ...") drew a round shield and an unframed crystal in 4 of 4 pictures where the shipped wording drew a heraldic shield and a rounded-square tile; "no frame, no border, no badge" did not remove the tile; the iron key stayed unsolved (flat or line-art, two teeth). Nothing shipped, the badge stays off. Look at `experiments/curated/lab-round6-20261016/contact-sheet.jpg` and say whether the C row's flat outlined style is acceptable for icons.
 - [ ] **Make shows what the lab measured** (#1494): the game-icon look lost its "Tested well" badge (still first in
   Game items, Best-for "One item on white; check shape details"); where Fix face and Fix hands run the same recipe
   they become one "Fix face and hands" button with "Repaints with a WAI model and can change this look's face finish —
