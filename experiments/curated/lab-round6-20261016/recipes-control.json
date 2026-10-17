@@ -1,0 +1,2266 @@
+{
+ "control-shield-202610160403": {
+  "job_id": "d59e7b40-ec0a-44e6-afab-a70efeb59d4d",
+  "prompt_ids": [
+   "fc8783f6-b955-4fdc-914d-ea79e1c7bc97"
+  ],
+  "recipe": {
+   "version": 2,
+   "preset_id": "zimage-fast",
+   "controls": {
+    "positive": "stylized hand painted game inventory icon, soft cel shading, one round wooden shield with an iron rim and a central iron boss, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+    "width": 1024,
+    "height": 1024,
+    "seed": 202610160403,
+    "steps": 8,
+    "cfg": 1.0,
+    "denoise": 1.0
+   },
+   "batch_count": 1,
+   "created_at": 1792187478.1183562,
+   "workflow": {
+    "1": {
+     "class_type": "UNETLoader",
+     "inputs": {
+      "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+      "weight_dtype": "default"
+     }
+    },
+    "2": {
+     "class_type": "CLIPLoader",
+     "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "lumina2",
+      "device": "cpu"
+     }
+    },
+    "3": {
+     "class_type": "VAELoader",
+     "inputs": {
+      "vae_name": "ae.safetensors"
+     }
+    },
+    "4": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "2",
+       0
+      ],
+      "text": "stylized hand painted game inventory icon, soft cel shading, one round wooden shield with an iron rim and a central iron boss, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+     }
+    },
+    "5": {
+     "class_type": "ConditioningZeroOut",
+     "inputs": {
+      "conditioning": [
+       "4",
+       0
+      ]
+     }
+    },
+    "6": {
+     "class_type": "ModelSamplingAuraFlow",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "shift": 3.0
+     }
+    },
+    "7": {
+     "class_type": "EmptySD3LatentImage",
+     "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+     }
+    },
+    "8": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "6",
+       0
+      ],
+      "seed": 202610160403,
+      "steps": 8,
+      "cfg": 1.0,
+      "sampler_name": "res_multistep",
+      "scheduler": "simple",
+      "positive": [
+       "4",
+       0
+      ],
+      "negative": [
+       "5",
+       0
+      ],
+      "latent_image": [
+       "7",
+       0
+      ],
+      "denoise": 1.0
+     }
+    },
+    "9": {
+     "class_type": "VAEDecodeTiled",
+     "inputs": {
+      "samples": [
+       "8",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ],
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 64,
+      "temporal_overlap": 8
+     }
+    },
+    "10": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "9",
+       0
+      ],
+      "filename_prefix": "Studio/Z-Image-Fast"
+     }
+    }
+   },
+   "submissions": [
+    {
+     "index": 0,
+     "prompt_id": "fc8783f6-b955-4fdc-914d-ea79e1c7bc97",
+     "seed": 202610160403,
+     "graph": {
+      "1": {
+       "class_type": "UNETLoader",
+       "inputs": {
+        "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+        "weight_dtype": "default"
+       }
+      },
+      "2": {
+       "class_type": "CLIPLoader",
+       "inputs": {
+        "clip_name": "qwen_3_4b.safetensors",
+        "type": "lumina2",
+        "device": "cpu"
+       }
+      },
+      "3": {
+       "class_type": "VAELoader",
+       "inputs": {
+        "vae_name": "ae.safetensors"
+       }
+      },
+      "4": {
+       "class_type": "CLIPTextEncode",
+       "inputs": {
+        "clip": [
+         "2",
+         0
+        ],
+        "text": "stylized hand painted game inventory icon, soft cel shading, one round wooden shield with an iron rim and a central iron boss, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+       }
+      },
+      "5": {
+       "class_type": "ConditioningZeroOut",
+       "inputs": {
+        "conditioning": [
+         "4",
+         0
+        ]
+       }
+      },
+      "6": {
+       "class_type": "ModelSamplingAuraFlow",
+       "inputs": {
+        "model": [
+         "1",
+         0
+        ],
+        "shift": 3.0
+       }
+      },
+      "7": {
+       "class_type": "EmptySD3LatentImage",
+       "inputs": {
+        "width": 1024,
+        "height": 1024,
+        "batch_size": 1
+       }
+      },
+      "8": {
+       "class_type": "KSampler",
+       "inputs": {
+        "model": [
+         "6",
+         0
+        ],
+        "seed": 202610160403,
+        "steps": 8,
+        "cfg": 1.0,
+        "sampler_name": "res_multistep",
+        "scheduler": "simple",
+        "positive": [
+         "4",
+         0
+        ],
+        "negative": [
+         "5",
+         0
+        ],
+        "latent_image": [
+         "7",
+         0
+        ],
+        "denoise": 1.0
+       }
+      },
+      "9": {
+       "class_type": "VAEDecodeTiled",
+       "inputs": {
+        "samples": [
+         "8",
+         0
+        ],
+        "vae": [
+         "3",
+         0
+        ],
+        "tile_size": 512,
+        "overlap": 64,
+        "temporal_size": 64,
+        "temporal_overlap": 8
+       }
+      },
+      "10": {
+       "class_type": "SaveImage",
+       "inputs": {
+        "images": [
+         "9",
+         0
+        ],
+        "filename_prefix": "Studio/Z-Image-Fast"
+       }
+      }
+     },
+     "status": "completed",
+     "gpu_memory": {
+      "peak_shared_bytes": 82563072,
+      "peak_dedicated_bytes": 11876204544,
+      "samples": 206,
+      "spilled": false
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "filename": "Z-Image-Fast_00046_.png",
+     "subfolder": "Studio",
+     "type": "output",
+     "seed": 202610160403,
+     "prompt_id": "fc8783f6-b955-4fdc-914d-ea79e1c7bc97",
+     "media_type": "image",
+     "asset_id": "281de1b605315e7da5efe50d8a31cbdc"
+    }
+   ],
+   "parent_assets": [],
+   "references": [],
+   "preparation": null,
+   "native_recipe": null,
+   "continuation": null,
+   "tile": null,
+   "tile_receipt": null,
+   "parallax": null,
+   "parallax_receipt": null
+  }
+ },
+ "icon-shield-202610160601": {
+  "job_id": "f8921814-f6b8-4f27-8707-4be5c13bd2c5",
+  "prompt_ids": [
+   "028fdaff-ba9d-4f1b-a4e3-52963fd213f3"
+  ],
+  "recipe": {
+   "version": 2,
+   "preset_id": "zimage-fast",
+   "controls": {
+    "positive": "stylized hand painted game inventory icon, soft cel shading, one round wooden shield with an iron rim and a central iron boss, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+    "width": 1024,
+    "height": 1024,
+    "seed": 202610160601,
+    "steps": 8,
+    "cfg": 1.0,
+    "denoise": 1.0
+   },
+   "batch_count": 1,
+   "created_at": 1792163025.5336926,
+   "workflow": {
+    "1": {
+     "class_type": "UNETLoader",
+     "inputs": {
+      "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+      "weight_dtype": "default"
+     }
+    },
+    "2": {
+     "class_type": "CLIPLoader",
+     "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "lumina2",
+      "device": "cpu"
+     }
+    },
+    "3": {
+     "class_type": "VAELoader",
+     "inputs": {
+      "vae_name": "ae.safetensors"
+     }
+    },
+    "4": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "2",
+       0
+      ],
+      "text": "stylized hand painted game inventory icon, soft cel shading, one round wooden shield with an iron rim and a central iron boss, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+     }
+    },
+    "5": {
+     "class_type": "ConditioningZeroOut",
+     "inputs": {
+      "conditioning": [
+       "4",
+       0
+      ]
+     }
+    },
+    "6": {
+     "class_type": "ModelSamplingAuraFlow",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "shift": 3.0
+     }
+    },
+    "7": {
+     "class_type": "EmptySD3LatentImage",
+     "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+     }
+    },
+    "8": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "6",
+       0
+      ],
+      "seed": 202610160601,
+      "steps": 8,
+      "cfg": 1.0,
+      "sampler_name": "res_multistep",
+      "scheduler": "simple",
+      "positive": [
+       "4",
+       0
+      ],
+      "negative": [
+       "5",
+       0
+      ],
+      "latent_image": [
+       "7",
+       0
+      ],
+      "denoise": 1.0
+     }
+    },
+    "9": {
+     "class_type": "VAEDecodeTiled",
+     "inputs": {
+      "samples": [
+       "8",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ],
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 64,
+      "temporal_overlap": 8
+     }
+    },
+    "10": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "9",
+       0
+      ],
+      "filename_prefix": "Studio/Z-Image-Fast"
+     }
+    }
+   },
+   "submissions": [
+    {
+     "index": 0,
+     "prompt_id": "028fdaff-ba9d-4f1b-a4e3-52963fd213f3",
+     "seed": 202610160601,
+     "graph": {
+      "1": {
+       "class_type": "UNETLoader",
+       "inputs": {
+        "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+        "weight_dtype": "default"
+       }
+      },
+      "2": {
+       "class_type": "CLIPLoader",
+       "inputs": {
+        "clip_name": "qwen_3_4b.safetensors",
+        "type": "lumina2",
+        "device": "cpu"
+       }
+      },
+      "3": {
+       "class_type": "VAELoader",
+       "inputs": {
+        "vae_name": "ae.safetensors"
+       }
+      },
+      "4": {
+       "class_type": "CLIPTextEncode",
+       "inputs": {
+        "clip": [
+         "2",
+         0
+        ],
+        "text": "stylized hand painted game inventory icon, soft cel shading, one round wooden shield with an iron rim and a central iron boss, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+       }
+      },
+      "5": {
+       "class_type": "ConditioningZeroOut",
+       "inputs": {
+        "conditioning": [
+         "4",
+         0
+        ]
+       }
+      },
+      "6": {
+       "class_type": "ModelSamplingAuraFlow",
+       "inputs": {
+        "model": [
+         "1",
+         0
+        ],
+        "shift": 3.0
+       }
+      },
+      "7": {
+       "class_type": "EmptySD3LatentImage",
+       "inputs": {
+        "width": 1024,
+        "height": 1024,
+        "batch_size": 1
+       }
+      },
+      "8": {
+       "class_type": "KSampler",
+       "inputs": {
+        "model": [
+         "6",
+         0
+        ],
+        "seed": 202610160601,
+        "steps": 8,
+        "cfg": 1.0,
+        "sampler_name": "res_multistep",
+        "scheduler": "simple",
+        "positive": [
+         "4",
+         0
+        ],
+        "negative": [
+         "5",
+         0
+        ],
+        "latent_image": [
+         "7",
+         0
+        ],
+        "denoise": 1.0
+       }
+      },
+      "9": {
+       "class_type": "VAEDecodeTiled",
+       "inputs": {
+        "samples": [
+         "8",
+         0
+        ],
+        "vae": [
+         "3",
+         0
+        ],
+        "tile_size": 512,
+        "overlap": 64,
+        "temporal_size": 64,
+        "temporal_overlap": 8
+       }
+      },
+      "10": {
+       "class_type": "SaveImage",
+       "inputs": {
+        "images": [
+         "9",
+         0
+        ],
+        "filename_prefix": "Studio/Z-Image-Fast"
+       }
+      }
+     },
+     "status": "completed",
+     "gpu_memory": {
+      "peak_shared_bytes": 82563072,
+      "peak_dedicated_bytes": 10771505152,
+      "samples": 18,
+      "spilled": false
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "filename": "Z-Image-Fast_00041_.png",
+     "subfolder": "Studio",
+     "type": "output",
+     "seed": 202610160601,
+     "prompt_id": "028fdaff-ba9d-4f1b-a4e3-52963fd213f3",
+     "media_type": "image",
+     "asset_id": "c85360e327d95412856f9336af792108"
+    }
+   ],
+   "parent_assets": [],
+   "references": [],
+   "preparation": null,
+   "native_recipe": null,
+   "continuation": null,
+   "tile": null,
+   "tile_receipt": null,
+   "parallax": null,
+   "parallax_receipt": null
+  }
+ },
+ "icon-crystal-202610160403": {
+  "job_id": "816325cb-989d-465b-9095-9389aa82a347",
+  "prompt_ids": [
+   "9088f50a-2663-48f9-aa22-9cb947fa216e"
+  ],
+  "recipe": {
+   "version": 2,
+   "preset_id": "zimage-fast",
+   "controls": {
+    "positive": "stylized hand painted game inventory icon, soft cel shading, one red mana crystal, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+    "width": 1024,
+    "height": 1024,
+    "seed": 202610160403,
+    "steps": 8,
+    "cfg": 1.0,
+    "denoise": 1.0
+   },
+   "batch_count": 1,
+   "created_at": 1792163042.3613486,
+   "workflow": {
+    "1": {
+     "class_type": "UNETLoader",
+     "inputs": {
+      "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+      "weight_dtype": "default"
+     }
+    },
+    "2": {
+     "class_type": "CLIPLoader",
+     "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "lumina2",
+      "device": "cpu"
+     }
+    },
+    "3": {
+     "class_type": "VAELoader",
+     "inputs": {
+      "vae_name": "ae.safetensors"
+     }
+    },
+    "4": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "2",
+       0
+      ],
+      "text": "stylized hand painted game inventory icon, soft cel shading, one red mana crystal, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+     }
+    },
+    "5": {
+     "class_type": "ConditioningZeroOut",
+     "inputs": {
+      "conditioning": [
+       "4",
+       0
+      ]
+     }
+    },
+    "6": {
+     "class_type": "ModelSamplingAuraFlow",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "shift": 3.0
+     }
+    },
+    "7": {
+     "class_type": "EmptySD3LatentImage",
+     "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+     }
+    },
+    "8": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "6",
+       0
+      ],
+      "seed": 202610160403,
+      "steps": 8,
+      "cfg": 1.0,
+      "sampler_name": "res_multistep",
+      "scheduler": "simple",
+      "positive": [
+       "4",
+       0
+      ],
+      "negative": [
+       "5",
+       0
+      ],
+      "latent_image": [
+       "7",
+       0
+      ],
+      "denoise": 1.0
+     }
+    },
+    "9": {
+     "class_type": "VAEDecodeTiled",
+     "inputs": {
+      "samples": [
+       "8",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ],
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 64,
+      "temporal_overlap": 8
+     }
+    },
+    "10": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "9",
+       0
+      ],
+      "filename_prefix": "Studio/Z-Image-Fast"
+     }
+    }
+   },
+   "submissions": [
+    {
+     "index": 0,
+     "prompt_id": "9088f50a-2663-48f9-aa22-9cb947fa216e",
+     "seed": 202610160403,
+     "graph": {
+      "1": {
+       "class_type": "UNETLoader",
+       "inputs": {
+        "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+        "weight_dtype": "default"
+       }
+      },
+      "2": {
+       "class_type": "CLIPLoader",
+       "inputs": {
+        "clip_name": "qwen_3_4b.safetensors",
+        "type": "lumina2",
+        "device": "cpu"
+       }
+      },
+      "3": {
+       "class_type": "VAELoader",
+       "inputs": {
+        "vae_name": "ae.safetensors"
+       }
+      },
+      "4": {
+       "class_type": "CLIPTextEncode",
+       "inputs": {
+        "clip": [
+         "2",
+         0
+        ],
+        "text": "stylized hand painted game inventory icon, soft cel shading, one red mana crystal, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+       }
+      },
+      "5": {
+       "class_type": "ConditioningZeroOut",
+       "inputs": {
+        "conditioning": [
+         "4",
+         0
+        ]
+       }
+      },
+      "6": {
+       "class_type": "ModelSamplingAuraFlow",
+       "inputs": {
+        "model": [
+         "1",
+         0
+        ],
+        "shift": 3.0
+       }
+      },
+      "7": {
+       "class_type": "EmptySD3LatentImage",
+       "inputs": {
+        "width": 1024,
+        "height": 1024,
+        "batch_size": 1
+       }
+      },
+      "8": {
+       "class_type": "KSampler",
+       "inputs": {
+        "model": [
+         "6",
+         0
+        ],
+        "seed": 202610160403,
+        "steps": 8,
+        "cfg": 1.0,
+        "sampler_name": "res_multistep",
+        "scheduler": "simple",
+        "positive": [
+         "4",
+         0
+        ],
+        "negative": [
+         "5",
+         0
+        ],
+        "latent_image": [
+         "7",
+         0
+        ],
+        "denoise": 1.0
+       }
+      },
+      "9": {
+       "class_type": "VAEDecodeTiled",
+       "inputs": {
+        "samples": [
+         "8",
+         0
+        ],
+        "vae": [
+         "3",
+         0
+        ],
+        "tile_size": 512,
+        "overlap": 64,
+        "temporal_size": 64,
+        "temporal_overlap": 8
+       }
+      },
+      "10": {
+       "class_type": "SaveImage",
+       "inputs": {
+        "images": [
+         "9",
+         0
+        ],
+        "filename_prefix": "Studio/Z-Image-Fast"
+       }
+      }
+     },
+     "status": "completed",
+     "gpu_memory": {
+      "peak_shared_bytes": 82563072,
+      "peak_dedicated_bytes": 10771505152,
+      "samples": 233,
+      "spilled": false
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "filename": "Z-Image-Fast_00042_.png",
+     "subfolder": "Studio",
+     "type": "output",
+     "seed": 202610160403,
+     "prompt_id": "9088f50a-2663-48f9-aa22-9cb947fa216e",
+     "media_type": "image",
+     "asset_id": "5fb09a62624c5eaebd2812dc7445adfa"
+    }
+   ],
+   "parent_assets": [],
+   "references": [],
+   "preparation": null,
+   "native_recipe": null,
+   "continuation": null,
+   "tile": null,
+   "tile_receipt": null,
+   "parallax": null,
+   "parallax_receipt": null
+  }
+ },
+ "icon-crystal-202610160601": {
+  "job_id": "ffe71888-6ae8-41c4-8939-da85181bc70f",
+  "prompt_ids": [
+   "209a1092-6f75-4720-a187-70f45fcdc5a3"
+  ],
+  "recipe": {
+   "version": 2,
+   "preset_id": "zimage-fast",
+   "controls": {
+    "positive": "stylized hand painted game inventory icon, soft cel shading, one red mana crystal, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+    "width": 1024,
+    "height": 1024,
+    "seed": 202610160601,
+    "steps": 8,
+    "cfg": 1.0,
+    "denoise": 1.0
+   },
+   "batch_count": 1,
+   "created_at": 1792163171.5956063,
+   "workflow": {
+    "1": {
+     "class_type": "UNETLoader",
+     "inputs": {
+      "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+      "weight_dtype": "default"
+     }
+    },
+    "2": {
+     "class_type": "CLIPLoader",
+     "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "lumina2",
+      "device": "cpu"
+     }
+    },
+    "3": {
+     "class_type": "VAELoader",
+     "inputs": {
+      "vae_name": "ae.safetensors"
+     }
+    },
+    "4": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "2",
+       0
+      ],
+      "text": "stylized hand painted game inventory icon, soft cel shading, one red mana crystal, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+     }
+    },
+    "5": {
+     "class_type": "ConditioningZeroOut",
+     "inputs": {
+      "conditioning": [
+       "4",
+       0
+      ]
+     }
+    },
+    "6": {
+     "class_type": "ModelSamplingAuraFlow",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "shift": 3.0
+     }
+    },
+    "7": {
+     "class_type": "EmptySD3LatentImage",
+     "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+     }
+    },
+    "8": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "6",
+       0
+      ],
+      "seed": 202610160601,
+      "steps": 8,
+      "cfg": 1.0,
+      "sampler_name": "res_multistep",
+      "scheduler": "simple",
+      "positive": [
+       "4",
+       0
+      ],
+      "negative": [
+       "5",
+       0
+      ],
+      "latent_image": [
+       "7",
+       0
+      ],
+      "denoise": 1.0
+     }
+    },
+    "9": {
+     "class_type": "VAEDecodeTiled",
+     "inputs": {
+      "samples": [
+       "8",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ],
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 64,
+      "temporal_overlap": 8
+     }
+    },
+    "10": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "9",
+       0
+      ],
+      "filename_prefix": "Studio/Z-Image-Fast"
+     }
+    }
+   },
+   "submissions": [
+    {
+     "index": 0,
+     "prompt_id": "209a1092-6f75-4720-a187-70f45fcdc5a3",
+     "seed": 202610160601,
+     "graph": {
+      "1": {
+       "class_type": "UNETLoader",
+       "inputs": {
+        "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+        "weight_dtype": "default"
+       }
+      },
+      "2": {
+       "class_type": "CLIPLoader",
+       "inputs": {
+        "clip_name": "qwen_3_4b.safetensors",
+        "type": "lumina2",
+        "device": "cpu"
+       }
+      },
+      "3": {
+       "class_type": "VAELoader",
+       "inputs": {
+        "vae_name": "ae.safetensors"
+       }
+      },
+      "4": {
+       "class_type": "CLIPTextEncode",
+       "inputs": {
+        "clip": [
+         "2",
+         0
+        ],
+        "text": "stylized hand painted game inventory icon, soft cel shading, one red mana crystal, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+       }
+      },
+      "5": {
+       "class_type": "ConditioningZeroOut",
+       "inputs": {
+        "conditioning": [
+         "4",
+         0
+        ]
+       }
+      },
+      "6": {
+       "class_type": "ModelSamplingAuraFlow",
+       "inputs": {
+        "model": [
+         "1",
+         0
+        ],
+        "shift": 3.0
+       }
+      },
+      "7": {
+       "class_type": "EmptySD3LatentImage",
+       "inputs": {
+        "width": 1024,
+        "height": 1024,
+        "batch_size": 1
+       }
+      },
+      "8": {
+       "class_type": "KSampler",
+       "inputs": {
+        "model": [
+         "6",
+         0
+        ],
+        "seed": 202610160601,
+        "steps": 8,
+        "cfg": 1.0,
+        "sampler_name": "res_multistep",
+        "scheduler": "simple",
+        "positive": [
+         "4",
+         0
+        ],
+        "negative": [
+         "5",
+         0
+        ],
+        "latent_image": [
+         "7",
+         0
+        ],
+        "denoise": 1.0
+       }
+      },
+      "9": {
+       "class_type": "VAEDecodeTiled",
+       "inputs": {
+        "samples": [
+         "8",
+         0
+        ],
+        "vae": [
+         "3",
+         0
+        ],
+        "tile_size": 512,
+        "overlap": 64,
+        "temporal_size": 64,
+        "temporal_overlap": 8
+       }
+      },
+      "10": {
+       "class_type": "SaveImage",
+       "inputs": {
+        "images": [
+         "9",
+         0
+        ],
+        "filename_prefix": "Studio/Z-Image-Fast"
+       }
+      }
+     },
+     "status": "completed",
+     "gpu_memory": {
+      "peak_shared_bytes": 82563072,
+      "peak_dedicated_bytes": 10771505152,
+      "samples": 18,
+      "spilled": false
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "filename": "Z-Image-Fast_00043_.png",
+     "subfolder": "Studio",
+     "type": "output",
+     "seed": 202610160601,
+     "prompt_id": "209a1092-6f75-4720-a187-70f45fcdc5a3",
+     "media_type": "image",
+     "asset_id": "acbd7a323f215997ac27806fa3461437"
+    }
+   ],
+   "parent_assets": [],
+   "references": [],
+   "preparation": null,
+   "native_recipe": null,
+   "continuation": null,
+   "tile": null,
+   "tile_receipt": null,
+   "parallax": null,
+   "parallax_receipt": null
+  }
+ },
+ "icon-key-202610160403": {
+  "job_id": "c48f5cbc-b2db-4be0-865a-ce9793bdc08b",
+  "prompt_ids": [
+   "42277345-8f3b-4caf-a908-402cd0ee90aa"
+  ],
+  "recipe": {
+   "version": 2,
+   "preset_id": "zimage-fast",
+   "controls": {
+    "positive": "stylized hand painted game inventory icon, soft cel shading, one iron key with a simple round bow and three teeth, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+    "width": 1024,
+    "height": 1024,
+    "seed": 202610160403,
+    "steps": 8,
+    "cfg": 1.0,
+    "denoise": 1.0
+   },
+   "batch_count": 1,
+   "created_at": 1792163313.7258213,
+   "workflow": {
+    "1": {
+     "class_type": "UNETLoader",
+     "inputs": {
+      "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+      "weight_dtype": "default"
+     }
+    },
+    "2": {
+     "class_type": "CLIPLoader",
+     "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "lumina2",
+      "device": "cpu"
+     }
+    },
+    "3": {
+     "class_type": "VAELoader",
+     "inputs": {
+      "vae_name": "ae.safetensors"
+     }
+    },
+    "4": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "2",
+       0
+      ],
+      "text": "stylized hand painted game inventory icon, soft cel shading, one iron key with a simple round bow and three teeth, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+     }
+    },
+    "5": {
+     "class_type": "ConditioningZeroOut",
+     "inputs": {
+      "conditioning": [
+       "4",
+       0
+      ]
+     }
+    },
+    "6": {
+     "class_type": "ModelSamplingAuraFlow",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "shift": 3.0
+     }
+    },
+    "7": {
+     "class_type": "EmptySD3LatentImage",
+     "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+     }
+    },
+    "8": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "6",
+       0
+      ],
+      "seed": 202610160403,
+      "steps": 8,
+      "cfg": 1.0,
+      "sampler_name": "res_multistep",
+      "scheduler": "simple",
+      "positive": [
+       "4",
+       0
+      ],
+      "negative": [
+       "5",
+       0
+      ],
+      "latent_image": [
+       "7",
+       0
+      ],
+      "denoise": 1.0
+     }
+    },
+    "9": {
+     "class_type": "VAEDecodeTiled",
+     "inputs": {
+      "samples": [
+       "8",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ],
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 64,
+      "temporal_overlap": 8
+     }
+    },
+    "10": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "9",
+       0
+      ],
+      "filename_prefix": "Studio/Z-Image-Fast"
+     }
+    }
+   },
+   "submissions": [
+    {
+     "index": 0,
+     "prompt_id": "42277345-8f3b-4caf-a908-402cd0ee90aa",
+     "seed": 202610160403,
+     "graph": {
+      "1": {
+       "class_type": "UNETLoader",
+       "inputs": {
+        "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+        "weight_dtype": "default"
+       }
+      },
+      "2": {
+       "class_type": "CLIPLoader",
+       "inputs": {
+        "clip_name": "qwen_3_4b.safetensors",
+        "type": "lumina2",
+        "device": "cpu"
+       }
+      },
+      "3": {
+       "class_type": "VAELoader",
+       "inputs": {
+        "vae_name": "ae.safetensors"
+       }
+      },
+      "4": {
+       "class_type": "CLIPTextEncode",
+       "inputs": {
+        "clip": [
+         "2",
+         0
+        ],
+        "text": "stylized hand painted game inventory icon, soft cel shading, one iron key with a simple round bow and three teeth, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+       }
+      },
+      "5": {
+       "class_type": "ConditioningZeroOut",
+       "inputs": {
+        "conditioning": [
+         "4",
+         0
+        ]
+       }
+      },
+      "6": {
+       "class_type": "ModelSamplingAuraFlow",
+       "inputs": {
+        "model": [
+         "1",
+         0
+        ],
+        "shift": 3.0
+       }
+      },
+      "7": {
+       "class_type": "EmptySD3LatentImage",
+       "inputs": {
+        "width": 1024,
+        "height": 1024,
+        "batch_size": 1
+       }
+      },
+      "8": {
+       "class_type": "KSampler",
+       "inputs": {
+        "model": [
+         "6",
+         0
+        ],
+        "seed": 202610160403,
+        "steps": 8,
+        "cfg": 1.0,
+        "sampler_name": "res_multistep",
+        "scheduler": "simple",
+        "positive": [
+         "4",
+         0
+        ],
+        "negative": [
+         "5",
+         0
+        ],
+        "latent_image": [
+         "7",
+         0
+        ],
+        "denoise": 1.0
+       }
+      },
+      "9": {
+       "class_type": "VAEDecodeTiled",
+       "inputs": {
+        "samples": [
+         "8",
+         0
+        ],
+        "vae": [
+         "3",
+         0
+        ],
+        "tile_size": 512,
+        "overlap": 64,
+        "temporal_size": 64,
+        "temporal_overlap": 8
+       }
+      },
+      "10": {
+       "class_type": "SaveImage",
+       "inputs": {
+        "images": [
+         "9",
+         0
+        ],
+        "filename_prefix": "Studio/Z-Image-Fast"
+       }
+      }
+     },
+     "status": "completed",
+     "gpu_memory": {
+      "peak_shared_bytes": 82563072,
+      "peak_dedicated_bytes": 10575937536,
+      "samples": 298,
+      "spilled": false
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "filename": "Z-Image-Fast_00045_.png",
+     "subfolder": "Studio",
+     "type": "output",
+     "seed": 202610160403,
+     "prompt_id": "42277345-8f3b-4caf-a908-402cd0ee90aa",
+     "media_type": "image",
+     "asset_id": "d3596a0a85805e1b96e2273f40043e97"
+    }
+   ],
+   "parent_assets": [],
+   "references": [],
+   "preparation": null,
+   "native_recipe": null,
+   "continuation": null,
+   "tile": null,
+   "tile_receipt": null,
+   "parallax": null,
+   "parallax_receipt": null
+  }
+ },
+ "control-key-202610160601": {
+  "job_id": "876fb83a-3e3d-4928-90be-7109b113b86b",
+  "prompt_ids": [
+   "129b4f22-f63e-45df-aa62-5fa7d19713aa"
+  ],
+  "recipe": {
+   "version": 2,
+   "preset_id": "zimage-fast",
+   "controls": {
+    "positive": "stylized hand painted game inventory icon, soft cel shading, one iron key with a simple round bow and three teeth, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+    "width": 1024,
+    "height": 1024,
+    "seed": 202610160601,
+    "steps": 8,
+    "cfg": 1.0,
+    "denoise": 1.0
+   },
+   "batch_count": 1,
+   "created_at": 1792199939.1827333,
+   "workflow": {
+    "1": {
+     "class_type": "UNETLoader",
+     "inputs": {
+      "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+      "weight_dtype": "default"
+     }
+    },
+    "2": {
+     "class_type": "CLIPLoader",
+     "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "lumina2",
+      "device": "cpu"
+     }
+    },
+    "3": {
+     "class_type": "VAELoader",
+     "inputs": {
+      "vae_name": "ae.safetensors"
+     }
+    },
+    "4": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "2",
+       0
+      ],
+      "text": "stylized hand painted game inventory icon, soft cel shading, one iron key with a simple round bow and three teeth, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+     }
+    },
+    "5": {
+     "class_type": "ConditioningZeroOut",
+     "inputs": {
+      "conditioning": [
+       "4",
+       0
+      ]
+     }
+    },
+    "6": {
+     "class_type": "ModelSamplingAuraFlow",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "shift": 3.0
+     }
+    },
+    "7": {
+     "class_type": "EmptySD3LatentImage",
+     "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+     }
+    },
+    "8": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "6",
+       0
+      ],
+      "seed": 202610160601,
+      "steps": 8,
+      "cfg": 1.0,
+      "sampler_name": "res_multistep",
+      "scheduler": "simple",
+      "positive": [
+       "4",
+       0
+      ],
+      "negative": [
+       "5",
+       0
+      ],
+      "latent_image": [
+       "7",
+       0
+      ],
+      "denoise": 1.0
+     }
+    },
+    "9": {
+     "class_type": "VAEDecodeTiled",
+     "inputs": {
+      "samples": [
+       "8",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ],
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 64,
+      "temporal_overlap": 8
+     }
+    },
+    "10": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "9",
+       0
+      ],
+      "filename_prefix": "Studio/Z-Image-Fast"
+     }
+    }
+   },
+   "submissions": [
+    {
+     "index": 0,
+     "prompt_id": "129b4f22-f63e-45df-aa62-5fa7d19713aa",
+     "seed": 202610160601,
+     "graph": {
+      "1": {
+       "class_type": "UNETLoader",
+       "inputs": {
+        "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+        "weight_dtype": "default"
+       }
+      },
+      "2": {
+       "class_type": "CLIPLoader",
+       "inputs": {
+        "clip_name": "qwen_3_4b.safetensors",
+        "type": "lumina2",
+        "device": "cpu"
+       }
+      },
+      "3": {
+       "class_type": "VAELoader",
+       "inputs": {
+        "vae_name": "ae.safetensors"
+       }
+      },
+      "4": {
+       "class_type": "CLIPTextEncode",
+       "inputs": {
+        "clip": [
+         "2",
+         0
+        ],
+        "text": "stylized hand painted game inventory icon, soft cel shading, one iron key with a simple round bow and three teeth, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+       }
+      },
+      "5": {
+       "class_type": "ConditioningZeroOut",
+       "inputs": {
+        "conditioning": [
+         "4",
+         0
+        ]
+       }
+      },
+      "6": {
+       "class_type": "ModelSamplingAuraFlow",
+       "inputs": {
+        "model": [
+         "1",
+         0
+        ],
+        "shift": 3.0
+       }
+      },
+      "7": {
+       "class_type": "EmptySD3LatentImage",
+       "inputs": {
+        "width": 1024,
+        "height": 1024,
+        "batch_size": 1
+       }
+      },
+      "8": {
+       "class_type": "KSampler",
+       "inputs": {
+        "model": [
+         "6",
+         0
+        ],
+        "seed": 202610160601,
+        "steps": 8,
+        "cfg": 1.0,
+        "sampler_name": "res_multistep",
+        "scheduler": "simple",
+        "positive": [
+         "4",
+         0
+        ],
+        "negative": [
+         "5",
+         0
+        ],
+        "latent_image": [
+         "7",
+         0
+        ],
+        "denoise": 1.0
+       }
+      },
+      "9": {
+       "class_type": "VAEDecodeTiled",
+       "inputs": {
+        "samples": [
+         "8",
+         0
+        ],
+        "vae": [
+         "3",
+         0
+        ],
+        "tile_size": 512,
+        "overlap": 64,
+        "temporal_size": 64,
+        "temporal_overlap": 8
+       }
+      },
+      "10": {
+       "class_type": "SaveImage",
+       "inputs": {
+        "images": [
+         "9",
+         0
+        ],
+        "filename_prefix": "Studio/Z-Image-Fast"
+       }
+      }
+     },
+     "status": "completed",
+     "gpu_memory": {
+      "peak_shared_bytes": 82563072,
+      "peak_dedicated_bytes": 10200014848,
+      "samples": 163,
+      "spilled": false
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "filename": "Z-Image-Fast_00067_.png",
+     "subfolder": "Studio",
+     "type": "output",
+     "seed": 202610160601,
+     "prompt_id": "129b4f22-f63e-45df-aa62-5fa7d19713aa",
+     "media_type": "image",
+     "asset_id": "bf1b69d0a2fa5108933947b1dc41ff45"
+    }
+   ],
+   "parent_assets": [],
+   "references": [],
+   "preparation": null,
+   "native_recipe": null,
+   "continuation": null,
+   "tile": null,
+   "tile_receipt": null,
+   "parallax": null,
+   "parallax_receipt": null
+  }
+ },
+ "icon-backpack-202610160403": {
+  "job_id": "5ccc7759-d602-457b-a79a-897f0cc1c78f",
+  "prompt_ids": [
+   "91299618-3c32-4846-afae-9dc6761bd1bf"
+  ],
+  "recipe": {
+   "version": 2,
+   "preset_id": "zimage-fast",
+   "controls": {
+    "positive": "stylized hand painted game inventory icon, soft cel shading, one brown leather backpack with a closed flap and two buckled straps, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+    "width": 1024,
+    "height": 1024,
+    "seed": 202610160403,
+    "steps": 8,
+    "cfg": 1.0,
+    "denoise": 1.0
+   },
+   "batch_count": 1,
+   "created_at": 1792163186.8194296,
+   "workflow": {
+    "1": {
+     "class_type": "UNETLoader",
+     "inputs": {
+      "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+      "weight_dtype": "default"
+     }
+    },
+    "2": {
+     "class_type": "CLIPLoader",
+     "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "lumina2",
+      "device": "cpu"
+     }
+    },
+    "3": {
+     "class_type": "VAELoader",
+     "inputs": {
+      "vae_name": "ae.safetensors"
+     }
+    },
+    "4": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "2",
+       0
+      ],
+      "text": "stylized hand painted game inventory icon, soft cel shading, one brown leather backpack with a closed flap and two buckled straps, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+     }
+    },
+    "5": {
+     "class_type": "ConditioningZeroOut",
+     "inputs": {
+      "conditioning": [
+       "4",
+       0
+      ]
+     }
+    },
+    "6": {
+     "class_type": "ModelSamplingAuraFlow",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "shift": 3.0
+     }
+    },
+    "7": {
+     "class_type": "EmptySD3LatentImage",
+     "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+     }
+    },
+    "8": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "6",
+       0
+      ],
+      "seed": 202610160403,
+      "steps": 8,
+      "cfg": 1.0,
+      "sampler_name": "res_multistep",
+      "scheduler": "simple",
+      "positive": [
+       "4",
+       0
+      ],
+      "negative": [
+       "5",
+       0
+      ],
+      "latent_image": [
+       "7",
+       0
+      ],
+      "denoise": 1.0
+     }
+    },
+    "9": {
+     "class_type": "VAEDecodeTiled",
+     "inputs": {
+      "samples": [
+       "8",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ],
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 64,
+      "temporal_overlap": 8
+     }
+    },
+    "10": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "9",
+       0
+      ],
+      "filename_prefix": "Studio/Z-Image-Fast"
+     }
+    }
+   },
+   "submissions": [
+    {
+     "index": 0,
+     "prompt_id": "91299618-3c32-4846-afae-9dc6761bd1bf",
+     "seed": 202610160403,
+     "graph": {
+      "1": {
+       "class_type": "UNETLoader",
+       "inputs": {
+        "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+        "weight_dtype": "default"
+       }
+      },
+      "2": {
+       "class_type": "CLIPLoader",
+       "inputs": {
+        "clip_name": "qwen_3_4b.safetensors",
+        "type": "lumina2",
+        "device": "cpu"
+       }
+      },
+      "3": {
+       "class_type": "VAELoader",
+       "inputs": {
+        "vae_name": "ae.safetensors"
+       }
+      },
+      "4": {
+       "class_type": "CLIPTextEncode",
+       "inputs": {
+        "clip": [
+         "2",
+         0
+        ],
+        "text": "stylized hand painted game inventory icon, soft cel shading, one brown leather backpack with a closed flap and two buckled straps, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+       }
+      },
+      "5": {
+       "class_type": "ConditioningZeroOut",
+       "inputs": {
+        "conditioning": [
+         "4",
+         0
+        ]
+       }
+      },
+      "6": {
+       "class_type": "ModelSamplingAuraFlow",
+       "inputs": {
+        "model": [
+         "1",
+         0
+        ],
+        "shift": 3.0
+       }
+      },
+      "7": {
+       "class_type": "EmptySD3LatentImage",
+       "inputs": {
+        "width": 1024,
+        "height": 1024,
+        "batch_size": 1
+       }
+      },
+      "8": {
+       "class_type": "KSampler",
+       "inputs": {
+        "model": [
+         "6",
+         0
+        ],
+        "seed": 202610160403,
+        "steps": 8,
+        "cfg": 1.0,
+        "sampler_name": "res_multistep",
+        "scheduler": "simple",
+        "positive": [
+         "4",
+         0
+        ],
+        "negative": [
+         "5",
+         0
+        ],
+        "latent_image": [
+         "7",
+         0
+        ],
+        "denoise": 1.0
+       }
+      },
+      "9": {
+       "class_type": "VAEDecodeTiled",
+       "inputs": {
+        "samples": [
+         "8",
+         0
+        ],
+        "vae": [
+         "3",
+         0
+        ],
+        "tile_size": 512,
+        "overlap": 64,
+        "temporal_size": 64,
+        "temporal_overlap": 8
+       }
+      },
+      "10": {
+       "class_type": "SaveImage",
+       "inputs": {
+        "images": [
+         "9",
+         0
+        ],
+        "filename_prefix": "Studio/Z-Image-Fast"
+       }
+      }
+     },
+     "status": "completed",
+     "gpu_memory": {
+      "peak_shared_bytes": 82563072,
+      "peak_dedicated_bytes": 10771505152,
+      "samples": 228,
+      "spilled": false
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "filename": "Z-Image-Fast_00044_.png",
+     "subfolder": "Studio",
+     "type": "output",
+     "seed": 202610160403,
+     "prompt_id": "91299618-3c32-4846-afae-9dc6761bd1bf",
+     "media_type": "image",
+     "asset_id": "b5dbdfe9e0955095b2452db210ea7871"
+    }
+   ],
+   "parent_assets": [],
+   "references": [],
+   "preparation": null,
+   "native_recipe": null,
+   "continuation": null,
+   "tile": null,
+   "tile_receipt": null,
+   "parallax": null,
+   "parallax_receipt": null
+  }
+ },
+ "control-backpack-202610160601": {
+  "job_id": "2fdbf134-ca0f-457d-b9ad-f5b63a9146ee",
+  "prompt_ids": [
+   "b5667959-a9b5-46fb-9d2f-d3712f0a0673"
+  ],
+  "recipe": {
+   "version": 2,
+   "preset_id": "zimage-fast",
+   "controls": {
+    "positive": "stylized hand painted game inventory icon, soft cel shading, one brown leather backpack with a closed flap and two buckled straps, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+    "width": 1024,
+    "height": 1024,
+    "seed": 202610160601,
+    "steps": 8,
+    "cfg": 1.0,
+    "denoise": 1.0
+   },
+   "batch_count": 1,
+   "created_at": 1792200027.0242393,
+   "workflow": {
+    "1": {
+     "class_type": "UNETLoader",
+     "inputs": {
+      "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+      "weight_dtype": "default"
+     }
+    },
+    "2": {
+     "class_type": "CLIPLoader",
+     "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "lumina2",
+      "device": "cpu"
+     }
+    },
+    "3": {
+     "class_type": "VAELoader",
+     "inputs": {
+      "vae_name": "ae.safetensors"
+     }
+    },
+    "4": {
+     "class_type": "CLIPTextEncode",
+     "inputs": {
+      "clip": [
+       "2",
+       0
+      ],
+      "text": "stylized hand painted game inventory icon, soft cel shading, one brown leather backpack with a closed flap and two buckled straps, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+     }
+    },
+    "5": {
+     "class_type": "ConditioningZeroOut",
+     "inputs": {
+      "conditioning": [
+       "4",
+       0
+      ]
+     }
+    },
+    "6": {
+     "class_type": "ModelSamplingAuraFlow",
+     "inputs": {
+      "model": [
+       "1",
+       0
+      ],
+      "shift": 3.0
+     }
+    },
+    "7": {
+     "class_type": "EmptySD3LatentImage",
+     "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+     }
+    },
+    "8": {
+     "class_type": "KSampler",
+     "inputs": {
+      "model": [
+       "6",
+       0
+      ],
+      "seed": 202610160601,
+      "steps": 8,
+      "cfg": 1.0,
+      "sampler_name": "res_multistep",
+      "scheduler": "simple",
+      "positive": [
+       "4",
+       0
+      ],
+      "negative": [
+       "5",
+       0
+      ],
+      "latent_image": [
+       "7",
+       0
+      ],
+      "denoise": 1.0
+     }
+    },
+    "9": {
+     "class_type": "VAEDecodeTiled",
+     "inputs": {
+      "samples": [
+       "8",
+       0
+      ],
+      "vae": [
+       "3",
+       0
+      ],
+      "tile_size": 512,
+      "overlap": 64,
+      "temporal_size": 64,
+      "temporal_overlap": 8
+     }
+    },
+    "10": {
+     "class_type": "SaveImage",
+     "inputs": {
+      "images": [
+       "9",
+       0
+      ],
+      "filename_prefix": "Studio/Z-Image-Fast"
+     }
+    }
+   },
+   "submissions": [
+    {
+     "index": 0,
+     "prompt_id": "b5667959-a9b5-46fb-9d2f-d3712f0a0673",
+     "seed": 202610160601,
+     "graph": {
+      "1": {
+       "class_type": "UNETLoader",
+       "inputs": {
+        "unet_name": "z-image-turbo_fp8_scaled_e4m3fn_KJ.safetensors",
+        "weight_dtype": "default"
+       }
+      },
+      "2": {
+       "class_type": "CLIPLoader",
+       "inputs": {
+        "clip_name": "qwen_3_4b.safetensors",
+        "type": "lumina2",
+        "device": "cpu"
+       }
+      },
+      "3": {
+       "class_type": "VAELoader",
+       "inputs": {
+        "vae_name": "ae.safetensors"
+       }
+      },
+      "4": {
+       "class_type": "CLIPTextEncode",
+       "inputs": {
+        "clip": [
+         "2",
+         0
+        ],
+        "text": "stylized hand painted game inventory icon, soft cel shading, one brown leather backpack with a closed flap and two buckled straps, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing"
+       }
+      },
+      "5": {
+       "class_type": "ConditioningZeroOut",
+       "inputs": {
+        "conditioning": [
+         "4",
+         0
+        ]
+       }
+      },
+      "6": {
+       "class_type": "ModelSamplingAuraFlow",
+       "inputs": {
+        "model": [
+         "1",
+         0
+        ],
+        "shift": 3.0
+       }
+      },
+      "7": {
+       "class_type": "EmptySD3LatentImage",
+       "inputs": {
+        "width": 1024,
+        "height": 1024,
+        "batch_size": 1
+       }
+      },
+      "8": {
+       "class_type": "KSampler",
+       "inputs": {
+        "model": [
+         "6",
+         0
+        ],
+        "seed": 202610160601,
+        "steps": 8,
+        "cfg": 1.0,
+        "sampler_name": "res_multistep",
+        "scheduler": "simple",
+        "positive": [
+         "4",
+         0
+        ],
+        "negative": [
+         "5",
+         0
+        ],
+        "latent_image": [
+         "7",
+         0
+        ],
+        "denoise": 1.0
+       }
+      },
+      "9": {
+       "class_type": "VAEDecodeTiled",
+       "inputs": {
+        "samples": [
+         "8",
+         0
+        ],
+        "vae": [
+         "3",
+         0
+        ],
+        "tile_size": 512,
+        "overlap": 64,
+        "temporal_size": 64,
+        "temporal_overlap": 8
+       }
+      },
+      "10": {
+       "class_type": "SaveImage",
+       "inputs": {
+        "images": [
+         "9",
+         0
+        ],
+        "filename_prefix": "Studio/Z-Image-Fast"
+       }
+      }
+     },
+     "status": "completed",
+     "gpu_memory": {
+      "peak_shared_bytes": 82563072,
+      "peak_dedicated_bytes": 10197917696,
+      "samples": 162,
+      "spilled": false
+     }
+    }
+   ],
+   "outputs": [
+    {
+     "filename": "Z-Image-Fast_00068_.png",
+     "subfolder": "Studio",
+     "type": "output",
+     "seed": 202610160601,
+     "prompt_id": "b5667959-a9b5-46fb-9d2f-d3712f0a0673",
+     "media_type": "image",
+     "asset_id": "200c98a4b7a359e59368046bcd016016"
+    }
+   ],
+   "parent_assets": [],
+   "references": [],
+   "preparation": null,
+   "native_recipe": null,
+   "continuation": null,
+   "tile": null,
+   "tile_receipt": null,
+   "parallax": null,
+   "parallax_receipt": null
+  }
+ }
+}

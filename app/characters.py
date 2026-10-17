@@ -7,6 +7,7 @@ canon, named by asset id and sha256 like a look's anchor, set only from the Work
 """
 import re
 
+import looks
 from workspace import CARD_ID, WorkspaceError
 
 KIND = "character"
@@ -56,15 +57,21 @@ def canon_asset(studio, card):
 
 
 def listing(studio):
-    result = []
+    result, saved_looks = [], None
     for card in studio.assets.cards(KIND):
-        asset, reason = canon_asset(studio, card), None
-        try: validate_body(card["body"])
+        asset, reason, body = canon_asset(studio, card), None, {}
+        try: body = validate_body(card["body"])
         except WorkspaceError as error: reason = str(error)
         if asset is None: reason = reason or "Its canon picture is no longer in the library. Restore it, or make another picture the canon."
         elif (asset.get("media_type") or "image") != "image": reason = reason or "Its canon is not a picture."
         if card["trashed_at"]: reason = "This character is put away. Restore it to use it."
-        result.append(dict(card, usable=reason is None, unusable_reason=reason, canon_asset_id=asset["id"] if asset else None))
+        look_note = None
+        if body.get("look_id"):
+            if saved_looks is None: saved_looks = {look["id"]: look for look in looks.listing(studio)["looks"]}
+            look = saved_looks.get(body["look_id"])
+            if look and look["trashed_at"]: look_note = "Its preferred look is put away; Make uses the goal's default look."
+            elif not look or not look["usable"]: look_note = "Its preferred look's recipe is no longer usable; Make uses the goal's default look."
+        result.append(dict(card, usable=reason is None, unusable_reason=reason, canon_asset_id=asset["id"] if asset else None, look_note=look_note))
     return {"characters": result, "generation_submitted": False}
 
 

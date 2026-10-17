@@ -15,7 +15,7 @@ function between(start, end) {
   return source.slice(first, last);
 }
 const readinessSource = between('  function readinessItems(){', '\n  function syncReady(){');
-const combineSource = between('  function combineBusy(){', '\n  // Each engine');
+const combineSource = between('  // sendBusy counts only', '\n  // Each engine');
 const prepareSource = between('  async function prepareVary(button){', "\n  document.addEventListener('click',e=>{const button=e.target.closest('[data-ux-vary]')");
 const U = require('../app/static/studio-core.js');
 
@@ -25,7 +25,7 @@ function context(extra) {
     missingByPreset: {}, continuationState: null, pendingInputs: [], uploaded: null, lastUploaded: null,
     secondPicture: null, sharedAdoptionError: null, varyUnapplied: null, sourceReadError: '',
     submitting: false, handoffBusy: false, pickerBusy: false, restoring: false, pairActionBusy: false, poseBusy: false,
-    referencePending: 0, varyBusy: false, catalog: {presets: [{id: 'plain', name: 'Plain'}]},
+    referencePending: 0, varyBusy: false, tileBusy: false, parallaxBusy: false, planBusy: false, polishBusy: new Set(), makeVaryBusy: new Set(), catalog: {presets: [{id: 'plain', name: 'Plain'}]},
     draftDirty: false, recipeTemplateHash: null, selectedPositive: 'kept words',
     calls: [], notices: [], asked: [], answer: true, typed: '', negative: '', staged: false,
     window: {confirm(text) { sandbox.asked.push(text); return sandbox.answer; }}, stagedPicture: () => sandbox.staged,
@@ -137,7 +137,7 @@ function makeVaryBox(extra) {
     StudioContinuation: SC, catalog: {presets: catalogPresets}, missingByPreset: {}, installedLoras: [],
     assetState: {assets: [{id: 'asset-1', media_type: 'image', trashed_at: null}]},
     jobs: [{id: 'job-1', preset_id: 'wai', status: 'completed', controls: {lora: 0.8, lora_name: 'style.safetensors', lora2: 0, lora2_name: 'none.safetensors', sampler: 'euler', scheduler: 'normal', cfg: 6, steps: 28}}],
-    calls: [], sent: [], context: sourceContext, recipePreset: 'wai',
+    calls: [], sent: [], context: sourceContext, recipePreset: 'wai', combineBusy: () => false, sendBusy: () => false, tileBusy: false, parallaxBusy: false, syncReady() {},
     crypto: {getRandomValues: (array) => { array[0] = 41; return array; }},
     async readSource() { box.calls.push('context'); return box.context; },
     async api(url) { box.calls.push(url); return {preset_id: box.recipePreset, controls: {positive: 'a lantern', seed: 4}}; },
@@ -242,7 +242,7 @@ test('Make card Vary is wired to one StudioWorkbench.vary call per press (#1497)
   assert.notEqual(varyPictureStart, -1, 'make.js has a Make-side Vary');
   assert.doesNotMatch(makeSource, /Prepare variations in the full editor/, 'the card no longer sends the owner to the full editor');
   assert.match(makeSource, /closest\('\[data-make-vary\]'\);if\(varying&&!varying\.disabled\)\{void varyPicture\(varying\)/);
-  let calls = 0, release; const box = makeCard((...args) => { calls++; assert.deepEqual(args, ['asset-1', 'wai', 'job-1', 'subtle']); return new Promise(r => { release = r; }); });
+  let calls = 0, release; const box = makeCard((...args) => { calls++; assert.deepEqual(args, ['asset-1', 'wai', 'job-1', 'subtle', undefined]); return new Promise(r => { release = r; }); });
   const button = {dataset: {asset: 'asset-1', preset: 'wai', job: 'job-1', makeVary: 'subtle'}};
   const first = box.varyPicture(button); await box.varyPicture(button);
   assert.equal(calls, 1, 'a double press sends once');

@@ -23,7 +23,7 @@ function page({saved={},refresh=async()=>{}}={}){
     continuationState:{version:1,intent:'combine',preset_id:FOUR,source_asset_id:'source-asset',source_sha256:'a'.repeat(64),reference_file:'keep.png'},
     referenceRecords:[{role:'pose',file:'pose.png',sha256:'b'.repeat(64)}],
     escape:value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),
-    combineBusy:()=>false,engineEstimate:()=>null,durationLabel:s=>s+' s',getControl:key=>key==='seed'?seed:null,
+    combineBusy:()=>false,syncReady:()=>{},engineEstimate:()=>null,durationLabel:s=>s+' s',getControl:key=>key==='seed'?seed:null,
     continuationBlockers:()=>[],announce:(text,error)=>announced.push({text,error}),refresh,
     localStorage:{getItem:key=>storage.has(key)?storage.get(key):null,setItem:(key,value)=>storage.set(key,String(value))},
     post:async(url,body)=>{posts.push({url,body});

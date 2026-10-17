@@ -1,0 +1,856 @@
+{
+ "round": 6,
+ "issue": 1498,
+ "preset_id": "zimage-fast",
+ "look_id": "look-zimage-game-icon",
+ "backend": "primary ComfyUI 8188 through the Studio 8191 /api/jobs; 1024x1024, 8 steps, cfg 1.0, denoise 1.0, no LoRA, no negative input",
+ "judge": "agent (Sonnet 5.5), non-blind; native-resolution full-frame inspection of every round-6 picture; reused round-5 control pictures re-viewed on the contact sheet only",
+ "verdict_key": {
+  "K": "keep (strict)",
+  "F": "fixable",
+  "R": "reject"
+ },
+ "not_art_acceptance": "agent verdicts are not owner art acceptance or licence clearance",
+ "scenes": {
+  "shield": "one round wooden shield with an iron rim and a central iron boss",
+  "crystal": "one red mana crystal",
+  "key": "one iron key with a simple round bow and three teeth",
+  "backpack": "one brown leather backpack with a closed flap and two buckled straps"
+ },
+ "variants": {
+  "control": {
+   "wording": "stylized hand painted game inventory icon, soft cel shading, {scene}, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+   "strict_keep_total": "1/8",
+   "strict_keep_default_seed_202610160403": "1/4",
+   "strict_keep_extra_seed_202610160601": "0/4",
+   "trials": [
+    {
+     "object": "shield",
+     "seed": 202610160403,
+     "verdict": "fixable",
+     "reason": "Pointed heraldic outline instead of the requested round shield; one item, rim and boss present, no frame. Bit-identical to the round-5 image (same sha256).",
+     "source": "round-6 run",
+     "trial": "control-shield-202610160403",
+     "job_id": "d59e7b40-ec0a-44e6-afab-a70efeb59d4d",
+     "prompt_ids": [
+      "fc8783f6-b955-4fdc-914d-ea79e1c7bc97"
+     ],
+     "elapsed_seconds": 100.7,
+     "sha256": "c7715e1c986ed717b610d071533aeaea43a2614334a22ad1adbec3d3ed90ad3d",
+     "recipe_sha256": "0a15bfa93f270b51ae1601da41cfae459f1a89529de745cbed67027acbd751ff",
+     "peak_commit": 0.804,
+     "admission_commit": 0.774,
+     "submit_attempt": 3,
+     "positive": "stylized hand painted game inventory icon, soft cel shading, one round wooden shield with an iron rim and a central iron boss, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+     "created_at": "2026-10-16T22:51:18",
+     "finished_at": "2026-10-16T22:52:58",
+     "image_local_only": "lab-20261016f/control-shield-202610160403-0.png"
+    },
+    {
+     "object": "shield",
+     "seed": 202610160601,
+     "verdict": "fixable",
+     "reason": "Round-5 trial reused: pointed heraldic outline instead of round.",
+     "source": "round-5 receipts (lab-2026-10-16e.receipts.json)",
+     "trial": "icon-shield-202610160601",
+     "job_id": "f8921814-f6b8-4f27-8707-4be5c13bd2c5",
+     "prompt_ids": [
+      "028fdaff-ba9d-4f1b-a4e3-52963fd213f3"
+     ],
+     "elapsed_seconds": 9.5,
+     "sha256": "f4284eff9bd757af73a2feefcddad5d456c9a5b79413d5d6f20cb86b2e175e10",
+     "recipe_sha256": "ab704061aefba3cda0d6dab04454adf72b4f1dc44e2f58dde756cbebd54830c2",
+     "peak_commit": 0.763,
+     "positive": "stylized hand painted game inventory icon, soft cel shading, one round wooden shield with an iron rim and a central iron boss, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+     "image_local_only": "lab-20261016e/icon-shield-202610160601-0.png"
+    },
+    {
+     "object": "crystal",
+     "seed": 202610160403,
+     "verdict": "fixable",
+     "reason": "Round-5 trial reused: one red crystal inside an unrequested dark rounded-square frame.",
+     "source": "round-5 receipts (lab-2026-10-16e.receipts.json)",
+     "trial": "icon-crystal-202610160403",
+     "job_id": "816325cb-989d-465b-9095-9389aa82a347",
+     "prompt_ids": [
+      "9088f50a-2663-48f9-aa22-9cb947fa216e"
+     ],
+     "elapsed_seconds": 113.8,
+     "sha256": "50c04e74ebb544ac17d0b35f66abba48b26cbe77080267544b322582f7d924d9",
+     "recipe_sha256": "9fb2505562d9ecfa77ce7589067d66ad37b054c2d8914ca4c3ca7d3edf55ffe1",
+     "peak_commit": 0.738,
+     "positive": "stylized hand painted game inventory icon, soft cel shading, one red mana crystal, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+     "image_local_only": "lab-20261016e/icon-crystal-202610160403-0.png"
+    },
+    {
+     "object": "crystal",
+     "seed": 202610160601,
+     "verdict": "fixable",
+     "reason": "Round-5 trial reused: same rounded-square frame around the crystal.",
+     "source": "round-5 receipts (lab-2026-10-16e.receipts.json)",
+     "trial": "icon-crystal-202610160601",
+     "job_id": "ffe71888-6ae8-41c4-8939-da85181bc70f",
+     "prompt_ids": [
+      "209a1092-6f75-4720-a187-70f45fcdc5a3"
+     ],
+     "elapsed_seconds": 8.6,
+     "sha256": "cbf9ea72456a59e2adb7069b422a280f888186c813155e9bd84f1c026b5f0109",
+     "recipe_sha256": "dfb3b0c2115207064c5b1a0c9629e1613772020936710118c67c49d4e1b1746f",
+     "peak_commit": 0.705,
+     "positive": "stylized hand painted game inventory icon, soft cel shading, one red mana crystal, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+     "image_local_only": "lab-20261016e/icon-crystal-202610160601-0.png"
+    },
+    {
+     "object": "key",
+     "seed": 202610160403,
+     "verdict": "fixable",
+     "reason": "Round-5 trial reused: rounded-square border and only two teeth instead of three.",
+     "source": "round-5 receipts (lab-2026-10-16e.receipts.json)",
+     "trial": "icon-key-202610160403",
+     "job_id": "c48f5cbc-b2db-4be0-865a-ce9793bdc08b",
+     "prompt_ids": [
+      "42277345-8f3b-4caf-a908-402cd0ee90aa"
+     ],
+     "elapsed_seconds": 145.7,
+     "sha256": "817e7e722777b20dcc83d5eb9bce9358874e1d493e55e6737c7586c4aca4ca00",
+     "recipe_sha256": "720860707f530de99bf8f391ccb8f3e8fd899a0ccd8bea5f72f0ff06943a4612",
+     "peak_commit": 0.765,
+     "positive": "stylized hand painted game inventory icon, soft cel shading, one iron key with a simple round bow and three teeth, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+     "image_local_only": "lab-20261016e/icon-key-202610160403-0.png"
+    },
+    {
+     "object": "key",
+     "seed": 202610160601,
+     "verdict": "fixable",
+     "reason": "No frame this time, but the bit has two teeth (one notch) instead of three; pale grey cartoon key with a heavy black outline.",
+     "source": "round-6 run",
+     "trial": "control-key-202610160601",
+     "job_id": "876fb83a-3e3d-4928-90be-7109b113b86b",
+     "prompt_ids": [
+      "129b4f22-f63e-45df-aa62-5fa7d19713aa"
+     ],
+     "elapsed_seconds": 79.6,
+     "sha256": "4703ef2fca12891706c7c2db7d4ab762c8fc0f585963f261fd2fe3887ca28938",
+     "recipe_sha256": "01ddb51b51b03f72eb1aeef3c1a19a3f1dd6ec99a2a4908ac5a305b3ef64c85b",
+     "peak_commit": 0.744,
+     "admission_commit": 0.743,
+     "submit_attempt": 1,
+     "positive": "stylized hand painted game inventory icon, soft cel shading, one iron key with a simple round bow and three teeth, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+     "created_at": "2026-10-17T02:18:59",
+     "finished_at": "2026-10-17T02:20:18",
+     "image_local_only": "lab-20261016f/control-key-202610160601-0.png"
+    },
+    {
+     "object": "backpack",
+     "seed": 202610160403,
+     "verdict": "keep",
+     "reason": "Round-5 trial reused: one closed-flap backpack, two buckled flap straps, no frame, no extra item.",
+     "source": "round-5 receipts (lab-2026-10-16e.receipts.json)",
+     "trial": "icon-backpack-202610160403",
+     "job_id": "5ccc7759-d602-457b-a79a-897f0cc1c78f",
+     "prompt_ids": [
+      "91299618-3c32-4846-afae-9dc6761bd1bf"
+     ],
+     "elapsed_seconds": 111.8,
+     "sha256": "b8ef43151c160597ee23fc472e8c668a5219ff11d541ce0e4a4ad91590c925f5",
+     "recipe_sha256": "832bcb51afdc96326bccbdb6f13de3a2e870b524b8a072790c94e65d89ef2074",
+     "peak_commit": 0.728,
+     "positive": "stylized hand painted game inventory icon, soft cel shading, one brown leather backpack with a closed flap and two buckled straps, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+     "image_local_only": "lab-20261016e/icon-backpack-202610160403-0.png"
+    },
+    {
+     "object": "backpack",
+     "seed": 202610160601,
+     "verdict": "fixable",
+     "reason": "Closed flap and two buckled flap straps, but the front pocket also carries two buckled straps: four buckles against the requested two.",
+     "source": "round-6 run",
+     "trial": "control-backpack-202610160601",
+     "job_id": "2fdbf134-ca0f-457d-b9ad-f5b63a9146ee",
+     "prompt_ids": [
+      "b5667959-a9b5-46fb-9d2f-d3712f0a0673"
+     ],
+     "elapsed_seconds": 78.8,
+     "sha256": "8e22da2787c8e50d376a840641273041bef3ef58c534865a977ddfe2acbcbd91",
+     "recipe_sha256": "156c458f5a2272f28a706a88191dc224410e559a565e141203a5516d83a43ea4",
+     "peak_commit": 0.751,
+     "admission_commit": 0.744,
+     "submit_attempt": 1,
+     "positive": "stylized hand painted game inventory icon, soft cel shading, one brown leather backpack with a closed flap and two buckled straps, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+     "created_at": "2026-10-17T02:20:27",
+     "finished_at": "2026-10-17T02:21:45",
+     "image_local_only": "lab-20261016f/control-backpack-202610160601-0.png"
+    }
+   ]
+  },
+  "A-noframe": {
+   "wording": "stylized hand painted game inventory icon, soft cel shading, {scene}, single centred object, complete object visible with generous empty margin, isolated on pure white background, no frame, no border, no badge, no other objects, no writing",
+   "strict_keep_total": "2/8",
+   "strict_keep_default_seed_202610160403": "1/4",
+   "strict_keep_extra_seed_202610160601": "1/4",
+   "trials": [
+    {
+     "object": "shield",
+     "seed": 202610160403,
+     "verdict": "fixable",
+     "reason": "Pointed heraldic shield, not round; otherwise the same picture as the control.",
+     "source": "round-6 run",
+     "trial": "A-noframe-shield-202610160403",
+     "job_id": "7be23245-cb8f-47ba-9451-39882ccc823a",
+     "prompt_ids": [
+      "411a5962-89b7-4339-82b3-6a809a7ac771"
+     ],
+     "elapsed_seconds": 104.4,
+     "sha256": "7f2f372f9f8c4d72fd2e75046b82aa161b9bc00520e22aa0122ec947c9105240",
+     "recipe_sha256": "6d49936a4ec57bf63ba934b5e43dfc400b581e84562e7975cebc8246e4d17e13",
+     "peak_commit": 0.754,
+     "admission_commit": 0.745,
+     "submit_attempt": 1,
+     "positive": "stylized hand painted game inventory icon, soft cel shading, one round wooden shield with an iron rim and a central iron boss, single centred object, complete object visible with generous empty margin, isolated on pure white background, no frame, no border, no badge, no other objects, no writing",
+     "created_at": "2026-10-16T22:53:02",
+     "finished_at": "2026-10-16T22:54:46",
+     "image_local_only": "lab-20261016f/A-noframe-shield-202610160403-0.png"
+    },
+    {
+     "object": "shield",
+     "seed": 202610160601,
+     "verdict": "fixable",
+     "reason": "Pointed heraldic shield, not round.",
+     "source": "round-6 run",
+     "trial": "A-noframe-shield-202610160601",
+     "job_id": "e8f6dff5-5ee1-4a28-b75f-0190e07d63da",
+     "prompt_ids": [
+      "9c10939e-68ea-4d05-ad37-ef7728a877ae"
+     ],
+     "elapsed_seconds": 85.1,
+     "sha256": "dede91a8ee32f8b4992c8684b43f107b10e4ee685606d61ba69513b45ffeb6df",
+     "recipe_sha256": "f689b1c52307ea378fa7c886d0b10c95b80be36ac7f2a75a43f4d998f7daa316",
+     "peak_commit": 0.75,
+     "admission_commit": 0.744,
+     "submit_attempt": 1,
+     "positive": "stylized hand painted game inventory icon, soft cel shading, one round wooden shield with an iron rim and a central iron boss, single centred object, complete object visible with generous empty margin, isolated on pure white background, no frame, no border, no badge, no other objects, no writing",
+     "created_at": "2026-10-17T02:28:57",
+     "finished_at": "2026-10-17T02:30:23",
+     "image_local_only": "lab-20261016f/A-noframe-shield-202610160601-0.png"
+    },
+    {
+     "object": "crystal",
+     "seed": 202610160403,
+     "verdict": "fixable",
+     "reason": "Thick black rounded-square frame around the crystal: the wording \"no frame, no border, no badge\" did not remove it.",
+     "source": "round-6 run",
+     "trial": "A-noframe-crystal-202610160403",
+     "job_id": "e141e4ae-3950-415f-9551-aca1bb753ba2",
+     "prompt_ids": [
+      "5a70ed56-65c7-4261-bbbd-63b1297011c5"
+     ],
+     "elapsed_seconds": 84.4,
+     "sha256": "c86104c6278a6135fc0c59c272efc2ec94b3e89376267354eb5459dcda1bb457",
+     "recipe_sha256": "b6d669e9a5b257afc55161250f7e9121087cb10c649486a3a9db444ecb79a853",
+     "peak_commit": 0.733,
+     "admission_commit": 0.731,
+     "submit_attempt": 1,
+     "positive": "stylized hand painted game inventory icon, soft cel shading, one red mana crystal, single centred object, complete object visible with generous empty margin, isolated on pure white background, no frame, no border, no badge, no other objects, no writing",
+     "created_at": "2026-10-17T02:14:31",
+     "finished_at": "2026-10-17T02:15:55",
+     "image_local_only": "lab-20261016f/A-noframe-crystal-202610160403-0.png"
+    },
+    {
+     "object": "crystal",
+     "seed": 202610160601,
+     "verdict": "keep",
+     "reason": "One red faceted crystal with a thin dark outline hugging its shape; no frame, no extra item.",
+     "source": "round-6 run",
+     "trial": "A-noframe-crystal-202610160601",
+     "job_id": "c8a750ec-cfa1-4606-bb05-d706778ad8cf",
+     "prompt_ids": [
+      "a7fc1f2b-efcc-4aad-9804-b75d2d66392b"
+     ],
+     "elapsed_seconds": 83.3,
+     "sha256": "7c3a10d6ad16ea83fac462f934746481575c77a18f26da964249d1d0283d4ad1",
+     "recipe_sha256": "c12dabd1ee5bbef0c679bd32ce85b721b9673b20a8de6126379c580dcdf3bec2",
+     "peak_commit": 0.746,
+     "admission_commit": 0.744,
+     "submit_attempt": 1,
+     "positive": "stylized hand painted game inventory icon, soft cel shading, one red mana crystal, single centred object, complete object visible with generous empty margin, isolated on pure white background, no frame, no border, no badge, no other objects, no writing",
+     "created_at": "2026-10-17T02:30:28",
+     "finished_at": "2026-10-17T02:31:51",
+     "image_local_only": "lab-20261016f/A-noframe-crystal-202610160601-0.png"
+    },
+    {
+     "object": "key",
+     "seed": 202610160403,
+     "verdict": "fixable",
+     "reason": "Grey key inside a black rounded-square frame (the frame the wording asked to avoid); two teeth.",
+     "source": "round-6 run",
+     "trial": "A-noframe-key-202610160403",
+     "job_id": "578e7af9-e45c-4f8c-b68b-2e7885a2c081",
+     "prompt_ids": [
+      "3be7f04b-9c4f-4a11-8fa0-0fdea6b9d52a"
+     ],
+     "elapsed_seconds": 84.9,
+     "sha256": "c2ef4ef0163b45492d46c0f677261fa6d6a5da0253cc9c27a5b5de301dc87ace",
+     "recipe_sha256": "94453c523030ea68f024047ebac3390f49d99b7e759f92c5605eafddd83190b1",
+     "peak_commit": 0.755,
+     "admission_commit": 0.728,
+     "submit_attempt": 1,
+     "positive": "stylized hand painted game inventory icon, soft cel shading, one iron key with a simple round bow and three teeth, single centred object, complete object visible with generous empty margin, isolated on pure white background, no frame, no border, no badge, no other objects, no writing",
+     "created_at": "2026-10-17T02:15:59",
+     "finished_at": "2026-10-17T02:17:24",
+     "image_local_only": "lab-20261016f/A-noframe-key-202610160403-0.png"
+    },
+    {
+     "object": "key",
+     "seed": 202610160601,
+     "verdict": "fixable",
+     "reason": "No frame, but two teeth instead of three; grey cartoon key with heavy black outline.",
+     "source": "round-6 run",
+     "trial": "A-noframe-key-202610160601",
+     "job_id": "c923dd92-8e90-45b3-ae2c-da653decbfd6",
+     "prompt_ids": [
+      "7f8da417-22e0-4369-8dd6-e65b5605b5ec"
+     ],
+     "elapsed_seconds": 84.9,
+     "sha256": "4a289dfeef7f08b0d498761fba70bdd0be7f884c28935396da51d1119e1dfa36",
+     "recipe_sha256": "754d723a47bafc3646bd171a7c829fd8a8b45e2d7a0a24e66676c09744d4f12e",
+     "peak_commit": 0.78,
+     "admission_commit": 0.724,
+     "submit_attempt": 1,
+     "positive": "stylized hand painted game inventory icon, soft cel shading, one iron key with a simple round bow and three teeth, single centred object, complete object visible with generous empty margin, isolated on pure white background, no frame, no border, no badge, no other objects, no writing",
+     "created_at": "2026-10-17T02:31:57",
+     "finished_at": "2026-10-17T02:33:22",
+     "image_local_only": "lab-20261016f/A-noframe-key-202610160601-0.png"
+    },
+    {
+     "object": "backpack",
+     "seed": 202610160403,
+     "verdict": "keep",
+     "reason": "One closed-flap backpack, two buckled flap straps, unbuckled pocket tabs, no frame.",
+     "source": "round-6 run",
+     "trial": "A-noframe-backpack-202610160403",
+     "job_id": "0d5886ed-9105-4c79-9438-a70c81ed73aa",
+     "prompt_ids": [
+      "02c38551-2eb5-4ea7-add9-c7f63723e518"
+     ],
+     "elapsed_seconds": 86.5,
+     "sha256": "ea86fc91c16d659d0ca40ba2684f5039332abd12b50668c5bc707694b255e2fb",
+     "recipe_sha256": "066a72b2953e236cc2d0b1bdbeb282025903fab3c78beef6e06a25b3613244fc",
+     "peak_commit": 0.75,
+     "admission_commit": 0.742,
+     "submit_attempt": 1,
+     "positive": "stylized hand painted game inventory icon, soft cel shading, one brown leather backpack with a closed flap and two buckled straps, single centred object, complete object visible with generous empty margin, isolated on pure white background, no frame, no border, no badge, no other objects, no writing",
+     "created_at": "2026-10-17T02:17:29",
+     "finished_at": "2026-10-17T02:18:55",
+     "image_local_only": "lab-20261016f/A-noframe-backpack-202610160403-0.png"
+    },
+    {
+     "object": "backpack",
+     "seed": 202610160601,
+     "verdict": "fixable",
+     "reason": "Four buckled straps (two flap, two pocket) against the requested two.",
+     "source": "round-6 run",
+     "trial": "A-noframe-backpack-202610160601",
+     "job_id": "54678b61-e5cc-4bc6-b875-0299c648ed2e",
+     "prompt_ids": [
+      "fc9a8e1d-ead0-4aee-ad0f-9936b5886592"
+     ],
+     "elapsed_seconds": 86.9,
+     "sha256": "25052b577f1a1bc92744f54a52e53417c3584296238109d1b69aeecd5e0ec478",
+     "recipe_sha256": "5eb2cf8129b8ef2c23b49c829cbadede61f545610ea50da5551f93071a242605",
+     "peak_commit": 0.787,
+     "admission_commit": 0.78,
+     "submit_attempt": 1,
+     "positive": "stylized hand painted game inventory icon, soft cel shading, one brown leather backpack with a closed flap and two buckled straps, single centred object, complete object visible with generous empty margin, isolated on pure white background, no frame, no border, no badge, no other objects, no writing",
+     "created_at": "2026-10-17T02:33:27",
+     "finished_at": "2026-10-17T02:34:54",
+     "image_local_only": "lab-20261016f/A-noframe-backpack-202610160601-0.png"
+    }
+   ]
+  },
+  "B-shapefirst": {
+   "wording": "{scene}, the object's own silhouette is the whole icon shape, floating alone on a plain pure white background with generous empty margin, stylized hand painted game inventory icon, soft cel shading, complete object visible, no writing",
+   "strict_keep_total": "3/8",
+   "strict_keep_default_seed_202610160403": "1/4",
+   "strict_keep_extra_seed_202610160601": "2/4",
+   "trials": [
+    {
+     "object": "shield",
+     "seed": 202610160403,
+     "verdict": "fixable",
+     "reason": "Round outline achieved, rim and boss correct, but a grey ground-shadow ellipse floats under it (second shape; \"floating\" wording).",
+     "source": "round-6 run",
+     "trial": "B-shapefirst-shield-202610160403",
+     "job_id": "1f92419b-deb9-4899-aa61-79927e04421e",
+     "prompt_ids": [
+      "95ecf236-ee8c-4bb1-9a45-3aaec3e93ff9"
+     ],
+     "elapsed_seconds": 260.9,
+     "sha256": "94d2a3a20f573b1f57493fb8bb82c18bad2526c2fedd9d5978c9bed746e8f074",
+     "recipe_sha256": "d11764beb88a103513e6392a0fbc54ffc99ad0ded96f320d16323ef5e7b075c8",
+     "peak_commit": 0.912,
+     "admission_commit": 0.734,
+     "submit_attempt": 3,
+     "positive": "one round wooden shield with an iron rim and a central iron boss, the object's own silhouette is the whole icon shape, floating alone on a plain pure white background with generous empty margin, stylized hand painted game inventory icon, soft cel shading, complete object visible, no writing",
+     "created_at": "2026-10-17T01:08:41",
+     "finished_at": "2026-10-17T01:13:02",
+     "image_local_only": "lab-20261016f/B-shapefirst-shield-202610160403-0.png"
+    },
+    {
+     "object": "shield",
+     "seed": 202610160601,
+     "verdict": "keep",
+     "reason": "Round wooden shield with iron rim, rivets and central boss; single item, no frame, no shadow, painted style kept.",
+     "source": "round-6 run",
+     "trial": "B-shapefirst-shield-202610160601",
+     "job_id": "965f14f0-e53f-49d2-9d8b-716f2707a8e5",
+     "prompt_ids": [
+      "ce5076a8-dbaa-40d8-b5b6-1493b4d175f6"
+     ],
+     "elapsed_seconds": 108.8,
+     "sha256": "5fa2b231b71f6cbaae93650839ffd38b2cf394a7897bf504823d2a6401fc64e3",
+     "recipe_sha256": "39900cbf09ae01b83b3c6fc40370deb781b078a9f8a80532e367c09975446b81",
+     "peak_commit": 0.765,
+     "admission_commit": 0.749,
+     "submit_attempt": 1,
+     "positive": "one round wooden shield with an iron rim and a central iron boss, the object's own silhouette is the whole icon shape, floating alone on a plain pure white background with generous empty margin, stylized hand painted game inventory icon, soft cel shading, complete object visible, no writing",
+     "created_at": "2026-10-17T01:23:52",
+     "finished_at": "2026-10-17T01:25:41",
+     "image_local_only": "lab-20261016f/B-shapefirst-shield-202610160601-0.png"
+    },
+    {
+     "object": "crystal",
+     "seed": 202610160403,
+     "verdict": "keep",
+     "reason": "One red faceted crystal with a hugging dark-red outline; no frame, no extra item.",
+     "source": "round-6 run",
+     "trial": "B-shapefirst-crystal-202610160403",
+     "job_id": "15887902-fad4-4940-b758-bc06586dd0a4",
+     "prompt_ids": [
+      "66272782-89f6-4fea-ba0e-03e345448e5d"
+     ],
+     "elapsed_seconds": 112.8,
+     "sha256": "21770a12d112d91dd1b9fe22f22b89935acee74198de921737471c413ddb5ace",
+     "recipe_sha256": "9ef6f97dcdc09d95f0f2126dd306d7af8c04d5d1741dffbc5c3c99ac2cfa479e",
+     "peak_commit": 0.846,
+     "admission_commit": 0.786,
+     "submit_attempt": 1,
+     "positive": "one red mana crystal, the object's own silhouette is the whole icon shape, floating alone on a plain pure white background with generous empty margin, stylized hand painted game inventory icon, soft cel shading, complete object visible, no writing",
+     "created_at": "2026-10-17T01:35:58",
+     "finished_at": "2026-10-17T01:37:50",
+     "image_local_only": "lab-20261016f/B-shapefirst-crystal-202610160403-0.png"
+    },
+    {
+     "object": "crystal",
+     "seed": 202610160601,
+     "verdict": "keep",
+     "reason": "One red faceted crystal with a thin outline; no frame, no extra item.",
+     "source": "round-6 run",
+     "trial": "B-shapefirst-crystal-202610160601",
+     "job_id": "5162342d-ede1-41b6-aa20-60e9aeed9c2e",
+     "prompt_ids": [
+      "a148b408-ee6d-4f33-8a59-430f50b88e02"
+     ],
+     "elapsed_seconds": 89.0,
+     "sha256": "885083e6474b104e8dbe6909ef041b26988a4ffa6915c23b7e94edabeb63cb4b",
+     "recipe_sha256": "b316d2245eb359c47cee975d711be98191fc417de08defe3607d40fed7436d36",
+     "peak_commit": 0.748,
+     "admission_commit": 0.738,
+     "submit_attempt": 1,
+     "positive": "one red mana crystal, the object's own silhouette is the whole icon shape, floating alone on a plain pure white background with generous empty margin, stylized hand painted game inventory icon, soft cel shading, complete object visible, no writing",
+     "created_at": "2026-10-17T02:03:57",
+     "finished_at": "2026-10-17T02:05:26",
+     "image_local_only": "lab-20261016f/B-shapefirst-crystal-202610160601-0.png"
+    },
+    {
+     "object": "key",
+     "seed": 202610160403,
+     "verdict": "reject",
+     "reason": "Flat black pictogram: iron material, painted shading and the three teeth are lost (one notch only).",
+     "source": "round-6 run",
+     "trial": "B-shapefirst-key-202610160403",
+     "job_id": "10960ea6-7337-42f5-8acd-20d69afda805",
+     "prompt_ids": [
+      "57d7649e-5024-4fa2-8c58-8975beb0366d"
+     ],
+     "elapsed_seconds": 131.4,
+     "sha256": "11e5b2cb179d148db24396f0e883a0530cb64c7567a34df26fd8532e635840a7",
+     "recipe_sha256": "53b534382ca9e128c94d4a2b66c3a7bcef3f41b893fb6a3890833aea0c70c93c",
+     "peak_commit": 0.802,
+     "admission_commit": 0.683,
+     "submit_attempt": 1,
+     "positive": "one iron key with a simple round bow and three teeth, the object's own silhouette is the whole icon shape, floating alone on a plain pure white background with generous empty margin, stylized hand painted game inventory icon, soft cel shading, complete object visible, no writing",
+     "created_at": "2026-10-17T01:45:18",
+     "finished_at": "2026-10-17T01:47:29",
+     "image_local_only": "lab-20261016f/B-shapefirst-key-202610160403-0.png"
+    },
+    {
+     "object": "key",
+     "seed": 202610160601,
+     "verdict": "reject",
+     "reason": "Flat black tilted pictogram: material, painted style and three teeth lost.",
+     "source": "round-6 run",
+     "trial": "B-shapefirst-key-202610160601",
+     "job_id": "6f594311-c640-48ab-9287-29bc88ce9549",
+     "prompt_ids": [
+      "36f10558-7fd7-47bc-ade8-ccc70622cc89"
+     ],
+     "elapsed_seconds": 89.2,
+     "sha256": "ced7d73fd22f3195537234e0fadda4d18532d0ad9b90ec4ebfa0d6a2536105df",
+     "recipe_sha256": "df0f70c7174c802fdfe871cff882ea24f5fd59272ad41d8a10bebcc5cd0f5f04",
+     "peak_commit": 0.769,
+     "admission_commit": 0.737,
+     "submit_attempt": 1,
+     "positive": "one iron key with a simple round bow and three teeth, the object's own silhouette is the whole icon shape, floating alone on a plain pure white background with generous empty margin, stylized hand painted game inventory icon, soft cel shading, complete object visible, no writing",
+     "created_at": "2026-10-17T02:05:31",
+     "finished_at": "2026-10-17T02:07:00",
+     "image_local_only": "lab-20261016f/B-shapefirst-key-202610160601-0.png"
+    },
+    {
+     "object": "backpack",
+     "seed": 202610160403,
+     "verdict": "fixable",
+     "reason": "Painted backpack with a grey ground-shadow ellipse and four buckled straps against the requested two.",
+     "source": "round-6 run",
+     "trial": "B-shapefirst-backpack-202610160403",
+     "job_id": "cf4f2205-feb9-44ac-9da1-63db491eb3bc",
+     "prompt_ids": [
+      "533ec6f6-6d10-4e48-8712-7691e1b3559e"
+     ],
+     "elapsed_seconds": 145.6,
+     "sha256": "a0a446cd02dc8765fab48625c0101b037f484b23127bfdf2db2e96f4b799db0f",
+     "recipe_sha256": "d06d8da6b03d6ce292b32cb827b4e6f8bfe97496fb47462d303fb81481608d6b",
+     "peak_commit": 0.802,
+     "admission_commit": 0.573,
+     "submit_attempt": 2,
+     "positive": "one brown leather backpack with a closed flap and two buckled straps, the object's own silhouette is the whole icon shape, floating alone on a plain pure white background with generous empty margin, stylized hand painted game inventory icon, soft cel shading, complete object visible, no writing",
+     "created_at": "2026-10-17T01:54:39",
+     "finished_at": "2026-10-17T01:57:05",
+     "image_local_only": "lab-20261016f/B-shapefirst-backpack-202610160403-0.png"
+    },
+    {
+     "object": "backpack",
+     "seed": 202610160601,
+     "verdict": "fixable",
+     "reason": "Painted closed-flap backpack, no shadow or frame, but three buckled front straps (one flap, two pocket) plus a buckle on the shoulder strap.",
+     "source": "round-6 run",
+     "trial": "B-shapefirst-backpack-202610160601",
+     "job_id": "d0a5c6f8-c550-43e6-ac07-713a03d1cb23",
+     "prompt_ids": [
+      "3c55d96a-f7e7-4052-898b-4f8c4893e82d"
+     ],
+     "elapsed_seconds": 88.6,
+     "sha256": "d39a36b2ed626199ac8352248f2bd023e331d3b9d7bfccd89bedce91374241ad",
+     "recipe_sha256": "2c3910550ebbaa0ab6fb0a9b06f3cb5dafcb1e9bbcfd971a01a3baaf993925f6",
+     "peak_commit": 0.78,
+     "admission_commit": 0.76,
+     "submit_attempt": 1,
+     "positive": "one brown leather backpack with a closed flap and two buckled straps, the object's own silhouette is the whole icon shape, floating alone on a plain pure white background with generous empty margin, stylized hand painted game inventory icon, soft cel shading, complete object visible, no writing",
+     "created_at": "2026-10-17T02:07:05",
+     "finished_at": "2026-10-17T02:08:33",
+     "image_local_only": "lab-20261016f/B-shapefirst-backpack-202610160601-0.png"
+    }
+   ]
+  },
+  "C-shapefirst-nofloat": {
+   "wording": "{scene}, stylized hand painted game inventory icon with soft cel shading, the object's own outline is the whole icon shape, alone on a plain pure white background with generous empty margin, complete object visible, no writing",
+   "strict_keep_total": "4/8",
+   "strict_keep_default_seed_202610160403": "2/4",
+   "strict_keep_extra_seed_202610160601": "2/4",
+   "trials": [
+    {
+     "object": "shield",
+     "seed": 202610160403,
+     "verdict": "keep",
+     "reason": "Round wooden shield with iron rim, rivets and central boss; single item, no frame, no shadow, painted style kept.",
+     "source": "round-6 run",
+     "trial": "C-shapefirst-nofloat-shield-202610160403",
+     "job_id": "079f437a-d1c6-416e-aeea-977ac71aa578",
+     "prompt_ids": [
+      "fe4f04f3-b166-406b-868a-50d01a84449b"
+     ],
+     "elapsed_seconds": 105.5,
+     "sha256": "9d1d41a68172eac421ba6ec327ec744bcc39fe95eab7ba34b24e26451aa3d6dd",
+     "recipe_sha256": "7e46bbe4165213f59e979593522137f3f5cddb8fd7e5287563236450527801c0",
+     "peak_commit": 0.753,
+     "admission_commit": 0.755,
+     "submit_attempt": 1,
+     "positive": "one round wooden shield with an iron rim and a central iron boss, stylized hand painted game inventory icon with soft cel shading, the object's own outline is the whole icon shape, alone on a plain pure white background with generous empty margin, complete object visible, no writing",
+     "created_at": "2026-10-17T01:57:10",
+     "finished_at": "2026-10-17T01:58:55",
+     "image_local_only": "lab-20261016f/C-shapefirst-nofloat-shield-202610160403-0.png"
+    },
+    {
+     "object": "shield",
+     "seed": 202610160601,
+     "verdict": "keep",
+     "reason": "Round wooden shield with iron rim, rivets and central boss; single item, no frame, no shadow.",
+     "source": "round-6 run",
+     "trial": "C-shapefirst-nofloat-shield-202610160601",
+     "job_id": "8c8bedb7-7275-4736-bcdc-12d616f24030",
+     "prompt_ids": [
+      "efe912fe-c7da-4dc0-8589-d6e53db49cf6"
+     ],
+     "elapsed_seconds": 83.8,
+     "sha256": "4a0640330843d2ed1158521513c4c64ba5a2c846f937dd649005c8b97f64428d",
+     "recipe_sha256": "92d262f59e22a04ca123877e5d3615cd01961ae3c374c0883f81a477c2cf0a74",
+     "peak_commit": 0.776,
+     "admission_commit": 0.771,
+     "submit_attempt": 1,
+     "positive": "one round wooden shield with an iron rim and a central iron boss, stylized hand painted game inventory icon with soft cel shading, the object's own outline is the whole icon shape, alone on a plain pure white background with generous empty margin, complete object visible, no writing",
+     "created_at": "2026-10-17T02:08:40",
+     "finished_at": "2026-10-17T02:10:03",
+     "image_local_only": "lab-20261016f/C-shapefirst-nofloat-shield-202610160601-0.png"
+    },
+    {
+     "object": "crystal",
+     "seed": 202610160403,
+     "verdict": "keep",
+     "reason": "One red faceted crystal with a hugging dark-red outline; no frame, no extra item.",
+     "source": "round-6 run",
+     "trial": "C-shapefirst-nofloat-crystal-202610160403",
+     "job_id": "29952268-6dc7-4f24-83ac-e5691917f38d",
+     "prompt_ids": [
+      "e4f7eb0b-cd09-4c44-8dcd-4d5270bde535"
+     ],
+     "elapsed_seconds": 98.8,
+     "sha256": "f311a5b95ef98be337b23a709640c406bdd7ef1f35bb875f4cb77cdd090fb503",
+     "recipe_sha256": "7cbb9126eb7c4d5d294ecc9620a235f318c4c2378bc758dfc469a9035db9954c",
+     "peak_commit": 0.751,
+     "admission_commit": 0.744,
+     "submit_attempt": 1,
+     "positive": "one red mana crystal, stylized hand painted game inventory icon with soft cel shading, the object's own outline is the whole icon shape, alone on a plain pure white background with generous empty margin, complete object visible, no writing",
+     "created_at": "2026-10-17T01:59:01",
+     "finished_at": "2026-10-17T02:00:40",
+     "image_local_only": "lab-20261016f/C-shapefirst-nofloat-crystal-202610160403-0.png"
+    },
+    {
+     "object": "crystal",
+     "seed": 202610160601,
+     "verdict": "keep",
+     "reason": "One red faceted crystal with a thick hugging outline; no frame, no extra item.",
+     "source": "round-6 run",
+     "trial": "C-shapefirst-nofloat-crystal-202610160601",
+     "job_id": "da2a81b2-3537-472c-a7c6-a02bee45f521",
+     "prompt_ids": [
+      "65a8d9b5-e055-47cc-afc9-ed68bccda8a1"
+     ],
+     "elapsed_seconds": 78.5,
+     "sha256": "8bf3ee27590308e2e159f72e0165ae3ae5e6a9f322c613496a425aa67afbe8ac",
+     "recipe_sha256": "6eecab0c91c52dde34422e99c562ac9a0e64fabf0874e8c2783f21662ad6a836",
+     "peak_commit": 0.763,
+     "admission_commit": 0.765,
+     "submit_attempt": 1,
+     "positive": "one red mana crystal, stylized hand painted game inventory icon with soft cel shading, the object's own outline is the whole icon shape, alone on a plain pure white background with generous empty margin, complete object visible, no writing",
+     "created_at": "2026-10-17T02:10:10",
+     "finished_at": "2026-10-17T02:11:29",
+     "image_local_only": "lab-20261016f/C-shapefirst-nofloat-crystal-202610160601-0.png"
+    },
+    {
+     "object": "key",
+     "seed": 202610160403,
+     "verdict": "reject",
+     "reason": "Outline-only black line drawing with white fill: iron material and painted shading lost; two teeth at most.",
+     "source": "round-6 run",
+     "trial": "C-shapefirst-nofloat-key-202610160403",
+     "job_id": "720340a4-0124-4697-9682-f1c920da5af1",
+     "prompt_ids": [
+      "2097763a-c424-4af0-baad-d9c1b70c14c7"
+     ],
+     "elapsed_seconds": 91.3,
+     "sha256": "82ca6249d753a5beb40fb544d46265fb001b873b790e2dfd15fbdfceeb8bf89f",
+     "recipe_sha256": "c17eeab1a13720aad91c0a5f7b43ff0753fcad945be497c8b1f887adc5b8147f",
+     "peak_commit": 0.747,
+     "admission_commit": 0.743,
+     "submit_attempt": 1,
+     "positive": "one iron key with a simple round bow and three teeth, stylized hand painted game inventory icon with soft cel shading, the object's own outline is the whole icon shape, alone on a plain pure white background with generous empty margin, complete object visible, no writing",
+     "created_at": "2026-10-17T02:00:44",
+     "finished_at": "2026-10-17T02:02:16",
+     "image_local_only": "lab-20261016f/C-shapefirst-nofloat-key-202610160403-0.png"
+    },
+    {
+     "object": "key",
+     "seed": 202610160601,
+     "verdict": "fixable",
+     "reason": "Pale-grey key with thick black outline, round bow, no frame; flat sticker look, two teeth instead of three.",
+     "source": "round-6 run",
+     "trial": "C-shapefirst-nofloat-key-202610160601",
+     "job_id": "59ecd80a-e8ad-4ce3-8c90-dd56c28af189",
+     "prompt_ids": [
+      "87a01bb7-d4a1-4ba3-95ee-7ed78adfe0d2"
+     ],
+     "elapsed_seconds": 80.7,
+     "sha256": "ac609a502b545526fd14898c08b88d6d769e4abf8c73dd34b65b93d651b7bbc2",
+     "recipe_sha256": "2efbb04eba6b07cfa34d7280c28d3c30c85d9b91712e12b7412366d2444230b5",
+     "peak_commit": 0.761,
+     "admission_commit": 0.757,
+     "submit_attempt": 1,
+     "positive": "one iron key with a simple round bow and three teeth, stylized hand painted game inventory icon with soft cel shading, the object's own outline is the whole icon shape, alone on a plain pure white background with generous empty margin, complete object visible, no writing",
+     "created_at": "2026-10-17T02:11:35",
+     "finished_at": "2026-10-17T02:12:55",
+     "image_local_only": "lab-20261016f/C-shapefirst-nofloat-key-202610160601-0.png"
+    },
+    {
+     "object": "backpack",
+     "seed": 202610160403,
+     "verdict": "fixable",
+     "reason": "Bold-outline closed-flap backpack, no frame or shadow, but four buckled straps against the requested two.",
+     "source": "round-6 run",
+     "trial": "C-shapefirst-nofloat-backpack-202610160403",
+     "job_id": "24733720-cba0-40cf-a76e-538bbedbca3f",
+     "prompt_ids": [
+      "518dbf8b-d099-4a23-85ce-1c601d5956f0"
+     ],
+     "elapsed_seconds": 91.0,
+     "sha256": "611477bdbd902c84e95efe3c0ed2c76b5ed96e7267ce4a4c20a7cf19739cab19",
+     "recipe_sha256": "4dd948474aad4b0d767a05b571134a5ccd9030b8a3ee1692b30ad79d62292b87",
+     "peak_commit": 0.749,
+     "admission_commit": 0.738,
+     "submit_attempt": 1,
+     "positive": "one brown leather backpack with a closed flap and two buckled straps, stylized hand painted game inventory icon with soft cel shading, the object's own outline is the whole icon shape, alone on a plain pure white background with generous empty margin, complete object visible, no writing",
+     "created_at": "2026-10-17T02:02:19",
+     "finished_at": "2026-10-17T02:03:50",
+     "image_local_only": "lab-20261016f/C-shapefirst-nofloat-backpack-202610160403-0.png"
+    },
+    {
+     "object": "backpack",
+     "seed": 202610160601,
+     "verdict": "fixable",
+     "reason": "Bold-outline closed-flap backpack, no frame or shadow, but four buckled straps against the requested two.",
+     "source": "round-6 run",
+     "trial": "C-shapefirst-nofloat-backpack-202610160601",
+     "job_id": "7729f56d-1958-40cf-9979-77716045500b",
+     "prompt_ids": [
+      "59ccb948-7afd-4de3-8797-ed1a3c55d627"
+     ],
+     "elapsed_seconds": 87.6,
+     "sha256": "a8317b6adc4136289b73d7e59e4679e85238288d599440152ef08d9bab50f09b",
+     "recipe_sha256": "76bb12d7a1909eafd7f64c51296dab4934190e8b00022b3fc41ba038ca99a045",
+     "peak_commit": 0.736,
+     "admission_commit": 0.729,
+     "submit_attempt": 1,
+     "positive": "one brown leather backpack with a closed flap and two buckled straps, stylized hand painted game inventory icon with soft cel shading, the object's own outline is the whole icon shape, alone on a plain pure white background with generous empty margin, complete object visible, no writing",
+     "created_at": "2026-10-17T02:13:00",
+     "finished_at": "2026-10-17T02:14:27",
+     "image_local_only": "lab-20261016f/C-shapefirst-nofloat-backpack-202610160601-0.png"
+    }
+   ]
+  },
+  "D-itemwording": {
+   "wording": "{scene}, stylized hand painted game inventory item illustration, soft cel shading, rich material colours, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+   "strict_keep_total": "1/5",
+   "strict_keep_default_seed_202610160403": "1/4",
+   "strict_keep_extra_seed_202610160601": "0/1",
+   "trials": [
+    {
+     "object": "shield",
+     "seed": 202610160403,
+     "verdict": "fixable",
+     "reason": "Round and unframed, but semi-realistic painting with glyph-like carved marks in the wood: soft cel shading and \"no writing\" are not kept.",
+     "source": "round-6 run",
+     "trial": "D-itemwording-shield-202610160403",
+     "job_id": "5beb02a3-af66-460a-bc4f-ec825174e44f",
+     "prompt_ids": [
+      "0ec8ccf3-19ab-4476-bbca-1ce8ff55a47c"
+     ],
+     "elapsed_seconds": 81.1,
+     "sha256": "4591f3b331cb7c3720bf51385bc07dc21079f6f02e3cd9fe90697191a7e89f67",
+     "recipe_sha256": "89f1d4240cdef38335e282cf1a5b259e7a7cfd3a873dda4cabe62e82a261d7f7",
+     "peak_commit": 0.749,
+     "admission_commit": 0.742,
+     "submit_attempt": 1,
+     "positive": "one round wooden shield with an iron rim and a central iron boss, stylized hand painted game inventory item illustration, soft cel shading, rich material colours, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+     "created_at": "2026-10-17T02:21:51",
+     "finished_at": "2026-10-17T02:23:12",
+     "image_local_only": "lab-20261016f/D-itemwording-shield-202610160403-0.png"
+    },
+    {
+     "object": "shield",
+     "seed": 202610160601,
+     "verdict": "fixable",
+     "reason": "Round and unframed, but semi-realistic painting with glyph-like marks in the wood.",
+     "source": "round-6 run",
+     "trial": "D-itemwording-shield-202610160601",
+     "job_id": "9e355b36-1874-472e-8a10-204119d8ca31",
+     "prompt_ids": [
+      "f360d558-53f4-42aa-8872-89a0e2b9225c"
+     ],
+     "elapsed_seconds": 82.8,
+     "sha256": "b17e78176fc4e2569d2e98e8a2bd8e8b07e0f225050348aa7913deca9016eb90",
+     "recipe_sha256": "16e1b0cef14806fb090d405b063a6cc0f4292dfa029213eabb3145e451f729bf",
+     "peak_commit": 0.752,
+     "admission_commit": 0.744,
+     "submit_attempt": 1,
+     "positive": "one round wooden shield with an iron rim and a central iron boss, stylized hand painted game inventory item illustration, soft cel shading, rich material colours, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+     "created_at": "2026-10-17T02:27:30",
+     "finished_at": "2026-10-17T02:28:53",
+     "image_local_only": "lab-20261016f/D-itemwording-shield-202610160601-0.png"
+    },
+    {
+     "object": "crystal",
+     "seed": 202610160403,
+     "verdict": "keep",
+     "reason": "One red faceted crystal, no frame, no extra item; looser painterly texture than cel shading but still a stylised painted gem.",
+     "source": "round-6 run",
+     "trial": "D-itemwording-crystal-202610160403",
+     "job_id": "8fbae90f-0701-4a23-8c73-d9805915c1bd",
+     "prompt_ids": [
+      "208a78ae-d286-4c55-9991-4a387a6b1d67"
+     ],
+     "elapsed_seconds": 76.4,
+     "sha256": "98558b7ec1bc81aed690516eaa00a2b1e6bf6b34e459fd2717295cdb33bb4191",
+     "recipe_sha256": "5e59cc98c29f38f45fc36960829655b5c2431f1c50148cacb25a9f459d24761d",
+     "peak_commit": 0.749,
+     "admission_commit": 0.743,
+     "submit_attempt": 1,
+     "positive": "one red mana crystal, stylized hand painted game inventory item illustration, soft cel shading, rich material colours, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+     "created_at": "2026-10-17T02:23:15",
+     "finished_at": "2026-10-17T02:24:32",
+     "image_local_only": "lab-20261016f/D-itemwording-crystal-202610160403-0.png"
+    },
+    {
+     "object": "key",
+     "seed": 202610160403,
+     "verdict": "fixable",
+     "reason": "No frame, round bow, three teeth, but the metal reads as rusty bronze rather than iron and the finish is painterly, not cel-shaded.",
+     "source": "round-6 run",
+     "trial": "D-itemwording-key-202610160403",
+     "job_id": "999ae7aa-ea2e-402c-a67f-eb5d5c81cab1",
+     "prompt_ids": [
+      "d3ddf058-b705-4ab8-bbff-f3a0ea2e7d05"
+     ],
+     "elapsed_seconds": 80.5,
+     "sha256": "c2ff9575a5f630ff1e8390989375fc0a164e1574e044640a041f49ffb626d555",
+     "recipe_sha256": "38912e5d35b858346a5f2549ebc0b961604f85bdea37fc30ad53c77917d8b863",
+     "peak_commit": 0.752,
+     "admission_commit": 0.743,
+     "submit_attempt": 1,
+     "positive": "one iron key with a simple round bow and three teeth, stylized hand painted game inventory item illustration, soft cel shading, rich material colours, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+     "created_at": "2026-10-17T02:24:36",
+     "finished_at": "2026-10-17T02:25:56",
+     "image_local_only": "lab-20261016f/D-itemwording-key-202610160403-0.png"
+    },
+    {
+     "object": "backpack",
+     "seed": 202610160403,
+     "verdict": "fixable",
+     "reason": "Painterly leather with embossed emblem marks and a round badge on the pocket; four buckled straps.",
+     "source": "round-6 run",
+     "trial": "D-itemwording-backpack-202610160403",
+     "job_id": "fb751aa4-d010-4994-a37c-478125950d71",
+     "prompt_ids": [
+      "6904fb06-a281-4041-8e8c-b61d6007bf86"
+     ],
+     "elapsed_seconds": 84.5,
+     "sha256": "78e3fbc8fb7d45d3feb16584929f47903d820b34ef37f85f7eaf66252faba754",
+     "recipe_sha256": "d76730d062f24b707c9385216225e542bf97af6010c271ff0ba2dd40f7a39ba9",
+     "peak_commit": 0.752,
+     "admission_commit": 0.747,
+     "submit_attempt": 1,
+     "positive": "one brown leather backpack with a closed flap and two buckled straps, stylized hand painted game inventory item illustration, soft cel shading, rich material colours, single centred object, complete object visible with generous empty margin, isolated on pure white background, no other objects, no writing",
+     "created_at": "2026-10-17T02:26:01",
+     "finished_at": "2026-10-17T02:27:26",
+     "image_local_only": "lab-20261016f/D-itemwording-backpack-202610160403-0.png"
+    }
+   ]
+  }
+ }
+}
