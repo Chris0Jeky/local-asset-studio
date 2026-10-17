@@ -143,7 +143,7 @@ for(const status of [undefined,400])test('a failed sweep preserves sent swaps: '
       remember(){},renderRuns(){},poll:id=>polled.push(id),showRun(){},syncOperation(){}};
     const generate=vm.runInNewContext(between('  async function generateSweep(','  async function generateCompare(')+';generateSweep',context);
     await generate(LOOK);const message=said.at(-1);assert.equal(sent.length,at);assert.equal(state.runs.length,at-1);assert.equal(polled.length,at-1);assert.equal(state.busy,false);
-    if(status===undefined){assert.match(message,/the last one may have started; check Your pictures before trying again/);assert.doesNotMatch(message,/were not sent|send.*again/);}
+    if(status===undefined){assert.match(message,/the last one may have started and is not shown here; check the library and Problems before trying again/);assert.doesNotMatch(message,/were not sent|send.*again/);}
     else if(at>1)assert.match(message,new RegExp('Started '+(at-1)+' of 3; the rest were not sent'));
     for(let i=1;i<at;i++)assert.ok(message.includes('Swap '+i+'.'),'keeps every sent variant swap');
     assert.ok(!message.includes('Swap '+at+'.'),'no swap for the refused or uncertain variant');

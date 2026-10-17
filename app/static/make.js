@@ -952,7 +952,7 @@
       }
       say((started<n?'Started '+started+' of '+n+'; the rest were not sent because you left Make.':'Started '+n+' pictures, one per value of '+request.axis+'. They appear side by side in Your pictures.')+[request.notice,...swaps].filter(Boolean).map(x=>' '+x).join(''));
       if(started)showRun(group);if(typeof refresh==='function')void refresh();
-    }catch(error){if(error.message===SCENE_FIRST)sayMissing(error.message);else say((sending&&error.status===undefined?'Started '+started+' of '+n+'; the last one may have started; check Your pictures before trying again. ':started?'Started '+started+' of '+n+'; the rest were not sent. ':'')+error.message+[...swaps].map(n=>' '+n).join(''));}
+    }catch(error){if(error.message===SCENE_FIRST)sayMissing(error.message);else say((sending&&error.status===undefined?'Started '+started+' of '+n+'; the last one may have started and is not shown here; check the library and Problems before trying again. ':started?'Started '+started+' of '+n+'; the rest were not sent. ':'')+error.message+[...swaps].map(n=>' '+n).join(''));}
     finally{watch.stop();state.busy=false;syncOperation();}
   }
   async function generateCompare(){
@@ -975,7 +975,7 @@
       const noted=notes.map(n=>' '+n).join('');
       say((started<list.length?'Started '+started+' of '+list.length+'; the rest were not sent because you left Make.':'Started '+list.length+' pictures, one per look. They appear side by side in Your pictures.')+noted);
       if(typeof refresh==='function')void refresh();
-    }catch(error){say((sending&&error.status===undefined?'Started '+started+' of '+list.length+'; the last one may have started; check Your pictures before trying again. ':started?'Started '+started+' of '+list.length+'; the rest were not sent. ':'')+error.message+notes.map(n=>' '+n).join(''));}
+    }catch(error){say((sending&&error.status===undefined?'Started '+started+' of '+list.length+'; the last one may have started and is not shown here; check the library and Problems before trying again. ':started?'Started '+started+' of '+list.length+'; the rest were not sent. ':'')+error.message+notes.map(n=>' '+n).join(''));}
     finally{watch.stop();state.busy=false;syncOperation();}
   }
   // Your pictures lives in this browser; a new browser starts it from the library's Make pictures (audit v3 N6): the newest six

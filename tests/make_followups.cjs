@@ -154,7 +154,7 @@ test('Compare distinguishes an uncertain last send from an HTTP refusal, without
   for(const at of [1,2])for(const status of [undefined,400]){
     const h=compareHarness(null,{at,status});await h.generate();const said=h.statuses.at(-1);
     assert.equal(h.requests.filter(r=>r.url==='/api/jobs').length,at);assert.equal(h.state.runs.length,at-1);assert.equal(h.state.busy,false);
-    if(status===undefined){assert.match(said,/the last one may have started; check Your pictures before trying again/);assert.doesNotMatch(said,/were not sent|send.*again/);}
+    if(status===undefined){assert.match(said,/the last one may have started and is not shown here; check the library and Problems before trying again/);assert.doesNotMatch(said,/were not sent|send.*again/);}
     else if(at===2)assert.match(said,/Started 1 of 3; the rest were not sent/);
     if(at===2)assert.match(said,/Swap look-1\./);assert.doesNotMatch(said,/Swap look-2\./);
   }
