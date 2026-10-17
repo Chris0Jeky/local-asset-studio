@@ -362,7 +362,7 @@
     const batchLabel = q('#batch')?.closest('label'), phoneWidth = w.matchMedia('(max-width:600px)');
     // Phones fold only the secondary tools away; the blocker, status line, Cancel and run summary stay in view, because they say why Generate is off or what a run did.
     phoneTools.hidden = true; actions.before(phoneTools);
-    phoneTools.addEventListener('keydown', e => { if (e.key === 'Escape' && phoneTools.open) { phoneTools.open = false; phoneTools.querySelector('summary').focus(); } });
+    phoneTools.addEventListener('keydown', e => { if (e.key === 'Escape' && phoneTools.open) { e.preventDefault(); e.stopPropagation(); phoneTools.open = false; phoneTools.querySelector('summary').focus(); } });
     const phoneDock = () => {
       // Move the original controls, preserving their handlers; wide screens keep the original grid.
       const held = d.activeElement && dock.contains(d.activeElement) ? d.activeElement : null;
@@ -373,6 +373,8 @@
         actions.after(runTools); phoneTools.open = false;
       }
       phoneTools.hidden = !phoneWidth.matches;
+      // A focused run tool that just moved into the panel keeps focus only if the panel is open.
+      if (held && phoneWidth.matches && phoneTools.contains(held)) phoneTools.open = true;
       if (held && held.isConnected && d.activeElement !== held) held.focus({preventScroll:true});
     };
     phoneWidth.addEventListener('change', phoneDock); phoneDock();
