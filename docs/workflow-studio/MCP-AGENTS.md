@@ -19,7 +19,7 @@ py -3.12 -m venv "$HOME\.local-asset-studio-mcp"
 On Linux/macOS create the environment at `~/.local-asset-studio-mcp` and use its
 `bin/python` interpreter. The tools environment stays outside the checkout and is
 not a new runtime requirement for Studio. The optional dependency is deliberately pinned
-to `mcp==1.28.1`, not whichever incompatible major happens to be newest. Transitive
+to `mcp==1.30.0`, not whichever incompatible major happens to be newest. Transitive
 dependencies are resolved by pip; this is not a full reproducible environment lock.
 
 Start the ordinary configured Studio through its existing launcher. An agent host
@@ -204,7 +204,7 @@ Reviewed 13 September 2026:
 - Official Python v1 low-level server: https://py.sdk.modelcontextprotocol.io/v1/low-level-server/
 - Official client/stdio lifecycle: https://py.sdk.modelcontextprotocol.io/v1/client/
 - Official in-memory protocol testing: https://py.sdk.modelcontextprotocol.io/v1/testing/
-- Exact optional distribution: https://pypi.org/pypi/mcp/1.28.1/json
+- Exact optional distribution: https://pypi.org/pypi/mcp/1.30.0/json
 
 We use the official SDK for protocol framing/lifecycle, a small dependency-free
 bridge for application semantics, and Studio for every operation. Protocol SDK
