@@ -1,10 +1,22 @@
 """Record actual imports and native exports; the collision is explicitly controlled."""
 from pathlib import Path
 import argparse, hashlib, json, re, subprocess, time, zipfile
+from urllib.request import urlopen
 from playwright.sync_api import sync_playwright
 
+def verify_served_workspace(base, repo):
+    with urlopen(base + '/api/identity', timeout=10) as response:
+        identity = json.load(response)
+    if not isinstance(identity, dict) or identity.get('app') != 'local-asset-studio' or identity.get('version') != 'production-workspace-1':
+        raise ValueError('Unexpected served Studio identity; recording refused')
+    workspace = identity.get('workspace')
+    if not isinstance(workspace, str) or not Path(workspace).is_absolute() or Path(workspace).resolve() != repo:
+        raise ValueError('Served workspace does not match --repo-root; recording refused')
+    return identity
+
 p=argparse.ArgumentParser();p.add_argument('--repo-root',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args()
-repo=a.repo_root.resolve();out=a.output.resolve();out.mkdir(parents=True,exist_ok=False)
+repo=a.repo_root.resolve();base='http://127.0.0.1:8191';served_identity=verify_served_workspace(base,repo)
+out=a.output.resolve();out.mkdir(parents=True,exist_ok=False)
 parent=out.parent;inputs=parent/'public-inputs';preflight=json.loads((parent/'PREFLIGHT.json').read_text());base='http://127.0.0.1:8191'
 revision=subprocess.check_output(['git','rev-parse','HEAD'],cwd=repo,text=True).strip()
 assert not subprocess.check_output(['git','diff','HEAD','--','app','presets','workflows','models'],cwd=repo,text=True)
@@ -92,4 +104,5 @@ with sync_playwright() as pw:
     assert not forbidden and not errors
     raw=Path(page.video.path());ctx.close();browser.close()
 receipt=dict(application_revision=revision,application_source_unpatched=True,fixture_classification='CONTROLLED PUBLIC IMPORT AND DESTINATION-COLLISION FIXTURE; no generated output or actual prior failed export',input_provenance=preflight['inputs'],before_jobs=before_jobs,imported_jobs=imported_state,after_jobs=after_jobs,before_plans=before_plans,blocked_plan=blocked_after,completed_plan=completed,collision_destination=str(destination),fresh_destination=str(fresh_destination),collision_sentinel_sha256=sentinel_before,collision_sentinel_unchanged=True,downloaded_pack_sha256=hashlib.sha256(pack.read_bytes()).hexdigest(),downloaded_pack_bytes=pack.stat().st_size,downloaded_pack_members=files,events=events,duration_seconds=round(duration,3),trim_start_seconds=round(start-origin,3),raw_video=raw.relative_to(out).as_posix(),http_requests=audit,forbidden_requests=forbidden,browser_errors=errors,generation_submitted=False,native_editor_launched=False,accepted_art_unchanged=True)
+receipt['served_identity']=served_identity
 (out/'recording-receipt.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps(dict(duration=duration,revision=revision,blocked_plan=blocked_id,completed_plan=fresh_id,mutations=len([row for row in audit if row['method']!='GET']))))

@@ -2,7 +2,7 @@
 from pathlib import Path
 import argparse,hashlib,json,time
 R=Path(__file__).resolve().parents[1];p=argparse.ArgumentParser(description=__doc__);p.add_argument('--repo-root',type=Path,default=R/'las-next-tutorials');p.add_argument('--evidence',type=Path,default=R/'evidence/follow-on-20261014');a=p.parse_args();repo=a.repo_root.resolve();E=a.evidence.resolve();E.mkdir(parents=True,exist_ok=True);runtime=repo/'.runtime/recover-tutorial'
-assert not runtime.exists(),'Never overwrite retained state';runtime.mkdir()
+assert not runtime.exists(),'Never overwrite retained state';runtime.mkdir(parents=True)
 config=repo/'config/local.json';settings=json.loads(config.read_text());before=hashlib.sha256(config.read_bytes()).hexdigest()
 settings.update(experiments_root=str(runtime/'experiments'),comfy_root=str(runtime/'uninstalled-comfy'),comfy_url='http://127.0.0.1:18188',runtime_auto_recover=False,idle_cache_release_minutes=0,observe_job_resources=False,enable_large_job_resource_cleanup=False,enable_large_job_backend_restart=False,enable_idle_retained_commit_cleanup=False)
 config.write_text(json.dumps(settings,indent=2)+'\n')
