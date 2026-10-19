@@ -188,6 +188,15 @@ async def run(args):
             await open_asset();await page.fill('#assetNotes','Save, then continue')
             await page.click('#saveAssetDetails');await settle()
             await check('ASSET-06','Save keeps the current asset open for continuation',await page.locator('#assetDialog').is_visible() and fixture.ASSETS[0]['notes']=='Save, then continue')
+            writes=len(state.writes)
+            await page.fill('#assetTags','fixture, check:style=maybe')
+            await page.click('#saveAssetDetails');await settle()
+            await check('ASSET-47','Invalid quick-check text stays editable without a request or pending command',
+                        len(state.writes)==writes and await page.evaluate('assetDetailPending===null') and await page.input_value('#assetTags')=='fixture, check:style=maybe' and 'Nothing was sent' in await page.locator('#assetDetailStatus').inner_text())
+            await page.fill('#assetTags','fixture, check:style=yes')
+            await page.click('#saveAssetDetails');await settle()
+            await check('ASSET-48','Correcting a check saves the current tags once without recovery of invalid text',
+                        len(state.writes)==writes+1 and state.writes[-1].get('tags')==['fixture','check:style=yes'] and await page.evaluate('assetDetailPending===null && !assetDetailDirty()'))
             await open_asset();state.fail_write=True;await page.fill('#assetNotes','Retain this after error')
             await page.click('#saveAssetDetails');await settle()
             status=page.locator('#assetDetailStatus')
