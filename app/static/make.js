@@ -240,7 +240,7 @@
   }
   // Matches on the file name or the knowledge base's label, ignoring case: an exact name wins, else every typed word must appear.
   function adapterMatches(look,text){const s=text.toLowerCase(),files=compatible(look),names=f=>[f,f.replace(/\.safetensors$/i,''),short(f)].map(x=>x.toLowerCase());
-    const exact=files.filter(f=>names(f).includes(s));if(exact.length)return exact;const words=s.split(/\s+/).filter(Boolean);return files.filter(f=>{const hay=names(f).join(' ');return words.every(w=>hay.includes(w));});}
+    const exact=files.filter(f=>names(f).includes(s));if(exact.length)return exact;const words=s.split(/\s+/).filter(Boolean);return files.filter(f=>words.every(w=>loraText(f).includes(w)));}
   function addAdapter(look,name){const t=tuneOf(look),slot=freeSlot(look,t);if(!slot||!compatible(look).includes(name)||t.rows.some(r=>r.name===name))return;
     t.rows.push({slot,name,strength:startOf(name),on:true,added:true});t.cleared=t.cleared.filter(s=>s!==slot);tuneChanged();q('[data-tune-strength="'+slot+'"]')?.focus();
     say(fits(look,name)?'Added '+short(name)+'.':'Added '+short(name)+'. It was made for '+entry(name).family+', so it may not suit this model; check the first picture.');}
@@ -250,10 +250,11 @@
   // The LoRA list (owner, 19 Oct: choosing LoRAs must be browsable, not a name to guess): every installed LoRA for this model type as a
   // card with its role, fit, trigger word and the strength its maker recommends; Add puts it in at that strength. Typing narrows the list.
   // A new model family needs no code here: fit and order come from the knowledge base's family names (compatible(), fits()).
+  // One search text for the list and for Enter / Add (Codex P2 on #1537): file, label, role, family and trigger word.
+  const loraText=f=>{const e=entry(f)||{};return [f,f.replace(/\.safetensors$/i,''),short(f),e.role,e.family,e.trigger].join(' ').toLowerCase();};
   function loraCards(look,text){
     const t=tuneOf(look),slot=freeSlot(look,t),words=String(text||'').toLowerCase().split(/\s+/).filter(Boolean);
-    const hay=f=>{const e=entry(f)||{};return [f,short(f),e.role,e.family,e.trigger].join(' ').toLowerCase();};
-    const files=compatible(look).filter(f=>!t.rows.some(r=>r.name===f)&&words.every(w=>hay(f).includes(w)));
+    const files=compatible(look).filter(f=>!t.rows.some(r=>r.name===f)&&words.every(w=>loraText(f).includes(w)));
     const card=f=>{const e=entry(f)||{},range=Array.isArray(e.strength)&&e.strength.length===2&&e.strength[0]!==e.strength[1]?' (works '+e.strength[0]+'–'+e.strength[1]+')':'';
       return '<div class="make-lora-card'+(fits(look,f)?'':' make-lora-foreign')+'"><div><b>'+escape(short(f))+'</b><small>'+escape([e.role,fits(look,f)?'made for this model':e.family+', may not suit'].filter(Boolean).join(' · '))+'</small>'
         +'<small>'+(e.trigger?'Trigger '+escape(e.trigger)+', added to your words':'No trigger word')+' · starts at '+escape(startOf(f).toFixed(2))+escape(range)+'</small></div>'
