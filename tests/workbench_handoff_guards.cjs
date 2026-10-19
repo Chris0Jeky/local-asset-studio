@@ -35,7 +35,7 @@ function secondPictureHarness(sourceExists, localFile = false) {
     "let dirty=false;const assetDetailsDirty=()=>dirty;const warnUnsavedAsset=()=>{};",
     "let catalog={presets:[]};const notices=[];const announce=(message,error=false)=>notices.push({message,error});",
     `const assetState={assets:${asset}};`,
-    "const workbenchStamp=()=> 'stamp';const assetPreview=()=>'<img>';const escape=value=>String(value);",
+    "const workbenchStamp=()=> 'stamp';const assetPreview=()=>'<img>';const escape=value=>String(value);const reviewLabel=value=>String(value||'unreviewed');",
     "const handoffRecipes=()=>{};const destinationDetails=()=>{};",
     "const handoff={open:false,modal:false,showModal(){if(this.open&&!this.modal)throw Error('Modeless dialog conflict');this.open=this.modal=true;}};",
     "const readSource=()=>new Promise(()=>{});",
