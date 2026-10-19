@@ -177,6 +177,7 @@ def main():
                 page.locator('#presetChoice').select_option('example'); page.locator('#loadPreset').click()
                 page.wait_for_function("document.querySelector('#documentStats').textContent.includes('3 nodes')")
                 page.locator('#compileWorkflow').click(); page.wait_for_function("!document.querySelector('#exportGraph').disabled")
+                page.locator('#wfAllTools > summary').click()
                 page.locator('#loadNodes').click(); page.wait_for_function("document.querySelector('#exportGraph').disabled")
                 page.locator('#compileWorkflow').click(); page.wait_for_function("!document.querySelector('#exportGraph').disabled")
                 page.locator('#workflowNodeSelect').select_option('2')
@@ -205,6 +206,7 @@ def main():
                     # Browser draft survives a real page reload, without automatically restoring/running it.
                     page.reload(); page.locator('.wf-goal').nth(6).wait_for()
                     assert page.locator('#documentStats').inner_text() == 'No draft'
+                    page.locator('#wfAllTools > summary').click()
                     page.locator('#restoreWorkflow').click(); page.wait_for_function("document.querySelector('#documentStats').textContent.includes('4 nodes')")
                     assert page.evaluate("WorkflowStudio.snapshot().nodes['4'].inputs.text") == 'expanded prompt text', 'The expanded text is part of the restored draft'
                     page.goto(origin + '/workflow-studio.html?guide=workflow&step=1#builder')
