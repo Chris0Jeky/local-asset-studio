@@ -1,7 +1,8 @@
 """Redirect-policy fixtures use tiny local bytes behind logical provider HTTPS URLs."""
 import hashlib
 import http.client
-from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 import json
 from pathlib import Path
 import sys

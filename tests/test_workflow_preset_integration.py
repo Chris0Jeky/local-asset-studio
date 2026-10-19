@@ -1,7 +1,7 @@
 """Actual Studio/HTTP/CLI/SDK integration; no worker thread or Comfy request runs."""
 import copy
 from contextlib import redirect_stdout
-from http.server import ThreadingHTTPServer
+from http_test_server import ThreadingHTTPServer
 import io
 import json
 from pathlib import Path

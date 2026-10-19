@@ -396,7 +396,7 @@ class PresetModelReadinessTests(unittest.TestCase):
 
     def test_real_http_readiness_inspection_and_pin_only_refusal(self):
         from http.client import HTTPConnection
-        from http.server import ThreadingHTTPServer
+        from http_test_server import ThreadingHTTPServer
         self.graph = {}; self.preset['model_files'] = ['inpaint/fix.patch', 'diffusion_models/manual.gguf']
         self.pin('diffusion_models/manual.gguf', 'manual-pin')
         studio = self.studio(); handler = type('ReadinessHandler', (server.Handler,), {'studio': studio})

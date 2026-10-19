@@ -1,7 +1,8 @@
 """Bound the existing queue wait without touching ComfyUI work or replaying POSTs."""
 import copy
 from http.client import IncompleteRead
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 import json
 import threading
 import time

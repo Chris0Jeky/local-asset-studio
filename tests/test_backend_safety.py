@@ -1,6 +1,7 @@
 """Fault-injected manager tests: no model, process termination or GPU required."""
 import errno
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 import json
 from pathlib import Path
 import sys

@@ -1,7 +1,8 @@
 """Causal #95 contracts: real queue dispatch, receipts and HTTP construction; no GPU."""
 import copy
 from http.client import HTTPConnection, IncompleteRead
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 import json
 import io
 import shutil

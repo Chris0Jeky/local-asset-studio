@@ -2,7 +2,8 @@ import json
 import threading
 import unittest
 from http.client import HTTPConnection
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 from types import SimpleNamespace
 from unittest.mock import patch
 
