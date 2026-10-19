@@ -275,7 +275,7 @@ test('a plan names each fill a ticked recipe reads that the open recipe lacks, o
 });
 test('one-press Polish picks the face pass by source family and refuses with a reason where no route fits (S3)',()=>{
   // Operations as app/continuation.py computes them for the live graphs (FaceDetailer → localized-detail; no prompt → upscale).
-  const ops={'anime-face':['localized-detail','description'],'animagine-face':['localized-detail','description'],'anime-detail-fix':['localized-detail','description'],'anime-esrgan':['upscale','none'],'krea-refine':['image-to-image','description']};
+  const ops={'anime-face':['localized-detail','description'],'animagine-face':['localized-detail','description'],'anime-detail-fix':['localized-detail','description'],'anime-esrgan':['upscale','none'],'krea-refine':['image-to-image','description'],'anime-refine':['image-to-image','description']};
   const catalog=JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/catalog.json'),'utf8')).presets.map(p=>ops[p.id]?{...p,continuation_capability:{...cap,operation:ops[p.id][0],prompt_role:ops[p.id][1]}}:p);
   const pick=(kind,from,extra={})=>C.polishRoute(kind,catalog,{...source,preset_id:from,...extra},{});
   const id=(kind,from)=>{const r=pick(kind,from);assert.ok(r.ok,kind+' from '+from+': '+r.reason);return r.preset.id;};
@@ -294,6 +294,10 @@ test('one-press Polish picks the face pass by source family and refuses with a r
   const masked=catalog.map(p=>p.id==='anime-detail-fix'?{...p,continuation_capability:{...p.continuation_capability,requires_mask:true}}:p);
   assert.match(C.polishRoute('details',masked,{...source,preset_id:'wai'},{}).reason,/mask/);
   assert.match(C.polishRoute('details',catalog.filter(p=>p.id!=='anime-detail-fix'),{...source,preset_id:'wai'},{}).reason,/cannot read a source/);
+  // Refine 1.5× (gpu-lab round 7, #1563): anime pictures only, through anime-refine.
+  for(const from of ['wai','anima-portrait','noob'])assert.equal(id('refine',from),'anime-refine');assert.match(pick('refine','krea-portrait').reason,/anime model/);
+  // A refined picture stays anime work (Codex P2 on #1569): it can be refined, fixed and upscaled again.
+  assert.equal(id('refine','anime-refine'),'anime-refine');assert.equal(id('details','anime-refine'),'anime-detail-fix');assert.equal(id('upscale','anime-refine'),'anime-esrgan');assert.ok(pick('face','anime-refine').ok);
   assert.equal(pick('sharpen','wai').ok,false);assert.equal(C.polishRoute('face',catalog,null,{}).ok,false);
   const order=C.destinations('repair',catalog,{...source,preset_id:'zimage'}).map(p=>p.id);assert.ok(order.indexOf('anime-esrgan')<order.indexOf('anime-face'),'the repair prefer list names the real upscale id');
 });

@@ -51,6 +51,11 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 - [ ] **On a Make run card, one picture shows its next steps** (Make this my character, Vary, Fix, Upscale, Change one thing, New pose, Restyle, More); the others show Keep, Not this and **Next steps…**, which moves the steps to that picture. The first saved picture starts selected. A 4-picture card went from 62 visible buttons to 29. Reverse: in `app/static/make.js` drop the Next steps… button and the `.make-next` wrapper from `actions()`, `selectedOf()`, the `make-selected` class on figures, the `[data-make-select]` click branch and `state.selected`; then delete the `.make-next…` rules at the end of `app/static/make.css`.
 
+## 2026-10-19 overnight (ux-lead): Refine 1.5×
+
+- [ ] **Anime pictures get a one-press "Refine 1.5×"** (anime-refine at its own denoise 0.22) between the fixes and Upscale, on result cards and in Fix or upscale. Evidence: gpu-lab #1563, one Pearly picture (kept the face, added eye and lash detail) and one WAI picture (kept the picture); 0.35 drifted the eyes. Reverse: remove `refine` from `POLISH` in `app/static/make.js` and `app/static/continuation-core.js`.
+- [ ] **Accepted trade-off from #1554:** a chosen picture whose thumbnail is genuinely broken shows the browser's broken image, not the blank mark (the fallback is for look pictures only, so a slow thumbnail never removes yours).
+
 ## 2026-10-19 overnight (ux-lead): Anima merges and their LoRAs
 
 - [ ] **One Obsession Anima v2.0 and Pearly Anima Mix v1.0 count as Anima for LoRA fit** (`presets/settings-kb.json` family_aliases; the catalog records both as Anima-family merges). Before, every Anima LoRA on those looks said "may not suit". JANIMA LoRAs still say it. The full editor's guidance (bundle-core.js) reads the same aliases, so it now shows Anima guidance for them. Reverse: drop the two alias lines.
