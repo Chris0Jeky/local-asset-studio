@@ -169,7 +169,7 @@ def run_label(value):
 
 class Studio:
     def __init__(self, repo_root: Path):
-        self.root = repo_root.resolve()
+        self.root = repo_root.resolve(); self.port = PORT   # RuntimeRecovery autostarts only on the default port (#1584)
         self.catalog_path = inside(self.root, self.root / "presets/catalog.json")
         self.config = read_json(self.root / "config/local.json", {}) or {}
         self.experiments = Path(self.config.get("experiments_root", self.root / "experiments")).resolve()
