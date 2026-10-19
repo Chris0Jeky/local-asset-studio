@@ -7,6 +7,10 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-10-19 (Brief G): recipe picker
+
+- [ ] Recipe picker descriptions clamp to one line (full text on hover and for screen readers). Reverse: the clamp rule.
+
 ## 2026-10-19 overnight (ux-lead): Make robustness
 
 - [ ] **The chosen look carries a "✓ Chosen" badge** on its card, beside the accent border (colour alone did not say which look was chosen). Reverse: delete the `.make-look.active::after` rule at the end of `app/static/make.css`.
@@ -34,6 +38,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 ## 2026-10-19 overnight (ux-lead): wording
 
 - [ ] **A LoRA whose file is fixed in the recipe's graph reads "the recipe’s own LoRA"**, not "built-in adapter" (audit v3 N13), in the As made line, Tune and What this look uses. Reverse: the three strings in `app/static/make.js`.
+
+## 2026-10-19 overnight (ux-lead): Quality choice
+
+- [ ] **"Draft first" (a tick) became Quality: Draft / As made / Fine** (radio group beside Generate; the same step counts as Tune's Steps; the estimate follows). Same looks as before (10+ steps or slow). No finishing pass runs automatically: gpu-lab's 19 Oct advice is "nothing runs automatically", so Fix face and Upscale stay one press each on the result. Reverse: `draftMarkup()` in `app/static/make.js` back to the checkbox.
 
 ## 2026-10-19 overnight (ux-lead): Models & setup to Make
 
