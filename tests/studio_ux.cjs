@@ -316,6 +316,24 @@ test('Petiflow additions use knowledge defaults while retaining every lab note',
   assert.match(String(api.labOf(look,names[3])),/flattened the face/);
 });
 
+test('Tune lists every fitting LoRA as a card: other families folded, typing narrows, a recorded 0 starts at 1 (19 Oct)',()=>{
+  const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8');
+  const kb={'a.safetensors':{label:'Alpha style',family:'Anima',role:'style',trigger:'@alpha',default:0.6,strength:[0.3,1]},'b.safetensors':{label:'Beta',family:'Anima',role:'detail',trigger:'@betaword',default:0,strength:[0,1]},'c.safetensors':{label:'Gamma',family:'Other',role:'style',default:1}};
+  const t={rows:[{slot:'lora',name:'a.safetensors'}],cleared:[]},files=Object.keys(kb);
+  const context={tuneOf:()=>t,freeSlot:()=>'lora2',compatible:()=>files,entry:n=>kb[n],clamp:v=>Math.min(2,Math.max(0,Math.round((Number(v)||0)*20)/20)),fits:(l,f)=>kb[f].family==='Anima',short:n=>kb[n].label,escape:s=>String(s),tuneChanged(){},q:()=>null,say(){},labOf:()=>null};
+  const api=vm.runInNewContext(make.slice(make.indexOf('  function adapterMatches('),make.indexOf('  function tuneClick('))+';({loraCards,startOf,adapterMatches,addAdapter})',context);
+  const all=api.loraCards({},'');
+  assert.doesNotMatch(all,/data-tune-pick="a\.safetensors"/,'an added LoRA is not offered again');
+  assert.match(all,/data-tune-pick="b\.safetensors"[\s\S]*<details class="make-lora-more"><summary>1 from other families[\s\S]*data-tune-pick="c\.safetensors"/,'made-for first, other families folded');
+  assert.match(all,/starts at 1\.00 \(works 0–1\)/,'a recorded 0 is not a starting strength');
+  assert.equal(api.startOf('a.safetensors'),0.6);assert.equal(api.startOf('b.safetensors'),1);
+  const narrowed=api.loraCards({},'gam');assert.match(narrowed,/c\.safetensors/);assert.doesNotMatch(narrowed,/b\.safetensors|<details/);
+  assert.match(api.loraCards({},'zzz'),/No installed LoRA for this model matches/);
+  // Enter and Add use the list's search (Codex P2 on #1537): a trigger word alone finds and adds its LoRA.
+  assert.match(api.loraCards({},'@betaword'),/data-tune-pick="b\.safetensors"/);assert.deepEqual(api.adapterMatches({},'@betaword'),['b.safetensors']);
+  api.addAdapter({},'b.safetensors');assert.equal(t.rows.at(-1).name,'b.safetensors');assert.equal(t.rows.at(-1).strength,1);
+});
+
 test('Make offers a character card on every saved picture regardless of review, and preserves canon labels',()=>{
   const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8');
   const context={state:{charSave:null},reviewOf:()=>context.review,usableCharacters:()=>context.characters,escape:s=>s,characterForm:()=>'<form>character</form>',CANON_NOTE:'canon',characters:[]};
