@@ -24,6 +24,7 @@ JOBS = {}
 UPLOAD = 'f' * 32 + '_look.jpg'
 SLOW = []  # non-empty: the source context answers slowly, so the page can be changed while Generate runs
 CHARACTERS = []  # character cards saved through POST /api/characters, listed as app/characters.py lists them
+ROUGH = []  # non-empty: /api/estimate answers as it does with no comparable run on this PC (confidence none, a generic guess)
 FAIL_LABEL = []  # a Make job whose label ends with one of these is refused, as a Studio refusal mid-compare would be
 
 
@@ -43,6 +44,9 @@ class Handler(fixture.Handler):
 
     def do_POST(self):
         length = int(self.headers.get('Content-Length', '0'))
+        if ROUGH and self.path == '/api/estimate':
+            fixture.POSTS.append({'path': self.path, 'data': json.loads(self.rfile.read(length))})
+            return self.json({'available': True, 'estimate_seconds': 218.8, 'range_seconds': [88, 348], 'confidence': 'none', 'sample_count': 0, 'matched_samples': 0})
         if self.path == '/api/upload':
             self.rfile.read(length); fixture.POSTS.append({'path': self.path, 'data': {'filename': self.headers.get('X-Filename')}})
             return self.json({'file': UPLOAD, 'sha256': 'b' * 64, 'width': 512, 'height': 768, 'bytes': 2048}, 201)
@@ -157,6 +161,18 @@ def run(shots):
         assert label == 'Medium · ~125 s', label
         page.evaluate('()=>{jobs=[];StudioMake.refresh();}')
         pick_look('look-anima-pearly-petiflow'); assert page.locator('.make-chosen .make-tested').count() == 1 and page.input_value('#makeShape') == 'portrait'
+        # Honest estimate (pass 2): with no comparable run here the server's number is a generic guess, so Make uses the look's lab median
+        # per picture (the same ~31 s its card shows) and says where it comes from; a look with no lab number says the guess is rough.
+        ROUGH.append(1); page.select_option('#makeCount', '4')
+        page.wait_for_function('document.querySelector("#makeEstimate").textContent.includes("4 pictures")')
+        said = page.locator('#makeEstimate').inner_text(); assert said.startswith('About 2 min for 4 pictures, ~31 s each.') and 'look lab' in said and 'earlier runs' not in said, said
+        page.select_option('#makeCount', '1'); page.wait_for_function('!document.querySelector("#makeEstimate").textContent.includes("4 pictures")')
+        assert page.locator('#makeEstimate').inner_text().startswith('About 31 s. Median'), page.locator('#makeEstimate').inner_text()
+        page.locator('[data-tune=steps]').evaluate('(e)=>{e.value="13";e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}))}')
+        page.wait_for_function('document.querySelector("#makeEstimate").textContent.includes("rough guess")')
+        assert page.locator('#makeEstimate').inner_text() == 'About 4 min in total, a rough guess: nothing like it has run on this PC yet.', page.locator('#makeEstimate').inner_text()
+        page.locator('[data-tune=steps]').evaluate('(e)=>{e.value="";e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}))}')
+        ROUGH.clear(); page.select_option('#makeCount', '4'); page.wait_for_function('document.querySelector("#makeEstimate").textContent.endsWith("from earlier runs on this PC.")')
         assert 'Draft · 13 steps' in page.locator('#makeDraftBox').inner_text(), 'a 25-step look offers a draft too'
         page.locator('[data-make-change]').click(); assert page.locator('[data-make-keep-look]').inner_text() == 'Stay with Flat pastel close-up', 'the gallery never says Keep'
         page.locator('[data-make-keep-look]').click()

@@ -470,14 +470,17 @@
   let estimateEpoch=0;
   async function estimate(retry=false){
     const look=current(),out=q('#makeEstimate');if(!look||!out)return;const epoch=++estimateEpoch,p=presetFor(look),[w,h]=shapeSize(p,look,q('#makeShape').value),t=state.tune[look.id],plan=sweepPlan(look);
-    if(plan&&!plan.why){const each=await Promise.all(plan.runs.map(r=>json('/api/estimate',{preset_id:(byId(r.tune.preset)||p).id,controls:{...look.body.controls,width:w,height:h,...(r.tune.steps!=null?{steps:r.tune.steps}:{})},batch_count:1,reference_count:0}).then(e=>Number(e.estimate_seconds)||0,()=>0)));
+    if(plan&&!plan.why){let guessed=false;const each=await Promise.all(plan.runs.map(r=>json('/api/estimate',{preset_id:(byId(r.tune.preset)||p).id,controls:{...look.body.controls,width:w,height:h,...(r.tune.steps!=null?{steps:r.tune.steps}:{})},batch_count:1,reference_count:0}).then(e=>(guessed||=rough(e),Number(e.estimate_seconds)||0),()=>0)));
       if(epoch!==estimateEpoch||!out.isConnected)return;const total=each.reduce((x,y)=>x+y,0),unknown=each.filter(x=>!x).length;
-      out.classList.toggle('make-warn',total>600);out.textContent=plan.runs.length+' pictures, one per value'+(total?' · about '+duration(total)+' in total'+(unknown?' (no timing yet for '+unknown+')':'')+', from earlier runs on this PC.':' · no timing yet for these settings on this PC.');return;}
+      out.classList.toggle('make-warn',total>600);out.textContent=plan.runs.length+' pictures, one per value'+(total?' · about '+duration(total)+' in total'+(unknown?' (no timing yet for '+unknown+')':'')+basis({confidence:guessed?'none':''}):' · no timing yet for these settings on this PC.');return;}
     try{const e=await json('/api/estimate',{preset_id:tunedPreset(look).id,controls:{...look.body.controls,width:w,height:h,...(t?.steps!=null?{steps:t.steps}:{})},batch_count:Number(q('#makeCount').value),reference_count:0});if(epoch!==estimateEpoch||!out.isConnected)return;
-      out.classList.toggle('make-warn',e.estimate_seconds>600);out.textContent=e.estimate_seconds?'About '+duration(e.estimate_seconds)+' in total, from earlier runs on this PC.':'No timing yet: this look has not run here at this size.';}
+      const n=Number(q('#makeCount').value)||1,lab=t?.steps==null&&rough(e)&&lookTiming(look),total=lab?lab.seconds*n:e.estimate_seconds;
+      out.classList.toggle('make-warn',total>600);out.textContent=lab?'About '+duration(total)+(n>1?' for '+n+' pictures, ~'+Math.round(lab.seconds)+' s each':'')+'. '+lab.source:total?'About '+duration(total)+' in total'+basis(e):'No timing yet: this look has not run here at this size.';}
     catch{if(epoch===estimateEpoch&&!retry)setTimeout(()=>{if(epoch===estimateEpoch)estimate(true);},1500);}
   }
   const duration=s=>s<90?Math.round(s)+' s':Math.round(s/60)+' min';
+  // /api/estimate answers even with no comparable run here (confidence none: a generic guess with a wide range), so the words say which it is.
+  const rough=e=>e?.confidence==='none',basis=e=>rough(e)?', a rough guess: nothing like it has run on this PC yet.':', from earlier runs on this PC.';
   function syncOperation(){
     placeStatus();statusEl.textContent=state.status;
     const g=goal(),why=g.intent?goalBlocker(g,goalRoute(g)):state.compare?compareBlocker():current()&&lookWhy(current());
@@ -833,7 +836,7 @@
     if(g.intent==='repair'){const plan=state.polish[state.pick.id+':'+state.fix];put(plan?.seconds?'About '+duration(plan.seconds)+', from earlier runs on this PC.':'');return;}
     if(!p){put('');return;}
     try{const e=await json('/api/estimate',{preset_id:p.id,controls:goalExtras(g,p,state.pick.width?state.pick:null),batch_count:1,reference_count:p.reference_slots?.length?1:0});
-      put(e.estimate_seconds?'About '+duration(e.estimate_seconds)+', from earlier runs on this PC.':'No timing yet: this has not run on this PC.',e.estimate_seconds>600);}
+      put(e.estimate_seconds?'About '+duration(e.estimate_seconds)+basis(e):'No timing yet: this has not run on this PC.',e.estimate_seconds>600);}
     catch{put('');}
   }
   async function renderPictures(g){
@@ -975,10 +978,10 @@
   }
   let compareEpoch=0;
   async function compareEstimate(){
-    const out=q('#makeEstimate'),list=compareList();if(!out)return;const epoch=++compareEpoch;if(list.length<2){out.textContent='';return;}
-    const each=await Promise.all(list.map(l=>{const p=presetFor(l),[w,h]=shapeSize(p,l,'design');return json('/api/estimate',{preset_id:p?.id||l.body.preset_id,controls:{...l.body.controls,width:w,height:h},batch_count:1,reference_count:0}).then(e=>Number(e.estimate_seconds)||0,()=>0);}));
+    const out=q('#makeEstimate'),list=compareList();if(!out)return;const epoch=++compareEpoch;let guessed=false,usedLab=false;if(list.length<2){out.textContent='';return;}
+    const each=await Promise.all(list.map(l=>{const p=presetFor(l),[w,h]=shapeSize(p,l,'design');return json('/api/estimate',{preset_id:p?.id||l.body.preset_id,controls:{...l.body.controls,width:w,height:h},batch_count:1,reference_count:0}).then(e=>{const lab=rough(e)&&lookTiming(l);if(rough(e)&&!lab)guessed=true;if(lab)usedLab=true;return lab?lab.seconds:Number(e.estimate_seconds)||0;},()=>0);}));
     if(epoch!==compareEpoch||!out.isConnected)return;const total=each.reduce((x,y)=>x+y,0),unknown=each.filter(x=>!x).length;
-    out.classList.toggle('make-warn',total>600);out.textContent=list.length+' pictures, one per look'+(total?' · about '+duration(total)+' in total'+(unknown?' (no timing yet for '+unknown+')':'')+', from earlier runs on this PC.':' · no timing yet for these looks on this PC.');
+    out.classList.toggle('make-warn',total>600);out.textContent=list.length+' pictures, one per look'+(total?' · about '+duration(total)+' in total'+(unknown?' (no timing yet for '+unknown+')':'')+(guessed?basis({confidence:'none'}):usedLab?', from earlier runs and the look lab on this PC.':basis({})):' · no timing yet for these looks on this PC.');
   }
   // A compare sends its jobs one by one; leaving Make (even briefly) stops the ones not yet sent (#1514).
   function leaveWatch(){let left=false;const o=new MutationObserver(records=>{if(view.hidden||records.some(r=>r.oldValue!==null))left=true;});
