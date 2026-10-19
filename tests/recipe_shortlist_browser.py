@@ -124,6 +124,14 @@ async def run(out,inert):
                 snapshot="()=>({preset:selected.id,positive:document.querySelector('#positive').value,values:values(),uploaded,lastUploaded,parentAssets,parentByInput})"
                 before=await page.evaluate(snapshot)
                 await page.click('#workshopRecipeChange')
+                card=page.locator('#presetList button[data-id]').first
+                description=await card.get_attribute('title');card_id=await card.get_attribute('data-id')
+                check(await card.locator('> span').inner_text()==description,'recipe card retains the full description for hover and screen readers')
+                check(await card.get_attribute('aria-describedby')==await card.locator('> span').get_attribute('id'),'recipe card references its description')
+                check(await card.locator('> span').evaluate('n=>getComputedStyle(n).webkitLineClamp==="1"&&n.clientHeight<=parseFloat(getComputedStyle(n).lineHeight)+1'),'recipe description visually clamps to one line')
+                await page.fill('#presetSearch',description.split()[-1])
+                check(await page.locator('#presetList button[data-id="'+card_id+'"]').count()==1,'search matches the retained description tail')
+                await page.fill('#presetSearch','')
                 await page.select_option('#uxIntent','animate')
                 await page.click('#checkStartingRecipes')
                 await page.wait_for_selector('#shortlistResults article')
