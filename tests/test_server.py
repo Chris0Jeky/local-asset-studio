@@ -746,6 +746,31 @@ class ServerTests(unittest.TestCase):
         http=server.create_server(self.root,port=0,http_server=Bound,studio_factory=lambda root:created)
         self.assertIs(http.handler.studio,created)
 
+    def test_server_close_keeps_the_injected_shortlist_facade_read_only(self):
+        from test_recipe_shortlist import make_studio
+        class Bound(server.StudioHTTPServer):
+            def __init__(self,address,handler):self.handler=handler;self.server_port=8292
+        created=make_studio(self.root)
+        http=server.create_server(self.root,port=0,http_server=Bound,studio_factory=lambda root:created)
+        with patch.object(server.ThreadingHTTPServer,'server_close') as base_close:
+            http.server_close()
+        base_close.assert_called_once()
+        self.assertEqual(created.calls,[])
+
+    def test_server_close_uses_the_finisher_registered_at_creation(self):
+        class Bound(server.StudioHTTPServer):
+            def __init__(self,address,handler):self.handler=handler;self.server_port=8292
+        created=self.studio(); owner=created.parallax_finisher
+        self.addCleanup(owner.close)
+        http=server.create_server(self.root,port=0,http_server=Bound,studio_factory=lambda root:created)
+        replacement=server.parallax.Finisher(created); self.addCleanup(replacement.close)
+        created.parallax_finisher=replacement
+        with patch.object(server.ThreadingHTTPServer,'server_close') as base_close:
+            http.server_close()
+        base_close.assert_called_once()
+        self.assertTrue(owner.closed,'the HTTP server must close the actual owner it registered')
+        self.assertFalse(replacement.closed,'shutdown must not discover a replacement execution owner')
+
     def test_preview_port_moves_the_host_and_origin_guard(self):
         handler=server.Handler.__new__(server.Handler)
         with patch.object(server,"PORT",8291):

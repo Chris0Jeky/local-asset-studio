@@ -2915,16 +2915,16 @@ class Handler(BaseHTTPRequestHandler):
 
 class StudioHTTPServer(ThreadingHTTPServer):
     """On Windows SO_REUSEADDR lets a second process bind a listening port; four racing launchers once all bound 8191."""
+    _parallax_finisher = None
     if sys.platform == "win32": allow_reuse_address = False
     def server_bind(self):
         if sys.platform == "win32" and hasattr(socket, "SO_EXCLUSIVEADDRUSE"): self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
         super().server_bind()
 
     def server_close(self):
-        studio = getattr(self, 'studio', None)
-        finisher = getattr(studio, 'parallax_finisher', None)
-        if finisher is not None: finisher.close()
-        super().server_close()
+        try:
+            if self._parallax_finisher is not None: self._parallax_finisher.close()
+        finally: super().server_close()
 
 def create_server(repo_root, host=HOST, port=PORT, http_server=StudioHTTPServer, studio_factory=Studio):
     """Bind the loopback port before creating a Studio worker or queue."""
@@ -2934,6 +2934,8 @@ def create_server(repo_root, host=HOST, port=PORT, http_server=StudioHTTPServer,
         is_studio = isinstance(studio_factory, type) and issubclass(studio_factory, Studio)
         handler.studio = studio_factory(Path(repo_root), port=getattr(http, 'server_port', port)) if is_studio else studio_factory(Path(repo_root))
         http.studio = handler.studio
+        # Register the concrete owner once; injected read-only facades expose no execution capabilities.
+        http._parallax_finisher = handler.studio.parallax_finisher if isinstance(handler.studio, Studio) else None
     except Exception:
         http.server_close(); raise
     return http

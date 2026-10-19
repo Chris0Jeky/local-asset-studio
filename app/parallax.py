@@ -881,8 +881,12 @@ def _link(studio, job, finished, save=True):
     """Point a stage at its newest layer split; the in-memory link holds even when the save fails."""
     outputs = finished.get("outputs") or []
     with studio.lock:
-        marker = {key: value for key, value in (job.get("parallax_finish") or {}).items() if key not in ("error", "failed_at")}
-        job["parallax_finish"] = dict(marker, status="completed", job_id=finished["id"],
+        stages = {stage: finished["parallax_receipt"]["stages"][stage]["job_id"] for stage in STAGES}
+        previous = job.get("parallax_finish") or {}
+        # A cached receipt can replace a failed attempt for another pair sharing this stage.
+        same_pair = previous.get("finish_id") == finished["id"] and previous.get("stages") == stages
+        marker = {key: value for key, value in previous.items() if key not in ("error", "failed_at")} if same_pair else {}
+        job["parallax_finish"] = dict(marker, status="completed", job_id=finished["id"], finish_id=finished["id"], stages=stages,
             asset_ids={(o.get("parallax") or {}).get("layer"): o.get("asset_id") for o in outputs},
             summary=((outputs[0].get("parallax") or {}).get("summary") if outputs else None))
     if save: studio._save(job)

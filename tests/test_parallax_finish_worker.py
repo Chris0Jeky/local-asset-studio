@@ -290,6 +290,54 @@ class FinishWorkerTests(unittest.TestCase):
             parallax.finish(studio, plate['id'], isolate['id'])
         self.assertNotIn('parallax_finish', plate)
 
+    def test_cached_status_retry_uses_its_completed_pair_after_a_newer_shared_pair_fails(self):
+        studio = self.studio(); plate, isolate = self.pair(studio)
+        entered, release = threading.Event(), threading.Event()
+        def fail_newer_pair(*args, **kwargs):
+            entered.set()
+            if not release.wait(10): raise ValueError('test did not release CPU finishing')
+            raise ValueError('synthetic newer pair failure')
+        with patch.object(parallax, 'register', side_effect=lambda source, edit, fill: (edit.copy(), {'fallback': 'fixture'})):
+            completed = parallax.finish(studio, plate['id'], isolate['id'])
+            self.assertTrue(studio.parallax_finisher.wait_idle(5))
+            newer_plate = self.copied_stage(studio, plate)
+            with patch.object(parallax, 'layers', side_effect=fail_newer_pair):
+                newer = studio.parallax_finisher.submit(newer_plate['id'], isolate['id'])
+                try:
+                    self.assertTrue(entered.wait(5))
+                    running = copy.deepcopy(isolate['parallax_finish'])
+                    self.assertIs(parallax.finish(studio, plate['id'], isolate['id']), completed)
+                    self.assertEqual(isolate['parallax_finish'], running, 'cached reads must preserve a newer running pair')
+                finally:
+                    release.set(); self.assertTrue(studio.parallax_finisher.wait_idle(5))
+            self.assertIn('synthetic newer pair failure', newer.error)
+            self.assertEqual(isolate['parallax_finish']['finish_id'], newer.id)
+            self.assertEqual(isolate['parallax_finish']['status'], 'failed')
+
+            save = studio._save
+            def fail_status_save(job, **kwargs):
+                if job is isolate and (job.get('parallax_finish') or {}).get('status') == 'completed':
+                    raise OSError('synthetic status save fault')
+                return save(job, **kwargs)
+            with patch.object(studio, '_save', side_effect=fail_status_save):
+                self.assertIs(parallax.finish(studio, plate['id'], isolate['id']), completed)
+            pair = {stage: record['job_id'] for stage, record in completed['parallax_receipt']['stages'].items()}
+            for job in (plate, isolate):
+                marker = job['parallax_finish']
+                self.assertEqual(marker['job_id'], completed['id'])
+                self.assertEqual(marker['finish_id'], completed['id'])
+                self.assertEqual(marker['stages'], pair)
+            self.assertNotIn('attempt_id', isolate['parallax_finish'], 'the failed newer attempt cannot describe a cached result')
+            self.assertIn('synthetic status save fault', isolate['parallax_finish']['recording_error'])
+            with patch.object(parallax, 'layers', wraps=parallax.layers) as split_again:
+                # The status button sends its stage and this retained counterpart.
+                result = parallax.finish(studio, isolate['id'], isolate['parallax_finish']['stages']['plate'])
+            self.assertIs(result, completed)
+            split_again.assert_not_called()
+            self.assertNotIn('recording_error', isolate['parallax_finish'])
+            self.assertNotIn(newer.id, studio.jobs)
+            self.assertIsNone(studio.parallax_finisher.worker)
+
     def test_changed_source_is_rejected_before_final_output_files_exist(self):
         studio = self.studio(); plate, isolate = self.pair(studio)
         entered, release = threading.Event(), threading.Event()

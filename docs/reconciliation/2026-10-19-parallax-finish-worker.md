@@ -43,11 +43,15 @@ an explicit **Save split status** action.
   replaced jobs and changed claims, outputs or source bytes cannot publish.
 - Stage links carry an attempt identity. Finishing an older pair cannot replace
   a newer queued/running pair's link. A cached result is returned only when its
-  receipt belongs to the requested pair.
+  receipt belongs to the requested pair. Completed links derive their stage IDs
+  and finish ID from that receipt; another pair's failed attempt metadata cannot
+  retarget **Save split status**.
 - Success and failure release task capacity. The finisher explicitly closes its
   decoded and returned Pillow images, including PNG-encoding failures. An
   abnormal worker exit settles its waiters and retires its pending ownership.
-- Closing the owning HTTP server closes the finisher. Close revokes active output
+- HTTP creation registers the concrete Studio finisher. Shutdown closes that
+  registered owner without probing execution capabilities on an injected
+  read-only Studio facade. Close revokes active output
   publication, settles waiting work and joins for at most five seconds. A CPU
   operation already inside Pillow may finish later; it cannot publish then.
   Repeated close, late generation completion and late worker cleanup cannot
@@ -88,6 +92,37 @@ receipt and proves that the following inert generation progresses while the
 layer split is held on an event. It does not replace generation admission with
 a mock worker.
 
+## Independent review corrections
+
+Review of local candidate `c855946e6a635ee46adfd089e198bb48bfc9d76d` identified
+two P2 findings. The correction preserves the original bounded-worker design.
+
+First, a cached result for pair A could inherit a failed newer pair B's marker
+when both pairs shared an isolate. A link-save fault then exposed B's stage IDs
+on A's **Save split status** action, causing new CPU work for B. `_link` now
+derives both stage IDs and the finish ID from its verified completed receipt,
+retaining attempt metadata only when it belongs to that pair. The regression
+uses completed A, an actual failed B, a cached relink with a save fault, and the
+exact status-button request. Both completed markers agree with A's receipt,
+the retry returns cached A, and `layers` is called zero times. The same test
+checks that a cached A read leaves B's running marker untouched.
+
+Second, shutdown dynamically looked up `parallax_finisher` on the injected
+shortlist facade. Its existing read-only sentinel correctly rejected that
+execution-capability probe, preventing normal HTTP cleanup. Hosted run
+`39341039138` reproduced six teardown failures on both Linux and Windows.
+Creation now registers the actual Studio's finisher on its HTTP server, and
+shutdown closes that registered owner before normal HTTP cleanup. Focused tests
+retain the unmodified shortlist sentinel and prove that later replacement of a
+Studio's finisher cannot redirect the registered server's close operation.
+
+The new regressions first failed on the reviewed candidate: the cached marker
+retained B's finish ID, the facade raised its capability assertion, and shutdown
+closed a replacement finisher instead of the registered owner. Their RED/GREEN
+receipts are retained in `.runtime/parallax-review-cached-link-{red,green}.log`
+and `.runtime/parallax-review-close-{red,green}.log`. The correction does not
+change the separate #716 publication boundary or the native UI code.
+
 ## Verification
 
 All test images and generation replies are synthetic fixtures. No installed
@@ -96,10 +131,17 @@ only because the default sandbox denied inert loopback sockets and the Node
 child test runner. The browser used the already retained Playwright 1.55 runtime
 and Chromium cache; nothing was installed.
 
+The Parallax, server, shortlist and repository checks below were rerun after the
+review corrections. Frontend handoff, direct Node, native browser, EXIF and media
+results are retained evidence from the initial candidate; those files were not
+changed by the correction. Corrected-head hosted CI and focused rereview remain
+the coordinator's gates.
+
 | Check | Outcome |
 | --- | --- |
-| `python -m unittest discover -s tests -p 'test_parallax*.py' -v` | 39 passed: 22 existing Parallax tests, 15 CPU ownership/lifecycle tests, and two stage recovery contracts. Receipt: `.runtime/parallax-finish-final-green.log`. |
-| `python -m unittest discover -s tests -p 'test_server.py'` | 161 passed. Expected invalid-config diagnostics were emitted by the corresponding tests. |
+| `python -m unittest discover -s tests -p 'test_parallax*.py' -v` | 40 passed: 22 existing Parallax tests, 16 CPU ownership/lifecycle tests, and two stage recovery contracts. Receipt: `.runtime/parallax-review-parallax-green.log`. |
+| `python -m unittest discover -s tests -p 'test_server.py'` | 163 passed. Expected invalid-config diagnostics were emitted by the corresponding tests. Receipt: `.runtime/parallax-review-server-green.log`. |
+| `python -m unittest discover -s tests -p 'test_recipe_shortlist*.py' -v` | 126 discovered, 121 passed, five optional MCP SDK tests skipped. All six affected transport tests passed with normal teardown. Receipt: `.runtime/parallax-review-shortlist-green.log`. |
 | `python -m unittest discover -s tests -p 'test_frontend_handoffs.py' -v` | 19 passed. |
 | `node --test --test-reporter=tap tests/parallax_stage_recovery.cjs` | 19 passed. |
 | `node --check app/static/app.js` | Passed. |
