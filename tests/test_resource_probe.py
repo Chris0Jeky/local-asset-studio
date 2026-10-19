@@ -5,7 +5,8 @@ import sys
 import tempfile
 import threading
 import unittest
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 from pathlib import Path
 from types import SimpleNamespace as NS
 from unittest.mock import patch

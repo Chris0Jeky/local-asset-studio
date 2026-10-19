@@ -198,7 +198,8 @@ class I2VDiagnosticTests(unittest.TestCase):
         self.thread_patch.stop()
         self.thread_patch = None
         handler_type = type("DiagnosticHandler", (server.Handler,), {"studio": Stub()})
-        http = server.ThreadingHTTPServer(("127.0.0.1", 0), handler_type)
+        from http_test_server import ThreadingHTTPServer
+        http = ThreadingHTTPServer(("127.0.0.1", 0), handler_type)
         worker = threading.Thread(target=http.serve_forever, daemon=True)
         worker.start()
         try:

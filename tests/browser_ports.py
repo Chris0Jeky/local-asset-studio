@@ -1,5 +1,5 @@
 """Loopback HTTP fixtures whose ephemeral ports Chromium can open."""
-from http.server import ThreadingHTTPServer
+from http_test_server import ThreadingHTTPServer
 from urllib.parse import urlsplit
 
 # Chromium net/base/port_util.cc kRestrictedPorts.

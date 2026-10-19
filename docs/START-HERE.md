@@ -47,7 +47,7 @@ On the picture's card:
 
 Under the words box:
 
-- **Tune this look** is folded shut. Open it to see and change the look's base model, adapters (LoRAs) with their strengths, steps, sampler, words to leave out and seed. It only changes what **Generate** sends.
+- **Model, LoRAs and settings** is folded shut. Open it to see and change the look's base model, adapters (LoRAs) with their strengths, steps, sampler, words to leave out and seed. It only changes what **Generate** sends.
 - **Quality** (Draft, As made, Fine) is offered on looks with ten steps or more, and on slow looks. A draft uses half the steps: rougher but quicker. Fine uses half as many again: slower, and on the Anima looks no better in the 19 Oct lab (20-40 steps looked alike).
 - **What this look uses** names the model and adapters, with each adapter's trigger word.
 - **Shape**, **How many** and **Style strength** are beside the Generate button.
@@ -85,15 +85,15 @@ Under "From a picture you have", the goals take a picture instead of words. Choo
 
 **Prompt** describes the picture: subject, medium, framing, lighting, background and useful exclusions. In Make you type only the scene. The look adds the rest.
 
-**Seed** selects the starting noise. Keep it fixed when comparing one change. In **Tune this look**, untick **Different pictures each time** to lock it. The same seed on different models does not give the same composition.
+**Seed** selects the starting noise. Keep it fixed when comparing one change. In **Model, LoRAs and settings**, untick **Different pictures each time** to lock it. The same seed on different models does not give the same composition.
 
-**Steps** is the number of sampling passes. More steps take longer and are not always better. Each look and recipe has its own default. Do not set every model to 40. In **Tune this look**, **Steps** offers **As made**, **Draft** and **Finer**.
+**Steps** is the number of sampling passes. More steps take longer and are not always better. Each look and recipe has its own default. Do not set every model to 40. In **Model, LoRAs and settings**, **Steps** offers **As made**, **Draft** and **Finer**.
 
 **CFG** sets how strongly the prompt guides sampling. High values can damage a picture, so begin with the recipe's value. **Denoise**, on image variations, sets how much freedom the model gets to change the original. Both are in the Full editor.
 
 ## Things worth knowing before a long render
 
-- **Adapters (LoRAs).** Strength 0 means off, and the adapter is removed from the graph. Most style adapters need their trigger word to do anything. Make writes it for you when you add an adapter in **Tune this look**.
+- **Adapters (LoRAs).** Strength 0 means off, and the adapter is removed from the graph. Most style adapters need their trigger word to do anything. Make writes it for you when you add an adapter in **Model, LoRAs and settings**.
 - **Wildcards.** In a prompt, `{misty|stormy|golden}` picks one option and `__lighting__` picks a line from `presets/wildcards/lighting.txt`. The server chooses when it sends the job, from the seed, so the same recipe and seed give the same prompt.
 - **Krea 2 looks are slow here.** In the 16 October 2026 look lab, they took 6 to 37 minutes per picture on this PC. An earlier single run, 768×1152 at 15 steps, took 986.6 s on 12 September 2026 (see the [timing table](ANIME-FANTASY-ATELIER.md#timing-reality)). Most other anime looks took about 25 to 45 s per picture in the lab. These are one PC's measurements, not benchmarks.
 - **Pose-guide recipes in the Full editor.** **WAI • pose guide**, **Animagine • pose guide** and the drawn-skeleton WAI recipe expect a coloured OpenPose skeleton, not an ordinary photo. The **Style + Pose** recipes are the opposite: give them an ordinary picture of a person in the pose and their graph extracts the skeleton. Pose control sets structure. It does not lock face, costume or identity.

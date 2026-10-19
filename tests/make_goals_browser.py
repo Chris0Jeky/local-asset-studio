@@ -10,7 +10,7 @@ import json
 import sys
 import threading
 import time
-from http.server import ThreadingHTTPServer
+from http_test_server import ThreadingHTTPServer
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -699,7 +699,7 @@ def run(shots):
         history.close()
         assert not errors, errors
         browser.close()
-    server.shutdown()
+    server.shutdown(); server.server_close()
     print(json.dumps({'fixture_jobs_posted': len(jobs()), 'real_generation_submissions': 0, 'clicks_to_generate': clicks, 'page_errors': errors}))
 
 

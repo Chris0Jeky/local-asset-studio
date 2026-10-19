@@ -6,7 +6,7 @@ Fixture server from studio_browser_smoke (real frontend, synthetic API, real cat
 import json
 import threading
 import time
-from http.server import ThreadingHTTPServer
+from http_test_server import ThreadingHTTPServer
 
 from playwright.sync_api import sync_playwright
 import studio_browser_smoke as fixture

@@ -1,6 +1,6 @@
 """Real loopback Handler checks; Studio worker and Comfy transport stay inert."""
 from http.client import HTTPConnection
-from http.server import ThreadingHTTPServer
+from http_test_server import ThreadingHTTPServer
 import json
 import socket
 import threading

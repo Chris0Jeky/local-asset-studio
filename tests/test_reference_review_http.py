@@ -4,7 +4,8 @@ import http.client
 import json
 import threading
 import unittest
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 from unittest.mock import Mock, patch
 from studio_prompt import reference_review
 from studio_prompt.http_extension import extend_handler
