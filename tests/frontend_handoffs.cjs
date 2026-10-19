@@ -51,7 +51,7 @@ function sandbox(attached, local, availability = null, diagnostic = null, boot =
   const element = selector => {
     if (!elements.has(selector)) elements.set(selector, {
       value: '', files: [], textContent: '', classList: {toggle() {}},
-      querySelectorAll() {return [];}, addEventListener(name, handler) {(this.listeners ||= {})[name] = handler;}, scrollIntoView() {}, setAttribute(name, value) {(this.attributes ||= {})[name] = String(value);}, focus() {this.focused=true;}, close() {this.open=false;}, showModal() {this.open=true;},
+      querySelectorAll() {return [];}, addEventListener(name, handler, capture) {(this.listeners ||= {})[name] = handler;(this.listenerCapture ||= {})[name] = capture;}, scrollIntoView() {}, setAttribute(name, value) {(this.attributes ||= {})[name] = String(value);}, focus() {this.focused=true;}, close() {this.open=false;}, showModal() {this.open=true;},
     });
     return elements.get(selector);
   };
@@ -876,7 +876,12 @@ async function malformedPinOffersNoPath() {
 }
 
 async function modelShopCards() {
-  const {element, run} = sandbox({}, {});
+  const {element, context, run} = sandbox({}, {});
+  let replacement;
+  context.document.createElement = tag => ({tagName:tag,setAttribute(name,value){this[name]=value;}});
+  assert.equal(element('#modelLooks').listenerCapture?.error, true, 'look thumbnail errors are captured because image errors do not bubble');
+  element('#modelLooks').listeners.error({target:{matches:selector=>selector==='img',replaceWith:tile=>{replacement=tile;}}});
+  assert.equal(replacement.tagName, 'span');assert.equal(replacement.className, 'look-thumb');assert.equal(replacement['aria-hidden'], 'true', 'a failed look thumbnail becomes the blank decorative tile');
   const file = (id, folder, extra) => ({id, name: id + ' model', family: 'Fam ' + id, bytes: 8, file: folder + '/' + id + '.safetensors', path: 'C:\\models\\' + folder + '\\' + id + '.safetensors',
     present: true, verified: false, installable: true, source: 'https://huggingface.co/org/' + id, license: 'x', download: {}, ...extra});
   const assets = [file('base', 'checkpoints', {present: false}), file('enc', 'text_encoders', {present: false, installable: false, install_note: 'Copy it in by hand.', source: 'https://example.com/enc'}),
@@ -888,6 +893,8 @@ async function modelShopCards() {
   element('#modelCards').querySelector = () => null;
   element('#curatedModelSearch').value = '';
   run('renderCuratedModels()');
+  assert.match(element('#modelCards').innerHTML, /<summary>On disk, not verified \(3\)<\/summary>[\s\S]*<summary>On disk, verified \(0\)<\/summary>/, 'file groups distinguish presence from hash verification');
+  assert.match(element('#modelCards').innerHTML, /its pinned SHA-256 is not confirmed. Verify reads the file and compares it; nothing changes on disk./);
   const card = id => element('#modelCards').innerHTML.split('<article').find(part => part.includes('<code>') && part.includes('/' + id + '.safetensors</code>')) || assert.fail('no card for ' + id);
   // Used by: the looks that need the file, the recipes (by preset or adapter name) that use it; unused files say nothing.
   assert.match(card('base'), /Used by: Look A · recipes Recipe One/);
