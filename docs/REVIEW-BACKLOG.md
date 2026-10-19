@@ -15,6 +15,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 - **Verified:** syntax checks for both touched app JS files and the touched CJS test; both production frontend tests; review browser smoke (0 generation calls); use cases (25/25, 0 submissions, 0 page errors); frontend handoffs (19/19); repository validator. An additional Chromium probe at 1440px verified the empty-state button opens the existing planner and the direct Review desk link returns to Compare & review (0 POSTs). Browser checks used inert fixtures on isolated ports. The smoke runner needed repository-root `PYTHONPATH`; validation needed a process-local Git safe-directory override for the sandbox identity.
 - **NOT verified:** full unit-suite completion: the additional run encountered sandbox Git ownership errors and an untriaged failure marker, and was stopped after the requested proving checks passed. Its incomplete log remains at `.runtime/brief-i-20261019-unittest.log`; no baseline or full-suite green is claimed. Live Studios, real generation, creative acceptance or licensing were not tested. `make.js` and `make.css` remain untouched; no commit. Existing `HUMAN_TODO.md` decisions remain open and unchanged. Broader design-detector notices concern incumbent styling/copy outside this brief and were skipped to preserve scope.
 
+## 2026-10-19 pass 2 (Brief L): Recent runs cards clamp the prompt
+
+- [ ] **Recent runs show two lines of submitted prompt, with Show prompt / Hide prompt to expand it; unavailable Vary reasons also clamp to two lines.** Full text stays in each title; Vary stays disabled and its shared wording is unchanged. Decision: ux-lead-2, pass 2. Reverse: drop the `run-prompt` / `run-why` classes and prompt toggle from `app.js` / `studio-workbench.js`, and remove their clamp rules from `workshop.css`.
+
 ## 2026-10-19 pass 2 (Brief J): one review vocabulary
 
 - [ ] Review actions use Keep / Needs work / Not this with K / W / X; saved selections and the Library filter say Kept. Stored review values stay unchanged, including the Review desk's keep value. Reverse: the label maps.
