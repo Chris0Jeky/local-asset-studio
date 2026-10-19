@@ -8,13 +8,14 @@
   const stable=v=>JSON.stringify(v,(k,x)=>x&&typeof x==='object'&&!Array.isArray(x)?Object.fromEntries(Object.keys(x).sort().map(key=>[key,x[key]])):x);
   const same=(a,b)=>stable(a)===stable(b),flags=x=>x&&['generation_submitted','inference_submitted','execution_authorized'].every(k=>x[k]===false);
   let scope=null,active=null,detached=null,prepared=null,busy=false,pending=null,journalInvalid=false,saved=null;
-  const text=s=>{el('pp-status').textContent=s;};
+  const text=(s,error=false)=>{el('pp-status').textContent=s;if(error)el('savedBriefsFold').open=true;};
   const node=(tag,value)=>{const e=document.createElement(tag);if(value!==undefined)e.textContent=value;return e;};
   function capture(){return {draft:owner.capture(),reference:review.capture(),name:el('pp-name').value};}
   function matches(ticket){return ticket&&owner.matches(ticket.draft)&&same(ticket.reference,review.capture())&&ticket.name===el('pp-name').value;}
   function makeDocument(ticket){return {format:'studio.prompt-document/v1',name:ticket.name,profile_id:ticket.draft.profile,intent:ticket.draft.intent,reference_context:ticket.reference.context};}
   function controls(){
     const held=!!pending||journalInvalid;
+    if(active||detached||held)el('savedBriefsFold').open=true;
     el('pp-create').disabled=!scope||busy||held;el('pp-save').disabled=!scope||!active||busy||held;
     el('pp-preview').disabled=!scope||!el('pp-list').value||busy;
     el('pp-open').disabled=!prepared||busy||held;
@@ -95,7 +96,7 @@
     if(list.projects.some(x=>x.id===selected))el('pp-list').value=selected;
     controls();
   }
-  async function action(work){if(busy)return;busy=true;controls();try{await work();}catch(error){text(error.message);}finally{busy=false;controls();}}
+  async function action(work){if(busy)return;busy=true;controls();try{await work();}catch(error){text(error.message,true);}finally{busy=false;controls();}}
   function receipt(value,command){
     if(value.format!=='studio.prompt-command/v1'||!flags(value)||value.workspace_id!==scope||value.action!==command.action||!same(value.request,command.value)||value.request_id!==command.value.request_id)throw Error('Save receipt does not match the retained request.');
     const row=checkedRow(value.project),expected=command.action==='create'?1:command.value.expected_revision+1;
@@ -116,8 +117,8 @@
       if(ticket&&matches(ticket)&&command.action==='restore')showPreview(row,ticket);
       else if(!ticket)showPreview(row);
       text(current?'Save confirmed at revision '+row.revision+'. Your editor was not overwritten.':'Save revision '+row.revision+' was confirmed, but saved head '+row.head_revision+' is newer. The confirmed snapshot is detached; your editor was not overwritten.');
-      try{await refresh();el('pp-list').value=row.id;}catch(error){text('Save confirmed, but the list could not refresh: '+error.message);}
-    }catch(error){text(error.message+' Check save status; the exact command remains retained.');}
+      try{await refresh();el('pp-list').value=row.id;}catch(error){text('Save confirmed, but the list could not refresh: '+error.message,true);}
+    }catch(error){text(error.message+' Check save status; the exact command remains retained.',true);}
   }
   function save(actionName){return action(async()=>{
     if(!scope||pending||journalInvalid)throw Error('Resolve the retained save before starting another.');
@@ -151,7 +152,7 @@
       owner.openSaved(selected.ticket.draft,row.document);review.restore(row.document.reference_context);
       el('pp-name').value=row.document.name;const current=bindCurrent(row);prepared=null;
       text(current?'Opened revision '+row.revision+'. Saved descriptions are restored; original pictures must be reselected.':'Opened historical revision '+row.revision+' as a detached draft. Saved head '+row.head_revision+' was not changed; save this as a new brief or reopen the head.');controls();
-    }catch(error){text(error.message);controls();}
+    }catch(error){text(error.message,true);controls();}
   });
   el('pp-history').addEventListener('click',()=>action(async()=>{
     const key=el('pp-list').value,rows=await request('history',{workspace_id:scope,id:key});
@@ -176,14 +177,14 @@
       if(busy||!el('pp-forget-ack').checked)throw Error('Acknowledge what forgetting the handle means first.');
       sessionStorage.removeItem(storageKey);if(sessionStorage.getItem(storageKey)!==null)throw Error('The local handle could not be cleared.');
       pending=null;journalInvalid=false;el('pp-forget-ack').checked=false;text('Local handle forgotten. No server save was cancelled or undone.');controls();
-    }catch(error){text(error.message);}
+    }catch(error){text(error.message,true);}
   });
   el('pp-export').addEventListener('click',()=>{
-    let raw;try{raw=pending?.raw||sessionStorage.getItem(storageKey);}catch(error){text('Local recovery is unavailable: '+error.message);return;}if(!raw)return;
+    let raw;try{raw=pending?.raw||sessionStorage.getItem(storageKey);}catch(error){text('Local recovery is unavailable: '+error.message,true);return;}if(!raw)return;
     const url=URL.createObjectURL(new Blob([raw],{type:'application/json'})),link=node('a');link.href=url;link.download='pending-prompt-save.json';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
   el('pp-name').addEventListener('input',invalidate);document.addEventListener('studio-prompt-state',invalidate);
   el('reference-review').addEventListener('input',invalidate);el('reference-review').addEventListener('change',invalidate);
-  try{const raw=sessionStorage.getItem(storageKey);if(raw!==null)pending=parsePending(raw);}catch(error){journalInvalid=true;text('The retained save cannot be read: '+error.message);}
+  try{const raw=sessionStorage.getItem(storageKey);if(raw!==null)pending=parsePending(raw);}catch(error){journalInvalid=true;text('The retained save cannot be read: '+error.message,true);}
   action(async()=>{await refresh();text(pending?'Unconfirmed save recovered. Check save status; no command was replayed.':journalInvalid?'Resolve the unreadable local save handle before writing.':'Local brief storage is ready. Save is explicit; no automatic writes.');});
 })();
