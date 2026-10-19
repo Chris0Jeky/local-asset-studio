@@ -61,10 +61,14 @@ assert.match(list,/title="Edit bridge 618d5e59/,'The stored name stays reachable
 assert.match($('#productionDetail').innerHTML,/Edit bridge · steps = 8, 20, 30/);
 assert.match($('#productionDetail').innerHTML,/Start comparison/,'Start stays explicit');
 
-// 5 · Empty state repeats the orientation and offers the planner.
+// 5 · Empty state leads with Make and keeps the planner in the header.
 run('productionPlans=[];productionId=null;renderProduction();');
 assert.match($('#productionList').innerHTML,/Compare one change at a time/);
-assert.match($('#productionList').innerHTML,/data-production-plan/);
+assert.ok($('#productionList').innerHTML.startsWith('<div class="production-empty"><p>Comparing looks, or one setting such as LoRA strength, at one seed? <a href="/#make">Use Compare in Make</a>: no plan needed.</p>'));
+assert.doesNotMatch($('#productionList').innerHTML,/data-production-plan|<button/);
+const index=fs.readFileSync(path.join(__dirname,'../app/static/index.html'),'utf8');
+assert.match(index,/<button id="newExperiment" class="primary">Plan a comparison<\/button>/);
+assert.ok(index.includes('<div id="productionDetail"><p>Choose a plan on the left. Plans are budgeted, blind comparisons; quick side-by-sides live in Make.</p>'));
 
 // 6 · The live summary states the arithmetic and refuses a budget below the candidates.
 $('#experimentRecipe').textContent='Anima portrait';$('#experimentAxis').value='steps';
