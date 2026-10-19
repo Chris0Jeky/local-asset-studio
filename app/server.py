@@ -168,8 +168,8 @@ def run_label(value):
     except ValueError as error: raise StudioError(str(error)) from None
 
 class Studio:
-    def __init__(self, repo_root: Path):
-        self.root = repo_root.resolve()
+    def __init__(self, repo_root: Path, port=None):
+        self.root = repo_root.resolve(); self.port = PORT if port is None else port   # RuntimeRecovery autostarts only on the default port (#1584)
         self.catalog_path = inside(self.root, self.root / "presets/catalog.json")
         self.config = read_json(self.root / "config/local.json", {}) or {}
         self.experiments = Path(self.config.get("experiments_root", self.root / "experiments")).resolve()
@@ -2856,7 +2856,7 @@ def create_server(repo_root, host=HOST, port=PORT, http_server=StudioHTTPServer,
     """Bind the loopback port before creating a Studio worker or queue."""
     handler = extend_handler(Handler)
     http = http_server((host, port), handler)
-    try: handler.studio = studio_factory(Path(repo_root))
+    try: handler.studio = studio_factory(Path(repo_root), port=port) if studio_factory is Studio else studio_factory(Path(repo_root))   # the bound port, not the module default (Codex P2 on #1585)
     except Exception:
         http.server_close(); raise
     return http
