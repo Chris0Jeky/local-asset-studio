@@ -63,6 +63,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 - [ ] **"Tune this look" is now "Model, LoRAs and settings"** (Make's fold, the Ctrl+K hints, START-HERE, the anime guide, README): someone looking for "model" or "LoRA" finds it by its name. Code keeps the word "tune" internally. Reverse: the `<summary>` text in `renderComposer()` and the three finder strings in `app/static/studio-shell.js`.
 
+## 2026-10-19 overnight (ux-lead): proposal, not done
+
+- [ ] **Proposal: fold the Workflow builder's storage and file rows.** It opens with Saved workflows (6 buttons, 2 selects), revision history (2 buttons, 1 select) and a toolbar of 11 buttons before any node or step is visible (1,201 words on the page at 1440x900). Proposal: Saved workflows and revision history in one shut fold "Saved workflows and history", the file buttons (Import recipe graph, Open JSON, Export…) in a "Files" menu, so the first screen is "Start from a recipe" plus the Nodes/Steps view. Decided by the coordinator under the review mandate and built as brief E (#1560); reverse there.
+
 ## 2026-10-19 overnight (ux-lead): Anima turbo draft
 
 - [ ] **On Anima looks, Quality is Draft (turbo LoRA, 8 steps, cfg 1, euler/simple) or As made; no Fine.** From gpu-lab's round 7 (agent verdicts): turbo at 8 steps was a near-tie at about 13 s, and 20/30/40 steps looked alike. The turbo LoRA goes in a free slot; the look's own LoRAs stay. Applies wherever the knowledge base says the turbo file fits and the recipe binds steps and cfg. Reverse: delete `TURBO`/`turboFits` and the `if(turbo)` branch of `draftMarkup()` in `app/static/make.js`.
