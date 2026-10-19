@@ -1098,6 +1098,10 @@
     document.querySelector('#assetDialog')?.close();if(typeof showView==='function')showView('make');else window.StudioMake.refresh();
     (q('#makeComposer textarea,#makeComposer input:not([type=search])')||q('#makeGenerate'))?.focus();});
   let loaded=false;
-  window.StudioMake={refresh(){if(!loaded){loaded=true;void load();}else render();}};
+  // Models & setup lists the looks that are ready; a ready look in a Make goal offers "Use in Make" (owner, 19 Oct: browse models, then make).
+  // It chooses the goal and the look and opens Make; nothing is sent.
+  document.addEventListener('click',e=>{const b=e.target.closest('#modelLooks [data-make-use-look]');if(!b)return;const g=GOALS.find(x=>x.looks?.includes(b.dataset.makeUseLook));if(!g)return;
+    state.goal=g.id;state.look=b.dataset.makeUseLook;state.compare=false;state.picking=false;remember();const name=b.closest('li')?.querySelector('b')?.textContent||'';state.status=(name?name+' is chosen. ':'')+'Describe your picture, then press Generate.';state.missing='';if(typeof showView==='function')showView('make');else window.StudioMake.refresh();});
+  window.StudioMake={goalOf:id=>GOALS.find(x=>x.looks?.includes(id))?.id||null,refresh(){if(!loaded){loaded=true;void load();}else render();}};
   if(!view.hidden)window.StudioMake.refresh();
 })();
