@@ -627,7 +627,9 @@
       const outputs = q('#gallery')?.querySelectorAll('.imageCard').length || 0;
       text(results.querySelector('summary'), 'Recent runs'+(outputs ? ' · '+outputs+' output'+(outputs === 1 ? '' : 's') : ''));
       renderGuidance(blocked, first, outputs);
-      if (active && held && (!held.isConnected || held.disabled || held.closest('[hidden]'))) focusExisting(reviewButton);
+      // Only rescue focus that was actually lost (still on the removed control, or fallen to body); never take it from a control another handler already chose.
+      const lost = !d.activeElement || d.activeElement === d.body || d.activeElement === held;
+      if (active && held && lost && (!held.isConnected || held.disabled || held.closest('[hidden]'))) focusExisting(reviewButton);
     }
     const schedule = () => {
       contextRevision++;
