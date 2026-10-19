@@ -7,6 +7,10 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-10-19: Workflow builder first screen
+
+- [ ] Workflow builder: storage and file tools folded (All tools, Saved workflows). Reverse: remove the two details wrappers in workflow-studio.html and the fold-open lines in workflow-projects.js.
+
 ## 2026-10-19 overnight (ux-lead): look cards and sidebar
 
 - [ ] **Each look card names its model and LoRA count** ("Anima model · 1 LoRA"), on the gallery and on the chosen-look strip. Reverse: drop `recipeLine()` in `app/static/make.js`.

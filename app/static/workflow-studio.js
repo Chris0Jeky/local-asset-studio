@@ -74,6 +74,7 @@
     if (request !== schemaEpoch) return;
     schema = result;
     $('#schemaState').textContent = `${schema.backend_id} · ${Object.keys(schema.nodes).length} node classes`;
+    $('#wfAllTools .wf-toolbar')?.append($('#loadNodes'));
     nodeCatalog(); render();
     status(doc && doc.schema_sha256 !== schema.schema_sha256 ? 'Node definitions changed. Review the draft and explicitly accept the refreshed schema; compilation remains blocked until then.' : 'Installed nodes loaded. No model job was submitted.');
   }
