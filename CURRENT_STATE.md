@@ -1,5 +1,9 @@
 # Current state — 13 October 2026
 
+## MOSS-Image isolated backend - 19 October 2026
+
+MOSS-Image SFT (OpenMOSS, 5B DiT, Apache-2.0) runs on the RX 9070 XT through the new isolated `moss` backend (ComfyUI v0.42.1 checkout, own comfy-kitchen 0.2.39 overlay, port 8198, models read from the main library): int8 ConvRot gave a normal picture on the first job (123.5 s cold, 1024x1536, 30 steps), not the black image feared from an open ComfyUI report. 55 jobs, all completed: 12 of 12 keep over three adult scenes x three seeds plus ten costumes (9 keep), JSON layout boxes and in-picture lettering worked, the 4-step adapter renders in 4-8 steps, seven civitai MOSS adapters tried (one youthful-reading, skipped). Close-ups drift photographic unless the brief carries anime tags. Agent verdicts, not art acceptance; adapters keep their own terms. [Guide and results](docs/MOSS-IMAGE.md). Preserve ignored `.runtime/lab-20261019/`. No change to the primary runtime; Studio must be started from this branch until merged.
+
 ## GPU Look lab Round 6 - 16-17 October 2026
 
 Painted game icon wording repairs (#1498): 32 serial Studio jobs / 32 images (plus 5 never-sent queue-busy refusals) over four wordings, four objects and two seeds; strict KEEP control 1/8, no-frame words 2/8, object-first 3/8, object-first without "floating" 4/8 (round shield and unframed crystal 4/4, key 0/2 KEEP), item wording 1/5. No variant reached 3/4, so `presets/looks.json` is unchanged and "Tested well" stays off. Agent verdicts, not art acceptance. [Report](docs/looks/LOOK-LAB-2026-10-16.md#round-6-wording-repairs-for-the-painted-game-icon-1498), [curated entry](experiments/curated/lab-round6-20261016/). Preserve ignored `.runtime/lab-20261016f/` (full-size PNGs and per-job JSON).

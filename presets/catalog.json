@@ -8160,6 +8160,166 @@
       ],
       "graph": "workflows/api/qwen21-edit-api.json",
       "visual": "workflows/comfyui/60 - Qwen-Image 2.1 - Edit One Picture.json"
+    },
+    {
+      "id": "moss-t2i",
+      "name": "MOSS-Image SFT - Text to Image (5B, int8)",
+      "category": "MOSS-Image \u2022 isolated",
+      "collection": "production-workspace",
+      "family": "MOSS-Image",
+      "backend_id": "moss",
+      "modality": "image",
+      "verified": false,
+      "positive": [
+        "4",
+        "text"
+      ],
+      "negative": [
+        "5",
+        "text"
+      ],
+      "seed": [
+        "7",
+        "seed"
+      ],
+      "steps": [
+        "7",
+        "steps"
+      ],
+      "cfg": [
+        "7",
+        "cfg"
+      ],
+      "sampler": [
+        "7",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "7",
+        "scheduler"
+      ],
+      "width": [
+        "6",
+        "width"
+      ],
+      "height": [
+        "6",
+        "height"
+      ],
+      "lora": [
+        "10",
+        "strength_model"
+      ],
+      "lora_name": [
+        "10",
+        "lora_name"
+      ],
+      "lora2": [
+        "11",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "11",
+        "lora_name"
+      ],
+      "choices": {
+        "sampler": [
+          "euler",
+          "er_sde",
+          "euler_ancestral",
+          "dpmpp_2m"
+        ],
+        "scheduler": [
+          "sgm_uniform",
+          "simple",
+          "beta",
+          "normal"
+        ]
+      },
+      "dimension_limits": [
+        512,
+        2048
+      ],
+      "dimension_multiple": 16,
+      "max_pixels": 3145728,
+      "resolution_choices": [
+        [
+          1024,
+          1536
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1536,
+          1024
+        ],
+        [
+          832,
+          1248
+        ],
+        [
+          1248,
+          832
+        ],
+        [
+          1152,
+          1536
+        ],
+        [
+          1536,
+          2048
+        ],
+        [
+          2048,
+          1536
+        ]
+      ],
+      "model_files": [
+        "diffusion_models/moss_image_sft_int8_convrot.safetensors",
+        "text_encoders/qwen3.5_9b_int8_convrot.safetensors",
+        "vae/moss_image_flux2-vae_small.safetensors"
+      ],
+      "source": "https://huggingface.co/OpenMOSS-Team/MOSS-Image-SFT",
+      "commercial_note": "Apache-2.0 for the OpenMOSS weights and code (model card, read 19 October 2026). Each LoRA carries its own civitai terms in models/library.json. Runs on the isolated ComfyUI v0.42.1 backend (port 8198); the primary ComfyUI (v0.35.0) has no MOSS-Image model class or text encoder type.",
+      "description": "MOSS-Image SFT (OpenMOSS, 5B DiT, int8 ConvRot) with the Qwen3.5 9B text encoder, on the isolated v0.42.1 backend. Natural-language paragraphs, booru tags or a JSON layout all work as the prompt. Model card sampling: euler, sgm_uniform, 50 steps, CFG 3, 1 to 2 megapixels.",
+      "stages": [
+        "Qwen3.5 9B text encoder (int8)",
+        "MOSS-Image SFT 5B (int8 ConvRot) + 2 optional LoRA slots",
+        "30-step euler / sgm_uniform, CFG 3",
+        "FLUX.2 small decoder VAE",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "Model card (50 steps)",
+          "controls": {
+            "steps": 50
+          }
+        },
+        {
+          "name": "Fast (20 steps)",
+          "controls": {
+            "steps": 20
+          }
+        },
+        {
+          "name": "Square 1024",
+          "controls": {
+            "width": 1024,
+            "height": 1024
+          }
+        },
+        {
+          "name": "Landscape 1536x1024",
+          "controls": {
+            "width": 1536,
+            "height": 1024
+          }
+        }
+      ],
+      "graph": "workflows/api/moss-t2i-api.json"
     }
   ]
 }

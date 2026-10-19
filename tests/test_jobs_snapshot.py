@@ -41,7 +41,8 @@ class FixtureStudio:
         self.lock = threading.Lock()
         self.config = {"comfy_root": str(self.comfy_root), "python": str(root / "python.exe"),
                        "hidream_root": str(root / "isolated/ComfyUI"),
-                       "qwen21_root": str(root / "qwen21/ComfyUI"), **config}
+                       "qwen21_root": str(root / "qwen21/ComfyUI"),
+                       "moss_root": str(root / "moss/ComfyUI"), **config}
         self.production = SimpleNamespace(list=lambda: [])
 
     def _write_json_atomic(self, path, data):
