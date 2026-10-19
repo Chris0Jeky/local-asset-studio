@@ -59,6 +59,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 - [ ] **On Anima looks, Quality is Draft (turbo LoRA, 8 steps, cfg 1, euler/simple) or As made; no Fine.** From gpu-lab's round 7 (agent verdicts): turbo at 8 steps was a near-tie at about 13 s, and 20/30/40 steps looked alike. The turbo LoRA goes in a free slot; the look's own LoRAs stay. Applies wherever the knowledge base says the turbo file fits and the recipe binds steps and cfg. Reverse: delete `TURBO`/`turboFits` and the `if(turbo)` branch of `draftMarkup()` in `app/static/make.js`.
 
+## 2026-10-19 overnight (ux-lead): one picture's next steps at a time
+
+- [ ] **On a Make run card, one picture shows its next steps** (Make this my character, Vary, Fix, Upscale, Change one thing, New pose, Restyle, More); the others show Keep, Not this and **Next steps…**, which moves the steps to that picture. The first saved picture starts selected. A 4-picture card went from 62 visible buttons to 29. Reverse: in `app/static/make.js` drop the Next steps… button and the `.make-next` wrapper from `actions()`, `selectedOf()`, the `make-selected` class on figures, the `[data-make-select]` click branch and `state.selected`; then delete the `.make-next…` rules at the end of `app/static/make.css`.
+
 ## 2026-10-19 overnight (ux-lead): Refine 1.5×
 
 - [ ] **Anime pictures get a one-press "Refine 1.5×"** (anime-refine at its own denoise 0.22) between the fixes and Upscale, on result cards and in Fix or upscale. Evidence: gpu-lab #1563, one Pearly picture (kept the face, added eye and lash detail) and one WAI picture (kept the picture); 0.35 drifted the eyes. Reverse: remove `refine` from `POLISH` in `app/static/make.js` and `app/static/continuation-core.js`.
