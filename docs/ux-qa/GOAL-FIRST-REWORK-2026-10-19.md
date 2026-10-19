@@ -34,11 +34,17 @@ fake finished run in the browser only (`/api/jobs/<id>` and `/api/image/...` ans
 | F11 | Models & setup listed ready looks with no way to use one. | S8 #1549: Use in Make |
 | F12 | "built-in adapter at 1" (audit v3 N13). | #1552 |
 | F13 | Other tabs: Library first screen, Compare & review empty state, Prompt Lab storage-first, Library dialog's disabled actions. | Briefs A-D, run by Sol workers |
+| F14 | Four pictures on a result card showed eleven buttons each. | #1558: one picture's next steps at a time (62 → 29 visible buttons) |
+| F15 | Anima LoRAs said "may not suit" on the Anima merges (One Obsession, Pearly). | #1562: family_aliases |
+| F16 | Draft on Anima looks only halved the steps; round 7 found the turbo LoRA at 8 steps a near-tie on one picture. | #1559 |
+| F17 | No one-press light refine; detail-fix changed clean faces in round 7. | #1569: Refine 1.5× (anime-refine 0.22) |
+| F18 | The pose grid offered the character as its own pose; imported file names doubled. | #1564 |
+| F19 | Fix/Upscale stayed refused after a passing failure (recipes loading, failed read). | #1571 |
+| F20 | The anime goal led with Petiflow; round 7 favoured the One Obsession and Pearly mixes. | #1572 |
+| F21 | Other tabs, second round: Workflow builder first screen, Full editor's doubled blocker, recipe picker prose. | Briefs E-G (Sol) |
 
 ## Still open
-- Fine should map to gpu-lab's proven finishing order once its round 7 PR lands (~07:00): show the finishing buttons with measured seconds.
-- Run cards stay dense (up to 11 buttons per picture). A selected-picture action bar would cut that but changes every result test; not attempted tonight.
-- Workflow builder opens with 20+ buttons before any content; it is an agent-facing expert tool, proposal in REVIEW-BACKLOG.
+- Fine: round 7 found no gain from more steps on Anima (one picture), so Anima offers no Fine; other families keep 1.5× steps until measured.
 - Only two stick figures for New pose (audit v3 N11).
 
 Each slice's before/after and proof are in its PR and in `docs/UX-USE-CASE-MATRIX.md` where clicks change.
