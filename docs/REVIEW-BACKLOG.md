@@ -11,6 +11,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 - [ ] **Every visible "adapter" in Make now reads "LoRA"** (the heading line, the LoRA group in Model, LoRAs and settings, All LoRAs ×, Style strength's hint, Compare one setting's "LoRA strength", What this look uses, the add-by-name messages). The fold was already "Model, LoRAs and settings" and the owner says LoRA; one page said both. Tune's Steps choice "Finer · N" is now "Fine · N", the Quality word. The Full editor keeps "adapters" for now. Reverse: the strings in `app/static/make.js`.
 
+## 2026-10-19 pass 2 (Brief L): Recent runs cards clamp the prompt
+
+- [ ] **Recent runs show two lines of submitted prompt, with Show prompt / Hide prompt to expand it; unavailable Vary reasons also clamp to two lines.** Full text stays in each title; Vary stays disabled and its shared wording is unchanged. Decision: ux-lead-2, pass 2. Reverse: drop the `run-prompt` / `run-why` classes and prompt toggle from `app.js` / `studio-workbench.js`, and remove their clamp rules from `workshop.css`.
+
 ## 2026-10-19 pass 2 (Brief J): one review vocabulary
 
 - [ ] Review actions use Keep / Needs work / Not this with K / W / X; saved selections and the Library filter say Kept. Stored review values stay unchanged, including the Review desk's keep value. Reverse: the label maps.
