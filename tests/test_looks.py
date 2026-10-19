@@ -119,6 +119,16 @@ class LookTests(unittest.TestCase):
         with self.assertRaises(WorkspaceError): self.create(anchor_asset_id="missing-asset")
         with self.assertRaisesRegex(WorkspaceError, "kind"): looks.command(self.studio, {"action": "create", "kind": "character", "name": "x", "body": BODY})
 
+    def test_saving_a_look_prepends_its_anchor_to_caller_lineage(self):
+        source = self.root / "anchor.png"; source.write_bytes(b"anchor picture bytes")
+        asset = self.studio.assets.register({"id": "job-anchor", "preset_id": "text-only", "outputs": [{"filename": "anchor.png"}]}, 0, source)
+        lineage = [{"role": "evidence", "note": "caller evidence"}, {"role": "canon", "note": "caller canon"}]
+        card = self.create(anchor_asset_id=asset, lineage=lineage)
+        expected = [{"role": "anchor", "asset_id": asset, "sha256": self.studio.assets.get(asset)["sha256"], "job_id": "job-anchor", "preset_id": "text-only"}, *lineage]
+        self.assertEqual(card["lineage"], expected)
+        self.assertEqual(self.studio.assets.card(card["id"])["lineage"], expected)
+        self.assertEqual(lineage, [{"role": "evidence", "note": "caller evidence"}, {"role": "canon", "note": "caller canon"}])
+
     def test_edits_are_validated_and_revision_guarded(self):
         card = self.create()
         with self.assertRaises(WorkspaceError): looks.command(self.studio, {"action": "edit", "id": card["id"], "expected_revision": 0, "body": dict(BODY, template="no slot")})
