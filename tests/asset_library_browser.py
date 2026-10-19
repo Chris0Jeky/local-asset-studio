@@ -86,6 +86,14 @@ async def exercise(args):
                 await page.wait_for_function('!!catalog && !!selected && !!assetState.workspace_id')
                 await page.evaluate("showView('assets')")
                 await page.wait_for_selector(f'[data-asset-check="{ids[0]}"]')
+                check('LIB-38', 'Collection recovery sits below the list and fits the sidebar at 1440 px', await page.locator('#recoverCollections').evaluate("el=>{const sidebar=el.closest('.asset-sidebar').getBoundingClientRect(),rect=el.getBoundingClientRect();return el.previousElementSibling.id==='assetCollections' && el.nextElementSibling.textContent.includes('An asset can belong') && el.textContent==='Recover a collection draft…' && rect.left>=sidebar.left && rect.right<=sidebar.right && el.scrollWidth<=el.clientWidth;}"))
+                await page.evaluate('window.libraryFixtureAssets=assetState.assets;assetState.assets=[];renderAssets()')
+                check('LIB-39', 'Empty library explains Make and import', await page.locator('#assetGrid h3').inner_text() == 'Your library is empty' and await page.locator('#assetGrid p').inner_text() == 'Pictures you make in Make land here. You can also import images; importing makes nothing new.' and await page.locator('#assetGrid a.primary').get_attribute('href') == '/#make' and await page.locator('#assetGrid a.primary').inner_text() == 'Make a picture')
+                async with page.expect_file_chooser() as chooser:
+                    await page.click('#assetGrid [data-asset-import]')
+                check('LIB-40', 'Empty library import opens the existing file input', await (await chooser.value).element.get_attribute('id') == 'importAssets')
+                check('LIB-41', 'Nothing to review stays disabled with its explanation', await page.locator('#reviewNext').inner_text() == 'Nothing to review' and await page.locator('#reviewNext').get_attribute('title') == 'Every asset shown has a review.' and await page.locator('#reviewNext').is_disabled())
+                await page.evaluate('assetState.assets=window.libraryFixtureAssets;delete window.libraryFixtureAssets;renderAssets()')
                 async def text(selector):
                     node = page.locator(selector)
                     return await node.inner_text() if await node.count() else ''
