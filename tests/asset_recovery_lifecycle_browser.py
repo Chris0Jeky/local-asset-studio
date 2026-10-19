@@ -5,6 +5,7 @@ browser transport; it proves component behavior, not native browser isolation.
 Setup mutations are performed by the fixture's Workspace service, never by the
 inspector. Every browser metadata/model mutation is counted and must remain zero.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import asyncio
 import hashlib
@@ -135,7 +136,7 @@ async def exercise(args):
                     await page.set_viewport_size({'width':390,'height':1000});await page.evaluate("document.documentElement.style.zoom='2'")
                     await page.locator('#assetLifecycleRefresh').focus();await page.keyboard.press('Tab')
                     check('LIFE-10 narrow CSS-200-percent layout preserves accessible actions',await page.evaluate("(()=>{const d=document.querySelector('#assetRecoveryShelfDialog'),b=document.activeElement;return b.id==='assetLifecycleExport'&&b.getBoundingClientRect().right<=innerWidth+1&&d.scrollWidth<=d.clientWidth+1&&d.getBoundingClientRect().right<=innerWidth+1;})()"))
-                    await page.screenshot(path=str(args.out/'lifecycle-390-css200.png'))
+                    await evidence_screenshot(page, path=str(args.out/'lifecycle-390-css200.png'))
                     await page.evaluate("document.documentElement.style.zoom='1'");await page.set_viewport_size({'width':1280,'height':1000})
                     gate.clear();started.clear();await page.click('#assetLifecycleRefresh')
                     if not await asyncio.to_thread(started.wait,5):raise TimeoutError('Held read did not reach the fixture')

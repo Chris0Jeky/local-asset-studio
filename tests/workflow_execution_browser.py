@@ -4,6 +4,7 @@ Uses actual run-panel scripts/CSS, fixture shell styling/storage/transport, and
 real Python projection/ticket journaling against the fake runtime used in tests.
 This does not prove native browser-origin persistence or the complete Studio shell.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import json
 from pathlib import Path
@@ -59,10 +60,10 @@ def main():
         page.get_by_role('button', name='Prepare run ticket', exact=True).click()
         page.wait_for_function("document.querySelector('#runWorkflowTicket').disabled === false")
         assert not studio.jobs
-        page.screenshot(path=str(args.out / 'workflow-run-desktop.png'), full_page=True)
+        evidence_screenshot(page, path=str(args.out / 'workflow-run-desktop.png'), full_page=True)
         page.set_viewport_size({'width':390, 'height':1100})
         assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'Horizontal overflow'
-        page.screenshot(path=str(args.out / 'workflow-run-mobile.png'), full_page=True)
+        evidence_screenshot(page, path=str(args.out / 'workflow-run-mobile.png'), full_page=True)
         page.evaluate("fixtureDoc.name += ' edit'; fixtureEpoch++; document.dispatchEvent(new Event('workflow:render'))")
         assert page.locator('#runWorkflowTicket').is_disabled()
         page.get_by_role('button', name='Clear finished / unsubmitted ticket', exact=True).click()

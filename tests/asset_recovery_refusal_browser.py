@@ -1,4 +1,5 @@
 """Refused retries over actual HTTP/SQLite; --inert is not native-origin proof."""
+from browser_ports import evidence_screenshot
 import argparse
 import asyncio
 import hashlib
@@ -101,7 +102,7 @@ async def exercise(args):
                         await page.wait_for_function(settled)
                         check(slot+'-04 historical confirmation is GET only', len(writes) == count)
                         check(slot+'-05 newer draft or complete selection survives', await page.input_value('#assetNotes') == 'Newer unsaved text' if slot == 'detail' else await page.evaluate('assetSelection.size') == 2)
-                        await page.screenshot(path=str(args.out / (slot+'-390.png')))
+                        await evidence_screenshot(page, path=str(args.out / (slot+'-390.png')))
                         await context.close()
                     check('original bytes unchanged', hashlib.sha256(source.read_bytes()).hexdigest() == original)
                     check('no JavaScript exceptions', not errors)

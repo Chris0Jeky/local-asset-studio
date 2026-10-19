@@ -5,6 +5,7 @@ uses native browser HTTP on a free loopback port (--port fixes one). --inert use
 data-module URLs and a Python HTTP bridge (not browser-origin/network evidence).
 Both modes exercise the real create_server Handler and read-only guidance route.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import base64
 import copy
@@ -167,7 +168,7 @@ async function api(path){const r=await fetch(path);const value=await r.json();if
                     page.locator('[data-bundle-control="steps"]').fill('15')
                     page.wait_for_function("document.querySelector('#bundleScopedGuidance')?.textContent.includes('Outside this source')")
                     print(f'{width}px outside-source state rendered',flush=True)
-                    panel.scroll_into_view_if_needed();page.screenshot(path=str(args.out/f'guidance-{width}.png'))
+                    panel.scroll_into_view_if_needed();evidence_screenshot(page, path=str(args.out/f'guidance-{width}.png'))
                     assert page.evaluate("document.querySelector('#bundleExplorer').scrollWidth<=document.querySelector('#bundleExplorer').clientWidth")
                     page.locator('[data-bundle-control="steps"]').fill('')
                     page.wait_for_function("document.querySelector('#bundleScopedGuidance')?.textContent.includes('finite number')")

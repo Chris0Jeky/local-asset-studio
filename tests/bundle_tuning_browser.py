@@ -8,6 +8,7 @@ bytes as a data module (plus a delay); this does not test real-origin delivery.
 Requires already installed Playwright and Chromium. No automatic installation.
 The parent delivery unittest separately covers the actual Studio Handler.
 """
+from browser_ports import evidence_screenshot
 from http.server import BaseHTTPRequestHandler
 from browser_ports import browser_server
 from pathlib import Path
@@ -137,7 +138,7 @@ def run():
                 page.locator('#bundlePropose').click()
                 if out:
                     page.locator('#bundleTuning').scroll_into_view_if_needed()
-                    page.screenshot(path=str(out / f'tuning-{width}.png'))
+                    evidence_screenshot(page, path=str(out / f'tuning-{width}.png'))
                 assert page.evaluate("document.querySelector('#bundleExplorer').scrollWidth <= document.querySelector('#bundleExplorer').clientWidth")
                 page.locator('#bundleProposalConsent').check(); page.locator('#bundleStage').click()
                 page.locator('#bundleConsent').check(); page.locator('#bundleApply').click()
