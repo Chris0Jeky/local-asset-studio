@@ -273,7 +273,7 @@
     const files=compatible(look).filter(f=>!t.rows.some(r=>r.name===f)&&words.every(w=>loraText(f).includes(w)));
     const card=f=>{const e=entry(f)||{},range=Array.isArray(e.strength)&&e.strength.length===2&&e.strength[0]!==e.strength[1]?' (works '+e.strength[0]+'–'+e.strength[1]+')':'';
       return '<div class="make-lora-card'+(fits(look,f)?'':' make-lora-foreign')+'"><div><b>'+escape(short(f))+'</b><small>'+escape([e.role,fits(look,f)?'made for this model':e.family+', may not suit'].filter(Boolean).join(' · '))+'</small>'
-        +'<small>'+(e.trigger?'Trigger '+escape(e.trigger)+', added to your words':'No trigger word')+' · starts at '+escape(startOf(f).toFixed(2))+escape(range)+'</small></div>'
+        +'<small>'+(e.trigger?'Trigger '+escape(e.trigger)+', added to your words':'No trigger word')+' · starts at '+escape(startOf(f).toFixed(2))+escape(range)+'</small>'+(typeof TURBO!=='undefined'&&f===TURBO.file?'<small>Easier: Quality → Draft uses it with the 8 steps and cfg 1 it needs.</small>':'')+'</div>'
         +'<button type="button" data-tune-pick="'+escape(f)+'" aria-label="Add '+escape(short(f))+'"'+(slot?'':' disabled aria-describedby="makeLoraFull"')+'>Add</button></div>';};
     if(!files.length)return '<small>'+(words.length?'No installed LoRA for this model matches “'+escape(text)+'”.':'Every installed LoRA for this model is already added.')+'</small>';
     const made=files.filter(f=>fits(look,f)),other=files.filter(f=>!fits(look,f));
