@@ -1,5 +1,29 @@
 # Current state — 13 October 2026
 
+## Overnight coordinator session - 19 October 2026 (goal-first UX, MOSS, wrap-up)
+
+Executed: 52 PRs merged from 02:48 UTC (#1530) to 10:33 UTC (#1588) on 19 Oct, per `gh pr list --state merged`; #1578, #1582 and #1587 were approved and in the merge queue when this entry was written. Each one went through CI, one independent review or a clean Codex outcome, and a 3-minute aging floor, and was merged by the coordinator through `estate_merge.py`; none was squashed. 17 issues were closed as completed with evidence: 97, 204, 252, 282, 364, 384, 388, 552, 641, 661, 923, 1219, 1220, 1525, 1566, 1570, 1584. Sources: `gh pr list --state merged --search "merged:>=2026-10-18T22:00:00Z"` and `.runtime/closeout-20261019.md`.
+
+- **Make (goal-first).**
+  - The flagship anime journey (pick a look, switch model, add two LoRAs, Generate) went from 8 clicks plus 2 typed to 6 clicks.
+  - Changing outfit, pose or style from a result is one press, down from two.
+  - A 4-picture result card shows 29 buttons instead of 62.
+  - Other additions: import inside Make, the Quality choice (Draft / As made / Fine, with the Anima turbo Draft), Refine 1.5x, honest estimates, and the K/X keys.
+  - Measured with fixture and preview Studios. `docs/UX-USE-CASE-MATRIX.md` and `docs/ux-qa/GOAL-FIRST-REWORK-2026-10-19.md` hold the details.
+  - Agent UX judgements are logged in `docs/REVIEW-BACKLOG.md` with how to reverse each one. None is owner acceptance.
+- **Review vocabulary.** The words are Keep / Needs work / Not this, with keys K / W / X and a Library filter named Kept. The stored values are unchanged (#1579, #1581).
+- **Runtime recovery.** A preview Studio sharing `config/local.json` relaunched the main ComfyUI four times while MOSS ran on 8198 (#1584). Since #1585, a Studio on a non-default `--port` doesn't autostart recovery, and recovery never starts a backend while another is active or a switch is in flight. Follow-ups are in #1586.
+- **MOSS-Image (#1575).**
+  - An isolated backend on 8198 (ComfyUI v0.42.1), the `moss-t2i` preset and pinned weights.
+  - Lab evidence: 70 receipts and 70 judgement rows (66 keep, 2 fixable, 1 reject, 1 skipped).
+  - Speed: the first cold job took 123.5 s; warm 1024x1536 jobs take 53-106 s.
+  - A kohya sd-scripts LoRA trained on Base int8 (136 steps, 10 min 13 s) loads on SFT. The caption prefix carries most of the anime effect.
+  - #1575 merged at 10:10 UTC, after a fresh-context code review with no blocking findings; #1589 tracks its one MEDIUM. See `docs/MOSS-IMAGE.md` and the MOSS section below.
+  - The MOSS look for Make is on branch `ux2/make-moss`, pushed with no PR. Land it after #1575: merge main into it, then open the PR.
+- **Kromoss** (`lodestones/Kromoss`, a full fine-tune of MOSS-Image-Base under Apache-2.0, released 19 Oct): **not proven.** The int8 download stopped at 3.42 of 5.41 GB (`models/diffusion_models/kromoss_int8_convrot.safetensors.part`, resumable with `scripts/fetch-hf.py --resume`). Nothing was loaded or rendered.
+
+Not verified this session: art acceptance of any lab or Make picture; a real MOSS switch from Make; the Kromoss A/B; licence clearance for the Civitai style adapters. Open owner items are in `HUMAN_TODO.md`; no item was ticked.
+
 ## MOSS-Image isolated backend - 19 October 2026
 
 MOSS-Image SFT (OpenMOSS, 5B DiT, Apache-2.0) runs on the RX 9070 XT through the new isolated `moss` backend (ComfyUI v0.42.1 checkout, own comfy-kitchen 0.2.39 overlay, port 8198, models read from the main library): int8 ConvRot gave a normal picture on the first job (123.5 s cold, 1024x1536, 30 steps), not the black image feared from an open ComfyUI report. 70 jobs, all completed, 70 receipts and one judgement row each: 66 keep, 2 fixable (techwear framing; the cel LoRA without its caption prefix), 1 reject (photographic close-up against an anime brief), 1 skipped (a youthful-reading adapter). A LoRA trained on this PC (kohya sd-scripts on MOSS Base int8, 136 steps in 10 min, 34 pictures) loads and changes pictures, but its caption prefix does most of the anime work; a longer second run and the Kromoss model (download stopped at 63 %) are not verified That includes 9 of 9 keep over three adult scenes x three seeds, 9 of 10 costumes, JSON layout boxes and in-picture lettering working, the 4-step adapter rendering in 4-8 steps and seven civitai MOSS adapters tried. Close-ups drift photographic unless the brief carries anime tags. Agent verdicts, not art acceptance; adapters keep their own terms. [Guide and results](docs/MOSS-IMAGE.md). Preserve ignored `.runtime/lab-20261019/`. No change to the primary runtime; Studio must be started from this branch until merged.
