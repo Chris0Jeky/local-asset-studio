@@ -18,6 +18,7 @@ PLAN = dict(version=1, preset_id=PRESET['id'], source_asset_id='asset-0', source
             source_file='a'*32+'_room.png', width=512, height=512, objects='the desk', view_polygons=[])
 PLAN['plan_id'] = parallax.plan_id(PLAN)
 CALLS = []
+FINISH_CALLS = []
 
 
 async def reload_saved_stage(page, stage, checks, width):
@@ -42,6 +43,15 @@ async def reload_saved_stage(page, stage, checks, width):
 
 class Handler(fixture.Handler):
     def do_POST(self):
+        if self.path == '/api/parallax/finish':
+            body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', '0'))))
+            FINISH_CALLS.append(body)
+            if body != {'job_id': 'fixture-job', 'other_job_id': 'sibling-job'}:
+                return self.json({'error': 'The retained CPU pair was not sent'}, 400)
+            job = next(job for job in fixture.JOBS if job['id'] == 'fixture-job')
+            job['parallax_finish'] = {'status': 'completed', 'job_id': 'synthetic-split', 'summary': 'Synthetic measured split',
+                                      'stages': {'plate': 'fixture-job', 'isolate': 'sibling-job'}}
+            return self.json({'job': {'message': 'Synthetic CPU split completed. No generation submitted.'}})
         if self.path != '/api/parallax/stage':
             return super().do_POST()
         body = json.loads(self.rfile.read(int(self.headers.get('Content-Length', '0'))))
@@ -51,10 +61,45 @@ class Handler(fixture.Handler):
         return self.json(parallax.stage_payload(PLAN, body['stage'], fixture.source_context(fixture.ASSETS[0])))
 
 
+async def cpu_split_statuses(page, job, sibling, width, checks, out):
+    sibling['status'] = 'completed'
+    card = page.locator('article[data-output="fixture-job:0"]')
+    retained = {'finish_id': 'synthetic-pair', 'stages': {'plate': 'fixture-job', 'isolate': 'sibling-job'}}
+    for status, text in (('queued', 'Layer split queued.'), ('running', 'Splitting layers.')):
+        job['parallax_finish'] = dict(retained, status=status)
+        await page.evaluate('refresh()')
+        await card.get_by_text(text, exact=False).wait_for()
+        assert await card.locator('.parallaxFinish').count() == 0
+        assert 'Layers split:' not in await card.inner_text()
+        assert await card.locator('.parallaxStage').count() == 2
+        checks.append(f'{width}px CPU {status}: progress visible, completed stages retained, no duplicate split')
+    await page.screenshot(path=str(out/f'cpu-running-{width}.png'), full_page=True)
+    await card.screenshot(path=str(out/f'cpu-running-card-{width}.png'))
+    for reason in ('The layer split queue is full.', 'Studio restarted before splitting finished.', 'The parallax source changed; no layers were made.'):
+        job['parallax_finish'] = dict(retained, status='failed', error=reason)
+        await page.evaluate('refresh()')
+        await card.get_by_text(reason, exact=False).wait_for()
+        before = len(FINISH_CALLS)
+        await card.locator('.parallaxFinish').click()
+        await page.wait_for_function("document.querySelector('[data-output=\"fixture-job:0\"]').textContent.includes('Layers split: Synthetic measured split')")
+        assert FINISH_CALLS[before:] == [{'job_id': 'fixture-job', 'other_job_id': 'sibling-job'}]
+        checks.append(f'{width}px CPU retry: {reason} Exact retained pair submitted once, no Generate')
+    job['parallax_finish']['recording_error'] = 'Synthetic link-save refusal'
+    await page.evaluate('refresh()')
+    await card.get_by_text('Split status was not saved', exact=False).wait_for()
+    await card.get_by_role('button', name='Save split status').click()
+    await page.wait_for_function("!document.querySelector('[data-output=\"fixture-job:0\"]').textContent.includes('Split status was not saved')")
+    checks.append(f'{width}px completed CPU receipt survives link-save failure and explicit status retry')
+    await page.screenshot(path=str(out/f'cpu-completed-{width}.png'), full_page=True)
+    await card.screenshot(path=str(out/f'cpu-completed-card-{width}.png'))
+    job.pop('parallax_finish', None); sibling['status'] = 'uncertain'
+
+
 async def run(args):
     args.out.mkdir(parents=True, exist_ok=True)
     fixture.POSTS.clear()
     CALLS.clear()
+    FINISH_CALLS.clear()
     original_jobs = copy.deepcopy(fixture.JOBS)
     job = copy.deepcopy(fixture.JOBS[0])
     job.update(preset_id=PRESET['id'], preset_name='Parallax fixture, synthetic',
@@ -159,6 +204,7 @@ async def run(args):
                     assert await page.locator('#positive').input_value() == 'Newer wording belongs to the owner.'
                     assert await page.evaluate('parallaxState.stage') == 'isolate'
                     checks.append(f'{width}px deferred response preserves newer wording and selected stage')
+                    await cpu_split_statuses(page, job, sibling, width, checks, args.out)
                     await page.close()
                 assert not errors, errors
                 assert not any(row['path'] == '/api/jobs' for row in fixture.POSTS), fixture.POSTS
@@ -172,6 +218,7 @@ async def run(args):
         fixture.JOBS[:] = original_jobs
         report = {'mode': 'inert transport/storage' if args.inert else 'native HTTP', 'checks': checks,
                   'errors': errors, 'stage_requests': CALLS, 'completed': completed,
+                  'split_requests': FINISH_CALLS,
                   'generation_submitted': any(row['path'] == '/api/jobs' for row in fixture.POSTS)}
         (args.out/'report.json').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
     print(json.dumps(report, indent=2))
