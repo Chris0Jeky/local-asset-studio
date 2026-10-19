@@ -112,6 +112,11 @@ def main():
                     # intentionally collapsed until the user chooses Review checks.
                     page.wait_for_function("document.querySelector('#workshopReadiness').textContent.includes('Add a prompt to generate.')")
                     assert page.locator('#workshopReadiness').is_visible(), (width, layout)
+                    assert page.locator('#workshopSetupReadiness').is_hidden(), (width, layout)
+                    assert 'Add a prompt to generate.' not in page.locator('#workshopSetupRail').inner_text(), (width, layout)
+                    assert page.locator('#workshopRecipeChange').is_visible(), (width, layout)
+                    assert page.locator('#workshopBlockerList button').inner_text() == 'Write the description', (width, layout)
+                    assert page.locator('#workshopSetupReview').inner_text() == 'Review readiness', (width, layout)
                     page.click('#workshopReview')
                     blocker = page.locator('[data-readiness-code="continuation-wording"]')
                     blocker.wait_for(state='visible')

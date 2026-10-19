@@ -285,6 +285,7 @@ def run(screenshots):
             models.wait_for_function('document.querySelector("#modelLooks .model-look")')
             check(models.locator('#modelLooks').is_visible() and 'needs a download' in models.locator('#modelLooks').inner_text().lower() and models.locator('#modelLooks .model-look.needs').inner_text().startswith(wai_look),'looks list names which look needs a download')
             check(models.locator('#modelLooks .model-look.needs a').get_attribute('href')=='/#models?need=wai' and models.locator('#modelLooks .model-look.ready').count()>=1,'blocked look links to its files; other looks are ready')
+            check(models.locator('#modelLooks .model-look.ready [data-make-use-look]').count()>=1 and models.locator('#modelLooks .model-look.needs [data-make-use-look]').count()==0,'a ready look in a Make goal offers Use in Make; a blocked one does not')
             required=models.locator('#modelCards .model-card').filter(has_text='Required model')
             check(('Used by: '+wai_look) in required.inner_text(),'card says which look uses the file')
             check(required.locator('.model-get a').get_attribute('href')=='https://example.com/model' and 'C:/models/checkpoints' in required.locator('.model-get code').inner_text() and required.locator('[data-copy]').count()==2,'missing file shows its source, its folder and a copy button')
