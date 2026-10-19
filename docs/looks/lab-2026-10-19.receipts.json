@@ -1,0 +1,5170 @@
+{
+ "jobs": [
+  {
+   "name": "c1-gown-oneobs",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing an elegant midnight blue ballroom gown with long gloves, standing on a marble staircase in a grand ballroom, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "effea8d9-e8cb-4925-802c-3378de6986d2",
+   "prompt_ids": [
+    "d184e692-65e9-49b8-8b00-d49027488b86"
+   ],
+   "seconds": 57.28978657722473,
+   "peak_commit": 0.653,
+   "admission": 0.5238872418223932,
+   "outputs": [
+    {
+     "file": "c1-gown-oneobs-0.png",
+     "sha256": "5aa6d6f903992f1dc2a7e815884a281f32dd261898d817438f8a84c33d3aa019",
+     "bytes": 1333203
+    }
+   ]
+  },
+  {
+   "name": "c1-gown-pearly",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing an elegant midnight blue ballroom gown with long gloves, standing on a marble staircase in a grand ballroom, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "bac997cc-d213-4cc1-bb7a-9906d3695dc5",
+   "prompt_ids": [
+    "ee2037d4-16d0-4e52-a95f-d44c784dee1a"
+   ],
+   "seconds": 51.05254650115967,
+   "peak_commit": 0.61,
+   "admission": 0.5436630650824436,
+   "outputs": [
+    {
+     "file": "c1-gown-pearly-0.png",
+     "sha256": "b5079ac18f9b10c9ebda32ea0e4f7488a4f262d6463cc64969e0d962b00e8e39",
+     "bytes": 1163430
+    }
+   ]
+  },
+  {
+   "name": "c1-hanfu-oneobs",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing an ornate red and gold hanfu with flowing sleeves, holding a folding fan in a lantern-lit garden, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "85b5c289-2ed7-442b-aac9-ac221a424b4d",
+   "prompt_ids": [
+    "609d694b-4b64-499e-8fba-a4ac33f3346f"
+   ],
+   "seconds": 61.865342140197754,
+   "peak_commit": 0.678,
+   "admission": 0.524439091898978,
+   "outputs": [
+    {
+     "file": "c1-hanfu-oneobs-0.png",
+     "sha256": "cb98b7493978ba09086731a83185a62745566ed59625a51f0162098463dfc3db",
+     "bytes": 1612995
+    }
+   ]
+  },
+  {
+   "name": "c1-hanfu-pearly",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing an ornate red and gold hanfu with flowing sleeves, holding a folding fan in a lantern-lit garden, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "ece6f51f-5e28-4614-b181-4640f7d9e101",
+   "prompt_ids": [
+    "9df5ea58-aa9b-4e2d-822c-cb11fa7e4a4e"
+   ],
+   "seconds": 45.688289165496826,
+   "peak_commit": 0.574,
+   "admission": 0.5451748744668597,
+   "outputs": [
+    {
+     "file": "c1-hanfu-pearly-0.png",
+     "sha256": "57c2fb78c2a3a6668fe614f747507103253140d4c148472a306b9ad8a417fb91",
+     "bytes": 1356569
+    }
+   ]
+  },
+  {
+   "name": "c1-maid-oneobs",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing a classic long-sleeved Victorian maid dress with a white apron and lace headband, carrying a silver tea tray in a sunlit tea room, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "190a41f3-b8fb-4323-b91c-6faf2189f7c0",
+   "prompt_ids": [
+    "9858dbec-443b-4044-8ab5-098bbb3422e8"
+   ],
+   "seconds": 53.16950559616089,
+   "peak_commit": 0.648,
+   "admission": 0.5207543130622212,
+   "outputs": [
+    {
+     "file": "c1-maid-oneobs-0.png",
+     "sha256": "35e230e3f9c3a475ac8a6f73312ad354c4d0ec1798c427cbbcab4caf6fa54b32",
+     "bytes": 1299219
+    }
+   ]
+  },
+  {
+   "name": "c1-maid-pearly",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing a classic long-sleeved Victorian maid dress with a white apron and lace headband, carrying a silver tea tray in a sunlit tea room, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "b7f70be5-242c-4ef0-8637-d1c20eca60a9",
+   "prompt_ids": [
+    "c4bc0bef-5752-47d1-abaf-9bd83237a996"
+   ],
+   "seconds": 52.35022211074829,
+   "peak_commit": 0.653,
+   "admission": 0.6309363136000439,
+   "outputs": [
+    {
+     "file": "c1-maid-pearly-0.png",
+     "sha256": "f20e1d20db9d4b2893803ad17e7f9863058385657fc1e342c05d1d4534162dde",
+     "bytes": 1181167
+    }
+   ]
+  },
+  {
+   "name": "c1-office-oneobs",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing a tailored navy business suit with a white blouse and glasses, holding a tablet in a modern glass office, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "f9763dce-b4b5-47a9-892c-f2bc59abd197",
+   "prompt_ids": [
+    "0ff83353-4d40-476f-8bdd-adcec7dcf832"
+   ],
+   "seconds": 51.86400628089905,
+   "peak_commit": 0.649,
+   "admission": 0.5106669894027889,
+   "outputs": [
+    {
+     "file": "c1-office-oneobs-0.png",
+     "sha256": "58732754d64833ec868c9c641587151d5a33ea130fe4e4e99b1900dbef3daafe",
+     "bytes": 1031854
+    }
+   ]
+  },
+  {
+   "name": "c1-office-pearly",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing a tailored navy business suit with a white blouse and glasses, holding a tablet in a modern glass office, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "86bf74b5-499d-43f6-8448-f15cabfdb6a0",
+   "prompt_ids": [
+    "54d7a583-4ba4-4778-ae38-a5fa977e8a1b"
+   ],
+   "seconds": 45.38913702964783,
+   "peak_commit": 0.555,
+   "admission": 0.49808207391061016,
+   "outputs": [
+    {
+     "file": "c1-office-pearly-0.png",
+     "sha256": "a8cdab01c1e9d730f05637c82434ce87a5bba8a13eefbd6fff525c7be3392e0f",
+     "bytes": 910613
+    }
+   ]
+  },
+  {
+   "name": "c1-pirate-oneobs",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing a long crimson pirate captain coat with gold buttons and a feathered tricorn hat, one hand on a cutlass at the deck of a ship at sunset, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "2c7a0305-aead-44e4-96b9-bf3c87ae7f19",
+   "prompt_ids": [
+    "50bb55d5-22a3-45db-9fc4-5fc186e73662"
+   ],
+   "seconds": 51.83212637901306,
+   "peak_commit": 0.659,
+   "admission": 0.5334400503838164,
+   "outputs": [
+    {
+     "file": "c1-pirate-oneobs-0.png",
+     "sha256": "d782b5e1c0165c023e011fd2d34e5650f25eca3a4c54a2d93aee33a46d94a75b",
+     "bytes": 1405457
+    }
+   ]
+  },
+  {
+   "name": "c1-pirate-pearly",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing a long crimson pirate captain coat with gold buttons and a feathered tricorn hat, one hand on a cutlass at the deck of a ship at sunset, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "31bc3a71-bb27-4536-904b-ac49218cde26",
+   "prompt_ids": [
+    "56f1bebd-c37a-46c9-a7bd-c843092223d1"
+   ],
+   "seconds": 44.26292610168457,
+   "peak_commit": 0.564,
+   "admission": 0.5106290517025499,
+   "outputs": [
+    {
+     "file": "c1-pirate-pearly-0.png",
+     "sha256": "ab0f2a81475f0f133dd93b3788444f81b20b858d7de7db8ea82d34a38c88b5f8",
+     "bytes": 1313699
+    }
+   ]
+  },
+  {
+   "name": "c1-priestess-oneobs",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing white and gold priestess robes with a long veil, holding a staff topped with a golden sun in a sunlit cathedral, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "ce1b32a7-53b1-4827-bb0f-5584304b1b08",
+   "prompt_ids": [
+    "74bf58f6-f7a1-4fd7-9a70-23c50cebfd68"
+   ],
+   "seconds": 69.23082828521729,
+   "peak_commit": 0.664,
+   "admission": 0.5202496460077823,
+   "outputs": [
+    {
+     "file": "c1-priestess-oneobs-0.png",
+     "sha256": "ed18ce364db42c485fd4c8819b630ecac7681b227325d1eb5ab0c0b28075a8ff",
+     "bytes": 1432900
+    }
+   ]
+  },
+  {
+   "name": "c1-priestess-pearly",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing white and gold priestess robes with a long veil, holding a staff topped with a golden sun in a sunlit cathedral, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "1ff7d6cb-5a8d-4290-8ddb-05c806a8ca14",
+   "prompt_ids": [
+    "1192aed3-e36f-422d-a242-3fb78e14ec66"
+   ],
+   "seconds": 46.32875204086304,
+   "peak_commit": 0.587,
+   "admission": 0.5488640767119427,
+   "outputs": [
+    {
+     "file": "c1-priestess-pearly-0.png",
+     "sha256": "40a79c72b0227205cd2a27e11dc3438607b362142e5941b14def3657af735b29",
+     "bytes": 1288379
+    }
+   ]
+  },
+  {
+   "name": "c1-samurai-oneobs",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing lacquered black and red samurai armour with a half-cape, holding a katana in a bamboo forest at dawn, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "514842cb-c572-48b5-9993-83a78193b368",
+   "prompt_ids": [
+    "fe506c0e-5497-4728-ad51-a2cc4c32f230"
+   ],
+   "seconds": 42.8027765750885,
+   "peak_commit": 0.649,
+   "admission": 0.5055762441772405,
+   "outputs": [
+    {
+     "file": "c1-samurai-oneobs-0.png",
+     "sha256": "c00fec5e8e656eb91a74824b3c230dda455298600e3ef5780dc8896a96a206d9",
+     "bytes": 1594641
+    }
+   ]
+  },
+  {
+   "name": "c1-samurai-pearly",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing lacquered black and red samurai armour with a half-cape, holding a katana in a bamboo forest at dawn, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "c4be4eaa-a061-46db-aaed-a5f89c34dc7e",
+   "prompt_ids": [
+    "44f9ba44-cb11-417b-af59-878eb0dba98b"
+   ],
+   "seconds": 43.49795985221863,
+   "peak_commit": 0.615,
+   "admission": 0.5460693593613587,
+   "outputs": [
+    {
+     "file": "c1-samurai-pearly-0.png",
+     "sha256": "44ded43775a8015d3a6a1c5fbe96e3c14717a0c09bfe9514a5cc431e364e31ce",
+     "bytes": 1364278
+    }
+   ]
+  },
+  {
+   "name": "c1-techwear-oneobs",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing a black techwear jacket with glowing cyan seams and a long scarf, standing on a rainy neon street at night, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "0c5ec025-a417-4941-a7ea-4738672cb400",
+   "prompt_ids": [
+    "7d7d3b65-2ad3-4a4b-8ed4-f6b3b8ac67e2"
+   ],
+   "seconds": 55.03924250602722,
+   "peak_commit": 0.652,
+   "admission": 0.5152825171122142,
+   "outputs": [
+    {
+     "file": "c1-techwear-oneobs-0.png",
+     "sha256": "b7f70f512c39eba0b5d413804cc5a0db86e9235495a94efebffca5f52bf66a77",
+     "bytes": 1454130
+    }
+   ]
+  },
+  {
+   "name": "c1-techwear-pearly",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing a black techwear jacket with glowing cyan seams and a long scarf, standing on a rainy neon street at night, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "05db31d8-a120-461b-8857-5dadee5b396e",
+   "prompt_ids": [
+    "8ecd2506-cccd-405c-864a-a112517f65ea"
+   ],
+   "seconds": 53.113951444625854,
+   "peak_commit": 0.613,
+   "admission": 0.5216306261171099,
+   "outputs": [
+    {
+     "file": "c1-techwear-pearly-0.png",
+     "sha256": "94d7d3efaaf6cef1a3204077ac70142ab8f9a6071db4822f88e191787a35324b",
+     "bytes": 1304961
+    }
+   ]
+  },
+  {
+   "name": "c1-winter-oneobs",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing a thick cream winter coat, knitted scarf and gloves, holding a paper cup of tea in a snowy street at dusk, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "f73e6f5d-5f4c-436f-8435-da5d2fa292ba",
+   "prompt_ids": [
+    "7c60df5a-03bf-4069-9139-c57e664dd97b"
+   ],
+   "seconds": 56.86749792098999,
+   "peak_commit": 0.658,
+   "admission": 0.5157260136100703,
+   "outputs": [
+    {
+     "file": "c1-winter-oneobs-0.png",
+     "sha256": "5c1d9c45e08849b2da69c63689851e54a31ae51f763d7f655e95c6268dd70b2b",
+     "bytes": 1476856
+    }
+   ]
+  },
+  {
+   "name": "c1-winter-pearly",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing a thick cream winter coat, knitted scarf and gloves, holding a paper cup of tea in a snowy street at dusk, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "2f77d1f2-e2eb-49af-80f9-15d4da0d5940",
+   "prompt_ids": [
+    "f5b2f0ab-2999-47be-a678-9951ae7fbbc8"
+   ],
+   "seconds": 49.28977942466736,
+   "peak_commit": 0.617,
+   "admission": 0.537729242140241,
+   "outputs": [
+    {
+     "file": "c1-winter-pearly-0.png",
+     "sha256": "174a8da58b5766b5ffefc31f46ec4f955d72a4096485086196301e6f25da57f9",
+     "bytes": 1367481
+    }
+   ]
+  },
+  {
+   "name": "c1-witch-oneobs",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing a wide-brimmed purple witch hat and a long star-patterned cloak, holding a glowing lantern in a moonlit forest, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "ac978e75-b6f8-4c94-bddd-209cb39f672e",
+   "prompt_ids": [
+    "fab26051-6bb4-4d39-8cd7-67090f50e0fb"
+   ],
+   "seconds": 49.04048013687134,
+   "peak_commit": 0.645,
+   "admission": 0.5076780007405821,
+   "outputs": [
+    {
+     "file": "c1-witch-oneobs-0.png",
+     "sha256": "532031842a1e1675d9862f851083d0518dcac7b657a0e6599c32d05259f011fc",
+     "bytes": 1443931
+    }
+   ]
+  },
+  {
+   "name": "c1-witch-pearly",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing a wide-brimmed purple witch hat and a long star-patterned cloak, holding a glowing lantern in a moonlit forest, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "9ad1a8f2-bd27-45ce-9de8-8d09ba4dc3d2",
+   "prompt_ids": [
+    "3904f539-66a4-4acd-9ff3-6c87f96e5b36"
+   ],
+   "seconds": 45.98887276649475,
+   "peak_commit": 0.626,
+   "admission": 0.55405931001525,
+   "outputs": [
+    {
+     "file": "c1-witch-pearly-0.png",
+     "sha256": "eb4073070507691a46535f6e490dcbf2eefed478cadc16eec61e1ada79ada4c9",
+     "bytes": 1278839
+    }
+   ]
+  },
+  {
+   "name": "e1-esearu",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 1.0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0,
+    "lora_name": "pearly_esearu_style.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "e0a3dced-b78e-4b6e-b630-8a0a025e1f95",
+   "prompt_ids": [
+    "814ee4e9-5e54-4537-a86d-2306154a8050"
+   ],
+   "seconds": 26.46338176727295,
+   "peak_commit": 0.616,
+   "admission": 0.5935718233193479,
+   "outputs": [
+    {
+     "file": "e1-esearu-0.png",
+     "sha256": "a567948dbf9d6dd61d22e0e5efb88ef1f5b7ee188b3c8dd4e1e47452194eec8e",
+     "bytes": 1310744
+    }
+   ]
+  },
+  {
+   "name": "e1-highres",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0.8,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0,
+    "lora_name": "anima-highres-aesthetic-boost.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "7fc5aa5b-7224-453b-85db-6b21d5973cf9",
+   "prompt_ids": [
+    "3e1517f3-321b-40b2-849b-8300731f8834"
+   ],
+   "seconds": 60.47146534919739,
+   "peak_commit": 0.727,
+   "admission": 0.620015476350068,
+   "outputs": [
+    {
+     "file": "e1-highres-0.png",
+     "sha256": "dc16adc7c1a5dd700e0e19af6f48db68aa26042585050db02080fd86746b60c2",
+     "bytes": 1216424
+    }
+   ]
+  },
+  {
+   "name": "e1-huashijw",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0.8,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0,
+    "lora_name": "anima-huashijw_v2_step10000.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "429ccd3b-5748-4e20-b015-3668b3aa3de5",
+   "prompt_ids": [
+    "df203ec9-fb6c-42d2-8562-ff0bf5123f46"
+   ],
+   "seconds": 62.47672915458679,
+   "peak_commit": 0.718,
+   "admission": 0.5944370579281584,
+   "outputs": [
+    {
+     "file": "e1-huashijw-0.png",
+     "sha256": "4c17c8ce2dbdaef19f83b23cb0b06a09e29fea73ef46b2f966b10425022d2b05",
+     "bytes": 1255157
+    }
+   ]
+  },
+  {
+   "name": "e1-keta",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0.7,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0,
+    "lora_name": "anima-ke-ta_style_v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "4b44e9a8-d79b-432c-9cb1-0f46ea63fac7",
+   "prompt_ids": [
+    "d0239ce0-c9ce-45c6-80a4-9f4cb8f98a2c"
+   ],
+   "seconds": 26.546443700790405,
+   "peak_commit": 0.601,
+   "admission": 0.5731868847776252,
+   "outputs": [
+    {
+     "file": "e1-keta-0.png",
+     "sha256": "eb2bfb593f936edd4125780edce4b8e377d32750ce307016ad91b676119f2f53",
+     "bytes": 1244671
+    }
+   ]
+  },
+  {
+   "name": "e1-kieed",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0.8,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0,
+    "lora_name": "anima-kieed_v9_step6000.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "056e826d-f084-4be0-8251-67069b15c89b",
+   "prompt_ids": [
+    "34a0ed2c-9de2-4fa7-8c99-57f25a56ebba"
+   ],
+   "seconds": 25.861155033111572,
+   "peak_commit": 0.613,
+   "admission": 0.611175753091245,
+   "outputs": [
+    {
+     "file": "e1-kieed-0.png",
+     "sha256": "ab29e2eedce657166c3d5b8d802142b302dcf3370277d8acfd627c660c0e9bd1",
+     "bytes": 1325710
+    }
+   ]
+  },
+  {
+   "name": "e1-koukouya",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0.8,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0,
+    "lora_name": "anima-koukouya_v2_step2500.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "0177c11d-0c65-4d75-990e-a57c837edc0c",
+   "prompt_ids": [
+    "9d7a3287-f7f1-45dc-a411-f01683812598"
+   ],
+   "seconds": 24.96541452407837,
+   "peak_commit": 0.601,
+   "admission": 0.6005814908974226,
+   "outputs": [
+    {
+     "file": "e1-koukouya-0.png",
+     "sha256": "2818f7dfd1690456e5e9c052d3c53eb3383c54914cc04500d77d97bbee88603b",
+     "bytes": 1192787
+    }
+   ]
+  },
+  {
+   "name": "e1-newanima",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0.6,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0,
+    "lora_name": "anima-newanimastyle-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "ca622575-06fa-4501-84ec-c1490283f8da",
+   "prompt_ids": [
+    "097379f0-d6eb-4dc0-bb0e-960b837854dd"
+   ],
+   "seconds": 28.47133231163025,
+   "peak_commit": 0.646,
+   "admission": 0.608544383044526,
+   "outputs": [
+    {
+     "file": "e1-newanima-0.png",
+     "sha256": "33772029b3a34b14ddac60fd405d213251fce426abb37c15e8600552c1c12f57",
+     "bytes": 1341070
+    }
+   ]
+  },
+  {
+   "name": "e1-petiflow",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 1.0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0,
+    "lora_name": "pearly_petiflow2.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "871d3fbd-80cd-44a5-80af-171d936ec154",
+   "prompt_ids": [
+    "3f6b5d67-6bf3-4218-8bf3-dc455eb9febb"
+   ],
+   "seconds": 26.65444326400757,
+   "peak_commit": 0.593,
+   "admission": 0.5749673265541745,
+   "outputs": [
+    {
+     "file": "e1-petiflow-0.png",
+     "sha256": "9d3a2eefe6f97062033899666000913e207e803b5e2d8b57ba8298fcd18f0c3a",
+     "bytes": 1197697
+    }
+   ]
+  },
+  {
+   "name": "e1-rapscallion",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0.8,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0,
+    "lora_name": "rapscallion_cherrypick_min1024_prodigy_lr1_4000_stylepush.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "0a457ce4-8a74-40db-bbb6-9b4836aeb2a8",
+   "prompt_ids": [
+    "bb2c3ac9-5b5f-4133-b47b-9e15dde74968"
+   ],
+   "seconds": 28.44855785369873,
+   "peak_commit": 0.664,
+   "admission": 0.6136089464748464,
+   "outputs": [
+    {
+     "file": "e1-rapscallion-0.png",
+     "sha256": "3d48f3ae1bf9b16d8a931e0cd982f90b433672245234d20e333190b25d5c2a2c",
+     "bytes": 1227575
+    }
+   ]
+  },
+  {
+   "name": "e1-sky02",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0.8,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0,
+    "lora_name": "sky02Light.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "896c229f-cc5f-4096-a980-a7e079f66c84",
+   "prompt_ids": [
+    "05d6957c-1938-4725-993c-4f179de51371"
+   ],
+   "seconds": 26.500855922698975,
+   "peak_commit": 0.622,
+   "admission": 0.6042806159233455,
+   "outputs": [
+    {
+     "file": "e1-sky02-0.png",
+     "sha256": "1208738b4b6382ffbe5e85652599eae5f3b49635d26cdeef1dcaa96e896e9f94",
+     "bytes": 1293809
+    }
+   ]
+  },
+  {
+   "name": "e1-turbo8",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 8,
+    "cfg": 1.0,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 1.0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0,
+    "lora_name": "anima-turbo-lora-v0.2.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "e553801c-f03c-4a11-a884-c342294d8cbf",
+   "prompt_ids": [
+    "32c53161-ac32-4fbb-a1e3-4c9a0ec0fc9d"
+   ],
+   "seconds": 13.197696685791016,
+   "peak_commit": 0.614,
+   "admission": 0.6137349936868798,
+   "outputs": [
+    {
+     "file": "e1-turbo8-0.png",
+     "sha256": "80a35506d2469fc6213303a1172ff1678fca9547ed2d74f7e2d6a05d918ab62d",
+     "bytes": 1188356
+    }
+   ]
+  },
+  {
+   "name": "e1-xilmo",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0.8,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0,
+    "lora_name": "anima-xilmo-000020.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "c849f75b-bd47-4511-84c8-cd3e14413224",
+   "prompt_ids": [
+    "337f4ea3-e28d-4be0-85c6-0112fe342397"
+   ],
+   "seconds": 28.475528478622437,
+   "peak_commit": 0.652,
+   "admission": 0.596891013435525,
+   "outputs": [
+    {
+     "file": "e1-xilmo-0.png",
+     "sha256": "d6a05001a70e0389ff118635068a8fa6361e3a0dc2c5b6fcf494b44e714d18b4",
+     "bytes": 1218296
+    }
+   ]
+  },
+  {
+   "name": "f1-anifox",
+   "preset_id": "anifox-v2-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 29 years old, long black hair, red eyes, soft lipstick, pearl earrings, close-up portrait, upper body, looking at viewer, gentle smile, soft rim light, depth of field, detailed face, detailed eyes, masterpiece, best quality, amazing quality, very aesthetic",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "karras",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "8856b1a9-030b-4f37-a645-f0d5100077ab",
+   "prompt_ids": [
+    "bbf45a9d-82f0-4ab7-9ba6-291528fc921d"
+   ],
+   "seconds": 54.6924352645874,
+   "peak_commit": 0.659,
+   "admission": 0.5335929568500104,
+   "outputs": [
+    {
+     "file": "f1-anifox-0.png",
+     "sha256": "71db225f7e9e9f8218f2b8b9ea3e3f7e862f2c9da7911d173e203b7495d7eb35",
+     "bytes": 1296796
+    }
+   ]
+  },
+  {
+   "name": "f1-anima-aesthetic",
+   "preset_id": "anima-portrait",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, Close-up portrait of an adult woman in her late twenties with long black hair, deep red eyes, soft lipstick and elegant pearl earrings, looking at the viewer with a gentle smile, soft rim light, shallow depth of field, detailed eyes and eyelashes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "97acc214-a721-4062-ae89-bc5bc5bb9745",
+   "prompt_ids": [
+    "1d10499b-9e9e-44b6-88dd-f5440bb5753b"
+   ],
+   "seconds": 58.97565746307373,
+   "peak_commit": 0.587,
+   "admission": 0.5127552366379993,
+   "outputs": [
+    {
+     "file": "f1-anima-aesthetic-0.png",
+     "sha256": "23d9b8fcfcfef29b349da696f2bd53b7d73ef66843127dd1377a7bfa3deaecf8",
+     "bytes": 939440
+    }
+   ]
+  },
+  {
+   "name": "f1-anima",
+   "preset_id": "anima-v1-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, Close-up portrait of an adult woman in her late twenties with long black hair, deep red eyes, soft lipstick and elegant pearl earrings, looking at the viewer with a gentle smile, soft rim light, shallow depth of field, detailed eyes and eyelashes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "45aa9388-763c-455b-92fe-97cf73236d6d",
+   "prompt_ids": [
+    "061233b1-7fd3-4a5d-85ca-9b9710a119aa"
+   ],
+   "seconds": 49.22360348701477,
+   "peak_commit": 0.651,
+   "admission": 0.5192833504664026,
+   "outputs": [
+    {
+     "file": "f1-anima-0.png",
+     "sha256": "ca0cff4eaa0fafc7172d7ff9de239a2ef2c38fb05541ef1af44f275f7d595043",
+     "bytes": 1053248
+    }
+   ]
+  },
+  {
+   "name": "f1-janima",
+   "preset_id": "janima-v1-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, Close-up portrait of an adult woman in her late twenties with long black hair, deep red eyes, soft lipstick and elegant pearl earrings, looking at the viewer with a gentle smile, soft rim light, shallow depth of field, detailed eyes and eyelashes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "b475d7f7-e08a-4924-bffc-226446e94a8b",
+   "prompt_ids": [
+    "e355da36-4466-4d21-bf9a-2d3688b86b6b"
+   ],
+   "seconds": 62.410547494888306,
+   "peak_commit": 0.648,
+   "admission": 0.5005219223319635,
+   "outputs": [
+    {
+     "file": "f1-janima-0.png",
+     "sha256": "82c39f6a8c8063e5c2495e4cad96383817fcd5b87e6d299d740a1789380193d3",
+     "bytes": 973902
+    }
+   ]
+  },
+  {
+   "name": "f1-oneobs",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, Close-up portrait of an adult woman in her late twenties with long black hair, deep red eyes, soft lipstick and elegant pearl earrings, looking at the viewer with a gentle smile, soft rim light, shallow depth of field, detailed eyes and eyelashes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "a386b981-fc9f-4352-af2e-a09eb1d3596e",
+   "prompt_ids": [
+    "c11e83e7-02dc-4940-8335-c7d3453116e3"
+   ],
+   "seconds": 57.303462266922,
+   "peak_commit": 0.658,
+   "admission": 0.5090128737919513,
+   "outputs": [
+    {
+     "file": "f1-oneobs-0.png",
+     "sha256": "2d3adda81539bd94c21c0cf40237b544db44596d7e1bf460fe834b4151187c23",
+     "bytes": 1044090
+    }
+   ]
+  },
+  {
+   "name": "f1-pearly",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, Close-up portrait of an adult woman in her late twenties with long black hair, deep red eyes, soft lipstick and elegant pearl earrings, looking at the viewer with a gentle smile, soft rim light, shallow depth of field, detailed eyes and eyelashes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "efcb3ec7-c89e-4212-98cb-85bb6376e0bb",
+   "prompt_ids": [
+    "7e5d7791-665f-4387-b72d-bbf8a6cdb35d"
+   ],
+   "seconds": 47.36603116989136,
+   "peak_commit": 0.563,
+   "admission": 0.4479882099829392,
+   "outputs": [
+    {
+     "file": "f1-pearly-0.png",
+     "sha256": "3ec43765beafe0cd54c7023f4fd49a96369585e0655ff9603af8130efc3b2390",
+     "bytes": 975546
+    }
+   ]
+  },
+  {
+   "name": "f1-wai",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 29 years old, long black hair, red eyes, soft lipstick, pearl earrings, close-up portrait, upper body, looking at viewer, gentle smile, soft rim light, depth of field, detailed face, detailed eyes, masterpiece, best quality, amazing quality, very aesthetic",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "ec70bc1c-c841-4a74-b376-c7dc58b526f6",
+   "prompt_ids": [
+    "11675396-c99f-4d85-9e92-65bfd32741f3"
+   ],
+   "seconds": 55.846132040023804,
+   "peak_commit": 0.67,
+   "admission": 0.5422038185411105,
+   "outputs": [
+    {
+     "file": "f1-wai-0.png",
+     "sha256": "b67ecf6b14d2ea77767e8970e708e16b12a980159729eec509e3d8f6f10961dd",
+     "bytes": 1286499
+    }
+   ]
+  },
+  {
+   "name": "fin-detailfix-pearly",
+   "preset_id": "anime-detail-fix",
+   "controls": {
+    "positive": "masterpiece, best quality, amazing quality, detailed face, detailed eyes, clean lineart, same character, same colours",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad hands, extra digits, fewer digits, missing fingers, extra fingers, deformed hands, blurry, text, watermark",
+    "seed": 2026101901,
+    "steps": 24,
+    "cfg": 5.0,
+    "denoise": 0.4,
+    "sampler": "dpmpp_2m",
+    "scheduler": "karras"
+   },
+   "references": [],
+   "uploads": {
+    "reference": "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\s1-pearly-0.png"
+   },
+   "status": "completed",
+   "job_id": "853aaebd-ffb4-4334-83ea-f777619d70f9",
+   "prompt_ids": [
+    "d5bbac80-1961-4996-9c73-09332b4d695d"
+   ],
+   "seconds": 71.26670336723328,
+   "peak_commit": 0.575,
+   "admission": 0.4207568316154303,
+   "outputs": [
+    {
+     "file": "fin-detailfix-pearly-0.png",
+     "sha256": "ec6f65590e367cc0f2a665de3a7333555f02e8f4d854f8154e558877b4b3e8fd",
+     "bytes": 1293575
+    }
+   ]
+  },
+  {
+   "name": "fin-esrgan-pearly",
+   "preset_id": "anime-esrgan",
+   "controls": {},
+   "references": [],
+   "uploads": {
+    "reference": "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\s1-pearly-0.png"
+   },
+   "status": "completed",
+   "job_id": "c6fbf191-e863-4c52-b09c-849745a6693d",
+   "prompt_ids": [
+    "4b185a09-9fcc-4a93-8f7e-d10e01afb5f8"
+   ],
+   "seconds": 141.7974350452423,
+   "peak_commit": 0.618,
+   "admission": 0.5062246520770174,
+   "outputs": [
+    {
+     "file": "fin-esrgan-pearly-0.png",
+     "sha256": "16237b383d1a85e04a5b3c3aa445fe4d7b5a0975ff20b71efc2b955a62e7d4d6",
+     "bytes": 3587988
+    }
+   ]
+  },
+  {
+   "name": "fin-refine-pearly-d22",
+   "preset_id": "anime-refine",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, long silver hair, violet eyes, black and gold sorceress robe, holding a crystal staff, castle balcony at dusk, cinematic lighting, masterpiece, best quality",
+    "negative": "lowres, blurry, worst quality, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "seed": 2026101901,
+    "steps": 24,
+    "cfg": 5.0,
+    "denoise": 0.22
+   },
+   "references": [],
+   "uploads": {
+    "reference": "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\s1-pearly-0.png"
+   },
+   "status": "completed",
+   "job_id": "86031559-b56b-4cfb-96df-0fa33885b156",
+   "prompt_ids": [
+    "91d87d8b-0001-4dee-954e-094fcd7eda81"
+   ],
+   "seconds": 52.75842523574829,
+   "peak_commit": 0.71,
+   "admission": 0.5607532817306222,
+   "outputs": [
+    {
+     "file": "fin-refine-pearly-d22-0.png",
+     "sha256": "3b5ff3dfbe3922e7679140b2fb18884a7918a7b26aa0e916e48fecb2ac0d7f6d",
+     "bytes": 2807807
+    }
+   ]
+  },
+  {
+   "name": "fin-refine-pearly-d35",
+   "preset_id": "anime-refine",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, long silver hair, violet eyes, black and gold sorceress robe, holding a crystal staff, castle balcony at dusk, cinematic lighting, masterpiece, best quality",
+    "negative": "lowres, blurry, worst quality, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "seed": 2026101901,
+    "steps": 24,
+    "cfg": 5.0,
+    "denoise": 0.35
+   },
+   "references": [],
+   "uploads": {
+    "reference": "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\s1-pearly-0.png"
+   },
+   "status": "completed",
+   "job_id": "797d28fb-e3f0-47ac-87d6-ecd2d499410f",
+   "prompt_ids": [
+    "40591bcc-c3ea-487b-abc5-8c0ac2bf8b35"
+   ],
+   "seconds": 74.4754273891449,
+   "peak_commit": 0.713,
+   "admission": 0.41419241395833195,
+   "outputs": [
+    {
+     "file": "fin-refine-pearly-d35-0.png",
+     "sha256": "e29019abc031af87ebed9792dcb0cc9310fe75fd9fd4d8d28e337f16fb0366d3",
+     "bytes": 2794203
+    }
+   ]
+  },
+  {
+   "name": "fin-refine-wai-d22",
+   "preset_id": "anime-refine",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, long silver hair, violet eyes, black and gold sorceress robe, high collar, holding a crystal staff, castle balcony at dusk, cinematic lighting, masterpiece, best quality",
+    "negative": "lowres, blurry, worst quality, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, cleavage",
+    "seed": 2026101901,
+    "steps": 24,
+    "cfg": 5.0,
+    "denoise": 0.22
+   },
+   "references": [],
+   "uploads": {
+    "reference": "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\s1-wai-0.png"
+   },
+   "status": "completed",
+   "job_id": "a691eb65-bc15-4b37-9ff3-4aa65b9040e9",
+   "prompt_ids": [
+    "d8e3eee4-4e90-4873-89ef-3ead881747de"
+   ],
+   "seconds": 61.53397464752197,
+   "peak_commit": 0.772,
+   "admission": 0.5968082837446678,
+   "outputs": [
+    {
+     "file": "fin-refine-wai-d22-0.png",
+     "sha256": "43b1a5abd659d6e0665705f59c28ac5a312342589e2bed2fc3f00ba81b4919d3",
+     "bytes": 2530581
+    }
+   ]
+  },
+  {
+   "name": "g1-pearly-beta",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "beta",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "74a663ff-1c20-4955-bcac-03eb7ed66f41",
+   "prompt_ids": [
+    "9b4a7977-b291-4627-a797-a8c949c3dd6d"
+   ],
+   "seconds": 20.496081829071045,
+   "peak_commit": 0.571,
+   "admission": 0.5120691699916616,
+   "outputs": [
+    {
+     "file": "g1-pearly-beta-0.png",
+     "sha256": "87580b8ab3d5ff538d977ec3d35ddef0850c1c49c3f8d6c626ddfade5dd677a4",
+     "bytes": 1267210
+    }
+   ]
+  },
+  {
+   "name": "g1-pearly-cfg3",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 3,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "4641b6db-7013-479b-9908-fcb28a09d864",
+   "prompt_ids": [
+    "5b07076d-d5dc-4620-8ad4-8cf2eac5563b"
+   ],
+   "seconds": 20.780362844467163,
+   "peak_commit": 0.502,
+   "admission": 0.48309074458794,
+   "outputs": [
+    {
+     "file": "g1-pearly-cfg3-0.png",
+     "sha256": "295c3af9a4dba63da7220925dd3d8084e7318b50a5efa98329b1855c725152dc",
+     "bytes": 1235428
+    }
+   ]
+  },
+  {
+   "name": "g1-pearly-cfg6",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 6,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "2bd661f9-24ac-469d-a655-be91e9cfd53a",
+   "prompt_ids": [
+    "6e675079-5b66-41a0-8bfd-66ce52fc5fce"
+   ],
+   "seconds": 20.478723287582397,
+   "peak_commit": 0.545,
+   "admission": 0.49214801186525486,
+   "outputs": [
+    {
+     "file": "g1-pearly-cfg6-0.png",
+     "sha256": "536f6756e72d31d11fa3df90d8942b5d3ae286aa466189e2ea72ce53a57864be",
+     "bytes": 1288624
+    }
+   ]
+  },
+  {
+   "name": "g1-pearly-dpm2msde",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "dpmpp_2m_sde_gpu",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "23e625e1-aa72-4cbb-9096-81ad1247fdf6",
+   "prompt_ids": [
+    "26457abe-0601-4cf1-b833-7eefbe393490"
+   ],
+   "seconds": 22.4431471824646,
+   "peak_commit": 0.521,
+   "admission": 0.5156864420382874,
+   "outputs": [
+    {
+     "file": "g1-pearly-dpm2msde-0.png",
+     "sha256": "4158ecb19f7e9965b24978702311776fc51ac5c36b14601a3d14ed2f5bcb97b6",
+     "bytes": 1282954
+    }
+   ]
+  },
+  {
+   "name": "g1-pearly-euler_a",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "c437cee1-4b80-49a3-8234-a9d286789c36",
+   "prompt_ids": [
+    "afc0ea54-dcf3-4307-ad27-998a6c4877b4"
+   ],
+   "seconds": 21.402965784072876,
+   "peak_commit": 0.557,
+   "admission": 0.5152804847354157,
+   "outputs": [
+    {
+     "file": "g1-pearly-euler_a-0.png",
+     "sha256": "dd80072a7c836df6415cbfcac32c7c78e2c1ac47d45528274a28f8b4d65fe0e5",
+     "bytes": 1306332
+    }
+   ]
+  },
+  {
+   "name": "g1-pearly-normal",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "normal",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "f5f0a151-e15e-4923-8732-56c57bf46a96",
+   "prompt_ids": [
+    "d0f994dd-83ac-4161-9b94-fbf8ee47338e"
+   ],
+   "seconds": 20.471497297286987,
+   "peak_commit": 0.532,
+   "admission": 0.524824247227559,
+   "outputs": [
+    {
+     "file": "g1-pearly-normal-0.png",
+     "sha256": "0586742fd48a08bfcb148d66316f8b5806512f5eb8892637a232fb9a54c59427",
+     "bytes": 1273575
+    }
+   ]
+  },
+  {
+   "name": "g1-pearly-st20",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 20,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "2c0aab46-9145-4562-b098-67dcfbfd8ef9",
+   "prompt_ids": [
+    "fa9737f9-d1bd-4a8e-bf10-86d93445e04b"
+   ],
+   "seconds": 45.51285099983215,
+   "peak_commit": 0.553,
+   "admission": 0.501614304935902,
+   "outputs": [
+    {
+     "file": "g1-pearly-st20-0.png",
+     "sha256": "09cc1a1d02dbfb0f55450ade54cdcb79ca062c6a59044066d3078a932bcc7e74",
+     "bytes": 1281761
+    }
+   ]
+  },
+  {
+   "name": "g1-pearly-st40",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 40,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "8dec46fc-c280-4c71-b1d5-f9b6aab2da8a",
+   "prompt_ids": [
+    "0318e48e-c240-46be-9536-146b046ddb59"
+   ],
+   "seconds": 26.59833264350891,
+   "peak_commit": 0.493,
+   "admission": 0.49349268814588737,
+   "outputs": [
+    {
+     "file": "g1-pearly-st40-0.png",
+     "sha256": "0ba2f76133bc13ee30196ff60a79c531757fe97ddf7f8b148ea8a864a76c322a",
+     "bytes": 1268777
+    }
+   ]
+  },
+  {
+   "name": "k1-trigger-removed",
+   "preset_id": "krea-anime-atelier-gguf",
+   "controls": {
+    "seed": 2026101901,
+    "width": 768,
+    "height": 1152,
+    "steps": 15,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple",
+    "lora": 1.0,
+    "lora2": 1.0,
+    "lora3": 0,
+    "lora4": 0,
+    "positive": "medium shot of an adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff on a castle balcony at dusk, wind in her hair, calm confident smile looking at the viewer, cinematic lighting, high-end anime illustration with soft cel shading and delicate line work"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "21f460c2-62ab-4850-a119-f65a66702f69",
+   "prompt_ids": [
+    "b83ba9c2-035c-4716-a9c4-f2618de70b79"
+   ],
+   "seconds": 319.84132146835327,
+   "peak_commit": 0.719,
+   "admission": 0.5269201856141835,
+   "outputs": [
+    {
+     "file": "k1-trigger-removed-0.png",
+     "sha256": "d9bc6d6a3e49b35a5d9b3188f04f6d72da0fd86343bff72e8710cede26b7fe62",
+     "bytes": 1327020
+    }
+   ]
+  },
+  {
+   "name": "k2-trigger-end",
+   "preset_id": "krea-anime-atelier-gguf",
+   "controls": {
+    "seed": 2026101901,
+    "width": 768,
+    "height": 1152,
+    "steps": 15,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple",
+    "lora": 1.0,
+    "lora2": 1.0,
+    "lora3": 0,
+    "lora4": 0,
+    "positive": "medium shot of an adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff on a castle balcony at dusk, wind in her hair, calm confident smile looking at the viewer, cinematic lighting, high-end anime illustration with soft cel shading and delicate line work, @NJSW33T"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "0667cab8-9bbe-4ac6-acb9-2915ef9962cb",
+   "prompt_ids": [
+    "78737572-08c7-496f-8dd7-a5ca1eeb7b01"
+   ],
+   "seconds": 312.62168526649475,
+   "peak_commit": 0.713,
+   "admission": 0.5023085807904846,
+   "outputs": [
+    {
+     "file": "k2-trigger-end-0.png",
+     "sha256": "27ef1e651abf63dbef666f0de9ed1716476a7df7796562f3dabc30d8e254a3a4",
+     "bytes": 1347269
+    }
+   ]
+  },
+  {
+   "name": "k3-no-textfusion",
+   "preset_id": "krea-anime-atelier-gguf",
+   "controls": {
+    "seed": 2026101901,
+    "width": 768,
+    "height": 1152,
+    "steps": 15,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 1.0,
+    "lora3": 0,
+    "lora4": 0,
+    "positive": "@NJSW33T, medium shot of an adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff on a castle balcony at dusk, wind in her hair, calm confident smile looking at the viewer, cinematic lighting, high-end anime illustration with soft cel shading and delicate line work"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "63005df9-0e3a-492d-9765-7f57db8e49fc",
+   "prompt_ids": [
+    "553c2a6d-1a92-4a72-b8b0-d2648717c24d"
+   ],
+   "seconds": 311.74832916259766,
+   "peak_commit": 0.678,
+   "admission": 0.4856206950473608,
+   "outputs": [
+    {
+     "file": "k3-no-textfusion-0.png",
+     "sha256": "9c1945302c887d344c91c786bf1dd31265b35e37c51640e84f68ddee47a7edb8",
+     "bytes": 1301518
+    }
+   ]
+  },
+  {
+   "name": "k4-8step-euler",
+   "preset_id": "krea-anime-atelier-gguf",
+   "controls": {
+    "seed": 2026101901,
+    "width": 768,
+    "height": 1152,
+    "steps": 8,
+    "cfg": 1.0,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 1.0,
+    "lora2": 1.0,
+    "lora3": 0,
+    "lora4": 0,
+    "positive": "@NJSW33T, medium shot of an adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff on a castle balcony at dusk, wind in her hair, calm confident smile looking at the viewer, cinematic lighting, high-end anime illustration with soft cel shading and delicate line work"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "cb956927-6234-4ecb-893b-89a66ff8a655",
+   "prompt_ids": [
+    "18de03cd-0785-4108-be2b-490b8ce092c0"
+   ],
+   "seconds": 287.48692560195923,
+   "peak_commit": 0.662,
+   "admission": 0.5433441014766532,
+   "outputs": [
+    {
+     "file": "k4-8step-euler-0.png",
+     "sha256": "79d0daad4f94dd6e2d4ee65a470b64a1380628769f38efc3f26c8e94ef99860a",
+     "bytes": 1316349
+    }
+   ]
+  },
+  {
+   "name": "k5-4step-distill",
+   "preset_id": "krea-anime-atelier-gguf",
+   "controls": {
+    "seed": 2026101901,
+    "width": 768,
+    "height": 1152,
+    "steps": 4,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple",
+    "lora": 1.0,
+    "lora2": 1.0,
+    "lora3": 0,
+    "lora4": 0.85,
+    "positive": "@NJSW33T, medium shot of an adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff on a castle balcony at dusk, wind in her hair, calm confident smile looking at the viewer, cinematic lighting, high-end anime illustration with soft cel shading and delicate line work",
+    "lora4_name": "krea2_turbo_4step_rank_64_lora_comfyui.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "a4079264-010e-4d31-ba0c-f5b8ce2ed232",
+   "prompt_ids": [
+    "d5a71738-d0c7-4d31-87f0-dde84b1d8a62"
+   ],
+   "seconds": 276.03077840805054,
+   "peak_commit": 0.653,
+   "admission": 0.5622806328199682,
+   "outputs": [
+    {
+     "file": "k5-4step-distill-0.png",
+     "sha256": "f57229e593fb454688026aa3387f1143d7479e866b0f1da7ffeb4fb5a0b6909c",
+     "bytes": 1306511
+    }
+   ]
+  },
+  {
+   "name": "kr-ctrl-2",
+   "preset_id": "krea-anime-atelier-gguf",
+   "controls": {
+    "seed": 2026101902,
+    "width": 768,
+    "height": 1152,
+    "steps": 15,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple",
+    "lora": 1.0,
+    "lora2": 1.0,
+    "lora3": 0,
+    "lora4": 0,
+    "positive": "@NJSW33T, medium shot of an adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff on a castle balcony at dusk, wind in her hair, calm confident smile looking at the viewer, cinematic lighting, high-end anime illustration with soft cel shading and delicate line work"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "8520b529-acd2-49fe-9450-00d4a81ca85c",
+   "prompt_ids": [
+    "69914690-adee-49cc-b6b9-395c9600e2de"
+   ],
+   "seconds": 308.4711494445801,
+   "peak_commit": 0.674,
+   "admission": 0.5912422811524708,
+   "outputs": [
+    {
+     "file": "kr-ctrl-2-0.png",
+     "sha256": "b72f680fca8552b8267c232004a360930de1e8b454bf9c47845baaaea84b8585",
+     "bytes": 1317180
+    }
+   ]
+  },
+  {
+   "name": "kr-ctrl-3",
+   "preset_id": "krea-anime-atelier-gguf",
+   "controls": {
+    "seed": 2026101903,
+    "width": 768,
+    "height": 1152,
+    "steps": 15,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple",
+    "lora": 1.0,
+    "lora2": 1.0,
+    "lora3": 0,
+    "lora4": 0,
+    "positive": "@NJSW33T, medium shot of an adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff on a castle balcony at dusk, wind in her hair, calm confident smile looking at the viewer, cinematic lighting, high-end anime illustration with soft cel shading and delicate line work"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "82b19ab2-6d3c-4ca4-b20a-b0d5ee9bb8ff",
+   "prompt_ids": [
+    "e0760259-e4d7-448e-b8e4-06689fd27309"
+   ],
+   "seconds": 263.35988330841064,
+   "peak_commit": 0.65,
+   "admission": 0.5868643821263698,
+   "outputs": [
+    {
+     "file": "kr-ctrl-3-0.png",
+     "sha256": "f06e92310b7fe5a30518e12502ba5d521c5d16c42b50b8ca3ffacd48ad250de5",
+     "bytes": 1278377
+    }
+   ]
+  },
+  {
+   "name": "kr-face-notrig",
+   "preset_id": "krea-anime-atelier-gguf",
+   "controls": {
+    "seed": 2026101901,
+    "width": 768,
+    "height": 1152,
+    "steps": 15,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple",
+    "lora": 1.0,
+    "lora2": 1.0,
+    "lora3": 0,
+    "lora4": 0,
+    "positive": "close-up portrait of an adult woman in her late twenties with long black hair, deep red eyes, soft lipstick and elegant pearl earrings, looking at the viewer with a gentle smile, soft rim light, shallow depth of field, detailed eyes and eyelashes, high-end anime illustration with soft cel shading and delicate line work"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "ac716c16-e5aa-4133-b5c2-fb12189f26bc",
+   "prompt_ids": [
+    "90b18e91-39c9-4651-bfa0-ff42ddab8ccb"
+   ],
+   "seconds": 312.65745401382446,
+   "peak_commit": 0.669,
+   "admission": 0.5645699658066551,
+   "outputs": [
+    {
+     "file": "kr-face-notrig-0.png",
+     "sha256": "85c5273e0662a9cf638daba2ca3a8d4e0e31d017f302375b395c7e293489afdc",
+     "bytes": 1023337
+    }
+   ]
+  },
+  {
+   "name": "kr-kimono-notrig",
+   "preset_id": "krea-anime-atelier-gguf",
+   "controls": {
+    "seed": 2026101901,
+    "width": 768,
+    "height": 1152,
+    "steps": 15,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple",
+    "lora": 1.0,
+    "lora2": 1.0,
+    "lora3": 0,
+    "lora4": 0,
+    "positive": "full body shot of an adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi, holding a red paper umbrella on an arched stone bridge among cherry blossoms, serene smile looking at the viewer, soft spring light, high-end anime illustration with soft cel shading and delicate line work"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "dd08fdfa-9357-46ba-b754-020c4930a9eb",
+   "prompt_ids": [
+    "98b90199-7f7a-4924-98d4-a04d514c0218"
+   ],
+   "seconds": 331.41732120513916,
+   "peak_commit": 0.691,
+   "admission": 0.5484990458987195,
+   "outputs": [
+    {
+     "file": "kr-kimono-notrig-0.png",
+     "sha256": "0dbb4f2e3d22bc94831d449d4d651355da16d15079d0cda2850053edb1f0c61d",
+     "bytes": 1442275
+    }
+   ]
+  },
+  {
+   "name": "kr-notrig-2",
+   "preset_id": "krea-anime-atelier-gguf",
+   "controls": {
+    "seed": 2026101902,
+    "width": 768,
+    "height": 1152,
+    "steps": 15,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple",
+    "lora": 1.0,
+    "lora2": 1.0,
+    "lora3": 0,
+    "lora4": 0,
+    "positive": "medium shot of an adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff on a castle balcony at dusk, wind in her hair, calm confident smile looking at the viewer, cinematic lighting, high-end anime illustration with soft cel shading and delicate line work"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "6dd34683-d24b-4914-9643-020f6cb7f4b5",
+   "prompt_ids": [
+    "5b63d6cd-11f9-4159-8cfc-e4334ff036a4"
+   ],
+   "seconds": 261.8302094936371,
+   "peak_commit": 0.642,
+   "admission": 0.5936368195263749,
+   "outputs": [
+    {
+     "file": "kr-notrig-2-0.png",
+     "sha256": "c161790ced2c4dd26f16f670445dacfa2616b54a5c3e0658a57ba764a20dbcd2",
+     "bytes": 1289729
+    }
+   ]
+  },
+  {
+   "name": "kr-notrig-3",
+   "preset_id": "krea-anime-atelier-gguf",
+   "controls": {
+    "seed": 2026101903,
+    "width": 768,
+    "height": 1152,
+    "steps": 15,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple",
+    "lora": 1.0,
+    "lora2": 1.0,
+    "lora3": 0,
+    "lora4": 0,
+    "positive": "medium shot of an adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff on a castle balcony at dusk, wind in her hair, calm confident smile looking at the viewer, cinematic lighting, high-end anime illustration with soft cel shading and delicate line work"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "f093471e-6684-4d77-bd14-92c4de4cb5de",
+   "prompt_ids": [
+    "9e398fd6-4321-470c-9694-5ee613d58cab"
+   ],
+   "seconds": 314.5642738342285,
+   "peak_commit": 0.704,
+   "admission": 0.5625036762109737,
+   "outputs": [
+    {
+     "file": "kr-notrig-3-0.png",
+     "sha256": "2c73b72bbd7e1831b156ce801bd2bc8c590bb3b837cce3e7bc03fd797c809c77",
+     "bytes": 1277624
+    }
+   ]
+  },
+  {
+   "name": "pose-wai-p1-hip-s8",
+   "preset_id": "wai-skeleton",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, multiple views, text, watermark, cleavage, revealing clothes, plunging neckline, bad anatomy, bad hands, extra digits, missing fingers, child, loli, young",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 28,
+    "cfg": 5.0,
+    "pose_strength": 0.8
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\p1-hip.png"
+   ],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "be9fed8f-381f-4ebf-a808-9bbdf61bb3dd",
+   "prompt_ids": [
+    "1ef4dce1-af83-49f9-9f3a-086348008db3"
+   ],
+   "seconds": 54.732218503952026,
+   "peak_commit": 0.666,
+   "admission": 0.5540699899560736,
+   "outputs": [
+    {
+     "file": "pose-wai-p1-hip-s8-0.png",
+     "sha256": "32723063ebfdd5333f78477007c06d473d9ae498066c4f5fff5a73927d143d09",
+     "bytes": 1294773
+    }
+   ]
+  },
+  {
+   "name": "pose-wai-p2-sword-s10",
+   "preset_id": "wai-skeleton",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, multiple views, text, watermark, cleavage, revealing clothes, plunging neckline, bad anatomy, bad hands, extra digits, missing fingers, child, loli, young",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 28,
+    "cfg": 5.0,
+    "pose_strength": 1.0
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\p2-sword.png"
+   ],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "02efc4ed-8cf7-4261-b5ee-4035ef6d3ac8",
+   "prompt_ids": [
+    "fd20c428-91c5-4720-bd55-1dd7323dbb49"
+   ],
+   "seconds": 26.534648895263672,
+   "peak_commit": 0.651,
+   "admission": 0.5560060878850737,
+   "outputs": [
+    {
+     "file": "pose-wai-p2-sword-s10-0.png",
+     "sha256": "dd6ea5534fa9620e54d06649c0470d2ec702a0d3d99cf87648ede7959ec7ce7a",
+     "bytes": 1273718
+    }
+   ]
+  },
+  {
+   "name": "pose-wai-p2-sword-s8",
+   "preset_id": "wai-skeleton",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, multiple views, text, watermark, cleavage, revealing clothes, plunging neckline, bad anatomy, bad hands, extra digits, missing fingers, child, loli, young",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 28,
+    "cfg": 5.0,
+    "pose_strength": 0.8
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\p2-sword.png"
+   ],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "ee9e369a-db85-4f16-90ff-10d2411487cf",
+   "prompt_ids": [
+    "f414c99b-9bf2-496d-b803-a4f956055049"
+   ],
+   "seconds": 26.52446460723877,
+   "peak_commit": 0.631,
+   "admission": 0.5815161228052921,
+   "outputs": [
+    {
+     "file": "pose-wai-p2-sword-s8-0.png",
+     "sha256": "ee0079e7b945eae2c999d8ad14ec2aa55db6d57a8c065ae0a7b94c6f947f84ec",
+     "bytes": 1252052
+    }
+   ]
+  },
+  {
+   "name": "pose-wai-p3-crossed-s8",
+   "preset_id": "wai-skeleton",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, multiple views, text, watermark, cleavage, revealing clothes, plunging neckline, bad anatomy, bad hands, extra digits, missing fingers, child, loli, young",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 28,
+    "cfg": 5.0,
+    "pose_strength": 0.8
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\p3-crossed.png"
+   ],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "688f29e3-c5a8-4e28-b021-9a9c9e2e6261",
+   "prompt_ids": [
+    "9cab0186-20e3-4971-a880-74a0f2d52332"
+   ],
+   "seconds": 26.531418561935425,
+   "peak_commit": 0.58,
+   "admission": 0.5370386723845263,
+   "outputs": [
+    {
+     "file": "pose-wai-p3-crossed-s8-0.png",
+     "sha256": "e73c3ad2d816cb8afae561e97859c1cf11d36749a0f970afbe3e724705f11815",
+     "bytes": 1288282
+    }
+   ]
+  },
+  {
+   "name": "pose-wai-p4-walk-s8",
+   "preset_id": "wai-skeleton",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, multiple views, text, watermark, cleavage, revealing clothes, plunging neckline, bad anatomy, bad hands, extra digits, missing fingers, child, loli, young",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 28,
+    "cfg": 5.0,
+    "pose_strength": 0.8
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\p4-walk.png"
+   ],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "d8b0f582-f22f-4b1e-b71e-95943eff3e05",
+   "prompt_ids": [
+    "ac9d8759-d13b-46a9-9474-affed0c7159a"
+   ],
+   "seconds": 28.580334186553955,
+   "peak_commit": 0.602,
+   "admission": 0.5703440279922843,
+   "outputs": [
+    {
+     "file": "pose-wai-p4-walk-s8-0.png",
+     "sha256": "1bc7dc189cc705fd8aceffbff254c456a12a7ad4c6a348378006b90e9a79a751",
+     "bytes": 1305351
+    }
+   ]
+  },
+  {
+   "name": "pose-wai-p5-reach-s10",
+   "preset_id": "wai-skeleton",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, multiple views, text, watermark, cleavage, revealing clothes, plunging neckline, bad anatomy, bad hands, extra digits, missing fingers, child, loli, young",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 28,
+    "cfg": 5.0,
+    "pose_strength": 1.0
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\p5-reach.png"
+   ],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "aac04606-8dec-4946-a61e-5055d64c7885",
+   "prompt_ids": [
+    "6d545b73-d660-4a6f-aaec-069825659b91"
+   ],
+   "seconds": 28.525626182556152,
+   "peak_commit": 0.631,
+   "admission": 0.5882913895926049,
+   "outputs": [
+    {
+     "file": "pose-wai-p5-reach-s10-0.png",
+     "sha256": "9e6f7508af18ef03d2862efa3b6b54d6adab29cce27f5b58196ef67ef1cb705c",
+     "bytes": 1317700
+    }
+   ]
+  },
+  {
+   "name": "pose-wai-p5-reach-s8",
+   "preset_id": "wai-skeleton",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, multiple views, text, watermark, cleavage, revealing clothes, plunging neckline, bad anatomy, bad hands, extra digits, missing fingers, child, loli, young",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 28,
+    "cfg": 5.0,
+    "pose_strength": 0.8
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\p5-reach.png"
+   ],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "ac9871b2-f591-41fa-9adb-7c2e1bc7309a",
+   "prompt_ids": [
+    "3302fd96-c5ab-4827-92ce-c0632c876ac5"
+   ],
+   "seconds": 31.402158975601196,
+   "peak_commit": 0.639,
+   "admission": 0.558531854039321,
+   "outputs": [
+    {
+     "file": "pose-wai-p5-reach-s8-0.png",
+     "sha256": "8a31b229256b98905c2e3a6875d5e8c6739b9c5f6dd9d30ba8a8aac8a9b6763a",
+     "bytes": 1307455
+    }
+   ]
+  },
+  {
+   "name": "pose2-wai-q1-hip-s10",
+   "preset_id": "wai-skeleton",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, multiple views, text, watermark, cleavage, revealing clothes, plunging neckline, bad anatomy, bad hands, extra digits, missing fingers, child, loli, young",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 28,
+    "cfg": 5.0,
+    "pose_strength": 1.0
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\q1-hip.png"
+   ],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "7ea1d6b5-16ac-4865-82f7-ae79803ae457",
+   "prompt_ids": [
+    "4d0486d3-dd5b-425c-a803-3d4471213e4a"
+   ],
+   "seconds": 25.30627155303955,
+   "peak_commit": 0.575,
+   "admission": 0.5403240294045869,
+   "outputs": [
+    {
+     "file": "pose2-wai-q1-hip-s10-0.png",
+     "sha256": "9b3dbb19b51baede920e558b1d61d229f1b09fe1d75be5a3d64289521381c105",
+     "bytes": 1285000
+    }
+   ]
+  },
+  {
+   "name": "pose2-wai-q1-hip-s9",
+   "preset_id": "wai-skeleton",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, multiple views, text, watermark, cleavage, revealing clothes, plunging neckline, bad anatomy, bad hands, extra digits, missing fingers, child, loli, young",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 28,
+    "cfg": 5.0,
+    "pose_strength": 0.9
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\q1-hip.png"
+   ],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "c7d605bb-e15a-4588-84d8-08a5a5b93e4e",
+   "prompt_ids": [
+    "b367ab89-3fb8-47ea-8f07-7c82385438a3"
+   ],
+   "seconds": 54.673792123794556,
+   "peak_commit": 0.619,
+   "admission": 0.4435599797431809,
+   "outputs": [
+    {
+     "file": "pose2-wai-q1-hip-s9-0.png",
+     "sha256": "07cd7992ea5a46a44294f202ab64fede08988bd3726b5e88e02b94e4082de454",
+     "bytes": 1281474
+    }
+   ]
+  },
+  {
+   "name": "pose2-wai-q2-sword-s10",
+   "preset_id": "wai-skeleton",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, multiple views, text, watermark, cleavage, revealing clothes, plunging neckline, bad anatomy, bad hands, extra digits, missing fingers, child, loli, young",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 28,
+    "cfg": 5.0,
+    "pose_strength": 1.0
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\q2-sword.png"
+   ],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "a1c7e892-d854-4140-8f9a-5f62aed836b7",
+   "prompt_ids": [
+    "b1a3573f-1694-472b-af6f-2a5acff32f2d"
+   ],
+   "seconds": 26.511711359024048,
+   "peak_commit": 0.628,
+   "admission": 0.5457993322008345,
+   "outputs": [
+    {
+     "file": "pose2-wai-q2-sword-s10-0.png",
+     "sha256": "5bd64f061660204ca703d2595cec7c4112ddf56e09f8a23ca12ea452e7192180",
+     "bytes": 1338677
+    }
+   ]
+  },
+  {
+   "name": "pose2-wai-q2-sword-s9",
+   "preset_id": "wai-skeleton",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, multiple views, text, watermark, cleavage, revealing clothes, plunging neckline, bad anatomy, bad hands, extra digits, missing fingers, child, loli, young",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 28,
+    "cfg": 5.0,
+    "pose_strength": 0.9
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\q2-sword.png"
+   ],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "74e65e5f-66e3-48e8-8f30-2f7a99b713da",
+   "prompt_ids": [
+    "8c52752c-9fb6-4ccf-88b4-7a71bd20eae8"
+   ],
+   "seconds": 26.535012245178223,
+   "peak_commit": 0.562,
+   "admission": 0.5423792007036646,
+   "outputs": [
+    {
+     "file": "pose2-wai-q2-sword-s9-0.png",
+     "sha256": "1966134433f385996553bbbbe9fef1472060e94225cb0b69b49ba0d6f1488672",
+     "bytes": 1289642
+    }
+   ]
+  },
+  {
+   "name": "pose2-wai-q3-crossed-s10",
+   "preset_id": "wai-skeleton",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, multiple views, text, watermark, cleavage, revealing clothes, plunging neckline, bad anatomy, bad hands, extra digits, missing fingers, child, loli, young",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 28,
+    "cfg": 5.0,
+    "pose_strength": 1.0
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\q3-crossed.png"
+   ],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "4d13c101-57e1-4f34-9229-34ddc5b8f72e",
+   "prompt_ids": [
+    "e83da674-020c-4495-ba5a-4abb312a7463"
+   ],
+   "seconds": 30.72269058227539,
+   "peak_commit": 0.639,
+   "admission": 0.5808777173874059,
+   "outputs": [
+    {
+     "file": "pose2-wai-q3-crossed-s10-0.png",
+     "sha256": "eb46d7c2d9e022adddf94e478c9cd50dcd52e7153bb7c9f457f65fd8134de8f7",
+     "bytes": 1282661
+    }
+   ]
+  },
+  {
+   "name": "pose2-wai-q3-crossed-s9",
+   "preset_id": "wai-skeleton",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, multiple views, text, watermark, cleavage, revealing clothes, plunging neckline, bad anatomy, bad hands, extra digits, missing fingers, child, loli, young",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 28,
+    "cfg": 5.0,
+    "pose_strength": 0.9
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\q3-crossed.png"
+   ],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "581a3fee-a7ad-47b0-b362-426e820eb8d6",
+   "prompt_ids": [
+    "df236d4b-92d0-403f-88d4-53f87d3aee75"
+   ],
+   "seconds": 25.36138677597046,
+   "peak_commit": 0.616,
+   "admission": 0.5618205983540457,
+   "outputs": [
+    {
+     "file": "pose2-wai-q3-crossed-s9-0.png",
+     "sha256": "1615cfff61308b7d81400b7f87ebd2df77b41745bce6acd8adb962ef9c886a90",
+     "bytes": 1267873
+    }
+   ]
+  },
+  {
+   "name": "pose2-wai-q4-walk-s10",
+   "preset_id": "wai-skeleton",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, multiple views, text, watermark, cleavage, revealing clothes, plunging neckline, bad anatomy, bad hands, extra digits, missing fingers, child, loli, young",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 28,
+    "cfg": 5.0,
+    "pose_strength": 1.0
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\q4-walk.png"
+   ],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "887c32d5-7795-40ff-b963-017886899c03",
+   "prompt_ids": [
+    "2369b992-fbc4-49e3-9f19-21b2e95877c6"
+   ],
+   "seconds": 35.62301421165466,
+   "peak_commit": 0.618,
+   "admission": 0.6106330287849909,
+   "outputs": [
+    {
+     "file": "pose2-wai-q4-walk-s10-0.png",
+     "sha256": "b7645c5afe4056de2ddf327c0ae8c333557e18a14e10e3a24332b7c17036c158",
+     "bytes": 1344973
+    }
+   ]
+  },
+  {
+   "name": "pose2-wai-q4-walk-s9",
+   "preset_id": "wai-skeleton",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, multiple views, text, watermark, cleavage, revealing clothes, plunging neckline, bad anatomy, bad hands, extra digits, missing fingers, child, loli, young",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 28,
+    "cfg": 5.0,
+    "pose_strength": 0.9
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\q4-walk.png"
+   ],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "46d3e9d0-ae9b-457e-9521-ce3b61906323",
+   "prompt_ids": [
+    "93e9d745-c6af-486a-8005-9c12db1b44e0"
+   ],
+   "seconds": 31.485055923461914,
+   "peak_commit": 0.625,
+   "admission": 0.5871617865978858,
+   "outputs": [
+    {
+     "file": "pose2-wai-q4-walk-s9-0.png",
+     "sha256": "8ba49fb358b9790412f860fd7f404918da0ed5512847b7b294a9de23d026a947",
+     "bytes": 1358101
+    }
+   ]
+  },
+  {
+   "name": "pose2-wai-q5-reach-s10",
+   "preset_id": "wai-skeleton",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, multiple views, text, watermark, cleavage, revealing clothes, plunging neckline, bad anatomy, bad hands, extra digits, missing fingers, child, loli, young",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 28,
+    "cfg": 5.0,
+    "pose_strength": 1.0
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\q5-reach.png"
+   ],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "9a673d4b-039f-4451-9835-7bfa60269373",
+   "prompt_ids": [
+    "b181886d-5008-4006-a23a-363878e92a0b"
+   ],
+   "seconds": 26.932963371276855,
+   "peak_commit": 0.657,
+   "admission": 0.5848690663165347,
+   "outputs": [
+    {
+     "file": "pose2-wai-q5-reach-s10-0.png",
+     "sha256": "fe45707328937c25c96d09701b88e6b7993a1a6e05cda0b1a07d715476b3bf7c",
+     "bytes": 1345683
+    }
+   ]
+  },
+  {
+   "name": "pose2-wai-q5-reach-s9",
+   "preset_id": "wai-skeleton",
+   "controls": {
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, multiple views, text, watermark, cleavage, revealing clothes, plunging neckline, bad anatomy, bad hands, extra digits, missing fingers, child, loli, young",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 28,
+    "cfg": 5.0,
+    "pose_strength": 0.9
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\q5-reach.png"
+   ],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "7ee9982d-68b7-4e56-80a6-8fb83cd17724",
+   "prompt_ids": [
+    "0a310c85-7bbb-4f9b-bc94-6358600de041"
+   ],
+   "seconds": 28.866472959518433,
+   "peak_commit": 0.658,
+   "admission": 0.5997463035848098,
+   "outputs": [
+    {
+     "file": "pose2-wai-q5-reach-s9-0.png",
+     "sha256": "48b7b0e43d5a95c16db13c7348651d826968d9ee321dfeed7513555430312540",
+     "bytes": 1351965
+    }
+   ]
+  },
+  {
+   "name": "r1-s1-oneobs-2",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101902,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "b03b034f-6b45-450b-a56d-063def29cda7",
+   "prompt_ids": [
+    "c9c0da21-7598-414a-bcd6-c58f6e1f9e1b"
+   ],
+   "seconds": 58.61607551574707,
+   "peak_commit": 0.62,
+   "admission": 0.48995695027435493,
+   "outputs": [
+    {
+     "file": "r1-s1-oneobs-2-0.png",
+     "sha256": "c9be4cf100603d90200e300f401f4f3e64d26163493daaf01e2ec3cff8f58991",
+     "bytes": 1390919
+    }
+   ]
+  },
+  {
+   "name": "r1-s1-oneobs-3",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101903,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "8feeb53f-0e8a-4750-a0e4-e818f57ac40a",
+   "prompt_ids": [
+    "6d8eb9db-4580-424b-a055-68b3e4b70828"
+   ],
+   "seconds": 58.55632209777832,
+   "peak_commit": 0.621,
+   "admission": 0.4906401875333848,
+   "outputs": [
+    {
+     "file": "r1-s1-oneobs-3-0.png",
+     "sha256": "fdaae76bf13de941632d1ea513e1d9430ce7f8ac0f879a3e69b0b889d2a5526f",
+     "bytes": 1354404
+    }
+   ]
+  },
+  {
+   "name": "r1-s1-oneobs-4",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101904,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "edb40311-30e3-4860-9237-0a78dfc7aab6",
+   "prompt_ids": [
+    "8c7cbac0-775f-406a-a8bf-93d733807f9a"
+   ],
+   "seconds": 51.797497510910034,
+   "peak_commit": 0.66,
+   "admission": 0.5401466547157597,
+   "outputs": [
+    {
+     "file": "r1-s1-oneobs-4-0.png",
+     "sha256": "15ec9de76b2336240924ed91aeb0e89c870c894f5cbd40c0c1f3790a74b1e752",
+     "bytes": 1355348
+    }
+   ]
+  },
+  {
+   "name": "r1-s1-pearly-2",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101902,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "f6a53d73-2225-42df-9527-6fbdd4372591",
+   "prompt_ids": [
+    "94e6c194-bb03-44b1-8e32-6194b9da319f"
+   ],
+   "seconds": 58.81583213806152,
+   "peak_commit": 0.599,
+   "admission": 0.607475910755864,
+   "outputs": [
+    {
+     "file": "r1-s1-pearly-2-0.png",
+     "sha256": "6adf774e296327ba51fc12d5405bac87c0c51322188b39b18f569d2e82b9bedb",
+     "bytes": 1272118
+    }
+   ]
+  },
+  {
+   "name": "r1-s1-pearly-3",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101903,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "238c6433-6d3e-4aa2-acc9-a7c965613e67",
+   "prompt_ids": [
+    "b1ee282b-ea0f-452c-ac95-4e195c502e27"
+   ],
+   "seconds": 57.0622296333313,
+   "peak_commit": 0.585,
+   "admission": 0.504809719319997,
+   "outputs": [
+    {
+     "file": "r1-s1-pearly-3-0.png",
+     "sha256": "0c474c75830edd2fa15a14ae46f9f4635e7f4f8d9a6b38c0ef5a602f2d0d9e32",
+     "bytes": 1275109
+    }
+   ]
+  },
+  {
+   "name": "r1-s1-pearly-4",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101904,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "1f60c16a-c4bd-44b8-8c29-adf7fabe1706",
+   "prompt_ids": [
+    "358cd3a9-4170-45f0-b964-61a099ff60b5"
+   ],
+   "seconds": 71.04395604133606,
+   "peak_commit": 0.584,
+   "admission": 0.5335578485370792,
+   "outputs": [
+    {
+     "file": "r1-s1-pearly-4-0.png",
+     "sha256": "9eb1d29dc1f996ffb1f5c9afc825692f227795d4f25476aa7b59ca358bf6696b",
+     "bytes": 1272623
+    }
+   ]
+  },
+  {
+   "name": "r1-s1-wai-2",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101902,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe with high collar, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, high collar, fully covered, masterpiece, best quality, amazing quality, very aesthetic",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, plunging neckline",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "55c0d55f-5e08-414d-a239-ed730a03a901",
+   "prompt_ids": [
+    "60aac706-bc21-4735-8f80-bf5e4d3754dc"
+   ],
+   "seconds": 43.5824830532074,
+   "peak_commit": 0.636,
+   "admission": 0.49553335385369723,
+   "outputs": [
+    {
+     "file": "r1-s1-wai-2-0.png",
+     "sha256": "bb4ee8d5ae6a705798f06205453b4c70432c81d7931e30884516887f957bfa27",
+     "bytes": 1293997
+    }
+   ]
+  },
+  {
+   "name": "r1-s1-wai-3",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101903,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe with high collar, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, high collar, fully covered, masterpiece, best quality, amazing quality, very aesthetic",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, plunging neckline",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "2daae91b-359d-45b3-b89c-c5ddc80e012d",
+   "prompt_ids": [
+    "1223a594-cadc-4a22-80fa-f36cbce5866d"
+   ],
+   "seconds": 59.80932831764221,
+   "peak_commit": 0.644,
+   "admission": 0.48502799818217845,
+   "outputs": [
+    {
+     "file": "r1-s1-wai-3-0.png",
+     "sha256": "38c6ac0bf4e0ef6f653c5d3ede7bf0a885e12a6b97946355978e9c33951c3787",
+     "bytes": 1253396
+    }
+   ]
+  },
+  {
+   "name": "r1-s1-wai-4",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101904,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe with high collar, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, high collar, fully covered, masterpiece, best quality, amazing quality, very aesthetic",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, plunging neckline",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "834cdea6-c734-41d9-a20d-dff7007d0b51",
+   "prompt_ids": [
+    "c5b03a9f-825d-482b-9514-4ac82f6ef3da"
+   ],
+   "seconds": 72.70729279518127,
+   "peak_commit": 0.728,
+   "admission": 0.5433332621337278,
+   "outputs": [
+    {
+     "file": "r1-s1-wai-4-0.png",
+     "sha256": "948468cadb3f41fa3fbf258ef704300b1a73a8add28fd2989e512bdf414f906f",
+     "bytes": 1217303
+    }
+   ]
+  },
+  {
+   "name": "r1-s2-oneobs-2",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101902,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "dfecbb57-872b-4eb7-b75d-6b13233a36fd",
+   "prompt_ids": [
+    "120475d9-0bf4-4729-b5b4-b8be9e385255"
+   ],
+   "seconds": 49.284101247787476,
+   "peak_commit": 0.603,
+   "admission": 0.46972475879672454,
+   "outputs": [
+    {
+     "file": "r1-s2-oneobs-2-0.png",
+     "sha256": "ea4d4cd0dbf290808fbc1818d1f043229f7bca594f3e8871b9e39a8a01b62dbb",
+     "bytes": 1558214
+    }
+   ]
+  },
+  {
+   "name": "r1-s2-oneobs-3",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101903,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "7614135b-6916-4bcf-8856-b20d636d18a9",
+   "prompt_ids": [
+    "abdcfe02-8532-4af3-ac1d-53c1c980a1f9"
+   ],
+   "seconds": 57.92292380332947,
+   "peak_commit": 0.633,
+   "admission": 0.4977515536524362,
+   "outputs": [
+    {
+     "file": "r1-s2-oneobs-3-0.png",
+     "sha256": "4cd9d9a69fae97af253df40dac0a9ef2f53ac807ef75f3fff2fe1648230ae1b4",
+     "bytes": 1627280
+    }
+   ]
+  },
+  {
+   "name": "r1-s2-oneobs-4",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101904,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "2b99323a-9071-4eeb-8b7f-ee9dee955f43",
+   "prompt_ids": [
+    "c8017bf8-be0a-4d38-9741-e572960160e2"
+   ],
+   "seconds": 50.49524188041687,
+   "peak_commit": 0.706,
+   "admission": 0.6082535140591857,
+   "outputs": [
+    {
+     "file": "r1-s2-oneobs-4-0.png",
+     "sha256": "f3310e8e719dd7ce03ffb8326be9bf57f4aa78914a58f321e9ec75f437f35138",
+     "bytes": 1567355
+    }
+   ]
+  },
+  {
+   "name": "r1-s2-pearly-2",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101902,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "bdc773e4-e81c-4573-a2a8-c193c2703724",
+   "prompt_ids": [
+    "5d306cff-3387-4e8d-91d3-2a7214d23cbc"
+   ],
+   "seconds": 59.542826890945435,
+   "peak_commit": 0.528,
+   "admission": 0.4783902555582317,
+   "outputs": [
+    {
+     "file": "r1-s2-pearly-2-0.png",
+     "sha256": "23de065c9a6fb2a68c081b615740fa85ac2d295279190133eb1031e68b9a3541",
+     "bytes": 1365766
+    }
+   ]
+  },
+  {
+   "name": "r1-s2-pearly-3",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101903,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "e83ef82f-57ec-4860-ad0a-7d7cb78c83e3",
+   "prompt_ids": [
+    "382f22bf-aaaa-4667-92d6-8cd991c7ef2b"
+   ],
+   "seconds": 70.05988645553589,
+   "peak_commit": 0.56,
+   "admission": 0.5147225375284353,
+   "outputs": [
+    {
+     "file": "r1-s2-pearly-3-0.png",
+     "sha256": "d7284d3ef067bab647041f97e0de14de4e3b024096bdc2337c6d2664d08e9581",
+     "bytes": 1404149
+    }
+   ]
+  },
+  {
+   "name": "r1-s2-pearly-4",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101904,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "505f3b48-08b6-4011-9e5c-61fe0833f682",
+   "prompt_ids": [
+    "34cd9dc5-f5c8-49a2-a6fa-8998496333e6"
+   ],
+   "seconds": 61.26968312263489,
+   "peak_commit": 0.666,
+   "admission": 0.63209201868894,
+   "outputs": [
+    {
+     "file": "r1-s2-pearly-4-0.png",
+     "sha256": "23acfa1819b84b32d390cfdb79cbd4b3a7472ea68b340e3f4a90f41cc5aa901e",
+     "bytes": 1389380
+    }
+   ]
+  },
+  {
+   "name": "r1-s2-wai-2",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101902,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 30 years old, black hair in an elaborate updo with kanzashi hairpins, red furisode kimono with white crane embroidery and gold obi, holding a red paper umbrella, standing on an arched stone bridge among cherry blossoms, full body, serene smile, looking at viewer, soft spring light, detailed face, detailed eyes, masterpiece, best quality, amazing quality, very aesthetic",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, plunging neckline",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "f27017db-c3e7-42dc-8956-38c832bd67f8",
+   "prompt_ids": [
+    "88389822-ec88-4d06-a40c-b48ba9b2ba9b"
+   ],
+   "seconds": 52.94982624053955,
+   "peak_commit": 0.634,
+   "admission": 0.48270028913947255,
+   "outputs": [
+    {
+     "file": "r1-s2-wai-2-0.png",
+     "sha256": "db2817a2fcace6a8ec703938ffd813cd759b06a30328dd66515a8596eb5f73aa",
+     "bytes": 1596271
+    }
+   ]
+  },
+  {
+   "name": "r1-s2-wai-3",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101903,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 30 years old, black hair in an elaborate updo with kanzashi hairpins, red furisode kimono with white crane embroidery and gold obi, holding a red paper umbrella, standing on an arched stone bridge among cherry blossoms, full body, serene smile, looking at viewer, soft spring light, detailed face, detailed eyes, masterpiece, best quality, amazing quality, very aesthetic",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, plunging neckline",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "eee3c757-56fa-447f-af2c-e4d8d3825750",
+   "prompt_ids": [
+    "5a107765-ab08-44fa-8184-3fda7df34dfc"
+   ],
+   "seconds": 46.9138662815094,
+   "peak_commit": 0.672,
+   "admission": 0.4931545962878757,
+   "outputs": [
+    {
+     "file": "r1-s2-wai-3-0.png",
+     "sha256": "96591ce7c6f0ce8fd79efb2f75e862f35d97af4f91034c93f014d138a57e83ee",
+     "bytes": 1499024
+    }
+   ]
+  },
+  {
+   "name": "r1-s2-wai-4",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101904,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 30 years old, black hair in an elaborate updo with kanzashi hairpins, red furisode kimono with white crane embroidery and gold obi, holding a red paper umbrella, standing on an arched stone bridge among cherry blossoms, full body, serene smile, looking at viewer, soft spring light, detailed face, detailed eyes, masterpiece, best quality, amazing quality, very aesthetic",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, plunging neckline",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "b2aa24c8-cff1-4b44-a81a-bc9ff86cbe90",
+   "prompt_ids": [
+    "aadcf73d-e754-4127-a82f-be54a0c60cb6"
+   ],
+   "seconds": 50.69967174530029,
+   "peak_commit": 0.743,
+   "admission": 0.5797831031540416,
+   "outputs": [
+    {
+     "file": "r1-s2-wai-4-0.png",
+     "sha256": "f0bb41579643433035ac73b17385981334ece62c7249a2446979c081c83d3fc8",
+     "bytes": 1535854
+    }
+   ]
+  },
+  {
+   "name": "r1-s3-oneobs-2",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101902,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman knight of thirty-two with short auburn hair and a small scar on her cheek, wearing silver plate armor and a blue cloak. She holds a longsword point down and stands on a misty battlefield at dawn, full body, determined expression, looking at the viewer, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "7cd01d53-336b-475a-8bc9-53804440116f",
+   "prompt_ids": [
+    "cc1d6006-179b-43c5-ba8e-d150344c9982"
+   ],
+   "seconds": 64.40312504768372,
+   "peak_commit": 0.622,
+   "admission": 0.4873541132038659,
+   "outputs": [
+    {
+     "file": "r1-s3-oneobs-2-0.png",
+     "sha256": "0aa00f108d8e13aa792e4fca944c2514a80eae394aef2fcb5f0248f9fbb745c6",
+     "bytes": 1157595
+    }
+   ]
+  },
+  {
+   "name": "r1-s3-oneobs-3",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101903,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman knight of thirty-two with short auburn hair and a small scar on her cheek, wearing silver plate armor and a blue cloak. She holds a longsword point down and stands on a misty battlefield at dawn, full body, determined expression, looking at the viewer, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "ab69106f-263e-4fe1-97e2-733af5366441",
+   "prompt_ids": [
+    "3a4a4453-8f6f-4def-9816-ed73a65c71c7"
+   ],
+   "seconds": 83.7285783290863,
+   "peak_commit": 0.654,
+   "admission": 0.5137207750193953,
+   "outputs": [
+    {
+     "file": "r1-s3-oneobs-3-0.png",
+     "sha256": "0273b6eb026ff74e6a86850d9bb56b3f11fea667aa6f3d360e90a29d935d47da",
+     "bytes": 1114100
+    }
+   ]
+  },
+  {
+   "name": "r1-s3-oneobs-4",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101904,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman knight of thirty-two with short auburn hair and a small scar on her cheek, wearing silver plate armor and a blue cloak. She holds a longsword point down and stands on a misty battlefield at dawn, full body, determined expression, looking at the viewer, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "253686d7-f551-4756-8e30-aadbf00e44d9",
+   "prompt_ids": [
+    "4878c551-6e0c-4b58-9c25-68910c932d24"
+   ],
+   "seconds": 52.07426977157593,
+   "peak_commit": 0.725,
+   "admission": 0.5890983627331913,
+   "outputs": [
+    {
+     "file": "r1-s3-oneobs-4-0.png",
+     "sha256": "38014fef3bddf1aaa51c32a695c3ee46c16414bb3ea1d932303766c706cf84d3",
+     "bytes": 1200795
+    }
+   ]
+  },
+  {
+   "name": "r1-s3-pearly-2",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101902,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman knight of thirty-two with short auburn hair and a small scar on her cheek, wearing silver plate armor and a blue cloak. She holds a longsword point down and stands on a misty battlefield at dawn, full body, determined expression, looking at the viewer, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "17905790-c0f0-402a-91da-fb452b56bcb9",
+   "prompt_ids": [
+    "4ec5ede2-801d-47b1-839a-948efa89e185"
+   ],
+   "seconds": 66.14128684997559,
+   "peak_commit": 0.55,
+   "admission": 0.5143933323376015,
+   "outputs": [
+    {
+     "file": "r1-s3-pearly-2-0.png",
+     "sha256": "4f4aa99d83109de357260ba48bd5ba7ed428361b08d639792b086b6278f1d6b2",
+     "bytes": 1091015
+    }
+   ]
+  },
+  {
+   "name": "r1-s3-pearly-3",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101903,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman knight of thirty-two with short auburn hair and a small scar on her cheek, wearing silver plate armor and a blue cloak. She holds a longsword point down and stands on a misty battlefield at dawn, full body, determined expression, looking at the viewer, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "5f4b7884-81a0-491b-8f4f-aeba1166f00a",
+   "prompt_ids": [
+    "76b17327-58d7-42df-8e9a-aa35d3c82e55"
+   ],
+   "seconds": 64.23164677619934,
+   "peak_commit": 0.583,
+   "admission": 0.5383685641202127,
+   "outputs": [
+    {
+     "file": "r1-s3-pearly-3-0.png",
+     "sha256": "8c69d03fca0258dde027f36174b7fb6bb3de36b56cba6e0ad6d3dc874a301043",
+     "bytes": 1114196
+    }
+   ]
+  },
+  {
+   "name": "r1-s3-pearly-4",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101904,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman knight of thirty-two with short auburn hair and a small scar on her cheek, wearing silver plate armor and a blue cloak. She holds a longsword point down and stands on a misty battlefield at dawn, full body, determined expression, looking at the viewer, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 25,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "b62a87e3-eba7-4a03-abfb-06b96d428663",
+   "prompt_ids": [
+    "97df8dc2-6827-4930-a3a7-2f7c574711f2"
+   ],
+   "seconds": 55.567431688308716,
+   "peak_commit": 0.624,
+   "admission": 0.5694850499159712,
+   "outputs": [
+    {
+     "file": "r1-s3-pearly-4-0.png",
+     "sha256": "06847c49b4e7727f69598d9c53f2a2a886a418722e996ac76c9648bb8e269c76",
+     "bytes": 1163850
+    }
+   ]
+  },
+  {
+   "name": "r1-s3-wai-2",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101902,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 32 years old, short auburn hair, small scar on cheek, silver plate armor with blue cloak, holding a longsword point down, standing on a misty battlefield at dawn, full body, determined expression, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality, very aesthetic",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, plunging neckline",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "90161dfb-bbfd-43e4-98c5-3dc00b97766f",
+   "prompt_ids": [
+    "2c942d6e-2850-42c6-8288-0603acd74b84"
+   ],
+   "seconds": 75.78167843818665,
+   "peak_commit": 0.64,
+   "admission": 0.4940064411201313,
+   "outputs": [
+    {
+     "file": "r1-s3-wai-2-0.png",
+     "sha256": "ecbeb71c4e996ab4b4863bc119649d3ae18b0eaa60e8e9657329853f44e4c27f",
+     "bytes": 1252708
+    }
+   ]
+  },
+  {
+   "name": "r1-s3-wai-3",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101903,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 32 years old, short auburn hair, small scar on cheek, silver plate armor with blue cloak, holding a longsword point down, standing on a misty battlefield at dawn, full body, determined expression, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality, very aesthetic",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, plunging neckline",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "2f2e5f5b-6d47-44d8-a7a7-58215d2977c6",
+   "prompt_ids": [
+    "314fab4c-336b-437f-b5e8-95699fba0ded"
+   ],
+   "seconds": 78.30015587806702,
+   "peak_commit": 0.662,
+   "admission": 0.5099895304699509,
+   "outputs": [
+    {
+     "file": "r1-s3-wai-3-0.png",
+     "sha256": "06533c80c974528314ba434ff620315446d8f8750db2b1966a54a20dd87a09ea",
+     "bytes": 1293274
+    }
+   ]
+  },
+  {
+   "name": "r1-s3-wai-4",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101904,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 32 years old, short auburn hair, small scar on cheek, silver plate armor with blue cloak, holding a longsword point down, standing on a misty battlefield at dawn, full body, determined expression, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality, very aesthetic",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, plunging neckline",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "12128d45-8a78-44f3-8d15-f5085bca3b0c",
+   "prompt_ids": [
+    "1db1a2a9-51ad-4931-8c7c-0c33dc75bff4"
+   ],
+   "seconds": 57.02533841133118,
+   "peak_commit": 0.723,
+   "admission": 0.5551774759091619,
+   "outputs": [
+    {
+     "file": "r1-s3-wai-4-0.png",
+     "sha256": "ee8e79629b5ecf6e32268b754ec12258e83efb92847424e1e0a4654a741c2184",
+     "bytes": 1250489
+    }
+   ]
+  },
+  {
+   "name": "s1-anifox",
+   "preset_id": "anifox-v2-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "denoise": 1.0,
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe with high collar, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality, very aesthetic",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "karras",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "e6861f17-b7e6-416d-8680-0e5e56718305",
+   "prompt_ids": [
+    "fb10dcbd-94e8-4fe6-8273-80c57e5840ca"
+   ],
+   "seconds": 66.277756690979,
+   "peak_commit": 0.652,
+   "admission": 0.5274607579920627,
+   "outputs": [
+    {
+     "file": "s1-anifox-0.png",
+     "sha256": "6183bcc74ef261ea97d56c3f8fbd5825055e2321044591d0823253d202c8d963",
+     "bytes": 1329837
+    }
+   ]
+  },
+  {
+   "name": "s1-anima-aesthetic",
+   "preset_id": "anima-portrait",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "11b5e5d2-ca44-4d89-805b-3e47a427b73b",
+   "prompt_ids": [
+    "1eb0715a-47b0-4d54-b849-5e498b2f4261"
+   ],
+   "seconds": 48.2762234210968,
+   "peak_commit": 0.553,
+   "admission": 0.50034486644734,
+   "outputs": [
+    {
+     "file": "s1-anima-aesthetic-0.png",
+     "sha256": "59257d2302bfcf64a437d2aef20169345feb53affd9386ff6b9ece6d4de122a6",
+     "bytes": 1263606
+    }
+   ]
+  },
+  {
+   "name": "s1-anima",
+   "preset_id": "anima-v1-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "denoise": 1.0,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "dcd6f269-be3c-4846-b5e8-f96e8d8c9532",
+   "prompt_ids": [
+    "7fcc0f30-fa52-4e52-8c1b-963c9ea41f34"
+   ],
+   "seconds": 68.52666997909546,
+   "peak_commit": 0.583,
+   "admission": 0.5354093438005255,
+   "outputs": [
+    {
+     "file": "s1-anima-0.png",
+     "sha256": "8a2b929477a6655abcb9a03b301306f9379617e7269864e49d2c8875f48a10ae",
+     "bytes": 1247909
+    }
+   ]
+  },
+  {
+   "name": "s1-animagine",
+   "preset_id": "anime",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "denoise": 1.0,
+    "positive": "1girl, original character, safe, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe with high collar, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, masterpiece, high score, great score, absurdres",
+    "negative": "lowres, bad anatomy, bad hands, text, error, missing finger, extra digits, fewer digits, cropped, worst quality, low quality, low score, bad score, average score, signature, watermark, username, blurry, child, loli",
+    "steps": 28,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "4f18a07d-2649-4063-8f50-05717effa957",
+   "prompt_ids": [
+    "d2f4353e-a653-4e43-b5ef-4bab168d9cae"
+   ],
+   "seconds": 75.91314196586609,
+   "peak_commit": 0.651,
+   "admission": 0.5000798206024984,
+   "outputs": [
+    {
+     "file": "s1-animagine-0.png",
+     "sha256": "e5f253f26985eeb3fd801076dc92e98f413e7790ed394d4159e4d7a40fa45e96",
+     "bytes": 1321172
+    }
+   ]
+  },
+  {
+   "name": "s1-cstati",
+   "preset_id": "cstati-v3-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "denoise": 1.0,
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe with high collar, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality, very aesthetic",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young",
+    "steps": 30,
+    "cfg": 4,
+    "sampler": "euler_ancestral",
+    "scheduler": "karras",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "c82bdedb-f073-42dc-895a-fd958fa763dd",
+   "prompt_ids": [
+    "be794a17-c00a-47f0-b44b-28f4ece3f2b6"
+   ],
+   "seconds": 49.87893104553223,
+   "peak_commit": 0.662,
+   "admission": 0.5300305191264191,
+   "outputs": [
+    {
+     "file": "s1-cstati-0.png",
+     "sha256": "84d7c05ac7a9c45ecfd1b76d717a29803407886113ec346ba365bacedbfd0a7c",
+     "bytes": 1210972
+    }
+   ]
+  },
+  {
+   "name": "s1-janima",
+   "preset_id": "janima-v1-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "denoise": 1.0,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "6084889f-a147-4594-9a57-b8511ab58408",
+   "prompt_ids": [
+    "c328ea49-2a82-4414-8e2d-479ae1555e63"
+   ],
+   "seconds": 48.88283586502075,
+   "peak_commit": 0.559,
+   "admission": 0.4540772108712871,
+   "outputs": [
+    {
+     "file": "s1-janima-0.png",
+     "sha256": "50ce34d1c6dc23ec3dd5179bee471ff8d2a03c65c0c30ad17fd6d0f5e391515b",
+     "bytes": 1309276
+    }
+   ]
+  },
+  {
+   "name": "s1-krea-gguf",
+   "preset_id": "krea-anime-atelier-gguf",
+   "controls": {
+    "seed": 2026101901,
+    "width": 768,
+    "height": 1152,
+    "positive": "@NJSW33T, medium shot of an adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff on a castle balcony at dusk, wind in her hair, calm confident smile looking at the viewer, cinematic lighting, high-end anime illustration with soft cel shading and delicate line work",
+    "steps": 15,
+    "cfg": 1.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "simple",
+    "lora": 1.0,
+    "lora2": 1.0,
+    "lora3": 0,
+    "lora4": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "caecd2cc-007d-4ea7-97bf-b5794049fa44",
+   "prompt_ids": [
+    "585249da-22cd-4295-b261-93236bc29d64"
+   ],
+   "seconds": 330.36204838752747,
+   "peak_commit": 0.644,
+   "admission": 0.4968773526753969,
+   "outputs": [
+    {
+     "file": "s1-krea-gguf-0.png",
+     "sha256": "7e39895e3c7022aa0f18537574d4181ae40abd219b720aa6ddf42b4c04d5a508",
+     "bytes": 1338004
+    }
+   ]
+  },
+  {
+   "name": "s1-noob",
+   "preset_id": "noob",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "denoise": 1.0,
+    "positive": "masterpiece, best quality, newest, absurdres, highres, safe, 1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe with high collar, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes",
+    "negative": "worst quality, low quality, worst aesthetic, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digits, fewer digits, cropped, jpeg artifacts, signature, watermark, username, blurry, mammal, anthro, furry, ambiguous form, feral, child, loli",
+    "steps": 28,
+    "cfg": 5.5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "18dde94d-f006-4279-b842-51539769b14b",
+   "prompt_ids": [
+    "78804ea1-fe79-4f27-a7fe-e60fdd5bfa97"
+   ],
+   "seconds": 103.85196590423584,
+   "peak_commit": 0.625,
+   "admission": 0.510261032099917,
+   "outputs": [
+    {
+     "file": "s1-noob-0.png",
+     "sha256": "6fb3b7f4c3c968664af59a878715e0923e1ce90057074ccef05c5eb83d7b9f9f",
+     "bytes": 1176860
+    }
+   ]
+  },
+  {
+   "name": "s1-oneobs",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "denoise": 1.0,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "e755dfe2-c214-45e6-b1dc-e6c568da2e3f",
+   "prompt_ids": [
+    "0208d828-6a5b-4787-901a-d84bb05f633e"
+   ],
+   "seconds": 51.08488941192627,
+   "peak_commit": 0.634,
+   "admission": 0.5188371441328151,
+   "outputs": [
+    {
+     "file": "s1-oneobs-0.png",
+     "sha256": "eb8a208b5b70ac859ba20a45eb460127616a674aef0b6e7c03bd2564ad87a371",
+     "bytes": 1391017
+    }
+   ]
+  },
+  {
+   "name": "s1-pearly",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "denoise": 1.0,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "78a314a2-3936-4619-a224-ba0ef56b2132",
+   "prompt_ids": [
+    "4dc99e64-dfff-4da1-9dcf-a3b82ff4aebc"
+   ],
+   "seconds": 52.57125401496887,
+   "peak_commit": 0.635,
+   "admission": 0.49269703255453184,
+   "outputs": [
+    {
+     "file": "s1-pearly-0.png",
+     "sha256": "c858981e4874a65e0bdb1c5f16e42f7b230019d1fe0f427e6608f21166016d6d",
+     "bytes": 1274779
+    }
+   ]
+  },
+  {
+   "name": "s1-wai",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "denoise": 1.0,
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe with high collar, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "6bf28f47-be3b-4af7-8a19-672017c46546",
+   "prompt_ids": [
+    "5b497f13-c35d-4cc7-a4e4-65ee02e08ced"
+   ],
+   "seconds": 75.82084012031555,
+   "peak_commit": 0.53,
+   "admission": 0.41047830513483585,
+   "outputs": [
+    {
+     "file": "s1-wai-0.png",
+     "sha256": "a1d0f86be78c539ba9102a248ab9a3272fbd738a361ecbc4fdc4f98f66b71825",
+     "bytes": 1254842
+    }
+   ]
+  },
+  {
+   "name": "s1-yumeflux",
+   "preset_id": "yumeflux-ilv1-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "denoise": 1.0,
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe with high collar, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality, very aesthetic",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young",
+    "steps": 30,
+    "cfg": 4,
+    "sampler": "euler_ancestral",
+    "scheduler": "karras",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "03f04d3b-b967-4a9d-941d-62fcf37b24d0",
+   "prompt_ids": [
+    "69203f53-0e72-4b3d-8749-f19fd1b815bd"
+   ],
+   "seconds": 57.85246515274048,
+   "peak_commit": 0.657,
+   "admission": 0.5348622359364706,
+   "outputs": [
+    {
+     "file": "s1-yumeflux-0.png",
+     "sha256": "51b7bf019491c6fcc0e1c68f4b6fd4d10575df1e26fa0294a1d4943d4e63b339",
+     "bytes": 1201675
+    }
+   ]
+  },
+  {
+   "name": "s2-anifox",
+   "preset_id": "anifox-v2-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 30 years old, black hair in an elaborate updo with kanzashi hairpins, red furisode kimono with white crane embroidery and gold obi, holding a red paper umbrella, standing on an arched stone bridge among cherry blossoms, full body, serene smile, looking at viewer, soft spring light, detailed face, detailed eyes, masterpiece, best quality, amazing quality, very aesthetic",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "karras",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "868bc228-144d-4e5c-9a74-f04e15850bbb",
+   "prompt_ids": [
+    "bda877e2-af76-4302-b180-cfb317438aa6"
+   ],
+   "seconds": 57.9193799495697,
+   "peak_commit": 0.69,
+   "admission": 0.5512108741563444,
+   "outputs": [
+    {
+     "file": "s2-anifox-0.png",
+     "sha256": "fefa6c023bc19d6a063816e7a9e9a1fadab28a3b241a9ff9d6cbfcb5479d41e9",
+     "bytes": 1566304
+    }
+   ]
+  },
+  {
+   "name": "s2-anima-aesthetic",
+   "preset_id": "anima-portrait",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "1525d75d-180b-46c0-8620-09530252fc07",
+   "prompt_ids": [
+    "3c2d2e2c-a464-481f-8b2c-4b243c58050d"
+   ],
+   "seconds": 51.01182532310486,
+   "peak_commit": 0.585,
+   "admission": 0.5561359607475512,
+   "outputs": [
+    {
+     "file": "s2-anima-aesthetic-0.png",
+     "sha256": "75bb9437b656415205064f5255aa10ff1ce6c6693c22ae59d038e67e6e7b57bf",
+     "bytes": 1281315
+    }
+   ]
+  },
+  {
+   "name": "s2-oneobs",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "caa044a7-14c5-4ade-9998-5ca866915c76",
+   "prompt_ids": [
+    "e4fd2db7-c57a-4b89-9ca6-97908e38c457"
+   ],
+   "seconds": 52.55562877655029,
+   "peak_commit": 0.648,
+   "admission": 0.5164000453977186,
+   "outputs": [
+    {
+     "file": "s2-oneobs-0.png",
+     "sha256": "3622f89701b5344a4e112dc7659c7d8a1c8577d3e9d7466c39e6b130f45f49a5",
+     "bytes": 1503264
+    }
+   ]
+  },
+  {
+   "name": "s2-pearly",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "9c75fa66-181a-43b6-9abe-38f742d80674",
+   "prompt_ids": [
+    "deb71916-3b13-47a5-8161-2131793b59d0"
+   ],
+   "seconds": 60.86779856681824,
+   "peak_commit": 0.728,
+   "admission": 0.6134424111289447,
+   "outputs": [
+    {
+     "file": "s2-pearly-0.png",
+     "sha256": "51ee44fb402b69e1bdff93d132bb9f64beccffbb4a743b19ec1a3ca7f12347f8",
+     "bytes": 1325467
+    }
+   ]
+  },
+  {
+   "name": "s2-wai",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 30 years old, black hair in an elaborate updo with kanzashi hairpins, red furisode kimono with white crane embroidery and gold obi, holding a red paper umbrella, standing on an arched stone bridge among cherry blossoms, full body, serene smile, looking at viewer, soft spring light, detailed face, detailed eyes, masterpiece, best quality, amazing quality, very aesthetic",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "7b6a5c28-70fe-4a8b-8800-6e58b1daf4da",
+   "prompt_ids": [
+    "539c2027-cbf5-49bb-9c38-60db809454f7"
+   ],
+   "seconds": 47.90005111694336,
+   "peak_commit": 0.67,
+   "admission": 0.5216631839964115,
+   "outputs": [
+    {
+     "file": "s2-wai-0.png",
+     "sha256": "ef2811e8e076689f0d9a404ce66bda54f7223cc60562ac60f4037b140c09e2e5",
+     "bytes": 1490877
+    }
+   ]
+  },
+  {
+   "name": "s3-anifox",
+   "preset_id": "anifox-v2-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 32 years old, short auburn hair, small scar on cheek, silver plate armor with blue cloak, holding a longsword point down, standing on a misty battlefield at dawn, full body, determined expression, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality, very aesthetic",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "karras",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "392281b4-cf7d-4873-a220-82f992111af9",
+   "prompt_ids": [
+    "f5a83b12-9269-45b5-84d2-343c8ab1425d"
+   ],
+   "seconds": 58.521037578582764,
+   "peak_commit": 0.64,
+   "admission": 0.5188441976758217,
+   "outputs": [
+    {
+     "file": "s3-anifox-0.png",
+     "sha256": "07dc4a6a8a54e8344b5cdf0329ad7c4bc19c4958ef0cf9d994ced520468c1243",
+     "bytes": 1464396
+    }
+   ]
+  },
+  {
+   "name": "s3-anima-aesthetic",
+   "preset_id": "anima-portrait",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, An adult woman knight of thirty-two with short auburn hair and a small scar on her cheek, wearing silver plate armor and a blue cloak. She holds a longsword point down and stands on a misty battlefield at dawn, full body, determined expression, looking at the viewer, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "8946be12-a44a-4177-9ab6-9a7761987419",
+   "prompt_ids": [
+    "77be4034-43fd-4818-8435-5f65a78f05aa"
+   ],
+   "seconds": 49.82638216018677,
+   "peak_commit": 0.546,
+   "admission": 0.505295377673791,
+   "outputs": [
+    {
+     "file": "s3-anima-aesthetic-0.png",
+     "sha256": "3e336236c4ab665af83a1eafdd2fa168f98e6d790d50f4c2230b6b7319ca572a",
+     "bytes": 1141054
+    }
+   ]
+  },
+  {
+   "name": "s3-oneobs",
+   "preset_id": "oneobsession-anima-v20-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman knight of thirty-two with short auburn hair and a small scar on her cheek, wearing silver plate armor and a blue cloak. She holds a longsword point down and stands on a misty battlefield at dawn, full body, determined expression, looking at the viewer, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "42dea777-92c8-4fae-a969-d0d539637460",
+   "prompt_ids": [
+    "156e9499-da0a-4f5e-a5f3-ce64c5c7d463"
+   ],
+   "seconds": 49.93543815612793,
+   "peak_commit": 0.634,
+   "admission": 0.5231955562519657,
+   "outputs": [
+    {
+     "file": "s3-oneobs-0.png",
+     "sha256": "6dfa4dff596f84f8d2454d032379006347dd354058b7a946b91ffd75356d6724",
+     "bytes": 1271469
+    }
+   ]
+  },
+  {
+   "name": "s3-pearly",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "masterpiece, best quality, good quality, score_8, An adult woman knight of thirty-two with short auburn hair and a small scar on her cheek, wearing silver plate armor and a blue cloak. She holds a longsword point down and stands on a misty battlefield at dawn, full body, determined expression, looking at the viewer, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark",
+    "steps": 30,
+    "cfg": 4.5,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "46ca7bdd-3555-4b30-8f4e-6af4ce8cd159",
+   "prompt_ids": [
+    "6c898b3e-2318-414a-b128-90fc937116d1"
+   ],
+   "seconds": 47.6964328289032,
+   "peak_commit": 0.586,
+   "admission": 0.5453687472732278,
+   "outputs": [
+    {
+     "file": "s3-pearly-0.png",
+     "sha256": "0a8ac40d8663722beced518a38b876ff82fe6fa81654741d6cc9a445fa8cabc2",
+     "bytes": 1173968
+    }
+   ]
+  },
+  {
+   "name": "s3-wai",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 32 years old, short auburn hair, small scar on cheek, silver plate armor with blue cloak, holding a longsword point down, standing on a misty battlefield at dawn, full body, determined expression, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality, very aesthetic",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "6ae674a1-2c1b-4e45-aef2-834915797f12",
+   "prompt_ids": [
+    "33486205-115c-4728-bd8f-8f09269f0bb8"
+   ],
+   "seconds": 51.28145933151245,
+   "peak_commit": 0.642,
+   "admission": 0.5039609031276765,
+   "outputs": [
+    {
+     "file": "s3-wai-0.png",
+     "sha256": "de046fafb1bb2df07654cfb6b4c05eeb3f398dbe0c9041ccf43ed03283ddcf30",
+     "bytes": 1313669
+    }
+   ]
+  },
+  {
+   "name": "w1-base",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, revealing clothes, plunging neckline, large breasts",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "0e144ea7-5983-42e2-bb07-49fd73b19539",
+   "prompt_ids": [
+    "4f7cbc1a-b8f2-4c22-adb5-17ad4aa7a40c"
+   ],
+   "seconds": 62.38778614997864,
+   "peak_commit": 0.697,
+   "admission": 0.5758199683969393,
+   "outputs": [
+    {
+     "file": "w1-base-0.png",
+     "sha256": "d7e9f11129b36f331729809857aa47e1f0632d0e5c95dfc75e86f2f48c36ac16",
+     "bytes": 1256994
+    }
+   ]
+  },
+  {
+   "name": "w1-cfg7",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, revealing clothes, plunging neckline, large breasts",
+    "steps": 30,
+    "cfg": 7,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "a8672355-94db-4bc3-8e07-a94a1a6b12a2",
+   "prompt_ids": [
+    "d6a89a79-11c2-49a0-aee7-53403ad9753f"
+   ],
+   "seconds": 20.438853979110718,
+   "peak_commit": 0.632,
+   "admission": 0.6319038445077129,
+   "outputs": [
+    {
+     "file": "w1-cfg7-0.png",
+     "sha256": "694a55ba922a5a96fb467ce0475792033e31197a31fd80cdaa6395a0016a9d0c",
+     "bytes": 1247808
+    }
+   ]
+  },
+  {
+   "name": "w1-detail",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, revealing clothes, plunging neckline, large breasts",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0.5,
+    "lora2": 0,
+    "lora_name": "Detail_enhancer_IL_v2.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "7738c3ff-d41f-418e-8ec0-17dba2f162cd",
+   "prompt_ids": [
+    "477bf0d8-8fa8-4d55-aaa6-be06817967c3"
+   ],
+   "seconds": 30.5406277179718,
+   "peak_commit": 0.646,
+   "admission": 0.6083487966655631,
+   "outputs": [
+    {
+     "file": "w1-detail-0.png",
+     "sha256": "6805fe2f6a0d20befb39b64364eaeedb8feec755542122e82f220a4befce061c",
+     "bytes": 1371486
+    }
+   ]
+  },
+  {
+   "name": "w1-dpm2m",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, revealing clothes, plunging neckline, large breasts",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "dpmpp_2m",
+    "scheduler": "karras",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "7108fabc-4c28-4872-a410-38163f3c689c",
+   "prompt_ids": [
+    "174df332-ad72-4b07-8ff8-883e9d02d48e"
+   ],
+   "seconds": 85.21759128570557,
+   "peak_commit": 0.829,
+   "admission": 0.6690898841353943,
+   "outputs": [
+    {
+     "file": "w1-dpm2m-0.png",
+     "sha256": "63eb06c305a7e30e82daabe2e13c5f02232ee86ba8080c553ec6204828c08641",
+     "bytes": 1316302
+    }
+   ]
+  },
+  {
+   "name": "w1-flatcolor",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, revealing clothes, plunging neckline, large breasts",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0.6,
+    "lora2": 0,
+    "lora_name": "illustrious_flat_color_v2.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "8db370ea-9ffd-4a9e-a36f-a10f9870ee41",
+   "prompt_ids": [
+    "47b91de5-2be2-481e-8da3-410189de004a"
+   ],
+   "seconds": 28.210533142089844,
+   "peak_commit": 0.634,
+   "admission": 0.6196578577345805,
+   "outputs": [
+    {
+     "file": "w1-flatcolor-0.png",
+     "sha256": "1f00733a5617b631a48aaa83d9be979dd8a9727c187c01e927cac5678d71dab5",
+     "bytes": 1178346
+    }
+   ]
+  },
+  {
+   "name": "w1-glossy",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, revealing clothes, plunging neckline, large breasts",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0.6,
+    "lora2": 0,
+    "lora_name": "glossy_anime_style_illustriousXL-000011.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "b5cd937c-a262-4d20-a3fb-64f5579b379a",
+   "prompt_ids": [
+    "07fa379f-3e06-4632-aa9a-fa0cb2571721"
+   ],
+   "seconds": 30.501582384109497,
+   "peak_commit": 0.652,
+   "admission": 0.6086662061008604,
+   "outputs": [
+    {
+     "file": "w1-glossy-0.png",
+     "sha256": "6f80030c0a233a9ad2864386ba7eefcdb74f9b26cfbaccddfe1430698e0ce885",
+     "bytes": 1362108
+    }
+   ]
+  },
+  {
+   "name": "w1-masterpieces",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, revealing clothes, plunging neckline, large breasts",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0.6,
+    "lora2": 0,
+    "lora_name": "illustrious_masterpieces_v3.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "4075cffb-0d9c-4fe7-9bcc-35f550412627",
+   "prompt_ids": [
+    "4fbfa0f2-60be-447e-a63e-dbdff12b5f5e"
+   ],
+   "seconds": 31.123884916305542,
+   "peak_commit": 0.647,
+   "admission": 0.5777365395684635,
+   "outputs": [
+    {
+     "file": "w1-masterpieces-0.png",
+     "sha256": "b4e20ad8f6d24caec8befabd2d86eda8e3ea0237722083fa53bb8066fe9e6c3f",
+     "bytes": 1280316
+    }
+   ]
+  },
+  {
+   "name": "w1-microdetails",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, revealing clothes, plunging neckline, large breasts",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0.6,
+    "lora2": 0,
+    "lora_name": "AddMicroDetails_Illustrious_v7.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "2cf03b9a-a1da-41b9-b335-a3b2a9ba85e6",
+   "prompt_ids": [
+    "9e3814e6-e0a8-4501-af73-f312775de482"
+   ],
+   "seconds": 94.94348335266113,
+   "peak_commit": 0.799,
+   "admission": 0.6216371536331804,
+   "outputs": [
+    {
+     "file": "w1-microdetails-0.png",
+     "sha256": "05800b9dd2f870bd30c591e6592b68e7de5404f367fe4d1934c75508b4391b3c",
+     "bytes": 1363418
+    }
+   ]
+  },
+  {
+   "name": "w1-mishima",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, revealing clothes, plunging neckline, large breasts",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0.7,
+    "lora2": 0,
+    "lora_name": "ST_Mishima_Kurone_0R.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "8c8b8e34-1af2-4207-beae-d343e348cee9",
+   "prompt_ids": [
+    "3b8fcc84-2a2a-43bb-b2ef-84e4f408e190"
+   ],
+   "seconds": 26.986894607543945,
+   "peak_commit": 0.641,
+   "admission": 0.6413743218835335,
+   "outputs": [
+    {
+     "file": "w1-mishima-0.png",
+     "sha256": "9f3924ba5a3b47142e2a58b17aba09aa7288d62e5812be8ee6d663fb4561cea1",
+     "bytes": 1238766
+    }
+   ]
+  },
+  {
+   "name": "w1-momoko",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, revealing clothes, plunging neckline, large breasts",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0.7,
+    "lora2": 0,
+    "lora_name": "ST_Momoko_Roshidere_0R.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "de13fad1-3e4b-49f4-b338-6f70a5064a98",
+   "prompt_ids": [
+    "9cae2fb2-dc48-4c81-ba98-33865217e6d3"
+   ],
+   "seconds": 26.540903329849243,
+   "peak_commit": 0.629,
+   "admission": 0.6167136610629921,
+   "outputs": [
+    {
+     "file": "w1-momoko-0.png",
+     "sha256": "ccd642942fa01fcc4f8b976d30052852170e24d9b38643df6e2a7f096a22cf81",
+     "bytes": 1282676
+    }
+   ]
+  },
+  {
+   "name": "w1-ringeko",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "r1ng3k0, 1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, revealing clothes, plunging neckline, large breasts",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0.8,
+    "lora2": 0,
+    "lora_name": "Ringeko.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "dbc0480b-43bc-47b3-a439-d7f69134789d",
+   "prompt_ids": [
+    "825e98ef-40a0-4b3a-b526-7a38cda4c066"
+   ],
+   "seconds": 22.602923154830933,
+   "peak_commit": 0.637,
+   "admission": 0.6369751825273617,
+   "outputs": [
+    {
+     "file": "w1-ringeko-0.png",
+     "sha256": "4db70e368531f41d0cdac6a9f3126d000849b9e1f702019e7a5fe9c3b9b83d6a",
+     "bytes": 1325593
+    }
+   ]
+  },
+  {
+   "name": "w1-shiny",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, revealing clothes, plunging neckline, large breasts",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0.6,
+    "lora2": 0,
+    "lora_name": "shiny_nai_ilxl_goofy_remade.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "ae6c87a7-8c55-4395-ab2d-e448f85118b0",
+   "prompt_ids": [
+    "b51fd869-5583-4824-804e-66302baf2fd1"
+   ],
+   "seconds": 25.167004585266113,
+   "peak_commit": 0.633,
+   "admission": 0.6161547574434006,
+   "outputs": [
+    {
+     "file": "w1-shiny-0.png",
+     "sha256": "5aaca789c0c08824449e5380ff8e907e46779226d8043f1434d10425df3e2938",
+     "bytes": 1257829
+    }
+   ]
+  },
+  {
+   "name": "w1-st20",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, revealing clothes, plunging neckline, large breasts",
+    "steps": 20,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "6447356b-f1d2-40a8-b587-6342e0661666",
+   "prompt_ids": [
+    "6e903250-3981-418c-8508-0179febf6e18"
+   ],
+   "seconds": 66.73511385917664,
+   "peak_commit": 0.785,
+   "admission": 0.6214909819057892,
+   "outputs": [
+    {
+     "file": "w1-st20-0.png",
+     "sha256": "b870678fbc3d45f4f455c0d28502d20855f29b4cb4c6e07fc2cf17b9fdeb3053",
+     "bytes": 1227399
+    }
+   ]
+  },
+  {
+   "name": "w1-st40",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, revealing clothes, plunging neckline, large breasts",
+    "steps": 40,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "285eb3db-4857-4aec-bca3-447c6b147ef5",
+   "prompt_ids": [
+    "80c12cac-b7d2-4cde-8561-7f54cada3789"
+   ],
+   "seconds": 68.87041568756104,
+   "peak_commit": 0.812,
+   "admission": 0.6472862270367324,
+   "outputs": [
+    {
+     "file": "w1-st40-0.png",
+     "sha256": "90905303d82adda96725c8fde7bc9751e5bbfddb505b53c27f3e4638c1f0a7af",
+     "bytes": 1241804
+    }
+   ]
+  },
+  {
+   "name": "w1-stabilizer",
+   "preset_id": "wai",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1216,
+    "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, holding a tall crystal staff, standing on a castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
+    "negative": "bad quality, worst quality, worst detail, sketch, censor, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, young, cleavage, revealing clothes, plunging neckline, large breasts",
+    "steps": 30,
+    "cfg": 5,
+    "sampler": "euler_ancestral",
+    "scheduler": "normal",
+    "lora": 0.6,
+    "lora2": 0,
+    "lora_name": "illustriousXLv01_stabilizer_v1.198.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "3235b4fb-ab2e-4a28-94d9-581cdc35865d",
+   "prompt_ids": [
+    "03c9cf83-9d01-44fc-b425-508068ace822"
+   ],
+   "seconds": 35.738232135772705,
+   "peak_commit": 0.651,
+   "admission": 0.6477602490370917,
+   "outputs": [
+    {
+     "file": "w1-stabilizer-0.png",
+     "sha256": "6cd949cc872f8c94d0ecbb6e2858b8b4899a3b86f0a5e4ffbcaf990d34fca5cc",
+     "bytes": 1416346
+    }
+   ]
+  }
+ ]
+}
