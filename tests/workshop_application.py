@@ -2,6 +2,7 @@
 
 Run with Playwright/Chromium: python tests/workshop_application.py --output .runtime/workshop-application
 """
+from browser_ports import evidence_screenshot
 import argparse
 import json
 import os
@@ -57,7 +58,7 @@ def main():
             stored = page.evaluate("JSON.parse(localStorage.getItem('studio.workshop.presentation.v2'))")
             assert stored == {'layout':'focus','skin':'atelier','ambience':'none'}, stored
             checks.append({'name':'real app default first viewport','document_height':height})
-            page.screenshot(path=str(args.output/'application-focus.png'),full_page=True)
+            evidence_screenshot(page, path=str(args.output/'application-focus.png'),full_page=True)
             # #598: the Prompt Lab handoff panel had no grid area, so the named templates auto-placed it in the
             # first free full-width row - y=1353 (Focus) and y=1358 (Studio) in this 900 px viewport: 1250 px below
             # where it belongs and 450 px below the fold. It now takes the heading row; the hidden state must create
@@ -130,7 +131,7 @@ def main():
             page.fill('#positive','A private draft that must not disappear')
             page.click('#workshopRecipeChange')
             assert page.locator('#presetSearch').evaluate('(el)=>el===document.activeElement')
-            page.screenshot(path=str(args.output/'application-recipes.png'),full_page=True)
+            evidence_screenshot(page, path=str(args.output/'application-recipes.png'),full_page=True)
             page.keyboard.press('Escape')
             assert page.locator('#workshopRecipeChange').evaluate('(el)=>el===document.activeElement')
             page.click('#workshopRecipeChange')
@@ -226,7 +227,7 @@ def main():
                         assert setup_width>=230,(width,setup_width)
                         assert editor_width>=480,(width,editor_width)
                 if (layout,skin) in {('focus','atelier'),('studio','sakura'),('immersive','retro-anime')}:
-                    fresh.screenshot(path=str(args.output/f'application-{layout}-{skin}-{ambience}-{width}.png'),full_page=True)
+                    evidence_screenshot(fresh, path=str(args.output/f'application-{layout}-{skin}-{ambience}-{width}.png'),full_page=True)
                 geometry.append(dict(case))
                 fresh.close()
             assert not errors,errors

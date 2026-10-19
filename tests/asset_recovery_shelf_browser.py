@@ -4,6 +4,7 @@ Default: native localStorage, WebCrypto and Web Locks on the production loopback
 origin. --inert explicitly substitutes browser storage/hash/locks/transport and
 copies local data between documents; it is NOT native persistence evidence.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import asyncio
 import hashlib
@@ -222,7 +223,7 @@ async def exercise(args):
                 await page.set_viewport_size({'width': 390, 'height': 1000})
                 await page.evaluate("document.documentElement.style.zoom='2'")
                 check('SHELF-14 390px CSS 200% layout has no horizontal dialog overflow', await page.evaluate("(()=>{const d=document.querySelector('#assetRecoveryShelfDialog');return d.scrollWidth<=d.clientWidth+1&&d.getBoundingClientRect().right<=innerWidth+1;})()"))
-                await page.screenshot(path=str(args.out / 'shelf-390-css200.png'))
+                await evidence_screenshot(page, path=str(args.out / 'shelf-390-css200.png'))
                 await page.evaluate("document.documentElement.style.zoom='1'")
                 await page.set_viewport_size({'width': 1280, 'height': 1000})
                 if not args.inert:

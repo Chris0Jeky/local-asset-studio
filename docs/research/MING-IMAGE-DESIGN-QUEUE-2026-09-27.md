@@ -14,4 +14,6 @@ Hardware gate: AMD RX 9070 XT **16GB** + 32GB RAM. Prefer FP8/GGUF; strip SageAt
 | 8 | Ostris AI-Toolkit Ming LoRA trainer (12GB claim) | Train toolkit | Ming Design | train-only (RTX 4070 12GB NVIDIA report with INT8+offload) | MIT + toolkit | no | SFW | **park** | Interesting for later asset LoRAs; NVIDIA-centric report; not inference Create. | https://note.com/sepiablue/n/n89e59ce996d9 |
 | 9 | Prompt enhancer Ling-3.0-flash-VL / qwen3.8-27B | PE helper | — | separate VRAM | varies | no | SFW | **park** | Official PE step; optional later if Design smoke wins. | Ming README |
 
+**Provenance note (current 2026-10-19, issue #1324; see FINDINGS §0).** Rows 3 and 4 were written with the official Layer DiT labelled BF16 at 24.62 GB and the Comfy Layer file read as a size mismatch. Re-read on 2026-10-19: the official Layer DiT stores about 6.15 billion parameters as F32 (24.62 GB), and the Comfy `design_layer_bf16` file's byte size fits the same parameters at BF16. The dtype explains the size difference; the Comfy file's header and hash are not yet checked. Row 3 stays **park**, and row 4 stays **park** pending that check. No download, install or promotion follows from this note.
+
 **Do not** flip LAS Create defaults. Tracking: see `ISSUES.md`. Cross-tree: #739 / #760 / #934 / #1028.

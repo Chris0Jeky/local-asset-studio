@@ -4,6 +4,7 @@ No navigation policy is changed. set_content supplies an isolated page, and a
 Python binding calls the ordinary planner using synthetic installed schemas.
 """
 from __future__ import annotations
+from browser_ports import evidence_screenshot
 import argparse
 import copy
 import json
@@ -220,7 +221,7 @@ class ControlPreviewBrowserTests(unittest.TestCase):
             self.page.evaluate('(zoom)=>document.body.style.zoom=zoom',zoom)
             expect(self.page.locator('#controlPreviewButton')).to_be_visible()
             self.assertTrue(self.page.evaluate('document.documentElement.scrollWidth<=innerWidth+1'))
-        if OUT:self.page.screenshot(path=str(OUT/'control-preview-zoom.png'),full_page=True)
+        if OUT:evidence_screenshot(self.page, path=str(OUT/'control-preview-zoom.png'),full_page=True)
 
 
 if __name__=='__main__':

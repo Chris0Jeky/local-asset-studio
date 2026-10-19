@@ -6,6 +6,8 @@ Chris — Ming Image Design research for Local Asset Studio, September twenty-se
 
 **Twelve vs twenty-four.** Twelve-gig shorthand means Design’s transformer at twelve-point-three-one gig BF16. Twenty-four means Layer’s transformer at twenty-four-point-six-two gig BF16. Not target VRAM of a consumer card.
 
+**Correction, current 2026-10-19 (issue thirteen twenty-four; FINDINGS section zero).** The Layer transformer is not BF16 as stored. The official card stores about six-point-one-five billion parameters as F32, which is twenty-four-point-six-two gig, and it recommends BF16 for inference. The Comfy Layer file at about twelve-point-three gig is the same parameters at two bytes each, so the size gap is a precision difference, not a parameter-count one. That last step is arithmetic from file sizes; the Comfy file's header is not yet read.
+
 **Vs Qwen stack.** Does not replace Qwen-Image-two-point-one, Edit-two-five-one-one, WAI, Pony, or RealVis. Different lane: layout and UI text rendering, not character or photo. License is MIT — friendlier than Qwen Research for shipping. Layer-decomp quality reported ahead of open Qwen-Image-Layered on Crello; closed Qwen layered is close.
 
 **Sixteen-gig AMD.** Official validate is one eighty-gig CUDA GPU. ComfyUI core Ming support merged in PR sixteen-four-eight-two. Comfy-Org and Kijai ship INT8 ConvRot DiT about six gig plus text-encoder INT8 about nineteen-point-five or W-four-A-eight about twelve-point-eight. Even the lightest Design stack needs Dynamic VRAM and system-RAM offload on a nine-zero-seven-zero XT. INT8 ConvRot on gfx twelve-zero-one has a rocky AMD history — prefer FP8/GGUF when available; today Ming’s consumer path is INT8 ConvRot, which may conflict with the strip-Triton rule.

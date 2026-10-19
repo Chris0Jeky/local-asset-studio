@@ -3,6 +3,7 @@
 This uses the deterministic workshop fixture. It does not connect to ComfyUI,
 load remote media, or authorize generation.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import json
 import os
@@ -130,7 +131,7 @@ def main() -> None:
 
         assert not errors, errors
         assert not requests, requests
-        page.screenshot(path=str(args.output / 'ambience-policy.png'), full_page=True)
+        evidence_screenshot(page, path=str(args.output / 'ambience-policy.png'), full_page=True)
         browser.close()
 
     report = {

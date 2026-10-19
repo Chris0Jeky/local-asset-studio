@@ -1,4 +1,5 @@
 """Opt-in Chromium proof: shipped UI/header boundary, inert APIs, no Comfy runtime."""
+from browser_ports import evidence_screenshot
 import argparse
 import copy
 import json
@@ -79,7 +80,7 @@ def run(output):
                 for width in (1440,390):
                     page.set_viewport_size({'width':width,'height':1000})
                     assert page.locator('#workerFailure').is_visible()
-                    page.screenshot(path=str(output/f'recovery-{width}.png'),full_page=True)
+                    evidence_screenshot(page, path=str(output/f'recovery-{width}.png'),full_page=True)
                     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'), 'Horizontal overflow'
                 button.focus();button.press('Enter')
                 page.wait_for_function("document.querySelector('#productionDetail').textContent.includes('Outcome reconciled')")

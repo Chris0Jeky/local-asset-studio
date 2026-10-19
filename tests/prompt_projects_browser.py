@@ -1,4 +1,5 @@
 """Real browser and shared SQLite commands; synthetic briefs, no model worker."""
+from browser_ports import evidence_screenshot
 import argparse
 import base64
 import copy
@@ -105,7 +106,7 @@ def run(output):
                         page.locator('#pp-save').click();expect(page.locator('#pp-status')).to_contain_text('retained')
                         assert POSTS.count('/api/prompt/projects/save')==before
                         page.evaluate('() => {Storage.prototype.setItem=window.savedSet;}')
-                        page.screenshot(path=str(output/f'briefs-{width}.png'),full_page=True)
+                        evidence_screenshot(page, path=str(output/f'briefs-{width}.png'),full_page=True)
                         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
                         assert not errors,errors
                         (output/f'project-{width}.json').write_text(json.dumps(service.get(scope,key),indent=2),encoding='utf-8')

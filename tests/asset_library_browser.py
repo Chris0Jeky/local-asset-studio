@@ -3,6 +3,7 @@
 Native HTTP by default. --inert explicitly replaces browser storage/transport;
 --baseline records missing expectations but never ignores JavaScript exceptions.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import asyncio
 import hashlib
@@ -109,7 +110,7 @@ async def exercise(args):
                 check('LIB-04', 'Selection review lists the hidden asset by title', 'Study 1' in await text('#assetSelectedList'))
                 boxes = [await page.locator(selector).bounding_box() for selector in ['#assetSearch', '#assetType', '#assetSort']]
                 check('LIB-31', 'Desktop search and filter controls share one compact row', max(box['y'] for box in boxes) - min(box['y'] for box in boxes) < 10)
-                await page.screenshot(path=str(args.out / 'selection-desktop.png'))
+                await evidence_screenshot(page, path=str(args.out / 'selection-desktop.png'))
                 before = len(writes)
                 await page.click('[data-bulk="favorite"]')
                 await page.wait_for_function('!assetLibraryBusy')
@@ -212,7 +213,7 @@ async def exercise(args):
                     await page.set_viewport_size({'width': width, 'height': 1100})
                     await page.locator('#assetBulk').scroll_into_view_if_needed()
                     check('LIB-24' if width == 390 else 'LIB-25', f'{width}px selection review fits without horizontal overflow', await page.evaluate('document.documentElement.scrollWidth<=innerWidth'))
-                    await page.screenshot(path=str(args.out / f'selection-{width}.png'))
+                    await evidence_screenshot(page, path=str(args.out / f'selection-{width}.png'))
                 check('LIB-26', 'Selection feedback has polite status semantics', await page.locator('#assetSelectionSummary').count() > 0 and await page.locator('#assetSelectionSummary').get_attribute('aria-live') == 'polite')
                 check('LIB-27', 'No generation, native preparation or backend mutation is sent', all(post['path'] in {'/api/estimate', '/api/references/check'} for post in fixture.POSTS))
                 check('LIB-28', 'No JavaScript errors', not errors)

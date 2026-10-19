@@ -5,6 +5,7 @@ Policy-restricted component mode: add --inert (test storage/transport, not nativ
 Add --baseline to record unmet expectations; JavaScript exceptions still fail.
 Add --response-delay-ms 400 to exercise slow synthetic mutation/diagnostic responses.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import asyncio
 import copy
@@ -204,7 +205,7 @@ async def run(args):
             await check('ASSET-09','Late save preserves newer typing and leaves it unsaved',await page.locator('#assetDialog').is_visible() and await page.input_value('#assetNotes')=='Newer edits during save' and await status.count()>0 and 'unsaved' in (await status.inner_text()).lower())
             await check('ASSET-10','Save persists its click-time snapshot exactly once',len(state.writes)==count+1 and fixture.ASSETS[0]['notes']=='First snapshot')
             # Dirty-state screenshot is a real Chromium render with explicitly synthetic content.
-            if await page.locator('#assetDialog').is_visible():await page.screenshot(path=str(args.out/'asset-detail-desktop.png'))
+            if await page.locator('#assetDialog').is_visible():await evidence_screenshot(page, path=str(args.out/'asset-detail-desktop.png'))
             await open_asset();state.diagnostic_gate.clear();state.fail_diagnostic=False
             await page.click('[data-i2v-diagnostic]');await settle();await page.click('[data-lineage="asset-1"]');state.diagnostic_gate.set();await settle()
             await check('ASSET-11','Late diagnostic success cannot replace the newly selected asset panel',await page.locator('#assetDiagnostic [data-i2v-diagnostic="wan-1"]').count()==1)
@@ -247,16 +248,16 @@ async def run(args):
                 await page.set_viewport_size({'width':width,'height':1100});await settle()
                 await check('ASSET-14' if width==390 else 'ASSET-15',f'{width}px dialog remains within viewport',await page.evaluate("document.documentElement.scrollWidth<=innerWidth && document.querySelector('#assetDialog').getBoundingClientRect().right<=innerWidth"))
                 await check('ASSET-26' if width==390 else 'ASSET-27',f'{width}px preview uses at most 35% viewport height',await page.locator('#assetDetailMedia').evaluate('(el)=>el.getBoundingClientRect().height<=innerHeight*.35'))
-                await page.screenshot(path=str(args.out/f'asset-detail-{width}.png'))
+                await evidence_screenshot(page, path=str(args.out/f'asset-detail-{width}.png'))
                 await page.locator('#assetDetailStatus').scroll_into_view_if_needed()
-                await page.screenshot(path=str(args.out/f'asset-editing-{width}.png'))
+                await evidence_screenshot(page, path=str(args.out/f'asset-editing-{width}.png'))
             await check('ASSET-28','Dirty/save messages have a polite status region',await status.get_attribute('role')=='status' and await status.get_attribute('aria-live')=='polite')
             await page.focus('#assetNotes');await page.keyboard.press('Tab')
             keyboard_target=await page.evaluate('document.activeElement.id')
             await page.keyboard.press('Enter');await settle()
             await check('ASSET-29','Keyboard reaches Save from Notes and keeps the confirmed asset open',keyboard_target=='saveAssetDetails' and await page.locator('#assetDialog').is_visible() and 'saved' in (await status.inner_text()).lower())
             await page.locator('#saveAssetDetails').scroll_into_view_if_needed()
-            await page.screenshot(path=str(args.out/'asset-saved-720.png'))
+            await evidence_screenshot(page, path=str(args.out/'asset-saved-720.png'))
             await page.fill('#assetNotes','Keep this after a Trash error');state.fail_write=True
             await page.click('#assetTrash');await settle()
             await check('ASSET-30','Trash error restores editing and retains the unsaved draft',await page.locator('#assetDialog').is_visible() and await page.input_value('#assetNotes')=='Keep this after a Trash error' and not await page.locator('#assetNotes').is_disabled() and 'unavailable' in (await status.inner_text()).lower())

@@ -4,6 +4,7 @@ Real Studio shell and SQLite setup persistence, synthetic references/other servi
 Native: python tests/setup_lineage_browser.py --out .runtime/setup-lineage
 Use --inert only where native navigation is policy-blocked (storage/API bridge doubles).
 """
+from browser_ports import evidence_screenshot
 import argparse
 import asyncio
 import hashlib
@@ -123,12 +124,12 @@ async def run(args):
                   await page.evaluate("parentByInput.reference==='asset-0' && parentAssets[0]==='asset-0'"))
             check('SETUP-05', 'Save does not silently retry the availability request', Handler.checks == count)
             await page.locator('#status').scroll_into_view_if_needed()
-            await page.screenshot(path=str(args.out / 'blocked-save-desktop.png'))
+            await evidence_screenshot(page, path=str(args.out / 'blocked-save-desktop.png'))
             await page.set_viewport_size({'width': 390, 'height': 1100})
             await page.locator('#status').scroll_into_view_if_needed()
             check('SETUP-06', '390px recovery feedback remains within the page width',
                   await page.evaluate('document.documentElement.scrollWidth<=innerWidth'))
-            await page.screenshot(path=str(args.out / 'blocked-save-390.png'))
+            await evidence_screenshot(page, path=str(args.out / 'blocked-save-390.png'))
             await page.set_viewport_size({'width': 1440, 'height': 1100})
             await pull(page, 'asset-0'); await save(page, 'Recovered setup')
             saved = Handler.store.setups()[0]['recipe']
@@ -139,7 +140,7 @@ async def run(args):
             await open_saved(second)
             await second.wait_for_selector('#savedList [data-load="0"]')
             await second.locator('#savedList [data-load="0"]').evaluate("n=>n.scrollIntoView({block:'center'})")
-            await second.screenshot(path=str(args.out / 'saved-setup-target.png'))
+            await evidence_screenshot(second, path=str(args.out / 'saved-setup-target.png'))
             hit = await second.locator('#savedList [data-load="0"]').evaluate('(el)=>{const r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}')
             check('SETUP-16', 'Saved setup button is not covered by the sticky recipe panel', hit)
             await second.click('#savedList [data-load="0"]')
