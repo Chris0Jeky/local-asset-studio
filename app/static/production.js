@@ -151,7 +151,7 @@ function renderProduction(){
         // Workspace review of one image, through the same guarded update the asset
         // dialog uses.  Blind mode hides settings, never the pictures, so marking a
         // keeper here reveals nothing about which variant produced it.
-        if(o.media_type==='image')html+='<div class="candidate-review"><button data-candidate-review="selected" data-candidate-asset="'+o.asset_id+'">Keeper</button><button data-candidate-review="needs_work" data-candidate-asset="'+o.asset_id+'">Needs work</button></div>';
+        if(o.media_type==='image')html+='<div class="candidate-review"><button data-candidate-review="selected" data-candidate-asset="'+o.asset_id+'">Keep</button><button data-candidate-review="needs_work" data-candidate-asset="'+o.asset_id+'">Needs work</button></div>';
         // The set comes from the stage's own recipe, so a candidate that finished after the last Workspace read still gets chips.
         const checkNames=o.media_type==='image'?candidateCheckNames(j):[];
         if(checkNames.length)html+='<div class="candidate-checks" role="group" aria-label="Quick checks for candidate '+esc(s.label)+'">'+StudioReviewChecks.chipsHTML({tags:candidateCheckAsset(o.asset_id)?.tags||[],names:checkNames,attr:'data-candidate-check',asset:o.asset_id,escape:esc})+'</div>';

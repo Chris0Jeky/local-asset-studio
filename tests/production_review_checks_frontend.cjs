@@ -25,7 +25,7 @@ vm.runInContext(`productionPlans=${JSON.stringify([plan])};productionId=${JSON.s
   assert.equal((html.match(/candidate-check-count/g)||[]).length,1,'candidate B has no answers, so no count');
   assert.deepEqual([...html.matchAll(/data-candidate-check="(\w+)" data-asset="asset-b"/g)].map(m=>m[1]),['style','anatomy','composition','clean']);
   assert.match(html,/class="review-check is-yes" data-candidate-check="style" data-asset="asset-a"/);
-  assert.match(html,/data-candidate-review="selected" data-candidate-asset="asset-b">Keeper</,'Keeper stays beside the checks');
+  assert.match(html,/data-candidate-review="selected" data-candidate-asset="asset-b">Keep</,'Keep stays beside the checks');
   const chip={dataset:{candidateCheck:'anatomy',asset:'asset-b'}},event={target:{closest:s=>s==='[data-candidate-check]'?chip:null}};
   await $('#productionDetail').onclick(event);
   assert.deepEqual(updates,[{ids:['asset-b'],action:'edit',tags:['check:anatomy=yes']}],'one guarded tags update per press, nothing else');

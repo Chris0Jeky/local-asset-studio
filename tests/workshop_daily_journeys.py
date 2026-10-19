@@ -172,7 +172,7 @@ async function mutateAssets(payload){if('''+('true' if fail else 'false')+''')th
         self.assertEqual(self.page.evaluate("document.activeElement.dataset.outputReview"), 'rejected', 'a poll re-render keeps focus on the decision')
         self.page.keyboard.press('x')
         self.page.wait_for_function('edits.length===2')
-        self.assertEqual(self.page.locator('.output-review-state').inner_text(), 'Rejected')
+        self.assertEqual(self.page.locator('.output-review-state').inner_text(), 'Not this')
 
     def test_a_brand_new_output_is_reviewed_after_the_library_read_brings_it_in(self):
         # Create never polls the library: the asset of an output made on this page arrives only with the read.

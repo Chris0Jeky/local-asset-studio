@@ -7,6 +7,10 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-10-19 pass 2 (Brief J): one review vocabulary
+
+- [ ] Review actions use Keep / Needs work / Not this with K / W / X; saved selections and the Library filter say Kept. Stored review values stay unchanged, including the Review desk's keep value. Reverse: the label maps.
+
 ## 2026-10-19 pass 2 (ux-lead-2): honest time estimates in Make
 
 - [ ] **When nothing comparable has run on this PC, Make's estimate uses the look's lab median per picture** ("About 2 min for 4 pictures, ~31 s each. Median of two test pictures in the 16 Oct look lab on this PC.") instead of the server's generic guess worded as "from earlier runs on this PC" (a new install showed "About 4 min" beside a card saying ~31 s). With no lab number either, it says "a rough guess: nothing like it has run on this PC yet". Picture goals, Compare looks and Compare one setting say the same. Reverse: `rough`/`basis` and the `lab` branch in `estimate()` in `app/static/make.js`.
