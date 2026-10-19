@@ -267,6 +267,87 @@ class SharedBackendStateTests(unittest.TestCase):
         self.assertEqual(self.thread.call_count,1)
         self.assertEqual(json.loads(self.path.read_text())['operation']['owner'],self.manager._owner)
 
+    def test_clean_reservation_failure_allows_a_fresh_explicit_retry(self):
+        writer_lock=backend_state.writer_lock
+        for fault in ('writer-lock','temporary-flush'):
+            with self.subTest(fault=fault):
+                self.path.write_text(json.dumps({'active':'primary','operation':{'id':'settled','status':'completed','target':'primary'}}))
+                manager=self.make_manager();raw=self.path.read_bytes();self.thread.reset_mock()
+                read=manager._state.read
+                def observed():
+                    self.assertTrue(manager.studio.lock._is_owned(),'Reservation failure is re-observed under the Studio lock')
+                    return read()
+                with ExitStack() as faults:
+                    if fault=='writer-lock':
+                        faults.enter_context(writer_lock(self.path))
+                        faults.enter_context(patch.object(backend_state,'writer_lock',side_effect=lambda path:writer_lock(path,timeout=0)))
+                    else:faults.enter_context(patch.object(backend_state.os,'fsync',side_effect=OSError('inert temporary flush failure')))
+                    with self.inert(manager),patch.object(manager._state,'read',side_effect=observed), \
+                         patch.object(backend_state.file_replace,'replace') as replace:
+                        with self.assertRaises(backend_state.StateError) as failure:manager.switch('hidream')
+                        self.assertNotIsInstance(failure.exception,backend_state.StateUnconfirmed)
+                        replace.assert_not_called()
+                self.assertEqual(self.path.read_bytes(),raw);self.thread.assert_not_called();self.launch.assert_not_called()
+                self.assertFalse(manager.busy);self.assertIsNone(manager.state_issue)
+                self.assertIsNone(manager._owned_operation);self.assertIsNone(manager._uncertain_publication)
+                expected=manager._state_snapshot
+                with manager.studio.lock:manager.require_work_admission()
+                self.assertIs(manager._state_snapshot,expected,'Work admission cannot adopt a switch worker snapshot')
+                with self.inert(manager):manager.switch('hidream')
+                self.assertEqual(self.thread.call_count,1)
+                self.assertEqual(json.loads(self.path.read_text())['operation']['owner'],manager._owner)
+        self.launch.assert_not_called()
+
+    def test_clean_reservation_followup_read_failure_does_not_latch_after_recovery(self):
+        manager=self.manager;read=manager._state.read;failed=[]
+        def flush(descriptor):
+            failed.append(True);raise OSError('inert temporary flush failure')
+        def observed():
+            self.assertTrue(manager.studio.lock._is_owned())
+            if failed:raise backend_state.StateError('inert followup read unavailable')
+            return read()
+        with self.inert(manager),patch.object(backend_state.os,'fsync',side_effect=flush), \
+             patch.object(manager._state,'read',side_effect=observed),patch.object(backend_state.file_replace,'replace') as replace:
+            with self.assertRaisesRegex(backend_state.StateError,'flush failure'):manager.switch('hidream')
+            self.assertIsNone(manager._state_snapshot)
+            with manager.studio.lock:
+                for admit in (manager._admit_shared,manager.require_work_admission):
+                    with self.assertRaisesRegex(backend_state.StateError,'followup read unavailable'):admit()
+            replace.assert_not_called()
+        self.assertFalse(self.path.exists());self.thread.assert_not_called();self.launch.assert_not_called()
+        self.assertIsNone(manager.state_issue);self.assertIsNone(manager._uncertain_publication)
+        with manager.studio.lock:manager.require_work_admission()
+        self.assertIsNone(manager._state_snapshot,'Pure work admission must not install a new expected record')
+        with self.inert(manager):manager.switch('hidream')
+        self.assertEqual(self.thread.call_count,1);self.assertEqual(json.loads(self.path.read_text())['operation']['owner'],manager._owner)
+
+    def test_clean_reservation_failure_does_not_bypass_new_shared_blockers(self):
+        manager=self.manager
+        with self.inert(manager),patch.object(backend_state.os,'fsync',side_effect=OSError('inert temporary flush failure')):
+            with self.assertRaises(backend_state.StateError):manager.switch('hidream')
+        self.assertIsNone(manager.state_issue)
+        cases=[('unreadable','{invalid'),
+               ('unknown-owner',{'active':'primary','operation':{'status':'running','owner':{'version':99}}}),
+               ('legacy',{'active':'primary','operation':{'status':'running'}}),
+               ('mismatch',{'active':'hidream','operation':{'status':'completed','target':'hidream'}})]
+        for name,value in cases:
+            with self.subTest(name=name):
+                self.path.write_text(value if isinstance(value,str) else json.dumps(value));raw=self.path.read_bytes()
+                with manager.studio.lock,self.assertRaises(backend_state.StateError):manager.require_work_admission()
+                if name!='mismatch':
+                    with self.inert(manager),self.assertRaises(backend_state.StateError):manager.switch('hidream')
+                self.assertEqual(self.path.read_bytes(),raw)
+        self.thread.assert_not_called();self.launch.assert_not_called()
+
+    def test_unknown_local_owner_reservation_failure_retains_its_hold(self):
+        manager=self.manager;manager._owner=None
+        with self.inert(manager),self.assertRaisesRegex(backend_state.StateError,'identify'):manager.switch('hidream')
+        self.assertIn('identify',manager.state_issue)
+        with manager.studio.lock:
+            for admit in (manager._admit_shared,manager.require_work_admission):
+                with self.assertRaisesRegex(backend_state.StateError,'identify'):admit()
+        self.assertFalse(self.path.exists());self.thread.assert_not_called();self.launch.assert_not_called()
+
     def test_dead_owner_before_launch_is_reconciled_without_runtime_actions(self):
         saved = self.record(); saved['active'] = 'hidream'
         saved['operation']['stopped_processes'] = [{'pid': 34, 'created_at': 5}]
@@ -419,6 +500,10 @@ class SharedBackendStateTests(unittest.TestCase):
             with self.assertRaises(backend_state.StateUnconfirmed):self.manager.switch('hidream')
         self.assertFalse(self.manager.busy);self.thread.assert_not_called();self.launch.assert_not_called()
         self.assertEqual(json.loads(self.path.read_text())['operation']['status'],'running')
+        self.assertEqual(self.manager._uncertain_publication,hashlib.sha256(self.path.read_bytes()).hexdigest())
+        with self.manager.studio.lock:
+            for admit in (self.manager._admit_shared,self.manager.require_work_admission):
+                with self.assertRaisesRegex(backend_state.StateError,'unconfirmed'):admit()
         with self.inert(self.manager):result=self.manager.resolve_switch_record(self.acknowledgement())
         self.assertFalse(result['shared_state']['blocker']);self.assertIsNone(self.manager.state_issue)
         with self.inert(self.manager):self.manager.switch('hidream')

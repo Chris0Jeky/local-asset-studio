@@ -148,11 +148,18 @@ class BackendManager:
 
     def _state_failed(self, exc, *, admission=False):
         """Do not turn a stale worker's error into another write over the current operation."""
-        self.state_issue=None if admission and isinstance(exc,backend_state.StateConflict) else str(exc);self._owned_operation=None
+        # reserve() uses StateUnconfirmed once replacement may have started. A
+        # plain initial refusal published no operation; the next admission must read/CAS
+        # afresh, even if this follow-up observation is temporarily unavailable.
+        clean_admission=(admission and isinstance(exc,backend_state.StateError)
+                         and not isinstance(exc,backend_state.StateUnconfirmed) and backend_state.valid_owner(self._owner))
+        self.state_issue=None if clean_admission else str(exc);self._owned_operation=None
         self._uncertain_publication=exc.attempted_sha256 if isinstance(exc,backend_state.StateUnconfirmed) else None
         try:
             self._state_snapshot=self._state.read();self.operation=copy.deepcopy(self._state_snapshot.value.get('operation'))
-        except backend_state.StateError as observed:self._state_snapshot=None;self.state_issue=str(observed)
+        except backend_state.StateError as observed:
+            self._state_snapshot=None
+            if not clean_admission:self.state_issue=str(observed)
 
     def _admit_shared(self):
         if self.state_issue:raise backend_state.StateError(self.state_issue)
