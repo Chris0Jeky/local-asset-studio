@@ -11,6 +11,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 - [ ] **Make's picture pickers (all six picture goals, and the pose slot) have "Import a picture…"**: one file (PNG, JPEG or WebP, up to 20 MiB) goes through the library's own import and becomes the chosen picture; Make is never left. The old "Import a picture first" link to the Library is gone, and the empty grid says "No pictures yet. Import one, or make one first." Reverse: the `data-make-import` button in `pictureFinder()` and `importPicture()` in `app/static/make.js`.
 
+## 2026-10-19 pass 2 (ux-lead-2): honest time estimates in Make
+
+- [ ] **When nothing comparable has run on this PC, Make's estimate uses the look's lab median per picture** ("About 2 min for 4 pictures, ~31 s each. Median of two test pictures in the 16 Oct look lab on this PC.") instead of the server's generic guess worded as "from earlier runs on this PC" (a new install showed "About 4 min" beside a card saying ~31 s). With no lab number either, it says "a rough guess: nothing like it has run on this PC yet". Picture goals, Compare looks and Compare one setting say the same. Reverse: `rough`/`basis` and the `lab` branch in `estimate()` in `app/static/make.js`.
+
 ## 2026-10-19: Workflow builder first screen
 
 - [ ] Workflow builder: storage and file tools folded (All tools, Saved workflows). Reverse: remove the two details wrappers in workflow-studio.html and the fold-open lines in workflow-projects.js.
