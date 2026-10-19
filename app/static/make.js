@@ -132,7 +132,10 @@
   }
   // Installed adapters made for this model type: the knowledge base names each file's family; a file it does not know is not offered.
   // Files whose family is the look's (or the switched model's) come first as made for it; the rest share only the loader (audit N5).
-  const fits=(look,f)=>[presetFor(look)?.family,tunedPreset(look)?.family].includes(entry(f)?.family);
+  // A merge of a base model counts as that base for its LoRAs: the knowledge base's family_aliases (One Obsession and Pearly are recorded
+  // Anima-family merges in presets/catalog.json), the same aliases the full editor's guidance reads (bundle-core.js).
+  const base=p=>kb().family_aliases?.[p?.family]||p?.family;
+  const fits=(look,f)=>[base(presetFor(look)),base(tunedPreset(look))].includes(entry(f)?.family);
   function compatible(look){
     const p=presetFor(look),k=kind(p),chosen=SLOTS.map(s=>p?.choices?.[NAMED(s)]).find(x=>x?.length),files=chosen||(typeof installedLoras!=='undefined'?installedLoras:[]);
     const kinds=new Set(presets().filter(r=>r.family&&kind(r)===k).map(r=>r.family));
@@ -160,7 +163,10 @@
   const halve=n=>Math.max(1,Math.round(n/2)),fullSteps=(look,tp)=>Number(look.body.controls?.steps||tp?.defaults?.steps)||0;
   const draftOf=(look,tp=tunedPreset(look))=>{const n=fullSteps(look,tp);return bound(tp,'steps')&&n>=2?halve(n):0;};
   function draftMarkup(look){const tp=tunedPreset(look),full=fullSteps(look,tp),n=full>=10||speed(look)[0]==='slow'?draftOf(look,tp):0,t=state.tune[look.id];if(!n)return'';
-    return '<label class="make-check"><input type="checkbox" id="makeDraft" data-steps="'+n+'"'+(t?.steps===n?' checked':'')+' aria-describedby="makeDraftHint"> Draft first · '+n+' steps, rougher but quicker</label><small id="makeDraftHint" class="muted">Then “Make the final” on the draft reruns it at the full '+fullSteps(look,tp)+' steps.</small>';}
+    // Quality is one visible choice (owner, 19 Oct): Draft, As made or Fine are Tune's own step counts, so the estimate follows the choice.
+    const fine=Math.min(150,Math.round(full*1.5)),radio=(id,value,label,on)=>'<label class="make-check"><input type="radio" name="makeQuality" id="'+id+'" value="'+value+'"'+(on?' checked':'')+(id==='makeDraft'?' aria-describedby="makeDraftHint"':'')+'> '+label+'</label>';
+    return '<fieldset class="make-quality"><legend>Quality</legend>'+radio('makeDraft',n,'Draft · '+n+' steps, rougher but quicker',t?.steps===n)+radio('makeStandard','','As made · '+full+' steps',t?.steps==null)+(fine>full?radio('makeFine',fine,'Fine · '+fine+' steps, slower',t?.steps===fine):'')
+      +'<small id="makeDraftHint" class="muted">A draft card offers “Make the final”: the same words and seed at the full '+full+' steps.</small></fieldset>';}
   const draftRun=run=>{const look=state.looks?.find(l=>l.id===run.lookId);return!!look&&run.scene&&run.tune?.steps!=null&&FINAL.includes(run.job.status)&&(run.job.outputs||[]).length>0&&run.tune.steps===draftOf(look,byId(run.tune.preset)||presetFor(look));};
   const clamp=v=>Math.min(2,Math.max(0,Math.round((Number(v)||0)*20)/20));
   function tuneSummary(look,t){
@@ -210,7 +216,7 @@
       +'<div class="make-tune-group"><h3>Adapters (LoRAs)</h3>'
       +(t.rows.length?'<label class="make-tune-scale">All adapters × <output id="makeTuneScaleOut">'+scaleOf(t)+'%</output><input type="range" id="makeTuneScale" data-tune="scale" min="0" max="150" step="10" value="'+scaleOf(t)+'" aria-describedby="makeTuneScaleHint"></label><small id="makeTuneScaleHint" class="muted">Multiplies every strength below; the arrow shows what is sent. 100% sends them as set.</small>'+t.rows.map(row).join(''):'<p class="muted">None: the model and the words carry this look.</p>')
       +(SLOTS.some(s=>bound(p,NAMED(s)))?(files.length?'<div class="make-tune-add"><label for="makeLoraSearch">Add a LoRA <small>installed, fits this model</small></label><input id="makeLoraSearch" type="search" list="makeLoraList" placeholder="Filter by name, style or trigger word" autocomplete="off" aria-describedby="makeLoraFit'+(slot?'':' makeLoraFull')+'"'+(slot?'':' disabled')+'><datalist id="makeLoraList">'+files.filter(f=>!t.rows.some(r=>r.name===f)).map(f=>{const e=entry(f);return '<option value="'+escape(f)+'">'+escape(short(f)+(e.role?' · '+e.role:'')+' · '+(fits(look,f)?'made for this model':e.family+', may not suit'))+'</option>';}).join('')+'</datalist><button type="button" data-tune-add'+(slot?'':' disabled')+'>Add</button>'
-        +'<small id="makeLoraFit">'+(made?made+' made for '+escape(family(p))+' come first.':'None is made for '+escape(family(p))+' itself.')+(other?' '+other+' from other families of this model type may not suit it.':'')+'</small>'
+        +'<small id="makeLoraFit">'+(made?made+' made for '+escape(base(p))+(base(p)!==family(p)?' (this model’s base)':'')+' come first.':'None is made for '+escape(family(p))+' itself.')+(other?' '+other+' from other families of this model type may not suit it.':'')+'</small>'
         +(slot?'':'<small id="makeLoraFull">All adapter slots of this recipe are in use; remove one first.</small>')+'<div id="makeLoraChoices" class="make-lora-list" role="group" aria-label="Installed LoRAs for this model">'+loraCards(look,'')+'</div></div>':'<p class="muted">No installed adapter is known to fit this model type. Models & setup lists what can be installed.</p>'):'<p class="muted">This recipe has no adapter slots to fill.</p>')+'</div>'
       +((bound(tp,'steps')&&steps)||(bound(tp,'sampler')&&tp.choices?.sampler?.length)?'<div class="make-tune-group"><h3>Quality and speed</h3><div class="make-pair">'
         +(bound(tp,'steps')&&steps?'<label>Steps<select data-tune="steps">'+option('','As made · '+steps,t.steps==null)+option(draft,'Draft · '+draft+', faster',t.steps===draft)+option(fine,'Finer · '+fine+', slower',t.steps===fine)+'</select></label>':'')
@@ -1049,7 +1055,7 @@
     if(t.dataset.makeSearch){state.queries[t.dataset.makeSearch]=t.value;renderGrid(t.dataset.makeSearch,t.dataset.makeAttr);}});
   // Choices that change the composer redraw it and keep the keyboard on the control just used.
   view.addEventListener('change',e=>{const t=e.target,g=goal(),redraw=sel=>{renderGoalComposer(g);q(sel)?.focus();};
-    if(t.id==='makeDraft'){const look=current();if(look){tuneOf(look).steps=t.checked?Number(t.dataset.steps):null;tuneChanged();q('#makeDraft')?.focus();}return;}
+    if(t.name==='makeQuality'){const look=current(),id=t.id;if(look){tuneOf(look).steps=t.value?Number(t.value):null;tuneChanged();q('#'+id)?.focus();}return;}
     if(t.dataset.makeFix){state.fix=t.dataset.makeFix;redraw('#makeFix-'+state.fix);return;}
     if(t.dataset.makeStyle){state.styleLook=t.dataset.makeStyle;for(const r of view.querySelectorAll('[data-make-style]')){r.removeAttribute('aria-invalid');r.removeAttribute('aria-describedby');}settleMissing();return;}
     if(t.dataset.makePoseRoute){state.poseRoute=t.dataset.makePoseRoute;redraw('#makePoseRoute-'+state.poseRoute);return;}

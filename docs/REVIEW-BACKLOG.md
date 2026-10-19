@@ -7,6 +7,10 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-10-19 (Brief G): recipe picker
+
+- [ ] Recipe picker descriptions clamp to one line (full text on hover and for screen readers). Reverse: the clamp rule.
+
 ## 2026-10-19 overnight (ux-lead): Make robustness
 
 - [ ] **The chosen look carries a "✓ Chosen" badge** on its card, beside the accent border (colour alone did not say which look was chosen). Reverse: delete the `.make-look.active::after` rule at the end of `app/static/make.css`.
@@ -31,6 +35,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 - [ ] **Make shows the look's model and LoRAs while Tune is shut.** The Tune line reads "As made: Anima · anima-base-v1.0 · pearly_petiflow2 1.00 · 25 steps" (the model file is named when a family has two) instead of "Model, adapters, steps, seed"; a tuned look still reads "Tuned: ...". Reverse: `asMade()` in `app/static/make.js` back to the fixed text.
 - [ ] **Make's composer uses the full width until the first picture exists.** "Your pictures" moves beside the words only once there is a run card; before that it sits below. Reverse: drop `&&state.runs.length>0` in `layout()` in `app/static/make.js`.
 
+## 2026-10-19 overnight (ux-lead): Quality choice
+
+- [ ] **"Draft first" (a tick) became Quality: Draft / As made / Fine** (radio group beside Generate; the same step counts as Tune's Steps; the estimate follows). Same looks as before (10+ steps or slow). No finishing pass runs automatically: gpu-lab's 19 Oct advice is "nothing runs automatically", so Fix face and Upscale stay one press each on the result. Reverse: `draftMarkup()` in `app/static/make.js` back to the checkbox.
+
 ## 2026-10-19 overnight (ux-lead): Models & setup to Make
 
 - [ ] **Models & setup → What you can make: each ready look in a Make goal has "Use in Make"**, which opens Make with that goal and look chosen and says "<look> is chosen. Describe your picture, then press Generate." Nothing is sent. Reverse: drop the button in `modelLooksMarkup()` (`app/static/app.js`) and the `#modelLooks [data-make-use-look]` listener in `app/static/make.js`.
@@ -42,6 +50,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 ## 2026-10-19 overnight (ux-lead): proposal, not done
 
 - [ ] **Proposal: fold the Workflow builder's storage and file rows.** It opens with Saved workflows (6 buttons, 2 selects), revision history (2 buttons, 1 select) and a toolbar of 11 buttons before any node or step is visible (1,201 words on the page at 1440x900). Proposal: Saved workflows and revision history in one shut fold "Saved workflows and history", the file buttons (Import recipe graph, Open JSON, Export…) in a "Files" menu, so the first screen is "Start from a recipe" plus the Nodes/Steps view. Not done: it is the agents' tool too, so tell an agent "do the Workflow builder fold" if you want it.
+
+## 2026-10-19 overnight (ux-lead): Anima merges and their LoRAs
+
+- [ ] **One Obsession Anima v2.0 and Pearly Anima Mix v1.0 count as Anima for LoRA fit** (`presets/settings-kb.json` family_aliases; the catalog records both as Anima-family merges). Before, every Anima LoRA on those looks said "may not suit". JANIMA LoRAs still say it. The full editor's guidance (bundle-core.js) reads the same aliases, so it now shows Anima guidance for them. Reverse: drop the two alias lines.
 
 ## 2026-10-19 overnight (ux-lead): picture pickers
 

@@ -3,7 +3,9 @@
   "updated": "2026-09-12",
   "note": "Settings knowledge base. Every rationale says where the number comes from; sources are URLs that document it. 'observed' lists local ComfyUI prompt IDs and is present only where this machine actually ran the setting. Narrative: docs/SETTINGS-KNOWLEDGE.md.",
   "family_aliases": {
-    "Krea 2": "Krea 2 Turbo"
+    "Krea 2": "Krea 2 Turbo",
+    "One Obsession Anima v2.0": "Anima",
+    "Pearly Anima Mix v1.0": "Anima"
   },
   "families": {
     "Krea 2 Turbo": {
@@ -17,7 +19,8 @@
           "danbooru quality soup does not help except where a LoRA was trained on tags (Niji Sweet Spot)",
           "trigger position follows the LoRA card: Niji Sweet Spot and NIJISIS at the start, fal style triggers at the end of a short prompt",
           "no ModelSampling* node belongs in these graphs; the Krea 2 loader already applies shift 1.15",
-          "FreeU, PAG and RescaleCFG do nothing useful at cfg 1"
+          "FreeU, PAG and RescaleCFG do nothing useful at cfg 1",
+          "19 October 2026 (agent-judged, 11 pictures, docs/looks/LOOK-LAB-2026-10-19.md): with the @NJSW33T trigger and TextFusion on at 15 steps euler_ancestral the trigger was painted as corner text on 2 of 6 pictures; none of 6 pictures without the trigger or without TextFusion showed it. Leave the trigger out; 4, 8 and 15 steps all cost 262-331 s because model load and the CPU text encode dominate"
         ]
       },
       "defaults": {
@@ -729,7 +732,9 @@
           "this family does take a negative prompt (node 5 in the authored graphs)",
           "Anima base knows artist tags natively with an @ prefix (e.g. @koukouya, @synswt, @kyano \\(kyanora3141\\)); the reference images 131843207/131843332/131843377/131843406 use exactly that with no adapter at cfg 3, dpmpp_2m_sde_gpu, simple, 30 steps",
           "the reference image 139608451 carried no text prompt at all: six style adapters (0.7/0.6/0.3/0.7/1.0/0.5), euler_ancestral, simple, 30 steps, cfg 4, 1328x1776",
-          "the official ComfyUI Anima base v1 template runs euler/simple at cfg 4 and 30 steps with the negative \"worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, sepia\""
+          "the official ComfyUI Anima base v1 template runs euler/simple at cfg 4 and 30 steps with the negative \"worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, sepia\"",
+          "19 October 2026 (agent-judged, docs/looks/LOOK-LAB-2026-10-19.md): on the Pearly and One Obsession mixes, steps 20/30/40, cfg 3/4.5/6 and simple/beta/normal were ties at a fixed seed; euler_ancestral and dpmpp_2m_sde_gpu changed the composition; eleven style adapters at 0.6-1.0 gave no measured quality gain; the turbo adapter at 8 steps cfg 1 was a near tie at about half the time",
+          "close-up faces from Pearly, Anima base, JANIMA and Anima aesthetic read youthful in the 19 October test: add mature cues for an adult close-up or use One Obsession; the newanimastyle adapter made the face younger"
         ]
       },
       "defaults": {
