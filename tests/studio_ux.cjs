@@ -334,6 +334,13 @@ test('Tune lists every fitting LoRA as a card: other families folded, typing nar
   api.addAdapter({},'b.safetensors');assert.equal(t.rows.at(-1).name,'b.safetensors');assert.equal(t.rows.at(-1).strength,1);
 });
 
+test('An Anima-family merge counts as Anima for its LoRAs (family_aliases, 19 Oct)',()=>{
+  const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),kb=JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/settings-kb.json'),'utf8'));
+  const lines=make.match(/  const base=p=>.*\n  const fits=.*\n/)[0];
+  const mix={family:'One Obsession Anima v2.0'},context={kb:()=>kb,presetFor:()=>mix,tunedPreset:()=>mix,entry:n=>({'a.safetensors':{family:'Anima'},'j.safetensors':{family:'JANIMA v1 (Anima)'}})[n]};
+  const api=vm.runInNewContext(lines+';({fits,base})',context);
+  assert.equal(api.base(mix),'Anima');assert.equal(api.fits({},'a.safetensors'),true,'an Anima LoRA is made for an Anima merge');assert.equal(api.fits({},'j.safetensors'),false,'another family still may not suit');
+});
 test('Make offers a character card on every saved picture regardless of review, and preserves canon labels',()=>{
   const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8');
   const context={state:{charSave:null},reviewOf:()=>context.review,usableCharacters:()=>context.characters,escape:s=>s,characterForm:()=>'<form>character</form>',CANON_NOTE:'canon',characters:[]};
