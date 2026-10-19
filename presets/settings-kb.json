@@ -3,7 +3,9 @@
   "updated": "2026-09-12",
   "note": "Settings knowledge base. Every rationale says where the number comes from; sources are URLs that document it. 'observed' lists local ComfyUI prompt IDs and is present only where this machine actually ran the setting. Narrative: docs/SETTINGS-KNOWLEDGE.md.",
   "family_aliases": {
-    "Krea 2": "Krea 2 Turbo"
+    "Krea 2": "Krea 2 Turbo",
+    "One Obsession Anima v2.0": "Anima",
+    "Pearly Anima Mix v1.0": "Anima"
   },
   "families": {
     "Krea 2 Turbo": {
