@@ -48,7 +48,7 @@ On the picture's card:
 Under the words box:
 
 - **Model, LoRAs and settings** is folded shut. Open it to see and change the look's base model, adapters (LoRAs) with their strengths, steps, sampler, words to leave out and seed. It only changes what **Generate** sends.
-- **Quality** (Draft, As made, Fine) is offered on looks with ten steps or more, and on slow looks. A draft uses half the steps: rougher but quicker. Fine uses half as many again: slower, and on the Anima looks no better in the 19 Oct lab (20-40 steps looked alike).
+- **Quality** (Draft, As made, Fine) is offered on looks with ten steps or more, and on slow looks. A draft uses half the steps: rougher but quicker. Fine uses half as many again: slower. On Anima looks Draft is the official turbo LoRA at 8 steps (cfg 1, euler/simple; about 13 s warm, a near-tie with a full run in the 19 Oct lab) and there is no Fine, because 20 to 40 steps looked alike.
 - **What this look uses** names the model and adapters, with each adapter's trigger word.
 - **Shape**, **How many** and **Style strength** are beside the Generate button.
 - **Compare looks**, in the look gallery, runs two or three looks on one scene and one seed and shows them side by side.
