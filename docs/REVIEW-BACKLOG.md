@@ -35,6 +35,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 - [ ] **"Draft first" (a tick) became Quality: Draft / As made / Fine** (radio group beside Generate; the same step counts as Tune's Steps; the estimate follows). Same looks as before (10+ steps or slow). No finishing pass runs automatically: gpu-lab's 19 Oct advice is "nothing runs automatically", so Fix face and Upscale stay one press each on the result. Reverse: `draftMarkup()` in `app/static/make.js` back to the checkbox.
 
+## 2026-10-19 overnight (ux-lead): Models & setup to Make
+
+- [ ] **Models & setup → What you can make: each ready look in a Make goal has "Use in Make"**, which opens Make with that goal and look chosen and says "<look> is chosen. Describe your picture, then press Generate." Nothing is sent. Reverse: drop the button in `modelLooksMarkup()` (`app/static/app.js`) and the `#modelLooks [data-make-use-look]` listener in `app/static/make.js`.
+
 ## 2026-10-19 overnight (ux-lead): name the fold for what is in it
 
 - [ ] **"Tune this look" is now "Model, LoRAs and settings"** (Make's fold, the Ctrl+K hints, START-HERE, the anime guide, README): someone looking for "model" or "LoRA" finds it by its name. Code keeps the word "tune" internally. Reverse: the `<summary>` text in `renderComposer()` and the three finder strings in `app/static/studio-shell.js`.
@@ -42,6 +46,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 ## 2026-10-19 overnight (ux-lead): Anima turbo draft
 
 - [ ] **On Anima looks, Quality is Draft (turbo LoRA, 8 steps, cfg 1, euler/simple) or As made; no Fine.** From gpu-lab's round 7 (agent verdicts): turbo at 8 steps was a near-tie at about 13 s, and 20/30/40 steps looked alike. The turbo LoRA goes in a free slot; the look's own LoRAs stay. Applies wherever the knowledge base says the turbo file fits and the recipe binds steps and cfg. Reverse: delete `TURBO`/`turboFits` and the `if(turbo)` branch of `draftMarkup()` in `app/static/make.js`.
+
+## 2026-10-19 overnight (ux-lead): picture pickers
+
+- [ ] **Character in a new pose: the pose grid leaves out the chosen character picture**; when it was your only picture it says "The character is your only picture. Import a pose picture in the library, or choose Draw the pose." Imported pictures no longer show their file name twice on picker cards. Reverse: `others` in `renderGrid()` and the `pictureMeta()` condition in `app/static/make.js`.
 
 ## 2026-10-17 session (agent judgment calls)
 
