@@ -8,7 +8,7 @@ import threading
 import time
 from http_test_server import ThreadingHTTPServer
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import expect, sync_playwright
 import studio_browser_smoke as fixture
 
 LOOKS = [dict(id=id, name=name, kind='look', revision=0, body=dict(preset_id='zimage-fast', controls={}, scene_example='A quiet garden')) for id, name in [('look-wai-fantasy-portrait', 'First look'), ('look-anima-fantasy-portrait', 'Second look')]]
@@ -73,10 +73,11 @@ def make_checks(browser, origin):
     assert page.locator('#makeScene').evaluate('(e)=>e===document.activeElement')
     # No width in the Look or prepare result: catalog dimensions still reach the exact estimate and submit.
     page.evaluate("()=>{const p=catalog.presets.find(p=>p.id==='zimage-fast');p.defaults.width=1024;p.defaults.height=1024;p.dimension_multiple=64;}")
+    page.expose_function('makeEstimateAfter', lambda after: next((p['data'] for p in reversed(fixture.POSTS[after:]) if p['path'] == '/api/estimate' and p['data'].get('preset_id') == 'zimage-fast'), None))
     for shape, size in [('portrait', [832, 1280]), ('landscape', [1280, 832]), ('square', [1024, 1024])]:
+        after = len(fixture.POSTS)
         page.locator('#makeScene').fill('A quiet garden'); page.locator('#makeShape').select_option(shape)
-        page.wait_for_timeout(100)
-        estimate = next(p['data'] for p in reversed(fixture.POSTS) if p['path'] == '/api/estimate' and p['data'].get('preset_id') == 'zimage-fast')
+        estimate = page.wait_for_function('async({after,size})=>{const e=await makeEstimateAfter(after);return e&&e.controls.width===size[0]&&e.controls.height===size[1]&&e;}', arg={'after': after, 'size': size}).json_value()
         before = len(jobs())
         page.evaluate("()=>{document.querySelector('#makeGenerate').click();document.querySelector('#makeGenerate').click();document.querySelector('#makeEditor').click();}")
         page.wait_for_function("!document.querySelector('#makeGenerate').disabled")
@@ -96,9 +97,14 @@ def make_checks(browser, origin):
     page.evaluate("()=>{missingByPreset={};StudioMake.refresh();}")
     assert page.locator('#makeGenerate').get_attribute('aria-describedby') is None and page.locator('#makeWhy').inner_text() == '' and page.locator('#makeWhy').count() == 1, 'the status region stays, empty'
     page.locator('#makeScene').fill('Keep feedback while switching')
+    # Hold prepare across the look switch: a fast response must not erase the busy state before we inspect it.
+    pending = []; hold = lambda route: pending.append(route)
+    page.route('**/api/looks/prepare', hold)
     before = len(jobs()); page.locator('#makeGenerate').click()
     page.locator('[data-make-change]').click(); page.locator('[data-make-look]').nth(1).click()
-    assert page.locator('#makeGenerate').is_disabled() and page.locator('#makeEditor').is_disabled()
+    expect(page.locator('#makeGenerate')).to_be_disabled(); expect(page.locator('#makeEditor')).to_be_disabled()
+    assert len(pending) == 1, 'the busy check holds the pending prepare request'
+    pending[0].continue_(); page.unroute('**/api/looks/prepare', hold)
     page.wait_for_function("!document.querySelector('#makeGenerate').disabled")
     assert len(jobs()) == before+1
     assert 'Started' in page.locator('#makeStatus').inner_text()
