@@ -1084,10 +1084,12 @@
     if(button){button.disabled=true;button.textContent='Importing…';}
     try{const r=await fetch('/api/assets/import',{method:'POST',headers:{'Content-Type':file.type,'X-Filename':file.name},body:file}),data=await r.json().catch(()=>({}));
       if(!r.ok||!data.asset?.id)throw Error(data.error||'The import was refused ('+r.status+').');
-      state.pictures=null;await loadPictures();if(goal()!==g)return;let a=state.pictures.find(x=>x.id===data.asset.id);if(!a)state.pictures.unshift(a=data.asset);
-      if(id==='makePosePictures'){state.pose={asset:a};state.posePicking=false;renderGoalComposer(g);q('[data-make-pose-change]')?.focus();}
-      else{state.character=null;choosePicture(a.id);await renderPictures(g);q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();}
-      say('Imported '+file.name+'. It is chosen.');}
+      // From here the asset exists (Codex P2 on #1576): it is chosen whatever happens next, and the list refresh is best effort.
+      let a=data.asset,listed=true;state.pictures=null;try{await loadPictures();a=state.pictures.find(x=>x.id===a.id)||(state.pictures.unshift(a),a);}catch{listed=false;state.pictures=[a];}
+      if(goal()===g){if(id==='makePosePictures'){state.pose={asset:a};state.posePicking=false;renderGoalComposer(g);q('[data-make-pose-change]')?.focus();}
+        else{state.character=null;choosePicture(a.id);await renderPictures(g);q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();}}
+      if(!listed)state.pictures=null;   // the next picker reads the library again
+      say('Imported '+file.name+'. It is chosen'+(listed?'.':'; the picture list could not refresh, so it will reload next time.'));return;}
     catch(error){if(button){button.disabled=false;button.textContent='Import a picture…';}fail(error.message);}
     finally{input.value='';}
   }

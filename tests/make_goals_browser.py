@@ -692,7 +692,15 @@ def run(shots):
         page.set_input_files('[data-make-import-file="makePictures"]', files=[{'name': 'my sketch.png', 'mimeType': 'image/png', 'buffer': png}])
         page.wait_for_selector('#makeComposer #makeGenerate'); assert 'my sketch.png' in page.locator('.make-picked').inner_text(), page.locator('.make-picked').inner_text()
         assert posted('/api/assets/import')[-1] == {'filename': 'my sketch.png', 'type': 'image/png'} and not [p for p in fixture.POSTS[-1:] if p['path'] == '/api/jobs']
-        page.set_input_files('[data-make-import-file="makePictures"]', files=[]) if page.locator('[data-make-import-file="makePictures"]').count() else None
+        # Codex P2 on #1576: the import landed but the list refresh fails; the picture is still chosen and nobody is told "Nothing was imported".
+        page.locator('[data-make-repick]').first.click(); page.wait_for_selector('[data-make-import="makePictures"]'); imports = len(posted('/api/assets/import'))
+        refuse = lambda route: route.fulfill(status=503, json={'error': 'Fixture workspace unavailable'}); page.route('**/api/workspace', refuse)
+        try:
+            page.set_input_files('[data-make-import-file="makePictures"]', files=[{'name': 'second.png', 'mimeType': 'image/png', 'buffer': png}])
+            page.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("could not refresh")')
+            assert 'second.png' in page.locator('.make-picked').inner_text() and len(posted('/api/assets/import')) == imports + 1
+            assert 'Nothing was imported' not in page.locator('#makeBody').inner_text()
+        finally: page.unroute('**/api/workspace', refuse)
         page.locator('[data-make-goal="combine"]').click(); page.wait_for_selector('#makeComposer')
         if not page.locator('[data-make-import-file="makePosePictures"]').count(): page.locator('[data-make-pose-change]').first.click()
         page.set_input_files('[data-make-import-file="makePosePictures"]', files=[{'name': 'pose ref.jpg', 'mimeType': 'image/jpeg', 'buffer': png}])
