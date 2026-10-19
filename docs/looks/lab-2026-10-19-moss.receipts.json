@@ -1,0 +1,2760 @@
+{
+ "jobs": [
+  {
+   "name": "m1-s1-proof",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "1ec8783d-8b38-47d2-9f6c-ea318c535cb4",
+   "prompt_ids": [
+    "e166ee9e-e8ad-4333-ba30-44fad9dd0fee"
+   ],
+   "seconds": 123.53790974617004,
+   "peak_commit": 0.719,
+   "admission": 0.4037237207702373,
+   "outputs": [
+    {
+     "file": "m1-s1-proof-0.png",
+     "sha256": "5cc51e62d727a8b50b6370dc048518c2561a2963ab9dcaad98543338e2e845a8",
+     "bytes": 2595538
+    }
+   ]
+  },
+  {
+   "name": "m4-s1-4step-sgm",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 4,
+    "cfg": 1.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 1.0,
+    "lora2": 0,
+    "lora_name": "moss_image_sft_4step_lora_v2.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "0b6d3abf-4601-45cc-8b10-275959da0b31",
+   "prompt_ids": [
+    "742d24c8-c84c-4c80-a56d-6b158f9cd273"
+   ],
+   "seconds": 58.76540279388428,
+   "peak_commit": 0.667,
+   "admission": 0.3928747340176678,
+   "outputs": [
+    {
+     "file": "m4-s1-4step-sgm-0.png",
+     "sha256": "72da6a1494a0c4d26dbdcd16aee8601596d626862a9656b0b325b072a499d315",
+     "bytes": 2154340
+    }
+   ]
+  },
+  {
+   "name": "m4-s1-4step",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 4,
+    "cfg": 1.0,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 1.0,
+    "lora2": 0,
+    "lora_name": "moss_image_sft_4step_lora_v2.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "add26c29-844c-4cfb-98cf-6310d88c65d0",
+   "prompt_ids": [
+    "de4339fa-0498-433d-bd58-8a9bef3d447c"
+   ],
+   "seconds": 41.014609813690186,
+   "peak_commit": 0.71,
+   "admission": 0.5948507063824442,
+   "outputs": [
+    {
+     "file": "m4-s1-4step-0.png",
+     "sha256": "8f843392a474b979c8d3f2e683092f26ec007d9716bf9e0ac93c1e591d1c24a9",
+     "bytes": 2154941
+    }
+   ]
+  },
+  {
+   "name": "m4-s1-8step",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 8,
+    "cfg": 1.0,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 1.0,
+    "lora2": 0,
+    "lora_name": "moss_image_sft_4step_lora_v2.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "85df9077-5e69-4872-ab21-83e75309472b",
+   "prompt_ids": [
+    "5e7cae75-a444-4f9b-b6e2-ca4b282c6e38"
+   ],
+   "seconds": 33.23488640785217,
+   "peak_commit": 0.71,
+   "admission": 0.5894235430209536,
+   "outputs": [
+    {
+     "file": "m4-s1-8step-0.png",
+     "sha256": "3f3a80e3436c48d0fcbedbd58a087aa8f3a22045c981613627322e3da3ab5153",
+     "bytes": 2197816
+    }
+   ]
+  },
+  {
+   "name": "m4-s2-4step",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 4,
+    "cfg": 1.0,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 1.0,
+    "lora2": 0,
+    "lora_name": "moss_image_sft_4step_lora_v2.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "045427aa-43c0-4440-a6d7-ac2dab60b22e",
+   "prompt_ids": [
+    "5e8cfce4-5f5c-47fa-ab31-1559c63813e6"
+   ],
+   "seconds": 59.27012658119202,
+   "peak_commit": 0.681,
+   "admission": 0.39907607353729047,
+   "outputs": [
+    {
+     "file": "m4-s2-4step-0.png",
+     "sha256": "0497ad817f3c7246fa3eba810cce8146ac83c91f9d31b63251ccdcf323afb5d1",
+     "bytes": 2296279
+    }
+   ]
+  },
+  {
+   "name": "m4-s3-4step",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman knight of thirty-two with short auburn hair and a small scar on her cheek, wearing silver plate armor and a blue cloak. She holds a longsword point down and stands on a misty battlefield at dawn, full body, determined expression, looking at the viewer, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 4,
+    "cfg": 1.0,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 1.0,
+    "lora2": 0,
+    "lora_name": "moss_image_sft_4step_lora_v2.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "070d912b-acc2-4adc-bef5-c8f07b72bc50",
+   "prompt_ids": [
+    "c4f3a40c-de11-424f-a489-c02eead24132"
+   ],
+   "seconds": 28.44199824333191,
+   "peak_commit": 0.687,
+   "admission": 0.5908698779920373,
+   "outputs": [
+    {
+     "file": "m4-s3-4step-0.png",
+     "sha256": "801fd03a54f165be0df34f14bb1c240b0c1c98648a45694fce8f146a6976efe0",
+     "bytes": 2024426
+    }
+   ]
+  },
+  {
+   "name": "mc1-gown",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing an elegant midnight blue ballroom gown with long gloves, standing on a marble staircase in a grand ballroom, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "0d528df5-6db5-4a60-99f4-8b74f77883bc",
+   "prompt_ids": [
+    "0d5c9397-7c36-4630-ad5a-e866b17dba44"
+   ],
+   "seconds": 56.49596619606018,
+   "peak_commit": 0.691,
+   "admission": 0.5992001122828405,
+   "outputs": [
+    {
+     "file": "mc1-gown-0.png",
+     "sha256": "11f5310fa25a3de786b6daa909584eaaa9df3bc0bcb5b562dfaacbe08f468624",
+     "bytes": 2735883
+    }
+   ]
+  },
+  {
+   "name": "mc1-hanfu",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing an ornate red and gold hanfu with flowing sleeves, holding a folding fan in a lantern-lit garden, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "875a9e5f-b8b6-4e68-a6d7-8e426e8a9385",
+   "prompt_ids": [
+    "8da42f76-faca-46e7-8ead-119838b5ae7e"
+   ],
+   "seconds": 97.38969397544861,
+   "peak_commit": 0.661,
+   "admission": 0.42106862212663765,
+   "outputs": [
+    {
+     "file": "mc1-hanfu-0.png",
+     "sha256": "0548e16f52222014099bf71be03c12206b3f59dfb9bc848ee7e997ae44110bca",
+     "bytes": 2933060
+    }
+   ]
+  },
+  {
+   "name": "mc1-maid",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing a classic long-sleeved Victorian maid dress with a white apron and lace headband, carrying a silver tea tray in a sunlit tea room, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "889c1f26-3f6e-46f9-b0f5-c8ea2d0fde83",
+   "prompt_ids": [
+    "69346ec5-cd53-4265-856c-c7c5091b8324"
+   ],
+   "seconds": 74.77659392356873,
+   "peak_commit": 0.671,
+   "admission": 0.5861571548510124,
+   "outputs": [
+    {
+     "file": "mc1-maid-0.png",
+     "sha256": "91b4f413fd00feae3299661ab67cfcf3d9e5316173f549f3d86f5f6e98cd55f5",
+     "bytes": 2394008
+    }
+   ]
+  },
+  {
+   "name": "mc1-office",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing a tailored navy business suit with a white blouse and glasses, holding a tablet in a modern glass office, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "a12a6ac4-9091-4f22-a23f-ea0b4b593987",
+   "prompt_ids": [
+    "3f27d341-a574-44e0-bc1a-f812a0130b73"
+   ],
+   "seconds": 105.02041244506836,
+   "peak_commit": 0.691,
+   "admission": 0.4117016764159649,
+   "outputs": [
+    {
+     "file": "mc1-office-0.png",
+     "sha256": "510308fb25199f48b753e23f8792b2ce749a28847c6497ad1cc6827bdc3474d9",
+     "bytes": 1928997
+    }
+   ]
+  },
+  {
+   "name": "mc1-pirate",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing a long crimson pirate captain coat with gold buttons and a feathered tricorn hat, one hand on a cutlass at the deck of a ship at sunset, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "ab07806a-7a55-482e-9263-567e16b64b74",
+   "prompt_ids": [
+    "a250142e-242a-454a-83cc-38981095223f"
+   ],
+   "seconds": 54.87551927566528,
+   "peak_commit": 0.594,
+   "admission": 0.5940572027194636,
+   "outputs": [
+    {
+     "file": "mc1-pirate-0.png",
+     "sha256": "77163e1f809e605d9647e7fe4f0bc7e9fae4a60210bc712c63507f486af7c6fa",
+     "bytes": 2551568
+    }
+   ]
+  },
+  {
+   "name": "mc1-priestess",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing white and gold priestess robes with a long veil, holding a staff topped with a golden sun in a sunlit cathedral, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "da23f24e-6e6a-4832-aedf-812699132e00",
+   "prompt_ids": [
+    "9feb6349-ebfc-4550-943c-4e3804ce3bad"
+   ],
+   "seconds": 56.52677297592163,
+   "peak_commit": 0.604,
+   "admission": 0.5914035960795372,
+   "outputs": [
+    {
+     "file": "mc1-priestess-0.png",
+     "sha256": "df398f5585c25246729f9a7a644b30e90ffed525493852a07514195b7764f73d",
+     "bytes": 2611306
+    }
+   ]
+  },
+  {
+   "name": "mc1-samurai",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing lacquered black and red samurai armour with a half-cape, holding a katana in a bamboo forest at dawn, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "14248755-e408-43dd-a505-c6e9343230e2",
+   "prompt_ids": [
+    "3a94ecf5-0720-4ab3-ba15-a8bbf12b7679"
+   ],
+   "seconds": 54.53417634963989,
+   "peak_commit": 0.597,
+   "admission": 0.5896549550223059,
+   "outputs": [
+    {
+     "file": "mc1-samurai-0.png",
+     "sha256": "09d3cf9a43daa6570a68691ec96a736a4c0cc56dae6eb9d63fd28013dbc3f0ab",
+     "bytes": 2983661
+    }
+   ]
+  },
+  {
+   "name": "mc1-techwear",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing a black techwear jacket with glowing cyan seams and a long scarf, standing on a rainy neon street at night, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "47c321fd-2d83-4465-ad8e-baf080040db7",
+   "prompt_ids": [
+    "7ec18002-ce3b-4210-b482-48020f49e61e"
+   ],
+   "seconds": 58.63529872894287,
+   "peak_commit": 0.645,
+   "admission": 0.5825308765856325,
+   "outputs": [
+    {
+     "file": "mc1-techwear-0.png",
+     "sha256": "fd78891a0f40e2a648c27072472a56e961befeef522901a785708c7716e9e187",
+     "bytes": 2711567
+    }
+   ]
+  },
+  {
+   "name": "mc1-winter",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing a thick cream winter coat, knitted scarf and gloves, holding a paper cup of tea in a snowy street at dusk, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "ba164e1d-760c-498e-8f7a-f54375886974",
+   "prompt_ids": [
+    "7668a00c-9cfa-4cb1-a6ff-732109e3d405"
+   ],
+   "seconds": 52.53492593765259,
+   "peak_commit": 0.618,
+   "admission": 0.5917063803719903,
+   "outputs": [
+    {
+     "file": "mc1-winter-0.png",
+     "sha256": "c36eef23d80849a55fd4cfac35edd2c10ca279449cab869c681903fe4e167566",
+     "bytes": 2746267
+    }
+   ]
+  },
+  {
+   "name": "mc1-witch",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long wavy chestnut hair and green eyes, wearing a wide-brimmed purple witch hat and a long star-patterned cloak, holding a glowing lantern in a moonlit forest, full body, looking at the viewer, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "d321b0e1-d863-438b-abea-83d6f89ca270",
+   "prompt_ids": [
+    "894e8369-34e6-4023-8fd8-6c1e3fa286d4"
+   ],
+   "seconds": 54.536925315856934,
+   "peak_commit": 0.621,
+   "admission": 0.5893218843305024,
+   "outputs": [
+    {
+     "file": "mc1-witch-0.png",
+     "sha256": "20ce6a8f988fa5c57fe25fa730b6b4c283fe34aa6e86e8a6b59d622c3ed132c1",
+     "bytes": 2615476
+    }
+   ]
+  },
+  {
+   "name": "mcel-face-off",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "anime illustration, flat cel shading, clean lineart. Close-up portrait of an adult woman in her late twenties with long black hair, deep red eyes, soft lipstick and elegant pearl earrings, looking at the viewer with a gentle smile, soft rim light, shallow depth of field, detailed eyes and eyelashes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "8872905f-331d-4748-9ca0-22dcbc766f70",
+   "prompt_ids": [
+    "553c520a-5a0c-4d78-80b9-d08fd0f04f57"
+   ],
+   "seconds": 100.93509268760681,
+   "peak_commit": 0.771,
+   "admission": 0.5272049574691282,
+   "outputs": [
+    {
+     "file": "mcel-face-off-0.png",
+     "sha256": "bc88869d3279f17d4e432f46e29b08c667ab05a74a5550f1cde02f869707d8bd",
+     "bytes": 1905236
+    }
+   ]
+  },
+  {
+   "name": "mcel-face-on06",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "anime illustration, flat cel shading, clean lineart. Close-up portrait of an adult woman in her late twenties with long black hair, deep red eyes, soft lipstick and elegant pearl earrings, looking at the viewer with a gentle smile, soft rim light, shallow depth of field, detailed eyes and eyelashes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0.6,
+    "lora2": 0,
+    "lora_name": "moss-lab-anima-cel-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "c18e578d-2401-416d-93e5-dbb314f7ac06",
+   "prompt_ids": [
+    "904e7f05-9ab1-4cec-b216-885441c52e18"
+   ],
+   "seconds": 60.49307990074158,
+   "peak_commit": 0.75,
+   "admission": 0.5908564085144314,
+   "outputs": [
+    {
+     "file": "mcel-face-on06-0.png",
+     "sha256": "63d6ecd26207db019a8073d9c47742b77fcdee8c1c7d0f80df4a336d48ff172d",
+     "bytes": 2103564
+    }
+   ]
+  },
+  {
+   "name": "mcel-face-on10-noprefix",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "Close-up portrait of an adult woman in her late twenties with long black hair, deep red eyes, soft lipstick and elegant pearl earrings, looking at the viewer with a gentle smile, soft rim light, shallow depth of field, detailed eyes and eyelashes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 1.0,
+    "lora2": 0,
+    "lora_name": "moss-lab-anima-cel-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "779c8242-ee9f-4762-ab86-279a058e2609",
+   "prompt_ids": [
+    "d4d3b55f-9201-427a-9eb5-eb7bd0272739"
+   ],
+   "seconds": 54.53328084945679,
+   "peak_commit": 0.677,
+   "admission": 0.5694926613663343,
+   "outputs": [
+    {
+     "file": "mcel-face-on10-noprefix-0.png",
+     "sha256": "85c243d604991caf87d3903414fd07054d760c0528140f8eaf991f98ead89fa3",
+     "bytes": 2379826
+    }
+   ]
+  },
+  {
+   "name": "mcel-face-on10",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "anime illustration, flat cel shading, clean lineart. Close-up portrait of an adult woman in her late twenties with long black hair, deep red eyes, soft lipstick and elegant pearl earrings, looking at the viewer with a gentle smile, soft rim light, shallow depth of field, detailed eyes and eyelashes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 1.0,
+    "lora2": 0,
+    "lora_name": "moss-lab-anima-cel-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "438cc040-fbd5-4141-8c90-964541c44167",
+   "prompt_ids": [
+    "cdfd884e-7d19-4c21-8770-d04e026fbc03"
+   ],
+   "seconds": 96.39329934120178,
+   "peak_commit": 0.757,
+   "admission": 0.47549814352342085,
+   "outputs": [
+    {
+     "file": "mcel-face-on10-0.png",
+     "sha256": "0c178c80b69b222aec418f86e1eae9a4c3eaf1a030c0c76b6571cb18fa532be2",
+     "bytes": 2258381
+    }
+   ]
+  },
+  {
+   "name": "mcel-s1-off",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "anime illustration, flat cel shading, clean lineart. An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "4610c314-cfe2-4300-8715-3a25c5360b96",
+   "prompt_ids": [
+    "1a679ec1-966c-4a7f-bf29-61b8c0df6e66"
+   ],
+   "seconds": 62.66936683654785,
+   "peak_commit": 0.719,
+   "admission": 0.5914677554255295,
+   "outputs": [
+    {
+     "file": "mcel-s1-off-0.png",
+     "sha256": "447a73648dd8b7ff7e670714228d04eef914ec04bcf916a02b07d846dbb86068",
+     "bytes": 2222937
+    }
+   ]
+  },
+  {
+   "name": "mcel-s1-on06",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "anime illustration, flat cel shading, clean lineart. An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0.6,
+    "lora2": 0,
+    "lora_name": "moss-lab-anima-cel-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "157af93c-86ed-4e9d-8506-bfd550fe9f4c",
+   "prompt_ids": [
+    "5db8cb86-d751-46b6-bae5-ea5facb3e2b4"
+   ],
+   "seconds": 60.48548865318298,
+   "peak_commit": 0.747,
+   "admission": 0.5945581636750346,
+   "outputs": [
+    {
+     "file": "mcel-s1-on06-0.png",
+     "sha256": "5d88749fb63e6795d207c9ac0e5ec4806922992616be8fd1e7ab11cf84572cb6",
+     "bytes": 2348279
+    }
+   ]
+  },
+  {
+   "name": "mcel-s1-on10",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "anime illustration, flat cel shading, clean lineart. An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 1.0,
+    "lora2": 0,
+    "lora_name": "moss-lab-anima-cel-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "24165025-8b73-4877-8a2a-de9ef1affb3b",
+   "prompt_ids": [
+    "8584598d-a351-4f2e-9fcc-5721bb85cbbb"
+   ],
+   "seconds": 70.50448083877563,
+   "peak_commit": 0.742,
+   "admission": 0.5993375567451558,
+   "outputs": [
+    {
+     "file": "mcel-s1-on10-0.png",
+     "sha256": "bcce47ce84d4391b13ddf1df1049d1abb5b5791285351cf9c2e2426316a8aec1",
+     "bytes": 2423353
+    }
+   ]
+  },
+  {
+   "name": "mcel-s2-off",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "anime illustration, flat cel shading, clean lineart. An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "fa5ab2ba-9515-4c45-afc4-647e32b18c13",
+   "prompt_ids": [
+    "b36e1e92-3515-4d55-89d2-abfc6547ed44"
+   ],
+   "seconds": 58.60298180580139,
+   "peak_commit": 0.742,
+   "admission": 0.5864786290399068,
+   "outputs": [
+    {
+     "file": "mcel-s2-off-0.png",
+     "sha256": "de29bcd8b6c107101190ea006f54451f493c2f5e27650375446edcc23e83b88c",
+     "bytes": 2713759
+    }
+   ]
+  },
+  {
+   "name": "mcel-s2-on06",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "anime illustration, flat cel shading, clean lineart. An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0.6,
+    "lora2": 0,
+    "lora_name": "moss-lab-anima-cel-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "5719271d-1308-4ddc-a1a6-c0f3e33a5968",
+   "prompt_ids": [
+    "9e215868-773c-412b-83fc-c3334a41f709"
+   ],
+   "seconds": 54.5010826587677,
+   "peak_commit": 0.686,
+   "admission": 0.5858107342331794,
+   "outputs": [
+    {
+     "file": "mcel-s2-on06-0.png",
+     "sha256": "55346680f534c5348b4412b476ef58e02857d3215071a2bfd7697a5da2cf7243",
+     "bytes": 2820291
+    }
+   ]
+  },
+  {
+   "name": "mcel-s2-on10",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "anime illustration, flat cel shading, clean lineart. An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 1.0,
+    "lora2": 0,
+    "lora_name": "moss-lab-anima-cel-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "72930fd0-f83b-4878-b0c5-a126483693b4",
+   "prompt_ids": [
+    "8efa8fd4-3d49-4397-a91b-1d698596fe8e"
+   ],
+   "seconds": 110.81947541236877,
+   "peak_commit": 0.691,
+   "admission": 0.44851033156753,
+   "outputs": [
+    {
+     "file": "mcel-s2-on10-0.png",
+     "sha256": "24af6c72e14e79c8774d1edd9144322364d37b54477fdff7d1f667e63760103a",
+     "bytes": 2778096
+    }
+   ]
+  },
+  {
+   "name": "mf1-face",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "Close-up portrait of an adult woman in her late twenties with long black hair, deep red eyes, soft lipstick and elegant pearl earrings, looking at the viewer with a gentle smile, soft rim light, shallow depth of field, detailed eyes and eyelashes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "f575261f-4118-4d68-bb69-f3accd590f85",
+   "prompt_ids": [
+    "ba14240b-3302-4da5-90e4-ce89dd785620"
+   ],
+   "seconds": 68.58888936042786,
+   "peak_commit": 0.649,
+   "admission": 0.5815644216421509,
+   "outputs": [
+    {
+     "file": "mf1-face-0.png",
+     "sha256": "53aeb06c71ca43de9912ecf1516b2809a89ca47679c11426e7fbf1478883b3d0",
+     "bytes": 2344150
+    }
+   ]
+  },
+  {
+   "name": "mf2-face-tags",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "masterpiece, best quality, anime coloring, flat color, cel shading, clean lineart, illustration, 1girl, solo, adult woman, mature female, 28 years old, long black hair, red eyes, pearl earrings, close-up, looking at viewer, gentle smile, soft rim light, detailed eyes",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "5eb74d64-4c35-49b7-84be-43e6e7e4e855",
+   "prompt_ids": [
+    "6e8bf328-050d-4ec2-a913-786319502bc4"
+   ],
+   "seconds": 56.47711253166199,
+   "peak_commit": 0.675,
+   "admission": 0.5942024977352947,
+   "outputs": [
+    {
+     "file": "mf2-face-tags-0.png",
+     "sha256": "8761e3de29c4c5a41ade99da260f6d2d07dc2e9d35009027e9c0e1381442cca4",
+     "bytes": 1752533
+    }
+   ]
+  },
+  {
+   "name": "mf3-face-2d",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "Close-up portrait of an adult woman in her late twenties with long black hair, deep red eyes, soft lipstick and elegant pearl earrings, looking at the viewer with a gentle smile, soft rim light, shallow depth of field, detailed eyes and eyelashes, 2D anime illustration with cel shading and clean lineart, not photorealistic, not a photograph.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "19a60d77-ca52-4934-a630-1b1edd7a7128",
+   "prompt_ids": [
+    "cebe1b97-dca5-473c-a4e1-e7856fea9766"
+   ],
+   "seconds": 54.50688123703003,
+   "peak_commit": 0.62,
+   "admission": 0.5939149363435676,
+   "outputs": [
+    {
+     "file": "mf3-face-2d-0.png",
+     "sha256": "ceaeb5659c22ce3f4ddb2d4ab9ebd52d430e3eed29d65a39e0b4e0594a7d3f5a",
+     "bytes": 2032595
+    }
+   ]
+  },
+  {
+   "name": "mf4-face-reverse",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "Close-up portrait of an adult woman in her late twenties with long black hair, deep red eyes, soft lipstick and elegant pearl earrings, looking at the viewer with a gentle smile, soft rim light, shallow depth of field, detailed eyes and eyelashes, anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0.9,
+    "lora2": 0,
+    "lora_name": "moss-reverse1999-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "5e3a62fe-6c7f-458c-9634-e4ba85038021",
+   "prompt_ids": [
+    "c32541e0-936d-41aa-8144-37ff751fc67c"
+   ],
+   "seconds": 54.477728605270386,
+   "peak_commit": 0.647,
+   "admission": 0.5928459061475493,
+   "outputs": [
+    {
+     "file": "mf4-face-reverse-0.png",
+     "sha256": "7bf4b3c096bdd7b2ad7efb55e57ea320aca2500f46f1f7e44c332df06f2c33a2",
+     "bytes": 2093089
+    }
+   ]
+  },
+  {
+   "name": "mf5-face-mikkoani",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "Close-up portrait of an adult woman in her late twenties with long black hair, deep red eyes, soft lipstick and elegant pearl earrings, looking at the viewer with a gentle smile, soft rim light, shallow depth of field, detailed eyes and eyelashes, anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 1.0,
+    "lora2": 0,
+    "lora_name": "moss-mikkoani-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "34680009-6a3b-4cdf-b541-33271dfc41db",
+   "prompt_ids": [
+    "00039174-467c-4ae9-b4fb-1d9218ae05ee"
+   ],
+   "seconds": 46.42457389831543,
+   "peak_commit": 0.638,
+   "admission": 0.5903029644168282,
+   "outputs": [
+    {
+     "file": "mf5-face-mikkoani-0.png",
+     "sha256": "0567e4383a6f87e4d63a9a3d4de535e3b6b027ec617de5a12bfdddfa2461db34",
+     "bytes": 2052353
+    }
+   ]
+  },
+  {
+   "name": "mg-s1-832",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 832,
+    "height": 1248,
+    "positive": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "b2cca469-4bce-4c78-b06b-580238a8eb12",
+   "prompt_ids": [
+    "d5350252-ad39-4779-883f-bf734de6c392"
+   ],
+   "seconds": 62.66739082336426,
+   "peak_commit": 0.682,
+   "admission": 0.5671738788413316,
+   "outputs": [
+    {
+     "file": "mg-s1-832-0.png",
+     "sha256": "5e5626174a7e29a81777fad45566be0605360669bacb49a01aee625660e5cde3",
+     "bytes": 1603419
+    }
+   ]
+  },
+  {
+   "name": "mg-s1-cfg2",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 2.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "870332bd-c4b6-4d99-8403-ca3542a2d291",
+   "prompt_ids": [
+    "77fd881c-73aa-4c18-ba1a-0bc9e7d1b51b"
+   ],
+   "seconds": 93.52655172348022,
+   "peak_commit": 0.674,
+   "admission": 0.4006038629824165,
+   "outputs": [
+    {
+     "file": "mg-s1-cfg2-0.png",
+     "sha256": "0028a2f286a07b9face3d6d8a1e7d37a73174173f96fec5a13932d86c220ded1",
+     "bytes": 2680452
+    }
+   ]
+  },
+  {
+   "name": "mg-s1-cfg4",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 4.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "42afb2ae-ad9f-4fda-b610-f30106864d2f",
+   "prompt_ids": [
+    "13f29b5d-89bb-4ba5-9604-4dd9210b1b78"
+   ],
+   "seconds": 94.84054446220398,
+   "peak_commit": 0.655,
+   "admission": 0.41051819551082236,
+   "outputs": [
+    {
+     "file": "mg-s1-cfg4-0.png",
+     "sha256": "37ad77c55d650031f2a17155796907cb40f01cf1456bbb1f7004d9d46f8a77f8",
+     "bytes": 2592532
+    }
+   ]
+  },
+  {
+   "name": "mg-s1-cfg6",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 6.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "51aa2b9a-7c97-475e-973c-61ccc1d45592",
+   "prompt_ids": [
+    "b619e4a3-f16b-4f87-b78c-49f202f5f0df"
+   ],
+   "seconds": 105.26491212844849,
+   "peak_commit": 0.759,
+   "admission": 0.4245808880386735,
+   "outputs": [
+    {
+     "file": "mg-s1-cfg6-0.png",
+     "sha256": "cc4331c0fe19e09f51df08e19d1aa828d549c707bbb3351cda45ac6ff56b6bbc",
+     "bytes": 2583008
+    }
+   ]
+  },
+  {
+   "name": "mg-s1-ersde",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "er_sde",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "5dd89da4-e835-4129-ace4-b5f9c46e1a24",
+   "prompt_ids": [
+    "9cd656a2-f7b8-4f60-b27d-426d12a567d9"
+   ],
+   "seconds": 105.63691830635071,
+   "peak_commit": 0.664,
+   "admission": 0.46679152101963783,
+   "outputs": [
+    {
+     "file": "mg-s1-ersde-0.png",
+     "sha256": "454c3dd6c9fb53ff9064117d55757086b57e6c3ac86d2d1c0da643fc30941b0f",
+     "bytes": 2343935
+    }
+   ]
+  },
+  {
+   "name": "mg-s1-euler_a",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler_ancestral",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "b81d0b6b-0333-49a5-bf0d-7a8726956d6e",
+   "prompt_ids": [
+    "733d0591-6836-4892-a76c-783e9da2dc1d"
+   ],
+   "seconds": 84.60975360870361,
+   "peak_commit": 0.672,
+   "admission": 0.5623179329117998,
+   "outputs": [
+    {
+     "file": "mg-s1-euler_a-0.png",
+     "sha256": "7d17a3b9ece76feda12d51f13910dd68519ce970feeebf54cd256a12da0d49a6",
+     "bytes": 2248494
+    }
+   ]
+  },
+  {
+   "name": "mg-s1-simple",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "b845f9a6-20da-41d4-a0fe-30ec3ea49f80",
+   "prompt_ids": [
+    "43550c88-3096-47b0-a1e1-578941467a1d"
+   ],
+   "seconds": 80.66957426071167,
+   "peak_commit": 0.71,
+   "admission": 0.556319352865723,
+   "outputs": [
+    {
+     "file": "mg-s1-simple-0.png",
+     "sha256": "6d13585776aecb9dedc09d0838805c48d74fdf516071199b1072cb1e37c6b6f1",
+     "bytes": 2590103
+    }
+   ]
+  },
+  {
+   "name": "mg-s1-st20",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 20,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "8f88f03c-9745-45ba-a53c-ed9626ecba51",
+   "prompt_ids": [
+    "8bacc15e-854c-4a1c-9998-95d2156434c2"
+   ],
+   "seconds": 44.39657545089722,
+   "peak_commit": 0.619,
+   "admission": 0.5952844395015624,
+   "outputs": [
+    {
+     "file": "mg-s1-st20-0.png",
+     "sha256": "cdcca84f3d97614a1361b32d3ab8d952f63886356c77e69f87cc655c0482214a",
+     "bytes": 2573744
+    }
+   ]
+  },
+  {
+   "name": "mg-s1-st50",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 50,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "9fa11b12-b694-4e4d-b606-c5e22451d643",
+   "prompt_ids": [
+    "2bb7a7bd-7d35-4fa7-a6a4-9747d80dd2b5"
+   ],
+   "seconds": 78.52875590324402,
+   "peak_commit": 0.618,
+   "admission": 0.5955307555994371,
+   "outputs": [
+    {
+     "file": "mg-s1-st50-0.png",
+     "sha256": "351362ead2afdc8c113e40a84c7b47786c3d7c843c05d6d85937e2419f505476",
+     "bytes": 2626003
+    }
+   ]
+  },
+  {
+   "name": "mh1-2k",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1536,
+    "height": 2048,
+    "positive": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "de715992-d4ce-4e25-bb51-8bfcb6369205",
+   "prompt_ids": [
+    "27785b4f-7f3e-4431-a605-9a70e695496d"
+   ],
+   "seconds": 165.90901923179626,
+   "peak_commit": 0.909,
+   "admission": 0.5952664669145794,
+   "outputs": [
+    {
+     "file": "mh1-2k-0.png",
+     "sha256": "25082fa31de764ae7f6f2626e26e0292de6b39d57ef0ce03308412f0cc05173d",
+     "bytes": 4450388
+    }
+   ]
+  },
+  {
+   "name": "mj-s1-layout",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "{\"summary\":{\"caption\":\"High-end anime illustration of an adult silver-haired sorceress on a castle balcony at dusk.\"},\"items\":[{\"label\":\"character\",\"caption\":\"an adult woman in her late twenties with long silver hair and violet eyes, black and gold sorceress robe, calm confident smile\",\"bbox\":[-648,-332,732,248]},{\"label\":\"object\",\"caption\":\"a tall crystal staff held upright, glowing violet crystal at the top\",\"bbox\":[-708,228,682,388]},{\"label\":\"object\",\"caption\":\"a distant fairytale castle with towers at sunset\",\"bbox\":[-768,-512,-68,-212]}],\"bbox_coord_space\":\"abs_centralized\",\"bbox_format\":\"yxyx\"}",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "f96ee2ed-6c0e-4124-9622-c51ae317a798",
+   "prompt_ids": [
+    "5b0532ac-9e67-4320-9b08-2e0c33cb9d30"
+   ],
+   "seconds": 80.67051672935486,
+   "peak_commit": 0.722,
+   "admission": 0.5527444817781878,
+   "outputs": [
+    {
+     "file": "mj-s1-layout-0.png",
+     "sha256": "140163e2b60e15dc65d7e71b5fb423bfdabb2f8074517103bb3e191af31cf1f1",
+     "bytes": 2603546
+    }
+   ]
+  },
+  {
+   "name": "mj-s2-layout",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "{\"summary\":{\"caption\":\"High-end anime illustration of an adult woman in a red kimono with a red umbrella on a stone bridge among cherry blossoms.\"},\"items\":[{\"label\":\"character\",\"caption\":\"an adult woman of thirty with black hair in an updo with kanzashi, red furisode kimono with white crane embroidery and a gold obi, serene smile\",\"bbox\":[-468,-212,732,228]},{\"label\":\"object\",\"caption\":\"a large red paper umbrella held over her shoulder\",\"bbox\":[-728,-332,-128,308]},{\"label\":\"object\",\"caption\":\"an arched stone bridge\",\"bbox\":[332,-512,768,512]}],\"bbox_coord_space\":\"abs_centralized\",\"bbox_format\":\"yxyx\"}",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "f98f3f23-1eb6-4197-ba05-4f350d4b31d3",
+   "prompt_ids": [
+    "608e0f30-cc5d-4dc0-8525-3edee63e960a"
+   ],
+   "seconds": 82.62800455093384,
+   "peak_commit": 0.686,
+   "admission": 0.5699304990895749,
+   "outputs": [
+    {
+     "file": "mj-s2-layout-0.png",
+     "sha256": "c0dd0f7feeb63ab5843a86364a0dd5d0bb84ddaafd32996acc6c237dac6d5f67",
+     "bytes": 2899678
+    }
+   ]
+  },
+  {
+   "name": "ml-anireal",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0.9,
+    "lora2": 0,
+    "lora_name": "moss-anireal-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "1416ecc7-8c92-4432-b798-bc04290a3f11",
+   "prompt_ids": [
+    "b17b5ff9-7701-4aa3-a224-135e3851a4e3"
+   ],
+   "seconds": 78.6666247844696,
+   "peak_commit": 0.694,
+   "admission": 0.5591582644490434,
+   "outputs": [
+    {
+     "file": "ml-anireal-0.png",
+     "sha256": "7efee4150b9c6bead419348a7b3e67d843f83e9a53b1d6e8b700019cdb215a87",
+     "bytes": 2231714
+    }
+   ]
+  },
+  {
+   "name": "ml-chainsaw",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "chainsty, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0.8,
+    "lora2": 0,
+    "lora_name": "moss-chainsawman-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "be5797e5-eb65-4cf6-85af-b22e59295718",
+   "prompt_ids": [
+    "fca17fbc-dce7-463d-8c1b-ab49cd60ea41"
+   ],
+   "seconds": 76.58231449127197,
+   "peak_commit": 0.726,
+   "admission": 0.5727474928838917,
+   "outputs": [
+    {
+     "file": "ml-chainsaw-0.png",
+     "sha256": "311c65ae90160c61ce72ff7437f2ead30c9bce7948502eff24514b24abe7c5b6",
+     "bytes": 1674194
+    }
+   ]
+  },
+  {
+   "name": "ml-impasto",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0.8,
+    "lora2": 0,
+    "lora_name": "moss-impasto-25d-v08.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "8aaeb5e0-00a8-4ba8-8747-e63d4efd7636",
+   "prompt_ids": [
+    "01fdeae3-4bf6-4998-be84-2088e606d649"
+   ],
+   "seconds": 62.55578589439392,
+   "peak_commit": 0.676,
+   "admission": 0.5384776350083997,
+   "outputs": [
+    {
+     "file": "ml-impasto-0.png",
+     "sha256": "08203c0e8910e62b7562002ccf1aef10d0a9dcdf7e8477304b144087efa45282",
+     "bytes": 2238619
+    }
+   ]
+  },
+  {
+   "name": "ml-mikkoani",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 1.0,
+    "lora2": 0,
+    "lora_name": "moss-mikkoani-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "75a1cf8e-851a-4540-a226-0b7fe1fc0586",
+   "prompt_ids": [
+    "74067065-1ef4-44bc-817b-f431b648c48c"
+   ],
+   "seconds": 66.54846119880676,
+   "peak_commit": 0.69,
+   "admission": 0.534012024975759,
+   "outputs": [
+    {
+     "file": "ml-mikkoani-0.png",
+     "sha256": "2712e7225f271371c12b1252d0ae9cc536c7d9de40140133fc7f6e52af82c08c",
+     "bytes": 2514812
+    }
+   ]
+  },
+  {
+   "name": "ml-nanmoka",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "@nanmokaken, An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0.8,
+    "lora2": 0,
+    "lora_name": "moss-nanmokaken-v05.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "3c330615-661a-4ac1-ab38-12a0b35e6b87",
+   "prompt_ids": [
+    "c10762e9-d562-4b72-b4e1-03731c5d3fd1"
+   ],
+   "seconds": 68.52508926391602,
+   "peak_commit": 0.669,
+   "admission": 0.5517371800461086,
+   "outputs": [
+    {
+     "file": "ml-nanmoka-0.png",
+     "sha256": "f6dffe397d0baa3d1c9f701486baaa3c1dc664f0e29eba29799c92e862dde2d9",
+     "bytes": 2531799
+    }
+   ]
+  },
+  {
+   "name": "ml-reverse1999",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0.9,
+    "lora2": 0,
+    "lora_name": "moss-reverse1999-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "cc380a78-b12c-4277-99ac-2ddf3180b5e5",
+   "prompt_ids": [
+    "112209fd-0fd5-4023-b8b3-f1215ee3f230"
+   ],
+   "seconds": 102.97573256492615,
+   "peak_commit": 0.717,
+   "admission": 0.41730920325569226,
+   "outputs": [
+    {
+     "file": "ml-reverse1999-0.png",
+     "sha256": "4e3a919c657cc7497fe0d2bd41b6b53c62a3043fb854fc434988529659e32e64",
+     "bytes": 2496699
+    }
+   ]
+  },
+  {
+   "name": "ml-rezero",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0.9,
+    "lora2": 0,
+    "lora_name": "moss-rezero-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "4ef3db18-3899-47b6-b4cf-d00f0d722cf5",
+   "prompt_ids": [
+    "082c9295-2d38-4514-b8ca-4f0f379988d6"
+   ],
+   "seconds": 72.64538145065308,
+   "peak_commit": 0.726,
+   "admission": 0.5857814440969655,
+   "outputs": [
+    {
+     "file": "ml-rezero-0.png",
+     "sha256": "6e82b0de2370f82f19cc051ea092b1c25406e6c52ab9628e778978b5b04d4be5",
+     "bytes": 1970644
+    }
+   ]
+  },
+  {
+   "name": "ml2-anireal-s2",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0.9,
+    "lora2": 0,
+    "lora_name": "moss-anireal-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "cad3f46f-d810-4bc7-9c24-d25e03a81d2a",
+   "prompt_ids": [
+    "6adf5d31-4e12-478c-a89b-ee3cb644f3f4"
+   ],
+   "seconds": 75.6816258430481,
+   "peak_commit": 0.724,
+   "admission": 0.5856721341056259,
+   "outputs": [
+    {
+     "file": "ml2-anireal-s2-0.png",
+     "sha256": "2bed0ec558b74575004af80a74852d139be8422d93c686d10554e785847f3480",
+     "bytes": 2460123
+    }
+   ]
+  },
+  {
+   "name": "ml2-impasto-s2",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0.9,
+    "lora2": 0,
+    "lora_name": "moss-impasto-25d-v08.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "d29f3fcb-b8d9-42c2-a7c1-0c211b456f3c",
+   "prompt_ids": [
+    "d966b181-009d-4d10-944c-421c490afff9"
+   ],
+   "seconds": 72.71860456466675,
+   "peak_commit": 0.693,
+   "admission": 0.572883741830443,
+   "outputs": [
+    {
+     "file": "ml2-impasto-s2-0.png",
+     "sha256": "b927c7fe99b32bbbc71ccb5d0c1e5cf756a3afbcce322d6cc7f217b0823bdc6c",
+     "bytes": 2381078
+    }
+   ]
+  },
+  {
+   "name": "ml2-mikkoani-s2",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0.9,
+    "lora2": 0,
+    "lora_name": "moss-mikkoani-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "3e42e695-8980-4053-96fa-6d981a62a48b",
+   "prompt_ids": [
+    "e4f8fe4e-211a-498c-99bd-cf36d29e2f5c"
+   ],
+   "seconds": 80.68516302108765,
+   "peak_commit": 0.724,
+   "admission": 0.5911297034180434,
+   "outputs": [
+    {
+     "file": "ml2-mikkoani-s2-0.png",
+     "sha256": "a36c090a0c5c38cf6d64d95c9005898a29962f8f02b759712b11dc3397034320",
+     "bytes": 2979289
+    }
+   ]
+  },
+  {
+   "name": "ml2-reverse1999-s2",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0.9,
+    "lora2": 0,
+    "lora_name": "moss-reverse1999-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "be284c5e-e873-47a6-8e05-d77100eb3dd9",
+   "prompt_ids": [
+    "89ac1ae8-9d1d-48c8-bec4-71709400c693"
+   ],
+   "seconds": 70.55707669258118,
+   "peak_commit": 0.689,
+   "admission": 0.5538132728710534,
+   "outputs": [
+    {
+     "file": "ml2-reverse1999-s2-0.png",
+     "sha256": "1cfcc16bb7bf1dbe59c5b4a261e4e31deabcd4bf50ac06dcbc5ee1dad454d345",
+     "bytes": 2746870
+    }
+   ]
+  },
+  {
+   "name": "mo-s2",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "352de02d-a28d-435f-9c3f-d889dd9eeb00",
+   "prompt_ids": [
+    "2449dd50-4593-4921-bfb4-c8938216998a"
+   ],
+   "seconds": 75.05140900611877,
+   "peak_commit": 0.678,
+   "admission": 0.5579047661706658,
+   "outputs": [
+    {
+     "file": "mo-s2-0.png",
+     "sha256": "7e3626a051c2d02c1ae15c8a9a050d88a4d4bd4dbb5bbef358fd281a570b8fc5",
+     "bytes": 2854620
+    }
+   ]
+  },
+  {
+   "name": "mo-s3",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman knight of thirty-two with short auburn hair and a small scar on her cheek, wearing silver plate armor and a blue cloak. She holds a longsword point down and stands on a misty battlefield at dawn, full body, determined expression, looking at the viewer, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "0f9be625-a586-4ab3-b7fb-d57b86f4cbf9",
+   "prompt_ids": [
+    "0f5c64ec-fa5a-4d06-abbd-07a9a6226093"
+   ],
+   "seconds": 56.43874001502991,
+   "peak_commit": 0.634,
+   "admission": 0.5884741042518439,
+   "outputs": [
+    {
+     "file": "mo-s3-0.png",
+     "sha256": "7403954d2229b01b175824157a27e1d148b0de6a9e8c0b5627b00a662fc23cfd",
+     "bytes": 2508126
+    }
+   ]
+  },
+  {
+   "name": "mp-s1-hybrid",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "masterpiece, best quality, newest, 1girl, solo, mature female. An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "f26c534a-5df1-4d04-95a9-1f60494af6cb",
+   "prompt_ids": [
+    "a2806d84-2318-421f-9910-e1026df2b5dd"
+   ],
+   "seconds": 82.62413144111633,
+   "peak_commit": 0.692,
+   "admission": 0.5414724816978491,
+   "outputs": [
+    {
+     "file": "mp-s1-hybrid-0.png",
+     "sha256": "f4f1f81efc34ef08bae2df2015b4e2af8215d2d2e0d5a2d73d52ce1b868c062d",
+     "bytes": 2561114
+    }
+   ]
+  },
+  {
+   "name": "mp-s1-tags",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "masterpiece, best quality, 1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, holding a tall crystal staff, castle balcony at dusk, wind in her hair, calm confident smile, looking at viewer, cowboy shot, cinematic lighting, detailed face, detailed eyes",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "31681233-d3bd-4498-bf35-1e3eceff706f",
+   "prompt_ids": [
+    "056c20f4-c030-49fe-a155-31ca5fefbebf"
+   ],
+   "seconds": 80.7212483882904,
+   "peak_commit": 0.72,
+   "admission": 0.565820554996674,
+   "outputs": [
+    {
+     "file": "mp-s1-tags-0.png",
+     "sha256": "de3694ae38e6333ede56e802456a41525c059e236876895913ad8ada7ebf0819",
+     "bytes": 2699851
+    }
+   ]
+  },
+  {
+   "name": "mr-s1-2",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101902,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "da0da3af-7a2f-4322-8a5d-11305654e5d5",
+   "prompt_ids": [
+    "e3a4d1a4-ad87-47b0-81b4-1735bf48c607"
+   ],
+   "seconds": 82.91395545005798,
+   "peak_commit": 0.643,
+   "admission": 0.5550256852576807,
+   "outputs": [
+    {
+     "file": "mr-s1-2-0.png",
+     "sha256": "70e030c8846f5d7850a296008179e2cf7e8baeb49aadd240527182ded51d9c04",
+     "bytes": 2215104
+    }
+   ]
+  },
+  {
+   "name": "mr-s1-3",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101903,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "6135c392-bf27-47ec-b939-aa2df69d6f4a",
+   "prompt_ids": [
+    "883fd3ea-d745-4c90-9af5-6519a82c42c2"
+   ],
+   "seconds": 81.09416151046753,
+   "peak_commit": 0.723,
+   "admission": 0.5730055648867775,
+   "outputs": [
+    {
+     "file": "mr-s1-3-0.png",
+     "sha256": "fd409e1a85785c238b0e0794cde6e80c12bca7a42dfe170e3eb5ad7cd8fa6bba",
+     "bytes": 2319206
+    }
+   ]
+  },
+  {
+   "name": "mr-s2-2",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101902,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "8106cbe2-4520-4525-8529-bb1053549ed0",
+   "prompt_ids": [
+    "72b4402f-52f7-4a26-8591-de24389ab2f3"
+   ],
+   "seconds": 79.0067880153656,
+   "peak_commit": 0.711,
+   "admission": 0.5459249012065623,
+   "outputs": [
+    {
+     "file": "mr-s2-2-0.png",
+     "sha256": "46551fcc83b04c5c688f772d7f4be143d168b04132818005ce9fb06ae906caf2",
+     "bytes": 2520415
+    }
+   ]
+  },
+  {
+   "name": "mr-s2-3",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101903,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "c3254eaf-dd9c-4a28-a8ed-38d1ca711bf9",
+   "prompt_ids": [
+    "d58139ba-9358-4944-a36f-d16a297879fb"
+   ],
+   "seconds": 82.67725872993469,
+   "peak_commit": 0.695,
+   "admission": 0.5518518300078601,
+   "outputs": [
+    {
+     "file": "mr-s2-3-0.png",
+     "sha256": "a688351648150eb2dc91b235799bc75b092995c025ecc5ca839d8220d3d42e5c",
+     "bytes": 2586882
+    }
+   ]
+  },
+  {
+   "name": "mr-s3-2",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101902,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman knight of thirty-two with short auburn hair and a small scar on her cheek, wearing silver plate armor and a blue cloak. She holds a longsword point down and stands on a misty battlefield at dawn, full body, determined expression, looking at the viewer, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "f3c9cb90-925f-4f5f-bb26-d010a7b682f1",
+   "prompt_ids": [
+    "9f9e055e-bbc8-491e-bf0b-ed390a35de97"
+   ],
+   "seconds": 78.60029315948486,
+   "peak_commit": 0.668,
+   "admission": 0.56166279027322,
+   "outputs": [
+    {
+     "file": "mr-s3-2-0.png",
+     "sha256": "f7b031098040282f44696d5b9247d0352706ebe8311f515bb785fe89ed2a7f97",
+     "bytes": 2161065
+    }
+   ]
+  },
+  {
+   "name": "mr-s3-3",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101903,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman knight of thirty-two with short auburn hair and a small scar on her cheek, wearing silver plate armor and a blue cloak. She holds a longsword point down and stands on a misty battlefield at dawn, full body, determined expression, looking at the viewer, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "28cc38c9-483d-442a-8b4d-edaacfb09fdc",
+   "prompt_ids": [
+    "9cd26254-02fb-4620-9443-882a38198885"
+   ],
+   "seconds": 81.02423000335693,
+   "peak_commit": 0.685,
+   "admission": 0.5391591586948348,
+   "outputs": [
+    {
+     "file": "mr-s3-3-0.png",
+     "sha256": "11486f1cf736a4c9a234b76e9838710854c0b62f2efc9c7b41028e674639e268",
+     "bytes": 2269085
+    }
+   ]
+  },
+  {
+   "name": "mt1-text",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1024,
+    "positive": "A tea-house storefront in a quiet street at dusk with a wooden signboard that reads \"MOON TEA HOUSE\" in clean black brush lettering and a paper lantern with the characters \"月茶屋\" beside the door, an adult woman in a green apron arranging teapots in the window, warm light, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "45f36519-6893-4bd7-b849-c382c15e5f4b",
+   "prompt_ids": [
+    "bac6f35c-365e-49e7-a413-b7fe033a6acc"
+   ],
+   "seconds": 40.42859601974487,
+   "peak_commit": 0.625,
+   "admission": 0.5864358295755616,
+   "outputs": [
+    {
+     "file": "mt1-text-0.png",
+     "sha256": "e98c87c0571d601baf98a931e1b00b796854ed367c517ddbc5078c0852f0ac09",
+     "bytes": 1645178
+    }
+   ]
+  },
+  {
+   "name": "sa-fl-4step",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "Ultra high-end anime key visual of an adult woman swordmaster in her late twenties with long white hair in a high ponytail, a flowing indigo haori over a white and gold battle kimono, drawing a glowing katana in a moonlit bamboo shrine courtyard, cherry petals and floating embers in the air, dramatic rim lighting, intricate fabric folds and a detailed calm face, painterly cel shading, masterpiece composition.",
+    "negative": "",
+    "steps": 4,
+    "cfg": 1.0,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 1.0,
+    "lora2": 0,
+    "lora_name": "moss_image_sft_4step_lora_v2.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "23dc7e0d-ca06-4e61-943f-4a24dd1bd5d8",
+   "prompt_ids": [
+    "f810bf7d-97e5-461c-b2d3-df994a5d1fb0"
+   ],
+   "seconds": 44.46993112564087,
+   "peak_commit": 0.662,
+   "admission": 0.4216876601891497,
+   "outputs": [
+    {
+     "file": "sa-fl-4step-0.png",
+     "sha256": "f7b8e3a7c86d0d43a7d58ef8289302eb7eda9f9432f1e0a6411054aad4c9d47b",
+     "bytes": 2395669
+    }
+   ]
+  },
+  {
+   "name": "sa-fl-st30",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "Ultra high-end anime key visual of an adult woman swordmaster in her late twenties with long white hair in a high ponytail, a flowing indigo haori over a white and gold battle kimono, drawing a glowing katana in a moonlit bamboo shrine courtyard, cherry petals and floating embers in the air, dramatic rim lighting, intricate fabric folds and a detailed calm face, painterly cel shading, masterpiece composition.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "91e98fd2-f442-4b57-ba74-bea9a73d52c9",
+   "prompt_ids": [
+    "373a000e-38b5-4b1b-9c84-09b6d8686d59"
+   ],
+   "seconds": 64.56122183799744,
+   "peak_commit": 0.72,
+   "admission": 0.5626052950508995,
+   "outputs": [
+    {
+     "file": "sa-fl-st30-0.png",
+     "sha256": "7de734e45ff804e1dc545fd583f174c72b77bae56943f8ee04052d74a948f75e",
+     "bytes": 2947973
+    }
+   ]
+  },
+  {
+   "name": "sa-fl-st50",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "Ultra high-end anime key visual of an adult woman swordmaster in her late twenties with long white hair in a high ponytail, a flowing indigo haori over a white and gold battle kimono, drawing a glowing katana in a moonlit bamboo shrine courtyard, cherry petals and floating embers in the air, dramatic rim lighting, intricate fabric folds and a detailed calm face, painterly cel shading, masterpiece composition.",
+    "negative": "",
+    "steps": 50,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "f98884ab-01ab-415e-95a8-91290d25ee2e",
+   "prompt_ids": [
+    "fa3b745c-ada8-4391-a7ea-d78302fdb62c"
+   ],
+   "seconds": 86.57246255874634,
+   "peak_commit": 0.65,
+   "admission": 0.5555683697134094,
+   "outputs": [
+    {
+     "file": "sa-fl-st50-0.png",
+     "sha256": "6928b073d36189310e746cd2549e14efcb1d8d0a4f5874cb5137d220cbc98101",
+     "bytes": 2947701
+    }
+   ]
+  },
+  {
+   "name": "sa-s2-st50",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 50,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "4675fa0b-98e7-4470-9eec-c4c892a5fbea",
+   "prompt_ids": [
+    "701f107b-3ff9-4936-bc39-315bc302d647"
+   ],
+   "seconds": 84.77659344673157,
+   "peak_commit": 0.65,
+   "admission": 0.5583319239530828,
+   "outputs": [
+    {
+     "file": "sa-s2-st50-0.png",
+     "sha256": "c025fcba1d8aa523d5033180617f31666151eb42c02b42dae7c88fdc21e79904",
+     "bytes": 2866621
+    }
+   ]
+  },
+  {
+   "name": "sa-s3-st50",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman knight of thirty-two with short auburn hair and a small scar on her cheek, wearing silver plate armor and a blue cloak. She holds a longsword point down and stands on a misty battlefield at dawn, full body, determined expression, looking at the viewer, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 50,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "eaa5f5d7-051c-44ad-b276-dacacb3d672d",
+   "prompt_ids": [
+    "b2bcbe27-39b1-4069-8ede-6b0fcde5ad2b"
+   ],
+   "seconds": 94.58354592323303,
+   "peak_commit": 0.716,
+   "admission": 0.5601670008000391,
+   "outputs": [
+    {
+     "file": "sa-s3-st50-0.png",
+     "sha256": "a9e6d5f9e8d163ccab16ca5658d744556b85f065c484a97125931057dc5d937d",
+     "bytes": 2506228
+    }
+   ]
+  }
+ ]
+}
