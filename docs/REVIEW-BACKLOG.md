@@ -11,6 +11,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 - [ ] **Full editor readiness lives in "Readiness & run details"** (ux-lead-2 decision). Removed the recipe-header Review readiness button; the dock offers "What’s missing?" only while blocked. Ready shows the readiness line and time, and lost focus returns to that line when the button disappears. The ONE NEXT ACTION guidance is unchanged. Reverse: restore the two buttons.
 
+## 2026-10-19 pass 2 (Brief J): one review vocabulary
+
+- [ ] Review actions use Keep / Needs work / Not this with K / W / X; saved selections and the Library filter say Kept. Stored review values stay unchanged, including the Review desk's keep value. Reverse: the label maps.
+
 ## 2026-10-19 pass 2 (Brief H)
 
 - [ ] **Failed look thumbnails become the blank decorative .look-thumb tile** in Models & setup, replacing broken-image icons for local-only examples. Reverse: remove the capture-phase error listener on #modelLooks in app/static/app.js.

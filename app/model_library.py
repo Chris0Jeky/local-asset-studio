@@ -40,11 +40,11 @@ def backend_affinity(asset):
 
 
 class ModelLibrary:
-    def __init__(self, root, comfy_root, *, backend_id='primary'):
+    def __init__(self, root, comfy_root, *, backend_id='primary', models_root=None):
         self.backend_id = backend_affinity({'backend': backend_id})
         self.root = Path(root).resolve()
         self.comfy = Path(comfy_root).resolve()
-        self.models = (self.comfy / "models").resolve()
+        self.models = (Path(models_root) if models_root else self.comfy / "models").resolve()   # a profile that shares the main library passes its models folder; input and output stay under comfy_root
         self.state = self.root / ".runtime/downloads"
         self.state.mkdir(parents=True, exist_ok=True)
         self.lock = threading.Lock()

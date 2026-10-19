@@ -25,7 +25,7 @@ vm.runInContext(`productionPlans=${JSON.stringify([plan])};productionId=${JSON.s
   assert.equal((html.match(/candidate-check-count/g)||[]).length,1,'candidate B has no answers, so no count');
   assert.deepEqual([...html.matchAll(/data-candidate-check="(\w+)" data-asset="asset-b"/g)].map(m=>m[1]),['style','anatomy','composition','clean']);
   assert.match(html,/class="review-check is-yes" data-candidate-check="style" data-asset="asset-a"/);
-  assert.match(html,/data-candidate-review="selected" data-candidate-asset="asset-b">Keeper</,'Keeper stays beside the checks');
+  assert.match(html,/data-candidate-review="selected" data-candidate-asset="asset-b">Keep</,'Keep stays beside the checks');
   const chip={dataset:{candidateCheck:'anatomy',asset:'asset-b'}},event={target:{closest:s=>s==='[data-candidate-check]'?chip:null}};
   await $('#productionDetail').onclick(event);
   assert.deepEqual(updates,[{ids:['asset-b'],action:'edit',tags:['check:anatomy=yes']}],'one guarded tags update per press, nothing else');
@@ -95,7 +95,7 @@ vm.runInContext(`productionPlans=${JSON.stringify([plan])};productionId=${JSON.s
   assert.equal(updates.length,beforeKeeper+1,'a second Keeper press while the first save is pending records no update');
   assert.equal($('#productionMessage').textContent,'Still saving the last mark for this candidate. Press again in a moment. Nothing was changed.');
   releaseKeeper();mutateGate=null;await keeperFirst;await keeperSecond;
-  assert.match($('#productionMessage').textContent,/Marked as a keeper in your Workspace/,'the first save reports its own success');
+  assert.match($('#productionMessage').textContent,/Kept in your Workspace/,'the first save reports its own success');
   assert.doesNotMatch($('#productionMessage').textContent,/Still saving|Resolve the earlier library update/,'no failure is reported for the save that succeeded');
   await pressKeeper();
   assert.equal(updates.length,beforeKeeper+2,'a Keeper press after the save settles records its own update');

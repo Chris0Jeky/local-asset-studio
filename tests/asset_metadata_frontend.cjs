@@ -149,7 +149,7 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
     s.accept(0);s.writes[1].reject(Error('Workspace unavailable'));await p;
     assert.equal(s.run("assetState.assets.find(a=>a.id==='a').review"),'rejected');
     assert.equal(s.run("assetState.assets.find(a=>a.id==='b').review"),'unreviewed');
-    assert.match(s.el('#assetBulkReviewStatus').textContent,/1 of 2 marked as Rejected/);
+    assert.match(s.el('#assetBulkReviewStatus').textContent,/1 of 2 marked as Not this/);
     assert.match(s.el('#assetBulkReviewStatus').textContent,/1 failed and no retry was sent/);
     assert.match(s.el('#assetBulkReviewStatus').textContent,/not confirmed/);
   });
@@ -172,14 +172,14 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
     s.run('globalThis.__approve=true');
     const p=s.run(`bulkReviewGroup(${groupKey},'rejected')`);
     const prompt=s.run('__prompts.at(-1)');
-    assert.match(prompt,/^Mark 3 unreviewed pictures in 'WAI v17 • illustration' as Rejected\?/);
+    assert.match(prompt,/^Mark 3 unreviewed pictures in 'WAI v17 • illustration' as Not this\?/);
     assert.match(prompt,/1 already reviewed keeps its review/);assert.match(prompt,/changed back individually/);
     assert.equal(s.writes.length,1);assert.deepEqual(s.metadata(0),{ids:['g4','g3','g2'],action:'edit',review:'rejected'});
     assert.deepEqual(s.payload(0).expected_revisions,{g4:0,g3:0,g2:0});
     s.accept(0);assert.equal(await p,true);
     for(const id of ['g2','g3','g4'])assert.equal(review(s,id),'rejected');
     assert.equal(review(s,'g0'),'selected');assert.equal(review(s,'g1'),'unreviewed');assert.equal(review(s,'other'),'unreviewed');
-    assert.match(s.el('#assetMessage').textContent,/Marked 3 of 3 in 'WAI v17 • illustration' as Rejected/);
+    assert.match(s.el('#assetMessage').textContent,/Marked 3 of 3 in 'WAI v17 • illustration' as Not this/);
     assert.equal(s.run(`assetGroupReviewPlan(${groupKey}).ids.length`),0);
   });
   await check('Group actions are escaped buttons naming their count, and vanish once nothing is unreviewed',()=>{
@@ -273,7 +273,7 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
     const s=library();s.run("assetState.assets.find(a=>a.id==='a').review='selected';assetState.assets.find(a=>a.id==='b').review='needs_work';assetSelection=new Set(['a','b']);renderAssets()");
     s.run('globalThis.__prompts=[];window.confirm=m=>{__prompts.push(m);return !!globalThis.__approve;}');
     await s.run("bulkReviewSelected('rejected')");
-    assert.equal(s.writes.length,0);assert.match(s.run('__prompts[0]'),/^Replace 2 saved reviews\? 1 keeper, 1 needs work will change to Rejected\./);
+    assert.equal(s.writes.length,0);assert.match(s.run('__prompts[0]'),/^Replace 2 saved reviews\? 1 kept, 1 needs work will change to Not this\./);
     assert.match(s.el('#assetBulkReviewStatus').textContent,/Nothing was changed/);
     s.run('__approve=true');const p=s.run("bulkReviewSelected('rejected')");assert.equal(s.writes.length,2);s.accept(0);s.accept(1);await p;
     assert.equal(s.run("assetState.assets.filter(a=>a.review==='rejected').length"),2);
@@ -282,14 +282,14 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
   });
   await check('Bulk review revisions are fixed at the confirm, so a refresh during the run cannot turn into an overwrite',async()=>{
     const s=groupLibrary(4);s.run("assetGroupMode='none';assetState.assets[0].review='selected';assetSelection=new Set(['g0','g1','g2','g3']);renderAssets()");
-    const p=s.run("bulkReviewSelected('rejected')");assert.match(s.run('__prompts[0]'),/^Replace 1 saved review\? 1 keeper will change to Rejected/);
+    const p=s.run("bulkReviewSelected('rejected')");assert.match(s.run('__prompts[0]'),/^Replace 1 saved review\? 1 kept will change to Not this/);
     assert.deepEqual([0,1,2].map(i=>s.payload(i).ids[0]),['g0','g1','g2']);
     // A refresh lands before g3's turn: it was reviewed elsewhere after the confirm and moved to revision 5.
     s.run("Object.assign(assetState.assets.find(a=>a.id==='g3'),{metadata_revision:5,review:'selected'})");
     for(let i=0;i<3;i++)s.accept(i);await tick();
     assert.equal(s.writes.length,4);const last=s.payload(3).ids[0];assert.equal(last,'g3');assert.deepEqual(s.payload(3).expected_revisions,{g3:0});
     const e=Error('Selected asset metadata changed or no longer exists; nothing changed in this batch');e.status=409;e.data={code:'asset_revision_conflict'};s.writes[3].reject(e);await p;
-    assert.equal(review(s,last),'selected');assert.match(s.el('#assetBulkReviewStatus').textContent,/3 of 4 marked as Rejected\. 1 failed/);
+    assert.equal(review(s,last),'selected');assert.match(s.el('#assetBulkReviewStatus').textContent,/3 of 4 marked as Not this\. 1 failed/);
   });
   await check('Bulk review late success never touches the replaced Workspace with same IDs',async()=>{
     const s=groupLibrary(5);s.run("assetGroupMode='none';assetSelection=new Set(['g0','g1','g2','g3','g4']);renderAssets()");
