@@ -238,8 +238,31 @@ class ServerTests(unittest.TestCase):
                 studio._run(job)
                 self.assertEqual(job['status'],'failed');self.assertEqual(job['prompt_ids'],[])
                 self.assertNotIn('/free',[args[0] for args,_ in studio.requests if args])
+                if name=='switch':
+                    # Work admission refuses the queued job before any release is attempted.
+                    self.assertEqual(studio.requests,[]);self.assertNotIn('commit_releases',job)
+                    self.assertNotIn('pending_submission',job);self.assertIn('backend switch',job['message'])
+                    self.assertIn('No prompt was submitted for output 1',job['message'])
+                    continue
                 self.assertIn(outcome,job['commit_releases'][0]['outcome'])
                 self.assertIn('below the required 32 GiB',job['message'])
+
+    def test_commit_release_records_a_switch_arriving_after_work_admission(self):
+        low=self._commit_reading(26*1024**3)
+        studio=self._heavy_studio([self.IDLE],release=5)
+        with patch.object(server.host_memory,'read',return_value=low):
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+        def switch_during_fresh_read():
+            studio.backends.busy=True
+            return low
+        with patch.object(server.host_memory,'read',side_effect=switch_during_fresh_read):studio._run(job)
+        self.assertEqual(job['status'],'failed');self.assertEqual(job['prompt_ids'],[])
+        self.assertNotIn('pending_submission',job)
+        self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue'])
+        release,=job['commit_releases']
+        self.assertEqual(release['outcome'],'skipped: a backend switch is running')
+        self.assertIn('below the required 32 GiB',job['message'])
+        self.assertIn('No prompt was submitted for output 1',job['message'])
 
     def test_commit_release_is_skipped_at_or_below_the_floor_its_own_transient_needs(self):
         floor=server.COMMIT_RELEASE_FLOOR_BYTES
