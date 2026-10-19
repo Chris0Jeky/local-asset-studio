@@ -62,14 +62,15 @@ test('Make orders each goal by lab evidence, files painting styles under Painted
   const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),grab=re=>JSON.parse(JSON.stringify(vm.runInNewContext('('+make.match(re)[1]+')')));
   const goals=grab(/const GOALS=(\[[\s\S]*?\n  \]);/),looks=id=>goals.find(g=>g.id===id).looks,ids=new Set(JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/looks.json'))).looks.map(l=>l.id));
   // Lab rounds 1-2 (docs/looks/LOOK-LAB-2026-10-16.md): measured high scorers first, rejects after them, unmeasured slow Krea last.
-  assert.deepEqual(looks('character'),['look-anima-pearly-petiflow','look-oneobsession-anima-v20-showcase','look-anifox-ringeko','look-pearly-anima-mix-v10-showcase','look-wai-fantasy-portrait','look-anima-fantasy-portrait','look-animagine-fantasy-portrait']);
+  // Round 7 (docs/looks/LOOK-LAB-2026-10-19.md, #1563): the One Obsession and Pearly mixes kept 12 of 12 each and lead.
+  assert.deepEqual(looks('character'),['look-oneobsession-anima-v20-showcase','look-pearly-anima-mix-v10-showcase','look-anima-pearly-petiflow','look-anifox-ringeko','look-wai-fantasy-portrait','look-anima-fantasy-portrait','look-animagine-fantasy-portrait']);
   assert.deepEqual(looks('scene'),['look-night-shift-retro-anime','look-noob-fantasy-scene','look-krea-watercolor-anime']);
   assert.deepEqual(looks('painting').slice(0,2),['look-anima-painterly-artist-tags','look-krea-style-emerald-tarot']);
   assert.ok(['look-krea-atelier-target-stack','look-krea-witch-nijisis'].every(id=>looks('painting').includes(id)&&!looks('character').includes(id)),'oil-paint and Nijisis looks are paintings');
   assert.deepEqual(looks('photo').slice(0,2),['look-preset-zimage-fast','look-preset-realvis']);assert.deepEqual(looks('game'),['look-zimage-game-icon','look-preset-stylized-prop','look-preset-pixel-lora']);
   for(const g of goals.filter(g=>g.looks)){const first=g.looks.findIndex(id=>/krea/.test(id));assert.ok(first<0||g.looks.slice(first).every(id=>/krea/.test(id)),g.id+' keeps Krea last');for(const id of g.looks)assert.ok(ids.has(id),id);}
   const tested=grab(/const TESTED=(\{[^}]*\});/),shapes=grab(/const SHAPE_FOR=(\{[^}]*\});/);
-  assert.deepEqual(Object.keys(tested).sort(),['look-anima-painterly-artist-tags','look-anima-pearly-petiflow','look-krea-lenovo-ultrareal','look-krea-oil-fantasy','look-krea-realistic-snapshot','look-krea-style-inkwork-darkbrush','look-krea-watercolor-anime','look-night-shift-retro-anime']);
+  assert.deepEqual(Object.keys(tested).sort(),['look-anima-painterly-artist-tags','look-anima-pearly-petiflow','look-krea-lenovo-ultrareal','look-krea-oil-fantasy','look-krea-realistic-snapshot','look-krea-style-inkwork-darkbrush','look-krea-watercolor-anime','look-night-shift-retro-anime','look-oneobsession-anima-v20-showcase','look-pearly-anima-mix-v10-showcase']);
   assert.ok(!('look-zimage-game-icon' in tested),'game icon kept 3 of 8 (round 5), below the badge rule');assert.match(grab(/const BEST_FOR=(\{[^}]*\});/)['look-zimage-game-icon'],/check shape details/);
   assert.deepEqual(shapes,{character:'portrait',scene:'landscape',game:'square'});
 });

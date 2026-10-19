@@ -47,6 +47,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 - [ ] **Character in a new pose: the pose grid leaves out the chosen character picture**; when it was your only picture it says "The character is your only picture. Import a pose picture in the library, or choose Draw the pose." Imported pictures no longer show their file name twice on picker cards. Reverse: `others` in `renderGrid()` and the `pictureMeta()` condition in `app/static/make.js`.
 
+## 2026-10-19 overnight (ux-lead): Anime character order from round 7
+
+- [ ] **Anime character now starts with One Obsession, then Pearly mix, then Petiflow**, and the two mixes carry "Tested well" (12 of 12 each, 3 scenes x 4 seeds of adult characters, round 7, `docs/looks/LOOK-LAB-2026-10-19.md`). Petiflow (Anima base) moves to third because Anima-base close-up faces read youthful in that lab. Agent verdicts, not art acceptance. Reverse: the `character` looks order and the two TESTED entries in `app/static/make.js` and `app/static/studio-shell.js`.
+
 ## 2026-10-17 session (agent judgment calls)
 
 - [ ] **#1524 saved pictures from partial runs may be varied and polished.** Agent judgment: a saved asset is usable even when other pictures in its run were not recovered. Queued, running, uncertain and failed runs remain refused; source identity and bytes are still checked when pressed. Synthetic status contracts cover both paths. Reverse by removing `partial` from the two source-status allow-lists in `app/static/studio-workbench.js`.
