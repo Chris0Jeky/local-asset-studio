@@ -4,9 +4,11 @@ Chris — Ming Image Design research for Local Asset Studio, September twenty-se
 
 **What it is.** Ant inclusionAI Ming-Image-zero-point-one — MIT license. Two checkpoints: Design does text-to-UI, posters, infographics with real RGBA transparency. Layer splits a flat design into two-to-nine editable transparent PNGs. Marketed as six-B, but the diffusion transformer is only part of the download. Design totals about fifty-three gig on disk; Layer about sixty-five. The text encoder alone is about thirty-four gig BF16.
 
-**Twelve vs twenty-four.** Twelve-gig shorthand means Design’s transformer at twelve-point-three-one gig BF16. Twenty-four means Layer’s transformer at twenty-four-point-six-two gig BF16. Not target VRAM of a consumer card.
+**Twelve vs twenty-four.** The original September shorthand paired Design's twelve-point-three-one-gig transformer with Layer's twenty-four-point-six-two-gig transformer and labelled both BF16. The Layer label was wrong: its official storage is F32. These are stored transformer sizes, not measured consumer-card VRAM requirements.
 
-**Correction, current 2026-10-19 (issue thirteen twenty-four; FINDINGS section zero).** The Layer transformer is not BF16 as stored. The official card stores about six-point-one-five billion parameters as F32, which is twenty-four-point-six-two gig, and it recommends BF16 for inference. The Comfy Layer file at about twelve-point-three gig is the same parameters at two bytes each, so the size gap is a precision difference, not a parameter-count one. That last step is arithmetic from file sizes; the Comfy file's header is not yet read.
+**Correction, current 2026-10-19 (issue thirteen twenty-four; FINDINGS section zero).** The pinned official API reports about six-point-one-five billion Layer parameters as F32; the card recommends BF16 for inference. Design and Layer have nearly equal counts, with Layer seven thousand six hundred eighty parameters higher. The roughly twelve-point-three-gig Comfy BF16-named file is consistent with that Layer count at two bytes plus metadata. This explains the size gap as a plausible precision/repackaging difference; the actual Comfy header and tensor mapping remain unverified.
+
+**Accessible evidence.** [Nine raw current API responses and their dated receipts](evidence/ming-image-2026-10-19/README.md) now retain exact revisions, file sizes and advertised LFS hashes. The September raw pack is still missing, so current metadata must not be described as a recovered September audit. F32-to-BF16 conversion changes bytes; matching hashes between original shards and a repack is not the right acceptance test. No weights or tensor headers were downloaded.
 
 **Vs Qwen stack.** Does not replace Qwen-Image-two-point-one, Edit-two-five-one-one, WAI, Pony, or RealVis. Different lane: layout and UI text rendering, not character or photo. License is MIT — friendlier than Qwen Research for shipping. Layer-decomp quality reported ahead of open Qwen-Image-Layered on Crello; closed Qwen layered is close.
 
@@ -14,4 +16,4 @@ Chris — Ming Image Design research for Local Asset Studio, September twenty-se
 
 **Verdict.** Design twelve-gig DiT — **try** smoke in Comfy only, not Create daily. Layer twenty-four-gig DiT — **park** until a real offload or quant story exists. No dual-GPU plan.
 
-Pack path under handoffs ming-image-design-2026-09-27.
+The historical pack path was under handoffs ming-image-design-2026-09-27; that pack is unavailable here. The linked current evidence is tracked in this repository.
