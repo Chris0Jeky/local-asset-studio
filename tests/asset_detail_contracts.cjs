@@ -74,6 +74,85 @@ async function main(){
     const p=s.el('#saveAssetDetails').onclick();assert.deepEqual(s.metadata(0),{ids:['a'],action:'edit',title:'title',notes:'notes',tags:['a','b'],review:'needs_work'});s.accept(0);await p;
     assert.equal(s.run('assetDetailDirty()'),false);assert.equal(s.el('#assetDialog').open,true);assert.equal(s.run('activeAsset.review'),'needs_work');s.el('#closeAssetDialog').onclick();assert.equal(s.confirmations(),0);
   });
+  await test('A refused queue re-review keeps the draft without asking to discard or advancing',async()=>{
+    const s=setup();s.run(fs.readFileSync(path.join(__dirname,'../app/static/review-checks.js'),'utf8'));
+    s.run("assetQueue={ids:['a','b'],index:0}");
+    const first=s.run("assetQueueDecide('selected')");s.accept(0);assert.equal(await first,true);
+    assert.equal(s.run('activeAsset.id'),'b');assert.equal(s.run('assetQueueStep(-1)'),true);
+    s.el('#assetTags').value='check:style=maybe';s.el('#assetTags').emit('input');s.approve(true);
+    const refused=await s.run("assetQueueDecide('selected')");
+    assert.equal(s.writes.length,1);assert.equal(s.run('assetDetailPending'),null);
+    assert.equal(s.confirmations(),0,'a validation refusal must not offer to discard the draft');
+    assert.equal(refused,false);assert.equal(s.run('activeAsset.id'),'a');assert.equal(s.run('assetQueue.index'),0);
+    assert.equal(s.el('#assetTags').value,'check:style=maybe');assert.equal(s.run('assetDetailDirty()'),true);
+    s.el('#assetTags').value='check:style=yes';s.el('#assetTags').emit('input');
+    const corrected=s.run("assetQueueDecide('selected')");assert.equal(s.writes.length,2);s.accept(1);
+    assert.equal(await corrected,true);assert.equal(s.run('activeAsset.id'),'b');assert.equal(s.confirmations(),0);
+  });
+  await test('A clean re-selection of the saved queue decision advances without another command',async()=>{
+    const s=setup();s.run("assetQueue={ids:['a','b'],index:0}");
+    const first=s.run("assetQueueDecide('selected')");s.accept(0);await first;
+    assert.equal(s.run('assetQueueStep(-1)'),true);assert.equal(s.run('assetDetailDirty()'),false);
+    assert.equal(await s.run("assetQueueDecide('selected')"),true);
+    assert.equal(s.writes.length,1);assert.equal(s.run('activeAsset.id'),'b');assert.equal(s.confirmations(),0);
+  });
+  await test('Malformed quick-check tags stay editable without creating a pending save (#1211)',async()=>{
+    for(const tags of ['check:pose=maybe','check:hair=yes','Check:pose=yes','check:pose','check:pose=yes=no','check: pose=yes','check:pose=yes, check:pose=no','CHECK:face=no']){
+      const s=setup();s.run(fs.readFileSync(path.join(__dirname,'../app/static/review-checks.js'),'utf8'));
+      s.el('#assetTags').value=tags;s.el('#assetTags').emit('input');
+      const attempt=s.el('#saveAssetDetails').onclick();
+      assert.equal(s.writes.length,0,'invalid check tags must be refused before dispatch: '+tags);await attempt;
+      assert.equal(s.run('assetDetailPending'),null);assert.equal(s.run('assetRetainedDetail.operation'),null);
+      assert.equal(s.el('#assetTags').value,tags);assert.equal(s.run('assetDetailDirty()'),true);
+      assert.match(s.el('#assetDetailStatus').textContent,/check.*yes.*no.*Nothing was sent/i);
+      s.el('#assetTags').value='hero, check:pose=yes, check:pose=yes';
+      const corrected=s.el('#saveAssetDetails').onclick();
+      assert.deepEqual(s.metadata(0),{ids:['a'],action:'edit',tags:['hero','check:pose=yes']});s.accept(0);await corrected;
+      assert.equal(s.writes.length,1);assert.equal(s.run('assetDetailPending'),null);assert.equal(s.run('assetDetailDirty()'),false);
+    }
+  });
+  await test('Tag count and Unicode character limits are checked before creating a save',async()=>{
+    for(const tags of [Array.from({length:31},(_,i)=>'tag-'+i).join(', '),'x'.repeat(61),'🌿'.repeat(61)]){
+      const s=setup();s.el('#assetTags').value=tags;
+      const attempt=s.el('#saveAssetDetails').onclick();assert.equal(s.writes.length,0,'invalid tag bounds must not become a pending command');await attempt;
+      assert.equal(s.run('assetDetailPending'),null);assert.equal(s.el('#assetTags').value,tags);
+      assert.match(s.el('#assetDetailStatus').textContent,/30 tags|60 characters/);
+    }
+    const s=setup(),tags=['🌿'.repeat(60),...Array.from({length:29},(_,i)=>'tag-'+i)];
+    s.el('#assetTags').value=tags.join(', ');const valid=s.el('#saveAssetDetails').onclick();
+    assert.deepEqual(s.metadata(0),{ids:['a'],action:'edit',tags});s.accept(0);await valid;
+    assert.equal(s.run('assetDetailDirty()'),false);
+  });
+  await test('Pasted Python whitespace cannot hide an invalid check or duplicate a normalized tag',async()=>{
+    for(const space of ['\u0085','\u001c','\u001d','\u001e','\u001f']){
+      const s=setup();s.run(fs.readFileSync(path.join(__dirname,'../app/static/review-checks.js'),'utf8'));
+      const invalid=space+'check:style=maybe'+space;s.el('#assetTags').value=invalid;
+      const attempt=s.el('#saveAssetDetails').onclick();
+      assert.equal(s.writes.length,0,'Python-stripped whitespace must not hide invalid check tags');assert.equal(await attempt,false);
+      assert.equal(s.run('assetDetailPending'),null);assert.equal(s.el('#assetTags').value,invalid);
+      s.el('#assetTags').value=space+'check:style=yes'+space+', check:style=yes';
+      const corrected=s.el('#saveAssetDetails').onclick();assert.deepEqual(s.payload(0).tags,['check:style=yes']);
+      s.accept(0);assert.equal(await corrected,true);assert.equal(s.run('assetDetailDirty()'),false);
+    }
+  });
+  await test('Server whitespace-only draft tags clear explicitly while a non-whitespace BOM stays text',async()=>{
+    const s=setup();s.el('#assetTags').value='\u0085,\u001c,\u001d,\u001e,\u001f';
+    const clear=s.el('#saveAssetDetails').onclick();assert.deepEqual(s.payload(0).tags,[]);s.accept(0);await clear;
+    s.el('#assetTags').value='\ufefflabel\ufeff';const save=s.el('#saveAssetDetails').onclick();
+    assert.deepEqual(s.payload(1).tags,['\ufefflabel\ufeff']);s.accept(1);await save;
+  });
+  await test('Retry preserves exact pending bytes while newer invalid tags remain a local draft',async()=>{
+    const s=setup();s.run(fs.readFileSync(path.join(__dirname,'../app/static/review-checks.js'),'utf8'));
+    s.el('#assetTags').value='check:pose=yes';const first=s.el('#saveAssetDetails').onclick();
+    s.writes[0].reject(Error('response lost'));assert.equal(await first,false,'an unconfirmed save must not report success');
+    const body=s.writes[0].options.body;
+    s.el('#assetTags').value='\u0085check:pose=maybe\u001c';s.el('#assetTags').emit('input');
+    const retry=s.el('#saveAssetDetails').onclick();
+    assert.equal(s.writes.length,2);assert.equal(s.writes[1].options.body,body,'newer typing must not block or rewrite exact recovery');
+    s.accept(1);assert.equal(await retry,true,'the exact retry reports success only after its matching receipt');
+    assert.equal(s.el('#assetTags').value,'\u0085check:pose=maybe\u001c');assert.equal(s.run('assetDetailDirty()'),true);assert.equal(s.run('assetDetailPending'),null);
+    await s.el('#saveAssetDetails').onclick();assert.equal(s.writes.length,2,'the newer invalid draft cannot start a fresh command after recovery');
+  });
   await test('Success does not wait for a hung library read',async()=>{const s=setup();s.el('#assetNotes').value='Snapshot';s.run('refreshAssets=()=>new Promise(()=>{})');const p=s.el('#saveAssetDetails').onclick();s.accept(0);await p;assert.equal(s.el('#saveAssetDetails').disabled,false);assert.equal(s.timers.size,0);});
   await test('Timeout aborts actual signal, releases controls and never retries',async()=>{
     const s=setup();s.el('#assetNotes').value='keep';const p=s.el('#saveAssetDetails').onclick();[...s.timers.values()][0]();await p;

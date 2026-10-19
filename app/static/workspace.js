@@ -211,9 +211,9 @@ function resolveAssetConflict(keepEdits) {
   $('#saveAssetDetails').focus();
 }
 async function performAssetSave(operation, observe=false) {
-  if(assetDetailBusy || assetDetailPending!==operation || !assetDetailContextCurrent(operation.id,operation.epoch))return;
-  try{requireAssetScope(operation.command.workspace_id);}catch(error){assetDetailStatus(error.message,true);return;}
-  if(!retainAssetDraft())return;
+  if(assetDetailBusy || assetDetailPending!==operation || !assetDetailContextCurrent(operation.id,operation.epoch))return false;
+  try{requireAssetScope(operation.command.workspace_id);}catch(error){assetDetailStatus(error.message,true);return false;}
+  if(!retainAssetDraft())return false;
   const {id,epoch,command,body}=operation,controller=new AbortController();
   const request={},workspaceEpoch=assetWorkspaceEpoch;
   assetDetailRequest=request;
@@ -225,14 +225,15 @@ async function performAssetSave(operation, observe=false) {
   const timer=setTimeout(()=>controller.abort(),15000);
   try {
     const result=await (observe?api(assetReceiptURL(command),{signal:controller.signal}):assetRecovery.dispatch('detail',operation,()=>api('/api/assets/update',{method:'POST',headers:{'Content-Type':'application/json'},body,signal:controller.signal}),()=>current() && assetDetailPending===operation && assetState.workspace_id===command.workspace_id && !controller.signal.aborted));
-    if(!current())return;
+    if(!current())return false;
     if(result?.workspace_id!==command.workspace_id)throw Error('The response belongs to a different Workspace; the original recovery is retained.');
-    if(observe && result?.status==='unknown' && result.request_id===command.request_id){assetDetailStatus('Save still not confirmed. No receipt exists yet; the earlier request may still complete. No retry was sent.',true);return;}
+    if(observe && result?.status==='unknown' && result.request_id===command.request_id){assetDetailStatus('Save still not confirmed. No receipt exists yet; the earlier request may still complete. No retry was sent.',true);return false;}
     validateAssetReceipt(result,command);
     applyAssetSaveReceipt(operation,result);
     syncAssetAfterSave(operation,result);
+    return true;
   } catch(error) {
-    if(!current())return;
+    if(!current())return false;
     const conflict=!observe && assetRevisionConflict(error,command);
     if(error.data?.code==='asset_workspace_conflict'){
       assetDetailStatus('The server is using a different Workspace. No changes were applied there. The exact save is retained for the original Workspace.',true);
@@ -246,6 +247,7 @@ async function performAssetSave(operation, observe=false) {
     } else {
       assetDetailStatus('Save not confirmed. '+(error.name==='AbortError'?'The request timed out.':error.message)+' Your edits remain here. No automatic retry was sent.',true);
     }
+    return false;
   } finally {
     clearTimeout(timer);
     if(ownsRequest()){
@@ -306,14 +308,14 @@ function applyAssetSaveReceipt(operation,result) {
 }
 // Receipt retries preserve immutable request bytes. They never become generation retries.
 async function writeAssetDetails(payload, kind) {
-  if(assetDetailBusy || assetDetailConflict || !activeAsset || !$('#assetDialog').open)return;
+  if(assetDetailBusy || assetDetailConflict || !activeAsset || !$('#assetDialog').open)return false;
   if(assetDetailPending)return performAssetSave(assetDetailPending);
   try {
     const command=assetCommand({...payload,ids:[activeAsset.id]},[activeAsset],activeAsset.workspace_id);
     if(assetRecoveryLoadError)throw Error(assetRecoveryLoadError);
     assetDetailPending={id:activeAsset.id,epoch:assetDetailEpoch,command,body:JSON.stringify(command),kind,snapshot:assetDetailValues()};
-    await performAssetSave(assetDetailPending);
-  } catch(error){assetDetailStatus(error.message,true);}
+    return await performAssetSave(assetDetailPending);
+  } catch(error){assetDetailStatus(error.message,true);return false;}
 }
 async function checkAssetSave(){if(assetDetailPending)return performAssetSave(assetDetailPending,true);}
 for(const id of ['assetTitle','assetTags','assetReview','assetNotes']) {
@@ -586,13 +588,25 @@ async function assetQueueDecide(review) {
   if(assetQueue.ids[assetQueue.index]!==activeAsset.id)return false;
   $('#assetReview').value=review;renderAssetReasons();
   const target=activeAsset.id;
-  await saveAssetDetails();
+  const saved=await saveAssetDetails();
   // Only a confirmed save advances: an unconfirmed, conflicted or refused save keeps this asset and its reason on screen.
-  if(assetDetailBusy || assetDetailPending || assetDetailConflict || activeAsset?.id!==target)return false;
+  if(!saved || assetDetailBusy || assetDetailPending || assetDetailConflict || activeAsset?.id!==target)return false;
   if(assetState.assets.find(a=>a.id===target)?.review!==review)return false;
   return assetQueueStep(1);
 }
-function assetTagList(){return $('#assetTags').value.split(',').map(t=>t.trim()).filter(Boolean);}
+function assetTagList(value=$('#assetTags').value){
+  // Match AssetWorkspace.text's Python strip before validating new tags.
+  return value.split(',').map(t=>t.replace(/^[\p{White_Space}\u001c-\u001f]+|[\p{White_Space}\u001c-\u001f]+$/gu,'')).filter(Boolean);
+}
+// Mirror the server's tag limits before a new draft becomes an immutable pending command (#1211).
+function assetTagsProblem(tags){
+  if(tags.length>30)return 'Use up to 30 tags. Nothing was sent.';
+  if(tags.some(tag=>[...tag].length>60))return 'Use tags of up to 60 characters each. Nothing was sent.';
+  const checks=tags.filter(tag=>tag.slice(0,6).toLowerCase()==='check:');
+  if(!checks.length)return '';
+  if(!globalThis.StudioReviewChecks)return 'Quick-check validation is unavailable. Reload the page before saving check tags. Nothing was sent.';
+  return Object.keys(StudioReviewChecks.answers(tags)).length===checks.length?'':'Check tags must use check:name=yes or =no, with one answer per supported check. Nothing was sent.';
+}
 function renderAssetReasons() {
   const chosen=new Set(assetTagList().map(t=>t.toLowerCase()));
   renderAssetChecks();
@@ -1004,10 +1018,13 @@ document.addEventListener('keydown',e=>{
 // Queue decisions and the Save details button share one save path, payload and revision guard.
 async function saveAssetDetails() {
   const snapshot=assetDetailValues();
-  const saved={title:snapshot.title.trim(),tags:[...new Set(snapshot.tags.split(',').map(t=>t.trim()).filter(Boolean))],review:snapshot.review,notes:snapshot.notes.trim()};
+  const saved={title:snapshot.title.trim(),tags:[...new Set(assetTagList(snapshot.tags))],review:snapshot.review,notes:snapshot.notes.trim()};
   const changes=Object.fromEntries(Object.keys(saved).filter(key=>snapshot[key]!==assetDetailBaseline?.[key]).map(key=>[key,saved[key]]));
-  if(!Object.keys(changes).length && !assetDetailPending){assetDetailStatus('No unsaved changes.');return;}
-  await writeAssetDetails({action:'edit',...changes},'details');
+  if(!Object.keys(changes).length && !assetDetailPending){assetDetailStatus('No unsaved changes.');return true;}
+  // An earlier unconfirmed command still retries its exact bytes; newer invalid typing stays local.
+  const problem=!assetDetailPending && Object.hasOwn(changes,'tags')?assetTagsProblem(saved.tags):'';
+  if(problem){assetDetailStatus(problem,true);return false;}
+  return writeAssetDetails({action:'edit',...changes},'details');
 }
 $('#saveAssetDetails').onclick=saveAssetDetails;
 $('#assetFavorite').onclick=async()=>{
