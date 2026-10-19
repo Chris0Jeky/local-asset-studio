@@ -306,6 +306,17 @@ test('pose canvas is exposed as an operable application, not a static image (#14
   assert.match(tag, /aria-label="[^"]*Pose skeleton[^"]*"/, 'pose canvas keeps its accessible label');
   assert.match(tag, /aria-label="[^"]*joint[^"]*arrow keys[^"]*Shift[^"]*"/, 'pose canvas label must describe joint selection, arrow keys and Shift+arrow');
 });
+test('Make drops a second write to the same target while the first is in flight (Muse lens, 19 Oct)',async()=>{
+  const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),line=make.match(/  const inflight=new Set\(\),once=.*\n/)[0];
+  const api=vm.runInNewContext(line+';({once,inflight})',{});let calls=0,release;const slow=()=>new Promise(r=>{calls++;release=r;});
+  const first=api.once('character:c1',slow),second=api.once('character:c1',slow),other=api.once('character:c2',async()=>{calls++;});
+  await second;await other;assert.equal(calls,2,'the same target runs once; another target still runs');release();await first;
+  assert.equal(api.inflight.size,0,'the key is released after the write settles');await api.once('character:c1',async()=>{calls++;});assert.equal(calls,3);
+  await assert.rejects(api.once('k',async()=>{throw Error('boom');}));
+  // Each character form has its own key (Codex P2 on #1540): a pending save of one form never drops another form's save.
+  assert.match(make,/once\('character-save:'\+form\.dataset\.mode\+':'\+form\.dataset\.makeCharacterForm,/);assert.equal(api.inflight.has('k'),false,'a failed write releases its key');
+});
+
 test('Petiflow additions use knowledge defaults while retaining every lab note',()=>{
   const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),kb=JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/settings-kb.json'),'utf8')).loras;
   const look={id:'look-anima-pearly-petiflow'},preset={},t={rows:[],cleared:[]},names=['anima-xilmo-000020.safetensors','anima-ke-ta_style_v1.safetensors','anima-newanimastyle-v1.safetensors','anima-kieed_v9_step6000.safetensors'];
