@@ -54,7 +54,13 @@ def run(output):
                         page.on('pageerror',lambda e:errors.append(str(e)));base=f'http://127.0.0.1:{server.server_port}'
                         def ready(page):
                             page.goto(base+'/prompt-lab.html');expect(page.locator('#pp-create')).to_be_enabled()
+                            expect(page.locator('#savedBriefsFold')).not_to_have_attribute('open','')
+                            assert page.locator('main > :first-child').get_attribute('id')=='reference-analyze'
+                            assert page.locator('#savedBriefsFold').evaluate("(e)=>!!(document.getElementById('brief').compareDocumentPosition(e)&Node.DOCUMENT_POSITION_FOLLOWING)")
+                            page.screenshot(path=str(output/f'first-screen-{width}.png'))
+                            page.locator('#savedBriefsFold > summary').click()
                         def preview_open(page,key):
+                            if not page.locator('#savedBriefsFold').evaluate('(e)=>e.open'):page.locator('#savedBriefsFold > summary').click()
                             page.locator('#pp-list').select_option(key);page.locator('#pp-preview').click()
                             expect(page.locator('#pp-open')).to_be_enabled();page.locator('#pp-open').click()
                         ready(page)
