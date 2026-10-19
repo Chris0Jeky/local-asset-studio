@@ -184,6 +184,16 @@ def run(shots):
         # words and seed at the look's full steps and waits for Generate. Neither press submits anything but Generate.
         looks_of('painting'); pick_look('look-krea-oil-fantasy'); assert page.input_value('#makeCount') == '1'
         draft = page.locator('#makeDraft'); assert draft.count() == 1 and not draft.is_checked() and 'Draft · 6 steps' in page.locator('#makeDraftBox').inner_text()
+        # Fine (Muse LOW on #1546): Tune's finer count (12 x 1.5 = 18) is what the estimate asks about and what Generate sends; As made restores 12.
+        assert 'Fine · 18 steps' in page.locator('#makeDraftBox').inner_text(); page.check('#makeFine')
+        assert page.input_value('[data-tune=steps]') == '18' and '18 steps' in page.locator('#makeTuneSum').inner_text()
+        for _ in range(30):
+            if any(p['path'] == '/api/estimate' and p['data'].get('controls', {}).get('steps') == 18 for p in fixture.POSTS): break
+            page.wait_for_timeout(100)
+        else: raise AssertionError('the estimate is asked for the Fine step count')
+        page.locator('#makeScene').fill('a lone scholar on a bridge at dusk'); fine = generate(); assert len(fine) == 1 and fine[0]['controls']['steps'] == 18, fine
+        page.check('#makeStandard'); assert page.input_value('[data-tune=steps]') == '' and not page.is_checked('#makeFine')
+        draft = page.locator('#makeDraft')
         draft.check(); assert page.input_value('[data-tune=steps]') == '6' and 'draft 6 steps' in page.locator('#makeTuneSum').inner_text(), 'the draft is Tune’s own steps control'
         page.locator('#makeScene').fill('a lone scholar on a bridge at dusk'); shot('draft-first'); before = len(jobs()); sent = generate(); no_modal()
         assert len(sent) == 1 and sent[0]['controls']['steps'] == 6 and sent[0]['preset_id'] == 'krea-anime-atelier', sent
