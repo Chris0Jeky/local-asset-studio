@@ -42,7 +42,7 @@ Design must show **all 15** statuses (the current legend shows 7) and group them
 | --- | --- |
 | Health pill (top bar) | Connecting… · Checking ComfyUI… · Readiness unavailable · Studio worker unavailable · ComfyUI offline · Checking node readiness · Recipe needs models · ComfyUI connected |
 | Environment switcher (Models only) | Main library 8188 · HiDream O1 8192 · MiniMax H3 8194 · Qwen-Image 2.1 8196; switch: running · completed · failed · interrupted; disabled while busy: "A local operation is running. Switching is disabled until it finishes." |
-| Runtime recovery line | idle · checking · healthy · startup · reconnecting · unreachable · unreachable-but-alive · crashed-absent(-busy) · foreign-or-ambiguous-listener · blocked · leased · breaker-open (only state with Retry) · disabled |
+| Runtime recovery line | idle · checking · healthy · startup · reconnecting · unreachable · unreachable-but-alive · crashed-absent(-busy) · foreign-or-ambiguous-listener · other-backend-active (shared selection/switch, live alternate or unknown alternate health/ownership; message gives the explicit recovery action) · blocked · leased · breaker-open (only state with Retry) · disabled |
 | GPU lease (not shown today) | held by holder until time; new jobs and switches refused while held. **Proposal:** show as a top-bar chip "GPU reserved by <holder> · 12 min" |
 | Connection distinctions (AMBIENCE.md) | Never merge: internet hint · Studio API reachable · ComfyUI/schema ready · decorative media available · job activity |
 
