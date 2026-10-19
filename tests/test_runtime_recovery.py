@@ -215,4 +215,28 @@ class RuntimeRecoveryTests(unittest.TestCase):
         self.assertEqual(self.recovery.snapshot()["status"], "reconnecting")
         self.assertTrue(manager.busy)
 
+    def test_another_backend_active_in_shared_state_or_online_blocks_the_primary_launch(self):
+        """#1584: a second Studio's in-memory choice is stale; the shared state file and a live probe still name the real owner."""
+        manager = self.studio.backends; manager.profiles["moss"] = {"id": "moss", "name": "MOSS", "url": "http://127.0.0.1:8198"}
+        manager.state_path = Path(self.tmp.name) / "backend-state.json"; manager.state_path.write_text('{"active": "moss"}', encoding="utf-8")
+        snapshot = self.recovery.tick()
+        self.assertEqual((snapshot["status"], manager.launches), ("other-backend-active", 0))
+        manager.state_path.write_text('{"active": "primary"}', encoding="utf-8")
+        live = manager.request
+        manager.request = lambda profile, route, timeout: manager.stats if profile["id"] == "moss" else live(profile, route, timeout)
+        self.assertEqual(self.recovery.tick()["status"], "other-backend-active"); self.assertEqual(manager.launches, 0)
+        # Another Studio's switch away from this backend is in flight: "active" still names this one, the target is not up yet (Codex P1).
+        manager.request = live; manager.state_path.write_text('{"active": "primary", "operation": {"status": "running", "target": "moss"}}', encoding="utf-8")
+        self.assertEqual(self.recovery.tick()["status"], "other-backend-active"); self.assertEqual(manager.launches, 0)
+        manager.state_path.write_text('{"active": "primary", "operation": {"status": "succeeded", "target": "primary"}}', encoding="utf-8")
+        self.recovery.tick(); self.assertEqual(manager.launches, 1)
+
+    def test_only_the_default_port_autostarts_unless_config_says_so(self):
+        def autostart(port=None, **config):
+            studio = Studio(Path(self.tmp.name), enabled=False); studio.config.pop("runtime_recovery_autostart"); studio.config.update(config)
+            if port is not None: studio.port = port
+            return RuntimeRecovery(studio).autostart
+        self.assertTrue(autostart()); self.assertTrue(autostart(8191)); self.assertFalse(autostart(8292))
+        self.assertTrue(autostart(8292, runtime_recovery_autostart=True)); self.assertFalse(autostart(8191, runtime_recovery_autostart=False))
+
 if __name__ == "__main__": unittest.main()
