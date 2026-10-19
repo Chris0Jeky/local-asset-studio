@@ -15,6 +15,8 @@ import studio_browser_smoke as fixture
 import io
 from PIL import Image
 from test_server import server, png
+import tiles
+import parallax
 from studio_workflow.asset_read_http import extend_handler
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -34,7 +36,7 @@ def build_family_studio(root):
         studio = server.Studio(root)
     studio._request = lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError('Model request forbidden'))
     # A portrait-sized picture, so the layout check measures a realistic preview rather than an 8x12 pixel fixture.
-    stream = io.BytesIO(); Image.new('RGB', (768, 1152), 'purple').save(stream, 'PNG')
+    stream = io.BytesIO(); Image.new('RGB', (482, 704), 'purple').save(stream, 'PNG')
     source = root/'synthetic.png'; source.write_bytes(stream.getvalue())
     ids = []
     for index, name in enumerate(('Draft', 'Refine', 'Repair', 'Upscale')):
@@ -62,6 +64,10 @@ def build_handler(studio, posts, controls=None):
         _json = server.Handler._json
         def do_GET(self):
             path = urlsplit(self.path).path
+            if path.startswith('/api/tiles/source/') or path.startswith('/api/parallax/source/'):
+                tile = path.startswith('/api/tiles/'); module = tiles if tile else parallax
+                return self.json({'asset_id': path.rsplit('/', 1)[-1], 'width': 482, 'height': 704, 'eligible': False,
+                                  'reason': module.eligibility(482, 704), 'flag': tiles.FLAT_ONLY if tile else parallax.FLAG})
             if path == '/api/workspace': return self.json(self.studio.assets.snapshot())
             if path == '/api/jobs': return self.json(list(self.studio.jobs.values()))
             if path.startswith('/api/assets/') and path.endswith('/file'):
@@ -96,7 +102,7 @@ def exercise(out, browser_executable=None):
                 for width in (1440, 390):
                     context = browser.new_context(viewport={'width': width, 'height': 900 if width == 1440 else 1000}, reduced_motion='reduce')
                     page = context.new_page(); page.set_default_timeout(10000)
-                    page.on('pageerror', lambda e: errors.append(str(e)))
+                    page.on('pageerror', lambda e: errors.append(e.stack or str(e)))
                     page.on('dialog', lambda dialog: dialog.accept() if controls['confirm'] == 'accept' else dialog.dismiss())
                     try:
                         page.goto(origin+'/#assets', wait_until='domcontentloaded')
@@ -104,6 +110,37 @@ def exercise(out, browser_executable=None):
                         page.locator('#assetGrid .asset-open[data-asset-open="'+ids[-1]+'"]').click()
                         page.wait_for_function('document.querySelectorAll("#assetFamily [data-family-step]").length===4')
                         assert page.locator('#assetFamily [data-family-step]').evaluate_all('(els)=>els.map(e=>e.dataset.familyStep)') == ids
+                        page.wait_for_function('document.querySelector("#uxTileWhyAsset")?.textContent.includes("482")&&document.querySelector("#uxParallaxWhy")?.textContent.includes("512")')
+                        # Imported picture: all three unavailable actions fold together, preserving the controls and reasons.
+                        recorded = page.evaluate('({preset_id:activeAsset.preset_id,job_id:activeAsset.job_id})')
+                        page.evaluate('activeAsset.preset_id=null;activeAsset.job_id=null;refreshCarriedVary()')
+                        fold = page.locator('#assetNextSteps > .asset-unavailable')
+                        assert fold.count() == 1 and not fold.evaluate('(el)=>el.open')
+                        assert fold.locator(':scope > summary').inner_text() == 'Not available for this picture (3)'
+                        controls_in_fold = fold.locator('.ux-tile > button,.ux-parallax > button,.ux-vary > button')
+                        assert controls_in_fold.count() == 3 and all(not control.is_visible() for control in controls_in_fold.all())
+                        reasons = fold.locator('small').all_text_contents()
+                        fewer_words = len(' '.join(fold.locator(':scope > div').all_text_contents()).split())-len(fold.locator(':scope > summary').inner_text().split())
+                        page.screenshot(path=str(out/('available-'+str(width)+'.png')), full_page=True)
+                        assert page.locator('[data-family-recall="new"]').is_visible() and page.locator('[data-family-reference]').is_visible()
+                        assert page.locator('#assetFamilyActions').evaluate('(el)=>!!(el.compareDocumentPosition(document.querySelector(".asset-unavailable"))&Node.DOCUMENT_POSITION_FOLLOWING)')
+                        fold.locator(':scope > summary').click()
+                        assert all(control.is_visible() and control.is_disabled() for control in controls_in_fold.all())
+                        assert fold.locator('small').all_text_contents() == reasons
+                        page.screenshot(path=str(out/('unavailable-'+str(width)+'.png')), full_page=True)
+                        page.locator('#closeAssetDialog').click()
+                        page.evaluate('(id)=>openAsset(id)', ids[-1])
+                        assert not fold.evaluate('(el)=>el.open')
+                        page.wait_for_function('document.querySelector("#uxTileWhyAsset")?.textContent.includes("482")&&document.querySelector("#uxParallaxWhy")?.textContent.includes("512")')
+                        # If every action becomes available the disclosure disappears; available order is retained.
+                        page.evaluate('''recorded=>{activeAsset.preset_id=null;activeAsset.job_id=null;refreshCarriedVary();Object.assign(activeAsset,recorded);document.querySelector('[data-ux-tile]').disabled=false;
+                          document.querySelector('[data-ux-parallax]').disabled=false;refreshCarriedVary();}''', recorded)
+                        assert fold.count() == 0, page.locator('#assetNextSteps').inner_html()
+                        assert page.locator('#assetNextSteps > [role="group"]').evaluate_all('(els)=>els.map(el=>el.className)') == ['ux-tile','ux-parallax','ux-vary']
+                        page.locator('#closeAssetDialog').click()
+                        page.evaluate('(id)=>openAsset(id)', ids[-1])
+                        page.wait_for_function('document.querySelectorAll("#assetFamily [data-family-step]").length===4')
+                        checks.append({'width': width, 'unavailable_fold': 3, 'reasons_unchanged': True, 'reopen_closed': True, 'all_available_no_fold': True, 'fewer_visible_words': fewer_words})
                         if width == 1440:
                             # Layout: the picture and the next-step actions sit in the first 900 px viewport, above the form.
                             picture = page.locator('#assetDetailMedia img').bounding_box()
