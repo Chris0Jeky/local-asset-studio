@@ -5,14 +5,17 @@ backend family, stops no process, scans no ports, and never submits a prompt.
 """
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import threading
 import time
+import uuid
 from pathlib import Path
 
 from backend_contracts import connection_refused, endpoint_ready
 import backend_state
+import recovery_state
 
 REFUSAL_PROBE_TIMEOUT = 3
 DEFAULT_PORT = 8191
@@ -37,13 +40,24 @@ class RuntimeRecovery:
         # Cache observations are local to this monitor session, never launch authority.
         self._schema_endpoint_identity = None
         self._schema_process_identity = None
+        self._hold_reason = None
+        self._pending_attempt = None
+        self._retained_state_issue = None
+        self._log_error = None
         self.state = {"status": "disabled" if not self.enabled else "idle", "attempts": 0, "events": []}
         if self.enabled:
             try:
-                saved = json.loads(self.path.read_text(encoding="utf-8"))
-                if isinstance(saved, dict): self.state.update({k: v for k, v in saved.items() if k != "events"})
-            except (OSError, ValueError):
-                pass
+                saved = recovery_state.read(self.path)
+                if saved is not None:
+                    self.state.update({k: v for k, v in saved.items() if k != "events"})
+                    if (saved.get('last_attempt') or saved.get('launch_pending') or saved.get('startup_pid')
+                            or saved['attempts'] or saved['status'] in ('launching', 'startup')):
+                        self._hold_reason = ('Saved recovery attempt evidence is historical. Inspect the configured runtime and '
+                                             'runtime-recovery.log, then use Reset recovery; a current healthy observation also clears this hold.')
+            except (OSError, ValueError, RecursionError) as exc:
+                self._retained_state_issue = ('Cannot read retained recovery state: ' + str(exc)[:200] + '. Preserve the record and '
+                                             'runtime-recovery.log for inspection. With Studio stopped, copy and repair or move '
+                                             'the invalid runtime-recovery.json, then restart Studio. Reset recovery cannot overwrite it.')
             if self.state.get("status") == "healthy":
                 self.state.update(
                     status="checking",
@@ -60,32 +74,54 @@ class RuntimeRecovery:
         return value if low <= value <= high else fallback
 
     def snapshot(self):
-        result = dict(self.state)
+        result = copy.deepcopy(self.state)
+        if self._pending_attempt is not None: result['last_attempt'] = copy.deepcopy(self._pending_attempt)
+        if self._retained_state_issue or self._hold_reason:
+            result.update(inspection_required=True, message=self._retained_state_issue or self._hold_reason)
+            if self._retained_state_issue or result['status'] != 'checking': result['status'] = 'breaker-open'
+        if self._log_error: result['log_error'] = self._log_error
         result["enabled"] = self.enabled
         result["active_backend"] = self.studio.backends.active
         return result
 
-    def _record(self, status, message, **extra):
+    def _record(self, status, message, *, _clear=(), _release=False, _force_log=False, **extra):
+        if self._retained_state_issue: raise ValueError(self._retained_state_issue)
         now = time.time()
-        self.state.update(status=status, message=message, updated_at=now, **extra)
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.studio._write_json_atomic(self.path, self.state)
+        candidate = copy.deepcopy(self.state)
+        if self._pending_attempt is not None:
+            candidate['last_attempt'] = copy.deepcopy(self._pending_attempt)
+            if not _release: candidate['attempts'] = max(candidate['attempts'], self._pending_attempt['number'])
+        if self._hold_reason and not _release: candidate['launch_pending'] = True
+        for key in _clear: candidate.pop(key, None)
+        candidate.update(status=status, message=message, updated_at=now, **extra)
+        try: recovery_state.publish(self.path, candidate)
+        except Exception:
+            self._hold_reason = ('Recovery state publication is unconfirmed. Inspect runtime-recovery.json, runtime-recovery.log '
+                                 'and the configured runtime before Reset recovery; no further automatic start is allowed.')
+            raise
+        self.state = candidate
+        if _release: self._hold_reason = None; self._pending_attempt = None
         # The state file carries freshness; the log records changes, not every identical poll.
-        event = {"status": status, "message": message, **extra}
-        if event == getattr(self, "_last_event", None): return
-        with self.log_path.open("a", encoding="utf-8") as log:
-            log.write(json.dumps({"at": now, **event}, sort_keys=True, default=str) + "\n")
-        self._last_event = json.loads(json.dumps(event, sort_keys=True, default=str))  # only after the line is written
+        event = {"status": status, "message": message, "attempts": candidate['attempts'], **extra}
+        if 'last_attempt' in candidate: event['last_attempt'] = copy.deepcopy(candidate['last_attempt'])
+        if not _force_log and event == getattr(self, "_last_event", None) and not self._log_error: return
+        try:
+            line = json.dumps({"at": now, **event}, sort_keys=True, allow_nan=False) + "\n"
+            with self.log_path.open("a", encoding="utf-8") as log:
+                if log.write(line) != len(line): raise OSError('Recovery log append was incomplete')
+                log.flush()
+        except (OSError, UnicodeError) as exc:
+            self._log_error = str(exc)[:200]
+            return  # Diagnostic failure cannot undo the committed state or repeat a launch.
+        self._last_event = copy.deepcopy(event)  # only after write, flush and close succeeded
+        self._log_error = None
 
     def reset(self):
         """An explicit same-origin retry only clears the breaker; it cannot switch families."""
         with self.lock:
-            self.state.pop("breaker_until", None)
-            self.state.pop("startup_pid", None)
-            self.state.pop("startup_at", None)
-            self.state["attempts"] = 0
-            self._last_event = None  # an explicit operator action is always logged, even when repeated
-            self._record("idle", "Recovery breaker reset. The configured monitor will re-observe the selected backend.")
+            self._record("idle", "Recovery breaker reset. The configured monitor will re-observe the selected backend.",
+                         _clear=('breaker_until', 'startup_pid', 'startup_at', 'launch_pending'),
+                         _release=True, _force_log=True, attempts=0)
             return self.snapshot()
 
     def _monitor(self):
@@ -93,7 +129,9 @@ class RuntimeRecovery:
         while True:
             try: self.tick()
             except Exception as exc:
-                with self.lock: self._record("blocked", "Recovery monitor observation failed: " + str(exc)[:200])
+                with self.lock:
+                    try: self._record("blocked", "Recovery monitor observation failed: " + str(exc)[:200])
+                    except Exception: pass  # A failed diagnostic write must still reach the bounded wait.
             time.sleep(self.interval)
 
     def _leased(self):
@@ -177,6 +215,8 @@ class RuntimeRecovery:
         continuous = self.state.get("status") == "healthy" and endpoint == self._schema_endpoint_identity
         changed_process = (observed_process is not None and self._schema_process_identity is not None
                            and observed_process != self._schema_process_identity)
+        self._record("healthy", "Selected backend is healthy.", endpoint_identity=identity, attempts=0,
+                     _clear=('startup_pid', 'startup_at', 'breaker_until', 'launch_pending'), _release=True)
         if not continuous or changed_process:
             self.studio._schema = None
             self.studio._schema_at = 0
@@ -186,13 +226,11 @@ class RuntimeRecovery:
         if not continuous: self._schema_process_identity = None
         if observed_process is not None: self._schema_process_identity = observed_process
         self._schema_endpoint_identity = endpoint
-        for key in ("startup_pid", "startup_at", "breaker_until"):
-            self.state.pop(key, None)
-        self._record("healthy", "Selected backend is healthy.", endpoint_identity=identity, attempts=0)
 
     def tick(self):
         """One monitor pass. It is invoked only by the opt-in monitor or its tests."""
         with self.lock:
+            if self._retained_state_issue: return self.snapshot()
             manager = self.studio.backends
             profile = manager.profiles[manager.active]
             now = time.time()
@@ -226,6 +264,10 @@ class RuntimeRecovery:
                     else:
                         self._ready(profile, stats)
                     return self.snapshot()
+
+            if self._hold_reason:
+                self._record('breaker-open', self._hold_reason, launch_pending=True)
+                return self.snapshot()
 
             # A listener that cannot be proven to be this exact launcher is a hard stop.
             try:
@@ -281,9 +323,23 @@ class RuntimeRecovery:
                 if other:
                     self._record("other-backend-active", other)
                     return self.snapshot()
-                pid = manager.launch_recovery(profile)
-            self._record("startup", "Started the selected configured backend; waiting for its read-only health endpoint.",
-                         startup_pid=pid, startup_at=time.time(), attempts=int(self.state.get("attempts", 0)) + 1)
+                # Charge one intent through the required barriers before the existing launcher.
+                # An error at either publication or spawn retains this identity and closes
+                # automatic launch allowance until fresh health or a published explicit reset.
+                self._pending_attempt = {'version': 1, 'id': uuid.uuid4().hex, 'backend': profile['id'],
+                                         'number': self.state['attempts'] + 1, 'at': time.time()}
+                try:
+                    self._record('launching', 'Recorded one recovery attempt; starting the selected configured backend.',
+                                 launch_pending=True)
+                    def on_spawn(pid): self._pending_attempt['pid'] = pid
+                    pid = manager.launch_recovery(profile, on_spawn=on_spawn)
+                    self._record("startup", "Started the selected configured backend; waiting for its read-only health endpoint.",
+                                 startup_pid=pid, startup_at=time.time(), launch_pending=False)
+                except Exception:
+                    self._hold_reason = ('Recovery launch or its record is unconfirmed. Inspect the configured runtime, '
+                                         'runtime-recovery.json and runtime-recovery.log before Reset recovery; no automatic retry is allowed.')
+                    raise
+                self._pending_attempt = None
             return self.snapshot()
 
     def _open_breaker(self, message):
