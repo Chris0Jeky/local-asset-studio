@@ -1,10 +1,10 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 class Element{
- constructor(tag='div'){Object.assign(this,{tag,value:'',textContent:'',hidden:false,disabled:false,checked:false,children:[],listeners:{},dataset:{}});}
+ constructor(tag='div'){Object.assign(this,{tag,value:'',textContent:'',hidden:false,open:false,disabled:false,checked:false,children:[],listeners:{},dataset:{}});}
  addEventListener(k,f){this.listeners[k]=f;}append(...v){this.children.push(...v);}replaceChildren(...v){this.children=v;}
  get firstChild(){return this.children[0];}setAttribute(k,v){this[k]=v;}after(node){this.error=node;}removeAttribute(name){delete this[name];}querySelectorAll(){return [];}fire(k){return this.listeners[k]?.({target:this});}
 }
-const scope='a'.repeat(32),id='b'.repeat(32),store=new Map();let rejectStorage=false,drop=false,held=null,release,posts=[],rows=[],readRow=null,lastCommand;
+const scope='a'.repeat(32),id='b'.repeat(32),store=new Map();let refreshError=false,rejectStorage=false,drop=false,held=null,release,posts=[],rows=[],readRow=null,lastCommand;
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 const referenceAnalysis={
  request:{references:[{id:'picture-1',path:'reference.png',sha256:'c'.repeat(64)}]},
@@ -30,6 +30,7 @@ function create(){
     if(url==='/api/prompt/profiles')return response({profiles:[]});
     if(url.endsWith('/reference-review/inspect'))return response({format:'studio.reference-review/v1',
       analysis:JSON.parse(JSON.stringify(referenceAnalysis)),review:JSON.parse(JSON.stringify(referenceReview)),...zero});
+    if(url.endsWith('/capabilities')&&refreshError)throw Error('refresh fixture');
     if(url.endsWith('/capabilities'))return response({format:'studio.prompt-projects/v1',workspace_id:scope,...zero});
     if(url.includes('/list?'))return response({workspace_id:scope,projects:rows.map(r=>({id:r.id,name:r.document.name,revision:r.revision})),...zero});
     if(url.includes('/status?'))return response(lastCommand);
@@ -50,9 +51,12 @@ function create(){
 }
 (async()=>{
  let {context,el,row}=create();await tick();assert.equal(posts.length,0,'Page load never writes');
+ assert.equal(el('savedBriefsFold').open,false,'Storage starts collapsed');
+ refreshError=true;await el('pp-refresh').fire('click');assert.equal(el('savedBriefsFold').open,true,'Refresh errors reveal status');refreshError=false;
+ el('savedBriefsFold').open=false;el('pp-name').value='';await el('pp-create').fire('click');assert.equal(el('savedBriefsFold').open,true,'Save validation errors reveal status');el('pp-name').value='Keeper';el('savedBriefsFold').open=false;
  held=true;const saving=el('pp-create').fire('click');await tick();assert.equal(posts.length,1);
  el('brief').value='Newer while saving';await el('brief').fire('input');release();await saving;held=null;
- assert.equal(el('brief').value,'Newer while saving');assert.match(el('pp-current').textContent,/unsaved/);assert.equal(store.size,0);
+ assert.equal(el('brief').value,'Newer while saving');assert.match(el('pp-current').textContent,/unsaved/);assert.equal(store.size,0);assert.equal(el('savedBriefsFold').open,true,'An active saved brief reveals status');
  // Inject unknown reply: recreation of page must read the retained handle, not send again.
  drop=true;await el('pp-save').fire('click');assert.equal(store.size,1);assert.match(el('pp-status').textContent,/Check save status/);
  const count=posts.length;({context,el,row}=create());await tick();assert.equal(posts.length,count);assert.equal(el('pp-recovery').hidden,false);
@@ -68,8 +72,8 @@ function create(){
 
  // Opening a historical revision is a detached local draft, never a stale project head.
  const head=rows[0],historicalDocument=JSON.parse(JSON.stringify(head.document));historicalDocument.intent.brief='Historical words';
- readRow=row(historicalDocument,1,head.revision);el('pp-list').value=id;await el('pp-preview').fire('click');await el('pp-open').fire('click');
- assert.equal(el('brief').value,'Historical words');assert.equal(el('pp-save').disabled,true);assert.equal(el('pp-create').disabled,false);
+ el('savedBriefsFold').open=false;readRow=row(historicalDocument,1,head.revision);el('pp-list').value=id;await el('pp-preview').fire('click');await el('pp-open').fire('click');
+ assert.equal(el('savedBriefsFold').open,true,'A detached saved brief reveals status');assert.equal(el('brief').value,'Historical words');assert.equal(el('pp-save').disabled,true);assert.equal(el('pp-create').disabled,false);
  assert.match(el('pp-current').textContent,/detached draft/);assert.match(el('pp-current').textContent,/revision 1/);assert.match(el('pp-current').textContent,/head 2/);
  readRow=head;el('pp-list').value=id;await el('pp-preview').fire('click');await el('pp-open').fire('click');
  assert.equal(el('pp-save').disabled,false);assert.match(el('pp-current').textContent,/revision 2/);
