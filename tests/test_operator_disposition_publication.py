@@ -131,6 +131,164 @@ class OperatorDispositionPublicationTests(unittest.TestCase):
                 self.assertTrue(restarted.queue.empty())
                 self.assertEqual(restarted.requests, [])
 
+    def test_restarted_disposition_requires_fresh_barriers_before_acknowledgment(self):
+        for kind in ('stop', 'never', 'unknown'):
+            with self.subTest(kind=kind):
+                studio, job, state = self.fixture(kind)
+                with patch.object(studio, '_sync_parent_directory', side_effect=OSError('uncertain')):
+                    with self.assertRaises(OSError): self.invoke(studio, job, kind)
+                attempted = json.loads(state.read_bytes())[self.field(kind)]
+                restarted = fixtures.FakeStudio(self.root, [])
+                restored = restarted.jobs[job['id']]
+                restarted.reference_jobs = HeldReferenceJobs()
+                self.graph = restored['graph']
+                before, raw = copy.deepcopy(restored), state.read_bytes()
+                publish = restarted._write_observation_state
+
+                def publish_then_fail(path, value):
+                    publish(path, value)
+                    raise OSError('after publish')
+
+                for seam in ('file', 'parent', 'after_publish'):
+                    with self.subTest(seam=seam):
+                        fault = (patch('os.fsync', side_effect=OSError('file sync failed'))
+                                 if seam == 'file' else patch.object(restarted, '_sync_parent_directory', side_effect=OSError('parent failed'))
+                                 if seam == 'parent' else patch.object(restarted, '_write_observation_state', side_effect=publish_then_fail))
+                        with fault, self.assertRaises(OSError):
+                            self.invoke(restarted, restored, kind)
+                        self.assertEqual(restored, before)
+                        self.assertEqual(state.read_bytes(), raw)
+                        self.assertEqual(json.loads(state.read_bytes())[self.field(kind)], attempted)
+                        self.assertFalse(list(state.parent.glob('state.json.*.tmp')))
+                        self.retained(restarted, restored, before)
+
+                with patch.object(restarted, '_write_observation_state', wraps=publish) as writer:
+                    result = self.invoke(restarted, restored, kind)
+                writer.assert_called_once()
+                self.assertEqual(result[self.field(kind)], attempted)
+                # Only a completed publication in this process permits the idempotent return.
+                with patch.object(restarted, '_write_observation_state', side_effect=AssertionError('already acknowledged')):
+                    self.assertEqual(self.invoke(restarted, restored, kind), result)
+                self.retained(restarted, restored, before)
+
+    def test_restarted_disposition_refuses_changed_or_invalid_retained_state(self):
+        for kind in ('stop', 'never', 'unknown'):
+            for defect in ('controls', 'event', 'duplicate', 'wrong_id', 'oversize'):
+                with self.subTest(kind=kind, defect=defect):
+                    studio, job, state = self.fixture(kind)
+                    self.invoke(studio, job, kind)
+                    restarted = fixtures.FakeStudio(self.root, [])
+                    restored = restarted.jobs[job['id']]
+                    before, original = copy.deepcopy(restored), state.read_bytes()
+                    changed = json.loads(state.read_bytes())
+                    if defect == 'controls': changed['controls']['seed'] = 98765
+                    elif defect == 'event': changed[self.field(kind)]['event_id'] = 'f' * 32
+                    elif defect == 'wrong_id': changed['id'] = 'another-job'
+                    state.write_text(json.dumps(changed), encoding='utf-8')
+                    if defect == 'duplicate':
+                        state.write_text('{"id":"' + job['id'] + '","id":"' + job['id'] + '"}', encoding='utf-8')
+                    raw = state.read_bytes()
+                    budget = 1 if defect == 'oversize' else fixtures.server.observation_state.MAX_BYTES
+                    try:
+                        with patch.object(fixtures.server.observation_state, 'MAX_BYTES', budget), \
+                             patch.object(restarted, '_write_observation_state') as writer:
+                            with self.assertRaises(fixtures.server.StudioError):
+                                self.invoke(restarted, restored, kind)
+                        writer.assert_not_called()
+                        self.assertEqual(restored, before)
+                        self.assertEqual(state.read_bytes(), raw)
+                        self.assertTrue(restarted.queue.empty())
+                        self.assertEqual(restarted.requests, [])
+                    finally:
+                        state.write_bytes(original)  # Do not expose a corrupt fixture to the next restart.
+
+    def test_restarted_legacy_abandonment_republishes_without_inventing_fields(self):
+        studio, job, state = self.fixture('unknown')
+        self.invoke(studio, job, 'unknown')
+        legacy = json.loads(state.read_bytes())
+        legacy['abandonment'].pop('event_id')
+        legacy.pop('comfy_root'); legacy.pop('comfy_url')
+        state.write_text(json.dumps(legacy), encoding='utf-8')
+        restarted = fixtures.FakeStudio(self.root, [])
+        restored = restarted.jobs[job['id']]
+        publish = restarted._write_observation_state
+        with patch.object(restarted, '_write_observation_state', wraps=publish) as writer:
+            result = self.invoke(restarted, restored, 'unknown')
+        writer.assert_called_once()
+        self.assertEqual(result['abandonment'], legacy['abandonment'])
+        self.assertEqual(json.loads(state.read_bytes()), legacy)
+        for name, raw in self.immutable.items():
+            self.assertEqual((state.parent / name).read_bytes(), raw)
+        self.assertTrue(restarted.queue.empty())
+        self.assertEqual(restarted.requests, [])
+
+    def test_restarted_stop_republishes_receipts_without_live_indexing_metadata(self):
+        studio, job, state = self.fixture('stop')
+        output = studio.comfy_root / 'output' / 'retained.png'
+        output.parent.mkdir(exist_ok=True); output.write_bytes(fixtures.png())
+        job['outputs'] = [{'filename': output.name, 'subfolder': '', 'type': 'output', 'prompt_id': 'known'}]
+        studio._save(job)
+        self.invoke(studio, job, 'stop')
+        restarted = fixtures.FakeStudio(self.root, [])
+        restored = restarted.jobs[job['id']]
+        self.assertIn('asset_id', restored['outputs'][0])
+        retained = json.loads(state.read_bytes())
+        self.assertNotIn('asset_id', retained['outputs'][0])
+        before = copy.deepcopy(restored)
+        result = self.invoke(restarted, restored, 'stop')
+        self.assertEqual(result['tracking_disposition'], retained['tracking_disposition'])
+        self.assertEqual(json.loads(state.read_bytes()), retained)
+        self.assertEqual(restored, before)
+        self.assertTrue(restarted.queue.empty())
+        self.assertEqual(restarted.requests, [])
+
+    def test_restarted_disposition_can_be_put_away_before_same_reason_retry(self):
+        for kind in ('stop', 'never', 'unknown'):
+            with self.subTest(kind=kind):
+                studio, job, state = self.fixture(kind)
+                self.invoke(studio, job, kind)
+                restarted = fixtures.FakeStudio(self.root, [])
+                restored = restarted.jobs[job['id']]
+                restarted.put_away_job(job['id'], True)
+                retained = json.loads(state.read_bytes())
+                result = self.invoke(restarted, restored, kind)
+                self.assertEqual(result[self.field(kind)], retained[self.field(kind)])
+                self.assertEqual(json.loads(state.read_bytes()), retained)
+                self.assertEqual(restored['put_away_at'], retained['put_away_at'])
+                self.assertTrue(restarted.queue.empty())
+                self.assertEqual(restarted.requests, [])
+
+    def test_concurrent_restarted_disposition_acknowledges_one_publication(self):
+        self.start.stop()
+        for kind in ('stop', 'never', 'unknown'):
+            with self.subTest(kind=kind):
+                with patch.object(threading.Thread, 'start'):
+                    studio, job, state = self.fixture(kind)
+                    self.invoke(studio, job, kind)
+                    restarted = fixtures.FakeStudio(self.root, [])
+                restored = restarted.jobs[job['id']]
+                attempted = copy.deepcopy(restored[self.field(kind)])
+                ready, outcomes = threading.Barrier(3), []
+
+                def caller():
+                    try:
+                        ready.wait(5)
+                        outcomes.append(self.invoke(restarted, restored, kind))
+                    except BaseException as exc: outcomes.append(exc)
+
+                threads = [threading.Thread(target=caller) for _ in range(2)]
+                with patch.object(restarted, '_write_observation_state', wraps=restarted._write_observation_state) as writer:
+                    for thread in threads: thread.start()
+                    ready.wait(5)
+                    for thread in threads: thread.join(5)
+                self.assertTrue(all(not thread.is_alive() for thread in threads))
+                self.assertEqual(len(outcomes), 2)
+                self.assertTrue(all(isinstance(row, dict) for row in outcomes), outcomes)
+                self.assertTrue(all(row[self.field(kind)] == attempted for row in outcomes))
+                writer.assert_called_once()
+                self.assertTrue(restarted.queue.empty())
+                self.assertEqual(restarted.requests, [])
+
     def test_stop_retry_preserves_all_prior_stop_resume_history(self):
         studio, job, state = self.fixture('stop')
         studio.stop_tracking(job['id'], 'First stop')

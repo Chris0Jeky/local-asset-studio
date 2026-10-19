@@ -120,9 +120,25 @@ Reconciliation is a bounded strict read, not evidence that synchronization worke
 Even when the bytes match, the explicit retry republishes through all required
 barriers before updating memory. Repeated barrier failures retain one attempted
 identity without acknowledging success. Existing acknowledged same-reason calls
-remain idempotent. Restart loads the retained identity and queues nothing; the
-historical restart normalization writer is not migrated or given a stronger
-durability guarantee by this change.
+remain idempotent within that Studio process.
+
+On restart, readable stopped/abandoned state is retained for inspection and queues
+nothing. It is marked internally as loaded, not as a publication acknowledged by
+the new process. The first explicit same-reason command strictly compares the
+current retained state with the state loaded by recovery, then republishes it
+through the scoped writer. Only a normal return clears that marker. File-sync,
+parent-sync and post-publication failures still propagate; another explicit retry
+must complete the barriers, preserving the exact event, timestamp, history and
+receipts. Concurrent same-reason calls share the existing lock and acknowledge one
+publication. Different reasons still refuse before any publication.
+
+The comparison uses retained state before startup output indexing adds live asset
+metadata. Re-publication does not persist that metadata or invent missing legacy
+backend fields or event IDs. A successful Put away/Bring back publication includes
+the loaded disposition and also clears its marker. Changed, malformed or oversized
+retained state refuses before acknowledgment instead of being overwritten. This
+does not migrate the historical restart normalization writer: it still handles
+status normalization and multi-file saves, with their wider #716 gaps unchanged.
 
 `tests/test_operator_disposition_publication.py` covers both dispositions, including
 never-submitted and unknown-outcome abandonment; pre-replacement failures,
@@ -133,6 +149,15 @@ validation and global-writer exclusion. The first eight regression methods cause
 observation workflow runs the new suite on both Windows and Ubuntu. #716 remains
 open for multi-file saves/restart normalization, runtime/backend and production
 owners, lower-authority metadata and stronger platform qualification.
+
+The restart acknowledgment regressions exercise repeated file/parent failures,
+an exception after publication, strict retained-state mismatch and malformed-state
+refusals, same-process and concurrent idempotency, legacy fields, live output
+indexing and a preceding Put away command. The first four new methods produced
+31 assertion failures with the unchanged server; they never observed a publication
+call after restart. The original publisher tests continue to cover fsync before
+replacement, preservation of the prior target on failed writes and the explicit
+Windows directory-barrier limitation.
 
 ## Put away (#940)
 

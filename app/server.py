@@ -184,6 +184,7 @@ class Studio:
         self._host_commit = None; self._host_commit_at = 0
         self._gpu_memory = None; self._gpu_memory_at = 0
         self.jobs = {}; self.queue = Queue(); self.lock = threading.RLock(); self.worker_failure = None
+        self._loaded_operator_dispositions = {}  # Readable terminal state still needs an explicit publication acknowledgment.
         self.cancel_requests = {}   # job id -> open owner cancel request; the worker that owns the job resolves it (app/job_cancel.py)
         # ComfyUI keeps every model family it loaded in host RAM after the VRAM is freed (measured 16 Sep 2026: 25.8 GB committed on an
         # idle queue; one POST /free brought it to 5.7 GB). After this many idle minutes the worker asks it to release that cache once.
@@ -1457,13 +1458,8 @@ class Studio:
         if job.get("status") != "uncertain": return "Only an uncertain job can stop tracking"
         return Studio._known_prompt_error(job)
 
-    def _retained_operator_disposition(self, job, prospective, field):
-        """Reuse only an exact visible attempt; the caller must still publish it again.
-
-        Readback never proves a failed synchronization barrier. This only keeps an
-        explicit retry from replacing the event identity of an uncertain attempt.
-        The existing per-Studio lock owns these state-only operator commands.
-        """
+    def _read_operator_state(self, job):
+        """Read bounded, strict retained state; this does not acknowledge publication."""
         def unique(pairs):
             result = {}
             for key, value in pairs:
@@ -1485,6 +1481,19 @@ class Studio:
             if not isinstance(retained, dict) or retained.get('id') != job['id']:
                 raise ValueError('Wrong retained job identity')
             observation_state._bytes(retained)  # Reject overflowed floats and non-encodable retained values.
+            return retained
+        except (ValueError, TypeError, RecursionError, UnicodeError, OverflowError) as exc:
+            raise StudioError('Retained disposition state is invalid; restart to inspect it') from exc
+
+    def _retained_operator_disposition(self, job, prospective, field):
+        """Reuse only an exact visible attempt; the caller must still publish it again.
+
+        Readback never proves a failed synchronization barrier. This only keeps an
+        explicit retry from replacing the event identity of an uncertain attempt.
+        The existing per-Studio lock owns these state-only operator commands.
+        """
+        retained = self._read_operator_state(job)
+        try:
             old = retained.get(field)
             terminal = (self._tracking_stopped(retained) if field == 'tracking_disposition'
                         else retained.get('status') == 'abandoned')
@@ -1510,6 +1519,25 @@ class Studio:
             if isinstance(exc, StudioError): raise
             raise StudioError('Retained disposition state is invalid; restart to inspect it') from exc
 
+    def _acknowledge_loaded_operator_disposition(self, job, field):
+        """An explicit same-reason retry after restart must cross the barriers once.
+
+        Preserve loaded event/history identity, including legacy entries. The
+        existing command lock serializes acknowledgment; a failed publication
+        leaves the marker for another explicit retry, even after replacement.
+        """
+        key = (job['id'], field)
+        if key not in self._loaded_operator_dispositions: return
+        retained = self._read_operator_state(job)
+        state = self._loaded_operator_dispositions[key]
+        if (json.dumps(retained, sort_keys=True, allow_nan=False) != json.dumps(state, sort_keys=True, allow_nan=False)
+                or json.dumps(job.get(field), sort_keys=True, allow_nan=False) != json.dumps(state.get(field), sort_keys=True, allow_nan=False)):
+            raise StudioError('Retained disposition state changed; restart to inspect it')
+        # Startup output indexing and legacy backend defaults belong to the live
+        # view, not the retained disposition receipt this explicit call confirms.
+        self._write_observation_state(self.runs / job['id'] / 'state.json', state)
+        self._loaded_operator_dispositions.pop(key)
+
     def stop_tracking(self, job_id, reason):
         if type(reason) is not str: raise StudioError("Stop-tracking reason must be text")
         reason = reason.strip()
@@ -1521,6 +1549,7 @@ class Studio:
             disposition = job.get("tracking_disposition")
             if self._tracking_stopped(job):
                 if disposition.get("reason") != reason: raise StudioError("Tracking was already stopped with a different reason")
+                self._acknowledge_loaded_operator_disposition(job, 'tracking_disposition')
                 return self.public(job)
             error = self._stop_tracking_error(job)
             if error: raise StudioError(error)
@@ -1532,6 +1561,7 @@ class Studio:
             prospective = self._retained_operator_disposition(job, prospective, 'tracking_disposition')
             self._write_observation_state(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
             job["tracking_disposition"] = prospective['tracking_disposition']
+            self._loaded_operator_dispositions.pop((job_id, 'tracking_disposition'), None)
             return self.public(job)
 
     @staticmethod
@@ -1590,6 +1620,7 @@ class Studio:
             recorded = job.get("abandonment")
             if job.get("status") == "abandoned" and isinstance(recorded, dict):
                 if recorded.get("reason") != reason: raise StudioError("This job already has a retained abandonment reason")
+                self._acknowledge_loaded_operator_disposition(job, 'abandonment')
                 return self.public(job)
             if not submission_evidence.abandonable(job):
                 raise StudioError("Only inactive jobs without prompt IDs can be abandoned; known prompts use Stop tracking")
@@ -1607,6 +1638,7 @@ class Studio:
             prospective = self._retained_operator_disposition(job, prospective, 'abandonment')
             self._write_observation_state(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
             job.update(status="abandoned", message=message, abandonment=prospective['abandonment'])
+            self._loaded_operator_dispositions.pop((job_id, 'abandonment'), None)
             return self.public(job)
 
     def cancel_job(self, job_id):
@@ -1665,6 +1697,9 @@ class Studio:
             self._write_observation_state(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
             if put_away: job["put_away_at"] = prospective["put_away_at"]
             else: job.pop("put_away_at", None)
+            # This successful state publication also includes any loaded disposition.
+            self._loaded_operator_dispositions.pop((job_id, 'tracking_disposition'), None)
+            self._loaded_operator_dispositions.pop((job_id, 'abandonment'), None)
             return self.public(job)
 
     def _load_jobs(self):
@@ -1686,6 +1721,8 @@ class Studio:
                     "record_error": reason, "message": f"The run record could not be read ({reason}). Nothing was resubmitted." + (f" Known ComfyUI prompt IDs: {', '.join(ids[:8])}." if ids else "") + f" Inspect experiments/runs/{state_path.parent.name}/ before deleting it."}
                 continue
             if isinstance(data, dict) and isinstance(graph, dict) and data.get("id"):
+                defaults = {key: value for key, value in (('comfy_root', str(self.comfy_root)), ('comfy_url', self.comfy_url)) if key not in data}
+                state_written = False
                 data["graph"] = graph
                 data.setdefault('comfy_root', str(self.comfy_root))
                 data.setdefault('comfy_url', self.comfy_url)
@@ -1703,9 +1740,18 @@ class Studio:
                         self._write_json_atomic(state_path, {k: v for k, v in data.items() if k != "graph"})
                     else:
                         self._save(data)
+                    state_written = True
                 if job_cancel.reconcile_restart(data, state_path.parent):
                     self._write_json_atomic(state_path, {k: v for k, v in data.items() if k != "graph"})
+                    state_written = True
                 self.jobs[data["id"]] = data
+                fields = (['tracking_disposition'] if self._tracking_stopped(data) else [])
+                if data.get('status') == 'abandoned' and isinstance(data.get('abandonment'), dict): fields.append('abandonment')
+                if fields:
+                    retained = {k: v for k, v in data.items() if k != 'graph'}
+                    if not state_written:
+                        for name in defaults: retained.pop(name, None)
+                    for field in fields: self._loaded_operator_dispositions[(data['id'], field)] = copy.deepcopy(retained)
 
     def _request(self, path, method="GET", data=None, timeout=15, base_url=None, allow_empty=False):
         body = json.dumps(data).encode() if data is not None else None
