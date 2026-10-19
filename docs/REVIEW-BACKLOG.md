@@ -7,6 +7,11 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-10-19 pass 2 (Brief H)
+
+- [ ] **Failed look thumbnails become the blank decorative .look-thumb tile** in Models & setup, replacing broken-image icons for local-only examples. Reverse: remove the capture-phase error listener on #modelLooks in app/static/app.js.
+- [ ] **File groups read "On disk, not hash-checked" and "On disk, hash-checked"**, with the hint "They work. Verify reads a file and compares it with its pinned SHA-256; nothing changes on disk." Button labels stay unchanged. Reverse: restore the group names "Needs a check" and "Installed" and the previous hint in renderCuratedModels() in app/static/app.js.
+
 ## 2026-10-19: Workflow builder first screen
 
 - [ ] Workflow builder: storage and file tools folded (All tools, Saved workflows). Reverse: remove the two details wrappers in workflow-studio.html and the fold-open lines in workflow-projects.js.
