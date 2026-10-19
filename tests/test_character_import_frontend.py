@@ -1,6 +1,6 @@
 """Actual import handlers plus the existing Production/Workspace HTTP contracts, with inert sources."""
 import base64
-from http.server import ThreadingHTTPServer
+from http_test_server import ThreadingHTTPServer
 import json
 from pathlib import Path
 import shutil

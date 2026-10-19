@@ -15,7 +15,7 @@ import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
-from http.server import ThreadingHTTPServer
+from http_test_server import ThreadingHTTPServer
 from urllib.parse import urlsplit
 
 import studio_browser_smoke as fixture

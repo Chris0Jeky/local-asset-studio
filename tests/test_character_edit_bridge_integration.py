@@ -4,7 +4,7 @@ These tests must run in the full repository. No model, native editor or art appr
 is established by a synthetic canon or a substituted neural boundary.
 """
 import copy
-from http.server import ThreadingHTTPServer
+from http_test_server import ThreadingHTTPServer
 import json
 from pathlib import Path
 import threading

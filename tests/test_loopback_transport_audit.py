@@ -1,5 +1,6 @@
 """Bounded attribution for unexpected connections to loopback test fixtures."""
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 import json
 import threading
 import unittest

@@ -1,7 +1,7 @@
 """Real loopback routes for revision-bound mixed batch commands; no Comfy runtime."""
 import copy
 from http.client import HTTPConnection
-from http.server import ThreadingHTTPServer
+from http_test_server import ThreadingHTTPServer
 import json
 from pathlib import Path
 from queue import Queue
