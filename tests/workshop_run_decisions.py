@@ -416,11 +416,11 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
         node = self.page.evaluate_handle("document.querySelector('#workshopBlockerList li')")
         self.page.evaluate("document.querySelector('#createView').__workshop.sync()")
         self.assertTrue(self.page.evaluate("(n)=>n.isConnected", node))
-        # Codex P2 on #1125: once one blocker is left, its repair stays in the strip (once, beside its summary).
+        # With one blocker left, its repair stays in the strip and its message stays in the dock.
         self.page.evaluate("document.getElementById('uxBlockers').innerHTML='<div class=\"ux-blocker\" data-readiness-code=\"parameters\"><p>Width must be a multiple of 8.</p><button type=\"button\" data-ux-resolve=\"parameters\">Review motion settings</button></div>'")
         self.page.wait_for_function("document.querySelectorAll('#workshopBlockerList li').length===1 && !document.getElementById('workshopBlockerList').hidden")
         self.assertEqual(self.page.locator('#workshopReadiness').text_content(), 'Width must be a multiple of 8.')
-        self.assertEqual(self.page.locator('#workshopSetupReadiness').inner_text(), 'Width must be a multiple of 8.')
+        self.assertTrue(self.page.locator('#workshopSetupReadiness').is_hidden())
         self.assertEqual(self.page.locator('#workshopBlockerList li').inner_text(), 'Review motion settings', 'the message is not repeated')
         self.page.evaluate("document.activeElement?.blur()")
         self.page.locator('#workshopBlockerList button').click()
@@ -428,7 +428,7 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
         self.page.evaluate("document.getElementById('uxBlockers').innerHTML='<div class=\"ux-blocker\"><p>Only this one.</p></div>'")
         self.page.wait_for_function("document.getElementById('workshopBlockerList').hidden")
         self.assertEqual(self.page.locator('#workshopReadiness').text_content(), 'Only this one.')
-        self.assertEqual(self.page.locator('#workshopSetupReadiness').inner_text(), 'Only this one.')
+        self.assertTrue(self.page.locator('#workshopSetupReadiness').is_hidden())
         self.assertEqual(self.page.evaluate('submitted'), 0)
 
 if __name__ == '__main__':
