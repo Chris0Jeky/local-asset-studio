@@ -296,6 +296,8 @@ test('one-press Polish picks the face pass by source family and refuses with a r
   assert.match(C.polishRoute('details',catalog.filter(p=>p.id!=='anime-detail-fix'),{...source,preset_id:'wai'},{}).reason,/cannot read a source/);
   // Refine 1.5× (gpu-lab round 7, #1563): anime pictures only, through anime-refine.
   for(const from of ['wai','anima-portrait','noob'])assert.equal(id('refine',from),'anime-refine');assert.match(pick('refine','krea-portrait').reason,/anime model/);
+  // A refined picture stays anime work (Codex P2 on #1569): it can be refined, fixed and upscaled again.
+  assert.equal(id('refine','anime-refine'),'anime-refine');assert.equal(id('details','anime-refine'),'anime-detail-fix');assert.equal(id('upscale','anime-refine'),'anime-esrgan');assert.ok(pick('face','anime-refine').ok);
   assert.equal(pick('sharpen','wai').ok,false);assert.equal(C.polishRoute('face',catalog,null,{}).ok,false);
   const order=C.destinations('repair',catalog,{...source,preset_id:'zimage'}).map(p=>p.id);assert.ok(order.indexOf('anime-esrgan')<order.indexOf('anime-face'),'the repair prefer list names the real upscale id');
 });
