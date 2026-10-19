@@ -1,4 +1,4 @@
-let backendSwitching=false, backendActive=null, backendReadEpoch=0, backendReadPending=null, backendInventoryPending=false, backendSwitchEpoch=0;
+let backendSwitching=false, backendWorkBlocker='', backendActive=null, backendReadEpoch=0, backendReadPending=null, backendInventoryPending=false, backendSwitchEpoch=0;
 let backendResolution=null,backendResolving=false;
 function updateBackendResolution(){
   const button=$('#resolveBackendSwitch'),disabled=backendResolving||!backendResolution||!$('#backendStudiosClosed').checked||!$('#backendRuntimesInspected').checked;
@@ -40,7 +40,7 @@ async function refreshBackends() {
   try {
     const state=await api('/api/backends');if(!current())return;
     const switching=state?.busy===true&&state.operation?.status==='running'&&typeof state.operation?.target==='string';
-    if(!Array.isArray(state?.profiles)||typeof state.active!=='string'||typeof state.busy!=='boolean'||(state.busy&&state.operation?.status==='running'&&typeof state.operation?.target!=='string'))throw Error('The backend status is incomplete. Your draft was kept.');
+    if(!Array.isArray(state?.profiles)||typeof state.active!=='string'||typeof state.busy!=='boolean'||(state.work_blocker!=null&&typeof state.work_blocker!=='string')||(state.busy&&state.operation?.status==='running'&&typeof state.operation?.target!=='string'))throw Error('The backend status is incomplete. Your draft was kept.');
     const changed=backendActive!==null&&backendActive!==state.active;
     if(changed){
       const next=await api('/api/catalog');if(!current())return;
@@ -52,6 +52,7 @@ async function refreshBackends() {
       renderPresets();if(selected){renderSelected();restoreBackendEditor(snapshot);}
     }
     const sharedBlock=state.shared_state?.blocker||state.state_issue||'';
+    backendWorkBlocker=state.work_blocker||'';
     backendSwitching=state.busy||!!sharedBlock;
     const select=$('#backendChoice'),keep=select.value;
     select.innerHTML=state.profiles.map(p=>'<option value="'+esc(p.id)+'" '+(!p.installed?'disabled':'')+'>'+esc(p.name)+(p.online?' · online':'')+'</option>').join('');
@@ -59,12 +60,12 @@ async function refreshBackends() {
     if(backendSwitching&&[select,$('#switchBackend')].includes(document.activeElement)){const status=$('#backendStatus');status.tabIndex=-1;status.focus({preventScroll:true});}
     select.disabled=backendSwitching;$('#switchBackend').disabled=backendSwitching;
     const busyMessage='A local operation is running. Switching is disabled until it finishes.';
-    $('#backendStatus').textContent=switching?(state.operation.message||'One model environment at a time. Switching never starts a generation.'):(state.busy?busyMessage:(sharedBlock||state.operation?.message||'One model environment at a time. Switching never starts a generation.'));
+    $('#backendStatus').textContent=switching?(state.operation.message||'One model environment at a time. Switching never starts a generation.'):(state.busy?busyMessage:(sharedBlock||backendWorkBlocker||state.operation?.message||'One model environment at a time. Switching never starts a generation.'));
     renderBackendResolution(state.busy?null:state.shared_state);
     renderRecovery(state.recovery);
     backendActive=state.active;$('#activeBackend').textContent=state.profiles.find(p=>p.active)?.name||'';
-    // The Models disclosure is folded by default; a running switch keeps it open so its progress and the disabled controls stay visible.
-    const activeName=state.profiles.find(p=>p.active)?.name||'',panel=$('.environment-panel'),summary=$('#envSummary');if(summary)summary.textContent=switching?'Switching to '+(state.profiles.find(p=>p.id===state.operation.target)?.name||state.operation.target)+'…':activeName?'Active: '+activeName+' · switching is always explicit':'Switching is always explicit';if(backendSwitching&&panel)panel.open=true;
+    // Keep progress or a work refusal visible; a work-only mismatch leaves explicit Switch available as its repair.
+    const activeName=state.profiles.find(p=>p.active)?.name||'',panel=$('.environment-panel'),summary=$('#envSummary');if(summary)summary.textContent=switching?'Switching to '+(state.profiles.find(p=>p.id===state.operation.target)?.name||state.operation.target)+'…':activeName?'Active: '+activeName+' · switching is always explicit':'Switching is always explicit';if((backendSwitching||backendWorkBlocker)&&panel)panel.open=true;
     updateReady();
     if(changed||backendInventoryPending){
       backendInventoryPending=true;
@@ -94,4 +95,4 @@ $('#resolveBackendSwitch').onclick=async()=>{
   catch(e){if(attempt!==backendSwitchEpoch)return;const read=backendReadEpoch+1;await refreshBackends();if(attempt===backendSwitchEpoch&&read===backendReadEpoch)$('#backendStatus').textContent=e.message;}
   finally{backendResolving=false;updateBackendResolution();}
 };
-refreshBackends();setInterval(()=>{if(backendSwitching&&backendReadPending!==backendReadEpoch)refreshBackends();},3000);
+refreshBackends();setInterval(()=>{if((backendSwitching||backendWorkBlocker)&&backendReadPending!==backendReadEpoch)refreshBackends();},3000);

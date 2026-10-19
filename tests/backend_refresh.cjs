@@ -2,6 +2,59 @@
 const assert=require('node:assert/strict'),test=require('node:test'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../app/static/backends.js'),'utf8').replace('refreshBackends();setInterval(', 'setInterval(');
 function deferred(){let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return{promise,resolve,reject};}
+
+const workReason='The saved backend selection differs from this Studio. Switch explicitly in Models & setup or restart Studio after inspection before starting work.';
+function workReadinessFixture(){
+  const f=fixture(),app=fs.readFileSync(path.join(__dirname,'../app/static/app.js'),'utf8'),workbench=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
+  f.a.backend_id='old';f.context.window=f.context;
+  Object.assign(f.context,{U:require('../app/static/studio-core.js'),q:f.node,escape:String,missingByPreset:{},online:true,workerAlive:true,schemaAvailable:true,submitting:false,
+    pendingInputs:new Set(),continuationState:null,uploaded:null,lastUploaded:null,parentAssets:[],referenceRecords:[],tileBusy:false,parallaxBusy:false,secondPicture:null,sharedAdoptionError:'',varyUnapplied:null,
+    referencesReady:()=>true,continuationBlockers:()=>[],continuationBlockerItems:()=>[],i2vModeBlocker:()=>'',scheduleTimeEstimate(){},combineBusy:()=>false,
+    posePositionDirty:()=>false,poseHeldArtifact:()=>null,poseSizeHold:()=>'',poseHeldShown:null,syncContinuation(){},syncFills(){},syncCombinePair(){},syncPoseEditor(){},syncSourceAvailability(){},takesSource:()=>false,NO_SOURCE_SLOT:'No source required',
+    StudioMake:{refreshReadiness(){f.state.makeReadiness=(f.state.makeReadiness||0)+1;}}});
+  vm.runInContext(cut(app,'function updateReady() {','const activeLoraSlots = ')+cut(workbench,'  function after(name,callback)','  function element(')+cut(workbench,"  let readinessMarkup=''",'  function focusReadinessTarget(')+";after('updateReady',syncReady);",f.context);
+  return f;
+}
+
+test('a work-only refusal blocks actual Create readiness while leaving the switch repair enabled',async()=>{
+ const f=workReadinessFixture();f.context.updateReady();assert.equal(f.node('#generate').disabled,false);
+ f.node('#positive').value='My current draft';f.node('[data-key="seed"]').value='';f.node('#positive').focus();
+ const before=f.state.makeReadiness||0,read=f.run();f.pending.at(-1).resolve({...f.backend('old'),operation:{status:'completed',message:'Old switch finished'},shared_state:{blocker:null,resolvable:false},work_blocker:workReason});await read;
+ assert.equal(f.node('#generate').disabled,true);assert.equal(f.node('#switchBackend').disabled,false);assert.equal(f.node('#backendChoice').disabled,false);
+ assert.equal(vm.runInContext('backendSwitching',f.context),false);assert.equal(f.node('#backendStatus').textContent,workReason);
+ assert.match(f.node('#uxBlockers').innerHTML,/data-readiness-code="backend-work"/);assert.match(f.node('#uxBlockers').innerHTML,/data-ux-resolve="models"/);
+ assert.doesNotMatch(f.node('#uxBlockers').innerHTML,/environment is switching/);assert.equal(f.node('.environment-panel').open,true);
+ assert.equal(f.state.makeReadiness,before+1,'An already-open Make composer observes the same readiness change');
+ assert.equal(f.node('#positive').value,'My current draft');assert.equal(f.node('[data-key="seed"]').value,'');assert.equal(f.context.document.activeElement,f.node('#positive'));
+ assert.equal(f.writes.length,0);
+ f.node('#backendChoice').focus();const again=f.run();f.pending.at(-1).resolve({...f.backend('old'),work_blocker:workReason});await again;
+ assert.equal(f.context.document.activeElement,f.node('#backendChoice'));assert.equal(f.node('#positive').value,'My current draft');
+ const repair=f.node('#switchBackend').onclick();await f.tick();f.pending.at(-1).resolve({...f.backend('old'),work_blocker:null});await repair;
+ assert.deepEqual(f.writes.map(([url])=>url),['/api/backends/switch']);assert.equal(f.node('#generate').disabled,false);assert.equal(f.node('#uxBlockers').innerHTML,'');
+});
+
+test('work-only polling retains one current read and stops after a confirmed clear observation',async()=>{
+ const f=workReadinessFixture(),read=f.run();f.pending.at(-1).resolve({...f.backend('old'),work_blocker:workReason});await read;
+ const count=f.pending.length;f.state.poll();f.state.poll();assert.equal(f.pending.length,count+1);
+ f.pending.at(-1).resolve({...f.backend('old'),work_blocker:null});await f.tick();
+ assert.equal(f.node('#generate').disabled,false);f.state.poll();assert.equal(f.pending.length,count+1);assert.equal(f.writes.length,0);
+});
+
+for(const olderBlocked of [false,true])test('an older '+(olderBlocked?'blocked':'clear')+' observation cannot overwrite current work readiness',async()=>{
+ const f=workReadinessFixture(),older=f.run(),newer=f.run();
+ f.pending[1].resolve({...f.backend('old'),work_blocker:olderBlocked?null:workReason});await newer;
+ f.pending[0].resolve({...f.backend('old'),work_blocker:olderBlocked?workReason:null});await older;
+ assert.equal(f.node('#generate').disabled,!olderBlocked);assert.equal(f.node('#switchBackend').disabled,false);assert.equal(f.writes.length,0);
+});
+
+test('a malformed or failed work-status read retains the last accepted refusal',async()=>{
+ const f=workReadinessFixture(),first=f.run();f.pending.at(-1).resolve({...f.backend('old'),work_blocker:workReason});await first;
+ for(const value of [false,42,{},'transport']){
+   const read=f.run();if(value==='transport')f.pending.at(-1).reject(Error('Status read failed'));else f.pending.at(-1).resolve({...f.backend('old'),work_blocker:value});await read;
+   assert.equal(f.node('#generate').disabled,true);assert.equal(f.node('#switchBackend').disabled,false);assert.equal(vm.runInContext('backendWorkBlocker',f.context),workReason);
+ }
+ assert.equal(f.writes.length,0);
+});
 function fixture(){
   const nodes=new Map(),pending=[],writes=[],state={renders:0,health:0},a={id:'a',name:'A',positive:true,negative:true,defaults:{positive:'old default',seed:42}},b={...a,id:'b',name:'B'};
   const document={activeElement:null};

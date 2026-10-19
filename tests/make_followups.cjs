@@ -4,6 +4,27 @@ const {test}=require('node:test');
 const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8');
 const between=(start,end)=>{assert.ok(make.includes(start)&&make.includes(end));return make.slice(make.indexOf(start),make.indexOf(end,make.indexOf(start)));};
 
+test('an accepted work refusal updates Make Generate without replacing its composer or draft',()=>{
+  const nodes=new Map(),look={id:'look',body:{preset_id:'primary-recipe'}},preset={id:'primary-recipe'},reason='The saved selection differs. Switch explicitly in Models & setup.';
+  const q=id=>{if(!nodes.has(id))nodes.set(id,{disabled:false,textContent:'',innerHTML:'',dataset:{},attributes:{},setAttribute(k,v){this.attributes[k]=v;},removeAttribute(k){delete this.attributes[k];}});return nodes.get(id);};
+  const state={busy:false,status:'',compare:false},context={window:{},q,state,GOALS:[],goal:()=>({}),current:()=>look,tunedPreset:()=>preset,
+    placeStatus(){},statusEl:q('#makeStatus'),blockerMarkup:(_look,text)=>text,whyPreset:()=>preset,escape:String,
+    backendSwitching:false,backendWorkBlocker:'',online:true,workerAlive:true,schemaAvailable:true,
+    render(){throw Error('A readiness change must not rebuild the composer');}};
+  context.lookWhy=()=>context.blocker(look);vm.createContext(context);
+  vm.runInContext(between('  function runtimeBlocker()','  const blockerMarkup=')+between('  function syncOperation(){','  const say=')+make.match(/  window\.StudioMake=.*\n/)[0],context);
+  context.syncOperation();assert.equal(q('#makeGenerate').disabled,false);
+  q('#makeScene').value='Keep this draft';const composer=q('#makeComposer'),draft=q('#makeScene');
+  context.backendWorkBlocker=reason;
+  assert.equal(context.runtimeBlocker(),reason);
+  assert.equal(typeof context.window.StudioMake.refreshReadiness,'function');context.window.StudioMake.refreshReadiness();
+  assert.equal(q('#makeGenerate').disabled,true);assert.equal(q('#makeWhy').innerHTML,reason);assert.equal(q('#makeGenerate').attributes['aria-describedby'],'makeWhy');
+  assert.equal(q('#makeScene'),draft);assert.equal(draft.value,'Keep this draft');assert.equal(q('#makeComposer'),composer);
+  context.backendSwitching=true;context.window.StudioMake.refreshReadiness();assert.equal(q('#makeWhy').innerHTML,reason,'Specific work refusal takes priority over a generic switching message');
+  context.backendSwitching=false;context.backendWorkBlocker='';context.window.StudioMake.refreshReadiness();
+  assert.equal(q('#makeGenerate').disabled,false);assert.equal(q('#makeWhy').innerHTML,'');assert.equal(q('#makeGenerate').attributes['aria-describedby'],undefined);
+});
+
 test('Tune seeds follow the target recipe, including extra bindings and locked zero',async()=>{
   for(const originalSeed of [false,true])for(const targetSeed of [false,true,'extra'])for(const reseed of [false,true]){
     const original={id:'original',...(originalSeed?{seed:['1','seed']}:{})},target={id:'target',...(targetSeed==='extra'?{bindings_extra:{seed:['2','seed']}}:targetSeed?{seed:['2','seed']}:{})};

@@ -61,7 +61,7 @@
   }
   // The legacy boolean/text projection and actionable UI share exactly one blocker policy.
   // Action tokens are presentation destinations, never installation or execution permissions.
-  function readinessItems({preset,online,schemaAvailable,workerAlive=true,missing=[],referencesReady=true,switching=false,backend=null,busy=false,unfilled=[],sourceMissing=false}){
+  function readinessItems({preset,online,schemaAvailable,workerAlive=true,missing=[],referencesReady=true,switching=false,workBlocker='',backend=null,busy=false,unfilled=[],sourceMissing=false}){
     const items=[],add=(code,message,action=null)=>items.push({code,message,action});
     // A recipe that transforms a picture needs that picture on every route (the server refuses the authored example too).
     if(sourceMissing)add('source','Add your picture to '+(preset?.last_reference_label||preset?.reference_label||'Picture to keep (image 1)')+'; the authored example picture is never run.','source');
@@ -69,7 +69,8 @@
     if(Array.isArray(unfilled)&&unfilled.length)add('wording','Fill in the wording: replace '+unfilled.map(text=>'“'+text+'”').join(' and ')+' in the prompt.','fills');
     if(!preset)add('recipe','Choose a recipe.','recipes');
     if(busy)add('busy','An attachment or submission is in progress.');
-    if(switching)add('switching','The model environment is switching.','models');
+    if(workBlocker)add('backend-work',workBlocker,'models');
+    else if(switching)add('switching','The model environment is switching.','models');
     if(!workerAlive)add('worker','Studio worker is unavailable. Restart Studio; no generation can be queued safely.','models');
     if(online==null)add('health','ComfyUI readiness is not yet confirmed. Check Models & setup if the health response stays unavailable.','models');
     else if(!online)add('offline','ComfyUI is offline. Start it with the Studio launcher.','models');

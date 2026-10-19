@@ -1,5 +1,31 @@
 # Current state — 13 October 2026
 
+## Backend switch and readiness follow-up — 19 October 2026
+
+[#1599](https://github.com/Chris0Jeky/local-asset-studio/pull/1599) merged as
+`988a42b6230cd37be16976bee914a781825a5d26`, bringing this maintenance pass to eight merged PRs.
+Its qualified head `e9f7260c9a7b2e904936569cf98bbd7f2b50b160` passed all 28 workflow runs:
+5,778 tests on the branch and 5,795 on the current-main merge preview, each with 72 expected skips.
+Native Windows passed all 44 state and 10 admission tests; Windows and Linux each passed 161 server
+tests. Independent and automated reviews are clear, all three review findings are resolved, and
+the actual merged tree equals the qualified preview. The PR links the exact logs and scope.
+
+The accompanying UI follow-up projects the server's full work-refusal reason into Create, Make and
+Models & setup. A saved/local selection mismatch disables Generate while retaining explicit Switch
+as the repair. The existing polling loop can observe the hold clearing; it keeps stale-response
+guards and preserves the prompt draft and focus. Snapshot and admission share a read-only policy;
+neither observation nor a clean reservation refusal adopts a saved selection or authorizes work.
+
+The integrated UI delta passed 57 state/admission tests and 47 backend, 13 Create and 16 Make Node
+contracts. Its native inert fixture passed 16 checks at 1440 and 390 pixels with no page errors;
+root independently exercised the four new refusal cases and inspected Create, Make and Models &
+setup at both widths. Published-head checks and the UI merge disposition belong to its own PR.
+
+Issue #1586 is now closed. #716 remains open with its completed BackendManager and Stop/Abandon
+slices separated from multi-file saves, restart normalization, RuntimeRecovery, Production and
+stronger platform durability. No installed runtime/model action or generation occurred, and
+`HUMAN_TODO.md` and its existing owner decisions remain unchanged.
+
 ## GitHub issue maintenance — 19 October 2026
 
 This maintenance pass started from GitHub main `40a17994971aa736b79dfc18190b515d48231839`
