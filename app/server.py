@@ -38,6 +38,7 @@ from references import compile_references, image_record
 from production import Production, fingerprint
 import mixed_batch
 from backends import BackendManager
+import backend_state
 import host_memory
 import gpu_memory
 import wan_capacity
@@ -461,7 +462,8 @@ class Studio:
         return name
 
     def prepare(self, payload, *, _defer_host_commit_preflight=False):
-        if hasattr(self, 'backends') and self.backends.busy: raise StudioError('A backend switch is running. Wait for it to finish.')
+        if hasattr(self,'backends') and self.backends.busy:
+            raise StudioError('A backend switch is running. Wait for it to finish.')
         self.require_worker()
         if not isinstance(payload, dict): raise StudioError("JSON object required")
         preset = self.preset(payload.get("preset_id")); graph, graph_path = self.graph_for(preset)
@@ -1787,6 +1789,12 @@ class Studio:
         # Preserve pre-start/offline fixture behavior; new work never replaces a
         # dead worker or silently replays its queue.
         self.require_worker_observation()
+        if getattr(self, 'backends', None) is not None:
+            # Job and reservation callers retain this lock through registration.
+            # The shared-state check reads a bounded local file, never an endpoint.
+            with self.lock:
+                try:self.backends.require_work_admission()
+                except backend_state.StateError as exc:raise StudioError(str(exc)) from exc
 
     def health(self, refresh=False):
         worker_alive = self.worker_available()
@@ -2132,6 +2140,7 @@ class Studio:
             if job.get('status') == 'cancelled': return   # the owner cancelled it before the worker reached it: nothing to send
             if job.get('status') not in ('queued', 'not_submitted') or not submission_evidence.never_submitted(job):
                 raise StudioError('This job is not proven never submitted; reconcile retained evidence without replaying it')
+            if self._cancel_checkpoint(job) or not self._backend_submission_ready(job):return
             job['started_at']=time.time()
             job["status"] = "waiting"; job["message"] = "Waiting for existing ComfyUI work"; self._save(job)
         try: return self._run_generation(job)
@@ -2152,6 +2161,15 @@ class Studio:
         if job_cancel.pickup(self, job) is None and not job_cancel.stop_pending(job): return False
         job_cancel.settle(self, job); return True
 
+    def _backend_submission_ready(self, job, index=0):
+        """Caller holds the lock; a newly blocked unsubmitted member leaves no local work hold."""
+        try:self.backends.require_work_admission()
+        except ValueError as exc:
+            job['status']='partial' if job.get('prompt_ids') else 'failed'
+            job['message']=str(exc)+'. No prompt was submitted for output '+str(index+1)+'.'
+            self._stamp_finished(job);self._save(job);return False
+        return True
+
     def _run_generation(self, job):
         try: self._wait_for_queue(job.get('comfy_url'), stop=lambda: job.get('id') in self.cancel_requests)
         except QueueWaitUnavailable as exc:
@@ -2165,6 +2183,7 @@ class Studio:
         for i in range(job["batch_count"]):
             with self.lock:
                 if self._cancel_checkpoint(job): return
+                if not self._backend_submission_ready(job,i):return
             try:
                 # Building this member's graph is pre-submit too: a failure here sent nothing for it.
                 graph, seed = self._batch_graph(job, i)
@@ -2183,6 +2202,7 @@ class Studio:
             with self.lock:
                 # Last point before the POST: a cancel that arrived during the wait or the eviction sends nothing.
                 if self._cancel_checkpoint(job): return
+                if not self._backend_submission_ready(job,i):return
                 job["status"] = "submitting"; job["message"] = f"Submitting output {i + 1} of {job['batch_count']}"; job["pending_submission"] = {"index": i, "seed": seed, "graph": graph, "marked_at": time.time()}
                 try: self._save(job, durable=True)
                 except (OSError, ValueError) as exc:
@@ -2787,6 +2807,7 @@ class Handler(BaseHTTPRequestHandler):
                     result = self.studio.create_job(payload)
                 return self._json(201, result)
             if self.path == '/api/backends/switch': return self._json(202, self.studio.backends.switch(self._body_object().get('id')))
+            if self.path == '/api/backends/resolve-switch': return self._json(200, self.studio.backends.resolve_switch_record(self._body_object()))
             if self.path == '/api/runtime-recovery/retry': return self._json(202, self.studio.runtime_recovery.reset())
             if self.path == '/api/articulated': return self._json(201,self.studio.production.articulated(self._body_json()))
             if self.path == '/api/assets/import':

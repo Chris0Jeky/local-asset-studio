@@ -238,8 +238,31 @@ class ServerTests(unittest.TestCase):
                 studio._run(job)
                 self.assertEqual(job['status'],'failed');self.assertEqual(job['prompt_ids'],[])
                 self.assertNotIn('/free',[args[0] for args,_ in studio.requests if args])
+                if name=='switch':
+                    # Work admission refuses the queued job before any release is attempted.
+                    self.assertEqual(studio.requests,[]);self.assertNotIn('commit_releases',job)
+                    self.assertNotIn('pending_submission',job);self.assertIn('backend switch',job['message'])
+                    self.assertIn('No prompt was submitted for output 1',job['message'])
+                    continue
                 self.assertIn(outcome,job['commit_releases'][0]['outcome'])
                 self.assertIn('below the required 32 GiB',job['message'])
+
+    def test_commit_release_records_a_switch_arriving_after_work_admission(self):
+        low=self._commit_reading(26*1024**3)
+        studio=self._heavy_studio([self.IDLE],release=5)
+        with patch.object(server.host_memory,'read',return_value=low):
+            job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']]
+        def switch_during_fresh_read():
+            studio.backends.busy=True
+            return low
+        with patch.object(server.host_memory,'read',side_effect=switch_during_fresh_read):studio._run(job)
+        self.assertEqual(job['status'],'failed');self.assertEqual(job['prompt_ids'],[])
+        self.assertNotIn('pending_submission',job)
+        self.assertEqual([args[0] for args,_ in studio.requests if args],['/queue'])
+        release,=job['commit_releases']
+        self.assertEqual(release['outcome'],'skipped: a backend switch is running')
+        self.assertIn('below the required 32 GiB',job['message'])
+        self.assertIn('No prompt was submitted for output 1',job['message'])
 
     def test_commit_release_is_skipped_at_or_below_the_floor_its_own_transient_needs(self):
         floor=server.COMMIT_RELEASE_FLOOR_BYTES
@@ -826,7 +849,7 @@ class ServerTests(unittest.TestCase):
         # Valid JSON that is not an object once escaped do_POST as AttributeError/TypeError: no response, a dropped connection.
         studio=self.studio();sent=[];project='a'*32
         # /api/estimate is advisory and answers 200 {available: false}; every other route refuses.
-        routes=('/api/gpu-lease','/api/gpu-lease/release','/api/jobs','/api/backends/switch','/api/articulated','/api/preview',
+        routes=('/api/gpu-lease','/api/gpu-lease/release','/api/jobs','/api/backends/switch','/api/backends/resolve-switch','/api/articulated','/api/preview',
                 '/api/av','/api/voice-baseline','/api/av/'+project,'/api/production','/api/production/campaigns','/api/production-export',
                 '/api/experiments/plan','/api/production/%s/stop'%project,'/api/production/%s/extend-time'%project,'/api/production/%s/review'%project,'/api/production/%s/put-away'%project,
                 '/api/references/check','/api/assets/update','/api/collections','/api/setups','/api/assets/reference','/api/assets/export',
@@ -842,6 +865,27 @@ class ServerTests(unittest.TestCase):
                     handler.do_POST()
                     self.assertTrue(sent and 400<=sent[0][0]<500,sent)
         self.assertEqual(studio.assets.setups(),[]);self.assertEqual(studio.jobs,{})
+
+    def test_explicit_backend_resolution_route_only_settles_the_acknowledged_record(self):
+        studio=self.studio();manager=studio.backends
+        saved={'active':'primary','operation':{'id':'legacy-switch','target':'hidream','status':'running','pid':321,'log_directory':'retained'}}
+        manager.state_path.parent.mkdir(parents=True,exist_ok=True)
+        manager.state_path.write_text(json.dumps(saved))
+        command={'expected_sha256':hashlib.sha256(manager.state_path.read_bytes()).hexdigest(),
+                 'acknowledge_studios_closed':True,'acknowledge_runtimes_inspected':True}
+        handler=server.Handler.__new__(server.Handler);handler.studio=studio;handler.path='/api/backends/resolve-switch'
+        handler._safe_mutation=lambda:True;handler._body_json=lambda:command
+        sent=[];handler._json=lambda status,obj:sent.append((status,obj))
+        with patch.object(manager,'request',side_effect=URLError('inert offline')),patch.object(manager,'switch') as switch, \
+             patch.object(manager,'launch_recovery') as launch,patch('backends.subprocess.Popen') as process:
+            handler.do_POST()
+        self.assertEqual(sent[0][0],200,sent)
+        self.assertFalse(sent[0][1]['shared_state']['resolvable'])
+        landed=json.loads(manager.state_path.read_text())
+        self.assertEqual(landed['active'],'primary');self.assertEqual(landed['operation']['status'],'interrupted')
+        self.assertEqual(landed['operation']['pid'],321);self.assertEqual(landed['operation']['log_directory'],'retained')
+        self.assertEqual(landed['operation']['resolution']['expected_sha256'],command['expected_sha256'])
+        switch.assert_not_called();launch.assert_not_called();process.assert_not_called();self.assertEqual(studio.jobs,{})
 
     def test_export_ids_that_cannot_be_hashed_are_400(self):
         studio=self.studio();sent=[]

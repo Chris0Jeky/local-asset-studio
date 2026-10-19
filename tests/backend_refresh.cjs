@@ -300,3 +300,64 @@ test('backend disable and recovery hide retain focus on their status',async()=>{
  f.node('#backendChoice').focus();const refresh=f.run();f.pending.at(-1).resolve({...f.backend('old'),busy:true});await refresh;
  assert.equal(f.context.document.activeElement,f.node('#backendStatus'));
 });
+
+test('legacy resolution needs both acknowledgements and never submits during a read',async()=>{
+ const f=fixture(),legacy={...f.backend('old'),operation:{status:'running',target:'old',message:'Checking owned local runtimes'},shared_state:{sha256:'a'.repeat(64),blocker:'Legacy switch needs inspection',resolvable:true,operation:{status:'running',target:'old'}}};
+ const read=f.run();f.pending.at(-1).resolve(legacy);await read;
+ assert.equal(f.node('#switchBackend').disabled,true);assert.equal(f.node('#backendResolution').hidden,false);
+ assert.equal(f.node('#backendStatus').textContent,'Legacy switch needs inspection');assert.doesNotMatch(f.node('#envSummary').textContent,/Switching to/);
+ assert.equal(f.node('#resolveBackendSwitch').disabled,true);assert.equal(f.writes.length,0);
+ await f.node('#resolveBackendSwitch').onclick();assert.equal(f.writes.length,0);
+ f.node('#backendStudiosClosed').checked=true;f.node('#backendStudiosClosed').onchange();
+ assert.equal(f.node('#resolveBackendSwitch').disabled,true);
+ await f.node('#resolveBackendSwitch').onclick();assert.equal(f.writes.length,0);
+ f.node('#backendRuntimesInspected').checked=true;f.node('#backendRuntimesInspected').onchange();
+ assert.equal(f.node('#resolveBackendSwitch').disabled,false);
+ const work=f.node('#resolveBackendSwitch').onclick();await f.tick();
+ assert.equal(f.writes.length,1);assert.equal(f.writes[0][0],'/api/backends/resolve-switch');
+ assert.deepEqual(JSON.parse(JSON.stringify(f.writes[0][1])),{expected_sha256:'a'.repeat(64),acknowledge_studios_closed:true,acknowledge_runtimes_inspected:true});
+ f.pending.at(-1).resolve(f.backend('old'));await work;
+ assert.equal(f.node('#backendResolution').hidden,true);assert.equal(f.node('#switchBackend').disabled,false);
+ assert.equal(f.writes.some(([url])=>url==='/api/jobs'||url==='/api/backends/switch'),false);
+});
+
+test('completed resolution observes the restored environment while preserving the next job draft',async()=>{
+ const f=fixture();f.node('#positive').value='Draft for the saved environment';f.node('[data-key="seed"]').value='';
+ const read=f.run();f.pending.at(-1).resolve({...f.backend('old'),operation:{status:'completed',target:'new'},shared_state:{sha256:'a'.repeat(64),blocker:'Completion publication is unconfirmed',resolvable:true}});await read;
+ f.node('#backendStudiosClosed').checked=true;f.node('#backendRuntimesInspected').checked=true;f.node('#backendStudiosClosed').onchange();
+ const work=f.node('#resolveBackendSwitch').onclick();await f.tick();
+ f.pending.at(-1).resolve({...f.backend('new'),operation:{status:'completed',target:'new'}});await f.tick();
+ assert.equal(f.pending.at(-1).url,'/api/catalog');f.pending.at(-1).resolve({presets:[f.a,f.b]});await work;
+ assert.equal(f.node('#activeBackend').textContent,'new');assert.equal(vm.runInContext('backendActive',f.context),'new');
+ assert.equal(f.node('#backendResolution').hidden,true);assert.equal(f.node('#positive').value,'Draft for the saved environment');
+ assert.equal(f.node('[data-key="seed"]').value,'');assert.equal(f.state.health,1);
+ assert.deepEqual(f.writes.map(([url])=>url),['/api/backends/resolve-switch']);
+});
+
+test('changed state revokes a legacy acknowledgement and live ownership hides resolution',async()=>{
+ const f=fixture(),state=sha=>({...f.backend('old'),shared_state:{sha256:sha,blocker:'Inspect the saved switch',resolvable:true}});
+ let read=f.run();f.pending.at(-1).resolve(state('a'.repeat(64)));await read;
+ f.node('#backendStudiosClosed').checked=true;f.node('#backendRuntimesInspected').checked=true;f.node('#backendStudiosClosed').onchange();
+ f.node('#resolveBackendSwitch').focus();
+ read=f.run();f.pending.at(-1).resolve(state('a'.repeat(64)));await read;
+ assert.equal(f.node('#resolveBackendSwitch').disabled,false,'an unchanged poll preserves deliberate acknowledgements');
+ assert.equal(f.context.document.activeElement,f.node('#resolveBackendSwitch'));
+ read=f.run();f.pending.at(-1).resolve(state('b'.repeat(64)));await read;
+ assert.equal(f.node('#resolveBackendSwitch').disabled,true);assert.equal(f.node('#backendStudiosClosed').checked,false);
+ assert.equal(f.context.document.activeElement,f.node('#backendStatus'),'a replacement transfers focus before disabling Resolve');
+ f.node('#backendStudiosClosed').focus();read=f.run();f.pending.at(-1).resolve(state('c'.repeat(64)));await read;
+ assert.equal(f.context.document.activeElement,f.node('#backendStudiosClosed'),'a still-visible checkbox keeps focus');
+ f.node('#backendRuntimesInspected').focus();read=f.run();f.pending.at(-1).resolve({...state('c'.repeat(64)),shared_state:{blocker:'Another Studio owns the switch',resolvable:false}});await read;
+ assert.equal(f.node('#backendResolution').hidden,true);assert.equal(f.context.document.activeElement,f.node('#backendStatus'));
+ assert.equal(f.node('#switchBackend').disabled,true);assert.equal(f.writes.length,0);
+});
+
+test('double-clicking resolution sends one acknowledgement and never replays an uncertain reply',async()=>{
+ const f=fixture(),reply=deferred();f.context.post=(...args)=>{f.writes.push(args);return reply.promise;};
+ const read=f.run();f.pending.at(-1).resolve({...f.backend('old'),shared_state:{sha256:'a'.repeat(64),blocker:'Legacy switch',resolvable:true}});await read;
+ f.node('#backendStudiosClosed').checked=true;f.node('#backendRuntimesInspected').checked=true;f.node('#backendStudiosClosed').onchange();
+ const work=f.node('#resolveBackendSwitch').onclick();await f.node('#resolveBackendSwitch').onclick();
+ assert.equal(f.writes.length,1);reply.reject(Error('Resolution reply was lost'));await f.tick();
+ f.pending.at(-1).resolve(f.backend('old'));await work;
+ assert.equal(f.writes.length,1);assert.match(f.node('#backendStatus').textContent,/reply was lost/);
+});

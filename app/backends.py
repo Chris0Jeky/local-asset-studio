@@ -12,6 +12,7 @@ from urllib.parse import quote
 from urllib.request import HTTPRedirectHandler, ProxyHandler, build_opener
 from urllib.error import HTTPError
 from backend_contracts import connection_refused, endpoint_ready, loopback_port, queue_is_idle, readiness, timed_out
+import backend_state
 import gpu_memory
 
 
@@ -36,6 +37,8 @@ class BackendManager:
     def __init__(self, studio):
         self.studio=studio;self.busy=False;self.operation=None;self.last_launch_reserve=None
         self.state_path=studio.root/'.runtime/backend-state.json'
+        self._state=backend_state.Store(self.state_path);self._state_snapshot=None;self._owned_operation=None
+        self._owner=backend_state.current_owner();self.state_issue=None;self._uncertain_publication=None
         config=studio.config;primary=Path(config.get('comfy_root',studio.comfy_root)).resolve()
         python=Path(config.get('python','C:/AI/ComfyUI_windows_portable/python_embeded/python.exe')).resolve()
         isolated=Path(config.get('hidream_root','C:/AI/experiments/hidream-o1/ComfyUI')).resolve()
@@ -68,12 +71,19 @@ class BackendManager:
         if len(set(ports))!=len(ports):raise ValueError('Managed backends must use distinct loopback ports')
         self.active='primary'
         try:
-            saved=json.loads(self.state_path.read_text(encoding='utf-8'))
-            if not isinstance(saved,dict):raise ValueError('Invalid backend state')
+            try:self._state_snapshot=self._state.read()
+            except backend_state.StateConflict:self._state_snapshot=self._state.read()
+            try:
+                # Without even our own process identity, absence in this process
+                # view is not enough to reconcile another Studio's saved owner.
+                if self._owner is not None:self._state_snapshot=self._state.reconcile(self._state_snapshot)
+            except backend_state.StateConflict:self._state_snapshot=self._state.read()
+        except backend_state.StateError as exc:self.state_issue=str(exc)
+        if self._state_snapshot is not None:
+            saved=self._state_snapshot.value
             if saved.get('active') in self.profiles:self.active=saved['active']
-            self.operation=saved.get('operation') if isinstance(saved.get('operation'),dict) else None
-            if self.operation and self.operation.get('status')=='running':self.operation.update(status='interrupted',message='Studio restarted during a switch. Inspect the runtime before trying again.')
-        except (OSError,ValueError):pass
+            elif saved.get('active'):self.state_issue='Shared backend state selects an unknown environment; inspect the saved selection.'
+            self.operation=copy.deepcopy(saved.get('operation'))
         if self.active not in self.profiles:self.active='primary'
         self.activate(self.active)
 
@@ -103,23 +113,106 @@ class BackendManager:
             try:record['online']=endpoint_ready(self.request(profile,'/system_stats',0.8))
             except (OSError,ValueError):record['online']=False
             record['active']=self.active==profile['id'];profiles.append(record)
-        with self.studio.lock:active=self.active;busy=self.busy;operation=copy.deepcopy(self.operation);last_launch_reserve=copy.deepcopy(self.last_launch_reserve)
-        return {'active':active,'busy':busy,'operation':operation,'profiles':profiles,'last_launch_reserve':last_launch_reserve}
+        with self.studio.lock:active=self.active;busy=self.busy;operation=copy.deepcopy(self.operation);last_launch_reserve=copy.deepcopy(self.last_launch_reserve);state_issue=self.state_issue;uncertain=self._uncertain_publication if state_issue else None
+        try:
+            shared=self._state.read()
+            shared_state={'sha256':shared.identity[1] if shared.identity else None,'operation':shared.value.get('operation'),
+                          'blocker':state_issue or backend_state.blocker(shared.value),
+                          'resolvable':not busy and backend_state.resolution_allowed(shared,self._owner,uncertain)}
+        except backend_state.StateError as exc:shared_state={'sha256':None,'blocker':str(exc),'resolvable':False}
+        return {'active':active,'busy':busy,'operation':operation,'profiles':profiles,'last_launch_reserve':last_launch_reserve,
+                'state_issue':state_issue,'shared_state':shared_state}
 
-    def _save(self):
-        self.studio._write_json_atomic(self.state_path,{'active':self.active,'operation':self.operation})
+    def resolve_switch_record(self, payload):
+        """Settle the exact inspected record and align an unconfirmed completed selection."""
+        with self.studio.lock:
+            if self.busy:raise backend_state.StateError('A backend switch is still running in this Studio')
+            current=self._state.read();operation=current.value.get('operation') or {};activation=None
+            uncertain=self._uncertain_publication if self.state_issue else None
+            if (operation.get('status')=='completed' and backend_state.valid_owner(self._owner)
+                    and operation.get('owner')==self._owner and current.identity is not None
+                    and current.identity[1]==uncertain):
+                identifier=current.value['active']
+                if identifier not in self.profiles or operation.get('target')!=identifier:
+                    raise backend_state.StateError('The completed switch does not match a known saved environment; inspect its state before resolving')
+                if identifier!=self.active:
+                    if self._local_work():raise ValueError('Finish or reconcile active Studio work before restoring the saved environment')
+                    # Prepare every fallible local object before publishing. A lost
+                    # publication reply must leave routing unchanged and retryable.
+                    activation=self._prepare_activation(identifier)
+            try:resolved=self._state.resolve(current,payload,self._owner,uncertain)
+            except backend_state.StateUnconfirmed as exc:self._state_failed(exc);raise
+            if activation is not None:self._apply_activation(activation)
+            self._state_snapshot=resolved;self.operation=copy.deepcopy(resolved.value.get('operation'));self.state_issue=None;self._uncertain_publication=None
+        return self.snapshot()
+
+    def _state_failed(self, exc, *, admission=False):
+        """Do not turn a stale worker's error into another write over the current operation."""
+        # reserve() uses StateUnconfirmed once replacement may have started. A
+        # plain initial refusal published no operation; the next admission must read/CAS
+        # afresh, even if this follow-up observation is temporarily unavailable.
+        clean_admission=(admission and isinstance(exc,backend_state.StateError)
+                         and not isinstance(exc,backend_state.StateUnconfirmed) and backend_state.valid_owner(self._owner))
+        self.state_issue=None if clean_admission else str(exc);self._owned_operation=None
+        self._uncertain_publication=exc.attempted_sha256 if isinstance(exc,backend_state.StateUnconfirmed) else None
+        try:
+            self._state_snapshot=self._state.read();self.operation=copy.deepcopy(self._state_snapshot.value.get('operation'))
+        except backend_state.StateError as observed:
+            self._state_snapshot=None
+            if not clean_admission:self.state_issue=str(observed)
+
+    def _admit_shared(self):
+        if self.state_issue:raise backend_state.StateError(self.state_issue)
+        current=self._state.read();reason=backend_state.blocker(current.value)
+        if reason:raise backend_state.StateError(reason)
+        if current.value.get('active','primary') not in self.profiles:raise backend_state.StateError('Shared backend state selects an unknown environment')
+        self._state_snapshot=current;self.operation=copy.deepcopy(current.value.get('operation'))
+
+    def require_work_admission(self):
+        """Caller holds Studio's lock; observe state without changing a worker's expected record."""
+        if self.busy:raise backend_state.StateError('A backend switch is running. Wait for it to finish.')
+        if self.state_issue:raise backend_state.StateError(self.state_issue)
+        current=self._state.read();reason=backend_state.blocker(current.value)
+        if reason:raise backend_state.StateError(reason)
+        active=current.value.get('active','primary')
+        if active not in self.profiles:raise backend_state.StateError('Shared backend state selects an unknown environment; inspect its saved selection before starting work.')
+        if active!=self.active:
+            raise backend_state.StateError('The saved backend selection differs from this Studio. Switch explicitly in Models & setup or restart Studio after inspection before starting work.')
+
+    def _begin_switch(self, identifier):
+        """Caller holds Studio's lock; publish the owner before starting a worker."""
+        operation={'id':uuid.uuid4().hex,'target':identifier,'status':'running','started_at':time.time(),
+                   'message':'Checking owned local runtimes','owner':copy.deepcopy(self._owner),'phase':'checking'}
+        try:self._state_snapshot=self._state.reserve(self._state_snapshot,operation)
+        except backend_state.StateError as exc:self._state_failed(exc,admission=True);raise
+        self.operation=copy.deepcopy(self._state_snapshot.value['operation']);self.busy=True
+        self._uncertain_publication=None
+        self._owned_operation={'id':operation['id'],'owner':copy.deepcopy(operation['owner'])}
+
+    def _save(self, *, active=None):
+        try:
+            if self._state_snapshot is None:raise backend_state.StateError('Backend state is unconfirmed; inspect it before retrying')
+            self._state_snapshot=self._state.update(self._state_snapshot,self._owned_operation,self.operation,active)
+            self._uncertain_publication=None
+        except backend_state.StateError as exc:self._state_failed(exc);raise
 
     @staticmethod
     def models_root(profile):
         """The models folder a profile reads: its own checkout's, or the shared main library's when the profile names a `library` (moss)."""
         return Path(profile.get('library') or profile['root'])/'models'
 
-    def activate(self, identifier):
+    def _prepare_activation(self, identifier):
         from model_library import ModelLibrary
-        profile=self.profiles[identifier]
-        self.active=identifier;self.studio.comfy_url=profile['url'];self.studio.comfy_root=Path(profile['root'])
-        self.studio.library=ModelLibrary(self.studio.root,self.studio.comfy_root,backend_id=identifier,models_root=self.models_root(profile))
+        profile=self.profiles[identifier];root=Path(profile['root'])
+        library=ModelLibrary(self.studio.root,root,backend_id=identifier,models_root=self.models_root(profile))
+        return identifier,profile['url'],root,library
+
+    def _apply_activation(self, prepared):
+        self.active,self.studio.comfy_url,self.studio.comfy_root,self.studio.library=prepared
         self.studio._schema=None;self.studio._schema_at=0
+
+    def activate(self, identifier):
+        self._apply_activation(self._prepare_activation(identifier))
 
     def _local_work(self, ignore_job_ids=()):
         if getattr(self.studio, "reference_jobs", None) and self.studio.reference_jobs.busy(): return True
@@ -324,6 +417,7 @@ class BackendManager:
         if not self.available(self.profiles[identifier]):raise ValueError('This environment is not installed completely. '+self.readiness(self.profiles[identifier])['message'])
         with self.studio.lock:
             if self.busy:raise ValueError('A backend switch is already running; follow its current status')
+            self._admit_shared()
             # A switch launches a backend; while another local GPU tenant holds the lease that is refused (409 gpu_leased).
             lease=getattr(self.studio,'gpu_lease',None)
             if lease:lease.require_available()
@@ -333,22 +427,20 @@ class BackendManager:
             # Check every endpoint, including work submitted directly through ComfyUI.
             for profile in self.profiles.values():self._idle(profile,allow_offline=True)
             self._stopped_results()
-            previous=self.operation
-            self.busy=True;self.operation={'id':uuid.uuid4().hex,'target':identifier,'status':'running','started_at':time.time(),'message':'Checking owned local runtimes'}
-            try:self._save()
-            except Exception:
-                self.busy=False;self.operation=previous
-                raise
+            self._begin_switch(identifier)
         try:threading.Thread(target=self._switch,args=(identifier,),daemon=True,name='studio-backend-switch').start()
         except Exception as exc:
             with self.studio.lock:
-                self.busy=False;self.operation.update(status='failed',finished_at=time.time(),message='Switch worker did not start: '+str(exc)[:300]);self._save()
+                try:
+                    self.operation.update(status='failed',finished_at=time.time(),message='Switch worker did not start: '+str(exc)[:300]);self._save()
+                finally:self.busy=False;self._owned_operation=None
             raise
         return self.snapshot()
 
     def _switch(self, identifier):
         launched=None
         try:
+            with self.studio.lock:self._state.check_owned(self._state_snapshot,self._owned_operation)
             target=self.profiles[identifier]
             if not self.available(target):raise ValueError(self.readiness(target)['message'])
             with self.studio.lock:
@@ -374,7 +466,7 @@ class BackendManager:
                 stopped={'profile':key,'pid':process.pid,'created_at':process.create_time(),'matched_entry':profile['entry']}
                 with self.studio.lock:
                     self.operation.setdefault('stopped_processes', []).append(stopped)
-                    self.operation['message']='Stopping idle '+profile['name'];self._save()
+                    self.operation.update(phase='stopping',message='Stopping idle '+profile['name']);self._save()
                 process.terminate();process.wait(timeout=15)
             owned=self.process(target)
             if owned and observed[identifier]!=(owned.pid,owned.create_time()):raise ValueError('Target process changed during preflight; retry explicitly')
@@ -396,8 +488,9 @@ class BackendManager:
                     elif identifier=='hidream':argv=[target['python'],'-s',target['entry'],'--install-root',str(Path(target['root']).parent)]
                     else:argv=[target['python'],'-s',target['entry'],'--comfy-root',target['root']]
                     with (logs/(stamp+'-out.log')).open('w') as out,(logs/(stamp+'-error.log')).open('w') as err:
+                        with self.studio.lock:self.operation.update(phase='launch-intent',log_directory=str(logs));self._save()
                         launched=subprocess.Popen(argv,cwd=target['root'],stdout=out,stderr=err,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
-                    with self.studio.lock:self.operation.update(pid=launched.pid,log_directory=str(logs));self._save()
+                    with self.studio.lock:self.operation.update(pid=launched.pid,phase='launched');self._save()
                     if identifier=='primary':Path(target['pidfile']).write_text(str(launched.pid))
                     for _ in range(120):
                         if launched.poll() is not None:raise ValueError('The selected runtime exited during startup; inspect its saved log')
@@ -412,15 +505,21 @@ class BackendManager:
             if launched:
                 listener=self.process(target)
                 if listener is None or listener.pid!=launched.pid:raise ValueError('Ready endpoint does not belong to the launched process; inspect retained runtime')
-            self.activate(identifier)
             with self.studio.lock:
-                self.operation.update(status='completed',finished_at=time.time(),message=target['name']+' endpoint is ready. Model inference was not checked; no generation submitted.');self._save()
+                activation=self._prepare_activation(identifier)
+                self.operation.update(status='completed',finished_at=time.time(),message=target['name']+' endpoint is ready. Model inference was not checked; no generation submitted.');self._save(active=identifier)
+                self._apply_activation(activation)
+        except backend_state.StateError as exc:
+            with self.studio.lock:self._state_failed(exc)
         except Exception as exc:
             # A timed-out launcher may already be accepting direct ComfyUI jobs.
             # Never terminate it blindly during cleanup or silently restart the old family.
             preserved=launched and launched.poll() is None
             with self.studio.lock:
                 if preserved:self.operation.update(preserved_pid=launched.pid,recovery='Inspect the retained runtime and queue, then switch explicitly. No automatic retry.')
-                self.operation.update(status='failed',finished_at=time.time(),message=str(exc)[:500]);self._save()
+                if launched is None and self.operation.get('phase')=='launch-intent':self.operation['inspection_required']=True
+                self.operation.update(status='failed',finished_at=time.time(),message=str(exc)[:500])
+                try:self._save()
+                except backend_state.StateError:pass
         finally:
-            with self.studio.lock:self.busy=False
+            with self.studio.lock:self.busy=False;self._owned_operation=None

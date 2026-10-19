@@ -73,6 +73,37 @@ class ReferenceJobTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'different'):self.service.create(changed)
         self.assertEqual(self.calls,[])
 
+    def backend_hold(self):
+        path=self.studio_instance.backends.state_path;path.parent.mkdir(parents=True,exist_ok=True)
+        path.write_text(json.dumps({'active':'primary','operation':{'status':'running','target':'hidream'}}))
+
+    def test_shared_backend_hold_refuses_new_reference_intake_without_a_reservation(self):
+        self.backend_hold()
+        with self.assertRaisesRegex(ValueError,'shared|legacy'):self.create()
+        self.assertTrue(self.studio_instance.queue.empty());self.assertFalse(self.service.busy())
+        with self.studio_instance.assets.connection() as db:
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM reference_jobs_v1').fetchone()[0],0)
+        self.assertEqual(self.calls,[])
+
+    def test_existing_reference_receipt_stays_readable_during_a_shared_backend_hold(self):
+        before=self.create();self.backend_hold()
+        self.assertEqual(self.create(),before);self.assertEqual(self.studio_instance.queue.qsize(),1)
+        self.assertEqual(self.calls,[])
+
+    def test_shared_backend_hold_after_queueing_refuses_reference_dispatch(self):
+        self.create();self.backend_hold();self.run_one();state=self.get()['state']
+        self.assertEqual(state['status'],'failed');self.assertEqual(state['inference_attempts'],0)
+        self.assertFalse(state['resource_hold']);self.assertFalse(self.service.busy());self.assertEqual(self.calls,[])
+
+    def test_shared_backend_hold_during_the_last_resource_read_prevents_inference_intent(self):
+        self.create()
+        def reading(_):
+            self.backend_hold();return {'available_ram_bytes':20*GIB,'commit_headroom_bytes':30*GIB,'free_vram_bytes':12*GIB}
+        with patch('studio_prompt.reference_jobs.resources',side_effect=reading):self.run_one()
+        state=self.get()['state'];self.assertEqual(state['status'],'failed');self.assertEqual(state['inference_attempts'],0)
+        self.assertFalse(state['resource_hold']);self.assertFalse(self.service.busy())
+        self.assertNotIn(('POST','/api/chat'),self.calls)
+
     def test_missing_config_disables_before_any_request(self):
         del self.studio_instance.config['reference_helper']
         self.assertFalse(self.service.capabilities()['enabled'])

@@ -159,12 +159,25 @@ class WorkflowAdmissionHttpTests(unittest.TestCase):
         self.fixture = DocumentRunIntegrationTests(); self.fixture.setUp()
         self.addCleanup(self.fixture.doCleanups)
         self.studio = self.fixture.studio
+        self.backend_manager = self.studio.backends
         self.now = attach_lease(self.studio)
+        # Lease lifecycle is inert; HTTP preparation still uses the real saved-state policy.
+        self.studio.backends.require_work_admission = self.backend_manager.require_work_admission
         status, prepared = self.fixture.request(PREFIX, self.fixture.value)
         self.assertEqual(status, 200, prepared)
         self.prepared = prepared
         self.ticket = prepared['record']['report']['ticket']
         self.intent = self.studio.runs / 'workflow-requests' / (self.ticket['request_id'] + '.json')
+
+    def test_shared_switch_still_blocks_ticket_before_durable_intent(self):
+        path = self.backend_manager.state_path
+        raw = canonical({'active': 'primary', 'operation': {'id': 'legacy', 'status': 'running', 'target': 'hidream'}})
+        path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(raw)
+        status, result = self.fixture.request('/api/workflow-studio/run', {'ticket': self.ticket, 'approved': True})
+        self.assertEqual(status, 400, result); self.assertIn('legacy', result['error'])
+        self.assertFalse(self.intent.exists()); self.assertEqual(self.studio.queue.qsize(), 0)
+        self.assertFalse(self.studio.jobs); self.assertEqual(path.read_bytes(), raw)
+        self.assertEqual(self.fixture.request(PREFIX + '/prepared-run')[1]['record'], self.prepared['record'])
 
     def test_ticket_http_returns_409_without_consuming_the_request(self):
         self.studio.gpu_lease.acquire({'holder': 'local-qwen', 'ttl_seconds': 600})

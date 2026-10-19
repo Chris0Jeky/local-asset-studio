@@ -230,7 +230,7 @@ class RuntimeRecoveryTests(unittest.TestCase):
         # Another Studio's switch away from this backend is in flight: "active" still names this one, the target is not up yet (Codex P1).
         manager.request = live; manager.state_path.write_text('{"active": "primary", "operation": {"status": "running", "target": "moss"}}', encoding="utf-8")
         self.assertEqual(self.recovery.tick()["status"], "other-backend-active"); self.assertEqual(manager.launches, 0)
-        manager.state_path.write_text('{"active": "primary", "operation": {"status": "succeeded", "target": "primary"}}', encoding="utf-8")
+        manager.state_path.write_text('{"active": "primary", "operation": {"status": "completed", "target": "primary"}}', encoding="utf-8")
         self.recovery.tick(); self.assertEqual(manager.launches, 1)
 
     def test_only_the_default_port_autostarts_unless_config_says_so(self):

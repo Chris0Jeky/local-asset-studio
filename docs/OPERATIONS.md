@@ -63,7 +63,7 @@ Invoke-RestMethod -Method Post -Uri "$studio/api/gpu-lease/release" -Headers $or
 - **Idle model-cache release (on by default):** ComfyUI keeps every model family it loaded in host RAM after the VRAM is freed, so a session that touched Klein 9B, its text encoder, Anima and Klein 4B held 25.8 GB committed on an idle queue (measured 16 September 2026, recorded in `CURRENT_STATE.md`; one `POST /free` brought it to 5.7 GB and freed 15 GB of physical RAM; the earlier note in `RUNTIME-PRECONDITIONS.md` that `/free` "is not reliable on its own" was about commit headroom after a native allocation failure, a different state). The Studio's worker therefore asks ComfyUI to release that cache (`POST /free` with `unload_models` and `free_memory`) once per idle stretch: after `idle_cache_release_minutes` (default 10) without any Studio job, only when ComfyUI's own queue is empty, and never again until the next job. It also checks Windows commit headroom first: `/free` moves the GPU-resident weights into host RAM before it drops them (27.4 to 12.7 GiB of headroom on qwen21, 27 September 2026, #1167), so at or below the same 22 GiB floor as the commit gate's release, or with an unreadable counter, it posts nothing, records why in `cache_release.last_error`, and checks again on the next tick. The next job reloads its models from disk (about 30 s for Klein 9B), which is the price of the freed RAM. `/api/health` reports it under `cache_release` (count, last time, last error, idle seconds, whether a release is pending); set the key to `0` in `config/local.json` to keep the cache resident. Only the primary backend is released; the other backends (8192, 8194, 8196) are not touched. ComfyUI answers `/free` with an empty 200, which the Studio reads as success.
 - **Unload before a model change (on by default):** when the next graph no longer uses a model file the previous Studio graph loaded on the same ComfyUI process (a checkpoint, UNet, text encoder, VAE or other model switch; a LoRA change alone re-patches the loaded model and does not count), or when that idle process already has 512 MB or more in WDDM shared memory (not repeated once an unload has failed to clear it, because the cause is then outside ComfyUI), the worker posts `/free` with `unload_models` only, waits up to 30 s for ComfyUI's `torch_vram_total` to fall, and then submits. Without it ComfyUI leaves part of the previous checkpoint on the GPU, because its free-VRAM figure ignores the desktop's ~3 GB, and each new checkpoint spills further into system RAM (0, 3.7 and 6.0 GB on three SDXL jobs in one process, 23 September 2026; `docs/RUNTIME-PRECONDITIONS.md` §8). The node cache stays warm, so the unloaded model reloads from RAM rather than disk. Each run records what happened under `model_evictions` in its `state.json` (reason, dropped models, shared and reserved bytes before and after, outcome; `nothing resident` when PyTorch held 1 GiB or less, and no `/free` is sent); a busy ComfyUI queue or an unreachable ComfyUI is recorded and the prompt is submitted as before. Primary backend only. Set `"unload_models_on_change": false` in `config/local.json` to turn it off.
 - **Runtime recovery (opt-in):** set `runtime_auto_recover: true` in local config only if you want Studio to monitor the selected configured backend. It observes the fixed loopback endpoint at a bounded three-second probe deadline and records `.runtime/runtime-recovery.json` plus `.runtime/runtime-recovery.log`. The page refreshes this status with routine health polling; a disabled monitor never presents a saved enabled/startup state, and **Reset recovery** appears only while the enabled breaker is open. It may start that selected profile only after connection refusal, an exact launcher scan finds no retained process, and no fresh Studio work is queued, submitting or running. For blank protected psutil names, the scan asks Windows for that observed PID's process name with a bounded hidden read-only lookup. A resolved non-Python name is excluded; an unresolved name or protected configured-Python identity remains ambiguous and blocks recovery. It never changes backend family, scans or rewires ports, stops a process, clears a queue, or submits/replays a prompt. While a GPU lease is held it reports `leased` and starts nothing. An uncertain job is retained as evidence and does not trigger replay; a truly dead backend can still be started while it is retained. A live-but-unhealthy or foreign/ambiguous listener is preserved and reported for inspection. Startup is retained through its timeout and failed starts open the bounded breaker; use **Reset recovery** after inspection to clear the breaker for the next monitor pass. The monitor autostarts only for the Studio on port 8191 (a preview on another `--port` needs `runtime_recovery_autostart: true`); `create_server` passes the actual bound port into Studio and its subclasses before the monitor is constructed. Recovery reports `other-backend-active` while shared state selects another backend, records any switch still running, or another configured backend is online, has a retained process, or cannot be proven absent. Alternate health probes use the same three-second deadline; a timeout or incomplete response is unknown, never proof of absence. Immediately before launch, recovery rechecks shared state and configured processes under the Studio lock; network probes stay outside that lock (#1584, #1586).
-- **A stale shared selection or switch blocks recovery:** the refusal names the saved selection or running switch and explains what to do. If the saved backend has stopped, select the intended environment explicitly in **Models & setup**, or restart this Studio to follow the saved selection. If a switch's Studio exited, inspect the runtimes and switch explicitly in **Models & setup**. **Reset recovery** only resets the retry limit: it does not change the backend family or erase a shared switch. Starting another Studio does not overwrite a shared running switch as interrupted, since the original Studio may still own it.
+- **A stale shared selection or unresolved switch blocks recovery:** the refusal names the saved selection or switch. For a stopped saved selection, select the intended environment explicitly in **Models & setup**, or restart Studio to follow that selection. A new Studio reconciles a recorded switch only after proving its Studio owner absent; an uncertain runtime launch still requires inspection. A legacy switch has no recorded Studio owner and uses the explicit **Resolve saved switch** action described below. **Reset recovery** only resets the retry limit: it never changes backend family or clears an unresolved switch.
 - **Studio worker unavailable:** health reports this separately and generation is refused. Restart Studio; recovery only covers the selected ComfyUI runtime and never starts a second Studio worker.
 - **Offline:** use the desktop shortcut again; inspect `.runtime/` and the ComfyUI launcher logs if startup fails.
 - **Missing model/reference:** confirm the configured ComfyUI root, model filename and supplied reference. The presets use exact filenames. Model weights are not bundled in Git.
@@ -84,6 +84,85 @@ Invoke-RestMethod -Method Post -Uri "$studio/api/gpu-lease/release" -Headers $or
   - A cancelled job cannot be resumed. Reopen its recipe as a new draft instead.
 - **After a Qwen-to-SDXL crash:** wait for/inspect the queue, then restart ComfyUI with the existing controls under `C:\AI`. Never kill another application's process or clear an unknown job to make a test pass.
 - **Bad art:** execution success only means the graph completed. Compare the result to the brief; use the scorecard and refine one variable.
+
+### Shared backend switch ownership and explicit resolution (#1586)
+
+Each new switch records its Studio owner's PID, process creation time and a unique manager instance ID
+under `operation.owner` version 1. The backend child's PID remains separate. All `BackendManager` writes,
+including reservation, progress, completion, failure, startup reconciliation and explicit resolution, use
+the permanent `.runtime/backend-state.json.lock` file and an OS-held lock. Before replacing the state file,
+the writer compares the complete observed record and file identity again. A stale writer cannot publish
+over another cooperating writer's progress. A lost publication acknowledgement is preserved as uncertainty,
+without replaying the write or launching a worker. Ordinary conflicts before reservation can be retried
+explicitly against the current record after the other operation finishes.
+
+State loading performs no runtime start, stop, queue request or generation. It only reads the state and
+observes process identity before a bounded, serialized reconciliation:
+
+| Saved switch evidence | Result |
+| --- | --- |
+| Recorded Studio owner is still live | Keep the running record and refuse replacement, including an inspection acknowledgement from another Studio. |
+| Fresh process lookup proves the owner absent; phase is `checking` or `stopping` | Publish `interrupted`, preserving the active selection and original operation evidence. Later recovery still has to pass its usual runtime, queue and work checks. |
+| Owner is absent; phase is `launch-intent`, `launched` or unknown | Publish `interrupted` with `inspection_required: true`. Recovery and another switch remain blocked until explicit inspection. |
+| Legacy running record has no `owner` field | Preserve it unchanged. Offer explicit resolution after the operator closes other Studios and inspects runtimes and startup logs. |
+| Owner metadata is malformed or unsupported, access is denied, PID creation time differs, or this Studio cannot establish its own process identity | Treat ownership as unknown. Preserve the record; no automatic reconciliation or acknowledgement of a recorded foreign owner is allowed. |
+| Existing state file is malformed, unreadable, changing, linked, oversized or has no valid selection | Keep the error visible and block admission. An absent file alone means first run. |
+
+Age never proves that a switch was abandoned. A reused PID or changed creation time remains unknown;
+the code does not guess that the old owner exited. Without the process-observation dependency (`psutil`),
+read-only imports remain available, but owner identity is unknown and a switch cannot be reserved.
+`launch-intent` is flushed before process creation,
+so a crash between creating a runtime and recording its PID cannot be mistaken for a prelaunch interruption.
+Reconciliation preserves the target, original times, process identities, stopped-process records and logs,
+and records when and why it reconciled the operation.
+
+**Explicit resolution:** open **Models & setup**. Where offered, **Resolve saved switch** requires both
+acknowledgements: every other Studio using the project is closed, and the runtimes and saved startup logs
+were inspected. A poll does not acknowledge anything. If the record changes, both checks reset; review the
+current operation again. The action records those acknowledgements against the exact observed file digest
+and preserves the old evidence. It does not start or stop a runtime or submit a job. Resolving a legacy,
+failed or interrupted switch keeps this Studio's selected environment. Resolving this exact Studio's
+uncertain completed switch restores its already-saved selected environment as described below.
+**Runtime recovery, if already enabled, can resume on its next pass after resolution** and may start
+the currently selected backend only if all its normal checks pass. To choose an environment other than
+the saved completed target, use the separate environment switch action.
+
+The same resolution is available for this exact Studio manager's uncertain publication once its switch
+worker is inactive. If a completion, failure or resolution landed but its acknowledgement was lost, this exception
+requires the exact attempted file digest retained privately by that manager. Resolution preserves the
+recorded `completed`, `failed` or `interrupted` outcome, original message, times and saved selection, and adds
+the inspection receipt. Normal terminal records and ordinary observation errors do not enable this exception.
+A lost completion acknowledgement can leave this Studio's in-memory selection behind the saved selection.
+For that exact-owned completed record, resolution first verifies that the saved active environment is a
+known profile matching the completed target. If restoring it changes the local selection, finish or
+reconcile queued, running, reference and production work, then resolve again. The existing local-work check
+and routing update share the job-admission lock. Studio prepares the model-library object before publishing
+the receipt and applies the saved selection only after confirmation, before clearing the uncertainty hold.
+The next job therefore captures the restored runtime URL and model root. A preparation error or unconfirmed
+publication leaves the previous routing intact; observe the record again before an explicit retry.
+Ordinary switch completion uses the same prepare-before-publication ordering. This restoration changes
+only local routing and catalogue selection; it performs no runtime lifecycle action. A restart after
+inspection also follows the saved selection.
+Resolution is refused while that worker is active. A new manager has a different instance ID,
+even in the same PID, so it cannot use that local-worker exception for another manager's record. A live or
+unverified recorded foreign owner is never overridden by the checkboxes. Unknown owner formats or unreadable
+state have no resolution button; retain the record and logs for inspection instead of editing away a gate.
+
+For a same-origin API client, `GET /api/backends` exposes the authoritative `shared_state.blocker`,
+`shared_state.resolvable` and `shared_state.sha256`. `POST /api/backends/resolve-switch` accepts an object
+with that exact `expected_sha256`, `acknowledge_studios_closed: true` and
+`acknowledge_runtimes_inspected: true`. Both acknowledgements must be JSON booleans. A changed record or
+ineligible owner is refused without overwriting it. An uncertain reply must be observed through a new GET;
+the client must not replay the acknowledgement automatically. If state publication remains unconfirmed
+and no resolution is offered, inspect the saved record and logs before restarting Studio.
+
+**Deployment boundary:** close older Studio instances once their work is idle, then update and restart
+every Studio that writes this project's state. Mixed-version concurrent writers are unsupported: older
+processes do not honor the lock or owner fields. Never delete the lock file to force progress; process exit
+releases its OS-held ownership. This protocol serializes switch-state publication between cooperating
+Studios; it is not a cross-process lease covering every recovery launch, generation worker or external
+launcher. The existing GPU lease and runtime checks still apply. All validation for this change uses fake
+backends, inert lock contenders and browser fixtures; no installed runtime or model was exercised.
 
 ## Backup and source control
 

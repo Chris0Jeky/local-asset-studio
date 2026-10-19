@@ -201,7 +201,7 @@ DENY_IDS = {
     'planComparison', 'switchBackend', 'importAssets', 'importWorkflow', 'importRecipe',
     'saveAssetDetails', 'save', 'assetTrash', 'assetDownload', 'nativeExport', 'createScene',
     'saveSharedWorkflow', 'copySharedWorkflow', 'retrySharedWorkflow', 'prepareSavedRun',
-    'exportGraph', 'saveWorkflow', 'refreshModels', 'retryRecovery', 'uxPrepareHandoff',
+    'exportGraph', 'saveWorkflow', 'refreshModels', 'retryRecovery', 'resolveBackendSwitch', 'uxPrepareHandoff',
     'uxImportDraftButton', 'uxExportDraft', 'compare', 'newCollection', 'deleteCollection',
     'uxPoseUse', 'lookSaveButton', 'lookTrash',
 }

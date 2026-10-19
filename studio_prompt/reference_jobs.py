@@ -141,8 +141,9 @@ class ReferenceJobs:
 
     def _runtime(self):
         s=self.studio
-        need(not s.backends.busy,'A backend operation is active')
-        return {'backend':s.backends.active,'endpoint':s.comfy_url,'root':str(s.comfy_root)}
+        with s.lock:
+            s.backends.require_work_admission()
+            return {'backend':s.backends.active,'endpoint':s.comfy_url,'root':str(s.comfy_root)}
 
     def create(self,value):
         need(self.intake.acquire(blocking=False), 'Reference intake is already busy')
@@ -244,6 +245,7 @@ class ReferenceJobs:
                 need(context['runtime']==self._runtime() and context['configuration']==configuration(self.studio),'Helper context changed before dispatch')
                 self._idle()  # Recheck after helper inventory/residency observations.
                 reading=self._resources(context['configuration'])
+                self.studio.backends.require_work_admission()
                 with self.workspace.connection() as db:
                     db.execute('BEGIN IMMEDIATE');state=self._state(self._row(db,key))
                     if state['status']!='preparing':return
