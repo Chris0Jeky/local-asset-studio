@@ -112,6 +112,59 @@ the reason in the ComfyUI log, at `GET /studio/vram-guard` and in the Studio's `
 matches the pinned hashes. To turn it off, set `"primary_vram_guard": false` in `config/local.json` and restart ComfyUI
 through the Studio; nothing needs reverting in the installation.
 
+### Unknown external VRAM readings — repository correction, 19 October 2026 (#983)
+
+The guard source now keeps an unavailable or impossible external-use observation as `others_bytes: null` at
+`GET /studio/vram-guard`. Its eviction adjustment uses a declared **4 GiB fallback**, capped to a valid capacity
+reported by ComfyUI's `get_total_memory(device)`. This is the existing launch-reserve fallback amount, reused as an
+explicit policy; it is not a current measurement and does not establish that an allocation will fit.
+
+If a larger credible reading was obtained on the same device and capacity within **2 seconds**, the adjustment keeps
+that last-known bound instead. Two seconds covers four 0.5-second sampling windows so a brief partial PDH sample does
+not immediately discard a larger observation. A failure never refreshes its age; once that interval expires, the
+adjustment returns to the declared fallback even if an unknown sample is still cached. A previous measured zero never
+suppresses the fallback. Device/capacity changes and a backward monotonic clock discard both cached and last-known data.
+Missing, nonnumeric, nonfinite or nonpositive capacity, and a failed device/capacity query, remain explicitly unknown.
+The Torch device key prevents cached values crossing a device/capacity change; it does **not** map a Windows PDH adapter
+LUID to a Torch ordinal. The existing PDH selection still chooses the adapter with the own PID's greatest dedicated
+usage, or the busiest fully metered adapter when that PID has no nonzero entry. This correction preserves that
+single-GPU primary-runtime policy and does not establish correct attribution across multiple active GPUs.
+
+`reading_basis` distinguishes `measured`, `reconciled` and `unknown`; `unknown_reason` explains uncertainty or a counter
+disagreement. `effective_others_bytes` and `adjustment_basis` distinguish the actual `measured`, `reconciled`, `fallback`
+or `last_known` eviction adjustment. `last_known_age_seconds`, `capacity_bytes`, `device` and bounded `counter_anomalies`
+retain its context. The ComfyUI log records changes to an uncertain/reconciled basis, with the anomaly rows; the Studio
+`/api/health` install report remains an installation report, not a live memory observation.
+
+The capacity-aware `gpu_memory.others_bytes` path also rejects a selected adapter total or own process counter more
+than **128 MiB** above the reported capacity before subtraction, using admission's existing headroom. Thus 20 GiB
+adapter minus 17 GiB own cannot pass as 3 GiB measured on a 16 GiB card. The 128 MiB headroom still permits a physical
+16 GiB card when ComfyUI reports 16,304 MiB. Callers that omit capacity keep their previous optional-capacity contract.
+Adapter reconciliation still handles a runaway other-process counter as a bound; admission still refuses that
+disagreement as a measurement. The exact zero-byte own entry on the fallback-selected adapter plus a runaway DWM
+counter is covered by an offline regression.
+
+This changes only the repository extension and shared reader. Load decisions outside `free_memory`, CPU/MPS paths and
+the tuple's torch-cache byte count are preserved. The ComfyUI source hashes above remain the install gate. The
+implementation of [`get_total_memory` at the same pinned upstream commit](https://github.com/Comfy-Org/ComfyUI/blob/40c4fcdf513a4523e39d54a9d391908af8df8171/comfy/model_management.py#L316)
+returns the total from `torch.cuda.mem_get_info` on the CUDA/ROCm path. Its retrieved function-source SHA-256 is
+`54d1ec932a020d28bc3340cba9ca22a0b778b8f1b22a00f731e51427222bb0f5`; the two wrapped functions also matched their existing
+source hashes. This helper-source observation does not change the guard's install pins.
+
+Repository source SHA-256, before this correction and after:
+
+| Source | Before | After |
+| --- | --- | --- |
+| `app/gpu_memory.py` | `dfe33d2b25394a59c34d2559b6765b7157c0e90aa61cf37bb012e5b2c55d771d` | `db9a44c1b7fc7b8d041e32b4f353f8c504ef04d25ed91db21f810017fcc58e1d` |
+| `comfy-extensions/studio_vram_guard/__init__.py` | `c0c2a365b36dabdcf98ebf273d5d9fd21359eb7d1d571f6ab99b9f342432b0a5` | `9b6dfdc73ada92b62d53f46d86ab6cf7ab2c83e3dc588cc6334ebacb35b956ab` |
+
+Causal offline regressions reproduced the original unknown-to-zero eviction result and the impossible capacity-source
+subtraction before the fix. The corrected pure tests cover cache expiry, device/capacity changes, a failed capacity
+query, scalar/tuple clamping, CPU/MPS bypass, admission's uncertainty and preserved load decisions. No installed ComfyUI
+file or package was changed, and no backend was restarted or model loaded for this correction. Activation and its effect
+on the workstation remain unmeasured. The owner explicitly waived the manual Task Manager check in
+[issue #983](https://github.com/Chris0Jeky/local-asset-studio/issues/983#issuecomment-5857633001); that check is not a remaining gate.
+
 ## Measured reserve and one launch path, 23 September 2026 (no ComfyUI source edited, no package changed)
 
 `C:/AI/Start-ComfyUI.ps1` gained an optional `-ArgumentsFile` parameter (the Studio passes

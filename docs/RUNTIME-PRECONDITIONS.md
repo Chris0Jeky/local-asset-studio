@@ -346,8 +346,11 @@ The primary's Krea 2 fp8 route (13.1 GB of diffusion weights) was recorded at 94
   the adapter figure and admission treats VRAM as unknown. Admission also passes the card size ComfyUI reports: a
   reading without an adapter figure that exceeds it is unknown, never clamped to a guess. The impossible counters are
   kept as evidence, at most 8 rows of `{adapter, pid, dedicated_bytes, adapter_total_bytes, limit_bytes}`, in
-  `last_launch_reserve.anomalies` and in admission receipts (`observation.vram.counter_anomalies`). The installed guard
-  still reads an unknown figure as zero (`runtime-patches/comfy-extensions/studio_vram_guard`), unchanged here.
+  `last_launch_reserve.anomalies` and in admission receipts (`observation.vram.counter_anomalies`). The repository guard's
+  [19 October correction](../runtime-patches/README.md#unknown-external-vram-readings--repository-correction-19-october-2026-983)
+  now reports unknown as null and separates its declared fallback or bounded last-known eviction adjustment. Its
+  capacity-aware reader also rejects impossible source counters before subtraction. That source correction has not
+  been activated or measured on the installed runtime; the historical runtime measurements below are unchanged.
   Not verified against Task Manager: the owner skipped that manual check.
 - Pinned host memory is not counted as a spill: the primary started with about 13 GB pinned read
   9,755 MB dedicated and 79 MB shared through the same counters.

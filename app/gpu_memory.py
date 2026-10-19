@@ -233,13 +233,15 @@ def others_bytes(reading, pid, capacity_bytes=None):
     Impossible process counters are reconciled against the adapter-level figure, so a runaway counter cannot
     zero the installed VRAM guard's perceived free memory; without a matching figure a new reading is unknown.
     A result above `capacity_bytes` (the card's size, when the caller knows it) is unknown, never a clamped guess.
+    A selected adapter total or own counter beyond that capacity plus sampling headroom is also unknown: subtracting
+    two impossible source counters can yield a plausible-looking difference. Callers without capacity retain the older contract.
     """
-    others = _others_bytes(reading, pid)
     capacity = _capacity(capacity_bytes)
+    others = _others_bytes(reading, pid, capacity)
     return None if others is not None and capacity is not None and others > capacity else others
 
 
-def _others_bytes(reading, pid):
+def _others_bytes(reading, pid, capacity=None):
     adapters = reading.get('adapters') if isinstance(reading, dict) else None
     owned = [name for name, processes in (adapters or {}).items() if processes.get(pid, {}).get('dedicated_bytes', 0) > 0]
     if owned:
@@ -252,6 +254,7 @@ def _others_bytes(reading, pid):
     total = _adapter_total(reading, adapter)
     if isinstance(reading, dict) and 'adapter_totals' in reading and total is None: return None
     values = {other: p['dedicated_bytes'] for other, p in adapters[adapter].items()}
+    if _over_card(total, capacity) or _over_card(values.get(pid), capacity): return None
     _, others, _ = _reconcile(values, total, own_pid=pid)
     return others
 
