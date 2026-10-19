@@ -13,6 +13,7 @@ async function main() {
     setAttribute(key, value) { if (key === 'id') this.id = value; else this[key] = String(value); }
     append(...nodes) { this.children.push(...nodes); }
     before() {}
+    after() {}
     replaceChildren(...nodes) { this.children = []; this._value = ''; this.append(...nodes); }
     get value() { return this._value; }
     set value(value) { this._value = String(value); }
@@ -20,6 +21,7 @@ async function main() {
     querySelectorAll() { return []; }
   }
   const toolbar = new Element('div'), builder = new Element('div');
+  for (const id of ['wfAllTools', 'wfSavedFold']) { const n = new Element('details'); n.id = id; }
   const document = {body: new Element('body'), activeElement: null, listeners: {},
     createElement: tag => new Element(tag), createTextNode: text => ({text}),
     querySelector: selector => selector === '#builder .wf-toolbar' ? toolbar : selector === '#builder .wf-builder' ? builder : ids.get(selector.slice(1)),

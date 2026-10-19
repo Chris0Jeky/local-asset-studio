@@ -27,6 +27,7 @@ class Element {
   append(...nodes) { for (const n of nodes) if (n && typeof n === 'object') { n.parent = this; this.children.push(n); } }
   // Inserted siblings join the live tree, so focus inside the Steps panel survives other panels' re-renders as in a browser.
   before(...nodes) { if (this.parent) this.parent.append(...nodes); }
+  after(...nodes) { if (this.parent) this.parent.append(...nodes); }
   replaceChildren(...nodes) {
     for (const c of this.children) c.parent = null; this.children = [];
     if (document.activeElement && !document.activeElement.isConnected) document.activeElement = null;

@@ -28,10 +28,13 @@ def main():
     schema = catalog(INFO, 'primary'); doc = new_document(GRAPH, schema, 'Processing study')
     with tempfile.TemporaryDirectory() as temp, sync_playwright() as engine:
         studio = SimpleNamespace(assets=SQLiteWorkspace(temp), lock=threading.RLock())
-        seen, errors = [], []
+        seen, errors = [], []; faults = {'save': False}
         def request(path, body):
             seen.append((path, body))
             try:
+                if path == PREFIX and body is not None and faults['save']:
+                    faults['save'] = False
+                    return {'status': 400, 'body': {'error': 'Synthetic save failure'}}
                 if path == '/api/catalog': result = {'presets': [{'id': 'example', 'name': 'Synthetic processing study'}]}
                 elif path.endswith('/guides'): result = {'guides': []}
                 elif path.endswith('/nodes') or path.endswith('/nodes/refresh'): result = schema
@@ -44,7 +47,7 @@ def main():
                 return {'status': getattr(exc, 'status', 400), 'body': {'error': str(exc)}}
         kwargs = {'headless': True}
         if args.chromium: kwargs['executable_path'] = args.chromium
-        browser = engine.chromium.launch(**kwargs); page = browser.new_page(viewport={'width': 1450, 'height': 1100})
+        browser = engine.chromium.launch(**kwargs); page = browser.new_page(viewport={'width': 1440, 'height': 900})
         page.set_default_timeout(8000)
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.on('dialog', lambda dialog: dialog.accept('Refine copy') if dialog.type == 'prompt' else dialog.accept())
@@ -62,8 +65,30 @@ def main():
         for name in ('workflow-studio.js', 'workflow-project-state.js', 'workflow-projects.js'): page.add_script_tag(content=(static / name).read_text(encoding='utf-8'))
         page.wait_for_selector('#presetChoice option[value=example]', state='attached')
         assert not any(body is not None for _, body in seen), 'Startup mutated something'
+        assert not page.locator('#wfAllTools').evaluate('(n)=>n.open')
+        assert not page.locator('#wfSavedFold').evaluate('(n)=>n.open')
+        assert page.locator('#sharedWorkflowState').is_visible() and page.locator('#sharedWorkflowStatus').is_visible()
+        words = page.evaluate(r"""() => {
+          const builder=document.querySelector('#builder'), end=builder.querySelector('.wf-builder').getBoundingClientRect().top;
+          const walker=document.createTreeWalker(builder,NodeFilter.SHOW_TEXT);let n,words=[];
+          while(n=walker.nextNode()) {const r=document.createRange();r.selectNodeContents(n);const box=r.getBoundingClientRect();if(box.width&&box.height&&box.top<end)words.push(n.textContent);}
+          return words.join(' ').trim().split(/\s+/).length;
+        }""")
+        assert words < 500, f'{words} words before the first node panel'
+        print(f'PASS 1440x900: {words} visible words before the first node panel; both folds closed; status lines visible')
+        page.locator('#builder').scroll_into_view_if_needed()
+        evidence_screenshot(page, path=str(args.out / 'first-screen.png'), full_page=False)
+
         page.select_option('#presetChoice', 'example'); page.click('#loadPreset')
         page.wait_for_function('window.WorkflowStudio.snapshot()?.nodes["2"]')
+        assert page.locator('#wfAllTools #loadNodes').count() == 1
+        assert not page.locator('#wfAllTools').evaluate('(n)=>n.open')
+        page.click('#compileWorkflow'); page.wait_for_function('!document.querySelector("#exportGraph").disabled')
+        page.click('#wfAllTools > summary')
+        with page.expect_download(): page.click('#exportGraph')
+        page.click('#wfAllTools > summary')
+        print('PASS recipe + check: 2 actions; recipe + check + All tools + export: 4 actions')
+
         page.click('#createWorkflowStep'); page.get_by_label('Step name', exact=True).fill('Refine')
         page.locator('dialog label').filter(has_text='2 · Scale').locator('input').check()
         page.locator('dialog label').filter(has_text='2.factor').locator('input').check()
@@ -72,11 +97,21 @@ def main():
         page.wait_for_selector('.wf-step-card')
         page.locator('#workflowSteps input[aria-label=factor]').fill('3.5'); page.locator('#workflowSteps input[aria-label=factor]').press('Tab')
         assert page.evaluate('WorkflowStudio.snapshot().nodes["2"].inputs.factor') == 3.5
+        page.locator('#wfSavedFold > summary').click()
+        faults['save'] = True
+        page.evaluate("document.querySelector('#saveSharedWorkflow').click();document.querySelector('#wfSavedFold').open=false")
+        page.wait_for_function("document.querySelector('#sharedWorkflowStatus').textContent.includes('Synthetic save failure')")
+        assert not page.evaluate('WorkflowProject.snapshot().id')
+        assert page.locator('#wfSavedFold').evaluate('(n)=>n.open'), 'An unattached save error must reveal recovery tools'
         page.click('#saveSharedWorkflow'); page.wait_for_function('document.querySelector("#sharedWorkflowState").textContent.includes("r1 · saved")')
         original = studio._workflow_documents.list()['documents'][0]['id']
         studio._workflow_documents.command(original, {'request_id': 'agent-edit', 'expected_revision': 1, 'commands': [{'op': 'rename', 'name': 'Agent edit'}]})
         page.fill('#workflowName', 'Human local edit'); page.locator('#workflowName').press('Tab'); page.click('#saveSharedWorkflow')
         page.wait_for_function('document.querySelector("#sharedWorkflowStatus").textContent.includes("another window")')
+        assert page.locator('#wfSavedFold').evaluate('(n)=>n.open')
+        page.click('#wfSavedFold > summary')
+        assert page.locator('#sharedWorkflowStatus').is_visible() and page.locator('#sharedWorkflowState').is_visible()
+        page.click('#wfSavedFold > summary')
         assert page.evaluate('WorkflowStudio.snapshot().name') == 'Human local edit'
         assert page.locator('#saveSharedWorkflow').is_disabled()
         page.click('#copySharedWorkflow'); page.wait_for_function('document.querySelector("#sharedWorkflowState").textContent.includes("r1 · saved")')
@@ -130,6 +165,9 @@ def main():
         page.get_by_role('button', name='Edit step', exact=True).first.click(); page.keyboard.press('Escape')
         assert not page.locator('dialog').is_visible()
         assert not any(path in ('/api/jobs', '/api/workflow-studio/run') for path, _ in seen)
+        page.click('#newWorkflow')
+        assert not page.locator('#wfSavedFold').evaluate('(n)=>n.open')
+        assert 'not attached' in page.locator('#sharedWorkflowState').inner_text()
         assert not errors, errors
         evidence = {'browser': 'inert Chromium DOM', 'synthetic_nodes': True, 'real_sqlite_service': True,
                     'page_errors': errors, 'generation_requests': 0, 'requests': len(seen), 'saved_workflows': 2,
