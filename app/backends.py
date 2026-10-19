@@ -124,12 +124,25 @@ class BackendManager:
                 'state_issue':state_issue,'shared_state':shared_state}
 
     def resolve_switch_record(self, payload):
-        """An explicit inspected acknowledgement changes only the exact saved operation."""
+        """Settle the exact inspected record and align an unconfirmed completed selection."""
         with self.studio.lock:
             if self.busy:raise backend_state.StateError('A backend switch is still running in this Studio')
-            current=self._state.read()
-            try:resolved=self._state.resolve(current,payload,self._owner,self._uncertain_publication if self.state_issue else None)
+            current=self._state.read();operation=current.value.get('operation') or {};activation=None
+            uncertain=self._uncertain_publication if self.state_issue else None
+            if (operation.get('status')=='completed' and backend_state.valid_owner(self._owner)
+                    and operation.get('owner')==self._owner and current.identity is not None
+                    and current.identity[1]==uncertain):
+                identifier=current.value['active']
+                if identifier not in self.profiles or operation.get('target')!=identifier:
+                    raise backend_state.StateError('The completed switch does not match a known saved environment; inspect its state before resolving')
+                if identifier!=self.active:
+                    if self._local_work():raise ValueError('Finish or reconcile active Studio work before restoring the saved environment')
+                    # Prepare every fallible local object before publishing. A lost
+                    # publication reply must leave routing unchanged and retryable.
+                    activation=self._prepare_activation(identifier)
+            try:resolved=self._state.resolve(current,payload,self._owner,uncertain)
             except backend_state.StateUnconfirmed as exc:self._state_failed(exc);raise
+            if activation is not None:self._apply_activation(activation)
             self._state_snapshot=resolved;self.operation=copy.deepcopy(resolved.value.get('operation'));self.state_issue=None;self._uncertain_publication=None
         return self.snapshot()
 
@@ -170,12 +183,18 @@ class BackendManager:
         """The models folder a profile reads: its own checkout's, or the shared main library's when the profile names a `library` (moss)."""
         return Path(profile.get('library') or profile['root'])/'models'
 
-    def activate(self, identifier):
+    def _prepare_activation(self, identifier):
         from model_library import ModelLibrary
-        profile=self.profiles[identifier]
-        self.active=identifier;self.studio.comfy_url=profile['url'];self.studio.comfy_root=Path(profile['root'])
-        self.studio.library=ModelLibrary(self.studio.root,self.studio.comfy_root,backend_id=identifier,models_root=self.models_root(profile))
+        profile=self.profiles[identifier];root=Path(profile['root'])
+        library=ModelLibrary(self.studio.root,root,backend_id=identifier,models_root=self.models_root(profile))
+        return identifier,profile['url'],root,library
+
+    def _apply_activation(self, prepared):
+        self.active,self.studio.comfy_url,self.studio.comfy_root,self.studio.library=prepared
         self.studio._schema=None;self.studio._schema_at=0
+
+    def activate(self, identifier):
+        self._apply_activation(self._prepare_activation(identifier))
 
     def _local_work(self, ignore_job_ids=()):
         if getattr(self.studio, "reference_jobs", None) and self.studio.reference_jobs.busy(): return True
@@ -469,8 +488,9 @@ class BackendManager:
                 listener=self.process(target)
                 if listener is None or listener.pid!=launched.pid:raise ValueError('Ready endpoint does not belong to the launched process; inspect retained runtime')
             with self.studio.lock:
+                activation=self._prepare_activation(identifier)
                 self.operation.update(status='completed',finished_at=time.time(),message=target['name']+' endpoint is ready. Model inference was not checked; no generation submitted.');self._save(active=identifier)
-                self.activate(identifier)
+                self._apply_activation(activation)
         except backend_state.StateError as exc:
             with self.studio.lock:self._state_failed(exc)
         except Exception as exc:

@@ -36,7 +36,7 @@ class StartupInterlockTests(unittest.TestCase):
         self.launch.return_value.pid = 500
         self.launch.return_value.poll.return_value = 1
         self.thread = self.stack.enter_context(patch('backends.threading.Thread'))
-        self.activate = self.stack.enter_context(patch.object(self.manager, 'activate'))
+        self.activate = self.stack.enter_context(patch.object(self.manager, '_apply_activation', wraps=self.manager._apply_activation))
 
     @staticmethod
     def process(pid, created=1):
@@ -140,14 +140,14 @@ class StartupInterlockTests(unittest.TestCase):
                 self.listeners['hidream'] = self.process(200)
         with patch.object(self.manager, '_save', side_effect=persist):self.run_worker()
         self.launch.assert_not_called()
-        self.activate.assert_called_once_with('hidream')
+        self.activate.assert_called_once(); self.assertEqual(self.manager.active, 'hidream'); self.assertEqual(self.studio.comfy_url, self.manager.profiles['hidream']['url'])
         self.assertEqual(self.manager.operation['status'], 'completed')
         self.assertNotIn('/prompt', self.routes)
 
     def test_ready_matching_target_is_reused_without_launch(self):
         self.listeners['hidream'] = self.process(200)
         self.run_worker()
-        self.activate.assert_called_once_with('hidream'); self.launch.assert_not_called()
+        self.activate.assert_called_once(); self.assertEqual(self.manager.active, 'hidream'); self.assertEqual(self.studio.comfy_url, self.manager.profiles['hidream']['url']); self.launch.assert_not_called()
         self.assertEqual(self.manager.operation['status'], 'completed')
         self.assertIn('inference was not checked', self.manager.operation['message'])
         self.assertNotIn('/prompt', self.routes)

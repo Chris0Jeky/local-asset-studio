@@ -321,6 +321,19 @@ test('legacy resolution needs both acknowledgements and never submits during a r
  assert.equal(f.writes.some(([url])=>url==='/api/jobs'||url==='/api/backends/switch'),false);
 });
 
+test('completed resolution observes the restored environment while preserving the next job draft',async()=>{
+ const f=fixture();f.node('#positive').value='Draft for the saved environment';f.node('[data-key="seed"]').value='';
+ const read=f.run();f.pending.at(-1).resolve({...f.backend('old'),operation:{status:'completed',target:'new'},shared_state:{sha256:'a'.repeat(64),blocker:'Completion publication is unconfirmed',resolvable:true}});await read;
+ f.node('#backendStudiosClosed').checked=true;f.node('#backendRuntimesInspected').checked=true;f.node('#backendStudiosClosed').onchange();
+ const work=f.node('#resolveBackendSwitch').onclick();await f.tick();
+ f.pending.at(-1).resolve({...f.backend('new'),operation:{status:'completed',target:'new'}});await f.tick();
+ assert.equal(f.pending.at(-1).url,'/api/catalog');f.pending.at(-1).resolve({presets:[f.a,f.b]});await work;
+ assert.equal(f.node('#activeBackend').textContent,'new');assert.equal(vm.runInContext('backendActive',f.context),'new');
+ assert.equal(f.node('#backendResolution').hidden,true);assert.equal(f.node('#positive').value,'Draft for the saved environment');
+ assert.equal(f.node('[data-key="seed"]').value,'');assert.equal(f.state.health,1);
+ assert.deepEqual(f.writes.map(([url])=>url),['/api/backends/resolve-switch']);
+});
+
 test('changed state revokes a legacy acknowledgement and live ownership hides resolution',async()=>{
  const f=fixture(),state=sha=>({...f.backend('old'),shared_state:{sha256:sha,blocker:'Inspect the saved switch',resolvable:true}});
  let read=f.run();f.pending.at(-1).resolve(state('a'.repeat(64)));await read;

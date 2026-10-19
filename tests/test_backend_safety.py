@@ -53,7 +53,7 @@ class BackendSafetyTests(unittest.TestCase):
         self.begin_switch()
         with patch.object(self.manager,'request',side_effect=request or (lambda p,r,*a: HEALTH if r=='/system_stats' else IDLE)), \
              patch.object(self.manager,'process',side_effect=process or (lambda p:self.process() if p['id']=='hidream' else None)), \
-             patch.object(self.manager,'activate') as activate,patch('backends.subprocess.Popen') as launch:
+             patch.object(self.manager,'_apply_activation',wraps=self.manager._apply_activation) as activate,patch('backends.subprocess.Popen') as launch:
             self.manager._switch('hidream')
             return activate,launch
 
@@ -154,7 +154,7 @@ class BackendSafetyTests(unittest.TestCase):
     def test_qwen21_switch_launches_its_launcher_with_the_isolated_root(self):
         self.begin_switch('qwen21')
         launched=Mock(pid=4321);launched.poll.return_value=1
-        with patch.object(self.manager,'request',side_effect=lambda p,r,*a: HEALTH if r=='/system_stats' else IDLE),              patch.object(self.manager,'process',return_value=None),patch.object(self.manager,'activate') as activate,              patch('backends.subprocess.Popen',return_value=launched) as popen:
+        with patch.object(self.manager,'request',side_effect=lambda p,r,*a: HEALTH if r=='/system_stats' else IDLE),              patch.object(self.manager,'process',return_value=None),patch.object(self.manager,'_apply_activation',wraps=self.manager._apply_activation) as activate,              patch('backends.subprocess.Popen',return_value=launched) as popen:
             self.manager._switch('qwen21')
         profile=self.manager.profiles['qwen21']
         self.assertEqual(popen.call_args.args[0],[profile['python'],'-s',profile['entry'],'--comfy-root',profile['root']])
@@ -327,14 +327,14 @@ class BackendSafetyTests(unittest.TestCase):
         activate.assert_not_called();launch.assert_not_called();self.assertIn('not ready',self.manager.operation['message'])
     def test_reused_idle_healthy_target_completes_without_launch(self):
         activate,launch=self.run_switch()
-        activate.assert_called_once_with('hidream');launch.assert_not_called()
+        activate.assert_called_once();self.assertEqual(self.manager.active,'hidream');self.assertEqual(self.studio.comfy_url,self.manager.profiles['hidream']['url']);launch.assert_not_called()
         self.assertEqual(self.manager.operation['status'],'completed');self.assertIn('inference was not checked',self.manager.operation['message'])
     def test_failed_startup_preserves_live_process_without_blind_cleanup(self):
         child=self.process(pid=900);child.poll.return_value=None
         self.begin_switch()
         def request(p,r,*a):return IDLE if r=='/queue' else {'system':None}
         with patch.object(self.manager,'request',side_effect=request),patch.object(self.manager,'process',return_value=None), \
-             patch('backends.subprocess.Popen',return_value=child),patch('backends.time.sleep'),patch.object(self.manager,'activate') as activate:
+             patch('backends.subprocess.Popen',return_value=child),patch('backends.time.sleep'),patch.object(self.manager,'_apply_activation',wraps=self.manager._apply_activation) as activate:
             self.manager._switch('hidream')
         child.terminate.assert_not_called();activate.assert_not_called();self.assertFalse(self.manager.busy)
         self.assertEqual(self.manager.operation['preserved_pid'],900);self.assertEqual(self.manager.operation['status'],'failed')
@@ -371,7 +371,7 @@ class BackendSafetyTests(unittest.TestCase):
         self.begin_switch()
         with patch.object(self.manager,'request',side_effect=lambda p,r,*a:HEALTH if r=='/system_stats' else IDLE), \
              patch.object(self.manager,'process',return_value=None),patch('backends.subprocess.Popen',return_value=child), \
-             patch.object(self.manager,'activate') as activate:
+             patch.object(self.manager,'_apply_activation',wraps=self.manager._apply_activation) as activate:
             self.manager._switch('hidream')
         activate.assert_not_called();child.terminate.assert_not_called()
         self.assertEqual(self.manager.operation['status'],'failed');self.assertEqual(self.manager.operation['preserved_pid'],900)
@@ -384,9 +384,9 @@ class BackendSafetyTests(unittest.TestCase):
         self.begin_switch()
         with patch.object(self.manager,'request',side_effect=lambda p,r,*a:HEALTH if r=='/system_stats' else IDLE), \
              patch.object(self.manager,'process',side_effect=observe),patch('backends.subprocess.Popen',return_value=child) as launch, \
-             patch.object(self.manager,'activate') as activate:
+             patch.object(self.manager,'_apply_activation',wraps=self.manager._apply_activation) as activate:
             self.manager._switch('hidream')
-        launch.assert_called_once();activate.assert_called_once_with('hidream');child.terminate.assert_not_called()
+        launch.assert_called_once();activate.assert_called_once();self.assertEqual(self.manager.active,'hidream');self.assertEqual(self.studio.comfy_url,self.manager.profiles['hidream']['url']);child.terminate.assert_not_called()
         self.assertEqual(self.manager.operation['status'],'completed');self.assertFalse(self.manager.busy)
     def test_real_loopback_http_request_limits_and_redirect_refusal(self):
         class Handler(BaseHTTPRequestHandler):

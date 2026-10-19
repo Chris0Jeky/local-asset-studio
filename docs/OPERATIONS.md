@@ -120,19 +120,29 @@ and records when and why it reconciled the operation.
 acknowledgements: every other Studio using the project is closed, and the runtimes and saved startup logs
 were inspected. A poll does not acknowledge anything. If the record changes, both checks reset; review the
 current operation again. The action records those acknowledgements against the exact observed file digest
-and preserves the old evidence. It does not change the selected backend, start or stop a runtime, or submit
-a job. **Runtime recovery, if already enabled, can resume on its next pass after resolution** and may start
-the currently selected backend only if all its normal checks pass. To change family, use the separate
-environment switch action.
+and preserves the old evidence. It does not start or stop a runtime or submit a job. Resolving a legacy,
+failed or interrupted switch keeps this Studio's selected environment. Resolving this exact Studio's
+uncertain completed switch restores its already-saved selected environment as described below.
+**Runtime recovery, if already enabled, can resume on its next pass after resolution** and may start
+the currently selected backend only if all its normal checks pass. To choose an environment other than
+the saved completed target, use the separate environment switch action.
 
 The same resolution is available for this exact Studio manager's uncertain publication once its switch
 worker is inactive. If a completion, failure or resolution landed but its acknowledgement was lost, this exception
 requires the exact attempted file digest retained privately by that manager. Resolution preserves the
-recorded `completed`, `failed` or `interrupted` outcome, original message, times and selection; it only adds the inspection
-receipt and clears the local uncertainty hold. Normal terminal records and ordinary observation errors do
-not enable this exception. A lost completion acknowledgement can leave this Studio's in-memory selection
-behind the saved selection; resolution does not activate another family. Select the intended environment
-explicitly, or restart Studio after inspection to follow the saved selection.
+recorded `completed`, `failed` or `interrupted` outcome, original message, times and saved selection, and adds
+the inspection receipt. Normal terminal records and ordinary observation errors do not enable this exception.
+A lost completion acknowledgement can leave this Studio's in-memory selection behind the saved selection.
+For that exact-owned completed record, resolution first verifies that the saved active environment is a
+known profile matching the completed target. If restoring it changes the local selection, finish or
+reconcile queued, running, reference and production work, then resolve again. The existing local-work check
+and routing update share the job-admission lock. Studio prepares the model-library object before publishing
+the receipt and applies the saved selection only after confirmation, before clearing the uncertainty hold.
+The next job therefore captures the restored runtime URL and model root. A preparation error or unconfirmed
+publication leaves the previous routing intact; observe the record again before an explicit retry.
+Ordinary switch completion uses the same prepare-before-publication ordering. This restoration changes
+only local routing and catalogue selection; it performs no runtime lifecycle action. A restart after
+inspection also follows the saved selection.
 Resolution is refused while that worker is active. A new manager has a different instance ID,
 even in the same PID, so it cannot use that local-worker exception for another manager's record. A live or
 unverified recorded foreign owner is never overridden by the checkboxes. Unknown owner formats or unreadable

@@ -14,7 +14,10 @@ async def exercise_backend_resolution(page, checks, posts):
 
     async def resolve(route):
         writes.append({'path':route.request.url.rsplit('/',1)[-1],'body':route.request.post_data_json})
-        observed['operation']={'id':'legacy-switch','status':'interrupted','message':'Saved switch resolved after inspection.'}
+        if observed['operation']['status']=='completed':
+            observed['active']='hidream'
+            for profile in observed['profiles']:profile['active']=profile['id']=='hidream'
+        else:observed['operation']={'id':'legacy-switch','status':'interrupted','message':'Saved switch resolved after inspection.'}
         observed['shared_state']={'sha256':'d'*64,'blocker':None,'resolvable':False}
         await route.fulfill(json=observed)
 
@@ -69,6 +72,25 @@ async def exercise_backend_resolution(page, checks, posts):
             assert 'Switching to' not in await page.locator('#envSummary').inner_text()
             assert len(writes)==start+1
             checks.append(f'{width}px legacy resolution requires both checks for the exact record; replacement resets checks and moves disabled-button focus to status while preserving checkbox focus; live foreign ownership stays blocked; only one explicit resolution POST occurs')
+            observed=copy.deepcopy(base)
+            observed['operation']={'id':'completed-switch','status':'completed','target':'hidream','message':'Completed switch saved; publication acknowledgement was lost.'}
+            observed['profiles'].append({'id':'hidream','name':'HiDream O1 · isolated','active':False,'installed':True})
+            observed['shared_state']={'sha256':'e'*64,'blocker':'Completion publication is unconfirmed; inspect the saved switch.','resolvable':True}
+            await page.evaluate('refreshBackends()')
+            disclosure=await page.locator('#backendResolution').inner_text()
+            assert 'restores the saved environment for subsequent work' in disclosure
+            assert 'Other resolutions keep the current environment' in disclosure
+            assert 'Finish or reconcile active work first' in disclosure
+            assert await page.locator('#activeBackend').inner_text()=='Main library'
+            await page.check('#backendStudiosClosed');await page.check('#backendRuntimesInspected')
+            await page.click('#resolveBackendSwitch')
+            await page.wait_for_function('!backendResolving && backendActive==="hidream"')
+            assert await page.locator('#activeBackend').inner_text()=='HiDream O1 · isolated'
+            assert 'Active: HiDream O1' in await page.locator('#envSummary').inner_text()
+            assert not await page.locator('#backendResolution').is_visible()
+            assert writes[start+1:]==[{'path':'resolve-switch','body':{'expected_sha256':'e'*64,
+                   'acknowledge_studios_closed':True,'acknowledge_runtimes_inspected':True}}]
+            checks.append(f'{width}px completed resolution discloses saved-environment restoration, then displays that environment after its single explicit acknowledgement without switching or generating')
         assert {row['path'] for row in posts[before:]}<={'/api/estimate','/api/references/check'}, 'The native resolution fixture never reaches a runtime action or generation route'
     finally:
         await page.unroute('**/api/backends',read)

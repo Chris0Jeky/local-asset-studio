@@ -441,9 +441,10 @@ class SharedBackendStateTests(unittest.TestCase):
         self.assertEqual(resolved['status'],'interrupted');self.assertFalse(result['shared_state']['blocker'])
         self.assertEqual(self.launch.call_count,1,'resolution performs no runtime action')
 
-    def uncertain_terminal_publication(self,status,loss='reply'):
+    def uncertain_terminal_publication(self,status,loss='reply',operation_target=None):
         manager=self.make_manager()
         with self.inert(manager):manager.switch('hidream')
+        if operation_target is not None:manager.operation['target']=operation_target
         replace=backend_state.file_replace.replace;read=manager._state.read;pending_read=[]
         def publish(source,target):
             candidate=json.loads(Path(source).read_text());replace(source,target)
@@ -471,14 +472,97 @@ class SharedBackendStateTests(unittest.TestCase):
                 with self.subTest(status=status,loss=loss):
                     manager=self.uncertain_terminal_publication(status,loss)
                     saved=json.loads(self.path.read_text());active=manager.active
+                    if status=='failed':manager.studio.jobs['other']={'status':'queued'}
                     with self.inert(manager):self.assertTrue(manager.snapshot()['shared_state']['resolvable'])
                     with self.inert(manager):result=manager.resolve_switch_record(self.acknowledgement())
                     landed=json.loads(self.path.read_text())
-                    self.assertEqual(landed['active'],saved['active']);self.assertEqual(manager.active,active)
+                    self.assertEqual(landed['active'],saved['active']);self.assertEqual(manager.active,saved['active'] if status=='completed' else active)
                     for key,value in saved['operation'].items():self.assertEqual(landed['operation'][key],value,key)
                     self.assertTrue(landed['operation']['resolution']['acknowledge_runtimes_inspected'])
                     self.assertIsNone(manager.state_issue);self.assertFalse(result['shared_state']['resolvable'])
                     self.assertFalse(result['shared_state']['blocker'])
+        self.launch.assert_not_called()
+
+    def test_completed_resolution_aligns_the_runtime_captured_by_the_next_job(self):
+        from server import Studio
+        manager=self.uncertain_terminal_publication('completed');studio=manager.studio;target=manager.profiles['hidream']
+        self.assertEqual(manager.active,'primary');studio._schema={'old':'schema'};studio._schema_at=99
+        with self.inert(manager):manager.resolve_switch_record(self.acknowledgement())
+        studio.runs=self.root/'runs';studio.runs.mkdir()
+        studio.prepare=Mock(return_value=({'id':'routing-fixture'}, {}, self.root/'workflow.json', {}, 1))
+        studio.host_commit_preflight=Mock(return_value=None);studio._save=Mock();studio.public=lambda job:job
+        studio._create_job=lambda payload,enqueue,job_id:Studio._create_job(studio,payload,enqueue,job_id)
+        job=Studio.create_job(studio,{'preset_id':'routing-fixture'},enqueue=False)
+        self.assertEqual(job['comfy_url'],target['url'])
+        self.assertEqual(job['comfy_root'],target['root'])
+        self.assertEqual(manager.active,'hidream');self.assertEqual(studio.library.backend_id,'hidream')
+        self.assertEqual(studio.library.models,Path(target['root'])/'models')
+        self.assertIsNone(studio._schema);self.assertEqual(studio._schema_at,0)
+        self.launch.assert_not_called()
+
+    def test_completed_alignment_waits_for_local_work_and_can_be_retried_after_it_settles(self):
+        for work in ('queued','running','reference','production'):
+            with self.subTest(work=work):
+                self.path.unlink(missing_ok=True);manager=self.uncertain_terminal_publication('completed');studio=manager.studio
+                if work in ('queued','running'):studio.jobs['other']={'status':work}
+                elif work=='reference':studio.reference_jobs=SimpleNamespace(busy=lambda:True)
+                else:studio.production=SimpleNamespace(list=lambda:[{'state':{'status':'running'}}])
+                raw=self.path.read_bytes()
+                with self.inert(manager),self.assertRaisesRegex(ValueError,'work|reconcile'):
+                    manager.resolve_switch_record(self.acknowledgement())
+                self.assertEqual(self.path.read_bytes(),raw);self.assertEqual(manager.active,'primary')
+                with self.inert(manager):self.assertTrue(manager.snapshot()['shared_state']['resolvable'])
+                studio.jobs.clear();studio.reference_jobs=None;studio.production=SimpleNamespace(list=lambda:[])
+                with self.inert(manager):manager.resolve_switch_record(self.acknowledgement())
+                self.assertEqual(manager.active,'hidream');self.assertIsNone(manager.state_issue)
+        self.launch.assert_not_called()
+
+    def test_completed_alignment_constructs_the_library_before_publishing_or_changing_routing(self):
+        manager=self.uncertain_terminal_publication('completed');studio=manager.studio;raw=self.path.read_bytes()
+        before=(manager.active,studio.comfy_url,studio.comfy_root,studio.library,studio._schema,studio._schema_at)
+        with self.inert(manager),patch('model_library.ModelLibrary',side_effect=OSError('inert library preparation failure')):
+            with self.assertRaisesRegex(OSError,'library preparation'):manager.resolve_switch_record(self.acknowledgement())
+        self.assertEqual(self.path.read_bytes(),raw)
+        self.assertEqual((manager.active,studio.comfy_url,studio.comfy_root,studio.library,studio._schema,studio._schema_at),before)
+        with self.inert(manager):self.assertTrue(manager.snapshot()['shared_state']['resolvable'])
+        with self.inert(manager):manager.resolve_switch_record(self.acknowledgement())
+        self.assertEqual(manager.active,'hidream');self.launch.assert_not_called()
+
+    def test_normal_completion_constructs_the_library_before_publishing_the_new_selection(self):
+        manager=self.manager;studio=manager.studio
+        before=(manager.active,studio.comfy_url,studio.comfy_root,studio.library,studio._schema,studio._schema_at)
+        process=SimpleNamespace(pid=902,create_time=lambda:99)
+        with self.inert(manager):manager.switch('hidream')
+        with self.inert(manager),patch.object(manager,'process',side_effect=lambda profile:process if profile['id']=='hidream' else None), \
+             patch('model_library.ModelLibrary',side_effect=OSError('inert library preparation failure')):
+            manager._switch('hidream')
+        saved=json.loads(self.path.read_text())
+        self.assertEqual(saved['active'],'primary')
+        self.assertEqual(saved['operation']['status'],'failed')
+        self.assertIn('library preparation',saved['operation']['message'])
+        self.assertEqual((manager.active,studio.comfy_url,studio.comfy_root,studio.library,studio._schema,studio._schema_at),before)
+        self.assertFalse(manager.busy);self.launch.assert_not_called()
+
+    def test_completed_alignment_requires_a_known_matching_saved_target(self):
+        for mismatch in ('unknown-profile','different-target'):
+            with self.subTest(mismatch=mismatch):
+                self.path.unlink(missing_ok=True)
+                manager=self.uncertain_terminal_publication('completed',operation_target='primary' if mismatch=='different-target' else None)
+                if mismatch=='unknown-profile':del manager.profiles['hidream']
+                raw=self.path.read_bytes();studio=manager.studio
+                before=(manager.active,studio.comfy_url,studio.comfy_root,studio.library)
+                with self.inert(manager),self.assertRaisesRegex(ValueError,'known saved environment'):
+                    manager.resolve_switch_record(self.acknowledgement())
+                self.assertEqual(self.path.read_bytes(),raw);self.assertIsNotNone(manager.state_issue)
+                self.assertEqual((manager.active,studio.comfy_url,studio.comfy_root,studio.library),before)
+        self.launch.assert_not_called()
+
+    def test_legacy_resolution_remains_state_only_while_local_work_exists(self):
+        saved=self.record();saved['operation'].pop('owner');self.path.write_text(json.dumps(saved))
+        manager=self.make_manager();manager.studio.jobs['other']={'status':'queued'}
+        with self.inert(manager):manager.resolve_switch_record(self.acknowledgement())
+        self.assertEqual(manager.active,'primary');self.assertEqual(manager.studio.library.backend_id,'primary')
+        self.assertEqual(json.loads(self.path.read_text())['operation']['status'],'interrupted')
         self.launch.assert_not_called()
 
     def test_terminal_resolution_refuses_changed_records_and_an_ordinary_error_hold(self):
@@ -510,11 +594,13 @@ class SharedBackendStateTests(unittest.TestCase):
 
     def test_lost_terminal_resolution_reply_requires_a_fresh_explicit_acknowledgement(self):
         manager=self.uncertain_terminal_publication('completed');command=self.acknowledgement()
+        studio=manager.studio;before=(manager.active,studio.comfy_url,studio.comfy_root,studio.library)
         original=json.loads(self.path.read_text())['operation'];replace=backend_state.file_replace.replace
         def lost_reply(source,target):
             replace(source,target);raise OSError('inert lost resolution acknowledgement')
         with self.inert(manager),patch.object(backend_state.file_replace,'replace',side_effect=lost_reply):
             with self.assertRaises(backend_state.StateUnconfirmed):manager.resolve_switch_record(command)
+        self.assertEqual((manager.active,studio.comfy_url,studio.comfy_root,studio.library),before)
         with self.inert(manager):self.assertTrue(manager.snapshot()['shared_state']['resolvable'])
         raw=self.path.read_bytes()
         with self.assertRaises(backend_state.StateConflict):manager.resolve_switch_record(command)
@@ -522,6 +608,7 @@ class SharedBackendStateTests(unittest.TestCase):
         with self.inert(manager):manager.resolve_switch_record(self.acknowledgement())
         landed=json.loads(self.path.read_text())['operation']
         for key,value in original.items():self.assertEqual(landed[key],value,key)
+        self.assertEqual(manager.active,'hidream');self.assertEqual(studio.comfy_url,manager.profiles['hidream']['url'])
         self.assertIsNone(manager.state_issue);self.launch.assert_not_called()
 
     def test_lost_own_running_resolution_reply_can_settle_its_exact_interrupted_record(self):
@@ -534,12 +621,14 @@ class SharedBackendStateTests(unittest.TestCase):
             with self.assertRaises(backend_state.StateUnconfirmed):manager.resolve_switch_record(self.acknowledgement())
         saved=json.loads(self.path.read_text());self.assertEqual(saved['operation']['status'],'interrupted')
         with self.inert(manager):self.assertTrue(manager.snapshot()['shared_state']['resolvable'])
+        manager.studio.jobs['other']={'status':'queued'}
         with self.inert(manager):manager.resolve_switch_record(self.acknowledgement())
         landed=json.loads(self.path.read_text())
         self.assertEqual(landed['active'],saved['active'])
         for key in ('status','message','owner','started_at','inspection_required'):
             self.assertEqual(landed['operation'][key],saved['operation'][key])
         self.assertIsNone(manager.state_issue);self.thread.assert_not_called();self.launch.assert_not_called()
+        self.assertEqual(manager.active,'primary');self.assertEqual(manager.studio.library.backend_id,'primary')
 
 
 if __name__ == '__main__': unittest.main()
