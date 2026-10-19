@@ -378,7 +378,7 @@
       +'<textarea id="makeScene" rows="3" maxlength="1000" placeholder="'+escape(example)+'"></textarea>'
       +'<div class="make-row">'+(example?'<button type="button" id="makeUseExample">Use the example</button>':'')+'<small>Plain words are fine. The look adds its own style and quality words.</small></div>'
       +options.map(o=>'<label class="make-check"><input type="checkbox" data-make-option="'+escape(o.id)+'"'+(o.default?' checked':'')+'> '+escape(o.label)+'</label>').join('')
-      +'<details class="make-tune" id="makeTune"'+(state.tuneOpen?' open':'')+'><summary>Tune this look <small id="makeTuneSum"></small></summary><div id="makeTuneBody"></div></details>'
+      +'<details class="make-tune" id="makeTune"'+(state.tuneOpen?' open':'')+'><summary>Model, LoRAs and settings <small id="makeTuneSum"></small></summary><div id="makeTuneBody"></div></details>'
       +'<details class="make-tune" id="makeSweep"'+(sweepOf(look).open?' open':'')+'><summary>Compare one setting <small id="makeSweepSum"></small></summary><div id="makeSweepBody"></div></details>'
       +'</div><div class="make-compose-side">'
       +'<div class="make-pair"><label>Shape<select id="makeShape">'+Object.entries(SHAPES).map(([k,v])=>'<option value="'+k+'"'+(k===shapeDefault(look)?' selected':'')+'>'+v+(k==='design'?' · '+escape(look.body.controls.width||'')+'×'+escape(look.body.controls.height||''):'')+'</option>').join('')+'</select></label>'
