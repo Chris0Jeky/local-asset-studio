@@ -5,6 +5,54 @@ from workshop_entry_points import workshop_html, script
 
 
 class RunDecisions(entry.EntryPoints):
+    def test_recent_run_long_prompt_expands_and_refusal_stays_clamped(self):
+        # Exercise the real card renderer, click delegate and Vary markup offline.
+        static = entry.ROOT / 'app/static'
+        app = (static / 'app.js').read_text(encoding='utf-8')
+        workbench = (static / 'studio-workbench.js').read_text(encoding='utf-8')
+        renderer = app[app.index('function mediaCard('):app.index('// Make seamless (#1220):', app.index('function mediaCard('))]
+        delegate = app[app.index("$('#gallery').onclick="):].split('\n};', 1)[0] + '\n};'
+        vary = workbench[workbench.index('  function varyMarkup('):workbench.index('  function varyPlanFor(')]
+        self.page.route('**/*', lambda route: route.abort())
+        self.page.set_content('<style>' + (static / 'workshop.css').read_text(encoding='utf-8') + '</style><div id="gallery" style="width:280px"></div>')
+        self.page.add_script_tag(content=app.splitlines()[0] + '\n' + app.splitlines()[1])
+        self.page.add_script_tag(content=(static / 'continuation-core.js').read_text(encoding='utf-8'))
+        self.page.add_script_tag(content='const escape=esc;function tileNote(){return "";}function parallaxNote(){return "";}function message(text){throw Error(text);}')
+        self.page.add_script_tag(content=renderer + '\n' + vary + '\n' + delegate)
+        prompt = 'An adult ranger in a layered cloak studies a brass compass beside the forest river. ' * 10 + '<quoted "wording">'
+        reason = 'No close-variation route is recorded for Klein pose, which starts from other pictures. Use Prepare new seed on its run, or Continue with this.'
+        self.page.evaluate("""({prompt,reason})=>{
+          document.querySelector('#gallery').innerHTML=mediaCard({id:'long-prompt',preset_name:'Klein pose',controls:{positive:prompt,seed:42}},0,{})+
+            varyMarkup({kind:'none',reason},'','run-why-test',true);
+        }""", {'prompt': prompt, 'reason': reason})
+        for width in (280, 640):
+            self.page.locator('#gallery').evaluate('(n,width)=>n.style.width=width+"px"', width)
+            paragraph = self.page.locator('.run-prompt')
+            toggle = self.page.locator('.run-prompt-more')
+            self.assertEqual(paragraph.text_content(), prompt)
+            self.assertEqual(paragraph.get_attribute('title'), prompt)
+            self.assertEqual(paragraph.evaluate('n=>getComputedStyle(n).webkitLineClamp'), '2')
+            self.assertLess(paragraph.evaluate('n=>n.clientHeight'), paragraph.evaluate('n=>n.scrollHeight'))
+            self.assertEqual(toggle.get_attribute('aria-expanded'), 'false')
+            collapsed = paragraph.bounding_box()['height']
+            toggle.click()
+            self.assertEqual(toggle.get_attribute('aria-expanded'), 'true')
+            self.assertEqual(toggle.inner_text(), 'Hide prompt')
+            self.assertNotEqual(paragraph.evaluate('n=>getComputedStyle(n).webkitLineClamp'), '2')
+            self.assertGreater(paragraph.bounding_box()['height'], collapsed)
+            toggle.click()
+            self.assertEqual(toggle.inner_text(), 'Show prompt')
+            self.assertEqual(toggle.get_attribute('aria-expanded'), 'false')
+            self.assertEqual(paragraph.evaluate('n=>getComputedStyle(n).webkitLineClamp'), '2')
+        why = self.page.locator('.run-why')
+        self.assertEqual(why.get_attribute('title'), reason)
+        self.assertEqual(why.text_content(), reason)
+        self.assertEqual(why.evaluate('n=>getComputedStyle(n).webkitLineClamp'), '2')
+        self.assertTrue(self.page.get_by_role('button', name='Vary', exact=True).is_disabled())
+        self.assertIn('Seed 42', self.page.locator('.imageCard').inner_text())
+        self.assertFalse(self.page.locator('.imageCard small').evaluate('n=>!!n.closest(".run-prompt")'))
+        self.assertNotIn('run-why', self.page.evaluate("varyMarkup({kind:'none',reason:'Library hint'},'','library-why')"))
+
     def test_dock_semantics_and_short_typing_status(self):
         self.load_workshop()
         dock = self.page.locator('.wk-run-dock')

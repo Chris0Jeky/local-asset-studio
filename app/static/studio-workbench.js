@@ -930,8 +930,8 @@
   // source's stack (WAI), copies the picture's recorded LoRA slots and sampling settings; a recipe with no route
   // reloads its own recipe with new seeds and records this picture as the parent. Generate stays the owner's press.
   let varyBusy=false;
-  function varyMarkup(plan,attrs,why){
-    const hint='<small id="'+why+'">'+escape(StudioContinuation.varyHint(plan))+'</small>';
+  function varyMarkup(plan,attrs,why,recent=false){
+    const reason=escape(StudioContinuation.varyHint(plan)),hint='<small id="'+why+'"'+(recent&&plan.kind==='none'?' class="run-why" title="'+reason+'"':'')+'>'+reason+'</small>';
     if(plan.kind==='none')return '<button type="button" disabled aria-describedby="'+why+'">Vary</button>'+hint;
     if(plan.kind==='reseed')return '<button type="button" data-ux-vary="reseed" '+attrs+' aria-describedby="'+why+'">Vary · new seeds, same recipe</button>'+hint;
     return '<button type="button" data-ux-vary="subtle" '+attrs+' aria-describedby="'+why+'">Vary subtle</button><button type="button" data-ux-vary="strong" '+attrs+' aria-describedby="'+why+'">Vary strong</button>'+hint;
@@ -979,7 +979,7 @@
       const anchor=card.querySelector('.reference-output'),actions=card.querySelector('.card-actions');if(!anchor||!actions)continue;
       const job=jobs.find(j=>j.id===anchor.dataset.job),index=Number(anchor.dataset.index),output=job?.outputs?.[index];if(!job||!output)continue;
       const plan=varyPlanFor(job.preset_id,job.id,output.asset_id,output.media_type);
-      placeVary(card,actions,varyMarkup(plan,'data-asset="'+escape(output.asset_id||'')+'" data-preset="'+escape(job.preset_id||'')+'" data-job="'+escape(job.id)+'"','uxVaryWhy-'+escape(job.id)+'-'+index));
+      placeVary(card,actions,varyMarkup(plan,'data-asset="'+escape(output.asset_id||'')+'" data-preset="'+escape(job.preset_id||'')+'" data-job="'+escape(job.id)+'"','uxVaryWhy-'+escape(job.id)+'-'+index,true));
     }
   }
   function syncOpenAssetVary(){
