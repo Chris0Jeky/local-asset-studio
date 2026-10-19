@@ -49,9 +49,12 @@ class RuntimeRecovery:
             try:
                 saved = recovery_state.read(self.path)
                 if saved is not None:
+                    # Preserve the original evidence before even historical health
+                    # normalization can replace a status-only legacy signal.
+                    legacy = recovery_state.legacy_attempt(saved)
+                    if legacy is not None: saved['legacy_attempt'] = legacy
                     self.state.update({k: v for k, v in saved.items() if k != "events"})
-                    if (saved.get('last_attempt') or saved.get('launch_pending') or saved.get('startup_pid')
-                            or saved['attempts'] or saved['status'] in ('launching', 'startup')):
+                    if saved.get('last_attempt') or saved.get('legacy_attempt'):
                         self._hold_reason = ('Saved recovery attempt evidence is historical. Inspect the configured runtime and '
                                              'runtime-recovery.log, then use Reset recovery; a current healthy observation also clears this hold.')
             except (OSError, ValueError, RecursionError) as exc:
@@ -88,6 +91,8 @@ class RuntimeRecovery:
         if self._retained_state_issue: raise ValueError(self._retained_state_issue)
         now = time.time()
         candidate = copy.deepcopy(self.state)
+        legacy = recovery_state.legacy_attempt(candidate)
+        if legacy is not None: candidate['legacy_attempt'] = legacy
         if self._pending_attempt is not None:
             candidate['last_attempt'] = copy.deepcopy(self._pending_attempt)
             if not _release: candidate['attempts'] = max(candidate['attempts'], self._pending_attempt['number'])
@@ -104,6 +109,7 @@ class RuntimeRecovery:
         # The state file carries freshness; the log records changes, not every identical poll.
         event = {"status": status, "message": message, "attempts": candidate['attempts'], **extra}
         if 'last_attempt' in candidate: event['last_attempt'] = copy.deepcopy(candidate['last_attempt'])
+        if 'legacy_attempt' in candidate: event['legacy_attempt'] = copy.deepcopy(candidate['legacy_attempt'])
         if not _force_log and event == getattr(self, "_last_event", None) and not self._log_error: return
         try:
             line = json.dumps({"at": now, **event}, sort_keys=True, allow_nan=False) + "\n"
@@ -119,6 +125,8 @@ class RuntimeRecovery:
     def reset(self):
         """An explicit same-origin retry only clears the breaker; it cannot switch families."""
         with self.lock:
+            if not self.enabled:
+                raise ValueError('Recovery is disabled; Reset recovery is unavailable and the saved record was preserved.')
             self._record("idle", "Recovery breaker reset. The configured monitor will re-observe the selected backend.",
                          _clear=('breaker_until', 'startup_pid', 'startup_at', 'launch_pending'),
                          _release=True, _force_log=True, attempts=0)

@@ -17,6 +17,7 @@ import file_replace
 
 MAX_BYTES = 128 * 1024
 DIRECTORY_SYNC_SUPPORTED = os.name != 'nt'
+_LEGACY_FIELDS = ('status', 'attempts', 'startup_pid', 'startup_at', 'breaker_until', 'launch_pending', 'updated_at')
 
 
 def _bytes(value):
@@ -45,6 +46,27 @@ def _finite(value):
     except OverflowError: return False
 
 
+def _validate_observation(value):
+    if (not isinstance(value.get('status'), str) or not value['status']
+            or type(value.get('attempts')) is not int or not 0 <= value['attempts'] <= 10):
+        raise ValueError('Recovery state has an invalid status or attempt count')
+    for key in ('updated_at', 'startup_at', 'breaker_until'):
+        if key in value and not _finite(value[key]): raise ValueError('Recovery state has an invalid ' + key)
+    if 'startup_pid' in value and (type(value['startup_pid']) is not int or not 0 < value['startup_pid'] <= 2**32 - 1):
+        raise ValueError('Recovery state has an invalid startup PID')
+    if 'launch_pending' in value and type(value['launch_pending']) is not bool:
+        raise ValueError('Recovery state has an invalid launch intent')
+
+
+def legacy_attempt(value):
+    """Retain only observed old-format fields; never invent an attempt identity."""
+    if 'last_attempt' in value or 'legacy_attempt' in value: return None
+    if (value.get('launch_pending') or value.get('startup_pid') or value.get('attempts')
+            or value.get('status') in ('launching', 'startup')):
+        return {'version': 1, 'evidence': {key: value[key] for key in _LEGACY_FIELDS if key in value}}
+    return None
+
+
 def read(path):
     """Only a missing record is first use; invalid saved allowance stays blocked."""
     path = Path(path)
@@ -56,15 +78,7 @@ def read(path):
     if not 1 <= len(raw) <= MAX_BYTES: raise ValueError('Recovery state has an invalid size')
     value = json.loads(raw, object_pairs_hook=_object)
     _bytes(value)  # Reject non-finite values, including overflowing JSON exponents.
-    if (not isinstance(value.get('status'), str) or not value['status']
-            or type(value.get('attempts')) is not int or not 0 <= value['attempts'] <= 10):
-        raise ValueError('Recovery state has an invalid status or attempt count')
-    for key in ('updated_at', 'startup_at', 'breaker_until'):
-        if key in value and not _finite(value[key]): raise ValueError('Recovery state has an invalid ' + key)
-    if 'startup_pid' in value and (type(value['startup_pid']) is not int or not 0 < value['startup_pid'] <= 2**32 - 1):
-        raise ValueError('Recovery state has an invalid startup PID')
-    if 'launch_pending' in value and type(value['launch_pending']) is not bool:
-        raise ValueError('Recovery state has an invalid launch intent')
+    _validate_observation(value)
     if 'last_attempt' in value:
         attempt = value['last_attempt']
         if (not isinstance(attempt, dict) or type(attempt.get('version')) is not int or attempt['version'] != 1
@@ -75,6 +89,15 @@ def read(path):
                 or not _finite(attempt.get('at'))
                 or ('pid' in attempt and (type(attempt['pid']) is not int or not 0 < attempt['pid'] <= 2**32 - 1))):
             raise ValueError('Recovery state has invalid retained attempt evidence')
+    if 'legacy_attempt' in value:
+        attempt = value['legacy_attempt']
+        if (not isinstance(attempt, dict) or set(attempt) != {'version', 'evidence'}
+                or type(attempt.get('version')) is not int or attempt['version'] != 1
+                or not isinstance(attempt['evidence'], dict) or set(attempt['evidence']) - set(_LEGACY_FIELDS)):
+            raise ValueError('Recovery state has invalid legacy attempt evidence')
+        _validate_observation(attempt['evidence'])
+        if legacy_attempt(attempt['evidence']) is None:
+            raise ValueError('Recovery state has no recognized legacy attempt evidence')
     return value
 
 

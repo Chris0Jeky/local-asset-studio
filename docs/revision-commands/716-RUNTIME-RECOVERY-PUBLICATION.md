@@ -38,7 +38,8 @@ open for those remaining domains and stronger Windows directory durability.
    attempts. Later reconnecting, leased, other-backend or monitor-error records
    preserve the pending identity, charged allowance and observed PID. A fresh
    healthy observation or explicit Reset recovery must successfully publish before
-   this process releases its hold. Neither operation discards `last_attempt`.
+   this process releases its hold. Neither operation discards `last_attempt` or
+   retained legacy attempt evidence.
 
 The state publisher encodes finite JSON within **128 KiB**, creates a same-directory
 temporary file exclusively, checks the complete write, flushes and synchronizes
@@ -64,7 +65,7 @@ failure does not mask an earlier write, flush or synchronization failure.
 | Launcher throws after callback or pidfile work | Charged pending intent | The snapshot retains the observed PID; the next successful diagnostic publication retains it on disk. No second automatic launch. |
 | Terminal record fails before replacement | Charged pending intent | Retain the observed PID and uncertainty. No second automatic launch. |
 | Terminal replacement is visible before an error | Charged pending intent | Readable startup bytes do not acknowledge the operation. Restart treats the retained attempt as historical. |
-| Reset or fresh-health publication fails | Previous committed record | No reset acknowledgment or allowance release. Visible cleared fields still retain the last attempt for conservative startup. |
+| Reset or fresh-health publication fails | Previous committed record | No reset acknowledgment or allowance release. Visible cleared fields still retain the last attempt or original legacy evidence for conservative startup. |
 | Log append fails after state publication | Newly committed record | Surface `log_error`; do not undo the state or turn a diagnostic failure into another runtime launch. |
 
 ## Startup and inspection
@@ -78,21 +79,45 @@ Reset refuses to overwrite invalid retained bytes. The remedy names the record:
 stop Studio, retain copies of `runtime-recovery.json` and `runtime-recovery.log`,
 inspect the runtime, then repair or move the invalid record before restarting.
 
-A new enabled Studio treats any saved `last_attempt`, pending intent, startup PID,
-nonzero attempt count, or launching/startup status as historical evidence requiring
-a hold. Even a saved healthy/reset record with a last attempt cannot prove to this
-process that its previous writer completed every required barrier. Saved health
-first appears as checking; a current unsuccessful probe exposes the held breaker.
-A current healthy observation or explicit Reset recovery must publish successfully
-to release that hold. Both retain the last attempt's identity and observed PID.
+A new enabled Studio treats any saved `last_attempt`, `legacy_attempt`, pending
+intent, startup PID, nonzero attempt count, or launching/startup status as
+historical evidence requiring a hold. Even a saved healthy/reset record with
+attempt history cannot prove to this process that its previous writer completed
+every required barrier. Saved health first appears as checking; a current
+unsuccessful probe exposes the held breaker. A current healthy observation or
+explicit Reset recovery must publish successfully to release that hold. Both
+retain the last attempt's identity and observed PID.
+
+Old-format records without `last_attempt` preserve their recognized original
+fields in `legacy_attempt: {version: 1, evidence: {...}}`. The evidence contains
+the saved status and attempt count plus any recorded startup PID, startup time,
+breaker deadline, pending flag and update time. No UUID, backend, PID or attempt
+number is invented. The captured fields precede startup health normalization or
+any observational status update. Every later candidate, including reset and
+healthy release, retains them; they are validated on the next read and recognized
+as historical evidence even if the current status is healthy or idle with zero
+attempts. A visible reset/health replacement followed by a parent-barrier or
+post-replacement error therefore cannot replenish legacy allowance on restart.
+Constructing this historical marker in memory is no acknowledgment that its
+publication or any earlier writer's barriers completed.
 
 **Compatibility cost:** restarting Studio while a previously recovery-started
 runtime remains offline now requires inspection and Reset recovery before another
 automatic attempt. Restart while the selected runtime is healthy clears the hold
 through a fresh successfully published observation. This deliberately avoids
 reconstructing launch authority from readable terminal bytes. Legacy records with
-no attempt evidence retain their existing checking/observation behavior, and a
-disabled monitor still does not restore enabled status or autostart.
+no attempt evidence retain their existing checking/observation behavior. A legacy
+count-only, pending-only or launching/startup-status-only record incurs the same
+restart hold; its preserved fields express that uncertainty without claiming a
+known launched process.
+
+A disabled monitor still does not restore saved enabled status or startup identity
+and does not autostart. Its public Reset method refuses before reading or writing
+the state or log, preserving valid, malformed and unreadable records alike.
+`POST /api/runtime-recovery/retry` returns the existing **400** error response with
+the disabled message; it cannot bypass this refusal through the HTTP route.
+Enabled Reset still returns **202** only after successful publication, and the
+existing same-origin guard still applies.
 
 Reset only clears this recovery owner's allowance/hold. It does not adopt a saved
 backend selection, resolve another Studio's switch, stop a process, release a GPU
@@ -102,7 +127,8 @@ selection still has its existing independent refusal and explicit remedy.
 ## Diagnostic log and platform limits
 
 State commits before `.runtime/runtime-recovery.log` is appended. Log entries
-include the charged attempt number and latest attempt identity when present.
+include the charged attempt number, latest attempt identity and original legacy
+evidence when present.
 Deduplication advances only after the complete line is written, flushed and closed.
 A log failure is reported in `snapshot().log_error`, and a later observation may
 try its diagnostic append again. A partially written line or duplicate after an
@@ -133,6 +159,18 @@ The focused writer extension separately demonstrated seven failures for incomple
 writes, owned-temp cleanup and primary-error preservation before those fixes.
 The later log-identity and temporary-close regressions each demonstrated one
 assertion failure before their respective fixes.
+
+Independent review identified two more causal transitions: legacy release could
+erase every recognized historical field before an unconfirmed replacement, and
+disabled Reset could overwrite saved bytes that its constructor had not read.
+Seven new owner methods on the reviewed candidate produced **52 assertion
+failures across 30 tests**, with zero errors; the legacy-reader schema regression
+produced **13 assertion failures in one test**, with zero errors. They cover
+successful legacy reset/health, native parent and post-replacement faults,
+status-only observations, disabled valid/malformed/unreadable/missing records,
+and the real retry route with an in-memory transport and its same-origin guard.
+The corrected focused matrix contains **149 tests**: 54 recovery, 14 writer,
+16 GPU lease, 47 backend safety, 12 startup interlock and 6 file replacement.
 
 The dedicated `runtime-recovery-publication.yml` workflow checks out the actual PR
 head on Windows and Ubuntu, then runs the recovery, writer, GPU lease, backend

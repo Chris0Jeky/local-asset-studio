@@ -1,6 +1,7 @@
 """Causal recovery publication tests; all backends and launches are inert."""
 from contextlib import contextmanager
 import copy
+import io
 import json
 import os
 from pathlib import Path
@@ -13,11 +14,20 @@ from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'app'))
 import runtime_recovery
-from server import Studio as RealStudio
+from server import Handler, PORT, Studio as RealStudio
 from test_runtime_recovery import Studio
 
 
 class RuntimeRecoveryPublicationTests(unittest.TestCase):
+    LEGACY_RECORDS = (
+        {'status': 'startup', 'attempts': 1, 'startup_pid': 9001, 'startup_at': 10, 'updated_at': 12, 'breaker_until': 20},
+        {'status': 'breaker-open', 'attempts': 2},
+        {'status': 'idle', 'attempts': 0, 'launch_pending': True},
+        {'status': 'launching', 'attempts': 0},
+        {'status': 'startup', 'attempts': 0},
+        {'status': 'healthy', 'attempts': 0, 'startup_pid': 9001},
+    )
+
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
@@ -40,6 +50,27 @@ class RuntimeRecoveryPublicationTests(unittest.TestCase):
 
     def _bytes(self): return self.recovery.path.read_bytes()
     def _saved(self): return json.loads(self._bytes())
+
+    def _retained(self, value, *, enabled=True):
+        root = Path(tempfile.mkdtemp(dir=self.directory.name))
+        path = root / '.runtime' / 'runtime-recovery.json'
+        if value is not None:
+            path.parent.mkdir()
+            path.write_bytes(value if isinstance(value, bytes) else json.dumps(value).encode())
+        return runtime_recovery.RuntimeRecovery(Studio(root, enabled=enabled))
+
+    @staticmethod
+    def _retry_route(recovery, *, origin=None):
+        # Use the real route and origin guard; only HTTP transport is in memory.
+        handler = Handler.__new__(Handler)
+        handler.studio = SimpleNamespace(runtime_recovery=recovery)
+        handler.path = '/api/runtime-recovery/retry'
+        handler.headers = {'Host': f'127.0.0.1:{PORT}', 'Origin': origin or f'http://127.0.0.1:{PORT}', 'Content-Length': '0'}
+        handler.rfile = io.BytesIO()
+        sent = []
+        handler._json = lambda status, body: sent.append((status, body))
+        handler.do_POST()
+        return sent[0]
 
     def _returns(self, operation, *args, **kwargs):
         try: return operation(*args, **kwargs)
@@ -352,6 +383,138 @@ class RuntimeRecoveryPublicationTests(unittest.TestCase):
         restarted.tick()
         self.assertTrue(restarted.snapshot()['inspection_required'])
         self.assertEqual(self.studio.backends.launches, 1)
+
+    def test_legacy_evidence_survives_successful_reset_health_and_later_observations(self):
+        for source in self.LEGACY_RECORDS:
+            for operation in ('reset', 'health'):
+                with self.subTest(source=source, operation=operation):
+                    r = self._retained(source)
+                    expected = {'version': 1, 'evidence': source}
+                    self.assertTrue(r.snapshot()['inspection_required'])
+                    if operation == 'reset': result = r.reset()
+                    else:
+                        r.studio.backends.online = True
+                        result = r.tick()
+                    self.assertFalse(result.get('inspection_required', False))
+                    self.assertEqual(result['attempts'], 0)
+                    self.assertEqual(result.get('legacy_attempt'), expected)
+                    self.assertNotIn('last_attempt', result, 'Legacy evidence cannot invent an attested attempt identity')
+                    for status in ('reconnecting', 'leased', 'other-backend-active', 'blocked'):
+                        r._record(status, 'Observation after a completed release.')
+                        self.assertEqual(json.loads(r.path.read_bytes())['legacy_attempt'], expected)
+                    r.reset()
+                    r.studio.backends.online = True
+                    self.assertEqual(r.tick()['legacy_attempt'], expected)
+                    events = [json.loads(line) for line in r.log_path.read_text(encoding='utf-8').splitlines()]
+                    self.assertEqual(events[-1].get('legacy_attempt'), expected)
+                    r.studio.backends.online = False
+                    restarted = runtime_recovery.RuntimeRecovery(r.studio)
+                    restarted.tick()
+                    self.assertTrue(restarted.snapshot()['inspection_required'])
+                    self.assertEqual(r.studio.backends.launches, 0)
+
+    def _failed_legacy_release(self, phase):
+        for source in self.LEGACY_RECORDS:
+            for operation in ('reset', 'health'):
+                with self.subTest(source=source, operation=operation, phase=phase):
+                    r = self._retained(source)
+                    before = copy.deepcopy(r.state)
+                    r.studio.backends.online = operation == 'health'
+                    original = Path.replace
+                    def replace(path, target):
+                        original(path, target)
+                        raise OSError('post-replace fault')
+                    failure = self._sync_failure('parent') if phase == 'parent' else patch.object(Path, 'replace', replace)
+                    with failure, self.assertRaisesRegex(OSError, 'parent sync fault|post-replace fault'):
+                        r.reset() if operation == 'reset' else r.tick()
+                    self.assertEqual(r.state, before)
+                    self.assertTrue(r.snapshot()['inspection_required'])
+                    visible = json.loads(r.path.read_bytes())
+                    self.assertEqual(visible['attempts'], 0)
+                    self.assertEqual(visible['status'], 'idle' if operation == 'reset' else 'healthy')
+                    r.studio.backends.online = False
+                    restarted = runtime_recovery.RuntimeRecovery(r.studio)
+                    restarted.tick(); restarted.tick()
+                    self.assertEqual(r.studio.backends.launches, 0, 'Readable release bytes cannot replenish legacy launch allowance')
+                    self.assertTrue(restarted.snapshot()['inspection_required'])
+                    self.assertEqual(visible.get('legacy_attempt'), {'version': 1, 'evidence': source})
+
+    @unittest.skipIf(os.name == 'nt', 'Native POSIX parent barrier')
+    def test_legacy_release_parent_failure_cannot_replenish_allowance_on_restart(self):
+        self._failed_legacy_release('parent')
+
+    def test_legacy_release_post_replace_error_cannot_replenish_allowance_on_restart(self):
+        self._failed_legacy_release('post-replace')
+
+    def test_status_only_legacy_history_is_preserved_before_an_observation_changes_status(self):
+        for status in ('startup', 'launching'):
+            for observation in ('reconnecting', 'leased', 'other-backend-active', 'blocked'):
+                with self.subTest(status=status, observation=observation):
+                    source = {'status': status, 'attempts': 0}
+                    r = self._retained(source)
+                    r._record(observation, 'Historical state is still held.')
+                    self.assertTrue(r.snapshot()['inspection_required'])
+                    self.assertEqual(json.loads(r.path.read_bytes()).get('legacy_attempt'), {'version': 1, 'evidence': source})
+                    r.reset()
+                    self.assertEqual(r.snapshot()['legacy_attempt'], {'version': 1, 'evidence': source})
+                    self.assertEqual(r.studio.backends.launches, 0)
+
+    def test_disabled_reset_preserves_valid_legacy_malformed_missing_and_unreadable_records(self):
+        valid = {'status': 'launching', 'attempts': 1, 'launch_pending': True,
+                 'last_attempt': {'version': 1, 'id': 'a' * 32, 'backend': 'primary', 'number': 1, 'at': 10, 'pid': 9001}}
+        for name, source in (('versioned', valid), ('legacy', self.LEGACY_RECORDS[0]), ('malformed', b'{'),
+                             ('missing', None), ('unreadable', valid)):
+            with self.subTest(record=name):
+                r = self._retained(source, enabled=False)
+                raw = r.path.read_bytes() if r.path.exists() else None
+                original = Path.open
+                def open_file(path, *args, **kwargs):
+                    if name == 'unreadable' and path == r.path and args and args[0] == 'rb':
+                        raise PermissionError('retained record unreadable')
+                    return original(path, *args, **kwargs)
+                refused = None
+                with patch.object(Path, 'open', open_file):
+                    r = runtime_recovery.RuntimeRecovery(r.studio)
+                    try: r.reset()
+                    except ValueError as exc: refused = str(exc)
+                self.assertEqual(r.path.read_bytes() if r.path.exists() else None, raw)
+                self.assertIsNotNone(refused, 'Disabled Reset must refuse before publication')
+                self.assertIn('disabled', refused.lower())
+                self.assertEqual(r.snapshot()['status'], 'disabled')
+                self.assertFalse(r.snapshot()['enabled'])
+                self.assertNotIn('last_attempt', r.snapshot())
+                self.assertNotIn('startup_pid', r.snapshot())
+                self.assertFalse(r.log_path.exists())
+                self.assertEqual(r.studio.backends.routes, [])
+                self.assertEqual(r.studio.backends.launches, 0)
+
+    def test_retry_route_refuses_disabled_reset_without_erasing_retained_evidence(self):
+        source = {'status': 'startup', 'attempts': 1, 'startup_pid': 9001,
+                  'last_attempt': {'version': 1, 'id': 'a' * 32, 'backend': 'primary', 'number': 1, 'at': 10, 'pid': 9001}}
+        for retained in (source, b'{'):
+            with self.subTest(retained=retained):
+                r = self._retained(retained, enabled=False)
+                raw = r.path.read_bytes()
+                code, body = self._retry_route(r)
+                self.assertEqual(code, 400)
+                self.assertIn('disabled', body['error'].lower())
+                self.assertEqual(r.path.read_bytes(), raw)
+                self.assertEqual(r.snapshot()['status'], 'disabled')
+                self.assertEqual(r.studio.backends.launches, 0)
+
+    def test_retry_route_keeps_same_origin_guard_and_enabled_legacy_release(self):
+        source = self.LEGACY_RECORDS[0]
+        r = self._retained(source)
+        raw = r.path.read_bytes()
+        code, _ = self._retry_route(r, origin='https://foreign.invalid')
+        self.assertEqual(code, 403)
+        self.assertEqual(r.path.read_bytes(), raw)
+        code, body = self._retry_route(r)
+        self.assertEqual(code, 202)
+        self.assertEqual(body['attempts'], 0)
+        self.assertFalse(body.get('inspection_required', False))
+        self.assertEqual(body.get('legacy_attempt'), {'version': 1, 'evidence': source})
+        self.assertEqual(r.studio.backends.launches, 0)
 
     def test_invalid_retained_records_preserve_bytes_and_never_replenish_attempts(self):
         path = self.recovery.path

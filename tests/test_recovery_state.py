@@ -156,6 +156,27 @@ class RecoveryStateTests(unittest.TestCase):
                 self.assertEqual(self.path.read_bytes(), b'previous record')
                 self.assertEqual(list(self.path.parent.glob('*.tmp')), [])
 
+    def test_retained_legacy_evidence_requires_recognized_valid_original_fields(self):
+        source = {'status': 'startup', 'attempts': 1, 'startup_pid': 9001, 'startup_at': 10}
+        valid = {'status': 'idle', 'attempts': 0, 'legacy_attempt': {'version': 1, 'evidence': source}}
+        self.path.write_text(json.dumps(valid), encoding='utf-8')
+        self.assertEqual(state.read(self.path), valid)
+        invalid = [None, {}, {'version': 2, 'evidence': source}, {'version': True, 'evidence': source},
+                   {'version': 1, 'evidence': source, 'id': 'invented'}, {'version': 1, 'evidence': []},
+                   {'version': 1, 'evidence': {'status': 'idle', 'attempts': 0}},
+                   {'version': 1, 'evidence': {'status': 'startup', 'attempts': True}},
+                   {'version': 1, 'evidence': {'status': 'startup', 'attempts': 11}},
+                   {'version': 1, 'evidence': {**source, 'startup_pid': False}},
+                   {'version': 1, 'evidence': {**source, 'startup_at': -1}},
+                   {'version': 1, 'evidence': {**source, 'launch_pending': 'true'}},
+                   {'version': 1, 'evidence': {**source, 'backend': 'invented'}}]
+        for marker in invalid:
+            with self.subTest(marker=marker):
+                raw = json.dumps({**valid, 'legacy_attempt': marker}).encode()
+                self.path.write_bytes(raw)
+                with self.assertRaises(ValueError): state.read(self.path)
+                self.assertEqual(self.path.read_bytes(), raw)
+
     def test_windows_contract_reports_no_directory_barrier(self):
         with patch.object(state, 'DIRECTORY_SYNC_SUPPORTED', False), patch.object(state.os, 'open') as opened:
             result = state.publish(self.path, self.value)
