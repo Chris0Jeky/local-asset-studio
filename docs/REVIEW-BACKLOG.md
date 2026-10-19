@@ -31,6 +31,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 - [ ] **Make shows the look's model and LoRAs while Tune is shut.** The Tune line reads "As made: Anima · anima-base-v1.0 · pearly_petiflow2 1.00 · 25 steps" (the model file is named when a family has two) instead of "Model, adapters, steps, seed"; a tuned look still reads "Tuned: ...". Reverse: `asMade()` in `app/static/make.js` back to the fixed text.
 - [ ] **Make's composer uses the full width until the first picture exists.** "Your pictures" moves beside the words only once there is a run card; before that it sits below. Reverse: drop `&&state.runs.length>0` in `layout()` in `app/static/make.js`.
 
+## 2026-10-19 overnight (ux-lead): Models & setup to Make
+
+- [ ] **Models & setup → What you can make: each ready look in a Make goal has "Use in Make"**, which opens Make with that goal and look chosen and says "<look> is chosen. Describe your picture, then press Generate." Nothing is sent. Reverse: drop the button in `modelLooksMarkup()` (`app/static/app.js`) and the `#modelLooks [data-make-use-look]` listener in `app/static/make.js`.
+
 ## 2026-10-19 overnight (ux-lead): name the fold for what is in it
 
 - [ ] **"Tune this look" is now "Model, LoRAs and settings"** (Make's fold, the Ctrl+K hints, START-HERE, the anime guide, README): someone looking for "model" or "LoRA" finds it by its name. Code keeps the word "tune" internally. Reverse: the `<summary>` text in `renderComposer()` and the three finder strings in `app/static/studio-shell.js`.
@@ -38,6 +42,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 ## 2026-10-19 overnight (ux-lead): one picture's next steps at a time
 
 - [ ] **On a Make run card, one picture shows its next steps** (Make this my character, Vary, Fix, Upscale, Change one thing, New pose, Restyle, More); the others show Keep, Not this and **Next steps…**, which moves the steps to that picture. The first saved picture starts selected. A 4-picture card went from 62 visible buttons to 29. Reverse: delete the `.make-outputs figure:not(.make-selected) .make-next{display:none}` rule in `app/static/make.css`.
+
+## 2026-10-19 overnight (ux-lead): picture pickers
+
+- [ ] **Character in a new pose: the pose grid leaves out the chosen character picture**; when it was your only picture it says "The character is your only picture. Import a pose picture in the library, or choose Draw the pose." Imported pictures no longer show their file name twice on picker cards. Reverse: `others` in `renderGrid()` and the `pictureMeta()` condition in `app/static/make.js`.
 
 ## 2026-10-17 session (agent judgment calls)
 

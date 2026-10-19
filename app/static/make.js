@@ -746,7 +746,8 @@
   const pictureLabel=a=>pictureTitle(a.prompt_excerpt||(!a.job_id&&a.title)||a.title,a.created_at);
   // Cards that share a prompt are told apart by a second line (audit v3 N5): the look or recipe, how long ago, the seed.
   const ago=t=>{const s=Math.max(0,Date.now()/1000-Number(t||0));return !t?'':s<90?'just now':s<5400?Math.round(s/60)+' min ago':s<129600?Math.round(s/3600)+' h ago':Math.round(s/86400)+' days ago';};
-  const pictureMeta=a=>[String(a.run_label||'').startsWith('Make · ')?a.run_label.slice(7):a.preset_name,ago(a.created_at),a.source?.seed!=null?'seed '+a.source.seed:''].filter(Boolean).join(' · ');
+  // An imported picture's "recipe" is its file name, already in its title: it is not repeated (19 Oct walkthrough).
+  const pictureMeta=a=>[String(a.run_label||'').startsWith('Make · ')?a.run_label.slice(7):a.preset_name&&String(a.title||'').includes(a.preset_name)?'':a.preset_name,ago(a.created_at),a.source?.seed!=null?'seed '+a.source.seed:''].filter(Boolean).join(' · ');
   // The pickers show your pictures, as the Library's Mine does (workspace.js assetIsAgentRun: Make runs are yours, #1421).
   const agentRun=a=>typeof assetIsAgentRun==='function'&&assetIsAgentRun(a);
   const PICK={edit:'Choose the picture to change.',repair:'Choose the picture to fix or enlarge.',restyle:'Choose the picture to redraw in another look.',combine:'Choose the character. The pose comes next.',animate:'Choose the still to bring to life.',mesh:'Choose a picture of one object or character, ideally on a plain background.'};
@@ -851,10 +852,12 @@
   function renderGrid(id,attr){
     const box=q('#'+id);if(!box||!state.pictures)return;const terms=String(state.queries[id]||'').toLowerCase().split(/\s+/).filter(Boolean);
     const match=a=>{const text=[pictureLabel(a),pictureMeta(a),a.title,a.prompt_excerpt,a.filename,...(a.tags||[])].join(' ').toLowerCase();return terms.every(t=>text.includes(t));};
-    const agents=state.pictures.filter(agentRun).length,pool=state.allPictures||!agents?state.pictures:state.pictures.filter(a=>!agentRun(a)),list=pool.filter(match);
-    const shown=list.slice(0,60),more=list.length-shown.length,hidden=!state.allPictures&&agents&&terms.length?state.pictures.filter(a=>agentRun(a)&&match(a)).length:0;
+    // The pose grid never offers the character picture as its own pose.
+    const others=id==='makePosePictures'?state.pictures.filter(a=>a.id!==state.pick?.id):state.pictures;
+    const agents=others.filter(agentRun).length,pool=state.allPictures||!agents?others:others.filter(a=>!agentRun(a)),list=pool.filter(match);
+    const shown=list.slice(0,60),more=list.length-shown.length,hidden=!state.allPictures&&agents&&terms.length?others.filter(a=>agentRun(a)&&match(a)).length:0;
     const card=a=>{const label=pictureLabel(a),meta=pictureMeta(a);return '<button type="button" '+attr+'="'+escape(a.id)+'" title="'+escape(String(a.prompt_excerpt||a.title||label)+(meta?' · '+meta:''))+'"><img src="'+thumbUrl(a)+'" alt="'+escape(label)+'" loading="lazy"><small aria-hidden="true">'+escape(label)+'</small>'+(meta?'<small class="make-pic-meta">'+escape(meta)+'</small>':'')+'</button>';};
-    box.innerHTML=list.length?shown.map(card).join('')+(more?'<p class="muted">'+more+' older picture'+(more===1?'':'s')+' match too. Search to narrow the list.</p>':''):pool.length?'<p class="muted">No picture matches “'+escape(state.queries[id])+'”'+(hidden?'; '+hidden+' from agent runs do'+(hidden===1?'es':'')+'.':'.')+'</p>':state.pictures.length?'<p class="muted">None of your own pictures yet: everything here is from agent runs.</p>':'<p class="muted">No pictures yet. Make one first, or import one in the library.</p>';
+    box.innerHTML=list.length?shown.map(card).join('')+(more?'<p class="muted">'+more+' older picture'+(more===1?'':'s')+' match too. Search to narrow the list.</p>':''):pool.length?'<p class="muted">No picture matches “'+escape(state.queries[id])+'”'+(hidden?'; '+hidden+' from agent runs do'+(hidden===1?'es':'')+'.':'.')+'</p>':others.length?'<p class="muted">None of your own pictures yet: everything here is from agent runs.</p>':state.pictures.length?'<p class="muted">The character is your only picture. Import a pose picture in the library, or choose Draw the pose.</p>':'<p class="muted">No pictures yet. Make one first, or import one in the library.</p>';
     const all=q('[data-make-all="'+id+'"]');if(all){all.hidden=!agents;all.setAttribute('aria-pressed',String(!!state.allPictures));all.textContent=state.allPictures?'Show only my pictures':'Show all pictures ('+agents+' more from agent runs)';}
   }
   function figureSvg(points,mirror){const P=PE(),at=i=>points[i]&&[Math.round((mirror?1-points[i][0]:points[i][0])*100),Math.round(points[i][1]*150)];
@@ -1129,6 +1132,10 @@
     document.querySelector('#assetDialog')?.close();if(typeof showView==='function')showView('make');else window.StudioMake.refresh();
     (q('#makeComposer textarea,#makeComposer input:not([type=search])')||q('#makeGenerate'))?.focus();});
   let loaded=false;
-  window.StudioMake={refresh(){if(!loaded){loaded=true;void load();}else render();}};
+  // Models & setup lists the looks that are ready; a ready look in a Make goal offers "Use in Make" (owner, 19 Oct: browse models, then make).
+  // It chooses the goal and the look and opens Make; nothing is sent.
+  document.addEventListener('click',e=>{const b=e.target.closest('#modelLooks [data-make-use-look]');if(!b)return;const g=GOALS.find(x=>x.looks?.includes(b.dataset.makeUseLook));if(!g)return;
+    state.goal=g.id;state.look=b.dataset.makeUseLook;state.compare=false;state.picking=false;remember();const name=b.closest('li')?.querySelector('b')?.textContent||'';state.status=(name?name+' is chosen. ':'')+'Describe your picture, then press Generate.';state.missing='';if(typeof showView==='function')showView('make');else window.StudioMake.refresh();});
+  window.StudioMake={goalOf:id=>GOALS.find(x=>x.looks?.includes(id))?.id||null,refresh(){if(!loaded){loaded=true;void load();}else render();}};
   if(!view.hidden)window.StudioMake.refresh();
 })();
