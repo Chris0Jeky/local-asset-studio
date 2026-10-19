@@ -204,9 +204,9 @@ The strategy, asset wishlist and isolated behavior lab were requested and can be
 Raised by the overnight coordinator and its gpu-lab and ux-lead agents. Agent verdicts in the lab files are not art acceptance, and nothing here was decided for you. Close-out record: `.runtime/closeout-20261019.md`.
 
 - [ ] **lab-art-acceptance-1019** (owner judgment; agents do not tick this): accept or reject the round 7/7b and MOSS lab pictures you care about (`docs/looks/LOOK-LAB-*19*`, `docs/MOSS-IMAGE.md`; full-size files in `.runtime/lab-20261019/`).
-- [ ] **adapter-licences-1019** (owner decision): licence posture for the Chainsaw Man, Re:Zero and Reverse 1999 style adapters, the Kijai 4-step MOSS LoRA (no licence stated), and anything trained from Anima-mix pictures (non-commercial base terms). Until decided, treat them as personal-use only.
-- [ ] **kromoss-trial-1019** (owner decision): finish the Kromoss download (3.42 of 5.41 GB in `models/diffusion_models/kromoss_int8_convrot.safetensors.part`, resume with `scripts/fetch-hf.py --resume`) and run the same-seed A/B against MOSS SFT, or drop it.
-- [ ] **moss-look-1019** (owner decision): should Make get a MOSS-Image look? The draft is on branch `ux2/make-moss` ("Detailed painted anime, rich costumes", third under Anime character, with a one-press environment switch). It is parked because merging main breaks `tests/make_followups.cjs`; the wording and placement are agent judgements.
+- [ ] **adapter-licences-1019** (owner decision; agents do not tick this): licence posture for the Chainsaw Man, Re:Zero and Reverse 1999 style adapters, the Kijai 4-step MOSS LoRA (no licence stated), and anything trained from Anima-mix pictures (non-commercial base terms). Until decided, treat them as personal-use only.
+- [ ] **kromoss-trial-1019** (owner decision; agents do not tick this): finish the Kromoss download (3.42 of 5.41 GB in `models/diffusion_models/kromoss_int8_convrot.safetensors.part`, resume with `scripts/fetch-hf.py --resume`) and run the same-seed A/B against MOSS SFT, or drop it.
+- [ ] **moss-look-1019** (owner decision; agents do not tick this): should Make get a MOSS-Image look? The draft is on branch `ux2/make-moss` ("Detailed painted anime, rich costumes", third under Anime character, with a one-press environment switch). It is parked because merging main breaks `tests/make_followups.cjs`; the wording and placement are agent judgements.
 
 ## Asset wishlist production (27 September 2026) — open
 
