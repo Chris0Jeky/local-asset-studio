@@ -155,7 +155,7 @@ function renderPresets() {
   const card = p => {
     const pins = Array.isArray(pinMismatchByPreset[p.id]) ? pinMismatchByPreset[p.id] : [], missing = missingByPreset[p.id] || [], thumb = presetThumb(p), pace = presetPace(p);
     const pinBadge = pins.length ? '<em class="badge" title="' + esc(pins.join(', ')) + '">Model verification needs attention</em>' : '';
-    return '<button class="preset ' + (selected?.id === p.id ? 'chosen' : '') + '" data-id="' + esc(p.id) + '">' + (thumb ? '<img class="preset-thumb" src="' + esc(thumb) + '" alt="" loading="lazy">' : '') + '<b>' + esc(p.name) + '</b><span>' + esc(plainLine(p.description)) + '</span><div class="recipe-meta"><span>' + esc(p.family || p.category) + '</span>'
+    return '<button class="preset ' + (selected?.id === p.id ? 'chosen' : '') + '" data-id="' + esc(p.id) + '" title="' + esc(p.description || '') + '" aria-describedby="preset-description-' + esc(p.id) + '">' + (thumb ? '<img class="preset-thumb" src="' + esc(thumb) + '" alt="" loading="lazy">' : '') + '<b>' + esc(p.name) + '</b><span id="preset-description-' + esc(p.id) + '">' + esc(p.description || '') + '</span><div class="recipe-meta"><span>' + esc(p.family || p.category) + '</span>'
       + (pace ? '<em class="badge pace ' + pace[0] + '" title="' + esc(pace[2]) + '">' + esc(pace[1]) + '</em>' : '')
       + (missing.length ? '<em class="badge need" title="' + esc(missing.join(', ')) + '">Needs download</em>' : '') + pinBadge + '</div></button>';
   };
@@ -721,7 +721,7 @@ function modelUsage(assets,windows){
   // Only once a disk inventory is reported: before that an unlisted adapter is unknown, not missing. An extension-less name counts too.
   const onDisk=new Set((library?.inventory||[]).map(m=>modelBase(m.file)));
   const loras=c=>Object.entries(c||{}).filter(([k,v])=>/^lora\d*(_name)?$/.test(k)&&typeof v==='string'&&v.trim()&&(/_name$/.test(k)||!Number.isFinite(Number(v)))).map(([,v])=>byBase.get(modelBase(v))||(onDisk.has(modelBase(v))||!onDisk.size?null:{file:'loras/'+String(v).split(/[\\/]/).pop(),present:false,unlisted:true})).filter(Boolean);
-  const join=(kind,item,presetId,controls)=>{const missing=[];for(const r of modelReqs.get(presetId)||[]){const a=resolve(r);if(a)add(a,kind,item);if(r.present!==true)missing.push(a||r);}for(const a of loras(controls)){if(!a.unlisted)add(a,kind,item);if(a.present===false)missing.push(a);}return missing;};
+  const join=(kind,item,presetId,controls)=>{const missing=[];for(const r of modelReqs.get(presetId)||[]){const a=resolve(r);if(a)add(a,kind,item);if(r.present!==true||r.pin_mismatch)missing.push(a||r);}for(const a of loras(controls)){if(!a.unlisted)add(a,kind,item);if(a.present===false)missing.push(a);}return missing;};
   for(const l of modelLooks||[]){const missing=join('looks',{id:l.id,name:l.name},l.body.preset_id,l.body.controls);states.push({look:l,known:!!modelReqs.get(l.body.preset_id),missing:[...new Map(missing.map(m=>[m.file,m])).values()]});}
   for(const r of atelierRecipes||[])if(r?.id)join('recipes',{id:r.id,name:r.name||r.id},r.preset_id,r.controls);
   return{use,states};
@@ -742,10 +742,10 @@ function modelLooksMarkup(states,query){
 }
 function renderCuratedModels(){
   if(!library)return;const params=new URLSearchParams(location.hash.split('?')[1]||''),need=StudioUX.normalizeView(location.hash)==='models'?(params.get('need')||new URLSearchParams(location.search).get('need')):null;
-  const preset=(catalog?.presets||[]).find(p=>p.id===need),missing=Object.hasOwn(missingByPreset,need)&&Array.isArray(missingByPreset[need])?missingByPreset[need]:[],query=$('#curatedModelSearch').value.toLowerCase(),windows=libraryRootIsWindows(library.model_root);
+  const preset=(catalog?.presets||[]).find(p=>p.id===need),missing=Object.hasOwn(missingByPreset,need)&&Array.isArray(missingByPreset[need])?missingByPreset[need]:[],pins=Object.hasOwn(pinMismatchByPreset,need)&&Array.isArray(pinMismatchByPreset[need])?pinMismatchByPreset[need]:[],query=$('#curatedModelSearch').value.toLowerCase(),windows=libraryRootIsWindows(library.model_root);
   const busy=library.assets.some(a=>['queued','downloading','verifying'].includes(a.download?.status)&&Date.now()/1000-a.download.updated_at<180);
   const {use,states}=modelUsage(library.assets,windows),listed=(list,limit)=>list.slice(0,limit).map(x=>esc(x.name)).join(', ')+(list.length>limit?' +'+(list.length-limit)+' more':'');
-  const cardStatus=currentModelStatus(),shownCards=library.assets.filter(a=>(need?!a.present&&missing.some(file=>{const key=canonicalModelRel(a.file,windows),required=canonicalModelRel(file,windows);return key===required||key.endsWith('/'+required);}):modelStatusMatch(a,cardStatus))&&[a.name,a.family,a.file,...(use.get(a.id)?.looks||[]).map(x=>x.name),...(use.get(a.id)?.recipes||[]).map(x=>x.name)].some(v=>String(v||'').toLowerCase().includes(query))),hiddenCards=library.assets.length-shownCards.length;
+  const cardStatus=currentModelStatus(),shownCards=library.assets.filter(a=>(need?(()=>{const req=file=>{const key=canonicalModelRel(a.file,windows),required=canonicalModelRel(file,windows);return key===required||key.endsWith('/'+required);};return !a.present&&missing.some(req)||pins.some(req);})():modelStatusMatch(a,cardStatus))&&[a.name,a.family,a.file,...(use.get(a.id)?.looks||[]).map(x=>x.name),...(use.get(a.id)?.recipes||[]).map(x=>x.name)].some(v=>String(v||'').toLowerCase().includes(query))),hiddenCards=library.assets.length-shownCards.length;
   const card=a=>{
       const d=a.download||{},active=['queued','downloading','verifying'].includes(d.status)&&Date.now()/1000-d.updated_at<180,u=use.get(a.id);
       const pinOnly=a.installable!==true,dir=a.status==='invalid_pin'?'':String(a.path||'').replace(/[\\/][^\\/]*$/,'')||(library.model_root?library.model_root+'/'+String(a.file||'').replace(/\/?[^/]*$/,''):'');
