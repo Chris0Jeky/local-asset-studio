@@ -46,7 +46,17 @@ Cited in the 2026-09-27 pack as `raw/comfy-org-head-sizes.txt` and `raw/hf-*.jso
 
 ## Current provenance (observed 2026-10-19, issue #1324)
 
-Read through the Hugging Face model API and tree API, which this pack already used as its method. These are summaries of the API responses, not saved raw JSON; the queries used only `expand[]=safetensors`, which returns only the listed properties, so `sha` and `lastModified` were **not requested** (their absence says nothing about the repos). A revision pin needs a re-query with `expand[]=sha&expand[]=lastModified`.
+The first 2026-10-19 reconciliation used summarized, unpinned responses with only `expand[]=safetensors`. Those summaries did not preserve `sha`, `lastModified` or raw responses. A subsequent metadata-only collection on the same date now retains the discovery response and **revision-pinned model/tree responses** for all three repositories in [evidence/ming-image-2026-10-19](evidence/ming-image-2026-10-19/README.md).
+
+The [receipt manifest](evidence/ming-image-2026-10-19/receipts.json) records all nine requested/final URLs, UTC fetch timestamps, server dates, HTTP statuses, byte counts and response SHA-256 hashes. The response files are unmodified bytes. Discovery requests explicitly expanded `sha`, `lastModified` and `safetensors`; pinned requests then used the full selected revision. The model responses confirm that revision, and the tree responses have no next-page Link header. No weight or header-range request was made.
+
+| Repository | Retained revision | Current evidence |
+|---|---|---|
+| `inclusionAI/Ming-Image-0.1-Design` | `c57c49689d12ef7d4e24a170014f1dc43d3ce258` | API count 6,154,901,056, BF16; five transformer shards total 12,309,858,144 bytes |
+| `inclusionAI/Ming-Image-0.1-Design-Layer` | `ff1b22d2bdd0ae6597c0024a42cac7923b24cf92` | API count 6,154,908,736, F32; nine transformer shards total 24,619,690,768 bytes |
+| `Comfy-Org/Ming-Image` | `93804ff3747517a318969c5f61b25a57daefe09f` | No `safetensors` object; Layer BF16-named file is 12,309,874,192 bytes; per-file LFS identities retained |
+
+The following table preserves the earlier 2026-10-19 summaries for provenance. Their values can now be compared with the pinned responses; these are not newly recovered September receipts.
 
 | Endpoint | What it returned |
 |---|---|
@@ -55,9 +65,11 @@ Read through the Hugging Face model API and tree API, which this pack already us
 | `huggingface.co/api/models/Comfy-Org/Ming-Image?expand[]=safetensors` | no `safetensors` object (sha and `lastModified` not requested); per-file breakdown not available |
 | `huggingface.co/api/models/Comfy-Org/Ming-Image/tree/main?recursive=true` (bytes) | `diffusion_models/ming_image_0.1_design_bf16.safetensors` 12,309,858,664; `diffusion_models/ming_image_0.1_design_int8_convrot.safetensors` 6,175,239,953; `diffusion_models/ming_image_0.1_design_layer_bf16.safetensors` 12,309,874,192; `diffusion_models/ming_image_0.1_design_layer_int8_convrot.safetensors` 6,175,255,481; `text_encoders/ming_image_0.1_ling_mini_2.0_layer_bf16.safetensors` 36,677,768,245; `text_encoders/ming_image_0.1_ling_mini_2.0_layer_int8_convrot.safetensors` 19,507,670,525 |
 
-The tree API also returns a per-file LFS sha256 for each file. Those hashes are **not recorded here**: they came back through a summarizing fetch and have not been checked against the raw response, so they cannot be cited as audit evidence. The next step is to pull the raw tree JSON into a tracked file with its date and compare the hashes there.
+The current raw tree responses now preserve every advertised per-file LFS SHA-256 and size, including the official transformer's separate shards. The Comfy Layer BF16 entry advertises `31c588e279f0dd461d3366ae7e21b4a0f6926fbc8b5a1f6580ab899a761be34a`. These identifiers come directly from retained JSON; no downloaded weight was hashed locally.
 
-Not established: the official Layer transformer's LFS hash (so no byte-identity claim between the Comfy and official Layer files); the Comfy file's safetensors header dtype; any revision pin.
+Not established: the Comfy file's own header dtype/tensor inventory, numerical equivalence after conversion, or runtime/consumer-GPU behavior. Byte-identical files or matching hashes are not expected across F32-to-BF16 conversion and sharded-to-single-file repackaging. The [evidence README](evidence/ming-image-2026-10-19/README.md) distinguishes measured metadata from arithmetic inference and provides an offline receipt verification snippet.
+
+The historical operator pack remains unavailable. None of these current receipts audits the missing September capture or changes the existing park/default, licence or art-acceptance decisions.
 
 ## Related LAS issues / packs
 

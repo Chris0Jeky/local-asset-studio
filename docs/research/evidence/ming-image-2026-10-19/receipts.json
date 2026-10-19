@@ -1,0 +1,122 @@
+{
+  "scope": "Public JSON metadata only; no weight, header-range, runtime, licence or art qualification. Current evidence; not a reconstruction of missing 2026-09-27 files.",
+  "responses": [
+    {
+      "file": "design-discovery.json",
+      "requested_url": "https://huggingface.co/api/models/inclusionAI/Ming-Image-0.1-Design?expand%5B%5D=sha&expand%5B%5D=lastModified&expand%5B%5D=safetensors",
+      "response_url": "https://huggingface.co/api/models/inclusionAI/Ming-Image-0.1-Design?expand%5B%5D=sha&expand%5B%5D=lastModified&expand%5B%5D=safetensors",
+      "fetched_at_utc": "2026-10-19T14:01:20.389855+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "server_date": "Mon, 19 Oct 2026 14:01:20 GMT",
+      "etag": "W/\"ea-DexJltVXdwHZd1Lo+0o+03DzsMg\"",
+      "link": null,
+      "bytes": 234,
+      "sha256": "3411a8eed6d18e2e5556d359d48d15db73947b1a1022a68ac8ed1f5bee0035f5"
+    },
+    {
+      "file": "design-model-c57c49689d12ef7d4e24a170014f1dc43d3ce258.json",
+      "requested_url": "https://huggingface.co/api/models/inclusionAI/Ming-Image-0.1-Design/revision/c57c49689d12ef7d4e24a170014f1dc43d3ce258?expand%5B%5D=sha&expand%5B%5D=lastModified&expand%5B%5D=safetensors",
+      "response_url": "https://huggingface.co/api/models/inclusionAI/Ming-Image-0.1-Design/revision/c57c49689d12ef7d4e24a170014f1dc43d3ce258?expand%5B%5D=sha&expand%5B%5D=lastModified&expand%5B%5D=safetensors",
+      "fetched_at_utc": "2026-10-19T14:01:20.529282+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "server_date": "Mon, 19 Oct 2026 14:01:20 GMT",
+      "etag": "W/\"ea-DexJltVXdwHZd1Lo+0o+03DzsMg\"",
+      "link": null,
+      "bytes": 234,
+      "sha256": "3411a8eed6d18e2e5556d359d48d15db73947b1a1022a68ac8ed1f5bee0035f5"
+    },
+    {
+      "file": "design-tree-c57c49689d12ef7d4e24a170014f1dc43d3ce258.json",
+      "requested_url": "https://huggingface.co/api/models/inclusionAI/Ming-Image-0.1-Design/tree/c57c49689d12ef7d4e24a170014f1dc43d3ce258?recursive=true",
+      "response_url": "https://huggingface.co/api/models/inclusionAI/Ming-Image-0.1-Design/tree/c57c49689d12ef7d4e24a170014f1dc43d3ce258?recursive=true",
+      "fetched_at_utc": "2026-10-19T14:01:20.665763+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "server_date": "Mon, 19 Oct 2026 14:01:20 GMT",
+      "etag": "W/\"22b3-cGCzyt4tMbdtegNWRnYYTjxT1pE\"",
+      "link": null,
+      "bytes": 8883,
+      "sha256": "6b298753207edff0ed3c1902eb95a7745128e38bdc3793b115c9fb4814842154"
+    },
+    {
+      "file": "layer-discovery.json",
+      "requested_url": "https://huggingface.co/api/models/inclusionAI/Ming-Image-0.1-Design-Layer?expand%5B%5D=sha&expand%5B%5D=lastModified&expand%5B%5D=safetensors",
+      "response_url": "https://huggingface.co/api/models/inclusionAI/Ming-Image-0.1-Design-Layer?expand%5B%5D=sha&expand%5B%5D=lastModified&expand%5B%5D=safetensors",
+      "fetched_at_utc": "2026-10-19T14:01:20.749685+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "server_date": "Mon, 19 Oct 2026 14:01:20 GMT",
+      "etag": "W/\"ef-V8cHXLSmYHbf8MBxw90WVPlCRqY\"",
+      "link": null,
+      "bytes": 239,
+      "sha256": "7b489924ef768d6e9ee88aa3b69e5b9b0fde7cae3d1e3f9df6adbae096bb98ab"
+    },
+    {
+      "file": "layer-model-ff1b22d2bdd0ae6597c0024a42cac7923b24cf92.json",
+      "requested_url": "https://huggingface.co/api/models/inclusionAI/Ming-Image-0.1-Design-Layer/revision/ff1b22d2bdd0ae6597c0024a42cac7923b24cf92?expand%5B%5D=sha&expand%5B%5D=lastModified&expand%5B%5D=safetensors",
+      "response_url": "https://huggingface.co/api/models/inclusionAI/Ming-Image-0.1-Design-Layer/revision/ff1b22d2bdd0ae6597c0024a42cac7923b24cf92?expand%5B%5D=sha&expand%5B%5D=lastModified&expand%5B%5D=safetensors",
+      "fetched_at_utc": "2026-10-19T14:01:20.830455+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "server_date": "Mon, 19 Oct 2026 14:01:20 GMT",
+      "etag": "W/\"ef-V8cHXLSmYHbf8MBxw90WVPlCRqY\"",
+      "link": null,
+      "bytes": 239,
+      "sha256": "7b489924ef768d6e9ee88aa3b69e5b9b0fde7cae3d1e3f9df6adbae096bb98ab"
+    },
+    {
+      "file": "layer-tree-ff1b22d2bdd0ae6597c0024a42cac7923b24cf92.json",
+      "requested_url": "https://huggingface.co/api/models/inclusionAI/Ming-Image-0.1-Design-Layer/tree/ff1b22d2bdd0ae6597c0024a42cac7923b24cf92?recursive=true",
+      "response_url": "https://huggingface.co/api/models/inclusionAI/Ming-Image-0.1-Design-Layer/tree/ff1b22d2bdd0ae6597c0024a42cac7923b24cf92?recursive=true",
+      "fetched_at_utc": "2026-10-19T14:01:20.949522+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "server_date": "Mon, 19 Oct 2026 14:01:21 GMT",
+      "etag": "W/\"28d5-e2qCUjWTTc4V+QGhTAT52GDicTY\"",
+      "link": null,
+      "bytes": 10453,
+      "sha256": "b830db837166942838e0af9fb6c6a6e2a57ca6a26bbb8c472a073a0df3469419"
+    },
+    {
+      "file": "comfy-discovery.json",
+      "requested_url": "https://huggingface.co/api/models/Comfy-Org/Ming-Image?expand%5B%5D=sha&expand%5B%5D=lastModified&expand%5B%5D=safetensors",
+      "response_url": "https://huggingface.co/api/models/Comfy-Org/Ming-Image?expand%5B%5D=sha&expand%5B%5D=lastModified&expand%5B%5D=safetensors",
+      "fetched_at_utc": "2026-10-19T14:01:21.041534+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "server_date": "Mon, 19 Oct 2026 14:01:21 GMT",
+      "etag": "W/\"99-rTlOQkfbSK6QZiZnM4SNivji4i4\"",
+      "link": null,
+      "bytes": 153,
+      "sha256": "2bf658e21bd5538191e49f9d67bbb2cc7c07fe63b1d516fec5f33c8d49e0230b"
+    },
+    {
+      "file": "comfy-model-93804ff3747517a318969c5f61b25a57daefe09f.json",
+      "requested_url": "https://huggingface.co/api/models/Comfy-Org/Ming-Image/revision/93804ff3747517a318969c5f61b25a57daefe09f?expand%5B%5D=sha&expand%5B%5D=lastModified&expand%5B%5D=safetensors",
+      "response_url": "https://huggingface.co/api/models/Comfy-Org/Ming-Image/revision/93804ff3747517a318969c5f61b25a57daefe09f?expand%5B%5D=sha&expand%5B%5D=lastModified&expand%5B%5D=safetensors",
+      "fetched_at_utc": "2026-10-19T14:01:21.119967+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "server_date": "Mon, 19 Oct 2026 14:01:21 GMT",
+      "etag": "W/\"99-rTlOQkfbSK6QZiZnM4SNivji4i4\"",
+      "link": null,
+      "bytes": 153,
+      "sha256": "2bf658e21bd5538191e49f9d67bbb2cc7c07fe63b1d516fec5f33c8d49e0230b"
+    },
+    {
+      "file": "comfy-tree-93804ff3747517a318969c5f61b25a57daefe09f.json",
+      "requested_url": "https://huggingface.co/api/models/Comfy-Org/Ming-Image/tree/93804ff3747517a318969c5f61b25a57daefe09f?recursive=true",
+      "response_url": "https://huggingface.co/api/models/Comfy-Org/Ming-Image/tree/93804ff3747517a318969c5f61b25a57daefe09f?recursive=true",
+      "fetched_at_utc": "2026-10-19T14:01:21.224577+00:00",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "server_date": "Mon, 19 Oct 2026 14:01:21 GMT",
+      "etag": "W/\"f91-8hz0VBUNEBkTWnz4doC3hL0cuQw\"",
+      "link": null,
+      "bytes": 3985,
+      "sha256": "ef7409061700f75f1077b83362dbb1037e4155105f2c5c4b2417a89f50615fd4"
+    }
+  ]
+}
