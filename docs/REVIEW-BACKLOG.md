@@ -7,6 +7,10 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-10-19 pass 2 (Brief J): one review vocabulary
+
+- [ ] Review actions use Keep / Needs work / Not this with K / W / X; saved selections and the Library filter say Kept. Stored review values stay unchanged, including the Review desk's keep value. Reverse: the label maps.
+
 ## 2026-10-19 pass 2 (Brief H)
 
 - [ ] **Failed look thumbnails become the blank decorative .look-thumb tile** in Models & setup, replacing broken-image icons for local-only examples. Reverse: remove the capture-phase error listener on #modelLooks in app/static/app.js.
