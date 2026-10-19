@@ -39,6 +39,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 - [ ] **"Tune this look" is now "Model, LoRAs and settings"** (Make's fold, the Ctrl+K hints, START-HERE, the anime guide, README): someone looking for "model" or "LoRA" finds it by its name. Code keeps the word "tune" internally. Reverse: the `<summary>` text in `renderComposer()` and the three finder strings in `app/static/studio-shell.js`.
 
+## 2026-10-19 overnight (ux-lead): picture pickers
+
+- [ ] **Character in a new pose: the pose grid leaves out the chosen character picture**; when it was your only picture it says "The character is your only picture. Import a pose picture in the library, or choose Draw the pose." Imported pictures no longer show their file name twice on picker cards. Reverse: `others` in `renderGrid()` and the `pictureMeta()` condition in `app/static/make.js`.
+
 ## 2026-10-17 session (agent judgment calls)
 
 - [ ] **#1524 saved pictures from partial runs may be varied and polished.** Agent judgment: a saved asset is usable even when other pictures in its run were not recovered. Queued, running, uncertain and failed runs remain refused; source identity and bytes are still checked when pressed. Synthetic status contracts cover both paths. Reverse by removing `partial` from the two source-status allow-lists in `app/static/studio-workbench.js`.
