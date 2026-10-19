@@ -3,6 +3,7 @@
 Default: native browser HTTP. --inert substitutes storage and API transport explicitly.
 --baseline records unmet expectations but never suppresses runtime/JavaScript errors.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import asyncio
 import hashlib
@@ -138,7 +139,7 @@ async def run(args):
             for width,id in [(1440,'READY-22'),(390,'READY-23')]:
                 await page.set_viewport_size({'width':width,'height':1100});await page.locator('#uxBlockers').scroll_into_view_if_needed()
                 check(id,str(width)+'px readiness controls fit the viewport',await page.evaluate('document.documentElement.scrollWidth<=innerWidth'))
-                await page.screenshot(path=str(args.out/f'create-readiness-{width}.png'))
+                await evidence_screenshot(page, path=str(args.out/f'create-readiness-{width}.png'))
             # A partial shared-draft adoption must remain a Generate hold after
             # readiness is rendered as structured actions instead of plain text.
             adoption_error=await page.evaluate("""()=>{

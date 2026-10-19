@@ -5,6 +5,7 @@ Fixture server from studio_browser_smoke (real frontend and catalog capabilities
 fixture record: no ComfyUI, no model. Asserts each goal's exact request, that the handoff dialog never opens, and that
 recipe placeholders never reach the page.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import json
 import sys
@@ -98,7 +99,7 @@ def run(shots):
             for width, height in ((1440, 900), (390, 844)):
                 page.set_viewport_size({'width': width, 'height': height}); page.wait_for_timeout(150)
                 page.evaluate('(s)=>{const e=document.querySelector(s);if(e)window.scrollTo(0,e.getBoundingClientRect().top+scrollY-140)}', target); page.wait_for_timeout(100)
-                page.screenshot(path=str(shots / ('%s-%d.png' % (name, width))))
+                evidence_screenshot(page, path=str(shots / ('%s-%d.png' % (name, width))))
             page.set_viewport_size({'width': 1440, 'height': 900}); page.wait_for_timeout(150)
 
         def no_modal(): assert not page.evaluate('document.querySelector("#uxHandoff")?.open'), 'the handoff dialog must not open'

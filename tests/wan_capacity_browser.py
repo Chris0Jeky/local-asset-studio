@@ -1,4 +1,5 @@
 """Opt-in browser proof of Wan mode admission; synthetic APIs, no GPU calls."""
+from browser_ports import evidence_screenshot
 import argparse
 import hashlib
 import json
@@ -39,7 +40,7 @@ def run(output):
                         assert page.locator('#generate').is_disabled()
                         assert 'Held:' in page.locator('#i2vModeNote').text_content()
                         page.locator('#i2vModeNote').scroll_into_view_if_needed()
-                        page.screenshot(path=str(output / f'{mode}-{width}.png'))
+                        evidence_screenshot(page, path=str(output / f'{mode}-{width}.png'))
                     page.locator('#i2vMode').select_option('balanced')
                     assert page.locator('#generate').is_enabled()
                     assert 'Held:' not in page.locator('#i2vModeNote').text_content()
@@ -67,7 +68,7 @@ def run(output):
                     page.evaluate("selectPreset('wan22-t2v')")
                     page.wait_for_function("document.querySelector('#generate').disabled")
                     assert '81 frames' in page.locator('#uxBlockers').text_content()
-                    page.screenshot(path=str(output / f't2v-default-{width}.png'))
+                    evidence_screenshot(page, path=str(output / f't2v-default-{width}.png'))
                     page.locator('#variants').get_by_role('button', name='Short motion study', exact=True).click()
                     page.wait_for_function("!document.querySelector('#generate').disabled")
                     page.locator('#variants').get_by_role('button', name='3.4-second shot', exact=True).click()

@@ -1,4 +1,5 @@
 """Native Chromium journeys on the actual composed Studio handler, inert storage only."""
+from browser_ports import evidence_screenshot
 import importlib.util
 import json
 import os
@@ -198,7 +199,7 @@ class SpokenBrowserTests(unittest.TestCase):
         self.assertEqual(0, len([m for m, _ in self.traffic if m == 'POST']))
         output = os.environ.get('SPOKEN_BROWSER_SCREENSHOT')
         if output:
-            Path(output).parent.mkdir(parents=True, exist_ok=True); self.page.screenshot(path=output, full_page=True)
+            Path(output).parent.mkdir(parents=True, exist_ok=True); evidence_screenshot(self.page, path=output, full_page=True)
         self.assert_no_inference()
 
     def test_failure_on_inspect_hides_stale_player_without_sending_writes(self):
