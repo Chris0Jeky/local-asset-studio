@@ -36,7 +36,7 @@ shows. Real catalog, ComfyUI on 8188 read-only. A Playwright walk (`scratchpad`,
 and aborted every non-GET except `/api/estimate`; nothing was submitted. Runs & review with real history was read as text only from
 the live Studio (8191), with non-GETs and images blocked, because pictures there may be adult (agents do not open them).
 
-What the walk measured, per page (visible controls / words / page height at 1440 → 390): Make 23 / 318 / 1711 → 2699; Library
+What the walk measured, a selected subset of the 12 pages (visible controls / words, plus page height at 1440 → 390 where it was recorded; the other five pages and the missing heights were not kept): Make 23 / 318 / 1711 → 2699; Library
 20 / 145; Models & setup **431** / 438 / 2279 → 4267; Full editor 59 / 200; Compare & review 8 / 165; Workflow builder 67 / **1187** /
 3904 → 6558; Prompt Lab 46 / 417. No page scrolls sideways at 390 px. No page errors.
 
