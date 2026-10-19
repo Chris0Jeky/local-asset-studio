@@ -29,3 +29,31 @@ fake finished run in the browser only (`/api/jobs/<id>` and `/api/image/...` ans
 
 Each slice's before/after and proof are in its PR and in `docs/UX-USE-CASE-MATRIX.md` where clicks change.
 Judgement calls are logged in `docs/REVIEW-BACKLOG.md` with how to reverse them.
+
+## Pass 2 (ux-lead-2, 19 Oct): a first-time user, the whole app, 1440x900 and 390 px
+Method: a preview Studio on 127.0.0.1:8292 from the `ux2/*` worktree, with **no experiments root**, so it showed what a new install
+shows. Real catalog, ComfyUI on 8188 read-only. A Playwright walk (`scratchpad`, not committed) loaded the 12 pages at both widths
+and aborted every non-GET except `/api/estimate`; nothing was submitted. Runs & review with real history was read as text only from
+the live Studio (8191), with non-GETs and images blocked, because pictures there may be adult (agents do not open them).
+
+What the walk measured, per page (visible controls / words / page height at 1440 → 390): Make 23 / 318 / 1711 → 2699; Library
+20 / 145; Models & setup **431** / 438 / 2279 → 4267; Full editor 59 / 200; Compare & review 8 / 165; Workflow builder 67 / **1187** /
+3904 → 6558; Prompt Lab 46 / 417. No page scrolls sideways at 390 px. No page errors.
+
+Onboarding: Make opens first with *Anime character* chosen. From a cold start, a high-end anime picture is **look, words,
+Generate**: 2 clicks plus typing, with the model and LoRAs readable on the chosen look. That path is sound. The friction was around it:
+
+| # | Finding | Where | Slice |
+| --- | --- | --- | --- |
+| P1 | On a new install the estimate said "About 4 min in total, from earlier runs on this PC" beside a card saying ~31 s. Nothing had run: the server's answer was a generic guess (`confidence: none`). | Make | #1574: the look's lab median when nothing comparable ran, else "a rough guess"; Compare looks never claims runs it did not use |
+| P2 | Every picture goal on an empty library dead-ended: "import one in the library" meant leaving Make (5 clicks + file). | Make | #1576: *Import a picture…* in the picker and the pose slot; it is chosen (2 clicks + file) |
+| P3 | One page said LoRA and adapter for the same thing; Steps said "Finer" where Quality said "Fine". | Make | #1582 |
+| P4 | Review words differed in four places (Keep / Not this; Keep / Needs work / Reject; Keeper(s) / Rejected; "Keep for consideration"). Make had no review keys. | All | Decision J: Keep / Needs work / Not this, K / W / X, "Kept". Make part #1579; the rest Brief J (Sol) |
+| P5 | Models & setup: 6 of 24 look rows showed broken images; "Needs a check (170)" and "Installed (0)" while all 24 looks were ready. | Models & setup | Brief H (#1580) |
+| P6 | Compare & review with no plans said "Choose a plan on the left" over an empty list; the status filter was cut to "In progress o"; the Review desk opened directly was a dead end. | Compare & review | Brief I (Sol) |
+| P7 | The Full editor showed three ways into the same checks (Review readiness, Review checks, Readiness & run details). | Full editor | Decision K, Brief K (Sol) |
+| P8 | Make cannot help with a recipe that needs another model environment: Generate is disabled with "Switch to X to use this recipe" and a link. MOSS-Image (#1575) is the first Make-worthy case. | Make | Next: environment chip on looks and a one-press switch beside the disabled Generate, after #1575 |
+| P9 | Models & setup: the "Model environment" fold sits above the page heading, and look rows are subtitled with recipe names ("Anima v1 · modular illustration baseline"). | Models & setup | Open, low |
+| P10 | Library: three import affordances on the empty first screen, and the heading "A library, not a dead end." says little. | Library | Open, low |
+| P11 | Phone: the 11 goal tiles fill the first screen before any look; the Full editor's dock takes about 17% of an 844 px screen. | Make, Full editor | Open, low |
+| P12 | Workflow builder: 1,187 words on its first screen, 6,558 px tall at 390 px. | Workflow builder | Open: Brief E folded its tools; a second pass would fold the walkthrough text |
