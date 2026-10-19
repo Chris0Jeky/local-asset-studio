@@ -156,7 +156,7 @@ def run(shots):
         assert label == 'Medium · ~125 s', label
         page.evaluate('()=>{jobs=[];StudioMake.refresh();}')
         pick_look('look-anima-pearly-petiflow'); assert page.locator('.make-chosen .make-tested').count() == 1 and page.input_value('#makeShape') == 'portrait'
-        assert 'Draft first · 13 steps' in page.locator('#makeDraftBox').inner_text(), 'a 25-step look offers a draft too'
+        assert 'Draft · 13 steps' in page.locator('#makeDraftBox').inner_text(), 'a 25-step look offers a draft too'
         page.locator('[data-make-change]').click(); assert page.locator('[data-make-keep-look]').inner_text() == 'Stay with Flat pastel close-up', 'the gallery never says Keep'
         page.locator('[data-make-keep-look]').click()
         painting = looks_of('painting')
@@ -183,7 +183,7 @@ def run(shots):
         # Draft first (audit #12): a slow look offers a quick low-step draft; the draft's card offers "Make the final", which stages the same
         # words and seed at the look's full steps and waits for Generate. Neither press submits anything but Generate.
         looks_of('painting'); pick_look('look-krea-oil-fantasy'); assert page.input_value('#makeCount') == '1'
-        draft = page.locator('#makeDraft'); assert draft.count() == 1 and not draft.is_checked() and 'Draft first · 6 steps' in page.locator('#makeDraftBox').inner_text()
+        draft = page.locator('#makeDraft'); assert draft.count() == 1 and not draft.is_checked() and 'Draft · 6 steps' in page.locator('#makeDraftBox').inner_text()
         draft.check(); assert page.input_value('[data-tune=steps]') == '6' and 'draft 6 steps' in page.locator('#makeTuneSum').inner_text(), 'the draft is Tune’s own steps control'
         page.locator('#makeScene').fill('a lone scholar on a bridge at dusk'); shot('draft-first'); before = len(jobs()); sent = generate(); no_modal()
         assert len(sent) == 1 and sent[0]['controls']['steps'] == 6 and sent[0]['preset_id'] == 'krea-anime-atelier', sent

@@ -120,7 +120,7 @@ A matching hash proves the bytes match the pinned file. It does not prove who ma
 
 **Change one thing.** Press **Edit and re-run** on a finished card. It brings back that run's words, shape, count, style strength, tune and **seed, locked**, and sets **Different pictures each time** off. The page says "That run’s settings are back, with its seed locked." Change one setting or a few words, then press Generate. Because the seed is the same, what you change is what you see.
 
-**Draft, then the final.** **Draft first** is a tick under the words options: about half the steps, rougher but quicker. It shows on any look with 10 or more steps, and on every slow look (the Krea ones). The anime looks have 25 to 30 steps, so they show it too. You can also set **Steps** to **Draft** under **Tune this look**. Either way:
+**Draft, then the final.** **Quality** is a choice beside Generate: **Draft** (about half the steps, rougher but quicker), **As made**, or **Fine** (half as many steps again, slower). The estimate under Generate follows the choice. It shows on any look with 10 or more steps, and on every slow look (the Krea ones). The anime looks have 25 to 30 steps, so they show it too. You can also set **Steps** to **Draft** under **Tune this look**. Either way:
 
 1. Press **Generate**. The card's tune line reads "Tuned: draft N steps".
 2. If you like it, press **Make the final** on the card. It sets up the same words and the same seed at the look's full steps. The page says "The final is set up". It does not start the job: press **Generate** to make it.
