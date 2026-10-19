@@ -38,7 +38,9 @@ class BoundPortGuard:
 def evidence_screenshot(page, **options):
     """Optional evidence only: sync pages return bytes/None; async pages return an awaitable."""
     from inspect import isawaitable
-    from playwright.sync_api import TimeoutError as ScreenshotTimeout
+    try: from playwright.sync_api import TimeoutError as ScreenshotTimeout
+    except ImportError:  # contract tests drive stub pages on runners without Playwright
+        class ScreenshotTimeout(Exception): pass
     def skipped(error): print(f'evidence screenshot skipped: {error}', flush=True)
     try: result = page.screenshot(**options, timeout=30000, animations='disabled')
     except ScreenshotTimeout as error:
