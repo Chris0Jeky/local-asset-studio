@@ -929,8 +929,25 @@ async function modelShopCards() {
   run(`modelReqs.set('p2',[{file:'checkpoints/base.safetensors',asset_id:'base',present:true}]);renderCuratedModels()`);
   assert.match(element('#modelLooks').innerHTML, /Ready now<\/h4>[\s\S]*Look B/);
   run(`modelReqs.set('p2',[{file:'checkpoints/base.safetensors',asset_id:'base',present:true,pin_mismatch:{note:'Content differs'}}]);renderCuratedModels()`);
-  assert.match(element('#modelLooks').innerHTML, /Needs a download<\/h4>[\s\S]*Look B/);
+  const lookB = () => element('#modelLooks').innerHTML.split('<li class="model-look needs">').find(row => row.includes('<b>Look B</b>')).split('</li>')[0];
+  assert.match(lookB(), /File changed since it was pinned: base\.safetensors/);
+  assert.match(lookB(), /href="\/#models\?need=p2">Check files/);
+  assert.doesNotMatch(lookB(), /Needs:|files? to get/);
+  assert.match(element('#modelLooks').innerHTML, /2 need attention[\s\S]*Needs attention<\/h4>/);
   assert.doesNotMatch(element('#modelLooks').innerHTML, /Ready now<\/h4>[\s\S]*Look B/);
+  run(`modelLooks[1].body.controls={lora_name:'base.safetensors'};renderCuratedModels()`);
+  assert.match(lookB(), /File changed since it was pinned: base\.safetensors/);
+  assert.doesNotMatch(lookB(), /files? to get/);
+  run(`modelLooks[1].body.controls={}`);
+  run(`modelReqs.set('p2',[{file:'checkpoints/base.safetensors',asset_id:'base',present:true,pin_mismatch:{}},{file:'vae/shared.safetensors',asset_id:'shared',present:true,pin_mismatch:{}}]);renderCuratedModels()`);
+  assert.match(lookB(), /File changed since it was pinned: base\.safetensors, shared\.safetensors/);
+  assert.doesNotMatch(lookB(), /files? to get/);
+  run(`modelReqs.set('p2',[{file:'checkpoints/base.safetensors',asset_id:'base',present:true,pin_mismatch:{}},{file:'text_encoders/enc.safetensors',asset_id:'enc',present:false}]);renderCuratedModels()`);
+  assert.match(lookB(), /Needs: enc\.safetensors; changed: base\.safetensors/);
+  assert.match(lookB(), /href="\/#models\?need=p2">1 file to get/);
+  assert.doesNotMatch(lookB(), /2 files to get/);
+  run(`modelReqs.set('p2',[{file:'checkpoints/changed<&.safetensors',present:true,pin_mismatch:{}}]);renderCuratedModels()`);
+  assert.match(lookB(), /File changed since it was pinned: changed&lt;&amp;\.safetensors/);
   run(`modelReqs.set('p2',[{file:'vae/shared.safetensors',asset_id:'shared'}]);renderCuratedModels()`);
   assert.match(element('#modelLooks').innerHTML, /Needs a download<\/h4>[\s\S]*Look B/, 'an unresolved requirement blocks, as the server does');
   // An adapter named in a look but listed nowhere (library or disk) is missing, not silently ignored; one on disk is fine.
