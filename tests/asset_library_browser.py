@@ -168,7 +168,7 @@ async def exercise(args):
                 await page.evaluate("document.querySelector('#assetSearch').value='';setAssetScope('collection:'+" + json.dumps(empty['id']) + ')')
                 check('LIB-17', 'An empty collection has a specific next step', 'This collection has no assets' in await text('#assetGrid'))
                 await page.click('#assetScopes [data-scope="selected"]')
-                check('LIB-18', 'Keepers means saved review state, not checkbox selection', await text('#assetScopeTitle') == 'Keepers' and 'No keepers yet' in await text('#assetGrid'))
+                check('LIB-18', 'Kept means saved review state, not checkbox selection', await text('#assetScopeTitle') == 'Kept' and 'No kept assets yet' in await text('#assetGrid'))
                 await page.evaluate("document.querySelector('#assetSearch').value='';setAssetScope('all')")
                 await page.locator(f'[data-asset-check="{ids[0]}"]').check()
                 mutation_gate.clear()
@@ -196,7 +196,7 @@ async def exercise(args):
                 await page.click('[data-review-bulk="needs_work"]')
                 await page.wait_for_function('!assetBulkReviewBusy')
                 outcome['accept'] = False
-                check('LIB-37', 'Bulk review asks before replacing a saved keeper', len(dialogs) == asked + 1 and dialogs[-1].startswith('Replace 1 saved review? 1 keeper will change to Needs work.'))
+                check('LIB-37', 'Bulk review asks before replacing a saved keeper', len(dialogs) == asked + 1 and dialogs[-1].startswith('Replace 1 saved review? 1 kept will change to Needs work.'))
                 sent = writes[before:]
                 check('LIB-35', 'Bulk review sends one ordinary single-asset command per selection', len(sent) == 2 and all(len(w['ids']) == 1 and w['action'] == 'edit' and w['review'] == 'needs_work' and w['expected_revisions'] for w in sent) and {w['ids'][0] for w in sent} == set(ids[:2]))
                 saved = {a['id']: a['review'] for a in store.snapshot()['assets']}

@@ -62,8 +62,8 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
     const s=library(201);assert.equal(s.run('typeof assetSelectionCanProceed'),'function');s.run("assetSelection=new Set(['gone'])");assert.equal(s.run("assetSelectionCanProceed('export')"),false);assert.equal(s.run('assetSelection.size'),1);
     s.run('assetSelection=new Set(assetState.assets.map(a=>a.id))');assert.equal(s.run("assetSelectionCanProceed('favorite')"),false);assert.equal(s.run('assetSelection.size'),201);assert.equal(s.confirmations(),0);
   });
-  await test('Keeper review scope is not confused with checkbox selection',()=>{
-    const s=library();s.run("assetSelection.add('a0');setAssetScope('selected')");assert.equal(s.el('#assetScopeTitle').textContent,'Keepers');assert.match(s.el('#assetGrid').innerHTML,/No keepers yet/);assert.equal(s.run('assetSelection.size'),0);
+  await test('Kept review scope is not confused with checkbox selection',()=>{
+    const s=library();s.run("assetSelection.add('a0');setAssetScope('selected')");assert.equal(s.el('#assetScopeTitle').textContent,'Kept');assert.match(s.el('#assetGrid').innerHTML,/No kept assets yet/);assert.equal(s.run('assetSelection.size'),0);
   });
   await test('Re-choosing the scope already shown keeps the selection; a different scope still clears it',()=>{
     const s=library();s.run("assetSelection=new Set(['a0','a1']);setAssetScope('all')");assert.equal(s.run('assetSelection.size'),2);assert.doesNotMatch(s.el('#assetMessage').textContent,/Selection cleared/);

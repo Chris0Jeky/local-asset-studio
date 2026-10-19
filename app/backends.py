@@ -40,6 +40,7 @@ class BackendManager:
         python=Path(config.get('python','C:/AI/ComfyUI_windows_portable/python_embeded/python.exe')).resolve()
         isolated=Path(config.get('hidream_root','C:/AI/experiments/hidream-o1/ComfyUI')).resolve()
         qwen21=Path(config.get('qwen21_root','C:/AI/experiments/qwen-image-21/ComfyUI')).resolve()
+        moss=Path(config.get('moss_root','C:/AI/experiments/moss-image/ComfyUI')).resolve()
         self.profiles={
             'primary':{'id':'primary','name':'Main library','root':str(primary),'url':config.get('comfy_url','http://127.0.0.1:8188'),
                        'python':str(python),'port':8188,'entry':str(primary/'main.py'),
@@ -56,6 +57,9 @@ class BackendManager:
             'qwen21':{'id':'qwen21','name':'Qwen-Image 2.1 · isolated','root':str(qwen21),'url':'http://127.0.0.1:8196',
                       'python':str(python),'port':8196,'entry':str(studio.root/'scripts/qwen21-launch.py'),
                       'description':'ComfyUI v0.37.0 checkout with its own Comfy Kitchen overlay; the ROCm Torch installation is shared unchanged'},
+            'moss':{'id':'moss','name':'MOSS-Image · isolated','root':str(moss),'url':'http://127.0.0.1:8198',
+                    'python':str(python),'port':8198,'entry':str(studio.root/'scripts/moss-launch.py'),'library':str(primary),
+                    'description':'ComfyUI v0.42.1 checkout (MOSS-Image needs 0.42+) with its own Comfy Kitchen overlay; models and LoRAs are read from the main library by path; the ROCm Torch installation is shared unchanged'},
         }
         ports=[]
         for profile in self.profiles.values():
@@ -105,11 +109,16 @@ class BackendManager:
     def _save(self):
         self.studio._write_json_atomic(self.state_path,{'active':self.active,'operation':self.operation})
 
+    @staticmethod
+    def models_root(profile):
+        """The models folder a profile reads: its own checkout's, or the shared main library's when the profile names a `library` (moss)."""
+        return Path(profile.get('library') or profile['root'])/'models'
+
     def activate(self, identifier):
         from model_library import ModelLibrary
         profile=self.profiles[identifier]
         self.active=identifier;self.studio.comfy_url=profile['url'];self.studio.comfy_root=Path(profile['root'])
-        self.studio.library=ModelLibrary(self.studio.root,self.studio.comfy_root,backend_id=identifier)
+        self.studio.library=ModelLibrary(self.studio.root,self.studio.comfy_root,backend_id=identifier,models_root=self.models_root(profile))
         self.studio._schema=None;self.studio._schema_at=0
 
     def _local_work(self, ignore_job_ids=()):

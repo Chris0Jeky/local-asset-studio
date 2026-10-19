@@ -278,7 +278,7 @@ async def run(args):
             newest=max(fixture.ASSETS,key=lambda a:a['created_at'])['id']
             await page.click('#reviewNext');await settle()
             await check('ASSET-32','The queue opens the newest unreviewed asset and shows k of n',await page.evaluate('activeAsset.id')==newest and f'1 of {pending}' in await page.locator('#assetQueue').inner_text())
-            await check('ASSET-33','The dialog shows the shortcut legend in queue mode','K keeper' in await page.locator('#assetQueue').inner_text())
+            await check('ASSET-33','The dialog shows the shortcut legend in queue mode','K Keep' in await page.locator('#assetQueue').inner_text())
             await page.click('[data-review-reason="hands"]')
             await check('ASSET-34','A reason chip toggles a tag without typing',await page.evaluate("assetTagList().includes('hands')") and await page.locator('[data-review-reason="hands"]').get_attribute('aria-pressed')=='true')
             writes=len(state.writes)

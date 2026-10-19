@@ -55,7 +55,7 @@ function assetScopedCount(scope){
   return list.filter(a=>(type==='all'||a.media_type===type)&&[a.title,a.preset_name,a.notes,a.run_label||'',a.prompt_excerpt||'',...a.tags].join(' ').toLowerCase().includes(query)).length;
 }
 function renderAssetScopeCounts(){document.querySelectorAll('#assetScopes [data-scope]').forEach(b=>{if(!b.dataset.scopeLabel)b.dataset.scopeLabel=b.textContent.trim();b.innerHTML='<span>'+esc(b.dataset.scopeLabel)+'</span><small>'+assetScopedCount(b.dataset.scope).toLocaleString('en-US')+'</small>';});}
-const assetReviewLabels = {unreviewed:'Unreviewed',selected:'Keeper',needs_work:'Needs work',rejected:'Rejected'};
+const assetReviewLabels = {unreviewed:'Unreviewed',selected:'Kept',needs_work:'Needs work',rejected:'Not this'};
 const assetReviewShortcuts = {k:'selected',w:'needs_work',x:'rejected'};
 const assetReasonTags = ['hands','face','style off','composition','anatomy','artifacts','crop'];
 function recoveryScopeMessage(scope) {
@@ -473,7 +473,7 @@ function assetEmptyState() {
   }else if(assetScope==='favorite'){
     title='No favorites yet';description='Use the star on an asset to find it here. Favorites do not change your review notes.';
   }else if(assetScope==='selected'){
-    title='No keepers yet';description='Mark a reviewed asset as a keeper to find it here. Checking a selection box only chooses assets for an action.';
+    title='No kept assets yet';description='Keep a reviewed asset to find it here. Checking a selection box only chooses assets for an action.';
   }else if(assetScope==='unreviewed'){
     title='No assets awaiting review';description='Your active assets already have a saved review. Browse all assets to revisit a decision.';
   }else if(assetScope==='needs_work'){
@@ -494,7 +494,7 @@ function assetSelectionCanProceed(action) {
   if(selection.missing){assetMessage(selection.missing+(selection.missing===1?' selected asset is unavailable.':' selected assets are unavailable.')+' Review the selection or keep only visible assets before continuing.',true);return false;}
   if(assetSelection.size>assetSelectionLimit){assetMessage('Choose at most '+assetSelectionLimit+' assets per action. The current selection has not been changed.',true);return false;}
   if(selection.entries.some(e=>e.asset.workspace_id && e.asset.workspace_id!==assetState.workspace_id)){assetMessage('Selected assets belong to a different Workspace. Refresh the library before continuing.',true);return false;}
-  const labels={trash:'Move to Trash',restore:'Restore',favorite:'Favorite',selected:'Mark as keeper',review:'Mark a review',add_collection:'Add to collection',remove_collection:'Remove from collection',agent_run:'Mark as agent run',mine:'Mark as mine',export:'Export pack',scene:'Create scene',native:'Create native export'};
+  const labels={trash:'Move to Trash',restore:'Restore',favorite:'Favorite',selected:'Keep',review:'Mark a review',add_collection:'Add to collection',remove_collection:'Remove from collection',agent_run:'Mark as agent run',mine:'Mark as mine',export:'Export pack',scene:'Create scene',native:'Create native export'};
   return !selection.hidden || window.confirm((labels[action]||'This action')+' will include '+selection.hidden+(selection.hidden===1?' selected asset':' selected assets')+' outside this view. Continue with all '+assetSelection.size+' selected assets? Cancel to review the selection or keep only visible assets.');
 }
 function clearAssetFilters() {clearTimeout(assetSearchTimer);assetSearchTimer=null;$('#assetSearch').value='';$('#assetType').value='all';renderAssets();$('#assetSearch').focus();}
@@ -510,7 +510,7 @@ function assetPreview(asset, detail=false) {
   if(asset.media_type==='audio')return detail?'<audio controls aria-label="Play '+alt+'" src="'+url+'"></audio>':'<span class="asset-type-placeholder"><span aria-hidden="true">♫</span><small>Audio</small></span>';
   return detail?'<model-viewer camera-controls touch-action="pan-y" environment-image="neutral" src="'+url+'" alt="'+alt+'"></model-viewer>':'<span class="asset-type-placeholder"><span aria-hidden="true">◇</span><small>3D model</small></span>';
 }
-function assetCardHTML(a) {const display=assetCardTitle(a);return '<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'" data-asset-card="'+esc(a.id)+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(display)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(display)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(display)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(display)+'</button>'+(assetSubtitle(a)?'<small class="asset-card-prompt" title="'+esc(assetSubtitle(a))+'">'+esc(assetSubtitle(a))+'</small>':'')+'<div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(a.review==='selected'?'keeper':a.review.replace('_',' '))+'</span></div><div class="asset-tags">'+(assetIsAgentRun(a)?'<span class="asset-run-label" title="Agent run label">'+esc(a.run_label)+'</span>':'')+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>';}
+function assetCardHTML(a) {const display=assetCardTitle(a);return '<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'" data-asset-card="'+esc(a.id)+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(display)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(display)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(display)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(display)+'</button>'+(assetSubtitle(a)?'<small class="asset-card-prompt" title="'+esc(assetSubtitle(a))+'">'+esc(assetSubtitle(a))+'</small>':'')+'<div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(assetReviewLabels[a.review]||a.review)+'</span></div><div class="asset-tags">'+(assetIsAgentRun(a)?'<span class="asset-run-label" title="Agent run label">'+esc(a.run_label)+'</span>':'')+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>';}
 function renderAssets() {
   observeAssetWorkspaceIdentity();
   // A remembered collection that no longer exists opens All assets rather than an unavailable view.
@@ -524,7 +524,7 @@ function renderAssets() {
   $('#clearAssetFilters').hidden=!assetFiltersActive();
   $('#selectVisible').disabled=!assets.length;
   $('#selectVisible').textContent=assets.length>assetSelectionLimit?'Select first '+assetSelectionLimit+' of '+assets.length:'Select visible';
-  $('#assetScopeTitle').textContent=col?.name||({all:'All assets',unreviewed:'Awaiting review',favorite:'Favorites',selected:'Keepers',needs_work:'Needs work',trash:'Trash'}[assetScope]||'Collection');
+  $('#assetScopeTitle').textContent=col?.name||({all:'All assets',unreviewed:'Awaiting review',favorite:'Favorites',selected:'Kept',needs_work:'Needs work',trash:'Trash'}[assetScope]||'Collection');
   $('#collectionActions').hidden=!col;
   $('#assetCollections').innerHTML=assetState.collections.map(c=>'<button data-scope="collection:'+c.id+'" class="'+(col?.id===c.id?'active':'')+'"><span>▱ '+esc(c.name)+'</span><small>'+c.count+'</small></button>').join('')||'<p class="muted">Collect a character, a project, or an idea.</p>';
   document.querySelectorAll('#assetScopes [data-scope]').forEach(b=>b.classList.toggle('active',b.dataset.scope===assetScope));renderAssetScopeCounts();
@@ -558,8 +558,8 @@ function renderAssetQueue() {
   panel.hidden=!assetQueue;
   if(!assetQueue){panel.innerHTML='';return;}
   panel.innerHTML='<div class="asset-queue-head"><b>Review queue</b><span role="status" aria-live="polite">'+(assetQueue.index+1)+' of '+assetQueue.ids.length+'</span></div>'+
-    '<div class="asset-queue-actions"><button type="button" data-queue-review="selected">Keeper <kbd>K</kbd></button><button type="button" data-queue-review="needs_work">Needs work <kbd>W</kbd></button><button type="button" data-queue-review="rejected">Rejected <kbd>X</kbd></button><button type="button" data-queue-skip>Skip <kbd>S</kbd></button><button type="button" data-queue-step="-1">← Previous</button><button type="button" data-queue-step="1">Next →</button><button type="button" data-queue-exit>Leave queue</button></div>'+
-    '<small class="asset-queue-legend">K keeper · W needs work · X rejected · S skip without saving · 1-5 quick checks · ← / → move. Typing in a field is never a shortcut. Each decision saves through Save details and then advances.</small>';
+    '<div class="asset-queue-actions"><button type="button" data-queue-review="selected">Keep <kbd>K</kbd></button><button type="button" data-queue-review="needs_work">Needs work <kbd>W</kbd></button><button type="button" data-queue-review="rejected">Not this <kbd>X</kbd></button><button type="button" data-queue-skip>Skip <kbd>S</kbd></button><button type="button" data-queue-step="-1">← Previous</button><button type="button" data-queue-step="1">Next →</button><button type="button" data-queue-exit>Leave queue</button></div>'+
+    '<small class="asset-queue-legend">K Keep · W Needs work · X Not this · S skip without saving · 1-5 quick checks · ← / → move. Typing in a field is never a shortcut. Each decision saves through Save details and then advances.</small>';
 }
 function startReviewQueue() {
   const pending=assetUnreviewed(visibleAssets()).slice().sort((a,b)=>(b.created_at||0)-(a.created_at||0));
@@ -647,7 +647,7 @@ function assetReviewOverwritePrompt(ids, review) {
   const counts=new Map();
   for(const id of ids){const saved=assetState.assets.find(a=>a.id===id)?.review||'unreviewed';if(saved!=='unreviewed' && saved!==review)counts.set(saved,(counts.get(saved)||0)+1);}
   if(!counts.size)return '';
-  const total=[...counts.values()].reduce((a,b)=>a+b,0),name=(state,n)=>state==='selected'?(n===1?'keeper':'keepers'):assetReviewLabels[state].toLowerCase();
+  const total=[...counts.values()].reduce((a,b)=>a+b,0),name=(state,n)=>assetReviewLabels[state].toLowerCase();
   return 'Replace '+total+' saved '+(total===1?'review':'reviews')+'? '+[...counts].map(([state,n])=>n+' '+name(state,n)).join(', ')+' will change to '+assetReviewLabels[review]+'.\n\n'+
     'The rest of the selection is unreviewed or already '+assetReviewLabels[review]+'. There is no undo; each review can be changed back individually by opening the asset.';
 }
