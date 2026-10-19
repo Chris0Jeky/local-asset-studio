@@ -11,6 +11,11 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 - [ ] **Full editor readiness lives in "Readiness & run details"** (ux-lead-2 decision). Removed the recipe-header Review readiness button; the dock offers "What’s missing?" only while blocked. Ready shows the readiness line and time, and lost focus returns to that line when the button disappears. The ONE NEXT ACTION guidance is unchanged. Reverse: restore the two buttons.
 
+## 2026-10-19 pass 2 (Brief H)
+
+- [ ] **Failed look thumbnails become the blank decorative .look-thumb tile** in Models & setup, replacing broken-image icons for local-only examples. Reverse: remove the capture-phase error listener on #modelLooks in app/static/app.js.
+- [ ] **File groups read "On disk, not verified" and "On disk, verified"**, with the hint "Present on disk; its pinned SHA-256 is not confirmed. Verify reads the file and compares it; nothing changes on disk." Button labels stay unchanged. Reverse: restore the group names "Needs a check" and "Installed" and the previous hint in renderCuratedModels() in app/static/app.js.
+
 ## 2026-10-19 pass 2 (ux-lead-2): import a picture inside Make
 
 - [ ] **Make's picture pickers (all six picture goals, and the pose slot) have "Import a picture…"**: one file (PNG, JPEG or WebP, up to 20 MiB) goes through the library's own import and becomes the chosen picture; Make is never left. The old "Import a picture first" link to the Library is gone, and the empty grid says "No pictures yet. Import one, or make one first." Reverse: the `data-make-import` button in `pictureFinder()` and `importPicture()` in `app/static/make.js`.
