@@ -43,12 +43,12 @@ On the picture's card:
 
 - **Edit and re-run** brings back that run's words and settings with its seed locked. Change one thing, press **Generate**, and what you changed is what you see.
 - **Same words, another look** reopens the gallery with that scene ready.
-- **Make the final** appears on a run made with **Draft first**. It sets up the same words and seed at the look's full steps. It does not start the run: press **Generate**.
+- **Make the final** appears on a run made at **Quality: Draft**. It sets up the same words and seed at the look's full steps. It does not start the run: press **Generate**.
 
 Under the words box:
 
 - **Model, LoRAs and settings** is folded shut. Open it to see and change the look's base model, adapters (LoRAs) with their strengths, steps, sampler, words to leave out and seed. It only changes what **Generate** sends.
-- **Draft first** is offered on looks with ten steps or more, and on slow looks. A draft uses half the steps: rougher but quicker.
+- **Quality** (Draft, As made, Fine) is offered on looks with ten steps or more, and on slow looks. A draft uses half the steps: rougher but quicker. Fine uses half as many again: slower, and on the Anima looks no better in the 19 Oct lab (20-40 steps looked alike).
 - **What this look uses** names the model and adapters, with each adapter's trigger word.
 - **Shape**, **How many** and **Style strength** are beside the Generate button.
 - **Compare looks**, in the look gallery, runs two or three looks on one scene and one seed and shows them side by side.
