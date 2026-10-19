@@ -40,9 +40,24 @@
 | ROCm INT8 ConvRot / HIP notes | https://github.com/Comfy-Org/comfy-kitchen/issues/78 |
 | ROCm Triton default PR | https://github.com/Comfy-Org/ComfyUI/pull/14862 |
 
-## HEAD size evidence
+## HEAD size evidence (dated 2026-09-27)
 
-See `raw/comfy-org-head-sizes.txt` and `raw/hf-*.json`.
+Cited in the 2026-09-27 pack as `raw/comfy-org-head-sizes.txt` and `raw/hf-*.json`. **Checked 2026-10-19: neither path exists in this repository, and the operator handoffs pack is not here either.** The 2026-09-27 sizes survive only as the tables in FINDINGS section 2. They are not audited from files in the repo.
+
+## Current provenance (observed 2026-10-19, issue #1324)
+
+Read through the Hugging Face model API and tree API, which this pack already used as its method. These are summaries of the API responses, not saved raw JSON; no commit SHA was returned, and the API gave no `lastModified` for either model repo.
+
+| Endpoint | What it returned |
+|---|---|
+| `huggingface.co/api/models/inclusionAI/Ming-Image-0.1-Design-Layer?expand[]=safetensors` | `safetensors.total` 6,154,908,736; parameters `{"F32": 6154908736}` |
+| `huggingface.co/api/models/inclusionAI/Ming-Image-0.1-Design?expand[]=safetensors` | `safetensors.total` 6,154,901,056; parameters `{"BF16": 6154901056}` |
+| `huggingface.co/api/models/Comfy-Org/Ming-Image?expand[]=safetensors` | no `safetensors` object and no sha or `lastModified`; per-file breakdown not available |
+| `huggingface.co/api/models/Comfy-Org/Ming-Image/tree/main?recursive=true` (bytes) | `diffusion_models/ming_image_0.1_design_bf16.safetensors` 12,309,858,664; `diffusion_models/ming_image_0.1_design_int8_convrot.safetensors` 6,175,239,953; `diffusion_models/ming_image_0.1_design_layer_bf16.safetensors` 12,309,874,192; `diffusion_models/ming_image_0.1_design_layer_int8_convrot.safetensors` 6,175,255,481; `text_encoders/ming_image_0.1_ling_mini_2.0_layer_bf16.safetensors` 36,677,768,245; `text_encoders/ming_image_0.1_ling_mini_2.0_layer_int8_convrot.safetensors` 19,507,670,525 |
+
+The tree API also returns a per-file LFS sha256 for each file. Those hashes are **not recorded here**: they came back through a summarizing fetch and have not been checked against the raw response, so they cannot be cited as audit evidence. The next step is to pull the raw tree JSON into a tracked file with its date and compare the hashes there.
+
+Not established: the official Layer transformer's LFS hash (so no byte-identity claim between the Comfy and official Layer files); the Comfy file's safetensors header dtype; any revision pin.
 
 ## Related LAS issues / packs
 
