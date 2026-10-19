@@ -7,6 +7,15 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-10-19 pass 2 (Brief I)
+
+- **Empty comparison desk:** replaced the right-panel dead end with the decided "No plans yet" explanation, a **Plan a comparison** button that clicks the existing `#newExperiment`, and **Compare looks in Make** linking to `/#make`. Applies when no plan is selected and the filtered list is empty; visible plans retain today's no-selection guidance. Reverse: restore the original `#productionDetail` placeholder in `index.html`, remove the empty/no-selection render branch and button dispatch in `production.js`, and remove the matching assertions in `production_clarity_frontend.cjs`.
+- **Status filter:** shortened "In progress or needs attention (older folded)" to **Active**; retained the decided explanation in `#planSummary` alongside existing counts. Reverse: restore the old option label and the prior summary assignment, then remove the corresponding assertions.
+- **Direct Review desk:** changed **Not opened** to **No comparison open** and linked **Compare & review** to `/#production` in the guidance. The no-project JS path preserves the authored linked sentence. Reverse: restore the old badge/loading text in `review.html` and the original `message(...)` call in `review.js`, then remove the matching assertions.
+- **Verified:** syntax checks for both touched app JS files and the touched CJS test; both production frontend tests; review browser smoke (0 generation calls); use cases (25/25, 0 submissions, 0 page errors); frontend handoffs (19/19); repository validator. An additional Chromium probe at 1440px verified the empty-state button opens the existing planner and the direct Review desk link returns to Compare & review (0 POSTs). Browser checks used inert fixtures on isolated ports. The smoke runner needed repository-root `PYTHONPATH`; validation needed a process-local Git safe-directory override for the sandbox identity.
+- **NOT verified:** full unit-suite completion: the additional run encountered sandbox Git ownership errors and an untriaged failure marker, and was stopped after the requested proving checks passed. Its incomplete log remains at `.runtime/brief-i-20261019-unittest.log`; no baseline or full-suite green is claimed. Live Studios, real generation, creative acceptance or licensing were not tested. `make.js` and `make.css` remain untouched; no commit. Existing `HUMAN_TODO.md` decisions remain open and unchanged. Broader design-detector notices concern incumbent styling/copy outside this brief and were skipped to preserve scope.
+
+
 ## 2026-10-19: Workflow builder first screen
 
 - [ ] Workflow builder: storage and file tools folded (All tools, Saved workflows). Reverse: remove the two details wrappers in workflow-studio.html and the fold-open lines in workflow-projects.js.
