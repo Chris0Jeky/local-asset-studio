@@ -702,6 +702,27 @@ class ServerTests(unittest.TestCase):
             http=server.create_server(tmp, port=8292, http_server=Bound)
             self.assertEqual(http.handler.studio.port, 8292); self.assertFalse(http.handler.studio.runtime_recovery.autostart)
 
+    def test_create_server_gives_studio_subclasses_the_actual_bound_port(self):
+        class PreviewStudio(server.Studio):pass
+        class Bound:
+            def __init__(self,address,handler):self.handler=handler;self.server_port=8292
+            def server_close(self):pass
+        (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy'),'runtime_auto_recover':True}))
+        for factory in (server.Studio,PreviewStudio):
+            with self.subTest(factory=factory.__name__):
+                http=server.create_server(self.root,port=0,http_server=Bound,studio_factory=factory)
+                studio=http.handler.studio
+                self.assertEqual(studio.port,8292);self.assertFalse(studio.runtime_recovery.autostart)
+                self.assertFalse(hasattr(studio.runtime_recovery,'thread'))
+
+    def test_create_server_keeps_one_argument_custom_factories(self):
+        class Bound:
+            def __init__(self,address,handler):self.handler=handler;self.server_port=8292
+            def server_close(self):pass
+        created=types.SimpleNamespace(root=self.root)
+        http=server.create_server(self.root,port=0,http_server=Bound,studio_factory=lambda root:created)
+        self.assertIs(http.handler.studio,created)
+
     def test_preview_port_moves_the_host_and_origin_guard(self):
         handler=server.Handler.__new__(server.Handler)
         with patch.object(server,"PORT",8291):

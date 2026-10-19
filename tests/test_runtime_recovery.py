@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import errno
+import json
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 from urllib.error import URLError
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "app"))
@@ -238,5 +240,110 @@ class RuntimeRecoveryTests(unittest.TestCase):
             return RuntimeRecovery(studio).autostart
         self.assertTrue(autostart()); self.assertTrue(autostart(8191)); self.assertFalse(autostart(8292))
         self.assertTrue(autostart(8292, runtime_recovery_autostart=True)); self.assertFalse(autostart(8191, runtime_recovery_autostart=False))
+
+    def test_stale_shared_selection_explains_explicit_recovery_without_changing_family(self):
+        manager=self.studio.backends;manager.profiles['moss']={'id':'moss','name':'MOSS','url':'http://127.0.0.1:8198'}
+        manager.state_path=Path(self.tmp.name)/'backend-state.json';saved={'active':'moss'}
+        manager.state_path.write_text(json.dumps(saved),encoding='utf-8')
+        self.recovery.reset();snapshot=self.recovery.tick()
+        self.assertEqual((snapshot['status'],manager.active,manager.launches),('other-backend-active','primary',0))
+        self.assertIn("Shared backend state selects 'moss'",snapshot['message'])
+        self.assertIn('Models & setup',snapshot['message']);self.assertIn('Reset recovery',snapshot['message'])
+        self.assertEqual(json.loads(manager.state_path.read_text(encoding='utf-8')),saved)
+
+    def test_stale_shared_switch_explains_its_remedy_and_same_target_also_blocks(self):
+        manager=self.studio.backends;manager.profiles['moss']={'id':'moss','name':'MOSS','url':'http://127.0.0.1:8198'}
+        manager.state_path=Path(self.tmp.name)/'backend-state.json'
+        for target in ('moss','primary'):
+            saved={'active':'primary','operation':{'status':'running','target':target,'started_at':0}}
+            manager.state_path.write_text(json.dumps(saved),encoding='utf-8')
+            with self.subTest(target=target):
+                snapshot=self.recovery.tick()
+                self.assertEqual((snapshot['status'],manager.launches),('other-backend-active',0))
+                self.assertIn('switch',snapshot['message']);self.assertIn('Models & setup',snapshot['message'])
+                self.assertEqual(json.loads(manager.state_path.read_text(encoding='utf-8')),saved)
+
+    def test_alternate_timeout_or_incomplete_health_is_unknown_and_never_authorizes_launch(self):
+        manager=self.studio.backends;manager.profiles['moss']={'id':'moss','name':'MOSS','url':'http://127.0.0.1:8198'}
+        absent=manager.request
+        for result in (TimeoutError('loading'),URLError(TimeoutError('loading')),OSError('unreadable'),{}, {'system':{}}):
+            def request(profile,route,timeout):
+                self.assertFalse(self.studio.lock._is_owned(),'Network probes must stay outside the Studio lock')
+                if profile['id']=='primary':return absent(profile,route,timeout)
+                if isinstance(result,Exception):raise result
+                return result
+            manager.request=request
+            with self.subTest(result=result):
+                snapshot=self.recovery.tick()
+                self.assertEqual((snapshot['status'],manager.launches),('other-backend-active',0))
+                self.assertIn('moss',snapshot['message']);self.assertIn('unknown',snapshot['message'])
+
+    def test_alternate_refusal_deadline_and_retained_process_are_checked(self):
+        manager=self.studio.backends;manager.profiles['moss']={'id':'moss','name':'MOSS','url':'http://127.0.0.1:8198'}
+        calls=[]
+        def windows_request(profile,route,timeout):
+            calls.append((profile['id'],timeout))
+            if timeout<2:raise TimeoutError('Windows refusal pending')
+            raise URLError(OSError(errno.ECONNREFUSED,'refused'))
+        manager.request=windows_request
+        manager.configured_processes=lambda profile:[SimpleNamespace(pid=42)] if profile['id']=='moss' else []
+        snapshot=self.recovery.tick()
+        self.assertEqual((snapshot['status'],manager.launches),('other-backend-active',0))
+        self.assertIn('process',snapshot['message'])
+        self.assertEqual(calls,[('primary',REFUSAL_PROBE_TIMEOUT),('moss',REFUSAL_PROBE_TIMEOUT)])
+        manager.configured_processes=lambda profile:[]
+        snapshot=self.recovery.tick();self.assertEqual((snapshot['status'],manager.launches),('startup',1))
+
+    def test_alternate_foreign_listener_is_preserved_after_connection_refusal(self):
+        manager=self.studio.backends;manager.profiles['moss']={'id':'moss','name':'MOSS','url':'http://127.0.0.1:8198'}
+        def process(profile):
+            if profile['id']=='moss':raise ValueError('Port is owned by another command')
+            return None
+        manager.process=process
+        snapshot=self.recovery.tick()
+        self.assertEqual((snapshot['status'],manager.launches),('other-backend-active',0))
+        self.assertIn('moss',snapshot['message']);self.assertIn('ownership',snapshot['message'])
+
+    def test_shared_switch_created_after_probe_is_rechecked_under_studio_lock(self):
+        manager=self.studio.backends;manager.profiles['moss']={'id':'moss','name':'MOSS','url':'http://127.0.0.1:8198'}
+        manager.state_path=Path(self.tmp.name)/'backend-state.json'
+        manager.state_path.write_text('{"active":"primary"}',encoding='utf-8')
+        def available(profile):
+            manager.state_path.write_text('{"active":"primary","operation":{"status":"running","target":"moss"}}',encoding='utf-8')
+            return True
+        manager.available=available
+        observed=manager.request
+        def request(*args):
+            self.assertFalse(self.studio.lock._is_owned(),'Network probes must stay outside the Studio lock')
+            return observed(*args)
+        manager.request=request
+        snapshot=self.recovery.tick()
+        self.assertEqual((snapshot['status'],manager.launches),('other-backend-active',0))
+
+    def test_alternate_process_appearing_after_probe_blocks_final_launch(self):
+        manager=self.studio.backends;manager.profiles['moss']={'id':'moss','name':'MOSS','url':'http://127.0.0.1:8198'}
+        def available(profile):
+            def process(other):
+                if other['id']=='moss':
+                    self.assertTrue(self.studio.lock._is_owned())
+                    return SimpleNamespace(pid=42)
+                return None
+            manager.process=process
+            return True
+        manager.available=available
+        snapshot=self.recovery.tick()
+        self.assertEqual((snapshot['status'],manager.launches),('other-backend-active',0))
+
+    def test_startup_timeout_begins_after_slow_alternate_observations(self):
+        manager=self.studio.backends;manager.profiles['moss']={'id':'moss','name':'MOSS','url':'http://127.0.0.1:8198'}
+        now=[100.0];absent=manager.request;self.recovery.startup_timeout=10
+        def request(profile,route,timeout):
+            if profile['id']=='moss':now[0]=108.0
+            return absent(profile,route,timeout)
+        manager.request=request
+        with patch('runtime_recovery.time.time',side_effect=lambda:now[0]):
+            self.recovery.tick();manager.matching=[SimpleNamespace(pid=9001)]
+            now[0]=113.0;snapshot=self.recovery.tick()
+        self.assertEqual((snapshot['status'],manager.launches),('startup',1))
 
 if __name__ == "__main__": unittest.main()

@@ -2856,7 +2856,9 @@ def create_server(repo_root, host=HOST, port=PORT, http_server=StudioHTTPServer,
     """Bind the loopback port before creating a Studio worker or queue."""
     handler = extend_handler(Handler)
     http = http_server((host, port), handler)
-    try: handler.studio = studio_factory(Path(repo_root), port=port) if studio_factory is Studio else studio_factory(Path(repo_root))   # the bound port, not the module default (Codex P2 on #1585)
+    try:
+        is_studio = isinstance(studio_factory, type) and issubclass(studio_factory, Studio)
+        handler.studio = studio_factory(Path(repo_root), port=getattr(http, 'server_port', port)) if is_studio else studio_factory(Path(repo_root))
     except Exception:
         http.server_close(); raise
     return http
