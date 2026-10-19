@@ -18,7 +18,7 @@
           "trigger position follows the LoRA card: Niji Sweet Spot and NIJISIS at the start, fal style triggers at the end of a short prompt",
           "no ModelSampling* node belongs in these graphs; the Krea 2 loader already applies shift 1.15",
           "FreeU, PAG and RescaleCFG do nothing useful at cfg 1",
-          "19 October 2026 (agent-judged, 11 pictures, docs/looks/LOOK-LAB-2026-10-19.md): with the @NJSW33T trigger and TextFusion on at 15 steps euler_ancestral the trigger was painted as corner text on 2 of 6 pictures; none of 5 pictures without the trigger or without TextFusion showed it. Leave the trigger out; 4, 8 and 15 steps cost 276-331 s because model load and the CPU text encode dominate"
+          "19 October 2026 (agent-judged, 11 pictures, docs/looks/LOOK-LAB-2026-10-19.md): with the @NJSW33T trigger and TextFusion on at 15 steps euler_ancestral the trigger was painted as corner text on 2 of 6 pictures; none of 6 pictures without the trigger or without TextFusion showed it. Leave the trigger out; 4, 8 and 15 steps all cost 262-331 s because model load and the CPU text encode dominate"
         ]
       },
       "defaults": {
