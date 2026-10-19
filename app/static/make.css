@@ -137,5 +137,8 @@
 /* The chosen look carries a check mark, not only the accent border (WCAG 1.4.1). Compare looks has its own round check (above), so not there. */
 .make-look.active:has(>.make-look-select[role=radio])::after{content:"\2713  Chosen";position:absolute;top:8px;right:8px;padding:3px 8px;border-radius:999px;background:var(--accent);color:#10201a;font-size:11px;font-weight:700;pointer-events:none}
 
+/* The LoRA list in Tune (19 Oct): one card per installed LoRA that fits, Add on the right; other families in a fold. */
+.make-lora-list{grid-column:1/-1;display:flex;flex-direction:column;gap:6px;max-height:340px;overflow:auto;padding-right:2px}.make-lora-card{display:flex;gap:10px;align-items:center;justify-content:space-between;border:1px solid var(--make-edge);border-radius:8px;padding:8px 10px;background:var(--panel)}.make-lora-card>div{display:flex;flex-direction:column;gap:2px;min-width:0}.make-lora-card small{color:var(--muted);font-size:11px}.make-lora-card button{flex:0 0 auto;font-size:12px;padding:5px 12px}.make-lora-foreign b{color:var(--muted)}.make-lora-more{display:flex;flex-direction:column;gap:6px}.make-lora-more summary{font-size:11px;color:var(--muted);cursor:pointer;padding:4px 0}.make-lora-more[open]{display:flex}
+
 /* A note in the picture grid (empty, no match, older pictures) spans the row instead of wrapping in one 150 px cell. */
 .make-pictures>p{grid-column:1/-1;margin:0}

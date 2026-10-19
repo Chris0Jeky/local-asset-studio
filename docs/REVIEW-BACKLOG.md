@@ -12,6 +12,11 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 - [ ] **The chosen look carries a "✓ Chosen" badge** on its card, beside the accent border (colour alone did not say which look was chosen). Reverse: delete the `.make-look.active::after` rule at the end of `app/static/make.css`.
 - [ ] **A second press of Keep / Not this, Resume / Stop tracking, Save character or Put away / Restore is ignored while the first save is in flight** (Muse lens). Reverse: drop the `once(...)` wrappers in `app/static/make.js`.
 
+## 2026-10-19 overnight (ux-lead): LoRA list in Tune
+
+- [ ] **Tune shows every installed LoRA that fits as a card with Add** (role, made for this model or not, trigger word, starting strength and range). Other families fold under "may not suit"; typing filters. Reverse: in `renderTune()` in `app/static/make.js`, render `#makeLoraChoices` empty again and drop `loraCards()`.
+- [ ] **An added LoRA whose recorded default is 0 starts at 1, kept in its range** (the full editor already did this; Make added it at 0, which did nothing). Reverse: `startOf()` back to `default??1`.
+
 ## 2026-10-19 overnight (ux-lead): run-card next steps
 
 - [ ] **Make run cards show Change one thing, New pose and Restyle beside Vary and the fixes** (were under More; "Put in a new pose" is now "New pose", the Library dialog's word). More keeps Open full size, Other fixes, Animate and Make it 3D. Reverse: move the three `from(...)` calls in `actions()` in `app/static/make.js` back into the More `<details>`.
