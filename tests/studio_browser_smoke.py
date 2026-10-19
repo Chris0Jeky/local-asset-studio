@@ -142,7 +142,7 @@ def run(screenshots):
             page=context.new_page(); errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
             page.goto(origin);page.wait_for_selector('#makeGoals [data-make-goal]')
             check(page.locator('#makeView').is_visible() and not page.locator('#homeView').is_visible(),'Make is the default view')
-            check(page.locator('#studioSidebar nav > a').all_text_contents()==['✦Make','03Library','◇Models & setup'],'Workspace has exactly the three primary destinations')
+            check(page.locator('#studioSidebar nav > a').all_text_contents()==['✦Make','▦Library','◇Models & setup'],'Workspace has exactly the three primary destinations')
             check(page.locator('#studioSidebar [data-studio-route="home"]').count()==0,'Overview is absent from the sidebar')
             for section in ['Advanced','More tools']:
                 group=page.locator(f'[data-nav-group="{section}"]');summary=group.locator('summary')
