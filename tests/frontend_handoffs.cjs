@@ -952,6 +952,10 @@ async function modelShopCards() {
   run(`pinMismatchByPreset={p2:['vae/shared.safetensors']};location.hash='#models?need=p2';renderCuratedModels()`);
   assert.match(element('#modelCards').innerHTML, /shared model/, 'a present file that fails its pin is shown in the need view');
   run(`pinMismatchByPreset={};location.hash='#models';renderCuratedModels()`);
+  // Offline, health carries no pin map; the inspected requirement still opens the changed card (Codex P2 on #1567).
+  run(`pinMismatchByPreset={};modelReqs.set('p2',[{file:'vae/shared.safetensors',asset_id:'shared',present:true,pin_mismatch:{}}]);location.hash='#models?need=p2';renderCuratedModels()`);
+  assert.match(element('#modelCards').innerHTML, /shared model/, 'an inspected pin mismatch is shown in the need view without health data');
+  run(`location.hash='#models';renderCuratedModels()`);
   run(`modelReqs.set('p2',[{file:'vae/shared.safetensors',asset_id:'shared'}]);renderCuratedModels()`);
   assert.match(element('#modelLooks').innerHTML, /Needs a download<\/h4>[\s\S]*Look B/, 'an unresolved requirement blocks, as the server does');
   // An adapter named in a look but listed nowhere (library or disk) is missing, not silently ignored; one on disk is fine.
