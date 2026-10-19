@@ -68,7 +68,22 @@ assert.ok($('#productionList').innerHTML.startsWith('<div class="production-empt
 assert.doesNotMatch($('#productionList').innerHTML,/data-production-plan|<button/);
 const index=fs.readFileSync(path.join(__dirname,'../app/static/index.html'),'utf8');
 assert.match(index,/<button id="newExperiment" class="primary">Plan a comparison<\/button>/);
-assert.ok(index.includes('<div id="productionDetail"><p>Choose a plan on the left. Plans are budgeted, blind comparisons; quick side-by-sides live in Make.</p>'));
+const emptyDetail=$('#productionDetail').innerHTML;
+assert.equal(emptyDetail,'<p>No plans yet. <button type="button" data-plan-comparison><b>Plan a comparison</b></button> runs one change across a few candidates and reviews them blind. For a quick side-by-side, use <a href="/#make"><b>Compare looks</b> in Make</a>.</p>');
+assert.ok(index.includes('<div id="productionDetail">'+emptyDetail));
+let planClicks=0;$('#newExperiment').click=()=>{planClicks++;};
+run("$('#productionDetail').onclick({target:{closest:selector=>selector==='[data-plan-comparison]'?{}:null}});");
+assert.equal(planClicks,1,'The empty-state action opens the existing planner');
+assert.match(index,/<option value="active">Active<\/option>/);
+assert.match($('#planSummary').textContent,/Showing plans in progress or needing attention; untouched for 7 days folds under Older/);
+run(`productionPlans=[${JSON.stringify(planned)}];renderProduction();`);
+assert.match($('#productionDetail').innerHTML,/^<p>Choose a plan on the left\./,'Visible plans retain the existing no-selection text');
+run("setPlanFilter({type:'voice'});");
+assert.equal($('#productionDetail').innerHTML,emptyDetail,'An empty filtered list offers the same next actions');
+run("productionPlans=[];setPlanFilter({type:'all'});");
+const review=fs.readFileSync(path.join(__dirname,'../app/static/review.html'),'utf8');
+assert.match(review,/<span id="phase" class="badge">No comparison open<\/span>/);
+assert.match(review,/in <a href="\/#production">Compare &amp; review<\/a>, open a comparison plan/);
 
 // 6 · The live summary states the arithmetic and refuses a budget below the candidates.
 $('#experimentRecipe').textContent='Anima portrait';$('#experimentAxis').value='steps';

@@ -91,7 +91,7 @@ function renderPlanSummary(){
   const kinds=PLAN_TYPES[planFilter.type],typed=productionPlans.filter(p=>!kinds||kinds.includes(p.kind)),desk=typed.filter(p=>p.put_away!==true);
   const review=desk.filter(p=>p?.state?.status==='awaiting_review').length,running=desk.filter(p=>PLAN_RUNNING.includes(p?.state?.status)).length,older=planGroups(productionPlans).older.length;
   const parts=[];if(review)parts.push(review+' waiting for your review');if(running)parts.push(running+' running');if(older)parts.push(older+' older');
-  el.textContent=parts.length?parts.join(' · '):(typed.length?typed.length+' '+PLAN_TYPE_NOUNS[planFilter.type]+' · nothing waiting':'');
+  el.textContent=[parts.length?parts.join(' · '):(typed.length?typed.length+' '+PLAN_TYPE_NOUNS[planFilter.type]+' · nothing waiting':''),planFilter.status==='active'?'Showing plans in progress or needing attention; untouched for 7 days folds under Older':''].filter(Boolean).join('. ');
 }
 function renderPlanList(){
   renderPlanSummary();
@@ -126,7 +126,7 @@ function writeProductionDetail(plan,html){
 }
 function renderProduction(){
   renderPlanList();
-  const p=productionPlans.find(p=>p.id===productionId);if(!p)return;
+  const p=productionPlans.find(p=>p.id===productionId);if(!p){const groups=planGroups(productionPlans);writeProductionDetail(null,groups.recent.length+groups.older.length?'<p>Choose a plan on the left. Plans are budgeted, blind comparisons; quick side-by-sides live in Make.</p><p>Native sprite atlases, layered images and Godot projects start from selected Workspace assets.</p>':'<p>No plans yet. <button type="button" data-plan-comparison><b>Plan a comparison</b></button> runs one change across a few candidates and reviews them blind. For a quick side-by-side, use <a href="/#make"><b>Compare looks</b> in Make</a>.</p>');return;}
   if(p.kind==='av'){
     writeProductionDetail(p.id,'<div class="section-title"><div><span class="eyebrow">SCENE</span><h2 title="'+esc(p.name)+'">'+esc(planHumanTitle(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p><p><a class="primary artifact-download" href="/av.html?project='+encodeURIComponent(p.id)+'">Open Scene editor</a> <span class="muted">Edit sources and timing, then render explicitly from the Scene editor.</span></p>'+planPutAway(p));
     return;
@@ -355,7 +355,7 @@ async function checkCandidateAsset(id,name){
     productionMessage('Saved for this candidate: '+name+' '+(now===null?'not checked':now?'yes':'no')+'. The comparison outcome is unchanged.');
   }finally{candidateCheckBusy=false;}
 }
-$('#productionDetail').onclick=async e=>{const actionButton=e.target.closest('[data-project-action]'),action=actionButton?.dataset.projectAction,coordinatorAction=['start','stop','resume','extend-time'].includes(action);
+$('#productionDetail').onclick=async e=>{if(e.target.closest('[data-plan-comparison]')){$('#newExperiment').click();return;}const actionButton=e.target.closest('[data-project-action]'),action=actionButton?.dataset.projectAction,coordinatorAction=['start','stop','resume','extend-time'].includes(action);
   if(coordinatorAction&&productionActionPending){productionMessage('Wait for the current action to finish. Nothing was sent.');return;}
   if(coordinatorAction){productionActionPending=true;actionButton.disabled=true;}
   try{

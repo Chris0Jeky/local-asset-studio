@@ -35,7 +35,7 @@ class PlaceNames(unittest.TestCase):
         self.assertIn('<h3>Library</h3>', library)
         runs = index[index.index('id="productionView"'):]
         self.assertRegex(runs[:400], r'class="eyebrow">COMPARE &(amp;)? REVIEW<')
-        self.assertIn('Compare & review', (STATIC / 'review.js').read_text(encoding='utf-8'))
+        self.assertIn('<a href="/#production">Compare &amp; review</a>', (STATIC / 'review.html').read_text(encoding='utf-8'))  # the Review desk's empty state links back
 
 
 if __name__ == '__main__':
