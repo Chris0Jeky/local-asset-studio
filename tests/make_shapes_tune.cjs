@@ -241,3 +241,22 @@ test('applyTune preserves the prepared seed', () => {
   );
   assert.equal(controls.seed, 123);
 });
+
+// The shut Tune line names the base model (Codex P2 on #1533): two looks of one family on different files read differently.
+test('As made names the model file when a family has two models', () => {
+  const ctx = {PRESETS: [
+    {id: 'anima-base', family: 'Anima', model: {file: 'diffusion_models/anima-base-v1.0.safetensors'}, steps: ['1', 'steps'], lora: ['2', 'strength'], lora_name: ['2', 'name']},
+    {id: 'anima-aes', family: 'Anima', model: {file: 'diffusion_models/anima-aesthetic-v1.1.safetensors'}, steps: ['1', 'steps']},
+    {id: 'wai', family: 'WAI', model: {file: 'checkpoints/wai.safetensors'}}], knowledge: {loras: {'petiflow.safetensors': {label: 'pearly_petiflow2'}}}};
+  vm.createContext(ctx);
+  vm.runInContext('const presets=()=>PRESETS;\n' + "const SLOTS=['lora','lora2','lora3','lora4','lora5','lora6'];\n" +
+    'const presetFor=look=>presets().find(p=>p.id===look?.body?.preset_id);\n' + 'const bound=(p,k)=>!!(p?.[k]||p?.bindings_extra?.[k]);\n' +
+    slice('  const adapters=look=>', '\n  const lookList=') + '\n' + slice('  const kb=()=>', '\n  // Same model type') + '\n' +
+    slice('  const modelLabel=', '\n  // A word already') + '\n' + slice('  const halve=n=>', '\n  const draftOf=') + '\n' +
+    slice('  function asMade(look){', '\n  // The tune applied') + '\nthis.asMade=asMade;', ctx);
+  const a = ctx.asMade({body: {preset_id: 'anima-base', controls: {steps: 25, lora: 1, lora_name: 'petiflow.safetensors'}}});
+  const b = ctx.asMade({body: {preset_id: 'anima-aes', controls: {steps: 30}}});
+  assert.equal(a, 'As made: Anima · anima-base-v1.0 · pearly_petiflow2 1.00 · 25 steps');
+  assert.equal(b, 'As made: Anima · anima-aesthetic-v1.1 · 30 steps');
+  assert.equal(ctx.asMade({body: {preset_id: 'wai', controls: {}}}), 'As made: WAI');
+});
