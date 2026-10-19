@@ -500,7 +500,7 @@ function parallaxNote(job,output){
   const siblings=jobs.filter(j=>j.parallax?.plan_id===claim.plan_id&&j.parallax.stage===other),done=siblings.find(j=>j.status==='completed'),live=siblings.find(j=>['queued','waiting','submitting','running','uncertain'].includes(j.status));
   const failed=job.parallax_finish?.error?'Layers not split: '+job.parallax_finish.error+' ':'';
   if(done)return '<p class="disabledReason"><small>'+esc(failed||'Both edits are in; the layers are not split yet.')+'</small></p><button class="parallaxFinish" data-job="'+id+'" title="Register both edits, build the far, mid and near layers, measure the recomposite error and make the strip. Nothing is generated.">Split layers</button>';
-  if(live?.status==='uncertain')return '<p class="tileNote"><small>The '+name[other]+' edit is uncertain: check it in Recent runs and Resume observation. Do not press Generate again for it; the layers split once it completes.</small></p>';
+  if(live?.status==='uncertain')return '<p class="tileNote"><small>The '+name[other]+' edit is uncertain: check it in Recent runs or Problems. Do not press Generate again for it; the layers split once it completes.</small></p>';
   if(live)return '<p class="tileNote"><small>The '+name[other]+' edit is '+esc(live.status)+'; the layers split when it completes.</small></p>';
   const recovery=typeof window!=='undefined'?window.StudioParallaxRecovery:null,parallaxAvailable=!!recovery?.mounted;
   // Until the recovery controller mounts (it loads after the page), say it is loading; only a failed mount asks for a reload.
