@@ -47,6 +47,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 - [ ] **"Tune this look" is now "Model, LoRAs and settings"** (Make's fold, the Ctrl+K hints, START-HERE, the anime guide, README): someone looking for "model" or "LoRA" finds it by its name. Code keeps the word "tune" internally. Reverse: the `<summary>` text in `renderComposer()` and the three finder strings in `app/static/studio-shell.js`.
 
+## 2026-10-19 overnight (ux-lead): Anima merges and their LoRAs
+
+- [ ] **One Obsession Anima v2.0 and Pearly Anima Mix v1.0 count as Anima for LoRA fit** (`presets/settings-kb.json` family_aliases; the catalog records both as Anima-family merges). Before, every Anima LoRA on those looks said "may not suit". JANIMA LoRAs still say it. The full editor's guidance (bundle-core.js) reads the same aliases, so it now shows Anima guidance for them. Reverse: drop the two alias lines.
+
 ## 2026-10-19 overnight (ux-lead): picture pickers
 
 - [ ] **Character in a new pose: the pose grid leaves out the chosen character picture**; when it was your only picture it says "The character is your only picture. Import a pose picture in the library, or choose Draw the pose." Imported pictures no longer show their file name twice on picker cards. Reverse: `others` in `renderGrid()` and the `pictureMeta()` condition in `app/static/make.js`.

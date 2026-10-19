@@ -134,7 +134,10 @@
   }
   // Installed adapters made for this model type: the knowledge base names each file's family; a file it does not know is not offered.
   // Files whose family is the look's (or the switched model's) come first as made for it; the rest share only the loader (audit N5).
-  const fits=(look,f)=>[presetFor(look)?.family,tunedPreset(look)?.family].includes(entry(f)?.family);
+  // A merge of a base model counts as that base for its LoRAs: the knowledge base's family_aliases (One Obsession and Pearly are recorded
+  // Anima-family merges in presets/catalog.json), the same aliases the full editor's guidance reads (bundle-core.js).
+  const base=p=>kb().family_aliases?.[p?.family]||p?.family;
+  const fits=(look,f)=>[base(presetFor(look)),base(tunedPreset(look))].includes(entry(f)?.family);
   function compatible(look){
     const p=presetFor(look),k=kind(p),chosen=SLOTS.map(s=>p?.choices?.[NAMED(s)]).find(x=>x?.length),files=chosen||(typeof installedLoras!=='undefined'?installedLoras:[]);
     const kinds=new Set(presets().filter(r=>r.family&&kind(r)===k).map(r=>r.family));
@@ -215,7 +218,7 @@
       +'<div class="make-tune-group"><h3>Adapters (LoRAs)</h3>'
       +(t.rows.length?'<label class="make-tune-scale">All adapters × <output id="makeTuneScaleOut">'+scaleOf(t)+'%</output><input type="range" id="makeTuneScale" data-tune="scale" min="0" max="150" step="10" value="'+scaleOf(t)+'" aria-describedby="makeTuneScaleHint"></label><small id="makeTuneScaleHint" class="muted">Multiplies every strength below; the arrow shows what is sent. 100% sends them as set.</small>'+t.rows.map(row).join(''):'<p class="muted">None: the model and the words carry this look.</p>')
       +(SLOTS.some(s=>bound(p,NAMED(s)))?(files.length?'<div class="make-tune-add"><label for="makeLoraSearch">Add a LoRA <small>installed, fits this model</small></label><input id="makeLoraSearch" type="search" list="makeLoraList" placeholder="Filter by name, style or trigger word" autocomplete="off" aria-describedby="makeLoraFit'+(slot?'':' makeLoraFull')+'"'+(slot?'':' disabled')+'><datalist id="makeLoraList">'+files.filter(f=>!t.rows.some(r=>r.name===f)).map(f=>{const e=entry(f);return '<option value="'+escape(f)+'">'+escape(short(f)+(e.role?' · '+e.role:'')+' · '+(fits(look,f)?'made for this model':e.family+', may not suit'))+'</option>';}).join('')+'</datalist><button type="button" data-tune-add'+(slot?'':' disabled')+'>Add</button>'
-        +'<small id="makeLoraFit">'+(made?made+' made for '+escape(family(p))+' come first.':'None is made for '+escape(family(p))+' itself.')+(other?' '+other+' from other families of this model type may not suit it.':'')+'</small>'
+        +'<small id="makeLoraFit">'+(made?made+' made for '+escape(base(p))+(base(p)!==family(p)?' (this model’s base)':'')+' come first.':'None is made for '+escape(family(p))+' itself.')+(other?' '+other+' from other families of this model type may not suit it.':'')+'</small>'
         +(slot?'':'<small id="makeLoraFull">All adapter slots of this recipe are in use; remove one first.</small>')+'<div id="makeLoraChoices" class="make-lora-list" role="group" aria-label="Installed LoRAs for this model">'+loraCards(look,'')+'</div></div>':'<p class="muted">No installed adapter is known to fit this model type. Models & setup lists what can be installed.</p>'):'<p class="muted">This recipe has no adapter slots to fill.</p>')+'</div>'
       +((bound(tp,'steps')&&steps)||(bound(tp,'sampler')&&tp.choices?.sampler?.length)?'<div class="make-tune-group"><h3>Quality and speed</h3><div class="make-pair">'
         +(bound(tp,'steps')&&steps?'<label>Steps<select data-tune="steps">'+option('','As made · '+steps,t.steps==null)+option(draft,'Draft · '+draft+', faster',t.steps===draft)+option(fine,'Finer · '+fine+', slower',t.steps===fine)+'</select></label>':'')
