@@ -839,6 +839,36 @@
           "evidence": "presets/catalog.json · zimage-fast (authored defaults)"
         }
       ]
+    },
+    {
+      "id": "look-moss-detailed-anime",
+      "kind": "look",
+      "name": "Detailed painted anime, rich costumes",
+      "body": {
+        "preset_id": "moss-t2i",
+        "template": "{scene}, looking at the viewer, cinematic lighting, detailed face and eyes, 2D anime illustration with cel shading and clean lineart, high-end anime illustration.",
+        "negative": "",
+        "controls": {
+          "width": 1024,
+          "height": 1536,
+          "seed": 2026101901,
+          "steps": 30,
+          "cfg": 3,
+          "sampler": "euler",
+          "scheduler": "sgm_uniform",
+          "lora": 0,
+          "lora2": 0
+        },
+        "scene_example": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff, on a castle balcony at dusk with wind in her hair, a calm confident smile, cowboy shot",
+        "source_prompt": "An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+        "notes": "From the 19 Oct MOSS-Image lab (docs/MOSS-IMAGE.md, PR #1575): the tail 'looking at the viewer, cinematic lighting, detailed face and eyes, high-end anime illustration.' is the lab's wording (9 of 9 kept on three scenes x three seeds, 9 of 10 costumes); '2D anime illustration with cel shading and clean lineart' is the lab's fix for close-ups drifting photographic (mf3). This exact template has not been rendered as a whole. Empty negative as the model card advises; coverage words go in the scene. Runs on the isolated MOSS-Image backend; agent judgements, not art acceptance."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "docs/MOSS-IMAGE.md · 19 Oct 2026 MOSS-Image lab (PR #1575)"
+        }
+      ]
     }
   ]
 }

@@ -63,14 +63,14 @@ test('Make orders each goal by lab evidence, files painting styles under Painted
   const goals=grab(/const GOALS=(\[[\s\S]*?\n  \]);/),looks=id=>goals.find(g=>g.id===id).looks,ids=new Set(JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/looks.json'))).looks.map(l=>l.id));
   // Lab rounds 1-2 (docs/looks/LOOK-LAB-2026-10-16.md): measured high scorers first, rejects after them, unmeasured slow Krea last.
   // Round 7 (docs/looks/LOOK-LAB-2026-10-19.md, #1563): the One Obsession and Pearly mixes kept 12 of 12 each and lead.
-  assert.deepEqual(looks('character'),['look-oneobsession-anima-v20-showcase','look-pearly-anima-mix-v10-showcase','look-anima-pearly-petiflow','look-anifox-ringeko','look-wai-fantasy-portrait','look-anima-fantasy-portrait','look-animagine-fantasy-portrait']);
+  assert.deepEqual(looks('character'),['look-oneobsession-anima-v20-showcase','look-pearly-anima-mix-v10-showcase','look-moss-detailed-anime','look-anima-pearly-petiflow','look-anifox-ringeko','look-wai-fantasy-portrait','look-anima-fantasy-portrait','look-animagine-fantasy-portrait']);
   assert.deepEqual(looks('scene'),['look-night-shift-retro-anime','look-noob-fantasy-scene','look-krea-watercolor-anime']);
   assert.deepEqual(looks('painting').slice(0,2),['look-anima-painterly-artist-tags','look-krea-style-emerald-tarot']);
   assert.ok(['look-krea-atelier-target-stack','look-krea-witch-nijisis'].every(id=>looks('painting').includes(id)&&!looks('character').includes(id)),'oil-paint and Nijisis looks are paintings');
   assert.deepEqual(looks('photo').slice(0,2),['look-preset-zimage-fast','look-preset-realvis']);assert.deepEqual(looks('game'),['look-zimage-game-icon','look-preset-stylized-prop','look-preset-pixel-lora']);
   for(const g of goals.filter(g=>g.looks)){const first=g.looks.findIndex(id=>/krea/.test(id));assert.ok(first<0||g.looks.slice(first).every(id=>/krea/.test(id)),g.id+' keeps Krea last');for(const id of g.looks)assert.ok(ids.has(id),id);}
   const tested=grab(/const TESTED=(\{[^}]*\});/),shapes=grab(/const SHAPE_FOR=(\{[^}]*\});/);
-  assert.deepEqual(Object.keys(tested).sort(),['look-anima-painterly-artist-tags','look-anima-pearly-petiflow','look-krea-lenovo-ultrareal','look-krea-oil-fantasy','look-krea-realistic-snapshot','look-krea-style-inkwork-darkbrush','look-krea-watercolor-anime','look-night-shift-retro-anime','look-oneobsession-anima-v20-showcase','look-pearly-anima-mix-v10-showcase']);
+  assert.deepEqual(Object.keys(tested).sort(),['look-anima-painterly-artist-tags','look-anima-pearly-petiflow','look-krea-lenovo-ultrareal','look-krea-oil-fantasy','look-krea-realistic-snapshot','look-krea-style-inkwork-darkbrush','look-krea-watercolor-anime','look-moss-detailed-anime','look-night-shift-retro-anime','look-oneobsession-anima-v20-showcase','look-pearly-anima-mix-v10-showcase']);
   assert.ok(!('look-zimage-game-icon' in tested),'game icon kept 3 of 8 (round 5), below the badge rule');assert.match(grab(/const BEST_FOR=(\{[^}]*\});/)['look-zimage-game-icon'],/check shape details/);
   assert.deepEqual(shapes,{character:'portrait',scene:'landscape',game:'square'});
 });
@@ -80,7 +80,7 @@ test('Make speed and Best for come from the look lab doc',()=>{
   for(const m of doc.matchAll(/^\| (look-[\w-]+) \|[^|]*\|[^|]*\| ([\d.]+) \|/gm))rows[m[1]]=Number(m[2]);
   const lab=grab(/const LAB_SECONDS=(\{[^}]*\});/),best=grab(/const BEST_FOR=(\{[^}]*\});/),ids=new Set(JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/looks.json'))).looks.map(l=>l.id));
   assert.ok(Object.keys(rows).length>=20,'the R1 table parses');assert.deepEqual(lab,rows,'LAB_SECONDS is the doc R1 "Median s/image" column');
-  for(const id of Object.keys(best)){assert.ok(ids.has(id)&&(id in rows||id==='look-zimage-game-icon'),id);/* round 4 (PR #1488) look: its evidence is its receipts, not an R1 row */assert.ok(best[id].length<=80,id);}
+  for(const id of Object.keys(best)){assert.ok(ids.has(id)&&(id in rows||id==='look-zimage-game-icon'||id==='look-moss-detailed-anime'),id);/* round 4 (PR #1488) and MOSS-Image (19 Oct, docs/MOSS-IMAGE.md) looks: their evidence is their receipts, not an R1 row */assert.ok(best[id].length<=80,id);}
   assert.ok(lab['look-night-shift-retro-anime']>=45,'Night Shift is not Fast (#1448)');
 });
 const image = {media_type:'image',filename:'source.png'};
@@ -352,6 +352,14 @@ test('An Anima-family merge counts as Anima for its LoRAs (family_aliases, 19 Oc
   const mix={family:'One Obsession Anima v2.0'},context={kb:()=>kb,presetFor:()=>mix,tunedPreset:()=>mix,entry:n=>({'a.safetensors':{family:'Anima'},'j.safetensors':{family:'JANIMA v1 (Anima)'}})[n]};
   const api=vm.runInNewContext(lines+';({fits,base})',context);
   assert.equal(api.base(mix),'Anima');assert.equal(api.fits({},'a.safetensors'),true,'an Anima LoRA is made for an Anima merge');assert.equal(api.fits({},'j.safetensors'),false,'another family still may not suit');
+});
+test('MOSS-Image style LoRAs fit the MOSS look; the youthful-reading one and the 4-step accelerator are not offered (19 Oct lab)',()=>{
+  const kb=JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/settings-kb.json'),'utf8')),moss=Object.keys(kb.loras).filter(f=>kb.loras[f].family==='MOSS-Image').sort();
+  assert.deepEqual(moss,['moss-anireal-v1.safetensors','moss-chainsawman-v1.safetensors','moss-impasto-25d-v08.safetensors','moss-mikkoani-v1.safetensors','moss-reverse1999-v1.safetensors','moss-rezero-v1.safetensors']);
+  assert.equal(kb.families['MOSS-Image'].prompt.negative,'','the model card advises an empty negative');
+  const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),lines=make.match(/  const base=p=>.*\n  const fits=.*\n/)[0],p={family:'MOSS-Image'};
+  const api=vm.runInNewContext(lines+';({fits})',{kb:()=>kb,presetFor:()=>p,tunedPreset:()=>p,entry:n=>kb.loras[n]});
+  assert.equal(api.fits({},'moss-mikkoani-v1.safetensors'),true);
 });
 test('Make offers a character card on every saved picture regardless of review, and preserves canon labels',()=>{
   const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8');

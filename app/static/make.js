@@ -10,7 +10,7 @@
   const json=async(path,body)=>{const r=await fetch(path,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(Error(data.error||data.message||('Request failed ('+r.status+')')),{status:r.status});return data;};
   // Curated, not generated: a goal lists looks by id in the order a newcomer should meet them (proven first, slow last).
   const GOALS=[
-    {id:'character',name:'Anime character',hint:'A person or creature, drawn',looks:['look-oneobsession-anima-v20-showcase','look-pearly-anima-mix-v10-showcase','look-anima-pearly-petiflow','look-anifox-ringeko','look-wai-fantasy-portrait','look-anima-fantasy-portrait','look-animagine-fantasy-portrait']},
+    {id:'character',name:'Anime character',hint:'A person or creature, drawn',looks:['look-oneobsession-anima-v20-showcase','look-pearly-anima-mix-v10-showcase','look-moss-detailed-anime','look-anima-pearly-petiflow','look-anifox-ringeko','look-wai-fantasy-portrait','look-anima-fantasy-portrait','look-animagine-fantasy-portrait']},
     {id:'scene',name:'Scene or background',hint:'A place, no main character',looks:['look-night-shift-retro-anime','look-noob-fantasy-scene','look-krea-watercolor-anime']},
     {id:'painting',name:'Painted illustration',hint:'Oil, ink, watercolour, book cover',looks:['look-anima-painterly-artist-tags','look-krea-style-emerald-tarot','look-krea-style-inkwork-darkbrush','look-krea-style-airy-softwatercolor','look-krea-oil-fantasy','look-krea-atelier-target-stack','look-krea-witch-nijisis']},
     {id:'photo',name:'Photo',hint:'Realistic people, places, products',looks:['look-preset-zimage-fast','look-preset-realvis','look-krea-realistic-snapshot','look-krea-lenovo-ultrareal']},
@@ -30,11 +30,11 @@
   // Round 7 (docs/looks/LOOK-LAB-2026-10-19.md, PR #1563): the One Obsession and Pearly Anima mixes kept 12 of 12 each (3 scenes x 4 seeds, adult
   // characters), so they lead the Anime character goal; Petiflow (Anima base) follows, as Anima-base close-up faces read youthful in that lab.
   // Kept in at least 3 of 4 test pictures, or 2 of 2 where only two were made (docs/looks/LOOK-LAB-2026-10-16.md, rounds 1-2; the game icon is round 4, PR #1488: potion and sword, one seed each).
-  const TESTED={'look-oneobsession-anima-v20-showcase':'12 of 12 (19 Oct, round 7)','look-pearly-anima-mix-v10-showcase':'12 of 12 (19 Oct, round 7)','look-anima-pearly-petiflow':'4 of 4','look-anima-painterly-artist-tags':'2 of 2','look-night-shift-retro-anime':'3 of 4','look-krea-watercolor-anime':'2 of 2','look-krea-oil-fantasy':'2 of 2','look-krea-style-inkwork-darkbrush':'2 of 2','look-krea-realistic-snapshot':'2 of 2','look-krea-lenovo-ultrareal':'2 of 2'};
+  const TESTED={'look-moss-detailed-anime':'18 of 19 (19 Oct, MOSS-Image lab: 9 of 9 scenes, 9 of 10 costumes)','look-oneobsession-anima-v20-showcase':'12 of 12 (19 Oct, round 7)','look-pearly-anima-mix-v10-showcase':'12 of 12 (19 Oct, round 7)','look-anima-pearly-petiflow':'4 of 4','look-anima-painterly-artist-tags':'2 of 2','look-night-shift-retro-anime':'3 of 4','look-krea-watercolor-anime':'2 of 2','look-krea-oil-fantasy':'2 of 2','look-krea-style-inkwork-darkbrush':'2 of 2','look-krea-realistic-snapshot':'2 of 2','look-krea-lenovo-ultrareal':'2 of 2'};
   const tested=l=>TESTED[l.id]?'<small class="make-tested" title="'+escape(TESTED[l.id]+' test pictures on this PC were kept (16 Oct 2026 unless dated; judged by an agent, not art approval).')+'">Tested well</small>':'';
   // Best for (lab rounds 1-2, docs/looks/LOOK-LAB-2026-10-16.md "Ranked best look per goal" and R3): what each tested look carried.
   // Kept here, not in presets/looks.json, because a look body takes only the fields app/looks.py allows.
-  const BEST_FOR={'look-oneobsession-anima-v20-showcase':'Adult characters in costume; leans to revealing cuts, so name what is covered','look-pearly-anima-mix-v10-showcase':'Adult characters in costume, props held as written','look-anima-pearly-petiflow':'Close-ups and upper-body portraits holding one thing','look-anifox-ringeko':'A character holding an animal, readable faces; avoid books and lettering','look-night-shift-retro-anime':'Quiet, empty interiors with a few named props','look-anima-painterly-artist-tags':'A painted travel scene with one figure, quickly','look-krea-watercolor-anime':'Airy painted scenes','look-krea-style-inkwork-darkbrush':'Black-and-white buildings and interiors','look-krea-oil-fantasy':'Dark, colourful fantasy places','look-krea-style-airy-softwatercolor':'Pale flowery rooms; avoid written labels','look-krea-lenovo-ultrareal':'Natural phone-photo people and rooms','look-zimage-game-icon':'One item on white; check shape details'};
+  const BEST_FOR={'look-moss-detailed-anime':'Rich costumes and props, full body, lettering; close-ups may turn photographic','look-oneobsession-anima-v20-showcase':'Adult characters in costume; leans to revealing cuts, so name what is covered','look-pearly-anima-mix-v10-showcase':'Adult characters in costume, props held as written','look-anima-pearly-petiflow':'Close-ups and upper-body portraits holding one thing','look-anifox-ringeko':'A character holding an animal, readable faces; avoid books and lettering','look-night-shift-retro-anime':'Quiet, empty interiors with a few named props','look-anima-painterly-artist-tags':'A painted travel scene with one figure, quickly','look-krea-watercolor-anime':'Airy painted scenes','look-krea-style-inkwork-darkbrush':'Black-and-white buildings and interiors','look-krea-oil-fantasy':'Dark, colourful fantasy places','look-krea-style-airy-softwatercolor':'Pale flowery rooms; avoid written labels','look-krea-lenovo-ultrareal':'Natural phone-photo people and rooms','look-zimage-game-icon':'One item on white; check shape details'};
   const bestFor=l=>BEST_FOR[l.id]?'<small class="make-best">Best for: '+escape(BEST_FOR[l.id])+'</small>':'';
   // Recorded, never inferred: only a recipe whose own commercial_note names non-commercial terms (presets/catalog.json) is tagged.
   const nonCommercial=p=>/non-?commercial|prohibit commerciali/i.test(p?.commercial_note||'');
@@ -73,13 +73,16 @@
   // Honest speed (#1448): median seconds per picture measured in the 16 Oct look lab (docs/looks/LOOK-LAB-2026-10-16.md, R1 table,
   // "Median s/image": load, encode, sample and decode on this PC; two pictures each, cold and warm mixed). Update from the doc, not by hand.
   const LAB_SECONDS={'look-night-shift-retro-anime':163.2,'look-krea-atelier-target-stack':1757,'look-krea-witch-nijisis':812.2,'look-anima-painterly-artist-tags':31.7,'look-anima-fantasy-portrait':37.1,'look-wai-fantasy-portrait':25.4,'look-animagine-fantasy-portrait':41.5,'look-pearly-anima-mix-v10-showcase':29.8,'look-oneobsession-anima-v20-showcase':30.8,'look-anima-pearly-petiflow':30.6,'look-anifox-ringeko':44.9,'look-noob-fantasy-scene':36.7,'look-krea-watercolor-anime':375,'look-krea-oil-fantasy':643.1,'look-krea-style-emerald-tarot':466.8,'look-krea-style-inkwork-darkbrush':434,'look-krea-style-airy-softwatercolor':430,'look-krea-realistic-snapshot':342.7,'look-krea-lenovo-ultrareal':357.2,'look-preset-stylized-prop':43.3,'look-preset-pixel-lora':47.9,'look-preset-realvis':86.7,'look-preset-zimage-fast':102.4};
+  // MOSS-Image (19 Oct lab, docs/MOSS-IMAGE.md): 30 steps at 1024x1536, 53-106 s warm on a shared PC; the first after a switch loads the model.
+  // Kept apart from LAB_SECONDS, which mirrors the 16 Oct lab table (studio_ux.cjs checks it against the doc).
+  const LAB_OTHER={'look-moss-detailed-anime':{seconds:75,source:'Median of the 19 Oct MOSS-Image lab on this PC. The first picture after a switch takes about 2 min.'}};
   // This PC's finished Make runs of the look as made (its recipe and steps; drafts and model switches left out) come first, then the lab.
   // ponytail: picture size is not matched; a reshaped run counts like a designed one.
   function lookTiming(look){
     const seen=new Map(),names=['Make · '+look.name,'Make · Compare · '+look.name],steps=look.body.controls?.steps;
     for(const j of [...(typeof jobs!=='undefined'&&Array.isArray(jobs)?jobs:[]),...state.runs.map(r=>r.job)])if(j?.id&&names.includes(j.label)&&(steps==null||Number(j.controls?.steps)===Number(steps)))seen.set(j.id,j);
     const mine=window.StudioContinuation?.combineTiming?.([...seen.values()],look.body.preset_id);
-    return mine?{seconds:mine.seconds,source:'Median of '+mine.count+' finished run'+(mine.count>1?'s':'')+' of this look on this PC.'}:LAB_SECONDS[look.id]?{seconds:LAB_SECONDS[look.id],source:'Median of two test pictures in the 16 Oct look lab on this PC.'}:null;
+    return mine?{seconds:mine.seconds,source:'Median of '+mine.count+' finished run'+(mine.count>1?'s':'')+' of this look on this PC.'}:LAB_SECONDS[look.id]?{seconds:LAB_SECONDS[look.id],source:'Median of two test pictures in the 16 Oct look lab on this PC.'}:LAB_OTHER[look.id]||null;
   }
   // Fast under 45 s, Medium under 3 min, Slow otherwise. A look never measured says so; only a Krea recipe is known slow without a number.
   function speed(look){const t=look&&lookTiming(look),s=t&&Math.round(t.seconds);
@@ -89,7 +92,24 @@
   // The same runtime facts the full editor gates on (app.js globals); unknown (null) health does not block.
   function runtimeBlocker(){if(typeof backendSwitching!=='undefined'&&backendSwitching)return'A model environment switch is running. Wait for it to finish.';if(typeof workerAlive!=='undefined'&&workerAlive===false)return'The Studio worker has stopped. Restart the Studio before generating.';if(typeof online!=='undefined'&&online===false)return'ComfyUI is not reachable. Start it, then try again.';if(typeof online!=='undefined'&&online===true&&typeof schemaAvailable!=='undefined'&&!schemaAvailable)return'ComfyUI is still starting up. Try again in a moment.';return'';}
   function blocker(look,p=tunedPreset(look)){const runtime=runtimeBlocker();if(runtime)return runtime;if(look.usable===false)return look.unusable_reason||'This look cannot be used now.';if(!p)return'This look’s recipe is not in the library.';if(p.runtime_block)return p.runtime_block;const missing=typeof missingByPreset!=='undefined'&&missingByPreset[p.id];if(Array.isArray(missing)&&missing.length)return'Needs '+missing.length+' model file'+(missing.length>1?'s':'')+' first: open Models & setup.';return'';}
-  const blockerMarkup=(look,text,id=tunedPreset(look)?.id||look.body.preset_id)=>escape(text).replace('Models &amp; setup','<a href="/#models?need='+escape(encodeURIComponent(id))+'">Models &amp; setup</a>');
+  const blockerMarkup=(look,text,id=tunedPreset(look)?.id||look.body.preset_id)=>{const sw=switchMarkup(byId(id),text);return sw?'Runs in '+escape(envTarget(byId(id)))+(running()?', not the running '+escape(envName(running())):'')+'.'+sw:escape(text).replace('Models &amp; setup','<a href="/#models?need='+escape(encodeURIComponent(id))+'">Models &amp; setup</a>');};
+  // Another model environment (MOSS-Image, 19 Oct): the recipe's runtime_block says "Switch to X to use this recipe." Make offers that switch as
+  // one press beside the reason. The press is the user's explicit choice; nothing switches on its own, and a switch never generates.
+  // The server sets that runtime_block exactly when the recipe's backend is not the active one (Studio.catalog), so it is the signal here.
+  const envOf=p=>p?.backend_id||'primary',running=()=>typeof backendActive!=='undefined'&&backendActive||null;
+  const envName=id=>(document.querySelector('#backendChoice option[value="'+CSS.escape(id)+'"]')?.textContent||id).replace(/ · online$/,'');
+  const envTarget=p=>/^Switch to (.+) to use this recipe\.$/.exec(p?.runtime_block||'')?.[1]||envName(envOf(p));
+  function switchMarkup(p,text){if(!p||text!==p.runtime_block||!/^Switch to .+ to use this recipe\.$/.test(text))return'';const to=envOf(p),name=envTarget(p);
+    return' <button type="button" class="make-env-switch" data-make-switch="'+escape(to)+'" data-make-switch-name="'+escape(name)+'">Switch to '+escape(name)+'</button><small class="muted"> About a minute. Nothing is generated.</small>';}
+  let switchWatch=null;
+  function switchEnvironment(to,name=envName(to)){
+    const choice=document.querySelector('#backendChoice'),go=document.querySelector('#switchBackend');
+    if(!running())return say('Still reading the model environments. Try again in a moment.');
+    if(!choice||!go||go.disabled)return say('A local operation is running. Try the switch again when it finishes.');
+    choice.value=to;if(choice.value!==to)return say(name+' is not installed. Models & setup lists what it needs.');
+    go.click();say('Switching to '+name+'… Nothing is generated. Generate comes back when it is ready.');clearInterval(switchWatch);const started=Date.now();
+    switchWatch=setInterval(()=>{if(typeof backendSwitching!=='undefined'&&!backendSwitching&&backendActive===to){clearInterval(switchWatch);render();say(name+' is running. Press Generate when ready.');}
+      else if(Date.now()-started>240000){clearInterval(switchWatch);say('The switch to '+name+' has not finished. Models & setup shows its progress.');}},1000);}
 
   // Tune this look (owner ask, 16 Oct 2026): see and change the look's model, adapters, steps, negative and seed without the
   // full editor. Folded shut by default. Tuning only changes the controls Generate sends: the server's allow-list, adapter
@@ -167,6 +187,8 @@
   // Round 7 look lab (gpu-lab, 19 Oct; agent verdicts, not art acceptance): on Anima models the official turbo LoRA at 8 steps, cfg 1, euler/simple
   // (13 s warm) was a near-tie with 30 steps, and 20/30/40 steps looked alike. So an Anima look's Draft is the turbo pass, and it offers no Fine.
   // Keyed by file, so it applies wherever the knowledge base says that file fits (compatible()); update from the lab doc, not by hand.
+  // MOSS-Image (19 Oct lab, docs/MOSS-IMAGE.md): 20, 30 and 50 steps were ties, so Quality offers no Fine there either (Tune still can).
+  const NO_FINE=new Set(['MOSS-Image']);
   const TURBO={file:'anima-turbo-lora-v0.2.safetensors',steps:8,cfg:1,sampler:'euler',scheduler:'simple'};
   const turboFits=(look,t=tuneOf(look),tp=tunedPreset(look))=>compatible(look).includes(TURBO.file)&&['steps','cfg'].every(k=>bound(tp,k))&&(t.rows.some(r=>r.name===TURBO.file)||!!freeSlot(look,t));
   function draftMarkup(look){const tp=tunedPreset(look),full=fullSteps(look,tp),turbo=turboFits(look),n=turbo?TURBO.steps:full>=10||speed(look)[0]==='slow'?draftOf(look,tp):0,t=state.tune[look.id];if(!n)return'';
@@ -174,7 +196,7 @@
     const fine=Math.min(150,Math.round(full*1.5)),radio=(id,value,label,on)=>'<label class="make-check"><input type="radio" name="makeQuality" id="'+id+'" value="'+value+'"'+(on?' checked':'')+(id==='makeDraft'?' aria-describedby="makeDraftHint"':'')+'> '+label+'</label>';
     if(turbo)return '<fieldset class="make-quality"><legend>Quality</legend>'+radio('makeDraft','turbo','Draft · turbo LoRA, 8 steps, quickest',!!t?.turbo)+radio('makeStandard','','As made · '+full+' steps',!t?.turbo&&t?.steps==null)
       +'<small id="makeDraftHint" class="muted">On Anima models the turbo Draft takes about half the time; on one 19 Oct lab picture it came close to a full run, and 20, 30 and 40 steps looked alike, so there is no Fine. Compare with As made on your own picture. A draft card offers “Make the final” at the full '+full+' steps.</small></fieldset>';
-    return '<fieldset class="make-quality"><legend>Quality</legend>'+radio('makeDraft',n,'Draft · '+n+' steps, rougher but quicker',t?.steps===n)+radio('makeStandard','','As made · '+full+' steps',t?.steps==null&&!t?.turbo)+(fine>full?radio('makeFine',fine,'Fine · '+fine+' steps, slower',t?.steps===fine):'')
+    return '<fieldset class="make-quality"><legend>Quality</legend>'+radio('makeDraft',n,'Draft · '+n+' steps, rougher but quicker',t?.steps===n)+radio('makeStandard','','As made · '+full+' steps',t?.steps==null&&!t?.turbo)+(fine>full&&!NO_FINE.has(tp?.family)?radio('makeFine',fine,'Fine · '+fine+' steps, slower',t?.steps===fine):'')
       +'<small id="makeDraftHint" class="muted">A draft card offers “Make the final”: the same words and seed at the full '+full+' steps.</small></fieldset>';}
   const draftRun=run=>{const look=state.looks?.find(l=>l.id===run.lookId);return!!look&&run.scene&&FINAL.includes(run.job.status)&&(run.job.outputs||[]).length>0&&(!!run.tune?.turbo||run.tune?.steps!=null&&run.tune.steps===draftOf(look,byId(run.tune.preset)||presetFor(look)));};
   const clamp=v=>Math.min(2,Math.max(0,Math.round((Number(v)||0)*20)/20));
@@ -1004,7 +1026,7 @@
     const out=q('#makeEstimate'),list=compareList();if(!out)return;const epoch=++compareEpoch;let guessed=false,usedLab=false,usedRuns=false;if(list.length<2){out.textContent='';return;}
     const each=await Promise.all(list.map(l=>{const p=presetFor(l),[w,h]=shapeSize(p,l,'design');return json('/api/estimate',{preset_id:p?.id||l.body.preset_id,controls:{...l.body.controls,width:w,height:h},batch_count:1,reference_count:0}).then(e=>{const lab=rough(e)&&lookTiming(l);if(rough(e)&&!lab)guessed=true;if(lab)usedLab=true;else if(!rough(e)&&e.estimate_seconds)usedRuns=true;return lab?lab.seconds:Number(e.estimate_seconds)||0;},()=>0);}));
     if(epoch!==compareEpoch||!out.isConnected)return;const total=each.reduce((x,y)=>x+y,0),unknown=each.filter(x=>!x).length;
-    out.classList.toggle('make-warn',total>600);out.textContent=list.length+' pictures, one per look'+(total?' · about '+duration(total)+' in total'+(unknown?' (no timing yet for '+unknown+')':'')+(guessed?basis({confidence:'none'}):!usedLab?basis({}):usedRuns?', from earlier runs and the look lab on this PC.':', from the 16 Oct look lab on this PC.'):' · no timing yet for these looks on this PC.');
+    out.classList.toggle('make-warn',total>600);out.textContent=list.length+' pictures, one per look'+(total?' · about '+duration(total)+' in total'+(unknown?' (no timing yet for '+unknown+')':'')+(guessed?basis({confidence:'none'}):!usedLab?basis({}):usedRuns?', from earlier runs and the look lab on this PC.':', from the look lab on this PC.'):' · no timing yet for these looks on this PC.');
   }
   // A compare sends its jobs one by one; leaving Make (even briefly) stops the ones not yet sent (#1514).
   function leaveWatch(){let left=false;const o=new MutationObserver(records=>{if(view.hidden||records.some(r=>r.oldValue!==null))left=true;});
@@ -1112,6 +1134,7 @@
     const migrate=e.target.closest('[data-make-migrate]');if(migrate){openMigration(migrate.dataset.makeMigrate);return;}
     if(e.target.closest('[data-make-note-dismiss]')){dismissNote();return;}
     const pick=e.target.closest('[data-make-pick]');if(pick){state.character=null;choosePicture(pick.dataset.makePick);renderPictures(goal());q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();return;}
+    const sw=e.target.closest('[data-make-switch]');if(sw){switchEnvironment(sw.dataset.makeSwitch,sw.dataset.makeSwitchName);return;}
     const all=e.target.closest('[data-make-all]');if(all){state.allPictures=!state.allPictures;for(const [id,attr] of [['makePictures','data-make-pick'],['makePosePictures','data-make-pose-pick']])renderGrid(id,attr);q('[data-make-all="'+all.dataset.makeAll+'"]')?.focus();return;}
     if(e.target.closest('[data-make-repick]')){state.repicking=true;renderPictures(goal());q('[data-make-search="makePictures"]')?.focus();return;}
     if(e.target.closest('[data-make-keep-picture]')){state.repicking=false;renderPictures(goal());q('#makeComposer .make-step h2')?.focus();return;}

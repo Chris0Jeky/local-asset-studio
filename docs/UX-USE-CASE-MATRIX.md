@@ -1,5 +1,14 @@
 # UX use-case matrix
 
+## Make: a look on another model environment (MOSS-Image), 19 October 2026
+
+MOSS-Image runs on its own ComfyUI (#1575). Before this, a MOSS recipe was reachable only through the Full editor, after switching in Models & setup.
+Now its look sits in Make's Anime character goal, says where it runs, and offers the switch beside the disabled Generate.
+
+| Journey | Before | After | Proof |
+| --- | --- | --- | --- |
+| A MOSS-Image anime picture from Make, Main library running | not in Make (Models & setup: open the Model environment fold, choose MOSS, Switch environment; then Full editor: find the recipe, write the prompt, Generate) | 3 clicks + words (the look, Switch to MOSS-Image, Generate) | `make_goals_browser.py` MOSS segment: one `/api/backends/switch`, no job until Generate |
+
 ## Make: Compare one setting — 16 October 2026
 
 Audit v3 N7, issue #1496. One look with its Tune, one setting varied over two or three values, the words, shape, tune and
