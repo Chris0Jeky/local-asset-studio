@@ -211,7 +211,7 @@ class LiveGuard(unittest.TestCase):
         self.assertIn('deny-list attribute', runner.live_allows('click', True, 'x', 'Keep', ('data-choose-candidate',), False, '[data-asset-open="x"]'))
 
     def test_the_local_list_covers_clicks_only(self):
-        self.assertIn('read-only', runner.live_allows('press', False, 'workshopReview', 'Review checks', (), False, '#workshopReview'))
+        self.assertIn('read-only', runner.live_allows('press', False, 'workshopReview', 'What’s missing?', (), False, '#workshopReview'))
 
     def test_no_local_control_is_a_denied_id_and_every_one_says_why(self):
         for selector, why in runner.LOCAL_CONTROLS.items():
