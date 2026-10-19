@@ -116,10 +116,9 @@ async def exercise_preparation_ownership(page, check, out):
         await page.keyboard.press('Escape')
         await finish('parallax')
     finally:
-        await page.evaluate('''async () => {
+        await page.evaluate('''() => {
           Object.values(window.__prepareFinish).forEach(resolve=>resolve());
           if(window.__finishPreparationJob)window.__finishPreparationJob();
-          await new Promise(resolve=>setTimeout(resolve,0));
         }''')
         await page.wait_for_function('!submitting')
         await page.evaluate('''() => {
@@ -245,10 +244,10 @@ async def run(args):
                 }""")
                 await page.set_input_files('[data-ref-file="0"]', image)
                 await page.wait_for_function('referencePending===1')
-                await page.evaluate("""async() => {
+                await page.evaluate("""() => {
                   window.__finishCheck([{file:'local-look.png',sha256:'b'.repeat(64),available:false}]);
-                  await window.__oldCheck;
                 }""")
+                await page.wait_for_function('referencePending===0')
                 check('stale availability does not invalidate a newly uploaded copy of the same bytes', await page.evaluate("!referenceRecords[0].missing && referencesReady() && referencePending===0 && parentByInput.lastReference==='asset-0'"))
                 check('no generation submission', not await page.evaluate("window.__writes.includes('/api/jobs')"))
                 if errors:print('JavaScript exceptions:',json.dumps(errors),flush=True)  # #1306: the hosted failure kept no message

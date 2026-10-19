@@ -32,6 +32,27 @@ const copy=()=>page.api('/api/assets/reference',{body:JSON.stringify({id:'asset-
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('transport case complete', result.stdout, 'The asynchronous case exited before completion')
 
+    def test_attachment_control_does_not_export_a_pending_promise(self):
+        tree=ast.parse((ROOT/'tests/source_slot_choices_browser.py').read_text(encoding='utf-8'))
+        action=next(node.args[0].value for node in ast.walk(tree)
+                    if isinstance(node,ast.Call) and isinstance(node.func,ast.Attribute) and node.func.attr=='evaluate'
+                    and node.args and isinstance(node.args[0],ast.Constant) and isinstance(node.args[0].value,str)
+                    and "attachReferenceAsset(1,'asset-2')" in node.args[0].value)
+        self.run_case("""
+const scope={referencePending:0,referenceRecords:[]};
+scope.window=scope;
+scope.attachReferenceAsset=(index,id)=>new Promise(resolve=>{
+  scope.referencePending++;
+  scope.finish=()=>{scope.referenceRecords[index]={parent_asset:id};scope.referencePending--;resolve()};
+});
+let result=vm.runInNewContext('('+ACTION+')',scope);
+if(typeof result==='function')result=result();
+assert.equal(result,undefined,'CDP must not await the fixture operation promise');
+assert.equal(scope.referencePending,1); assert.equal(scope.referenceRecords[1],undefined);
+scope.finish(); await tick();
+assert.equal(scope.referencePending,0); assert.equal(scope.referenceRecords[1].parent_asset,'asset-2');
+""".replace('ACTION',json.dumps(action)))
+
     def test_copy_release_is_consumed_before_a_later_response_arrives(self):
         self.run_case("""
 page.__choiceDelay=true;

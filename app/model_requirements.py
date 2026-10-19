@@ -67,7 +67,7 @@ def cached_pin_mismatch(asset, stamp, record):
     if stamp is None: return None
     size, mtime_ns = stamp
     fresh = valid_fingerprint(record, size, mtime_ns)
-    unavailable = isinstance(record, dict) and bool(record.get('digest_unavailable'))
+    unavailable = isinstance(record, dict) and bool(record.get('digest_unavailable')) and record.get('bytes') == size and record.get('mtime_ns') == mtime_ns
     return pin_mismatch(asset, size, record['sha256'] if fresh else None, digest_unavailable=unavailable)
 
 
