@@ -40,6 +40,72 @@ class BackendAdmissionTests(unittest.TestCase):
     def legacy(self):
         self.record(operation={'id':'legacy','status':'running','target':'hidream'})
 
+    def test_snapshot_work_refusal_matches_fresh_admission_without_replacing_worker_state(self):
+        manager=self.manager;read=manager._state.read;read_locks=[]
+        expected=manager._state_snapshot;operation=copy.deepcopy(manager.operation)
+        owner=dict(manager._owner,instance_id='another-studio')
+        cases=[('mismatch',{'active':'hidream','operation':{'status':'completed','target':'hidream'}}),
+               ('first-run',None),*[('terminal-'+status,{'active':'primary','operation':{'status':status}}) for status in ('completed','failed','interrupted')],
+               ('legacy',{'active':'primary','operation':{'status':'running','target':'hidream'}}),
+               ('foreign',{'active':'primary','operation':{'status':'running','target':'hidream','owner':owner}}),
+               ('inspection',{'active':'primary','operation':{'status':'interrupted','inspection_required':True}}),
+               ('unknown',{'active':'missing','operation':None}),('malformed',{})]
+        def locked_read():
+            read_locks.append(self.studio.lock._is_owned())
+            return read()
+        def endpoint(*args):
+            self.assertFalse(self.studio.lock._is_owned(),'Runtime observation stays outside the lock')
+            return {'system':{'ready':True},'devices':[]}
+        def resolution(*args):
+            self.assertFalse(self.studio.lock._is_owned(),'Owner-process observation stays outside the lock')
+            return False
+        for name,value in cases:
+            with self.subTest(name=name):
+                if value is None:self.path.unlink(missing_ok=True)
+                else:self.path.parent.mkdir(parents=True,exist_ok=True);self.path.write_text(json.dumps(value))
+                raw=self.path.read_bytes() if self.path.exists() else None
+                with patch.object(manager._state,'read',side_effect=locked_read) as reads, \
+                     patch.object(manager,'request',side_effect=endpoint),patch.object(backend_state,'resolution_allowed',side_effect=resolution):
+                    status=manager.snapshot();self.assertEqual(reads.call_count,1)
+                    refusal=None
+                    with self.studio.lock:
+                        try:manager.require_work_admission()
+                        except backend_state.StateError as exc:refusal=str(exc)
+                    self.assertEqual(reads.call_count,2)
+                self.assertEqual(status.get('work_blocker'),refusal)
+                self.assertIn('work_blocker',status)
+                self.assertEqual(read_locks[-2:],[True,True],'The local and shared status are one locked observation')
+                if name=='mismatch':
+                    self.assertIn('Switch explicitly',refusal);self.assertFalse(status['shared_state']['blocker'])
+                    self.assertFalse(status['shared_state']['resolvable']);self.assertFalse(status['busy'])
+                self.assertIs(manager._state_snapshot,expected);self.assertEqual(manager.operation,operation)
+                self.assertIsNone(manager.state_issue);self.assertIsNone(manager._owned_operation);self.assertIsNone(manager._uncertain_publication)
+                self.assertEqual(self.path.read_bytes() if self.path.exists() else None,raw)
+        self.launch.assert_not_called();self.assertEqual(self.studio.requests,[])
+
+    def test_snapshot_keeps_local_refusal_priority_when_shared_state_cannot_be_read(self):
+        manager=self.manager
+        for busy,issue,expected in ((True,'Local publication is unconfirmed','A backend switch is running. Wait for it to finish.'),
+                                    (False,'Local publication is unconfirmed','Local publication is unconfirmed'),
+                                    (False,None,'The shared record is unreadable')):
+            with self.subTest(busy=busy,issue=issue):
+                manager.busy=busy;manager.state_issue=issue
+                with patch.object(manager,'request',return_value={}), \
+                     patch.object(manager._state,'read',side_effect=backend_state.StateError('The shared record is unreadable')) as reads:
+                    status=manager.snapshot();self.assertEqual(reads.call_count,1)
+                    with self.studio.lock,self.assertRaisesRegex(backend_state.StateError,expected):manager.require_work_admission()
+                    self.assertEqual(reads.call_count,1 if busy or issue else 2,'Local refusal must not attempt a shared read')
+                self.assertEqual(status.get('work_blocker'),expected)
+                self.assertEqual(manager.state_issue,issue)
+
+    def test_a_clear_status_does_not_authorize_later_work_after_selection_changes(self):
+        with patch.object(self.manager,'request',return_value={}):status=self.manager.snapshot()
+        self.assertIn('work_blocker',status);self.assertIsNone(status['work_blocker'])
+        self.record(active='hidream',operation={'status':'completed','target':'hidream'})
+        with self.studio.lock,self.assertRaisesRegex(backend_state.StateError,'Switch explicitly'):
+            self.manager.require_work_admission()
+        self.assertEqual(self.studio.jobs,{});self.assertTrue(self.studio.queue.empty());self.launch.assert_not_called()
+
     def uncertain_completion(self):
         manager=self.manager
         with self.studio.lock:manager._admit_shared();manager._begin_switch('hidream')

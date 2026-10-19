@@ -25,6 +25,16 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
     assert.equal(typeof U.readinessItems,'function');const items=U.readinessItems({preset:null,online:null,schemaAvailable:false,workerAlive:false,referencesReady:false,missing:['x'],switching:true,busy:true});
     const allow=new Set(['recipes','models','dependencies','references',null]);assert.ok(items.every(i=>allow.has(i.action??null)));assert.equal(items.find(i=>i.code==='busy').action,null);assert.equal(items.find(i=>i.code==='references').action,'references');
   });
+  await test('work refusal reaches base Generate and actionable readiness without pretending to switch',()=>{
+    const reason='The saved selection differs. Switch explicitly in Models & setup.',s=fixture();
+    s.run("online=true;schemaAvailable=true;let backendSwitching=false,backendWorkBlocker='';");s.run('updateReady()');assert.equal(s.element('#generate').disabled,false);
+    s.run('backendWorkBlocker='+JSON.stringify(reason)+';updateReady()');assert.equal(s.element('#generate').disabled,true);
+    const input={preset:{id:'A'},online:true,schemaAvailable:true,workBlocker:reason};
+    assert.deepEqual(U.readinessItems(input),[{code:'backend-work',message:reason,action:'models'}]);
+    assert.deepEqual(U.readiness(input),{ready:false,blockers:[reason]});
+    assert.deepEqual(U.readinessItems({...input,switching:true}),[{code:'backend-work',message:reason,action:'models'}]);
+    s.run("backendWorkBlocker='';updateReady()");assert.equal(s.element('#generate').disabled,false);
+  });
   await test('starting inspection invalidates the previous count and graph immediately',async()=>{
     const s=fixture();s.element('#dependencyCount').textContent='1 / 1 present';s.element('#nodeList').innerHTML='old';s.element('#graphPreview').textContent='old';const p=s.run('inspectSelected()');
     assert.match(s.element('#dependencyCount').textContent,/Checking/);assert.equal(s.element('#nodeList').innerHTML,'');assert.equal(s.element('#graphPreview').textContent,'');s.requests[0].resolve(report('A'));await p;

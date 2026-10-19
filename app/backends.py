@@ -20,6 +20,19 @@ class _NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):return None
 
 
+def work_blocker(observed, *, active, profiles, busy, state_issue):
+    """Project one observation into a refusal; never adopt or publish its selection."""
+    if busy:return 'A backend switch is running. Wait for it to finish.'
+    if state_issue:return state_issue
+    if isinstance(observed,backend_state.StateError):return str(observed)
+    reason=backend_state.blocker(observed.value)
+    if reason:return reason
+    saved=observed.value.get('active','primary')
+    if saved not in profiles:return 'Shared backend state selects an unknown environment; inspect its saved selection before starting work.'
+    if saved!=active:return 'The saved backend selection differs from this Studio. Switch explicitly in Models & setup or restart Studio after inspection before starting work.'
+    return None
+
+
 # --reserve-vram replaces ComfyUI's default rather than adding to it (600+100 MiB on this 16,304 MB Windows
 # card, comfy/model_management.py:863-867). ComfyUI's free-VRAM figure does not subtract what dwm and other
 # apps hold, so a model it loads "completely" can spill into WDDM shared memory. A measured reserve
@@ -112,16 +125,20 @@ class BackendManager:
             record={k:profile[k] for k in ('id','name','url','root','description')};record['readiness']=self.readiness(profile);record['installed']=record['readiness']['ready']
             try:record['online']=endpoint_ready(self.request(profile,'/system_stats',0.8))
             except (OSError,ValueError):record['online']=False
-            record['active']=self.active==profile['id'];profiles.append(record)
-        with self.studio.lock:active=self.active;busy=self.busy;operation=copy.deepcopy(self.operation);last_launch_reserve=copy.deepcopy(self.last_launch_reserve);state_issue=self.state_issue;uncertain=self._uncertain_publication if state_issue else None
-        try:
-            shared=self._state.read()
+            profiles.append(record)
+        with self.studio.lock:
+            active=self.active;busy=self.busy;operation=copy.deepcopy(self.operation);last_launch_reserve=copy.deepcopy(self.last_launch_reserve);state_issue=self.state_issue;uncertain=self._uncertain_publication if state_issue else None
+            try:shared=self._state.read()
+            except backend_state.StateError as exc:shared=exc
+        for profile in profiles:profile['active']=active==profile['id']
+        if isinstance(shared,backend_state.StateError):shared_state={'sha256':None,'blocker':str(shared),'resolvable':False}
+        else:
             shared_state={'sha256':shared.identity[1] if shared.identity else None,'operation':shared.value.get('operation'),
                           'blocker':state_issue or backend_state.blocker(shared.value),
                           'resolvable':not busy and backend_state.resolution_allowed(shared,self._owner,uncertain)}
-        except backend_state.StateError as exc:shared_state={'sha256':None,'blocker':str(exc),'resolvable':False}
         return {'active':active,'busy':busy,'operation':operation,'profiles':profiles,'last_launch_reserve':last_launch_reserve,
-                'state_issue':state_issue,'shared_state':shared_state}
+                'state_issue':state_issue,'shared_state':shared_state,
+                'work_blocker':work_blocker(shared,active=active,profiles=self.profiles,busy=busy,state_issue=state_issue)}
 
     def resolve_switch_record(self, payload):
         """Settle the exact inspected record and align an unconfirmed completed selection."""
@@ -170,14 +187,9 @@ class BackendManager:
 
     def require_work_admission(self):
         """Caller holds Studio's lock; observe state without changing a worker's expected record."""
-        if self.busy:raise backend_state.StateError('A backend switch is running. Wait for it to finish.')
-        if self.state_issue:raise backend_state.StateError(self.state_issue)
-        current=self._state.read();reason=backend_state.blocker(current.value)
+        current=None if self.busy or self.state_issue else self._state.read()
+        reason=work_blocker(current,active=self.active,profiles=self.profiles,busy=self.busy,state_issue=self.state_issue)
         if reason:raise backend_state.StateError(reason)
-        active=current.value.get('active','primary')
-        if active not in self.profiles:raise backend_state.StateError('Shared backend state selects an unknown environment; inspect its saved selection before starting work.')
-        if active!=self.active:
-            raise backend_state.StateError('The saved backend selection differs from this Studio. Switch explicitly in Models & setup or restart Studio after inspection before starting work.')
 
     def _begin_switch(self, identifier):
         """Caller holds Studio's lock; publish the owner before starting a worker."""
