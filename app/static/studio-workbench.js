@@ -1057,9 +1057,10 @@
   // Continue with this, sent as one job without touching Create's form. polishPlan only reads; polish posts /api/jobs once.
   const polishBusy=new Set();
   async function polishRoute(assetId,kind){
-    if(!catalog)return{ok:false,reason:'Recipes are still loading.'};
-    let source;try{source=await readSource(assetId);}catch(error){return{ok:false,reason:'Could not read this picture. '+error.message};}
-    if(source?.asset_id!==assetId)return{ok:false,reason:'This picture’s record could not be verified. Refresh and try again.'};
+    // A passing condition (recipes loading, a failed read) rejects, so Make asks again after its cool-down instead of caching a refusal (Muse, 19 Oct).
+    if(!catalog)throw Error('Recipes are still loading.');
+    let source;try{source=await readSource(assetId);}catch(error){throw Error('Could not read this picture. '+error.message);}
+    if(source?.asset_id!==assetId)throw Error('This picture’s record could not be verified. Refresh and try again.');
     // Make retries rejected plans; a resolved refusal would stay cached after the source finishes.
     const job=jobs.find(j=>j.id===source.job_id);if(job&&!['completed','partial'].includes(job.status))throw Error('Wait for a completed source run before polishing it. Inspect unresolved work in Problems.');
     return{...StudioContinuation.polishRoute(kind,catalog.presets,source,missingByPreset),source};

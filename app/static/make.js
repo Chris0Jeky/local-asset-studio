@@ -41,7 +41,7 @@
   const licence=p=>nonCommercial(p)?'<small class="make-licence" title="'+escape(p.commercial_note)+'">Non-commercial</small>':'';
   const FINAL=['completed','failed','partial','uncertain','not_submitted','cancelled','abandoned'];
   const POLISH={face:'Fix face',details:'Fix hands and details',refine:'Refine 1.5\u00d7',upscale:'Upscale 2\u00d7'};
-  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),varying:new Set(),varyHeld:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',poseRoute:'copy',pose:null,posePicking:false,compare:false,compareLooks:[],sweeps:{},characters:[],character:null,allPictures:false,charSave:null,charEdit:null,charMigrate:null,charStale:false,charForm:{},openers:new Set(),noteGone:false};
+  const state={selected:{},goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),varying:new Set(),varyHeld:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',poseRoute:'copy',pose:null,posePicking:false,compare:false,compareLooks:[],sweeps:{},characters:[],character:null,allPictures:false,charSave:null,charEdit:null,charMigrate:null,charStale:false,charForm:{},openers:new Set(),noteGone:false};
   // Round 5 (#1492): Anima pictures send Fix face and Fix hands to one WAI face-then-hand repaint, so they are one button, and say what that costs.
   const MERGED='Fix face and hands',FIX_HINT='Repaints with a WAI model and can change this look’s face finish — keep the original and compare.',UP_HINT='Smooths fine texture; upscale the version you chose.',REFINE_HINT='Refine redraws lightly at 1.5\u00d7: on the 19 Oct lab picture it kept the face and added eye and lash detail. Compare with the original; upscale last.';
   const merged=id=>{const f=state.polish[id+':face'],d=state.polish[id+':details'];return !!(f?.ok&&d?.ok&&f.preset_id&&f.preset_id===d.preset_id);};
@@ -120,7 +120,7 @@
     const rows=t.rows.filter(r=>r&&SLOTS.includes(r.slot)&&bound(tp,r.slot)&&typeof r.name==='string'&&r.name.length<300&&num(r.strength,0,2)&&typeof r.on==='boolean');
     if(rows.length!==t.rows.length||new Set(rows.map(r=>r.slot)).size!==rows.length||!t.cleared.every(s=>SLOTS.includes(s)))return null;
     if(!(t.steps==null||Number.isSafeInteger(t.steps)&&t.steps>0&&t.steps<=150)||!(t.negative==null||typeof t.negative==='string'&&t.negative.length<=4000)||!(t.seed==null||Number.isSafeInteger(t.seed)&&t.seed>=0)||!(t.scale==null||num(t.scale,0,150)))return null;
-    return{preset:tp.id,rows:rows.map(r=>({slot:r.slot,name:r.name,strength:r.strength,on:r.on,...(r.added?{added:true}:{})})),cleared:[...t.cleared],steps:t.steps??null,sampler:tp.choices?.sampler?.includes(t.sampler)?t.sampler:'',negative:t.negative??null,seed:t.seed??null,reseed:t.reseed!==false,scale:t.scale??100};
+    return{preset:tp.id,rows:rows.map(r=>({slot:r.slot,name:r.name,strength:r.strength,on:r.on,...(r.added?{added:true}:{})})),cleared:[...t.cleared],steps:t.steps??null,sampler:tp.choices?.sampler?.includes(t.sampler)?t.sampler:'',negative:t.negative??null,seed:t.seed??null,reseed:t.reseed!==false,scale:t.scale??100,...(t.turbo===true?{turbo:true}:{})};
   }
   function keepTune(look){
     const t=state.tune[look.id];delete savedTunes[look.id];
@@ -164,12 +164,19 @@
   // saves real time: ten steps or more, or a slow look. A fast few-step model (Night Shift's 8) spends its time outside sampling.
   const halve=n=>Math.max(1,Math.round(n/2)),fullSteps=(look,tp)=>Number(look.body.controls?.steps||tp?.defaults?.steps)||0;
   const draftOf=(look,tp=tunedPreset(look))=>{const n=fullSteps(look,tp);return bound(tp,'steps')&&n>=2?halve(n):0;};
-  function draftMarkup(look){const tp=tunedPreset(look),full=fullSteps(look,tp),n=full>=10||speed(look)[0]==='slow'?draftOf(look,tp):0,t=state.tune[look.id];if(!n)return'';
+  // Round 7 look lab (gpu-lab, 19 Oct; agent verdicts, not art acceptance): on Anima models the official turbo LoRA at 8 steps, cfg 1, euler/simple
+  // (13 s warm) was a near-tie with 30 steps, and 20/30/40 steps looked alike. So an Anima look's Draft is the turbo pass, and it offers no Fine.
+  // Keyed by file, so it applies wherever the knowledge base says that file fits (compatible()); update from the lab doc, not by hand.
+  const TURBO={file:'anima-turbo-lora-v0.2.safetensors',steps:8,cfg:1,sampler:'euler',scheduler:'simple'};
+  const turboFits=(look,t=tuneOf(look),tp=tunedPreset(look))=>compatible(look).includes(TURBO.file)&&['steps','cfg'].every(k=>bound(tp,k))&&(t.rows.some(r=>r.name===TURBO.file)||!!freeSlot(look,t));
+  function draftMarkup(look){const tp=tunedPreset(look),full=fullSteps(look,tp),turbo=turboFits(look),n=turbo?TURBO.steps:full>=10||speed(look)[0]==='slow'?draftOf(look,tp):0,t=state.tune[look.id];if(!n)return'';
     // Quality is one visible choice (owner, 19 Oct): Draft, As made or Fine are Tune's own step counts, so the estimate follows the choice.
     const fine=Math.min(150,Math.round(full*1.5)),radio=(id,value,label,on)=>'<label class="make-check"><input type="radio" name="makeQuality" id="'+id+'" value="'+value+'"'+(on?' checked':'')+(id==='makeDraft'?' aria-describedby="makeDraftHint"':'')+'> '+label+'</label>';
-    return '<fieldset class="make-quality"><legend>Quality</legend>'+radio('makeDraft',n,'Draft · '+n+' steps, rougher but quicker',t?.steps===n)+radio('makeStandard','','As made · '+full+' steps',t?.steps==null)+(fine>full?radio('makeFine',fine,'Fine · '+fine+' steps, slower',t?.steps===fine):'')
+    if(turbo)return '<fieldset class="make-quality"><legend>Quality</legend>'+radio('makeDraft','turbo','Draft · turbo LoRA, 8 steps, quickest',!!t?.turbo)+radio('makeStandard','','As made · '+full+' steps',!t?.turbo&&t?.steps==null)
+      +'<small id="makeDraftHint" class="muted">On Anima models the turbo Draft takes about half the time; on one 19 Oct lab picture it came close to a full run, and 20, 30 and 40 steps looked alike, so there is no Fine. Compare with As made on your own picture. A draft card offers “Make the final” at the full '+full+' steps.</small></fieldset>';
+    return '<fieldset class="make-quality"><legend>Quality</legend>'+radio('makeDraft',n,'Draft · '+n+' steps, rougher but quicker',t?.steps===n)+radio('makeStandard','','As made · '+full+' steps',t?.steps==null&&!t?.turbo)+(fine>full?radio('makeFine',fine,'Fine · '+fine+' steps, slower',t?.steps===fine):'')
       +'<small id="makeDraftHint" class="muted">A draft card offers “Make the final”: the same words and seed at the full '+full+' steps.</small></fieldset>';}
-  const draftRun=run=>{const look=state.looks?.find(l=>l.id===run.lookId);return!!look&&run.scene&&run.tune?.steps!=null&&FINAL.includes(run.job.status)&&(run.job.outputs||[]).length>0&&run.tune.steps===draftOf(look,byId(run.tune.preset)||presetFor(look));};
+  const draftRun=run=>{const look=state.looks?.find(l=>l.id===run.lookId);return!!look&&run.scene&&FINAL.includes(run.job.status)&&(run.job.outputs||[]).length>0&&(!!run.tune?.turbo||run.tune?.steps!=null&&run.tune.steps===draftOf(look,byId(run.tune.preset)||presetFor(look)));};
   const clamp=v=>Math.min(2,Math.max(0,Math.round((Number(v)||0)*20)/20));
   function tuneSummary(look,t){
     const p=presetFor(look),base=Object.fromEntries(adapters(look).map(a=>[a.key,a])),parts=[];if(!t)return'';
@@ -177,7 +184,7 @@
     for(const r of t.rows){const a=base[r.slot];if(!a||(r.name&&r.name!==a.name))parts.push('+'+short(r.name)+(r.on?' '+r.strength:' off'));else if(!r.on)parts.push(short(a.name)+' off');else if(r.strength!==a.strength)parts.push(short(a.name)+' '+r.strength);}
     for(const a of Object.values(base))if(!t.rows.some(r=>r.slot===a.key))parts.push('−'+short(a.name));
     if(scaleOf(t)!==100&&t.rows.some(r=>r.on))parts.push('all adapters ×'+scaleOf(t)+'%');
-    if(t.steps!=null)parts.push((t.steps===draftOf(look,byId(t.preset)||p)?'draft ':'')+t.steps+' steps');if(t.sampler)parts.push(t.sampler);if(t.negative!=null)parts.push('own negative');if(!t.reseed&&t.seed!=null)parts.push('seed '+t.seed+' locked');
+    if(t.turbo)parts.push('draft · turbo LoRA, 8 steps');else if(t.steps!=null)parts.push((t.steps===draftOf(look,byId(t.preset)||p)?'draft ':'')+t.steps+' steps');if(t.sampler)parts.push(t.sampler);if(t.negative!=null)parts.push('own negative');if(!t.reseed&&t.seed!=null)parts.push('seed '+t.seed+' locked');
     return parts.length?'Tuned: '+parts.join(' · '):'';
   }
   // Untuned, the summary still names what will run (owner, 19 Oct: the model and LoRAs are the choice, so they stay in view while Tune is shut).
@@ -193,6 +200,9 @@
     if(t.steps!=null&&bound(tp,'steps'))controls.steps=t.steps;
     if(t.sampler&&bound(tp,'sampler'))controls.sampler=t.sampler;
     if(t.negative!=null&&bound(tp,'negative'))controls.negative=t.negative;
+    // The turbo draft, after the sampler: it needs its own steps, cfg, sampler and scheduler, whatever Tune says (Muse HIGH on #1559).
+    if(t.turbo&&compatible(look).includes(TURBO.file)){const own=t.rows.find(r=>r.name===TURBO.file),slot=own?.slot||SLOTS.find(x=>bound(tp,x)&&bound(tp,NAMED(x))&&!t.rows.some(r=>r.slot===x));
+      if(slot){controls[slot]=1;controls[NAMED(slot)]=TURBO.file;controls.steps=TURBO.steps;controls.cfg=TURBO.cfg;if(tp.choices?.sampler?.includes(TURBO.sampler))controls.sampler=TURBO.sampler;if(tp.choices?.scheduler?.includes(TURBO.scheduler))controls.scheduler=TURBO.scheduler;}}
     // A trigger word is written only for an adapter you added: the look's own wording already speaks for its own adapters.
     if(typeof controls.positive==='string')for(const r of t.rows){const e=entry(r.name);if(!r.added||!r.on||!e?.trigger)continue;
       const add=e.trigger.split(',').map(w=>w.trim()).filter(w=>w&&!hasToken(controls.positive,w)).join(', ');if(!add)continue;
@@ -243,7 +253,7 @@
     if(key==='scale'){t.scale=Math.min(150,Math.max(0,Number(target.value)||0));paintScale(t);tuneChanged(false);return true;}
     if(key==='reseed'){if(target.checked===t.reseed)return true;t.reseed=target.checked;tuneChanged();q('#makeNewSeed')?.focus();return true;}
     if(key==='model'){t.preset=target.value;const tp=tunedPreset(look);if(t.sampler&&!tp.choices?.sampler?.includes(t.sampler))t.sampler='';tuneChanged();return true;}
-    if(key==='steps')t.steps=target.value?Number(target.value):null;
+    if(key==='steps'){t.steps=target.value?Number(target.value):null;delete t.turbo;}
     if(key==='sampler')t.sampler=target.value;
     if(key==='negative')t.negative=target.value===(look.body.negative||'')?null:target.value;
     if(key==='seed')t.seed=target.value===''?null:Number(target.value);
@@ -253,8 +263,8 @@
   function adapterMatches(look,text){const s=text.toLowerCase(),files=compatible(look),names=f=>[f,f.replace(/\.safetensors$/i,''),short(f)].map(x=>x.toLowerCase());
     const exact=files.filter(f=>names(f).includes(s));if(exact.length)return exact;const words=s.split(/\s+/).filter(Boolean);return files.filter(f=>words.every(w=>loraText(f).includes(w)));}
   function addAdapter(look,name){const t=tuneOf(look),slot=freeSlot(look,t);if(!slot||!compatible(look).includes(name)||t.rows.some(r=>r.name===name))return;
-    t.rows.push({slot,name,strength:startOf(name),on:true,added:true});t.cleared=t.cleared.filter(s=>s!==slot);tuneChanged();q('[data-tune-strength="'+slot+'"]')?.focus();
-    say(fits(look,name)?'Added '+short(name)+'.':'Added '+short(name)+'. It was made for '+entry(name).family+', so it may not suit this model; check the first picture.');}
+    t.rows.push({slot,name,strength:startOf(name),on:true,added:true});t.cleared=t.cleared.filter(s=>s!==slot);const turboOff=typeof TURBO!=='undefined'&&t.turbo&&!turboFits(look,t);if(turboOff)delete t.turbo;tuneChanged();q('[data-tune-strength="'+slot+'"]')?.focus();
+    say((fits(look,name)?'Added '+short(name)+'.':'Added '+short(name)+'. It was made for '+entry(name).family+', so it may not suit this model; check the first picture.')+(turboOff?' That took the last free slot, so Quality is back to As made (the turbo Draft needs one).':''));}
   // An added LoRA starts at its recommended strength. A recorded 0 means "off in recipes", not advice, so it starts at 1 kept inside its
   // recorded range, as the full editor's recommendedStrength does (an added LoRA at 0 did nothing).
   const startOf=name=>{const e=entry(name),d=Number(e?.default),r=Array.isArray(e?.strength)?e.strength.filter(Number.isFinite):[];return clamp(d>0?d:r.length?Math.max(Math.min(...r),Math.min(1,Math.max(...r))):1);};
@@ -268,7 +278,7 @@
     const files=compatible(look).filter(f=>!t.rows.some(r=>r.name===f)&&words.every(w=>loraText(f).includes(w)));
     const card=f=>{const e=entry(f)||{},range=Array.isArray(e.strength)&&e.strength.length===2&&e.strength[0]!==e.strength[1]?' (works '+e.strength[0]+'–'+e.strength[1]+')':'';
       return '<div class="make-lora-card'+(fits(look,f)?'':' make-lora-foreign')+'"><div><b>'+escape(short(f))+'</b><small>'+escape([e.role,fits(look,f)?'made for this model':e.family+', may not suit'].filter(Boolean).join(' · '))+'</small>'
-        +'<small>'+(e.trigger?'Trigger '+escape(e.trigger)+', added to your words':'No trigger word')+' · starts at '+escape(startOf(f).toFixed(2))+escape(range)+'</small></div>'
+        +'<small>'+(e.trigger?'Trigger '+escape(e.trigger)+', added to your words':'No trigger word')+' · starts at '+escape(startOf(f).toFixed(2))+escape(range)+'</small>'+(typeof TURBO!=='undefined'&&f===TURBO.file?'<small>Easier: Quality → Draft uses it with the 8 steps and cfg 1 it needs.</small>':'')+'</div>'
         +'<button type="button" data-tune-pick="'+escape(f)+'" aria-label="Add '+escape(short(f))+'"'+(slot?'':' disabled aria-describedby="makeLoraFull"')+'>Add</button></div>';};
     if(!files.length)return '<small>'+(words.length?'No installed LoRA for this model matches “'+escape(text)+'”.':'Every installed LoRA for this model is already added.')+'</small>';
     const made=files.filter(f=>fits(look,f)),other=files.filter(f=>!fits(look,f));
@@ -298,7 +308,7 @@
   const sweepOf=look=>state.sweeps[look.id]??={open:false,axis:'',values:[]};
   function sweepAxes(look){
     const t=tuneOf(look),tp=tunedPreset(look);
-    return[{id:'steps',label:'Steps',why:!bound(tp,'steps')?'this recipe takes no step count':fullSteps(look,tp)<1?'this look’s step count is not known here':''},
+    return[{id:'steps',label:'Steps',why:t.turbo?'Quality is the turbo Draft, which fixes 8 steps; choose As made first':!bound(tp,'steps')?'this recipe takes no step count':fullSteps(look,tp)<1?'this look’s step count is not known here':''},
       ...(t.rows.length?t.rows.map(r=>({id:'adapter:'+r.slot,label:short(r.name)+' strength',slot:r.slot,why:''})):[{id:'adapter',label:'Adapter strength',why:'this look has no adapter; add one in Tune first'}]),
       {id:'model',label:'Model',why:models(look).length?'':'no other model in the library takes this look'}];
   }
@@ -321,7 +331,8 @@
       if(runs.some(x=>x.label===label))return fail('give different values');runs.push({label,tune:t});}
     return runs.length<2?fail('give two or three values'):{axis,runs,why:''};
   }
-  const lookWhy=look=>blocker(look)||sweepPlan(look)?.why||'';
+  const turboWhy=look=>{const t=state.tune[look.id];return t?.turbo&&!turboFits(look,t)?'The turbo Draft needs a free LoRA slot: remove a LoRA or choose Quality As made.':'';};
+  const lookWhy=look=>blocker(look)||turboWhy(look)||sweepPlan(look)?.why||'';
   // The recipe a refusal's Models & setup link opens: a blocked compare value, else the tuned recipe.
   const whyPreset=look=>!blocker(look)&&sweepPlan(look)?.preset||tunedPreset(look)?.id||look.body.preset_id;
   // An added adapter's trigger word goes in only where it is on (applyTune), so sweeping it changes the words too.
@@ -472,14 +483,21 @@
   let estimateEpoch=0;
   async function estimate(retry=false){
     const look=current(),out=q('#makeEstimate');if(!look||!out)return;const epoch=++estimateEpoch,p=presetFor(look),[w,h]=shapeSize(p,look,q('#makeShape').value),t=state.tune[look.id],plan=sweepPlan(look);
-    if(plan&&!plan.why){const each=await Promise.all(plan.runs.map(r=>json('/api/estimate',{preset_id:(byId(r.tune.preset)||p).id,controls:{...look.body.controls,width:w,height:h,...(r.tune.steps!=null?{steps:r.tune.steps}:{})},batch_count:1,reference_count:0}).then(e=>Number(e.estimate_seconds)||0,()=>0)));
+    if(plan&&!plan.why){let guessed=false;const each=await Promise.all(plan.runs.map(r=>json('/api/estimate',{preset_id:(byId(r.tune.preset)||p).id,controls:{...look.body.controls,width:w,height:h,...(r.tune.steps!=null?{steps:r.tune.steps}:{})},batch_count:1,reference_count:0}).then(e=>(guessed||=rough(e),Number(e.estimate_seconds)||0),()=>0)));
       if(epoch!==estimateEpoch||!out.isConnected)return;const total=each.reduce((x,y)=>x+y,0),unknown=each.filter(x=>!x).length;
-      out.classList.toggle('make-warn',total>600);out.textContent=plan.runs.length+' pictures, one per value'+(total?' · about '+duration(total)+' in total'+(unknown?' (no timing yet for '+unknown+')':'')+', from earlier runs on this PC.':' · no timing yet for these settings on this PC.');return;}
-    try{const e=await json('/api/estimate',{preset_id:tunedPreset(look).id,controls:{...look.body.controls,width:w,height:h,...(t?.steps!=null?{steps:t.steps}:{})},batch_count:Number(q('#makeCount').value),reference_count:0});if(epoch!==estimateEpoch||!out.isConnected)return;
-      out.classList.toggle('make-warn',e.estimate_seconds>600);out.textContent=e.estimate_seconds?'About '+duration(e.estimate_seconds)+' in total, from earlier runs on this PC.':'No timing yet: this look has not run here at this size.';}
+      out.classList.toggle('make-warn',total>600);out.textContent=plan.runs.length+' pictures, one per value'+(total?' · about '+duration(total)+' in total'+(unknown?' (no timing yet for '+unknown+')':'')+basis({confidence:guessed?'none':''}):' · no timing yet for these settings on this PC.');return;}
+    try{const e=await json('/api/estimate',{preset_id:tunedPreset(look).id,controls:{...look.body.controls,width:w,height:h,...(t?.turbo&&turboFits(look,t)?{steps:TURBO.steps}:t?.steps!=null?{steps:t.steps}:{})},batch_count:Number(q('#makeCount').value),reference_count:0});if(epoch!==estimateEpoch||!out.isConnected)return;
+      const n=Number(q('#makeCount').value)||1,lab=rough(e)&&labTimed(look,t,w,h)&&lookTiming(look),total=lab?lab.seconds*n:e.estimate_seconds;
+      out.classList.toggle('make-warn',total>600);out.textContent=lab?'About '+duration(total)+(n>1?' for '+n+' pictures, ~'+Math.round(lab.seconds)+' s each':'')+'. '+lab.source:total?'About '+duration(total)+' in total'+basis(e):'No timing yet: this look has not run here at this size.';}
     catch{if(epoch===estimateEpoch&&!retry)setTimeout(()=>{if(epoch===estimateEpoch)estimate(true);},1500);}
   }
   const duration=s=>s<90?Math.round(s)+' s':Math.round(s/60)+' min';
+  // /api/estimate answers even with no comparable run here (confidence none: a generic guess with a wide range), so the words say which it is.
+  // The lab median holds only for the look as timed: its model, steps (turbo Draft has its own), sampler and LoRA files, at about its designed pixel count
+  // (strengths, words, negative and seed do not change the time). Anything else falls back to the server's guess, worded as one.
+  const labTimed=(look,t,w,h)=>{const p=presetFor(look),[dw,dh]=shapeSize(p,look,'design'),own=adapters(look);
+    return(!t||(!t.preset||t.preset===p?.id)&&t.steps==null&&!t.turbo&&!t.sampler&&(t.rows||[]).every(r=>own.some(a=>a.key===r.slot&&(!r.name||r.name===a.name))))&&Math.abs(w*h-dw*dh)<=0.05*dw*dh;};
+  const rough=e=>e?.confidence==='none',basis=e=>rough(e)?', a rough guess: nothing like it has run on this PC yet.':', from earlier runs on this PC.';
   function syncOperation(){
     placeStatus();statusEl.textContent=state.status;
     const g=goal(),why=g.intent?goalBlocker(g,goalRoute(g)):state.compare?compareBlocker():current()&&lookWhy(current());
@@ -576,9 +594,13 @@
     const reasons=[...new Set(Object.keys(POLISH).map(k=>state.polish[a+':'+k]).filter(x=>x&&!x.ok).map(x=>inMake(x.reason)))],whyId=r=>'makePolishWhy-'+escape(a)+'-'+reasons.indexOf(r);
     const polish=kind=>{const plan=state.polish[a+':'+kind],why=plan&&!plan.ok?inMake(plan.reason):'',busy=state.polishing.has(a+':'+kind);
       return '<button type="button" data-make-polish="'+kind+'" data-asset="'+escape(a)+'"'+(busy||why?' disabled':'')+(why?' aria-describedby="'+whyId(why)+'"':'')+'>'+polishName(a,kind)+(plan?.seconds?' <small>~'+duration(plan.seconds)+'</small>':'')+(busy?' …':'')+'</button>';};
-    return '<div class="make-actions">'+marks(a)+characterMarkup(job,a)+vary+polishKinds(a).map(polish).join('')+from('edit','Change one thing')+from('combine','New pose')+from('restyle','Restyle')+(Object.keys(POLISH).some(k=>state.polishing.has(a+':'+k))?'<small class="make-action-reason">Starting the finishing pass for this picture. Please wait.</small>':'')+reasons.map(r=>'<small class="make-warn make-polish-why" id="'+whyId(r)+'">'+escape(r)+'</small>').join('')+(merged(a)?'<small class="muted make-polish-hint">'+FIX_HINT+'</small>':'')+(state.polish[a+':refine']?.ok?'<small class="muted make-polish-hint">'+REFINE_HINT+'</small>':'')+(state.polish[a+':upscale']?.ok?'<small class="muted make-polish-hint">'+UP_HINT+'</small>':'')
-      +'<details class="make-more" data-more="'+escape(a)+'"><summary>More</summary><button type="button" data-ux-open-asset="'+escape(a)+'">Open full size</button>'+hand('repair','Other fixes\u2026')+from('animate','Animate')+from('mesh','Make it 3D')+'</details></div>';
+    return '<div class="make-actions">'+marks(a)+'<button type="button" class="make-next-open" data-make-select="'+escape(a)+'" data-run-id="'+escape(job.id)+'">Next steps…</button><div class="make-next" role="group" aria-label="Next steps for this picture">'+characterMarkup(job,a)+vary+polishKinds(a).map(polish).join('')+from('edit','Change one thing')+from('combine','New pose')+from('restyle','Restyle')+(Object.keys(POLISH).some(k=>state.polishing.has(a+':'+k))?'<small class="make-action-reason">Starting the finishing pass for this picture. Please wait.</small>':'')+reasons.map(r=>'<small class="make-warn make-polish-why" id="'+whyId(r)+'">'+escape(r)+'</small>').join('')+(merged(a)?'<small class="muted make-polish-hint">'+FIX_HINT+'</small>':'')+(state.polish[a+':refine']?.ok?'<small class="muted make-polish-hint">'+REFINE_HINT+'</small>':'')+(state.polish[a+':upscale']?.ok?'<small class="muted make-polish-hint">'+UP_HINT+'</small>':'')
+      +'<details class="make-more" data-more="'+escape(a)+'"><summary>More</summary><button type="button" data-ux-open-asset="'+escape(a)+'">Open full size</button>'+hand('repair','Other fixes\u2026')+from('animate','Animate')+from('mesh','Make it 3D')+'</details></div></div>';
   }
+  // One picture of a card shows its next steps at a time (owner, 19 Oct: four pictures each with eleven buttons is a wall). Keep and Not this
+  // stay on every picture; "Next steps…" moves the steps to another. The first saved picture starts selected; the others' steps stay in the
+  // page, hidden, so nothing about them changes but where they show.
+  const selectedOf=job=>{const ids=(job.outputs||[]).filter(o=>o.asset_id&&picture(o)).map(o=>o.asset_id);return ids.includes(state.selected[job.id])?state.selected[job.id]:ids[0];};
   // My character (#1205): any finished picture can become a character's canon (owner, 16 Oct), with its words. Saving writes one Workspace card and
   // never submits. The form keeps its answers in state, so a redraw of the runs list does not lose what was typed.
   // v2: Edit and Put away / Restore (revision-checked: a 409 means the card changed elsewhere, so it is reloaded), a read-only
@@ -734,7 +756,7 @@
       return '<article class="make-run" data-run="'+escape(job.id)+'"><header><div><b>'+escape(pictureTitle(scene||title||job.controls?.positive||look,job.created_at))+'</b>'+(scene?'<small>'+escape(scene)+'</small>':look&&!scene?'<small>'+escape(look)+'</small>':'')+(tuned?'<small class="make-tuned">'+escape(tuned)+'</small>':'')+'</div><span class="make-run-state '+escape(lost?'uncertain':job.status)+'">'+escape(lost?'Lost contact with this run; still checking':words(job))+'</span></header>'
       +(scene?'<div class="make-run-tools">'+(draftRun(runs[0])?'<button type="button" data-make-final="'+escape(job.id)+'">Make the final</button>':'')+'<button type="button" data-make-rerun="'+escape(job.id)+'">Edit and re-run</button><button type="button" data-make-another="'+escape(job.id)+'">Same words, another look</button></div>':runs[0].redo?'<div class="make-run-tools"><button type="button" data-make-redo="'+escape(job.id)+'">Edit and re-run</button></div>':'')
       +(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')+(lost?'':recovery(job))
-      +'<div class="make-outputs">'+(job.outputs||[]).map((o,i)=>!picture(o)?other(o):'<figure>'+img(job,o,i,look)+actions(job,o)+'</figure>').join('')+pending(job)+'</div></article>';});
+      +'<div class="make-outputs">'+(job.outputs||[]).map((o,i)=>!picture(o)?other(o):'<figure'+(o.asset_id&&o.asset_id===selectedOf(job)?' class="make-selected"':'')+'>'+img(job,o,i,look)+actions(job,o)+'</figure>').join('')+pending(job)+'</div></article>';});
     const focus=document.activeElement,key=e=>(e.closest('[data-run]')?.dataset.run||'')+'|'+e.tagName+'|'+JSON.stringify({...e.dataset})+'|'+e.textContent,focusKey=box.contains(focus)?key(focus):null,open=[...box.querySelectorAll('details[open]')].map(e=>e.dataset.more);
     const next=document.createElement('div');next.innerHTML=markup.join('');
     const ids=new Set(list.map(c=>c.id));for(const old of [...box.children])if(!ids.has(old.dataset.run))old.remove();
@@ -835,7 +857,7 @@
     if(g.intent==='repair'){const plan=state.polish[state.pick.id+':'+state.fix];put(plan?.seconds?'About '+duration(plan.seconds)+', from earlier runs on this PC.':'');return;}
     if(!p){put('');return;}
     try{const e=await json('/api/estimate',{preset_id:p.id,controls:goalExtras(g,p,state.pick.width?state.pick:null),batch_count:1,reference_count:p.reference_slots?.length?1:0});
-      put(e.estimate_seconds?'About '+duration(e.estimate_seconds)+', from earlier runs on this PC.':'No timing yet: this has not run on this PC.',e.estimate_seconds>600);}
+      put(e.estimate_seconds?'About '+duration(e.estimate_seconds)+basis(e):'No timing yet: this has not run on this PC.',e.estimate_seconds>600);}
     catch{put('');}
   }
   async function renderPictures(g){
@@ -912,6 +934,8 @@
   function choosePicture(id){
     const a=state.pictures?.find(x=>x.id===id)||(typeof assetState!=='undefined'&&assetState?.assets?.find(x=>x.id===id))||{id,title:''};
     if(state.pick?.id!==id){state.form={};try{const saved=JSON.parse(localStorage.getItem(fillsKey(id))||'{}');for(const k of ['who','clothes'])if(typeof saved['@'+k]==='string')state.form[k]=saved['@'+k];}catch{}}
+    // A new character that is the chosen pose picture leaves the pose empty, so one picture is never both.
+    if(state.pose?.asset?.id===id)state.pose=null;
     state.pick=a;state.repicking=false;
   }
   function rememberFills(id,form){try{const saved=JSON.parse(localStorage.getItem(fillsKey(id))||'{}');for(const k of ['who','clothes','pose'])if(String(form[k]||'').trim())saved['@'+k]=form[k].trim();localStorage.setItem(fillsKey(id),JSON.stringify(saved));}catch{}}
@@ -977,10 +1001,10 @@
   }
   let compareEpoch=0;
   async function compareEstimate(){
-    const out=q('#makeEstimate'),list=compareList();if(!out)return;const epoch=++compareEpoch;if(list.length<2){out.textContent='';return;}
-    const each=await Promise.all(list.map(l=>{const p=presetFor(l),[w,h]=shapeSize(p,l,'design');return json('/api/estimate',{preset_id:p?.id||l.body.preset_id,controls:{...l.body.controls,width:w,height:h},batch_count:1,reference_count:0}).then(e=>Number(e.estimate_seconds)||0,()=>0);}));
+    const out=q('#makeEstimate'),list=compareList();if(!out)return;const epoch=++compareEpoch;let guessed=false,usedLab=false,usedRuns=false;if(list.length<2){out.textContent='';return;}
+    const each=await Promise.all(list.map(l=>{const p=presetFor(l),[w,h]=shapeSize(p,l,'design');return json('/api/estimate',{preset_id:p?.id||l.body.preset_id,controls:{...l.body.controls,width:w,height:h},batch_count:1,reference_count:0}).then(e=>{const lab=rough(e)&&lookTiming(l);if(rough(e)&&!lab)guessed=true;if(lab)usedLab=true;else if(!rough(e)&&e.estimate_seconds)usedRuns=true;return lab?lab.seconds:Number(e.estimate_seconds)||0;},()=>0);}));
     if(epoch!==compareEpoch||!out.isConnected)return;const total=each.reduce((x,y)=>x+y,0),unknown=each.filter(x=>!x).length;
-    out.classList.toggle('make-warn',total>600);out.textContent=list.length+' pictures, one per look'+(total?' · about '+duration(total)+' in total'+(unknown?' (no timing yet for '+unknown+')':'')+', from earlier runs on this PC.':' · no timing yet for these looks on this PC.');
+    out.classList.toggle('make-warn',total>600);out.textContent=list.length+' pictures, one per look'+(total?' · about '+duration(total)+' in total'+(unknown?' (no timing yet for '+unknown+')':'')+(guessed?basis({confidence:'none'}):!usedLab?basis({}):usedRuns?', from earlier runs and the look lab on this PC.':', from the 16 Oct look lab on this PC.'):' · no timing yet for these looks on this PC.');
   }
   // A compare sends its jobs one by one; leaving Make (even briefly) stops the ones not yet sent (#1514).
   function leaveWatch(){let left=false;const o=new MutationObserver(records=>{if(view.hidden||records.some(r=>r.oldValue!==null))left=true;});
@@ -1057,7 +1081,7 @@
     if(t.dataset.makeSearch){state.queries[t.dataset.makeSearch]=t.value;renderGrid(t.dataset.makeSearch,t.dataset.makeAttr);}});
   // Choices that change the composer redraw it and keep the keyboard on the control just used.
   view.addEventListener('change',e=>{const t=e.target,g=goal(),redraw=sel=>{renderGoalComposer(g);q(sel)?.focus();};
-    if(t.name==='makeQuality'){const look=current(),id=t.id;if(look){tuneOf(look).steps=t.value?Number(t.value):null;tuneChanged();q('#'+id)?.focus();}return;}
+    if(t.name==='makeQuality'){const look=current(),id=t.id;if(look){const tune=tuneOf(look);tune.turbo=t.value==='turbo';tune.steps=t.value&&t.value!=='turbo'?Number(t.value):null;tuneChanged();q('#'+id)?.focus();}return;}
     if(t.dataset.makeFix){state.fix=t.dataset.makeFix;redraw('#makeFix-'+state.fix);return;}
     if(t.dataset.makeStyle){state.styleLook=t.dataset.makeStyle;for(const r of view.querySelectorAll('[data-make-style]')){r.removeAttribute('aria-invalid');r.removeAttribute('aria-describedby');}settleMissing();return;}
     if(t.dataset.makePoseRoute){state.poseRoute=t.dataset.makePoseRoute;redraw('#makePoseRoute-'+state.poseRoute);return;}
@@ -1096,6 +1120,7 @@
     if(e.target.closest('[data-make-style-words]')){state.styleWords=true;renderGoalComposer(goal());q('#makeF-look')?.focus();return;}
     if(e.target.closest('[data-make-style-pictures]')){state.styleWords=false;renderGoalComposer(goal());q('[data-make-style]')?.focus();return;}
     // A result's next step opens that picture goal here with the picture already chosen.
+    const pickNext=e.target.closest('[data-make-select]');if(pickNext){state.selected[pickNext.dataset.runId]=pickNext.dataset.makeSelect;renderRuns();q('.make-selected [data-make-select="'+CSS.escape(pickNext.dataset.makeSelect)+'"]')?.closest('figure')?.querySelector('.make-next button:not(:disabled),.make-next summary')?.focus();return;}
     const from=e.target.closest('[data-make-from]');if(from){const next=GOALS.find(x=>x.intent===from.dataset.makeFrom);if(!next)return;state.goal=next.id;state.compare=false;state.character=null;choosePicture(from.dataset.asset);remember();render();
       say(next.name+': your picture is chosen. Fill in what is asked, then press Generate.');(q('#makeComposer textarea,#makeComposer input')||q('#makeGenerate'))?.focus();return;}
     if(e.target.closest('[data-make-change]')){state.picking=true;renderLooks();q('.make-look.active [data-make-look]')?.focus();return;}
@@ -1105,7 +1130,7 @@
       // Edit and re-run brings the run's tune back with its look; another look starts from that look as made.
       if(!again.dataset.makeAnother){if(Array.isArray(run.tune?.rows)&&Array.isArray(run.tune.cleared)){state.tune[run.lookId]=structuredClone(run.tune);state.tuneOpen=state.tuneOpen||(!!run.tuned&&!final);}else{delete state.tune[run.lookId];delete savedTunes[run.lookId];}}
       // Make the final is Edit and re-run with the draft's steps put back to the look's own: the same words and seed, staged, never sent.
-      if(final&&state.tune[run.lookId])state.tune[run.lookId].steps=null;try{sessionStorage.setItem('studio.make.scene.'+run.goal,run.scene);}catch{}remember();render();
+      if(final&&state.tune[run.lookId]){state.tune[run.lookId].steps=null;delete state.tune[run.lookId].turbo;}try{sessionStorage.setItem('studio.make.scene.'+run.goal,run.scene);}catch{}remember();render();
       if(final){say('The final is set up: the same words and seed at full detail. Press Generate to make it.');q('#makeGenerate')?.focus();return;}
       const scene=q('#makeScene');if(scene&&!state.picking){scene.focus();scene.select();}else q('.make-look.active [data-make-look]')?.focus();return;}
     const redo=e.target.closest('[data-make-redo]');if(redo){const run=state.runs.find(r=>r.job.id===redo.dataset.makeRedo);

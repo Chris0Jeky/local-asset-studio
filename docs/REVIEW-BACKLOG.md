@@ -7,6 +7,10 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-10-19 pass 2 (ux-lead-2): honest time estimates in Make
+
+- [ ] **When nothing comparable has run on this PC, Make's estimate uses the look's lab median per picture** ("About 2 min for 4 pictures, ~31 s each. Median of two test pictures in the 16 Oct look lab on this PC.") instead of the server's generic guess worded as "from earlier runs on this PC" (a new install showed "About 4 min" beside a card saying ~31 s). With no lab number either, it says "a rough guess: nothing like it has run on this PC yet". Picture goals, Compare looks and Compare one setting say the same. Reverse: `rough`/`basis` and the `lab` branch in `estimate()` in `app/static/make.js`.
+
 ## 2026-10-19: Workflow builder first screen
 
 - [ ] Workflow builder: storage and file tools folded (All tools, Saved workflows). Reverse: remove the two details wrappers in workflow-studio.html and the fold-open lines in workflow-projects.js.
@@ -58,6 +62,14 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 ## 2026-10-19 overnight (ux-lead): proposal, not done
 
 - [ ] **Proposal: fold the Workflow builder's storage and file rows.** It opens with Saved workflows (6 buttons, 2 selects), revision history (2 buttons, 1 select) and a toolbar of 11 buttons before any node or step is visible (1,201 words on the page at 1440x900). Proposal: Saved workflows and revision history in one shut fold "Saved workflows and history", the file buttons (Import recipe graph, Open JSON, Export…) in a "Files" menu, so the first screen is "Start from a recipe" plus the Nodes/Steps view. Decided by the coordinator under the review mandate and built as brief E (#1560); reverse there.
+
+## 2026-10-19 overnight (ux-lead): Anima turbo draft
+
+- [ ] **On Anima looks, Quality is Draft (turbo LoRA, 8 steps, cfg 1, euler/simple) or As made; no Fine.** From gpu-lab's round 7 (agent verdicts): turbo at 8 steps was a near-tie at about 13 s, and 20/30/40 steps looked alike. The turbo LoRA goes in a free slot; the look's own LoRAs stay. Applies wherever the knowledge base says the turbo file fits and the recipe binds steps and cfg. Reverse: delete `TURBO`/`turboFits` and the `if(turbo)` branch of `draftMarkup()` in `app/static/make.js`.
+
+## 2026-10-19 overnight (ux-lead): one picture's next steps at a time
+
+- [ ] **On a Make run card, one picture shows its next steps** (Make this my character, Vary, Fix, Upscale, Change one thing, New pose, Restyle, More); the others show Keep, Not this and **Next steps…**, which moves the steps to that picture. The first saved picture starts selected. A 4-picture card went from 62 visible buttons to 29. Reverse: in `app/static/make.js` drop the Next steps… button and the `.make-next` wrapper from `actions()`, `selectedOf()`, the `make-selected` class on figures, the `[data-make-select]` click branch and `state.selected`; then delete the `.make-next…` rules at the end of `app/static/make.css`.
 
 ## 2026-10-19 overnight (ux-lead): Refine 1.5×
 
