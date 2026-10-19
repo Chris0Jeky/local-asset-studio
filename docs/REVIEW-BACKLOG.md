@@ -11,6 +11,15 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 - [ ] **Recent runs show two lines of submitted prompt, with Show prompt / Hide prompt to expand it; unavailable Vary reasons also clamp to two lines.** Full text stays in each title; Vary stays disabled and its shared wording is unchanged. Decision: ux-lead-2, pass 2. Reverse: drop the `run-prompt` / `run-why` classes and prompt toggle from `app.js` / `studio-workbench.js`, and remove their clamp rules from `workshop.css`.
 
+## 2026-10-19 pass 2 (Brief H)
+
+- [ ] **Failed look thumbnails become the blank decorative .look-thumb tile** in Models & setup, replacing broken-image icons for local-only examples. Reverse: remove the capture-phase error listener on #modelLooks in app/static/app.js.
+- [ ] **File groups read "On disk, not verified" and "On disk, verified"**, with the hint "Present on disk; its pinned SHA-256 is not confirmed. Verify reads the file and compares it; nothing changes on disk." Button labels stay unchanged. Reverse: restore the group names "Needs a check" and "Installed" and the previous hint in renderCuratedModels() in app/static/app.js.
+
+## 2026-10-19 pass 2 (ux-lead-2): import a picture inside Make
+
+- [ ] **Make's picture pickers (all six picture goals, and the pose slot) have "Import a picture…"**: one file (PNG, JPEG or WebP, up to 20 MiB) goes through the library's own import and becomes the chosen picture; Make is never left. The old "Import a picture first" link to the Library is gone, and the empty grid says "No pictures yet. Import one, or make one first." Reverse: the `data-make-import` button in `pictureFinder()` and `importPicture()` in `app/static/make.js`.
+
 ## 2026-10-19 pass 2 (ux-lead-2): one review vocabulary (decision; Make part here, the rest in Brief J)
 
 - [ ] **Review words across the Studio: Keep / Needs work / Not this, keys K / W / X; the library filter says "Kept"; stored values are unchanged** (selected / needs_work / rejected). Before, Make said Keep / Not this, the Full editor Keep / Needs work / Reject, the Library Keeper(s) / Rejected, and the Review desk "Keep for consideration". Make keeps its two buttons (no Needs work button: #1558 cut card buttons) and gains K and X on a focused picture; its Keep message says "Kept pictures are in the library under Kept." Reverse: the keydown listener before the radio-group one and the `aria-keyshortcuts` in `marks()` in `app/static/make.js`; the label maps named in Brief J.

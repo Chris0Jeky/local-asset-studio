@@ -682,6 +682,15 @@ class ServerTests(unittest.TestCase):
         handler.headers={"Host":"evil.example:8191","Origin":"http://evil.example:8191"}
         self.assertFalse(handler._safe_host())
 
+    def test_create_server_gives_the_studio_its_bound_port(self):
+        """Codex P2 on #1585: a preview built with create_server(port=N) is on N, so its recovery stays off by default."""
+        class Bound:
+            def __init__(self, address, handler): self.handler=handler
+            def server_close(self): pass
+        with tempfile.TemporaryDirectory() as tmp:
+            http=server.create_server(tmp, port=8292, http_server=Bound)
+            self.assertEqual(http.handler.studio.port, 8292); self.assertFalse(http.handler.studio.runtime_recovery.autostart)
+
     def test_preview_port_moves_the_host_and_origin_guard(self):
         handler=server.Handler.__new__(server.Handler)
         with patch.object(server,"PORT",8291):
