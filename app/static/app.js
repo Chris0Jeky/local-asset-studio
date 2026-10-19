@@ -155,7 +155,7 @@ function renderPresets() {
   const card = p => {
     const pins = Array.isArray(pinMismatchByPreset[p.id]) ? pinMismatchByPreset[p.id] : [], missing = missingByPreset[p.id] || [], thumb = presetThumb(p), pace = presetPace(p);
     const pinBadge = pins.length ? '<em class="badge" title="' + esc(pins.join(', ')) + '">Model verification needs attention</em>' : '';
-    return '<button class="preset ' + (selected?.id === p.id ? 'chosen' : '') + '" data-id="' + esc(p.id) + '">' + (thumb ? '<img class="preset-thumb" src="' + esc(thumb) + '" alt="" loading="lazy">' : '') + '<b>' + esc(p.name) + '</b><span>' + esc(plainLine(p.description)) + '</span><div class="recipe-meta"><span>' + esc(p.family || p.category) + '</span>'
+    return '<button class="preset ' + (selected?.id === p.id ? 'chosen' : '') + '" data-id="' + esc(p.id) + '" title="' + esc(p.description || '') + '" aria-describedby="preset-description-' + esc(p.id) + '">' + (thumb ? '<img class="preset-thumb" src="' + esc(thumb) + '" alt="" loading="lazy">' : '') + '<b>' + esc(p.name) + '</b><span id="preset-description-' + esc(p.id) + '">' + esc(p.description || '') + '</span><div class="recipe-meta"><span>' + esc(p.family || p.category) + '</span>'
       + (pace ? '<em class="badge pace ' + pace[0] + '" title="' + esc(pace[2]) + '">' + esc(pace[1]) + '</em>' : '')
       + (missing.length ? '<em class="badge need" title="' + esc(missing.join(', ')) + '">Needs download</em>' : '') + pinBadge + '</div></button>';
   };

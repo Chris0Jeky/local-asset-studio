@@ -2056,10 +2056,10 @@ function recipePickerIsGroupedAndPlain() {
   assert.deepEqual(order, ['character', 'scene', 'photo', 'game', 'edit', 'video', '3d'], 'groups follow what each recipe makes');
   const groupOf = id => { const before = html.slice(0, html.indexOf('data-id="' + id + '"')); return [...before.matchAll(/data-group="([^"]+)"/g)].pop()?.[1]; };
   assert.deepEqual(['wai', 'krea-environment', 'realvis', 'pixel-lora', 'fix', 'clip', 'mesh'].map(groupOf), order);
-  assert.match(html, /data-id="wai"><img class="preset-thumb" src="\/api\/examples\/recipe-thumbs-20260927\/wai\.jpg"/, 'the recipe-default thumbnail of a non-adult recipe');
+  assert.match(html, /data-id="wai"[^>]*><img class="preset-thumb" src="\/api\/examples\/recipe-thumbs-20260927\/wai\.jpg"/, 'the recipe-default thumbnail of a non-adult recipe');
   assert.doesNotMatch(html, /adult\.jpg|x\.jpg|civitai-intake/, 'never an adult-tagged or intake picture');
-  assert.match(html, /<span>Close variations of a WAI picture\.<\/span>/, 'one plain sentence without the decision aside');
-  assert.doesNotMatch(html, /#1202|owner decision|review separate|Measured details/);
+  assert.ok(html.includes('title="'+run("catalog.presets[0].description").replaceAll('"','&quot;')+'" aria-describedby="preset-description-wai"'), 'hover and accessible description retain the full text');
+  assert.ok(html.includes('<span id="preset-description-wai">'+run("catalog.presets[0].description").replaceAll('"','&quot;')+'</span>'), 'visual clamping preserves the full description in the DOM');
   assert.match(html, /data-id="wai"[\s\S]*?badge pace fast[^>]*>about 20 s</, 'speed from the fastest recorded run');
   assert.match(html, /data-id="fix"[\s\S]*?badge pace fast" title="Timing stated in the recipe description">about 20 s</, 'else the recipe wording');
   assert.match(html, /data-id="realvis"[\s\S]*?title="checkpoints\/real\.safetensors">Needs download</);
