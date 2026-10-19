@@ -1,7 +1,8 @@
 let backendSwitching=false, backendActive=null, backendReadEpoch=0, backendReadPending=null, backendInventoryPending=false, backendSwitchEpoch=0;
 function renderRecovery(recovery={}) {
   $('#recoveryStatus').textContent=recovery.message || (recovery.enabled ? 'Runtime recovery is watching the selected backend.' : 'Runtime recovery is disabled.');
-  $('#retryRecovery').hidden=!recovery.enabled || recovery.status!=='breaker-open';
+  const retry=$('#retryRecovery'),hide=!recovery.enabled || recovery.status!=='breaker-open';
+  if(hide&&document.activeElement===retry){const status=$('#recoveryStatus');status.tabIndex=-1;status.focus({preventScroll:true});}retry.hidden=hide;
 }
 // Capture at acceptance, not request start. Empty settings are authored values too.
 function backendEditorSnapshot(){
@@ -39,6 +40,7 @@ async function refreshBackends() {
     const select=$('#backendChoice'),keep=select.value;
     select.innerHTML=state.profiles.map(p=>'<option value="'+esc(p.id)+'" '+(!p.installed?'disabled':'')+'>'+esc(p.name)+(p.online?' · online':'')+'</option>').join('');
     select.value=switching?state.operation.target:(state.busy?state.active:(backendActive===null?state.active:(keep||state.active)));
+    if(state.busy&&[select,$('#switchBackend')].includes(document.activeElement)){const status=$('#backendStatus');status.tabIndex=-1;status.focus({preventScroll:true});}
     select.disabled=state.busy;$('#switchBackend').disabled=state.busy;
     const busyMessage='A local operation is running. Switching is disabled until it finishes.';
     $('#backendStatus').textContent=switching?(state.operation.message||'One model environment at a time. Switching never starts a generation.'):(state.busy?busyMessage:(state.operation?.message||'One model environment at a time. Switching never starts a generation.'));
@@ -60,7 +62,7 @@ async function refreshBackends() {
   finally{if(backendReadPending===epoch)backendReadPending=null;}
 }
 $('#switchBackend').onclick=async()=>{
-  const attempt=++backendSwitchEpoch;backendReadEpoch++;backendSwitching=true;updateReady();$('#switchBackend').disabled=true;
+  const attempt=++backendSwitchEpoch;backendReadEpoch++;backendSwitching=true;updateReady();if(document.activeElement===$('#switchBackend')){const status=$('#backendStatus');status.tabIndex=-1;status.textContent='Switching model environment...';status.focus({preventScroll:true});}$('#switchBackend').disabled=true;
   try{await post('/api/backends/switch',{id:$('#backendChoice').value});await refreshBackends();}
   catch(e){if(attempt!==backendSwitchEpoch)return;const read=backendReadEpoch+1;await refreshBackends();if(attempt===backendSwitchEpoch&&read===backendReadEpoch)$('#backendStatus').textContent=e.message;}
 };
