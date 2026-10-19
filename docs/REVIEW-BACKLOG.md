@@ -10,7 +10,7 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 ## 2026-10-19 pass 2 (Brief H)
 
 - [ ] **Failed look thumbnails become the blank decorative .look-thumb tile** in Models & setup, replacing broken-image icons for local-only examples. Reverse: remove the capture-phase error listener on #modelLooks in app/static/app.js.
-- [ ] **File groups read "On disk, not hash-checked" and "On disk, hash-checked"**, with the hint "They work. Verify reads a file and compares it with its pinned SHA-256; nothing changes on disk." Button labels stay unchanged. Reverse: restore the group names "Needs a check" and "Installed" and the previous hint in renderCuratedModels() in app/static/app.js.
+- [ ] **File groups read "On disk, not verified" and "On disk, verified"**, with the hint "Present on disk; its pinned SHA-256 is not confirmed. Verify reads the file and compares it; nothing changes on disk." Button labels stay unchanged. Reverse: restore the group names "Needs a check" and "Installed" and the previous hint in renderCuratedModels() in app/static/app.js.
 
 ## 2026-10-19 pass 2 (ux-lead-2): honest time estimates in Make
 

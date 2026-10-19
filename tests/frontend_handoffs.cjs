@@ -893,8 +893,8 @@ async function modelShopCards() {
   element('#modelCards').querySelector = () => null;
   element('#curatedModelSearch').value = '';
   run('renderCuratedModels()');
-  assert.match(element('#modelCards').innerHTML, /<summary>On disk, not hash-checked \(3\)<\/summary>[\s\S]*<summary>On disk, hash-checked \(0\)<\/summary>/, 'file groups distinguish presence from hash verification');
-  assert.match(element('#modelCards').innerHTML, /They work\. Verify reads a file and compares it with its pinned SHA-256; nothing changes on disk\./);
+  assert.match(element('#modelCards').innerHTML, /<summary>On disk, not verified \(3\)<\/summary>[\s\S]*<summary>On disk, verified \(0\)<\/summary>/, 'file groups distinguish presence from hash verification');
+  assert.match(element('#modelCards').innerHTML, /its pinned SHA-256 is not confirmed. Verify reads the file and compares it; nothing changes on disk./);
   const card = id => element('#modelCards').innerHTML.split('<article').find(part => part.includes('<code>') && part.includes('/' + id + '.safetensors</code>')) || assert.fail('no card for ' + id);
   // Used by: the looks that need the file, the recipes (by preset or adapter name) that use it; unused files say nothing.
   assert.match(card('base'), /Used by: Look A · recipes Recipe One/);
