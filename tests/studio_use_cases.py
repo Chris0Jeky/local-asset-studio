@@ -24,6 +24,7 @@ error, no generation submitted and at least one case run. In live mode the journ
 page exception or an empty run are still red. The report is written either way, so a red run
 still leaves its evidence; see verdict() and tests/test_use_case_matrix.py.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import copy
 import json
@@ -586,7 +587,8 @@ class CaseRun:
 
     def _shot(self, index):
         name = '%02d.png' % index
-        try: self.page.screenshot(path=str(self.dir / name))
+        try:
+            if evidence_screenshot(self.page, path=str(self.dir / name)) is None: return ''
         except Exception: return ''
         return repo_path(self.dir / name)
 

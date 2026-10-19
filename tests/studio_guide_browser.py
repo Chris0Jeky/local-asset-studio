@@ -3,6 +3,7 @@
 Native browser HTTP/storage only. Requires an environment that permits local
 HTTP navigation. Hosted CI runs this gate; no simulated-browser fallback.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import json
 import os
@@ -228,11 +229,11 @@ def run(out):
             resume=page.locator('#goalCards a',has_text='Resume').first;resume.click();page.wait_for_selector('.studio-guide-panel')
             check('stage=wording' in page.url,'resume restores stable navigation but not an observed success')
             page.set_viewport_size({'width':390,'height':844});page.click('#checkGuideStep')
-            page.locator('.studio-guide-panel').screenshot(path=str(out/'guide-mobile.png'))
+            evidence_screenshot(page.locator('.studio-guide-panel'), path=str(out/'guide-mobile.png'))
             check(page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'390px guide has no horizontal page overflow')
             page.set_viewport_size({'width':1440,'height':1000});page.evaluate('document.body.style.zoom="2"')
             check(page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'200% zoom retains page layout')
-            page.evaluate('document.body.style.zoom="1"');page.locator('.studio-guide-panel').screenshot(path=str(out/'guide-desktop.png'))
+            page.evaluate('document.body.style.zoom="1"');evidence_screenshot(page.locator('.studio-guide-panel'), path=str(out/'guide-desktop.png'))
             check(not errors,'no page exceptions: '+str(errors))
             forbidden=[x for x in CALLS if x[0]!='GET' and x[1] not in ('/api/estimate','/api/workflow-studio/nodes/refresh','/api/workflow-studio/compile')]
             check(not forbidden,'zero generation, installation, switching or asset-mutation calls: '+str(forbidden))

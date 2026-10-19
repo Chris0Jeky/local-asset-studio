@@ -3,6 +3,7 @@
 python tests/review_browser_smoke.py --out <new evidence directory> [--chromium /path/to/chromium]
 Install Playwright only in a test environment. The normal unittest suite needs no browser.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import hashlib
 import json
@@ -59,7 +60,7 @@ def main():
                 page.locator('#notes').fill('Procedural QA assessment '+alias+'; not artistic acceptance.')
                 if alias=='A':page.locator('#cleanup').fill('0')
                 page.locator('#saveAssessment').click();expect(page.locator('#assessmentStatus')).to_have_text('Saved')
-            page.screenshot(path=str(args.out/'review-desktop.png'),full_page=True)
+            evidence_screenshot(page, path=str(args.out/'review-desktop.png'),full_page=True)
             page.locator('#reveal').click();expect(page.locator('#phase')).to_have_text('Settings revealed')
             expect(page.locator('#evidence')).to_contain_text('inert-prompt')
             page.locator('#selected').select_option('A');page.locator('#summary').fill('QA decision only. All sources and rejected results retained.')
@@ -87,7 +88,7 @@ def main():
             expect(page.locator('#desk')).to_be_visible()
             page.locator('#notes').focus();page.keyboard.type('Keyboard QA note');expect(page.locator('#saveDraft')).to_be_visible()
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'Horizontal overflow at 390 px'
-            page.screenshot(path=str(args.out/'review-mobile.png'),full_page=True)
+            evidence_screenshot(page, path=str(args.out/'review-mobile.png'),full_page=True)
             assert not errors,errors;assert all(url.startswith((base+'/','data:','blob:','about:')) for url in requests),requests
             assert studio.network_calls==0 and studio.queue.empty() and studio.production.get(identifier)['budget']==initial
             evidence={'scope':'Procedural CPU fixture and real Chromium, not user Windows Studio or model inference','browser':browser.version,

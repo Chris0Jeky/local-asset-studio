@@ -3,6 +3,7 @@
 Native HTTP by default; --inert labels substituted storage/transport. All server
 changes are fixture-side setup (another client), never generation or user files.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import asyncio
 import hashlib
@@ -221,9 +222,9 @@ async def exercise(args):
                 for width in [1440,390]:
                     await page.set_viewport_size({'width':width,'height':1100})
                     check('GRID-23' if width==1440 else 'GRID-24', f'{width}px layout remains within the viewport',await page.evaluate('document.documentElement.scrollWidth<=innerWidth'))
-                    await page.screenshot(path=str(args.out/f'grid-{width}.png'))
+                    await evidence_screenshot(page, path=str(args.out/f'grid-{width}.png'))
                     await page.locator(f'[data-asset-check="{active}"]').focus()
-                    await page.locator('#assetGrid').screenshot(path=str(args.out/f'focused-grid-{width}.png'))
+                    await evidence_screenshot(page.locator('#assetGrid'), path=str(args.out/f'focused-grid-{width}.png'))
                 check('GRID-25', 'Browsing and refresh make no mutation or generation request',all(p['path'] in {'/api/estimate','/api/references/check'} for p in fixture.POSTS))
                 check('GRID-26', 'Complete shell has no JavaScript exceptions',not errors)
                 await browser.close()
