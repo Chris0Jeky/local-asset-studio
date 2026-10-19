@@ -168,8 +168,8 @@
     // Quality is one visible choice (owner, 19 Oct): Draft, As made or Fine are Tune's own step counts, so the estimate follows the choice.
     const fine=Math.min(150,Math.round(full*1.5)),radio=(id,value,label,on)=>'<label class="make-check"><input type="radio" name="makeQuality" id="'+id+'" value="'+value+'"'+(on?' checked':'')+(id==='makeDraft'?' aria-describedby="makeDraftHint"':'')+'> '+label+'</label>';
     if(turbo)return '<fieldset class="make-quality"><legend>Quality</legend>'+radio('makeDraft','turbo','Draft · turbo LoRA, 8 steps, quickest',!!t?.turbo)+radio('makeStandard','','As made · '+full+' steps',!t?.turbo&&t?.steps==null)
-      +'<small id="makeDraftHint" class="muted">On Anima models 8 turbo steps came close to a full run in the 19 Oct lab, and 20 to 40 steps looked the same, so there is no Fine. A draft card offers “Make the final” at the full '+full+' steps.</small></fieldset>';
-    return '<fieldset class="make-quality"><legend>Quality</legend>'+radio('makeDraft',n,'Draft · '+n+' steps, rougher but quicker',t?.steps===n)+radio('makeStandard','','As made · '+full+' steps',t?.steps==null)+(fine>full?radio('makeFine',fine,'Fine · '+fine+' steps, slower',t?.steps===fine):'')
+      +'<small id="makeDraftHint" class="muted">On Anima models the turbo Draft takes about half the time; on one 19 Oct lab picture it came close to a full run, and 20, 30 and 40 steps looked alike, so there is no Fine. Compare with As made on your own picture. A draft card offers “Make the final” at the full '+full+' steps.</small></fieldset>';
+    return '<fieldset class="make-quality"><legend>Quality</legend>'+radio('makeDraft',n,'Draft · '+n+' steps, rougher but quicker',t?.steps===n)+radio('makeStandard','','As made · '+full+' steps',t?.steps==null&&!t?.turbo)+(fine>full?radio('makeFine',fine,'Fine · '+fine+' steps, slower',t?.steps===fine):'')
       +'<small id="makeDraftHint" class="muted">A draft card offers “Make the final”: the same words and seed at the full '+full+' steps.</small></fieldset>';}
   const draftRun=run=>{const look=state.looks?.find(l=>l.id===run.lookId);return!!look&&run.scene&&FINAL.includes(run.job.status)&&(run.job.outputs||[]).length>0&&(!!run.tune?.turbo||run.tune?.steps!=null&&run.tune.steps===draftOf(look,byId(run.tune.preset)||presetFor(look)));};
   const clamp=v=>Math.min(2,Math.max(0,Math.round((Number(v)||0)*20)/20));
@@ -193,11 +193,11 @@
       if(r){controls[s]=eff(r,t);if(r.name&&bound(tp,NAMED(s)))controls[NAMED(s)]=r.name;}
       else if(switched||t.cleared.includes(s))controls[s]=0;}
     if(t.steps!=null&&bound(tp,'steps'))controls.steps=t.steps;
-    // The turbo draft: the turbo LoRA in a free slot (or its own row), and the steps, cfg, sampler and scheduler it was made for.
-    if(t.turbo&&compatible(look).includes(TURBO.file)){const own=t.rows.find(r=>r.name===TURBO.file),slot=own?.slot||SLOTS.find(x=>bound(tp,x)&&bound(tp,NAMED(x))&&!t.rows.some(r=>r.slot===x));
-      if(slot){controls[slot]=1;controls[NAMED(slot)]=TURBO.file;controls.steps=TURBO.steps;controls.cfg=TURBO.cfg;if(tp.choices?.sampler?.includes(TURBO.sampler))controls.sampler=TURBO.sampler;if(tp.choices?.scheduler?.includes(TURBO.scheduler))controls.scheduler=TURBO.scheduler;}}
     if(t.sampler&&bound(tp,'sampler'))controls.sampler=t.sampler;
     if(t.negative!=null&&bound(tp,'negative'))controls.negative=t.negative;
+    // The turbo draft, after the sampler: it needs its own steps, cfg, sampler and scheduler, whatever Tune says (Muse HIGH on #1559).
+    if(t.turbo&&compatible(look).includes(TURBO.file)){const own=t.rows.find(r=>r.name===TURBO.file),slot=own?.slot||SLOTS.find(x=>bound(tp,x)&&bound(tp,NAMED(x))&&!t.rows.some(r=>r.slot===x));
+      if(slot){controls[slot]=1;controls[NAMED(slot)]=TURBO.file;controls.steps=TURBO.steps;controls.cfg=TURBO.cfg;if(tp.choices?.sampler?.includes(TURBO.sampler))controls.sampler=TURBO.sampler;if(tp.choices?.scheduler?.includes(TURBO.scheduler))controls.scheduler=TURBO.scheduler;}}
     // A trigger word is written only for an adapter you added: the look's own wording already speaks for its own adapters.
     if(typeof controls.positive==='string')for(const r of t.rows){const e=entry(r.name);if(!r.added||!r.on||!e?.trigger)continue;
       const add=e.trigger.split(',').map(w=>w.trim()).filter(w=>w&&!hasToken(controls.positive,w)).join(', ');if(!add)continue;
@@ -258,8 +258,8 @@
   function adapterMatches(look,text){const s=text.toLowerCase(),files=compatible(look),names=f=>[f,f.replace(/\.safetensors$/i,''),short(f)].map(x=>x.toLowerCase());
     const exact=files.filter(f=>names(f).includes(s));if(exact.length)return exact;const words=s.split(/\s+/).filter(Boolean);return files.filter(f=>words.every(w=>loraText(f).includes(w)));}
   function addAdapter(look,name){const t=tuneOf(look),slot=freeSlot(look,t);if(!slot||!compatible(look).includes(name)||t.rows.some(r=>r.name===name))return;
-    t.rows.push({slot,name,strength:startOf(name),on:true,added:true});t.cleared=t.cleared.filter(s=>s!==slot);tuneChanged();q('[data-tune-strength="'+slot+'"]')?.focus();
-    say(fits(look,name)?'Added '+short(name)+'.':'Added '+short(name)+'. It was made for '+entry(name).family+', so it may not suit this model; check the first picture.');}
+    t.rows.push({slot,name,strength:startOf(name),on:true,added:true});t.cleared=t.cleared.filter(s=>s!==slot);const turboOff=typeof TURBO!=='undefined'&&t.turbo&&!turboFits(look,t);if(turboOff)delete t.turbo;tuneChanged();q('[data-tune-strength="'+slot+'"]')?.focus();
+    say((fits(look,name)?'Added '+short(name)+'.':'Added '+short(name)+'. It was made for '+entry(name).family+', so it may not suit this model; check the first picture.')+(turboOff?' That took the last free slot, so Quality is back to As made (the turbo Draft needs one).':''));}
   // An added LoRA starts at its recommended strength. A recorded 0 means "off in recipes", not advice, so it starts at 1 kept inside its
   // recorded range, as the full editor's recommendedStrength does (an added LoRA at 0 did nothing).
   const startOf=name=>{const e=entry(name),d=Number(e?.default),r=Array.isArray(e?.strength)?e.strength.filter(Number.isFinite):[];return clamp(d>0?d:r.length?Math.max(Math.min(...r),Math.min(1,Math.max(...r))):1);};
@@ -303,7 +303,7 @@
   const sweepOf=look=>state.sweeps[look.id]??={open:false,axis:'',values:[]};
   function sweepAxes(look){
     const t=tuneOf(look),tp=tunedPreset(look);
-    return[{id:'steps',label:'Steps',why:!bound(tp,'steps')?'this recipe takes no step count':fullSteps(look,tp)<1?'this look’s step count is not known here':''},
+    return[{id:'steps',label:'Steps',why:t.turbo?'Quality is the turbo Draft, which fixes 8 steps; choose As made first':!bound(tp,'steps')?'this recipe takes no step count':fullSteps(look,tp)<1?'this look’s step count is not known here':''},
       ...(t.rows.length?t.rows.map(r=>({id:'adapter:'+r.slot,label:short(r.name)+' strength',slot:r.slot,why:''})):[{id:'adapter',label:'Adapter strength',why:'this look has no adapter; add one in Tune first'}]),
       {id:'model',label:'Model',why:models(look).length?'':'no other model in the library takes this look'}];
   }
@@ -326,7 +326,8 @@
       if(runs.some(x=>x.label===label))return fail('give different values');runs.push({label,tune:t});}
     return runs.length<2?fail('give two or three values'):{axis,runs,why:''};
   }
-  const lookWhy=look=>blocker(look)||sweepPlan(look)?.why||'';
+  const turboWhy=look=>{const t=state.tune[look.id];return t?.turbo&&!turboFits(look,t)?'The turbo Draft needs a free LoRA slot: remove a LoRA or choose Quality As made.':'';};
+  const lookWhy=look=>blocker(look)||turboWhy(look)||sweepPlan(look)?.why||'';
   // The recipe a refusal's Models & setup link opens: a blocked compare value, else the tuned recipe.
   const whyPreset=look=>!blocker(look)&&sweepPlan(look)?.preset||tunedPreset(look)?.id||look.body.preset_id;
   // An added adapter's trigger word goes in only where it is on (applyTune), so sweeping it changes the words too.

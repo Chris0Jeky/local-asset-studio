@@ -273,7 +273,8 @@ test('the turbo draft fills a free slot with the turbo LoRA at 8 steps, cfg 1, e
     'const compatible=()=>[TURBO.file];\n' + scaleSrc + '\n' + tokenSrc + '\n' + applySrc, context);
   context.controls = {positive: 'a girl', steps: 30, cfg: 4.5, sampler: 'dpmpp_2m', scheduler: 'karras', lora: 1, lora_name: 'own.safetensors'};
   context.look = lookFor('base', {lora: 1, lora_name: 'own.safetensors', steps: 30});
-  context.tune = tuneFor('base', [{slot: 'lora', name: 'own.safetensors', strength: 1, on: true}], {turbo: true});
+  // A sampler chosen in Tune before Draft does not override the turbo's euler (Muse HIGH on #1559).
+  context.tune = tuneFor('base', [{slot: 'lora', name: 'own.safetensors', strength: 1, on: true}], {turbo: true, sampler: 'dpmpp_2m'});
   vm.runInContext('applyTune(controls,look,tune)', context);
   const c = JSON.parse(vm.runInContext('JSON.stringify(controls)', context));
   assert.deepEqual([c.lora2, c.lora2_name, c.steps, c.cfg, c.sampler, c.scheduler], [1, 'anima-turbo-lora-v0.2.safetensors', 8, 1, 'euler', 'simple']);
@@ -282,4 +283,19 @@ test('the turbo draft fills a free slot with the turbo LoRA at 8 steps, cfg 1, e
   vm.runInContext('applyTune(controls,look,tune)', context);
   const m = JSON.parse(vm.runInContext('JSON.stringify(controls)', context));
   assert.deepEqual([m.steps, m.cfg, m.lora2_name], [30, 4.5, undefined], 'As made sends no turbo');
+});
+
+// Turbo Draft guards (Muse HIGHs on #1559): Compare one setting cannot vary Steps under it, and a turbo with no free slot is refused, not silently dropped.
+test('turbo Draft blocks a Steps comparison and refuses when no LoRA slot is free', () => {
+  const axes = slice('  function sweepAxes(look){', '\n  function sweepDefaults(');
+  const why = src.match(/  const turboWhy=.*\n/)[0];
+  const t = {turbo: true, rows: []}, ctx = {tuneOf: () => t, tunedPreset: () => ({steps: ['1', 'steps']}), bound: (p, k) => !!p?.[k], fullSteps: () => 25, short: n => n, models: () => [],
+    state: {tune: {look: t}}, turboFits: () => false};
+  vm.createContext(ctx); vm.runInContext(axes + why, ctx);
+  ctx.look = {id: 'look'};
+  assert.match(vm.runInContext('sweepAxes(look)[0].why', ctx), /turbo Draft/);
+  assert.match(vm.runInContext('turboWhy(look)', ctx), /needs a free LoRA slot/);
+  t.turbo = false;
+  assert.equal(vm.runInContext('sweepAxes(look)[0].why', ctx), '');
+  assert.equal(vm.runInContext('turboWhy(look)', ctx), '');
 });
