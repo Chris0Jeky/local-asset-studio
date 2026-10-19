@@ -75,7 +75,7 @@ class SceneTests(unittest.TestCase):
 
     def test_http_commands_share_cas_and_serve_only_hashed_source_ranges(self):
         from http.client import HTTPConnection
-        from http.server import ThreadingHTTPServer
+        from http_test_server import ThreadingHTTPServer
         from test_server import server
         handler=type('SceneHTTPFixture',(server.Handler,),{'studio':self.studio})
         http=ThreadingHTTPServer(('127.0.0.1',0),handler)

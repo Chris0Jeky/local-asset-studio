@@ -269,7 +269,8 @@ class ReferenceJobTests(unittest.TestCase):
         self.assertEqual(self.calls,[])
 
     def test_real_loopback_worker_transport_and_clean_derivatives(self):
-        from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
+        from http.server import BaseHTTPRequestHandler
+        from http_test_server import ThreadingHTTPServer
         requests=[]; response=self.answer
         class Handler(BaseHTTPRequestHandler):
             def log_message(self,*args):pass

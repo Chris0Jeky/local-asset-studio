@@ -2,7 +2,8 @@
 import copy
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, redirect_stdout
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 import io
 import json
 from pathlib import Path

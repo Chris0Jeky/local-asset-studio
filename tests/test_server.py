@@ -1,4 +1,5 @@
 import hashlib
+from functools import partial
 import importlib.util
 import io
 import json
@@ -12,7 +13,7 @@ from pathlib import Path
 from unittest.mock import patch
 from unittest.mock import Mock
 from http.client import HTTPConnection, IncompleteRead
-from http.server import ThreadingHTTPServer
+from http_test_server import ThreadingHTTPServer
 from urllib.error import HTTPError, URLError
 from queue import Empty
 from PIL import Image
@@ -29,6 +30,9 @@ def rgba_png(width=8, height=8, transparent=True):
 
 SPEC = importlib.util.spec_from_file_location("asset_server", Path(__file__).parents[1] / "app/server.py")
 server = importlib.util.module_from_spec(SPEC); SPEC.loader.exec_module(server)
+
+class FixtureHTTPServer(ThreadingHTTPServer, server.StudioHTTPServer):pass
+server.create_server=partial(server.create_server,http_server=FixtureHTTPServer)
 
 GRAPH = {"1":{"inputs":{"text":"native positive","width":512,"height":512,"seed":1,"steps":20,"cfg":7,"lora":1,"strength_clip":1,"reference":"default.png"}}, "2":{"inputs":{"width":512,"height":512}}}
 PRESET = {"id":"demo","name":"Demo","category":"Test","graph":"workflows/api/demo-api.json","positive":["1","text"],"width":["1","width"],"height":["1","height"],"seed":["1","seed"],"steps":["1","steps"],"cfg":["1","cfg"],"lora":["1","lora"],"reference":["1","reference"],"bindings_extra":{"width":[["2","width"]],"height":[["2","height"]],"lora":[["1","strength_clip"]]}}

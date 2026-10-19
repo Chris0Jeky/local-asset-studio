@@ -1,6 +1,7 @@
 """Actual loopback transport for the shared document reducer and persistence."""
 import copy
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 from io import BytesIO
 import json
 from pathlib import Path

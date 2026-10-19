@@ -31,7 +31,7 @@ test('finder indexes preset model and family metadata and offers Tune without ge
   vm.runInNewContext(commands+';commands();',context);
   assert.match(results.innerHTML,/data-make-look="look-test"/);
   for(const query of ['base-model','portrait recipe']){input.value=query;vm.runInNewContext('commands()',context);assert.match(results.innerHTML,/data-make-look="look-test"/);}
-  for(const query of ['lora','adapter','tune']){input.value=query;vm.runInNewContext('commands()',context);assert.match(results.innerHTML,/href="\/#make"/);assert.match(results.innerHTML,/Open Tune this look under the composer/);}
+  for(const query of ['lora','adapter','tune']){input.value=query;vm.runInNewContext('commands()',context);assert.match(results.innerHTML,/href="\/#make"/);assert.match(results.innerHTML,/Open Model, LoRAs and settings under the words in Make/);}
   input.value='flux';vm.runInNewContext('commands()',context);assert.match(results.innerHTML,/href="\/#models"/);
 });
 test('finder reaches installed adapters and model files that no look uses (#23), and no longer offers Overview (#18)',()=>{
@@ -45,9 +45,9 @@ test('finder reaches installed adapters and model files that no look uses (#23),
   // The empty finder keeps its shape: no adapter rows until something is typed.
   assert.doesNotMatch(results.innerHTML,/Use xilmo/);
   input.value='xilmo';vm.runInNewContext('commands()',context);
-  assert.match(results.innerHTML,/<b>Use xilmo-style\.safetensors in Tune<\/b>/);assert.match(results.innerHTML,/Adapter - add it under Tune this look in Make/);
+  assert.match(results.innerHTML,/<b>Use xilmo-style\.safetensors in Make<\/b>/);assert.match(results.innerHTML,/LoRA - add it under Model, LoRAs and settings in Make/);
   input.value='pearly';vm.runInNewContext('commands()',context);
-  assert.match(results.innerHTML,/<b>Use pearly-line\.safetensors in Tune<\/b>/);
+  assert.match(results.innerHTML,/<b>Use pearly-line\.safetensors in Make<\/b>/);
   // A checkpoint file with no look reaches Models & setup through that row's own file index, once.
   input.value='flux-checkpoint';vm.runInNewContext('commands()',context);
   assert.match(results.innerHTML,/<b>Models & setup<\/b>/);assert.equal((results.innerHTML.match(/href="\/#models"/g)||[]).length,1);

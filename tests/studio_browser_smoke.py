@@ -192,7 +192,7 @@ def run(screenshots):
             for query in ['lora','adapter','tune']:
                 finder.keyboard.press('Control+k');finder.fill('#studioCommandSearch',query)
                 result=finder.locator('#studioCommandResults a').first
-                check(result.get_attribute('href')=='/#make' and 'Open Tune this look under the composer' in result.inner_text(),'Tune hint leads to Make: '+query)
+                check(result.get_attribute('href')=='/#make' and 'Open Model, LoRAs and settings under the words in Make' in result.inner_text(),'Tune hint leads to Make: '+query)
                 finder.keyboard.press('Escape')
             finder.keyboard.press('Control+k');finder.fill('#studioCommandSearch','pixel');finder.wait_for_selector('#studioCommandResults [data-make-look="look-preset-pixel-lora"]')
             check(finder.locator('#studioCommandResults a').first.get_attribute('data-make-look')=='look-preset-pixel-lora','pixel search leads to the pixel-art look')

@@ -1,5 +1,6 @@
 """Actual loopback transport, not an image inference test."""
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 import json
 import os
 import threading

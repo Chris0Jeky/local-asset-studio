@@ -5,7 +5,7 @@ import threading
 import unittest
 import uuid
 from http.client import HTTPConnection
-from http.server import ThreadingHTTPServer
+from http_test_server import ThreadingHTTPServer
 from pathlib import Path
 from types import SimpleNamespace
 from http_refusal_transport import atomic_json_post
