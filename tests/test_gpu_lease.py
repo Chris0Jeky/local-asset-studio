@@ -1,6 +1,6 @@
 """GPU lease (issue #805): inert fakes only. No real process is stopped, no ComfyUI endpoint is probed, no prompt is posted."""
 from http.client import HTTPConnection
-from http.server import ThreadingHTTPServer
+from http_test_server import ThreadingHTTPServer
 import json
 import sys
 import tempfile

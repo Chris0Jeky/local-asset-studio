@@ -307,7 +307,7 @@
     paramSummary.replaceChildren(el('span', '', 'Fine-tune the recipe'));
     const paramHint = el('small', 'wk-parameter-summary'); paramSummary.append(paramHint);
     const promptHint = el('small', 'wk-prompt-hint', 'Describe the result you want. Tune the recipe when you need to.');
-    q('#positiveWrap').append(promptHint);
+    q('#positiveLabel')?.classList.add('sr-only'); q('#positiveWrap').append(promptHint);
     q('#positive').rows = 5;
     const draftBar = q('#uxDraftBar'), draftButtons = draftBar?.querySelector(':scope > div');
     let draftOptions;
@@ -320,12 +320,12 @@
     setupReview.className = 'wk-setup-review'; setupRail.append(setupReview);
     // The storage notice stays outside the closed Appearance popover, so a choice that will not persist is always visible.
     setupRail.append(preferenceNotice);
-    const dock = el('div', 'wk-run-dock'); dock.setAttribute('aria-label','Generation controls');
+    const dock = el('div', 'wk-run-dock'); dock.setAttribute('role','group'); dock.setAttribute('aria-label','Generation controls');
     const dockInfo = el('div', 'wk-dock-info'), readiness = el('strong'), eta = el('span');
-    readiness.id = 'workshopReadiness'; eta.id = 'workshopEta';
+    readiness.id = 'workshopReadiness'; readiness.tabIndex = 0; eta.id = 'workshopEta';
     const reviewButton = button('workshopReview', 'Review checks', () => reveal(review));
     dockInfo.append(readiness, eta, reviewButton);
-    const status = q('#status'); dock.append(dockInfo, actions); if (status) dock.append(status); create.append(dock);
+    const status = q('#status'); if (status) status.tabIndex = 0; dock.append(dockInfo, actions); if (status) dock.append(status); create.append(dock);
     // A text field you enter is never left under the fixed dock; a narrow or short dock also compacts while you type (workshop.css).
     const typing = n => !!n?.matches?.('textarea,input:not([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset],[type=file],[type=color],[type=image])') && !dock.contains(n);
     // Measured after the compacted dock has laid out, and once more a frame later in case the page height settled.
@@ -354,7 +354,7 @@
     create.addEventListener('focusout', e => { if (!typing(e.target)) return; if (pressing) relaxPending = true; else dock.classList.remove('wk-typing'); });
     create.addEventListener('focusin', e => { if (typing(e.target)) { dock.classList.add('wk-typing'); clearOfDock(e.target, 2); } });
     const estimate = q('#timeEstimate'); if (estimate) runBox.append(estimate);
-    const runTools = el('div', 'wk-run-tools'); runTools.setAttribute('aria-label', 'Plan and vary this run');
+    const runTools = el('div', 'wk-run-tools'); runTools.setAttribute('role', 'group'); runTools.setAttribute('aria-label', 'Plan and vary this run');
     const compare = q('#planComparison'), newSeed = q('#randomSeed');
     for (const tool of [newSeed, compare]) if (tool) runTools.append(tool);
     actions.after(runTools);
@@ -386,14 +386,24 @@
     // A started run says when it started and how long it has taken so far (handoff 03). Only started_at is observed,
     // so there is no progress bar and no guessed finish (K13); the job's own message stays as it is.
     const clock = seconds => { const s = Math.max(0, Math.floor(seconds)); return s < 60 ? s+' s' : Math.floor(s/60)+' min '+String(s%60).padStart(2,'0')+' s'; };
+    const elapsedNotice = el('p', 'sr-only'); elapsedNotice.id = 'workshopElapsedStatus'; elapsedNotice.setAttribute('role', 'status'); elapsedNotice.setAttribute('aria-live', 'polite'); create.append(elapsedNotice);
+    const elapsedStates = new Map();
     const tickElapsed = () => {
       if (create.hidden || d.hidden) return;
       const list = typeof jobs !== 'undefined' && Array.isArray(jobs) ? jobs : [];
+      const changes = [];
+      for (const job of list) {
+        const started = Number(job.started_at); if (!Number.isFinite(started) || started <= 0) continue;
+        const stamp = job.status+'|'+started, previous = elapsedStates.get(job.id); if (previous === stamp) continue; elapsedStates.set(job.id, stamp);
+        if (previous === undefined && !['waiting','submitting','running'].includes(job.status)) continue;
+        changes.push('Run '+job.id+': '+job.status+', '+clock(Date.now()/1000 - started)+' elapsed.');
+      }
+      if (changes.length) text(elapsedNotice, changes.join(' '));
       for (const card of d.querySelectorAll('#gallery .jobStatus[data-problem]')) {
         const job = list.find(j => j.id === card.dataset.problem), started = Number(job?.started_at);
         let line = card.querySelector('.job-elapsed');
         if (!job || !['waiting','submitting','running'].includes(job.status) || !Number.isFinite(started) || started <= 0) { line?.remove(); continue; }
-        if (!line) { line = el('p', 'job-elapsed'); const message = card.querySelector(':scope > p'); if (message) message.after(line); else card.append(line); }
+        if (!line) { line = el('p', 'job-elapsed'); line.setAttribute('aria-live', 'off'); const message = card.querySelector(':scope > p'); if (message) message.after(line); else card.append(line); }
         text(line, 'Started '+new Date(started*1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})+' · '+clock(Date.now()/1000 - started)+' so far');
       }
     };
@@ -556,7 +566,7 @@
     let blockerSignature = '';
     function renderBlockers(blockers) {
       const rows = blockers.map(n => { const fix = n.querySelector('[data-ux-resolve]'); return [n.dataset.readinessCode || '', n.querySelector('p').textContent, fix?.textContent || '', !!fix?.disabled]; });
-      // A lone blocker's text is already the summary above; its row then carries only the repair, if it has one.
+      // A lone blocker's text stays in the dock; its row carries only the repair, if it has one.
       const single = rows.length === 1; blockerList.hidden = !rows.length || single && !rows[0][2];
       const signature = JSON.stringify(rows); if (signature === blockerSignature) return; blockerSignature = signature;
       blockerList.replaceChildren(...rows.map(([code, message, label, disabled]) => {
@@ -573,6 +583,8 @@
       }));
     }
     function sync() {
+      // #1525 asks this only for the run dock and the blocker list: a control elsewhere (e.g. a reference choice) hands focus on itself.
+      const held = (dock.contains(d.activeElement) || blockerList.contains(d.activeElement)) ? d.activeElement : null;
       const active = !create.hidden;
       d.body.classList.toggle('workshop-active', active);
       if (!active && recipeDialog.open) recipeDialog.close();
@@ -605,6 +617,7 @@
       dockInfo.classList.toggle('wk-clear', !blocked);
       text(readiness, readinessText + (blockers.length > 1 ? ' (+'+(blockers.length-1)+' more)' : ''));
       text(setupReadiness, blockers.length > 1 ? blockers.length+' things to fix before generating' : readinessText);
+      setupReadiness.hidden = blockers.length === 1;
       renderBlockers(blockers);
       const time = q('#estimateValue')?.textContent;
       const etaText = estimate && !estimate.hidden && time ? 'Expected: '+time : 'Runtime estimate not available';
@@ -616,6 +629,9 @@
       const outputs = q('#gallery')?.querySelectorAll('.imageCard').length || 0;
       text(results.querySelector('summary'), 'Recent runs'+(outputs ? ' · '+outputs+' output'+(outputs === 1 ? '' : 's') : ''));
       renderGuidance(blocked, first, outputs);
+      // Only rescue focus that was actually lost (still on the removed control, or fallen to body); never take it from a control another handler already chose.
+      const lost = !d.activeElement || d.activeElement === d.body || d.activeElement === held;
+      if (active && held && lost && (!held.isConnected || held.disabled || held.closest('[hidden]'))) focusExisting(reviewButton);
     }
     const schedule = () => {
       contextRevision++;

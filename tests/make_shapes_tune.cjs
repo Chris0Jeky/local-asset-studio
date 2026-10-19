@@ -241,3 +241,61 @@ test('applyTune preserves the prepared seed', () => {
   );
   assert.equal(controls.seed, 123);
 });
+
+// The shut Tune line names the base model (Codex P2 on #1533): two looks of one family on different files read differently.
+test('As made names the model file when a family has two models', () => {
+  const ctx = {PRESETS: [
+    {id: 'anima-base', family: 'Anima', model: {file: 'diffusion_models/anima-base-v1.0.safetensors'}, steps: ['1', 'steps'], lora: ['2', 'strength'], lora_name: ['2', 'name']},
+    {id: 'anima-aes', family: 'Anima', model: {file: 'diffusion_models/anima-aesthetic-v1.1.safetensors'}, steps: ['1', 'steps']},
+    {id: 'wai', family: 'WAI', model: {file: 'checkpoints/wai.safetensors'}}], knowledge: {loras: {'petiflow.safetensors': {label: 'pearly_petiflow2'}}}};
+  vm.createContext(ctx);
+  vm.runInContext('const presets=()=>PRESETS;\n' + "const SLOTS=['lora','lora2','lora3','lora4','lora5','lora6'];\n" +
+    'const presetFor=look=>presets().find(p=>p.id===look?.body?.preset_id);\n' + 'const bound=(p,k)=>!!(p?.[k]||p?.bindings_extra?.[k]);\n' +
+    slice('  const adapters=look=>', '\n  const lookList=') + '\n' + slice('  const kb=()=>', '\n  // Same model type') + '\n' +
+    slice('  const modelLabel=', '\n  // A word already') + '\n' + slice('  const halve=n=>', '\n  const draftOf=') + '\n' +
+    slice('  function asMade(look){', '\n  // The tune applied') + '\nthis.asMade=asMade;', ctx);
+  const a = ctx.asMade({body: {preset_id: 'anima-base', controls: {steps: 25, lora: 1, lora_name: 'petiflow.safetensors'}}});
+  const b = ctx.asMade({body: {preset_id: 'anima-aes', controls: {steps: 30}}});
+  assert.equal(a, 'As made: Anima · anima-base-v1.0 · pearly_petiflow2 1.00 · 25 steps');
+  assert.equal(b, 'As made: Anima · anima-aesthetic-v1.1 · 30 steps');
+  assert.equal(ctx.asMade({body: {preset_id: 'wai', controls: {}}}), 'As made: WAI');
+});
+
+// Round 7 turbo draft (gpu-lab, 19 Oct): an Anima look's Draft puts the turbo LoRA in a free slot and sends its own steps, cfg, sampler and scheduler.
+test('the turbo draft fills a free slot with the turbo LoRA at 8 steps, cfg 1, euler/simple', () => {
+  const turboSrc = src.match(/  const TURBO=\{.*\};\n/)[0];
+  const preset = basePreset({cfg: ['1', 'cfg'], scheduler: ['1', 'scheduler'], choices: {sampler: ['euler', 'dpmpp_2m'], scheduler: ['simple', 'karras']}});
+  const context = {PRESETS: [preset], knowledge: KNOWLEDGE};
+  vm.createContext(context);
+  vm.runInContext('const presets=()=>PRESETS;\n' + "const SLOTS=['lora','lora2','lora3','lora4','lora5','lora6'];\n" + "const NAMED=k=>k+'_name';\n" +
+    'const bound=(p,k)=>!!(p?.[k]||p?.bindings_extra?.[k]);\n' + 'const byId=id=>presets().find(p=>p.id===id);\n' + 'const presetFor=look=>presets().find(p=>p.id===look?.body?.preset_id);\n' +
+    "const kb=()=>typeof knowledge!=='undefined'&&knowledge||{};\n" + 'const entry=name=>name&&kb().loras?.[name]||null;\n' + turboSrc +
+    'const compatible=()=>[TURBO.file];\n' + scaleSrc + '\n' + tokenSrc + '\n' + applySrc, context);
+  context.controls = {positive: 'a girl', steps: 30, cfg: 4.5, sampler: 'dpmpp_2m', scheduler: 'karras', lora: 1, lora_name: 'own.safetensors'};
+  context.look = lookFor('base', {lora: 1, lora_name: 'own.safetensors', steps: 30});
+  // A sampler chosen in Tune before Draft does not override the turbo's euler (Muse HIGH on #1559).
+  context.tune = tuneFor('base', [{slot: 'lora', name: 'own.safetensors', strength: 1, on: true}], {turbo: true, sampler: 'dpmpp_2m'});
+  vm.runInContext('applyTune(controls,look,tune)', context);
+  const c = JSON.parse(vm.runInContext('JSON.stringify(controls)', context));
+  assert.deepEqual([c.lora2, c.lora2_name, c.steps, c.cfg, c.sampler, c.scheduler], [1, 'anima-turbo-lora-v0.2.safetensors', 8, 1, 'euler', 'simple']);
+  assert.equal(c.lora_name, 'own.safetensors', 'the look\u2019s own LoRA stays');
+  context.tune = tuneFor('base', [{slot: 'lora', name: 'own.safetensors', strength: 1, on: true}]); context.controls = {steps: 30, cfg: 4.5};
+  vm.runInContext('applyTune(controls,look,tune)', context);
+  const m = JSON.parse(vm.runInContext('JSON.stringify(controls)', context));
+  assert.deepEqual([m.steps, m.cfg, m.lora2_name], [30, 4.5, undefined], 'As made sends no turbo');
+});
+
+// Turbo Draft guards (Muse HIGHs on #1559): Compare one setting cannot vary Steps under it, and a turbo with no free slot is refused, not silently dropped.
+test('turbo Draft blocks a Steps comparison and refuses when no LoRA slot is free', () => {
+  const axes = slice('  function sweepAxes(look){', '\n  function sweepDefaults(');
+  const why = src.match(/  const turboWhy=.*\n/)[0];
+  const t = {turbo: true, rows: []}, ctx = {tuneOf: () => t, tunedPreset: () => ({steps: ['1', 'steps']}), bound: (p, k) => !!p?.[k], fullSteps: () => 25, short: n => n, models: () => [],
+    state: {tune: {look: t}}, turboFits: () => false};
+  vm.createContext(ctx); vm.runInContext(axes + why, ctx);
+  ctx.look = {id: 'look'};
+  assert.match(vm.runInContext('sweepAxes(look)[0].why', ctx), /turbo Draft/);
+  assert.match(vm.runInContext('turboWhy(look)', ctx), /needs a free LoRA slot/);
+  t.turbo = false;
+  assert.equal(vm.runInContext('sweepAxes(look)[0].why', ctx), '');
+  assert.equal(vm.runInContext('turboWhy(look)', ctx), '');
+});

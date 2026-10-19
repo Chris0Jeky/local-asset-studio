@@ -101,6 +101,10 @@ LORA_NAME_KEYS = tuple(k + "_name" for k in LORA_SLOTS)
 # Plain numeric controls and their accepted range; app/looks.py keeps the same table for saved looks (parity test).
 NUMBER_RANGES = (("seed", 0, 2**63-1, True), ("steps", 1, 150, True), ("cfg", 0, 30, False), ("denoise", 0, 1, False), ("style_weight", 0, 2, False), ("pose_strength", 0, 2, False), ("depth_cut", 0, 100, True))
 
+def _post_failure_detail(exc):
+    code = getattr(exc, 'code', None); reason = getattr(exc, 'reason', None) or exc
+    return (f'HTTP {code}' if isinstance(code, int) else type(reason).__name__ + ': ' + str(reason))[:200]
+
 class StudioError(ValueError):
     code = None
 
@@ -2156,12 +2160,12 @@ class Studio:
                         detail = error.get("message", "Invalid workflow") if isinstance(error, dict) else str(error)
                         job["message"] = "ComfyUI rejected the workflow before queuing: " + detail[:400] + (". No prompt was submitted for output " + str(i + 1) + "." if job["status"] == "partial" else "")
                         self._stamp_finished(job); self._save(job); return
-                    job["status"] = "uncertain"; job["message"] = "Submission outcome is uncertain and will not be retried automatically."; self._save(job); return
+                    job["status"] = "uncertain"; job["message"] = "Submission outcome is uncertain and will not be retried automatically. ComfyUI said: " + _post_failure_detail(exc) + "."; self._save(job); return
             except (URLError, TimeoutError, OSError, json.JSONDecodeError, UnicodeDecodeError, HTTPException) as exc:
-                job["status"] = "uncertain"; job["message"] = "Submission outcome is uncertain and will not be retried automatically."; self._save(job); return
+                job["status"] = "uncertain"; job["message"] = "Submission outcome is uncertain and will not be retried automatically. ComfyUI said: " + _post_failure_detail(exc) + "."; self._save(job); return
             prompt_id = response.get("prompt_id") if isinstance(response, dict) else None
             if not isinstance(response, dict) or not isinstance(prompt_id, str) or not prompt_id.strip():
-                job['status']='uncertain';job['message']='No prompt ID was returned. Submission intent is retained and will not be retried.';self._save(job);return
+                job['status']='uncertain';job['message']='No prompt ID was returned. Submission intent is retained and will not be retried. Response: '+(json.dumps(response, default=str)[:200] if isinstance(response, dict) else type(response).__name__);self._save(job);return
             self._resource_observation_event('accepted', job, index=i, prompt_id=prompt_id)
             submission = {"index": i, "prompt_id": prompt_id, "seed": seed, "graph": graph, "status": "observing"}
             job["prompt_ids"].append(prompt_id); job.setdefault("submissions", []).append(submission); job.pop("pending_submission", None); job["status"] = "running"; job["message"] = f"Generating output {i + 1} of {job['batch_count']}"
@@ -2480,12 +2484,12 @@ class Handler(BaseHTTPRequestHandler):
     def _json(self, status, obj):
         raw = json.dumps(obj).encode(); self.send_response(status); self.send_header("Content-Type", "application/json"); self.send_header("Cache-Control", "no-store"); self.send_header("Content-Length", str(len(raw))); self.end_headers(); self.wfile.write(raw)
     def _safe_host(self):
-        return self.headers.get("Host", "") in ("127.0.0.1:8191", "localhost:8191")
+        return self.headers.get("Host", "") in (f"127.0.0.1:{PORT}", f"localhost:{PORT}")
     def _safe_mutation(self):
         if not self._safe_host(): return False
         origin = self.headers.get("Origin")
         parsed = urlparse(origin or "")
-        return parsed.scheme == "http" and parsed.netloc in ("127.0.0.1:8191", "localhost:8191") and not parsed.username and not parsed.password
+        return parsed.scheme == "http" and parsed.netloc in (f"127.0.0.1:{PORT}", f"localhost:{PORT}") and not parsed.username and not parsed.password
     def _require_gpu(self):
         """New generation work is refused (409 gpu_leased) while another local GPU tenant holds the lease."""
         lease = getattr(self.studio, "gpu_lease", None)
@@ -2858,8 +2862,12 @@ def create_server(repo_root, host=HOST, port=PORT, http_server=StudioHTTPServer,
     return http
 
 def main():
-    parser = argparse.ArgumentParser(); parser.add_argument("--repo-root", "--root", dest="repo_root", default=str(Path(__file__).parents[1])); args = parser.parse_args()
-    with create_server(args.repo_root) as http:
+    global PORT
+    parser = argparse.ArgumentParser(); parser.add_argument("--repo-root", "--root", dest="repo_root", default=str(Path(__file__).parents[1]))
+    parser.add_argument("--port", type=int, default=PORT, help="loopback port (default 8191); a second preview Studio uses another one"); args = parser.parse_args()
+    if not 1024 <= args.port <= 65535: parser.error("--port must be 1024-65535")
+    PORT = args.port
+    with create_server(args.repo_root, port=PORT) as http:
         print(f"Asset Studio ready: http://{HOST}:{PORT}/ (Prompt Lab: /prompt-lab.html)", flush=True)
         http.serve_forever()
 if __name__ == "__main__": main()

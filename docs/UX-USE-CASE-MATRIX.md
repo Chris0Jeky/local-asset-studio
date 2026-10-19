@@ -74,8 +74,9 @@ Owner ask (16 October 2026): "the user should be able to do it without much conf
     are the existing one-press polish routes (Anima pictures send Fix face and Fix hands to the same repaint, so they show as one **Fix face and hands** button with a keep-the-original warning; round 5, #1492), and a route that does not fit the picture gives its reason. **Animate**
     (`wan22-i2v`): a motion field and a length (Short, 17 frames, about 0.7 s; Longer, 33 frames, about 1.4 s; held modes are
     not offered). **Picture to 3D** (`trellis-auto-cutout`): nothing to fill in.
-  - Every goal keeps *Open in the full editor instead*, which opens the old dialog. A result's *More* menu (Change one
-    thing, Restyle, Put in a new pose, Animate, Make it 3D) now opens that goal in Make with the picture already chosen.
+  - Every goal keeps *Open in the full editor instead*, which opens the old dialog. A result's **Change one thing**, **New pose** and
+    **Restyle** buttons (one press each since 19 Oct, #1533 follow-up; before, *More* then the item, two presses) and its *More* menu
+    (Animate, Make it 3D) open that goal in Make with the picture already chosen.
 - **The same submission rules.** Generate is the only press that submits. It sends the request the dialog would have
   prepared: the source is copied through `/api/assets/reference` and checked against its `/context`, the claim comes from
   `StudioContinuation.initial`, a look picture is staged through `/api/assets/reference` (or `/api/upload` for an example
@@ -112,8 +113,9 @@ Refs #278.
     encoders on the same backend; the candidate must also bind every setting and adapter slot the look uses. The catalog now
     names each recipe's base model (`model`: loader, file, encoders). A model that needs a download says so and links to
     Models & setup.
-  - **Adapters (LoRAs)** as rows: on/off, strength 0–2, the trigger word, and Remove. **Add an installed adapter** searches only
-    installed files that the settings knowledge base places in the same model type. An added adapter's trigger word is written
+  - **Adapters (LoRAs)** as rows: on/off, strength 0–2, the trigger word, and Remove. **Add a LoRA** lists them (19 Oct): one card per
+    installed file that the settings knowledge base places in the same model type, with its role, fit, trigger word and starting
+    strength, and an Add button (one press, was type a name and press Add). Other families fold under "may not suit"; typing narrows the list. An added adapter's trigger word is written
     into the wording, at the start or end as its card says.
   - **Quality and speed**: steps as made, draft or finer, and the sampler when the recipe binds it. **Leave out**: the negative
     prompt. **Seed**: locked when *Different pictures each time* is off.

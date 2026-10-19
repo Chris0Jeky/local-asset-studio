@@ -9,7 +9,7 @@ import tempfile
 import threading
 import unittest
 from http.client import HTTPConnection
-from http.server import ThreadingHTTPServer
+from http_test_server import ThreadingHTTPServer
 from pathlib import Path
 from unittest.mock import patch
 

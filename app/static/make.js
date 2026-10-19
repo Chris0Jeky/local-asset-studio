@@ -10,7 +10,7 @@
   const json=async(path,body)=>{const r=await fetch(path,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(Error(data.error||data.message||('Request failed ('+r.status+')')),{status:r.status});return data;};
   // Curated, not generated: a goal lists looks by id in the order a newcomer should meet them (proven first, slow last).
   const GOALS=[
-    {id:'character',name:'Anime character',hint:'A person or creature, drawn',looks:['look-anima-pearly-petiflow','look-oneobsession-anima-v20-showcase','look-anifox-ringeko','look-pearly-anima-mix-v10-showcase','look-wai-fantasy-portrait','look-anima-fantasy-portrait','look-animagine-fantasy-portrait']},
+    {id:'character',name:'Anime character',hint:'A person or creature, drawn',looks:['look-oneobsession-anima-v20-showcase','look-pearly-anima-mix-v10-showcase','look-anima-pearly-petiflow','look-anifox-ringeko','look-wai-fantasy-portrait','look-anima-fantasy-portrait','look-animagine-fantasy-portrait']},
     {id:'scene',name:'Scene or background',hint:'A place, no main character',looks:['look-night-shift-retro-anime','look-noob-fantasy-scene','look-krea-watercolor-anime']},
     {id:'painting',name:'Painted illustration',hint:'Oil, ink, watercolour, book cover',looks:['look-anima-painterly-artist-tags','look-krea-style-emerald-tarot','look-krea-style-inkwork-darkbrush','look-krea-style-airy-softwatercolor','look-krea-oil-fantasy','look-krea-atelier-target-stack','look-krea-witch-nijisis']},
     {id:'photo',name:'Photo',hint:'Realistic people, places, products',looks:['look-preset-zimage-fast','look-preset-realvis','look-krea-realistic-snapshot','look-krea-lenovo-ultrareal']},
@@ -27,21 +27,23 @@
   const SHAPE_FOR={character:'portrait',scene:'landscape',game:'square'};
   // Lab evidence (docs/looks/LOOK-LAB-2026-10-16.md on branch lab/look-qualification-20261016): looks whose two lab runs were both
   // judged keep, with the median score. Agent judgement on this PC, not art acceptance; update this map from the lab doc, not by hand.
+  // Round 7 (docs/looks/LOOK-LAB-2026-10-19.md, PR #1563): the One Obsession and Pearly Anima mixes kept 12 of 12 each (3 scenes x 4 seeds, adult
+  // characters), so they lead the Anime character goal; Petiflow (Anima base) follows, as Anima-base close-up faces read youthful in that lab.
   // Kept in at least 3 of 4 test pictures, or 2 of 2 where only two were made (docs/looks/LOOK-LAB-2026-10-16.md, rounds 1-2; the game icon is round 4, PR #1488: potion and sword, one seed each).
-  const TESTED={'look-anima-pearly-petiflow':'4 of 4','look-anima-painterly-artist-tags':'2 of 2','look-night-shift-retro-anime':'3 of 4','look-krea-watercolor-anime':'2 of 2','look-krea-oil-fantasy':'2 of 2','look-krea-style-inkwork-darkbrush':'2 of 2','look-krea-realistic-snapshot':'2 of 2','look-krea-lenovo-ultrareal':'2 of 2'};
-  const tested=l=>TESTED[l.id]?'<small class="make-tested" title="'+escape(TESTED[l.id]+' test pictures on this PC were kept (16 Oct 2026, judged by an agent, not art approval).')+'">Tested well</small>':'';
+  const TESTED={'look-oneobsession-anima-v20-showcase':'12 of 12 (19 Oct, round 7)','look-pearly-anima-mix-v10-showcase':'12 of 12 (19 Oct, round 7)','look-anima-pearly-petiflow':'4 of 4','look-anima-painterly-artist-tags':'2 of 2','look-night-shift-retro-anime':'3 of 4','look-krea-watercolor-anime':'2 of 2','look-krea-oil-fantasy':'2 of 2','look-krea-style-inkwork-darkbrush':'2 of 2','look-krea-realistic-snapshot':'2 of 2','look-krea-lenovo-ultrareal':'2 of 2'};
+  const tested=l=>TESTED[l.id]?'<small class="make-tested" title="'+escape(TESTED[l.id]+' test pictures on this PC were kept (16 Oct 2026 unless dated; judged by an agent, not art approval).')+'">Tested well</small>':'';
   // Best for (lab rounds 1-2, docs/looks/LOOK-LAB-2026-10-16.md "Ranked best look per goal" and R3): what each tested look carried.
   // Kept here, not in presets/looks.json, because a look body takes only the fields app/looks.py allows.
-  const BEST_FOR={'look-anima-pearly-petiflow':'Close-ups and upper-body portraits holding one thing','look-anifox-ringeko':'A character holding an animal, readable faces; avoid books and lettering','look-night-shift-retro-anime':'Quiet, empty interiors with a few named props','look-anima-painterly-artist-tags':'A painted travel scene with one figure, quickly','look-krea-watercolor-anime':'Airy painted scenes','look-krea-style-inkwork-darkbrush':'Black-and-white buildings and interiors','look-krea-oil-fantasy':'Dark, colourful fantasy places','look-krea-style-airy-softwatercolor':'Pale flowery rooms; avoid written labels','look-krea-lenovo-ultrareal':'Natural phone-photo people and rooms','look-zimage-game-icon':'One item on white; check shape details'};
+  const BEST_FOR={'look-oneobsession-anima-v20-showcase':'Adult characters in costume; leans to revealing cuts, so name what is covered','look-pearly-anima-mix-v10-showcase':'Adult characters in costume, props held as written','look-anima-pearly-petiflow':'Close-ups and upper-body portraits holding one thing','look-anifox-ringeko':'A character holding an animal, readable faces; avoid books and lettering','look-night-shift-retro-anime':'Quiet, empty interiors with a few named props','look-anima-painterly-artist-tags':'A painted travel scene with one figure, quickly','look-krea-watercolor-anime':'Airy painted scenes','look-krea-style-inkwork-darkbrush':'Black-and-white buildings and interiors','look-krea-oil-fantasy':'Dark, colourful fantasy places','look-krea-style-airy-softwatercolor':'Pale flowery rooms; avoid written labels','look-krea-lenovo-ultrareal':'Natural phone-photo people and rooms','look-zimage-game-icon':'One item on white; check shape details'};
   const bestFor=l=>BEST_FOR[l.id]?'<small class="make-best">Best for: '+escape(BEST_FOR[l.id])+'</small>':'';
   // Recorded, never inferred: only a recipe whose own commercial_note names non-commercial terms (presets/catalog.json) is tagged.
   const nonCommercial=p=>/non-?commercial|prohibit commerciali/i.test(p?.commercial_note||'');
   const licence=p=>nonCommercial(p)?'<small class="make-licence" title="'+escape(p.commercial_note)+'">Non-commercial</small>':'';
   const FINAL=['completed','failed','partial','uncertain','not_submitted','cancelled','abandoned'];
-  const POLISH={face:'Fix face',details:'Fix hands and details',upscale:'Upscale 2\u00d7'};
-  const state={goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),varying:new Set(),varyHeld:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',poseRoute:'copy',pose:null,posePicking:false,compare:false,compareLooks:[],sweeps:{},characters:[],character:null,allPictures:false,charSave:null,charEdit:null,charMigrate:null,charStale:false,charForm:{},openers:new Set(),noteGone:false};
+  const POLISH={face:'Fix face',details:'Fix hands and details',refine:'Refine 1.5\u00d7',upscale:'Upscale 2\u00d7'};
+  const state={selected:{},goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],pictures:null,picking:false,review:{},polish:{},polishing:new Set(),varying:new Set(),varyHeld:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',poseRoute:'copy',pose:null,posePicking:false,compare:false,compareLooks:[],sweeps:{},characters:[],character:null,allPictures:false,charSave:null,charEdit:null,charMigrate:null,charStale:false,charForm:{},openers:new Set(),noteGone:false};
   // Round 5 (#1492): Anima pictures send Fix face and Fix hands to one WAI face-then-hand repaint, so they are one button, and say what that costs.
-  const MERGED='Fix face and hands',FIX_HINT='Repaints with a WAI model and can change this look’s face finish — keep the original and compare.',UP_HINT='Smooths fine texture; upscale the version you chose.';
+  const MERGED='Fix face and hands',FIX_HINT='Repaints with a WAI model and can change this look’s face finish — keep the original and compare.',UP_HINT='Smooths fine texture; upscale the version you chose.',REFINE_HINT='Refine redraws lightly at 1.5\u00d7: on the 19 Oct lab picture it kept the face and added eye and lash detail. Compare with the original; upscale last.';
   const merged=id=>{const f=state.polish[id+':face'],d=state.polish[id+':details'];return !!(f?.ok&&d?.ok&&f.preset_id&&f.preset_id===d.preset_id);};
   const polishName=(id,kind)=>kind==='face'&&merged(id)?MERGED:POLISH[kind];
   const polishKinds=id=>Object.keys(POLISH).filter(k=>!(k==='details'&&merged(id)));
@@ -65,7 +67,7 @@
   const SLOTS=['lora','lora2','lora3','lora4','lora5','lora6'];
   // The look's active adapters: a strength above zero with a file. Style strength scales exactly these and nothing else.
   const adapters=look=>{const c=look?.body?.controls||{},p=presetFor(look),bound=k=>!!(p?.[k]||p?.bindings_extra?.[k]);
-    return SLOTS.filter(k=>Number(c[k])>0&&(typeof c[k+'_name']==='string'&&c[k+'_name']||p&&!bound(k+'_name'))).map(k=>({key:k,name:c[k+'_name']||'built-in adapter',strength:Number(c[k])}));};
+    return SLOTS.filter(k=>Number(c[k])>0&&(typeof c[k+'_name']==='string'&&c[k+'_name']||p&&!bound(k+'_name'))).map(k=>({key:k,name:c[k+'_name']||'the recipe’s own LoRA',strength:Number(c[k])}));};
   const lookList=()=>{const g=goal();if(!g?.looks||!state.looks)return[];return g.looks.map(id=>state.looks.find(l=>l.id===id)).filter(l=>l&&!l.trashed_at);};
   const current=()=>state.looks?.find(l=>l.id===state.look&&!l.trashed_at)||null;
   // Honest speed (#1448): median seconds per picture measured in the 16 Oct look lab (docs/looks/LOOK-LAB-2026-10-16.md, R1 table,
@@ -95,7 +97,7 @@
   const NAMED=k=>k+'_name',bound=(p,k)=>!!(p?.[k]||p?.bindings_extra?.[k]),byId=id=>presets().find(p=>p.id===id);
   const kb=()=>typeof knowledge!=='undefined'&&knowledge||{},entry=name=>name&&kb().loras?.[name]||null;
   const family=p=>p?.family||p?.name||p?.id||'';
-  const short=name=>entry(name)?.label||String(name||'built-in adapter').replace(/\.safetensors$/,'');
+  const short=name=>entry(name)?.label||String(name||'the recipe’s own LoRA').replace(/\.safetensors$/,'');
   // Same model type = same loader node and text encoders on the same backend (app/looks.py model_of): the look's wording and
   // adapters carry over, so a switch never meets a graph that cannot take them; results will still differ. A recipe whose
   // adapter file is fixed in its graph (a strength binding with no filename binding) offers no switch: that file cannot move.
@@ -118,7 +120,7 @@
     const rows=t.rows.filter(r=>r&&SLOTS.includes(r.slot)&&bound(tp,r.slot)&&typeof r.name==='string'&&r.name.length<300&&num(r.strength,0,2)&&typeof r.on==='boolean');
     if(rows.length!==t.rows.length||new Set(rows.map(r=>r.slot)).size!==rows.length||!t.cleared.every(s=>SLOTS.includes(s)))return null;
     if(!(t.steps==null||Number.isSafeInteger(t.steps)&&t.steps>0&&t.steps<=150)||!(t.negative==null||typeof t.negative==='string'&&t.negative.length<=4000)||!(t.seed==null||Number.isSafeInteger(t.seed)&&t.seed>=0)||!(t.scale==null||num(t.scale,0,150)))return null;
-    return{preset:tp.id,rows:rows.map(r=>({slot:r.slot,name:r.name,strength:r.strength,on:r.on,...(r.added?{added:true}:{})})),cleared:[...t.cleared],steps:t.steps??null,sampler:tp.choices?.sampler?.includes(t.sampler)?t.sampler:'',negative:t.negative??null,seed:t.seed??null,reseed:t.reseed!==false,scale:t.scale??100};
+    return{preset:tp.id,rows:rows.map(r=>({slot:r.slot,name:r.name,strength:r.strength,on:r.on,...(r.added?{added:true}:{})})),cleared:[...t.cleared],steps:t.steps??null,sampler:tp.choices?.sampler?.includes(t.sampler)?t.sampler:'',negative:t.negative??null,seed:t.seed??null,reseed:t.reseed!==false,scale:t.scale??100,...(t.turbo===true?{turbo:true}:{})};
   }
   function keepTune(look){
     const t=state.tune[look.id];delete savedTunes[look.id];
@@ -132,7 +134,10 @@
   }
   // Installed adapters made for this model type: the knowledge base names each file's family; a file it does not know is not offered.
   // Files whose family is the look's (or the switched model's) come first as made for it; the rest share only the loader (audit N5).
-  const fits=(look,f)=>[presetFor(look)?.family,tunedPreset(look)?.family].includes(entry(f)?.family);
+  // A merge of a base model counts as that base for its LoRAs: the knowledge base's family_aliases (One Obsession and Pearly are recorded
+  // Anima-family merges in presets/catalog.json), the same aliases the full editor's guidance reads (bundle-core.js).
+  const base=p=>kb().family_aliases?.[p?.family]||p?.family;
+  const fits=(look,f)=>[base(presetFor(look)),base(tunedPreset(look))].includes(entry(f)?.family);
   function compatible(look){
     const p=presetFor(look),k=kind(p),chosen=SLOTS.map(s=>p?.choices?.[NAMED(s)]).find(x=>x?.length),files=chosen||(typeof installedLoras!=='undefined'?installedLoras:[]);
     const kinds=new Set(presets().filter(r=>r.family&&kind(r)===k).map(r=>r.family));
@@ -159,9 +164,19 @@
   // saves real time: ten steps or more, or a slow look. A fast few-step model (Night Shift's 8) spends its time outside sampling.
   const halve=n=>Math.max(1,Math.round(n/2)),fullSteps=(look,tp)=>Number(look.body.controls?.steps||tp?.defaults?.steps)||0;
   const draftOf=(look,tp=tunedPreset(look))=>{const n=fullSteps(look,tp);return bound(tp,'steps')&&n>=2?halve(n):0;};
-  function draftMarkup(look){const tp=tunedPreset(look),full=fullSteps(look,tp),n=full>=10||speed(look)[0]==='slow'?draftOf(look,tp):0,t=state.tune[look.id];if(!n)return'';
-    return '<label class="make-check"><input type="checkbox" id="makeDraft" data-steps="'+n+'"'+(t?.steps===n?' checked':'')+' aria-describedby="makeDraftHint"> Draft first · '+n+' steps, rougher but quicker</label><small id="makeDraftHint" class="muted">Then “Make the final” on the draft reruns it at the full '+fullSteps(look,tp)+' steps.</small>';}
-  const draftRun=run=>{const look=state.looks?.find(l=>l.id===run.lookId);return!!look&&run.scene&&run.tune?.steps!=null&&FINAL.includes(run.job.status)&&(run.job.outputs||[]).length>0&&run.tune.steps===draftOf(look,byId(run.tune.preset)||presetFor(look));};
+  // Round 7 look lab (gpu-lab, 19 Oct; agent verdicts, not art acceptance): on Anima models the official turbo LoRA at 8 steps, cfg 1, euler/simple
+  // (13 s warm) was a near-tie with 30 steps, and 20/30/40 steps looked alike. So an Anima look's Draft is the turbo pass, and it offers no Fine.
+  // Keyed by file, so it applies wherever the knowledge base says that file fits (compatible()); update from the lab doc, not by hand.
+  const TURBO={file:'anima-turbo-lora-v0.2.safetensors',steps:8,cfg:1,sampler:'euler',scheduler:'simple'};
+  const turboFits=(look,t=tuneOf(look),tp=tunedPreset(look))=>compatible(look).includes(TURBO.file)&&['steps','cfg'].every(k=>bound(tp,k))&&(t.rows.some(r=>r.name===TURBO.file)||!!freeSlot(look,t));
+  function draftMarkup(look){const tp=tunedPreset(look),full=fullSteps(look,tp),turbo=turboFits(look),n=turbo?TURBO.steps:full>=10||speed(look)[0]==='slow'?draftOf(look,tp):0,t=state.tune[look.id];if(!n)return'';
+    // Quality is one visible choice (owner, 19 Oct): Draft, As made or Fine are Tune's own step counts, so the estimate follows the choice.
+    const fine=Math.min(150,Math.round(full*1.5)),radio=(id,value,label,on)=>'<label class="make-check"><input type="radio" name="makeQuality" id="'+id+'" value="'+value+'"'+(on?' checked':'')+(id==='makeDraft'?' aria-describedby="makeDraftHint"':'')+'> '+label+'</label>';
+    if(turbo)return '<fieldset class="make-quality"><legend>Quality</legend>'+radio('makeDraft','turbo','Draft · turbo LoRA, 8 steps, quickest',!!t?.turbo)+radio('makeStandard','','As made · '+full+' steps',!t?.turbo&&t?.steps==null)
+      +'<small id="makeDraftHint" class="muted">On Anima models the turbo Draft takes about half the time; on one 19 Oct lab picture it came close to a full run, and 20, 30 and 40 steps looked alike, so there is no Fine. Compare with As made on your own picture. A draft card offers “Make the final” at the full '+full+' steps.</small></fieldset>';
+    return '<fieldset class="make-quality"><legend>Quality</legend>'+radio('makeDraft',n,'Draft · '+n+' steps, rougher but quicker',t?.steps===n)+radio('makeStandard','','As made · '+full+' steps',t?.steps==null&&!t?.turbo)+(fine>full?radio('makeFine',fine,'Fine · '+fine+' steps, slower',t?.steps===fine):'')
+      +'<small id="makeDraftHint" class="muted">A draft card offers “Make the final”: the same words and seed at the full '+full+' steps.</small></fieldset>';}
+  const draftRun=run=>{const look=state.looks?.find(l=>l.id===run.lookId);return!!look&&run.scene&&FINAL.includes(run.job.status)&&(run.job.outputs||[]).length>0&&(!!run.tune?.turbo||run.tune?.steps!=null&&run.tune.steps===draftOf(look,byId(run.tune.preset)||presetFor(look)));};
   const clamp=v=>Math.min(2,Math.max(0,Math.round((Number(v)||0)*20)/20));
   function tuneSummary(look,t){
     const p=presetFor(look),base=Object.fromEntries(adapters(look).map(a=>[a.key,a])),parts=[];if(!t)return'';
@@ -169,9 +184,12 @@
     for(const r of t.rows){const a=base[r.slot];if(!a||(r.name&&r.name!==a.name))parts.push('+'+short(r.name)+(r.on?' '+r.strength:' off'));else if(!r.on)parts.push(short(a.name)+' off');else if(r.strength!==a.strength)parts.push(short(a.name)+' '+r.strength);}
     for(const a of Object.values(base))if(!t.rows.some(r=>r.slot===a.key))parts.push('−'+short(a.name));
     if(scaleOf(t)!==100&&t.rows.some(r=>r.on))parts.push('all adapters ×'+scaleOf(t)+'%');
-    if(t.steps!=null)parts.push((t.steps===draftOf(look,byId(t.preset)||p)?'draft ':'')+t.steps+' steps');if(t.sampler)parts.push(t.sampler);if(t.negative!=null)parts.push('own negative');if(!t.reseed&&t.seed!=null)parts.push('seed '+t.seed+' locked');
+    if(t.turbo)parts.push('draft · turbo LoRA, 8 steps');else if(t.steps!=null)parts.push((t.steps===draftOf(look,byId(t.preset)||p)?'draft ':'')+t.steps+' steps');if(t.sampler)parts.push(t.sampler);if(t.negative!=null)parts.push('own negative');if(!t.reseed&&t.seed!=null)parts.push('seed '+t.seed+' locked');
     return parts.length?'Tuned: '+parts.join(' · '):'';
   }
+  // Untuned, the summary still names what will run (owner, 19 Oct: the model and LoRAs are the choice, so they stay in view while Tune is shut).
+  function asMade(look){const p=presetFor(look),steps=fullSteps(look,p);if(!p)return'Model, adapters, steps, seed';
+    return 'As made: '+[modelLabel(p,presets()),...adapters(look).map(a=>short(a.name)+' '+a.strength.toFixed(2)),...(bound(p,'steps')&&steps?[steps+' steps']:[])].join(' · ');}
   // The tune applied to the prepared controls. Every bound slot of a switched model is written (off or empty is 0), so the
   // other recipe never keeps an authored adapter of its own; on the look's own model only changed slots are written.
   function applyTune(controls,look,t){
@@ -182,6 +200,9 @@
     if(t.steps!=null&&bound(tp,'steps'))controls.steps=t.steps;
     if(t.sampler&&bound(tp,'sampler'))controls.sampler=t.sampler;
     if(t.negative!=null&&bound(tp,'negative'))controls.negative=t.negative;
+    // The turbo draft, after the sampler: it needs its own steps, cfg, sampler and scheduler, whatever Tune says (Muse HIGH on #1559).
+    if(t.turbo&&compatible(look).includes(TURBO.file)){const own=t.rows.find(r=>r.name===TURBO.file),slot=own?.slot||SLOTS.find(x=>bound(tp,x)&&bound(tp,NAMED(x))&&!t.rows.some(r=>r.slot===x));
+      if(slot){controls[slot]=1;controls[NAMED(slot)]=TURBO.file;controls.steps=TURBO.steps;controls.cfg=TURBO.cfg;if(tp.choices?.sampler?.includes(TURBO.sampler))controls.sampler=TURBO.sampler;if(tp.choices?.scheduler?.includes(TURBO.scheduler))controls.scheduler=TURBO.scheduler;}}
     // A trigger word is written only for an adapter you added: the look's own wording already speaks for its own adapters.
     if(typeof controls.positive==='string')for(const r of t.rows){const e=entry(r.name);if(!r.added||!r.on||!e?.trigger)continue;
       const add=e.trigger.split(',').map(w=>w.trim()).filter(w=>w&&!hasToken(controls.positive,w)).join(', ');if(!add)continue;
@@ -206,9 +227,9 @@
       +(missing.length?'<p class="make-warn" id="makeTuneWhy">Needs '+missing.length+' model file'+(missing.length>1?'s':'')+' first. <a href="/#models?need='+escape(encodeURIComponent(tp.id))+'">Open Models & setup</a></p>':'')+'</div>'
       +'<div class="make-tune-group"><h3>Adapters (LoRAs)</h3>'
       +(t.rows.length?'<label class="make-tune-scale">All adapters × <output id="makeTuneScaleOut">'+scaleOf(t)+'%</output><input type="range" id="makeTuneScale" data-tune="scale" min="0" max="150" step="10" value="'+scaleOf(t)+'" aria-describedby="makeTuneScaleHint"></label><small id="makeTuneScaleHint" class="muted">Multiplies every strength below; the arrow shows what is sent. 100% sends them as set.</small>'+t.rows.map(row).join(''):'<p class="muted">None: the model and the words carry this look.</p>')
-      +(SLOTS.some(s=>bound(p,NAMED(s)))?(files.length?'<div class="make-tune-add"><label for="makeLoraSearch">Add an installed adapter</label><input id="makeLoraSearch" list="makeLoraList" placeholder="Search by name" autocomplete="off" aria-describedby="makeLoraFit'+(slot?'':' makeLoraFull')+'"'+(slot?'':' disabled')+'><datalist id="makeLoraList">'+files.filter(f=>!t.rows.some(r=>r.name===f)).map(f=>{const e=entry(f);return '<option value="'+escape(f)+'">'+escape(short(f)+(e.role?' · '+e.role:'')+' · '+(fits(look,f)?'made for this model':e.family+', may not suit'))+'</option>';}).join('')+'</datalist><button type="button" data-tune-add'+(slot?'':' disabled')+'>Add</button>'
-        +'<small id="makeLoraFit">'+(made?made+' made for '+escape(family(p))+' come first.':'None is made for '+escape(family(p))+' itself.')+(other?' '+other+' from other families of this model type may not suit it.':'')+'</small>'
-        +(slot?'':'<small id="makeLoraFull">All adapter slots of this recipe are in use; remove one first.</small>')+'<div id="makeLoraChoices" class="make-lora-choices" role="group" aria-label="Matching adapters"></div></div>':'<p class="muted">No installed adapter is known to fit this model type. Models & setup lists what can be installed.</p>'):'<p class="muted">This recipe has no adapter slots to fill.</p>')+'</div>'
+      +(SLOTS.some(s=>bound(p,NAMED(s)))?(files.length?'<div class="make-tune-add"><label for="makeLoraSearch">Add a LoRA <small>installed, fits this model</small></label><input id="makeLoraSearch" type="search" list="makeLoraList" placeholder="Filter by name, style or trigger word" autocomplete="off" aria-describedby="makeLoraFit'+(slot?'':' makeLoraFull')+'"'+(slot?'':' disabled')+'><datalist id="makeLoraList">'+files.filter(f=>!t.rows.some(r=>r.name===f)).map(f=>{const e=entry(f);return '<option value="'+escape(f)+'">'+escape(short(f)+(e.role?' · '+e.role:'')+' · '+(fits(look,f)?'made for this model':e.family+', may not suit'))+'</option>';}).join('')+'</datalist><button type="button" data-tune-add'+(slot?'':' disabled')+'>Add</button>'
+        +'<small id="makeLoraFit">'+(made?made+' made for '+escape(base(p))+(base(p)!==family(p)?' (this model’s base)':'')+' come first.':'None is made for '+escape(family(p))+' itself.')+(other?' '+other+' from other families of this model type may not suit it.':'')+'</small>'
+        +(slot?'':'<small id="makeLoraFull">All adapter slots of this recipe are in use; remove one first.</small>')+'<div id="makeLoraChoices" class="make-lora-list" role="group" aria-label="Installed LoRAs for this model">'+loraCards(look,'')+'</div></div>':'<p class="muted">No installed adapter is known to fit this model type. Models & setup lists what can be installed.</p>'):'<p class="muted">This recipe has no adapter slots to fill.</p>')+'</div>'
       +((bound(tp,'steps')&&steps)||(bound(tp,'sampler')&&tp.choices?.sampler?.length)?'<div class="make-tune-group"><h3>Quality and speed</h3><div class="make-pair">'
         +(bound(tp,'steps')&&steps?'<label>Steps<select data-tune="steps">'+option('','As made · '+steps,t.steps==null)+option(draft,'Draft · '+draft+', faster',t.steps===draft)+option(fine,'Finer · '+fine+', slower',t.steps===fine)+'</select></label>':'')
         +(bound(tp,'sampler')&&tp.choices?.sampler?.length?'<label>Sampler<select data-tune="sampler">'+option('','As made'+(c.sampler?' · '+c.sampler:''),!t.sampler)+tp.choices.sampler.filter(s=>s!==c.sampler).map(s=>option(s,s,t.sampler===s)).join('')+'</select></label>':'')+'</div></div>':'')
@@ -220,7 +241,7 @@
   // A tune change redraws only the summary, Generate's readiness and the estimate, so the scene being typed is never disturbed.
   function tuneChanged(redraw=true){
     const look=current();if(!look)return;if(redraw){renderTune();renderSweep();return;}
-    keepTune(look);sweepPaint();const sum=q('#makeTuneSum'),why=lookWhy(look),button=q('#makeGenerate');if(sum)sum.textContent=tuneSummary(look,state.tune[look.id])||'Model, adapters, steps, seed';
+    keepTune(look);sweepPaint();const sum=q('#makeTuneSum'),why=lookWhy(look),button=q('#makeGenerate');if(sum)sum.textContent=tuneSummary(look,state.tune[look.id])||asMade(look);
     const draftBox=q('#makeDraftBox');if(draftBox)draftBox.innerHTML=draftMarkup(look);
     if(button&&!state.busy){button.disabled=!!why;button.title=why;}const said=q('#makeWhy');if(said){said.innerHTML=why?blockerMarkup(look,why,whyPreset(look)):'';said.dataset.why=why;}estimate();
   }
@@ -232,7 +253,7 @@
     if(key==='scale'){t.scale=Math.min(150,Math.max(0,Number(target.value)||0));paintScale(t);tuneChanged(false);return true;}
     if(key==='reseed'){if(target.checked===t.reseed)return true;t.reseed=target.checked;tuneChanged();q('#makeNewSeed')?.focus();return true;}
     if(key==='model'){t.preset=target.value;const tp=tunedPreset(look);if(t.sampler&&!tp.choices?.sampler?.includes(t.sampler))t.sampler='';tuneChanged();return true;}
-    if(key==='steps')t.steps=target.value?Number(target.value):null;
+    if(key==='steps'){t.steps=target.value?Number(target.value):null;delete t.turbo;}
     if(key==='sampler')t.sampler=target.value;
     if(key==='negative')t.negative=target.value===(look.body.negative||'')?null:target.value;
     if(key==='seed')t.seed=target.value===''?null:Number(target.value);
@@ -240,22 +261,42 @@
   }
   // Matches on the file name or the knowledge base's label, ignoring case: an exact name wins, else every typed word must appear.
   function adapterMatches(look,text){const s=text.toLowerCase(),files=compatible(look),names=f=>[f,f.replace(/\.safetensors$/i,''),short(f)].map(x=>x.toLowerCase());
-    const exact=files.filter(f=>names(f).includes(s));if(exact.length)return exact;const words=s.split(/\s+/).filter(Boolean);return files.filter(f=>{const hay=names(f).join(' ');return words.every(w=>hay.includes(w));});}
+    const exact=files.filter(f=>names(f).includes(s));if(exact.length)return exact;const words=s.split(/\s+/).filter(Boolean);return files.filter(f=>words.every(w=>loraText(f).includes(w)));}
   function addAdapter(look,name){const t=tuneOf(look),slot=freeSlot(look,t);if(!slot||!compatible(look).includes(name)||t.rows.some(r=>r.name===name))return;
-    t.rows.push({slot,name,strength:clamp(entry(name)?.default??1),on:true,added:true});t.cleared=t.cleared.filter(s=>s!==slot);tuneChanged();q('[data-tune-strength="'+slot+'"]')?.focus();
-    say(fits(look,name)?'Added '+short(name)+'.':'Added '+short(name)+'. It was made for '+entry(name).family+', so it may not suit this model; check the first picture.');}
+    t.rows.push({slot,name,strength:startOf(name),on:true,added:true});t.cleared=t.cleared.filter(s=>s!==slot);const turboOff=typeof TURBO!=='undefined'&&t.turbo&&!turboFits(look,t);if(turboOff)delete t.turbo;tuneChanged();q('[data-tune-strength="'+slot+'"]')?.focus();
+    say((fits(look,name)?'Added '+short(name)+'.':'Added '+short(name)+'. It was made for '+entry(name).family+', so it may not suit this model; check the first picture.')+(turboOff?' That took the last free slot, so Quality is back to As made (the turbo Draft needs one).':''));}
+  // An added LoRA starts at its recommended strength. A recorded 0 means "off in recipes", not advice, so it starts at 1 kept inside its
+  // recorded range, as the full editor's recommendedStrength does (an added LoRA at 0 did nothing).
+  const startOf=name=>{const e=entry(name),d=Number(e?.default),r=Array.isArray(e?.strength)?e.strength.filter(Number.isFinite):[];return clamp(d>0?d:r.length?Math.max(Math.min(...r),Math.min(1,Math.max(...r))):1);};
+  // The LoRA list (owner, 19 Oct: choosing LoRAs must be browsable, not a name to guess): every installed LoRA for this model type as a
+  // card with its role, fit, trigger word and the strength its maker recommends; Add puts it in at that strength. Typing narrows the list.
+  // A new model family needs no code here: fit and order come from the knowledge base's family names (compatible(), fits()).
+  // One search text for the list and for Enter / Add (Codex P2 on #1537): file, label, role, family and trigger word.
+  const loraText=f=>{const e=entry(f)||{};return [f,f.replace(/\.safetensors$/i,''),short(f),e.role,e.family,e.trigger].join(' ').toLowerCase();};
+  function loraCards(look,text){
+    const t=tuneOf(look),slot=freeSlot(look,t),words=String(text||'').toLowerCase().split(/\s+/).filter(Boolean);
+    const files=compatible(look).filter(f=>!t.rows.some(r=>r.name===f)&&words.every(w=>loraText(f).includes(w)));
+    const card=f=>{const e=entry(f)||{},range=Array.isArray(e.strength)&&e.strength.length===2&&e.strength[0]!==e.strength[1]?' (works '+e.strength[0]+'–'+e.strength[1]+')':'';
+      return '<div class="make-lora-card'+(fits(look,f)?'':' make-lora-foreign')+'"><div><b>'+escape(short(f))+'</b><small>'+escape([e.role,fits(look,f)?'made for this model':e.family+', may not suit'].filter(Boolean).join(' · '))+'</small>'
+        +'<small>'+(e.trigger?'Trigger '+escape(e.trigger)+', added to your words':'No trigger word')+' · starts at '+escape(startOf(f).toFixed(2))+escape(range)+'</small>'+(typeof TURBO!=='undefined'&&f===TURBO.file?'<small>Easier: Quality → Draft uses it with the 8 steps and cfg 1 it needs.</small>':'')+'</div>'
+        +'<button type="button" data-tune-pick="'+escape(f)+'" aria-label="Add '+escape(short(f))+'"'+(slot?'':' disabled aria-describedby="makeLoraFull"')+'>Add</button></div>';};
+    if(!files.length)return '<small>'+(words.length?'No installed LoRA for this model matches “'+escape(text)+'”.':'Every installed LoRA for this model is already added.')+'</small>';
+    const made=files.filter(f=>fits(look,f)),other=files.filter(f=>!fits(look,f));
+    // Filtered, every match shows flat; unfiltered, LoRAs from other families wait in a fold, as they may not suit.
+    return words.length||!made.length?files.map(card).join(''):made.map(card).join('')+(other.length?'<details class="make-lora-more"><summary>'+other.length+' from other families of this model type (may not suit)</summary>'+other.map(card).join('')+'</details>':'');
+  }
   function tuneClick(target){
     const look=current();if(!look)return false;
     const remove=target.closest('[data-tune-remove]');if(remove){const t=tuneOf(look),s=remove.dataset.tuneRemove;t.rows=t.rows.filter(r=>r.slot!==s);if(!t.cleared.includes(s))t.cleared.push(s);tuneChanged();q('#makeLoraSearch')?.focus();return true;}
     const pick=target.closest('[data-tune-pick]');if(pick){addAdapter(look,pick.dataset.tunePick);return true;}
-    if(target.closest('[data-tune-add]')){const input=q('#makeLoraSearch'),text=input?.value.trim()||'',t=tuneOf(look),choices=q('#makeLoraChoices');if(choices)choices.innerHTML='';
+    if(target.closest('[data-tune-add]')){const input=q('#makeLoraSearch'),text=input?.value.trim()||'',t=tuneOf(look),choices=q('#makeLoraChoices');
       if(!text){say('Type part of an adapter name, then press Add.');input?.focus();return true;}
       // A part of the name is enough (audit v3 N2): one match is added, several are offered as choices, none says why.
       const found=adapterMatches(look,text),open=found.filter(f=>!t.rows.some(r=>r.name===f));
       if(!found.length){say(text+' is not an installed adapter for this model type. Type part of its name, or choose one from the list.');input?.focus();return true;}
       if(!open.length){say(short(found[0])+(found.length>1?' and the other matches are':' is')+' already added.');input?.focus();return true;}
       if(open.length===1){addAdapter(look,open[0]);return true;}
-      if(choices){choices.innerHTML='<small>'+open.length+' adapters match “'+escape(text)+'”. Choose one:</small>'+open.slice(0,8).map(f=>'<button type="button" class="make-link" data-tune-pick="'+escape(f)+'">'+escape(short(f))+(fits(look,f)?'':' · '+escape(entry(f).family)+', may not suit')+'</button>').join('')+(open.length>8?'<small>'+(open.length-8)+' more: type more of the name.</small>':'');choices.querySelector('button')?.focus();}
+      if(choices){choices.innerHTML=loraCards(look,text);choices.querySelector('[data-tune-pick]')?.focus();}
       say(open.length+' adapters match. Choose one.');return true;}
     if(target.closest('[data-tune-reset]')){const reseed=state.tune[look.id]?.reseed??true;delete state.tune[look.id];delete savedTunes[look.id];tuneOf(look).reseed=reseed;tuneChanged();return true;}
     return false;
@@ -267,14 +308,14 @@
   const sweepOf=look=>state.sweeps[look.id]??={open:false,axis:'',values:[]};
   function sweepAxes(look){
     const t=tuneOf(look),tp=tunedPreset(look);
-    return[{id:'steps',label:'Steps',why:!bound(tp,'steps')?'this recipe takes no step count':fullSteps(look,tp)<1?'this look’s step count is not known here':''},
+    return[{id:'steps',label:'Steps',why:t.turbo?'Quality is the turbo Draft, which fixes 8 steps; choose As made first':!bound(tp,'steps')?'this recipe takes no step count':fullSteps(look,tp)<1?'this look’s step count is not known here':''},
       ...(t.rows.length?t.rows.map(r=>({id:'adapter:'+r.slot,label:short(r.name)+' strength',slot:r.slot,why:''})):[{id:'adapter',label:'Adapter strength',why:'this look has no adapter; add one in Tune first'}]),
       {id:'model',label:'Model',why:models(look).length?'':'no other model in the library takes this look'}];
   }
   function sweepDefaults(look,axis){const t=tuneOf(look),tp=tunedPreset(look),p=presetFor(look);
     if(axis.id==='steps'){const n=t.steps??fullSteps(look,tp);return[String(n),String(n>1?halve(n):n+1)];}
     if(axis.id==='model')return[tp.id,(tp===p?models(look)[0]:p).id];
-    const r=t.rows.find(x=>x.slot===axis.slot),now=r.on?r.strength:0;return[String(now),String(now?0:clamp(entry(r.name)?.default??1))];}
+    const r=t.rows.find(x=>x.slot===axis.slot),now=r.on?r.strength:0;return[String(now),String(now?0:startOf(r.name))];}
   // The runs one press would send, or why it cannot: null while Compare one setting is folded shut.
   function sweepPlan(look,base=tuneOf(look)){
     const s=sweepOf(look);if(!s.open)return null;const fail=why=>({why:'Compare one setting: '+why.replace(/\.?$/,'.')});
@@ -290,7 +331,8 @@
       if(runs.some(x=>x.label===label))return fail('give different values');runs.push({label,tune:t});}
     return runs.length<2?fail('give two or three values'):{axis,runs,why:''};
   }
-  const lookWhy=look=>blocker(look)||sweepPlan(look)?.why||'';
+  const turboWhy=look=>{const t=state.tune[look.id];return t?.turbo&&!turboFits(look,t)?'The turbo Draft needs a free LoRA slot: remove a LoRA or choose Quality As made.':'';};
+  const lookWhy=look=>blocker(look)||turboWhy(look)||sweepPlan(look)?.why||'';
   // The recipe a refusal's Models & setup link opens: a blocked compare value, else the tuned recipe.
   const whyPreset=look=>!blocker(look)&&sweepPlan(look)?.preset||tunedPreset(look)?.id||look.body.preset_id;
   // An added adapter's trigger word goes in only where it is on (applyTune), so sweeping it changes the words too.
@@ -331,11 +373,15 @@
   const statusEl=document.createElement('p');statusEl.id='makeStatus';statusEl.className='make-status';statusEl.setAttribute('role','status');
   function placeStatus(){const button=q('.make-go #makeGenerate'),slot=button?null:q('#makeStatusSlot');if(button&&statusEl.previousElementSibling!==button)button.after(statusEl);else if(slot&&statusEl.parentElement!==slot)slot.append(statusEl);}
   placeStatus();
+  // A look picture that is missing on this PC (local-only examples) shows the blank mark, not a broken image. Only look pictures:
+  // a chosen picture of yours (.make-picked) keeps its <img>, so a slow or failed thumbnail never removes it.
+  view.addEventListener('error',e=>{if(e.target.matches?.('.make-look img,.make-chosen:not(.make-picked)>img')){const blank=document.createElement('span');blank.className='make-look-blank';blank.setAttribute('aria-hidden','true');blank.textContent='✦';e.target.replaceWith(blank);}},true);
   function renderGoals(){
     q('#makeGoals').innerHTML=GOALS.map((g,i)=>(i===5?'<div class="make-goal-group" role="group" aria-labelledby="makePictureGoals"><span class="make-goal-break" id="makePictureGoals">From a picture you have</span>':'')+'<button type="button" role="radio" tabindex="'+(g.id===state.goal?'0':'-1')+'" aria-checked="'+(g.id===state.goal)+'" data-make-goal="'+g.id+'"><b>'+escape(g.name)+'</b><small>'+escape(g.hint)+'</small></button>').join('')+'</div>';
   }
   // Once a look is chosen the gallery folds to one line and the results sit beside the words, so Generate and its pictures share a screen.
-  function layout(){const focused=!goal().intent&&!!current()&&!state.picking&&!state.compare;q('#makeSplit').classList.toggle('make-has-look',focused);view.classList.toggle('make-focused',focused);}
+  // The pictures column opens beside the words only once there are pictures; before that the composer takes the full width.
+  function layout(){const focused=!goal().intent&&!!current()&&!state.picking&&!state.compare;q('#makeSplit').classList.toggle('make-has-look',focused&&state.runs.length>0);view.classList.toggle('make-focused',focused);}
   function render(){renderGoals();const g=goal();if(g.intent)renderPictures(g);else renderLooks();renderRuns();layout();placeStatus();}
   function renderLooks(){
     const body=q('#makeBody');
@@ -347,13 +393,15 @@
     const on=l=>compare?state.compareLooks.includes(l.id):l.id===state.look;
     const cards=list.map(l=>{const p=presetFor(l),thumb=thumbOf(l),why=compare?blocker(l,p):blocker(l);return '<article class="make-look'+(on(l)?' active':'')+'"><button type="button" class="make-look-select" data-make-look="'+escape(l.id)+'" role="'+(compare?'checkbox':'radio')+'" tabindex="'+(compare||l.id===(state.look||list[0]?.id)?'0':'-1')+'" aria-checked="'+on(l)+'">'
       +(thumb?'<img src="'+escape(thumb)+'" alt="" loading="lazy">':'<span class="make-look-blank" aria-hidden="true">✦</span>')
-      +'<span class="make-look-text"><b>'+escape(l.name)+'</b>'+pace(l)+tested(l)+licence(p)+bestFor(l)+(tried(l)?'<small>Run on this PC before</small>':'')+'</span></button>'+(why?'<small class="make-warn make-look-text">'+blockerMarkup(l,why)+'</small>':'')+'</article>';}).join('');
+      +'<span class="make-look-text"><b>'+escape(l.name)+'</b>'+recipeLine(l)+pace(l)+tested(l)+licence(p)+bestFor(l)+(tried(l)?'<small>Run on this PC before</small>':'')+'</span></button>'+(why?'<small class="make-warn make-look-text">'+blockerMarkup(l,why)+'</small>':'')+'</article>';}).join('');
     const chosen=current();
     if(chosen&&!state.picking&&!compare){const p=presetFor(chosen),thumb=thumbOf(chosen);
-      body.innerHTML='<div class="make-chosen">'+(thumb?'<img src="'+escape(thumb)+'" alt="">':'<span class="make-look-blank" aria-hidden="true">✦</span>')+'<div><small>Look</small><b>'+escape(chosen.name)+'</b>'+pace(chosen)+tested(chosen)+licence(p)+bestFor(chosen)+'</div><button type="button" data-make-change>Change look</button></div><div id="makeComposer"></div>';}
+      body.innerHTML='<div class="make-chosen">'+(thumb?'<img src="'+escape(thumb)+'" alt="">':'<span class="make-look-blank" aria-hidden="true">✦</span>')+'<div><small>Look</small><b>'+escape(chosen.name)+'</b>'+recipeLine(chosen)+pace(chosen)+tested(chosen)+licence(p)+bestFor(chosen)+'</div><button type="button" data-make-change>Change look</button></div><div id="makeComposer"></div>';}
     else body.innerHTML='<div class="make-step"><span>1</span><h2>'+(compare?'Choose two or three looks to compare':'Choose a look')+'</h2>'+(chosen&&!compare?'<button type="button" class="make-link" data-make-keep-look>Stay with '+escape(chosen.name)+'</button>':'')+(list.length>1?'<button type="button" class="make-link" data-make-compare aria-pressed="'+compare+'">'+(compare?'Back to one look':'Compare looks')+'</button>':'')+'</div><div class="make-looks" role="'+(compare?'group':'radiogroup')+'" aria-label="'+(compare?'Looks to compare':'Look')+'">'+cards+'</div><div id="makeComposer"></div>';
     renderComposer();layout();
   }
+  // A look names its model and LoRA count on its card (owner, 19 Oct: someone choosing a model should see which look uses which).
+  const recipeLine=l=>{const p=presetFor(l),n=adapters(l).length;return p?'<small class="make-recipe">'+escape(family(p))+' model'+(n?' · '+n+' LoRA'+(n>1?'s':''):'')+'</small>':'';};
   function shapeSize(preset,look,shape){
     const w=Number(look.body.controls.width||preset?.defaults?.width||1024),h=Number(look.body.controls.height||preset?.defaults?.height||1024),grid=preset?.dimension_multiple||64,round=v=>Math.max(grid,Math.round(v/grid)*grid);
     if(shape==='design')return[w,h];const area=w*h,long=Math.max(w,h),short=Math.min(w,h);
@@ -372,7 +420,7 @@
       +'<textarea id="makeScene" rows="3" maxlength="1000" placeholder="'+escape(example)+'"></textarea>'
       +'<div class="make-row">'+(example?'<button type="button" id="makeUseExample">Use the example</button>':'')+'<small>Plain words are fine. The look adds its own style and quality words.</small></div>'
       +options.map(o=>'<label class="make-check"><input type="checkbox" data-make-option="'+escape(o.id)+'"'+(o.default?' checked':'')+'> '+escape(o.label)+'</label>').join('')
-      +'<details class="make-tune" id="makeTune"'+(state.tuneOpen?' open':'')+'><summary>Tune this look <small id="makeTuneSum"></small></summary><div id="makeTuneBody"></div></details>'
+      +'<details class="make-tune" id="makeTune"'+(state.tuneOpen?' open':'')+'><summary>Model, LoRAs and settings <small id="makeTuneSum"></small></summary><div id="makeTuneBody"></div></details>'
       +'<details class="make-tune" id="makeSweep"'+(sweepOf(look).open?' open':'')+'><summary>Compare one setting <small id="makeSweepSum"></small></summary><div id="makeSweepBody"></div></details>'
       +'</div><div class="make-compose-side">'
       +'<div class="make-pair"><label>Shape<select id="makeShape">'+Object.entries(SHAPES).map(([k,v])=>'<option value="'+k+'"'+(k===shapeDefault(look)?' selected':'')+'>'+v+(k==='design'?' · '+escape(look.body.controls.width||'')+'×'+escape(look.body.controls.height||''):'')+'</option>').join('')+'</select></label>'
@@ -382,7 +430,7 @@
       +'<div id="makeDraftBox"></div>'
       +'<button type="button" id="makeEditor" class="make-link">Open in the full editor instead</button>'
       +'<details class="make-about"><summary>What this look uses</summary><p><b>Model:</b> '+escape(family(p)||look.body.preset_id)+(p?.model?.file?' <small class="muted">'+escape(p.model.file)+'</small>':'')+'</p>'
-      +(adapters(look).length?'<p><b>Adapters:</b></p><ul>'+adapters(look).map(a=>'<li>'+escape(short(a.name==='built-in adapter'?'':a.name))+' at '+escape(a.strength)+(entry(a.name)?.trigger?' \u00b7 trigger <code>'+escape(entry(a.name).trigger)+'</code>':'')+'</li>').join('')+'</ul>':'<p>No style adapters: the model and the wording carry this look.</p>')
+      +(adapters(look).length?'<p><b>Adapters:</b></p><ul>'+adapters(look).map(a=>'<li>'+escape(short(a.name==='the recipe’s own LoRA'?'':a.name))+' at '+escape(a.strength)+(entry(a.name)?.trigger?' \u00b7 trigger <code>'+escape(entry(a.name).trigger)+'</code>':'')+'</li>').join('')+'</ul>':'<p>No style adapters: the model and the wording carry this look.</p>')
       +(example?'<p><b>Example:</b> '+escape(example)+'</p>':'')
       +(look.body.notes?'<details class="make-maint"><summary>Details for maintainers</summary><p class="muted">'+escape(look.body.notes)+'</p></details>':'')+'</details>'
       +'</div>'+goBar(why?blockerMarkup(look,why):'')+'</div>';
@@ -438,7 +486,7 @@
     if(plan&&!plan.why){const each=await Promise.all(plan.runs.map(r=>json('/api/estimate',{preset_id:(byId(r.tune.preset)||p).id,controls:{...look.body.controls,width:w,height:h,...(r.tune.steps!=null?{steps:r.tune.steps}:{})},batch_count:1,reference_count:0}).then(e=>Number(e.estimate_seconds)||0,()=>0)));
       if(epoch!==estimateEpoch||!out.isConnected)return;const total=each.reduce((x,y)=>x+y,0),unknown=each.filter(x=>!x).length;
       out.classList.toggle('make-warn',total>600);out.textContent=plan.runs.length+' pictures, one per value'+(total?' · about '+duration(total)+' in total'+(unknown?' (no timing yet for '+unknown+')':'')+', from earlier runs on this PC.':' · no timing yet for these settings on this PC.');return;}
-    try{const e=await json('/api/estimate',{preset_id:tunedPreset(look).id,controls:{...look.body.controls,width:w,height:h,...(t?.steps!=null?{steps:t.steps}:{})},batch_count:Number(q('#makeCount').value),reference_count:0});if(epoch!==estimateEpoch||!out.isConnected)return;
+    try{const e=await json('/api/estimate',{preset_id:tunedPreset(look).id,controls:{...look.body.controls,width:w,height:h,...(t?.turbo&&turboFits(look,t)?{steps:TURBO.steps}:t?.steps!=null?{steps:t.steps}:{})},batch_count:Number(q('#makeCount').value),reference_count:0});if(epoch!==estimateEpoch||!out.isConnected)return;
       out.classList.toggle('make-warn',e.estimate_seconds>600);out.textContent=e.estimate_seconds?'About '+duration(e.estimate_seconds)+' in total, from earlier runs on this PC.':'No timing yet: this look has not run here at this size.';}
     catch{if(epoch===estimateEpoch&&!retry)setTimeout(()=>{if(epoch===estimateEpoch)estimate(true);},1500);}
   }
@@ -481,7 +529,10 @@
   // Keep / Not this: the library's own review field. Saves run one after another (the library takes one command at a
   // time), and pressing the recorded decision again clears it, decided from the refreshed record, not page memory.
   let reviewQueue=Promise.resolve();
-  function review(button){button.disabled=true;reviewQueue=reviewQueue.then(()=>saveReview(button));return reviewQueue;}
+  // One write per target at a time (Muse lens, 19 Oct): a redraw can bring back an enabled button mid-save, so a second press of Keep,
+  // Resume, Save character or Put away is dropped while the first is in flight, instead of applying twice or undoing itself.
+  const inflight=new Set(),once=async(key,fn)=>{if(inflight.has(key))return;inflight.add(key);try{return await fn();}finally{inflight.delete(key);}};
+  function review(button){const key='review:'+button.dataset.asset;if(inflight.has(key))return reviewQueue;inflight.add(key);button.disabled=true;reviewQueue=reviewQueue.then(()=>saveReview(button)).finally(()=>inflight.delete(key));return reviewQueue;}
   async function saveReview(button){
     const id=button.dataset.asset
     try{if(await refreshAssets(true)===false){await new Promise(r=>setTimeout(r,600));await refreshAssets(true);}
@@ -515,7 +566,7 @@
   }
   async function recover(button){
     const action=button.dataset.makeResume?'resume':'stop-tracking',id=button.dataset.makeResume||button.dataset.makeStop,run=state.runs.find(r=>r.job.id===id);if(!run)return;
-    let body={};if(action==='stop-tracking'){const field=q('[data-make-stop-reason="'+CSS.escape(id)+'"]'),reason=field?.value.trim();if(!reason){field?.setAttribute('aria-invalid','true');field?.focus();say('Give a reason before stopping tracking.');return;}body={reason};}
+    let body={};if(action==='stop-tracking'){const field=q('[data-make-stop-reason="'+CSS.escape(id)+'"]'),reason=field?.value.trim();if(!reason){field?.setAttribute('aria-invalid','true');field?.setAttribute('aria-describedby','makeStatus');field?.focus();say('Give a reason before stopping tracking.');return;}body={reason};}
     button.disabled=true;
     try{const job=await json('/api/jobs/'+encodeURIComponent(id)+'/'+action,body);run.job={...run.job,...job};run.lost=false;renderRuns();remember();if(observing(run))poll(id);else{clearTimeout(timers.get(id));timers.delete(id);}
       say(action==='resume'?'Checking ComfyUI again for this run. Nothing is sent again.':'Tracking stopped. Its record and any pictures stay in the library.');}
@@ -529,15 +580,20 @@
     if(varyBox.querySelector('button:disabled'))for(const hint of varyBox.querySelectorAll('small[id]'))hint.textContent=inMake(hint.textContent);
     else{const busy=state.varying.has(a),held=state.varyHeld.has(a);for(const b of varyBox.querySelectorAll('[data-ux-vary]')){b.dataset.makeVary=b.dataset.uxVary;b.removeAttribute('data-ux-vary');b.disabled=busy||held;}
       if(busy||held)for(const hint of varyBox.querySelectorAll('small[id]'))hint.textContent=held?VARY_HELD:'Starting the variations for this picture. Please wait.';}const vary=varyBox.innerHTML;
-    // Next steps open Make's own picture goals with this picture chosen; other fixes still go through the full handoff.
+    // Next steps open Make's own picture goals with this picture chosen; other fixes still go through the full handoff. Change one thing
+    // (outfit, colour), New pose and Restyle sit beside Vary and the fixes: they are the tweaks people name (owner, 19 Oct); the rest wait under More.
     const hand=(intent,label)=>'<button type="button" data-ux-handoff="'+escape(a)+'" data-ux-handoff-intent="'+intent+'">'+label+'</button>',from=(intent,label)=>'<button type="button" data-make-from="'+intent+'" data-asset="'+escape(a)+'">'+label+'</button>';
     // A fix that cannot run stays on screen, disabled, with its reason beside it (one line per distinct reason), as the Fix or upscale goal does.
     const reasons=[...new Set(Object.keys(POLISH).map(k=>state.polish[a+':'+k]).filter(x=>x&&!x.ok).map(x=>inMake(x.reason)))],whyId=r=>'makePolishWhy-'+escape(a)+'-'+reasons.indexOf(r);
     const polish=kind=>{const plan=state.polish[a+':'+kind],why=plan&&!plan.ok?inMake(plan.reason):'',busy=state.polishing.has(a+':'+kind);
       return '<button type="button" data-make-polish="'+kind+'" data-asset="'+escape(a)+'"'+(busy||why?' disabled':'')+(why?' aria-describedby="'+whyId(why)+'"':'')+'>'+polishName(a,kind)+(plan?.seconds?' <small>~'+duration(plan.seconds)+'</small>':'')+(busy?' …':'')+'</button>';};
-    return '<div class="make-actions">'+marks(a)+characterMarkup(job,a)+vary+polishKinds(a).map(polish).join('')+(Object.keys(POLISH).some(k=>state.polishing.has(a+':'+k))?'<small class="make-action-reason">Starting the finishing pass for this picture. Please wait.</small>':'')+reasons.map(r=>'<small class="make-warn make-polish-why" id="'+whyId(r)+'">'+escape(r)+'</small>').join('')+(merged(a)?'<small class="muted make-polish-hint">'+FIX_HINT+'</small>':'')+(state.polish[a+':upscale']?.ok?'<small class="muted make-polish-hint">'+UP_HINT+'</small>':'')
-      +'<details class="make-more" data-more="'+escape(a)+'"><summary>More</summary><button type="button" data-ux-open-asset="'+escape(a)+'">Open full size</button>'+hand('repair','Other fixes\u2026')+from('edit','Change one thing')+from('restyle','Restyle')+from('combine','Put in a new pose')+from('animate','Animate')+from('mesh','Make it 3D')+'</details></div>';
+    return '<div class="make-actions">'+marks(a)+'<button type="button" class="make-next-open" data-make-select="'+escape(a)+'" data-run-id="'+escape(job.id)+'">Next steps…</button><div class="make-next" role="group" aria-label="Next steps for this picture">'+characterMarkup(job,a)+vary+polishKinds(a).map(polish).join('')+from('edit','Change one thing')+from('combine','New pose')+from('restyle','Restyle')+(Object.keys(POLISH).some(k=>state.polishing.has(a+':'+k))?'<small class="make-action-reason">Starting the finishing pass for this picture. Please wait.</small>':'')+reasons.map(r=>'<small class="make-warn make-polish-why" id="'+whyId(r)+'">'+escape(r)+'</small>').join('')+(merged(a)?'<small class="muted make-polish-hint">'+FIX_HINT+'</small>':'')+(state.polish[a+':refine']?.ok?'<small class="muted make-polish-hint">'+REFINE_HINT+'</small>':'')+(state.polish[a+':upscale']?.ok?'<small class="muted make-polish-hint">'+UP_HINT+'</small>':'')
+      +'<details class="make-more" data-more="'+escape(a)+'"><summary>More</summary><button type="button" data-ux-open-asset="'+escape(a)+'">Open full size</button>'+hand('repair','Other fixes\u2026')+from('animate','Animate')+from('mesh','Make it 3D')+'</details></div></div>';
   }
+  // One picture of a card shows its next steps at a time (owner, 19 Oct: four pictures each with eleven buttons is a wall). Keep and Not this
+  // stay on every picture; "Next steps…" moves the steps to another. The first saved picture starts selected; the others' steps stay in the
+  // page, hidden, so nothing about them changes but where they show.
+  const selectedOf=job=>{const ids=(job.outputs||[]).filter(o=>o.asset_id&&picture(o)).map(o=>o.asset_id);return ids.includes(state.selected[job.id])?state.selected[job.id]:ids[0];};
   // My character (#1205): any finished picture can become a character's canon (owner, 16 Oct), with its words. Saving writes one Workspace card and
   // never submits. The form keeps its answers in state, so a redraw of the runs list does not lose what was typed.
   // v2: Edit and Put away / Restore (revision-checked: a 409 means the card changed elsewhere, so it is reloaded), a read-only
@@ -678,6 +734,7 @@
     const list=runCards(state.runs);
     const shown=new Set(list.flatMap(c=>c.runs));if(shown.size<state.runs.length){for(const r of state.runs)if(!shown.has(r)){clearTimeout(timers.get(r.job.id));timers.delete(r.job.id);}state.runs=state.runs.filter(r=>shown.has(r));remember();}
     planPolish(list.flatMap(c=>c.runs));
+    layout();
     if(!list.length){box.innerHTML='<p class="muted">Pictures you make here show up in this space, with one-press next steps.</p>';return;}
     const img=(job,o,i,look)=>(o.asset_id?'<button type="button" class="make-open" data-ux-open-asset="'+escape(o.asset_id)+'" aria-label="Open picture '+(i+1)+' from '+escape(look)+' full size">':'')+'<img src="/api/image/'+encodeURIComponent(job.id)+'/'+i+'" alt="Picture '+(i+1)+' from '+escape(look)+'" loading="lazy">'+(o.asset_id?'</button>':'');
     // A clip or a 3D model has no picture to show here: one press opens it in the library viewer.
@@ -692,7 +749,7 @@
       return '<article class="make-run" data-run="'+escape(job.id)+'"><header><div><b>'+escape(pictureTitle(scene||title||job.controls?.positive||look,job.created_at))+'</b>'+(scene?'<small>'+escape(scene)+'</small>':look&&!scene?'<small>'+escape(look)+'</small>':'')+(tuned?'<small class="make-tuned">'+escape(tuned)+'</small>':'')+'</div><span class="make-run-state '+escape(lost?'uncertain':job.status)+'">'+escape(lost?'Lost contact with this run; still checking':words(job))+'</span></header>'
       +(scene?'<div class="make-run-tools">'+(draftRun(runs[0])?'<button type="button" data-make-final="'+escape(job.id)+'">Make the final</button>':'')+'<button type="button" data-make-rerun="'+escape(job.id)+'">Edit and re-run</button><button type="button" data-make-another="'+escape(job.id)+'">Same words, another look</button></div>':runs[0].redo?'<div class="make-run-tools"><button type="button" data-make-redo="'+escape(job.id)+'">Edit and re-run</button></div>':'')
       +(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')+(lost?'':recovery(job))
-      +'<div class="make-outputs">'+(job.outputs||[]).map((o,i)=>!picture(o)?other(o):'<figure>'+img(job,o,i,look)+actions(job,o)+'</figure>').join('')+pending(job)+'</div></article>';});
+      +'<div class="make-outputs">'+(job.outputs||[]).map((o,i)=>!picture(o)?other(o):'<figure'+(o.asset_id&&o.asset_id===selectedOf(job)?' class="make-selected"':'')+'>'+img(job,o,i,look)+actions(job,o)+'</figure>').join('')+pending(job)+'</div></article>';});
     const focus=document.activeElement,key=e=>(e.closest('[data-run]')?.dataset.run||'')+'|'+e.tagName+'|'+JSON.stringify({...e.dataset})+'|'+e.textContent,focusKey=box.contains(focus)?key(focus):null,open=[...box.querySelectorAll('details[open]')].map(e=>e.dataset.more);
     const next=document.createElement('div');next.innerHTML=markup.join('');
     const ids=new Set(list.map(c=>c.id));for(const old of [...box.children])if(!ids.has(old.dataset.run))old.remove();
@@ -708,7 +765,8 @@
   const pictureLabel=a=>pictureTitle(a.prompt_excerpt||(!a.job_id&&a.title)||a.title,a.created_at);
   // Cards that share a prompt are told apart by a second line (audit v3 N5): the look or recipe, how long ago, the seed.
   const ago=t=>{const s=Math.max(0,Date.now()/1000-Number(t||0));return !t?'':s<90?'just now':s<5400?Math.round(s/60)+' min ago':s<129600?Math.round(s/3600)+' h ago':Math.round(s/86400)+' days ago';};
-  const pictureMeta=a=>[String(a.run_label||'').startsWith('Make · ')?a.run_label.slice(7):a.preset_name,ago(a.created_at),a.source?.seed!=null?'seed '+a.source.seed:''].filter(Boolean).join(' · ');
+  // An imported picture's "recipe" is its file name, already in its title: it is not repeated (19 Oct walkthrough).
+  const pictureMeta=a=>[String(a.run_label||'').startsWith('Make · ')?a.run_label.slice(7):a.preset_name&&String(a.title||'').includes(a.preset_name)?'':a.preset_name,ago(a.created_at),a.source?.seed!=null?'seed '+a.source.seed:''].filter(Boolean).join(' · ');
   // The pickers show your pictures, as the Library's Mine does (workspace.js assetIsAgentRun: Make runs are yours, #1421).
   const agentRun=a=>typeof assetIsAgentRun==='function'&&assetIsAgentRun(a);
   const PICK={edit:'Choose the picture to change.',repair:'Choose the picture to fix or enlarge.',restyle:'Choose the picture to redraw in another look.',combine:'Choose the character. The pose comes next.',animate:'Choose the still to bring to life.',mesh:'Choose a picture of one object or character, ideally on a plain background.'};
@@ -813,10 +871,12 @@
   function renderGrid(id,attr){
     const box=q('#'+id);if(!box||!state.pictures)return;const terms=String(state.queries[id]||'').toLowerCase().split(/\s+/).filter(Boolean);
     const match=a=>{const text=[pictureLabel(a),pictureMeta(a),a.title,a.prompt_excerpt,a.filename,...(a.tags||[])].join(' ').toLowerCase();return terms.every(t=>text.includes(t));};
-    const agents=state.pictures.filter(agentRun).length,pool=state.allPictures||!agents?state.pictures:state.pictures.filter(a=>!agentRun(a)),list=pool.filter(match);
-    const shown=list.slice(0,60),more=list.length-shown.length,hidden=!state.allPictures&&agents&&terms.length?state.pictures.filter(a=>agentRun(a)&&match(a)).length:0;
+    // The pose grid never offers the character picture as its own pose.
+    const others=id==='makePosePictures'?state.pictures.filter(a=>a.id!==state.pick?.id):state.pictures;
+    const agents=others.filter(agentRun).length,pool=state.allPictures||!agents?others:others.filter(a=>!agentRun(a)),list=pool.filter(match);
+    const shown=list.slice(0,60),more=list.length-shown.length,hidden=!state.allPictures&&agents&&terms.length?others.filter(a=>agentRun(a)&&match(a)).length:0;
     const card=a=>{const label=pictureLabel(a),meta=pictureMeta(a);return '<button type="button" '+attr+'="'+escape(a.id)+'" title="'+escape(String(a.prompt_excerpt||a.title||label)+(meta?' · '+meta:''))+'"><img src="'+thumbUrl(a)+'" alt="'+escape(label)+'" loading="lazy"><small aria-hidden="true">'+escape(label)+'</small>'+(meta?'<small class="make-pic-meta">'+escape(meta)+'</small>':'')+'</button>';};
-    box.innerHTML=list.length?shown.map(card).join('')+(more?'<p class="muted">'+more+' older picture'+(more===1?'':'s')+' match too. Search to narrow the list.</p>':''):pool.length?'<p class="muted">No picture matches “'+escape(state.queries[id])+'”'+(hidden?'; '+hidden+' from agent runs do'+(hidden===1?'es':'')+'.':'.')+'</p>':state.pictures.length?'<p class="muted">None of your own pictures yet: everything here is from agent runs.</p>':'<p class="muted">No pictures yet. Make one first, or import one in the library.</p>';
+    box.innerHTML=list.length?shown.map(card).join('')+(more?'<p class="muted">'+more+' older picture'+(more===1?'':'s')+' match too. Search to narrow the list.</p>':''):pool.length?'<p class="muted">No picture matches “'+escape(state.queries[id])+'”'+(hidden?'; '+hidden+' from agent runs do'+(hidden===1?'es':'')+'.':'.')+'</p>':others.length?'<p class="muted">None of your own pictures yet: everything here is from agent runs.</p>':state.pictures.length?'<p class="muted">The character is your only picture. Import a pose picture in the library, or choose Draw the pose.</p>':'<p class="muted">No pictures yet. Make one first, or import one in the library.</p>';
     const all=q('[data-make-all="'+id+'"]');if(all){all.hidden=!agents;all.setAttribute('aria-pressed',String(!!state.allPictures));all.textContent=state.allPictures?'Show only my pictures':'Show all pictures ('+agents+' more from agent runs)';}
   }
   function figureSvg(points,mirror){const P=PE(),at=i=>points[i]&&[Math.round((mirror?1-points[i][0]:points[i][0])*100),Math.round(points[i][1]*150)];
@@ -829,7 +889,7 @@
     let main='',side='';
     if(g.intent==='edit')main=(fields.length?fields.map(fill).join(''):field('change','What should change?','replace her hat with a red Santa hat'))+'<small class="muted">Everything else stays as it is: the character, pose, clothes, background and style.</small>';
     else if(g.intent==='repair'){planFixes(a.id);preselectFix(a.id);main='<fieldset class="make-options"><legend>Choose one</legend>'+polishKinds(a.id).map(kind=>{const label=polishName(a.id,kind);const plan=state.polish[a.id+':'+kind],off=!!plan&&!plan.ok;
-      return '<label class="make-check"><input type="radio" name="makeFix" id="makeFix-'+kind+'" data-make-fix="'+kind+'"'+(state.fix===kind?' checked':'')+(off?' disabled aria-describedby="makeFixWhy-'+kind+'"':'')+'> '+label+(plan?.seconds?' <small>~'+duration(plan.seconds)+'</small>':'')+'</label>'+(off?'<small class="make-warn make-option-why" id="makeFixWhy-'+kind+'">'+escape(inMake(plan.reason))+'</small>':'')+(kind==='face'&&merged(a.id)?'<small class="muted make-option-why">'+FIX_HINT+'</small>':'')+(kind==='upscale'&&plan?.ok?'<small class="muted make-option-why">'+UP_HINT+'</small>':'');}).join('')+'</fieldset>';}
+      return '<label class="make-check"><input type="radio" name="makeFix" id="makeFix-'+kind+'" data-make-fix="'+kind+'"'+(state.fix===kind?' checked':'')+(off?' disabled aria-describedby="makeFixWhy-'+kind+'"':'')+'> '+label+(plan?.seconds?' <small>~'+duration(plan.seconds)+'</small>':'')+'</label>'+(off?'<small class="make-warn make-option-why" id="makeFixWhy-'+kind+'">'+escape(inMake(plan.reason))+'</small>':'')+(kind==='face'&&merged(a.id)?'<small class="muted make-option-why">'+FIX_HINT+'</small>':'')+(kind==='refine'&&plan?.ok?'<small class="muted make-option-why">'+REFINE_HINT+'</small>':'')+(kind==='upscale'&&plan?.ok?'<small class="muted make-option-why">'+UP_HINT+'</small>':'');}).join('')+'</fieldset>';}
     else if(g.intent==='restyle'){
       if(p?.reference_slots?.length)main='<fieldset class="make-style-looks" id="makeStyleLooks" tabindex="-1"><legend>Redraw it the way this look is drawn</legend>'+lookPictures().map(l=>'<label class="make-style"><input type="radio" name="makeStyle" id="makeStyle-'+escape(l.id)+'" data-make-style="'+escape(l.id)+'"'+(state.styleLook===l.id?' checked':'')+'><img src="'+escape(thumbOf(l))+'" alt="" loading="lazy"><span>'+escape(l.name)+'</span></label>').join('')+'</fieldset>'
         +'<button type="button" class="make-link" data-make-style-words>Describe the look in words instead</button>'+fields.map(fill).join('')+'<small class="muted">Only how the look picture is drawn is copied, not what it shows. Your picture keeps its character, pose, clothes and layout.</small>';
@@ -867,6 +927,8 @@
   function choosePicture(id){
     const a=state.pictures?.find(x=>x.id===id)||(typeof assetState!=='undefined'&&assetState?.assets?.find(x=>x.id===id))||{id,title:''};
     if(state.pick?.id!==id){state.form={};try{const saved=JSON.parse(localStorage.getItem(fillsKey(id))||'{}');for(const k of ['who','clothes'])if(typeof saved['@'+k]==='string')state.form[k]=saved['@'+k];}catch{}}
+    // A new character that is the chosen pose picture leaves the pose empty, so one picture is never both.
+    if(state.pose?.asset?.id===id)state.pose=null;
     state.pick=a;state.repicking=false;
   }
   function rememberFills(id,form){try{const saved=JSON.parse(localStorage.getItem(fillsKey(id))||'{}');for(const k of ['who','clothes','pose'])if(String(form[k]||'').trim())saved['@'+k]=form[k].trim();localStorage.setItem(fillsKey(id),JSON.stringify(saved));}catch{}}
@@ -1006,13 +1068,13 @@
   }
   // The gallery folds away under the pointer: bring "Describe your picture" out from under the fixed bar (audit N8, make.css scroll-margin).
   function focusScene(){q('#makeComposer .make-step')?.scrollIntoView({block:'nearest'});q('#makeScene')?.focus({preventScroll:true});}
-  view.addEventListener('input',e=>{const t=e.target;if(t.closest('#makeTune')){tuneInput(t);return;}if(t.closest('#makeSweep')){sweepInput(t);return;}
+  view.addEventListener('input',e=>{const t=e.target;if(t.id==='makeLoraSearch'){const box=q('#makeLoraChoices'),look=current();if(box&&look)box.innerHTML=loraCards(look,t.value);return;}if(t.closest('#makeTune')){tuneInput(t);return;}if(t.closest('#makeSweep')){sweepInput(t);return;}
     if(t.dataset.makeField){state.form[t.dataset.makeField]=t.value;t.removeAttribute('aria-invalid');t.removeAttribute('aria-describedby');settleMissing();if(t.tagName==='SELECT')void goalEstimate(goal(),goalRoute(goal()));return;}
     if(t.dataset.makeChar){state.charForm[t.dataset.makeChar]=t.value;t.removeAttribute('aria-invalid');t.removeAttribute('aria-describedby');settleMissing();return;}
     if(t.dataset.makeSearch){state.queries[t.dataset.makeSearch]=t.value;renderGrid(t.dataset.makeSearch,t.dataset.makeAttr);}});
   // Choices that change the composer redraw it and keep the keyboard on the control just used.
   view.addEventListener('change',e=>{const t=e.target,g=goal(),redraw=sel=>{renderGoalComposer(g);q(sel)?.focus();};
-    if(t.id==='makeDraft'){const look=current();if(look){tuneOf(look).steps=t.checked?Number(t.dataset.steps):null;tuneChanged();q('#makeDraft')?.focus();}return;}
+    if(t.name==='makeQuality'){const look=current(),id=t.id;if(look){const tune=tuneOf(look);tune.turbo=t.value==='turbo';tune.steps=t.value&&t.value!=='turbo'?Number(t.value):null;tuneChanged();q('#'+id)?.focus();}return;}
     if(t.dataset.makeFix){state.fix=t.dataset.makeFix;redraw('#makeFix-'+state.fix);return;}
     if(t.dataset.makeStyle){state.styleLook=t.dataset.makeStyle;for(const r of view.querySelectorAll('[data-make-style]')){r.removeAttribute('aria-invalid');r.removeAttribute('aria-describedby');}settleMissing();return;}
     if(t.dataset.makePoseRoute){state.poseRoute=t.dataset.makePoseRoute;redraw('#makePoseRoute-'+state.poseRoute);return;}
@@ -1038,8 +1100,8 @@
     const saveChar=e.target.closest('[data-make-character-save]');if(saveChar){openCharacterForm(saveChar.dataset.makeCharacterSave,saveChar.closest('[data-run]')?.dataset.run);return;}
     if(e.target.closest('[data-make-character-cancel]')){const a=state.charSave,edit=state.charEdit,move=state.charMigrate;clearCharForms();renderRuns();refreshCharacters();q(edit?'[data-make-character-edit="'+CSS.escape(edit)+'"]':move?'[data-make-migrate="'+CSS.escape(move)+'"]':'[data-make-character-save="'+CSS.escape(a||'')+'"]')?.focus();return;}
     const editChar=e.target.closest('[data-make-character-edit]');if(editChar){openCharacterEdit(editChar.dataset.makeCharacterEdit);return;}
-    const awayChar=e.target.closest('[data-make-character-away]');if(awayChar){void characterCommand(awayChar.dataset.makeCharacterAway,'trash');return;}
-    const restoreChar=e.target.closest('[data-make-character-restore]');if(restoreChar){void characterCommand(restoreChar.dataset.makeCharacterRestore,'restore');return;}
+    const awayChar=e.target.closest('[data-make-character-away]');if(awayChar){void once('character:'+awayChar.dataset.makeCharacterAway,()=>characterCommand(awayChar.dataset.makeCharacterAway,'trash'));return;}
+    const restoreChar=e.target.closest('[data-make-character-restore]');if(restoreChar){void once('character:'+restoreChar.dataset.makeCharacterRestore,()=>characterCommand(restoreChar.dataset.makeCharacterRestore,'restore'));return;}
     const migrate=e.target.closest('[data-make-migrate]');if(migrate){openMigration(migrate.dataset.makeMigrate);return;}
     if(e.target.closest('[data-make-note-dismiss]')){dismissNote();return;}
     const pick=e.target.closest('[data-make-pick]');if(pick){state.character=null;choosePicture(pick.dataset.makePick);renderPictures(goal());q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();return;}
@@ -1051,6 +1113,7 @@
     if(e.target.closest('[data-make-style-words]')){state.styleWords=true;renderGoalComposer(goal());q('#makeF-look')?.focus();return;}
     if(e.target.closest('[data-make-style-pictures]')){state.styleWords=false;renderGoalComposer(goal());q('[data-make-style]')?.focus();return;}
     // A result's next step opens that picture goal here with the picture already chosen.
+    const pickNext=e.target.closest('[data-make-select]');if(pickNext){state.selected[pickNext.dataset.runId]=pickNext.dataset.makeSelect;renderRuns();q('.make-selected [data-make-select="'+CSS.escape(pickNext.dataset.makeSelect)+'"]')?.closest('figure')?.querySelector('.make-next button:not(:disabled),.make-next summary')?.focus();return;}
     const from=e.target.closest('[data-make-from]');if(from){const next=GOALS.find(x=>x.intent===from.dataset.makeFrom);if(!next)return;state.goal=next.id;state.compare=false;state.character=null;choosePicture(from.dataset.asset);remember();render();
       say(next.name+': your picture is chosen. Fill in what is asked, then press Generate.');(q('#makeComposer textarea,#makeComposer input')||q('#makeGenerate'))?.focus();return;}
     if(e.target.closest('[data-make-change]')){state.picking=true;renderLooks();q('.make-look.active [data-make-look]')?.focus();return;}
@@ -1060,12 +1123,12 @@
       // Edit and re-run brings the run's tune back with its look; another look starts from that look as made.
       if(!again.dataset.makeAnother){if(Array.isArray(run.tune?.rows)&&Array.isArray(run.tune.cleared)){state.tune[run.lookId]=structuredClone(run.tune);state.tuneOpen=state.tuneOpen||(!!run.tuned&&!final);}else{delete state.tune[run.lookId];delete savedTunes[run.lookId];}}
       // Make the final is Edit and re-run with the draft's steps put back to the look's own: the same words and seed, staged, never sent.
-      if(final&&state.tune[run.lookId])state.tune[run.lookId].steps=null;try{sessionStorage.setItem('studio.make.scene.'+run.goal,run.scene);}catch{}remember();render();
+      if(final&&state.tune[run.lookId]){state.tune[run.lookId].steps=null;delete state.tune[run.lookId].turbo;}try{sessionStorage.setItem('studio.make.scene.'+run.goal,run.scene);}catch{}remember();render();
       if(final){say('The final is set up: the same words and seed at full detail. Press Generate to make it.');q('#makeGenerate')?.focus();return;}
       const scene=q('#makeScene');if(scene&&!state.picking){scene.focus();scene.select();}else q('.make-look.active [data-make-look]')?.focus();return;}
     const redo=e.target.closest('[data-make-redo]');if(redo){const run=state.runs.find(r=>r.job.id===redo.dataset.makeRedo);
       if(run&&redoRun(run)){say('That run’s picture and answers are back. Change what you like, then press Generate.');(q('#makeComposer textarea,#makeComposer input:not([type=search])')||q('#makeGenerate'))?.focus();}return;}
-    const recovering=e.target.closest('[data-make-resume],[data-make-stop]');if(recovering&&!recovering.disabled){void recover(recovering);return;}
+    const recovering=e.target.closest('[data-make-resume],[data-make-stop]');if(recovering&&!recovering.disabled){void once('recover:'+(recovering.dataset.makeResume||recovering.dataset.makeStop),()=>recover(recovering));return;}
     const verdict=e.target.closest('[data-make-review]');if(verdict){void review(verdict);return;}
     const polishing=e.target.closest('[data-make-polish]');if(polishing&&!polishing.disabled){void polishPicture(polishing);return;}
     const varying=e.target.closest('[data-make-vary]');if(varying&&!varying.disabled){void varyPicture(varying);return;}
@@ -1075,7 +1138,7 @@
   });
   // Which disclosures are open survives a redraw; opening a line-up reads the pictures (details fire toggle without bubbling).
   view.addEventListener('toggle',e=>{const k=e.target.dataset?.openKey;if(!k)return;if(e.target.open){state.openers.add(k);if(k.startsWith('lineup:'))void fillLineups();}else state.openers.delete(k);},true);
-  view.addEventListener('submit',e=>{const form=e.target.closest('[data-make-character-form]');if(form){e.preventDefault();void saveCharacter(form);}});
+  view.addEventListener('submit',e=>{const form=e.target.closest('[data-make-character-form]');if(form){e.preventDefault();void once('character-save:'+form.dataset.mode+':'+form.dataset.makeCharacterForm,()=>saveCharacter(form));}});
   view.addEventListener('keydown',e=>{const radio=e.target.closest('[role="radio"]'),group=radio?.closest('[role="radiogroup"]');if(group&&['ArrowRight','ArrowDown','ArrowLeft','ArrowUp','Home','End'].includes(e.key)){
     e.preventDefault();const items=[...group.querySelectorAll('[role="radio"]')],i=items.indexOf(radio),next=items[e.key==='Home'?0:e.key==='End'?items.length-1:(i+(['ArrowRight','ArrowDown'].includes(e.key)?1:items.length-1))%items.length],attr=next.hasAttribute('data-make-goal')?'data-make-goal':'data-make-look',value=next.getAttribute(attr);if(attr==='data-make-goal'){state.goal=value;state.pictures=null;remember();render();}else{state.look=value;state.picking=true;remember();renderLooks();}q('['+attr+'="'+value+'"]')?.focus();return;
   }if(e.target.id==='makeLoraSearch'&&e.key==='Enter'&&!e.isComposing){e.preventDefault();if(!e.repeat)q('[data-tune-add]')?.click();return;}
@@ -1090,6 +1153,10 @@
     document.querySelector('#assetDialog')?.close();if(typeof showView==='function')showView('make');else window.StudioMake.refresh();
     (q('#makeComposer textarea,#makeComposer input:not([type=search])')||q('#makeGenerate'))?.focus();});
   let loaded=false;
-  window.StudioMake={refresh(){if(!loaded){loaded=true;void load();}else render();}};
+  // Models & setup lists the looks that are ready; a ready look in a Make goal offers "Use in Make" (owner, 19 Oct: browse models, then make).
+  // It chooses the goal and the look and opens Make; nothing is sent.
+  document.addEventListener('click',e=>{const b=e.target.closest('#modelLooks [data-make-use-look]');if(!b)return;const g=GOALS.find(x=>x.looks?.includes(b.dataset.makeUseLook));if(!g)return;
+    state.goal=g.id;state.look=b.dataset.makeUseLook;state.compare=false;state.picking=false;remember();const name=b.closest('li')?.querySelector('b')?.textContent||'';state.status=(name?name+' is chosen. ':'')+'Describe your picture, then press Generate.';state.missing='';if(typeof showView==='function')showView('make');else window.StudioMake.refresh();});
+  window.StudioMake={goalOf:id=>GOALS.find(x=>x.looks?.includes(id))?.id||null,refresh(){if(!loaded){loaded=true;void load();}else render();}};
   if(!view.hidden)window.StudioMake.refresh();
 })();

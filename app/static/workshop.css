@@ -56,7 +56,7 @@ body.workshop-active .ux-notice {background:var(--wk-soft);color:var(--text);bor
 .workshop .ux-section-heading>span {display:none}
 .workshop .ux-section-heading h3 {font-size:14px;font-weight:600;letter-spacing:0;margin:0}
 .workshop .ux-section-heading :is(a,button) {font-size:11px;min-height:36px;max-width:50%}
-.workshop #positiveWrap {font-size:0;margin:0;display:block}
+.workshop #positiveWrap {margin:0;display:block}
 .workshop #positive {font-size:16px;line-height:1.75;padding:21px 22px;min-height:170px;max-height:55vh;resize:vertical;letter-spacing:.005em;border-color:var(--wk-field-line);border-radius:12px;background:var(--wk-input);margin:0}
 .workshop #positive:focus {border-color:var(--accent)}
 .wk-prompt-hint {display:block;font-size:11px;line-height:1.6;margin:10px 0 18px}
@@ -133,9 +133,9 @@ body.workshop-active .ux-notice {background:var(--wk-soft);color:var(--text);bor
 .workshop .wk-run-dock #status {grid-column:1/-1;font-size:11px;line-height:1.5;margin:0;max-height:3em;overflow:auto;color:var(--muted);overflow-wrap:anywhere}
 .workshop .wk-run-dock #status:empty {display:none}
 .workshop .wk-run-dock #status.error {color:var(--danger)}
-/* While a text field has focus, a narrow or short dock keeps only what running needs; a very short one keeps Variations and Generate. */
+/* While a text field has focus, a narrow or short dock keeps only what running needs; a very short one keeps Variations, Generate and run messages. */
 @media(max-width:600px),(max-height:700px) {.workshop .wk-run-dock.wk-typing :is(.wk-run-tools,.wk-dock-info>span) {display:none}}
-@media(max-height:500px) {.workshop .wk-run-dock.wk-typing {padding:8px 12px;bottom:6px}.workshop .wk-run-dock.wk-typing :is(.wk-dock-info,#status) {display:none}}
+@media(max-height:500px) {.workshop .wk-run-dock.wk-typing {padding:8px 12px;bottom:6px}.workshop .wk-run-dock.wk-typing .wk-dock-info {display:none}}
 .workshop :is(input,button,select,textarea,summary) {scroll-margin-block:110px calc(var(--workshop-dock-space) + 20px)}
 body.workshop-active #workshopRecipeDialog {width:min(960px,calc(100vw - 40px));max-height:90dvh;padding:28px;margin:auto;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:20px;box-shadow:var(--wk-shadow);overflow:auto}
 #workshopRecipeDialog::backdrop {background:#06080cc7;backdrop-filter:blur(8px)}
@@ -167,7 +167,7 @@ body.workshop-active #workshopRecipeDialog .setup {position:static;padding:0;max
 #workshopRecipeDialog .preset b {font-size:13px;line-height:1.45;font-weight:600;display:block;overflow-wrap:anywhere}
 #workshopRecipeDialog .preset>span {font-size:12px;color:var(--muted);line-height:1.5;display:block;margin-top:8px}
 #workshopRecipeDialog .preset .recipe-meta {display:flex;flex-wrap:wrap;gap:5px;font-size:10px}
-#workshopRecipeDialog .preset>span {display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:4px}
+#workshopRecipeDialog .preset>span {display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;margin-top:4px}
 #workshopRecipeDialog .preset:has(.preset-thumb) {display:grid;grid-template-columns:56px minmax(0,1fr);column-gap:12px;align-content:start}
 #workshopRecipeDialog .preset:has(.preset-thumb)>:not(.preset-thumb) {grid-column:2}
 #workshopRecipeDialog .preset[hidden] {display:none}
@@ -304,3 +304,6 @@ body.workshop-active[data-workshop-skin="arcade"] :is(.eyebrow,.wk-recipe small)
 .run-cancel button {font-size:11px;padding:6px 10px}
 .run-outcome button {font-size:11px;padding:6px 10px}
 .run-outcome [data-run-outcome="show"] {border-color:var(--accent);color:var(--accent)}
+
+.workshop .wk-run-dock.wk-typing :is(.wk-dock-info>strong,#status):focus {max-height:none;white-space:normal;overflow:visible}
+@media(max-height:500px) {.workshop #positive {min-height:120px;max-height:40vh}}

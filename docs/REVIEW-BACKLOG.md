@@ -7,6 +7,79 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-10-19: Workflow builder first screen
+
+- [ ] Workflow builder: storage and file tools folded (All tools, Saved workflows). Reverse: remove the two details wrappers in workflow-studio.html and the fold-open lines in workflow-projects.js.
+
+## 2026-10-19 (Brief G): recipe picker
+
+- [ ] Recipe picker descriptions clamp to one line (full text on hover and for screen readers). Reverse: the clamp rule.
+
+## 2026-10-19 overnight (ux-lead): Make robustness
+
+- [ ] **The chosen look carries a "✓ Chosen" badge** on its card, beside the accent border (colour alone did not say which look was chosen). Reverse: delete the `.make-look.active::after` rule at the end of `app/static/make.css`.
+- [ ] **A second press of Keep / Not this, Resume / Stop tracking, Save character or Put away / Restore is ignored while the first save is in flight** (Muse lens). Reverse: drop the `once(...)` wrappers in `app/static/make.js`.
+
+## 2026-10-19 overnight (ux-lead): look cards and sidebar
+
+- [ ] **Each look card names its model and LoRA count** ("Anima model · 1 LoRA"), on the gallery and on the chosen-look strip. Reverse: drop `recipeLine()` in `app/static/make.js`.
+- [ ] **Sidebar icons are glyphs, not numerals** (Library ▦, Full editor ⚙, Compare & review ⇄, Overview ⌂; "03" beside Library read as a count, audit v3 N9). Reverse: the icon fields in `links` in `app/static/studio-shell.js`.
+
+## 2026-10-19 overnight (ux-lead): LoRA list in Tune
+
+- [ ] **Tune shows every installed LoRA that fits as a card with Add** (role, made for this model or not, trigger word, starting strength and range). Other families fold under "may not suit"; typing filters. Reverse: in `renderTune()` in `app/static/make.js`, render `#makeLoraChoices` empty again and drop `loraCards()`.
+- [ ] **An added LoRA whose recorded default is 0 starts at 1, kept in its range** (the full editor already did this; Make added it at 0, which did nothing). Reverse: `startOf()` back to `default??1`.
+
+## 2026-10-19 overnight (ux-lead): run-card next steps
+
+- [ ] **Make run cards show Change one thing, New pose and Restyle beside Vary and the fixes** (were under More; "Put in a new pose" is now "New pose", the Library dialog's word). More keeps Open full size, Other fixes, Animate and Make it 3D. Reverse: move the three `from(...)` calls in `actions()` in `app/static/make.js` back into the More `<details>`.
+
+## 2026-10-19 overnight (ux-lead, goal-first rework; design in docs/ux-qa/GOAL-FIRST-REWORK-2026-10-19.md)
+
+- [ ] **Make shows the look's model and LoRAs while Tune is shut.** The Tune line reads "As made: Anima · anima-base-v1.0 · pearly_petiflow2 1.00 · 25 steps" (the model file is named when a family has two) instead of "Model, adapters, steps, seed"; a tuned look still reads "Tuned: ...". Reverse: `asMade()` in `app/static/make.js` back to the fixed text.
+- [ ] **Make's composer uses the full width until the first picture exists.** "Your pictures" moves beside the words only once there is a run card; before that it sits below. Reverse: drop `&&state.runs.length>0` in `layout()` in `app/static/make.js`.
+
+## 2026-10-19 overnight (ux-lead): wording
+
+- [ ] **A LoRA whose file is fixed in the recipe's graph reads "the recipe’s own LoRA"**, not "built-in adapter" (audit v3 N13), in the As made line, Tune and What this look uses. Reverse: the three strings in `app/static/make.js`.
+
+## 2026-10-19 overnight (ux-lead): Quality choice
+
+- [ ] **"Draft first" (a tick) became Quality: Draft / As made / Fine** (radio group beside Generate; the same step counts as Tune's Steps; the estimate follows). Same looks as before (10+ steps or slow). No finishing pass runs automatically: gpu-lab's 19 Oct advice is "nothing runs automatically", so Fix face and Upscale stay one press each on the result. Reverse: `draftMarkup()` in `app/static/make.js` back to the checkbox.
+
+## 2026-10-19 overnight (ux-lead): Models & setup to Make
+
+- [ ] **Models & setup → What you can make: each ready look in a Make goal has "Use in Make"**, which opens Make with that goal and look chosen and says "<look> is chosen. Describe your picture, then press Generate." Nothing is sent. Reverse: drop the button in `modelLooksMarkup()` (`app/static/app.js`) and the `#modelLooks [data-make-use-look]` listener in `app/static/make.js`.
+
+## 2026-10-19 overnight (ux-lead): name the fold for what is in it
+
+- [ ] **"Tune this look" is now "Model, LoRAs and settings"** (Make's fold, the Ctrl+K hints, START-HERE, the anime guide, README): someone looking for "model" or "LoRA" finds it by its name. Code keeps the word "tune" internally. Reverse: the `<summary>` text in `renderComposer()` and the three finder strings in `app/static/studio-shell.js`.
+
+## 2026-10-19 overnight (ux-lead): Anima turbo draft
+
+- [ ] **On Anima looks, Quality is Draft (turbo LoRA, 8 steps, cfg 1, euler/simple) or As made; no Fine.** From gpu-lab's round 7 (agent verdicts): turbo at 8 steps was a near-tie at about 13 s, and 20/30/40 steps looked alike. The turbo LoRA goes in a free slot; the look's own LoRAs stay. Applies wherever the knowledge base says the turbo file fits and the recipe binds steps and cfg. Reverse: delete `TURBO`/`turboFits` and the `if(turbo)` branch of `draftMarkup()` in `app/static/make.js`.
+
+## 2026-10-19 overnight (ux-lead): one picture's next steps at a time
+
+- [ ] **On a Make run card, one picture shows its next steps** (Make this my character, Vary, Fix, Upscale, Change one thing, New pose, Restyle, More); the others show Keep, Not this and **Next steps…**, which moves the steps to that picture. The first saved picture starts selected. A 4-picture card went from 62 visible buttons to 29. Reverse: in `app/static/make.js` drop the Next steps… button and the `.make-next` wrapper from `actions()`, `selectedOf()`, the `make-selected` class on figures, the `[data-make-select]` click branch and `state.selected`; then delete the `.make-next…` rules at the end of `app/static/make.css`.
+
+## 2026-10-19 overnight (ux-lead): Refine 1.5×
+
+- [ ] **Anime pictures get a one-press "Refine 1.5×"** (anime-refine at its own denoise 0.22) between the fixes and Upscale, on result cards and in Fix or upscale. Evidence: gpu-lab #1563, one Pearly picture (kept the face, added eye and lash detail) and one WAI picture (kept the picture); 0.35 drifted the eyes. Reverse: remove `refine` from `POLISH` in `app/static/make.js` and `app/static/continuation-core.js`.
+- [ ] **Accepted trade-off from #1554:** a chosen picture whose thumbnail is genuinely broken shows the browser's broken image, not the blank mark (the fallback is for look pictures only, so a slow thumbnail never removes yours).
+
+## 2026-10-19 overnight (ux-lead): Anima merges and their LoRAs
+
+- [ ] **One Obsession Anima v2.0 and Pearly Anima Mix v1.0 count as Anima for LoRA fit** (`presets/settings-kb.json` family_aliases; the catalog records both as Anima-family merges). Before, every Anima LoRA on those looks said "may not suit". JANIMA LoRAs still say it. The full editor's guidance (bundle-core.js) reads the same aliases, so it now shows Anima guidance for them. Reverse: drop the two alias lines.
+
+## 2026-10-19 overnight (ux-lead): picture pickers
+
+- [ ] **Character in a new pose: the pose grid leaves out the chosen character picture**; when it was your only picture it says "The character is your only picture. Import a pose picture in the library, or choose Draw the pose." Imported pictures no longer show their file name twice on picker cards. Reverse: `others` in `renderGrid()` and the `pictureMeta()` condition in `app/static/make.js`.
+
+## 2026-10-19 overnight (ux-lead): Anime character order from round 7
+
+- [ ] **Anime character now starts with One Obsession, then Pearly mix, then Petiflow**, and the two mixes carry "Tested well" (12 of 12 each, 3 scenes x 4 seeds of adult characters, round 7, `docs/looks/LOOK-LAB-2026-10-19.md`). Petiflow (Anima base) moves to third because Anima-base close-up faces read youthful in that lab. Agent verdicts, not art acceptance. Reverse: the `character` looks order and the two TESTED entries in `app/static/make.js` and `app/static/studio-shell.js`.
+
 ## 2026-10-17 session (agent judgment calls)
 
 - [ ] **#1524 saved pictures from partial runs may be varied and polished.** Agent judgment: a saved asset is usable even when other pictures in its run were not recovered. Queued, running, uncertain and failed runs remain refused; source identity and bytes are still checked when pressed. Synthetic status contracts cover both paths. Reverse by removing `partial` from the two source-status allow-lists in `app/static/studio-workbench.js`.

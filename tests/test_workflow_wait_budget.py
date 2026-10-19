@@ -1,6 +1,7 @@
 """Observation expiry must not issue another request or masquerade as output failure."""
 from contextlib import redirect_stdout
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 import io
 import json
 from types import SimpleNamespace

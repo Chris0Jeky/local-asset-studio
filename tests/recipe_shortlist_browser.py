@@ -3,6 +3,7 @@
 Default is native HTTP/storage. --inert is a disclosed component/full-shell mode
 for containers that disallow localhost navigation; not evidence of native origin.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import asyncio
 import copy
@@ -123,6 +124,14 @@ async def run(out,inert):
                 snapshot="()=>({preset:selected.id,positive:document.querySelector('#positive').value,values:values(),uploaded,lastUploaded,parentAssets,parentByInput})"
                 before=await page.evaluate(snapshot)
                 await page.click('#workshopRecipeChange')
+                card=page.locator('#presetList button[data-id]').first
+                description=await card.get_attribute('title');card_id=await card.get_attribute('data-id')
+                check(await card.locator('> span').inner_text()==description,'recipe card retains the full description for hover and screen readers')
+                check(await card.get_attribute('aria-describedby')==await card.locator('> span').get_attribute('id'),'recipe card references its description')
+                check(await card.locator('> span').evaluate('n=>getComputedStyle(n).webkitLineClamp==="1"&&n.clientHeight<=parseFloat(getComputedStyle(n).lineHeight)+1'),'recipe description visually clamps to one line')
+                await page.fill('#presetSearch',description.split()[-1])
+                check(await page.locator('#presetList button[data-id="'+card_id+'"]').count()==1,'search matches the retained description tail')
+                await page.fill('#presetSearch','')
                 await page.select_option('#uxIntent','animate')
                 await page.click('#checkStartingRecipes')
                 await page.wait_for_selector('#shortlistResults article')
@@ -150,12 +159,12 @@ async def run(out,inert):
                 previous=CALLS.count(PREFIX);await page.click('#checkStartingRecipes');await page.wait_for_selector('#shortlistResults article')
                 check('declaration' in await page.locator('#shortlistResults').inner_text(),'reference counts never claim that source bytes were checked')
                 check(CALLS.count(PREFIX)==previous+1,'goal and count changes do not auto-request')
-                await page.locator('#recipeShortlist').screenshot(path=str(out/'desktop.png'))
+                await evidence_screenshot(page.locator('#recipeShortlist'), path=str(out/'desktop.png'))
                 await page.set_viewport_size({'width':390,'height':844})
-                await page.screenshot(path=str(out/'mobile-shell.png'))
+                await evidence_screenshot(page, path=str(out/'mobile-shell.png'))
                 (out/'layout.json').write_text(json.dumps(await page.evaluate("""()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,nodes:[...document.querySelectorAll('body *')].filter(n=>n.getBoundingClientRect().width&&n.getBoundingClientRect().right>innerWidth+1).map(n=>({tag:n.tagName,id:n.id,cls:n.className,rect:n.getBoundingClientRect().toJSON()})).slice(0,30)})"""),indent=2),encoding='utf-8')
                 check(await page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'390px full Studio shell has no horizontal overflow')
-                await page.locator('#recipeShortlist').screenshot(path=str(out/'mobile.png'))
+                await evidence_screenshot(page.locator('#recipeShortlist'), path=str(out/'mobile.png'))
                 await page.set_viewport_size({'width':1440,'height':1100});await page.evaluate('document.body.style.zoom="2"')
                 check(await page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'200% zoom retains layout');await page.evaluate('document.body.style.zoom="1"')
                 # Delayed read: real AbortSignal is covered by Node; native fetch additionally exercises it.
@@ -217,12 +226,12 @@ async def run(out,inert):
                 await page.locator('#shortlistResults article details > summary').first.click()
                 check('prompt guidance' in await page.locator('#shortlistResults').inner_text() and 'not geometric' in await page.locator('#shortlistResults').inner_text(),'named source roles expose prompt-guidance limits rather than pose-control promises')
                 await page.locator('#checkStartingRecipes').focus()
-                await page.screenshot(path=str(out/'source-desktop.png'))
+                await evidence_screenshot(page, path=str(out/'source-desktop.png'))
                 await page.set_viewport_size({'width':390,'height':844})
                 check(await page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'source guidance fits the 390px shell')
                 await page.locator('#checkStartingRecipes').focus()
                 await page.locator('#checkStartingRecipes').scroll_into_view_if_needed()
-                await page.screenshot(path=str(out/'source-mobile.png'))
+                await evidence_screenshot(page, path=str(out/'source-mobile.png'))
                 await page.set_viewport_size({'width':1440,'height':1100})
                 raw_source=checked_source_path.read_bytes()
                 try:
@@ -274,10 +283,10 @@ async def run(out,inert):
                 exported=json.loads(export_path.read_text(encoding='utf-8'))
                 check(exported['can_apply'] is False and len(exported['intent']['sources'])==3 and exported['before']==draft_before,'deliberate exported review retains exact before-state and all three sources without apply authority')
                 check(hashlib.sha256(exported['proposal_json'].encode('utf-8')).hexdigest()==exported['proposal_sha256'],'export identity matches exact server JSON bytes, not a lossy browser reserialization')
-                await page.locator('#setupProposalDialog').evaluate('n=>n.scrollTop=0');await page.screenshot(path=str(out/'proposal-desktop.png'))
+                await page.locator('#setupProposalDialog').evaluate('n=>n.scrollTop=0');await evidence_screenshot(page, path=str(out/'proposal-desktop.png'))
                 await page.set_viewport_size({'width':390,'height':844})
                 check(await page.locator('#setupProposalDialog').evaluate('n=>n.scrollWidth<=n.clientWidth'),'setup proposal fits the 390px dialog without horizontal overflow')
-                await page.locator('#setupProposalDialog').evaluate('n=>n.scrollTop=0');await page.screenshot(path=str(out/'proposal-mobile.png'))
+                await page.locator('#setupProposalDialog').evaluate('n=>n.scrollTop=0');await evidence_screenshot(page, path=str(out/'proposal-mobile.png'))
                 await page.set_viewport_size({'width':1440,'height':1100});await page.evaluate('document.body.style.zoom="2"')
                 check(await page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'setup review keeps the page in bounds at 200% zoom');await page.evaluate('document.body.style.zoom="1"')
                 await page.locator('#setupProposalInputs > summary').click()
@@ -310,10 +319,10 @@ async def run(out,inert):
                 check(await page.locator('#shortlistRole1').evaluate('x=>x===document.activeElement'),'keyboard focus follows the moved source')
                 await page.click('#checkStartingRecipes');await page.wait_for_selector('#shortlistResults article')
                 check([x['asset_id'] for x in QUERIES[-1]['sources']]==[ordered_ids[1],ordered_ids[0],ordered_ids[2]],'next observation uses the revised source order')
-                await page.locator('#shortlistSourceList').screenshot(path=str(out/'ordered-desktop.png'))
+                await evidence_screenshot(page.locator('#shortlistSourceList'), path=str(out/'ordered-desktop.png'))
                 await page.set_viewport_size({'width':390,'height':844})
                 check(await page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'ordered source controls fit the 390px shell')
-                await page.locator('#shortlistSourceList').screenshot(path=str(out/'ordered-mobile.png'))
+                await evidence_screenshot(page.locator('#shortlistSourceList'), path=str(out/'ordered-mobile.png'))
                 await page.set_viewport_size({'width':1440,'height':1100});await page.evaluate('document.body.style.zoom="2"')
                 check(await page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'ordered source controls fit at 200% zoom');await page.evaluate('document.body.style.zoom="1"')
                 before_calls=CALLS.count(PREFIX);DELAY=.7

@@ -2,6 +2,7 @@
 
 Run: python tests/reference_review_browser.py --output .runtime/reference-review/browser
 """
+from browser_ports import evidence_screenshot
 import argparse
 import base64
 import json
@@ -129,7 +130,7 @@ def run(output):
                         assert receipt['preview']['reference_draft']['source_report_sha256'] == fixture.report['report_sha256']
                         assert receipt['preview']['reference_draft']['unresolved_questions'] == fixture.report['answer']['questions']
                         assert 'media_base64' not in receipt_file.read_text()
-                        page.screenshot(path=str(output / f'review-{width}.png'), full_page=True)
+                        evidence_screenshot(page, path=str(output / f'review-{width}.png'), full_page=True)
                         page.locator('#rr-undo').click()
                         expect(page.locator('#style')).to_have_value('')
                         expect(page.locator('#brief')).to_have_value('A newer instruction')
@@ -167,7 +168,7 @@ def run(output):
                         expect(page.locator('#rr-originals-error')).to_be_hidden()
                         # No horizontal overflow at either width, including 200% text zoom.
                         page.locator('#rr-help').evaluate('(e)=>e.open=true')
-                        page.screenshot(path=str(output / f'refusal-{width}.png'), full_page=True)
+                        evidence_screenshot(page, path=str(output / f'refusal-{width}.png'), full_page=True)
                         assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), f'overflow at {width}'
                         page.add_style_tag(content='html{font-size:200%}')
                         assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), f'zoom overflow at {width}'

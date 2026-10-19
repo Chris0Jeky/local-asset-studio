@@ -396,7 +396,7 @@ class PresetModelReadinessTests(unittest.TestCase):
 
     def test_real_http_readiness_inspection_and_pin_only_refusal(self):
         from http.client import HTTPConnection
-        from http.server import ThreadingHTTPServer
+        from http_test_server import ThreadingHTTPServer
         self.graph = {}; self.preset['model_files'] = ['inpaint/fix.patch', 'diffusion_models/manual.gguf']
         self.pin('diffusion_models/manual.gguf', 'manual-pin')
         studio = self.studio(); handler = type('ReadinessHandler', (server.Handler,), {'studio': studio})
@@ -422,6 +422,19 @@ class PresetModelReadinessTests(unittest.TestCase):
                 self.assertEqual(before, sorted(p.relative_to(self.root).as_posix() for p in self.root.rglob('*')))
         finally: http.shutdown(); http.server_close(); thread.join(5)
         self.assertFalse(studio.jobs); self.assertTrue(studio.queue.empty())
+
+
+class TombstoneStampTests(unittest.TestCase):
+    def test_digest_tombstone_binds_to_its_own_size_and_mtime(self):
+        from model_requirements import cached_pin_mismatch
+        asset = {'id': 'x', 'file': 'checkpoints/a.safetensors', 'bytes': 100, 'sha256': 'a' * 64}
+        tombstone = {'path': 'p', 'bytes': 50, 'mtime_ns': 111, 'digest_unavailable': True}
+        self.assertIsNone(cached_pin_mismatch(asset, (100, 222), tombstone), 'a replaced file must not inherit a stale tombstone')
+        self.assertIsNone(cached_pin_mismatch(asset, (100, 222), {**tombstone, 'bytes': 100}), 'same size with a new mtime is not a hashing race')
+        differs = cached_pin_mismatch(asset, (60, 222), tombstone)
+        self.assertIn('Content differs', differs['note']); self.assertNotIn('changed while hashing', differs['note'])
+        exact = cached_pin_mismatch(asset, (50, 111), tombstone)
+        self.assertIn('changed while hashing', exact['note'])
 
 
 if __name__ == '__main__': unittest.main()

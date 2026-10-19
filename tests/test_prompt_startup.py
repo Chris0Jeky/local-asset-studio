@@ -1,4 +1,6 @@
 import base64
+from functools import partial
+from http_test_server import ThreadingHTTPServer
 import http.client
 import hashlib
 import io
@@ -14,6 +16,9 @@ import unittest
 
 SPEC = importlib.util.spec_from_file_location("prompt_startup_server", Path(__file__).parents[1] / "app/server.py")
 server = importlib.util.module_from_spec(SPEC); SPEC.loader.exec_module(server)
+
+class FixtureHTTPServer(ThreadingHTTPServer, server.StudioHTTPServer):pass
+server.create_server=partial(server.create_server,http_server=FixtureHTTPServer)
 
 
 class FakeStudio:

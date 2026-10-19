@@ -9,6 +9,7 @@ storage and crypto shims. It tests component reconstruction, not origin storage
 persistence or native WebCrypto. Normal HTTP mode remains the integration gate.
 """
 from __future__ import annotations
+from browser_ports import evidence_screenshot
 import argparse
 from contextlib import contextmanager
 import copy
@@ -173,7 +174,7 @@ def run():
                         # Re-prepare a fresh view only, so the screenshot includes named Steps.
                         page.locator('[data-bundle-workflow=prepare]').click()
                         page.wait_for_function("document.querySelector('.bundle-workflow-preview').textContent.includes('named Steps')")
-                        page.screenshot(path=str(args.out/f'bundle-workflow-{width}.png'),full_page=True)
+                        evidence_screenshot(page, path=str(args.out/f'bundle-workflow-{width}.png'),full_page=True)
                     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
                     assert not errors,errors
                     context.close();print(f'PASS {width}px ({"inert component" if args.inert else "native HTTP/sessionStorage"}): stale draft, storage failure, lost response/reconstruction/replay, one saved record, zero inference routes')

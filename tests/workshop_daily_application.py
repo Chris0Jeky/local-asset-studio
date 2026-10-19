@@ -1,4 +1,5 @@
 """Full Studio entry-point journeys on the existing synthetic HTTP fixture, never ComfyUI."""
+from browser_ports import evidence_screenshot
 import argparse
 import json
 import os
@@ -53,9 +54,9 @@ def main():
                     assert card.get_attribute('data-problem') == failed_job['id'] and failed_job['prompt_ids'][0] in content, content
                     assert failed_job['failure']['summary'] in content, content
                     assert failed_job['failure']['action'] in content, content
-                    page.screenshot(path=str(output/f'problems-{width}.png'))
+                    evidence_screenshot(page, path=str(output/f'problems-{width}.png'))
                     assert page.evaluate('JSON.stringify([selected.id,values(),parentAssets])') == original
-                    page.screenshot(path=str(output/f'full-editor-{width}.png'), full_page=True)
+                    evidence_screenshot(page, path=str(output/f'full-editor-{width}.png'), full_page=True)
                     checks.append(f'Full editor bundles and failed-run explanation at {width}px preserve current work')
                     page.evaluate("showView('create');selectPreset('anima-portrait')")
                     page.wait_for_function('schemaAvailable')
@@ -68,7 +69,7 @@ def main():
                     assert page.locator('#uxSourcePicker').is_visible()
                     assert 'Loading' in page.locator('#uxPickerStatus').inner_text()
                     page.wait_for_selector('[data-ux-pull="asset-0"]')
-                    page.screenshot(path=str(output/f'library-picker-{width}.png'))
+                    evidence_screenshot(page, path=str(output/f'library-picker-{width}.png'))
                     page.click('[data-ux-close="uxSourcePicker"]')
                     page.wait_for_function('!document.querySelector("#uxSourcePicker").open')
                     assert page.locator('#uxPullAsset').evaluate('(n)=>n===document.activeElement')

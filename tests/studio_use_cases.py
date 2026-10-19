@@ -24,6 +24,7 @@ error, no generation submitted and at least one case run. In live mode the journ
 page exception or an empty run are still red. The report is written either way, so a red run
 still leaves its evidence; see verdict() and tests/test_use_case_matrix.py.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import copy
 import json
@@ -586,7 +587,8 @@ class CaseRun:
 
     def _shot(self, index):
         name = '%02d.png' % index
-        try: self.page.screenshot(path=str(self.dir / name))
+        try:
+            if evidence_screenshot(self.page, path=str(self.dir / name)) is None: return ''
         except Exception: return ''
         return repo_path(self.dir / name)
 
@@ -1364,6 +1366,7 @@ def _vary(c):
         blocked = c.page.evaluate("(() => { const b = document.querySelector('[data-readiness-code=\"vary\"]'); return {generate: document.querySelector('#generate').disabled, blocker: b ? b.textContent : ''}; })()")
         # A picture with no recorded recipe: the asset panel shows Vary disabled, with the reason beside it.
         c.page.evaluate("showView('assets');openAsset('asset-3')"); c.page.wait_for_timeout(300)
+        if c.page.locator('#assetNextSteps > .asset-unavailable:not([open])').count(): c.act('#assetNextSteps > .asset-unavailable > summary', note='read unavailable actions')
         c.act('#assetDialog .ux-vary button', 'read', note='Vary disabled with its reason', supplementary=True)
         why = c.page.evaluate("(() => { const b = document.querySelector('#assetDialog .ux-vary button'); return b && b.disabled ? document.getElementById(b.getAttribute('aria-describedby')).textContent : ''; })()")
         c.page.evaluate("document.querySelector('#assetDialog').close();showView('create')"); c.page.wait_for_timeout(300)
@@ -1409,6 +1412,7 @@ def _tile(c):
     wide = c.pick('asset-1', '#assetGrid [data-asset-open]', 'image asset in the Asset library', keep=LIVE_IMAGE_ASSET)
     c.act('[data-asset-open="%s"]' % wide, note='open a wide picture')
     c.page.wait_for_timeout(500)
+    if c.page.locator('#assetNextSteps > .asset-unavailable:not([open])').count(): c.act('#assetNextSteps > .asset-unavailable > summary', note='read unavailable actions')
     c.act('#assetDialog .ux-tile button', 'read', note='Make seamless and why it is not offered')
     why = c.page.evaluate(WHY_TILE)
     c.act('#closeAssetDialog', navigation=True, note='close the wide picture', supplementary=True)
@@ -1459,6 +1463,7 @@ def _parallax(c):
     small = c.pick('asset-2', '#assetGrid [data-asset-open]', 'image asset in the Asset library', keep=LIVE_IMAGE_ASSET)
     c.act('[data-asset-open="%s"]' % small, note='open a small picture')
     c.page.wait_for_timeout(500)
+    if c.page.locator('#assetNextSteps > .asset-unavailable:not([open])').count(): c.act('#assetNextSteps > .asset-unavailable > summary', note='read unavailable actions')
     c.act('#assetDialog .ux-parallax [data-ux-parallax]', 'read', note='Make parallax layers and why it is not offered')
     why = c.page.evaluate(WHY_PARALLAX)
     c.act('#closeAssetDialog', navigation=True, note='close the small picture', supplementary=True)
@@ -1466,6 +1471,7 @@ def _parallax(c):
     c.act('[data-asset-open="%s"]' % wide, note='open a wide scene')
     c.page.wait_for_timeout(500)
     waiting = c.page.evaluate(WHY_PARALLAX)
+    if c.page.locator('#assetNextSteps > .asset-unavailable:not([open]) .ux-parallax').count(): c.act('#assetNextSteps > .asset-unavailable > summary', note='open parallax setup')
     c.act('#uxParallaxObjects', 'fill', typed=PARALLAX_OBJECTS, note='name the foreground to lift out')
     c.act('#assetDialog .ux-parallax-mark > summary', note='open the picture to mark the far view', supplementary=True)
     c.page.wait_for_timeout(300)
@@ -1839,7 +1845,9 @@ def _workflow(c):
         except Exception: pass
     c.act('#compileWorkflow')
     c.page.wait_for_timeout(500)
+    c.act('#wfAllTools > summary')
     c.act('#exportGraph', 'read', note='export availability after the check')
+    c.act('#wfSavedFold > summary')
     c.act('#saveSharedWorkflow', 'read', note='save to Workspace')
     c.act('#prepareSavedRun', 'read', note='prepare a run from a saved revision')
     runs = submissions(OBSERVED_POSTS)

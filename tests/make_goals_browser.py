@@ -5,12 +5,13 @@ Fixture server from studio_browser_smoke (real frontend and catalog capabilities
 fixture record: no ComfyUI, no model. Asserts each goal's exact request, that the handoff dialog never opens, and that
 recipe placeholders never reach the page.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import json
 import sys
 import threading
 import time
-from http.server import ThreadingHTTPServer
+from http_test_server import ThreadingHTTPServer
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -98,7 +99,7 @@ def run(shots):
             for width, height in ((1440, 900), (390, 844)):
                 page.set_viewport_size({'width': width, 'height': height}); page.wait_for_timeout(150)
                 page.evaluate('(s)=>{const e=document.querySelector(s);if(e)window.scrollTo(0,e.getBoundingClientRect().top+scrollY-140)}', target); page.wait_for_timeout(100)
-                page.screenshot(path=str(shots / ('%s-%d.png' % (name, width))))
+                evidence_screenshot(page, path=str(shots / ('%s-%d.png' % (name, width))))
             page.set_viewport_size({'width': 1440, 'height': 900}); page.wait_for_timeout(150)
 
         def no_modal(): assert not page.evaluate('document.querySelector("#uxHandoff")?.open'), 'the handoff dialog must not open'
@@ -125,12 +126,12 @@ def run(shots):
         def pick_look(look_id):
             if page.locator('[data-make-change]').count(): page.locator('[data-make-change]').click()
             page.locator('[data-make-look="%s"]' % look_id).click(); page.wait_for_selector('#makeScene')
-        CHARACTERS = ['look-anima-pearly-petiflow', 'look-oneobsession-anima-v20-showcase', 'look-anifox-ringeko', 'look-pearly-anima-mix-v10-showcase', 'look-wai-fantasy-portrait', 'look-anima-fantasy-portrait', 'look-animagine-fantasy-portrait']
+        CHARACTERS = ['look-oneobsession-anima-v20-showcase', 'look-pearly-anima-mix-v10-showcase', 'look-anima-pearly-petiflow', 'look-anifox-ringeko', 'look-wai-fantasy-portrait', 'look-anima-fantasy-portrait', 'look-animagine-fantasy-portrait']
         assert looks_of('character') == CHARACTERS, 'proven first, rejects after them, no oil-paint look under Anime character'
         shot('looks-character', '.make-looks')
         badged = page.eval_on_selector_all('.make-look', 'n=>n.filter(e=>e.querySelector(".make-tested")).map(e=>e.querySelector("[data-make-look]").dataset.makeLook)')
-        assert badged == ['look-anima-pearly-petiflow'], badged  # kept in most test pictures (rounds 1-2); AniFox kept 0 of 2 new seeds
-        assert page.locator('.make-tested').first.inner_text() == 'Tested well' and '4 of 4' in page.locator('.make-tested').first.get_attribute('title')
+        assert badged == ['look-oneobsession-anima-v20-showcase', 'look-pearly-anima-mix-v10-showcase', 'look-anima-pearly-petiflow'], badged  # kept in most test pictures (rounds 1-2); AniFox kept 0 of 2 new seeds
+        assert page.locator('.make-tested').first.inner_text() == 'Tested well' and '12 of 12' in page.locator('.make-tested').first.get_attribute('title')
         # A look picked low in the gallery leaves "Describe your picture" in view below the fixed bar, and every goal chip
         # wraps on screen (audit N8).
         for (width, height), look in (((1440, 900), 'look-anifox-ringeko'), ((390, 844), 'look-wai-fantasy-portrait')):
@@ -156,7 +157,7 @@ def run(shots):
         assert label == 'Medium · ~125 s', label
         page.evaluate('()=>{jobs=[];StudioMake.refresh();}')
         pick_look('look-anima-pearly-petiflow'); assert page.locator('.make-chosen .make-tested').count() == 1 and page.input_value('#makeShape') == 'portrait'
-        assert 'Draft first · 13 steps' in page.locator('#makeDraftBox').inner_text(), 'a 25-step look offers a draft too'
+        assert 'Draft · 13 steps' in page.locator('#makeDraftBox').inner_text(), 'a 25-step look offers a draft too'
         page.locator('[data-make-change]').click(); assert page.locator('[data-make-keep-look]').inner_text() == 'Stay with Flat pastel close-up', 'the gallery never says Keep'
         page.locator('[data-make-keep-look]').click()
         painting = looks_of('painting')
@@ -183,7 +184,17 @@ def run(shots):
         # Draft first (audit #12): a slow look offers a quick low-step draft; the draft's card offers "Make the final", which stages the same
         # words and seed at the look's full steps and waits for Generate. Neither press submits anything but Generate.
         looks_of('painting'); pick_look('look-krea-oil-fantasy'); assert page.input_value('#makeCount') == '1'
-        draft = page.locator('#makeDraft'); assert draft.count() == 1 and not draft.is_checked() and 'Draft first · 6 steps' in page.locator('#makeDraftBox').inner_text()
+        draft = page.locator('#makeDraft'); assert draft.count() == 1 and not draft.is_checked() and 'Draft · 6 steps' in page.locator('#makeDraftBox').inner_text()
+        # Fine (Muse LOW on #1546): Tune's finer count (12 x 1.5 = 18) is what the estimate asks about and what Generate sends; As made restores 12.
+        assert 'Fine · 18 steps' in page.locator('#makeDraftBox').inner_text(); page.check('#makeFine')
+        assert page.input_value('[data-tune=steps]') == '18' and '18 steps' in page.locator('#makeTuneSum').inner_text()
+        for _ in range(30):
+            if any(p['path'] == '/api/estimate' and p['data'].get('controls', {}).get('steps') == 18 for p in fixture.POSTS): break
+            page.wait_for_timeout(100)
+        else: raise AssertionError('the estimate is asked for the Fine step count')
+        page.locator('#makeScene').fill('a lone scholar on a bridge at dusk'); fine = generate(); assert len(fine) == 1 and fine[0]['controls']['steps'] == 18, fine
+        page.check('#makeStandard'); assert page.input_value('[data-tune=steps]') == '' and not page.is_checked('#makeFine')
+        draft = page.locator('#makeDraft')
         draft.check(); assert page.input_value('[data-tune=steps]') == '6' and 'draft 6 steps' in page.locator('#makeTuneSum').inner_text(), 'the draft is Tune’s own steps control'
         page.locator('#makeScene').fill('a lone scholar on a bridge at dusk'); shot('draft-first'); before = len(jobs()); sent = generate(); no_modal()
         assert len(sent) == 1 and sent[0]['controls']['steps'] == 6 and sent[0]['preset_id'] == 'krea-anime-atelier', sent
@@ -232,6 +243,7 @@ def run(shots):
         text = page.locator('#makeComposer').inner_text() + ' '.join(page.eval_on_selector_all('#makeComposer [placeholder]', 'n=>n.map(e=>e.placeholder)'))
         assert 'character picture' in text.lower() and 'pose' in text.lower() and '[' not in text and 'e.g.' not in text and 'Ellen' not in text, text
         page.wait_for_selector('[data-make-pose-pick="asset-2"]')
+        assert page.locator('[data-make-pose-pick="asset-1"]').count() == 0, 'the character picture (asset-1) is not offered as its own pose (19 Oct)'
         assert not generate() and 'Choose the pose first' in page.locator('#makeStatus').inner_text(), 'no pose, no job'
         page.locator('[data-make-pose-pick="asset-2"]').click()
         assert 'Choose the pose first' not in page.locator('#makeStatus').inner_text(), 'the pose reminder clears once the pose is chosen (audit N10)'
@@ -689,7 +701,7 @@ def run(shots):
         history.close()
         assert not errors, errors
         browser.close()
-    server.shutdown()
+    server.shutdown(); server.server_close()
     print(json.dumps({'fixture_jobs_posted': len(jobs()), 'real_generation_submissions': 0, 'clicks_to_generate': clicks, 'page_errors': errors}))
 
 

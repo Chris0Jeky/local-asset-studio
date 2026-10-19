@@ -2,6 +2,7 @@
 
 This intentionally has no --base-url: all writes go to the owned fixture server.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import json
 import os
@@ -24,6 +25,7 @@ SNAPSHOT = '''() => ({recipe:selected.id, keep:lastUploaded, parents:[...parentA
 
 
 def precision_checks(page, check):
+    for axis in ('X', 'Y'): check(page.locator('#uxPose'+axis).get_attribute('aria-describedby') == 'uxPoseStatus', 'Coordinate error text is linked to '+axis)
     before = page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()')
     initial = [page.locator('#uxPose' + key).input_value() for key in ('X', 'Y')]
     page.locator('#uxPoseX').fill('0'); page.locator('#uxPoseY').fill('123.45')
@@ -591,7 +593,7 @@ def main(argv=None):
                         check(posts.count('/api/pose/render') == count_before + 1, 'No implicit retry or duplicate guide render')
                         check(page.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'The page has no horizontal overflow')
                         page.locator('#uxPoseEditor').scroll_into_view_if_needed()
-                        page.screenshot(path=str(args.out / (name + '.png')))
+                        evidence_screenshot(page, path=str(args.out / (name + '.png')))
                         row['passed'] = True
                     except Exception as exc:
                         row['error'] = str(exc)
@@ -611,7 +613,7 @@ def main(argv=None):
                     row['assertions'].append(message)
                 try:
                     sdxl_in_place(page, origin, args.out, check_sdxl, drawings, posts)
-                    page.locator('#uxPoseEditor').scroll_into_view_if_needed(); page.screenshot(path=str(args.out / 'sdxl-in-place.png'))
+                    page.locator('#uxPoseEditor').scroll_into_view_if_needed(); evidence_screenshot(page, path=str(args.out / 'sdxl-in-place.png'))
                     row['passed'] = True
                 except Exception as exc:
                     row['error'] = str(exc)
@@ -631,7 +633,7 @@ def main(argv=None):
                     row['assertions'].append(message)
                 try:
                     restored_guide(page, origin, args.out, check_restored, drawings, posts, spec)
-                    page.locator('#uxPoseEditor').scroll_into_view_if_needed(); page.screenshot(path=str(args.out / 'restored-guide.png'))
+                    page.locator('#uxPoseEditor').scroll_into_view_if_needed(); evidence_screenshot(page, path=str(args.out / 'restored-guide.png'))
                     row['passed'] = True
                 except Exception as exc:
                     row['error'] = str(exc)
@@ -651,7 +653,7 @@ def main(argv=None):
                     row['assertions'].append(message)
                 try:
                     pending_read_drag_and_draft(page, origin, args.out, check_pending, drawings, posts, spec)
-                    page.locator('#uxPoseEditor').scroll_into_view_if_needed(); page.screenshot(path=str(args.out / 'pending-read.png'))
+                    page.locator('#uxPoseEditor').scroll_into_view_if_needed(); evidence_screenshot(page, path=str(args.out / 'pending-read.png'))
                     row['passed'] = True
                 except Exception as exc:
                     row['error'] = str(exc)
@@ -671,7 +673,7 @@ def main(argv=None):
                     row['assertions'].append(message)
                 try:
                     stalled_read_timeout(page, origin, args.out, check_stalled, drawings, posts, spec)
-                    page.locator('#uxPoseEditor').scroll_into_view_if_needed(); page.screenshot(path=str(args.out / 'stalled-read.png'))
+                    page.locator('#uxPoseEditor').scroll_into_view_if_needed(); evidence_screenshot(page, path=str(args.out / 'stalled-read.png'))
                     row['passed'] = True
                 except Exception as exc:
                     row['error'] = str(exc)

@@ -1,4 +1,5 @@
 """Opt-in control geometry proof; actual Studio source, synthetic HTTP only."""
+from browser_ports import evidence_screenshot
 import argparse
 import asyncio
 import hashlib
@@ -71,7 +72,7 @@ async def run(args):
                             e.scrollIntoView({block:'center'});
                             const r=e.getBoundingClientRect(); return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===e;
                         }''')
-                        await page.screenshot(path=str(args.out / f'{mode}-{width}-{scale}x.png'))
+                        await evidence_screenshot(page, path=str(args.out / f'{mode}-{width}-{scale}x.png'))
                         passed = (all(30 <= b['height'] <= 64 for b in geometry['boxes'].values())
                                   and geometry['full_width_help'] and seed_hit
                                   and not geometry['overflow'] and not geometry['note_clipped'] and keyboard_next

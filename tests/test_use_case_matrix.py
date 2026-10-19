@@ -335,7 +335,7 @@ class ScreenshotPaths(unittest.TestCase):
         patch = mock.patch.object(runner, 'ROOT', self.root)
         patch.start(); self.addCleanup(patch.stop)
         self.page = mock.Mock()
-        self.page.screenshot.side_effect = lambda *, path: Path(path).write_bytes(b'synthetic screenshot')
+        self.page.screenshot.side_effect = lambda *, path, timeout, animations: Path(path).write_bytes(b'synthetic screenshot')
 
     def case(self, screenshots):
         return runner.CaseRun({'id': 'screenshot-stub'}, self.page, 'http://127.0.0.1:8191', False, screenshots)
@@ -345,7 +345,7 @@ class ScreenshotPaths(unittest.TestCase):
         receipt = case._shot(1)
         saved = case.dir / '01.png'
         self.assertEqual(receipt, '.runtime/ux-use-cases/screenshot-stub/01.png')
-        self.page.screenshot.assert_called_once_with(path=str(saved))
+        self.page.screenshot.assert_called_once_with(path=str(saved), timeout=30000, animations='disabled')
         self.assertEqual(saved.read_bytes(), b'synthetic screenshot')
 
     def test_outside_repository_screenshot_receipt_is_absolute(self):
@@ -354,7 +354,7 @@ class ScreenshotPaths(unittest.TestCase):
         try: receipt = case._shot(2)
         except ValueError as error: self.fail('An outside-repository screenshot must return its absolute path: ' + str(error))
         self.assertEqual(receipt, saved.as_posix())
-        self.page.screenshot.assert_called_once_with(path=str(saved))
+        self.page.screenshot.assert_called_once_with(path=str(saved), timeout=30000, animations='disabled')
         self.assertEqual(saved.read_bytes(), b'synthetic screenshot')
 
     def test_screenshot_exception_keeps_the_empty_receipt(self):
@@ -364,7 +364,7 @@ class ScreenshotPaths(unittest.TestCase):
                 self.page.screenshot.reset_mock()
                 case = self.case(screenshots)
                 self.assertEqual(case._shot(3), '')
-                self.page.screenshot.assert_called_once_with(path=str(case.dir / '03.png'))
+                self.page.screenshot.assert_called_once_with(path=str(case.dir / '03.png'), timeout=30000, animations='disabled')
                 self.assertFalse((case.dir / '03.png').exists())
 
 

@@ -4,6 +4,7 @@ Runs its own disposable server on a free loopback port (--port fixes one), refus
 this fixture to a running Studio. --inert substitutes only browser storage/transport
 for environments that prohibit navigation; default mode uses native HTTP.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import asyncio
 import io
@@ -94,10 +95,10 @@ async def exercise(args):
                 await a.fill('#assetNotes','New note from A');await a.click('#saveAssetDetails');await saved(a)
                 await b.fill('#assetNotes','B wants a different correction');await b.click('#saveAssetDetails');await conflicted(b)
                 record('META-07 same-field conflict exposes both choices','Both changed' in await b.locator('#assetDetailConflict').inner_text())
-                await b.screenshot(path=str(args.out/'conflict-desktop.png'))
+                await evidence_screenshot(b, path=str(args.out/'conflict-desktop.png'))
                 await b.set_viewport_size({'width':390,'height':1100});await b.locator('#assetDetailConflict').scroll_into_view_if_needed()
                 record('META-08 narrow conflict remains within viewport',await b.evaluate("document.documentElement.scrollWidth<=innerWidth && document.querySelector('#assetDialog').scrollWidth<=document.querySelector('#assetDialog').clientWidth"))
-                await b.screenshot(path=str(args.out/'conflict-390.png'))
+                await evidence_screenshot(b, path=str(args.out/'conflict-390.png'))
                 before=len(writes);await b.click('[data-asset-current]')
                 record('META-09 use saved version is read-only',len(writes)==before and await b.input_value('#assetNotes')=='New note from A')
                 await b.set_viewport_size({'width':1440,'height':1100})

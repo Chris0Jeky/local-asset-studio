@@ -1,7 +1,8 @@
 """Real loopback protocol checks, including lost/ambiguous commit responses."""
 from contextlib import contextmanager
 from http.client import HTTPConnection, RemoteDisconnected
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 import json
 from pathlib import Path
 import socket

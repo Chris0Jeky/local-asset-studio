@@ -5,7 +5,7 @@ ComfyUI process or inference is started. Ephemeral transport sends the Handler's
 normal loopback Host/Origin headers to test its unchanged guard.
 """
 from http.client import HTTPConnection
-from http.server import ThreadingHTTPServer
+from http_test_server import ThreadingHTTPServer
 import json
 from pathlib import Path
 import socket

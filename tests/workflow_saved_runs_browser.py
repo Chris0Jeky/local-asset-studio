@@ -3,6 +3,7 @@
 Binds only a free loopback port (--port fixes one). No worker thread, model execution,
 owner configuration or installed ComfyUI is used. Native browser storage enabled.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import copy
 import json
@@ -115,6 +116,7 @@ def main():
                 assert page.locator('#prepareSavedRun').is_disabled()
                 page.select_option('#presetChoice','example'); page.click('#loadPreset')
                 page.wait_for_function('window.WorkflowStudio.snapshot() !== null')
+                page.locator('#wfSavedFold > summary').click()
                 page.click('#saveSharedWorkflow')
                 page.wait_for_function('window.WorkflowProject.snapshot().id && !window.WorkflowProject.snapshot().blocked')
                 key=page.evaluate('window.WorkflowProject.snapshot().id')
@@ -164,10 +166,10 @@ def main():
                 output=args.out/'wide-ticket.json';downloading.value.save_as(str(output))
                 assert output.read_bytes()==canonical(wide_run['record']['report']['ticket'])
                 page.locator('#reviewSavedRun').focus()
-                page.locator('#workflowSavedRuns').screenshot(path=str(args.out/'saved-runs-desktop.png'))
+                evidence_screenshot(page.locator('#workflowSavedRuns'), path=str(args.out/'saved-runs-desktop.png'))
                 page.set_viewport_size({'width':390,'height':1100})
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'Horizontal overflow'
-                page.locator('#workflowSavedRuns').screenshot(path=str(args.out/'saved-runs-mobile.png'))
+                evidence_screenshot(page.locator('#workflowSavedRuns'), path=str(args.out/'saved-runs-mobile.png'))
                 assert not errors, errors
                 assert '/prompt' not in comfy_requests and len(studio.jobs)==1
                 result={'browser':'inert full production page + injected HTTP bridge/storage/crypto' if args.inert else 'full production page + real HTTP/SQLite + native localStorage', 'jobs_queued':1,

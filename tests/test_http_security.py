@@ -1,6 +1,7 @@
 """Exercise the real Handler's common response boundary over loopback HTTP (#98)."""
 from http.client import HTTPConnection
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 import copy
 import json
 import socket

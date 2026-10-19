@@ -6,6 +6,7 @@ Studio or ComfyUI ports and is intentionally excluded from unittest discovery.
 
     python tests/character_review_browser.py --out <new evidence directory>
 """
+from browser_ports import evidence_screenshot
 import argparse
 import copy
 from http.client import HTTPConnection
@@ -216,7 +217,7 @@ def run(out, chromium=None):
             assert first_records[0]["review"]["reviewer"] == "local-user"
             assert first_records[0]["review"]["output_sha256"] == expected_sha
             assert first_records[0]["output"]["sha256"] == expected_sha
-            page.screenshot(path=str(out / "review-desktop-1440.png"), full_page=True)
+            evidence_screenshot(page, path=str(out / "review-desktop-1440.png"), full_page=True)
 
             # The same saved review is reopened at 390px.  A changed assessment
             # must clear current acceptance while retaining the finalize event.
@@ -233,13 +234,13 @@ def run(out, chromium=None):
             page.locator("#finalize").press("Enter")
             page.locator("#revision").filter(has_text=re.compile(r"^Revision " + str(mobile_revision) + r" ·")).wait_for()
             assert fixture.studio.production.reviews.inspect(identifier)["character_review"]["review_revision"] == mobile_revision
-            page.locator("#decision").screenshot(path=str(out / "review-mobile-decision-390.png"))
+            evidence_screenshot(page.locator("#decision"), path=str(out / "review-mobile-decision-390.png"))
             page.locator("#notes").fill("Changed assessment: retain the original event, clear acceptance.")
             page.locator("#saveAssessment").focus()
             page.locator("#saveAssessment").press("Enter")
             page.locator("#assessmentStatus").filter(has_text=re.compile(r"^Saved$")).wait_for()
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth"), "Horizontal overflow at 390px"
-            page.screenshot(path=str(out / "review-mobile-390.png"), full_page=True)
+            evidence_screenshot(page, path=str(out / "review-mobile-390.png"), full_page=True)
 
             assert not errors, errors
             context.close()

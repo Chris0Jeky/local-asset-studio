@@ -1,9 +1,58 @@
 """Run decisions remain reachable without replacing execution owners (#770/#775/#778/#779)."""
+from browser_ports import evidence_screenshot
 import workshop_entry_points as entry
 from workshop_entry_points import workshop_html, script
 
 
 class RunDecisions(entry.EntryPoints):
+    def test_dock_semantics_and_short_typing_status(self):
+        self.load_workshop()
+        dock = self.page.locator('.wk-run-dock')
+        self.assertEqual(dock.get_attribute('role'), 'group')
+        self.assertEqual(dock.get_attribute('aria-label'), 'Generation controls')
+        tools = self.page.locator('.wk-run-tools')
+        self.assertEqual(tools.get_attribute('role'), 'group')
+        self.assertEqual(tools.get_attribute('aria-label'), 'Plan and vary this run')
+        self.page.set_viewport_size({'width': 760, 'height': 500})
+        self.page.evaluate("document.querySelector('#status').textContent='A run message that stays available while typing.'")
+        self.page.focus('#positive')
+        self.assertTrue(self.page.locator('#status').is_visible())
+        self.assertEqual(self.page.locator('#status').get_attribute('role'), 'status')
+        self.assertFalse(self.page.locator('.wk-dock-info').is_visible())
+        self.assertTrue(dock.evaluate("n=>n.classList.contains('wk-typing')"))
+
+    def test_clamped_reason_expands_on_keyboard_focus(self):
+        self.load_workshop()
+        self.page.set_viewport_size({'width': 390, 'height': 844})
+        self.page.focus('#positive')
+        self.page.locator('#workshopReadiness').focus()
+        # A held pointer can retain typing mode after focus moves to the dock.
+        self.page.evaluate("document.querySelector('.wk-run-dock').classList.add('wk-typing')")
+        self.assertEqual(self.page.locator('#workshopReadiness').evaluate('n=>getComputedStyle(n).whiteSpace'), 'normal')
+        self.assertEqual(self.page.locator('#workshopReadiness').evaluate('n=>getComputedStyle(n).maxHeight'), 'none')
+
+    def test_elapsed_announcements_change_with_state_without_ticking(self):
+        self.load_workshop()
+        self.page.evaluate("window.jobs=[{id:'old-run',status:'completed',started_at:Date.now()/1000-300},{id:'clock-test',status:'running',started_at:Date.now()/1000-10}]")
+        self.page.wait_for_function("document.querySelector('#workshopElapsedStatus').textContent.includes('running')")
+        notice = self.page.locator('#workshopElapsedStatus')
+        self.assertEqual(notice.get_attribute('aria-live'), 'polite')
+        before = notice.text_content()
+        self.assertNotIn('old-run', before)
+        self.page.wait_for_timeout(1200)
+        self.assertEqual(notice.text_content(), before)
+        self.page.evaluate("jobs[1].status='completed'")
+        self.page.wait_for_function("document.querySelector('#workshopElapsedStatus').textContent.includes('completed')")
+
+    def test_blocker_rerender_restores_removed_focus(self):
+        self.load_workshop()
+        self.page.evaluate("document.querySelector('#uxBlockers').innerHTML='<div class=\"ux-blocker\"><p>First blocker.</p><button data-ux-resolve=\"models\">Repair</button></div>'")
+        self.page.locator('#workshopBlockerList button').wait_for()
+        self.page.locator('#workshopBlockerList button').focus()
+        self.page.evaluate("document.querySelector('#uxBlockers p').textContent='Changed blocker.'")
+        self.page.wait_for_function("document.querySelector('#workshopReadiness').textContent==='Changed blocker.'")
+        self.assertTrue(self.page.locator('#workshopReview').evaluate('n=>n===document.activeElement'))
+
     def test_phone_dock_is_compact_with_keyboard_reachable_tools(self):
         self.load_workshop()
         self.page.evaluate("document.querySelector('#estimateValue').textContent='~42s'")
@@ -30,7 +79,7 @@ class RunDecisions(entry.EntryPoints):
                     self.assertLessEqual(height, 72, self.page.evaluate("[document.querySelector('#status').textContent, document.querySelector('#workshopReadiness').textContent, document.querySelector('.wk-dock-info').className]"))
                     self.assertIn('~42s', self.page.locator('#workshopEta').inner_text())
                     self.assertTrue(self.page.locator('#generate').evaluate('(n)=>n===runOriginals.generate'))
-                    if layout == 'focus' and motion == 'no-preference': self.page.screenshot(path=str(shots / 'closed.png'))
+                    if layout == 'focus' and motion == 'no-preference': evidence_screenshot(self.page, path=str(shots / 'closed.png'))
                     toggle = self.page.locator('#workshopRunTools > summary')
                     for identity in tools: self.assertFalse(self.page.locator('#'+identity).is_visible(), identity)
                     # Tab order follows the visual order: Run tools, then Generate.
@@ -48,7 +97,7 @@ class RunDecisions(entry.EntryPoints):
                     self.page.select_option('#batch', '2')
                     self.page.click('#randomSeed'); self.page.click('#planComparison')
                     self.assertEqual(self.page.locator('[data-key=seed]').input_value(), '43')
-                    if layout == 'focus' and motion == 'no-preference': self.page.screenshot(path=str(shots / 'open.png'))
+                    if layout == 'focus' and motion == 'no-preference': evidence_screenshot(self.page, path=str(shots / 'open.png'))
                     for scroll in (0, 10000):
                         self.page.evaluate('(y)=>scrollTo(0,y)', scroll)
                         box = self.page.locator('#generate').bounding_box()
@@ -367,11 +416,11 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
         node = self.page.evaluate_handle("document.querySelector('#workshopBlockerList li')")
         self.page.evaluate("document.querySelector('#createView').__workshop.sync()")
         self.assertTrue(self.page.evaluate("(n)=>n.isConnected", node))
-        # Codex P2 on #1125: once one blocker is left, its repair stays in the strip (once, beside its summary).
+        # With one blocker left, its repair stays in the strip and its message stays in the dock.
         self.page.evaluate("document.getElementById('uxBlockers').innerHTML='<div class=\"ux-blocker\" data-readiness-code=\"parameters\"><p>Width must be a multiple of 8.</p><button type=\"button\" data-ux-resolve=\"parameters\">Review motion settings</button></div>'")
         self.page.wait_for_function("document.querySelectorAll('#workshopBlockerList li').length===1 && !document.getElementById('workshopBlockerList').hidden")
         self.assertEqual(self.page.locator('#workshopReadiness').text_content(), 'Width must be a multiple of 8.')
-        self.assertEqual(self.page.locator('#workshopSetupReadiness').inner_text(), 'Width must be a multiple of 8.')
+        self.assertTrue(self.page.locator('#workshopSetupReadiness').is_hidden())
         self.assertEqual(self.page.locator('#workshopBlockerList li').inner_text(), 'Review motion settings', 'the message is not repeated')
         self.page.evaluate("document.activeElement?.blur()")
         self.page.locator('#workshopBlockerList button').click()
@@ -379,7 +428,7 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
         self.page.evaluate("document.getElementById('uxBlockers').innerHTML='<div class=\"ux-blocker\"><p>Only this one.</p></div>'")
         self.page.wait_for_function("document.getElementById('workshopBlockerList').hidden")
         self.assertEqual(self.page.locator('#workshopReadiness').text_content(), 'Only this one.')
-        self.assertEqual(self.page.locator('#workshopSetupReadiness').inner_text(), 'Only this one.')
+        self.assertTrue(self.page.locator('#workshopSetupReadiness').is_hidden())
         self.assertEqual(self.page.evaluate('submitted'), 0)
 
 if __name__ == '__main__':

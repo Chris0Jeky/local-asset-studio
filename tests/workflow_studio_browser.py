@@ -4,6 +4,7 @@ Uses the real new page, scripts, styles, HTTP extension and compiler with an ine
 synthetic Comfy schema. This is NOT the configured Windows/GPU runtime.
 Requires separately available playwright + Chromium; not a runtime dependency.
 """
+from browser_ports import evidence_screenshot
 import argparse
 from browser_ports import browser_server
 import json
@@ -171,11 +172,12 @@ def main():
                 assert studio.calls == 0
                 if args.screenshots:
                     args.screenshots.mkdir(parents=True, exist_ok=True)
-                    page.screenshot(path=str(args.screenshots / 'workflow-guides.png'), full_page=False)
+                    evidence_screenshot(page, path=str(args.screenshots / 'workflow-guides.png'), full_page=False)
                 page.locator('#loadNodes').click(); page.wait_for_function("document.querySelector('#nodeCount').textContent.includes('5 installed')")
                 page.locator('#presetChoice').select_option('example'); page.locator('#loadPreset').click()
                 page.wait_for_function("document.querySelector('#documentStats').textContent.includes('3 nodes')")
                 page.locator('#compileWorkflow').click(); page.wait_for_function("!document.querySelector('#exportGraph').disabled")
+                page.locator('#wfAllTools > summary').click()
                 page.locator('#loadNodes').click(); page.wait_for_function("document.querySelector('#exportGraph').disabled")
                 page.locator('#compileWorkflow').click(); page.wait_for_function("!document.querySelector('#exportGraph').disabled")
                 page.locator('#workflowNodeSelect').select_option('2')
@@ -199,11 +201,12 @@ def main():
                 text_inputs(page)
                 if args.screenshots:
                     page.locator('#builder').scroll_into_view_if_needed()
-                    page.screenshot(path=str(args.screenshots / 'workflow-builder.png'), full_page=False)
+                    evidence_screenshot(page, path=str(args.screenshots / 'workflow-builder.png'), full_page=False)
                 if not args.inert_dom:
                     # Browser draft survives a real page reload, without automatically restoring/running it.
                     page.reload(); page.locator('.wf-goal').nth(6).wait_for()
                     assert page.locator('#documentStats').inner_text() == 'No draft'
+                    page.locator('#wfAllTools > summary').click()
                     page.locator('#restoreWorkflow').click(); page.wait_for_function("document.querySelector('#documentStats').textContent.includes('4 nodes')")
                     assert page.evaluate("WorkflowStudio.snapshot().nodes['4'].inputs.text") == 'expanded prompt text', 'The expanded text is part of the restored draft'
                     page.goto(origin + '/workflow-studio.html?guide=workflow&step=1#builder')
@@ -224,7 +227,7 @@ def main():
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
                 page.locator('#studioNavToggle').click(); assert page.locator('#studioNavToggle').get_attribute('aria-expanded') == 'true'
                 page.keyboard.press('Escape'); assert page.locator('#studioNavToggle').get_attribute('aria-expanded') == 'false'
-                if args.screenshots: page.screenshot(path=str(args.screenshots / 'workflow-mobile.png'))
+                if args.screenshots: evidence_screenshot(page, path=str(args.screenshots / 'workflow-mobile.png'))
                 assert not errors, errors
                 assert studio.calls == 0
                 assert all(path not in ('/prompt', '/api/jobs', '/api/workflow-studio/run') for path in requests), requests

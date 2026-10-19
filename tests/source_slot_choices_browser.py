@@ -170,7 +170,9 @@ async def exercise_source_choices(page, check):
 
     # Existing target metadata is explicit and replacement still needs confirmation.
     await reset(page, 'qwen-3ref')
-    await page.evaluate("attachReferenceAsset(1,'asset-2')")
+    # Keep the operation in-page; CDP must observe applied state, not await its promise (#1132).
+    await page.evaluate("() => {window.__choiceAttachRun=attachReferenceAsset(1,'asset-2')}")
+    await page.wait_for_function("referencePending===0 && referenceRecords[1]?.parent_asset==='asset-2'")
     await page.locator('#uxPullAsset').click()
     await page.locator('[data-ux-pull="asset-1"]').wait_for(state='visible')
     await page.select_option('#uxSourceSlot','0')

@@ -31,7 +31,7 @@ test('finder indexes preset model and family metadata and offers Tune without ge
   vm.runInNewContext(commands+';commands();',context);
   assert.match(results.innerHTML,/data-make-look="look-test"/);
   for(const query of ['base-model','portrait recipe']){input.value=query;vm.runInNewContext('commands()',context);assert.match(results.innerHTML,/data-make-look="look-test"/);}
-  for(const query of ['lora','adapter','tune']){input.value=query;vm.runInNewContext('commands()',context);assert.match(results.innerHTML,/href="\/#make"/);assert.match(results.innerHTML,/Open Tune this look under the composer/);}
+  for(const query of ['lora','adapter','tune']){input.value=query;vm.runInNewContext('commands()',context);assert.match(results.innerHTML,/href="\/#make"/);assert.match(results.innerHTML,/Open Model, LoRAs and settings under the words in Make/);}
   input.value='flux';vm.runInNewContext('commands()',context);assert.match(results.innerHTML,/href="\/#models"/);
 });
 test('finder reaches installed adapters and model files that no look uses (#23), and no longer offers Overview (#18)',()=>{
@@ -45,9 +45,9 @@ test('finder reaches installed adapters and model files that no look uses (#23),
   // The empty finder keeps its shape: no adapter rows until something is typed.
   assert.doesNotMatch(results.innerHTML,/Use xilmo/);
   input.value='xilmo';vm.runInNewContext('commands()',context);
-  assert.match(results.innerHTML,/<b>Use xilmo-style\.safetensors in Tune<\/b>/);assert.match(results.innerHTML,/Adapter - add it under Tune this look in Make/);
+  assert.match(results.innerHTML,/<b>Use xilmo-style\.safetensors in Make<\/b>/);assert.match(results.innerHTML,/LoRA - add it under Model, LoRAs and settings in Make/);
   input.value='pearly';vm.runInNewContext('commands()',context);
-  assert.match(results.innerHTML,/<b>Use pearly-line\.safetensors in Tune<\/b>/);
+  assert.match(results.innerHTML,/<b>Use pearly-line\.safetensors in Make<\/b>/);
   // A checkpoint file with no look reaches Models & setup through that row's own file index, once.
   input.value='flux-checkpoint';vm.runInNewContext('commands()',context);
   assert.match(results.innerHTML,/<b>Models & setup<\/b>/);assert.equal((results.innerHTML.match(/href="\/#models"/g)||[]).length,1);
@@ -62,14 +62,15 @@ test('Make orders each goal by lab evidence, files painting styles under Painted
   const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),grab=re=>JSON.parse(JSON.stringify(vm.runInNewContext('('+make.match(re)[1]+')')));
   const goals=grab(/const GOALS=(\[[\s\S]*?\n  \]);/),looks=id=>goals.find(g=>g.id===id).looks,ids=new Set(JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/looks.json'))).looks.map(l=>l.id));
   // Lab rounds 1-2 (docs/looks/LOOK-LAB-2026-10-16.md): measured high scorers first, rejects after them, unmeasured slow Krea last.
-  assert.deepEqual(looks('character'),['look-anima-pearly-petiflow','look-oneobsession-anima-v20-showcase','look-anifox-ringeko','look-pearly-anima-mix-v10-showcase','look-wai-fantasy-portrait','look-anima-fantasy-portrait','look-animagine-fantasy-portrait']);
+  // Round 7 (docs/looks/LOOK-LAB-2026-10-19.md, #1563): the One Obsession and Pearly mixes kept 12 of 12 each and lead.
+  assert.deepEqual(looks('character'),['look-oneobsession-anima-v20-showcase','look-pearly-anima-mix-v10-showcase','look-anima-pearly-petiflow','look-anifox-ringeko','look-wai-fantasy-portrait','look-anima-fantasy-portrait','look-animagine-fantasy-portrait']);
   assert.deepEqual(looks('scene'),['look-night-shift-retro-anime','look-noob-fantasy-scene','look-krea-watercolor-anime']);
   assert.deepEqual(looks('painting').slice(0,2),['look-anima-painterly-artist-tags','look-krea-style-emerald-tarot']);
   assert.ok(['look-krea-atelier-target-stack','look-krea-witch-nijisis'].every(id=>looks('painting').includes(id)&&!looks('character').includes(id)),'oil-paint and Nijisis looks are paintings');
   assert.deepEqual(looks('photo').slice(0,2),['look-preset-zimage-fast','look-preset-realvis']);assert.deepEqual(looks('game'),['look-zimage-game-icon','look-preset-stylized-prop','look-preset-pixel-lora']);
   for(const g of goals.filter(g=>g.looks)){const first=g.looks.findIndex(id=>/krea/.test(id));assert.ok(first<0||g.looks.slice(first).every(id=>/krea/.test(id)),g.id+' keeps Krea last');for(const id of g.looks)assert.ok(ids.has(id),id);}
   const tested=grab(/const TESTED=(\{[^}]*\});/),shapes=grab(/const SHAPE_FOR=(\{[^}]*\});/);
-  assert.deepEqual(Object.keys(tested).sort(),['look-anima-painterly-artist-tags','look-anima-pearly-petiflow','look-krea-lenovo-ultrareal','look-krea-oil-fantasy','look-krea-realistic-snapshot','look-krea-style-inkwork-darkbrush','look-krea-watercolor-anime','look-night-shift-retro-anime']);
+  assert.deepEqual(Object.keys(tested).sort(),['look-anima-painterly-artist-tags','look-anima-pearly-petiflow','look-krea-lenovo-ultrareal','look-krea-oil-fantasy','look-krea-realistic-snapshot','look-krea-style-inkwork-darkbrush','look-krea-watercolor-anime','look-night-shift-retro-anime','look-oneobsession-anima-v20-showcase','look-pearly-anima-mix-v10-showcase']);
   assert.ok(!('look-zimage-game-icon' in tested),'game icon kept 3 of 8 (round 5), below the badge rule');assert.match(grab(/const BEST_FOR=(\{[^}]*\});/)['look-zimage-game-icon'],/check shape details/);
   assert.deepEqual(shapes,{character:'portrait',scene:'landscape',game:'square'});
 });
@@ -306,6 +307,17 @@ test('pose canvas is exposed as an operable application, not a static image (#14
   assert.match(tag, /aria-label="[^"]*Pose skeleton[^"]*"/, 'pose canvas keeps its accessible label');
   assert.match(tag, /aria-label="[^"]*joint[^"]*arrow keys[^"]*Shift[^"]*"/, 'pose canvas label must describe joint selection, arrow keys and Shift+arrow');
 });
+test('Make drops a second write to the same target while the first is in flight (Muse lens, 19 Oct)',async()=>{
+  const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),line=make.match(/  const inflight=new Set\(\),once=.*\n/)[0];
+  const api=vm.runInNewContext(line+';({once,inflight})',{});let calls=0,release;const slow=()=>new Promise(r=>{calls++;release=r;});
+  const first=api.once('character:c1',slow),second=api.once('character:c1',slow),other=api.once('character:c2',async()=>{calls++;});
+  await second;await other;assert.equal(calls,2,'the same target runs once; another target still runs');release();await first;
+  assert.equal(api.inflight.size,0,'the key is released after the write settles');await api.once('character:c1',async()=>{calls++;});assert.equal(calls,3);
+  await assert.rejects(api.once('k',async()=>{throw Error('boom');}));
+  // Each character form has its own key (Codex P2 on #1540): a pending save of one form never drops another form's save.
+  assert.match(make,/once\('character-save:'\+form\.dataset\.mode\+':'\+form\.dataset\.makeCharacterForm,/);assert.equal(api.inflight.has('k'),false,'a failed write releases its key');
+});
+
 test('Petiflow additions use knowledge defaults while retaining every lab note',()=>{
   const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),kb=JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/settings-kb.json'),'utf8')).loras;
   const look={id:'look-anima-pearly-petiflow'},preset={},t={rows:[],cleared:[]},names=['anima-xilmo-000020.safetensors','anima-ke-ta_style_v1.safetensors','anima-newanimastyle-v1.safetensors','anima-kieed_v9_step6000.safetensors'];
@@ -316,6 +328,31 @@ test('Petiflow additions use knowledge defaults while retaining every lab note',
   assert.match(String(api.labOf(look,names[3])),/flattened the face/);
 });
 
+test('Tune lists every fitting LoRA as a card: other families folded, typing narrows, a recorded 0 starts at 1 (19 Oct)',()=>{
+  const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8');
+  const kb={'a.safetensors':{label:'Alpha style',family:'Anima',role:'style',trigger:'@alpha',default:0.6,strength:[0.3,1]},'b.safetensors':{label:'Beta',family:'Anima',role:'detail',trigger:'@betaword',default:0,strength:[0,1]},'c.safetensors':{label:'Gamma',family:'Other',role:'style',default:1}};
+  const t={rows:[{slot:'lora',name:'a.safetensors'}],cleared:[]},files=Object.keys(kb);
+  const context={tuneOf:()=>t,freeSlot:()=>'lora2',compatible:()=>files,entry:n=>kb[n],clamp:v=>Math.min(2,Math.max(0,Math.round((Number(v)||0)*20)/20)),fits:(l,f)=>kb[f].family==='Anima',short:n=>kb[n].label,escape:s=>String(s),tuneChanged(){},q:()=>null,say(){},labOf:()=>null};
+  const api=vm.runInNewContext(make.slice(make.indexOf('  function adapterMatches('),make.indexOf('  function tuneClick('))+';({loraCards,startOf,adapterMatches,addAdapter})',context);
+  const all=api.loraCards({},'');
+  assert.doesNotMatch(all,/data-tune-pick="a\.safetensors"/,'an added LoRA is not offered again');
+  assert.match(all,/data-tune-pick="b\.safetensors"[\s\S]*<details class="make-lora-more"><summary>1 from other families[\s\S]*data-tune-pick="c\.safetensors"/,'made-for first, other families folded');
+  assert.match(all,/starts at 1\.00 \(works 0–1\)/,'a recorded 0 is not a starting strength');
+  assert.equal(api.startOf('a.safetensors'),0.6);assert.equal(api.startOf('b.safetensors'),1);
+  const narrowed=api.loraCards({},'gam');assert.match(narrowed,/c\.safetensors/);assert.doesNotMatch(narrowed,/b\.safetensors|<details/);
+  assert.match(api.loraCards({},'zzz'),/No installed LoRA for this model matches/);
+  // Enter and Add use the list's search (Codex P2 on #1537): a trigger word alone finds and adds its LoRA.
+  assert.match(api.loraCards({},'@betaword'),/data-tune-pick="b\.safetensors"/);assert.deepEqual(api.adapterMatches({},'@betaword'),['b.safetensors']);
+  api.addAdapter({},'b.safetensors');assert.equal(t.rows.at(-1).name,'b.safetensors');assert.equal(t.rows.at(-1).strength,1);
+});
+
+test('An Anima-family merge counts as Anima for its LoRAs (family_aliases, 19 Oct)',()=>{
+  const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),kb=JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/settings-kb.json'),'utf8'));
+  const lines=make.match(/  const base=p=>.*\n  const fits=.*\n/)[0];
+  const mix={family:'One Obsession Anima v2.0'},context={kb:()=>kb,presetFor:()=>mix,tunedPreset:()=>mix,entry:n=>({'a.safetensors':{family:'Anima'},'j.safetensors':{family:'JANIMA v1 (Anima)'}})[n]};
+  const api=vm.runInNewContext(lines+';({fits,base})',context);
+  assert.equal(api.base(mix),'Anima');assert.equal(api.fits({},'a.safetensors'),true,'an Anima LoRA is made for an Anima merge');assert.equal(api.fits({},'j.safetensors'),false,'another family still may not suit');
+});
 test('Make offers a character card on every saved picture regardless of review, and preserves canon labels',()=>{
   const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8');
   const context={state:{charSave:null},reviewOf:()=>context.review,usableCharacters:()=>context.characters,escape:s=>s,characterForm:()=>'<form>character</form>',CANON_NOTE:'canon',characters:[]};

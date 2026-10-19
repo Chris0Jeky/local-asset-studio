@@ -1,9 +1,10 @@
 """Real loopback routes for revision-bound mixed batch commands; no Comfy runtime."""
 import copy
 from http.client import HTTPConnection
-from http.server import ThreadingHTTPServer
+from http_test_server import ThreadingHTTPServer
 import json
 from pathlib import Path
+from queue import Queue
 import shutil
 import socket
 import subprocess
@@ -16,9 +17,23 @@ from http_refusal_transport import atomic_json_post
 
 
 class MixedBatchHTTPTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # #872: build schemas and snapshot the known output once; each test still owns its HTTP sockets.
+        cls.case=fixtures.MixedBatchTests();cls.addClassCleanup(cls.case.doCleanups)
+        # GPU process discovery is unrelated to the mixed-batch HTTP/lifetime contract.
+        with patch.object(fixtures.server.Studio,'_sample_gpu_memory',return_value=None):cls.case.setUp()
+        cls.case.fixture.patches[0].stop()
+        cls.original_job=copy.deepcopy(cls.case.job);cls.original_files=cls.case.files()
+        cls.original_requests=copy.deepcopy(cls.case.studio.requests)
+    def reset_case(self):
+        self.case.job=copy.deepcopy(self.original_job);self.studio.jobs={self.case.job['id']:self.case.job}
+        self.studio.queue=Queue();self.studio.requests=copy.deepcopy(self.original_requests);self.studio.replies=iter(())
+        for name,raw in self.original_files.items():
+            path=self.studio.runs/self.case.job['id']/name
+            if path.read_bytes()!=raw:path.write_bytes(raw)
     def setUp(self):
-        self.case=fixtures.MixedBatchTests();self.addCleanup(self.case.doCleanups);self.case.setUp()
-        self.studio=self.case.studio;self.case.fixture.patches[0].stop()
+        self.studio=self.case.studio;self.reset_case()
         handler=type('MixedHandler',(fixtures.server.Handler,),{'studio':self.studio})
         # Binding numeric loopback needs no reverse DNS; HTTPServer.server_bind normally calls getfqdn.
         with patch.object(socket,'getfqdn',return_value='127.0.0.1'):
@@ -40,6 +55,18 @@ class MixedBatchHTTPTests(unittest.TestCase):
                 except OSError:pass
             response=connection.getresponse();return response.status,json.loads(response.read())
         finally:connection.close()
+    def test_fixture_reset_restores_isolated_evidence_without_new_snapshots(self):
+        assets=self.studio.assets
+        self.case.job['graph'].clear();self.case.job['pending_submission']['index']=2
+        self.studio.requests.append((('/unexpected',),{}));self.studio.queue.put(('unexpected',None))
+        (self.studio.runs/self.case.job['id']/'state.json').write_text('{}')
+        with patch.object(assets,'snapshot_file',side_effect=AssertionError('Fixture reset must reuse its snapshot')):
+            self.reset_case()
+        self.assertEqual(self.case.job,self.original_job);self.assertEqual(self.case.files(),self.original_files)
+        self.assertIs(self.studio.jobs[self.case.job['id']],self.case.job);self.assertIs(self.studio.assets,assets)
+        self.assertEqual(self.studio.requests,self.original_requests);self.assertTrue(self.studio.queue.empty())
+        self.assertEqual(assets.file(self.case.job['outputs'][0]['asset_id']).read_bytes(),fixtures.png())
+        with self.assertRaises(StopIteration):next(self.studio.replies)
     def test_get_fixture_sends_no_request_body(self):
         wire=bytearray();real_create_connection=socket.create_connection
         class ObservedSocket:
