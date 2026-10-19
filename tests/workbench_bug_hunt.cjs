@@ -125,4 +125,8 @@ test('Vary and Polish refuse unsettled jobs but allow saved partial, completed o
     b.jobs=jobs;assert.equal(b.varyPlanFor('plain','job','asset').kind,'img2img');
     assert.equal((await b.polishPlan('asset','face')).ok,true);
   }
+  // Passing conditions reject, so Make retries after its cool-down instead of caching a refusal (Muse, 19 Oct).
+  b.jobs=[];b.readSource=async()=>{throw Error('offline');};await assert.rejects(b.polishPlan('asset','face'),/Could not read this picture\. offline/);
+  b.readSource=async()=>({asset_id:'other'});await assert.rejects(b.polishPlan('asset','face'),/could not be verified/);
+  const loaded=b.catalog;b.catalog=null;await assert.rejects(b.polishPlan('asset','face'),/Recipes are still loading/);b.catalog=loaded;
 });

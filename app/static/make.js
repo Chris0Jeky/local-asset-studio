@@ -916,6 +916,8 @@
   function choosePicture(id){
     const a=state.pictures?.find(x=>x.id===id)||(typeof assetState!=='undefined'&&assetState?.assets?.find(x=>x.id===id))||{id,title:''};
     if(state.pick?.id!==id){state.form={};try{const saved=JSON.parse(localStorage.getItem(fillsKey(id))||'{}');for(const k of ['who','clothes'])if(typeof saved['@'+k]==='string')state.form[k]=saved['@'+k];}catch{}}
+    // A new character that is the chosen pose picture leaves the pose empty, so one picture is never both.
+    if(state.pose?.asset?.id===id)state.pose=null;
     state.pick=a;state.repicking=false;
   }
   function rememberFills(id,form){try{const saved=JSON.parse(localStorage.getItem(fillsKey(id))||'{}');for(const k of ['who','clothes','pose'])if(String(form[k]||'').trim())saved['@'+k]=form[k].trim();localStorage.setItem(fillsKey(id),JSON.stringify(saved));}catch{}}
