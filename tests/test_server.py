@@ -653,6 +653,8 @@ class ServerTests(unittest.TestCase):
             self.assertTrue(handler._safe_mutation())
             handler.headers={"Host":"127.0.0.1:8191","Origin":"http://127.0.0.1:8191"}
             self.assertFalse(handler._safe_host())
+            handler.headers={"Host":"evil.example:8291","Origin":"http://evil.example:8291"}
+            self.assertFalse(handler._safe_host());self.assertFalse(handler._safe_mutation())
 
     def test_foreign_origin_post_drains_declared_body_before_refusal(self):
         body=b"a"*(32*1024)
