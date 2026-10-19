@@ -142,6 +142,10 @@ class OperatorDispositionPublicationTests(unittest.TestCase):
                 restored = restarted.jobs[job['id']]
                 restarted.reference_jobs = HeldReferenceJobs()
                 self.graph = restored['graph']
+                # Seed the historical Windows text writer's CRLF formatting on
+                # every platform; the scoped publisher writes binary LF bytes.
+                lf = state.read_bytes().replace(b'\r\n', b'\n')
+                state.write_bytes(lf.replace(b'\n', b'\r\n'))
                 before, raw = copy.deepcopy(restored), state.read_bytes()
                 publish = restarted._write_observation_state
 
@@ -157,7 +161,9 @@ class OperatorDispositionPublicationTests(unittest.TestCase):
                         with fault, self.assertRaises(OSError):
                             self.invoke(restarted, restored, kind)
                         self.assertEqual(restored, before)
-                        self.assertEqual(state.read_bytes(), raw)
+                        # Before replacement every byte survives; after replacement
+                        # only the serializer's line endings may differ from CRLF.
+                        self.assertEqual(state.read_bytes(), raw if seam == 'file' else lf)
                         self.assertEqual(json.loads(state.read_bytes())[self.field(kind)], attempted)
                         self.assertFalse(list(state.parent.glob('state.json.*.tmp')))
                         self.retained(restarted, restored, before)
