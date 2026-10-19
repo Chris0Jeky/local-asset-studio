@@ -11,6 +11,11 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 - [ ] **Make run cards show Change one thing, New pose and Restyle beside Vary and the fixes** (were under More; "Put in a new pose" is now "New pose", the Library dialog's word). More keeps Open full size, Other fixes, Animate and Make it 3D. Reverse: move the three `from(...)` calls in `actions()` in `app/static/make.js` back into the More `<details>`.
 
+## 2026-10-19 overnight (ux-lead, goal-first rework; design in docs/ux-qa/GOAL-FIRST-REWORK-2026-10-19.md)
+
+- [ ] **Make shows the look's model and LoRAs while Tune is shut.** The Tune line reads "As made: Anima · anima-base-v1.0 · pearly_petiflow2 1.00 · 25 steps" (the model file is named when a family has two) instead of "Model, adapters, steps, seed"; a tuned look still reads "Tuned: ...". Reverse: `asMade()` in `app/static/make.js` back to the fixed text.
+- [ ] **Make's composer uses the full width until the first picture exists.** "Your pictures" moves beside the words only once there is a run card; before that it sits below. Reverse: drop `&&state.runs.length>0` in `layout()` in `app/static/make.js`.
+
 ## 2026-10-17 session (agent judgment calls)
 
 - [ ] **#1524 saved pictures from partial runs may be varied and polished.** Agent judgment: a saved asset is usable even when other pictures in its run were not recovered. Queued, running, uncertain and failed runs remain refused; source identity and bytes are still checked when pressed. Synthetic status contracts cover both paths. Reverse by removing `partial` from the two source-status allow-lists in `app/static/studio-workbench.js`.
