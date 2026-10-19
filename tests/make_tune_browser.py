@@ -79,12 +79,12 @@ def run():
             # Several matches are offered as choices; choosing one adds exactly that one.
             page.fill('#makeLoraSearch', 'anima'); page.click('[data-tune-add]')
             choices = page.eval_on_selector_all('#makeLoraChoices [data-tune-pick]', 'b => b.map(x => x.dataset.tunePick)')
-            assert len(choices) > 1 and not page.query_selector('[data-slot=lora2]') and 'adapters match' in page.text_content('#makeStatus'), (choices, page.text_content('#makeStatus'))
+            assert len(choices) > 1 and not page.query_selector('[data-slot=lora2]') and 'LoRAs match' in page.text_content('#makeStatus'), (choices, page.text_content('#makeStatus'))
             assert page.evaluate('document.activeElement.dataset.tunePick') == choices[0], 'the keyboard lands on the first choice'
             page.click('#makeLoraChoices [data-tune-pick="%s"]' % choices[1])
             assert page.query_selector('[data-slot=lora2]') and page.evaluate('(n) => document.querySelector("[data-slot=lora2] b").textContent === (knowledge.loras[n].label || n.replace(/\\.safetensors$/, ""))', choices[1])
             page.fill('#makeLoraSearch', 'no-such-adapter-zz'); page.press('#makeLoraSearch', 'Enter')
-            assert 'is not an installed adapter for this model type' in page.text_content('#makeStatus'), page.text_content('#makeStatus')
+            assert 'is not an installed LoRA for this model type' in page.text_content('#makeStatus'), page.text_content('#makeStatus')
             page.click('[data-tune-reset]'); assert not page.query_selector('[data-slot=lora2]') and not posted('/api/jobs')
             offered = page.eval_on_selector_all('#makeModel option', 'o => o.map(x => x.value)')
             assert offered[0] == BASE and SWITCH in offered and 'oneobsession-anima-v20-baseline' in offered, offered
@@ -107,7 +107,7 @@ def run():
             assert all(KNOWLEDGE['loras'][v]['family'] == 'Anima' for v, f in zip(listed, fit) if f) and all(KNOWLEDGE['loras'][v]['role'] in l for v, l in zip(listed, labels)), (listed, labels)
             assert 'made for Anima come first' in page.text_content('#makeLoraFit') and 'may not suit' in page.text_content('#makeLoraFit')
             page.fill('#makeLoraSearch', FOREIGN); page.click('[data-tune-add]')
-            assert 'not an installed adapter for this model type' in page.text_content('#makeStatus') and not page.query_selector('[data-slot=lora2]')
+            assert 'not an installed LoRA for this model type' in page.text_content('#makeStatus') and not page.query_selector('[data-slot=lora2]')
             page.fill('#makeLoraSearch', ADDED); page.click('[data-tune-add]')
             assert page.query_selector('[data-slot=lora2]') and '@40u40uya' in page.text_content('[data-slot=lora2] small'), 'added row shows its trigger'
             page.fill('#makeLoraSearch', ADDED); page.click('[data-tune-add]')
@@ -122,7 +122,7 @@ def run():
             page.select_option('#makeShape', 'square'); page.select_option('#makeCount', '2')
             page.evaluate('() => { const r = document.querySelector("#makeTuneScale"); r.value = "50"; r.dispatchEvent(new Event("input", {bubbles: true})); }')
             assert page.text_content('[data-slot=lora] output') == '0.70 \u2192 0.35' and page.input_value('#makeStrength') == '50', page.text_content('[data-slot=lora] output')
-            assert 'all adapters \u00d750%' in page.text_content('#makeTuneSum'), page.text_content('#makeTuneSum')
+            assert 'all LoRAs \u00d750%' in page.text_content('#makeTuneSum'), page.text_content('#makeTuneSum')
             assert page.evaluate('getComputedStyle(document.querySelector(".make-go")).position') == 'sticky' and page.query_selector('.make-go #makeGenerate')
             # Generate stays on screen with Tune open (audit N4): the bar is the composer's own child, on a desktop and on a phone.
             assert page.evaluate('document.querySelector(".make-go").parentElement.classList.contains("make-composer")')
@@ -153,7 +153,7 @@ def run():
             target = presets[SWITCH]; bound = {k for k in c if target.get(k) or (target.get('bindings_extra') or {}).get(k)}
             assert bound == set(c), ('only inputs the target recipe binds', set(c) - bound)
             tuned = page.text_content('.make-run .make-tuned')
-            assert all(part in tuned for part in ('model Pearly Anima Mix', '+', 'all adapters \u00d750%', '%d steps' % steps, 'own negative', 'seed 1234 locked')), tuned
+            assert all(part in tuned for part in ('model Pearly Anima Mix', '+', 'all LoRAs \u00d750%', '%d steps' % steps, 'own negative', 'seed 1234 locked')), tuned
             # Back to the look as made, then Edit and re-run: the run's tune comes back with its look.
             page.click('[data-tune-reset]'); assert page.input_value('#makeModel') == BASE and not page.query_selector('[data-slot=lora2]')
             page.click('[data-make-rerun="%s"]' % JOB['id'])

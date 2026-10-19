@@ -112,7 +112,7 @@ test('Steps reads the authored count from the served catalog defaults, and is un
 
 test('adapter values are told apart by the strength sent, not the label (Codex 4299976354)',()=>{
   const h=harness();h.tuneOf(h.look).scale=0;
-  assert.match(h.open('adapter:lora',['1','0']).why,/send the same strength.*All adapters is at 0%/);
+  assert.match(h.open('adapter:lora',['1','0']).why,/send the same strength.*All LoRAs is at 0%/);
   const r=harness(),plan=r.open('adapter:lora',['0.01','0']);
   assert.match(plan.why,/send the same strength/,'0.01 rounds to 0: off, the same as 0');
   const ok=r.open('adapter:lora',['0.01','0.35']);assert.equal(ok.why,'');assert.equal(ok.runs[0].tune.rows[0].on,false);assert.match(ok.runs[0].label,/ off$/);
