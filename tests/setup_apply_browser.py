@@ -2,6 +2,7 @@
 
 --inert is explicit component transport/storage/crypto, not a native-origin pass.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import asyncio
 import copy
@@ -107,9 +108,9 @@ async def run(out,inert=False):
             check(not await page.locator('#setupProposalDialog').evaluate('n=>n.open') and not await page.locator('#workshopRecipeDialog').evaluate('n=>n.open'),'successful reviewed setup closes both review and recipe dialogs')
             await page.wait_for_function("document.activeElement===document.querySelector('#sharedSetupStatus')")
             check(await page.locator('#sharedSetupStatus').is_visible(),'applied setup status receives visible editor focus')
-            await page.locator('#sharedSetupPanel').scroll_into_view_if_needed();await page.screenshot(path=str(out/'apply-desktop.png'))
+            await page.locator('#sharedSetupPanel').scroll_into_view_if_needed();await evidence_screenshot(page, path=str(out/'apply-desktop.png'))
             await page.set_viewport_size({'width':390,'height':844});await page.locator('#sharedSetupPanel').scroll_into_view_if_needed()
-            check(await page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'shared setup recovery fits the 390px shell');await page.screenshot(path=str(out/'apply-mobile.png'))
+            check(await page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'shared setup recovery fits the 390px shell');await evidence_screenshot(page, path=str(out/'apply-mobile.png'))
             await page.set_viewport_size({'width':1440,'height':1100});await page.evaluate('document.body.style.zoom="2"')
             check(await page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'shared setup recovery fits 200% zoom');await page.evaluate('document.body.style.zoom="1"')
             await page.locator('#undoSharedSetup').focus();await page.keyboard.press('Enter');await page.wait_for_function("StudioSetupApply.controller.state.revision===3&&!StudioSetupApply.controller.running")

@@ -222,6 +222,15 @@ class WorkspaceTests(unittest.TestCase):
         with self.assertRaisesRegex(workspace.WorkspaceError, 'The output file is empty'): self.store.snapshot_file(empty)
         self.assertEqual(set(p.name for p in self.store.media.iterdir()), before)
 
+    def test_snapshot_file_coerces_invalid_suffixes_to_data(self):
+        for suffix in ('', '.bad-suffix', '.' + 'x' * 12):
+            with self.subTest(suffix=suffix):
+                source=self.root/('output'+suffix); source.write_bytes(b'snapshot bytes')
+                relative,digest,size=self.store.snapshot_file(source)
+                self.assertEqual(Path(relative), Path('media')/(digest+'.data'))
+                self.assertEqual((size, (self.store.root/relative).read_bytes()), (14, b'snapshot bytes'))
+                self.assertEqual(list(self.store.media.glob('*.part')), [])
+
     def test_repeated_migration_is_idempotent_but_never_replaces_another_setup(self):
         recipe={'preset':'test','parent_assets':[self.asset]}
         payload={'id':'legacy-0','name':'Browser A','recipe':recipe}

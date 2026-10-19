@@ -354,8 +354,9 @@
   const statusEl=document.createElement('p');statusEl.id='makeStatus';statusEl.className='make-status';statusEl.setAttribute('role','status');
   function placeStatus(){const button=q('.make-go #makeGenerate'),slot=button?null:q('#makeStatusSlot');if(button&&statusEl.previousElementSibling!==button)button.after(statusEl);else if(slot&&statusEl.parentElement!==slot)slot.append(statusEl);}
   placeStatus();
-  // A look picture that is missing on this PC (local-only examples) shows the blank mark, not a broken image.
-  view.addEventListener('error',e=>{if(e.target.matches?.('.make-look img,.make-chosen>img')){const blank=document.createElement('span');blank.className='make-look-blank';blank.setAttribute('aria-hidden','true');blank.textContent='✦';e.target.replaceWith(blank);}},true);
+  // A look picture that is missing on this PC (local-only examples) shows the blank mark, not a broken image. Only look pictures:
+  // a chosen picture of yours (.make-picked) keeps its <img>, so a slow or failed thumbnail never removes it.
+  view.addEventListener('error',e=>{if(e.target.matches?.('.make-look img,.make-chosen:not(.make-picked)>img')){const blank=document.createElement('span');blank.className='make-look-blank';blank.setAttribute('aria-hidden','true');blank.textContent='✦';e.target.replaceWith(blank);}},true);
   function renderGoals(){
     q('#makeGoals').innerHTML=GOALS.map((g,i)=>(i===5?'<div class="make-goal-group" role="group" aria-labelledby="makePictureGoals"><span class="make-goal-break" id="makePictureGoals">From a picture you have</span>':'')+'<button type="button" role="radio" tabindex="'+(g.id===state.goal?'0':'-1')+'" aria-checked="'+(g.id===state.goal)+'" data-make-goal="'+g.id+'"><b>'+escape(g.name)+'</b><small>'+escape(g.hint)+'</small></button>').join('')+'</div>';
   }
@@ -373,13 +374,15 @@
     const on=l=>compare?state.compareLooks.includes(l.id):l.id===state.look;
     const cards=list.map(l=>{const p=presetFor(l),thumb=thumbOf(l),why=compare?blocker(l,p):blocker(l);return '<article class="make-look'+(on(l)?' active':'')+'"><button type="button" class="make-look-select" data-make-look="'+escape(l.id)+'" role="'+(compare?'checkbox':'radio')+'" tabindex="'+(compare||l.id===(state.look||list[0]?.id)?'0':'-1')+'" aria-checked="'+on(l)+'">'
       +(thumb?'<img src="'+escape(thumb)+'" alt="" loading="lazy">':'<span class="make-look-blank" aria-hidden="true">✦</span>')
-      +'<span class="make-look-text"><b>'+escape(l.name)+'</b>'+pace(l)+tested(l)+licence(p)+bestFor(l)+(tried(l)?'<small>Run on this PC before</small>':'')+'</span></button>'+(why?'<small class="make-warn make-look-text">'+blockerMarkup(l,why)+'</small>':'')+'</article>';}).join('');
+      +'<span class="make-look-text"><b>'+escape(l.name)+'</b>'+recipeLine(l)+pace(l)+tested(l)+licence(p)+bestFor(l)+(tried(l)?'<small>Run on this PC before</small>':'')+'</span></button>'+(why?'<small class="make-warn make-look-text">'+blockerMarkup(l,why)+'</small>':'')+'</article>';}).join('');
     const chosen=current();
     if(chosen&&!state.picking&&!compare){const p=presetFor(chosen),thumb=thumbOf(chosen);
-      body.innerHTML='<div class="make-chosen">'+(thumb?'<img src="'+escape(thumb)+'" alt="">':'<span class="make-look-blank" aria-hidden="true">✦</span>')+'<div><small>Look</small><b>'+escape(chosen.name)+'</b>'+pace(chosen)+tested(chosen)+licence(p)+bestFor(chosen)+'</div><button type="button" data-make-change>Change look</button></div><div id="makeComposer"></div>';}
+      body.innerHTML='<div class="make-chosen">'+(thumb?'<img src="'+escape(thumb)+'" alt="">':'<span class="make-look-blank" aria-hidden="true">✦</span>')+'<div><small>Look</small><b>'+escape(chosen.name)+'</b>'+recipeLine(chosen)+pace(chosen)+tested(chosen)+licence(p)+bestFor(chosen)+'</div><button type="button" data-make-change>Change look</button></div><div id="makeComposer"></div>';}
     else body.innerHTML='<div class="make-step"><span>1</span><h2>'+(compare?'Choose two or three looks to compare':'Choose a look')+'</h2>'+(chosen&&!compare?'<button type="button" class="make-link" data-make-keep-look>Stay with '+escape(chosen.name)+'</button>':'')+(list.length>1?'<button type="button" class="make-link" data-make-compare aria-pressed="'+compare+'">'+(compare?'Back to one look':'Compare looks')+'</button>':'')+'</div><div class="make-looks" role="'+(compare?'group':'radiogroup')+'" aria-label="'+(compare?'Looks to compare':'Look')+'">'+cards+'</div><div id="makeComposer"></div>';
     renderComposer();layout();
   }
+  // A look names its model and LoRA count on its card (owner, 19 Oct: someone choosing a model should see which look uses which).
+  const recipeLine=l=>{const p=presetFor(l),n=adapters(l).length;return p?'<small class="make-recipe">'+escape(family(p))+' model'+(n?' · '+n+' LoRA'+(n>1?'s':''):'')+'</small>':'';};
   function shapeSize(preset,look,shape){
     const w=Number(look.body.controls.width||preset?.defaults?.width||1024),h=Number(look.body.controls.height||preset?.defaults?.height||1024),grid=preset?.dimension_multiple||64,round=v=>Math.max(grid,Math.round(v/grid)*grid);
     if(shape==='design')return[w,h];const area=w*h,long=Math.max(w,h),short=Math.min(w,h);
@@ -507,7 +510,10 @@
   // Keep / Not this: the library's own review field. Saves run one after another (the library takes one command at a
   // time), and pressing the recorded decision again clears it, decided from the refreshed record, not page memory.
   let reviewQueue=Promise.resolve();
-  function review(button){button.disabled=true;reviewQueue=reviewQueue.then(()=>saveReview(button));return reviewQueue;}
+  // One write per target at a time (Muse lens, 19 Oct): a redraw can bring back an enabled button mid-save, so a second press of Keep,
+  // Resume, Save character or Put away is dropped while the first is in flight, instead of applying twice or undoing itself.
+  const inflight=new Set(),once=async(key,fn)=>{if(inflight.has(key))return;inflight.add(key);try{return await fn();}finally{inflight.delete(key);}};
+  function review(button){const key='review:'+button.dataset.asset;if(inflight.has(key))return reviewQueue;inflight.add(key);button.disabled=true;reviewQueue=reviewQueue.then(()=>saveReview(button)).finally(()=>inflight.delete(key));return reviewQueue;}
   async function saveReview(button){
     const id=button.dataset.asset
     try{if(await refreshAssets(true)===false){await new Promise(r=>setTimeout(r,600));await refreshAssets(true);}
@@ -541,7 +547,7 @@
   }
   async function recover(button){
     const action=button.dataset.makeResume?'resume':'stop-tracking',id=button.dataset.makeResume||button.dataset.makeStop,run=state.runs.find(r=>r.job.id===id);if(!run)return;
-    let body={};if(action==='stop-tracking'){const field=q('[data-make-stop-reason="'+CSS.escape(id)+'"]'),reason=field?.value.trim();if(!reason){field?.setAttribute('aria-invalid','true');field?.focus();say('Give a reason before stopping tracking.');return;}body={reason};}
+    let body={};if(action==='stop-tracking'){const field=q('[data-make-stop-reason="'+CSS.escape(id)+'"]'),reason=field?.value.trim();if(!reason){field?.setAttribute('aria-invalid','true');field?.setAttribute('aria-describedby','makeStatus');field?.focus();say('Give a reason before stopping tracking.');return;}body={reason};}
     button.disabled=true;
     try{const job=await json('/api/jobs/'+encodeURIComponent(id)+'/'+action,body);run.job={...run.job,...job};run.lost=false;renderRuns();remember();if(observing(run))poll(id);else{clearTimeout(timers.get(id));timers.delete(id);}
       say(action==='resume'?'Checking ComfyUI again for this run. Nothing is sent again.':'Tracking stopped. Its record and any pictures stay in the library.');}
@@ -736,7 +742,8 @@
   const pictureLabel=a=>pictureTitle(a.prompt_excerpt||(!a.job_id&&a.title)||a.title,a.created_at);
   // Cards that share a prompt are told apart by a second line (audit v3 N5): the look or recipe, how long ago, the seed.
   const ago=t=>{const s=Math.max(0,Date.now()/1000-Number(t||0));return !t?'':s<90?'just now':s<5400?Math.round(s/60)+' min ago':s<129600?Math.round(s/3600)+' h ago':Math.round(s/86400)+' days ago';};
-  const pictureMeta=a=>[String(a.run_label||'').startsWith('Make · ')?a.run_label.slice(7):a.preset_name,ago(a.created_at),a.source?.seed!=null?'seed '+a.source.seed:''].filter(Boolean).join(' · ');
+  // An imported picture's "recipe" is its file name, already in its title: it is not repeated (19 Oct walkthrough).
+  const pictureMeta=a=>[String(a.run_label||'').startsWith('Make · ')?a.run_label.slice(7):a.preset_name&&String(a.title||'').includes(a.preset_name)?'':a.preset_name,ago(a.created_at),a.source?.seed!=null?'seed '+a.source.seed:''].filter(Boolean).join(' · ');
   // The pickers show your pictures, as the Library's Mine does (workspace.js assetIsAgentRun: Make runs are yours, #1421).
   const agentRun=a=>typeof assetIsAgentRun==='function'&&assetIsAgentRun(a);
   const PICK={edit:'Choose the picture to change.',repair:'Choose the picture to fix or enlarge.',restyle:'Choose the picture to redraw in another look.',combine:'Choose the character. The pose comes next.',animate:'Choose the still to bring to life.',mesh:'Choose a picture of one object or character, ideally on a plain background.'};
@@ -841,10 +848,12 @@
   function renderGrid(id,attr){
     const box=q('#'+id);if(!box||!state.pictures)return;const terms=String(state.queries[id]||'').toLowerCase().split(/\s+/).filter(Boolean);
     const match=a=>{const text=[pictureLabel(a),pictureMeta(a),a.title,a.prompt_excerpt,a.filename,...(a.tags||[])].join(' ').toLowerCase();return terms.every(t=>text.includes(t));};
-    const agents=state.pictures.filter(agentRun).length,pool=state.allPictures||!agents?state.pictures:state.pictures.filter(a=>!agentRun(a)),list=pool.filter(match);
-    const shown=list.slice(0,60),more=list.length-shown.length,hidden=!state.allPictures&&agents&&terms.length?state.pictures.filter(a=>agentRun(a)&&match(a)).length:0;
+    // The pose grid never offers the character picture as its own pose.
+    const others=id==='makePosePictures'?state.pictures.filter(a=>a.id!==state.pick?.id):state.pictures;
+    const agents=others.filter(agentRun).length,pool=state.allPictures||!agents?others:others.filter(a=>!agentRun(a)),list=pool.filter(match);
+    const shown=list.slice(0,60),more=list.length-shown.length,hidden=!state.allPictures&&agents&&terms.length?others.filter(a=>agentRun(a)&&match(a)).length:0;
     const card=a=>{const label=pictureLabel(a),meta=pictureMeta(a);return '<button type="button" '+attr+'="'+escape(a.id)+'" title="'+escape(String(a.prompt_excerpt||a.title||label)+(meta?' · '+meta:''))+'"><img src="'+thumbUrl(a)+'" alt="'+escape(label)+'" loading="lazy"><small aria-hidden="true">'+escape(label)+'</small>'+(meta?'<small class="make-pic-meta">'+escape(meta)+'</small>':'')+'</button>';};
-    box.innerHTML=list.length?shown.map(card).join('')+(more?'<p class="muted">'+more+' older picture'+(more===1?'':'s')+' match too. Search to narrow the list.</p>':''):pool.length?'<p class="muted">No picture matches “'+escape(state.queries[id])+'”'+(hidden?'; '+hidden+' from agent runs do'+(hidden===1?'es':'')+'.':'.')+'</p>':state.pictures.length?'<p class="muted">None of your own pictures yet: everything here is from agent runs.</p>':'<p class="muted">No pictures yet. Make one first, or import one in the library.</p>';
+    box.innerHTML=list.length?shown.map(card).join('')+(more?'<p class="muted">'+more+' older picture'+(more===1?'':'s')+' match too. Search to narrow the list.</p>':''):pool.length?'<p class="muted">No picture matches “'+escape(state.queries[id])+'”'+(hidden?'; '+hidden+' from agent runs do'+(hidden===1?'es':'')+'.':'.')+'</p>':others.length?'<p class="muted">None of your own pictures yet: everything here is from agent runs.</p>':state.pictures.length?'<p class="muted">The character is your only picture. Import a pose picture in the library, or choose Draw the pose.</p>':'<p class="muted">No pictures yet. Make one first, or import one in the library.</p>';
     const all=q('[data-make-all="'+id+'"]');if(all){all.hidden=!agents;all.setAttribute('aria-pressed',String(!!state.allPictures));all.textContent=state.allPictures?'Show only my pictures':'Show all pictures ('+agents+' more from agent runs)';}
   }
   function figureSvg(points,mirror){const P=PE(),at=i=>points[i]&&[Math.round((mirror?1-points[i][0]:points[i][0])*100),Math.round(points[i][1]*150)];
@@ -1066,8 +1075,8 @@
     const saveChar=e.target.closest('[data-make-character-save]');if(saveChar){openCharacterForm(saveChar.dataset.makeCharacterSave,saveChar.closest('[data-run]')?.dataset.run);return;}
     if(e.target.closest('[data-make-character-cancel]')){const a=state.charSave,edit=state.charEdit,move=state.charMigrate;clearCharForms();renderRuns();refreshCharacters();q(edit?'[data-make-character-edit="'+CSS.escape(edit)+'"]':move?'[data-make-migrate="'+CSS.escape(move)+'"]':'[data-make-character-save="'+CSS.escape(a||'')+'"]')?.focus();return;}
     const editChar=e.target.closest('[data-make-character-edit]');if(editChar){openCharacterEdit(editChar.dataset.makeCharacterEdit);return;}
-    const awayChar=e.target.closest('[data-make-character-away]');if(awayChar){void characterCommand(awayChar.dataset.makeCharacterAway,'trash');return;}
-    const restoreChar=e.target.closest('[data-make-character-restore]');if(restoreChar){void characterCommand(restoreChar.dataset.makeCharacterRestore,'restore');return;}
+    const awayChar=e.target.closest('[data-make-character-away]');if(awayChar){void once('character:'+awayChar.dataset.makeCharacterAway,()=>characterCommand(awayChar.dataset.makeCharacterAway,'trash'));return;}
+    const restoreChar=e.target.closest('[data-make-character-restore]');if(restoreChar){void once('character:'+restoreChar.dataset.makeCharacterRestore,()=>characterCommand(restoreChar.dataset.makeCharacterRestore,'restore'));return;}
     const migrate=e.target.closest('[data-make-migrate]');if(migrate){openMigration(migrate.dataset.makeMigrate);return;}
     if(e.target.closest('[data-make-note-dismiss]')){dismissNote();return;}
     const pick=e.target.closest('[data-make-pick]');if(pick){state.character=null;choosePicture(pick.dataset.makePick);renderPictures(goal());q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();return;}
@@ -1093,7 +1102,7 @@
       const scene=q('#makeScene');if(scene&&!state.picking){scene.focus();scene.select();}else q('.make-look.active [data-make-look]')?.focus();return;}
     const redo=e.target.closest('[data-make-redo]');if(redo){const run=state.runs.find(r=>r.job.id===redo.dataset.makeRedo);
       if(run&&redoRun(run)){say('That run’s picture and answers are back. Change what you like, then press Generate.');(q('#makeComposer textarea,#makeComposer input:not([type=search])')||q('#makeGenerate'))?.focus();}return;}
-    const recovering=e.target.closest('[data-make-resume],[data-make-stop]');if(recovering&&!recovering.disabled){void recover(recovering);return;}
+    const recovering=e.target.closest('[data-make-resume],[data-make-stop]');if(recovering&&!recovering.disabled){void once('recover:'+(recovering.dataset.makeResume||recovering.dataset.makeStop),()=>recover(recovering));return;}
     const verdict=e.target.closest('[data-make-review]');if(verdict){void review(verdict);return;}
     const polishing=e.target.closest('[data-make-polish]');if(polishing&&!polishing.disabled){void polishPicture(polishing);return;}
     const varying=e.target.closest('[data-make-vary]');if(varying&&!varying.disabled){void varyPicture(varying);return;}
@@ -1103,7 +1112,7 @@
   });
   // Which disclosures are open survives a redraw; opening a line-up reads the pictures (details fire toggle without bubbling).
   view.addEventListener('toggle',e=>{const k=e.target.dataset?.openKey;if(!k)return;if(e.target.open){state.openers.add(k);if(k.startsWith('lineup:'))void fillLineups();}else state.openers.delete(k);},true);
-  view.addEventListener('submit',e=>{const form=e.target.closest('[data-make-character-form]');if(form){e.preventDefault();void saveCharacter(form);}});
+  view.addEventListener('submit',e=>{const form=e.target.closest('[data-make-character-form]');if(form){e.preventDefault();void once('character-save:'+form.dataset.mode+':'+form.dataset.makeCharacterForm,()=>saveCharacter(form));}});
   view.addEventListener('keydown',e=>{const radio=e.target.closest('[role="radio"]'),group=radio?.closest('[role="radiogroup"]');if(group&&['ArrowRight','ArrowDown','ArrowLeft','ArrowUp','Home','End'].includes(e.key)){
     e.preventDefault();const items=[...group.querySelectorAll('[role="radio"]')],i=items.indexOf(radio),next=items[e.key==='Home'?0:e.key==='End'?items.length-1:(i+(['ArrowRight','ArrowDown'].includes(e.key)?1:items.length-1))%items.length],attr=next.hasAttribute('data-make-goal')?'data-make-goal':'data-make-look',value=next.getAttribute(attr);if(attr==='data-make-goal'){state.goal=value;state.pictures=null;remember();render();}else{state.look=value;state.picking=true;remember();renderLooks();}q('['+attr+'="'+value+'"]')?.focus();return;
   }if(e.target.id==='makeLoraSearch'&&e.key==='Enter'&&!e.isComposing){e.preventDefault();if(!e.repeat)q('[data-tune-add]')?.click();return;}
@@ -1118,6 +1127,10 @@
     document.querySelector('#assetDialog')?.close();if(typeof showView==='function')showView('make');else window.StudioMake.refresh();
     (q('#makeComposer textarea,#makeComposer input:not([type=search])')||q('#makeGenerate'))?.focus();});
   let loaded=false;
-  window.StudioMake={refresh(){if(!loaded){loaded=true;void load();}else render();}};
+  // Models & setup lists the looks that are ready; a ready look in a Make goal offers "Use in Make" (owner, 19 Oct: browse models, then make).
+  // It chooses the goal and the look and opens Make; nothing is sent.
+  document.addEventListener('click',e=>{const b=e.target.closest('#modelLooks [data-make-use-look]');if(!b)return;const g=GOALS.find(x=>x.looks?.includes(b.dataset.makeUseLook));if(!g)return;
+    state.goal=g.id;state.look=b.dataset.makeUseLook;state.compare=false;state.picking=false;remember();const name=b.closest('li')?.querySelector('b')?.textContent||'';state.status=(name?name+' is chosen. ':'')+'Describe your picture, then press Generate.';state.missing='';if(typeof showView==='function')showView('make');else window.StudioMake.refresh();});
+  window.StudioMake={goalOf:id=>GOALS.find(x=>x.looks?.includes(id))?.id||null,refresh(){if(!loaded){loaded=true;void load();}else render();}};
   if(!view.hidden)window.StudioMake.refresh();
 })();

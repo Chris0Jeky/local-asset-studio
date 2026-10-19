@@ -2,6 +2,7 @@
 """Native browser proof for accessible setup compatibility selector states."""
 from __future__ import annotations
 
+from browser_ports import evidence_screenshot
 import argparse
 import asyncio
 import os
@@ -127,7 +128,7 @@ async def run(out: Path) -> None:
         await page.evaluate("document.documentElement.style.zoom='2'")
         overflow = await page.evaluate("document.documentElement.scrollWidth-document.documentElement.clientWidth")
         assert overflow <= 1, f"selector presenter overflowed by {overflow}px at 390px / 200% zoom"
-        await page.screenshot(path=out / "selector-390-zoom-200.png", full_page=True)
+        await evidence_screenshot(page, path=out / "selector-390-zoom-200.png", full_page=True)
 
         await page.evaluate("wrappedPresenter.destroy();presenter.destroy()")
         assert await page.locator("[data-setup-compatibility]").count() == 0

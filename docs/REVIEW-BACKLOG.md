@@ -7,6 +7,16 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-10-19 overnight (ux-lead): Make robustness
+
+- [ ] **The chosen look carries a "✓ Chosen" badge** on its card, beside the accent border (colour alone did not say which look was chosen). Reverse: delete the `.make-look.active::after` rule at the end of `app/static/make.css`.
+- [ ] **A second press of Keep / Not this, Resume / Stop tracking, Save character or Put away / Restore is ignored while the first save is in flight** (Muse lens). Reverse: drop the `once(...)` wrappers in `app/static/make.js`.
+
+## 2026-10-19 overnight (ux-lead): look cards and sidebar
+
+- [ ] **Each look card names its model and LoRA count** ("Anima model · 1 LoRA"), on the gallery and on the chosen-look strip. Reverse: drop `recipeLine()` in `app/static/make.js`.
+- [ ] **Sidebar icons are glyphs, not numerals** (Library ▦, Full editor ⚙, Compare & review ⇄, Overview ⌂; "03" beside Library read as a count, audit v3 N9). Reverse: the icon fields in `links` in `app/static/studio-shell.js`.
+
 ## 2026-10-19 overnight (ux-lead): LoRA list in Tune
 
 - [ ] **Tune shows every installed LoRA that fits as a card with Add** (role, made for this model or not, trigger word, starting strength and range). Other families fold under "may not suit"; typing filters. Reverse: in `renderTune()` in `app/static/make.js`, render `#makeLoraChoices` empty again and drop `loraCards()`.
@@ -21,6 +31,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 - [ ] **Make shows the look's model and LoRAs while Tune is shut.** The Tune line reads "As made: Anima · anima-base-v1.0 · pearly_petiflow2 1.00 · 25 steps" (the model file is named when a family has two) instead of "Model, adapters, steps, seed"; a tuned look still reads "Tuned: ...". Reverse: `asMade()` in `app/static/make.js` back to the fixed text.
 - [ ] **Make's composer uses the full width until the first picture exists.** "Your pictures" moves beside the words only once there is a run card; before that it sits below. Reverse: drop `&&state.runs.length>0` in `layout()` in `app/static/make.js`.
 
+## 2026-10-19 overnight (ux-lead): Models & setup to Make
+
+- [ ] **Models & setup → What you can make: each ready look in a Make goal has "Use in Make"**, which opens Make with that goal and look chosen and says "<look> is chosen. Describe your picture, then press Generate." Nothing is sent. Reverse: drop the button in `modelLooksMarkup()` (`app/static/app.js`) and the `#modelLooks [data-make-use-look]` listener in `app/static/make.js`.
+
 ## 2026-10-19 overnight (ux-lead): name the fold for what is in it
 
 - [ ] **"Tune this look" is now "Model, LoRAs and settings"** (Make's fold, the Ctrl+K hints, START-HERE, the anime guide, README): someone looking for "model" or "LoRA" finds it by its name. Code keeps the word "tune" internally. Reverse: the `<summary>` text in `renderComposer()` and the three finder strings in `app/static/studio-shell.js`.
@@ -28,6 +42,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 ## 2026-10-19 overnight (ux-lead): proposal, not done
 
 - [ ] **Proposal: fold the Workflow builder's storage and file rows.** It opens with Saved workflows (6 buttons, 2 selects), revision history (2 buttons, 1 select) and a toolbar of 11 buttons before any node or step is visible (1,201 words on the page at 1440x900). Proposal: Saved workflows and revision history in one shut fold "Saved workflows and history", the file buttons (Import recipe graph, Open JSON, Export…) in a "Files" menu, so the first screen is "Start from a recipe" plus the Nodes/Steps view. Not done: it is the agents' tool too, so tell an agent "do the Workflow builder fold" if you want it.
+
+## 2026-10-19 overnight (ux-lead): picture pickers
+
+- [ ] **Character in a new pose: the pose grid leaves out the chosen character picture**; when it was your only picture it says "The character is your only picture. Import a pose picture in the library, or choose Draw the pose." Imported pictures no longer show their file name twice on picker cards. Reverse: `others` in `renderGrid()` and the `pictureMeta()` condition in `app/static/make.js`.
 
 ## 2026-10-17 session (agent judgment calls)
 

@@ -612,18 +612,18 @@ function durationLabel(s){return Math.round(s)+' s';}</script><script>"""+source
         self.assertEqual(self.page.locator('#status').get_attribute('tabindex'), '-1')
         self.assertEqual(self.page.locator('#status').inner_text(), 'Generation is unavailable')
 
-    def test_final_dismissal_focuses_generation_dock_when_status_is_hidden_in_typing_layout(self):
+    def test_final_dismissal_focuses_status_when_it_stays_visible_in_typing_layout(self):
         self.page.set_viewport_size({'width': 1280, 'height': 480})
         self.load_workshop()
         self.page.add_script_tag(content=source('run-outcome.js'))
         self.page.evaluate("document.getElementById('generate').disabled=true;document.getElementById('status').textContent='Generation is unavailable'")
         self.settle({'id': 'done-1', 'status': 'completed', 'outputs': [{}]})
         self.page.focus('#positive')
-        self.assertTrue(self.page.locator('#status').is_hidden(), 'the production short typing layout hides status')
+        # #1525: the short typing layout keeps the #status live region visible, so dismissal lands on it, not the dock.
+        self.assertTrue(self.page.locator('#status').is_visible(), 'the production short typing layout keeps status visible')
         self.page.click('[data-run-outcome="dismiss"]')
         self.assertTrue(self.page.locator('#runOutcome').is_hidden())
-        self.assertTrue(self.page.locator('.wk-run-dock').evaluate('(n)=>n===document.activeElement'))
-        self.assertEqual(self.page.locator('.wk-run-dock').get_attribute('tabindex'), '-1')
+        self.assertTrue(self.page.locator('#status').evaluate('(n)=>n===document.activeElement'))
         self.assertEqual(self.page.locator('#status').inner_text(), 'Generation is unavailable')
         self.assertEqual(self.page.evaluate('submitted'), 0)
 

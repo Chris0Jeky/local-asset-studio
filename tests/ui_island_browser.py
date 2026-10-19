@@ -7,6 +7,7 @@ makes no request outside the local origin. Never contacts ComfyUI; the fixture b
 
     python tests/ui_island_browser.py [--output .runtime/ui-island]
 """
+from browser_ports import evidence_screenshot
 import argparse
 import json
 import os
@@ -125,7 +126,7 @@ def main():
                   'prompt field identity and value preserved across unmount/remount')
             check(page.locator('#workshopGuidance').evaluate('el => getComputedStyle(el).display') == 'none' and page.locator('#uiIsland').is_visible(),
                   'Immersive: island takes the guidance slot; legacy aside hidden only while active')
-            page.screenshot(path=str(args.output / 'flag-on.png'), full_page=False) if os.environ.get('UI_ISLAND_SCREENSHOT') else None
+            evidence_screenshot(page, path=str(args.output / 'flag-on.png'), full_page=False) if os.environ.get('UI_ISLAND_SCREENSHOT') else None
             check(not errors, 'flag on: no page errors ' + str(errors))
             context.close()
 

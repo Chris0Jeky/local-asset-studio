@@ -3,6 +3,7 @@
 Browser visibility is simulated and intervals shortened to exercise the actual
 handlers without relying on an OS window manager or spending minutes per case.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import json
 import os
@@ -89,7 +90,7 @@ def run(output):
                 evidence['cases'].append({'browser_back_refresh_works': True, 'bfcache_used': page.evaluate('!!window.lastPageshowPersisted')})
                 for width in (1440, 390):
                     page.set_viewport_size({'width': width, 'height': 1000})
-                    page.screenshot(path=str(output / f'polling-{width}.png'), full_page=False)
+                    evidence_screenshot(page, path=str(output / f'polling-{width}.png'), full_page=False)
                 assert not errors, errors
                 writes = [post['path'] for post in fixture.POSTS if post['path'] not in ('/api/estimate', '/api/references/check')]
                 assert not writes, writes

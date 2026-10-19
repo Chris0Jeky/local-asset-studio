@@ -3,6 +3,7 @@
 Default uses native sessionStorage/page.reload. --inert substitutes browser storage
 and transport only and recreates the document, so is not native reload evidence.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import asyncio
 import hashlib
@@ -124,7 +125,7 @@ async def exercise(args):
                 check('SCOPE-09', 'Current conflict never replaces newer local typing', await page.input_value('#assetNotes') == 'My newer unsaved review notes')
                 await page.set_viewport_size({'width': 390, 'height': 1100}); await page.locator('#assetDetailConflict').scroll_into_view_if_needed()
                 check('SCOPE-10', '390px conflict fits the dialog', await page.evaluate("document.querySelector('#assetDialog').scrollWidth<=document.querySelector('#assetDialog').clientWidth"))
-                await page.screenshot(path=str(args.out / 'historical-receipt-conflict-390.png'))
+                await evidence_screenshot(page, path=str(args.out / 'historical-receipt-conflict-390.png'))
                 await page.click('[data-asset-rebase]')
                 check('SCOPE-11', 'Rebase preserves unsaved notes without writing', len(writes) == before and await page.input_value('#assetNotes') == 'My newer unsaved review notes')
                 await page.click('#saveAssetDetails'); await clean(page)
@@ -138,7 +139,7 @@ async def exercise(args):
                 page = await reload(page); before = len(writes)
                 await page.click('[data-asset-recover-open]')
                 check('SCOPE-15', 'Same asset ID in a different Workspace cannot open A recovery', not await page.locator('#assetDialog').is_visible() and len(writes) == before and 'different workspace' in (await page.inner_text('#assetCommandRecovery')).lower())
-                await page.set_viewport_size({'width':390,'height':1100}); await page.locator('#assetCommandRecovery').scroll_into_view_if_needed(); await page.screenshot(path=str(args.out / 'wrong-workspace-390.png'))
+                await page.set_viewport_size({'width':390,'height':1100}); await page.locator('#assetCommandRecovery').scroll_into_view_if_needed(); await evidence_screenshot(page, path=str(args.out / 'wrong-workspace-390.png'))
                 outcome = await page.evaluate("""async ({id,scope})=>{try{await api('/api/assets/'+id+'/metadata?workspace_id='+scope);return {unexpected:true};}catch(e){return {status:e.status,...e.data};}}""", {'id': identifier, 'scope': scope_a})
                 check('SCOPE-16', 'Metadata observation itself rejects a switched Workspace', outcome.get('status') == 409 and outcome.get('code') == 'asset_workspace_conflict' and 'current' not in outcome)
                 Handler.studio.assets = a; await refresh(page, scope_a); await page.click('[data-asset-recover-open]')
