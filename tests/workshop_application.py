@@ -109,14 +109,15 @@ def main():
                     page.fill('#positive', '   ')
                     assert page.locator('#generate').is_disabled(), (width, layout)
                     # The specific blocker is summarized in the dock; details are
-                    # intentionally collapsed until the user chooses Review checks.
+                    # intentionally collapsed until the user chooses What’s missing?.
                     page.wait_for_function("document.querySelector('#workshopReadiness').textContent.includes('Add a prompt to generate.')")
                     assert page.locator('#workshopReadiness').is_visible(), (width, layout)
                     assert page.locator('#workshopSetupReadiness').is_hidden(), (width, layout)
                     assert 'Add a prompt to generate.' not in page.locator('#workshopSetupRail').inner_text(), (width, layout)
                     assert page.locator('#workshopRecipeChange').is_visible(), (width, layout)
                     assert page.locator('#workshopBlockerList button').inner_text() == 'Write the description', (width, layout)
-                    assert page.locator('#workshopSetupReview').inner_text() == 'Review readiness', (width, layout)
+                    assert page.locator('#workshopSetupReview').count() == 0, (width, layout)
+                    assert page.locator('#workshopReview').inner_text() == 'What’s missing?', (width, layout)
                     page.click('#workshopReview')
                     blocker = page.locator('[data-readiness-code="continuation-wording"]')
                     blocker.wait_for(state='visible')
@@ -126,6 +127,7 @@ def main():
                     assert page.locator('#positive').evaluate('(el)=>el===document.activeElement')
                     page.fill('#positive', original_prompt)
                     assert not page.locator('#generate').is_disabled(), (width, layout)
+                    page.wait_for_function("document.querySelector('#workshopReview').hidden")
                     assert not [row for row in fixture.POSTS if row['path'] == '/api/jobs']
                     prompt_cases.append({'width': width, 'layout': layout})
             page.set_viewport_size({'width': 1440, 'height': 900})

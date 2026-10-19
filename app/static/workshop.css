@@ -284,13 +284,12 @@ body.workshop-active[data-workshop-skin="arcade"] :is(.eyebrow,.wk-recipe small)
   .workshop .wk-phone-panel {position:absolute;bottom:calc(100% + 8px);left:0;right:0;display:grid;gap:10px;max-height:calc(100dvh - 160px);overflow:auto;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--panel);box-shadow:var(--wk-shadow)}
   .workshop .wk-phone-panel>label {display:flex;align-items:center;gap:10px;margin:0;font-size:11px}
   .workshop .wk-phone-panel .wk-run-tools {grid-row:auto;grid-column:auto}
-  /* Why Generate is off, a message, Cancel and the run summary stay in the dock; the line collapses only when it has nothing to say. */
+  /* Why Generate is off, a message, Cancel and the run summary stay in the dock; the readiness line also stays visible when ready. */
   .workshop .wk-run-dock>.wk-dock-info {grid-column:1/-1;grid-row:auto}
-  .workshop .wk-dock-info.wk-clear {display:none}
   .workshop .wk-run-dock .wk-dock-info {gap:0 6px}.workshop .wk-run-dock .wk-dock-info>button {grid-row:1;min-height:32px;padding:2px 8px}
-  /* Typing keeps a one-line reason and message with the keyboard up (the dock grows past the idle 72px only when they have something to say). */
+  /* Typing keeps a one-line readiness summary and message with the keyboard up. */
   .workshop .wk-run-dock.wk-typing :is(.wk-dock-info>strong,#status) {max-height:1.5em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-  /* Review checks stays reachable while typing; it shrinks to the 24px minimum target (WCAG 2.5.8) instead of hiding. */
+  /* What's missing? stays reachable while blocked and typing; it shrinks to the 24px minimum target (WCAG 2.5.8). */
   .workshop .wk-run-dock.wk-typing .wk-dock-info>button {min-height:24px;padding:0 6px;font-size:10px;line-height:1.2}
 }
 /* Settled summaries own their text so polling and new runs cannot erase them (run-outcome.js). */

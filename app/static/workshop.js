@@ -316,14 +316,12 @@
     const review = disclosure('workshopChecks', 'Readiness & run details', [runBox]);
     const reviewSummary = review.querySelector('summary');
     editor.append(parameters, inspection, review);
-    const setupReview = button('workshopSetupReview', 'Review readiness', () => reveal(review));
-    setupReview.className = 'wk-setup-review'; setupRail.append(setupReview);
     // The storage notice stays outside the closed Appearance popover, so a choice that will not persist is always visible.
     setupRail.append(preferenceNotice);
     const dock = el('div', 'wk-run-dock'); dock.setAttribute('role','group'); dock.setAttribute('aria-label','Generation controls');
     const dockInfo = el('div', 'wk-dock-info'), readiness = el('strong'), eta = el('span');
-    readiness.id = 'workshopReadiness'; readiness.tabIndex = 0; eta.id = 'workshopEta';
-    const reviewButton = button('workshopReview', 'Review checks', () => reveal(review));
+    readiness.id = 'workshopReadiness'; readiness.tabIndex = -1; eta.id = 'workshopEta';
+    const reviewButton = button('workshopReview', 'What’s missing?', () => reveal(review));
     dockInfo.append(readiness, eta, reviewButton);
     const status = q('#status'); if (status) status.tabIndex = 0; dock.append(dockInfo, actions); if (status) dock.append(status); create.append(dock);
     // A text field you enter is never left under the fixed dock; a narrow or short dock also compacts while you type (workshop.css).
@@ -614,6 +612,7 @@
       const blocked = q('#generate').disabled, first = q('#uxBlockers .ux-blocker p')?.textContent;
       const readinessText = blocked ? first || 'Review readiness before generating.' : 'No blockers reported';
       const blockers = blocked ? [...d.querySelectorAll('#uxBlockers .ux-blocker')].filter(n => n.querySelector('p')?.textContent) : [];
+      reviewButton.hidden = !blocked;
       dockInfo.classList.toggle('wk-clear', !blocked);
       text(readiness, readinessText + (blockers.length > 1 ? ' (+'+(blockers.length-1)+' more)' : ''));
       text(setupReadiness, blockers.length > 1 ? blockers.length+' things to fix before generating' : readinessText);
@@ -631,7 +630,7 @@
       renderGuidance(blocked, first, outputs);
       // Only rescue focus that was actually lost (still on the removed control, or fallen to body); never take it from a control another handler already chose.
       const lost = !d.activeElement || d.activeElement === d.body || d.activeElement === held;
-      if (active && held && lost && (!held.isConnected || held.disabled || held.closest('[hidden]'))) focusExisting(reviewButton);
+      if (active && held && lost && (!held.isConnected || held.disabled || held.closest('[hidden]'))) focusExisting(reviewButton.hidden ? readiness : reviewButton);
     }
     const schedule = () => {
       contextRevision++;

@@ -1,5 +1,22 @@
 # UX use-case matrix
 
+## Full editor: one readiness fold — 19 October 2026 (Brief K)
+
+The recipe header no longer has a Review readiness button. The dock offers **What’s missing?**
+only while Generate is blocked; it opens **Readiness & run details · needs attention**. When ready,
+the fold summary is **Readiness & run details**, and the dock retains the readiness line and time.
+The ONE NEXT ACTION guidance is unchanged. A dock or blocker action that disappears when readiness
+clears returns keyboard focus to the readiness line, which has `tabIndex=-1`.
+
+| Journey | Click change | Measured result |
+| --- | --- | --- |
+| `compare-settings-from-recipe` | Removed one supplementary “open run details” click before Plan comparison; the ready-state dock button is hidden | 5 clicks, 9 steps taken / 8 intended, 3 view switches, 0 dead ends, 0 unexplained disabled controls; PASS |
+
+`python tests/studio_use_cases.py --out .runtime/brief-k-use-cases.json`: **25/25 PASS**, zero
+generation submissions and zero page errors. Fixture HTTP request threads logged errors on other
+routes during the sweep; the journey results above are browser-observed outcomes, not a claim that
+those fixture routes are error-free. The historical tables below retain their original measurements.
+
 ## Make: import a picture where you pick it (pass 2), 19 October 2026
 
 A brand-new user's first picture goal (*Change a picture*, *Fix or upscale*, *Restyle*, *New pose*, *Animate*, *Picture to 3D*) opened an empty grid

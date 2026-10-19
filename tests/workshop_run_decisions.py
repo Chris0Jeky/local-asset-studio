@@ -107,6 +107,29 @@ class RunDecisions(entry.EntryPoints):
         self.page.wait_for_function("document.querySelector('#workshopReadiness').textContent==='Changed blocker.'")
         self.assertTrue(self.page.locator('#workshopReview').evaluate('n=>n===document.activeElement'))
 
+    def test_readiness_has_one_fold_and_rescues_focus_when_ready(self):
+        for source in ('review', 'blocker'):
+            with self.subTest(source=source):
+                self.page.goto('about:blank')
+                self.load_workshop()
+                self.assertEqual(self.page.locator('#workshopSetupReview').count(), 0)
+                review = self.page.locator('#workshopReview')
+                self.assertEqual(review.inner_text(), 'What’s missing?')
+                self.assertEqual(self.page.locator('#workshopChecks > summary').inner_text(), 'Readiness & run details · needs attention')
+                review.click()
+                self.assertTrue(self.page.locator('#workshopChecks').evaluate('n=>n.open'))
+                if source == 'blocker':
+                    self.page.evaluate("document.querySelector('#uxBlockers').innerHTML='<div class=\"ux-blocker\"><p>Missing model.</p><button data-ux-resolve=\"models\">Repair</button></div>'")
+                    self.page.locator('#workshopBlockerList button').focus()
+                else:
+                    review.focus()
+                self.make_idle()
+                self.assertTrue(review.is_hidden())
+                self.assertEqual(self.page.locator('#workshopReadiness').get_attribute('tabindex'), '-1')
+                self.assertTrue(self.page.locator('#workshopReadiness').evaluate('n=>n===document.activeElement'))
+                self.assertEqual(self.page.locator('#workshopChecks > summary').inner_text(), 'Readiness & run details')
+                self.assertEqual(self.page.evaluate('submitted'), 0)
+
     def test_phone_dock_is_compact_with_keyboard_reachable_tools(self):
         self.load_workshop()
         self.page.evaluate("document.querySelector('#estimateValue').textContent='~42s'")
@@ -130,7 +153,7 @@ class RunDecisions(entry.EntryPoints):
                     dock = self.page.locator('.wk-run-dock')
                     height = dock.bounding_box()['height']
                     print(f'Phone dock ({layout}, {motion}): {height:.2f}px', flush=True)
-                    self.assertLessEqual(height, 72, self.page.evaluate("[document.querySelector('#status').textContent, document.querySelector('#workshopReadiness').textContent, document.querySelector('.wk-dock-info').className]"))
+                    self.assertLessEqual(height, 96, self.page.evaluate("[document.querySelector('#status').textContent, document.querySelector('#workshopReadiness').textContent, document.querySelector('.wk-dock-info').className]"))
                     self.assertIn('~42s', self.page.locator('#workshopEta').inner_text())
                     self.assertTrue(self.page.locator('#generate').evaluate('(n)=>n===runOriginals.generate'))
                     if layout == 'focus' and motion == 'no-preference': evidence_screenshot(self.page, path=str(shots / 'closed.png'))
@@ -164,7 +187,7 @@ class RunDecisions(entry.EntryPoints):
                     self.page.evaluate("document.dispatchEvent(new KeyboardEvent('keydown',{key:'x'}))")
                     self.assertFalse(self.page.locator('#workshopRunTools').evaluate('(n)=>n.open'))
                     self.assertTrue(toggle.evaluate('(n)=>n===document.activeElement'), 'Escape returns focus to Run tools')
-                    self.assertLessEqual(dock.bounding_box()['height'], 72)
+                    self.assertLessEqual(dock.bounding_box()['height'], 96)
             self.page.set_viewport_size({'width': 1440, 'height': 900})
             self.page.wait_for_function('document.querySelector("#workshopRunTools").hidden')
             self.page.select_option('#workshopLayout', 'focus', force=True)
@@ -225,10 +248,10 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
                     self.assertTrue(self.page.locator('#workshopReview').evaluate('(n)=>!n.closest("#workshopRunTools")'))
                     blocked = self.page.locator('.wk-run-dock').bounding_box()['height']
                 with self.subTest(layout=layout, part='idle: collapsed and compact'):
-                    # Enabled and quiet: the line and the status collapse and the dock is compact again.
+                    # Enabled and quiet: the status collapses and readiness stays visible and the dock is compact again.
                     self.make_idle()
-                    self.assertFalse(self.page.locator('#workshopReadiness').is_visible()); self.assertFalse(self.page.locator('#status').is_visible())
-                    self.assertLessEqual(self.page.locator('.wk-run-dock').bounding_box()['height'], 72)
+                    self.assertTrue(self.page.locator('#workshopReadiness').is_visible()); self.assertFalse(self.page.locator('#status').is_visible())
+                    self.assertLessEqual(self.page.locator('.wk-run-dock').bounding_box()['height'], 96)
                 with self.subTest(layout=layout, part='b: message error'):
                     # An error written by message() is visible.
                     self.page.evaluate("(()=>{document.querySelector('#generate').disabled=false;const s=document.querySelector('#status');s.textContent='Failed to start: the Studio lost the response.';s.classList.toggle('error',true)})()")
@@ -345,9 +368,9 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
                         self.assertEqual(result['covered'], 0, result)
                         self.assertGreaterEqual(result['top'], 0, result)
                         self.assertTrue(self.page.locator('#generate').is_visible())
-                        # Idle, the phone dock stays at its 72px; with a reason or message it keeps both on one line each.
-                        # 120px while a reason or message shows: one clipped line each plus a reachable 24px Review checks (#1515 CI: hiding it stranded keyboard users).
-                        if width <= 600: self.assertLessEqual(result['dock'], 72 if quiet else 120, 'the phone dock stays compact while typing')
+                        # Idle, the phone dock stays within 96px; with a reason or message it keeps both on one line each.
+                        # 120px while a reason or message shows: one clipped line each plus a reachable 24px What’s missing? (#1515 CI: hiding it stranded keyboard users).
+                        if width <= 600: self.assertLessEqual(result['dock'], 96 if quiet else 120, 'the phone dock stays compact while typing')
                         if width <= 600 and not quiet: self.assertTrue(self.page.locator('#workshopReadiness').is_visible() and self.page.locator('#status').is_visible())
                         elif height <= 700: self.assertLess(result['dock'], before, 'a short dock compacts while typing')
                         self.page.evaluate("document.activeElement?.blur()")

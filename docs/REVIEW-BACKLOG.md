@@ -7,6 +7,10 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-10-19 pass 2 (Brief K)
+
+- [ ] **Full editor readiness lives in "Readiness & run details"** (ux-lead-2 decision). Removed the recipe-header Review readiness button; the dock offers "What’s missing?" only while blocked. Ready shows the readiness line and time, and lost focus returns to that line when the button disappears. The ONE NEXT ACTION guidance is unchanged. Reverse: restore the two buttons.
+
 ## 2026-10-19 pass 2 (ux-lead-2): Make says LoRA, not adapter
 
 - [ ] **Every visible "adapter" in Make now reads "LoRA"** (the heading line, the LoRA group in Model, LoRAs and settings, All LoRAs ×, Style strength's hint, Compare one setting's "LoRA strength", What this look uses, the add-by-name messages). The fold was already "Model, LoRAs and settings" and the owner says LoRA; one page said both. Tune's Steps choice "Finer · N" is now "Fine · N", the Quality word. The Full editor keeps "adapters" for now. Reverse: the strings in `app/static/make.js`.

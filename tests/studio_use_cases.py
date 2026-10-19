@@ -898,7 +898,6 @@ def _compare(c):
     c.act('#workshopRecipeChange', note='open the recipe picker', supplementary=True)
     c.act('#presetList [data-id="anima-portrait"]', note='the baseline recipe')
     c.act('#positive', 'fill', typed=BRIEF)
-    c.act('#workshopReview', note='open run details', supplementary=True)
     c.stop_before(c.act('#planComparison'), 'stopped at Plan comparison: live mode never opens the planner a study is prepared from')
     c.act('#experimentAxis', 'select', typed='cfg')
     c.act('#experimentValues', 'read', note='proposed candidate values')
