@@ -65,7 +65,7 @@
   const SLOTS=['lora','lora2','lora3','lora4','lora5','lora6'];
   // The look's active adapters: a strength above zero with a file. Style strength scales exactly these and nothing else.
   const adapters=look=>{const c=look?.body?.controls||{},p=presetFor(look),bound=k=>!!(p?.[k]||p?.bindings_extra?.[k]);
-    return SLOTS.filter(k=>Number(c[k])>0&&(typeof c[k+'_name']==='string'&&c[k+'_name']||p&&!bound(k+'_name'))).map(k=>({key:k,name:c[k+'_name']||'built-in adapter',strength:Number(c[k])}));};
+    return SLOTS.filter(k=>Number(c[k])>0&&(typeof c[k+'_name']==='string'&&c[k+'_name']||p&&!bound(k+'_name'))).map(k=>({key:k,name:c[k+'_name']||'the recipe’s own LoRA',strength:Number(c[k])}));};
   const lookList=()=>{const g=goal();if(!g?.looks||!state.looks)return[];return g.looks.map(id=>state.looks.find(l=>l.id===id)).filter(l=>l&&!l.trashed_at);};
   const current=()=>state.looks?.find(l=>l.id===state.look&&!l.trashed_at)||null;
   // Honest speed (#1448): median seconds per picture measured in the 16 Oct look lab (docs/looks/LOOK-LAB-2026-10-16.md, R1 table,
@@ -95,7 +95,7 @@
   const NAMED=k=>k+'_name',bound=(p,k)=>!!(p?.[k]||p?.bindings_extra?.[k]),byId=id=>presets().find(p=>p.id===id);
   const kb=()=>typeof knowledge!=='undefined'&&knowledge||{},entry=name=>name&&kb().loras?.[name]||null;
   const family=p=>p?.family||p?.name||p?.id||'';
-  const short=name=>entry(name)?.label||String(name||'built-in adapter').replace(/\.safetensors$/,'');
+  const short=name=>entry(name)?.label||String(name||'the recipe’s own LoRA').replace(/\.safetensors$/,'');
   // Same model type = same loader node and text encoders on the same backend (app/looks.py model_of): the look's wording and
   // adapters carry over, so a switch never meets a graph that cannot take them; results will still differ. A recipe whose
   // adapter file is fixed in its graph (a strength binding with no filename binding) offers no switch: that file cannot move.
@@ -408,7 +408,7 @@
       +'<div id="makeDraftBox"></div>'
       +'<button type="button" id="makeEditor" class="make-link">Open in the full editor instead</button>'
       +'<details class="make-about"><summary>What this look uses</summary><p><b>Model:</b> '+escape(family(p)||look.body.preset_id)+(p?.model?.file?' <small class="muted">'+escape(p.model.file)+'</small>':'')+'</p>'
-      +(adapters(look).length?'<p><b>Adapters:</b></p><ul>'+adapters(look).map(a=>'<li>'+escape(short(a.name==='built-in adapter'?'':a.name))+' at '+escape(a.strength)+(entry(a.name)?.trigger?' \u00b7 trigger <code>'+escape(entry(a.name).trigger)+'</code>':'')+'</li>').join('')+'</ul>':'<p>No style adapters: the model and the wording carry this look.</p>')
+      +(adapters(look).length?'<p><b>Adapters:</b></p><ul>'+adapters(look).map(a=>'<li>'+escape(short(a.name==='the recipe’s own LoRA'?'':a.name))+' at '+escape(a.strength)+(entry(a.name)?.trigger?' \u00b7 trigger <code>'+escape(entry(a.name).trigger)+'</code>':'')+'</li>').join('')+'</ul>':'<p>No style adapters: the model and the wording carry this look.</p>')
       +(example?'<p><b>Example:</b> '+escape(example)+'</p>':'')
       +(look.body.notes?'<details class="make-maint"><summary>Details for maintainers</summary><p class="muted">'+escape(look.body.notes)+'</p></details>':'')+'</details>'
       +'</div>'+goBar(why?blockerMarkup(look,why):'')+'</div>';
