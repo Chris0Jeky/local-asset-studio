@@ -52,6 +52,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 - [ ] **Anime pictures get a one-press "Refine 1.5×"** (anime-refine at its own denoise 0.22) between the fixes and Upscale, on result cards and in Fix or upscale. Evidence: gpu-lab #1563, one Pearly picture (kept the face, added eye and lash detail) and one WAI picture (kept the picture); 0.35 drifted the eyes. Reverse: remove `refine` from `POLISH` in `app/static/make.js` and `app/static/continuation-core.js`.
 - [ ] **Accepted trade-off from #1554:** a chosen picture whose thumbnail is genuinely broken shows the browser's broken image, not the blank mark (the fallback is for look pictures only, so a slow thumbnail never removes yours).
 
+## 2026-10-19 overnight (ux-lead): Anima merges and their LoRAs
+
+- [ ] **One Obsession Anima v2.0 and Pearly Anima Mix v1.0 count as Anima for LoRA fit** (`presets/settings-kb.json` family_aliases; the catalog records both as Anima-family merges). Before, every Anima LoRA on those looks said "may not suit". JANIMA LoRAs still say it. The full editor's guidance (bundle-core.js) reads the same aliases, so it now shows Anima guidance for them. Reverse: drop the two alias lines.
+
 ## 2026-10-19 overnight (ux-lead): picture pickers
 
 - [ ] **Character in a new pose: the pose grid leaves out the chosen character picture**; when it was your only picture it says "The character is your only picture. Import a pose picture in the library, or choose Draw the pose." Imported pictures no longer show their file name twice on picker cards. Reverse: `others` in `renderGrid()` and the `pictureMeta()` condition in `app/static/make.js`.
