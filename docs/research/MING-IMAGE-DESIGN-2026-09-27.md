@@ -31,7 +31,7 @@ Reading of these numbers:
 **Not verified, and what this changes.**
 
 - Not known: the Comfy Layer file's own dtype and parameter count (its safetensors header is not read); whether the Comfy Layer file is byte-identical to the official Layer DiT (no matching LFS hash for the official transformer was retrieved).
-- Not known: a commit revision for any size. The HF API returned no commit `sha` or `lastModified` for either model repo, so no size here is pinned to a revision. The Comfy tree gives a per-file LFS sha256 (recorded in SOURCES, section "Current provenance").
+- Not known: a commit revision for any size. The 2026-10-19 queries did not request `sha` or `lastModified` (they used only `expand[]=safetensors`), so no size here is pinned to a revision. The Comfy tree response exposes a per-file LFS sha256, but it is not recorded in SOURCES (not yet checked against a raw response).
 - Not in this repository: the raw HEAD and tree files that SOURCES named (`raw/comfy-org-head-sizes.txt`, `raw/hf-*.json`), and the operator handoffs pack. Checked on 2026-10-19: neither exists in the repo, so the 2026-09-27 numbers cannot be audited from files here; they stand as dated observations only.
 - Changed: the Layer footprint row "BF16 DiT alone 24.62 GB" was computed from the F32 size. If the Comfy Layer file really is the same parameters at BF16, a BF16 Layer DiT would be about 12.31 GB, not 24.62 GB. The fit row is therefore not re-decided here.
 - **Unchanged: the Layer park verdict** (section 7). Its condition (a) is now largely supported by the byte arithmetic but still unverified in the Comfy header; conditions (b) text-encoder footprint and (c) dual GPU are not evaluated here and remain unmet.
