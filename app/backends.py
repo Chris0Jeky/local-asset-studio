@@ -161,6 +161,17 @@ class BackendManager:
         if current.value.get('active','primary') not in self.profiles:raise backend_state.StateError('Shared backend state selects an unknown environment')
         self._state_snapshot=current;self.operation=copy.deepcopy(current.value.get('operation'))
 
+    def require_work_admission(self):
+        """Caller holds Studio's lock; observe state without changing a worker's expected record."""
+        if self.busy:raise backend_state.StateError('A backend switch is running. Wait for it to finish.')
+        if self.state_issue:raise backend_state.StateError(self.state_issue)
+        current=self._state.read();reason=backend_state.blocker(current.value)
+        if reason:raise backend_state.StateError(reason)
+        active=current.value.get('active','primary')
+        if active not in self.profiles:raise backend_state.StateError('Shared backend state selects an unknown environment; inspect its saved selection before starting work.')
+        if active!=self.active:
+            raise backend_state.StateError('The saved backend selection differs from this Studio. Switch explicitly in Models & setup or restart Studio after inspection before starting work.')
+
     def _begin_switch(self, identifier):
         """Caller holds Studio's lock; publish the owner before starting a worker."""
         operation={'id':uuid.uuid4().hex,'target':identifier,'status':'running','started_at':time.time(),

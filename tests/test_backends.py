@@ -184,7 +184,11 @@ class BackendTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'switch is running'):self.studio.create_job({'preset_id':'demo'})
         self.assertTrue(self.studio.queue.empty());manager.busy=False
         job=self.studio.create_job({'preset_id':'demo'});internal=self.studio.jobs[job['id']]
-        original=internal['comfy_url'];manager.activate('hidream')
+        original=internal['comfy_url']
+        # Model a confirmed selection change; a saved/local mismatch now refuses
+        # new submission. The older job still retains its captured endpoint.
+        self.studio._write_json_atomic(manager.state_path,{'active':'hidream','operation':{'status':'completed','target':'hidream'}})
+        manager.activate('hidream')
         self.studio._run(internal)
         self.assertTrue(self.studio.requests)
         for args,kwargs in self.studio.requests:
