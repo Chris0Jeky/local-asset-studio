@@ -325,10 +325,15 @@ test('changed state revokes a legacy acknowledgement and live ownership hides re
  const f=fixture(),state=sha=>({...f.backend('old'),shared_state:{sha256:sha,blocker:'Inspect the saved switch',resolvable:true}});
  let read=f.run();f.pending.at(-1).resolve(state('a'.repeat(64)));await read;
  f.node('#backendStudiosClosed').checked=true;f.node('#backendRuntimesInspected').checked=true;f.node('#backendStudiosClosed').onchange();
+ f.node('#resolveBackendSwitch').focus();
  read=f.run();f.pending.at(-1).resolve(state('a'.repeat(64)));await read;
  assert.equal(f.node('#resolveBackendSwitch').disabled,false,'an unchanged poll preserves deliberate acknowledgements');
+ assert.equal(f.context.document.activeElement,f.node('#resolveBackendSwitch'));
  read=f.run();f.pending.at(-1).resolve(state('b'.repeat(64)));await read;
  assert.equal(f.node('#resolveBackendSwitch').disabled,true);assert.equal(f.node('#backendStudiosClosed').checked,false);
+ assert.equal(f.context.document.activeElement,f.node('#backendStatus'),'a replacement transfers focus before disabling Resolve');
+ f.node('#backendStudiosClosed').focus();read=f.run();f.pending.at(-1).resolve(state('c'.repeat(64)));await read;
+ assert.equal(f.context.document.activeElement,f.node('#backendStudiosClosed'),'a still-visible checkbox keeps focus');
  f.node('#backendRuntimesInspected').focus();read=f.run();f.pending.at(-1).resolve({...state('c'.repeat(64)),shared_state:{blocker:'Another Studio owns the switch',resolvable:false}});await read;
  assert.equal(f.node('#backendResolution').hidden,true);assert.equal(f.context.document.activeElement,f.node('#backendStatus'));
  assert.equal(f.node('#switchBackend').disabled,true);assert.equal(f.writes.length,0);

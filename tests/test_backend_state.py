@@ -6,6 +6,7 @@ import json
 import multiprocessing
 import os
 import hashlib
+import importlib.util
 from pathlib import Path
 import sys
 import tempfile
@@ -170,6 +171,20 @@ class BackendStateIOTests(unittest.TestCase):
             with self.subTest(raw=raw):
                 self.path.write_text(raw)
                 with self.assertRaises(backend_state.StateError):self.store.read()
+
+    def test_missing_psutil_allows_module_import_but_never_confirms_an_owner(self):
+        name='backend_state_without_psutil'
+        spec=importlib.util.spec_from_file_location(name,Path(backend_state.__file__))
+        isolated=importlib.util.module_from_spec(spec)
+        with patch.dict(sys.modules,{'psutil':None,name:isolated}):spec.loader.exec_module(isolated)
+        self.assertIsNone(isolated.current_owner())
+        self.assertEqual(isolated.owner_status(self.operation()['owner']),'unknown')
+        self.initial();raw=self.path.read_bytes();store=isolated.Store(self.path);expected=store.read()
+        self.assertEqual(store.reconcile(expected).value,expected.value)
+        self.assertFalse(isolated.resolution_allowed(expected,isolated.current_owner()))
+        with self.assertRaisesRegex(isolated.StateError,'identify'):
+            store.reserve(expected,dict(self.operation(),owner=isolated.current_owner()))
+        self.assertEqual(self.path.read_bytes(),raw)
 
 
 class SharedBackendStateTests(unittest.TestCase):
@@ -425,6 +440,106 @@ class SharedBackendStateTests(unittest.TestCase):
         self.assertEqual(resolved['pid'],901);self.assertEqual(resolved['log_directory'],saved['log_directory'])
         self.assertEqual(resolved['status'],'interrupted');self.assertFalse(result['shared_state']['blocker'])
         self.assertEqual(self.launch.call_count,1,'resolution performs no runtime action')
+
+    def uncertain_terminal_publication(self,status,loss='reply'):
+        manager=self.make_manager()
+        with self.inert(manager):manager.switch('hidream')
+        replace=backend_state.file_replace.replace;read=manager._state.read;pending_read=[]
+        def publish(source,target):
+            candidate=json.loads(Path(source).read_text());replace(source,target)
+            if candidate['operation']['status']==status:
+                if loss=='reply':raise OSError('inert lost terminal publication acknowledgement')
+                pending_read.append(True)
+        def observe():
+            if pending_read:
+                pending_read.pop();raise backend_state.StateError('inert lost landed read')
+            return read()
+        process=SimpleNamespace(pid=902,create_time=lambda:99)
+        with self.inert(manager),patch.object(backend_state.file_replace,'replace',side_effect=publish), \
+             patch.object(manager._state,'read',side_effect=observe), \
+             patch.object(manager,'process',side_effect=lambda profile:process if profile['id']=='hidream' else None):
+            if status=='failed':
+                with patch.object(manager,'available',side_effect=ValueError('inert preflight failure')):manager._switch('hidream')
+            else:manager._switch('hidream')
+        self.assertFalse(manager.busy);self.assertIsNotNone(manager.state_issue)
+        self.assertEqual(json.loads(self.path.read_text())['operation']['status'],status)
+        return manager
+
+    def test_terminal_publication_uncertainty_can_be_inspected_without_changing_its_outcome(self):
+        for status in ('completed','failed'):
+            for loss in ('reply','landed-read'):
+                with self.subTest(status=status,loss=loss):
+                    manager=self.uncertain_terminal_publication(status,loss)
+                    saved=json.loads(self.path.read_text());active=manager.active
+                    with self.inert(manager):self.assertTrue(manager.snapshot()['shared_state']['resolvable'])
+                    with self.inert(manager):result=manager.resolve_switch_record(self.acknowledgement())
+                    landed=json.loads(self.path.read_text())
+                    self.assertEqual(landed['active'],saved['active']);self.assertEqual(manager.active,active)
+                    for key,value in saved['operation'].items():self.assertEqual(landed['operation'][key],value,key)
+                    self.assertTrue(landed['operation']['resolution']['acknowledge_runtimes_inspected'])
+                    self.assertIsNone(manager.state_issue);self.assertFalse(result['shared_state']['resolvable'])
+                    self.assertFalse(result['shared_state']['blocker'])
+        self.launch.assert_not_called()
+
+    def test_terminal_resolution_refuses_changed_records_and_an_ordinary_error_hold(self):
+        for change in ('record','ordinary-error'):
+            with self.subTest(change=change):
+                manager=self.uncertain_terminal_publication('completed')
+                if change=='record':
+                    saved=json.loads(self.path.read_text());saved['operation']['message']='Newer terminal evidence'
+                    self.path.write_text(json.dumps(saved))
+                else:manager._state_failed(backend_state.StateError('ordinary observation failure'))
+                raw=self.path.read_bytes()
+                with self.inert(manager):self.assertFalse(manager.snapshot()['shared_state']['resolvable'])
+                with self.assertRaises(ValueError):manager.resolve_switch_record(self.acknowledgement())
+                self.assertEqual(self.path.read_bytes(),raw)
+
+    def test_normal_and_foreign_terminal_records_cannot_use_the_private_publication_exception(self):
+        for status in ('completed','failed','interrupted'):
+            for foreign in (False,True):
+                with self.subTest(status=status,foreign=foreign):
+                    owner=dict(self.manager._owner)
+                    if foreign:owner['instance_id']='another-manager-in-the-same-process'
+                    self.path.write_text(json.dumps({'active':'primary','operation':{'id':'terminal','status':status,'owner':owner}}))
+                    observed=self.manager._state.read();raw=self.path.read_bytes()
+                    with self.inert(self.manager):self.assertFalse(self.manager.snapshot()['shared_state']['resolvable'])
+                    with self.assertRaises(ValueError):self.manager.resolve_switch_record(self.acknowledgement())
+                    if foreign:
+                        self.assertFalse(backend_state.resolution_allowed(observed,self.manager._owner,observed.identity[1]))
+                    self.assertEqual(self.path.read_bytes(),raw)
+
+    def test_lost_terminal_resolution_reply_requires_a_fresh_explicit_acknowledgement(self):
+        manager=self.uncertain_terminal_publication('completed');command=self.acknowledgement()
+        original=json.loads(self.path.read_text())['operation'];replace=backend_state.file_replace.replace
+        def lost_reply(source,target):
+            replace(source,target);raise OSError('inert lost resolution acknowledgement')
+        with self.inert(manager),patch.object(backend_state.file_replace,'replace',side_effect=lost_reply):
+            with self.assertRaises(backend_state.StateUnconfirmed):manager.resolve_switch_record(command)
+        with self.inert(manager):self.assertTrue(manager.snapshot()['shared_state']['resolvable'])
+        raw=self.path.read_bytes()
+        with self.assertRaises(backend_state.StateConflict):manager.resolve_switch_record(command)
+        self.assertEqual(self.path.read_bytes(),raw)
+        with self.inert(manager):manager.resolve_switch_record(self.acknowledgement())
+        landed=json.loads(self.path.read_text())['operation']
+        for key,value in original.items():self.assertEqual(landed[key],value,key)
+        self.assertIsNone(manager.state_issue);self.launch.assert_not_called()
+
+    def test_lost_own_running_resolution_reply_can_settle_its_exact_interrupted_record(self):
+        manager=self.manager;replace=backend_state.file_replace.replace
+        def lost_reply(source,target):
+            replace(source,target);raise OSError('inert lost acknowledgement')
+        with self.inert(manager),patch.object(backend_state.file_replace,'replace',side_effect=lost_reply):
+            with self.assertRaises(backend_state.StateUnconfirmed):manager.switch('hidream')
+            self.assertFalse(manager.busy)
+            with self.assertRaises(backend_state.StateUnconfirmed):manager.resolve_switch_record(self.acknowledgement())
+        saved=json.loads(self.path.read_text());self.assertEqual(saved['operation']['status'],'interrupted')
+        with self.inert(manager):self.assertTrue(manager.snapshot()['shared_state']['resolvable'])
+        with self.inert(manager):manager.resolve_switch_record(self.acknowledgement())
+        landed=json.loads(self.path.read_text())
+        self.assertEqual(landed['active'],saved['active'])
+        for key in ('status','message','owner','started_at','inspection_required'):
+            self.assertEqual(landed['operation'][key],saved['operation'][key])
+        self.assertIsNone(manager.state_issue);self.thread.assert_not_called();self.launch.assert_not_called()
 
 
 if __name__ == '__main__': unittest.main()

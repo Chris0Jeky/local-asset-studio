@@ -1,7 +1,9 @@
 let backendSwitching=false, backendActive=null, backendReadEpoch=0, backendReadPending=null, backendInventoryPending=false, backendSwitchEpoch=0;
 let backendResolution=null,backendResolving=false;
 function updateBackendResolution(){
-  $('#resolveBackendSwitch').disabled=backendResolving||!backendResolution||!$('#backendStudiosClosed').checked||!$('#backendRuntimesInspected').checked;
+  const button=$('#resolveBackendSwitch'),disabled=backendResolving||!backendResolution||!$('#backendStudiosClosed').checked||!$('#backendRuntimesInspected').checked;
+  if(disabled&&document.activeElement===button){const status=$('#backendStatus');status.tabIndex=-1;status.focus({preventScroll:true});}
+  button.disabled=disabled;
 }
 function renderBackendResolution(shared){
   const next=shared?.resolvable&&typeof shared.sha256==='string'&&/^[a-f0-9]{64}$/.test(shared.sha256)?shared.sha256:null;

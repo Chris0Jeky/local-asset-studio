@@ -38,7 +38,7 @@ class BackendManager:
         self.studio=studio;self.busy=False;self.operation=None;self.last_launch_reserve=None
         self.state_path=studio.root/'.runtime/backend-state.json'
         self._state=backend_state.Store(self.state_path);self._state_snapshot=None;self._owned_operation=None
-        self._owner=backend_state.current_owner();self.state_issue=None
+        self._owner=backend_state.current_owner();self.state_issue=None;self._uncertain_publication=None
         config=studio.config;primary=Path(config.get('comfy_root',studio.comfy_root)).resolve()
         python=Path(config.get('python','C:/AI/ComfyUI_windows_portable/python_embeded/python.exe')).resolve()
         isolated=Path(config.get('hidream_root','C:/AI/experiments/hidream-o1/ComfyUI')).resolve()
@@ -113,12 +113,12 @@ class BackendManager:
             try:record['online']=endpoint_ready(self.request(profile,'/system_stats',0.8))
             except (OSError,ValueError):record['online']=False
             record['active']=self.active==profile['id'];profiles.append(record)
-        with self.studio.lock:active=self.active;busy=self.busy;operation=copy.deepcopy(self.operation);last_launch_reserve=copy.deepcopy(self.last_launch_reserve);state_issue=self.state_issue
+        with self.studio.lock:active=self.active;busy=self.busy;operation=copy.deepcopy(self.operation);last_launch_reserve=copy.deepcopy(self.last_launch_reserve);state_issue=self.state_issue;uncertain=self._uncertain_publication if state_issue else None
         try:
             shared=self._state.read()
             shared_state={'sha256':shared.identity[1] if shared.identity else None,'operation':shared.value.get('operation'),
                           'blocker':state_issue or backend_state.blocker(shared.value),
-                          'resolvable':not busy and backend_state.resolution_allowed(shared.value,self._owner)}
+                          'resolvable':not busy and backend_state.resolution_allowed(shared,self._owner,uncertain)}
         except backend_state.StateError as exc:shared_state={'sha256':None,'blocker':str(exc),'resolvable':False}
         return {'active':active,'busy':busy,'operation':operation,'profiles':profiles,'last_launch_reserve':last_launch_reserve,
                 'state_issue':state_issue,'shared_state':shared_state}
@@ -128,14 +128,15 @@ class BackendManager:
         with self.studio.lock:
             if self.busy:raise backend_state.StateError('A backend switch is still running in this Studio')
             current=self._state.read()
-            try:resolved=self._state.resolve(current,payload,self._owner)
+            try:resolved=self._state.resolve(current,payload,self._owner,self._uncertain_publication if self.state_issue else None)
             except backend_state.StateUnconfirmed as exc:self._state_failed(exc);raise
-            self._state_snapshot=resolved;self.operation=copy.deepcopy(resolved.value.get('operation'));self.state_issue=None
+            self._state_snapshot=resolved;self.operation=copy.deepcopy(resolved.value.get('operation'));self.state_issue=None;self._uncertain_publication=None
         return self.snapshot()
 
     def _state_failed(self, exc, *, admission=False):
         """Do not turn a stale worker's error into another write over the current operation."""
         self.state_issue=None if admission and isinstance(exc,backend_state.StateConflict) else str(exc);self._owned_operation=None
+        self._uncertain_publication=exc.attempted_sha256 if isinstance(exc,backend_state.StateUnconfirmed) else None
         try:
             self._state_snapshot=self._state.read();self.operation=copy.deepcopy(self._state_snapshot.value.get('operation'))
         except backend_state.StateError as observed:self._state_snapshot=None;self.state_issue=str(observed)
@@ -154,12 +155,14 @@ class BackendManager:
         try:self._state_snapshot=self._state.reserve(self._state_snapshot,operation)
         except backend_state.StateError as exc:self._state_failed(exc,admission=True);raise
         self.operation=copy.deepcopy(self._state_snapshot.value['operation']);self.busy=True
+        self._uncertain_publication=None
         self._owned_operation={'id':operation['id'],'owner':copy.deepcopy(operation['owner'])}
 
     def _save(self, *, active=None):
         try:
             if self._state_snapshot is None:raise backend_state.StateError('Backend state is unconfirmed; inspect it before retrying')
             self._state_snapshot=self._state.update(self._state_snapshot,self._owned_operation,self.operation,active)
+            self._uncertain_publication=None
         except backend_state.StateError as exc:self._state_failed(exc);raise
 
     @staticmethod

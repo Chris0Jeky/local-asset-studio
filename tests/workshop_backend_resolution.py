@@ -38,18 +38,25 @@ async def exercise_backend_resolution(page, checks, posts):
             assert len(writes)==start, 'One acknowledgement must not resolve it'
             await page.check('#backendRuntimesInspected')
             assert await page.locator('#resolveBackendSwitch').is_enabled()
+            await page.locator('#resolveBackendSwitch').focus()
             await page.evaluate('refreshBackends()')
             assert await page.locator('#resolveBackendSwitch').is_enabled(), 'An identical read preserves the deliberate checks'
+            assert await page.locator('#resolveBackendSwitch').evaluate('node=>node===document.activeElement')
             observed['shared_state']['sha256']='b'*64
             await page.evaluate('refreshBackends()')
             assert not await page.locator('#backendStudiosClosed').is_checked()
             assert not await page.locator('#backendRuntimesInspected').is_checked()
             assert await page.locator('#resolveBackendSwitch').is_disabled()
+            assert await page.locator('#backendStatus').evaluate('node=>node===document.activeElement'), 'Replacement transfers focus before disabling Resolve'
             assert len(writes)==start, 'A replacement record requires new acknowledgements'
+            await page.locator('#backendStudiosClosed').focus()
+            observed['shared_state']['sha256']='c'*64
+            await page.evaluate('refreshBackends()')
+            assert await page.locator('#backendStudiosClosed').evaluate('node=>node===document.activeElement'), 'A still-visible checkbox keeps focus across replacement'
             await page.check('#backendStudiosClosed');await page.check('#backendRuntimesInspected')
             await page.click('#resolveBackendSwitch')
             await page.wait_for_function('!backendResolving && document.querySelector("#backendResolution").hidden')
-            assert writes[start:]==[{'path':'resolve-switch','body':{'expected_sha256':'b'*64,
+            assert writes[start:]==[{'path':'resolve-switch','body':{'expected_sha256':'c'*64,
                    'acknowledge_studios_closed':True,'acknowledge_runtimes_inspected':True}}]
             assert await page.locator('#switchBackend').is_enabled()
             assert await page.locator('#backendStatus').evaluate('node=>node===document.activeElement'), 'Hiding the completed controls keeps focus visible'
@@ -61,7 +68,7 @@ async def exercise_backend_resolution(page, checks, posts):
             assert 'Another Studio still owns' in await page.locator('#backendStatus').inner_text()
             assert 'Switching to' not in await page.locator('#envSummary').inner_text()
             assert len(writes)==start+1
-            checks.append(f'{width}px legacy resolution requires both checks for the exact record; replacement resets checks, live foreign ownership stays blocked, and only one explicit resolution POST occurs')
+            checks.append(f'{width}px legacy resolution requires both checks for the exact record; replacement resets checks and moves disabled-button focus to status while preserving checkbox focus; live foreign ownership stays blocked; only one explicit resolution POST occurs')
         assert {row['path'] for row in posts[before:]}<={'/api/estimate','/api/references/check'}, 'The native resolution fixture never reaches a runtime action or generation route'
     finally:
         await page.unroute('**/api/backends',read)

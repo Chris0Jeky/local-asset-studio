@@ -1,5 +1,49 @@
 # Current state — 13 October 2026
 
+## GitHub issue maintenance — 19 October 2026
+
+This maintenance pass started from GitHub main `40a17994971aa736b79dfc18190b515d48231839`
+and reviewed the 135 then-open issues. The uploaded source was reconciled with GitHub before
+publishing changes. These seven PRs were independently reviewed, validated on their published
+heads and merged with merge commits:
+
+| PR | Delivered change | Merge commit |
+| --- | --- | --- |
+| [#1592](https://github.com/Chris0Jeky/local-asset-studio/pull/1592) | Parallax uncertainty without a receipt points to visible Recent runs / Problems guidance. | `2b5a1badc2bf7674d45cb9f937a1c506e0391c91` |
+| [#1593](https://github.com/Chris0Jeky/local-asset-studio/pull/1593) | MOSS keeps its host-commit gate at smaller canvases and refuses missing or empty extra-model-path configuration. | `11612fa2840618a047bc309d748b356b72bc7da8` |
+| [#1594](https://github.com/Chris0Jeky/local-asset-studio/pull/1594) | Explicit same-reason Stop / Abandon retries re-publish loaded dispositions after restart before acknowledgment. | `aa957fa757c934c2893fb1e1c2b44b27e355d1b1` |
+| [#1595](https://github.com/Chris0Jeky/local-asset-studio/pull/1595) | Runtime recovery gains bounded alternate-health checks, switch interlocks, actionable shared-state guidance and the actual bound Studio port. | `e24f842788fbb0ff40ac14233df323b3dea4021b` |
+| [#1596](https://github.com/Chris0Jeky/local-asset-studio/pull/1596) | Revision-pinned Ming metadata distinguishes the official Layer F32 files from Comfy's BF16-named repack; historical missing raw evidence stays identified as missing. | `20d26e6ec1c2bb21ba1ae4fe198622dfe2e07023` |
+| [#1597](https://github.com/Chris0Jeky/local-asset-studio/pull/1597) | Invalid new review tags stay editable, uncertain retries keep their original command bytes, and failed saves do not advance the review queue. | `535f91854da22ccc26aec4abb57476830913caf4` |
+| [#1598](https://github.com/Chris0Jeky/local-asset-studio/pull/1598) | The eviction guard preserves unknown external VRAM, applies a declared bounded adjustment and validates source capacity before subtraction. | `8f22ce3956f482adc596c8366addaa2728412378` |
+
+The runtime ownership follow-up [#1599](https://github.com/Chris0Jeky/local-asset-studio/pull/1599)
+adds a versioned Studio-process owner, coordinated state publication, conclusive dead-owner
+reconciliation and an explicit exact-record inspection flow. Live, reused or unobservable owner
+identities remain protected. An uncertain terminal publication can be settled only by the same
+inactive manager holding its exact attempted digest; resolution preserves the saved outcome and
+selection. Missing process-observation dependencies leave ownership unknown. This migrates the
+BackendManager writer, not the historical global writer or a universal runtime-launch lease.
+Its final published-head checks, review and merge disposition are recorded on that PR.
+
+Verification includes causal fault tests, Linux and Windows hosted checks, and native inert browser
+journeys. The #1598 head and merge preview each passed 5,734 tests with 72 expected skips plus the
+93-graph / 187-pin validator; its actual merged tree equals the tested tree. The #1597 browser runs
+passed 48 scenarios, 19 reload cases and two intentional fault probes. The runtime resolution flow
+was exercised and visually inspected at 1440 and 390 pixels. Local full-suite attempts affected by
+shared disk pressure are not pass evidence; the PRs link the qualifying hosted runs.
+
+Issues #1591, #1589, #1324 and #983 are closed. Remaining work is kept concrete in #716 (other
+publication owners and platform durability), #1211 (the wider review workflow), #1213 (the Krea
+adapter-stack continuation), #1234 (the inline CPU finishing path) and #361 (request-level image
+allocation). Existing owner answers and the waived Task Manager check are preserved.
+
+No installed ComfyUI was modified or launched, no model weights were downloaded, and no generation
+was submitted in this pass. The GPU extension's workstation activation and eviction behavior,
+Ming tensor/header equivalence, model quality and owner creative acceptance remain unmeasured.
+`HUMAN_TODO.md` is unchanged. The overnight runtime and art results below predate this maintenance
+pass and are not new execution evidence from it.
+
 ## Overnight coordinator session - 19 October 2026 (goal-first UX, MOSS, wrap-up)
 
 Executed: 52 PRs merged from 02:48 UTC (#1530) to 10:33 UTC (#1588) on 19 Oct, per `gh pr list --state merged`; #1578, #1582 and #1587 were approved and in the merge queue when this entry was written. Each one went through CI, one independent review or a clean Codex outcome, and a 3-minute aging floor, and was merged by the coordinator through `estate_merge.py`; none was squashed. 17 issues were closed as completed with evidence: 97, 204, 252, 282, 364, 384, 388, 552, 641, 661, 923, 1219, 1220, 1525, 1566, 1570, 1584. Sources: `gh pr list --state merged --search "merged:>=2026-10-18T22:00:00Z"` and `.runtime/closeout-20261019.md`.

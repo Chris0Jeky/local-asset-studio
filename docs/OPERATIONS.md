@@ -109,7 +109,9 @@ observes process identity before a bounded, serialized reconciliation:
 | Existing state file is malformed, unreadable, changing, linked, oversized or has no valid selection | Keep the error visible and block admission. An absent file alone means first run. |
 
 Age never proves that a switch was abandoned. A reused PID or changed creation time remains unknown;
-the code does not guess that the old owner exited. `launch-intent` is flushed before process creation,
+the code does not guess that the old owner exited. Without the process-observation dependency (`psutil`),
+read-only imports remain available, but owner identity is unknown and a switch cannot be reserved.
+`launch-intent` is flushed before process creation,
 so a crash between creating a runtime and recording its PID cannot be mistaken for a prelaunch interruption.
 Reconciliation preserves the target, original times, process identities, stopped-process records and logs,
 and records when and why it reconciled the operation.
@@ -124,7 +126,14 @@ the currently selected backend only if all its normal checks pass. To change fam
 environment switch action.
 
 The same resolution is available for this exact Studio manager's uncertain publication once its switch
-worker is inactive. It is refused while that worker is active. A new manager has a different instance ID,
+worker is inactive. If a completion, failure or resolution landed but its acknowledgement was lost, this exception
+requires the exact attempted file digest retained privately by that manager. Resolution preserves the
+recorded `completed`, `failed` or `interrupted` outcome, original message, times and selection; it only adds the inspection
+receipt and clears the local uncertainty hold. Normal terminal records and ordinary observation errors do
+not enable this exception. A lost completion acknowledgement can leave this Studio's in-memory selection
+behind the saved selection; resolution does not activate another family. Select the intended environment
+explicitly, or restart Studio after inspection to follow the saved selection.
+Resolution is refused while that worker is active. A new manager has a different instance ID,
 even in the same PID, so it cannot use that local-worker exception for another manager's record. A live or
 unverified recorded foreign owner is never overridden by the checkboxes. Unknown owner formats or unreadable
 state have no resolution button; retain the record and logs for inspection instead of editing away a gate.

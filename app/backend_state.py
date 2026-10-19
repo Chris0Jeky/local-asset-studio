@@ -16,7 +16,8 @@ import tempfile
 import time
 import uuid
 
-import psutil
+try:import psutil
+except ImportError:psutil=None
 import file_replace
 
 MAX_BYTES = 128 * 1024
@@ -26,7 +27,9 @@ WINDOWS = os.name == 'nt'
 
 class StateError(ValueError): pass
 class StateConflict(StateError): pass
-class StateUnconfirmed(StateError): pass
+class StateUnconfirmed(StateError):
+    def __init__(self,message,*,attempted_sha256=None):
+        super().__init__(message);self.attempted_sha256=attempted_sha256
 
 
 def _finite(value):
@@ -43,6 +46,7 @@ def valid_owner(owner):
 
 def current_owner():
     """Capture this Studio process, never the backend child or a record's PID."""
+    if psutil is None:return None
     try:
         owner = {'version': 1, 'pid': os.getpid(), 'created_at': psutil.Process(os.getpid()).create_time(),
                  'instance_id': uuid.uuid4().hex}
@@ -52,7 +56,7 @@ def current_owner():
 
 def owner_status(owner):
     """Only a fresh NoSuchProcess proves absence. Clock/PID-reuse mismatches are unknown."""
-    if not valid_owner(owner): return 'unknown'
+    if psutil is None or not valid_owner(owner): return 'unknown'
     try: created = psutil.Process(owner['pid']).create_time()
     except psutil.ZombieProcess: return 'unknown'
     except psutil.NoSuchProcess: return 'absent'
@@ -81,10 +85,16 @@ def blocker(value):
     return None
 
 
-def resolution_allowed(value, this_owner=None):
+def resolution_allowed(observed, this_owner=None, uncertain_sha256=None):
     """The manager separately excludes its active worker under the Studio lock."""
-    operation = value.get('operation')
-    if not isinstance(operation, dict) or not (operation.get('status') == 'running' or operation.get('inspection_required')): return False
+    operation = observed.value.get('operation')
+    if not isinstance(operation, dict): return False
+    if operation.get('status') in ('completed','failed','interrupted') and not operation.get('inspection_required'):
+        # Only a genuine unconfirmed publication in this manager supplies this
+        # private digest. A normal terminal record or another owner is ineligible.
+        return (valid_owner(this_owner) and operation.get('owner') == this_owner
+                and observed.identity is not None and observed.identity[1] == uncertain_sha256)
+    if not (operation.get('status') == 'running' or operation.get('inspection_required')): return False
     # Legacy ownership cannot be reconstructed. Only the explicit operator attestation can resolve it.
     if 'owner' not in operation: return True
     if not valid_owner(operation['owner']) or not valid_owner(this_owner): return False
@@ -238,7 +248,9 @@ class Store:
                 raise StateUnconfirmed('Backend state publication could not be confirmed')
             return landed
         except (OSError, StateError) as exc:
-            if replacing: raise StateUnconfirmed('Backend state publication is unconfirmed; inspect the saved operation before retrying') from exc
+            if replacing:
+                raise StateUnconfirmed('Backend state publication is unconfirmed; inspect the saved operation before retrying',
+                                       attempted_sha256=hashlib.sha256(raw).hexdigest()) from exc
             if isinstance(exc, StateError): raise
             raise StateError('Cannot publish backend state: ' + str(exc)[:200]) from exc
         finally:
@@ -276,7 +288,7 @@ class Store:
                              message='The recorded Studio owner exited. ' + ('Runtime launch outcome requires inspection.' if inspect else 'The switch ended before launch intent.'))
             return self._publish(current, value, lock)
 
-    def resolve(self, expected, payload, this_owner=None):
+    def resolve(self, expected, payload, this_owner=None, uncertain_sha256=None):
         if (not isinstance(payload,dict) or payload.get('acknowledge_studios_closed') is not True
                 or payload.get('acknowledge_runtimes_inspected') is not True):
             raise StateError('Confirm that every other Studio instance is closed and the runtimes and startup logs were inspected')
@@ -284,11 +296,12 @@ class Store:
             raise StateConflict('The saved switch changed; refresh Models & setup and inspect the current operation')
         with writer_lock(self.path) as lock:
             current=self._expected(expected,lock)
-            if not resolution_allowed(current.value,this_owner):
+            if not resolution_allowed(current,this_owner,uncertain_sha256):
                 raise StateError('The switch owner is live or unverified, or this record does not need resolution; the saved operation was preserved')
             value=copy.deepcopy(current.value);operation=value['operation']
-            operation.update(status='interrupted',inspection_required=False,
-                             message='Saved switch resolved after explicit inspection. Select the intended environment in Models & setup.')
+            if operation.get('status') not in ('completed','failed','interrupted'):
+                operation.update(status='interrupted',message='Saved switch resolved after explicit inspection. Select the intended environment in Models & setup.')
+            if operation.get('inspection_required') or operation.get('status')=='interrupted':operation['inspection_required']=False
             operation['resolution']={'at':time.time(),'expected_sha256':payload['expected_sha256'],
                                      'acknowledge_studios_closed':True,'acknowledge_runtimes_inspected':True,
                                      'resolved_by':copy.deepcopy(this_owner)}
