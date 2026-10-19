@@ -357,8 +357,9 @@
   const statusEl=document.createElement('p');statusEl.id='makeStatus';statusEl.className='make-status';statusEl.setAttribute('role','status');
   function placeStatus(){const button=q('.make-go #makeGenerate'),slot=button?null:q('#makeStatusSlot');if(button&&statusEl.previousElementSibling!==button)button.after(statusEl);else if(slot&&statusEl.parentElement!==slot)slot.append(statusEl);}
   placeStatus();
-  // A look picture that is missing on this PC (local-only examples) shows the blank mark, not a broken image.
-  view.addEventListener('error',e=>{if(e.target.matches?.('.make-look img,.make-chosen>img')){const blank=document.createElement('span');blank.className='make-look-blank';blank.setAttribute('aria-hidden','true');blank.textContent='✦';e.target.replaceWith(blank);}},true);
+  // A look picture that is missing on this PC (local-only examples) shows the blank mark, not a broken image. Only look pictures:
+  // a chosen picture of yours (.make-picked) keeps its <img>, so a slow or failed thumbnail never removes it.
+  view.addEventListener('error',e=>{if(e.target.matches?.('.make-look img,.make-chosen:not(.make-picked)>img')){const blank=document.createElement('span');blank.className='make-look-blank';blank.setAttribute('aria-hidden','true');blank.textContent='✦';e.target.replaceWith(blank);}},true);
   function renderGoals(){
     q('#makeGoals').innerHTML=GOALS.map((g,i)=>(i===5?'<div class="make-goal-group" role="group" aria-labelledby="makePictureGoals"><span class="make-goal-break" id="makePictureGoals">From a picture you have</span>':'')+'<button type="button" role="radio" tabindex="'+(g.id===state.goal?'0':'-1')+'" aria-checked="'+(g.id===state.goal)+'" data-make-goal="'+g.id+'"><b>'+escape(g.name)+'</b><small>'+escape(g.hint)+'</small></button>').join('')+'</div>';
   }
