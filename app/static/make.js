@@ -510,7 +510,10 @@
   // Keep / Not this: the library's own review field. Saves run one after another (the library takes one command at a
   // time), and pressing the recorded decision again clears it, decided from the refreshed record, not page memory.
   let reviewQueue=Promise.resolve();
-  function review(button){button.disabled=true;reviewQueue=reviewQueue.then(()=>saveReview(button));return reviewQueue;}
+  // One write per target at a time (Muse lens, 19 Oct): a redraw can bring back an enabled button mid-save, so a second press of Keep,
+  // Resume, Save character or Put away is dropped while the first is in flight, instead of applying twice or undoing itself.
+  const inflight=new Set(),once=async(key,fn)=>{if(inflight.has(key))return;inflight.add(key);try{return await fn();}finally{inflight.delete(key);}};
+  function review(button){const key='review:'+button.dataset.asset;if(inflight.has(key))return reviewQueue;inflight.add(key);button.disabled=true;reviewQueue=reviewQueue.then(()=>saveReview(button)).finally(()=>inflight.delete(key));return reviewQueue;}
   async function saveReview(button){
     const id=button.dataset.asset
     try{if(await refreshAssets(true)===false){await new Promise(r=>setTimeout(r,600));await refreshAssets(true);}
@@ -544,7 +547,7 @@
   }
   async function recover(button){
     const action=button.dataset.makeResume?'resume':'stop-tracking',id=button.dataset.makeResume||button.dataset.makeStop,run=state.runs.find(r=>r.job.id===id);if(!run)return;
-    let body={};if(action==='stop-tracking'){const field=q('[data-make-stop-reason="'+CSS.escape(id)+'"]'),reason=field?.value.trim();if(!reason){field?.setAttribute('aria-invalid','true');field?.focus();say('Give a reason before stopping tracking.');return;}body={reason};}
+    let body={};if(action==='stop-tracking'){const field=q('[data-make-stop-reason="'+CSS.escape(id)+'"]'),reason=field?.value.trim();if(!reason){field?.setAttribute('aria-invalid','true');field?.setAttribute('aria-describedby','makeStatus');field?.focus();say('Give a reason before stopping tracking.');return;}body={reason};}
     button.disabled=true;
     try{const job=await json('/api/jobs/'+encodeURIComponent(id)+'/'+action,body);run.job={...run.job,...job};run.lost=false;renderRuns();remember();if(observing(run))poll(id);else{clearTimeout(timers.get(id));timers.delete(id);}
       say(action==='resume'?'Checking ComfyUI again for this run. Nothing is sent again.':'Tracking stopped. Its record and any pictures stay in the library.');}
@@ -1073,8 +1076,8 @@
     const saveChar=e.target.closest('[data-make-character-save]');if(saveChar){openCharacterForm(saveChar.dataset.makeCharacterSave,saveChar.closest('[data-run]')?.dataset.run);return;}
     if(e.target.closest('[data-make-character-cancel]')){const a=state.charSave,edit=state.charEdit,move=state.charMigrate;clearCharForms();renderRuns();refreshCharacters();q(edit?'[data-make-character-edit="'+CSS.escape(edit)+'"]':move?'[data-make-migrate="'+CSS.escape(move)+'"]':'[data-make-character-save="'+CSS.escape(a||'')+'"]')?.focus();return;}
     const editChar=e.target.closest('[data-make-character-edit]');if(editChar){openCharacterEdit(editChar.dataset.makeCharacterEdit);return;}
-    const awayChar=e.target.closest('[data-make-character-away]');if(awayChar){void characterCommand(awayChar.dataset.makeCharacterAway,'trash');return;}
-    const restoreChar=e.target.closest('[data-make-character-restore]');if(restoreChar){void characterCommand(restoreChar.dataset.makeCharacterRestore,'restore');return;}
+    const awayChar=e.target.closest('[data-make-character-away]');if(awayChar){void once('character:'+awayChar.dataset.makeCharacterAway,()=>characterCommand(awayChar.dataset.makeCharacterAway,'trash'));return;}
+    const restoreChar=e.target.closest('[data-make-character-restore]');if(restoreChar){void once('character:'+restoreChar.dataset.makeCharacterRestore,()=>characterCommand(restoreChar.dataset.makeCharacterRestore,'restore'));return;}
     const migrate=e.target.closest('[data-make-migrate]');if(migrate){openMigration(migrate.dataset.makeMigrate);return;}
     if(e.target.closest('[data-make-note-dismiss]')){dismissNote();return;}
     const pick=e.target.closest('[data-make-pick]');if(pick){state.character=null;choosePicture(pick.dataset.makePick);renderPictures(goal());q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();return;}
@@ -1101,7 +1104,7 @@
       const scene=q('#makeScene');if(scene&&!state.picking){scene.focus();scene.select();}else q('.make-look.active [data-make-look]')?.focus();return;}
     const redo=e.target.closest('[data-make-redo]');if(redo){const run=state.runs.find(r=>r.job.id===redo.dataset.makeRedo);
       if(run&&redoRun(run)){say('That run’s picture and answers are back. Change what you like, then press Generate.');(q('#makeComposer textarea,#makeComposer input:not([type=search])')||q('#makeGenerate'))?.focus();}return;}
-    const recovering=e.target.closest('[data-make-resume],[data-make-stop]');if(recovering&&!recovering.disabled){void recover(recovering);return;}
+    const recovering=e.target.closest('[data-make-resume],[data-make-stop]');if(recovering&&!recovering.disabled){void once('recover:'+(recovering.dataset.makeResume||recovering.dataset.makeStop),()=>recover(recovering));return;}
     const verdict=e.target.closest('[data-make-review]');if(verdict){void review(verdict);return;}
     const polishing=e.target.closest('[data-make-polish]');if(polishing&&!polishing.disabled){void polishPicture(polishing);return;}
     const varying=e.target.closest('[data-make-vary]');if(varying&&!varying.disabled){void varyPicture(varying);return;}
@@ -1111,7 +1114,7 @@
   });
   // Which disclosures are open survives a redraw; opening a line-up reads the pictures (details fire toggle without bubbling).
   view.addEventListener('toggle',e=>{const k=e.target.dataset?.openKey;if(!k)return;if(e.target.open){state.openers.add(k);if(k.startsWith('lineup:'))void fillLineups();}else state.openers.delete(k);},true);
-  view.addEventListener('submit',e=>{const form=e.target.closest('[data-make-character-form]');if(form){e.preventDefault();void saveCharacter(form);}});
+  view.addEventListener('submit',e=>{const form=e.target.closest('[data-make-character-form]');if(form){e.preventDefault();void once('character-save:'+form.dataset.mode+':'+form.dataset.makeCharacterForm,()=>saveCharacter(form));}});
   view.addEventListener('keydown',e=>{const radio=e.target.closest('[role="radio"]'),group=radio?.closest('[role="radiogroup"]');if(group&&['ArrowRight','ArrowDown','ArrowLeft','ArrowUp','Home','End'].includes(e.key)){
     e.preventDefault();const items=[...group.querySelectorAll('[role="radio"]')],i=items.indexOf(radio),next=items[e.key==='Home'?0:e.key==='End'?items.length-1:(i+(['ArrowRight','ArrowDown'].includes(e.key)?1:items.length-1))%items.length],attr=next.hasAttribute('data-make-goal')?'data-make-goal':'data-make-look',value=next.getAttribute(attr);if(attr==='data-make-goal'){state.goal=value;state.pictures=null;remember();render();}else{state.look=value;state.picking=true;remember();renderLooks();}q('['+attr+'="'+value+'"]')?.focus();return;
   }if(e.target.id==='makeLoraSearch'&&e.key==='Enter'&&!e.isComposing){e.preventDefault();if(!e.repeat)q('[data-tune-add]')?.click();return;}
