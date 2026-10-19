@@ -84,6 +84,7 @@ def readiness(profile, repo_root):
         required.extend((role, root / path, False) for role, path in QWEN21_FILES)
     if profile['id'] == 'moss':
         required.append(('Comfy Kitchen overlay', root / 'python_packages/comfy_kitchen', True))
+        required.append(('Shared model paths', root / 'extra_model_paths.yaml', False))
         required.extend((role, Path(profile['library']) / path, False) for role, path in MOSS_FILES)
     if profile['id'] == 'h3':
         required.append(('isolated loader', Path(repo_root) / 'scripts/h3_mmap_loader.py', False))
