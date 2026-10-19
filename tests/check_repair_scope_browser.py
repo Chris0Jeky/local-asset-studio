@@ -5,6 +5,7 @@ Studio server, file navigation, model calls or user artwork. Generated HTML is
 supplied via set_content; this is display/keyboard evidence, not native intake.
 """
 from __future__ import annotations
+from browser_ports import evidence_screenshot
 import argparse
 import json
 from pathlib import Path
@@ -64,7 +65,7 @@ def probe(output, browser_path, no_sandbox=False):
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
                 assert not any(url.startswith(('http:', 'https:')) for url in requests), requests
                 assert not errors, errors
-                page.screenshot(path=str(output/(label+'.png')), full_page=True)
+                evidence_screenshot(page, path=str(output/(label+'.png')), full_page=True)
                 observations[label] = {'width': width, 'loaded_images': 3, 'scope_statistics': 4,
                     'readonly_digest': True, 'keyboard_disclosure': True, 'horizontal_overflow': False,
                     'external_requests': 0, 'page_errors': errors}

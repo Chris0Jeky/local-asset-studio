@@ -1,4 +1,5 @@
 """Run decisions remain reachable without replacing execution owners (#770/#775/#778/#779)."""
+from browser_ports import evidence_screenshot
 import workshop_entry_points as entry
 from workshop_entry_points import workshop_html, script
 
@@ -30,7 +31,7 @@ class RunDecisions(entry.EntryPoints):
                     self.assertLessEqual(height, 72, self.page.evaluate("[document.querySelector('#status').textContent, document.querySelector('#workshopReadiness').textContent, document.querySelector('.wk-dock-info').className]"))
                     self.assertIn('~42s', self.page.locator('#workshopEta').inner_text())
                     self.assertTrue(self.page.locator('#generate').evaluate('(n)=>n===runOriginals.generate'))
-                    if layout == 'focus' and motion == 'no-preference': self.page.screenshot(path=str(shots / 'closed.png'))
+                    if layout == 'focus' and motion == 'no-preference': evidence_screenshot(self.page, path=str(shots / 'closed.png'))
                     toggle = self.page.locator('#workshopRunTools > summary')
                     for identity in tools: self.assertFalse(self.page.locator('#'+identity).is_visible(), identity)
                     # Tab order follows the visual order: Run tools, then Generate.
@@ -48,7 +49,7 @@ class RunDecisions(entry.EntryPoints):
                     self.page.select_option('#batch', '2')
                     self.page.click('#randomSeed'); self.page.click('#planComparison')
                     self.assertEqual(self.page.locator('[data-key=seed]').input_value(), '43')
-                    if layout == 'focus' and motion == 'no-preference': self.page.screenshot(path=str(shots / 'open.png'))
+                    if layout == 'focus' and motion == 'no-preference': evidence_screenshot(self.page, path=str(shots / 'open.png'))
                     for scroll in (0, 10000):
                         self.page.evaluate('(y)=>scrollTo(0,y)', scroll)
                         box = self.page.locator('#generate').bounding_box()

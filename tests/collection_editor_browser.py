@@ -3,6 +3,7 @@
 Native browser HTTP by default. --inert explicitly substitutes browser origin,
 storage and transport. --baseline records expectation failures but not exceptions.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import asyncio
 import hashlib
@@ -196,8 +197,8 @@ async def exercise(args):
                 await page.set_viewport_size({'width':390,'height':1000})
                 check('COL-23','The collection editor fits a 390px viewport',await page.evaluate('document.querySelector("#collectionDialog").getBoundingClientRect().right<=innerWidth && document.documentElement.scrollWidth<=innerWidth'))
                 check('COL-24','Status messages use a polite atomic region',await page.locator('#collectionStatus').count()>0 and await page.locator('#collectionStatus').get_attribute('aria-live')=='polite' and await page.locator('#collectionStatus').get_attribute('aria-atomic')=='true')
-                await page.screenshot(path=str(args.out/'collection-draft-390.png'))
-                await page.set_viewport_size({'width':1440,'height':1000});await page.screenshot(path=str(args.out/'collection-draft-desktop.png'))
+                await evidence_screenshot(page, path=str(args.out/'collection-draft-390.png'))
+                await page.set_viewport_size({'width':1440,'height':1000});await evidence_screenshot(page, path=str(args.out/'collection-draft-desktop.png'))
                 check('COL-25','Collection operations never imply generation/install/upload',all(p['path'] in {'/api/estimate','/api/references/check'} for p in fixture.POSTS))
                 check('COL-26','The full shell has no JavaScript exceptions',not errors)
                 await browser.close()

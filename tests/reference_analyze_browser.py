@@ -2,6 +2,7 @@
 
 Never creates a generation job or contacts the owner's workstation.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import base64
 import json
@@ -113,7 +114,7 @@ def run(output):
                         destination=output/f'analysis-receipt-{width}.json';download.value.save_as(str(destination));receipt=json.loads(destination.read_text(encoding='utf-8'))
                         assert receipt['analysis']['request']['references'][0]['sha256']==fixture.refs[0]['sha256']
                         assert 'media_base64' not in destination.read_text(encoding='utf-8')
-                        page.screenshot(path=str(output/f'analysis-{width}.png'),full_page=True)
+                        evidence_screenshot(page, path=str(output/f'analysis-{width}.png'),full_page=True)
                         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),f'overflow {width}'
                         page.add_style_tag(content='html{font-size:200%}')
                         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),f'text zoom overflow {width}'
@@ -141,7 +142,7 @@ def run(output):
                             expect(page.locator('#ra-new')).to_be_enabled()
                             page.locator('#ra-new').click()
                             page.locator('#ra-files').set_input_files(originals);expect(page.locator('#ra-start')).to_be_enabled()
-                            page.screenshot(path=str(output/'retirement-recovery.png'),full_page=True)
+                            evidence_screenshot(page, path=str(output/'retirement-recovery.png'),full_page=True)
                         if width==390:
                             page.locator('#ra-new').click();expect(page.locator('#ra-start')).to_be_enabled()
                             LOSE_MODEL.set();page.locator('#ra-start').click()

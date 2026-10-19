@@ -4,6 +4,7 @@ Run: python tests/workshop_browser.py --output .runtime/workshop-qa
 Uses Playwright's Chromium, or STUDIO_BROWSER_EXECUTABLE for a system browser.
 This is not a live ComfyUI or full application qualification.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import re
 import json
@@ -115,7 +116,7 @@ def main():
         assert height < 1700, height
         assert page.locator('#generate').bounding_box()['y'] < 900
         assert page.locator('#positive').bounding_box()['y'] < 900
-        page.screenshot(path=str(args.output / 'focus-atelier.png'), full_page=True)
+        evidence_screenshot(page, path=str(args.output / 'focus-atelier.png'), full_page=True)
         checks.append({'name': 'desktop first viewport + original controls + no submission', 'height': height})
 
         page.locator('#positive').fill('My unsaved private draft')
@@ -273,7 +274,7 @@ def main():
                     assert setup_width >= 230, (width, setup_width)
                     assert editor_width >= 480, (width, editor_width)
             if (layout, skin) in {('focus','atelier'), ('studio','sakura'), ('immersive','retro-anime')}:
-                page.screenshot(
+                evidence_screenshot(page,
                     path=str(args.output / f'{layout}-{skin}-{ambience}-{width}.png'),
                     full_page=True,
                 )

@@ -3,6 +3,7 @@
 Native HTTP/storage by default. --inert explicitly uses the existing component
 transport/storage shim when localhost navigation is unavailable. No inference.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import asyncio
 import json
@@ -120,7 +121,7 @@ async def run(args):
                 checks.append('successful bundle apply closes both dialogs and restores editable prompt focus')
             assert not [row for row in fixture.POSTS if row['path']=='/api/jobs']
             assert not errors, errors
-            await page.screenshot(path=str(args.output/'handoff.png'))
+            await evidence_screenshot(page, path=str(args.output/'handoff.png'))
             await browser.close()
     finally:
         if previous_wildcards is None:
