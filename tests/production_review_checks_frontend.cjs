@@ -95,7 +95,7 @@ vm.runInContext(`productionPlans=${JSON.stringify([plan])};productionId=${JSON.s
   assert.equal(updates.length,beforeKeeper+1,'a second Keeper press while the first save is pending records no update');
   assert.equal($('#productionMessage').textContent,'Still saving the last mark for this candidate. Press again in a moment. Nothing was changed.');
   releaseKeeper();mutateGate=null;await keeperFirst;await keeperSecond;
-  assert.match($('#productionMessage').textContent,/Marked as a keeper in your Workspace/,'the first save reports its own success');
+  assert.match($('#productionMessage').textContent,/Kept in your Workspace/,'the first save reports its own success');
   assert.doesNotMatch($('#productionMessage').textContent,/Still saving|Resolve the earlier library update/,'no failure is reported for the save that succeeded');
   await pressKeeper();
   assert.equal(updates.length,beforeKeeper+2,'a Keeper press after the save settles records its own update');

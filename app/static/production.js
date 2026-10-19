@@ -335,7 +335,7 @@ async function reviewCandidateAsset(id,review){
   try{
     await refreshAssets(true);
     await mutateAssets({ids:[id],action:'edit',review});
-    productionMessage((review==='selected'?'Marked as a keeper':'Marked as needing work')+' in your Workspace. The comparison outcome and its reservations are unchanged.');
+    productionMessage((review==='selected'?'Kept':'Marked as needing work')+' in your Workspace. The comparison outcome and its reservations are unchanged.');
   }finally{candidateReviewBusy.delete(id);}
 }
 // #1203: quick yes/no checks on a candidate picture, saved one press at a time through the same guarded update.
