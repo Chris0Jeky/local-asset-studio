@@ -316,6 +316,15 @@ test('Petiflow additions use knowledge defaults while retaining every lab note',
   assert.match(String(api.labOf(look,names[3])),/flattened the face/);
 });
 
+test('Make drops a second write to the same target while the first is in flight (Muse lens, 19 Oct)',async()=>{
+  const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),line=make.match(/  const inflight=new Set\(\),once=.*\n/)[0];
+  const api=vm.runInNewContext(line+';({once,inflight})',{});let calls=0,release;const slow=()=>new Promise(r=>{calls++;release=r;});
+  const first=api.once('character:c1',slow),second=api.once('character:c1',slow),other=api.once('character:c2',async()=>{calls++;});
+  await second;await other;assert.equal(calls,2,'the same target runs once; another target still runs');release();await first;
+  assert.equal(api.inflight.size,0,'the key is released after the write settles');await api.once('character:c1',async()=>{calls++;});assert.equal(calls,3);
+  await assert.rejects(api.once('k',async()=>{throw Error('boom');}));assert.equal(api.inflight.has('k'),false,'a failed write releases its key');
+});
+
 test('Make offers a character card on every saved picture regardless of review, and preserves canon labels',()=>{
   const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8');
   const context={state:{charSave:null},reviewOf:()=>context.review,usableCharacters:()=>context.characters,escape:s=>s,characterForm:()=>'<form>character</form>',CANON_NOTE:'canon',characters:[]};

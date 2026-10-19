@@ -7,6 +7,11 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-10-19 overnight (ux-lead): Make robustness
+
+- [ ] **The chosen look carries a "✓ Chosen" badge** on its card, beside the accent border (colour alone did not say which look was chosen). Reverse: delete the `.make-look.active::after` rule at the end of `app/static/make.css`.
+- [ ] **A second press of Keep / Not this, Resume / Stop tracking, Save character or Put away / Restore is ignored while the first save is in flight** (Muse lens). Reverse: drop the `once(...)` wrappers in `app/static/make.js`.
+
 ## 2026-10-17 session (agent judgment calls)
 
 - [ ] **#1524 saved pictures from partial runs may be varied and polished.** Agent judgment: a saved asset is usable even when other pictures in its run were not recovered. Queued, running, uncertain and failed runs remain refused; source identity and bytes are still checked when pressed. Synthetic status contracts cover both paths. Reverse by removing `partial` from the two source-status allow-lists in `app/static/studio-workbench.js`.
