@@ -1229,6 +1229,161 @@
    ]
   },
   {
+   "name": "edit-k4b-bg-snow",
+   "preset_id": "flux-edit",
+   "controls": {
+    "positive": "Change the castle balcony at dusk into a snowy mountain pass at dawn. Keep everything else exactly as it is: the character's face, hair, pose, hands, the staff, the background and the rendering style.",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 4,
+    "cfg": 1.0
+   },
+   "references": [],
+   "uploads": {
+    "reference": "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\s1-pearly-0.png"
+   },
+   "status": "completed",
+   "job_id": "7cb992fd-55b4-4ce9-8b12-c11d2e3a74c3",
+   "prompt_ids": [
+    "4399ad24-20ee-42f7-b25e-ab9110b8a04f"
+   ],
+   "seconds": 14.476732730865479,
+   "peak_commit": 0.606,
+   "admission": 0.5984763868899422,
+   "outputs": [
+    {
+     "file": "edit-k4b-bg-snow-0.png",
+     "sha256": "ffba97169e8807ad8d85dbc14901f4203091facd3b5a14c2e3dbb9faac272ecb",
+     "bytes": 1558351
+    }
+   ]
+  },
+  {
+   "name": "edit-k4b-costume-armor",
+   "preset_id": "flux-edit",
+   "controls": {
+    "positive": "Replace her black and gold sorceress robe with white and silver plate armour with a blue cloak. Keep everything else exactly as it is: the character's face, hair, pose, hands, the staff, the background and the rendering style.",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 4,
+    "cfg": 1.0
+   },
+   "references": [],
+   "uploads": {
+    "reference": "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\s1-pearly-0.png"
+   },
+   "status": "completed",
+   "job_id": "552e624d-1bab-4600-aefa-5abb59733ece",
+   "prompt_ids": [
+    "33cc72ea-a577-4d39-a4ae-21f186dab2e1"
+   ],
+   "seconds": 38.928364276885986,
+   "peak_commit": 0.59,
+   "admission": 0.41898623291867004,
+   "outputs": [
+    {
+     "file": "edit-k4b-costume-armor-0.png",
+     "sha256": "b8b891f679b1043338595abdf077cdca9c9c2f94f77bda52ba834859ffd8c797",
+     "bytes": 1629284
+    }
+   ]
+  },
+  {
+   "name": "edit-k4b-costume-kimono",
+   "preset_id": "flux-edit",
+   "controls": {
+    "positive": "Replace her sorceress robe with a red and gold kimono with a gold obi. Keep everything else exactly as it is: the character's face, hair, pose, hands, the staff, the background and the rendering style.",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 4,
+    "cfg": 1.0
+   },
+   "references": [],
+   "uploads": {
+    "reference": "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\s1-pearly-0.png"
+   },
+   "status": "completed",
+   "job_id": "6fe6fc24-2914-4008-a9dc-2186043fec7c",
+   "prompt_ids": [
+    "e7a25b96-b571-4b9f-9c19-1779a560f645"
+   ],
+   "seconds": 18.351801872253418,
+   "peak_commit": 0.593,
+   "admission": 0.5904585807187537,
+   "outputs": [
+    {
+     "file": "edit-k4b-costume-kimono-0.png",
+     "sha256": "1ec1e0ef86bfcb7dd928a5baf5b619efded0ddfd84d101477f26c93afadb9594",
+     "bytes": 1743231
+    }
+   ]
+  },
+  {
+   "name": "edit-k4b-expression-laugh",
+   "preset_id": "flux-edit",
+   "controls": {
+    "positive": "Change her expression to a gentle laugh with her eyes closed. Keep everything else exactly as it is: the character's face, hair, pose, hands, the staff, the background and the rendering style.",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 4,
+    "cfg": 1.0
+   },
+   "references": [],
+   "uploads": {
+    "reference": "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\s1-pearly-0.png"
+   },
+   "status": "completed",
+   "job_id": "c234ec8f-f344-4784-96c1-947bfb8faced",
+   "prompt_ids": [
+    "a8cca8c6-0f40-43c3-b525-36139e9359ed"
+   ],
+   "seconds": 18.32606339454651,
+   "peak_commit": 0.599,
+   "admission": 0.5914230829864876,
+   "outputs": [
+    {
+     "file": "edit-k4b-expression-laugh-0.png",
+     "sha256": "b2634c521450b053f679741b5a23f732a89ec3d998baef2ead1f4791f63cc2a0",
+     "bytes": 1503668
+    }
+   ]
+  },
+  {
+   "name": "edit-k4b-hair-crimson",
+   "preset_id": "flux-edit",
+   "controls": {
+    "positive": "Change her hair colour from silver to deep crimson red. Keep everything else exactly as it is: the character's face, hair, pose, hands, the staff, the background and the rendering style.",
+    "width": 832,
+    "height": 1216,
+    "seed": 2026101901,
+    "steps": 4,
+    "cfg": 1.0
+   },
+   "references": [],
+   "uploads": {
+    "reference": "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\s1-pearly-0.png"
+   },
+   "status": "completed",
+   "job_id": "b746267d-9166-49d5-ba3b-245ca12673c0",
+   "prompt_ids": [
+    "28f02ea2-8b7b-4d2f-b8c9-67b41702d6cb"
+   ],
+   "seconds": 16.32955288887024,
+   "peak_commit": 0.601,
+   "admission": 0.5981204818470496,
+   "outputs": [
+    {
+     "file": "edit-k4b-hair-crimson-0.png",
+     "sha256": "f6cfe12f87f130ac6d4155e84e461b34491dffe345376d5d1f69fd30de99376b",
+     "bytes": 1506512
+    }
+   ]
+  },
+  {
    "name": "f1-anifox",
    "preset_id": "anifox-v2-baseline",
    "controls": {
@@ -2108,6 +2263,303 @@
    ]
   },
   {
+   "name": "kl-copy-c1-pirate-pearly",
+   "preset_id": "combine-klein-9b-copypose",
+   "controls": {
+    "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult silver-haired sorceress with violet eyes and long hair; keep that character's face, hair and rendering style and the clothes with their colours (a black and gold sorceress robe with a high collar, covered neckline); only the pose and framing change, to image 2's: one hand on the hip and the other hand on a sword hilt, relaxed confident stance, medium full body. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+    "seed": 2026101901,
+    "steps": 6,
+    "cfg": 1.0,
+    "width": 832,
+    "height": 1216
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\c1-pirate-pearly-0.png"
+   ],
+   "uploads": {
+    "last_reference": "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\s1-pearly-0.png"
+   },
+   "status": "completed",
+   "job_id": "639646e0-9f9e-4e96-8419-96704bda40be",
+   "prompt_ids": [
+    "49eaa3fc-48b4-4412-80e3-ab88d467c5b0"
+   ],
+   "seconds": 66.64135694503784,
+   "peak_commit": 0.674,
+   "admission": 0.5270599414069754,
+   "outputs": [
+    {
+     "file": "kl-copy-c1-pirate-pearly-0.png",
+     "sha256": "a7b68a9bd73290e32c549717659c40a1253a550e992975f6a62bd0c026d502ff",
+     "bytes": 1466664
+    }
+   ]
+  },
+  {
+   "name": "kl-copy-c1-samurai-pearly",
+   "preset_id": "combine-klein-9b-copypose",
+   "controls": {
+    "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult silver-haired sorceress with violet eyes and long hair; keep that character's face, hair and rendering style and the clothes with their colours (a black and gold sorceress robe with a high collar, covered neckline); only the pose and framing change, to image 2's: standing with a sword held low in the right hand, left hand at the side, full body. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+    "seed": 2026101901,
+    "steps": 6,
+    "cfg": 1.0,
+    "width": 832,
+    "height": 1216
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\c1-samurai-pearly-0.png"
+   ],
+   "uploads": {
+    "last_reference": "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\s1-pearly-0.png"
+   },
+   "status": "completed",
+   "job_id": "a1a163df-432b-4184-87a5-f07b4d6a2640",
+   "prompt_ids": [
+    "88527cf6-c696-4306-a8af-00a929fcace7"
+   ],
+   "seconds": 70.66327929496765,
+   "peak_commit": 0.683,
+   "admission": 0.5420474849297268,
+   "outputs": [
+    {
+     "file": "kl-copy-c1-samurai-pearly-0.png",
+     "sha256": "f7cc228004d51dadd6826f5c5865f1e46beed2618529a526a94f8a2990e6513e",
+     "bytes": 1521663
+    }
+   ]
+  },
+  {
+   "name": "kl-copy-mo-s3",
+   "preset_id": "combine-klein-9b-copypose",
+   "controls": {
+    "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult silver-haired sorceress with violet eyes and long hair; keep that character's face, hair and rendering style and the clothes with their colours (a black and gold sorceress robe with a high collar, covered neckline); only the pose and framing change, to image 2's: standing with both hands resting on a sword hilt planted point-down in front, front view, full body. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+    "seed": 2026101901,
+    "steps": 6,
+    "cfg": 1.0,
+    "width": 832,
+    "height": 1216
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\mo-s3-0.png"
+   ],
+   "uploads": {
+    "last_reference": "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\s1-pearly-0.png"
+   },
+   "status": "completed",
+   "job_id": "2d1ca188-b1ea-4ffb-b675-958c89f5ae61",
+   "prompt_ids": [
+    "86a23a4d-8774-45d2-94b3-51cf7cc5c634"
+   ],
+   "seconds": 86.81277966499329,
+   "peak_commit": 0.73,
+   "admission": 0.41860059938378336,
+   "outputs": [
+    {
+     "file": "kl-copy-mo-s3-0.png",
+     "sha256": "7057a43d6c3a084c38b23d53fb1b61fd886fde234b6973758668f6598ff38df8",
+     "bytes": 1543693
+    }
+   ]
+  },
+  {
+   "name": "kl-copy-mr-s2-3",
+   "preset_id": "combine-klein-9b-copypose",
+   "controls": {
+    "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult silver-haired sorceress with violet eyes and long hair; keep that character's face, hair and rendering style and the clothes with their colours (a black and gold sorceress robe with a high collar, covered neckline); only the pose and framing change, to image 2's: standing straight holding a large umbrella over the shoulder with one hand, other hand lightly raised, full body. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
+    "seed": 2026101901,
+    "steps": 6,
+    "cfg": 1.0,
+    "width": 832,
+    "height": 1216
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\mr-s2-3-0.png"
+   ],
+   "uploads": {
+    "last_reference": "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\s1-pearly-0.png"
+   },
+   "status": "completed",
+   "job_id": "f8ef9eac-cf1b-465f-982e-88afebe45b2e",
+   "prompt_ids": [
+    "e74539c1-7bdb-4e85-8a9f-030f21a0a32d"
+   ],
+   "seconds": 66.76309084892273,
+   "peak_commit": 0.691,
+   "admission": 0.564937547053508,
+   "outputs": [
+    {
+     "file": "kl-copy-mr-s2-3-0.png",
+     "sha256": "9830bac2bda1171ebbb5cc6126706c75e0503632c1ceeec998639161f4d5b982",
+     "bytes": 1516188
+    }
+   ]
+  },
+  {
+   "name": "kl-skel-q1-hip",
+   "preset_id": "combine-klein-9b-skeleton",
+   "controls": {
+    "positive": "Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: an adult silver-haired sorceress with violet eyes and long hair. Draw one hand on the hip, the other arm relaxed, weight on one leg, front view, full body from image 2 with the body exactly in that skeleton's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black and gold sorceress robe with a high collar, covered neckline. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+    "seed": 2026101901,
+    "steps": 6,
+    "cfg": 1.0,
+    "width": 832,
+    "height": 1216
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\q1-hip.png"
+   ],
+   "uploads": {
+    "last_reference": "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\s1-pearly-0.png"
+   },
+   "status": "completed",
+   "job_id": "01c7b191-fb38-45e6-b593-2d6ef8e504ca",
+   "prompt_ids": [
+    "a1da37c0-dcaa-44c3-8fed-a555274fbc4a"
+   ],
+   "seconds": 81.13697457313538,
+   "peak_commit": 0.705,
+   "admission": 0.38530285522638846,
+   "outputs": [
+    {
+     "file": "kl-skel-q1-hip-0.png",
+     "sha256": "10de2342e523c484bc4ba44e7a9e4211df8c4e497700567700751a05e5376aa3",
+     "bytes": 1137652
+    }
+   ]
+  },
+  {
+   "name": "kl-skel-q2-sword",
+   "preset_id": "combine-klein-9b-skeleton",
+   "controls": {
+    "positive": "Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: an adult silver-haired sorceress with violet eyes and long hair. Draw wide-legged stance, both hands gripping a sword hilt in front of the body, front view, full body from image 2 with the body exactly in that skeleton's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black and gold sorceress robe with a high collar, covered neckline. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+    "seed": 2026101901,
+    "steps": 6,
+    "cfg": 1.0,
+    "width": 832,
+    "height": 1216
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\q2-sword.png"
+   ],
+   "uploads": {
+    "last_reference": "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\s1-pearly-0.png"
+   },
+   "status": "completed",
+   "job_id": "bb9f3228-264c-4256-bacf-54902601c908",
+   "prompt_ids": [
+    "b455cd02-39e7-46e4-ba0c-da600eec6101"
+   ],
+   "seconds": 94.61052227020264,
+   "peak_commit": 0.682,
+   "admission": 0.41476654047864947,
+   "outputs": [
+    {
+     "file": "kl-skel-q2-sword-0.png",
+     "sha256": "cda87e0f94feb2367da7422e6155d0c355a7e6f67e4c0f149ff19336842babe1",
+     "bytes": 1140048
+    }
+   ]
+  },
+  {
+   "name": "kl-skel-q3-crossed",
+   "preset_id": "combine-klein-9b-skeleton",
+   "controls": {
+    "positive": "Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: an adult silver-haired sorceress with violet eyes and long hair. Draw arms crossed over the chest, standing straight, front view, full body from image 2 with the body exactly in that skeleton's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black and gold sorceress robe with a high collar, covered neckline. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+    "seed": 2026101901,
+    "steps": 6,
+    "cfg": 1.0,
+    "width": 832,
+    "height": 1216
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\q3-crossed.png"
+   ],
+   "uploads": {
+    "last_reference": "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\s1-pearly-0.png"
+   },
+   "status": "completed",
+   "job_id": "76a7a84e-3e6c-4b46-9c9c-63f8e6a844e5",
+   "prompt_ids": [
+    "2e4e911c-4ac8-487b-a835-762988c575cc"
+   ],
+   "seconds": 82.70956468582153,
+   "peak_commit": 0.636,
+   "admission": 0.4256293155130285,
+   "outputs": [
+    {
+     "file": "kl-skel-q3-crossed-0.png",
+     "sha256": "7082d6d395c1cf4b8c858d9669dafce498f9e978e235dfa5f014cef17b4cbc6b",
+     "bytes": 1123363
+    }
+   ]
+  },
+  {
+   "name": "kl-skel-q4-walk",
+   "preset_id": "combine-klein-9b-skeleton",
+   "controls": {
+    "positive": "Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: an adult silver-haired sorceress with violet eyes and long hair. Draw walking mid-stride toward the camera, one arm swinging forward, full body from image 2 with the body exactly in that skeleton's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black and gold sorceress robe with a high collar, covered neckline. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+    "seed": 2026101901,
+    "steps": 6,
+    "cfg": 1.0,
+    "width": 832,
+    "height": 1216
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\q4-walk.png"
+   ],
+   "uploads": {
+    "last_reference": "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\s1-pearly-0.png"
+   },
+   "status": "completed",
+   "job_id": "2c3fbeb3-9896-435b-a224-cd5a756fe8d9",
+   "prompt_ids": [
+    "967932f1-4090-4842-84c6-2ee5a7738667"
+   ],
+   "seconds": 60.51912832260132,
+   "peak_commit": 0.65,
+   "admission": 0.5346241688973662,
+   "outputs": [
+    {
+     "file": "kl-skel-q4-walk-0.png",
+     "sha256": "c556aa9cd8097d0a7328d9f99472044c1b0795081eddf394f8445c8e29b57d54",
+     "bytes": 1231610
+    }
+   ]
+  },
+  {
+   "name": "kl-skel-q5-reach",
+   "preset_id": "combine-klein-9b-skeleton",
+   "controls": {
+    "positive": "Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: an adult silver-haired sorceress with violet eyes and long hair. Draw one arm raised straight up above the head, the other hand on the hip, full body from image 2 with the body exactly in that skeleton's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black and gold sorceress robe with a high collar, covered neckline. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
+    "seed": 2026101901,
+    "steps": 6,
+    "cfg": 1.0,
+    "width": 832,
+    "height": 1216
+   },
+   "references": [
+    "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\poses\\q5-reach.png"
+   ],
+   "uploads": {
+    "last_reference": "C:\\Users\\jekyt\\Desktop\\Printer Config\\Others\\Git\\local-asset-studio\\.runtime\\lab-20261019\\out\\s1-pearly-0.png"
+   },
+   "status": "completed",
+   "job_id": "70ebb9e5-45a6-4dd0-ae4d-79ee02e4b4db",
+   "prompt_ids": [
+    "d348b697-26d7-4778-9256-7a12e8309894"
+   ],
+   "seconds": 62.67809510231018,
+   "peak_commit": 0.646,
+   "admission": 0.5465190326906613,
+   "outputs": [
+    {
+     "file": "kl-skel-q5-reach-0.png",
+     "sha256": "93f34b82ad7df5ae53fd4161eab296811edbc56975f34a801dbd654309d9ddec",
+     "bytes": 1155549
+    }
+   ]
+  },
+  {
    "name": "kr-ctrl-2",
    "preset_id": "krea-anime-atelier-gguf",
    "controls": {
@@ -2875,6 +3327,73 @@
      "file": "pose2-wai-q5-reach-s9-0.png",
      "sha256": "48b7b0e43d5a95c16db13c7348651d826968d9ee321dfeed7513555430312540",
      "bytes": 1351965
+    }
+   ]
+  },
+  {
+   "name": "proof-draft-knight",
+   "preset_id": "pearly-anima-mix-v10-baseline",
+   "controls": {
+    "positive": "masterpiece, best quality, very aesthetic, highres, absurdres, newest, score_9, score_8, score_7, depth of field, cinematic composition, adult original character, an adult woman knight of thirty with short auburn hair and a small scar on her cheek, silver plate armor and a blue cloak, holding a longsword point down, standing on a misty hill at dawn, full body, determined expression, dynamic pose, looking at viewer",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+    "width": 832,
+    "height": 1216,
+    "seed": 1901785542,
+    "steps": 8,
+    "cfg": 1,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "denoise": 1,
+    "lora": 1,
+    "lora2": 0,
+    "lora3": 0,
+    "lora4": 0,
+    "lora5": 0,
+    "lora6": 0,
+    "lora_name": "anima-turbo-lora-v0.2.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "bbbd6dc1-172c-45a3-8d8f-3daf85326f93",
+   "prompt_ids": [
+    "0e0494a0-839e-4b3a-a1e6-1620f4b3fde0"
+   ],
+   "seconds": 28.735172986984253,
+   "peak_commit": null,
+   "admission": null,
+   "outputs": [
+    {
+     "file": "proof-draft-knight-0.png",
+     "sha256": "d06a1c0764a1ab50d9f4e8eca5d0db999e1abf0b57804221f88dbfc11cdeaef4",
+     "bytes": 1197721
+    }
+   ]
+  },
+  {
+   "name": "proof-refine-knight",
+   "preset_id": "anime-refine",
+   "controls": {
+    "reference": "bf913da2c5f24a1faba4998851f9a409_Pearly-Anima-Mix-v10-Baseline_00052_.png.png",
+    "positive": "masterpiece, best quality, very aesthetic, highres, absurdres, newest, score_9, score_8, score_7, depth of field, cinematic composition, adult original character, an adult woman knight of thirty with short auburn hair and a small scar on her cheek, silver plate armor and a blue cloak, holding a longsword point down, standing on a misty hill at dawn, full body, determined expression, dynamic pose, looking at viewer",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+    "seed": 890730251
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "b749a604-9f89-4e90-9966-31dc487b66b0",
+   "prompt_ids": [
+    "8eebb535-af85-42b4-961a-fdb85dac41ac"
+   ],
+   "seconds": 68.05292105674744,
+   "peak_commit": null,
+   "admission": null,
+   "outputs": [
+    {
+     "file": "proof-refine-knight-0.png",
+     "sha256": "8d65ca1d14443db89282a29bb3328610c016ee338a13141e89d390f7ba348ae9",
+     "bytes": 2590527
     }
    ]
   },
