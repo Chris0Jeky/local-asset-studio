@@ -7,6 +7,11 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-10-19 overnight (ux-lead): look cards and sidebar
+
+- [ ] **Each look card names its model and LoRA count** ("Anima model · 1 LoRA"), on the gallery and on the chosen-look strip. Reverse: drop `recipeLine()` in `app/static/make.js`.
+- [ ] **Sidebar icons are glyphs, not numerals** (Library ▦, Full editor ⚙, Compare & review ⇄, Overview ⌂; "03" beside Library read as a count, audit v3 N9). Reverse: the icon fields in `links` in `app/static/studio-shell.js`.
+
 ## 2026-10-19 overnight (ux-lead): LoRA list in Tune
 
 - [ ] **Tune shows every installed LoRA that fits as a card with Add** (role, made for this model or not, trigger word, starting strength and range). Other families fold under "may not suit"; typing filters. Reverse: in `renderTune()` in `app/static/make.js`, render `#makeLoraChoices` empty again and drop `loraCards()`.
