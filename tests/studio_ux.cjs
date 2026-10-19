@@ -306,16 +306,6 @@ test('pose canvas is exposed as an operable application, not a static image (#14
   assert.match(tag, /aria-label="[^"]*Pose skeleton[^"]*"/, 'pose canvas keeps its accessible label');
   assert.match(tag, /aria-label="[^"]*joint[^"]*arrow keys[^"]*Shift[^"]*"/, 'pose canvas label must describe joint selection, arrow keys and Shift+arrow');
 });
-test('Petiflow additions use knowledge defaults while retaining every lab note',()=>{
-  const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),kb=JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/settings-kb.json'),'utf8')).loras;
-  const look={id:'look-anima-pearly-petiflow'},preset={},t={rows:[],cleared:[]},names=['anima-xilmo-000020.safetensors','anima-ke-ta_style_v1.safetensors','anima-newanimastyle-v1.safetensors','anima-kieed_v9_step6000.safetensors'];
-  const context={tunedPreset:()=>preset,presetFor:()=>preset,tuneOf:()=>t,freeSlot:()=> 'lora2',compatible:()=>names,entry:n=>kb[n],clamp:n=>n,tuneChanged(){},q:()=>null,say(){},fits:()=>true,short:n=>n};
-  const start=make.indexOf('  const LAB='),end=make.indexOf('  // Style strength',start),add=make.slice(make.indexOf('  function addAdapter('),make.indexOf('  function tuneClick('));
-  const api=vm.runInNewContext(make.slice(start,end)+add+';({addAdapter,labOf})',context);
-  for(const name of names){t.rows=[];api.addAdapter(look,name);assert.equal(t.rows[0].strength,kb[name].default,name);assert.match(String(api.labOf(look,name)),/Lab with Petiflow:/);}
-  assert.match(String(api.labOf(look,names[3])),/flattened the face/);
-});
-
 test('Make drops a second write to the same target while the first is in flight (Muse lens, 19 Oct)',async()=>{
   const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),line=make.match(/  const inflight=new Set\(\),once=.*\n/)[0];
   const api=vm.runInNewContext(line+';({once,inflight})',{});let calls=0,release;const slow=()=>new Promise(r=>{calls++;release=r;});
@@ -325,6 +315,16 @@ test('Make drops a second write to the same target while the first is in flight 
   await assert.rejects(api.once('k',async()=>{throw Error('boom');}));
   // Each character form has its own key (Codex P2 on #1540): a pending save of one form never drops another form's save.
   assert.match(make,/once\('character-save:'\+form\.dataset\.mode\+':'\+form\.dataset\.makeCharacterForm,/);assert.equal(api.inflight.has('k'),false,'a failed write releases its key');
+});
+
+test('Petiflow additions use knowledge defaults while retaining every lab note',()=>{
+  const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8'),kb=JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/settings-kb.json'),'utf8')).loras;
+  const look={id:'look-anima-pearly-petiflow'},preset={},t={rows:[],cleared:[]},names=['anima-xilmo-000020.safetensors','anima-ke-ta_style_v1.safetensors','anima-newanimastyle-v1.safetensors','anima-kieed_v9_step6000.safetensors'];
+  const context={tunedPreset:()=>preset,presetFor:()=>preset,tuneOf:()=>t,freeSlot:()=> 'lora2',compatible:()=>names,entry:n=>kb[n],clamp:n=>n,tuneChanged(){},q:()=>null,say(){},fits:()=>true,short:n=>n};
+  const start=make.indexOf('  const LAB='),end=make.indexOf('  // Style strength',start),add=make.slice(make.indexOf('  function addAdapter('),make.indexOf('  function tuneClick('));
+  const api=vm.runInNewContext(make.slice(start,end)+add+';({addAdapter,labOf})',context);
+  for(const name of names){t.rows=[];api.addAdapter(look,name);assert.equal(t.rows[0].strength,kb[name].default,name);assert.match(String(api.labOf(look,name)),/Lab with Petiflow:/);}
+  assert.match(String(api.labOf(look,names[3])),/flattened the face/);
 });
 
 test('Make offers a character card on every saved picture regardless of review, and preserves canon labels',()=>{
