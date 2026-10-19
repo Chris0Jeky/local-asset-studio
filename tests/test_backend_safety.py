@@ -24,7 +24,7 @@ class FixtureStudio:
     def __init__(self,root,**config):
         self.root=root;self.comfy_root=root/'comfy';self.jobs={};self.lock=threading.Lock()
         self.config={'comfy_root':str(self.comfy_root),'python':str(root/'python.exe'),
-                     'hidream_root':str(root/'isolated/ComfyUI'),'qwen21_root':str(root/'qwen21/ComfyUI'),**config}
+                     'hidream_root':str(root/'isolated/ComfyUI'),'qwen21_root':str(root/'qwen21/ComfyUI'),'moss_root':str(root/'moss/ComfyUI'),**config}
         self.production=SimpleNamespace(list=lambda:[])
     def _write_json_atomic(self,path,data):
         path.parent.mkdir(parents=True,exist_ok=True)
@@ -96,6 +96,39 @@ class BackendSafetyTests(unittest.TestCase):
             with self.subTest(role=role):
                 current=self.manager.readiness(profile);self.assertFalse(current['ready']);self.assertIn(role,current['message'])
             path.write_bytes(body)
+    def test_moss_needs_its_overlay_and_reads_three_files_from_the_main_library(self):
+        profile=self.manager.profiles['moss'];report=self.manager.readiness(profile)
+        self.assertEqual((profile['port'],profile['url']),(8198,'http://127.0.0.1:8198'))
+        self.assertTrue(report['ready']);self.assertEqual(len(contracts.MOSS_FILES),3)
+        roles=[item['role'] for item in report['requirements']]
+        self.assertEqual(roles,['Python interpreter','ComfyUI entry','Studio launcher','Comfy Kitchen overlay','diffusion','text encoder','decoder'])
+        for item in report['requirements'][4:]:
+            self.assertTrue(Path(item['path']).resolve().is_relative_to(Path(self.studio.comfy_root).resolve()),item)
+            self.assertFalse(Path(item['path']).resolve().is_relative_to(Path(profile['root']).resolve()),item)
+        for role,relative in contracts.MOSS_FILES:
+            path=Path(profile['library'])/relative;body=path.read_bytes();path.write_bytes(b'')
+            with self.subTest(role=role):
+                current=self.manager.readiness(profile);self.assertFalse(current['ready']);self.assertIn(role,current['message'])
+            path.write_bytes(body)
+    def test_moss_reads_models_from_the_main_library_but_keeps_input_and_output_in_its_checkout(self):
+        profile=self.manager.profiles['moss'];self.manager.activate('moss')
+        self.assertEqual(self.studio.library.models,(Path(self.studio.config['comfy_root'])/'models').resolve())
+        self.assertEqual(Path(self.studio.comfy_root).resolve(),Path(profile['root']).resolve())
+        self.assertEqual(self.manager.models_root(profile),Path(profile['library'])/'models')
+        self.assertEqual(self.manager.models_root(self.manager.profiles['qwen21']),Path(self.manager.profiles['qwen21']['root'])/'models')
+    def test_moss_preset_is_gated_on_host_commit_and_the_launcher_knows_its_port(self):
+        import json
+        from server import Studio
+        preset=next(p for p in json.loads((Path(__file__).resolve().parents[1]/'presets/catalog.json').read_text(encoding='utf-8'))['presets'] if p['id']=='moss-t2i')
+        graph={'6':{'class_type':'EmptyFlux2LatentImage','inputs':{'width':1024,'height':1536,'batch_size':1}}}
+        self.assertTrue(Studio.host_commit_required(preset,graph))
+        script=(Path(__file__).resolve().parents[1]/'scripts/Start-Studio.ps1').read_text(encoding='utf-8-sig')
+        self.assertIn('127.0.0.1:8198/system_stats',script);self.assertIn("'qwen21','moss'",script)
+    def test_moss_launch_is_owned_only_through_its_exact_comfy_root(self):
+        profile=self.manager.profiles['moss'];argv=[profile['python'],'-s',profile['entry'],'--comfy-root',profile['root']]
+        self.assertTrue(BackendManager.matches_configured_process(profile,profile['python'],argv,profile['root']))
+        for bad in (argv[:-1]+[str(self.root/'qwen21/ComfyUI')],argv[:3]+['--install-root',profile['root']],argv+['--comfy-root',profile['root']]):
+            with self.subTest(bad=bad):self.assertFalse(BackendManager.matches_configured_process(profile,profile['python'],bad,profile['root']))
     def test_qwen21_launch_is_owned_only_through_its_exact_comfy_root(self):
         profile=self.manager.profiles['qwen21'];argv=[profile['python'],'-s',profile['entry'],'--comfy-root',profile['root']]
         self.assertTrue(BackendManager.matches_configured_process(profile,profile['python'],argv,profile['root']))
@@ -385,7 +418,8 @@ class BackendSafetyTests(unittest.TestCase):
     def test_launch_recovery_argv_pidfile_and_spawn_attestation(self):
         profiles=self.manager.profiles;profiles['primary']['pidfile']=str(self.root/'comfyui.pid');pidfile=Path(profiles['primary']['pidfile'])
         for identifier,tail in (('primary',None),('hidream',['--install-root',str(Path(profiles['hidream']['root']).parent)]),
-                                ('h3',['--comfy-root',profiles['h3']['root']]),('qwen21',['--comfy-root',profiles['qwen21']['root']])):
+                                ('h3',['--comfy-root',profiles['h3']['root']]),('qwen21',['--comfy-root',profiles['qwen21']['root']]),
+                                ('moss',['--comfy-root',profiles['moss']['root']])):
             with self.subTest(identifier=identifier):
                 pidfile.unlink(missing_ok=True);spawned=[];profile=profiles[identifier]
                 attest=lambda pid:spawned.append((pid,pidfile.exists()))
