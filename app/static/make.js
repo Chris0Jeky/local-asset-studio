@@ -1085,7 +1085,7 @@
   });
   // Which disclosures are open survives a redraw; opening a line-up reads the pictures (details fire toggle without bubbling).
   view.addEventListener('toggle',e=>{const k=e.target.dataset?.openKey;if(!k)return;if(e.target.open){state.openers.add(k);if(k.startsWith('lineup:'))void fillLineups();}else state.openers.delete(k);},true);
-  view.addEventListener('submit',e=>{const form=e.target.closest('[data-make-character-form]');if(form){e.preventDefault();void once('character-save',()=>saveCharacter(form));}});
+  view.addEventListener('submit',e=>{const form=e.target.closest('[data-make-character-form]');if(form){e.preventDefault();void once('character-save:'+form.dataset.mode+':'+form.dataset.makeCharacterForm,()=>saveCharacter(form));}});
   view.addEventListener('keydown',e=>{const radio=e.target.closest('[role="radio"]'),group=radio?.closest('[role="radiogroup"]');if(group&&['ArrowRight','ArrowDown','ArrowLeft','ArrowUp','Home','End'].includes(e.key)){
     e.preventDefault();const items=[...group.querySelectorAll('[role="radio"]')],i=items.indexOf(radio),next=items[e.key==='Home'?0:e.key==='End'?items.length-1:(i+(['ArrowRight','ArrowDown'].includes(e.key)?1:items.length-1))%items.length],attr=next.hasAttribute('data-make-goal')?'data-make-goal':'data-make-look',value=next.getAttribute(attr);if(attr==='data-make-goal'){state.goal=value;state.pictures=null;remember();render();}else{state.look=value;state.picking=true;remember();renderLooks();}q('['+attr+'="'+value+'"]')?.focus();return;
   }if(e.target.id==='makeLoraSearch'&&e.key==='Enter'&&!e.isComposing){e.preventDefault();if(!e.repeat)q('[data-tune-add]')?.click();return;}

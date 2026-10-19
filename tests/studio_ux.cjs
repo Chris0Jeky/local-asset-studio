@@ -322,7 +322,9 @@ test('Make drops a second write to the same target while the first is in flight 
   const first=api.once('character:c1',slow),second=api.once('character:c1',slow),other=api.once('character:c2',async()=>{calls++;});
   await second;await other;assert.equal(calls,2,'the same target runs once; another target still runs');release();await first;
   assert.equal(api.inflight.size,0,'the key is released after the write settles');await api.once('character:c1',async()=>{calls++;});assert.equal(calls,3);
-  await assert.rejects(api.once('k',async()=>{throw Error('boom');}));assert.equal(api.inflight.has('k'),false,'a failed write releases its key');
+  await assert.rejects(api.once('k',async()=>{throw Error('boom');}));
+  // Each character form has its own key (Codex P2 on #1540): a pending save of one form never drops another form's save.
+  assert.match(make,/once\('character-save:'\+form\.dataset\.mode\+':'\+form\.dataset\.makeCharacterForm,/);assert.equal(api.inflight.has('k'),false,'a failed write releases its key');
 });
 
 test('Make offers a character card on every saved picture regardless of review, and preserves canon labels',()=>{
