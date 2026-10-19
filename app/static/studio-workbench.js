@@ -957,8 +957,9 @@
   }
   function syncAssetUnavailable(holder){
     if(holder?.id!=='assetNextSteps')return;
-    const groups=['.ux-tile','.ux-parallax','.ux-vary'].map(selector=>holder.querySelector(selector)).filter(Boolean),blocked=groups.filter(box=>box.querySelector('button')?.disabled);
-    const focused=document.activeElement;let fold=holder.querySelector(':scope > .asset-unavailable');
+    const groups=['.ux-tile','.ux-parallax','.ux-vary'].map(selector=>holder.querySelector(selector)).filter(Boolean),focused=document.activeElement,
+      // Fold only what cannot apply to this picture: a box with editable setup (or the focus) is mid-entry, not unavailable.
+      blocked=groups.filter(box=>box.querySelector('button')?.disabled&&!box.contains(focused)&&!box.querySelector('input:not([disabled]),select:not([disabled]),textarea:not([disabled])'));let fold=holder.querySelector(':scope > .asset-unavailable');
     if(blocked.length&&!fold){fold=element('details','asset-unavailable','<summary></summary>');holder.append(fold);}
     let next=q('#assetFamilyActions');
     for(const box of groups.filter(box=>!blocked.includes(box)).reverse()){if(box.parentElement!==holder||box.nextElementSibling!==next)holder.insertBefore(box,next);next=box;}
