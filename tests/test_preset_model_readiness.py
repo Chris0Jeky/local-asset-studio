@@ -424,4 +424,17 @@ class PresetModelReadinessTests(unittest.TestCase):
         self.assertFalse(studio.jobs); self.assertTrue(studio.queue.empty())
 
 
+class TombstoneStampTests(unittest.TestCase):
+    def test_digest_tombstone_binds_to_its_own_size_and_mtime(self):
+        from model_requirements import cached_pin_mismatch
+        asset = {'id': 'x', 'file': 'checkpoints/a.safetensors', 'bytes': 100, 'sha256': 'a' * 64}
+        tombstone = {'path': 'p', 'bytes': 50, 'mtime_ns': 111, 'digest_unavailable': True}
+        self.assertIsNone(cached_pin_mismatch(asset, (100, 222), tombstone), 'a replaced file must not inherit a stale tombstone')
+        self.assertIsNone(cached_pin_mismatch(asset, (100, 222), {**tombstone, 'bytes': 100}), 'same size with a new mtime is not a hashing race')
+        differs = cached_pin_mismatch(asset, (60, 222), tombstone)
+        self.assertIn('Content differs', differs['note']); self.assertNotIn('changed while hashing', differs['note'])
+        exact = cached_pin_mismatch(asset, (50, 111), tombstone)
+        self.assertIn('changed while hashing', exact['note'])
+
+
 if __name__ == '__main__': unittest.main()
