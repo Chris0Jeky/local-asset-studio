@@ -4,6 +4,7 @@ Native: python tests/restyle_ownership_browser.py --out .runtime/restyle-ownersh
 Restricted environments: add --inert (explicit test storage/API bridge; not native origin proof).
 No models, originals or generation are touched. Synthetic API data only.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import asyncio
 import json
@@ -252,7 +253,7 @@ async def run(args):
                 check('no generation submission', not await page.evaluate("window.__writes.includes('/api/jobs')"))
                 if errors:print('JavaScript exceptions:',json.dumps(errors),flush=True)  # #1306: the hosted failure kept no message
                 check('no JavaScript exceptions', not errors)
-                await page.screenshot(path=str(args.out/'final.png'), full_page=True)
+                await evidence_screenshot(page, path=str(args.out/'final.png'), full_page=True)
                 completed = True
             finally:
                 await context.tracing.stop(path=str(args.out/'trace.zip'))

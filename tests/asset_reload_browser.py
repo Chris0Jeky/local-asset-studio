@@ -5,6 +5,7 @@ machines may run only with --inert, which injects storage and transport into a
 fresh document for each reload; that mode is explicitly not native storage proof.
 No Studio process, SQLite store, generation endpoint or backend endpoint is used.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import asyncio
 import copy
@@ -161,10 +162,10 @@ async def run(args):
             await check('RELOAD-15','Unsent draft reload remains local and uses zero POSTs',len(state.writes)==before and await page.input_value('#assetNotes')=='Unsent draft survives a reload' and await page.evaluate('activeAsset.metadata_revision')==0)
             await page.set_viewport_size({'width':1440,'height':1100})
             await check('RELOAD-16','Desktop recovery view has no horizontal overflow',await page.evaluate('document.documentElement.scrollWidth<=innerWidth'))
-            await page.screenshot(path=str(args.out/'recovery-desktop.png'),full_page=True)
+            await evidence_screenshot(page, path=str(args.out/'recovery-desktop.png'),full_page=True)
             await page.set_viewport_size({'width':390,'height':1100})
             await check('RELOAD-17','390px recovery view has no horizontal overflow',await page.evaluate('document.documentElement.scrollWidth<=innerWidth && document.querySelector("#assetDialog").scrollWidth<=document.querySelector("#assetDialog").clientWidth'))
-            await page.screenshot(path=str(args.out/'recovery-390.png'),full_page=True)
+            await evidence_screenshot(page, path=str(args.out/'recovery-390.png'),full_page=True)
             await check('RELOAD-18','No generation or backend mutation is sent',all(post['path'] in {'/api/estimate','/api/references/check'} for post in fixture.POSTS))
             await check('RELOAD-19','No complete-shell JavaScript exception occurred',not errors)
             await browser.close();browser=None

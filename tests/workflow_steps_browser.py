@@ -5,6 +5,7 @@ nodes and a simulated browser transport/storage. Native shell navigation and act
 browser-origin persistence are intentionally not claimed by this fixture.
 Run: python tests/workflow_steps_browser.py --chromium /usr/bin/chromium --out DIR
 """
+from browser_ports import evidence_screenshot
 import argparse
 import json
 from pathlib import Path
@@ -123,8 +124,8 @@ def main():
         page.click('#saveSharedWorkflow'); page.wait_for_function('document.querySelector(\"#sharedWorkflowState\").textContent.includes(\"r4 · saved\")')
         assert [step['id'] for step in studio._workflow_documents.get(original)['document']['steps']] == reordered
         page.click('#compileWorkflow'); page.wait_for_function('document.querySelector("#workflowStatus").textContent.includes("Connections checked")')
-        page.locator('#builder').screenshot(path=str(args.out / 'workflow-steps-desktop.png'))
-        page.set_viewport_size({'width': 390, 'height': 844}); page.locator('#builder').screenshot(path=str(args.out / 'workflow-steps-mobile.png'))
+        evidence_screenshot(page.locator('#builder'), path=str(args.out / 'workflow-steps-desktop.png'))
+        page.set_viewport_size({'width': 390, 'height': 844}); evidence_screenshot(page.locator('#builder'), path=str(args.out / 'workflow-steps-mobile.png'))
         assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'Mobile page overflow'
         page.get_by_role('button', name='Edit step', exact=True).first.click(); page.keyboard.press('Escape')
         assert not page.locator('dialog').is_visible()

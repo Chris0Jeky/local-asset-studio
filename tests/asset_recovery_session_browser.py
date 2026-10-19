@@ -3,6 +3,7 @@
 Native mode uses the shipped loopback shell. --inert explicitly substitutes
 browser storage/transport; it does not certify native origin persistence.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import asyncio
 import hashlib
@@ -152,7 +153,7 @@ async def exercise(args):
                     await page.click('[data-asset-batch-check]'); await confirmed(page, 'library')
                     check('SESSION-11 bulk historical confirmation does not repeat mutations', len(writes) == before and all(a.get(i)['review'] == 'selected' for i in ids))
                     await page.set_viewport_size({'width': 390, 'height': 900})
-                    await page.screenshot(path=str(args.out / 'recovery-390.png'))
+                    await evidence_screenshot(page, path=str(args.out / 'recovery-390.png'))
                     check('SESSION-12 no unexpected generation or original-media change', all(p['path'] in ['/api/estimate', '/api/references/check'] for p in fixture.POSTS) and hashlib.sha256(source.read_bytes()).hexdigest() == original_hash)
                     check('SESSION-13 no page exceptions', not errors)
                 finally: await browser.close()

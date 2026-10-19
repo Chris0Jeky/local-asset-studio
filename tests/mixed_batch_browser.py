@@ -1,4 +1,5 @@
 """Opt-in Chromium: shipped Gallery, real recovery commands/files, synthetic Comfy."""
+from browser_ports import evidence_screenshot
 import argparse
 import copy
 import json
@@ -67,7 +68,7 @@ def run(output):
                 dispose=box.locator('[data-mixed-action="dispose"]');dispose.scroll_into_view_if_needed()
                 pointer=dispose.evaluate("""element=>{const r=element.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {reachable:element===hit||element.contains(hit),hit:hit?.outerHTML,button:{x:r.x,y:r.y,width:r.width,height:r.height}};}""")
                 result['pointer_target']=pointer
-                page.screenshot(path=str(output/'mixed-pointer-target.png'),full_page=True)
+                evidence_screenshot(page, path=str(output/'mixed-pointer-target.png'),full_page=True)
                 assert pointer['reachable'],'A preceding panel intercepts the recovery button: '+str(pointer)
                 dispose.click();assert len(mutations)==1
                 box.locator('[data-mixed-reason]').fill('Retain the unknown tail; no retry.')
@@ -79,7 +80,7 @@ def run(output):
                 assert box.locator('[data-mixed-ack]').is_checked()
                 for width in (1440,1100,390):
                     page.set_viewport_size({'width':width,'height':1000})
-                    box.scroll_into_view_if_needed();page.screenshot(path=str(output/f'mixed-{width}.png'),full_page=True)
+                    box.scroll_into_view_if_needed();evidence_screenshot(page, path=str(output/f'mixed-{width}.png'),full_page=True)
                     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'Horizontal overflow'
                     layout=page.evaluate("""()=>{const setup=document.querySelector('.setup').getBoundingClientRect(),gallery=document.querySelector('.gallery-panel').getBoundingClientRect();return {width:innerWidth,setupBottom:setup.bottom,galleryTop:gallery.top};}""")
                     result.setdefault('stacked_layout',[]).append(layout)

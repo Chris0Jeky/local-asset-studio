@@ -3,6 +3,7 @@
 The fixture loads the production workshop styles against the real direct-child order. It
 has no API, executor, storage or model connection and therefore cannot submit work.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import json
 import os
@@ -132,7 +133,7 @@ def main():
                         assert rects['transfer']['bottom'] <= rects['appearance']['top'] + 1, rects
 
                     if width == 1440 and ambience == 'night-shift':
-                        page.screenshot(path=str(args.output / f'transfer-{layout}.png'), full_page=True)
+                        evidence_screenshot(page, path=str(args.output / f'transfer-{layout}.png'), full_page=True)
                     checks.append({
                         'width': width, 'height': height, 'layout': layout,
                         'ambience': ambience, 'apply_bottom': rects['apply']['bottom']

@@ -2,6 +2,7 @@
 
 No live Studio, ComfyUI or generation worker is used. Run explicitly, not on every unit-test discovery.
 """
+from browser_ports import evidence_screenshot
 import argparse
 from browser_ports import browser_server
 import json
@@ -61,7 +62,7 @@ def run(out):
                     assert box and box['x']>=0 and box['x']+box['width']<=width+1,'Import dialog exceeds the viewport'
                     assert dialog.evaluate('(node)=>node.scrollWidth<=node.clientWidth+1'),'Import controls overflow horizontally'
                     page.locator('#importCharacterCase').focus();assert page.locator('#importCharacterCase').evaluate('(node)=>node===document.activeElement')
-                    dialog.screenshot(path=str(out/f'import-{width}.png'))
+                    evidence_screenshot(dialog, path=str(out/f'import-{width}.png'))
                     page.locator('#importCharacterCase').press('Enter');dialog.wait_for(state='hidden')
                     page.locator('#productionMessage').filter(has_text='Nothing was started').wait_for()
                     rows.append({'width':width,'imported_or_reopened':True,'keyboard_submit':True,'horizontal_overflow':False})

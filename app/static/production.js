@@ -5,7 +5,7 @@ let plannerWithheld=[], plannerNotice='', plannerRequestId=0;
 // Stored plan names are identity: the plan file, its fingerprint and every
 // receipt keep the name a study was created with.  These helpers only make the
 // list and the detail header readable, and never write a name back.
-const PRODUCTION_EMPTY='<div class="production-empty"><p><b>Nothing here yet.</b> Compare one change at a time across a few candidates, start explicitly, review blind, keep a winner.</p><p class="muted">You get here by planning a comparison from a recipe in Full editor, by branching a finished study, or by preparing an export, scene or voice job.</p><button class="primary" data-production-plan>Plan a comparison</button></div>';
+const PRODUCTION_EMPTY='<div class="production-empty"><p>Comparing looks, or one setting such as LoRA strength, at one seed? <a href="/#make">Use Compare in Make</a>: no plan needed.</p><p><b>Nothing here yet.</b> Compare one change at a time across a few candidates, start explicitly, review blind, keep a winner.</p><p class="muted">You get here by planning a comparison from a recipe in Full editor, by branching a finished study, or by preparing an export, scene or voice job.</p></div>';
 function planDate(value){
   const seconds=Number(value);if(!Number.isFinite(seconds)||seconds<=0)return '';
   try{return new Date(seconds*1000).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});}catch(e){return '';}

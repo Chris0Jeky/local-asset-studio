@@ -3,6 +3,7 @@
 The HTTP fixture reuses studio_browser_smoke; backend behavior is covered separately
 by test_preset_model_readiness's real Handler tests. No model or installer runs.
 """
+from browser_ports import evidence_screenshot
 import argparse
 import json
 import os
@@ -84,7 +85,7 @@ def run(output):
                     page.evaluate("document.querySelector('#dependencies').closest('details').open=true")
                     page.locator('#dependencies [data-install="curated"]').focus()
                     assert page.locator('#dependencies [data-install="curated"]').evaluate('(el)=>document.activeElement===el')
-                    page.locator('#dependencies').screenshot(path=str(output/f'dependencies-{width}.png'))
+                    evidence_screenshot(page.locator('#dependencies'), path=str(output/f'dependencies-{width}.png'))
                     assert not errors, errors
                     writes = [post for post in fixture.POSTS if post['path'] not in ('/api/estimate', '/api/references/check')]
                     assert not writes, writes

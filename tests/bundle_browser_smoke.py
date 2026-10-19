@@ -5,6 +5,7 @@ Requires Playwright and an already installed Chromium; never installs either.
 The fixture implements the documented legacy workbench seam. The production
 bundle JS/CSS run unchanged. Full Studio/Windows integration is a separate check.
 """
+from browser_ports import evidence_screenshot
 from pathlib import Path
 import os
 import shutil
@@ -60,7 +61,7 @@ def run():
             assert 'not a preview' in page.locator('#bundleVariantNotice').inner_text()
             if output:
                 page.locator('#bundleSelectedTitle').scroll_into_view_if_needed()
-                page.screenshot(path=str(output / f'bundle-{width}.png'))
+                evidence_screenshot(page, path=str(output / f'bundle-{width}.png'))
             # Cancel / Escape changes nothing and restores focus.
             page.keyboard.press('Escape')
             assert page.evaluate('calls.length') == 0

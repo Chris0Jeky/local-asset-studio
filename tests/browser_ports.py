@@ -33,3 +33,20 @@ class BoundPortGuard:
         if not self._safe_host(): return False
         parsed = urlsplit(self.headers.get('Origin') or '')
         return parsed.scheme == 'http' and parsed.netloc in self._bound_hosts() and not parsed.username and not parsed.password
+
+
+def evidence_screenshot(page, **options):
+    """Optional evidence only: sync pages return bytes/None; async pages return an awaitable."""
+    from inspect import isawaitable
+    try: from playwright.sync_api import TimeoutError as ScreenshotTimeout
+    except ImportError:  # contract tests drive stub pages on runners without Playwright
+        class ScreenshotTimeout(Exception): pass
+    def skipped(error): print(f'evidence screenshot skipped: {error}', flush=True)
+    try: result = page.screenshot(**options, timeout=30000, animations='disabled')
+    except ScreenshotTimeout as error:
+        skipped(error); return None
+    if not isawaitable(result): return result
+    async def capture():
+        try: return await result
+        except ScreenshotTimeout as error: skipped(error); return None
+    return capture()
