@@ -44,6 +44,10 @@ class Handler(fixture.Handler):
 
     def do_POST(self):
         length = int(self.headers.get('Content-Length', '0'))
+        if self.path == '/api/assets/import':  # the library's import: a new asset, as Studio.import_image answers
+            self.rfile.read(length); fixture.POSTS.append({'path': self.path, 'data': {'filename': self.headers.get('X-Filename'), 'type': self.headers.get('Content-Type')}})
+            asset = dict(fixture.ASSETS[0], id='asset-imported-%d' % len(fixture.ASSETS), title=self.headers.get('X-Filename'), filename=self.headers.get('X-Filename'), created_at=1789229999, review='unreviewed')
+            fixture.ASSETS.insert(0, asset); return self.json({'asset': asset}, 201)
         if ROUGH and self.path == '/api/estimate':
             fixture.POSTS.append({'path': self.path, 'data': json.loads(self.rfile.read(length))})
             return self.json({'available': True, 'estimate_seconds': 218.8, 'range_seconds': [88, 348], 'confidence': 'none', 'sample_count': 0, 'matched_samples': 0})
@@ -709,6 +713,30 @@ def run(shots):
                      dict(id='retained-uncertain', look='Unknown', status='uncertain'), dict(id='retained-mix-a', look='Done', status='completed', group='retained-mix'),
                      dict(id='retained-mix-b', look='Unknown', status='uncertain', group='retained-mix')]
         records = {r['id']: dict(id=r['id'], status=r['status'], outputs=[], batch_count=1) for r in retained}; reads = []
+        # Import here (pass 2): a picture goal imports a file without leaving Make and chooses it; the pose slot does the same.
+        png = (ROOT / 'examples/gallery/abstract.png').read_bytes()
+        page.goto(origin + '/#make'); page.wait_for_selector('[data-make-goal]')
+        page.locator('[data-make-goal="edit"]').click()
+        if page.locator('[data-make-repick]').count(): page.locator('[data-make-repick]').first.click()
+        page.wait_for_selector('[data-make-import="makePictures"]'); assert 'href="/#assets"' not in page.locator('#makeBody').inner_html()
+        page.set_input_files('[data-make-import-file="makePictures"]', files=[{'name': 'my sketch.png', 'mimeType': 'image/png', 'buffer': png}])
+        page.wait_for_selector('#makeComposer #makeGenerate'); assert 'my sketch.png' in page.locator('.make-picked').inner_text(), page.locator('.make-picked').inner_text()
+        assert posted('/api/assets/import')[-1] == {'filename': 'my sketch.png', 'type': 'image/png'} and not [p for p in fixture.POSTS[-1:] if p['path'] == '/api/jobs']
+        # Codex P2 on #1576: the import landed but the list refresh fails; the picture is still chosen and nobody is told "Nothing was imported".
+        page.locator('[data-make-repick]').first.click(); page.wait_for_selector('[data-make-import="makePictures"]'); imports = len(posted('/api/assets/import'))
+        refuse = lambda route: route.fulfill(status=503, json={'error': 'Fixture workspace unavailable'}); page.route('**/api/workspace', refuse)
+        try:
+            page.set_input_files('[data-make-import-file="makePictures"]', files=[{'name': 'second.png', 'mimeType': 'image/png', 'buffer': png}])
+            page.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("could not refresh")')
+            assert 'second.png' in page.locator('.make-picked').inner_text() and len(posted('/api/assets/import')) == imports + 1
+            assert 'Nothing was imported' not in page.locator('#makeBody').inner_text()
+        finally: page.unroute('**/api/workspace', refuse)
+        page.locator('[data-make-goal="combine"]').click(); page.wait_for_selector('#makeComposer')
+        if not page.locator('[data-make-import-file="makePosePictures"]').count(): page.locator('[data-make-pose-change]').first.click()
+        page.set_input_files('[data-make-import-file="makePosePictures"]', files=[{'name': 'pose ref.jpg', 'mimeType': 'image/jpeg', 'buffer': png}])
+        page.wait_for_selector('[data-make-pose-change]'); assert 'pose ref.jpg' in page.locator('#makeComposer').inner_text()
+        before = len(fixture.POSTS); page.set_input_files('[data-make-import-file="makePosePictures"]', files=[{'name': 'notes.txt', 'mimeType': 'text/plain', 'buffer': b'x'}]) if page.locator('[data-make-import-file="makePosePictures"]').count() else None
+        assert len(fixture.POSTS) == before, 'a non-picture file is refused before any request'
         history = browser.new_page(); history.on('pageerror', lambda e: errors.append(str(e)))
         def read_run(route):
             id = route.request.url.rsplit('/', 1)[-1]; reads.append(id); route.fulfill(json=records[id])

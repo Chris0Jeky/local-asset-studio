@@ -14,6 +14,7 @@ from pathlib import Path
 from backend_contracts import connection_refused, endpoint_ready
 
 REFUSAL_PROBE_TIMEOUT = 3
+DEFAULT_PORT = 8191
 
 
 class RuntimeRecovery:
@@ -23,7 +24,8 @@ class RuntimeRecovery:
         self.studio = studio
         config = studio.config
         self.enabled = config.get("runtime_auto_recover") is True
-        self.autostart = config.get("runtime_recovery_autostart", True) is True
+        # Only the Studio on the default port owns recovery; a preview on another --port needs an explicit true (#1584).
+        self.autostart = config.get("runtime_recovery_autostart", getattr(studio, "port", DEFAULT_PORT) == DEFAULT_PORT) is True
         self.interval = self._number(config.get("runtime_recovery_poll_seconds", 15), 2, 300, 15)
         self.backoff = self._number(config.get("runtime_recovery_backoff_seconds", 30), 2, 3600, 30)
         self.startup_timeout = self._number(config.get("runtime_recovery_startup_timeout_seconds", 120), 10, 1800, 120)
@@ -99,6 +101,22 @@ class RuntimeRecovery:
         if not record: return None
         return (f"ComfyUI is paused: the GPU is leased to {record['holder']} until "
                 f"{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(record['expires_at']))}. Recovery resumes after release or expiry.")
+
+    def _other_backend(self, profile):
+        """An isolated backend this Studio does not see as active (another Studio's switch, a stale in-memory choice) still owns the GPU."""
+        manager = self.studio.backends
+        try: state = json.loads(manager.state_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError, AttributeError): state = None
+        state = state if isinstance(state, dict) else {}; saved = state.get("active"); operation = state.get("operation")
+        # A switch in flight (any Studio) keeps "active" on the old backend until the target answers: it owns the GPU (Codex P1 on #1585).
+        if isinstance(operation, dict) and operation.get("status") == "running" and operation.get("target") != profile["id"]: return str(operation.get("target") or "a switch")
+        if isinstance(saved, str) and saved in manager.profiles and saved != profile["id"]: return saved
+        for other in manager.profiles.values():
+            if other["id"] == profile["id"]: continue
+            try:
+                if endpoint_ready(manager.request(other, "/system_stats", 1)): return other["id"]
+            except (OSError, ValueError): pass
+        return None
 
     def _fresh_work(self):
         if getattr(self.studio, "reference_jobs", None) and self.studio.reference_jobs.busy(): return True
@@ -215,6 +233,10 @@ class RuntimeRecovery:
                 return self.snapshot()
             if not self.enabled:
                 self._record("crashed-absent", "Selected backend appears absent. Automatic recovery is disabled.")
+                return self.snapshot()
+            other = self._other_backend(profile)
+            if other:
+                self._record("other-backend-active", f"Backend '{other}' is active or online; recovery will not start '{profile['id']}' over it.")
                 return self.snapshot()
             if now < float(self.state.get("breaker_until", 0)):
                 self._record("breaker-open", "Recovery attempts are paused after bounded failures.")

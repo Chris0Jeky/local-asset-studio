@@ -11,6 +11,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 - [ ] Review actions use Keep / Needs work / Not this with K / W / X; saved selections and the Library filter say Kept. Stored review values stay unchanged, including the Review desk's keep value. Reverse: the label maps.
 
+## 2026-10-19 pass 2 (ux-lead-2): import a picture inside Make
+
+- [ ] **Make's picture pickers (all six picture goals, and the pose slot) have "Import a picture…"**: one file (PNG, JPEG or WebP, up to 20 MiB) goes through the library's own import and becomes the chosen picture; Make is never left. The old "Import a picture first" link to the Library is gone, and the empty grid says "No pictures yet. Import one, or make one first." Reverse: the `data-make-import` button in `pictureFinder()` and `importPicture()` in `app/static/make.js`.
+
 ## 2026-10-19 pass 2 (ux-lead-2): one review vocabulary (decision; Make part here, the rest in Brief J)
 
 - [ ] **Review words across the Studio: Keep / Needs work / Not this, keys K / W / X; the library filter says "Kept"; stored values are unchanged** (selected / needs_work / rejected). Before, Make said Keep / Not this, the Full editor Keep / Needs work / Reject, the Library Keeper(s) / Rejected, and the Review desk "Keep for consideration". Make keeps its two buttons (no Needs work button: #1558 cut card buttons) and gains K and X on a focused picture; its Keep message says "Kept pictures are in the library under Kept." Reverse: the keydown listener before the radio-group one and the `aria-keyshortcuts` in `marks()` in `app/static/make.js`; the label maps named in Brief J.
