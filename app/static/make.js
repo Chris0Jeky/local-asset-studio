@@ -183,12 +183,12 @@
     if(t.preset&&t.preset!==p?.id)parts.push('model '+family(byId(t.preset)));
     for(const r of t.rows){const a=base[r.slot];if(!a||(r.name&&r.name!==a.name))parts.push('+'+short(r.name)+(r.on?' '+r.strength:' off'));else if(!r.on)parts.push(short(a.name)+' off');else if(r.strength!==a.strength)parts.push(short(a.name)+' '+r.strength);}
     for(const a of Object.values(base))if(!t.rows.some(r=>r.slot===a.key))parts.push('−'+short(a.name));
-    if(scaleOf(t)!==100&&t.rows.some(r=>r.on))parts.push('all adapters ×'+scaleOf(t)+'%');
+    if(scaleOf(t)!==100&&t.rows.some(r=>r.on))parts.push('all LoRAs ×'+scaleOf(t)+'%');
     if(t.turbo)parts.push('draft · turbo LoRA, 8 steps');else if(t.steps!=null)parts.push((t.steps===draftOf(look,byId(t.preset)||p)?'draft ':'')+t.steps+' steps');if(t.sampler)parts.push(t.sampler);if(t.negative!=null)parts.push('own negative');if(!t.reseed&&t.seed!=null)parts.push('seed '+t.seed+' locked');
     return parts.length?'Tuned: '+parts.join(' · '):'';
   }
   // Untuned, the summary still names what will run (owner, 19 Oct: the model and LoRAs are the choice, so they stay in view while Tune is shut).
-  function asMade(look){const p=presetFor(look),steps=fullSteps(look,p);if(!p)return'Model, adapters, steps, seed';
+  function asMade(look){const p=presetFor(look),steps=fullSteps(look,p);if(!p)return'Model, LoRAs, steps, seed';
     return 'As made: '+[modelLabel(p,presets()),...adapters(look).map(a=>short(a.name)+' '+a.strength.toFixed(2)),...(bound(p,'steps')&&steps?[steps+' steps']:[])].join(' · ');}
   // The tune applied to the prepared controls. Every bound slot of a switched model is written (off or empty is 0), so the
   // other recipe never keeps an authored adapter of its own; on the look's own model only changed slots are written.
@@ -223,15 +223,15 @@
     const all=[p,...list],made=files.filter(f=>fits(look,f)).length,other=files.length-made;
     box.innerHTML='<div class="make-tune-group"><h3>Model</h3>'
       +'<label>Base model<select id="makeModel" data-tune="model">'+option(p.id,'As made · '+modelLabel(p,all)+(nonCommercial(p)?' · non-commercial':'')+(missingFor(p).length?' · needs download':''),tp===p)+list.map(m=>option(m.id,modelLabel(m,all)+(nonCommercial(m)?' · non-commercial':'')+(missingFor(m).length?' · needs download':''),tp===m)).join('')+'</select></label>'
-      +'<small class="muted">'+escape(tp?.model?.file||tp?.name||'')+(nonCommercial(tp)?' · '+escape(tp.commercial_note):'')+(list.length?' · Same model type: the look’s words and adapters carry over; pictures will differ.':' · No other model in the library takes this look’s words and adapters.')+'</small>'
+      +'<small class="muted">'+escape(tp?.model?.file||tp?.name||'')+(nonCommercial(tp)?' · '+escape(tp.commercial_note):'')+(list.length?' · Same model type: the look’s words and LoRAs carry over; pictures will differ.':' · No other model in the library takes this look’s words and LoRAs.')+'</small>'
       +(missing.length?'<p class="make-warn" id="makeTuneWhy">Needs '+missing.length+' model file'+(missing.length>1?'s':'')+' first. <a href="/#models?need='+escape(encodeURIComponent(tp.id))+'">Open Models & setup</a></p>':'')+'</div>'
-      +'<div class="make-tune-group"><h3>Adapters (LoRAs)</h3>'
-      +(t.rows.length?'<label class="make-tune-scale">All adapters × <output id="makeTuneScaleOut">'+scaleOf(t)+'%</output><input type="range" id="makeTuneScale" data-tune="scale" min="0" max="150" step="10" value="'+scaleOf(t)+'" aria-describedby="makeTuneScaleHint"></label><small id="makeTuneScaleHint" class="muted">Multiplies every strength below; the arrow shows what is sent. 100% sends them as set.</small>'+t.rows.map(row).join(''):'<p class="muted">None: the model and the words carry this look.</p>')
+      +'<div class="make-tune-group"><h3>LoRAs</h3>'
+      +(t.rows.length?'<label class="make-tune-scale">All LoRAs × <output id="makeTuneScaleOut">'+scaleOf(t)+'%</output><input type="range" id="makeTuneScale" data-tune="scale" min="0" max="150" step="10" value="'+scaleOf(t)+'" aria-describedby="makeTuneScaleHint"></label><small id="makeTuneScaleHint" class="muted">Multiplies every strength below; the arrow shows what is sent. 100% sends them as set.</small>'+t.rows.map(row).join(''):'<p class="muted">None: the model and the words carry this look.</p>')
       +(SLOTS.some(s=>bound(p,NAMED(s)))?(files.length?'<div class="make-tune-add"><label for="makeLoraSearch">Add a LoRA <small>installed, fits this model</small></label><input id="makeLoraSearch" type="search" list="makeLoraList" placeholder="Filter by name, style or trigger word" autocomplete="off" aria-describedby="makeLoraFit'+(slot?'':' makeLoraFull')+'"'+(slot?'':' disabled')+'><datalist id="makeLoraList">'+files.filter(f=>!t.rows.some(r=>r.name===f)).map(f=>{const e=entry(f);return '<option value="'+escape(f)+'">'+escape(short(f)+(e.role?' · '+e.role:'')+' · '+(fits(look,f)?'made for this model':e.family+', may not suit'))+'</option>';}).join('')+'</datalist><button type="button" data-tune-add'+(slot?'':' disabled')+'>Add</button>'
         +'<small id="makeLoraFit">'+(made?made+' made for '+escape(base(p))+(base(p)!==family(p)?' (this model’s base)':'')+' come first.':'None is made for '+escape(family(p))+' itself.')+(other?' '+other+' from other families of this model type may not suit it.':'')+'</small>'
-        +(slot?'':'<small id="makeLoraFull">All adapter slots of this recipe are in use; remove one first.</small>')+'<div id="makeLoraChoices" class="make-lora-list" role="group" aria-label="Installed LoRAs for this model">'+loraCards(look,'')+'</div></div>':'<p class="muted">No installed adapter is known to fit this model type. Models & setup lists what can be installed.</p>'):'<p class="muted">This recipe has no adapter slots to fill.</p>')+'</div>'
+        +(slot?'':'<small id="makeLoraFull">All LoRA slots of this recipe are in use; remove one first.</small>')+'<div id="makeLoraChoices" class="make-lora-list" role="group" aria-label="Installed LoRAs for this model">'+loraCards(look,'')+'</div></div>':'<p class="muted">No installed LoRA is known to fit this model type. Models & setup lists what can be installed.</p>'):'<p class="muted">This recipe has no LoRA slots to fill.</p>')+'</div>'
       +((bound(tp,'steps')&&steps)||(bound(tp,'sampler')&&tp.choices?.sampler?.length)?'<div class="make-tune-group"><h3>Quality and speed</h3><div class="make-pair">'
-        +(bound(tp,'steps')&&steps?'<label>Steps<select data-tune="steps">'+option('','As made · '+steps,t.steps==null)+option(draft,'Draft · '+draft+', faster',t.steps===draft)+option(fine,'Finer · '+fine+', slower',t.steps===fine)+'</select></label>':'')
+        +(bound(tp,'steps')&&steps?'<label>Steps<select data-tune="steps">'+option('','As made · '+steps,t.steps==null)+option(draft,'Draft · '+draft+', faster',t.steps===draft)+option(fine,'Fine · '+fine+', slower',t.steps===fine)+'</select></label>':'')
         +(bound(tp,'sampler')&&tp.choices?.sampler?.length?'<label>Sampler<select data-tune="sampler">'+option('','As made'+(c.sampler?' · '+c.sampler:''),!t.sampler)+tp.choices.sampler.filter(s=>s!==c.sampler).map(s=>option(s,s,t.sampler===s)).join('')+'</select></label>':'')+'</div></div>':'')
       +(bound(tp,'negative')?'<div class="make-tune-group"><h3>Leave out</h3><textarea id="makeNegative" data-tune="negative" rows="2" maxlength="4000" aria-label="Negative prompt: things to leave out" placeholder="Things to keep out of the picture">'+escape(t.negative??look.body.negative??'')+'</textarea></div>':'')
       +(bound(tp,'seed')?'<div class="make-tune-group"><label class="make-check"><input type="checkbox" id="makeNewSeed" data-tune="reseed"'+(t.reseed?' checked':'')+'> Different pictures each time</label><label>Seed<input type="number" id="makeSeed" data-tune="seed" min="0" max="2147483646" step="1" inputmode="numeric" value="'+escape(t.seed??c.seed??'')+'"'+(t.reseed?' disabled':'')+' aria-describedby="makeSeedHint"></label><small id="makeSeedHint" class="muted">'+(t.reseed?'Turn off “Different pictures each time” to lock this seed.':'Locked: every run starts from this seed.')+'</small></div>':'')
@@ -290,14 +290,14 @@
     const remove=target.closest('[data-tune-remove]');if(remove){const t=tuneOf(look),s=remove.dataset.tuneRemove;t.rows=t.rows.filter(r=>r.slot!==s);if(!t.cleared.includes(s))t.cleared.push(s);tuneChanged();q('#makeLoraSearch')?.focus();return true;}
     const pick=target.closest('[data-tune-pick]');if(pick){addAdapter(look,pick.dataset.tunePick);return true;}
     if(target.closest('[data-tune-add]')){const input=q('#makeLoraSearch'),text=input?.value.trim()||'',t=tuneOf(look),choices=q('#makeLoraChoices');
-      if(!text){say('Type part of an adapter name, then press Add.');input?.focus();return true;}
+      if(!text){say('Type part of a LoRA name, then press Add.');input?.focus();return true;}
       // A part of the name is enough (audit v3 N2): one match is added, several are offered as choices, none says why.
       const found=adapterMatches(look,text),open=found.filter(f=>!t.rows.some(r=>r.name===f));
-      if(!found.length){say(text+' is not an installed adapter for this model type. Type part of its name, or choose one from the list.');input?.focus();return true;}
+      if(!found.length){say(text+' is not an installed LoRA for this model type. Type part of its name, or choose one from the list.');input?.focus();return true;}
       if(!open.length){say(short(found[0])+(found.length>1?' and the other matches are':' is')+' already added.');input?.focus();return true;}
       if(open.length===1){addAdapter(look,open[0]);return true;}
       if(choices){choices.innerHTML=loraCards(look,text);choices.querySelector('[data-tune-pick]')?.focus();}
-      say(open.length+' adapters match. Choose one.');return true;}
+      say(open.length+' LoRAs match. Choose one.');return true;}
     if(target.closest('[data-tune-reset]')){const reseed=state.tune[look.id]?.reseed??true;delete state.tune[look.id];delete savedTunes[look.id];tuneOf(look).reseed=reseed;tuneChanged();return true;}
     return false;
   }
@@ -309,7 +309,7 @@
   function sweepAxes(look){
     const t=tuneOf(look),tp=tunedPreset(look);
     return[{id:'steps',label:'Steps',why:t.turbo?'Quality is the turbo Draft, which fixes 8 steps; choose As made first':!bound(tp,'steps')?'this recipe takes no step count':fullSteps(look,tp)<1?'this look’s step count is not known here':''},
-      ...(t.rows.length?t.rows.map(r=>({id:'adapter:'+r.slot,label:short(r.name)+' strength',slot:r.slot,why:''})):[{id:'adapter',label:'Adapter strength',why:'this look has no adapter; add one in Tune first'}]),
+      ...(t.rows.length?t.rows.map(r=>({id:'adapter:'+r.slot,label:short(r.name)+' strength',slot:r.slot,why:''})):[{id:'adapter',label:'LoRA strength',why:'this look has no LoRA; add one under Model, LoRAs and settings first'}]),
       {id:'model',label:'Model',why:models(look).length?'':'no other model in the library takes this look'}];
   }
   function sweepDefaults(look,axis){const t=tuneOf(look),tp=tunedPreset(look),p=presetFor(look);
@@ -327,7 +327,7 @@
         t.preset=m.id;if(t.sampler&&!m.choices?.sampler?.includes(t.sampler))t.sampler='';label=(m===p?'As made · ':'')+modelLabel(m,all);}
       else{const n=Number(raw),r=t.rows.find(x=>x.slot===axis.slot);if(!Number.isFinite(n)||n<0||n>2)return fail('strengths go from 0 (off) to 2');r.on=clamp(n)>0;if(r.on)r.strength=clamp(n);label=short(r.name)+(r.on?' '+rowOut(r,t):' off');
         // Told apart by what applyTune sends: 0.01 rounds to off, and All adapters at 0% sends 0 for every value.
-        if(runs.some(x=>eff(x.tune.rows.find(y=>y.slot===axis.slot),x.tune)===eff(r,t)))return fail('two values send the same strength'+(scaleOf(t)!==100?' (All adapters is at '+scaleOf(t)+'%)':''));}
+        if(runs.some(x=>eff(x.tune.rows.find(y=>y.slot===axis.slot),x.tune)===eff(r,t)))return fail('two values send the same strength'+(scaleOf(t)!==100?' (All LoRAs is at '+scaleOf(t)+'%)':''));}
       if(runs.some(x=>x.label===label))return fail('give different values');runs.push({label,tune:t});}
     return runs.length<2?fail('give two or three values'):{axis,runs,why:''};
   }
@@ -337,7 +337,7 @@
   const whyPreset=look=>!blocker(look)&&sweepPlan(look)?.preset||tunedPreset(look)?.id||look.body.preset_id;
   // An added adapter's trigger word goes in only where it is on (applyTune), so sweeping it changes the words too.
   function sweepHint(look,axis){const r=axis?.slot&&tuneOf(look).rows.find(x=>x.slot===axis.slot),trigger=r?.added&&entry(r.name)?.trigger;
-    return trigger?'The same look, seed and other settings for every picture; only this adapter’s strength changes, and its trigger word “'+trigger+'” is added only to the pictures where it is on.':'The same look, words and seed for every picture; only this setting changes. One picture per value, side by side on one card.';}
+    return trigger?'The same look, seed and other settings for every picture; only this LoRA’s strength changes, and its trigger word “'+trigger+'” is added only to the pictures where it is on.':'The same look, words and seed for every picture; only this setting changes. One picture per value, side by side on one card.';}
   function renderSweep(){
     const look=current(),box=q('#makeSweepBody');if(!look||!box)return;const s=sweepOf(look),axes=sweepAxes(look),axis=axes.find(a=>a.id===s.axis&&!a.why),p=presetFor(look),all=[p,...models(look)];
     const option=(value,label,on,off)=>'<option value="'+escape(value)+'"'+(on?' selected':'')+(off?' disabled':'')+'>'+escape(label)+'</option>';
@@ -346,7 +346,7 @@
       return '<label>'+name+'<input type="number" data-sweep-value="'+i+'" value="'+escape(v)+'" '+(axis.id==='steps'?'min="1" max="150" step="1"':'min="0" max="2" step="0.05"')+(i===2?' placeholder="optional"':'')+'></label>';};
     box.innerHTML='<p class="make-hint">'+escape(sweepHint(look,axis))+'</p>'
       +'<label class="make-sweep-axis">Setting to vary<select id="makeSweepAxis" data-sweep="axis">'+option('','Choose a setting',!axis)+axes.map(a=>option(a.id,a.label+(a.why?' · unavailable: '+a.why:''),axis===a,!!a.why)).join('')+'</select></label>'
-      +(axis?'<div class="make-sweep-values">'+[0,1,2].map(field).join('')+'</div>'+(axis.slot?'<small class="muted">0 turns the adapter off.</small>':''):'')
+      +(axis?'<div class="make-sweep-values">'+[0,1,2].map(field).join('')+'</div>'+(axis.slot?'<small class="muted">0 turns the LoRA off.</small>':''):'')
       +'<small id="makeSweepOne" class="muted">While this is open, How many is one picture per value. Fold it shut to make pictures as usual.</small>';
     sweepPaint();
   }
@@ -362,7 +362,7 @@
     else if(target.dataset.sweepValue!=null)s.values[Number(target.dataset.sweepValue)]=target.value;
     sweepPaint();syncOperation();estimate();}
 
-  view.innerHTML='<div class="make-heading"><span class="eyebrow">MAKE</span><h1 id="makeTitle" tabindex="-1">What are you making?</h1><p>Pick a goal, pick a look by its picture, describe your idea. The look brings the right model, adapters and settings.</p></div>'
+  view.innerHTML='<div class="make-heading"><span class="eyebrow">MAKE</span><h1 id="makeTitle" tabindex="-1">What are you making?</h1><p>Pick a goal, pick a look by its picture, describe your idea. The look brings the right model, LoRAs and settings.</p></div>'
     +'<div class="make-goals" role="radiogroup" aria-labelledby="makeTitle" id="makeGoals"></div>'
     +'<div id="makeStatusSlot"></div>'
     +'<div id="makeSplit" class="make-split"><div id="makeBody"></div><section class="make-runs" aria-labelledby="makeRunsTitle"><div class="section-title"><h2 id="makeRunsTitle">Your pictures</h2><a href="/#assets">Open the library ↗</a></div><div id="makeRuns" class="make-run-list" aria-live="polite" aria-relevant="additions text"></div></section></div>'
@@ -426,11 +426,11 @@
       +'<div class="make-pair"><label>Shape<select id="makeShape">'+Object.entries(SHAPES).map(([k,v])=>'<option value="'+k+'"'+(k===shapeDefault(look)?' selected':'')+'>'+v+(k==='design'?' · '+escape(look.body.controls.width||'')+'×'+escape(look.body.controls.height||''):'')+'</option>').join('')+'</select></label>'
       +'<label>How many<select id="makeCount"><option value="1"'+(slow?' selected':'')+'>1 picture</option><option value="2">2 pictures</option><option value="4"'+(slow?'':' selected')+'>4 to choose from</option></select></label></div>'
       // With Tune open the same multiplier sits above the adapters it scales, so this copy hides (make.css).
-      +(adapters(look).length?'<label class="make-strength">Style strength <output id="makeStrengthOut">'+scaleOf(tuneOf(look))+'%</output><input type="range" id="makeStrength" min="0" max="150" step="10" value="'+scaleOf(tuneOf(look))+'" aria-describedby="makeStrengthHint"><small id="makeStrengthHint" class="muted">How strongly the look\u2019s '+adapters(look).length+' style adapter'+(adapters(look).length>1?'s apply':' applies')+'. 100% is the look as made.</small></label>':'')
+      +(adapters(look).length?'<label class="make-strength">Style strength <output id="makeStrengthOut">'+scaleOf(tuneOf(look))+'%</output><input type="range" id="makeStrength" min="0" max="150" step="10" value="'+scaleOf(tuneOf(look))+'" aria-describedby="makeStrengthHint"><small id="makeStrengthHint" class="muted">How strongly the look\u2019s '+adapters(look).length+' style LoRA'+(adapters(look).length>1?'s apply':' applies')+'. 100% is the look as made.</small></label>':'')
       +'<div id="makeDraftBox"></div>'
       +'<button type="button" id="makeEditor" class="make-link">Open in the full editor instead</button>'
       +'<details class="make-about"><summary>What this look uses</summary><p><b>Model:</b> '+escape(family(p)||look.body.preset_id)+(p?.model?.file?' <small class="muted">'+escape(p.model.file)+'</small>':'')+'</p>'
-      +(adapters(look).length?'<p><b>Adapters:</b></p><ul>'+adapters(look).map(a=>'<li>'+escape(short(a.name==='the recipe’s own LoRA'?'':a.name))+' at '+escape(a.strength)+(entry(a.name)?.trigger?' \u00b7 trigger <code>'+escape(entry(a.name).trigger)+'</code>':'')+'</li>').join('')+'</ul>':'<p>No style adapters: the model and the wording carry this look.</p>')
+      +(adapters(look).length?'<p><b>LoRAs:</b></p><ul>'+adapters(look).map(a=>'<li>'+escape(short(a.name==='the recipe’s own LoRA'?'':a.name))+' at '+escape(a.strength)+(entry(a.name)?.trigger?' \u00b7 trigger <code>'+escape(entry(a.name).trigger)+'</code>':'')+'</li>').join('')+'</ul>':'<p>No LoRAs: the model and the wording carry this look.</p>')
       +(example?'<p><b>Example:</b> '+escape(example)+'</p>':'')
       +(look.body.notes?'<details class="make-maint"><summary>Details for maintainers</summary><p class="muted">'+escape(look.body.notes)+'</p></details>':'')+'</details>'
       +'</div>'+goBar(why?blockerMarkup(look,why):'')+'</div>';
