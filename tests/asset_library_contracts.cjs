@@ -11,6 +11,16 @@ function library(count=3){
 let passed=0,failed=0;
 async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}catch(e){failed++;console.error('FAIL',name,'\n',e.message);}}
 (async()=>{
+  await test('An empty library offers Make and the existing import control',()=>{
+    const s=library(0),html=s.el('#assetGrid').innerHTML;
+    assert.match(html,/<h3>Your library is empty<\/h3>/);assert.match(html,/Pictures you make in Make land here\. You can also import images; importing makes nothing new\./);
+    assert.match(html,/<a class="primary" href="\/#make">Make a picture<\/a> <button data-asset-import>Import images<\/button>/);
+  });
+  await test('Review next explains completed reviews and resets when pending reviews return',()=>{
+    const s=library();assert.equal(s.el('#reviewNext').textContent,'Review next (3 unreviewed)');assert.equal(s.el('#reviewNext').disabled,false);assert.equal(s.el('#reviewNext').title,'');
+    s.run("for(const asset of assetState.assets)asset.review='selected';renderAssets()");assert.equal(s.el('#reviewNext').textContent,'Nothing to review');assert.equal(s.el('#reviewNext').title,'Every asset shown has a review.');assert.equal(s.el('#reviewNext').disabled,true);
+    s.run("assetState.assets[0].review='unreviewed';renderAssets()");assert.equal(s.el('#reviewNext').textContent,'Review next (1 unreviewed)');assert.equal(s.el('#reviewNext').title,'');assert.equal(s.el('#reviewNext').disabled,false);
+  });
   await test('Hidden selection is counted without silently changing its IDs',()=>{
     const s=library();s.run("assetSelection=new Set(['a0','a1']);");s.el('#assetSearch').value='Asset 0';s.run('renderAssets()');
     assert.match(s.el('#assetSelectionSummary').textContent,/1 visible.*1 outside/i);assert.equal(s.run('assetSelection.size'),2);
