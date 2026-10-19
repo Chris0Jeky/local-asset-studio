@@ -44,6 +44,12 @@ class RunDecisions(entry.EntryPoints):
             self.assertEqual(toggle.inner_text(), 'Show prompt')
             self.assertEqual(toggle.get_attribute('aria-expanded'), 'false')
             self.assertEqual(paragraph.evaluate('n=>getComputedStyle(n).webkitLineClamp'), '2')
+        # A gallery rerender (poll, filter, Show more) keeps an opened prompt open (Codex P2 on #1588).
+        self.page.locator('.run-prompt-more').click()
+        self.page.evaluate("prompt=>{document.querySelector('#gallery .imageCard').outerHTML=mediaCard({id:'long-prompt',preset_name:'Klein pose',controls:{positive:prompt,seed:42}},0,{});}", prompt)
+        self.assertEqual(self.page.locator('.run-prompt-more').get_attribute('aria-expanded'), 'true')
+        self.assertIn('run-prompt-expanded', self.page.locator('.run-prompt').get_attribute('class'))
+        self.page.locator('.run-prompt-more').click()
         why = self.page.locator('.run-why')
         self.assertEqual(why.get_attribute('title'), reason)
         self.assertEqual(why.text_content(), reason)
