@@ -39,6 +39,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 - [ ] **Make shows the look's model and LoRAs while Tune is shut.** The Tune line reads "As made: Anima · anima-base-v1.0 · pearly_petiflow2 1.00 · 25 steps" (the model file is named when a family has two) instead of "Model, adapters, steps, seed"; a tuned look still reads "Tuned: ...". Reverse: `asMade()` in `app/static/make.js` back to the fixed text.
 - [ ] **Make's composer uses the full width until the first picture exists.** "Your pictures" moves beside the words only once there is a run card; before that it sits below. Reverse: drop `&&state.runs.length>0` in `layout()` in `app/static/make.js`.
 
+## 2026-10-19 overnight (ux-lead): wording
+
+- [ ] **A LoRA whose file is fixed in the recipe's graph reads "the recipe’s own LoRA"**, not "built-in adapter" (audit v3 N13), in the As made line, Tune and What this look uses. Reverse: the three strings in `app/static/make.js`.
+
 ## 2026-10-19 overnight (ux-lead): Quality choice
 
 - [ ] **"Draft first" (a tick) became Quality: Draft / As made / Fine** (radio group beside Generate; the same step counts as Tune's Steps; the estimate follows). Same looks as before (10+ steps or slow). No finishing pass runs automatically: gpu-lab's 19 Oct advice is "nothing runs automatically", so Fix face and Upscale stay one press each on the result. Reverse: `draftMarkup()` in `app/static/make.js` back to the checkbox.
