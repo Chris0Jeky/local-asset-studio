@@ -11,6 +11,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 - [ ] **Review words across the Studio: Keep / Needs work / Not this, keys K / W / X; the library filter says "Kept"; stored values are unchanged** (selected / needs_work / rejected). Before, Make said Keep / Not this, the Full editor Keep / Needs work / Reject, the Library Keeper(s) / Rejected, and the Review desk "Keep for consideration". Make keeps its two buttons (no Needs work button: #1558 cut card buttons) and gains K and X on a focused picture; its Keep message says "Kept pictures are in the library under Kept." Reverse: the keydown listener before the radio-group one and the `aria-keyshortcuts` in `marks()` in `app/static/make.js`; the label maps named in Brief J.
 
+## 2026-10-19 pass 2 (ux-lead-2): honest time estimates in Make
+
+- [ ] **When nothing comparable has run on this PC, Make's estimate uses the look's lab median per picture** ("About 2 min for 4 pictures, ~31 s each. Median of two test pictures in the 16 Oct look lab on this PC.") instead of the server's generic guess worded as "from earlier runs on this PC" (a new install showed "About 4 min" beside a card saying ~31 s). With no lab number either, it says "a rough guess: nothing like it has run on this PC yet". Picture goals, Compare looks and Compare one setting say the same. Reverse: `rough`/`basis` and the `lab` branch in `estimate()` in `app/static/make.js`.
+
 ## 2026-10-19: Workflow builder first screen
 
 - [ ] Workflow builder: storage and file tools folded (All tools, Saved workflows). Reverse: remove the two details wrappers in workflow-studio.html and the fold-open lines in workflow-projects.js.
