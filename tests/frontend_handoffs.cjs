@@ -948,6 +948,10 @@ async function modelShopCards() {
   assert.doesNotMatch(lookB(), /2 files to get/);
   run(`modelReqs.set('p2',[{file:'checkpoints/changed<&.safetensors',present:true,pin_mismatch:{}}]);renderCuratedModels()`);
   assert.match(lookB(), /File changed since it was pinned: changed&lt;&amp;\.safetensors/);
+  // Its link lands on the changed file's card: the need view lists pin mismatches, not only absent files (Codex P2 on #1565).
+  run(`pinMismatchByPreset={p2:['vae/shared.safetensors']};location.hash='#models?need=p2';renderCuratedModels()`);
+  assert.match(element('#modelCards').innerHTML, /shared model/, 'a present file that fails its pin is shown in the need view');
+  run(`pinMismatchByPreset={};location.hash='#models';renderCuratedModels()`);
   run(`modelReqs.set('p2',[{file:'vae/shared.safetensors',asset_id:'shared'}]);renderCuratedModels()`);
   assert.match(element('#modelLooks').innerHTML, /Needs a download<\/h4>[\s\S]*Look B/, 'an unresolved requirement blocks, as the server does');
   // An adapter named in a look but listed nowhere (library or disk) is missing, not silently ignored; one on disk is fine.
