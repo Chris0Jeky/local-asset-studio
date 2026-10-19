@@ -11,6 +11,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 - [ ] **Full editor readiness lives in "Readiness & run details"** (ux-lead-2 decision). Removed the recipe-header Review readiness button; the dock offers "What’s missing?" only while blocked. Ready shows the readiness line and time, and lost focus returns to that line when the button disappears. The ONE NEXT ACTION guidance is unchanged. Reverse: restore the two buttons.
 
+## 2026-10-19 pass 2 (ux-lead-2): one review vocabulary (decision; Make part here, the rest in Brief J)
+
+- [ ] **Review words across the Studio: Keep / Needs work / Not this, keys K / W / X; the library filter says "Kept"; stored values are unchanged** (selected / needs_work / rejected). Before, Make said Keep / Not this, the Full editor Keep / Needs work / Reject, the Library Keeper(s) / Rejected, and the Review desk "Keep for consideration". Make keeps its two buttons (no Needs work button: #1558 cut card buttons) and gains K and X on a focused picture; its Keep message says "Kept pictures are in the library under Kept." Reverse: the keydown listener before the radio-group one and the `aria-keyshortcuts` in `marks()` in `app/static/make.js`; the label maps named in Brief J.
+
 ## 2026-10-19 pass 2 (ux-lead-2): honest time estimates in Make
 
 - [ ] **When nothing comparable has run on this PC, Make's estimate uses the look's lab median per picture** ("About 2 min for 4 pictures, ~31 s each. Median of two test pictures in the 16 Oct look lab on this PC.") instead of the server's generic guess worded as "from earlier runs on this PC" (a new install showed "About 4 min" beside a card saying ~31 s). With no lab number either, it says "a rough guess: nothing like it has run on this PC yet". Picture goals, Compare looks and Compare one setting say the same. Reverse: `rough`/`basis` and the `lab` branch in `estimate()` in `app/static/make.js`.
@@ -62,6 +66,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 ## 2026-10-19 overnight (ux-lead): name the fold for what is in it
 
 - [ ] **"Tune this look" is now "Model, LoRAs and settings"** (Make's fold, the Ctrl+K hints, START-HERE, the anime guide, README): someone looking for "model" or "LoRA" finds it by its name. Code keeps the word "tune" internally. Reverse: the `<summary>` text in `renderComposer()` and the three finder strings in `app/static/studio-shell.js`.
+
+## 2026-10-19 overnight (ux-lead): proposal, not done
+
+- [ ] **Proposal: fold the Workflow builder's storage and file rows.** It opens with Saved workflows (6 buttons, 2 selects), revision history (2 buttons, 1 select) and a toolbar of 11 buttons before any node or step is visible (1,201 words on the page at 1440x900). Proposal: Saved workflows and revision history in one shut fold "Saved workflows and history", the file buttons (Import recipe graph, Open JSON, Export…) in a "Files" menu, so the first screen is "Start from a recipe" plus the Nodes/Steps view. Decided by the coordinator under the review mandate and built as brief E (#1560); reverse there.
 
 ## 2026-10-19 overnight (ux-lead): Anima turbo draft
 

@@ -17,6 +17,37 @@ generation submissions and zero page errors. Fixture HTTP request threads logged
 routes during the sweep; the journey results above are browser-observed outcomes, not a claim that
 those fixture routes are error-free. The historical tables below retain their original measurements.
 
+## Make: goal-first rework — 19 October 2026
+
+Design and findings: `docs/ux-qa/GOAL-FIRST-REWORK-2026-10-19.md`. Measured on preview Studios (127.0.0.1:8291-8293, own empty workspace,
+real catalog) and in fixture mode; nothing was submitted. PRs #1533 (model and LoRAs in view, full-width composer), #1534 (result next
+steps), #1537 (LoRA list), #1540 (one write per target, chosen badge), #1543 (look cards name their model), #1546 (Quality), #1548
+(the fold is named Model, LoRAs and settings), #1549 (Use in Make from Models & setup), #1552 ("the recipe’s own LoRA"), #1558 (one
+picture's next steps at a time), #1559 (Anima turbo Draft), #1562 (Anima merges fit Anima LoRAs), #1564 (picker fixes), #1569 (Refine 1.5×),
+#1571 (plan retries), #1572 (round-7 look order). Refs #278.
+
+Flagship journey: a high-end anime picture with a chosen model and two LoRAs, then tweaks.
+
+| Step | Before (16 Oct, audit v3) | After (19 Oct) |
+| --- | --- | --- |
+| See which model a look uses | open the look, open Tune (2) | read it on the card ("Anima model · 1 LoRA"), 0 |
+| See the look's model and LoRAs once chosen | open Tune (1) | the fold's line reads "As made: Anima · anima-base-v1.0 · pearly_petiflow2 1.00 · 25 steps", 0 |
+| Find the fold for model and LoRAs | "Tune this look" (name gives no hint) | "Model, LoRAs and settings" |
+| Add a LoRA you have not memorised | type part of its name, pick from the datalist, Add (2 clicks + typing) | Add on its card in the list (1 click); role, fit, trigger and starting strength shown |
+| Add two LoRAs | 4 clicks + 2 typed | 2 clicks |
+| Choose quality | Draft tick, or Tune → Steps for Fine (1-2) | Quality: Draft / As made / Fine beside Generate (1); the estimate follows |
+| Total before Generate (look, open fold, switch model, 2 LoRAs, Generate) | 8 clicks + 2 typed + the scene | 6 clicks + the scene |
+| From a result: change outfit / new pose / restyle | More, then the item (2 each) | 1 each |
+| From Models & setup to that look in Make | Make, goal, find the card (3) | Use in Make (1) |
+| LoRA fit on an Anima merge (One Obsession, Pearly) | every Anima LoRA "may not suit" | Anima LoRAs "made for this model" |
+| Read a 4-picture result card | 62 visible buttons | 29 (one picture's next steps at a time; Next steps… moves them) |
+| Quick draft on an Anima look | half the steps (13-15) | turbo LoRA at 8 steps, cfg 1, euler/simple (one press) |
+| Sharpen eyes and detail | Continue with this in the full editor | Refine 1.5× on the result (1) |
+| First anime look offered | Petiflow (Anima base) | One Obsession, then Pearly mix (round 7: 12 of 12 each) |
+
+Unchanged: Generate is the only press that submits; no finishing pass runs on its own (gpu-lab, 19 Oct: detail-fix only for a named
+face or hand defect, refine only for softness, ESRGAN last).
+
 ## Make: Compare one setting — 16 October 2026
 
 Audit v3 N7, issue #1496. One look with its Tune, one setting varied over two or three values, the words, shape, tune and
