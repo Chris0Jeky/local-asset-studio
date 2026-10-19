@@ -105,9 +105,12 @@ class RuntimeRecovery:
     def _other_backend(self, profile):
         """An isolated backend this Studio does not see as active (another Studio's switch, a stale in-memory choice) still owns the GPU."""
         manager = self.studio.backends
-        try: saved = json.loads(manager.state_path.read_text(encoding="utf-8")).get("active")
-        except (OSError, ValueError, AttributeError): saved = None
-        if saved in manager.profiles and saved != profile["id"]: return saved
+        try: state = json.loads(manager.state_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError, AttributeError): state = None
+        state = state if isinstance(state, dict) else {}; saved = state.get("active"); operation = state.get("operation")
+        # A switch in flight (any Studio) keeps "active" on the old backend until the target answers: it owns the GPU (Codex P1 on #1585).
+        if isinstance(operation, dict) and operation.get("status") == "running" and operation.get("target") != profile["id"]: return str(operation.get("target") or "a switch")
+        if isinstance(saved, str) and saved in manager.profiles and saved != profile["id"]: return saved
         for other in manager.profiles.values():
             if other["id"] == profile["id"]: continue
             try:
