@@ -9,11 +9,38 @@
 
 ---
 
+## 0. Provenance and reconciliation (added 2026-10-19, issue #1324)
+
+**Labels.** Unlabelled statements in sections 1–7 are **dated observations from 2026-09-27**. Items marked **[current 2026-10-19]** were read again on 2026-10-19 from the Hugging Face model API and tree API (the same public metadata method SOURCES names). Nothing here downloads weights. The 2026-09-27 wording is kept; corrections sit next to the original text.
+
+**Precision and parameter count (the open question on 2026-09-27).** **[current 2026-10-19]**
+
+| Repo | `safetensors` total params | Stored dtype | Expected bytes at stored dtype | Recorded size |
+|---|---|---|---|---|
+| `inclusionAI/Ming-Image-0.1-Design` | 6,154,901,056 | BF16 only | 12,309,802,112 (≈ 12.31 GB) | 12.31 GB (dated tree) |
+| `inclusionAI/Ming-Image-0.1-Design-Layer` | 6,154,908,736 | **F32 only** | 24,619,634,944 (≈ 24.62 GB) | 24.62 GB (dated tree) |
+| `Comfy-Org/Ming-Image` `diffusion_models/ming_image_0.1_design_layer_bf16.safetensors` | not published per file | not read | 12,309,874,192 bytes on disk | 12.31 GB (dated HEAD) |
+
+Reading of these numbers:
+
+- The official Layer DiT is **F32 storage of about 6.15 billion parameters**. The 2026-09-27 "~12.31B" parameter figure for Layer was an arithmetic guess that assumed BF16 bytes; it is wrong, and the parameter count is the same as Design's.
+- The 24.62 GB size is correct as a size. The "BF16" label on it (TLDR item 3, section 2) is not the stored dtype. The model card recommends BF16 for inference, which is a runtime choice.
+- The Comfy file `design_layer_bf16` is 12,309,874,192 bytes. That is the byte size of the same ~6.15B parameters at 2 bytes each, within about 57 KB of header and metadata (the same overhead the Design file shows). So the 2026-09-27 "discrepancy" is best explained by **dtype** (F32 official storage versus a BF16 repack of the same DiT), not by a different parameter count. This is an **inference from byte sizes**: the Comfy file's own header was not read, and the Comfy repo exposes no per-file safetensors breakdown through the API.
+- The 2026-09-27 "65.20 GB" and "52.88 GB" totals are sums of the recorded component sizes, rounded to two decimals; they are not re-measured here.
+
+**Not verified, and what this changes.**
+
+- Not known: the Comfy Layer file's own dtype and parameter count (its safetensors header is not read); whether the Comfy Layer file is byte-identical to the official Layer DiT (no matching LFS hash for the official transformer was retrieved).
+- Not known: a commit revision for any size. The 2026-10-19 queries did not request `sha` or `lastModified` (they used only `expand[]=safetensors`), so no size here is pinned to a revision. The Comfy tree response exposes a per-file LFS sha256, but it is not recorded in SOURCES (not yet checked against a raw response).
+- Not in this repository: the raw HEAD and tree files that SOURCES named (`raw/comfy-org-head-sizes.txt`, `raw/hf-*.json`), and the operator handoffs pack. Checked on 2026-10-19: neither exists in the repo, so the 2026-09-27 numbers cannot be audited from files here; they stand as dated observations only.
+- Changed: the Layer footprint row "BF16 DiT alone 24.62 GB" was computed from the F32 size. If the Comfy Layer file really is the same parameters at BF16, a BF16 Layer DiT would be about 12.31 GB, not 24.62 GB. The fit row is therefore not re-decided here.
+- **Unchanged: the Layer park verdict** (section 7). Its condition (a) is now largely supported by the byte arithmetic but still unverified in the Comfy header; conditions (b) text-encoder footprint and (c) dual GPU are not evaluated here and remain unmet.
+
 ## Executive TLDR
 
 1. **Ming-Image-0.1-Design + Design-Layer** (inclusionAI / Ant Group) — MIT, HF + GitHub, design-first T2I + layer decompose. **Not** a general anime/photo replacement for WAI / Pony / RealVis / QI-2.1.
 2. **"6B" is the DiT only.** Design package **52.88 GB** BF16; Layer **65.20 GB**. Multimodal TE (**~34 GB**) + connector (**~6.2 GB**) dominate disk and VRAM.
-3. **"12GB / 24GB" shorthand** = Design DiT **12.31 GB** vs Layer DiT **24.62 GB** (BF16), **not** validated consumer VRAM.
+3. **"12GB / 24GB" shorthand** = Design DiT **12.31 GB** vs Layer DiT **24.62 GB** (BF16), **not** validated consumer VRAM. *Correction [current 2026-10-19, §0]: the 24.62 GB Layer DiT is F32 storage of ~6.15B parameters (the card's stored dtype); BF16 is the recommended inference precision.*
 4. Official validate: **1× CUDA GPU ≥ 80 GiB**, BF16, 12 steps. Consumer BF16: **no** on 16/24/32/48 GB cards.
 5. Comfy path exists: **ComfyUI PR [#16482](https://github.com/Comfy-Org/ComfyUI/pull/16482) MERGED 2026-09-24**; weights at `Comfy-Org/Ming-Image` (moved from `Kijai/Ming-Image-ComfyUI`).
 6. Consumer quants today: **INT8 ConvRot** DiT ~**6.18 GB**; TE INT8 ~**19.5 GB** or **w4a8 ~12.8 GB**; VAE ~0.25 GB. Still needs **Dynamic VRAM / offload** on 16GB.
@@ -59,7 +86,7 @@
 
 | Component | Design | Design-Layer |
 |---|---|---|
-| transformer (DiT) | **12.31 GB** (~6.15B) | **24.62 GB** (~12.31B) |
+| transformer (DiT) | **12.31 GB** (~6.15B) | **24.62 GB** (~12.31B as dated 2026-09-27; *corrected [current 2026-10-19, §0]: 6,154,908,736 parameters, stored F32*) |
 | mllm (TE) | 34.02 GB (~17B) | 34.02 GB (shared) |
 | connector | 6.17 GB (~3.09B) | 6.17 GB |
 | vae | 0.25 GB | 0.25 GB |
@@ -80,7 +107,7 @@
 | Layer TE bf16 / int8 | same 36.678 / 19.508 GB |
 | `ming_image_vae_bf16.safetensors` | 0.254 GB |
 
-⚠️ **Discrepancy:** Official Layer DiT is **24.62 GB**; Comfy-Org `design_layer_bf16` HEAD is **12.31 GB** (same as Design). Treat Layer Comfy files as **unverified** until SHA/param audit — strengthens **park** for Layer.
+⚠️ **Discrepancy:** Official Layer DiT is **24.62 GB**; Comfy-Org `design_layer_bf16` HEAD is **12.31 GB** (same as Design). Treat Layer Comfy files as **unverified** until SHA/param audit — strengthens **park** for Layer. *[current 2026-10-19, §0]: the byte size fits the same ~6.15B parameters stored at BF16 against the official F32 storage; this points to a dtype difference, not a parameter-count one. Still unverified: the Comfy file's header and its hash match.*
 
 ### Fit on RX 9070 XT 16GB
 
@@ -91,6 +118,8 @@
 | Design INT8 DiT + w4a8 TE + VAE | ~6.2 + 12.8 + 0.25 ≈ **19.3 GB** | **tight** — Dynamic VRAM + 32GB RAM offload only |
 | Layer BF16 DiT alone | 24.62 GB | **no** |
 | Official validate | 80 GB CUDA | n/a desktop |
+
+*[current 2026-10-19, §0]: the "Layer BF16 DiT alone 24.62 GB" row is the F32-stored size. A BF16 Layer DiT of the same parameters would be about 12.31 GB, unmeasured; this row is not re-decided here.*
 
 Community (NVIDIA RTX 4070 12GB) reports **training** LoRAs via AI-Toolkit INT8 + full layer offload — inference smoke on AMD 16GB is plausible but **unproven**.
 
@@ -157,5 +186,5 @@ Community (NVIDIA RTX 4070 12GB) reports **training** LoRAs via AI-Toolkit INT8 
 ## 7. Clear recommendation for Chris
 
 - **Try (Design / 12GB DiT):** After Comfy includes #16482, optional **metadata-only bookmark** of Comfy-Org INT8 DiT + w4a8 TE + VAE. Smoke 1024, CFG 1.0, 12 steps, pytorch-cross-attention, Dynamic VRAM on. Compare one UI-poster prompt vs QI-2.1 / Klein for layout text — **quality curiosity only**. No Create preset. No BF16.
-- **Park (Layer / 24GB DiT):** Until (a) verified Comfy Layer weights match official param count, (b) TE ≤~8–10GB quant or strong offload recipe on gfx1201, or (c) dual-GPU exists. None of these are true today.
+- **Park (Layer / 24GB DiT):** Until (a) verified Comfy Layer weights match official param count, (b) TE ≤~8–10GB quant or strong offload recipe on gfx1201, or (c) dual-GPU exists. None of these are true today. *[current 2026-10-19, §0]: the official param count (~6.15B, F32) is now read; condition (a) still needs the Comfy file's header and hash, so the verdict stands.*
 - **Do not** displace QI-2.1 / Edit-2511 / Illu daily lanes.
