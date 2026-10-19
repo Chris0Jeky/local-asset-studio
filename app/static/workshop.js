@@ -583,7 +583,8 @@
       }));
     }
     function sync() {
-      const held = create.contains(d.activeElement) ? d.activeElement : null;
+      // #1525 asks this only for the run dock and the blocker list: a control elsewhere (e.g. a reference choice) hands focus on itself.
+      const held = (dock.contains(d.activeElement) || blockerList.contains(d.activeElement)) ? d.activeElement : null;
       const active = !create.hidden;
       d.body.classList.toggle('workshop-active', active);
       if (!active && recipeDialog.open) recipeDialog.close();
