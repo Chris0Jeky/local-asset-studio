@@ -237,7 +237,7 @@ def merge_checks(browser, origin):
     saved = [dict(id='make-merge', look='First look', lookId=LOOKS[0]['id'], goal='character', scene='Merge')]
     page = browser.new_page(viewport={'width': 1440, 'height': 900}); errors = []; page.on('pageerror', lambda e: errors.append(str(e))); before = len(jobs())
     page.goto(origin+'/#make'); page.evaluate('(runs)=>localStorage.setItem("studio.make",JSON.stringify({goal:"character",look:null,runs}))', saved)
-    page.goto(origin+'/?merge#make'); page.wait_for_selector('[data-make-polish=upscale][data-asset=asset-0]'); page.wait_for_selector('[data-make-polish=upscale][data-asset=%s]' % WAI)
+    page.goto(origin+'/?merge#make'); page.wait_for_selector('[data-make-polish=upscale][data-asset=asset-0]'); page.wait_for_selector('[data-make-polish=upscale][data-asset=%s]' % WAI, state='attached')  # the second picture's steps wait behind Next steps…
     page.wait_for_function('document.querySelectorAll("#makeRuns .make-polish-hint").length===3')
     kinds = lambda a: page.eval_on_selector_all('[data-make-polish][data-asset=%s]' % a, 'n=>n.map(e=>e.dataset.makePolish+":"+e.firstChild.textContent)')
     assert kinds('asset-0') == ['face:Fix face and hands', 'upscale:Upscale 2×'], kinds('asset-0')
@@ -245,6 +245,12 @@ def merge_checks(browser, origin):
     hints = page.eval_on_selector_all('#makeRuns .make-polish-hint', 'n=>n.map(e=>e.textContent)')
     assert sum(h.startswith(HINT) for h in hints) == 1 and hints[0].startswith(HINT), hints
     assert hints.count(UP) == 2 and len(hints) == 3, hints
+    # One picture per card shows its next steps (19 Oct): the first does; the second offers Next steps…, which moves them there. Keep stays on both.
+    assert page.is_visible('[data-make-polish=upscale][data-asset=asset-0]') and not page.is_visible('[data-make-polish=upscale][data-asset=%s]' % WAI)
+    assert page.is_visible('[data-make-review=selected][data-asset=%s]' % WAI) and not page.is_visible('[data-make-select=asset-0]')
+    page.locator('[data-make-select="%s"]' % WAI).click(); page.wait_for_selector('[data-make-polish=upscale][data-asset=%s]' % WAI)
+    assert not page.is_visible('[data-make-polish=upscale][data-asset=asset-0]') and page.evaluate('document.activeElement.closest("figure")?.classList.contains("make-selected")'), 'focus lands in the picked picture'
+    page.locator('[data-make-select="asset-0"]').click(); page.wait_for_selector('[data-make-polish=upscale][data-asset=asset-0]')
     # The goal composer merges the same way.
     page.locator('[data-make-goal="repair"]').click(); page.wait_for_selector('#makePictures [data-make-pick="asset-0"]'); page.locator('#makePictures [data-make-pick="asset-0"]').click()
     page.wait_for_function('document.querySelectorAll("#makeComposer [data-make-fix]").length===2')
