@@ -249,6 +249,15 @@ class GpuMemoryTests(unittest.TestCase):
         self.assertEqual(gpu_memory.others_bytes(sample, 40), 14 * GIB)
         self.assertEqual(gpu_memory.others_for_admission(sample, 40), (None, 'GPU adapter and process counters disagree'))
 
+    def test_zero_byte_own_entry_on_the_selected_adapter_keeps_the_runaway_counter_unknown_for_admission(self):
+        # #983 owner-requested combination: the fallback-selected adapter itself has the zero-byte own entry.
+        sample = reading_with_totals({DGPU.format(40): 0, DGPU.format(2304): DWM_ANOMALY,
+                                      IGPU.format(11): 300 * MIB},
+                                     {DGPU_ADAPTER: 14 * GIB, IGPU_ADAPTER: 300 * MIB})
+        self.assertEqual(gpu_memory.others_bytes(sample, 40, capacity_bytes=16 * GIB), 14 * GIB)
+        self.assertEqual(gpu_memory.others_for_admission(sample, 40, capacity_bytes=16 * GIB),
+                         (None, 'GPU adapter and process counters disagree'))
+
     def test_process_values_are_bounded_by_the_adapter_figure(self):
         # 4.5 GiB against a 4 GiB adapter is inside the sampling headroom, so not an anomaly, but no process holds
         # more than the adapter reports in use.
@@ -281,7 +290,7 @@ class GpuMemoryTests(unittest.TestCase):
         self.assertEqual(gpu_memory.others_for_admission(over, 40), (3 * GIB, None))
         external, reason = gpu_memory.others_for_admission(over, 40, capacity_bytes=16 * GIB)
         self.assertIsNone(external); self.assertIn('capacity', reason)
-        self.assertEqual(gpu_memory.others_bytes(over, 40, capacity_bytes=16 * GIB), 3 * GIB)   # the guard is unchanged
+        self.assertIsNone(gpu_memory.others_bytes(over, 40, capacity_bytes=16 * GIB))
         own = reading({DGPU.format(40): 30 * GIB, DGPU.format(2304): 2 * GIB})
         external, reason = gpu_memory.others_for_admission(own, 40, capacity_bytes=16 * GIB)
         self.assertIsNone(external); self.assertIn('capacity', reason)
@@ -298,6 +307,19 @@ class GpuMemoryTests(unittest.TestCase):
                        reading_with_totals({DGPU.format(40): 17 * GIB}, {DGPU_ADAPTER: 17 * GIB})):
             with self.subTest(sample=sample):
                 self.assertEqual(gpu_memory.others_for_admission(sample, 40, capacity_bytes=16 * GIB), (None, gpu_memory.CAPACITY_REASON))
+
+    def test_guard_rejects_over_capacity_sources_before_subtracting(self):
+        samples = [reading_with_totals({DGPU.format(40): 15 * GIB}, {DGPU_ADAPTER: 18 * GIB}),
+                   reading({DGPU.format(40): 17 * GIB, DGPU.format(2304): GIB}),
+                   reading_with_totals({DGPU.format(40): 17 * GIB}, {DGPU_ADAPTER: 17 * GIB})]
+        for sample in samples:
+            with self.subTest(sample=sample):
+                self.assertIsNone(gpu_memory.others_bytes(sample, 40, capacity_bytes=16 * GIB))
+
+    def test_guard_capacity_headroom_accepts_a_physical_full_card_and_ignores_other_adapters(self):
+        sample = reading_with_totals({DGPU.format(40): 15 * GIB, IGPU.format(11): DWM_ANOMALY},
+                                     {DGPU_ADAPTER: 16 * GIB, IGPU_ADAPTER: 66 * GIB})
+        self.assertEqual(gpu_memory.others_bytes(sample, 40, capacity_bytes=16304 * MIB), GIB)
 
     def test_admission_measures_physical_full_card_and_normal_usage(self):
         for total, own, others in ((16 * GIB, 15 * GIB, GIB), (11 * GIB, 8 * GIB, 3 * GIB)):

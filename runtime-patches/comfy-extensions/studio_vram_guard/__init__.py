@@ -19,6 +19,7 @@ import ast
 import hashlib
 import importlib.util
 import logging
+import math
 import os
 from pathlib import Path
 import threading
@@ -29,7 +30,12 @@ REPO = Path(__file__).resolve().parents[3]
 EXPECTED = {'free_memory': '80ea11a1b6a61a9b83155b7f925bc99ef453e2a89e2e9574f6cde400d1a65de7',
             'get_free_memory': '7621aa973a4551eb04c7fdca2444e4e80bf53034abde6affb3f5386cdc5b86e5'}
 CACHE_SECONDS = 0.5
-STATUS = {'installed': False, 'reason': 'not loaded', 'others_bytes': None, 'eviction_calls': 0, 'counted_calls': 0}
+# A partial PDH sample can miss one adapter. Keep a larger recent bound for four sampling windows, never indefinitely.
+LAST_KNOWN_SECONDS = 2.0
+FALLBACK_BYTES = 4 * 1024 ** 3   # the same declared fallback as gpu_memory.FALLBACK_GIB, not a measurement
+STATUS = {'installed': False, 'reason': 'not loaded', 'others_bytes': None, 'eviction_calls': 0, 'counted_calls': 0,
+          'reading_basis': 'unknown', 'unknown_reason': 'not sampled', 'effective_others_bytes': None,
+          'adjustment_basis': None, 'last_known_age_seconds': None, 'capacity_bytes': None, 'device': None, 'counter_anomalies': []}
 NODE_CLASS_MAPPINGS = {}
 
 
@@ -49,20 +55,67 @@ def load_gpu_memory(repo=REPO):
     return module
 
 
+def _bytes(value, positive=False):
+    if isinstance(value, bool) or not isinstance(value, (int, float)): return None
+    try:
+        if not math.isfinite(value) or value < 0: return None
+    except OverflowError: return None
+    value = int(value)
+    return value if value > 0 or not positive else None
+
+
 class OthersReading:
-    """Dedicated VRAM held by every process except this one on its adapter, cached briefly; 0 when unreadable."""
+    """Eviction adjustment with separately reported evidence; unknown is never a measured zero.
+
+    A missing/invalid reading uses the declared fallback (capped to a known capacity), or a larger last-known bound
+    for at most LAST_KNOWN_SECONDS. Failed reads do not refresh that bound's age. Device/capacity changes invalidate it.
+    """
     def __init__(self, gpu_memory, pid=None, clock=time.monotonic, status=STATUS):
         self.gpu_memory, self.pid, self.clock, self.status = gpu_memory, os.getpid() if pid is None else pid, clock, status
-        self.value, self.at, self.lock = 0, None, threading.Lock()
+        self.value, self.at, self.key, self.lock = None, None, None, threading.Lock()
+        self.last_known, self.last_known_at, self.notice = None, None, None
+        self.reason, self.basis, self.anomalies = 'not sampled', 'unknown', []
 
-    def __call__(self):
+    def __call__(self, capacity_bytes=None, device=None, unknown_reason=None):
         with self.lock:
-            now = self.clock()
+            now, capacity = self.clock(), _bytes(capacity_bytes, positive=True)
+            key = (device, capacity)
+            if key != self.key or self.at is not None and now < self.at:
+                self.at = self.last_known = self.last_known_at = None
+                self.key = key
             if self.at is None or now - self.at > CACHE_SECONDS:
-                try: self.value = self.gpu_memory.others_bytes(self.gpu_memory.read(), self.pid) or 0
-                except Exception: self.value = 0
-                self.at = now; self.status['others_bytes'] = self.value
-            return self.value
+                self.value, self.basis, self.anomalies = None, 'unknown', []
+                self.reason = unknown_reason or ('GPU capacity is unavailable' if capacity is None else
+                                                'GPU device identity is unavailable' if device is None else None)
+                if self.reason is None:
+                    try:
+                        sample = self.gpu_memory.read()
+                        self.anomalies = self.gpu_memory.anomalies(sample, capacity_bytes=capacity)
+                        self.value = _bytes(self.gpu_memory.others_bytes(sample, self.pid, capacity_bytes=capacity))
+                        _, self.reason = self.gpu_memory.others_for_admission(sample, self.pid, capacity_bytes=capacity)
+                        if self.value is not None:
+                            self.basis = 'reconciled' if self.reason else 'measured'
+                            self.last_known, self.last_known_at = self.value, now
+                        elif self.reason is None: self.reason = 'External GPU memory reading is unavailable'
+                    except Exception as exc:
+                        self.value = None
+                        self.reason = 'GPU memory reading failed: ' + type(exc).__name__ + ': ' + str(exc)[:160]
+                self.at = now
+            age = None if self.last_known_at is None else now - self.last_known_at
+            held, adjustment = self.value, self.basis
+            if held is None:
+                held, adjustment = min(FALLBACK_BYTES, capacity) if capacity is not None else FALLBACK_BYTES, 'fallback'
+                if age is not None and 0 <= age <= LAST_KNOWN_SECONDS and self.last_known > held:
+                    held, adjustment = self.last_known, 'last_known'
+            self.status.update(others_bytes=self.value, reading_basis=self.basis, unknown_reason=self.reason,
+                               effective_others_bytes=held, adjustment_basis=adjustment, last_known_age_seconds=age,
+                               capacity_bytes=capacity, device=device, counter_anomalies=self.anomalies)
+            notice = (self.basis, self.reason, adjustment)
+            if notice != self.notice and self.reason:
+                logging.warning('Studio VRAM guard: external use %s (%s); adjustment %s bytes (%s); anomalies=%s',
+                                self.basis, self.reason, held, adjustment, self.anomalies)
+            self.notice = notice
+            return held
 
 
 def install(mm, others, path=None, expected=EXPECTED, status=STATUS):
@@ -80,8 +133,19 @@ def install(mm, others, path=None, expected=EXPECTED, status=STATUS):
 
         def get_free_memory(dev=None, torch_free_too=False):
             result = original_get(dev, torch_free_too)
-            if not getattr(local, 'depth', 0) or getattr(dev, 'type', None) in ('cpu', 'mps'): return result
-            held = others()
+            if not getattr(local, 'depth', 0): return result
+            capacity, device, unknown_reason = None, None, None
+            try:
+                # A bare cuda device follows the current GPU; resolve its identity before consulting the cache.
+                implicit = dev is None or str(dev) == 'cuda' or (getattr(dev, 'type', None) == 'cuda' and getattr(dev, 'index', None) is None)
+                resolved = mm.get_torch_device() if implicit else dev
+                if getattr(resolved, 'type', None) in ('cpu', 'mps') or str(resolved) in ('cpu', 'mps'): return result
+                device = str(resolved)
+                try: capacity = mm.get_total_memory(resolved)
+                except Exception as exc: unknown_reason = 'GPU capacity query failed: ' + type(exc).__name__
+            except Exception as exc:
+                unknown_reason = 'GPU device identity query failed: ' + type(exc).__name__
+            held = others(capacity_bytes=capacity, device=device, unknown_reason=unknown_reason)
             if held <= 0: return result
             status['counted_calls'] += 1
             if torch_free_too: return (max(0, result[0] - held), result[1])
