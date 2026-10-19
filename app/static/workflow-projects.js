@@ -10,12 +10,12 @@
   let applying = false, readToken = 0, reduceToken = 0, state, mode = 'nodes', historyOwner = null;
   let stepsDropTyped = false;
   const panel = el('section', null, {class: 'wf-panel wf-shared', 'aria-label': 'Saved workflows'});
-  const fold = $('#wfSavedFold'); let foldError = false;
+  const fold = $('#wfSavedFold'); let foldError = 0;
   const actions = el('div', null, {class: 'wf-toolbar'}), choice = el('select', null, {id: 'sharedWorkflowChoice', 'aria-label': 'Saved workflow'});
   choice.append(el('option', 'Refresh saved workflows', {value: ''})); actions.append(choice);
   const message = el('p', 'Save drafts to Workspace to share them with agents. Nothing runs when you save.', {role: 'status', id: 'sharedWorkflowStatus'});
   function say(text) { message.textContent = text; }
-  function guard(fn) { return async () => { try { await fn(); } catch (error) { foldError = true; say(error.message); } finally { sync(); } }; }
+  function guard(fn) { return async () => { try { await fn(); } catch (error) { foldError++; say(error.message); } finally { sync(); } }; }
   async function request(path, value) {
     const r = await fetch(path, value === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(value)});
     const result = await r.json();
@@ -54,7 +54,7 @@
         : state.binding.conflict ? `Save receipt recovered at r${result.revision}, but head is r${result.head_revision}. Your draft is retained. Open current or save a copy.`
         : `Workspace revision ${result.revision} saved. ${state.dirty(W.snapshot()) ? 'Later local edits remain unsaved.' : 'Agents can now read this exact revision.'}`);
     } catch (error) {
-      foldError = true; state.failure(error.status);
+      foldError++; state.failure(error.status);
       say(error.status === 409 ? 'An agent or another window changed this workflow. Local edits are retained. Open current or save a separate copy.'
         : error.message + (state.pending ? ' The exact request is retained; use Retry retained save, not a new save.' : ''));
     } finally { state.busy = false; sync(); }
@@ -83,7 +83,7 @@
   panel.append(actions, historyActions);
   fold.append(panel); fold.after(stateLabel, message);
   try { state = new P.State(sessionStorage, uuid); if (state.pending) say('A save request survived this tab’s reload. Retry its exact retained request to reconcile it; it will not overwrite the current draft.'); }
-  catch (error) { foldError = true; say('Shared saving is unavailable: ' + error.message); }
+  catch (error) { foldError++; say('Shared saving is unavailable: ' + error.message); }
   let publishedProject = '';
   function projectSnapshot() {
     return {id: state?.binding?.id || null, revision: state?.binding?.revision || null,
@@ -91,8 +91,12 @@
       conflict: !!state?.binding?.conflict};
   }
   window.WorkflowProject = Object.freeze({snapshot: projectSnapshot});
+  let foldOpenedFor = '';
   function sync() {
-    if (foldError || state?.binding) fold.open = true;
+    // Open the fold when a workflow attaches or an error appears, once per change: a user who closes it keeps it closed.
+    const foldKey = foldError ? 'error' + foldError : (state?.binding?.id || '');
+    if (foldKey && foldKey !== foldOpenedFor) fold.open = true;
+    foldOpenedFor = foldKey;
     const next = JSON.stringify(projectSnapshot());
     if (next !== publishedProject) { publishedProject = next; document.dispatchEvent(new Event('workflow:project')); }
     if (!state) { panel.querySelectorAll('button').forEach(n => n.disabled = true); return; }
@@ -112,7 +116,7 @@
     $('#restoreSharedWorkflow').disabled = blocked || !state.binding || !!state.binding.conflict || !history.value || historyOwner !== state.binding.id;
   }
   history.onchange = sync;
-  document.addEventListener('workflow:replace', () => { stepsDropTyped = true; readToken++; if (!applying && state) { state.detach(); foldError = false; fold.open = false; history.replaceChildren(el('option', 'Load revision history', {value: ''})); say('Local draft loaded. Save a new Workspace copy, or open a saved workflow to edit its revisions.'); } });
+  document.addEventListener('workflow:replace', () => { stepsDropTyped = true; readToken++; if (!applying && state) { state.detach(); foldError = 0; foldOpenedFor = ''; fold.open = false; history.replaceChildren(el('option', 'Load revision history', {value: ''})); say('Local draft loaded. Save a new Workspace copy, or open a saved workflow to edit its revisions.'); } });
   // Steps use the same pure reducer as saved commands, without committing a revision.
   const stepsPanel = el('section', null, {id: 'workflowSteps', class: 'wf-steps', 'aria-label': 'Workflow steps'}); stepsPanel.hidden = true;
   const viewbar = el('div', null, {class: 'wf-toolbar'}), nodesPanel = $('#builder .wf-builder');
