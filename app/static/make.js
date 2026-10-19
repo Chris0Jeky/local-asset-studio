@@ -845,11 +845,12 @@
   async function renderPictures(g){
     const body=q('#makeBody'),a=state.pick;
     if(a&&!state.repicking){body.innerHTML=(g.intent==='combine'?'':'<div class="make-chosen make-picked"><img src="'+thumbUrl(a)+'" alt=""><div><small>'+(chosenCharacter()?'Your character':'Your picture')+'</small><b>'+escape(chosenCharacter()?.name||pictureLabel(a))+'</b></div><button type="button" data-make-repick>Change picture</button></div>')+'<div id="makeComposer"></div>';renderGoalComposer(g);return;}
-    body.innerHTML='<div class="make-step"><span>1</span><h2 tabindex="-1">'+(g.intent==='combine'?'Pick the character picture':'Pick the picture')+'</h2>'+(a?'<button type="button" class="make-link" data-make-keep-picture>Stay with '+escape(pictureLabel(a))+'</button>':'')+'</div><div id="makeCharNote"></div>'+characterChooser(g)+'<p class="make-hint">'+escape(PICK[g.intent])+' <a href="/#assets">Import a picture</a> first if it is not here.</p>'+pictureFinder('makePictures','data-make-pick');
+    body.innerHTML='<div class="make-step"><span>1</span><h2 tabindex="-1">'+(g.intent==='combine'?'Pick the character picture':'Pick the picture')+'</h2>'+(a?'<button type="button" class="make-link" data-make-keep-picture>Stay with '+escape(pictureLabel(a))+'</button>':'')+'</div><div id="makeCharNote"></div>'+characterChooser(g)+'<p class="make-hint">'+escape(PICK[g.intent])+'</p>'+pictureFinder('makePictures','data-make-pick');
     await fillPictures(g,'makePictures','data-make-pick');
     if(goal()===g){characterNote(g);void fillLineups();}
   }
-  const pictureFinder=(id,attr)=>'<div class="make-finder"><input type="search" class="make-search" data-make-search="'+id+'" data-make-attr="'+attr+'" placeholder="Search your pictures" aria-label="Search your pictures" aria-controls="'+id+'" value="'+escape(state.queries[id]||'')+'"><button type="button" class="make-link" data-make-all="'+id+'" aria-controls="'+id+'" aria-pressed="false" hidden></button></div><div id="'+id+'" class="make-pictures"><p class="muted">Loading your pictures…</p></div>';
+  // Import here (pass 2): a picture that is not in the library yet is one file choice away, and it becomes the chosen picture; Make is never left.
+  const pictureFinder=(id,attr)=>'<div class="make-finder"><input type="search" class="make-search" data-make-search="'+id+'" data-make-attr="'+attr+'" placeholder="Search your pictures" aria-label="Search your pictures" aria-controls="'+id+'" value="'+escape(state.queries[id]||'')+'"><button type="button" data-make-import="'+id+'">Import a picture…</button><input type="file" accept="image/png,image/jpeg,image/webp" hidden data-make-import-file="'+id+'" aria-label="Import a picture"><button type="button" class="make-link" data-make-all="'+id+'" aria-controls="'+id+'" aria-pressed="false" hidden></button></div><div id="'+id+'" class="make-pictures"><p class="muted">Loading your pictures…</p></div>';
   async function loadPictures(){if(!state.pictures){const data=await json('/api/workspace');state.pictures=(data.assets||[]).filter(a=>a.media_type==='image'&&picture(a)&&!a.trashed_at).sort((a,b)=>(b.created_at||0)-(a.created_at||0));}return state.pictures;}   // your pictures by default, the whole library with Show all; the grid shows the newest 60 matches
   async function fillPictures(g,id,attr){
     try{await loadPictures();
@@ -865,7 +866,7 @@
     const agents=others.filter(agentRun).length,pool=state.allPictures||!agents?others:others.filter(a=>!agentRun(a)),list=pool.filter(match);
     const shown=list.slice(0,60),more=list.length-shown.length,hidden=!state.allPictures&&agents&&terms.length?others.filter(a=>agentRun(a)&&match(a)).length:0;
     const card=a=>{const label=pictureLabel(a),meta=pictureMeta(a);return '<button type="button" '+attr+'="'+escape(a.id)+'" title="'+escape(String(a.prompt_excerpt||a.title||label)+(meta?' · '+meta:''))+'"><img src="'+thumbUrl(a)+'" alt="'+escape(label)+'" loading="lazy"><small aria-hidden="true">'+escape(label)+'</small>'+(meta?'<small class="make-pic-meta">'+escape(meta)+'</small>':'')+'</button>';};
-    box.innerHTML=list.length?shown.map(card).join('')+(more?'<p class="muted">'+more+' older picture'+(more===1?'':'s')+' match too. Search to narrow the list.</p>':''):pool.length?'<p class="muted">No picture matches “'+escape(state.queries[id])+'”'+(hidden?'; '+hidden+' from agent runs do'+(hidden===1?'es':'')+'.':'.')+'</p>':others.length?'<p class="muted">None of your own pictures yet: everything here is from agent runs.</p>':state.pictures.length?'<p class="muted">The character is your only picture. Import a pose picture in the library, or choose Draw the pose.</p>':'<p class="muted">No pictures yet. Make one first, or import one in the library.</p>';
+    box.innerHTML=list.length?shown.map(card).join('')+(more?'<p class="muted">'+more+' older picture'+(more===1?'':'s')+' match too. Search to narrow the list.</p>':''):pool.length?'<p class="muted">No picture matches “'+escape(state.queries[id])+'”'+(hidden?'; '+hidden+' from agent runs do'+(hidden===1?'es':'')+'.':'.')+'</p>':others.length?'<p class="muted">None of your own pictures yet: everything here is from agent runs.</p>':state.pictures.length?'<p class="muted">The character is your only picture. Import a pose picture, or choose Draw the pose.</p>':'<p class="muted">No pictures yet. Import one, or make one first.</p>';
     const all=q('[data-make-all="'+id+'"]');if(all){all.hidden=!agents;all.setAttribute('aria-pressed',String(!!state.allPictures));all.textContent=state.allPictures?'Show only my pictures':'Show all pictures ('+agents+' more from agent runs)';}
   }
   function figureSvg(points,mirror){const P=PE(),at=i=>points[i]&&[Math.round((mirror?1-points[i][0]:points[i][0])*100),Math.round(points[i][1]*150)];
@@ -1062,6 +1063,23 @@
     if(t.dataset.makeChar){state.charForm[t.dataset.makeChar]=t.value;t.removeAttribute('aria-invalid');t.removeAttribute('aria-describedby');settleMissing();return;}
     if(t.dataset.makeSearch){state.queries[t.dataset.makeSearch]=t.value;renderGrid(t.dataset.makeSearch,t.dataset.makeAttr);}});
   // Choices that change the composer redraw it and keep the keyboard on the control just used.
+  view.addEventListener('change',e=>{if(e.target.matches('[data-make-import-file]'))void importPicture(e.target);});
+  // The library's own import (POST /api/assets/import); the new picture is chosen for the slot whose button was pressed.
+  async function importPicture(input){
+    const file=input.files?.[0],id=input.dataset.makeImportFile,g=goal(),box=q('#'+id),button=q('[data-make-import="'+id+'"]');if(!file)return;
+    const fail=text=>{if(box)box.insertAdjacentHTML('afterbegin','<p class="make-error" role="alert">'+escape(text)+' Nothing was imported.</p>');};
+    if(!['image/png','image/jpeg','image/webp'].includes(file.type))return fail('Choose a PNG, JPEG or WebP picture.');
+    if(file.size>20*1024*1024)return fail(file.name+' is over 20 MiB.');
+    if(button){button.disabled=true;button.textContent='Importing…';}
+    try{const r=await fetch('/api/assets/import',{method:'POST',headers:{'Content-Type':file.type,'X-Filename':file.name},body:file}),data=await r.json().catch(()=>({}));
+      if(!r.ok||!data.asset?.id)throw Error(data.error||'The import was refused ('+r.status+').');
+      state.pictures=null;await loadPictures();if(goal()!==g)return;let a=state.pictures.find(x=>x.id===data.asset.id);if(!a)state.pictures.unshift(a=data.asset);
+      if(id==='makePosePictures'){state.pose={asset:a};state.posePicking=false;renderGoalComposer(g);q('[data-make-pose-change]')?.focus();}
+      else{state.character=null;choosePicture(a.id);await renderPictures(g);q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();}
+      say('Imported '+file.name+'. It is chosen.');}
+    catch(error){if(button){button.disabled=false;button.textContent='Import a picture…';}fail(error.message);}
+    finally{input.value='';}
+  }
   view.addEventListener('change',e=>{const t=e.target,g=goal(),redraw=sel=>{renderGoalComposer(g);q(sel)?.focus();};
     if(t.name==='makeQuality'){const look=current(),id=t.id;if(look){tuneOf(look).steps=t.value?Number(t.value):null;tuneChanged();q('#'+id)?.focus();}return;}
     if(t.dataset.makeFix){state.fix=t.dataset.makeFix;redraw('#makeFix-'+state.fix);return;}
@@ -1094,6 +1112,7 @@
     const migrate=e.target.closest('[data-make-migrate]');if(migrate){openMigration(migrate.dataset.makeMigrate);return;}
     if(e.target.closest('[data-make-note-dismiss]')){dismissNote();return;}
     const pick=e.target.closest('[data-make-pick]');if(pick){state.character=null;choosePicture(pick.dataset.makePick);renderPictures(goal());q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();return;}
+    const imp=e.target.closest('[data-make-import]');if(imp){q('[data-make-import-file="'+imp.dataset.makeImport+'"]')?.click();return;}
     const all=e.target.closest('[data-make-all]');if(all){state.allPictures=!state.allPictures;for(const [id,attr] of [['makePictures','data-make-pick'],['makePosePictures','data-make-pose-pick']])renderGrid(id,attr);q('[data-make-all="'+all.dataset.makeAll+'"]')?.focus();return;}
     if(e.target.closest('[data-make-repick]')){state.repicking=true;renderPictures(goal());q('[data-make-search="makePictures"]')?.focus();return;}
     if(e.target.closest('[data-make-keep-picture]')){state.repicking=false;renderPictures(goal());q('#makeComposer .make-step h2')?.focus();return;}

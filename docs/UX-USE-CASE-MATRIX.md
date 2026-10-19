@@ -1,5 +1,15 @@
 # UX use-case matrix
 
+## Make: import a picture where you pick it (pass 2), 19 October 2026
+
+A brand-new user's first picture goal (*Change a picture*, *Fix or upscale*, *Restyle*, *New pose*, *Animate*, *Picture to 3D*) opened an empty grid
+that said "import one in the library", which meant leaving Make. Now **Import a picture…** sits beside the search box (and in the pose slot), and the
+imported file is chosen at once.
+
+| Journey | Before | After | Proof |
+| --- | --- | --- | --- |
+| Change a picture you have on disk, not yet in the Studio | 5 clicks + file (Library, Import images, file, Make, goal, the picture) | 2 clicks + file (goal, Import a picture…, file; chosen) | `make_goals_browser.py` import segment |
+
 ## Make: Compare one setting — 16 October 2026
 
 Audit v3 N7, issue #1496. One look with its Tune, one setting varied over two or three values, the words, shape, tune and
