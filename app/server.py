@@ -2480,12 +2480,12 @@ class Handler(BaseHTTPRequestHandler):
     def _json(self, status, obj):
         raw = json.dumps(obj).encode(); self.send_response(status); self.send_header("Content-Type", "application/json"); self.send_header("Cache-Control", "no-store"); self.send_header("Content-Length", str(len(raw))); self.end_headers(); self.wfile.write(raw)
     def _safe_host(self):
-        return self.headers.get("Host", "") in ("127.0.0.1:8191", "localhost:8191")
+        return self.headers.get("Host", "") in (f"127.0.0.1:{PORT}", f"localhost:{PORT}")
     def _safe_mutation(self):
         if not self._safe_host(): return False
         origin = self.headers.get("Origin")
         parsed = urlparse(origin or "")
-        return parsed.scheme == "http" and parsed.netloc in ("127.0.0.1:8191", "localhost:8191") and not parsed.username and not parsed.password
+        return parsed.scheme == "http" and parsed.netloc in (f"127.0.0.1:{PORT}", f"localhost:{PORT}") and not parsed.username and not parsed.password
     def _require_gpu(self):
         """New generation work is refused (409 gpu_leased) while another local GPU tenant holds the lease."""
         lease = getattr(self.studio, "gpu_lease", None)
@@ -2858,8 +2858,12 @@ def create_server(repo_root, host=HOST, port=PORT, http_server=StudioHTTPServer,
     return http
 
 def main():
-    parser = argparse.ArgumentParser(); parser.add_argument("--repo-root", "--root", dest="repo_root", default=str(Path(__file__).parents[1])); args = parser.parse_args()
-    with create_server(args.repo_root) as http:
+    global PORT
+    parser = argparse.ArgumentParser(); parser.add_argument("--repo-root", "--root", dest="repo_root", default=str(Path(__file__).parents[1]))
+    parser.add_argument("--port", type=int, default=PORT, help="loopback port (default 8191); a second preview Studio uses another one"); args = parser.parse_args()
+    if not 1024 <= args.port <= 65535: parser.error("--port must be 1024-65535")
+    PORT = args.port
+    with create_server(args.repo_root, port=PORT) as http:
         print(f"Asset Studio ready: http://{HOST}:{PORT}/ (Prompt Lab: /prompt-lab.html)", flush=True)
         http.serve_forever()
 if __name__ == "__main__": main()

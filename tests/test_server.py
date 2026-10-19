@@ -646,6 +646,14 @@ class ServerTests(unittest.TestCase):
         handler.headers={"Host":"evil.example:8191","Origin":"http://evil.example:8191"}
         self.assertFalse(handler._safe_host())
 
+    def test_preview_port_moves_the_host_and_origin_guard(self):
+        handler=server.Handler.__new__(server.Handler)
+        with patch.object(server,"PORT",8291):
+            handler.headers={"Host":"127.0.0.1:8291","Origin":"http://127.0.0.1:8291"}
+            self.assertTrue(handler._safe_mutation())
+            handler.headers={"Host":"127.0.0.1:8191","Origin":"http://127.0.0.1:8191"}
+            self.assertFalse(handler._safe_host())
+
     def test_foreign_origin_post_drains_declared_body_before_refusal(self):
         body=b"a"*(32*1024)
         handler=server.Handler.__new__(server.Handler)
