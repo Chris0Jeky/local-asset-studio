@@ -109,11 +109,16 @@ class BackendManager:
     def _save(self):
         self.studio._write_json_atomic(self.state_path,{'active':self.active,'operation':self.operation})
 
+    @staticmethod
+    def models_root(profile):
+        """The models folder a profile reads: its own checkout's, or the shared main library's when the profile names a `library` (moss)."""
+        return Path(profile.get('library') or profile['root'])/'models'
+
     def activate(self, identifier):
         from model_library import ModelLibrary
         profile=self.profiles[identifier]
         self.active=identifier;self.studio.comfy_url=profile['url'];self.studio.comfy_root=Path(profile['root'])
-        self.studio.library=ModelLibrary(self.studio.root,self.studio.comfy_root,backend_id=identifier)
+        self.studio.library=ModelLibrary(self.studio.root,self.studio.comfy_root,backend_id=identifier,models_root=self.models_root(profile))
         self.studio._schema=None;self.studio._schema_at=0
 
     def _local_work(self, ignore_job_ids=()):

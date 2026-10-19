@@ -1795,7 +1795,7 @@ class Studio:
         from model_requirements import requirements
         model_root = self.library.models
         if hasattr(self, 'backends'):
-            model_root = Path(self.backends.profiles[preset.get('backend_id', 'primary')]['root']) / 'models'
+            model_root = self.backends.models_root(self.backends.profiles[preset.get('backend_id', 'primary')])
         return requirements(self.library, preset, graph, model_root, assets=assets, observations=observations, fingerprints=fingerprints)
 
     def inspect_workflow(self, payload):

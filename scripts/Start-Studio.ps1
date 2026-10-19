@@ -71,12 +71,13 @@ $isolatedReady = $false
 try { $isolatedStats = Invoke-RestMethod 'http://127.0.0.1:8192/system_stats' -TimeoutSec 2; $isolatedReady = [bool]$isolatedStats.system } catch { }
 try { $h3Stats = Invoke-RestMethod 'http://127.0.0.1:8194/system_stats' -TimeoutSec 2; $isolatedReady = $isolatedReady -or [bool]$h3Stats.system } catch { }
 try { $qwen21Stats = Invoke-RestMethod 'http://127.0.0.1:8196/system_stats' -TimeoutSec 2; $isolatedReady = $isolatedReady -or [bool]$qwen21Stats.system } catch { }
+try { $mossStats = Invoke-RestMethod 'http://127.0.0.1:8198/system_stats' -TimeoutSec 2; $isolatedReady = $isolatedReady -or [bool]$mossStats.system } catch { }
 $backendStatePath = Join-Path $repoRoot '.runtime\backend-state.json'
 $savedBackend = $null
 if (Test-Path -LiteralPath $backendStatePath) { $savedBackend = Get-Content -LiteralPath $backendStatePath -Raw | ConvertFrom-Json }
 # Probes can outlive the initial lease observation, including a held lease.
 $gpuAvailable = Test-StudioGpuLeaseAvailable
-if ($gpuAvailable -and -not $comfyReady -and -not $isolatedReady -and $savedBackend.active -notin @('hidream','h3','qwen21')) {
+if ($gpuAvailable -and -not $comfyReady -and -not $isolatedReady -and $savedBackend.active -notin @('hidream','h3','qwen21','moss')) {
     if (-not (Test-Path -LiteralPath $studioConfig.comfy_launcher)) { throw 'ComfyUI is offline and its launcher is missing. Check config/local.json.' }
     # Start the same runtime the Studio's own switch/recovery launches: arguments from BackendManager.primary_argv,
     # with the configured --reserve-vram and pinned-memory setting (docs/RUNTIME-PRECONDITIONS.md section 8).

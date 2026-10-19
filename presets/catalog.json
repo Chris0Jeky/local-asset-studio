@@ -8168,6 +8168,7 @@
       "collection": "production-workspace",
       "family": "MOSS-Image",
       "backend_id": "moss",
+      "host_commit_heavy": true,
       "modality": "image",
       "verified": false,
       "positive": [

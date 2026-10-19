@@ -110,6 +110,20 @@ class BackendSafetyTests(unittest.TestCase):
             with self.subTest(role=role):
                 current=self.manager.readiness(profile);self.assertFalse(current['ready']);self.assertIn(role,current['message'])
             path.write_bytes(body)
+    def test_moss_reads_models_from_the_main_library_but_keeps_input_and_output_in_its_checkout(self):
+        profile=self.manager.profiles['moss'];self.manager.activate('moss')
+        self.assertEqual(self.studio.library.models,(Path(self.studio.config['comfy_root'])/'models').resolve())
+        self.assertEqual(Path(self.studio.comfy_root).resolve(),Path(profile['root']).resolve())
+        self.assertEqual(self.manager.models_root(profile),Path(profile['library'])/'models')
+        self.assertEqual(self.manager.models_root(self.manager.profiles['qwen21']),Path(self.manager.profiles['qwen21']['root'])/'models')
+    def test_moss_preset_is_gated_on_host_commit_and_the_launcher_knows_its_port(self):
+        import json
+        from server import Studio
+        preset=next(p for p in json.loads((Path(__file__).resolve().parents[1]/'presets/catalog.json').read_text(encoding='utf-8'))['presets'] if p['id']=='moss-t2i')
+        graph={'6':{'class_type':'EmptyFlux2LatentImage','inputs':{'width':1024,'height':1536,'batch_size':1}}}
+        self.assertTrue(Studio.host_commit_required(preset,graph))
+        script=(Path(__file__).resolve().parents[1]/'scripts/Start-Studio.ps1').read_text(encoding='utf-8-sig')
+        self.assertIn('127.0.0.1:8198/system_stats',script);self.assertIn("'qwen21','moss'",script)
     def test_moss_launch_is_owned_only_through_its_exact_comfy_root(self):
         profile=self.manager.profiles['moss'];argv=[profile['python'],'-s',profile['entry'],'--comfy-root',profile['root']]
         self.assertTrue(BackendManager.matches_configured_process(profile,profile['python'],argv,profile['root']))
