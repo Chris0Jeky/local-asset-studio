@@ -4,6 +4,54 @@ from workshop_entry_points import workshop_html, script
 
 
 class RunDecisions(entry.EntryPoints):
+    def test_dock_semantics_and_short_typing_status(self):
+        self.load_workshop()
+        dock = self.page.locator('.wk-run-dock')
+        self.assertEqual(dock.get_attribute('role'), 'group')
+        self.assertEqual(dock.get_attribute('aria-label'), 'Generation controls')
+        tools = self.page.locator('.wk-run-tools')
+        self.assertEqual(tools.get_attribute('role'), 'group')
+        self.assertEqual(tools.get_attribute('aria-label'), 'Plan and vary this run')
+        self.page.set_viewport_size({'width': 760, 'height': 500})
+        self.page.evaluate("document.querySelector('#status').textContent='A run message that stays available while typing.'")
+        self.page.focus('#positive')
+        self.assertTrue(self.page.locator('#status').is_visible())
+        self.assertEqual(self.page.locator('#status').get_attribute('role'), 'status')
+        self.assertFalse(self.page.locator('.wk-dock-info').is_visible())
+        self.assertTrue(dock.evaluate("n=>n.classList.contains('wk-typing')"))
+
+    def test_clamped_reason_expands_on_keyboard_focus(self):
+        self.load_workshop()
+        self.page.set_viewport_size({'width': 390, 'height': 844})
+        self.page.focus('#positive')
+        self.page.locator('#workshopReadiness').focus()
+        # A held pointer can retain typing mode after focus moves to the dock.
+        self.page.evaluate("document.querySelector('.wk-run-dock').classList.add('wk-typing')")
+        self.assertEqual(self.page.locator('#workshopReadiness').evaluate('n=>getComputedStyle(n).whiteSpace'), 'normal')
+        self.assertEqual(self.page.locator('#workshopReadiness').evaluate('n=>getComputedStyle(n).maxHeight'), 'none')
+
+    def test_elapsed_announcements_change_with_state_without_ticking(self):
+        self.load_workshop()
+        self.page.evaluate("window.jobs=[{id:'old-run',status:'completed',started_at:Date.now()/1000-300},{id:'clock-test',status:'running',started_at:Date.now()/1000-10}]")
+        self.page.wait_for_function("document.querySelector('#workshopElapsedStatus').textContent.includes('running')")
+        notice = self.page.locator('#workshopElapsedStatus')
+        self.assertEqual(notice.get_attribute('aria-live'), 'polite')
+        before = notice.text_content()
+        self.assertNotIn('old-run', before)
+        self.page.wait_for_timeout(1200)
+        self.assertEqual(notice.text_content(), before)
+        self.page.evaluate("jobs[1].status='completed'")
+        self.page.wait_for_function("document.querySelector('#workshopElapsedStatus').textContent.includes('completed')")
+
+    def test_blocker_rerender_restores_removed_focus(self):
+        self.load_workshop()
+        self.page.evaluate("document.querySelector('#uxBlockers').innerHTML='<div class=\"ux-blocker\"><p>First blocker.</p><button data-ux-resolve=\"models\">Repair</button></div>'")
+        self.page.locator('#workshopBlockerList button').wait_for()
+        self.page.locator('#workshopBlockerList button').focus()
+        self.page.evaluate("document.querySelector('#uxBlockers p').textContent='Changed blocker.'")
+        self.page.wait_for_function("document.querySelector('#workshopReadiness').textContent==='Changed blocker.'")
+        self.assertTrue(self.page.locator('#workshopReview').evaluate('n=>n===document.activeElement'))
+
     def test_phone_dock_is_compact_with_keyboard_reachable_tools(self):
         self.load_workshop()
         self.page.evaluate("document.querySelector('#estimateValue').textContent='~42s'")
