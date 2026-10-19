@@ -4,7 +4,8 @@ import http.client
 import json
 import threading
 import unittest
-from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 from urllib.parse import urlencode
 import test_reference_jobs as fixtures
 from studio_prompt.http_extension import extend_handler

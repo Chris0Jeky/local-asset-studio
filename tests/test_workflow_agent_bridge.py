@@ -3,7 +3,8 @@ import copy
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import redirect_stdout
 from http.client import IncompleteRead
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 import io
 import json
 import threading
