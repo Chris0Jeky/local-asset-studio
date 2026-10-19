@@ -7,6 +7,10 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-10-19: Workflow builder first screen
+
+- [ ] Workflow builder: storage and file tools folded (All tools, Saved workflows). Reverse: remove the two details wrappers in workflow-studio.html and the fold-open lines in workflow-projects.js.
+
 ## 2026-10-19 (Brief G): recipe picker
 
 - [ ] Recipe picker descriptions clamp to one line (full text on hover and for screen readers). Reverse: the clamp rule.
