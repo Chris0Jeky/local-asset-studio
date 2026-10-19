@@ -30,3 +30,5 @@
   #assetDialog #assetDetailMedia>model-viewer{width:100%;height:100%}   /* model-viewer has size containment: it needs an explicit height */
 }
 .asset-family-actions button{min-width:0;overflow-wrap:anywhere}
+
+.asset-unavailable{min-width:0}.asset-unavailable>summary{cursor:pointer}.asset-unavailable[open]{display:grid;gap:8px}
