@@ -140,6 +140,28 @@ class PipelineTests(unittest.TestCase):
         g={'1':{'class_type':'A','inputs':{'x':'bad'}}}
         with self.assertRaises(ValueError):p.graph_check(g,{})
         with self.assertRaises(ValueError):p.graph_check(g,{'A':{'input':{'required':{'x':[['good']]}}}})
+    def test_issue97_save_glb_union_socket_overlap(self):
+        info=p.read_json(ROOT/'tests/fixtures/graph-validation/object-info.json')
+        for received in ('MESH','FILE_3D_GLB','IMAGE, FILE_3D_GLB'):
+            info['FixtureSources']['output']=[received]
+            g={'source':{'class_type':'FixtureSources','inputs':{}},'save':{'class_type':'SaveGLB','inputs':{'mesh':['source',0],'filename_prefix':'test'}}}
+            with self.subTest(received=received):self.assertTrue(p.graph_check(g,info)['node_snapshot_checked'])
+        info['FixtureSources']['output']=['IMAGE,MASK']
+        with self.assertRaisesRegex(ValueError,'Linked input type mismatch'):p.graph_check(g,info)
+    def test_issue97_save_video_legacy_flat_codec(self):
+        info=p.read_json(ROOT/'tests/fixtures/graph-validation/object-info.json')
+        g={'source':{'class_type':'FixtureSources','inputs':{}},'save':{'class_type':'SaveVideo','inputs':{'video':['source',0],'filename_prefix':'test','format':'mp4','codec':'h264'}}}
+        before=copy.deepcopy(g);fields,required=p.expanded_input_contract(info['SaveVideo'],g['save']['inputs'])
+        self.assertNotIn('format.codec',fields);self.assertNotIn('format.codec',required);self.assertIn('codec',fields)
+        self.assertTrue(p.graph_check(g,info)['node_snapshot_checked']);self.assertEqual(g,before)
+        g['save']['inputs']['codec']='bogus'
+        with self.assertRaisesRegex(ValueError,'Unknown dynamic input option: codec'):p.graph_check(g,info)
+    def test_issue97_crop_color_widget_literal(self):
+        info=p.read_json(ROOT/'tests/fixtures/graph-validation/object-info.json')
+        g={'source':{'class_type':'FixtureSources','inputs':{}},'crop':{'class_type':'ImageCropToMask','inputs':{'images':['source',2],'masks':['source',3],'width':1024,'height':1024,'pad_factor':1.0,'grow_mask':0,'background':'#123456'}}}
+        before=copy.deepcopy((g,info));self.assertFalse(p.graph_check(g,info)['inference_verified']);self.assertEqual((g,info),before)
+        g['crop']['inputs']['background']=1
+        with self.assertRaisesRegex(ValueError,'Widget literal type mismatch'):p.graph_check(g,info)
     def test_schema_v3_combo_options_and_invalid_enums(self):
         g={'1':{'class_type':'A','inputs':{'choice':'good'}}}
         info={'A':{'input':{'required':{'choice':['COMBO',{'options':['good','better']}] }},'output':[]}}
