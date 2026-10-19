@@ -2770,3 +2770,8 @@ NoobAI remains hobby-only, and WAI mirror provenance is not creator authenticati
 alternative, pipeline controls, sources and recovery. The implementation branch is
 `codex/studio-workflow-lab`, based on `6bd4e5b`; final Git/CI status is reported with
 the handoff. [HUMAN_TODO.md](HUMAN_TODO.md) contains the optional creative choices.
+
+
+## 18 October 2026: tutorial fixture workspace guards
+
+Recover now creates a missing .runtime parent while refusing an existing fixture. Export checks the read-only served Studio app/protocol/workspace identity against --repo-root before output creation or Git checks, and retains that identity in its recording receipt. Six disposable regression tests pass; the unchanged scripts fail the causal run. The repository validator passes. No recording, generation, native editor, shared service, accepted artwork or retained lab output was changed. Full application tests, independent review and exact-head CI remain separate gates. HUMAN_TODO.md creative, licensing and physical/native acceptance items remain open.
