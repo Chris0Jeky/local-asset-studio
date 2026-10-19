@@ -955,11 +955,22 @@
     if(source&&route.positive&&!words.trim())return 'No description was kept for this picture, and '+route.name+' needs one. Use Continue with this and describe it.';
     return StudioContinuation.unfilled(route,words).length?route.name+' needs wording filled in. Use Continue with this.':'';
   }
+  function syncAssetUnavailable(holder){
+    if(holder?.id!=='assetNextSteps')return;
+    const groups=['.ux-tile','.ux-parallax','.ux-vary'].map(selector=>holder.querySelector(selector)).filter(Boolean),blocked=groups.filter(box=>box.querySelector('button')?.disabled);
+    const focused=document.activeElement;let fold=holder.querySelector(':scope > .asset-unavailable');
+    if(blocked.length&&!fold){fold=element('details','asset-unavailable','<summary></summary>');holder.append(fold);}
+    let next=q('#assetFamilyActions');
+    for(const box of groups.filter(box=>!blocked.includes(box)).reverse()){if(box.parentElement!==holder||box.nextElementSibling!==next)holder.insertBefore(box,next);next=box;}
+    next=null;for(const box of [...blocked].reverse()){if(box.parentElement!==fold||box.nextElementSibling!==next)fold.insertBefore(box,next);next=box;}
+    if(fold){if(blocked.length)fold.querySelector('summary').textContent='Not available for this picture ('+blocked.length+')';else fold.remove();}
+    if(holder.contains(focused)&&document.activeElement!==focused)focused.focus({preventScroll:true});
+  }
   // Rebuilt only when its words change, so polling never steals focus from a Vary button.
   function placeVary(holder,after,markup){
-    let box=holder.querySelector(':scope > .ux-vary');if(box&&box.dataset.markup===markup)return;
+    let box=holder.querySelector('.ux-vary');if(box&&box.dataset.markup===markup)return;
     const next=element('div','ux-vary',markup);next.dataset.markup=markup;next.setAttribute('role','group');next.setAttribute('aria-label','Vary this picture');
-    if(box)box.replaceWith(next);else after.after(next);
+    if(box)box.replaceWith(next);else after.after(next);syncAssetUnavailable(holder);
   }
   function syncGalleryVary(){
     if(!catalog)return;
@@ -973,7 +984,7 @@
   function syncOpenAssetVary(){
     const a=activeAsset,holder=q('#assetHandoffs')?.parentElement;if(!holder)return;
     // Vary is for pictures; a video, sound or model asset shows no Vary control at all.
-    if(!a||a.media_type!=='image'){holder.querySelector(':scope > .ux-vary')?.remove();return;}
+    if(!a||a.media_type!=='image'){holder.querySelector('.ux-vary')?.remove();syncAssetUnavailable(holder);return;}
     const plan=varyPlanFor(a.preset_id,a.job_id,a.id,a.media_type);
     placeVary(holder,q('#assetHandoffs'),varyMarkup(plan,'data-asset="'+escape(a.id)+'" data-preset="'+escape(a.preset_id||'')+'" data-job="'+escape(a.job_id||'')+'"','uxVaryWhyAsset'));
   }
@@ -1115,15 +1126,15 @@
     return band+'<button type="button" data-ux-tile="'+escape(status?.asset_id||'')+'"'+(status?.eligible?'':' disabled')+' aria-describedby="'+why+'">Make seamless</button><small id="'+why+'">'+escape(note)+'</small>';
   }
   function placeTile(holder,markup){
-    let box=holder.querySelector(':scope > .ux-tile');if(box&&box.dataset.markup===markup)return;
+    let box=holder.querySelector('.ux-tile');if(box&&box.dataset.markup===markup)return;
     const chosen=box?.querySelector('[data-ux-tile-band]')?.value;
     const next=element('div','ux-tile',markup);next.dataset.markup=markup;next.setAttribute('role','group');next.setAttribute('aria-label','Make this texture tile');
     const band=next.querySelector('[data-ux-tile-band]');if(band&&chosen&&[...band.options].some(o=>o.value===chosen&&!o.disabled))band.value=chosen;
-    if(box)box.replaceWith(next);else q('#assetHandoffs').after(next);
+    if(box)box.replaceWith(next);else q('#assetHandoffs').after(next);syncAssetUnavailable(holder);
   }
   after('openAsset',()=>{
     const a=activeAsset,holder=q('#assetHandoffs')?.parentElement;if(!holder)return;
-    if(!a||a.media_type!=='image'||a.trashed_at||!catalog?.presets?.some(p=>p.tile_route)){holder.querySelector(':scope > .ux-tile')?.remove();return;}
+    if(!a||a.media_type!=='image'||a.trashed_at||!catalog?.presets?.some(p=>p.tile_route)){holder.querySelector('.ux-tile')?.remove();syncAssetUnavailable(holder);return;}
     const read=++tileRead,current=()=>read===tileRead&&activeAsset?.id===a.id;placeTile(holder,tileMarkup(null));
     api('/api/tiles/source/'+encodeURIComponent(a.id)).then(status=>{if(current())placeTile(holder,tileMarkup(status));})
       .catch(error=>{if(current())placeTile(holder,tileMarkup({asset_id:a.id,eligible:false,reason:'Could not check this picture: '+error.message+'.'}));});
@@ -1175,7 +1186,7 @@
   }
   function syncParallax(group){
     const why=parallaxReason(group),button=group.querySelector('[data-ux-parallax]');if(!button)return;
-    button.disabled=Boolean(why)||parallaxBusy;group.querySelector('#uxParallaxWhy').textContent=why||group.parallaxStatus.flag;
+    button.disabled=Boolean(why)||parallaxBusy;group.querySelector('#uxParallaxWhy').textContent=why||group.parallaxStatus.flag;syncAssetUnavailable(q('#assetNextSteps'));
     const pick=group.querySelector('.ux-parallax-pick'),status=group.parallaxStatus;if(!pick||!status?.width)return;
     pick.querySelectorAll('.ux-parallax-box').forEach(box=>box.remove());
     for(const [x0,y0,x1,y1] of parallaxBoxes(group.querySelector('#uxParallaxView').value)||[]){
@@ -1193,16 +1204,17 @@
   }
   function placeParallax(holder,status,url){
     const next=element('div','ux-parallax',parallaxMarkup(status,url));next.setAttribute('role','group');next.setAttribute('aria-label','Split this picture into parallax layers');next.parallaxStatus=status;
-    const box=holder.querySelector(':scope > .ux-parallax');if(box)box.replaceWith(next);else(holder.querySelector(':scope > .ux-tile')||q('#assetHandoffs')).after(next);
-    if(status?.eligible)syncParallax(next);
+    const box=holder.querySelector('.ux-parallax');if(box)box.replaceWith(next);else(holder.querySelector('.ux-tile')||q('#assetHandoffs')).after(next);
+    if(status?.eligible)syncParallax(next);else syncAssetUnavailable(holder);
   }
   after('openAsset',()=>{
     const a=activeAsset,holder=q('#assetHandoffs')?.parentElement;if(!holder)return;
-    if(!a||a.media_type!=='image'||a.trashed_at||!catalog?.presets?.some(p=>p.parallax_route)){holder.querySelector(':scope > .ux-parallax')?.remove();return;}
+    if(!a||a.media_type!=='image'||a.trashed_at||!catalog?.presets?.some(p=>p.parallax_route)){holder.querySelector('.ux-parallax')?.remove();syncAssetUnavailable(holder);return;}
     const read=++parallaxRead,current=()=>read===parallaxRead&&activeAsset?.id===a.id;placeParallax(holder,null,a.url);
     api('/api/parallax/source/'+encodeURIComponent(a.id)).then(status=>{if(current())placeParallax(holder,status,a.url);})
       .catch(error=>{if(current())placeParallax(holder,{asset_id:a.id,eligible:false,reason:'Could not check this picture: '+error.message+'.'},a.url);});
   });
+  after('openAsset',()=>{const fold=q('#assetNextSteps > .asset-unavailable');if(fold)fold.open=false;});
   document.addEventListener('input',e=>{const group=e.target.closest?.('.ux-parallax');if(group)syncParallax(group);});
   function pickPoint(pick,e){const r=pick.getBoundingClientRect(),s=pick.closest('.ux-parallax').parallaxStatus;return [Math.round(Math.max(0,Math.min(1,(e.clientX-r.left)/r.width))*s.width),Math.round(Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))*s.height)];}
   document.addEventListener('pointerdown',e=>{const pick=e.target.closest?.('.ux-parallax-pick');if(!pick||e.button!==0)return;e.preventDefault();parallaxDrag={pick,start:pickPoint(pick,e)};pick.setPointerCapture?.(e.pointerId);});
