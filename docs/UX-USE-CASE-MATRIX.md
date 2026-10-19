@@ -17,6 +17,16 @@ generation submissions and zero page errors. Fixture HTTP request threads logged
 routes during the sweep; the journey results above are browser-observed outcomes, not a claim that
 those fixture routes are error-free. The historical tables below retain their original measurements.
 
+## Make: import a picture where you pick it (pass 2), 19 October 2026
+
+A brand-new user's first picture goal (*Change a picture*, *Fix or upscale*, *Restyle*, *New pose*, *Animate*, *Picture to 3D*) opened an empty grid
+that said "import one in the library", which meant leaving Make. Now **Import a picture…** sits beside the search box (and in the pose slot), and the
+imported file is chosen at once.
+
+| Journey | Before | After | Proof |
+| --- | --- | --- | --- |
+| Change a picture you have on disk, not yet in the Studio | 5 clicks + file (Library, Import images, file, Make, goal, the picture) | 2 clicks + file (goal, Import a picture…, file; chosen) | `make_goals_browser.py` import segment |
+
 ## Make: goal-first rework — 19 October 2026
 
 Design and findings: `docs/ux-qa/GOAL-FIRST-REWORK-2026-10-19.md`. Measured on preview Studios (127.0.0.1:8291-8293, own empty workspace,
