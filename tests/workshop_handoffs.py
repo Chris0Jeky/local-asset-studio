@@ -20,6 +20,7 @@ from workshop_browser_core import immersive_css
 from workshop_wildcards import WILDCARDS, exercise_wildcards
 from workshop_continuation_help import exercise_continuation_help
 from workshop_backend_refresh import exercise_backend_refresh
+from workshop_backend_resolution import exercise_backend_resolution
 from workshop_parallax_handoff import exercise_parallax_handoff
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -58,6 +59,7 @@ async def run(args):
                 await page.set_viewport_size({'width':1440, 'height':900})
             if args.case in ('all', 'backends'):
                 await exercise_backend_refresh(page, checks, fixture.POSTS)
+                await exercise_backend_resolution(page, checks, fixture.POSTS)
                 await page.set_viewport_size({'width':1440, 'height':900})
                 await page.select_option('#workshopLayout', 'focus', force=True)
             if args.case in ('all', 'continuation'):

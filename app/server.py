@@ -2787,6 +2787,7 @@ class Handler(BaseHTTPRequestHandler):
                     result = self.studio.create_job(payload)
                 return self._json(201, result)
             if self.path == '/api/backends/switch': return self._json(202, self.studio.backends.switch(self._body_object().get('id')))
+            if self.path == '/api/backends/resolve-switch': return self._json(200, self.studio.backends.resolve_switch_record(self._body_object()))
             if self.path == '/api/runtime-recovery/retry': return self._json(202, self.studio.runtime_recovery.reset())
             if self.path == '/api/articulated': return self._json(201,self.studio.production.articulated(self._body_json()))
             if self.path == '/api/assets/import':

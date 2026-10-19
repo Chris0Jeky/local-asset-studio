@@ -1,4 +1,17 @@
 let backendSwitching=false, backendActive=null, backendReadEpoch=0, backendReadPending=null, backendInventoryPending=false, backendSwitchEpoch=0;
+let backendResolution=null,backendResolving=false;
+function updateBackendResolution(){
+  $('#resolveBackendSwitch').disabled=backendResolving||!backendResolution||!$('#backendStudiosClosed').checked||!$('#backendRuntimesInspected').checked;
+}
+function renderBackendResolution(shared){
+  const next=shared?.resolvable&&typeof shared.sha256==='string'&&/^[a-f0-9]{64}$/.test(shared.sha256)?shared.sha256:null;
+  if(backendResolution!==next){$('#backendStudiosClosed').checked=false;$('#backendRuntimesInspected').checked=false;}
+  backendResolution=next;
+  if(!next&&[$('#backendStudiosClosed'),$('#backendRuntimesInspected'),$('#resolveBackendSwitch')].includes(document.activeElement)){
+    const status=$('#backendStatus');status.tabIndex=-1;status.focus({preventScroll:true});
+  }
+  $('#backendResolution').hidden=!next;updateBackendResolution();
+}
 function renderRecovery(recovery={}) {
   $('#recoveryStatus').textContent=recovery.message || (recovery.enabled ? 'Runtime recovery is watching the selected backend.' : 'Runtime recovery is disabled.');
   const retry=$('#retryRecovery'),hide=!recovery.enabled || recovery.status!=='breaker-open';
@@ -36,18 +49,20 @@ async function refreshBackends() {
       catalog=next;if(replacement)selected=replacement;
       renderPresets();if(selected){renderSelected();restoreBackendEditor(snapshot);}
     }
-    backendSwitching=state.busy;
+    const sharedBlock=state.shared_state?.blocker||state.state_issue||'';
+    backendSwitching=state.busy||!!sharedBlock;
     const select=$('#backendChoice'),keep=select.value;
     select.innerHTML=state.profiles.map(p=>'<option value="'+esc(p.id)+'" '+(!p.installed?'disabled':'')+'>'+esc(p.name)+(p.online?' · online':'')+'</option>').join('');
     select.value=switching?state.operation.target:(state.busy?state.active:(backendActive===null?state.active:(keep||state.active)));
-    if(state.busy&&[select,$('#switchBackend')].includes(document.activeElement)){const status=$('#backendStatus');status.tabIndex=-1;status.focus({preventScroll:true});}
-    select.disabled=state.busy;$('#switchBackend').disabled=state.busy;
+    if(backendSwitching&&[select,$('#switchBackend')].includes(document.activeElement)){const status=$('#backendStatus');status.tabIndex=-1;status.focus({preventScroll:true});}
+    select.disabled=backendSwitching;$('#switchBackend').disabled=backendSwitching;
     const busyMessage='A local operation is running. Switching is disabled until it finishes.';
-    $('#backendStatus').textContent=switching?(state.operation.message||'One model environment at a time. Switching never starts a generation.'):(state.busy?busyMessage:(state.operation?.message||'One model environment at a time. Switching never starts a generation.'));
+    $('#backendStatus').textContent=switching?(state.operation.message||'One model environment at a time. Switching never starts a generation.'):(state.busy?busyMessage:(sharedBlock||state.operation?.message||'One model environment at a time. Switching never starts a generation.'));
+    renderBackendResolution(state.busy?null:state.shared_state);
     renderRecovery(state.recovery);
     backendActive=state.active;$('#activeBackend').textContent=state.profiles.find(p=>p.active)?.name||'';
     // The Models disclosure is folded by default; a running switch keeps it open so its progress and the disabled controls stay visible.
-    const activeName=state.profiles.find(p=>p.active)?.name||'',panel=$('.environment-panel'),summary=$('#envSummary');if(summary)summary.textContent=switching?'Switching to '+(state.profiles.find(p=>p.id===state.operation.target)?.name||state.operation.target)+'…':activeName?'Active: '+activeName+' · switching is always explicit':'Switching is always explicit';if(switching&&panel)panel.open=true;
+    const activeName=state.profiles.find(p=>p.active)?.name||'',panel=$('.environment-panel'),summary=$('#envSummary');if(summary)summary.textContent=switching?'Switching to '+(state.profiles.find(p=>p.id===state.operation.target)?.name||state.operation.target)+'…':activeName?'Active: '+activeName+' · switching is always explicit':'Switching is always explicit';if(backendSwitching&&panel)panel.open=true;
     updateReady();
     if(changed||backendInventoryPending){
       backendInventoryPending=true;
@@ -67,4 +82,14 @@ $('#switchBackend').onclick=async()=>{
   catch(e){if(attempt!==backendSwitchEpoch)return;const read=backendReadEpoch+1;await refreshBackends();if(attempt===backendSwitchEpoch&&read===backendReadEpoch)$('#backendStatus').textContent=e.message;}
 };
 $('#retryRecovery').onclick=async()=>{try{await post('/api/runtime-recovery/retry',{});await refreshBackends();}catch(e){$('#recoveryStatus').textContent=e.message;}};
+$('#backendStudiosClosed').onchange=updateBackendResolution;$('#backendRuntimesInspected').onchange=updateBackendResolution;
+$('#resolveBackendSwitch').onclick=async()=>{
+  if(backendResolving||!backendResolution||!$('#backendStudiosClosed').checked||!$('#backendRuntimesInspected').checked)return;
+  const expected=backendResolution,attempt=++backendSwitchEpoch;backendResolving=true;backendReadEpoch++;
+  if(document.activeElement===$('#resolveBackendSwitch')){const status=$('#backendStatus');status.tabIndex=-1;status.textContent='Recording the inspected switch resolution…';status.focus({preventScroll:true});}
+  updateBackendResolution();
+  try{await post('/api/backends/resolve-switch',{expected_sha256:expected,acknowledge_studios_closed:true,acknowledge_runtimes_inspected:true});await refreshBackends();}
+  catch(e){if(attempt!==backendSwitchEpoch)return;const read=backendReadEpoch+1;await refreshBackends();if(attempt===backendSwitchEpoch&&read===backendReadEpoch)$('#backendStatus').textContent=e.message;}
+  finally{backendResolving=false;updateBackendResolution();}
+};
 refreshBackends();setInterval(()=>{if(backendSwitching&&backendReadPending!==backendReadEpoch)refreshBackends();},3000);

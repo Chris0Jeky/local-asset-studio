@@ -12,6 +12,7 @@ import time
 from pathlib import Path
 
 from backend_contracts import connection_refused, endpoint_ready
+import backend_state
 
 REFUSAL_PROBE_TIMEOUT = 3
 DEFAULT_PORT = 8191
@@ -109,14 +110,13 @@ class RuntimeRecovery:
         bounded network observations stay outside Studio's lock.
         """
         manager = self.studio.backends
-        try: state = json.loads(manager.state_path.read_text(encoding="utf-8"))
-        except (OSError, ValueError, AttributeError): state = None
-        state = state if isinstance(state, dict) else {}; saved = state.get("active"); operation = state.get("operation")
-        # Even a same-family switch owns the interval before its new process appears. Age alone cannot prove its owner died.
-        if isinstance(operation, dict) and operation.get("status") == "running":
-            return (f"Shared backend state records a switch to '{operation.get('target') or 'unknown'}' as running. "
-                    "Wait for it to finish; if its Studio exited, inspect the runtimes and switch explicitly in Models & setup. "
-                    "Reset recovery does not clear a shared switch.")
+        if getattr(manager, 'state_issue', None): return 'Shared backend state requires inspection: ' + manager.state_issue
+        try: state = backend_state.read(getattr(manager, 'state_path', self.studio.root / '.runtime/backend-state.json')).value
+        except backend_state.StateError as exc: return 'Shared backend state requires inspection: ' + str(exc)
+        reason = backend_state.blocker(state)
+        if reason: return reason
+        saved = state.get('active')
+        if saved and saved not in manager.profiles: return 'Shared backend state selects an unknown environment; inspect the saved selection.'
         if isinstance(saved, str) and saved in manager.profiles and saved != profile["id"]:
             return (f"Shared backend state selects '{saved}', while this Studio still selects '{profile['id']}'. "
                     "If that backend has stopped, select the intended environment explicitly in Models & setup, "

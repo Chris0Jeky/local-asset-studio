@@ -1,0 +1,430 @@
+"""Shared switch ownership, using small state files and inert backend doubles."""
+from contextlib import ExitStack, contextmanager
+import copy
+import errno
+import json
+import multiprocessing
+import os
+import hashlib
+from pathlib import Path
+import sys
+import tempfile
+import threading
+from types import SimpleNamespace
+import unittest
+from unittest.mock import Mock, patch
+from urllib.error import URLError
+
+import psutil
+
+sys.path.insert(0, str(Path(__file__).parents[1] / 'app'))
+from backends import BackendManager
+from runtime_recovery import RuntimeRecovery
+import backend_state
+
+
+def hold_writer(path, ready, release, crash=False):
+    with backend_state.writer_lock(Path(path)):
+        ready.set()
+        if not release.wait(10):os._exit(72)
+        if crash:os._exit(73)
+
+
+def race_writer(path, ready, start, results, action):
+    store=backend_state.Store(path);expected=store.read();ready.put(True)
+    if not start.wait(10):os._exit(72)
+    try:
+        if action=='reserve':
+            operation={'id':str(os.getpid()),'owner':backend_state.current_owner(),'target':'primary','status':'running','phase':'checking'}
+            store.reserve(expected,operation)
+        else:
+            with patch.object(backend_state,'owner_status',return_value='absent'):store.reconcile(expected)
+        results.put('published')
+    except backend_state.StateError as exc:results.put(type(exc).__name__)
+
+
+class BackendStateIOTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary=tempfile.TemporaryDirectory();self.addCleanup(self.temporary.cleanup)
+        self.path=Path(self.temporary.name).resolve()/'backend-state.json';self.store=backend_state.Store(self.path)
+
+    def operation(self):
+        return {'id':'operation-a','owner':SharedBackendStateTests.owner(),'target':'primary','status':'running','phase':'checking'}
+
+    def initial(self):
+        operation=self.operation();self.path.write_text(json.dumps({'active':'primary','operation':operation}))
+        return self.store.read(),{'id':operation['id'],'owner':operation['owner']}
+
+    def test_another_process_cannot_enter_the_held_writer_lock(self):
+        context=multiprocessing.get_context('spawn');ready=context.Event();release=context.Event()
+        process=context.Process(target=hold_writer,args=(str(self.path),ready,release))
+        process.start()
+        try:
+            self.assertTrue(ready.wait(5),'inert lock holder did not start')
+            with self.assertRaisesRegex(backend_state.StateError,'busy'):
+                with backend_state.writer_lock(self.path,timeout=0.03):self.fail('second writer entered')
+        finally:
+            release.set();process.join(5)
+            if process.is_alive():process.terminate();process.join(5)
+        self.assertEqual(process.exitcode,0)
+
+    def test_process_crash_releases_ownership_without_removing_lock_file(self):
+        context=multiprocessing.get_context('spawn');ready=context.Event();release=context.Event()
+        process=context.Process(target=hold_writer,args=(str(self.path),ready,release,True));process.start()
+        try:
+            self.assertTrue(ready.wait(5));lock=self.path.with_name(self.path.name+'.lock');identity=lock.stat().st_ino
+            release.set();process.join(5);self.assertEqual(process.exitcode,73)
+            with backend_state.writer_lock(self.path,timeout=0):self.assertEqual(lock.stat().st_ino,identity)
+        finally:
+            release.set()
+            if process.is_alive():process.terminate();process.join(5)
+
+    def test_two_real_writers_or_reconcilers_publish_only_one_transition(self):
+        context=multiprocessing.get_context('spawn')
+        for action in ('reserve','reconcile'):
+            with self.subTest(action=action):
+                self.path.unlink(missing_ok=True)
+                if action=='reconcile':self.initial()
+                ready=context.Queue();results=context.Queue();start=context.Event()
+                processes=[context.Process(target=race_writer,args=(str(self.path),ready,start,results,action)) for _ in range(2)]
+                for process in processes:process.start()
+                try:
+                    for _ in processes:self.assertTrue(ready.get(timeout=5))
+                    start.set();outcomes=[results.get(timeout=5) for _ in processes]
+                    self.assertCountEqual(outcomes,['published','StateConflict'])
+                    landed=self.store.read().value;self.assertEqual(landed['revision'],1)
+                    self.assertEqual(landed['operation']['status'],'running' if action=='reserve' else 'interrupted')
+                finally:
+                    start.set()
+                    for process in processes:
+                        process.join(5)
+                        if process.is_alive():process.terminate();process.join(5)
+                    ready.close();results.close()
+                self.assertTrue(all(process.exitcode==0 for process in processes))
+
+    def test_replacement_while_reconciler_waits_is_not_overwritten(self):
+        expected,_=self.initial();replacement=copy.deepcopy(expected.value);replacement['operation']['id']='operation-b'
+        writer_lock=backend_state.writer_lock
+        def replaced(*args,**kwargs):
+            self.path.write_text(json.dumps(replacement));return writer_lock(*args,**kwargs)
+        with patch.object(backend_state,'writer_lock',side_effect=replaced),patch.object(backend_state,'owner_status',return_value='absent'):
+            with self.assertRaises(backend_state.StateConflict):self.store.reconcile(expected)
+        self.assertEqual(self.store.read().value,replacement)
+
+    def test_progress_changed_during_flush_is_not_overwritten_even_for_same_operation(self):
+        expected,token=self.initial();replacement=copy.deepcopy(expected.value);replacement['revision']=7
+        replacement['operation']['message']='newer progress';flushed=os.fsync
+        def changed(descriptor):
+            flushed(descriptor);self.path.write_text(json.dumps(replacement))
+        operation=dict(expected.value['operation'],message='stale progress')
+        with patch.object(backend_state.os,'fsync',side_effect=changed):
+            with self.assertRaises(backend_state.StateConflict):self.store.update(expected,token,operation)
+        self.assertEqual(self.store.read().value,replacement)
+
+    def test_failed_flush_preserves_original_and_lost_replace_reply_is_not_replayed(self):
+        expected,token=self.initial();raw=self.path.read_bytes();operation=dict(expected.value['operation'],message='updated')
+        with patch.object(backend_state.os,'fsync',side_effect=OSError('inert full disk')):
+            with self.assertRaises(backend_state.StateError):self.store.update(expected,token,operation)
+        self.assertEqual(self.path.read_bytes(),raw)
+        replace=backend_state.file_replace.replace;calls=[]
+        def lost_reply(source,target):
+            calls.append(True);replace(source,target);raise OSError('inert lost acknowledgement')
+        with patch.object(backend_state.file_replace,'replace',side_effect=lost_reply):
+            with self.assertRaises(backend_state.StateUnconfirmed):self.store.update(expected,token,operation)
+        self.assertEqual(calls,[True]);self.assertEqual(self.store.read().value['operation']['message'],'updated')
+        self.assertEqual(list(self.path.parent.glob('.backend-state-*.tmp')),[])
+
+    def test_changed_lock_cannot_authorize_publication(self):
+        expected,token=self.initial();flushed=os.fsync;refused=[]
+        def changed(descriptor):
+            flushed(descriptor);lock=self.path.with_name(self.path.name+'.lock')
+            try:lock.unlink()
+            except PermissionError:refused.append(True);return
+            lock.write_bytes(b'new lock')
+        with patch.object(backend_state.os,'fsync',side_effect=changed):
+            try:self.store.update(expected,token,dict(expected.value['operation'],message='updated'))
+            except backend_state.StateError:self.assertEqual(self.store.read().value,expected.value)
+            else:self.assertEqual(os.name,'nt');self.assertTrue(refused)
+
+    def test_windows_primitive_is_nonblocking_and_unlocks_the_same_byte(self):
+        calls=[]
+        fake=SimpleNamespace(LK_NBLCK=7,LK_UNLCK=9,locking=lambda fd,mode,size:calls.append((mode,size,os.lseek(fd,0,os.SEEK_CUR))))
+        with patch.object(backend_state,'WINDOWS',True),patch.dict(sys.modules,{'msvcrt':fake}):
+            with backend_state.writer_lock(self.path,timeout=0):pass
+        self.assertEqual(calls,[(7,1,0),(9,1,0)])
+        fake.locking=Mock(side_effect=OSError(errno.EACCES,'held'))
+        with patch.object(backend_state,'WINDOWS',True),patch.dict(sys.modules,{'msvcrt':fake}):
+            with self.assertRaisesRegex(backend_state.StateError,'busy'):
+                with backend_state.writer_lock(self.path,timeout=0):self.fail('entered held Windows lock')
+        self.assertEqual(fake.locking.call_count,1)
+
+    def test_malformed_owner_never_becomes_absence(self):
+        for field,value in (('pid',True),('pid',-1),('created_at',float('nan')),('created_at',10**1000),('version',True),('instance_id','')):
+            owner=self.operation()['owner'];owner[field]=value
+            with self.subTest(field=field),patch('backend_state.psutil.Process') as process:
+                self.assertEqual(backend_state.owner_status(owner),'unknown');process.assert_not_called()
+
+    def test_unreadable_duplicate_or_invalid_state_is_not_first_run(self):
+        self.assertIsNone(self.store.read().identity)
+        for raw in ('','{bad','[]','{}','{"active":""}','{"active":"primary","active":"hidream"}','{"operation":false}','{"revision":true}','{"operation":{"owner":{"created_at":NaN}}}'):
+            with self.subTest(raw=raw):
+                self.path.write_text(raw)
+                with self.assertRaises(backend_state.StateError):self.store.read()
+
+
+class SharedBackendStateTests(unittest.TestCase):
+    def setUp(self):
+        self.stack = ExitStack(); self.addCleanup(self.stack.close)
+        self.root = Path(self.stack.enter_context(tempfile.TemporaryDirectory())).resolve()
+        (self.root / '.runtime').mkdir()
+        self.path = self.root / '.runtime/backend-state.json'
+        self.thread = self.stack.enter_context(patch('backends.threading.Thread'))
+        self.launch = self.stack.enter_context(patch('backends.subprocess.Popen'))
+        self.launch.return_value.pid = 901; self.launch.return_value.poll.return_value = 1
+        self.manager = self.make_manager()
+
+    def make_manager(self):
+        def write(path, value):
+            path.parent.mkdir(parents=True, exist_ok=True)
+            pending = path.with_suffix('.tmp'); pending.write_text(json.dumps(value)); pending.replace(path)
+        studio = SimpleNamespace(root=self.root, comfy_root=self.root/'comfy', config={}, jobs={},
+                                 lock=threading.RLock(), production=SimpleNamespace(list=lambda: []),
+                                 _write_json_atomic=write)
+        manager = BackendManager(studio); studio.backends = manager
+        return manager
+
+    @staticmethod
+    def owner(pid=987654321):
+        return {'version': 1, 'pid': pid, 'created_at': 123.0, 'instance_id': 'other-studio'}
+
+    def record(self, **operation):
+        value = {'active': 'primary', 'operation': dict(id='switch-a', target='hidream', status='running',
+                 started_at=1.0, owner=self.owner(), phase='checking', **operation)}
+        self.path.write_text(json.dumps(value)); return value
+
+    @contextmanager
+    def owner_probe(self, result):
+        process = psutil.Process
+        def observe(pid=None, *args, **kwargs):
+            if pid == 987654321:
+                if isinstance(result, Exception): raise result
+                return SimpleNamespace(create_time=lambda: result)
+            return process(pid, *args, **kwargs)
+        with patch('psutil.Process', side_effect=observe): yield
+
+    @contextmanager
+    def inert(self, manager):
+        with ExitStack() as stack:
+            for method, value in (('available', True), ('_idle', None), ('_stopped_results', None),
+                                  ('process', None), ('configured_processes', [])):
+                stack.enter_context(patch.object(manager, method, return_value=value))
+            stack.enter_context(patch.object(manager, 'request', return_value={'system': {'ready': True}, 'devices': []}))
+            yield
+
+    def test_live_foreign_owner_is_displayed_and_cannot_be_replaced(self):
+        saved = self.record(); raw = self.path.read_bytes()
+        with self.owner_probe(123.0): manager = self.make_manager()
+        self.assertEqual(manager.operation['status'], 'running')
+        with self.inert(manager), self.assertRaisesRegex(ValueError, 'switch|owner'):
+            manager.switch('primary')
+        self.assertEqual(self.path.read_bytes(), raw)
+        self.assertEqual(manager.operation, saved['operation'])
+        self.thread.assert_not_called(); self.launch.assert_not_called()
+
+    def test_two_studios_cannot_reserve_the_same_idle_state(self):
+        other = self.make_manager()
+        with self.inert(self.manager): self.manager.switch('hidream')
+        reserved = self.path.read_bytes()
+        with self.inert(other), self.assertRaisesRegex(ValueError, 'switch|changed|owner'):
+            other.switch('primary')
+        self.assertEqual(self.path.read_bytes(), reserved)
+        self.assertEqual(self.thread.call_count, 1)
+
+    def test_explicit_retry_after_a_reservation_conflict_reads_the_completed_winner(self):
+        reserve=self.manager._state.reserve
+        def race(expected,operation):
+            self.path.write_text(json.dumps({'active':'primary','operation':{'id':'winner','status':'completed','target':'primary'}}))
+            return reserve(expected,operation)
+        with self.inert(self.manager),patch.object(self.manager._state,'reserve',side_effect=race):
+            with self.assertRaises(backend_state.StateConflict):self.manager.switch('hidream')
+        self.thread.assert_not_called()
+        with self.inert(self.manager):self.manager.switch('hidream')
+        self.assertEqual(self.thread.call_count,1)
+        self.assertEqual(json.loads(self.path.read_text())['operation']['owner'],self.manager._owner)
+
+    def test_dead_owner_before_launch_is_reconciled_without_runtime_actions(self):
+        saved = self.record(); saved['active'] = 'hidream'
+        saved['operation']['stopped_processes'] = [{'pid': 34, 'created_at': 5}]
+        self.path.write_text(json.dumps(saved))
+        with self.owner_probe(psutil.NoSuchProcess(987654321)): manager = self.make_manager()
+        landed = json.loads(self.path.read_text())
+        self.assertEqual(landed['active'], 'hidream')
+        self.assertEqual(landed['operation']['status'], 'interrupted')
+        self.assertEqual(landed['operation']['stopped_processes'], saved['operation']['stopped_processes'])
+        self.assertEqual(landed['operation']['owner'], saved['operation']['owner'])
+        self.assertEqual(landed['operation']['started_at'], 1.0)
+        self.assertFalse(landed['operation']['inspection_required'])
+        self.assertIn('reconciled_at', landed['operation'])
+        self.assertEqual(manager.operation, landed['operation'])
+        self.thread.assert_not_called(); self.launch.assert_not_called()
+
+    def test_launch_intent_survives_dead_owner_reconciliation_and_blocks_recovery(self):
+        saved = self.record(); saved['operation'].update(phase='launch-intent', log_directory='retained-log')
+        self.path.write_text(json.dumps(saved))
+        with self.owner_probe(psutil.NoSuchProcess(987654321)): manager = self.make_manager()
+        landed = json.loads(self.path.read_text())
+        self.assertEqual(landed['operation']['status'], 'interrupted')
+        self.assertTrue(landed['operation']['inspection_required'])
+        self.assertEqual(landed['operation']['log_directory'], 'retained-log')
+        manager.studio.config.update(runtime_auto_recover=True, runtime_recovery_autostart=False)
+        recovery = RuntimeRecovery(manager.studio)
+        with self.inert(manager), patch.object(manager, 'request', side_effect=URLError(ConnectionRefusedError(errno.ECONNREFUSED, 'fixture'))), \
+             patch.object(manager, 'launch_recovery') as launch:
+            result = recovery.tick()
+        self.assertEqual(result['status'], 'other-backend-active'); launch.assert_not_called()
+        self.assertIn('inspection', result['message'].lower())
+        with self.inert(manager), self.assertRaisesRegex(ValueError, 'inspection'):
+            manager.switch('primary')
+
+    def test_legacy_ownerless_record_remains_unchanged_and_blocks_switch(self):
+        saved = self.record(); saved['operation'].pop('owner')
+        self.path.write_text(json.dumps(saved)); raw = self.path.read_bytes()
+        manager = self.make_manager()
+        self.assertEqual(manager.operation['status'], 'running')
+        with self.inert(manager), self.assertRaisesRegex(ValueError, 'owner|legacy'):
+            manager.switch('hidream')
+        self.assertEqual(self.path.read_bytes(), raw); self.thread.assert_not_called()
+
+    def test_unreadable_state_blocks_switch_and_recovery(self):
+        self.path.write_text('{invalid'); manager = self.make_manager()
+        with self.inert(manager), self.assertRaisesRegex(ValueError, 'state|read'):
+            manager.switch('hidream')
+        manager.studio.config.update(runtime_auto_recover=True, runtime_recovery_autostart=False)
+        recovery = RuntimeRecovery(manager.studio)
+        with self.inert(manager), patch.object(manager, 'request', side_effect=URLError(ConnectionRefusedError(errno.ECONNREFUSED, 'fixture'))), \
+             patch.object(manager, 'launch_recovery') as launch:
+            self.assertEqual(recovery.tick()['status'], 'other-backend-active')
+        launch.assert_not_called(); self.assertEqual(self.path.read_text(), '{invalid')
+
+    def test_unknown_or_reused_owner_identity_is_preserved(self):
+        for result in (psutil.AccessDenied(987654321), 456.0, float('nan')):
+            with self.subTest(result=result):
+                self.record(); raw = self.path.read_bytes()
+                with self.owner_probe(result): manager = self.make_manager()
+                self.assertEqual(manager.operation['status'], 'running')
+                self.assertEqual(self.path.read_bytes(), raw)
+
+    def test_unreadable_observer_identity_cannot_reconcile_a_recorded_owner(self):
+        self.record(); raw=self.path.read_bytes()
+        with patch.object(backend_state,'current_owner',return_value=None),self.owner_probe(psutil.NoSuchProcess(987654321)):
+            manager=self.make_manager()
+            with self.inert(manager):self.assertFalse(manager.snapshot()['shared_state']['resolvable'])
+            with self.assertRaisesRegex(ValueError,'live|unverified'):
+                manager.resolve_switch_record(self.acknowledgement())
+        self.assertEqual(self.path.read_bytes(),raw)
+        self.assertEqual(manager.operation['status'],'running')
+        self.thread.assert_not_called();self.launch.assert_not_called()
+
+    def test_stale_worker_progress_does_not_overwrite_or_launch(self):
+        with self.inert(self.manager): self.manager.switch('hidream')
+        replacement = self.record(); raw = self.path.read_bytes()
+        with self.inert(self.manager): self.manager._switch('hidream')
+        self.assertEqual(self.path.read_bytes(), raw)
+        self.launch.assert_not_called(); self.assertFalse(self.manager.busy)
+
+    def test_stale_worker_failure_does_not_overwrite_newer_operation(self):
+        with self.inert(self.manager): self.manager.switch('hidream')
+        self.record(); raw = self.path.read_bytes()
+        with patch.object(self.manager, 'available', side_effect=ValueError('inert preflight failure')):
+            self.manager._switch('hidream')
+        self.assertEqual(self.path.read_bytes(), raw); self.launch.assert_not_called()
+
+    def test_launch_intent_is_durable_before_process_creation(self):
+        with self.inert(self.manager): self.manager.switch('hidream')
+        observed = []
+        def launch(*args, **kwargs):
+            observed.append(json.loads(self.path.read_text())['operation'])
+            raise OSError('inert creation failure')
+        self.launch.side_effect = launch
+        with self.inert(self.manager): self.manager._switch('hidream')
+        self.assertEqual(len(observed), 1)
+        self.assertEqual(observed[0].get('phase'), 'launch-intent')
+        self.assertEqual(observed[0]['owner']['pid'], os.getpid())
+        self.assertTrue(json.loads(self.path.read_text())['operation']['inspection_required'])
+
+    def acknowledgement(self):
+        return {'expected_sha256':hashlib.sha256(self.path.read_bytes()).hexdigest(),
+                'acknowledge_studios_closed':True,'acknowledge_runtimes_inspected':True}
+
+    def test_legacy_resolution_is_explicit_preserves_evidence_and_allows_later_switch(self):
+        saved=self.record();saved['operation'].pop('owner');saved['operation']['log_directory']='keep-this-log'
+        self.path.write_text(json.dumps(saved));manager=self.make_manager()
+        with self.inert(manager): result=manager.resolve_switch_record(self.acknowledgement())
+        resolved=json.loads(self.path.read_text())
+        self.assertEqual(resolved['active'],saved['active'])
+        self.assertEqual(resolved['operation']['log_directory'],'keep-this-log')
+        self.assertEqual(resolved['operation']['status'],'interrupted')
+        self.assertTrue(resolved['operation']['resolution']['acknowledge_runtimes_inspected'])
+        self.assertFalse(result['shared_state']['resolvable'])
+        self.thread.assert_not_called();self.launch.assert_not_called()
+        with self.inert(manager):manager.switch('hidream')
+        self.assertEqual(json.loads(self.path.read_text())['operation']['owner']['pid'],os.getpid())
+
+    def test_resolution_requires_both_exact_acknowledgements(self):
+        saved=self.record();saved['operation'].pop('owner');self.path.write_text(json.dumps(saved))
+        manager=self.make_manager();raw=self.path.read_bytes()
+        for field in ('acknowledge_studios_closed','acknowledge_runtimes_inspected'):
+            for value in (False,'true',1,None):
+                command=self.acknowledgement();command[field]=value
+                with self.subTest(field=field,value=value),self.assertRaisesRegex(ValueError,'Confirm'):
+                    manager.resolve_switch_record(command)
+                self.assertEqual(self.path.read_bytes(),raw)
+
+    def test_live_or_unknown_recorded_owner_cannot_be_resolved_by_acknowledgement(self):
+        for result in (123.0,456.0,psutil.AccessDenied(987654321)):
+            with self.subTest(result=result),self.owner_probe(result):
+                self.record();manager=self.make_manager();raw=self.path.read_bytes()
+                with self.inert(manager):self.assertFalse(manager.snapshot()['shared_state']['resolvable'])
+                with self.assertRaisesRegex(ValueError,'live|unverified'):
+                    manager.resolve_switch_record(self.acknowledgement())
+                self.assertEqual(self.path.read_bytes(),raw)
+
+    def test_stale_operator_acknowledgement_does_not_resolve_replacement(self):
+        saved=self.record();saved['operation'].pop('owner');self.path.write_text(json.dumps(saved))
+        command=self.acknowledgement();saved['operation']['id']='switch-b'
+        self.path.write_text(json.dumps(saved));raw=self.path.read_bytes();manager=self.make_manager()
+        with self.assertRaisesRegex(ValueError,'changed'):manager.resolve_switch_record(command)
+        self.assertEqual(self.path.read_bytes(),raw)
+
+    def test_unconfirmed_own_reservation_can_be_resolved_only_after_the_worker_is_inactive(self):
+        replace=backend_state.file_replace.replace
+        def lost_reply(source,target):
+            replace(source,target);raise OSError('inert lost acknowledgement')
+        with self.inert(self.manager),patch.object(backend_state.file_replace,'replace',side_effect=lost_reply):
+            with self.assertRaises(backend_state.StateUnconfirmed):self.manager.switch('hidream')
+        self.assertFalse(self.manager.busy);self.thread.assert_not_called();self.launch.assert_not_called()
+        self.assertEqual(json.loads(self.path.read_text())['operation']['status'],'running')
+        with self.inert(self.manager):result=self.manager.resolve_switch_record(self.acknowledgement())
+        self.assertFalse(result['shared_state']['blocker']);self.assertIsNone(self.manager.state_issue)
+        with self.inert(self.manager):self.manager.switch('hidream')
+        with self.assertRaisesRegex(ValueError,'still running'):self.manager.resolve_switch_record(self.acknowledgement())
+
+    def test_own_launch_publication_uncertainty_keeps_evidence_until_explicit_inspection(self):
+        with self.inert(self.manager):self.manager.switch('hidream')
+        replace=backend_state.file_replace.replace
+        def lost_reply(source,target):
+            phase=json.loads(Path(source).read_text())['operation'].get('phase')
+            replace(source,target)
+            if phase=='launched':raise OSError('inert lost acknowledgement')
+        with self.inert(self.manager),patch.object(backend_state.file_replace,'replace',side_effect=lost_reply):self.manager._switch('hidream')
+        self.assertFalse(self.manager.busy);saved=json.loads(self.path.read_text())['operation']
+        self.assertEqual(saved['status'],'running');self.assertEqual(saved['phase'],'launched');self.assertEqual(saved['pid'],901)
+        self.assertIsNotNone(self.manager.state_issue)
+        with self.inert(self.manager):result=self.manager.resolve_switch_record(self.acknowledgement())
+        resolved=json.loads(self.path.read_text())['operation']
+        self.assertEqual(resolved['pid'],901);self.assertEqual(resolved['log_directory'],saved['log_directory'])
+        self.assertEqual(resolved['status'],'interrupted');self.assertFalse(result['shared_state']['blocker'])
+        self.assertEqual(self.launch.call_count,1,'resolution performs no runtime action')
+
+
+if __name__ == '__main__': unittest.main()

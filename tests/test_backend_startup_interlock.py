@@ -54,8 +54,7 @@ class StartupInterlockTests(unittest.TestCase):
         return {'system': {'python_version': 'fixture'}} if route == '/system_stats' else {'queue_running': [], 'queue_pending': []}
 
     def run_worker(self):
-        self.manager.operation = {'id': 'startup-test', 'target': 'hidream', 'status': 'running'}
-        self.manager.busy = True
+        with self.studio.lock:self.manager._admit_shared();self.manager._begin_switch('hidream')
         self.manager._switch('hidream')
 
     def preserved(self):
@@ -126,8 +125,8 @@ class StartupInterlockTests(unittest.TestCase):
 
     def test_startup_arriving_after_start_intent_blocks_popen(self):
         save = self.manager._save
-        def persist():
-            save()
+        def persist(**kwargs):
+            save(**kwargs)
             if self.manager.operation.get('message', '').startswith('Starting '):
                 self.starting['hidream'] = [self.process(200)]
         with patch.object(self.manager, '_save', side_effect=persist):self.run_worker()
@@ -135,8 +134,8 @@ class StartupInterlockTests(unittest.TestCase):
 
     def test_target_listener_arriving_after_start_intent_is_reused_without_popen(self):
         save = self.manager._save
-        def persist():
-            save()
+        def persist(**kwargs):
+            save(**kwargs)
             if self.manager.operation.get('message', '').startswith('Starting '):
                 self.listeners['hidream'] = self.process(200)
         with patch.object(self.manager, '_save', side_effect=persist):self.run_worker()

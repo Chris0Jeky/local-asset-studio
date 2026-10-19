@@ -25,6 +25,9 @@ class BackendTests(unittest.TestCase):
     def tearDown(self):
         self.threads.stop();self.tmp.cleanup()
 
+    def begin_switch(self, manager, identifier='primary'):
+        with self.studio.lock:manager._admit_shared();manager._begin_switch(identifier)
+
     def test_snapshot_locks_copies_but_not_endpoint_requests(self):
         manager=self.studio.backends;deepcopy=backends.copy.deepcopy;copied=[]
         manager.operation={'status':'running'};manager.last_launch_reserve={'reserve_gib':0.6}
@@ -50,7 +53,7 @@ class BackendTests(unittest.TestCase):
                 mutations.append(('setdefault',lock._is_owned()));return super().setdefault(*args)
         for outcome in ('completed','exited','timeout'):
             with self.subTest(outcome=outcome):
-                mutations.clear();manager.operation=CheckedOperation(id='test',target='primary',status='running')
+                self.begin_switch(manager);mutations.clear();manager.operation=CheckedOperation(manager.operation)
                 manager.profiles['primary']['pidfile']=str(self.root/'comfyui.pid')
                 stopped=MagicMock(pid=1111);stopped.create_time.return_value=1.0
                 launched=MagicMock(pid=4321);launched.poll.return_value=1 if outcome=='exited' else None
@@ -117,7 +120,7 @@ class BackendTests(unittest.TestCase):
     def test_switch_actually_launches_primary_with_the_reserve_flag(self):
         # primary_argv alone would stay green if the call site were reverted; assert what Popen receives.
         manager=self.studio.backends;manager.profiles['primary']['pidfile']=str(self.root/'comfyui.pid');manager.profiles['primary']['reserve_vram']='auto'
-        manager.operation={'id':'test','target':'primary','status':'running','started_at':0.0,'message':'test'}
+        self.begin_switch(manager)
         launched=MagicMock(pid=4321);launched.poll.return_value=1
         reserve={'reserve_gib':3.8,'basis':'measured','others_bytes':3*2**30,'adapter':'a','unknown_reason':None}
         with patch.object(manager,'available',return_value=True),patch.object(manager,'_idle',return_value=True), \
@@ -135,7 +138,7 @@ class BackendTests(unittest.TestCase):
         # Issue #983: the switch used to overwrite launch_reserve_gib's excluded_pids (counter anomalies) with
         # the just-stopped backend PIDs. Drives the full _switch so line 379 executes.
         manager=self.studio.backends;manager.profiles['primary']['pidfile']=str(self.root/'comfyui.pid');manager.profiles['primary']['reserve_vram']='auto'
-        manager.operation={'id':'test','target':'primary','status':'running','started_at':0.0,'message':'test'}
+        self.begin_switch(manager)
         stopped=MagicMock(pid=1111);stopped.create_time.return_value=111.0
         launched=MagicMock(pid=4321);launched.poll.return_value=1
         reserve={'reserve_gib':4.7,'basis':'reconciled','others_bytes':4*2**30,'adapter':'a','adapter_total_bytes':4*2**30,
@@ -153,7 +156,7 @@ class BackendTests(unittest.TestCase):
     def test_switch_records_impossible_counters_with_the_launch_reserve(self):
         # Issue #983, owner decision 27 Sep 2026: impossible readings are kept as evidence on the launch record.
         manager=self.studio.backends;manager.profiles['primary']['pidfile']=str(self.root/'comfyui.pid');manager.profiles['primary']['reserve_vram']='auto'
-        manager.operation={'id':'test','target':'primary','status':'running','started_at':0.0,'message':'test'}
+        self.begin_switch(manager)
         launched=MagicMock(pid=4321);launched.poll.return_value=1;adapter='0x00000000_0x000102fb_0'
         reading={'adapters':{adapter:{2304:{'dedicated_bytes':int(65.9*2**30),'shared_bytes':0},30868:{'dedicated_bytes':812*2**20,'shared_bytes':0}}},
                  'adapter_totals':{adapter:4*2**30},'unknown_reason':None,'adapter_unknown_reason':None}
@@ -188,11 +191,11 @@ class BackendTests(unittest.TestCase):
             if args[0].startswith(('/queue','/prompt','/history')):self.assertEqual(kwargs['base_url'],original)
         with self.assertRaisesRegex(ValueError,'Main library'):self.studio.prepare({'preset_id':'demo'})
 
-    def test_restart_keeps_interrupted_switch_and_does_not_launch(self):
+    def test_restart_keeps_legacy_running_switch_and_does_not_launch(self):
         state=self.root/'.runtime/backend-state.json';state.parent.mkdir(exist_ok=True)
         state.write_text(json.dumps({'active':'hidream','operation':{'status':'running','target':'primary'}}))
         manager=BackendManager(self.studio)
-        self.assertEqual(manager.active,'hidream');self.assertEqual(manager.operation['status'],'interrupted')
+        self.assertEqual(manager.active,'hidream');self.assertEqual(manager.operation['status'],'running')
         self.assertFalse(manager.busy)
 
     def test_restart_restores_hidream_routing(self):

@@ -14,6 +14,7 @@ from urllib.error import URLError
 
 sys.path.insert(0,str(Path(__file__).parents[1]/'app'))
 import backend_contracts as contracts
+import backend_state
 from backends import BackendManager
 
 IDLE={'queue_running':[],'queue_pending':[]}
@@ -46,8 +47,10 @@ class BackendSafetyTests(unittest.TestCase):
     def tearDown(self):self.temp.cleanup()
     def process(self,pid=123,created=1):
         proc=Mock();proc.pid=pid;proc.create_time.return_value=created;return proc
+    def begin_switch(self,identifier='hidream'):
+        with self.studio.lock:self.manager._admit_shared();self.manager._begin_switch(identifier)
     def run_switch(self,request=None,process=None):
-        self.manager.operation={'id':'test-switch','status':'running'};self.manager.busy=True
+        self.begin_switch()
         with patch.object(self.manager,'request',side_effect=request or (lambda p,r,*a: HEALTH if r=='/system_stats' else IDLE)), \
              patch.object(self.manager,'process',side_effect=process or (lambda p:self.process() if p['id']=='hidream' else None)), \
              patch.object(self.manager,'activate') as activate,patch('backends.subprocess.Popen') as launch:
@@ -149,7 +152,7 @@ class BackendSafetyTests(unittest.TestCase):
         for bad in (argv[:-1]+[str(self.root/'isolated/ComfyUI')],argv[:3]+['--install-root',profile['root']],argv+['--comfy-root',profile['root']]):
             with self.subTest(bad=bad):self.assertFalse(BackendManager.matches_configured_process(profile,profile['python'],bad,profile['root']))
     def test_qwen21_switch_launches_its_launcher_with_the_isolated_root(self):
-        self.manager.operation={'id':'test-switch','status':'running'};self.manager.busy=True
+        self.begin_switch('qwen21')
         launched=Mock(pid=4321);launched.poll.return_value=1
         with patch.object(self.manager,'request',side_effect=lambda p,r,*a: HEALTH if r=='/system_stats' else IDLE),              patch.object(self.manager,'process',return_value=None),patch.object(self.manager,'activate') as activate,              patch('backends.subprocess.Popen',return_value=launched) as popen:
             self.manager._switch('qwen21')
@@ -255,8 +258,8 @@ class BackendSafetyTests(unittest.TestCase):
                 thread.assert_not_called()
 
     def test_failed_intent_write_releases_gate(self):
-        with patch.object(self.manager,'request',return_value=IDLE),patch.object(self.manager,'_save',side_effect=OSError('disk full')),patch('backends.threading.Thread') as thread:
-            with self.assertRaises(OSError):self.manager.switch('hidream')
+        with patch.object(self.manager,'request',return_value=IDLE),patch('backend_state.os.fsync',side_effect=OSError('disk full')),patch('backends.threading.Thread') as thread:
+            with self.assertRaises(backend_state.StateError):self.manager.switch('hidream')
         thread.assert_not_called();self.assertFalse(self.manager.busy);self.assertIsNone(self.manager.operation)
     def test_failed_thread_start_is_durable_and_releases_gate(self):
         with patch.object(self.manager,'request',return_value=IDLE),patch('backends.threading.Thread.start',side_effect=RuntimeError('thread failed')):
@@ -267,7 +270,7 @@ class BackendSafetyTests(unittest.TestCase):
             self.studio._write_json_atomic(self.manager.state_path,value)
             with patch('backends.subprocess.Popen') as launch,patch('backends.threading.Thread') as thread:manager=BackendManager(self.studio)
             launch.assert_not_called();thread.assert_not_called();self.assertFalse(manager.busy)
-            if isinstance(value,dict) and isinstance(value['operation'],dict):self.assertEqual(manager.operation['status'],'interrupted')
+            if isinstance(value,dict) and isinstance(value['operation'],dict):self.assertEqual(manager.operation['status'],'running')
     def test_executed_script_not_later_python_argument(self):
         p=self.manager.profiles['primary'];good=[p['python'],'-s',p['entry'],'--listen','127.0.0.1','--port',str(p['port'])]
         self.assertTrue(self.manager.matches_configured_process(p,p['python'],good,p['root']))
@@ -328,7 +331,7 @@ class BackendSafetyTests(unittest.TestCase):
         self.assertEqual(self.manager.operation['status'],'completed');self.assertIn('inference was not checked',self.manager.operation['message'])
     def test_failed_startup_preserves_live_process_without_blind_cleanup(self):
         child=self.process(pid=900);child.poll.return_value=None
-        self.manager.operation={'id':'timeout','status':'running'};self.manager.busy=True
+        self.begin_switch()
         def request(p,r,*a):return IDLE if r=='/queue' else {'system':None}
         with patch.object(self.manager,'request',side_effect=request),patch.object(self.manager,'process',return_value=None), \
              patch('backends.subprocess.Popen',return_value=child),patch('backends.time.sleep'),patch.object(self.manager,'activate') as activate:
@@ -342,6 +345,7 @@ class BackendSafetyTests(unittest.TestCase):
     def test_retained_startup_before_listener_blocks_new_switch(self):
         import psutil
         self.manager.operation={'status':'interrupted','target':'hidream','pid':900}
+        self.studio._write_json_atomic(self.manager.state_path,{'active':'primary','operation':self.manager.operation})
         child=self.process(pid=900);profile=self.manager.profiles['hidream']
         child.exe.return_value=profile['python'];child.cwd.return_value=profile['root']
         child.cmdline.return_value=[profile['python'],profile['entry'],'--install-root',str(Path(profile['root']).parent)]
@@ -364,7 +368,7 @@ class BackendSafetyTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'Cannot inspect'):self.manager._check_retained_startup()
     def test_ready_endpoint_must_belong_to_launched_process(self):
         child=self.process(pid=900);child.poll.return_value=None
-        self.manager.operation={'id':'ownership','status':'running'};self.manager.busy=True
+        self.begin_switch()
         with patch.object(self.manager,'request',side_effect=lambda p,r,*a:HEALTH if r=='/system_stats' else IDLE), \
              patch.object(self.manager,'process',return_value=None),patch('backends.subprocess.Popen',return_value=child), \
              patch.object(self.manager,'activate') as activate:
@@ -377,7 +381,7 @@ class BackendSafetyTests(unittest.TestCase):
             nonlocal observations
             if profile['id']!='hidream':return None
             observations+=1;return child if observations>=3 else None
-        self.manager.operation={'id':'success','status':'running'};self.manager.busy=True
+        self.begin_switch()
         with patch.object(self.manager,'request',side_effect=lambda p,r,*a:HEALTH if r=='/system_stats' else IDLE), \
              patch.object(self.manager,'process',side_effect=observe),patch('backends.subprocess.Popen',return_value=child) as launch, \
              patch.object(self.manager,'activate') as activate:
