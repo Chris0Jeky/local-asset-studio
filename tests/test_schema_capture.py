@@ -3,7 +3,8 @@ import base64
 import copy
 from contextlib import redirect_stdout, redirect_stderr
 import hashlib
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 import io
 import json
 import os

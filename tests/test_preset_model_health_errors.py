@@ -1,6 +1,6 @@
 """A bad catalog graph produces a per-preset diagnostic, not global HTTP failure."""
 from http.client import HTTPConnection
-from http.server import ThreadingHTTPServer
+from http_test_server import ThreadingHTTPServer
 import json
 from pathlib import Path
 import tempfile

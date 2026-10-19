@@ -7,6 +7,11 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-10-19 overnight (ux-lead): LoRA list in Tune
+
+- [ ] **Tune shows every installed LoRA that fits as a card with Add** (role, made for this model or not, trigger word, starting strength and range). Other families fold under "may not suit"; typing filters. Reverse: in `renderTune()` in `app/static/make.js`, render `#makeLoraChoices` empty again and drop `loraCards()`.
+- [ ] **An added LoRA whose recorded default is 0 starts at 1, kept in its range** (the full editor already did this; Make added it at 0, which did nothing). Reverse: `startOf()` back to `default??1`.
+
 ## 2026-10-19 overnight (ux-lead): run-card next steps
 
 - [ ] **Make run cards show Change one thing, New pose and Restyle beside Vary and the fixes** (were under More; "Put in a new pose" is now "New pose", the Library dialog's word). More keeps Open full size, Other fixes, Animate and Make it 3D. Reverse: move the three `from(...)` calls in `actions()` in `app/static/make.js` back into the More `<details>`.
@@ -19,6 +24,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 ## 2026-10-19 overnight (ux-lead): Models & setup to Make
 
 - [ ] **Models & setup → What you can make: each ready look in a Make goal has "Use in Make"**, which opens Make with that goal and look chosen and says "<look> is chosen. Describe your picture, then press Generate." Nothing is sent. Reverse: drop the button in `modelLooksMarkup()` (`app/static/app.js`) and the `#modelLooks [data-make-use-look]` listener in `app/static/make.js`.
+
+## 2026-10-19 overnight (ux-lead): name the fold for what is in it
+
+- [ ] **"Tune this look" is now "Model, LoRAs and settings"** (Make's fold, the Ctrl+K hints, START-HERE, the anime guide, README): someone looking for "model" or "LoRA" finds it by its name. Code keeps the word "tune" internally. Reverse: the `<summary>` text in `renderComposer()` and the three finder strings in `app/static/studio-shell.js`.
 
 ## 2026-10-17 session (agent judgment calls)
 

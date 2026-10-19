@@ -1,7 +1,8 @@
 """SDK/CLI/MCP parity on real SQLite; no generation endpoint in this fixture."""
 import asyncio
 from contextlib import redirect_stdout
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 import importlib.util
 import io
 import json
