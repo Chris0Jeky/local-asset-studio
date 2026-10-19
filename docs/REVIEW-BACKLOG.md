@@ -12,6 +12,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 - [ ] **Each look card names its model and LoRA count** ("Anima model · 1 LoRA"), on the gallery and on the chosen-look strip. Reverse: drop `recipeLine()` in `app/static/make.js`.
 - [ ] **Sidebar icons are glyphs, not numerals** (Library ▦, Full editor ⚙, Compare & review ⇄, Overview ⌂; "03" beside Library read as a count, audit v3 N9). Reverse: the icon fields in `links` in `app/static/studio-shell.js`.
 
+## 2026-10-19 overnight (ux-lead): run-card next steps
+
+- [ ] **Make run cards show Change one thing, New pose and Restyle beside Vary and the fixes** (were under More; "Put in a new pose" is now "New pose", the Library dialog's word). More keeps Open full size, Other fixes, Animate and Make it 3D. Reverse: move the three `from(...)` calls in `actions()` in `app/static/make.js` back into the More `<details>`.
+
 ## 2026-10-19 overnight (ux-lead, goal-first rework; design in docs/ux-qa/GOAL-FIRST-REWORK-2026-10-19.md)
 
 - [ ] **Make shows the look's model and LoRAs while Tune is shut.** The Tune line reads "As made: Anima · anima-base-v1.0 · pearly_petiflow2 1.00 · 25 steps" (the model file is named when a family has two) instead of "Model, adapters, steps, seed"; a tuned look still reads "Tuned: ...". Reverse: `asMade()` in `app/static/make.js` back to the fixed text.

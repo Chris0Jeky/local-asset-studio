@@ -136,3 +136,6 @@
 .make-pose-routes{margin:4px 0 6px}.make-pose-routes small{display:block;margin:-4px 0 8px 26px;font-size:11px}.make-tune-row .make-lab{color:var(--accent)}
 /* The model line on a look card (19 Oct). */
 .make-look-text small.make-recipe,.make-chosen small.make-recipe{color:var(--text,#e8efe9);font-weight:600}
+
+/* A note in the picture grid (empty, no match, older pictures) spans the row instead of wrapping in one 150 px cell. */
+.make-pictures>p{grid-column:1/-1;margin:0}

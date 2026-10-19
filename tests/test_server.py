@@ -375,6 +375,38 @@ class ServerTests(unittest.TestCase):
                 self.assertEqual(restored['status'],'uncertain')
                 self.assertTrue(restored['pending_submission'])
 
+    def _assert_uncertain_prompt_evidence(self, reply, detail):
+        s=FakeStudio(self.root,[{'queue_running':[],'queue_pending':[]},reply])
+        job=s.jobs[s.create_job({'preset_id':'demo','controls':{}},enqueue=False)['id']];s._run(job)
+        self.assertEqual(job['status'],'uncertain');self.assertTrue(job['pending_submission'])
+        self.assertEqual(job['prompt_ids'],[]);self.assertEqual(job['submissions'],[])
+        self.assertEqual(sum(args[0]=='/prompt' for args,_ in s.requests),1)
+        saved=json.loads((s.runs/job['id']/'state.json').read_text())
+        self.assertEqual(saved['message'],job['message']);self.assertEqual(saved['pending_submission'],job['pending_submission'])
+        self.assertIn(detail,s.public(job)['message'])
+        return job
+
+    def test_uncertain_prompt_http_error_retains_status_without_reading_body(self):
+        error=HTTPError('http://localhost/prompt',503,'Unavailable',{},io.BytesIO(b'upstream unavailable'))
+        self.addCleanup(error.close)
+        with patch.object(error,'read',side_effect=AssertionError('must not read uncertain response')):
+            self._assert_uncertain_prompt_evidence(error,'HTTP 503')
+        self.assertTrue(error.closed)
+
+    def test_uncertain_prompt_network_error_retains_bounded_reason(self):
+        for error,detail in ((URLError('refused'+'x'*300),'refused'),(TimeoutError('timed out'),'timed out'),
+                             (OSError('connection reset'),'connection reset'),(json.JSONDecodeError('bad JSON','{',0),'bad JSON'),
+                             (UnicodeDecodeError('utf-8',b'\xff',0,1,'invalid start byte'),'invalid start byte'),(IncompleteRead(b'{'),'IncompleteRead')):
+            with self.subTest(error=type(error).__name__):
+                job=self._assert_uncertain_prompt_evidence(error,detail)
+                self.assertLessEqual(len(job['message']),350)
+
+    def test_uncertain_prompt_missing_id_retains_bounded_response(self):
+        for reply,detail in (({'status':'queued','detail':'x'*300},'"status": "queued"'),({'prompt_id':'   '},'"prompt_id": "   "'),([], 'list')):
+            with self.subTest(reply=type(reply).__name__):
+                job=self._assert_uncertain_prompt_evidence(reply,detail)
+                self.assertLessEqual(len(job['message']),350)
+
     def test_valid_prompt_response_preserves_prompt_id_and_completes(self):
         s=self.studio(); job=s.jobs[s.create_job({'preset_id':'demo','controls':{}}, enqueue=False)['id']]
         replies=[self._http_response(json.dumps({'queue_running':[],'queue_pending':[]}).encode()),

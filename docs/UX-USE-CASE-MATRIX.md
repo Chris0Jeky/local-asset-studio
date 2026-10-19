@@ -74,8 +74,9 @@ Owner ask (16 October 2026): "the user should be able to do it without much conf
     are the existing one-press polish routes (Anima pictures send Fix face and Fix hands to the same repaint, so they show as one **Fix face and hands** button with a keep-the-original warning; round 5, #1492), and a route that does not fit the picture gives its reason. **Animate**
     (`wan22-i2v`): a motion field and a length (Short, 17 frames, about 0.7 s; Longer, 33 frames, about 1.4 s; held modes are
     not offered). **Picture to 3D** (`trellis-auto-cutout`): nothing to fill in.
-  - Every goal keeps *Open in the full editor instead*, which opens the old dialog. A result's *More* menu (Change one
-    thing, Restyle, Put in a new pose, Animate, Make it 3D) now opens that goal in Make with the picture already chosen.
+  - Every goal keeps *Open in the full editor instead*, which opens the old dialog. A result's **Change one thing**, **New pose** and
+    **Restyle** buttons (one press each since 19 Oct, #1533 follow-up; before, *More* then the item, two presses) and its *More* menu
+    (Animate, Make it 3D) open that goal in Make with the picture already chosen.
 - **The same submission rules.** Generate is the only press that submits. It sends the request the dialog would have
   prepared: the source is copied through `/api/assets/reference` and checked against its `/context`, the claim comes from
   `StudioContinuation.initial`, a look picture is staged through `/api/assets/reference` (or `/api/upload` for an example

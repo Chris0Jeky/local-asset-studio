@@ -55,11 +55,12 @@ function collectionPersist(s){
 function collectionCanLeave(){
   const s=collectionSession;
   if(s?.busy){collectionStatus('A collection operation is pending. Keep this dialog open until its outcome is known.');return false;}
-  if(s?.storageError)return window.confirm('Local recovery is unavailable. Copy your visible text before closing. Closing does not cancel or undo any server work. Close this editor?');
-  if(s?.pending)return window.confirm('This change may already be saved. Keep its exact command and your local draft for Restore / Inspect on reopening? Closing does not cancel a server change.');
-  return s?.discarded||!collectionDirty(s)||s?.restoreRequired||window.confirm('Keep this unsaved collection draft locally and close? Cancel keeps the editor open. Discard local draft is a separate action.');
+  if(s?.storageError)return window.confirm('Local recovery is unavailable; no durable draft can be guaranteed. Copy your visible text before leaving. Leaving does not cancel or undo any server work. Leave this editor without guaranteed recovery?');
+  if(s?.pending){if(!window.confirm('This change may already be saved. Keep its exact command and your local draft for Restore / Inspect on reopening? Closing does not cancel a server change.'))return false;}
+  else if(!s?.discarded&&collectionDirty(s)&&!s?.restoreRequired&&!window.confirm('Keep this unsaved collection draft locally and close? Cancel keeps the editor open. Discard local draft is a separate action.'))return false;
+  if(!collectionPersist(s)){collectionControls();return false;}return true;
 }
-function closeCollection(){if(collectionCanLeave()){collectionPersist(collectionSession);$('#collectionDialog').close();}}
+function closeCollection(){if(collectionCanLeave())$('#collectionDialog').close();}
 function collectionRecoveryList(s){
   const select=$('#collectionRecoveredTargets');select.replaceChildren();
   try{for(const entry of s.journal.list().sort((a,b)=>b.draft.updated_at-a.draft.updated_at)){
@@ -73,7 +74,6 @@ function openCollection(id=null){
   let journal,recovery=null,failure;
   try{journal=new StudioCollectionRecovery.Journal(sessionStorage,assetState.workspace_id);recovery=journal.get(id);}catch(e){failure=e;}
   if(id&&!col&&!recovery){if($('#collectionDialog').open)collectionStatus('This collection is no longer in the loaded Workspace. Your current edits were kept.',true);else assetMessage('Collection unavailable. Refresh the library to check it.',true);return false;}
-  if($('#collectionDialog').open)collectionPersist(collectionSession);
   const s={id,revision:col?.revision,scope:assetState.workspace_id,epoch:++collectionEpoch,baseline:{name:col?.name||'',description:col?.description||''},
     busy:false,uncertain:!!recovery?.pending,pending:recovery?.pending??null,journal,recovery,restoreRequired:!!recovery,storageError:!!failure,observed:col??null,stale:false};
   collectionSession=s;collectionEditing=id;
@@ -239,5 +239,5 @@ $('#deleteCollection').onclick=()=>{const id=assetScope.startsWith('collection:'
 $('#showSavedCollection').onclick=()=>{
   const s=collectionSession;if(!s?.id||!collectionCanLeave())return;
   if(!collectionScope(s)||!assetState.collections.some(c=>c.id===s.id)){collectionStatus('The saved collection is not in the loaded list yet. Refresh the library and inspect it; no save was repeated.',true);void refreshAssets(true);return;}
-  collectionPersist(s);$('#collectionDialog').close();setAssetScope('collection:'+s.id);
+  $('#collectionDialog').close();setAssetScope('collection:'+s.id);
 };

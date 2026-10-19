@@ -9,6 +9,23 @@ function page(storage=memoryStorage()){
 let passed=0;
 async function test(name,fn){await fn();passed++;console.log('PASS',name);}
 (async()=>{
+ for(const mode of ['quota','readback','stale','unreadable'])for(const leave of ['close','switch','showSaved'])await test(mode+' on final '+leave+' keeps the editor until explicit unprotected leave',()=>{
+  const s=page();s.open(A);s.input('#collectionName','Keep my name');s.input('#collectionDescription','Keep my description');
+  const session=s.run('collectionSession'),retained=s.storage.getItem(session.journal.key);let focused='#collectionDescription';
+  for(const id of ['#collectionName','#collectionDescription'])s.el(id).focus=()=>{focused=id;};
+  s.run("window.confirm=text=>{(window.prompts??=[]).push(text);return window.prompts.length===1;}");
+  if(mode==='unreadable')s.storage.getItem=()=>{throw Error('storage disabled');};
+  else if(mode==='stale')s.storage.data.set(session.journal.key,retained+' ');
+  else s.storage.setItem=(k,v)=>{if(mode==='quota')throw Error('quota');s.storage.data.set(k,v+' ');};
+  const attempt=()=>leave==='close'?s.el('#cancelCollection').onclick():leave==='switch'?s.open(B):s.el('#showSavedCollection').onclick();
+  attempt();
+  const kept=()=>{assert.equal(s.el('#collectionDialog').open,true);assert.equal(s.run('collectionSession'),session);assert.equal(s.el('#collectionName').value,'Keep my name');assert.equal(s.el('#collectionDescription').value,'Keep my description');assert.equal(focused,'#collectionDescription');assert.equal(s.run('assetScope'),'all');assert.equal(s.writes.length,0);assert.equal(s.reads.length,0);assert.equal(s.el('#saveCollection').disabled,true);assert.match(s.el('#collectionStatus').textContent,/Local recovery could not be verified/);};
+  kept();assert.equal(s.run('window.prompts.length'),1,'the first leave must stop on storage failure');
+  attempt();kept();assert.match(s.run('window.prompts[1]'),/no durable draft|cannot.*guarantee/i);
+  s.run('window.confirm=()=>true');attempt();
+  assert.equal(s.el('#collectionDialog').open,leave==='switch');if(leave==='switch')assert.equal(s.run('collectionSession.id'),B);
+  assert.equal(s.run('assetScope'),leave==='showSaved'?'collection:'+A:'all');assert.equal(s.writes.length,0);assert.equal(s.reads.length,0);
+ });
  await test('drafts are offered after reload, never automatically submitted or restored',()=>{const s=page();s.open();s.input('#collectionName','Local create');s.input('#collectionDescription','Retained');const r=page(s.storage);r.open();assert.equal(r.el('#restoreCollectionDraft').hidden,false,'reload must offer Restore');assert.equal(r.el('#saveCollection').disabled,true);r.restore();assert.equal(r.el('#collectionName').value,'Local create');assert.equal(r.el('#collectionDescription').value,'Retained');assert.equal(r.writes.length,0);assert.equal(r.reads.length,0);});
  await test('a rename draft retains its opened baseline and revision',()=>{const s=page();s.open(A);s.input('#collectionName','My rename');const r=page(s.storage);r.run(`assetState.collections[0].name='Other tab';assetState.collections[0].revision=2;`);r.open(A);r.restore();assert.equal(r.run('collectionSession.revision'),1);assert.equal(r.el('#collectionName').value,'My rename');assert.match(r.el('#collectionComparison').textContent,/Other tab/);assert.equal(r.writes.length,0);});
  await test('pending is durable before POST and newer typing does not alter its body',async()=>{const s=page();s.open();s.input('#collectionName','Clicked');const waiting=s.submit();assert.equal(s.writes.length,1);const body=s.writes[0].options.body;s.input('#collectionName','Newer');const stored=s.run('collectionSession.journal.get(null)');assert.equal(stored.pending.body,body);assert.equal(stored.draft.values.name,'Newer');s.writes[0].reject(Error('lost'));await waiting;const r=page(s.storage);r.open();r.restore();assert.equal(r.el('#collectionName').value,'Newer');assert.equal(r.el('#saveCollection').disabled,true);assert.equal(r.run('collectionSession.pending.body'),body);});
