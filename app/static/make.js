@@ -172,6 +172,9 @@
     if(t.steps!=null)parts.push((t.steps===draftOf(look,byId(t.preset)||p)?'draft ':'')+t.steps+' steps');if(t.sampler)parts.push(t.sampler);if(t.negative!=null)parts.push('own negative');if(!t.reseed&&t.seed!=null)parts.push('seed '+t.seed+' locked');
     return parts.length?'Tuned: '+parts.join(' · '):'';
   }
+  // Untuned, the summary still names what will run (owner, 19 Oct: the model and LoRAs are the choice, so they stay in view while Tune is shut).
+  function asMade(look){const p=presetFor(look),steps=fullSteps(look,p);if(!p)return'Model, adapters, steps, seed';
+    return 'As made: '+[modelLabel(p,presets()),...adapters(look).map(a=>short(a.name)+' '+a.strength.toFixed(2)),...(bound(p,'steps')&&steps?[steps+' steps']:[])].join(' · ');}
   // The tune applied to the prepared controls. Every bound slot of a switched model is written (off or empty is 0), so the
   // other recipe never keeps an authored adapter of its own; on the look's own model only changed slots are written.
   function applyTune(controls,look,t){
@@ -220,7 +223,7 @@
   // A tune change redraws only the summary, Generate's readiness and the estimate, so the scene being typed is never disturbed.
   function tuneChanged(redraw=true){
     const look=current();if(!look)return;if(redraw){renderTune();renderSweep();return;}
-    keepTune(look);sweepPaint();const sum=q('#makeTuneSum'),why=lookWhy(look),button=q('#makeGenerate');if(sum)sum.textContent=tuneSummary(look,state.tune[look.id])||'Model, adapters, steps, seed';
+    keepTune(look);sweepPaint();const sum=q('#makeTuneSum'),why=lookWhy(look),button=q('#makeGenerate');if(sum)sum.textContent=tuneSummary(look,state.tune[look.id])||asMade(look);
     const draftBox=q('#makeDraftBox');if(draftBox)draftBox.innerHTML=draftMarkup(look);
     if(button&&!state.busy){button.disabled=!!why;button.title=why;}const said=q('#makeWhy');if(said){said.innerHTML=why?blockerMarkup(look,why,whyPreset(look)):'';said.dataset.why=why;}estimate();
   }
@@ -331,11 +334,14 @@
   const statusEl=document.createElement('p');statusEl.id='makeStatus';statusEl.className='make-status';statusEl.setAttribute('role','status');
   function placeStatus(){const button=q('.make-go #makeGenerate'),slot=button?null:q('#makeStatusSlot');if(button&&statusEl.previousElementSibling!==button)button.after(statusEl);else if(slot&&statusEl.parentElement!==slot)slot.append(statusEl);}
   placeStatus();
+  // A look picture that is missing on this PC (local-only examples) shows the blank mark, not a broken image.
+  view.addEventListener('error',e=>{if(e.target.matches?.('.make-look img,.make-chosen>img')){const blank=document.createElement('span');blank.className='make-look-blank';blank.setAttribute('aria-hidden','true');blank.textContent='✦';e.target.replaceWith(blank);}},true);
   function renderGoals(){
     q('#makeGoals').innerHTML=GOALS.map((g,i)=>(i===5?'<div class="make-goal-group" role="group" aria-labelledby="makePictureGoals"><span class="make-goal-break" id="makePictureGoals">From a picture you have</span>':'')+'<button type="button" role="radio" tabindex="'+(g.id===state.goal?'0':'-1')+'" aria-checked="'+(g.id===state.goal)+'" data-make-goal="'+g.id+'"><b>'+escape(g.name)+'</b><small>'+escape(g.hint)+'</small></button>').join('')+'</div>';
   }
   // Once a look is chosen the gallery folds to one line and the results sit beside the words, so Generate and its pictures share a screen.
-  function layout(){const focused=!goal().intent&&!!current()&&!state.picking&&!state.compare;q('#makeSplit').classList.toggle('make-has-look',focused);view.classList.toggle('make-focused',focused);}
+  // The pictures column opens beside the words only once there are pictures; before that the composer takes the full width.
+  function layout(){const focused=!goal().intent&&!!current()&&!state.picking&&!state.compare;q('#makeSplit').classList.toggle('make-has-look',focused&&state.runs.length>0);view.classList.toggle('make-focused',focused);}
   function render(){renderGoals();const g=goal();if(g.intent)renderPictures(g);else renderLooks();renderRuns();layout();placeStatus();}
   function renderLooks(){
     const body=q('#makeBody');
@@ -681,6 +687,7 @@
     const list=runCards(state.runs);
     const shown=new Set(list.flatMap(c=>c.runs));if(shown.size<state.runs.length){for(const r of state.runs)if(!shown.has(r)){clearTimeout(timers.get(r.job.id));timers.delete(r.job.id);}state.runs=state.runs.filter(r=>shown.has(r));remember();}
     planPolish(list.flatMap(c=>c.runs));
+    layout();
     if(!list.length){box.innerHTML='<p class="muted">Pictures you make here show up in this space, with one-press next steps.</p>';return;}
     const img=(job,o,i,look)=>(o.asset_id?'<button type="button" class="make-open" data-ux-open-asset="'+escape(o.asset_id)+'" aria-label="Open picture '+(i+1)+' from '+escape(look)+' full size">':'')+'<img src="/api/image/'+encodeURIComponent(job.id)+'/'+i+'" alt="Picture '+(i+1)+' from '+escape(look)+'" loading="lazy">'+(o.asset_id?'</button>':'');
     // A clip or a 3D model has no picture to show here: one press opens it in the library viewer.
