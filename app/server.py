@@ -738,9 +738,9 @@ class Studio:
     @staticmethod
     def host_commit_required(preset, graph):
         explicit = preset.get('host_commit_heavy') is True
-        # Qwen-Image 2.1 loads its 7B model and a 9.35 GB int8 text encoder whatever the canvas (2.1-6.5 GiB of commit
-        # was left at 832x1248, docs/QWEN-IMAGE-21.md), and its edit graph has no width/height, so size never exempts it.
-        size_independent = preset.get('backend_id') == 'qwen21'
+        # Qwen-Image 2.1 and MOSS load their large model/text-encoder packs whatever the canvas; their 832x1248
+        # choices must not bypass the gate. Qwen's edit graph also has no width/height (docs/QWEN-IMAGE-21.md).
+        size_independent = preset.get('backend_id') in ('qwen21', 'moss')
         model_bound = False; megapixels = 0.0
         for node in graph.values():
             inputs = node.get('inputs', {})
@@ -764,8 +764,8 @@ class Studio:
         if reason: raise StudioError('Host commit headroom is unavailable: '+str(reason))
         if not isinstance(available,int) or available < minimum:
             actual='unknown' if not isinstance(available,int) else f'{available / 1024**3:.1f} GiB'
-            if isinstance(available, int): raise HostCommitShortfall(f'Host commit headroom {actual} is below the required 32 GiB for this Qwen/FLUX.2 submission', reading=dict(reading))
-            raise StudioError(f'Host commit headroom {actual} is below the required 32 GiB for this Qwen/FLUX.2 submission')
+            if isinstance(available, int): raise HostCommitShortfall(f'Host commit headroom {actual} is below the required 32 GiB for this model submission', reading=dict(reading))
+            raise StudioError(f'Host commit headroom {actual} is below the required 32 GiB for this model submission')
         return reading
 
     def _pre_submit_commit_check(self, job, preset, graph, index):

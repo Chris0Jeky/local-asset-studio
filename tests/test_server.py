@@ -342,6 +342,17 @@ class ServerTests(unittest.TestCase):
         self.assertFalse(server.Studio.host_commit_required({'id':'wai'},sdxl))
         self.assertFalse(server.Studio.host_commit_required({'id':'klein','host_commit_heavy':True},{'1':{'class_type':'UNETLoader','inputs':{'unet_name':'flux-2-klein-9b.safetensors'}},'5':{'class_type':'EmptyLatentImage','inputs':{'width':832,'height':1248}}}))
 
+    def test_moss_small_canvas_still_requires_known_32_gib_host_headroom(self):
+        preset=next(p for p in json.loads((Path(__file__).parents[1]/'presets/catalog.json').read_text(encoding='utf-8'))['presets'] if p['id']=='moss-t2i')
+        graph={'6':{'class_type':'EmptyFlux2LatentImage','inputs':{'width':832,'height':1248,'batch_size':1}}}
+        studio=self.studio();studio.config['enforce_host_commit_headroom']=True;minimum=32*1024**3
+        for reading,message in ((self._commit_reading(minimum-1),'below the required 32 GiB'),
+                                ({'available_bytes':None,'unknown_reason':'counter unavailable'},'counter unavailable')):
+            with self.subTest(reading=reading),patch.object(server.host_memory,'read',return_value=reading):
+                with self.assertRaisesRegex(server.StudioError,message):studio.host_commit_preflight(preset,graph,refresh=True)
+        reading=self._commit_reading(minimum)
+        with patch.object(server.host_memory,'read',return_value=reading):self.assertEqual(studio.host_commit_preflight(preset,graph,refresh=True),reading)
+
     def test_host_commit_gate_ignores_nonheavy_qwen_encoder_and_observation(self):
         (self.root/'config/local.json').write_text(json.dumps({'comfy_root':str(self.root/'fake-comfy'),'enforce_host_commit_headroom':True}))
         graph=json.loads(json.dumps(GRAPH));graph['1']['inputs']['clip_name']='qwen_3_4b.safetensors'

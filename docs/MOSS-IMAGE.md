@@ -13,8 +13,12 @@ The primary ComfyUI here is v0.35.0 and has neither the model class nor the `mos
 | Model paths | `...\ComfyUI\extra_model_paths.yaml` | points at the main library (`C:\AI\ComfyUI_windows_portable\ComfyUI\models`) so weights and LoRAs are not duplicated |
 | Python and Torch | the portable `python_embeded` | shared, unchanged: torch 2.9.1+rocm7.2.1 |
 | Launcher | `scripts/moss-launch.py` | overlay first on `sys.path`, `127.0.0.1:8198`, `--reserve-vram 2 --disable-pinned-memory` |
-| Studio profile | `moss` in `app/backends.py` | *MOSS-Image - isolated*; readiness checks the overlay and three library files (`app/backend_contracts.py`, `MOSS_FILES`) |
+| Studio profile | `moss` in `app/backends.py` | *MOSS-Image - isolated*; readiness checks the overlay, a nonempty `extra_model_paths.yaml` and three library files (`app/backend_contracts.py`, `MOSS_FILES`) |
 | Preset | `moss-t2i` | `workflows/api/moss-t2i-api.json`: UNETLoader, CLIPLoader type `moss_image`, VAELoader, two LoRA slots, EmptyFlux2LatentImage, KSampler |
+
+When `enforce_host_commit_headroom` is enabled, every MOSS canvas requires 32 GiB of known host-commit headroom,
+including the 832x1248 choice below 1 MP. Readiness checks file presence only: the contents of `extra_model_paths.yaml`,
+node compatibility and inference still need their separate validation.
 
 ## Weights (all verified against the Hugging Face LFS SHA-256)
 

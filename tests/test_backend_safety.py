@@ -101,8 +101,8 @@ class BackendSafetyTests(unittest.TestCase):
         self.assertEqual((profile['port'],profile['url']),(8198,'http://127.0.0.1:8198'))
         self.assertTrue(report['ready']);self.assertEqual(len(contracts.MOSS_FILES),3)
         roles=[item['role'] for item in report['requirements']]
-        self.assertEqual(roles,['Python interpreter','ComfyUI entry','Studio launcher','Comfy Kitchen overlay','diffusion','text encoder','decoder'])
-        for item in report['requirements'][4:]:
+        self.assertEqual(roles,['Python interpreter','ComfyUI entry','Studio launcher','Comfy Kitchen overlay','Shared model paths','diffusion','text encoder','decoder'])
+        for item in report['requirements'][5:]:
             self.assertTrue(Path(item['path']).resolve().is_relative_to(Path(self.studio.comfy_root).resolve()),item)
             self.assertFalse(Path(item['path']).resolve().is_relative_to(Path(profile['root']).resolve()),item)
         for role,relative in contracts.MOSS_FILES:
@@ -110,6 +110,19 @@ class BackendSafetyTests(unittest.TestCase):
             with self.subTest(role=role):
                 current=self.manager.readiness(profile);self.assertFalse(current['ready']);self.assertIn(role,current['message'])
             path.write_bytes(body)
+    def test_moss_missing_or_empty_shared_paths_blocks_readiness(self):
+        profile=self.manager.profiles['moss'];paths=Path(profile['root'])/'extra_model_paths.yaml'
+        paths.unlink(missing_ok=True)
+        for contents in (None,b''):
+            if contents is not None:paths.write_bytes(contents)
+            with self.subTest(contents=contents):
+                report=self.manager.readiness(profile)
+                self.assertFalse(report['ready']);self.assertIn('Shared model paths',report['message'])
+                missing=next(item for item in report['missing'] if item['role']=='Shared model paths')
+                self.assertEqual(Path(missing['path']),paths)
+        paths.write_text('main_library:\n  base_path: '+profile['library']+'\n  diffusion_models: models/diffusion_models\n')
+        report=self.manager.readiness(profile)
+        self.assertTrue(report['ready']);self.assertIsNone(report['runtime_compatible'])
     def test_moss_reads_models_from_the_main_library_but_keeps_input_and_output_in_its_checkout(self):
         profile=self.manager.profiles['moss'];self.manager.activate('moss')
         self.assertEqual(self.studio.library.models,(Path(self.studio.config['comfy_root'])/'models').resolve())
@@ -120,8 +133,9 @@ class BackendSafetyTests(unittest.TestCase):
         import json
         from server import Studio
         preset=next(p for p in json.loads((Path(__file__).resolve().parents[1]/'presets/catalog.json').read_text(encoding='utf-8'))['presets'] if p['id']=='moss-t2i')
-        graph={'6':{'class_type':'EmptyFlux2LatentImage','inputs':{'width':1024,'height':1536,'batch_size':1}}}
-        self.assertTrue(Studio.host_commit_required(preset,graph))
+        for width,height in ((832,1248),(1024,1536),(1536,2048)):
+            graph={'6':{'class_type':'EmptyFlux2LatentImage','inputs':{'width':width,'height':height,'batch_size':1}}}
+            with self.subTest(width=width,height=height):self.assertTrue(Studio.host_commit_required(preset,graph))
         script=(Path(__file__).resolve().parents[1]/'scripts/Start-Studio.ps1').read_text(encoding='utf-8-sig')
         self.assertIn('127.0.0.1:8198/system_stats',script);self.assertIn("'qwen21','moss'",script)
     def test_moss_launch_is_owned_only_through_its_exact_comfy_root(self):
