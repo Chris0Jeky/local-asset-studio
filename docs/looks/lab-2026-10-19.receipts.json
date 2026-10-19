@@ -2,6 +2,11 @@
  "jobs": [
   {
    "name": "c1-gown-oneobs",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101901,
@@ -40,6 +45,11 @@
   },
   {
    "name": "c1-gown-pearly",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -78,6 +88,11 @@
   },
   {
    "name": "c1-hanfu-oneobs",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101901,
@@ -116,6 +131,11 @@
   },
   {
    "name": "c1-hanfu-pearly",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -154,6 +174,11 @@
   },
   {
    "name": "c1-maid-oneobs",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101901,
@@ -192,6 +217,11 @@
   },
   {
    "name": "c1-maid-pearly",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -230,6 +260,11 @@
   },
   {
    "name": "c1-office-oneobs",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101901,
@@ -268,6 +303,11 @@
   },
   {
    "name": "c1-office-pearly",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -306,6 +346,11 @@
   },
   {
    "name": "c1-pirate-oneobs",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101901,
@@ -344,6 +389,11 @@
   },
   {
    "name": "c1-pirate-pearly",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -382,6 +432,11 @@
   },
   {
    "name": "c1-priestess-oneobs",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101901,
@@ -420,6 +475,11 @@
   },
   {
    "name": "c1-priestess-pearly",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -458,6 +518,11 @@
   },
   {
    "name": "c1-samurai-oneobs",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101901,
@@ -496,6 +561,11 @@
   },
   {
    "name": "c1-samurai-pearly",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -534,6 +604,11 @@
   },
   {
    "name": "c1-techwear-oneobs",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101901,
@@ -572,6 +647,11 @@
   },
   {
    "name": "c1-techwear-pearly",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -610,6 +690,11 @@
   },
   {
    "name": "c1-winter-oneobs",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101901,
@@ -648,6 +733,11 @@
   },
   {
    "name": "c1-winter-pearly",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -686,6 +776,11 @@
   },
   {
    "name": "c1-witch-oneobs",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101901,
@@ -724,6 +819,11 @@
   },
   {
    "name": "c1-witch-pearly",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -762,6 +862,11 @@
   },
   {
    "name": "e1-esearu",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -801,6 +906,11 @@
   },
   {
    "name": "e1-highres",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -840,6 +950,11 @@
   },
   {
    "name": "e1-huashijw",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -879,6 +994,11 @@
   },
   {
    "name": "e1-keta",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -918,6 +1038,11 @@
   },
   {
    "name": "e1-kieed",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -957,6 +1082,11 @@
   },
   {
    "name": "e1-koukouya",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -996,6 +1126,11 @@
   },
   {
    "name": "e1-newanima",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -1035,6 +1170,11 @@
   },
   {
    "name": "e1-petiflow",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -1074,6 +1214,11 @@
   },
   {
    "name": "e1-rapscallion",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -1113,6 +1258,11 @@
   },
   {
    "name": "e1-sky02",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -1152,6 +1302,11 @@
   },
   {
    "name": "e1-turbo8",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -1191,6 +1346,11 @@
   },
   {
    "name": "e1-xilmo",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -1230,6 +1390,11 @@
   },
   {
    "name": "edit-k4b-bg-snow",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "flux-edit",
    "controls": {
     "positive": "Change the castle balcony at dusk into a snowy mountain pass at dawn. Keep everything else exactly as it is: the character's face, hair, pose, hands, the staff, the background and the rendering style.",
@@ -1261,6 +1426,11 @@
   },
   {
    "name": "edit-k4b-costume-armor",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "flux-edit",
    "controls": {
     "positive": "Replace her black and gold sorceress robe with white and silver plate armour with a blue cloak. Keep everything else exactly as it is: the character's face, hair, pose, hands, the staff, the background and the rendering style.",
@@ -1292,6 +1462,11 @@
   },
   {
    "name": "edit-k4b-costume-kimono",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "flux-edit",
    "controls": {
     "positive": "Replace her sorceress robe with a red and gold kimono with a gold obi. Keep everything else exactly as it is: the character's face, hair, pose, hands, the staff, the background and the rendering style.",
@@ -1323,6 +1498,11 @@
   },
   {
    "name": "edit-k4b-expression-laugh",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "flux-edit",
    "controls": {
     "positive": "Change her expression to a gentle laugh with her eyes closed. Keep everything else exactly as it is: the character's face, hair, pose, hands, the staff, the background and the rendering style.",
@@ -1354,6 +1534,11 @@
   },
   {
    "name": "edit-k4b-hair-crimson",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "flux-edit",
    "controls": {
     "positive": "Change her hair colour from silver to deep crimson red. Keep everything else exactly as it is: the character's face, hair, pose, hands, the staff, the background and the rendering style.",
@@ -1385,6 +1570,11 @@
   },
   {
    "name": "f1-anifox",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "anifox-v2-baseline",
    "controls": {
     "seed": 2026101901,
@@ -1419,6 +1609,11 @@
   },
   {
    "name": "f1-anima-aesthetic",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "anima-portrait",
    "controls": {
     "seed": 2026101901,
@@ -1449,6 +1644,11 @@
   },
   {
    "name": "f1-anima",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "anima-v1-baseline",
    "controls": {
     "seed": 2026101901,
@@ -1487,6 +1687,11 @@
   },
   {
    "name": "f1-janima",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "janima-v1-baseline",
    "controls": {
     "seed": 2026101901,
@@ -1524,6 +1729,11 @@
   },
   {
    "name": "f1-oneobs",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101901,
@@ -1562,6 +1772,11 @@
   },
   {
    "name": "f1-pearly",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -1600,6 +1815,11 @@
   },
   {
    "name": "f1-wai",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101901,
@@ -1634,6 +1854,11 @@
   },
   {
    "name": "fin-detailfix-pearly",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "anime-detail-fix",
    "controls": {
     "positive": "masterpiece, best quality, amazing quality, detailed face, detailed eyes, clean lineart, same character, same colours",
@@ -1667,6 +1892,11 @@
   },
   {
    "name": "fin-esrgan-pearly",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "anime-esrgan",
    "controls": {},
    "references": [],
@@ -1691,6 +1921,11 @@
   },
   {
    "name": "fin-refine-pearly-d22",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "anime-refine",
    "controls": {
     "positive": "1girl, solo, adult woman, mature female, long silver hair, violet eyes, black and gold sorceress robe, holding a crystal staff, castle balcony at dusk, cinematic lighting, masterpiece, best quality",
@@ -1722,6 +1957,11 @@
   },
   {
    "name": "fin-refine-pearly-d35",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "anime-refine",
    "controls": {
     "positive": "1girl, solo, adult woman, mature female, long silver hair, violet eyes, black and gold sorceress robe, holding a crystal staff, castle balcony at dusk, cinematic lighting, masterpiece, best quality",
@@ -1753,6 +1993,11 @@
   },
   {
    "name": "fin-refine-wai-d22",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "anime-refine",
    "controls": {
     "positive": "1girl, solo, adult woman, mature female, long silver hair, violet eyes, black and gold sorceress robe, high collar, holding a crystal staff, castle balcony at dusk, cinematic lighting, masterpiece, best quality",
@@ -1784,6 +2029,11 @@
   },
   {
    "name": "g1-pearly-beta",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -1822,6 +2072,11 @@
   },
   {
    "name": "g1-pearly-cfg3",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -1860,6 +2115,11 @@
   },
   {
    "name": "g1-pearly-cfg6",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -1898,6 +2158,11 @@
   },
   {
    "name": "g1-pearly-dpm2msde",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -1936,6 +2201,11 @@
   },
   {
    "name": "g1-pearly-euler_a",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -1974,6 +2244,11 @@
   },
   {
    "name": "g1-pearly-normal",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -2012,6 +2287,11 @@
   },
   {
    "name": "g1-pearly-st20",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -2050,6 +2330,11 @@
   },
   {
    "name": "g1-pearly-st40",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -2088,6 +2373,11 @@
   },
   {
    "name": "k1-trigger-removed",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "krea-anime-atelier-gguf",
    "controls": {
     "seed": 2026101901,
@@ -2123,6 +2413,11 @@
   },
   {
    "name": "k2-trigger-end",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "krea-anime-atelier-gguf",
    "controls": {
     "seed": 2026101901,
@@ -2158,6 +2453,11 @@
   },
   {
    "name": "k3-no-textfusion",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "krea-anime-atelier-gguf",
    "controls": {
     "seed": 2026101901,
@@ -2193,6 +2493,11 @@
   },
   {
    "name": "k4-8step-euler",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "krea-anime-atelier-gguf",
    "controls": {
     "seed": 2026101901,
@@ -2228,6 +2533,11 @@
   },
   {
    "name": "k5-4step-distill",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "krea-anime-atelier-gguf",
    "controls": {
     "seed": 2026101901,
@@ -2264,6 +2574,11 @@
   },
   {
    "name": "kl-copy-c1-pirate-pearly",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "combine-klein-9b-copypose",
    "controls": {
     "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult silver-haired sorceress with violet eyes and long hair; keep that character's face, hair and rendering style and the clothes with their colours (a black and gold sorceress robe with a high collar, covered neckline); only the pose and framing change, to image 2's: one hand on the hip and the other hand on a sword hilt, relaxed confident stance, medium full body. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
@@ -2297,6 +2612,11 @@
   },
   {
    "name": "kl-copy-c1-samurai-pearly",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "combine-klein-9b-copypose",
    "controls": {
     "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult silver-haired sorceress with violet eyes and long hair; keep that character's face, hair and rendering style and the clothes with their colours (a black and gold sorceress robe with a high collar, covered neckline); only the pose and framing change, to image 2's: standing with a sword held low in the right hand, left hand at the side, full body. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
@@ -2330,6 +2650,11 @@
   },
   {
    "name": "kl-copy-mo-s3",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "combine-klein-9b-copypose",
    "controls": {
     "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult silver-haired sorceress with violet eyes and long hair; keep that character's face, hair and rendering style and the clothes with their colours (a black and gold sorceress robe with a high collar, covered neckline); only the pose and framing change, to image 2's: standing with both hands resting on a sword hilt planted point-down in front, front view, full body. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
@@ -2363,6 +2688,11 @@
   },
   {
    "name": "kl-copy-mr-s2-3",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "combine-klein-9b-copypose",
    "controls": {
     "positive": "change the actions and poses in Image 1 to match those in Image 2. The character in image 1 is an adult silver-haired sorceress with violet eyes and long hair; keep that character's face, hair and rendering style and the clothes with their colours (a black and gold sorceress robe with a high collar, covered neckline); only the pose and framing change, to image 2's: standing straight holding a large umbrella over the shoulder with one hand, other hand lightly raised, full body. Nothing else of image 2 is copied: not its person, clothes, shoes, colours or background. One figure only, nobody else in the picture.",
@@ -2396,6 +2726,11 @@
   },
   {
    "name": "kl-skel-q1-hip",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "combine-klein-9b-skeleton",
    "controls": {
     "positive": "Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: an adult silver-haired sorceress with violet eyes and long hair. Draw one hand on the hip, the other arm relaxed, weight on one leg, front view, full body from image 2 with the body exactly in that skeleton's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black and gold sorceress robe with a high collar, covered neckline. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
@@ -2429,6 +2764,11 @@
   },
   {
    "name": "kl-skel-q2-sword",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "combine-klein-9b-skeleton",
    "controls": {
     "positive": "Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: an adult silver-haired sorceress with violet eyes and long hair. Draw wide-legged stance, both hands gripping a sword hilt in front of the body, front view, full body from image 2 with the body exactly in that skeleton's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black and gold sorceress robe with a high collar, covered neckline. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
@@ -2462,6 +2802,11 @@
   },
   {
    "name": "kl-skel-q3-crossed",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "combine-klein-9b-skeleton",
    "controls": {
     "positive": "Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: an adult silver-haired sorceress with violet eyes and long hair. Draw arms crossed over the chest, standing straight, front view, full body from image 2 with the body exactly in that skeleton's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black and gold sorceress robe with a high collar, covered neckline. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
@@ -2495,6 +2840,11 @@
   },
   {
    "name": "kl-skel-q4-walk",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "combine-klein-9b-skeleton",
    "controls": {
     "positive": "Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: an adult silver-haired sorceress with violet eyes and long hair. Draw walking mid-stride toward the camera, one arm swinging forward, full body from image 2 with the body exactly in that skeleton's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black and gold sorceress robe with a high collar, covered neckline. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
@@ -2528,6 +2878,11 @@
   },
   {
    "name": "kl-skel-q5-reach",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "combine-klein-9b-skeleton",
    "controls": {
     "positive": "Image 1 is a pose skeleton (a coloured stick figure on black) giving the exact body position: an adult silver-haired sorceress with violet eyes and long hair. Draw one arm raised straight up above the head, the other hand on the hip, full body from image 2 with the body exactly in that skeleton's position, in image 2's clean rendering style, wearing image 2's clothes with image 2's colours: a black and gold sorceress robe with a high collar, covered neckline. Replace the black background with a plain light background. Nothing of image 1's drawing remains, and nothing that is not named above is added. One figure only, nobody else in the picture.",
@@ -2561,6 +2916,11 @@
   },
   {
    "name": "kr-ctrl-2",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "krea-anime-atelier-gguf",
    "controls": {
     "seed": 2026101902,
@@ -2596,6 +2956,11 @@
   },
   {
    "name": "kr-ctrl-3",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "krea-anime-atelier-gguf",
    "controls": {
     "seed": 2026101903,
@@ -2631,6 +2996,11 @@
   },
   {
    "name": "kr-face-notrig",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "krea-anime-atelier-gguf",
    "controls": {
     "seed": 2026101901,
@@ -2666,6 +3036,11 @@
   },
   {
    "name": "kr-kimono-notrig",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "krea-anime-atelier-gguf",
    "controls": {
     "seed": 2026101901,
@@ -2701,6 +3076,11 @@
   },
   {
    "name": "kr-notrig-2",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "krea-anime-atelier-gguf",
    "controls": {
     "seed": 2026101902,
@@ -2736,6 +3116,11 @@
   },
   {
    "name": "kr-notrig-3",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "krea-anime-atelier-gguf",
    "controls": {
     "seed": 2026101903,
@@ -2771,6 +3156,11 @@
   },
   {
    "name": "pose-wai-p1-hip-s8",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai-skeleton",
    "controls": {
     "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
@@ -2804,6 +3194,11 @@
   },
   {
    "name": "pose-wai-p2-sword-s10",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai-skeleton",
    "controls": {
     "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
@@ -2837,6 +3232,11 @@
   },
   {
    "name": "pose-wai-p2-sword-s8",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai-skeleton",
    "controls": {
     "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
@@ -2870,6 +3270,11 @@
   },
   {
    "name": "pose-wai-p3-crossed-s8",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai-skeleton",
    "controls": {
     "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
@@ -2903,6 +3308,11 @@
   },
   {
    "name": "pose-wai-p4-walk-s8",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai-skeleton",
    "controls": {
     "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
@@ -2936,6 +3346,11 @@
   },
   {
    "name": "pose-wai-p5-reach-s10",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai-skeleton",
    "controls": {
     "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
@@ -2969,6 +3384,11 @@
   },
   {
    "name": "pose-wai-p5-reach-s8",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai-skeleton",
    "controls": {
     "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
@@ -3002,6 +3422,11 @@
   },
   {
    "name": "pose2-wai-q1-hip-s10",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai-skeleton",
    "controls": {
     "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
@@ -3035,6 +3460,11 @@
   },
   {
    "name": "pose2-wai-q1-hip-s9",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai-skeleton",
    "controls": {
     "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
@@ -3068,6 +3498,11 @@
   },
   {
    "name": "pose2-wai-q2-sword-s10",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai-skeleton",
    "controls": {
     "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
@@ -3101,6 +3536,11 @@
   },
   {
    "name": "pose2-wai-q2-sword-s9",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai-skeleton",
    "controls": {
     "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
@@ -3134,6 +3574,11 @@
   },
   {
    "name": "pose2-wai-q3-crossed-s10",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai-skeleton",
    "controls": {
     "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
@@ -3167,6 +3612,11 @@
   },
   {
    "name": "pose2-wai-q3-crossed-s9",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai-skeleton",
    "controls": {
     "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
@@ -3200,6 +3650,11 @@
   },
   {
    "name": "pose2-wai-q4-walk-s10",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai-skeleton",
    "controls": {
     "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
@@ -3233,6 +3688,11 @@
   },
   {
    "name": "pose2-wai-q4-walk-s9",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai-skeleton",
    "controls": {
     "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
@@ -3266,6 +3726,11 @@
   },
   {
    "name": "pose2-wai-q5-reach-s10",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai-skeleton",
    "controls": {
     "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
@@ -3299,6 +3764,11 @@
   },
   {
    "name": "pose2-wai-q5-reach-s9",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai-skeleton",
    "controls": {
     "positive": "1girl, solo, adult woman, mature female, 28 years old, long silver hair, violet eyes, elegant black and gold sorceress robe, high collar, fully covered, castle balcony at dusk, full body, calm confident smile, looking at viewer, cinematic lighting, detailed face, detailed eyes, masterpiece, best quality, amazing quality",
@@ -3332,6 +3802,11 @@
   },
   {
    "name": "proof-draft-knight",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "positive": "masterpiece, best quality, very aesthetic, highres, absurdres, newest, score_9, score_8, score_7, depth of field, cinematic composition, adult original character, an adult woman knight of thirty with short auburn hair and a small scar on her cheek, silver plate armor and a blue cloak, holding a longsword point down, standing on a misty hill at dawn, full body, determined expression, dynamic pose, looking at viewer",
@@ -3372,6 +3847,11 @@
   },
   {
    "name": "proof-refine-knight",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "anime-refine",
    "controls": {
     "reference": "bf913da2c5f24a1faba4998851f9a409_Pearly-Anima-Mix-v10-Baseline_00052_.png.png",
@@ -3399,6 +3879,11 @@
   },
   {
    "name": "r1-s1-oneobs-2",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101902,
@@ -3437,6 +3922,11 @@
   },
   {
    "name": "r1-s1-oneobs-3",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101903,
@@ -3475,6 +3965,11 @@
   },
   {
    "name": "r1-s1-oneobs-4",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101904,
@@ -3513,6 +4008,11 @@
   },
   {
    "name": "r1-s1-pearly-2",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101902,
@@ -3551,6 +4051,11 @@
   },
   {
    "name": "r1-s1-pearly-3",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101903,
@@ -3589,6 +4094,11 @@
   },
   {
    "name": "r1-s1-pearly-4",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101904,
@@ -3627,6 +4137,11 @@
   },
   {
    "name": "r1-s1-wai-2",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101902,
@@ -3661,6 +4176,11 @@
   },
   {
    "name": "r1-s1-wai-3",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101903,
@@ -3695,6 +4215,11 @@
   },
   {
    "name": "r1-s1-wai-4",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101904,
@@ -3729,6 +4254,11 @@
   },
   {
    "name": "r1-s2-oneobs-2",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101902,
@@ -3767,6 +4297,11 @@
   },
   {
    "name": "r1-s2-oneobs-3",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101903,
@@ -3805,6 +4340,11 @@
   },
   {
    "name": "r1-s2-oneobs-4",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101904,
@@ -3843,6 +4383,11 @@
   },
   {
    "name": "r1-s2-pearly-2",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101902,
@@ -3881,6 +4426,11 @@
   },
   {
    "name": "r1-s2-pearly-3",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101903,
@@ -3919,6 +4469,11 @@
   },
   {
    "name": "r1-s2-pearly-4",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101904,
@@ -3957,6 +4512,11 @@
   },
   {
    "name": "r1-s2-wai-2",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101902,
@@ -3991,6 +4551,11 @@
   },
   {
    "name": "r1-s2-wai-3",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101903,
@@ -4025,6 +4590,11 @@
   },
   {
    "name": "r1-s2-wai-4",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101904,
@@ -4059,6 +4629,11 @@
   },
   {
    "name": "r1-s3-oneobs-2",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101902,
@@ -4097,6 +4672,11 @@
   },
   {
    "name": "r1-s3-oneobs-3",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101903,
@@ -4135,6 +4715,11 @@
   },
   {
    "name": "r1-s3-oneobs-4",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101904,
@@ -4173,6 +4758,11 @@
   },
   {
    "name": "r1-s3-pearly-2",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101902,
@@ -4211,6 +4801,11 @@
   },
   {
    "name": "r1-s3-pearly-3",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101903,
@@ -4249,6 +4844,11 @@
   },
   {
    "name": "r1-s3-pearly-4",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101904,
@@ -4287,6 +4887,11 @@
   },
   {
    "name": "r1-s3-wai-2",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101902,
@@ -4321,6 +4926,11 @@
   },
   {
    "name": "r1-s3-wai-3",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101903,
@@ -4355,6 +4965,11 @@
   },
   {
    "name": "r1-s3-wai-4",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101904,
@@ -4388,7 +5003,120 @@
    ]
   },
   {
+   "name": "rf-den10",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
+   "preset_id": "anime-refine",
+   "controls": {
+    "positive": "masterpiece, best quality, very aesthetic, highres, absurdres, newest, score_9, score_8, score_7, depth of field, cinematic composition, adult original character, an adult woman knight of thirty with short auburn hair and a small scar on her cheek, silver plate armor and a blue cloak, holding a longsword point down, standing on a misty hill at dawn, full body, determined expression, dynamic pose, looking at viewer",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+    "seed": 890730251,
+    "denoise": 0.1,
+    "steps": 24,
+    "cfg": 5.0
+   },
+   "references": [],
+   "uploads": {
+    "reference": "draft-knight.png"
+   },
+   "status": "completed",
+   "job_id": "371ba186-22f2-4e04-b67d-abfeb7a9e6ec",
+   "prompt_ids": [
+    "51bfa30e-19c5-414e-a261-dfe3155ad8ca"
+   ],
+   "seconds": 83.66087627410889,
+   "peak_commit": 0.808,
+   "admission": 0.4959049201530962,
+   "outputs": [
+    {
+     "file": "rf-den10-0.png",
+     "sha256": "21479b84c9a7277d297059f70946ac036eaf6777c70534bbd0f1225c3e56d86a",
+     "bytes": 2594129
+    }
+   ]
+  },
+  {
+   "name": "rf-den15",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
+   "preset_id": "anime-refine",
+   "controls": {
+    "positive": "masterpiece, best quality, very aesthetic, highres, absurdres, newest, score_9, score_8, score_7, depth of field, cinematic composition, adult original character, an adult woman knight of thirty with short auburn hair and a small scar on her cheek, silver plate armor and a blue cloak, holding a longsword point down, standing on a misty hill at dawn, full body, determined expression, dynamic pose, looking at viewer",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+    "seed": 890730251,
+    "denoise": 0.15,
+    "steps": 24,
+    "cfg": 5.0
+   },
+   "references": [],
+   "uploads": {
+    "reference": "draft-knight.png"
+   },
+   "status": "completed",
+   "job_id": "b07c48b5-56d6-4345-ae95-76bd18b91bdc",
+   "prompt_ids": [
+    "2ecd9ebf-27dd-44d2-89ed-5939585d1b81"
+   ],
+   "seconds": 62.77842140197754,
+   "peak_commit": 0.769,
+   "admission": 0.4809499743601719,
+   "outputs": [
+    {
+     "file": "rf-den15-0.png",
+     "sha256": "b44b2417735e9b11e55c50d44762f73fad0e0693a897b710f0bade5c1101aba7",
+     "bytes": 2592199
+    }
+   ]
+  },
+  {
+   "name": "rf-den22",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
+   "preset_id": "anime-refine",
+   "controls": {
+    "positive": "masterpiece, best quality, very aesthetic, highres, absurdres, newest, score_9, score_8, score_7, depth of field, cinematic composition, adult original character, an adult woman knight of thirty with short auburn hair and a small scar on her cheek, silver plate armor and a blue cloak, holding a longsword point down, standing on a misty hill at dawn, full body, determined expression, dynamic pose, looking at viewer",
+    "negative": "worst quality, low quality, score_1, score_2, score_3, blurry, jpeg artifacts, bad anatomy, bad hands, extra digits, missing fingers, text, watermark, child, loli, shota",
+    "seed": 890730251,
+    "denoise": 0.22,
+    "steps": 24,
+    "cfg": 5.0
+   },
+   "references": [],
+   "uploads": {
+    "reference": "draft-knight.png"
+   },
+   "status": "completed",
+   "job_id": "a5533ff1-7473-4901-8d22-d8c31e3ec0b5",
+   "prompt_ids": [
+    "07a9d566-fb61-4880-bd33-8bdd60ba2d62"
+   ],
+   "seconds": 119.91211533546448,
+   "peak_commit": 0.769,
+   "admission": 0.512369204597858,
+   "outputs": [
+    {
+     "file": "rf-den22-0.png",
+     "sha256": "1a4fc2eed58cd7a387541c8c2a6c97802e311e930b2191b79870defc64b68ce8",
+     "bytes": 2590503
+    }
+   ]
+  },
+  {
    "name": "s1-anifox",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "anifox-v2-baseline",
    "controls": {
     "seed": 2026101901,
@@ -4424,6 +5152,11 @@
   },
   {
    "name": "s1-anima-aesthetic",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "anima-portrait",
    "controls": {
     "seed": 2026101901,
@@ -4454,6 +5187,11 @@
   },
   {
    "name": "s1-anima",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "anima-v1-baseline",
    "controls": {
     "seed": 2026101901,
@@ -4493,6 +5231,11 @@
   },
   {
    "name": "s1-animagine",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "anime",
    "controls": {
     "seed": 2026101901,
@@ -4528,6 +5271,11 @@
   },
   {
    "name": "s1-cstati",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "cstati-v3-baseline",
    "controls": {
     "seed": 2026101901,
@@ -4563,6 +5311,11 @@
   },
   {
    "name": "s1-janima",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "janima-v1-baseline",
    "controls": {
     "seed": 2026101901,
@@ -4601,6 +5354,11 @@
   },
   {
    "name": "s1-krea-gguf",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "krea-anime-atelier-gguf",
    "controls": {
     "seed": 2026101901,
@@ -4636,6 +5394,11 @@
   },
   {
    "name": "s1-noob",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "noob",
    "controls": {
     "seed": 2026101901,
@@ -4671,6 +5434,11 @@
   },
   {
    "name": "s1-oneobs",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101901,
@@ -4710,6 +5478,11 @@
   },
   {
    "name": "s1-pearly",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -4749,6 +5522,11 @@
   },
   {
    "name": "s1-wai",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101901,
@@ -4784,6 +5562,11 @@
   },
   {
    "name": "s1-yumeflux",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "yumeflux-ilv1-baseline",
    "controls": {
     "seed": 2026101901,
@@ -4819,6 +5602,11 @@
   },
   {
    "name": "s2-anifox",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "anifox-v2-baseline",
    "controls": {
     "seed": 2026101901,
@@ -4853,6 +5641,11 @@
   },
   {
    "name": "s2-anima-aesthetic",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "anima-portrait",
    "controls": {
     "seed": 2026101901,
@@ -4883,6 +5676,11 @@
   },
   {
    "name": "s2-oneobs",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101901,
@@ -4921,6 +5719,11 @@
   },
   {
    "name": "s2-pearly",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -4959,6 +5762,11 @@
   },
   {
    "name": "s2-wai",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101901,
@@ -4993,6 +5801,11 @@
   },
   {
    "name": "s3-anifox",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "anifox-v2-baseline",
    "controls": {
     "seed": 2026101901,
@@ -5027,6 +5840,11 @@
   },
   {
    "name": "s3-anima-aesthetic",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "anima-portrait",
    "controls": {
     "seed": 2026101901,
@@ -5057,6 +5875,11 @@
   },
   {
    "name": "s3-oneobs",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "oneobsession-anima-v20-baseline",
    "controls": {
     "seed": 2026101901,
@@ -5095,6 +5918,11 @@
   },
   {
    "name": "s3-pearly",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "pearly-anima-mix-v10-baseline",
    "controls": {
     "seed": 2026101901,
@@ -5133,6 +5961,11 @@
   },
   {
    "name": "s3-wai",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101901,
@@ -5167,6 +6000,11 @@
   },
   {
    "name": "w1-base",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101901,
@@ -5201,6 +6039,11 @@
   },
   {
    "name": "w1-cfg7",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101901,
@@ -5235,6 +6078,11 @@
   },
   {
    "name": "w1-detail",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101901,
@@ -5270,6 +6118,11 @@
   },
   {
    "name": "w1-dpm2m",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101901,
@@ -5304,6 +6157,11 @@
   },
   {
    "name": "w1-flatcolor",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101901,
@@ -5339,6 +6197,11 @@
   },
   {
    "name": "w1-glossy",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101901,
@@ -5374,6 +6237,11 @@
   },
   {
    "name": "w1-masterpieces",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101901,
@@ -5409,6 +6277,11 @@
   },
   {
    "name": "w1-microdetails",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101901,
@@ -5444,6 +6317,11 @@
   },
   {
    "name": "w1-mishima",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101901,
@@ -5479,6 +6357,11 @@
   },
   {
    "name": "w1-momoko",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101901,
@@ -5514,6 +6397,11 @@
   },
   {
    "name": "w1-ringeko",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101901,
@@ -5549,6 +6437,11 @@
   },
   {
    "name": "w1-shiny",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101901,
@@ -5584,6 +6477,11 @@
   },
   {
    "name": "w1-st20",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101901,
@@ -5618,6 +6516,11 @@
   },
   {
    "name": "w1-st40",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101901,
@@ -5652,6 +6555,11 @@
   },
   {
    "name": "w1-stabilizer",
+   "backend": {
+    "id": "primary",
+    "url": "http://127.0.0.1:8188",
+    "comfyui": "0.35.0"
+   },
    "preset_id": "wai",
    "controls": {
     "seed": 2026101901,
