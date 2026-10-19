@@ -148,3 +148,5 @@
 
 /* A note in the picture grid (empty, no match, older pictures) spans the row instead of wrapping in one 150 px cell. */
 .make-pictures>p{grid-column:1/-1;margin:0}
+/* One picture per card shows its next steps (19 Oct); the others offer "Next steps…" to move them. Keep / Not this stay on every picture. */
+.make-outputs figure:not(.make-selected) .make-next{display:none}.make-outputs figure.make-selected .make-next-open{display:none}.make-next{display:contents}.make-actions .make-next>small{flex-basis:100%;color:var(--muted)}.make-outputs figure.make-selected>.make-open img{outline:2px solid var(--accent);outline-offset:2px}

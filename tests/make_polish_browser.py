@@ -237,7 +237,7 @@ def merge_checks(browser, origin):
     saved = [dict(id='make-merge', look='First look', lookId=LOOKS[0]['id'], goal='character', scene='Merge')]
     page = browser.new_page(viewport={'width': 1440, 'height': 900}); errors = []; page.on('pageerror', lambda e: errors.append(str(e))); before = len(jobs())
     page.goto(origin+'/#make'); page.evaluate('(runs)=>localStorage.setItem("studio.make",JSON.stringify({goal:"character",look:null,runs}))', saved)
-    page.goto(origin+'/?merge#make'); page.wait_for_selector('[data-make-polish=upscale][data-asset=asset-0]'); page.wait_for_selector('[data-make-polish=upscale][data-asset=%s]' % WAI)
+    page.goto(origin+'/?merge#make'); page.wait_for_selector('[data-make-polish=upscale][data-asset=asset-0]'); page.wait_for_selector('[data-make-polish=upscale][data-asset=%s]' % WAI, state='attached')  # the second picture's steps wait behind Next steps…
     page.wait_for_function('document.querySelectorAll("#makeRuns .make-polish-hint").length===5')
     kinds = lambda a: page.eval_on_selector_all('[data-make-polish][data-asset=%s]' % a, 'n=>n.map(e=>e.dataset.makePolish+":"+e.firstChild.textContent)')
     assert kinds('asset-0') == ['face:Fix face and hands', 'refine:Refine 1.5×', 'upscale:Upscale 2×'], kinds('asset-0')
