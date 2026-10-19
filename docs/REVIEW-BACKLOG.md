@@ -7,6 +7,10 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-10-19 pass 2 (Brief L): Recent runs cards clamp the prompt
+
+- [ ] **Recent runs show two lines of submitted prompt, with Show prompt / Hide prompt to expand it; unavailable Vary reasons also clamp to two lines.** Full text stays in each title; Vary stays disabled and its shared wording is unchanged. Decision: ux-lead-2, pass 2. Reverse: drop the `run-prompt` / `run-why` classes and prompt toggle from `app.js` / `studio-workbench.js`, and remove their clamp rules from `workshop.css`.
+
 ## 2026-10-19 pass 2 (Brief J): one review vocabulary
 
 - [ ] Review actions use Keep / Needs work / Not this with K / W / X; saved selections and the Library filter say Kept. Stored review values stay unchanged, including the Review desk's keep value. Reverse: the label maps.
