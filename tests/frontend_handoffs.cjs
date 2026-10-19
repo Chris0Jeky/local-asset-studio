@@ -1707,6 +1707,9 @@ async function parallaxStagesAreTwoOwnerPresses() {
   assert.match(card(plate), /class="parallaxStage" data-job="plate-job" data-stage="isolate"/);
   assert.match(card(plate), /has no isolate edit yet/);
   assert.match(card(plate, [isolate('running')]), /isolate edit is running; the layers split when it completes/);
+  assert.match(card(plate, [isolate('uncertain')]), /uncertain/);
+  assert.doesNotMatch(card(plate, [isolate('uncertain')]), /isolate edit is uncertain; the layers split when it completes/);
+  assert.match(card(plate, [isolate('uncertain')]), /not.*again|Resume observation/i);
   assert.match(card(plate, [isolate('completed')]), /class="parallaxFinish" data-job="plate-job"/);
   assert.match(card({...plate, parallax_finish: {error: 'no fit'}}, [isolate('completed')]), /Layers not split: no fit/);
   assert.match(card({...plate, parallax_finish: {job_id: 'split', summary: 'within 0.36/255'}}), /Layers split: within 0.36\/255/);
