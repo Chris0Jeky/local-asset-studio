@@ -290,3 +290,13 @@ test('Models refresh reloads options, redraws slots and Vary, and retains the in
  assert.equal(slotSelects(f.box.innerHTML)[0].value,'keep.safetensors');assert.doesNotMatch(f.box.innerHTML,/keep\.safetensors \(recorded/);
  assert.equal(f.node('[data-key="lora"]').value,'0');assert.equal(vary,1);assert.equal(f.writes.length,0);
 });
+
+test('backend disable and recovery hide retain focus on their status',async()=>{
+ const f=fixture();f.node('#switchBackend').focus();const work=f.node('#switchBackend').onclick();
+ assert.equal(f.context.document.activeElement,f.node('#backendStatus'));
+ await f.tick();f.pending[0].resolve(f.backend('old'));await work;
+ f.node('#retryRecovery').focus();f.context.renderRecovery({enabled:false,message:'Recovery disabled'});
+ assert.equal(f.context.document.activeElement,f.node('#recoveryStatus'));assert.equal(f.node('#retryRecovery').hidden,true);
+ f.node('#backendChoice').focus();const refresh=f.run();f.pending.at(-1).resolve({...f.backend('old'),busy:true});await refresh;
+ assert.equal(f.context.document.activeElement,f.node('#backendStatus'));
+});

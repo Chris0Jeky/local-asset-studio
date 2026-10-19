@@ -482,8 +482,8 @@ function assetEmptyState() {
     title='Your assets are in Trash';description='Open Trash to review and restore them. Moving assets to Trash does not delete their originals.';
     action='<button data-scope="trash" data-asset-browse-scope>Open Trash</button>';
   }else{
-    title='Your asset library is empty';description='Import an existing image to organize or continue working on it. Importing does not generate a new image.';
-    action='<button data-asset-import>Import images</button>';
+    title='Your library is empty';description='Pictures you make in Make land here. You can also import images; importing makes nothing new.';
+    action='<a class="primary" href="/#make">Make a picture</a> <button data-asset-import>Import images</button>';
   }
   return '<div class="asset-empty"><h3>'+title+'</h3><p>'+description+'</p>'+action+'</div>';
 }
@@ -532,7 +532,8 @@ function renderAssets() {
   $('#bulkCollection').innerHTML='<option value="">Choose collection…</option>'+assetState.collections.map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('');
   if(assetState.collections.some(c=>c.id===destination))$('#bulkCollection').value=destination;
   const pending=assetUnreviewed(assets);
-  $('#reviewNext').textContent='Review next ('+pending.length+' unreviewed)';
+  $('#reviewNext').textContent=pending.length?'Review next ('+pending.length+' unreviewed)':'Nothing to review';
+  $('#reviewNext').title=pending.length?'':'Every asset shown has a review.';
   $('#reviewNext').disabled=!pending.length;
   const groups=assetGroups(assets,assetGroupMode),grouped=!!groups[0]?.key;
   $('#assetGrid').classList.toggle('is-grouped',grouped && !!assets.length);
