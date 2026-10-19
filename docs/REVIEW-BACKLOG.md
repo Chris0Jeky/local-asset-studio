@@ -9,7 +9,7 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 ## 2026-10-19 overnight (ux-lead, goal-first rework; design in docs/ux-qa/GOAL-FIRST-REWORK-2026-10-19.md)
 
-- [ ] **Make shows the look's model and LoRAs while Tune is shut.** The Tune line reads "As made: Anima · pearly_petiflow2 1.00 · 25 steps" instead of "Model, adapters, steps, seed"; a tuned look still reads "Tuned: ...". Reverse: `asMade()` in `app/static/make.js` back to the fixed text.
+- [ ] **Make shows the look's model and LoRAs while Tune is shut.** The Tune line reads "As made: Anima · anima-base-v1.0 · pearly_petiflow2 1.00 · 25 steps" (the model file is named when a family has two) instead of "Model, adapters, steps, seed"; a tuned look still reads "Tuned: ...". Reverse: `asMade()` in `app/static/make.js` back to the fixed text.
 - [ ] **Make's composer uses the full width until the first picture exists.** "Your pictures" moves beside the words only once there is a run card; before that it sits below. Reverse: drop `&&state.runs.length>0` in `layout()` in `app/static/make.js`.
 
 ## 2026-10-17 session (agent judgment calls)

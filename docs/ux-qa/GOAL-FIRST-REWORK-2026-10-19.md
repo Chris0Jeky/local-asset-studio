@@ -21,7 +21,7 @@ fake finished run in the browser only (`/api/jobs/<id>` and `/api/image/...` ans
 ## Findings (19 Oct) and slices
 | # | Finding | Slice |
 | --- | --- | --- |
-| F1 | Model and LoRAs hidden: the shut Tune line read "Model, adapters, steps, seed", naming categories, not choices. | S1: the line reads "As made: Anima · pearly_petiflow2 1.00 · 25 steps"; tuned runs keep "Tuned: ..." |
+| F1 | Model and LoRAs hidden: the shut Tune line read "Model, adapters, steps, seed", naming categories, not choices. | S1: the line reads "As made: Anima · anima-base-v1.0 · pearly_petiflow2 1.00 · 25 steps" (the model file is named when a family has two); tuned runs keep "Tuned: ..." |
 | F2 | Before the first picture the composer sat in a 40% column beside an empty "Your pictures" column; Shape, How many and Generate stacked below the text box. | S1: the split opens only once runs exist; before that the composer uses the full width with its controls in the side column. |
 | F3 | A look whose example picture is local-only and absent showed a broken image. | S1: missing look pictures fall back to the blank mark. |
 | F4 | Run cards: "Change one thing" and "Put in a new pose" (change outfit, change pose) were under More. | S2 |

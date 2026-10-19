@@ -174,7 +174,7 @@
   }
   // Untuned, the summary still names what will run (owner, 19 Oct: the model and LoRAs are the choice, so they stay in view while Tune is shut).
   function asMade(look){const p=presetFor(look),steps=fullSteps(look,p);if(!p)return'Model, adapters, steps, seed';
-    return 'As made: '+[family(p),...adapters(look).map(a=>short(a.name)+' '+a.strength.toFixed(2)),...(bound(p,'steps')&&steps?[steps+' steps']:[])].join(' · ');}
+    return 'As made: '+[modelLabel(p,presets()),...adapters(look).map(a=>short(a.name)+' '+a.strength.toFixed(2)),...(bound(p,'steps')&&steps?[steps+' steps']:[])].join(' · ');}
   // The tune applied to the prepared controls. Every bound slot of a switched model is written (off or empty is 0), so the
   // other recipe never keeps an authored adapter of its own; on the look's own model only changed slots are written.
   function applyTune(controls,look,t){
