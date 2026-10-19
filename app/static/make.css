@@ -134,3 +134,5 @@
 .make-away-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 0;font-size:13px}
 .make-note{border:1px solid var(--make-edge);border-radius:12px;padding:10px 14px;margin:0 0 16px;background:var(--panel)}.make-note h3{margin:0 0 6px;font-size:14px}.make-note p{margin:0 0 8px;font-size:12px;color:var(--muted)}.make-note .make-row{margin-top:6px}
 .make-pose-routes{margin:4px 0 6px}.make-pose-routes small{display:block;margin:-4px 0 8px 26px;font-size:11px}.make-tune-row .make-lab{color:var(--accent)}
+/* A note in the picture grid (empty, no match, older pictures) spans the row instead of wrapping in one 150 px cell. */
+.make-pictures>p{grid-column:1/-1;margin:0}
