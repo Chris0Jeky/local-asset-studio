@@ -2853,6 +2853,212 @@
         1.0,
         1.0
       ]
+    },
+    {
+      "id": "moss-image-flux2-vae-small",
+      "name": "moss_image_flux2-vae_small.safetensors",
+      "file": "vae/moss_image_flux2-vae_small.safetensors",
+      "repo": "Comfy-Org/MOSS-Image",
+      "revision": "3284a1dbb351e3396d70f39f2a71cbf6ed2ef1bb",
+      "source": "https://huggingface.co/Comfy-Org/MOSS-Image",
+      "url": "https://huggingface.co/Comfy-Org/MOSS-Image/resolve/3284a1dbb351e3396d70f39f2a71cbf6ed2ef1bb/vae/flux2-vae_small.safetensors",
+      "bytes": 249521340,
+      "sha256": "d8d52ba036475f5fb07c8b435e176d3d97ebfa82f0d1a1c317f9cc1e25bd013b",
+      "license": "apache-2.0",
+      "terms": "Apache License 2.0 for the OpenMOSS-Team weights and bundled code (model card OpenMOSS-Team/MOSS-Image-SFT, read 19 October 2026); Comfy-Org repackaged files. Loaded only by the isolated moss backend (ComfyUI v0.42.1 checkout, docs/MOSS-IMAGE.md); the file lives in the main model library and the isolated checkout reads it by extra_model_paths.yaml.",
+      "family": "MOSS-Image",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ],
+      "backend": "moss"
+    },
+    {
+      "id": "moss-image-sft-int8-convrot",
+      "name": "moss_image_sft_int8_convrot.safetensors",
+      "file": "diffusion_models/moss_image_sft_int8_convrot.safetensors",
+      "repo": "Comfy-Org/MOSS-Image",
+      "revision": "3284a1dbb351e3396d70f39f2a71cbf6ed2ef1bb",
+      "source": "https://huggingface.co/Comfy-Org/MOSS-Image",
+      "url": "https://huggingface.co/Comfy-Org/MOSS-Image/resolve/3284a1dbb351e3396d70f39f2a71cbf6ed2ef1bb/diffusion_models/moss_image_sft_int8_convrot.safetensors",
+      "bytes": 5413698958,
+      "sha256": "b4d1475bc7eeffd7b809e82ea13a1fba1fb85c4e18365af3813722faa5c0fe4f",
+      "license": "apache-2.0",
+      "terms": "Apache License 2.0 for the OpenMOSS-Team weights and bundled code (model card OpenMOSS-Team/MOSS-Image-SFT, read 19 October 2026); Comfy-Org repackaged files. Loaded only by the isolated moss backend (ComfyUI v0.42.1 checkout, docs/MOSS-IMAGE.md); the file lives in the main model library and the isolated checkout reads it by extra_model_paths.yaml.",
+      "family": "MOSS-Image",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ],
+      "backend": "moss"
+    },
+    {
+      "id": "qwen3-5-9b-int8-convrot",
+      "name": "qwen3.5_9b_int8_convrot.safetensors",
+      "file": "text_encoders/qwen3.5_9b_int8_convrot.safetensors",
+      "repo": "Comfy-Org/MOSS-Image",
+      "revision": "3284a1dbb351e3396d70f39f2a71cbf6ed2ef1bb",
+      "source": "https://huggingface.co/Comfy-Org/MOSS-Image",
+      "url": "https://huggingface.co/Comfy-Org/MOSS-Image/resolve/3284a1dbb351e3396d70f39f2a71cbf6ed2ef1bb/text_encoders/qwen3.5_9b_int8_convrot.safetensors",
+      "bytes": 9748121532,
+      "sha256": "32e3787472f708fa5f83624acbf5ef23f7fc89c439e05065ea57cfe5a97f025a",
+      "license": "apache-2.0",
+      "terms": "Qwen3.5-9B text encoder repackaged by Comfy-Org for MOSS-Image (int8 ConvRot); Apache-2.0 per the MOSS-Image repository (read 19 October 2026). Loaded only by the isolated moss backend.",
+      "family": "MOSS-Image",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ],
+      "backend": "moss"
+    },
+    {
+      "id": "moss-anireal-v1",
+      "name": "MOSS-Image LoRA / Anireal (anime realism) v1.0",
+      "file": "loras/moss-anireal-v1.safetensors",
+      "source": "https://civitai.com/models/3006790",
+      "url": "https://civitai.com/api/download/models/3411644",
+      "bytes": 129015928,
+      "sha256": "827b1f76485d0cb63c6f84fa0ad5a2e4045667ad41b000f00c0a6f10d6e94f36",
+      "license": "civitai per-file flags",
+      "terms": "civitai model 3006790, per-file permissions read 19 October 2026: Image, RentCivit, Rent (a missing Sell flag means no selling of generated images or the model). Style or franchise adapters (Chainsaw Man, Re:Zero, Reverse 1999) imitate third-party works; the civitai flags are not a clearance of those rights. Loaded only by the isolated moss backend (docs/MOSS-IMAGE.md).",
+      "family": "MOSS-Image",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ],
+      "backend": "moss"
+    },
+    {
+      "id": "moss-impasto-25d-v08",
+      "name": "MOSS-Image LoRA / Impasto 2.5D Anime Style v0.8-beta HE (Moss)",
+      "file": "loras/moss-impasto-25d-v08.safetensors",
+      "source": "https://civitai.com/models/2230912",
+      "url": "https://civitai.com/api/download/models/3412725",
+      "bytes": 64528288,
+      "sha256": "c793c19be6c8bdfccdd31a34e9fb4d7c529b032e68adc7901b1305d122dd37d1",
+      "license": "civitai per-file flags",
+      "terms": "civitai model 2230912, per-file permissions read 19 October 2026: RentCivit, Rent (a missing Sell flag means no selling of generated images or the model). Style or franchise adapters (Chainsaw Man, Re:Zero, Reverse 1999) imitate third-party works; the civitai flags are not a clearance of those rights. Loaded only by the isolated moss backend (docs/MOSS-IMAGE.md).",
+      "family": "MOSS-Image",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ],
+      "backend": "moss"
+    },
+    {
+      "id": "moss-mikkoani-v1",
+      "name": "MOSS-Image LoRA / mikkoani (90s anime style) MOSS-Image",
+      "file": "loras/moss-mikkoani-v1.safetensors",
+      "source": "https://civitai.com/models/2470371",
+      "url": "https://civitai.com/api/download/models/3413205",
+      "bytes": 129017232,
+      "sha256": "bf56af1c4a6bafe8e59bd824301a45995941930d74f923a0b01cf9b7b25bd54e",
+      "license": "civitai per-file flags",
+      "terms": "civitai model 2470371, per-file permissions read 19 October 2026: Image, RentCivit, Rent, Sell, SellMerge (a missing Sell flag means no selling of generated images or the model). Style or franchise adapters (Chainsaw Man, Re:Zero, Reverse 1999) imitate third-party works; the civitai flags are not a clearance of those rights. Loaded only by the isolated moss backend (docs/MOSS-IMAGE.md).",
+      "family": "MOSS-Image",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ],
+      "backend": "moss"
+    },
+    {
+      "id": "moss-nanmokaken-v05",
+      "name": "MOSS-Image LoRA / Nanmokaken style moss v0.5",
+      "file": "loras/moss-nanmokaken-v05.safetensors",
+      "source": "https://civitai.com/models/2974124",
+      "url": "https://civitai.com/api/download/models/3412370",
+      "bytes": 145157312,
+      "sha256": "3ee272e6d37572d66f494f5ac1cbd0732b38c7e564ebed738055c1e925af2b4c",
+      "license": "civitai per-file flags",
+      "terms": "civitai model 2974124, per-file permissions read 19 October 2026: Image, RentCivit (a missing Sell flag means no selling of generated images or the model). Style or franchise adapters (Chainsaw Man, Re:Zero, Reverse 1999) imitate third-party works; the civitai flags are not a clearance of those rights. Loaded only by the isolated moss backend (docs/MOSS-IMAGE.md).",
+      "family": "MOSS-Image",
+      "trigger": "@nanmokaken",
+      "strength": [
+        1.0,
+        1.0
+      ],
+      "backend": "moss"
+    },
+    {
+      "id": "moss-chainsawman-v1",
+      "name": "MOSS-Image LoRA / Chainsaw Man anime style v1.0",
+      "file": "loras/moss-chainsawman-v1.safetensors",
+      "source": "https://civitai.com/models/3008852",
+      "url": "https://civitai.com/api/download/models/3414286",
+      "bytes": 72629088,
+      "sha256": "9c07fcca3da9818b9cdb49941fc549d057c7e35f74f80bfcd97746774ee05911",
+      "license": "civitai per-file flags",
+      "terms": "civitai model 3008852, per-file permissions read 19 October 2026: Image, RentCivit, Rent, Sell, SellMerge (a missing Sell flag means no selling of generated images or the model). Style or franchise adapters (Chainsaw Man, Re:Zero, Reverse 1999) imitate third-party works; the civitai flags are not a clearance of those rights. Loaded only by the isolated moss backend (docs/MOSS-IMAGE.md).",
+      "family": "MOSS-Image",
+      "trigger": "chainsty",
+      "strength": [
+        1.0,
+        1.0
+      ],
+      "backend": "moss"
+    },
+    {
+      "id": "moss-reverse1999-v1",
+      "name": "MOSS-Image LoRA / Reverse 1999 style v1.0",
+      "file": "loras/moss-reverse1999-v1.safetensors",
+      "source": "https://civitai.com/models/3005908",
+      "url": "https://civitai.com/api/download/models/3410478",
+      "bytes": 77765576,
+      "sha256": "a903e13cec2faedf74572f31f6c2fec682aaa985ca1564028c98b123248adb08",
+      "license": "civitai per-file flags",
+      "terms": "civitai model 3005908, per-file permissions read 19 October 2026: Image, RentCivit, Rent, Sell, SellMerge (a missing Sell flag means no selling of generated images or the model). Style or franchise adapters (Chainsaw Man, Re:Zero, Reverse 1999) imitate third-party works; the civitai flags are not a clearance of those rights. Loaded only by the isolated moss backend (docs/MOSS-IMAGE.md).",
+      "family": "MOSS-Image",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ],
+      "backend": "moss"
+    },
+    {
+      "id": "moss-rezero-v1",
+      "name": "MOSS-Image LoRA / Re:Zero anime style v1.0",
+      "file": "loras/moss-rezero-v1.safetensors",
+      "source": "https://civitai.com/models/3008724",
+      "url": "https://civitai.com/api/download/models/3414087",
+      "bytes": 72707072,
+      "sha256": "98a3d84b15c3fca78e2f7cd6e714155b161ab673751f22134c46c94ba0c81247",
+      "license": "civitai per-file flags",
+      "terms": "civitai model 3008724, per-file permissions read 19 October 2026: Image, RentCivit, Rent, Sell, SellMerge (a missing Sell flag means no selling of generated images or the model). Style or franchise adapters (Chainsaw Man, Re:Zero, Reverse 1999) imitate third-party works; the civitai flags are not a clearance of those rights. Loaded only by the isolated moss backend (docs/MOSS-IMAGE.md).",
+      "family": "MOSS-Image",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ],
+      "backend": "moss"
+    },
+    {
+      "id": "moss-image-sft-4step-lora-v2",
+      "name": "MOSS-Image LoRA / SFT 4-step distillation v2 (Kijai experimental)",
+      "file": "loras/moss_image_sft_4step_lora_v2.safetensors",
+      "repo": "Kijai/MOSS-image_experimental",
+      "revision": "9869b2855d0921c10ecee0011c88f7b961a736a6",
+      "source": "https://huggingface.co/Kijai/MOSS-image_experimental",
+      "url": "https://huggingface.co/Kijai/MOSS-image_experimental/resolve/9869b2855d0921c10ecee0011c88f7b961a736a6/loras/moss_image_sft_4_steps_lora_v2_600_avg_rank_72_bf16.safetensors",
+      "bytes": 327078952,
+      "sha256": "632ff58fba4b09893ba591c043f447240768cf9ac989e12bffa25f5d684b6616",
+      "license": "unspecified",
+      "terms": "Kijai/MOSS-image_experimental (Hugging Face) states no licence in its repository card or tags (read 19 October 2026); the base model is Apache-2.0 but a derived adapter without a licence is not cleared. Private experiments only. Loaded only by the isolated moss backend.",
+      "family": "MOSS-Image",
+      "trigger": "",
+      "strength": [
+        0.8,
+        1.0
+      ],
+      "backend": "moss"
     }
   ],
   "collections": [

@@ -24,7 +24,7 @@
     <div class="review-columns">
       <section class="panel" id="assessment" aria-labelledby="assessmentTitle"><span class="eyebrow">02 / RECORD WHAT YOU FOUND</span><h2 id="assessmentTitle">Candidate assessment</h2>
         <form id="assessmentForm"><label>Candidate<select id="candidate"></select></label><div id="candidateSource" class="source-note" hidden></div>
-          <label>Verdict<select id="verdict"><option value="unreviewed">Not reviewed</option><option value="keep">Keep for consideration</option><option value="needs_work">Needs work</option><option value="reject">Reject</option></select></label>
+          <label>Verdict<select id="verdict"><option value="unreviewed">Not reviewed</option><option value="keep">Keep</option><option value="needs_work">Needs work</option><option value="reject">Not this</option></select></label>
           <fieldset><legend>Observed checks</legend><div id="observations" class="observations"></div></fieldset>
           <fieldset id="characterAssessment" hidden><legend>Character requirements</legend><p class="muted">Assess every requirement for this case. Details you cannot see remain unconfirmed.</p><div id="characterChecks" class="observations"></div></fieldset>
           <div class="two-fields"><label>Preference · 1–5, optional<input id="preference" type="number" min="1" max="5" step="1" placeholder="Not scored"></label><label>Cleanup · measured seconds<input id="cleanup" type="number" min="0" max="86400" step="1" placeholder="Not measured"></label></div>

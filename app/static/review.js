@@ -2,6 +2,7 @@
 (function () {
   'use strict';
   const CHECKS = {constraints:'Stated constraints',identity:'Identity / costume',pose_contact:'Pose / contact',composition:'Composition',detail:'Detail / cleanup'};
+  const verdictLabel=v=>({keep:'Keep',needs_work:'Needs work',reject:'Not this',unreviewed:'Not reviewed'}[v]||String(v).replaceAll('_',' '));
   function cropFromPercent(values) {
     if(values.length!==4||values.some(v=>!['string','number'].includes(typeof v)||String(v).trim()===''||!Number.isFinite(Number(v))||Number(v)<0||Number(v)>100))throw Error('Enter four crop percentages.');
     const crop=values.map(v=>Math.round(Number(v)*100));
@@ -92,14 +93,14 @@
     const options=state.candidates.map(c=>[c.alias,'Candidate '+c.alias]);
     selectOptions($('#left'),options,options[0][0]);selectOptions($('#right'),options,options[Math.min(1,options.length-1)][0]);selectOptions($('#candidate'),options,options[0][0]);
     const view=viewDraft||state;cropIds.forEach((id,i)=>{$('#'+id).value=view.crop[i]/100;});$('#background').value=view.background;
-    fillAssessment();$('#progress').replaceChildren(...state.candidates.map(c=>{const row=el('div');row.className='progress-row';row.append(el('b','Candidate '+c.alias),el('span',c.assessment.verdict.replaceAll('_',' ')));return row;}));
+    fillAssessment();$('#progress').replaceChildren(...state.candidates.map(c=>{const row=el('div');row.className='progress-row';row.append(el('b','Candidate '+c.alias),el('span',verdictLabel(c.assessment.verdict)));return row;}));
     $('#decision').hidden=!state.revealed;$('#provenance').hidden=!state.revealed;$('#evidence').textContent=state.revealed?JSON.stringify(state.evidence,null,2):'';
     selectOptions($('#selected'),[['','None should progress'],...options],state.selected||'');$('#selected').value=selectionDraft??state.selected??'';$('#summary').value=summaryDraft??state.notes;
     $('#characterDecision').value=characterDecisionDraft??state.character_review?.review?.decision??'selected';
     $('#characterDecisionStatus').hidden=!state.character_context;
     $('#characterDecisionStatus').textContent=state.character_review?`${state.character_review.review.decision==='accepted'?'Accepted':'Selected'} for this case by ${state.character_review.review.reviewer} at review revision ${state.character_review.review_revision}. Rights and engine acceptance remain separate.`:'Character acceptance has not been recorded. Every character requirement must pass before selection or acceptance.';
     $('#history').replaceChildren(...state.history.slice(0,40).map(e=>el('li',`r${e.revision} · ${e.action}${e.alias?' · '+e.alias:''} · ${e.reviewer}`)));
-    selectOptions($('#restoreRevision'),[['','Choose an earlier assessment'],...state.history.filter(e=>e.action==='rate').map(e=>[String(e.revision),`r${e.revision} · ${e.alias} · ${e.assessment.verdict}`])],'');
+    selectOptions($('#restoreRevision'),[['','Choose an earlier assessment'],...state.history.filter(e=>e.action==='rate').map(e=>[String(e.revision),`r${e.revision} · ${e.alias} · ${verdictLabel(e.assessment.verdict)}`])],'');
     $('#downloads').replaceChildren();
     for(const a of state.export?.artifacts||[]){const link=el('a',a.path.endsWith('.zip')?'Download review evidence pack':a.path.endsWith('.png')?'Download matched contact sheet':'Download structured review');link.href=artifactPath(a.url,project)+'?download';link.download='';$('#downloads').append(link);}
     draw().catch(error=>message(error.message,true));controls();
