@@ -178,6 +178,8 @@ def run(shots):
         page.wait_for_function('document.querySelector("#makeEstimate").textContent.includes("rough guess")')
         page.locator('#makeModel').evaluate('(e)=>{e.selectedIndex=0;e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}))}')
         page.wait_for_function('document.querySelector("#makeEstimate").textContent.startsWith("About 31 s. Median")')
+        page.check('#makeDraft'); page.wait_for_function('document.querySelector("#makeEstimate").textContent.includes("rough guess")')  # turbo Draft (#1559) is not the look as timed
+        page.check('#makeStandard'); page.wait_for_function('document.querySelector("#makeEstimate").textContent.startsWith("About 31 s. Median")')
         ROUGH.clear(); page.select_option('#makeCount', '4'); page.wait_for_function('document.querySelector("#makeEstimate").textContent.endsWith("from earlier runs on this PC.")')
         assert 'Draft · 13 steps' in page.locator('#makeDraftBox').inner_text(), 'a 25-step look offers a draft too'
         page.locator('[data-make-change]').click(); assert page.locator('[data-make-keep-look]').inner_text() == 'Stay with Flat pastel close-up', 'the gallery never says Keep'
