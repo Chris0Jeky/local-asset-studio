@@ -20,6 +20,12 @@ QWEN21_FILES = (
     ('decoder', 'models/vae/qwen_image_2.1_vae_bf16.safetensors'),
 )
 
+MOSS_FILES = (
+    ('diffusion', 'models/diffusion_models/moss_image_sft_int8_convrot.safetensors'),
+    ('text encoder', 'models/text_encoders/qwen3.5_9b_int8_convrot.safetensors'),
+    ('decoder', 'models/vae/moss_image_flux2-vae_small.safetensors'),
+)
+
 
 def loopback_port(url):
     """Managed launchers support one explicit IPv4 loopback listener, not proxies."""
@@ -76,6 +82,9 @@ def readiness(profile, repo_root):
     if profile['id'] == 'qwen21':
         required.append(('Comfy Kitchen overlay', root / 'python_packages/comfy_kitchen', True))
         required.extend((role, root / path, False) for role, path in QWEN21_FILES)
+    if profile['id'] == 'moss':
+        required.append(('Comfy Kitchen overlay', root / 'python_packages/comfy_kitchen', True))
+        required.extend((role, Path(profile['library']) / path, False) for role, path in MOSS_FILES)
     if profile['id'] == 'h3':
         required.append(('isolated loader', Path(repo_root) / 'scripts/h3_mmap_loader.py', False))
         required.extend((role, root / path, False) for role, path in H3_FILES)

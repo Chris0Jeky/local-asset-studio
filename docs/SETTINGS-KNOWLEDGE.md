@@ -155,9 +155,10 @@ acceptance; evidence and caveats in [the report](looks/LOOK-LAB-2026-10-19.md). 
 | The richest finish, time is fine | **Krea 2 GGUF + Niji Sweet Spot** | leave the `@NJSW33T` trigger out (or switch TextFusion off); 4, 8 or 15 steps all cost 262-331 s because load dominates | the trigger can be painted as corner text (2 of 6 trigger pictures) |
 | Illustrious checkpoints (WAI, AniFox, CSTati, YumeFlux) | WAI v17 with exclusions | `high collar, fully covered` in the positive and `cleavage, revealing clothes, plunging neckline` in the negative | trusting "high collar" alone: it was ignored by four checkpoints |
 | A larger, cleaner picture | **`anime-esrgan` 2x** (1664x2432, 142 s) | run last, on the picture you chose | upscaling a picture with a prop error: it keeps the error |
-| More detail on a softish picture | **`anime-refine` at denoise 0.22** (53 s, 1.5x) | 0.22 kept the face; 0.35 drifted | denoise 0.35 and above reshapes the eye and smile |
+| More detail on a softish picture | **`anime-refine` at denoise 0.15-0.22** (53-68 s, 1.5x) | 0.22 kept the face on the sorceress, but shifted a knight's eye colour (amber to grey-green); 0.15 and 0.10 kept it; 0.35 drifted | denoise 0.35 and above reshapes the eye and smile |
 | Fix a named face or hand defect | `anime-detail-fix` | only when a defect is named | running it on a clean face: it replaced a smile with a pursed mouth |
-| A specific pose | a Klein route (Copy Pose, depth, drawn skeleton) | match the prompt to the pose | `wai-skeleton` followed only a hand-on-hip pose of five; dynamic poses were ignored |
+| A specific pose | **Klein 9B drawn skeleton** (`combine-klein-9b-skeleton`, 60-95 s): 5 of 5 skeletons followed, identity kept | give the character picture and a plain pose skeleton | `wai-skeleton` followed only a hand-on-hip pose of five; Klein **Copy Pose** leaked the pose picture's background 4 of 4 |
+| One change to a finished picture | **Klein 4B `flux-edit`** (14-39 s): robe to armour, robe to kimono, laugh: keep | say what must not change | hair colour also changed the eyes; a background change replaced only part of it |
 
 Settings that did not matter on the Pearly mix at a fixed seed: steps 20 / 30 / 40, CFG 3 / 4.5 / 6, simple / beta / normal. Samplers `euler_ancestral` and `dpmpp_2m_sde_gpu` change the composition (and opened the neckline), so they are not a neutral swap. The turbo adapter at 8 steps, CFG 1 was a near tie at about half the time.
 

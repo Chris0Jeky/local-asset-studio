@@ -3,9 +3,9 @@
 // current decision again returns the output to unreviewed. Nothing is generated, moved or deleted.
 // K / W / X decide for the output whose card holds keyboard focus, never while typing in a field.
 (function(){
-  const LABEL={selected:'Kept',needs_work:'Needs work',rejected:'Rejected',unreviewed:'Unreviewed'};
+  const LABEL={selected:'Kept',needs_work:'Needs work',rejected:'Not this',unreviewed:'Unreviewed'};
   const KEYS={k:'selected',w:'needs_work',x:'rejected'};
-  const CHOICES=[['selected','Keep','K'],['needs_work','Needs work','W'],['rejected','Reject','X']];
+  const CHOICES=[['selected','Keep','K'],['needs_work','Needs work','W'],['rejected','Not this','X']];
   let busy=false;
   const record=id=>typeof assetState!=='undefined'?assetState.assets.find(a=>a.id===id):null;
   const escText=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
