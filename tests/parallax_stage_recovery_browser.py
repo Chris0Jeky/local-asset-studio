@@ -65,7 +65,7 @@ async def run(args):
         job['outputs'] = [{'filename': 'lantern.png', 'asset_id': 'asset-0', 'media_type': 'image', 'seed': 42}]
     sibling = dict(id='sibling-job', preset_name='Parallax fixture, synthetic', preset_id=PRESET['id'],
                    status='uncertain', message='Synthetic uncertain sibling, not a model run',
-                   controls={}, outputs=[], parallax=dict(PLAN, stage='isolate'))
+                   prompt_ids=[], has_pending_submission=True, controls={}, outputs=[], parallax=dict(PLAN, stage='isolate'))
     fixture.JOBS[:] = [job, sibling]
     server = fixture.browser_server(Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -97,6 +97,9 @@ async def run(args):
                     gallery_text = await page.locator('#gallery').inner_text()
                     assert 'uncertain' in gallery_text, 'Original card keeps the live sibling status'
                     assert 'isolate' in gallery_text.lower(), 'Original card names the sibling stage'
+                    assert 'Recent runs or Problems' in gallery_text, 'Uncertain sibling directs the owner to its problem record'
+                    assert 'Resume observation' not in gallery_text, 'A sibling without a prompt receipt must not recommend unavailable observation'
+                    assert 'Do not press Generate again' in gallery_text, 'Uncertain submission must not be repeated'
                     assert await page.evaluate('backendActive') == 'primary', 'Backend identity is unchanged'
                     for stage in ('plate', 'isolate'):
                         button = page.locator(f'.parallaxStage[data-job="fixture-job"][data-stage="{stage}"]')

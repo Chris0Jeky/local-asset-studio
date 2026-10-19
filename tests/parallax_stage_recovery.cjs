@@ -44,6 +44,16 @@ function sibling(status){
   job.outputs=[];
   return job;
 }
+test('an uncertain sibling without a prompt receipt points to the problem record without offering resume or repetition',()=>{
+  s.jobs=[base,{...sibling('uncertain'),prompt_ids:[],has_pending_submission:true}];
+  try{
+    const html=s.parallaxNote(base,{});
+    assert.match(html,/isolate edit is uncertain/);
+    assert.match(html,/Recent runs|Problems/);
+    assert.doesNotMatch(html,/Resume observation/);
+    assert.match(html,/Do not press Generate again/);
+  }finally{s.jobs=[];}
+});
 test('reload asks before replacing Create and sends only an explicit stage request',async()=>{
   const f=fixture();assert.equal(await f.controller.load('plate-job','plate'),true);
   assert.deepEqual(f.requests,[{job_id:'plate-job',stage:'plate'}]);assert.equal(f.applied.length,1);assert.match(f.confirmations[0],/Nothing runs/);
