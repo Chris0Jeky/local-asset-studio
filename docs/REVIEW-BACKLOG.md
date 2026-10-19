@@ -41,7 +41,7 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 ## 2026-10-19 overnight (ux-lead): one picture's next steps at a time
 
-- [ ] **On a Make run card, one picture shows its next steps** (Make this my character, Vary, Fix, Upscale, Change one thing, New pose, Restyle, More); the others show Keep, Not this and **Next steps…**, which moves the steps to that picture. The first saved picture starts selected. A 4-picture card went from 62 visible buttons to 29. Reverse: delete the `.make-outputs figure:not(.make-selected) .make-next{display:none}` rule in `app/static/make.css`.
+- [ ] **On a Make run card, one picture shows its next steps** (Make this my character, Vary, Fix, Upscale, Change one thing, New pose, Restyle, More); the others show Keep, Not this and **Next steps…**, which moves the steps to that picture. The first saved picture starts selected. A 4-picture card went from 62 visible buttons to 29. Reverse: in `app/static/make.js` drop the Next steps… button and the `.make-next` wrapper from `actions()`, `selectedOf()`, the `make-selected` class on figures, the `[data-make-select]` click branch and `state.selected`; then delete the `.make-next…` rules at the end of `app/static/make.css`.
 
 ## 2026-10-19 overnight (ux-lead): picture pickers
 
