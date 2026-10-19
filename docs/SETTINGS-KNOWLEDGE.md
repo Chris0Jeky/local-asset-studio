@@ -143,6 +143,24 @@ LoRA/IP-Adapter/ControlNet weights merely because they share a node label.
 The weights use the CircleStone Labs Non-Commercial weights terms, distinct from generated-output conditions.
 Preserve the recorded private-experiment decision and per-file provenance; a recipe or byte hash is not a rights grant.
 
+## Adult character pictures: what round 7 measured (19 October 2026)
+
+Agent-judged on this PC, one brief set (sorceress balcony, kimono bridge, knight battlefield, ten costumes), not art
+acceptance; evidence and caveats in [the report](looks/LOOK-LAB-2026-10-19.md). Models and adapters keep their own terms.
+
+| You want | Use | Settings that held | Mistake to avoid |
+| --- | --- | --- | --- |
+| A costume or full-body adult character, many tries | **Pearly Anima mix** (12 of 12 keep over 3 scenes x 4 seeds), **One Obsession Anima** (12 of 12) | sentence prompt, euler / simple, 20-30 steps, CFG 4.5; a Draft of four is ~20-25 s each back to back | stacking style adapters for quality (11 tried, no gain); `newanimastyle` makes faces younger |
+| A close-up adult face | **One Obsession**, WAI v17, AniFox | add "mature female, 30 years old"; judge the face at full size | the Pearly mix, Anima base, JANIMA and Anima aesthetic read youthful in this test |
+| The richest finish, time is fine | **Krea 2 GGUF + Niji Sweet Spot** | leave the `@NJSW33T` trigger out (or switch TextFusion off); 4, 8 or 15 steps cost 276-331 s because load dominates | the trigger can be painted as corner text (2 of 6 trigger pictures) |
+| Illustrious checkpoints (WAI, AniFox, CSTati, YumeFlux) | WAI v17 with exclusions | `high collar, fully covered` in the positive and `cleavage, revealing clothes, plunging neckline` in the negative | trusting "high collar" alone: it was ignored by four checkpoints |
+| A larger, cleaner picture | **`anime-esrgan` 2x** (1664x2432, 142 s) | run last, on the picture you chose | upscaling a picture with a prop error: it keeps the error |
+| More detail on a softish picture | **`anime-refine` at denoise 0.22** (53 s, 1.5x) | 0.22 kept the face; 0.35 drifted | denoise 0.35 and above reshapes the eye and smile |
+| Fix a named face or hand defect | `anime-detail-fix` | only when a defect is named | running it on a clean face: it replaced a smile with a pursed mouth |
+| A specific pose | a Klein route (Copy Pose, depth, drawn skeleton) | match the prompt to the pose | `wai-skeleton` followed only a hand-on-hip pose of five; dynamic poses were ignored |
+
+Settings that did not matter on the Pearly mix at a fixed seed: steps 20 / 30 / 40, CFG 3 / 4.5 / 6, simple / beta / normal. Samplers `euler_ancestral` and `dpmpp_2m_sde_gpu` change the composition (and opened the neckline), so they are not a neutral swap. The turbo adapter at 8 steps, CFG 1 was a near tie at about half the time.
+
 ## SDXL, Z-Image Turbo, FLUX.2 Klein, Qwen Image Edit
 
 These four are in the knowledge base so the planner has something to say about every anime-adjacent preset,

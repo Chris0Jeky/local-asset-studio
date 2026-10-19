@@ -1,5 +1,9 @@
 # Current state — 13 October 2026
 
+## GPU Look lab Round 7 - 19 October 2026
+
+144 serial Studio jobs (all completed, none failed or uncertain) on adult SFW characters: family survey on three scenes, seed reliability, settings and adapter grids, ten costumes on two Anima mixes, Krea trigger-text tests, drawn-skeleton poses and finishing passes. Pearly and One Obsession Anima mixes kept 12 of 12 each; steps 20/30/40 look alike; four Anima close-up faces read youthful and were skipped; the Krea corner trigger text appeared on 2 of 6 trigger pictures and 0 of 5 without trigger or TextFusion; `wai-skeleton` followed only a hand-on-hip pose; `anime-refine` at 0.22 and `anime-esrgan` 2x kept the picture, `anime-detail-fix` on a clean face changed the expression. Agent verdicts, not art acceptance. [Report](docs/looks/LOOK-LAB-2026-10-19.md), [what to use for what](docs/SETTINGS-KNOWLEDGE.md). Preserve ignored `.runtime/lab-20261019/`. No preset, look or runtime default changed; HUMAN_TODO.md unchanged.
+
 ## GPU Look lab Round 6 - 16-17 October 2026
 
 Painted game icon wording repairs (#1498): 32 serial Studio jobs / 32 images (plus 5 never-sent queue-busy refusals) over four wordings, four objects and two seeds; strict KEEP control 1/8, no-frame words 2/8, object-first 3/8, object-first without "floating" 4/8 (round shield and unframed crystal 4/4, key 0/2 KEEP), item wording 1/5. No variant reached 3/4, so `presets/looks.json` is unchanged and "Tested well" stays off. Agent verdicts, not art acceptance. [Report](docs/looks/LOOK-LAB-2026-10-16.md#round-6-wording-repairs-for-the-painted-game-icon-1498), [curated entry](experiments/curated/lab-round6-20261016/). Preserve ignored `.runtime/lab-20261016f/` (full-size PNGs and per-job JSON).
