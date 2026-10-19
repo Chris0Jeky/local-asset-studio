@@ -122,3 +122,17 @@ This is a comparison of tested briefs, not a taste ranking; the finishes are dif
 3. `1536x2048` was rejected until it was added to the preset's authored resolution pairs; the Studio accepts only authored pairs.
 4. The Studio's runtime recovery can relaunch the main ComfyUI while an isolated backend is active; check `/api/backends` (`online`) before assuming the GPU belongs to one family.
 
+
+## LoRA training on this AMD PC (status at 09:30, 19 October 2026)
+
+kohya `sd-scripts` (dev, commit `04ca541`, 18 October) trains MOSS-Image LoRAs with `moss_image_train_network.py` from the ComfyUI int8 ConvRot Base file and text encoder. It is a separate environment, never the shared runtime: `C:\AI\experiments\moss-train` holds the clone, an overlay of pure-Python packages (`accelerate` 1.15.0, `diffusers` 0.40.0, `huggingface-hub`, `voluptuous`, `imagesize`, the optimizers) installed with `pip --no-deps --target`, and `run_train.py`, which puts the overlay first on `sys.path` and runs the script on the portable Python (torch 2.9.1+rocm7.2.1 unchanged). The Base int8 file lives on `E:\moss-image-base\` (SHA-256 `f601c1e1...d8e6f` matches the Hugging Face LFS id).
+
+What was needed to get as far as model load on this box, in order:
+
+1. The Windows ROCm torch has no `torch.distributed` backend, so `accelerate.utils.other.model_has_dtensor` raised `ModuleNotFoundError`; the overlay copy now returns `False` when DTensor cannot be imported (an overlay edit, not a change to the shared runtime).
+2. `PYTHONUTF8=1` is required: the trainer prints Japanese strings and the Windows console code page raised `UnicodeEncodeError`.
+3. The embedded Python ignores `PYTHONPATH`, so the overlay is put on `sys.path` from `run_train.py`.
+
+Dataset for the first smoke test: ten Krea 2 + Niji Sweet Spot pictures from this lab (those without the painted trigger text), captioned with their own prompts plus `krea niji style.`; 768x1152 buckets, rank 16, AdamW, constant 1e-4, bf16, gradient checkpointing, latents and text-encoder outputs cached to disk. These are model outputs, so any LoRA from them carries the Krea Community Licence terms and the Niji adapter's own terms; it is a technique test, not a distributable adapter.
+
+The smoke run passed latent caching, text-encoder caching and LoRA creation (252 DiT modules) and is loading the int8 Base. Results (seconds per step, VRAM, whether the ConvRot int8 backward runs without Triton on gfx1201, a working LoRA or not) are appended here when they exist; until then training on this PC is **unverified**.
