@@ -928,6 +928,9 @@ async function modelShopCards() {
   element('#curatedModelSearch').value = '';
   run(`modelReqs.set('p2',[{file:'checkpoints/base.safetensors',asset_id:'base',present:true}]);renderCuratedModels()`);
   assert.match(element('#modelLooks').innerHTML, /Ready now<\/h4>[\s\S]*Look B/);
+  run(`modelReqs.set('p2',[{file:'checkpoints/base.safetensors',asset_id:'base',present:true,pin_mismatch:{note:'Content differs'}}]);renderCuratedModels()`);
+  assert.match(element('#modelLooks').innerHTML, /Needs a download<\/h4>[\s\S]*Look B/);
+  assert.doesNotMatch(element('#modelLooks').innerHTML, /Ready now<\/h4>[\s\S]*Look B/);
   run(`modelReqs.set('p2',[{file:'vae/shared.safetensors',asset_id:'shared'}]);renderCuratedModels()`);
   assert.match(element('#modelLooks').innerHTML, /Needs a download<\/h4>[\s\S]*Look B/, 'an unresolved requirement blocks, as the server does');
   // An adapter named in a look but listed nowhere (library or disk) is missing, not silently ignored; one on disk is fine.

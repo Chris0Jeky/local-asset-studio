@@ -721,7 +721,7 @@ function modelUsage(assets,windows){
   // Only once a disk inventory is reported: before that an unlisted adapter is unknown, not missing. An extension-less name counts too.
   const onDisk=new Set((library?.inventory||[]).map(m=>modelBase(m.file)));
   const loras=c=>Object.entries(c||{}).filter(([k,v])=>/^lora\d*(_name)?$/.test(k)&&typeof v==='string'&&v.trim()&&(/_name$/.test(k)||!Number.isFinite(Number(v)))).map(([,v])=>byBase.get(modelBase(v))||(onDisk.has(modelBase(v))||!onDisk.size?null:{file:'loras/'+String(v).split(/[\\/]/).pop(),present:false,unlisted:true})).filter(Boolean);
-  const join=(kind,item,presetId,controls)=>{const missing=[];for(const r of modelReqs.get(presetId)||[]){const a=resolve(r);if(a)add(a,kind,item);if(r.present!==true)missing.push(a||r);}for(const a of loras(controls)){if(!a.unlisted)add(a,kind,item);if(a.present===false)missing.push(a);}return missing;};
+  const join=(kind,item,presetId,controls)=>{const missing=[];for(const r of modelReqs.get(presetId)||[]){const a=resolve(r);if(a)add(a,kind,item);if(r.present!==true||r.pin_mismatch)missing.push(a||r);}for(const a of loras(controls)){if(!a.unlisted)add(a,kind,item);if(a.present===false)missing.push(a);}return missing;};
   for(const l of modelLooks||[]){const missing=join('looks',{id:l.id,name:l.name},l.body.preset_id,l.body.controls);states.push({look:l,known:!!modelReqs.get(l.body.preset_id),missing:[...new Map(missing.map(m=>[m.file,m])).values()]});}
   for(const r of atelierRecipes||[])if(r?.id)join('recipes',{id:r.id,name:r.name||r.id},r.preset_id,r.controls);
   return{use,states};
