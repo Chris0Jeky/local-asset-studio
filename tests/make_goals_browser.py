@@ -172,6 +172,12 @@ def run(shots):
         page.wait_for_function('document.querySelector("#makeEstimate").textContent.includes("rough guess")')
         assert page.locator('#makeEstimate').inner_text() == 'About 4 min in total, a rough guess: nothing like it has run on this PC yet.', page.locator('#makeEstimate').inner_text()
         page.locator('[data-tune=steps]').evaluate('(e)=>{e.value="";e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}))}')
+        # Codex P2 on #1574: another base model (or sampler, added LoRA file, other pixel count) is not the look the lab timed: rough guess. Shapes keep about the same pixel count, so they keep the lab number.
+        page.wait_for_function('document.querySelector("#makeEstimate").textContent.startsWith("About 31 s. Median")')
+        page.locator('#makeModel').evaluate('(e)=>{e.selectedIndex=1;e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}))}')
+        page.wait_for_function('document.querySelector("#makeEstimate").textContent.includes("rough guess")')
+        page.locator('#makeModel').evaluate('(e)=>{e.selectedIndex=0;e.dispatchEvent(new Event("input",{bubbles:true}));e.dispatchEvent(new Event("change",{bubbles:true}))}')
+        page.wait_for_function('document.querySelector("#makeEstimate").textContent.startsWith("About 31 s. Median")')
         ROUGH.clear(); page.select_option('#makeCount', '4'); page.wait_for_function('document.querySelector("#makeEstimate").textContent.endsWith("from earlier runs on this PC.")')
         assert 'Draft · 13 steps' in page.locator('#makeDraftBox').inner_text(), 'a 25-step look offers a draft too'
         page.locator('[data-make-change]').click(); assert page.locator('[data-make-keep-look]').inner_text() == 'Stay with Flat pastel close-up', 'the gallery never says Keep'
@@ -506,6 +512,12 @@ def run(shots):
         assert 'Three looks chosen' in page.locator('#makeStatus').inner_text()
         page.locator('#makeScene').fill('A lantern keeper in a pine wood at dusk')
         page.wait_for_function('document.querySelector("#makeEstimate").textContent.includes("3 pictures")')
+        # Codex P2 on #1574: with no comparable run here every look uses its lab median, and the words never claim earlier runs.
+        ROUGH.append(1); page.locator('[data-make-look="%s"]' % third).click(); page.locator('[data-make-look="%s"]' % third).click()
+        page.wait_for_function('document.querySelector("#makeEstimate").textContent.endsWith(", from the 16 Oct look lab on this PC.")')
+        assert 'earlier runs' not in page.locator('#makeEstimate').inner_text(); ROUGH.clear()
+        page.locator('[data-make-look="%s"]' % third).click(); page.locator('[data-make-look="%s"]' % third).click()
+        page.wait_for_function('document.querySelector("#makeEstimate").textContent.endsWith(", from earlier runs on this PC.")')
         assert page.locator('#makeGenerate').inner_text() == 'Generate 3 pictures'
         shot('compare-composer')
         before = len(jobs()); page.locator('#makeGenerate').click()

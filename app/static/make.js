@@ -476,12 +476,16 @@
       if(epoch!==estimateEpoch||!out.isConnected)return;const total=each.reduce((x,y)=>x+y,0),unknown=each.filter(x=>!x).length;
       out.classList.toggle('make-warn',total>600);out.textContent=plan.runs.length+' pictures, one per value'+(total?' · about '+duration(total)+' in total'+(unknown?' (no timing yet for '+unknown+')':'')+basis({confidence:guessed?'none':''}):' · no timing yet for these settings on this PC.');return;}
     try{const e=await json('/api/estimate',{preset_id:tunedPreset(look).id,controls:{...look.body.controls,width:w,height:h,...(t?.steps!=null?{steps:t.steps}:{})},batch_count:Number(q('#makeCount').value),reference_count:0});if(epoch!==estimateEpoch||!out.isConnected)return;
-      const n=Number(q('#makeCount').value)||1,lab=t?.steps==null&&rough(e)&&lookTiming(look),total=lab?lab.seconds*n:e.estimate_seconds;
+      const n=Number(q('#makeCount').value)||1,lab=rough(e)&&labTimed(look,t,w,h)&&lookTiming(look),total=lab?lab.seconds*n:e.estimate_seconds;
       out.classList.toggle('make-warn',total>600);out.textContent=lab?'About '+duration(total)+(n>1?' for '+n+' pictures, ~'+Math.round(lab.seconds)+' s each':'')+'. '+lab.source:total?'About '+duration(total)+' in total'+basis(e):'No timing yet: this look has not run here at this size.';}
     catch{if(epoch===estimateEpoch&&!retry)setTimeout(()=>{if(epoch===estimateEpoch)estimate(true);},1500);}
   }
   const duration=s=>s<90?Math.round(s)+' s':Math.round(s/60)+' min';
   // /api/estimate answers even with no comparable run here (confidence none: a generic guess with a wide range), so the words say which it is.
+  // The lab median holds only for the look as timed: its model, steps, sampler and LoRA files, at about its designed pixel count
+  // (strengths, words, negative and seed do not change the time). Anything else falls back to the server's guess, worded as one.
+  const labTimed=(look,t,w,h)=>{const p=presetFor(look),[dw,dh]=shapeSize(p,look,'design'),own=adapters(look);
+    return(!t||(!t.preset||t.preset===p?.id)&&t.steps==null&&!t.sampler&&(t.rows||[]).every(r=>own.some(a=>a.key===r.slot&&(!r.name||r.name===a.name))))&&Math.abs(w*h-dw*dh)<=0.05*dw*dh;};
   const rough=e=>e?.confidence==='none',basis=e=>rough(e)?', a rough guess: nothing like it has run on this PC yet.':', from earlier runs on this PC.';
   function syncOperation(){
     placeStatus();statusEl.textContent=state.status;
@@ -984,10 +988,10 @@
   }
   let compareEpoch=0;
   async function compareEstimate(){
-    const out=q('#makeEstimate'),list=compareList();if(!out)return;const epoch=++compareEpoch;let guessed=false,usedLab=false;if(list.length<2){out.textContent='';return;}
-    const each=await Promise.all(list.map(l=>{const p=presetFor(l),[w,h]=shapeSize(p,l,'design');return json('/api/estimate',{preset_id:p?.id||l.body.preset_id,controls:{...l.body.controls,width:w,height:h},batch_count:1,reference_count:0}).then(e=>{const lab=rough(e)&&lookTiming(l);if(rough(e)&&!lab)guessed=true;if(lab)usedLab=true;return lab?lab.seconds:Number(e.estimate_seconds)||0;},()=>0);}));
+    const out=q('#makeEstimate'),list=compareList();if(!out)return;const epoch=++compareEpoch;let guessed=false,usedLab=false,usedRuns=false;if(list.length<2){out.textContent='';return;}
+    const each=await Promise.all(list.map(l=>{const p=presetFor(l),[w,h]=shapeSize(p,l,'design');return json('/api/estimate',{preset_id:p?.id||l.body.preset_id,controls:{...l.body.controls,width:w,height:h},batch_count:1,reference_count:0}).then(e=>{const lab=rough(e)&&lookTiming(l);if(rough(e)&&!lab)guessed=true;if(lab)usedLab=true;else if(!rough(e)&&e.estimate_seconds)usedRuns=true;return lab?lab.seconds:Number(e.estimate_seconds)||0;},()=>0);}));
     if(epoch!==compareEpoch||!out.isConnected)return;const total=each.reduce((x,y)=>x+y,0),unknown=each.filter(x=>!x).length;
-    out.classList.toggle('make-warn',total>600);out.textContent=list.length+' pictures, one per look'+(total?' · about '+duration(total)+' in total'+(unknown?' (no timing yet for '+unknown+')':'')+(guessed?basis({confidence:'none'}):usedLab?', from earlier runs and the look lab on this PC.':basis({})):' · no timing yet for these looks on this PC.');
+    out.classList.toggle('make-warn',total>600);out.textContent=list.length+' pictures, one per look'+(total?' · about '+duration(total)+' in total'+(unknown?' (no timing yet for '+unknown+')':'')+(guessed?basis({confidence:'none'}):!usedLab?basis({}):usedRuns?', from earlier runs and the look lab on this PC.':', from the 16 Oct look lab on this PC.'):' · no timing yet for these looks on this PC.');
   }
   // A compare sends its jobs one by one; leaving Make (even briefly) stops the ones not yet sent (#1514).
   function leaveWatch(){let left=false;const o=new MutationObserver(records=>{if(view.hidden||records.some(r=>r.oldValue!==null))left=true;});
