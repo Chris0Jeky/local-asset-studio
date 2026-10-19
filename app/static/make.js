@@ -538,7 +538,7 @@
     try{if(await refreshAssets(true)===false){await new Promise(r=>setTimeout(r,600));await refreshAssets(true);}
       delete state.review[id];const value=reviewOf(id)===button.dataset.makeReview?'unreviewed':button.dataset.makeReview;
       await mutateAssets({action:'edit',ids:[id],review:value});state.review[id]=value;renderRuns();
-      say(value==='selected'?'Kept. Your keepers are in the library under Keepers.':value==='rejected'?'Marked: not this one.':'Decision cleared.');}
+      say(value==='selected'?'Kept. Kept pictures are in the library under Kept.':value==='rejected'?'Marked: not this one.':'Decision cleared.');}
     catch(error){button.disabled=false;say('Could not save that: '+error.message);}
   }
   const reviewOf=id=>state.review[id]??(typeof assetState!=='undefined'&&assetState?.assets?.find(x=>x.id===id)?.review)??'unreviewed';
@@ -572,7 +572,7 @@
       say(action==='resume'?'Checking ComfyUI again for this run. Nothing is sent again.':'Tracking stopped. Its record and any pictures stay in the library.');}
     catch(error){button.disabled=false;say(error.message);}
   }
-  const marks=a=>{const review=reviewOf(a),mark=(value,label)=>'<button type="button" data-make-review="'+value+'" data-asset="'+escape(a)+'" aria-pressed="'+(review===value)+'">'+(review===value?'✓ '+(value==='selected'?'Kept':'Marked: not this'):label)+'</button>';return mark('selected','★ Keep')+mark('rejected','Not this');};
+  const marks=a=>{const review=reviewOf(a),mark=(value,label,key=value==='selected'?'K':'X')=>'<button type="button" data-make-review="'+value+'" data-asset="'+escape(a)+'" aria-pressed="'+(review===value)+'" aria-keyshortcuts="'+key+'" title="'+key+' on a focused picture">'+(review===value?'✓ '+(value==='selected'?'Kept':'Marked: not this'):label)+'</button>';return mark('selected','★ Keep')+mark('rejected','Not this');};
   function actions(job,output){
     const a=output.asset_id;if(!a)return'<small class="muted">Saving to the library…</small>';
     const varyBox=document.createElement('div');varyBox.innerHTML=window.StudioWorkbench?.varyMarkup?.(job.preset_id,job.id,a,job.status)||'';
@@ -1139,6 +1139,9 @@
   // Which disclosures are open survives a redraw; opening a line-up reads the pictures (details fire toggle without bubbling).
   view.addEventListener('toggle',e=>{const k=e.target.dataset?.openKey;if(!k)return;if(e.target.open){state.openers.add(k);if(k.startsWith('lineup:'))void fillLineups();}else state.openers.delete(k);},true);
   view.addEventListener('submit',e=>{const form=e.target.closest('[data-make-character-form]');if(form){e.preventDefault();void once('character-save:'+form.dataset.mode+':'+form.dataset.makeCharacterForm,()=>saveCharacter(form));}});
+  // One key map across the Studio (pass 2): K keeps and X marks "not this" on the focused picture, as in the Library and the Full editor.
+  view.addEventListener('keydown',e=>{const k=e.key?.toLowerCase();if((k==='k'||k==='x')&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.target.matches('input,textarea,select,[contenteditable]')){
+    const b=e.target.closest('.make-outputs figure')?.querySelector('[data-make-review="'+(k==='k'?'selected':'rejected')+'"]');if(b&&!b.disabled){e.preventDefault();void review(b);return;}}});
   view.addEventListener('keydown',e=>{const radio=e.target.closest('[role="radio"]'),group=radio?.closest('[role="radiogroup"]');if(group&&['ArrowRight','ArrowDown','ArrowLeft','ArrowUp','Home','End'].includes(e.key)){
     e.preventDefault();const items=[...group.querySelectorAll('[role="radio"]')],i=items.indexOf(radio),next=items[e.key==='Home'?0:e.key==='End'?items.length-1:(i+(['ArrowRight','ArrowDown'].includes(e.key)?1:items.length-1))%items.length],attr=next.hasAttribute('data-make-goal')?'data-make-goal':'data-make-look',value=next.getAttribute(attr);if(attr==='data-make-goal'){state.goal=value;state.pictures=null;remember();render();}else{state.look=value;state.picking=true;remember();renderLooks();}q('['+attr+'="'+value+'"]')?.focus();return;
   }if(e.target.id==='makeLoraSearch'&&e.key==='Enter'&&!e.isComposing){e.preventDefault();if(!e.repeat)q('[data-tune-add]')?.click();return;}

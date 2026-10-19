@@ -7,6 +7,10 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-10-19 pass 2 (ux-lead-2): one review vocabulary (decision; Make part here, the rest in Brief J)
+
+- [ ] **Review words across the Studio: Keep / Needs work / Not this, keys K / W / X; the library filter says "Kept"; stored values are unchanged** (selected / needs_work / rejected). Before, Make said Keep / Not this, the Full editor Keep / Needs work / Reject, the Library Keeper(s) / Rejected, and the Review desk "Keep for consideration". Make keeps its two buttons (no Needs work button: #1558 cut card buttons) and gains K and X on a focused picture; its Keep message says "Kept pictures are in the library under Kept." Reverse: the keydown listener before the radio-group one and the `aria-keyshortcuts` in `marks()` in `app/static/make.js`; the label maps named in Brief J.
+
 ## 2026-10-19: Workflow builder first screen
 
 - [ ] Workflow builder: storage and file tools folded (All tools, Saved workflows). Reverse: remove the two details wrappers in workflow-studio.html and the fold-open lines in workflow-projects.js.

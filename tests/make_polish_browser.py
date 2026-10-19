@@ -47,6 +47,12 @@ class Handler(fixture.Handler):
         if self.path == '/api/looks/prepare':
             data = json.loads(self.rfile.read(int(self.headers.get('Content-Length', '0')))); time.sleep(0.3)
             return self.json({'preset_id': 'zimage-fast', 'controls': {'positive': data['scene']}})
+        if self.path == '/api/assets/update':  # a review edit, applied and receipted as Workspace.update_assets does (K / X keys below)
+            data = json.loads(self.rfile.read(int(self.headers.get('Content-Length', '0')))); fixture.POSTS.append({'path': self.path, 'data': data})
+            chosen = [a for a in fixture.ASSETS if a['id'] in data['ids']]
+            for a in chosen: a.update(review=data['review']); a['metadata_revision'] += 1
+            return self.json({'workspace_id': '1'*32, 'current': chosen, 'status': 'applied', 'request_id': data['request_id'], 'updated': data['ids'], 'action': 'edit',
+                              'revisions': {a['id']: a['metadata_revision'] for a in chosen}, 'applied': {'review': data['review']}})
         if self.path not in ('/api/jobs', '/api/assets/reference'): return super().do_POST()
         data = json.loads(self.rfile.read(int(self.headers.get('Content-Length', '0'))))
         fixture.POSTS.append({'path': self.path, 'data': data})
@@ -165,6 +171,12 @@ def make_checks(browser, origin):
     assert page.evaluate('new Date(1789228800*1000).toLocaleDateString()') in page.locator('#makeRuns .make-run header b').first.inner_text()
     page.evaluate('()=>{assetState.assets.find(a=>a.id==="asset-1").review="selected";StudioMake.refresh();}')
     assert 'Kept' in page.locator('[data-make-review="selected"][data-asset="asset-1"]').inner_text()
+    # One key map (pass 2): X on a focused picture marks it "not this", as the Library and the Full editor do; K keeps; typing is never caught.
+    keep = page.locator('[data-make-review="selected"][data-asset="asset-1"]'); assert keep.get_attribute('aria-keyshortcuts') == 'K'
+    before = len(fixture.POSTS); keep.focus(); page.keyboard.press('x')
+    page.wait_for_function('()=>document.querySelector(`[data-make-review="rejected"][data-asset="asset-1"]`)?.getAttribute("aria-pressed")==="true"', timeout=8000)
+    assert any('rejected' in json.dumps(p['data']) for p in fixture.POSTS[before:]), fixture.POSTS[before:]
+    assert 'not this' in page.locator('#makeStatus').inner_text()
     assert page.locator('#experimentDialog').get_attribute('aria-labelledby') == 'experimentTitle'
     assert page.locator('#newCollection').get_attribute('aria-label') == 'Create collection'
     assert page.locator('.hero-art').get_attribute('role') == 'group'
