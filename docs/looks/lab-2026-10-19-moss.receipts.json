@@ -2,6 +2,11 @@
  "jobs": [
   {
    "name": "m1-s1-proof",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -36,6 +41,11 @@
   },
   {
    "name": "m4-s1-4step-sgm",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -71,6 +81,11 @@
   },
   {
    "name": "m4-s1-4step",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -106,6 +121,11 @@
   },
   {
    "name": "m4-s1-8step",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -141,6 +161,11 @@
   },
   {
    "name": "m4-s2-4step",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -176,6 +201,11 @@
   },
   {
    "name": "m4-s3-4step",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -211,6 +241,11 @@
   },
   {
    "name": "mc1-gown",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -245,6 +280,11 @@
   },
   {
    "name": "mc1-hanfu",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -279,6 +319,11 @@
   },
   {
    "name": "mc1-maid",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -313,6 +358,11 @@
   },
   {
    "name": "mc1-office",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -347,6 +397,11 @@
   },
   {
    "name": "mc1-pirate",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -381,6 +436,11 @@
   },
   {
    "name": "mc1-priestess",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -415,6 +475,11 @@
   },
   {
    "name": "mc1-samurai",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -449,6 +514,11 @@
   },
   {
    "name": "mc1-techwear",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -483,6 +553,11 @@
   },
   {
    "name": "mc1-winter",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -517,6 +592,11 @@
   },
   {
    "name": "mc1-witch",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -550,7 +630,409 @@
    ]
   },
   {
+   "name": "mcel-face-off",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "anime illustration, flat cel shading, clean lineart. Close-up portrait of an adult woman in her late twenties with long black hair, deep red eyes, soft lipstick and elegant pearl earrings, looking at the viewer with a gentle smile, soft rim light, shallow depth of field, detailed eyes and eyelashes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "8872905f-331d-4748-9ca0-22dcbc766f70",
+   "prompt_ids": [
+    "553c520a-5a0c-4d78-80b9-d08fd0f04f57"
+   ],
+   "seconds": 100.93509268760681,
+   "peak_commit": 0.771,
+   "admission": 0.5272049574691282,
+   "outputs": [
+    {
+     "file": "mcel-face-off-0.png",
+     "sha256": "bc88869d3279f17d4e432f46e29b08c667ab05a74a5550f1cde02f869707d8bd",
+     "bytes": 1905236
+    }
+   ]
+  },
+  {
+   "name": "mcel-face-on06",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "anime illustration, flat cel shading, clean lineart. Close-up portrait of an adult woman in her late twenties with long black hair, deep red eyes, soft lipstick and elegant pearl earrings, looking at the viewer with a gentle smile, soft rim light, shallow depth of field, detailed eyes and eyelashes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0.6,
+    "lora2": 0,
+    "lora_name": "moss-lab-anima-cel-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "c18e578d-2401-416d-93e5-dbb314f7ac06",
+   "prompt_ids": [
+    "904e7f05-9ab1-4cec-b216-885441c52e18"
+   ],
+   "seconds": 60.49307990074158,
+   "peak_commit": 0.75,
+   "admission": 0.5908564085144314,
+   "outputs": [
+    {
+     "file": "mcel-face-on06-0.png",
+     "sha256": "63d6ecd26207db019a8073d9c47742b77fcdee8c1c7d0f80df4a336d48ff172d",
+     "bytes": 2103564
+    }
+   ]
+  },
+  {
+   "name": "mcel-face-on10-noprefix",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "Close-up portrait of an adult woman in her late twenties with long black hair, deep red eyes, soft lipstick and elegant pearl earrings, looking at the viewer with a gentle smile, soft rim light, shallow depth of field, detailed eyes and eyelashes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 1.0,
+    "lora2": 0,
+    "lora_name": "moss-lab-anima-cel-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "779c8242-ee9f-4762-ab86-279a058e2609",
+   "prompt_ids": [
+    "d4d3b55f-9201-427a-9eb5-eb7bd0272739"
+   ],
+   "seconds": 54.53328084945679,
+   "peak_commit": 0.677,
+   "admission": 0.5694926613663343,
+   "outputs": [
+    {
+     "file": "mcel-face-on10-noprefix-0.png",
+     "sha256": "85c243d604991caf87d3903414fd07054d760c0528140f8eaf991f98ead89fa3",
+     "bytes": 2379826
+    }
+   ]
+  },
+  {
+   "name": "mcel-face-on10",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "anime illustration, flat cel shading, clean lineart. Close-up portrait of an adult woman in her late twenties with long black hair, deep red eyes, soft lipstick and elegant pearl earrings, looking at the viewer with a gentle smile, soft rim light, shallow depth of field, detailed eyes and eyelashes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 1.0,
+    "lora2": 0,
+    "lora_name": "moss-lab-anima-cel-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "438cc040-fbd5-4141-8c90-964541c44167",
+   "prompt_ids": [
+    "cdfd884e-7d19-4c21-8770-d04e026fbc03"
+   ],
+   "seconds": 96.39329934120178,
+   "peak_commit": 0.757,
+   "admission": 0.47549814352342085,
+   "outputs": [
+    {
+     "file": "mcel-face-on10-0.png",
+     "sha256": "0c178c80b69b222aec418f86e1eae9a4c3eaf1a030c0c76b6571cb18fa532be2",
+     "bytes": 2258381
+    }
+   ]
+  },
+  {
+   "name": "mcel-s1-off",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "anime illustration, flat cel shading, clean lineart. An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "4610c314-cfe2-4300-8715-3a25c5360b96",
+   "prompt_ids": [
+    "1a679ec1-966c-4a7f-bf29-61b8c0df6e66"
+   ],
+   "seconds": 62.66936683654785,
+   "peak_commit": 0.719,
+   "admission": 0.5914677554255295,
+   "outputs": [
+    {
+     "file": "mcel-s1-off-0.png",
+     "sha256": "447a73648dd8b7ff7e670714228d04eef914ec04bcf916a02b07d846dbb86068",
+     "bytes": 2222937
+    }
+   ]
+  },
+  {
+   "name": "mcel-s1-on06",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "anime illustration, flat cel shading, clean lineart. An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0.6,
+    "lora2": 0,
+    "lora_name": "moss-lab-anima-cel-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "157af93c-86ed-4e9d-8506-bfd550fe9f4c",
+   "prompt_ids": [
+    "5db8cb86-d751-46b6-bae5-ea5facb3e2b4"
+   ],
+   "seconds": 60.48548865318298,
+   "peak_commit": 0.747,
+   "admission": 0.5945581636750346,
+   "outputs": [
+    {
+     "file": "mcel-s1-on06-0.png",
+     "sha256": "5d88749fb63e6795d207c9ac0e5ec4806922992616be8fd1e7ab11cf84572cb6",
+     "bytes": 2348279
+    }
+   ]
+  },
+  {
+   "name": "mcel-s1-on10",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "anime illustration, flat cel shading, clean lineart. An adult woman in her late twenties with long silver hair and violet eyes, wearing an elegant black and gold sorceress robe with a high collar, holding a tall crystal staff. She stands on a castle balcony at dusk with wind in her hair, a calm confident smile, looking at the viewer, cowboy shot, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 1.0,
+    "lora2": 0,
+    "lora_name": "moss-lab-anima-cel-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "24165025-8b73-4877-8a2a-de9ef1affb3b",
+   "prompt_ids": [
+    "8584598d-a351-4f2e-9fcc-5721bb85cbbb"
+   ],
+   "seconds": 70.50448083877563,
+   "peak_commit": 0.742,
+   "admission": 0.5993375567451558,
+   "outputs": [
+    {
+     "file": "mcel-s1-on10-0.png",
+     "sha256": "bcce47ce84d4391b13ddf1df1049d1abb5b5791285351cf9c2e2426316a8aec1",
+     "bytes": 2423353
+    }
+   ]
+  },
+  {
+   "name": "mcel-s2-off",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "anime illustration, flat cel shading, clean lineart. An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "fa5ab2ba-9515-4c45-afc4-647e32b18c13",
+   "prompt_ids": [
+    "b36e1e92-3515-4d55-89d2-abfc6547ed44"
+   ],
+   "seconds": 58.60298180580139,
+   "peak_commit": 0.742,
+   "admission": 0.5864786290399068,
+   "outputs": [
+    {
+     "file": "mcel-s2-off-0.png",
+     "sha256": "de29bcd8b6c107101190ea006f54451f493c2f5e27650375446edcc23e83b88c",
+     "bytes": 2713759
+    }
+   ]
+  },
+  {
+   "name": "mcel-s2-on06",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "anime illustration, flat cel shading, clean lineart. An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0.6,
+    "lora2": 0,
+    "lora_name": "moss-lab-anima-cel-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "5719271d-1308-4ddc-a1a6-c0f3e33a5968",
+   "prompt_ids": [
+    "9e215868-773c-412b-83fc-c3334a41f709"
+   ],
+   "seconds": 54.5010826587677,
+   "peak_commit": 0.686,
+   "admission": 0.5858107342331794,
+   "outputs": [
+    {
+     "file": "mcel-s2-on06-0.png",
+     "sha256": "55346680f534c5348b4412b476ef58e02857d3215071a2bfd7697a5da2cf7243",
+     "bytes": 2820291
+    }
+   ]
+  },
+  {
+   "name": "mcel-s2-on10",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "anime illustration, flat cel shading, clean lineart. An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 1.0,
+    "lora2": 0,
+    "lora_name": "moss-lab-anima-cel-v1.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "72930fd0-f83b-4878-b0c5-a126483693b4",
+   "prompt_ids": [
+    "8efa8fd4-3d49-4397-a91b-1d698596fe8e"
+   ],
+   "seconds": 110.81947541236877,
+   "peak_commit": 0.691,
+   "admission": 0.44851033156753,
+   "outputs": [
+    {
+     "file": "mcel-s2-on10-0.png",
+     "sha256": "24af6c72e14e79c8774d1edd9144322364d37b54477fdff7d1f667e63760103a",
+     "bytes": 2778096
+    }
+   ]
+  },
+  {
    "name": "mf1-face",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -585,6 +1067,11 @@
   },
   {
    "name": "mf2-face-tags",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -619,6 +1106,11 @@
   },
   {
    "name": "mf3-face-2d",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -653,6 +1145,11 @@
   },
   {
    "name": "mf4-face-reverse",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -688,6 +1185,11 @@
   },
   {
    "name": "mf5-face-mikkoani",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -723,6 +1225,11 @@
   },
   {
    "name": "mg-s1-832",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -757,6 +1264,11 @@
   },
   {
    "name": "mg-s1-cfg2",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -791,6 +1303,11 @@
   },
   {
    "name": "mg-s1-cfg4",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -825,6 +1342,11 @@
   },
   {
    "name": "mg-s1-cfg6",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -859,6 +1381,11 @@
   },
   {
    "name": "mg-s1-ersde",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -893,6 +1420,11 @@
   },
   {
    "name": "mg-s1-euler_a",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -927,6 +1459,11 @@
   },
   {
    "name": "mg-s1-simple",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -961,6 +1498,11 @@
   },
   {
    "name": "mg-s1-st20",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -995,6 +1537,11 @@
   },
   {
    "name": "mg-s1-st50",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -1029,6 +1576,11 @@
   },
   {
    "name": "mh1-2k",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -1063,6 +1615,11 @@
   },
   {
    "name": "mj-s1-layout",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -1097,6 +1654,11 @@
   },
   {
    "name": "mj-s2-layout",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -1131,6 +1693,11 @@
   },
   {
    "name": "ml-anireal",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -1166,6 +1733,11 @@
   },
   {
    "name": "ml-chainsaw",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -1201,6 +1773,11 @@
   },
   {
    "name": "ml-impasto",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -1236,6 +1813,11 @@
   },
   {
    "name": "ml-mikkoani",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -1271,6 +1853,11 @@
   },
   {
    "name": "ml-nanmoka",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -1306,6 +1893,11 @@
   },
   {
    "name": "ml-reverse1999",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -1341,6 +1933,11 @@
   },
   {
    "name": "ml-rezero",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -1376,6 +1973,11 @@
   },
   {
    "name": "ml2-anireal-s2",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -1411,6 +2013,11 @@
   },
   {
    "name": "ml2-impasto-s2",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -1446,6 +2053,11 @@
   },
   {
    "name": "ml2-mikkoani-s2",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -1481,6 +2093,11 @@
   },
   {
    "name": "ml2-reverse1999-s2",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -1516,6 +2133,11 @@
   },
   {
    "name": "mo-s2",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -1550,6 +2172,11 @@
   },
   {
    "name": "mo-s3",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -1584,6 +2211,11 @@
   },
   {
    "name": "mp-s1-hybrid",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -1618,6 +2250,11 @@
   },
   {
    "name": "mp-s1-tags",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -1652,6 +2289,11 @@
   },
   {
    "name": "mr-s1-2",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101902,
@@ -1686,6 +2328,11 @@
   },
   {
    "name": "mr-s1-3",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101903,
@@ -1720,6 +2367,11 @@
   },
   {
    "name": "mr-s2-2",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101902,
@@ -1754,6 +2406,11 @@
   },
   {
    "name": "mr-s2-3",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101903,
@@ -1788,6 +2445,11 @@
   },
   {
    "name": "mr-s3-2",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101902,
@@ -1822,6 +2484,11 @@
   },
   {
    "name": "mr-s3-3",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101903,
@@ -1856,6 +2523,11 @@
   },
   {
    "name": "mt1-text",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
    "preset_id": "moss-t2i",
    "controls": {
     "seed": 2026101901,
@@ -1885,6 +2557,202 @@
      "file": "mt1-text-0.png",
      "sha256": "e98c87c0571d601baf98a931e1b00b796854ed367c517ddbc5078c0852f0ac09",
      "bytes": 1645178
+    }
+   ]
+  },
+  {
+   "name": "sa-fl-4step",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "Ultra high-end anime key visual of an adult woman swordmaster in her late twenties with long white hair in a high ponytail, a flowing indigo haori over a white and gold battle kimono, drawing a glowing katana in a moonlit bamboo shrine courtyard, cherry petals and floating embers in the air, dramatic rim lighting, intricate fabric folds and a detailed calm face, painterly cel shading, masterpiece composition.",
+    "negative": "",
+    "steps": 4,
+    "cfg": 1.0,
+    "sampler": "euler",
+    "scheduler": "simple",
+    "lora": 1.0,
+    "lora2": 0,
+    "lora_name": "moss_image_sft_4step_lora_v2.safetensors"
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "23dc7e0d-ca06-4e61-943f-4a24dd1bd5d8",
+   "prompt_ids": [
+    "f810bf7d-97e5-461c-b2d3-df994a5d1fb0"
+   ],
+   "seconds": 44.46993112564087,
+   "peak_commit": 0.662,
+   "admission": 0.4216876601891497,
+   "outputs": [
+    {
+     "file": "sa-fl-4step-0.png",
+     "sha256": "f7b8e3a7c86d0d43a7d58ef8289302eb7eda9f9432f1e0a6411054aad4c9d47b",
+     "bytes": 2395669
+    }
+   ]
+  },
+  {
+   "name": "sa-fl-st30",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "Ultra high-end anime key visual of an adult woman swordmaster in her late twenties with long white hair in a high ponytail, a flowing indigo haori over a white and gold battle kimono, drawing a glowing katana in a moonlit bamboo shrine courtyard, cherry petals and floating embers in the air, dramatic rim lighting, intricate fabric folds and a detailed calm face, painterly cel shading, masterpiece composition.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "91e98fd2-f442-4b57-ba74-bea9a73d52c9",
+   "prompt_ids": [
+    "373a000e-38b5-4b1b-9c84-09b6d8686d59"
+   ],
+   "seconds": 64.56122183799744,
+   "peak_commit": 0.72,
+   "admission": 0.5626052950508995,
+   "outputs": [
+    {
+     "file": "sa-fl-st30-0.png",
+     "sha256": "7de734e45ff804e1dc545fd583f174c72b77bae56943f8ee04052d74a948f75e",
+     "bytes": 2947973
+    }
+   ]
+  },
+  {
+   "name": "sa-fl-st50",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "Ultra high-end anime key visual of an adult woman swordmaster in her late twenties with long white hair in a high ponytail, a flowing indigo haori over a white and gold battle kimono, drawing a glowing katana in a moonlit bamboo shrine courtyard, cherry petals and floating embers in the air, dramatic rim lighting, intricate fabric folds and a detailed calm face, painterly cel shading, masterpiece composition.",
+    "negative": "",
+    "steps": 50,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "f98884ab-01ab-415e-95a8-91290d25ee2e",
+   "prompt_ids": [
+    "fa3b745c-ada8-4391-a7ea-d78302fdb62c"
+   ],
+   "seconds": 86.57246255874634,
+   "peak_commit": 0.65,
+   "admission": 0.5555683697134094,
+   "outputs": [
+    {
+     "file": "sa-fl-st50-0.png",
+     "sha256": "6928b073d36189310e746cd2549e14efcb1d8d0a4f5874cb5137d220cbc98101",
+     "bytes": 2947701
+    }
+   ]
+  },
+  {
+   "name": "sa-s2-st50",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman of thirty with black hair in an elaborate updo with kanzashi hairpins, wearing a red furisode kimono with white crane embroidery and a gold obi. She holds a red paper umbrella and stands on an arched stone bridge among cherry blossoms, full body, serene smile, looking at the viewer, soft spring light, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 50,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "4675fa0b-98e7-4470-9eec-c4c892a5fbea",
+   "prompt_ids": [
+    "701f107b-3ff9-4936-bc39-315bc302d647"
+   ],
+   "seconds": 84.77659344673157,
+   "peak_commit": 0.65,
+   "admission": 0.5583319239530828,
+   "outputs": [
+    {
+     "file": "sa-s2-st50-0.png",
+     "sha256": "c025fcba1d8aa523d5033180617f31666151eb42c02b42dae7c88fdc21e79904",
+     "bytes": 2866621
+    }
+   ]
+  },
+  {
+   "name": "sa-s3-st50",
+   "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfyui": "0.42.1"
+   },
+   "preset_id": "moss-t2i",
+   "controls": {
+    "seed": 2026101901,
+    "width": 1024,
+    "height": 1536,
+    "positive": "An adult woman knight of thirty-two with short auburn hair and a small scar on her cheek, wearing silver plate armor and a blue cloak. She holds a longsword point down and stands on a misty battlefield at dawn, full body, determined expression, looking at the viewer, cinematic lighting, detailed face and eyes, high-end anime illustration.",
+    "negative": "",
+    "steps": 50,
+    "cfg": 3.0,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+   },
+   "references": [],
+   "uploads": {},
+   "status": "completed",
+   "job_id": "eaa5f5d7-051c-44ad-b276-dacacb3d672d",
+   "prompt_ids": [
+    "b2bcbe27-39b1-4069-8ede-6b0fcde5ad2b"
+   ],
+   "seconds": 94.58354592323303,
+   "peak_commit": 0.716,
+   "admission": 0.5601670008000391,
+   "outputs": [
+    {
+     "file": "sa-s3-st50-0.png",
+     "sha256": "a9e6d5f9e8d163ccab16ca5658d744556b85f065c484a97125931057dc5d937d",
+     "bytes": 2506228
     }
    ]
   }
