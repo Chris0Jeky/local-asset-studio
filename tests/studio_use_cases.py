@@ -1845,7 +1845,9 @@ def _workflow(c):
         except Exception: pass
     c.act('#compileWorkflow')
     c.page.wait_for_timeout(500)
+    c.act('#wfAllTools > summary')
     c.act('#exportGraph', 'read', note='export availability after the check')
+    c.act('#wfSavedFold > summary')
     c.act('#saveSharedWorkflow', 'read', note='save to Workspace')
     c.act('#prepareSavedRun', 'read', note='prepare a run from a saved revision')
     runs = submissions(OBSERVED_POSTS)

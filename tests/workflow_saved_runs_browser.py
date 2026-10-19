@@ -116,6 +116,7 @@ def main():
                 assert page.locator('#prepareSavedRun').is_disabled()
                 page.select_option('#presetChoice','example'); page.click('#loadPreset')
                 page.wait_for_function('window.WorkflowStudio.snapshot() !== null')
+                page.locator('#wfSavedFold > summary').click()
                 page.click('#saveSharedWorkflow')
                 page.wait_for_function('window.WorkflowProject.snapshot().id && !window.WorkflowProject.snapshot().blocked')
                 key=page.evaluate('window.WorkflowProject.snapshot().id')

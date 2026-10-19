@@ -7,6 +7,10 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-10-19: Workflow builder first screen
+
+- [ ] Workflow builder: storage and file tools folded (All tools, Saved workflows). Reverse: remove the two details wrappers in workflow-studio.html and the fold-open lines in workflow-projects.js.
+
 ## 2026-10-19 (Brief G): recipe picker
 
 - [ ] Recipe picker descriptions clamp to one line (full text on hover and for screen readers). Reverse: the clamp rule.
@@ -35,6 +39,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 - [ ] **Make shows the look's model and LoRAs while Tune is shut.** The Tune line reads "As made: Anima · anima-base-v1.0 · pearly_petiflow2 1.00 · 25 steps" (the model file is named when a family has two) instead of "Model, adapters, steps, seed"; a tuned look still reads "Tuned: ...". Reverse: `asMade()` in `app/static/make.js` back to the fixed text.
 - [ ] **Make's composer uses the full width until the first picture exists.** "Your pictures" moves beside the words only once there is a run card; before that it sits below. Reverse: drop `&&state.runs.length>0` in `layout()` in `app/static/make.js`.
 
+## 2026-10-19 overnight (ux-lead): wording
+
+- [ ] **A LoRA whose file is fixed in the recipe's graph reads "the recipe’s own LoRA"**, not "built-in adapter" (audit v3 N13), in the As made line, Tune and What this look uses. Reverse: the three strings in `app/static/make.js`.
+
 ## 2026-10-19 overnight (ux-lead): Quality choice
 
 - [ ] **"Draft first" (a tick) became Quality: Draft / As made / Fine** (radio group beside Generate; the same step counts as Tune's Steps; the estimate follows). Same looks as before (10+ steps or slow). No finishing pass runs automatically: gpu-lab's 19 Oct advice is "nothing runs automatically", so Fix face and Upscale stay one press each on the result. Reverse: `draftMarkup()` in `app/static/make.js` back to the checkbox.
@@ -51,6 +59,11 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 - [ ] **On Anima looks, Quality is Draft (turbo LoRA, 8 steps, cfg 1, euler/simple) or As made; no Fine.** From gpu-lab's round 7 (agent verdicts): turbo at 8 steps was a near-tie at about 13 s, and 20/30/40 steps looked alike. The turbo LoRA goes in a free slot; the look's own LoRAs stay. Applies wherever the knowledge base says the turbo file fits and the recipe binds steps and cfg. Reverse: delete `TURBO`/`turboFits` and the `if(turbo)` branch of `draftMarkup()` in `app/static/make.js`.
 
+## 2026-10-19 overnight (ux-lead): Refine 1.5×
+
+- [ ] **Anime pictures get a one-press "Refine 1.5×"** (anime-refine at its own denoise 0.22) between the fixes and Upscale, on result cards and in Fix or upscale. Evidence: gpu-lab #1563, one Pearly picture (kept the face, added eye and lash detail) and one WAI picture (kept the picture); 0.35 drifted the eyes. Reverse: remove `refine` from `POLISH` in `app/static/make.js` and `app/static/continuation-core.js`.
+- [ ] **Accepted trade-off from #1554:** a chosen picture whose thumbnail is genuinely broken shows the browser's broken image, not the blank mark (the fallback is for look pictures only, so a slow thumbnail never removes yours).
+
 ## 2026-10-19 overnight (ux-lead): Anima merges and their LoRAs
 
 - [ ] **One Obsession Anima v2.0 and Pearly Anima Mix v1.0 count as Anima for LoRA fit** (`presets/settings-kb.json` family_aliases; the catalog records both as Anima-family merges). Before, every Anima LoRA on those looks said "may not suit". JANIMA LoRAs still say it. The full editor's guidance (bundle-core.js) reads the same aliases, so it now shows Anima guidance for them. Reverse: drop the two alias lines.
@@ -58,6 +71,10 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 ## 2026-10-19 overnight (ux-lead): picture pickers
 
 - [ ] **Character in a new pose: the pose grid leaves out the chosen character picture**; when it was your only picture it says "The character is your only picture. Import a pose picture in the library, or choose Draw the pose." Imported pictures no longer show their file name twice on picker cards. Reverse: `others` in `renderGrid()` and the `pictureMeta()` condition in `app/static/make.js`.
+
+## 2026-10-19 overnight (ux-lead): Anime character order from round 7
+
+- [ ] **Anime character now starts with One Obsession, then Pearly mix, then Petiflow**, and the two mixes carry "Tested well" (12 of 12 each, 3 scenes x 4 seeds of adult characters, round 7, `docs/looks/LOOK-LAB-2026-10-19.md`). Petiflow (Anima base) moves to third because Anima-base close-up faces read youthful in that lab. Agent verdicts, not art acceptance. Reverse: the `character` looks order and the two TESTED entries in `app/static/make.js` and `app/static/studio-shell.js`.
 
 ## 2026-10-17 session (agent judgment calls)
 

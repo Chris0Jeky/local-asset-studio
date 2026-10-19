@@ -349,7 +349,7 @@
   }
   // #S3 one-press Polish from Make: each kind is one repair route; the face pass follows the source's checkpoint family.
   // Face and detail passes repaint with an anime SDXL model, so they are offered only for pictures from anime families.
-  const POLISH={face:'Fix face',details:'Fix hands and details',upscale:'Upscale'};
+  const POLISH={face:'Fix face',details:'Fix hands and details',refine:'Refine 1.5×',upscale:'Upscale'};
   const POLISH_ANIME=/Illustrious|WAI|Animagine|Pony|NoobAI|AniFox|CSTati|YumeFlux|Anima/i;
   function polishRoute(kind,presets,source,missing){
     const none=reason=>({ok:false,preset:null,reason});
@@ -358,12 +358,13 @@
     const made=(presets||[]).find(p=>p.id===source.preset_id),family=made?.family||'';
     // A face or detail repaint is anime work whatever its route's family says. An upscale is not: it accepts any picture,
     // so an upscaled photo must not become eligible for an anime repaint (#1409 review).
-    const anime=POLISH_ANIME.test(family)||['anime-face','animagine-face','anime-detail-fix'].includes(made?.id);
+    const anime=POLISH_ANIME.test(family)||['anime-face','animagine-face','anime-detail-fix','anime-refine'].includes(made?.id);
     let id='anime-esrgan';
     if(kind!=='upscale'){
       if(!made)return none(POLISH[kind]+' needs a picture made by a Studio recipe; this one has none recorded. Use Continue with this.');
       if(!anime)return none(POLISH[kind]+' repaints with an anime model, which does not match '+(family||made.name)+'. Use Continue with this.');
-      id=kind==='details'?'anime-detail-fix':/Animagine/i.test(family)||made.id==='animagine-face'?'animagine-face':/Illustrious|WAI/i.test(family)||made.id==='anime-face'?'anime-face':'anime-detail-fix';
+      // Refine 1.5× (gpu-lab round 7, PR #1563): anime-refine at its own denoise 0.22 kept the face and added eye and lash detail.
+      id=kind==='refine'?'anime-refine':kind==='details'?'anime-detail-fix':/Animagine/i.test(family)||made.id==='animagine-face'?'animagine-face':/Illustrious|WAI/i.test(family)||made.id==='anime-face'?'anime-face':'anime-detail-fix';
     }
     const preset=destinations('repair',presets||[],source).find(p=>p.id===id);
     if(!preset)return none(POLISH[kind]+' needs the '+id+' recipe, which cannot read a source picture here.');

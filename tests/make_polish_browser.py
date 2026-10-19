@@ -139,7 +139,7 @@ def make_checks(browser, origin):
     page.wait_for_timeout(2800)
     assert page.evaluate('originalMore===document.querySelector("[data-more=asset-1]")&&originalMore.open&&originalMore.contains(document.activeElement)')
     page.evaluate('()=>pendingPolish.splice(0).forEach(r=>r({ok:false,reason:"Does not apply to this picture"}))')
-    page.wait_for_function('document.querySelectorAll("[data-make-polish][data-asset=asset-1]:disabled").length===3')
+    page.wait_for_function('document.querySelectorAll("[data-make-polish][data-asset=asset-1]:disabled").length===4')
     assert page.locator('[data-more="asset-1"]').evaluate('(e)=>e.open&&e.contains(document.activeElement)')
     # A fix that cannot run stays, disabled, and names its reason once (aria-describedby), as the Fix or upscale goal does.
     why = page.locator('[data-make-polish=face][data-asset=asset-1]').get_attribute('aria-describedby')
@@ -166,7 +166,7 @@ def make_checks(browser, origin):
     page.evaluate('()=>{window.planCalls=0;StudioWorkbench.polishPlan=()=>{planCalls++;return Promise.reject(Error("fixture refusal"));};}')
     MAKE_JOBS[saved[3]['id']]['outputs'] = [dict(filename='cool.png', asset_id='asset-cool', media_type='image')]
     page.wait_for_selector('[data-run="%s"] img' % saved[3]['id']); page.wait_for_timeout(1500)
-    assert page.evaluate('planCalls') == 3, page.evaluate('planCalls')  # one per finishing kind
+    assert page.evaluate('planCalls') == 4, page.evaluate('planCalls')  # one per finishing kind (face, details, refine, upscale)
     # A run whose reads fail keeps being checked, says so on its card, and recovers by itself.
     FAILING.add(saved[4]['id'])
     page.wait_for_function('id=>document.querySelector(`[data-run="${id}"] .make-run-state`)?.textContent.startsWith("Lost contact")', arg=saved[4]['id'], timeout=6000)
@@ -238,20 +238,20 @@ def merge_checks(browser, origin):
     page = browser.new_page(viewport={'width': 1440, 'height': 900}); errors = []; page.on('pageerror', lambda e: errors.append(str(e))); before = len(jobs())
     page.goto(origin+'/#make'); page.evaluate('(runs)=>localStorage.setItem("studio.make",JSON.stringify({goal:"character",look:null,runs}))', saved)
     page.goto(origin+'/?merge#make'); page.wait_for_selector('[data-make-polish=upscale][data-asset=asset-0]'); page.wait_for_selector('[data-make-polish=upscale][data-asset=%s]' % WAI)
-    page.wait_for_function('document.querySelectorAll("#makeRuns .make-polish-hint").length===3')
+    page.wait_for_function('document.querySelectorAll("#makeRuns .make-polish-hint").length===5')
     kinds = lambda a: page.eval_on_selector_all('[data-make-polish][data-asset=%s]' % a, 'n=>n.map(e=>e.dataset.makePolish+":"+e.firstChild.textContent)')
-    assert kinds('asset-0') == ['face:Fix face and hands', 'upscale:Upscale 2×'], kinds('asset-0')
-    assert kinds(WAI) == ['face:Fix face', 'details:Fix hands and details', 'upscale:Upscale 2×'], kinds(WAI)
+    assert kinds('asset-0') == ['face:Fix face and hands', 'refine:Refine 1.5×', 'upscale:Upscale 2×'], kinds('asset-0')
+    assert kinds(WAI) == ['face:Fix face', 'details:Fix hands and details', 'refine:Refine 1.5×', 'upscale:Upscale 2×'], kinds(WAI)
     hints = page.eval_on_selector_all('#makeRuns .make-polish-hint', 'n=>n.map(e=>e.textContent)')
     assert sum(h.startswith(HINT) for h in hints) == 1 and hints[0].startswith(HINT), hints
-    assert hints.count(UP) == 2 and len(hints) == 3, hints
+    assert hints.count(UP) == 2 and len(hints) == 5 and sum(h.startswith('Refine redraws') for h in hints) == 2, hints
     # The goal composer merges the same way.
     page.locator('[data-make-goal="repair"]').click(); page.wait_for_selector('#makePictures [data-make-pick="asset-0"]'); page.locator('#makePictures [data-make-pick="asset-0"]').click()
-    page.wait_for_function('document.querySelectorAll("#makeComposer [data-make-fix]").length===2')
-    assert page.eval_on_selector_all('#makeComposer [data-make-fix]', 'n=>n.map(e=>e.dataset.makeFix)') == ['face', 'upscale'] and 'Fix face and hands' in page.locator('label:has([data-make-fix=face])').inner_text()
+    page.wait_for_function('document.querySelectorAll("#makeComposer [data-make-fix]").length===3')
+    assert page.eval_on_selector_all('#makeComposer [data-make-fix]', 'n=>n.map(e=>e.dataset.makeFix)') == ['face', 'refine', 'upscale'] and 'Fix face and hands' in page.locator('label:has([data-make-fix=face])').inner_text()
     assert page.is_checked('[data-make-fix=face]') and HINT in page.locator('#makeComposer').inner_text() and UP in page.locator('#makeComposer').inner_text()
     page.locator('[data-make-repick]').first.click(); page.wait_for_selector('#makePictures [data-make-pick="%s"]' % WAI); page.locator('#makePictures [data-make-pick="%s"]' % WAI).click()
-    page.wait_for_function('document.querySelectorAll("#makeComposer [data-make-fix]").length===3')
+    page.wait_for_function('document.querySelectorAll("#makeComposer [data-make-fix]").length===4')
     assert HINT not in page.locator('#makeComposer').inner_text() and UP in page.locator('#makeComposer').inner_text()
     assert len(jobs()) == before, 'planning and drawing hints sends nothing'
     # The merged pass is saved under the name Make showed, so the Library does not call a face-and-hands repaint face-only (Codex on #1494).
