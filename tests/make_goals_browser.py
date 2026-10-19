@@ -243,6 +243,7 @@ def run(shots):
         text = page.locator('#makeComposer').inner_text() + ' '.join(page.eval_on_selector_all('#makeComposer [placeholder]', 'n=>n.map(e=>e.placeholder)'))
         assert 'character picture' in text.lower() and 'pose' in text.lower() and '[' not in text and 'e.g.' not in text and 'Ellen' not in text, text
         page.wait_for_selector('[data-make-pose-pick="asset-2"]')
+        assert page.locator('[data-make-pose-pick="asset-1"]').count() == 0, 'the character picture (asset-1) is not offered as its own pose (19 Oct)'
         assert not generate() and 'Choose the pose first' in page.locator('#makeStatus').inner_text(), 'no pose, no job'
         page.locator('[data-make-pose-pick="asset-2"]').click()
         assert 'Choose the pose first' not in page.locator('#makeStatus').inner_text(), 'the pose reminder clears once the pose is chosen (audit N10)'

@@ -566,7 +566,7 @@
     let blockerSignature = '';
     function renderBlockers(blockers) {
       const rows = blockers.map(n => { const fix = n.querySelector('[data-ux-resolve]'); return [n.dataset.readinessCode || '', n.querySelector('p').textContent, fix?.textContent || '', !!fix?.disabled]; });
-      // A lone blocker's text is already the summary above; its row then carries only the repair, if it has one.
+      // A lone blocker's text stays in the dock; its row carries only the repair, if it has one.
       const single = rows.length === 1; blockerList.hidden = !rows.length || single && !rows[0][2];
       const signature = JSON.stringify(rows); if (signature === blockerSignature) return; blockerSignature = signature;
       blockerList.replaceChildren(...rows.map(([code, message, label, disabled]) => {
@@ -617,6 +617,7 @@
       dockInfo.classList.toggle('wk-clear', !blocked);
       text(readiness, readinessText + (blockers.length > 1 ? ' (+'+(blockers.length-1)+' more)' : ''));
       text(setupReadiness, blockers.length > 1 ? blockers.length+' things to fix before generating' : readinessText);
+      setupReadiness.hidden = blockers.length === 1;
       renderBlockers(blockers);
       const time = q('#estimateValue')?.textContent;
       const etaText = estimate && !estimate.hidden && time ? 'Expected: '+time : 'Runtime estimate not available';
