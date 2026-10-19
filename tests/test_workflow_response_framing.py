@@ -1,7 +1,8 @@
 """Valid JSON alone does not establish that its HTTP message arrived completely."""
 from contextlib import redirect_stdout
 from http.client import HTTPException, IncompleteRead
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 import io
 import json
 from pathlib import Path

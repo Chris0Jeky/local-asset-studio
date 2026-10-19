@@ -1,6 +1,7 @@
 import json
 import io
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 from pathlib import Path
 import sys
 from threading import Thread

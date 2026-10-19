@@ -2,7 +2,8 @@
 import copy
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 import json
 from pathlib import Path
 import sqlite3

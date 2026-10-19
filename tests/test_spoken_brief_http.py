@@ -3,7 +3,8 @@ import io
 import http.client
 import socket
 from email.message import Message
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 import importlib
 import importlib.util
 import json

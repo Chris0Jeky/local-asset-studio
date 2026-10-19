@@ -1,7 +1,7 @@
 """Resource-scoped guidance, real Handler and offline CLI. Never loads a model."""
 import copy
 from http.client import HTTPConnection
-from http.server import ThreadingHTTPServer
+from http_test_server import ThreadingHTTPServer
 import importlib.util
 import json
 from pathlib import Path
@@ -208,7 +208,7 @@ class GuidanceHTTPTests(unittest.TestCase):
             def __getattr__(self,key): raise AssertionError('Unexpected runtime/storage access: '+key)
         self.studio = NoRuntime()
         # Production factory composes Prompt/Workflow/Document/Run handlers.
-        self.http = self.server_module.create_server(root, port=0, studio_factory=lambda _: self.studio)
+        self.http = self.server_module.create_server(root, port=0, http_server=ThreadingHTTPServer, studio_factory=lambda _: self.studio)
         self.thread=threading.Thread(target=self.http.serve_forever,daemon=True);self.thread.start()
         self.payload = {'preset_id':'fixture','controls':{},'expected_graph':copy.deepcopy(self.g),'expected_bindings':G.bindings(self.p)}
     def tearDown(self): self.http.shutdown();self.http.server_close();self.thread.join(5);self.temp.cleanup()

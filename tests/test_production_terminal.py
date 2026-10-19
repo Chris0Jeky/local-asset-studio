@@ -108,7 +108,7 @@ class TerminalFrontendTests(unittest.TestCase):
 class TerminalHTTPTests(unittest.TestCase):
     def reconcile(self,outcome):
         from http.client import HTTPConnection
-        from http.server import ThreadingHTTPServer
+        from http_test_server import ThreadingHTTPServer
         import threading
         fixture=TerminalObservationTests();self.addCleanup(fixture.doCleanups);fixture.setUp()
         fixture.terminal(outcome);before=fixture.snapshot();state=fixture.lab._get(fixture.identifier)['state']

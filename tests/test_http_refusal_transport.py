@@ -1,5 +1,6 @@
 """Proves the early-refusal test transport sends only the requested loopback payload."""
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 import json
 import threading
 import unittest

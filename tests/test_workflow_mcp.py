@@ -5,7 +5,8 @@ The ordinary Studio suite can run without the optional agent environment.
 """
 import asyncio
 from contextlib import contextmanager
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from http_test_server import ThreadingHTTPServer
 import importlib.util
 import json
 from pathlib import Path
