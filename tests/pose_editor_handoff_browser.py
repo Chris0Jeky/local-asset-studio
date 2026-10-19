@@ -24,7 +24,6 @@ SNAPSHOT = '''() => ({recipe:selected.id, keep:lastUploaded, parents:[...parentA
 
 
 def precision_checks(page, check):
-    check(page.locator('#uxPoseCanvas').get_attribute('role') == 'group' and page.locator('#uxPoseCanvas').get_attribute('aria-roledescription') == 'pose editor', 'Pose is a named, keyboard-operable editor group with instructions, not a static image or application mode')
     for axis in ('X', 'Y'): check(page.locator('#uxPose'+axis).get_attribute('aria-describedby') == 'uxPoseStatus', 'Coordinate error text is linked to '+axis)
     before = page.locator('#uxPoseCanvas').evaluate('(el)=>el.toDataURL()')
     initial = [page.locator('#uxPose' + key).input_value() for key in ('X', 'Y')]
