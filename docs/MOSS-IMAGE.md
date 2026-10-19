@@ -44,7 +44,7 @@ Until this branch is merged, the Studio must be started from this branch for the
 
 ## Results (agent-judged, one 9070 XT, shared PC; see [the receipts](looks/lab-2026-10-19-moss.receipts.json) and [judgements](looks/lab-2026-10-19-moss.judgements.jsonl))
 
-Scope: SFW adult characters, the same three briefs as the round-7 look lab (sorceress on a castle balcony, kimono on a stone bridge, knight on a battlefield), seed `2026101901` unless a seed is named, 1024x1536, euler / sgm_uniform, 30 steps, CFG 3, empty negative, one job at a time through the Studio. 55 jobs, all completed, none failed or repeated. Verdicts are agent judgements with the [rubric](quality/JUDGING-RUBRIC.md), configuration-aware, not art acceptance; one picture (Nanmokaken) was skipped as youthful-reading. Hands were judged at contact-sheet scale except the staff hand of the first proof (crop clean); the free hand is often long and thin.
+Scope: SFW adult characters, the same three briefs as the round-7 look lab (sorceress on a castle balcony, kimono on a stone bridge, knight on a battlefield), seed `2026101901` unless a seed is named, 1024x1536, euler / sgm_uniform, 30 steps, CFG 3, empty negative, one job at a time through the Studio. 55 jobs, all completed, none failed or repeated, 55 receipts and 55 judgement rows (one per picture): 52 keep, 1 fixable, 1 reject, 1 skipped. Verdicts are agent judgements with the [rubric](quality/JUDGING-RUBRIC.md), configuration-aware, not art acceptance; one picture (Nanmokaken) was skipped as youthful-reading. Hands were judged at contact-sheet scale except the staff hand of the first proof (crop clean); the free hand is often long and thin.
 
 ### Speed (Studio job seconds, shared PC)
 
