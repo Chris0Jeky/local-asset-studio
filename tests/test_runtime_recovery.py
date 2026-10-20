@@ -34,8 +34,9 @@ class Manager:
     def configured_processes(self, profile): return list(self.matching)
     def available(self, profile): return True
     def readiness(self, profile): return {"message": "fixture ready"}
-    def launch_recovery(self, profile):
+    def launch_recovery(self, profile, on_spawn=None):
         self.launches += 1
+        if on_spawn is not None: on_spawn(9000 + self.launches)
         return 9000 + self.launches
 
 

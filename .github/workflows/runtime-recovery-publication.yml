@@ -1,0 +1,47 @@
+name: Runtime recovery publication barriers
+on:
+  pull_request:
+    paths:
+      - 'app/runtime_recovery.py'
+      - 'app/recovery_state.py'
+      - 'app/backends.py'
+      - 'app/backend_state.py'
+      - 'app/file_replace.py'
+      - 'tests/test_runtime_recovery*.py'
+      - 'tests/test_recovery_state.py'
+      - 'tests/test_gpu_lease.py'
+      - 'tests/test_backend_safety.py'
+      - 'tests/test_backend_startup_interlock.py'
+      - 'tests/test_file_replace.py'
+      - '.github/workflows/runtime-recovery-publication.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: runtime-recovery-publication-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  barriers:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: git log -1 --format=%H
+      - run: python -m pip install -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - run: python -m unittest discover -s tests -p 'test_runtime_recovery*.py' -v
+      - run: python -m unittest discover -s tests -p test_recovery_state.py -v
+      - run: python -m unittest discover -s tests -p test_gpu_lease.py -v
+      - run: python -m unittest discover -s tests -p test_backend_safety.py -v
+      - run: python -m unittest discover -s tests -p test_backend_startup_interlock.py -v
+      - run: python -m unittest discover -s tests -p test_file_replace.py -v
+      - run: python scripts/validate-repo.py
