@@ -5584,7 +5584,7 @@
       "category": "Anime flagship",
       "collection": "workflow-lab",
       "graph": "workflows/api/krea-refine-api.json",
-      "verified": true,
+      "verified": false,
       "commercial_note": "Krea 2 Community License covers the base weights; each stacked LoRA carries its own civitai/fal terms, recorded in models/library.json and not cleared for any particular use.",
       "positive": [
         "4",
@@ -5653,19 +5653,15 @@
       "vary": {
         "status": "owner-approved",
         "sources": [
-          "krea-portrait",
-          "krea-portrait-gguf",
-          "krea-environment",
           "krea-anime-atelier",
-          "krea-anime-atelier-gguf",
-          "krea-style-lab",
           "krea-refine"
         ],
         "subtle": {
           "controls": {
-            "denoise": 0.45
+            "denoise": 0.45,
+            "steps": 4
           },
-          "basis": "Owner-approved by the option the owner chose on 27 September 2026 (in chat, after the first Vary live-proof sheets vary-sdxl-sheet.jpg and vary-krea-sheet.jpg), whose full text was, verbatim: \"Nudge both up (Recommended): Subtle becomes today's Strong (SDXL 0.5, Krea 0.45); Strong goes further (SDXL 0.7, Krea 0.65). The GPU worker proves one round of each, then they're marked owner-approved.\" The round-two sheets (vary-*-sheet-v2.jpg) were shown to the owner, who raised no objection. Subtle moves past the old strong value (on the live proof 0.25 read \"too close\" and 0.5 \"right\"). Proved through the page on 27 Sep 2026 at 0.45: job b4bfb680 (2 pictures, 900.1 s), experiments/curated/live-proofs-20260927/. The earlier starting value 0.25 was this recipe's measured polish default (23 Sep 2026, jobs 36e5d833, 0cba57ec, 0887896e)."
+          "basis": "Owner-approved by the option the owner chose on 27 September 2026 (in chat, after the first Vary live-proof sheets vary-sdxl-sheet.jpg and vary-krea-sheet.jpg), whose full text was, verbatim: \"Nudge both up (Recommended): Subtle becomes today's Strong (SDXL 0.5, Krea 0.45); Strong goes further (SDXL 0.7, Krea 0.65). The GPU worker proves one round of each, then they're marked owner-approved.\" The round-two sheets (vary-*-sheet-v2.jpg) were shown to the owner, who raised no objection. Subtle moves past the old strong value (on the live proof 0.25 read \"too close\" and 0.5 \"right\"). Proved through the page on 27 Sep 2026 at 0.45: job b4bfb680 (2 pictures, 900.1 s), experiments/curated/live-proofs-20260927/. The earlier starting value 0.25 was this recipe's measured polish default (23 Sep 2026, jobs 36e5d833, 0cba57ec, 0887896e). The detailed v2 receipt records subtle at four steps; this route preserves that executed setting. The six-step shorthand in HUMAN_TODO.md and CURRENT_STATE.md does not describe the subtle receipt. Source-stack carry has static coverage only; no new carried-stack generation or visual acceptance is claimed."
         },
         "strong": {
           "controls": {
@@ -5673,7 +5669,20 @@
             "steps": 6
           },
           "basis": "Owner-approved by the option the owner chose on 27 September 2026 (in chat, after the first Vary live-proof sheets vary-sdxl-sheet.jpg and vary-krea-sheet.jpg), whose full text was, verbatim: \"Nudge both up (Recommended): Subtle becomes today's Strong (SDXL 0.5, Krea 0.45); Strong goes further (SDXL 0.7, Krea 0.65). The GPU worker proves one round of each, then they're marked owner-approved.\" The round-two sheets (vary-*-sheet-v2.jpg) were shown to the owner, who raised no objection. Strong goes further and keeps the 6-step setting: the owner asked to keep it unless it clearly fights 0.65, and the live proof kept the composition at 6 steps. Proved through the page on 27 Sep 2026 at 0.65, 6 steps: job 213848b0 (2 pictures, 1322.2 s), experiments/curated/live-proofs-20260927/. The earlier starting value was the recipe's own Redraw variant (0.5, 6 steps)."
-        }
+        },
+        "carry": [
+          "lora",
+          "lora_name",
+          "lora2",
+          "lora2_name",
+          "lora3",
+          "lora3_name",
+          "lora4",
+          "lora4_name",
+          "sampler",
+          "scheduler",
+          "cfg"
+        ]
       },
       "modality": "image",
       "family": "Krea 2 Turbo",
@@ -5727,7 +5736,7 @@
           }
         }
       ],
-      "execution_note": "Executed 2026-09-12 through Studio job 21e4a629-9b7c-4cd2-a87e-dae80a2082f4 (prompt 3-node chain TextFusion + Niji Sweet Spot + 4-step distill, slot 4 pruned) on the authored example image in 233.2 s at 1024x1024; image inspected. Not an art approval. Default changed to denoise 0.25 on 23 September 2026 after six Studio jobs on Studio/krea-style-lab_00001_.png with the shrine's own prompt (denoise 0.25: jobs 36e5d833, 0cba57ec, 0887896e; 0.35: jobs 9602e836, 36537036, f5427eb8; 338-420 s each on the fp8 build), judged with the source in shuffled groups. Not art acceptance."
+      "execution_note": "Executed 2026-09-12 through Studio job 21e4a629-9b7c-4cd2-a87e-dae80a2082f4 (prompt 3-node chain TextFusion + Niji Sweet Spot + 4-step distill, slot 4 pruned) on the authored example image in 233.2 s at 1024x1024; image inspected. Not an art approval. Default changed to denoise 0.25 on 23 September 2026 after six Studio jobs on Studio/krea-style-lab_00001_.png with the shrine's own prompt (denoise 0.25: jobs 36e5d833, 0cba57ec, 0887896e; 0.35: jobs 9602e836, 36537036, f5427eb8; 338-420 s each on the fp8 build), judged with the source in shuffled groups. Not art acceptance. The later source-stack-carry policy is not covered by these historical executions: verified is false pending a new explicit proving run. See docs/revision-commands/1213-KREA-VARY-STACK.md. Historical Vary settings remain subtle 0.45 at four steps and strong 0.65 at six steps."
     },
     {
       "id": "sdxl-inpaint-fix",

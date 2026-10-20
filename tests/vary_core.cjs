@@ -147,4 +147,41 @@ test('the shipped catalog routes Krea, plain SDXL and WAI pictures and nothing e
   assert.equal(C.varyRoute('wai',live).id,'wai-vary');assert.equal(C.varyRoute('anime-wai-quality',live).id,'wai-vary');
   for(const other of ['anime','noob','pony','lineani-portrait','combine-klein-9b-copypose'])assert.equal(C.varyRoute(other,live),null,other);
 });
+const kreaCatalog=JSON.parse(fs.readFileSync(path.join(__dirname,'../presets/catalog.json'),'utf8')).presets;
+const kreaIds=['krea-portrait','krea-portrait-gguf','krea-environment','krea-anime-atelier','krea-anime-atelier-gguf','krea-style-lab','krea-refine'];
+const kreaShelf=kreaCatalog.filter(p=>kreaIds.includes(p.id)).map(p=>{
+  const graph=JSON.parse(fs.readFileSync(path.join(__dirname,'..',p.graph),'utf8'));
+  const defaults=Object.fromEntries(Object.entries(p).filter(([,v])=>Array.isArray(v)&&v.length===2&&graph[v[0]]?.inputs?.[v[1]]!==undefined).map(([key,v])=>[key,graph[v[0]].inputs[v[1]]]));
+  return{...p,defaults,continuation_capability:cap(p.id==='krea-refine'?'image-to-image':'new-image')};
+});
+const kreaControls={lora:0.7,lora_name:'recorded-style.safetensors',lora2:0,lora2_name:'recorded-off.safetensors',lora3:0,lora3_name:'recorded-third.safetensors',lora4:0.4,lora4_name:'recorded-fourth.safetensors',sampler:'euler_ancestral',scheduler:'beta',cfg:1.5};
+test('Krea Vary carries all four recorded adapter pairs and keeps the executed four/six step settings',()=>{
+  for(const preset_id of ['krea-anime-atelier','krea-refine']){
+    const jobs=[{id:'job-1',preset_id,status:'completed',controls:{...kreaControls,steps:15}}];
+    const plan=C.varyPlan(picture(preset_id),kreaShelf,jobs,{},[]);
+    assert.equal(plan.kind,'img2img');assert.deepEqual(plan.carry,kreaControls);
+    assert.deepEqual(plan.strengths.subtle.controls,{denoise:0.45,steps:4});
+    assert.deepEqual(plan.strengths.strong.controls,{denoise:0.65,steps:6});
+    assert.equal(plan.starting,false,'the historical numeric settings remain owner-approved');
+    assert.match(C.varyStatus(plan,'subtle',1),/same checkpoint and adapters as this picture/);
+  }
+});
+test('five incompatible Krea recipes use their own recorded-recipe reseed fallback',()=>{
+  for(const id of kreaIds.filter(id=>!['krea-anime-atelier','krea-refine'].includes(id))){
+    const plan=C.varyPlan(picture(id),kreaShelf,[],{},[]);
+    assert.equal(plan.kind,'reseed',id);assert.equal(plan.route.id,id);
+    assert.match(C.varyStatus(plan,'reseed',1),/new seeds, same recipe/);
+  }
+});
+test('Krea carry refuses absent runs and missing named files and discloses source-default fallbacks',()=>{
+  const source='krea-anime-atelier',job={id:'job-1',preset_id:source,status:'completed',controls:{...kreaControls}};
+  assert.equal(C.varyPlan(picture(source),kreaShelf,[],{},[]).kind,'none');
+  const missing=C.varyPlan(picture(source),kreaShelf,[job],{},['recorded-style.safetensors']);
+  assert.equal(missing.kind,'none');assert.match(missing.reason,/recorded-off.safetensors/);
+  delete job.controls.lora3_name;
+  const fallback=C.varyPlan(picture(source),kreaShelf,[job],{},[]);
+  assert.equal(fallback.kind,'img2img');assert.deepEqual(fallback.carryFallback,['lora3_name']);
+  assert.match(C.varyStatus(fallback,'subtle',1),/lora3_name not recorded; using the recipe's current default/);
+  assert.doesNotMatch(C.varyStatus(fallback,'subtle',1),/same checkpoint and adapters as this picture/);
+});
 console.log(count+' Vary policy contracts passed');
