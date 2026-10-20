@@ -7,9 +7,11 @@ on:
       - 'app/static/studio-workbench.js'
       - 'app/static/parallax-stage-recovery.js'
       - 'app/parallax.py'
+      - 'app/server.py'
       - 'tests/parallax_stage_recovery*'
       - 'tests/test_parallax_stage_recovery.py'
       - 'tests/test_parallax.py'
+      - 'tests/test_parallax_finish_worker.py'
       - 'tests/studio_browser_smoke.py'
       - 'tests/asset_detail_browser.py'
       - '.github/workflows/parallax-stage-recovery.yml'
@@ -44,6 +46,7 @@ jobs:
       - run: python -m pip install pillow playwright==1.57.0
       - run: python -m playwright install --with-deps chromium
       - run: python -m unittest discover -s tests -p test_parallax_stage_recovery.py -v
+      - run: python -m unittest discover -s tests -p test_parallax_finish_worker.py -v
       - run: python tests/parallax_stage_recovery_browser.py --out .runtime/parallax-stage-recovery
       - uses: actions/upload-artifact@v4
         if: always()

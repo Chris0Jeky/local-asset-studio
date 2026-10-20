@@ -229,6 +229,53 @@ test('Make Vary refuses with its reason before copying anything (#1497)', async 
   assert.deepEqual(wordless.calls, ['context'], 'no copy and no job');
 });
 
+const kreaPresets = JSON.parse(fs.readFileSync(path.join(__dirname, '../presets/catalog.json'), 'utf8')).presets;
+const kreaRoute = {...kreaPresets.find(p => p.id === 'krea-refine'), continuation_capability: {...catalogPresets[2].continuation_capability}};
+const kreaSource = {...kreaPresets.find(p => p.id === 'krea-anime-atelier'), continuation_capability: {operation: 'new-image', prompt_role: 'description'}};
+const kreaRecorded = {lora: 0.7, lora_name: 'recorded-style.safetensors', lora2: 0, lora2_name: 'recorded-off.safetensors', lora3: 0, lora3_name: 'recorded-third.safetensors', lora4: 0.4, lora4_name: 'recorded-fourth.safetensors', sampler: 'euler_ancestral', scheduler: 'beta', cfg: 1.5};
+const kreaJob = {id: 'job-1', preset_id: kreaSource.id, status: 'completed', controls: {...kreaRecorded, steps: 15, positive: 'a witch in a garden'}};
+const kreaContext = {...sourceContext, preset_id: kreaSource.id, positive: kreaJob.controls.positive};
+test('Make Krea Vary submits the four-slot recorded stack with the historical four/six step strengths', async () => {
+  for (const [strength, denoise, steps] of [['subtle', 0.45, 4], ['strong', 0.65, 6]]) {
+    const box = makeVaryBox({catalog: {presets: [kreaSource, kreaRoute]}, jobs: [kreaJob], context: kreaContext});
+    await box.vary('asset-1', kreaSource.id, 'job-1', strength);
+    assert.equal(box.sent.length, 1);
+    const sent = box.sent[0];
+    for (const [key, value] of Object.entries(kreaRecorded)) assert.equal(sent.controls[key], value, key);
+    assert.equal(sent.controls.denoise, denoise); assert.equal(sent.controls.steps, steps);
+    assert.equal(sent.preset_id, 'krea-refine'); assert.equal(sent.controls.positive, kreaJob.controls.positive);
+    assert.deepEqual(box.calls, ['context', '/api/assets/reference', '/api/jobs']);
+  }
+});
+test('Create Krea Vary prepares the same four-slot stack and never submits a job', async () => {
+  for (const [strength, steps] of [['subtle', 4], ['strong', 6]]) {
+    const controls = Object.fromEntries([...Object.keys(kreaRecorded), 'denoise', 'steps', 'seed'].map(key => [key, {value: ''}]));
+    const plan = SC.varyPlan({preset_id: kreaSource.id, job_id: 'job-1', media_type: 'image'}, [kreaSource, kreaRoute], [kreaJob], {}, []);
+    const box = context({
+      StudioContinuation: SC, varyPlanFor: () => plan, getControl: key => controls[key],
+      async post(url) { box.calls.push(url); return {file: FILE, sha256: SHA, parent_asset: 'asset-1', context: kreaContext}; },
+      beginContinuation() { box.selected = kreaRoute; box.continuationState = {preset_id: kreaRoute.id}; },
+    });
+    await box.prepareVary({dataset: {uxVary: strength, asset: 'asset-1', preset: kreaSource.id, job: 'job-1'}});
+    assert.equal(box.notices.some(notice => notice.error), false, JSON.stringify(box.notices));
+    for (const [key, value] of Object.entries(kreaRecorded)) assert.equal(controls[key].value, String(value), key);
+    assert.equal(controls.steps.value, steps); assert.equal(controls.denoise.value, strength === 'subtle' ? 0.45 : 0.65);
+    assert.deepEqual(box.calls, ['/api/assets/reference']);
+  }
+});
+test('each excluded Krea source uses its checked recorded recipe for a new-seed Make round', async () => {
+  for (const id of ['krea-portrait', 'krea-portrait-gguf', 'krea-environment', 'krea-anime-atelier-gguf', 'krea-style-lab']) {
+    const source = {...kreaPresets.find(p => p.id === id), continuation_capability: {operation: 'new-image', prompt_role: 'description'}};
+    const box = makeVaryBox({catalog: {presets: [source, kreaRoute]}, jobs: [{...kreaJob, preset_id: id}]});
+    box.api = async url => { box.calls.push(url); return {preset_id: id, controls: {...kreaRecorded, steps: 15, positive: 'recorded words'}}; };
+    await box.vary('asset-1', id, 'job-1', 'reseed');
+    assert.deepEqual(box.calls, ['/api/jobs/job-1/recipe', '/api/recipe-check', '/api/jobs']);
+    assert.equal(box.sent.length, 1); assert.equal(box.sent[0].preset_id, id);
+    assert.equal(box.sent[0].expected_template_sha256, 'c'.repeat(64));
+    assert.equal(box.sent[0].controls.steps, 15); assert.equal(box.sent[0].controls.lora_name, kreaRecorded.lora_name);
+  }
+});
+
 // make.js side: one press calls StudioWorkbench.vary once, adds the run and polls it; a failure only says so.
 const makeSource = fs.readFileSync(path.join(__dirname, '../app/static/make.js'), 'utf8');
 test('Make keeps disabled Vary visible with its linked reason (#1510)',()=>{

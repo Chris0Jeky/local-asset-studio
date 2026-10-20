@@ -17,14 +17,14 @@
       "gzipBytes": 1035
     },
     "island.js": {
-      "sha256": "564b73ef3c0c8c6c4370070ffb8dad5338a429438b703cf6933c1cd895bfe4dd",
-      "bytes": 70678,
-      "gzipBytes": 27441
+      "sha256": "88975d7a64f9a4851771d69c695cb2696e489520d8f8f9410fa44123801e9487",
+      "bytes": 70944,
+      "gzipBytes": 27517
     }
   },
   "budget": {
     "gzipLimitBytes": 153600,
-    "gzipTotalBytes": 28476
+    "gzipTotalBytes": 28552
   },
   "toolchain": {
     "node": "24.13.1",
@@ -32,11 +32,11 @@
       "@vitejs/plugin-vue": "6.0.9",
       "happy-dom": "20.14.5",
       "typescript": "6.0.3",
-      "vite": "8.3.1",
+      "vite": "8.3.4",
       "vitest": "5.0.2",
       "vue": "3.5.43",
       "vue-tsc": "3.3.11"
     },
-    "lockfileSha256": "80e94c92a667dc2f2ab4493112a5f09495d12a616377b7282929c85a017b1fac"
+    "lockfileSha256": "979258bc72246d5d2385ec6c4a850e98582513965f70bc7b732a93b0754b9d0b"
   }
 }

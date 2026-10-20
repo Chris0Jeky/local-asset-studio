@@ -41,6 +41,18 @@ class ShippedVaryRoutes(unittest.TestCase):
         for other in ("anime", "noob", "pony", "anime-animagine-quality", "style-pose-wai", "restyle-wai", "anime-complete"):
             self.assertFalse(any(other in sources for sources in routes.values()), other)
 
+    def test_krea_carries_only_compatible_fp8_sources_with_all_four_slots_and_historical_steps(self):
+        route = by_id(CATALOG, "krea-refine")
+        self.assertEqual(route["vary"]["sources"], ["krea-anime-atelier", "krea-refine"])
+        self.assertEqual(route["vary"]["carry"], [key for slot in ("lora", "lora2", "lora3", "lora4") for key in (slot, slot + "_name")] + ["sampler", "scheduler", "cfg"])
+        self.assertEqual(route["vary"]["subtle"]["controls"], {"denoise": 0.45, "steps": 4})
+        self.assertEqual(route["vary"]["strong"]["controls"], {"denoise": 0.65, "steps": 6})
+        self.assertEqual(route["vary"]["status"], "owner-approved")
+        self.assertFalse(route["verified"], "Historical refine execution does not qualify the new source-stack carry")
+        for source_id in ("krea-portrait", "krea-portrait-gguf", "krea-environment", "krea-anime-atelier-gguf", "krea-style-lab"):
+            self.assertFalse(any(source_id in p.get("vary", {}).get("sources", []) for p in CATALOG))
+            self.assertEqual(continuation.capability(by_id(CATALOG, source_id), graph_of(by_id(CATALOG, source_id)))["operation"], "new-image")
+
     def test_the_wai_route_keeps_the_source_checkpoint_and_every_lora_slot(self):
         route = by_id(CATALOG, "wai-vary")
         self.assertEqual(route["vary"]["carry"], ["lora", "lora_name", "lora2", "lora2_name", "sampler", "scheduler", "cfg", "steps"])
@@ -80,8 +92,8 @@ class VaryContract(unittest.TestCase):
 
     def test_a_route_must_resample_the_kept_picture(self):
         text = by_id(self.presets, "krea-portrait")
-        text["vary"] = copy.deepcopy(self.route["vary"]); text["vary"]["sources"] = ["krea-environment"]
-        self.route["vary"]["sources"].remove("krea-environment")
+        text["vary"] = copy.deepcopy(self.route["vary"]); text["vary"]["sources"] = ["krea-anime-atelier"]
+        self.route["vary"]["sources"].remove("krea-anime-atelier")
         self.assertTrue(any("image-to-image" in p for p in self.problems()))
 
     def test_strengths_are_bound_controls_with_subtle_below_strong(self):
@@ -322,6 +334,141 @@ class CarryContract(unittest.TestCase):
                 self.assertEqual(self.problems(), [])
                 self.edits["wai"].append(lambda graph: graph["1"]["inputs"].update({field: "other.gguf"}))
                 self.assertTrue(any("wai" in p and "another checkpoint" in p for p in self.problems()), self.problems())
+
+
+class ModelOnlyCarryContract(unittest.TestCase):
+    """Krea's model-only adapters keep their own footprint; they never claim a CLIP output."""
+    def setUp(self):
+        self.presets = copy.deepcopy(CATALOG)
+        self.route = by_id(self.presets, "krea-refine")
+        self.route["vary"]["sources"] = ["krea-anime-atelier", "krea-refine"]
+        self.route["vary"]["carry"] = [key for slot in ("lora", "lora2", "lora3", "lora4") for key in (slot, slot + "_name")] + ["sampler", "scheduler", "cfg"]
+        self.route["vary"]["subtle"]["controls"]["steps"] = 4
+        self.edits = {}
+
+    graph = CarryContract.graph
+    problems = CarryContract.problems
+
+    def test_four_model_only_adapters_feed_the_sampler_without_a_clip_footprint(self):
+        self.assertEqual(self.problems(), [])
+        graph = self.graph(self.route)
+        for node in ("10", "11", "12", "13"):
+            self.assertTrue(continuation._lora_feeds(graph, node, "7", "model"))
+            self.assertFalse(continuation._lora_feeds(graph, node, "4", "clip"))
+
+    def test_exact_model_identity_is_required_even_with_matching_family_and_slots(self):
+        self.route["vary"]["sources"].append("krea-anime-atelier-gguf")
+        self.assertTrue(any("krea-anime-atelier-gguf" in p and "another checkpoint" in p for p in self.problems()))
+
+    def test_source_and_route_cannot_change_adapter_loader_kind(self):
+        def clip_adapter(graph):
+            graph["10"]["class_type"] = "LoraLoader"
+            graph["10"]["inputs"].update(clip=["2", 0], strength_clip=1)
+        self.edits["krea-anime-atelier"] = [clip_adapter]
+        self.assertTrue(any("krea-anime-atelier" in p and "loader kind" in p for p in self.problems()), self.problems())
+
+    def test_model_only_bindings_cannot_claim_an_extra_strength_or_another_file_field(self):
+        for wrong in ("extra-strength", "file-field"):
+            with self.subTest(wrong=wrong):
+                self.setUp()
+                for preset_id in ("krea-refine", "krea-anime-atelier"):
+                    preset = by_id(self.presets, preset_id)
+                    if wrong == "extra-strength": preset["bindings_extra"] = {"lora": [["10", "strength_clip"]]}
+                    else: preset["lora_name"] = ["10", "other_name"]
+                self.assertTrue(any("model-only" in p and "binding" in p for p in self.problems()), self.problems())
+
+    def assert_filename_fanout_is_refused(self, preset_id):
+        from server import Studio
+        preset = by_id(self.presets, preset_id)
+        preset["bindings_extra"] = {"lora4_name": [["10", "lora_name"]]}
+        graph = self.graph(preset); studio = Studio.__new__(Studio)
+        studio._bind_control(graph, preset, "lora_name", "recorded-first.safetensors")
+        studio._bind_control(graph, preset, "lora4_name", "recorded-fourth.safetensors")
+        self.assertEqual(graph["10"]["inputs"]["lora_name"], "recorded-fourth.safetensors",
+                         "The real companion binding overwrites the first recorded filename")
+        self.assertTrue(any(p.startswith(preset_id + ":") and "model-only lora4" in p and "binding" in p for p in self.problems()), self.problems())
+
+    def test_model_only_route_filename_fanout_is_refused(self):
+        self.assert_filename_fanout_is_refused("krea-refine")
+
+    def test_model_only_source_filename_fanout_is_refused(self):
+        self.assert_filename_fanout_is_refused("krea-anime-atelier")
+
+    def test_every_model_only_route_and_source_sampler_must_receive_every_adapter(self):
+        for preset_id in ("krea-refine", "krea-anime-atelier"):
+            for model in (["1", 0], ["13", 1], ["missing", 0]):
+                with self.subTest(preset=preset_id, model=model):
+                    self.edits = {preset_id: [lambda graph: graph["7"]["inputs"].update(model=model)]}
+                    self.assertTrue(any(preset_id in p and ("does not feed" in p or "cannot determine" in p) for p in self.problems()), self.problems())
+            def second_sampler(graph):
+                graph["30"] = copy.deepcopy(graph["7"]); graph["30"]["inputs"]["model"] = ["1", 0]
+            self.edits = {preset_id: [second_sampler]}
+            self.assertTrue(any(preset_id in p and "does not feed" in p for p in self.problems()), self.problems())
+
+    def test_model_only_unknown_wrappers_stay_refused_and_known_model_forwarders_stay_supported(self):
+        for kind in ("UnknownModelWrapper", "ModelSamplingSD3"):
+            def wrapper(graph):
+                graph["30"] = {"class_type": kind, "inputs": {"model": ["13", 0]}}
+                graph["7"]["inputs"]["model"] = ["30", 0]
+            self.edits = {"krea-refine": [wrapper], "krea-anime-atelier": [wrapper]}
+            if kind == "UnknownModelWrapper": self.assertTrue(any("cannot determine" in p for p in self.problems()), self.problems())
+            else: self.assertEqual(self.problems(), [])
+
+    def assert_upstream_wrapper_is_refused(self, preset_id):
+        def wrapper(graph):
+            graph["30"] = {"class_type": "UnknownModelWrapper", "inputs": {"model": ["1", 0]}}
+            graph["10"]["inputs"]["model"] = ["30", 0]
+        self.edits = {preset_id: [wrapper]}
+        # Every adapter still reaches the sampler, and the declared base name is unchanged. Neither proves its input.
+        graph = self.graph(by_id(self.presets, preset_id))
+        self.assertTrue(continuation._lora_feeds(graph, "10", "7", "model"))
+        self.assertEqual(continuation._models(graph), continuation._models(graph_of(self.route)))
+        self.assertTrue(any(p.startswith(preset_id + ":") and "connected base" in p for p in self.problems()), self.problems())
+
+    def test_model_only_route_unknown_wrapper_before_first_adapter_is_refused(self):
+        self.assert_upstream_wrapper_is_refused("krea-refine")
+
+    def test_model_only_source_unknown_wrapper_before_first_adapter_is_refused(self):
+        self.assert_upstream_wrapper_is_refused("krea-anime-atelier")
+
+    def test_model_only_upstream_links_need_a_real_model_output_without_cycles_or_missing_nodes(self):
+        for preset_id in ("krea-refine", "krea-anime-atelier"):
+            for link in (["1", 1], ["missing", 0], ["10", 0], ["1", True], "1", None):
+                with self.subTest(preset=preset_id, link=link):
+                    self.edits = {preset_id: [lambda graph: graph["10"]["inputs"].update(model=link)]}
+                    self.assertTrue(any(p.startswith(preset_id + ":") and "connected base" in p for p in self.problems()), self.problems())
+
+    def test_model_only_known_forwarders_before_first_adapter_are_supported(self):
+        for kind in sorted(continuation.PASS_THROUGH["model"]):
+            def wrapper(graph):
+                graph["30"] = {"class_type": kind, "inputs": {"model": ["1", 0]}}
+                graph["10"]["inputs"]["model"] = ["30", 0]
+            self.edits = {key: [wrapper] for key in ("krea-refine", "krea-anime-atelier")}
+            self.assertEqual(self.problems(), [], kind)
+        self.edits["krea-refine"].append(lambda graph: graph["10"]["inputs"].update(model=["30", 1]))
+        self.assertTrue(any("krea-refine:" in p and "connected base" in p for p in self.problems()), self.problems())
+
+    def test_model_only_connected_base_cannot_be_masked_by_matching_orphan_loader_names(self):
+        def extra_base(graph):
+            graph["30"] = copy.deepcopy(graph["1"])
+            graph["30"]["inputs"]["unet_name"] = "other-base.safetensors"
+        self.edits = {key: [extra_base] for key in ("krea-refine", "krea-anime-atelier")}
+        self.edits["krea-refine"].append(lambda graph: graph["10"]["inputs"].update(model=["30", 0]))
+        source = by_id(self.presets, "krea-anime-atelier")
+        self.assertEqual(continuation._models(self.graph(self.route)), continuation._models(self.graph(source)),
+                         "Both graphs declare both base names, but their stacks draw from different loaders")
+        self.assertTrue(any("krea-anime-atelier" in p and "connected base" in p for p in self.problems()), self.problems())
+
+    def test_model_only_connected_base_includes_the_recognized_loader_kind(self):
+        self.edits = {"krea-refine": [lambda graph: graph["1"].update(class_type="UnetLoaderGGUF")]}
+        self.assertTrue(any("krea-anime-atelier" in p and "connected base" in p for p in self.problems()), self.problems())
+
+    def test_model_only_connected_base_needs_its_own_single_filename_field(self):
+        for inputs in ({"ckpt_name": "krea2_turbo_fp8_scaled.safetensors"},
+                       {"unet_name": ["missing", 0], "ckpt_name": "krea2_turbo_fp8_scaled.safetensors"}):
+            with self.subTest(inputs=inputs):
+                self.edits = {"krea-refine": [lambda graph: graph["1"].update(inputs=inputs)]}
+                self.assertTrue(any(p.startswith("krea-refine:") and "connected base" in p for p in self.problems()), self.problems())
 
 
 class VaryClientPolicy(unittest.TestCase):

@@ -18,7 +18,7 @@ MAX_PROVIDER_RESPONSE_BYTES = _source.MAX_RESPONSE_BYTES
 MAX_CACHE_RECORD_BYTES = 4_194_304
 USER_AGENT = "local-asset-studio-source-snapshot/1"
 CACHE_SCHEMA = "studio.adult-illustration-source-response-cache/v1"
-FETCH_SCHEMA = "studio.adult-illustration-source-fetch/v1"
+FETCH_SCHEMA = "studio.adult-illustration-source-fetch/v2"
 RECEIPT_SCHEMA = "studio.adult-illustration-source-transport-receipt/v1"
 
 AUTHORITY = {

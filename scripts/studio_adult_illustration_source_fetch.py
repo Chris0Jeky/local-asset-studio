@@ -14,9 +14,14 @@ from studio_prompt.adult_illustration_source_transport import (  # noqa: E402
     BoundedProviderTransport,
     MetadataPolicy,
     SnapshotResponseCache,
+    EvidencePolicy,
+    SnapshotEvidenceStore,
+    HttpRequest,
+    resolve_payload_reference,
     fetch_civitai,
     fetch_huggingface,
 )
+from studio_prompt._adult_illustration_source_transport_common import parse_cache_json  # noqa: E402
 
 _AUTHORITY = {
     "download_authorized": False,
@@ -34,6 +39,10 @@ def _add_transport_options(parser: argparse.ArgumentParser) -> None:
         help="explicitly permit one bounded public provider-metadata GET operation",
     )
     parser.add_argument("--cache-dir", help="optional exact-identity metadata cache")
+    parser.add_argument("--evidence-dir", help="optional immutable metadata evidence store, independent of the cache")
+    parser.add_argument("--evidence-max-bytes", type=int, help="logical body/provenance byte budget, fixed when creating a store")
+    parser.add_argument("--evidence-max-payloads", type=int, help="digest row budget including pruning tombstones")
+    parser.add_argument("--evidence-max-observations", type=int, help="bounded source-provenance row budget")
     parser.add_argument(
         "--refresh",
         action="store_true",
@@ -65,6 +74,15 @@ def _parser() -> argparse.ArgumentParser:
     )
     civitai.add_argument("--version-id", required=True, type=int)
     _add_transport_options(civitai)
+    resolve = commands.add_parser('resolve', help='resolve an exported payload reference offline; state determines availability')
+    resolve.add_argument('--ref', required=True, help='fetch export or raw payload reference JSON, at most 4 MiB')
+    resolve.add_argument('--evidence-dir', help='existing immutable evidence store')
+    resolve.add_argument('--cache-dir', help='existing cache, only for verifying a legacy export')
+    resolve.add_argument('--out', help='exclusive-create JSON result; verified bytes are base64 encoded')
+    prune = commands.add_parser('prune', help='explicitly remove one evidence body and retain its pruning tombstone')
+    prune.add_argument('--evidence-dir', required=True)
+    prune.add_argument('--sha256', required=True)
+    prune.add_argument('--out', help='exclusive-create JSON result')
     return parser
 
 
@@ -113,6 +131,37 @@ def _policy(args: argparse.Namespace) -> MetadataPolicy:
     )
 
 
+def _evidence_store(args):
+    limits = {'max_total_bytes': args.evidence_max_bytes, 'max_payloads': args.evidence_max_payloads,
+              'max_observations': args.evidence_max_observations}
+    supplied = {key: value for key, value in limits.items() if value is not None}
+    if args.evidence_dir is None:
+        if supplied: raise ValueError('--evidence-dir is required with evidence quota options')
+        return None
+    return SnapshotEvidenceStore(args.evidence_dir, policy=EvidencePolicy(**supplied) if supplied else None)
+
+
+def _resolve(args):
+    path = Path(args.ref)
+    if path.is_symlink(): raise ValueError('Reference input cannot be a symlink')
+    with path.open('rb') as handle: raw = handle.read(4_194_305)
+    if len(raw) > 4_194_304: raise ValueError('Reference input is oversized')
+    value = parse_cache_json(raw)
+    ref = value.get('raw_payload_ref', value)
+    store = SnapshotEvidenceStore(args.evidence_dir, create=False) if args.evidence_dir is not None else None
+    cache = None
+    if args.cache_dir is not None:
+        if not Path(args.cache_dir).is_dir(): raise ValueError('Legacy cache is unavailable')
+        cache = SnapshotResponseCache(args.cache_dir)
+    request = None
+    if isinstance(ref, dict) and 'schema' not in ref:
+        snapshot = value.get('snapshot')
+        if snapshot is not None and not isinstance(snapshot, dict): raise ValueError('Legacy snapshot must be an object')
+        original = snapshot.get('request') if snapshot is not None else None
+        if isinstance(original, dict): request = HttpRequest(**original)
+    return resolve_payload_reference(ref, evidence_store=store, cache=cache, request=request)
+
+
 def _error(command: str, exc: Exception) -> dict[str, Any]:
     return {
         "error": str(exc),
@@ -126,10 +175,17 @@ def main(argv: list[str] | None = None, *, exchange=None) -> int:
     args = _parser().parse_args(argv)
     try:
         _preflight_output(args.out)
+        if args.command == 'resolve':
+            _emit(_resolve(args), args.out); return 0
+        if args.command == 'prune':
+            result = SnapshotEvidenceStore(args.evidence_dir, create=False).prune(args.sha256)
+            _emit(result, args.out)
+            return 0 if result['state'] in ('pruned', 'missing') else 2
         if not args.allow_network:
             raise ValueError(
                 "--allow-network is required for explicit provider metadata access"
             )
+        evidence = _evidence_store(args)
         cache = (
             SnapshotResponseCache(args.cache_dir)
             if args.cache_dir is not None
@@ -139,6 +195,7 @@ def main(argv: list[str] | None = None, *, exchange=None) -> int:
             exchange=exchange,
             policy=_policy(args),
             cache=cache,
+            evidence_store=evidence,
             refresh=args.refresh,
         )
         if args.command == "huggingface":
