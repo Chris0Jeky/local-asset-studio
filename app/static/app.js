@@ -496,11 +496,13 @@ function tileNote(job,output){
 function parallaxNote(job,output){
   if(output.parallax){const p=output.parallax;return '<p class="tileNote"><small>'+esc(p.layer==='strip'?'Parallax strip, camera left / centre / right. ':p.layer[0].toUpperCase()+p.layer.slice(1)+' layer, shift '+p.shift_px+' px. ')+esc(p.summary)+'</small></p>';}
   const claim=job.parallax;if(!claim||job.status!=='completed')return '';
-  if(job.parallax_finish?.job_id)return '<p class="tileNote"><small>Layers split: '+esc(job.parallax_finish.summary||'see the Parallax layers assets')+'</small></p>';
-  const other=claim.stage==='plate'?'isolate':'plate',name={plate:'clean plate',isolate:'isolate'},id=esc(job.id);
+  const other=claim.stage==='plate'?'isolate':'plate',name={plate:'clean plate',isolate:'isolate'},id=esc(job.id),finish=job.parallax_finish;
+  const retainedOther=finish?.stages?.[other],pair=typeof retainedOther==='string'?' data-other-job="'+esc(retainedOther)+'"':'',recording=finish?.recording_error?' Split status was not saved: '+finish.recording_error+'.':'';
+  if(finish?.job_id)return '<p class="tileNote"><small>Layers split: '+esc(finish.summary||'see the Parallax layers assets')+esc(recording)+'</small></p>'+(recording?'<button class="parallaxFinish" data-job="'+id+'"'+pair+'>Save split status</button>':'');
+  if(['queued','running'].includes(finish?.status))return '<p class="tileNote"><small>'+(finish.status==='queued'?'Layer split queued.':'Splitting layers.')+' Both edits are complete; queued generations can continue.'+esc(recording)+'</small></p>';
   const siblings=jobs.filter(j=>j.parallax?.plan_id===claim.plan_id&&j.parallax.stage===other),done=siblings.find(j=>j.status==='completed'),live=siblings.find(j=>['queued','waiting','submitting','running','uncertain'].includes(j.status));
-  const failed=job.parallax_finish?.error?'Layers not split: '+job.parallax_finish.error+' ':'';
-  if(done)return '<p class="disabledReason"><small>'+esc(failed||'Both edits are in; the layers are not split yet.')+'</small></p><button class="parallaxFinish" data-job="'+id+'" title="Register both edits, build the far, mid and near layers, measure the recomposite error and make the strip. Nothing is generated.">Split layers</button>';
+  const failed=finish?.error?'Layers not split: '+finish.error+' ':'';
+  if(done)return '<p class="disabledReason"><small>'+esc((failed||'Both edits are in; the layers are not split yet.')+recording)+'</small></p><button class="parallaxFinish" data-job="'+id+'"'+pair+' title="Register both edits, build the far, mid and near layers, measure the recomposite error and make the strip. Nothing is generated.">Split layers</button>';
   if(live?.status==='uncertain')return '<p class="tileNote"><small>The '+name[other]+' edit is uncertain: check it in Recent runs or Problems. Do not press Generate again for it; the layers split once it completes.</small></p>';
   if(live)return '<p class="tileNote"><small>The '+name[other]+' edit is '+esc(live.status)+'; the layers split when it completes.</small></p>';
   const recovery=typeof window!=='undefined'?window.StudioParallaxRecovery:null,parallaxAvailable=!!recovery?.mounted;
@@ -995,7 +997,7 @@ $('#gallery').onclick=async e=>{
     const pin=e.target.closest('.pin');if(pin){const p={job:pin.dataset.job,index:pin.dataset.index},unpin=pinned.some(x=>x.job===p.job&&x.index===p.index),dropped=!unpin&&pinned.length>=2;pinned=unpin?pinned.filter(x=>x.job!==p.job||x.index!==p.index):[...pinned.slice(-1),p];renderCompare();if(dropped)message('Side by side shows two pictures. The oldest pin was replaced by this one.');}
     const recipe=e.target.closest('.recipe');if(recipe)await exportRecipe(recipe.dataset.job);
     const cancel=e.target.closest('.cancelJob');if(cancel){if(!cancel.disabled)await cancelJob(cancel.dataset.job,cancel.dataset.confirm==='1');return;}
-    const parallaxFinish=e.target.closest('.parallaxFinish');if(parallaxFinish){await jobAction('parallax:'+parallaxFinish.dataset.job,async()=>{const data=await post('/api/parallax/finish',{job_id:parallaxFinish.dataset.job});message(data?.job?.message||'Layers split.');await refresh();});return;}
+    const parallaxFinish=e.target.closest('.parallaxFinish');if(parallaxFinish){await jobAction('parallax:'+parallaxFinish.dataset.job,async()=>{const body={job_id:parallaxFinish.dataset.job};if(parallaxFinish.dataset.otherJob)body.other_job_id=parallaxFinish.dataset.otherJob;const data=await post('/api/parallax/finish',body);message(data?.job?.message||'Layers split.');await refresh();});return;}
     const finishTile=e.target.closest('.finishTile');if(finishTile){await jobAction('tile:'+finishTile.dataset.job,async()=>{const data=await post('/api/tiles/finish',{job_id:finishTile.dataset.job});message(data?.job?.message||'Tile finished.');await refresh();});return;}
     const resume=e.target.closest('.resume');if(resume)await jobAction('resume:'+resume.dataset.job,async()=>{await post('/api/jobs/'+encodeURIComponent(resume.dataset.job)+'/resume',{});await refresh();});
     const toggle=e.target.closest('[data-problems-toggle]');if(toggle){if(toggle.dataset.problemsToggle==='all')problemsShowAll=!problemsShowAll;else problemsShowPutAway=!problemsShowPutAway;jobsSignature='';renderJobs(undefined,true);return;}

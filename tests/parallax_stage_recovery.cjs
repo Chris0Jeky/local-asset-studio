@@ -17,6 +17,32 @@ test('completed stages retain both explicit reload actions after a split',()=>{
   for(const stage of ['plate','isolate'])assert.match(html,new RegExp('data-stage="'+stage+'"'));
   assert.match(html,/Layers split/);
 });
+test('queued and running CPU splits show progress without claiming finished layers or offering a duplicate split',()=>{
+  for(const status of ['queued','running']){
+    const html=render({...base,parallax_finish:{status,finish_id:'pending-pair'}});
+    assert.match(html,status==='queued'?/Layer split queued/:/Splitting layers/);
+    assert.doesNotMatch(html,/Layers split:|class="parallaxFinish"/);
+    for(const stage of ['plate','isolate'])assert.match(html,new RegExp('data-stage="'+stage+'"'));
+  }
+});
+test('CPU split failures retain the split-only retry on the completed pair',()=>{
+  s.jobs=[base,{...base,id:'isolate-job',parallax:{...base.parallax,stage:'isolate'}}];
+  try{
+    for(const error of ['The layer split queue is full. Try Split layers again when a split finishes.',
+                        'Studio restarted before splitting finished. Press Split layers to retry.',
+                        'The parallax source changed; no layers were made.']){
+      const html=render({...base,parallax_finish:{status:'failed',error}});
+      assert.match(html,/class="parallaxFinish"/);assert.match(html,/Split layers/);
+      assert.ok(html.includes(error));assert.doesNotMatch(html,/Layers split:/);
+    }
+  }finally{s.jobs=[];}
+});
+test('completed layers retain the result and show a failed stage-link save',()=>{
+  const html=render({...base,parallax_finish:{status:'completed',job_id:'split',summary:'Measured split',recording_error:'Synthetic storage refusal'}});
+  assert.match(html,/Layers split: Measured split/);
+  assert.match(html,/Split status was not saved/);
+  assert.match(html,/Synthetic storage refusal/);
+});
 test('unsplit cards retain existing status and do not duplicate the existing next-stage action',()=>{
   const html=render(base);
   for(const stage of ['plate','isolate'])assert.equal((html.match(new RegExp('data-stage="'+stage+'"','g'))||[]).length,1);

@@ -213,6 +213,7 @@ class Studio:
             # publication marker keep the historical recovery path.
             if job.get("operation") in ("native.av-preview.v1","native.voice-baseline.v1") and "publication_status" in job and job["publication_status"] != "published": continue
             self.index_outputs(job)
+        self.parallax_finisher = parallax.Finisher(self)
         self.production = Production(self)
         self.backends = BackendManager(self)
         self.backends.activate(self.backends.active)
@@ -2247,7 +2248,7 @@ class Studio:
         if job.get('gpu_spill'): job["message"] = self.spill_message(job)
         job['finished_at']=time.time();job['elapsed_seconds']=job['finished_at']-job['started_at'];self._save(job)
         tiles.finish_after_run(self, job)   # deterministic Pillow steps on a completed seam repaint; never a generation
-        parallax.finish_after_run(self, job)   # splits the layers once both parallax edits are in; never a generation
+        parallax.finish_after_run(self, job)   # bounded CPU handoff; the next generation does not wait for layer splitting
 
     def _prompt_listed(self, job, prompt_id):
         """True unless ComfyUI's queue proves the prompt is neither running nor pending; unreadable means listed."""
@@ -2914,10 +2915,16 @@ class Handler(BaseHTTPRequestHandler):
 
 class StudioHTTPServer(ThreadingHTTPServer):
     """On Windows SO_REUSEADDR lets a second process bind a listening port; four racing launchers once all bound 8191."""
+    _parallax_finisher = None
     if sys.platform == "win32": allow_reuse_address = False
     def server_bind(self):
         if sys.platform == "win32" and hasattr(socket, "SO_EXCLUSIVEADDRUSE"): self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
         super().server_bind()
+
+    def server_close(self):
+        try:
+            if self._parallax_finisher is not None: self._parallax_finisher.close()
+        finally: super().server_close()
 
 def create_server(repo_root, host=HOST, port=PORT, http_server=StudioHTTPServer, studio_factory=Studio):
     """Bind the loopback port before creating a Studio worker or queue."""
@@ -2926,6 +2933,9 @@ def create_server(repo_root, host=HOST, port=PORT, http_server=StudioHTTPServer,
     try:
         is_studio = isinstance(studio_factory, type) and issubclass(studio_factory, Studio)
         handler.studio = studio_factory(Path(repo_root), port=getattr(http, 'server_port', port)) if is_studio else studio_factory(Path(repo_root))
+        http.studio = handler.studio
+        # Register the concrete owner once; injected read-only facades expose no execution capabilities.
+        http._parallax_finisher = handler.studio.parallax_finisher if isinstance(handler.studio, Studio) else None
     except Exception:
         http.server_close(); raise
     return http

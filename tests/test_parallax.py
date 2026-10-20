@@ -244,10 +244,15 @@ class RouteTests(unittest.TestCase):
         (self.root / "presets/catalog.json").write_text(json.dumps({"presets": [DEMO, ROUTE]}))
         (self.root / "workflows/api/demo-api.json").write_text(json.dumps(DEMO_GRAPH))
         shutil.copyfile(ROOT / ROUTE["graph"], self.root / ROUTE["graph"])
-        patcher = patch.object(threading.Thread, "start", lambda *_: None); patcher.start(); self.addCleanup(patcher.stop)
+        start = threading.Thread.start
+        patcher = patch.object(threading.Thread, "start", lambda thread: start(thread) if thread.name == "asset-studio-parallax-finish" else None)
+        patcher.start(); self.addCleanup(patcher.stop)
         self.pictures = room()
 
-    def studio(self, replies=()): return FakeStudio(self.root, replies)
+    def studio(self, replies=()):
+        studio = FakeStudio(self.root, replies)
+        self.addCleanup(studio.parallax_finisher.close)
+        return studio
 
     def source(self, studio, image=None):
         return studio.import_image("room.png", "image/png", png(image or self.pictures[0]))["asset"]
@@ -342,7 +347,9 @@ class RouteTests(unittest.TestCase):
         studio.replies = iter([{"queue_running": [], "queue_pending": []}, {"prompt_id": prompt},
                                {prompt: {"status": {"status_str": "success"}, "outputs": {"13": {"images": [{"filename": name, "subfolder": "Verified", "type": "output"}]}}}}])
         job = studio.jobs[studio.create_job(self.payload(stage), enqueue=False)["id"]]
-        studio._run(job); return job
+        studio._run(job)
+        self.assertTrue(studio.parallax_finisher.wait_idle(30), "the owned CPU worker must finish before this fixture is removed")
+        return job
 
     def test_both_edits_are_split_once_with_layers_strip_lineage_and_receipts(self):
         studio = self.studio(); source, plate, isolate = self.pictures; plate_stage = self.prepared(studio)

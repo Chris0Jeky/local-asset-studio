@@ -1753,6 +1753,9 @@ async function parallaxStagesAreTwoOwnerPresses() {
   run(`jobs=[]`);
   await element('#gallery').onclick({target: {closest: selector => selector === '.parallaxFinish' ? {dataset: {job: 'plate-job'}} : null}});
   assert.deepEqual(requests.filter(r => r.url === '/api/parallax/finish').map(r => r.data), [{job_id: 'plate-job'}]);
+  assert.match(card({...plate, parallax_finish: {status: 'failed', stages: {plate: 'plate-job', isolate: 'retained-isolate'}, error: 'split interrupted'}}, [isolate('completed')]), /data-other-job="retained-isolate"/);
+  await element('#gallery').onclick({target: {closest: selector => selector === '.parallaxFinish' ? {dataset: {job: 'plate-job', otherJob: 'retained-isolate'}} : null}});
+  assert.deepEqual(requests.filter(r => r.url === '/api/parallax/finish').at(-1).data, {job_id: 'plate-job', other_job_id: 'retained-isolate'});
   assert.match(card(plate), /disabled[^>]*title="Parallax staging is still loading\."/, 'before the controller mounts the stage button waits and says so');
   run(`window.StudioParallaxRecovery={mounted:false,failed:true}`);
   assert.match(card(plate), /disabled[^>]*title="Parallax staging is unavailable: reload the page\."/, 'only a failed mount asks for a reload');

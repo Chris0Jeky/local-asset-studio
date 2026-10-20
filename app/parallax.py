@@ -1,4 +1,4 @@
-"""Parallax layers (#1219): the background lab's route C2 as a Studio route. This module never calls ComfyUI or queues work.
+"""Parallax layers (#1219): the background lab's route C2 as a Studio route. This module never calls ComfyUI or queues generation.
 
 1. Prepare (`prepare`): the owner names the foreground to lift out and may mark the far view (window glass, sky) as boxes
    or polygons on the picture. The Studio attaches the unchanged source as the edit picture and returns a plan whose
@@ -30,6 +30,8 @@ import statistics
 import threading
 import time
 import uuid
+from collections import deque
+from contextlib import ExitStack
 from pathlib import Path
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageOps, ImageStat
@@ -55,7 +57,8 @@ ISOLATE_WORDS = ("Replace everything except {objects} with a plain pure white ba
 FLAG = ("Name the foreground concretely (e.g. the desk, the chair and the lamp). Mark the far view (window glass, sky) as boxes "
         "inside the glass, or leave it empty for two layers. The view mask is yours, not detected.")
 CLAIM_FIELDS = {"version", "plan_id", "stage", "preset_id", "source_asset_id", "source_sha256", "source_file", "width", "height", "objects", "view_polygons"}
-_FINISH_LOCK = threading.Lock()
+MAX_WAITING_FINISHES = 2       # implementation budget: one CPU worker plus two waiting pairs, not a throughput measurement
+_STAGE_IDENTITY = ("id", "status", "parallax", "outputs", "submissions", "controls", "preset_id", "graph_path")
 
 
 # ---------------------------------------------------------------- masks (L images, 0 or 255)
@@ -595,50 +598,235 @@ def sibling(studio, job):
     return max(matches, key=lambda item: (item.get("finished_at") or item.get("created_at") or 0, item["id"])) if matches else None
 
 
+def _pair(studio, job_id, other_job_id):
+    """Select the exact pair under the Studio lock, before work enters the CPU queue."""
+    job = studio.jobs.get(job_id) if isinstance(job_id, str) else None
+    if not job: raise ValueError("Unknown job")
+    if not job.get("parallax"): raise ValueError("This job is not a parallax edit.")
+    _claim(job["parallax"])
+    if other_job_id is None: other = sibling(studio, job)
+    else:
+        other = studio.jobs.get(other_job_id) if isinstance(other_job_id, str) else None
+        if not other or (other.get("parallax") or {}).get("plan_id") != job["parallax"]["plan_id"] or other["parallax"].get("stage") == job["parallax"]["stage"]:
+            raise ValueError("The other job is not the other stage of this parallax plan.")
+    if other is None:
+        missing = STAGE_NAMES[STAGES[1 - STAGES.index(job["parallax"]["stage"])]]
+        raise ValueError("Run the %s edit of this plan first; no layers were made." % missing)
+    for item in (job, other):
+        _claim(item["parallax"])
+        if item.get("status") != "completed": raise ValueError("Split the layers after both edits complete; the %s edit is %s." % (STAGE_NAMES[item["parallax"]["stage"]], item.get("status")))
+        _image_output(item)
+    return (job, other) if job["parallax"]["stage"] == "plate" else (other, job)
+
+
+def _stage_identity(job):
+    return {key: job.get(key) for key in _STAGE_IDENTITY}
+
+
+def _asset_identity(asset):
+    return {key: asset.get(key) for key in ("id", "job_id", "output_index", "sha256", "path", "trashed_at")}
+
+
+def _receipt_matches_stage(finished, job):
+    try:
+        claim = _claim(job["parallax"]); output = _image_output(job)
+        receipt = finished["parallax_receipt"]; stages = receipt["stages"]; stage = stages[claim["stage"]]
+        return (finished.get("operation") == OPERATION and finished.get("status") == "completed"
+                and finished["id"] == finish_id(stages["plate"]["job_id"], stages["isolate"]["job_id"])
+                and receipt["plan"] == {key: value for key, value in claim.items() if key != "stage"}
+                and all(stage.get(key) == value for key, value in (("job_id", job["id"]), ("asset_id", output["asset_id"]), ("prompt_id", output.get("prompt_id")))))
+    except (KeyError, TypeError, ValueError): return False
+
+
+class _FinishTask:
+    def __init__(self, plate, isolate):
+        self.jobs = (plate, isolate)
+        self.stages = tuple(copy.deepcopy(_stage_identity(job)) for job in self.jobs)
+        self.id = finish_id(plate["id"], isolate["id"])
+        self.attempt = uuid.uuid4().hex; self.requested_at = time.time()
+        self.done = threading.Event(); self.result = None; self.error = None; self.assets = {}
+
+
+class Finisher:
+    """One lifecycle-owned CPU thread, at most two waiting pairs, no generation or restart replay.
+
+    The Studio lock protects admission, stage links and the final publication. CPU work and PNG
+    encoding run without it. An idle owner has no thread; close revokes publication before joining.
+    Explicit finish callers use this same owner and deduplicate the admitted pair.
+    """
+    def __init__(self, studio):
+        self.studio = studio; self.changed = threading.Condition(studio.lock)
+        self.pending = deque(); self.tasks = {}; self.active = None; self.worker = None; self.closed = False
+        self.last_error = None
+        for job in list(studio.jobs.values()):
+            marker = job.get("parallax_finish") or {}
+            if not isinstance(marker, dict): continue
+            if marker.get("status") not in ("queued", "running"): continue
+            finished = studio.jobs.get(marker.get("finish_id"))
+            if finished and _receipt_matches_stage(finished, job):
+                _link(studio, job, finished, save=False)
+            else:
+                job["parallax_finish"] = dict(marker, status="failed", failed_at=time.time(),
+                    error="Studio restarted before splitting finished. Press Split layers to retry; no generation was submitted.")
+            self._save_marker(job)
+
+    def _save_marker(self, job):
+        marker = job.get("parallax_finish") or {}
+        marker.pop("recording_error", None)
+        try: self.studio._save(job)
+        except Exception as exc:
+            marker["recording_error"] = str(exc)[:300] or type(exc).__name__
+            self.last_error = {"job_id": job["id"], "error": str(exc)[:300], "durable": False}
+
+    def _mark(self, task, status, error=None):
+        for job in task.jobs:
+            marker = job.get("parallax_finish") or {}
+            if self.studio.jobs.get(job["id"]) is not job or marker.get("attempt_id") != task.attempt: continue
+            job["parallax_finish"] = dict(marker, status=status)
+            if error: job["parallax_finish"].update(error=error[:300], failed_at=time.time())
+            self._save_marker(job)
+
+    def _owned(self, task):
+        if self.closed or self.tasks.get(task.id) is not task:
+            raise ValueError("Layer splitting stopped. Press Split layers after restarting Studio; no generation was submitted.")
+        for original, snapshot in zip(task.jobs, task.stages):
+            if self.studio.jobs.get(snapshot["id"]) is not original or _stage_identity(original) != snapshot:
+                raise ValueError("A parallax edit changed or was removed while splitting; no layers were made. Inspect the retained pair before retrying Split layers.")
+        if task.id in self.studio.jobs: raise ValueError("The layer split record changed while splitting; inspect the retained result before retrying.")
+
+    def submit(self, job_id, other_job_id=None):
+        with self.changed:
+            if self.closed: raise ValueError("Layer splitting is stopped. Restart Studio before using Split layers.")
+            plate, isolate = _pair(self.studio, job_id, other_job_id)
+            identifier = finish_id(plate["id"], isolate["id"])
+            finished = self.studio.jobs.get(identifier)
+            if finished:
+                if not all(_receipt_matches_stage(finished, item) for item in (plate, isolate)):
+                    raise ValueError("The layer split record does not match this completed pair; inspect its retained files before retrying.")
+                for item in (plate, isolate):
+                    marker = item.get("parallax_finish") or {}
+                    # An older explicit read never replaces a newer in-flight or completed pair's link.
+                    if marker.get("status") not in ("queued", "running") and marker.get("job_id") in (None, identifier):
+                        _link(self.studio, item, finished, save=False); self._save_marker(item)
+                return finished
+            if identifier in self.tasks: return self.tasks[identifier]
+            if len(self.tasks) >= 1 + MAX_WAITING_FINISHES:
+                raise ValueError("The layer split queue is full. Try Split layers again when a split finishes; both completed edits are retained.")
+            task = _FinishTask(plate, isolate)
+            for item in task.stages:
+                output = _image_output(item); asset = self.studio.assets.get(output["asset_id"])
+                if asset.get("job_id") != item["id"] or asset.get("trashed_at"):
+                    raise ValueError("A saved edit is unavailable or belongs to another job; inspect the retained pair before using Split layers.")
+                task.assets[item["parallax"]["stage"]] = _asset_identity(asset)
+            self.tasks[identifier] = task; self.pending.append(task)
+            for item in task.jobs:
+                item["parallax_finish"] = {"status": "queued", "finish_id": identifier, "attempt_id": task.attempt,
+                    "requested_at": task.requested_at, "stages": {"plate": plate["id"], "isolate": isolate["id"]}}
+                self._save_marker(item)
+            if self.worker is None:
+                worker = threading.Thread(target=self._work, name="asset-studio-parallax-finish", daemon=True)
+                self.worker = worker
+                try: worker.start()
+                except Exception as exc:
+                    self.worker = None; self.pending.remove(task); self.tasks.pop(identifier)
+                    task.error = "Layer splitting could not start: " + str(exc)[:200]
+                    self._mark(task, "failed", task.error); task.done.set(); self.changed.notify_all()
+                    raise ValueError(task.error) from exc
+            return task
+
+    def _work(self):
+        try:
+            while True:
+                with self.changed:
+                    if self.closed or not self.pending:
+                        self.worker = None; self.changed.notify_all(); return
+                    task = self.pending.popleft(); self.active = task
+                try:
+                    with self.changed: self._owned(task); self._mark(task, "running")
+                    task.result = _finish_pair(self.studio, self, task)
+                except BaseException as exc:
+                    task.error = str(exc)[:300] or type(exc).__name__
+                    with self.changed:
+                        if not self.closed: self._mark(task, "failed", task.error)
+                    if not isinstance(exc, Exception): return  # settle the waiter, then retire and release any pending owners
+                finally:
+                    with self.changed:
+                        self.tasks.pop(task.id, None); self.active = None; task.done.set(); self.changed.notify_all()
+        finally:
+            with self.changed:
+                if self.worker is threading.current_thread():
+                    for task in self.tasks.values():
+                        task.error = "Layer splitting stopped before completion. Press Split layers to retry."
+                        if not self.closed: self._mark(task, "failed", task.error)
+                        task.done.set()
+                    self.tasks.clear(); self.pending.clear(); self.active = None; self.worker = None
+                    self.changed.notify_all()
+
+    def wait_idle(self, timeout=5):
+        deadline = time.monotonic() + timeout
+        with self.changed:
+            worker = self.worker
+            if not self.changed.wait_for(lambda: self.worker is None, timeout): return False
+        if worker is not None and worker.ident is not None and worker is not threading.current_thread(): worker.join(max(0, deadline - time.monotonic()))
+        return worker is None or not worker.is_alive()
+
+    def close(self, timeout=5):
+        with self.changed:
+            first_close = not self.closed; self.closed = True; worker = self.worker
+            for task in list(self.tasks.values()) if first_close else ():
+                finished = self.studio.jobs.get(task.id)
+                if finished and all(_receipt_matches_stage(finished, job) for job in task.jobs): task.result = finished
+                else:
+                    task.error = "Studio stopped before splitting finished. Press Split layers after restarting; no generation was submitted."
+                    self._mark(task, "failed", task.error)
+                task.done.set()
+                if task is not self.active: self.tasks.pop(task.id, None)
+            self.pending.clear()
+        if worker is not None and worker.ident is not None and worker is not threading.current_thread(): worker.join(timeout)
+        return worker is None or not worker.is_alive()
+
+
 def finish(studio, job_id, other_job_id=None):
-    """Register, split, measure and preview one completed plate + isolate pair. Idempotent per pair."""
-    with _FINISH_LOCK:
-        job = studio.jobs.get(job_id) if isinstance(job_id, str) else None
-        if not job: raise ValueError("Unknown job")
-        if not job.get("parallax"): raise ValueError("This job is not a parallax edit.")
-        _claim(job["parallax"])
-        if other_job_id is None: other = sibling(studio, job)
-        else:
-            other = studio.jobs.get(other_job_id) if isinstance(other_job_id, str) else None
-            if not other or (other.get("parallax") or {}).get("plan_id") != job["parallax"]["plan_id"] or other["parallax"].get("stage") == job["parallax"]["stage"]:
-                raise ValueError("The other job is not the other stage of this parallax plan.")
-        if other is None:
-            missing = STAGE_NAMES[STAGES[1 - STAGES.index(job["parallax"]["stage"])]]
-            raise ValueError("Run the %s edit of this plan first; no layers were made." % missing)
-        plate, isolate = (job, other) if job["parallax"]["stage"] == "plate" else (other, job)
-        identifier = finish_id(plate["id"], isolate["id"])
-        if identifier in studio.jobs:
-            finished = studio.jobs[identifier]
-            for item in (plate, isolate):
-                if (item.get("parallax_finish") or {}).get("job_id") != identifier: _link(studio, item, finished)
-            return finished
-        for item in (plate, isolate):
-            if item.get("status") != "completed": raise ValueError("Split the layers after both edits complete; the %s edit is %s." % (STAGE_NAMES[item["parallax"]["stage"]], item.get("status")))
+    """An explicit split waits for the same bounded CPU owner used by automatic completion."""
+    task = studio.parallax_finisher.submit(job_id, other_job_id)
+    if isinstance(task, dict): return task
+    if not task.done.wait(300): raise ValueError("Layer splitting is still queued or running. Follow its progress in Recent runs; no duplicate split was queued.")
+    if task.error: raise ValueError(task.error)
+    return task.result
+
+
+def _finish_pair(studio, owner, task):
+    """Use admitted snapshots, then recheck ownership and all source bytes before final files exist."""
+    plate, isolate = task.stages; identifier = task.id
+    with ExitStack() as owned_images:
+        def own(image):
+            owned_images.callback(image.close); return image
         claim = plate["parallax"]; _claim(isolate["parallax"])
         context, source = _source(studio, claim["source_asset_id"])
-        if context["sha256"] != claim["source_sha256"]: raise ValueError("The parallax source changed; no layers were made.")
+        own(source)
+        if context["sha256"] != claim["source_sha256"] or source.size != (claim["width"], claim["height"]):
+            raise ValueError("The parallax source changed; no layers were made.")
         edits, records = {}, {}
         for item in (plate, isolate):
             output = _image_output(item); path, asset = studio.assets.file_entry(output["asset_id"]); raw = path.read_bytes()
-            if hashlib.sha256(raw).hexdigest() != asset["sha256"]: raise ValueError("A saved edit changed; no layers were made.")
-            with Image.open(io.BytesIO(raw)) as decoded: edits[item["parallax"]["stage"]] = (decoded.convert("RGB"), output, asset)
+            if _asset_identity(asset) != task.assets[item["parallax"]["stage"]] or hashlib.sha256(raw).hexdigest() != asset["sha256"]:
+                raise ValueError("A saved edit changed; no layers were made.")
+            with Image.open(io.BytesIO(raw)) as decoded:
+                edits[item["parallax"]["stage"]] = (own(decoded.convert("RGB")), output, asset)
         white = (255, 255, 255)
         plate_registered, records["plate"] = register(source, edits["plate"][0], source)
+        own(plate_registered)
         isolate_registered, records["isolate"] = register(source, edits["isolate"][0], white)
+        own(isolate_registered)
         images, record = layers(source, plate_registered, isolate_registered, claim["view_polygons"])
+        for image in images.values():
+            if image is not None: own(image)
         record["registration"] = records; record["summary"] = summary(record)
-        directory = studio.runs / identifier; directory.mkdir(parents=True, exist_ok=True)
         assets = [(name, images[name]) for name in ("far", "mid", "near") if images[name] is not None] + [("strip", images["strip"])]
         evidence = {"plate-registered.png": plate_registered, "isolate-registered.png": isolate_registered, "plate-matched.png": images["plate_matched"],
                     "near-matte.png": images["near_matte"], "view-mask.png": images["view_mask"]}
         files = {("parallax-strip.png" if name == "strip" else name + ".png"): png_bytes(image) for name, image in assets}
         files.update({name: png_bytes(image) for name, image in evidence.items()})
-        for filename, data in files.items(): (directory / filename).write_bytes(data)
         hashes = {filename: hashlib.sha256(data).hexdigest() for filename, data in files.items()}
         stage_receipts = {}
         for item in (plate, isolate):
@@ -662,15 +850,30 @@ def finish(studio, job_id, other_job_id=None):
                     "parallax": {"layer": name, "shift_px": shifts[name], "plan_id": claim["plan_id"], "summary": record["summary"]}} for name, _ in assets if name != "strip"]
         outputs.append({"filename": "parallax-strip.png", "run_file": "parallax-strip.png", "type": "output", "media_type": "image", "prompt_id": prompt_id,
                         "parallax": {"layer": "strip", "plan_id": claim["plan_id"], "summary": record["summary"]}})
-        finished = {"id": identifier, "operation": OPERATION, "status": "completed", "created_at": time.time(), "preset_id": "parallax-layers",
+        finished = {"id": identifier, "operation": OPERATION, "status": "completed", "created_at": task.requested_at, "preset_id": "parallax-layers",
                     "preset_name": "Parallax layers", "controls": {}, "batch_count": 1, "prompt_ids": [], "submissions": [], "references": [],
                     "parent_assets": [claim["source_asset_id"], edits["plate"][1]["asset_id"], edits["isolate"][1]["asset_id"]], "graph_path": "", "graph": {},
                     "parallax_receipt": receipt, "outputs": outputs,
                     "message": "Parallax layers split from plate prompt %s and isolate prompt %s. %s No generation was submitted." % (prompt_id, stage_receipts["isolate"]["prompt_id"], record["summary"])}
-        studio.index_outputs(finished); studio._save(finished)
-        with studio.lock: studio.jobs[identifier] = finished
-        for item in (plate, isolate): _link(studio, item, finished, save=False)   # both links hold in memory before either save
-        for item in (plate, isolate): studio._save(item)
+        with studio.lock:
+            owner._owned(task)
+            context = continuation.source_context(studio, claim["source_asset_id"])
+            if context["sha256"] != claim["source_sha256"] or (context["width"], context["height"]) != (claim["width"], claim["height"]):
+                raise ValueError("The parallax source changed; no layers were made.")
+            for expected in task.assets.values():
+                path, asset = studio.assets.file_entry(expected["id"])
+                if _asset_identity(asset) != expected or hashlib.sha256(path.read_bytes()).hexdigest() != expected["sha256"]:
+                    raise ValueError("A saved edit changed; no layers were made.")
+            directory = studio.runs / identifier; directory.mkdir(parents=True, exist_ok=True)
+            for filename, data in files.items(): (directory / filename).write_bytes(data)
+            studio.index_outputs(finished)
+            if any(not output.get("asset_id") for output in finished["outputs"]):
+                raise ValueError("Layer files were saved, but an asset could not be indexed. Inspect the retained files, then retry Split layers.")
+            studio._save(finished); studio.jobs[identifier] = finished
+            for item in task.jobs:
+                if (item.get("parallax_finish") or {}).get("attempt_id") == task.attempt: _link(studio, item, finished, save=False)
+            for item in task.jobs:
+                if (item.get("parallax_finish") or {}).get("attempt_id") == task.attempt: owner._save_marker(item)
         return finished
 
 
@@ -678,20 +881,33 @@ def _link(studio, job, finished, save=True):
     """Point a stage at its newest layer split; the in-memory link holds even when the save fails."""
     outputs = finished.get("outputs") or []
     with studio.lock:
-        job["parallax_finish"] = {"job_id": finished["id"], "asset_ids": {(o.get("parallax") or {}).get("layer"): o.get("asset_id") for o in outputs},
-                                  "summary": ((outputs[0].get("parallax") or {}).get("summary") if outputs else None)}
+        stages = {stage: finished["parallax_receipt"]["stages"][stage]["job_id"] for stage in STAGES}
+        previous = job.get("parallax_finish") or {}
+        # A cached receipt can replace a failed attempt for another pair sharing this stage.
+        same_pair = previous.get("finish_id") == finished["id"] and previous.get("stages") == stages
+        marker = {key: value for key, value in previous.items() if key not in ("error", "failed_at")} if same_pair else {}
+        job["parallax_finish"] = dict(marker, status="completed", job_id=finished["id"], finish_id=finished["id"], stages=stages,
+            asset_ids={(o.get("parallax") or {}).get("layer"): o.get("asset_id") for o in outputs},
+            summary=((outputs[0].get("parallax") or {}).get("summary") if outputs else None))
     if save: studio._save(job)
 
 
 def finish_after_run(studio, job):
-    """The worker's hook after a stage completes: split once both stages are in, and record a failure instead of raising."""
+    """Reserve the exact completed pair and return to generation before CPU finishing starts."""
     if not job.get("parallax") or job.get("status") != "completed" or (job.get("parallax_finish") or {}).get("job_id"): return
+    other = None
     try:
-        _claim(job["parallax"])
-        if sibling(studio, job) is None: return      # the other edit has not completed yet; its own completion finishes the pair
-        finish(studio, job["id"])
+        with studio.lock:
+            if studio.parallax_finisher.closed or studio.jobs.get(job["id"]) is not job: return
+            _claim(job["parallax"])
+            other = sibling(studio, job)
+            if other is None: return  # its own completion will admit the pair
+            studio.parallax_finisher.submit(job["id"], other["id"])
     except Exception as exc:  # a stage's own outcome never changes because its split failed
-        if (job.get("parallax_finish") or {}).get("job_id") in studio.jobs: return   # the layers exist; only saving the link failed
-        job["parallax_finish"] = {"error": str(exc)[:300], "failed_at": time.time()}
-        try: studio._save(job)
-        except Exception: pass
+        with studio.lock:
+            marker = job.get("parallax_finish") or {}
+            if studio.parallax_finisher.closed or studio.jobs.get(job["id"]) is not job or marker.get("job_id") in studio.jobs or marker.get("status") in ("queued", "running"): return
+            job["parallax_finish"] = {"status": "failed", "error": str(exc)[:300], "failed_at": time.time()}
+            if other is not None:
+                job["parallax_finish"]["stages"] = {item["parallax"]["stage"]: item["id"] for item in (job, other)}
+            studio.parallax_finisher._save_marker(job)
