@@ -13,6 +13,9 @@ from .adult_illustration_source_intake import (
     snapshot_huggingface,
 )
 from ._adult_illustration_source_transport_cache import SnapshotResponseCache
+from ._adult_illustration_source_evidence import (
+    EvidencePolicy, SnapshotEvidenceStore, resolve_payload_reference,
+)
 from ._adult_illustration_source_transport_common import (
     AUTHORITY,
     FETCH_SCHEMA,
@@ -42,12 +45,7 @@ def _fetch_result(
         "authority": "none",
         "snapshot": snapshot,
         "transport_receipt": receipt,
-        "raw_payload_ref": {
-            "sha256": digest,
-            "cache_key": receipt["request_key"],
-            "retained_in_cache": receipt["cache_state"]
-            in {"miss", "refreshed", "hit", "revalidated"},
-        },
+        "raw_payload_ref": transport.raw_payload_ref,
         **AUTHORITY,
     }
 
@@ -84,6 +82,9 @@ __all__ = [
     "HttpResponse",
     "MetadataPolicy",
     "SnapshotResponseCache",
+    "EvidencePolicy",
+    "SnapshotEvidenceStore",
+    "resolve_payload_reference",
     "StdlibMetadataExchange",
     "WireResponse",
     "fetch_civitai",
