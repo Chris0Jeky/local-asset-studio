@@ -7,6 +7,11 @@ on:
       - 'scripts/spoken_brief*.py'
       - 'app/static/spoken-brief*'
       - 'app/static/voice.html'
+      - 'app/static/studio-shell.js'
+      - 'app/static/studio-core.js'
+      - 'app/static/studio.css'
+      - 'app/static/studio-navigation.css'
+      - 'app/static/style.css'
       - 'tests/*spoken*'
       - '.github/workflows/spoken-brief-studio.yml'
 permissions:

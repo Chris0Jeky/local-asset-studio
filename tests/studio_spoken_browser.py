@@ -47,7 +47,7 @@ class SpokenBrowserTests(unittest.TestCase):
             def _safe_mutation(inner): return inner._safe_host() and inner.headers.get('Origin') == 'http://' + inner.headers['Host']
             def do_GET(inner): traffic.append(('GET', inner.path)); return super().do_GET()
             def do_POST(inner): traffic.append(('POST', inner.path)); return super().do_POST()
-        Handler.studio = SimpleNamespace(config={'spoken_briefs': {'archive_root': str(self.f.source.parent)}})
+        Handler.studio = SimpleNamespace(root=ROOT, config={'spoken_briefs': {'archive_root': str(self.f.source.parent)}})
         self.server = browser_server(Handler)
         self.thread = threading.Thread(target=self.server.serve_forever, kwargs={'poll_interval': .01}); self.thread.start()
         self.addCleanup(self.stop_server)
@@ -55,6 +55,8 @@ class SpokenBrowserTests(unittest.TestCase):
         self.addCleanup(self.context.close)
         self.page = self.context.new_page(); self.errors = []
         self.page.on('pageerror', lambda e: self.errors.append(str(e)))
+        self.page.route('**/api/catalog', lambda route: route.fulfill(json={'presets': []}))
+        self.page.route('**/api/looks', lambda route: route.fulfill(json={'looks': []}))
         self.origin = f'http://127.0.0.1:{self.server.server_port}'
         self.page.set_default_timeout(8000)
         self.page.goto(self.origin + '/spoken-briefs.html')
@@ -99,15 +101,108 @@ class SpokenBrowserTests(unittest.TestCase):
     def test_listening_return_link_reaches_existing_production_document(self):
         # Navigation itself also works without script execution or API side effects.
         with self.browser.new_context(java_script_enabled=False) as context:
-            page = context.new_page(); page.goto(self.origin + '/spoken-briefs.html')
-            link = page.locator('nav a').nth(1)
-            self.assertEqual('/#production', link.get_attribute('href'))
-            with page.expect_navigation() as navigation:
-                link.click()
-            self.assertEqual(200, navigation.value.status)
-            self.assertEqual(self.origin + '/#production', page.url)
-            self.assertEqual(1, page.locator('#productionView').count())
+            page = context.new_page()
+            for width in (1280, 390):
+                with self.subTest(width=width):
+                    page.set_viewport_size({'width': width, 'height': 900})
+                    page.goto(self.origin + '/spoken-briefs.html')
+                    nav = page.get_by_role('navigation', name='Studio views')
+                    self.assertEqual('page', nav.get_by_role('link', name='Spoken Briefs', exact=True).get_attribute('aria-current'))
+                    self.assertEqual('/voice.html', nav.get_by_role('link', name='Voice takes', exact=True).get_attribute('href'))
+                    link = nav.get_by_role('link', name='Compare & review', exact=True)
+                    self.assertEqual('/#production', link.get_attribute('href'))
+                    link.focus()
+                    with page.expect_navigation() as navigation:
+                        page.keyboard.press('Enter')
+                    self.assertEqual(200, navigation.value.status)
+                    self.assertEqual(self.origin + '/#production', page.url)
+                    self.assertEqual(1, page.locator('#productionView').count())
         self.assertFalse(any(method == 'POST' for method, _ in self.traffic))
+
+    def assert_shell_destination(self):
+        self.page.locator('.studio-sidebar').wait_for(state='attached')
+        self.assertEqual('Spoken Briefs', self.page.locator('#studioPageTitle').inner_text())
+        active = self.page.locator('.studio-sidebar [aria-current="page"]')
+        self.assertEqual(1, active.count())
+        self.assertEqual('/spoken-briefs.html', active.get_attribute('href'))
+        self.assertEqual(0, self.page.locator('.topbar').count())
+
+    def test_shared_sidebar_and_keyboard_finder_reach_spoken_briefs(self):
+        self.page.route('**/api/voice-baseline', lambda route: route.fulfill(
+            json={'capabilities': {'configured': False}, 'projects': []}))
+        for width in (1280, 390):
+            for entry in ('sidebar', 'finder'):
+                with self.subTest(width=width, entry=entry):
+                    self.page.set_viewport_size({'width': width, 'height': 900})
+                    self.page.goto(self.origin + '/voice.html')
+                    self.page.locator('.studio-sidebar').wait_for(state='attached')
+                    if entry == 'sidebar':
+                        if width == 390: self.page.locator('#studioNavToggle').click()
+                        link = self.page.locator('.studio-sidebar a[href="/spoken-briefs.html"]')
+                        self.assertEqual(1, link.count(), 'The shared sidebar must expose retained listening')
+                        self.assertTrue(link.is_visible())
+                        link.focus(); self.page.keyboard.press('Enter')
+                    else:
+                        self.page.keyboard.press('Control+k')
+                        self.page.locator('#studioCommandSearch').fill('spoken briefs')
+                        self.page.keyboard.press('ArrowDown')
+                        self.assertEqual('/spoken-briefs.html', self.page.evaluate('document.activeElement.getAttribute("href")'))
+                        self.page.keyboard.press('Enter')
+                    self.page.wait_for_url('**/spoken-briefs.html')
+                    self.assert_shell_destination()
+        self.assertFalse(any(method == 'POST' for method, _ in self.traffic))
+        self.assert_no_inference()
+
+    def test_spoken_shell_skip_focus_and_keyboard_dismissal(self):
+        for width in (1280, 390):
+            with self.subTest(width=width):
+                self.page.set_viewport_size({'width': width, 'height': 900})
+                self.page.goto(self.origin + '/spoken-briefs.html')
+                self.assert_shell_destination()
+                self.page.keyboard.press('Tab')
+                self.assertTrue(self.page.locator('.studio-skip').evaluate('(e)=>e===document.activeElement'))
+                self.page.keyboard.press('Enter')
+                self.assertTrue(self.page.locator('main').evaluate('(e)=>e===document.activeElement'))
+                self.page.keyboard.press('Control+k')
+                self.assertTrue(self.page.locator('#studioCommandSearch').evaluate('(e)=>e===document.activeElement'))
+                self.page.keyboard.press('Escape')
+                self.assertFalse(self.page.locator('#studioCommandDialog').evaluate('(e)=>e.open'))
+                self.assertTrue(self.page.locator('main').evaluate('(e)=>e===document.activeElement'))
+                if width == 390:
+                    toggle = self.page.locator('#studioNavToggle')
+                    toggle.focus(); self.page.keyboard.press('Enter')
+                    self.assertEqual('true', toggle.get_attribute('aria-expanded'))
+                    self.assertEqual('/spoken-briefs.html', self.page.evaluate('document.activeElement.getAttribute("href")'))
+                    self.page.keyboard.press('Escape')
+                    self.assertEqual('false', toggle.get_attribute('aria-expanded'))
+                    self.assertTrue(toggle.evaluate('(e)=>e===document.activeElement'))
+                    self.assertTrue(self.page.locator('.studio-sidebar').evaluate('(e)=>e.inert'))
+        self.assertFalse(any(method == 'POST' for method, _ in self.traffic))
+        self.assert_no_inference()
+
+    def test_spoken_shell_and_inspected_archive_fit_desktop_and_mobile(self):
+        for width in (1280, 390):
+            with self.subTest(width=width):
+                self.page.set_viewport_size({'width': width, 'height': 900})
+                self.page.goto(self.origin + '/spoken-briefs.html')
+                self.assert_shell_destination()
+                self.inspect()
+                self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'), width)
+                for selector in ('main', '.studio-globalbar', '.layout>aside', '#archivePanel', '#archiveList', '#player', '.table-wrap', '#reviewForm'):
+                    bounds = self.page.locator(selector).bounding_box()
+                    self.assertIsNotNone(bounds, selector)
+                    self.assertGreaterEqual(bounds['x'], 0, selector)
+                    self.assertLessEqual(bounds['x'] + bounds['width'], width + 1, selector)
+                self.assertGreaterEqual(self.page.locator('#rate').bounding_box()['width'], 60,
+                                        'The playback-speed field must remain readable beside its label')
+                self.assertTrue(self.page.locator('#player').evaluate('(a)=>a.paused && !a.autoplay && !a.currentTime'))
+                output = os.environ.get('SPOKEN_BROWSER_SCREENSHOT')
+                if output:
+                    target = Path(output).with_name('spoken-shell-%d.png' % width)
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    evidence_screenshot(self.page, path=str(target), full_page=True)
+        self.assertFalse(any(method == 'POST' for method, _ in self.traffic))
+        self.assert_no_inference()
 
     def test_native_voice_failure_disables_prepare_until_explicit_refresh(self):
         for width in (1280, 390):
