@@ -271,8 +271,8 @@ class SnapshotEvidenceStore:
 
     def resolve(self, ref):
         _validate_ref(ref)
-        if ref['store_id'] not in (None, self.store_id): return _resolution(ref, 'store_mismatch')
         if ref['retention_state'] != 'retained': return _resolution(ref, ref['retention_state'], detail=ref['detail'])
+        if ref['store_id'] not in (None, self.store_id): return _resolution(ref, 'store_mismatch')
         try:
             with self._connection() as db:
                 db.execute('BEGIN')  # One consistent payload/provenance/pruning view.

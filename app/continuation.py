@@ -175,8 +175,35 @@ def _slot_fields(preset, slot):
     return sorted(str(item[1]) for item in [preset[slot]] + list((preset.get("bindings_extra") or {}).get(slot) or [])) if preset.get(slot) else []
 
 
+MODEL_BASE_FIELDS = {
+    "CheckpointLoaderSimple": ("ckpt_name", "checkpoint_name"),
+    "ImageOnlyCheckpointLoader": ("ckpt_name", "checkpoint_name"),
+    "UNETLoader": ("unet_name",), "UnetLoaderGGUF": ("unet_name", "gguf_name"),
+    "HiDreamO1ModelLoader": ("model_name",),
+}
+
+
+def _model_only_base(graph, start):
+    """The actually connected MODEL base (loader kind, filename), or None for an unproved upstream path."""
+    seen, target = set(), str(start)
+    while target not in seen:
+        seen.add(target)
+        node = graph.get(target)
+        if not isinstance(node, dict) or not isinstance(node.get("inputs"), dict): return None
+        link = node["inputs"].get("model")
+        if not isinstance(link, list) or len(link) != 2 or type(link[1]) is not int or link[1] != 0: return None
+        target = str(link[0]); node = graph.get(target)
+        if target in seen or not isinstance(node, dict) or not isinstance(node.get("inputs"), dict): return None
+        kind = node.get("class_type")
+        if kind in ("LoraLoader", "LoraLoaderModelOnly") or kind in PASS_THROUGH["model"]: continue
+        values = [node["inputs"][field] for field in MODEL_BASE_FIELDS.get(kind, ()) if field in node["inputs"]]
+        if len(values) == 1 and isinstance(values[0], str) and values[0].strip(): return kind, values[0]
+        return None
+    return None
+
+
 def _model_only_problems(preset, graph, slot):
-    """A model-only slot has exactly one strength/file binding and feeds every sampler's MODEL."""
+    """A model-only slot has one strength/file binding, a connected base and every sampler's MODEL."""
     binding = preset.get(slot)
     if not binding: return []
     node = str(binding[0]); adapter = graph.get(node, {})
@@ -192,6 +219,8 @@ def _model_only_problems(preset, graph, slot):
         problems.append("%s: vary cannot determine whether model-only adapter node %s feeds every sampler MODEL input" % (name, node))
     elif not all(paths):
         problems.append("%s: vary model-only adapter node %s does not feed every sampler through its MODEL output" % (name, node))
+    if _model_only_base(graph, node) is None:
+        problems.append("%s: vary cannot determine the connected base for model-only adapter node %s (unknown upstream shape, invalid MODEL port, cycle or missing loader)" % (name, node))
     return problems
 
 
@@ -246,6 +275,10 @@ def _carry_problems(preset, graph, vary, sources, graph_of, bound):
                 if source_kind != route_kind:
                     problems.append("%s: vary source %s changes %s loader kind (%s, not %s)" % (name, source_id, key, source_kind, route_kind))
                 problems += _model_only_problems(source, source_graph, key)
+                if source_kind == route_kind == "LoraLoaderModelOnly":
+                    source_base, route_base = _model_only_base(source_graph, str(source[key][0])), _model_only_base(graph, str(preset[key][0]))
+                    if source_base is not None and route_base is not None and source_base != route_base:
+                        problems.append("%s: vary source %s connected base %s differs from route %s for %s" % (name, source_id, source_base, route_base, key))
             accepted = (preset.get("choices") or {}).get(key)
             if accepted is not None:
                 recorded = (source.get("choices") or {}).get(key)

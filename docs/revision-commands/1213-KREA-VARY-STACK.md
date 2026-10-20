@@ -42,6 +42,10 @@ Its narrow attestation requires:
   to its `lora_name`, without an extra strength or CLIP footprint;
 - every carried model-only adapter to reach every sampler MODEL input on both the
   source and destination graph;
+- every model-only adapter's upstream MODEL path to reach a recognized base
+  loader through known adapters and MODEL forwarders, using output port zero;
+- that connected loader's kind and filename to match for each source/destination
+  slot, rather than treating unused declared loader names as connection evidence;
 - every source adapter to be carried, and no destination adapter supplied by its
   own defaults instead of the source.
 
@@ -90,6 +94,14 @@ Independent review found a filename fan-out gap. Separate source and destination
 regressions exercised the real `Studio._bind_control`: the fourth filename
 overwrote the first while validation returned no problems. Both tests failed
 before the filename-footprint correction and pass after it.
+The subsequent Codex review found that downstream reachability stopped at the
+adapter and left its own MODEL input unproved. Seven added test methods reproduced
+19 assertion/subtest failures before the upstream correction: source and route
+unknown wrappers before the first adapter, invalid ports/links, missing nodes,
+cycles, invalid base filename fields, and different connected bases hidden by
+matching sets of declared orphan loaders. Known MODEL forwarders stay supported.
+The correction traces each model-only stack upstream and compares its connected
+base; the WAI MODEL/CLIP attestation and catalog/client declarations are unchanged.
 
 Run the bounded checks:
 

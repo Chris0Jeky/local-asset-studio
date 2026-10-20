@@ -70,5 +70,24 @@ class SourceEvidenceCliTests(unittest.TestCase):
             self.assertEqual(code, 0); self.assertEqual(resolved['state'], 'corrupt')
             self.assertFalse(resolved['execution_authorized']); self.assertFalse(resolved['generation_submitted'])
 
+    def test_unretained_capture_state_survives_different_and_recreated_cli_store(self):
+        with tempfile.TemporaryDirectory() as root:
+            root = Path(root); evidence = root/'evidence'; other = root/'other'; source = root/'ref.json'
+            fetch = ['huggingface', '--repo', 'owner/model', '--revision', 'main', '--allow-network']
+            code, quota = self.command(fetch + ['--evidence-dir', str(evidence), '--evidence-max-bytes', '1'], FakeExchange())
+            self.assertEqual(code, 0); self.assertEqual(quota['raw_payload_ref']['retention_state'], 'quota_exceeded')
+            code, retained = self.command(fetch + ['--evidence-dir', str(other)], FakeExchange())
+            self.assertEqual(code, 0)
+            for value, target, expected in ((quota, other, 'quota_exceeded'), (retained, evidence, 'store_mismatch')):
+                source.write_text(json.dumps(value))
+                code, resolved = self.command(['resolve', '--ref', str(source), '--evidence-dir', str(target)])
+                self.assertEqual(code, 0); self.assertEqual(resolved['state'], expected)
+            (evidence/'payload-evidence.sqlite3').unlink()
+            self.assertEqual(self.command(fetch + ['--evidence-dir', str(evidence)], FakeExchange())[0], 0)
+            source.write_text(json.dumps(quota))
+            code, resolved = self.command(['resolve', '--ref', str(source), '--evidence-dir', str(evidence)])
+            self.assertEqual(code, 0); self.assertEqual(resolved['state'], 'quota_exceeded')
+            self.assertIsNone(resolved['body_base64']); self.assertFalse(resolved['execution_authorized'])
+
 
 if __name__ == '__main__': unittest.main()

@@ -414,6 +414,62 @@ class ModelOnlyCarryContract(unittest.TestCase):
             if kind == "UnknownModelWrapper": self.assertTrue(any("cannot determine" in p for p in self.problems()), self.problems())
             else: self.assertEqual(self.problems(), [])
 
+    def assert_upstream_wrapper_is_refused(self, preset_id):
+        def wrapper(graph):
+            graph["30"] = {"class_type": "UnknownModelWrapper", "inputs": {"model": ["1", 0]}}
+            graph["10"]["inputs"]["model"] = ["30", 0]
+        self.edits = {preset_id: [wrapper]}
+        # Every adapter still reaches the sampler, and the declared base name is unchanged. Neither proves its input.
+        graph = self.graph(by_id(self.presets, preset_id))
+        self.assertTrue(continuation._lora_feeds(graph, "10", "7", "model"))
+        self.assertEqual(continuation._models(graph), continuation._models(graph_of(self.route)))
+        self.assertTrue(any(p.startswith(preset_id + ":") and "connected base" in p for p in self.problems()), self.problems())
+
+    def test_model_only_route_unknown_wrapper_before_first_adapter_is_refused(self):
+        self.assert_upstream_wrapper_is_refused("krea-refine")
+
+    def test_model_only_source_unknown_wrapper_before_first_adapter_is_refused(self):
+        self.assert_upstream_wrapper_is_refused("krea-anime-atelier")
+
+    def test_model_only_upstream_links_need_a_real_model_output_without_cycles_or_missing_nodes(self):
+        for preset_id in ("krea-refine", "krea-anime-atelier"):
+            for link in (["1", 1], ["missing", 0], ["10", 0], ["1", True], "1", None):
+                with self.subTest(preset=preset_id, link=link):
+                    self.edits = {preset_id: [lambda graph: graph["10"]["inputs"].update(model=link)]}
+                    self.assertTrue(any(p.startswith(preset_id + ":") and "connected base" in p for p in self.problems()), self.problems())
+
+    def test_model_only_known_forwarders_before_first_adapter_are_supported(self):
+        for kind in sorted(continuation.PASS_THROUGH["model"]):
+            def wrapper(graph):
+                graph["30"] = {"class_type": kind, "inputs": {"model": ["1", 0]}}
+                graph["10"]["inputs"]["model"] = ["30", 0]
+            self.edits = {key: [wrapper] for key in ("krea-refine", "krea-anime-atelier")}
+            self.assertEqual(self.problems(), [], kind)
+        self.edits["krea-refine"].append(lambda graph: graph["10"]["inputs"].update(model=["30", 1]))
+        self.assertTrue(any("krea-refine:" in p and "connected base" in p for p in self.problems()), self.problems())
+
+    def test_model_only_connected_base_cannot_be_masked_by_matching_orphan_loader_names(self):
+        def extra_base(graph):
+            graph["30"] = copy.deepcopy(graph["1"])
+            graph["30"]["inputs"]["unet_name"] = "other-base.safetensors"
+        self.edits = {key: [extra_base] for key in ("krea-refine", "krea-anime-atelier")}
+        self.edits["krea-refine"].append(lambda graph: graph["10"]["inputs"].update(model=["30", 0]))
+        source = by_id(self.presets, "krea-anime-atelier")
+        self.assertEqual(continuation._models(self.graph(self.route)), continuation._models(self.graph(source)),
+                         "Both graphs declare both base names, but their stacks draw from different loaders")
+        self.assertTrue(any("krea-anime-atelier" in p and "connected base" in p for p in self.problems()), self.problems())
+
+    def test_model_only_connected_base_includes_the_recognized_loader_kind(self):
+        self.edits = {"krea-refine": [lambda graph: graph["1"].update(class_type="UnetLoaderGGUF")]}
+        self.assertTrue(any("krea-anime-atelier" in p and "connected base" in p for p in self.problems()), self.problems())
+
+    def test_model_only_connected_base_needs_its_own_single_filename_field(self):
+        for inputs in ({"ckpt_name": "krea2_turbo_fp8_scaled.safetensors"},
+                       {"unet_name": ["missing", 0], "ckpt_name": "krea2_turbo_fp8_scaled.safetensors"}):
+            with self.subTest(inputs=inputs):
+                self.edits = {"krea-refine": [lambda graph: graph["1"].update(inputs=inputs)]}
+                self.assertTrue(any(p.startswith("krea-refine:") and "connected base" in p for p in self.problems()), self.problems())
+
 
 class VaryClientPolicy(unittest.TestCase):
     @unittest.skipUnless(shutil.which("node"), "Node required for client policy checks")

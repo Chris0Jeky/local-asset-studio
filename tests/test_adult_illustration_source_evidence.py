@@ -308,6 +308,35 @@ print(json.dumps(result['raw_payload_ref']))
                         self.assertEqual(hashlib.sha256(raw.encode('utf-8')).hexdigest(), ref['sha256'])
                 self.assertEqual(api.SnapshotEvidenceStore(root).resolve(ref)['state'], 'corrupt')
 
+    def test_unretained_capture_states_survive_different_and_recreated_stores(self):
+        original = self.store(); retained = self.fetch(original)['raw_payload_ref']
+        refs = [self.fetch(None)['raw_payload_ref']]
+        with patch.object(original, '_commit', side_effect=OSError('fixture publication failure')):
+            refs.append(self.fetch(original)['raw_payload_ref'])
+        original.prune(retained['sha256']); refs.append(self.fetch(original)['raw_payload_ref'])
+        changed = _civitai_payload(); changed['name'] = 'fixture corruption'
+        corrupt = self.fetch(original, changed)['raw_payload_ref']
+        with closing(sqlite3.connect(original.path)) as db, db:
+            db.execute('UPDATE payloads SET body=? WHERE sha256=?', (b'changed', corrupt['sha256']))
+        refs.append(self.fetch(original, changed)['raw_payload_ref'])
+        quota = api.SnapshotEvidenceStore(self.root/'quota', policy=api.EvidencePolicy(max_total_bytes=1))
+        refs.append(self.fetch(quota)['raw_payload_ref'])
+        self.assertEqual({ref['retention_state'] for ref in refs},
+                         {'disabled', 'publication_failed', 'pruned', 'corrupt', 'quota_exceeded'})
+        different = api.SnapshotEvidenceStore(self.root/'different')
+        original.path.unlink(); recreated = self.store()
+        self.assertNotEqual(original.store_id, recreated.store_id)
+        for target in (different, recreated):
+            for ref in refs:
+                for resolved in (target.resolve(ref), api.resolve_payload_reference(ref, evidence_store=target),
+                                 api.resolve_payload_reference(ref)):
+                    with self.subTest(store=target.store_id, state=ref['retention_state']):
+                        self.assertEqual(resolved['state'], ref['retention_state'])
+                        self.assertIsNone(resolved['body_base64']); self.assertIsNone(resolved['provenance'])
+                        self.assert_authority(resolved)
+            self.assertEqual(target.resolve(retained)['state'], 'store_mismatch')
+            self.assertEqual(api.resolve_payload_reference(retained, evidence_store=target)['state'], 'store_mismatch')
+
     def test_credential_and_payload_limits_refuse_before_any_evidence_commit(self):
         store = self.store(); exchange = ScriptedExchange(AssertionError('credential request escaped'))
         transport = api.BoundedProviderTransport(exchange=exchange, evidence_store=store)
