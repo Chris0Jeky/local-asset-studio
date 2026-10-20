@@ -5,12 +5,14 @@ Studio access, helper calls, graph binding or generation happen in this module.
 """
 from __future__ import annotations
 import base64
+from contextlib import closing
 import copy
 import hashlib
 import io
 import warnings
 from PIL import Image, UnidentifiedImageError
 from .reference_analysis import draft, review_template, validate_report
+from .reference_intake import _CapturedImage
 from .schema import canonical, decode, digest, fields, need, text, validate
 
 HTTP_LIMIT = 48 * 1024 * 1024
@@ -46,19 +48,27 @@ def _images(report, rows):
         fields(row, ('reference_id', 'media_base64'))
         need(row['reference_id'] == ref['id'], 'Original image identity/order changed')
         encoded = row['media_base64']
-        need(type(encoded) is str and 0 < len(encoded) <= ENCODED_LIMIT, 'Original image exceeds the 8 MiB limit')
-        raw = base64.b64decode(encoded, validate=True)
-        need(0 < len(raw) <= IMAGE_LIMIT, 'Original image exceeds the 8 MiB limit')
+        if type(encoded) is _CapturedImage:
+            raw = encoded.raw
+        else:
+            need(type(encoded) is str and 0 < len(encoded) <= ENCODED_LIMIT, 'Original image exceeds the 8 MiB limit')
+            raw = base64.b64decode(encoded, validate=True)
+        need(type(raw) is bytes and 0 < len(raw) <= IMAGE_LIMIT, 'Original image exceeds the 8 MiB limit')
         need(hashlib.sha256(raw).hexdigest() == ref['sha256'], 'Reference bytes changed; choose the exact analyzed original')
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter('error', Image.DecompressionBombWarning)
-                with Image.open(io.BytesIO(raw)) as image:
-                    need(image.format in ('PNG', 'JPEG', 'WEBP'), 'Choose a PNG, JPEG or WebP image')
-                    need(0 < image.width * image.height <= PIXEL_LIMIT and getattr(image, 'n_frames', 1) == 1,
-                         'Original image exceeds the pixel/frame limit')
-                    image.verify()
-                with Image.open(io.BytesIO(raw)) as image: image.load()
+                for verify in (True, False):
+                    with io.BytesIO(raw) as stream, closing(Image.open(stream)) as image:
+                        if verify:
+                            need(image.format in ('PNG', 'JPEG', 'WEBP'), 'Choose a PNG, JPEG or WebP image')
+                            need(0 < image.width * image.height <= PIXEL_LIMIT and getattr(image, 'n_frames', 1) == 1,
+                                 'Original image exceeds the pixel/frame limit')
+                            image.verify()
+                        else: image.load()
+                    # close() releases pixels; dropping the owner also releases
+                    # codec buffers (notably WebP) before the next open allocates.
+                    del image
         except (UnidentifiedImageError, OSError, SyntaxError, Image.DecompressionBombError, Image.DecompressionBombWarning) as exc:
             raise ValueError('Original image could not be decoded within its limits') from exc
         images[ref['id']] = raw
