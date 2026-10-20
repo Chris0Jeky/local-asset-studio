@@ -346,7 +346,10 @@ class FinishWorkerTests(unittest.TestCase):
             entered.set()
             if not release.wait(10): raise ValueError('test did not release CPU finishing')
             return layers(*args, **kwargs)
-        with patch.object(parallax, 'layers', side_effect=blocked):
+        # Publication ownership is independent of the affine fit, covered by RegistrationTests.
+        # Keep the event barrier reachable under the full suite's allocation tracing.
+        with patch.object(parallax, 'register', side_effect=lambda source, edit, fill: (edit.copy(), {'fallback': 'fixture'})), \
+             patch.object(parallax, 'layers', side_effect=blocked):
             results, errors, callers = self.callers(studio, isolate['id'])
             try:
                 self.assertTrue(entered.wait(5))
@@ -369,7 +372,8 @@ class FinishWorkerTests(unittest.TestCase):
             entered.set()
             if not release.wait(10): raise ValueError('test did not release CPU finishing')
             return layers(*args, **kwargs)
-        with patch.object(parallax, 'layers', side_effect=blocked):
+        with patch.object(parallax, 'register', side_effect=lambda source, edit, fill: (edit.copy(), {'fallback': 'fixture'})), \
+             patch.object(parallax, 'layers', side_effect=blocked):
             results, errors, callers = self.callers(studio, isolate['id'])
             try:
                 self.assertTrue(entered.wait(5))
@@ -413,7 +417,9 @@ class FinishWorkerTests(unittest.TestCase):
             response = request(path, *args, **kwargs)
             if path == '/prompt' and response.get('prompt_id') == 'following': submitted.set()
             return response
-        with patch.object(parallax, 'layers', side_effect=blocked), patch.object(studio, '_request', side_effect=observe_request), \
+        # Exercise the real generation consumer and finish owner; the affine fit has separate tests.
+        with patch.object(parallax, 'register', side_effect=lambda source, edit, fill: (edit.copy(), {'fallback': 'fixture'})), \
+             patch.object(parallax, 'layers', side_effect=blocked), patch.object(studio, '_request', side_effect=observe_request), \
              patch.object(studio.queue, 'get', side_effect=[(action, isolate['id']), ('generate', following['id']), SystemExit]):
             worker = threading.Thread(target=studio._work, name='parallax-test-generation', daemon=True)
             worker.start()
