@@ -178,14 +178,22 @@ Do not collapse these dimensions:
 | Reusability | Can the accepted result continue into the next task with lineage? |
 | Rights | Are the exact resources and intended use permitted? |
 
+## Delivered UX corrections — 14 September 2026
+
+The matrix's [dated fixes](../UX-USE-CASE-MATRIX.md#top-friction-points) and
+[same-day remeasurement](../UX-USE-CASE-MATRIX.md#re-measured-after-fixes) record four delivered outcomes:
+
+- **Source-route recovery:** text-only Create recipes keep the source section visible, explain why a picture cannot be attached and offer **Show reference recipes**. The wrong-turn journey's dead ends fell from two to zero.
+- **Saved-revision readiness:** Workflow Studio's **Prepare saved revision** has an adjacent reason from the same snapshot that controls its disabled state. The builder journey's unexplained disabled controls fell from one to zero.
+- **Negative wording:** the negative/avoid disclosure opens by default when the recipe binds that field; a manual collapse remains local to the tab.
+- **Three references in one visit:** the picker stays open and advances to the next unfilled slot. The measured journey fell from seven to five clicks and six to two view switches.
+
+These are historical frontend fixture outcomes: ten journeys completed with zero generation requests and zero page exceptions. They do not establish owner usability, creative quality or licensing acceptance.
+
 ## Highest-value remaining UX work
 
-1. Keep source affordances visible on text-only routes with a direct reference-capable alternative.
-2. Explain every disabled Workflow Studio action adjacent to the control.
-3. Keep negative/avoid wording visible when a recipe supports it.
-4. Allow one picker visit to fill multiple ordered reference roles.
-5. Reduce persistent explanation density using local “Why?” disclosures.
-6. Bring accepted/reuse actions closer to candidate review.
-7. Run issue #313 and let real owner friction determine the next changes.
+1. Reduce persistent explanation density using local “Why?” disclosures.
+2. Bring accepted/reuse actions closer to candidate review.
+3. Run [issue #313](https://github.com/Chris0Jeky/local-asset-studio/issues/313) and let real owner friction determine the next changes.
 
 The target is not a UI with fewer words at any cost. It is a UI in which the visible words directly enable the next decision.
