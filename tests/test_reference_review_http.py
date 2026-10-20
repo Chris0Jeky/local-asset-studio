@@ -2,12 +2,14 @@
 import copy
 import http.client
 import json
+import socket
 import threading
 import unittest
 from http.server import BaseHTTPRequestHandler
 from http_test_server import ThreadingHTTPServer
 from unittest.mock import Mock, patch
 from studio_prompt import reference_review
+from studio_prompt import reference_intake
 from studio_prompt.http_extension import extend_handler
 from test_server import server
 import test_reference_review as fixtures
@@ -18,6 +20,7 @@ class ReferenceReviewHttpTests(unittest.TestCase):
         self.fixture = fixtures.ReferenceReviewTests(); self.fixture.setUp()
         self.studio = Mock()
         class Base(BaseHTTPRequestHandler):
+            protocol_version = 'HTTP/1.1'
             _safe_host = server.Handler._safe_host
             _safe_mutation = server.Handler._safe_mutation
             _content_length = server.Handler._content_length
@@ -94,6 +97,51 @@ class ReferenceReviewHttpTests(unittest.TestCase):
         status, result = self.call('reference-review/preview', json.dumps(payload).encode())
         self.assertEqual(status, 400); self.assertIn('changed', result['error'])
         self.assertEqual(self.fixture.payload, before)
+
+    def raw_request(self, body=b'', *, lengths=(), extra='', half_close=False):
+        sock = socket.create_connection(('127.0.0.1', self.server.server_port), timeout=2)
+        self.addCleanup(sock.close)
+        headers = 'POST /api/prompt/reference-review/preview HTTP/1.1\r\nHost: localhost:8191\r\nOrigin: http://localhost:8191\r\nContent-Type: application/json\r\n'
+        headers += ''.join('Content-Length: %s\r\n' % length for length in lengths) + extra + '\r\n'
+        sock.sendall(headers.encode() + body)
+        if half_close: sock.shutdown(socket.SHUT_WR)
+        response = http.client.HTTPResponse(sock); response.begin()
+        result = json.loads(response.read())
+        return sock, response.status, result
+
+    def test_successful_preview_leaves_persistent_connection_ready_for_the_next_request(self):
+        connection = http.client.HTTPConnection('127.0.0.1', self.server.server_port, timeout=2)
+        self.addCleanup(connection.close); original_socket = None
+        for _ in range(2):
+            connection.request('POST', '/api/prompt/reference-review/preview', json.dumps(self.fixture.payload),
+                {'Host': 'localhost:8191', 'Origin': 'http://localhost:8191', 'Content-Type': 'application/json'})
+            response = connection.getresponse(); result = json.loads(response.read())
+            self.assertEqual(response.status, 200, result.get('error'))
+            self.assertTrue(result['source_bytes_verified'])
+            self.assertIsNotNone(connection.sock)
+            if original_socket is not None: self.assertIs(connection.sock, original_socket)
+            original_socket = connection.sock
+
+    def test_incomplete_declared_body_closes_after_refusal_on_the_real_socket(self):
+        raw = json.dumps(self.fixture.payload).encode()
+        sock, status, result = self.raw_request(raw, lengths=[len(raw) + 1], half_close=True)
+        self.assertEqual(status, 400, result.get('error'))
+        self.assertIn('Incomplete', result['error'])
+        self.assertEqual(sock.recv(1), b'')
+
+    def test_ambiguous_headers_are_rejected_before_a_client_sends_their_body(self):
+        for lengths, extra in (([100, 100], ''), ([100, 101], ''), ([100], 'Transfer-Encoding: chunked\r\n')):
+            with self.subTest(lengths=lengths, extra=extra):
+                sock, status, result = self.raw_request(lengths=lengths, extra=extra)
+                self.assertEqual(status, 400, result.get('error'))
+                self.assertEqual(sock.recv(1), b'')
+
+    def test_stalled_body_releases_its_socket_with_a_bounded_error_response(self):
+        with patch.object(reference_intake, 'READ_TIMEOUT_SECONDS', 0.05):
+            sock, status, result = self.raw_request(b'{', lengths=[100])
+        self.assertEqual(status, 400, result.get('error'))
+        self.assertIn('timed out', result['error'])
+        self.assertEqual(sock.recv(1), b'')
 
 
 if __name__ == '__main__': unittest.main()

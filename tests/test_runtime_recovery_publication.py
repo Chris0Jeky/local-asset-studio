@@ -132,6 +132,66 @@ class RuntimeRecoveryPublicationTests(unittest.TestCase):
         self.assertEqual(self._saved(), before)
         self.assertEqual(self.studio.backends.launches, 0)
 
+    def test_failed_health_publication_still_invalidates_observed_runtime_schema(self):
+        for observation in ('first-health', 'endpoint-change', 'process-change'):
+            for phase in ('file', 'post-replace'):
+                with self.subTest(observation=observation, phase=phase):
+                    r = self._retained(None)
+                    r.studio.backends.online = True
+                    r.studio.backends.listener = SimpleNamespace(pid=40, create_time=lambda: 100.0)
+                    if observation != 'first-health': r.tick()
+                    if observation == 'endpoint-change': r.studio.backends.stats['system']['comfyui_version'] = 'replacement'
+                    if observation == 'process-change': r.studio.backends.listener = SimpleNamespace(pid=41, create_time=lambda: 200.0)
+                    r.studio._schema = {'previous-runtime': {}}
+                    r.studio._schema_at = runtime_recovery.time.monotonic()
+                    r.studio._schema_lock = runtime_recovery.threading.Lock()
+                    current_schema = {'replacement-runtime': {}}
+                    r.studio._request = lambda route, timeout: current_schema
+                    before = copy.deepcopy(r.state)
+                    original = Path.replace
+                    def replace(path, target):
+                        original(path, target)
+                        raise OSError('post-replace fault')
+                    failure = self._sync_failure('file') if phase == 'file' else patch.object(Path, 'replace', replace)
+                    with failure, self.assertRaisesRegex(OSError, 'file sync fault|post-replace fault'): r.tick()
+                    self.assertEqual(r.state, before, 'Failed health publication cannot release recovery authority')
+                    self.assertTrue(r.snapshot()['inspection_required'])
+                    self.assertEqual(r.studio.backends.launches, 0)
+                    self.assertIsNone(r.studio._schema, 'A current replacement observation must invalidate the old schema even when its record fails')
+                    self.assertEqual(r.studio._schema_at, 0)
+                    self.assertEqual(RealStudio.node_info(r.studio), current_schema)
+
+    def test_failed_continuous_health_publication_preserves_current_schema(self):
+        r = self.recovery
+        self.studio.backends.online = True
+        r.tick()
+        self.studio._schema = {'current-runtime': {}}
+        self.studio._schema_at = runtime_recovery.time.monotonic()
+        before = copy.deepcopy(r.state)
+        with self._sync_failure('file'), self.assertRaisesRegex(OSError, 'file sync fault'): r.tick()
+        self.assertEqual(r.state, before)
+        self.assertEqual(self.studio._schema, {'current-runtime': {}})
+        self.assertGreater(self.studio._schema_at, 0)
+
+    def test_failed_disconnect_publication_cannot_mask_a_later_reconnect(self):
+        r = self.recovery
+        self.studio.backends.online = True
+        r.tick()
+        self.studio._schema = {'previous-runtime': {}}
+        self.studio._schema_at = runtime_recovery.time.monotonic()
+        self.studio.backends.online = False
+        before = copy.deepcopy(r.state)
+        with patch('os.fsync', side_effect=OSError('storage unavailable')):
+            with self.assertRaisesRegex(OSError, 'storage unavailable'): r.tick()
+            with self.assertRaisesRegex(OSError, 'storage unavailable'):
+                r._record('blocked', 'Monitor diagnostic also cannot publish.')
+        self.assertEqual(r.state, before)
+        self.studio.backends.online = True
+        r.tick()
+        self.assertEqual(r.snapshot()['status'], 'healthy')
+        self.assertIsNone(self.studio._schema, 'A failed disconnect record cannot make reconnected runtime schema continuous')
+        self.assertEqual(self.studio._schema_at, 0)
+
     def test_log_open_failure_preserves_committed_state_and_retries_only_the_log(self):
         r = self.recovery
         old_event = copy.deepcopy(r._last_event)

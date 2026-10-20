@@ -100,16 +100,25 @@ def extend_handler(base):
             if self.headers.get('Content-Type','').split(';')[0]!='application/json':
                 return reject_json(self,400,{'error':'application/json required','generation_submitted':False})
             try:
-                # Only reference review accepts four original images; every source
-                # has its own byte/pixel cap and no input is persisted or executed.
                 limit = 1024*1024
                 if self.path == '/api/prompt/reference-review/preview':
-                    from .reference_review import HTTP_LIMIT
-                    limit = HTTP_LIMIT
-                body=self.rfile.read(self._content_length(limit))
-                result=dispatch(self.path,decode(body, limit=limit),self.studio)
+                    from .reference_intake import preview_body
+                    from .reference_review import HTTP_LIMIT, IMAGE_LIMIT, ENCODED_LIMIT
+                    # Keep the existing four-image JSON contract without ever
+                    # allocating its aggregate body or base64 strings. Originals
+                    # belong to this context and are released before responding.
+                    with preview_body(self, http_limit=HTTP_LIMIT, image_limit=IMAGE_LIMIT,
+                                      encoded_limit=ENCODED_LIMIT) as value:
+                        result=dispatch(self.path,value,self.studio)
+                else:
+                    body=self.rfile.read(self._content_length(limit))
+                    result=dispatch(self.path,decode(body, limit=limit),self.studio)
                 return self._json(200,result)
             except (ValueError,KeyError,TypeError,IndexError,RecursionError,OSError) as exc:
+                if self.path == '/api/prompt/reference-review/preview':
+                    # Intake can stop mid-image. Do not drain the original length
+                    # again or interpret remaining body bytes as another request.
+                    self.close_connection = True
                 return self._json(400,{'error':str(exc),'generation_submitted':False})
     # Compose at the existing extension seam; no second server or worker.
     from studio_workflow.http_extension import extend_handler as workflow_handler

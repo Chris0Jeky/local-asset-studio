@@ -88,6 +88,8 @@ class RuntimeRecovery:
         return result
 
     def _record(self, status, message, *, _clear=(), _release=False, _force_log=False, **extra):
+        # Cache continuity follows observations even when their state cannot publish.
+        if status != 'healthy': self._schema_endpoint_identity = None
         if self._retained_state_issue: raise ValueError(self._retained_state_issue)
         now = time.time()
         candidate = copy.deepcopy(self.state)
@@ -223,11 +225,13 @@ class RuntimeRecovery:
         continuous = self.state.get("status") == "healthy" and endpoint == self._schema_endpoint_identity
         changed_process = (observed_process is not None and self._schema_process_identity is not None
                            and observed_process != self._schema_process_identity)
-        self._record("healthy", "Selected backend is healthy.", endpoint_identity=identity, attempts=0,
-                     _clear=('startup_pid', 'startup_at', 'breaker_until', 'launch_pending'), _release=True)
+        # A current runtime observation invalidates cache independently of whether
+        # publishing its recovery allowance can complete.
         if not continuous or changed_process:
             self.studio._schema = None
             self.studio._schema_at = 0
+        self._record("healthy", "Selected backend is healthy.", endpoint_identity=identity, attempts=0,
+                     _clear=('startup_pid', 'startup_at', 'breaker_until', 'launch_pending'), _release=True)
         # Missing optional metadata is not a process change. Retain the last
         # observation only for comparison with a later *observed* identity.
         # Reconnects/endpoints reset it; snapshots still report current evidence.
