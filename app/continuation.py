@@ -224,13 +224,44 @@ def _model_only_problems(preset, graph, slot):
     return problems
 
 
+def _carry_slot_map_problems(preset, graph, carry):
+    """Each carried slot owns one adapter; all primary/companion writes preserve that ownership."""
+    name, extras, owners, problems = preset.get("id"), preset.get("bindings_extra") or {}, {}, []
+    def bindings(key):
+        values = ([preset[key]] if preset.get(key) else []) + list(extras.get(key) or [])
+        return [(str(item[0]), str(item[1])) for item in values if isinstance(item, (list, tuple)) and len(item) == 2]
+    for slot in VARY_LORA_SLOTS:
+        if slot not in carry or not preset.get(slot): continue
+        node = str(preset[slot][0]); kind = graph.get(node, {}).get("class_type")
+        if node in owners:
+            problems.append("%s: vary carried slots %s and %s alias adapter node %s" % (name, owners[node], slot, node))
+        else: owners[node] = slot
+        if kind not in ("LoraLoader", "LoraLoaderModelOnly"):
+            problems.append("%s: vary cannot determine the carried adapter kind for %s at node %s" % (name, slot, node))
+        strength = bindings(slot); allowed = {"strength_model", "strength_clip"} if kind == "LoraLoader" else {"strength_model"}
+        if not strength or len(set(strength)) != len(strength) or any(target != node or field not in allowed for target, field in strength):
+            problems.append("%s: vary %s strength bindings must write only legal strengths on its own adapter node %s" % (name, slot, node))
+        if bindings(slot + "_name") != [(node, "lora_name")]:
+            problems.append("%s: vary %s_name needs exactly its own adapter node %s lora_name binding" % (name, slot, node))
+    # A cfg/sampler/round-owned steps binding can overwrite the stack too. Reserve the adapter's structural inputs
+    # as well as its strengths/name; unrelated controls may not invalidate the graph after this attestation.
+    for key in sorted(set(preset) | set(extras)):
+        for node, field in bindings(key):
+            if node not in owners: continue
+            slot = owners[node]
+            owner = slot + "_name" if field == "lora_name" else slot if field in ("strength_model", "strength_clip") else None
+            if key != owner:
+                problems.append("%s: vary %s binding competes with carried %s at adapter node %s input %s" % (name, key, slot, node, field))
+    return problems
+
+
 def _carry_problems(preset, graph, vary, sources, graph_of, bound):
     """A route that carries its source's recorded LoRA stack (`carry`, a list of control names the page copies from the
     picture's run) must draw with the same checkpoint, carry every adapter the source can use, and add none of its own."""
     name, carry = preset.get("id"), vary["carry"]
     if not isinstance(carry, list) or not carry or any(not isinstance(item, str) for item in carry) or len(set(carry)) != len(carry):
         return ["%s: vary carry must be a non-empty list of distinct control names" % name]
-    problems, own = [], set()
+    problems, own = _carry_slot_map_problems(preset, graph, carry), set()
     for strength in ("subtle", "strong"):
         if isinstance(vary.get(strength), dict) and isinstance(vary[strength].get("controls"), dict): own |= set(vary[strength]["controls"])
     for key in carry:
@@ -257,6 +288,7 @@ def _carry_problems(preset, graph, vary, sources, graph_of, bound):
     models = _models(graph)
     for source in sources:
         source_id, source_graph = source.get("id"), graph_of(source)
+        problems += _carry_slot_map_problems(source, source_graph, carry)
         if not models or _models(source_graph) != models:
             problems.append("%s: vary source %s draws with another checkpoint (%s, not %s); a route that carries the recipe keeps its model" % (
                 name, source_id, ", ".join(sorted(_models(source_graph))) or "none", ", ".join(sorted(models)) or "none"))
