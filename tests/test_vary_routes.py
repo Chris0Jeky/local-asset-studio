@@ -335,6 +335,96 @@ class CarryContract(unittest.TestCase):
                 self.edits["wai"].append(lambda graph: graph["1"]["inputs"].update({field: "other.gguf"}))
                 self.assertTrue(any("wai" in p and "another checkpoint" in p for p in self.problems()), self.problems())
 
+    def test_route_and_source_strength_companions_stay_on_their_own_adapter(self):
+        from server import Studio
+        for preset_id in ("wai-vary", "wai"):
+            with self.subTest(preset=preset_id):
+                self.setUp(); preset = by_id(self.presets, preset_id)
+                preset["bindings_extra"]["lora"] = [["9", "strength_clip"]]
+                graph = self.graph(preset); studio = Studio.__new__(Studio)
+                studio._bind_control(graph, preset, "lora", 0.5)
+                self.assertEqual(graph["9"]["inputs"]["strength_clip"], 0.5)
+                studio._bind_control(graph, preset, "lora2", 0.0)
+                self.assertEqual(graph["9"]["inputs"]["strength_clip"], 0.0, "The disabled later slot overwrites the first slot's misrouted CLIP strength")
+                self.assertTrue(self.problems(), "A carried slot's strength must stay on its own adapter")
+
+    def test_route_and_source_filename_companions_cannot_overwrite_another_slot(self):
+        from server import Studio
+        for preset_id in ("wai-vary", "wai"):
+            with self.subTest(preset=preset_id):
+                self.setUp(); preset = by_id(self.presets, preset_id)
+                preset["bindings_extra"]["lora_name"] = [["9", "lora_name"]]
+                graph = self.graph(preset); studio = Studio.__new__(Studio)
+                studio._bind_control(graph, preset, "lora_name", "first.safetensors")
+                self.assertEqual(graph["9"]["inputs"]["lora_name"], "first.safetensors")
+                studio._bind_control(graph, preset, "lora2_name", "second.safetensors")
+                self.assertEqual(graph["9"]["inputs"]["lora_name"], "second.safetensors")
+                self.assertTrue(self.problems(), "A carried filename must not fan out to another slot")
+
+    def test_route_and_source_filename_controls_write_only_their_own_filename(self):
+        from server import Studio
+        for preset_id in ("wai-vary", "wai"):
+            with self.subTest(preset=preset_id):
+                self.setUp(); preset = by_id(self.presets, preset_id)
+                preset["lora_name"] = ["8", "strength_model"]
+                graph = self.graph(preset); studio = Studio.__new__(Studio)
+                studio._bind_control(graph, preset, "lora", 0.5)
+                studio._bind_control(graph, preset, "lora_name", "recorded.safetensors")
+                self.assertEqual(graph["8"]["inputs"]["strength_model"], "recorded.safetensors")
+                self.assertTrue(self.problems(), "A filename control must write lora_name, not a strength")
+
+    def test_matching_malformed_strength_maps_are_refused_on_source_and_route(self):
+        from server import Studio
+        for preset_id in ("wai-vary", "wai", "anime-wai-quality"):
+            by_id(self.presets, preset_id)["lora"] = ["8", "lora_name"]
+        graph = self.graph(self.route); studio = Studio.__new__(Studio)
+        studio._bind_control(graph, self.route, "lora", 0.5)
+        self.assertEqual(graph["8"]["inputs"]["lora_name"], 0.5)
+        self.assertTrue(self.problems(), "Matching field names cannot make a filename input a legal strength target")
+
+    def test_swapped_clip_companions_are_refused_even_without_duplicate_targets(self):
+        from server import Studio
+        for preset_id in ("wai-vary", "wai"):
+            with self.subTest(preset=preset_id):
+                self.setUp(); preset = by_id(self.presets, preset_id)
+                preset["bindings_extra"].update(lora=[["9", "strength_clip"]], lora2=[["8", "strength_clip"]])
+                graph = self.graph(preset); studio = Studio.__new__(Studio)
+                studio._bind_control(graph, preset, "lora", 0.5); studio._bind_control(graph, preset, "lora2", 0.0)
+                self.assertEqual((graph["8"]["inputs"]["strength_model"], graph["8"]["inputs"]["strength_clip"]), (0.5, 0.0))
+                self.assertEqual((graph["9"]["inputs"]["strength_model"], graph["9"]["inputs"]["strength_clip"]), (0.0, 0.5))
+                self.assertTrue(self.problems(), "Unique targets still need to belong to their own slot")
+
+    def test_route_and_source_carried_slots_cannot_share_an_adapter(self):
+        from server import Studio
+        for preset_id in ("wai-vary", "wai"):
+            with self.subTest(preset=preset_id):
+                self.setUp(); preset = by_id(self.presets, preset_id)
+                preset.update(lora2=["8", "strength_model"], lora2_name=["8", "lora_name"])
+                preset["bindings_extra"]["lora2"] = [["8", "strength_clip"]]
+                def collapse(graph):
+                    graph.pop("9")
+                    for target, field, port in (("5", "model", 0), ("2", "clip", 1), ("3", "clip", 1)):
+                        graph[target]["inputs"][field] = ["8", port]
+                self.edits = {preset_id: [collapse]}
+                graph = self.graph(preset); studio = Studio.__new__(Studio)
+                studio._bind_control(graph, preset, "lora", 0.5); studio._bind_control(graph, preset, "lora2", 0.0)
+                self.assertEqual(graph["8"]["inputs"]["strength_model"], 0.0)
+                self.assertTrue(self.problems(), "Distinct carried slots need distinct adapter owners")
+
+    def test_same_node_strength_fanout_survives_independent_source_node_numbering(self):
+        source = by_id(self.presets, "wai")
+        for key in ("lora", "lora_name", "lora2", "lora2_name"):
+            source[key][0] = {"8": "80", "9": "90"}[source[key][0]]
+        for items in source["bindings_extra"].values():
+            for binding in items: binding[0] = {"8": "80", "9": "90"}[binding[0]]
+        def renumber(graph):
+            for old, new in (("8", "80"), ("9", "90")): graph[new] = graph.pop(old)
+            for node in graph.values():
+                for value in node["inputs"].values():
+                    if isinstance(value, list) and len(value) == 2: value[0] = {"8": "80", "9": "90"}.get(value[0], value[0])
+        self.edits = {"wai": [renumber]}
+        self.assertEqual(self.problems(), [], "Legal MODEL/CLIP fanout stays valid without matching raw node IDs")
+
 
 class ModelOnlyCarryContract(unittest.TestCase):
     """Krea's model-only adapters keep their own footprint; they never claim a CLIP output."""
@@ -393,6 +483,55 @@ class ModelOnlyCarryContract(unittest.TestCase):
 
     def test_model_only_source_filename_fanout_is_refused(self):
         self.assert_filename_fanout_is_refused("krea-anime-atelier")
+
+    def assert_slot_alias_is_refused(self, preset_id):
+        from server import Studio
+        preset = by_id(self.presets, preset_id)
+        preset.update(lora4=["10", "strength_model"], lora4_name=["10", "lora_name"])
+        def collapse(graph):
+            graph.pop("13"); graph["7"]["inputs"]["model"] = ["12", 0]
+        self.edits = {preset_id: [collapse]}
+        graph = self.graph(preset); studio = Studio.__new__(Studio)
+        studio._bind_control(graph, preset, "lora_name", "first.safetensors"); studio._bind_control(graph, preset, "lora", 0.5)
+        studio._bind_control(graph, preset, "lora4_name", "fourth.safetensors"); studio._bind_control(graph, preset, "lora4", 0.0)
+        self.assertEqual((graph["10"]["inputs"]["lora_name"], graph["10"]["inputs"]["strength_model"]), ("fourth.safetensors", 0.0),
+                         "A disabled later slot overwrites the first filename and strength through the real binding path")
+        self.assertTrue(self.problems(), "Distinct carried slots cannot alias the same adapter")
+
+    def test_model_only_route_slots_cannot_alias_one_adapter(self):
+        self.assert_slot_alias_is_refused("krea-refine")
+
+    def test_model_only_source_slots_cannot_alias_one_adapter(self):
+        self.assert_slot_alias_is_refused("krea-anime-atelier")
+
+    def test_model_only_strength_only_and_filename_only_aliases_stay_refused(self):
+        for preset_id in ("krea-refine", "krea-anime-atelier"):
+            for key, field in (("lora4", "strength_model"), ("lora4_name", "lora_name")):
+                with self.subTest(preset=preset_id, key=key):
+                    self.setUp(); by_id(self.presets, preset_id)[key] = ["10", field]
+                    self.assertTrue(self.problems(), "Aliasing just one half of a carried slot remains a refusal")
+
+    def test_unknown_adapter_kinds_are_refused_even_with_matching_slot_maps(self):
+        for kind in ("UnknownModelWrapper", "LoraLoaderUnknown"):
+            def unknown(graph): graph["10"]["class_type"] = kind
+            self.edits = {key: [unknown] for key in ("krea-refine", "krea-anime-atelier")}
+            self.assertTrue(self.problems(), "Matching maps do not make an unknown adapter kind supported")
+
+    def test_other_primary_and_companion_controls_cannot_overwrite_carried_adapter_targets(self):
+        from server import Studio
+        for preset_id in ("krea-refine", "krea-anime-atelier"):
+            for key, field, value in (("cfg", "strength_model", 0.25), ("sampler", "lora_name", "euler"), ("steps", "strength_model", 4), ("cfg", "model", 0.25)):
+                for companion in (False, True):
+                    with self.subTest(preset=preset_id, key=key, field=field, companion=companion):
+                        self.setUp(); preset = by_id(self.presets, preset_id)
+                        if companion: preset.setdefault("bindings_extra", {})[key] = [["10", field]]
+                        else: preset[key] = ["10", field]
+                        graph = self.graph(preset); studio = Studio.__new__(Studio)
+                        studio._bind_control(graph, preset, "lora_name", "first.safetensors")
+                        studio._bind_control(graph, preset, "lora", 0.5)
+                        studio._bind_control(graph, preset, key, value)
+                        self.assertEqual(graph["10"]["inputs"][field], value, "Another control overwrites the carried adapter through the real binding path")
+                        self.assertTrue(self.problems(), "Adapter targets need exclusive ownership even against non-LoRA and round-owned controls")
 
     def test_every_model_only_route_and_source_sampler_must_receive_every_adapter(self):
         for preset_id in ("krea-refine", "krea-anime-atelier"):

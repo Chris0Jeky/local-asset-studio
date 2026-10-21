@@ -32,12 +32,15 @@ an input. Both Create and Make retain that distinction.
 ## Adapter contract
 
 The existing WAI carry path uses `LoraLoader`, whose MODEL and CLIP outputs must
-reach every relevant sampler and text encoder. Those checks remain unchanged.
+reach every relevant sampler and text encoder. That graph traversal is retained;
+the shared binding-map checks below also harden malformed WAI declarations while
+preserving its legal same-node MODEL/CLIP strength fanout.
 Krea uses `LoraLoaderModelOnly`, which has a MODEL footprint and no CLIP output.
 Its narrow attestation requires:
 
 - the source and destination to use the same exact base-model identity;
 - the same adapter loader kind for each carried slot;
+- a distinct adapter owner for each carried slot on both source and destination;
 - one strength binding to that node's `strength_model`, and one filename binding
   to its `lora_name`, without an extra strength or CLIP footprint;
 - every carried model-only adapter to reach every sampler MODEL input on both the
@@ -54,6 +57,11 @@ wrong output ports, bypassed adapters, missing slots, source/route loader change
 and fp8/GGUF differences remain refusals. A family label does not equate models.
 Filename companion bindings are also refused: one slot's filename cannot fan out
 and overwrite another slot while its strength binding still appears correct.
+The shared carry check accounts for every primary and companion binding. A slot's
+strengths stay on its own adapter's legal strength fields, and its filename writes
+exactly its own `lora_name`. Other controls cannot write any input on a carried
+adapter, including its structural MODEL/CLIP links. Thus a disabled later slot,
+CFG, sampler, or round-owned step binding cannot overwrite the attested stack.
 
 The unchanged frontend carry pipeline takes recorded job controls first. If a
 control is absent, it uses that source recipe's current default and names the
@@ -101,7 +109,26 @@ unknown wrappers before the first adapter, invalid ports/links, missing nodes,
 cycles, invalid base filename fields, and different connected bases hidden by
 matching sets of declared orphan loaders. Known MODEL forwarders stay supported.
 The correction traces each model-only stack upstream and compares its connected
-base; the WAI MODEL/CLIP attestation and catalog/client declarations are unchanged.
+base; the WAI MODEL/CLIP graph traversal and catalog/client declarations are retained.
+Another Codex review found that two controls could own the same adapter even
+though their individual footprints passed. Twelve added methods cover source and
+destination aliases, partial aliases, actual disabled-slot overwrites, WAI cross-node
+or swapped CLIP companions, filename misbindings/fanout, matching malformed strength
+maps, other control collisions through primary/companion bindings, and unknown
+adapter kinds. On the exact published prior code, the combined 52-method binding
+and model-only classes produced 29 assertion/subtest failures and zero errors.
+Legal WAI MODEL/CLIP fanout also passes with independently renumbered source nodes.
+These shared binding-map refusals are new WAI validation hardening; legitimate WAI
+behavior remains the same. Catalog and client declarations remain unchanged by
+the review corrections.
+
+The observed 52-method binding/model-only run passed before the scratch-environment
+reset. Its local logs are no longer available. At reconstruction, the full 64-test
+Vary suite, server suite and validator had not run locally after this slot-map
+correction. Merge qualification is recorded in [PR #1606](https://github.com/Chris0Jeky/local-asset-studio/pull/1606)
+and requires independently reviewed reconstructed source and fresh exact-head
+Actions validation. The earlier observed results do not establish that broader
+qualification.
 
 Run the bounded checks:
 
