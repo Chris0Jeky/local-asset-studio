@@ -3,10 +3,12 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 import copy
+from datetime import datetime, timezone
 import hashlib
 from http.client import HTTPException
 from threading import Lock
 import time
+import uuid
 from typing import Any, Callable, Iterator, Mapping
 from urllib.error import HTTPError, URLError
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
@@ -15,6 +17,7 @@ from ._adult_illustration_source_transport_cache import (
     SnapshotResponseCache,
     _parse_stored_at,
 )
+from ._adult_illustration_source_evidence import SnapshotEvidenceStore, payload_reference
 from ._adult_illustration_source_transport_common import (
     AUTHORITY,
     INTERNAL_REQUEST_HEADERS,
@@ -232,6 +235,7 @@ class BoundedProviderTransport:
         exchange: Exchange | None = None,
         policy: MetadataPolicy | None = None,
         cache: SnapshotResponseCache | None = None,
+        evidence_store: SnapshotEvidenceStore | None = None,
         refresh: bool = False,
         sleeper: Sleeper = time.sleep,
     ):
@@ -243,17 +247,22 @@ class BoundedProviderTransport:
             raise TypeError("exchange must be callable")
         if cache is not None and not isinstance(cache, SnapshotResponseCache):
             raise TypeError("cache must be SnapshotResponseCache")
+        if evidence_store is not None and not isinstance(evidence_store, SnapshotEvidenceStore):
+            raise TypeError("evidence_store must be SnapshotEvidenceStore")
         if not isinstance(refresh, bool):
             raise TypeError("refresh must be boolean")
         if not callable(sleeper):
             raise TypeError("sleeper must be callable")
         self.cache = cache
+        self.evidence_store = evidence_store
         self.refresh = refresh
         self.sleeper = sleeper
         self._fetch_lock = Lock()
         self._awaiting_finalization = False
         self._receipt: dict[str, Any] | None = None
         self._pending: tuple[HttpRequest, HttpResponse] | None = None
+        self._effective: tuple[HttpRequest, HttpResponse, str, str] | None = None
+        self._evidence_ref: dict[str, Any] | None = None
 
     @contextmanager
     def _fetch_scope(self) -> Iterator[None]:
@@ -266,6 +275,7 @@ class BoundedProviderTransport:
             if self._pending is not None or self._awaiting_finalization:
                 raise RuntimeError("Previous provider response was not finalized")
             self._receipt = None
+            self._evidence_ref = None
             try:
                 yield
             except BaseException:
@@ -279,6 +289,18 @@ class BoundedProviderTransport:
         if self._receipt is None:
             raise RuntimeError("No provider metadata request has completed")
         return copy.deepcopy(self._receipt)
+
+    @property
+    def raw_payload_ref(self) -> dict[str, Any]:
+        if self._awaiting_finalization or self._evidence_ref is None:
+            raise RuntimeError("Provider payload evidence is not finalized")
+        return copy.deepcopy(self._evidence_ref)
+
+    def _own_response(self, request, response):
+        # Every mode owns its exact effective bytes until finalization/abort. The request
+        # cache can be refreshed concurrently and must never be reread to retain evidence.
+        self._effective = (request, response, uuid.uuid4().hex, datetime.now(timezone.utc).isoformat())
+        self._evidence_ref = None
 
     def _exchange_with_retries(
         self,
@@ -362,6 +384,8 @@ class BoundedProviderTransport:
     def __call__(self, request: HttpRequest) -> HttpResponse:
         if self._pending is not None or self._awaiting_finalization:
             raise RuntimeError("Previous provider response was not finalized")
+        self._receipt = None
+        self._evidence_ref = None
         provider = validate_base_request(request)
         key = request_key(request)
         if self.cache is not None:
@@ -386,6 +410,7 @@ class BoundedProviderTransport:
                 cache_age_seconds=_cache_age_seconds(cache_stored_at),
             )
             self._awaiting_finalization = True
+            self._own_response(request, cached)
             return cached
 
         validators = _validator_headers(cached)
@@ -429,6 +454,7 @@ class BoundedProviderTransport:
             cache_age_seconds=_cache_age_seconds(receipt_stored_at),
         )
         self._awaiting_finalization = True
+        self._own_response(request, response)
         return response
 
     def _make_receipt(
@@ -485,6 +511,16 @@ class BoundedProviderTransport:
         ):
             self.abort()
             raise ValueError("Parsed snapshot payload identity does not match transport")
+        if not self._awaiting_finalization: return  # The same finalized response is idempotent.
+        if self._effective is None: raise AssertionError("missing owned provider response")
+        if self._evidence_ref is None:
+            request, response, capture_id, captured_at = self._effective
+            if self.evidence_store is None:
+                self._evidence_ref = payload_reference(raw_payload_sha256, len(response.body),
+                    self._receipt["request_key"], "disabled")
+            else:
+                self._evidence_ref = self.evidence_store.retain(request, response, self._receipt,
+                    capture_id=capture_id, captured_at=captured_at)
         if self._pending is not None:
             request, response = self._pending
             if self.cache is None:
@@ -494,8 +530,11 @@ class BoundedProviderTransport:
                 raise ValueError("Stored cache identity changed during finalization")
             self._pending = None
         self._awaiting_finalization = False
+        self._effective = None
 
     def abort(self) -> None:
         self._awaiting_finalization = False
         self._pending = None
         self._receipt = None
+        self._effective = None
+        self._evidence_ref = None
