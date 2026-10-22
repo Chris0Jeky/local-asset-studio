@@ -75,6 +75,8 @@ HISTORY_QUEUE_CHECK_EVERY = 5            # empty history polls (2 s apart) betwe
 HISTORY_UNLISTED_STRIKES = 3             # consecutive unlisted queue reads before the prompt is declared gone
 HISTORY_READ_STRIKES = 3                 # consecutive failed /history reads before observation ends uncertain (#1113); only reads are retried
 TERMINAL_RECEIPTS = ("completed", "failed", "cancelled")  # receipt statuses Resume reconciles from the record, never re-reads
+MAX_JOB_RECORD_BYTES = 8 * 1024**2       # per state/workflow file; recovery never reads an unbounded run record
+MAX_JOB_RECORD_DEPTH = 100              # reject recursive payloads before normalization can rewrite any evidence
 HISTORY_READ_BACKOFF_SECONDS = 2         # wait after the n-th consecutive failed read: n times this (2 s, then 4 s)
 HISTORY_READ_ERRORS_KEPT = 20            # failed reads recorded per submission; history_read_error_count keeps the total
 GPU_SAMPLE_EVERY = 5                    # empty history polls between merges of the sampler thread's GPU memory peaks (app/gpu_memory.py)
@@ -1384,9 +1386,16 @@ class Studio:
         if isinstance(value, (list, tuple)): return [Studio._finite_state(v) for v in value]
         return value
 
+    def _job_directory(self, job_id):
+        if not isinstance(job_id, str) or not job_id or '..' in job_id or re.search(r'[/\\:\x00-\x1f]', job_id) or job_id.endswith(('.', ' ')):
+            raise StudioError("Invalid job ID: expected a safe single path component")
+        directory = self.runs / job_id
+        if directory.resolve().parent != self.runs.resolve(): raise StudioError("Job directory escapes the runs folder")
+        return directory
+
     def _save(self, job, durable=False):
         if "record_error" in job: raise StudioError("An unreadable run record cannot be saved; inspect its folder first")
-        directory = self.runs / job["id"]
+        directory = self._job_directory(job.get("id"))
         recipe = {"preset_id": job["preset_id"], "controls": job["controls"], "batch_count": job["batch_count"], "graph_path": job["graph_path"], "created_at": job["created_at"]}
         recipe.update(references=job.get("references", []), parent_assets=job.get("parent_assets", []))
         if job.get("continuation") is not None: recipe["continuation"] = job["continuation"]
@@ -1705,56 +1714,91 @@ class Studio:
             self._loaded_operator_dispositions.pop((job_id, 'abandonment'), None)
             return self.public(job)
 
+    @staticmethod
+    def _read_job_record(path):
+        if path.stat().st_size > MAX_JOB_RECORD_BYTES: raise ValueError("Run record exceeds the size limit")
+        with path.open('rb') as stream: raw = stream.read(MAX_JOB_RECORD_BYTES + 1)
+        if len(raw) > MAX_JOB_RECORD_BYTES: raise ValueError("Run record exceeds the size limit")
+        record = json.loads(raw.decode('utf-8'))
+        if not isinstance(record, dict): raise ValueError("Expected a JSON object")
+        # Iterator stack bounds auxiliary memory by depth, even for wide workflow graphs.
+        stack = [iter((record,))]
+        while stack:
+            try: value = next(stack[-1])
+            except StopIteration: stack.pop(); continue
+            if isinstance(value, (dict, list)):
+                if len(stack) > MAX_JOB_RECORD_DEPTH: raise ValueError("Run record exceeds the nesting limit")
+                stack.append(iter(value.values() if isinstance(value, dict) else value))
+        return record
+
+    @staticmethod
+    def _validate_job_record(data):
+        for key, kind in (('status', str), ('preset_id', str), ('controls', dict), ('batch_count', int), ('graph_path', str), ('created_at', (int, float))):
+            if key not in data or isinstance(data[key], bool) or not isinstance(data[key], kind): raise ValueError(f"Invalid or missing {key}")
+        if not data['status'] or not data['preset_id'] or data['batch_count'] < 0 or not math.isfinite(data['created_at']): raise ValueError("Invalid job status, recipe or creation time")
+        for key, kind in (('prompt_ids', str), ('submissions', dict), ('outputs', dict), ('references', dict), ('parent_assets', str)):
+            if key in data and (not isinstance(data[key], list) or any(not isinstance(item, kind) for item in data[key])): raise ValueError(f"Invalid {key}")
+        for key in ('tracking_disposition', 'abandonment', 'pending_submission', 'cancellation'):
+            if key in data and not isinstance(data[key], dict): raise ValueError(f"Invalid {key}")
+        for key in ('comfy_root', 'comfy_url', 'operation', 'project_id', 'preset_name'):
+            if key in data and not isinstance(data[key], str): raise ValueError(f"Invalid {key}")
+        output_key = {'asset.import': 'uploaded_file', tiles.OPERATION: 'run_file', parallax.OPERATION: 'run_file',
+                      'native.articulated-prop.v1': 'native_path', 'native.av-preview.v1': 'native_path', 'native.voice-baseline.v1': 'native_path'}.get(data.get('operation'))
+        if output_key and any(not isinstance(output.get(output_key), str) for output in data.get('outputs', [])): raise ValueError(f"Invalid output {output_key}")
+
     def _load_jobs(self):
         for state_path in self.runs.glob("*/state.json"):
+            data = {}; path = state_path
             try:
                 for path in (state_path, state_path.parent / "workflow.json"):
-                    record = json.loads(path.read_text(encoding="utf-8"))
-                    if not isinstance(record, dict): raise ValueError("Expected a JSON object")
+                    record = self._read_job_record(path)
                     if path == state_path:
-                        if not record.get("id"): raise ValueError("Missing job ID")
                         data = record
+                        directory = self._job_directory(data.get("id"))
+                        if data['id'] != state_path.parent.name or directory != state_path.parent: raise ValueError("Job ID does not match its run folder")
+                        if data['id'] in self.jobs: raise ValueError("Duplicate job ID")
                     else: graph = record
-            except (OSError, ValueError) as exc:
-                reason = f"{path.name}: {exc}"; known = data.get("prompt_ids") if path != state_path else None   # state.json parsed first, so data is this run's
+                path = state_path
+                self._validate_job_record(data)
+            except (OSError, ValueError, TypeError, KeyError, AttributeError, RecursionError, OverflowError) as exc:
+                reason = f"{path.name}: {exc}"; known = data.get("prompt_ids")
                 ids = [i for i in known if isinstance(i, str)] if isinstance(known, list) else []
                 # Missing evidence collections cannot prove non-submission or authorize a disposition.
                 self.jobs[state_path.parent.name] = {"id": state_path.parent.name, "status": "uncertain", "created_at": 0,
                     "preset_name": "Unreadable run record", "controls": {}, "outputs": [], "run_path": str(state_path.parent),
                     "record_error": reason, "message": f"The run record could not be read ({reason}). Nothing was resubmitted." + (f" Known ComfyUI prompt IDs: {', '.join(ids[:8])}." if ids else "") + f" Inspect experiments/runs/{state_path.parent.name}/ before deleting it."}
                 continue
-            if isinstance(data, dict) and isinstance(graph, dict) and data.get("id"):
-                defaults = {key: value for key, value in (('comfy_root', str(self.comfy_root)), ('comfy_url', self.comfy_url)) if key not in data}
-                state_written = False
-                data["graph"] = graph
-                data.setdefault('comfy_root', str(self.comfy_root))
-                data.setdefault('comfy_url', self.comfy_url)
-                if data.get("status") in ("queued", "waiting", "submitting", "running", "uncertain"):
-                    if submission_evidence.never_submitted(data):
-                        data["status"] = "not_submitted"
-                        data["message"] = "Restarted before submission. Resume the owning experiment explicitly, or retain the recipe and abandon this local job. Nothing was submitted on restart."
-                    else:
-                        data["status"] = "uncertain"
-                        data["message"] = "Restarted while remote job state was unknown; use Resume observation for known prompt IDs. It was not resubmitted."
-                    if "pending_submission" in data and data.get("prompt_ids"):
-                        # Restarting a mixed observation must not normalize or
-                        # reconstruct its retained recipe/workflow source files.
-                        data["message"] = "Restarted with a mixed batch; check known batch receipts or explicitly record a local disposition. The unknown submission was not repeated."
-                        self._write_json_atomic(state_path, {k: v for k, v in data.items() if k != "graph"})
-                    else:
-                        self._save(data)
-                    state_written = True
-                if job_cancel.reconcile_restart(data, state_path.parent):
+            defaults = {key: value for key, value in (('comfy_root', str(self.comfy_root)), ('comfy_url', self.comfy_url)) if key not in data}
+            state_written = False
+            data["graph"] = graph
+            data.setdefault('comfy_root', str(self.comfy_root))
+            data.setdefault('comfy_url', self.comfy_url)
+            if data.get("status") in ("queued", "waiting", "submitting", "running", "uncertain"):
+                if submission_evidence.never_submitted(data):
+                    data["status"] = "not_submitted"
+                    data["message"] = "Restarted before submission. Resume the owning experiment explicitly, or retain the recipe and abandon this local job. Nothing was submitted on restart."
+                else:
+                    data["status"] = "uncertain"
+                    data["message"] = "Restarted while remote job state was unknown; use Resume observation for known prompt IDs. It was not resubmitted."
+                if "pending_submission" in data and data.get("prompt_ids"):
+                    # Restarting a mixed observation must not normalize or
+                    # reconstruct its retained recipe/workflow source files.
+                    data["message"] = "Restarted with a mixed batch; check known batch receipts or explicitly record a local disposition. The unknown submission was not repeated."
                     self._write_json_atomic(state_path, {k: v for k, v in data.items() if k != "graph"})
-                    state_written = True
-                self.jobs[data["id"]] = data
-                fields = (['tracking_disposition'] if self._tracking_stopped(data) else [])
-                if data.get('status') == 'abandoned' and isinstance(data.get('abandonment'), dict): fields.append('abandonment')
-                if fields:
-                    retained = {k: v for k, v in data.items() if k != 'graph'}
-                    if not state_written:
-                        for name in defaults: retained.pop(name, None)
-                    for field in fields: self._loaded_operator_dispositions[(data['id'], field)] = copy.deepcopy(retained)
+                else:
+                    self._save(data)
+                state_written = True
+            if job_cancel.reconcile_restart(data, state_path.parent):
+                self._write_json_atomic(state_path, {k: v for k, v in data.items() if k != "graph"})
+                state_written = True
+            fields = (['tracking_disposition'] if self._tracking_stopped(data) else [])
+            if data.get('status') == 'abandoned' and isinstance(data.get('abandonment'), dict): fields.append('abandonment')
+            if fields:
+                retained = {k: v for k, v in data.items() if k != 'graph'}
+                if not state_written:
+                    for name in defaults: retained.pop(name, None)
+                for field in fields: self._loaded_operator_dispositions[(data['id'], field)] = copy.deepcopy(retained)
+            self.jobs[data["id"]] = data
 
     def _request(self, path, method="GET", data=None, timeout=15, base_url=None, allow_empty=False):
         body = json.dumps(data).encode() if data is not None else None

@@ -153,5 +153,24 @@ class InputAdapters(unittest.TestCase):
         for source, target in (('IMAGE', 'IMAGE,MASK'), ('IMAGE', 'MASK,*'), ('*', 'IMAGE')):
             self.assertTrue(compatible(source, target))
 
+    def test_huge_integers_on_float_inputs_are_invalid_values_not_overflow_errors(self):
+        raw = {'input': {'required': {'value': ['FLOAT', {}]}}}
+        for value in (10 ** 400, -10 ** 400):
+            with self.subTest(value=value):
+                _, result, _, _ = inspect(raw, {'value': value})
+                self.assertFalse(result['valid'])
+                self.assertIn('invalid_value', {x['code'] for x in result['errors']})
+        for value in (0, 7, -2.5, 10 ** 300):
+            with self.subTest(value=value):
+                self.assertTrue(inspect(raw, {'value': value})[1]['valid'])
+
+    def test_huge_integer_node_positions_are_rejected_without_overflow(self):
+        info = {'Node': {'input': {}, 'output_node': True, 'output': []}}
+        schema = catalog(info, 'local-fixture')
+        doc = new_document({'1': {'class_type': 'Node', 'inputs': {}}}, schema)
+        doc['positions'] = {'1': [10 ** 400, 0]}
+        with self.assertRaisesRegex(ValueError, 'Invalid node position'):
+            compile_document(doc, schema)
+
 
 if __name__ == '__main__': unittest.main()

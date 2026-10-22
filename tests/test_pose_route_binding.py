@@ -143,6 +143,12 @@ class PoseRouteBindingTests(unittest.TestCase):
             req=skeleton_request(pose,data); req['route'][field]=value
             with self.subTest(field=field),self.assertRaises(ValueError): binding.compile_binding(req,data,artifact=pose)
 
+    def test_numeric_thresholds_reject_huge_integers_without_overflow(self):
+        for value in (10 ** 400, -10 ** 400, float('nan'), float('inf'), True):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                binding._number(value, 0, 1, 'joint threshold')
+        self.assertEqual(binding._number(1, 0, 1, 'joint threshold'), 1.0)
+
     def test_rejects_missing_extra_or_invalid_route_pins(self):
         pose=artifact(); data=pose_raster.render_png(pose)
         variants=[]
