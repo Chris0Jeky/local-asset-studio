@@ -14,7 +14,7 @@ from unittest.mock import patch
 
 from http_refusal_transport import atomic_json_post
 import test_production
-from test_server import FakeStudio, png
+from test_server import FakeStudio, png, rgba_png
 from studio_av import project as av
 from studio_av.render import _run_owned, RenderCancelled
 
@@ -118,6 +118,21 @@ class SceneTests(unittest.TestCase):
         overlay=doc['project']['overlays'][0]['id']
         with self.assertRaises(ValueError):self.change(doc,section='overlays',clip_id=overlay,changes={'x':639})
         self.assertEqual(self.scenes.inspect(doc['id'])['revision'],doc['revision'])
+
+    def test_default_overlay_fits_narrow_canvas(self):
+        self.asset=self.studio.import_image('wide.png','image/png',rgba_png(640,100))['asset']
+        doc=self.create(size=[64,360]);doc=self.change(doc,'add',section='overlays',asset_key='source0')
+        overlay=doc['project']['overlays'][0]
+        self.assertEqual((overlay['width'],overlay['height']),(64,10))
+        self.assertEqual(self.scenes.inspect(doc['id'])['revision'],1)
+
+    def test_valid_default_overlay_sizes_are_unchanged(self):
+        for source,size,expected in (((640,100),[640,360],(200,31)),((100,640),[640,64],(10,64)),((8,12),[64,64],(8,12))):
+            with self.subTest(source=source,size=size):
+                self.asset=self.studio.import_image('overlay.png','image/png',rgba_png(*source))['asset']
+                doc=self.create(size=size);doc=self.change(doc,'add',section='overlays',asset_key='source0')
+                overlay=doc['project']['overlays'][0]
+                self.assertEqual((overlay['width'],overlay['height']),expected)
 
     def test_export_reuses_revision_pack_and_detects_tampering(self):
         doc=self.create();export=self.change(doc,'export');again=self.change(doc,'export')
