@@ -10,6 +10,7 @@ import copy
 import hashlib
 import json
 import math
+import sys
 import re
 from typing import Any
 
@@ -162,7 +163,7 @@ def document(value: dict) -> dict:
     need(isinstance(positions, dict), "Positions must be an object")
     for key, xy in positions.items():
         need(key in nodes and isinstance(xy, list) and len(xy) == 2
-             and all(type(n) in (int, float) and math.isfinite(n) and abs(n) <= 100000 for n in xy),
+             and all(type(n) in (int, float) and abs(n) <= 100000 and math.isfinite(n) for n in xy),
              "Invalid node position")
     if "steps" in value:
         from .steps import validate_steps
@@ -268,7 +269,7 @@ def compile_document(value: dict, schema: dict) -> dict:
                 options, typ = spec["options"], spec["type"]
                 valid = True
                 if typ == "INT": valid = type(current) is int
-                elif typ == "FLOAT": valid = type(current) in (int, float) and math.isfinite(current)
+                elif typ == "FLOAT": valid = type(current) is int and abs(current) <= sys.float_info.max or type(current) is float and math.isfinite(current)
                 elif typ == "BOOLEAN": valid = type(current) is bool
                 elif typ == "STRING": valid = isinstance(current, str) and len(current) <= 65536
                 elif typ == "COMBO": valid = any(type(current) is type(x) and current == x for x in options.get("options", []))

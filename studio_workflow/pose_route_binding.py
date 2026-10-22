@@ -65,7 +65,7 @@ def _integer(value: Any, low: int, high: int, label: str) -> int:
 
 
 def _number(value: Any, low: float, high: float, label: str) -> float:
-    if type(value) not in (int, float) or not math.isfinite(value) or not low <= value <= high:
+    if type(value) not in (int, float) or not low <= value <= high or not math.isfinite(value):
         raise ValueError(label + ' is outside its declared finite range')
     return float(value)
 
