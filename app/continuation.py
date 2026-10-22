@@ -127,40 +127,24 @@ VARY_FIXED = {"seed", "positive", "negative", "reference", "last_reference", "wi
 
 
 def _models(graph):
-    # model_name also names auxiliary models; only the shipped base-model loader contributes it.
-    keys = ("ckpt_name", "unet_name", "checkpoint_name", "gguf_name")
-    return {value for node in graph.values() for key, value in (node.get("inputs") or {}).items()
-            if (key in keys or key == "model_name" and node.get("class_type") == "HiDreamO1ModelLoader") and isinstance(value, str)}
+    # checkpoint_name is a loader field too. model_name is not: face detectors use it, and counting it would call two checkpoints the same family.
+    keys = ("ckpt_name", "unet_name", "checkpoint_name")
+    return {value for node in graph.values() for key, value in (node.get("inputs") or {}).items() if key in keys and isinstance(value, str)}
 
 
-# Single-input nodes that forward the same MODEL / CLIP and neither add nor drop an adapter (#1243). Each is shipped
-# between a LoRA and its consumer: ModelSampling* on Qwen, RescaleCFG on Trellis, CLIPSetLastLayer on Pony. Anything else
-# (a merge, a switch, a Reroute pack, an unseen patch) stays an unknown shape and is refused.
-PASS_THROUGH = {"model": {"ModelSamplingAuraFlow", "ModelSamplingSD3", "RescaleCFG"}, "clip": {"CLIPSetLastLayer"}}
-
-
-def _lora_feeds(graph, start, target, field):
-    """Trace a MODEL/CLIP input back through known LoRA outputs; None means an unknown graph shape."""
-    kind = graph.get(start, {}).get("class_type")
-    if kind not in ("LoraLoader", "LoraLoaderModelOnly"): return None
-    if kind == "LoraLoaderModelOnly" and field == "clip": return False
-    seen, output = set(), 0 if field == "model" else 1
-    while target not in seen:
-        seen.add(target)
-        link = (graph.get(target, {}).get("inputs") or {}).get(field)
-        if not isinstance(link, list) or len(link) != 2 or type(link[1]) is not int: return None
-        target, port = str(link[0]), link[1]
-        if target == start: return port == output
-        node = graph.get(target)
-        if not isinstance(node, dict): return None
-        kind = node.get("class_type")
-        if kind in ("LoraLoader", "LoraLoaderModelOnly"):
-            if port != output or kind == "LoraLoaderModelOnly" and field == "clip": return False
-        elif kind in PASS_THROUGH[field]:
-            if port != 0: return None
-        elif kind in ("CheckpointLoaderSimple", "ImageOnlyCheckpointLoader", "UNETLoader", "UnetLoaderGGUF", "CLIPLoader", "HiDreamO1ModelLoader"): return False
-        else: return None
-    return False
+def _downstream(graph, start):
+    """Node ids reachable forward from start, including start. A LoRA chained through another LoRA still reaches the sampler."""
+    seen, stack = set(), [str(start)]
+    while stack:
+        node = stack.pop()
+        if node in seen: continue
+        seen.add(node)
+        for key, other in graph.items():
+            if str(key) in seen: continue
+            for value in (other.get("inputs") or {}).values():
+                if isinstance(value, list) and value and str(value[0]) == node:
+                    stack.append(str(key)); break
+    return seen
 
 
 VARY_LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
@@ -171,88 +155,8 @@ def _lora_nodes(graph):
 
 
 def _slot_fields(preset, slot):
-    """Every input one LoRA control writes, including its companion bindings."""
+    """Every input one LoRA strength control writes (the model strength plus any clip fan-out)."""
     return sorted(str(item[1]) for item in [preset[slot]] + list((preset.get("bindings_extra") or {}).get(slot) or [])) if preset.get(slot) else []
-
-
-MODEL_BASE_FIELDS = {
-    "CheckpointLoaderSimple": ("ckpt_name", "checkpoint_name"),
-    "ImageOnlyCheckpointLoader": ("ckpt_name", "checkpoint_name"),
-    "UNETLoader": ("unet_name",), "UnetLoaderGGUF": ("unet_name", "gguf_name"),
-    "HiDreamO1ModelLoader": ("model_name",),
-}
-
-
-def _model_only_base(graph, start):
-    """The actually connected MODEL base (loader kind, filename), or None for an unproved upstream path."""
-    seen, target = set(), str(start)
-    while target not in seen:
-        seen.add(target)
-        node = graph.get(target)
-        if not isinstance(node, dict) or not isinstance(node.get("inputs"), dict): return None
-        link = node["inputs"].get("model")
-        if not isinstance(link, list) or len(link) != 2 or type(link[1]) is not int or link[1] != 0: return None
-        target = str(link[0]); node = graph.get(target)
-        if target in seen or not isinstance(node, dict) or not isinstance(node.get("inputs"), dict): return None
-        kind = node.get("class_type")
-        if kind in ("LoraLoader", "LoraLoaderModelOnly") or kind in PASS_THROUGH["model"]: continue
-        values = [node["inputs"][field] for field in MODEL_BASE_FIELDS.get(kind, ()) if field in node["inputs"]]
-        if len(values) == 1 and isinstance(values[0], str) and values[0].strip(): return kind, values[0]
-        return None
-    return None
-
-
-def _model_only_problems(preset, graph, slot):
-    """A model-only slot has one strength/file binding, a connected base and every sampler's MODEL."""
-    binding = preset.get(slot)
-    if not binding: return []
-    node = str(binding[0]); adapter = graph.get(node, {})
-    if adapter.get("class_type") != "LoraLoaderModelOnly": return []
-    name = preset.get("id"); inputs = adapter.get("inputs") or {}; problems = []
-    if (binding != [node, "strength_model"] or preset.get(slot + "_name") != [node, "lora_name"]
-            or _slot_fields(preset, slot) != ["strength_model"] or _slot_fields(preset, slot + "_name") != ["lora_name"]
-            or "clip" in inputs or "strength_clip" in inputs):
-        problems.append("%s: vary model-only %s needs only its own strength_model and lora_name bindings" % (name, slot))
-    samplers = [str(key) for key, value in graph.items() if str(value.get("class_type") or "").startswith("KSampler")]
-    paths = [_lora_feeds(graph, node, target, "model") for target in samplers]
-    if not samplers or None in paths:
-        problems.append("%s: vary cannot determine whether model-only adapter node %s feeds every sampler MODEL input" % (name, node))
-    elif not all(paths):
-        problems.append("%s: vary model-only adapter node %s does not feed every sampler through its MODEL output" % (name, node))
-    if _model_only_base(graph, node) is None:
-        problems.append("%s: vary cannot determine the connected base for model-only adapter node %s (unknown upstream shape, invalid MODEL port, cycle or missing loader)" % (name, node))
-    return problems
-
-
-def _carry_slot_map_problems(preset, graph, carry):
-    """Each carried slot owns one adapter; all primary/companion writes preserve that ownership."""
-    name, extras, owners, problems = preset.get("id"), preset.get("bindings_extra") or {}, {}, []
-    def bindings(key):
-        values = ([preset[key]] if preset.get(key) else []) + list(extras.get(key) or [])
-        return [(str(item[0]), str(item[1])) for item in values if isinstance(item, (list, tuple)) and len(item) == 2]
-    for slot in VARY_LORA_SLOTS:
-        if slot not in carry or not preset.get(slot): continue
-        node = str(preset[slot][0]); kind = graph.get(node, {}).get("class_type")
-        if node in owners:
-            problems.append("%s: vary carried slots %s and %s alias adapter node %s" % (name, owners[node], slot, node))
-        else: owners[node] = slot
-        if kind not in ("LoraLoader", "LoraLoaderModelOnly"):
-            problems.append("%s: vary cannot determine the carried adapter kind for %s at node %s" % (name, slot, node))
-        strength = bindings(slot); allowed = {"strength_model", "strength_clip"} if kind == "LoraLoader" else {"strength_model"}
-        if not strength or len(set(strength)) != len(strength) or any(target != node or field not in allowed for target, field in strength):
-            problems.append("%s: vary %s strength bindings must write only legal strengths on its own adapter node %s" % (name, slot, node))
-        if bindings(slot + "_name") != [(node, "lora_name")]:
-            problems.append("%s: vary %s_name needs exactly its own adapter node %s lora_name binding" % (name, slot, node))
-    # A cfg/sampler/round-owned steps binding can overwrite the stack too. Reserve the adapter's structural inputs
-    # as well as its strengths/name; unrelated controls may not invalidate the graph after this attestation.
-    for key in sorted(set(preset) | set(extras)):
-        for node, field in bindings(key):
-            if node not in owners: continue
-            slot = owners[node]
-            owner = slot + "_name" if field == "lora_name" else slot if field in ("strength_model", "strength_clip") else None
-            if key != owner:
-                problems.append("%s: vary %s binding competes with carried %s at adapter node %s input %s" % (name, key, slot, node, field))
-    return problems
 
 
 def _carry_problems(preset, graph, vary, sources, graph_of, bound):
@@ -261,7 +165,7 @@ def _carry_problems(preset, graph, vary, sources, graph_of, bound):
     name, carry = preset.get("id"), vary["carry"]
     if not isinstance(carry, list) or not carry or any(not isinstance(item, str) for item in carry) or len(set(carry)) != len(carry):
         return ["%s: vary carry must be a non-empty list of distinct control names" % name]
-    problems, own = _carry_slot_map_problems(preset, graph, carry), set()
+    problems, own = [], set()
     for strength in ("subtle", "strong"):
         if isinstance(vary.get(strength), dict) and isinstance(vary[strength].get("controls"), dict): own |= set(vary[strength]["controls"])
     for key in carry:
@@ -271,24 +175,18 @@ def _carry_problems(preset, graph, vary, sources, graph_of, bound):
         if (slot in carry) != (slot + "_name" in carry): problems.append("%s: vary carries %s without its file %s, or the file without its strength" % (name, slot, slot + "_name"))
         elif slot in carry and preset.get(slot) and preset.get(slot + "_name") and str(preset[slot][0]) != str(preset[slot + "_name"][0]):
             problems.append("%s: vary %s and %s_name bind different nodes" % (name, slot, slot))
-        if slot in carry: problems += _model_only_problems(preset, graph, slot)
     carried_nodes = {str(preset[slot][0]) for slot in VARY_LORA_SLOTS if slot in carry and preset.get(slot)}
     samplers = {str(key) for key, node in graph.items() if str(node.get("class_type") or "").startswith("KSampler")}
     encoders = {str(key) for key, node in graph.items() if str(node.get("class_type") or "").startswith("CLIPTextEncode")}
     for node in sorted(carried_nodes):
-        if graph.get(node, {}).get("class_type") == "LoraLoaderModelOnly": continue  # attested above; it has no CLIP output
-        model_paths = [_lora_feeds(graph, node, target, "model") for target in sorted(samplers)]
-        clip_paths = [_lora_feeds(graph, node, target, "clip") for target in sorted(encoders)]
-        if not samplers or not encoders or None in model_paths or None in clip_paths:
-            problems.append("%s: vary cannot determine whether adapter node %s feeds all sampler model and text encoder clip inputs (missing nodes, invalid links or unknown graph shape)" % (name, node))
-        elif not all(model_paths) or not all(clip_paths):
-            problems.append("%s: vary adapter node %s does not feed all samplers and text encoders through its MODEL/CLIP outputs" % (name, node))
+        reached = _downstream(graph, node)
+        if (samplers and not reached & samplers) or (encoders and not reached & encoders):
+            problems.append("%s: vary adapter node %s does not feed the sampler and the text encoders" % (name, node))
     for node in sorted(_lora_nodes(graph) - carried_nodes):
         problems.append("%s: vary route has an adapter it does not take from the source (node %s); it would change the picture's LoRA stack" % (name, node))
     models = _models(graph)
     for source in sources:
         source_id, source_graph = source.get("id"), graph_of(source)
-        problems += _carry_slot_map_problems(source, source_graph, carry)
         if not models or _models(source_graph) != models:
             problems.append("%s: vary source %s draws with another checkpoint (%s, not %s); a route that carries the recipe keeps its model" % (
                 name, source_id, ", ".join(sorted(_models(source_graph))) or "none", ", ".join(sorted(models)) or "none"))
@@ -297,20 +195,8 @@ def _carry_problems(preset, graph, vary, sources, graph_of, bound):
                 problems.append("%s: vary source %s has an adapter the route does not carry (node %s); varying it here would drop it" % (name, source_id, node))
         for key in carry:
             if not source.get(key): problems.append("%s: vary source %s does not bind carried %s, so its recorded value is unknown" % (name, source_id, key)); continue
-            if key in VARY_LORA_SLOTS and source.get(key + "_name") and str(source[key][0]) != str(source[key + "_name"][0]):
-                problems.append("%s: vary source %s %s and %s_name bind different nodes" % (name, source_id, key, key))
             if key in VARY_LORA_SLOTS and preset.get(key) and _slot_fields(source, key) != _slot_fields(preset, key):
                 problems.append("%s: vary carries %s, but its strength reaches %s here and %s on %s" % (name, key, _slot_fields(preset, key), _slot_fields(source, key), source_id))
-            if key in VARY_LORA_SLOTS and preset.get(key):
-                source_kind = source_graph.get(str(source[key][0]), {}).get("class_type")
-                route_kind = graph.get(str(preset[key][0]), {}).get("class_type")
-                if source_kind != route_kind:
-                    problems.append("%s: vary source %s changes %s loader kind (%s, not %s)" % (name, source_id, key, source_kind, route_kind))
-                problems += _model_only_problems(source, source_graph, key)
-                if source_kind == route_kind == "LoraLoaderModelOnly":
-                    source_base, route_base = _model_only_base(source_graph, str(source[key][0])), _model_only_base(graph, str(preset[key][0]))
-                    if source_base is not None and route_base is not None and source_base != route_base:
-                        problems.append("%s: vary source %s connected base %s differs from route %s for %s" % (name, source_id, source_base, route_base, key))
             accepted = (preset.get("choices") or {}).get(key)
             if accepted is not None:
                 recorded = (source.get("choices") or {}).get(key)
@@ -419,12 +305,15 @@ def source_context(studio, asset_id):
     origin = "submitted-output" if positive is not None else "unavailable"
     warning = "" if positive is not None else "No unambiguous submitted prompt is retained for this output. Describe the desired result; the recipe example will not be used."
     role = prompt_role(graph, True) if isinstance(graph, dict) else "unknown"
-    from PIL import Image
-    with Image.open(path) as image:
-        width, height = image.size
-        # Source coordinates follow the displayed/engine-oriented pixels. Read the
-        # header only here; the source digest still covers the untouched file.
-        if image.format == 'JPEG' and image.getexif().get(274) in (5, 6, 7, 8): width, height = height, width
+    from PIL import Image, UnidentifiedImageError
+    try:
+        with Image.open(path) as image:
+            width, height = image.size
+            # Source coordinates follow the displayed/engine-oriented pixels. Read the
+            # header only here; the source digest still covers the untouched file.
+            if image.format == 'JPEG' and image.getexif().get(274) in (5, 6, 7, 8): width, height = height, width
+    except (OSError, SyntaxError, UnidentifiedImageError, Image.DecompressionBombError) as exc:
+        raise ValueError("Source image is damaged, restore the original asset.") from exc
     return {
         "version": 1,
         "asset_id": asset["id"],

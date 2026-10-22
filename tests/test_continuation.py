@@ -2,7 +2,7 @@
 import copy, re
 import hashlib
 from http.client import HTTPConnection
-from http_test_server import ThreadingHTTPServer
+from http.server import ThreadingHTTPServer
 import json
 from pathlib import Path
 import shutil
@@ -184,6 +184,24 @@ class ContinuationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Source bytes changed"): self.studio.prepare(self.payload)
         self.studio.assets.file(self.asset_id).write_bytes(png()); self.graph_path.write_text(self.graph_path.read_text() + "\n")
         with self.assertRaisesRegex(ValueError, "destination graph changed"): self.studio.prepare(self.payload)
+
+    def test_damaged_snapshot_raises_value_error_not_imaging_error(self):
+        """Zero-byte/truncated/non-image snapshots map to ValueError; a valid image keeps width/height."""
+        source = continuation.source_context(self.studio, self.asset_id)
+        self.assertEqual((source["width"], source["height"]), (8, 12))
+        path = self.studio.assets.file(self.asset_id)
+        raw = path.read_bytes()
+        self.addCleanup(path.write_bytes, raw)
+        for damaged in (b"", png()[:20], b"not-an-image"):
+            with self.subTest(size=len(damaged)):
+                path.write_bytes(damaged)
+                asset = dict(self.studio.assets.get(self.asset_id), sha256=hashlib.sha256(damaged).hexdigest())
+                with patch.object(self.studio.assets, "get", return_value=asset):
+                    with self.assertRaisesRegex(ValueError, "damaged"):
+                        continuation.source_context(self.studio, self.asset_id)
+        path.write_bytes(raw)
+        source = continuation.source_context(self.studio, self.asset_id)
+        self.assertEqual((source["width"], source["height"]), (8, 12))
 
     def test_graph_consumption_is_required_and_conditioning_only_is_not_refine(self):
         graph = copy.deepcopy(GRAPH); graph["6"]["inputs"]["latent_image"] = ["3", 0]
