@@ -12,7 +12,7 @@
   let draftPrefix=null,draftPaused=false,draftDirty=false,restoring=false,draftTimer=null,knownDrafts=new Map(),pendingInputs=new Set();
   let homeBusy=false,homeData=null,homeErrors=[],homeUpdated=null,homeSignature='';
   const main=q('main'),editor=q('#createView .editor');
-  function after(name,callback){const original=window[name];window[name]=function(...args){const result=original.apply(this,args);callback(...args);return result;};}
+  function after(name,callback){const original=window[name];window[name]=function(...args){const result=original.apply(this,args);if(result?.then)return result.then(value=>{if(value!==false)callback(...args);return value;});callback(...args);return result;};}
   function element(tag,className,html){const el=document.createElement(tag);if(className)el.className=className;if(html)el.innerHTML=html;return el;}
   function announce(text,error=false){message(text,error);q('#uxNotice').textContent=text;q('#uxNotice').classList.toggle('error',error);}
   // #308: a Generate the memory check refuses says why in plain words; the server's own wording follows in brackets.
@@ -714,7 +714,7 @@
     try{
       if(check){
         // One press saves one answer with the picture's review revision; Keep and Needs work never wait on it (#1203).
-        await refreshAssets(true);const asset=assetState.assets.find(a=>a.id===button.dataset.asset);
+        await refreshAssets(true);const asset=(typeof assetRecord==='function'?assetRecord(button.dataset.asset):assetState.assets.find(a=>a.id===button.dataset.asset));
         if(!asset)throw Error('This picture is no longer in the library. Nothing was saved.');
         const tags=StudioReviewChecks.cycle(asset.tags,check),now=StudioReviewChecks.answer(tags,check);
         await mutateAssets({action:'edit',ids:[asset.id],tags});
@@ -890,7 +890,7 @@
   function openHandoff(id,preferred,epoch,intent){
     if(epoch!=null&&epoch!==handoffEpoch)return false;const request=++handoffEpoch;
     if(assetDetailsDirty()){warnUnsavedAsset();return false;}if(!catalog){announce('Recipes are still loading.');return false;}
-    const a=assetState.assets.find(a=>a.id===id);if(!a||a.trashed_at||a.media_type!=='image'){announce('Choose an available image from the Asset library.',true);return false;}
+    const a=(typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id));if(!a||a.trashed_at||a.media_type!=='image'){announce('Choose an available image from the Asset library.',true);return false;}
     handoffId=id;sourceContext=null;handoffBaseline=workbenchStamp();
     handoffIntent=intent||(/wan|h3/.test(preferred||'')?'animate':/trellis|hunyuan/.test(preferred||'')?'mesh':/^combine-/.test(preferred||'')?'combine':/style-pose|restyle-/.test(preferred||'')?'restyle':/fix|refine|upscale|esrgan/.test(preferred||'')?'repair':'edit');
     q('#uxHandoffSource').innerHTML=assetPreview(a,true)+'<b>'+escape(a.title)+'</b><small>Source preserved · '+escape(({selected:'Kept',needs_work:'Needs work',rejected:'Not this',unreviewed:'Unreviewed'}[a.review||'unreviewed']||a.review))+'</small>';
@@ -922,7 +922,7 @@
   handoff.addEventListener('close',()=>{if(!handoff.open){handoffEpoch++;sourceContext=null;pendingStyle=null;}});
   handoff.addEventListener('cancel',e=>{if(handoffBusy)e.preventDefault();});
   // Capture the old action before its old handler can perform an immediate transfer.
-  async function openGalleryHandoff(id,preferred){const epoch=++handoffEpoch;if(!id){announce('This output has no saved asset identity. Refresh the workspace before attaching it.',true);return;}let asset=assetState.assets.find(a=>a.id===id);if(!asset)try{const data=await api('/api/workspace');if(epoch!==handoffEpoch)return;if(!data||!Array.isArray(data.assets))throw Error('Workspace assets are unavailable.');assetState=data;renderAssets();asset=assetState.assets.find(a=>a.id===id);}catch(err){if(epoch===handoffEpoch)announce('Could not refresh this output. '+err.message,true);return;}if(epoch!==handoffEpoch)return;openHandoff(id,preferred,epoch);}
+  async function openGalleryHandoff(id,preferred){const epoch=++handoffEpoch;if(!id){announce('This output has no saved asset identity. Refresh the workspace before attaching it.',true);return;}let asset=(typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id));if(!asset)try{if(!await resolveAssetIDs([id]))return;if(epoch!==handoffEpoch)return;asset=(typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id));}catch(err){if(epoch===handoffEpoch)announce('Could not refresh this output. '+err.message,true);return;}if(epoch!==handoffEpoch)return;openHandoff(id,preferred,epoch);}
   document.addEventListener('click',e=>{const button=e.target.closest('.reference-output,[data-handoff]');if(!button)return;e.preventDefault();e.stopImmediatePropagation();const output=button.dataset.job?jobs.find(j=>j.id===button.dataset.job)?.outputs?.[Number(button.dataset.index)]:null;if(button.classList.contains('reference-output')){void openGalleryHandoff(output?.asset_id,button.dataset.preset);return;}const id=activeAsset?.id;if(!id){announce('Choose an available image from the Asset library.',true);return;}openHandoff(id,button.dataset.preset||button.dataset.handoff);},true);
   after('openAsset',()=>{q('#uxAssetUnsaved')?.remove();if(!activeAsset)return;const a=activeAsset;const eligibility=U.sceneEligibility([a]);const make=(intent,label,primary)=>'<button'+(primary?' class="primary"':'')+' data-make-open="'+intent+'" data-asset="'+esc(a.id)+'">'+label+'</button>';q('#assetHandoffs').innerHTML=(!a.trashed_at&&a.media_type==='image'?(window.StudioMake?'<div class="ux-route-row" role="group" aria-label="Open in Make"><span>In Make</span>'+make('edit','Change it',true)+make('repair','Fix or upscale')+make('restyle','Restyle')+make('combine','New pose')+'</div><div class="ux-route-row" role="group" aria-label="Full editor"><span>Full editor</span>':'')+'<button'+(window.StudioMake?'':' class="primary"')+' data-ux-handoff="'+a.id+'">Continue with this →</button><button id="uxFindSourceRecipes">Find recipes for this image</button>'+(window.StudioMake?'</div>':''):'')+(!a.trashed_at&&['image','video','audio'].includes(a.media_type)?'<a class="ux-scene-link" href="/av.html?asset_ids='+encodeURIComponent(a.id)+'">'+(eligibility.ok?'Use in a scene':'Open scene source picker')+' ↗</a>':'');q('#assetRecipe').disabled=!a.job_id;q('#assetRecipe').textContent=a.job_id?'Recipe':'No recipe recorded';q('#assetRecipe').title=a.job_id?'':'This asset was not made by a Studio job, so there is no recipe to export.';});
   // #1202 Vary subtle / Vary strong: one press from a picture to a prepared round of close variations. The img2img route
@@ -937,7 +937,7 @@
     return '<button type="button" data-ux-vary="subtle" '+attrs+' aria-describedby="'+why+'">Vary subtle</button><button type="button" data-ux-vary="strong" '+attrs+' aria-describedby="'+why+'">Vary strong</button>'+hint;
   }
   function varyPlanFor(presetId,jobId,assetId,mediaType,status,make){
-    const asset=assetState.assets.find(a=>a.id===assetId);
+    const asset=(typeof assetRecord==='function'?assetRecord(assetId):assetState.assets.find(a=>a.id===assetId));
     // Make passes its own, fresher reading of the source run; the shared jobs list can lag it by one refresh.
     const job=jobs.find(j=>j.id===jobId),known=status||job?.status;if(known&&!['completed','partial'].includes(known))return{kind:'none',reason:'Wait for a completed source run before varying it. Inspect unresolved work in Problems.'};
     if(!assetId)return{kind:'none',reason:'This output has no saved asset identity. Refresh the workspace before varying it.'};
@@ -1254,7 +1254,7 @@
     document.dispatchEvent(new CustomEvent('studio:shortlist-source',{detail:source}));
   });
   after('renderAssets',()=>{if(assetScope==='unreviewed')q('#assetScopeTitle').textContent='Awaiting review';});
-  after('renderAssetSelection',()=>{const assets=[...assetSelection].map(id=>assetState.assets.find(a=>a.id===id)).filter(Boolean),eligibility=U.sceneEligibility(assets),link=q('#createScene');link.setAttribute('aria-disabled',String(!eligibility.ok));link.title=eligibility.reason;link.classList.toggle('ux-disabled',!eligibility.ok);});
+  after('renderAssetSelection',()=>{const assets=[...assetSelection].map(id=>(typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id))).filter(Boolean),eligibility=U.sceneEligibility(assets),link=q('#createScene');link.setAttribute('aria-disabled',String(!eligibility.ok));link.title=eligibility.reason;link.classList.toggle('ux-disabled',!eligibility.ok);});
   document.addEventListener('click',e=>{const link=e.target.closest('#createScene');if(link&&link.getAttribute('aria-disabled')==='true'){e.preventDefault();e.stopImmediatePropagation();assetMessage(link.title,true);}},true);
   after('renderAssetSelection',()=>{
     let button=q('#uxFindSelectedRecipes');if(!button){button=element('button');button.id='uxFindSelectedRecipes';button.type='button';q('#createScene').before(button);}
@@ -1263,7 +1263,7 @@
   });
   document.addEventListener('click',e=>{if(!e.target.closest('#uxFindSelectedRecipes'))return;
     if(assetDetailsDirty()){warnUnsavedAsset();return;}
-    const ids=[...assetSelection],items=ids.map(id=>assetState.assets.find(a=>a.id===id));
+    const ids=[...assetSelection],items=ids.map(id=>(typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id)));
     if(!window.RecipeShortlist||ids.length<1||ids.length>3||items.some(a=>!a||a.trashed_at||a.media_type!=='image'||typeof a.sha256!=='string'||! /^[0-9a-f]{64}$/.test(a.sha256))){assetMessage('Select one to three available images. Every selected image must have a saved identity; none were dropped.',true);return;}
     // Preserve selection order, including selections outside the current filter. The chooser displays every image before Check.
     const sources=items.map(a=>({asset_id:a.id,sha256:a.sha256,title:a.title,role:'source'}));q('#assetDialog').close();showView('create');
@@ -1314,7 +1314,7 @@
   }
   q('#uxSourceAssets').onclick=async e=>{const button=e.target.closest('[data-ux-pull]');if(!button||pickerBusy)return;pickerBusy=true;button.disabled=true;syncReady();try{const id=button.dataset.uxPull,slot=q('#uxSourceSlot').value;
       if(continuationState){const input=StudioContinuation.sourceInput(selected.continuation_capability),isSource=input==='last_reference'?slot==='lastReference':slot==='reference'||slot==='0';
-        if(isSource&&(!selected.reference_slots?.length||input==='reference')){picker.close();offerSecondPicture({asset:assetState.assets.find(a=>a.id===id)});return;}
+        if(isSource&&(!selected.reference_slots?.length||input==='reference')){picker.close();offerSecondPicture({asset:(typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id))});return;}
         if(isSource)throw Error(StudioContinuation.sourceLabel(selected)+' is the picture you are continuing. Pull into another slot, or use Leave this continuation to start from this one.');}
       if(selected.reference_slots?.length&&slot!=='lastReference')await attachReferenceAsset(Number(slot),id);
       else{const stamp=attachStamp(),result=await post('/api/assets/reference',{id});if(stamp!==attachStamp())throw Error('The workbench changed during attachment. Reopen the picker.');if(slot==='lastReference'){lastUploaded=result.file;q('#lastReference').value='';pendingInputs.delete('lastReference');}else{uploaded=result.file;q('#reference').value='';pendingInputs.delete('reference');}replaceParentAsset(slot==='lastReference'?'lastReference':'reference',null,id);}

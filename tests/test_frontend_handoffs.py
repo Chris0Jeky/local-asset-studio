@@ -6,6 +6,15 @@ from pathlib import Path
 
 class GalleryHandoffTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_library_pagination_and_off_page_selection(self):
+        result = subprocess.run(
+            [shutil.which('node'), str(Path(__file__).with_name('workspace_pagination.cjs'))],
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('Workspace pagination contracts passed: 9', result.stdout)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
     def test_workbench_bug_hunt_regressions(self):
         result = subprocess.run(
             [shutil.which('node'), '--test', str(Path(__file__).with_name('workbench_bug_hunt.cjs'))],

@@ -596,7 +596,7 @@ function renderJobs(signature=JSON.stringify(jobs),force=false) {
       // A finished run whose cancel did not take effect still says so (#1160 review); its outputs follow as usual.
       cards.push('<article class="jobStatus completed" data-problem="'+esc(job.id)+'"><b>'+esc(job.preset_name)+' · completed</b>'+renderCancel(job)+'</article>');
     }
-    const kept=[];job.outputs?.forEach((o,i)=>{const a=typeof assetState!=='undefined'&&assetState.assets.find(a=>a.id===o.asset_id);if(a?.trashed_at)return;kept.push(o.asset_id??i);if(cards.length>=recentShown)recentHidden++;else cards.push(mediaCard(job,i,o));});
+    const kept=[];job.outputs?.forEach((o,i)=>{const a=typeof assetRecord==='function'?assetRecord(o.asset_id):typeof assetState!=='undefined'&&assetState.assets.find(a=>a.id===o.asset_id);if(a&&a.trashed_at!=null)return;kept.push(o.asset_id??i);if(cards.length>=recentShown)recentHidden++;else cards.push(mediaCard(job,i,o));});
     keys.set(job.id,job.status+'|'+(job.cancellation?.state||'')+'|'+kept.join(','));
   });
   const problemMarkup=renderProblems(problems,problemsOpen);

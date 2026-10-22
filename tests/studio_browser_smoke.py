@@ -75,9 +75,18 @@ class Handler(BaseHTTPRequestHandler):
         path=urlsplit(self.path).path
         if path=='/static/vendor/model-viewer/model-viewer.min.js':
             self.send_response(200);self.send_header('Content-Type','text/javascript');self.end_headers();self.wfile.write(b'/* 3D renderer excluded from no-GPU UX fixture. */');return
-        if path=='/api/workspace':
+        if path in ('/api/workspace','/api/assets/page','/api/collections'):
             if WORKSPACE_DELAY:time.sleep(WORKSPACE_DELAY)
             if FAIL_WORKSPACE:return self.json({'error':'Fixture workspace unavailable'},503)
+        if path=='/api/assets/page':
+            from urllib.parse import parse_qs
+            query=parse_qs(urlsplit(self.path).query)
+            assets=[a for a in ASSETS if (a['trashed_at'] is not None)==(query.get('visibility')==['trash'])]
+            if 'review' in query: assets=[a for a in assets if a['review']==query['review'][0]]
+            if 'favorite' in query: assets=[a for a in assets if a['favorite']]
+            if 'media_type' in query: assets=[a for a in assets if a['media_type']==query['media_type'][0]]
+            return self.json({'format':'studio.asset-page/v1','workspace_id':'1'*32,'catalogue':{'epoch':'a'*32,'revision':1},'assets':assets[:100],'next_cursor':None})
+        if path=='/api/collections':return self.json({'format':'studio.collection-page/v1','workspace_id':'1'*32,'catalogue':{'epoch':'a'*32,'revision':1},'collections':[],'next_cursor':None})
         data={
             '/api/catalog':CATALOG, '/api/options':{'loras':[]}, '/api/knowledge':{}, '/api/recipes':{'recipes':[]},
             '/api/identity':{'workspace':'ux-test-workspace'}, '/api/setups':[], '/api/looks':{'looks':[],'seed_errors':[],'generation_submitted':False}, '/api/characters':{'characters':[],'generation_submitted':False}, '/api/jobs':JOBS,
@@ -107,6 +116,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         raw=self.rfile.read(int(self.headers.get('Content-Length','0')))
+        if self.path=='/api/assets/selection':
+            data=json.loads(raw)
+            items=[]
+            for key in data['ids']:
+                asset=next((a for a in ASSETS if a['id']==key),None)
+                items.append({'id':key,'state':'missing' if asset is None else 'trashed' if asset['trashed_at'] is not None else 'active','asset':asset})
+            return self.json({'workspace_id':'1'*32,'catalogue':{'epoch':'a'*32,'revision':1},'items':items})
         data=json.loads(raw) if self.headers.get('Content-Type')=='application/json' else {}
         POSTS.append({'path':self.path,'data':data})
         if self.path=='/api/assets/reference':

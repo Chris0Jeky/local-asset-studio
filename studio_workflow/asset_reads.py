@@ -247,7 +247,8 @@ class AssetReads:
     def __init__(self, workspace):
         self.workspace = workspace
 
-    def page(self, *, workspace_id=None, limit=50, cursor=None, filters=None):
+    def page(self, *, workspace_id=None, limit=50, cursor=None, filters=None, details=False):
+        require(type(details) is bool, 'Details must be boolean')
         require(_integer(limit,1,MAX_PAGE),'Page size must be an integer between 1 and 100')
         query = normalize_filters(filters)
         query_hash = hashlib.sha256(canonical(query)).hexdigest()
@@ -285,9 +286,11 @@ class AssetReads:
                               ' ORDER BY a.created_at DESC,a.id DESC LIMIT ?',[*params,limit+1]).fetchall()
             items = [_summary(row) for row in rows[:limit]]
             next_cursor = _encode_cursor(scope,stamp,query_hash,limit,items[-1]) if len(rows)>limit else None
+            if details: items = self.workspace._library_assets(db,items,scope)
             return _result('page',scope,stamp,filters=query,order=ORDER,limit=limit,assets=items,next_cursor=next_cursor)
 
-    def selection(self, ids, *, workspace_id):
+    def selection(self, ids, *, workspace_id, details=False):
+        require(type(details) is bool, 'Details must be boolean')
         ids = selection_ids(ids)
         self.workspace._validate_scope(workspace_id)
         with self.workspace.connection() as db:
@@ -297,6 +300,7 @@ class AssetReads:
             marks = ','.join('?' for _ in ids)
             rows = db.execute('SELECT '+_projection(db)+' FROM assets AS a WHERE a.id IN ('+marks+')',ids)
             found = {item['id']:item for item in map(_summary,rows)}
+            if details: found = {item['id']:item for item in self.workspace._library_assets(db,list(found.values()),scope)}
             items = []
             for key in ids:
                 asset = found.get(key)

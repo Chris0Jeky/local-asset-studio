@@ -33,11 +33,14 @@ def page_query(raw):
             'Relative asset page route required')
     require(re.search(r'%(?![0-9a-fA-F]{2})', parsed.query) is None, 'Malformed query escape')
     pairs = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True,
-                      encoding='utf-8', errors='strict', max_num_fields=8)
+                      encoding='utf-8', errors='strict', max_num_fields=9)
     query = dict(pairs)
     require(len(query) == len(pairs) and all(value for _, value in pairs),
             'Asset query fields must be nonempty and occur once')
-    require(set(query) <= set(DEFAULT_FILTERS) | {'workspace_id', 'limit', 'cursor'}, 'Unknown asset query field')
+    require(set(query) <= set(DEFAULT_FILTERS) | {'workspace_id', 'limit', 'cursor', 'details'}, 'Unknown asset query field')
+    if 'details' in query:
+        require(query['details'] in ('true','false'), 'Details must be true or false')
+        query['details'] = query['details'] == 'true'
     if 'limit' in query:
         require(re.fullmatch(r'[0-9]{1,3}', query['limit']) is not None, 'Invalid page size')
         query['limit'] = int(query['limit'])
@@ -90,8 +93,8 @@ def _body(handler):
         value = decode(b''.join(chunks).decode('utf-8'))
     finally:
         handler.connection.settimeout(prior_timeout)
-    require(type(value) is dict and set(value) == {'workspace_id', 'ids'},
-            'Supply exactly workspace_id and ids for selection inspection')
+    require(type(value) is dict and {'workspace_id','ids'} <= set(value) <= {'workspace_id','ids','details'},
+            'Supply workspace_id, ids and optional details for selection inspection')
     return value
 
 

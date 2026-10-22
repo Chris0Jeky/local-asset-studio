@@ -7,6 +7,12 @@ const journal=(s,slot='detail')=>s.storage.getItem(PREFIX+slot);
 const begin=s=>{s.el('#assetNotes').value='sent snapshot';return s.el('#saveAssetDetails').onclick();};
 const swap=s=>s.run("assetState={...assetState,workspace_id:'2'.repeat(32),assets:assetState.assets.map(a=>({...a,workspace_id:'2'.repeat(32),notes:'foreign saved'}))}");
 const conflict=(s,index=0)=>Object.assign(Error('Changed'),{status:409,data:{code:'asset_revision_conflict',workspace_id:'1'.repeat(32),request_id:s.payload(index).request_id,current:s.receipt(index).current}});
+async function readLibrary(s,state){
+  const start=s.reads.length,read=s.actualRefresh(true),catalogue={epoch:'a'.repeat(32),revision:1};
+  s.reads[start].resolve({...state,catalogue,next_cursor:null});
+  s.reads[start+1].resolve({workspace_id:state.workspace_id,catalogue,collections:state.collections,next_cursor:null});
+  assert.equal(await read,true);
+}
 for(const outcome of ['success','conflict','failure'])test('detail '+outcome+' from a previous Workspace cannot change recovery or the active editor',async()=>{
   const s=setup(),p=begin(s),receipt=s.receipt(0),bytes=journal(s);swap(s);
   if(outcome==='success')s.writes[0].resolve(receipt);else s.writes[0].reject(outcome==='conflict'?conflict(s):Error('delayed transport failure'));
@@ -55,14 +61,14 @@ for(const slot of ['detail','library'])test(slot+' receipt stays stale after an 
   const s=setup({autoOpen:slot==='detail'}),p=slot==='detail'?begin(s):s.run("mutateAssets({ids:['a'],action:'edit',favorite:true})").catch(()=>{}),receipt=s.receipt(0),bytes=journal(s,slot);
   const state=JSON.parse(s.run('JSON.stringify(assetState)'));
   for(const workspace_id of ['2'.repeat(32),'1'.repeat(32)]){
-    const refresh=s.actualRefresh(true);s.reads.at(-1).resolve({...state,workspace_id,assets:state.assets.map(a=>({...a,workspace_id}))});await refresh;
+    await readLibrary(s,{...state,workspace_id,assets:state.assets.map(a=>({...a,workspace_id}))});
   }
   s.writes[0].resolve(receipt);await p;
   assert.equal(journal(s,slot),bytes);assert.equal(s.run('!!'+(slot==='detail'?'assetDetailPending':'assetLibraryPending')),true);assert.equal(s.run('assetState.assets[0].metadata_revision'),0);
 });
 test('same-Workspace refresh does not cancel a valid current request',async()=>{
   const s=setup(),p=begin(s),receipt=s.receipt(0),state=JSON.parse(s.run('JSON.stringify(assetState)'));
-  const refresh=s.actualRefresh(true);s.reads.at(-1).resolve(state);await refresh;s.writes[0].resolve(receipt);await p;
+  await readLibrary(s,state);s.writes[0].resolve(receipt);await p;
   assert.equal(s.run('activeAsset.notes'),'sent snapshot');assert.equal(journal(s),null);assert.equal(s.run('assetDetailBusy'),false);
 });
 for(const slot of ['detail','library'])test(slot+' callback stays stale across Workspace observations rendered by a different loader',async()=>{

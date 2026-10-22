@@ -316,12 +316,80 @@ class AssetWorkspace:
         except AssetReadError as exc:
             raise WorkspaceError(str(exc), status=exc.status, code=exc.code, **exc.details) from exc
 
-    def asset_selection(self, ids, *, workspace_id):
+    def asset_selection(self, ids, *, workspace_id, details=False):
         from studio_workflow.asset_reads import AssetReads, AssetReadError
         try:
-            return AssetReads(self).selection(ids, workspace_id=workspace_id)
+            return AssetReads(self).selection(ids, workspace_id=workspace_id, details=details)
         except AssetReadError as exc:
             raise WorkspaceError(str(exc), status=exc.status, code=exc.code, **exc.details) from exc
+
+    def _library_assets(self, db, summaries, identity):
+        """Opt-in bounded Library fields; never decode unbounded private JSON or read media."""
+        from studio_workflow.asset_reads import require
+        if not summaries: return []
+        # Byte bounds are applied in SQL before values cross into Python. Refuse
+        # oversize fields rather than handing an editor a silently cut baseline.
+        bounds = {'title':4096,'filename':4096,'preset_name':4096,'notes':32000,'tags':8192,
+                  'source':65536,'lineage':16384,'job_id':512,'run_label':320,'prompt_excerpt':1024}
+        columns = ','.join(f'CASE WHEN length(CAST({key} AS BLOB))<={limit} THEN {key} END AS {key},'
+                          f'{key} IS NULL AS {key}_null' for key,limit in bounds.items())
+        marks = ','.join('?' for _ in summaries)
+        rows = db.execute('SELECT id,output_index,'+columns+' FROM assets WHERE id IN ('+marks+')',
+                          [a['id'] for a in summaries])
+        found = {}
+        for row in rows:
+            fields = {key:row[key] for key in bounds}
+            require(all(type(value) is str or value is None and row[key+'_null']
+                        and key in ('preset_name','run_label','prompt_excerpt') for key,value in fields.items()),
+                    'Library metadata exceeds its bound or is invalid',code='asset_read_unavailable',status=503)
+            try:
+                for key,kind in (('tags',list),('source',dict),('lineage',list)):
+                    fields[key] = json.loads(fields[key])
+                    require(type(fields[key]) is kind, 'Invalid Library metadata',code='asset_read_unavailable',status=503)
+                require(all(type(x) is str for x in fields['tags']+fields['lineage']),
+                        'Invalid Library labels',code='asset_read_unavailable',status=503)
+            except (ValueError,RecursionError) as exc:
+                raise WorkspaceError('Library metadata is unavailable',code='asset_read_unavailable',status=503) from exc
+            memberships = db.execute('SELECT collection_id FROM collection_assets WHERE asset_id=? ORDER BY collection_id LIMIT 201',
+                                     (row['id'],)).fetchall()
+            require(len(memberships)<=200, 'Library memberships exceed their bound',code='asset_read_unavailable',status=503)
+            found[row['id']] = dict(fields,output_index=row['output_index'],collections=[r[0] for r in memberships],workspace_id=identity)
+        return [dict(a,**found[a['id']]) for a in summaries]
+
+    def collection_page(self, *, workspace_id=None, limit=50, cursor=None):
+        from studio_workflow.asset_reads import _integer, _state, ENTITY, require
+        from studio_workflow.collection_http import collection_cursor, encode_cursor
+        require(_integer(limit,1,100), 'Page size must be an integer between 1 and 100')
+        position = collection_cursor(cursor) if cursor is not None else None
+        if workspace_id is not None: self._validate_scope(workspace_id)
+        if position is not None:
+            require(position['limit']==limit, 'Collection cursor belongs to another page size; explicitly refresh',
+                    code='collection_cursor_mismatch',status=409)
+            require(workspace_id is None or position['workspace_id']==workspace_id, 'Collection cursor belongs to another Workspace',
+                    code='asset_workspace_conflict',status=409)
+            workspace_id = position['workspace_id']
+        with self.connection() as db:
+            db.execute('BEGIN')
+            identity, stamp = self._check_scope(db,workspace_id), _state(db)
+            require(position is None or position['catalogue']==stamp, 'Collection catalogue changed; explicitly refresh',
+                    code='collection_cursor_stale',status=409)
+            where, params = (' WHERE c.id>?',[position['last']]) if position else ('',[])
+            rows = db.execute('''SELECT CASE WHEN length(CAST(c.id AS BLOB))<=512 THEN c.id END AS id,
+                CASE WHEN length(CAST(c.name AS BLOB))<=400 THEN c.name END AS name,
+                CASE WHEN length(CAST(c.description AS BLOB))<=4000 THEN c.description END AS description,
+                c.revision,(SELECT COUNT(*) FROM collection_assets AS ca JOIN assets AS a ON a.id=ca.asset_id
+                    WHERE ca.collection_id=c.id AND a.trashed_at IS NULL) AS count
+                FROM collections AS c'''+where+' ORDER BY c.id LIMIT ?',[*params,limit+1]).fetchall()
+            items = [dict(row) for row in rows[:limit]]
+            require(all(type(c['id']) is str and ENTITY.fullmatch(c['id']) and type(c['name']) is str
+                        and 0<len(c['name'])<=100 and type(c['description']) is str and len(c['description'])<=1000
+                        and _integer(c['revision'],1) and _integer(c['count']) for c in items),
+                    'Collection metadata is unavailable',code='collection_read_unavailable',status=503)
+            next_cursor = encode_cursor({'format':'studio.collection-cursor/v1','workspace_id':identity,'catalogue':stamp,
+                                         'limit':limit,'last':items[-1]['id']}) if len(rows)>limit else None
+            return {'format':'studio.collection-page/v1','workspace_id':identity,'catalogue':stamp,'limit':limit,
+                    'order':'id_asc','collections':items,'next_cursor':next_cursor,'observation_only':True,
+                    'media_bytes_verified':False,'generation_submitted':False}
 
     @staticmethod
     def text(value, name, maximum):

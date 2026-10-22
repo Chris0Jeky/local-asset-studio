@@ -219,12 +219,13 @@ async function main(){
   });
   await test('A library read that overlaps a confirmed save cannot regress its revision (#1436)',async()=>{
     const s=setup(),stale=JSON.parse(s.run('JSON.stringify(assetState)'));
-    const read=s.actualRefresh(true);assert.equal(s.reads.length,1);
+    const stamp={epoch:'a'.repeat(32),revision:1},collection={workspace_id:'1'.repeat(32),catalogue:stamp,collections:[],next_cursor:null};
+    const read=s.actualRefresh(true);assert.equal(s.reads.length,2);
     s.el('#assetNotes').value='Saved during the read';const save=s.el('#saveAssetDetails').onclick();s.accept(0);await save;
     assert.equal(s.run("assetState.assets.find(a=>a.id==='a').metadata_revision"),1);
-    s.reads[0].resolve(stale);await new Promise(r=>setImmediate(r));
-    assert.equal(s.reads.length,2,'the overlapping snapshot is re-read, not applied');
-    const fresh=JSON.parse(s.run('JSON.stringify(assetState)'));s.reads[1].resolve(fresh);assert.equal(await read,true);
+    s.reads[0].resolve({...stale,catalogue:stamp,next_cursor:null});s.reads[1].resolve(collection);await new Promise(r=>setImmediate(r));
+    assert.equal(s.reads.length,4,'the overlapping pages are re-read, not applied');
+    const fresh=JSON.parse(s.run('JSON.stringify(assetState)'));s.reads[2].resolve({...fresh,catalogue:stamp,next_cursor:null});s.reads[3].resolve(collection);assert.equal(await read,true);
     assert.equal(s.run("assetState.assets.find(a=>a.id==='a').metadata_revision"),1);
     s.run("document.querySelector=()=>null");s.el('#assetDialog').close();s.run("openAsset('a')");s.el('#assetFavorite').onclick();
     assert.deepEqual(s.payload(1).expected_revisions,{a:1},'the next save is not a spurious conflict');
