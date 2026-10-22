@@ -34,6 +34,8 @@ PART = re.compile(r'[A-Za-z0-9][A-Za-z0-9._-]*')
 LICENCES = {'CC0-1.0', 'MIT', 'OFL-1.1', 'Apache-2.0'}
 FETCH_HOSTS = {'raw.githubusercontent.com', 'dl.polyhaven.org', 'ambientcg.com'}
 MAX_DOWNLOAD = 32 * 1024 * 1024
+# WebP needs 30 bytes; JPEG frames and PNG transparency may follow metadata.
+HEADER_BYTES = 1024 * 1024
 
 
 class TruncatedHeader(ValueError):
@@ -139,7 +141,18 @@ def prompt_block(root, asset_id):
 
 
 def receipt_for(root, path, rows, template, now, provider=None):
-    data = path.read_bytes()
+    if path.stat().st_size > MAX_DOWNLOAD:
+        raise ValueError(f'{path.name}: candidate exceeds {MAX_DOWNLOAD} bytes')
+    digest = hashlib.sha256()
+    with path.open('rb') as stream:
+        data = stream.read(HEADER_BYTES)
+        size = len(data)
+        digest.update(data)
+        while chunk := stream.read(HEADER_BYTES):
+            size += len(chunk)
+            if size > MAX_DOWNLOAD:
+                raise ValueError(f'{path.name}: candidate exceeds {MAX_DOWNLOAD} bytes')
+            digest.update(chunk)
     match = NAME.fullmatch(path.stem)
     if not match:
         raise ValueError(f'{path.name}: expected <asset-id>--<w>x<h>--candidate-<n>{path.suffix}')
@@ -181,7 +194,7 @@ def receipt_for(root, path, rows, template, now, provider=None):
         'reported_model': None, 'output_id': None, 'produced_at': None, 'prompt_record': f'CHATGPT-PROMPT-PACK.md#{match["id"]}' if block else None,
         'input_anchors': [{'asset_id': a, 'sha256': None, 'note': 'Add the uploaded anchor file hash when known.'} for a in anchors]})
     receipt['intake'] = {'received_at': now, 'candidate': int(match['n'])}
-    receipt['files'] = [{'relative_path': path.relative_to(root).as_posix(), 'sha256': sha256(data), 'bytes': len(data),
+    receipt['files'] = [{'relative_path': path.relative_to(root).as_posix(), 'sha256': digest.hexdigest(), 'bytes': size,
                          'width': width, 'height': height, 'format': fmt, 'alpha': alpha, 'duration_seconds': None, 'codec': None}]
     receipt['unknowns'] = unknowns
     return receipt
