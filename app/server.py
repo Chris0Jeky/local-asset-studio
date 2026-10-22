@@ -1239,15 +1239,22 @@ class Studio:
         target = directory / (identifier + ".zip")
         temporary = target.with_suffix(".part")
         try:
+            written = []
             with zipfile.ZipFile(temporary, "x", compression=zipfile.ZIP_STORED) as archive:
                 for asset in assets:
                     source = self.assets.file(asset["id"])
                     if digest_file(source) != asset["sha256"]: raise StudioError("An asset changed; export stopped")
-                    archive.write(source, "assets/" + asset["id"] + source.suffix)
+                    member = "assets/" + asset["id"] + source.suffix; archive.write(source, member); written.append((member, asset["sha256"]))
                     job = self.jobs.get(asset["job_id"])
                     if job:
                         archive.writestr("recipes/" + asset["id"] + ".json", json.dumps(self.export_recipe(job), indent=2))
                 archive.writestr("manifest.json", json.dumps({"version": 1, "assets": assets, "created_at": time.time(), "note": "Review states are creative selections, not model-license or engine acceptance."}, indent=2))
+            with zipfile.ZipFile(temporary) as archive:
+                for member, expected in written:
+                    hashed = hashlib.sha256()
+                    with archive.open(member) as stream:
+                        for chunk in iter(lambda: stream.read(1024**2), b""): hashed.update(chunk)
+                    if hashed.hexdigest() != expected: raise StudioError("An asset changed while the archive was written; export stopped")
             temporary.replace(target)
         finally:
             temporary.unlink(missing_ok=True)

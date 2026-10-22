@@ -922,6 +922,38 @@ class ServerTests(unittest.TestCase):
                 handler.do_POST()
                 self.assertEqual(sent[0][0],400,sent)
 
+    def test_export_archive_bytes_match_manifest(self):
+        s=self.studio()
+        assets=[s.import_image(name,'image/png',body)['asset'] for name,body in (('plain.png',png()),('alpha.png',rgba_png()))]
+        result=s.export_assets({'ids':[a['id'] for a in assets]})
+        directory=s.assets.root/'exports'
+        with server.zipfile.ZipFile(directory/(result['id']+'.zip')) as archive:
+            manifest=json.loads(archive.read('manifest.json'))
+            self.assertEqual(manifest['assets'],assets);self.assertEqual(result['count'],2)
+            for asset in manifest['assets']:
+                raw=archive.read('assets/'+asset['id']+s.assets.file(asset['id']).suffix)
+                self.assertEqual(hashlib.sha256(raw).hexdigest(),asset['sha256']);self.assertEqual(len(raw),asset['bytes'])
+                self.assertEqual(json.loads(archive.read('recipes/'+asset['id']+'.json')),s.export_recipe(s.jobs[asset['job_id']]))
+        self.assertEqual(list(directory.glob('*.part')),[])
+
+    def test_export_rejects_bytes_changed_during_zip_ingestion(self):
+        s=self.studio();asset=s.import_image('source.png','image/png',png())['asset']
+        source=s.assets.file(asset['id']);original=source.read_bytes();written=[]
+        write=server.zipfile.ZipFile.write
+        def changed_write(archive,filename,arcname=None,*args,**kwargs):
+            self.assertEqual(Path(filename),source)
+            source.write_bytes(b'changed'+original[7:])
+            try:
+                write(archive,filename,arcname,*args,**kwargs)
+                written.append(hashlib.sha256(source.read_bytes()).hexdigest())
+            finally:source.write_bytes(original)
+        with patch.object(server.zipfile.ZipFile,'write',changed_write):
+            with self.assertRaisesRegex(server.StudioError,'changed.*export stopped'):
+                s.export_assets({'ids':[asset['id']]})
+        self.assertEqual(len(written),1);self.assertNotEqual(written[0],asset['sha256'])
+        self.assertEqual(source.read_bytes(),original)
+        self.assertEqual(list((s.assets.root/'exports').iterdir()),[])
+
     def test_export_with_trashed_asset_returns_code_and_ids(self):
         import uuid
         s=self.studio()
