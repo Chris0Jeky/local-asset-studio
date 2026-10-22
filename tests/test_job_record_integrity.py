@@ -120,13 +120,11 @@ class JobRecordIntegrityTests(unittest.TestCase):
         (directory/'workflow.json').write_bytes(b'{broken')
         self.assertIn('Known ComfyUI prompt IDs: known-prompt',self.recover_bad(directory)['message'])
 
-    def test_normalization_failure_is_inside_the_record_error_boundary(self):
-        directory=self.write_record('bad');save=server.Studio._save
-        def fail(studio,job,**kwargs):
-            if job['id']=='bad' and 'record_error' not in job:raise TypeError('malformed normalization input')
-            return save(studio,job,**kwargs)
-        with patch.object(server.Studio,'_save',fail):
-            self.assertIn('malformed normalization input',self.recover_bad(directory)['record_error'])
+    def test_normalization_write_failure_still_stops_startup(self):
+        # Only reading and validation are contained; a failed restart write must not be masked as unreadable (test_mixed_batch).
+        self.write_record('bad')
+        def fail(studio,job,**kwargs):raise OSError('state file locked')
+        with patch.object(server.Studio,'_save',fail),self.assertRaisesRegex(OSError,'state file locked'):FakeStudio(self.root,[])
 
     def test_malformed_native_output_is_contained_before_indexing(self):
         for output in ({},{'native_path':[]}):

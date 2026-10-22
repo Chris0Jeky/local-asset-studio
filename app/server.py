@@ -1760,37 +1760,6 @@ class Studio:
                     else: graph = record
                 path = state_path
                 self._validate_job_record(data)
-                defaults = {key: value for key, value in (('comfy_root', str(self.comfy_root)), ('comfy_url', self.comfy_url)) if key not in data}
-                state_written = False
-                data["graph"] = graph
-                data.setdefault('comfy_root', str(self.comfy_root))
-                data.setdefault('comfy_url', self.comfy_url)
-                if data.get("status") in ("queued", "waiting", "submitting", "running", "uncertain"):
-                    if submission_evidence.never_submitted(data):
-                        data["status"] = "not_submitted"
-                        data["message"] = "Restarted before submission. Resume the owning experiment explicitly, or retain the recipe and abandon this local job. Nothing was submitted on restart."
-                    else:
-                        data["status"] = "uncertain"
-                        data["message"] = "Restarted while remote job state was unknown; use Resume observation for known prompt IDs. It was not resubmitted."
-                    if "pending_submission" in data and data.get("prompt_ids"):
-                        # Restarting a mixed observation must not normalize or
-                        # reconstruct its retained recipe/workflow source files.
-                        data["message"] = "Restarted with a mixed batch; check known batch receipts or explicitly record a local disposition. The unknown submission was not repeated."
-                        self._write_json_atomic(state_path, {k: v for k, v in data.items() if k != "graph"})
-                    else:
-                        self._save(data)
-                    state_written = True
-                if job_cancel.reconcile_restart(data, state_path.parent):
-                    self._write_json_atomic(state_path, {k: v for k, v in data.items() if k != "graph"})
-                    state_written = True
-                fields = (['tracking_disposition'] if self._tracking_stopped(data) else [])
-                if data.get('status') == 'abandoned' and isinstance(data.get('abandonment'), dict): fields.append('abandonment')
-                if fields:
-                    retained = {k: v for k, v in data.items() if k != 'graph'}
-                    if not state_written:
-                        for name in defaults: retained.pop(name, None)
-                    for field in fields: self._loaded_operator_dispositions[(data['id'], field)] = copy.deepcopy(retained)
-                self.jobs[data["id"]] = data
             except (OSError, ValueError, TypeError, KeyError, AttributeError, RecursionError, OverflowError) as exc:
                 reason = f"{path.name}: {exc}"; known = data.get("prompt_ids")
                 ids = [i for i in known if isinstance(i, str)] if isinstance(known, list) else []
@@ -1798,6 +1767,38 @@ class Studio:
                 self.jobs[state_path.parent.name] = {"id": state_path.parent.name, "status": "uncertain", "created_at": 0,
                     "preset_name": "Unreadable run record", "controls": {}, "outputs": [], "run_path": str(state_path.parent),
                     "record_error": reason, "message": f"The run record could not be read ({reason}). Nothing was resubmitted." + (f" Known ComfyUI prompt IDs: {', '.join(ids[:8])}." if ids else "") + f" Inspect experiments/runs/{state_path.parent.name}/ before deleting it."}
+                continue
+            defaults = {key: value for key, value in (('comfy_root', str(self.comfy_root)), ('comfy_url', self.comfy_url)) if key not in data}
+            state_written = False
+            data["graph"] = graph
+            data.setdefault('comfy_root', str(self.comfy_root))
+            data.setdefault('comfy_url', self.comfy_url)
+            if data.get("status") in ("queued", "waiting", "submitting", "running", "uncertain"):
+                if submission_evidence.never_submitted(data):
+                    data["status"] = "not_submitted"
+                    data["message"] = "Restarted before submission. Resume the owning experiment explicitly, or retain the recipe and abandon this local job. Nothing was submitted on restart."
+                else:
+                    data["status"] = "uncertain"
+                    data["message"] = "Restarted while remote job state was unknown; use Resume observation for known prompt IDs. It was not resubmitted."
+                if "pending_submission" in data and data.get("prompt_ids"):
+                    # Restarting a mixed observation must not normalize or
+                    # reconstruct its retained recipe/workflow source files.
+                    data["message"] = "Restarted with a mixed batch; check known batch receipts or explicitly record a local disposition. The unknown submission was not repeated."
+                    self._write_json_atomic(state_path, {k: v for k, v in data.items() if k != "graph"})
+                else:
+                    self._save(data)
+                state_written = True
+            if job_cancel.reconcile_restart(data, state_path.parent):
+                self._write_json_atomic(state_path, {k: v for k, v in data.items() if k != "graph"})
+                state_written = True
+            fields = (['tracking_disposition'] if self._tracking_stopped(data) else [])
+            if data.get('status') == 'abandoned' and isinstance(data.get('abandonment'), dict): fields.append('abandonment')
+            if fields:
+                retained = {k: v for k, v in data.items() if k != 'graph'}
+                if not state_written:
+                    for name in defaults: retained.pop(name, None)
+                for field in fields: self._loaded_operator_dispositions[(data['id'], field)] = copy.deepcopy(retained)
+            self.jobs[data["id"]] = data
 
     def _request(self, path, method="GET", data=None, timeout=15, base_url=None, allow_empty=False):
         body = json.dumps(data).encode() if data is not None else None
