@@ -870,6 +870,26 @@ class ServerTests(unittest.TestCase):
                 self.assertEqual(sent[0][0],400,sent)
         self.assertEqual(studio.assets.setups(),[])
 
+    def test_character_card_invalid_actions_write_structured_http_refusals(self):
+        studio=self.studio()
+        cases=[({},400,'Unknown card action','invalid_asset_command')]
+        cases += [({'action':action},400,'Unknown card action','invalid_asset_command') for action in ([],{},None,True,False,0,1,1.5,'','explode')]
+        cases += [({'action':'create'},400,'This route saves characters; the card kind must be character','invalid_asset_command'),
+                  ({'action':'edit','id':'missing'},404,'Card not found','card_not_found')]
+        for payload,status,error,code in cases:
+            with self.subTest(payload=payload):
+                body=json.dumps(payload).encode()
+                handler=server.Handler.__new__(server.Handler);handler.studio=studio;handler.path='/api/characters'
+                handler._safe_mutation=lambda:True;handler.request_version='HTTP/1.1';handler.requestline='POST /api/characters HTTP/1.1'
+                handler.headers={'Content-Type':'application/json','Content-Length':str(len(body))}
+                handler.rfile=io.BytesIO(body);handler.wfile=io.BytesIO()
+                handler.do_POST()
+                headers,raw=handler.wfile.getvalue().split(b'\r\n\r\n',1)
+                self.assertTrue(headers.startswith(('%s %s '%(handler.protocol_version,status)).encode()),headers)
+                self.assertIn(b'Content-Type: application/json',headers)
+                self.assertEqual(json.loads(raw),{'error':error,'code':code})
+        self.assertEqual(studio.assets.cards('character'),[]);self.assertEqual(studio.jobs,{})
+
     def test_every_json_route_answers_a_non_object_body_with_4xx(self):
         # Valid JSON that is not an object once escaped do_POST as AttributeError/TypeError: no response, a dropped connection.
         studio=self.studio();sent=[];project='a'*32

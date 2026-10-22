@@ -98,6 +98,16 @@ class WorkspaceCardTests(unittest.TestCase):
                 with self.assertRaises(workspace.WorkspaceError): self.store.card_command(payload)
         self.assertEqual(self.store.cards('look'), [])
 
+    def test_invalid_action_discriminators_are_structured_refusals_and_change_nothing(self):
+        card = self.create()
+        payloads = [{}] + [{'action': action} for action in ([], {}, None, True, False, 0, 1, 1.5, '', 'explode')]
+        for payload in payloads:
+            with self.subTest(payload=payload):
+                with self.assertRaises(workspace.WorkspaceError) as caught: self.store.card_command(payload)
+                self.assertEqual(caught.exception.status, 400)
+                self.assertEqual(caught.exception.response(), {'error': 'Unknown card action', 'code': 'invalid_asset_command'})
+                self.assertEqual(self.store.cards('look'), [card])
+
     def test_an_edit_without_changes_is_refused(self):
         card = self.create()
         with self.assertRaises(workspace.WorkspaceError):
