@@ -154,7 +154,7 @@ class ReviewedSetupHistoryClientTests(unittest.TestCase):
         for change in ({'export_sha256':'a'*64},{'export_bytes':1},{'export_json':'{}'},
                        {'export':dict(original['export'],revision=2)}):
             with patch.object(self.client,'transport',return_value=dict(original,**change)),self.assertRaises(ValueError):self.export()
-        for change in ({'workspace_id':'e'*32},{'draft_id':'other'},{'revision':2},{'authority':'execute'}):
+        for change in ({'workspace_id':'e'*32},{'draft_id':'other'},{'revision':2},{'authority':'execute'},{'draft_sha256':'a'*64}):
             value=copy.deepcopy(original);value['export'].update(change);raw=canonical(value['export'])
             value.update(export_json=raw.decode(),export_sha256=digest(value['export']),export_bytes=len(raw))
             with patch.object(self.client,'transport',return_value=value),self.assertRaises(ValueError):self.export()
