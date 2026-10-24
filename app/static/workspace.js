@@ -521,8 +521,8 @@ function assetEmptyState() {
     const mine=assetSource()==='mine';
     title=mine?'None of your own runs here':'No agent runs here';description='This view holds '+everySource.length+(mine?' agent-run':' of your own')+' assets, hidden by the source filter.';
     action='<button data-asset-source="all">Show all sources</button>';
-  }else if(scope.length && assetFiltersActive()){
-    title='No matching assets';description='This view contains '+scope.length+' assets, but none match your search and media filter. Your selection is unchanged.';
+  }else if((scope.length||assetPaging) && assetFiltersActive()){
+    title='No matching assets';description=(assetPaging?'Nothing in this view':'This view contains '+scope.length+' assets, but none')+' matches your search and media filter. Your selection is unchanged.';
     action='<button data-asset-clear-filters>Clear filters in this view</button>';
   }else if(assetScope==='trash'){
     title='Trash is empty';description='Assets moved to Trash remain recoverable here.';

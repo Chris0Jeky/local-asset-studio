@@ -42,7 +42,7 @@ async def exercise(args):
         a=store.collection({'name':'Portraits','description':'Retain this note'})
         b=store.collection({'name':'Other','description':'Other note'})
         original_hash=hashlib.sha256(file.read_bytes()).hexdigest()
-        class Handler(production.Handler):
+        class Handler(production.extend_handler(production.Handler)):
             studio=SimpleNamespace(assets=store)
             json=fixture.Handler.json
             def _safe_host(self):
@@ -54,9 +54,10 @@ async def exercise(args):
                     flags['hold_read']=False;snapshot=self.studio.assets.snapshot();flags['read_captured']=True
                     if not read_gate.wait(8):return self._json(503,{'error':'Held-read fixture deadline'})
                     return self._json(200,snapshot)
-                if self.path=='/api/workspace' or self.path.startswith('/api/assets/'):return super().do_GET()
+                if self.path=='/api/workspace' or self.path.startswith('/api/assets/') or self.path.startswith('/api/collections'):return super().do_GET()
                 return fixture.Handler.do_GET(self)
             def do_POST(self):
+                if self.path=='/api/assets/selection':return super().do_POST()  # read-only Workspace observation, served by the real store
                 if self.path=='/api/collections':
                     raw=self.rfile.read(int(self.headers['Content-Length']));writes.append(json.loads(raw));self.rfile=io.BytesIO(raw)
                     if not gate.wait(8):return self._json(503,{'error':'Fixture deadline'})

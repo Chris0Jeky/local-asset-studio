@@ -43,15 +43,16 @@ async def exercise(args):
         assert b.register(job, 0, source) == identifier
         scope_a, scope_b = a.snapshot()['workspace_id'], b.snapshot()['workspace_id']
 
-        class Handler(BoundPortGuard, production.Handler):
+        class Handler(BoundPortGuard, production.extend_handler(production.Handler)):
             studio = SimpleNamespace(assets=a)
             json = fixture.Handler.json
             def do_GET(self):
-                if self.path == '/api/workspace' or self.path.startswith('/api/assets/'):
+                if self.path == '/api/workspace' or self.path.startswith('/api/assets/') or self.path.startswith('/api/collections'):
                     reads.append(self.path)
                     return super().do_GET()
                 return fixture.Handler.do_GET(self)
             def do_POST(self):
+                if self.path=='/api/assets/selection':return super().do_POST()  # read-only Workspace observation, served by the real store
                 if self.path == '/api/assets/update':
                     raw = self.rfile.read(int(self.headers['Content-Length'])); writes.append(raw.decode('utf-8')); self.rfile = io.BytesIO(raw)
                     if flags['fail']:
