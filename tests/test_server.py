@@ -1196,6 +1196,89 @@ class ServerTests(unittest.TestCase):
         self.assertTrue(result["available"]); self.assertEqual(result["confidence"],"none"); self.assertEqual(result["sample_count"],0)
         self.assertIn("Generic modality fallback", " ".join(result["basis"]))
 
+    def _output_history_job(self, outputs, class_type='SaveImage', batch_count=1):
+        graph=json.loads(json.dumps(GRAPH));graph['9']={'class_type':class_type,'inputs':{}}
+        (self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph))
+        studio=FakeStudio(self.root,[self.IDLE,{'prompt_id':'media'},{'media':{'status':{'status_str':'success'},'outputs':outputs}}])
+        job=studio.jobs[studio.create_job({'preset_id':'demo','controls':{},'batch_count':batch_count},enqueue=False)['id']]
+        return studio,job
+
+    def test_observe_expected_outputs_all_known_media_nodes_require_files(self):
+        for class_type in ('SaveImage','SaveAnimatedWEBP','SaveAnimatedPNG','SaveVideo','SaveGLB','VHS_VideoCombine','PreviewImage','SaveAudio'):
+            with self.subTest(class_type=class_type):
+                studio,job=self._output_history_job({},class_type=class_type)
+                with self.assertRaisesRegex(server.StudioError,'returned no output files'):studio._run(job)
+                self.assertEqual(job['status'],'failed')
+
+    def test_observe_expected_outputs_empty_history_fails_without_resubmitting(self):
+        studio,job=self._output_history_job({})
+        with self.assertRaisesRegex(server.StudioError,'returned no output files.*not resubmitted'):studio._run(job)
+        self.assertEqual(job['status'],'failed');self.assertEqual(job['submissions'][0]['status'],'failed')
+        self.assertEqual(job['prompt_ids'],['media']);self.assertEqual(job['submissions'][0]['prompt_id'],'media');self.assertEqual(job['outputs'],[])
+        self.assertEqual(job['submissions'][0]['graph']['9']['class_type'],'SaveImage')
+        self.assertEqual([args[0] for args,_ in studio.requests],['/queue','/prompt','/history/media'])
+        saved=json.loads((studio.runs/job['id']/'state.json').read_text())
+        self.assertEqual(saved['status'],'failed');self.assertEqual(saved['prompt_ids'],['media']);self.assertIn('finished_at',saved)
+
+    def test_observe_expected_outputs_malformed_descriptors_fail(self):
+        studio,job=self._output_history_job({'9':{'images':[None,'bad',{}, {'subfolder':'','type':'output'},{'filename':''}]}})
+        with self.assertRaisesRegex(server.StudioError,'returned no output files'):studio._run(job)
+        self.assertEqual(job['status'],'failed');self.assertEqual(job['outputs'],[]);self.assertEqual(job['prompt_ids'],['media'])
+        self.assertEqual([args[0] for args,_ in studio.requests].count('/prompt'),1)
+
+    def test_observe_expected_outputs_valid_image_completes(self):
+        studio,job=self._output_history_job({'9':{'images':[{'filename':'ok.png','subfolder':'','type':'output'}]}})
+        studio._run(job)
+        self.assertEqual(job['status'],'completed');self.assertEqual(job['submissions'][0]['status'],'completed')
+        self.assertEqual([(o['prompt_id'],o['filename']) for o in job['outputs']],[('media','ok.png')])
+
+    def test_observe_expected_outputs_resume_counts_retained_deduplicated_descriptor(self):
+        output={'filename':'ok.png','subfolder':'','type':'output'}
+        studio,job=self._output_history_job({})
+        submission={'index':0,'seed':1,'prompt_id':'media','status':'observing','graph':job['graph']}
+        job.update(status='uncertain',prompt_ids=['media'],submissions=[submission],outputs=[dict(output,prompt_id='media',media_type='image',seed=1)])
+        studio.replies=iter([{'media':{'status':{'status_str':'success'},'outputs':{'9':{'images':[output]}}}}])
+        studio._resume(job)
+        self.assertEqual(job['status'],'completed');self.assertEqual(submission['status'],'completed');self.assertEqual(len(job['outputs']),1)
+        self.assertEqual([args[0] for args,_ in studio.requests],['/history/media'])
+
+    def test_observe_expected_outputs_unknown_or_unavailable_graph_completes(self):
+        for graph in (None,[],{}, {'9':{'class_type':'UnknownOutput','inputs':{}}}):
+            with self.subTest(graph=graph):
+                studio,job=self._output_history_job({});job['graph']=graph
+                submission={'prompt_id':'media','status':'observing'};job.update(prompt_ids=['media'],submissions=[submission])
+                studio.replies=iter([{'media':{'status':{'status_str':'success'},'outputs':{}}}])
+                self.assertTrue(studio._observe_history(job,submission));self.assertEqual(submission['status'],'completed')
+
+    def test_observe_expected_outputs_uses_submission_graph_before_job_graph(self):
+        for class_type,failed in (('SaveImage',True),('UnknownOutput',False)):
+            with self.subTest(class_type=class_type):
+                studio,job=self._output_history_job({},class_type='SaveImage' if not failed else 'UnknownOutput')
+                submission={'prompt_id':'media','status':'observing','graph':{'9':{'class_type':class_type}}}
+                job.update(prompt_ids=['media'],submissions=[submission])
+                studio.replies=iter([{'media':{'status':{'status_str':'success'},'outputs':{}}}])
+                if failed:
+                    with self.assertRaisesRegex(server.StudioError,'returned no output files'):studio._observe_history(job,submission)
+                else:self.assertTrue(studio._observe_history(job,submission))
+
+    def test_observe_expected_outputs_all_media_collections_complete(self):
+        for class_type,collection,filename in (('SaveImage','images','ok.png'),('SaveAnimatedWEBP','gifs','ok.webp'),
+                                               ('SaveVideo','videos','ok.mp4'),('SaveAudio','audio','ok.flac'),('SaveGLB','3d','ok.glb')):
+            with self.subTest(collection=collection):
+                studio,job=self._output_history_job({'9':{collection:[{'filename':filename,'subfolder':'','type':'output'}]}},class_type=class_type)
+                studio._run(job)
+                self.assertEqual(job['status'],'completed');self.assertEqual(job['outputs'][0]['prompt_id'],'media')
+
+    def test_observe_expected_outputs_missing_files_after_completed_member_is_partial(self):
+        studio,job=self._output_history_job({})
+        submission={'prompt_id':'media','status':'observing','graph':job['graph']}
+        job.update(prompt_ids=['earlier','media'],submissions=[{'prompt_id':'earlier','status':'completed'},submission],
+                   outputs=[{'filename':'earlier.png','prompt_id':'earlier'}])
+        studio.replies=iter([{'media':{'status':{'status_str':'success'},'outputs':{}}}])
+        with self.assertRaisesRegex(server.StudioError,'returned no output files'):studio._observe_history(job,submission)
+        self.assertEqual(job['status'],'partial');self.assertEqual(submission['status'],'failed');self.assertEqual(job['prompt_ids'],['earlier','media'])
+        self.assertEqual(job['outputs'],[{'filename':'earlier.png','prompt_id':'earlier'}])
+
     def test_confirmed_history_failure_records_studio_interval(self):
         replies=[{"queue_running":[],"queue_pending":[]},{"prompt_id":"failed-one"},
                  {"failed-one":{"status":{"status_str":"error","messages":[

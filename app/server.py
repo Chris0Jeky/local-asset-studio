@@ -66,6 +66,7 @@ from i2v_diagnostics import centered_crop_plan, image_metadata, locate_source
 
 HOST, PORT = "127.0.0.1", 8191
 IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
+MEDIA_OUTPUT_NODES = continuation.OUTPUTS | {"PreviewImage", "SaveAudio"}
 CONTROL_KEYS = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "lora", "reference", "last_reference", "frames", "fps", "style_weight", "pose_strength", "depth_cut", "sampler", "scheduler", "lora_name", "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name", "lora5", "lora5_name", "lora6", "lora6_name")
 METADATA_CONTROL_KEYS = ("mode",)
 LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
@@ -2392,6 +2393,14 @@ class Studio:
                     self._record_history_failure(job, submission, message)
                     raise StudioError(message)
                 self._collect_outputs(job, submission, history)
+                graph = submission.get("graph")
+                if not isinstance(graph, dict): graph = job.get("graph")
+                expects_outputs = isinstance(graph, dict) and any(isinstance(node, dict) and isinstance(node.get("class_type"), str) and node["class_type"] in MEDIA_OUTPUT_NODES for node in graph.values())
+                output_count = sum(1 for output in job["outputs"] if output.get("prompt_id") == prompt_id)
+                if expects_outputs and not output_count:
+                    message = "ComfyUI finished this prompt but returned no output files; it was not resubmitted."
+                    self._record_history_failure(job, submission, message)
+                    raise StudioError(message)
                 submission["status"] = "completed"; self.index_outputs(job); self._save(job); return True
             empty_polls += 1
             if empty_polls % GPU_SAMPLE_EVERY == 1: self._sample_gpu_memory(job, submission, sampler)

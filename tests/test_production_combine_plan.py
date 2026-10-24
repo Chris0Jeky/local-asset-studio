@@ -216,7 +216,7 @@ class CombinePlanTests(unittest.TestCase):
 
     def test_start_runs_every_stage_on_the_one_worker_and_an_uncertain_stage_is_never_resubmitted(self):
         project = self.studio.production.create(self.intent(engines=["combine-klein-9b-depth", "combine-klein"], seeds=[11]))
-        studio = self.fresh([IDLE, {"prompt_id": "depth-11"}, {"depth-11": {"status": {"status_str": "success"}, "outputs": {}}}, *SWAP, URLError("lost POST response")])
+        studio = self.fresh([IDLE, {"prompt_id": "depth-11"}, {"depth-11": {"status": {"status_str": "success"}, "outputs": {"13": {"images": [{"filename": "combined.png", "subfolder": "", "type": "output"}]}}}}, *SWAP, URLError("lost POST response")])
         lab = studio.production; lab.start(project["id"]); self.assertEqual(studio.queue.qsize(), 1)
         self.assertEqual(lab.get(project["id"])["budget"], {"allowance": 2, "reserved": 2})
         lab.run(project["id"])
@@ -232,8 +232,8 @@ class CombinePlanTests(unittest.TestCase):
 
     def test_completed_plan_lands_every_result_as_a_run_of_the_same_pair(self):
         project = self.studio.production.create(self.intent(engines=["combine-klein-9b-depth", "combine-klein-9b-copypose"], seeds=[7]))
-        studio = self.fresh([IDLE, {"prompt_id": "a"}, {"a": {"status": {"status_str": "success"}, "outputs": {}}},
-                             *SWAP, {"prompt_id": "b"}, {"b": {"status": {"status_str": "success"}, "outputs": {}}}])
+        studio = self.fresh([IDLE, {"prompt_id": "a"}, {"a": {"status": {"status_str": "success"}, "outputs": {"13": {"images": [{"filename": "combined.png", "subfolder": "", "type": "output"}]}}}},
+                             *SWAP, {"prompt_id": "b"}, {"b": {"status": {"status_str": "success"}, "outputs": {"13": {"images": [{"filename": "combined.png", "subfolder": "", "type": "output"}]}}}}])
         studio.production.start(project["id"]); studio.production.run(project["id"])
         after = studio.production.get(project["id"]); self.assertEqual(after["state"]["status"], "awaiting_review")
         jobs = [studio.public(studio.jobs[s["attempt"]["job_id"]]) for s in after["stages"]]
