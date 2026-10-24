@@ -103,7 +103,7 @@ class SetupDraftClient:
              and result['export_bytes']==len(raw.encode('utf-8')),'Setup inspection export identity does not match its contents')
         need(value.get('format')=='studio.setup-revision-inspection/v2' and value.get('workspace_id')==workspace_id
              and value.get('draft_id')==key and type(value.get('revision')) is int and value['revision']==revision
-             and revision<=result['head_revision'] and value.get('authority')=='none'
+             and revision<=result['head_revision'] and value.get('authority')=='none' and digest(value.get('draft'))==value.get('draft_sha256')
              and all(value.get(k) is v for k,v in FLAGS.items()),'Setup inspection export belongs to another read')
         return result
     def list(self):return self._request(PREFIX)
