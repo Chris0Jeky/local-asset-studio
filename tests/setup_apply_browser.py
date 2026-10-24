@@ -133,7 +133,8 @@ async def run(out,inert=False):
             page.once('dialog',lambda dialog:dialog.accept());await page.click('#loadSharedSetup');await page.wait_for_function("!StudioSetupApply.controller.running&&selected.id==='qwen-3ref'")
             check(s.upload_count==6,'explicit checked load uses existing staged inputs, without another copy')
             check(not errors,'zero page exceptions')
-            forbidden=[x for x in advice.CALLS if x not in (advice.PREFIX,advice.PROPOSAL,'/api/estimate')]+[x['path'] for x in advice.fixture.POSTS if x['path'] not in ('/api/estimate',)]
+            seen=('/api/estimate','/api/assets/selection')  # the Library's read-only observation of off-page IDs
+            forbidden=[x for x in advice.CALLS if x not in (advice.PREFIX,advice.PROPOSAL)+seen]+[x['path'] for x in advice.fixture.POSTS if x['path'] not in seen]
             check(not forbidden,'zero generation, installation, switching or unrelated asset-write calls: '+str(forbidden))
             (out/'result.json').write_text(json.dumps({'checks':checks,'passed':len(checks),'native':not inert,'commands':COMMANDS,'reads':READS,'uploads':s.upload_count,'errors':errors,'source_sha256':{f:hashlib.sha256((ROOT/f).read_bytes()).hexdigest() for f in ('app/static/setup-apply.js','app/static/studio-workbench.js','studio_workflow/setup_drafts.py')}},indent=2))
             await browser.close()
