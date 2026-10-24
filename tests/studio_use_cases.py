@@ -360,6 +360,7 @@ def build_handler():
     class Handler(extend_handler(PromptFixtureBase)):
         def do_GET(self):
             path = urlsplit(self.path).path
+            if path in ('/api/assets/page','/api/collections'): return fixture.Handler.do_GET(self)
             if path == '/api/workflow-studio/guides': return self.json(guides())
             if path == '/api/workflow-studio/nodes': return self.json(schema)
             if path == '/api/workflow-studio/capabilities':
@@ -393,6 +394,7 @@ def build_handler():
 
         def do_POST(self):
             path = urlsplit(self.path).path
+            if path == '/api/assets/selection': return fixture.Handler.do_POST(self)
             length = int(self.headers.get('Content-Length', '0'))
             if path in ('/api/workflow-studio/compile', '/api/workflow-studio/nodes/refresh'):
                 raw = json.loads(self.rfile.read(length) or b'{}')

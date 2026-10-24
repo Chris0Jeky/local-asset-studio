@@ -50,14 +50,15 @@ async def exercise(args):
         scope = store.snapshot()['workspace_id']
         empty = store.collection({'name': 'Empty project'})
 
-        class Handler(BoundPortGuard, production.Handler):
+        class Handler(BoundPortGuard, production.extend_handler(production.Handler)):
             studio = SimpleNamespace(assets=store)
             json = fixture.Handler.json
             def do_GET(self):
-                if self.path == '/api/workspace' or self.path.startswith('/api/assets/'):
+                if self.path == '/api/workspace' or self.path.startswith('/api/assets/') or self.path.startswith('/api/collections'):
                     return super().do_GET()
                 return fixture.Handler.do_GET(self)
             def do_POST(self):
+                if self.path=='/api/assets/selection':return super().do_POST()  # read-only Workspace observation, served by the real store
                 if self.path == '/api/assets/update':
                     raw = self.rfile.read(int(self.headers['Content-Length']))
                     writes.append(json.loads(raw)); self.rfile = io.BytesIO(raw)
@@ -87,7 +88,7 @@ async def exercise(args):
                 await page.wait_for_function('!!catalog && !!selected && !!assetState.workspace_id')
                 await page.evaluate("showView('assets')")
                 await page.wait_for_selector(f'[data-asset-check="{ids[0]}"]')
-                check('LIB-38', 'Collection recovery sits below the list and fits the sidebar at 1440 px', await page.locator('#recoverCollections').evaluate("el=>{const sidebar=el.closest('.asset-sidebar').getBoundingClientRect(),rect=el.getBoundingClientRect();return el.previousElementSibling.id==='assetCollections' && el.nextElementSibling.textContent.includes('An asset can belong') && el.textContent==='Recover a collection draft…' && rect.left>=sidebar.left && rect.right<=sidebar.right && el.scrollWidth<=el.clientWidth;}"))
+                check('LIB-38', 'Collection recovery sits below the list and fits the sidebar at 1440 px', await page.locator('#recoverCollections').evaluate("el=>{const sidebar=el.closest('.asset-sidebar').getBoundingClientRect(),rect=el.getBoundingClientRect();return el.previousElementSibling.id==='collectionPaging' && el.previousElementSibling.previousElementSibling.id==='assetCollections' && el.nextElementSibling.textContent.includes('An asset can belong') && el.textContent==='Recover a collection draft…' && rect.left>=sidebar.left && rect.right<=sidebar.right && el.scrollWidth<=el.clientWidth;}"))
                 await page.evaluate('window.libraryFixtureAssets=assetState.assets;assetState.assets=[];renderAssets()')
                 check('LIB-39', 'Empty library explains Make and import', await page.locator('#assetGrid h3').inner_text() == 'Your library is empty' and await page.locator('#assetGrid p').inner_text() == 'Pictures you make in Make land here. You can also import images; importing makes nothing new.' and await page.locator('#assetGrid a.primary').get_attribute('href') == '/#make' and await page.locator('#assetGrid a.primary').inner_text() == 'Make a picture')
                 async with page.expect_file_chooser() as chooser:
@@ -98,19 +99,22 @@ async def exercise(args):
                 async def text(selector):
                     node = page.locator(selector)
                     return await node.inner_text() if await node.count() else ''
+                async def settle(): await page.wait_for_function('!assetSearchTimer&&!assetRefreshing&&assetPaging.query===assetPageQuery()')  # scope, search and sort are server reads
                 async def search(value):
                     # Typing is debounced in the product; wait for the pending repaint, never a fixed sleep.
                     await page.fill('#assetSearch', value)
-                    await page.wait_for_function('!assetSearchTimer')
+                    await settle()
                 async def select_two():
                     await search('')
                     await page.evaluate("setAssetScope('all')")
+                    await settle()
                     for identifier in ids[:2]:
                         await page.locator(f'[data-asset-check="{identifier}"]').check()
                     await search('Study 0')
+                    await page.evaluate('resolveAssetSelection()')  # the off-page pick is resolved by ID, as its Resolve button does
                 await select_two()
                 check('LIB-01', 'Filtering preserves both selected IDs', await page.evaluate('assetSelection.size') == 2)
-                check('LIB-02', 'Matching and total counts are separate', '1 of 3' in await text('#assetVisibleCount'))
+                check('LIB-02', 'The count names the page the server returned for the search', '1 assets on this page' in await text('#assetVisibleCount'))
                 check('LIB-03', 'Hidden selection is explicit beside the actions', '1 visible' in await text('#assetSelectionSummary') and '1 outside' in await text('#assetSelectionSummary'))
                 details = page.locator('.asset-selection-context summary')
                 if await details.count():
@@ -149,6 +153,7 @@ async def exercise(args):
                 check('LIB-12', 'Keep only visible prunes local selection to the one matching asset', await page.evaluate('ids=>JSON.stringify([...assetSelection])===JSON.stringify([ids[0]])', ids))
                 check('LIB-13', 'Pruning returns keyboard focus to search', await keep.count() > 0 and await page.evaluate("document.activeElement.id==='assetSearch'"))
                 await page.select_option('#assetSort', 'title')
+                await settle()
                 clear = page.locator('#clearAssetFilters')
                 if await clear.count():
                     await clear.focus(); await page.keyboard.press('Enter')
@@ -157,19 +162,25 @@ async def exercise(args):
                 metadata = store.metadata(ids[2])
                 store.update({'ids': [ids[2]], 'action': 'trash', 'expected_revisions': {ids[2]: metadata['metadata_revision']}, 'request_id': uuid.uuid4().hex})
                 await page.evaluate('refreshAssets(true)')
-                await page.wait_for_function('id=>assetState.assets.some(a=>a.id===id&&a.trashed_at)', arg=ids[2])
+                await page.wait_for_function('!assetRefreshing')
                 await page.click('#assetScopes [data-scope="trash"]')
+                await settle()
+                await page.wait_for_function('id=>!assetRefreshing&&assetPaging.query===assetPageQuery()&&assetState.assets.some(a=>a.id===id&&a.trashed_at)', arg=ids[2])  # Trash is its own server read
                 await search('absent query')
                 check('LIB-15', 'Populated Trash with no matches is described as filtered', 'No matching assets' in await text('#assetGrid') and 'Trash is empty' not in await text('#assetGrid'))
                 reset = page.locator('[data-asset-clear-filters]')
                 if await reset.count():
                     await reset.click()
+                await settle()
                 check('LIB-16', 'Empty-state reset preserves Trash scope and reveals its asset', await page.evaluate('assetScope') == 'trash' and await page.locator('#assetGrid .asset-card').count() == 1)
                 await page.evaluate("document.querySelector('#assetSearch').value='';setAssetScope('collection:'+" + json.dumps(empty['id']) + ')')
+                await settle()
                 check('LIB-17', 'An empty collection has a specific next step', 'This collection has no assets' in await text('#assetGrid'))
                 await page.click('#assetScopes [data-scope="selected"]')
+                await settle()
                 check('LIB-18', 'Kept means saved review state, not checkbox selection', await text('#assetScopeTitle') == 'Kept' and 'No kept assets yet' in await text('#assetGrid'))
                 await page.evaluate("document.querySelector('#assetSearch').value='';setAssetScope('all')")
+                await settle()
                 await page.locator(f'[data-asset-check="{ids[0]}"]').check()
                 mutation_gate.clear()
                 await page.click('[data-bulk="selected"]')
@@ -179,11 +190,13 @@ async def exercise(args):
                 await page.wait_for_function('!assetLibraryBusy && !assetLibraryPending')
                 check('LIB-29', 'A late bulk success does not erase a selection changed while waiting', await page.evaluate('assetSelection.size') == 2)
                 await page.click('#assetScopes [data-scope="unreviewed"]')
+                await settle()
                 await search('Study 0')
-                check('LIB-30', 'Awaiting review counts only its own unreviewed active assets', '0 of 1' in await text('#assetVisibleCount'))
+                check('LIB-30', 'Awaiting review counts only its own unreviewed active assets', '0 assets on this page' in await text('#assetVisibleCount'))
                 await search('')
                 # Organisation and bulk review over the same real records.
                 await page.evaluate("setAssetScope('all')")
+                await settle()
                 await page.select_option('#assetGroup', 'run')
                 check('LIB-32', 'Group by run gives each job its own section without losing a card', await page.locator('#assetGrid .asset-group').count() == 2 and await page.locator('#assetGrid .asset-card').count() == 2)
                 check('LIB-33', 'Review next counts only unreviewed assets in this view', '(1 unreviewed)' in await text('#reviewNext'))
@@ -204,6 +217,7 @@ async def exercise(args):
                 await page.evaluate('assetSelection.clear();renderAssets()')
                 # Oversized gallery is a UI fixture only: no writes or large real-media claim.
                 await page.evaluate("refreshAssets=async()=>{};setAssetScope('all');assetState.assets=Array.from({length:205},(_,i)=>({...assetState.assets[0],id:'large-'+i,title:'Large '+i,trashed_at:null,collections:[]}));renderAssets();")
+                await settle()
                 check('LIB-19', 'Select visible discloses the bounded batch size first', '200 of 205' in await text('#selectVisible'))
                 await page.click('#selectVisible')
                 check('LIB-20', 'Select visible selects 200 and explains the remaining matches', await page.evaluate('assetSelection.size') == 200 and '200 of 205' in await text('#assetMessage'))

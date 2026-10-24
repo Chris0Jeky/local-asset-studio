@@ -38,16 +38,17 @@ async def exercise(args):
         identifier = store.register({'id':'conflict-envelope', 'outputs':[{'filename':image.name, 'media_type':'image'}]}, 0, image)
         scope = store.snapshot()['workspace_id']
 
-        class Handler(BoundPortGuard, production.Handler):
+        class Handler(BoundPortGuard, production.extend_handler(production.Handler)):
             studio = SimpleNamespace(assets=store)
             json = fixture.Handler.json
 
             def do_GET(self):
-                if self.path == '/api/workspace' or self.path.startswith('/api/assets/'):
+                if self.path == '/api/workspace' or self.path.startswith('/api/assets/') or self.path.startswith('/api/collections'):
                     return super().do_GET()
                 return fixture.Handler.do_GET(self)
 
             def do_POST(self):
+                if self.path=='/api/assets/selection':return super().do_POST()  # read-only Workspace observation, served by the real store
                 if self.path == '/api/assets/update':
                     raw = self.rfile.read(int(self.headers['Content-Length']))
                     writes.append(raw.decode('utf-8')); self.rfile = io.BytesIO(raw)

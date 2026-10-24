@@ -39,7 +39,7 @@ async def exercise(args):
         ids = [store.register({'id': f'shelf-{i}', 'preset_name': 'Synthetic shelf QA',
                 'outputs': [{'filename': source.name, 'media_type': 'image'}]}, 0, source) for i in range(2)]
 
-        class Handler(production.Handler):
+        class Handler(production.extend_handler(production.Handler)):
             studio = SimpleNamespace(assets=store)
             json = fixture.Handler.json
 
@@ -52,12 +52,13 @@ async def exercise(args):
                 return self._safe_host() and self.headers.get('Origin') in (f'http://127.0.0.1:{self.server.server_port}', f'http://localhost:{self.server.server_port}')
 
             def do_GET(self):
-                if self.path == '/api/workspace' or self.path.startswith('/api/assets/'):
+                if self.path == '/api/workspace' or self.path.startswith('/api/assets/') or self.path.startswith('/api/collections'):
                     reads.append(self.path)
                     return super().do_GET()
                 return fixture.Handler.do_GET(self)
 
             def do_POST(self):
+                if self.path=='/api/assets/selection':return super().do_POST()  # read-only Workspace observation, served by the real store
                 if self.path == '/api/assets/update':
                     raw = self.rfile.read(int(self.headers['Content-Length']))
                     writes.append(raw.decode('utf-8')); self.rfile = io.BytesIO(raw)

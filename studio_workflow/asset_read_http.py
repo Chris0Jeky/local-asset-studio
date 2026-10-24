@@ -4,7 +4,7 @@ import sqlite3
 import time
 from urllib.parse import parse_qsl, urlsplit
 
-from .asset_reads import AssetReadError, DEFAULT_FILTERS, require
+from .asset_reads import AssetReadError, DEFAULT_FILTERS, page_options, require
 from .core import decode
 from .http_body import reject_json
 from . import asset_family
@@ -14,6 +14,7 @@ SELECTION = '/api/assets/selection'
 FAMILY = '/api/assets/family/'
 RECALL = '/api/assets/recall/'
 MAX_QUERY = 4096
+MAX_PAGE_QUERY = 8192  # Percent-encoded 200-character search plus a bounded title cursor and all filters.
 MAX_BODY = 32768
 BODY_TIMEOUT = 5
 
@@ -27,17 +28,21 @@ def _error(exc):
 
 
 def page_query(raw):
-    require(len(raw) <= MAX_QUERY, 'Asset query exceeds its bound')
+    require(len(raw) <= MAX_PAGE_QUERY, 'Asset query exceeds its bound')
     parsed = urlsplit(raw)
     require(parsed.path == PAGE and not parsed.scheme and not parsed.netloc and not parsed.fragment,
             'Relative asset page route required')
     require(re.search(r'%(?![0-9a-fA-F]{2})', parsed.query) is None, 'Malformed query escape')
     pairs = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True,
-                      encoding='utf-8', errors='strict', max_num_fields=8)
+                      encoding='utf-8', errors='strict', max_num_fields=11)
     query = dict(pairs)
     require(len(query) == len(pairs) and all(value for _, value in pairs),
             'Asset query fields must be nonempty and occur once')
-    require(set(query) <= set(DEFAULT_FILTERS) | {'workspace_id', 'limit', 'cursor'}, 'Unknown asset query field')
+    require(set(query) <= set(DEFAULT_FILTERS) | {'workspace_id', 'limit', 'cursor', 'details', 'q', 'sort'}, 'Unknown asset query field')
+    page_options(query.get('q'),query.get('sort','newest'))
+    if 'details' in query:
+        require(query['details'] in ('true','false'), 'Details must be true or false')
+        query['details'] = query['details'] == 'true'
     if 'limit' in query:
         require(re.fullmatch(r'[0-9]{1,3}', query['limit']) is not None, 'Invalid page size')
         query['limit'] = int(query['limit'])
@@ -90,8 +95,8 @@ def _body(handler):
         value = decode(b''.join(chunks).decode('utf-8'))
     finally:
         handler.connection.settimeout(prior_timeout)
-    require(type(value) is dict and set(value) == {'workspace_id', 'ids'},
-            'Supply exactly workspace_id and ids for selection inspection')
+    require(type(value) is dict and {'workspace_id','ids'} <= set(value) <= {'workspace_id','ids','details'},
+            'Supply workspace_id, ids and optional details for selection inspection')
     return value
 
 

@@ -327,20 +327,23 @@ $('#productionDetail').onchange=e=>{if(e.target.id==='blindComparison'){blindCom
 // /api/assets/update command the asset dialog sends, never a new endpoint. It
 // records a creative preference only; the comparison's own outcome is untouched.
 const candidateReviewBusy=new Set();
+// A candidate can sit outside the Library's one page: read through the resolved set and resolve by ID before a write.
+const candidateRecord=id=>typeof assetRecord==='function'?assetRecord(id)||null:assetState.assets.find(a=>a.id===id)||null;
+async function candidateResolve(id){await refreshAssets(true);if(!candidateRecord(id)&&typeof resolveAssetIDs==='function')await resolveAssetIDs([id]);return candidateRecord(id);}
 async function reviewCandidateAsset(id,review){
   if(!id||!['selected','needs_work'].includes(review))return;
   // A second press on the same candidate while its save is in flight would queue a second library update and report it as a failure.
   if(candidateReviewBusy.has(id)){productionMessage('Still saving the last mark for this candidate. Press again in a moment. Nothing was changed.');return;}
   candidateReviewBusy.add(id);
   try{
-    await refreshAssets(true);
+    await candidateResolve(id);
     await mutateAssets({ids:[id],action:'edit',review});
     productionMessage((review==='selected'?'Kept':'Marked as needing work')+' in your Workspace. The comparison outcome and its reservations are unchanged.');
   }finally{candidateReviewBusy.delete(id);}
 }
 // #1203: quick yes/no checks on a candidate picture, saved one press at a time through the same guarded update.
 // Counts per candidate come only from those owner answers; the comparison's own outcome is untouched.
-function candidateCheckAsset(id){return globalThis.StudioReviewChecks&&typeof assetState!=='undefined'?assetState.assets.find(a=>a.id===id)||null:null;}
+function candidateCheckAsset(id){return globalThis.StudioReviewChecks&&typeof assetState!=='undefined'?candidateRecord(id):null;}
 function candidateCheckNames(job){return globalThis.StudioReviewChecks&&job?StudioReviewChecks.forPreset((typeof catalog==='undefined'?[]:catalog?.presets||[]).find(p=>p.id===job.preset_id)):[];}
 let candidateCheckBusy=false;
 async function checkCandidateAsset(id,name){
@@ -348,7 +351,7 @@ async function checkCandidateAsset(id,name){
   if(!id||!globalThis.StudioReviewChecks)return;
   candidateCheckBusy=true;
   try{
-    await refreshAssets(true);const asset=assetState.assets.find(a=>a.id===id);
+    const asset=await candidateResolve(id);
     if(!asset)throw Error('This candidate is no longer in the library. Nothing was saved.');
     const tags=StudioReviewChecks.cycle(asset.tags,name),now=StudioReviewChecks.answer(tags,name);
     await mutateAssets({ids:[id],action:'edit',tags});renderProduction();
@@ -386,7 +389,7 @@ $('#productionDetail').onkeydown=async e=>{const index=globalThis.StudioReviewCh
 function renderNativeAssets(){
   $('#nativeAssetList').innerHTML=nativeAssets.map((a,i)=>'<div class="native-source"><span>'+esc(a.title)+'</span><button type="button" data-native-up="'+i+'" '+(!i?'disabled':'')+' aria-label="Move source '+(i+1)+' earlier">↑</button><button type="button" data-native-down="'+i+'" '+(i===nativeAssets.length-1?'disabled':'')+' aria-label="Move source '+(i+1)+' later">↓</button>'+(a.media_type==='image'?'<label>Duration ms<input type="number" min="1" max="60000" data-native-duration="'+a.id+'" value="'+a.duration+'"></label><label>Layer name<input data-native-layer="'+a.id+'" value="'+esc(a.layerName)+'"></label>':'<small>Optional GLB</small>')+'</div>').join('');
 }
-$('#nativeExport').onclick=()=>{nativeAssets=[...assetSelection].map(id=>assetState.assets.find(a=>a.id===id)).filter(Boolean).map(a=>({...a,duration:100,layerName:a.title}));if(!nativeAssets.length){assetMessage('Select the source images first.',true);return;}$('#nativeStatus').textContent='Prepare the export, then start it from Compare & review.';renderNativeAssets();$('#nativeDialog').showModal();};
+$('#nativeExport').onclick=()=>{nativeAssets=[...assetSelection].map(id=>typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id)).filter(Boolean).map(a=>({...a,duration:100,layerName:a.title}));if(!nativeAssets.length){assetMessage('Select the source images first.',true);return;}$('#nativeStatus').textContent='Prepare the export, then start it from Compare & review.';renderNativeAssets();$('#nativeDialog').showModal();};
 $('#cancelNative').onclick=()=>$('#nativeDialog').close();$('#nativeKind').onchange=()=>{$('#nativeEngineWrap').hidden=$('#nativeKind').value!=='godot';$('#nativeKritaWrap').hidden=$('#nativeKind').value!=='ora';};
 function readNativeInputs(){
   for(const input of $('#nativeAssetList').querySelectorAll('input')){

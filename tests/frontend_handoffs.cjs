@@ -1582,9 +1582,10 @@ async function recentRunsHeldLineSurvivesAnAssetRefresh() {
   const waiting = line.textContent;
   assert.equal(waiting, '1 run finished, shown when the clip stops');
   s.run('renderAssets=()=>{};renderLibraryRecovery=()=>{};');
-  s.context.fetch = async url => {
-    assert.equal(url, '/api/workspace');
-    return {ok: true, json: async () => ({workspace_id: 'workspace', assets: [{id: 'kept-0', trashed_at: 1}], collections: []})};
+  s.context.fetch = async (url,options={}) => {
+    if(url==='/api/assets/selection')return {ok:true,json:async()=>({workspace_id:'1'.repeat(32),items:JSON.parse(options.body).ids.map(id=>({id,state:'missing',asset:null}))})};
+    assert.match(url, /^\/api\/(assets\/page|collections)\?/);
+    return {ok: true, json: async () => ({workspace_id: '1'.repeat(32),catalogue:{epoch:'a'.repeat(32),revision:1}, assets: [{id: 'kept-0', trashed_at: 1}], collections: [],next_cursor:null})};
   };
   assert.equal(await s.run('refreshAssets()'), true, 'The real workspace refresh reads a trashed-output snapshot');
   assert.equal(s.run('jobsSignature'), '', 'The workspace path resets the jobs signature');

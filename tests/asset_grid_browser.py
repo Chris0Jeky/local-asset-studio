@@ -12,7 +12,7 @@ import shutil
 import tempfile
 import threading
 import uuid
-from browser_ports import browser_server
+from browser_ports import BoundPortGuard, browser_server
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -45,16 +45,15 @@ async def exercise(args):
             store.update({'ids': [identifier], 'action': 'edit', 'request_id': uuid.uuid4().hex,
                           'expected_revisions': {identifier: store.metadata(identifier)['metadata_revision']}, **values})
         for i, identifier in enumerate(ids): edit(identifier, title=f'Study {i}')
-        class Handler(production.Handler):
+        class Handler(BoundPortGuard, production.extend_handler(production.Handler)):
             studio = SimpleNamespace(assets=store)
             json = fixture.Handler.json
-            def _safe_host(self):
-                return self.headers.get('Host') == f'127.0.0.1:{self.server.server_port}'
             def do_GET(self):
-                if self.path == '/api/workspace' or self.path.startswith('/api/assets/'):
+                if self.path == '/api/workspace' or self.path.startswith('/api/assets/') or self.path.startswith('/api/collections'):
                     return super().do_GET()
                 return fixture.Handler.do_GET(self)
             def do_POST(self):
+                if self.path=='/api/assets/selection':return super().do_POST()  # read-only Workspace observation, served by the real store
                 # Not a mutation harness. All page writes are recorded inert fixture calls.
                 return fixture.Handler.do_POST(self)
         http = browser_server(Handler)
@@ -93,6 +92,7 @@ async def exercise(args):
                 await refresh()
                 check('GRID-34', 'An unchanged grouped refresh makes no grid mutations', await page.evaluate('groupMutations.length===0'))
                 await page.evaluate('groupObserver.disconnect();document.querySelector("#assetSort").value="oldest";renderAssets();')
+                await page.wait_for_function('!assetRefreshing&&assetPaging.query.includes("oldest")')  # sort is a server read now: wait for the page it returns
                 check('GRID-35', 'Group reorder preserves identity, focus and selected reading order', await page.evaluate('card(gridIds[0])===keptCard && keptImage.isConnected && document.activeElement===keptCheck && JSON.stringify([...document.querySelectorAll("#assetGrid [data-asset-check]")].map(n=>n.dataset.assetCheck))===JSON.stringify(visibleAssets().map(a=>a.id))'))
                 await page.evaluate('id=>{assetState.assets.find(a=>a.id===id).job_id="moved-run";renderAssets();}', ids[0])
                 check('GRID-36', 'Moving an asset into a new group retains its source and focus', await page.evaluate('card(gridIds[0])===keptCard && keptImage.isConnected && document.activeElement===keptCheck && keptCard.closest(".asset-group")?.querySelector("h4").textContent.includes("moved-run") && document.querySelectorAll("#assetGrid .asset-group").length===3'))
@@ -155,6 +155,7 @@ async def exercise(args):
                 check('GRID-12', 'Reordering still matches the selected sort', await page.evaluate('JSON.stringify([...document.querySelectorAll("#assetGrid [data-asset-check]")].map(n=>n.dataset.assetCheck))===JSON.stringify(visibleAssets().map(a=>a.id))'))
                 # Test filtered cleanup and deterministic focus fallback without a search action owning focus.
                 await page.evaluate("document.querySelector('#assetSort').value='oldest';renderAssets();")
+                await page.wait_for_function('!assetRefreshing&&assetPaging.query.includes("oldest")')
                 order = await page.evaluate('visibleAssets().map(a=>a.id)')
                 removed = order[1];successor = order[2]
                 await page.locator(f'[data-asset-check="{removed}"]').focus()
@@ -164,16 +165,21 @@ async def exercise(args):
                 check('GRID-13', 'A removed focused card moves focus to the next surviving checkbox', await page.evaluate('id=>document.activeElement.dataset.assetCheck===id',successor))
                 check('GRID-14', 'A removed card leaves no stale grid node', await page.locator(f'[data-asset-check="{removed}"]').count()==0)
                 await page.fill('#assetSearch','no such title')
+                await page.wait_for_function('!assetRefreshing&&!assetSearchTimer&&assetPaging.query===assetPageQuery()')  # search is a debounced server read
                 await page.locator('[data-asset-clear-filters]').focus()
                 await page.evaluate("window.keptEmpty=document.querySelector('[data-asset-clear-filters]')")
                 await refresh()
                 check('GRID-15', 'Unchanged empty view retains its focused recovery action', await page.evaluate('keptEmpty.isConnected && document.activeElement===keptEmpty'))
                 await page.fill('#assetSearch','')
+                await page.wait_for_function('!assetRefreshing&&!assetSearchTimer&&assetPaging.query===assetPageQuery()')  # search is a debounced server read
                 active=await page.evaluate('visibleAssets()[0].id')
                 await page.locator(f'[data-asset-check="{active}"]').focus()
                 await page.evaluate("document.querySelector('#assetSearch').value='no such title';renderAssets();")
+                await page.wait_for_function('!assetRefreshing&&!assetSearchTimer&&assetPaging.query===assetPageQuery()')  # search is a debounced server read
                 check('GRID-16', 'No surviving cards returns grid focus to Search', await page.evaluate('document.activeElement.id==="assetSearch"'))
-                await page.fill('#assetSearch','');await page.focus('#assetSearch');await refresh()
+                await page.fill('#assetSearch','')
+                await page.wait_for_function('!assetRefreshing&&!assetSearchTimer&&assetPaging.query===assetPageQuery()')  # search is a debounced server read
+                await page.focus('#assetSearch');await refresh()
                 check('GRID-17', 'A refresh does not steal focus from another control', await page.evaluate('document.activeElement.id==="assetSearch"'))
                 # Source identity and Workspace identity are independent from mutable labels.
                 active=await page.evaluate('visibleAssets()[0].id');await remember(active)

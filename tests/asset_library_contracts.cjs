@@ -241,7 +241,7 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
     s.run('assetRefreshing=false');[...s.timers.values()].at(-1)();await p;
     assert.equal(s.run('JSON.stringify(__reads)'),'[[true,"Refreshing…"]]');
     assert.equal(s.el('#workspaceRefresh').disabled,false);assert.equal(s.el('#workspaceRefresh').textContent,'Refresh assets');
-    assert.match(s.el('#assetMessage').textContent,/Library refreshed: 3 active assets/);
+    assert.match(s.el('#assetMessage').textContent,/Library refreshed: 3 assets on this page/);
   });
   const exportStub=s=>{s.run("post = async (url, body) => api(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});");s.run("document.createElement = () => ({href:'', download:'', click(){}});");};
   const trashedError=ids=>{const e=Error(ids.length+' selected asset is in Trash');e.status=400;e.data={error:e.message,code:'export_has_trashed',trashed_ids:ids};return e;};

@@ -1,12 +1,62 @@
 """Collection protocol adapter on the existing same-origin Studio handler."""
+import base64
+import hashlib
+import re
 import sqlite3
 from urllib.parse import parse_qsl, urlsplit
-from .core import decode
+from .core import canonical, decode
 from .http_body import reject_json
 from .collection_commands import CollectionError, MAX_COMMAND_BYTES, RECOVERY, require
 
 PREFIX = '/api/collections'
 STATUS_PREFIX = PREFIX + '/commands/'
+
+
+def page_query(raw):
+    require(len(raw) <= 4096, 'Collection query exceeds its bound')
+    parsed = _path(raw)
+    require(parsed.path == PREFIX, 'Relative collection list route required')
+    require(re.search(r'%(?![0-9a-fA-F]{2})', parsed.query) is None, 'Malformed query escape')
+    pairs = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True,
+                      encoding='utf-8', errors='strict', max_num_fields=3)
+    query = dict(pairs)
+    require(len(query) == len(pairs) and all(value for _, value in pairs)
+            and set(query) <= {'workspace_id','limit','cursor'}, 'Invalid collection query fields')
+    if 'limit' in query:
+        require(re.fullmatch(r'[0-9]{1,3}',query['limit']) is not None, 'Invalid page size')
+        query['limit'] = int(query['limit'])
+    return query
+
+
+def encode_cursor(position):
+    envelope = {'position':position,'sha256':hashlib.sha256(canonical(position)).hexdigest()}
+    return base64.urlsafe_b64encode(canonical(envelope)).decode('ascii').rstrip('=')
+
+
+def collection_cursor(value):
+    from .asset_reads import HEX32, ENTITY, _integer
+    error = {'code':'collection_cursor_invalid','status':400}
+    require(type(value) is str and 0 < len(value) <= 2048
+            and re.fullmatch(r'[A-Za-z0-9_-]+',value), 'Invalid collection cursor', **error)
+    try:
+        raw = base64.b64decode(value+'='*((-len(value))%4), altchars=b'-_', validate=True)
+        envelope = decode(raw.decode('utf-8'))
+        require(type(envelope) is dict and set(envelope) == {'position','sha256'}, 'Invalid collection cursor', **error)
+        body = envelope['position']
+        require(type(body) is dict and set(body) == {'format','workspace_id','catalogue','limit','last'},
+                'Invalid collection cursor position', **error)
+        stamp = body['catalogue']
+        require(canonical(envelope) == raw and envelope['sha256'] == hashlib.sha256(canonical(body)).hexdigest()
+                and body['format'] == 'studio.collection-cursor/v1'
+                and type(body['workspace_id']) is str and HEX32.fullmatch(body['workspace_id'])
+                and _integer(body['limit'],1,100) and type(body['last']) is str and ENTITY.fullmatch(body['last'])
+                and type(stamp) is dict and set(stamp) == {'epoch','revision'}
+                and type(stamp['epoch']) is str and HEX32.fullmatch(stamp['epoch']) and _integer(stamp['revision']),
+                'Invalid collection cursor values or checksum', **error)
+        return body
+    except (ValueError,TypeError,OverflowError,RecursionError) as exc:
+        if isinstance(exc,CollectionError): raise
+        raise CollectionError('Invalid collection cursor encoding', **error) from exc
 
 
 def _path(raw):
@@ -48,6 +98,18 @@ def extend_handler(base):
 
         def do_GET(self):
             if not self._collection_route(): return super().do_GET()
+            if self.path.split('?',1)[0] == PREFIX:
+                # Reads have no uncertain-command outcome or retry advice.
+                from .asset_read_http import _error
+                try:
+                    if not self._safe_host(): return self._json(403,_error(ValueError('Loopback Host required')))
+                    result, code = self.studio.assets.collection_page(**page_query(self.path)), 200
+                except (ValueError,RecursionError) as exc:
+                    result, code = _error(exc), getattr(exc,'status',400)
+                except (sqlite3.Error,OSError):
+                    result, code = _error(CollectionError('Collection catalogue is unavailable',code='collection_read_unavailable')), 503
+                try: return self._json(code,result)
+                except (BrokenPipeError,ConnectionResetError): return None
             if not self._safe_host(): return self._json(403, CollectionError('Loopback Host required').response())
             return self._collection_reply(lambda: status(self.path, self.studio.assets))
 

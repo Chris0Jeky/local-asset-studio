@@ -33,14 +33,15 @@ async def exercise(args):
         source=root/'source.png';Image.new('RGB',(48,64),(100,110,120)).save(source)
         ids=[store.register({'id':f'qa-{i}','preset_name':f'Metadata QA {i}','created_at':100-i,
                              'outputs':[{'filename':'source.png','media_type':'image'}]},0,source) for i in range(2)]
-        class Handler(BoundPortGuard, production.Handler):
+        class Handler(BoundPortGuard, production.extend_handler(production.Handler)):
             studio=SimpleNamespace(assets=store)
             json=fixture.Handler.json
             def do_GET(self):
-                if self.path=='/api/workspace' or self.path.startswith('/api/assets/'):
+                if self.path=='/api/workspace' or self.path.startswith('/api/assets/') or self.path.startswith('/api/collections'):
                     return super().do_GET()
                 return fixture.Handler.do_GET(self)
             def do_POST(self):
+                if self.path=='/api/assets/selection':return super().do_POST()  # read-only Workspace observation, served by the real store
                 if self.path=='/api/assets/update':
                     raw=self.rfile.read(int(self.headers['Content-Length']));writes.append(json.loads(raw));self.rfile=io.BytesIO(raw)
                     if flags['fail']:

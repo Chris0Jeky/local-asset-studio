@@ -62,10 +62,11 @@ async def exercise(args):
                 if self.path.startswith('/api/assets/recovery-observation?'):
                     observation_reads.append(self.path);started.set()
                     if not gate.wait(10):return self._json(503,{'error':'Synthetic observation deadline'})
-                if self.path=='/api/workspace' or self.path.startswith('/api/assets/'):
+                if self.path=='/api/workspace' or self.path.startswith('/api/assets/') or self.path.startswith('/api/collections'):
                     return super().do_GET()
                 return fixture.Handler.do_GET(self)
             def do_POST(self):
+                if self.path=='/api/assets/selection':return super().do_POST()  # read-only Workspace observation, served by the real store
                 if self.path=='/api/assets/update':
                     metadata_posts.append(self.path)
                     return super().do_POST()
@@ -98,7 +99,7 @@ async def exercise(args):
                         else:await page.goto(f'http://127.0.0.1:{http.server_port}/#assets')
                         await page.wait_for_function('!!catalog && !!selected')
                         await page.evaluate("showView('assets')")
-                        await page.wait_for_function('assetState.assets.length===11')
+                        await page.wait_for_function('assetState.assets.length===10')
                         await page.evaluate('''()=>{window.__lensCalls=[];const original=api;api=async(url,options)=>{const row={url,done:false};__lensCalls.push(row);try{return await original(url,options);}finally{row.done=true;}};}''')
                         return page
                     async def seed(page,local=detail):

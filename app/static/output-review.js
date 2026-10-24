@@ -7,7 +7,7 @@
   const KEYS={k:'selected',w:'needs_work',x:'rejected'};
   const CHOICES=[['selected','Keep','K'],['needs_work','Needs work','W'],['rejected','Not this','X']];
   let busy=false;
-  const record=id=>typeof assetState!=='undefined'?assetState.assets.find(a=>a.id===id):null;
+  const record=id=>typeof assetRecord==='function'?assetRecord(id):typeof assetState!=='undefined'?assetState.assets.find(a=>a.id===id):null;   // the output may sit off the Library's page
   const escText=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   // The card owns the markup so renderJobs keeps focus on a decision button across a poll re-render.
   function markup(output){
@@ -40,7 +40,7 @@
   async function apply(id,value){
     try{
       // Create does not poll the library, so a new output's asset arrives only with this read.
-      await readLibrary();const current=record(id);if(!current)throw Error('This output is not in the library yet. Try again in a moment, or open Asset library.');
+      await readLibrary();if(!record(id)&&typeof resolveAssetIDs==='function')await resolveAssetIDs([id]);const current=record(id);if(!current)throw Error('This output is not in the library yet. Try again in a moment, or open Asset library.');
       const next=current.review===value?'unreviewed':value;
       await mutateAssets({action:'edit',ids:[id],review:next});
       say(next==='unreviewed'?'Review cleared. The output is unreviewed again.':LABEL[next]+'. Saved to the Asset library; press it again to clear.');return true;

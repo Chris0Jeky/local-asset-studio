@@ -42,7 +42,7 @@ async def exercise(args):
         a=store.collection({'name':'Portraits','description':'Retain this note'})
         b=store.collection({'name':'Other','description':'Other note'})
         original_hash=hashlib.sha256(file.read_bytes()).hexdigest()
-        class Handler(production.Handler):
+        class Handler(production.extend_handler(production.Handler)):
             studio=SimpleNamespace(assets=store)
             json=fixture.Handler.json
             def _safe_host(self):
@@ -50,13 +50,18 @@ async def exercise(args):
             def _safe_mutation(self):
                 return self._safe_host() and self.headers.get("Origin") == f"http://127.0.0.1:{self.server.server_port}"
             def do_GET(self):
-                if self.path=='/api/workspace' and flags['hold_read']:
-                    flags['hold_read']=False;snapshot=self.studio.assets.snapshot();flags['read_captured']=True
-                    if not read_gate.wait(8):return self._json(503,{'error':'Held-read fixture deadline'})
-                    return self._json(200,snapshot)
-                if self.path=='/api/workspace' or self.path.startswith('/api/assets/'):return super().do_GET()
+                if self.path.startswith('/api/assets/page') and flags['hold_read']:
+                    # Read the page now (the old snapshot), answer it only when the gate opens.
+                    flags['hold_read']=False;send=self._json;held=[];self._json=lambda status,data:held.append((status,data))
+                    try:super().do_GET()
+                    finally:del self._json
+                    flags['read_captured']=True
+                    if not read_gate.wait(8):return send(503,{'error':'Held-read fixture deadline'})
+                    return send(*held[0])
+                if self.path=='/api/workspace' or self.path.startswith('/api/assets/') or self.path.startswith('/api/collections'):return super().do_GET()
                 return fixture.Handler.do_GET(self)
             def do_POST(self):
+                if self.path=='/api/assets/selection':return super().do_POST()  # read-only Workspace observation, served by the real store
                 if self.path=='/api/collections':
                     raw=self.rfile.read(int(self.headers['Content-Length']));writes.append(json.loads(raw));self.rfile=io.BytesIO(raw)
                     if not gate.wait(8):return self._json(503,{'error':'Fixture deadline'})

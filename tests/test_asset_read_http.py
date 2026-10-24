@@ -56,6 +56,38 @@ class AssetReadHTTPTests(unittest.TestCase):
         self.assertEqual([x['state'] for x in result['items']],['active','missing','trashed'])
         self.assertTrue(result['observation_only']);self.assertFalse(result['generation_submitted'])
 
+    def test_search_sort_and_mismatched_cursor_through_http(self):
+        with self.store.connection() as db:db.execute("UPDATE assets SET title='Needle_100%'")
+        query={'q':'NEEDLE_100%','sort':'oldest','limit':1,'details':'true','workspace_id':self.scope}
+        status,first,_=self.request('GET',PAGE+'?'+urlencode(query))
+        self.assertEqual(status,200);self.assertEqual(first['assets'][0]['id'],self.ids[0])
+        query['cursor']=first['next_cursor']
+        status,second,_=self.request('GET',PAGE+'?'+urlencode(query))
+        self.assertEqual(status,200);self.assertEqual(second['assets'][0]['id'],self.ids[1])
+        for change in ({'sort':'title'},{'q':'other'}):
+            status,result,_=self.request('GET',PAGE+'?'+urlencode(dict(query,**change)))
+            self.assertEqual(status,409);self.assertEqual(result['code'],'asset_cursor_mismatch')
+
+    def test_search_and_sort_query_bounds(self):
+        for query in ('q=','q=+','q='+'x'*201,'q=%00','q=x&q=y','sort=','sort=unknown','sort=title&sort=oldest'):
+            with self.subTest(query=query[:70]):
+                status,result,_=self.request('GET',PAGE+'?'+query)
+                self.assertEqual(status,400);self.assertEqual(result['code'],'asset_read_invalid')
+        status,_,_=self.request('GET',PAGE+'?'+urlencode({'q':'x'*200,'sort':'title'}))
+        self.assertEqual(status,200)
+
+    def test_search_title_continuation_fits_full_query_bound(self):
+        title=chr(0x1f31f)*200;col=self.store.collection({'name':'Full query'})['id']
+        with self.store.connection() as db:
+            db.execute('UPDATE assets SET title=?,favorite=1',(title,))
+            db.executemany('INSERT INTO collection_assets VALUES (?,?)',[(col,key) for key in self.ids])
+        query={'q':title,'sort':'title','workspace_id':self.scope,'limit':1,'details':'true',
+               'visibility':'active','media_type':'image','review':'unreviewed','favorite':'true','collection_id':col}
+        status,first,_=self.request('GET',PAGE+'?'+urlencode(query))
+        self.assertEqual(status,200);query['cursor']=first['next_cursor']
+        status,second,_=self.request('GET',PAGE+'?'+urlencode(query))
+        self.assertEqual(status,200);self.assertNotEqual(first['assets'][0]['id'],second['assets'][0]['id'])
+
     def test_malformed_repeated_unknown_and_overlong_queries_are_refused(self):
         for query in ('limit=1&limit=2','unknown=x','limit=true','limit=0','cursor=',
                       'favorite=1','visibility=','limit=%FF','limit=%GG','limit',

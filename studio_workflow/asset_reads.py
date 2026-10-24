@@ -23,6 +23,9 @@ MAX_SELECTION = 200
 MAX_CURSOR = 2048
 MAX_RESPONSE_BYTES = 2 * 1024 * 1024
 ORDER = 'created_at_desc_id_desc'
+SORTS = {'newest':('a.created_at','DESC','<',ORDER),
+         'oldest':('a.created_at','ASC','>','created_at_asc_id_asc'),
+         'title':('a.title COLLATE NOCASE','ASC','>','title_nocase_asc_id_asc')}
 ENTITY = re.compile(r'[A-Za-z0-9_-]{1,128}\Z')
 HEX32 = re.compile(r'[0-9a-f]{32}\Z')
 HEX64 = re.compile(r'[0-9a-f]{64}\Z')
@@ -151,6 +154,23 @@ def normalize_filters(value=None):
     return result
 
 
+def page_options(q, sort):
+    require(q is None or type(q) is str and 1 <= len(q) <= 200 and q.strip() and '\0' not in q,
+            'Search must be nonempty text of at most 200 characters without NUL')
+    require(type(sort) is str and sort in SORTS, 'Sort must be newest, oldest or title')
+    if q is not None:
+        try: q.encode('utf-8')
+        except UnicodeError as exc: raise AssetReadError('Invalid search text encoding') from exc
+
+
+def page_query_hash(filters, q, sort):
+    # Preserve the original default query identity for existing read-only clients.
+    query = dict(filters)
+    if q is not None: query['q'] = q
+    if sort != 'newest': query['sort'] = sort
+    return hashlib.sha256(canonical(query)).hexdigest()
+
+
 def selection_ids(value):
     require(type(value) is list and 1 <= len(value) <= MAX_SELECTION,
             'Supply between 1 and 200 selected asset IDs')
@@ -177,7 +197,8 @@ def _cursor(value):
                 and _matches(HEX64,body['query_sha256']) and _integer(body['limit'],1,MAX_PAGE)
                 and type(stamp) is dict and set(stamp) == {'epoch','revision'}
                 and _matches(HEX32,stamp['epoch']) and _integer(stamp['revision'])
-                and type(last) is list and len(last) == 2 and _finite(last[0]) and _matches(ENTITY,last[1]),
+                and type(last) is list and len(last) == 2
+                and (_finite(last[0]) or type(last[0]) is str and len(last[0]) <= 4096) and _matches(ENTITY,last[1]),
                 'Invalid asset cursor values', **error)
         return body
     except (ValueError,TypeError,OverflowError,RecursionError) as exc:
@@ -185,11 +206,13 @@ def _cursor(value):
         raise AssetReadError('Invalid asset cursor encoding', **error) from exc
 
 
-def _encode_cursor(scope, stamp, query_hash, limit, asset):
+def _encode_cursor(scope, stamp, query_hash, limit, asset, key=None):
     body = {'format':'studio.asset-cursor/v1', 'workspace_id':scope, 'catalogue':stamp,
-            'query_sha256':query_hash, 'limit':limit, 'last':[asset['created_at'],asset['id']]}
+            'query_sha256':query_hash, 'limit':limit, 'last':[asset['created_at'] if key is None else key,asset['id']]}
     envelope = {'position':body,'sha256':hashlib.sha256(canonical(body)).hexdigest()}
-    return base64.urlsafe_b64encode(canonical(envelope)).decode('ascii').rstrip('=')
+    cursor = base64.urlsafe_b64encode(canonical(envelope)).decode('ascii').rstrip('=')
+    require(len(cursor) <= MAX_CURSOR, 'Asset sort key exceeds its cursor bound',code='asset_read_unavailable',status=503)
+    return cursor
 
 
 def _summary(row):
@@ -247,20 +270,25 @@ class AssetReads:
     def __init__(self, workspace):
         self.workspace = workspace
 
-    def page(self, *, workspace_id=None, limit=50, cursor=None, filters=None):
+    def page(self, *, workspace_id=None, limit=50, cursor=None, filters=None, details=False, q=None, sort='newest'):
+        require(type(details) is bool, 'Details must be boolean')
         require(_integer(limit,1,MAX_PAGE),'Page size must be an integer between 1 and 100')
         query = normalize_filters(filters)
-        query_hash = hashlib.sha256(canonical(query)).hexdigest()
+        page_options(q,sort)
+        query_hash = page_query_hash(query,q,sort)
+        sort_key, direction, comparison, order = SORTS[sort]
         position = _cursor(cursor) if cursor is not None else None
         if workspace_id is not None: self.workspace._validate_scope(workspace_id)
         if position is not None:
             require(position['limit'] == limit and position['query_sha256'] == query_hash,
-                    'Cursor belongs to different filters or page size; explicitly refresh',
+                    'Cursor belongs to different filters, search, sort or page size; explicitly refresh',
                     code='asset_cursor_mismatch',status=409)
             if workspace_id is not None:
                 require(position['workspace_id'] == workspace_id, 'Cursor belongs to another Workspace',
                         code='asset_workspace_conflict',status=409)
             workspace_id = position['workspace_id']
+            require(type(position['last'][0]) is str if sort == 'title' else _finite(position['last'][0]),
+                    'Invalid cursor sort key',code='asset_cursor_invalid')
         with self.workspace.connection() as db:
             db.execute('BEGIN')
             scope = self.workspace._check_scope(db,workspace_id)
@@ -278,16 +306,37 @@ class AssetReads:
                         'The selected collection no longer exists',code='asset_collection_unavailable',status=409)
                 clauses.append('EXISTS (SELECT 1 FROM collection_assets AS ca WHERE ca.collection_id=? AND ca.asset_id=a.id)')
                 params.append(query['collection_id'])
+            if q is not None:
+                # LIKE metacharacters are literal search text; all values stay bound.
+                pattern = '%' + q.lower().replace('\\','\\\\').replace('%','\\%').replace('_','\\_') + '%'
+                db.create_function('asset_search_text',1,lambda value: value.lower() if type(value) is str else '',deterministic=True)
+                fields = ('title','filename','preset_name','notes','run_label','prompt_excerpt')
+                matches = ["asset_search_text(a."+field+") LIKE ? ESCAPE '\\'" for field in fields]
+                matches.append("EXISTS (SELECT 1 FROM json_each(CASE WHEN json_valid(a.tags) THEN a.tags ELSE '[]' END) AS tag "
+                               "WHERE tag.type='text' AND asset_search_text(tag.value) LIKE ? ESCAPE '\\')")
+                clauses.append('('+' OR '.join(matches)+')');params.extend([pattern]*len(matches))
             if position is not None:
-                clauses.append('(a.created_at,a.id)<(?,?)'); params.extend(position['last'])
+                clauses.append('('+sort_key+',a.id)'+comparison+'(?,?)'); params.extend(position['last'])
             where = ' WHERE ' + ' AND '.join(clauses) if clauses else ''
-            rows = db.execute('SELECT '+_projection(db)+' FROM assets AS a'+where+
-                              ' ORDER BY a.created_at DESC,a.id DESC LIMIT ?',[*params,limit+1]).fetchall()
-            items = [_summary(row) for row in rows[:limit]]
-            next_cursor = _encode_cursor(scope,stamp,query_hash,limit,items[-1]) if len(rows)>limit else None
-            return _result('page',scope,stamp,filters=query,order=ORDER,limit=limit,assets=items,next_cursor=next_cursor)
+            projection = _projection(db)
+            if sort == 'title': projection += ',CASE WHEN length(CAST(a.title AS BLOB))<=4096 THEN CAST(a.title AS BLOB) END AS _sort_title'
+            rows = db.execute('SELECT '+projection+' FROM assets AS a'+where+
+                              ' ORDER BY '+sort_key+' '+direction+',a.id '+direction+' LIMIT ?',[*params,limit+1]).fetchall()
+            items, last_key = [], None
+            for row in rows[:limit]:
+                value = dict(row)
+                if sort == 'title':
+                    raw = value.pop('_sort_title')
+                    require(type(raw) is bytes, 'Asset title sort key is invalid or exceeds its bound',code='asset_read_unavailable',status=503)
+                    try: last_key = raw.decode(value['_text_encoding'])
+                    except UnicodeError as exc: raise AssetReadError('Invalid title sort key encoding',code='asset_read_unavailable',status=503) from exc
+                items.append(_summary(value))
+            next_cursor = _encode_cursor(scope,stamp,query_hash,limit,items[-1],last_key) if len(rows)>limit else None
+            if details: items = self.workspace._library_assets(db,items,scope)
+            return _result('page',scope,stamp,filters=query,order=order,limit=limit,assets=items,next_cursor=next_cursor)
 
-    def selection(self, ids, *, workspace_id):
+    def selection(self, ids, *, workspace_id, details=False):
+        require(type(details) is bool, 'Details must be boolean')
         ids = selection_ids(ids)
         self.workspace._validate_scope(workspace_id)
         with self.workspace.connection() as db:
@@ -297,6 +346,7 @@ class AssetReads:
             marks = ','.join('?' for _ in ids)
             rows = db.execute('SELECT '+_projection(db)+' FROM assets AS a WHERE a.id IN ('+marks+')',ids)
             found = {item['id']:item for item in map(_summary,rows)}
+            if details: found = {item['id']:item for item in self.workspace._library_assets(db,list(found.values()),scope)}
             items = []
             for key in ids:
                 asset = found.get(key)

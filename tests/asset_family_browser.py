@@ -18,6 +18,7 @@ from test_server import server, png
 import tiles
 import parallax
 from studio_workflow.asset_read_http import extend_handler
+from studio_workflow.collection_http import extend_handler as extend_collections
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -84,7 +85,7 @@ def build_handler(studio, posts, controls=None):
             posts.append(self.path)
             return super().do_POST()
     Base.studio = studio
-    return extend_handler(Base)
+    return extend_handler(extend_collections(Base))
 
 
 def exercise(out, browser_executable=None):
