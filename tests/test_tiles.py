@@ -314,6 +314,79 @@ class RouteTests(unittest.TestCase):
         self.assertEqual([j for j in studio.jobs.values() if j.get("operation") == tiles.OPERATION], [])
         with self.assertRaisesRegex(ValueError, "not a seamless-tile repaint"): tiles.finish(studio, next(j for j in studio.jobs if j != job["id"]))
 
+    def completed_repaint_without_finish(self):
+        studio = self.studio(); prepared = tiles.prepare(studio, {"asset_id": self.source(studio)["id"]})
+        with patch.object(tiles, "finish_after_run"):
+            job = self.run_repaint(studio, prepared, tiles.roll_half(lit_texture()))
+        self.assertEqual(job["status"], "completed"); self.assertNotIn("tile_finish", job)
+        return studio, job, studio.runs / tiles.finish_id(job["id"])
+
+    def test_finish_preserves_unexplained_files_after_restart(self):
+        for filename in ("tile.png", "tile-3x3.png", "tile-unflattened.png", "notes.txt"):
+            with self.subTest(filename=filename):
+                studio, job, directory = self.completed_repaint_without_finish()
+                directory.mkdir(); retained = b"retained interrupted finish: " + filename.encode()
+                (directory / filename).write_bytes(retained)
+                restarted = self.studio(); self.assertNotIn(directory.name, restarted.jobs)
+                jobs_before = set(restarted.jobs); repaint_state = (studio.runs / job["id"] / "state.json").read_bytes()
+                with patch.object(restarted, "index_outputs") as index, patch.object(restarted, "_save") as save:
+                    error = None
+                    try: tiles.finish(restarted, job["id"])
+                    except ValueError as exc: error = str(exc)
+                    self.assertEqual((directory / filename).read_bytes(), retained, "an unexplained finish must never overwrite retained bytes")
+                    self.assertIsNotNone(error, "an unexplained finish must explicitly refuse publication")
+                    self.assertIn("Inspect and recover", error); self.assertIn(str(directory), error)
+                    index.assert_not_called(); save.assert_not_called()
+                self.assertEqual({p.name for p in directory.iterdir()}, {filename})
+                self.assertEqual(set(restarted.jobs), jobs_before); self.assertNotIn("tile_finish", restarted.jobs[job["id"]])
+                self.assertEqual((studio.runs / job["id"] / "state.json").read_bytes(), repaint_state)
+                self.assertEqual(restarted.requests, [], "refusal never resubmits the repaint")
+
+    def test_an_interrupted_finish_is_retained_and_retries_refuse(self):
+        studio, job, directory = self.completed_repaint_without_finish()
+        with patch.object(studio, "index_outputs", side_effect=OSError("interrupted_before_finished_record")):
+            tiles.finish_after_run(studio, job)
+        self.assertEqual(job["status"], "completed"); self.assertIn("interrupted_before_finished_record", job["tile_finish"]["error"])
+        self.assertNotIn(directory.name, studio.jobs); self.assertFalse((directory / "state.json").exists())
+        retained = {p.name: p.read_bytes() for p in directory.iterdir()}
+        self.assertEqual(set(retained), {"tile.png", "tile-3x3.png", "tile-unflattened.png"})
+        requests = list(studio.requests); jobs_before = set(studio.jobs)
+        for _ in range(2):
+            with self.assertRaisesRegex(ValueError, "Inspect and recover"): tiles.finish(studio, job["id"])
+            tiles.finish_after_run(studio, job)
+            self.assertIn("Inspect and recover", job["tile_finish"]["error"])
+            self.assertNotIn("job_id", job["tile_finish"]); self.assertEqual(job["status"], "completed")
+            self.assertEqual({p.name: p.read_bytes() for p in directory.iterdir()}, retained)
+            self.assertEqual(set(studio.jobs), jobs_before); self.assertEqual(studio.requests, requests)
+        restarted = self.studio()
+        with self.assertRaisesRegex(ValueError, "Inspect and recover"): tiles.finish(restarted, job["id"])
+        self.assertEqual({p.name: p.read_bytes() for p in directory.iterdir()}, retained); self.assertEqual(restarted.requests, [])
+
+    def test_finish_refuses_an_existing_empty_directory_or_file(self):
+        for kind in ("directory", "file"):
+            with self.subTest(kind=kind):
+                studio, job, directory = self.completed_repaint_without_finish()
+                if kind == "directory": directory.mkdir()
+                else: directory.write_bytes(b"retained destination file")
+                requests = list(studio.requests)
+                with self.assertRaisesRegex(ValueError, "Inspect and recover"): tiles.finish(studio, job["id"])
+                if kind == "directory": self.assertEqual(list(directory.iterdir()), [])
+                else: self.assertEqual(directory.read_bytes(), b"retained destination file")
+                self.assertNotIn(directory.name, studio.jobs); self.assertEqual(studio.requests, requests)
+
+    def test_finish_reserves_its_directory_without_a_check_then_create_race(self):
+        studio, job, directory = self.completed_repaint_without_finish(); original = Path.mkdir
+        def competing_finish(path, *args, **kwargs):
+            if path == directory:
+                original(path); (path / "tile.png").write_bytes(b"retained competing finish")
+            return original(path, *args, **kwargs)
+        requests = list(studio.requests)
+        with patch.object(Path, "mkdir", competing_finish), self.assertRaisesRegex(ValueError, "Inspect and recover"):
+            tiles.finish(studio, job["id"])
+        self.assertEqual((directory / "tile.png").read_bytes(), b"retained competing finish")
+        self.assertEqual({p.name for p in directory.iterdir()}, {"tile.png"})
+        self.assertNotIn(directory.name, studio.jobs); self.assertEqual(studio.requests, requests)
+
     def test_a_lost_link_to_the_finished_tile_is_rebuilt(self):
         """Review on #1224: the repaint's save can fail after the finished job was stored (a Windows write lock), or the
         Studio can stop between the two saves. The link must hold in memory, and Finish tile must restore it after a restart."""

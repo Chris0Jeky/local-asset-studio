@@ -307,7 +307,11 @@ def finish(studio, job_id):
         metrics = {"seam_source": centre_seam(rolled), "seam_composite": seam(joined), "seam_tile": seam(final), "centre_seam_tile": centre_seam(final),
                    "inner_gradient_source": inner_gradient(rolled), "inner_gradient_tile": inner_gradient(final), "band_px": claim["band_px"]}
         metrics["summary"] = summary(metrics)
-        directory = studio.runs / identifier; directory.mkdir(parents=True, exist_ok=True)
+        directory = studio.runs / identifier
+        # Reserve a new destination atomically; an interrupted finish is retained evidence, not permission to overwrite.
+        try: directory.mkdir(parents=True)
+        except FileExistsError:
+            raise ValueError("Tile finish destination already exists without a loaded finished-job record. Inspect and recover retained evidence before retrying: %s" % directory) from None
         files = {"tile.png": png_bytes(final), "tile-3x3.png": png_bytes(preview)}
         if claim["flatten_sigma_px"]: files["tile-unflattened.png"] = png_bytes(joined)
         for filename, data in files.items(): (directory / filename).write_bytes(data)
