@@ -2,15 +2,15 @@
 from __future__ import annotations
 from .client import Client, ClientError
 from .commands import identifier
+from .setup_draft_client import SetupDraftClient
 
 PREFIX = '/api/workflow-studio/documents'
 
 
 class WorkflowClient(Client):
     @property
-    def setup_drafts(self):
-        """Shared revisions, explicit copy-only apply, and non-replaying recovery."""
-        from .setup_draft_client import SetupDraftClient
+    def setup_drafts(self) -> SetupDraftClient:
+        """Shared revisions, read-only history/compare/export, apply and recovery."""
         return SetupDraftClient(self.request)
 
     def setup_proposal(self, request: dict) -> dict:
