@@ -292,3 +292,42 @@ test('the attachment stamp excludes wording, lineage and batch state', () => {
   assert.match(attachStampSource, /referenceRecords/, 'Slot files, roles and availability stay in');
   assert.match(attachStampSource, /uploaded/, 'Staged named-input files stay in');
 });
+
+// A result tile's picture can sit outside the first Library page: it is resolved by ID before its review is saved (#1622).
+const resultReviewSource = between('  resultPanel.onclick=async e=>{', '\n  // Number keys 1-5');
+function resultReviewHarness({known, state}) {
+  const context = {};
+  vm.runInNewContext([
+    "let pairActionBusy=false;const setupStamp=()=>'s',syncReady=()=>{},announce=(m,e)=>notices.push({m,e}),notices=[],resolveCalls=[],saved=[];",
+    "const store=new Map(" + JSON.stringify(known) + ");const assetRecord=id=>store.get(id);",
+    "const refreshAssets=async()=>true;",
+    "const resolveAssetIDs=async ids=>{resolveCalls.push(ids);for(const id of ids)store.set(id," + JSON.stringify(state) + ");return true;};",
+    "const StudioReviewChecks={cycle:(tags,c)=>[...tags,c],answer:()=>true};",
+    "const mutateAssets=async payload=>{saved.push(payload);};",
+    "const resultPanel={querySelectorAll:()=>[]};const q=()=>null;const document={activeElement:null};",
+    resultReviewSource,
+    "this.press=dataset=>resultPanel.onclick({target:{closest:()=>({dataset,disabled:false})}});",
+    "this.state=()=>JSON.stringify({resolveCalls,saved,notices});",
+  ].join('\n'), context);
+  return context;
+}
+
+for (const [label, dataset, payload] of [
+  ['check', {uxCheck: 'face', asset: 'far'}, {action: 'edit', ids: ['far'], tags: ['face']}],
+  ['review', {uxReview: 'selected', asset: 'far'}, {action: 'edit', ids: ['far'], review: 'selected'}],
+]) {
+  test(`a result tile ${label} resolves an asset outside the first Library page before saving`, async () => {
+    const harness = resultReviewHarness({known: [], state: {id: 'far', tags: []}});
+    await harness.press(dataset);
+    const state = JSON.parse(harness.state());
+    assert.deepEqual(state.resolveCalls, [['far']]);
+    assert.deepEqual(state.saved, [payload]);
+    assert.deepEqual(state.notices, []);
+  });
+}
+
+test('a result tile review of an already known asset makes no extra read', async () => {
+  const harness = resultReviewHarness({known: [['near', {id: 'near', tags: []}]], state: null});
+  await harness.press({uxReview: 'selected', asset: 'near'});
+  assert.deepEqual(JSON.parse(harness.state()).resolveCalls, []);
+});
