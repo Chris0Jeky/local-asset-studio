@@ -119,5 +119,15 @@ async function test(name,fn){await fn();console.log('PASS',name);passed++;}
     assert.equal(retained.operation.body,s.writes[1].options.body);assert.deepEqual(retained.selection,['old']);
     assert.equal(s.run('assetLibraryPending.body'),s.writes[1].options.body);assert.equal(s.run('assetLibraryPending.selection[0]'),'old');assert.equal(s.run('assetSelection.has("page")'),true);
   });
+  await test('An unchanged read keeps resolved off-page IDs; a changed catalogue invalidates them',async()=>{
+    const s=init();await refresh(s,[asset('a')],'next');s.run("assetSelection=new Set(['old'])");
+    const p=s.run('resolveAssetSelection()');await flush();
+    s.writes[0].resolve({workspace_id:scope,catalogue:stamp,items:[{id:'old',state:'active',asset:asset('old',{metadata_revision:3})}]});assert.equal(await p,true);
+    assert.equal(await refresh(s,[asset('a')],'next'),true);
+    assert.equal(s.run('assetResolved.has("old")'),true);assert.equal(s.run('assetSelectionInfo().unresolved'),0);
+    const n=s.reads.length,q=s.actualRefresh(true);await flush();const changed={...stamp,revision:2};
+    s.reads[n].resolve({...page([asset('a')],'next'),catalogue:changed});s.reads[n+1].resolve({...collections(),catalogue:changed});assert.equal(await q,true);
+    assert.equal(s.run('assetResolved.has("old")'),false);assert.equal(s.run('assetSelectionInfo().unresolved'),1);
+  });
   console.log('Workspace pagination contracts passed:',passed);
 })().catch(error=>{console.error(error);process.exitCode=1;});
