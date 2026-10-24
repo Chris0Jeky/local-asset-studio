@@ -714,13 +714,15 @@
     try{
       if(check){
         // One press saves one answer with the picture's review revision; Keep and Needs work never wait on it (#1203).
-        await refreshAssets(true);const asset=(typeof assetRecord==='function'?assetRecord(button.dataset.asset):assetState.assets.find(a=>a.id===button.dataset.asset));
+        await refreshAssets(true);if(typeof assetRecord==='function'&&!assetRecord(button.dataset.asset))await resolveAssetIDs([button.dataset.asset]);   // off the first page: resolve this picture by ID
+        const asset=(typeof assetRecord==='function'?assetRecord(button.dataset.asset):assetState.assets.find(a=>a.id===button.dataset.asset));
         if(!asset)throw Error('This picture is no longer in the library. Nothing was saved.');
         const tags=StudioReviewChecks.cycle(asset.tags,check),now=StudioReviewChecks.answer(tags,check);
         await mutateAssets({action:'edit',ids:[asset.id],tags});
         status='Saved: '+check+' '+(now===null?'not checked':now?'yes':'no')+'.';
       }else if(button.dataset.uxReview){
-        await refreshAssets(true);await mutateAssets({action:'edit',ids:[button.dataset.asset],review:button.dataset.uxReview});
+        await refreshAssets(true);if(typeof assetRecord==='function'&&!assetRecord(button.dataset.asset))await resolveAssetIDs([button.dataset.asset]);
+        await mutateAssets({action:'edit',ids:[button.dataset.asset],review:button.dataset.uxReview});
         status=button.dataset.uxReview==='selected'?'Kept.':'Needs-work decision saved.';
       }else{
         const job=jobs.find(j=>j.id===button.dataset.job),index=Number(button.dataset.index),output=job?.outputs?.[index];
@@ -1270,12 +1272,22 @@
     document.dispatchEvent(new CustomEvent('studio:shortlist-sources',{detail:sources}));
   });
   // Pull any existing image into a named reference slot, without changing the recipe.
-  const picker=element('dialog','studio-dialog');picker.id='uxSourcePicker';picker.setAttribute('aria-labelledby','uxPickerTitle');picker.innerHTML='<div class="dialog-heading"><h2 id="uxPickerTitle">Pull from your library</h2><button data-ux-close="uxSourcePicker" aria-label="Close source picker">✕</button></div><label for="uxSourceSlot">Use as<select id="uxSourceSlot"></select></label><label for="uxSourceSearch">Search saved images<input id="uxSourceSearch" type="search" placeholder="Title, tags or recipe…"></label><p id="uxPickerStatus" role="status"></p><div id="uxSourceAssets" class="ux-picker-grid"></div>';document.body.append(picker);
+  const picker=element('dialog','studio-dialog');picker.id='uxSourcePicker';picker.setAttribute('aria-labelledby','uxPickerTitle');picker.innerHTML='<div class="dialog-heading"><h2 id="uxPickerTitle">Pull from your library</h2><button data-ux-close="uxSourcePicker" aria-label="Close source picker">✕</button></div><label for="uxSourceSlot">Use as<select id="uxSourceSlot"></select></label><label for="uxSourceSearch">Search saved images<input id="uxSourceSearch" type="search" maxlength="200" placeholder="Title, tags or recipe…"></label><p id="uxPickerStatus" role="status"></p><div id="uxSourceAssets" class="ux-picker-grid"></div><div id="uxSourcePaging"></div>';document.body.append(picker);
   // Three references cost three round trips only if the picker closes after each pick. It stays open,
   // advances to the next unfilled slot, and closes itself when every required slot holds one (#278 friction 4).
   function sourceSlotOptions(){return selected.reference_slots?.length?selected.reference_slots.map((r,i)=>'<option value="'+i+'">Picture '+(i+1)+' · '+escape(referenceRecords[i]?.role||r.role)+(referenceRecords[i]?.file&&!referenceRecords[i]?.missing?' · attached':'')+'</option>').join('')+(selected.last_reference?'<option value="lastReference">'+escape(selected.last_reference_label||'Last frame')+'</option>':''):'<option value="reference">'+escape(selected.reference_label||'Reference / first frame')+'</option>'+(selected.last_reference?'<option value="lastReference">'+escape(selected.last_reference_label||'Last frame')+'</option>':'');}
   function nextEmptySlot(){return selected.reference_slots?.length?referenceRecords.findIndex(r=>!r.file||r.missing):-1;}
-  function renderSources(){const query=q('#uxSourceSearch').value.toLowerCase();const assets=assetState.assets.filter(a=>!a.trashed_at&&a.media_type==='image'&&[a.title,a.preset_name,...a.tags].join(' ').toLowerCase().includes(query));q('#uxSourceAssets').innerHTML=assets.map(a=>'<button data-ux-pull="'+a.id+'">'+assetPreview(a)+'<b>'+escape(a.title)+'</b><small>'+escape(({selected:'Kept',needs_work:'Needs work',rejected:'Not this',unreviewed:'Unreviewed'}[a.review||'unreviewed']||a.review))+'</small></button>').join('')||'<p>No matching saved images. Import an image in the Asset library first.</p>';}
+  // The picker owns its reads: the Library page is one bounded slice, so saved images are searched and paged here (#1622).
+  let sourcePage={assets:[],next:null},sourceSeq=0,sourceSearchTimer=null;
+  async function readSources(more){
+    const seq=++sourceSeq,term=q('#uxSourceSearch').value.trim(),filters={visibility:'active',media_type:'image',sort:'newest',limit:100,details:true};
+    if(term)filters.q=term;if(more&&sourcePage.next)filters.cursor=sourcePage.next;
+    const data=await api(assetReadURL('/api/assets/page',filters));
+    if(seq!==sourceSeq||!picker.open)return false;   // a newer search or a closed picker owns the list
+    if(!Array.isArray(data?.assets))throw Error('The saved-image page was not understood.');
+    sourcePage={assets:more?[...sourcePage.assets,...data.assets]:data.assets,next:data.next_cursor||null};return true;
+  }
+  function renderSources(){q('#uxSourceAssets').innerHTML=sourcePage.assets.map(a=>'<button data-ux-pull="'+a.id+'">'+assetPreview(a)+'<b>'+escape(a.title)+'</b><small>'+escape(({selected:'Kept',needs_work:'Needs work',rejected:'Not this',unreviewed:'Unreviewed'}[a.review||'unreviewed']||a.review))+'</small></button>').join('')||'<p>No matching saved images. Import an image in the Asset library first.</p>';q('#uxSourcePaging').innerHTML=sourcePage.next?'<button type="button" data-ux-source-more>More saved images</button>':'';}
   function syncSourceAvailability(){
     // The modal already blocks duplicate interaction. Keep its opener focusable for native return.
     q('#uxPullAsset').disabled=!takesSource();
@@ -1290,14 +1302,14 @@
     q('#uxSourceSearch').value='';q('#uxSourceSearch').disabled=true;q('#uxSourceSlot').disabled=true;
     q('#uxSourceSlot').innerHTML=sourceSlotOptions();
     const first=nextEmptySlot();if(first>=0)q('#uxSourceSlot').value=String(first);
-    q('#uxSourceAssets').replaceChildren();q('#uxSourceAssets').setAttribute('aria-busy','true');
+    sourcePage={assets:[],next:null};q('#uxSourceAssets').replaceChildren();q('#uxSourcePaging').replaceChildren();q('#uxSourceAssets').setAttribute('aria-busy','true');
     const status=q('#uxPickerStatus');status.textContent='Loading saved images…';status.tabIndex=-1;
     picker.showModal();status.focus({preventScroll:true});
     try{
-      const loaded=await refreshAssets();
+      const loaded=await readSources(false);
       if(request!==sourcePickerEpoch||!picker.open)return;
       if(epoch!==selectionEpoch||view!=='create'){picker.close();return;}
-      if(!loaded){status.textContent='The library is unavailable or another refresh is still running. Close and reopen to retry; no cached image was attached.';return;}
+      if(!loaded)return;
       renderSources();status.textContent='Attach a copy. The original stays in your library.';
       q('#uxSourceSearch').disabled=false;q('#uxSourceSlot').disabled=false;
       if(document.activeElement===status)q('#uxSourceSearch').focus({preventScroll:true});
@@ -1305,8 +1317,9 @@
     finally{if(request===sourcePickerEpoch){pickerLoading=false;q('#uxSourceAssets').setAttribute('aria-busy','false');syncSourceAvailability();}}
   }
   q('#uxPullAsset').onclick=openSourcePicker;
-  picker.addEventListener('close',()=>{if(picker.open)return;sourcePickerEpoch++;pickerLoading=false;syncSourceAvailability();});
-  q('#uxSourceSearch').oninput=renderSources;
+  picker.addEventListener('close',()=>{if(picker.open)return;sourcePickerEpoch++;sourceSeq++;clearTimeout(sourceSearchTimer);pickerLoading=false;syncSourceAvailability();});
+  q('#uxSourceSearch').oninput=()=>{clearTimeout(sourceSearchTimer);sourceSearchTimer=setTimeout(async()=>{try{if(await readSources(false))renderSources();}catch(error){q('#uxPickerStatus').textContent='Could not search the library. '+error.message;}},150);};
+  q('#uxSourcePaging').onclick=async e=>{if(!e.target.closest('[data-ux-source-more]'))return;try{if(await readSources(true))renderSources();}catch(error){q('#uxPickerStatus').textContent='Could not read more of the library. '+error.message;}};
   after('selectPreset',()=>{if(picker.open)picker.close();});
   async function pullIntoSlot(index,id){
     try{await attachReferenceAsset(index,id);draftDirty=true;saveDraft();syncCreate();return true;}
@@ -1314,7 +1327,7 @@
   }
   q('#uxSourceAssets').onclick=async e=>{const button=e.target.closest('[data-ux-pull]');if(!button||pickerBusy)return;pickerBusy=true;button.disabled=true;syncReady();try{const id=button.dataset.uxPull,slot=q('#uxSourceSlot').value;
       if(continuationState){const input=StudioContinuation.sourceInput(selected.continuation_capability),isSource=input==='last_reference'?slot==='lastReference':slot==='reference'||slot==='0';
-        if(isSource&&(!selected.reference_slots?.length||input==='reference')){picker.close();offerSecondPicture({asset:(typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id))});return;}
+        if(isSource&&(!selected.reference_slots?.length||input==='reference')){picker.close();offerSecondPicture({asset:sourcePage.assets.find(a=>a.id===id)});return;}
         if(isSource)throw Error(StudioContinuation.sourceLabel(selected)+' is the picture you are continuing. Pull into another slot, or use Leave this continuation to start from this one.');}
       if(selected.reference_slots?.length&&slot!=='lastReference')await attachReferenceAsset(Number(slot),id);
       else{const stamp=attachStamp(),result=await post('/api/assets/reference',{id});if(stamp!==attachStamp())throw Error('The workbench changed during attachment. Reopen the picker.');if(slot==='lastReference'){lastUploaded=result.file;q('#lastReference').value='';pendingInputs.delete('lastReference');}else{uploaded=result.file;q('#reference').value='';pendingInputs.delete('reference');}replaceParentAsset(slot==='lastReference'?'lastReference':'reference',null,id);}

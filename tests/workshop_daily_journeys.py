@@ -317,27 +317,30 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-ux-p
 const q=s=>document.querySelector(s),escape=v=>String(v);
 function element(tag,cls){const n=document.createElement(tag);n.className=cls;return n;}
 let selected={reference:true},referenceRecords=[],selectionEpoch=0,view='create',pickerBusy=false,pickerLoading=false,sourcePickerEpoch=0;
-let assetState={assets:[{id:'old',title:'Cached old image',tags:[],media_type:'image'}]};
+const assetReadURL=(path,query)=>path+'?'+new URLSearchParams(query);
 const takesSource=()=>!!selected.reference,NO_SOURCE_SLOT='Choose a reference recipe';
 function announce(){}function after(){}function syncReady(){}function assetPreview(){return '';}
-window.pending=[];function refreshAssets(){return new Promise(resolve=>pending.push(resolve));}
+window.pending=[];window.urls=[];function api(url){urls.push(url);return new Promise((resolve,reject)=>pending.push({resolve,reject}));}
+window.pageOf=(ids,next=null)=>({assets:ids.map(id=>({id,title:'Image '+id,tags:[],media_type:'image'})),next_cursor:next});
 </script><script>'''+production+'</script>')
 
-    def test_library_success_survives_the_production_read_scheduler(self):
+    def test_picker_searches_and_pages_on_its_own_reads(self):
         self.load_picker()
-        self.page.add_script_tag(content=source('read-poller.js'))
-        self.page.evaluate('''() => {
-          const readAssets=refreshAssets;
-          window.pickerPoller=new ReadPoller();
-          pickerPoller.register('assets',{interval:15000,task:readAssets});
-          refreshAssets=(...args)=>pickerPoller.refresh('assets',...args);
-        }''')
         self.page.click('#uxPullAsset')
-        self.page.evaluate('pending.shift()(true)')
-        self.page.wait_for_function('!pickerLoading')
-        self.assertEqual(self.page.locator('[data-ux-pull]').count(), 1)
-        self.assertTrue(self.page.locator('#uxSourceSearch').is_enabled())
-        self.page.evaluate('pickerPoller.dispose()')
+        self.page.evaluate("pending.shift().resolve(pageOf(['a'],'c1'))")
+        self.page.wait_for_selector('[data-ux-pull]')
+        self.assertIn('media_type=image', self.page.evaluate('urls[0]'))
+        self.page.click('[data-ux-source-more]')
+        self.assertIn('cursor=c1', self.page.evaluate('urls[1]'))
+        self.page.evaluate("pending.shift().resolve(pageOf(['b']))")
+        self.page.wait_for_function('document.querySelectorAll("[data-ux-pull]").length===2')
+        self.assertEqual(self.page.locator('[data-ux-source-more]').count(), 0)
+        self.page.fill('#uxSourceSearch', 'forest')
+        self.page.wait_for_function('urls.length===3')
+        self.assertIn('q=forest', self.page.evaluate('urls[2]'))
+        self.assertNotIn('cursor=', self.page.evaluate('urls[2]'))
+        self.page.evaluate("pending.shift().resolve(pageOf(['z']))")
+        self.page.wait_for_function('document.querySelectorAll("[data-ux-pull]").length===1')
 
     def test_library_opens_immediately_and_refuses_failed_cached_results(self):
         self.load_picker()
@@ -345,7 +348,7 @@ window.pending=[];function refreshAssets(){return new Promise(resolve=>pending.p
         self.assertTrue(self.page.locator('#uxSourcePicker').is_visible())
         self.assertIn('Loading', self.page.locator('#uxPickerStatus').inner_text())
         self.assertEqual(self.page.locator('[data-ux-pull]').count(), 0)
-        self.page.evaluate('pending.shift()(false)')
+        self.page.evaluate("pending.shift().reject(Error('offline'))")
         self.page.wait_for_function('!pickerLoading')
         self.assertIn('reopen', self.page.locator('#uxPickerStatus').inner_text())
         self.assertEqual(self.page.locator('[data-ux-pull]').count(), 0)
@@ -357,9 +360,9 @@ window.pending=[];function refreshAssets(){return new Promise(resolve=>pending.p
         self.page.wait_for_function('!picker.open')
         self.assertTrue(self.page.locator('#uxPullAsset').evaluate('(n)=>n===document.activeElement'))
         self.page.click('#uxPullAsset')
-        self.page.evaluate('pending.shift()(true)')
+        self.page.evaluate("pending.shift().resolve(pageOf(['old']))")
         self.assertEqual(self.page.locator('[data-ux-pull]').count(), 0)
-        self.page.evaluate('pending.shift()(true)')
+        self.page.evaluate("pending.shift().resolve(pageOf(['old']))")
         self.page.wait_for_selector('[data-ux-pull]')
         self.assertEqual(self.page.locator('[data-ux-pull]').count(), 1)
         self.page.keyboard.press('Escape')
@@ -371,7 +374,7 @@ window.pending=[];function refreshAssets(){return new Promise(resolve=>pending.p
         self.page.locator('#uxPullAsset').evaluate('(n)=>n.click()')
         self.assertEqual(self.page.evaluate('pending.length'), 1)
         self.page.locator('[data-ux-close="uxSourcePicker"]').focus()
-        self.page.evaluate('pending.shift()(true)')
+        self.page.evaluate("pending.shift().resolve(pageOf(['old']))")
         self.page.wait_for_selector('[data-ux-pull]')
         self.assertTrue(self.page.locator('[data-ux-close="uxSourcePicker"]').evaluate('(n)=>n===document.activeElement'))
         self.page.keyboard.press('Escape')
@@ -381,7 +384,7 @@ window.pending=[];function refreshAssets(){return new Promise(resolve=>pending.p
     def test_recipe_change_during_library_read_does_not_render_old_cards(self):
         self.load_picker()
         self.page.click('#uxPullAsset')
-        self.page.evaluate('selectionEpoch++; pending.shift()(true)')
+        self.page.evaluate("selectionEpoch++; pending.shift().resolve(pageOf(['old']))")
         self.page.wait_for_function('!picker.open')
         self.assertEqual(self.page.locator('[data-ux-pull]').count(), 0)
         self.assertFalse(self.page.evaluate('pickerLoading'))

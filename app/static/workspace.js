@@ -402,7 +402,8 @@ async function refreshAssets(force=false,position=null) {
     const sameCatalogue=previousScope===data.workspace_id && JSON.stringify(assetPaging?.catalogue)===JSON.stringify(page.catalogue);
     if(!force&&sameCatalogue){data.collections=assetState.collections;collections.next_cursor=assetPaging.collectionNext;}
     assetState=data;
-    assetResolved.clear();assetPaging={query,cursor,history:[...history],next:page.next_cursor,collectionNext:collections.next_cursor,catalogue:page.catalogue};
+    if(!sameCatalogue)assetResolved.clear();   // an unchanged catalogue keeps what the operator resolved; a changed one invalidates it
+    assetPaging={query,cursor,history:[...history],next:page.next_cursor,collectionNext:collections.next_cursor,catalogue:page.catalogue};
     if(previousScope && previousScope!==data.workspace_id){assetSelection.clear();if(assetLibraryPending?.command.workspace_id===data.workspace_id)assetRetainedSelection=assetLibraryPending.selection;}
     // Recent runs owns its output visibility too: explicitly observe off-page
     // IDs in its displayed window, never infer Trash from page membership.
