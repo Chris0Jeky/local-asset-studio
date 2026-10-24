@@ -420,11 +420,14 @@ def source_context(studio, asset_id):
     warning = "" if positive is not None else "No unambiguous submitted prompt is retained for this output. Describe the desired result; the recipe example will not be used."
     role = prompt_role(graph, True) if isinstance(graph, dict) else "unknown"
     from PIL import Image
-    with Image.open(path) as image:
-        width, height = image.size
-        # Source coordinates follow the displayed/engine-oriented pixels. Read the
-        # header only here; the source digest still covers the untouched file.
-        if image.format == 'JPEG' and image.getexif().get(274) in (5, 6, 7, 8): width, height = height, width
+    try:
+        with Image.open(path) as image:
+            width, height = image.size
+            # Source coordinates follow the displayed/engine-oriented pixels. Read the
+            # header only here; the source digest still covers the untouched file.
+            if image.format == 'JPEG' and image.getexif().get(274) in (5, 6, 7, 8): width, height = height, width
+    except (OSError, SyntaxError) as exc: # DecompressionBombError stays a safety refusal for its callers
+        raise ValueError("Source image is damaged, restore the original asset.") from exc
     return {
         "version": 1,
         "asset_id": asset["id"],
