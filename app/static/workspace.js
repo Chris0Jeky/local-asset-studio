@@ -388,9 +388,13 @@ async function refreshAssets(force=false,position=null) {
     let data,epoch,page,collections;
     let cursor=position?position.cursor:!force&&assetPaging?.query===query?assetPaging.cursor:null;
     let history=position?position.history:!force&&assetPaging?.query===query?assetPaging.history:[];
+    // A replayed page cursor goes stale when the catalogue moves on: a background or view-switch read then restarts at page 1.
+    let replayed=!position&&cursor!==null,fellBack=false;
+    const read=()=>Promise.all([api(assetReadURL('/api/assets/page',{...filters,limit:100,details:true,cursor})),api(assetReadURL('/api/collections',{workspace_id:page?.workspace_id,limit:100}))]);
     let reads=0;do{
       epoch=assetReceiptEpoch;
-      [page,collections]=await Promise.all([api(assetReadURL('/api/assets/page',{...filters,limit:100,details:true,cursor})),api(assetReadURL('/api/collections',{workspace_id:page?.workspace_id,limit:100}))]);
+      try{[page,collections]=await read();}
+      catch(e){if(!replayed||e.data?.code!=='asset_cursor_stale')throw e;replayed=false;fellBack=true;cursor=null;history=[];[page,collections]=await read();}
       if(epoch!==assetReceiptEpoch){cursor=null;history=[];}
     }while(epoch!==assetReceiptEpoch&&++reads<5);   // re-read while saves land, at most five times
     if(epoch!==assetReceiptEpoch)return false;   // still racing saves: keep the newer local records; the next poll reads again
@@ -411,7 +415,8 @@ async function refreshAssets(force=false,position=null) {
     const outputIDs=[...new Set(jobs.flatMap(job=>job.outputs||[]).slice(0,Math.min(recentLimit,200)).map(o=>o.asset_id).filter(id=>id&&!assetRecord(id)))];
     if(outputIDs.length)await resolveAssetIDs(outputIDs);
     renderLibraryRecovery();
-    if(force||signature!==assetSignature){assetSignature=signature;renderAssets();jobsSignature='';renderJobs();}
+    if(force||signature!==assetSignature||fellBack){assetSignature=signature;renderAssets();jobsSignature='';renderJobs();}
+    if(fellBack)assetMessage('The Library changed since this page was opened, so it is showing page 1 again.');
     return true;
   } catch(e) {if(assetScopeRestored && e.data?.code==='asset_collection_unavailable'){assetScopeRestored=false;assetScope='all';}assetMessage(e.message,true);return false;}
   finally {assetRefreshing=false;if(query!==assetPageQuery()&&!assetSearchTimer)void refreshAssets(true);}
