@@ -177,7 +177,7 @@ class AVProjects:
                 av.need(asset['kind']=='image','Static overlays require PNG sources')
                 from PIL import Image
                 with Image.open(av.safe_path(directory,asset['path'])) as image:width,height=image.size
-                scale=min(1,200/width,project['size'][1]/height);width=max(1,int(width*scale));height=max(1,int(height*scale))
+                scale=min(1,200/width,project['size'][0]/width,project['size'][1]/height);width=max(1,int(width*scale));height=max(1,int(height*scale))
                 clip={'id':identifier,'asset':key,'start':0,'frames':timing['frames'],'x':0,'y':0,'width':width,'height':height,'opacity':1}
             else:
                 av.need(asset['kind']=='audio','Audio clips require PCM WAV')
