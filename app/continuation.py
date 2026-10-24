@@ -426,7 +426,7 @@ def source_context(studio, asset_id):
             # Source coordinates follow the displayed/engine-oriented pixels. Read the
             # header only here; the source digest still covers the untouched file.
             if image.format == 'JPEG' and image.getexif().get(274) in (5, 6, 7, 8): width, height = height, width
-    except (OSError, SyntaxError, Image.DecompressionBombError) as exc:
+    except (OSError, SyntaxError) as exc: # DecompressionBombError stays a safety refusal for its callers
         raise ValueError("Source image is damaged, restore the original asset.") from exc
     return {
         "version": 1,
