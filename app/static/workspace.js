@@ -8,7 +8,7 @@ let assetReceiptEpoch = 0;
 let assetPaging=null,assetResolved=new Map(),assetResolveRequest=0,assetOpenRequest=0,assetCollectionBusy=false;
 function assetRecord(id){const item=assetResolved.get(id);return item?item.asset:assetState.assets.find(a=>a.id===id);}
 function assetRecords(){return [...new Map([...assetState.assets,...[...assetResolved.values()].map(i=>i.asset).filter(Boolean)].map(a=>[a.id,a])).values()];}
-function assetPageFilters(){const filters={visibility:assetScope==='trash'?'trash':'active'};if(assetScope==='favorite')filters.favorite=true;if(['selected','needs_work','unreviewed'].includes(assetScope))filters.review=assetScope;if(assetScope.startsWith('collection:'))filters.collection_id=assetScope.slice(11);if($('#assetType').value!=='all')filters.media_type=$('#assetType').value;return filters;}
+function assetPageFilters(){const filters={visibility:assetScope==='trash'?'trash':'active',sort:$('#assetSort').value||'newest'},q=$('#assetSearch').value.trim();if(q)filters.q=q;if(assetScope==='favorite')filters.favorite=true;if(['selected','needs_work','unreviewed'].includes(assetScope))filters.review=assetScope;if(assetScope.startsWith('collection:'))filters.collection_id=assetScope.slice(11);if($('#assetType').value!=='all')filters.media_type=$('#assetType').value;return filters;}
 function assetPageQuery(){return JSON.stringify(assetPageFilters());}
 function assetReadURL(path,query){return path+'?'+Object.entries(query).filter(([,v])=>v!==null&&v!==undefined).map(([k,v])=>encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');}
 async function resolveAssetIDs(ids){
@@ -89,9 +89,9 @@ function assetScopedCount(scope){
     if(scope.startsWith('collection:'))return a.collections.includes(scope.slice(11));
     return true;
   }));
-  return list.filter(a=>(type==='all'||a.media_type===type)&&[a.title,a.preset_name,a.notes,a.run_label||'',a.prompt_excerpt||'',...a.tags].join(' ').toLowerCase().includes(query)).length;
+  return list.filter(a=>(type==='all'||a.media_type===type)&&(assetPaging||[a.title,a.filename||'',a.preset_name,a.notes,a.run_label||'',a.prompt_excerpt||'',...a.tags].join(' ').toLowerCase().includes(query))).length;
 }
-function renderAssetScopeCounts(){document.querySelectorAll('#assetScopes [data-scope]').forEach(b=>{if(!b.dataset.scopeLabel)b.dataset.scopeLabel=b.textContent.trim();b.innerHTML='<span>'+esc(b.dataset.scopeLabel)+'</span><small>'+assetScopedCount(b.dataset.scope).toLocaleString('en-US')+'</small>';});}
+function renderAssetScopeCounts(){document.querySelectorAll('#assetScopes [data-scope]').forEach(b=>{if(!b.dataset.scopeLabel)b.dataset.scopeLabel=b.textContent.trim();b.innerHTML='<span>'+esc(b.dataset.scopeLabel)+'</span><small>'+assetScopedCount(b.dataset.scope).toLocaleString('en-US')+(assetPaging?' on this page':'')+'</small>';});}
 const assetReviewLabels = {unreviewed:'Unreviewed',selected:'Kept',needs_work:'Needs work',rejected:'Not this'};
 const assetReviewShortcuts = {k:'selected',w:'needs_work',x:'rejected'};
 const assetReasonTags = ['hands','face','style off','composition','anatomy','artifacts','crop'];
@@ -413,7 +413,7 @@ async function refreshAssets(force=false,position=null) {
     if(force||signature!==assetSignature){assetSignature=signature;renderAssets();jobsSignature='';renderJobs();}
     return true;
   } catch(e) {if(assetScopeRestored && e.data?.code==='asset_collection_unavailable'){assetScopeRestored=false;assetScope='all';}assetMessage(e.message,true);return false;}
-  finally {assetRefreshing=false;if(query!==assetPageQuery())void refreshAssets(true);}
+  finally {assetRefreshing=false;if(query!==assetPageQuery()&&!assetSearchTimer)void refreshAssets(true);}
 }
 // Scope, filters and checkbox selection are separate projections over the loaded Workspace.
 const assetSelectionLimit=200;
@@ -436,7 +436,7 @@ function restoreAssetView(){
     if(assetSortModes.includes(sort))$('#assetSort').value=sort;
     if(assetTypeModes.includes(type))$('#assetType').value=type;
   }catch(error){}
-  try{const search=sessionStorage.getItem(assetViewKeys.search);if(typeof search==='string' && search.length<=500)$('#assetSearch').value=search;}catch(error){}
+  try{const search=sessionStorage.getItem(assetViewKeys.search);if(typeof search==='string' && search.length<=200)$('#assetSearch').value=search;}catch(error){}
 }
 // Selection ergonomics: grid order is the grouped reading order, so a Shift range matches what the operator sees.
 let assetSelectionAnchor=null,assetCheckShift=false;
@@ -482,7 +482,8 @@ function assetScopeAssets() {
 function assetFiltersActive(){return !!$('#assetSearch').value.trim() || $('#assetType').value!=='all';}
 function visibleAssets() {
   const query=$('#assetSearch').value.trim().toLowerCase(), type=$('#assetType').value;
-  const list=assetSourceFilter(assetScopeAssets()).filter(a=>(type==='all'||a.media_type===type)&&[a.title,a.preset_name,a.notes,a.run_label||'',a.prompt_excerpt||'',...a.tags].join(' ').toLowerCase().includes(query));
+  const list=assetSourceFilter(assetScopeAssets()).filter(a=>(type==='all'||a.media_type===type)&&(assetPaging||[a.title,a.filename||'',a.preset_name,a.notes,a.run_label||'',a.prompt_excerpt||'',...a.tags].join(' ').toLowerCase().includes(query)));
+  if(assetPaging)return list;
   const sort=$('#assetSort').value;
   return list.sort((a,b)=>sort==='title'?a.title.localeCompare(b.title):sort==='oldest'?a.created_at-b.created_at:b.created_at-a.created_at);
 }
@@ -571,16 +572,15 @@ function assetPreview(asset, detail=false) {
 function assetCardHTML(a) {const display=assetCardTitle(a);return '<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'" data-asset-card="'+esc(a.id)+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(display)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(display)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(display)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(display)+'</button>'+(assetSubtitle(a)?'<small class="asset-card-prompt" title="'+esc(assetSubtitle(a))+'">'+esc(assetSubtitle(a))+'</small>':'')+'<div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(assetReviewLabels[a.review]||a.review)+'</span></div><div class="asset-tags">'+(assetIsAgentRun(a)?'<span class="asset-run-label" title="Agent run label">'+esc(a.run_label)+'</span>':'')+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>';}
 function renderAssets() {
   observeAssetWorkspaceIdentity();
-  if(assetPaging && assetPaging.query!==assetPageQuery()){if(!assetRefreshing)void refreshAssets(true);return;}
+  if(assetPaging && assetPaging.query!==assetPageQuery()){if(!assetRefreshing&&!assetSearchTimer)void refreshAssets(true);return;}
   // A remembered collection that no longer exists opens All assets rather than an unavailable view.
   if(assetScopeRestored && assetState.workspace_id && !assetPaging?.collectionNext){assetScopeRestored=false;if(assetScope.startsWith('collection:') && !assetState.collections.some(c=>'collection:'+c.id===assetScope))assetScope='all';}
   rememberAssetView();
   const assets=visibleAssets(), col=assetState.collections.find(c=>'collection:'+c.id===assetScope), source=assetSource();
   const inScope=assetScopeAssets(), sourced=assetSourceFilter(inScope,source), sourceHidden=inScope.length-sourced.length;
-  $('#assetTotal').textContent=assets.length;
+  $('#assetTotal').textContent=assets.length+(assetPaging?' on this page':'');
   $('#assetSource').hidden=!assetState.assets.some(assetIsAgentRun);$('#assetSource').value=source;
-  $('#assetVisibleCount').textContent=(assetFiltersActive()?assets.length+' of '+sourced.length+' assets':assets.length+' assets')+(sourceHidden?' · '+sourceHidden+(source==='mine'?' agent runs hidden':' of yours hidden'):'');
-  if(assetPaging)$('#assetVisibleCount').textContent+=' · current page (search, sort and counts apply here)';
+  $('#assetVisibleCount').textContent=(assetPaging?assets.length+' assets on this page':assetFiltersActive()?assets.length+' of '+sourced.length+' assets':assets.length+' assets')+(sourceHidden?' · '+sourceHidden+(source==='mine'?' agent runs hidden':' of yours hidden'):'');
   $('#assetPaging').innerHTML=assetPaging?'<button data-asset-page="previous" '+(!assetPaging.history.length?'disabled':'')+'>Previous page</button><span>Page '+(assetPaging.history.length+1)+'</span><button data-asset-page="next" '+(!assetPaging.next?'disabled':'')+'>Next page</button>':'';
   $('#collectionPaging').innerHTML=assetPaging?.collectionNext?'<button data-collection-more>More collections</button>':'';
   $('#clearAssetFilters').hidden=!assetFiltersActive();
@@ -1028,15 +1028,15 @@ async function refreshAssetsNow() {
   try{
     for(let waited=0;assetRefreshing && waited<150;waited++)await new Promise(resolve=>setTimeout(resolve,100));
     const ok=await refreshAssets(true,{cursor:null,history:[]});
-    if(ok)assetMessage('Library refreshed: '+assetState.assets.filter(a=>a.trashed_at==null).length+' active assets.');
+    if(ok)assetMessage('Library refreshed: '+assetState.assets.length+' assets on this page.');
     else if(assetRefreshing)assetMessage('Another library read is still running. Try Refresh again in a moment.',true);
     return ok;
   }finally{button.disabled=false;button.textContent=label;button.removeAttribute?.('aria-busy');}
 }
 $('#workspaceRefresh').onclick=()=>refreshAssetsNow();
-// Typing repaints once the operator pauses; every other control is immediate.
-$('#assetSearch').oninput=()=>{clearTimeout(assetSearchTimer);assetSearchTimer=setTimeout(()=>{assetSearchTimer=null;renderAssets();},150);};
-$('#assetType').onchange=renderAssets;$('#assetSort').onchange=renderAssets;
+// Typing reads a new first page once the operator pauses; every other control is immediate.
+$('#assetSearch').oninput=()=>{clearTimeout(assetSearchTimer);assetSearchTimer=setTimeout(()=>{assetSearchTimer=null;void refreshAssets(true);},150);};
+$('#assetType').onchange=renderAssets;$('#assetSort').onchange=()=>{void refreshAssets(true);};
 function chooseAssetSource(value){assetSourceMode=assetSourceModes.includes(value)?value:null;try{localStorage.setItem(assetSourceStorageKey,assetSourceMode||'');}catch(error){}renderAssets();}
 $('#assetSource').onchange=()=>chooseAssetSource($('#assetSource').value);
 $('#assetGroup').onchange=()=>{assetGroupMode=assetGroupModes.includes($('#assetGroup').value)?$('#assetGroup').value:'none';try{localStorage.setItem(assetGroupStorageKey,assetGroupMode);}catch(error){}renderAssets();};

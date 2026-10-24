@@ -62,6 +62,71 @@ class AssetReadTests(unittest.TestCase):
         self.assertEqual(self.page(filters={'visibility': 'trash'})['assets'], [])
         self.assertIsNone(self.page(filters={'visibility': 'trash'})['next_cursor'])
 
+    def test_search_matches_literal_wildcards_and_backslash(self):
+        with self.store.connection() as db:
+            db.executemany('UPDATE assets SET title=? WHERE id=?', [
+                ('100% complete','asset-000000'),('100X complete','asset-000001'),
+                ('under_score','asset-000002'),('underXscore','asset-000003'),
+                (r'folder\leaf','asset-000004')])
+        for q,expected in [('%',[0]),('_',[2]),(chr(92),[4]),('COMPLETE',[1,0])]:
+            with self.subTest(q=q):
+                self.assertEqual([a['id'] for a in self.page(q=q)['assets']],
+                                 [f'asset-{i:06}' for i in expected])
+
+    def test_search_covers_all_library_fields_and_decoded_tags(self):
+        self.assertNotEqual(self.page(limit=1)['assets'][0]['id'],'asset-000000')
+        for field in ('title','filename','preset_name','notes','run_label','prompt_excerpt','tags'):
+            with self.subTest(field=field), self.store.connection() as db:
+                value=json.dumps(['unique "needle"']) if field=='tags' else 'unique "needle"'
+                db.execute('UPDATE assets SET '+field+'=? WHERE id=?',(value,'asset-000000'))
+                db.commit()
+                self.assertEqual([a['id'] for a in self.page(q='UNIQUE "needle"')['assets']],['asset-000000'])
+                db.execute('UPDATE assets SET '+field+'=? WHERE id=?',('[]' if field=='tags' else '', 'asset-000000'))
+
+    def test_search_matches_unicode_case_insensitively(self):
+        with self.store.connection() as db:db.execute("UPDATE assets SET title='Étoile' WHERE id='asset-000000'")
+        self.assertEqual([a['id'] for a in self.page(q='éTOILE')['assets']],['asset-000000'])
+
+    def test_title_cursor_uses_full_key_instead_of_truncated_display_label(self):
+        with self.store.connection() as db:
+            db.execute("UPDATE assets SET title='z'")
+            db.execute("UPDATE assets SET title=? WHERE id='asset-000000'",('a'*200+'b',))
+            db.execute("UPDATE assets SET title=? WHERE id='asset-000001'",('a'*200+'a',))
+        first=self.page(limit=1,sort='title')
+        second=self.page(limit=1,sort='title',cursor=first['next_cursor'])
+        self.assertEqual(first['assets'][0]['id'],'asset-000001')
+        self.assertEqual(second['assets'][0]['id'],'asset-000000')
+
+    def test_each_sort_walks_page_boundaries_with_stable_ties(self):
+        titles=['Zulu','alpha','ALPHA','Beta','beta','Aardvark','Zulu']
+        created=[3,1,2,1,0,2,3]
+        with self.store.connection() as db:
+            db.executemany('UPDATE assets SET title=?,created_at=? WHERE id=?',[(t,created[i],f'asset-{i:06}') for i,t in enumerate(titles)])
+        for sort,expected in [('newest',[6,0,5,2,3,1,4]),('oldest',[4,1,3,2,5,0,6]),('title',[5,1,2,3,4,0,6])]:
+            with self.subTest(sort=sort):
+                cursor=None; found=[]
+                for _ in range(8):
+                    result=self.page(limit=2,sort=sort,cursor=cursor)
+                    found += [a['id'] for a in result['assets']];cursor=result['next_cursor']
+                    if cursor is None:break
+                else:self.fail('Sort continuation did not terminate')
+                self.assertEqual(found,[f'asset-{i:06}' for i in expected])
+
+    def test_cursor_binds_search_and_sort(self):
+        for sort in ('newest','oldest','title'):
+            first=self.page(limit=1,q='Title',sort=sort)
+            for changed in ({'q':'other','sort':sort},{'q':'Title','sort':'oldest' if sort!='oldest' else 'title'}):
+                self.expect_error('asset_cursor_mismatch',self.page,limit=1,cursor=first['next_cursor'],**changed)
+            self.assertEqual(len(self.page(limit=1,q='Title',sort=sort,cursor=first['next_cursor'])['assets']),1)
+
+    def test_search_and_sort_bounds_fail_before_database_access(self):
+        self.assertEqual(self.page(q='x'*200)['assets'],[])
+        with patch.object(self.store,'connection',side_effect=AssertionError('Database reached')):
+            for q in ('',' '*3,'x'*201,1,True,[], 'nul\0query'):
+                with self.subTest(q=q):self.expect_error('asset_read_invalid',self.page,q=q)
+            for sort in ('','NEWEST','random',None,1,[]):
+                with self.subTest(sort=sort):self.expect_error('asset_read_invalid',self.page,sort=sort)
+
     def test_summary_does_not_decode_large_or_corrupt_private_fields(self):
         with self.store.connection() as db:
             db.execute("UPDATE assets SET source='not JSON',lineage='not JSON',tags='not JSON',notes=?", ('secret'*200000,))

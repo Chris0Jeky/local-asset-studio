@@ -22,6 +22,37 @@ async function test(name,fn){await fn();console.log('PASS',name);passed++;}
     assert.equal(s.reads.length,2);assert.equal(s.writes.length,0);assert.equal(s.run('assetState.assets.length'),1);
     assert.match(s.el('#assetPaging').innerHTML,/Next page/);assert.match(s.el('#assetVisibleCount').textContent,/page/i);
   });
+  await test('Search is debounced, queries the server and resets paging',async()=>{
+    const s=init();await refresh(s,[asset('first')],'next');
+    s.run("assetPaging.cursor='old';assetPaging.history=[null]");
+    s.el('#assetSearch').value='off-page %_';s.el('#assetSearch').oninput();
+    s.el('#assetSearch').value='off-page %_ needle';s.el('#assetSearch').oninput();
+    s.run('renderAssets()');assert.equal(s.reads.length,2,'repaints must respect the pending debounce');
+    const n=s.reads.length;assert.equal(s.timers.size,1);assert.equal(n,2);
+    const fn=[...s.timers.values()][0];s.timers.clear();fn();await flush();
+    assert.equal(s.reads.length,n+2,'debounced search must request a new server page');
+    const query=new URL(s.reads[n].url,'http://fixture').searchParams;
+    assert.equal(query.get('q'),'off-page %_ needle');assert.equal(query.get('sort'),'newest');assert.equal(query.has('cursor'),false);
+    s.reads[n].resolve(page([asset('found',{title:'off-page %_ needle'})]));s.reads[n+1].resolve(collections());await flush();
+    assert.equal(s.run('assetPaging.history.length'),0);assert.equal(s.run('visibleAssets()[0].id'),'found');
+    assert.doesNotMatch(s.el('#assetVisibleCount').textContent,/search, sort/);
+  });
+  await test('Sort queries the server, resets paging and preserves the server order',async()=>{
+    const s=init();await refresh(s,[asset('first')],'next');s.run("assetPaging.cursor='old';assetPaging.history=[null]");
+    s.el('#assetSort').value='title';const n=s.reads.length;s.el('#assetSort').onchange();await flush();
+    const query=new URL(s.reads[n].url,'http://fixture').searchParams;
+    assert.equal(query.get('sort'),'title');assert.equal(query.has('cursor'),false);assert.equal(query.has('q'),false);
+    s.reads[n].resolve(page([asset('a',{title:'same'}),asset('b',{title:'same'})]));s.reads[n+1].resolve(collections());await flush();
+    assert.equal(s.run('assetPaging.history.length'),0);assert.deepEqual(JSON.parse(s.run('JSON.stringify(visibleAssets().map(a=>a.id))')),['a','b']);
+  });
+  await test('A sort change during an in-flight read discards the old response and requests the latest query',async()=>{
+    const s=init();await refresh(s,[asset('first')],'next');const n=s.reads.length,p=s.actualRefresh(true);await flush();
+    s.el('#assetSort').value='oldest';s.el('#assetSort').onchange();assert.equal(s.reads.length,n+2);
+    s.reads[n].resolve(page([asset('stale')]));s.reads[n+1].resolve(collections());assert.equal(await p,false);await flush();
+    assert.equal(s.run('assetState.assets[0].id'),'first');assert.equal(s.reads.length,n+4);
+    const query=new URL(s.reads[n+2].url,'http://fixture').searchParams;assert.equal(query.get('sort'),'oldest');assert.equal(query.has('cursor'),false);
+    s.reads[n+2].resolve(page([asset('oldest')]));s.reads[n+3].resolve(collections());await flush();assert.equal(s.run('assetState.assets[0].id'),'oldest');
+  });
   await test('Off-page is unresolved, never missing; explicit selection observation distinguishes Trash and deletion',async()=>{
     const s=init();await refresh(s,[asset('a')],'next');
     s.run("assetSelection=new Set(['old','gone']);renderAssets()");

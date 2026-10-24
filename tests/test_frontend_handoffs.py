@@ -12,7 +12,7 @@ class GalleryHandoffTests(unittest.TestCase):
             capture_output=True, text=True, timeout=15,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn('Workspace pagination contracts passed: 9', result.stdout)
+        self.assertIn('Workspace pagination contracts passed: 12', result.stdout)
 
     @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
     def test_workbench_bug_hunt_regressions(self):

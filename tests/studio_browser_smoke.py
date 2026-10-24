@@ -85,6 +85,12 @@ class Handler(BaseHTTPRequestHandler):
             if 'review' in query: assets=[a for a in assets if a['review']==query['review'][0]]
             if 'favorite' in query: assets=[a for a in assets if a['favorite']]
             if 'media_type' in query: assets=[a for a in assets if a['media_type']==query['media_type'][0]]
+            if 'q' in query:
+                needle=query['q'][0].lower()
+                assets=[a for a in assets if any(needle in str(value or '').lower() for value in
+                        [a.get(k) for k in ('title','filename','preset_name','notes','run_label','prompt_excerpt')]+a.get('tags',[]))]
+            sort=query.get('sort',['newest'])[0]
+            assets=sorted(assets,key=lambda a:(a['title'].lower() if sort=='title' else a['created_at'],a['id']),reverse=sort=='newest')
             return self.json({'format':'studio.asset-page/v1','workspace_id':'1'*32,'catalogue':{'epoch':'a'*32,'revision':1},'assets':assets[:100],'next_cursor':None})
         if path=='/api/collections':return self.json({'format':'studio.collection-page/v1','workspace_id':'1'*32,'catalogue':{'epoch':'a'*32,'revision':1},'collections':[],'next_cursor':None})
         data={
