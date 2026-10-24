@@ -129,5 +129,14 @@ async function test(name,fn){await fn();console.log('PASS',name);passed++;}
     s.reads[n].resolve({...page([asset('a')],'next'),catalogue:changed});s.reads[n+1].resolve({...collections(),catalogue:changed});assert.equal(await q,true);
     assert.equal(s.run('assetResolved.has("old")'),false);assert.equal(s.run('assetSelectionInfo().unresolved'),1);
   });
+  await test('A stale replayed cursor on a non-forced read falls back to page 1 with a notice; an explicit page move still stops',async()=>{
+    const s=init();await refresh(s,[asset('first')],'next');s.run("assetPaging.cursor='old';assetPaging.history=[null]");
+    const n=s.reads.length,p=s.actualRefresh();await flush();assert.match(s.reads[n].url,/cursor=old/);
+    s.reads[n].reject(Object.assign(Error('Catalogue changed; refresh'),{status:409,data:{code:'asset_cursor_stale'}}));s.reads[n+1].resolve(collections());await flush();
+    assert.equal(s.reads.length,n+4,'one retry, with both reads');assert.doesNotMatch(s.reads[n+2].url,/cursor=/);
+    s.reads[n+2].resolve(page([asset('fresh')],'next'));s.reads[n+3].resolve(collections());
+    assert.equal(await p,true);assert.equal(s.run('assetState.assets[0].id'),'fresh');assert.equal(s.run('assetPaging.cursor'),null);assert.equal(s.run('assetPaging.history.length'),0);
+    assert.match(s.el('#assetMessage').textContent,/page 1 again/);assert.doesNotMatch(s.el('#assetMessage').textContent,/Catalogue changed/);
+  });
   console.log('Workspace pagination contracts passed:',passed);
 })().catch(error=>{console.error(error);process.exitCode=1;});

@@ -74,8 +74,28 @@ class CollectionListReadTests(unittest.TestCase):
             s.upper() for s in statements if "FROM COLLECTIONS AS C" in s.upper()
         ]
         self.assertEqual(len(queries), 2)
-        self.assertTrue(all("ORDER BY C.ID" in s and "LIMIT 101" in s for s in queries))
+        self.assertTrue(all("ORDER BY C.NAME COLLATE NOCASE,C.ID" in s and "LIMIT 101" in s for s in queries))
         self.assertEqual(before, self.store.snapshot())
+
+    def test_pages_follow_name_order_with_an_id_tiebreak_across_cursors(self):
+        with self.store.connection() as db:
+            db.execute("DELETE FROM collections")
+            db.executemany(
+                "INSERT INTO collections (id,name,description,created_at) VALUES (?,?,?,0)",
+                [("col-1", "banana", ""), ("col-2", "Apple", ""), ("col-3", "cherry", ""),
+                 ("col-4", "apple", ""), ("col-5", "Banana", ""), ("col-6", "Date", "")],
+            )
+        expected = ["col-2", "col-4", "col-1", "col-5", "col-3", "col-6"]  # name NOCASE, then id
+        seen, cursor = [], None
+        while True:
+            page = self.store.collection_page(limit=2, cursor=cursor)
+            self.assertEqual(page["order"], "name_nocase_asc_id_asc")
+            seen += [c["id"] for c in page["collections"]]
+            cursor = page["next_cursor"]
+            if cursor is None:
+                break
+        self.assertEqual(seen, expected)
+        self.assertEqual([c["id"] for c in self.store.collection_page(limit=100)["collections"]], expected)
 
     def test_count_excludes_trash_including_timestamp_zero(self):
         source = Path(self.temp.name) / "image.png"

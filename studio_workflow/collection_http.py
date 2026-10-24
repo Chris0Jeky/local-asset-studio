@@ -49,7 +49,8 @@ def collection_cursor(value):
         require(canonical(envelope) == raw and envelope['sha256'] == hashlib.sha256(canonical(body)).hexdigest()
                 and body['format'] == 'studio.collection-cursor/v1'
                 and type(body['workspace_id']) is str and HEX32.fullmatch(body['workspace_id'])
-                and _integer(body['limit'],1,100) and type(body['last']) is str and ENTITY.fullmatch(body['last'])
+                and _integer(body['limit'],1,100) and type(body['last']) is list and len(body['last']) == 2 and type(body['last'][0]) is str and 0 < len(body['last'][0]) <= 100
+                and type(body['last'][1]) is str and ENTITY.fullmatch(body['last'][1])
                 and type(stamp) is dict and set(stamp) == {'epoch','revision'}
                 and type(stamp['epoch']) is str and HEX32.fullmatch(stamp['epoch']) and _integer(stamp['revision']),
                 'Invalid collection cursor values or checksum', **error)

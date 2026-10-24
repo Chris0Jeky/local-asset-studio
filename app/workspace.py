@@ -373,22 +373,22 @@ class AssetWorkspace:
             identity, stamp = self._check_scope(db,workspace_id), _state(db)
             require(position is None or position['catalogue']==stamp, 'Collection catalogue changed; explicitly refresh',
                     code='collection_cursor_stale',status=409)
-            where, params = (' WHERE c.id>?',[position['last']]) if position else ('',[])
+            where, params = (' WHERE (c.name COLLATE NOCASE,c.id)>(?,?)',position['last']) if position else ('',[])
             rows = db.execute('''SELECT CASE WHEN length(CAST(c.id AS BLOB))<=512 THEN c.id END AS id,
                 CASE WHEN length(CAST(c.name AS BLOB))<=400 THEN c.name END AS name,
                 CASE WHEN length(CAST(c.description AS BLOB))<=4000 THEN c.description END AS description,
                 c.revision,(SELECT COUNT(*) FROM collection_assets AS ca JOIN assets AS a ON a.id=ca.asset_id
                     WHERE ca.collection_id=c.id AND a.trashed_at IS NULL) AS count
-                FROM collections AS c'''+where+' ORDER BY c.id LIMIT ?',[*params,limit+1]).fetchall()
+                FROM collections AS c'''+where+' ORDER BY c.name COLLATE NOCASE,c.id LIMIT ?',[*params,limit+1]).fetchall()
             items = [dict(row) for row in rows[:limit]]
             require(all(type(c['id']) is str and ENTITY.fullmatch(c['id']) and type(c['name']) is str
                         and 0<len(c['name'])<=100 and type(c['description']) is str and len(c['description'])<=1000
                         and _integer(c['revision'],1) and _integer(c['count']) for c in items),
                     'Collection metadata is unavailable',code='collection_read_unavailable',status=503)
             next_cursor = encode_cursor({'format':'studio.collection-cursor/v1','workspace_id':identity,'catalogue':stamp,
-                                         'limit':limit,'last':items[-1]['id']}) if len(rows)>limit else None
+                                         'limit':limit,'last':[items[-1]['name'],items[-1]['id']]}) if len(rows)>limit else None
             return {'format':'studio.collection-page/v1','workspace_id':identity,'catalogue':stamp,'limit':limit,
-                    'order':'id_asc','collections':items,'next_cursor':next_cursor,'observation_only':True,
+                    'order':'name_nocase_asc_id_asc','collections':items,'next_cursor':next_cursor,'observation_only':True,
                     'media_bytes_verified':False,'generation_submitted':False}
 
     @staticmethod
