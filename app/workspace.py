@@ -624,7 +624,7 @@ class AssetWorkspace:
         action = payload.get("action")
         allowed = {"create": {"action", "id", "kind", "name", "body", "lineage"}, "edit": {"action", "id", "expected_revision", "name", "body", "lineage"},
                    "trash": {"action", "id", "expected_revision"}, "restore": {"action", "id", "expected_revision"}}
-        if action not in allowed: raise WorkspaceError("Unknown card action")
+        if not isinstance(action, str) or action not in allowed: raise WorkspaceError("Unknown card action")
         if set(payload) - allowed[action]: raise WorkspaceError("Unknown card command fields")
         now = time.time()
         if action == "create":
