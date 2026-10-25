@@ -1,6 +1,6 @@
 # ADR: frontend modernization without replacing the local runtime
 
-**Decision status: proposed; owner accepted the maintainer build step (option B, 23 Sep 2026). The spike ran on 27 Sep 2026 (#907); see [Spike results](#spike-results-27-sep-2026-907). A default change remains a separate owner decision.**
+**Decision status: candidate default, not approved for a default switch.** The owner accepted the maintainer build step (option B, 23 Sep 2026) and answered **candidate default** after seeing the island on 27 Sep 2026 (`adaptive-island-trial`). The historical [spike results](#spike-results-27-sep-2026-907) remain below; the [current decision plan](#candidate-default-plan-1207) prepares the separate owner decision and implementation PR.
 
 ## Context
 
@@ -101,3 +101,168 @@ Measured on the owner's Windows 11 PC (Radeon host, Python 3.14.3, headless Chro
 
 **Recommendation: accept option B for the guidance island trial and keep it behind `?ui=island`, off by default.** The island met every gate the spike could exercise at under a fifth of its budget with two small, read-only legacy seams. Do not change the default or start the source-board island (A3) until the owner has used the trial and the 200 % zoom and A7 paired-fixture checks have run.
 
+## Candidate-default plan (#1207)
+
+Prepared 25 October 2026 against production source `1aa48338f0f2aedd545bad6fcec1c4865a862849`.
+The owner's 27 September answer promotes the two panels to a **candidate**, not to a default.
+This section supersedes the spike's recommendation to wait for owner trial feedback; it does
+not supersede the historical measurements or authorize a switch. Refs #907.
+
+### Keep Vue or port to plain JavaScript?
+
+**Recommendation: retain the existing Vue island for these two panels.** It already has typed,
+runtime-validated snapshots, isolated lifecycle/failure handling, a read-only action bridge,
+component tests and committed offline assets. A port would have to recreate and prove those
+contracts, disclosure preferences, recipe projection and keyboard handling in a second renderer.
+It could avoid the Vue payload and the maintainer build, but there is no measured plain-JS port
+whose size or load advantage can be claimed. The normal Create arm below is the existing page
+without either candidate panel, not a plain-JS implementation of them.
+
+| Choice | Concrete cost | Decision consequence |
+| --- | --- | --- |
+| Keep Vue | Two additional static bundle files; maintain source/lockfile/build parity | Smallest default-switch diff; retain the existing bridge and tests |
+| Port both panels | New DOM/lifecycle/disclosure code and replacement parity tests; final payload unknown | Choose only if the owner rejects the measured payload or maintainer build cost; replace Vue completely for this surface |
+
+For either choice, Python's runtime and APIs stay unchanged. The shipped page reads local assets;
+normal launch requires no Node, npm, CDN, internet connection or change to installed ComfyUI.
+The build remains a maintainer/CI operation. No second framework or production draft authority is needed.
+
+### Current page-cost measurement
+
+`python tests/ui_island_browser.py --output .runtime/issue-1207/island-verified` runs the same real frontend
+against synthetic HTTP data, with all non-fixture-origin requests blocked. Six alternating runs
+per arm use new Chromium contexts (Playwright 1.62.0, Python 3.14.3 on Windows) at 1440 x 900, empty browser storage and disabled browser cache
+(Playwright routing); the OS file cache is not cold. Arms are normal `/#create`, opt-in
+`/?ui=island#create`, and a candidate `/#create` whose **test-only response override** removes
+only the loader's opt-in guard. The production file is never rewritten. The script refuses a
+changed/missing guard instead of silently measuring a different implementation.
+
+`load` is Navigation Timing's `loadEventEnd`; `workshop` is elapsed navigation time when the
+browser driver first observes the workshop and selected recipe; `panels` additionally waits for
+a rendered authored-setup card. These are separate milestones, not interchangeable definitions
+of readiness. The 300 ms request-settling wait is excluded from these timings.
+
+Measured 2026-10-25T20:03:18.604138+00:00; milliseconds, medians of six runs per arm.
+
+| Arm | load p50 | workshop observed p50 | panels observed p50 |
+| --- | ---: | ---: | ---: |
+| normal | 624.5 | 652.3 | absent |
+| opt-in | 658.4 | 708.1 | 743.3 |
+| candidate-default | 592.2 | 624.0 | 685.6 |
+
+The opt-in arm is the direct HTTP comparison for the island's page cost: **+33.9 ms** at the
+load milestone in this sample. The candidate was 32.3 ms below normal, but its shell response
+was fulfilled by Playwright instead of one fixture HTTP response. That confound and ordinary
+run/order variation prevent treating the candidate row as a speedup or a precise prediction of
+production-default latency. The final sample was taken after the journey browser runs finished;
+the broad unit suite was still running. These are local synthetic loads, not a user study, network benchmark, generation-speed claim or
+proof that Vue is faster. Six runs cannot establish a general latency ceiling. Raw samples and
+payload hashes are retained in the ignored output directory's `result.json`; rerun on the target
+host before the later implementation PR if the source or host changes.
+
+Current committed payload, measured from the actual files rather than the September table:
+
+| Additional bundle | Raw bytes served | gzip level 9, Python measurement | SHA-256 |
+| --- | ---: | ---: | --- |
+| `island.js` | 70,944 | 27,602 | `88975d7a64f9a4851771d69c695cb2696e489520d8f8f9410fa44123801e9487` |
+| `island.css` | 2,987 | 1,037 | `cda5d623c99479f8af9133184733ed8a5147ca03fde52fb4fd185e3e4dbf56e0` |
+| Total | **73,931 (72.2 KiB)** | **28,639 (28.0 KiB)** | |
+
+The build manifest records 28,552 B gzip using its pinned Node/zlib toolchain; compressor versions
+can differ, and the static tests verify the actual bundle hashes against that manifest. Both are
+below 153,600 B (150 KiB). Python's static server serves uncompressed bytes: gzip is a payload
+budget comparison, **not** the actual loopback transfer size. Recipe JSON, showcase-module and
+local preview requests are additional to this bundle total; previews depend on the selected
+recipe and viewport. The fixture does not model the owner's complete model/media inventory.
+Normal mode still requests neither island bundle file and creates no island root.
+
+### Fixture journeys and zoom
+
+The normal baseline and candidate default at 100% each passed **25/25 journeys**. The final
+candidate at 200%-equivalent reflow also passed **25/25**. All three had **zero generation
+submissions and zero page exceptions**. The updated candidate runner additionally requires
+mounted panels on each journey ending on the main page. The panel/browser script passed
+**61 checks**.
+
+```console
+python tests/studio_use_cases.py --out .runtime/issue-1207/baseline-journeys.json --screenshots .runtime/issue-1207/baseline-shots
+python tests/studio_use_cases.py --island-default --out .runtime/issue-1207/candidate-final.json --screenshots .runtime/issue-1207/candidate-final-shots
+python tests/studio_use_cases.py --island-default --zoom 200 --out .runtime/issue-1207/candidate-zoom-verified.json --screenshots .runtime/issue-1207/candidate-zoom-verified-shots
+python -m unittest discover -s tests -p "test_ui_island_static.py"
+python -m unittest discover -s tests -p "test_use_case_matrix.py"
+python scripts/validate-repo.py
+```
+
+Static serving/budget checks passed **5/5**, runner/scoring checks **68/68**; validation passed
+93 preset graphs/bindings and 187 pinned assets. An additional full offline unit-suite attempt
+was stopped after about 35 minutes on the shared host without a final verdict; it is **not pass
+evidence**, and the full pre-publication gate remains for the coordinator. The new flagless-mount regression was run
+before removing the opt-in guard from the fixture's response: the normal control passed and
+the candidate check failed with `Timeout 5000ms exceeded` waiting for the island primary action.
+It passed after the fixture override; no production code was changed to make that test pass.
+
+The candidate switch is available only as `--island-default` in the fixture runner; combining it
+with `--base-url` is refused before browser startup. No production preference, query string or
+persisted default is changed. Each journey ending on the main page additionally requires the
+island primary action and authored-setup cards to be mounted, so an inert override cannot
+masquerade as coverage. Normal controls, typed wording, source handoffs, comparisons and recovery
+remain the existing journey drivers' success conditions; the script never presses Generate.
+
+The 200% test halves the CSS viewport and doubles pixel density (1536 x 1060 becomes 768 x 530
+for journeys; 1440 x 900 becomes 720 x 450 for panel checks). This exercises equivalent reflow
+and readable controls, **not Chromium's native toolbar zoom or an assistive-technology audit**.
+The panel checks cover Focus, Studio and Immersive: no internal horizontal overflow, keyboard
+opening of Why this?, and collapse/reopen of authored setups. The first journey now opens the
+collapsed navigation through its menu button at that narrower viewport. The comparison driver
+also uses Tab to leave the prompt before looking for the secondary run tools that the short
+viewport deliberately hides while typing.
+
+The existing fixture logs asset-family reads with `studio=None` and occasional connection aborts
+when a context closes; these also occurred in the normal baseline. They are not production
+recovery evidence. Journey success, page exceptions and generation-request counts are recorded
+separately; existing measured dead ends remain in the matrices rather than being erased.
+
+### What a future switch changes for someone who never opted in
+
+- Ordinary Create gains **Next step**, its primary reveal/focus action, source/evidence wording
+  and a closed **Why this?** disclosure. Existing secondary guidance links remain as currently
+  rendered; the later PR must explicitly account for them rather than claim there is only one button.
+- **Authored setups** shows up to four ideas for the selected recipe, or clearly labelled
+  fallback recipe ideas when no authored setup matches. Inspect opens the existing bundle
+  explorer; it neither applies a setup nor submits a generation. Run evidence, art acceptance
+  and licence clearance remain distinct.
+- Focus and Studio gain content in the guidance slot that was previously empty. In Immersive,
+  the island hides the retained legacy guidance aside while active. This changes page height,
+  scrolling and keyboard tab order, and adds collapsible-discovery preferences in browser storage;
+  denied storage keeps the choice in the tab only.
+- The existing main-page loader runs even when the initial route is Make or Assets. Simply
+  removing its guard therefore adds bundle/data work to those visits too, although the panel
+  lives in Create. This measured candidate simulates that exact behavior; a later Create-only
+  lazy-load design would need its own proof.
+- Failure or unmount restores legacy guidance without replacing prompt controls or replaying a
+  write. A deliberate opt-out is needed: removing `?ui=island` would no longer disable a default.
+  No generation, upload, retry, runtime switch, remote-media permission or model licence changes.
+
+### Separate decision and implementation PR
+
+The owner chooses **retain as opt-in**, **make the Vue panels default**, or **port the panels**,
+using the costs and coverage above. The checked `adaptive-island-trial` answer in HUMAN_TODO.md
+stays checked; the default-switch decision stays open. No unanswered preference is inferred here.
+
+If the owner selects the Vue default, the next PR should:
+
+1. Record that answer, change the loader default and provide a documented explicit opt-out
+   (proposed `?ui=legacy`), preserving `?ui=island` links. Keep unmount/failure rollback intact.
+2. Replace the trial heading with normal Task guide wording. Retain the same immutable snapshot,
+   one primary next step, existing action adapter and inspect-only authored setups.
+3. Rebuild and commit source plus bundle/manifest together with the pinned maintainer toolchain;
+   update flag/default static tests and run component/build reproducibility checks.
+4. Run normal-default and explicit-opt-out browser arms, all fixture journeys at 100% and 200%
+   equivalent, offline containment, storage denial, keyboard, reduced motion and rollback.
+   Confirm no automatic generation and no prompt identity/value loss.
+5. Carry forward the limits: native browser zoom, IME, assistive technology, actual generation and
+   live recovery with the panels are not proved by these inert fixtures. Owner workflow/art
+   acceptance remains separate. Any port must meet the same gates before replacing Vue.
+
+This completes the decision preparation requested by #1207. Activation and the owner's final
+choice belong to the separate PR; the production default remains opt-in.

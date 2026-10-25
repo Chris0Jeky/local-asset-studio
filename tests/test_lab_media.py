@@ -70,6 +70,35 @@ class ManifestContract(unittest.TestCase):
                 seen+=1
         self.assertGreater(seen,0,'no local-media references found; the guard would be vacuous')
 
+    def test_judged_page_pose_and_p2_p3_cells_are_restorable_manifest_entries(self):
+        findings=(ROOT/'experiments/curated/nsfw-lab-20260923/FINDINGS.md').read_text(encoding='utf-8')
+        prequels=findings.split('## Page poses —')[1].split('## Pose transfer — still running')[0]
+        cells=re.findall(r'^\| (p(?:2|3)?-[\w-]+) \| `([a-f0-9-]{36})`',prequels,re.M)
+        self.assertEqual(len(cells),15,'five page poses, six p2 and four p3 judged cells')
+        entries=manifest('nsfw-lab')['entries']
+        for cell,job in cells:
+            with self.subTest(cell=cell):
+                matches=[entry for entry in entries if entry['id']==cell]
+                self.assertEqual(len(matches),1,'judged cell must occur exactly once')
+                entry=matches[0]
+                self.assertEqual(entry['job_id'],job)
+                self.assertEqual(entry['cell'],cell)
+                self.assertEqual(entry['file'],cell+'.jpg')
+                if cell.startswith('p-'):
+                    receipt=next(line for line in prequels.splitlines() if line.startswith('| '+cell+' |'))
+                    prompt=re.findall(r'`([^`]+)`',receipt)[1]
+                else:
+                    receipt=next(line for line in prequels.splitlines() if line.startswith('- ') and 'job `'+job[:8]+'`' in line)
+                    prompt=re.search(r'prompt `([^`]+)`',receipt)[1]
+                self.assertEqual(entry['prompt_id'],prompt,'preserve the recorded full ID or prefix')
+                source=entry['source_png']
+                self.assertTrue(source and not Path(source).is_absolute())
+                self.assertNotIn('..',Path(source).parts)
+                self.assertEqual(Path(source).name,re.search(r'`([^`]+\.png)`',receipt)[1])
+                self.assertEqual(sum(e.get('source_png')==source for e in entries),1,
+                                 'each backfilled cell needs its own restorable source path')
+                self.assertRegex(entry['source_sha256'],r'^[a-f0-9]{64}$')
+
     def test_no_image_binary_is_tracked_in_the_lab_folders(self):
         tracked=subprocess.check_output(['git','ls-files','-z','examples'],cwd=ROOT).decode().split('\0')
         prefixes=tuple('examples/'+folder+'/' for folder in FOLDERS)
