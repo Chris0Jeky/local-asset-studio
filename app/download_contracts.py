@@ -1,6 +1,7 @@
 """Pinned-transfer, receipt-freshness and no-clobber publication contracts."""
 from __future__ import annotations
 import hashlib
+import http.client
 import ipaddress
 import json
 import os
@@ -10,7 +11,7 @@ import socket
 import time
 import uuid
 from urllib.parse import urlparse, urlsplit
-from urllib.request import HTTPRedirectHandler, build_opener
+from urllib.request import HTTPRedirectHandler, HTTPSHandler, build_opener
 
 
 MAX_DOWNLOAD_REDIRECTS=5
@@ -133,11 +134,29 @@ def validate_download_url(url,provider=None,resolver=socket.getaddrinfo):
         try:addresses.add(ipaddress.ip_address(str(answer[4][0]).split('%',1)[0]))
         except (IndexError,TypeError,ValueError) as exc:raise ValueError('Model download host returned an invalid address') from exc
     if not addresses:raise ValueError('Model download host returned no addresses')
+    _require_public(addresses)
+    return provider
+
+
+def _require_public(addresses):
     if any(address.is_multicast for address in addresses):
         raise ValueError('Model download host resolves to a multicast address')
     if any(not address.is_global for address in addresses):
         raise ValueError('Model download host resolves to a loopback, private, local or reserved address')
-    return provider
+
+
+class _PeerCheckedHTTPSConnection(http.client.HTTPSConnection):
+    """urllib dials by hostname after validation; a DNS answer that flips in between must not get the request."""
+    def connect(self):
+        super().connect()
+        if self._tunnel_host:return  # behind a configured proxy the peer is the operator's proxy, not the model host
+        try:_require_public({ipaddress.ip_address(str(self.sock.getpeername()[0]).split('%',1)[0])})
+        except Exception:
+            self.sock.close();raise
+
+
+class PeerCheckedHTTPSHandler(HTTPSHandler):
+    def https_open(self,req):return self.do_open(_PeerCheckedHTTPSConnection,req,context=self._context)
 
 
 class DownloadRedirectHandler(HTTPRedirectHandler):
@@ -164,7 +183,8 @@ class DownloadRedirectHandler(HTTPRedirectHandler):
 def open_download(request,timeout=60,resolver=socket.getaddrinfo,transport_handlers=()):
     """Open one curated transfer with a fresh redirect counter and address policy."""
     provider=validate_download_url(request.full_url,resolver=resolver)
-    client=build_opener(DownloadRedirectHandler(provider,resolver),*transport_handlers)
+    # Every hop, redirects included, re-checks the connected peer before the GET is sent.
+    client=build_opener(DownloadRedirectHandler(provider,resolver),*(transport_handlers or (PeerCheckedHTTPSHandler(),)))
     return client.open(request,timeout=timeout)
 
 
