@@ -30,13 +30,13 @@
     "node": "24.13.1",
     "packages": {
       "@vitejs/plugin-vue": "6.0.9",
-      "happy-dom": "20.14.5",
+      "happy-dom": "21.0.4",
       "typescript": "6.0.3",
       "vite": "8.3.4",
-      "vitest": "5.0.2",
+      "vitest": "5.0.3",
       "vue": "3.5.43",
       "vue-tsc": "3.3.11"
     },
-    "lockfileSha256": "979258bc72246d5d2385ec6c4a850e98582513965f70bc7b732a93b0754b9d0b"
+    "lockfileSha256": "ee4ae6e488688352c4be22d7ccd8d16fbd4c2a866333aa6d412a3e5113183aa7"
   }
 }
