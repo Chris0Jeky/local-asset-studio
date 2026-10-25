@@ -175,6 +175,10 @@ The migration copied the original artifacts; it did not move or delete them. `do
 
 ## Add another preset
 
+Dedicated character and background presets may author `review_set: "character"` or `review_set: "background"`
+in the catalog. Combine keeps its transfer checks; absent or unknown values use the plain Create checks.
+Create card counts summarize owner answers from pictures on the loaded Library page, excluding Trash.
+
 1. Save a working API graph in `workflows/api/` and its visual counterpart in `workflows/comfyui/`.
 2. Add a catalog entry mapping controls to `[node-id, input-name]`. Use `bindings_extra` when one visible control must update multiple inputs, such as FLUX scheduler dimensions.
 3. Set `verified` false until a real generation succeeds. Add an honest commercial note and useful defaults.

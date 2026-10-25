@@ -607,6 +607,7 @@ function renderAssets() {
   $('#assetGrid').classList.toggle('is-grouped',grouped && !!assets.length);
   StudioAssetGrid.render($('#assetGrid'),assets,{groups,workspaceId:assetState.workspace_id,selected:assetSelection,cardHTML:assetCardHTML,cardTitle:assetCardTitle,groupActionsHTML:assetGroupActionsHTML,groupSourceHTML:assetGroupSourceHTML,emptyHTML:assets.length?'':assetEmptyState(),focusFallback:$('#assetSearch')});
   renderAssetSelection();assetBulkReviewControls();
+  if(typeof renderPresets==='function')renderPresets();
 }
 // Reconcile the saved record without fetching; retain cached nodes and current group membership.
 function updateAssetCard() {renderAssets();}

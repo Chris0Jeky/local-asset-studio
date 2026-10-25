@@ -45,7 +45,7 @@ PROMPT_EXCERPT_CHARS = 60
 RUN_LABEL_MAX = 80
 # Quick review checks (#1203): one owner answer per check, stored as a `check:<name>=yes|no` tag so it saves with the
 # asset's revisioned review. The page picks which checks a recipe route shows; absent means not checked (K14).
-REVIEW_CHECKS = ("pose", "face", "outfit", "style", "clean", "anatomy", "composition")
+REVIEW_CHECKS = ("pose", "face", "outfit", "style", "clean", "anatomy", "composition", "silhouette", "hands", "depth", "palette")
 CHECK_TAG = re.compile(r"check:(%s)=(yes|no)" % "|".join(REVIEW_CHECKS))
 # Cards (#1221, #1205): named, revisioned Workspace records that are not pictures. `body` is the kind's JSON (a look's wording
 # template and recipe, app/looks.py; a character's words, app/characters.py), `lineage` the pictures it came from.

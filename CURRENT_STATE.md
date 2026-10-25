@@ -1,5 +1,42 @@
 # Current state — 13 October 2026
 
+## Quick review check follow-up - 25 October 2026 (#1211)
+
+Dedicated character/portrait and background/environment presets now author an optional `review_set`.
+The shared checks and Workspace tag validation include Character (face, outfit, silhouette, hands,
+style) and Background (composition, depth, palette, clean). Combine keeps its transfer checks;
+unmarked and unknown routes keep plain Create. Create recipe cards reuse the shared summary and
+refresh with Library repaints. Their visible `Loaded checks` label scopes counts to pictures on
+the loaded Library page, excluding Trash; these are not whole-Workspace totals.
+
+Comparison number keys were already implemented by `daee33f78` at `app/static/production.js:388`.
+The existing regression passed before this change; added coverage exercises both authored sets
+through that same renderer and guarded keyboard-save path.
+
+Before the fix, the new route and recipe-card assertions failed, and the five Workspace tests
+reported one failure and one error because the new names were rejected. After the fix: eight
+review-check contracts, five Workspace tests, the comparison contract, all 21 frontend handoff
+tests, and JS syntax checks passed. All 25 fixture browser use cases passed with zero page errors
+and zero generation submissions. A separate inert fixture passed 14 assertions at 1440 and 390
+pixels, including card repaint and Library click/number-key checks; both card screenshots were
+inspected. The UI detector reported no findings. Repository validation passed 93 graphs/bindings
+and 187 pinned assets.
+
+Full Python suite: 6,032 tests in 2703.129 seconds, FAILED with one error and 82 skips.
+`test_gpu_lease.ServerLeaseTests.test_http_contract_acquire_report_refuse_jobs_and_release`
+timed out reading `/api/backends` at `tests/test_gpu_lease.py:264`. Its HTTP client has a
+five-second deadline; BackendManager snapshot still performs five real backend health probes
+in this fixture. This is a plausible timing cause, not a reproduced diagnosis or a green gate.
+The unchanged GPU lease module passed all 16 tests in isolation (9.946 seconds), and the exact
+HTTP test also passed using HEAD's original Workspace code (one test, 5.187 seconds).
+The lease test and backend snapshot are outside this issue and remain unchanged. Full-suite
+qualification is unresolved; rerun `python -m unittest discover -s tests` before closing #1211.
+These results cover the uncommitted diff over base `1aa48338f0f2aedd545bad6fcec1c4865a862849`.
+Evidence stays in `.runtime/issue-1211/`, including the full failure and isolated baseline logs.
+No installed Studio/ComfyUI runtime was changed or started, and no generation was submitted.
+`HUMAN_TODO.md` and its creative, licensing and runtime owner decisions remain unchanged.
+Publication and PR review belong to the coordinator; this worktree has no Git writes.
+
 ## Backend switch and readiness follow-up — 19 October 2026
 
 [#1599](https://github.com/Chris0Jeky/local-asset-studio/pull/1599) merged as
