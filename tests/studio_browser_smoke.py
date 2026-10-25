@@ -65,6 +65,7 @@ def source_context(asset):
             'warning':'', 'width':512, 'height':768}
 
 class Handler(BaseHTTPRequestHandler):
+    workspace_id='1'*32
     def log_message(self, *args):
         pass
 
@@ -91,12 +92,12 @@ class Handler(BaseHTTPRequestHandler):
                         [a.get(k) for k in ('title','filename','preset_name','notes','run_label','prompt_excerpt')]+a.get('tags',[]))]
             sort=query.get('sort',['newest'])[0]
             assets=sorted(assets,key=lambda a:(a['title'].lower() if sort=='title' else a['created_at'],a['id']),reverse=sort=='newest')
-            return self.json({'format':'studio.asset-page/v1','workspace_id':'1'*32,'catalogue':{'epoch':'a'*32,'revision':1},'assets':assets[:100],'next_cursor':None})
-        if path=='/api/collections':return self.json({'format':'studio.collection-page/v1','workspace_id':'1'*32,'catalogue':{'epoch':'a'*32,'revision':1},'collections':[],'next_cursor':None})
+            return self.json({'format':'studio.asset-page/v1','workspace_id':getattr(self,'workspace_id',Handler.workspace_id),'catalogue':{'epoch':'a'*32,'revision':1},'assets':assets[:100],'next_cursor':None})
+        if path=='/api/collections':return self.json({'format':'studio.collection-page/v1','workspace_id':getattr(self,'workspace_id',Handler.workspace_id),'catalogue':{'epoch':'a'*32,'revision':1},'collections':[],'next_cursor':None})
         data={
             '/api/catalog':CATALOG, '/api/options':{'loras':[]}, '/api/knowledge':{}, '/api/recipes':{'recipes':[]},
             '/api/identity':{'workspace':'ux-test-workspace'}, '/api/setups':[], '/api/looks':{'looks':[],'seed_errors':[],'generation_submitted':False}, '/api/characters':{'characters':[],'generation_submitted':False}, '/api/jobs':JOBS,
-            '/api/workspace':{'workspace_id':'1'*32,'assets':ASSETS,'collections':[]}, '/api/production':PLANS,
+            '/api/workspace':{'workspace_id':getattr(self,'workspace_id',Handler.workspace_id),'assets':ASSETS,'collections':[]}, '/api/production':PLANS,
             '/api/health':{'online':ONLINE,'schema_available':ONLINE,'missing_models':{},'devices':[]},
             '/api/backends':{'active':'primary','busy':False,'operation':None,'profiles':[{'id':'primary','name':'Main library','active':True,'online':ONLINE,'installed':True}]},
             '/api/library':{'storage':{'free_bytes':100000000000,'total_bytes':200000000000,'reserve_bytes':20000000000},'assets':[],'folders':[],'inventory':[],'collections':[],'model_root':'Fixture path'},
@@ -128,7 +129,7 @@ class Handler(BaseHTTPRequestHandler):
             for key in data['ids']:
                 asset=next((a for a in ASSETS if a['id']==key),None)
                 items.append({'id':key,'state':'missing' if asset is None else 'trashed' if asset['trashed_at'] is not None else 'active','asset':asset})
-            return self.json({'workspace_id':'1'*32,'catalogue':{'epoch':'a'*32,'revision':1},'items':items})
+            return self.json({'workspace_id':getattr(self,'workspace_id',Handler.workspace_id),'catalogue':{'epoch':'a'*32,'revision':1},'items':items})
         data=json.loads(raw) if self.headers.get('Content-Type')=='application/json' else {}
         POSTS.append({'path':self.path,'data':data})
         if self.path=='/api/assets/reference':
