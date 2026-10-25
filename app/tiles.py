@@ -19,6 +19,7 @@ import copy
 import hashlib
 import io
 import re
+import tempfile
 import threading
 import time
 import uuid
@@ -312,29 +313,43 @@ def finish(studio, job_id):
         try: directory.mkdir(parents=True)
         except FileExistsError:
             raise ValueError("Tile finish destination already exists without a loaded finished-job record. Inspect and recover retained evidence before retrying: %s" % directory) from None
-        files = {"tile.png": png_bytes(final), "tile-3x3.png": png_bytes(preview)}
-        if claim["flatten_sigma_px"]: files["tile-unflattened.png"] = png_bytes(joined)
-        for filename, data in files.items(): (directory / filename).write_bytes(data)
-        hashes = {filename: hashlib.sha256(data).hexdigest() for filename, data in files.items()}
-        submission = next((item for item in job.get("submissions", []) if item.get("prompt_id") == output.get("prompt_id")), {})
-        preview_asset = uuid.uuid5(uuid.NAMESPACE_URL, f"asset-studio:{identifier}:1").hex
-        steps = ["Soft composite of the repainted %d px cross over the rolled texture (Gaussian feather %d px)" % (claim["band_px"], claim["feather_px"]),
-                 "Circular Gaussian lighting flatten, sigma %d px (Pillow, 3x3 wrap)" % claim["flatten_sigma_px"] if claim["flatten_sigma_px"] else "No lighting flatten",
-                 "Seam metric: mean |difference| across the wrap edges; 3x3 repeat preview"]
-        receipt = {"version": VERSION, "plan": copy.deepcopy(claim), "repaint_job_id": job_id, "repaint_prompt_id": output.get("prompt_id"),
-                   "repaint_asset_id": output["asset_id"], "repaint_sha256": repaint_asset["sha256"], "repaint_preset_id": job.get("preset_id"),
-                   "repaint_graph_path": job.get("graph_path"), "repaint_controls": copy.deepcopy(job.get("controls")), "repaint_seed": output.get("seed"),
-                   "submitted_graph": copy.deepcopy(submission.get("graph")), "steps": steps, "metrics": metrics, "files": hashes,
-                   "method": "experiments/curated/background-lab-20260927 (PR #1222)", "finished_at": time.time()}
-        tile = dict(metrics, preview_asset_id=preview_asset, repaint_prompt_id=output.get("prompt_id"), flat_only=FLAT_ONLY)
-        finished = {"id": identifier, "operation": OPERATION, "status": "completed", "created_at": time.time(), "preset_id": "seamless-tile",
-                    "preset_name": "Seamless tile", "controls": {}, "batch_count": 1, "prompt_ids": [], "submissions": [], "references": [],
-                    "parent_assets": [claim["source_asset_id"], output["asset_id"]], "graph_path": "", "graph": {}, "tile_receipt": receipt,
-                    "message": "Seamless tile finished from repaint prompt %s. %s No generation was submitted." % (output.get("prompt_id"), metrics["summary"]),
-                    "outputs": [{"filename": "tile.png", "run_file": "tile.png", "type": "output", "media_type": "image", "prompt_id": output.get("prompt_id"), "seed": output.get("seed"), "tile": tile},
-                                {"filename": "tile-3x3.png", "run_file": "tile-3x3.png", "type": "output", "media_type": "image", "prompt_id": output.get("prompt_id"), "tile_preview": {"of": "tile.png", "summary": metrics["summary"]}}]}
-        studio.index_outputs(finished); studio._save(finished)
-        with studio.lock: studio.jobs[identifier] = finished
+        try:
+            files = {"tile.png": png_bytes(final), "tile-3x3.png": png_bytes(preview)}
+            if claim["flatten_sigma_px"]: files["tile-unflattened.png"] = png_bytes(joined)
+            for filename, data in files.items(): (directory / filename).write_bytes(data)
+            hashes = {filename: hashlib.sha256(data).hexdigest() for filename, data in files.items()}
+            submission = next((item for item in job.get("submissions", []) if item.get("prompt_id") == output.get("prompt_id")), {})
+            preview_asset = uuid.uuid5(uuid.NAMESPACE_URL, f"asset-studio:{identifier}:1").hex
+            steps = ["Soft composite of the repainted %d px cross over the rolled texture (Gaussian feather %d px)" % (claim["band_px"], claim["feather_px"]),
+                     "Circular Gaussian lighting flatten, sigma %d px (Pillow, 3x3 wrap)" % claim["flatten_sigma_px"] if claim["flatten_sigma_px"] else "No lighting flatten",
+                     "Seam metric: mean |difference| across the wrap edges; 3x3 repeat preview"]
+            receipt = {"version": VERSION, "plan": copy.deepcopy(claim), "repaint_job_id": job_id, "repaint_prompt_id": output.get("prompt_id"),
+                       "repaint_asset_id": output["asset_id"], "repaint_sha256": repaint_asset["sha256"], "repaint_preset_id": job.get("preset_id"),
+                       "repaint_graph_path": job.get("graph_path"), "repaint_controls": copy.deepcopy(job.get("controls")), "repaint_seed": output.get("seed"),
+                       "submitted_graph": copy.deepcopy(submission.get("graph")), "steps": steps, "metrics": metrics, "files": hashes,
+                       "method": "experiments/curated/background-lab-20260927 (PR #1222)", "finished_at": time.time()}
+            tile = dict(metrics, preview_asset_id=preview_asset, repaint_prompt_id=output.get("prompt_id"), flat_only=FLAT_ONLY)
+            finished = {"id": identifier, "operation": OPERATION, "status": "completed", "created_at": time.time(), "preset_id": "seamless-tile",
+                        "preset_name": "Seamless tile", "controls": {}, "batch_count": 1, "prompt_ids": [], "submissions": [], "references": [],
+                        "parent_assets": [claim["source_asset_id"], output["asset_id"]], "graph_path": "", "graph": {}, "tile_receipt": receipt,
+                        "message": "Seamless tile finished from repaint prompt %s. %s No generation was submitted." % (output.get("prompt_id"), metrics["summary"]),
+                        "outputs": [{"filename": "tile.png", "run_file": "tile.png", "type": "output", "media_type": "image", "prompt_id": output.get("prompt_id"), "seed": output.get("seed"), "tile": tile},
+                                    {"filename": "tile-3x3.png", "run_file": "tile-3x3.png", "type": "output", "media_type": "image", "prompt_id": output.get("prompt_id"), "tile_preview": {"of": "tile.png", "summary": metrics["summary"]}}]}
+            studio.index_outputs(finished); studio._save(finished)
+            with studio.lock: studio.jobs[identifier] = finished
+        except Exception as exc:
+            failure = {"error": str(exc)[:300], "failed_at": time.time(), "retained_path": str(directory)}
+            try:
+                # An exclusively reserved container prevents clobbering and keeps partial state.json out of the job loader.
+                quarantine = Path(tempfile.mkdtemp(prefix=identifier + ".interrupted-", dir=studio.runs)) / "attempt"
+                directory.rename(quarantine)
+                failure["retained_path"] = str(quarantine)
+            except OSError as quarantine_error:
+                failure["quarantine_error"] = str(quarantine_error)[:300]
+            with studio.lock: job["tile_finish"] = failure
+            try: studio._save(job)
+            except Exception: pass  # keep failure evidence in memory even if the repaint record is also locked
+            raise
         _link(studio, job, finished)
         return finished
 
@@ -355,6 +370,6 @@ def finish_after_run(studio, job):
     except Exception as exc:  # the repaint's own outcome never changes because its finishing step failed
         finished = studio.jobs.get(finish_id(job["id"]))
         if finished: _link(studio, job, finished, save=False)   # the tile exists; only recording its link failed
-        else: job["tile_finish"] = {"error": str(exc)[:300], "failed_at": time.time()}
+        else: job["tile_finish"] = dict(job.get("tile_finish") or {}, error=str(exc)[:300], failed_at=time.time())
         try: studio._save(job)
         except Exception: pass
