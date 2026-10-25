@@ -1,6 +1,7 @@
 """Redirect-policy fixtures use tiny local bytes behind logical provider HTTPS URLs."""
 import hashlib
 import http.client
+import io
 from http.server import BaseHTTPRequestHandler
 from http_test_server import ThreadingHTTPServer
 import json
@@ -9,7 +10,7 @@ import sys
 import tempfile
 import threading
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from urllib.error import HTTPError
 from urllib.parse import urlparse
 from urllib.request import HTTPSHandler,Request,build_opener
@@ -195,6 +196,27 @@ class RedirectInstallIntegrationTests(unittest.TestCase):
             # Inner gate, unchanged: the transfer itself still refuses the origin, with no DNS and no HTTP.
             with self.assertRaisesRegex(ValueError,'curated HTTPS model source'):self.lib._download(self.asset,self.target)
         resolver.assert_not_called();request.assert_not_called();self.assertEqual(self.part.read_bytes(),self.body);self.assertFalse(self.target.exists())
+
+
+class PeerAddressTests(unittest.TestCase):
+    """DNS answers checked at validation can flip before urllib dials the hostname (rebinding)."""
+    def open_with_peer(self,address):
+        sock=Mock();sock.getpeername.return_value=(address,443);sock.makefile.return_value=io.BytesIO(b'HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n')
+        def dial(connection):connection.sock=sock
+        with patch.object(http.client.HTTPSConnection,'connect',dial):
+            try:contracts.open_download(Request('https://huggingface.co/model'),resolver=public_resolver).close()
+            except ValueError as exc:return sock,str(exc)
+        return sock,None
+
+    def test_flipped_dns_answer_never_receives_the_request(self):
+        for address in ('10.0.0.5','127.0.0.1','169.254.169.254','::1'):
+            with self.subTest(address=address):
+                sock,error=self.open_with_peer(address)
+                self.assertIn('loopback, private, local or reserved',error or '');sock.sendall.assert_not_called();sock.close.assert_called()
+
+    def test_public_peer_proceeds_to_the_request(self):
+        sock,error=self.open_with_peer('93.184.216.34')
+        self.assertIsNone(error);sock.sendall.assert_called()
 
 
 if __name__=='__main__':unittest.main()
