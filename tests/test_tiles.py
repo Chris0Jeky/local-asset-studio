@@ -342,25 +342,99 @@ class RouteTests(unittest.TestCase):
                 self.assertEqual((studio.runs / job["id"] / "state.json").read_bytes(), repaint_state)
                 self.assertEqual(restarted.requests, [], "refusal never resubmits the repaint")
 
-    def test_an_interrupted_finish_is_retained_and_retries_refuse(self):
+    def test_failed_finish_is_quarantined_and_retry_reuses_the_repaint(self):
+        for stage in ("encode", "write", "index", "recipe.json", "workflow.json", "state.json"):
+            with self.subTest(stage=stage):
+                studio, job, directory = self.completed_repaint_without_finish()
+                requests = list(studio.requests); retained = {}
+                encode, write, index, save = tiles.png_bytes, Path.write_bytes, studio.index_outputs, studio._write_json_atomic
+                def fail():
+                    retained.update({p.name: p.read_bytes() for p in directory.iterdir()})
+                    raise OSError("injected_" + stage)
+                def encoding(image):
+                    if stage == "encode": fail()
+                    return encode(image)
+                def writing(path, data):
+                    if stage == "write" and path == directory / "tile-3x3.png":
+                        write(path, b"partial png"); fail()
+                    return write(path, data)
+                def indexing(finished):
+                    index(finished)
+                    if stage == "index": fail()
+                def saving(path, data):
+                    save(path, data)
+                    if path.parent == directory and path.name == stage: fail()
+                with patch.object(tiles, "png_bytes", encoding), patch.object(Path, "write_bytes", writing), \
+                        patch.object(studio, "index_outputs", indexing), patch.object(studio, "_write_json_atomic", saving):
+                    tiles.finish_after_run(studio, job)
+                self.assertEqual(job["status"], "completed"); self.assertIn("injected_" + stage, job["tile_finish"]["error"])
+                self.assertNotIn(directory.name, studio.jobs)
+                self.assertFalse(directory.exists(), "a failed owned attempt must release the finish destination")
+                evidence = Path(job["tile_finish"]["retained_path"])
+                self.assertTrue(evidence.parent.name.startswith(directory.name + ".interrupted-"))
+                self.assertEqual({p.name: p.read_bytes() for p in evidence.iterdir()}, retained)
+                saved = json.loads((studio.runs / job["id"] / "state.json").read_text(encoding="utf-8"))
+                self.assertEqual(saved["tile_finish"]["retained_path"], str(evidence))
+                restarted = self.studio()
+                self.assertEqual(set(restarted.jobs), set(studio.jobs), "quarantined records must not load as jobs")
+                if stage in ("encode", "index", "workflow.json"):
+                    finished = tiles.finish(restarted, job["id"])
+                else:
+                    tiles.finish_after_run(restarted, restarted.jobs[job["id"]])
+                    finished = restarted.jobs[directory.name]
+                self.assertEqual(finished["status"], "completed")
+                self.assertEqual(finished["tile_receipt"]["repaint_prompt_id"], "seam-prompt")
+                self.assertEqual(restarted.jobs[job["id"]]["tile_finish"]["job_id"], directory.name)
+                self.assertIs(tiles.finish(restarted, job["id"]), finished)
+                for output in finished["outputs"]:
+                    self.assertTrue(restarted.assets.file(output["asset_id"]).is_file())
+                self.assertEqual({p.name: p.read_bytes() for p in evidence.iterdir()}, retained)
+                self.assertEqual(studio.requests, requests); self.assertEqual(restarted.requests, [])
+
+    def test_explicit_finish_failures_keep_distinct_evidence_for_each_attempt(self):
+        studio, job, directory = self.completed_repaint_without_finish(); attempts = []
+        for _ in range(2):
+            with patch.object(studio, "index_outputs", side_effect=OSError("index_locked")):
+                with self.assertRaisesRegex(OSError, "index_locked"): tiles.finish(studio, job["id"])
+            evidence = Path(job["tile_finish"]["retained_path"])
+            self.assertNotIn(evidence, attempts); attempts.append(evidence)
+        retained = [{p.name: p.read_bytes() for p in evidence.iterdir()} for evidence in attempts]
+        tiles.finish(studio, job["id"])
+        self.assertEqual([{p.name: p.read_bytes() for p in evidence.iterdir()} for evidence in attempts], retained)
+
+    def test_failed_quarantine_keeps_original_evidence_and_refuses_retry(self):
         studio, job, directory = self.completed_repaint_without_finish()
-        with patch.object(studio, "index_outputs", side_effect=OSError("interrupted_before_finished_record")):
+        with patch.object(studio, "index_outputs", side_effect=OSError("index_locked")), \
+                patch.object(Path, "rename", side_effect=PermissionError("quarantine_locked")):
             tiles.finish_after_run(studio, job)
-        self.assertEqual(job["status"], "completed"); self.assertIn("interrupted_before_finished_record", job["tile_finish"]["error"])
-        self.assertNotIn(directory.name, studio.jobs); self.assertFalse((directory / "state.json").exists())
+        failure = job["tile_finish"]
+        self.assertIn("index_locked", failure["error"]); self.assertIn("quarantine_locked", failure["quarantine_error"])
+        self.assertEqual(failure["retained_path"], str(directory))
         retained = {p.name: p.read_bytes() for p in directory.iterdir()}
         self.assertEqual(set(retained), {"tile.png", "tile-3x3.png", "tile-unflattened.png"})
-        requests = list(studio.requests); jobs_before = set(studio.jobs)
-        for _ in range(2):
-            with self.assertRaisesRegex(ValueError, "Inspect and recover"): tiles.finish(studio, job["id"])
+        with self.assertRaisesRegex(ValueError, "Inspect and recover"): tiles.finish(studio, job["id"])
+        self.assertEqual({p.name: p.read_bytes() for p in directory.iterdir()}, retained)
+        self.assertNotIn(directory.name, studio.jobs)
+
+    def test_quarantine_allocation_failure_does_not_mask_the_finish_failure(self):
+        studio, job, directory = self.completed_repaint_without_finish()
+        with patch.object(tiles, "png_bytes", side_effect=OSError("encoding_failed")), \
+                patch.object(tiles.tempfile, "mkdtemp", side_effect=PermissionError("quarantine_allocation_denied")):
+            with self.assertRaisesRegex(OSError, "encoding_failed"): tiles.finish(studio, job["id"])
+        self.assertTrue(directory.is_dir()); self.assertEqual(list(directory.iterdir()), [])
+        self.assertEqual(job["tile_finish"]["retained_path"], str(directory))
+        self.assertIn("quarantine_allocation_denied", job["tile_finish"]["quarantine_error"])
+
+    def test_failure_evidence_survives_in_memory_when_all_record_saves_are_locked(self):
+        studio, job, directory = self.completed_repaint_without_finish()
+        with patch.object(studio, "_save", side_effect=PermissionError("record_locked")):
             tiles.finish_after_run(studio, job)
-            self.assertIn("Inspect and recover", job["tile_finish"]["error"])
-            self.assertNotIn("job_id", job["tile_finish"]); self.assertEqual(job["status"], "completed")
-            self.assertEqual({p.name: p.read_bytes() for p in directory.iterdir()}, retained)
-            self.assertEqual(set(studio.jobs), jobs_before); self.assertEqual(studio.requests, requests)
-        restarted = self.studio()
-        with self.assertRaisesRegex(ValueError, "Inspect and recover"): tiles.finish(restarted, job["id"])
-        self.assertEqual({p.name: p.read_bytes() for p in directory.iterdir()}, retained); self.assertEqual(restarted.requests, [])
+        self.assertIn("record_locked", job["tile_finish"]["error"])
+        evidence = Path(job["tile_finish"]["retained_path"])
+        self.assertTrue((evidence / "tile.png").is_file()); self.assertFalse(directory.exists())
+        tiles.finish_after_run(studio, job)
+        self.assertEqual(job["tile_finish"]["job_id"], directory.name)
+        self.assertTrue((evidence / "tile.png").is_file())
 
     def test_finish_refuses_an_existing_empty_directory_or_file(self):
         for kind in ("directory", "file"):
@@ -399,6 +473,7 @@ class RouteTests(unittest.TestCase):
         with patch.object(server.Studio, "_save", flaky):
             job = self.run_repaint(studio, prepared, tiles.roll_half(lit_texture()))
         identifier = tiles.finish_id(job["id"])
+        self.assertEqual(list(studio.runs.glob(identifier + ".interrupted-*")), [])
         self.assertTrue(flaky.failed); self.assertEqual(job["tile_finish"]["job_id"], identifier, "no false 'not finished' after a failed save")
         # A restart that lost the link entirely: the finished job is on disk, the repaint record has no link.
         state = studio.runs / job["id"] / "state.json"; record = json.loads(state.read_text(encoding="utf-8")); record.pop("tile_finish", None)
