@@ -3,6 +3,7 @@ live mode only reaches the loopback Studio, whose own health probe reads ComfyUI
 
     python tests/studio_use_cases.py                      # fixture mode (default), full run
     python tests/studio_use_cases.py --case first-image-from-brief
+    python tests/studio_use_cases.py --island-default --zoom 200 --out .runtime/ux-island-200.json
     python tests/studio_use_cases.py --base-url http://127.0.0.1:8191   # live, read-only
 
 Fixture mode reuses tests/studio_browser_smoke.py's synthetic API server (imported, not
@@ -820,6 +821,8 @@ def _first_image(c):
     c.page.keyboard.press('Home')
     assert c.page.locator('[data-make-goal="character"]').evaluate('(e) => e === document.activeElement')
     c.act('#makeGoals', 'read', note='Make starting points')
+    if not c.page.locator('[data-nav-group="Advanced"] summary').is_visible():
+        c.act('#studioNavToggle', note='open navigation at the narrower zoom viewport', supplementary=True)
     c.act('[data-nav-group="Advanced"] summary', note='open advanced tools', supplementary=True)
     c.act('[data-studio-route="create"]', navigation=True)
     assert c.page.locator('[data-studio-route="create"]').get_attribute('aria-current') == 'page'
@@ -900,6 +903,7 @@ def _compare(c):
     c.act('#workshopRecipeChange', note='open the recipe picker', supplementary=True)
     c.act('#presetList [data-id="anima-portrait"]', note='the baseline recipe')
     c.act('#positive', 'fill', typed=BRIEF)
+    c.page.locator('#positive').press('Tab')  # finish typing so the short viewport reveals secondary run tools
     c.stop_before(c.act('#planComparison'), 'stopped at Plan comparison: live mode never opens the planner a study is prepared from')
     c.act('#experimentAxis', 'select', typed='cfg')
     c.act('#experimentValues', 'read', note='proposed candidate values')
@@ -1892,10 +1896,14 @@ def load_cases(path=CASES_PATH):
     return json.loads(Path(path).read_text(encoding='utf-8'))
 
 
-def run_case(spec, page, origin, live, screenshots):
+def run_case(spec, page, origin, live, screenshots, island_default=False):
     run = CaseRun(spec, page, origin, live, screenshots)
     passed, detail, failure, skip_kind, skip_reason = False, '', '', '', ''
-    try: passed, detail = DRIVERS[spec['id']](run)
+    try:
+        passed, detail = DRIVERS[spec['id']](run)
+        if island_default and page.locator('#createView').count():
+            page.wait_for_selector('#uiIsland[data-state=mounted] #uiIslandPrimary', state='attached')
+            page.wait_for_selector('#uiIsland [data-recipe-card]', state='attached')
     except LiveCaseSkip as skip:
         # Live: a named end, not a failure and not a dead end. Fixture: the data is always there, so it is one.
         if live: skip_kind, skip_reason = skip.kind, skip.reason; detail = ('stopped: ' if skip.kind == 'read-only' else 'skipped: ') + skip.reason
@@ -1930,7 +1938,11 @@ def main(argv=None):
     parser.add_argument('--out', type=Path, default=MATRIX_PATH)
     parser.add_argument('--screenshots', type=Path, default=SHOTS_ROOT)
     parser.add_argument('--chromium', help='Chromium executable path.')
+    parser.add_argument('--island-default', action='store_true', help='Fixture only: simulate default island loading on ordinary URLs.')
+    parser.add_argument('--zoom', type=int, choices=(100, 200), default=100, help='Browser-zoom equivalent CSS viewport and pixel density.')
     args = parser.parse_args(argv)
+    if args.base_url and args.island_default:
+        parser.error('--island-default is fixture-only; it cannot change a live Studio')
 
     data = load_cases()
     known = {case['id'] for case in data['cases']}
@@ -1965,13 +1977,17 @@ def main(argv=None):
                                                  executable_path=args.chromium or os.environ.get('CHROMIUM_PATH') or shutil.which('chromium') or None)
             for spec in cases:
                 # One context per case: browser storage (drafts, filters, guide steps) must not leak between cases.
-                context = browser.new_context(viewport={'width': 1536, 'height': 1060}, device_scale_factor=1, reduced_motion='reduce')
+                scale = args.zoom // 100
+                context = browser.new_context(viewport={'width': 1536 // scale, 'height': 1060 // scale}, device_scale_factor=scale, reduced_motion='reduce')
+                if args.island_default:
+                    from ui_island_browser import install_candidate_default
+                    install_candidate_default(context, origin)
                 page = context.new_page()
                 page.set_default_timeout(6000)
                 page.on('pageerror', lambda error, case=spec['id']: errors.append(case + ': ' + str(error)[:200]))
                 page.on('request', lambda request: OBSERVED_POSTS.append(urlsplit(request.url).path) if request.method == 'POST' else None)
                 print('--- ' + spec['id'], flush=True)
-                rows.append(run_case(spec, page, origin, live, args.screenshots))
+                rows.append(run_case(spec, page, origin, live, args.screenshots, island_default=args.island_default))
                 print(case_result(rows[-1]) + ' ' + spec['id'] + ' · ' + (rows[-1]['detail'] or rows[-1]['failure']), flush=True)
                 page.close(); context.close()
             browser.close()
@@ -1982,6 +1998,7 @@ def main(argv=None):
     submitted = submissions(OBSERVED_POSTS)
     matrix = {'version': 1, 'refs': data.get('refs'), 'mode': 'live-readonly' if live else 'fixture',
               'origin': origin if live else 'fixture server', 'seconds': round(time.time() - started, 1),
+              'presentation': 'candidate-island-default' if args.island_default else 'normal', 'zoom_equivalent_percent': args.zoom,
               'cases': len(rows), **outcome_counts(rows),
               'generation_submissions': len(submitted), 'posts_observed': len(OBSERVED_POSTS),
               'post_routes': sorted(set(OBSERVED_POSTS)), 'page_errors': errors,

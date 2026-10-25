@@ -5,15 +5,21 @@ mirrors the workshop's projection, dispatches only reveal/navigation intents, pr
 across unmount/remount, survives storage denial and an unreadable recipe list, follows reduced motion, and the page
 makes no request outside the local origin. Never contacts ComfyUI; the fixture blocks unexpected mutations.
 
+Also measures normal/opt-in/candidate-default loads and checks 200%-equivalent reflow (#1207).
+The candidate is a test-only loader response override, never a production default change.
+
     python tests/ui_island_browser.py [--output .runtime/ui-island]
 """
 from browser_ports import evidence_screenshot
 import argparse
+import gzip
+import hashlib
 import json
 import os
 import shutil
 import sys
 import threading
+from datetime import datetime, timezone
 from browser_ports import browser_server
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -35,6 +41,16 @@ class Handler(fixture.Handler):
         return super().do_GET()
 
 
+def install_candidate_default(context, origin):
+    """Fixture-only response override; production files and ordinary URLs stay unchanged."""
+    shell = (ROOT / 'app/static/studio-shell.js').read_text(encoding='utf-8')
+    guard = "new URLSearchParams(location.search).get('ui')!=='island'||"
+    assert shell.count(guard) == 1, 'Update the candidate fixture for the current island loader'
+    shell = shell.replace(guard, '')
+    context.route(origin + '/static/studio-shell.js', lambda route: route.fulfill(
+        status=200, content_type='text/javascript', body=shell))
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', type=Path, default=ROOT / '.runtime/ui-island')
@@ -45,19 +61,20 @@ def main():
     server.handle_error = lambda *_: None  # a closed browser context aborting an in-flight fixture response is not a finding
     threading.Thread(target=server.serve_forever, daemon=True).start()
     origin = f'http://127.0.0.1:{server.server_port}'
-    checks, external = [], []
+    checks, external, measurements = [], [], []
 
     def check(condition, label):
         assert condition, label
         checks.append(label); print('PASS: ' + label, flush=True)
 
-    def new_page(browser, **options):
-        context = browser.new_context(viewport={'width': 1440, 'height': 900}, **options)
+    def new_page(browser, candidate=False, viewport=None, **options):
+        context = browser.new_context(viewport=viewport or {'width': 1440, 'height': 900}, **options)
         # Network denial: everything outside the local Studio origin is aborted and recorded.
         def guard(route):
             if route.request.url.startswith(origin + '/'): return route.continue_()
             external.append(route.request.url); return route.abort()
         context.route('**/*', guard)
+        if candidate: install_candidate_default(context, origin)
         page = context.new_page(); errors, requests = [], []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.on('request', lambda request: requests.append(request.url))
@@ -80,6 +97,40 @@ def main():
             check(page.evaluate('document.body.dataset.uiIsland') is None, 'flag off: no island page flag')
             check(page.locator('#workshopGuidance').count() == 1, 'flag off: legacy guidance present')
             check(not errors, 'flag off: no page errors ' + str(errors))
+            context.close()
+
+            # Candidate default: the ordinary URL must mount without an opt-in query.
+            context, page, errors, requests = new_page(browser, candidate=True)
+            open_create(page)
+            page.wait_for_selector('#uiIsland[data-state=mounted] #uiIslandPrimary', timeout=5000)
+            check(page.url.endswith('/#create'), 'candidate default uses the ordinary Create URL')
+            check(page.locator('#uiIslandPrimary').is_visible(), 'candidate default shows Next step without opting in')
+            check(page.locator('#uiIsland [data-recipe-card]').count() > 0, 'candidate default shows authored setups')
+            check(not errors, 'candidate default: no page errors')
+            context.close()
+
+            # 200% browser-zoom equivalent: half the CSS viewport, doubled pixel density.
+            context, page, errors, _ = new_page(browser, candidate=True,
+                viewport={'width': 720, 'height': 450}, device_scale_factor=2)
+            open_create(page)
+            page.wait_for_selector('#uiIsland [data-recipe-card]')
+            for layout in ('focus', 'studio', 'immersive'):
+                page.select_option('#workshopLayout', layout, force=True)
+                page.locator('#uiIslandPrimary').scroll_into_view_if_needed()
+                check(page.locator('#uiIsland').evaluate('el => el.scrollWidth <= el.clientWidth + 1'),
+                      '200% equivalent: island has no horizontal overflow in ' + layout)
+                page.locator('#uiIsland .ui-island__why summary').focus()
+                page.keyboard.press('Enter')
+                check(page.locator('#uiIsland .ui-island__why').evaluate('el => el.open'),
+                      '200% equivalent: Why this opens by keyboard in ' + layout)
+                page.keyboard.press('Enter')
+                page.locator('#uiIslandToggle').click()
+                check(page.locator('#uiIslandToggle').get_attribute('aria-expanded') == 'false',
+                      '200% equivalent: authored setups collapse in ' + layout)
+                page.locator('#uiIslandToggle').click()
+                check(page.locator('#uiIsland [data-recipe-card]').first.is_visible(),
+                      '200% equivalent: authored setups reopen in ' + layout)
+            check(not errors, '200% equivalent: no page errors')
             context.close()
 
             # Flag on.
@@ -150,11 +201,35 @@ def main():
             check(not errors, 'recipe failure: no page errors ' + str(errors))
             context.close()
             STATE['fail_recipes'] = False
+
+            # Alternating arms, six cold browser contexts per arm, same fixture and viewport.
+            for _ in range(6):
+                for arm in ('normal', 'opt-in', 'candidate-default'):
+                    context, page, errors, requests = new_page(browser, candidate=arm == 'candidate-default')
+                    open_create(page, '?ui=island' if arm == 'opt-in' else '')
+                    workshop_ms = page.evaluate('performance.now()')
+                    island_ms = None
+                    if arm != 'normal':
+                        page.wait_for_selector('#uiIsland [data-recipe-card]')
+                        island_ms = page.evaluate('performance.now()')
+                    load_ms = page.evaluate("performance.getEntriesByType('navigation')[0].loadEventEnd")
+                    page.wait_for_timeout(300)  # settle lazy requests; not included in ready timings
+                    measurements.append({'arm': arm, 'workshop_ms': round(workshop_ms, 1),
+                        'island_ms': round(island_ms, 1) if island_ms is not None else None,
+                        'load_ms': round(load_ms, 1), 'requests': len(requests)})
+                    check(not errors, 'measurement ' + str(len(measurements)) + ': no page errors')
+                    context.close()
             browser.close()
         check(not external, 'no request left the local origin: ' + str(external[:5]))
     finally:
-        server.shutdown()
-    (args.output / 'result.json').write_text(json.dumps({'checks': checks}, indent=2), encoding='utf-8')
+        server.shutdown(); server.server_close()
+    payload = {}
+    for name in ('island.js', 'island.css'):
+        raw = (ROOT / 'app/static/ui-dist' / name).read_bytes()
+        payload[name] = {'bytes': len(raw), 'gzip_bytes': len(gzip.compress(raw, compresslevel=9, mtime=0)),
+                         'sha256': hashlib.sha256(raw).hexdigest()}
+    (args.output / 'result.json').write_text(json.dumps({'checks': checks, 'measurements': measurements,
+        'payload': payload, 'measured_at': datetime.now(timezone.utc).isoformat()}, indent=2), encoding='utf-8')
     print(f'{len(checks)} checks passed')
 
 
