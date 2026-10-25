@@ -1,5 +1,19 @@
 # Current state — 13 October 2026
 
+## Source-art licence records — 25 October 2026
+
+Issue #1512's [dated licence evidence](docs/adaptive-studio/assets/LICENCE-EVIDENCE-1512.md)
+records OpenAI output terms, the read Krea 2 Community Licence PDF, pinned font headers and
+promo/README-cover trademark inspection. Atelier receipts link the terms without inventing
+model IDs. The Recover fixture's three requested hero images match Anima, SDXL/LineAni and
+Krea recipes and hashes; no Qwen-Image 2.1 output was identified. These are evidence records,
+not publication/commercial clearance or new owner acceptance; `HUMAN_TODO.md` choices remain open.
+
+Proof: the three source-art evidence tests first failed against the unchanged records
+(18 failures), then passed with the fix. `python -m unittest discover -s tests` passed:
+6,034 tests in 2,625.099 seconds, 82 skipped. `python scripts/validate-repo.py` passed.
+The full-suite log is local-only at `.runtime/issue-1512/full-suite.log`.
+
 ## Backend switch and readiness follow-up — 19 October 2026
 
 [#1599](https://github.com/Chris0Jeky/local-asset-studio/pull/1599) merged as

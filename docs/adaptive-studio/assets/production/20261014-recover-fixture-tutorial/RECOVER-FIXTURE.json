@@ -136,5 +136,34 @@
   "config_before_sha256": "84d982527df6ad44d41b6f4303723c44a57c15ce9cda74f6606901fd5d7761dc",
   "config_after_sha256": "e89b62673f7b53bcfcc6b1f666a70ffaeaa0e17bb6ec2ac46f9733b23620b42e",
   "expected": "Actual server loads retained unknown-state marker; actual UI has no observation/replay button and Recipe is read-only. Stop without mutation.",
-  "backend": "Unused loopback port 18188; no installed or started backend"
+  "backend": "Unused loopback port 18188; no installed or started backend",
+  "licence_review": {
+    "accessed_at": "2026-10-25",
+    "terms_evidence": "../../LICENCE-EVIDENCE-1512.md#recover-fixture",
+    "qwen_image_21_outputs": [],
+    "conclusion": "No generated fixture output. Requested hero images trace to Anima, SDXL plus LineAni, and Krea 2 Turbo plus the official retro-anime adapter; Qwen encoder/VAE names do not identify a Qwen-Image 2.1 generator.",
+    "displayed_assets": [
+      {
+        "path": "examples/workflow-lab/anima.png",
+        "sha256": "00db8258bf3f1f48af89da1a0299c0539c174ea79342e2b98637725957edb94b",
+        "recipe": "experiments/curated/workflow-lab/anima-portrait-recipe.json",
+        "prompt_id": "6d136e16-132f-4964-a07b-988a2a34b5ac",
+        "generator_file": "anima-aesthetic-v1.1.safetensors"
+      },
+      {
+        "path": "examples/workflow-lab/lineani.png",
+        "sha256": "2ba9fe6412e6fc27048cccd9d93fcbc93e4be0c39bad98e9fa4ba95bf4c5ef31",
+        "recipe": "experiments/curated/workflow-lab/lineani-portrait-recipe.json",
+        "prompt_id": "6e37e90d-ef45-4e07-af31-045b4938fe53",
+        "generator_file": "sd_xl_base_1.0.safetensors"
+      },
+      {
+        "path": "examples/workflow-lab/krea.png",
+        "sha256": "00d7d09fe24d5bf39a6ae7a5ecb935909018a4765ab8e5aeea4b4988b2dd567b",
+        "recipe": "experiments/curated/workflow-lab/krea-portrait-recipe.json",
+        "prompt_id": "144048d4-d6ea-4142-87f5-bdf11d87031c",
+        "generator_file": "krea2_turbo_fp8_scaled.safetensors"
+      }
+    ]
+  }
 }
