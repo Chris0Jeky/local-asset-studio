@@ -1,0 +1,69 @@
+{
+  "format": "hidream-step-comparison/v1",
+  "issue": 2,
+  "recorded_at": "2026-10-25T20:55:05.921410+00:00",
+  "status": "partial_runtime_crash",
+  "backend_id": "hidream",
+  "backend_url": "http://127.0.0.1:8192",
+  "backend_root": "C:/AI/experiments/hidream-o1/ComfyUI",
+  "recipes": [
+    "recipe-8.json",
+    "recipe-20.json"
+  ],
+  "schema_sha256": "af067ed402c9844e601e5d5ada062df7503ace6d00215c7bef54bbd3cfdb5b51",
+  "switch": {
+    "id": "7ea7c9d34eae46a3a762144db2094e83",
+    "target": "hidream",
+    "status": "completed",
+    "started_at": 1792961278.7711675,
+    "finished_at": 1792961381.4104774,
+    "message": "HiDream O1 \u00b7 isolated endpoint is ready. Model inference was not checked; no generation submitted."
+  },
+  "active_switch_refusal": {
+    "http_status": 400,
+    "response": {
+      "error": "Finish or reconcile active Studio work before switching backends"
+    }
+  },
+  "runs": [
+    {
+      "recipe": "recipe-8.json",
+      "request_id": "fadf3a00-b163-4d8b-814a-63342e041518",
+      "job_id": "9539f3a2-f0ed-5887-8ff0-c528297f1567",
+      "prompt_ids": [
+        "86d4c40c-dba4-4908-8ca5-79c07552b998"
+      ],
+      "status": "uncertain",
+      "started_at": 1792961392.963912,
+      "elapsed_seconds": null,
+      "timing_note": "No completion time: process exited during model loading. Do not substitute observation wall time for render time.",
+      "outputs_observed": [],
+      "inspection": "No final output available for inspection",
+      "history": "Unavailable after process exit; retained Studio submission receipt and failed history-read observations",
+      "job_evidence": "experiments/runs/9539f3a2-f0ed-5887-8ff0-c528297f1567",
+      "ticket_evidence": ".runtime/hidream-8-ticket.json",
+      "crash": {
+        "message": "Windows fatal exception: access violation",
+        "code": "0xC0000005",
+        "phase": "HiDream model loading",
+        "log": ".runtime/backends/20261025-204815-7ea7c9d34eae46a3a762144db2094e83-error.log",
+        "log_sha256": "a041ba970b4a79f15c64c29a1a7f243b0762ccb4e888fbef8170c1b18c052ad4"
+      },
+      "message": "Could not observe a known ComfyUI prompt: 3 history reads in a row failed (last: <urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>). It was not resubmitted. Use Resume observation when ComfyUI is available."
+    }
+  ],
+  "art_acceptance": "not requested; remains with owner",
+  "licensing": "not evaluated by this study",
+  "unresolved": [
+    "Upstream Torch 2.9.x warning",
+    "Historical primary-process native transition crash",
+    "Isolated HiDream process access violation during this attempt; root cause unproven"
+  ],
+  "comparison": "not completed",
+  "reference_edit": "not attempted in this pass; prior trial remains recorded in docs/HIDREAM.md",
+  "remaining": [
+    "Recover or explicitly reconcile the retained uncertain prompt before any new generation or environment switch",
+    "Complete the frozen 8/20 comparison and inspect both final outputs on a stable runtime",
+    "Then perform and inspect a reference-edit trial; retain recipe, reference hash, prompt history and timing"
+  ]
+}
