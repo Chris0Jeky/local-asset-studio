@@ -58,6 +58,7 @@ import pose_guide
 import tiles
 import parallax
 import looks
+import review_media
 import characters
 from studio_prompt.http_extension import extend_handler
 from i2v_diagnostics import artifact_path as i2v_artifact_path
@@ -881,6 +882,7 @@ class Studio:
         if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
         label = run_label(payload.get("label")) if isinstance(payload, dict) else None
         preset, graph, graph_path, controls, batch = self.prepare(payload, _defer_host_commit_preflight=True)
+        look = looks.run_look(self, payload.get('look'))
         deferred = None
         # A fresh reading: whether to defer (and so later free the backend) is decided on current counters, not a cached one.
         try: reading = self.host_commit_preflight(preset, graph, refresh=True)
@@ -900,6 +902,7 @@ class Studio:
         job["prompt_bindings"] = {key: ([preset[key]] if preset.get(key) else []) + preset.get("bindings_extra", {}).get(key, []) for key in ("positive", "negative")}
         job["parent_assets"] = parents
         if label: job["label"] = label
+        if look is not None: job['look'] = look
         if payload.get("continuation") is not None: job["continuation"] = copy.deepcopy(payload["continuation"])
         if payload.get("tile") is not None: job["tile"] = copy.deepcopy(payload["tile"])
         if payload.get("parallax") is not None: job["parallax"] = copy.deepcopy(payload["parallax"])
@@ -929,6 +932,7 @@ class Studio:
     def public(self, job):
         allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label", "cancellation", "commit_releases", "host_commit_windows", "tile", "tile_finish", "parallax", "parallax_finish")
         result = {k: job.get(k) for k in allowed}
+        if job.get('look') is not None: result['look'] = job['look']
         if "record_error" in job: result.update(record_error=job["record_error"], run_path=job["run_path"])
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
@@ -1141,6 +1145,7 @@ class Studio:
     def export_recipe(self, job):
         if "record_error" in job: raise StudioError("An unreadable run record has no recipe to export; inspect its folder first")
         return {"version": 2, "preset_id": job["preset_id"], "controls": job["controls"],
+                **({'look': job['look']} if job.get('look') is not None else {}),
                 "batch_count": job["batch_count"], "created_at": job["created_at"],
                 "workflow": job["graph"], "submissions": job.get("submissions", []),
                 "outputs": job.get("outputs", []), "parent_assets": job.get("parent_assets", []), "references": job.get("references", []),
@@ -1186,6 +1191,13 @@ class Studio:
             except (OSError, ValueError, sqlite3.Error) as exc:
                 # A storage fault while indexing a known output never changes the remote outcome.
                 output["snapshot_error"] = str(exc)[:200]
+            if (output.get('asset_id') and output.get('media_type', 'image') == 'image'
+                    and (job.get('look') or {}).get('options', {}).get('quiet_wall') is True and 'text_safe' not in output):
+                try:
+                    path, asset = self.assets.file_entry(output['asset_id'])
+                    output['text_safe'] = review_media.text_safe_metrics(review_media.checked_bytes(path, asset['sha256']))
+                except (OSError, ValueError, sqlite3.Error) as exc:
+                    output['text_safe'] = {'error': str(exc)[:200]}
 
     def asset_reference(self, asset_id):
         asset = self.assets.get(asset_id)
@@ -1406,6 +1418,7 @@ class Studio:
         directory = self._job_directory(job.get("id"))
         recipe = {"preset_id": job["preset_id"], "controls": job["controls"], "batch_count": job["batch_count"], "graph_path": job["graph_path"], "created_at": job["created_at"]}
         recipe.update(references=job.get("references", []), parent_assets=job.get("parent_assets", []))
+        if job.get('look') is not None: recipe['look'] = job['look']
         if job.get("continuation") is not None: recipe["continuation"] = job["continuation"]
         if job.get("tile") is not None: recipe["tile"] = job["tile"]
         if job.get("parallax") is not None: recipe["parallax"] = job["parallax"]

@@ -65,7 +65,7 @@
     }
     return problems;
   }
-  let application=null,preparation=null;
+  let application=null,preparation=null,preparedLook=null;
   // Admission is global while preparing, even if the owner changes the selected recipe.
   // Tokens prevent an obsolete completion from releasing a newer request's hold.
   function beginPreparation(){return preparation={};}
@@ -74,14 +74,23 @@
     if(!value||value.version!==1||value.preset_id!==presetId||!Array.isArray(value.controls)||!value.controls.length||value.controls.length>32||value.controls.some(k=>typeof k!=='string'||!/^[a-z][a-z0-9_]{0,63}$/.test(k)))return null;
     return {version:1,preset_id:presetId,controls:[...new Set(value.controls)]};
   }
-  function clearApplication(){application=null;}
-  function restoreApplication(value,presetId){
+  function normalizeLook(value){
+    if(!value||typeof value.id!=='string'||!/^[a-zA-Z0-9_-]{1,160}$/.test(value.id)||typeof value.name!=='string'||value.name.length>120||!Number.isSafeInteger(value.revision)||value.revision<0)return null;
+    const options=value.options??{};
+    if(!options||typeof options!=='object'||Array.isArray(options)||Object.keys(options).length>6||Object.entries(options).some(([k,v])=>!/^[a-z][a-z0-9_]{1,31}$/.test(k)||typeof v!=='boolean'))return null;
+    return {id:value.id,name:value.name,revision:value.revision,...(Object.keys(options).length?{options:{...options}}:{})};
+  }
+  function clearApplication(){application=null;preparedLook=null;}
+  function restoreApplication(value,presetId,look=null){
     application=value==null?null:normalizeApplication(value,presetId);
     if(value!=null&&!application)throw Error('Invalid look application state.');
+    preparedLook=look==null?null:normalizeLook(look);
+    if(look!=null&&!preparedLook)throw Error('Invalid prepared look.');
+    if(preparedLook)preparedLook={preset_id:presetId,look:preparedLook};
   }
-  function applicationPayload(presetId){return application?.preset_id===presetId?{look_application:normalizeApplication(application,presetId)}:{};}
+  function applicationPayload(presetId){return {...(application?.preset_id===presetId?{look_application:normalizeApplication(application,presetId)}:{}),...(preparedLook?.preset_id===presetId?{look:normalizeLook(preparedLook.look)}:{})};}
   function applicationBlocker(presetId){if(preparation)return 'A Look is being prepared. Wait for it to finish before generating or saving a setup.';return application?.preset_id===presetId?'This Look could not be applied: '+application.controls.join(', ')+'. Recipe defaults are shown; no Look settings were applied. Reprepare with supported settings or reset the recipe without the look. Nothing was generated.':'';}
-  return{SLOT,slotCount,recipeProblem,groups,optionLabel,prepareBlocker,saveBlocker,saveControls,summary,optionRows,optionsPayload,readyMessage,applyControls,normalizeApplication,clearApplication,restoreApplication,applicationPayload,applicationBlocker,beginPreparation,finishPreparation};
+  return{SLOT,slotCount,recipeProblem,groups,optionLabel,prepareBlocker,saveBlocker,saveControls,summary,optionRows,optionsPayload,readyMessage,applyControls,normalizeLook,normalizeApplication,clearApplication,restoreApplication,applicationPayload,applicationBlocker,beginPreparation,finishPreparation};
 });
 
 (function(){
@@ -178,6 +187,7 @@
       const details=problems.map(key=>/^lora\d*_name$/.test(key)?"LoRA '"+result.controls[key]+"' is not installed":(key==='scheduler'?'schedule':key.replaceAll('_',' '))+" '"+result.controls[key]+"' could not be applied").join('; ');
       const text="This look's "+details+'. Prepare stopped. '+(problems.some(key=>/^lora\d*_name$/.test(key))?'Install missing LoRAs in Models & setup or pick another look.':'Pick another look, or choose a recipe that offers these settings.')+' Create is unchanged.';message(text,true);status(text,true);return false;
     }
+    L.restoreApplication(null,result.preset_id,result.look);
     composed=result.controls.positive;q('#positive').dispatchEvent(new Event('input',{bubbles:true}));
     updateLoraHints();updateReady();scheduleTimeEstimate();recipeChanged();
     const text=L.readyMessage(result,switched,looks.find(l=>l.id===result.look.id));message(text);status(text);

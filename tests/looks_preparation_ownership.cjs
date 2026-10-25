@@ -35,7 +35,7 @@ async function fixture(){
   node('#lookSelect').value='look-a';node('#lookScene').value='a room';emit('change',node('#lookSelect'));
   return {ctx,node,option,requests,statuses,pending,emit,reads:()=>reads,applied:()=>applied,generated:()=>generated,stamp:value=>{stamp=value;},
     shortcut(extra={}){let prevented=false;node('#lookScene').listeners.keydown({key:'Enter',ctrlKey:true,target:node('#lookScene'),preventDefault(){prevented=true;},...extra});return prevented;},
-    start:()=>node('#lookPrepare').onclick(),result:()=>({preset_id:'demo',look:{id:'look-a',name:'Look A'},controls:{positive:'prepared',negative:''}})};
+    start:()=>node('#lookPrepare').onclick(),result:()=>({preset_id:'demo',look:{id:'look-a',name:'Look A',revision:1,options:{rain:false}},controls:{positive:'prepared',negative:''}})};
 }
 let count=0,failed=0;
 async function test(name,fn){try{await fn();count++;console.log('PASS '+name);}catch(e){failed++;console.error('FAIL '+name+'\n'+e.stack);}}
@@ -45,6 +45,7 @@ async function test(name,fn){try{await fn();count++;console.log('PASS '+name);}c
     f.shortcut();assert.equal(f.generated(),0,'A pending response cannot generate');
     f.pending.resolve(f.result());for(let i=0;i<6;i++)await Promise.resolve();
     assert.match(f.node('#lookStatus').textContent,/Prepared\. Press Ctrl\+Enter again \(or Generate\) to run it\./);
+    assert.equal(JSON.stringify(f.ctx.StudioLooks.applicationPayload('demo').look),JSON.stringify(f.result().look));
     f.shortcut({repeat:true});assert.equal(f.generated(),0);
     f.shortcut();assert.equal(f.generated(),1);
     f.node('#lookScene').value='a different room';f.emit('input',f.node('#lookScene'));f.shortcut();

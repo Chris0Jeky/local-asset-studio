@@ -475,7 +475,7 @@
       // A switched model may not offer the look's sampler or scheduler: use its default and say so (#1506 follow-up).
       for(const key of ['sampler','scheduler']){const choices=tp.choices?.[key],value=controls[key],fallback=tp.defaults?.[key];
         if(key in controls&&choices?.length&&!choices.includes(value)&&choices.includes(fallback)){controls[key]=fallback;notes.push("This look's "+key+' '+value+' is not offered by '+(tp.name||tp.id)+'; using its default '+fallback+'.');}}
-      return{preset_id,controls,notes,tuned:tuneSummary(look,v),tune:{...v,reseed:controls.seed==null&&v.reseed,seed:controls.seed??v.seed,composer}};};
+      return{preset_id,controls,look:result.look,notes,tuned:tuneSummary(look,v),tune:{...v,reseed:controls.seed==null&&v.reseed,seed:controls.seed??v.seed,composer}};};
     // A compare reports a variant's swap only once that variant is sent (generateSweep); the base run is not sent then.
     const {notes,...first}=build(t),variants=plan?plan.runs.map(r=>({...build(r.tune),label:r.label})):null;
     return{...first,batch_count,scene,notice:[...new Set([...(result.notices||[]),...(plan?[]:notes)])].join(' '),...(plan?{axis:plan.axis.label,variants}:{})};
@@ -528,7 +528,7 @@
   async function openInEditor(){
     const look=current();if(!look||state.busy)return;
     state.busy=true;say('Preparing…');
-    try{const request=await prepared(look);applySaved({preset:request.preset_id,controls:request.controls,batch_count:request.batch_count,parent_assets:[],references:[]},{});showView('create');say('Ready in the full editor.'+(request.notice?' '+request.notice:''));}
+    try{const request=await prepared(look);applySaved({preset:request.preset_id,look:request.look,controls:request.controls,batch_count:request.batch_count,parent_assets:[],references:[]},{});showView('create');say('Ready in the full editor.'+(request.notice?' '+request.notice:''));}
     catch(error){say(error.message);}
     finally{state.busy=false;syncOperation();}
   }
@@ -1017,7 +1017,7 @@
       for(const v of runs){
         if(watch.stopped())break;
         say('Sending '+(started+1)+' of '+n+' to ComfyUI\u2026');
-        sending=true;const job=await json('/api/jobs',{preset_id:v.preset_id,controls:v.controls,batch_count:1,label:'Make · Compare · '+look.name});sending=false;for(const n of v.notes||[])swaps.add(n);
+        sending=true;const job=await json('/api/jobs',{preset_id:v.preset_id,controls:v.controls,look:v.look,batch_count:1,label:'Make · Compare · '+look.name});sending=false;for(const n of v.notes||[])swaps.add(n);
         state.runs.splice(started++,0,{job,look:look.name,lookId:look.id,goal:runGoal,scene:request.scene,tune:v.tune,tuned:v.tuned,group,axis:request.axis,value:v.label});remember();renderRuns();poll(job.id);
       }
       say((started<n?'Started '+started+' of '+n+'; the rest were not sent because you left Make.':'Started '+n+' pictures, one per value of '+request.axis+'. They appear side by side in Your pictures.')+[request.notice,...swaps].filter(Boolean).map(x=>' '+x).join(''));
@@ -1039,7 +1039,7 @@
         if(bound(p,'seed'))controls.seed=seed;
         if(stopped())break;
         say('Sending '+(started+1)+' of '+list.length+' to ComfyUI…');
-        sending=true;const job=await json('/api/jobs',{preset_id:p?.id||look.body.preset_id,controls,batch_count:1,label:'Make · Compare · '+look.name});sending=false;
+        sending=true;const job=await json('/api/jobs',{preset_id:p?.id||look.body.preset_id,controls,look:result.look,batch_count:1,label:'Make · Compare · '+look.name});sending=false;
         state.runs.splice(started++,0,{job,look:look.name,lookId:look.id,goal:runGoal,scene,group});notes.push(...swaps);remember();renderRuns();poll(job.id);
       }
       const noted=notes.map(n=>' '+n).join('');
