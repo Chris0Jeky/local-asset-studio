@@ -1263,14 +1263,18 @@
     button.textContent='Find recipes for selected images ('+assetSelection.size+')';button.disabled=assetSelection.size===0;
     button.title='Review one to three selected library images in selection order; no attachment or generation.';
   });
-  document.addEventListener('click',e=>{if(!e.target.closest('#uxFindSelectedRecipes'))return;
+  async function findSelectedRecipes(){
+    if(assetDetailsDirty()){warnUnsavedAsset();return;}
+    // A search, filter or page move leaves selected IDs off the loaded page: observe them explicitly, never call them unavailable (#1636).
+    if(assetSelection.size>=1&&assetSelection.size<=3&&typeof resolveAssetSelection==='function'&&assetSelectionInfo().unresolved&&!await resolveAssetSelection())return;
     if(assetDetailsDirty()){warnUnsavedAsset();return;}
     const ids=[...assetSelection],items=ids.map(id=>(typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id)));
     if(!window.RecipeShortlist||ids.length<1||ids.length>3||items.some(a=>!a||a.trashed_at||a.media_type!=='image'||typeof a.sha256!=='string'||! /^[0-9a-f]{64}$/.test(a.sha256))){assetMessage('Select one to three available images. Every selected image must have a saved identity; none were dropped.',true);return;}
     // Preserve selection order, including selections outside the current filter. The chooser displays every image before Check.
     const sources=items.map(a=>({asset_id:a.id,sha256:a.sha256,title:a.title,role:'source'}));q('#assetDialog').close();showView('create');
     document.dispatchEvent(new CustomEvent('studio:shortlist-sources',{detail:sources}));
-  });
+  }
+  document.addEventListener('click',e=>{if(!e.target.closest('#uxFindSelectedRecipes'))return;void findSelectedRecipes();});
   // Pull any existing image into a named reference slot, without changing the recipe.
   const picker=element('dialog','studio-dialog');picker.id='uxSourcePicker';picker.setAttribute('aria-labelledby','uxPickerTitle');picker.innerHTML='<div class="dialog-heading"><h2 id="uxPickerTitle">Pull from your library</h2><button data-ux-close="uxSourcePicker" aria-label="Close source picker">✕</button></div><label for="uxSourceSlot">Use as<select id="uxSourceSlot"></select></label><label for="uxSourceSearch">Search saved images<input id="uxSourceSearch" type="search" maxlength="200" placeholder="Title, tags or recipe…"></label><p id="uxPickerStatus" role="status"></p><div id="uxSourceAssets" class="ux-picker-grid"></div><div id="uxSourcePaging"></div>';document.body.append(picker);
   // Three references cost three round trips only if the picker closes after each pick. It stays open,

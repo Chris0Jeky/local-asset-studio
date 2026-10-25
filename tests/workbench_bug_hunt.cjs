@@ -130,3 +130,20 @@ test('Vary and Polish refuse unsettled jobs but allow saved partial, completed o
   b.readSource=async()=>({asset_id:'other'});await assert.rejects(b.polishPlan('asset','face'),/could not be verified/);
   const loaded=b.catalog;b.catalog=null;await assert.rejects(b.polishPlan('asset','face'),/Recipes are still loading/);b.catalog=loaded;
 });
+
+test('bulk recipe advice resolves selected images that a search moved off the loaded page (#1636)',async()=>{
+  const sha=n=>String(n).repeat(64),image=id=>({id,sha256:sha(id.length),title:id,media_type:'image',trashed_at:null});
+  const page=new Map([['a',image('a')]]),resolved=new Map(),events=[],messages=[];let posts=0;
+  const b=box({assetSelection:new Set(['a','bb','ccc']),window:{RecipeShortlist:{}},assetMessage:(...m)=>messages.push(m),
+    assetRecord:id=>resolved.get(id)||page.get(id),assetSelectionInfo:()=>({unresolved:[...b.assetSelection].filter(id=>!b.assetRecord(id)).length}),
+    resolveAssetSelection:async()=>{posts++;for(const id of b.assetSelection)if(!page.has(id))resolved.set(id,image(id));return true;},
+    CustomEvent:class{constructor(type,init){this.type=type;this.detail=init.detail;}},document:{dispatchEvent:e=>events.push(e)}});
+  b.q('#assetDialog').close=()=>{};
+  vm.runInContext(section('  async function findSelectedRecipes(){',"\n  document.addEventListener('click',e=>{if(!e.target.closest('#uxFindSelectedRecipes'))")+'\nthis.findSelectedRecipes=findSelectedRecipes;',b);
+  await b.findSelectedRecipes();
+  assert.equal(posts,1,'off-page selections are observed once');
+  assert.deepEqual(messages,[],'available off-page images are not reported unavailable');
+  assert.equal(JSON.stringify(events.map(e=>e.detail.map(s=>s.asset_id))),'[["a","bb","ccc"]]','every selected image is sent in selection order');
+  // A failed or superseded observation sends nothing.
+  resolved.clear();events.length=0;b.resolveAssetSelection=async()=>false;await b.findSelectedRecipes();assert.equal(events.length,0);
+});

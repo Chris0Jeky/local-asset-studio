@@ -250,9 +250,14 @@ async def run(out,inert):
                 await page.evaluate("assetScope='all';assetSelection.clear();document.querySelector('#assetSearch').value='';renderAssets()")
                 for key in ordered_ids:await page.locator('[data-asset-check="'+key+'"]').check()
                 await page.fill('#assetSearch',fixture.ASSETS[0]['title'])
+                # Let the debounced server search land first, so two selections are off the loaded page every run (#1636).
+                await page.wait_for_function("t=>!assetRefreshing&&assetPaging&&JSON.parse(assetPaging.query).q===t",arg=fixture.ASSETS[0]['title'])
+                check(await page.evaluate("ids=>ids.filter(id=>!assetState.assets.some(a=>a.id===id)).length",ordered_ids)==2,'the search leaves two selected images off the loaded page')
                 before_calls=CALLS.count(PREFIX)
                 await page.wait_for_selector('#uxFindSelectedRecipes',timeout=2000)
                 await page.click('#uxFindSelectedRecipes')
+                try:await page.wait_for_function("document.querySelectorAll('#shortlistSourceList fieldset').length===3",timeout=3000)
+                except Exception:pass
                 check(await page.locator('#shortlistSourceList fieldset').count()==3,'bulk advice includes all three selected images, including filter-hidden selections')
                 check(CALLS.count(PREFIX)==before_calls and await page.evaluate(snapshot)==current_before,'ordered entry neither checks nor replaces the current Create setup')
                 check(await page.locator('#shortlistReferences').is_disabled(),'ordered advice derives its count from actual selected images')
@@ -348,7 +353,7 @@ async def run(out,inert):
                 await page.click('#uxFindSelectedRecipes')
                 check(await page.evaluate("location.hash==='#assets'&&assetSelection.has('missing-fourth')") and CALLS.count(PREFIX)==before_calls,'unavailable selected sources remain visible as a refusal instead of being silently omitted')
                 check(not errors,'no page exceptions')
-                forbidden=[x for x in CALLS if x not in (PREFIX,PROPOSAL,'/api/estimate')]
+                forbidden=[x for x in CALLS if x not in (PREFIX,PROPOSAL,'/api/estimate','/api/assets/selection')]  # selection is a read-only Workspace observation
                 check(not forbidden,'zero generation/install/switch/asset writes: '+str(forbidden))
                 check(MAX_ACTIVE<=1,'bounded one in-flight read in these scenarios')
                 await browser.close()
