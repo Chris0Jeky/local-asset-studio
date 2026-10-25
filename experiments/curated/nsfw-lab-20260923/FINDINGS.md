@@ -587,6 +587,12 @@ All three completed. The LoRA is T6 in `TECHNIQUES.md`.
 
 ## Page poses — queued from the LoRA examples
 
+Archive correction (#988, 25 October 2026): the five page poses below and the
+six p2/four p3 results were omitted from the original 670-entry manifest.
+All 15 retained sources are now cataloged with local-only contacts; their
+current unique source paths and hash/receipt boundaries are in `INDEX.md`.
+The original paths below remain historical evidence, not current restore paths.
+
 The version page has four poses worth copying, listed as T6 page poses in `TECHNIQUES.md`. Posted with `seethroughILL` and the LoRA at strength 1.
 
 | Cell | Job | Prompt | Still |
