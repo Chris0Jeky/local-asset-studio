@@ -24,6 +24,8 @@ The new research catalog deliberately cannot assert `local_verified: true`. Real
 {
   "schema_version": 1,
   "recipe_id": "h3-seed-lab",
+  "resolved_recipe": null,
+  "provider_ids": {"prompt": null, "job": null, "prediction": null},
   "workflow_sha256": null,
   "bundle_lock_sha256": null,
   "runtime_fingerprint": null,
@@ -31,12 +33,56 @@ The new research catalog deliberately cannot assert `local_verified: true`. Real
   "timing_seconds": {"load": null, "encode": null, "sample": null, "decode": null},
   "peak_memory_bytes": {"gpu": null, "host": null, "measurement_method": null},
   "outputs": [],
-  "acceptance": {"reviewed": false, "accepted": null, "defects": [], "cleanup_minutes": null},
-  "commercial_review": {"state": "not_reviewed", "terms_snapshot_sha256": null}
+  "execution_success": null,
+  "reviewed": null,
+  "acceptance": {"accepted": null, "defects": [], "cleanup_minutes": null},
+  "licensing": null,
+  "commercial_review": {"state": null, "terms_snapshot_sha256": null}
 }
 ```
 
 Null means not measured, not zero. A successfully returned image is execution evidence, not proof of quality. This is a design example, not a file purportedly produced by a real H3 run.
+
+Before promoting a cloud importer/receipt contract, require the full resolved recipe and every known provider prompt/job/prediction ID, as specified in the [landing checklist](research/FRONTIER-MCP-ASSETS-2026-10-01-PIPELINES.md#landing-contract-all-pipelines). Preserve the exact submitted workflow/request, all stage parameters and resolved defaults, model/tool revisions, references, preprocessing and adapters; record unavailable details as gaps. A recipe ID or prompt alone is insufficient. Retain provider IDs with their stage/attempt association, including multiple IDs of the same kind, to reconcile uncertain submissions without repeating them.
+
+Execution success, reviewed status and art acceptance each allow `true`, `false` or `null` independently. Licensing and commercial review each have their own nullable outcome, tied to the actual terms and intended use. Unknown is not approval or rejection; explicit `false` is not unknown. Review can reject an output; even accepted art with unknown licensing has no inferred commercial clearance. These examples specify design expectations only, not an executable schema or a supported cloud adapter.
+
+### Illustrative cloud receipts
+
+Both records below are fictional, not generation evidence or owner decisions. Each contains the complete recipe for a fictional one-stage still tool: no references, preprocessing or adapters, and no additional defaults. The ID lists all belong to that single stage/attempt; the first tool returned two job IDs. Real multi-stage receipts must retain the corresponding associations and every known ID. Field names are illustrative, not an import format.
+
+```json
+[
+  {
+    "example": "reviewed-rejection",
+    "provider": "fictional-cloud",
+    "resolved_recipe": {
+      "tool_revision": "fictional-still@demo-r1", "model_revision": "fictional-model@demo-r1",
+      "references": [], "preprocessing": [], "adapters": [],
+      "parameters": {"prompt": "A brass lantern", "negative_prompt": "text", "seed": 42, "width": 512, "height": 512, "steps": 20, "guidance": 5, "sampler": "demo-euler", "schedule": "demo-linear", "output_format": "png"}
+    },
+    "provider_ids": {"prompt": ["demo-prompt-1"], "job": ["demo-job-1", "demo-job-2"], "prediction": ["demo-prediction-1"]},
+    "execution_success": true, "reviewed": true, "accepted": false,
+    "review_note": "Rejected: handle does not match the brief.",
+    "licensing": null, "commercial_review": null
+  },
+  {
+    "example": "accepted-unknown-licensing",
+    "provider": "fictional-cloud",
+    "resolved_recipe": {
+      "tool_revision": "fictional-still@demo-r1", "model_revision": "fictional-model@demo-r1",
+      "references": [], "preprocessing": [], "adapters": [],
+      "parameters": {"prompt": "A brass lantern", "negative_prompt": "text", "seed": 43, "width": 512, "height": 512, "steps": 20, "guidance": 5, "sampler": "demo-euler", "schedule": "demo-linear", "output_format": "png"}
+    },
+    "provider_ids": {"prompt": null, "job": ["demo-job-3"], "prediction": null},
+    "execution_success": true, "reviewed": true, "accepted": true,
+    "review_note": "Accepted for this fictional brief only; terms not supplied.",
+    "licensing": null, "commercial_review": null
+  }
+]
+```
+
+The rejected record remains unaccepted despite successful execution and review. The accepted record still has unknown licensing and commercial review; neither state may be filled from its execution or art acceptance. These records do not bypass P8's supported Studio admission, read-only `comfy-local`, explicit paid scope or leave-unexecuted fallback.
 
 ## 2. A model library that answers “where does this go?”
 
