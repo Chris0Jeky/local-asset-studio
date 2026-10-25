@@ -348,7 +348,8 @@ class RouteTests(unittest.TestCase):
                                {prompt: {"status": {"status_str": "success"}, "outputs": {"13": {"images": [{"filename": name, "subfolder": "Verified", "type": "output"}]}}}}])
         job = studio.jobs[studio.create_job(self.payload(stage), enqueue=False)["id"]]
         studio._run(job)
-        self.assertTrue(studio.parallax_finisher.wait_idle(30), "the owned CPU worker must finish before this fixture is removed")
+        # The bound is for teardown, not speed: Pillow 13 on hosted Linux runners measured 60 s for this split (#1630).
+        self.assertTrue(studio.parallax_finisher.wait_idle(120), "the owned CPU worker must finish before this fixture is removed")
         return job
 
     def test_both_edits_are_split_once_with_layers_strip_lineage_and_receipts(self):
