@@ -29,7 +29,7 @@ class Handler(fixture.Handler):
             self.rfile.read(int(self.headers.get('Content-Length', 0)))
             fixture.POSTS.append({'path': self.path})
             return self.json({'preset_id': 'zimage-fast', 'preset_name': 'Fixture recipe',
-                              'look': {'id': LOOK['id'], 'name': LOOK['name']}, 'controls': copy.deepcopy(CONTROLS)})
+                              'look': {'id': LOOK['id'], 'name': LOOK['name'], 'revision': LOOK['revision']}, 'controls': copy.deepcopy(CONTROLS)})
         return super().do_POST()
 
 
@@ -87,6 +87,7 @@ def main():
                     assert page.locator('[data-key=seed]').input_value() == '37'
                     assert page.locator('#positive').input_value() == CONTROLS['positive']
                     assert page.evaluate("StudioLooks.applicationBlocker(selected.id)") == ''
+                    assert page.evaluate('StudioSetupDraft.capture()')['recipe']['look'] == {key: LOOK[key] for key in ('id', 'name', 'revision')}
                     assert 'look_application' not in page.evaluate('StudioSetupDraft.capture()')['recipe']
                     # A missing binding also restores the last prepared Create values.
                     before = page.evaluate('StudioSetupDraft.capture()')
