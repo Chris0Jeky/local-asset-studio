@@ -101,6 +101,27 @@ class InstallSafetyTests(unittest.TestCase):
                 contracts.publish_verified(self.part,self.target,identity,self.asset['sha256'])
         self.assertFalse(self.target.exists());self.assertEqual(self.part.read_bytes(),b'y'*len(self.body))
 
+    def failed_rollback(self,refused):
+        # Publish by rename, fail the digest, then refuse the first `refused` rollback renames (a reader holds the file).
+        self.part.write_bytes(self.body);identity=contracts.file_identity(self.part);rename=os.rename;calls=[]
+        def flaky(source,target):
+            calls.append(target)
+            if 1<len(calls)<=1+refused:raise PermissionError(13,'file in use')
+            return rename(source,target)
+        with patch.object(contracts.os,'name','nt'),patch.object(contracts.os,'link',side_effect=OSError('no links')),patch.object(contracts.os,'rename',side_effect=flaky),patch.object(contracts,'sha256',return_value='0'*64):
+            with self.assertRaises(ValueError) as caught:contracts.publish_verified(self.part,self.target,identity,self.asset['sha256'])
+        return str(caught.exception),calls
+
+    def test_failed_move_back_quarantines_unverified_bytes(self):
+        message,calls=self.failed_rollback(1)
+        self.assertEqual(message,'Published file does not match the verified digest; files preserved for inspection')
+        self.assertFalse(self.target.exists());self.assertFalse(self.part.exists())
+        self.assertTrue(calls[-1].name.endswith('.unverified'));self.assertEqual(calls[-1].read_bytes(),self.body)
+
+    def test_unmovable_unverified_bytes_fail_naming_the_published_path(self):
+        message,calls=self.failed_rollback(2)
+        self.assertIn('unverified bytes remain at '+str(self.target),message);self.assertEqual(len(calls),3)
+
     def test_rename_requires_digest_before_moving_stage(self):
         self.part.write_bytes(self.body);identity=contracts.file_identity(self.part)
         with patch.object(contracts.os,'name','nt'),patch.object(contracts.os,'link',side_effect=OSError('no links')):
