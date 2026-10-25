@@ -200,8 +200,11 @@ def publish_verified(source,target,identity,expected_sha256=None):
     except OSError:mismatch=True
     if renamed and (changed or mismatch):
         # Never leave unverified bytes at the model's published name: move them back to the staging name (no-clobber).
+        # If neither no-clobber rename works (a reader holds the file open), fail naming the path, never silently.
         try:os.rename(target,source)
-        except OSError:pass
+        except OSError:
+            try:os.rename(target,target.with_name('.'+target.name+'.'+uuid.uuid4().hex+'.unverified'))
+            except OSError as exc:raise ValueError(f'Published file failed verification and could not be moved aside; unverified bytes remain at {target}. Delete it before loading this model.') from exc
     if changed:raise ValueError('Source changed during publication; files preserved for inspection, not verified')
     if mismatch:raise ValueError('Published file does not match the verified digest; files preserved for inspection')
     if not renamed:source.unlink()
