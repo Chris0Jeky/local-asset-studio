@@ -128,6 +128,7 @@
     },
     {
       "id": "krea-turbo",
+      "terms": "Krea 2 Community Licence v1 PDF read 2026-10-25; dated source and output/commercial restrictions: docs/adaptive-studio/assets/LICENCE-EVIDENCE-1512.md#krea-2. Output ownership is conditional on compliance; commercial eligibility is not asserted.",
       "name": "Krea 2 Turbo / FP8 flagship",
       "file": "diffusion_models/krea2_turbo_fp8_scaled.safetensors",
       "repo": "Comfy-Org/Krea-2",
@@ -157,6 +158,7 @@
     },
     {
       "id": "krea-text",
+      "terms": "Krea 2 Community Licence v1 PDF read 2026-10-25; dated source and output/commercial restrictions: docs/adaptive-studio/assets/LICENCE-EVIDENCE-1512.md#krea-2. No use-specific clearance is asserted.",
       "name": "Krea 2 / prompt encoder",
       "file": "text_encoders/qwen3vl_4b_fp8_scaled.safetensors",
       "repo": "Comfy-Org/Krea-2",
@@ -171,6 +173,7 @@
     },
     {
       "id": "krea-retro",
+      "terms": "Krea 2 Community Licence v1 PDF read 2026-10-25; dated source and output/commercial restrictions: docs/adaptive-studio/assets/LICENCE-EVIDENCE-1512.md#krea-2. No use-specific clearance is asserted.",
       "name": "Krea 2 / official retro anime",
       "file": "loras/krea2_retroanime.safetensors",
       "repo": "Comfy-Org/Krea-2",
@@ -328,7 +331,7 @@
       "bytes": 469291992,
       "sha256": "f47c4316dd93af66e0518c93b582f459571d4925b519133770c73a52cd5db7c6",
       "license": "Krea 2 Community",
-      "terms": "Krea 2 Community Licence per the Comfy-Org repo card (LICENSE.pdf not read). Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
+      "terms": "Krea 2 Community Licence v1 PDF read 2026-10-25; dated source and output/commercial restrictions: docs/adaptive-studio/assets/LICENCE-EVIDENCE-1512.md#krea-2. Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
       "family": "Krea 2",
       "trigger": "monochrome ink wash style",
       "strength": [
@@ -347,7 +350,7 @@
       "bytes": 469291992,
       "sha256": "805aa30d863347222485b9d3ce81642dbc70a73cebc95ab57219d98b878fceec",
       "license": "Krea 2 Community",
-      "terms": "Krea 2 Community Licence per the Comfy-Org repo card (LICENSE.pdf not read). Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
+      "terms": "Krea 2 Community Licence v1 PDF read 2026-10-25; dated source and output/commercial restrictions: docs/adaptive-studio/assets/LICENCE-EVIDENCE-1512.md#krea-2. Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
       "family": "Krea 2",
       "trigger": "monochrome stippling style",
       "strength": [
@@ -366,7 +369,7 @@
       "bytes": 469291992,
       "sha256": "8c1d45d204aeb4e34a7d9e16a7d473917592ba0048b03f4e03e037e3578ca500",
       "license": "Krea 2 Community",
-      "terms": "Krea 2 Community Licence per the Comfy-Org repo card (LICENSE.pdf not read). Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
+      "terms": "Krea 2 Community Licence v1 PDF read 2026-10-25; dated source and output/commercial restrictions: docs/adaptive-studio/assets/LICENCE-EVIDENCE-1512.md#krea-2. Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
       "family": "Krea 2",
       "trigger": "naive expressive sketch style",
       "strength": [
@@ -385,7 +388,7 @@
       "bytes": 469291992,
       "sha256": "a779c14435949eabae9ce0bface4320cad6672ef3547e8489107e3498d65e871",
       "license": "Krea 2 Community",
-      "terms": "Krea 2 Community Licence per the Comfy-Org repo card (LICENSE.pdf not read). Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
+      "terms": "Krea 2 Community Licence v1 PDF read 2026-10-25; dated source and output/commercial restrictions: docs/adaptive-studio/assets/LICENCE-EVIDENCE-1512.md#krea-2. Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
       "family": "Krea 2",
       "trigger": "textured abstract style",
       "strength": [
@@ -404,7 +407,7 @@
       "bytes": 469291992,
       "sha256": "7063a6f15ec6112ad3c06d79097b2a30a3ea7d9072821cb36021010d55989fe5",
       "license": "Krea 2 Community",
-      "terms": "Krea 2 Community Licence per the Comfy-Org repo card (LICENSE.pdf not read). Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
+      "terms": "Krea 2 Community Licence v1 PDF read 2026-10-25; dated source and output/commercial restrictions: docs/adaptive-studio/assets/LICENCE-EVIDENCE-1512.md#krea-2. Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
       "family": "Krea 2",
       "trigger": "rainy window style",
       "strength": [
@@ -423,7 +426,7 @@
       "bytes": 469291992,
       "sha256": "3805e8655f19fbcac116542685e3f78f3a642e8fbfb857b5352bb32a4b3d445a",
       "license": "Krea 2 Community",
-      "terms": "Krea 2 Community Licence per the Comfy-Org repo card (LICENSE.pdf not read). Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
+      "terms": "Krea 2 Community Licence v1 PDF read 2026-10-25; dated source and output/commercial restrictions: docs/adaptive-studio/assets/LICENCE-EVIDENCE-1512.md#krea-2. Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
       "family": "Krea 2",
       "trigger": "art deco watercolor style",
       "strength": [
@@ -442,7 +445,7 @@
       "bytes": 469291992,
       "sha256": "194abdd531ca190d32799f26ab5bab634aa5ba3f07b7a60ffb282657db8bf3a0",
       "license": "Krea 2 Community",
-      "terms": "Krea 2 Community Licence per the Comfy-Org repo card (LICENSE.pdf not read). Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
+      "terms": "Krea 2 Community Licence v1 PDF read 2026-10-25; dated source and output/commercial restrictions: docs/adaptive-studio/assets/LICENCE-EVIDENCE-1512.md#krea-2. Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
       "family": "Krea 2",
       "trigger": "ethereal motion blur style",
       "strength": [
@@ -461,7 +464,7 @@
       "bytes": 469291992,
       "sha256": "8cca96c56658fb3ac5269f9ef2245bd07cbf1b7a189f517c8763470bb1385f9f",
       "license": "Krea 2 Community",
-      "terms": "Krea 2 Community Licence per the Comfy-Org repo card (LICENSE.pdf not read). Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
+      "terms": "Krea 2 Community Licence v1 PDF read 2026-10-25; dated source and output/commercial restrictions: docs/adaptive-studio/assets/LICENCE-EVIDENCE-1512.md#krea-2. Downloaded and SHA-256 verified 2026-09-12; a completed render is not licence clearance.",
       "family": "Krea 2",
       "trigger": "vintage tarot style",
       "strength": [
@@ -480,7 +483,7 @@
       "bytes": 438140968,
       "sha256": "7590b2d2772f45d7b1252124c63918b1b807e93fbf9eab20546fa7233b4dc482",
       "license": "Krea 2 Community",
-      "terms": "Community redistribution of the Krea 2 Turbo distill under krea-2-community-license (repo card; PDF not read). Downloaded and SHA-256 verified 2026-09-12. Use with steps 4, cfg 1.",
+      "terms": "Community redistribution of the Krea 2 Turbo distill under krea-2-community-license (repo card); governing v1 PDF read 2026-10-25: docs/adaptive-studio/assets/LICENCE-EVIDENCE-1512.md#krea-2. Downloaded and SHA-256 verified 2026-09-12. Use with steps 4, cfg 1. Mirror/adapter clearance is not independently asserted.",
       "family": "Krea 2",
       "trigger": "",
       "strength": [
