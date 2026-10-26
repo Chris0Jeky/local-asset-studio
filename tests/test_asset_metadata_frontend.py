@@ -6,6 +6,12 @@ from pathlib import Path
 
 class AssetMetadataFrontend(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node.js required')
+    def test_canonical_metadata_cache(self):
+        result=subprocess.run([shutil.which('node'),str(Path(__file__).with_name('asset_metadata_cache.cjs'))],capture_output=True,text=True,timeout=20)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertIn('Asset metadata cache contracts: 18 passed, 0 failed',result.stdout)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js required')
     def test_quick_check_interactions(self):
         result=subprocess.run([shutil.which('node'),str(Path(__file__).with_name('review_check_interactions.cjs'))],capture_output=True,text=True,timeout=20)
         self.assertEqual(result.returncode,0,result.stdout+result.stderr)

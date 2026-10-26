@@ -166,6 +166,27 @@ async def exercise(args):
                 await evidence_screenshot(a,path=str(args.out/'checks-loaded-1440.png'))
                 await a.keyboard.press('1');await a.wait_for_function("document.querySelector('#productionMessage').textContent.startsWith('Saved for this candidate: style no.')")
                 record('META-28 comparison key changes the observed saved answer once',len(writes)==before+1 and 'check:style=no' in store.get(ids[1])['tags'] and 'check:style=yes' not in store.get(ids[1])['tags'])
+                # #1627: observe a filtered-out ID, return it to the page, then use the ordinary save/star controls.
+                await a.evaluate("showView('assets')")
+                await a.fill('#assetSearch','canonical-offpage-observation')
+                await a.wait_for_function('!assetSearchTimer&&!assetRefreshing&&assetPaging.query===assetPageQuery()&&assetState.assets.length===0')
+                await a.evaluate("async id=>{assetSelection=new Set([id]);if(!await resolveAssetIDs([id]))throw Error('Selected-ID observation was not current');}",ids[1])
+                await a.fill('#assetSearch','')
+                await a.wait_for_function('!assetSearchTimer&&!assetRefreshing&&assetPaging.query===assetPageQuery()')
+                membership=await a.evaluate('({ids:assetState.assets.map(a=>a.id),selection:[...assetSelection],cursor:assetPaging.cursor})')
+                await a.locator(f'.asset-card-title[data-asset-open="{ids[1]}"]').click()
+                await a.fill('#assetTitle','Confirmed canonical title');await a.click('#saveAssetDetails');await saved(a)
+                card=a.locator(f'[data-asset-card="{ids[1]}"]')
+                record('META-29 confirmed off-page save repaints its returned page card',await card.locator('.asset-card-title').inner_text()=='Confirmed canonical title' and
+                       await a.evaluate("id=>assetState.assets.find(a=>a.id===id).metadata_revision===assetResolved.get(id).asset.metadata_revision",ids[1]))
+                await a.click('#assetFavorite');await saved(a)
+                record('META-30 the grid star reflects the confirmed dialog favorite',await card.locator('[data-asset-favorite]').get_attribute('aria-label')=='Unfavorite Confirmed canonical title')
+                await a.click('#closeAssetDialog');await a.wait_for_function("!document.querySelector('#assetDialog').open")
+                revision=store.get(ids[1])['metadata_revision'];before=len(writes)
+                await card.locator('[data-asset-favorite]').click();await a.wait_for_function('!assetLibraryBusy')
+                record('META-31 next grid star sends the opposite favorite at its confirmed revision',len(writes)==before+1 and writes[-1].get('favorite') is False and
+                       writes[-1]['expected_revisions']=={ids[1]:revision} and store.get(ids[1])['favorite'] is False)
+                record('META-32 canonical saves preserve loaded membership and selection',membership==await a.evaluate('({ids:assetState.assets.map(a=>a.id),selection:[...assetSelection],cursor:assetPaging.cursor})'))
                 record('META-19 no generation/backend mutation' ,all(p['path'] in ['/api/estimate','/api/references/check'] for p in fixture.POSTS))
                 record('META-20 no page exceptions',not errors)
                 await browser.close()
@@ -176,7 +197,7 @@ async def exercise(args):
                      'limits':['Synthetic non-generation APIs; no Studio construction or model calls.',
                                'No owner-PC, screen-reader, reload-draft or artwork acceptance evidence.']}
             (args.out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
-    if len(checks)!=28:raise AssertionError('Scenario run did not complete')
+    if len(checks)!=32:raise AssertionError('Scenario run did not complete')
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--out',type=Path,required=True);parser.add_argument('--inert',action='store_true');parser.add_argument('--port', type=int, default=0, help='Fixed loopback port; 0 binds a free one')

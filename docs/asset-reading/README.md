@@ -132,8 +132,18 @@ Workspace storage workflow runs the new contracts on Ubuntu and Windows.
 Bounded returned rows/bytes are not a claim of constant query time: sparse filters
 may scan many index entries, while the ordinary continuation is an indexed seek.
 No browser heap, decoder, GPU, wall-time speed-up, thumbnail quality, or owner art
-acceptance is inferred from these fixtures. Transport/client integration is the
-next stacked slice. Grid migration, paginated collections, detail loading,
-thumbnail/proxy work, job history and measured browser budgets remain #177 work.
+acceptance is inferred from these fixtures.
+
+HTTP, CLI and MCP integration, bounded Library and collection pages, selected-ID
+detail reads, server-side search/sort/source filtering, and cached image thumbnails
+are implemented. The Library reconciles loaded-page and resolved metadata after
+accepted observations and confirmed receipts; page membership stays separate from
+record freshness. The [canonical metadata verification](../verification/2026-10-26-library-canonical-metadata.md)
+records that correction and its limits.
+
+Other page-only consumers, cache coherence outside that bounded correction, bulk
+refresh page preservation and read transaction boundaries remain #1627 work.
+Broader media/proxy work, job-history and inventory costs, generation-aware resource
+scheduling, and actual before/after browser budget measurements remain #177 work.
 
 See [implementation plan](PLAN.md) and [engineering queue](ENGINEERING-QUEUE.md).

@@ -60,3 +60,29 @@ These are local scoped measurements. Published-head CI logs, checkout trees, ful
 The earlier combined integration tree, before these follow-ups, ran 6,052 tests locally in 960.761 seconds with four failed direct-peer subtests and 42 skips. Its old redirect test inherited this host's proxy configuration and therefore exercised the proxy exception instead of a direct peer. The same unchanged two-test module passed with only proxy environment variables removed. The #1633 follow-up explicitly isolates proxy configuration and independently covers direct and proxy TLS; its focused 115-test run passed with the normal host environment. This retained failure is not presented as a successful full-suite gate.
 
 [#2](https://github.com/Chris0Jeky/local-asset-studio/issues/2) still needs an actual same-seed 8/20-step render comparison and a new reference-edit trial; its native loading crash and uncertain prompt remain unresolved. [#1627](https://github.com/Chris0Jeky/local-asset-studio/issues/1627) remains the broader paging follow-up; the stale-cursor and collection sort items already fixed by #1628 are distinguished in its issue discussion. `HUMAN_TODO.md` is unchanged: art acceptance, Kromoss/MOSS choices, parallax review and existing publication/runtime decisions remain with the owner.
+
+## Hosted qualification supplement — 26 October 2026
+
+The separate published-head and Windows gates described above subsequently passed
+for [#1650's final head `67ad50e3b4c4999b0fa31b2426d6600a4b5f2fe7`](https://github.com/Chris0Jeky/local-asset-studio/pull/1650#issuecomment-6406003257).
+All 35 workflows succeeded on their first attempts. The
+[full-suite job](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/40250973404/job/121342563208)
+ran 6,075 tests in 1,010.743 seconds, passed with 74 skips, and completed the lifetime
+shutdown check; repository validation passed 93 graphs/bindings and 187 pinned assets.
+The qualified merge-preview tree was `70e80a91f710085c9615dbe09f0d5cb5f9da101b`.
+The coordinator independently fetched actual merge
+[`554ca3d58c838648fa1fdf16ff104bd26aefd639`](https://github.com/Chris0Jeky/local-asset-studio/commit/554ca3d58c838648fa1fdf16ff104bd26aefd639)
+and verified that its tree equals that qualified tree.
+
+The corrected Restyle gate passed on
+[Windows](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/40250973375/job/121342562733)
+and [Ubuntu](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/40250973375/job/121342562975).
+The [delayed Prepared gate](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/40250973336/job/121342562773)
+and [Library normal/400 ms matrix](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/40250973321)
+also passed. Download publication ran 143 tests on each platform:
+[Windows](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/40250973372/job/121342563120)
+with two skips and [Ubuntu](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/40250973372/job/121342563272)
+with five. The final qualification comment links the complete receipts and records
+the fresh head review with no findings. These successful gates supersede the earlier
+pending-gate statements; they do not erase the retained failures or establish the
+unknown Windows TCP cause, artwork acceptance, or qualification of later children.
