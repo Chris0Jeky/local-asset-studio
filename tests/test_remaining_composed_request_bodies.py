@@ -126,12 +126,13 @@ class RemainingComposedRequestBodyTests(unittest.TestCase):
             with self.subTest(action=action):
                 self.assertFalse(self.incomplete(path, payload)['generation_submitted'])
                 command.assert_not_called()
-                self.assertTrue(intake.acquire(blocking=False), 'EOF refusal leaked intake admission')
+                # Receiving the response can precede the handler's finally release.
+                self.assertTrue(intake.acquire(timeout=5), 'EOF refusal leaked intake admission')
                 intake.release()
                 self.assertEqual(self.post(path, payload),
                                  (202 if action == 'create' else 200, {'accepted': True}))
                 command.assert_called_once_with(payload)
-                self.assertTrue(intake.acquire(blocking=False))
+                self.assertTrue(intake.acquire(timeout=5))
                 intake.release()
 
     def test_truncated_resource_cleanup_never_initializes_controller(self):
