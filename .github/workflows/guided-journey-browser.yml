@@ -17,12 +17,14 @@ on:
       - 'tests/asset_detail_browser.py'
       - 'tests/studio_browser_smoke.py'
       - 'tests/test_studio_guide.py'
+      - 'scripts/ci-install-chromium.sh'
+      - 'tests/test_ci_browser_dependencies.py'
       - '.github/workflows/guided-journey-browser.yml'
 permissions:
   contents: read
 jobs:
   journeys:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -35,7 +37,11 @@ jobs:
         with:
           node-version: '22'
       - run: python -m pip install playwright==1.57.0
-      - run: python -m playwright install --with-deps chromium
+      - name: Check bounded browser dependency setup
+        run: python -m unittest discover -s tests -p test_ci_browser_dependencies.py -v
+      - name: Install Chromium with bounded signed Ubuntu dependencies
+        timeout-minutes: 4
+        run: bash scripts/ci-install-chromium.sh
       - run: python -m unittest discover -s tests -p test_studio_guide.py -v
       - run: python -m unittest discover -s tests -p test_create_readiness_frontend.py -v
       - name: Actual pages and native HTTP, storage, keyboard and stage navigation

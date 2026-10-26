@@ -2,6 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const path=require('node:path').join(__dirname,'../app/static/asset-recovery-shelf.js');
 const S=fs.existsSync(path)?require(path):{};
+const create=require('./asset_recovery_shelf_memory.cjs');
 const crypto=require('node:crypto').webcrypto,W='1'.repeat(32);
 function envelope(note='draft',pending=false){
   const form={title:'Synthetic review',tags:'tag',review:'unreviewed',notes:note};
@@ -37,15 +38,15 @@ test('record/aggregate byte, field, target and key bounds refuse without truncat
   const e=envelope();e.metadata.id=e.id='a'.repeat(129);await assert.rejects(record(e),/identity|ID|bound/i);
 });
 test('locked writes survive fresh store instances and stale writers preserve both viewpoints',async()=>{
-  const m=memory(),store=S.create(m),r=await record();await store.put(r,null);
-  assert.deepEqual(await S.create(m).list(),[r]);
+  const m=memory(),store=create(m),r=await record();await store.put(r,null);
+  assert.deepEqual(await create(m).list(),[r]);
   const newer=await record(envelope('newer'),{id:r.id,generation:2,created_at:r.created_at,updated_at:101});
   await store.put(newer,r.sha256);
   await assert.rejects(store.put(await record(envelope('stale'),{id:r.id,generation:2,created_at:r.created_at,updated_at:101}),r.sha256),/changed|conflict/i);
   assert.equal((await store.list())[0].payload.draft.notes,'newer');
 });
 test('unresolved command cannot be changed or removed by an update',async()=>{
-  const m=memory(),store=S.create(m),r=await record(envelope('draft',true));await store.put(r,null);
+  const m=memory(),store=create(m),r=await record(envelope('draft',true));await store.put(r,null);
   const cleared=await record(envelope('next'),{id:r.id,generation:2,created_at:100,updated_at:101});
   await assert.rejects(store.put(cleared,r.sha256),/pending|immutable/i);
   const e=envelope('newer',true);e.operation.command.notes='changed';e.operation.body=JSON.stringify(e.operation.command);
@@ -54,29 +55,29 @@ test('unresolved command cannot be changed or removed by an update',async()=>{
 });
 test('storage refusal or changed readback reports failure; unavailable locks never write',async()=>{
   const r=await record(),m=memory();let writes=0;
-  await assert.rejects(S.create({...m,locks:null}).put(r,null),/lock|unavailable/i);assert.equal(m.raw(),null);
-  await assert.rejects(S.create({...m,storage:{getItem:()=>null,setItem(){writes++;throw Error('quota');}}}).put(r,null),/quota|storage|retain/i);assert.equal(writes,1);
-  await assert.rejects(S.create({...m,storage:{getItem:()=>null,setItem(){}}}).put(r,null),/readback|verify|retain/i);
+  await assert.rejects(create({...m,locks:null}).put(r,null),/lock|unavailable/i);assert.equal(m.raw(),null);
+  await assert.rejects(create({...m,storage:{getItem:()=>null,setItem(){writes++;throw Error('quota');}}}).put(r,null),/quota|storage|retain/i);assert.equal(writes,1);
+  await assert.rejects(create({...m,storage:{getItem:()=>null,setItem(){}}}).put(r,null),/readback|verify|retain/i);
 });
 test('capacity and duplicate request pressure never evict existing records',async()=>{
-  const m=memory(),store=S.create(m),first=await record(envelope('pending',true));await store.put(first,null);
+  const m=memory(),store=create(m),first=await record(envelope('pending',true));await store.put(first,null);
   await assert.rejects(store.put(await record(envelope('another view',true)),null),/duplicate|request/i);
   for(let i=1;i<S.LIMITS.records;i++)await store.put(await record(),null);
   const before=m.raw();await assert.rejects(store.put(await record(),null),/capacity|limit|full/i);assert.equal(m.raw(),before);
   assert.equal((await store.list())[0].payload.operation.command.request_id,'request_1234567890');
 });
 test('import is inspected before persistence; malformed/duplicate batches are all-or-nothing',async()=>{
-  const m=memory(),store=S.create(m),a=await record(),b=await record();const text=await S.encode([a,b],crypto);
+  const m=memory(),store=create(m),a=await record(),b=await record();const text=await S.encode([a,b],crypto);
   const inspected=await S.decode(text,crypto);assert.equal(m.raw(),null);await store.importRecords(inspected);assert.equal((await store.list()).length,2);
   const before=m.raw();await assert.rejects(store.importRecords([await record(),a]),/duplicate|exists/i);assert.equal(m.raw(),before);
   await assert.rejects(S.encode([a,a],crypto),/duplicate/i);
 });
 test('explicit digest-guarded discard clears only its chosen local record',async()=>{
-  const m=memory(),store=S.create(m),a=await record(envelope('pending',true)),b=await record();await store.importRecords([a,b]);
+  const m=memory(),store=create(m),a=await record(envelope('pending',true)),b=await record();await store.importRecords([a,b]);
   await assert.rejects(store.remove(a.id,'0'.repeat(64)),/changed|conflict/i);await store.remove(a.id,a.sha256);assert.deepEqual(await store.list(),[b]);
 });
 test('concurrent tab capacity checks serialize under the shared origin lock',async()=>{
-  const m=memory(),a=S.create(m),b=S.create(m);for(let i=0;i<S.LIMITS.records-1;i++)await a.put(await record(),null);
+  const m=memory(),a=create(m),b=create(m);for(let i=0;i<S.LIMITS.records-1;i++)await a.put(await record(),null);
   const r1=await record(),r2=await record();const results=await Promise.allSettled([a.put(r1,null),b.put(r2,null)]);
   assert.equal(results.filter(r=>r.status==='fulfilled').length,1);assert.equal((await a.list()).length,S.LIMITS.records);
 });
@@ -100,7 +101,7 @@ test('non-ASCII fields are bounded by UTF-8 bytes, and imported library extras a
 });
 test('a held lock times out without writing or silently falling back to unlocked storage',async()=>{
   const m=memory(),r=await record(),locks={request(n,o){return new Promise((resolve,reject)=>o.signal.addEventListener('abort',()=>reject(Error('lock wait aborted')),{once:true}));}};
-  await assert.rejects(S.create({...m,locks,lockTimeoutMs:10}).put(r,null),/abort|lock/i);assert.equal(m.raw(),null);
+  await assert.rejects(create({...m,locks,lockTimeoutMs:10}).put(r,null),/abort|lock/i);assert.equal(m.raw(),null);
 });
 test('server-valid Unicode titles keep code-point limits separate from UTF-8 storage budgets',async()=>{
   for(const title of ['界'.repeat(200),'😀'.repeat(200)]){

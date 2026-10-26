@@ -21,6 +21,7 @@ from PIL import Image
 from playwright.async_api import async_playwright
 import studio_browser_smoke as fixture
 from asset_detail_browser import inert_page
+from browser_shelf_owner import inert_shelf_owner
 import server as production
 from browser_ports import BoundPortGuard
 
@@ -56,7 +57,7 @@ async def exercise(args):
         frozen=store.snapshot()
 
         class Handler(BoundPortGuard, production.extend_handler(production.Handler)):
-            studio=SimpleNamespace(assets=store)
+            studio=SimpleNamespace(assets=store,jobs={})
             json=fixture.Handler.json
             def do_GET(self):
                 if self.path.startswith('/api/assets/recovery-observation?'):
@@ -93,9 +94,8 @@ async def exercise(args):
                             await page.evaluate('''()=>{
                               Object.defineProperty(window,'crypto',{value:{getRandomValues:crypto.getRandomValues.bind(crypto),subtle:{digest:async(n,data)=>new Uint8Array(await __lifecycleHash(Array.from(data))).buffer}}});
                               let tail=Promise.resolve();Object.defineProperty(navigator,'locks',{value:{request:(n,o,fn)=>{const p=tail.then(fn);tail=p.catch(()=>{});return p;}}});
-                              assetShelfStore=StudioAssetRecoveryShelf.create({storage:()=>localStorage,locks:()=>navigator.locks,crypto});
-                              assetShelfSession=StudioAssetRecoveryShelfSession.create({journal:assetRecovery,store:assetShelfStore,crypto,onStatus:assetShelfStatus});
                             }''')
+                            await inert_shelf_owner(page)
                         else:await page.goto(f'http://127.0.0.1:{http.server_port}/#assets')
                         await page.wait_for_function('!!catalog && !!selected')
                         await page.evaluate("showView('assets')")

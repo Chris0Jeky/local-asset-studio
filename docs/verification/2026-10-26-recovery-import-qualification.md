@@ -1,8 +1,15 @@
 # Recovery import and keyboard qualification — 26 October 2026
 
-Refs #392 and #393. This work extends the existing shelf and its native browser
-fixture. It adds no recovery store, server metadata writer, retry mechanism,
-generation, runtime installation or owner acceptance decision.
+Refs #392 and #393. This is the initial UI-only qualification of the existing
+localStorage shelf and its native browser fixture. That slice added no recovery
+store, server metadata writer, retry mechanism, generation, runtime installation
+or owner acceptance decision.
+
+Later hosted evidence reopened #825 after two writers both reported success.
+The [transactional-owner qualification](2026-10-26-shelf-transaction-qualification.md)
+records the reproduced renderer-cache defect and the subsequent IndexedDB owner.
+The 50 checks, hashes and measurements below remain historical results for this
+initial slice; they are not relabeled as validation of the new storage owner.
 
 ## Reconciled source
 
@@ -13,7 +20,7 @@ whose complete tracked blobs and modes match that tree; its commit identity is
 different. The coordinator owns publishing, current-main reconciliation, hosted
 CI and actual merged-tree verification.
 
-The final local native run used these exact SHA-256 values:
+The final local native run of this initial UI-only slice used these exact SHA-256 values:
 
 | File | SHA-256 |
 | --- | --- |
@@ -50,7 +57,7 @@ may receive its completion.
 
 ## Executed native evidence
 
-The final local command was:
+The final local command for this initial slice was:
 
 ```console
 python tests/asset_recovery_shelf_browser.py --out .runtime/recovery-native-review-final

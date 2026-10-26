@@ -13,6 +13,7 @@ on:
       - 'tests/*asset_recovery*'
       - 'tests/asset_detail*'
       - 'tests/studio_browser_smoke.py'
+      - 'tests/browser_shelf_owner.py'
       - '.github/workflows/asset-recovery-lifecycle.yml'
   workflow_dispatch:
 permissions:

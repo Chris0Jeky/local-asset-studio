@@ -11,6 +11,9 @@ on:
       - 'tests/test_asset_recovery*'
       - 'tests/asset_detail*'
       - 'tests/studio_browser_smoke.py'
+      - 'tests/browser_shelf_owner.py'
+      - 'scripts/ci-install-chromium.sh'
+      - 'tests/test_ci_browser_dependencies.py'
       - '.github/workflows/asset-recovery-shelf.yml'
   workflow_dispatch:
 permissions:
@@ -23,12 +26,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-24.04, windows-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
@@ -36,12 +40,24 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: git rev-parse HEAD
       - run: python -m pip install playwright==1.57.0 -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
-      - run: python -m playwright install --with-deps chromium
+      - name: Browser dependency helper contracts
+        if: runner.os == 'Linux'
+        run: python -m unittest discover -s tests -p test_ci_browser_dependencies.py -v
+      - name: Bounded Linux Chromium dependencies and browser
+        if: runner.os == 'Linux'
+        timeout-minutes: 4
+        run: bash scripts/ci-install-chromium.sh
+      - name: Windows Chromium dependencies and browser
+        if: runner.os == 'Windows'
+        run: python -m playwright install --with-deps chromium
       - name: Bounded codecs, journals, checkpoint failure and CAS contracts
         run: python -m unittest discover -s tests -p test_asset_recovery_shelf.py -v
       - name: Native browser storage, lost responses and real SQLite
         run: python tests/asset_recovery_shelf_browser.py --out .runtime/asset-recovery-shelf
+      - name: Native transactional owner, renderer races and storage faults
+        run: python tests/asset_recovery_shelf_owner_browser.py --out .runtime/asset-recovery-shelf/owner
       - uses: actions/upload-artifact@v4
         if: always()
         with:

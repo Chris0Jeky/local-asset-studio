@@ -2,6 +2,7 @@
 let assetShelfStore=StudioAssetRecoveryShelf.create({storage:()=>localStorage,locks:()=>navigator.locks});
 let assetShelfSession=StudioAssetRecoveryShelfSession.create({journal:assetRecovery,store:assetShelfStore,onStatus:assetShelfStatus});
 let assetShelfRecords=[],assetShelfImported=null,assetShelfReading=false,assetShelfChanging=false,assetShelfReadEpoch=0,assetShelfImportEpoch=0,assetShelfReturnFocus=null;
+let assetShelfReadError=false,assetShelfLegacyReview=null;
 const assetShelfOptKey='studio.asset-recovery.shelf.enabled.v1';
 function assetShelfStatus(text,error=false){
   for(const id of ['assetShelfStatus','assetShelfLocalStatus','assetShelfDetailStatus']){
@@ -25,6 +26,10 @@ function assetShelfSummary(record){
 }
 function assetShelfRender(){
   const panel=document.getElementById('assetShelfRecords');
+  if(assetShelfReadError){
+    panel.innerHTML='<p>Recovery records could not be read. Retained data has not been replaced. Use the export controls to keep a copy where available.</p>';
+    document.getElementById('assetShelfCount').textContent='Record count unavailable.';return;
+  }
   panel.innerHTML=assetShelfRecords.length?assetShelfRecords.map(r=>{
     const foreign=!r.workspace_id||r.workspace_id!==assetState.workspace_id;
     return '<article class="asset-shelf-record"><h3>'+esc(assetShelfSummary(r))+'</h3>'+
@@ -35,12 +40,24 @@ function assetShelfRender(){
 }
 async function assetShelfRefresh(){
   const epoch=++assetShelfReadEpoch;assetShelfReading=true;
+  assetShelfLegacyReview=null;document.getElementById('assetShelfAcceptLegacy').hidden=true;
   try{
-    const records=await assetShelfStore.list();if(epoch!==assetShelfReadEpoch)return;
-    assetShelfRecords=records;assetShelfRender();document.getElementById('assetShelfRawExport').hidden=true;
+    const [records,legacy]=await Promise.allSettled([assetShelfStore.list(),assetShelfStore.legacyRaw()]);if(epoch!==assetShelfReadEpoch)return;
+    // The older bytes stay exportable even when the current owner cannot be read.
+    // An unavailable legacy read leaves its explicit export control discoverable.
+    const older=legacy.status==='rejected'||legacy.value!==null;
+    document.getElementById('assetShelfLegacyExport').hidden=!older;
+    document.getElementById('assetShelfLegacyNotice').hidden=!older;
+    if(records.status==='rejected')throw records.reason;
+    const recovered=assetShelfReadError;assetShelfReadError=false;
+    assetShelfRecords=records.value;assetShelfRender();document.getElementById('assetShelfRawExport').hidden=true;
+    if(recovered)assetShelfStatus('Local recovery records read. No server changes were made.');
   }catch(error){
     if(epoch!==assetShelfReadEpoch)return;
-    assetShelfRecords=[];assetShelfRender();assetShelfStatus(error.message+' Retained bytes were not replaced.',true);
+    assetShelfReadError=true;assetShelfRecords=[];assetShelfRender();assetShelfStatus(error.message+' Retained bytes were not replaced.',true);
+    assetShelfLegacyReview=error.code==='asset_recovery_legacy_changed'?error.review||null:null;
+    document.getElementById('assetShelfAcceptLegacy').hidden=!assetShelfLegacyReview;
+    if(assetShelfLegacyReview)document.getElementById('assetShelfLegacyNotice').hidden=false;
     document.getElementById('assetShelfRawExport').hidden=false;
   }finally{if(epoch===assetShelfReadEpoch)assetShelfReading=false;}
 }
@@ -70,7 +87,8 @@ function assetShelfInspect(record){
     '<label class="asset-shelf-opt"><input type="checkbox" id="assetShelfEnabled">Keep detail and library recovery on this device for this tab</label>'+
     '<p>Wait for “checkpoint verified” before closing. Clearing a tab record or disabling checkpoints does not delete shelf records or cancel server work. Review-queue bulk shortcuts are not included in this shelf.</p>'+
     '<p id="assetShelfStatus" role="status" aria-live="polite"></p><p id="assetShelfCount"></p>'+
-    '<div class="asset-shelf-actions"><button type="button" id="assetShelfRefresh">Refresh local records</button><button type="button" id="assetShelfExport">Export shelf</button><button type="button" id="assetShelfRawExport" hidden>Export retained raw evidence</button></div>'+
+    '<div class="asset-shelf-actions"><button type="button" id="assetShelfRefresh">Refresh local records</button><button type="button" id="assetShelfExport">Export shelf</button><button type="button" id="assetShelfRawExport" hidden>Export retained raw evidence</button><button type="button" id="assetShelfLegacyExport" hidden>Export older recovery</button><button type="button" id="assetShelfAcceptLegacy" hidden>Continue with current shelf</button></div>'+
+    '<p id="assetShelfLegacyNotice" hidden>Recovery data saved by an older Studio version stays separate and can be exported. Close or reload older Studio tabs before continuing. Continuing with the current shelf does not merge or delete the older data.</p>'+
     '<div class="asset-shelf-actions"><button type="button" data-recovery-observe-slot="detail">Inspect this tab’s asset recovery</button><button type="button" data-recovery-observe-slot="library">Inspect this tab’s library recovery</button></div>'+
     '<label>Inspect a recovery JSON bundle (at most 2 MiB)<input id="assetShelfImport" type="file" accept=".json,application/json"></label>'+
     '<section id="assetShelfImportPreview" hidden><h3>Inspected import</h3><p></p><button type="button" id="assetShelfImportConfirm">Import inspected records locally</button></section>'+
@@ -91,6 +109,7 @@ function assetShelfInspect(record){
   dialog.addEventListener('close',()=>{
     if(dialog.open)return;
     assetShelfReadEpoch++;assetShelfImportEpoch++;assetShelfReading=false;assetShelfImported=null;
+    assetShelfLegacyReview=null;document.getElementById('assetShelfAcceptLegacy').hidden=true;
     document.getElementById('assetShelfImportPreview').hidden=true;document.getElementById('assetShelfImport').value='';
     if(assetShelfReturnFocus?.isConnected)assetShelfReturnFocus.focus();
   });
@@ -106,7 +125,26 @@ function assetShelfInspect(record){
   document.getElementById('assetShelfRefresh').onclick=()=>void assetShelfRefresh();
   document.getElementById('assetShelfExport').onclick=()=>void assetShelfAction(async()=>assetShelfDownload(await assetShelfStore.export(),'asset-review-recovery.json'));
   document.getElementById('assetShelfRawExport').onclick=()=>void assetShelfAction(async()=>{
-    const raw=assetShelfStore.raw();if(raw!==null)assetShelfDownload(raw,'unverified-asset-review-recovery.json');
+    const raw=await assetShelfStore.raw();if(raw!==null)assetShelfDownload(raw,'unverified-asset-review-recovery.json');
+    else assetShelfStatus('No retained raw recovery data is available.');
+  });
+  document.getElementById('assetShelfLegacyExport').onclick=()=>void assetShelfAction(async()=>{
+    const raw=await assetShelfStore.legacyRaw();if(raw!==null)assetShelfDownload(raw,'older-asset-review-recovery.json');
+    else assetShelfStatus('No older recovery data is available.');
+  });
+  document.getElementById('assetShelfAcceptLegacy').onclick=()=>void assetShelfAction(async()=>{
+    const review=assetShelfLegacyReview,epoch=assetShelfReadEpoch;
+    const current=()=>dialog.open&&assetShelfReadEpoch===epoch&&assetShelfLegacyReview===review;
+    if(!review||!current())throw Error('Refresh local records and inspect the older recovery warning before continuing.');
+    if(!window.confirm('Continue using the current shelf records? Older recovery data stays separate and can be exported. Close or reload older Studio tabs first. Nothing will be merged or deleted.'))return;
+    if(!current())return;
+    try{await assetShelfStore.acceptLegacy(review);}
+    catch(error){if(!current())return;throw error;}
+    if(!current())return;
+    const button=document.getElementById('assetShelfAcceptLegacy'),moveFocus=document.activeElement===button,refreshEpoch=assetShelfReadEpoch+1;
+    assetShelfStatus('Continuing with the current shelf. Older recovery data remains separately available to export.');
+    await assetShelfRefresh();
+    if(moveFocus&&dialog.open&&assetShelfReadEpoch===refreshEpoch&&(document.activeElement===button||document.activeElement===document.body))document.getElementById('assetShelfRefresh').focus();
   });
   document.getElementById('assetShelfImport').onchange=event=>{
     const file=event.target.files?.[0],epoch=++assetShelfImportEpoch;assetShelfImported=null;document.getElementById('assetShelfImportPreview').hidden=true;
