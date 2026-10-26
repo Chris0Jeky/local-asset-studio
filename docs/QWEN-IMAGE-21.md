@@ -55,6 +55,22 @@ Choose **Qwen-Image 2.1 · isolated** in the environment selector and press **Sw
 HiDream, the Studio refuses while any queue is busy, stops only the exact idle configured process, and starts
 this launcher. Return to **Main library** for every other family. Do not run both families on the GPU at once.
 
+### Encoder presence gate — 26 October 2026
+
+The Studio's presence check now also requires a nonempty
+`comfy/text_encoders/qwen_image21.py` in the selected isolated checkout. A missing
+or empty encoder module refuses before switch-worker creation, process inspection
+or switch-state publication. The existing worker-side check repeats this
+requirement before process work. Direct use of `scripts/qwen21-launch.py` also
+refuses a missing or empty module before staging example inputs or starting the
+checkout's `main.py`.
+
+This is a filesystem-presence check; it does not import the encoder, verify its
+hash, certify a ComfyUI version or prove inference compatibility. The complete
+checkout still uses the existing port and launch arguments. The
+[disposable-fixture evidence](verification/2026-10-26-qwen21-preflight.md) records
+the missing/empty failures and complete-checkout controls for #1661.
+
 ## Speed
 
 Measured on 22-23 September 2026 by `experiments/curated/qwen-image-21-20260922/bench.py`: 832 × 1248, 8 steps, one cold

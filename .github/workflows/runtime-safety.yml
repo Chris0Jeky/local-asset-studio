@@ -9,6 +9,8 @@ on:
       - 'tests/test_reference*.py'
       - 'tests/test_native_export*.py'
       - 'tests/test_backend*.py'
+      - 'tests/test_qwen21_launcher.py'
+      - 'scripts/qwen21-launch.py'
       - 'tests/test_model*.py'
       - 'tests/test_av_client*.py'
       - 'tests/test_mixed_batch_http.py'
@@ -33,6 +35,8 @@ on:
       - 'tests/test_reference*.py'
       - 'tests/test_native_export*.py'
       - 'tests/test_backend*.py'
+      - 'tests/test_qwen21_launcher.py'
+      - 'scripts/qwen21-launch.py'
       - 'tests/test_model*.py'
       - 'tests/test_av_client*.py'
       - 'tests/test_mixed_batch_http.py'
@@ -58,6 +62,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Record tested commit
+        run: git log -1 --format=%H
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -69,6 +77,8 @@ jobs:
       - name: Addressable figure storage
         run: python -m unittest discover -s tests -p 'test_addressable_figures*.py' -v
       - run: python -m unittest discover -s tests -p test_backend_safety.py -v
+      - name: Qwen isolated launcher preflight
+        run: python -m unittest discover -s tests -p test_qwen21_launcher.py -v
       - run: python -m unittest discover -s tests -p test_backend_startup_interlock.py -v
       - name: Shared backend switch ownership and native file locks
         run: python -m unittest discover -s tests -p test_backend_state.py -v

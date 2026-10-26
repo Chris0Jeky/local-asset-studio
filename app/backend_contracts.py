@@ -70,8 +70,8 @@ def endpoint_ready(value):
 def readiness(profile, repo_root):
     """Check the selected launcher plus its declared baseline files, without loading them.
 
-    H3's five-file contract follows docs/H3-WINDOWS.md and Qwen-Image 2.1's three files
-    docs/QWEN-IMAGE-21.md. Other families retain
+    H3's five-file contract follows docs/H3-WINDOWS.md and Qwen-Image 2.1's encoder
+    module and three model files follow docs/QWEN-IMAGE-21.md. Other families retain
     per-preset model validation: this is not a second general model manager.
     """
     root = Path(profile['root'])
@@ -81,6 +81,7 @@ def readiness(profile, repo_root):
     if profile['id'] == 'hidream':required.append(('Transformers overlay', root / 'python_packages/transformers', True))
     if profile['id'] == 'qwen21':
         required.append(('Comfy Kitchen overlay', root / 'python_packages/comfy_kitchen', True))
+        required.append(('Qwen-Image 2.1 encoder module', root / 'comfy/text_encoders/qwen_image21.py', False))
         required.extend((role, root / path, False) for role, path in QWEN21_FILES)
     if profile['id'] == 'moss':
         required.append(('Comfy Kitchen overlay', root / 'python_packages/comfy_kitchen', True))
