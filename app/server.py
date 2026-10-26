@@ -2658,9 +2658,16 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError: raise StudioError("Valid Content-Length required")
         if size < 0 or size > limit: raise StudioError("Request body is too large")
         return size
+    def _read_body(self, limit):
+        size = self._content_length(limit)
+        raw = self.rfile.read(size)
+        if len(raw) != size:
+            self.close_connection = True
+            raise StudioError("Incomplete request body; nothing changed")
+        return raw
     def _body_json(self, limit=1024 * 1024):
         if self.headers.get("Content-Type", "").split(";", 1)[0] != "application/json": self._drain_refused_body(); raise StudioError("application/json required")
-        raw = self.rfile.read(self._content_length(limit))
+        raw = self._read_body(limit)
         try: return json.loads(raw.decode())
         except RecursionError: raise StudioError("JSON body is nested too deeply") from None
     def _body_object(self):
@@ -2885,8 +2892,8 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == '/api/runtime-recovery/retry': return self._json(202, self.studio.runtime_recovery.reset())
             if self.path == '/api/articulated': return self._json(201,self.studio.production.articulated(self._body_json()))
             if self.path == '/api/assets/import':
-                size=self._content_length(20*1024*1024)
-                try: return self._json(201,self.studio.import_image(self.headers.get('X-Filename','reference'),self.headers.get('Content-Type',''),self.rfile.read(size)))
+                body=self._read_body(20*1024*1024)
+                try: return self._json(201,self.studio.import_image(self.headers.get('X-Filename','reference'),self.headers.get('Content-Type',''),body))
                 except sqlite3.Error:
                     return self._json(503, {"error": "Asset storage could not confirm this request. Check its receipt before retrying the exact command.",
                                             "code": "asset_storage_unconfirmed"})
@@ -2966,7 +2973,7 @@ class Handler(BaseHTTPRequestHandler):
                 if not isinstance(payload, dict): raise StudioError('Put-away command must be an object')
                 return self._json(200, self.studio.put_away_job(parts[3], payload.get('put_away')))
             if self.path == "/api/upload":
-                size = self._content_length(20 * 1024 * 1024); return self._json(201, self.studio.upload(self.headers.get("X-Filename", "reference"), self.headers.get("Content-Type", ""), self.rfile.read(size)))
+                body = self._read_body(20 * 1024 * 1024); return self._json(201, self.studio.upload(self.headers.get("X-Filename", "reference"), self.headers.get("Content-Type", ""), body))
             # Draws a pose guide and stores it exactly as an upload; it reaches no model and queues nothing.
             # Make seamless (#1220): prepare stores a rolled seam cross as an upload; finish runs Pillow steps. Neither queues a generation.
             if self.path == "/api/tiles/prepare": return self._json(201, tiles.prepare(self.studio, self._body_object()))
