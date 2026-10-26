@@ -11,11 +11,13 @@ on:
       - 'tests/studio_browser_smoke.py'
       - 'studio_workflow/guides.py'
       - '.github/workflows/ux-use-cases.yml'
+      - 'scripts/ci-install-chromium.sh'
+      - 'tests/test_ci_browser_dependencies.py'
 permissions:
   contents: read
 jobs:
   use-cases:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -30,7 +32,11 @@ jobs:
       - run: python -m pip install pillow playwright==1.57.0
       - name: Offline gate (cases and scoring; no browser)
         run: python -m unittest discover -s tests -p test_use_case_matrix.py -v
-      - run: python -m playwright install --with-deps chromium
+      - name: Check bounded browser dependency setup
+        run: python -m unittest discover -s tests -p test_ci_browser_dependencies.py -v
+      - name: Install Chromium with bounded signed Ubuntu dependencies
+        timeout-minutes: 4
+        run: bash scripts/ci-install-chromium.sh
       - name: Measure every use case against the local fixture (never ComfyUI)
         run: python -u tests/studio_use_cases.py
       - name: Pose replacement and stale-response browser regressions

@@ -4,6 +4,8 @@ Native browser HTTP/storage only. Requires an environment that permits local
 HTTP navigation. Hosted CI runs this gate; no simulated-browser fallback.
 """
 from browser_ports import evidence_screenshot
+from contextlib import ExitStack
+from studio_guide_diagnostics import GuideNavigationDiagnostics
 import argparse
 import json
 import os
@@ -69,14 +71,15 @@ def run(out):
     def check(condition,label):
         assert condition,label; checks.append(label); print('PASS '+label,flush=True)
     try:
-        with sync_playwright() as p:
+        with sync_playwright() as p, ExitStack() as diagnostic_scope:
             browser=p.chromium.launch(executable_path=os.environ.get('CHROMIUM_PATH') or shutil.which('chromium') or None,headless=True,args=['--no-sandbox'])
             context=browser.new_context(viewport={'width':1440,'height':1000},reduced_motion='reduce')
             page=context.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
+            navigation=diagnostic_scope.enter_context(GuideNavigationDiagnostics(page,out,lambda:CALLS))
             def visit(guide,stage):
                 item=next(x for x in guides()['guides'] if x['id']==guide);step=next(x for x in item['steps'] if x['id']==stage)
                 url=urlsplit(step['route']);address=origin+url.path+'?'+urlencode({'guide':guide,'stage':stage})+'#'+url.fragment
-                page.goto(address,timeout=15000);page.wait_for_selector('.studio-guide-panel');
+                navigation.goto(address,timeout=15000);page.wait_for_selector('.studio-guide-panel');
                 if url.path=='/':page.wait_for_function('typeof selected !== "undefined" && !!selected && typeof backendActive !== "undefined" && !!backendActive')
                 return step
             for guide in guides()['guides']:
