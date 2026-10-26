@@ -29,6 +29,13 @@ JSON contains private review text; keep it somewhere appropriate for that text.
 Import selects a bounded JSON file and displays summaries first. **Import
 inspected records locally** writes only the local shelf. It does not restore a
 draft, query receipts, apply metadata, copy inputs or start generation.
+After keyboard confirmation, focus continues at the first imported record when
+the disappearing confirmation button still owns focus. Moving elsewhere while
+the import finishes keeps that newer focus. Closing and reopening the shelf
+starts a new inspection context; an older file read cannot populate it or replace
+its status with an old decoding error. Import completion and failure likewise
+belong to the dialog where confirmation began. Closing does not undo an explicit
+local import that already started; refresh shows the actual retained records.
 
 ## Persistence and concurrency contract
 
@@ -83,9 +90,27 @@ browser-data management rather than an invented migration.
 Node contracts for codecs, quotas/readback faults, count pressure, concurrent CAS,
 coalescing, occupied/foreign recovery, exact-body round trips and dispatch races.
 `tests/asset_recovery_shelf_browser.py` exercises the actual UI, HTTP handlers and
-synthetic SQLite store. The dedicated read-only CI lane runs native Chromium on
-Ubuntu and Windows. `--inert` is explicitly a local protocol/layout substitute;
-it does not prove native storage, origin, WebCrypto or Web Locks behavior.
+synthetic SQLite store. Its native journeys include export of a committed command
+whose response was lost, clearing local/session storage, closing the original
+tab, inspect-first import in a fresh tab, exact restoration and GET-only receipt
+recovery. It also exercises occupied session viewpoints, native file-input
+refusals, foreign/unknown imports, literal text, twenty unresolved records,
+explicit discard, quota refusal, two-tab CAS and bounded Web Locks.
+
+Keyboard checks cover import, restore, status, exact retry, disappearing controls,
+newer focus and cancelled reads across dialog openings. A disposable extension in
+the isolated Chromium profile sets browser-owned zoom through `chrome.tabs.setZoom`
+and reads it back through `getZoom`. The native 200% case requires the viewport
+width to halve, device pixel ratio to double, and CSS zoom to remain 1; it checks
+the 390px layout and keyboard access separately from the retained CSS-zoom case.
+It does not automate the browser menu or execute a screen reader.
+
+The dedicated read-only CI lane runs native Chromium on Ubuntu and Windows.
+`--inert` is explicitly a local protocol/layout substitute; it does not prove
+native storage, origin, WebCrypto, Web Locks or browser zoom. File selection uses
+Playwright's file-input API; it does not test an operating-system file chooser.
+The [26 October qualification](../verification/2026-10-26-recovery-import-qualification.md)
+records the causal fixes, native result, exact source hashes and remaining limits.
 
 Browser data clearing, origin changes, private-mode retention policy and physical
 copies of databases with the same Workspace identity remain limitations. The

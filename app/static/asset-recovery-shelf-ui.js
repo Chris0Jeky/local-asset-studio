@@ -78,7 +78,13 @@ function assetShelfInspect(record){
   document.body.append(dialog);
   const open=event=>{
     assetShelfReturnFocus=event.currentTarget;document.getElementById('assetShelfEnabled').checked=assetShelfSession.enabled;
-    if(!dialog.open)dialog.showModal();void assetShelfRefresh();
+    if(!dialog.open){
+      // A queued close event can arrive after this opening and must not preserve
+      // the previous dialog's pending file read or inspected import.
+      assetShelfImportEpoch++;assetShelfImported=null;document.getElementById('assetShelfImportPreview').hidden=true;document.getElementById('assetShelfImport').value='';
+      dialog.showModal();
+    }
+    void assetShelfRefresh();
   };
   document.getElementById('openAssetRecoveryShelf').onclick=open;document.getElementById('openAssetRecoveryShelfDetails').onclick=open;
   document.getElementById('closeAssetRecoveryShelf').onclick=()=>dialog.close();
@@ -106,7 +112,9 @@ function assetShelfInspect(record){
     const file=event.target.files?.[0],epoch=++assetShelfImportEpoch;assetShelfImported=null;document.getElementById('assetShelfImportPreview').hidden=true;
     void assetShelfAction(async()=>{
       if(!file)return;if(file.size>StudioAssetRecoveryShelf.LIMITS.total)throw Error('Recovery import exceeds 2 MiB; no content was read.');
-      const records=await StudioAssetRecoveryShelf.decode(await assetShelfImportText(file));
+      let records;
+      try{records=await StudioAssetRecoveryShelf.decode(await assetShelfImportText(file));}
+      catch(error){if(epoch!==assetShelfImportEpoch||!dialog.open)return;throw error;}
       if(epoch!==assetShelfImportEpoch||!dialog.open)return;
       assetShelfImported=records;const preview=document.getElementById('assetShelfImportPreview');preview.hidden=false;
       preview.querySelector('p').textContent=records.length+' records inspected; nothing stored or sent. '+records.map(assetShelfSummary).join('\n');
@@ -114,9 +122,17 @@ function assetShelfInspect(record){
     });
   };
   document.getElementById('assetShelfImportConfirm').onclick=()=>void assetShelfAction(async()=>{
-    const inspected=assetShelfImported;if(!inspected)throw Error('Inspect a valid bundle first.');
-    await assetShelfStore.importRecords(inspected);assetShelfImported=null;document.getElementById('assetShelfImportPreview').hidden=true;
+    const inspected=assetShelfImported,epoch=assetShelfImportEpoch;if(!inspected)throw Error('Inspect a valid bundle first.');
+    try{await assetShelfStore.importRecords(inspected);}
+    catch(error){if(epoch!==assetShelfImportEpoch||!dialog.open||assetShelfImported!==inspected)return;throw error;}
+    if(epoch!==assetShelfImportEpoch||!dialog.open||assetShelfImported!==inspected)return;
+    const confirm=document.getElementById('assetShelfImportConfirm'),moveFocus=document.activeElement===confirm;
+    assetShelfImported=null;document.getElementById('assetShelfImportPreview').hidden=true;
     assetShelfStatus('Imported locally. No draft restored, receipt queried, metadata saved or job submitted.');await assetShelfRefresh();
+    if(moveFocus&&epoch===assetShelfImportEpoch&&dialog.open&&(document.activeElement===confirm||document.activeElement===document.body)){
+      const first=inspected[0]&&document.querySelector('[data-shelf-inspect="'+inspected[0].id+'"]');
+      (first||document.getElementById('assetShelfImport')).focus();
+    }
   });
   dialog.addEventListener('click',event=>{
     const button=event.target.closest('[data-shelf-inspect],[data-shelf-restore],[data-shelf-export],[data-shelf-discard]');if(!button||button.disabled)return;
