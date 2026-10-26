@@ -361,7 +361,7 @@ def build_handler():
     class Handler(extend_handler(PromptFixtureBase)):
         def do_GET(self):
             path = urlsplit(self.path).path
-            if path in ('/api/assets/page','/api/collections'): return fixture.Handler.do_GET(self)
+            if path in ('/api/assets/page','/api/collections') or path.startswith('/api/assets/family/'): return fixture.Handler.do_GET(self)
             if path == '/api/workflow-studio/guides': return self.json(guides())
             if path == '/api/workflow-studio/nodes': return self.json(schema)
             if path == '/api/workflow-studio/capabilities':
@@ -955,6 +955,7 @@ def _reuse(c):
     c.act('#assetGrid', 'read', note='saved pictures listed')
     keeper = c.pick('asset-1', '#assetGrid [data-asset-open]', 'image asset in the Asset library', keep=LIVE_IMAGE_ASSET)
     c.act('[data-asset-open="%s"]' % keeper, note='open the keeper')
+    if not c.live:c.page.wait_for_function('document.querySelectorAll("#assetFamily [data-family-step]").length === 1')
     c.act('[data-ux-handoff="%s"]' % keeper, note='continue with this picture')
     c.need_destination('qwen-1ref')
     c.act('#uxDestination', 'select', typed='qwen-1ref')

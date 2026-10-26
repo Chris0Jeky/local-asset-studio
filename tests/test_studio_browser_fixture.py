@@ -31,3 +31,15 @@ class WorkspaceIdentityTests(unittest.TestCase):
     def test_delegating_handler_preserves_workspace_override(self):
         for response in self.responses({'workspace_id': '2' * 32}):
             self.assertEqual(response['workspace_id'], '2' * 32)
+
+    def test_delegating_handler_serves_bounded_family_in_the_observed_workspace(self):
+        for suffix,children in (('',None),('&children=true',[])):
+            with self.subTest(suffix=suffix):
+                handler=SimpleNamespace(path='/api/assets/family/asset-1?workspace_id='+'2'*32+suffix,
+                                        workspace_id='2'*32,json=lambda value,status=200:(status,value))
+                status,response=fixture.Handler.do_GET(handler)
+                self.assertEqual(status,200);self.assertEqual(response['workspace_id'],'2'*32)
+                self.assertEqual(response['asset_id'],'asset-1');self.assertEqual([node['id'] for node in response['nodes']],['asset-1'])
+                self.assertEqual(response['children'],children);self.assertEqual(response['edges'],[])
+                self.assertTrue(response['observation_only']);self.assertFalse(response['generation_submitted'])
+                self.assertFalse(response['media_bytes_verified']);self.assertEqual(response['children_scanned'],0)
