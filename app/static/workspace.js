@@ -6,8 +6,21 @@ let assetSignature = '', assetRefreshing = false, assetWorkspaceEpoch = 0, asset
 let assetReceiptEpoch = 0;
 // Page rows and explicitly resolved IDs are separate: absence from a page proves nothing about an ID.
 let assetPaging=null,assetResolved=new Map(),assetResolveRequest=0,assetOpenRequest=0,assetCollectionBusy=false;
-function assetRecord(id){const item=assetResolved.get(id);return item?item.asset:assetState.assets.find(a=>a.id===id);}
-function assetRecords(){return [...new Map([...assetState.assets,...[...assetResolved.values()].map(i=>i.asset).filter(Boolean)].map(a=>[a.id,a])).values()];}
+function assetRecord(id){
+  const page=assetState.assets.find(a=>a.id===id),item=assetResolved.get(id);
+  if(!item)return page;
+  return item.asset && page && page.workspace_id===item.asset.workspace_id && page.metadata_revision>item.asset.metadata_revision?page:item.asset;
+}
+function assetPageRecords(){return assetState.assets.map(a=>assetRecord(a.id)).filter(Boolean);}
+function assetRecords(){return [...new Set([...assetState.assets.map(a=>a.id),...assetResolved.keys()])].map(assetRecord).filter(Boolean);}
+// Full observations share the newest known record; the page keeps its existing IDs and order.
+// An explicit missing observation masks an old page row until a later read establishes otherwise.
+function rememberAssetObservation(item){
+  const known=assetRecord(item.id),asset=item.asset && known && known.workspace_id===item.asset.workspace_id && known.metadata_revision>item.asset.metadata_revision?known:item.asset;
+  assetResolved.set(item.id,{...item,asset,state:asset?(asset.trashed_at==null?'active':'trashed'):'missing'});
+  const index=assetState.assets.findIndex(a=>a.id===item.id);
+  if(asset && index>=0 && assetState.assets[index].workspace_id===asset.workspace_id)assetState.assets[index]=asset;
+}
 function assetPageFilters(){const filters={visibility:assetScope==='trash'?'trash':'active',sort:$('#assetSort').value||'newest',source:assetSourceChoice()},q=$('#assetSearch').value.trim();if(q)filters.q=q;if(assetScope==='favorite')filters.favorite=true;if(['selected','needs_work','unreviewed'].includes(assetScope))filters.review=assetScope;if(assetScope.startsWith('collection:'))filters.collection_id=assetScope.slice(11);if($('#assetType').value!=='all')filters.media_type=$('#assetType').value;return filters;}
 function assetPageQuery(){return JSON.stringify(assetPageFilters());}
 function assetReadURL(path,query){return path+'?'+Object.entries(query).filter(([,v])=>v!==null&&v!==undefined).map(([k,v])=>encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');}
@@ -17,7 +30,7 @@ async function resolveAssetIDs(ids){
   const result=await api('/api/assets/selection',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({workspace_id:scope,ids,details:true})});
   if(assetState.workspace_id!==scope || assetWorkspaceEpoch!==epoch || assetReceiptEpoch!==receipt)return false;
   if(result?.workspace_id!==scope || !Array.isArray(result.items) || result.items.length!==ids.length || result.items.some((item,i)=>item.id!==ids[i] || !['active','trashed','missing'].includes(item.state) || (item.state==='missing'?item.asset!==null:!validAssetMetadata(item.asset)||item.asset.id!==item.id||item.asset.workspace_id!==scope)))throw Error('The selected-ID observation is invalid. Nothing was changed.');
-  for(const item of result.items)assetResolved.set(item.id,item);
+  for(const item of result.items)rememberAssetObservation(item);
   return true;
 }
 async function resolveAssetSelection(){
@@ -82,7 +95,7 @@ function assetCardTitle(asset){if(!assetDefaultTitle(asset))return asset.title||
 // Scope chips count what the current source, search and media filters actually show, per scope.
 function assetScopedCount(scope){
   const query=$('#assetSearch').value.trim().toLowerCase(),type=$('#assetType').value;
-  const list=assetSourceFilter(assetState.assets.filter(a=>{
+  const list=assetSourceFilter(assetPageRecords().filter(a=>{
     if(scope==='trash')return a.trashed_at!=null;
     if(a.trashed_at!=null)return false;
     if(scope==='favorite'&&!a.favorite)return false;
@@ -307,10 +320,9 @@ async function performAssetSave(operation, observe=false) {
 }
 // A confirmed single save updates the loaded record in place. A whole workspace refetch is not evidence of anything more.
 function syncAssetAfterSave(operation,result) {
-  const record=assetRecord(operation.id),revision=result.revisions[operation.id];
-  if(!record || record.workspace_id!==operation.command.workspace_id || record.metadata_revision!==operation.command.expected_revisions[operation.id])return void refreshAssets(true);
-  Object.assign(record,result.unchanged?.includes(operation.id)?{}:result.applied,{metadata_revision:revision});assetReceiptEpoch++;
-  if(operation.kind==='trash')renderAssets();else updateAssetCard(record.id);
+  const updated=applyAssetReceipt(operation.command,result);
+  if(operation.kind==='trash')renderAssets();else updateAssetCard(operation.id);
+  if(!updated)void refreshAssets(true);
 }
 function applyAssetSaveReceipt(operation,result) {
   const unchanged=JSON.stringify(assetDetailValues())===JSON.stringify(operation.snapshot);
@@ -410,6 +422,7 @@ async function refreshAssets(force=false,position=null) {
     if(!force&&sameCatalogue){data.collections=assetState.collections;collections.next_cursor=assetPaging.collectionNext;}
     assetState=data;
     if(!sameCatalogue)assetResolved.clear();   // an unchanged catalogue keeps what the operator resolved; a changed one invalidates it
+    else for(const asset of data.assets){const item=assetResolved.get(asset.id);if(item)rememberAssetObservation(item);}
     assetPaging={query,cursor,history:[...history],next:page.next_cursor,collectionNext:collections.next_cursor,catalogue:page.catalogue};
     if(previousScope && previousScope!==data.workspace_id){assetSelection.clear();if(assetLibraryPending?.command.workspace_id===data.workspace_id)assetRetainedSelection=assetLibraryPending.selection;}
     // Recent runs owns its output visibility too: explicitly observe off-page
@@ -481,7 +494,7 @@ function toggleAssetCheck(box) {
 }
 function assetScopeAssets() {
   if(assetScope.startsWith('collection:') && !assetState.collections.some(c=>'collection:'+c.id===assetScope) && !assetPaging?.collectionNext)return [];
-  return assetState.assets.filter(a=>{
+  return assetPageRecords().filter(a=>{
     if(assetScope==='trash'?a.trashed_at==null:a.trashed_at!=null)return false;
     if(assetScope==='favorite'&&!a.favorite)return false;
     if(['selected','needs_work','unreviewed'].includes(assetScope)&&(a.review||'unreviewed')!==assetScope)return false;
@@ -726,12 +739,19 @@ async function postAssetCommand(command) {
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
   try{return await api('/api/assets/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(command),signal:controller.signal});}finally{clearTimeout(timer);}
 }
-// A confirmed receipt updates only records still at the revision it was issued against.
-function applyAssetReviewReceipt(command,result) {
+// A receipt is a partial historical patch, not a full current observation. Apply it only at its
+// expected revision, then reconcile the existing copies. Even a skipped/no-op patch invalidates held reads.
+function applyAssetReceipt(command,result) {
+  let updated=false;assetReceiptEpoch++;
   for(const id of command.ids){
-    const record=assetRecord(id);
-    if(record && (!record.workspace_id || record.workspace_id===command.workspace_id) && record.metadata_revision===command.expected_revisions[id])Object.assign(record,result.unchanged?.includes(id)?{}:result.applied,{metadata_revision:result.revisions[id]}),assetReceiptEpoch++;
+    const item=assetResolved.get(id);if(item?.state==='missing')continue;
+    for(const record of new Set([assetState.assets.find(a=>a.id===id),item?.asset])){
+      if(!record || record.workspace_id!==command.workspace_id || record.metadata_revision!==command.expected_revisions[id])continue;
+      Object.assign(record,['edit','trash','restore'].includes(command.action)&&!result.unchanged?.includes(id)?result.applied:{},{metadata_revision:result.revisions[id]});updated=true;
+    }
+    if(item?.asset?.workspace_id===command.workspace_id)rememberAssetObservation(item);
   }
+  return updated;
 }
 // Replacing a saved decision is not the same as reviewing a new asset: name what changes before any write.
 function assetReviewOverwritePrompt(ids, review) {
@@ -766,7 +786,7 @@ async function bulkReviewSelected(review) {
         const command=assetCommand({ids:[id],action:'edit',review},[entry],entry.workspace_id||workspace);
         const result=validateAssetReceipt(await postAssetCommand(command),command);
         if(!owns())break;
-        applyAssetReviewReceipt(command,result);
+        applyAssetReceipt(command,result);
         done++;
       } catch(error) {
         if(!owns())break;
@@ -879,7 +899,7 @@ async function runAssetGroupEdit({key,plan,snapshot,changes,where,focusAction,ti
       try {
         const result=validateAssetReceipt(await postAssetCommand(command),command);
         done+=ids.length;
-        if(owns())applyAssetReviewReceipt(command,result);
+        if(owns())applyAssetReceipt(command,result);
       } catch(error) {
         const code=error.data?.code;
         if(code==='asset_revision_conflict'){
@@ -932,15 +952,8 @@ async function performLibraryCommand(operation,observe=false) {
     if(!current())throw Error('The library or Workspace changed while this request was pending. Its original recovery is retained.');
     if(observe && result?.status==='unknown')throw Error('No receipt yet; the earlier update may still complete. No retry was sent.');
     validateAssetReceipt(result,command);assetRecovery.clear('library');assetLibraryPending=null;
-    // A confirmed snapshot is not a new permission to overwrite another client's later changes.
-    for(const id of command.ids){
-      const asset=assetRecord(id);
-      if(asset && asset.workspace_id===command.workspace_id && asset.metadata_revision===command.expected_revisions[id]){
-        asset.metadata_revision=result.revisions[id];
-        if(['edit','trash','restore'].includes(command.action)&&!result.unchanged?.includes(id))Object.assign(asset,result.applied);
-      }
-    }
-    assetReceiptEpoch++;void refreshAssets(true);assetMessage('Library update confirmed.');return result;   // an overlapping read re-reads instead of restoring the pre-update snapshot
+    applyAssetReceipt(command,result);renderAssets();
+    void refreshAssets(true);assetMessage('Library update confirmed.');return result;   // an overlapping read re-reads instead of restoring the pre-update snapshot
   } catch(error) {
     if(current() && !observe && error.data?.code!=='asset_workspace_conflict' && error.status>=400 && error.status<500){throw Error('This attempt was refused. '+error.message+' The exact command and complete selection remain retained. Check its receipt or explicitly discard local recovery before a different update.');}
     throw Error('Library update not confirmed. '+error.message+' No automatic retry was sent.');
@@ -1172,7 +1185,7 @@ document.addEventListener('click',async e=>{
     if(e.target.closest('[data-asset-import]')){$('#importAssets').click();return;}
     const scope=e.target.closest('[data-scope]');if(scope){if(scope.hasAttribute?.('data-asset-browse-scope')){$('#assetSearch').value='';$('#assetType').value='all';}setAssetScope(scope.dataset.scope);}
     const open=e.target.closest('[data-asset-open]');if(open)openAsset(open.dataset.assetOpen);
-    const favorite=e.target.closest('[data-asset-favorite]');if(favorite){const a=assetState.assets.find(a=>a.id===favorite.dataset.assetFavorite);if(!a)throw Error('This asset is no longer in the loaded library; nothing changed. Refresh the library.');await mutateAssets({ids:[a.id],action:'edit',favorite:!a.favorite});}
+    const favorite=e.target.closest('[data-asset-favorite]');if(favorite){const id=favorite.dataset.assetFavorite,a=assetState.assets.some(a=>a.id===id)?assetRecord(id):null;if(!a)throw Error('This asset is no longer in the loaded library; nothing changed. Refresh the library.');await mutateAssets({ids:[a.id],action:'edit',favorite:!a.favorite});}
     const lineage=e.target.closest('[data-lineage]');if(lineage)openAsset(lineage.dataset.lineage);
     const handoff=e.target.closest('[data-handoff]');if(handoff)await handoffAsset(activeAsset.id,handoff.dataset.handoff);
     const bulk=e.target.closest('[data-bulk]');
