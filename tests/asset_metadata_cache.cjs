@@ -13,10 +13,10 @@ async function load(s,assets,position=null){
   const n=s.reads.length,p=s.actualRefresh(true,position);await flush();
   s.reads[n].resolve(page(assets));s.reads[n+1].resolve(collections());assert.equal(await p,true);
 }
-async function observe(s,items){
+async function observe(s,items,stamp=catalogue){
   const n=s.writes.length,p=s.run('resolveAssetIDs('+JSON.stringify(items.map(i=>i.id))+')');
   assert.equal(s.writes[n].url,'/api/assets/selection');
-  s.writes[n].resolve({workspace_id:scope,catalogue,items});assert.equal(await p,true);
+  s.writes[n].resolve({workspace_id:scope,catalogue:stamp,items});assert.equal(await p,true);
 }
 const observed=a=>({id:a.id,state:a.trashed_at==null?'active':'trashed',asset:a});
 async function ready(){
@@ -147,6 +147,42 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
     assert.equal(s.run("Object.hasOwn(assetRecord('a'),'collection_id')"),false);
     assert.deepEqual(value(s,"assetRecord('a').collections"),[],'collection membership is established by the existing explicit read');
     assert.equal(s.run("assetState.assets.find(a=>a.id==='a').metadata_revision"),1);
+  });
+  await test('A held page from an older catalogue cannot erase a newer selected-ID observation',async()=>{
+    const s=await ready(),r=s.reads.length,reading=s.actualRefresh(false);await flush();
+    const n=s.writes.length,observing=s.run("resolveAssetIDs(['a'])"),latest=asset('a',{metadata_revision:2,title:'Newer selected read'});
+    s.writes[n].resolve({workspace_id:scope,catalogue:{...catalogue,revision:3},items:[observed(latest)]});assert.equal(await observing,true);
+    s.reads[r].resolve({...page([asset('a',{metadata_revision:1,title:'Older held page'})]),catalogue:{...catalogue,revision:2}});
+    s.reads[r+1].resolve({...collections(),catalogue:{...catalogue,revision:2}});await flush();
+    assert.equal(s.run("assetRecord('a').metadata_revision"),2,'the older catalogue must not clear the newer observation');
+    assert.equal(s.reads.length,r+4,'the overlapping page is read again within the existing bounded loop');
+    assert.equal(new URL(s.reads[r+2].url,'http://fixture').searchParams.get('cursor'),'second','a read-only observation does not reset page navigation');
+    s.reads[r+2].resolve({...page([asset('b'),latest]),catalogue:{...catalogue,revision:3}});
+    s.reads[r+3].resolve({...collections(),catalogue:{...catalogue,revision:3}});assert.equal(await reading,true);
+    assert.equal(s.run("assetRecord('a').title"),'Newer selected read');assert.equal(s.run('assetPaging.cursor'),'second');
+    assert.deepEqual(value(s,'[...assetSelection]'),['a','off']);
+  });
+  await test('Resolving a mixed selection repaints the loaded favorite before its next activation',async()=>{
+    const s=await ready(),n=s.writes.length,reading=s.run('resolveAssetSelection()');
+    s.writes[n].resolve({workspace_id:scope,catalogue:{...catalogue,revision:3},items:[observed(asset('a',{metadata_revision:2,favorite:true})),observed(asset('off'))]});
+    assert.equal(await reading,true);
+    assert.match(s.el('#assetGrid').innerHTML,/data-asset-favorite="a" aria-label="Unfavorite a"/);
+    assert.deepEqual(value(s,'[assetState.assets.map(a=>a.id),[...assetSelection],assetPaging.cursor]'),[['b','a'],['a','off'],'second']);
+    const next=s.writes.length,toggle=s.clickClosest('[data-asset-favorite]',{assetFavorite:'a'});
+    assert.equal(s.payload(next).favorite,false);assert.deepEqual(s.payload(next).expected_revisions,{a:2});s.accept(next);await toggle;
+  });
+  await test('A newer page rejects older selected-ID replies, while a later missing observation remains authoritative',async()=>{
+    for(const old of [{id:'a',state:'missing',asset:null},observed(asset('a',{metadata_revision:1}))]){
+      const s=await ready(),n=s.writes.length,observing=s.run("resolveAssetIDs(['a'])");
+      const r=s.reads.length,reading=s.actualRefresh(true);await flush();
+      s.reads[r].resolve({...page([asset('a',{metadata_revision:2,title:'Newer page'})]),catalogue:{...catalogue,revision:3}});
+      s.reads[r+1].resolve({...collections(),catalogue:{...catalogue,revision:3}});assert.equal(await reading,true);
+      s.writes[n].resolve({workspace_id:scope,catalogue,items:[old]});assert.equal(await observing,false);
+      assert.equal(s.run("assetRecord('a').metadata_revision"),2);assert.match(s.el('#assetGrid').innerHTML,/Newer page/);
+      await observe(s,[{id:'a',state:'missing',asset:null}],{...catalogue,revision:4});
+      assert.equal(s.run("assetRecord('a')"),null);assert.doesNotMatch(s.el('#assetGrid').innerHTML,/data-asset-card="a"/);
+      assert.equal(s.run("assetSelection.has('a')"),true);
+    }
   });
   console.log('Asset metadata cache contracts: '+passed+' passed, '+failed+' failed');if(failed)process.exitCode=1;
 })().catch(error=>{console.error(error);process.exitCode=1;});

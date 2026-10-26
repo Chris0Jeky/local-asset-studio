@@ -5,7 +5,7 @@ let assetSignature = '', assetRefreshing = false, assetWorkspaceEpoch = 0, asset
 // Bumped when a confirmed receipt advances a loaded record in place: a library read that overlapped it is stale (#1436).
 let assetReceiptEpoch = 0;
 // Page rows and explicitly resolved IDs are separate: absence from a page proves nothing about an ID.
-let assetPaging=null,assetResolved=new Map(),assetResolveRequest=0,assetOpenRequest=0,assetCollectionBusy=false;
+let assetPaging=null,assetResolved=new Map(),assetResolveRequest=0,assetOpenRequest=0,assetCollectionBusy=false,assetObservationEpoch=0,assetPageEpoch=0;
 function assetRecord(id){
   const page=assetState.assets.find(a=>a.id===id),item=assetResolved.get(id);
   if(!item)return page;
@@ -25,12 +25,14 @@ function assetPageFilters(){const filters={visibility:assetScope==='trash'?'tras
 function assetPageQuery(){return JSON.stringify(assetPageFilters());}
 function assetReadURL(path,query){return path+'?'+Object.entries(query).filter(([,v])=>v!==null&&v!==undefined).map(([k,v])=>encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');}
 async function resolveAssetIDs(ids){
-  const scope=assetState.workspace_id,epoch=assetWorkspaceEpoch,receipt=assetReceiptEpoch;
+  const scope=assetState.workspace_id,epoch=assetWorkspaceEpoch,receipt=assetReceiptEpoch,page=assetPageEpoch;
   requireAssetScope(scope);
   const result=await api('/api/assets/selection',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({workspace_id:scope,ids,details:true})});
-  if(assetState.workspace_id!==scope || assetWorkspaceEpoch!==epoch || assetReceiptEpoch!==receipt)return false;
+  if(assetState.workspace_id!==scope || assetWorkspaceEpoch!==epoch || assetReceiptEpoch!==receipt || assetPageEpoch!==page)return false;
   if(result?.workspace_id!==scope || !Array.isArray(result.items) || result.items.length!==ids.length || result.items.some((item,i)=>item.id!==ids[i] || !['active','trashed','missing'].includes(item.state) || (item.state==='missing'?item.asset!==null:!validAssetMetadata(item.asset)||item.asset.id!==item.id||item.asset.workspace_id!==scope)))throw Error('The selected-ID observation is invalid. Nothing was changed.');
   for(const item of result.items)rememberAssetObservation(item);
+  assetObservationEpoch++;   // an older held page must not clear this newer explicit observation
+  if(result.items.some(item=>assetState.assets.some(a=>a.id===item.id)))renderAssets();
   return true;
 }
 async function resolveAssetSelection(){
@@ -400,19 +402,20 @@ async function refreshAssets(force=false,position=null) {
   assetRefreshing=true;
   const query=assetPageQuery(),filters=assetPageFilters();
   try {
-    let data,epoch,page,collections;
+    let data,epoch,observation,page,collections;
     let cursor=position?position.cursor:!force&&assetPaging?.query===query?assetPaging.cursor:null;
     let history=position?position.history:!force&&assetPaging?.query===query?assetPaging.history:[];
     // A replayed page cursor goes stale when the catalogue moves on: a background or view-switch read then restarts at page 1.
     let replayed=!position&&cursor!==null,fellBack=false;
     const read=()=>Promise.all([api(assetReadURL('/api/assets/page',{...filters,limit:100,details:true,cursor})),api(assetReadURL('/api/collections',{workspace_id:page?.workspace_id,limit:100}))]);
+    const current=()=>epoch===assetReceiptEpoch && observation===assetObservationEpoch;
     let reads=0;do{
-      epoch=assetReceiptEpoch;
+      epoch=assetReceiptEpoch;observation=assetObservationEpoch;
       try{[page,collections]=await read();}
       catch(e){if(!replayed||e.data?.code!=='asset_cursor_stale')throw e;replayed=false;fellBack=true;cursor=null;history=[];[page,collections]=await read();}
       if(epoch!==assetReceiptEpoch){cursor=null;history=[];}
-    }while(epoch!==assetReceiptEpoch&&++reads<5);   // re-read while saves land, at most five times
-    if(epoch!==assetReceiptEpoch)return false;   // still racing saves: keep the newer local records; the next poll reads again
+    }while(!current()&&++reads<5);   // at most five reads; only a write receipt resets the requested page
+    if(!current())return false;   // still racing saves/ID observations: keep the newer records; the next poll reads again
     if(query!==assetPageQuery())return false;
     if(!StudioAssetRecovery.workspace(page?.workspace_id) || page.workspace_id!==collections?.workspace_id || JSON.stringify(page.catalogue)!==JSON.stringify(collections.catalogue) || !Array.isArray(page.assets) || !Array.isArray(collections.collections))throw Error('Library reads changed Workspace or catalogue. Refresh to try again.');
     data={assets:page.assets,collections:collections.collections,workspace_id:page.workspace_id};
@@ -420,7 +423,7 @@ async function refreshAssets(force=false,position=null) {
     const previousScope=assetState.workspace_id;
     const sameCatalogue=previousScope===data.workspace_id && JSON.stringify(assetPaging?.catalogue)===JSON.stringify(page.catalogue);
     if(!force&&sameCatalogue){data.collections=assetState.collections;collections.next_cursor=assetPaging.collectionNext;}
-    assetState=data;
+    assetState=data;assetPageEpoch++;   // older selected-ID replies, including missing, no longer own this observation
     if(!sameCatalogue)assetResolved.clear();   // an unchanged catalogue keeps what the operator resolved; a changed one invalidates it
     else for(const asset of data.assets){const item=assetResolved.get(asset.id);if(item)rememberAssetObservation(item);}
     assetPaging={query,cursor,history:[...history],next:page.next_cursor,collectionNext:collections.next_cursor,catalogue:page.catalogue};
