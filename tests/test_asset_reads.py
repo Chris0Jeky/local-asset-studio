@@ -62,6 +62,68 @@ class AssetReadTests(unittest.TestCase):
         self.assertEqual(self.page(filters={'visibility': 'trash'})['assets'], [])
         self.assertIsNone(self.page(filters={'visibility': 'trash'})['next_cursor'])
 
+    def test_source_filter_precedes_page_limit_and_keeps_make_runs_in_mine(self):
+        self.seed(100, 7)
+        with self.store.connection() as db:
+            db.execute("UPDATE assets SET run_label='Agent lab'")
+            db.executemany('UPDATE assets SET run_label=? WHERE id=?', [
+                (None, 'asset-000000'), ('', 'asset-000001'),
+                ('Make · Fix face', 'asset-000002'), ('make · lower case', 'asset-000003'),
+                ('Make ·', 'asset-000004')])
+        # Every personal result is beyond the first unfiltered page.
+        self.assertFalse({'asset-000000', 'asset-000001', 'asset-000002'} &
+                         {a['id'] for a in self.page(limit=100)['assets']})
+        first = self.page(limit=2, filters={'source': 'mine'})
+        second = self.page(limit=2, filters={'source': 'mine'}, cursor=first['next_cursor'])
+        self.assertEqual([a['id'] for a in first['assets'] + second['assets']],
+                         ['asset-000002', 'asset-000001', 'asset-000000'])
+        self.assertIsNone(second['next_cursor'])
+        agents = self.page(limit=100, sort='oldest', filters={'source': 'agent'})
+        self.assertEqual([a['id'] for a in agents['assets'][:2]], ['asset-000003', 'asset-000004'])
+        self.assertEqual(len(agents['assets']), 100)
+
+    def test_source_cursor_identity_and_legacy_all_source_query_are_preserved(self):
+        from studio_workflow.asset_reads import DEFAULT_FILTERS, page_query_hash, _cursor
+        from studio_workflow.core import canonical
+        import hashlib
+        legacy = {key: value for key, value in DEFAULT_FILTERS.items() if key != 'source'}
+        first = self.page(limit=2)
+        self.assertEqual(first['filters'], legacy)
+        self.assertEqual(_cursor(first['next_cursor'])['query_sha256'], hashlib.sha256(canonical(legacy)).hexdigest())
+        self.assertEqual(self.page(limit=2, filters={'source': 'all'}, cursor=first['next_cursor'])['assets'][0]['id'], 'asset-000004')
+        mine = self.page(limit=2, filters={'source': 'mine'})
+        self.assertEqual(_cursor(mine['next_cursor'])['query_sha256'], page_query_hash(mine['filters'], None, 'newest'))
+        for source in ('all', 'agent'):
+            self.expect_error('asset_cursor_mismatch', self.page, limit=2,
+                              filters={'source': source}, cursor=mine['next_cursor'])
+
+    def test_source_filter_composes_with_scope_search_and_read_only_connection(self):
+        collection = self.store.collection({'name': 'Source subset'})['id']
+        with self.store.connection() as db:
+            db.execute("UPDATE assets SET favorite=1,review='selected',run_label='Agent lab'")
+            db.execute("UPDATE assets SET run_label='Make · Portrait' WHERE id='asset-000000'")
+            db.execute("UPDATE assets SET trashed_at=1 WHERE id='asset-000006'")
+            db.executemany('INSERT INTO collection_assets VALUES (?,?)',
+                           [(collection, 'asset-000000'), (collection, 'asset-000005')])
+        original = self.store.connection
+        @contextmanager
+        def readonly():
+            with original() as db:
+                db.execute('PRAGMA query_only=ON'); yield db
+        with patch.object(self.store, 'connection', readonly), \
+             patch.object(self.store, 'snapshot', side_effect=AssertionError('Full snapshot')):
+            result = self.page(filters={'source': 'agent', 'favorite': True,
+                                       'review': 'selected', 'collection_id': collection}, q='Title', sort='title')
+            self.assertEqual([a['id'] for a in result['assets']], ['asset-000005'])
+            trash = self.page(filters={'source': 'agent', 'visibility': 'trash'})
+            self.assertEqual([a['id'] for a in trash['assets']], ['asset-000006'])
+
+    def test_source_filter_invalid_values_refuse_before_database_access(self):
+        with patch.object(self.store, 'connection', side_effect=AssertionError('Database reached')):
+            for source in (None, True, 0, [], {}, '', 'Mine', 'other'):
+                with self.subTest(source=source):
+                    self.expect_error('asset_read_invalid', self.page, filters={'source': source})
+
     def test_search_matches_literal_wildcards_and_backslash(self):
         with self.store.connection() as db:
             db.executemany('UPDATE assets SET title=? WHERE id=?', [

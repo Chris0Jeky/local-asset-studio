@@ -20,7 +20,8 @@ const plan={id:'c'.repeat(32),name:'Lantern keeper',kind:'comparison',axis:'cfg'
 vm.runInContext(`productionPlans=${JSON.stringify([plan])};productionId=${JSON.stringify(plan.id)};renderProduction();`,context);
 (async()=>{
   let html=$('#productionDetail').innerHTML;
-  assert.deepEqual([...html.matchAll(/data-candidate-check="(\w+)" data-asset="asset-c"/g)].map(m=>m[1]),['style','anatomy','composition','clean'],'asset-c has its four chips on the first render, before any refresh');
+  assert.match(html,/data-candidate-check-load="asset-c"/,'the first render offers a read for a candidate whose saved answers have not been observed');
+  assert.doesNotMatch(html,/data-candidate-check="\w+" data-asset="asset-c"/,'an unloaded candidate is not falsely labelled not checked');
   assert.match(html,/<p class="muted candidate-check-count">style 1\/1 · clean 0\/1<\/p>/,'candidate A counts its owner answers');
   assert.equal((html.match(/candidate-check-count/g)||[]).length,1,'candidate B has no answers, so no count');
   assert.deepEqual([...html.matchAll(/data-candidate-check="(\w+)" data-asset="asset-b"/g)].map(m=>m[1]),['style','anatomy','composition','clean']);

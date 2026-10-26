@@ -116,13 +116,15 @@ function writeProductionDetail(plan,html){
   const detail=$('#productionDetail'),active=typeof document!=='undefined'?document.activeElement:null;
   if(productionDrafts.plan!==plan)dropProductionDrafts();
   const focus=active?.id&&detail.contains?.(active)&&productionDetailPlan===plan?{id:active.id,start:active.selectionStart,end:active.selectionEnd,direction:active.selectionDirection,scroll:active.scrollTop}:null;
+  const candidateFocus=detail.contains?.(active)&&productionDetailPlan===plan?Object.fromEntries(['candidateCheck','asset','candidateCheckLoad','candidateReview','candidateAsset','candidateOpen','chooseCandidate'].filter(key=>active?.dataset?.[key]!=null).map(key=>[key,active.dataset[key]])):{};
   detail.innerHTML=html;productionDetailPlan=plan;
   for(const [id,value] of Object.entries(productionDrafts.fields)){const el=detail.querySelector?.('#'+id);if(el)el.value=value;}
-  const el=focus&&detail.querySelector?.('#'+focus.id);if(!el)return;
+  const candidates=Object.keys(candidateFocus).length?[...(detail.querySelectorAll?.('[data-candidate-check],[data-candidate-check-load],[data-candidate-review],[data-candidate-open],[data-choose-candidate]')||[])]:[];
+  const el=focus&&detail.querySelector?.('#'+focus.id)||candidates.find(button=>Object.entries(candidateFocus).every(([key,value])=>button.dataset[key]===value))||candidates.find(button=>candidateFocus.candidateCheckLoad&&button.dataset.asset===candidateFocus.candidateCheckLoad&&button.dataset.candidateCheck);if(!el)return;
   el.focus?.({preventScroll:true});
   // Number inputs have no caret API and throw on setSelectionRange; focus alone is right for them.
-  try{if(typeof focus.start==='number'&&typeof focus.end==='number')el.setSelectionRange(focus.start,focus.end,focus.direction||'none');}catch(err){}
-  if(typeof focus.scroll==='number')el.scrollTop=focus.scroll;
+  try{if(typeof focus?.start==='number'&&typeof focus?.end==='number')el.setSelectionRange(focus.start,focus.end,focus.direction||'none');}catch(err){}
+  if(typeof focus?.scroll==='number')el.scrollTop=focus.scroll;
 }
 function renderProduction(){
   renderPlanList();
@@ -152,9 +154,10 @@ function renderProduction(){
         // dialog uses.  Blind mode hides settings, never the pictures, so marking a
         // keeper here reveals nothing about which variant produced it.
         if(o.media_type==='image')html+='<div class="candidate-review"><button data-candidate-review="selected" data-candidate-asset="'+o.asset_id+'">Keep</button><button data-candidate-review="needs_work" data-candidate-asset="'+o.asset_id+'">Needs work</button></div>';
-        // The set comes from the stage's own recipe, so a candidate that finished after the last Workspace read still gets chips.
+        // The recipe chooses the checks; only observed Workspace metadata can say whether they have an answer.
         const checkNames=o.media_type==='image'?candidateCheckNames(j):[];
-        if(checkNames.length)html+='<div class="candidate-checks" role="group" aria-label="Quick checks for candidate '+esc(s.label)+'">'+StudioReviewChecks.chipsHTML({tags:candidateCheckAsset(o.asset_id)?.tags||[],names:checkNames,attr:'data-candidate-check',asset:o.asset_id,escape:esc})+'</div>';
+        if(checkNames.length){const asset=candidateCheckAsset(o.asset_id),missing=typeof assetResolved!=='undefined'&&assetResolved.get(o.asset_id)?.state==='missing';
+          html+='<div class="candidate-checks" role="group" aria-label="Quick checks for candidate '+esc(s.label)+'">'+(asset?StudioReviewChecks.chipsHTML({tags:asset.tags,names:checkNames,attr:'data-candidate-check',asset:o.asset_id,escape:esc}):'<p class="muted">'+(missing?'Saved checks unavailable: this picture is not in the Library.':'Saved checks not loaded. Read them before answering.')+'</p><button type="button" data-candidate-check-load="'+esc(o.asset_id)+'">'+(missing?'Retry saved checks':'Load saved checks')+'</button>')+'</div>';}
       }
       // The recipe carries the exact settings, so it stays hidden while blind, like the labels, until Reveal.
       if(j)html+='<details><summary>Execution record</summary><small>'+esc(j.message)+'</small><p>'+esc((j.prompt_ids||[]).join(', '))+'</p>'+(j.tracking_disposition?.status==='stopped'?'<p><b>Tracking stopped</b>: '+esc(j.tracking_disposition.reason)+'</p>':'')+(blindComparison?'<small class="muted">Recipe hidden while comparing blind. Reveal settings to see the recipe.</small>':'<button data-job-recipe="'+j.id+'">Recipe</button>')+'</details>';
@@ -345,6 +348,21 @@ async function reviewCandidateAsset(id,review){
 // Counts per candidate come only from those owner answers; the comparison's own outcome is untouched.
 function candidateCheckAsset(id){return globalThis.StudioReviewChecks&&typeof assetState!=='undefined'?candidateRecord(id):null;}
 function candidateCheckNames(job){return globalThis.StudioReviewChecks&&job?StudioReviewChecks.forPreset((typeof catalog==='undefined'?[]:catalog?.presets||[]).find(p=>p.id===job.preset_id)):[];}
+const candidateChecksLoading=new Set();
+function candidateHasImage(plan,id){return plan?.kind==='comparison'&&(plan.stages||[]).some(stage=>(stage.job?.outputs||[]).some(output=>output.asset_id===id&&output.media_type==='image'));}
+async function loadCandidateChecks(id){
+  const plan=productionId,scope=typeof assetState==='undefined'?null:assetState.workspace_id,epoch=typeof assetWorkspaceEpoch==='undefined'?null:assetWorkspaceEpoch;
+  const current=()=>productionId===plan&&productionDetailPlan===plan&&(typeof assetState==='undefined'?null:assetState.workspace_id)===scope&&(typeof assetWorkspaceEpoch==='undefined'?null:assetWorkspaceEpoch)===epoch&&candidateHasImage(productionPlans.find(p=>p.id===plan),id);
+  if(!id||!candidateHasImage(productionPlans.find(p=>p.id===plan),id)||candidateChecksLoading.has(id))return false;
+  candidateChecksLoading.add(id);productionMessage('Reading saved checks…');
+  try{
+    if(!scope||typeof resolveAssetIDs!=='function')throw Error('The Library is not ready. Refresh it, then load these saved checks again.');
+    const observed=await resolveAssetIDs([id]);if(!current())return false;
+    if(!observed)throw Error('The saved checks changed while loading. Load them again before answering.');
+    renderProduction();productionMessage(candidateCheckAsset(id)?'Saved checks loaded. No answer was changed.':'This candidate is no longer in the Library. No answer was changed.');return true;
+  }catch(error){if(current())productionMessage(error.message,true);return false;}
+  finally{candidateChecksLoading.delete(id);}
+}
 let candidateCheckBusy=false;
 async function checkCandidateAsset(id,name){
   if(candidateCheckBusy){productionMessage('Still saving the last answer. Press again in a moment. Nothing was changed.');return;}
@@ -372,6 +390,7 @@ $('#productionDetail').onclick=async e=>{if(e.target.closest('[data-plan-compari
   const recipe=e.target.closest('[data-job-recipe]')?.dataset.jobRecipe;
   const mark=e.target.closest('[data-candidate-review]');
   if(mark){await reviewCandidateAsset(mark.dataset.candidateAsset,mark.dataset.candidateReview);return;}
+  const loadChecks=e.target.closest('[data-candidate-check-load]');if(loadChecks){await loadCandidateChecks(loadChecks.dataset.candidateCheckLoad);return;}
   const checkChip=e.target.closest('[data-candidate-check]');if(checkChip){await checkCandidateAsset(checkChip.dataset.asset,checkChip.dataset.candidateCheck);return;}
   if(open){await refreshAssets();openAsset(open);return;}if(recipe){await exportRecipe(recipe);return;}
   if(action==='branch'){applySaved({preset:p.recipe.preset_id,controls:p.recipe.controls,references:p.recipe.references,parent_assets:p.recipe.parent_assets});await openComparison(p);return;}

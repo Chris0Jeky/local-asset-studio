@@ -30,13 +30,24 @@ saved with an asset. Scope, sort and media type are remembered the same way, and
 the search text for this tab only, so a reload keeps your view; a remembered
 collection that has since been deleted opens All assets.
 
-**Source** (*Mine / Agent runs / All sources*) appears once any asset carries a
-run label. Agent runs are assets whose job was submitted with a `label` (see
-below); everything else, including every asset registered before labels existed,
-counts as Mine. Until you choose, the library shows **Mine**; the choice is
-remembered in this browser like grouping. The count line says how many assets
-the source hides, and **Review next** queues only the assets in the current
-source, scope and filters.
+**Source** (*Mine / Agent runs / All sources*) stays available in the paged
+Library, including an empty filtered page. Agent runs have a nonempty run label
+except labels beginning with the exact `Make · ` prefix, which describe your
+personal Make results. Unlabelled assets, including those registered before
+labels existed, also count as Mine. Until you choose, the Library shows **Mine**;
+the choice is remembered in this browser like grouping.
+
+The server applies source, scope, search and media filters before choosing each
+bounded page, so newer agent results cannot hide older personal results from
+Mine. Changing source starts that query at page 1 and retains the complete
+checkbox selection. Counts and **Review next** describe the loaded page. An
+empty Mine or Agent view offers **Show all sources** without claiming that the
+whole Library is empty.
+
+This resolves only the source-filter-before-pagination item in
+[#1627](https://github.com/Chris0Jeky/local-asset-studio/issues/1627). That issue
+remains open for other page-only consumers, canonical-cache freshness, bulk
+command page preservation and read transaction boundaries.
 
 When an asset still has its registered title (*recipe · N*), its card shows the
 first 60 characters of the job's positive prompt under the title; the asset

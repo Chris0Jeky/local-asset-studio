@@ -96,6 +96,17 @@ class ReviewedSetupHistoryTests(unittest.TestCase):
         self.assertEqual(result['left_revision'], 1)
         self.assertFalse(result['generation_submitted'])
 
+    def test_comparison_reports_a_changed_prepared_look_option(self):
+        self.before['recipe']['look']={'id':'look-night-shift','name':'Night Shift','revision':2,'options':{'quiet_wall':True}}
+        key=self.revisions(1);changed=copy.deepcopy(self.before)
+        changed['recipe']['look']['options']['quiet_wall']=False
+        self.command('replace',draft_id=key,expected_revision=1,draft=changed)
+        result=self.history().compare(key,1,2,workspace_id=self.scope)
+        lineage=next(row for row in result['sections'] if row['section']=='lineage')
+        self.assertTrue(lineage['changed'])
+        self.assertTrue(json.loads(lineage['left']['preview'])['look']['options']['quiet_wall'])
+        self.assertFalse(json.loads(lineage['right']['preview'])['look']['options']['quiet_wall'])
+
     def test_metadata_export_omits_runtime_paths_and_has_distinct_exact_digest(self):
         key = self.revisions(1)
         result = self.history().export_revision(key, 1, workspace_id=self.scope)

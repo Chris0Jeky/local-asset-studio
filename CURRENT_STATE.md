@@ -1,5 +1,32 @@
 # Current state — 13 October 2026
 
+## Review workflow and download integrity follow-ups — 26 October 2026
+
+Quick-check edits preserve keyboard focus, compare tag sets without false dirty states, and
+explicitly load unobserved comparison answers before displaying them. Create-card counts use
+confirmed metadata while retaining their loaded-page scope. Look attribution survives reviewed
+setup history and same-recipe reruns; Make results show the existing layout diagnostic.
+Mine/Agent filtering now runs before bounded pagination, so newer agent assets cannot hide
+older personal results. Source choices retain selection and remain available on empty pages;
+the broader #1627 remains open.
+
+The grid browser's two reproduced sort/read races now wait for the matching page, including a
+400 ms delayed-response case. Download failures retain complete recovery paths and cleanup
+instructions, direct peers are checked before TLS, and the Linux/Windows intake matrix covers
+the transport and publication contracts. Full-suite scheduling avoids duplicate PR branch-push
+runs while retaining the suite, leak checks, provenance and validation gates.
+Qualification also reproduced an existing early-bootstrap race (#1649): startup now waits for
+its companion scripts, with a deliberately delayed-script browser regression. Restyle fixture
+resets use a cloned synthetic source; actual copy actions retain native HTTP and error checks.
+
+The [dated verification record](docs/verification/2026-10-26-review-workflows.md) separates scoped
+local/browser evidence from published-head CI and merge-tree qualification. The separate
+[download record](docs/verification/2026-10-26-model-download-integrity.md) preserves the Windows
+rename-denial limit and corrects the alleged redirect-response leak as not reproduced. Prior
+failed or timed-out runs below remain historical evidence; current gate results are recorded
+on the qualified PR heads. No installed runtime change, model download or generation occurred.
+`HUMAN_TODO.md` and its owner decisions are unchanged; #2 and the broader #1627 remain open.
+
 ## Quick review check follow-up - 25 October 2026 (#1211)
 
 Dedicated character/portrait and background/environment presets now author an optional `review_set`.

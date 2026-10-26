@@ -6,6 +6,12 @@ from pathlib import Path
 
 class AssetMetadataFrontend(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node.js required')
+    def test_quick_check_interactions(self):
+        result=subprocess.run([shutil.which('node'),str(Path(__file__).with_name('review_check_interactions.cjs'))],capture_output=True,text=True,timeout=20)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertIn('Review check interaction contracts passed:',result.stdout)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js required')
     def test_revision_and_receipt_contracts(self):
         result=subprocess.run([shutil.which('node'),str(Path(__file__).with_name('asset_metadata_frontend.cjs'))],capture_output=True,text=True,timeout=20)
         self.assertEqual(result.returncode,0,result.stdout+result.stderr)

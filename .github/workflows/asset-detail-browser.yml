@@ -8,6 +8,7 @@ on:
       - 'tests/test_collection*'
       - 'app/workspace.py'
       - 'app/server.py'
+      - 'studio_workflow/asset_read*.py'
       - 'tests/asset_workspace*'
       - 'tests/test_asset_workspace*'
       - 'tests/asset_metadata*'
@@ -16,6 +17,7 @@ on:
       - 'tests/test_asset_grid*'
       - 'tests/asset_library*'
       - 'tests/test_asset_library*'
+      - 'tests/asset_source_filter*'
       - 'tests/asset_detail*'
       - 'tests/test_asset_detail*'
       - 'tests/asset_reload_browser.py'
@@ -64,12 +66,13 @@ jobs:
         if: matrix.response-delay-ms == 0
         run: |
           node tests/asset_library_contracts.cjs
+          node tests/asset_source_filter_frontend.cjs
           python tests/asset_library_browser.py --out .runtime/asset-library-proof
+          python tests/asset_source_filter_browser.py --out .runtime/asset-source-proof
       - name: Stable grid focus and preview lifecycle
-        if: matrix.response-delay-ms == 0
         run: |
           node tests/asset_grid_contracts.cjs
-          python tests/asset_grid_browser.py --out .runtime/asset-grid-proof
+          python tests/asset_grid_browser.py --out .runtime/asset-grid-proof --response-delay-ms ${{ matrix.response-delay-ms }}
       - name: Addressable figure editor recovery
         if: matrix.response-delay-ms == 0
         run: |
@@ -90,6 +93,7 @@ jobs:
             .runtime/asset-metadata-proof/
             .runtime/asset-workspace-proof/
             .runtime/asset-library-proof/
+            .runtime/asset-source-proof/
             .runtime/asset-grid-proof/
             .runtime/addressable-figures-proof/
             .runtime/collection-editor-proof/

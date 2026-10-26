@@ -106,6 +106,32 @@ page.__choiceFailure=true; await assert.rejects(copy(),/Synthetic copy unavailab
 assert.equal(reads.length,0);
 """)
 
+    def test_reset_seeds_an_independent_source_without_a_network_copy(self):
+        self.run_case("""
+const source={file:'fixture.png',parent_asset:'asset-0',context:{title:'Original fixture'}};
+const positive={value:''},adopted=[];
+page.__choiceSource=source;page.structuredClone=structuredClone;
+page.selectPreset=()=>{};page.document={querySelector:()=>positive};
+page.showView=()=>{};page.updateReady=()=>{};
+page.post=(url,data)=>page.api(url,{body:JSON.stringify(data)});
+page.beginContinuation=(result,id,kind)=>adopted.push({result,id,kind});
+const reset=page.__choiceReset('qwen-3ref');
+// The hosted Windows failure was this setup fetch rejecting before any HTTP response.
+for(const read of reads)read.reject(TypeError('Failed to fetch'));
+await reset;
+assert.equal(reads.length,0,'scenario reset must not depend on an unrelated native HTTP copy');
+assert.equal(adopted.length,1);assert.equal(adopted[0].id,'qwen-3ref');assert.equal(adopted[0].kind,'edit');
+assert.deepEqual(adopted[0].result,source);assert.notEqual(adopted[0].result,source);
+assert.notEqual(adopted[0].result.context,source.context);
+adopted[0].result.context.title='Changed by scenario';
+await page.__choiceReset('qwen-2ref');
+assert.equal(adopted[1].result.context.title,'Original fixture');
+assert.equal(positive.value,'Keep my source and edited wording');
+// The behavior under test still uses native transport, and its failures remain observable.
+const action=copy();const refused=assert.rejects(action,/Failed to fetch/);
+assert.equal(reads.length,1);reads.shift().reject(TypeError('Failed to fetch'));await refused;
+""")
+
 
 if __name__ == '__main__':
     unittest.main()

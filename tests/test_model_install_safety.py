@@ -86,10 +86,11 @@ class InstallSafetyTests(unittest.TestCase):
             os.utime(source,ns=(identity['mtime_ns'],identity['mtime_ns']))
             return rename(source,target)
         with patch.object(contracts.os,'name','nt'),patch.object(contracts.os,'link',side_effect=OSError('no links')),patch.object(contracts.os,'rename',side_effect=swap):
-            with self.assertRaisesRegex(ValueError,'^Published file does not match the verified digest; files preserved for inspection$'):
+            with self.assertRaisesRegex(ValueError,'Published file does not match the verified digest') as caught:
                 contracts.publish_verified(self.part,self.target,identity,self.asset['sha256'])
         # Unverified bytes never stay at the model's name: they go back to the staging name; the original is untouched.
         self.assertFalse(self.target.exists());self.assertEqual(self.part.read_bytes(),replacement);self.assertEqual(saved.read_bytes(),self.body)
+        self.assertEqual(getattr(caught.exception,'unverified_path',None),self.part)
 
     def test_rename_rejects_a_write_during_the_digest(self):
         # A writer that changes the published file while it is being hashed must not leave a verified receipt behind.
@@ -97,12 +98,12 @@ class InstallSafetyTests(unittest.TestCase):
         def hash_then_write(path):
             digest=real(path);path.write_bytes(b'y'*len(self.body));return digest
         with patch.object(contracts.os,'name','nt'),patch.object(contracts.os,'link',side_effect=OSError('no links')),patch.object(contracts,'sha256',side_effect=hash_then_write):
-            with self.assertRaisesRegex(ValueError,'^Published file does not match the verified digest; files preserved for inspection$'):
+            with self.assertRaisesRegex(ValueError,'Published file does not match the verified digest'):
                 contracts.publish_verified(self.part,self.target,identity,self.asset['sha256'])
         self.assertFalse(self.target.exists());self.assertEqual(self.part.read_bytes(),b'y'*len(self.body))
 
     def failed_rollback(self,refused):
-        # Publish by rename, fail the digest, then refuse the first `refused` rollback renames (a reader holds the file).
+        # One refused rename models a transient/name conflict; persistent Windows share-delete denial refuses both.
         self.part.write_bytes(self.body);identity=contracts.file_identity(self.part);rename=os.rename;calls=[]
         def flaky(source,target):
             calls.append(target)
@@ -110,17 +111,55 @@ class InstallSafetyTests(unittest.TestCase):
             return rename(source,target)
         with patch.object(contracts.os,'name','nt'),patch.object(contracts.os,'link',side_effect=OSError('no links')),patch.object(contracts.os,'rename',side_effect=flaky),patch.object(contracts,'sha256',return_value='0'*64):
             with self.assertRaises(ValueError) as caught:contracts.publish_verified(self.part,self.target,identity,self.asset['sha256'])
-        return str(caught.exception),calls
+        return caught.exception,calls
 
     def test_failed_move_back_quarantines_unverified_bytes(self):
-        message,calls=self.failed_rollback(1)
-        self.assertEqual(message,'Published file does not match the verified digest; files preserved for inspection')
+        error,calls=self.failed_rollback(1)
+        self.assertIn(str(calls[-1]),str(error))
         self.assertFalse(self.target.exists());self.assertFalse(self.part.exists())
         self.assertTrue(calls[-1].name.endswith('.unverified'));self.assertEqual(calls[-1].read_bytes(),self.body)
+        self.lib._failed(self.asset,error)
+        receipt=self.receipt()
+        self.assertEqual(receipt.get('unverified_path'),str(calls[-1]))
+        self.assertIn('manually',receipt.get('cleanup',''))
+        self.assertIn(receipt['cleanup'],receipt['message'])
+        self.assertEqual(calls[-1].read_bytes(),self.body)  # Reporting never deletes the retained bytes.
 
     def test_unmovable_unverified_bytes_fail_naming_the_published_path(self):
-        message,calls=self.failed_rollback(2)
-        self.assertIn('unverified bytes remain at '+str(self.target),message);self.assertEqual(len(calls),3)
+        error,calls=self.failed_rollback(2)
+        self.assertIn('unverified bytes remain at '+str(self.target),str(error));self.assertEqual(len(calls),3)
+        self.lib._failed(self.asset,error)
+        receipt=self.receipt()
+        self.assertEqual(receipt.get('unverified_path'),str(self.target))
+        self.assertIn('Do not load',receipt['message']);self.assertIn('Close',receipt.get('cleanup',''))
+        self.assertEqual(self.target.read_bytes(),self.body);self.assertFalse(self.part.exists())
+
+    def test_long_unverified_path_and_cleanup_survive_failure_receipt_and_reload(self):
+        # Paths can exceed the UI message budget. The receipt must keep the complete path separately.
+        path=self.target.parent.joinpath(*(['deep-model-folder']*24),'demo.safetensors')
+        cleanup='Do not load this model. Close any reader, then inspect and move or remove the unverified file manually before retrying.'
+        error=ValueError('Unverified bytes remain at '+str(path)+'. '+cleanup)
+        error.unverified_path=path;error.cleanup=cleanup
+        self.lib._failed(self.asset,error)
+        restored=models.ModelLibrary(self.root,self.root/'comfy').snapshot()['assets'][0]['download']
+        self.assertEqual(restored.get('unverified_path'),str(path))
+        self.assertEqual(restored.get('cleanup'),cleanup)
+        self.assertIn(cleanup,restored['message']);self.assertLessEqual(len(restored['message']),300)
+
+    def test_quarantine_preserves_a_competing_staging_file(self):
+        self.part.write_bytes(self.body);identity=contracts.file_identity(self.part);rename=os.rename
+        competing=b'another writer owns the staging name';calls=[]
+        def conflicted(source,target):
+            calls.append(target)
+            if len(calls)==1:
+                rename(source,target);source.write_bytes(competing);return
+            if target==self.part:raise FileExistsError('staging name occupied')
+            return rename(source,target)
+        with patch.object(contracts.os,'name','nt'),patch.object(contracts.os,'link',side_effect=OSError('no links')),patch.object(contracts.os,'rename',side_effect=conflicted),patch.object(contracts,'sha256',return_value='0'*64):
+            with self.assertRaises(ValueError) as caught:contracts.publish_verified(self.part,self.target,identity,self.asset['sha256'])
+        self.lib._failed(self.asset,caught.exception)
+        self.assertEqual(self.part.read_bytes(),competing);self.assertEqual(calls[-1].read_bytes(),self.body)
+        self.assertEqual(self.receipt().get('unverified_path'),str(calls[-1]));self.assertFalse(self.target.exists())
 
     def test_rename_requires_digest_before_moving_stage(self):
         self.part.write_bytes(self.body);identity=contracts.file_identity(self.part)

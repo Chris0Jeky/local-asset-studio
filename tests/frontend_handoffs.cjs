@@ -102,6 +102,35 @@ async function aFailedStartupStageDoesNotStopTheRest() {
   assert.match(element('#status').textContent + ' ' + element('#status').innerHTML, /Setup store unreadable|Saved setups/, 'the failed stage is reported');
 }
 
+async function startupWaitsForCompanionScripts() {
+  const app=fs.readFileSync(path.join(__dirname,'../app/static/app.js'),'utf8');
+  const startup=app.slice(app.lastIndexOf('(async()=>{'));
+  for(const state of ['loading','complete']){
+    const calls=[],listeners=new Map(),elements=new Map();let failure=null;
+    const context=vm.createContext({
+      document:{readyState:state,addEventListener(name,fn){listeners.set(name,fn);}},
+      location:{hash:''},catalog:null,readPoller:null,
+      $:id=>{if(!elements.has(id))elements.set(id,{});return elements.get(id);},esc:String,
+      api:async()=>({presets:[{id:'plain',category:'Images'}]}),loadAtelier:async()=>{},
+      selectPreset:id=>calls.push('selected:'+id),message:text=>calls.push('message:'+text),
+      loadSetups:async()=>calls.push('setups'),health:async()=>calls.push('health'),refresh:async()=>calls.push('jobs'),
+      refreshLibrary:async()=>calls.push('models'),showView(){},
+      configureReadPolling(){context.readPoller={start:()=>calls.push('polling')};}
+    });
+    if(state==='complete')context.refreshAssets=async()=>calls.push('assets');
+    const finished=vm.runInContext(startup,context).catch(error=>{failure=error;});
+    await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(failure,null,'a fast catalogue cannot start companion reads while workspace.js is still loading');
+    if(state==='loading'){
+      assert.ok(!calls.includes('health'),'health starts with the complete companion scripts');
+      context.refreshAssets=async()=>calls.push('assets');context.document.readyState='interactive';
+      assert.equal(typeof listeners.get('DOMContentLoaded'),'function');listeners.get('DOMContentLoaded')();
+    }
+    await finished;assert.equal(failure,null);
+    assert.deepEqual(calls,['selected:plain','setups','health','jobs','assets','models','polling']);
+  }
+}
+
 async function avoidWordingIsVisibleWhenTheRecipeBindsIt() {
   const {element, context, run} = sandbox(sourceAttachment('a'.repeat(32) + '_retained.png'), {file: 'own-upload.png', sha256: 'e'.repeat(64), width: 512, height: 768});
   run(`catalog.presets.push({id:'binds-avoid',name:'binds-avoid',modality:'image',positive:['1','text'],negative:['2','text'],defaults:{negative:'blurry'}},
@@ -1907,6 +1936,7 @@ async function parallaxLateRepliesKeepCreateEdits() {
   await i2vDiagnosticEligibilityAndRetry();
   await unresolvedInputLineageCannotBeSaved();
   await avoidWordingIsVisibleWhenTheRecipeBindsIt();
+  await startupWaitsForCompanionScripts();
   await aFailedStartupStageDoesNotStopTheRest();
   await linkedModelFolderIsOneRow();
   await modelShopCards();

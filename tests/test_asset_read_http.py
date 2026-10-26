@@ -46,6 +46,23 @@ class AssetReadHTTPTests(unittest.TestCase):
         self.assertEqual(before,self.store.snapshot())
         with self.store.connection() as db:self.assertEqual(db.execute('SELECT COUNT(*) FROM asset_commands').fetchone()[0],0)
 
+    def test_source_filter_is_applied_before_paging_by_the_production_route(self):
+        with self.store.connection() as db:
+            db.execute("UPDATE assets SET run_label='Agent lab'")
+            db.execute("UPDATE assets SET run_label='Make · Portrait' WHERE id=?", (self.ids[0],))
+        before = self.store.snapshot()
+        status, mine, _ = self.request('GET', PAGE+'?source=mine&limit=1')
+        self.assertEqual(status, 200)
+        self.assertEqual([a['id'] for a in mine['assets']], [self.ids[0]])
+        self.assertIsNone(mine['next_cursor'])
+        status, agents, _ = self.request('GET', PAGE+'?source=agent&limit=1')
+        self.assertEqual(status, 200)
+        self.assertEqual([a['id'] for a in agents['assets']], [self.ids[2]])
+        self.assertIsNotNone(agents['next_cursor'])
+        for query in ('source=Mine', 'source=', 'source=mine&source=agent'):
+            self.assertEqual(self.request('GET', PAGE+'?'+query)[0], 400)
+        self.assertEqual(self.store.snapshot(), before)
+
     def test_retained_selection_is_not_inferred_from_one_page(self):
         self.request('GET',PAGE+'?limit=1')
         with self.store.connection() as db:db.execute('UPDATE assets SET trashed_at=0 WHERE id=?',(self.ids[1],))
@@ -82,7 +99,7 @@ class AssetReadHTTPTests(unittest.TestCase):
             db.execute('UPDATE assets SET title=?,favorite=1',(title,))
             db.executemany('INSERT INTO collection_assets VALUES (?,?)',[(col,key) for key in self.ids])
         query={'q':title,'sort':'title','workspace_id':self.scope,'limit':1,'details':'true',
-               'visibility':'active','media_type':'image','review':'unreviewed','favorite':'true','collection_id':col}
+               'visibility':'active','media_type':'image','review':'unreviewed','favorite':'true','collection_id':col,'source':'mine'}
         status,first,_=self.request('GET',PAGE+'?'+urlencode(query))
         self.assertEqual(status,200);query['cursor']=first['next_cursor']
         status,second,_=self.request('GET',PAGE+'?'+urlencode(query))

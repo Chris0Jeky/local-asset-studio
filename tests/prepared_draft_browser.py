@@ -3,6 +3,7 @@ import copy
 import json
 import os
 import threading
+import time
 from browser_ports import browser_server
 from urllib.parse import urlsplit
 
@@ -13,6 +14,10 @@ SAVED = []
 
 class Handler(fixture.Handler):
     def do_GET(self):
+        # #1649 fault injection: a fast catalogue must not start reads before its companion script exists.
+        # This delays the server response, not the browser assertion or its readiness deadline.
+        if urlsplit(self.path).path == '/static/workspace.js':
+            time.sleep(0.7)
         if urlsplit(self.path).path == '/api/setups':
             return self.json(SAVED)
         return super().do_GET()
@@ -30,7 +35,7 @@ class Handler(fixture.Handler):
 
 
 def main():
-    from playwright.sync_api import sync_playwright
+    from playwright.sync_api import sync_playwright, TimeoutError as BrowserTimeout
     tile_id = next(p['id'] for p in fixture.CATALOG['presets'] if p.get('tile_route'))
     parallax_id = next(p['id'] for p in fixture.CATALOG['presets'] if p.get('parallax_route'))
     common = {'version': 1, 'source_asset_id': 'asset-0', 'source_sha256': 'a'*64}
@@ -50,7 +55,12 @@ def main():
                         page = browser.new_page(viewport={'width': width, 'height': 1060})
                         page.on('pageerror', lambda error: errors.append(str(error)))
                         page.goto(f'http://127.0.0.1:{server.server_port}/')
-                        page.wait_for_function("typeof StudioSetupDraft !== 'undefined' && !!selected && schemaAvailable")
+                        try:
+                            page.wait_for_function("typeof StudioSetupDraft !== 'undefined' && !!selected && schemaAvailable")
+                        except BrowserTimeout:
+                            readiness = page.evaluate("({setup:typeof StudioSetupDraft,selected:typeof selected==='undefined'?null:selected?.id,schema:typeof schemaAvailable==='undefined'?null:schemaAvailable,healthError:typeof healthError==='undefined'?null:healthError,polling:typeof readPoller==='undefined'?null:!!readPoller})")
+                            print(json.dumps({'prepared_startup': readiness, 'page_errors': errors}), flush=True)
+                            raise
                         page.evaluate("showView('create')")
                         for kind, plan in plans:
                             recipe = {'preset': plan['preset_id'], kind: plan, 'batch': 1, 'parent_assets': ['asset-0'],
@@ -90,7 +100,7 @@ def main():
                     assert not errors, errors
                     allowed = {'/api/setups', '/api/recipe-check', '/api/estimate', '/api/references/check'}
                     assert all(row['path'] in allowed for row in fixture.POSTS), fixture.POSTS
-                    print('Prepared drafts: tile/parallax capture, restore, shared adoption and holds, named save, checked import, stale-source hold at desktop/mobile; no generation')
+                    print('Prepared drafts: delayed companion startup, tile/parallax capture, restore, shared adoption and holds, named save, checked import, stale-source hold at desktop/mobile; no generation')
                 finally:
                     browser.close()
         finally:

@@ -14,3 +14,12 @@ class AssetLibraryFrontend(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('Asset library contracts: 41 passed, 0 failed', result.stdout)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js required')
+    def test_paged_source_filter_contracts(self):
+        result = subprocess.run(
+            [shutil.which('node'), str(Path(__file__).with_name('asset_source_filter_frontend.cjs'))],
+            capture_output=True, text=True, timeout=20,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('tests 4', result.stdout)

@@ -1,5 +1,13 @@
 name: Check studio
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ['**']
+  workflow_dispatch:
+concurrency:
+  group: check-studio-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:

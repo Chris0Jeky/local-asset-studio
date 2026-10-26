@@ -141,7 +141,8 @@ def import_candidate(root, comfy_root, source, folder, name, expected_identity, 
         return record
     except Exception as exc:
         if record is not None:
-            try:_save(journal, record, 'needs_inspection', error=str(exc)[:500])
+            recovery={key:str(getattr(exc,key)) for key in ('unverified_path','cleanup') if getattr(exc,key,None) is not None}
+            try:_save(journal, record, 'needs_inspection', error=str(exc)[:500], **recovery)
             except Exception as report_error:exc.add_note('Intake journal update failed: ' + str(report_error))
         exc.add_note('Intake evidence: ' + str(journal) + '; source cleanup was not requested')
         raise

@@ -8,7 +8,7 @@ let assetReceiptEpoch = 0;
 let assetPaging=null,assetResolved=new Map(),assetResolveRequest=0,assetOpenRequest=0,assetCollectionBusy=false;
 function assetRecord(id){const item=assetResolved.get(id);return item?item.asset:assetState.assets.find(a=>a.id===id);}
 function assetRecords(){return [...new Map([...assetState.assets,...[...assetResolved.values()].map(i=>i.asset).filter(Boolean)].map(a=>[a.id,a])).values()];}
-function assetPageFilters(){const filters={visibility:assetScope==='trash'?'trash':'active',sort:$('#assetSort').value||'newest'},q=$('#assetSearch').value.trim();if(q)filters.q=q;if(assetScope==='favorite')filters.favorite=true;if(['selected','needs_work','unreviewed'].includes(assetScope))filters.review=assetScope;if(assetScope.startsWith('collection:'))filters.collection_id=assetScope.slice(11);if($('#assetType').value!=='all')filters.media_type=$('#assetType').value;return filters;}
+function assetPageFilters(){const filters={visibility:assetScope==='trash'?'trash':'active',sort:$('#assetSort').value||'newest',source:assetSourceChoice()},q=$('#assetSearch').value.trim();if(q)filters.q=q;if(assetScope==='favorite')filters.favorite=true;if(['selected','needs_work','unreviewed'].includes(assetScope))filters.review=assetScope;if(assetScope.startsWith('collection:'))filters.collection_id=assetScope.slice(11);if($('#assetType').value!=='all')filters.media_type=$('#assetType').value;return filters;}
 function assetPageQuery(){return JSON.stringify(assetPageFilters());}
 function assetReadURL(path,query){return path+'?'+Object.entries(query).filter(([,v])=>v!==null&&v!==undefined).map(([k,v])=>encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');}
 async function resolveAssetIDs(ids){
@@ -53,12 +53,13 @@ let assetRetainedDetail = null, assetRecoveryError = '', assetRecoveryLoadError 
 let assetGroupMode = 'none', assetSearchTimer = null, assetQueue = null, assetBulkReviewBusy = false;
 const assetGroupModes = ['recipe','day','run'], assetGroupStorageKey = 'studio.assets.group';
 // Source is a view preference like grouping: an asset with a run label (set by API callers, never by Create) is an agent run (#939).
-// Until the operator chooses, the library shows Mine once any labelled asset exists; with none, every source is shown.
+// Paged queries default to Mine independently of the rows already loaded.
 const assetSourceModes = ['mine','agent','all'], assetSourceStorageKey = 'studio.assets.source';
 let assetSourceMode = null;
 // "Make · …" labels name the person's own Make runs (make.js; Fix and Upscale in studio-workbench.js), not agent runs.
 function assetIsAgentRun(asset){return typeof asset?.run_label==='string' && asset.run_label!=='' && !asset.run_label.startsWith('Make · ');}
-function assetSource(){return !assetState.assets.some(assetIsAgentRun)?'all':assetSourceModes.includes(assetSourceMode)?assetSourceMode:'mine';}
+function assetSourceChoice(){return assetSourceModes.includes(assetSourceMode)?assetSourceMode:'mine';}
+function assetSource(){return assetPaging?assetSourceChoice():!assetState.assets.some(assetIsAgentRun)?'all':assetSourceChoice();}
 function assetSourceFilter(list, source=assetSource()){return source==='all'?list:list.filter(a=>assetIsAgentRun(a)===(source==='agent'));}
 // Existing lab outputs carry no label, so the operator marks them (#939): a label makes an agent run, clearing it makes it
 // theirs again. The label field is shared by the selection bar and group actions; blank means the default. The server
@@ -184,7 +185,9 @@ function validateAssetReceipt(result, command) {
 function assetDetailValues() {
   return {title:$('#assetTitle').value, tags:$('#assetTags').value, review:$('#assetReview').value, notes:$('#assetNotes').value};
 }
-function assetDetailDirty() { return !!assetDetailBaseline && JSON.stringify(assetDetailValues())!==JSON.stringify(assetDetailBaseline); }
+function assetTagsEqual(left,right){const a=new Set(assetTagList(left)),b=new Set(assetTagList(right));return a.size===b.size&&[...a].every(tag=>b.has(tag));}
+function assetDetailFieldEqual(key,left,right){return key==='tags'?assetTagsEqual(left,right):left===right;}
+function assetDetailDirty() { return !!assetDetailBaseline && Object.entries(assetDetailValues()).some(([key,value])=>!assetDetailFieldEqual(key,value,assetDetailBaseline[key])); }
 function assetDetailStatus(text, error=false) {
   let status=$('#assetDetailStatus');
   if(!status){status=document.createElement('p');status.id='assetDetailStatus';status.className='muted';status.setAttribute('role','status');status.setAttribute('aria-live','polite');$('#saveAssetDetails').parentElement.before(status);}
@@ -530,6 +533,10 @@ function assetEmptyState() {
   }else if((scope.length||assetPaging) && assetFiltersActive()){
     title='No matching assets';description=(assetPaging?'Nothing in this view':'This view contains '+scope.length+' assets, but none')+' matches your search and media filter. Your selection is unchanged.';
     action='<button data-asset-clear-filters>Clear filters in this view</button>';
+  }else if(assetPaging && !scope.length && assetSource()!=='all'){
+    title=assetSource()==='mine'?'None of your own runs here':'No agent runs here';
+    description='No '+(assetSource()==='mine'?'personal':'agent-run')+' assets match this view and its filters. Choose All sources to include every run.';
+    action='<button data-asset-source="all">Show all sources</button>';
   }else if(assetScope==='trash'){
     title='Trash is empty';description='Assets moved to Trash remain recoverable here.';
   }else if(collection){
@@ -585,7 +592,7 @@ function renderAssets() {
   const assets=visibleAssets(), col=assetState.collections.find(c=>'collection:'+c.id===assetScope), source=assetSource();
   const inScope=assetScopeAssets(), sourced=assetSourceFilter(inScope,source), sourceHidden=inScope.length-sourced.length;
   $('#assetTotal').textContent=assets.length+(assetPaging?' on this page':'');
-  $('#assetSource').hidden=!assetState.assets.some(assetIsAgentRun);$('#assetSource').value=source;
+  $('#assetSource').hidden=!assetPaging&&!assetState.assets.some(assetIsAgentRun);$('#assetSource').value=source;
   $('#assetVisibleCount').textContent=(assetPaging?assets.length+' assets on this page':assetFiltersActive()?assets.length+' of '+sourced.length+' assets':assets.length+' assets')+(sourceHidden?' · '+sourceHidden+(source==='mine'?' agent runs hidden':' of yours hidden'):'');
   $('#assetPaging').innerHTML=assetPaging?'<button data-asset-page="previous" '+(!assetPaging.history.length?'disabled':'')+'>Previous page</button><span>Page '+(assetPaging.history.length+1)+'</span><button data-asset-page="next" '+(!assetPaging.next?'disabled':'')+'>Next page</button>':'';
   $('#collectionPaging').innerHTML=assetPaging?.collectionNext?'<button data-collection-more>More collections</button>':'';
@@ -675,9 +682,12 @@ function assetTagsProblem(tags){
   return Object.keys(StudioReviewChecks.answers(tags)).length===checks.length?'':'Check tags must use check:name=yes or =no, with one answer per supported check. Nothing was sent.';
 }
 function renderAssetReasons() {
+  const focused=document.activeElement?.closest?.('#assetReviewChecks [data-review-check],#assetReviewReasons [data-review-reason]');
+  const check=focused?.dataset.reviewCheck,reason=focused?.dataset.reviewReason;
   const chosen=new Set(assetTagList().map(t=>t.toLowerCase()));
   renderAssetChecks();
   $('#assetReviewReasons').innerHTML=assetReasonTags.map(reason=>'<button type="button" class="asset-reason'+(chosen.has(reason)?' is-on':'')+'" data-review-reason="'+esc(reason)+'" aria-pressed="'+(chosen.has(reason)?'true':'false')+'">'+esc(reason)+'</button>').join('');
+  if(focused)[...(document.querySelectorAll?.('#assetReviewChecks [data-review-check],#assetReviewReasons [data-review-reason]')||[])].find(button=>check?button.dataset.reviewCheck===check:button.dataset.reviewReason===reason)?.focus?.({preventScroll:true});
 }
 // Quick checks (#1203) fit the picture's recipe route and live in the same tags draft as the reason chips: a press edits
 // the draft only, and Save details or a K/W/X decision saves them with the review. Keep never waits on them.
@@ -693,7 +703,7 @@ function toggleAssetReviewCheck(name) {
   $('#assetTags').value=tags.join(', ');renderAssetReasons();
   if(!retainAssetDraft())return;
   const now=StudioReviewChecks.answer(tags,name);
-  assetDetailStatus(name+' '+(now===null?'not checked':now?'yes':'no')+'. Unsaved until Save details or K / W / X.');
+  assetDetailStatus(name+' '+(now===null?'not checked':now?'yes':'no')+'. '+(assetDetailDirty()?'Unsaved until Save details or K / W / X.':'No unsaved changes.'));
 }
 function toggleAssetReason(reason) {
   if(!assetReasonTags.includes(reason))return;
@@ -1097,7 +1107,7 @@ document.addEventListener('keydown',e=>{
 async function saveAssetDetails() {
   const snapshot=assetDetailValues();
   const saved={title:snapshot.title.trim(),tags:[...new Set(assetTagList(snapshot.tags))],review:snapshot.review,notes:snapshot.notes.trim()};
-  const changes=Object.fromEntries(Object.keys(saved).filter(key=>snapshot[key]!==assetDetailBaseline?.[key]).map(key=>[key,saved[key]]));
+  const changes=Object.fromEntries(Object.keys(saved).filter(key=>!assetDetailFieldEqual(key,snapshot[key],assetDetailBaseline?.[key])).map(key=>[key,saved[key]]));
   if(!Object.keys(changes).length && !assetDetailPending){assetDetailStatus('No unsaved changes.');return true;}
   // An earlier unconfirmed command still retries its exact bytes; newer invalid typing stays local.
   const problem=!assetDetailPending && Object.hasOwn(changes,'tags')?assetTagsProblem(saved.tags):'';

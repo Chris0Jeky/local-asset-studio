@@ -73,6 +73,15 @@ test('prepare new seed checks the recipe against the current graph', async () =>
   assert.equal(box.recipeTemplateHash, 'checked-graph');
 });
 
+test('Create new-seed preparation preserves the recorded Look options', async () => {
+  const look={id:'look-night-shift',name:'Night Shift',revision:2,options:{quiet_wall:true}};
+  let saved;
+  const box=context({async api(){return {preset_id:'plain',controls:{positive:'scene',seed:4},look};},applySaved(value){saved=value;}});
+  await box.prepareVary({dataset:{uxVary:'reseed',asset:'asset-1',preset:'plain',job:'job-1'}});
+  assert.equal(JSON.stringify(saved.look),JSON.stringify(look));
+  assert.equal(saved.controls.positive,'scene');
+});
+
 const press = {dataset: {uxVary: 'reseed', asset: 'asset-1', preset: 'plain', job: 'job-1'}};
 
 test('Vary asks before replacing the owner own wording, and declining changes nothing (#1213)', async () => {
@@ -193,6 +202,16 @@ test('Make Vary new seeds checks the recipe and sends one round (#1497)', async 
   assert.equal(box.sent[0].controls.seed, 41);
   assert.equal(box.sent[0].controls.positive, 'a lantern');
   assert.equal(box.sent[0].label, 'Make · Vary');
+});
+
+test('Make new-seed Vary forwards Look provenance in its one job request', async () => {
+  const look={id:'look-night-shift',name:'Night Shift',revision:2,options:{quiet_wall:true}};
+  const box=makeVaryBox({jobs:[{id:'job-1',preset_id:'plain',status:'completed',controls:{}}],
+    async api(){return {preset_id:'plain',controls:{positive:'scene',seed:4},look};}});
+  await box.vary('asset-1','plain','job-1','reseed');
+  assert.equal(box.sent.length,1);
+  assert.equal(JSON.stringify(box.sent[0].look),JSON.stringify(look));
+  assert.equal(box.sent[0].controls.seed,41);
 });
 
 test('a second Make Vary press while the first is sending posts nothing more (#1497)', async () => {

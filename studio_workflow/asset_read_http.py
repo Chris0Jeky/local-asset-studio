@@ -4,7 +4,7 @@ import sqlite3
 import time
 from urllib.parse import parse_qsl, urlsplit
 
-from .asset_reads import AssetReadError, DEFAULT_FILTERS, page_options, require
+from .asset_reads import AssetReadError, FILTER_KEYS, page_options, require
 from .core import decode
 from .http_body import reject_json
 from . import asset_family
@@ -34,11 +34,11 @@ def page_query(raw):
             'Relative asset page route required')
     require(re.search(r'%(?![0-9a-fA-F]{2})', parsed.query) is None, 'Malformed query escape')
     pairs = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True,
-                      encoding='utf-8', errors='strict', max_num_fields=11)
+                      encoding='utf-8', errors='strict', max_num_fields=12)
     query = dict(pairs)
     require(len(query) == len(pairs) and all(value for _, value in pairs),
             'Asset query fields must be nonempty and occur once')
-    require(set(query) <= set(DEFAULT_FILTERS) | {'workspace_id', 'limit', 'cursor', 'details', 'q', 'sort'}, 'Unknown asset query field')
+    require(set(query) <= set(FILTER_KEYS) | {'workspace_id', 'limit', 'cursor', 'details', 'q', 'sort'}, 'Unknown asset query field')
     page_options(query.get('q'),query.get('sort','newest'))
     if 'details' in query:
         require(query['details'] in ('true','false'), 'Details must be true or false')
@@ -46,7 +46,7 @@ def page_query(raw):
     if 'limit' in query:
         require(re.fullmatch(r'[0-9]{1,3}', query['limit']) is not None, 'Invalid page size')
         query['limit'] = int(query['limit'])
-    filters = {key: query.pop(key) for key in DEFAULT_FILTERS if key in query}
+    filters = {key: query.pop(key) for key in FILTER_KEYS if key in query}
     if 'favorite' in filters:
         require(filters['favorite'] in ('true', 'false'), 'Favorite must be true or false')
         filters['favorite'] = filters['favorite'] == 'true'

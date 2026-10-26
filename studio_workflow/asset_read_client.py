@@ -178,13 +178,14 @@ def main(argv=None):
     page.add_argument('--cursor'); page.add_argument('--visibility', choices=('active', 'trash', 'all'), default='active')
     page.add_argument('--media-type'); page.add_argument('--review', choices=contract.REVIEWS)
     page.add_argument('--favorite', choices=('true', 'false')); page.add_argument('--collection-id')
+    page.add_argument('--source', choices=('all', 'mine', 'agent'), default='all')
     selected = sub.add_parser('selection'); selected.add_argument('--workspace-id', required=True)
     selected.add_argument('ids', nargs='+')
     args = parser.parse_args(argv)
     try:
         client = AssetReadClient(args.url, timeout=args.timeout)
         if args.command == 'page':
-            filters = {key: getattr(args, key) for key in contract.DEFAULT_FILTERS}
+            filters = {key: getattr(args, key) for key in contract.FILTER_KEYS}
             if args.favorite is not None: filters['favorite'] = args.favorite == 'true'
             result = client.page(workspace_id=args.workspace_id, limit=args.limit, cursor=args.cursor, filters=filters)
         else:

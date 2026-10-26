@@ -16,6 +16,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT/'app'))
 import model_intake as intake
+import download_contracts as contracts
 from download_contracts import InstallLease, file_identity
 from model_library import ModelLibrary
 
@@ -84,6 +85,20 @@ class IntakePublicationTests(unittest.TestCase):
         self.assert_source(); self.assertEqual(self.target.read_bytes(), b'other writer')
         record = self.journal(); self.assertEqual(record['status'], 'needs_inspection')
         self.assertEqual(Path(record['partial_path']).read_bytes(), self.body)
+
+    def test_failed_publication_keeps_quarantine_path_and_cleanup_in_intake_journal(self):
+        rename=os.rename;calls=[]
+        def refuse_move_back(source,target):
+            calls.append(target)
+            if len(calls)==2:raise PermissionError('staging name unavailable')
+            return rename(source,target)
+        with patch.object(contracts,'os',wraps=os) as platform,patch.object(contracts,'sha256',return_value='0'*64):
+            platform.name='nt';platform.link.side_effect=OSError('no links');platform.rename.side_effect=refuse_move_back
+            with self.assertRaises(ValueError):self.run_intake()
+        record=self.journal();self.assertEqual(record['status'],'needs_inspection')
+        self.assertEqual(record.get('unverified_path'),str(calls[-1]))
+        self.assertIn('manually',record.get('cleanup',''));self.assertIn(record['cleanup'],record['error'])
+        self.assert_source();self.assertEqual(calls[-1].read_bytes(),self.body);self.assertFalse(self.target.exists())
 
     def test_model_root_drift_before_journal_refuses_without_side_effects(self):
         drifted = self.target.with_name('drifted.safetensors')

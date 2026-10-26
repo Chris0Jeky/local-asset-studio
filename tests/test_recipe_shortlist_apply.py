@@ -58,6 +58,37 @@ class SetupApplyTests(unittest.TestCase):
         self.assertEqual(self.s.upload_count,0)
         self.assertFalse(first['generation_submitted'])
 
+    def test_prepared_look_survives_shared_checkpoint_replace_and_restore(self):
+        look={'id':'look-night-shift','name':'Night Shift','revision':2,'options':{'quiet_wall':True}}
+        self.before['recipe']['look']=copy.deepcopy(look)
+        first=self.create();changed=copy.deepcopy(self.before);changed['recipe']['controls']['positive']='Edited scene'
+        second=self.command('replace',draft_id=first['draft_id'],expected_revision=1,draft=changed)
+        self.assertEqual(second['draft']['recipe']['look'],look)
+        self.assertEqual(self.store().get(first['draft_id'],1)['draft']['recipe']['look'],look)
+        restored=self.command('restore',draft_id=first['draft_id'],expected_revision=2,revision=1)
+        self.assertEqual(restored['draft'],self.before)
+        self.assertEqual(self.s.upload_count,0)
+        self.assertFalse(restored['generation_submitted'])
+
+    def test_new_recipe_proposal_discloses_removing_prepared_look(self):
+        look={'id':'look-night-shift','name':'Night Shift','revision':2,'options':{'quiet_wall':True}}
+        self.before['recipe']['look']=look;self.q['draft']=copy.deepcopy(self.before)
+        first=self.create();report=propose(self.q,self.s)
+        self.assertIn({'section':'Prepared Look provenance','before':look,'proposed':None,'changed':True},report['diff'])
+        applied=self.apply(first,report)
+        self.assertNotIn('look',applied['draft']['recipe'])
+        self.assertEqual(self.store().get(first['draft_id'],1)['draft']['recipe']['look'],look)
+
+    def test_malformed_look_cannot_enter_a_shared_checkpoint(self):
+        look={'id':'look-night-shift','name':'Night Shift','revision':2,'options':{'quiet_wall':True}}
+        for change in ({'revision':True},{'revision':-1},{'id':'../look'},{'name':'x'*121},
+                       {'options':{'quiet_wall':'yes'}},{'options':{'bad key':True}},
+                       {'options':{'option_'+str(i):True for i in range(7)}},{'extra':'untrusted'}):
+            value=copy.deepcopy(self.before);value['recipe']['look']={**look,**change}
+            with self.subTest(change=change),self.assertRaisesRegex(ValueError,'look|Look'):
+                self.command('create',draft=value)
+        self.assertEqual(self.s.upload_count,0)
+
     def test_same_request_different_content_and_wrong_workspace_refuse(self):
         self.create();changed=copy.deepcopy(self.before);changed['recipe']['controls']['positive']='Changed'
         with self.assertRaisesRegex(ValueError,'request|Request'):self.command('create',draft=changed)

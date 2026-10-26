@@ -45,6 +45,18 @@ class AssetReadClientTests(unittest.TestCase):
         self.assertEqual(self.client.page(workspace_id=self.scope),self.page)
         self.assertTrue(response.closed)
 
+    def test_source_filter_reaches_the_typed_client_and_cli(self):
+        self.page['filters']['source'] = 'mine'
+        response = self.reply(self.page)
+        with patch.object(self.client.opener, 'open', wraps=self.client.opener.open) as calls:
+            self.assertEqual(self.client.page(filters={'source': 'mine'}), self.page)
+        self.assertIn('source=mine', calls.call_args.args[0].full_url)
+        self.assertTrue(response.closed)
+        with patch.object(self.module.AssetReadClient, 'page', return_value=self.page) as page, \
+             patch('sys.stdout', new_callable=io.StringIO):
+            self.assertEqual(self.module.main(['page', '--source', 'mine']), 0)
+        self.assertEqual(page.call_args.kwargs['filters']['source'], 'mine')
+
     def test_untrusted_response_cannot_invent_scope_authority_or_summary_fields(self):
         mutations=[lambda p:p.update(workspace_id='d'*32),lambda p:p.update(generation_submitted=0),
                    lambda p:p.update(extra=True),lambda p:p['assets'][0].update(path='/private'),

@@ -205,3 +205,42 @@ test('uncertain observation can resume and Stop tracking clears its polling time
     assert.deepEqual(polled,action==='resume'?['job']:[]);assert.deepEqual(cleared,action==='stop'?['timer']:[]);assert.equal(timers.has('job'),action==='resume');
   }
 });
+
+test('Make single and comparison pictures show the recorded quiet-left diagnostic',()=>{
+  const app=fs.readFileSync(path.join(__dirname,'../app/static/app.js'),'utf8');
+  const note=app.slice(app.indexOf('function lookNote('),app.indexOf('var expandedPrompts='));
+  for(const group of [false,true])for(const unavailable of [false,true]){
+    const output={filename:'scene.png',asset_id:'picture-1',text_safe:unavailable?{error:'unsupported image'}:{left_edge_density:0.02,right_edge_density:0.1,comparison:'left quieter'}};
+    const job={id:'job-1',status:'completed',controls:{seed:4},look:{id:'look-night-shift',name:'<Night Shift>',revision:2,options:{quiet_wall:true}},outputs:[output]};
+    const runs=[{job,look:'Night Shift',scene:'A room'}],cards=[{group,id:'job-1',runs}];let rendered='';
+    const box={children:[],contains:()=>false,querySelectorAll:()=>[]};
+    const context={state:{runs},runCards:()=>cards,q:()=>box,planPolish(){},layout(){},observing:()=>false,
+      FINAL:['completed'],words:job=>job.status,picture:()=>true,pictureTitle:String,escape:String,esc:s=>String(s).replaceAll('<','&lt;'),
+      recovery:()=>'',marks:()=>'',characterMarkup:()=>'',actions:()=>'',selectedOf:()=>null,draftRun:()=>false,
+      document:{activeElement:{},createElement:()=>({children:[],set innerHTML(value){rendered=value;}})}};
+    const render=vm.runInNewContext(note+between('  function renderRuns(){','  // Picture goals stay in Make')+';renderRuns',context);
+    render();
+    assert.match(rendered,/Prepared with &lt;Night Shift>/);
+    if(unavailable)assert.match(rendered,/Quiet-left check unavailable: unsupported image/);
+    else{assert.match(rendered,/left 2\.0%, right 10\.0%/);assert.match(rendered,/Detail proxy only/);}
+  }
+});
+
+test('recorded and new seed result handoffs retain Look provenance without submitting',async()=>{
+  const source=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
+  const handler=source.slice(source.indexOf('  resultPanel.onclick=async e=>{'),source.indexOf('  // Number keys 1-5'));
+  const look={id:'look-night-shift',name:'Night Shift',revision:2,options:{quiet_wall:true}};
+  for(const mode of ['recorded','new']){
+    let saved;const calls=[],recipe={preset_id:'plain',controls:{positive:'scene',seed:4},look,parent_assets:[],references:[]};
+    const panel={},context={resultPanel:panel,pairActionBusy:false,setupStamp:()=>'',syncReady(){},q:()=>({}),
+      jobs:[{id:'job-1',status:'completed',outputs:[{seed:4}]}],catalog:{presets:[{id:'plain'}]},
+      api:async()=>recipe,post:async url=>{calls.push(url);return{template_sha256:'checked'};},
+      crypto:{getRandomValues:array=>{array[0]=9;return array;}},StudioContinuation:{combineReferences:()=>[]},
+      selectPreset(){},applySaved(value){saved=value;},saveDraft(){},updateReady(){},recipeChanged(){},announce:message=>{throw Error(message);}};
+    vm.runInNewContext(handler,context);
+    await panel.onclick({target:{closest:()=>({dataset:{uxRerun:mode,job:'job-1',index:'0'}})}});
+    assert.equal(JSON.stringify(saved.look),JSON.stringify(look));
+    assert.equal(saved.controls.seed,mode==='new'?'9':'4');
+    assert.deepEqual(calls,['/api/recipe-check']);
+  }
+});

@@ -64,6 +64,12 @@ def source_context(asset):
             'negative':'blur', 'prompt_origin':'submitted-output', 'prompt_role':'description',
             'warning':'', 'width':512, 'height':768}
 
+
+def source_reference(asset):
+    """One synthetic copied-source payload for HTTP actions and deterministic scenario setup."""
+    return {'file':'a'*32+'_fixture.png','sha256':asset['sha256'],'width':512,'height':768,
+            'parent_asset':asset['id'],'context':source_context(asset)}
+
 class Handler(BaseHTTPRequestHandler):
     workspace_id='1'*32
     def log_message(self, *args):
@@ -134,8 +140,7 @@ class Handler(BaseHTTPRequestHandler):
         POSTS.append({'path':self.path,'data':data})
         if self.path=='/api/assets/reference':
             asset=next(a for a in ASSETS if a['id']==data['id'])
-            return self.json({'file':'a'*32+'_fixture.png','sha256':asset['sha256'],'width':512,'height':768,
-                              'parent_asset':asset['id'],'context':source_context(asset)})
+            return self.json(source_reference(asset))
         if self.path=='/api/estimate':return self.json({'available':True,'estimate_seconds':42,'range_seconds':[30,55],'confidence':'medium','sample_count':4,'matched_samples':3,'basis':['3 completed runs of this workflow','scaled for 832×1216, 15 steps, 1 active LoRA, 1 output'],'features':{'workflow':'Synthetic workflow','model':['fixture-model'],'loras':['fixture-lora'],'resolution':[832,1216],'steps':15,'frames':1,'node_count':8,'references':1,'modality':'image'}})
         if self.path=='/api/references/check':return self.json([{'file':f,'available':f!='missing.png','sha256':'a'*64} for f in data['files']])
         if self.path=='/api/prompt/compile':

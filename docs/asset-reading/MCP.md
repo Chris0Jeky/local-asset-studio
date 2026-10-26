@@ -12,7 +12,10 @@ The underlying selection POST is an observation, not a metadata command.
 
 - `asset_page`: one page, default 50 and maximum 100 summaries. Optional
   `workspace_id`, `limit`, `cursor` and `filters`. Filters support `visibility`
-  (`active`, `trash`, `all`), `media_type`, `review`, `favorite`, `collection_id`.
+  (`active`, `trash`, `all`), `media_type`, `review`, `favorite`, `collection_id`,
+  and `source` (`all`, `mine`, `agent`). Source is applied before pagination;
+  omitted or `all` retains the legacy query identity. Make-labelled personal
+  runs stay in Mine.
 - `asset_selection`: one observation of 1–200 **unique** `ids`, in their supplied
   order, with a required `workspace_id`. Active, trashed and genuinely missing
   assets are distinct; an unloaded page is not evidence that an asset is missing.

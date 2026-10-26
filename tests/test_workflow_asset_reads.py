@@ -66,6 +66,15 @@ class WorkflowAssetReadTests(unittest.TestCase):
             self.assertEqual(main(['--describe']), 0)
         self.assertIn('asset_selection', json.loads(output.getvalue())['tools'])
 
+    def test_source_filter_is_admitted_by_the_read_only_tool_contract(self):
+        properties = self.bridge.definitions()['asset_page']['inputSchema']['properties']['filters']['properties']
+        self.assertEqual(set(properties['source']['enum']), {'all', 'mine', 'agent'})
+        self.fixture.page['filters']['source'] = 'agent'
+        self.reply(self.fixture.page)
+        result = self.bridge.invoke('asset_page', {'filters': {'source': 'agent'}})
+        self.assertTrue(result['ok'], result)
+        self.assertEqual(data(result)['filters']['source'], 'agent')
+
     def test_exact_page_uses_existing_transport_timeout_and_one_get(self):
         response = self.reply(self.fixture.page)
         with patch.object(self.client, 'request', side_effect=AssertionError('Loose decoder used')), \

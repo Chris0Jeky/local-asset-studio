@@ -732,7 +732,7 @@
         const target=catalog.presets.find(p=>p.id===recipe.preset_id);if(!target)throw Error('This recipe is no longer available.');
         const seed=output.seed??recipe.controls?.seed;if(seed==null)throw Error('This run has no recorded seed. Inspect its recipe before preparing another.');let next=seed;
         if(button.dataset.uxRerun==='new'){next=crypto.getRandomValues(new Uint32Array(1))[0];if(String(next)===String(seed))next=(next+1)%4294967296;}
-        const setup={preset:target.id,continuation:recipe.continuation,controls:{...recipe.controls,seed:String(next)},batch_count:1,parent_assets:recipe.parent_assets,references:StudioContinuation.combineReferences(target,recipe.references||[])};
+        const setup={preset:target.id,look:recipe.look,continuation:recipe.continuation,controls:{...recipe.controls,seed:String(next)},batch_count:1,parent_assets:recipe.parent_assets,references:StudioContinuation.combineReferences(target,recipe.references||[])};
         selectPreset(target.id,true,true);applySaved(setup);
         recipeTemplateHash=check.template_sha256;draftDirty=true;saveDraft();updateReady();recipeChanged();
         status=(button.dataset.uxRerun==='new'?'New seed ':'Recorded seed ')+next+' prepared. Review the recipe, then Generate.';
@@ -886,7 +886,7 @@
     q('#uxPrepareHandoff').disabled=!p||!sourceContext||!!cap?.requires_mask||handoffBusy||submitting;q('#uxPrepareReason').textContent=cap?.requires_mask?'This recipe needs a mask, which this handoff cannot prepare. Choose another destination recipe.':'';q('#uxDestination').disabled=handoffBusy;
   }
   function handoffRecipes(preferred){q('#uxHandoffIntents').innerHTML=U.INTENTS.filter(i=>i.id!=='create').map(i=>'<button data-ux-destination="'+i.id+'" aria-pressed="'+(i.id===handoffIntent)+'">'+i.verb+'</button>').join('');const recipes=StudioContinuation.destinations(handoffIntent,catalog?.presets||[],sourceContext);q('#uxDestination').innerHTML=recipes.map(p=>'<option value="'+escape(p.id)+'">'+escape(p.name)+(p.continuation_capability.requires_mask?' · mask preparation required':'')+'</option>').join('');if(recipes.some(p=>p.id===preferred))q('#uxDestination').value=preferred;destinationDetails();}
-  function assetDetailsDirty(){return q('#assetDialog').open&&activeAsset&&(q('#assetTitle').value!==activeAsset.title||q('#assetNotes').value!==activeAsset.notes||q('#assetTags').value!==activeAsset.tags.join(', ')||q('#assetReview').value!==activeAsset.review);}
+  function assetDetailsDirty(){return q('#assetDialog').open&&activeAsset&&(q('#assetTitle').value!==activeAsset.title||q('#assetNotes').value!==activeAsset.notes||!assetTagsEqual(q('#assetTags').value,activeAsset.tags.join(', '))||q('#assetReview').value!==activeAsset.review);}
   function warnUnsavedAsset(){let notice=q('#uxAssetUnsaved');if(!notice){notice=element('p','callout');notice.id='uxAssetUnsaved';notice.setAttribute('role','status');q('#assetHandoffs').before(notice);}notice.textContent='Save your asset details before continuing. Your changes are still here.';q('#saveAssetDetails').focus();}
   document.addEventListener('click',e=>{if(e.target.closest('.ux-scene-link,#assetRecipe')&&assetDetailsDirty()){e.preventDefault();e.stopImmediatePropagation();warnUnsavedAsset();}},true);
   function openHandoff(id,preferred,epoch,intent){
@@ -1042,7 +1042,7 @@
         if(recipe?.preset_id!==plan.route.id)throw Error('This run no longer records '+plan.route.name+'. Nothing was applied.');
         const check=await post('/api/recipe-check',recipe);
         if(stamp!==workbenchStamp())throw Error('The workbench changed while the recipe was being checked. Nothing was applied; press Vary again.');
-        selectPreset(plan.route.id,true,true);applySaved({preset:plan.route.id,controls:{...(recipe.controls||{})},batch_count:1,parent_assets:[assetId]});
+        selectPreset(plan.route.id,true,true);applySaved({preset:plan.route.id,look:recipe.look,controls:{...(recipe.controls||{})},batch_count:1,parent_assets:[assetId]});
         recipeTemplateHash=check.template_sha256;
       }
       const seedInput=getControl('seed');if(seedInput)seedInput.value=seed;
@@ -1106,7 +1106,7 @@
         const recipe=await api('/api/jobs/'+encodeURIComponent(jobId)+'/recipe');
         if(recipe?.preset_id!==route.id)throw Error('This run no longer records '+route.name+'. Nothing was sent.');
         const check=await post('/api/recipe-check',recipe);
-        return await sendVary({...base,controls:{...(recipe.controls||{}),...(route.seed?{seed}:{})},expected_template_sha256:check.template_sha256});
+        return await sendVary({...base,look:recipe.look,controls:{...(recipe.controls||{}),...(route.seed?{seed}:{})},expected_template_sha256:check.template_sha256});
       }
       let source;try{source=await readSource(assetId);}catch(error){throw Error('Could not read this picture. '+error.message);}
       if(source?.asset_id!==assetId)throw Error('This picture’s record could not be verified. Refresh and try again.');

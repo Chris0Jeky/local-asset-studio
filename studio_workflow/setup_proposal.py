@@ -76,7 +76,7 @@ def validate_draft(value):
          and all(x in ('reference','lastReference') for x in draft['pendingInputs']) and len(set(draft['pendingInputs']))==len(draft['pendingInputs']),
          'Invalid draft pending inputs')
     recipe=draft['recipe']; required={'preset','controls','batch','references','parent_assets','parent_by_input'}
-    need(type(recipe) is dict and required<=set(recipe) and set(recipe)<=required|{'continuation'}, 'Supply the complete current recipe declaration')
+    need(type(recipe) is dict and required<=set(recipe) and set(recipe)<=required|{'continuation','look'}, 'Supply the complete current recipe declaration')
     need(type(recipe['preset']) is str and ID.fullmatch(recipe['preset']), 'Invalid draft preset')
     need(type(recipe['batch']) is int and 1<=recipe['batch']<=4, 'Invalid draft batch')
     need(type(recipe['controls']) is dict and len(recipe['controls'])<=64, 'Invalid draft controls')
@@ -87,6 +87,16 @@ def validate_draft(value):
     need(type(recipe['parent_by_input']) is dict and set(recipe['parent_by_input'])<={'reference','lastReference'}
          and all(type(x) is str and x in recipe['parent_assets'] for x in recipe['parent_by_input'].values()), 'Invalid draft input lineage')
     need('continuation' not in recipe or recipe['continuation'] is None or type(recipe['continuation']) is dict, 'Invalid draft continuation')
+    if 'look' in recipe:
+        # Retain historical attribution, not an authorization to run: /api/jobs checks the live card revision.
+        look=recipe['look']
+        need(type(look) is dict and {'id','name','revision'}<=set(look)<= {'id','name','revision','options'}, 'Invalid prepared Look fields')
+        need(type(look['id']) is str and re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{2,127}',look['id'])
+             and _text(look['name'],120) and bool(look['name'].strip())
+             and type(look['revision']) is int and 0<=look['revision']<=2**53-1, 'Invalid prepared Look identity')
+        options=look.get('options',{})
+        need(type(options) is dict and len(options)<=6
+             and all(re.fullmatch(r'[a-z][a-z0-9_]{1,31}',key) and type(item) is bool for key,item in options.items()), 'Invalid prepared Look options')
     return draft
 
 
@@ -143,6 +153,7 @@ def _diff(before, intent):
               ('References',recipe['references'],intent['sources']),
               ('Lineage',{'parents':recipe['parent_assets'],'by_input':recipe['parent_by_input']},intent['lineage']),
               ('Continuation context',recipe.get('continuation'),None),('Pending local inputs',before['pendingInputs'],[])]
+    if 'look' in recipe:sections.append(('Prepared Look provenance',recipe['look'],None))
     return [{'section':title,'before':old,'proposed':new,'changed':canonical(old)!=canonical(new)} for title,old,new in sections]
 
 

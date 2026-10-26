@@ -35,9 +35,15 @@ silently removed and no retained write command is rewritten.
 
 Supported filters are `visibility` (`active`, `trash`, `all`), `media_type`,
 `review` (`unreviewed`, `selected`, `needs_work`, `rejected`), boolean `favorite`,
-and exact `collection_id`. Omitted optional filters normalize to null; unknown
+exact `collection_id`, and `source` (`all`, `mine`, `agent`). Source filtering runs
+before the page limit. Mine includes unlabelled runs and labels beginning with
+the exact `Make · ` prefix; other nonempty run labels are Agent runs. Omitted or
+explicit `all` preserves the original normalized filter object and cursor hash.
+The Library defaults to Mine and keeps the source control available on empty
+pages; the read API, client CLI (`--source`) and MCP default to all sources.
+Other omitted optional filters normalize to null; unknown
 keys, invalid types, empty identities, and duplicate selected IDs refuse. A missing
-collection is a typed conflict, not an empty successful result. No search, count,
+collection is a typed conflict, not an empty successful result. No count,
 offset, membership expansion, or arbitrary SQL option is exposed.
 
 ## Response and consistency contract
