@@ -26,19 +26,20 @@ class RequestFramingTests(unittest.TestCase):
         self.addCleanup(self.close)
     def close(self):
         self.http.shutdown();self.http.server_close();self.thread.join(2)
-    def raw_request(self,headers,body=b'',path='/api/jobs',method='POST'):
+    def raw_request(self,headers,body=b'',path='/api/jobs',method='POST',shutdown=True):
         request=(f'{method} {path} HTTP/1.1\r\nHost: 127.0.0.1:8191\r\n'
                  'Origin: http://127.0.0.1:8191\r\nContent-Type: application/json\r\n'
                  +headers+'\r\n').encode('ascii')+body
         with socket.create_connection(('127.0.0.1',self.http.server_port),timeout=5) as connection:
-            connection.sendall(request);connection.shutdown(socket.SHUT_WR)
+            connection.sendall(request)
+            if shutdown:connection.shutdown(socket.SHUT_WR)
             chunks=[]
             while chunk:=connection.recv(65536):chunks.append(chunk)
         return b''.join(chunks)
     def rejected(self,headers,body=b'',path='/api/jobs',method='POST'):
         before=copy.deepcopy(self.studio.jobs)
         queued=self.studio.queue.qsize()
-        raw=self.raw_request(headers,body,path,method)
+        raw=self.raw_request(headers,body,path,method,shutdown=False)
         self.assertEqual(raw.split(b' ',2)[1],b'400',raw)
         self.assertEqual(raw.count(b'HTTP/1.1 '),1,raw)
         self.assertIn(b'X-Content-Type-Options: nosniff\r\n',raw)
@@ -60,6 +61,14 @@ class RequestFramingTests(unittest.TestCase):
             for length in ('',f'Content-Length: {len(body)}\r\n'):
                 with self.subTest(encoding=encoding,length=length):
                     self.rejected(f'Transfer-Encoding: {encoding}\r\n'+length,body)
+    def test_malformed_headers_cannot_hide_framing_fields(self):
+        body=json.dumps({'preset_id':'demo','controls':{}}).encode()
+        pipeline=b'GET /api/identity HTTP/1.1\r\nHost: 127.0.0.1:8191\r\n\r\n'
+        for hidden in ('Content-Length : 0\r\n', 'Transfer-Encoding : chunked\r\n',
+                       'Invalid Header: ignored\r\nContent-Length: 0\r\n',
+                       'Invalid Header: ignored\r\nTransfer-Encoding: chunked\r\n'):
+            with self.subTest(hidden=hidden):
+                self.rejected(f'Content-Length: {len(body)}\r\n'+hidden,body+pipeline)
     def test_content_length_requires_ascii_decimal_digits(self):
         body=json.dumps({'preset_id':'demo','controls':{}}).encode()
         for length in ('+'+str(len(body)),str(len(body))+'_0','-0','', '1 0'):

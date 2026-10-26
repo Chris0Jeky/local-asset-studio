@@ -6,7 +6,7 @@ from .guides import guides
 from .execution import RunAdmissionRefused, prepare_ticket, run_ticket
 from .document_http import extend_handler as extend_documents
 from .run_http import extend_handler as extend_run_records
-from .http_body import reject_json
+from .http_body import read_complete_body, reject_json
 from . import pose_artifact_store
 
 PREFIX = '/api/workflow-studio'
@@ -128,7 +128,7 @@ def extend_handler(base):
                 else: result['recovery'] = 'Inspect the same ticket/job; never retry with a new request identity.'
                 return reject_json(self, 400, result)
             try:
-                value = decode(self.rfile.read(self._content_length(1048576)))
+                value = decode(read_complete_body(self, 1048576))
                 result = post(path, value, self.studio)
                 return self._json(200, result)
             except RunAdmissionRefused as exc:

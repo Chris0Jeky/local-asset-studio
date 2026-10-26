@@ -2614,8 +2614,8 @@ class Handler(BaseHTTPRequestHandler):
     def parse_request(self):
         if not super().parse_request(): return False
         lengths = self.headers.get_all('Content-Length') or []
-        # Reject before dispatch: composed routes also consume the request stream.
-        if (self.headers.get_all('Transfer-Encoding') or len(lengths) > 1 or
+        # Header parser defects can hide framing fields from get_all().
+        if (self.headers.defects or self.headers.get_all('Transfer-Encoding') or len(lengths) > 1 or
                 (lengths and not re.fullmatch(r'[0-9]+', lengths[0].strip(' \t')))):
             self.close_connection = True
             self._json(400, {'error': 'Unsupported or ambiguous request framing', 'code': 'invalid_request_framing'})
