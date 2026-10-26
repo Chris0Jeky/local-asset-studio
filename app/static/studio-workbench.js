@@ -409,7 +409,7 @@
     finally{planBusy=false;syncReady();syncCombinePlan();}
   };
   // #1203: this PC's owner answers for every picture the recipe made, e.g. "pose 3/4 · face 1/4"; none reads as such (K14).
-  function engineChecks(preset){return StudioReviewChecks.summary(assetState.assets.filter(a=>a.preset_id===preset.id),StudioReviewChecks.forPreset(preset))||'Not checked yet';}
+  function engineChecks(preset){return 'Loaded checks: '+(StudioReviewChecks.summary((typeof assetRecords==='function'?assetRecords():assetState.assets).filter(a=>a.preset_id===preset.id&&a.media_type==='image'&&a.trashed_at==null),StudioReviewChecks.forPreset(preset))||'none');}
   enginePanel.onclick=e=>{
     const button=e.target.closest('[data-ux-engine]');if(!button||button.disabled||combineBusy()||button.dataset.uxEngine===selected.id)return;
     try{switchCombineEngine(button.dataset.uxEngine);}catch(error){announce(error.message,true);}
@@ -679,20 +679,22 @@
     const active=!!StudioContinuation.combineKind(selected);resultPanel.hidden=!active;if(!active){resultMarkup='';return;}
     const RESULT_LIMIT=24,runWhen=seconds=>{const at=new Date(Number(seconds)*1000);if(!Number(seconds)||isNaN(at))return'';return at.toDateString()===new Date().toDateString()?at.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):at.toLocaleString([],{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});};
     const record=currentPair(),matches=jobs.filter(job=>StudioContinuation.sameCombinePair(record,job,catalog.presets));
-    const groups=StudioContinuation.combineRuns(matches,output=>!!assetState.assets.find(a=>a.id===output.asset_id)?.trashed_at);
+    const recordOf=id=>typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id);
+    const groups=StudioContinuation.combineRuns(matches,output=>recordOf(output.asset_id)?.trashed_at!=null);
     const engine=job=>StudioContinuation.combineEngineLabel(catalog.presets.find(p=>p.id===job.preset_id)||{id:job.preset_id,name:job.preset_name});
     const pictures=referenceRecords.filter(r=>r.file&&!r.missing).length+(lastUploaded?1:0);
     const total=groups.runs.reduce((sum,run)=>sum+run.outputs.length,0);let room=RESULT_LIMIT;
     const lock=combineBusy()?'disabled title="'+(!pairActionBusy&&!submitting&&!poseBusy&&posePositionDirty()?'Set or reset the typed joint position first.':'Wait for the current Combine action to finish.')+'"':'';
     const tile=(job,output,index)=>{
-      const asset=assetState.assets.find(a=>a.id===output.asset_id),id=escape(job.id),review=asset?.review||'unreviewed',seed=escape(output.seed??job.controls?.seed??'unknown'),mark=pairActionBusy?'disabled':'';
-      return '<article class="ux-result-tile"><img src="/api/image/'+encodeURIComponent(job.id)+'/'+index+'" alt="'+escape(engine(job))+' result, seed '+seed+'"><b>Seed '+seed+'</b><span>'+escape(({selected:'Kept',needs_work:'Needs work',rejected:'Not this',unreviewed:'Unreviewed'}[review||'unreviewed']||review))+'</span><div class="ux-result-actions">'+(output.asset_id?'<button type="button" data-ux-review="selected" data-asset="'+escape(output.asset_id)+'" '+mark+'>Keep</button><button type="button" data-ux-review="needs_work" data-asset="'+escape(output.asset_id)+'" '+mark+'>Needs work</button>':'')+'<button type="button" data-ux-rerun="same" data-job="'+id+'" data-index="'+index+'" '+lock+'>Prepare same seed</button><button type="button" data-ux-rerun="new" data-job="'+id+'" data-index="'+index+'" '+lock+'>Prepare new seed</button></div>'+(output.asset_id?'<div class="ux-result-checks" role="group" aria-label="Quick checks for seed '+seed+', keys 1 to 5">'+StudioReviewChecks.chipsHTML({tags:asset?.tags||[],names:StudioReviewChecks.forPreset(catalog.presets.find(p=>p.id===job.preset_id)),attr:'data-ux-check',asset:output.asset_id,disabled:pairActionBusy,escape})+'</div>':'')+'</article>';
+      const asset=recordOf(output.asset_id),id=escape(job.id),review=asset?.review||'unreviewed',seed=escape(output.seed??job.controls?.seed??'unknown'),mark=pairActionBusy?'disabled':'';
+      const label=asset?({selected:'Kept',needs_work:'Needs work',rejected:'Not this',unreviewed:'Unreviewed'}[review]||review):asset===null?'Asset unavailable':output.asset_id?'Saved review not loaded':'No saved asset identity';
+      return '<article class="ux-result-tile"><img src="/api/image/'+encodeURIComponent(job.id)+'/'+index+'" alt="'+escape(engine(job))+' result, seed '+seed+'"><b>Seed '+seed+'</b><span>'+escape(label)+'</span><div class="ux-result-actions">'+(output.asset_id&&asset!==null?'<button type="button" data-ux-review="selected" data-asset="'+escape(output.asset_id)+'" '+mark+'>Keep</button><button type="button" data-ux-review="needs_work" data-asset="'+escape(output.asset_id)+'" '+mark+'>Needs work</button>':'')+'<button type="button" data-ux-rerun="same" data-job="'+id+'" data-index="'+index+'" '+lock+'>Prepare same seed</button><button type="button" data-ux-rerun="new" data-job="'+id+'" data-index="'+index+'" '+lock+'>Prepare new seed</button></div>'+(output.asset_id?(asset?'<div class="ux-result-checks" role="group" aria-label="Quick checks for seed '+seed+', keys 1 to 5">'+StudioReviewChecks.chipsHTML({tags:asset.tags||[],names:StudioReviewChecks.forPreset(catalog.presets.find(p=>p.id===job.preset_id)),attr:'data-ux-check',asset:output.asset_id,disabled:pairActionBusy,escape})+'</div>':'<p><button type="button" data-ux-check-load="'+escape(output.asset_id)+'" data-asset="'+escape(output.asset_id)+'" '+mark+'>'+(asset===null?'Check availability':'Load saved checks')+'</button></p>'):'')+'</article>';
     };
     const runs=groups.runs.map(({job,outputs})=>{
       if(room<=0)return'';const shown=outputs.slice(0,room);room-=shown.length;
       const facts=[Number(job.elapsed_seconds)>0?durationLabel(job.elapsed_seconds):'',outputs.length+' seed'+(outputs.length===1?'':'s'),runWhen(job.created_at),job.project_id?'from a plan':''].filter(Boolean).join(' · ');
-      const checked=StudioReviewChecks.summary(outputs.map(({output})=>assetState.assets.find(a=>a.id===output.asset_id)).filter(Boolean),StudioReviewChecks.COMBINE);
-      return '<div class="ux-run-group"><div class="ux-run-head"><b>'+escape(engine(job))+'</b><small>'+escape(facts)+'</small>'+(checked?'<small class="ux-run-checks">'+escape(checked)+'</small>':'')+'<button type="button" data-ux-result-recipe="'+escape(job.id)+'">Recipe</button></div><div class="ux-run-seeds">'+shown.map(({output,index})=>tile(job,output,index)).join('')+'</div></div>';
+      const checked=StudioReviewChecks.summary(outputs.map(({output})=>recordOf(output.asset_id)).filter(Boolean),StudioReviewChecks.COMBINE);
+      return '<div class="ux-run-group"><div class="ux-run-head"><b>'+escape(engine(job))+'</b><small>'+escape(facts)+'</small>'+(checked?'<small class="ux-run-checks">Loaded checks: '+escape(checked)+'</small>':'')+'<button type="button" data-ux-result-recipe="'+escape(job.id)+'">Recipe</button></div><div class="ux-run-seeds">'+shown.map(({output,index})=>tile(job,output,index)).join('')+'</div></div>';
     }).join('');
     const live=groups.active.map(({job})=>'<p class="ux-run-live">'+escape(engine(job))+' · '+escape(job.status)+(runWhen(job.created_at)?' since '+escape(runWhen(job.created_at)):'')+'</p>').join('');
     const count=groups.attention.length;
@@ -709,21 +711,29 @@
       let found=card();if(!found){q('#jobProblems [data-problems-toggle="all"]')?.click();found=card();}
       if(!found||!focusReadinessTarget(found))announce('This run is not in the open Problems list. Its recipe stays available here.',true);
       return;}
-    if(!button.dataset.uxReview&&!button.dataset.uxRerun&&!button.dataset.uxCheck)return;
-    const stamp=setupStamp(),check=button.dataset.uxCheck,refocus=check&&button===document.activeElement;pairActionBusy=true;syncReady();let status='';
+    if(!button.dataset.uxReview&&!button.dataset.uxRerun&&!button.dataset.uxCheck&&!button.dataset.uxCheckLoad)return;
+    const stamp=setupStamp(),check=button.dataset.uxCheck,load=button.dataset.uxCheckLoad,refocus=(check||load)&&button===document.activeElement;pairActionBusy=true;syncReady();let status='',current=()=>stamp===setupStamp();
     try{
-      if(check){
-        // One press saves one answer with the picture's review revision; Keep and Needs work never wait on it (#1203).
-        await refreshAssets(true);if(typeof assetRecord==='function'&&!assetRecord(button.dataset.asset))await resolveAssetIDs([button.dataset.asset]);   // off the first page: resolve this picture by ID
-        const asset=(typeof assetRecord==='function'?assetRecord(button.dataset.asset):assetState.assets.find(a=>a.id===button.dataset.asset));
-        if(!asset)throw Error('This picture is no longer in the library. Nothing was saved.');
-        const tags=StudioReviewChecks.cycle(asset.tags,check),now=StudioReviewChecks.answer(tags,check);
-        await mutateAssets({action:'edit',ids:[asset.id],tags});
-        status='Saved: '+check+' '+(now===null?'not checked':now?'yes':'no')+'.';
-      }else if(button.dataset.uxReview){
-        await refreshAssets(true);if(typeof assetRecord==='function'&&!assetRecord(button.dataset.asset))await resolveAssetIDs([button.dataset.asset]);
-        await mutateAssets({action:'edit',ids:[button.dataset.asset],review:button.dataset.uxReview});
-        status=button.dataset.uxReview==='selected'?'Kept.':'Needs-work decision saved.';
+      if(check||button.dataset.uxReview||load){
+        const scope=typeof assetState==='object'?assetState.workspace_id:null,epoch=typeof assetWorkspaceEpoch==='number'?assetWorkspaceEpoch:0,id=load||button.dataset.asset;
+        current=()=>stamp===setupStamp()&&scope===(typeof assetState==='object'?assetState.workspace_id:null)&&epoch===(typeof assetWorkspaceEpoch==='number'?assetWorkspaceEpoch:0);
+        if(load){
+          if(typeof resolveAssetIDs!=='function'||!await resolveAssetIDs([id])||!current())throw Error('The workbench or Workspace changed while reading saved checks. Nothing was saved.');
+        }else{
+          await refreshAssets();if(!current())throw Error('The workbench or Workspace changed while reading this picture. Nothing was saved.');
+          if(typeof assetRecord==='function'&&!assetRecord(id)&&!await resolveAssetIDs([id]))throw Error('The Workspace changed while reading this picture. Nothing was saved.');
+          if(!current())throw Error('The workbench or Workspace changed while reading this picture. Nothing was saved.');
+        }
+        const asset=typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id);
+        if(!asset||asset.trashed_at!=null)throw Error('This picture is unavailable in the active library. Nothing was saved.');
+        if(load)status='Loaded saved review and checks. Nothing was saved.';
+        else if(check){
+          const tags=StudioReviewChecks.cycle(asset.tags,check),now=StudioReviewChecks.answer(tags,check);
+          await mutateAssets({action:'edit',ids:[asset.id],tags});status='Saved: '+check+' '+(now===null?'not checked':now?'yes':'no')+'.';
+        }else{
+          await mutateAssets({action:'edit',ids:[id],review:button.dataset.uxReview});
+          status=button.dataset.uxReview==='selected'?'Kept.':'Needs-work decision saved.';
+        }
       }else{
         const job=jobs.find(j=>j.id===button.dataset.job),index=Number(button.dataset.index),output=job?.outputs?.[index];
         if(job?.status!=='completed'||!output)throw Error('Only a completed run can prepare another seed. Inspect unresolved work in Problems.');
@@ -740,7 +750,7 @@
     }catch(error){status=error.message;announce(status,true);}
     finally{
       pairActionBusy=false;syncReady();const line=q('#uxPairActionStatus');if(line)line.textContent=status;
-      if(refocus)[...resultPanel.querySelectorAll('[data-ux-check]')].find(b=>b.dataset.uxCheck===check&&b.dataset.asset===button.dataset.asset)?.focus();
+      if(refocus&&current())[...resultPanel.querySelectorAll('[data-ux-check],[data-ux-check-load]')].find(b=>(!check||b.dataset.uxCheck===check)&&b.dataset.asset===(load||button.dataset.asset))?.focus();
     }
   };
   // Number keys 1-5 press the quick checks of the seed tile holding focus.
@@ -1287,16 +1297,21 @@
   function sourceSlotOptions(){return selected.reference_slots?.length?selected.reference_slots.map((r,i)=>'<option value="'+i+'">Picture '+(i+1)+' · '+escape(referenceRecords[i]?.role||r.role)+(referenceRecords[i]?.file&&!referenceRecords[i]?.missing?' · attached':'')+'</option>').join('')+(selected.last_reference?'<option value="lastReference">'+escape(selected.last_reference_label||'Last frame')+'</option>':''):'<option value="reference">'+escape(selected.reference_label||'Reference / first frame')+'</option>'+(selected.last_reference?'<option value="lastReference">'+escape(selected.last_reference_label||'Last frame')+'</option>':'');}
   function nextEmptySlot(){return selected.reference_slots?.length?referenceRecords.findIndex(r=>!r.file||r.missing):-1;}
   // The picker owns its reads: the Library page is one bounded slice, so saved images are searched and paged here (#1622).
-  let sourcePage={assets:[],next:null},sourceSeq=0,sourceSearchTimer=null;
+  let sourcePage={assets:[],unavailable:[],next:null},sourceSeq=0,sourceSearchTimer=null;
   async function readSources(more){
     const seq=++sourceSeq,term=q('#uxSourceSearch').value.trim(),filters={visibility:'active',media_type:'image',sort:'newest',limit:100,details:true};
     if(term)filters.q=term;if(more&&sourcePage.next)filters.cursor=sourcePage.next;
     const data=await api(assetReadURL('/api/assets/page',filters));
     if(seq!==sourceSeq||!picker.open)return false;   // a newer search or a closed picker owns the list
-    if(!Array.isArray(data?.assets))throw Error('The saved-image page was not understood.');
-    sourcePage={assets:more?[...sourcePage.assets,...data.assets]:data.assets,next:data.next_cursor||null};return true;
+    const unavailable=data?.unavailable_assets||[];
+    if(!Array.isArray(data?.assets)||!Array.isArray(unavailable)||data.assets.length+unavailable.length>100||unavailable.some(item=>!item||typeof item.id!=='string'||typeof item.error!=='string'))throw Error('The saved-image page was not understood.');
+    sourcePage={assets:more?[...sourcePage.assets,...data.assets]:data.assets,unavailable:more?[...(sourcePage.unavailable||[]),...unavailable]:unavailable,next:data.next_cursor||null};return true;
   }
-  function renderSources(){q('#uxSourceAssets').innerHTML=sourcePage.assets.map(a=>'<button data-ux-pull="'+a.id+'">'+assetPreview(a)+'<b>'+escape(a.title)+'</b><small>'+escape(({selected:'Kept',needs_work:'Needs work',rejected:'Not this',unreviewed:'Unreviewed'}[a.review||'unreviewed']||a.review))+'</small></button>').join('')||'<p>No matching saved images. Import an image in the Asset library first.</p>';q('#uxSourcePaging').innerHTML=sourcePage.next?'<button type="button" data-ux-source-more>More saved images</button>':'';}
+  function renderSources(){
+    const unavailable=sourcePage.unavailable||[];
+    q('#uxSourceAssets').innerHTML=sourcePage.assets.map(a=>'<button data-ux-pull="'+a.id+'">'+assetPreview(a)+'<b>'+escape(a.title)+'</b><small>'+escape(({selected:'Kept',needs_work:'Needs work',rejected:'Not this',unreviewed:'Unreviewed'}[a.review||'unreviewed']||a.review))+'</small></button>').join('')||(unavailable.length?'<p>Saved-image details unavailable. The observed IDs and reasons are below.</p>':'<p>No matching saved images. Import an image in the Asset library first.</p>');
+    q('#uxSourcePaging').innerHTML=(unavailable.length?'<p>'+sourcePage.assets.length+' available of '+(sourcePage.assets.length+unavailable.length)+' observed saved images loaded.</p>'+unavailableAssetDetails(unavailable):'')+(sourcePage.next?'<button type="button" data-ux-source-more>More saved images</button>':'');
+  }
   function syncSourceAvailability(){
     // The modal already blocks duplicate interaction. Keep its opener focusable for native return.
     q('#uxPullAsset').disabled=!takesSource();
@@ -1311,7 +1326,7 @@
     q('#uxSourceSearch').value='';q('#uxSourceSearch').disabled=true;q('#uxSourceSlot').disabled=true;
     q('#uxSourceSlot').innerHTML=sourceSlotOptions();
     const first=nextEmptySlot();if(first>=0)q('#uxSourceSlot').value=String(first);
-    sourcePage={assets:[],next:null};q('#uxSourceAssets').replaceChildren();q('#uxSourcePaging').replaceChildren();q('#uxSourceAssets').setAttribute('aria-busy','true');
+    sourcePage={assets:[],unavailable:[],next:null};q('#uxSourceAssets').replaceChildren();q('#uxSourcePaging').replaceChildren();q('#uxSourceAssets').setAttribute('aria-busy','true');
     const status=q('#uxPickerStatus');status.textContent='Loading saved images…';status.tabIndex=-1;
     picker.showModal();status.focus({preventScroll:true});
     try{

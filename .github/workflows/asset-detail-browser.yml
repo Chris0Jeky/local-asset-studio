@@ -18,6 +18,8 @@ on:
       - 'tests/asset_library*'
       - 'tests/test_asset_library*'
       - 'tests/asset_source_filter*'
+      - 'tests/library_*'
+      - 'tests/test_library_*'
       - 'tests/asset_detail*'
       - 'tests/test_asset_detail*'
       - 'tests/asset_reload_browser.py'
@@ -73,6 +75,12 @@ jobs:
         run: |
           node tests/asset_grid_contracts.cjs
           python tests/asset_grid_browser.py --out .runtime/asset-grid-proof --response-delay-ms ${{ matrix.response-delay-ms }}
+      - name: Bounded Library pages and off-page consumers
+        if: matrix.response-delay-ms == 0
+        run: |
+          node tests/library_offpage_frontend.cjs
+          node tests/library_page_frontend.cjs
+          python tests/library_page_browser.py --out .runtime/library-page-proof
       - name: Addressable figure editor recovery
         if: matrix.response-delay-ms == 0
         run: |
@@ -95,6 +103,7 @@ jobs:
             .runtime/asset-library-proof/
             .runtime/asset-source-proof/
             .runtime/asset-grid-proof/
+            .runtime/library-page-proof/
             .runtime/addressable-figures-proof/
             .runtime/collection-editor-proof/
           if-no-files-found: ignore

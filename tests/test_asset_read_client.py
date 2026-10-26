@@ -57,6 +57,18 @@ class AssetReadClientTests(unittest.TestCase):
             self.assertEqual(self.module.main(['page', '--source', 'mine']), 0)
         self.assertEqual(page.call_args.kwargs['filters']['source'], 'mine')
 
+    def test_exact_job_filter_reaches_the_typed_client_and_cli(self):
+        self.page['filters']['job_id'] = 'one run · 雪'
+        self.reply(self.page)
+        with patch.object(self.client.opener, 'open', wraps=self.client.opener.open) as calls:
+            self.assertEqual(self.client.page(filters={'job_id': 'one run · 雪'}), self.page)
+        from urllib.parse import parse_qs, urlsplit
+        self.assertEqual(parse_qs(urlsplit(calls.call_args.args[0].full_url).query)['job_id'], ['one run · 雪'])
+        with patch.object(self.module.AssetReadClient, 'page', return_value=self.page) as page, \
+             patch('sys.stdout', new_callable=io.StringIO):
+            self.assertEqual(self.module.main(['page', '--job-id', 'one run · 雪']), 0)
+        self.assertEqual(page.call_args.kwargs['filters']['job_id'], 'one run · 雪')
+
     def test_untrusted_response_cannot_invent_scope_authority_or_summary_fields(self):
         mutations=[lambda p:p.update(workspace_id='d'*32),lambda p:p.update(generation_submitted=0),
                    lambda p:p.update(extra=True),lambda p:p['assets'][0].update(path='/private'),

@@ -3,8 +3,11 @@
 python tests/studio_browser_smoke.py --screenshots /tmp/studio-ux
 Requires Playwright and Chromium, outside the managed model environment.
 The local fixture server serves real frontend files and explicitly synthetic API data.
+Asset and collection observations use the production SQLite query owner; media,
+jobs, direct fixture mutations, and response-delay controls remain synthetic.
 """
 from browser_ports import evidence_screenshot
+import atexit
 import argparse
 import hashlib
 import os
@@ -12,6 +15,7 @@ import shutil
 import json
 import mimetypes
 import sys
+import tempfile
 import threading
 import time
 from http.server import BaseHTTPRequestHandler
@@ -24,6 +28,9 @@ sys.path.insert(0, str(ROOT / 'app')); sys.path.insert(0, str(ROOT))  # app/ mod
 import continuation
 import looks
 import wan_capacity
+from workspace import AssetWorkspace
+from studio_workflow.asset_read_http import page_query as asset_page_query, _error as observation_error
+from studio_workflow.collection_http import page_query as collection_page_query
 POSTS = []
 FAIL_WORKSPACE = False
 WORKSPACE_DELAY = 0
@@ -40,6 +47,7 @@ for preset in CATALOG['presets']:
     preset['continuation_capability'] = continuation.capability(preset, graph)
     preset['continuation_capability']['template_sha256'] = hashlib.sha256((ROOT / preset['graph']).read_bytes()).hexdigest()
 ASSETS = []
+COLLECTIONS = []
 for i, (title, file, review) in enumerate([
     ('Lantern · material study', 'examples/references/lantern-reference.png', 'unreviewed'),
     ('Forest · atmosphere', 'examples/lanternkeeper/forest-hero.png', 'selected'),
@@ -70,6 +78,70 @@ def source_reference(asset):
     return {'file':'a'*32+'_fixture.png','sha256':asset['sha256'],'width':512,'height':768,
             'parent_asset':asset['id'],'context':source_context(asset)}
 
+
+class FixtureObservations:
+    """Synthetic inputs, real SQLite query/cursor ownership; no copied media or jobs."""
+    def __init__(self, identity):
+        self.temp=tempfile.TemporaryDirectory(prefix='studio-browser-assets-')
+        self.workspace=AssetWorkspace(self.temp.name);self.signature=None;self.sources={}
+        with self.workspace.connection() as db:
+            db.execute('UPDATE workspace_identity SET id=? WHERE singleton=1',(identity,))
+            self.columns={row['name'] for row in db.execute('PRAGMA table_info(assets)')}
+
+    def sync(self):
+        signature=json.dumps([ASSETS,COLLECTIONS],sort_keys=True)
+        if signature==self.signature:return
+        assets,collections=json.loads(signature)
+        with self.workspace.connection() as db:
+            db.execute('BEGIN IMMEDIATE')
+            for table in ('collection_assets','collections','assets'):db.execute('DELETE FROM '+table)
+            for c in collections:
+                db.execute('INSERT INTO collections(id,name,description,created_at,revision) VALUES (?,?,?,?,?)',
+                           (c['id'],c['name'],c.get('description',''),c.get('created_at',0),c.get('revision',1)))
+            for index,asset in enumerate(assets):
+                row=dict(output_index=index,path='fixture/'+asset['id'],source={},lineage=[],tags=[],notes='',
+                         favorite=False,review='unreviewed',metadata_revision=0)
+                row.update({key:value for key,value in asset.items() if key in self.columns})
+                row['job_id']=asset.get('job_id') or ''
+                for key in ('source','lineage','tags'):row[key]=json.dumps(row[key])
+                row['favorite']=int(row['favorite'])
+                names=','.join(row);marks=','.join('?' for _ in row)
+                db.execute('INSERT INTO assets ('+names+') VALUES ('+marks+')',list(row.values()))
+                db.executemany('INSERT INTO collection_assets VALUES (?,?)',
+                               [(key,asset['id']) for key in asset.get('collections',[])])
+        self.signature=signature;self.sources={a['id']:a for a in assets}
+
+    def presentation(self, result):
+        records=list(result.get('assets',[]))+[item['asset'] for item in result.get('items',[]) if item.get('asset')]
+        for record in records:
+            source=self.sources[record['id']]
+            # Keep explicit data URLs/custom fake media routes and unknown fake jobs.
+            if 'url' in source:record['url']=source['url']
+            if 'job_id' in record and source.get('job_id') is None:record['job_id']=None
+        return result
+
+
+_OBSERVATIONS={};_OBSERVATION_LOCK=threading.RLock()
+
+def close_fixture_observations():
+    with _OBSERVATION_LOCK:
+        for owner in _OBSERVATIONS.values():owner.temp.cleanup()
+        _OBSERVATIONS.clear()
+
+atexit.register(close_fixture_observations)
+
+def observe_fixture(handler, action):
+    identity=getattr(handler,'workspace_id',Handler.workspace_id)
+    try:
+        with _OBSERVATION_LOCK:
+            AssetWorkspace._validate_scope(identity)
+            owner=_OBSERVATIONS.get(identity)
+            if owner is None:owner=_OBSERVATIONS[identity]=FixtureObservations(identity)
+            owner.sync();result=owner.presentation(action(owner.workspace))
+        return handler.json(result)
+    except (ValueError,RecursionError) as exc:
+        return handler.json(observation_error(exc),getattr(exc,'status',400))
+
 class Handler(BaseHTTPRequestHandler):
     workspace_id='1'*32
     def log_message(self, *args):
@@ -86,20 +158,9 @@ class Handler(BaseHTTPRequestHandler):
             if WORKSPACE_DELAY:time.sleep(WORKSPACE_DELAY)
             if FAIL_WORKSPACE:return self.json({'error':'Fixture workspace unavailable'},503)
         if path=='/api/assets/page':
-            from urllib.parse import parse_qs
-            query=parse_qs(urlsplit(self.path).query)
-            assets=[a for a in ASSETS if (a['trashed_at'] is not None)==(query.get('visibility')==['trash'])]
-            if 'review' in query: assets=[a for a in assets if a['review']==query['review'][0]]
-            if 'favorite' in query: assets=[a for a in assets if a['favorite']]
-            if 'media_type' in query: assets=[a for a in assets if a['media_type']==query['media_type'][0]]
-            if 'q' in query:
-                needle=query['q'][0].lower()
-                assets=[a for a in assets if any(needle in str(value or '').lower() for value in
-                        [a.get(k) for k in ('title','filename','preset_name','notes','run_label','prompt_excerpt')]+a.get('tags',[]))]
-            sort=query.get('sort',['newest'])[0]
-            assets=sorted(assets,key=lambda a:(a['title'].lower() if sort=='title' else a['created_at'],a['id']),reverse=sort=='newest')
-            return self.json({'format':'studio.asset-page/v1','workspace_id':getattr(self,'workspace_id',Handler.workspace_id),'catalogue':{'epoch':'a'*32,'revision':1},'assets':assets[:100],'next_cursor':None})
-        if path=='/api/collections':return self.json({'format':'studio.collection-page/v1','workspace_id':getattr(self,'workspace_id',Handler.workspace_id),'catalogue':{'epoch':'a'*32,'revision':1},'collections':[],'next_cursor':None})
+            return observe_fixture(self,lambda workspace:workspace.asset_page(**asset_page_query(self.path)))
+        if path=='/api/collections':
+            return observe_fixture(self,lambda workspace:workspace.collection_page(**collection_page_query(self.path)))
         data={
             '/api/catalog':CATALOG, '/api/options':{'loras':[]}, '/api/knowledge':{}, '/api/recipes':{'recipes':[]},
             '/api/identity':{'workspace':'ux-test-workspace'}, '/api/setups':[], '/api/looks':{'looks':[],'seed_errors':[],'generation_submitted':False}, '/api/characters':{'characters':[],'generation_submitted':False}, '/api/jobs':JOBS,
@@ -131,11 +192,8 @@ class Handler(BaseHTTPRequestHandler):
         raw=self.rfile.read(int(self.headers.get('Content-Length','0')))
         if self.path=='/api/assets/selection':
             data=json.loads(raw)
-            items=[]
-            for key in data['ids']:
-                asset=next((a for a in ASSETS if a['id']==key),None)
-                items.append({'id':key,'state':'missing' if asset is None else 'trashed' if asset['trashed_at'] is not None else 'active','asset':asset})
-            return self.json({'workspace_id':getattr(self,'workspace_id',Handler.workspace_id),'catalogue':{'epoch':'a'*32,'revision':1},'items':items})
+            return observe_fixture(self,lambda workspace:workspace.asset_selection(data['ids'],
+                                   workspace_id=data['workspace_id'],details=data.get('details',False)))
         data=json.loads(raw) if self.headers.get('Content-Type')=='application/json' else {}
         POSTS.append({'path':self.path,'data':data})
         if self.path=='/api/assets/reference':

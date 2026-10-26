@@ -1,5 +1,6 @@
 """Shared browser responses also support handlers that delegate without inheriting."""
 import io
+import json
 import unittest
 from types import SimpleNamespace
 
@@ -20,8 +21,9 @@ class WorkspaceIdentityTests(unittest.TestCase):
                 self.assertTrue(handler.wfile.getvalue())
             else:
                 yield fixture.Handler.do_GET(handler)
-        handler = SimpleNamespace(path='/api/assets/selection', headers={'Content-Length': '10'},
-                                  rfile=io.BytesIO(b'{"ids":[]}'), json=lambda value: value, **attributes)
+        body=json.dumps({'workspace_id':attributes.get('workspace_id','1'*32),'ids':['missing']}).encode()
+        handler = SimpleNamespace(path='/api/assets/selection', headers={'Content-Length':str(len(body))},
+                                  rfile=io.BytesIO(body), json=lambda value: value, **attributes)
         yield fixture.Handler.do_POST(handler)
 
     def test_delegating_handler_uses_default_workspace(self):

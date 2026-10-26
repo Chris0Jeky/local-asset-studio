@@ -203,7 +203,10 @@ def exercise(out, browser_executable=None):
                         # The reference action opens the existing picker and focuses this exact asset,
                         # without selecting a recipe or copying source bytes on the user's behalf.
                         page.locator('#closeAssetDialog').click()
-                        page.evaluate('(id)=>{selectPreset("gentle-variation");showView("assets");openAsset(id)}', ids[-1])
+                        page.evaluate('''async id=>{selectPreset("gentle-variation");showView("assets");
+                          document.querySelector('#assetSearch').value='no matching family title';await refreshAssets(true);await openAsset(id);}''', ids[-1])
+                        assert not page.evaluate('(id)=>assetState.assets.some(a=>a.id===id)', ids[-1])
+                        assert page.evaluate('(id)=>assetRecord(id)?.id===id', ids[-1])
                         page.locator('[data-family-reference]').click()
                         page.wait_for_function('document.querySelector("#uxSourcePicker").open&&!document.querySelector("#uxSourceSearch").disabled')
                         page.wait_for_function('(id)=>document.activeElement?.dataset.uxPull===id', arg=ids[-1])
@@ -219,7 +222,7 @@ def exercise(out, browser_executable=None):
                             '(els)=>els.map(el=>{const r=el.getBoundingClientRect();return {left:r.left,right:r.right,viewport:innerWidth}})')
                         assert all(r['left'] >= -1 and r['right'] <= r['viewport']+1 for r in bounds), bounds
                         evidence_screenshot(page, path=str(out/('family-'+str(width)+'.png')), full_page=True)
-                        checks.append({'width': width, 'four_steps': True, 'navigation': True, 'recall': True, 'new_seed': True, 'declined_confirm_visible': True, 'draft_retained': True, 'stale_refused': True, 'source_picker_no_copy': True, 'keyboard_focus': True, 'zoom': 2})
+                        checks.append({'width': width, 'four_steps': True, 'navigation': True, 'recall': True, 'new_seed': True, 'declined_confirm_visible': True, 'draft_retained': True, 'stale_refused': True, 'off_page_source_picker_no_copy': True, 'keyboard_focus': True, 'zoom': 2})
                     except Exception as error:
                         evidence = {'status': 'failed', 'width': width, 'error': str(error)[:4000],
                                     'page_errors': errors[:30], 'post_routes': sorted(set(posts)),

@@ -13,8 +13,7 @@ function fixture(options={}){
 function asset(id,label=null){return {id,workspace_id:scope,title:id,filename:id+'.png',notes:'',tags:[],review:'unreviewed',favorite:false,
   media_type:'image',preset_id:'test',preset_name:'Test',job_id:id,metadata_revision:0,created_at:1,collections:[],source:{},lineage:[],bytes:1,run_label:label};}
 function reply(s,index,assets,next=null){
-  s.reads[index].resolve({workspace_id:scope,catalogue:stamp,assets,next_cursor:next});
-  s.reads[index+1].resolve({workspace_id:scope,catalogue:stamp,collections:[],next_cursor:null});
+  s.reads[index].resolve({workspace_id:scope,catalogue:stamp,assets,cursor:query(s,index).get('cursor'),next_cursor:next,unavailable_assets:[],collection_page:{workspace_id:scope,catalogue:stamp,collections:[],next_cursor:null}});
 }
 function query(s,index){return new URL(s.reads[index].url,'http://fixture').searchParams;}
 
@@ -43,10 +42,10 @@ test('a saved Agent preference stays explicit on an empty page and offers All so
 test('changing source from page two restarts its query and preserves the complete selection',async()=>{
   const s=fixture();let pending=s.actualRefresh(true);reply(s,0,[asset('mine-first')],'mine-next');await pending;
   s.run("assetSelection=new Set(['mine-first','off-page'])");
-  pending=s.run('moveAssetPage(true)');assert.equal(query(s,2).get('cursor'),'mine-next');reply(s,2,[asset('mine-second')]);await pending;
-  s.run("chooseAssetSource('agent')");assert.equal(s.reads.length,6);
-  assert.equal(query(s,4).get('source'),'agent');assert.equal(query(s,4).has('cursor'),false);
-  reply(s,4,[asset('agent-only','Agent lab')]);await tick();
+  pending=s.run('moveAssetPage(true)');assert.equal(query(s,1).get('cursor'),'mine-next');reply(s,1,[asset('mine-second')]);await pending;
+  s.run("chooseAssetSource('agent')");assert.equal(s.reads.length,3);
+  assert.equal(query(s,2).get('source'),'agent');assert.equal(query(s,2).has('cursor'),false);
+  reply(s,2,[asset('agent-only','Agent lab')]);await tick();
   assert.equal(s.run('assetPaging.history.length'),0);
   assert.equal(s.run('JSON.stringify([...assetSelection])'),'["mine-first","off-page"]');
   assert.equal(s.el('#assetSource').value,'agent');assert.equal(s.writes.length,0);
@@ -55,11 +54,11 @@ test('changing source from page two restarts its query and preserves the complet
 test('a held source response cannot replace the newer All sources choice',async()=>{
   const s=fixture();let pending=s.actualRefresh(true);reply(s,0,[asset('mine')]);await pending;
   s.run("chooseAssetSource('agent');chooseAssetSource('all')");
-  assert.equal(s.reads.length,4);
-  reply(s,2,[asset('obsolete','Agent lab')]);await tick();
-  assert.equal(s.reads.length,6);assert.equal(query(s,4).get('source'),'all');
+  assert.equal(s.reads.length,2);
+  reply(s,1,[asset('obsolete','Agent lab')]);await tick();
+  assert.equal(s.reads.length,3);assert.equal(query(s,2).get('source'),'all');
   assert.equal(s.run("assetState.assets.some(a=>a.id==='obsolete')"),false);
-  reply(s,4,[asset('mine'),asset('agent','Agent lab')]);await tick();
+  reply(s,2,[asset('mine'),asset('agent','Agent lab')]);await tick();
   assert.equal(s.run('assetSource()'),'all');assert.equal(s.run('visibleAssets().length'),2);
   assert.equal(s.writes.length,0);
 });

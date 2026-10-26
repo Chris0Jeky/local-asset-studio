@@ -234,6 +234,48 @@ async def scenario_row_names_and_motion(browser):
     await reduced.close()
     return {"row_inputs_named_per_figure": True, "reduced_motion_scroll": "auto"}
 
+
+async def scenario_off_page_children(browser):
+    page, errors = await page_for(browser)
+    await page.evaluate('''() => {
+      assetState.workspace_id=activeAsset.workspace_id;window.__resolved=new Map();window.__selections=[];
+      window.refreshAssets=async()=>{refreshed++;return true;};
+      window.assetRecord=id=>assetState.assets.find(a=>a.id===id)||__resolved.get(id);
+      window.resolveAssetIDs=async ids=>{__selections.push(ids);for(const id of ids)__resolved.set(id,{id,workspace_id:assetState.workspace_id,trashed_at:null});return true;};
+    }''')
+    await add_default(page, second=True)
+    await page.click('#figureSplitCreate')
+    await page.wait_for_selector('[data-figure-child]')
+    assert await page.locator('[data-figure-child]').count() == 2
+    assert await page.evaluate('assetState.assets.map(a=>a.id)') == ['asset-a']
+    assert await page.evaluate('__selections.length') == 1
+    assert await page.evaluate('__selections[0]') == await page.evaluate('lastCreated')
+    await page.locator('[data-figure-child]').nth(1).click()
+    assert await page.evaluate('opened') == [(await page.evaluate('lastCreated'))[1]]
+    assert await page.evaluate('postCount') == 1
+    assert not errors, errors
+    await page.close()
+    return {'visible_page_unchanged': True, 'selected_id_reads': 1, 'children': 2, 'split_posts': 1}
+
+
+async def scenario_workspace_changed_after_receipt(browser, aba=False):
+    page, errors = await page_for(browser)
+    await page.evaluate('''aba => {
+      assetState.workspace_id=activeAsset.workspace_id;window.__selections=[];window.assetWorkspaceEpoch=1;
+      window.refreshAssets=async()=>{refreshed++;assetWorkspaceEpoch++;assetState.workspace_id='2'.repeat(32);if(aba){assetWorkspaceEpoch++;assetState.workspace_id=activeAsset.workspace_id;}return true;};
+      window.resolveAssetIDs=async ids=>{__selections.push(ids);return true;};
+    }''', aba)
+    await add_default(page)
+    await page.click('#figureSplitCreate')
+    await page.wait_for_function("document.querySelector('#figureSplitStatus').textContent.includes('Workspace changed')")
+    assert await page.locator('[data-figure-child]').count() == 0
+    assert await page.evaluate('__selections') == []
+    assert 'Split confirmed' in await page.text_content('#figureSplitStatus')
+    assert await page.evaluate(f"sessionStorage.getItem('{PENDING_KEY}')") is None
+    assert not errors, errors
+    await page.close()
+    return {'receipt_confirmed': True, 'foreign_selected_id_reads': 0, 'foreign_child_actions': 0}
+
 async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", type=Path, required=True)
@@ -256,6 +298,9 @@ async def main():
                 "coalesced_refresh": await scenario_coalesced_refresh(browser),
                 "refresh_failure": await scenario_refresh_failure(browser),
                 "row_names_and_motion": await scenario_row_names_and_motion(browser),
+                "off_page_children": await scenario_off_page_children(browser),
+                "workspace_changed_after_receipt": await scenario_workspace_changed_after_receipt(browser),
+                "workspace_aba_after_receipt": await scenario_workspace_changed_after_receipt(browser, aba=True),
             }
         finally:
             await browser.close()

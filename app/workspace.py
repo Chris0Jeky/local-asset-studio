@@ -323,42 +323,49 @@ class AssetWorkspace:
         except AssetReadError as exc:
             raise WorkspaceError(str(exc), status=exc.status, code=exc.code, **exc.details) from exc
 
-    def _library_assets(self, db, summaries, identity):
+    def _library_assets(self, db, summaries, identity, *, unavailable=None):
         """Opt-in bounded Library fields; never decode unbounded private JSON or read media."""
-        from studio_workflow.asset_reads import require
+        from studio_workflow.asset_reads import _text_encoding, require
         if not summaries: return []
-        # Byte bounds are applied in SQL before values cross into Python. Refuse
-        # oversize fields rather than handing an editor a silently cut baseline.
-        bounds = {'title':4096,'filename':4096,'preset_name':4096,'notes':32000,'tags':8192,
+        # Bound SQL materialization without cutting an editor baseline. Thirty
+        # 60-code-point tags can use 43,444 bytes as escaped JSON in UTF-16.
+        bounds = {'title':4096,'filename':4096,'preset_name':4096,'notes':32000,'tags':43520,
                   'source':65536,'lineage':16384,'job_id':512,'run_label':320,'prompt_excerpt':1024}
-        columns = ','.join(f'CASE WHEN length(CAST({key} AS BLOB))<={limit} THEN {key} END AS {key},'
+        encoding = _text_encoding(db)
+        columns = ','.join(f"CASE WHEN typeof({key})='text' AND length(CAST({key} AS BLOB))<={limit} THEN CAST({key} AS BLOB) END AS {key},"
                           f'{key} IS NULL AS {key}_null' for key,limit in bounds.items())
         marks = ','.join('?' for _ in summaries)
         rows = db.execute('SELECT id,output_index,'+columns+' FROM assets WHERE id IN ('+marks+')',
                           [a['id'] for a in summaries])
         found = {}
         for row in rows:
-            fields = {key:row[key] for key in bounds}
-            require(all(type(value) is str or value is None and row[key+'_null']
-                        and key in ('preset_name','run_label','prompt_excerpt') for key,value in fields.items()),
-                    'Library metadata exceeds its bound or is invalid',code='asset_read_unavailable',status=503)
             try:
+                # Decode inside this row's refusal boundary. SQLite's eager TEXT
+                # decoding would otherwise abort the entire page for one bad byte.
+                fields = {key:row[key].decode(encoding) if type(row[key]) is bytes else row[key] for key in bounds}
+                require(all(type(value) is str or value is None and row[key+'_null']
+                            and key in ('preset_name','run_label','prompt_excerpt') for key,value in fields.items()),
+                        'Library metadata exceeds its bound or is invalid',code='asset_read_unavailable',status=503)
                 for key,kind in (('tags',list),('source',dict),('lineage',list)):
                     fields[key] = json.loads(fields[key])
                     require(type(fields[key]) is kind, 'Invalid Library metadata',code='asset_read_unavailable',status=503)
                 require(all(type(x) is str for x in fields['tags']+fields['lineage']),
                         'Invalid Library labels',code='asset_read_unavailable',status=503)
+                json.dumps(fields,allow_nan=False)
+                memberships = db.execute('SELECT collection_id FROM collection_assets WHERE asset_id=? ORDER BY collection_id LIMIT 201',
+                                         (row['id'],)).fetchall()
+                require(len(memberships)<=200, 'Library memberships exceed their bound',code='asset_read_unavailable',status=503)
+                found[row['id']] = dict(fields,output_index=row['output_index'],collections=[r[0] for r in memberships],workspace_id=identity)
             except (ValueError,RecursionError) as exc:
-                raise WorkspaceError('Library metadata is unavailable',code='asset_read_unavailable',status=503) from exc
-            memberships = db.execute('SELECT collection_id FROM collection_assets WHERE asset_id=? ORDER BY collection_id LIMIT 201',
-                                     (row['id'],)).fetchall()
-            require(len(memberships)<=200, 'Library memberships exceed their bound',code='asset_read_unavailable',status=503)
-            found[row['id']] = dict(fields,output_index=row['output_index'],collections=[r[0] for r in memberships],workspace_id=identity)
-        return [dict(a,**found[a['id']]) for a in summaries]
+                if unavailable is None:
+                    raise WorkspaceError('Library metadata is unavailable',code='asset_read_unavailable',status=503) from exc
+                unavailable.append({'id':row['id'],'code':'asset_read_unavailable',
+                                    'error':'Library metadata is unavailable for this asset'})
+        return [dict(a,**found[a['id']]) for a in summaries if a['id'] in found]
 
     def collection_page(self, *, workspace_id=None, limit=50, cursor=None):
-        from studio_workflow.asset_reads import _integer, _state, ENTITY, require
-        from studio_workflow.collection_http import collection_cursor, encode_cursor
+        from studio_workflow.asset_reads import _integer, _state, require
+        from studio_workflow.collection_http import collection_cursor
         require(_integer(limit,1,100), 'Page size must be an integer between 1 and 100')
         position = collection_cursor(cursor) if cursor is not None else None
         if workspace_id is not None: self._validate_scope(workspace_id)
@@ -371,25 +378,31 @@ class AssetWorkspace:
         with self.connection() as db:
             db.execute('BEGIN')
             identity, stamp = self._check_scope(db,workspace_id), _state(db)
-            require(position is None or position['catalogue']==stamp, 'Collection catalogue changed; explicitly refresh',
-                    code='collection_cursor_stale',status=409)
-            where, params = (' WHERE (c.name COLLATE NOCASE,c.id)>(?,?)',position['last']) if position else ('',[])
-            rows = db.execute('''SELECT CASE WHEN length(CAST(c.id AS BLOB))<=512 THEN c.id END AS id,
-                CASE WHEN length(CAST(c.name AS BLOB))<=400 THEN c.name END AS name,
-                CASE WHEN length(CAST(c.description AS BLOB))<=4000 THEN c.description END AS description,
-                c.revision,(SELECT COUNT(*) FROM collection_assets AS ca JOIN assets AS a ON a.id=ca.asset_id
-                    WHERE ca.collection_id=c.id AND a.trashed_at IS NULL) AS count
-                FROM collections AS c'''+where+' ORDER BY c.name COLLATE NOCASE,c.id LIMIT ?',[*params,limit+1]).fetchall()
-            items = [dict(row) for row in rows[:limit]]
-            require(all(type(c['id']) is str and ENTITY.fullmatch(c['id']) and type(c['name']) is str
-                        and 0<len(c['name'])<=100 and type(c['description']) is str and len(c['description'])<=1000
-                        and _integer(c['revision'],1) and _integer(c['count']) for c in items),
-                    'Collection metadata is unavailable',code='collection_read_unavailable',status=503)
-            next_cursor = encode_cursor({'format':'studio.collection-cursor/v1','workspace_id':identity,'catalogue':stamp,
-                                         'limit':limit,'last':[items[-1]['name'],items[-1]['id']]}) if len(rows)>limit else None
-            return {'format':'studio.collection-page/v1','workspace_id':identity,'catalogue':stamp,'limit':limit,
-                    'order':'name_nocase_asc_id_asc','collections':items,'next_cursor':next_cursor,'observation_only':True,
-                    'media_bytes_verified':False,'generation_submitted':False}
+            return self._collection_page(db,identity,stamp,limit=limit,position=position)
+
+    def _collection_page(self, db, identity, stamp, *, limit, position=None):
+        """Existing bounded collection projection inside the caller's read snapshot."""
+        from studio_workflow.asset_reads import _integer, ENTITY, require
+        from studio_workflow.collection_http import encode_cursor
+        require(position is None or position['catalogue']==stamp, 'Collection catalogue changed; explicitly refresh',
+                code='collection_cursor_stale',status=409)
+        where, params = (' WHERE (c.name COLLATE NOCASE,c.id)>(?,?)',position['last']) if position else ('',[])
+        rows = db.execute('''SELECT CASE WHEN length(CAST(c.id AS BLOB))<=512 THEN c.id END AS id,
+            CASE WHEN length(CAST(c.name AS BLOB))<=400 THEN c.name END AS name,
+            CASE WHEN length(CAST(c.description AS BLOB))<=4000 THEN c.description END AS description,
+            c.revision,(SELECT COUNT(*) FROM collection_assets AS ca JOIN assets AS a ON a.id=ca.asset_id
+                WHERE ca.collection_id=c.id AND a.trashed_at IS NULL) AS count
+            FROM collections AS c'''+where+' ORDER BY c.name COLLATE NOCASE,c.id LIMIT ?',[*params,limit+1]).fetchall()
+        items = [dict(row) for row in rows[:limit]]
+        require(all(type(c['id']) is str and ENTITY.fullmatch(c['id']) and type(c['name']) is str
+                    and 0<len(c['name'])<=100 and type(c['description']) is str and len(c['description'])<=1000
+                    and _integer(c['revision'],1) and _integer(c['count']) for c in items),
+                'Collection metadata is unavailable',code='collection_read_unavailable',status=503)
+        next_cursor = encode_cursor({'format':'studio.collection-cursor/v1','workspace_id':identity,'catalogue':stamp,
+                                     'limit':limit,'last':[items[-1]['name'],items[-1]['id']]}) if len(rows)>limit else None
+        return {'format':'studio.collection-page/v1','workspace_id':identity,'catalogue':stamp,'limit':limit,
+                'order':'name_nocase_asc_id_asc','collections':items,'next_cursor':next_cursor,'observation_only':True,
+                'media_bytes_verified':False,'generation_submitted':False}
 
     @staticmethod
     def text(value, name, maximum):

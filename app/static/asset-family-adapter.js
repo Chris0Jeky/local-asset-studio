@@ -33,14 +33,21 @@
       options.finish(mode,target,result.controls.seed);
     }
     async function reference(id){
-      const state=options.state();
+      const initial=context(),state=options.state();
       need(!state.dirty&&!state.pending&&!state.conflict&&!state.metadataBusy,
         'Save or resolve the asset editor first. Your draft is kept.');
       need(!options.owner.busy(),'Wait for the current Create action to finish. Your work was kept.');
-      const asset=options.asset(id);
+      let asset=options.asset(id);
+      if(!asset&&options.resolve){
+        const observed=await options.resolve([id]),now=context();
+        need(observed!==false&&now.workspace===initial.workspace&&now.stamp===initial.stamp,
+          'The asset, Workspace or Create draft changed while reading this reference. Your work was kept.');
+        need(!options.owner.busy(),'Wait for the current Create action to finish. Your work was kept.');
+        asset=options.asset(id);
+      }
       need(asset&&asset.trashed_at==null&&asset.media_type==='image','Choose an active image as a reference.');
-      const stamp=options.owner.stamp(),scope=state.workspace;
-      await options.picker(asset,()=>options.owner.stamp()===stamp&&options.state().workspace===scope);
+      const stamp=options.owner.stamp(),scope=state.workspace,epoch=state.workspaceEpoch;
+      await options.picker(asset,()=>options.owner.stamp()===stamp&&options.state().workspace===scope&&options.state().workspaceEpoch===epoch);
     }
     return {context,apply,reference};
   }
@@ -58,7 +65,8 @@
       dirty:assetDetailDirty(),pending:!!assetDetailPending,conflict:!!assetDetailConflict,metadataBusy:assetDetailBusy,
       specialized:!!continuationState||!!tileState||!!parallaxState||q('#uxPoseEditor')?.hidden===false});
     const adapter=StudioFamilyAdapter.create({owner,state,presets:()=>catalog?.presets||[],backend:()=>backendActive,
-      asset:id=>assetState.assets.find(a=>a.id===id),
+      asset:id=>typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id),
+      resolve:ids=>typeof resolveAssetIDs==='function'?resolveAssetIDs(ids):Promise.resolve(false),
       finish:(mode,target,seed)=>{
         q('#assetDialog').close();showView('create');
         const focus=mode==='words'&&target.positive?q('#positive'):getControl('seed');
@@ -81,7 +89,7 @@
     const family=F.install({...adapter,read:api,say:message,asset:()=>activeAsset,
       confirm:globalThis.confirm.bind(globalThis),
       check:(recipe,signal)=>api('/api/recipe-check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(recipe),signal}),
-      open:id=>{if(!openAsset(id))message('The asset could not be opened. Your current editor was kept.',true);}});
+      open:async id=>{if(!await openAsset(id))message('The asset could not be opened. Your current editor was kept.',true);}});
     let last=null;
     function observeDetail(){
       const now=state(),key=q('#assetDialog').open?JSON.stringify([now.workspace,now.assetId,now.assetEpoch]):null;

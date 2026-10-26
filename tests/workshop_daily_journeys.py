@@ -313,8 +313,9 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-ux-p
 
     def load_picker(self):
         production = region(source('studio-workbench.js'), '  // Pull any existing image', '  // Drafts are data only')
-        self.page.set_content('''<button id="uxPullAsset">Pull from library</button><script>
-const q=s=>document.querySelector(s),escape=v=>String(v);
+        helpers = region(source('app.js'), 'const esc =', '\n') + region(source('workspace.js'), 'function unavailableAssetDetails(', '\n')
+        self.page.set_content('<style>'+source('asset-review.css')+'</style><button id="uxPullAsset">Pull from library</button><script>'+helpers+'''
+const q=s=>document.querySelector(s),escape=esc;
 function element(tag,cls){const n=document.createElement(tag);n.className=cls;return n;}
 let selected={reference:true},referenceRecords=[],selectionEpoch=0,view='create',pickerBusy=false,pickerLoading=false,sourcePickerEpoch=0;
 const assetReadURL=(path,query)=>path+'?'+new URLSearchParams(query);
@@ -323,6 +324,30 @@ function announce(){}function after(){}function syncReady(){}function assetPrevi
 window.pending=[];window.urls=[];function api(url){urls.push(url);return new Promise((resolve,reject)=>pending.push({resolve,reject}));}
 window.pageOf=(ids,next=null)=>({assets:ids.map(id=>({id,title:'Image '+id,tags:[],media_type:'image'})),next_cursor:next});
 </script><script>'''+production+'</script>')
+
+    def test_picker_retains_unavailable_details_without_selectable_partial_rows(self):
+        self.page.set_viewport_size({'width': 390, 'height': 900})
+        self.load_picker()
+        self.page.click('#uxPullAsset')
+        self.page.evaluate("pending.shift().resolve({assets:[],unavailable_assets:[{id:'x'.repeat(128),code:'asset_read_limit',error:'Too <large>'}],next_cursor:'next'})")
+        self.page.wait_for_selector('#uxSourcePaging summary')
+        self.assertEqual(self.page.locator('[data-ux-pull]').count(), 0)
+        self.assertNotIn('No matching saved images', self.page.locator('#uxSourceAssets').inner_text())
+        self.assertIn('0 available of 1 observed saved images loaded', self.page.locator('#uxSourcePaging').inner_text())
+        self.page.click('#uxSourcePaging summary')
+        self.assertIn('Too <large>', self.page.locator('#uxSourcePaging').inner_text())
+        self.assertEqual(self.page.locator('#uxSourcePaging large').count(), 0)
+        self.assertTrue(self.page.evaluate('document.documentElement.scrollWidth<=innerWidth'))
+        self.page.click('[data-ux-source-more]')
+        self.page.evaluate("pending.shift().resolve({...pageOf(['safe']),unavailable_assets:[{id:'another',code:'asset_read_limit',error:'Another reason'}]})")
+        self.page.wait_for_selector('[data-ux-pull="safe"]')
+        self.assertEqual(self.page.locator('[data-ux-pull]').count(), 1)
+        self.assertIn('1 available of 3 observed saved images loaded', self.page.locator('#uxSourcePaging').inner_text())
+        self.page.fill('#uxSourceSearch', 'fresh')
+        self.page.wait_for_function('urls.length===3')
+        self.page.evaluate("pending.shift().resolve(pageOf(['fresh']))")
+        self.page.wait_for_selector('[data-ux-pull="fresh"]')
+        self.assertEqual(self.page.locator('#uxSourcePaging details').count(), 0)
 
     def test_picker_searches_and_pages_on_its_own_reads(self):
         self.load_picker()
@@ -435,8 +460,13 @@ let assetState={assets:[]},jobs=[{id:'done',status:'completed',preset_name:'P',o
         self.assertEqual(titles()[0], ['done', True, 'Wait for the current Combine action to finish.'])
         self.page.evaluate('busy=false;dirty=true;resultMarkup=""')
         self.assertEqual(titles()[0], ['done', True, 'Set or reset the typed joint position first.'], 'waiting never clears an unapplied joint edit')
-        # #1203 (Codex on #1212): a run that finished after the last Workspace read still offers its quick checks.
+        # An unobserved output offers a read; it must not invent unanswered checks from page absence.
         chips = self.page.evaluate("dirty=false;catalog.presets=[{id:'P',continuation_capability:{operation:'combine'}}];Object.assign(jobs[0],{preset_id:'P'});jobs[0].outputs[0].asset_id='fresh';resultMarkup='';syncCombineResults();"
+                                   "[...document.querySelectorAll('[data-ux-check][data-asset=\"fresh\"]')].map(b=>b.textContent)")
+        self.assertEqual(chips, [])
+        self.assertEqual(self.page.locator('[data-ux-check-load="fresh"]').inner_text(), 'Load saved checks')
+        self.assertIn('Saved review not loaded', self.page.locator('.ux-result-tile').inner_text())
+        chips = self.page.evaluate("assetState.assets=[{id:'fresh',tags:[],review:'unreviewed'}];syncCombineResults();"
                                    "[...document.querySelectorAll('[data-ux-check][data-asset=\"fresh\"]')].map(b=>b.textContent)")
         self.assertEqual(chips, ['pose', 'face', 'outfit', 'style', 'clean'])
 

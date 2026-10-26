@@ -1273,7 +1273,7 @@ def _combine_loop(c):
         tile = '#uxPairResults .ux-result-tile:has([data-ux-check][data-asset="asset-2"])'
         assert c.page.locator(tile + ' [data-ux-check]').all_inner_texts() == ['pose', 'face', 'outfit', 'style', 'clean']
         engine_chip = '[data-ux-engine="%s"] .ux-engine-checks' % initial['preset_id']
-        assert c.page.locator(engine_chip).inner_text() == 'Not checked yet'
+        assert c.page.locator(engine_chip).inner_text() == 'Loaded checks: none'
         c.act('[data-ux-check="pose"][data-asset="asset-2"]', note='quick check: the pose carried over')
         c.page.wait_for_function('assetState.assets.find(a=>a.id === "asset-2").tags.includes("check:pose=yes")')
         c.act('[data-ux-check="face"][data-asset="asset-2"]', note="quick check: the face is the character's")
@@ -1286,8 +1286,8 @@ def _combine_loop(c):
         assert all('review' not in w for w in writes) and c.page.evaluate('assetState.assets.find(a=>a.id === "asset-2").review') == 'selected'
         assert c.page.locator('[data-ux-review="selected"][data-asset="asset-2"]').is_enabled()
         c.act(engine_chip, 'read', note="the engine chip counts this PC's answers")
-        assert c.page.locator(engine_chip).inner_text() == 'pose 1/1 · face 0/1', c.page.locator(engine_chip).inner_text()
-        assert c.page.locator('#uxPairResults .ux-run-group:has([data-asset="asset-2"]) .ux-run-checks').inner_text() == 'pose 1/1 · face 0/1'
+        assert c.page.locator(engine_chip).inner_text() == 'Loaded checks: pose 1/1 · face 0/1', c.page.locator(engine_chip).inner_text()
+        assert c.page.locator('#uxPairResults .ux-run-group:has([data-asset="asset-2"]) .ux-run-checks').inner_text() == 'Loaded checks: pose 1/1 · face 0/1'
         c.act('[data-ux-rerun="same"][data-job="combine-loop-0"]', note='stage the exact recorded seed, without running it')
         c.page.wait_for_function('getControl("seed").value === "42" && !referencePending')
         assert c.page.locator('#positive').input_value() == initial['controls']['positive']

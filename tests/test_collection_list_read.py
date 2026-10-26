@@ -223,8 +223,12 @@ class CollectionListReadTests(unittest.TestCase):
         self.assertEqual(selected["items"][0]["asset"]["source"], asset["source"])
         with self.store.connection() as db:
             db.execute("UPDATE assets SET source=? WHERE id=?", ("x" * 1000000, key))
+        page = self.store.asset_page(details=True)
+        self.assertEqual(page['assets'], [])
+        self.assertEqual([item['id'] for item in page['unavailable_assets']], [key])
+        self.assertEqual(page['unavailable_assets'][0]['code'], 'asset_read_unavailable')
         with self.assertRaises(WorkspaceError):
-            self.store.asset_page(details=True)
+            self.store.asset_selection([key], workspace_id=self.scope, details=True)
 
 
 if __name__ == "__main__":
