@@ -4,7 +4,7 @@
 
 [Creation journeys](CREATION-JOURNEYS-2026-10-26.md) records ten bounded native-browser paths, input counts and automated elapsed time, the reproduced picture-draft reload loss, scoped per-tab recovery, and private request/storage checks. Synthetic interface evidence remains separate from configured-machine creative acceptance.
 
-[Owner anime trial](OWNER-ANIME-TRIAL-2026-10-26.md) is an unrun manual protocol with a fixed original adult character brief, ten tasks, separate human and machine timing, a six-image budget and an owner scorecard. Its proposed targets and acceptance criteria are not measured results.
+[Owner anime trial](OWNER-ANIME-TRIAL-2026-10-26.md) is an unrun manual protocol with a fixed original adult character brief, ten tasks, separate human and machine timing, a six-output-image cap and an owner scorecard. The cap includes every image in Make's two- or four-image Vary round; optional pose, correction or upscale tasks stop at readiness when no budget remains. Its proposed targets and acceptance criteria are not measured results.
 
 ## Live journey pass — 24 September 2026
 
