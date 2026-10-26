@@ -9,7 +9,7 @@ import unittest
 import wave
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT));sys.path.append(str(ROOT/'scripts'))
 from studio_av import project as p
-from studio_av.render import compile_project,render,inspect_wav,validate_media
+from studio_av.render import compile_project,render,inspect_wav,validate_media,video_duration
 try:import PIL;HAS_PIL=True
 except ImportError:HAS_PIL=False
 
@@ -44,6 +44,23 @@ class AVTests(unittest.TestCase):
         validate_media(self.doc,self.root)
         self.doc['shots'][0]['frames']=73
         with self.assertRaisesRegex(ValueError,'Video source too short'):validate_media(self.doc,self.root)
+
+    @unittest.skipUnless(shutil.which('ffmpeg') and shutil.which('ffprobe'),'FFmpeg not installed')
+    def test_longer_audio_track_cannot_extend_video_trim(self):
+        path=self.root/'media'/'short-video-long-audio.mp4'
+        subprocess.run([shutil.which('ffmpeg'),'-v','error','-f','lavfi','-i','color=c=red:s=64x64:r=24:d=1',
+                        '-f','lavfi','-i','anullsrc=r=48000:cl=stereo','-t','3','-c:v','libx264','-pix_fmt','yuv420p','-c:a','aac',str(path)],check=True)
+        self.doc['assets']={'clip':{'path':'media/'+path.name,'kind':'video','sha256':p.file_hash(path)}}
+        self.doc['shots']=[{'id':'shot','asset':'clip','source_in':0,'frames':24,'transition_frames':0}]
+        self.doc['audio']=[];self.doc['overlays']=[]
+        # A valid trim still works when the container has a longer audio tail.
+        validate_media(self.doc,self.root)
+        for source_in,frames in ((0,25),(0,72),(1,24)):
+            with self.subTest(source_in=source_in,frames=frames):
+                out=self.root/f'must-not-render-audio-tail-{source_in}-{frames}'
+                self.doc['shots'][0].update(source_in=source_in,frames=frames)
+                with self.assertRaisesRegex(ValueError,'Video source too short'):render(self.doc,self.root,out)
+                self.assertFalse(out.exists())
     def test_unknown_fields(self):
         self.doc['shell']='bad'
         with self.assertRaises(ValueError):p.validate(self.doc)
@@ -173,6 +190,24 @@ class AVTests(unittest.TestCase):
     def test_source_too_short(self):
         self.doc['audio'][0]['source_sample']=20
         with self.assertRaises(ValueError):validate_media(self.doc,self.root)
+
+class VideoDurationTests(unittest.TestCase):
+    def test_video_duration_ignores_longer_container_and_audio(self):
+        self.assertEqual(video_duration({'format':{'duration':'3'},'streams':[
+            {'codec_type':'audio','duration':'3'},{'codec_type':'video','duration':'1'}]}),1)
+
+    def test_unknown_video_extent_never_falls_back_to_container(self):
+        for duration in (None,'N/A','NaN','Infinity','0','-1','1e9999'):
+            with self.subTest(duration=duration),self.assertRaisesRegex(ValueError,'Video duration is unavailable'):
+                video_duration({'format':{'duration':'3'},'streams':[{'codec_type':'video','duration':duration}]})
+        with self.assertRaisesRegex(ValueError,'Video duration is unavailable'):
+            video_duration({'format':{'duration':'3'},'streams':[{'codec_type':'video'}]})
+
+    def test_ambiguous_or_absent_video_track_is_refused(self):
+        for streams in ([],[{'codec_type':'audio','duration':'3'}],[{'codec_type':'video','duration':'1'}]*2):
+            with self.subTest(streams=streams),self.assertRaisesRegex(ValueError,'single primary media stream'):
+                video_duration({'streams':streams})
+
 
 class BlenderContractTests(unittest.TestCase):
     def test_narrow_operations(self):

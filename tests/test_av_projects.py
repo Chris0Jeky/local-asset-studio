@@ -53,6 +53,22 @@ class SceneTests(unittest.TestCase):
         for method in (self.studio.production.start,self.studio.production.resume):
             with self.assertRaises(ValueError):method(doc['id'])
 
+    def test_video_intake_and_add_use_video_track_duration(self):
+        source=self.root/'short-video-long-audio.mp4'
+        subprocess.run([shutil.which('ffmpeg'),'-v','error','-f','lavfi','-i','color=c=red:s=64x64:r=24:d=1',
+                        '-f','lavfi','-i','anullsrc=r=48000:cl=stereo','-t','3','-c:v','libx264','-pix_fmt','yuv420p','-c:a','aac',str(source)],check=True)
+        job={'id':'video-duration-fixture','preset_name':'Video fixture','outputs':[{'filename':source.name,'media_type':'video'}]}
+        asset_id=self.studio.assets.register(job,0,source)
+        doc=self.scenes.create({'action':'create','name':'Video scene','asset_ids':[asset_id],'frames_per_shot':72})
+        self.assertEqual(doc['project']['shots'][0]['frames'],24)
+        doc=self.change(doc,'add',section='shots',asset_key='source0')
+        self.assertEqual([shot['frames'] for shot in doc['project']['shots']],[24,24])
+        self.assertEqual(doc['timing']['frames'],48)
+        with self.assertRaisesRegex(ValueError,'Video source too short'):
+            self.change(doc,section='shots',clip_id='shot0',changes={'frames':25})
+        self.assertEqual(self.scenes.inspect(doc['id'])['revision'],1)
+        self.assertEqual(self.studio.queue.qsize(),0);self.assertEqual(self.studio.requests,[])
+
     def test_revision_conflict_and_restore_keep_append_only_history(self):
         doc=self.create();changed=self.change(doc,section='shots',clip_id='shot0',changes={'frames':48})
         with self.assertRaisesRegex(ValueError,'Scene conflict'):
