@@ -1109,6 +1109,8 @@ $('#importWorkflow').onchange=async e=>{
   try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Workflow JSON must be under 1 MiB');const report=await post('/api/workflow-inspect',{workflow:JSON.parse(await file.text()),name:file.name});$('#importReport').innerHTML='<p><b>'+report.node_count+' nodes inspected</b> · '+esc(report.format)+'</p><p>Missing nodes: '+esc(report.missing_nodes.join(', ')||'none detected')+'</p><p>Model filenames: '+esc(report.models.join(', ')||'none found in saved values')+'</p><p>Missing files: '+esc(report.missing_models.join(', ')||'none detected')+'</p><small>'+esc(report.note)+'</small>';}catch(err){$('#importReport').textContent=err.message;}finally{e.target.value='';}
 };
 (async()=>{
+  // #1649: companion classic scripts define Workspace and polling readers after app.js in the document.
+  if(document.readyState==='loading')await new Promise(resolve=>document.addEventListener('DOMContentLoaded',resolve,{once:true}));
   try{
     catalog=await api('/api/catalog');await loadAtelier();$('#recipeCount').textContent=catalog.presets.length+' editable recipes';
     $('#categorySelect').innerHTML=['All',...new Set(catalog.presets.map(p=>p.category||'Other'))].map(c=>'<option>'+esc(c)+'</option>').join('');
