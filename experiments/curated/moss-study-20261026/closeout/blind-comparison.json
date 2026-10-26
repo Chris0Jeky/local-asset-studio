@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "joined_at": "2026-10-26T20:26:59.131376+00:00",
+  "rating_sha256": "9b1eb02944bb9f4e3ca7910b712f342b9b2f7b5cd8f20c711354abefb39c0c6b",
+  "rating_export_sha256": "a256e5a1d89d8bb2394c68d5d5d09664eee29a3dd4466ce55ae8f03c1cb25844",
+  "mapping_sha256": "0f4fba834d1865efd4618063c5ab3389466a5c47fddd70785ed596c620555192",
+  "scope": "Same12 existing original-study images, four matched scene/seed groups; identities withheld during a fresh independent rating pass. No new render.",
+  "reviewer": "GPT-6 Luna xhigh",
+  "originals_viewed": 12,
+  "final_unique_crop_regions": 42,
+  "crop_views": 54,
+  "verdicts": {
+    "fixable": 4,
+    "keep": 8
+  },
+  "human_accepted": false,
+  "comparisons": [
+    {
+      "baseline": "base",
+      "treatment": "mikko",
+      "pairs": 4,
+      "metrics": {
+        "adherence": {
+          "win": 0,
+          "tie": 1,
+          "loss": 3
+        },
+        "anatomy": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "style": {
+          "win": 4,
+          "tie": 0,
+          "loss": 0
+        },
+        "technical": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "composition": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        }
+      }
+    },
+    {
+      "baseline": "base",
+      "treatment": "mikko-impasto",
+      "pairs": 4,
+      "metrics": {
+        "adherence": {
+          "win": 0,
+          "tie": 2,
+          "loss": 2
+        },
+        "anatomy": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "style": {
+          "win": 4,
+          "tie": 0,
+          "loss": 0
+        },
+        "technical": {
+          "win": 1,
+          "tie": 3,
+          "loss": 0
+        },
+        "composition": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        }
+      }
+    },
+    {
+      "baseline": "mikko",
+      "treatment": "mikko-impasto",
+      "pairs": 4,
+      "metrics": {
+        "adherence": {
+          "win": 1,
+          "tie": 3,
+          "loss": 0
+        },
+        "anatomy": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "style": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "technical": {
+          "win": 1,
+          "tie": 3,
+          "loss": 0
+        },
+        "composition": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        }
+      }
+    }
+  ],
+  "limitations": [
+    "Ordinal subjective agent ratings, not owner acceptance or significance.",
+    "Same images are rated again; this is not eight independent scene/seed pairs.",
+    "Rater and label visibility both differ from original ratings; differences cannot be attributed solely to blinding.",
+    "Anatomy ties are score-bucket ties, not identical anatomy or proven fixes."
+  ]
+}

@@ -1,0 +1,414 @@
+{
+  "date": "2026-10-26",
+  "base_sha": "d89b36f32",
+  "purpose": "Private adult non-explicit anime fashion; isolate adapter trigger, strength and texture, then compare two briefs and two seeds.",
+  "generation_budget": 24,
+  "stop_conditions": [
+    "Any failed, uncertain, interrupted or partial job: observe and stop; never automatically retry.",
+    "Stop before a new plan if host commit is at least 75 percent or free physical RAM is below 4 GiB.",
+    "Visually inspect every output and full-resolution face/hand crops; skip youthful-reading or explicit results.",
+    "No art acceptance or model-licence clearance is inferred."
+  ],
+  "plans": [
+    {
+      "name": "MOSS 20261026 sorceress 2026102601",
+      "recipe": {
+        "preset_id": "moss-t2i",
+        "controls": {
+          "seed": 2026102601,
+          "width": 1024,
+          "height": 1536,
+          "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 30-year-old woman with a visibly mature adult face and curvy adult proportions, long silver hair, violet eyes and a confident teasing smile. Full body from head to boots, three-quarter view, contrapposto with one hand resting on her hip and the other relaxed and visible. She wears a fitted black-and-gold corset bodice over an opaque ivory blouse, a short tailored cape, a high-waisted asymmetrical skirt with a thigh slit over opaque fitted shorts, and thigh-high black boots. A striking hourglass silhouette, elegant fantasy fashion, gold jewelry. She stands on a castle balcony at dusk; the entire figure has clear separation from the distant background. Tasteful non-explicit fashion illustration.",
+          "negative": "",
+          "steps": 30,
+          "cfg": 3,
+          "sampler": "euler",
+          "scheduler": "sgm_uniform",
+          "lora": 0,
+          "lora2": 0
+        }
+      },
+      "variants": [
+        {
+          "label": "base",
+          "controls": {
+            "lora": 0,
+            "lora2": 0,
+            "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 30-year-old woman with a visibly mature adult face and curvy adult proportions, long silver hair, violet eyes and a confident teasing smile. Full body from head to boots, three-quarter view, contrapposto with one hand resting on her hip and the other relaxed and visible. She wears a fitted black-and-gold corset bodice over an opaque ivory blouse, a short tailored cape, a high-waisted asymmetrical skirt with a thigh slit over opaque fitted shorts, and thigh-high black boots. A striking hourglass silhouette, elegant fantasy fashion, gold jewelry. She stands on a castle balcony at dusk; the entire figure has clear separation from the distant background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "No style adapter; common prompt-only control.",
+          "sources": []
+        },
+        {
+          "label": "reverse-no-trigger",
+          "controls": {
+            "lora": 0.9,
+            "lora2": 0,
+            "lora_name": "moss-reverse1999-v1.safetensors",
+            "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 30-year-old woman with a visibly mature adult face and curvy adult proportions, long silver hair, violet eyes and a confident teasing smile. Full body from head to boots, three-quarter view, contrapposto with one hand resting on her hip and the other relaxed and visible. She wears a fitted black-and-gold corset bodice over an opaque ivory blouse, a short tailored cape, a high-waisted asymmetrical skirt with a thigh slit over opaque fitted shorts, and thigh-high black boots. A striking hourglass silhouette, elegant fantasy fashion, gold jewelry. She stands on a castle balcony at dusk; the entire figure has clear separation from the distant background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "Historical strength without the author trigger.",
+          "sources": [
+            "https://civitai.com/api/v1/models/3005908"
+          ]
+        },
+        {
+          "label": "reverse-trigger",
+          "controls": {
+            "lora": 0.9,
+            "lora2": 0,
+            "lora_name": "moss-reverse1999-v1.safetensors",
+            "positive": "reversesty, 2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 30-year-old woman with a visibly mature adult face and curvy adult proportions, long silver hair, violet eyes and a confident teasing smile. Full body from head to boots, three-quarter view, contrapposto with one hand resting on her hip and the other relaxed and visible. She wears a fitted black-and-gold corset bodice over an opaque ivory blouse, a short tailored cape, a high-waisted asymmetrical skirt with a thigh slit over opaque fitted shorts, and thigh-high black boots. A striking hourglass silhouette, elegant fantasy fashion, gold jewelry. She stands on a castle balcony at dusk; the entire figure has clear separation from the distant background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "Only add reversesty to isolate trigger wording.",
+          "sources": [
+            "https://civitai.com/api/v1/models/3005908"
+          ]
+        },
+        {
+          "label": "reverse-1.2",
+          "controls": {
+            "lora": 1.2,
+            "lora2": 0,
+            "lora_name": "moss-reverse1999-v1.safetensors",
+            "positive": "reversesty, 2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 30-year-old woman with a visibly mature adult face and curvy adult proportions, long silver hair, violet eyes and a confident teasing smile. Full body from head to boots, three-quarter view, contrapposto with one hand resting on her hip and the other relaxed and visible. She wears a fitted black-and-gold corset bodice over an opaque ivory blouse, a short tailored cape, a high-waisted asymmetrical skirt with a thigh slit over opaque fitted shorts, and thigh-high black boots. A striking hourglass silhouette, elegant fantasy fashion, gold jewelry. She stands on a castle balcony at dusk; the entire figure has clear separation from the distant background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "Only raise trigger-enabled strength from 0.9 to 1.2.",
+          "sources": [
+            "https://civitai.com/api/v1/models/3005908"
+          ]
+        },
+        {
+          "label": "mikko",
+          "controls": {
+            "lora": 0.9,
+            "lora2": 0,
+            "lora_name": "moss-mikkoani-v1.safetensors",
+            "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 30-year-old woman with a visibly mature adult face and curvy adult proportions, long silver hair, violet eyes and a confident teasing smile. Full body from head to boots, three-quarter view, contrapposto with one hand resting on her hip and the other relaxed and visible. She wears a fitted black-and-gold corset bodice over an opaque ivory blouse, a short tailored cape, a high-waisted asymmetrical skirt with a thigh slit over opaque fitted shorts, and thigh-high black boots. A striking hourglass silhouette, elegant fantasy fashion, gold jewelry. She stands on a castle balcony at dusk; the entire figure has clear separation from the distant background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "Alternative mature anime finish at the same strength.",
+          "sources": [
+            "https://civitai.com/api/v1/models/2470371"
+          ]
+        },
+        {
+          "label": "mikko-impasto",
+          "controls": {
+            "lora": 0.9,
+            "lora2": 0.25,
+            "lora_name": "moss-mikkoani-v1.safetensors",
+            "lora2_name": "moss-impasto-25d-v08.safetensors",
+            "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 30-year-old woman with a visibly mature adult face and curvy adult proportions, long silver hair, violet eyes and a confident teasing smile. Full body from head to boots, three-quarter view, contrapposto with one hand resting on her hip and the other relaxed and visible. She wears a fitted black-and-gold corset bodice over an opaque ivory blouse, a short tailored cape, a high-waisted asymmetrical skirt with a thigh slit over opaque fitted shorts, and thigh-high black boots. A striking hourglass silhouette, elegant fantasy fashion, gold jewelry. She stands on a castle balcony at dusk; the entire figure has clear separation from the distant background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "Only add low-strength painterly texture to mikko.",
+          "sources": [
+            "https://civitai.com/api/v1/models/2470371",
+            "https://civitai.com/api/v1/models/2230912"
+          ]
+        }
+      ],
+      "max_seconds": 2400,
+      "max_generations": 6
+    },
+    {
+      "name": "MOSS 20261026 sorceress 2026102602",
+      "recipe": {
+        "preset_id": "moss-t2i",
+        "controls": {
+          "seed": 2026102602,
+          "width": 1024,
+          "height": 1536,
+          "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 30-year-old woman with a visibly mature adult face and curvy adult proportions, long silver hair, violet eyes and a confident teasing smile. Full body from head to boots, three-quarter view, contrapposto with one hand resting on her hip and the other relaxed and visible. She wears a fitted black-and-gold corset bodice over an opaque ivory blouse, a short tailored cape, a high-waisted asymmetrical skirt with a thigh slit over opaque fitted shorts, and thigh-high black boots. A striking hourglass silhouette, elegant fantasy fashion, gold jewelry. She stands on a castle balcony at dusk; the entire figure has clear separation from the distant background. Tasteful non-explicit fashion illustration.",
+          "negative": "",
+          "steps": 30,
+          "cfg": 3,
+          "sampler": "euler",
+          "scheduler": "sgm_uniform",
+          "lora": 0,
+          "lora2": 0
+        }
+      },
+      "variants": [
+        {
+          "label": "base",
+          "controls": {
+            "lora": 0,
+            "lora2": 0,
+            "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 30-year-old woman with a visibly mature adult face and curvy adult proportions, long silver hair, violet eyes and a confident teasing smile. Full body from head to boots, three-quarter view, contrapposto with one hand resting on her hip and the other relaxed and visible. She wears a fitted black-and-gold corset bodice over an opaque ivory blouse, a short tailored cape, a high-waisted asymmetrical skirt with a thigh slit over opaque fitted shorts, and thigh-high black boots. A striking hourglass silhouette, elegant fantasy fashion, gold jewelry. She stands on a castle balcony at dusk; the entire figure has clear separation from the distant background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "No style adapter; common prompt-only control.",
+          "sources": []
+        },
+        {
+          "label": "reverse-no-trigger",
+          "controls": {
+            "lora": 0.9,
+            "lora2": 0,
+            "lora_name": "moss-reverse1999-v1.safetensors",
+            "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 30-year-old woman with a visibly mature adult face and curvy adult proportions, long silver hair, violet eyes and a confident teasing smile. Full body from head to boots, three-quarter view, contrapposto with one hand resting on her hip and the other relaxed and visible. She wears a fitted black-and-gold corset bodice over an opaque ivory blouse, a short tailored cape, a high-waisted asymmetrical skirt with a thigh slit over opaque fitted shorts, and thigh-high black boots. A striking hourglass silhouette, elegant fantasy fashion, gold jewelry. She stands on a castle balcony at dusk; the entire figure has clear separation from the distant background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "Historical strength without the author trigger.",
+          "sources": [
+            "https://civitai.com/api/v1/models/3005908"
+          ]
+        },
+        {
+          "label": "reverse-trigger",
+          "controls": {
+            "lora": 0.9,
+            "lora2": 0,
+            "lora_name": "moss-reverse1999-v1.safetensors",
+            "positive": "reversesty, 2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 30-year-old woman with a visibly mature adult face and curvy adult proportions, long silver hair, violet eyes and a confident teasing smile. Full body from head to boots, three-quarter view, contrapposto with one hand resting on her hip and the other relaxed and visible. She wears a fitted black-and-gold corset bodice over an opaque ivory blouse, a short tailored cape, a high-waisted asymmetrical skirt with a thigh slit over opaque fitted shorts, and thigh-high black boots. A striking hourglass silhouette, elegant fantasy fashion, gold jewelry. She stands on a castle balcony at dusk; the entire figure has clear separation from the distant background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "Only add reversesty to isolate trigger wording.",
+          "sources": [
+            "https://civitai.com/api/v1/models/3005908"
+          ]
+        },
+        {
+          "label": "reverse-1.2",
+          "controls": {
+            "lora": 1.2,
+            "lora2": 0,
+            "lora_name": "moss-reverse1999-v1.safetensors",
+            "positive": "reversesty, 2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 30-year-old woman with a visibly mature adult face and curvy adult proportions, long silver hair, violet eyes and a confident teasing smile. Full body from head to boots, three-quarter view, contrapposto with one hand resting on her hip and the other relaxed and visible. She wears a fitted black-and-gold corset bodice over an opaque ivory blouse, a short tailored cape, a high-waisted asymmetrical skirt with a thigh slit over opaque fitted shorts, and thigh-high black boots. A striking hourglass silhouette, elegant fantasy fashion, gold jewelry. She stands on a castle balcony at dusk; the entire figure has clear separation from the distant background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "Only raise trigger-enabled strength from 0.9 to 1.2.",
+          "sources": [
+            "https://civitai.com/api/v1/models/3005908"
+          ]
+        },
+        {
+          "label": "mikko",
+          "controls": {
+            "lora": 0.9,
+            "lora2": 0,
+            "lora_name": "moss-mikkoani-v1.safetensors",
+            "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 30-year-old woman with a visibly mature adult face and curvy adult proportions, long silver hair, violet eyes and a confident teasing smile. Full body from head to boots, three-quarter view, contrapposto with one hand resting on her hip and the other relaxed and visible. She wears a fitted black-and-gold corset bodice over an opaque ivory blouse, a short tailored cape, a high-waisted asymmetrical skirt with a thigh slit over opaque fitted shorts, and thigh-high black boots. A striking hourglass silhouette, elegant fantasy fashion, gold jewelry. She stands on a castle balcony at dusk; the entire figure has clear separation from the distant background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "Alternative mature anime finish at the same strength.",
+          "sources": [
+            "https://civitai.com/api/v1/models/2470371"
+          ]
+        },
+        {
+          "label": "mikko-impasto",
+          "controls": {
+            "lora": 0.9,
+            "lora2": 0.25,
+            "lora_name": "moss-mikkoani-v1.safetensors",
+            "lora2_name": "moss-impasto-25d-v08.safetensors",
+            "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 30-year-old woman with a visibly mature adult face and curvy adult proportions, long silver hair, violet eyes and a confident teasing smile. Full body from head to boots, three-quarter view, contrapposto with one hand resting on her hip and the other relaxed and visible. She wears a fitted black-and-gold corset bodice over an opaque ivory blouse, a short tailored cape, a high-waisted asymmetrical skirt with a thigh slit over opaque fitted shorts, and thigh-high black boots. A striking hourglass silhouette, elegant fantasy fashion, gold jewelry. She stands on a castle balcony at dusk; the entire figure has clear separation from the distant background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "Only add low-strength painterly texture to mikko.",
+          "sources": [
+            "https://civitai.com/api/v1/models/2470371",
+            "https://civitai.com/api/v1/models/2230912"
+          ]
+        }
+      ],
+      "max_seconds": 2400,
+      "max_generations": 6
+    },
+    {
+      "name": "MOSS 20261026 evening 2026102601",
+      "recipe": {
+        "preset_id": "moss-t2i",
+        "controls": {
+          "seed": 2026102601,
+          "width": 1024,
+          "height": 1536,
+          "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 32-year-old woman with a visibly mature adult face and curvy adult proportions, a black wavy bob and emerald eyes. Waist-up editorial portrait, direct eye contact, playful wink and a warm sly smile, shoulders turned slightly, one gloved hand resting on her waist and the other hand holding the stem of a single red rose below her shoulder. She wears a fitted crimson off-the-shoulder evening dress with a structured opaque bodice and long black opera gloves, gold earrings. A strong fitted silhouette, polished elegant fashion, softly lit art-deco lounge in the background. Tasteful non-explicit fashion illustration.",
+          "negative": "",
+          "steps": 30,
+          "cfg": 3,
+          "sampler": "euler",
+          "scheduler": "sgm_uniform",
+          "lora": 0,
+          "lora2": 0
+        }
+      },
+      "variants": [
+        {
+          "label": "base",
+          "controls": {
+            "lora": 0,
+            "lora2": 0,
+            "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 32-year-old woman with a visibly mature adult face and curvy adult proportions, a black wavy bob and emerald eyes. Waist-up editorial portrait, direct eye contact, playful wink and a warm sly smile, shoulders turned slightly, one gloved hand resting on her waist and the other hand holding the stem of a single red rose below her shoulder. She wears a fitted crimson off-the-shoulder evening dress with a structured opaque bodice and long black opera gloves, gold earrings. A strong fitted silhouette, polished elegant fashion, softly lit art-deco lounge in the background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "No style adapter; common prompt-only control.",
+          "sources": []
+        },
+        {
+          "label": "reverse-no-trigger",
+          "controls": {
+            "lora": 0.9,
+            "lora2": 0,
+            "lora_name": "moss-reverse1999-v1.safetensors",
+            "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 32-year-old woman with a visibly mature adult face and curvy adult proportions, a black wavy bob and emerald eyes. Waist-up editorial portrait, direct eye contact, playful wink and a warm sly smile, shoulders turned slightly, one gloved hand resting on her waist and the other hand holding the stem of a single red rose below her shoulder. She wears a fitted crimson off-the-shoulder evening dress with a structured opaque bodice and long black opera gloves, gold earrings. A strong fitted silhouette, polished elegant fashion, softly lit art-deco lounge in the background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "Historical strength without the author trigger.",
+          "sources": [
+            "https://civitai.com/api/v1/models/3005908"
+          ]
+        },
+        {
+          "label": "reverse-trigger",
+          "controls": {
+            "lora": 0.9,
+            "lora2": 0,
+            "lora_name": "moss-reverse1999-v1.safetensors",
+            "positive": "reversesty, 2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 32-year-old woman with a visibly mature adult face and curvy adult proportions, a black wavy bob and emerald eyes. Waist-up editorial portrait, direct eye contact, playful wink and a warm sly smile, shoulders turned slightly, one gloved hand resting on her waist and the other hand holding the stem of a single red rose below her shoulder. She wears a fitted crimson off-the-shoulder evening dress with a structured opaque bodice and long black opera gloves, gold earrings. A strong fitted silhouette, polished elegant fashion, softly lit art-deco lounge in the background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "Only add reversesty to isolate trigger wording.",
+          "sources": [
+            "https://civitai.com/api/v1/models/3005908"
+          ]
+        },
+        {
+          "label": "reverse-1.2",
+          "controls": {
+            "lora": 1.2,
+            "lora2": 0,
+            "lora_name": "moss-reverse1999-v1.safetensors",
+            "positive": "reversesty, 2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 32-year-old woman with a visibly mature adult face and curvy adult proportions, a black wavy bob and emerald eyes. Waist-up editorial portrait, direct eye contact, playful wink and a warm sly smile, shoulders turned slightly, one gloved hand resting on her waist and the other hand holding the stem of a single red rose below her shoulder. She wears a fitted crimson off-the-shoulder evening dress with a structured opaque bodice and long black opera gloves, gold earrings. A strong fitted silhouette, polished elegant fashion, softly lit art-deco lounge in the background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "Only raise trigger-enabled strength from 0.9 to 1.2.",
+          "sources": [
+            "https://civitai.com/api/v1/models/3005908"
+          ]
+        },
+        {
+          "label": "mikko",
+          "controls": {
+            "lora": 0.9,
+            "lora2": 0,
+            "lora_name": "moss-mikkoani-v1.safetensors",
+            "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 32-year-old woman with a visibly mature adult face and curvy adult proportions, a black wavy bob and emerald eyes. Waist-up editorial portrait, direct eye contact, playful wink and a warm sly smile, shoulders turned slightly, one gloved hand resting on her waist and the other hand holding the stem of a single red rose below her shoulder. She wears a fitted crimson off-the-shoulder evening dress with a structured opaque bodice and long black opera gloves, gold earrings. A strong fitted silhouette, polished elegant fashion, softly lit art-deco lounge in the background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "Alternative mature anime finish at the same strength.",
+          "sources": [
+            "https://civitai.com/api/v1/models/2470371"
+          ]
+        },
+        {
+          "label": "mikko-impasto",
+          "controls": {
+            "lora": 0.9,
+            "lora2": 0.25,
+            "lora_name": "moss-mikkoani-v1.safetensors",
+            "lora2_name": "moss-impasto-25d-v08.safetensors",
+            "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 32-year-old woman with a visibly mature adult face and curvy adult proportions, a black wavy bob and emerald eyes. Waist-up editorial portrait, direct eye contact, playful wink and a warm sly smile, shoulders turned slightly, one gloved hand resting on her waist and the other hand holding the stem of a single red rose below her shoulder. She wears a fitted crimson off-the-shoulder evening dress with a structured opaque bodice and long black opera gloves, gold earrings. A strong fitted silhouette, polished elegant fashion, softly lit art-deco lounge in the background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "Only add low-strength painterly texture to mikko.",
+          "sources": [
+            "https://civitai.com/api/v1/models/2470371",
+            "https://civitai.com/api/v1/models/2230912"
+          ]
+        }
+      ],
+      "max_seconds": 2400,
+      "max_generations": 6
+    },
+    {
+      "name": "MOSS 20261026 evening 2026102602",
+      "recipe": {
+        "preset_id": "moss-t2i",
+        "controls": {
+          "seed": 2026102602,
+          "width": 1024,
+          "height": 1536,
+          "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 32-year-old woman with a visibly mature adult face and curvy adult proportions, a black wavy bob and emerald eyes. Waist-up editorial portrait, direct eye contact, playful wink and a warm sly smile, shoulders turned slightly, one gloved hand resting on her waist and the other hand holding the stem of a single red rose below her shoulder. She wears a fitted crimson off-the-shoulder evening dress with a structured opaque bodice and long black opera gloves, gold earrings. A strong fitted silhouette, polished elegant fashion, softly lit art-deco lounge in the background. Tasteful non-explicit fashion illustration.",
+          "negative": "",
+          "steps": 30,
+          "cfg": 3,
+          "sampler": "euler",
+          "scheduler": "sgm_uniform",
+          "lora": 0,
+          "lora2": 0
+        }
+      },
+      "variants": [
+        {
+          "label": "base",
+          "controls": {
+            "lora": 0,
+            "lora2": 0,
+            "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 32-year-old woman with a visibly mature adult face and curvy adult proportions, a black wavy bob and emerald eyes. Waist-up editorial portrait, direct eye contact, playful wink and a warm sly smile, shoulders turned slightly, one gloved hand resting on her waist and the other hand holding the stem of a single red rose below her shoulder. She wears a fitted crimson off-the-shoulder evening dress with a structured opaque bodice and long black opera gloves, gold earrings. A strong fitted silhouette, polished elegant fashion, softly lit art-deco lounge in the background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "No style adapter; common prompt-only control.",
+          "sources": []
+        },
+        {
+          "label": "reverse-no-trigger",
+          "controls": {
+            "lora": 0.9,
+            "lora2": 0,
+            "lora_name": "moss-reverse1999-v1.safetensors",
+            "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 32-year-old woman with a visibly mature adult face and curvy adult proportions, a black wavy bob and emerald eyes. Waist-up editorial portrait, direct eye contact, playful wink and a warm sly smile, shoulders turned slightly, one gloved hand resting on her waist and the other hand holding the stem of a single red rose below her shoulder. She wears a fitted crimson off-the-shoulder evening dress with a structured opaque bodice and long black opera gloves, gold earrings. A strong fitted silhouette, polished elegant fashion, softly lit art-deco lounge in the background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "Historical strength without the author trigger.",
+          "sources": [
+            "https://civitai.com/api/v1/models/3005908"
+          ]
+        },
+        {
+          "label": "reverse-trigger",
+          "controls": {
+            "lora": 0.9,
+            "lora2": 0,
+            "lora_name": "moss-reverse1999-v1.safetensors",
+            "positive": "reversesty, 2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 32-year-old woman with a visibly mature adult face and curvy adult proportions, a black wavy bob and emerald eyes. Waist-up editorial portrait, direct eye contact, playful wink and a warm sly smile, shoulders turned slightly, one gloved hand resting on her waist and the other hand holding the stem of a single red rose below her shoulder. She wears a fitted crimson off-the-shoulder evening dress with a structured opaque bodice and long black opera gloves, gold earrings. A strong fitted silhouette, polished elegant fashion, softly lit art-deco lounge in the background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "Only add reversesty to isolate trigger wording.",
+          "sources": [
+            "https://civitai.com/api/v1/models/3005908"
+          ]
+        },
+        {
+          "label": "reverse-1.2",
+          "controls": {
+            "lora": 1.2,
+            "lora2": 0,
+            "lora_name": "moss-reverse1999-v1.safetensors",
+            "positive": "reversesty, 2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 32-year-old woman with a visibly mature adult face and curvy adult proportions, a black wavy bob and emerald eyes. Waist-up editorial portrait, direct eye contact, playful wink and a warm sly smile, shoulders turned slightly, one gloved hand resting on her waist and the other hand holding the stem of a single red rose below her shoulder. She wears a fitted crimson off-the-shoulder evening dress with a structured opaque bodice and long black opera gloves, gold earrings. A strong fitted silhouette, polished elegant fashion, softly lit art-deco lounge in the background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "Only raise trigger-enabled strength from 0.9 to 1.2.",
+          "sources": [
+            "https://civitai.com/api/v1/models/3005908"
+          ]
+        },
+        {
+          "label": "mikko",
+          "controls": {
+            "lora": 0.9,
+            "lora2": 0,
+            "lora_name": "moss-mikkoani-v1.safetensors",
+            "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 32-year-old woman with a visibly mature adult face and curvy adult proportions, a black wavy bob and emerald eyes. Waist-up editorial portrait, direct eye contact, playful wink and a warm sly smile, shoulders turned slightly, one gloved hand resting on her waist and the other hand holding the stem of a single red rose below her shoulder. She wears a fitted crimson off-the-shoulder evening dress with a structured opaque bodice and long black opera gloves, gold earrings. A strong fitted silhouette, polished elegant fashion, softly lit art-deco lounge in the background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "Alternative mature anime finish at the same strength.",
+          "sources": [
+            "https://civitai.com/api/v1/models/2470371"
+          ]
+        },
+        {
+          "label": "mikko-impasto",
+          "controls": {
+            "lora": 0.9,
+            "lora2": 0.25,
+            "lora_name": "moss-mikkoani-v1.safetensors",
+            "lora2_name": "moss-impasto-25d-v08.safetensors",
+            "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 32-year-old woman with a visibly mature adult face and curvy adult proportions, a black wavy bob and emerald eyes. Waist-up editorial portrait, direct eye contact, playful wink and a warm sly smile, shoulders turned slightly, one gloved hand resting on her waist and the other hand holding the stem of a single red rose below her shoulder. She wears a fitted crimson off-the-shoulder evening dress with a structured opaque bodice and long black opera gloves, gold earrings. A strong fitted silhouette, polished elegant fashion, softly lit art-deco lounge in the background. Tasteful non-explicit fashion illustration."
+          },
+          "rationale": "Only add low-strength painterly texture to mikko.",
+          "sources": [
+            "https://civitai.com/api/v1/models/2470371",
+            "https://civitai.com/api/v1/models/2230912"
+          ]
+        }
+      ],
+      "max_seconds": 2400,
+      "max_generations": 6
+    }
+  ]
+}

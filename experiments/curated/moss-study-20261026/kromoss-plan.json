@@ -1,0 +1,171 @@
+{
+  "date": "2026-10-26",
+  "execution_status": "NOT RUN - checkpoint transfer ended short on three bounded attempts",
+  "checkpoint_revision": "a4fe97449297af2e3be7841e1c18e431f3b06031",
+  "checkpoint_expected_bytes": 5413698958,
+  "checkpoint_expected_sha256": "cacff0dd25cd2cf531e1f5ddae7872c3d57a54dbf66f1a1279f2f118514e7905",
+  "checkpoint_partial_bytes": 2587306298,
+  "dmd2_download_verified": true,
+  "generation_budget": 8,
+  "plans": [
+    {
+      "name": "Kromoss 20261026 sorceress",
+      "recipe": {
+        "preset_id": "kromoss-t2i",
+        "controls": {
+          "seed": 2026102601,
+          "width": 1024,
+          "height": 1536,
+          "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 30-year-old woman with a visibly mature adult face and curvy adult proportions, long silver hair, violet eyes and a confident teasing smile. Full body from head to boots, three-quarter view, contrapposto with one hand resting on her hip and the other relaxed and visible. She wears a fitted black-and-gold corset bodice over an opaque ivory blouse, a short tailored cape, a high-waisted asymmetrical skirt with a thigh slit over opaque fitted shorts, and thigh-high black boots. A striking hourglass silhouette, elegant fantasy fashion, gold jewelry. She stands on a castle balcony at dusk; the entire figure has clear separation from the distant background. Tasteful non-explicit fashion illustration.",
+          "negative": "",
+          "steps": 30,
+          "cfg": 3,
+          "sampler": "euler",
+          "scheduler": "sgm_uniform",
+          "lora": 0,
+          "lora2": 0
+        }
+      },
+      "variants": [
+        {
+          "label": "regular-30",
+          "controls": {
+            "steps": 30,
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Same sampling compute as the SFT baseline in the24-picture study.",
+          "sources": [
+            "https://huggingface.co/lodestones/Kromoss"
+          ]
+        },
+        {
+          "label": "regular-50",
+          "controls": {
+            "steps": 50,
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Author50-step recommendation; local layer22 skip unavailable and not applied.",
+          "sources": [
+            "https://huggingface.co/lodestones/Kromoss"
+          ]
+        },
+        {
+          "label": "dmd2-8",
+          "controls": {
+            "steps": 8,
+            "cfg": 1,
+            "scheduler": "simple",
+            "lora_name": "kromoss-u11000-8steps-dmd2.safetensors",
+            "lora": 1,
+            "lora2": 0
+          },
+          "rationale": "AuthorDMD2 settings,8steps/CFG1/Euler/simple/strength1; local compatibility unverified.",
+          "sources": [
+            "https://huggingface.co/lodestones/Kromoss"
+          ]
+        },
+        {
+          "label": "dmd2-mikko",
+          "controls": {
+            "steps": 8,
+            "cfg": 1,
+            "scheduler": "simple",
+            "lora_name": "kromoss-u11000-8steps-dmd2.safetensors",
+            "lora": 1,
+            "lora2_name": "moss-mikkoani-v1.safetensors",
+            "lora2": 0.9
+          },
+          "rationale": "Only add mikkoani to the DMD2 route; compare style and retained character traits.",
+          "sources": [
+            "https://huggingface.co/lodestones/Kromoss",
+            "https://civitai.com/api/v1/models/2470371"
+          ]
+        }
+      ],
+      "max_seconds": 2400,
+      "max_generations": 4
+    },
+    {
+      "name": "Kromoss 20261026 evening",
+      "recipe": {
+        "preset_id": "kromoss-t2i",
+        "controls": {
+          "seed": 2026102601,
+          "width": 1024,
+          "height": 1536,
+          "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 32-year-old woman with a visibly mature adult face and curvy adult proportions, a black wavy bob and emerald eyes. Waist-up editorial portrait, direct eye contact, playful wink and a warm sly smile, shoulders turned slightly, one gloved hand resting on her waist and the other hand holding the stem of a single red rose below her shoulder. She wears a fitted crimson off-the-shoulder evening dress with a structured opaque bodice and long black opera gloves, gold earrings. A strong fitted silhouette, polished elegant fashion, softly lit art-deco lounge in the background. Tasteful non-explicit fashion illustration.",
+          "negative": "",
+          "steps": 30,
+          "cfg": 3,
+          "sampler": "euler",
+          "scheduler": "sgm_uniform",
+          "lora": 0,
+          "lora2": 0
+        }
+      },
+      "variants": [
+        {
+          "label": "regular-30",
+          "controls": {
+            "steps": 30,
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Same sampling compute as the SFT baseline in the24-picture study.",
+          "sources": [
+            "https://huggingface.co/lodestones/Kromoss"
+          ]
+        },
+        {
+          "label": "regular-50",
+          "controls": {
+            "steps": 50,
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Author50-step recommendation; local layer22 skip unavailable and not applied.",
+          "sources": [
+            "https://huggingface.co/lodestones/Kromoss"
+          ]
+        },
+        {
+          "label": "dmd2-8",
+          "controls": {
+            "steps": 8,
+            "cfg": 1,
+            "scheduler": "simple",
+            "lora_name": "kromoss-u11000-8steps-dmd2.safetensors",
+            "lora": 1,
+            "lora2": 0
+          },
+          "rationale": "AuthorDMD2 settings,8steps/CFG1/Euler/simple/strength1; local compatibility unverified.",
+          "sources": [
+            "https://huggingface.co/lodestones/Kromoss"
+          ]
+        },
+        {
+          "label": "dmd2-mikko",
+          "controls": {
+            "steps": 8,
+            "cfg": 1,
+            "scheduler": "simple",
+            "lora_name": "kromoss-u11000-8steps-dmd2.safetensors",
+            "lora": 1,
+            "lora2_name": "moss-mikkoani-v1.safetensors",
+            "lora2": 0.9
+          },
+          "rationale": "Only add mikkoani to the DMD2 route; compare style and retained character traits.",
+          "sources": [
+            "https://huggingface.co/lodestones/Kromoss",
+            "https://civitai.com/api/v1/models/2470371"
+          ]
+        }
+      ],
+      "max_seconds": 2400,
+      "max_generations": 4
+    }
+  ],
+  "prerequisite": "A complete source-hash-verified checkpoint, then live node/schema validation and fresh resource/queue admission. No Kromoss jobs have been created, reserved or submitted."
+}

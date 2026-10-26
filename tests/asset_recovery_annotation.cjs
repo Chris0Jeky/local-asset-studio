@@ -2,7 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const Journal=require('../app/static/asset-recovery.js'),Shelf=require('../app/static/asset-recovery-shelf.js');
 const Session=require('../app/static/asset-recovery-shelf-session.js'),crypto=require('node:crypto').webcrypto;
-const createShelf=require('./asset_recovery_shelf_memory.cjs');
+const createShelf=require('./asset_recovery_shelf_memory.js');
 const W='1'.repeat(32),REQUEST='refusal-request-0001',AT=1793037600000;
 const clone=value=>JSON.parse(JSON.stringify(value));
 function memory(){const values=new Map();return {values,getItem:key=>values.get(key)??null,setItem(key,value){if(this.failWrite)throw Error('synthetic quota');values.set(key,value);},removeItem:key=>values.delete(key)};}

@@ -61,7 +61,7 @@ that submits to ComfyUI, polls `/history`, and persists jobs under `experiments/
 submitted graph. `_request()` is its ComfyUI seam; `BackendManager.request`, `resource_probe.fetch_stats` and `Handler._media` (`/view`) bypass it with their own loopback connections.
 
 **Siblings**, each wired into `Studio`, each unit-tested: `backends.py` (explicit switches between `primary`
-8188, `hidream` isolated 8192, `h3` mmap loader 8194, `qwen21` isolated v0.37.0 8196; state in `.runtime/backend-state.json`; presets carry
+8188, `hidream` isolated 8192, `h3` mmap loader 8194, `qwen21` v0.37.0 8196, `moss` v0.42.1 8198; state in `.runtime/backend-state.json`; presets carry
 `backend_id`), `workspace.py` (SQLite asset Workspace, content-addressed store, reversible trash),
 `production.py` (budgeted comparisons; `fingerprint()` is a plan's identity), `references.py` (reference
 roles + provenance), `native_exports.py` / `articulated.py` (Krita/Godot/Blender jobs driven only through
