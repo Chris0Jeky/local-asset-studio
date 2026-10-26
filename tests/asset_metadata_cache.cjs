@@ -9,9 +9,10 @@ const page=assets=>({workspace_id:scope,catalogue,assets,next_cursor:'next'});
 const collections=()=>({workspace_id:scope,catalogue,collections:[],next_cursor:null});
 const flush=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
 const value=(s,code)=>JSON.parse(s.run('JSON.stringify('+code+')'));
-async function load(s,assets,position=null){
+async function load(s,assets,position=null,stamp){
+  if(arguments.length<4)stamp=catalogue;
   const n=s.reads.length,p=s.actualRefresh(true,position);await flush();
-  s.reads[n].resolve(page(assets));s.reads[n+1].resolve(collections());assert.equal(await p,true);
+  s.reads[n].resolve({...page(assets),catalogue:stamp});s.reads[n+1].resolve({...collections(),catalogue:stamp});assert.equal(await p,true);
 }
 async function observe(s,items,stamp=catalogue){
   const n=s.writes.length,p=s.run('resolveAssetIDs('+JSON.stringify(items.map(i=>i.id))+')');
@@ -183,6 +184,37 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
       assert.equal(s.run("assetRecord('a')"),null);assert.doesNotMatch(s.el('#assetGrid').innerHTML,/data-asset-card="a"/);
       assert.equal(s.run("assetSelection.has('a')"),true);
     }
+  });
+  await test('Same-catalogue refreshes and filter/page changes preserve an explicit selected-ID handoff',async()=>{
+    for(const change of ['refresh','filter','page']){
+      const s=await ready(),n=s.writes.length,observing=s.run("resolveAssetIDs(['a','off'])");
+      if(change==='filter')s.el('#assetSearch').value='other page';
+      await load(s,[asset('b')],change==='page'?{cursor:'third',history:[null,'second']}:null);
+      const position=value(s,'[assetPaging.cursor,assetPaging.history]');
+      s.writes[n].resolve({workspace_id:scope,catalogue,items:[observed(asset('a')),observed(asset('off'))]});
+      assert.equal(await observing,true,change+' changed page membership, not the saved selected-ID metadata');
+      assert.deepEqual(value(s,"['a','off'].map(id=>assetRecord(id).id)"),['a','off']);
+      assert.deepEqual(value(s,'assetState.assets.map(a=>a.id)'),['b'],'resolved sources stay off page');
+      assert.deepEqual(value(s,'[...assetSelection]'),['a','off']);assert.deepEqual(value(s,'[assetPaging.cursor,assetPaging.history]'),position);
+      assert.equal(s.writes.length,n+1,'the explicit observation is neither repeated nor replaced by a write');
+    }
+  });
+  await test('Equal unknown or invalid catalogue stamps cannot preserve an older selected-ID reply',async()=>{
+    for(const stamp of [undefined,null,{}, {epoch:'invalid',revision:1}, {epoch:catalogue.epoch,revision:-1}, {epoch:catalogue.epoch,revision:Number.MAX_SAFE_INTEGER+1}]){
+      const s=await ready();await load(s,[asset('b')],null,stamp);
+      const n=s.writes.length,observing=s.run("resolveAssetIDs(['a'])");await load(s,[asset('b')],null,stamp);
+      s.writes[n].resolve({workspace_id:scope,catalogue:stamp,items:[{id:'a',state:'missing',asset:null}]});
+      assert.equal(await observing,false,'unproven catalogue equality cannot keep the earlier reply current');
+      assert.equal(s.run("assetResolved.has('a')"),false);
+    }
+  });
+  await test('Opening an off-page asset completes across an unchanged catalogue refresh',async()=>{
+    const s=await ready(),n=s.writes.length,opening=s.run("openAsset('far')");
+    await load(s,[asset('b')]);
+    s.writes[n].resolve({workspace_id:scope,catalogue,items:[observed(asset('far'))]});
+    assert.equal(await opening,true);assert.equal(s.run('activeAsset.id'),'far');assert.equal(s.el('#assetDialog').open,true);
+    assert.deepEqual(value(s,'assetState.assets.map(a=>a.id)'),['b']);assert.deepEqual(value(s,'[...assetSelection]'),['a','off']);
+    assert.equal(s.writes.length,n+1);assert.equal(s.writes[n].url,'/api/assets/selection');
   });
   console.log('Asset metadata cache contracts: '+passed+' passed, '+failed+' failed');if(failed)process.exitCode=1;
 })().catch(error=>{console.error(error);process.exitCode=1;});

@@ -421,9 +421,11 @@ async function refreshAssets(force=false,position=null) {
     data={assets:page.assets,collections:collections.collections,workspace_id:page.workspace_id};
     const signature=JSON.stringify(data);
     const previousScope=assetState.workspace_id;
-    const sameCatalogue=previousScope===data.workspace_id && JSON.stringify(assetPaging?.catalogue)===JSON.stringify(page.catalogue);
+    const sameCatalogue=previousScope===data.workspace_id && typeof page.catalogue?.epoch==='string' && /^[0-9a-f]{32}$/.test(page.catalogue.epoch) &&
+      Number.isSafeInteger(page.catalogue.revision) && page.catalogue.revision>=0 && JSON.stringify(assetPaging?.catalogue)===JSON.stringify(page.catalogue);
     if(!force&&sameCatalogue){data.collections=assetState.collections;collections.next_cursor=assetPaging.collectionNext;}
-    assetState=data;assetPageEpoch++;   // older selected-ID replies, including missing, no longer own this observation
+    assetState=data;
+    if(!sameCatalogue)assetPageEpoch++;   // a new catalogue retires older ID reads; same-catalogue filters/pages do not
     if(!sameCatalogue)assetResolved.clear();   // an unchanged catalogue keeps what the operator resolved; a changed one invalidates it
     else for(const asset of data.assets){const item=assetResolved.get(asset.id);if(item)rememberAssetObservation(item);}
     assetPaging={query,cursor,history:[...history],next:page.next_cursor,collectionNext:collections.next_cursor,catalogue:page.catalogue};
