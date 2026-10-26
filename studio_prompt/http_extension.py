@@ -5,7 +5,7 @@ import sqlite3
 from urllib.parse import urlparse
 
 from studio_workflow.addressable_figures import split_figures
-from studio_workflow.http_body import reject_json
+from studio_workflow.http_body import read_complete_body, reject_json
 from studio_workflow.preset_adapter import SOURCE_KEYS
 from .core import fields, need, decode, profiles, compile_brief, apply_proposal, bind_graph, canonical
 from .recipe_intake import inspect_media
@@ -78,7 +78,7 @@ def extend_handler(base):
                 if self.headers.get('Content-Type','').split(';')[0]!='application/json':
                     return reject_json(self,400,{'error':'application/json required','generation_submitted':False})
                 try:
-                    body=self.rfile.read(self._content_length(1024*1024))
+                    body=read_complete_body(self,1024*1024)
                     return self._json(201,split_figures(self.studio.assets,decode(body)))
                 except sqlite3.Error:
                     return self._json(503,{
@@ -111,7 +111,7 @@ def extend_handler(base):
                                       encoded_limit=ENCODED_LIMIT) as value:
                         result=dispatch(self.path,value,self.studio)
                 else:
-                    body=self.rfile.read(self._content_length(limit))
+                    body=read_complete_body(self,limit)
                     result=dispatch(self.path,decode(body, limit=limit),self.studio)
                 return self._json(200,result)
             except (ValueError,KeyError,TypeError,IndexError,RecursionError,OSError) as exc:
