@@ -7,6 +7,10 @@ on:
       - 'app/download_contracts.py'
       - 'scripts/intake-downloads.py'
       - 'tests/test_model_intake*.py'
+      - 'tests/test_model_install_safety.py'
+      - 'tests/test_model_download_transport.py'
+      - 'tests/test_model_redirects.py'
+      - 'tests/fixtures/model-download-tls/**'
       - 'tests/test_intake_unknown.py'
       - 'tests/test_fetch_scripts.py'
       - '.github/workflows/model-intake.yml'
@@ -18,6 +22,10 @@ on:
       - 'app/download_contracts.py'
       - 'scripts/intake-downloads.py'
       - 'tests/test_model_intake*.py'
+      - 'tests/test_model_install_safety.py'
+      - 'tests/test_model_download_transport.py'
+      - 'tests/test_model_redirects.py'
+      - 'tests/fixtures/model-download-tls/**'
       - 'tests/test_intake_unknown.py'
       - 'tests/test_fetch_scripts.py'
       - '.github/workflows/model-intake.yml'
@@ -40,6 +48,9 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m unittest discover -s tests -p test_model_intake.py -v
+      - run: python -m unittest discover -s tests -p test_model_install_safety.py -v
+      - run: python -m unittest discover -s tests -p test_model_download_transport.py -v
+      - run: python -m unittest discover -s tests -p test_model_redirects.py -v
       - run: python -m unittest discover -s tests -p test_model_intake_identity.py -v
       - run: python -m unittest discover -s tests -p test_intake_unknown.py -v
       - run: python -m unittest discover -s tests -p test_fetch_scripts.py -v
