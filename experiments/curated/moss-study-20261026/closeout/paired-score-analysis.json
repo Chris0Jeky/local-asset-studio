@@ -1,0 +1,1378 @@
+{
+  "created_at": "2026-10-26T20:09:55.232319+00:00",
+  "source_receipts_sha256": "160396d732db86d981e322f6e22b5897ec55e4d69cea9802b2108030f4d2ed78",
+  "source_judgments_sha256": "e97452ef3b7c8f4479962afd407cb56bbc6ca4cf186327e5fe0e342eb41a2364",
+  "source_hash_scope": "LF-normalized retained Git bytes; calculations unchanged",
+  "source_judgments_export_sha256": "dd654448712e5ab8d89ae485f83c22bd59d6d9d45728b39b1580c887cc82b7d2",
+  "source_receipts_export_sha256": "654abf5f576a4e57b24cbbdf1fb656c5433f09810f17500545181affadf92cab",
+  "scope": "24 existing primary visible-label reviews only; four matched scene/seed cells per comparison, not 24 independent pairs. No new renders or judgments.",
+  "limitations": [
+    "Scores are ordinal and subjective; no averages, significance tests or population generalization.",
+    "Same reviewer within a plan; reviewers differ between plans. Labels are visible, allowing expectation bias.",
+    "No owner art acceptance; no character consistency/training-set membership inference.",
+    "Style adherence score is not a whole-image quality or keeper rate.",
+    "A tie is the same ordinal bucket, not identical images, hands or anatomy."
+  ],
+  "comparisons": [
+    {
+      "baseline": "base",
+      "treatment": "reverse-no-trigger",
+      "pairs": 4,
+      "metrics": {
+        "adherence": {
+          "win": 0,
+          "tie": 3,
+          "loss": 1
+        },
+        "anatomy": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "style": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "technical": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "composition": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        }
+      },
+      "details": [
+        {
+          "plan_index": 0,
+          "scene": "sorceress",
+          "seed": 2026102601,
+          "baseline_job_id": "9ce82147-c2c1-5677-96a5-8c568dac0a80",
+          "treatment_job_id": "dbf9b081-88e3-5220-8d2a-f75f7957b81e",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 3,
+              "outcome": "loss"
+            },
+            "anatomy": {
+              "baseline": 3,
+              "treatment": 3,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 1,
+          "scene": "sorceress",
+          "seed": 2026102602,
+          "baseline_job_id": "fbed070f-6d45-5259-9f5e-adb490a0e230",
+          "treatment_job_id": "23642287-9cd0-5ef9-84fd-955102cbcb4b",
+          "scores": {
+            "adherence": {
+              "baseline": 3,
+              "treatment": 3,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 2,
+          "scene": "evening",
+          "seed": 2026102601,
+          "baseline_job_id": "9887dfa1-d693-58d1-bf88-fa76ff8c1099",
+          "treatment_job_id": "6f4fbfc5-3a93-580a-8481-772cf1cdc4f9",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 3,
+          "scene": "evening",
+          "seed": 2026102602,
+          "baseline_job_id": "cae35529-85b3-5c47-a17f-a4600baaf9c2",
+          "treatment_job_id": "5f8a0947-e2d4-512b-a061-45e0d8368735",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "baseline": "base",
+      "treatment": "reverse-trigger",
+      "pairs": 4,
+      "metrics": {
+        "adherence": {
+          "win": 0,
+          "tie": 3,
+          "loss": 1
+        },
+        "anatomy": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "style": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "technical": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "composition": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        }
+      },
+      "details": [
+        {
+          "plan_index": 0,
+          "scene": "sorceress",
+          "seed": 2026102601,
+          "baseline_job_id": "9ce82147-c2c1-5677-96a5-8c568dac0a80",
+          "treatment_job_id": "22165650-c88f-5959-af9e-1d18b2f3147c",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 3,
+              "treatment": 3,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 1,
+          "scene": "sorceress",
+          "seed": 2026102602,
+          "baseline_job_id": "fbed070f-6d45-5259-9f5e-adb490a0e230",
+          "treatment_job_id": "fb035140-bb59-544a-aae4-d74a764c4805",
+          "scores": {
+            "adherence": {
+              "baseline": 3,
+              "treatment": 3,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 2,
+          "scene": "evening",
+          "seed": 2026102601,
+          "baseline_job_id": "9887dfa1-d693-58d1-bf88-fa76ff8c1099",
+          "treatment_job_id": "95c61e35-f1d8-5c06-aff8-9e27824a0c6f",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 3,
+              "outcome": "loss"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 3,
+          "scene": "evening",
+          "seed": 2026102602,
+          "baseline_job_id": "cae35529-85b3-5c47-a17f-a4600baaf9c2",
+          "treatment_job_id": "7931d7bf-e7be-52c5-b643-fead6e407180",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "baseline": "base",
+      "treatment": "reverse-1.2",
+      "pairs": 4,
+      "metrics": {
+        "adherence": {
+          "win": 0,
+          "tie": 2,
+          "loss": 2
+        },
+        "anatomy": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "style": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "technical": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "composition": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        }
+      },
+      "details": [
+        {
+          "plan_index": 0,
+          "scene": "sorceress",
+          "seed": 2026102601,
+          "baseline_job_id": "9ce82147-c2c1-5677-96a5-8c568dac0a80",
+          "treatment_job_id": "4a6556ac-4344-5ab7-ba47-e19664d01535",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 3,
+              "outcome": "loss"
+            },
+            "anatomy": {
+              "baseline": 3,
+              "treatment": 3,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 1,
+          "scene": "sorceress",
+          "seed": 2026102602,
+          "baseline_job_id": "fbed070f-6d45-5259-9f5e-adb490a0e230",
+          "treatment_job_id": "9eddcf4a-4be4-55a8-8eae-8f4267cabf13",
+          "scores": {
+            "adherence": {
+              "baseline": 3,
+              "treatment": 3,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 2,
+          "scene": "evening",
+          "seed": 2026102601,
+          "baseline_job_id": "9887dfa1-d693-58d1-bf88-fa76ff8c1099",
+          "treatment_job_id": "534e4159-3ac9-5df2-8114-2d1655232eea",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 3,
+              "outcome": "loss"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 3,
+          "scene": "evening",
+          "seed": 2026102602,
+          "baseline_job_id": "cae35529-85b3-5c47-a17f-a4600baaf9c2",
+          "treatment_job_id": "eba18a30-55f1-5fdf-b384-8db1a1503d61",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "baseline": "base",
+      "treatment": "mikko",
+      "pairs": 4,
+      "metrics": {
+        "adherence": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "anatomy": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "style": {
+          "win": 4,
+          "tie": 0,
+          "loss": 0
+        },
+        "technical": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "composition": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        }
+      },
+      "details": [
+        {
+          "plan_index": 0,
+          "scene": "sorceress",
+          "seed": 2026102601,
+          "baseline_job_id": "9ce82147-c2c1-5677-96a5-8c568dac0a80",
+          "treatment_job_id": "c1a3f42a-ced2-5f5e-9ed0-6dd4c33d52f7",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 3,
+              "treatment": 3,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 5,
+              "outcome": "win"
+            },
+            "technical": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 1,
+          "scene": "sorceress",
+          "seed": 2026102602,
+          "baseline_job_id": "fbed070f-6d45-5259-9f5e-adb490a0e230",
+          "treatment_job_id": "b0a95a7c-5ac6-5a04-bdc2-5abb5408ef7a",
+          "scores": {
+            "adherence": {
+              "baseline": 3,
+              "treatment": 3,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 5,
+              "outcome": "win"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 2,
+          "scene": "evening",
+          "seed": 2026102601,
+          "baseline_job_id": "9887dfa1-d693-58d1-bf88-fa76ff8c1099",
+          "treatment_job_id": "0a451048-5ff5-5f93-ba60-62d79b516001",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 5,
+              "outcome": "win"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 3,
+          "scene": "evening",
+          "seed": 2026102602,
+          "baseline_job_id": "cae35529-85b3-5c47-a17f-a4600baaf9c2",
+          "treatment_job_id": "351079b3-d60e-59ed-b50a-3e0ff66601b1",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 5,
+              "outcome": "win"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "baseline": "base",
+      "treatment": "mikko-impasto",
+      "pairs": 4,
+      "metrics": {
+        "adherence": {
+          "win": 0,
+          "tie": 3,
+          "loss": 1
+        },
+        "anatomy": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "style": {
+          "win": 1,
+          "tie": 3,
+          "loss": 0
+        },
+        "technical": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "composition": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        }
+      },
+      "details": [
+        {
+          "plan_index": 0,
+          "scene": "sorceress",
+          "seed": 2026102601,
+          "baseline_job_id": "9ce82147-c2c1-5677-96a5-8c568dac0a80",
+          "treatment_job_id": "9372bf23-985d-5aa6-9204-5c3205eb0d49",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 3,
+              "outcome": "loss"
+            },
+            "anatomy": {
+              "baseline": 3,
+              "treatment": 3,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 5,
+              "outcome": "win"
+            },
+            "technical": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 1,
+          "scene": "sorceress",
+          "seed": 2026102602,
+          "baseline_job_id": "fbed070f-6d45-5259-9f5e-adb490a0e230",
+          "treatment_job_id": "78a8252b-5d8d-55ec-a123-4516ef39c858",
+          "scores": {
+            "adherence": {
+              "baseline": 3,
+              "treatment": 3,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 2,
+          "scene": "evening",
+          "seed": 2026102601,
+          "baseline_job_id": "9887dfa1-d693-58d1-bf88-fa76ff8c1099",
+          "treatment_job_id": "e34b0a63-bc7d-5a69-a627-8f4f3c81aec7",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 3,
+          "scene": "evening",
+          "seed": 2026102602,
+          "baseline_job_id": "cae35529-85b3-5c47-a17f-a4600baaf9c2",
+          "treatment_job_id": "1e733d25-3026-59a4-aef5-5dc0d31314cb",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "baseline": "reverse-no-trigger",
+      "treatment": "reverse-trigger",
+      "pairs": 4,
+      "metrics": {
+        "adherence": {
+          "win": 1,
+          "tie": 2,
+          "loss": 1
+        },
+        "anatomy": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "style": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "technical": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "composition": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        }
+      },
+      "details": [
+        {
+          "plan_index": 0,
+          "scene": "sorceress",
+          "seed": 2026102601,
+          "baseline_job_id": "dbf9b081-88e3-5220-8d2a-f75f7957b81e",
+          "treatment_job_id": "22165650-c88f-5959-af9e-1d18b2f3147c",
+          "scores": {
+            "adherence": {
+              "baseline": 3,
+              "treatment": 4,
+              "outcome": "win"
+            },
+            "anatomy": {
+              "baseline": 3,
+              "treatment": 3,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 1,
+          "scene": "sorceress",
+          "seed": 2026102602,
+          "baseline_job_id": "23642287-9cd0-5ef9-84fd-955102cbcb4b",
+          "treatment_job_id": "fb035140-bb59-544a-aae4-d74a764c4805",
+          "scores": {
+            "adherence": {
+              "baseline": 3,
+              "treatment": 3,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 2,
+          "scene": "evening",
+          "seed": 2026102601,
+          "baseline_job_id": "6f4fbfc5-3a93-580a-8481-772cf1cdc4f9",
+          "treatment_job_id": "95c61e35-f1d8-5c06-aff8-9e27824a0c6f",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 3,
+              "outcome": "loss"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 3,
+          "scene": "evening",
+          "seed": 2026102602,
+          "baseline_job_id": "5f8a0947-e2d4-512b-a061-45e0d8368735",
+          "treatment_job_id": "7931d7bf-e7be-52c5-b643-fead6e407180",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "baseline": "reverse-trigger",
+      "treatment": "reverse-1.2",
+      "pairs": 4,
+      "metrics": {
+        "adherence": {
+          "win": 0,
+          "tie": 3,
+          "loss": 1
+        },
+        "anatomy": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "style": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "technical": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "composition": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        }
+      },
+      "details": [
+        {
+          "plan_index": 0,
+          "scene": "sorceress",
+          "seed": 2026102601,
+          "baseline_job_id": "22165650-c88f-5959-af9e-1d18b2f3147c",
+          "treatment_job_id": "4a6556ac-4344-5ab7-ba47-e19664d01535",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 3,
+              "outcome": "loss"
+            },
+            "anatomy": {
+              "baseline": 3,
+              "treatment": 3,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 1,
+          "scene": "sorceress",
+          "seed": 2026102602,
+          "baseline_job_id": "fb035140-bb59-544a-aae4-d74a764c4805",
+          "treatment_job_id": "9eddcf4a-4be4-55a8-8eae-8f4267cabf13",
+          "scores": {
+            "adherence": {
+              "baseline": 3,
+              "treatment": 3,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 2,
+          "scene": "evening",
+          "seed": 2026102601,
+          "baseline_job_id": "95c61e35-f1d8-5c06-aff8-9e27824a0c6f",
+          "treatment_job_id": "534e4159-3ac9-5df2-8114-2d1655232eea",
+          "scores": {
+            "adherence": {
+              "baseline": 3,
+              "treatment": 3,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 3,
+          "scene": "evening",
+          "seed": 2026102602,
+          "baseline_job_id": "7931d7bf-e7be-52c5-b643-fead6e407180",
+          "treatment_job_id": "eba18a30-55f1-5fdf-b384-8db1a1503d61",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "baseline": "mikko",
+      "treatment": "mikko-impasto",
+      "pairs": 4,
+      "metrics": {
+        "adherence": {
+          "win": 0,
+          "tie": 3,
+          "loss": 1
+        },
+        "anatomy": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "style": {
+          "win": 0,
+          "tie": 1,
+          "loss": 3
+        },
+        "technical": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        },
+        "composition": {
+          "win": 0,
+          "tie": 4,
+          "loss": 0
+        }
+      },
+      "details": [
+        {
+          "plan_index": 0,
+          "scene": "sorceress",
+          "seed": 2026102601,
+          "baseline_job_id": "c1a3f42a-ced2-5f5e-9ed0-6dd4c33d52f7",
+          "treatment_job_id": "9372bf23-985d-5aa6-9204-5c3205eb0d49",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 3,
+              "outcome": "loss"
+            },
+            "anatomy": {
+              "baseline": 3,
+              "treatment": 3,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "technical": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 1,
+          "scene": "sorceress",
+          "seed": 2026102602,
+          "baseline_job_id": "b0a95a7c-5ac6-5a04-bdc2-5abb5408ef7a",
+          "treatment_job_id": "78a8252b-5d8d-55ec-a123-4516ef39c858",
+          "scores": {
+            "adherence": {
+              "baseline": 3,
+              "treatment": 3,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 5,
+              "treatment": 4,
+              "outcome": "loss"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 2,
+          "scene": "evening",
+          "seed": 2026102601,
+          "baseline_job_id": "0a451048-5ff5-5f93-ba60-62d79b516001",
+          "treatment_job_id": "e34b0a63-bc7d-5a69-a627-8f4f3c81aec7",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 5,
+              "treatment": 4,
+              "outcome": "loss"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        },
+        {
+          "plan_index": 3,
+          "scene": "evening",
+          "seed": 2026102602,
+          "baseline_job_id": "351079b3-d60e-59ed-b50a-3e0ff66601b1",
+          "treatment_job_id": "1e733d25-3026-59a4-aef5-5dc0d31314cb",
+          "scores": {
+            "adherence": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "anatomy": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            },
+            "style": {
+              "baseline": 5,
+              "treatment": 4,
+              "outcome": "loss"
+            },
+            "technical": {
+              "baseline": 5,
+              "treatment": 5,
+              "outcome": "tie"
+            },
+            "composition": {
+              "baseline": 4,
+              "treatment": 4,
+              "outcome": "tie"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
