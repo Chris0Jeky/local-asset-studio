@@ -12,7 +12,10 @@ parser.add_argument('--comfy-root',default='C:/AI/experiments/moss-image/ComfyUI
 parser.add_argument('--reserve-vram',default='2')
 args=parser.parse_args()
 root=Path(args.comfy_root).resolve()
-if not (root/'main.py').is_file() or not (root/'comfy/text_encoders/moss_image.py').is_file():
+encoder=root/'comfy/text_encoders/moss_image.py'
+try:encoder_ready=encoder.is_file() and encoder.stat().st_size>0
+except OSError:encoder_ready=False
+if not (root/'main.py').is_file() or not encoder_ready:
     parser.error('The isolated ComfyUI checkout is missing or predates MOSS-Image (v0.42.0+); see docs/MOSS-IMAGE.md')
 if not (root/'python_packages/comfy_kitchen').is_dir():
     parser.error('Isolated dependencies are missing; see docs/MOSS-IMAGE.md')
