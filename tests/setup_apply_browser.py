@@ -54,7 +54,7 @@ async def run(out,inert=False):
     for index,item in enumerate(case.items):
         asset=s.assets.get(item['asset_id']);path='/fixture/'+item['asset_id']+'.png';advice.EXTRA_MEDIA[path]=s.assets.file(item['asset_id'])
         advice.fixture.ASSETS.append({**prototype,**asset,'url':path,'title':'Reference '+str(index+1),'workspace_id':case.scope,'tags':[],'collections':[],'lineage':[]})
-    Handler.studio=s;http=browser_server(Handler)
+    Handler.studio=s;Handler.workspace_id=case.scope;http=browser_server(Handler)
     thread=threading.Thread(target=http.serve_forever,daemon=True);thread.start();origin='http://127.0.0.1:'+str(http.server_port)
     try:
         async with async_playwright() as p:

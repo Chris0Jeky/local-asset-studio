@@ -1256,20 +1256,29 @@
     document.dispatchEvent(new CustomEvent('studio:shortlist-source',{detail:source}));
   });
   after('renderAssets',()=>{if(assetScope==='unreviewed')q('#assetScopeTitle').textContent='Awaiting review';});
-  after('renderAssetSelection',()=>{const assets=[...assetSelection].map(id=>(typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id))).filter(Boolean),eligibility=U.sceneEligibility(assets),link=q('#createScene');link.setAttribute('aria-disabled',String(!eligibility.ok));link.title=eligibility.reason;link.classList.toggle('ux-disabled',!eligibility.ok);});
+  // A selection a search or page move left unresolved is not judged from the loaded page: activation resolves it
+  // through assetSelectionCanProceed (resolveAssetSelection), whose re-render judges every selected source.
+  after('renderAssetSelection',()=>{const unresolved=typeof assetSelectionInfo==='function'&&assetSelectionInfo().unresolved,assets=[...assetSelection].map(id=>(typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id))).filter(Boolean),eligibility=unresolved?{ok:true,reason:'Selected assets outside this page are checked before the scene opens.'}:U.sceneEligibility(assets),link=q('#createScene');link.setAttribute('aria-disabled',String(!eligibility.ok));link.title=eligibility.reason;link.classList.toggle('ux-disabled',!eligibility.ok);});
   document.addEventListener('click',e=>{const link=e.target.closest('#createScene');if(link&&link.getAttribute('aria-disabled')==='true'){e.preventDefault();e.stopImmediatePropagation();assetMessage(link.title,true);}},true);
   after('renderAssetSelection',()=>{
     let button=q('#uxFindSelectedRecipes');if(!button){button=element('button');button.id='uxFindSelectedRecipes';button.type='button';q('#createScene').before(button);}
     button.textContent='Find recipes for selected images ('+assetSelection.size+')';button.disabled=assetSelection.size===0;
     button.title='Review one to three selected library images in selection order; no attachment or generation.';
   });
-  document.addEventListener('click',e=>{if(!e.target.closest('#uxFindSelectedRecipes'))return;
+  document.addEventListener('click',async e=>{if(!e.target.closest('#uxFindSelectedRecipes'))return;
     if(assetDetailsDirty()){warnUnsavedAsset();return;}
-    const ids=[...assetSelection],items=ids.map(id=>(typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id)));
-    if(!window.RecipeShortlist||ids.length<1||ids.length>3||items.some(a=>!a||a.trashed_at||a.media_type!=='image'||typeof a.sha256!=='string'||! /^[0-9a-f]{64}$/.test(a.sha256))){assetMessage('Select one to three available images. Every selected image must have a saved identity; none were dropped.',true);return;}
-    // Preserve selection order, including selections outside the current filter. The chooser displays every image before Check.
-    const sources=items.map(a=>({asset_id:a.id,sha256:a.sha256,title:a.title,role:'source'}));q('#assetDialog').close();showView('create');
-    document.dispatchEvent(new CustomEvent('studio:shortlist-sources',{detail:sources}));
+    const ids=[...assetSelection],scope=assetState.workspace_id,epoch=assetWorkspaceEpoch;
+    const unavailable='Select one to three available images. Every selected image must have a saved identity; none were dropped.';
+    if(!window.RecipeShortlist||ids.length<1||ids.length>3){assetMessage(unavailable,true);return;}
+    try{
+      if(!await resolveAssetIDs(ids)||assetState.workspace_id!==scope||assetWorkspaceEpoch!==epoch||JSON.stringify(ids)!==JSON.stringify([...assetSelection])){assetMessage('The Workspace or selection changed while reading the selected images. Choose the images again; nothing was applied.',true);return;}
+      const items=ids.map(id=>assetRecord(id));
+      if(items.some(a=>!a||a.trashed_at||a.media_type!=='image'||typeof a.sha256!=='string'||! /^[0-9a-f]{64}$/.test(a.sha256)))throw Error(unavailable);
+      if(assetDetailsDirty()){warnUnsavedAsset();return;}
+      // Preserve selection order, including selections outside the current filter. The chooser displays every image before Check.
+      const sources=items.map(a=>({asset_id:a.id,sha256:a.sha256,title:a.title,role:'source'}));q('#assetDialog').close();showView('create');
+      document.dispatchEvent(new CustomEvent('studio:shortlist-sources',{detail:sources}));
+    }catch(error){assetMessage(error.message,true);}
   });
   // Pull any existing image into a named reference slot, without changing the recipe.
   const picker=element('dialog','studio-dialog');picker.id='uxSourcePicker';picker.setAttribute('aria-labelledby','uxPickerTitle');picker.innerHTML='<div class="dialog-heading"><h2 id="uxPickerTitle">Pull from your library</h2><button data-ux-close="uxSourcePicker" aria-label="Close source picker">✕</button></div><label for="uxSourceSlot">Use as<select id="uxSourceSlot"></select></label><label for="uxSourceSearch">Search saved images<input id="uxSourceSearch" type="search" maxlength="200" placeholder="Title, tags or recipe…"></label><p id="uxPickerStatus" role="status"></p><div id="uxSourceAssets" class="ux-picker-grid"></div><div id="uxSourcePaging"></div>';document.body.append(picker);
