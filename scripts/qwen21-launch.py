@@ -10,7 +10,10 @@ parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--comfy-root',default='C:/AI/experiments/qwen-image-21/ComfyUI')
 args=parser.parse_args()
 root=Path(args.comfy_root).resolve()
-if not (root/'main.py').is_file() or not (root/'comfy/text_encoders/qwen_image21.py').is_file():
+encoder=root/'comfy/text_encoders/qwen_image21.py'
+try:encoder_ready=encoder.is_file() and encoder.stat().st_size>0
+except OSError:encoder_ready=False
+if not (root/'main.py').is_file() or not encoder_ready:
     parser.error('The isolated ComfyUI checkout is missing or predates Qwen-Image-2.1; see docs/QWEN-IMAGE-21.md')
 if not (root/'python_packages/comfy_kitchen').is_dir():
     parser.error('Isolated dependencies are missing; see docs/QWEN-IMAGE-21.md')

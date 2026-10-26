@@ -88,7 +88,7 @@ class BackendSafetyTests(unittest.TestCase):
         self.assertEqual((profile['port'],profile['url']),(8196,'http://127.0.0.1:8196'))
         self.assertTrue(report['ready']);self.assertEqual(len(contracts.QWEN21_FILES),3)
         roles=[item['role'] for item in report['requirements']]
-        self.assertEqual(roles,['Python interpreter','ComfyUI entry','Studio launcher','Comfy Kitchen overlay','diffusion','text encoder','decoder'])
+        self.assertEqual(roles,['Python interpreter','ComfyUI entry','Studio launcher','Comfy Kitchen overlay','Qwen-Image 2.1 encoder module','diffusion','text encoder','decoder'])
         for item in report['requirements'][3:]:
             self.assertTrue(Path(item['path']).resolve().is_relative_to(Path(profile['root']).resolve()),item)
         overlay=Path(profile['root'])/'python_packages/comfy_kitchen';overlay.rmdir();overlay.write_bytes(b'not a package')
@@ -99,6 +99,60 @@ class BackendSafetyTests(unittest.TestCase):
             with self.subTest(role=role):
                 current=self.manager.readiness(profile);self.assertFalse(current['ready']);self.assertIn(role,current['message'])
             path.write_bytes(body)
+    def assert_qwen21_encoder_refuses_before_admission(self,contents):
+        profile=self.manager.profiles['qwen21'];encoder=Path(profile['root'])/'comfy/text_encoders/qwen_image21.py'
+        encoder.parent.mkdir(parents=True,exist_ok=True);encoder.unlink(missing_ok=True)
+        if contents is not None:encoder.write_bytes(contents)
+        state=self.manager.state_path
+        before=state.read_bytes() if state.exists() else None
+        with patch('backends.threading.Thread') as thread,patch.object(self.manager,'configured_processes',return_value=[]) as scans, \
+             patch.object(self.manager,'process',return_value=None) as process, \
+             patch.object(self.manager,'request',side_effect=lambda p,r,*a: HEALTH if r=='/system_stats' else IDLE) as request:
+            with self.assertRaisesRegex(ValueError,'Qwen-Image 2.1 encoder module'):self.manager.switch('qwen21')
+        thread.assert_not_called();scans.assert_not_called();process.assert_not_called();request.assert_not_called()
+        self.assertFalse(self.manager.busy);self.assertIsNone(self.manager.operation);self.assertEqual(self.manager.active,'primary')
+        self.assertEqual(state.read_bytes() if state.exists() else None,before)
+        report=self.manager.readiness(profile);self.assertFalse(report['ready'])
+        missing=next(item for item in report['missing'] if item['role']=='Qwen-Image 2.1 encoder module')
+        self.assertEqual(Path(missing['path']),encoder)
+        self.assertIsNone(report['hash_verified']);self.assertIsNone(report['runtime_compatible'])
+    def test_qwen21_missing_encoder_refuses_before_switch_worker_or_process_observation(self):
+        self.assert_qwen21_encoder_refuses_before_admission(None)
+    def test_qwen21_empty_encoder_refuses_before_switch_worker_or_process_observation(self):
+        self.assert_qwen21_encoder_refuses_before_admission(b'')
+    def test_qwen21_complete_encoder_presence_allows_explicit_switch_admission(self):
+        encoder=Path(self.manager.profiles['qwen21']['root'])/'comfy/text_encoders/qwen_image21.py'
+        encoder.parent.mkdir(parents=True,exist_ok=True);encoder.write_bytes(b'# inert encoder fixture\n')
+        report=self.manager.readiness(self.manager.profiles['qwen21'])
+        self.assertTrue(report['ready']);self.assertIsNone(report['hash_verified']);self.assertIsNone(report['runtime_compatible'])
+        with patch('backends.threading.Thread') as thread,patch.object(self.manager,'configured_processes',return_value=[]), \
+             patch.object(self.manager,'process',return_value=None), \
+             patch.object(self.manager,'request',side_effect=lambda p,r,*a: HEALTH if r=='/system_stats' else IDLE):
+            self.manager.switch('qwen21')
+        thread.assert_called_once();thread.return_value.start.assert_called_once()
+        self.assertTrue(self.manager.busy);self.assertEqual(self.manager.operation['target'],'qwen21')
+        self.assertEqual(self.manager.active,'primary')
+    def assert_qwen21_worker_rechecks_encoder_before_process_work(self,contents):
+        encoder=Path(self.manager.profiles['qwen21']['root'])/'comfy/text_encoders/qwen_image21.py'
+        encoder.parent.mkdir(parents=True,exist_ok=True)
+        encoder.write_bytes(b'# admitted encoder fixture\n');self.begin_switch('qwen21')
+        encoder.unlink()
+        if contents is not None:encoder.write_bytes(contents)
+        launched=Mock(pid=4321);launched.poll.return_value=1
+        with patch.object(self.manager,'configured_processes',return_value=[]) as scans, \
+             patch.object(self.manager,'process',return_value=None) as process, \
+             patch.object(self.manager,'request',side_effect=lambda p,r,*a: HEALTH if r=='/system_stats' else IDLE) as request, \
+             patch('backends.subprocess.Popen',return_value=launched) as launch:
+            self.manager._switch('qwen21')
+        scans.assert_not_called();process.assert_not_called();request.assert_not_called();launch.assert_not_called()
+        self.assertEqual(self.manager.operation['status'],'failed')
+        self.assertIn('Qwen-Image 2.1 encoder module',self.manager.operation['message'])
+        self.assertEqual(self.manager.operation.get('stopped_processes',[]),[])
+        self.assertFalse(self.manager.busy);self.assertEqual(self.manager.active,'primary')
+    def test_qwen21_worker_rechecks_missing_encoder_before_process_work(self):
+        self.assert_qwen21_worker_rechecks_encoder_before_process_work(None)
+    def test_qwen21_worker_rechecks_empty_encoder_before_process_work(self):
+        self.assert_qwen21_worker_rechecks_encoder_before_process_work(b'')
     def test_moss_needs_its_overlay_and_reads_three_files_from_the_main_library(self):
         profile=self.manager.profiles['moss'];report=self.manager.readiness(profile)
         self.assertEqual((profile['port'],profile['url']),(8198,'http://127.0.0.1:8198'))
