@@ -8349,6 +8349,159 @@
         }
       ],
       "graph": "workflows/api/moss-t2i-api.json"
+    },
+    {
+      "id": "kromoss-t2i",
+      "name": "Kromoss update 11000 - Text to Image (5B, int8)",
+      "category": "MOSS-Image \u2022 isolated",
+      "collection": "production-workspace",
+      "family": "MOSS-Image",
+      "backend_id": "moss",
+      "host_commit_heavy": true,
+      "modality": "image",
+      "verified": false,
+      "positive": [
+        "4",
+        "text"
+      ],
+      "negative": [
+        "5",
+        "text"
+      ],
+      "seed": [
+        "7",
+        "seed"
+      ],
+      "steps": [
+        "7",
+        "steps"
+      ],
+      "cfg": [
+        "7",
+        "cfg"
+      ],
+      "sampler": [
+        "7",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "7",
+        "scheduler"
+      ],
+      "width": [
+        "6",
+        "width"
+      ],
+      "height": [
+        "6",
+        "height"
+      ],
+      "lora": [
+        "10",
+        "strength_model"
+      ],
+      "lora_name": [
+        "10",
+        "lora_name"
+      ],
+      "lora2": [
+        "11",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "11",
+        "lora_name"
+      ],
+      "choices": {
+        "sampler": [
+          "euler",
+          "er_sde",
+          "euler_ancestral",
+          "dpmpp_2m"
+        ],
+        "scheduler": [
+          "sgm_uniform",
+          "simple",
+          "beta",
+          "normal"
+        ]
+      },
+      "dimension_limits": [
+        512,
+        2048
+      ],
+      "dimension_multiple": 16,
+      "max_pixels": 3145728,
+      "resolution_choices": [
+        [
+          1024,
+          1536
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1536,
+          1024
+        ],
+        [
+          832,
+          1248
+        ],
+        [
+          1248,
+          832
+        ],
+        [
+          1152,
+          1536
+        ],
+        [
+          1536,
+          2048
+        ],
+        [
+          2048,
+          1536
+        ]
+      ],
+      "model_files": [
+        "diffusion_models/kromoss-u11000-int8-convrot.safetensors",
+        "text_encoders/qwen3.5_9b_int8_convrot.safetensors",
+        "vae/moss_image_flux2-vae_small.safetensors"
+      ],
+      "source": "https://huggingface.co/lodestones/Kromoss",
+      "commercial_note": "Author-declared Apache-2.0 for Kromoss and its DMD2 adapter (model card read 26 October 2026). Each other LoRA retains its own terms in models/library.json. Private experimental use; generation and licence facts are separate from art acceptance.",
+      "description": "Kromoss update 11000, a MOSS-Image Base fine-tune, pinned to revision a4fe97449297af2e3be7841e1c18e431f3b06031. Reuses the isolated MOSS backend, Qwen3.5 encoder and small VAE. Author sampling: 50 steps, Euler / sgm_uniform, CFG 3. Layer-22 negative-branch skipping is unavailable in this pinned local graph.",
+      "stages": [
+        "Qwen3.5 9B text encoder (int8)",
+        "Kromoss update 11000 5B (int8 ConvRot) + 2 optional LoRA slots",
+        "50-step Euler / sgm_uniform, CFG 3",
+        "FLUX.2 small decoder VAE",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "Same compute as MOSS study (30 steps)",
+          "controls": {
+            "steps": 30
+          }
+        },
+        {
+          "name": "DMD2 fast (8 steps)",
+          "controls": {
+            "steps": 8,
+            "cfg": 1,
+            "sampler": "euler",
+            "scheduler": "simple",
+            "lora_name": "kromoss-u11000-8steps-dmd2.safetensors",
+            "lora": 1,
+            "lora2": 0
+          }
+        }
+      ],
+      "graph": "workflows/api/kromoss-t2i-api.json"
     }
   ]
 }

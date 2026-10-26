@@ -1,0 +1,339 @@
+{
+  "date": "2026-10-26",
+  "purpose": "User-requested franchise recognition, style, pose and fuller-bust adult-body pilot; no character LoRA or image reference.",
+  "roster_source": "presets/wildcards/nsfw_character.txt",
+  "selection": "Explicit curated adult subset; wildcard rows are not automatically submitted.",
+  "generation_budget": 15,
+  "seed": 2026102603,
+  "characters": [
+    {
+      "id": "tifa",
+      "name": "Tifa Lockhart from Final Fantasy VII, her adult main-story version",
+      "adult": "Canonical age 20, official original FFVII profile; exclude childhood and flashback versions.",
+      "description": "An adult Tifa Lockhart from Final Fantasy VII, age twenty, with long dark brown-black hair, reddish-brown eyes, a white cropped tank top with black trim, black suspenders, black pleated miniskirt over opaque fitted shorts, black thigh socks, and red combat gloves and boots. ",
+      "anchors": [
+        "long dark hair",
+        "reddish-brown eyes",
+        "white/black crop top and suspenders",
+        "black pleated skirt/shorts",
+        "red combat gloves and boots"
+      ],
+      "sources": [
+        "https://finalfantasyviipc.square-enix-games.com/en&lang=en",
+        "https://www.jp.square-enix.com/ffviir_ig/character/tifa.html"
+      ]
+    },
+    {
+      "id": "yor",
+      "name": "Yor Forger (Yor Briar), Thorn Princess from Spy x Family, the adult mother",
+      "adult": "Official anime profile identifies adult mother/wife, city-hall clerk and Thorn Princess; exact age not verified in the opened primary sources.",
+      "description": "The adult woman Yor Forger, also called Yor Briar and the Thorn Princess from Spy x Family, with long near-black hair and face-framing locks, red eyes, gold rose hair ornaments and earrings, a fitted opaque black halter dress with red rose-pattern lining and a flared skirt, black fingerless gloves and black thigh-high boots. ",
+      "anchors": [
+        "long near-black hair and face-framing locks",
+        "red eyes",
+        "gold rose hair ornaments and earrings",
+        "black dress with red lining",
+        "black gloves and thigh-high boots"
+      ],
+      "sources": [
+        "https://spy-family.net/tvseries/#character",
+        "https://spy-family.net/tvseries/assets/img/top/chara_yor_1.png"
+      ]
+    },
+    {
+      "id": "2b",
+      "name": "2B, YoRHa No.2 Type B from NieR Automata, an adult woman-shaped android",
+      "adult": "Official developer identifies YoRHa battle android; official art depicts an adult woman-shaped android. Human chronological age is not asserted.",
+      "description": "2B, YoRHa No.2 Type B from NieR Automata, a clearly adult woman-shaped android with a short white bob and long side fringe, a black eye-cover and black headband, a small beauty mark near her mouth, an opaque black embroidered high-collar combat dress with puff shoulders, a fitted waist and flared skirt, black gloves and black thigh-high boots. ",
+      "anchors": [
+        "short white bob with long side fringe",
+        "black eye-cover and headband",
+        "beauty mark near mouth",
+        "black high-collar embroidered puff-shoulder dress",
+        "black gloves and thigh-high boots"
+      ],
+      "sources": [
+        "https://www.platinumgames.com/works/nier-automata",
+        "https://www.jp.square-enix.com/nierautomata/character/"
+      ]
+    }
+  ],
+  "plans": [
+    {
+      "name": "MOSS character pilot 20261026 tifa",
+      "recipe": {
+        "preset_id": "moss-t2i",
+        "controls": {
+          "seed": 2026102603,
+          "width": 1024,
+          "height": 1536,
+          "positive": "2D anime illustration, clean lineart, deliberate cel shading. Tifa Lockhart from Final Fantasy VII, her adult main-story version. Her recognizable iconic fully clothed outfit; visibly adult face and proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+          "negative": "",
+          "steps": 30,
+          "cfg": 3,
+          "sampler": "euler",
+          "scheduler": "sgm_uniform",
+          "lora": 0,
+          "lora2": 0
+        }
+      },
+      "variants": [
+        {
+          "label": "name-only",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. Tifa Lockhart from Final Fantasy VII, her adult main-story version. Her recognizable iconic fully clothed outfit; visibly adult face and proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Name/franchise plus adult non-explicit framing, without feature description, reference or character adapter.",
+          "sources": [
+            "https://finalfantasyviipc.square-enix-games.com/en&lang=en",
+            "https://www.jp.square-enix.com/ffviir_ig/character/tifa.html"
+          ]
+        },
+        {
+          "label": "described",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. An adult Tifa Lockhart from Final Fantasy VII, age twenty, with long dark brown-black hair, reddish-brown eyes, a white cropped tank top with black trim, black suspenders, black pleated miniskirt over opaque fitted shorts, black thigh socks, and red combat gloves and boots. Natural balanced mature adult proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Explicit canonical feature description; baseline for independent adaptations.",
+          "sources": [
+            "https://finalfantasyviipc.square-enix-games.com/en&lang=en",
+            "https://www.jp.square-enix.com/ffviir_ig/character/tifa.html"
+          ]
+        },
+        {
+          "label": "style-mikko",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. An adult Tifa Lockhart from Final Fantasy VII, age twenty, with long dark brown-black hair, reddish-brown eyes, a white cropped tank top with black trim, black suspenders, black pleated miniskirt over opaque fitted shorts, black thigh socks, and red combat gloves and boots. Natural balanced mature adult proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora_name": "moss-mikkoani-v1.safetensors",
+            "lora": 0.9,
+            "lora2": 0
+          },
+          "rationale": "Only add the style adapter to described baseline; assess identity anchors separately from style.",
+          "sources": [
+            "https://civitai.com/api/v1/models/2470371"
+          ]
+        },
+        {
+          "label": "seated-pose",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. An adult Tifa Lockhart from Final Fantasy VII, age twenty, with long dark brown-black hair, reddish-brown eyes, a white cropped tank top with black trim, black suspenders, black pleated miniskirt over opaque fitted shorts, black thigh socks, and red combat gloves and boots. Natural balanced mature adult proportions. Sitting sideways on a tall art-deco stool, both ankles crossed, one gloved hand resting on her knee and the other on her hip, entire figure and both boots visible. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Only change pose from described baseline; no pose reference or ControlNet is used.",
+          "sources": [
+            "https://finalfantasyviipc.square-enix-games.com/en&lang=en",
+            "https://www.jp.square-enix.com/ffviir_ig/character/tifa.html"
+          ]
+        },
+        {
+          "label": "fuller-bust",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. An adult Tifa Lockhart from Final Fantasy VII, age twenty, with long dark brown-black hair, reddish-brown eyes, a white cropped tank top with black trim, black suspenders, black pleated miniskirt over opaque fitted shorts, black thigh socks, and red combat gloves and boots. A fuller bust under the same opaque fitted outfit, a curvier adult hourglass silhouette and balanced mature anatomy. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Only change body-proportion wording from described baseline; retain identity, pose and opaque fitted outfit.",
+          "sources": [
+            "https://finalfantasyviipc.square-enix-games.com/en&lang=en",
+            "https://www.jp.square-enix.com/ffviir_ig/character/tifa.html"
+          ]
+        }
+      ],
+      "max_seconds": 2400,
+      "max_generations": 5
+    },
+    {
+      "name": "MOSS character pilot 20261026 yor",
+      "recipe": {
+        "preset_id": "moss-t2i",
+        "controls": {
+          "seed": 2026102603,
+          "width": 1024,
+          "height": 1536,
+          "positive": "2D anime illustration, clean lineart, deliberate cel shading. Yor Forger (Yor Briar), Thorn Princess from Spy x Family, the adult mother. Her recognizable iconic fully clothed outfit; visibly adult face and proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+          "negative": "",
+          "steps": 30,
+          "cfg": 3,
+          "sampler": "euler",
+          "scheduler": "sgm_uniform",
+          "lora": 0,
+          "lora2": 0
+        }
+      },
+      "variants": [
+        {
+          "label": "name-only",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. Yor Forger (Yor Briar), Thorn Princess from Spy x Family, the adult mother. Her recognizable iconic fully clothed outfit; visibly adult face and proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Name/franchise plus adult non-explicit framing, without feature description, reference or character adapter.",
+          "sources": [
+            "https://spy-family.net/tvseries/#character",
+            "https://spy-family.net/tvseries/assets/img/top/chara_yor_1.png"
+          ]
+        },
+        {
+          "label": "described",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. The adult woman Yor Forger, also called Yor Briar and the Thorn Princess from Spy x Family, with long near-black hair and face-framing locks, red eyes, gold rose hair ornaments and earrings, a fitted opaque black halter dress with red rose-pattern lining and a flared skirt, black fingerless gloves and black thigh-high boots. Natural balanced mature adult proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Explicit canonical feature description; baseline for independent adaptations.",
+          "sources": [
+            "https://spy-family.net/tvseries/#character",
+            "https://spy-family.net/tvseries/assets/img/top/chara_yor_1.png"
+          ]
+        },
+        {
+          "label": "style-mikko",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. The adult woman Yor Forger, also called Yor Briar and the Thorn Princess from Spy x Family, with long near-black hair and face-framing locks, red eyes, gold rose hair ornaments and earrings, a fitted opaque black halter dress with red rose-pattern lining and a flared skirt, black fingerless gloves and black thigh-high boots. Natural balanced mature adult proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora_name": "moss-mikkoani-v1.safetensors",
+            "lora": 0.9,
+            "lora2": 0
+          },
+          "rationale": "Only add the style adapter to described baseline; assess identity anchors separately from style.",
+          "sources": [
+            "https://civitai.com/api/v1/models/2470371"
+          ]
+        },
+        {
+          "label": "seated-pose",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. The adult woman Yor Forger, also called Yor Briar and the Thorn Princess from Spy x Family, with long near-black hair and face-framing locks, red eyes, gold rose hair ornaments and earrings, a fitted opaque black halter dress with red rose-pattern lining and a flared skirt, black fingerless gloves and black thigh-high boots. Natural balanced mature adult proportions. Sitting sideways on a tall art-deco stool, both ankles crossed, one gloved hand resting on her knee and the other on her hip, entire figure and both boots visible. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Only change pose from described baseline; no pose reference or ControlNet is used.",
+          "sources": [
+            "https://spy-family.net/tvseries/#character",
+            "https://spy-family.net/tvseries/assets/img/top/chara_yor_1.png"
+          ]
+        },
+        {
+          "label": "fuller-bust",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. The adult woman Yor Forger, also called Yor Briar and the Thorn Princess from Spy x Family, with long near-black hair and face-framing locks, red eyes, gold rose hair ornaments and earrings, a fitted opaque black halter dress with red rose-pattern lining and a flared skirt, black fingerless gloves and black thigh-high boots. A fuller bust under the same opaque fitted outfit, a curvier adult hourglass silhouette and balanced mature anatomy. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Only change body-proportion wording from described baseline; retain identity, pose and opaque fitted outfit.",
+          "sources": [
+            "https://spy-family.net/tvseries/#character",
+            "https://spy-family.net/tvseries/assets/img/top/chara_yor_1.png"
+          ]
+        }
+      ],
+      "max_seconds": 2400,
+      "max_generations": 5
+    },
+    {
+      "name": "MOSS character pilot 20261026 2b",
+      "recipe": {
+        "preset_id": "moss-t2i",
+        "controls": {
+          "seed": 2026102603,
+          "width": 1024,
+          "height": 1536,
+          "positive": "2D anime illustration, clean lineart, deliberate cel shading. 2B, YoRHa No.2 Type B from NieR Automata, an adult woman-shaped android. Her recognizable iconic fully clothed outfit; visibly adult face and proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+          "negative": "",
+          "steps": 30,
+          "cfg": 3,
+          "sampler": "euler",
+          "scheduler": "sgm_uniform",
+          "lora": 0,
+          "lora2": 0
+        }
+      },
+      "variants": [
+        {
+          "label": "name-only",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. 2B, YoRHa No.2 Type B from NieR Automata, an adult woman-shaped android. Her recognizable iconic fully clothed outfit; visibly adult face and proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Name/franchise plus adult non-explicit framing, without feature description, reference or character adapter.",
+          "sources": [
+            "https://www.platinumgames.com/works/nier-automata",
+            "https://www.jp.square-enix.com/nierautomata/character/"
+          ]
+        },
+        {
+          "label": "described",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. 2B, YoRHa No.2 Type B from NieR Automata, a clearly adult woman-shaped android with a short white bob and long side fringe, a black eye-cover and black headband, a small beauty mark near her mouth, an opaque black embroidered high-collar combat dress with puff shoulders, a fitted waist and flared skirt, black gloves and black thigh-high boots. Natural balanced mature adult proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Explicit canonical feature description; baseline for independent adaptations.",
+          "sources": [
+            "https://www.platinumgames.com/works/nier-automata",
+            "https://www.jp.square-enix.com/nierautomata/character/"
+          ]
+        },
+        {
+          "label": "style-mikko",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. 2B, YoRHa No.2 Type B from NieR Automata, a clearly adult woman-shaped android with a short white bob and long side fringe, a black eye-cover and black headband, a small beauty mark near her mouth, an opaque black embroidered high-collar combat dress with puff shoulders, a fitted waist and flared skirt, black gloves and black thigh-high boots. Natural balanced mature adult proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora_name": "moss-mikkoani-v1.safetensors",
+            "lora": 0.9,
+            "lora2": 0
+          },
+          "rationale": "Only add the style adapter to described baseline; assess identity anchors separately from style.",
+          "sources": [
+            "https://civitai.com/api/v1/models/2470371"
+          ]
+        },
+        {
+          "label": "seated-pose",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. 2B, YoRHa No.2 Type B from NieR Automata, a clearly adult woman-shaped android with a short white bob and long side fringe, a black eye-cover and black headband, a small beauty mark near her mouth, an opaque black embroidered high-collar combat dress with puff shoulders, a fitted waist and flared skirt, black gloves and black thigh-high boots. Natural balanced mature adult proportions. Sitting sideways on a tall art-deco stool, both ankles crossed, one gloved hand resting on her knee and the other on her hip, entire figure and both boots visible. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Only change pose from described baseline; no pose reference or ControlNet is used.",
+          "sources": [
+            "https://www.platinumgames.com/works/nier-automata",
+            "https://www.jp.square-enix.com/nierautomata/character/"
+          ]
+        },
+        {
+          "label": "fuller-bust",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. 2B, YoRHa No.2 Type B from NieR Automata, a clearly adult woman-shaped android with a short white bob and long side fringe, a black eye-cover and black headband, a small beauty mark near her mouth, an opaque black embroidered high-collar combat dress with puff shoulders, a fitted waist and flared skirt, black gloves and black thigh-high boots. A fuller bust under the same opaque fitted outfit, a curvier adult hourglass silhouette and balanced mature anatomy. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Only change body-proportion wording from described baseline; retain identity, pose and opaque fitted outfit.",
+          "sources": [
+            "https://www.platinumgames.com/works/nier-automata",
+            "https://www.jp.square-enix.com/nierautomata/character/"
+          ]
+        }
+      ],
+      "max_seconds": 2400,
+      "max_generations": 5
+    }
+  ],
+  "judging": [
+    "Use canonical anchors to score recognition separately from requested adaptation.",
+    "Inspect adult reading, opaque coverage, original full-size picture and both face/hand crops first; skip youthful or explicit results.",
+    "Record neutral-to-seated pose and requested fuller-bust response separately; control rubric remains null because there is no external control input.",
+    "The five treatments independently branch from the described baseline; no claim about combined style/pose/body interactions."
+  ],
+  "limitations": [
+    "Single seed is a pilot, not consistency evidence.",
+    "Name-only recognition measures learned associations and does not establish training-set membership.",
+    "Tifa is canonically20, not25+; Yor exact age is not asserted; 2B is an adult-presenting android without a claimed human chronological age.",
+    "No art acceptance, franchise-rights clearance or model licensing approval is inferred."
+  ]
+}
