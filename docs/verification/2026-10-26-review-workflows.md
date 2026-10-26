@@ -33,7 +33,7 @@ The separate [download-integrity evidence](2026-10-26-model-download-integrity.m
 
 ## CI scheduling
 
-`Check studio` previously ran the same heavy suite on every branch push and again on the associated pull-request event. It now runs on pull requests, pushes to `main`, and explicit manual dispatch. A concurrency group replaces superseded runs for the same PR or ref. The full suite, resource-leak checks, 1,200-second hosted budget, checkout/tree provenance, repository validator and read-only permissions are unchanged.
+`Check studio` previously ran the same heavy suite on every branch push and again on the associated pull-request event. It now runs on pull requests, pushes to `main` or tags, and explicit manual dispatch. A concurrency group replaces superseded runs for the same PR or ref. The full suite, resource-leak checks, 1,200-second hosted budget, checkout/tree provenance, repository validator and read-only permissions are unchanged.
 
 This follows GitHub's documented [event filters](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#on) and [concurrency behavior](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency). Standalone branches can still request qualification through manual dispatch or a draft PR.
 
@@ -45,5 +45,4 @@ Independent Look review passed **59 focused Python tests**, plus **18 Make**, **
 
 These are local scoped measurements. Published-head CI logs, checkout trees, full-suite verdicts and actual merge-tree comparisons belong in the PR conversation; a previous-head success is not a substitute. The native Windows matrix is a separate gate. No installed runtime was modified or started, no model weights were downloaded, and no generation was submitted.
 
-[#2](https://github.com/Chris0Jeky/local-asset-studio/issues/2) remains open for its uncertain native loading crash and completed render comparison. [#1627](https://github.com/Chris0Jeky/local-asset-studio/issues/1627) remains the broader paging follow-up; the stale-cursor and collection sort items already fixed by #1628 are distinguished in its issue discussion. `HUMAN_TODO.md` is unchanged: art acceptance, Kromoss/MOSS choices, parallax review and existing publication/runtime decisions remain with the owner.
-
+[#2](https://github.com/Chris0Jeky/local-asset-studio/issues/2) still needs an actual same-seed 8/20-step render comparison and a new reference-edit trial; its native loading crash and uncertain prompt remain unresolved. [#1627](https://github.com/Chris0Jeky/local-asset-studio/issues/1627) remains the broader paging follow-up; the stale-cursor and collection sort items already fixed by #1628 are distinguished in its issue discussion. `HUMAN_TODO.md` is unchanged: art acceptance, Kromoss/MOSS choices, parallax review and existing publication/runtime decisions remain with the owner.
