@@ -71,7 +71,7 @@ def _sections(record):
         'references': {'board': recipe['references'], 'inputs': record['inputs'],
                        'named': {k: controls[k] for k in ('reference', 'last_reference') if k in controls}},
         'controls': {k: v for k, v in controls.items() if k not in ('positive', 'negative', 'reference', 'last_reference')},
-        'lineage': {k: recipe[k] for k in ('parent_assets', 'parent_by_input', 'continuation') if k in recipe},
+        'lineage': {k: recipe[k] for k in ('parent_assets', 'parent_by_input', 'continuation', 'look') if k in recipe},
         'batch': recipe['batch'], 'pending_inputs': draft['pendingInputs'],
         'authoring': {'updatedAt': draft['updatedAt']},
         'runtime': record['runtime'],

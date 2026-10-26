@@ -10,7 +10,8 @@
     ['Recipe',{preset:r.preset,template:before.templateHash},{preset:intent.preset_id,template:intent.template_sha256}],
     ['Settings and wording',r.controls,intent.controls],['Batch',r.batch,intent.batch],['References',r.references,intent.sources],
     ['Lineage',{parents:r.parent_assets,by_input:r.parent_by_input},intent.lineage],
-    ['Continuation context',r.continuation??null,null],['Pending local inputs',before.pendingInputs,[]]
+    ['Continuation context',r.continuation??null,null],['Pending local inputs',before.pendingInputs,[]],
+    ...(Object.hasOwn(r,'look')?[['Prepared Look provenance',r.look,null]]:[])
   ].map(([section,before,proposed])=>({section,before,proposed,changed:!same(before,proposed)}));}
   async function sha256(text){need(globalThis.crypto?.subtle,'Exact review requires a secure browser context. Open Studio on its configured loopback address.');return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text))),x=>x.toString(16).padStart(2,'0')).join('');}
   async function validate(r,q,hashText=sha256){
@@ -68,7 +69,7 @@
     function render(r){
       status.textContent='Proposal ready for review only. No settings, files or jobs were changed.';
       inputs.open=false;inputsTitle.textContent='Edit wording and source contributions';const resultTitle=el('h3','What would change');resultTitle.tabIndex=-1;output.append(resultTitle);
-      for(const row of r.diff){const detail=el('details',undefined,'proposal-change');detail.open=row.changed&&['Recipe','Settings and wording','References','Batch','Pending local inputs'].includes(row.section);detail.append(el('summary',row.section+' · '+(row.changed?'would change':'unchanged')));
+      for(const row of r.diff){const detail=el('details',undefined,'proposal-change');detail.open=row.changed&&['Recipe','Settings and wording','References','Batch','Pending local inputs','Prepared Look provenance'].includes(row.section);detail.append(el('summary',row.section+' · '+(row.changed?'would change':'unchanged')));
         if(row.section==='Settings and wording'){
           const table=el('table'),head=el('tr');for(const label of ['Control','Current','Proposed'])head.append(el('th',label));const thead=el('thead');thead.append(head);table.append(thead);const body=el('tbody');
           for(const key of Array.from(new Set([...Object.keys(row.before),...Object.keys(row.proposed)])).sort()){const tr=el('tr');tr.append(el('th',key),el('td',Object.hasOwn(row.before,key)?String(row.before[key]):'Not present'),el('td',Object.hasOwn(row.proposed,key)?String(row.proposed[key]):'Would be removed'));body.append(tr);}table.append(body);detail.append(table);

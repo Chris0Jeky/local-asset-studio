@@ -10,6 +10,13 @@ function diff(before,intent){const r=before.recipe;return [
  ['Continuation context',r.continuation??null,null],['Pending local inputs',before.pendingInputs,[]]
  ].map(([section,before,proposed])=>({section,before,proposed,changed:!C.same(before,proposed)}));}
 async function reseal(r){const {proposal_sha256,proposal_json,...body}=r,exact=JSON.stringify(body);return {...body,proposal_json:exact,proposal_sha256:await hashText(exact)};}
+test('a proposal from a Look draft must disclose removal of its provenance',async()=>{
+ const query=structuredClone(q),look={id:'look-night-shift',name:'Night Shift',revision:2,options:{quiet_wall:true}};
+ query.draft.recipe.look=look;const missing=await report(query);
+ await assert.rejects(()=>C.validate(missing,query,hashText));
+ missing.diff.push({section:'Prepared Look provenance',before:look,proposed:null,changed:true});
+ const complete=await reseal(missing);assert.equal(await C.validate(complete,query,hashText),complete);
+});
 test('self-consistent envelopes cannot rewrite negative wording, contributions or the review diff',async()=>{
  for(const mutate of [r=>r.intent.controls.negative='unrequested text',r=>r.intent.controls.reference='hidden.png',r=>r.intent.sources[0].contribution='different face',r=>r.intent.sources[0].avoid='different costume',r=>r.diff[1].changed=!r.diff[1].changed,r=>r.diff[1].proposed={positive:'invented'}]){
   const r=await report();mutate(r);const resealResult=await reseal(r);await assert.rejects(()=>C.validate(resealResult,q,hashText));
