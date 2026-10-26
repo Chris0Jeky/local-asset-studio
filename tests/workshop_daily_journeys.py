@@ -464,7 +464,7 @@ window.state=()=>{syncContinuation();return [q('#uxRestoreSourcePrompt').disable
     def test_workspace_refresh_reports_success_failure_and_busy(self):
         refresh = region(source('workspace.js'), 'async function refreshAssets(', '// Scope, filters')
         self.page.set_content('''<script>
-let assetRefreshing=false,assetState={workspace_id:'old'},assetSignature='',jobsSignature='',assetReceiptEpoch=0,assetPaging=null,assetScopeRestored=false,assetSearchTimer=null,assetRetainedSelection=null,jobs=[],recentShown=10;
+let assetRefreshing=false,assetState={workspace_id:'old'},assetSignature='',jobsSignature='',assetReceiptEpoch=0,assetObservationEpoch=0,assetPageEpoch=0,assetPaging=null,assetScopeRestored=false,assetSearchTimer=null,assetRetainedSelection=null,jobs=[],recentShown=10;
 const assetSelection=new Set(),assetResolved=new Map(),StudioAssetRecovery={workspace:id=>!!id};let assetLibraryPending=null;
 function assetPageQuery(){return 'q';}function assetPageFilters(){return {};}function assetReadURL(path){return path;}function assetRecord(){return null;}async function resolveAssetIDs(){}
 function renderLibraryRecovery(){}function renderAssets(){}function renderJobs(){}function assetMessage(){};
