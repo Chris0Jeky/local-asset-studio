@@ -8,7 +8,7 @@ let assetReceiptEpoch = 0;
 let assetPaging=null,assetResolved=new Map(),assetResolveRequest=0,assetOpenRequest=0,assetCollectionBusy=false;
 function assetRecord(id){const item=assetResolved.get(id);return item?item.asset:assetState.assets.find(a=>a.id===id);}
 function assetRecords(){return [...new Map([...assetState.assets,...[...assetResolved.values()].map(i=>i.asset).filter(Boolean)].map(a=>[a.id,a])).values()];}
-function assetPageFilters(){const filters={visibility:assetScope==='trash'?'trash':'active',sort:$('#assetSort').value||'newest'},q=$('#assetSearch').value.trim();if(q)filters.q=q;if(assetScope==='favorite')filters.favorite=true;if(['selected','needs_work','unreviewed'].includes(assetScope))filters.review=assetScope;if(assetScope.startsWith('collection:'))filters.collection_id=assetScope.slice(11);if($('#assetType').value!=='all')filters.media_type=$('#assetType').value;return filters;}
+function assetPageFilters(){const filters={visibility:assetScope==='trash'?'trash':'active',sort:$('#assetSort').value||'newest',source:assetSourceChoice()},q=$('#assetSearch').value.trim();if(q)filters.q=q;if(assetScope==='favorite')filters.favorite=true;if(['selected','needs_work','unreviewed'].includes(assetScope))filters.review=assetScope;if(assetScope.startsWith('collection:'))filters.collection_id=assetScope.slice(11);if($('#assetType').value!=='all')filters.media_type=$('#assetType').value;return filters;}
 function assetPageQuery(){return JSON.stringify(assetPageFilters());}
 function assetReadURL(path,query){return path+'?'+Object.entries(query).filter(([,v])=>v!==null&&v!==undefined).map(([k,v])=>encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');}
 async function resolveAssetIDs(ids){
@@ -53,12 +53,13 @@ let assetRetainedDetail = null, assetRecoveryError = '', assetRecoveryLoadError 
 let assetGroupMode = 'none', assetSearchTimer = null, assetQueue = null, assetBulkReviewBusy = false;
 const assetGroupModes = ['recipe','day','run'], assetGroupStorageKey = 'studio.assets.group';
 // Source is a view preference like grouping: an asset with a run label (set by API callers, never by Create) is an agent run (#939).
-// Until the operator chooses, the library shows Mine once any labelled asset exists; with none, every source is shown.
+// Paged queries default to Mine independently of the rows already loaded.
 const assetSourceModes = ['mine','agent','all'], assetSourceStorageKey = 'studio.assets.source';
 let assetSourceMode = null;
 // "Make · …" labels name the person's own Make runs (make.js; Fix and Upscale in studio-workbench.js), not agent runs.
 function assetIsAgentRun(asset){return typeof asset?.run_label==='string' && asset.run_label!=='' && !asset.run_label.startsWith('Make · ');}
-function assetSource(){return !assetState.assets.some(assetIsAgentRun)?'all':assetSourceModes.includes(assetSourceMode)?assetSourceMode:'mine';}
+function assetSourceChoice(){return assetSourceModes.includes(assetSourceMode)?assetSourceMode:'mine';}
+function assetSource(){return assetPaging?assetSourceChoice():!assetState.assets.some(assetIsAgentRun)?'all':assetSourceChoice();}
 function assetSourceFilter(list, source=assetSource()){return source==='all'?list:list.filter(a=>assetIsAgentRun(a)===(source==='agent'));}
 // Existing lab outputs carry no label, so the operator marks them (#939): a label makes an agent run, clearing it makes it
 // theirs again. The label field is shared by the selection bar and group actions; blank means the default. The server
@@ -532,6 +533,10 @@ function assetEmptyState() {
   }else if((scope.length||assetPaging) && assetFiltersActive()){
     title='No matching assets';description=(assetPaging?'Nothing in this view':'This view contains '+scope.length+' assets, but none')+' matches your search and media filter. Your selection is unchanged.';
     action='<button data-asset-clear-filters>Clear filters in this view</button>';
+  }else if(assetPaging && !scope.length && assetSource()!=='all'){
+    title=assetSource()==='mine'?'None of your own runs here':'No agent runs here';
+    description='No '+(assetSource()==='mine'?'personal':'agent-run')+' assets match this view and its filters. Choose All sources to include every run.';
+    action='<button data-asset-source="all">Show all sources</button>';
   }else if(assetScope==='trash'){
     title='Trash is empty';description='Assets moved to Trash remain recoverable here.';
   }else if(collection){
@@ -587,7 +592,7 @@ function renderAssets() {
   const assets=visibleAssets(), col=assetState.collections.find(c=>'collection:'+c.id===assetScope), source=assetSource();
   const inScope=assetScopeAssets(), sourced=assetSourceFilter(inScope,source), sourceHidden=inScope.length-sourced.length;
   $('#assetTotal').textContent=assets.length+(assetPaging?' on this page':'');
-  $('#assetSource').hidden=!assetState.assets.some(assetIsAgentRun);$('#assetSource').value=source;
+  $('#assetSource').hidden=!assetPaging&&!assetState.assets.some(assetIsAgentRun);$('#assetSource').value=source;
   $('#assetVisibleCount').textContent=(assetPaging?assets.length+' assets on this page':assetFiltersActive()?assets.length+' of '+sourced.length+' assets':assets.length+' assets')+(sourceHidden?' · '+sourceHidden+(source==='mine'?' agent runs hidden':' of yours hidden'):'');
   $('#assetPaging').innerHTML=assetPaging?'<button data-asset-page="previous" '+(!assetPaging.history.length?'disabled':'')+'>Previous page</button><span>Page '+(assetPaging.history.length+1)+'</span><button data-asset-page="next" '+(!assetPaging.next?'disabled':'')+'>Next page</button>':'';
   $('#collectionPaging').innerHTML=assetPaging?.collectionNext?'<button data-collection-more>More collections</button>':'';

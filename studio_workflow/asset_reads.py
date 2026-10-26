@@ -31,6 +31,7 @@ HEX32 = re.compile(r'[0-9a-f]{32}\Z')
 HEX64 = re.compile(r'[0-9a-f]{64}\Z')
 DEFAULT_FILTERS = {'visibility':'active', 'media_type':None, 'review':None,
                    'favorite':None, 'collection_id':None}
+FILTER_KEYS = (*DEFAULT_FILTERS, 'source')
 REVIEWS = ('unreviewed','selected','needs_work','rejected')
 DISPLAY_LIMITS = {'title':200, 'filename':256, 'preset_name':200}
 EPOCH_VALID = "typeof(epoch)='text' AND length(epoch)=32 AND instr(epoch,char(0))=0 AND epoch NOT GLOB '*[^0-9a-f]*'"
@@ -142,8 +143,12 @@ def migrate(db):
 def normalize_filters(value=None):
     require(value is None or type(value) is dict, 'Asset filters must be an object')
     value = {} if value is None else value
-    require(set(value) <= set(DEFAULT_FILTERS), 'Unsupported asset filter')
+    require(set(value) <= set(FILTER_KEYS), 'Unsupported asset filter')
     result = dict(DEFAULT_FILTERS, **value)
+    source = result.pop('source', 'all')
+    require(type(source) is str and source in ('all', 'mine', 'agent'), 'Invalid source filter')
+    # Omitted/All keeps the original response shape and cursor identity.
+    if source != 'all': result['source'] = source
     require(type(result['visibility']) is str and result['visibility'] in ('active','trash','all'), 'Invalid visibility filter')
     kind = result['media_type']
     require(kind is None or _is_media_type(kind), 'Invalid media type filter')
@@ -297,6 +302,11 @@ class AssetReads:
                 require(position['catalogue'] == stamp, 'Asset catalogue changed; explicitly refresh this query',
                         code='asset_cursor_stale',status=409)
             clauses, params = [], []
+            if query.get('source') in ('mine', 'agent'):
+                # Match assetIsAgentRun exactly: Make labels are the owner's runs.
+                # substr equality stays case-sensitive, unlike SQLite's default LIKE.
+                agent = "(typeof(a.run_label)='text' AND a.run_label<>'' AND substr(a.run_label,1,7)<>'Make · ')"
+                clauses.append(agent if query['source'] == 'agent' else 'NOT ' + agent)
             if query['visibility'] != 'all':
                 clauses.append('a.trashed_at IS ' + ('NULL' if query['visibility']=='active' else 'NOT NULL'))
             for key in ('media_type','review','favorite'):
