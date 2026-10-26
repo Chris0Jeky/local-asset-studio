@@ -1,0 +1,278 @@
+{
+  "version": 2,
+  "preset_id": "moss-t2i",
+  "controls": {
+    "seed": 2026102602,
+    "width": 1024,
+    "height": 1536,
+    "positive": "reversesty, 2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 30-year-old woman with a visibly mature adult face and curvy adult proportions, long silver hair, violet eyes and a confident teasing smile. Full body from head to boots, three-quarter view, contrapposto with one hand resting on her hip and the other relaxed and visible. She wears a fitted black-and-gold corset bodice over an opaque ivory blouse, a short tailored cape, a high-waisted asymmetrical skirt with a thigh slit over opaque fitted shorts, and thigh-high black boots. A striking hourglass silhouette, elegant fantasy fashion, gold jewelry. She stands on a castle balcony at dusk; the entire figure has clear separation from the distant background. Tasteful non-explicit fashion illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0.9,
+    "lora2": 0,
+    "lora_name": "moss-reverse1999-v1.safetensors"
+  },
+  "batch_count": 1,
+  "created_at": 1793033100.2941363,
+  "workflow": {
+    "1": {
+      "class_type": "UNETLoader",
+      "inputs": {
+        "unet_name": "moss_image_sft_int8_convrot.safetensors",
+        "weight_dtype": "default"
+      }
+    },
+    "2": {
+      "class_type": "CLIPLoader",
+      "inputs": {
+        "clip_name": "qwen3.5_9b_int8_convrot.safetensors",
+        "type": "moss_image",
+        "device": "default"
+      }
+    },
+    "3": {
+      "class_type": "VAELoader",
+      "inputs": {
+        "vae_name": "moss_image_flux2-vae_small.safetensors"
+      }
+    },
+    "4": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "2",
+          0
+        ],
+        "text": "reversesty, 2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 30-year-old woman with a visibly mature adult face and curvy adult proportions, long silver hair, violet eyes and a confident teasing smile. Full body from head to boots, three-quarter view, contrapposto with one hand resting on her hip and the other relaxed and visible. She wears a fitted black-and-gold corset bodice over an opaque ivory blouse, a short tailored cape, a high-waisted asymmetrical skirt with a thigh slit over opaque fitted shorts, and thigh-high black boots. A striking hourglass silhouette, elegant fantasy fashion, gold jewelry. She stands on a castle balcony at dusk; the entire figure has clear separation from the distant background. Tasteful non-explicit fashion illustration."
+      }
+    },
+    "5": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "2",
+          0
+        ],
+        "text": ""
+      }
+    },
+    "6": {
+      "class_type": "EmptyFlux2LatentImage",
+      "inputs": {
+        "width": 1024,
+        "height": 1536,
+        "batch_size": 1
+      }
+    },
+    "7": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "10",
+          0
+        ],
+        "positive": [
+          "4",
+          0
+        ],
+        "negative": [
+          "5",
+          0
+        ],
+        "latent_image": [
+          "6",
+          0
+        ],
+        "seed": 2026102602,
+        "steps": 30,
+        "cfg": 3.0,
+        "sampler_name": "euler",
+        "scheduler": "sgm_uniform",
+        "denoise": 1.0
+      }
+    },
+    "8": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "7",
+          0
+        ],
+        "vae": [
+          "3",
+          0
+        ]
+      }
+    },
+    "9": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "8",
+          0
+        ],
+        "filename_prefix": "Studio/moss-t2i"
+      }
+    },
+    "10": {
+      "class_type": "LoraLoaderModelOnly",
+      "inputs": {
+        "model": [
+          "1",
+          0
+        ],
+        "lora_name": "moss-reverse1999-v1.safetensors",
+        "strength_model": 0.9
+      }
+    }
+  },
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "cd59cd90-9e55-4577-a8fd-f8e5b3084ee1",
+      "seed": 2026102602,
+      "graph": {
+        "1": {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "moss_image_sft_int8_convrot.safetensors",
+            "weight_dtype": "default"
+          }
+        },
+        "2": {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen3.5_9b_int8_convrot.safetensors",
+            "type": "moss_image",
+            "device": "default"
+          }
+        },
+        "3": {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "moss_image_flux2-vae_small.safetensors"
+          }
+        },
+        "4": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "text": "reversesty, 2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 30-year-old woman with a visibly mature adult face and curvy adult proportions, long silver hair, violet eyes and a confident teasing smile. Full body from head to boots, three-quarter view, contrapposto with one hand resting on her hip and the other relaxed and visible. She wears a fitted black-and-gold corset bodice over an opaque ivory blouse, a short tailored cape, a high-waisted asymmetrical skirt with a thigh slit over opaque fitted shorts, and thigh-high black boots. A striking hourglass silhouette, elegant fantasy fashion, gold jewelry. She stands on a castle balcony at dusk; the entire figure has clear separation from the distant background. Tasteful non-explicit fashion illustration."
+          }
+        },
+        "5": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "text": ""
+          }
+        },
+        "6": {
+          "class_type": "EmptyFlux2LatentImage",
+          "inputs": {
+            "width": 1024,
+            "height": 1536,
+            "batch_size": 1
+          }
+        },
+        "7": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "10",
+              0
+            ],
+            "positive": [
+              "4",
+              0
+            ],
+            "negative": [
+              "5",
+              0
+            ],
+            "latent_image": [
+              "6",
+              0
+            ],
+            "seed": 2026102602,
+            "steps": 30,
+            "cfg": 3.0,
+            "sampler_name": "euler",
+            "scheduler": "sgm_uniform",
+            "denoise": 1.0
+          }
+        },
+        "8": {
+          "class_type": "VAEDecode",
+          "inputs": {
+            "samples": [
+              "7",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ]
+          }
+        },
+        "9": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "images": [
+              "8",
+              0
+            ],
+            "filename_prefix": "Studio/moss-t2i"
+          }
+        },
+        "10": {
+          "class_type": "LoraLoaderModelOnly",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "lora_name": "moss-reverse1999-v1.safetensors",
+            "strength_model": 0.9
+          }
+        }
+      },
+      "status": "completed",
+      "gpu_memory": {
+        "peak_shared_bytes": 350707712,
+        "peak_dedicated_bytes": 11956502528,
+        "samples": 101,
+        "spilled": false
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "filename": "moss-t2i_00079_.png",
+      "subfolder": "Studio",
+      "type": "output",
+      "seed": 2026102602,
+      "prompt_id": "cd59cd90-9e55-4577-a8fd-f8e5b3084ee1",
+      "media_type": "image",
+      "asset_id": "f7262a1d103c519eb26e3ab19c1b7039"
+    }
+  ],
+  "parent_assets": [],
+  "references": [],
+  "preparation": null,
+  "native_recipe": null,
+  "continuation": null,
+  "tile": null,
+  "tile_receipt": null,
+  "parallax": null,
+  "parallax_receipt": null
+}

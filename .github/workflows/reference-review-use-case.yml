@@ -13,12 +13,14 @@ on:
       - 'tests/studio_browser_smoke.py'
       - 'tests/test_reference_review*.py'
       - 'tests/test_use_case_matrix.py'
+      - 'scripts/ci-install-chromium.sh'
+      - 'tests/test_ci_browser_dependencies.py'
       - '.github/workflows/reference-review-use-case.yml'
 permissions:
   contents: read
 jobs:
   reference-review-journey:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +30,11 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install pillow playwright==1.57.0
-      - run: python -m playwright install --with-deps chromium
+      - name: Check bounded browser dependency setup
+        run: python -m unittest discover -s tests -p test_ci_browser_dependencies.py -v
+      - name: Install Chromium with bounded signed Ubuntu dependencies
+        timeout-minutes: 4
+        run: bash scripts/ci-install-chromium.sh
       - name: Offline registration and reference-review contracts
         run: |
           python -m unittest discover -s tests -p 'test_reference_review*.py' -v

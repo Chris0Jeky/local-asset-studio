@@ -25,12 +25,14 @@ on:
       - 'tests/asset_reload_browser.py'
       - 'tests/asset_recovery_contracts.cjs'
       - 'tests/studio_browser_smoke.py'
+      - 'scripts/ci-install-chromium.sh'
+      - 'tests/test_ci_browser_dependencies.py'
       - '.github/workflows/asset-detail-browser.yml'
 permissions:
   contents: read
 jobs:
   browser:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     strategy:
       fail-fast: false
@@ -47,7 +49,11 @@ jobs:
         with:
           node-version: '22'
       - run: python -m pip install playwright==1.57.0 -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
-      - run: python -m playwright install --with-deps chromium
+      - name: Check bounded browser dependency setup
+        run: python -m unittest discover -s tests -p test_ci_browser_dependencies.py -v
+      - name: Install Chromium with bounded signed Ubuntu dependencies
+        timeout-minutes: 4
+        run: bash scripts/ci-install-chromium.sh
       - run: python -m unittest discover -s tests -p 'test_asset_detail*.py' -v
       - run: node tests/asset_recovery_contracts.cjs
       - name: Native browser HTTP against synthetic Studio APIs
