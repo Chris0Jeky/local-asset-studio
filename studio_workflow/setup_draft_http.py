@@ -2,7 +2,7 @@
 import sqlite3
 from urllib.parse import urlsplit
 from .core import decode, need
-from .http_body import reject_json
+from .http_body import read_complete_body, reject_json
 from .setup_drafts import SetupDrafts, SetupError, PREFIX, MAX_COMMAND
 
 
@@ -49,7 +49,7 @@ def extend_handler(base):
             if self.headers.get('Content-Type','').split(';')[0]!='application/json':
                 return reject_json(self,400,{'error':'application/json required','generation_submitted':False})
             try:
-                value=decode(self.rfile.read(self._content_length(MAX_COMMAND)))
+                value=decode(read_complete_body(self,MAX_COMMAND))
                 need(type(value) is dict,'JSON object required')
             except (ValueError,OSError,RecursionError) as exc:return self._json(400,{'error':str(exc),'generation_submitted':False})
             return self._setup_reply(value)

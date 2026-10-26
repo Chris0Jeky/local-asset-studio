@@ -1,7 +1,7 @@
 """Same-origin operation commands on Studio's existing HTTP server, not inference threads."""
 import sqlite3
 from urllib.parse import parse_qs, urlparse
-from studio_workflow.http_body import reject_json
+from studio_workflow.http_body import read_complete_body, reject_json
 from .schema import decode, need
 
 PREFIX='/api/prompt/reference-jobs/'
@@ -55,7 +55,7 @@ def extend_handler(base):
                     return reject_json(self,409,{'error':'Reference intake is busy. Nothing was queued.', 'generation_submitted':False})
                 held=service.intake;limit=48*1024*1024
             try:
-                raw=self.rfile.read(self._content_length(limit));value=decode(raw,limit=limit)
+                raw=read_complete_body(self,limit);value=decode(raw,limit=limit)
                 if self.path==PREFIX+'create':return self._json(202,service._create(value))
                 if self.path==PREFIX+'retire':return self._json(200,service.retire(value))
                 return self._json(200,service.cancel(value) if self.path.endswith('/cancel') else service.release(value))

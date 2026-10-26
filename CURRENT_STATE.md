@@ -1,5 +1,43 @@
 # Current state — 13 October 2026
 
+## Remaining composed command bodies — 26 October 2026
+
+Six remaining composed readers now use the existing complete-body helper before
+decoding commands: setup drafts, control previews, workflow commands, saved-run
+commands, reference analysis commands and large-job resource preparation. This
+changes HTTP admission only; it does not change job-state publication or Library
+paging. EOF-short requests close without applying their valid JSON prefix.
+
+Seven real-socket regressions first produced 12 failures, including committed setup
+creation/replacement in real SQLite and calls reaching inert dispatch/service
+doubles. With the fix all seven pass; rejected setup commands preserve the complete
+database, including heads, history and receipts. Complete requests still succeed
+with the original identity, and reference intake admission is released on refusal.
+The 119-test seam run passed. The initial full suite passed 6,089 tests in 860.117 s
+(82 skipped). Final-source lifetime shard 1/2 passed 3,116 tests in 662.747 s
+(49 skipped), with no retained non-daemon threads or active child processes.
+Lifetime shard 2/2 ran 2,980 tests in 880.462 s (33 skipped), with two errors in
+unchanged tests: the shutdown probe missed its one-second startup deadline, and
+native-export planning hit the 2 GiB free-space guard before its injected write
+failure. It reported no retained non-daemon threads or active child processes.
+Both modules then passed in isolation (13 and four tests); the drive measured
+50.579 GiB free. Neither root cause is established. One unchanged shard recheck
+passed all 2,980 tests in 682.536 s (33 skipped), with no retained non-daemon
+threads or active child processes. Its 697 independent free-space samples ranged
+from 50.552 to 50.577 GiB. Both final-source shards are therefore green across
+all 6,096 tests (82 skipped); the earlier errors remain evidence, not dismissed
+as flaky. All ten captured code-file hashes still match the qualification receipt.
+Repository validation and diff whitespace checks passed.
+
+Base: `14cbcde61d17b391a97050a31b9614c4c0e04897`. Raw logs, the source-hash receipt
+and the serial lifetime runner are local-only in `.runtime/improvement-15/`.
+Concurrent edits to `studio_prompt/project_http.py` and
+`tests/test_prompt_projects_http.py` were preserved, not authored by this lane;
+qualification includes those bytes. No installed Studio/ComfyUI service or model
+generation was used.
+`HUMAN_TODO.md` is unchanged; its owner choices remain open. Git writes, review and
+PR publication belong to the coordinator for this worktree.
+
 ## Composed HTTP body completeness — 26 October 2026
 
 Prompt dispatch, figure splitting and workflow-document routes now reject EOF-short bodies

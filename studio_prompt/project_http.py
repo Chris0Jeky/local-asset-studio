@@ -1,7 +1,7 @@
 """Scoped prompt-document commands on the existing same-origin Studio handler."""
 import sqlite3
 from urllib.parse import parse_qs,urlsplit
-from studio_workflow.http_body import reject_json
+from studio_workflow.http_body import read_complete_body,reject_json
 from .schema import decode,need
 from .projects import FLAGS,REQUEST_LIMIT,ProjectError
 
@@ -54,7 +54,7 @@ def extend_handler(base):
             if self.headers.get('Content-Type','').split(';')[0]!='application/json':
                 return reject_json(self,400,{'error':'application/json required','code':'invalid_project_command',**FLAGS})
             try:
-                value=decode(self.rfile.read(self._content_length(REQUEST_LIMIT)))
+                value=decode(read_complete_body(self,REQUEST_LIMIT))
                 return self._json(200,self._prompt_project_service().command(route,value))
             except (ValueError,TypeError,KeyError,IndexError,RecursionError,OSError,sqlite3.Error) as error:return self._prompt_project_error(error)
     return ProjectHandler
