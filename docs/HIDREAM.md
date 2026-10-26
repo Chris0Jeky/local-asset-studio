@@ -54,3 +54,27 @@ Switching never installs packages or submits generation. **Generate** remains
 a separate action.
 
 Sources: [custom node](https://github.com/Saganaki22/HiDream_O1-ComfyUI), [converted FP8 model](https://huggingface.co/drbaph/HiDream-O1-Image-FP8), [official model](https://huggingface.co/HiDream-ai/HiDream-O1-Image).
+
+## Same-seed comparison attempt — 25 October 2026
+
+The [frozen 8/20-step study](../experiments/curated/hidream-step-comparison/README.md)
+pins identical concept inputs, seed `2026091131`, CFG 5, 2048-square resolution and
+the API template hash. Its regression test prepares both through the ordinary
+Studio ticket binder and checks that only sampler steps differ. No backend or
+installed dependency changes were made.
+
+Explicit switching started HiDream in isolation; both concept and edit graphs
+passed the live schema check. A switch back during active work was refused. The
+eight-step job `9539f3a2-f0ed-5887-8ff0-c528297f1567`, prompt
+`86d4c40c-dba4-4908-8ca5-79c07552b998`, then lost its backend during model loading:
+the isolated process exited with native access violation `0xC0000005`. Studio
+retained its submission and marked it uncertain after three failed history reads.
+No final output could be inspected and no render time is reported. The 20-step
+run and new reference-edit trial were not submitted; #2 remains incomplete.
+
+This new isolated loading crash does not establish the cause of the earlier
+primary-process transition crash. Both that historical crash and the Torch 2.9.x
+warning remain unresolved. Recover or explicitly reconcile the retained prompt
+before another generation or switch; never prepare a replacement ticket to probe
+an uncertain submission. Art acceptance and licensing remain separate owner choices
+in [HUMAN_TODO.md](../HUMAN_TODO.md).
