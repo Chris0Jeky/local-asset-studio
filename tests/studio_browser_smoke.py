@@ -100,6 +100,14 @@ class Handler(BaseHTTPRequestHandler):
             assets=sorted(assets,key=lambda a:(a['title'].lower() if sort=='title' else a['created_at'],a['id']),reverse=sort=='newest')
             return self.json({'format':'studio.asset-page/v1','workspace_id':getattr(self,'workspace_id',Handler.workspace_id),'catalogue':{'epoch':'a'*32,'revision':1},'assets':assets[:100],'next_cursor':None})
         if path=='/api/collections':return self.json({'format':'studio.collection-page/v1','workspace_id':getattr(self,'workspace_id',Handler.workspace_id),'catalogue':{'epoch':'a'*32,'revision':1},'collections':[],'next_cursor':None})
+        if path.startswith('/api/assets/family/') and getattr(self,'family_observations',False):
+            from urllib.parse import parse_qs
+            asset_id=path.rsplit('/',1)[-1];asset=next((a for a in ASSETS if a['id']==asset_id),None)
+            if not asset:return self.json({'error':'Fixture asset missing'},404)
+            node=dict(id=asset_id,title=asset['title'],state='trashed' if asset['trashed_at'] is not None else 'active',operation=None,seed=None,strength=None)
+            return self.json(dict(version=1,asset_id=asset_id,workspace_id=getattr(self,'workspace_id',Handler.workspace_id),nodes=[node],edges=[],gaps=[],truncated=False,
+                                  children=[] if parse_qs(urlsplit(self.path).query).get('children')==['true'] else None,children_truncated=False,children_scanned=0,
+                                  observation_only=True,generation_submitted=False,media_bytes_verified=False))
         data={
             '/api/catalog':CATALOG, '/api/options':{'loras':[]}, '/api/knowledge':{}, '/api/recipes':{'recipes':[]},
             '/api/identity':{'workspace':'ux-test-workspace'}, '/api/setups':[], '/api/looks':{'looks':[],'seed_errors':[],'generation_submitted':False}, '/api/characters':{'characters':[],'generation_submitted':False}, '/api/jobs':JOBS,

@@ -1,4 +1,101 @@
-# Current state — 13 October 2026
+# Current state — 26 October 2026
+
+## Owner-requested session closeout — 26 October 2026
+
+The intake-test repair merged as [#1670](https://github.com/Chris0Jeky/local-asset-studio/pull/1670)
+(`f7ed2dd0`), closing #1669; final-head hosted proof is 6,113 tests / 79 skips /
+1,005.191 s, with clean lifetime shutdown. Three Tifa follow-up jobs then completed
+and were inspected, giving **42 distinct completed images** across the session.
+All three new images have exact recipes, output hashes and agent pre-reviews.
+The owner requested finishing/saving the work and closing, so the remaining nine
+follow-up jobs were never submitted. The eight Kromoss comparisons remain NOT RUN.
+
+An independent blind reread of 12 existing images is also saved: Mikko's style
+direction repeats, while the earlier Impasto penalty does not; garment adherence
+and ordinal-score/rater limits remain explicit. This adds reviews, not renders.
+[The closeout record](experiments/curated/moss-study-20261026/closeout/README.md)
+retains raw judgments, the frozen mapping, exact source pins and remaining plan.
+
+The standard supervised foreground Studio route succeeded after the detached
+launcher refusal. No guard was bypassed. Resource pressure during the three-job
+batch prompted stopping the finite controller; all three submitted jobs completed.
+The owned idle MOSS PID 41400 was then stopped, releasing cached RAM; no foreign
+process was touched (MCP report: zero proven orphans). After verifying all 42 jobs
+terminal, Studio PID 14368 ended through its supervised session; ports 8191/8198
+are free. Private full-size evidence and galleries stay on E:, original ComfyUI
+outputs remain intact, and `HUMAN_TODO.md` art/Make decisions remain open.
+
+## Reference intake test waits for admission release — 26 October 2026
+
+From merged `5a1720bb`, the EOF/reference-command regression now waits up to five
+seconds on the intake semaphore after each HTTP response, matching the bounded
+client timeout. Receiving the response does not prove the handler's `finally`
+release has run. Both refusal and successful-command probes retain their leak
+assertions; no production handler or shared transport behavior changed.
+The controlled response-before-release schedule fails before the test fix and
+passes afterward (all four actions, eight bounded probes). Removing the actual
+handler release in memory still fails the EOF leak assertion. The ordinary seven
+reference-command tests and four composed-body transport tests pass. Proof scripts
+and receipts are in `.runtime/intake-test-sync-20261026/`, copied to the private
+E: study evidence before retirement; this repairs the test race tracked in #1669.
+No generation or subjective `HUMAN_TODO.md` decision was performed by this slice.
+
+## MOSS adapter and character qualification — 26 October 2026
+
+Starting from `d89b36f3` in an owned worktree (later integrating `b4515ca7`), the
+finite MOSS study completed **39 jobs / 39 unique prompt IDs / 39 distinct images**:
+24 original-adult adapter comparisons and 15 Tifa/Yor/2B recognition, style, pose
+and fuller-bust variants. Every image has an exact recipe, source hash and
+full-image/face/hand agent inspection; six also have an independent second judgment.
+[Results and next plans](experiments/curated/moss-study-20261026/RESULTS.md) contain
+all IDs and limitations. Primary agent verdicts are 17 keep / 22 fixable, with
+visible labels, not owner acceptance. Private full-size evidence and the complete
+static gallery remain at `E:/local-asset-studio-labs/moss-20261026/evidence/`.
+
+Mikko 0.9 gives the clearest graphic style change in this sample; the Reverse
+trigger effect is subtle at 0.9 and Impasto 0.25 adds no clear brief-quality gain.
+Tifa/Yor name-only recall is strong, while 2B needs explicit anchors and still
+misses opaque chest coverage. All three seated variants cross knees rather than
+ankles; body-wording response is uneven. This demonstrates learned associations,
+not training-image membership. Three executed recipes are saved, and `moss-t2i`
+is execution-qualified for the tested 30-step settings. No Make look was added.
+
+The MOSS readiness guard now refuses a missing/empty text-encoder implementation
+before stopping a healthy backend (red regression reproduced; 48 safety tests and
+175 server tests pass). A missing browser-fixture family route was repaired:
+three fixture tests and all 25 browser journeys pass with zero page errors, server
+tracebacks or generation submissions. Final full-suite proof: **6,109 tests,
+82 skipped, 1,061.452 s, exit 0**, with configured FFmpeg/ffprobe on PATH. An earlier
+Windows catalog-encoding failure was corrected by preserving the original JSON
+escape policy (16 focused checks pass). The integrated AV base's affected suites
+pass 31 + 41 (one skip) + 3 tests. A fresh independent review found no blockers in
+the code/config changes. The latest validator and publication receipt travel with
+the milestone closeout; these suite counts describe the tested source snapshots.
+
+Initial PR CI caught the shared family fixture hiding legacy lineage buttons.
+The response is now opt-in for the deeper journey fixture; its new unit test failed
+before the fix, then four fixture tests and 48 asset-detail checks at both 0 and
+400 ms delay pass. A separate recovery-layout race was reproduced with a detached
+card and corrected by atomically reading the current DOM, retaining all layout
+assertions; three viewport cases pass. Scoped independent round-two review is clear.
+These test-only fixes use focused proof; they are later than the full-suite snapshot.
+
+Kromoss update 11000 source identities are pinned, with an unverified preset and
+eight **NOT RUN** comparisons. DMD2 downloaded and checksum-verified, but its
+checkpoint remains 2,587,306,298 / 5,413,698,958 bytes after three short transfers;
+the earlier revision's partial was preserved. [#1662](https://github.com/Chris0Jeky/local-asset-studio/issues/1662)
+tracks the exact resume dependency; no unverified weight was installed. A 12-job
+two-seed Tifa/Yor follow-up is saved, not submitted. The Qwen parallel readiness
+question and mixed roster adult-version audit are separately tracked in
+[#1661](https://github.com/Chris0Jeky/local-asset-studio/issues/1661) and
+[#1663](https://github.com/Chris0Jeky/local-asset-studio/issues/1663).
+
+All 39 jobs were complete and ComfyUI's queue empty before the owned Studio PID
+29932 and MOSS PID 30520 were stopped after identity checks; ports 8191/8198 are
+free. Four completed Production plans remain `awaiting_review`; no subjective
+selection was inferred. Original ComfyUI outputs and the copied E: evidence stay
+intact, shared packages were unchanged, and no paid credits were used.
+`HUMAN_TODO.md` still owns art acceptance and MOSS Make-look wording/placement.
 
 ## AV trims use the video track's duration - 26 October 2026
 

@@ -184,6 +184,15 @@ async def exercise(args):
                     await page.click('#openAssetRecoveryShelfDetails' if details else '#openAssetRecoveryShelf')
                     await page.wait_for_function('!assetShelfReading')
 
+                async def close_shelf_with_keyboard(page):
+                    # Native dialog close is queued. Complete its focus handoff
+                    # before tab_to observes the next keyboard activation target.
+                    await page.evaluate("""() => {window.__shelfKeyboardClosed=false;
+                      document.getElementById('assetRecoveryShelfDialog').addEventListener('close',()=>{
+                        window.__shelfKeyboardClosed=true;},{once:true});}""")
+                    await page.keyboard.press('Escape')
+                    await page.wait_for_function('__shelfKeyboardClosed && !document.getElementById("assetRecoveryShelfDialog").open')
+
                 async def restore_record(page, record_id):
                     # Closing is queued by <dialog>; wait for its focus handoff
                     # before the next keyboard activation starts another dialog.
@@ -329,7 +338,10 @@ async def exercise(args):
                 check('SHELF-CONFLICT-01 occupied session and imported viewpoint both survive refusal',
                       conflict_observation['journal_unchanged'] and conflict_observation['shelf_unchanged'] and
                       'different local viewpoint' in conflict_observation['status'] and len(writes) == before, conflict_observation)
-                await page.keyboard.press('Escape'); await activate(page, '[data-asset-recover-open]'); await shelf(page, True)
+                await close_shelf_with_keyboard(page)
+                await activate(page, '[data-asset-recover-open]')
+                await page.wait_for_function('document.getElementById("assetDialog").open')
+                await shelf(page, True)
                 # Exercise the file-input refusal UI over native storage, not only codec helpers.
                 valid = json.loads(exported)
                 corrupt = json.loads(exported); corrupt['records'][0]['sha256'] = '0' * 64
