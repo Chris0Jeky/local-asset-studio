@@ -8,6 +8,7 @@ import json
 import tempfile
 import unittest
 from unittest import mock
+from types import SimpleNamespace
 from pathlib import Path
 import sys
 
@@ -455,6 +456,60 @@ class CaseSelection(unittest.TestCase):
         with self.assertRaises(SystemExit) as caught: runner.main(['--case', CASES['cases'][0]['id'], '--case', 'no-such-journey'])
         self.assertIn('no-such-journey', str(caught.exception))
         self.assertNotIn(CASES['cases'][0]['id'], str(caught.exception))
+
+
+class FamilyFixtureReads(unittest.TestCase):
+    def setUp(self):
+        import studio_browser_smoke as fixture
+        self.fixture = fixture
+        fixture.close_fixture_observations()
+        for name in ('ASSETS', 'JOBS', 'PLANS'):
+            patcher = mock.patch.object(fixture, name, json.loads(json.dumps(getattr(fixture, name))))
+            patcher.start(); self.addCleanup(patcher.stop)
+        self.addCleanup(fixture.close_fixture_observations)
+        fixture.ASSETS[1].update(lineage=['asset-0'], job_id='fixture-job', source={'seed': 43})
+        fixture.JOBS[0]['controls']['denoise'] = 0.4
+        self.handler_type, _ = runner.build_handler()
+
+    def read(self, path, host='127.0.0.1:31879'):
+        handler = object.__new__(self.handler_type)
+        handler.path = path; handler.headers = {'Host': host}
+        handler.server = SimpleNamespace(server_port=31879)
+        handler.json = lambda value, status=200: (status, value)
+        try: return handler.do_GET()
+        except Exception as error: self.fail(f'Family fixture request raised {type(error).__name__}: {error}')
+
+    def test_family_uses_real_lineage_and_synthetic_job_without_mutation(self):
+        before = json.dumps([self.fixture.ASSETS, self.fixture.JOBS, self.fixture.POSTS], sort_keys=True)
+        status, body = self.read('/api/assets/family/asset-1?workspace_id=' + '1' * 32)
+        self.assertEqual(status, 200)
+        self.assertEqual([node['id'] for node in body['nodes']], ['asset-0', 'asset-1'])
+        self.assertEqual(body['edges'], [{'parent': 'asset-0', 'child': 'asset-1'}])
+        self.assertEqual((body['nodes'][1]['seed'], body['nodes'][1]['strength']), ('43', '0.4'))
+        self.assertTrue(body['observation_only']); self.assertFalse(body['generation_submitted'])
+        self.assertFalse(body['media_bytes_verified'])
+        self.assertEqual(json.dumps([self.fixture.ASSETS, self.fixture.JOBS, self.fixture.POSTS], sort_keys=True), before)
+
+    def test_explicit_children_follow_current_fixture_workspace(self):
+        path = '/api/assets/family/asset-0?workspace_id=' + '1' * 32 + '&children=true'
+        status, body = self.read(path)
+        self.assertEqual(status, 200)
+        self.assertEqual([node['id'] for node in body['children']], ['asset-1'])
+        self.fixture.ASSETS[1]['lineage'] = []
+        status, body = self.read(path)
+        self.assertEqual(status, 200); self.assertEqual(body['children'], [])
+
+    def test_family_preserves_host_scope_and_query_refusals(self):
+        base = '/api/assets/family/asset-0?workspace_id='
+        cases = [(base + '2' * 32, '127.0.0.1:31879', 409),
+                 (base + '1' * 32 + '&children=yes', '127.0.0.1:31879', 400),
+                 (base + '1' * 32 + '&workspace_id=' + '1' * 32, '127.0.0.1:31879', 400),
+                 (base + '1' * 32, 'foreign.invalid', 403)]
+        for path, host, expected in cases:
+            with self.subTest(path=path, host=host):
+                status, body = self.read(path, host)
+                self.assertEqual(status, expected); self.assertNotIn('nodes', body)
+                self.assertTrue(body['observation_only']); self.assertFalse(body['generation_submitted'])
 
 
 if __name__ == '__main__': unittest.main()

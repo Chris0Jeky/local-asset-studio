@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-09-21",
+  "updated": "2026-10-26",
   "note": "Saved control sets. status 'executed' means this machine ran these controls and the evidence block names the ComfyUI prompt ID; 'unverified' means the settings come from model and LoRA cards and have not been rendered here. Most prompts are original characters. Recipes tagged adult-illustration use the Times Lazy character pack (mature-body tags). Wildcards ({a|b} and __name__) expand server-side at submission.",
   "recipes": [
     {
@@ -1939,7 +1939,118 @@
         "seconds": 48.3,
         "note": "Studio job; JPEG examples/civitai-intake/noob-nsfw-girls.jpg. Soft/blurry back view. Extra fingers on the hip-side hand. Generated, not accepted."
       }
+    },
+    {
+      "id": "moss-mikko-evening-20261026",
+      "name": "MOSS - mikkoani evening portrait",
+      "preset_id": "moss-t2i",
+      "family": "MOSS-Image",
+      "tags": [
+        "anime",
+        "adult-illustration",
+        "non-explicit",
+        "evidence"
+      ],
+      "controls": {
+        "seed": 2026102601,
+        "width": 1024,
+        "height": 1536,
+        "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 32-year-old woman with a visibly mature adult face and curvy adult proportions, a black wavy bob and emerald eyes. Waist-up editorial portrait, direct eye contact, playful wink and a warm sly smile, shoulders turned slightly, one gloved hand resting on her waist and the other hand holding the stem of a single red rose below her shoulder. She wears a fitted crimson off-the-shoulder evening dress with a structured opaque bodice and long black opera gloves, gold earrings. A strong fitted silhouette, polished elegant fashion, softly lit art-deco lounge in the background. Tasteful non-explicit fashion illustration.",
+        "negative": "",
+        "steps": 30,
+        "cfg": 3,
+        "sampler": "euler",
+        "scheduler": "sgm_uniform",
+        "lora": 0.9,
+        "lora2": 0,
+        "lora_name": "moss-mikkoani-v1.safetensors"
+      },
+      "batch_count": 1,
+      "notes": "Graphic lines and mature fashion in this two-seed study. This seed keeps the rose/hand brief; no owner acceptance. Inspect hands in any new seed.",
+      "sources": [
+        "https://huggingface.co/OpenMOSS-Team/MOSS-Image-SFT"
+      ],
+      "status": "executed",
+      "evidence": {
+        "job_id": "0a451048-5ff5-5f93-ba60-62d79b516001",
+        "prompt_id": "bb5821a8-c05d-4331-ba8a-ff07fcb28e7e",
+        "seconds": 48.723,
+        "note": "Generated and agent-reviewed, not accepted. Exact recipe: experiments/curated/moss-study-20261026/recipes/plan-02-04-mikko.json"
+      }
+    },
+    {
+      "id": "moss-tifa-recall-20261026",
+      "name": "MOSS - adult Tifa name recall pilot",
+      "preset_id": "moss-t2i",
+      "family": "MOSS-Image",
+      "tags": [
+        "anime",
+        "adult-illustration",
+        "non-explicit",
+        "evidence"
+      ],
+      "controls": {
+        "seed": 2026102603,
+        "width": 1024,
+        "height": 1536,
+        "positive": "2D anime illustration, clean lineart, deliberate cel shading. Tifa Lockhart from Final Fantasy VII, her adult main-story version. Her recognizable iconic fully clothed outfit; visibly adult face and proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+        "negative": "",
+        "steps": 30,
+        "cfg": 3,
+        "sampler": "euler",
+        "scheduler": "sgm_uniform",
+        "lora": 0,
+        "lora2": 0
+      },
+      "batch_count": 1,
+      "notes": "Adult main-story Tifa. Name-only recall recovered the main outfit anchors in one seed without a character LoRA or reference. Not proof of training-set membership or consistency.",
+      "sources": [
+        "https://huggingface.co/OpenMOSS-Team/MOSS-Image-SFT"
+      ],
+      "status": "executed",
+      "evidence": {
+        "job_id": "058078ee-cfab-43ee-9828-fb3ac5bff607",
+        "prompt_id": "4e2eaa58-62d8-4450-a932-2d6f62883a7a",
+        "seconds": 62.859,
+        "note": "Generated and agent-reviewed, not accepted. Exact recipe: experiments/curated/moss-study-20261026/recipes/character-tifa-00-name-only.json"
+      }
+    },
+    {
+      "id": "moss-yor-fuller-bust-20261026",
+      "name": "MOSS - adult Yor fuller-bust pilot",
+      "preset_id": "moss-t2i",
+      "family": "MOSS-Image",
+      "tags": [
+        "anime",
+        "adult-illustration",
+        "non-explicit",
+        "evidence"
+      ],
+      "controls": {
+        "seed": 2026102603,
+        "width": 1024,
+        "height": 1536,
+        "positive": "2D anime illustration, clean lineart, deliberate cel shading. The adult woman Yor Forger, also called Yor Briar and the Thorn Princess from Spy x Family, with long near-black hair and face-framing locks, red eyes, gold rose hair ornaments and earrings, a fitted opaque black halter dress with red rose-pattern lining and a flared skirt, black fingerless gloves and black thigh-high boots. A fuller bust under the same opaque fitted outfit, a curvier adult hourglass silhouette and balanced mature anatomy. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+        "negative": "",
+        "steps": 30,
+        "cfg": 3,
+        "sampler": "euler",
+        "scheduler": "sgm_uniform",
+        "lora": 0,
+        "lora2": 0
+      },
+      "batch_count": 1,
+      "notes": "Somewhat fuller proportions than the described baseline in one seed; outfit anchors retained. Unrequested needle weapons may appear. Body control and seed consistency remain limited; not owner acceptance.",
+      "sources": [
+        "https://huggingface.co/OpenMOSS-Team/MOSS-Image-SFT"
+      ],
+      "status": "executed",
+      "evidence": {
+        "job_id": "7e4ef9d4-2316-4f2d-a588-e9f110c385bc",
+        "prompt_id": "d513f47d-25ba-42e9-961c-b0035b218052",
+        "seconds": 49.011,
+        "note": "Generated and agent-reviewed, not accepted. Exact recipe: experiments/curated/moss-study-20261026/recipes/character-yor-04-fuller-bust.json"
+      }
     }
-
   ]
 }

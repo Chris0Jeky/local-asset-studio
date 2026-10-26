@@ -1,0 +1,1177 @@
+{
+  "schema_version": 1,
+  "collected_at": "2026-10-26T18:01:39.851120+00:00",
+  "plan_sha256": "7a6367fbd7b141bc6e7b9a16b762126e7af80c209d2ef453382fb0789630bca7",
+  "plan_export_sha256": "14e5dad95012119cdc03fa451ca75bd76ef8c7ba4c659209141b47db97f2115c",
+  "template_sha256": "92dc6168d5501b90a5c8e1e23fc05512207c7a5b53b76aa31fe6af8ec12fb4e0",
+  "summary": {
+    "completed": 15,
+    "failed": 0,
+    "uncertain": 0,
+    "primary_visual_reviews": 15,
+    "distinct_output_hashes": 15,
+    "verdicts": {
+      "keep": 7,
+      "fixable": 8
+    },
+    "median_job_seconds": 51.09445238113403
+  },
+  "scope": "One seed per character, five independent variants; no character LoRA or image reference; visible labels, agent pre-review only.",
+  "runs": [
+    {
+      "character": "tifa",
+      "treatment": "name-only",
+      "seed": 2026102603,
+      "job_id": "058078ee-cfab-43ee-9828-fb3ac5bff607",
+      "prompt_ids": [
+        "4e2eaa58-62d8-4450-a932-2d6f62883a7a"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "job_elapsed_seconds": 62.85894250869751,
+      "recipe": "recipes/character-tifa-00-name-only.json",
+      "recipe_sha256": "97338f8f62420b66f2f801dbfbed9089a7f7bc7e435dfbf8a30da49ebb43e4d0",
+      "export_sha256": "ca331be0e6b7126646c1ffc8045818ae42df9d37c2ce30e3662d4ded6e31dabf",
+      "model_pins": {
+        "verified_at": 1793035390.8731081,
+        "template_sha256": "92dc6168d5501b90a5c8e1e23fc05512207c7a5b53b76aa31fe6af8ec12fb4e0",
+        "models": [
+          {
+            "file": "diffusion_models/moss_image_sft_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\diffusion_models\\moss_image_sft_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              5629499547032615,
+              5413698958,
+              1792381724015894300,
+              1792378258542649200
+            ],
+            "sha256": "b4d1475bc7eeffd7b809e82ea13a1fba1fb85c4e18365af3813722faa5c0fe4f"
+          },
+          {
+            "file": "text_encoders/qwen3.5_9b_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\text_encoders\\qwen3.5_9b_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              3096224756794185,
+              9748121532,
+              1792388726950760300,
+              1792381727786478000
+            ],
+            "sha256": "32e3787472f708fa5f83624acbf5ef23f7fc89c439e05065ea57cfe5a97f025a"
+          },
+          {
+            "file": "vae/moss_image_flux2-vae_small.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\vae\\moss_image_flux2-vae_small.safetensors",
+            "identity": [
+              8660451676565188446,
+              39687971728888484,
+              249521340,
+              1792378254562184800,
+              1792378051529729200
+            ],
+            "sha256": "d8d52ba036475f5fb07c8b435e176d3d97ebfa82f0d1a1c317f9cc1e25bd013b"
+          },
+          {
+            "file": "loras/moss-mikkoani-v1.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\loras\\moss-mikkoani-v1.safetensors",
+            "identity": [
+              8660451676565188446,
+              6473924477184197,
+              129017232,
+              1792388919794707200,
+              1792379292090198700
+            ],
+            "sha256": "bf56af1c4a6bafe8e59bd824301a45995941930d74f923a0b01cf9b7b25bd54e"
+          }
+        ],
+        "scope": "Content hashes verified once before this five-job character batch; full file identities rechecked before each submission."
+      },
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\character-tifa\\00-name-only-0.png",
+        "sha256": "f097bfdbcd6bffcdfd342599af6fef8cd6355ee6fad4f7ecb6d903bd8adc4eaf",
+        "bytes": 1017461,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "character": "tifa",
+      "treatment": "described",
+      "seed": 2026102603,
+      "job_id": "a234a720-2272-4340-8f22-6456bcc407e9",
+      "prompt_ids": [
+        "99d300b6-0d00-485e-b570-08627e2e7c8f"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "job_elapsed_seconds": 46.73345494270325,
+      "recipe": "recipes/character-tifa-01-described.json",
+      "recipe_sha256": "ea48c38b86c0cb1be791da9781ea3334f381bfe6e8f1638bc847567404d34ef1",
+      "export_sha256": "f1c259c56c448f2d5631b8cc412d58e714801cef8044fa256df87c6e49ebf486",
+      "model_pins": {
+        "verified_at": 1793035390.8731081,
+        "template_sha256": "92dc6168d5501b90a5c8e1e23fc05512207c7a5b53b76aa31fe6af8ec12fb4e0",
+        "models": [
+          {
+            "file": "diffusion_models/moss_image_sft_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\diffusion_models\\moss_image_sft_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              5629499547032615,
+              5413698958,
+              1792381724015894300,
+              1792378258542649200
+            ],
+            "sha256": "b4d1475bc7eeffd7b809e82ea13a1fba1fb85c4e18365af3813722faa5c0fe4f"
+          },
+          {
+            "file": "text_encoders/qwen3.5_9b_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\text_encoders\\qwen3.5_9b_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              3096224756794185,
+              9748121532,
+              1792388726950760300,
+              1792381727786478000
+            ],
+            "sha256": "32e3787472f708fa5f83624acbf5ef23f7fc89c439e05065ea57cfe5a97f025a"
+          },
+          {
+            "file": "vae/moss_image_flux2-vae_small.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\vae\\moss_image_flux2-vae_small.safetensors",
+            "identity": [
+              8660451676565188446,
+              39687971728888484,
+              249521340,
+              1792378254562184800,
+              1792378051529729200
+            ],
+            "sha256": "d8d52ba036475f5fb07c8b435e176d3d97ebfa82f0d1a1c317f9cc1e25bd013b"
+          },
+          {
+            "file": "loras/moss-mikkoani-v1.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\loras\\moss-mikkoani-v1.safetensors",
+            "identity": [
+              8660451676565188446,
+              6473924477184197,
+              129017232,
+              1792388919794707200,
+              1792379292090198700
+            ],
+            "sha256": "bf56af1c4a6bafe8e59bd824301a45995941930d74f923a0b01cf9b7b25bd54e"
+          }
+        ],
+        "scope": "Content hashes verified once before this five-job character batch; full file identities rechecked before each submission."
+      },
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\character-tifa\\01-described-0.png",
+        "sha256": "2bcdaaee3949525aac33fd3694f95ce0936ac2566f67f847ef993fb06ea9155d",
+        "bytes": 981404,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "character": "tifa",
+      "treatment": "style-mikko",
+      "seed": 2026102603,
+      "job_id": "a1135388-83aa-445a-8fdc-cd141691e4ef",
+      "prompt_ids": [
+        "61e3efc9-e902-4170-b6ab-9e9c4e10e31a"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "job_elapsed_seconds": 52.74476099014282,
+      "recipe": "recipes/character-tifa-02-style-mikko.json",
+      "recipe_sha256": "d25fd15b9dfcaa05b59fa5a486f8403c99c703691c2dddad0d08da8c08beb68d",
+      "export_sha256": "ebf3d055d41f91343d57f575ddb3811918232f02c0525de1970826f86b13f546",
+      "model_pins": {
+        "verified_at": 1793035390.8731081,
+        "template_sha256": "92dc6168d5501b90a5c8e1e23fc05512207c7a5b53b76aa31fe6af8ec12fb4e0",
+        "models": [
+          {
+            "file": "diffusion_models/moss_image_sft_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\diffusion_models\\moss_image_sft_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              5629499547032615,
+              5413698958,
+              1792381724015894300,
+              1792378258542649200
+            ],
+            "sha256": "b4d1475bc7eeffd7b809e82ea13a1fba1fb85c4e18365af3813722faa5c0fe4f"
+          },
+          {
+            "file": "text_encoders/qwen3.5_9b_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\text_encoders\\qwen3.5_9b_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              3096224756794185,
+              9748121532,
+              1792388726950760300,
+              1792381727786478000
+            ],
+            "sha256": "32e3787472f708fa5f83624acbf5ef23f7fc89c439e05065ea57cfe5a97f025a"
+          },
+          {
+            "file": "vae/moss_image_flux2-vae_small.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\vae\\moss_image_flux2-vae_small.safetensors",
+            "identity": [
+              8660451676565188446,
+              39687971728888484,
+              249521340,
+              1792378254562184800,
+              1792378051529729200
+            ],
+            "sha256": "d8d52ba036475f5fb07c8b435e176d3d97ebfa82f0d1a1c317f9cc1e25bd013b"
+          },
+          {
+            "file": "loras/moss-mikkoani-v1.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\loras\\moss-mikkoani-v1.safetensors",
+            "identity": [
+              8660451676565188446,
+              6473924477184197,
+              129017232,
+              1792388919794707200,
+              1792379292090198700
+            ],
+            "sha256": "bf56af1c4a6bafe8e59bd824301a45995941930d74f923a0b01cf9b7b25bd54e"
+          }
+        ],
+        "scope": "Content hashes verified once before this five-job character batch; full file identities rechecked before each submission."
+      },
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\character-tifa\\02-style-mikko-0.png",
+        "sha256": "028def089e4d8a684db1cbd5f511d2b2705775df373edc24c27bc3808233de34",
+        "bytes": 1225548,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "character": "tifa",
+      "treatment": "seated-pose",
+      "seed": 2026102603,
+      "job_id": "c0b7ac2b-fe46-462b-824c-ece5db840bf2",
+      "prompt_ids": [
+        "3bc56d2a-b5f5-47e7-8b2c-f22f1c5bd6d9"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "job_elapsed_seconds": 66.82231211662292,
+      "recipe": "recipes/character-tifa-03-seated-pose.json",
+      "recipe_sha256": "63e96de509718a8a2b6babfd4a5b4c04682e03c5853545417daa863c59f58028",
+      "export_sha256": "d002ade6b75615e905f72cc962344f8d2c1cb709d9b4310411de7345cb72fb62",
+      "model_pins": {
+        "verified_at": 1793035390.8731081,
+        "template_sha256": "92dc6168d5501b90a5c8e1e23fc05512207c7a5b53b76aa31fe6af8ec12fb4e0",
+        "models": [
+          {
+            "file": "diffusion_models/moss_image_sft_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\diffusion_models\\moss_image_sft_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              5629499547032615,
+              5413698958,
+              1792381724015894300,
+              1792378258542649200
+            ],
+            "sha256": "b4d1475bc7eeffd7b809e82ea13a1fba1fb85c4e18365af3813722faa5c0fe4f"
+          },
+          {
+            "file": "text_encoders/qwen3.5_9b_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\text_encoders\\qwen3.5_9b_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              3096224756794185,
+              9748121532,
+              1792388726950760300,
+              1792381727786478000
+            ],
+            "sha256": "32e3787472f708fa5f83624acbf5ef23f7fc89c439e05065ea57cfe5a97f025a"
+          },
+          {
+            "file": "vae/moss_image_flux2-vae_small.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\vae\\moss_image_flux2-vae_small.safetensors",
+            "identity": [
+              8660451676565188446,
+              39687971728888484,
+              249521340,
+              1792378254562184800,
+              1792378051529729200
+            ],
+            "sha256": "d8d52ba036475f5fb07c8b435e176d3d97ebfa82f0d1a1c317f9cc1e25bd013b"
+          },
+          {
+            "file": "loras/moss-mikkoani-v1.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\loras\\moss-mikkoani-v1.safetensors",
+            "identity": [
+              8660451676565188446,
+              6473924477184197,
+              129017232,
+              1792388919794707200,
+              1792379292090198700
+            ],
+            "sha256": "bf56af1c4a6bafe8e59bd824301a45995941930d74f923a0b01cf9b7b25bd54e"
+          }
+        ],
+        "scope": "Content hashes verified once before this five-job character batch; full file identities rechecked before each submission."
+      },
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\character-tifa\\03-seated-pose-0.png",
+        "sha256": "09f9c81791c0c4ca7b13a63a7d11701c1a271f6285cf9e01d4f19704a70efe73",
+        "bytes": 1233526,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "character": "tifa",
+      "treatment": "fuller-bust",
+      "seed": 2026102603,
+      "job_id": "be17cda2-d22e-434e-80aa-0c5917071cd5",
+      "prompt_ids": [
+        "44a41e18-5414-4b52-8e31-95a63d9efb6c"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "job_elapsed_seconds": 48.95325446128845,
+      "recipe": "recipes/character-tifa-04-fuller-bust.json",
+      "recipe_sha256": "bb748ccde1d2d40069c7dcd34bc2a3e2ad502290a6d53a313440384989aae430",
+      "export_sha256": "4efbdd583e6750f7efa017836407d5c4dec45daa1d7c4e6391aafbae457e800a",
+      "model_pins": {
+        "verified_at": 1793035390.8731081,
+        "template_sha256": "92dc6168d5501b90a5c8e1e23fc05512207c7a5b53b76aa31fe6af8ec12fb4e0",
+        "models": [
+          {
+            "file": "diffusion_models/moss_image_sft_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\diffusion_models\\moss_image_sft_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              5629499547032615,
+              5413698958,
+              1792381724015894300,
+              1792378258542649200
+            ],
+            "sha256": "b4d1475bc7eeffd7b809e82ea13a1fba1fb85c4e18365af3813722faa5c0fe4f"
+          },
+          {
+            "file": "text_encoders/qwen3.5_9b_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\text_encoders\\qwen3.5_9b_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              3096224756794185,
+              9748121532,
+              1792388726950760300,
+              1792381727786478000
+            ],
+            "sha256": "32e3787472f708fa5f83624acbf5ef23f7fc89c439e05065ea57cfe5a97f025a"
+          },
+          {
+            "file": "vae/moss_image_flux2-vae_small.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\vae\\moss_image_flux2-vae_small.safetensors",
+            "identity": [
+              8660451676565188446,
+              39687971728888484,
+              249521340,
+              1792378254562184800,
+              1792378051529729200
+            ],
+            "sha256": "d8d52ba036475f5fb07c8b435e176d3d97ebfa82f0d1a1c317f9cc1e25bd013b"
+          },
+          {
+            "file": "loras/moss-mikkoani-v1.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\loras\\moss-mikkoani-v1.safetensors",
+            "identity": [
+              8660451676565188446,
+              6473924477184197,
+              129017232,
+              1792388919794707200,
+              1792379292090198700
+            ],
+            "sha256": "bf56af1c4a6bafe8e59bd824301a45995941930d74f923a0b01cf9b7b25bd54e"
+          }
+        ],
+        "scope": "Content hashes verified once before this five-job character batch; full file identities rechecked before each submission."
+      },
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\character-tifa\\04-fuller-bust-0.png",
+        "sha256": "5358dd8b06bed2c65e65548a82ca6529aefa81ad8bcebd028e3b3d8261153872",
+        "bytes": 996117,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "character": "yor",
+      "treatment": "name-only",
+      "seed": 2026102603,
+      "job_id": "fe2d51c5-dd8d-4dcb-a397-cbd0952cc784",
+      "prompt_ids": [
+        "c5f811cd-fa78-4202-a189-ab09ee4644bb"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "job_elapsed_seconds": 62.83271026611328,
+      "recipe": "recipes/character-yor-00-name-only.json",
+      "recipe_sha256": "443b65177f3fa4d9ac9424d99f80712176a1942f1aaafb79b423ec81bbb4f193",
+      "export_sha256": "14c998b676be32257826071640c2b03231775a6eb126da4ae8215bedb4794f99",
+      "model_pins": {
+        "verified_at": 1793035898.999815,
+        "template_sha256": "92dc6168d5501b90a5c8e1e23fc05512207c7a5b53b76aa31fe6af8ec12fb4e0",
+        "models": [
+          {
+            "file": "diffusion_models/moss_image_sft_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\diffusion_models\\moss_image_sft_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              5629499547032615,
+              5413698958,
+              1792381724015894300,
+              1792378258542649200
+            ],
+            "sha256": "b4d1475bc7eeffd7b809e82ea13a1fba1fb85c4e18365af3813722faa5c0fe4f"
+          },
+          {
+            "file": "text_encoders/qwen3.5_9b_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\text_encoders\\qwen3.5_9b_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              3096224756794185,
+              9748121532,
+              1792388726950760300,
+              1792381727786478000
+            ],
+            "sha256": "32e3787472f708fa5f83624acbf5ef23f7fc89c439e05065ea57cfe5a97f025a"
+          },
+          {
+            "file": "vae/moss_image_flux2-vae_small.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\vae\\moss_image_flux2-vae_small.safetensors",
+            "identity": [
+              8660451676565188446,
+              39687971728888484,
+              249521340,
+              1792378254562184800,
+              1792378051529729200
+            ],
+            "sha256": "d8d52ba036475f5fb07c8b435e176d3d97ebfa82f0d1a1c317f9cc1e25bd013b"
+          },
+          {
+            "file": "loras/moss-mikkoani-v1.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\loras\\moss-mikkoani-v1.safetensors",
+            "identity": [
+              8660451676565188446,
+              6473924477184197,
+              129017232,
+              1792388919794707200,
+              1792379292090198700
+            ],
+            "sha256": "bf56af1c4a6bafe8e59bd824301a45995941930d74f923a0b01cf9b7b25bd54e"
+          }
+        ],
+        "scope": "Content hashes verified once before this five-job character batch; full file identities rechecked before each submission."
+      },
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\character-yor\\00-name-only-0.png",
+        "sha256": "4c4a66244e1e9780981bbbb8ac17c540d097868328489c6a7d4241058c4dc81e",
+        "bytes": 1020817,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "character": "yor",
+      "treatment": "described",
+      "seed": 2026102603,
+      "job_id": "79fd935a-9ad6-4cb5-9654-b7913a04fe88",
+      "prompt_ids": [
+        "117c5c18-24fc-4d05-bcab-ee96fb541ab9"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "job_elapsed_seconds": 46.844701051712036,
+      "recipe": "recipes/character-yor-01-described.json",
+      "recipe_sha256": "e3284efae23810bf83edb4145b8097c3dc8f4fc1810932fe1eff488d1d525e54",
+      "export_sha256": "eb32d3df2d9e875d8a377822b9fd87b8c3eb3e88df423db1c2f02900a62e43e2",
+      "model_pins": {
+        "verified_at": 1793035898.999815,
+        "template_sha256": "92dc6168d5501b90a5c8e1e23fc05512207c7a5b53b76aa31fe6af8ec12fb4e0",
+        "models": [
+          {
+            "file": "diffusion_models/moss_image_sft_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\diffusion_models\\moss_image_sft_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              5629499547032615,
+              5413698958,
+              1792381724015894300,
+              1792378258542649200
+            ],
+            "sha256": "b4d1475bc7eeffd7b809e82ea13a1fba1fb85c4e18365af3813722faa5c0fe4f"
+          },
+          {
+            "file": "text_encoders/qwen3.5_9b_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\text_encoders\\qwen3.5_9b_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              3096224756794185,
+              9748121532,
+              1792388726950760300,
+              1792381727786478000
+            ],
+            "sha256": "32e3787472f708fa5f83624acbf5ef23f7fc89c439e05065ea57cfe5a97f025a"
+          },
+          {
+            "file": "vae/moss_image_flux2-vae_small.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\vae\\moss_image_flux2-vae_small.safetensors",
+            "identity": [
+              8660451676565188446,
+              39687971728888484,
+              249521340,
+              1792378254562184800,
+              1792378051529729200
+            ],
+            "sha256": "d8d52ba036475f5fb07c8b435e176d3d97ebfa82f0d1a1c317f9cc1e25bd013b"
+          },
+          {
+            "file": "loras/moss-mikkoani-v1.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\loras\\moss-mikkoani-v1.safetensors",
+            "identity": [
+              8660451676565188446,
+              6473924477184197,
+              129017232,
+              1792388919794707200,
+              1792379292090198700
+            ],
+            "sha256": "bf56af1c4a6bafe8e59bd824301a45995941930d74f923a0b01cf9b7b25bd54e"
+          }
+        ],
+        "scope": "Content hashes verified once before this five-job character batch; full file identities rechecked before each submission."
+      },
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\character-yor\\01-described-0.png",
+        "sha256": "f716044bf77d2f12ff24d793f7a38948d1c0e3b3d9764c983fd1fedc1666a1db",
+        "bytes": 1339900,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "character": "yor",
+      "treatment": "style-mikko",
+      "seed": 2026102603,
+      "job_id": "49d2593c-f469-44b5-b51c-7dde1eb1665c",
+      "prompt_ids": [
+        "3216fe49-445a-450c-b9c9-b746d26be84c"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "job_elapsed_seconds": 51.09445238113403,
+      "recipe": "recipes/character-yor-02-style-mikko.json",
+      "recipe_sha256": "925f340fd5ded7190bcc113ce2264a3aa37d8370488968962ff92de01bf084aa",
+      "export_sha256": "789b837c76bd3a14a0950cb6957271dc30d6e37443f1df5cd8566b7405c8c943",
+      "model_pins": {
+        "verified_at": 1793035898.999815,
+        "template_sha256": "92dc6168d5501b90a5c8e1e23fc05512207c7a5b53b76aa31fe6af8ec12fb4e0",
+        "models": [
+          {
+            "file": "diffusion_models/moss_image_sft_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\diffusion_models\\moss_image_sft_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              5629499547032615,
+              5413698958,
+              1792381724015894300,
+              1792378258542649200
+            ],
+            "sha256": "b4d1475bc7eeffd7b809e82ea13a1fba1fb85c4e18365af3813722faa5c0fe4f"
+          },
+          {
+            "file": "text_encoders/qwen3.5_9b_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\text_encoders\\qwen3.5_9b_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              3096224756794185,
+              9748121532,
+              1792388726950760300,
+              1792381727786478000
+            ],
+            "sha256": "32e3787472f708fa5f83624acbf5ef23f7fc89c439e05065ea57cfe5a97f025a"
+          },
+          {
+            "file": "vae/moss_image_flux2-vae_small.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\vae\\moss_image_flux2-vae_small.safetensors",
+            "identity": [
+              8660451676565188446,
+              39687971728888484,
+              249521340,
+              1792378254562184800,
+              1792378051529729200
+            ],
+            "sha256": "d8d52ba036475f5fb07c8b435e176d3d97ebfa82f0d1a1c317f9cc1e25bd013b"
+          },
+          {
+            "file": "loras/moss-mikkoani-v1.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\loras\\moss-mikkoani-v1.safetensors",
+            "identity": [
+              8660451676565188446,
+              6473924477184197,
+              129017232,
+              1792388919794707200,
+              1792379292090198700
+            ],
+            "sha256": "bf56af1c4a6bafe8e59bd824301a45995941930d74f923a0b01cf9b7b25bd54e"
+          }
+        ],
+        "scope": "Content hashes verified once before this five-job character batch; full file identities rechecked before each submission."
+      },
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\character-yor\\02-style-mikko-0.png",
+        "sha256": "2671ecb468daf660a1e7779c2e458808df308a51d73e7fe10e67a270654c03e7",
+        "bytes": 1419364,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "character": "yor",
+      "treatment": "seated-pose",
+      "seed": 2026102603,
+      "job_id": "19f511c9-a752-43b0-afe3-8d23026f59c8",
+      "prompt_ids": [
+        "9d549fa0-768b-48f3-9eb2-f5db3d853f4b"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "job_elapsed_seconds": 66.94976210594177,
+      "recipe": "recipes/character-yor-03-seated-pose.json",
+      "recipe_sha256": "5527558eb66183b82afd1c1d8ba189247d8f6d833485a3ba5ff6f3ce136d6e82",
+      "export_sha256": "7c99248407455fb1207c608a1a00b66d23e60ba104c1f243966c29c0513e3850",
+      "model_pins": {
+        "verified_at": 1793035898.999815,
+        "template_sha256": "92dc6168d5501b90a5c8e1e23fc05512207c7a5b53b76aa31fe6af8ec12fb4e0",
+        "models": [
+          {
+            "file": "diffusion_models/moss_image_sft_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\diffusion_models\\moss_image_sft_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              5629499547032615,
+              5413698958,
+              1792381724015894300,
+              1792378258542649200
+            ],
+            "sha256": "b4d1475bc7eeffd7b809e82ea13a1fba1fb85c4e18365af3813722faa5c0fe4f"
+          },
+          {
+            "file": "text_encoders/qwen3.5_9b_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\text_encoders\\qwen3.5_9b_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              3096224756794185,
+              9748121532,
+              1792388726950760300,
+              1792381727786478000
+            ],
+            "sha256": "32e3787472f708fa5f83624acbf5ef23f7fc89c439e05065ea57cfe5a97f025a"
+          },
+          {
+            "file": "vae/moss_image_flux2-vae_small.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\vae\\moss_image_flux2-vae_small.safetensors",
+            "identity": [
+              8660451676565188446,
+              39687971728888484,
+              249521340,
+              1792378254562184800,
+              1792378051529729200
+            ],
+            "sha256": "d8d52ba036475f5fb07c8b435e176d3d97ebfa82f0d1a1c317f9cc1e25bd013b"
+          },
+          {
+            "file": "loras/moss-mikkoani-v1.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\loras\\moss-mikkoani-v1.safetensors",
+            "identity": [
+              8660451676565188446,
+              6473924477184197,
+              129017232,
+              1792388919794707200,
+              1792379292090198700
+            ],
+            "sha256": "bf56af1c4a6bafe8e59bd824301a45995941930d74f923a0b01cf9b7b25bd54e"
+          }
+        ],
+        "scope": "Content hashes verified once before this five-job character batch; full file identities rechecked before each submission."
+      },
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\character-yor\\03-seated-pose-0.png",
+        "sha256": "014e837829c5ce423572a75d1449621968ce3d76b1f40d1c073f254b0d5398c2",
+        "bytes": 1193609,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "character": "yor",
+      "treatment": "fuller-bust",
+      "seed": 2026102603,
+      "job_id": "7e4ef9d4-2316-4f2d-a588-e9f110c385bc",
+      "prompt_ids": [
+        "d513f47d-25ba-42e9-961c-b0035b218052"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "job_elapsed_seconds": 49.01083755493164,
+      "recipe": "recipes/character-yor-04-fuller-bust.json",
+      "recipe_sha256": "ab4737c683d17e3b7a50a81c0d8c84d2fd272cbd44c25b080639378829381ab3",
+      "export_sha256": "659d19341b9fb65f09fa596652c02e030a392023874bffc6ccb0da41edf59af9",
+      "model_pins": {
+        "verified_at": 1793035898.999815,
+        "template_sha256": "92dc6168d5501b90a5c8e1e23fc05512207c7a5b53b76aa31fe6af8ec12fb4e0",
+        "models": [
+          {
+            "file": "diffusion_models/moss_image_sft_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\diffusion_models\\moss_image_sft_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              5629499547032615,
+              5413698958,
+              1792381724015894300,
+              1792378258542649200
+            ],
+            "sha256": "b4d1475bc7eeffd7b809e82ea13a1fba1fb85c4e18365af3813722faa5c0fe4f"
+          },
+          {
+            "file": "text_encoders/qwen3.5_9b_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\text_encoders\\qwen3.5_9b_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              3096224756794185,
+              9748121532,
+              1792388726950760300,
+              1792381727786478000
+            ],
+            "sha256": "32e3787472f708fa5f83624acbf5ef23f7fc89c439e05065ea57cfe5a97f025a"
+          },
+          {
+            "file": "vae/moss_image_flux2-vae_small.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\vae\\moss_image_flux2-vae_small.safetensors",
+            "identity": [
+              8660451676565188446,
+              39687971728888484,
+              249521340,
+              1792378254562184800,
+              1792378051529729200
+            ],
+            "sha256": "d8d52ba036475f5fb07c8b435e176d3d97ebfa82f0d1a1c317f9cc1e25bd013b"
+          },
+          {
+            "file": "loras/moss-mikkoani-v1.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\loras\\moss-mikkoani-v1.safetensors",
+            "identity": [
+              8660451676565188446,
+              6473924477184197,
+              129017232,
+              1792388919794707200,
+              1792379292090198700
+            ],
+            "sha256": "bf56af1c4a6bafe8e59bd824301a45995941930d74f923a0b01cf9b7b25bd54e"
+          }
+        ],
+        "scope": "Content hashes verified once before this five-job character batch; full file identities rechecked before each submission."
+      },
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\character-yor\\04-fuller-bust-0.png",
+        "sha256": "73699d2ad12a867eaf5b77567e84f61443df28ff907ad28e2f11a96d93cc1c88",
+        "bytes": 1136949,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "character": "2b",
+      "treatment": "name-only",
+      "seed": 2026102603,
+      "job_id": "d3fb18c6-9197-447c-9ec9-44206d455d01",
+      "prompt_ids": [
+        "dd446e92-eba6-4883-b6c3-071bfbfe9681"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "job_elapsed_seconds": 67.23001050949097,
+      "recipe": "recipes/character-2b-00-name-only.json",
+      "recipe_sha256": "aba0d20257bf7ca2ad3e86f7b0bfe0a7dc53746dcb27b18a1004bcaa55e4cae7",
+      "export_sha256": "031b1bf6bae54b06f2df2f85aef4163b05163bd6bfa8116a462d3e0c2f1b8dbc",
+      "model_pins": {
+        "verified_at": 1793036577.2879822,
+        "template_sha256": "92dc6168d5501b90a5c8e1e23fc05512207c7a5b53b76aa31fe6af8ec12fb4e0",
+        "models": [
+          {
+            "file": "diffusion_models/moss_image_sft_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\diffusion_models\\moss_image_sft_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              5629499547032615,
+              5413698958,
+              1792381724015894300,
+              1792378258542649200
+            ],
+            "sha256": "b4d1475bc7eeffd7b809e82ea13a1fba1fb85c4e18365af3813722faa5c0fe4f"
+          },
+          {
+            "file": "text_encoders/qwen3.5_9b_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\text_encoders\\qwen3.5_9b_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              3096224756794185,
+              9748121532,
+              1792388726950760300,
+              1792381727786478000
+            ],
+            "sha256": "32e3787472f708fa5f83624acbf5ef23f7fc89c439e05065ea57cfe5a97f025a"
+          },
+          {
+            "file": "vae/moss_image_flux2-vae_small.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\vae\\moss_image_flux2-vae_small.safetensors",
+            "identity": [
+              8660451676565188446,
+              39687971728888484,
+              249521340,
+              1792378254562184800,
+              1792378051529729200
+            ],
+            "sha256": "d8d52ba036475f5fb07c8b435e176d3d97ebfa82f0d1a1c317f9cc1e25bd013b"
+          },
+          {
+            "file": "loras/moss-mikkoani-v1.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\loras\\moss-mikkoani-v1.safetensors",
+            "identity": [
+              8660451676565188446,
+              6473924477184197,
+              129017232,
+              1792388919794707200,
+              1792379292090198700
+            ],
+            "sha256": "bf56af1c4a6bafe8e59bd824301a45995941930d74f923a0b01cf9b7b25bd54e"
+          }
+        ],
+        "scope": "Content hashes verified once before this five-job character batch; full file identities rechecked before each submission."
+      },
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\character-2b\\00-name-only-0.png",
+        "sha256": "48bbf9936cc64fed434c6b734f2e2e4d2842913e7c9a184b3483f70844659fa5",
+        "bytes": 1065049,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "character": "2b",
+      "treatment": "described",
+      "seed": 2026102603,
+      "job_id": "2de04bdd-80a9-4646-8fbb-32d692621b6a",
+      "prompt_ids": [
+        "30c915c2-12e5-44b6-a5db-4c9b595d92e2"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "job_elapsed_seconds": 48.729546785354614,
+      "recipe": "recipes/character-2b-01-described.json",
+      "recipe_sha256": "3e5f4d0adfb0d2b3e5d77cd7a33637f82cf8c1fc9fa8afce6962d256c508cda5",
+      "export_sha256": "6315d269887c105a0e87afdf8053d8d0517e85d606e6e4800b04c3a871d671d1",
+      "model_pins": {
+        "verified_at": 1793036577.2879822,
+        "template_sha256": "92dc6168d5501b90a5c8e1e23fc05512207c7a5b53b76aa31fe6af8ec12fb4e0",
+        "models": [
+          {
+            "file": "diffusion_models/moss_image_sft_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\diffusion_models\\moss_image_sft_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              5629499547032615,
+              5413698958,
+              1792381724015894300,
+              1792378258542649200
+            ],
+            "sha256": "b4d1475bc7eeffd7b809e82ea13a1fba1fb85c4e18365af3813722faa5c0fe4f"
+          },
+          {
+            "file": "text_encoders/qwen3.5_9b_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\text_encoders\\qwen3.5_9b_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              3096224756794185,
+              9748121532,
+              1792388726950760300,
+              1792381727786478000
+            ],
+            "sha256": "32e3787472f708fa5f83624acbf5ef23f7fc89c439e05065ea57cfe5a97f025a"
+          },
+          {
+            "file": "vae/moss_image_flux2-vae_small.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\vae\\moss_image_flux2-vae_small.safetensors",
+            "identity": [
+              8660451676565188446,
+              39687971728888484,
+              249521340,
+              1792378254562184800,
+              1792378051529729200
+            ],
+            "sha256": "d8d52ba036475f5fb07c8b435e176d3d97ebfa82f0d1a1c317f9cc1e25bd013b"
+          },
+          {
+            "file": "loras/moss-mikkoani-v1.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\loras\\moss-mikkoani-v1.safetensors",
+            "identity": [
+              8660451676565188446,
+              6473924477184197,
+              129017232,
+              1792388919794707200,
+              1792379292090198700
+            ],
+            "sha256": "bf56af1c4a6bafe8e59bd824301a45995941930d74f923a0b01cf9b7b25bd54e"
+          }
+        ],
+        "scope": "Content hashes verified once before this five-job character batch; full file identities rechecked before each submission."
+      },
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\character-2b\\01-described-0.png",
+        "sha256": "dbc266ab346c89feaece3389a00e90011d414a1ba2e88a5c0e3b583cd10ce05f",
+        "bytes": 961824,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "character": "2b",
+      "treatment": "style-mikko",
+      "seed": 2026102603,
+      "job_id": "9d2e3786-43ce-4992-8732-7fc893db0fb9",
+      "prompt_ids": [
+        "bdc5552e-0a94-4426-a45e-636f097854f4"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "job_elapsed_seconds": 50.83539915084839,
+      "recipe": "recipes/character-2b-02-style-mikko.json",
+      "recipe_sha256": "b8e58d408ddefd038f2e26c286cf266bbdd173f7db989cf82c4b63f84572f874",
+      "export_sha256": "bc94c58c720c5fc477d52d08514585c8ee79995131b2198715cdc96a52eea725",
+      "model_pins": {
+        "verified_at": 1793036577.2879822,
+        "template_sha256": "92dc6168d5501b90a5c8e1e23fc05512207c7a5b53b76aa31fe6af8ec12fb4e0",
+        "models": [
+          {
+            "file": "diffusion_models/moss_image_sft_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\diffusion_models\\moss_image_sft_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              5629499547032615,
+              5413698958,
+              1792381724015894300,
+              1792378258542649200
+            ],
+            "sha256": "b4d1475bc7eeffd7b809e82ea13a1fba1fb85c4e18365af3813722faa5c0fe4f"
+          },
+          {
+            "file": "text_encoders/qwen3.5_9b_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\text_encoders\\qwen3.5_9b_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              3096224756794185,
+              9748121532,
+              1792388726950760300,
+              1792381727786478000
+            ],
+            "sha256": "32e3787472f708fa5f83624acbf5ef23f7fc89c439e05065ea57cfe5a97f025a"
+          },
+          {
+            "file": "vae/moss_image_flux2-vae_small.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\vae\\moss_image_flux2-vae_small.safetensors",
+            "identity": [
+              8660451676565188446,
+              39687971728888484,
+              249521340,
+              1792378254562184800,
+              1792378051529729200
+            ],
+            "sha256": "d8d52ba036475f5fb07c8b435e176d3d97ebfa82f0d1a1c317f9cc1e25bd013b"
+          },
+          {
+            "file": "loras/moss-mikkoani-v1.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\loras\\moss-mikkoani-v1.safetensors",
+            "identity": [
+              8660451676565188446,
+              6473924477184197,
+              129017232,
+              1792388919794707200,
+              1792379292090198700
+            ],
+            "sha256": "bf56af1c4a6bafe8e59bd824301a45995941930d74f923a0b01cf9b7b25bd54e"
+          }
+        ],
+        "scope": "Content hashes verified once before this five-job character batch; full file identities rechecked before each submission."
+      },
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\character-2b\\02-style-mikko-0.png",
+        "sha256": "04d296c24e7f9ed6ba86f0c992dca26091cad016f298dac6bc7a617e25652ab2",
+        "bytes": 1327599,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "character": "2b",
+      "treatment": "seated-pose",
+      "seed": 2026102603,
+      "job_id": "cd710a5b-3ea4-4db2-90de-19ebb2bdf125",
+      "prompt_ids": [
+        "c576d70a-0ed7-40eb-a7a8-8be0ec1b19f0"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "job_elapsed_seconds": 66.97691369056702,
+      "recipe": "recipes/character-2b-03-seated-pose.json",
+      "recipe_sha256": "ca6187ff96bfa053adb6954c535b8b04a7a6a20682e729d8d2649bcc96211345",
+      "export_sha256": "9cd51b341e5569d553484d5752b8b7c0957d1cbd625e2942520b5c0a033ff049",
+      "model_pins": {
+        "verified_at": 1793036577.2879822,
+        "template_sha256": "92dc6168d5501b90a5c8e1e23fc05512207c7a5b53b76aa31fe6af8ec12fb4e0",
+        "models": [
+          {
+            "file": "diffusion_models/moss_image_sft_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\diffusion_models\\moss_image_sft_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              5629499547032615,
+              5413698958,
+              1792381724015894300,
+              1792378258542649200
+            ],
+            "sha256": "b4d1475bc7eeffd7b809e82ea13a1fba1fb85c4e18365af3813722faa5c0fe4f"
+          },
+          {
+            "file": "text_encoders/qwen3.5_9b_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\text_encoders\\qwen3.5_9b_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              3096224756794185,
+              9748121532,
+              1792388726950760300,
+              1792381727786478000
+            ],
+            "sha256": "32e3787472f708fa5f83624acbf5ef23f7fc89c439e05065ea57cfe5a97f025a"
+          },
+          {
+            "file": "vae/moss_image_flux2-vae_small.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\vae\\moss_image_flux2-vae_small.safetensors",
+            "identity": [
+              8660451676565188446,
+              39687971728888484,
+              249521340,
+              1792378254562184800,
+              1792378051529729200
+            ],
+            "sha256": "d8d52ba036475f5fb07c8b435e176d3d97ebfa82f0d1a1c317f9cc1e25bd013b"
+          },
+          {
+            "file": "loras/moss-mikkoani-v1.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\loras\\moss-mikkoani-v1.safetensors",
+            "identity": [
+              8660451676565188446,
+              6473924477184197,
+              129017232,
+              1792388919794707200,
+              1792379292090198700
+            ],
+            "sha256": "bf56af1c4a6bafe8e59bd824301a45995941930d74f923a0b01cf9b7b25bd54e"
+          }
+        ],
+        "scope": "Content hashes verified once before this five-job character batch; full file identities rechecked before each submission."
+      },
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\character-2b\\03-seated-pose-0.png",
+        "sha256": "06beb7ae8f7d510ba04ac60920a0ca652a1045a2a3b825bac732ecb3a97381c3",
+        "bytes": 1283615,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "character": "2b",
+      "treatment": "fuller-bust",
+      "seed": 2026102603,
+      "job_id": "f74bb8ec-dcfa-4d88-8e89-ab822ae4eb96",
+      "prompt_ids": [
+        "b5cee97d-7ecb-4daf-88f0-56245eecca0f"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "job_elapsed_seconds": 48.93782329559326,
+      "recipe": "recipes/character-2b-04-fuller-bust.json",
+      "recipe_sha256": "a68ff96091a58bb0f4892bb2f75c0da2f0d2a08381e8c5be6fb5bbd43928b1f8",
+      "export_sha256": "7b38755c8ac8a4ae0c7eaf6f2ee41a1f9cba2f0ce57c5b7faa2fda83bbc06c44",
+      "model_pins": {
+        "verified_at": 1793036577.2879822,
+        "template_sha256": "92dc6168d5501b90a5c8e1e23fc05512207c7a5b53b76aa31fe6af8ec12fb4e0",
+        "models": [
+          {
+            "file": "diffusion_models/moss_image_sft_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\diffusion_models\\moss_image_sft_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              5629499547032615,
+              5413698958,
+              1792381724015894300,
+              1792378258542649200
+            ],
+            "sha256": "b4d1475bc7eeffd7b809e82ea13a1fba1fb85c4e18365af3813722faa5c0fe4f"
+          },
+          {
+            "file": "text_encoders/qwen3.5_9b_int8_convrot.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\text_encoders\\qwen3.5_9b_int8_convrot.safetensors",
+            "identity": [
+              8660451676565188446,
+              3096224756794185,
+              9748121532,
+              1792388726950760300,
+              1792381727786478000
+            ],
+            "sha256": "32e3787472f708fa5f83624acbf5ef23f7fc89c439e05065ea57cfe5a97f025a"
+          },
+          {
+            "file": "vae/moss_image_flux2-vae_small.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\vae\\moss_image_flux2-vae_small.safetensors",
+            "identity": [
+              8660451676565188446,
+              39687971728888484,
+              249521340,
+              1792378254562184800,
+              1792378051529729200
+            ],
+            "sha256": "d8d52ba036475f5fb07c8b435e176d3d97ebfa82f0d1a1c317f9cc1e25bd013b"
+          },
+          {
+            "file": "loras/moss-mikkoani-v1.safetensors",
+            "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\loras\\moss-mikkoani-v1.safetensors",
+            "identity": [
+              8660451676565188446,
+              6473924477184197,
+              129017232,
+              1792388919794707200,
+              1792379292090198700
+            ],
+            "sha256": "bf56af1c4a6bafe8e59bd824301a45995941930d74f923a0b01cf9b7b25bd54e"
+          }
+        ],
+        "scope": "Content hashes verified once before this five-job character batch; full file identities rechecked before each submission."
+      },
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\character-2b\\04-fuller-bust-0.png",
+        "sha256": "89f87c06472091a03128f1d8306e3aec77c7faa63beb3cded7d88932d7238237",
+        "bytes": 977283,
+        "width": 1024,
+        "height": 1536
+      }
+    }
+  ]
+}

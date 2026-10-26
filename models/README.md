@@ -1,5 +1,14 @@
 # Model registry
 
+26 October MOSS study update: `library.json` pins Kromoss update 11000 and its
+8-step DMD2 adapter at the same upstream revision. The adapter passed its source
+checksum; the checkpoint is an incomplete partial after three short transfers,
+so neither Kromoss preset variant is execution-verified. The older, different
+checkpoint partial is preserved. Reverse 1999's author trigger is `reversesty`.
+See the [MOSS guide](../docs/MOSS-IMAGE.md) for identities and the
+[39-picture SFT study](../experiments/curated/moss-study-20261026/RESULTS.md) for
+actual runs; a catalog pin does not assert installation or inference.
+
 `installed-manifest.json` records relative model paths, file sizes, SHA-256 values and available source revisions. The files were checksum-verified when originally downloaded. Presence and size can be checked quickly; rehashing every weight is deliberately not part of every launch.
 
 No weights are stored in Git. They remain in the configured ComfyUI `models` directory. This registry does not install a fresh machine automatically.

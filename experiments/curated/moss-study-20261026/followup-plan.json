@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "status": "planned-not-submitted",
+  "generation_allowance": 12,
+  "purpose": "Repeat the one-seed Tifa/Yor body and style pilot on two new seeds with independent matched branches.",
+  "evidence_parent": "characters-receipts.json",
+  "constraints": [
+    "Adult main-story versions only; non-explicit fashion.",
+    "No character LoRA/reference; same 30-step MOSS SFT settings.",
+    "Verify model pins, template and queue before explicit execution; preserve intent and prompt IDs; never repeat an uncertain POST.",
+    "Full-resolution face/hands and canonical anchors judged separately from body/style response; agent pre-review is not owner acceptance."
+  ],
+  "plans": [
+    {
+      "character": "tifa",
+      "recipe": {
+        "preset_id": "moss-t2i",
+        "controls": {
+          "seed": 2026102604,
+          "width": 1024,
+          "height": 1536,
+          "positive": "2D anime illustration, clean lineart, deliberate cel shading. Tifa Lockhart from Final Fantasy VII, her adult main-story version. Her recognizable iconic fully clothed outfit; visibly adult face and proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+          "negative": "",
+          "steps": 30,
+          "cfg": 3,
+          "sampler": "euler",
+          "scheduler": "sgm_uniform",
+          "lora": 0,
+          "lora2": 0
+        }
+      },
+      "variants": [
+        {
+          "label": "described",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. An adult Tifa Lockhart from Final Fantasy VII, age twenty, with long dark brown-black hair, reddish-brown eyes, a white cropped tank top with black trim, black suspenders, black pleated miniskirt over opaque fitted shorts, black thigh socks, and red combat gloves and boots. Natural balanced mature adult proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Explicit canonical feature description; baseline for independent adaptations.",
+          "sources": [
+            "https://finalfantasyviipc.square-enix-games.com/en&lang=en",
+            "https://www.jp.square-enix.com/ffviir_ig/character/tifa.html"
+          ]
+        },
+        {
+          "label": "style-mikko",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. An adult Tifa Lockhart from Final Fantasy VII, age twenty, with long dark brown-black hair, reddish-brown eyes, a white cropped tank top with black trim, black suspenders, black pleated miniskirt over opaque fitted shorts, black thigh socks, and red combat gloves and boots. Natural balanced mature adult proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora_name": "moss-mikkoani-v1.safetensors",
+            "lora": 0.9,
+            "lora2": 0
+          },
+          "rationale": "Only add the style adapter to described baseline; assess identity anchors separately from style.",
+          "sources": [
+            "https://civitai.com/api/v1/models/2470371"
+          ]
+        },
+        {
+          "label": "fuller-bust",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. An adult Tifa Lockhart from Final Fantasy VII, age twenty, with long dark brown-black hair, reddish-brown eyes, a white cropped tank top with black trim, black suspenders, black pleated miniskirt over opaque fitted shorts, black thigh socks, and red combat gloves and boots. A fuller bust under the same opaque fitted outfit, a curvier adult hourglass silhouette and balanced mature anatomy. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Only change body-proportion wording from described baseline; retain identity, pose and opaque fitted outfit.",
+          "sources": [
+            "https://finalfantasyviipc.square-enix-games.com/en&lang=en",
+            "https://www.jp.square-enix.com/ffviir_ig/character/tifa.html"
+          ]
+        }
+      ]
+    },
+    {
+      "character": "tifa",
+      "recipe": {
+        "preset_id": "moss-t2i",
+        "controls": {
+          "seed": 2026102605,
+          "width": 1024,
+          "height": 1536,
+          "positive": "2D anime illustration, clean lineart, deliberate cel shading. Tifa Lockhart from Final Fantasy VII, her adult main-story version. Her recognizable iconic fully clothed outfit; visibly adult face and proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+          "negative": "",
+          "steps": 30,
+          "cfg": 3,
+          "sampler": "euler",
+          "scheduler": "sgm_uniform",
+          "lora": 0,
+          "lora2": 0
+        }
+      },
+      "variants": [
+        {
+          "label": "described",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. An adult Tifa Lockhart from Final Fantasy VII, age twenty, with long dark brown-black hair, reddish-brown eyes, a white cropped tank top with black trim, black suspenders, black pleated miniskirt over opaque fitted shorts, black thigh socks, and red combat gloves and boots. Natural balanced mature adult proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Explicit canonical feature description; baseline for independent adaptations.",
+          "sources": [
+            "https://finalfantasyviipc.square-enix-games.com/en&lang=en",
+            "https://www.jp.square-enix.com/ffviir_ig/character/tifa.html"
+          ]
+        },
+        {
+          "label": "style-mikko",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. An adult Tifa Lockhart from Final Fantasy VII, age twenty, with long dark brown-black hair, reddish-brown eyes, a white cropped tank top with black trim, black suspenders, black pleated miniskirt over opaque fitted shorts, black thigh socks, and red combat gloves and boots. Natural balanced mature adult proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora_name": "moss-mikkoani-v1.safetensors",
+            "lora": 0.9,
+            "lora2": 0
+          },
+          "rationale": "Only add the style adapter to described baseline; assess identity anchors separately from style.",
+          "sources": [
+            "https://civitai.com/api/v1/models/2470371"
+          ]
+        },
+        {
+          "label": "fuller-bust",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. An adult Tifa Lockhart from Final Fantasy VII, age twenty, with long dark brown-black hair, reddish-brown eyes, a white cropped tank top with black trim, black suspenders, black pleated miniskirt over opaque fitted shorts, black thigh socks, and red combat gloves and boots. A fuller bust under the same opaque fitted outfit, a curvier adult hourglass silhouette and balanced mature anatomy. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Only change body-proportion wording from described baseline; retain identity, pose and opaque fitted outfit.",
+          "sources": [
+            "https://finalfantasyviipc.square-enix-games.com/en&lang=en",
+            "https://www.jp.square-enix.com/ffviir_ig/character/tifa.html"
+          ]
+        }
+      ]
+    },
+    {
+      "character": "yor",
+      "recipe": {
+        "preset_id": "moss-t2i",
+        "controls": {
+          "seed": 2026102604,
+          "width": 1024,
+          "height": 1536,
+          "positive": "2D anime illustration, clean lineart, deliberate cel shading. Yor Forger (Yor Briar), Thorn Princess from Spy x Family, the adult mother. Her recognizable iconic fully clothed outfit; visibly adult face and proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+          "negative": "",
+          "steps": 30,
+          "cfg": 3,
+          "sampler": "euler",
+          "scheduler": "sgm_uniform",
+          "lora": 0,
+          "lora2": 0
+        }
+      },
+      "variants": [
+        {
+          "label": "described",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. The adult woman Yor Forger, also called Yor Briar and the Thorn Princess from Spy x Family, with long near-black hair and face-framing locks, red eyes, gold rose hair ornaments and earrings, a fitted opaque black halter dress with red rose-pattern lining and a flared skirt, black fingerless gloves and black thigh-high boots. Natural balanced mature adult proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Explicit canonical feature description; baseline for independent adaptations.",
+          "sources": [
+            "https://spy-family.net/tvseries/#character",
+            "https://spy-family.net/tvseries/assets/img/top/chara_yor_1.png"
+          ]
+        },
+        {
+          "label": "style-mikko",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. The adult woman Yor Forger, also called Yor Briar and the Thorn Princess from Spy x Family, with long near-black hair and face-framing locks, red eyes, gold rose hair ornaments and earrings, a fitted opaque black halter dress with red rose-pattern lining and a flared skirt, black fingerless gloves and black thigh-high boots. Natural balanced mature adult proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora_name": "moss-mikkoani-v1.safetensors",
+            "lora": 0.9,
+            "lora2": 0
+          },
+          "rationale": "Only add the style adapter to described baseline; assess identity anchors separately from style.",
+          "sources": [
+            "https://civitai.com/api/v1/models/2470371"
+          ]
+        },
+        {
+          "label": "fuller-bust",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. The adult woman Yor Forger, also called Yor Briar and the Thorn Princess from Spy x Family, with long near-black hair and face-framing locks, red eyes, gold rose hair ornaments and earrings, a fitted opaque black halter dress with red rose-pattern lining and a flared skirt, black fingerless gloves and black thigh-high boots. A fuller bust under the same opaque fitted outfit, a curvier adult hourglass silhouette and balanced mature anatomy. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Only change body-proportion wording from described baseline; retain identity, pose and opaque fitted outfit.",
+          "sources": [
+            "https://spy-family.net/tvseries/#character",
+            "https://spy-family.net/tvseries/assets/img/top/chara_yor_1.png"
+          ]
+        }
+      ]
+    },
+    {
+      "character": "yor",
+      "recipe": {
+        "preset_id": "moss-t2i",
+        "controls": {
+          "seed": 2026102605,
+          "width": 1024,
+          "height": 1536,
+          "positive": "2D anime illustration, clean lineart, deliberate cel shading. Yor Forger (Yor Briar), Thorn Princess from Spy x Family, the adult mother. Her recognizable iconic fully clothed outfit; visibly adult face and proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+          "negative": "",
+          "steps": 30,
+          "cfg": 3,
+          "sampler": "euler",
+          "scheduler": "sgm_uniform",
+          "lora": 0,
+          "lora2": 0
+        }
+      },
+      "variants": [
+        {
+          "label": "described",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. The adult woman Yor Forger, also called Yor Briar and the Thorn Princess from Spy x Family, with long near-black hair and face-framing locks, red eyes, gold rose hair ornaments and earrings, a fitted opaque black halter dress with red rose-pattern lining and a flared skirt, black fingerless gloves and black thigh-high boots. Natural balanced mature adult proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Explicit canonical feature description; baseline for independent adaptations.",
+          "sources": [
+            "https://spy-family.net/tvseries/#character",
+            "https://spy-family.net/tvseries/assets/img/top/chara_yor_1.png"
+          ]
+        },
+        {
+          "label": "style-mikko",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. The adult woman Yor Forger, also called Yor Briar and the Thorn Princess from Spy x Family, with long near-black hair and face-framing locks, red eyes, gold rose hair ornaments and earrings, a fitted opaque black halter dress with red rose-pattern lining and a flared skirt, black fingerless gloves and black thigh-high boots. Natural balanced mature adult proportions. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora_name": "moss-mikkoani-v1.safetensors",
+            "lora": 0.9,
+            "lora2": 0
+          },
+          "rationale": "Only add the style adapter to described baseline; assess identity anchors separately from style.",
+          "sources": [
+            "https://civitai.com/api/v1/models/2470371"
+          ]
+        },
+        {
+          "label": "fuller-bust",
+          "controls": {
+            "positive": "2D anime illustration, clean lineart, deliberate cel shading. The adult woman Yor Forger, also called Yor Briar and the Thorn Princess from Spy x Family, with long near-black hair and face-framing locks, red eyes, gold rose hair ornaments and earrings, a fitted opaque black halter dress with red rose-pattern lining and a flared skirt, black fingerless gloves and black thigh-high boots. A fuller bust under the same opaque fitted outfit, a curvier adult hourglass silhouette and balanced mature anatomy. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+            "lora": 0,
+            "lora2": 0
+          },
+          "rationale": "Only change body-proportion wording from described baseline; retain identity, pose and opaque fitted outfit.",
+          "sources": [
+            "https://spy-family.net/tvseries/#character",
+            "https://spy-family.net/tvseries/assets/img/top/chara_yor_1.png"
+          ]
+        }
+      ]
+    }
+  ]
+}

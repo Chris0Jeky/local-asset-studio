@@ -294,6 +294,9 @@ def live_allows(action, navigation, control_id='', label='', attributes=(), subm
 # --------------------------------------------------------------------------------------
 def build_handler():
     import studio_browser_smoke as fixture
+    from types import SimpleNamespace
+    from studio_workflow import asset_family
+    from studio_workflow.asset_read_http import family_query
     from studio_workflow.guides import guides
     from studio_workflow.core import catalog, new_document, compile_document
     from studio_prompt.http_extension import extend_handler
@@ -362,6 +365,14 @@ def build_handler():
         def do_GET(self):
             path = urlsplit(self.path).path
             if path in ('/api/assets/page','/api/collections'): return fixture.Handler.do_GET(self)
+            if path.startswith('/api/assets/family/'):
+                if not self._safe_host():
+                    return self.json(fixture.observation_error(ValueError('Loopback Host required')), 403)
+                def read_family(workspace):
+                    _, identifier, query = family_query(self.path)
+                    studio = SimpleNamespace(assets=workspace, jobs={job['id']: job for job in fixture.JOBS})
+                    return asset_family.observe(studio, identifier, **query)
+                return fixture.observe_fixture(self, read_family)
             if path == '/api/workflow-studio/guides': return self.json(guides())
             if path == '/api/workflow-studio/nodes': return self.json(schema)
             if path == '/api/workflow-studio/capabilities':
@@ -955,6 +966,7 @@ def _reuse(c):
     c.act('#assetGrid', 'read', note='saved pictures listed')
     keeper = c.pick('asset-1', '#assetGrid [data-asset-open]', 'image asset in the Asset library', keep=LIVE_IMAGE_ASSET)
     c.act('[data-asset-open="%s"]' % keeper, note='open the keeper')
+    if not c.live:c.page.wait_for_function('document.querySelectorAll("#assetFamily [data-family-step]").length === 1')
     c.act('[data-ux-handoff="%s"]' % keeper, note='continue with this picture')
     c.need_destination('qwen-1ref')
     c.act('#uxDestination', 'select', typed='qwen-1ref')
