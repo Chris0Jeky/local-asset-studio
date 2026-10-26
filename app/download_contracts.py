@@ -146,13 +146,17 @@ def _require_public(addresses):
 
 
 class _PeerCheckedHTTPSConnection(http.client.HTTPSConnection):
-    """urllib dials by hostname after validation; a DNS answer that flips in between must not get the request."""
+    """Check a direct peer after TCP connection, before TLS or an HTTP request."""
     def connect(self):
-        super().connect()
-        if self._tunnel_host:return  # behind a configured proxy the peer is the operator's proxy, not the model host
-        try:_require_public({ipaddress.ip_address(str(self.sock.getpeername()[0]).split('%',1)[0])})
+        try:
+            # HTTPSConnection.connect wraps TLS immediately after this TCP/CONNECT step.
+            http.client.HTTPConnection.connect(self)
+            # A configured proxy owns target DNS/routing; its socket peer is not the model host.
+            if not self._tunnel_host:
+                _require_public({ipaddress.ip_address(str(self.sock.getpeername()[0]).split('%',1)[0])})
+            self.sock=self._context.wrap_socket(self.sock,server_hostname=self._tunnel_host or self.host)
         except Exception:
-            self.sock.close();raise
+            self.close();raise
 
 
 class PeerCheckedHTTPSHandler(HTTPSHandler):
@@ -181,10 +185,14 @@ class DownloadRedirectHandler(HTTPRedirectHandler):
 
 
 def open_download(request,timeout=60,resolver=socket.getaddrinfo,transport_handlers=()):
-    """Open one curated transfer with a fresh redirect counter and address policy."""
+    """Open one curated transfer with a fresh redirect counter and address policy.
+
+    transport_handlers is a trusted tests-only seam: an explicit HTTPS handler can
+    replace socket handling for inert fixtures. Other handlers must not remove the
+    default peer/TLS guard. It is never populated from a URL, catalog or user config.
+    """
     provider=validate_download_url(request.full_url,resolver=resolver)
-    # Every hop, redirects included, re-checks the connected peer before the GET is sent.
-    client=build_opener(DownloadRedirectHandler(provider,resolver),*(transport_handlers or (PeerCheckedHTTPSHandler(),)))
+    client=build_opener(DownloadRedirectHandler(provider,resolver),*transport_handlers,PeerCheckedHTTPSHandler())
     return client.open(request,timeout=timeout)
 
 
@@ -194,6 +202,16 @@ def sha256(path):
         for chunk in iter(lambda: stream.read(8 * 1024**2), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+class UnverifiedPublicationError(ValueError):
+    """Keep manual recovery and the complete retained path separate from bounded UI text."""
+    def __init__(self,reason,path,*,published=False):
+        self.unverified_path=path
+        self.cleanup=('Do not load this model. Close any reader, then inspect and move or remove the unverified file manually before retrying.'
+                      if published else 'Do not load the retained file. Inspect it and remove it manually when no longer needed.')
+        location='remain at' if published else 'retained at'
+        super().__init__(f'{self.cleanup} {reason}; unverified bytes {location} {path}.')
 
 
 def publish_verified(source,target,identity,expected_sha256=None):
@@ -218,15 +236,18 @@ def publish_verified(source,target,identity,expected_sha256=None):
     # The hash of a multi-GB file takes a while: the identity read just before it must still hold just after it (#1416 review).
     try:mismatch=not changed and renamed and (sha256(target)!=expected_sha256 or file_identity(target)!=after)
     except OSError:mismatch=True
-    if renamed and (changed or mismatch):
-        # Never leave unverified bytes at the model's published name: move them back to the staging name (no-clobber).
-        # If neither no-clobber rename works (a reader holds the file open), fail naming the path, never silently.
-        try:os.rename(target,source)
-        except OSError:
-            try:os.rename(target,target.with_name('.'+target.name+'.'+uuid.uuid4().hex+'.unverified'))
-            except OSError as exc:raise ValueError(f'Published file failed verification and could not be moved aside; unverified bytes remain at {target}. Delete it before loading this model.') from exc
-    if changed:raise ValueError('Source changed during publication; files preserved for inspection, not verified')
-    if mismatch:raise ValueError('Published file does not match the verified digest; files preserved for inspection')
+    if changed or mismatch:
+        retained=target
+        if renamed:
+            # Best effort, no-clobber recovery. Windows share-delete denial can block both renames.
+            try:os.rename(target,source);retained=source
+            except OSError:
+                quarantine=target.with_name('.'+target.name+'.'+uuid.uuid4().hex+'.unverified')
+                try:os.rename(target,quarantine);retained=quarantine
+                except OSError as exc:
+                    raise UnverifiedPublicationError('Published file failed verification and could not be moved aside',target,published=True) from exc
+        reason='Source changed during publication' if changed else 'Published file does not match the verified digest'
+        raise UnverifiedPublicationError(reason,retained,published=retained==target)
     if not renamed:source.unlink()
     return file_identity(target)
 

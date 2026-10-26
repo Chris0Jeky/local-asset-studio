@@ -244,8 +244,13 @@ class ModelLibrary:
             part=getattr(exc,'partial_path',None) or self.partial_path(self.destination(asset));partial=str(part)
             done=part.stat().st_size if part.is_file() else 0
         except (OSError,ValueError):pass
+        recovery={};message=str(exc);cleanup=getattr(exc,'cleanup',None)
+        if getattr(exc,'unverified_path',None) is not None:recovery['unverified_path']=str(exc.unverified_path)
+        if isinstance(cleanup,str) and cleanup:
+            recovery['cleanup']=cleanup
+            if not message.startswith(cleanup):message=cleanup+' '+message
         try:self._record(asset['id'],status='failed',bytes_done=done,bytes_total=asset['bytes'],
-                         sha256=asset['sha256'],partial_path=partial,message=str(exc)[:300])
+                         sha256=asset['sha256'],partial_path=partial,message=message[:300],**recovery)
         except OSError as reporting_error:
             exc.add_note('Failure receipt could not be written: '+str(reporting_error))
 
