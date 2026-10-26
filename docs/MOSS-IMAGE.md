@@ -1,5 +1,14 @@
 # MOSS-Image: isolated backend on this PC
 
+**26 October qualification:** 39 completed, inspected Studio jobs (24 original-adult
+adapter comparisons and 15 franchise-recognition/adaptation pictures), with exact
+recipes, unique prompt IDs and hash-bound judgments in the
+[study results](../experiments/curated/moss-study-20261026/RESULTS.md). The tested
+scope is SFT int8, 1024×1536, Euler / sgm_uniform, 30 steps, CFG 3, empty negative;
+`moss-t2i` now records that execution. Three executed recipes are saved. This is
+agent pre-review, not art acceptance. Kromoss is still unverified and its eight
+saved comparison jobs did not run.
+
 MOSS-Image (OpenMOSS, released 16 October 2026) is a 5B single-stream DiT with a Qwen3.5-9B text encoder and the FLUX.2 VAE (small decoder). It makes text-to-image from natural language, booru tags or a JSON layout. The **local `moss-t2i` workflow has no edit input or ControlNet**; its pose control is prompt wording and layout boxes. Community edit and color/depth adapters are now listed by [Comfy-Org](https://huggingface.co/Comfy-Org/MOSS-Image) (checked 26 October); they are not installed or proven by this local recipe. OpenMOSS weights and code are Apache-2.0; adapters have separate terms.
 
 The primary ComfyUI here is v0.35.0 and has neither the model class nor the `moss_image` text encoder type (both arrived in ComfyUI v0.42.0). Upgrading the primary would upgrade the shared Torch/ROCm environment's ComfyUI packages, which this repository forbids, so MOSS runs on its own backend, as Qwen-Image 2.1 does ([QWEN-IMAGE-21.md](QWEN-IMAGE-21.md)).

@@ -1,5 +1,11 @@
 # Adult fashion study: MOSS and its adapters, 26 October 2026
 
+**Executed:** all 24 original-character comparisons and all 15 franchise pilot
+jobs completed and were inspected. [Results, limitations and the next bounded
+queue](RESULTS.md) retain the findings; [receipts](receipts.json) and
+[franchise receipts](characters-receipts.json) bind exact recipes and image hashes.
+The eight Kromoss jobs remain **NOT RUN**. No result is owner-accepted by this record.
+
 The [frozen plan](plan.json) tests two original, explicitly adult character briefs,
 two seeds and six treatments, for a fixed allowance of 24 graph executions. All
 characters are 30 or 32, with mature faces and adult proportions; the requested
@@ -48,8 +54,8 @@ Full-size images, exact recipes, prompt/job IDs, admission observations and per-
 receipts live under `E:/local-asset-studio-labs/moss-20261026/evidence/`; actual
 Studio job/project state lives under the sibling `experiments/`. Controller logs
 are in this checkout's ignored `.runtime/lab-20261026/`. Models and generated image
-bytes stay outside Git. Completion, visual judgements and recommendations will be
-recorded only from the corresponding receipts and inspected outputs.
+bytes stay outside Git. Completion, visual judgements and recommendations in the
+results record come from the corresponding receipts and inspected outputs.
 
 The [shared rubric](../../../docs/quality/JUDGING-RUBRIC.md) applies: inspect every
 full image and full-resolution face/hand crops, identify defects, and skip any

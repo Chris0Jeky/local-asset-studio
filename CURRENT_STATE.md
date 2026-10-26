@@ -1,4 +1,53 @@
-# Current state — 13 October 2026
+# Current state — 26 October 2026
+
+## MOSS adapter and character qualification — 26 October 2026
+
+Starting from `d89b36f3` in an owned worktree (later integrating `b4515ca7`), the
+finite MOSS study completed **39 jobs / 39 unique prompt IDs / 39 distinct images**:
+24 original-adult adapter comparisons and 15 Tifa/Yor/2B recognition, style, pose
+and fuller-bust variants. Every image has an exact recipe, source hash and
+full-image/face/hand agent inspection; six also have an independent second judgment.
+[Results and next plans](experiments/curated/moss-study-20261026/RESULTS.md) contain
+all IDs and limitations. Primary agent verdicts are 17 keep / 22 fixable, with
+visible labels, not owner acceptance. Private full-size evidence and the complete
+static gallery remain at `E:/local-asset-studio-labs/moss-20261026/evidence/`.
+
+Mikko 0.9 gives the clearest graphic style change in this sample; the Reverse
+trigger effect is subtle at 0.9 and Impasto 0.25 adds no clear brief-quality gain.
+Tifa/Yor name-only recall is strong, while 2B needs explicit anchors and still
+misses opaque chest coverage. All three seated variants cross knees rather than
+ankles; body-wording response is uneven. This demonstrates learned associations,
+not training-image membership. Three executed recipes are saved, and `moss-t2i`
+is execution-qualified for the tested 30-step settings. No Make look was added.
+
+The MOSS readiness guard now refuses a missing/empty text-encoder implementation
+before stopping a healthy backend (red regression reproduced; 48 safety tests and
+175 server tests pass). A missing browser-fixture family route was repaired:
+three fixture tests and all 25 browser journeys pass with zero page errors, server
+tracebacks or generation submissions. Final full-suite proof: **6,109 tests,
+82 skipped, 1,061.452 s, exit 0**, with configured FFmpeg/ffprobe on PATH. An earlier
+Windows catalog-encoding failure was corrected by preserving the original JSON
+escape policy (16 focused checks pass). The integrated AV base's affected suites
+pass 31 + 41 (one skip) + 3 tests. A fresh independent review found no blockers in
+the code/config changes. The latest validator and publication receipt travel with
+the milestone closeout; these suite counts describe the tested source snapshots.
+
+Kromoss update 11000 source identities are pinned, with an unverified preset and
+eight **NOT RUN** comparisons. DMD2 downloaded and checksum-verified, but its
+checkpoint remains 2,587,306,298 / 5,413,698,958 bytes after three short transfers;
+the earlier revision's partial was preserved. [#1662](https://github.com/Chris0Jeky/local-asset-studio/issues/1662)
+tracks the exact resume dependency; no unverified weight was installed. A 12-job
+two-seed Tifa/Yor follow-up is saved, not submitted. The Qwen parallel readiness
+question and mixed roster adult-version audit are separately tracked in
+[#1661](https://github.com/Chris0Jeky/local-asset-studio/issues/1661) and
+[#1663](https://github.com/Chris0Jeky/local-asset-studio/issues/1663).
+
+All 39 jobs were complete and ComfyUI's queue empty before the owned Studio PID
+29932 and MOSS PID 30520 were stopped after identity checks; ports 8191/8198 are
+free. Four completed Production plans remain `awaiting_review`; no subjective
+selection was inferred. Original ComfyUI outputs and the copied E: evidence stay
+intact, shared packages were unchanged, and no paid credits were used.
+`HUMAN_TODO.md` still owns art acceptance and MOSS Make-look wording/placement.
 
 ## AV trims use the video track's duration - 26 October 2026
 

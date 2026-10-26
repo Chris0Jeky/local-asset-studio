@@ -8198,7 +8198,8 @@
       "backend_id": "moss",
       "host_commit_heavy": true,
       "modality": "image",
-      "verified": false,
+      "verified": true,
+      "execution_note": "26 October 2026: 39 recorded, inspected Studio jobs on the isolated MOSS backend; 1024x1536, Euler / sgm_uniform, 30 steps, CFG 3, SFT int8 and the tested adapters. See experiments/curated/moss-study-20261026/RESULTS.md. Execution qualification only, not art acceptance or all-setting coverage.",
       "positive": [
         "4",
         "text"
