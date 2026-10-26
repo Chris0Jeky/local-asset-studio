@@ -17,6 +17,7 @@ on:
       - 'tests/asset_detail_browser.py'
       - 'tests/studio_browser_smoke.py'
       - 'tests/test_studio_guide.py'
+      - 'tests/test_studio_guide_diagnostics.py'
       - 'scripts/ci-install-chromium.sh'
       - 'tests/test_ci_browser_dependencies.py'
       - '.github/workflows/guided-journey-browser.yml'
@@ -44,6 +45,10 @@ jobs:
         run: bash scripts/ci-install-chromium.sh
       - run: python -m unittest discover -s tests -p test_studio_guide.py -v
       - run: python -m unittest discover -s tests -p test_create_readiness_frontend.py -v
+      - name: Prove bounded diagnostics preserve native load failures
+        run: |
+          python -m unittest discover -s tests -p test_studio_guide_diagnostics.py -v
+          python tests/studio_guide_diagnostics_browser.py --out .runtime/guide-diagnostics-proof
       - name: Actual pages and native HTTP, storage, keyboard and stage navigation
         run: python tests/studio_guide_browser.py --out .runtime/guide-proof
       - name: Native disclosure layout and keyboard ownership on isolated coach fixture
@@ -68,6 +73,7 @@ jobs:
           name: guide-browser-proof
           path: |
             .runtime/guide-proof/
+            .runtime/guide-diagnostics-proof/
             .runtime/guide-disclosure-proof/
             .runtime/control-preview-proof/
             .runtime/control-precision-proof/
