@@ -1,13 +1,14 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const Core=require('../app/static/asset-recovery-shelf.js'),Journal=require('../app/static/asset-recovery.js');
+const create=require('./asset_recovery_shelf_memory.js');
 const source=require('node:path').join(__dirname,'../app/static/asset-recovery-shelf-session.js');
 const Session=fs.existsSync(source)?require(source):{};
 const crypto=require('node:crypto').webcrypto,W='1'.repeat(32);
 function value(note='draft',pending=false){const form={title:'a',tags:'',review:'unreviewed',notes:note};const command={ids:['a'],action:'edit',notes:'snapshot',workspace_id:W,expected_revisions:{a:0},request_id:'0123456789abcdef'};return {version:2,workspace_id:W,id:'a',metadata:{id:'a',workspace_id:W,metadata_revision:0,title:'a',notes:'',tags:[],review:'unreviewed',favorite:false,trashed_at:null},baseline:{...form,notes:''},draft:form,operation:pending?{command,body:JSON.stringify(command,null,2),kind:'details',snapshot:{...form,notes:'snapshot'}}:null,conflict:null};}
 function storage(){const data=new Map();return {getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};}
 function device(){const local=storage();let tail=Promise.resolve();return {local,locks:{request(n,o,fn){const p=tail.then(fn);tail=p.catch(()=>{});return p;}}};}
-function setup({shared=device()}={}){const journal=Journal.create(storage()),store=Core.create({storage:shared.local,locks:shared.locks,crypto});assert.equal(typeof Session.create,'function','shelf session controller must exist');const messages=[],session=Session.create({journal,store,crypto,onStatus:s=>messages.push(s)});return {journal,store,session,messages};}
+function setup({shared=device()}={}){const journal=Journal.create(storage()),store=create({storage:shared.local,locks:shared.locks,crypto});assert.equal(typeof Session.create,'function','shelf session controller must exist');const messages=[],session=Session.create({journal,store,crypto,onStatus:s=>messages.push(s)});return {journal,store,session,messages};}
 function libraryValue(note='lib'){const command={ids:['a'],action:'edit',notes:note,workspace_id:W,expected_revisions:{a:0},request_id:'abcdef0123456789'};return {version:2,workspace_id:W,operation:{command,body:JSON.stringify(command)},selection:['a']};}
 test('disabled controller does not persist ordinary journal changes',async()=>{const s=setup();s.journal.write('detail',value());await s.session.flush();assert.equal((await s.store.list()).length,0);});
 test('opt-in mirrors drafts, coalesces typing and preserves immutable command bytes',async()=>{
@@ -50,12 +51,12 @@ test('capacity failure cannot block explicit discard needed to free space',async
 });
 test('reload with an unresolved pending command recovers the same record without a duplicate identity',async()=>{
   const shared=device(),journalStorage=storage();
-  const journal1=Journal.create(journalStorage),store1=Core.create({storage:shared.local,locks:shared.locks,crypto});
+  const journal1=Journal.create(journalStorage),store1=create({storage:shared.local,locks:shared.locks,crypto});
   const firstSession=Session.create({journal:journal1,store:store1,crypto,onStatus:()=>{}});
   await firstSession.enable();journal1.write('detail',value('snapshot',true));await firstSession.flush();
   const before=await store1.list();assert.equal(before.length,1);const first=before[0];
   assert.ok(first.payload.operation&&first.payload.operation.command.request_id==='0123456789abcdef');
-  const journal2=Journal.create(journalStorage),store2=Core.create({storage:shared.local,locks:shared.locks,crypto});
+  const journal2=Journal.create(journalStorage),store2=create({storage:shared.local,locks:shared.locks,crypto});
   let sends=0;const secondSession=Session.create({journal:journal2,store:store2,crypto,onStatus:()=>{}});
   await secondSession.enable();assert.equal(sends,0,'recovery itself never posts');
   const after=await store2.list();

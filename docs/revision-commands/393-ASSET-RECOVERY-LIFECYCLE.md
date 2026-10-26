@@ -97,6 +97,13 @@ transport; it proves component/protocol behavior, not native browser guarantees.
 The responsive case uses 390px with CSS 200% zoom, not browser-menu zoom or a
 screen-reader usability certification. Only synthetic text and media enter CI.
 
+The [26 October shelf-import qualification](../verification/2026-10-26-recovery-import-qualification.md)
+adds native browser-owned 200% zoom and keyboard/import ownership checks to the
+separate shelf fixture. It fixes focus lost when import confirmation disappears
+and stale file reads or import errors crossing dialog openings. Those results do not establish
+all lifecycle/conflict journeys at that zoom, browser-menu operation, or an
+executed screen-reader pass.
+
 ## Remaining issue-level acceptance
 
 This is a bounded inspection slice, not closure of all #393. The existing editor

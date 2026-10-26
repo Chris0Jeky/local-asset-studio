@@ -2,6 +2,7 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.StudioAssetRecoveryShelf=api;})(globalThis,function(){
   'use strict';
   const KEY='studio.asset-recovery.shelf.v1',LOCK=KEY+'.lock';
+  const DATABASE='studio.asset-recovery.shelf.v2',STORE='shelf',ENTRY='current';
   const LIMITS=Object.freeze({records:20,record:256*1024,total:2*1024*1024,depth:16,keys:20000,string:64*1024,ids:200});
   const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
   const bytes=s=>new TextEncoder().encode(s).byteLength;
@@ -162,24 +163,105 @@
     const v=parse(raw);if(!keys(v,['version','records'])||v.version!==1)fail('Unsupported recovery bundle version or fields.');
     await encode(v.records,crypto);return v.records;
   }
-  function create({storage,locks,crypto=globalThis.crypto,lockTimeoutMs=5000}){
-    const target=()=>typeof storage==='function'?storage():storage;
+  function rawBound(raw){if(raw!==null&&(typeof raw!=='string'||raw.length>LIMITS.total||bytes(raw)>LIMITS.total))fail('Raw recovery exceeds the safe export limit.');return raw;}
+  const ownerFields=['version','raw','legacy_digest'];
+  function ownerState(value){
+    if(!keys(value,ownerFields)||value.version!==1||typeof value.raw!=='string'||value.legacy_digest!==null&&!digest(value.legacy_digest))fail('Unsupported recovery owner state version or fields.');
+    rawBound(value.raw);return value;
+  }
+  function ownerEntry(entry){if(!Array.isArray(entry)||entry.length>1)fail('Unsupported recovery owner entry.');return entry.length?ownerState(entry[0]):null;}
+  const sameOwner=(a,b)=>keys(a,ownerFields)&&keys(b,ownerFields)&&ownerFields.every(k=>a[k]===b[k]);
+  const sameEntry=(a,b)=>Array.isArray(a)&&Array.isArray(b)&&a.length===b.length&&a.length<=1&&(!a.length||sameOwner(a[0],b[0]));
+  // localStorage visibility can lag across renderer processes even while Web
+  // Locks serialize callbacks. This one entry, not that renderer cache, owns CAS.
+  function indexedOwner(timeoutMs){
+    function open(){return new Promise((resolve,reject)=>{
+      let request,done=false,timer,problem;
+      const finish=(error,value)=>{if(done){value?.close();return;}done=true;clearTimeout(timer);if(error)reject(error);else resolve(value);};
+      try{if(!globalThis.indexedDB?.open)throw Error('IndexedDB is unavailable; device recovery cannot be retained safely.');request=globalThis.indexedDB.open(DATABASE,1);}
+      catch(error){finish(error);return;}
+      timer=setTimeout(()=>{problem=Error('Recovery IndexedDB open timed out; no current shelf was replaced.');try{request.transaction?.abort();}catch(_){}finish(problem);},timeoutMs);
+      request.onblocked=()=>finish(Error('Recovery IndexedDB is blocked. Close older tabs and retry; existing recovery remains saved.'));
+      request.onupgradeneeded=event=>{
+        try{if(done){request.transaction.abort();return;}if(event.oldVersion!==0)throw Error('Unsupported recovery database version.');request.result.createObjectStore(STORE);}
+        catch(error){problem=error;try{request.transaction?.abort();}catch(_){}}
+      };
+      request.onerror=()=>finish(problem||Error('Recovery IndexedDB could not open: '+(request.error?.message||'unknown error')));
+      request.onsuccess=()=>{const db=request.result;
+        if(done){db.close();return;}
+        if(db.version!==1||db.objectStoreNames.length!==1||!db.objectStoreNames.contains(STORE)){db.close();finish(Error('Unsupported recovery database layout; existing data was preserved.'));return;}
+        finish(null,db);
+      };
+    });}
+    async function transaction(mode,work){
+      const db=await open();return new Promise((resolve,reject)=>{
+        let tx,result,problem,done=false,timer;
+        const finish=error=>{if(done)return;done=true;clearTimeout(timer);db.close();if(error)reject(error);else resolve(result);};
+        const abort=error=>{problem=error;try{tx.abort();}catch(_){finish(error);}};
+        try{tx=mode==='readwrite'?db.transaction(STORE,mode,{durability:'strict'}):db.transaction(STORE,mode);}
+        catch(error){finish(error);return;}
+        timer=setTimeout(()=>abort(Error('Recovery IndexedDB transaction timed out; its outcome is not confirmed.')),timeoutMs);
+        tx.oncomplete=()=>finish();
+        tx.onabort=()=>finish(problem||Error('Recovery IndexedDB transaction aborted: '+(tx.error?.message||'no current shelf was replaced')));
+        tx.onerror=()=>{problem=problem||Error('Could not retain recovery storage: '+(tx.error?.message||'IndexedDB request failed'));};
+        // getAll preserves absence separately from a corrupt stored null or
+        // undefined value. Neither may be silently treated as a fresh shelf.
+        const store=tx.objectStore(STORE),request=store.getAll(ENTRY,1);
+        request.onsuccess=()=>{try{result=work(request.result,store,abort);}catch(error){abort(error);}};
+        request.onerror=()=>{problem=Error('Recovery IndexedDB read failed: '+(request.error?.message||'unknown error'));};
+      });
+    }
+    return {
+      read:()=>transaction('readonly',value=>value),
+      compareAndSwap:(before,next)=>transaction('readwrite',(current,store,abort)=>{
+        if(!sameEntry(current,before))fail('Recovery storage changed in another tab; refresh before retrying.');
+        // Compare and put run in this live request callback. Crypto and bundle
+        // validation have already finished; success waits for tx.oncomplete.
+        const written=store.put(next,ENTRY);
+        written.onsuccess=()=>{try{const readback=store.getAll(ENTRY,1);readback.onsuccess=()=>{if(!sameEntry(readback.result,[next]))abort(Error('Recovery readback did not verify.'));};}catch(error){abort(error);}};
+        return next;
+      })
+    };
+  }
+  function create({storage=()=>globalThis.localStorage,locks=()=>globalThis.navigator?.locks,crypto=globalThis.crypto,lockTimeoutMs=5000,backend}={}){
+    const target=()=>typeof storage==='function'?storage():storage,owner=backend??indexedOwner(lockTimeoutMs),reviews=new WeakMap();
     const locker=()=>typeof locks==='function'?locks():locks;
-    async function read(){const raw=target().getItem(KEY);return raw===null?[]:decode(raw,crypto);}
-    async function change(update){
+    const legacyRaw=async()=>rawBound(target().getItem(KEY));
+    async function digestRaw(raw){if(raw===null)return null;if(!crypto?.subtle)fail('WebCrypto is unavailable; recovery cannot be verified.');return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(raw))),b=>b.toString(16).padStart(2,'0')).join('');}
+    const legacyDigest=async()=>digestRaw(await legacyRaw());
+    function quarantine(state,seen){
+      const review=Object.freeze({});reviews.set(review,{entry:[{...state}],state:{...state},legacy_digest:seen});
+      const error=Error('Older-version recovery changed. Both copies remain saved. Export current and older recovery for comparison, then close or reload older tabs before continuing with the current shelf.');
+      error.code='asset_recovery_legacy_changed';error.review=review;throw error;
+    }
+    async function snapshot(){
+      const entry=await owner.read(),state=ownerEntry(entry),legacy=await legacyRaw(),raw=state?state.raw:legacy;
+      const records=raw===null?[]:await decode(raw,crypto);
+      const seen=await digestRaw(legacy);
+      if(state&&state.legacy_digest!==seen)quarantine(state,seen);
+      return {entry,state,raw,records,legacy_digest:seen};
+    }
+    async function read(){return (await snapshot()).records;}
+    async function locked(action){
       const lock=locker();if(!lock?.request)fail('Browser locks are unavailable; no shelf-dependent write was sent.');
       const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),lockTimeoutMs);
-      try{return await lock.request(LOCK,{mode:'exclusive',signal:controller.signal},async()=>{
-        clearTimeout(timer);
-        const store=target(),before=store.getItem(KEY),records=before===null?[]:await decode(before,crypto);
-        const next=await update(records),raw=await encode(next,crypto);
-        // Also detect writes by older/uncooperative clients that do not take this lock.
-        if(store.getItem(KEY)!==before)fail('Recovery storage changed during inspection; refresh before retrying.');
-        try{store.setItem(KEY,raw);if(store.getItem(KEY)!==raw)fail('Recovery readback did not verify.');}
-        catch(error){throw Error('Could not retain recovery storage: '+error.message);}
-        return next;
-      });}finally{clearTimeout(timer);}
+      try{return await lock.request(LOCK,{mode:'exclusive',signal:controller.signal},()=>{clearTimeout(timer);return action();});}finally{clearTimeout(timer);}
     }
+    async function change(update){return locked(async()=>{
+      const before=await snapshot(),next=await update(before.records),raw=await encode(next,crypto),seen=await legacyDigest();
+      if(seen!==before.legacy_digest){if(before.state)quarantine(before.state,seen);fail('Older recovery changed during inspection; refresh before retrying.');}
+      await owner.compareAndSwap(before.entry,{version:1,raw,legacy_digest:before.legacy_digest});return next;
+    });}
+    async function acceptLegacy(review){return locked(async()=>{
+      const inspected=review&&reviews.get(review);if(!inspected)fail('Refresh recovery before reviewing older changes.');
+      const entry=await owner.read(),current=ownerEntry(entry);if(!sameEntry(entry,inspected.entry))fail('Current recovery changed; refresh before reviewing older changes.');
+      const seen=await legacyDigest();if(seen!==inspected.legacy_digest)quarantine(current,seen);
+      // The inspected owner was already validated. Revalidate its bundle before
+      // acknowledging; corrupt evidence must not gain authoritative use.
+      await decode(current.raw,crypto);
+      if(await legacyDigest()!==seen)fail('Older recovery changed during review; refresh before continuing.');
+      await owner.compareAndSwap(inspected.entry,{...inspected.state,legacy_digest:seen});reviews.delete(review);
+    });}
     return {
       list:read,
       async put(record,expectedDigest=null){
@@ -199,8 +281,9 @@
       async remove(identifier,expectedDigest){return change(records=>{const r=records.find(r=>r.id===identifier);if(!r||r.sha256!==expectedDigest)fail('Recovery record changed; inspect before discard.');return records.filter(r=>r.id!==identifier);});},
       async importRecords(records){await encode(records,crypto);return change(existing=>{const known=new Set(existing.map(r=>r.id));if(records.some(r=>known.has(r.id)))fail('Duplicate imported record already exists.');return [...existing,...records];});},
       async export(){return encode(await read(),crypto);},
-      raw(){const raw=target().getItem(KEY);if(raw!==null&&(raw.length>LIMITS.total||bytes(raw)>LIMITS.total))fail('Raw recovery exceeds the safe export limit.');return raw;}
+      async raw(){const entry=await owner.read();if(!entry.length)return legacyRaw();const state=entry[0];return rawBound(typeof state?.raw==='string'?state.raw:JSON.stringify(state)??String(state));},
+      legacyRaw,acceptLegacy
     };
   }
-  return {KEY,LOCK,LIMITS,REGISTERED_TITLE_MAX,parse,canonical,project,seal,encode,decode,create};
+  return {KEY,LOCK,DATABASE,STORE,ENTRY,LIMITS,REGISTERED_TITLE_MAX,parse,canonical,project,seal,encode,decode,create};
 });
