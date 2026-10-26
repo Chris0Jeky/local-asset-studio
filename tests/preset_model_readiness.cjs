@@ -50,11 +50,48 @@ const count=()=>requests.filter(r=>r.options.method==='POST').length;
   const html=element('#modelCards').innerHTML;
   assert.match(html,/data-install="manual" disabled/);assert.match(html,/data-install="unknown" disabled/);
   assert.ok(!/data-install="ok" disabled/.test(html));
+
+  const retained='C:\\model library\\'+('long folder\\'.repeat(32))+'.model-<img src=x onerror=bad()>&".unverified';
+  const cleanup='Do not load this file. Inspect it manually; <script>bad()</script> is text.';
+  const otherCleanup='Do not load this file. '+('Keep for inspection. '.repeat(20))+'<b>Manual cleanup</b> only.';
+  const failure={status:'failed',message:cleanup+' Published file failed verification.'};
+  const rows=[{id:'failed',name:'Failed download',download:failure},
+    {id:'other',name:'Other failure',download:{status:'failed',message:'Other failure'}},
+    {id:'installed',name:'Installed model',present:true,verified:true,download:{status:'installed'}},
+    {id:'active',name:'Active download',download:{status:'downloading',updated_at:Date.now()/1000}},
+    {id:'legacy',name:'Legacy failure',download:{status:'failed',message:'Original failure'}}]
+    .map(row=>({family:'Fixture',file:row.id+'.safetensors',bytes:8,installable:true,...row}));
+  const draw=async assets=>{libraryReply={...libraryReply,assets};await vm.runInContext('refreshLibrary()',context);return element('#modelCards').innerHTML;};
+  const before=await draw(rows),buttons=value=>value.match(/<button data-install=[^>]+>[^<]+<\/button>/g);
+  const recovered=await draw(rows.map(row=>({...row,download:{...row.download,
+    unverified_path:row.id==='failed'?retained:row.id==='other'?'C:\\other.unverified':'STALE-PATH',
+    cleanup:row.id==='failed'?cleanup:row.id==='other'?otherCleanup:'STALE-CLEANUP'}})));
+  const cards=recovered.match(/<article class="model-card">[\s\S]*?<\/article>/g);
+  const failed=cards.find(card=>card.includes('data-install="failed"'));
+  assert.ok(failed.includes(retained.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;')),
+    'the failed card exposes the complete retained path beyond the short message budget');
+  assert.ok(failed.includes('Retained unverified file'),'the path is explicitly identified for manual recovery');
+  assert.ok(failed.includes('&lt;script&gt;bad()&lt;/script&gt;'),'complete cleanup text is escaped');
+  assert.ok(!failed.includes('<script>')&&!failed.includes('<img'),'receipt fields cannot introduce markup');
+  assert.equal(failed.split('Do not load this file.').length-1,1,'a cleanup prefix already in the bounded message is shown once');
+  assert.ok(!failed.includes('C:\\other.unverified'),'another failure never owns this path');
+  const other=cards.find(card=>card.includes('data-install="other"'));
+  assert.ok(other.includes('C:\\other.unverified')&&!other.includes('long folder'),'each failed receipt retains its own path');
+  assert.ok(other.includes(otherCleanup.replaceAll('<','&lt;').replaceAll('>','&gt;')),'cleanup is complete even beyond the message budget');
+  assert.deepEqual(buttons(recovered),buttons(before),'recovery details preserve installer and active-download decisions');
+  for(const id of ['installed','active']){
+    const card=cards.find(value=>value.includes('data-install="'+id+'"'));
+    assert.ok(!card.includes('STALE-PATH')&&!card.includes('STALE-CLEANUP')&&!card.includes('model-recovery'),
+      'recovery fields are shown only on a failed receipt: '+id);
+  }
+  const legacy=await draw([{...rows[4],download:{status:'failed',message:'Original failure',unverified_path:{invalid:true},cleanup:['invalid']}}]);
+  assert.ok(legacy.includes('Original failure')&&!legacy.includes('model-recovery'),'legacy and malformed optional fields keep the original error');
+  await draw([{id:'manual',installable:false,install_note:'Pin only'},{id:'unknown'},{id:'ok',installable:true}]);
   assert.equal(count(),0,'rendering and readiness must not write');
   const disabled={disabled:true,dataset:{install:'manual'}};
   await handlers.click({target:{closest:s=>s==='[data-install]'?disabled:null}});assert.equal(count(),0,'disabled delegated controls never dispatch');
   const enabled={disabled:false,dataset:{install:'ok'}};
   await handlers.click({target:{closest:s=>s==='[data-install]'?enabled:null}});
   assert.equal(count(),1);assert.equal(requests.find(r=>r.options.method==='POST').url,'/api/models/install');
-  console.log('Dependency and Models controls require explicit installer eligibility; readiness and rendering stay read-only.');
+  console.log('Dependency and Models controls require explicit installer eligibility; failed recovery text is complete, escaped and receipt-owned; rendering stays read-only.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

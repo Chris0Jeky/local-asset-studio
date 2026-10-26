@@ -96,3 +96,27 @@ of these checks.
 Native Windows share-delete behavior is covered by deterministic rename-denial
 fault injection here, not a native Windows execution. Full repository and
 hosted integration validation remain separate publication gates.
+
+## Failed-card recovery display follow-up
+
+The Models card now displays the complete retained path and cleanup text from
+its own failed receipt. Both fields are escaped, and the path preserves its
+whitespace while wrapping inside narrow cards. A cleanup prefix already present
+in the bounded failure message is shown once in the recovery block. Installed
+and active receipts do not display stale recovery fields. Existing install,
+verification and busy-state decisions are unchanged; no cleanup action is added.
+
+The existing `test_preset_model_frontend.py` runner exercises production
+`app.js` with inert DOM and fetch boundaries. The new assertion failed against
+the previous UI because the complete path was absent, then passed after the
+display change. It covers long and hostile text, per-receipt ownership,
+failed-only display, legacy/malformed optional fields, unchanged button markup,
+and zero rendering writes.
+
+`tests/model_download_recovery_browser.py` is an opt-in real-frontend proof with
+synthetic APIs and blocked external traffic. It passed at 1,440, 390 and 320 pixel
+viewport widths with a 447-character retained path. The recovery blocks were
+331, 318 and 248 pixels wide: the full path and cleanup remained present, no
+card overflow or injected elements occurred, and no page errors or mutations
+were recorded. Screenshots were inspected. This is local Chromium evidence, not
+a native Windows or backend execution claim.
