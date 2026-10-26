@@ -15,6 +15,9 @@ The grid browser's two reproduced sort/read races now wait for the matching page
 instructions, direct peers are checked before TLS, and the Linux/Windows intake matrix covers
 the transport and publication contracts. Full-suite scheduling avoids duplicate PR branch-push
 runs while retaining the suite, leak checks, provenance and validation gates.
+Qualification also reproduced an existing early-bootstrap race (#1649): startup now waits for
+its companion scripts, with a deliberately delayed-script browser regression. Restyle fixture
+resets use a cloned synthetic source; actual copy actions retain native HTTP and error checks.
 
 The [dated verification record](docs/verification/2026-10-26-review-workflows.md) separates scoped
 local/browser evidence from published-head CI and merge-tree qualification. The separate
