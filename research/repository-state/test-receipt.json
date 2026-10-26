@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "source_sha": "9df20ed8dad91647b16198e353b709db03ce5dd7",
-  "run_at": "2026-09-14T12:20:00Z",
-  "command": "python -m unittest discover -s tests",
-  "total": 2294,
-  "passed": 2229,
-  "skipped": 65,
+  "source_sha": "ce1cfe367277905c0e4104fbfa2d9a524bbbdf4d",
+  "run_at": "2026-10-26T21:39:06Z",
+  "command": "FULL_SUITE_LIFETIME_BUDGET_SECONDS=1200 python tests/check_full_suite_lifetime.py",
+  "total": 6186,
+  "passed": 6105,
+  "skipped": 81,
   "failures": 0,
   "errors": 0,
-  "environment": "Windows 11 / Python 3.14 strict full-suite control"
+  "environment": "GitHub Actions Ubuntu 24.04.5 / Python 3.12.15; PR #1675, run 40406112921, job 121864166817; clean lifetime shutdown"
 }

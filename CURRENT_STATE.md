@@ -1,5 +1,66 @@
 # Current state — 26 October 2026
 
+## Engineering integration closeout — 26 October 2026, 21:54 GMT
+
+The reviewed continuation is merged through #1675 at
+`928df102faa524958892830bc8f63819318fab92`. The [integration record](docs/verification/2026-10-26-integration-closeout.md)
+maps each exact head, tested tree, actual merge and retained failure. Earlier
+entries below remain evidence for their own source and date; their pending
+qualification statements are superseded by this dated closeout.
+
+- **Recovery:** #1659 merged the transactional IndexedDB shelf, explicit legacy
+  migration/quarantine and close/reopen/export/import qualification. Native Linux
+  and Windows each passed 54 UI and 14 transaction checks, including browser-owned
+  200% zoom. Issues #392 and #825 are complete. #1664 retains historical refusal
+  explanations beside the exact pending command; 32 native checks passed per OS.
+- **Library:** #1660 completes #1627: atomic asset/collection observations,
+  deliberate page retention, unavailable-record reporting and off-page consumers.
+  Native qualification covers 205 actual temporary SQLite assets, cross-page
+  selection and explicit 20/5 same-run pages; all 15 checks passed.
+- **Agent readers:** #1665 adds MCP history, comparison and revision export through
+  the existing typed client, with a 1 MiB raw-body bound, strict duplicate-key
+  decoding and exact revision continuation. The mandatory official-SDK lane ran
+  all 17 reader cases on each OS without skips. #123 and #395 retain broader work.
+- **Finishing and readiness:** #1656/#1658 qualify source video-track bounds and
+  decoded output coverage before successful AV receipts. #1667 completes #1661's
+  missing/empty Qwen encoder investigation; #1672 closes the direct MOSS launcher
+  gap. All three Qwen and four MOSS direct-launcher cases passed on Windows without
+  skips. Disposable controls do not establish installed-host inference quality.
+- **Evidence and CI:** #1666 supplies the missing synthetic owner fields without
+  changing assertions. #1674 retains Guided navigation evidence before cleanup
+  and bounds Bundle, UX and Linux Lifecycle installation. All four browser workflows (five jobs)
+  passed on the hosted source. The original Guided timeout's cause remains
+  unestablished; its synthetic held-image probe proves diagnostic ordering only.
+  The additional #1675 correction handles Windows peer-abort response writes;
+  causal controls retain unrelated errors, one read/response attempt and unchanged
+  real SQLite data.
+
+The final code qualification at `ce1cfe367277905c0e4104fbfa2d9a524bbbdf4d` passed **6,186 tests in
+683.038 seconds, 81 skips, zero failures/errors**, with clean
+lifetime shutdown and every recorded exit callback returning. Its tree equals
+the final code merge. Validation checked **94 graphs/bindings, 189 pinned
+assets, 4,568 tracked paths and 164 LoRA names**. The generated
+[repository snapshot](docs/generated/REPOSITORY-STATE.md) binds these receipts to
+that measurement source separately from its captured main revision. It is a
+dated bounded queue, not live GitHub state.
+
+The operating-model closeout for #315 refreshes current `STATUS.md`, preserves
+the September assessment as history, applies the existing taxonomy/WIP policy to
+the active queue and defines a bounded future ledger archive procedure. No archive
+or automatic service was introduced. #177's measured resource qualification and
+#393's remaining keyboard/focus/accessibility matrix are the next authored ready
+slices. Configured-host resource work and the accepted-asset loop remain separate.
+
+Concurrent #1668/#1670 and merged evidence closeout #1671 were preserved and
+reviewed during integration. Their 42 completed image records and blind reread
+of 12 existing images belong to that recorded study; this engineering continuation
+submitted no GPU generation. The MOSS closeout gains a dated clarification of the
+raw receipt's inherited five-job scope label; raw receipts and hashes are unchanged.
+Nine follow-up renders and eight Kromoss comparisons remain unrun. #1662 retains
+its external pinned-transfer dependency; `HUMAN_TODO.md` retains the first-hand UX,
+art acceptance and MOSS Make-look decisions without inferring new answers.
+
+
 ## Owner-requested session closeout — 26 October 2026
 
 The intake-test repair merged as [#1670](https://github.com/Chris0Jeky/local-asset-studio/pull/1670)

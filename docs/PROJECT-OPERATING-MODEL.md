@@ -1,6 +1,6 @@
 # Repository operating model
 
-This guide keeps Local Asset Studio's active queue legible while preserving the detailed evidence that makes the project reliable. It implements the first operating slice of issue #315. It does not replace GitHub, `STATUS.md`, `CURRENT_STATE.md`, `HUMAN_TODO.md` or the domain-specific runbooks.
+This guide keeps Local Asset Studio's active queue legible while preserving the detailed evidence that makes the project reliable. It records the operating model delivered for issue #315. It does not replace GitHub, `STATUS.md`, `CURRENT_STATE.md`, `HUMAN_TODO.md` or the domain-specific runbooks.
 
 ## Four different records
 
@@ -150,24 +150,33 @@ The `next_ready` array is a bounded **authored selection** from the capture. Val
 
 ## Evidence retention and archive
 
-`CURRENT_STATE.md` remains the append-only evidence ledger for now. When it becomes materially difficult to load or review, move older dated sections into `docs/evidence/YYYY-MM.md`, keep a dated index at the top of `CURRENT_STATE.md`, and preserve Git history. Do not rewrite old measurements to match new definitions.
+Review ledger size during planned monthly maintenance. `CURRENT_STATE.md` remains the dated execution ledger; `docs/STATUS.md` remains the current assessment. A new result may supersede an old claim by a dated correction, but it never silently replaces that claim or converts a failed check into a pass.
+
+When the ledger exceeds **1 MiB**, an archive PR may move completed calendar-month sections older than **90 days** to root-level `CURRENT_STATE-YYYY-MM.md` files. Keeping archived ledgers at the same path depth preserves their existing relative evidence links. This is a bounded maintenance procedure, not a new CI gate or automatic scheduled job. No archive is required for the 26 October capture, whose ledger is below that threshold.
+
+An archive change must:
+
+1. Keep active work, unresolved defects, pending qualification, uncertain commands and owner decisions in the current records. An old date alone never makes a section complete.
+2. Keep each failure, causal investigation and later correction together. If a related sequence spans months or remains unresolved, leave the whole sequence in the live ledger until it can be moved without losing context.
+3. Copy the selected section bodies exactly, including source SHAs, prompt IDs, timings, limitations and original wording. Before removing the duplicated bodies from the live ledger, compare the original and archived bytes and retain their SHA-256s in the archive PR evidence.
+4. Leave each original heading in `CURRENT_STATE.md` with a link to the archived heading, preserving incoming anchors. Add the covered dates, source revision and root-level archive links to `docs/history/README.md`. Verify both embedded evidence paths and fragment targets before moving a section. If exact copying would break a cross-section anchor, retain the linked section group in the live ledger until it can be archived coherently. Do not move supporting verification documents or rewrite evidence bodies just to reduce ledger size.
+5. Keep `HUMAN_TODO.md` authoritative and unchanged by archival. A completed generation or passing suite cannot convert an owner choice into acceptance.
+6. Run repository validation, check the retained heading links and all embedded archive path/fragment links, and review the resulting current assessment and active-work capture. A historical correction belongs beside the original record or in a dated linked annotation, never in a silently edited receipt.
 
 Generated snapshots are replaceable projections. Raw runtime, browser, model and private-media evidence remains under ignored `.runtime/` or the documented external evidence root. Do not commit private source art or credentials merely to make the snapshot self-contained.
 
-## Scope of this first slice
+Git history remains available, but is not the only locator for moved evidence: the live heading links, archive index and source revision keep the record discoverable. Labels, automated GitHub capture and a project board are optional future conveniences; the documented taxonomy, authored bounded capture and deterministic generator are sufficient to operate this model without a mandatory external service.
 
-Delivered here:
+## Delivered operating model — 26 October 2026
 
-- the taxonomy and WIP contract;
-- a structured issue form and concise-first PR template;
-- an offline deterministic generator with separate work/receipt provenance, stale-receipt handling and a drift gate that depends only on committed capture evidence;
-- root-owned stack validation and a one-owner-run-lane gate;
-- a checked generated snapshot and CI drift gate;
-- a bounded capture of the current active queue.
+The operating-model acceptance in #315 is represented by:
 
-Still open under #315:
+- the taxonomy/readiness tables and bounded active issue/PR capture;
+- the authored next-ready list with explicit dependencies;
+- the linked WIP limit, root-owned stack validation and single owner-run lane;
+- the deterministic generated view, SHA-bound CI receipts and drift check;
+- current authored `docs/STATUS.md` alongside the dated `CURRENT_STATE.md` ledger and the retention procedure above;
+- the concise-first PR template and evidence-linked implementation PRs;
+- explicit owner overrides and maintenance bypass without a mandatory external service.
 
-- applying labels to the wider active issue set;
-- generating GitHub captures automatically through a reviewed connector/export path;
-- deciding an exact ledger archive threshold after observing growth;
-- refining the queue based on actual use without turning it into bureaucracy.
+Labels for a wider issue set, automated connector capture and further queue refinements may be proposed as independent improvements when needed. They are optional representations or conveniences, not prerequisites for the delivered model. GitHub remains authoritative for live work; the checked capture always states its observation time.

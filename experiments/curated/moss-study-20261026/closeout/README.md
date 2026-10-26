@@ -17,6 +17,12 @@ were checked before the batch; full file identities and template were checked
 before each submission. Retained JSON is LF-normalized; separate export hashes
 retain the original exported bytes.
 
+**Receipt-label clarification, 26 October:** the retained `model_pins.scope` string
+in `followup-receipts.json` says "five-job character batch". This historical label
+does not define the number of follow-up executions: the receipt's three job
+records and their hashes are the recorded scope. It supplies no evidence of two
+additional runs or a new hash-verification event. The raw receipt is preserved.
+
 All three are agent-rated keep, with minor glove/fingertip boundary ambiguity.
 Recognition anchors remain clear. Fuller-bust wording gives a modest apparent
 change; the torso angle also changes, so this is not a precise size measurement.

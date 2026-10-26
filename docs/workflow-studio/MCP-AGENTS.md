@@ -206,8 +206,9 @@ resumable events, artifact download, or owned-job cancellation is claimed here.
   stale-write refusal. Its "lost response" leg discards an already returned reply;
   it does not simulate power failure.
 - The dedicated `Workflow MCP contracts` CI lane installs the pinned SDK on
-  Ubuntu and Windows and requires it before running protocol tests. The ordinary
-  Studio suite can skip only the four optional protocol tests when MCP is absent.
+  Ubuntu and Windows and requires it before running its applicable protocol tests.
+  Ordinary discovery may skip optional SDK protocol cases when MCP is absent;
+  those skips are not protocol evidence.
 
 The authoring environment lacks the optional SDK/full private checkout, so the
 protocol and full-suite claims require the published CI run, linked from the PR.
