@@ -12,6 +12,7 @@ on:
       - 'tests/asset_detail_contracts.cjs'
       - 'tests/asset_detail_browser.py'
       - 'tests/studio_browser_smoke.py'
+      - 'tests/browser_shelf_owner.py'
       - '.github/workflows/asset-recovery-refusals.yml'
   workflow_dispatch:
 permissions:

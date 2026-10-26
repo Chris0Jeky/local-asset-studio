@@ -75,10 +75,20 @@ def run(output):
                     assert recovery.locator('p').last.text_content() == CLEANUP
                     assert card.text_content().count(CLEANUP) == 1
                     assert card.locator('img,script').count() == 0
-                    bounds = recovery.evaluate('(el)=>({width:el.clientWidth,scroll:el.scrollWidth,whiteSpace:getComputedStyle(el.querySelector("code")).whiteSpace})')
+                    # Inventory and model-use responses can replace a card after a
+                    # locator resolves it. Read the live nodes and their geometry
+                    # in one browser turn, before another response can redraw them.
+                    bounds = page.evaluate('''() => {
+                        const card = document.querySelector('#modelCards .model-card');
+                        const el = card.querySelector('.model-recovery');
+                        return {width:el.clientWidth,scroll:el.scrollWidth,
+                            whiteSpace:getComputedStyle(el.querySelector('code')).whiteSpace,
+                            cardWidth:card.clientWidth,cardScroll:card.scrollWidth};
+                    }''')
+                    assert bounds['width'] > 0 and bounds['cardWidth'] > 0, bounds
                     assert bounds['scroll'] <= bounds['width'] + 1, bounds
                     assert bounds['whiteSpace'] == 'pre-wrap', bounds
-                    assert card.evaluate('(el)=>el.scrollWidth<=el.clientWidth+1')
+                    assert bounds['cardScroll'] <= bounds['cardWidth'] + 1, bounds
                     card.evaluate('(el)=>window.scrollBy(0,el.getBoundingClientRect().top-document.querySelector(".models-toolbar").getBoundingClientRect().bottom-16)')
                     evidence_screenshot(card, path=str(output / f'recovery-card-{width}.png'))
                     assert not errors, errors

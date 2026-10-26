@@ -1,6 +1,6 @@
 """Closed-tab recovery over the shipped UI and disposable real HTTP/SQLite.
 
-Default: native localStorage, WebCrypto and Web Locks on the production loopback
+Default: native IndexedDB, WebCrypto and Web Locks on the production loopback
 origin. --inert explicitly substitutes browser storage/hash/locks/transport and
 copies local data between documents; it is NOT native persistence evidence.
 """
@@ -22,6 +22,7 @@ from PIL import Image
 from playwright.async_api import async_playwright
 import studio_browser_smoke as fixture
 from asset_detail_browser import inert_page
+from browser_shelf_owner import inert_shelf_owner, replace_shelf_raw, clear_shelf_storage, refuse_shelf_writes, read_shelf_entry
 import server as production
 
 
@@ -130,7 +131,7 @@ async def exercise(args):
                     await page.wait_for_function('!assetShelfChanging')
 
                 async def import_refused(page, name, content, message):
-                    raw = await page.evaluate('localStorage.getItem(StudioAssetRecoveryShelf.KEY)')
+                    raw = await page.evaluate('assetShelfStore.raw()')
                     journal = await page.evaluate('JSON.stringify({...sessionStorage})')
                     before_posts, before_receipts = len(writes), sum('/api/assets/commands/' in r for r in reads)
                     await tab_to(page, '#assetShelfImport')
@@ -138,7 +139,7 @@ async def exercise(args):
                     check(name, await page.evaluate('''message=>assetShelfImported===null &&
                           document.getElementById('assetShelfImportPreview').hidden &&
                           document.getElementById('assetShelfStatus').textContent.includes(message)''', message) and
-                          await page.evaluate('localStorage.getItem(StudioAssetRecoveryShelf.KEY)') == raw and
+                          await page.evaluate('assetShelfStore.raw()') == raw and
                           await page.evaluate('JSON.stringify({...sessionStorage})') == journal and len(writes) == before_posts and
                           sum('/api/assets/commands/' in r for r in reads) == before_receipts and
                           await page.evaluate("document.activeElement.id==='assetShelfImport'"))
@@ -162,9 +163,8 @@ async def exercise(args):
                           Object.defineProperty(window, 'crypto', {value:{getRandomValues: crypto.getRandomValues.bind(crypto),
                             subtle:{digest:async(name,data)=>new Uint8Array(await __shelfHash(Array.from(data))).buffer}}});
                           let tail=Promise.resolve();Object.defineProperty(navigator,'locks',{value:{request:(n,o,fn)=>{const p=tail.then(fn);tail=p.catch(()=>{});return p;}}});
-                          assetShelfStore=StudioAssetRecoveryShelf.create({storage:()=>localStorage,locks:()=>navigator.locks,crypto});
-                          assetShelfSession=StudioAssetRecoveryShelfSession.create({journal:assetRecovery,store:assetShelfStore,crypto,onStatus:assetShelfStatus});
                         }''')
+                        await inert_shelf_owner(page)
                         if retained is not None:
                             await page.evaluate('raw=>localStorage.setItem(StudioAssetRecoveryShelf.KEY,raw)', retained)
                     else:
@@ -175,7 +175,7 @@ async def exercise(args):
                     nonlocal retained
                     await page.evaluate('assetShelfSession.flush()')
                     if args.inert:
-                        retained = await page.evaluate('localStorage.getItem(StudioAssetRecoveryShelf.KEY)')
+                        retained = await page.evaluate('assetShelfStore.raw()')
                     await page.close()
 
                 async def shelf(page, details=False):
@@ -260,7 +260,7 @@ async def exercise(args):
                 if b'\xef\xbf\xbd' not in malformed_bytes:
                     raise AssertionError('Synthetic bundle did not contain the replacement-character UTF-8 bytes')
                 malformed_bytes = malformed_bytes.replace(b'\xef\xbf\xbd', b'\x80', 1)
-                invalid_import_before = await page.evaluate('localStorage.getItem(StudioAssetRecoveryShelf.KEY)')
+                invalid_import_before = await page.evaluate('assetShelfStore.raw()')
                 invalid_import_writes = len(writes)
                 await page.set_input_files('#assetShelfImport', {
                     'name': 'malformed-utf8-recovery.json', 'mimeType': 'application/json',
@@ -270,13 +270,13 @@ async def exercise(args):
                       await page.evaluate('''() => assetShelfImported===null &&
                         document.querySelector('#assetShelfImportPreview').hidden &&
                         document.querySelector('#assetShelfStatus').textContent.includes('valid UTF-8')''') and
-                      await page.evaluate('localStorage.getItem(StudioAssetRecoveryShelf.KEY)') == invalid_import_before and
+                      await page.evaluate('assetShelfStore.raw()') == invalid_import_before and
                       len(writes) == invalid_import_writes)
                 async with page.expect_download() as download_info:
                     await activate(page, '#assetShelfExport')
                 download = await download_info.value; exported = Path(await download.path()).read_bytes()
                 before = len(writes); before_receipts = sum(export_request in r for r in reads)
-                await page.evaluate('''() => {localStorage.clear();sessionStorage.clear();}''')
+                await clear_shelf_storage(page, args.inert)
                 # Do not flush the closed tab back into the deliberately cleared storage.
                 await page.close(); retained = None; page = await page_new()
                 check('SHELF-EXPORT-01 fresh tab starts without a shelf or session recovery',
@@ -291,7 +291,7 @@ async def exercise(args):
                 await page.wait_for_function('assetShelfImported!==null')
                 check('SHELF-11 fresh-tab import inspection does not persist, query receipts or mutate', len(writes) == before and
                       sum(export_request in r for r in reads) == before_receipts and
-                      await page.evaluate('localStorage.getItem(StudioAssetRecoveryShelf.KEY)') is None)
+                      await page.evaluate('assetShelfStore.raw()') is None)
                 await activate(page, '#assetShelfImportConfirm'); await page.wait_for_function('assetShelfImported===null && !assetShelfChanging')
                 imported_records = await page.evaluate('assetShelfStore.list()')
                 imported_pending = next(r for r in imported_records if (r['payload'].get('operation') or {}).get('command', {}).get('request_id') == export_request)
@@ -320,10 +320,10 @@ async def exercise(args):
                     await page.reload(); await ready(page)
                 await shelf(page)
                 local_view = await page.evaluate('JSON.stringify(assetRecovery.read("detail"))')
-                shelf_view = await page.evaluate('localStorage.getItem(StudioAssetRecoveryShelf.KEY)')
+                shelf_view = await page.evaluate('assetShelfStore.raw()')
                 await activate(page, f'[data-shelf-restore="{imported_id}"]'); await page.wait_for_function('!assetShelfChanging')
                 conflict_observation = {'journal_unchanged': await page.evaluate('JSON.stringify(assetRecovery.read("detail"))') == local_view,
-                    'shelf_unchanged': await page.evaluate('localStorage.getItem(StudioAssetRecoveryShelf.KEY)') == shelf_view,
+                    'shelf_unchanged': await page.evaluate('assetShelfStore.raw()') == shelf_view,
                     'status': await page.locator('#assetShelfStatus').inner_text(), 'posts_before': before, 'posts_after': len(writes),
                     'editor_open': await page.locator('#assetDialog').evaluate('(element)=>element.open')}
                 check('SHELF-CONFLICT-01 occupied session and imported viewpoint both survive refusal',
@@ -348,7 +348,7 @@ async def exercise(args):
                 ]:
                     await import_refused(page, name, content, message)
                 for cancelled_kind, cancelled_bytes in [('valid', exported), ('malformed', b'{')]:
-                    cancelled_storage = await page.evaluate('localStorage.getItem(StudioAssetRecoveryShelf.KEY)')
+                    cancelled_storage = await page.evaluate('assetShelfStore.raw()')
                     await page.evaluate('''() => {const original=File.prototype.arrayBuffer;
                       window.__importReadHeld=false;File.prototype.arrayBuffer=function(){const file=this;File.prototype.arrayBuffer=original;
                         return new Promise((resolve,reject)=>{window.__releaseImportRead=()=>original.call(file).then(resolve,reject);window.__importReadHeld=true;});};}''')
@@ -360,13 +360,13 @@ async def exercise(args):
                     await tab_to(page, '#assetShelfImport')
                     current_status = await page.locator('#assetShelfStatus').inner_text()
                     await page.evaluate('__releaseImportRead()'); await page.wait_for_function('!assetShelfChanging')
-                    cancelled_observation = await page.evaluate('''()=>({imported:assetShelfImported!==null,
+                    cancelled_observation = await page.evaluate('''async()=>({imported:assetShelfImported!==null,
                       hidden:document.getElementById('assetShelfImportPreview').hidden,focus:document.activeElement.id,
                       dialog:document.getElementById('assetRecoveryShelfDialog').open,epoch:assetShelfImportEpoch})''')
                     check('SHELF-KEYBOARD-06 cancelled inspection cannot replace a reopened dialog (' + cancelled_kind + ')',
                           not cancelled_observation['imported'] and cancelled_observation['hidden'] and cancelled_observation['focus'] == 'assetShelfImport' and
                           await page.locator('#assetShelfStatus').inner_text() == current_status and
-                          await page.evaluate('localStorage.getItem(StudioAssetRecoveryShelf.KEY)') == cancelled_storage and len(writes) == before, cancelled_observation)
+                          await page.evaluate('assetShelfStore.raw()') == cancelled_storage and len(writes) == before, cancelled_observation)
                 # Foreign evidence is valid for inspection/export, never restoration.
                 foreign_reads = [r for r in reads if '/api/assets/commands/' in r or '/api/assets/recovery-observation' in r]
                 foreign = await page.evaluate('''async()=>{const [r]=await assetShelfStore.list(),p=structuredClone(r.payload),w='2'.repeat(32);p.workspace_id=w;p.metadata.workspace_id=w;
@@ -380,7 +380,7 @@ async def exercise(args):
                 rejected_bundle = await page.evaluate('r=>StudioAssetRecoveryShelf.encode([r])', rejected_record)
                 for rejected_context in ['active', 'reopened', 'committed-reopened']:
                     await import_inspect(page, rejected_bundle.encode())
-                    rejected_raw = await page.evaluate('localStorage.getItem(StudioAssetRecoveryShelf.KEY)')
+                    rejected_raw = await page.evaluate('assetShelfStore.raw()')
                     await page.evaluate('''commitFirst => {const original=assetShelfStore.importRecords.bind(assetShelfStore);
                       window.__rejectedImportHeld=false;assetShelfStore.importRecords=async records=>{
                         await new Promise(resolve=>{window.__releaseRejectedImport=resolve;window.__rejectedImportHeld=true;});
@@ -393,9 +393,9 @@ async def exercise(args):
                         await tab_to(page, '#assetShelfImport')
                     rejected_status = await page.locator('#assetShelfStatus').inner_text()
                     await page.evaluate('__releaseRejectedImport()'); await page.wait_for_function('!assetShelfChanging')
-                    rejected_observation = await page.evaluate('''()=>({status:document.getElementById('assetShelfStatus').textContent,
+                    rejected_observation = await page.evaluate('''async()=>({status:document.getElementById('assetShelfStatus').textContent,
                       imported:assetShelfImported!==null,hidden:document.getElementById('assetShelfImportPreview').hidden,
-                      focus:document.activeElement.id,raw:localStorage.getItem(StudioAssetRecoveryShelf.KEY)})''')
+                      focus:document.activeElement.id,raw:await assetShelfStore.raw()})''')
                     if rejected_context == 'active':
                         expected_ui = 'Synthetic local import rejection' in rejected_observation['status'] and rejected_observation['imported'] and not rejected_observation['hidden'] and rejected_observation['focus'] == 'assetShelfImportConfirm'
                     else:
@@ -464,7 +464,7 @@ async def exercise(args):
                     records = await page.evaluate('assetShelfStore.list()'); base = records[0]
                     update = """async data=>{const r=data.record,p=structuredClone(r.payload);p.draft.notes=data.note;
                       const next=await StudioAssetRecoveryShelf.seal(r.slot,p,{id:r.id,generation:r.generation+1,created_at:r.created_at,updated_at:r.updated_at+1},crypto);
-                      try{await assetShelfStore.put(next,r.sha256);return {written:true,refusal:null};}catch(error){if(!error.message.includes('changed'))throw error;return {written:false,refusal:error.message};}}"""
+                      try{await assetShelfStore.put(next,r.sha256);return {written:true,refusal:null,sha256:next.sha256,note:data.note};}catch(error){if(!error.message.includes('changed'))throw error;return {written:false,refusal:error.message,sha256:next.sha256,note:data.note};}}"""
                     results = await asyncio.gather(page.evaluate(update, {'record': base, 'note': 'Tab A viewpoint'}),
                                                    other.evaluate(update, {'record': base, 'note': 'Tab B viewpoint'}))
                     # Synthetic fixture values only: retain both writer outcomes and the record's
@@ -475,13 +475,63 @@ async def exercise(args):
                             'before': {'generation': base['generation'], 'sha256': base['sha256']},
                             'after': None if final is None else {'generation': final['generation'], 'sha256': final['sha256'],
                                                                  'notes': ((final.get('payload') or {}).get('draft') or {}).get('notes')}}
-                    check('SHELF-NATIVE-01 two-tab expected-digest CAS admits exactly one writer', [r['written'] for r in results].count(True) == 1, race)
+                    winners = [r for r in results if r['written']]
+                    check('SHELF-NATIVE-01 two-tab expected-digest CAS admits exactly one writer', len(winners) == 1 and final is not None and
+                          final['generation'] == base['generation'] + 1 and final['sha256'] == winners[0]['sha256'] and
+                          final['payload']['draft']['notes'] == winners[0]['note'], race)
                     await other.evaluate("""() => {window.__shelfHeld=false;navigator.locks.request(StudioAssetRecoveryShelf.LOCK,()=>new Promise(resolve=>{window.__releaseShelfLock=resolve;window.__shelfHeld=true;}));}""")
                     await other.wait_for_function('__shelfHeld')
                     outcome = await page.evaluate("""async()=>{const r=(await assetShelfStore.list())[0];try{await assetShelfStore.remove(r.id,r.sha256);return 'unexpected';}catch(error){return error.name;}}""")
                     check('SHELF-NATIVE-02 held lock times out without unlocked fallback', outcome == 'AbortError')
-                    await other.evaluate('__releaseShelfLock()'); await other.close()
+                    await other.evaluate('__releaseShelfLock()')
                     await page.click('#assetShelfRefresh'); await page.wait_for_function('!assetShelfReading')
+                    # A genuinely separate tab writes only the preserved older
+                    # store. It cannot replace the current transactional owner.
+                    current_entry = (await read_shelf_entry(page))[0]
+                    older = await page.evaluate('''async record=>{const p=structuredClone(record.payload);p.draft.notes='Older version viewpoint';
+                      return StudioAssetRecoveryShelf.encode([await StudioAssetRecoveryShelf.seal(record.slot,p,
+                        {id:record.id,generation:record.generation+1,created_at:record.created_at,updated_at:record.updated_at+1},crypto)]);}''', final)
+                    await other.evaluate('raw=>localStorage.setItem(StudioAssetRecoveryShelf.KEY,raw)', older)
+                    await page.wait_for_function('raw=>localStorage.getItem(StudioAssetRecoveryShelf.KEY)===raw', arg=older)
+                    await page.click('#assetShelfRefresh'); await page.wait_for_function('!assetShelfReading && !!assetShelfLegacyReview')
+                    downloads = []
+                    for selector in ['#assetShelfRawExport', '#assetShelfLegacyExport']:
+                        async with page.expect_download() as info: await activate(page, selector)
+                        downloads.append(Path(await (await info.value).path()).read_bytes())
+                    check('SHELF-OWNER-01 quarantine exports preserve both exact bundles',
+                          downloads == [current_entry['raw'].encode(), older.encode()] and (await read_shelf_entry(page))[0] == current_entry and len(writes) == before)
+                    await page.set_viewport_size({'width': 390, 'height': 1000})
+                    reachable = []
+                    for selector in ['#assetShelfRawExport', '#assetShelfLegacyExport', '#assetShelfAcceptLegacy']:
+                        await tab_to(page, selector)
+                        reachable.append(await page.evaluate('''()=>{const b=document.activeElement,r=b.getBoundingClientRect(),d=document.getElementById('assetRecoveryShelfDialog');
+                          return !b.hidden&&r.left>=0&&r.right<=innerWidth+1&&d.scrollWidth<=d.clientWidth+1;}'''))
+                    check('SHELF-OWNER-02 quarantine actions remain reachable at 390px', all(reachable))
+                    await evidence_screenshot(page, path=str(args.out / 'shelf-quarantine-390.png'))
+                    acknowledgement_prompts = []
+                    async def acknowledge(dialog):
+                        acknowledgement_prompts.append(dialog.message); await dialog.accept()
+                    page.on('dialog', acknowledge)
+                    await activate(page, '#assetShelfAcceptLegacy'); await page.wait_for_function('!assetShelfChanging && !assetShelfReading && assetShelfLegacyReview===null')
+                    acknowledged = (await read_shelf_entry(page))[0]
+                    check('SHELF-OWNER-03 confirmed acknowledgement changes only compatibility metadata',
+                          acknowledged['raw'] == current_entry['raw'] and acknowledged['version'] == current_entry['version'] and
+                          acknowledged['legacy_digest'] == hashlib.sha256(older.encode()).hexdigest() and
+                          await page.evaluate('assetShelfStore.legacyRaw()') == older and
+                          len(acknowledgement_prompts) == 1 and 'Nothing will be merged or deleted.' in acknowledgement_prompts[0] and
+                          await page.evaluate("document.activeElement.id==='assetShelfRefresh'") and len(writes) == before)
+                    later_older = older + ' '
+                    await other.evaluate('raw=>localStorage.setItem(StudioAssetRecoveryShelf.KEY,raw)', later_older)
+                    await page.wait_for_function('raw=>localStorage.getItem(StudioAssetRecoveryShelf.KEY)===raw', arg=later_older)
+                    await page.click('#assetShelfRefresh'); await page.wait_for_function('!assetShelfReading && !!assetShelfLegacyReview')
+                    check('SHELF-OWNER-04 later legacy writes quarantine again without replacing current data',
+                          (await read_shelf_entry(page))[0] == acknowledged and await page.evaluate('assetShelfStore.raw()') == current_entry['raw'] and
+                          await page.evaluate('assetShelfStore.legacyRaw()') == later_older and len(writes) == before)
+                    # Deliberate fixture acknowledgement keeps the next independent
+                    # quota/capacity cases on their previously inspected current data.
+                    await activate(page, '#assetShelfAcceptLegacy'); await page.wait_for_function('!assetShelfChanging && !assetShelfReading && assetShelfLegacyReview===null')
+                    page.remove_listener('dialog', acknowledge); await other.close()
+                    await page.set_viewport_size({'width': 1280, 'height': 1000})
                 # Explicit discard is local, including an unresolved identity.
                 discard_prompts = []
                 async def accept(dialog):
@@ -492,23 +542,31 @@ async def exercise(args):
                 await page.wait_for_function('!assetShelfReading')
                 check('SHELF-15 discard changes neither SQLite nor original media', len(writes) == before and hashlib.sha256(source.read_bytes()).hexdigest() == original_hash)
                 # A full shelf of distinct unresolved identities refuses through the real UI.
-                retained_fixture = await page.evaluate('localStorage.getItem(StudioAssetRecoveryShelf.KEY)')
+                retained_fixture = await page.evaluate('assetShelfStore.raw()')
                 full_shelf = await page.evaluate('''async record=>{const records=[];for(let i=1;i<=StudioAssetRecoveryShelf.LIMITS.records;i++){
                   const p=structuredClone(record.payload);p.operation.command.request_id='capacity-request-'+i.toString().padStart(4,'0');
                   p.operation.body=JSON.stringify(p.operation.command);
                   records.push(await StudioAssetRecoveryShelf.seal(record.slot,p,{id:i.toString(16).padStart(32,'0'),generation:1,created_at:1,updated_at:1},crypto));}
-                  const raw=await StudioAssetRecoveryShelf.encode(records);localStorage.setItem(StudioAssetRecoveryShelf.KEY,raw);return raw;}''', imported_pending)
+                  return StudioAssetRecoveryShelf.encode(records);}''', imported_pending)
+                await replace_shelf_raw(page, full_shelf, args.inert)
                 await page.close(); retained = full_shelf if args.inert else None; page = await page_new()
                 await page.evaluate('id=>openAsset(id)', ids[1])
                 await page.fill('#assetNotes', 'Visible draft while twenty unresolved identities fill the shelf')
                 await enable(page)
                 await page.click('#saveAssetDetails'); await unknown(page)
                 capacity_wire = await page.evaluate('assetDetailPending.body')
+                capacity_status_before = await page.locator('#assetShelfDetailStatus').inner_text()
+                # The editor's finally path retains its newer draft once more.
+                # Wait for that real checkpoint result, including expected refusal,
+                # before asserting the final persistence/status observation.
+                capacity_error = await page.evaluate('assetShelfSession.flush().then(()=>null,error=>error.message)')
+                capacity_status = await page.locator('#assetShelfDetailStatus').inner_text()
                 check('SHELF-CAPACITY-01 full unresolved shelf refuses dependent save without eviction',
-                      len(writes) == before and await page.evaluate('localStorage.getItem(StudioAssetRecoveryShelf.KEY)') == full_shelf and
+                      len(writes) == before and await page.evaluate('assetShelfStore.raw()') == full_shelf and
                       len(await page.evaluate('assetShelfStore.list()')) == 20 and
                       await page.input_value('#assetNotes') == 'Visible draft while twenty unresolved identities fill the shelf' and
-                      'capacity' in await page.locator('#assetShelfDetailStatus').inner_text())
+                      capacity_error is not None and 'capacity' in capacity_error and 'capacity' in capacity_status,
+                      {'status_before_final_checkpoint': capacity_status_before, 'status_after_final_checkpoint': capacity_status, 'checkpoint_error': capacity_error})
                 await shelf(page, True); page.on('dialog', accept)
                 await activate(page, '[data-shelf-discard="' + '1'.zfill(32) + '"]')
                 await page.wait_for_function('!assetShelfChanging && !assetShelfReading')
@@ -518,12 +576,12 @@ async def exercise(args):
                       'may already have committed' in discard_prompts[-1] and 'does not cancel or undo server work' in discard_prompts[-1])
                 # Restore synthetic fixture data between independent refusal scenarios.
                 await page.evaluate('assetShelfSession.disable()')
-                await page.evaluate('raw=>localStorage.setItem(StudioAssetRecoveryShelf.KEY,raw)', retained_fixture)
+                await replace_shelf_raw(page, retained_fixture, args.inert)
                 await page.close(); retained = retained_fixture if args.inert else None; page = await page_new()
                 await page.evaluate('id=>openAsset(id)', ids[1]); await shelf(page, True)
                 await page.press('#assetShelfRefresh', 'Escape')
                 await enable(page)
-                await page.evaluate('''() => {const proto=Object.getPrototypeOf(localStorage),set=proto.setItem;window.__restoreShelfStorage=()=>{proto.setItem=set;};proto.setItem=function(k,v){if(k===StudioAssetRecoveryShelf.KEY)throw new DOMException('Synthetic quota','QuotaExceededError');return set.call(this,k,v);};}''')
+                await refuse_shelf_writes(page, args.inert)
                 before = len(writes); await page.fill('#assetNotes', 'Draft during a shelf quota failure')
                 await page.click('#saveAssetDetails'); await unknown(page)
                 check('SHELF-16 quota refusal sends zero POST and retains exact pending command', len(writes) == before and await page.input_value('#assetNotes') == 'Draft during a shelf quota failure')
@@ -537,7 +595,7 @@ async def exercise(args):
             failure = error
         finally:
             http.shutdown(); http.server_close(); thread.join(timeout=5)
-        (args.out / 'receipt.json').write_text(json.dumps({'mode': 'inert substitutions; NOT native storage/locks/crypto proof' if args.inert else 'native Chromium HTTP/SQLite/localStorage/Web Locks/WebCrypto', 'checks': checks, 'errors': errors, 'failure': str(failure) if failure else None, 'metadata_posts': len(writes)}, indent=2), encoding='utf-8')
+        (args.out / 'receipt.json').write_text(json.dumps({'mode': 'inert substitutions; NOT native storage/locks/crypto proof' if args.inert else 'native Chromium HTTP/SQLite/IndexedDB/Web Locks/WebCrypto', 'checks': checks, 'errors': errors, 'failure': str(failure) if failure else None, 'metadata_posts': len(writes)}, indent=2), encoding='utf-8')
         if failure:
             raise failure
 

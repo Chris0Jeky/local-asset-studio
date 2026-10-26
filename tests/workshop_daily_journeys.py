@@ -493,22 +493,27 @@ window.state=()=>{syncContinuation();return [q('#uxRestoreSourcePrompt').disable
 
     def test_workspace_refresh_reports_success_failure_and_busy(self):
         refresh = region(source('workspace.js'), 'async function refreshAssets(', '// Scope, filters')
+        observe = region(source('workspace.js'), 'function observeAssetWorkspaceIdentity(', 'function assetReceiptURL(')
         self.page.set_content('''<script>
-let assetRefreshing=false,assetState={workspace_id:'old'},assetSignature='',jobsSignature='',assetReceiptEpoch=0,assetObservationEpoch=0,assetPageEpoch=0,assetPaging=null,assetScopeRestored=false,assetSearchTimer=null,assetRetainedSelection=null,jobs=[],recentShown=10;
+let assetRefreshing=false,assetState={workspace_id:'old'},assetObservedWorkspace='old',assetWorkspaceEpoch=0,assetSignature='',jobsSignature='',assetReceiptEpoch=0,assetObservationEpoch=0,assetPageEpoch=0,assetPaging=null,assetScopeRestored=false,assetSearchTimer=null,assetRetainedSelection=null,jobs=[],recentShown=10;
 const assetSelection=new Set(),assetResolved=new Map(),StudioAssetRecovery={workspace:id=>!!id};let assetLibraryPending=null;
-function assetPageQuery(){return 'q';}function assetPageFilters(){return {};}function assetReadURL(path){return path;}function assetRecord(){return null;}async function resolveAssetIDs(){}
+function assetPageQuery(){return 'q';}function assetPageFilters(){return {};}function assetReadURL(path,options){window.lastRead={path,options};return path;}function assetRecord(){return null;}async function resolveAssetIDs(){}
 function renderLibraryRecovery(){}function renderAssets(){}function renderJobs(){}function assetMessage(){};
 window.pending=[];function api(){return new Promise((resolve,reject)=>pending.push({resolve,reject}));}
-</script><script>'''+refresh+'</script>')
+</script><script>'''+observe+refresh+'</script>')
         self.page.evaluate('()=>{window.first=refreshAssets()}')
         self.assertFalse(self.page.evaluate('refreshAssets()'))
-        self.page.evaluate("pending.splice(0).forEach(p=>p.reject(Error('offline')))")  # the page and collection reads fail together
+        self.assertEqual(self.page.evaluate('pending.length'), 1, 'assets and collections share one observation')
+        self.assertTrue(self.page.evaluate('lastRead.options.include_collections && lastRead.options.details'))
+        self.page.evaluate("pending.splice(0).forEach(p=>p.reject(Error('offline')))")
         self.assertFalse(self.page.evaluate('first'))
         self.assertEqual(self.page.evaluate('assetState.workspace_id'), 'old')
         self.page.evaluate('()=>{window.second=refreshAssets()}')
-        self.page.evaluate("const catalogue={epoch:'e',revision:1};pending[0].resolve({workspace_id:'new',catalogue,assets:[],next_cursor:null});pending[1].resolve({workspace_id:'new',catalogue,collections:[],next_cursor:null})")
+        self.assertEqual(self.page.evaluate('pending.length'), 1)
+        self.page.evaluate("const catalogue={epoch:'e'.repeat(32),revision:1};pending[0].resolve({workspace_id:'new',catalogue,assets:[],unavailable_assets:[],cursor:null,next_cursor:null,collection_page:{workspace_id:'new',catalogue,collections:[],next_cursor:null}})")
         self.assertTrue(self.page.evaluate('second'))
         self.assertEqual(self.page.evaluate('assetState.workspace_id'), 'new')
+        self.assertEqual(self.page.evaluate('assetWorkspaceEpoch'), 1)
 
     def load_outcome(self):
         self.page.goto('about:blank')

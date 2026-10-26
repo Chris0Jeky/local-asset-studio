@@ -11,6 +11,8 @@ class AssetRecoveryShelfContracts(unittest.TestCase):
         result = subprocess.run(
             [shutil.which('node'), '--test',
              str(Path(__file__).with_name('asset_recovery_shelf.cjs')),
+             str(Path(__file__).with_name('asset_recovery_shelf_owner.cjs')),
+             str(Path(__file__).with_name('asset_recovery_shelf_ui.cjs')),
              str(Path(__file__).with_name('asset_recovery_shelf_session.cjs')),
              str(Path(__file__).with_name('asset_recovery_checkpoint.cjs')),
              str(Path(__file__).with_name('asset_recovery_shelf_restore.cjs'))],

@@ -112,6 +112,42 @@ The existing Asset detail workflow now runs the two new causal harnesses and
 `library_page_browser.py` on its zero-delay matrix, and uploads the native
 receipt/screenshots with the other workflow evidence.
 
+## First hosted qualification and retained failures
+
+The first published candidate, PR #1660 head
+`12ff76929dea86b847a17382632368d87a051f3f`, exposed two browser-fixture defects:
+
+- [Workshop job 121692466588](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/40357121717/job/121692466588)
+  failed because its extracted `refreshAssets` fixture omitted the new Workspace
+  epoch and still supplied two independent asset/collection responses. The exact
+  `ReferenceError` was reproduced locally. The fixture now extracts the real
+  Workspace-identity observer, supplies its state, and asserts one combined
+  details/collections observation. Busy rejection, failed-read preservation and
+  successful Workspace adoption remain checked. The entire 54-test native daily
+  journey suite passed in 18.409 seconds, with no page exceptions.
+- [Model-readiness job 121692468637](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/40357121688/job/121692468637)
+  measured a card after a concurrent inventory/model-use response replaced it.
+  A controlled real refresh reproduced the detached handle's zero width and
+  empty computed whitespace. The fixture now looks up and measures the current
+  card in one browser operation. Both overflow assertions and the exact
+  `pre-wrap` assertion remain, with positive-width checks added. Its native
+  1440/390/320-pixel runs passed with recovery widths 331/318/248, literal hostile
+  path and cleanup text preserved, no mutations and no page exceptions.
+
+Independent review found no blocker in either fixture correction. These changes
+do not modify production CSS, raise timeouts, or relax the failed assertions.
+Original hosted logs and local causal/green runs were kept separately under
+`.runtime/model-recovery-review/` and the session's Workshop verification logs.
+Fresh hosted qualification of the corrected candidate is still required.
+
+The same candidate also exposed a real two-tab shelf lost update in
+[Ubuntu job 121692469089](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/40357121775/job/121692469089).
+Both writers returned success while only one viewpoint survived. Artifact
+`12667150927` retains their outcomes, generations and digests. That product
+correction is owned by parent PR #1659 and reopened issue #825; the earlier
+passing shelf runs do not supersede this failure. Library merge qualification
+includes the corrected parent and its native evidence.
+
 ## Limits
 
 These flows establish bounded per-request reads, truthful loaded/page counts and

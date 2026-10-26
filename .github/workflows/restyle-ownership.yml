@@ -12,6 +12,8 @@ on:
       - 'tests/test_source_slot_choice_transport.py'
       - 'tests/studio_browser_smoke.py'
       - 'tests/asset_detail_browser.py'
+      - 'scripts/ci-install-chromium.sh'
+      - 'tests/test_ci_browser_dependencies.py'
       - '.github/workflows/restyle-ownership.yml'
 permissions:
   contents: read
@@ -20,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-24.04, windows-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
@@ -35,7 +37,15 @@ jobs:
         with:
           node-version: '22'
       - run: python -m pip install playwright==1.57.0
-      - run: python -m playwright install --with-deps chromium
+      - name: Check bounded browser dependency setup
+        if: runner.os == 'Linux'
+        run: python -m unittest discover -s tests -p test_ci_browser_dependencies.py -v
+      - name: Install Chromium with bounded signed Ubuntu dependencies
+        if: runner.os == 'Linux'
+        timeout-minutes: 4
+        run: bash scripts/ci-install-chromium.sh
+      - if: runner.os == 'Windows'
+        run: python -m playwright install --with-deps chromium
       - run: node --test tests/reference_structural_observations.cjs tests/reference_restore_observations.cjs tests/reference_attachment_races.cjs tests/workbench_handoff_guards.cjs tests/workbench_board_source_recovery.cjs
       - name: Deterministic deferred transport contracts
         run: python -m unittest discover -s tests -p test_source_slot_choice_transport.py -v

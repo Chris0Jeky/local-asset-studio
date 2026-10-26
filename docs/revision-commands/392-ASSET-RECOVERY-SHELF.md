@@ -39,12 +39,21 @@ local import that already started; refresh shows the actual retained records.
 
 ## Persistence and concurrency contract
 
-One versioned `localStorage` value is serialized under an origin-wide Web Lock.
-Each change validates existing records under that lock, checks the chosen record's
-expected SHA-256 and generation, validates all limits/identities, and verifies exact
-readback. Lock acquisition is bounded to five seconds. There is no unlocked
-fallback. Secure loopback WebCrypto, Web Locks and browser storage must be available
-for the opt-in guarantee. Disabled mode retains the existing session-only behavior.
+One IndexedDB entry owns the current versioned shelf bundle. Each change reads
+and validates an observed snapshot, checks the chosen record's expected SHA-256
+and generation, and computes the candidate outside a database transaction. A
+single readwrite transaction compares the complete observed entry and queues its
+replacement within the same request callback. Success is reported only after
+transaction completion and verified readback. The stored bundle format and
+limits below are unchanged.
+
+An origin-wide Web Lock remains cooperative coordination with bounded five-second
+acquisition. IndexedDB supplies the atomic storage boundary: native evidence
+proved that localStorage renderer caches can remain stale after a correctly
+serialized Web Lock callback. There is no localStorage or unlocked fallback for
+current writes. IndexedDB opens and transactions are also bounded. Secure loopback
+WebCrypto, Web Locks and transactional browser storage must be available for the
+opt-in guarantee. Disabled mode retains the existing session-only behavior.
 
 Records retain creation/update time, monotonically increasing local generation,
 Workspace identity and separate baseline, draft and immutable pending command.
@@ -64,6 +73,31 @@ persistent evidence. There is no silent eviction/expiry. A full shelf refuses ne
 checkpoints and dependent writes; explicitly export/discard a chosen old record.
 Discard remains available after a capacity failure. It is local only and never
 cancels, undoes or promises to prevent an in-flight server operation.
+
+### Recovery saved by an older version
+
+Before the current shelf is initialized, older localStorage records can be
+inspected and exported without copying them. The first explicit shelf mutation
+or enabled checkpoint strictly validates and copies that bounded snapshot into
+the transactional owner. Its original bytes remain untouched and separately
+exportable. An initialized empty shelf stays initialized, so discarding its final
+record cannot resurrect the older copy.
+
+Older tabs can keep writing their preserved copy until they are closed or
+reloaded. Those writes cannot overwrite current IndexedDB records. Once a changed
+older copy becomes visible, new shelf-dependent writes pause. **Export retained
+raw evidence** and **Export older recovery** keep both exact copies accessible;
+neither is silently merged or deleted. A failed read reports an unavailable
+record count instead of presenting an empty shelf.
+
+After comparing/exporting and closing or reloading older tabs, explicitly choose
+**Continue with current shelf**. Confirmation acknowledges only the exact current
+state and older-copy digest that were inspected. If either changed while the
+confirmation was pending, refresh and review again. A successful acknowledgement
+changes only compatibility metadata; both recovery bundles stay byte-identical.
+Another older-tab write pauses current checkpoints again. Detection depends on
+when that legacy write becomes visible; immediate cross-store coherence is not
+claimed. No read, reload or checkpoint acknowledges the divergence automatically.
 
 ## Bounds and format
 
@@ -88,14 +122,25 @@ browser-data management rather than an invented migration.
 
 `python -m unittest discover -s tests -p test_asset_recovery_shelf.py -v` executes
 Node contracts for codecs, quotas/readback faults, count pressure, concurrent CAS,
-coalescing, occupied/foreign recovery, exact-body round trips and dispatch races.
+coalescing, occupied/foreign recovery, exact-body round trips, transaction-owner
+compatibility/corruption, export/acknowledgement ownership and dispatch races.
 `tests/asset_recovery_shelf_browser.py` exercises the actual UI, HTTP handlers and
 synthetic SQLite store. Its native journeys include export of a committed command
-whose response was lost, clearing local/session storage, closing the original
+whose response was lost, clearing the current owner plus local/session storage, closing the original
 tab, inspect-first import in a fresh tab, exact restoration and GET-only receipt
 recovery. It also exercises occupied session viewpoints, native file-input
 refusals, foreign/unknown imports, literal text, twenty unresolved records,
-explicit discard, quota refusal, two-tab CAS and bounded Web Locks.
+explicit discard, quota refusal, two-tab CAS and bounded Web Locks. Its quarantine
+journey downloads both exact bundles and exercises explicit acknowledgement and
+a later older-tab write at 390px.
+
+`tests/asset_recovery_shelf_owner_browser.py` separately qualifies native
+cross-renderer transactions, initial/append/discard/capacity races, actual stored
+winner bytes, initialization and replacement abort/quota failures, unavailable or
+blocked storage, late connection closure and preserved legacy evidence. Only its
+explicit fault-isolation lane omits cooperative lock scheduling to force two
+prepared candidates through the real IndexedDB comparison. Production never
+selects that test lane.
 
 Keyboard checks cover import, restore, status, exact retry, disappearing controls,
 newer focus and cancelled reads across dialog openings. A disposable extension in
@@ -109,8 +154,10 @@ The dedicated read-only CI lane runs native Chromium on Ubuntu and Windows.
 `--inert` is explicitly a local protocol/layout substitute; it does not prove
 native storage, origin, WebCrypto, Web Locks or browser zoom. File selection uses
 Playwright's file-input API; it does not test an operating-system file chooser.
-The [26 October qualification](../verification/2026-10-26-recovery-import-qualification.md)
-records the causal fixes, native result, exact source hashes and remaining limits.
+The [initial UI qualification](../verification/2026-10-26-recovery-import-qualification.md)
+and [subsequent transactional qualification](../verification/2026-10-26-shelf-transaction-qualification.md)
+retain their separate causal failures, native results, exact source hashes and
+remaining limits.
 
 Browser data clearing, origin changes, private-mode retention policy and physical
 copies of databases with the same Workspace identity remain limitations. The
