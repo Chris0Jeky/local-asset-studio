@@ -35,12 +35,14 @@ def input_options(kind, fps=None):
         options+=['-f','wav']
     return options
 
-def probe(path,kind,executables=None):
+def probe(path,kind,executables=None,*,count_frames=False):
     # The caller has validated path/hash.  The explicit demuxer prevents probe
     # auto-detection from treating a renamed asset as a playlist or script.
+    entries='format=duration:stream=codec_type,codec_name,width,height,sample_rate,channels,r_frame_rate,duration'
+    if count_frames:entries+=',nb_read_frames'
     try:
-        result=subprocess.run([tool('ffprobe',executables),'-v','error',*input_options(kind),'-show_entries',
-            'format=duration:stream=codec_type,codec_name,width,height,sample_rate,channels,r_frame_rate,duration','-of','json',str(path)],
+        result=subprocess.run([tool('ffprobe',executables),'-v','error',*input_options(kind),*(['-count_frames'] if count_frames else []),'-show_entries',
+            entries,'-of','json',str(path)],
             capture_output=True,timeout=20,check=True)
     except subprocess.CalledProcessError as exc:
         raise ValueError(f'Invalid constrained {kind} input') from exc
@@ -192,8 +194,13 @@ def render(p,root,out,timeout=180,*,executables=None,cancel=None,progress=None):
     _run_owned(common+['-i',str(out/'picture.mp4'),'-i',str(out/'mix.wav'),'-map','0:v:0','-map','1:a:0','-c:v','copy','-c:a','aac','-b:a','192k','-movflags','+faststart',str(out/'preview.mp4')],out/'mux.log',timeout,cancel)
     if cancel and cancel():raise RenderCancelled('Render cancelled before output verification')
     report('Verifying output')
-    qc=inspect_wav(out/'mix.wav');metadata=probe(out/'preview.mp4','video',executables)
+    # Audio/container duration can hide missing or retimed video frames.
+    qc=inspect_wav(out/'mix.wav');metadata=probe(out/'preview.mp4','video',executables,count_frames=True)
     need(qc['samples']==info['samples'],'Output audio duration mismatch')
+    video_seconds=video_duration(metadata)
+    video=next(s for s in metadata['streams'] if s.get('codec_type')=='video')
+    need(video.get('nb_read_frames')==str(info['frames']),'Output video frame count mismatch')
+    need(abs(video_seconds-info['duration_seconds'])<=1/48000,'Output video duration mismatch')
     duration=float(metadata['format']['duration']);need(abs(duration-info['duration_seconds'])<=max(.05,p['fps'][1]/p['fps'][0]),'Output AV duration mismatch')
     receipt={'schema_version':1,'source_revision':info['project_sha256'],'frames_expected':info['frames'],'audio_qc':qc,'probe':metadata,
         'outputs':{n:file_hash(out/n) for n in ('picture.mp4','mix.wav','preview.mp4')},'generation_performed':False,'creative_acceptance':'not_reviewed',
