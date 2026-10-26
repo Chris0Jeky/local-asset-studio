@@ -52,7 +52,9 @@ class SetupDraftClient:
         except HTTPError as exc:
             try:
                 with exc:result=decode(read_response(exc,65536))
-            except (ValueError,OSError,HTTPException):result={'error':'Unverified setup error; inspect the original request receipt'}
+            except (ValueError,OSError,HTTPException):
+                result={'error':'Unverified setup read error; no write was submitted' if value is None
+                        else 'Unverified setup error; inspect the original request receipt'}
             raise ClientError(exc.code,result) from exc
     def _history_read(self,key,action,workspace_id,expected_head,**values):
         identifier(key);need(key not in ('.','..','requests'),'Invalid setup history identifier')
@@ -77,12 +79,15 @@ class SetupDraftClient:
             need(expected_head is not None and before_revision<=_history_integer(expected_head),'A continuation requires the observed expected head')
         result=self._history_read(key,'history',workspace_id,expected_head,limit=limit,before_revision=before_revision)
         rows=result.get('revisions');need(type(rows) is list and len(rows)<=limit and type(result.get('limit')) is int and result['limit']==limit,'Invalid setup history page')
-        previous=before_revision if before_revision is not None else result['head_revision']+1
+        start=before_revision if before_revision is not None else result['head_revision']+1
+        expected=list(range(start-1,max(0,start-1-limit),-1));observed=[]
         for row in rows:
             need(type(row) is dict,'Invalid setup history summary');revision=_history_integer(row.get('revision'))
-            need(revision<previous and revision<=result['head_revision'],'Setup history page is not descending');previous=revision
+            observed.append(revision)
+        need(observed==expected,'Setup history page is incomplete or not contiguous')
         cursor=result.get('next_before_revision')
-        need(cursor is None or bool(rows) and type(cursor) is int and cursor==rows[-1]['revision'],'Invalid setup history continuation')
+        expected_cursor=expected[-1] if expected and expected[-1]>1 else None
+        need('next_before_revision' in result and cursor==expected_cursor and (cursor is None or type(cursor) is int),'Invalid setup history continuation')
         return result
     def compare(self,key: str,left: int,right: int,*,workspace_id: str,expected_head: int | None=None) -> dict:
         """Compare retained revisions without checking dependencies or staging inputs."""

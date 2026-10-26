@@ -44,6 +44,7 @@ jobs:
       - run: python -m unittest discover -s tests -p test_workflow_agent_bridge.py -v
       - run: python -m unittest discover -s tests -p test_workflow_mcp.py -v
       - run: python -m unittest discover -s tests -p test_workflow_asset_mcp.py -v
+      - run: python -m unittest discover -s tests -p test_workflow_setup_history_mcp.py -v
       - run: python -m unittest discover -s tests -p test_workflow_asset_reads.py -v
       - run: python -m unittest discover -s tests -p test_workflow_saved_run_clients.py -v
       - run: python -m unittest discover -s tests -p test_workflow_response_framing.py -v

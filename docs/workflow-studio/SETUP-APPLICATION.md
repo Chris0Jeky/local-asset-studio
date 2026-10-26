@@ -120,8 +120,13 @@ authorization to repeat a write. Server errors after a possible write are report
 as `setup_outcome_unknown` with the original request ID. These exits do not describe
 model execution: no model work is submitted here.
 
-MCP read mode adds `setup_draft_list`, `setup_draft_get` and
-`setup_draft_recover`. Author mode additionally exposes `setup_draft_command`,
+MCP read mode adds `setup_draft_list`, `setup_draft_get`, `setup_draft_recover`,
+`setup_draft_history`, `setup_draft_compare` and `setup_draft_export_revision`.
+The three history readers require the original Workspace identity and reuse the
+typed SDK client. Continuation also requires the observed head; no read retries,
+staging or generation occur. See the [bounded history contract](../revision-commands/395-SETUP-HISTORY-READS.md)
+for arguments, exact export identity and the remaining #395 acceptance.
+Author mode additionally exposes `setup_draft_command`,
 with a `command_json` string containing the same exact command. It is marked as
 mutating: applying it copies files even though it does not generate. Existing
 `recipe_setup_proposal` remains read-only. Capability discovery now reports

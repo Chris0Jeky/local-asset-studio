@@ -8,10 +8,9 @@ from .setup_drafts import SetupDrafts, SetupError, PREFIX, MAX_COMMAND
 
 def route(path,value,studio):
     parsed=urlsplit(path)
-    from .setup_history import READ_ACTIONS, read_route
-    parts=parsed.path[len(PREFIX)+1:].split('/') if parsed.path.startswith(PREFIX+'/') else []
+    from .setup_history import is_read_path, read_route
     # Receipt request IDs may themselves be history/compare/export. Keep that route first.
-    if len(parts)==2 and parts[0]!='requests' and parts[1] in READ_ACTIONS:
+    if is_read_path(parsed.path):
         need(value is None, 'Setup history is read-only')
         return read_route(path,studio.assets)
     need(not parsed.query and not parsed.fragment,'Setup draft routes do not accept query parameters')

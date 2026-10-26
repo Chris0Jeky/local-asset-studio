@@ -103,6 +103,21 @@ human edits meanwhile, HTTP 409 becomes an MCP tool error retaining the code and
 request context. Re-read and propose a deliberate new edit; do not automatically
 raise the expected revision and overwrite the person's work.
 
+## Reviewed setup history
+
+`setup_draft_history`, `setup_draft_compare` and `setup_draft_export_revision`
+inspect the existing shared setup revisions in read mode. They use the same
+typed SDK client, Workspace identity, expected-head checks and 1 MiB response
+bound as the ordinary history service. Each invocation makes one GET; explicit
+page continuation retains both the cursor revision and observed head. Supplied
+read arguments remain in error context, and read failures never become unknown
+write outcomes or automatic retries.
+
+These observations leave private browser edits, stored revisions and staged
+files unchanged. An inspection export carries no import or execution authority.
+The [history reader contract](../revision-commands/395-SETUP-HISTORY-READS.md)
+lists the arguments and remaining #395 browser/fork/import acceptance.
+
 ## Exact JSON, including 64-bit seeds
 
 Document, command and ticket inputs are **JSON strings**, not nested MCP numbers.
@@ -128,7 +143,9 @@ for hosts that only render text. No generated image/model bytes are embedded.
 Strict bounded decoding rejects duplicate keys, reserved prototype keys, nonfinite
 numbers and excessive nesting. Requests are capped at 1 MiB after decoding and
 binding; replies at 2 MiB of underlying canonical data; there are at most four
-simultaneous calls. The Studio transport's own cap is 16 MiB. Envelopes duplicate
+simultaneous calls. Ordinary Studio transport replies have a 16 MiB cap; the
+reviewed-setup history routes use their narrower 1 MiB raw limit and strict JSON
+decoding before materialization. Envelopes duplicate
 text for MCP compatibility and therefore add overhead beyond the data cap. A large
 reply fails visibly instead of silently truncating a workflow or substituting data.
 Use `studio_nodes` with `query`, `offset`, `limit` (1–100) and the returned schema

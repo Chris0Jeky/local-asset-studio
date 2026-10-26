@@ -24,6 +24,12 @@ FLAGS = {'observation_only': True, 'dependencies_checked': False,
 READ_ACTIONS = {'history', 'compare', 'export'}
 
 
+def is_read_path(path):
+    """Classify the existing inspection routes, excluding operation receipt IDs."""
+    parts = path[len(PREFIX)+1:].split('/') if path.startswith(PREFIX+'/') else []
+    return len(parts) == 2 and parts[0] != 'requests' and parts[1] in READ_ACTIONS
+
+
 class HistoryReadError(SetupError):
     """Read failures must not suggest recovery of a write that never occurred."""
     def result(self):
