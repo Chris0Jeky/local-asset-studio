@@ -75,10 +75,12 @@ def run(output):
                     assert recovery.locator('p').last.text_content() == CLEANUP
                     assert card.text_content().count(CLEANUP) == 1
                     assert card.locator('img,script').count() == 0
-                    bounds = recovery.evaluate('(el)=>({width:el.clientWidth,scroll:el.scrollWidth,whiteSpace:getComputedStyle(el.querySelector("code")).whiteSpace})')
+                    # loadModelUse may replace cards after locator resolution; read the current DOM atomically.
+                    bounds = page.evaluate('()=>{const card=document.querySelector("#modelCards .model-card"),el=card.querySelector(".model-recovery");return {width:el.clientWidth,scroll:el.scrollWidth,whiteSpace:getComputedStyle(el.querySelector("code")).whiteSpace,cardFits:card.scrollWidth<=card.clientWidth+1}}')
+                    assert bounds['width'] > 0, bounds
                     assert bounds['scroll'] <= bounds['width'] + 1, bounds
                     assert bounds['whiteSpace'] == 'pre-wrap', bounds
-                    assert card.evaluate('(el)=>el.scrollWidth<=el.clientWidth+1')
+                    assert bounds['cardFits'], bounds
                     card.evaluate('(el)=>window.scrollBy(0,el.getBoundingClientRect().top-document.querySelector(".models-toolbar").getBoundingClientRect().bottom-16)')
                     evidence_screenshot(card, path=str(output / f'recovery-card-{width}.png'))
                     assert not errors, errors

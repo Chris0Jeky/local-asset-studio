@@ -1,0 +1,278 @@
+{
+  "version": 2,
+  "preset_id": "moss-t2i",
+  "controls": {
+    "seed": 2026102602,
+    "width": 1024,
+    "height": 1536,
+    "positive": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 32-year-old woman with a visibly mature adult face and curvy adult proportions, a black wavy bob and emerald eyes. Waist-up editorial portrait, direct eye contact, playful wink and a warm sly smile, shoulders turned slightly, one gloved hand resting on her waist and the other hand holding the stem of a single red rose below her shoulder. She wears a fitted crimson off-the-shoulder evening dress with a structured opaque bodice and long black opera gloves, gold earrings. A strong fitted silhouette, polished elegant fashion, softly lit art-deco lounge in the background. Tasteful non-explicit fashion illustration.",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0.9,
+    "lora2": 0,
+    "lora_name": "moss-mikkoani-v1.safetensors"
+  },
+  "batch_count": 1,
+  "created_at": 1793034930.6534266,
+  "workflow": {
+    "1": {
+      "class_type": "UNETLoader",
+      "inputs": {
+        "unet_name": "moss_image_sft_int8_convrot.safetensors",
+        "weight_dtype": "default"
+      }
+    },
+    "2": {
+      "class_type": "CLIPLoader",
+      "inputs": {
+        "clip_name": "qwen3.5_9b_int8_convrot.safetensors",
+        "type": "moss_image",
+        "device": "default"
+      }
+    },
+    "3": {
+      "class_type": "VAELoader",
+      "inputs": {
+        "vae_name": "moss_image_flux2-vae_small.safetensors"
+      }
+    },
+    "4": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "2",
+          0
+        ],
+        "text": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 32-year-old woman with a visibly mature adult face and curvy adult proportions, a black wavy bob and emerald eyes. Waist-up editorial portrait, direct eye contact, playful wink and a warm sly smile, shoulders turned slightly, one gloved hand resting on her waist and the other hand holding the stem of a single red rose below her shoulder. She wears a fitted crimson off-the-shoulder evening dress with a structured opaque bodice and long black opera gloves, gold earrings. A strong fitted silhouette, polished elegant fashion, softly lit art-deco lounge in the background. Tasteful non-explicit fashion illustration."
+      }
+    },
+    "5": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "2",
+          0
+        ],
+        "text": ""
+      }
+    },
+    "6": {
+      "class_type": "EmptyFlux2LatentImage",
+      "inputs": {
+        "width": 1024,
+        "height": 1536,
+        "batch_size": 1
+      }
+    },
+    "7": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "10",
+          0
+        ],
+        "positive": [
+          "4",
+          0
+        ],
+        "negative": [
+          "5",
+          0
+        ],
+        "latent_image": [
+          "6",
+          0
+        ],
+        "seed": 2026102602,
+        "steps": 30,
+        "cfg": 3.0,
+        "sampler_name": "euler",
+        "scheduler": "sgm_uniform",
+        "denoise": 1.0
+      }
+    },
+    "8": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "7",
+          0
+        ],
+        "vae": [
+          "3",
+          0
+        ]
+      }
+    },
+    "9": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "8",
+          0
+        ],
+        "filename_prefix": "Studio/moss-t2i"
+      }
+    },
+    "10": {
+      "class_type": "LoraLoaderModelOnly",
+      "inputs": {
+        "model": [
+          "1",
+          0
+        ],
+        "lora_name": "moss-mikkoani-v1.safetensors",
+        "strength_model": 0.9
+      }
+    }
+  },
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "5c0656b0-6dc4-4efe-8be4-060f5ad2c536",
+      "seed": 2026102602,
+      "graph": {
+        "1": {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "moss_image_sft_int8_convrot.safetensors",
+            "weight_dtype": "default"
+          }
+        },
+        "2": {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen3.5_9b_int8_convrot.safetensors",
+            "type": "moss_image",
+            "device": "default"
+          }
+        },
+        "3": {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "moss_image_flux2-vae_small.safetensors"
+          }
+        },
+        "4": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "text": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 32-year-old woman with a visibly mature adult face and curvy adult proportions, a black wavy bob and emerald eyes. Waist-up editorial portrait, direct eye contact, playful wink and a warm sly smile, shoulders turned slightly, one gloved hand resting on her waist and the other hand holding the stem of a single red rose below her shoulder. She wears a fitted crimson off-the-shoulder evening dress with a structured opaque bodice and long black opera gloves, gold earrings. A strong fitted silhouette, polished elegant fashion, softly lit art-deco lounge in the background. Tasteful non-explicit fashion illustration."
+          }
+        },
+        "5": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "text": ""
+          }
+        },
+        "6": {
+          "class_type": "EmptyFlux2LatentImage",
+          "inputs": {
+            "width": 1024,
+            "height": 1536,
+            "batch_size": 1
+          }
+        },
+        "7": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "10",
+              0
+            ],
+            "positive": [
+              "4",
+              0
+            ],
+            "negative": [
+              "5",
+              0
+            ],
+            "latent_image": [
+              "6",
+              0
+            ],
+            "seed": 2026102602,
+            "steps": 30,
+            "cfg": 3.0,
+            "sampler_name": "euler",
+            "scheduler": "sgm_uniform",
+            "denoise": 1.0
+          }
+        },
+        "8": {
+          "class_type": "VAEDecode",
+          "inputs": {
+            "samples": [
+              "7",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ]
+          }
+        },
+        "9": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "images": [
+              "8",
+              0
+            ],
+            "filename_prefix": "Studio/moss-t2i"
+          }
+        },
+        "10": {
+          "class_type": "LoraLoaderModelOnly",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "lora_name": "moss-mikkoani-v1.safetensors",
+            "strength_model": 0.9
+          }
+        }
+      },
+      "status": "completed",
+      "gpu_memory": {
+        "peak_shared_bytes": 350707712,
+        "peak_dedicated_bytes": 12254826496,
+        "samples": 101,
+        "spilled": false
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "filename": "moss-t2i_00093_.png",
+      "subfolder": "Studio",
+      "type": "output",
+      "seed": 2026102602,
+      "prompt_id": "5c0656b0-6dc4-4efe-8be4-060f5ad2c536",
+      "media_type": "image",
+      "asset_id": "71bf9aeb08e4501f9421b138803cb46c"
+    }
+  ],
+  "parent_assets": [],
+  "references": [],
+  "preparation": null,
+  "native_recipe": null,
+  "continuation": null,
+  "tile": null,
+  "tile_receipt": null,
+  "parallax": null,
+  "parallax_receipt": null
+}
