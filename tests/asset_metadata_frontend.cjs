@@ -141,6 +141,21 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
     assert.equal(s.run('globalThis.__refetches'),0);
     assert.equal(s.run("assetState.assets.find(a=>a.id==='a').review"),'selected');
   });
+  await check('Create recipe counts use confirmed selected-ID metadata for loaded page members',async()=>{
+    const fs=require('node:fs'),path=require('node:path'),s=setup({autoOpen:false});
+    s.run(fs.readFileSync(path.join(__dirname,'../app/static/review-checks.js'),'utf8'));
+    s.el('#assetType').value='all';s.el('#assetSort').value='newest';s.el('#categorySelect').value='All';
+    s.run("catalog={presets:[{id:'hero',name:'Hero',review_set:'character'}]};mode='all';selected=null;missingByPreset={};pinMismatchByPreset={};presetThumb=()=>'';presetPace=()=>null;PICKER_GROUPS=[['all','All']];presetGroup=()=> 'all';document.activeElement=null;");
+    // Resolving a selection off page and returning to the same catalogue keeps a separate, resolved record.
+    s.run("assetState.assets=assetState.assets.slice(0,1);Object.assign(assetState.assets[0],{media_type:'image',preset_id:'hero',preset_name:'Hero',collections:[],created_at:0});assetResolved.set('a',{id:'a',state:'active',asset:JSON.parse(JSON.stringify(assetState.assets[0]))});assetResolved.set('off',{id:'off',state:'active',asset:{...assetState.assets[0],id:'off',tags:['check:face=yes']}});");
+    const app=fs.readFileSync(path.join(__dirname,'../app/static/app.js'),'utf8');
+    s.run(app.slice(app.indexOf('function renderPresets()'),app.indexOf('function updateReady()')));
+    s.run("renderAssets();openAsset('a')");s.el('#assetTags').value='check:face=yes';
+    const save=s.el('#saveAssetDetails').onclick();s.accept(0);assert.equal(await save,true);
+    assert.match(s.el('#presetList').innerHTML,/Loaded checks: face 1\/1/,'the confirmed answer is counted after repaint; the off-page resolved picture stays excluded');
+    s.run("assetResolved.set('a',{id:'a',state:'missing',asset:null});renderPresets()");
+    assert.match(s.el('#presetList').innerHTML,/Loaded checks: none/,'a resolved missing record does not reuse its stale page answers');
+  });
   await check('Bulk review saves each selected asset once and lists every failure',async()=>{
     const s=library();s.run("assetSelection=new Set(['a','b']);renderAssets()");
     const p=s.run("bulkReviewSelected('rejected')");
