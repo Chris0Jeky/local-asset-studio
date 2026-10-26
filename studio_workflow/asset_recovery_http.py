@@ -41,7 +41,7 @@ def extend_handler(base):
             except (sqlite3.Error, OSError):
                 result, status = {'error': 'Recovery observation unavailable; retained evidence is unchanged', 'code': 'asset_observation_unavailable'}, 503
             try: return self._json(status, result)
-            except (BrokenPipeError, ConnectionResetError): return None
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError): return None
 
         def do_POST(self):
             if self.path.split('?', 1)[0] != PATH: return super().do_POST()

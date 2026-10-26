@@ -139,6 +139,50 @@ class RecoveryObservationTests(unittest.TestCase):
         self.assertLessEqual(len(json.dumps(result).encode()), 2*1024*1024)
 
 
+    def _get_with_response_fault(self, error):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from studio_workflow import asset_recovery_http as module
+        writes=[]
+        with self.store.connection() as db: before=list(db.iterdump())
+        source=self.source.read_bytes()
+        class Base:
+            studio=SimpleNamespace(assets=self.store)
+            path=module.PATH+'?'+urlencode({'workspace_id':self.store.snapshot()['workspace_id'],'ids':json.dumps([self.asset])})
+            def _safe_host(handler): return True
+            def _json(handler,status,result):
+                writes.append((status,result))
+                if error is not None: raise error
+                return 'sent once'
+        handler=module.extend_handler(Base)()
+        with patch.object(module,'read',wraps=module.read) as read:
+            try: return handler.do_GET()
+            finally:
+                read.assert_called_once_with(handler.path,self.store)
+                self.assertEqual(len(writes),1)
+                self.assertEqual(writes[0][0],200)
+                self.assertEqual(writes[0][1]['targets'][0]['id'],self.asset)
+                self.assertIs(writes[0][1]['generation_submitted'],False)
+                with self.store.connection() as db: self.assertEqual(list(db.iterdump()),before)
+                self.assertEqual(self.source.read_bytes(),source)
+
+    def test_get_response_write_tolerates_peer_disconnects_without_repeating_observation(self):
+        self.assertEqual(self._get_with_response_fault(None),'sent once')
+        for error in [BrokenPipeError('peer closed'),ConnectionResetError('peer reset'),
+                      ConnectionAbortedError(10053,'peer aborted')]:
+            with self.subTest(error=type(error).__name__):
+                self.assertIsNone(self._get_with_response_fault(error))
+
+    def test_get_response_write_keeps_non_disconnect_errors_visible(self):
+        for error in [OSError(5,'unrelated response I/O failure'),
+                      ConnectionError('unclassified connection failure'),
+                      ValueError('response encoding failure')]:
+            with self.subTest(error=type(error).__name__):
+                with self.assertRaises(type(error)) as caught: self._get_with_response_fault(error)
+                self.assertIs(caught.exception,error)
+
+
+
 class RecoveryObservationHTTP(unittest.TestCase):
     def setUp(self):
         import test_asset_metadata_http as fixture_http
