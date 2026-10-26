@@ -37,6 +37,43 @@ No installed Studio/ComfyUI runtime was changed or started, and no generation wa
 `HUMAN_TODO.md` and its creative, licensing and runtime owner decisions remain unchanged.
 Publication and PR review belong to the coordinator; this worktree has no Git writes.
 
+## Source-art licence records — 25 October 2026
+
+Issue #1512's [dated licence evidence](docs/adaptive-studio/assets/LICENCE-EVIDENCE-1512.md)
+records OpenAI output terms, the read Krea 2 Community Licence PDF, pinned font headers and
+promo/README-cover trademark inspection. Atelier receipts link the terms without inventing
+model IDs. The Recover fixture's three requested hero images match Anima, SDXL/LineAni and
+Krea recipes and hashes; no Qwen-Image 2.1 output was identified. These are evidence records,
+not publication/commercial clearance or new owner acceptance; `HUMAN_TODO.md` choices remain open.
+
+Proof: the three source-art evidence tests first failed against the unchanged records
+(18 failures), then passed with the fix. `python -m unittest discover -s tests` passed:
+6,034 tests in 2,625.099 seconds, 82 skipped. `python scripts/validate-repo.py` passed.
+The full-suite log is local-only at `.runtime/issue-1512/full-suite.log`.
+
+## HiDream comparison preparation and native loading crash — 25 October 2026
+
+Issue #2's explicit backend switching, visual workflows and initial eight-step
+reference trial were already present. The missing same-seed 8/20-step comparison
+now has frozen, template-pinned recipes and a regression test through Studio's
+ticket binder. Both HiDream graphs passed the isolated endpoint's live schema
+check, and an active-work switch to primary was refused without starting it.
+
+The eight-step attempt retained job `9539f3a2-f0ed-5887-8ff0-c528297f1567` and prompt
+`86d4c40c-dba4-4908-8ca5-79c07552b998`. The isolated process exited with native
+access violation `0xC0000005` during model loading. Studio marked the job uncertain
+after three failed history reads and did not resubmit. No output was inspected;
+no completed-render timing exists. Neither 20 steps nor a new reference edit was
+submitted. The [curated record](experiments/curated/hidream-step-comparison/README.md)
+retains the attempt and remaining acceptance; #2 remains open. No installed package
+changes were made. The Torch warning, historical primary transition crash and
+owner choices in `HUMAN_TODO.md` remain unresolved.
+
+The focused comparison regression passed after failing without the frozen
+recipes; repository validation passed. The full offline suite was stopped after
+1,506 seconds at its 25-minute budget without a final verdict. Its result is not
+claimed green; `.runtime/issue-2-full-suite*` retains the log and budget receipt.
+
 ## Backend switch and readiness follow-up — 19 October 2026
 
 [#1599](https://github.com/Chris0Jeky/local-asset-studio/pull/1599) merged as

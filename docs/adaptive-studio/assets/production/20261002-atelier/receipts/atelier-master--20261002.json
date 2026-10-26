@@ -21,7 +21,7 @@
     "item_id": null,
     "original_page": null,
     "creator_credit": null,
-    "terms_evidence": null,
+    "terms_evidence": "../../../LICENCE-EVIDENCE-1512.md#openai",
     "retrieved_at": null,
     "review_status": "provenance-recorded; source/license clearance not asserted"
   },
@@ -157,7 +157,7 @@
   },
   "unknowns": [
     "Provider model, seed, provider output/job ID and provider timestamps were not exposed; values remain null.",
-    "No license or source terms verification was performed.",
+    "Current public terms were read on 2026-10-25; see source.terms_evidence. The original execution-surface agreement and use-specific clearance remain unverified.",
     "No runtime slot, text contrast, accessibility, decoded-memory, loading or crossfade checks were performed."
   ]
 }
