@@ -1,5 +1,26 @@
 # Current state — 13 October 2026
 
+## AV trims use the video track's duration - 26 October 2026
+
+Starting from clean `7a89410d` (matching origin/main), with no open PRs, a synthetic
+MP4 with one second of video and three seconds of audio reproduced a false-complete
+render: 72 expected frames, but only 48 video frames (two seconds) in the three-second
+output. Container duration included the audio tail. The shared probe now retains
+video-stream duration; validation, scene intake and adding shots use that finite,
+positive track extent. Unknown or ambiguous video extent is refused. No ComfyUI
+submission or GPU generation was performed; all media fixtures are synthetic CPU work.
+
+The final regressions fail with four assertions when container-duration selection is
+restored in memory. The corrected AV suite passes 43 tests (three skipped); all 25
+scene tests pass, as do the rendered AV demo, workbench CLI and repository validation.
+The first complete run exercised 6,107 tests with 82 skips and one unrelated failure:
+the backend writer-lock fixture did not signal readiness within five seconds. Its
+isolated rerun passes in 0.382 seconds; no lock-exclusion assertion failed. An earlier
+broad baseline was stopped to replace it with verification of the final source.
+The unchanged full-suite rerun passes all 6,107 tests in 888.387 seconds (82 skipped),
+including the previously timed-out fixture. No unrelated test or deadline was changed.
+Receipts are retained locally under `.runtime/engineering-17/`; `HUMAN_TODO.md` is unchanged.
+
 ## Unambiguous HTTP request framing - 26 October 2026
 
 The shared Handler now rejects duplicate Content-Length fields (including equal values),

@@ -40,11 +40,21 @@ def probe(path,kind,executables=None):
     # auto-detection from treating a renamed asset as a playlist or script.
     try:
         result=subprocess.run([tool('ffprobe',executables),'-v','error',*input_options(kind),'-show_entries',
-            'format=duration:stream=codec_type,codec_name,width,height,sample_rate,channels,r_frame_rate','-of','json',str(path)],
+            'format=duration:stream=codec_type,codec_name,width,height,sample_rate,channels,r_frame_rate,duration','-of','json',str(path)],
             capture_output=True,timeout=20,check=True)
     except subprocess.CalledProcessError as exc:
         raise ValueError(f'Invalid constrained {kind} input') from exc
     need(len(result.stdout)<1024*1024,'Probe result too large');return json.loads(result.stdout)
+
+def video_duration(metadata):
+    """The single video track's extent; container duration may include a longer audio tail."""
+    streams=[s for s in metadata.get('streams',[]) if s.get('codec_type')=='video']
+    need(len(streams)==1,'Expected a single primary media stream')
+    try:duration=float(streams[0].get('duration',0))
+    except (TypeError,ValueError,OverflowError) as exc:raise ValueError('Video duration is unavailable') from exc
+    need(math.isfinite(duration) and duration>0,'Video duration is unavailable')
+    return duration
+
 
 def validate_media(p,root,executables=None,cancel=None):
     result=validate(p,root); metadata={}
@@ -64,7 +74,7 @@ def validate_media(p,root,executables=None,cancel=None):
     fps=p['fps'][0]/p['fps'][1]
     for s in p['shots']:
         if p['assets'][s['asset']]['kind']=='video':
-            duration=float(metadata[s['asset']].get('format',{}).get('duration',0))
+            duration=video_duration(metadata[s['asset']])
             # A whole extra frame masks invalid trims behind the output tpad.
             # Allow only a single audio-sample timestamp rounding tolerance.
             need(math.isfinite(duration) and (s['source_in']+s['frames'])/fps<=duration+1/48000,'Video source too short')

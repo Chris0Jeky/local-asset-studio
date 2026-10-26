@@ -10,7 +10,7 @@ import uuid
 import zipfile
 
 from studio_av import project as av
-from studio_av.render import render, validate_media, probe, tool, RenderCancelled
+from studio_av.render import render, validate_media, probe, video_duration, tool, RenderCancelled
 
 ACTIVE = ('queued','running')
 EDITABLE = {'shots':{'source_in','frames','transition_frames'},
@@ -130,8 +130,7 @@ class AVProjects:
                 else:
                     count=frames
                     if kind=='video':
-                        info=probe(target,kind,tools);duration=float(info.get('format',{}).get('duration',0))
-                        av.need(math.isfinite(duration) and duration>0,'Video duration is unavailable')
+                        duration=video_duration(probe(target,kind,tools))
                         count=min(frames,math.floor(duration*project['fps'][0]/project['fps'][1]+1e-6))
                     project['shots'].append({'id':'shot'+str(i),'asset':key,'source_in':0,'frames':count,'transition_frames':0})
             timing=av.validate(project,directory)
@@ -171,7 +170,7 @@ class AVProjects:
                 av.need(asset['kind'] in ('image','video'),'Shots require visual media');frames=72
                 if asset['kind']=='video':
                     info=probe(av.safe_path(directory,asset['path']),'video',self.executables())
-                    frames=min(frames,math.floor(float(info.get('format',{}).get('duration',0))*project['fps'][0]/project['fps'][1]+1e-6))
+                    frames=min(frames,math.floor(video_duration(info)*project['fps'][0]/project['fps'][1]+1e-6))
                 clip={'id':identifier,'asset':key,'source_in':0,'frames':frames,'transition_frames':0}
             elif section=='overlays':
                 av.need(asset['kind']=='image','Static overlays require PNG sources')
