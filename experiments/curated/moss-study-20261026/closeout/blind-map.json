@@ -1,0 +1,90 @@
+{
+  "frozen_before_judging": true,
+  "random_seed": 202610262,
+  "mapping": [
+    {
+      "group": 1,
+      "alias": "item-869778.png",
+      "job_id": "c1a3f42a-ced2-5f5e-9ed0-6dd4c33d52f7",
+      "treatment": "mikko",
+      "source_sha256": "9b268345ca86aba7b25e69363516d26bbc705e16aff5ff6299e5826b5da92772"
+    },
+    {
+      "group": 1,
+      "alias": "item-407750.png",
+      "job_id": "9ce82147-c2c1-5677-96a5-8c568dac0a80",
+      "treatment": "base",
+      "source_sha256": "ee3a8c41964bf6fc69b7e304dbab377d34cc551189c0ccabdbe56c226ee04c3c"
+    },
+    {
+      "group": 1,
+      "alias": "item-233616.png",
+      "job_id": "9372bf23-985d-5aa6-9204-5c3205eb0d49",
+      "treatment": "mikko-impasto",
+      "source_sha256": "2a987d54b503fe07c22e0e5529eefa4bd6d34ef5c1274ae67a91e52235fee216"
+    },
+    {
+      "group": 2,
+      "alias": "item-793946.png",
+      "job_id": "b0a95a7c-5ac6-5a04-bdc2-5abb5408ef7a",
+      "treatment": "mikko",
+      "source_sha256": "78fbe5abacc1f571143e3de42a7e0fa440bcf3262a8c7292f8bf32888387598a"
+    },
+    {
+      "group": 2,
+      "alias": "item-470411.png",
+      "job_id": "78a8252b-5d8d-55ec-a123-4516ef39c858",
+      "treatment": "mikko-impasto",
+      "source_sha256": "132df6a80b5703a3c4ab2d803493165aa760dadccdd9ed15c42d8407250a2d0e"
+    },
+    {
+      "group": 2,
+      "alias": "item-808075.png",
+      "job_id": "fbed070f-6d45-5259-9f5e-adb490a0e230",
+      "treatment": "base",
+      "source_sha256": "ab0f9aed2fdcfd815042a2ff2ba3022f69723b4c10fe16086d2bd3070980a6ec"
+    },
+    {
+      "group": 3,
+      "alias": "item-660529.png",
+      "job_id": "0a451048-5ff5-5f93-ba60-62d79b516001",
+      "treatment": "mikko",
+      "source_sha256": "3c57c0d279793ba5bc2b14b1890775ab49d4d274d9c2022ee50f9f6b7c19f745"
+    },
+    {
+      "group": 3,
+      "alias": "item-929838.png",
+      "job_id": "e34b0a63-bc7d-5a69-a627-8f4f3c81aec7",
+      "treatment": "mikko-impasto",
+      "source_sha256": "2c66b5f0466a5477ea7eed06d68854178c51d9d763e3fd098c1ed1156e6cfaf3"
+    },
+    {
+      "group": 3,
+      "alias": "item-956963.png",
+      "job_id": "9887dfa1-d693-58d1-bf88-fa76ff8c1099",
+      "treatment": "base",
+      "source_sha256": "5a5c7178579a27ec4817d416169b0cfc463f39715bdb1bcc7a7705c17a11ff13"
+    },
+    {
+      "group": 4,
+      "alias": "item-486932.png",
+      "job_id": "351079b3-d60e-59ed-b50a-3e0ff66601b1",
+      "treatment": "mikko",
+      "source_sha256": "fec33a8655e93f6a095d079ea458685547aab081852deb3fc61c535b51786336"
+    },
+    {
+      "group": 4,
+      "alias": "item-768182.png",
+      "job_id": "1e733d25-3026-59a4-aef5-5dc0d31314cb",
+      "treatment": "mikko-impasto",
+      "source_sha256": "cdd55b8f074d11533a54d968378aed789ca07e6205d9b146913073b0e2c2469f"
+    },
+    {
+      "group": 4,
+      "alias": "item-598576.png",
+      "job_id": "cae35529-85b3-5c47-a17f-a4600baaf9c2",
+      "treatment": "base",
+      "source_sha256": "05232834b9db70c18ae36082a297cb5cd9f5467993954e9e98b7f3e0aca530e6"
+    }
+  ]
+}

@@ -1,5 +1,9 @@
 # MOSS study results, 26 October 2026
 
+**Later closeout:** [three Tifa follow-up jobs and an independent blind reread](closeout/README.md)
+bring the session total to 42 distinct images. Nine follow-up jobs remain
+unsubmitted. This page preserves the original 39-image wave and its judgments.
+
 **39 jobs completed, 39 unique prompt IDs and 39 distinct image hashes; no failed,
 uncertain or repeated submission.** Every output has an exact exported recipe,
 hash-bound receipt and full-image/face/hand inspection. Generated files stay outside
@@ -88,7 +92,9 @@ All 39 exact exports are under [recipes/](recipes/), with
 [original judgments](judgements.jsonl), [second judgments](second-judge.jsonl) and
 [franchise judgments](characters-judgements.jsonl).
 
-The next queue is deliberately finite; saved plans are not submitted jobs:
+At the original 39-image checkpoint, the next queue was deliberately finite.
+Saved plans alone are not submitted jobs; the later partial execution is recorded
+in the [closeout](closeout/README.md):
 
 1. **Body/style repeatability, 12 jobs:** [followup-plan.json](followup-plan.json),
    Tifa and Yor, two new seeds each, described baseline versus mikkoani 0.9 versus

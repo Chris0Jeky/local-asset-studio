@@ -1,5 +1,12 @@
 # MOSS-Image: isolated backend on this PC
 
+**Session closeout:** [three Tifa follow-up renders and a blind reread](../experiments/curated/moss-study-20261026/closeout/README.md)
+were saved after the original wave: 42 distinct completed pictures in total,
+with nine follow-up jobs never submitted. The blind reread repeats Mikko's style
+direction but does not repeat the original Impasto penalty; garment adherence is
+a separate tradeoff. Owned runtimes are stopped, and the remaining plan is not a
+background queue. Art acceptance and Make-look placement remain owner choices.
+
 **26 October qualification:** 39 completed, inspected Studio jobs (24 original-adult
 adapter comparisons and 15 franchise-recognition/adaptation pictures), with exact
 recipes, unique prompt IDs and hash-bound judgments in the
