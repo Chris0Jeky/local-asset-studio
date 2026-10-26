@@ -165,7 +165,13 @@ steps 4 and cfg 1.
 
 Downloaded from the official [Comfy-Org/Krea-2](https://huggingface.co/Comfy-Org/Krea-2) repository and the
 [4-step distill mirror](https://huggingface.co/lvladikov/Krea2-Turbo-Distill-4step-LoRA); both repo cards
-state `krea-2-community-license`. The licence PDF itself has not been read.
+state `krea-2-community-license`. The Community Licence v1 PDF (22 June 2026) was read
+on 25 October 2026: [dated source, hash and terms](../docs/adaptive-studio/assets/LICENCE-EVIDENCE-1512.md#krea-2).
+Outputs belong to their generator subject to compliance. Commercial use of the model, derivatives
+or outputs requires total trailing-year revenue below USD 1 million (including controlled affiliates);
+at/above that threshold a separate enterprise licence is required. Filtering, lawful-use and disclosure
+conditions also apply. This records the base licence, not commercial eligibility or independent
+clearance of every third-party adapter.
 
 | File | Trigger | Strength | Source |
 | --- | --- | --- | --- |

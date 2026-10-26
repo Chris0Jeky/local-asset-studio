@@ -1,0 +1,14 @@
+{
+  "preset_id": "hidream-o1-concept",
+  "controls": {
+    "positive": "Original anime key visual: an adult silver-haired explorer in a dark travelling coat, holding a brass compass in a rainy Japanese mountain village at blue hour. Clean expressive linework, layered cel shading, teal lantern light, restrained vermilion accents, cinematic composition. No typography.",
+    "negative": "",
+    "seed": 2026091131,
+    "steps": 8,
+    "cfg": 5.0,
+    "width": 2048,
+    "height": 2048
+  },
+  "batch_count": 1,
+  "expected_template_sha256": "3b505d6dda51374ae8fdc1c6f467776bd723999e94ad0aa8d10d357fb3dfcaf0"
+}
