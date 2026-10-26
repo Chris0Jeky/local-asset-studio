@@ -184,7 +184,9 @@ function validateAssetReceipt(result, command) {
 function assetDetailValues() {
   return {title:$('#assetTitle').value, tags:$('#assetTags').value, review:$('#assetReview').value, notes:$('#assetNotes').value};
 }
-function assetDetailDirty() { return !!assetDetailBaseline && JSON.stringify(assetDetailValues())!==JSON.stringify(assetDetailBaseline); }
+function assetTagsEqual(left,right){const a=new Set(assetTagList(left)),b=new Set(assetTagList(right));return a.size===b.size&&[...a].every(tag=>b.has(tag));}
+function assetDetailFieldEqual(key,left,right){return key==='tags'?assetTagsEqual(left,right):left===right;}
+function assetDetailDirty() { return !!assetDetailBaseline && Object.entries(assetDetailValues()).some(([key,value])=>!assetDetailFieldEqual(key,value,assetDetailBaseline[key])); }
 function assetDetailStatus(text, error=false) {
   let status=$('#assetDetailStatus');
   if(!status){status=document.createElement('p');status.id='assetDetailStatus';status.className='muted';status.setAttribute('role','status');status.setAttribute('aria-live','polite');$('#saveAssetDetails').parentElement.before(status);}
@@ -675,9 +677,12 @@ function assetTagsProblem(tags){
   return Object.keys(StudioReviewChecks.answers(tags)).length===checks.length?'':'Check tags must use check:name=yes or =no, with one answer per supported check. Nothing was sent.';
 }
 function renderAssetReasons() {
+  const focused=document.activeElement?.closest?.('#assetReviewChecks [data-review-check],#assetReviewReasons [data-review-reason]');
+  const check=focused?.dataset.reviewCheck,reason=focused?.dataset.reviewReason;
   const chosen=new Set(assetTagList().map(t=>t.toLowerCase()));
   renderAssetChecks();
   $('#assetReviewReasons').innerHTML=assetReasonTags.map(reason=>'<button type="button" class="asset-reason'+(chosen.has(reason)?' is-on':'')+'" data-review-reason="'+esc(reason)+'" aria-pressed="'+(chosen.has(reason)?'true':'false')+'">'+esc(reason)+'</button>').join('');
+  if(focused)[...(document.querySelectorAll?.('#assetReviewChecks [data-review-check],#assetReviewReasons [data-review-reason]')||[])].find(button=>check?button.dataset.reviewCheck===check:button.dataset.reviewReason===reason)?.focus?.({preventScroll:true});
 }
 // Quick checks (#1203) fit the picture's recipe route and live in the same tags draft as the reason chips: a press edits
 // the draft only, and Save details or a K/W/X decision saves them with the review. Keep never waits on them.
@@ -693,7 +698,7 @@ function toggleAssetReviewCheck(name) {
   $('#assetTags').value=tags.join(', ');renderAssetReasons();
   if(!retainAssetDraft())return;
   const now=StudioReviewChecks.answer(tags,name);
-  assetDetailStatus(name+' '+(now===null?'not checked':now?'yes':'no')+'. Unsaved until Save details or K / W / X.');
+  assetDetailStatus(name+' '+(now===null?'not checked':now?'yes':'no')+'. '+(assetDetailDirty()?'Unsaved until Save details or K / W / X.':'No unsaved changes.'));
 }
 function toggleAssetReason(reason) {
   if(!assetReasonTags.includes(reason))return;
@@ -1097,7 +1102,7 @@ document.addEventListener('keydown',e=>{
 async function saveAssetDetails() {
   const snapshot=assetDetailValues();
   const saved={title:snapshot.title.trim(),tags:[...new Set(assetTagList(snapshot.tags))],review:snapshot.review,notes:snapshot.notes.trim()};
-  const changes=Object.fromEntries(Object.keys(saved).filter(key=>snapshot[key]!==assetDetailBaseline?.[key]).map(key=>[key,saved[key]]));
+  const changes=Object.fromEntries(Object.keys(saved).filter(key=>!assetDetailFieldEqual(key,snapshot[key],assetDetailBaseline?.[key])).map(key=>[key,saved[key]]));
   if(!Object.keys(changes).length && !assetDetailPending){assetDetailStatus('No unsaved changes.');return true;}
   // An earlier unconfirmed command still retries its exact bytes; newer invalid typing stays local.
   const problem=!assetDetailPending && Object.hasOwn(changes,'tags')?assetTagsProblem(saved.tags):'';

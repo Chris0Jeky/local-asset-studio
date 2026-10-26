@@ -34,7 +34,7 @@ async def exercise(args):
         ids=[store.register({'id':f'qa-{i}','preset_name':f'Metadata QA {i}','created_at':100-i,
                              'outputs':[{'filename':'source.png','media_type':'image'}]},0,source) for i in range(2)]
         class Handler(BoundPortGuard, production.extend_handler(production.Handler)):
-            studio=SimpleNamespace(assets=store)
+            studio=SimpleNamespace(assets=store,jobs={})
             json=fixture.Handler.json
             def do_GET(self):
                 if self.path=='/api/workspace' or self.path.startswith('/api/assets/') or self.path.startswith('/api/collections'):
@@ -134,6 +134,38 @@ async def exercise(args):
                 record('META-21 recovered Trash preserves later typing',await b.locator('#assetDialog').is_visible() and
                        await b.input_value('#assetNotes')=='New notes after lost Trash response' and await b.evaluate('assetDetailDirty()') and
                        store.get(ids[0])['trashed_at'] is not None and len(writes)==before)
+                # #1211: chip repaint keeps keyboard focus, and restoring the saved answers is not a dirty edit.
+                row=store.get(ids[1]);store.update({'request_id':uuid.uuid4().hex,'expected_revisions':{ids[1]:row['metadata_revision']},'ids':[ids[1]],'action':'edit','tags':['check:style=yes','hero']})
+                await open_asset(a,ids[1]);before=len(writes)
+                style=a.locator('[data-review-check="style"]');await style.focus();await a.keyboard.press('Enter')
+                record('META-22 quick-check repaint preserves its focused button',await a.evaluate("document.activeElement?.dataset.reviewCheck==='style'"))
+                hands=a.locator('[data-review-reason="hands"]');await hands.focus();await a.keyboard.press('Enter');await a.keyboard.press('Enter')
+                record('META-23 reason-chip repaint preserves focus and sends nothing',await a.evaluate("document.activeElement?.dataset.reviewReason==='hands'") and len(writes)==before)
+                await style.focus();await a.keyboard.press('Enter');await a.keyboard.press('Enter')
+                record('META-24 restoring answers clears dirty state and retained draft',await a.input_value('#assetTags')=='hero, check:style=yes' and await a.evaluate('!assetDetailDirty() && assetRetainedDetail===null'))
+                await a.click('#saveAssetDetails')
+                record('META-25 saving the restored answer set is read-only',len(writes)==before and 'No unsaved changes' in await a.locator('#assetDetailStatus').inner_text())
+                await a.click('#closeAssetDialog');await a.wait_for_function("!document.querySelector('#assetDialog').open")
+                await a.fill('#assetSearch','no-matching-review-check-picture')
+                await a.wait_for_function('!assetSearchTimer&&!assetRefreshing&&assetPaging.query===assetPageQuery()')
+                plan={'id':'c'*32,'name':'Saved checks fixture','kind':'comparison','axis':'seed','values':[1],
+                      'budget':{'reserved':1,'allowance':1},'created_at':1790000000,
+                      'stages':[{'label':'A','job':{'id':'job-checks','preset_id':'fixture-create','status':'completed','outputs':[{'asset_id':ids[1],'media_type':'image'}]}}],
+                      'state':{'status':'awaiting_review','message':'Finished'}}
+                async def comparison_read(route):await route.fulfill(content_type='application/json',body=json.dumps([plan]))
+                await a.route('**/api/production',comparison_read)
+                await a.evaluate("productionId=null;showView('production')")
+                load=a.locator(f'[data-candidate-check-load="{ids[1]}"]');await load.wait_for()
+                await a.set_viewport_size({'width':390,'height':1100});await load.scroll_into_view_if_needed()
+                record('META-26 off-page saved answers stay unknown until read',await a.locator('.candidate-checks').inner_text()=='Saved checks not loaded. Read them before answering.\n\nLoad saved checks' and await a.locator('[data-candidate-check]').count()==0 and await a.locator('.candidate-checks').evaluate('el=>el.scrollWidth<=el.clientWidth'))
+                await evidence_screenshot(a,path=str(args.out/'checks-unloaded-390.png'))
+                before=len(writes);await load.focus();await a.keyboard.press('Enter')
+                loaded=a.locator(f'[data-candidate-check="style"][data-asset="{ids[1]}"]');await loaded.wait_for()
+                record('META-27 loading saved checks changes no answer and focuses the loaded chip',len(writes)==before and (await loaded.get_attribute('aria-label')).startswith('style: yes.') and await a.evaluate("document.activeElement?.dataset.candidateCheck==='style'") and store.get(ids[1])['tags']==['check:style=yes','hero'])
+                await a.set_viewport_size({'width':1440,'height':1100});await loaded.scroll_into_view_if_needed()
+                await evidence_screenshot(a,path=str(args.out/'checks-loaded-1440.png'))
+                await a.keyboard.press('1');await a.wait_for_function("document.querySelector('#productionMessage').textContent.startsWith('Saved for this candidate: style no.')")
+                record('META-28 comparison key changes the observed saved answer once',len(writes)==before+1 and 'check:style=no' in store.get(ids[1])['tags'] and 'check:style=yes' not in store.get(ids[1])['tags'])
                 record('META-19 no generation/backend mutation' ,all(p['path'] in ['/api/estimate','/api/references/check'] for p in fixture.POSTS))
                 record('META-20 no page exceptions',not errors)
                 await browser.close()
@@ -144,7 +176,7 @@ async def exercise(args):
                      'limits':['Synthetic non-generation APIs; no Studio construction or model calls.',
                                'No owner-PC, screen-reader, reload-draft or artwork acceptance evidence.']}
             (args.out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
-    if len(checks)!=21:raise AssertionError('Scenario run did not complete')
+    if len(checks)!=28:raise AssertionError('Scenario run did not complete')
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--out',type=Path,required=True);parser.add_argument('--inert',action='store_true');parser.add_argument('--port', type=int, default=0, help='Fixed loopback port; 0 binds a free one')
