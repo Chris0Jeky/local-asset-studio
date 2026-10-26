@@ -4,6 +4,13 @@
   const PREFIX='studio.asset-recovery.v1.', LIMIT=512*1024;
   const workspace=value=>typeof value==='string' && /^[0-9a-f]{32}$/.test(value);
   const object=value=>value && typeof value==='object' && !Array.isArray(value);
+  function scopedStorage(storage,privacy='regular'){
+    if(!['regular','private','all'].includes(privacy))throw Error('Invalid recovery privacy scope.');
+    const prefix=privacy==='regular'?'':'studio.privacy.'+privacy+'.',target=()=>typeof storage==='function'?storage():storage;
+    const names=()=>{const store=target(),out=[];for(let i=0;i<store.length;i++){const key=store.key(i);if(typeof key!=='string')continue;if(prefix?key.startsWith(prefix):!key.startsWith('studio.privacy.'))out.push(prefix?key.slice(prefix.length):key);}return out;};
+    return {getItem:key=>target().getItem(prefix+key),setItem:(key,value)=>target().setItem(prefix+key,value),removeItem:key=>target().removeItem(prefix+key),
+      get length(){return names().length;},key:index=>names()[index]??null};
+  }
   const form=value=>object(value) && ['title','tags','review','notes'].every(k=>typeof value[k]==='string');
   const refusalCode=value=>typeof value==='string' && /^[A-Za-z0-9_-]{1,64}$/.test(value);
   function validRefusal(value,pending,scope){
@@ -98,5 +105,5 @@
     function connect(value){checkpoint=value;}
     return {read,write,clear,dispatch,connect,recordRefusal};
   }
-  return {create,PREFIX,workspace,validRefusal,lastRefusal};
+  return {create,PREFIX,workspace,validRefusal,lastRefusal,scopedStorage};
 });

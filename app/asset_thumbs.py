@@ -65,19 +65,22 @@ def render(source, size):
     return image
 
 
-def thumbnail(workspace, asset_id, size=DEFAULT_SIZE):
+def thumbnail(workspace, asset_id, size=DEFAULT_SIZE, *, privacy='regular'):
     """(path, etag) of the cached thumbnail for an image asset, rendering it once. WorkspaceError for anything else."""
     if size not in SIZES: raise WorkspaceError("Unsupported thumbnail size", code="invalid_thumbnail_size")
-    asset = workspace.get(asset_id)
+    asset = workspace.get(asset_id,privacy=privacy)
     if asset["media_type"] != "image":
         raise WorkspaceError("Only image assets have thumbnails", status=404, code="thumbnail_unavailable")
     digest = asset["sha256"]
     if not isinstance(digest, str) or not SHA256.fullmatch(digest):
         raise WorkspaceError("Asset content identity is unavailable", status=404, code="thumbnail_unavailable")
-    folder = workspace.root / "thumbs"
+    root = workspace.storage_root(asset.get('privacy','regular'))
+    folder = root / 'thumbs'
     target, tag = folder / f"{digest}-{size}-v{THUMB_VERSION}.webp", etag(digest, size)
+    if folder.is_symlink() or target.is_symlink() or folder.resolve().parent != root.resolve():
+        raise WorkspaceError('Thumbnail storage must remain in its own workspace directory', code='thumbnail_unavailable')
     if target.is_file(): return target, tag
-    source = workspace.file(asset_id)
+    source = workspace.file(asset_id,privacy=privacy)
     from PIL import Image
     with _DECODES:
         if target.is_file(): return target, tag  # another request rendered it while this one waited

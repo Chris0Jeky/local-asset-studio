@@ -33,6 +33,7 @@ function page({saved={},refresh=async()=>{}}={}){
   vm.createContext(context);
   // The helpers this section calls live earlier in the workbench; these stand-ins read the same state the same way.
   vm.runInContext(`
+    function draftStorage(){return localStorage;}
     function values(){return{positive:'Klein 4B wording',seed:getControl('seed').value,last_reference:lastUploaded};}
     function attachedReferencePayload(){return referenceRecords.map(r=>({...r}));}
     function pairKey(){return JSON.stringify([continuationState.source_sha256,referenceRecords.filter(r=>r.file).map(r=>r.sha256||r.file)]);}

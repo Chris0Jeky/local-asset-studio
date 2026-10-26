@@ -5,6 +5,7 @@ No journal, metadata writer, media reads, migration or background activity lives
 import json
 import math
 import time
+from .asset_reads import privacy_sql
 
 FORMAT = 'studio.asset-recovery-observation/v1'
 MAX_TARGETS = 200
@@ -22,7 +23,7 @@ def _text(value, maximum):
     return value
 
 
-def observe(workspace, ids, workspace_id, collection_id=None):
+def observe(workspace, ids, workspace_id, collection_id=None, privacy='regular'):
     """Return every selected target, including missing ones, in one scoped snapshot."""
     if (not isinstance(ids, list) or not 1 <= len(ids) <= MAX_TARGETS or
             any(not _identifier(i) for i in ids) or len(set(ids)) != len(ids)):
@@ -30,17 +31,19 @@ def observe(workspace, ids, workspace_id, collection_id=None):
     workspace._validate_scope(workspace_id)  # Unlike the legacy snapshot, scope is mandatory.
     if collection_id is not None and not _identifier(collection_id):
         raise ValueError('Supply a bounded collection identity')
+    clause, params = privacy_sql(privacy)
+    membership_clause, membership_params = privacy_sql(privacy, 'c.')
     with workspace.connection() as db:
         db.execute('BEGIN')
         identity = workspace._check_scope(db, workspace_id)
         collection = None
         if collection_id is not None:
-            row = db.execute('SELECT id,name FROM collections WHERE id=?', (collection_id,)).fetchone()
+            row = db.execute('SELECT id,name FROM collections WHERE id=? AND '+clause, [collection_id,*params]).fetchone()
             collection = {'id': collection_id, 'exists': row is not None}
             if row is not None: collection['name'] = _text(row['name'], 100)
         targets = []
         for identifier in ids:
-            row = db.execute('SELECT id,title,metadata_revision,trashed_at FROM assets WHERE id=?', (identifier,)).fetchone()
+            row = db.execute('SELECT id,title,metadata_revision,trashed_at FROM assets WHERE id=? AND '+clause, [identifier,*params]).fetchone()
             if row is None:
                 targets.append({'id': identifier, 'state': 'missing'})
                 continue
@@ -51,8 +54,8 @@ def observe(workspace, ids, workspace_id, collection_id=None):
             revision = row['metadata_revision']
             if type(revision) is not int or not 0 <= revision <= 2**53 - 1:
                 raise ValueError('Stored metadata revision is unavailable')
-            count = db.execute('SELECT count(*) FROM collection_assets ca JOIN collections c ON c.id=ca.collection_id WHERE ca.asset_id=?', (identifier,)).fetchone()[0]
-            memberships = db.execute('SELECT c.id,c.name FROM collection_assets ca JOIN collections c ON c.id=ca.collection_id WHERE ca.asset_id=? ORDER BY c.name,c.id LIMIT ?', (identifier, MAX_COLLECTIONS)).fetchall()
+            count = db.execute('SELECT count(*) FROM collection_assets ca JOIN collections c ON c.id=ca.collection_id WHERE ca.asset_id=? AND '+membership_clause, [identifier,*membership_params]).fetchone()[0]
+            memberships = db.execute('SELECT c.id,c.name FROM collection_assets ca JOIN collections c ON c.id=ca.collection_id WHERE ca.asset_id=? AND '+membership_clause+' ORDER BY c.name,c.id LIMIT ?', [identifier,*membership_params,MAX_COLLECTIONS]).fetchall()
             target = {'id': identifier, 'state': 'active' if row['trashed_at'] is None else 'trashed',
                       'title': _text(row['title'], 200), 'metadata_revision': revision,
                       'collection_count': count, 'collections_limited': count > MAX_COLLECTIONS,

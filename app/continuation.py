@@ -401,15 +401,17 @@ def _text(graph, bindings):
     return values[0] if len(set(values)) == 1 else None
 
 
-def source_context(studio, asset_id):
-    asset = studio.assets.get(asset_id)
+def source_context(studio, asset_id, *, privacy='regular'):
+    asset = studio.assets.get(asset_id,privacy=privacy)
     if asset.get("trashed_at") or asset.get("media_type") != "image":
         raise ValueError("Restore an image asset before continuing with it.")
-    path = studio.assets.file(asset_id)
+    path = studio.assets.file(asset_id,privacy=privacy)
     if path.stat().st_size > 20 * 1024 * 1024: raise ValueError("Source exceeds the 20 MiB reference limit.")
     if hashlib.sha256(path.read_bytes()).hexdigest() != asset["sha256"]:
         raise ValueError("Source bytes changed. Restore the original asset before continuing.")
     job = studio.jobs.get(asset.get("job_id")) or {}
+    if job and job.get('privacy','regular') != asset.get('privacy','regular'):
+        raise ValueError('Source recipe is unavailable. Inspect the retained source record before continuing.')
     prompt_id = (asset.get("source") or {}).get("prompt_id")
     matches = [submission for submission in job.get("submissions", []) if prompt_id and submission.get("prompt_id") == prompt_id]
     graph = matches[0].get("graph") if len(matches) == 1 else None
@@ -471,7 +473,7 @@ def validate(studio, payload, preset, graph, check_runtime=False):
         raise ValueError("The destination graph changed. Reopen the handoff and review the new route.")
     if cap["requires_mask"]:
         raise ValueError("This route needs a prepared RGBA repair mask, not an unchanged source copy. Prepare the mask in the dedicated repair workflow.")
-    source = source_context(studio, claim["source_asset_id"])
+    source = source_context(studio,claim['source_asset_id'],privacy='all' if payload.get('privacy')=='private' else 'regular')
     if source["sha256"] != claim["source_sha256"]:
         raise ValueError("The continuation source changed. Reopen Continue with this asset.")
     parents = payload.get("parent_assets")
@@ -516,7 +518,7 @@ def validate(studio, payload, preset, graph, check_runtime=False):
             raise ValueError("Every declared source input must have a valid graph binding.") from None
         if not isinstance(name, str) or bound != name or not re.fullmatch(r"[0-9a-f]{32}_[A-Za-z0-9._-]+\.(?:png|jpg|webp)", name):
             raise ValueError("Attach every declared source input explicitly; authored example inputs are not allowed.")
-        upload = upload_root / name
+        upload = studio._upload_path(name,payload.get('privacy','regular'),allow_regular=True)
         if upload.is_symlink() or not upload.is_file() or upload.stat().st_size > 20 * 1024 * 1024:
             raise ValueError("Continuation input bytes changed or are missing. Reattach every source before running.")
         upload_hash = hashlib.sha256(upload.read_bytes()).hexdigest()

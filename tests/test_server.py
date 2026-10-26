@@ -2143,11 +2143,13 @@ class ServerTests(unittest.TestCase):
                 self.assertEqual(seen,{'status':404,'obj':{'error':'Unknown image'}})
 
     def test_get_local_oserror_is_500_without_comfy_wording(self):
-        s=self.studio(); name='0'*32 + '_missing.png'
+        s=self.studio(); name='0'*32 + '_unreadable.png'
+        source=s.experiments/'uploads'/name;source.parent.mkdir(parents=True,exist_ok=True);source.write_bytes(png())
         handler=server.Handler.__new__(server.Handler); handler.studio=s; handler.path='/api/uploads/' + name; handler.headers={}
         handler._safe_host=lambda:True; seen={}
         handler._json=lambda status,obj:seen.update(status=status,obj=obj)
-        handler.do_GET()
+        with patch.object(handler,'_local_file',side_effect=OSError(13,'Permission denied',str(source))):
+            handler.do_GET()
         self.assertEqual(seen.get('status'),500,seen)
         self.assertIn('Could not read a local file',seen['obj']['error'])
         self.assertIn(name,seen['obj']['error'])
@@ -2171,7 +2173,9 @@ class ServerTests(unittest.TestCase):
         handler.send_response=Mock(side_effect=AssertionError('disconnected client must not get a second response'))
         # A vanished browser surfaces from the local file write, not from the ComfyUI request.
         with patch.object(server.Handler,'_local_file',side_effect=BrokenPipeError()), patch.object(server,'urlopen',side_effect=AssertionError('no ComfyUI call')):
-            s.jobs[identifier]['outputs'][0]['asset_id']='a'*32; s.assets=Mock(); handler.do_GET()
+            s.jobs[identifier]['outputs'][0]['asset_id']='a'*32; s.assets=Mock()
+            s.assets.file_entry.return_value=(s.experiments/'workspace'/'a.png',{'job_id':identifier,'output_index':0,'privacy':'regular'})
+            handler.do_GET()
         self.assertEqual(sent,[])
     def test_get_comfy_disconnect_or_stall_is_a_comfy_error(self):
         from http.client import RemoteDisconnected

@@ -3,6 +3,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 const {test}=require('node:test');
 const make=fs.readFileSync(path.join(__dirname,'../app/static/make.js'),'utf8');
 const between=(start,end)=>{assert.ok(make.includes(start)&&make.includes(end));return make.slice(make.indexOf(start),make.indexOf(end,make.indexOf(start)));};
+const privacy=between('  const creationPrivacy=','  const json=')+between('  const classified=','  // Curated,');
 
 test('an accepted work refusal updates Make Generate without replacing its composer or draft',()=>{
   const nodes=new Map(),look={id:'look',body:{preset_id:'primary-recipe'}},preset={id:'primary-recipe'},reason='The saved selection differs. Switch explicitly in Models & setup.';
@@ -76,8 +77,8 @@ test('choosing a character uses a live preferred Restyle look or the default and
   const fallback={id:'default'},preferred={id:'preferred'},note="Its preferred look is put away; Make uses the goal's default look.";
   for(const [available,look_note,expected] of [[[fallback,preferred],null,'preferred'],[[fallback],note,'default'],[[fallback,preferred],note,'default'],[[fallback],"Its preferred look's recipe is no longer usable; Make uses the goal's default look.",'default'],[[],note,null],[[fallback,{id:'previous'}],note,'previous']]){
     const c={id:'mira',canon_asset_id:'canon',body:{who:'Mira',clothes:'green cloak',look_id:'preferred'},look_note},state={form:{},styleLook:'previous',styleWords:true};
-    let said='';const context={state,usableCharacters:()=>[c],lookPictures:()=>available,goal:()=>({intent:'restyle'}),choosePicture:id=>{state.pick={id};},renderPictures(){},say:text=>{said=text;},q:()=>null};
-    const choose=vm.runInNewContext(between('  function chooseCharacter(','  const chosenCharacter=')+';chooseCharacter',context);context.chooseCharacter=choose;
+    let said='';const context={state,window:{},usableCharacters:()=>[c],lookPictures:()=>available,goal:()=>({intent:'restyle'}),choosePicture:id=>{state.pick={id};},renderPictures(){},say:text=>{said=text;},q:()=>null};
+    const choose=vm.runInNewContext(privacy+between('  function chooseCharacter(','  const chosenCharacter=')+';chooseCharacter',context);context.chooseCharacter=choose;
     const click=vm.runInNewContext('(function(e){'+between("    const character=e.target.closest('[data-make-character]');","    const saveChar=e.target.closest(")+'})',context);
     click({target:{closest:()=>({dataset:{makeCharacter:'mira'}})}});
     assert.equal(state.character,'mira');assert.equal(state.pick.id,'canon');assert.equal(state.form.who,'Mira');assert.equal(state.form.clothes,'green cloak');
@@ -89,13 +90,13 @@ test('choosing a character uses a live preferred Restyle look or the default and
 
 function restoreHarness(failure,status='completed'){
   const requests=[],queue=[],saved=[],state={runs:[]};let response=failure;
-  const context={state,savedRuns:[{id:'saved',look:'My look',scene:'a room',tune:{seed:0}}],restoredRuns:false,
+  const context={state,window:{},view:{dataset:{}},readDraft:()=>null,restoreDraft:async()=>{},savedRuns:[{id:'saved',look:'My look',scene:'a room',tune:{seed:0}}],restoredRuns:false,
     presets:()=>[{}],loadCharacters:async()=>{},render(){},renderRuns(){},refreshPickers(){},seedRuns:async()=>{throw Error('Must retain saved history');},
     remember:()=>saved.push(JSON.stringify(state.runs)),FINAL:['completed','failed','uncertain'],
     setTimeout:(fn,delay)=>{const timer={fn,delay};queue.push(timer);return timer;},clearTimeout:timer=>{const i=queue.indexOf(timer);if(i>=0)queue.splice(i,1);},
     fetch:async(url,options={})=>{requests.push({url,options});if(url==='/api/looks')return{ok:true,json:async()=>({looks:[]})};
       if(response==='network')throw TypeError('Network unavailable');return{ok:response===200,status:response,json:async()=>response===200?{id:'saved',status,outputs:[]}:({error:'Unavailable'})};}};
-  const api=vm.runInNewContext((make.match(/  const observing=.*\n/)?.[0]||'')+between('  const json=','  // Curated,')+between('  const timers=new Map();','  // A finished run')+between('  async function load(){','  // The gallery folds away')+';({load,pending:()=>timers.size})',context);
+  const api=vm.runInNewContext((make.match(/  const observing=.*\n/)?.[0]||'')+between('  const creationPrivacy=','  // Curated,')+between('  const timers=new Map();','  // A finished run')+between('  async function load(){','  // The gallery folds away')+';({load,pending:()=>timers.size})',context);
   return{...api,state,requests,saved,queue,respond:code=>{response=code;},jobStatus:next=>{status=next;},tick:async()=>{const timer=queue.shift();assert.ok(timer);await timer.fn();}};
 }
 
@@ -119,9 +120,9 @@ test('restore drops only a confirmed 404 and does not poll the missing run',asyn
 function historyHarness(runs,saved=[]){
   const storage=new Map([['studio.make',JSON.stringify({runs:saved})]]),timers=new Map(runs.map(r=>[r.job.id,r.job.id])),cleared=[],state={goal:'character',runs};
   const policy=make.includes('  const observing=')?between('  const observing=','  const remember='):'';
-  const context={state,timers,q:()=>({}),clearTimeout:id=>cleared.push(id),localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)}};
+  const context={state,timers,window:{},rememberDraft(){},q:()=>({}),clearTimeout:id=>cleared.push(id),localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)}};
   const render=between('  function renderRuns(){','    planPolish(')+'return list;}';
-  const api=vm.runInNewContext(make.match(/  const FINAL=.*\n/)[0]+policy+between('  const remember=','  const presets=')+render+';({remember,renderRuns,savedRuns,restored:()=>{restoredRuns=true;}})',context);
+  const api=vm.runInNewContext(privacy+make.match(/  const FINAL=.*\n/)[0]+policy+between('  const remember=','  const presets=')+render+';({remember,renderRuns,savedRuns,restored:()=>{restoredRuns=true;}})',context);
   return{...api,state,timers,cleared,saved:()=>JSON.parse(storage.get('studio.make')).runs};
 }
 const run=(id,status='completed',group)=>({job:{id,status},look:id,scene:'a room',group});
@@ -147,13 +148,13 @@ test('a finished overflow Compare rolls off as a whole, while lost contact stays
 function compareHarness(leaveAt,failure){
   const state={goal:'character',busy:false,runs:[]},view={hidden:false,isConnected:true},requests=[],statuses=[],polled=[];let observer;
   const leave=()=>{view.hidden=true;observer?.callback([{oldValue:null}]);view.hidden=false;observer?.callback([{oldValue:''}]);};
-  const context={state,view,Uint32Array,crypto:{getRandomValues:a=>a},compareList:()=>[1,2,3].map(id=>({id:'look-'+id,name:'Look '+id,body:{}})),compareBlocker:()=>'',q:()=>({value:'a room'}),say:s=>statuses.push(s),
+  const context={state,view,window:{},Uint32Array,crypto:{getRandomValues:a=>a},compareList:()=>[1,2,3].map(id=>({id:'look-'+id,name:'Look '+id,body:{}})),compareBlocker:()=>'',q:()=>({value:'a room'}),say:s=>statuses.push(s),
     MutationObserver:class{constructor(callback){this.callback=callback;observer=this;}observe(){}disconnect(){this.disconnected=true;}},
     presetFor:()=>({id:'preset'}),shapeSize:()=>[512,512],bound:()=>false,remember(){},renderRuns(){},poll:id=>polled.push(id),syncOperation(){},
     json:async(url,body)=>{requests.push({url,body});if(url==='/api/looks/prepare'){if(leaveAt==='prepare')leave();return{controls:{},look:{id:body.id,name:body.id,revision:0},notices:['Swap '+body.id+'.']};}
       if(failure&&requests.filter(r=>r.url==='/api/jobs').length===(failure.at||2)){const e=Error('Request refused');if(failure.status!==undefined)e.status=failure.status;throw e;}
       if(leaveAt==='job')leave();return{id:'job-'+requests.filter(r=>r.url==='/api/jobs').length,status:'queued'};}};
-  const generate=vm.runInNewContext(between('  function leaveWatch(){','  // Your pictures lives')+';generateCompare',context);
+  const generate=vm.runInNewContext(privacy+between('  function leaveWatch(){','  // Your pictures lives')+';generateCompare',context);
   return{generate,state,requests,statuses,polled,disconnected:()=>observer?.disconnected};
 }
 
@@ -198,9 +199,9 @@ test('unfinished cards past the six are capped at 20 (#1514 review)',()=>{
 test('uncertain observation can resume and Stop tracking clears its polling timer',async()=>{
   for(const action of ['resume','stop']){
     const state={runs:[run('job','uncertain')]},polled=[],cleared=[],timers=new Map([['job','timer']]);
-    const context={state,timers,CSS:{escape:x=>x},q:()=>({value:'owner stopped'}),json:async()=>({status:'uncertain',tracking_disposition:{status:action==='resume'?'active':'stopped'}}),
+    const context={window:{},state,timers,CSS:{escape:x=>x},q:()=>({value:'owner stopped'}),json:async()=>({status:'uncertain',tracking_disposition:{status:action==='resume'?'active':'stopped'}}),
       renderRuns(){},remember(){},say(){},poll:id=>polled.push(id),clearTimeout:id=>cleared.push(id)};
-    const recover=vm.runInNewContext(make.match(/  const FINAL=.*\n/)[0]+(make.match(/  const observing=.*\n/)?.[0]||'')+between('  async function recover(','  const marks=')+';recover',context);
+    const recover=vm.runInNewContext(privacy+make.match(/  const FINAL=.*\n/)[0]+(make.match(/  const observing=.*\n/)?.[0]||'')+between('  async function recover(','  const marks=')+';recover',context);
     await recover({dataset:action==='resume'?{makeResume:'job'}:{makeStop:'job'}});
     assert.deepEqual(polled,action==='resume'?['job']:[]);assert.deepEqual(cleared,action==='stop'?['timer']:[]);assert.equal(timers.has('job'),action==='resume');
   }
@@ -214,11 +215,11 @@ test('Make single and comparison pictures show the recorded quiet-left diagnosti
     const job={id:'job-1',status:'completed',controls:{seed:4},look:{id:'look-night-shift',name:'<Night Shift>',revision:2,options:{quiet_wall:true}},outputs:[output]};
     const runs=[{job,look:'Night Shift',scene:'A room'}],cards=[{group,id:'job-1',runs}];let rendered='';
     const box={children:[],contains:()=>false,querySelectorAll:()=>[]};
-    const context={state:{runs},runCards:()=>cards,q:()=>box,planPolish(){},layout(){},observing:()=>false,
+    const context={state:{runs},window:{},runCards:()=>cards,q:()=>box,planPolish(){},layout(){},observing:()=>false,
       FINAL:['completed'],words:job=>job.status,picture:()=>true,pictureTitle:String,escape:String,esc:s=>String(s).replaceAll('<','&lt;'),
       recovery:()=>'',marks:()=>'',characterMarkup:()=>'',actions:()=>'',selectedOf:()=>null,draftRun:()=>false,
       document:{activeElement:{},createElement:()=>({children:[],set innerHTML(value){rendered=value;}})}};
-    const render=vm.runInNewContext(note+between('  function renderRuns(){','  // Picture goals stay in Make')+';renderRuns',context);
+    const render=vm.runInNewContext(privacy+note+between('  function renderRuns(){','  // Picture goals stay in Make')+';renderRuns',context);
     render();
     assert.match(rendered,/Prepared with &lt;Night Shift>/);
     if(unavailable)assert.match(rendered,/Quiet-left check unavailable: unsupported image/);

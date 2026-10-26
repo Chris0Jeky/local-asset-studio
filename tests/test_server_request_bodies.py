@@ -83,4 +83,4 @@ class RequestBodyTests(unittest.TestCase):
             with self.subTest(route=route):
                 status, result = self.post(route, body, content_type='image/png')
                 self.assertEqual(status, 201, result)
-                operation.assert_called_once_with('reference', 'image/png', body)
+                operation.assert_called_once_with('reference', 'image/png', body, privacy='regular')

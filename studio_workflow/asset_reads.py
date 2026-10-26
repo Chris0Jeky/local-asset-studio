@@ -31,7 +31,7 @@ HEX32 = re.compile(r'[0-9a-f]{32}\Z')
 HEX64 = re.compile(r'[0-9a-f]{64}\Z')
 DEFAULT_FILTERS = {'visibility':'active', 'media_type':None, 'review':None,
                    'favorite':None, 'collection_id':None}
-FILTER_KEYS = (*DEFAULT_FILTERS, 'source', 'job_id')
+FILTER_KEYS = (*DEFAULT_FILTERS, 'source', 'job_id', 'privacy')
 REVIEWS = ('unreviewed','selected','needs_work','rejected')
 DISPLAY_LIMITS = {'title':200, 'filename':256, 'preset_name':200}
 EPOCH_VALID = "typeof(epoch)='text' AND length(epoch)=32 AND instr(epoch,char(0))=0 AND epoch NOT GLOB '*[^0-9a-f]*'"
@@ -55,7 +55,7 @@ def _projection(db):
     f"'{encoding}' AS _text_encoding",
     *[f"CASE WHEN typeof(a.{key})='text' AND length(CAST(a.{key} AS BLOB))<={limit*width} "
       f"THEN CAST(a.{key} AS BLOB) END AS {key}" for key,limit in
-      {'id':128,'sha256':64,'media_type':32,'review':32,'preset_id':128}.items()],
+      {'id':128,'sha256':64,'media_type':32,'review':32,'preset_id':128,'privacy':7}.items()],
     # SQLite's TEXT substr stops at NUL. Byte prefixes preserve labels and must
     # never silently turn a corrupt identity into another valid identity.
     *[f"CASE WHEN typeof(a.{key})='text' THEN coalesce(substr(CAST(a.{key} AS BLOB),1,{4*(limit+1)}),X'') END AS {key},"
@@ -76,6 +76,20 @@ class AssetReadError(ValueError):
 
 def require(condition, message, **error):
     if not condition: raise AssetReadError(message, **error)
+
+
+def privacy_scope(value):
+    require(type(value) is str and value in ('regular','private','all'), 'Invalid privacy scope', code='privacy_invalid')
+    return value
+
+
+def privacy_matches(value, scope):
+    return type(value) is str and value in ('regular','private') and (scope == 'all' or value == scope)
+
+
+def privacy_sql(scope, prefix=''):
+    privacy_scope(scope)
+    return (prefix+"privacy IN ('regular','private')", []) if scope == 'all' else (prefix+'privacy=?', [scope])
 
 
 def _matches(pattern, value):
@@ -99,20 +113,26 @@ def _finite(value):
     return type(value) in (int,float) and math.isfinite(value)
 
 
-def _state(db):
+def _state(db, privacy='regular'):
+    privacy_scope(privacy)
+    column = 'revision' if privacy == 'all' else privacy+'_revision'
     try:
         rows = db.execute(f"""SELECT singleton,
             CASE WHEN typeof(version)='integer' THEN version END AS version,
             CASE WHEN {EPOCH_VALID} THEN epoch END AS epoch,
-            CASE WHEN typeof(revision)='integer' THEN revision END AS revision
+            CASE WHEN typeof(revision)='integer' THEN revision END AS all_revision,
+            CASE WHEN typeof({column})='integer' THEN {column} END AS revision
             FROM asset_read_state_v1 LIMIT 2""").fetchall()
         row = rows[0] if len(rows) == 1 and rows[0]['singleton'] == 1 else None
     except sqlite3.DatabaseError as exc:
         raise AssetReadError('Asset catalogue read state is unavailable', code='asset_read_unavailable', status=503) from exc
     require(row is not None and row['version'] == 1 and _matches(HEX32,row['epoch'])
-            and _integer(row['revision']), 'Asset catalogue read state is invalid or unsupported',
+            and _integer(row['all_revision']) and _integer(row['revision']), 'Asset catalogue read state is invalid or unsupported',
             code='asset_read_unavailable', status=503)
-    return {'epoch':row['epoch'], 'revision':row['revision']}
+    # Scope epochs invalidate legacy global cursors once, without exposing old
+    # global mutation counts. Replacing the base epoch still expires every scope.
+    epoch = row['epoch'] if privacy == 'all' else hashlib.sha256((row['epoch']+':'+privacy).encode()).hexdigest()[:32]
+    return {'epoch':epoch, 'revision':row['revision']}
 
 
 def migrate(db):
@@ -129,7 +149,14 @@ def migrate(db):
             epoch TEXT NOT NULL, revision INTEGER NOT NULL
             CHECK(typeof(revision)='integer' AND revision BETWEEN 0 AND 9007199254740991))''')
         db.execute('INSERT INTO asset_read_state_v1 VALUES (1,1,?,0)', (uuid.uuid4().hex,))
-    _state(db)  # Never reset an existing invalid/unknown state or reuse old cursors.
+    _state(db, 'all')  # Never reset an existing invalid/unknown state or reuse old cursors.
+    columns = {row['name'] for row in db.execute('PRAGMA table_info(asset_read_state_v1)')}
+    for privacy in ('regular','private'):
+        column = privacy+'_revision'
+        if column not in columns:
+            db.execute(f'''ALTER TABLE asset_read_state_v1 ADD COLUMN {column} INTEGER NOT NULL DEFAULT 0
+                CHECK(typeof({column})='integer' AND {column} BETWEEN 0 AND 9007199254740991)''')
+        _state(db, privacy)
     db.execute('CREATE INDEX IF NOT EXISTS asset_read_order_v1 ON assets(created_at DESC,id DESC)')
     db.execute('CREATE INDEX IF NOT EXISTS asset_read_active_v1 ON assets(created_at DESC,id DESC) WHERE trashed_at IS NULL')
     db.execute('CREATE INDEX IF NOT EXISTS asset_read_job_v1 ON assets(job_id,created_at DESC,id DESC)')
@@ -144,6 +171,26 @@ def migrate(db):
                 AND {EPOCH_VALID};
                 SELECT CASE WHEN changes()!=1 THEN RAISE(ABORT,'Asset catalogue read state unavailable') END;
                 END''')
+            # The global stamp remains available only in explicit All reads.
+            # Memberships affect a scoped view only when both endpoints are in
+            # that scope. Parent deletes already invalidate their own scope,
+            # including cascades whose parent is absent from this AFTER trigger.
+            records = ('NEW',) if action == 'INSERT' else ('OLD',) if action == 'DELETE' else ('OLD','NEW')
+            for privacy in ('regular','private'):
+                if table == 'collection_assets':
+                    predicate = ' OR '.join(f'''EXISTS(SELECT 1 FROM assets a JOIN collections c
+                        ON c.id={record}.collection_id WHERE a.id={record}.asset_id
+                        AND a.privacy='{privacy}' AND c.privacy='{privacy}')''' for record in records)
+                else:
+                    predicate = ' OR '.join(f"{record}.privacy='{privacy}'" for record in records)
+                column = privacy+'_revision'
+                db.execute(f'''CREATE TRIGGER IF NOT EXISTS asset_read_{table}_{action.lower()}_{privacy}_v1
+                    AFTER {action} ON {table} WHEN {predicate} BEGIN
+                    UPDATE asset_read_state_v1 SET {column}={column}+1
+                    WHERE singleton=1 AND version=1 AND typeof({column})='integer'
+                    AND {column} BETWEEN 0 AND 9007199254740990 AND {EPOCH_VALID};
+                    SELECT CASE WHEN changes()!=1 THEN RAISE(ABORT,'Asset catalogue read state unavailable') END;
+                    END''')
 
 
 def normalize_filters(value=None):
@@ -155,6 +202,9 @@ def normalize_filters(value=None):
     require(type(source) is str and source in ('all', 'mine', 'agent'), 'Invalid source filter')
     # Omitted/All keeps the original response shape and cursor identity.
     if source != 'all': result['source'] = source
+    privacy = privacy_scope(result.pop('privacy', 'regular'))
+    # Keep regular legacy query/cursor identity; non-default scopes remain bound.
+    if privacy != 'regular': result['privacy'] = privacy
     job = result.pop('job_id', None)
     require(job is None or type(job) is str and 1 <= len(job) <= 128 and job.isprintable(), 'Invalid job filter')
     if job is not None: result['job_id'] = job
@@ -236,7 +286,7 @@ def _summary(row):
     error = {'code':'asset_read_unavailable','status':503}
     # Decode bounded scalar bytes here, not in SQLite's implicit TEXT converter.
     # Corrupt stored text must become the same typed refusal as other bad metadata.
-    for key in ('id','sha256','media_type','review','preset_id'):
+    for key in ('id','sha256','media_type','review','preset_id','privacy'):
         raw = value[key]
         if raw is None: continue
         require(type(raw) is bytes, 'An asset scalar is not text', **error)
@@ -244,7 +294,7 @@ def _summary(row):
             value[key] = raw.decode(encoding)
         except UnicodeError as exc:
             raise AssetReadError('An asset scalar has invalid text encoding', **error) from exc
-    require(_matches(ENTITY,value['id']) and _matches(HEX64,value['sha256'])
+    require(_matches(ENTITY,value['id']) and _matches(HEX64,value['sha256']) and value['privacy'] in ('regular','private')
             and _is_media_type(value['media_type'])
             and value['review'] in REVIEWS and value['favorite'] in (0,1)
             and _finite(value['created_at']) and _integer(value['bytes'])
@@ -268,6 +318,8 @@ def _summary(row):
         value[key] = text[:limit]
     value['favorite'] = bool(value['favorite'])
     value['url'] = '/api/assets/' + value['id'] + '/file'
+    if value['privacy'] == 'private': value['url'] += '?privacy=private'
+    else: value.pop('privacy')  # Additive private label; retain existing regular summary shape.
     return value
 
 
@@ -308,13 +360,15 @@ class AssetReads:
         with self.workspace.connection() as db:
             db.execute('BEGIN')
             scope = self.workspace._check_scope(db,workspace_id)
-            stamp = _state(db)
+            privacy = query.get('privacy', 'regular')
+            stamp = _state(db, privacy)
             if position is not None:
                 compatible = position['catalogue'] == stamp or reanchor and position['catalogue']['epoch'] == stamp['epoch'] \
                     and position['catalogue']['revision'] <= stamp['revision']
                 require(compatible, 'Asset catalogue changed; explicitly refresh this query',
                         code='asset_cursor_stale',status=409)
-            clauses, params = [], []
+            privacy_clause, params = privacy_sql(privacy, 'a.')
+            clauses = [privacy_clause]
             if query.get('source') in ('mine', 'agent'):
                 # Match assetIsAgentRun exactly: Make labels are the owner's runs.
                 # substr equality stays case-sensitive, unlike SQLite's default LIKE.
@@ -326,7 +380,8 @@ class AssetReads:
                 if query[key] is not None: clauses.append('a.'+key+'=?'); params.append(query[key])
             if 'job_id' in query: clauses.append('a.job_id=?'); params.append(query['job_id'])
             if query['collection_id'] is not None:
-                require(db.execute('SELECT 1 FROM collections WHERE id=?',(query['collection_id'],)).fetchone() is not None,
+                collection_clause, collection_params = privacy_sql(privacy)
+                require(db.execute('SELECT 1 FROM collections WHERE id=? AND '+collection_clause,[query['collection_id'],*collection_params]).fetchone() is not None,
                         'The selected collection no longer exists',code='asset_collection_unavailable',status=409)
                 clauses.append('EXISTS (SELECT 1 FROM collection_assets AS ca WHERE ca.collection_id=? AND ca.asset_id=a.id)')
                 params.append(query['collection_id'])
@@ -361,11 +416,11 @@ class AssetReads:
                 extra['cursor'] = _encode_cursor(scope,stamp,query_hash,limit,
                     {'id':position['last'][1],'created_at':position['last'][0]},position['last'][0]) if position else None
             if include_collections:
-                extra['collection_page'] = self.workspace._collection_page(db,scope,stamp,limit=100)
+                extra['collection_page'] = self.workspace._collection_page(db,scope,stamp,limit=100,privacy=privacy)
             count = len(summaries)
             if details:
                 unavailable = []
-                projected = self.workspace._library_assets(db,summaries,scope,unavailable=unavailable)
+                projected = self.workspace._library_assets(db,summaries,scope,unavailable=unavailable,privacy=privacy)
                 by_id = {a['id']:a for a in projected}; errors = {e['id']:e for e in unavailable}
                 items, extra['unavailable_assets'], count = [], [], 0
                 # Preserve a prefix of observed rows, including unavailable IDs.
@@ -384,18 +439,19 @@ class AssetReads:
             next_cursor = _encode_cursor(scope,stamp,query_hash,limit,summaries[count-1],keys[count-1]) if len(rows)>count else None
             return _result('page',scope,stamp,filters=query,order=order,limit=limit,assets=items,next_cursor=next_cursor,**extra)
 
-    def selection(self, ids, *, workspace_id, details=False):
+    def selection(self, ids, *, workspace_id, details=False, privacy='regular'):
         require(type(details) is bool, 'Details must be boolean')
+        clause, params = privacy_sql(privacy, 'a.')
         ids = selection_ids(ids)
         self.workspace._validate_scope(workspace_id)
         with self.workspace.connection() as db:
             db.execute('BEGIN')
             scope = self.workspace._check_scope(db,workspace_id)
-            stamp = _state(db)
+            stamp = _state(db, privacy)
             marks = ','.join('?' for _ in ids)
-            rows = db.execute('SELECT '+_projection(db)+' FROM assets AS a WHERE a.id IN ('+marks+')',ids)
+            rows = db.execute('SELECT '+_projection(db)+' FROM assets AS a WHERE a.id IN ('+marks+') AND '+clause,[*ids,*params])
             found = {item['id']:item for item in map(_summary,rows)}
-            if details: found = {item['id']:item for item in self.workspace._library_assets(db,list(found.values()),scope)}
+            if details: found = {item['id']:item for item in self.workspace._library_assets(db,list(found.values()),scope,privacy=privacy)}
             items = []
             for key in ids:
                 asset = found.get(key)

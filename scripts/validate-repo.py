@@ -15,7 +15,7 @@ def exact_int(value):
 
 
 # Runtime output folders that must never be committed. Every entry is also a .gitignore rule; tests/test_repo_payload_guard.py holds the two lists in step so a new folder cannot be added to one alone.
-OPERATIONAL_PREFIXES=('experiments/runs/','experiments/imports/','experiments/uploads/','experiments/workspace/','experiments/projects/','experiments/diagnostics/','experiments/pose-artifacts/','.runtime/')
+OPERATIONAL_PREFIXES=('experiments/runs/','experiments/imports/','experiments/uploads/','experiments/workspace/','experiments/private/','experiments/projects/','experiments/diagnostics/','experiments/pose-artifacts/','.runtime/')
 catalog=json.loads((root/'presets/catalog.json').read_text(encoding='utf-8'))['presets']
 assert len({p['id'] for p in catalog})==len(catalog), 'Duplicate preset IDs'
 fields=['positive','negative','width','height','seed','steps','cfg','denoise','lora','reference','last_reference','frames','fps','style_weight','pose_strength','depth_cut','sampler','scheduler','lora_name','lora2','lora2_name','lora3','lora3_name','lora4','lora4_name','lora5','lora5_name','lora6','lora6_name']

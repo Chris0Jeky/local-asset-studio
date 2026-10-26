@@ -1,5 +1,17 @@
 // Thumbnail rendering version; keep in step with THUMB_VERSION in app/asset_thumbs.py (tests/test_asset_thumbs.py pins both).
 const ASSET_THUMB_VERSION = 1;
+let assetActivePrivacy=globalThis.window?.StudioPrivacy?.scope?.()||'regular';
+let assetPrivacyEpoch=0;
+function assetPrivacyScope(){return assetActivePrivacy;}
+function assetPrivacyAllows(record){const value=record?.privacy===undefined?'regular':record.privacy;return ['regular','private'].includes(value)&&(assetActivePrivacy==='all'||value===assetActivePrivacy);}
+function assetPrivacyHeaders(scope=assetActivePrivacy){return {'X-Studio-Privacy':scope};}
+function assetPrivacyStorage(scope=assetActivePrivacy){return StudioAssetRecovery.scopedStorage(()=>sessionStorage,scope);}
+function assetPreferenceStorage(){return assetActivePrivacy==='regular'?localStorage:assetPrivacyStorage();}
+const assetJournals=new Map();
+// At most one bounded unsaved detail per view survives a storage refusal while
+// its private controls are hidden. It is never treated as a persisted command.
+const assetUnstoredDetails=new Map();
+function assetJournalFor(scope=assetActivePrivacy){if(!assetJournals.has(scope))assetJournals.set(scope,StudioAssetRecovery.create(()=>assetPrivacyStorage(scope)));return assetJournals.get(scope);}
 let assetState = {assets:[], collections:[]}, assetScope = 'all', assetSelection = new Set(), activeAsset = null, collectionEditing = null;
 let assetSignature = '', assetRefreshing = false, assetWorkspaceEpoch = 0, assetObservedWorkspace;
 // Bumped when a confirmed receipt advances a loaded record in place: a library read that overlapped it is stale (#1436).
@@ -7,10 +19,11 @@ let assetReceiptEpoch = 0;
 // Page rows and explicitly resolved IDs are separate: absence from a page proves nothing about an ID.
 let assetPaging=null,assetResolved=new Map(),assetResolveRequest=0,assetOpenRequest=0,assetCollectionBusy=false,assetObservationEpoch=0,assetPageEpoch=0;
 let assetSiblingPage=null,assetSiblingRequest=null;
+let assetRefreshRequest=0,assetRefreshController=null;
 function assetRecord(id){
   const page=assetState.assets.find(a=>a.id===id),item=assetResolved.get(id);
-  if(!item)return page;
-  return item.asset && page && page.workspace_id===item.asset.workspace_id && page.metadata_revision>item.asset.metadata_revision?page:item.asset;
+  const record=!item?page:item.asset && page && page.workspace_id===item.asset.workspace_id && page.metadata_revision>item.asset.metadata_revision?page:item.asset;
+  return assetPrivacyAllows(record)?record:undefined;
 }
 function assetPageRecords(){return assetState.assets.map(a=>assetRecord(a.id)).filter(Boolean);}
 function assetRecords(){return [...new Set([...assetState.assets.map(a=>a.id),...assetResolved.keys()])].map(assetRecord).filter(Boolean);}
@@ -22,15 +35,15 @@ function rememberAssetObservation(item){
   const index=assetState.assets.findIndex(a=>a.id===item.id);
   if(asset && index>=0 && assetState.assets[index].workspace_id===asset.workspace_id)assetState.assets[index]=asset;
 }
-function assetPageFilters(){const filters={visibility:assetScope==='trash'?'trash':'active',sort:$('#assetSort').value||'newest',source:assetSourceChoice()},q=$('#assetSearch').value.trim();if(q)filters.q=q;if(assetScope==='favorite')filters.favorite=true;if(['selected','needs_work','unreviewed'].includes(assetScope))filters.review=assetScope;if(assetScope.startsWith('collection:'))filters.collection_id=assetScope.slice(11);if($('#assetType').value!=='all')filters.media_type=$('#assetType').value;return filters;}
+function assetPageFilters(){const filters={visibility:assetScope==='trash'?'trash':'active',sort:$('#assetSort').value||'newest',source:assetSourceChoice()},q=$('#assetSearch').value.trim();if(assetActivePrivacy!=='regular')filters.privacy=assetActivePrivacy;if(q)filters.q=q;if(assetScope==='favorite')filters.favorite=true;if(['selected','needs_work','unreviewed'].includes(assetScope))filters.review=assetScope;if(assetScope.startsWith('collection:'))filters.collection_id=assetScope.slice(11);if($('#assetType').value!=='all')filters.media_type=$('#assetType').value;return filters;}
 function assetPageQuery(){return JSON.stringify(assetPageFilters());}
 function assetReadURL(path,query){return path+'?'+Object.entries(query).filter(([,v])=>v!==null&&v!==undefined).map(([k,v])=>encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');}
 async function resolveAssetIDs(ids){
   const scope=assetState.workspace_id,epoch=assetWorkspaceEpoch,receipt=assetReceiptEpoch,page=assetPageEpoch;
   requireAssetScope(scope);
-  const result=await api('/api/assets/selection',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({workspace_id:scope,ids,details:true})});
+  const result=await api('/api/assets/selection',{method:'POST',headers:{'Content-Type':'application/json',...assetPrivacyHeaders()},body:JSON.stringify({workspace_id:scope,ids,details:true})});
   if(assetState.workspace_id!==scope || assetWorkspaceEpoch!==epoch || assetReceiptEpoch!==receipt || assetPageEpoch!==page)return false;
-  if(result?.workspace_id!==scope || !Array.isArray(result.items) || result.items.length!==ids.length || result.items.some((item,i)=>item.id!==ids[i] || !['active','trashed','missing'].includes(item.state) || (item.state==='missing'?item.asset!==null:!validAssetMetadata(item.asset)||item.asset.id!==item.id||item.asset.workspace_id!==scope)))throw Error('The selected-ID observation is invalid. Nothing was changed.');
+  if(result?.workspace_id!==scope || !Array.isArray(result.items) || result.items.length!==ids.length || result.items.some((item,i)=>item.id!==ids[i] || !['active','trashed','missing'].includes(item.state) || (item.state==='missing'?item.asset!==null:!assetPrivacyAllows(item.asset)||!validAssetMetadata(item.asset)||item.asset.id!==item.id||item.asset.workspace_id!==scope)))throw Error('The selected-ID observation is invalid. Nothing was changed.');
   for(const item of result.items)rememberAssetObservation(item);
   assetObservationEpoch++;   // an older held page must not clear this newer explicit observation
   if(result.items.some(item=>assetState.assets.some(a=>a.id===item.id)))renderAssets();
@@ -40,7 +53,7 @@ async function resolveAssetSelection(){
   const request=++assetResolveRequest,ids=[...assetSelection];if(!ids.length)return true;
   if(ids.length>200){assetMessage('Choose at most 200 assets per action.',true);return false;}
   try{const ok=await resolveAssetIDs(ids);if(!ok || request!==assetResolveRequest || JSON.stringify(ids)!==JSON.stringify([...assetSelection]))return false;renderAssetSelection();return true;}
-  catch(error){assetMessage(error.message,true);return false;}
+  catch(error){if(request===assetResolveRequest)assetMessage(error.message,true);return false;}
 }
 async function moveAssetPage(next){
   if(!assetPaging || assetRefreshing)return false;
@@ -51,13 +64,13 @@ async function moveAssetPage(next){
 }
 async function moreAssetCollections(){
   if(!assetPaging?.collectionNext || assetCollectionBusy)return false;
-  const paging=assetPaging,scope=assetState.workspace_id,epoch=assetWorkspaceEpoch,receipt=assetReceiptEpoch;
+  const paging=assetPaging,scope=assetState.workspace_id,epoch=assetWorkspaceEpoch,receipt=assetReceiptEpoch,privacyEpoch=assetPrivacyEpoch;
   const current=()=>assetPaging===paging && assetState.workspace_id===scope && assetWorkspaceEpoch===epoch && assetReceiptEpoch===receipt;assetCollectionBusy=true;
-  try{const data=await api(assetReadURL('/api/collections',{workspace_id:scope,limit:100,cursor:paging.collectionNext}));
+  try{const data=await api(assetReadURL('/api/collections',{workspace_id:scope,limit:100,cursor:paging.collectionNext}),{headers:assetPrivacyHeaders()});
     if(!current())return false;
-    if(data.workspace_id!==scope || JSON.stringify(data.catalogue)!==JSON.stringify(paging.catalogue) || !Array.isArray(data.collections))throw Error('Collections changed. Refresh the Library before continuing.');
+    if(data.workspace_id!==scope || JSON.stringify(data.catalogue)!==JSON.stringify(paging.catalogue) || !Array.isArray(data.collections) || data.collections.some(c=>!assetPrivacyAllows(c)))throw Error('Collections changed. Refresh the Library before continuing.');
     assetState.collections.push(...data.collections);paging.collectionNext=data.next_cursor;renderAssets();return true;
-  }catch(error){if(current())assetMessage(error.message,true);return false;}finally{assetCollectionBusy=false;}
+  }catch(error){if(current())assetMessage(error.message,true);return false;}finally{if(privacyEpoch===assetPrivacyEpoch)assetCollectionBusy=false;}
 }
 // The tab journal retains drafts and exact commands; Workspace owns saved metadata.
 let assetDetailEpoch = 0, assetDetailBaseline = null, assetDetailBusy = false, assetDetailDiscarding = false, assetDiagnosticRequest = 0;
@@ -65,10 +78,10 @@ let assetDetailPending = null, assetDetailConflict = null, assetLibraryPending =
 // Async completions own one request, not whichever editor or Workspace is visible later.
 let assetDetailRequest = null, assetLibraryRequest = null;
 const assetFormIds = {title:'assetTitle',tags:'assetTags',review:'assetReview',notes:'assetNotes'};
-const assetRecovery = StudioAssetRecovery.create(()=>sessionStorage);
+let assetRecovery = assetJournalFor();
 let assetRetainedDetail = null, assetRecoveryError = '', assetRecoveryLoadError = '', assetRetainedSelection = null, assetDialogOpener = null;
 // Queue, grouping and reason chips are projections over the same saved review states; the server schema is unchanged.
-let assetGroupMode = 'none', assetSearchTimer = null, assetQueue = null, assetBulkReviewBusy = false;
+let assetGroupMode = 'none', assetSearchTimer = null, assetQueue = null, assetBulkReviewBusy = false,assetBulkRequest=null;
 const assetGroupModes = ['recipe','day','run'], assetGroupStorageKey = 'studio.assets.group';
 // Source is a view preference like grouping: an asset with a run label (set by API callers, never by Create) is an agent run (#939).
 // Paged queries default to Mine independently of the rows already loaded.
@@ -126,16 +139,27 @@ function observeAssetWorkspaceIdentity() {
 }
 function assetReceiptURL(command){return '/api/assets/commands/'+command.request_id+'?workspace_id='+encodeURIComponent(command.workspace_id);}
 
+function assetDetailRecoveryValue(){
+  const metadata=Object.fromEntries(['id','workspace_id','metadata_revision','title','notes','tags','review','favorite','trashed_at'].map(k=>[k,activeAsset[k]]));
+  const operation=assetDetailPending?Object.fromEntries(['command','body','kind','snapshot'].map(k=>[k,assetDetailPending[k]])):null;
+  const last_refusal=StudioAssetRecovery.lastRefusal(assetRetainedDetail,operation);
+  return {version:2,workspace_id:activeAsset.workspace_id,id:activeAsset.id,metadata,baseline:assetDetailBaseline,draft:assetDetailValues(),operation,conflict:assetDetailConflict,...(last_refusal?{last_refusal}:{})};
+}
 function rememberAssetDetails() {
   if(assetRecoveryLoadError)throw Error(assetRecoveryLoadError);
   if(!activeAsset || !assetDetailBaseline)return;
   if(!StudioAssetRecovery.workspace(activeAsset.workspace_id))throw Error('Workspace identity is unavailable. Keep a copy of this draft before leaving.');
   if(assetRetainedDetail && assetRetainedDetail.workspace_id!==activeAsset.workspace_id)throw Error('A retained draft belongs to a different Workspace. It has not been replaced.');
-  if(!assetDetailDirty() && !assetDetailPending && !assetDetailConflict){assetRecovery.clear('detail');assetRetainedDetail=null;return;}
-  const metadata=Object.fromEntries(['id','workspace_id','metadata_revision','title','notes','tags','review','favorite','trashed_at'].map(k=>[k,activeAsset[k]]));
-  const operation=assetDetailPending?Object.fromEntries(['command','body','kind','snapshot'].map(k=>[k,assetDetailPending[k]])):null;
-  const last_refusal=StudioAssetRecovery.lastRefusal(assetRetainedDetail,operation);
-  assetRetainedDetail=assetRecovery.write('detail',{version:2,workspace_id:activeAsset.workspace_id,id:activeAsset.id,metadata,baseline:assetDetailBaseline,draft:assetDetailValues(),operation,conflict:assetDetailConflict,...(last_refusal?{last_refusal}:{})});
+  if(!assetDetailDirty() && !assetDetailPending && !assetDetailConflict){assetRecovery.clear('detail');assetRetainedDetail=null;assetUnstoredDetails.delete(assetActivePrivacy);return;}
+  assetRetainedDetail=assetRecovery.write('detail',assetDetailRecoveryValue());assetUnstoredDetails.delete(assetActivePrivacy);
+}
+function suspendUnstoredAssetDraft(){
+  if(!activeAsset||!assetDetailBaseline)return;
+  let raw=null;const memory={getItem:()=>raw,setItem:(_,value)=>{raw=value;}};
+  // Reuse the exact journal validator and size bound without claiming browser
+  // persistence or enabling dispatch through this temporary memory copy.
+  try{assetUnstoredDetails.set(assetActivePrivacy,StudioAssetRecovery.create(memory).write('detail',assetDetailRecoveryValue()));}
+  catch(error){assetRecoveryError=error.message;}
 }
 function retainAssetDraft() {
   try{rememberAssetDetails();assetRecoveryError='';return true;}
@@ -282,7 +306,7 @@ async function performAssetSave(operation, observe=false) {
   try{requireAssetScope(operation.command.workspace_id);}catch(error){assetDetailStatus(error.message,true);return false;}
   if(!retainAssetDraft())return false;
   const {id,epoch,command,body}=operation,controller=new AbortController();
-  const request={},workspaceEpoch=assetWorkspaceEpoch;
+  const request={},workspaceEpoch=assetWorkspaceEpoch,headers=assetPrivacyHeaders();
   assetDetailRequest=request;
   const ownsRequest=()=>assetDetailRequest===request;
   const ownsEditor=()=>assetDetailContextCurrent(id,epoch) && assetDetailPending===operation && activeAsset.workspace_id===command.workspace_id;
@@ -292,7 +316,7 @@ async function performAssetSave(operation, observe=false) {
   assetDetailStatus(observe?'Checking the earlier save receipt…':'Saving this snapshot… Newer typing stays in your draft.');
   const timer=setTimeout(()=>controller.abort(),15000);
   try {
-    const result=await (observe?api(assetReceiptURL(command),{signal:controller.signal}):assetRecovery.dispatch('detail',operation,()=>api('/api/assets/update',{method:'POST',headers:{'Content-Type':'application/json'},body,signal:controller.signal}),()=>current() && assetDetailPending===operation && assetState.workspace_id===command.workspace_id && !controller.signal.aborted));
+    const result=await (observe?api(assetReceiptURL(command),{headers,signal:controller.signal}):assetRecovery.dispatch('detail',operation,()=>api('/api/assets/update',{method:'POST',headers:{'Content-Type':'application/json',...headers},body,signal:controller.signal}),()=>current() && assetDetailPending===operation && assetState.workspace_id===command.workspace_id && !controller.signal.aborted));
     if(!current())return false;
     if(result?.workspace_id!==command.workspace_id)throw Error('The response belongs to a different Workspace; the original recovery is retained.');
     if(observe && result?.status==='unknown' && result.request_id===command.request_id){assetDetailStatus('Save still not confirmed. No receipt exists yet; the earlier request may still complete. No retry was sent.',true);return false;}
@@ -402,24 +426,28 @@ document.addEventListener('click',e=>{
 $('#importAssets').onchange=async e=>{
   const files=[...e.target.files];if(!files.length)return;
   if(files.length>32){assetMessage('Import up to 32 images at a time.',true);return;}
-  const ids=[];
+  const ids=[],epoch=assetWorkspaceEpoch,captured=globalThis.window?.StudioPrivacy?.capture?.()||{scope:assetActivePrivacy,privacy:'regular'};
+  const current=()=>epoch===assetWorkspaceEpoch;
   try{
     for(let i=0;i<files.length;i++){
+      if(!current())break;
       const file=files[i];assetMessage('Importing '+(i+1)+' of '+files.length+'…');
       if(file.size>20*1024*1024)throw Error(file.name+' exceeds 20 MiB');
-      const result=await api('/api/assets/import',{method:'POST',headers:{'Content-Type':file.type,'X-Filename':file.name},body:file});ids.push(result.asset.id);
+      const result=await api('/api/assets/import',{method:'POST',headers:{'Content-Type':file.type,'X-Filename':file.name,'X-Studio-Privacy':captured.scope,'X-Studio-Creation-Privacy':captured.privacy},body:file});ids.push(result.asset.id);
     }
+    if(!current())return;
     assetScope='all';$('#assetSearch').value='';await refreshAssets(true);assetSelection=new Set(ids);renderAssets();assetMessage('Imported '+ids.length+' originals. They are selected for organization or native export.');
-  }catch(err){await refreshAssets(true);assetMessage(err.message+' '+ids.length+' earlier imports are preserved.',true);}
+  }catch(err){if(!current())return;await refreshAssets(true);if(current())assetMessage(err.message+' '+ids.length+' earlier imports are preserved.',true);}
   finally{e.target.value='';}
 };
 function assetMessage(text, error=false) { const el=$('#assetMessage'); el.textContent=text; el.classList.toggle('error',error); }
 async function refreshAssets(force=false,position=null) {
   if(assetRefreshing)return false;
   assetRefreshing=true;
+  const refreshRequest=++assetRefreshRequest,controller=new AbortController();assetRefreshController=controller;
   const query=assetPageQuery(),filters=assetPageFilters(),scope=assetState.workspace_id,workspaceEpoch=assetWorkspaceEpoch;
   let accepted=null;
-  const owns=()=>accepted?assetPaging===accepted.page && assetState.workspace_id===accepted.scope && assetWorkspaceEpoch===accepted.epoch:assetState.workspace_id===scope && assetWorkspaceEpoch===workspaceEpoch;
+  const owns=()=>refreshRequest===assetRefreshRequest && (accepted?assetPaging===accepted.page && assetState.workspace_id===accepted.scope && assetWorkspaceEpoch===accepted.epoch:assetState.workspace_id===scope && assetWorkspaceEpoch===workspaceEpoch);
   let reanchor=!!position?.reanchor || !position&&!force&&assetPaging?.query===query&&!!assetPaging.needsReanchor;
   try {
     let data,epoch,observation,page,collections;
@@ -428,7 +456,8 @@ async function refreshAssets(force=false,position=null) {
     let reanchorHistory=position?.reanchorHistory??(!force&&assetPaging?.query===query?assetPaging.reanchorHistory||0:0);
     // A replayed page cursor goes stale when the catalogue moves on: a background or view-switch read then restarts at page 1.
     let replayed=!position&&cursor!==null&&!reanchor,fellBack=false;
-    const read=()=>api(assetReadURL('/api/assets/page',{...filters,workspace_id:reanchor?scope:undefined,limit:100,details:true,include_collections:true,cursor,reanchor:reanchor?true:undefined}));
+    const headers=assetPrivacyHeaders();
+    const read=()=>api(assetReadURL('/api/assets/page',{...filters,workspace_id:reanchor?scope:undefined,limit:100,details:true,include_collections:true,cursor,reanchor:reanchor?true:undefined}),{headers,signal:controller.signal});
     const current=()=>epoch===assetReceiptEpoch && observation===assetObservationEpoch;
     let reads=0;do{
       epoch=assetReceiptEpoch;observation=assetObservationEpoch;
@@ -445,7 +474,7 @@ async function refreshAssets(force=false,position=null) {
     if(!current())return false;   // still racing saves/ID observations: keep the newer records; the next poll reads again
     if(query!==assetPageQuery())return false;
     collections=page?.collection_page;
-    if(!validAssetPage(page,100) || (cursor!==null||reanchor)&&page.workspace_id!==scope || page.workspace_id!==collections?.workspace_id || JSON.stringify(page.catalogue)!==JSON.stringify(collections.catalogue) || !Array.isArray(collections.collections))throw Error('Library reads changed Workspace or catalogue, or returned invalid details. Refresh to try again.');
+    if(!validAssetPage(page,100) || (cursor!==null||reanchor)&&page.workspace_id!==scope || page.workspace_id!==collections?.workspace_id || JSON.stringify(page.catalogue)!==JSON.stringify(collections.catalogue) || !Array.isArray(collections.collections) || collections.collections.some(c=>!assetPrivacyAllows(c)))throw Error('Library reads changed Workspace or catalogue, or returned details outside this privacy view. Refresh to try again.');
     data={assets:page.assets,collections:collections.collections,workspace_id:page.workspace_id};
     const signature=JSON.stringify({data,unavailable:page.unavailable_assets,next:page.next_cursor});
     const previousScope=assetState.workspace_id;
@@ -481,13 +510,13 @@ async function refreshAssets(force=false,position=null) {
     if(assetScopeRestored && e.data?.code==='asset_collection_unavailable'){assetScopeRestored=false;assetScope='all';}
     assetMessage((accepted?(reanchor?'Library update confirmed. ':'')+'Library page loaded. Additional asset details could not be read: ':reanchor?'Library update confirmed. This page could not be refreshed: ':'')+e.message,true);return false;
   }
-  finally {assetRefreshing=false;if(query!==assetPageQuery()&&!assetSearchTimer)void refreshAssets(true);}
+  finally {if(refreshRequest===assetRefreshRequest){assetRefreshing=false;assetRefreshController=null;if(query!==assetPageQuery()&&!assetSearchTimer)void refreshAssets(true);}}
 }
 function validAssetPage(page,limit){
   if(!StudioAssetRecovery.workspace(page?.workspace_id) || typeof page.catalogue?.epoch!=='string' || !/^[0-9a-f]{32}$/.test(page.catalogue.epoch) || !Number.isSafeInteger(page.catalogue.revision) || page.catalogue.revision<0 ||
     !Array.isArray(page.assets) || !Array.isArray(page.unavailable_assets) || page.assets.length+page.unavailable_assets.length>limit ||
     ![page.cursor,page.next_cursor].every(cursor=>cursor===null||typeof cursor==='string') ||
-    page.assets.some(asset=>!validAssetMetadata(asset)||asset.workspace_id!==page.workspace_id) ||
+    page.assets.some(asset=>!assetPrivacyAllows(asset)||!validAssetMetadata(asset)||asset.workspace_id!==page.workspace_id) ||
     page.unavailable_assets.some(item=>!item||typeof item.id!=='string'||typeof item.code!=='string'||typeof item.error!=='string'))return false;
   const ids=[...page.assets,...page.unavailable_assets].map(item=>item.id);return new Set(ids).size===ids.length;
 }
@@ -503,17 +532,17 @@ function validAssetScope(value){return assetFixedScopes.includes(value) || typeo
 function rememberAssetView(){
   const view=[assetScope,$('#assetSort').value,$('#assetType').value,$('#assetSearch').value],key=JSON.stringify(view);
   if(key===assetViewRemembered)return;assetViewRemembered=key;
-  try{if(validAssetScope(view[0]))localStorage.setItem(assetViewKeys.scope,view[0]);if(assetSortModes.includes(view[1]))localStorage.setItem(assetViewKeys.sort,view[1]);if(assetTypeModes.includes(view[2]))localStorage.setItem(assetViewKeys.type,view[2]);}catch(error){}
-  try{if(typeof view[3]==='string' && view[3].length<=500)sessionStorage.setItem(assetViewKeys.search,view[3]);}catch(error){}
+  try{const storage=assetPreferenceStorage();if(validAssetScope(view[0]))storage.setItem(assetViewKeys.scope,view[0]);if(assetSortModes.includes(view[1]))storage.setItem(assetViewKeys.sort,view[1]);if(assetTypeModes.includes(view[2]))storage.setItem(assetViewKeys.type,view[2]);}catch(error){}
+  try{if(typeof view[3]==='string' && view[3].length<=500)assetPrivacyStorage().setItem(assetViewKeys.search,view[3]);}catch(error){}
 }
 function restoreAssetView(){
   try{
-    const scope=localStorage.getItem(assetViewKeys.scope),sort=localStorage.getItem(assetViewKeys.sort),type=localStorage.getItem(assetViewKeys.type);
+    const storage=assetPreferenceStorage(),scope=storage.getItem(assetViewKeys.scope),sort=storage.getItem(assetViewKeys.sort),type=storage.getItem(assetViewKeys.type);
     if(validAssetScope(scope)){assetScope=scope;assetScopeRestored=scope!=='all';}
     if(assetSortModes.includes(sort))$('#assetSort').value=sort;
     if(assetTypeModes.includes(type))$('#assetType').value=type;
   }catch(error){}
-  try{const search=sessionStorage.getItem(assetViewKeys.search);if(typeof search==='string' && search.length<=200)$('#assetSearch').value=search;}catch(error){}
+  try{const search=assetPrivacyStorage().getItem(assetViewKeys.search);if(typeof search==='string' && search.length<=200)$('#assetSearch').value=search;}catch(error){}
 }
 // Selection ergonomics: grid order is the grouped reading order, so a Shift range matches what the operator sees.
 let assetSelectionAnchor=null,assetCheckShift=false;
@@ -643,7 +672,7 @@ function clearAssetFilters() {clearTimeout(assetSearchTimer);assetSearchTimer=nu
 // Small previews use the server's cached WEBP thumbnail; detail and review views keep the original.
 // ?v=<rendering version>-<sha256 prefix> names the bytes, so only then may the server mark the response immutable
 // (an ID alone can recur across Workspaces).
-function assetThumbUrl(asset) {return '/api/assets/'+encodeURIComponent(asset.id)+'/thumb?v='+ASSET_THUMB_VERSION+'-'+encodeURIComponent(String(asset.sha256||'').slice(0,16));}
+function assetThumbUrl(asset) {return '/api/assets/'+encodeURIComponent(asset.id)+'/thumb?v='+ASSET_THUMB_VERSION+'-'+encodeURIComponent(String(asset.sha256||'').slice(0,16))+(asset.privacy==='private'?'&privacy=private':'');}
 function assetPreview(asset, detail=false) {
   const url=asset.url, alt=esc(asset.title);
   if(!url)return '<span class="asset-type-placeholder"><span aria-hidden="true">▨</span><small>'+(detail?'File unavailable':'No preview · file missing')+'</small></span>';
@@ -826,7 +855,7 @@ function assetBulkReviewControls(){document.querySelectorAll('[data-review-bulk]
 // Selection and group review share one write: the ordinary /api/assets/update edit with expected_revisions.
 async function postAssetCommand(command) {
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
-  try{return await api('/api/assets/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(command),signal:controller.signal});}finally{clearTimeout(timer);}
+  try{return await api('/api/assets/update',{method:'POST',headers:{'Content-Type':'application/json',...assetPrivacyHeaders()},body:JSON.stringify(command),signal:controller.signal});}finally{clearTimeout(timer);}
 }
 // A receipt is a partial historical patch, not a full current observation. Apply it only at its
 // expected revision, then reconcile the existing copies. Even a skipped/no-op patch invalidates held reads.
@@ -861,7 +890,7 @@ async function bulkReviewSelected(review) {
   // Revisions are fixed with the question: a review saved elsewhere after this point conflicts instead of being overwritten.
   const ids=[...assetSelection],snapshot=assetRevisionSnapshot(ids),overwrite=assetReviewOverwritePrompt(ids,review);
   if(overwrite && !window.confirm(overwrite)){$('#assetBulkReviewStatus').textContent='Nothing was changed. Saved reviews are kept.';return;}
-  const workspace=assetState.workspace_id, workspaceEpoch=assetWorkspaceEpoch;
+  const workspace=assetState.workspace_id, workspaceEpoch=assetWorkspaceEpoch,request={};assetBulkRequest=request;
   const owns=()=>assetState.workspace_id===workspace && assetWorkspaceEpoch===workspaceEpoch;
   const label=assetReviewLabels[review],failures=[];
   let done=0;
@@ -888,7 +917,7 @@ async function bulkReviewSelected(review) {
   };
   try{await Promise.all(Array.from({length:Math.max(1,Math.min(3,ids.length))},worker));}
   finally {
-    assetBulkReviewBusy=false;assetBulkReviewControls();
+    if(assetBulkRequest===request){assetBulkRequest=null;assetBulkReviewBusy=false;assetBulkReviewControls();}
     if(owns()){
       renderAssets();
       status(failures.length?done+' of '+ids.length+' marked as '+label+'. '+failures.length+' failed and no retry was sent: '+failures.join(' · ')
@@ -974,7 +1003,7 @@ async function bulkSourceGroup(key, source) {
 // snapshot into an overwrite. The first batch that is refused, conflicted or unconfirmed stops the run. Status is owned
 // by the Workspace generation it started in (#830).
 async function runAssetGroupEdit({key,plan,snapshot,changes,where,focusAction,title,doneNote}) {
-  const workspace=assetState.workspace_id,epoch=assetWorkspaceEpoch,total=plan.ids.length;
+  const workspace=assetState.workspace_id,epoch=assetWorkspaceEpoch,privacyEpoch=assetPrivacyEpoch,total=plan.ids.length,request={};assetBulkRequest=request;
   const owns=()=>assetState.workspace_id===workspace && assetWorkspaceEpoch===epoch;
   let done=0,stop='';
   // Disabling the focused trigger can drop focus to <body>, outside the grid's own handoff; restore it after the run.
@@ -1002,9 +1031,8 @@ async function runAssetGroupEdit({key,plan,snapshot,changes,where,focusAction,ti
       if(owns())assetMessage('Marking '+done+' of '+total+where+'…');
     }
   } finally {
-    assetBulkReviewBusy=false;assetBulkReviewControls();
-    if(!owns())assetMessage(title+' stopped: the Workspace changed while it ran. '+done+' of '+total+' were confirmed'+where+' in the earlier Workspace. Nothing was marked in the Workspace now shown.',true);
-    else {
+    if(assetBulkRequest===request){assetBulkRequest=null;assetBulkReviewBusy=false;assetBulkReviewControls();}
+    if(owns()){
       renderAssets();
       const focused=document.activeElement;
       // A group that left the view (marked as agent runs under Mine, say) hands focus to search rather than <body>.
@@ -1012,6 +1040,7 @@ async function runAssetGroupEdit({key,plan,snapshot,changes,where,focusAction,ti
       assetMessage(stop?done+' of '+total+' marked'+where+'. Stopped: '+stop+' No retry was sent; refresh the library before marking what remains.':
         'Marked '+done+' of '+total+where+'. '+doneNote(),!!stop);
     }
+    if(!owns()&&privacyEpoch===assetPrivacyEpoch)assetMessage(title+' stopped: the Workspace changed while it ran. '+done+' of '+total+' were confirmed'+where+' in the earlier Workspace. Nothing was marked in the Workspace now shown.',true);
   }
   return !stop;
 }
@@ -1030,7 +1059,7 @@ function renderLibraryRecovery() {
 async function performLibraryCommand(operation,observe=false) {
   if(assetLibraryBusy)throw Error('A library update is still pending.');
   if(assetLibraryPending!==operation)throw Error('This update no longer owns the library recovery. No request was sent.');
-  const request={},workspaceEpoch=assetWorkspaceEpoch,command=operation.command;
+  const request={},workspaceEpoch=assetWorkspaceEpoch,command=operation.command,headers=assetPrivacyHeaders();
   assetLibraryRequest=request;
   const ownsRequest=()=>assetLibraryRequest===request;
   const current=()=>ownsRequest() && assetLibraryPending===operation && assetState.workspace_id===command.workspace_id && assetWorkspaceEpoch===workspaceEpoch;
@@ -1040,7 +1069,7 @@ async function performLibraryCommand(operation,observe=false) {
     requireAssetScope(command.workspace_id);
     const last_refusal=StudioAssetRecovery.lastRefusal(assetRecovery.read('library'),operation);
     assetRecovery.write('library',{version:2,workspace_id:command.workspace_id,operation,selection:operation.selection||[...assetSelection],...(last_refusal?{last_refusal}:{})});
-    const result=await (observe?api(assetReceiptURL(command),{signal:controller.signal}):assetRecovery.dispatch('library',operation,()=>api('/api/assets/update',{method:'POST',headers:{'Content-Type':'application/json'},body:operation.body,signal:controller.signal}),()=>current() && !controller.signal.aborted));
+    const result=await (observe?api(assetReceiptURL(command),{headers,signal:controller.signal}):assetRecovery.dispatch('library',operation,()=>api('/api/assets/update',{method:'POST',headers:{'Content-Type':'application/json',...headers},body:operation.body,signal:controller.signal}),()=>current() && !controller.signal.aborted));
     if(!current())throw Error('The library or Workspace changed while this request was pending. Its original recovery is retained.');
     if(observe && result?.status==='unknown')throw Error('No receipt yet; the earlier update may still complete. No retry was sent.');
     validateAssetReceipt(result,command);assetRecovery.clear('library');assetLibraryPending=null;
@@ -1101,7 +1130,7 @@ function openAsset(id,owns=null) {
   if(assetRetainedDetail && assetRetainedDetail.id!==id){
     if(assetRetainedDetail.operation || assetRetainedDetail.conflict){assetMessage('Review the retained draft before opening another asset. Its save recovery is still in this tab.',true);renderLibraryRecovery();return false;}
     if(!$('#assetDialog').open && !window.confirm('Discard the retained draft before opening another asset? Cancel keeps it in this tab.'))return false;
-    try{assetRecovery.clear('detail');assetRetainedDetail=null;}catch(error){assetMessage(error.message,true);return false;}
+    try{assetRecovery.clear('detail');assetRetainedDetail=null;assetUnstoredDetails.delete(assetActivePrivacy);}catch(error){assetMessage(error.message,true);return false;}
   }
   activeAsset={...candidate,workspace_id:assetState.workspace_id};assetDetailEpoch++;assetDiagnosticRequest++;assetDetailPending=null;assetDetailConflict=null;renderAssetConflict();renderAssetSaveRecovery();
   const a=activeAsset;
@@ -1114,7 +1143,7 @@ function openAsset(id,owns=null) {
   renderAssetReasons();renderAssetSiblings(a);renderAssetQueue();
   $('#assetDetails').innerHTML='<p>'+esc(a.preset_name)+' · '+new Date(a.created_at*1000).toLocaleString()+'</p><p>'+esc(a.filename)+' · '+(a.bytes/1024/1024).toFixed(2)+' MiB</p><p>Seed '+esc(a.source.seed??'not recorded')+'</p>'+((a.source.tile||a.source.tile_preview||a.source.parallax)?'<p class="tileNote">'+esc((a.source.tile||a.source.tile_preview||a.source.parallax).summary)+'</p>':'')+(a.prompt_excerpt?'<p class="asset-prompt-excerpt">Prompt text: '+esc(a.prompt_excerpt)+'</p>':'')+(assetIsAgentRun(a)?'<p>Run label: '+esc(a.run_label)+'</p>':'')+'<details><summary>File identity</summary><code>'+a.sha256+'</code><p>Prompt '+esc(a.source.prompt_id||'not recorded')+'</p></details>';
   $('#assetFavorite').textContent=a.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=a.trashed_at!=null?'Restore':'Move to Trash';
-  $('#assetDownload').href=a.url+'?download';
+  $('#assetDownload').href=a.url+((a.url||'').includes('?')?'&':'?')+'download';
   $('#assetHandoffs').innerHTML=a.media_type==='image'?'<button data-handoff="reference">Edit image</button><button data-handoff="anime-detail-fix" title="Repaint detected hands and faces; review settings before generating">Fix hands &amp; face</button><button data-handoff="krea-refine" title="Open Krea image refinement; review settings before generating">Refine image</button><button data-handoff="wan22-i2v">Animate</button><button data-handoff="trellis-auto-cutout">Make 3D</button><button data-handoff="anime-upscale">Upscale</button>':'';
   renderI2VDiagnosticAction(a);
   $('#assetLineage').innerHTML=a.lineage.length?'<h3>Source assets</h3>'+a.lineage.map(id=>{const parent=assetState.assets.find(p=>p.id===id);return '<button data-lineage="'+esc(id)+'">'+esc(parent?.title||id)+'</button>';}).join(''):'';
@@ -1136,7 +1165,10 @@ function openAsset(id,owns=null) {
 // hooks wrap openAsset and must run once, after its asynchronous result settles.
 const openResolvedAsset=openAsset;
 async function handoffAsset(id,presetId) {
+  const epoch=assetWorkspaceEpoch,source=assetRecord(id);
+  if(source?.privacy==='private'&&globalThis.window?.StudioPrivacy?.creation?.()!=='private')throw Error('Choose Private for this creation before using a private picture.');
   const result=await post('/api/assets/reference',{id});
+  if(epoch!==assetWorkspaceEpoch)return;
   let preset=catalog.presets.find(p=>p.id===presetId);
   if(presetId==='reference')preset=catalog.presets.find(p=>p.id==='qwen-1ref')||catalog.presets.find(p=>p.id==='gentle-variation')||catalog.presets.find(p=>p.reference&&(p.modality||'image')==='image');
   if(presetId==='anime-upscale')preset=catalog.presets.find(p=>p.id==='anime-esrgan-2x')||catalog.presets.find(p=>p.reference&&/upscale/i.test(p.name));
@@ -1163,9 +1195,9 @@ $('#workspaceRefresh').onclick=()=>refreshAssetsNow();
 // Typing reads a new first page once the operator pauses; every other control is immediate.
 $('#assetSearch').oninput=()=>{clearTimeout(assetSearchTimer);assetSearchTimer=setTimeout(()=>{assetSearchTimer=null;void refreshAssets(true);},150);};
 $('#assetType').onchange=renderAssets;$('#assetSort').onchange=()=>{void refreshAssets(true);};
-function chooseAssetSource(value){assetSourceMode=assetSourceModes.includes(value)?value:null;try{localStorage.setItem(assetSourceStorageKey,assetSourceMode||'');}catch(error){}renderAssets();}
+function chooseAssetSource(value){assetSourceMode=assetSourceModes.includes(value)?value:null;try{assetPreferenceStorage().setItem(assetSourceStorageKey,assetSourceMode||'');}catch(error){}renderAssets();}
 $('#assetSource').onchange=()=>chooseAssetSource($('#assetSource').value);
-$('#assetGroup').onchange=()=>{assetGroupMode=assetGroupModes.includes($('#assetGroup').value)?$('#assetGroup').value:'none';try{localStorage.setItem(assetGroupStorageKey,assetGroupMode);}catch(error){}renderAssets();};
+$('#assetGroup').onchange=()=>{assetGroupMode=assetGroupModes.includes($('#assetGroup').value)?$('#assetGroup').value:'none';try{assetPreferenceStorage().setItem(assetGroupStorageKey,assetGroupMode);}catch(error){}renderAssets();};
 $('#reviewNext').onclick=()=>startReviewQueue();
 $('#selectVisible').onclick=()=>{selectVisibleAssets();};
 $('#clearAssetFilters').onclick=clearAssetFilters;
@@ -1182,6 +1214,7 @@ $('#assetDialog').addEventListener('cancel',e=>{e.preventDefault();closeAssetDet
 $('#assetDialog').addEventListener('close',()=>{
   // A queued close event can arrive after a new session has already opened.
   if($('#assetDialog').open)return;
+  if(!activeAsset&&!assetDetailBaseline)return; // A privacy change already retained and retired this editor.
   if(assetDetailPending || assetDetailConflict)retainAssetDraft();
   else if(!assetRecoveryLoadError)try{assetRecovery.clear('detail');assetRetainedDetail=null;}catch(error){assetRecoveryError=error.message;}
   assetDetailEpoch++;assetDiagnosticRequest++;assetDetailBaseline=null;assetQueue=null;renderAssetQueue();
@@ -1235,6 +1268,7 @@ $('#assetTrash').onclick=async()=>{
 };
 $('#assetRecipe').onclick=()=>exportRecipe(activeAsset.job_id);
 document.addEventListener('click',async e=>{
+  const privacyEpoch=assetWorkspaceEpoch;
   try{
     const page=e.target.closest('[data-asset-page]');if(page){await moveAssetPage(page.dataset.assetPage==='next');return;}
     const siblings=e.target.closest('[data-asset-siblings]');if(siblings){await loadAssetSiblings(siblings.dataset.assetSiblings);return;}
@@ -1247,7 +1281,7 @@ document.addEventListener('click',async e=>{
       if(assetDetailBusy || assetLibraryBusy || $('#assetDialog').open){assetMessage($('#assetDialog').open?'Close the asset editor before discarding local recovery; nothing was discarded.':'A save is still in flight; discard local recovery once it settles.',true);return;}
       if(!window.confirm('Discard this local draft/recovery record? An unconfirmed save may already have committed. This does not cancel or undo any server change.'))return;
       assetRecovery.clear(slot);
-      if(slot==='detail')assetRetainedDetail=null;else {assetLibraryPending=null;assetRetainedSelection=null;assetSelection.clear();}
+      if(slot==='detail'){assetRetainedDetail=null;assetUnstoredDetails.delete(assetActivePrivacy);}else {assetLibraryPending=null;assetRetainedSelection=null;assetSelection.clear();}
       renderLibraryRecovery();assetMessage('Local recovery discarded. No server change was made.');return;
     }
     if(e.target.closest('[data-asset-recover-open]')){if(assetRetainedDetail)openAsset(assetRetainedDetail.id);return;}
@@ -1288,7 +1322,20 @@ document.addEventListener('click',async e=>{
     const bulk=e.target.closest('[data-bulk]');
     if(bulk){
       const ids=[...assetSelection], action=bulk.dataset.bulk;if(!ids.length)return;
-      if(action==='export'){assetMessage('Building a pack with originals, recipes and metadata…');const deliver=result=>{const link=document.createElement('a');link.href=result.url;link.download='asset-pack.zip';link.click();assetMessage('Export ready: '+result.count+' assets with recipes and provenance.');};try{deliver(await post('/api/assets/export',{ids}));}catch(error){const trashed=error?.data?.code==='export_has_trashed'?error.data.trashed_ids||[]:null;if(!Array.isArray(trashed)||!trashed.length)throw error;const remaining=ids.filter(id=>!trashed.includes(id));if(!remaining.length)throw error;if(!window.confirm(trashed.length+(trashed.length===1?' selected asset is':' selected assets are')+' in Trash. Export the other '+remaining.length+' without '+(trashed.length===1?'it':'them')+'?')){assetMessage('Export cancelled. Selection unchanged.');return;}deliver(await post('/api/assets/export',{ids:remaining}));}return;}
+      if(action==='export'){
+        const headers=assetPrivacyHeaders(),current=()=>privacyEpoch===assetWorkspaceEpoch;
+        const send=selected=>api('/api/assets/export',{method:'POST',headers:{'Content-Type':'application/json',...headers},body:JSON.stringify({ids:selected})});
+        assetMessage('Building a pack with originals, recipes and metadata…');
+        const deliver=result=>{if(!current())return;const link=document.createElement('a');link.href=result.url;link.download='asset-pack.zip';link.click();assetMessage('Export ready: '+result.count+' assets with recipes and provenance.');};
+        try{deliver(await send(ids));}
+        catch(error){
+          if(!current())return;
+          const trashed=error?.data?.code==='export_has_trashed'?error.data.trashed_ids||[]:null;if(!Array.isArray(trashed)||!trashed.length)throw error;
+          const remaining=ids.filter(id=>!trashed.includes(id));if(!remaining.length)throw error;
+          if(!window.confirm(trashed.length+(trashed.length===1?' selected asset is':' selected assets are')+' in Trash. Export the other '+remaining.length+' without '+(trashed.length===1?'it':'them')+'?')){assetMessage('Export cancelled. Selection unchanged.');return;}
+          if(current())deliver(await send(remaining));
+        }return;
+      }
       if(action==='agent_run' || action==='mine'){
         // Only assets whose source changes are sent: an existing label is never overwritten, and clearing labels
         // other than the default asks first, naming them.
@@ -1297,7 +1344,7 @@ document.addEventListener('click',async e=>{
         if(!target.length){assetMessage(run_label?'All '+ids.length+' selected assets are already agent runs; their labels are kept. Nothing was changed.':'None of the '+ids.length+' selected assets is an agent run. Nothing was changed.');return;}
         const named=[...new Set(records.filter(a=>a && target.includes(a.id)).map(a=>a.run_label))].filter(l=>l!==assetDefaultRunLabel);
         if(!run_label && named.length && !window.confirm('Clear the run label from '+target.length+' selected '+(target.length===1?'asset':'assets')+'?\n\nThis also clears labels other than \''+assetDefaultRunLabel+'\': '+named.slice(0,5).map(l=>'\''+l+'\'').join(', ')+(named.length>5?' and '+(named.length-5)+' more':'')+'. Mark as agent run sets only the label typed beside it; the old labels are not kept anywhere else.')){assetMessage('Nothing was changed. Run labels are kept.');return;}
-        await mutateAssets({ids:target,action:'edit',run_label});const changed=JSON.stringify([...assetSelection])!==JSON.stringify(ids);if(!changed)assetSelection.clear();renderAssets();
+        await mutateAssets({ids:target,action:'edit',run_label});if(privacyEpoch!==assetWorkspaceEpoch)return;const changed=JSON.stringify([...assetSelection])!==JSON.stringify(ids);if(!changed)assetSelection.clear();renderAssets();
         assetMessage((run_label?'Marked '+target.length+' as agent runs ('+run_label+').'+(kept?' '+kept+' already '+(kept===1?'an agent run kept its':'agent runs kept their')+' label.':'')+(assetSource()==='mine'?' The Mine view hides them; choose All sources or Agent runs to see them.':''):
           'Marked '+target.length+' as yours; their run label is cleared.'+(kept?' '+kept+' already yours '+(kept===1?'was':'were')+' not changed.':''))+' Mark as '+(run_label?'mine':'agent run')+' reverses it.'+(changed?' Your changed selection was kept.':''));
         return;
@@ -1305,9 +1352,9 @@ document.addEventListener('click',async e=>{
       const payload={ids,action,collection_id:$('#bulkCollection').value};
       if(action==='favorite')Object.assign(payload,{action:'edit',favorite:true});
       if(action==='selected')Object.assign(payload,{action:'edit',review:'selected'});
-      await mutateAssets(payload);const changed=JSON.stringify([...assetSelection])!==JSON.stringify(ids);if(!changed)assetSelection.clear();renderAssets();assetMessage((action==='trash'?'Moved to Trash. Originals and recipes are preserved.':'Updated '+ids.length+' assets.')+(changed?' Your changed selection was kept.':''));
+      await mutateAssets(payload);if(privacyEpoch!==assetWorkspaceEpoch)return;const changed=JSON.stringify([...assetSelection])!==JSON.stringify(ids);if(!changed)assetSelection.clear();renderAssets();assetMessage((action==='trash'?'Moved to Trash. Originals and recipes are preserved.':'Updated '+ids.length+' assets.')+(changed?' Your changed selection was kept.':''));
     }
-  }catch(err){assetMessage(err.message,true);message(err.message,true);}
+  }catch(err){if(privacyEpoch===assetWorkspaceEpoch){assetMessage(err.message,true);message(err.message,true);}}
 });
 // A thumbnail the server cannot produce (unreadable image, older server) falls back once to the original file;
 // a card image neither source can supply becomes a labelled reason, never an empty box.
@@ -1325,13 +1372,37 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape' && !e.ctrlKey && !e.metaKey && !e.shiftKey && assetSelection.size){e.preventDefault();clearAssetSelection();}
 });
 // Reload recovery is read-only until the operator chooses Check or Retry.
-try{
-  assetRetainedDetail=assetRecovery.read('detail');
-  const library=assetRecovery.read('library');
-  if(library){assetLibraryPending={...library.operation,selection:library.selection};assetRetainedSelection=library.selection;}
-}catch(error){assetRecoveryError=assetRecoveryLoadError=error.message;}
+function loadAssetRecoveryJournal(){
+  assetRetainedDetail=null;assetLibraryPending=null;assetRetainedSelection=null;assetRecoveryError=assetRecoveryLoadError='';
+  try{assetRetainedDetail=assetRecovery.read('detail');const library=assetRecovery.read('library');
+    if(library){assetLibraryPending={...library.operation,selection:library.selection};assetRetainedSelection=library.selection;}
+  }catch(error){assetRecoveryError=assetRecoveryLoadError=error.message;}
+  const memory=assetUnstoredDetails.get(assetActivePrivacy);
+  if(memory&&memory.workspace_id===assetState.workspace_id){assetRetainedDetail=memory;assetRecoveryError='Browser recovery could not be retained. This draft is kept in memory while this page stays open. Review or copy it before reloading. Changing views sent no save.';}
+}
+loadAssetRecoveryJournal();
 // Grouping is a local view preference only; losing it never loses an asset or a review.
-try{const stored=localStorage.getItem(assetGroupStorageKey);if(assetGroupModes.includes(stored)){assetGroupMode=stored;$('#assetGroup').value=stored;}}catch(error){}
-try{const stored=localStorage.getItem(assetSourceStorageKey);if(assetSourceModes.includes(stored))assetSourceMode=stored;}catch(error){}
+try{const stored=assetPreferenceStorage().getItem(assetGroupStorageKey);if(assetGroupModes.includes(stored)){assetGroupMode=stored;$('#assetGroup').value=stored;}}catch(error){}
+try{const stored=assetPreferenceStorage().getItem(assetSourceStorageKey);if(assetSourceModes.includes(stored))assetSourceMode=stored;}catch(error){}
 restoreAssetView();
 renderAssetReasons();renderLibraryRecovery();
+document.addEventListener('studio:privacy-change',event=>{
+  const next=event.detail?.scope||globalThis.window?.StudioPrivacy?.scope?.()||'regular';
+  if(next===assetActivePrivacy||!['regular','private','all'].includes(next))return;
+  // Retain the old tab's exact bytes before changing owners. No mutation is
+  // retried, cancelled or inferred from a disappearing card.
+  if(activeAsset&&assetDetailBaseline&&!retainAssetDraft())suspendUnstoredAssetDraft();rememberAssetView();
+  assetPrivacyEpoch++;assetWorkspaceEpoch++;assetPageEpoch++;assetReceiptEpoch++;assetObservationEpoch++;assetDetailEpoch++;assetDiagnosticRequest++;
+  assetResolveRequest++;assetOpenRequest++;assetRefreshRequest++;assetRefreshController?.abort();assetRefreshController=null;
+  clearTimeout(assetSearchTimer);assetSearchTimer=null;assetRefreshing=false;assetCollectionBusy=false;assetBulkReviewBusy=false;assetBulkRequest=null;
+  assetDetailRequest=null;assetLibraryRequest=null;assetDetailBusy=false;assetLibraryBusy=false;assetDetailDiscarding=false;
+  activeAsset=null;assetDetailBaseline=null;assetDetailPending=null;assetDetailConflict=null;assetQueue=null;assetDialogOpener=null;
+  assetSelection.clear();assetSelectionAnchor=null;assetResolved.clear();assetSiblingPage=null;assetSiblingRequest=null;
+  assetState={assets:[],collections:[],workspace_id:assetState.workspace_id};assetPaging=null;assetSignature='';
+  if($('#assetDialog').open)$('#assetDialog').close();
+  for(const id of ['assetTitle','assetTags','assetNotes','bulkRunLabel'])$('#'+id).value='';$('#assetReview').value='unreviewed';
+  for(const id of ['assetDetailMedia','assetDiagnostic','assetSameRun','assetDetails','assetLineage','assetHandoffs','assetDetailConflict','assetDetailRecovery','assetCommandRecovery','assetBulkReviewStatus','assetDetailStatus']){const panel=$('#'+id);if(panel)panel.innerHTML='';}
+  $('#assetDownload').href='';$('#assetSearch').value='';$('#assetSort').value='newest';$('#assetType').value='all';assetScope='all';assetViewRemembered='';assetScopeRestored=false;
+  assetActivePrivacy=next;assetRecovery=assetJournalFor(next);loadAssetRecoveryJournal();restoreAssetView();
+  assetMessage('');renderAssetQueue();renderLibraryRecovery();renderAssets();void refreshAssets(true);
+});

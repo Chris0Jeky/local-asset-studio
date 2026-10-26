@@ -70,8 +70,10 @@ def _number(value):
         return False
 
 
-def _summary(asset):
-    _need(type(asset) is dict and set(asset) == SUMMARY)
+def _summary(asset, privacy='regular'):
+    _need(type(asset) is dict and set(asset) in (SUMMARY, SUMMARY | {'privacy'}))
+    classification = asset.get('privacy', 'regular')
+    _need(contract.privacy_matches(classification, privacy), 'Asset response belongs to another privacy scope')
     _need(contract._matches(contract.ENTITY, asset['id']) and contract._matches(contract.HEX64, asset['sha256']))
     _need(type(asset['media_type']) is str and 1 <= len(asset['media_type']) <= 32
           and type(asset['review']) is str and asset['review'] in contract.REVIEWS
@@ -88,7 +90,7 @@ def _summary(asset):
           and len(set(truncated)) == len(truncated))
     _need(all(type(asset[field]) is str and len(asset[field]) == contract.DISPLAY_LIMITS[field]
               for field in truncated))
-    _need(asset['url'] == '/api/assets/' + asset['id'] + '/file')
+    _need(asset['url'] == '/api/assets/' + asset['id'] + '/file' + ('?privacy=private' if classification == 'private' else ''))
     return asset
 
 
@@ -137,7 +139,7 @@ class AssetReadClient(Client):
         seen, previous = set(), tuple(position['last']) if position is not None else None
         if position is not None: _need(result['catalogue'] == position['catalogue'], 'Continuation returned a changed catalogue')
         for asset in assets:
-            _summary(asset)
+            _summary(asset, query.get('privacy', 'regular'))
             order = asset['created_at'], asset['id']
             _need(asset['id'] not in seen and (previous is None or order < previous), 'Assets are duplicated or out of order')
             seen.add(asset['id']); previous = order
@@ -153,9 +155,12 @@ class AssetReadClient(Client):
                   'Next cursor does not identify this page boundary')
         return result
 
-    def selection(self, ids, *, workspace_id):
+    def selection(self, ids, *, workspace_id, privacy='regular'):
         ids = contract.selection_ids(ids); _scope(workspace_id)
-        result = self._observe('/api/assets/selection', {'ids': ids, 'workspace_id': workspace_id})
+        contract.privacy_scope(privacy)
+        body = {'ids': ids, 'workspace_id': workspace_id}
+        if privacy != 'regular': body['privacy'] = privacy
+        result = self._observe('/api/assets/selection', body)
         _envelope(result, 'selection', workspace_id, {'items'})
         items = result['items']
         _need(type(items) is list and len(items) == len(ids), 'Selection response lost retained IDs')
@@ -164,7 +169,7 @@ class AssetReadClient(Client):
             if item['asset'] is None:
                 _need(item['state'] == 'missing')
             else:
-                asset = _summary(item['asset'])
+                asset = _summary(item['asset'], privacy)
                 _need(asset['id'] == key and item['state'] == ('active' if asset['trashed_at'] is None else 'trashed'))
         return result
 
@@ -179,8 +184,10 @@ def main(argv=None):
     page.add_argument('--media-type'); page.add_argument('--review', choices=contract.REVIEWS)
     page.add_argument('--favorite', choices=('true', 'false')); page.add_argument('--collection-id')
     page.add_argument('--source', choices=('all', 'mine', 'agent'), default='all')
+    page.add_argument('--privacy', choices=('regular', 'private', 'all'), default='regular')
     page.add_argument('--job-id')
     selected = sub.add_parser('selection'); selected.add_argument('--workspace-id', required=True)
+    selected.add_argument('--privacy', choices=('regular', 'private', 'all'), default='regular')
     selected.add_argument('ids', nargs='+')
     args = parser.parse_args(argv)
     try:
@@ -190,7 +197,7 @@ def main(argv=None):
             if args.favorite is not None: filters['favorite'] = args.favorite == 'true'
             result = client.page(workspace_id=args.workspace_id, limit=args.limit, cursor=args.cursor, filters=filters)
         else:
-            result = client.selection(args.ids, workspace_id=args.workspace_id)
+            result = client.selection(args.ids, workspace_id=args.workspace_id, privacy=args.privacy)
         print(json.dumps(result, ensure_ascii=True, allow_nan=False))
         return 0
     except (ValueError, OSError, URLError, HTTPException) as exc:

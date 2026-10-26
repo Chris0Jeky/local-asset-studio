@@ -4,7 +4,7 @@ import sqlite3
 import time
 from urllib.parse import parse_qsl, urlsplit
 
-from .asset_reads import AssetReadError, FILTER_KEYS, page_options, require
+from .asset_reads import AssetReadError, FILTER_KEYS, page_options, require, privacy_scope
 from .core import decode
 from .http_body import reject_json
 from . import asset_family
@@ -17,6 +17,16 @@ MAX_QUERY = 4096
 MAX_PAGE_QUERY = 20480  # Bounded title cursor, percent-encoded Unicode search/job ID and all filters.
 MAX_BODY = 32768
 BODY_TIMEOUT = 5
+
+
+def request_privacy(handler, value=None):
+    from creation_privacy import scope_for_handler
+    selected = scope_for_handler(handler)
+    if value is None: return selected
+    privacy_scope(value)
+    require(handler.headers.get('X-Studio-Privacy') is None or selected == value,
+            'Privacy body and header disagree', code='privacy_invalid')
+    return value
 
 
 def _error(exc):
@@ -65,10 +75,10 @@ def family_query(raw):
     require(re.fullmatch(r'[A-Za-z0-9_-]{1,128}', identifier) is not None, 'Invalid asset identity')
     require(re.search(r'%(?![0-9a-fA-F]{2})', parsed.query) is None, 'Malformed query escape')
     pairs = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True,
-                      encoding='utf-8', errors='strict', max_num_fields=2)
+                      encoding='utf-8', errors='strict', max_num_fields=3)
     query = dict(pairs)
     require(len(query) == len(pairs) and 'workspace_id' in query and
-            set(query) <= ({'workspace_id', 'children'} if prefix == FAMILY else {'workspace_id'}),
+            set(query) <= ({'workspace_id', 'children', 'privacy'} if prefix == FAMILY else {'workspace_id', 'privacy'}),
             'Supply one Workspace identity and only supported family fields')
     if 'children' in query:
         require(query['children'] in ('true', 'false'), 'Children must be true or false')
@@ -96,8 +106,9 @@ def _body(handler):
         value = decode(b''.join(chunks).decode('utf-8'))
     finally:
         handler.connection.settimeout(prior_timeout)
-    require(type(value) is dict and {'workspace_id','ids'} <= set(value) <= {'workspace_id','ids','details'},
+    require(type(value) is dict and {'workspace_id','ids'} <= set(value) <= {'workspace_id','ids','details','privacy'},
             'Supply workspace_id, ids and optional details for selection inspection')
+    if 'privacy' in value: privacy_scope(value['privacy'])
     return value
 
 
@@ -125,12 +136,17 @@ def extend_handler(base):
             if self.path.startswith((FAMILY, RECALL)):
                 def observe():
                     prefix, identifier, query = family_query(self.path)
+                    query['privacy'] = request_privacy(self)
                     action = asset_family.observe if prefix == FAMILY else asset_family.recall
                     return action(self.studio, identifier, **query)
                 return self._asset_read_reply(observe)
             if self.path.split('?', 1)[0] != PAGE:
                 return self._json(405, _error(ValueError('Selection inspection requires POST')))
-            return self._asset_read_reply(lambda: self.studio.assets.asset_page(**page_query(self.path)))
+            def page():
+                query = page_query(self.path)
+                query['filters']['privacy'] = request_privacy(self)
+                return self.studio.assets.asset_page(**query)
+            return self._asset_read_reply(page)
 
         def do_POST(self):
             if not self._asset_read_route(): return super().do_POST()
@@ -152,6 +168,7 @@ def extend_handler(base):
                 self._content_length(MAX_BODY)
                 started = True
                 value = _body(self)
+                value['privacy'] = request_privacy(self, value.get('privacy'))
             except (ValueError, OSError, RecursionError) as exc:
                 self.close_connection = True
                 status = 408 if isinstance(exc, TimeoutError) else getattr(exc, 'status', 400)

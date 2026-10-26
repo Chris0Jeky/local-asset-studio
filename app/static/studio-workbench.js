@@ -8,9 +8,12 @@
   const U=StudioUX,q=s=>document.querySelector(s),escape=esc;
   let sharedAdoptionError='';
   let selectionEpoch=0,sourceContext=null,handoffBaseline=null,sourceReadError='',varyUnapplied=null;
-  let intentId='create',handoffId=null,handoffIntent='edit',handoffBusy=false,pickerBusy=false,pickerLoading=false,sourcePickerEpoch=0,handoffEpoch=0;
+  let intentId='create',handoffId=null,handoffIntent='edit',handoffBusy=false,pickerBusy=false,pickerLoading=false,sourcePickerEpoch=0,handoffEpoch=0,handoffBusyOwner=null,pickerBusyOwner=null;
   let draftPrefix=null,draftPaused=false,draftDirty=false,restoring=false,draftTimer=null,knownDrafts=new Map(),pendingInputs=new Set();
-  let homeBusy=false,homeData=null,homeErrors=[],homeUpdated=null,homeSignature='';
+  let draftPrivacy=globalThis.StudioPrivacy?.creation()||'regular',knownFills=new Map();
+  const draftStorage=(classification=draftPrivacy)=>classification==='private'?sessionStorage:localStorage;
+  const draftStorageKey=(key,classification=draftPrivacy)=>key+(classification==='private'?'.private':'');
+  let homeBusy=false,homeData=null,homeErrors=[],homeUpdated=null,homeSignature='',homeEpoch=0;
   const main=q('main'),editor=q('#createView .editor');
   function after(name,callback){const original=window[name];window[name]=function(...args){const result=original.apply(this,args);if(result?.then)return result.then(value=>{if(value!==false)callback(...args);return value;});callback(...args);return result;};}
   function element(tag,className,html){const el=document.createElement(tag);if(className)el.className=className;if(html)el.innerHTML=html;return el;}
@@ -34,9 +37,9 @@
   let fillsPreset=null,fillsSource=null,fillsTemplate='',fillsAssembled=null,transferredFills=null;
   const fillInputs=()=>[...fillsBlock.querySelectorAll('[data-ux-fill]')];
   function fillValues(){return Object.fromEntries(fillInputs().map(input=>[input.dataset.uxFill,input.value]));}
-  function fillsKey(){return continuationState?'studio-fills:'+continuationState.source_asset_id:null;}
-  function rememberedFills(){const key=fillsKey();if(!key)return{};try{const value=JSON.parse(localStorage.getItem(key)||'{}');return value&&typeof value==='object'?value:{};}catch(e){return{};}}
-  function rememberFills(){const key=fillsKey();if(!key)return;const remembered={...rememberedFills(),...fillValues()};for(const [placeholder,value]of Object.entries(fillValues())){const meaning=StudioContinuation.fillMeaning(placeholder);if(meaning)remembered['@'+meaning]=value;}try{localStorage.setItem(key,JSON.stringify(remembered));}catch(e){}}
+  function fillsKey(){return continuationState?draftStorageKey('studio-fills:'+continuationState.source_asset_id):null;}
+  function rememberedFills(){const key=fillsKey();if(!key)return{};try{const raw=draftStorage().getItem(key),value=JSON.parse(raw||'{}');if(value&&typeof value==='object'&&!Array.isArray(value)){knownFills.set(key,raw);return value;}return{};}catch(e){return{};}}
+  function rememberFills(){const key=fillsKey();if(!key)return;const remembered={...rememberedFills(),...fillValues()};for(const [placeholder,value]of Object.entries(fillValues())){const meaning=StudioContinuation.fillMeaning(placeholder);if(meaning)remembered['@'+meaning]=value;}try{const raw=JSON.stringify(remembered);draftStorage().setItem(key,raw);knownFills.set(key,raw);}catch(e){}}
   function assembleFills(){
     const text=StudioContinuation.assemble(fillsTemplate,fillValues());fillsAssembled=text;rememberFills();
     if(q('#positive').value!==text){q('#positive').value=text;q('#positive').dispatchEvent(new Event('input',{bubbles:true}));if(typeof updateReady==='function')updateReady();}
@@ -264,8 +267,8 @@
     const combine=!!selected&&(selected.continuation_capability?.operation==='combine'||selected.continuation_operation==='combine')&&!!selected.reference_board&&!!selected.last_reference;
     pairPanel.hidden=!combine;if(!combine){pairMarkup='';syncCombineEngines();syncCombineResults();return;}
     const board=referenceRecords[0],boardFile=board?.file&&!board.missing?board.file:null,keepAsset=continuationState?.source_asset_id||null;
-    const tiles=[{label:selected.reference_board_label||'Pose picture',n:imageNumber(selected.reference_board_label)||2,src:boardFile?'/api/uploads/'+encodeURIComponent(boardFile):null,empty:'No pose picture yet.',action:'board',button:'Pull it from the library'},
-                 {label:selected.last_reference_label||'Picture to keep',n:imageNumber(selected.last_reference_label)||1,src:lastUploaded?'/api/uploads/'+encodeURIComponent(lastUploaded):keepAsset?'/api/assets/'+encodeURIComponent(keepAsset)+'/file':null,empty:'No picture to keep yet.',action:'keep',button:'Choose your picture'}].sort((a,b)=>a.n-b.n);
+    const tiles=[{label:selected.reference_board_label||'Pose picture',n:imageNumber(selected.reference_board_label)||2,src:boardFile?referenceMediaUrl(boardFile):null,empty:'No pose picture yet.',action:'board',button:'Pull it from the library'},
+                 {label:selected.last_reference_label||'Picture to keep',n:imageNumber(selected.last_reference_label)||1,src:lastUploaded?referenceMediaUrl(lastUploaded):keepAsset?'/api/assets/'+encodeURIComponent(keepAsset)+'/file'+(draftPrivacy==='private'?'?privacy=all':''):null,empty:'No picture to keep yet.',action:'keep',button:'Choose your picture'}].sort((a,b)=>a.n-b.n);
     const markup=tiles.map(t=>'<figure class="ux-pair-tile">'+(t.src?'<img src="'+escape(t.src)+'" alt="'+escape(t.label)+'">':'<div class="ux-pair-empty"><span>'+escape(t.empty)+'</span><button type="button" data-ux-pair="'+t.action+'">'+escape(t.button)+'</button></div>')+'<figcaption>'+escape(t.label)+'</figcaption></figure>').join('');
     if(markup!==pairMarkup){pairMarkup=markup;pairPanel.innerHTML='<span class="eyebrow">THE TWO PICTURES, IN THE ORDER THE MODEL READS THEM</span><div class="ux-pair-tiles">'+markup+'</div>';}
     syncCombineEngines();syncCombineResults();
@@ -376,7 +379,7 @@
   // Outfit stays with this pair; other answers are saved by meaning for engine switches, not the fresh recipe's placeholder fields.
   q('#uxPlanFills').oninput=e=>{
     const meaning=e.target?.dataset?.uxPlanFill;if(!meaning)return;planFills[meaning]=e.target.value;
-    if(meaning!=='outfit'){const key=fillsKey();if(key)try{localStorage.setItem(key,JSON.stringify({...rememberedFills(),['@'+meaning]:e.target.value}));}catch(error){}}
+    if(meaning!=='outfit'){const key=fillsKey();if(key)try{const raw=JSON.stringify({...rememberedFills(),['@'+meaning]:e.target.value});draftStorage().setItem(key,raw);knownFills.set(key,raw);}catch(error){}}
     syncCombinePlan();
   };
   const planTime=seconds=>Number(seconds)>0?durationLabel(seconds):'unknown';
@@ -688,7 +691,7 @@
     const tile=(job,output,index)=>{
       const asset=recordOf(output.asset_id),id=escape(job.id),review=asset?.review||'unreviewed',seed=escape(output.seed??job.controls?.seed??'unknown'),mark=pairActionBusy?'disabled':'';
       const label=asset?({selected:'Kept',needs_work:'Needs work',rejected:'Not this',unreviewed:'Unreviewed'}[review]||review):asset===null?'Asset unavailable':output.asset_id?'Saved review not loaded':'No saved asset identity';
-      return '<article class="ux-result-tile"><img src="/api/image/'+encodeURIComponent(job.id)+'/'+index+'" alt="'+escape(engine(job))+' result, seed '+seed+'"><b>Seed '+seed+'</b><span>'+escape(label)+'</span><div class="ux-result-actions">'+(output.asset_id&&asset!==null?'<button type="button" data-ux-review="selected" data-asset="'+escape(output.asset_id)+'" '+mark+'>Keep</button><button type="button" data-ux-review="needs_work" data-asset="'+escape(output.asset_id)+'" '+mark+'>Needs work</button>':'')+'<button type="button" data-ux-rerun="same" data-job="'+id+'" data-index="'+index+'" '+lock+'>Prepare same seed</button><button type="button" data-ux-rerun="new" data-job="'+id+'" data-index="'+index+'" '+lock+'>Prepare new seed</button></div>'+(output.asset_id?(asset?'<div class="ux-result-checks" role="group" aria-label="Quick checks for seed '+seed+', keys 1 to 5">'+StudioReviewChecks.chipsHTML({tags:asset.tags||[],names:StudioReviewChecks.forPreset(catalog.presets.find(p=>p.id===job.preset_id)),attr:'data-ux-check',asset:output.asset_id,disabled:pairActionBusy,escape})+'</div>':'<p><button type="button" data-ux-check-load="'+escape(output.asset_id)+'" data-asset="'+escape(output.asset_id)+'" '+mark+'>'+(asset===null?'Check availability':'Load saved checks')+'</button></p>'):'')+'</article>';
+      return '<article class="ux-result-tile"><img src="'+escape(globalThis.StudioPrivacy?.mediaUrl('/api/image/'+encodeURIComponent(job.id)+'/'+index,job)||'/api/image/'+encodeURIComponent(job.id)+'/'+index)+'" alt="'+escape(engine(job))+' result, seed '+seed+'"><b>Seed '+seed+'</b><span>'+escape(label)+'</span><div class="ux-result-actions">'+(output.asset_id&&asset!==null?'<button type="button" data-ux-review="selected" data-asset="'+escape(output.asset_id)+'" '+mark+'>Keep</button><button type="button" data-ux-review="needs_work" data-asset="'+escape(output.asset_id)+'" '+mark+'>Needs work</button>':'')+'<button type="button" data-ux-rerun="same" data-job="'+id+'" data-index="'+index+'" '+lock+'>Prepare same seed</button><button type="button" data-ux-rerun="new" data-job="'+id+'" data-index="'+index+'" '+lock+'>Prepare new seed</button></div>'+(output.asset_id?(asset?'<div class="ux-result-checks" role="group" aria-label="Quick checks for seed '+seed+', keys 1 to 5">'+StudioReviewChecks.chipsHTML({tags:asset.tags||[],names:StudioReviewChecks.forPreset(catalog.presets.find(p=>p.id===job.preset_id)),attr:'data-ux-check',asset:output.asset_id,disabled:pairActionBusy,escape})+'</div>':'<p><button type="button" data-ux-check-load="'+escape(output.asset_id)+'" data-asset="'+escape(output.asset_id)+'" '+mark+'>'+(asset===null?'Check availability':'Load saved checks')+'</button></p>'):'')+'</article>';
     };
     const runs=groups.runs.map(({job,outputs})=>{
       if(room<=0)return'';const shown=outputs.slice(0,room);room-=shown.length;
@@ -759,7 +762,7 @@
     const chip=tile.querySelectorAll('[data-ux-check]')[index];if(!chip)return;e.preventDefault();if(!chip.disabled){chip.focus();chip.click();}
   });
   after('renderJobs',()=>{syncCombineEngines();syncCombineResults();});after('renderAssets',()=>{syncCombineEngines();syncCombineResults();});
-  function workbenchStamp(){return JSON.stringify({backend:typeof backendActive==='undefined'?null:backendActive,switching:typeof backendSwitching!=='undefined'&&!!backendSwitching,preset:selected?.id,controls:values(),parents:parentAssets,references:attachedReferencePayload(),continuation:continuationState,batch:q('#batch').value,pending:['reference','lastReference'].map(id=>[...(q('#'+id).files||[])].map(f=>[f.name,f.size,f.lastModified]))});}
+  function workbenchStamp(){return JSON.stringify({privacy:draftPrivacy,backend:typeof backendActive==='undefined'?null:backendActive,switching:typeof backendSwitching!=='undefined'&&!!backendSwitching,preset:selected?.id,controls:values(),parents:parentAssets,references:attachedReferencePayload(),continuation:continuationState,batch:q('#batch').value,pending:['reference','lastReference'].map(id=>[...(q('#'+id).files||[])].map(f=>[f.name,f.size,f.lastModified]))});}
   // Slot and picker attachment preserves wording, so its guard compares attachment-relevant
   // state only: wording, lineage claims and batch must not refuse a copy that was already
   // verified against its own destination (#606 finding 3). Replace resets to the recipe
@@ -769,7 +772,7 @@
   function syncContinuation(){
     contextPanel.hidden=!continuationState;if(!continuationState)return;
     const source=continuationSource,cap=selected?.continuation_capability;
-    q('#uxContinuationImage').src='/api/assets/'+encodeURIComponent(continuationState.source_asset_id)+'/file';
+    q('#uxContinuationImage').src='/api/assets/'+encodeURIComponent(continuationState.source_asset_id)+'/file'+(globalThis.StudioPrivacy?.creation()==='private'?'?privacy=all':'');
     q('#uxContinuationTitle').textContent=source?.title||'Saved source · '+continuationState.source_asset_id;
     const reusable=source?.prompt_origin==='submitted-output'&&source?.prompt_role==='description'&&typeof source.positive==='string';
     q('#uxContinuationOrigin').textContent=cap?.prompt_role==='none'?'This operation has no text prompt.':reusable&&q('#positive').value===source.positive?'Prompt matches this output’s submitted description.':q('#positive').value.trim()?'Using your editable wording for this pass.':'Wording needed: '+(cap?.prompt_role==='instruction'?'say what to change and what to preserve.':cap?.prompt_role==='motion'?'describe the motion and camera movement.':'describe the resulting image you want.');
@@ -782,21 +785,25 @@
     q('#uxChangeRoute').disabled=submitting;q('#uxLeaveContinuation').disabled=submitting;
     q('#generate').textContent=cap?.operation==='upscale'?'Upscale source →':cap?.operation==='restyle'?'Restyle source →':cap?.operation==='combine'?'Combine pictures →':cap?.prompt_role==='motion'?'Animate source →':'Generate source-based pass →';
   }
-  async function readSource(id){return api('/api/assets/'+encodeURIComponent(id)+'/context',{signal:AbortSignal.timeout(30000)});}
+  async function readSource(id,captured){const owner=captured||globalThis.StudioPrivacy?.capture?.();const context=!captured&&owner?.privacy==='private'?{...owner,scope:'all'}:owner;return api('/api/assets/'+encodeURIComponent(id)+'/context',{signal:AbortSignal.timeout(30000),...privacyOptions(context)});}
   async function hydrateContinuation(){
-    const claim=continuationState,stamp=JSON.stringify(claim);sourceReadError='';syncReady();if(!claim)return;
-    try{const source=await readSource(claim.source_asset_id);if(stamp!==JSON.stringify(continuationState))return;if(source?.asset_id!==claim.source_asset_id||source.sha256!==claim.source_sha256)throw Error('Source identity changed. Reopen the handoff.');continuationSource=source;}
-    catch(error){if(stamp===JSON.stringify(continuationState))sourceReadError='Could not verify source metadata: '+error.message;}
-    finally{if(stamp===JSON.stringify(continuationState))syncReady();}
+    const claim=continuationState,stamp=JSON.stringify(claim),epoch=selectionEpoch;sourceReadError='';syncReady();if(!claim)return;
+    const current=()=>epoch===selectionEpoch&&stamp===JSON.stringify(continuationState);
+    try{const source=await readSource(claim.source_asset_id);if(!current())return;if(source?.asset_id!==claim.source_asset_id||source.sha256!==claim.source_sha256)throw Error('Source identity changed. Reopen the handoff.');continuationSource=source;}
+    catch(error){if(current())sourceReadError='Could not verify source metadata: '+error.message;}
+    finally{if(current())syncReady();}
   }
   q('#uxRestoreSourcePrompt').onclick=()=>{const source=continuationSource;if(!source||q('#uxRestoreSourcePrompt').disabled)return;if(q('#positive').value!==source.positive&&!window.confirm('Replace your current wording with this output’s submitted description?'))return;q('#positive').value=source.positive;if(selected.negative)q('#negative').value=source.negative||'';draftDirty=true;saveDraft();syncReady();};
   q('#uxChangeRoute').onclick=()=>openHandoff(continuationState.source_asset_id,selected.id);
   q('#uxLeaveContinuation').onclick=leaveContinuation;
   async function reattachSource(){
     if(!continuationState||pickerBusy||handoffBusy||submitting||restoring)return;
-    const claim=continuationState,stamp=JSON.stringify(claim);pickerBusy=true;syncReady();
+    const claim=continuationState,stamp=JSON.stringify(claim),epoch=selectionEpoch,captured=globalThis.StudioPrivacy?.capture?.(),busyOwner={};
+    const current=()=>pickerBusyOwner===busyOwner&&epoch===selectionEpoch&&(!captured||captured.revision===globalThis.StudioPrivacy?.capture?.().revision);
+    pickerBusyOwner=busyOwner;pickerBusy=true;syncReady();
     try{
-      const result=await post('/api/assets/reference',{id:claim.source_asset_id});
+      const result=await post('/api/assets/reference',{id:claim.source_asset_id},privacyOptions(captured));
+      if(!current())return;
       if(stamp!==JSON.stringify(continuationState))throw Error('The task changed while the source was being put back. Nothing was attached.');
       if(result.sha256!==claim.source_sha256||result.parent_asset!==claim.source_asset_id||result.context?.sha256!==claim.source_sha256)throw Error('The library copy of the source changed. Reopen Continue with this asset.');
       // A fresh staged copy has a fresh name; the claim follows it, the identity (source hash) does not change.
@@ -806,8 +813,8 @@
       continuationState=renamed;continuationSource=result.context;secondPicture=null;secondPanel.hidden=true;
       attachContinuationSource(result,false);pendingInputs.delete(StudioContinuation.sourceInput(selected.continuation_capability)==='last_reference'?'lastReference':'reference');
       draftDirty=true;saveDraft();syncCreate();announce(StudioContinuation.sourceLabel(selected)+' holds the source again. No generation submitted.');
-    }catch(error){announce(error.message,true);}
-    finally{pickerBusy=false;syncReady();}
+    }catch(error){if(current())announce(error.message,true);}
+    finally{if(pickerBusyOwner===busyOwner){pickerBusyOwner=null;pickerBusy=false;syncReady();}}
   }
   // One slot, two pictures: the second picture is a question, not a silent replacement (owner report, 14 Sep 2026).
   let secondPicture=null,pendingStyle=null;
@@ -851,7 +858,9 @@
   q('#uxSecondReplace').onclick=async()=>{
     const item=secondPicture;if(pickerBusy||handoffBusy||submitting||restoring||referencePending||!item||!continuationState)return;
     if(!window.confirm('Start from this picture instead? The continuation ends and Create resets to the recipe defaults. The original stays in your library.'))return;
-    pickerBusy=true;syncReady();
+    const epoch=selectionEpoch,captured=globalThis.StudioPrivacy?.capture?.(),busyOwner={};
+    const current=()=>pickerBusyOwner===busyOwner&&epoch===selectionEpoch&&(!captured||captured.revision===globalThis.StudioPrivacy?.capture?.().revision);
+    pickerBusyOwner=busyOwner;pickerBusy=true;syncReady();
     try{
       if(item.file){const transfer=new DataTransfer();transfer.items.add(item.file);selectPreset(selected.id,true,true);q('#reference').files=transfer.files;legacyReferenceChange?.call(q('#reference'),new Event('change'));}
       else{
@@ -859,15 +868,16 @@
         // existing source owner then commit synchronously, with no second request.
         // Replace resets to the recipe defaults, so wording typed while the copy runs is
         // newer work the stale confirmation must not wipe: whole-workbench guard.
-        const stamp=workbenchStamp(),epoch=selectionEpoch,refs=referenceEpoch,result=await post('/api/assets/reference',{id:item.asset.id});
+        const stamp=workbenchStamp(),refs=referenceEpoch,result=await post('/api/assets/reference',{id:item.asset.id},privacyOptions(captured));
+        if(!current())return;
         if(referencePending||epoch!==selectionEpoch||refs!==referenceEpoch||stamp!==workbenchStamp()||secondPicture!==item)throw Error('The workbench changed while the picture was being copied. It was not applied.');
         if(result?.parent_asset!==item.asset.id||result?.sha256!==item.asset.sha256||result?.context?.asset_id!==item.asset.id||result?.context?.sha256!==item.asset.sha256||!StudioContinuation.normalize({...continuationState,reference_file:result?.file,source_asset_id:item.asset.id,source_sha256:item.asset.sha256}))throw Error('The replacement attachment could not be verified. The current source was kept.');
         selectPreset(selected.id,true,true);attachContinuationSource(result);
       }
       dismissSecondPicture();
       draftDirty=true;saveDraft();syncCreate();announce('Continuation ended. '+secondName(item)+' is now the reference; the prompt is the recipe default.');
-    }catch(error){announce(error.message,true);}
-    finally{pickerBusy=false;syncReady();}
+    }catch(error){if(current())announce(error.message,true);}
+    finally{if(pickerBusyOwner===busyOwner){pickerBusyOwner=null;pickerBusy=false;syncReady();}}
   };
   // The existing slot attachment owner arbitrates late copies and preserves slot roles.
   q('#uxSecondSlots').onclick=async e=>{
@@ -875,15 +885,16 @@
     if(!button||pickerBusy||handoffBusy||submitting||restoring||referencePending||!item?.asset||!continuationState)return;
     if(StudioContinuation.sourceInput(selected.continuation_capability)!=='reference'||!Number.isInteger(index)||index<1||!selected.reference_slots?.[index])return;
     if(referenceRecords[index]?.file&&!referenceRecords[index]?.missing&&!window.confirm('Replace Picture '+(index+1)+' with '+secondName(item)+'? Picture 1 and your wording stay unchanged.'))return;
-    const ownedFocus=secondPanel.contains(document.activeElement);
-    pickerBusy=true;button.disabled=true;secondPanel.setAttribute('aria-busy','true');syncReady();
+    const ownedFocus=secondPanel.contains(document.activeElement),epoch=selectionEpoch,captured=globalThis.StudioPrivacy?.capture?.(),busyOwner={};
+    const current=()=>pickerBusyOwner===busyOwner&&epoch===selectionEpoch&&(!captured||captured.revision===globalThis.StudioPrivacy?.capture?.().revision);
+    pickerBusyOwner=busyOwner;pickerBusy=true;button.disabled=true;secondPanel.setAttribute('aria-busy','true');syncReady();
     try{
-      if(!await pullIntoSlot(index,item.asset.id))return;
+      if(!await pullIntoSlot(index,item.asset.id,current)||!current())return;
       const returnFocus=ownedFocus&&view==='create'&&(secondPanel.contains(document.activeElement)||document.activeElement===document.body);
       if(secondPicture===item)dismissSecondPicture();
       announce('Picture '+(index+1)+' attached. Your source and wording were kept. Review its role before generating.');
       if(returnFocus)focusReadinessTarget(q('[data-ref-contribution="'+index+'"]')||q('[data-ref-file="'+index+'"]'));
-    }finally{pickerBusy=false;button.disabled=false;secondPanel.setAttribute('aria-busy','false');syncReady();}
+    }finally{if(pickerBusyOwner===busyOwner){pickerBusyOwner=null;pickerBusy=false;button.disabled=false;secondPanel.setAttribute('aria-busy','false');syncReady();}}
   };
   // A modal handoff carries IDs, not paths; selecting a destination never runs it.
   const handoff=element('dialog','studio-dialog ux-handoff');handoff.id='uxHandoff';handoff.setAttribute('aria-labelledby','uxHandoffTitle');handoff.innerHTML='<div class="dialog-heading"><div><span class="eyebrow">CONTINUE WITH THIS ASSET</span><h2 id="uxHandoffTitle">Where should it go next?</h2></div><button data-ux-close="uxHandoff" aria-label="Close handoff">✕</button></div><div class="ux-handoff-layout"><div id="uxHandoffSource"></div><div><div id="uxHandoffIntents" class="ux-handoff-intents"></div><label for="uxDestination">Destination recipe<select id="uxDestination"></select></label><div id="uxHandoffDetails"></div><details><summary>Wording prepared for this pass</summary><pre id="uxHandoffPrompt"></pre></details><details><summary>Technical recipe notes</summary><p id="uxHandoffTechnical"></p></details><p class="callout">Prepare attaches a copy and fills the settings. Nothing runs until you press Generate.</p><p id="uxHandoffStatus" role="status"></p><button id="uxPrepareHandoff" class="primary">Prepare in Create →</button><p class="disabledReason"><small id="uxPrepareReason"></small></p></div></div>';document.body.append(handoff);
@@ -913,12 +924,14 @@
   q('#uxDestination').onchange=destinationDetails;
   q('#uxPrepareHandoff').onclick=async()=>{
     if(handoffBusy||q('#uxPrepareHandoff').disabled)return;
-    const id=handoffId,preset=q('#uxDestination').value,epoch=handoffEpoch,source=sourceContext;
-    handoffBusy=true;destinationDetails();syncReady();
+    const id=handoffId,preset=q('#uxDestination').value,epoch=handoffEpoch,selection=selectionEpoch,source=sourceContext;
+    const current=()=>epoch===handoffEpoch&&selection===selectionEpoch;
+    const busyOwner={};handoffBusyOwner=busyOwner;handoffBusy=true;destinationDetails();syncReady();
     try{
       if(handoffBaseline!==workbenchStamp())throw Error('The workbench changed while this handoff was open. Reopen it to review the current task.');
       const result=await api('/api/assets/reference',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id}),signal:AbortSignal.timeout(30000)});
-      if(epoch!==handoffEpoch||!handoff.open||preset!==q('#uxDestination').value||handoffBaseline!==workbenchStamp())throw Error('The task changed during attachment. The copy was staged but not applied; reopen the handoff.');
+      if(!current())return;
+      if(!handoff.open||preset!==q('#uxDestination').value||handoffBaseline!==workbenchStamp())throw Error('The task changed during attachment. The copy was staged but not applied; reopen the handoff.');
       if(result.context?.sha256!==source.sha256||result.context?.asset_id!==id||JSON.stringify(result.context)!==JSON.stringify(source))throw Error('The source record changed during attachment. Reopen the handoff before applying it.');
       beginContinuation(result,preset,handoffIntent);sourceReadError='';const style=pendingStyle;pendingStyle=null;
       const restyle=StudioContinuation.sourceInput(selected.continuation_capability)==='last_reference';
@@ -928,8 +941,8 @@
         if(style?.file){announce('Source attached as the '+label+'; your picture is uploading to Picture 1.');void uploadRoleFile(0,style.file);}
         else if(style?.asset){announce('Source attached as the '+label+'; your picture goes on Picture 1.');void pullIntoSlot(0,style.asset.id);}
         else{announce('Source attached as the '+label+'. Now add '+(op==='combine'?'the picture whose pose you want to Picture 1':'a picture to Picture 1 of '+board)+', then press Generate.');focusReadinessTarget(q('[data-ref-file="0"]'));}}
-    }catch(error){q('#uxHandoffStatus').textContent=error.message;}
-    finally{handoffBusy=false;destinationDetails();syncReady();}
+    }catch(error){if(current())q('#uxHandoffStatus').textContent=error.message;}
+    finally{if(handoffBusyOwner===busyOwner){handoffBusyOwner=null;handoffBusy=false;destinationDetails();syncReady();}}
   };
   handoff.addEventListener('close',()=>{if(!handoff.open){handoffEpoch++;sourceContext=null;pendingStyle=null;}});
   handoff.addEventListener('cancel',e=>{if(handoffBusy)e.preventDefault();});
@@ -1068,32 +1081,32 @@
   // S3 one-press Polish (Fix face, Fix hands and details, Upscale) for Make: the same staged copy, claim and prepared wording as
   // Continue with this, sent as one job without touching Create's form. polishPlan only reads; polish posts /api/jobs once.
   const polishBusy=new Set();
-  async function polishRoute(assetId,kind){
+  async function polishRoute(assetId,kind,captured){
     // A passing condition (recipes loading, a failed read) rejects, so Make asks again after its cool-down instead of caching a refusal (Muse, 19 Oct).
     if(!catalog)throw Error('Recipes are still loading.');
-    let source;try{source=await readSource(assetId);}catch(error){throw Error('Could not read this picture. '+error.message);}
+    let source;try{source=await readSource(assetId,captured);}catch(error){throw Error('Could not read this picture. '+error.message);}
     if(source?.asset_id!==assetId)throw Error('This picture’s record could not be verified. Refresh and try again.');
     // Make retries rejected plans; a resolved refusal would stay cached after the source finishes.
     const job=jobs.find(j=>j.id===source.job_id);if(job&&!['completed','partial'].includes(job.status))throw Error('Wait for a completed source run before polishing it. Inspect unresolved work in Problems.');
     return{...StudioContinuation.polishRoute(kind,catalog.presets,source,missingByPreset),source};
   }
-  async function polishPlan(assetId,kind){
-    const route=await polishRoute(assetId,kind),timing=route.ok?StudioContinuation.combineTiming(jobs,route.preset.id):null;
+  async function polishPlan(assetId,kind,captured=globalThis.StudioPrivacy?.capture?.()){
+    const route=await polishRoute(assetId,kind,captured),timing=route.ok?StudioContinuation.combineTiming(jobs,route.preset.id):null;
     return{ok:!!route.ok,preset_id:route.preset?.id||null,reason:route.reason||'',...(timing?{seconds:timing.seconds}:{})};
   }
-  async function polish(assetId,kind,label){
+  async function polish(assetId,kind,label,captured=globalThis.StudioPrivacy?.capture?.()){
     const key=assetId+':'+kind;if(polishBusy.has(key))throw Error('This polish is already being sent. Wait for it.');
     if(sendBusy()||tileBusy||parallaxBusy)throw Error('Wait for the current action to finish before polishing this picture.');
     polishBusy.add(key);
     try{
       syncReady();
-      const route=await polishRoute(assetId,kind);if(!route.ok)throw Error(route.reason);
-      const {preset,source}=route,result=await post('/api/assets/reference',{id:assetId});
+      const route=await polishRoute(assetId,kind,captured);if(!route.ok)throw Error(route.reason);
+      const {preset,source}=route,result=await post('/api/assets/reference',{id:assetId},privacyOptions(captured));
       if(result?.parent_asset!==assetId||result.sha256!==source.sha256||result.context?.asset_id!==assetId||JSON.stringify(result.context)!==JSON.stringify(source))throw Error('The picture changed while it was being copied. Nothing was sent.');
       const prepared=StudioContinuation.initial(result.context,preset,'repair',result.file),controls={reference:result.file};
       if(preset.positive)controls.positive=prepared.positive;if(preset.negative)controls.negative=prepared.negative;
       if(preset.seed)controls.seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647;
-      return await post('/api/jobs',{preset_id:preset.id,continuation:prepared.claim,controls,batch_count:1,parent_assets:[assetId],references:[],label:'Make · '+(typeof label==='string'&&label?label:StudioContinuation.POLISH[kind])});   // Make passes the name it showed (e.g. a merged face-and-hands pass)
+      return await post('/api/jobs',{preset_id:preset.id,...(captured?.privacy==='private'?{privacy:'private'}:{}),continuation:prepared.claim,controls,batch_count:1,parent_assets:[assetId],references:[],label:'Make · '+(typeof label==='string'&&label?label:StudioContinuation.POLISH[kind])},privacyOptions(captured));
     }finally{polishBusy.delete(key);syncReady();}
   }
   // #1497 Vary from Make: the round prepareVary sets up (same plan, wording, carried stack, strength and round size), sent as
@@ -1101,8 +1114,8 @@
   // /api/jobs once; a failed or uncertain post is reported, never sent again.
   const makeVaryBusy=new Set();
   // No HTTP answer (a dropped connection, an unreadable reply) means the job may exist: flag it so Make holds this Vary.
-  const sendVary=body=>post('/api/jobs',body).catch(error=>{if(error.status===undefined)error.uncertain=true;throw error;});
-  async function vary(assetId,presetId,jobId,strength,status){
+  const sendVary=(body,captured)=>post('/api/jobs',{...body,...(captured?.privacy==='private'?{privacy:'private'}:{})},privacyOptions(captured)).catch(error=>{if(error.status===undefined)error.uncertain=true;throw error;});
+  async function vary(assetId,presetId,jobId,strength,status,captured=globalThis.StudioPrivacy?.capture?.()){
     if(makeVaryBusy.has(assetId))throw Error('Vary is already being sent for this picture. Wait for it.');
     if(sendBusy()||tileBusy||parallaxBusy)throw Error('Wait for the current action to finish before varying this picture.');
     makeVaryBusy.add(assetId);
@@ -1113,20 +1126,20 @@
       if(plan.kind==='reseed'?strength!=='reseed':!['subtle','strong'].includes(strength))throw Error('This Vary button is out of date. Nothing was sent; press Vary again.');
       const route=plan.route,seed=crypto.getRandomValues(new Uint32Array(1))[0]%2147483647,base={preset_id:route.id,batch_count:plan.round.count,parent_assets:[assetId],references:[],label:'Make · '+(strength==='reseed'?'Vary':'Vary '+strength)};
       if(plan.kind==='reseed'){
-        const recipe=await api('/api/jobs/'+encodeURIComponent(jobId)+'/recipe');
+        const recipe=await api('/api/jobs/'+encodeURIComponent(jobId)+'/recipe',privacyOptions(captured));
         if(recipe?.preset_id!==route.id)throw Error('This run no longer records '+route.name+'. Nothing was sent.');
-        const check=await post('/api/recipe-check',recipe);
-        return await sendVary({...base,look:recipe.look,controls:{...(recipe.controls||{}),...(route.seed?{seed}:{})},expected_template_sha256:check.template_sha256});
+        const check=await post('/api/recipe-check',{...recipe,...(captured?{privacy:captured.privacy}:{})},privacyOptions(captured));
+        return await sendVary({...base,look:recipe.look,controls:{...(recipe.controls||{}),...(route.seed?{seed}:{})},expected_template_sha256:check.template_sha256},captured);
       }
-      let source;try{source=await readSource(assetId);}catch(error){throw Error('Could not read this picture. '+error.message);}
+      let source;try{source=await readSource(assetId,captured);}catch(error){throw Error('Could not read this picture. '+error.message);}
       if(source?.asset_id!==assetId)throw Error('This picture’s record could not be verified. Refresh and try again.');
       const reason=varyProblem(plan,source);if(reason)throw Error(reason);
-      const result=await post('/api/assets/reference',{id:assetId});
+      const result=await post('/api/assets/reference',{id:assetId},privacyOptions(captured));
       if(result?.parent_asset!==assetId||result.sha256!==source.sha256||result.context?.asset_id!==assetId||JSON.stringify(result.context)!==JSON.stringify(source))throw Error('The picture changed while it was being copied. Nothing was sent.');
       const prepared=StudioContinuation.initial(result.context,route,'edit',result.file);
       const controls={reference:result.file,...(StudioContinuation.canvasFor(result.context,route)||{}),...(plan.carry||{}),...plan.strengths[strength].controls};
       if(route.positive)controls.positive=prepared.positive;if(route.negative)controls.negative=prepared.negative;if(route.seed)controls.seed=seed;
-      return await sendVary({...base,continuation:prepared.claim,controls});
+      return await sendVary({...base,continuation:prepared.claim,controls},captured);
     }finally{makeVaryBusy.delete(assetId);syncReady();}
   }
   Object.assign(globalThis.StudioWorkbench,{polish,polishPlan,vary});
@@ -1342,27 +1355,30 @@
   }
   q('#uxPullAsset').onclick=openSourcePicker;
   picker.addEventListener('close',()=>{if(picker.open)return;sourcePickerEpoch++;sourceSeq++;clearTimeout(sourceSearchTimer);pickerLoading=false;syncSourceAvailability();});
-  q('#uxSourceSearch').oninput=()=>{clearTimeout(sourceSearchTimer);sourceSearchTimer=setTimeout(async()=>{try{if(await readSources(false))renderSources();}catch(error){q('#uxPickerStatus').textContent='Could not search the library. '+error.message;}},150);};
-  q('#uxSourcePaging').onclick=async e=>{if(!e.target.closest('[data-ux-source-more]'))return;try{if(await readSources(true))renderSources();}catch(error){q('#uxPickerStatus').textContent='Could not read more of the library. '+error.message;}};
+  q('#uxSourceSearch').oninput=()=>{const request=sourcePickerEpoch;clearTimeout(sourceSearchTimer);sourceSearchTimer=setTimeout(async()=>{if(request!==sourcePickerEpoch||!picker.open)return;try{if(await readSources(false))renderSources();}catch(error){if(request===sourcePickerEpoch&&picker.open)q('#uxPickerStatus').textContent='Could not search the library. '+error.message;}},150);};
+  q('#uxSourcePaging').onclick=async e=>{if(!e.target.closest('[data-ux-source-more]'))return;const request=sourcePickerEpoch;try{if(await readSources(true))renderSources();}catch(error){if(request===sourcePickerEpoch&&picker.open)q('#uxPickerStatus').textContent='Could not read more of the library. '+error.message;}};
   after('selectPreset',()=>{if(picker.open)picker.close();});
-  async function pullIntoSlot(index,id){
-    try{await attachReferenceAsset(index,id);draftDirty=true;saveDraft();syncCreate();return true;}
-    catch(error){announce('The second picture was not attached. '+error.message,true);return false;}
+  async function pullIntoSlot(index,id,ownerCurrent=()=>true){
+    const epoch=selectionEpoch,captured=globalThis.StudioPrivacy?.capture?.();
+    const current=()=>ownerCurrent()&&epoch===selectionEpoch&&(!captured||captured.revision===globalThis.StudioPrivacy?.capture?.().revision);
+    try{await attachReferenceAsset(index,id,current);if(!current())return false;draftDirty=true;saveDraft();syncCreate();return true;}
+    catch(error){if(current())announce('The second picture was not attached. '+error.message,true);return false;}
   }
-  q('#uxSourceAssets').onclick=async e=>{const button=e.target.closest('[data-ux-pull]');if(!button||pickerBusy)return;pickerBusy=true;button.disabled=true;syncReady();try{const id=button.dataset.uxPull,slot=q('#uxSourceSlot').value;
+  q('#uxSourceAssets').onclick=async e=>{const button=e.target.closest('[data-ux-pull]');if(!button||pickerBusy)return;const request=sourcePickerEpoch,selection=selectionEpoch,current=()=>request===sourcePickerEpoch&&selection===selectionEpoch,busyOwner={};pickerBusyOwner=busyOwner;pickerBusy=true;button.disabled=true;syncReady();try{const id=button.dataset.uxPull,slot=q('#uxSourceSlot').value;
       if(continuationState){const input=StudioContinuation.sourceInput(selected.continuation_capability),isSource=input==='last_reference'?slot==='lastReference':slot==='reference'||slot==='0';
         if(isSource&&(!selected.reference_slots?.length||input==='reference')){picker.close();offerSecondPicture({asset:sourcePage.assets.find(a=>a.id===id)});return;}
         if(isSource)throw Error(StudioContinuation.sourceLabel(selected)+' is the picture you are continuing. Pull into another slot, or use Leave this continuation to start from this one.');}
-      if(selected.reference_slots?.length&&slot!=='lastReference')await attachReferenceAsset(Number(slot),id);
-      else{const stamp=attachStamp(),result=await post('/api/assets/reference',{id});if(stamp!==attachStamp())throw Error('The workbench changed during attachment. Reopen the picker.');if(slot==='lastReference'){lastUploaded=result.file;q('#lastReference').value='';pendingInputs.delete('lastReference');}else{uploaded=result.file;q('#reference').value='';pendingInputs.delete('reference');}replaceParentAsset(slot==='lastReference'?'lastReference':'reference',null,id);}
+      if(selected.reference_slots?.length&&slot!=='lastReference')await attachReferenceAsset(Number(slot),id,current);
+      else{const stamp=attachStamp(),result=await post('/api/assets/reference',{id});if(!current())return;if(stamp!==attachStamp())throw Error('The workbench changed during attachment. Reopen the picker.');if(slot==='lastReference'){lastUploaded=result.file;q('#lastReference').value='';pendingInputs.delete('lastReference');}else{uploaded=result.file;q('#reference').value='';pendingInputs.delete('reference');}replaceParentAsset(slot==='lastReference'?'lastReference':'reference',null,id);}
+      if(!current())return;
       draftDirty=true;saveDraft();syncCreate();
       const filled=referenceRecords.filter(r=>r.file&&!r.missing).length,boardDone=!!selected.reference_board&&filled>=(selected.reference_board.min??1);
       const remaining=boardDone?-1:nextEmptySlot();
       if(remaining<0){picker.close();announce('Saved source attached. No generation submitted.');}
-      else{q('#uxSourceSlot').innerHTML=sourceSlotOptions();q('#uxSourceSlot').value=String(remaining);q('#uxPickerStatus').textContent='Attached. Picture '+(remaining+1)+' of '+referenceRecords.length+' is still empty; pick its image or close this picker.';announce('Saved source attached. No generation submitted.');}}catch(err){q('#uxPickerStatus').textContent=err.message;}finally{pickerBusy=false;button.disabled=false;syncReady();}};
+      else{q('#uxSourceSlot').innerHTML=sourceSlotOptions();q('#uxSourceSlot').value=String(remaining);q('#uxPickerStatus').textContent='Attached. Picture '+(remaining+1)+' of '+referenceRecords.length+' is still empty; pick its image or close this picker.';announce('Saved source attached. No generation submitted.');}}catch(err){if(current())q('#uxPickerStatus').textContent=err.message;}finally{if(pickerBusyOwner===busyOwner){pickerBusyOwner=null;pickerBusy=false;button.disabled=false;syncReady();}}};
   picker.addEventListener('cancel',e=>{if(pickerBusy)e.preventDefault();});picker.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();if(!pickerBusy)picker.close();}});
   // Drafts are data only, scoped to the server's workspace identity. No File bytes.
-  function snapshot(){if(!selected)return null;return U.normalizeDraft({version:1,updatedAt:Date.now(),recipe:{preset:selected.id,...continuationPayload(),...tilePayload(),...parallaxPayload(),...(typeof StudioLooks!=='undefined'?StudioLooks.applicationPayload(selected.id):{}),controls:values(),batch:q('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},references:attachedReferencePayload()},pendingInputs:['reference','lastReference'].filter(id=>pendingInputs.has(id)||(q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded))),templateHash:recipeTemplateHash});}
+  function snapshot(){if(!selected)return null;return U.normalizeDraft({version:1,updatedAt:Date.now(),recipe:{preset:selected.id,...(draftPrivacy==='private'?{privacy:'private'}:{}),...continuationPayload(),...tilePayload(),...parallaxPayload(),...(typeof StudioLooks!=='undefined'?StudioLooks.applicationPayload(selected.id):{}),controls:values(),batch:q('#batch').value,parent_assets:parentAssets,parent_by_input:{...parentByInput},references:attachedReferencePayload()},pendingInputs:['reference','lastReference'].filter(id=>pendingInputs.has(id)||(q('#'+id).files.length&&(id==='reference'?!uploaded:!lastUploaded))),templateHash:recipeTemplateHash});}
   // This remains the sole owner of Create mutation; commands persist before adoption.
   function setupStamp(){return JSON.stringify([workbenchStamp(),referenceEpoch,referencePending,selectionEpoch,recipeTemplateHash,parentByInput,typeof backendActive==='undefined'?null:backendActive]);}
   function setupBusy(){return !!referencePending||!!pickerBusy||!!restoring||!!submitting||!!handoffBusy||typeof backendSwitching!=='undefined'&&!!backendSwitching;}
@@ -1402,28 +1418,28 @@
   }
   window.StudioSetupDraft={capture(){const value=snapshot();if(!value)return null;value.updatedAt=0;value.recipe.parent_by_input=value.recipe.parent_by_input||{};return JSON.parse(JSON.stringify(value));},stamp:setupStamp,busy:setupBusy,adopt:adoptSharedSetup};
   document.dispatchEvent(new Event('studio:setup-draft-ready'));
-  function draftKey(){return draftPrefix&&selected?draftPrefix+selected.id:null;}
-  function readDraft(key=draftKey()){if(!key)return null;try{const value=U.normalizeDraft(JSON.parse(localStorage.getItem(key)));if(value)knownDrafts.set(key,value.updatedAt);return value;}catch(_){return null;}}
-  function saveDraft(){if(restoring||draftPaused||!draftDirty||!draftPrefix||!selected)return;const key=draftKey(),draft=snapshot();if(!draft)return;try{const current=U.normalizeDraft(JSON.parse(localStorage.getItem(key)));if(current&&knownDrafts.has(key)&&knownDrafts.get(key)!==current.updatedAt){draftPaused=true;renderDraftNotice();return;}if(current&&JSON.stringify({...current,updatedAt:0})===JSON.stringify({...draft,updatedAt:0}))return;localStorage.setItem(key,JSON.stringify(draft));knownDrafts.set(key,draft.updatedAt);q('#uxDraftStatus').textContent='Draft saved in this browser · '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}catch(_){q('#uxDraftStatus').textContent='Browser storage is unavailable. Export this draft or save a named setup.';}}
-  function renderDraftNotice(){const draft=readDraft();q('#uxRestoreDraft').hidden=!draft;q('#uxDiscardDraft').hidden=!draft;q('#uxKeepDraft').hidden=!draftPaused;q('#uxDraftStatus').textContent=draftPaused?'Another tab changed the saved draft. Autosave is paused; export yours or keep this tab.':draft?'Saved draft from '+new Date(draft.updatedAt).toLocaleString()+'. Restore it to continue.':'Your unsaved draft is kept in this browser. Save a setup to keep it in your workspace.';}
-  async function restoreDraft(draft){
+  function draftKey(classification=draftPrivacy){return draftPrefix&&selected?draftStorageKey(draftPrefix+selected.id,classification):null;}
+  function readDraft(key=draftKey()){if(!key)return null;try{const raw=draftStorage().getItem(key),value=U.normalizeDraft(JSON.parse(raw));if(value)knownDrafts.set(key,raw);return value;}catch(_){return null;}}
+  function saveDraft(){if(restoring||draftPaused||!draftDirty||!draftPrefix||!selected)return;const key=draftKey(),draft=snapshot();if(!draft)return;try{const existing=draftStorage().getItem(key),current=U.normalizeDraft(JSON.parse(existing));if(current&&knownDrafts.has(key)&&knownDrafts.get(key)!==existing){draftPaused=true;renderDraftNotice();return;}if(current&&JSON.stringify({...current,updatedAt:0})===JSON.stringify({...draft,updatedAt:0}))return;const raw=JSON.stringify(draft);draftStorage().setItem(key,raw);knownDrafts.set(key,raw);q('#uxDraftStatus').textContent=(draftPrivacy==='private'?'Private draft saved for this tab · ':'Draft saved in this browser · ')+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}catch(_){q('#uxDraftStatus').textContent='Browser storage is unavailable. Export this draft or save a named setup.';}}
+  function renderDraftNotice(){const draft=readDraft();q('#uxRestoreDraft').hidden=!draft;q('#uxDiscardDraft').hidden=!draft;q('#uxKeepDraft').hidden=!draftPaused;q('#uxDraftStatus').textContent=draftPaused?'Another tab changed the saved draft. Autosave is paused; export yours or keep this tab.':draft?'Saved draft from '+new Date(draft.updatedAt).toLocaleString()+'. Restore it to continue.':(draftPrivacy==='private'?'Private drafts stay in this tab. Export a draft to keep a separate copy.':'Your unsaved draft is kept in this browser. Save a setup to keep it in your workspace.');}
+  async function restoreDraft(draft,{persist=false}={}){
   if(!draft)return;if(!catalog?.presets.some(p=>p.id===draft.recipe.preset)){announce('This draft needs a recipe that is not in the current catalog.',true);return;}
-  restoring=true;let epoch=null,checkedInputs=[];
+  restoring=true;let epoch=null,checkedInputs=[],completed=false;
   try{applySaved(draft.recipe);epoch=selectionEpoch;recipeTemplateHash=draft.templateHash;pendingInputs=new Set(draft.pendingInputs);syncReady();
     checkedInputs=[...(!selected.reference_slots?.length&&selected.reference&&uploaded?[['reference',uploaded]]:[]),...(selected.last_reference&&lastUploaded?[['lastReference',lastUploaded]]:[])];
     if(checkedInputs.length){const files=[...new Set(checkedInputs.map(([,file])=>file))],checks=await post('/api/references/check',{files});if(epoch!==selectionEpoch)return;for(const [name,file]of checkedInputs)if(!checks.some(c=>c.file===file&&c.available)){pendingInputs.add(name);if(name==='reference')uploaded=null;else lastUploaded=null;releaseInputParent(name);}}
     if(typeof tileState!=='undefined'&&tileState&&((uploaded&&uploaded!==tileState.rolled_file)||!parentAssets.includes(tileState.source_asset_id)))tileState=null;
-    syncCreate();announce(draft.tileDropped||draft.recipe.tile&&typeof tileState!=='undefined'&&!tileState?'Seamless plan dropped because it no longer matches this draft. Use Make seamless again.':'Draft restored. Reattach any missing local files, then review before running.');
+    syncCreate();announce(draft.tileDropped||draft.recipe.tile&&typeof tileState!=='undefined'&&!tileState?'Seamless plan dropped because it no longer matches this draft. Use Make seamless again.':'Draft restored. Reattach any missing local files, then review before running.');completed=true;
   }catch(err){if(epoch===selectionEpoch){for(const [name,file]of checkedInputs){if(!file)continue;pendingInputs.add(name);if(name==='reference')uploaded=null;else lastUploaded=null;}announce('Input availability could not be checked: '+err.message,true);}}
-  finally{restoring=false;if(epoch===selectionEpoch)draftDirty=false;syncReady();}
+  finally{restoring=false;if(epoch===selectionEpoch){draftDirty=!!persist&&completed;if(draftDirty)saveDraft();}syncReady();}
 }
   q('#uxRestoreDraft').onclick=()=>restoreDraft(readDraft());
   q('#uxImportDraftButton').onclick=()=>q('#uxImportDraft').click();
-  q('#uxImportDraft').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>131072)throw Error('Draft files must be under 128 KiB.');const draft=U.normalizeDraft(JSON.parse(await file.text()));if(!draft)throw Error('This is not a supported Studio draft.');saveDraft();await restoreDraft(draft);}catch(err){announce(err.message,true);}finally{e.target.value='';}};
-  q('#uxDiscardDraft').onclick=()=>{try{const key=draftKey();if(key)localStorage.removeItem(key);knownDrafts.delete(key);draftDirty=false;renderDraftNotice();}catch(_){announce('Browser storage is unavailable.',true);}};
+  q('#uxImportDraft').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>131072)throw Error('Draft files must be under 128 KiB.');const draft=U.normalizeDraft(JSON.parse(await file.text()));if(!draft)throw Error('This is not a supported Studio draft.');saveDraft();await restoreDraft(draft,{persist:true});}catch(err){announce(err.message,true);}finally{e.target.value='';}};
+  q('#uxDiscardDraft').onclick=()=>{try{const key=draftKey();if(key)draftStorage().removeItem(key);knownDrafts.delete(key);draftDirty=false;renderDraftNotice();}catch(_){announce('Browser storage is unavailable.',true);}};
   q('#uxKeepDraft').onclick=()=>{draftPaused=false;readDraft();saveDraft();renderDraftNotice();};
   q('#uxExportDraft').onclick=()=>{const draft=snapshot();if(!draft)return;const a=document.createElement('a'),url=URL.createObjectURL(new Blob([JSON.stringify(draft,null,2)],{type:'application/json'}));a.href=url;a.download='studio-draft-'+draft.recipe.preset+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
-  window.addEventListener('storage',e=>{if(e.key===draftKey()){draftPaused=true;renderDraftNotice();}});
+  window.addEventListener('storage',e=>{if(draftPrivacy==='regular'&&e.key===draftKey()){draftPaused=true;renderDraftNotice();}});
   window.addEventListener('pagehide',saveDraft);
   for(const event of ['input','change'])q('#createView').addEventListener(event,e=>{if(e.target.closest('.editor'))draftDirty=true;syncReady();clearTimeout(draftTimer);draftTimer=setTimeout(saveDraft,350);});
   q('#createView').addEventListener('click',e=>{if(e.target.closest('[data-variant],#randomSeed,[data-ref-clear],[data-ref-up],[data-ref-down]')){pictureKept=null;renderUndo();draftDirty=true;syncReady();saveDraft();}});
@@ -1455,7 +1471,7 @@
     try{await post('/api/jobs/'+encodeURIComponent(button.dataset.job)+'/put-away',{put_away:away});if(jobInspector.open)jobInspector.close();announce(away?'Put away. Create → Problems → Show put away brings it back.':'Back on your desk and in Problems.');homeSignature='';await refreshHome();if(typeof refresh==='function')refresh();}
     finally{deskBusy=false;button.disabled=false;}
   }
-  async function refreshHome(){if(homeBusy)return;homeBusy=true;q('#uxRefreshHome').disabled=true;try{const result=await Promise.allSettled(['/api/workspace','/api/production','/api/jobs'].map(path=>api(path)));homeErrors=result.map((r,i)=>r.status==='rejected'?['Asset library','Runs','Jobs'][i]+': '+r.reason.message:null).filter(Boolean);homeData={workspace:result[0].status==='fulfilled'?result[0].value:null,plans:result[1].status==='fulfilled'?result[1].value:null,jobs:result[2].status==='fulfilled'?result[2].value:null};homeUpdated=new Date();renderHome();}finally{homeBusy=false;q('#uxRefreshHome').disabled=false;}}
+  async function refreshHome(){if(homeBusy)return;homeBusy=true;q('#uxRefreshHome').disabled=true;try{const epoch=homeEpoch,result=await Promise.allSettled(['/api/workspace','/api/production','/api/jobs'].map(path=>api(path)));if(epoch!==homeEpoch)return;homeErrors=result.map((r,i)=>r.status==='rejected'?['Asset library','Runs','Jobs'][i]+': '+r.reason.message:null).filter(Boolean);homeData={workspace:result[0].status==='fulfilled'?result[0].value:null,plans:result[1].status==='fulfilled'?result[1].value:null,jobs:result[2].status==='fulfilled'?result[2].value:null};homeUpdated=new Date();renderHome();}finally{homeBusy=false;q('#uxRefreshHome').disabled=false;}}
   function renderHome(){if(!homeData)return;const {workspace,plans,jobs:runJobs}=homeData,all=workspace?.assets||[],assets=all.filter(a=>typeof assetIsAgentRun!=='function'||!assetIsAgentRun(a)),hidden=all.filter(a=>!a.trashed_at).length-assets.filter(a=>!a.trashed_at).length,s=U.summarize(assets,plans||[],runJobs||[]);q('#uxHomeHealth').textContent=homeErrors.length?'Some data is unavailable. '+homeErrors.join(' · '):'Saved records refreshed '+homeUpdated.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})+(hidden?' · counts are your pictures; '+hidden+' agent run'+(hidden===1?' is':'s are')+' not counted':'')+' · execution, creative review and licensing remain separate.';q('#uxHomeHealth').classList.toggle('error',!!homeErrors.length);const signature=JSON.stringify(homeData);if(signature===homeSignature)return;homeSignature=signature;
     q('#uxStats').innerHTML=[['Saved assets',workspace?s.assets:'—','all'],['Awaiting review',workspace?s.unreviewed:'—','unreviewed'],['Kept',workspace?s.keepers:'—','selected'],['Needs another pass',workspace?s.needsWork:'—','needs_work']].map(([label,value,scope])=>'<button data-ux-scope="'+scope+'"><span>'+label+'</span><b>'+value+'</b><small>Open library →</small></button>').join('');
     // #940: a plan untouched for 7 days leaves the desk (Runs & review keeps it under Older). Live plans always stay;
@@ -1484,5 +1500,48 @@
     refreshHome=(...args)=>window.StudioReadPoller.refresh('overview',...args);
   }
   window.addEventListener('studio-read-poller-ready',attachOverviewPolling);attachOverviewPolling();
+  // Invalidate old readers before clearing their DOM. Changing only the view never moves the creation draft.
+  document.addEventListener('studio:privacy-change',event=>{
+    const change=event.detail,scopeChanged=change.previousScope!==change.scope,creationChanged=change.previousCreation!==change.creation;
+    if(scopeChanged||creationChanged){
+      sourceSeq++;sourcePickerEpoch++;handoffEpoch++;pickerBusy=pickerLoading=handoffBusy=false;pickerBusyOwner=handoffBusyOwner=null;
+      secondPanel.setAttribute('aria-busy','false');for(const button of secondPanel.querySelectorAll('[data-ux-second-slot]'))button.disabled=false;
+      sourcePage={assets:[],unavailable:[],next:null};sourceContext=null;handoffId=null;handoffBaseline=null;
+      for(const dialog of [picker,handoff])if(dialog.open)dialog.close();
+      for(const id of ['uxSourceAssets','uxSourcePaging','uxPickerStatus','uxHandoffSource','uxHandoffDetails','uxHandoffPrompt','uxHandoffTechnical','uxHandoffStatus'])q('#'+id)?.replaceChildren();
+      q('#uxSourceSearch').value='';syncReady();
+    }
+    if(scopeChanged){
+      homeEpoch++;homeData=null;homeSignature='';tileRead++;parallaxRead++;
+      if(jobInspector.open)jobInspector.close();
+      for(const id of ['uxStats','uxDesk','uxRecent'])q('#'+id)?.replaceChildren();
+      jobInspector.replaceChildren();q('#uxHomeHealth').textContent='Refresh to read this privacy view.';
+      if(view==='home')void refreshHome();
+    }
+    if(change.previousCreation===change.creation)return;
+    clearTimeout(draftTimer);draftTimer=null;selectionEpoch++;referenceEpoch++;
+    const before=snapshot(),oldKey=draftKey(),oldFillKey=fillsKey(),ownedDraft=knownDrafts.get(oldKey),ownedFills=knownFills.get(oldFillKey),wasPaused=draftPaused;
+    const fills={...JSON.parse(ownedFills||'{}'),...fillValues()};
+    if(change.previousCreation==='private'&&before&&oldKey)try{draftStorage().setItem(oldKey,JSON.stringify(before));}catch(_){announce('This draft could not be saved in the browser. Export it to retain a copy.',true);}
+    draftPrivacy=change.creation;draftPaused=false;knownDrafts.clear();draftDirty=false;
+    if(change.previousCreation==='regular'&&change.creation==='private'){
+      // Only this unsent draft moves. Unrelated saved setups and other recipes keep their own scope.
+      const moved=snapshot(),key=draftKey();
+      try{let retained=false;if(moved&&key){const raw=JSON.stringify(moved);sessionStorage.setItem(key,raw);knownDrafts.set(key,raw);if(oldKey){const existing=localStorage.getItem(oldKey);if(existing!==null){if(!wasPaused&&existing===ownedDraft)localStorage.removeItem(oldKey);else retained=true;}}}if(oldFillKey){const raw=JSON.stringify(fills);sessionStorage.setItem(fillsKey(),raw);knownFills.set(fillsKey(),raw);const existing=localStorage.getItem(oldFillKey);if(existing!==null){if(existing===ownedFills)localStorage.removeItem(oldFillKey);else retained=true;}}if(retained)announce('This creation is private. A regular browser draft changed in another tab, so that saved copy was kept.');}
+      catch(_){announce('Private browser storage is unavailable. Export this draft before leaving; a previous regular browser copy may remain.',true);}
+      draftDirty=true;renderDraftNotice();syncCreate();return;
+    }
+    // Leaving private creation restores a separate regular draft, never the private prompt, references or undo buffers.
+    const next=readDraft();restoring=true;
+    try{
+      forgetWording();wordingBase=null;combineWording.clear();for(const key of Object.keys(planFills))delete planFills[key];planPrepared=null;planPair=null;planSeeded=false;
+      fillsPreset=fillsSource=transferredFills=null;fillsTemplate='';fillsAssembled=null;
+      sourceReadError='';varyUnapplied=null;secondPicture=pendingStyle=null;secondPanel.hidden=true;
+      posePoints=poseHome=poseHeld=poseLoading=null;poseOpenFor=null;poseHeldShown='';poseTimeline=StudioPoseEditor.timeline(POSE_UNDO);
+      if(selected)selectPreset(selected.id,true,true,true);
+      q('#saveName').value='';pendingInputs.clear();forgetWording();
+    }finally{restoring=false;}
+    if(next)void restoreDraft(next);else{syncCreate();renderDraftNotice();}
+  });
   showView(location.hash);initializeDrafts();
 })();

@@ -133,5 +133,41 @@ class AssetMCPTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(len(self.requests), 5)
                     self.assert_no_writes(after)
 
+    async def test_stdio_private_assets_require_explicit_scope_without_writes(self):
+        from mcp import ClientSession, StdioServerParameters
+        from mcp.client.stdio import stdio_client
+        f = self.fixture
+        private = f.store.register({'id':'private-canary','privacy':'private','created_at':9,
+                    'outputs':[{'filename':'image.png'}]},0,Path(f.temp.name)/'image.png')
+        before = f.store.snapshot(); all_before = f.store.snapshot(privacy='all')
+        root = Path(__file__).resolve().parents[1]
+        params = StdioServerParameters(command=sys.executable,
+            args=[str(root/'scripts/workflow-mcp.py'),'--mode','read','--url',self.url,'--http-timeout','5'],
+            cwd=f.temp.name)
+        async with asyncio.timeout(35):
+            async with stdio_client(params) as (read, write):
+                async with ClientSession(read, write) as session:
+                    await session.initialize()
+                    ordinary = self.assert_result(await session.call_tool('asset_page',{}))
+                    self.assertNotIn(private,json.dumps(ordinary))
+                    hidden = self.assert_result(await session.call_tool('asset_selection',
+                        {'workspace_id':f.scope,'ids':[private,f.ids[0]]}))
+                    self.assertEqual([item['state'] for item in hidden['items']],['missing','active'])
+                    scoped = self.assert_result(await session.call_tool('asset_page',{'filters':{'privacy':'private'}}))
+                    self.assertEqual([asset['id'] for asset in scoped['assets']],[private])
+                    for scope, states in [('private',['active','missing']),('all',['active','active'])]:
+                        selected = self.assert_result(await session.call_tool('asset_selection',
+                            {'workspace_id':f.scope,'ids':[private,f.ids[0]],'privacy':scope}))
+                        self.assertEqual([item['state'] for item in selected['items']],states)
+                    combined = self.assert_result(await session.call_tool('asset_page',{'filters':{'privacy':'all'}}))
+                    self.assertEqual({asset['id'] for asset in combined['assets']},{private,*f.ids})
+                    sent = len(self.requests)
+                    invalid = await session.call_tool('asset_selection',
+                        {'workspace_id':f.scope,'ids':[private],'privacy':'PRIVATE'})
+                    self.assertTrue(invalid.isError)
+                    self.assertEqual(len(self.requests),sent,'Invalid scopes must not reach HTTP')
+        self.assert_no_writes(before)
+        self.assertEqual(f.store.snapshot(privacy='all'),all_before)
+
 
 if __name__ == '__main__': unittest.main()

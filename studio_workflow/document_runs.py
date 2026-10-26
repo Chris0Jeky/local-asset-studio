@@ -15,6 +15,7 @@ import uuid
 from .commands import fields, identifier
 from .core import MAX_BYTES, canonical, decode, digest, need
 from .documents import DocumentError, WorkflowDocuments
+from .privacy import is_regular
 
 VERSION = 'studio.document-run/v1'
 MAX_RECORDS = 4096
@@ -222,7 +223,7 @@ class DocumentRuns:
                 observation.update(state='workspace_changed', message='Inspect the original workspace; no job was joined.')
             else:
                 job = studio.jobs.get(report['job_id'])
-                if job is not None:
+                if is_regular(job):
                     try:
                         valid = (isinstance(job, dict) and job.get('id') == report['job_id']
                             and job.get('preset_id') == report['recipe']['preset_id']

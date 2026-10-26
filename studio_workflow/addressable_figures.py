@@ -35,7 +35,7 @@ _RECTANGLE_FIELDS = {"x", "y", "width", "height"}
 _PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 _PNG_CRITICAL_CHUNKS = {b"IHDR", b"PLTE", b"IDAT", b"IEND"}
 # Bound to app/workspace.py by tests/test_addressable_figures_schema.py.
-ASSET_INSERT_COLUMNS = ("id", "job_id", "output_index", "title", "media_type", "path", "filename", "sha256", "bytes", "created_at", "preset_id", "preset_name", "source", "lineage")
+ASSET_INSERT_COLUMNS = ("id", "job_id", "output_index", "title", "media_type", "path", "filename", "sha256", "bytes", "created_at", "preset_id", "preset_name", "source", "lineage", "privacy")
 WORKSPACE_HELPERS = ("_validate_scope", "_check_scope", "_observe_receipt", "_verify_snapshot")
 
 
@@ -112,7 +112,7 @@ def _validate(payload, workspace):
 
 
 def _parent_row(workspace, db, asset_id, parent_sha256):
-    row = db.execute("SELECT * FROM assets WHERE id=?", (asset_id,)).fetchone()
+    row = db.execute("SELECT * FROM assets WHERE id=? AND privacy='regular'", (asset_id,)).fetchone()
     if row is None:
         raise _error(workspace, "Parent asset was not found")
     if row["media_type"] != "image":
@@ -323,9 +323,11 @@ def split_figures(workspace, payload):
         db.execute("BEGIN")
         identity = workspace._check_scope(db, scope)
         receipt = db.execute(
-            "SELECT fingerprint,result FROM asset_commands WHERE request_id=?", (request_id,)
+            "SELECT fingerprint,result,privacy FROM asset_commands WHERE request_id=?", (request_id,)
         ).fetchone()
         if receipt:
+            if receipt['privacy'] != 'regular':
+                raise _error(workspace, 'Command was not found', status=404, code='asset_command_not_found')
             if receipt["fingerprint"] != fingerprint:
                 raise _error(
                     workspace,
@@ -350,9 +352,11 @@ def split_figures(workspace, payload):
         db.execute("BEGIN IMMEDIATE")
         identity = workspace._check_scope(db, scope)
         receipt = db.execute(
-            "SELECT fingerprint,result FROM asset_commands WHERE request_id=?", (request_id,)
+            "SELECT fingerprint,result,privacy FROM asset_commands WHERE request_id=?", (request_id,)
         ).fetchone()
         if receipt:
+            if receipt['privacy'] != 'regular':
+                raise _error(workspace, 'Command was not found', status=404, code='asset_command_not_found')
             if receipt["fingerprint"] != fingerprint:
                 raise _error(
                     workspace,
@@ -408,6 +412,7 @@ def split_figures(workspace, payload):
                     parent["preset_name"],
                     json.dumps(source, sort_keys=True, separators=(",", ":")),
                     json.dumps([asset_id]),
+                    'regular',
                 ),
             )
             figures.append(
@@ -432,7 +437,7 @@ def split_figures(workspace, payload):
             "generation_submitted": False,
         }
         db.execute(
-            "INSERT INTO asset_commands VALUES (?,?,?,?)",
+            "INSERT INTO asset_commands (request_id,fingerprint,result,created_at) VALUES (?,?,?,?)",
             (request_id, fingerprint, json.dumps(result, sort_keys=True, separators=(",", ":")), created_at),
         )
         return workspace._observe_receipt(db, result, scope)

@@ -87,9 +87,14 @@ class ReconciledHistoryTests(unittest.TestCase):
             with self.assertRaises(ValueError): self.history.page(self.key, workspace_id='f' * 32)
 
     def test_typed_diff_partitions_wording_controls_and_lineage_without_writes(self):
+        from PIL import Image
+        source = self.adapter.root / 'history-parent.png'
+        Image.new('RGB', (2, 2), 'white').save(source)
+        parent = self.adapter.studio.assets.register(
+            {'id': 'history-parent', 'outputs': [{'filename': source.name, 'media_type': 'image'}]}, 0, source)
         draft = copy.deepcopy(self.adapter.draft)
         draft['recipe']['controls'].update(positive='After', seed='42')
-        draft['recipe']['parent_assets'] = ['parent-one']
+        draft['recipe']['parent_assets'] = [parent]
         self.store.command({'action': 'replace', 'workspace_id': self.scope, 'request_id': 'domains',
                             'draft_id': self.key, 'expected_revision': 1, 'draft': draft})
         before = self.evidence(); result = self.history.compare(self.key, 1, 2, workspace_id=self.scope)

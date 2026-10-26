@@ -29,6 +29,7 @@ from pathlib import Path
 from PIL import Image, ImageChops, ImageFilter, ImageMath, ImageStat, ImageOps
 
 import continuation
+from studio_workflow.privacy import is_regular, require_regular_creation
 
 VERSION = 1
 OPERATION = "tile.finish.v1"
@@ -237,6 +238,7 @@ def validate(studio, payload, preset, graph, batch, check_runtime=False):
         if preset.get("tile_route"):
             raise ValueError("%s starts from Make seamless on a square, flat texture in the Asset library; the authored example cannot be queued." % (preset.get("name") or preset.get("id")))
         return None
+    require_regular_creation(payload)
     if not preset.get("tile_route"): raise ValueError("A seamless-tile plan runs only on the seamless-tile recipe.")
     _claim(claim)
     if claim["preset_id"] != preset.get("id"): raise ValueError("This seamless-tile plan was prepared for another recipe. Press Make seamless again.")
@@ -279,13 +281,14 @@ def finish(studio, job_id):
     """Composite, flatten, measure and preview one completed repaint. Idempotent: a second call returns the first result."""
     with _FINISH_LOCK:
         job = studio.jobs.get(job_id) if isinstance(job_id, str) else None
-        if not job: raise ValueError("Unknown job")
+        if not job or not is_regular(job): raise ValueError("Unknown job")
         claim = job.get("tile")
         if not claim: raise ValueError("This job is not a seamless-tile repaint.")
         identifier = finish_id(job_id)
         if identifier in studio.jobs:
             # A link lost to a failed save or a restart between the two saves is rebuilt here, so Finish tile is never a dead end.
             finished = studio.jobs[identifier]
+            if not is_regular(finished): raise ValueError("Unknown job")
             if (job.get("tile_finish") or {}).get("job_id") != identifier: _link(studio, job, finished)
             return finished
         if job.get("status") != "completed": raise ValueError("Finish the tile after its repaint completes; this job is %s." % job.get("status"))
@@ -365,11 +368,11 @@ def _link(studio, job, finished, save=True):
 
 def finish_after_run(studio, job):
     """The worker's hook after a repaint completes: finish once, and record a failure on the job instead of raising."""
-    if not job.get("tile") or job.get("status") != "completed" or (job.get("tile_finish") or {}).get("job_id"): return
+    if not is_regular(job) or not job.get("tile") or job.get("status") != "completed" or (job.get("tile_finish") or {}).get("job_id"): return
     try: finish(studio, job["id"])
     except Exception as exc:  # the repaint's own outcome never changes because its finishing step failed
         finished = studio.jobs.get(finish_id(job["id"]))
-        if finished: _link(studio, job, finished, save=False)   # the tile exists; only recording its link failed
+        if finished and is_regular(finished): _link(studio, job, finished, save=False)   # the tile exists; only recording its link failed
         else: job["tile_finish"] = dict(job.get("tile_finish") or {}, error=str(exc)[:300], failed_at=time.time())
         try: studio._save(job)
         except Exception: pass

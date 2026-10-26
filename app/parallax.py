@@ -35,6 +35,7 @@ from contextlib import ExitStack
 from pathlib import Path
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageOps, ImageStat
+from studio_workflow.privacy import is_regular, require_regular_creation
 
 import continuation
 
@@ -58,7 +59,7 @@ FLAG = ("Name the foreground concretely (e.g. the desk, the chair and the lamp).
         "inside the glass, or leave it empty for two layers. The view mask is yours, not detected.")
 CLAIM_FIELDS = {"version", "plan_id", "stage", "preset_id", "source_asset_id", "source_sha256", "source_file", "width", "height", "objects", "view_polygons"}
 MAX_WAITING_FINISHES = 2       # implementation budget: one CPU worker plus two waiting pairs, not a throughput measurement
-_STAGE_IDENTITY = ("id", "status", "parallax", "outputs", "submissions", "controls", "preset_id", "graph_path")
+_STAGE_IDENTITY = ("id", "privacy", "status", "parallax", "outputs", "submissions", "controls", "preset_id", "graph_path")
 
 
 # ---------------------------------------------------------------- masks (L images, 0 or 255)
@@ -529,6 +530,7 @@ def validate(studio, payload, preset, graph, batch, check_runtime=False):
         if preset.get("parallax_route"):
             raise ValueError("%s starts from Make parallax layers on a picture in the Asset library; the authored example cannot be queued." % (preset.get("name") or preset.get("id")))
         return None
+    require_regular_creation(payload)
     if not preset.get("parallax_route"): raise ValueError("A parallax plan runs only on the parallax-layers recipe.")
     _claim(claim)
     if claim["preset_id"] != preset.get("id"): raise ValueError("This parallax plan was prepared for another recipe. Press Make parallax layers again.")
@@ -564,7 +566,7 @@ def next_stage(studio, payload):
     """The other stage of a submitted parallax edit, ready for Create. Nothing is queued."""
     if not isinstance(payload, dict) or not set(payload) <= {"job_id", "stage"}: raise ValueError("Next stage takes job_id and optionally stage.")
     job = studio.jobs.get(payload.get("job_id")) if isinstance(payload.get("job_id"), str) else None
-    if not job: raise ValueError("Unknown job")
+    if not job or not is_regular(job): raise ValueError("Unknown job")
     claim = job.get("parallax")
     if not claim: raise ValueError("This job is not a parallax edit.")
     _claim(claim)
@@ -592,22 +594,23 @@ def _image_output(job):
 
 def sibling(studio, job):
     """The newest completed job of the other stage of the same plan, or None."""
+    if not is_regular(job): return None
     claim = job["parallax"]; other = STAGES[1 - STAGES.index(claim["stage"])]
     with studio.lock: jobs = list(studio.jobs.values())
-    matches = [item for item in jobs if (item.get("parallax") or {}).get("plan_id") == claim["plan_id"] and item["parallax"].get("stage") == other and item.get("status") == "completed"]
+    matches = [item for item in jobs if is_regular(item) and (item.get("parallax") or {}).get("plan_id") == claim["plan_id"] and item["parallax"].get("stage") == other and item.get("status") == "completed"]
     return max(matches, key=lambda item: (item.get("finished_at") or item.get("created_at") or 0, item["id"])) if matches else None
 
 
 def _pair(studio, job_id, other_job_id):
     """Select the exact pair under the Studio lock, before work enters the CPU queue."""
     job = studio.jobs.get(job_id) if isinstance(job_id, str) else None
-    if not job: raise ValueError("Unknown job")
+    if not job or not is_regular(job): raise ValueError("Unknown job")
     if not job.get("parallax"): raise ValueError("This job is not a parallax edit.")
     _claim(job["parallax"])
     if other_job_id is None: other = sibling(studio, job)
     else:
         other = studio.jobs.get(other_job_id) if isinstance(other_job_id, str) else None
-        if not other or (other.get("parallax") or {}).get("plan_id") != job["parallax"]["plan_id"] or other["parallax"].get("stage") == job["parallax"]["stage"]:
+        if not other or not is_regular(other) or (other.get("parallax") or {}).get("plan_id") != job["parallax"]["plan_id"] or other["parallax"].get("stage") == job["parallax"]["stage"]:
             raise ValueError("The other job is not the other stage of this parallax plan.")
     if other is None:
         missing = STAGE_NAMES[STAGES[1 - STAGES.index(job["parallax"]["stage"])]]
@@ -624,10 +627,11 @@ def _stage_identity(job):
 
 
 def _asset_identity(asset):
-    return {key: asset.get(key) for key in ("id", "job_id", "output_index", "sha256", "path", "trashed_at")}
+    return {key: asset.get(key) for key in ("id", "privacy", "job_id", "output_index", "sha256", "path", "trashed_at")}
 
 
 def _receipt_matches_stage(finished, job):
+    if not is_regular(finished) or not is_regular(job): return False
     try:
         claim = _claim(job["parallax"]); output = _image_output(job)
         receipt = finished["parallax_receipt"]; stages = receipt["stages"]; stage = stages[claim["stage"]]
@@ -659,6 +663,7 @@ class Finisher:
         self.pending = deque(); self.tasks = {}; self.active = None; self.worker = None; self.closed = False
         self.last_error = None
         for job in list(studio.jobs.values()):
+            if not is_regular(job): continue
             marker = job.get("parallax_finish") or {}
             if not isinstance(marker, dict): continue
             if marker.get("status") not in ("queued", "running"): continue
@@ -894,7 +899,7 @@ def _link(studio, job, finished, save=True):
 
 def finish_after_run(studio, job):
     """Reserve the exact completed pair and return to generation before CPU finishing starts."""
-    if not job.get("parallax") or job.get("status") != "completed" or (job.get("parallax_finish") or {}).get("job_id"): return
+    if not is_regular(job) or not job.get("parallax") or job.get("status") != "completed" or (job.get("parallax_finish") or {}).get("job_id"): return
     other = None
     try:
         with studio.lock:

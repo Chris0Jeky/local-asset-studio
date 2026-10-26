@@ -20,6 +20,8 @@
   const registeredTitle=v=>typeof v==='string'&&v.length<=REGISTERED_TITLE_MAX*2&&[...v].length<=REGISTERED_TITLE_MAX;
   const integer=v=>Number.isSafeInteger(v)&&v>=0;
   const reviews=['unreviewed','selected','needs_work','rejected'];
+  const privacyOf=record=>record.privacy===undefined?'regular':record.privacy;
+  const validPrivacy=value=>['regular','private','all'].includes(value);
   function canonical(value){
     if(Array.isArray(value))return '['+value.map(canonical).join(',')+']';
     if(object(value))return '{'+Object.keys(value).sort().map(k=>JSON.stringify(k)+':'+canonical(value[k])).join(',')+'}';
@@ -136,7 +138,8 @@
     return Array.from(new Uint8Array(result),b=>b.toString(16).padStart(2,'0')).join('');
   }
   function shape(r){
-    if(!keys(r,['version','id','slot','workspace_id','created_at','updated_at','generation','payload','sha256'])||r.version!==1)fail('Unsupported shelf record version or fields.');
+    if(!keys(r,['version','id','slot','workspace_id','created_at','updated_at','generation','payload','sha256','privacy'],['version','id','slot','workspace_id','created_at','updated_at','generation','payload','sha256'])||r.version!==1)fail('Unsupported shelf record version or fields.');
+    if(!validPrivacy(privacyOf(r)))fail('Invalid recovery privacy scope.');
     if(!scope(r.id)||!integer(r.created_at)||!integer(r.updated_at)||r.updated_at<r.created_at||!integer(r.generation)||r.generation<1||!digest(r.sha256))fail('Invalid shelf identity or timestamps.');
     validatePayload(r.slot,r.payload);
     if(r.workspace_id!==(r.payload.version===2?r.payload.workspace_id:null))fail('Shelf Workspace identity does not match its payload.');
@@ -224,7 +227,10 @@
       })
     };
   }
-  function create({storage=()=>globalThis.localStorage,locks=()=>globalThis.navigator?.locks,crypto=globalThis.crypto,lockTimeoutMs=5000,backend}={}){
+  function create({storage=()=>globalThis.localStorage,locks=()=>globalThis.navigator?.locks,crypto=globalThis.crypto,lockTimeoutMs=5000,backend,privacy='regular'}={}){
+    if(!validPrivacy(privacy))fail('Invalid recovery privacy scope.');
+    if(privacy!=='regular'&&!backend)fail('Private recovery requires a tab-only storage owner.');
+    const scoped=records=>{if(records.some(record=>privacyOf(record)!==privacy))fail('Recovery belongs to a different privacy view; choose its view before importing or restoring.');return records;};
     const target=()=>typeof storage==='function'?storage():storage,owner=backend??indexedOwner(lockTimeoutMs),reviews=new WeakMap();
     const locker=()=>typeof locks==='function'?locks():locks;
     const legacyRaw=async()=>rawBound(target().getItem(KEY));
@@ -237,7 +243,7 @@
     }
     async function snapshot(){
       const entry=await owner.read(),state=ownerEntry(entry),legacy=await legacyRaw(),raw=state?state.raw:legacy;
-      const records=raw===null?[]:await decode(raw,crypto);
+      const records=scoped(raw===null?[]:await decode(raw,crypto));
       const seen=await digestRaw(legacy);
       if(state&&state.legacy_digest!==seen)quarantine(state,seen);
       return {entry,state,raw,records,legacy_digest:seen};
@@ -249,7 +255,7 @@
       try{return await lock.request(LOCK,{mode:'exclusive',signal:controller.signal},()=>{clearTimeout(timer);return action();});}finally{clearTimeout(timer);}
     }
     async function change(update){return locked(async()=>{
-      const before=await snapshot(),next=await update(before.records),raw=await encode(next,crypto),seen=await legacyDigest();
+      const before=await snapshot(),next=scoped(await update(before.records)),raw=await encode(next,crypto),seen=await legacyDigest();
       if(seen!==before.legacy_digest){if(before.state)quarantine(before.state,seen);fail('Older recovery changed during inspection; refresh before retrying.');}
       await owner.compareAndSwap(before.entry,{version:1,raw,legacy_digest:before.legacy_digest});return next;
     });}
@@ -280,11 +286,24 @@
         });return record;
       },
       async remove(identifier,expectedDigest){return change(records=>{const r=records.find(r=>r.id===identifier);if(!r||r.sha256!==expectedDigest)fail('Recovery record changed; inspect before discard.');return records.filter(r=>r.id!==identifier);});},
-      async importRecords(records){await encode(records,crypto);return change(existing=>{const known=new Set(existing.map(r=>r.id));if(records.some(r=>known.has(r.id)))fail('Duplicate imported record already exists.');return [...existing,...records];});},
+      async importRecords(records){await encode(records,crypto);scoped(records);return change(existing=>{const known=new Set(existing.map(r=>r.id));if(records.some(r=>known.has(r.id)))fail('Duplicate imported record already exists.');return [...existing,...records];});},
       async export(){return encode(await read(),crypto);},
       async raw(){const entry=await owner.read();if(!entry.length)return legacyRaw();const state=entry[0];return rawBound(typeof state?.raw==='string'?state.raw:JSON.stringify(state)??String(state));},
       legacyRaw,acceptLegacy
     };
   }
-  return {KEY,LOCK,DATABASE,STORE,ENTRY,LIMITS,REGISTERED_TITLE_MAX,parse,canonical,project,seal,encode,decode,create};
+  function createTab({storage=()=>globalThis.sessionStorage,privacy,crypto=globalThis.crypto}={}){
+    if(!['private','all'].includes(privacy))fail('Tab recovery requires a private or all privacy view.');
+    const key='studio.asset-recovery.tab-shelf.v1.'+privacy,target=()=>typeof storage==='function'?storage():storage;
+    const read=()=>{const raw=target().getItem(key);return raw===null?[]:[ownerState(parse(raw,LIMITS.total*2+256))];};
+    const backend={read:async()=>read(),compareAndSwap:async(before,next)=>{
+      if(!sameEntry(read(),before))fail('Tab recovery changed; inspect before retrying.');
+      const raw=canonical(ownerState(next));target().setItem(key,raw);
+      if(target().getItem(key)!==raw)fail('Tab recovery could not be retained safely.');
+    }};
+    // Synchronous sessionStorage CAS owns this tab. No IndexedDB or origin-wide
+    // legacy store is opened, even while integrity hashes are awaiting WebCrypto.
+    return create({storage:{getItem:()=>null},backend,privacy,crypto,locks:{request:(_name,_options,work)=>work()}});
+  }
+  return {KEY,LOCK,DATABASE,STORE,ENTRY,LIMITS,REGISTERED_TITLE_MAX,parse,canonical,project,seal,encode,decode,create,createTab,privacyOf};
 });

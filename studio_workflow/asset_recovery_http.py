@@ -8,22 +8,24 @@ from .http_body import reject_json
 PATH = '/api/assets/recovery-observation'
 
 
-def read(raw, workspace):
+def read(raw, workspace, privacy=None):
     if len(raw.encode('utf-8')) > 64000:
         raise ValueError('Recovery query exceeds its byte limit')
     parsed = urlsplit(raw)
     if parsed.scheme or parsed.netloc or parsed.fragment or parsed.path != PATH:
         raise ValueError('Relative recovery observation route required')
-    pairs = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True, max_num_fields=3, errors='strict')
+    pairs = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True, max_num_fields=4, errors='strict')
     query = dict(pairs)
     if (len(query) != len(pairs) or not {'workspace_id', 'ids'} <= set(query) or
-            set(query) - {'workspace_id', 'ids', 'collection_id'}):
+            set(query) - {'workspace_id', 'ids', 'collection_id', 'privacy'}):
         raise ValueError('Supply exactly one Workspace identity and target list')
     try:
         ids = json.loads(query['ids'])
     except (ValueError, RecursionError):
         raise ValueError('Supply a bounded JSON target list') from None
-    return observe(workspace, ids, query['workspace_id'], query.get('collection_id'))
+    if privacy is not None and 'privacy' in query and privacy != query['privacy']:
+        raise ValueError('Privacy scopes disagree')
+    return observe(workspace, ids, query['workspace_id'], query.get('collection_id'), privacy=privacy or query.get('privacy','regular'))
 
 
 def extend_handler(base):
@@ -32,7 +34,8 @@ def extend_handler(base):
             if self.path.split('?', 1)[0] != PATH: return super().do_GET()
             if not self._safe_host(): return self._json(403, {'error': 'Loopback Host required'})
             try:
-                result, status = read(self.path, self.studio.assets), 200
+                from creation_privacy import scope_for_handler
+                result, status = read(self.path, self.studio.assets, privacy=scope_for_handler(self)), 200
             except ValueError as error:
                 if callable(getattr(error, 'response', None)):
                     result, status = error.response(), error.status

@@ -57,6 +57,37 @@ class AssetReadClientTests(unittest.TestCase):
             self.assertEqual(self.module.main(['page', '--source', 'mine']), 0)
         self.assertEqual(page.call_args.kwargs['filters']['source'], 'mine')
 
+    def test_explicit_privacy_scope_reaches_transport_and_validates_every_summary(self):
+        self.page['filters']['privacy'] = 'private'
+        self.asset.update(privacy='private', url='/api/assets/asset-one/file?privacy=private')
+        self.reply(self.page)
+        with patch.object(self.client.opener, 'open', wraps=self.client.opener.open) as calls:
+            self.assertEqual(self.client.page(filters={'privacy':'private'}), self.page)
+        self.assertIn('privacy=private', calls.call_args.args[0].full_url)
+        with patch.object(self.module.AssetReadClient, 'page', return_value=self.page) as page, \
+             patch('sys.stdout', new_callable=io.StringIO):
+            self.assertEqual(self.module.main(['page','--privacy','private']), 0)
+        self.assertEqual(page.call_args.kwargs['filters']['privacy'], 'private')
+        self.page['filters'] = dict(asset_reads.DEFAULT_FILTERS)
+        self.reply(self.page)
+        with self.assertRaises(ValueError): self.client.page()
+        for invalid in (None, True, 'PRIVATE', 'unknown'):
+            with self.subTest(invalid=invalid), patch.object(self.client,'_observe') as observe:
+                with self.assertRaises(ValueError): self.client.selection(['asset-one'],workspace_id=self.scope,privacy=invalid)
+                observe.assert_not_called()
+
+    def test_private_selection_is_explicit_and_default_refuses_a_misclassified_reply(self):
+        value={key:copy.deepcopy(v) for key,v in self.page.items() if key in
+               ('workspace_id','catalogue','observation_only','media_bytes_verified','generation_submitted')}
+        self.asset.update(privacy='private', url='/api/assets/asset-one/file?privacy=private')
+        value.update(format='studio.asset-selection/v1',items=[{'id':'asset-one','state':'active','asset':self.asset}])
+        self.reply(value)
+        with patch.object(self.client.opener,'open',wraps=self.client.opener.open) as calls:
+            self.assertEqual(self.client.selection(['asset-one'],workspace_id=self.scope,privacy='private'),value)
+        self.assertEqual(json.loads(calls.call_args.args[0].data)['privacy'],'private')
+        self.reply(value)
+        with self.assertRaises(ValueError): self.client.selection(['asset-one'],workspace_id=self.scope)
+
     def test_exact_job_filter_reaches_the_typed_client_and_cli(self):
         self.page['filters']['job_id'] = 'one run · 雪'
         self.reply(self.page)

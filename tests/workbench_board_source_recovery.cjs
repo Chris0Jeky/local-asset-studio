@@ -17,7 +17,7 @@ function between(start, end) {
 }
 
 const restoreDraftSource = between(
-  '  async function restoreDraft(draft){',
+  '  async function restoreDraft(',
   "\n  q('#uxRestoreDraft').onclick=",
 );
 const pickerSource = between(
@@ -76,7 +76,7 @@ test('an unavailable board-source check preserves the role slot and marks only t
 function pickerHarness(sourceInput) {
   const context = {};
   vm.runInNewContext([
-    "let pickerBusy=false,continuationState=null,uploaded='existing-source.png',lastUploaded=null,draftDirty=false;",
+    "let pickerBusy=false,pickerBusyOwner=null,sourcePickerEpoch=1,selectionEpoch=1,continuationState=null,uploaded='existing-source.png',lastUploaded=null,draftDirty=false;",
     "const selected={reference_slots:[{id:'style'}],reference_board:null,continuation_capability:{}};",
     "const referenceRecords=[{parent_asset:'old-parent',file:null,missing:true}];",
     `const StudioContinuation={sourceInput:()=>${JSON.stringify(sourceInput)},sourceLabel:()=> 'Source'};`,

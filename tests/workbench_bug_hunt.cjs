@@ -5,7 +5,7 @@ const C=require('../app/static/continuation-core.js'),U=require('../app/static/s
 function section(start,end){const a=code.indexOf(start),b=code.indexOf(end,a+start.length);assert.ok(a>=0&&b>a,start);return code.slice(a,b);}
 function box(extra={}){
   const nodes=new Map(),b={StudioContinuation:C,U,selected:{id:'plain'},catalog:{presets:[]},jobs:[],assetState:{assets:[]},
-    pendingInputs:[],uploaded:null,lastUploaded:null,continuationState:null,continuationSource:null,secondPicture:null,
+    draftPrivacy:'regular',pendingInputs:[],uploaded:null,lastUploaded:null,continuationState:null,continuationSource:null,secondPicture:null,
     sharedAdoptionError:'',varyUnapplied:null,missingByPreset:{},online:true,schemaAvailable:true,workerAlive:true,
     submitting:false,handoffBusy:false,pickerBusy:false,restoring:false,pairActionBusy:false,poseBusy:false,varyBusy:false,
     tileBusy:false,parallaxBusy:false,planBusy:false,polishBusy:new Set(),makeVaryBusy:new Set(),referencePending:0,
@@ -15,7 +15,7 @@ function box(extra={}){
     assetDetailEpoch:1,assetDetailContextCurrent:()=>true,applied:0,beginTile:()=>b.applied++,
     showView:()=>{},saveDraft:()=>{},syncCreate:()=>{},updateReady:()=>{},scheduleTimeEstimate:()=>{},recipeChanged:()=>{},
     q:s=>{if(!nodes.has(s))nodes.set(s,{value:'',files:[],open:false,disabled:false});return nodes.get(s);},...extra};
-  vm.createContext(b);return b;
+  vm.createContext(b);vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../app/static/references.js'),'utf8').split('let referenceRecords=')[0],b);return b;
 }
 const ready=section('  function readinessItems(){','\n  function syncReady(){');
 const busy=section('  // sendBusy counts only','\n  // Each engine');

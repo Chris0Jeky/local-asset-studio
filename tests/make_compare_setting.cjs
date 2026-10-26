@@ -137,7 +137,7 @@ test('the hint says an added adapter brings its trigger word only where it is on
 for(const status of [undefined,400])test('a failed sweep preserves sent swaps: '+(status||'no HTTP answer'),async()=>{
   for(const at of [1,2,3]){
     const state={goal:'character',runs:[]},said=[],sent=[],polled=[];
-    const context={state,SCENE_FIRST:'Describe the picture.',say:s=>said.push(s),sayMissing:s=>said.push(s),leaveWatch:()=>({stopped:()=>false,stop(){}}),
+    const context={state,window:{},privacyEpoch:0,requestPrivacy:()=>({scope:'regular',privacy:'regular'}),SCENE_FIRST:'Describe the picture.',say:s=>said.push(s),sayMissing:s=>said.push(s),leaveWatch:()=>({stopped:()=>false,stop(){}}),
       prepared:async()=>({axis:'Model',scene:'a room',variants:[1,2,3].map(i=>({preset_id:'p'+i,controls:{},notes:['Swap '+i+'.']}))}),
       json:async(url,body)=>{sent.push(body);if(sent.length===at){const e=Error('Request refused');if(status!==undefined)e.status=status;throw e;}return{id:'job-'+sent.length};},
       remember(){},renderRuns(){},poll:id=>polled.push(id),showRun(){},syncOperation(){}};

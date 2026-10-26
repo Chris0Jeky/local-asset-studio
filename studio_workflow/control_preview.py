@@ -152,4 +152,5 @@ def request(value: dict, studio) -> dict:
     _validate(value)
     with studio.lock:
         need(not studio.backends.busy, 'Environment switch is in progress')
-        return preview(value, studio.node_info(False), studio.backends.active)
+        from .schema_privacy import public_node_info
+        return preview(value, public_node_info(studio,False), studio.backends.active)

@@ -17,6 +17,7 @@ from pathlib import Path
 from urllib.error import HTTPError
 
 from .core import canonical, decode, digest, need
+from .privacy import require_regular_creation
 from .shortlist import query as shortlist_query, request as shortlist_request, _runtime
 
 PREFIX='/api/workflow-studio/setup-proposal'
@@ -83,10 +84,12 @@ def validate_draft(value):
     for key,item in recipe['controls'].items():
         need(re.fullmatch(r'[a-z][a-z0-9_]{0,63}',key) and (_text(item,20000) or type(item) in (int,float)), 'Invalid draft control')
     need(type(recipe['references']) is list and len(recipe['references'])<=8 and all(type(x) is dict for x in recipe['references']), 'Invalid retained reference declarations')
+    for reference in recipe['references']:require_regular_creation(reference)
     need(type(recipe['parent_assets']) is list and len(recipe['parent_assets'])<=32 and all(_text(x,160) for x in recipe['parent_assets']), 'Invalid draft lineage')
     need(type(recipe['parent_by_input']) is dict and set(recipe['parent_by_input'])<={'reference','lastReference'}
          and all(type(x) is str and x in recipe['parent_assets'] for x in recipe['parent_by_input'].values()), 'Invalid draft input lineage')
     need('continuation' not in recipe or recipe['continuation'] is None or type(recipe['continuation']) is dict, 'Invalid draft continuation')
+    require_regular_creation(recipe.get('continuation'))
     if 'look' in recipe:
         # Retain historical attribution, not an authorization to run: /api/jobs checks the live card revision.
         look=recipe['look']

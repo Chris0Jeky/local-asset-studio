@@ -1,3 +1,4 @@
+function referenceMediaUrl(file){return '/api/uploads/'+encodeURIComponent(file)+(globalThis.StudioPrivacy?.creation()==='private'?'?privacy=all':'');}
 let referenceRecords=[], referenceEpoch=0, referencePending=0;
 const referenceRenderedRecords=new WeakMap();
 const referenceRoles=['identity','pose','style','costume','composition','geometry','motion','mask'];
@@ -17,11 +18,11 @@ function beginReferenceAttachment(index){
     finish(){if(finished)return;finished=true;if(referenceAttachments.get(slot)===token)referenceUploading.delete(slot);if(epoch===referenceEpoch){referencePending--;renderReferenceSlots();}}
   };
 }
-async function attachReferenceAsset(index,id){
+async function attachReferenceAsset(index,id,ownerCurrent=()=>true){
   const attachment=beginReferenceAttachment(index);
   try{
     const result=await post('/api/assets/reference',{id});
-    if(!attachment.current())throw Error('The destination slot changed while the picture was being copied. It was not applied.');
+    if(!attachment.current()||!ownerCurrent())throw Error('The destination slot changed while the picture was being copied. It was not applied.');
     const slot=referenceRecords[index],previous=slot.parent_asset;Object.assign(slot,result,{missing:false});forgetDrawnGuide(slot);referenceChecks.delete(slot);
     if(index===0&&StudioContinuation.sourceInput(selected.continuation_capability)!=='last_reference')uploaded=result.file;
     replaceParentAsset('reference',previous,id);return result;
@@ -45,7 +46,7 @@ function renderReferenceSlots(){
   const record=referenceRenderedRecords.get(active?.closest?.('[data-ref-drop]'));
   const field=['role','contribution','avoid','file','up','down','clear'].find(key=>active?.hasAttribute?.('data-ref-'+key));
   const selection=field&&typeof active.selectionStart==='number'?[active.selectionStart,active.selectionEnd,active.selectionDirection]:null;
-  cards.innerHTML=referenceRecords.map((r,i)=>'<article class="reference-card" data-ref-drop="'+i+'"><div class="section-title"><b>Picture '+(i+1)+'</b><div><button type="button" data-ref-up="'+i+'" '+(!i?'disabled':'')+' aria-label="Move Picture '+(i+1)+' earlier">↑</button><button type="button" data-ref-down="'+i+'" '+(i===referenceRecords.length-1?'disabled':'')+' aria-label="Move Picture '+(i+1)+' later">↓</button><button type="button" data-ref-clear="'+i+'">Clear</button></div></div>'+(selected.reference_board?'':'<label>Role for Picture '+(i+1)+'<select data-ref-role="'+i+'">'+referenceRoles.map(role=>'<option '+(r.role===role?'selected':'')+'>'+role+'</option>').join('')+'</select></label>')+'<label class="reference-drop">'+(r.file&&!r.missing?'<img src="/api/uploads/'+encodeURIComponent(r.file)+'" alt="Picture '+(i+1)+' reference"><span>'+r.width+' × '+r.height+'</span>':'<span>'+(r.missing?'Reference missing. Attach it again.':'Drop or choose an image')+'</span>')+'<input type="file" data-ref-file="'+i+'" accept="image/png,image/jpeg,image/webp" aria-label="Upload Picture '+(i+1)+'"></label>'+(selected.reference_board?'':'<label>Use from Picture '+(i+1)+'<textarea rows="2" data-ref-contribution="'+i+'">'+esc(r.contribution)+'</textarea></label><label>Avoid copying<textarea rows="2" data-ref-avoid="'+i+'">'+esc(r.avoid)+'</textarea></label>')+'</article>').join('');
+  cards.innerHTML=referenceRecords.map((r,i)=>'<article class="reference-card" data-ref-drop="'+i+'"><div class="section-title"><b>Picture '+(i+1)+'</b><div><button type="button" data-ref-up="'+i+'" '+(!i?'disabled':'')+' aria-label="Move Picture '+(i+1)+' earlier">↑</button><button type="button" data-ref-down="'+i+'" '+(i===referenceRecords.length-1?'disabled':'')+' aria-label="Move Picture '+(i+1)+' later">↓</button><button type="button" data-ref-clear="'+i+'">Clear</button></div></div>'+(selected.reference_board?'':'<label>Role for Picture '+(i+1)+'<select data-ref-role="'+i+'">'+referenceRoles.map(role=>'<option '+(r.role===role?'selected':'')+'>'+role+'</option>').join('')+'</select></label>')+'<label class="reference-drop">'+(r.file&&!r.missing?'<img src="'+esc(referenceMediaUrl(r.file))+'" alt="Picture '+(i+1)+' reference"><span>'+r.width+' × '+r.height+'</span>':'<span>'+(r.missing?'Reference missing. Attach it again.':'Drop or choose an image')+'</span>')+'<input type="file" data-ref-file="'+i+'" accept="image/png,image/jpeg,image/webp" aria-label="Upload Picture '+(i+1)+'"></label>'+(selected.reference_board?'':'<label>Use from Picture '+(i+1)+'<textarea rows="2" data-ref-contribution="'+i+'">'+esc(r.contribution)+'</textarea></label><label>Avoid copying<textarea rows="2" data-ref-avoid="'+i+'">'+esc(r.avoid)+'</textarea></label>')+'</article>').join('');
   for(const card of cards.querySelectorAll('[data-ref-drop]'))referenceRenderedRecords.set(card,referenceRecords[Number(card.dataset.refDrop)]);
   if(record&&field){
     const index=referenceRecords.indexOf(record),replacement=index<0?null:cards.querySelector('[data-ref-'+field+'="'+index+'"]');

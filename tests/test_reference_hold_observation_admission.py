@@ -44,6 +44,7 @@ class AvailableReferenceJobs:
 class ObservationStudio:
     _sync_parent_directory = staticmethod(server.Studio._sync_parent_directory)
     _write_observation_state = server.Studio._write_observation_state
+    _job_directory = server.Studio._job_directory
 
     def __init__(self, root: Path, *, alive: bool = True, held: bool = True):
         self.lock = threading.RLock()

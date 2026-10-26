@@ -55,6 +55,22 @@ CARD_BODY_MAX = 64 * 1024
 CARD_LINEAGE_MAX = 20
 
 
+def privacy_scope(value, *, creation=False):
+    choices = ('regular', 'private') if creation else ('regular', 'private', 'all')
+    if type(value) is not str or value not in choices:
+        raise WorkspaceError('Choose a valid creation privacy' if creation else 'Choose a valid privacy scope', code='privacy_invalid')
+    return value
+
+
+def privacy_matches(value, scope):
+    return type(value) is str and value in ('regular', 'private') and (scope == 'all' or value == scope)
+
+
+def privacy_sql(scope, prefix=''):
+    privacy_scope(scope)
+    return (prefix+"privacy IN ('regular','private')", []) if scope == 'all' else (prefix+'privacy=?', [scope])
+
+
 def clean_run_label(value):
     """A run label (#939): None, or trimmed printable text of 1-80 characters; ValueError otherwise.
     Shared by job submission (app/server.py) and the asset edit command, where None marks the asset as the operator's own."""
@@ -88,6 +104,9 @@ def prompt_excerpt(job, limit=PROMPT_EXCERPT_CHARS):
 class AssetWorkspace:
     def __init__(self, experiments):
         self.root = (Path(experiments) / "workspace").resolve()
+        # Retain the literal child name: resolving a pre-existing symlink here
+        # would make later containment checks mistake a regular/outside path for private storage.
+        self.private_root = Path(experiments).resolve() / "private"
         self.root.mkdir(parents=True, exist_ok=True)
         self.media = self.root / "media"
         self.media.mkdir(exist_ok=True)
@@ -140,6 +159,9 @@ class AssetWorkspace:
                 if column not in columns: db.execute(f"ALTER TABLE assets ADD COLUMN {column} TEXT")
             from studio_workflow.collection_commands import migrate
             migrate(db)
+            for table in ('assets', 'collections', 'asset_commands', 'collection_commands_v1'):
+                if 'privacy' not in {r['name'] for r in db.execute('PRAGMA table_info('+table+')')}:
+                    db.execute("ALTER TABLE "+table+" ADD COLUMN privacy TEXT NOT NULL DEFAULT 'regular'")
             from studio_workflow.asset_reads import migrate as migrate_asset_reads
             migrate_asset_reads(db)
 
@@ -181,9 +203,21 @@ class AssetWorkspace:
         finally:
             db.close()
 
-    def snapshot_file(self, source):
+    def storage_root(self, privacy='regular'):
+        if privacy_scope(privacy, creation=True) == 'regular': return self.root
+        for path in (self.private_root, self.private_root / 'media'):
+            if path.is_symlink() or path.resolve() != path:
+                raise WorkspaceError('Private storage must use its dedicated directory without symlinks',
+                                     code='privacy_storage_unavailable')
+        if self.private_root == self.root or self.root in self.private_root.parents or self.private_root in self.root.parents:
+            raise WorkspaceError('Private storage must be separate from the regular workspace', code='privacy_storage_unavailable')
+        return self.private_root
+
+    def snapshot_file(self, source, privacy='regular'):
+        root = self.storage_root(privacy)
+        media = root / 'media'; media.mkdir(parents=True, exist_ok=True)
         source = Path(source)
-        temporary = self.media / (uuid.uuid4().hex + ".part")
+        temporary = media / (uuid.uuid4().hex + ".part")
         digest = hashlib.sha256()
         size = 0
         try:
@@ -199,7 +233,7 @@ class AssetWorkspace:
             suffix = source.suffix.lower()
             if len(suffix) > 12 or not suffix[1:].isalnum():
                 suffix = ".data"
-            destination = self.media / (hexdigest + suffix)
+            destination = media / (hexdigest + suffix)
             if destination.exists():
                 self._verify_snapshot(destination, hexdigest)
             else:
@@ -210,10 +244,10 @@ class AssetWorkspace:
             # A verified existing/colliding link may belong to a publisher that has
             # not synced the directory yet. Every returning caller owns this barrier.
             if os.name != 'nt':
-                fd = os.open(self.media, os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0))
+                fd = os.open(media, os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0))
                 try: os.fsync(fd)
                 finally: os.close(fd)
-            return str(destination.relative_to(self.root)), hexdigest, size
+            return str(destination.relative_to(root)), hexdigest, size
         finally:
             temporary.unlink(missing_ok=True)
 
@@ -225,33 +259,39 @@ class AssetWorkspace:
             raise WorkspaceError("An existing asset snapshot has changed; original retained")
 
     def register(self, job, index, source):
+        privacy = privacy_scope(job.get('privacy', 'regular'), creation=True)
         asset_id = uuid.uuid5(uuid.NAMESPACE_URL, f"asset-studio:{job['id']}:{index}").hex
         with self.connection() as db:
-            if db.execute("SELECT id FROM assets WHERE id=?", (asset_id,)).fetchone():
+            existing = db.execute("SELECT id,privacy FROM assets WHERE id=?", (asset_id,)).fetchone()
+            if existing:
+                if existing['privacy'] != privacy:
+                    raise WorkspaceError('The existing output has a different privacy classification; nothing changed', status=409, code='asset_privacy_conflict')
                 return asset_id
         if not Path(source).is_file():
             return None
         try: output = job["outputs"][index]
         except (IndexError, KeyError, TypeError): output = None
         if not isinstance(output, dict): raise WorkspaceError("That job output index is invalid; nothing was registered")
-        path, digest, size = self.snapshot_file(source)
+        path, digest, size = self.snapshot_file(source, privacy=privacy)
         label = job.get("label") if isinstance(job.get("label"), str) and job.get("label") else None
         with self.connection() as db:
             inserted = db.execute("""INSERT OR IGNORE INTO assets
                 (id,job_id,output_index,title,media_type,path,filename,sha256,bytes,
-                 created_at,preset_id,preset_name,source,lineage,run_label,prompt_excerpt)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
+                 created_at,preset_id,preset_name,source,lineage,run_label,prompt_excerpt,privacy)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
                 asset_id, job["id"], index, self.registered_title(job.get("preset_name", "Untitled"), index),
                 output.get("media_type", "image"), path, output.get("filename", Path(source).name),
                 digest, size, job.get("created_at", time.time()), job.get("preset_id"),
                 job.get("preset_name"), json.dumps(output), json.dumps(job.get("parent_assets", [])),
-                label[:80] if label else None, prompt_excerpt(job)))
+                label[:80] if label else None, prompt_excerpt(job), privacy))
             if inserted.rowcount == 0:
-                stored = db.execute("SELECT id FROM assets WHERE job_id=? AND output_index=?",
+                stored = db.execute("SELECT id,privacy FROM assets WHERE job_id=? AND output_index=?",
                                     (job["id"], index)).fetchone()
                 if stored is None:
                     raise WorkspaceError("That job output is already registered; nothing changed",
                                          status=409, code="asset_register_conflict")
+                if stored['privacy'] != privacy:
+                    raise WorkspaceError('The existing output has a different privacy classification; nothing changed', status=409, code='asset_privacy_conflict')
                 return stored["id"]
         return asset_id
 
@@ -266,47 +306,53 @@ class AssetWorkspace:
             value[field] = json.loads(value[field])
         value["favorite"] = bool(value["favorite"])
         value["url"] = "/api/assets/" + value["id"] + "/file"
+        if value.get('privacy') == 'private': value['url'] += '?privacy=private'
         return value
 
-    def get(self, asset_id):
+    def get(self, asset_id, privacy='regular'):
         if not isinstance(asset_id, str): raise WorkspaceError("Asset not found")  # caller JSON; SQLite would raise a non-ValueError
+        clause, params = privacy_sql(privacy)
         with self.connection() as db:
-            row = db.execute("SELECT * FROM assets WHERE id=?", (asset_id,)).fetchone()
+            row = db.execute("SELECT * FROM assets WHERE id=? AND "+clause, [asset_id, *params]).fetchone()
         if row is None:
             raise WorkspaceError("Asset not found")
         return self._asset(row)
 
-    def file(self, asset_id):
-        return self.file_entry(asset_id)[0]
+    def file(self, asset_id, privacy='regular'):
+        return self.file_entry(asset_id, privacy=privacy)[0]
 
-    def file_entry(self, asset_id):
+    def file_entry(self, asset_id, privacy='regular'):
         """(snapshot path, asset record): the contained media file and the row whose sha256 names its bytes."""
-        asset = self.get(asset_id)
-        path = (self.root / asset["path"]).resolve()
-        if self.media.resolve() not in path.parents or not path.is_file():
+        asset = self.get(asset_id, privacy=privacy)
+        root = self.storage_root(asset['privacy'])
+        path = (root / asset["path"]).resolve()
+        if (root / 'media').resolve() not in path.parents or not path.is_file():
             raise WorkspaceError("Asset snapshot is unavailable")
         return path, asset
 
-    def snapshot(self):
+    def snapshot(self, privacy='regular'):
+        clause, params = privacy_sql(privacy)
         with self.connection() as db:
             db.execute("BEGIN")
             identity = self._workspace_id(db)
-            assets = [dict(self._asset(r), workspace_id=identity) for r in db.execute("SELECT * FROM assets ORDER BY created_at DESC,id")]
-            collections = [dict(r) for r in db.execute("SELECT * FROM collections ORDER BY name COLLATE NOCASE")]
+            assets = [dict(self._asset(r), workspace_id=identity) for r in db.execute("SELECT * FROM assets WHERE "+clause+" ORDER BY created_at DESC,id", params)]
+            collections = [dict(r) for r in db.execute("SELECT * FROM collections WHERE "+clause+" ORDER BY name COLLATE NOCASE", params)]
             membership = list(db.execute("SELECT collection_id,asset_id FROM collection_assets"))
         by_id = {a["id"]: a for a in assets}
+        collection_ids = {c['id'] for c in collections}
         for asset in assets:
             asset["collections"] = []
         counts = {}
         for row in membership:
             asset = by_id.get(row["asset_id"])
-            if asset is not None:
+            if asset is not None and row['collection_id'] in collection_ids:
                 collection_id = row["collection_id"]
                 asset["collections"].append(collection_id)
                 if not asset["trashed_at"]:
                     counts[collection_id] = counts.get(collection_id, 0) + 1
         for collection in collections:
             collection["count"] = counts.get(collection["id"], 0)
+            if collection['privacy'] == 'regular': collection.pop('privacy')
         return {"assets": assets, "collections": collections, "workspace_id": identity}
 
     def asset_page(self, **query):
@@ -316,14 +362,14 @@ class AssetWorkspace:
         except AssetReadError as exc:
             raise WorkspaceError(str(exc), status=exc.status, code=exc.code, **exc.details) from exc
 
-    def asset_selection(self, ids, *, workspace_id, details=False):
+    def asset_selection(self, ids, *, workspace_id, details=False, privacy='regular'):
         from studio_workflow.asset_reads import AssetReads, AssetReadError
         try:
-            return AssetReads(self).selection(ids, workspace_id=workspace_id, details=details)
+            return AssetReads(self).selection(ids, workspace_id=workspace_id, details=details, privacy=privacy)
         except AssetReadError as exc:
             raise WorkspaceError(str(exc), status=exc.status, code=exc.code, **exc.details) from exc
 
-    def _library_assets(self, db, summaries, identity, *, unavailable=None):
+    def _library_assets(self, db, summaries, identity, *, unavailable=None, privacy='regular'):
         """Opt-in bounded Library fields; never decode unbounded private JSON or read media."""
         from studio_workflow.asset_reads import _text_encoding, require
         if not summaries: return []
@@ -352,8 +398,9 @@ class AssetWorkspace:
                 require(all(type(x) is str for x in fields['tags']+fields['lineage']),
                         'Invalid Library labels',code='asset_read_unavailable',status=503)
                 json.dumps(fields,allow_nan=False)
-                memberships = db.execute('SELECT collection_id FROM collection_assets WHERE asset_id=? ORDER BY collection_id LIMIT 201',
-                                         (row['id'],)).fetchall()
+                clause, params = privacy_sql(privacy, 'c.')
+                memberships = db.execute('SELECT ca.collection_id FROM collection_assets ca JOIN collections c ON c.id=ca.collection_id WHERE ca.asset_id=? AND '+clause+' ORDER BY ca.collection_id LIMIT 201',
+                                         [row['id'], *params]).fetchall()
                 require(len(memberships)<=200, 'Library memberships exceed their bound',code='asset_read_unavailable',status=503)
                 found[row['id']] = dict(fields,output_index=row['output_index'],collections=[r[0] for r in memberships],workspace_id=identity)
             except (ValueError,RecursionError) as exc:
@@ -363,42 +410,49 @@ class AssetWorkspace:
                                     'error':'Library metadata is unavailable for this asset'})
         return [dict(a,**found[a['id']]) for a in summaries if a['id'] in found]
 
-    def collection_page(self, *, workspace_id=None, limit=50, cursor=None):
+    def collection_page(self, *, workspace_id=None, limit=50, cursor=None, privacy='regular'):
         from studio_workflow.asset_reads import _integer, _state, require
         from studio_workflow.collection_http import collection_cursor
         require(_integer(limit,1,100), 'Page size must be an integer between 1 and 100')
+        privacy_scope(privacy)
         position = collection_cursor(cursor) if cursor is not None else None
         if workspace_id is not None: self._validate_scope(workspace_id)
         if position is not None:
-            require(position['limit']==limit, 'Collection cursor belongs to another page size; explicitly refresh',
+            require(position['limit']==limit and position.get('privacy','regular')==privacy, 'Collection cursor belongs to another privacy scope or page size; explicitly refresh',
                     code='collection_cursor_mismatch',status=409)
             require(workspace_id is None or position['workspace_id']==workspace_id, 'Collection cursor belongs to another Workspace',
                     code='asset_workspace_conflict',status=409)
             workspace_id = position['workspace_id']
         with self.connection() as db:
             db.execute('BEGIN')
-            identity, stamp = self._check_scope(db,workspace_id), _state(db)
-            return self._collection_page(db,identity,stamp,limit=limit,position=position)
+            identity, stamp = self._check_scope(db,workspace_id), _state(db,privacy)
+            return self._collection_page(db,identity,stamp,limit=limit,position=position,privacy=privacy)
 
-    def _collection_page(self, db, identity, stamp, *, limit, position=None):
+    def _collection_page(self, db, identity, stamp, *, limit, position=None, privacy='regular'):
         """Existing bounded collection projection inside the caller's read snapshot."""
         from studio_workflow.asset_reads import _integer, ENTITY, require
         from studio_workflow.collection_http import encode_cursor
         require(position is None or position['catalogue']==stamp, 'Collection catalogue changed; explicitly refresh',
                 code='collection_cursor_stale',status=409)
-        where, params = (' WHERE (c.name COLLATE NOCASE,c.id)>(?,?)',position['last']) if position else ('',[])
+        clause, params = privacy_sql(privacy, 'c.')
+        asset_clause, asset_params = privacy_sql(privacy, 'a.')
+        where = ' WHERE '+clause
+        if position: where += ' AND (c.name COLLATE NOCASE,c.id)>(?,?)'; params += position['last']
         rows = db.execute('''SELECT CASE WHEN length(CAST(c.id AS BLOB))<=512 THEN c.id END AS id,
             CASE WHEN length(CAST(c.name AS BLOB))<=400 THEN c.name END AS name,
             CASE WHEN length(CAST(c.description AS BLOB))<=4000 THEN c.description END AS description,
-            c.revision,(SELECT COUNT(*) FROM collection_assets AS ca JOIN assets AS a ON a.id=ca.asset_id
-                WHERE ca.collection_id=c.id AND a.trashed_at IS NULL) AS count
-            FROM collections AS c'''+where+' ORDER BY c.name COLLATE NOCASE,c.id LIMIT ?',[*params,limit+1]).fetchall()
+            c.revision,c.privacy,(SELECT COUNT(*) FROM collection_assets AS ca JOIN assets AS a ON a.id=ca.asset_id
+                WHERE ca.collection_id=c.id AND a.trashed_at IS NULL AND '''+asset_clause+''') AS count
+            FROM collections AS c'''+where+' ORDER BY c.name COLLATE NOCASE,c.id LIMIT ?',[*asset_params,*params,limit+1]).fetchall()
         items = [dict(row) for row in rows[:limit]]
         require(all(type(c['id']) is str and ENTITY.fullmatch(c['id']) and type(c['name']) is str
                     and 0<len(c['name'])<=100 and type(c['description']) is str and len(c['description'])<=1000
                     and _integer(c['revision'],1) and _integer(c['count']) for c in items),
                 'Collection metadata is unavailable',code='collection_read_unavailable',status=503)
+        for item in items:
+            if item['privacy'] == 'regular': item.pop('privacy')
         next_cursor = encode_cursor({'format':'studio.collection-cursor/v1','workspace_id':identity,'catalogue':stamp,
+                                     **({'privacy':privacy} if privacy!='regular' else {}),
                                      'limit':limit,'last':[items[-1]['name'],items[-1]['id']]}) if len(rows)>limit else None
         return {'format':'studio.collection-page/v1','workspace_id':identity,'catalogue':stamp,'limit':limit,
                 'order':'name_nocase_asc_id_asc','collections':items,'next_cursor':next_cursor,'observation_only':True,
@@ -410,20 +464,20 @@ class AssetWorkspace:
             raise WorkspaceError(f"{name} must be text up to {maximum} characters")
         return value.strip()
 
-    def collection(self, payload):
+    def collection(self, payload, privacy='regular'):
         from studio_workflow.collection_commands import CollectionCommands, CollectionError
         try:
-            service = CollectionCommands(self)
+            service = CollectionCommands(self, privacy=privacy_scope(privacy))
             versioned = isinstance(payload, dict) and bool(set(payload) & {"format", "workspace_id", "request_id", "expected_revision"})
             return service.command(payload) if versioned else service.legacy(payload)
         except CollectionError as exc:
             result = exc.response()
             raise WorkspaceError(result.pop("error"), status=exc.status, code=result.pop("code"), **result) from exc
 
-    def collection_status(self, request_id, expected_workspace_id):
+    def collection_status(self, request_id, expected_workspace_id, privacy='regular'):
         from studio_workflow.collection_commands import CollectionCommands, CollectionError
         try:
-            return CollectionCommands(self).status(request_id, expected_workspace_id)
+            return CollectionCommands(self, privacy=privacy_scope(privacy)).status(request_id, expected_workspace_id)
         except CollectionError as exc:
             result = exc.response()
             raise WorkspaceError(result.pop("error"), status=exc.status, code=result.pop("code"), **result) from exc
@@ -458,38 +512,42 @@ class AssetWorkspace:
     def _metadata_row(self, row, identity):
         return dict({k: v for k, v in self._asset(row).items() if k in METADATA_FIELDS}, workspace_id=identity)
 
-    def metadata(self, asset_id, expected_workspace_id=None):
+    def metadata(self, asset_id, expected_workspace_id=None, privacy='regular'):
+        clause, params = privacy_sql(privacy)
         with self.connection() as db:
             db.execute("BEGIN")
             identity = self._check_scope(db, expected_workspace_id)
-            row = db.execute("SELECT * FROM assets WHERE id=?", (asset_id,)).fetchone()
+            row = db.execute("SELECT * FROM assets WHERE id=? AND "+clause, [asset_id, *params]).fetchone()
             if row is None:
                 raise WorkspaceError("Asset not found")
             return self._metadata_row(row, identity)
 
-    def _observe_receipt(self, db, receipt, expected_workspace_id):
+    def _observe_receipt(self, db, receipt, expected_workspace_id, privacy='regular'):
         if expected_workspace_id is None:
             return receipt  # Preserve the historical unscoped API's exact receipt shape.
         identity = self._check_scope(db, expected_workspace_id)
         current = []
+        clause, params = privacy_sql(privacy)
         # Observed metadata is separate from the immutable receipt and bounded like conflicts.
         for asset_id in receipt.get("updated", [])[:10]:
-            row = db.execute("SELECT * FROM assets WHERE id=?", (asset_id,)).fetchone()
+            row = db.execute("SELECT * FROM assets WHERE id=? AND "+clause, [asset_id, *params]).fetchone()
             if row is not None:
                 current.append(self._metadata_row(row, identity))
         return dict(receipt, workspace_id=identity, current=current)
 
-    def command_status(self, request_id, expected_workspace_id=None):
+    def command_status(self, request_id, expected_workspace_id=None, privacy='regular'):
         request_id = self.request_id(request_id)
+        clause, params = privacy_sql(privacy)
         with self.connection() as db:
             db.execute("BEGIN")
             self._check_scope(db, expected_workspace_id)
-            row = db.execute("SELECT result FROM asset_commands WHERE request_id=?", (request_id,)).fetchone()
+            row = db.execute("SELECT result FROM asset_commands WHERE request_id=? AND "+clause, [request_id, *params]).fetchone()
             # A missing receipt cannot prove that an in-flight command will not commit.
             receipt = json.loads(row["result"]) if row else {"request_id": request_id, "status": "unknown"}
-            return self._observe_receipt(db, receipt, expected_workspace_id)
+            return self._observe_receipt(db, receipt, expected_workspace_id, privacy)
 
-    def update(self, payload):
+    def update(self, payload, privacy='regular'):
+        clause, privacy_params = privacy_sql(privacy)
         if not isinstance(payload, dict):
             raise WorkspaceError("Asset command must be an object")
         ids = payload.get("ids", [])
@@ -520,14 +578,16 @@ class AssetWorkspace:
             # No read-check/write gap: competing clients serialize at this boundary.
             db.execute("BEGIN IMMEDIATE")
             identity = self._check_scope(db, scope)
-            receipt = db.execute("SELECT fingerprint,result FROM asset_commands WHERE request_id=?", (request_id,)).fetchone()
+            receipt = db.execute("SELECT fingerprint,result,privacy FROM asset_commands WHERE request_id=?", (request_id,)).fetchone()
             if receipt:
+                if not privacy_matches(receipt['privacy'], privacy):
+                    raise WorkspaceError('Asset command not found', status=404, code='asset_command_not_found')
                 if receipt["fingerprint"] != fingerprint:
                     raise WorkspaceError("That request ID already identifies a different command; nothing changed",
                                          status=409, code="asset_request_reused", request_id=request_id)
-                return self._observe_receipt(db, json.loads(receipt["result"]), scope)
+                return self._observe_receipt(db, json.loads(receipt["result"]), scope, privacy)
             placeholders = ",".join("?" for _ in ids)
-            rows = {r["id"]: r for r in db.execute(f"SELECT * FROM assets WHERE id IN ({placeholders})", ids)}
+            rows = {r["id"]: r for r in db.execute(f"SELECT * FROM assets WHERE id IN ({placeholders}) AND "+clause, [*ids,*privacy_params])}
             missing = [i for i in ids if i not in rows]
             conflicts = [i for i in ids if i in rows and rows[i]["metadata_revision"] != expected[i]]
             if missing or conflicts:
@@ -543,8 +603,11 @@ class AssetWorkspace:
                 collection_id = payload.get("collection_id")
                 if not isinstance(collection_id, str) or not 1 <= len(collection_id) <= 128:
                     raise WorkspaceError("Choose an existing collection")
-                if not db.execute("SELECT id FROM collections WHERE id=?", (collection_id,)).fetchone():
+                collection = db.execute("SELECT id,privacy FROM collections WHERE id=? AND "+clause, [collection_id,*privacy_params]).fetchone()
+                if not collection:
                     raise WorkspaceError("Choose an existing collection")
+                if any(rows[i]['privacy'] != collection['privacy'] for i in ids):
+                    raise WorkspaceError('Assets and collection must share one privacy classification; nothing changed', status=409, code='asset_collection_privacy_conflict')
                 members = {r["asset_id"] for r in db.execute(f"SELECT asset_id FROM collection_assets WHERE collection_id=? AND asset_id IN ({placeholders})", [collection_id, *ids])}
                 # Only rows whose membership flips are changes: a repeat add or a remove of a non-member burns no revision (#1405 pattern).
                 changed_ids = [i for i in ids if (i not in members) == (action == "add_collection")]
@@ -609,8 +672,9 @@ class AssetWorkspace:
             if scope is not None:
                 result["workspace_id"] = identity
             # Compact receipts retain changed fields and revisions, never N copies of media/notes.
-            db.execute("INSERT INTO asset_commands VALUES (?,?,?,?)", (request_id, fingerprint, json.dumps(result), time.time()))
-            result = self._observe_receipt(db, result, scope)
+            command_privacy = 'private' if any(row['privacy']=='private' for row in rows.values()) else 'regular'
+            db.execute("INSERT INTO asset_commands (request_id,fingerprint,result,created_at,privacy) VALUES (?,?,?,?,?)", (request_id, fingerprint, json.dumps(result), time.time(), command_privacy))
+            result = self._observe_receipt(db, result, scope, privacy)
         return result
 
     def setups(self):
@@ -620,6 +684,8 @@ class AssetWorkspace:
     def save_setup(self, payload):
         if not isinstance(payload, dict):
             raise WorkspaceError("Setup request must be an object")
+        if 'privacy' in payload and payload['privacy'] != 'regular':
+            raise WorkspaceError('Private saved setups are not supported', code='privacy_unsupported')
         if payload.get("action") == "delete" and "id" not in payload:
             raise WorkspaceError("Setup ID is required to delete a setup")
         if "id" in payload:
@@ -642,6 +708,7 @@ class AssetWorkspace:
                 raise WorkspaceError("Saved setup recipe must contain finite JSON values") from error
             if len(raw) > 128 * 1024:
                 raise WorkspaceError("Saved setup is too large")
+            self._regular_record_sources(db, raw)
             existing = db.execute("SELECT name,recipe FROM setups WHERE id=?", (identifier,)).fetchone()
             if existing:
                 if existing["name"] != name or json.loads(existing["recipe"]) != recipe:
@@ -657,11 +724,12 @@ class AssetWorkspace:
                         raise WorkspaceError("That setup ID already exists; the original was preserved. Save with a new ID.")
         return {"id": identifier, "name": name}
 
-    def asset_by_sha256(self, digest):
+    def asset_by_sha256(self, digest, privacy='regular'):
         """The oldest live asset whose snapshot has these bytes, or None: a card's lineage names pictures by content, not by row."""
         if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest): return None
+        clause, params = privacy_sql(privacy)
         with self.connection() as db:
-            row = db.execute("SELECT * FROM assets WHERE sha256=? AND trashed_at IS NULL ORDER BY created_at,id LIMIT 1", (digest,)).fetchone()
+            row = db.execute("SELECT * FROM assets WHERE sha256=? AND trashed_at IS NULL AND "+clause+" ORDER BY created_at,id LIMIT 1", [digest,*params]).fetchone()
         return self._asset(row) if row else None
 
     @staticmethod
@@ -698,6 +766,35 @@ class AssetWorkspace:
         if "lineage" in payload or required: fields["lineage"] = self._card_json(payload.get("lineage", []), "lineage", list)
         return fields
 
+    @staticmethod
+    def _regular_record_sources(db, raw):
+        """Cards and legacy setups have no private store; known sources stay regular."""
+        def asset(identifier):
+            if type(identifier) is not str or not db.execute("SELECT 1 FROM assets WHERE id=? AND privacy='regular'", (identifier,)).fetchone():
+                raise WorkspaceError('Source asset is unavailable', status=404, code='card_source_unavailable')
+        pending = [json.loads(raw)]
+        while pending:
+            value = pending.pop()
+            if isinstance(value, list): pending.extend(value)
+            elif isinstance(value, dict):
+                if 'privacy' in value and value['privacy'] != 'regular':
+                    raise WorkspaceError('Private sources are not supported for this record', code='privacy_unsupported')
+                for key in ('asset_id','parent_asset','source_asset_id','canon_asset_id','anchor_asset_id'):
+                    if key in value: asset(value[key])
+                if 'parent_assets' in value:
+                    if not isinstance(value['parent_assets'],list): raise WorkspaceError('Invalid source asset list')
+                    for identifier in value['parent_assets']: asset(identifier)
+                if 'parent_by_input' in value:
+                    if not isinstance(value['parent_by_input'],dict): raise WorkspaceError('Invalid source asset mapping')
+                    for identifier in value['parent_by_input'].values(): asset(identifier)
+                if 'job_id' in value:
+                    identifier = value['job_id']
+                    # Portable looks retain historical external job IDs as evidence.
+                    # Known local jobs must have only regular output classifications.
+                    if type(identifier) is not str or not identifier or db.execute("SELECT 1 FROM assets WHERE job_id=? AND (privacy IS NULL OR privacy!='regular') LIMIT 1", (identifier,)).fetchone():
+                        raise WorkspaceError('Card source is unavailable', status=404, code='card_source_unavailable')
+                pending.extend(value.values())
+
     def card_command(self, payload):
         """create (optional client id: the same id and content again is a no-op), edit, trash, restore. Every change after create
         names the revision it read; a stale one is a 409 carrying the current card and changes nothing (no lost update)."""
@@ -715,6 +812,7 @@ class AssetWorkspace:
             fields = self._card_fields(payload, True)
             with self.connection() as db:
                 db.execute("BEGIN IMMEDIATE")
+                self._regular_record_sources(db, fields['lineage'])
                 existing = db.execute("SELECT * FROM cards WHERE id=?", (identifier,)).fetchone()
                 if existing:
                     same = existing["kind"] == payload["kind"] and existing["name"] == fields["name"] and json.loads(existing["body"]) == json.loads(fields["body"]) and json.loads(existing["lineage"]) == json.loads(fields["lineage"])
@@ -731,6 +829,7 @@ class AssetWorkspace:
         if not fields: raise WorkspaceError("No changes supplied")
         with self.connection() as db:
             db.execute("BEGIN IMMEDIATE")
+            if 'lineage' in fields: self._regular_record_sources(db, fields['lineage'])
             row = db.execute("SELECT * FROM cards WHERE id=?", (payload.get("id"),)).fetchone() if isinstance(payload.get("id"), str) else None
             if row is None: raise WorkspaceError("Card not found", status=404, code="card_not_found")
             if row["revision"] != expected:

@@ -577,6 +577,7 @@ class SharedBackendStateTests(unittest.TestCase):
         studio.prepare=Mock(return_value=({'id':'routing-fixture'}, {}, self.root/'workflow.json', {}, 1))
         studio.host_commit_preflight=Mock(return_value=None);studio._save=Mock();studio.public=lambda job:job
         studio._create_job=lambda payload,enqueue,job_id:Studio._create_job(studio,payload,enqueue,job_id)
+        studio._job_directory=lambda identifier,privacy=None:Studio._job_directory(studio,identifier,privacy)
         job=Studio.create_job(studio,{'preset_id':'routing-fixture'},enqueue=False)
         self.assertEqual(job['comfy_url'],target['url'])
         self.assertEqual(job['comfy_root'],target['root'])

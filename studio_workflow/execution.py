@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import uuid
 from .core import canonical, digest, need
+from .privacy import is_regular, require_regular_creation
 
 TICKET_VERSION = 'studio.run-ticket/v1'
 RECIPE_KEYS = {'preset_id', 'controls', 'references', 'parent_assets', 'batch_count', 'expected_template_sha256', 'label'}
@@ -120,6 +121,7 @@ def run_ticket(studio, ticket, approved=False):
         raise ValueError('Invalid request identity') from exc
     need(request_id == ticket['request_id'], 'Use the exact prepared request identity')
     recipe = ticket.get('recipe')
+    require_regular_creation(recipe)
     if isinstance(recipe, dict) and 'label' in recipe and recipe['label'] is not None:
         _clean_run_label(recipe['label'])
     identity = digest(ticket)
@@ -140,7 +142,7 @@ def run_ticket(studio, ticket, approved=False):
         if receipt.exists():
             recorded = json.loads(receipt.read_bytes())
             need(recorded.get('ticket_sha256') == identity, 'Ticket identity already belongs to different content')
-            if job_id in studio.jobs:
+            if is_regular(studio.jobs.get(job_id)):
                 return {'replayed': True, 'job': studio.public(studio.jobs[job_id]), 'dispatch_attempted': False}
             return {'replayed': True, 'job_id': job_id, 'status': 'reconciliation_required',
                     'dispatch_attempted': False, 'message': 'Intent exists but no job record is available. Do not create a new ticket or resubmit blindly.'}

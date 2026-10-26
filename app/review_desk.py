@@ -16,6 +16,7 @@ import time
 import uuid
 import zipfile
 import character_review
+from studio_workflow.privacy import is_regular
 
 from review_media import (FULL_CROP, MAX_CANDIDATES, MAX_TOTAL_BYTES, canonical,
                           checked_bytes, crop_box, digest, make_preview, render_sheet, write_new)
@@ -102,6 +103,7 @@ class ReviewDesk:
         for index, stage in enumerate(plan['stages']):
             attempt = project['state'].get('attempts', {}).get(str(index), {})
             job = self.production.studio.jobs.get(attempt.get('job_id'))
+            if job is not None and not is_regular(job):raise ValueError('Unknown job')
             if job and job.get('status') in ('queued', 'waiting', 'submitting', 'running', 'uncertain'):
                 raise ValueError('A comparison job is still unresolved; review cannot certify its output')
             public = self.production.studio.public(job) if job else {}

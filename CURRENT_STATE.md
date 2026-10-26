@@ -1,5 +1,42 @@
 # Current state — 26 October 2026
 
+## Private creations and interruption recovery — 26 October 2026
+
+The [private-creation slice](docs/PRIVATE-CREATIONS.md), tracked in
+[#1673](https://github.com/Chris0Jeky/local-asset-studio/issues/1673), adds a tab
+session default, an override for one unfinished creation, and Regular/Private/All
+browsing. Private image runs, uploads, snapshots, thumbnails and exports have
+separate roots. Default HTTP/SDK/MCP reads hide private work; stored classification
+and read scope remain distinct. Unsupported advanced private workflows refuse
+before side effects. This is local visibility and organization, not encryption or
+secure deletion; the shared catalogue and external engine copies remain explicit.
+
+Make picture drafts now retain source identities, wording, pose and style choices
+across same-tab reload. Full editor import persists the adopted draft. Conversion
+checks the exact saved bytes before removing this tab's regular copy, preserving
+a newer draft from another tab. Library recovery is scoped by view; collection
+recovery follows its classification. Private/All recovery uses bounded tab storage
+and does not populate the regular persistent IndexedDB shelf.
+
+The integrated native snapshot at `0af8d6a` passed **36 creation checks and 28
+recovery checks**, with unchanged served hashes, no page/HTTP-handler faults and
+one inert job acknowledgment. Subsequent causal review fixed every continuation
+attachment sibling (20 JavaScript checks), private catalogue/family/worker-health
+projections (16 checks), and runtime node schema filename disclosure (7 checks).
+The schema projection preserves the internal execution cache and locks retained
+job inspection against concurrent admission. Exact final-source full-suite and
+Linux/Windows browser qualification belong to the linked PR's head checks.
+
+The [ten measured journeys](docs/ux-qa/CREATION-JOURNEYS-2026-10-26.md) pass without
+model generation. Restoring interrupted Change/Combine/Restyle drafts avoids 3–6
+re-entry inputs; the normal journey input counts stay unchanged. The privacy bar
+recovers about 80 desktop pixels and 53 mobile pixels while retaining visible,
+keyboard-reachable choices. A [fixed adult-character owner trial](docs/ux-qa/OWNER-ANIME-TRIAL-2026-10-26.md)
+now separates human effort, system waits and artistic scoring; it is proposed and
+unrun. Owner artwork, licensing and configured-machine items in `HUMAN_TODO.md`
+remain open. Completed-run conversion and a distinct archive state remain future
+storage work; agents must not implement them by changing an asset label alone.
+
 ## Owner-requested session closeout — 26 October 2026
 
 The intake-test repair merged as [#1670](https://github.com/Chris0Jeky/local-asset-studio/pull/1670)

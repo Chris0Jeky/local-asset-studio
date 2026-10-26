@@ -158,7 +158,7 @@ class RecoveryObservationTests(unittest.TestCase):
         with patch.object(module,'read',wraps=module.read) as read:
             try: return handler.do_GET()
             finally:
-                read.assert_called_once_with(handler.path,self.store)
+                read.assert_called_once_with(handler.path,self.store,privacy='regular')
                 self.assertEqual(len(writes),1)
                 self.assertEqual(writes[0][0],200)
                 self.assertEqual(writes[0][1]['targets'][0]['id'],self.asset)

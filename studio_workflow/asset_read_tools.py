@@ -10,11 +10,14 @@ from .core import need
 
 WORKSPACE = {'type': 'string', 'pattern': r'^[0-9a-f]{32}$', 'maxLength': 32}
 ASSET_ID = {'type': 'string', 'pattern': r'^[A-Za-z0-9_-]{1,128}$', 'maxLength': 128}
+PRIVACY = {'type': 'string', 'enum': ['regular', 'private', 'all'], 'maxLength': 7,
+           'description': 'Explicit observation scope; omitted means regular and hides private records.'}
 PAGE_ARGUMENTS = {
     'workspace_id': WORKSPACE,
     'limit': {'type': 'integer', 'minimum': 1, 'maximum': asset_reads.MAX_PAGE},
     'cursor': {'type': 'string', 'pattern': r'^[A-Za-z0-9_-]+$', 'maxLength': asset_reads.MAX_CURSOR},
     'filters': {'type': 'object', 'additionalProperties': False, 'properties': {
+        'privacy': PRIVACY,
         'visibility': {'type': 'string', 'enum': ['active', 'trash', 'all']},
         'source': {'type': 'string', 'enum': ['all', 'mine', 'agent']},
         'media_type': {'type': ['string', 'null'], 'pattern': r'^[^\x00-\x1f\x7f]+$', 'minLength': 1, 'maxLength': 32},
@@ -23,6 +26,7 @@ PAGE_ARGUMENTS = {
         'job_id': {'type': ['string', 'null'], 'pattern': r'^[^\x00-\x1f\x7f]+$', 'minLength': 1, 'maxLength': 128},
         'collection_id': {**ASSET_ID, 'type': ['string', 'null']}}}}
 SELECTION_ARGUMENTS = {
+    'privacy': PRIVACY,
     'workspace_id': WORKSPACE,
     'ids': {'type': 'array', 'minItems': 1, 'maxItems': asset_reads.MAX_SELECTION,
             'uniqueItems': True, 'items': ASSET_ID}}

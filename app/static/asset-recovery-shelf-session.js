@@ -1,7 +1,7 @@
 /* Bridge the existing tab journal to optional persistent snapshots. No network owner. */
 (function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./asset-recovery-shelf.js'):root.StudioAssetRecoveryShelf);if(typeof module==='object'&&module.exports)module.exports=api;else root.StudioAssetRecoveryShelfSession=api;})(globalThis,function(Core){
   'use strict';
-  function create({journal,store,crypto=globalThis.crypto,now=Date.now,onStatus=()=>{}}){
+  function create({journal,store,crypto=globalThis.crypto,now=Date.now,onStatus=()=>{},privacy='regular'}){
     let enabled=false,tail=Promise.resolve(),scheduled=false;
     const pending=new Map(),writers=new Map(),errors=new Map();
     const serial=work=>{const result=tail.catch(()=>{}).then(work);tail=result.catch(()=>{});return result;};
@@ -30,11 +30,11 @@
         }else if(persisted.some(r=>r.workspace_id===workspaceId&&r.payload.operation?.command.request_id===requestId))throw Error('Duplicate pending request identity; inspect both viewpoints before saving.');
       }
       const time=Math.max(0,Math.floor(now()),prior?.updated_at||0);
-      const record=await Core.seal(slot,payload,{id:prior?.id||identifier(),created_at:prior?.created_at??time,updated_at:time,generation:(prior?.generation||0)+1},crypto);
+      const record=await Core.seal(slot,payload,{id:prior?.id||identifier(),created_at:prior?.created_at??time,updated_at:time,generation:(prior?.generation||0)+1,...(privacy==='regular'?{}:{privacy})},crypto);
       await store.put(record,prior?.sha256||null);writers.set(slot,record);return record;
     }
     async function checkpoint(slot,input){
-      try{const result=await capture(slot,input);errors.delete(slot);const other=errors.values().next().value;status(other?'Device recovery failed: '+other.message:'Device recovery checkpoint verified. Clearing browser data still removes it.',!!other);return result;}
+      try{const result=await capture(slot,input);errors.delete(slot);const other=errors.values().next().value;status(other?'Recovery failed: '+other.message:privacy==='regular'?'Device recovery checkpoint verified. Clearing browser data still removes it.':'Tab recovery checkpoint verified. Private review text stays in this tab’s storage.',!!other);return result;}
       catch(error){errors.set(slot,error);status('Device recovery failed: '+error.message,true);throw error;}
     }
     function schedule(){
@@ -62,6 +62,7 @@
       async disable(){enabled=false;pending.clear();journal.connect(null);await tail;errors.clear();status('Device checkpoints disabled for this tab. Existing shelf records remain.');},
       flush,
       restore(record,workspaceId){
+        if(Core.privacyOf(record)!==privacy)throw Error('Recovery belongs to a different privacy view. Choose that view before restoring.');
         if(record.workspace_id!==workspaceId||!workspaceId||record.payload.version!==2)throw Error('Another or unknown Workspace is inspection/export/discard only.');
         const value=copy(record.payload);
         // Canonical bundle key ordering must not alter the retained wire body or
