@@ -1,5 +1,32 @@
 # Current state — 13 October 2026
 
+## Unambiguous HTTP request framing - 26 October 2026
+
+The shared Handler now rejects duplicate Content-Length fields (including equal values),
+comma-separated or non-decimal lengths, and every Transfer-Encoding field before dispatch.
+Rejections return JSON 400 with `invalid_request_framing` and close the connection, preventing
+body bytes or a pipelined request from reaching core or composed routes. A single decimal length retains leading-zero
+and surrounding HTTP space/tab support; bodyless GET requests still work.
+
+The clean starting worktree matched origin/main at `14cbcde6`; the only open PR (#1654)
+covered incomplete composed bodies, not framing. Baselines passed 8 HTTP security and 4
+production-storage integration tests. Raw sockets then reproduced malformed requests queuing
+jobs with 201 responses. Disabling only the new parser method in a separate process produced
+18 failing subtests across the regression group; its valid-request control passed.
+
+The HTTP security suite passes all 13 tests; all 14 asset-read HTTP tests pass. The server
+suite passed 175 tests before the space/tab compatibility adjustment, which has its own
+red/green control. Repository validation passes 93 graph bindings and 187 pinned assets.
+An initial full run completed 6,090 tests in 808.229 seconds with three failures: the new
+rejection omitted the asset-read error code. The shared rejection now includes a typed code,
+with a regression assertion. The final full suite passed all 6,090 tests in 907.923 seconds
+(82 skipped). An earlier run was intentionally interrupted for the space/tab compatibility fix.
+Logs remain local-only in `.runtime/request-framing/`.
+
+No installed runtime was changed or generation submitted; no Git write or PR publication was
+performed. The coordinator owns review, commit and publication. `HUMAN_TODO.md` is unchanged; creative, licensing and
+owner acceptance choices remain open. The storage-fixture isolation candidate remains separate.
+
 ## Composed HTTP body completeness — 26 October 2026
 
 Prompt dispatch, figure splitting and workflow-document routes now reject EOF-short bodies

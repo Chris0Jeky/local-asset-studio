@@ -14,6 +14,75 @@ from http_refusal_transport import atomic_json_post
 from test_server import FakeStudio, png, server
 
 
+class RequestFramingTests(unittest.TestCase):
+    def setUp(self):
+        self.fixture=fixtures.ProductionTests();self.fixture.setUp();self.addCleanup(self.fixture.tearDown)
+        self.studio=FakeStudio(self.fixture.root,[])
+        self.fixture.patches[0].stop()
+        handler=type('FramingFixture',(server.extend_handler(server.Handler),),
+                     {'studio':self.studio,'protocol_version':'HTTP/1.1'})
+        self.http=ThreadingHTTPServer(('127.0.0.1',0),handler)
+        self.thread=threading.Thread(target=self.http.serve_forever,daemon=True);self.thread.start()
+        self.addCleanup(self.close)
+    def close(self):
+        self.http.shutdown();self.http.server_close();self.thread.join(2)
+    def raw_request(self,headers,body=b'',path='/api/jobs',method='POST'):
+        request=(f'{method} {path} HTTP/1.1\r\nHost: 127.0.0.1:8191\r\n'
+                 'Origin: http://127.0.0.1:8191\r\nContent-Type: application/json\r\n'
+                 +headers+'\r\n').encode('ascii')+body
+        with socket.create_connection(('127.0.0.1',self.http.server_port),timeout=5) as connection:
+            connection.sendall(request);connection.shutdown(socket.SHUT_WR)
+            chunks=[]
+            while chunk:=connection.recv(65536):chunks.append(chunk)
+        return b''.join(chunks)
+    def rejected(self,headers,body=b'',path='/api/jobs',method='POST'):
+        before=copy.deepcopy(self.studio.jobs)
+        queued=self.studio.queue.qsize()
+        raw=self.raw_request(headers,body,path,method)
+        self.assertEqual(raw.split(b' ',2)[1],b'400',raw)
+        self.assertEqual(raw.count(b'HTTP/1.1 '),1,raw)
+        self.assertIn(b'X-Content-Type-Options: nosniff\r\n',raw)
+        self.assertIn(b'"error": "Unsupported or ambiguous request framing"',raw)
+        self.assertIn(b'"code": "invalid_request_framing"',raw)
+        self.assertEqual(self.studio.jobs,before);self.assertEqual(self.studio.queue.qsize(),queued)
+        self.assertEqual(self.studio.requests,[])
+    def test_duplicate_and_list_lengths_cannot_create_jobs_or_dispatch_a_pipeline(self):
+        body=json.dumps({'preset_id':'demo','controls':{}}).encode()
+        pipeline=b'GET /api/identity HTTP/1.1\r\nHost: 127.0.0.1:8191\r\n\r\n'
+        for values in ((str(len(body)),'0'),('0',str(len(body))),
+                       (str(len(body)),str(len(body))), (f'{len(body)}, {len(body)}',)):
+            with self.subTest(values=values):
+                headers=''.join(f'Content-Length: {value}\r\n' for value in values)
+                self.rejected(headers,body+pipeline)
+    def test_transfer_encoding_is_rejected_with_or_without_content_length(self):
+        body=json.dumps({'preset_id':'demo','controls':{}}).encode()
+        for encoding in ('chunked','identity','gzip',''):
+            for length in ('',f'Content-Length: {len(body)}\r\n'):
+                with self.subTest(encoding=encoding,length=length):
+                    self.rejected(f'Transfer-Encoding: {encoding}\r\n'+length,body)
+    def test_content_length_requires_ascii_decimal_digits(self):
+        body=json.dumps({'preset_id':'demo','controls':{}}).encode()
+        for length in ('+'+str(len(body)),str(len(body))+'_0','-0','', '1 0'):
+            with self.subTest(length=length):self.rejected(f'Content-Length: {length}\r\n',body)
+    def test_framing_is_checked_before_composed_and_bodyless_routes(self):
+        self.rejected('Content-Length: 0\r\nContent-Length: 0\r\n',path='/api/identity',method='GET')
+        from studio_prompt.core import new_brief
+        body=json.dumps({'brief':new_brief('A lantern on a table')}).encode()
+        self.rejected(f'Content-Length: {len(body)}\r\nContent-Length: 0\r\n',body,path='/api/prompt/compile')
+    def test_unambiguous_requests_still_create_jobs_and_read_identity(self):
+        body=json.dumps({'preset_id':'demo','controls':{}}).encode()
+        for count,length in enumerate((str(len(body)),f'000{len(body)}',f'\t{len(body)} \t'),1):
+            with self.subTest(length=length):
+                raw=self.raw_request(f'Content-Length: {length}\r\n',body)
+                self.assertEqual(raw.split(b' ',2)[1],b'201',raw)
+                self.assertEqual(len(self.studio.jobs),count);self.assertEqual(self.studio.queue.qsize(),count)
+        for headers in ('','Content-Length: 0\r\n'):
+            with self.subTest(headers=headers):
+                raw=self.raw_request(headers,path='/api/identity',method='GET')
+                self.assertEqual(raw.split(b' ',2)[1],b'200',raw)
+        self.assertEqual(self.studio.requests,[])
+
+
 class ResponseSecurityTests(unittest.TestCase):
     def setUp(self):
         self.fixture=fixtures.ProductionTests();self.fixture.setUp();self.addCleanup(self.fixture.tearDown)
