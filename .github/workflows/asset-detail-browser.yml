@@ -66,10 +66,9 @@ jobs:
           node tests/asset_library_contracts.cjs
           python tests/asset_library_browser.py --out .runtime/asset-library-proof
       - name: Stable grid focus and preview lifecycle
-        if: matrix.response-delay-ms == 0
         run: |
           node tests/asset_grid_contracts.cjs
-          python tests/asset_grid_browser.py --out .runtime/asset-grid-proof
+          python tests/asset_grid_browser.py --out .runtime/asset-grid-proof --response-delay-ms ${{ matrix.response-delay-ms }}
       - name: Addressable figure editor recovery
         if: matrix.response-delay-ms == 0
         run: |

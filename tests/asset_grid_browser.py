@@ -2,6 +2,7 @@
 
 Native HTTP by default; --inert labels substituted storage/transport. All server
 changes are fixture-side setup (another client), never generation or user files.
+--response-delay-ms delays Library page reads to exercise sort-readiness races.
 """
 from browser_ports import evidence_screenshot
 import argparse
@@ -11,6 +12,7 @@ import json
 import shutil
 import tempfile
 import threading
+import time
 import uuid
 from browser_ports import BoundPortGuard, browser_server
 from pathlib import Path
@@ -19,7 +21,7 @@ from types import SimpleNamespace
 from PIL import Image
 from playwright.async_api import async_playwright
 import studio_browser_smoke as fixture
-from asset_detail_browser import inert_page
+from asset_detail_browser import inert_page, delay_milliseconds
 import server as production
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -27,6 +29,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 async def exercise(args):
     args.out.mkdir(parents=True, exist_ok=True)
+    response_delay_ms = getattr(args, 'response_delay_ms', 0)
     checks, errors, failure = [], [], None
     def check(identifier, expectation, value):
         checks.append({'id': identifier, 'expectation': expectation, 'passed': bool(value)})
@@ -46,9 +49,11 @@ async def exercise(args):
                           'expected_revisions': {identifier: store.metadata(identifier)['metadata_revision']}, **values})
         for i, identifier in enumerate(ids): edit(identifier, title=f'Study {i}')
         class Handler(BoundPortGuard, production.extend_handler(production.Handler)):
-            studio = SimpleNamespace(assets=store)
+            studio = SimpleNamespace(assets=store, jobs={})
             json = fixture.Handler.json
             def do_GET(self):
+                if self.path.startswith('/api/assets/page?'):
+                    time.sleep(response_delay_ms / 1000)  # Deliberate response fault injection, never a settling wait.
                 if self.path == '/api/workspace' or self.path.startswith('/api/assets/') or self.path.startswith('/api/collections'):
                     return super().do_GET()
                 return fixture.Handler.do_GET(self)
@@ -79,6 +84,9 @@ async def exercise(args):
                     await page.wait_for_function('!assetRefreshing')
                     await page.evaluate('refreshAssets(true)')
                     await page.wait_for_function('!assetRefreshing')
+                async def settled_page():
+                    # Sort is a server read. A stale page makes renderAssets defer synthetic fixture changes.
+                    await page.wait_for_function('!assetRefreshing && !assetSearchTimer && assetPaging?.query===assetPageQuery()', timeout=6000)
                 async def remember(identifier=ids[0]): await page.evaluate('remember', identifier)
                 await remember();await page.locator(f'[data-asset-check="{ids[0]}"]').focus();await refresh()
                 check('GRID-01', 'An unchanged forced refresh reuses the card', await page.evaluate('card(gridIds[0])===keptCard'))
@@ -92,7 +100,7 @@ async def exercise(args):
                 await refresh()
                 check('GRID-34', 'An unchanged grouped refresh makes no grid mutations', await page.evaluate('groupMutations.length===0'))
                 await page.evaluate('groupObserver.disconnect();document.querySelector("#assetSort").value="oldest";renderAssets();')
-                await page.wait_for_function('!assetRefreshing&&assetPaging.query.includes("oldest")')  # sort is a server read now: wait for the page it returns
+                await settled_page()
                 check('GRID-35', 'Group reorder preserves identity, focus and selected reading order', await page.evaluate('card(gridIds[0])===keptCard && keptImage.isConnected && document.activeElement===keptCheck && JSON.stringify([...document.querySelectorAll("#assetGrid [data-asset-check]")].map(n=>n.dataset.assetCheck))===JSON.stringify(visibleAssets().map(a=>a.id))'))
                 await page.evaluate('id=>{assetState.assets.find(a=>a.id===id).job_id="moved-run";renderAssets();}', ids[0])
                 check('GRID-36', 'Moving an asset into a new group retains its source and focus', await page.evaluate('card(gridIds[0])===keptCard && keptImage.isConnected && document.activeElement===keptCheck && keptCard.closest(".asset-group")?.querySelector("h4").textContent.includes("moved-run") && document.querySelectorAll("#assetGrid .asset-group").length===3'))
@@ -102,6 +110,7 @@ async def exercise(args):
                 await page.select_option('#assetGroup', 'recipe')
                 await page.locator(f'[data-asset-check="{ids[0]}"]').focus()
                 await page.evaluate('document.querySelector("#assetSort").value="newest";renderAssets();')
+                await settled_page()
                 check('GRID-39', 'Several cards share a retained group and reorder without losing focus', await page.evaluate('document.querySelectorAll("#assetGrid .asset-group").length===1 && document.querySelector("#assetGrid .asset-group h4 small").textContent==="3" && card(gridIds[0])===keptCard && keptImage.isConnected && document.activeElement===keptCheck && JSON.stringify([...document.querySelectorAll("#assetGrid [data-asset-check]")].map(n=>n.dataset.assetCheck))===JSON.stringify(visibleAssets().map(a=>a.id))'))
                 check('GRID-40', 'A group offers three keyboard triage buttons naming its unreviewed count', await page.evaluate('document.querySelectorAll("#assetGrid .asset-group-actions [data-group-review]").length===3 && document.querySelector("#assetGrid .asset-group-actions").textContent.startsWith("Mark 3 unreviewed as") && !document.querySelector("#assetGrid .asset-group-actions").hidden'))
                 await page.evaluate('window.groupPrompts=[];window.savedConfirm=window.confirm;window.confirm=m=>{groupPrompts.push(m);return false;};void 0')
@@ -215,9 +224,10 @@ async def exercise(args):
                 await page.evaluate('gridObserver.disconnect()')
                 # Exercise the standards-based insertion fallback even in moveBefore-capable Chromium.
                 await page.evaluate('window.gridMoveBefore=document.querySelector("#assetGrid").moveBefore;document.querySelector("#assetGrid").moveBefore=undefined;')
-                await page.select_option('#assetSort','newest');await remember(active)
+                await page.select_option('#assetSort','newest');await settled_page();await remember(active)
                 await page.locator(f'[data-asset-check="{active}"]').focus()
                 await page.evaluate('document.querySelector("#assetSort").value="oldest";renderAssets()')
+                await settled_page()
                 check('GRID-29', 'The insertBefore fallback retains the focused control on reorder', await page.evaluate('keptCheck.isConnected && document.activeElement===keptCheck'))
                 check('GRID-30', 'The fallback preserves source element identity on reorder', await page.evaluate('keptImage.isConnected'))
                 await page.evaluate('()=>{document.querySelector("#assetGrid").moveBefore=gridMoveBefore;}')
@@ -239,6 +249,7 @@ async def exercise(args):
         finally:
             http.shutdown();http.server_close();thread.join(timeout=5)
     receipt={'mode':'inert browser storage/transport' if args.inert else 'native HTTP/browser',
+             'response_delay_ms':response_delay_ms,
              'scope':'Actual shell, production Workspace reads and temporary SQLite; synthetic images. Video case proves DOM release only, not decoding/performance.',
              'checks':checks,'errors':errors,'execution_error':failure,'pass':sum(c['passed'] for c in checks),'fail':sum(not c['passed'] for c in checks),
              'posts':fixture.POSTS,'source_sha256':{f:hashlib.sha256((ROOT/f).read_bytes()).hexdigest() for f in ['app/static/workspace.js','app/static/asset-grid.js'] if (ROOT/f).is_file()}}
@@ -248,5 +259,5 @@ async def exercise(args):
 
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--out',type=Path,required=True);parser.add_argument('--inert',action='store_true');parser.add_argument('--baseline',action='store_true')
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--out',type=Path,required=True);parser.add_argument('--inert',action='store_true');parser.add_argument('--baseline',action='store_true');parser.add_argument('--response-delay-ms',type=delay_milliseconds,default=0)
     asyncio.run(exercise(parser.parse_args()))
