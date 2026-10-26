@@ -39,7 +39,7 @@ async def exercise(args):
         scope = store.snapshot()['workspace_id']
 
         class Handler(BoundPortGuard, production.extend_handler(production.Handler)):
-            studio = SimpleNamespace(assets=store)
+            studio = SimpleNamespace(assets=store, jobs={})
             json = fixture.Handler.json
 
             def do_GET(self):

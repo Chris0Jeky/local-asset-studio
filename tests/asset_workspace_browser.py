@@ -44,7 +44,7 @@ async def exercise(args):
         scope_a, scope_b = a.snapshot()['workspace_id'], b.snapshot()['workspace_id']
 
         class Handler(BoundPortGuard, production.extend_handler(production.Handler)):
-            studio = SimpleNamespace(assets=a)
+            studio = SimpleNamespace(assets=a, jobs={})
             json = fixture.Handler.json
             def do_GET(self):
                 if self.path == '/api/workspace' or self.path.startswith('/api/assets/') or self.path.startswith('/api/collections'):
