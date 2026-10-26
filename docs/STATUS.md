@@ -1,4 +1,37 @@
-# Status by goal — 24 September 2026
+# Status by goal — 26 October 2026
+
+## Current engineering delivery
+
+This section records the current repository work. The September percentages and workstation asset counts below are a historical assessment, not a fresh measurement. The dated ledger in [CURRENT_STATE.md](../CURRENT_STATE.md) and the [repository snapshot](generated/REPOSITORY-STATE.md) retain the source revisions and verification receipts. Completed implementation, successful model execution and owner art acceptance remain separate.
+
+| Area | Current delivery | Remaining acceptance |
+| --- | --- | --- |
+| Recovery shelf | Merged [#1659](https://github.com/Chris0Jeky/local-asset-studio/pull/1659): transactional IndexedDB owner, explicit legacy-copy handling, native closed-tab export/import, keyboard and actual 200% browser zoom. Issues #392 and #825 are complete. | Broader keyboard/lifecycle and assistive-technology matrix in #393; clearing browser data remains outside durability guarantees. |
+| Library browsing | Merged [#1660](https://github.com/Chris0Jeky/local-asset-studio/pull/1660): coherent asset/collection observations, bounded paging, unavailable details, preserved selection and off-page consumers. Issue #1627 is complete. | Browser memory/media/query budgets at 100, 1,000 and 10,000 assets remain in #177. |
+| Recovery explanations | Merged [#1664](https://github.com/Chris0Jeky/local-asset-studio/pull/1664): retain the last recorded refusal alongside exact unconfirmed command bytes and preserve it through reload and shelf round-trip. | #393 retains its wider lifecycle acceptance. |
+| Setup history and agents | Merged [#1665](https://github.com/Chris0Jeky/local-asset-studio/pull/1665): read-only MCP history, comparison and revision export with strict response bounds and revision sequence checks. The dedicated Linux/Windows SDK gates execute all 17 reader cases without skips. | Browser history, receipt associations, fork/import and retention in #395; broader artifact/progress/reconnection workflow in #123. |
+| Audio/video finishing | Merged #1656/#1658: trim against actual source video-track bounds and verify decoded output coverage before issuing successful receipts. | These synthetic/render contract checks do not establish new neural video quality or owner acceptance. |
+| Runtime readiness | Merged #1668 protects MOSS admission; merged [#1667](https://github.com/Chris0Jeky/local-asset-studio/pull/1667) and [#1672](https://github.com/Chris0Jeky/local-asset-studio/pull/1672) extend Qwen/MOSS direct-launcher refusal for incomplete encoder support. Issue #1661 is complete; all seven direct launcher cases passed on Windows without skips. | Stat-only preflight is separate from node compatibility, installed-host inference and output quality. |
+| Verification fixtures and CI | Merged #1659/#1660/#1666 correct queued-close sequencing, dependency setup/order and incomplete synthetic owners while retaining original failures and application assertions. Merged [#1674](https://github.com/Chris0Jeky/local-asset-studio/pull/1674) adds Guided failure receipts and bounds the measured Bundle, UX and Linux Lifecycle installers. Merged [#1675](https://github.com/Chris0Jeky/local-asset-studio/pull/1675) corrects the observed Windows response-abort cleanup gap; both new regressions and the unchanged native Lifecycle journey pass on Linux and Windows. | Native and inert evidence retain their separate limits; full proof is tied to each exact source tree. |
+| MOSS study records | Merged #1668 and #1671 preserve 42 completed image/recipe records and a separate blind reread of 12 existing images. | Agent ratings are not owner acceptance; nine follow-up renders and eight Kromoss comparisons remain unrun. |
+
+The final integration record is [26 October closeout](verification/2026-10-26-integration-closeout.md). It records merged revisions, exact-tree CI and retained failures; this page is the product-level view.
+
+## Next bounded work
+
+- **#177:** measure Library browser/SQLite resource costs on the stated catalogue sizes, with explicit memory, media and latency budgets. Paging correctness does not establish performance acceptance.
+- **#393:** finish the remaining keyboard, disappearing-opener, collection-focus, browser-menu zoom and screen-reader matrix. The shelf's native 200% zoom proof is narrower than this complete matrix.
+- **#395 / #123:** continue the existing setup-history and agent-workflow owners; the new MCP readers do not authorize imports or create a second history store.
+- **Repository operating model:** use the fresh authored queue, SHA-bound snapshot and explicit ledger retention procedure delivered under #315; labels and automatic connector capture are optional independent improvements.
+- **#1662:** resume the pinned Kromoss transfer only under a new bounded transfer attempt. This is an agent-executable external dependency, not an unresolved owner licensing decision.
+
+Dependency and readiness details are retained in the [captured active queue](../research/repository-state/active-work.json): #178 remains blocked by #77/#89, #313 is owner-run, and #395/#123 are parked beyond the next two ready slices. The dated capture records #315 in review before this documentation closeout; this update completes its operating-model acceptance.
+
+Owner choices remain in [HUMAN_TODO.md](../HUMAN_TODO.md), including the first-hand UX verdict (q-7), art acceptance and MOSS Make-look placement/wording. Existing answers stay recorded; this engineering closeout does not infer new answers.
+
+## Historical goal assessment — 24 September 2026, with later dated annotations
+
+The original assessment below is retained with its original counts, estimates and later annotations. Its open/closed issue references and installed-host observations describe those dates; they do not override the current engineering section or live GitHub state.
 
 The one page that says where each owner goal stands; `CURRENT_STATE.md` is the evidence ledger it views. Percentages are
 the coordinator's rough estimate, set in the 13–14 September assessment ([STUDIO-REVIEW-2026-09-13.md](STUDIO-REVIEW-2026-09-13.md))
@@ -16,7 +49,7 @@ inspected/accepted (a human judged the art), licensed (the terms allow the use);
 | G6 Modular workflow editing in the Studio | ~58 % (was ~55 %) | Step reordering, portable Step modules, lossless input adapters and control previews merged; an edited graph still cannot run (#122) |
 | G7 Everything else | ~50 % (was ~40 %) | Backend switches work, the VRAM guard and checkpoint-switch eviction target the measured spills, idle cache release; stage-aware admission merged opt-in; Spoken Briefs merged but unproved on real narration; #77/#89 open |
 
-## G1 — Workflows that genuinely work
+### G1 — Workflows that genuinely work
 
 **Moved up by** nineteen presets proved through the Studio since 14 September (Studio jobs, agent-inspected,
 `verified: true`, none art acceptance; `presets/catalog.json` against the #263 merge); **held back by** eight that lost the flag (`qwen21-t2i` and `qwen21-edit`, which lost it after #1059, were re-proved on 27 Sep).
@@ -40,7 +73,7 @@ has a Studio proof; `anime-detail-fix` and `pixel-lora` because their 14 Septemb
 moves ([quality/QUALITY-BACKLOG.md](quality/QUALITY-BACKLOG.md)). *History: on 13 September 27 presets had never completed a job; not re-counted.*
 **Next slice.** Six Studio proofs for the tiled-decode presets, then per-backend schema captures. Open: #97, #739, #10, #21, #2, #11, #3.
 
-## G2 — Chosen images at baseline quality
+### G2 — Chosen images at baseline quality
 
 **Moved up by** the fantasy pack's batch, the identity routes and the owner's q-30 choice; not by acceptance.
 **Done 16 September.** Look B (`anima-v1-baseline`, seed 2026091301) ran through the brief's four steps as Studio jobs
@@ -62,7 +95,7 @@ The full body's fine facial features are redrawn at that scale; a face pass at p
 (105 `anifox-v2-baseline` assets, #939); no inspected baseline entry for the pack exists. q-25 is answered (27 Sep 2026): Style + Pose stays in the pack on WAI v17 at style weight 0.3-0.45.
 **Next slice.** A face pass on the chosen full body, masked repair where a hand needs it, one owner review batch. Open: #14.
 
-## G3 — Character sheets, figures, poses, in-betweens
+### G3 — Character sheets, figures, poses, in-betweens
 
 **Moved up by** the figure splitter, a working hand repair and the pose tools. **Built, not yet used on a sheet.**
 `POST /api/assets/split-figures` and the Asset-library *Split figures* editor turn marked rectangles into child assets
@@ -81,7 +114,7 @@ check that corrected it is in [quality/QUALITY-BACKLOG.md](quality/QUALITY-BACKL
 **Missing.** In-betweens are a research lead (LayerInbetween) with no route; split-then-repose of one figure is untried.
 Next slice: #252's runtime acceptance. Related: #23, #24, #65, #66, #71, #72, #22, #225.
 
-## G4 — A UX that reflects the real work
+### G4 — A UX that reflects the real work
 
 **Moved down by** the 24 Sep live QA: the new surfaces are real, but the everyday lists stopped signalling. **Real.** The
 dense Create page became a workshop: Focus (#540), a Studio layout with Arcade and Sakura skins (#541), Immersive Studio
@@ -96,7 +129,7 @@ pilot artwork, allow reviewed remote decorative media.
 sheet/figure task family in Create (the splitter lives in the Asset library). **Next slice.** Run labels and a source
 filter (#939), then a reversible "put away" (#940). Open: #16, #36, #37, #38, #204, #539.
 
-## G5 — A UI that works and feels good
+### G5 — A UI that works and feels good
 
 **Moved up by** the live use-case mode. **Measured.** #839 made live mode reach every journey: the 22 Sep live run on
 main `12307176` reached 15 of 15 (5 PASS, 10 STOP at a control that would write, 0 SKIP, 0 FAIL), with 0 generation
@@ -106,7 +139,7 @@ stale after a size change). **Unmeasured.** The owner's verdict: the 14 Sep stat
 [UX-AUDIT-2026-09-14.md](UX-AUDIT-2026-09-14.md) (#278, open) and the first-hand pass over the answering wave (q-7) was
 kept open by the owner on 23 Sep.
 
-## G6 — Modular workflow editing
+### G6 — Modular workflow editing
 
 **Moved up a little by** new editing primitives: named Step reordering (#390, #587), portable Step modules with guarded
 undo/redo (#650, relanding #645), lossless input adapters with fail-closed schema validation (#646, #119), and typed
@@ -115,7 +148,7 @@ accepts only registered recipes and their projected fields (#122 open). **Next s
 whose graph equals a registered template except for inputs already named in that preset's catalog bindings. Open
 issues: #118–#123, #143, #384.
 
-## G7 — Everything else
+### G7 — Everything else
 
 **Moved up by** runtime fixes measured on this PC. Backend switches work since #863 and #870 (the Qwen-Image 2.1 switch
 took about 40 s each way). The idle cache release (#470) took ComfyUI from 5.3 GB to 463 MB resident. GPU spill is
