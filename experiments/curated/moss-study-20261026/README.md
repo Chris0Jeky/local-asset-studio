@@ -1,5 +1,9 @@
 # Adult fashion study: MOSS and its adapters, 26 October 2026
 
+**Later session closeout:** [three of the 12 follow-up jobs completed, nine were
+never submitted, and a 12-image blind reread was saved](closeout/README.md).
+The original 39-image wave below remains a separate executed record.
+
 **Executed:** all 24 original-character comparisons and all 15 franchise pilot
 jobs completed and were inspected. [Results, limitations and the next bounded
 queue](RESULTS.md) retain the findings; [receipts](receipts.json) and

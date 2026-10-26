@@ -1,5 +1,30 @@
 # Current state — 26 October 2026
 
+## Owner-requested session closeout — 26 October 2026
+
+The intake-test repair merged as [#1670](https://github.com/Chris0Jeky/local-asset-studio/pull/1670)
+(`f7ed2dd0`), closing #1669; final-head hosted proof is 6,113 tests / 79 skips /
+1,005.191 s, with clean lifetime shutdown. Three Tifa follow-up jobs then completed
+and were inspected, giving **42 distinct completed images** across the session.
+All three new images have exact recipes, output hashes and agent pre-reviews.
+The owner requested finishing/saving the work and closing, so the remaining nine
+follow-up jobs were never submitted. The eight Kromoss comparisons remain NOT RUN.
+
+An independent blind reread of 12 existing images is also saved: Mikko's style
+direction repeats, while the earlier Impasto penalty does not; garment adherence
+and ordinal-score/rater limits remain explicit. This adds reviews, not renders.
+[The closeout record](experiments/curated/moss-study-20261026/closeout/README.md)
+retains raw judgments, the frozen mapping, exact source pins and remaining plan.
+
+The standard supervised foreground Studio route succeeded after the detached
+launcher refusal. No guard was bypassed. Resource pressure during the three-job
+batch prompted stopping the finite controller; all three submitted jobs completed.
+The owned idle MOSS PID 41400 was then stopped, releasing cached RAM; no foreign
+process was touched (MCP report: zero proven orphans). After verifying all 42 jobs
+terminal, Studio PID 14368 ended through its supervised session; ports 8191/8198
+are free. Private full-size evidence and galleries stay on E:, original ComfyUI
+outputs remain intact, and `HUMAN_TODO.md` art/Make decisions remain open.
+
 ## Reference intake test waits for admission release — 26 October 2026
 
 From merged `5a1720bb`, the EOF/reference-command regression now waits up to five

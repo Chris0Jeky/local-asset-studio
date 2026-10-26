@@ -1,0 +1,255 @@
+{
+  "version": 2,
+  "preset_id": "moss-t2i",
+  "controls": {
+    "seed": 2026102604,
+    "width": 1024,
+    "height": 1536,
+    "positive": "2D anime illustration, clean lineart, deliberate cel shading. An adult Tifa Lockhart from Final Fantasy VII, age twenty, with long dark brown-black hair, reddish-brown eyes, a white cropped tank top with black trim, black suspenders, black pleated miniskirt over opaque fitted shorts, black thigh socks, and red combat gloves and boots. A fuller bust under the same opaque fitted outfit, a curvier adult hourglass silhouette and balanced mature anatomy. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. ",
+    "negative": "",
+    "steps": 30,
+    "cfg": 3,
+    "sampler": "euler",
+    "scheduler": "sgm_uniform",
+    "lora": 0,
+    "lora2": 0
+  },
+  "batch_count": 1,
+  "created_at": 1793043848.225837,
+  "workflow": {
+    "1": {
+      "class_type": "UNETLoader",
+      "inputs": {
+        "unet_name": "moss_image_sft_int8_convrot.safetensors",
+        "weight_dtype": "default"
+      }
+    },
+    "2": {
+      "class_type": "CLIPLoader",
+      "inputs": {
+        "clip_name": "qwen3.5_9b_int8_convrot.safetensors",
+        "type": "moss_image",
+        "device": "default"
+      }
+    },
+    "3": {
+      "class_type": "VAELoader",
+      "inputs": {
+        "vae_name": "moss_image_flux2-vae_small.safetensors"
+      }
+    },
+    "4": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "2",
+          0
+        ],
+        "text": "2D anime illustration, clean lineart, deliberate cel shading. An adult Tifa Lockhart from Final Fantasy VII, age twenty, with long dark brown-black hair, reddish-brown eyes, a white cropped tank top with black trim, black suspenders, black pleated miniskirt over opaque fitted shorts, black thigh socks, and red combat gloves and boots. A fuller bust under the same opaque fitted outfit, a curvier adult hourglass silhouette and balanced mature anatomy. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. "
+      }
+    },
+    "5": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "2",
+          0
+        ],
+        "text": ""
+      }
+    },
+    "6": {
+      "class_type": "EmptyFlux2LatentImage",
+      "inputs": {
+        "width": 1024,
+        "height": 1536,
+        "batch_size": 1
+      }
+    },
+    "7": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "1",
+          0
+        ],
+        "positive": [
+          "4",
+          0
+        ],
+        "negative": [
+          "5",
+          0
+        ],
+        "latent_image": [
+          "6",
+          0
+        ],
+        "seed": 2026102604,
+        "steps": 30,
+        "cfg": 3.0,
+        "sampler_name": "euler",
+        "scheduler": "sgm_uniform",
+        "denoise": 1.0
+      }
+    },
+    "8": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "7",
+          0
+        ],
+        "vae": [
+          "3",
+          0
+        ]
+      }
+    },
+    "9": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "8",
+          0
+        ],
+        "filename_prefix": "Studio/moss-t2i"
+      }
+    }
+  },
+  "submissions": [
+    {
+      "index": 0,
+      "prompt_id": "ece92be2-fc4c-4a1a-bd32-d6052c2994fd",
+      "seed": 2026102604,
+      "graph": {
+        "1": {
+          "class_type": "UNETLoader",
+          "inputs": {
+            "unet_name": "moss_image_sft_int8_convrot.safetensors",
+            "weight_dtype": "default"
+          }
+        },
+        "2": {
+          "class_type": "CLIPLoader",
+          "inputs": {
+            "clip_name": "qwen3.5_9b_int8_convrot.safetensors",
+            "type": "moss_image",
+            "device": "default"
+          }
+        },
+        "3": {
+          "class_type": "VAELoader",
+          "inputs": {
+            "vae_name": "moss_image_flux2-vae_small.safetensors"
+          }
+        },
+        "4": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "text": "2D anime illustration, clean lineart, deliberate cel shading. An adult Tifa Lockhart from Final Fantasy VII, age twenty, with long dark brown-black hair, reddish-brown eyes, a white cropped tank top with black trim, black suspenders, black pleated miniskirt over opaque fitted shorts, black thigh socks, and red combat gloves and boots. A fuller bust under the same opaque fitted outfit, a curvier adult hourglass silhouette and balanced mature anatomy. Standing in a relaxed three-quarter fashion pose with both arms lowered and gloved hands clearly visible, entire figure from head to boots. A confident warm teasing smile. Elegant studio backdrop, tasteful non-explicit fashion illustration; opaque clothing fits without gaps. "
+          }
+        },
+        "5": {
+          "class_type": "CLIPTextEncode",
+          "inputs": {
+            "clip": [
+              "2",
+              0
+            ],
+            "text": ""
+          }
+        },
+        "6": {
+          "class_type": "EmptyFlux2LatentImage",
+          "inputs": {
+            "width": 1024,
+            "height": 1536,
+            "batch_size": 1
+          }
+        },
+        "7": {
+          "class_type": "KSampler",
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "positive": [
+              "4",
+              0
+            ],
+            "negative": [
+              "5",
+              0
+            ],
+            "latent_image": [
+              "6",
+              0
+            ],
+            "seed": 2026102604,
+            "steps": 30,
+            "cfg": 3.0,
+            "sampler_name": "euler",
+            "scheduler": "sgm_uniform",
+            "denoise": 1.0
+          }
+        },
+        "8": {
+          "class_type": "VAEDecode",
+          "inputs": {
+            "samples": [
+              "7",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ]
+          }
+        },
+        "9": {
+          "class_type": "SaveImage",
+          "inputs": {
+            "images": [
+              "8",
+              0
+            ],
+            "filename_prefix": "Studio/moss-t2i"
+          }
+        }
+      },
+      "status": "completed",
+      "gpu_memory": {
+        "peak_shared_bytes": 350707712,
+        "peak_dedicated_bytes": 11657670656,
+        "samples": 117,
+        "spilled": false
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "filename": "moss-t2i_00112_.png",
+      "subfolder": "Studio",
+      "type": "output",
+      "seed": 2026102604,
+      "prompt_id": "ece92be2-fc4c-4a1a-bd32-d6052c2994fd",
+      "media_type": "image",
+      "asset_id": "a6d0fc529d4a570fb5e3f791eb9971db"
+    }
+  ],
+  "parent_assets": [],
+  "references": [],
+  "preparation": null,
+  "native_recipe": null,
+  "continuation": null,
+  "tile": null,
+  "tile_receipt": null,
+  "parallax": null,
+  "parallax_receipt": null
+}
