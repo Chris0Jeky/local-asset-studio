@@ -104,8 +104,8 @@ class BackendSafetyTests(unittest.TestCase):
         self.assertEqual((profile['port'],profile['url']),(8198,'http://127.0.0.1:8198'))
         self.assertTrue(report['ready']);self.assertEqual(len(contracts.MOSS_FILES),3)
         roles=[item['role'] for item in report['requirements']]
-        self.assertEqual(roles,['Python interpreter','ComfyUI entry','Studio launcher','Comfy Kitchen overlay','Shared model paths','diffusion','text encoder','decoder'])
-        for item in report['requirements'][5:]:
+        self.assertEqual(roles,['Python interpreter','ComfyUI entry','Studio launcher','Comfy Kitchen overlay','Shared model paths','MOSS encoder implementation','diffusion','text encoder','decoder'])
+        for item in report['requirements'][6:]:
             self.assertTrue(Path(item['path']).resolve().is_relative_to(Path(self.studio.comfy_root).resolve()),item)
             self.assertFalse(Path(item['path']).resolve().is_relative_to(Path(profile['root']).resolve()),item)
         for role,relative in contracts.MOSS_FILES:
@@ -126,6 +126,16 @@ class BackendSafetyTests(unittest.TestCase):
         paths.write_text('main_library:\n  base_path: '+profile['library']+'\n  diffusion_models: models/diffusion_models\n')
         report=self.manager.readiness(profile)
         self.assertTrue(report['ready']);self.assertIsNone(report['runtime_compatible'])
+    def test_missing_or_empty_moss_encoder_implementation_refuses_switch_before_process_work(self):
+        profile=self.manager.profiles['moss'];path=Path(profile['root'])/'comfy/text_encoders/moss_image.py'
+        path.parent.mkdir(parents=True,exist_ok=True);path.unlink(missing_ok=True)
+        for contents in (None,b''):
+            if contents is not None:path.write_bytes(contents)
+            with self.subTest(contents=contents),patch('backends.threading.Thread') as thread,patch.object(self.manager,'process') as process,patch.object(self.manager,'request',return_value=IDLE):
+                with self.assertRaisesRegex(ValueError,'MOSS encoder implementation'):self.manager.switch('moss')
+                thread.assert_not_called();process.assert_not_called();self.assertFalse(self.manager.busy)
+        path.write_bytes(b'inert encoder fixture')
+        self.assertTrue(self.manager.readiness(profile)['ready'])
     def test_moss_reads_models_from_the_main_library_but_keeps_input_and_output_in_its_checkout(self):
         profile=self.manager.profiles['moss'];self.manager.activate('moss')
         self.assertEqual(self.studio.library.models,(Path(self.studio.config['comfy_root'])/'models').resolve())
