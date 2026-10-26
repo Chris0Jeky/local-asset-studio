@@ -43,7 +43,7 @@ async def exercise(args):
         b_before = b.snapshot()
 
         class Handler(BoundPortGuard, production.extend_handler(production.Handler)):
-            studio = SimpleNamespace(assets=a)
+            studio = SimpleNamespace(assets=a, jobs={})
             json = fixture.Handler.json
 
             def do_GET(self):
