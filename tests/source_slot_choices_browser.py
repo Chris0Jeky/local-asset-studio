@@ -23,6 +23,11 @@ async def reset(page, recipe):
 
 
 async def exercise_source_choices(page, check):
+    # Resetting a synthetic draft is setup, not a copy action under test. The Windows
+    # trace in run 40248328498 lost this extra fetch before an HTTP response arrived.
+    # Real user copies below retain the native API path and its observable failures.
+    source=fixture.source_reference(next(asset for asset in fixture.ASSETS if asset['id']=='asset-0'))
+    await page.evaluate('source=>{window.__choiceSource=source}', source)
     await page.evaluate("""() => {
       window.__choiceCalls=[];window.__choiceFailure=false;window.__choiceDelay=false;
       const original=api;
@@ -50,7 +55,7 @@ async def exercise_source_choices(page, check):
       window.__choiceReset=async(id)=>{
         window.__choiceFailure=false;window.__choiceDelay=false;
         selectPreset(id,true,true);
-        const result=await post('/api/assets/reference',{id:'asset-0'});
+        const result=structuredClone(window.__choiceSource);
         beginContinuation(result,id,'edit');
         document.querySelector('#positive').value='Keep my source and edited wording';
         showView('create');updateReady();
