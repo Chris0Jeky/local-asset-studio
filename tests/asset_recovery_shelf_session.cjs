@@ -1,7 +1,7 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const Core=require('../app/static/asset-recovery-shelf.js'),Journal=require('../app/static/asset-recovery.js');
-const create=require('./asset_recovery_shelf_memory.cjs');
+const create=require('./asset_recovery_shelf_memory.js');
 const source=require('node:path').join(__dirname,'../app/static/asset-recovery-shelf-session.js');
 const Session=fs.existsSync(source)?require(source):{};
 const crypto=require('node:crypto').webcrypto,W='1'.repeat(32);

@@ -90,3 +90,27 @@ measure a real download or exercise the real privileged process termination.
 Fresh hosted execution at the corrected PR head remains the authority for actual
 download completion and the unchanged application tests. This maintenance slice
 does not itself qualify or close the recovery, Library, or annotation work.
+
+## Additional measured callers in the final follow-up
+
+The same ambient Azure dependency setup consumed **10 minutes 7 seconds** in
+[Reference review job 121718994569](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/40364666143/job/121718994569)
+before its contracts and native browser checks passed. The old Library head's
+[Model readiness browser job 121718998019](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/40364666443/job/121718998019)
+was still downloading packages after **7 minutes 34 seconds** when the run was
+cancelled following publication of its replacement head. That second event is
+recorded as supersession during setup, not a proven job-budget timeout; all four
+browser commands were skipped and no artifact was produced.
+
+These two observed callers now reuse the unchanged helper on Ubuntu 24.04, with
+the same four-minute setup step. Their application commands, checkout behavior,
+artifacts and existing 12-minute/10-minute job budgets remain unchanged. The
+model workflow's Ubuntu/Windows contract matrix is unchanged. Both PR and push
+trigger lists include the helper and its tests where those events already exist.
+Reversing only the runner/trigger/install substitutions reproduces each prior
+workflow byte for byte. Fresh hosted results qualify these new callers; the older
+successful Reference review run is retained separately.
+
+## Integration placement — 26 October 2026
+
+After main advanced with the MOSS and reference-intake changes, the reviewed Asset detail, Model readiness and Reference review setup corrections were promoted to #1659 for its fresh integrated qualification. The Asset family browser correction is the ninth caller; its retained cancelled job and exact normalized comparison are recorded in [Asset family dependency evidence](2026-10-26-asset-family-browser-dependencies.md). All original application commands, Windows installation commands and job budgets remain. The three recovery fixtures that lacked a jobs owner are the separate #1666 follow-up; this setup change does not claim their server exceptions are already fixed.

@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "collected_at": "2026-10-26T20:26:59.088043+00:00",
+  "plan": "../followup-plan.json",
+  "plan_sha256": "9c5d716a42fdd6ece0936340fff807d76e3d0f2fae4e4bd27657a9e398c47787",
+  "template_sha256": "92dc6168d5501b90a5c8e1e23fc05512207c7a5b53b76aa31fe6af8ec12fb4e0",
+  "execution_source_head": "54e2d83bcef3c174123360f5f5fcf37ded3e1894",
+  "summary": {
+    "allowance": 12,
+    "submitted": 3,
+    "completed": 3,
+    "failed": 0,
+    "uncertain": 0,
+    "unsubmitted": 9,
+    "primary_reviews": 3
+  },
+  "model_pins": {
+    "verified_at": 1793043692.098531,
+    "template_sha256": "92dc6168d5501b90a5c8e1e23fc05512207c7a5b53b76aa31fe6af8ec12fb4e0",
+    "models": [
+      {
+        "file": "diffusion_models/moss_image_sft_int8_convrot.safetensors",
+        "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\diffusion_models\\moss_image_sft_int8_convrot.safetensors",
+        "identity": [
+          8660451676565188446,
+          5629499547032615,
+          5413698958,
+          1792381724015894300,
+          1792378258542649200
+        ],
+        "sha256": "b4d1475bc7eeffd7b809e82ea13a1fba1fb85c4e18365af3813722faa5c0fe4f"
+      },
+      {
+        "file": "text_encoders/qwen3.5_9b_int8_convrot.safetensors",
+        "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\text_encoders\\qwen3.5_9b_int8_convrot.safetensors",
+        "identity": [
+          8660451676565188446,
+          3096224756794185,
+          9748121532,
+          1792388726950760300,
+          1792381727786478000
+        ],
+        "sha256": "32e3787472f708fa5f83624acbf5ef23f7fc89c439e05065ea57cfe5a97f025a"
+      },
+      {
+        "file": "vae/moss_image_flux2-vae_small.safetensors",
+        "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\vae\\moss_image_flux2-vae_small.safetensors",
+        "identity": [
+          8660451676565188446,
+          39687971728888484,
+          249521340,
+          1792378254562184800,
+          1792378051529729200
+        ],
+        "sha256": "d8d52ba036475f5fb07c8b435e176d3d97ebfa82f0d1a1c317f9cc1e25bd013b"
+      },
+      {
+        "file": "loras/moss-mikkoani-v1.safetensors",
+        "path": "C:\\AI\\ComfyUI_windows_portable\\ComfyUI\\models\\loras\\moss-mikkoani-v1.safetensors",
+        "identity": [
+          8660451676565188446,
+          6473924477184197,
+          129017232,
+          1792388919794707200,
+          1792379292090198700
+        ],
+        "sha256": "bf56af1c4a6bafe8e59bd824301a45995941930d74f923a0b01cf9b7b25bd54e"
+      }
+    ],
+    "scope": "Content hashes verified once before this five-job character batch; full file identities rechecked before each submission."
+  },
+  "runs": [
+    {
+      "character": "tifa",
+      "seed": 2026102604,
+      "treatment": "described",
+      "job_id": "92bc9262-83b3-4d72-85e0-49c8b069a90f",
+      "prompt_ids": [
+        "1780596f-fe74-424a-a992-a4e674c3698f"
+      ],
+      "status": "completed",
+      "elapsed_seconds": 83.02271485328674,
+      "recipe": "recipes/tifa-2026102604-00-described.json",
+      "recipe_sha256": "e666e625d242b8ba3ac961a454237275f2945f6a282cbfe704ff44ad528a0f04",
+      "export_sha256": "59db0329ef325a37840fa0f13413c3d15b423a03f13e2943488c1ced7695e0ac",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\followup\\character-tifa-2026102604\\00-described-0.png",
+        "sha256": "e41a8d56d624c123fc03941e670a2815c61cb038cbaf80b918f45ac24011f70c",
+        "bytes": 1196779,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "character": "tifa",
+      "seed": 2026102604,
+      "treatment": "style-mikko",
+      "job_id": "992eb3e2-e00e-4795-a1dd-f14de804dfce",
+      "prompt_ids": [
+        "590388f7-b2ab-447f-abf1-1852415ebb24"
+      ],
+      "status": "completed",
+      "elapsed_seconds": 66.88118481636047,
+      "recipe": "recipes/tifa-2026102604-01-style-mikko.json",
+      "recipe_sha256": "13d36733448802ed54078b478aeb8bc9dff4f2c3f259ca0a0af5b6aeb924cd4b",
+      "export_sha256": "aea7ebdf66f23b3c014a49cdd5eab9969ce30aea01b7f5acd0fdfe291e0773fb",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\followup\\character-tifa-2026102604\\01-style-mikko-0.png",
+        "sha256": "fb20177dc857f2879b39855cc999339edf146e3bf15e0ec0dd9e97234e121b40",
+        "bytes": 1296152,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "character": "tifa",
+      "seed": 2026102604,
+      "treatment": "fuller-bust",
+      "job_id": "c203cda1-3a88-4c8b-8c1d-6b0eec57ffae",
+      "prompt_ids": [
+        "ece92be2-fc4c-4a1a-bd32-d6052c2994fd"
+      ],
+      "status": "completed",
+      "elapsed_seconds": 57.10961127281189,
+      "recipe": "recipes/tifa-2026102604-02-fuller-bust.json",
+      "recipe_sha256": "4e5a01f088e71deb3480ccb8bab2bdb78791be53bf0f47e4b93c194840128458",
+      "export_sha256": "75370e2863add5bf7729410df36a32c1983e842c54fbc1daaf0a4126e76cabc4",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\followup\\character-tifa-2026102604\\02-fuller-bust-0.png",
+        "sha256": "46d8318c9734b07f0f8a58d44afdd0f6814df2925a79aa5a2c1c6bec1a156972",
+        "bytes": 1291034,
+        "width": 1024,
+        "height": 1536
+      }
+    }
+  ],
+  "remaining": [
+    {
+      "character": "tifa",
+      "seed": 2026102605,
+      "variants": [
+        "described",
+        "style-mikko",
+        "fuller-bust"
+      ],
+      "status": "not-submitted"
+    },
+    {
+      "character": "yor",
+      "seed": 2026102604,
+      "variants": [
+        "described",
+        "style-mikko",
+        "fuller-bust"
+      ],
+      "status": "not-submitted"
+    },
+    {
+      "character": "yor",
+      "seed": 2026102605,
+      "variants": [
+        "described",
+        "style-mikko",
+        "fuller-bust"
+      ],
+      "status": "not-submitted"
+    }
+  ],
+  "stop_reason": "Owner requested finish/save/session closeout. Only plan0 executed; no remaining plan has an intent/job ID."
+}

@@ -33,3 +33,8 @@ class WorkspaceIdentityTests(unittest.TestCase):
     def test_delegating_handler_preserves_workspace_override(self):
         for response in self.responses({'workspace_id': '2' * 32}):
             self.assertEqual(response['workspace_id'], '2' * 32)
+
+    def test_legacy_fixture_does_not_replace_lineage_with_family_observations(self):
+        handler=SimpleNamespace(path='/api/assets/family/asset-1',json=lambda value,status=200:(status,value))
+        status,_=fixture.Handler.do_GET(handler)
+        self.assertEqual(status,404)

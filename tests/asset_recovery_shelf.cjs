@@ -2,7 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const path=require('node:path').join(__dirname,'../app/static/asset-recovery-shelf.js');
 const S=fs.existsSync(path)?require(path):{};
-const create=require('./asset_recovery_shelf_memory.cjs');
+const create=require('./asset_recovery_shelf_memory.js');
 const crypto=require('node:crypto').webcrypto,W='1'.repeat(32);
 function envelope(note='draft',pending=false){
   const form={title:'Synthetic review',tags:'tag',review:'unreviewed',notes:note};

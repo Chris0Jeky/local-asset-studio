@@ -3018,7 +3018,7 @@
       "license": "civitai per-file flags",
       "terms": "civitai model 3005908, per-file permissions read 19 October 2026: Image, RentCivit, Rent, Sell, SellMerge (a missing Sell flag means no selling of generated images or the model). Style or franchise adapters (Chainsaw Man, Re:Zero, Reverse 1999) imitate third-party works; the civitai flags are not a clearance of those rights. Loaded only by the isolated moss backend (docs/MOSS-IMAGE.md).",
       "family": "MOSS-Image",
-      "trigger": "",
+      "trigger": "reversesty",
       "strength": [
         1.0,
         1.0
@@ -3059,6 +3059,46 @@
       "trigger": "",
       "strength": [
         0.8,
+        1.0
+      ],
+      "backend": "moss"
+    },
+    {
+      "id": "kromoss-u11000-int8-convrot",
+      "name": "Kromoss update 11000 / int8 ConvRot",
+      "file": "diffusion_models/kromoss-u11000-int8-convrot.safetensors",
+      "repo": "lodestones/Kromoss",
+      "revision": "a4fe97449297af2e3be7841e1c18e431f3b06031",
+      "source": "https://huggingface.co/lodestones/Kromoss/tree/a4fe97449297af2e3be7841e1c18e431f3b06031",
+      "url": "https://huggingface.co/lodestones/Kromoss/resolve/a4fe97449297af2e3be7841e1c18e431f3b06031/diffusion_models/kromoss_int8_convrot.safetensors",
+      "bytes": 5413698958,
+      "sha256": "cacff0dd25cd2cf531e1f5ddae7872c3d57a54dbf66f1a1279f2f118514e7905",
+      "license": "Apache-2.0",
+      "terms": "Author-declared Apache-2.0, card and LFS metadata read 26 October 2026. Pinned update 11000; use the isolated moss backend. DMD2 author settings: 8 steps, CFG 1, Euler/simple, strength 1. Source metadata is separate from installed-file verification and inspected inference.",
+      "family": "MOSS-Image",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ],
+      "backend": "moss"
+    },
+    {
+      "id": "kromoss-u11000-8steps-dmd2",
+      "name": "Kromoss update 11000 / 8-step DMD2 adapter",
+      "file": "loras/kromoss-u11000-8steps-dmd2.safetensors",
+      "repo": "lodestones/Kromoss",
+      "revision": "a4fe97449297af2e3be7841e1c18e431f3b06031",
+      "source": "https://huggingface.co/lodestones/Kromoss/tree/a4fe97449297af2e3be7841e1c18e431f3b06031",
+      "url": "https://huggingface.co/lodestones/Kromoss/resolve/a4fe97449297af2e3be7841e1c18e431f3b06031/8-steps-dmd2-lora.safetensors",
+      "bytes": 1189176800,
+      "sha256": "7683fe1fb51f73f5d690f24dd6b7f46f31ab9a9873729a854ac5c9a420ffe6f2",
+      "license": "Apache-2.0",
+      "terms": "Author-declared Apache-2.0, card and LFS metadata read 26 October 2026. Pinned update 11000; use the isolated moss backend. DMD2 author settings: 8 steps, CFG 1, Euler/simple, strength 1. Source metadata is separate from installed-file verification and inspected inference.",
+      "family": "MOSS-Image",
+      "trigger": "",
+      "strength": [
+        1.0,
         1.0
       ],
       "backend": "moss"

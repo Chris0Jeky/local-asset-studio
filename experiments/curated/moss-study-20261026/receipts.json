@@ -1,0 +1,677 @@
+{
+  "schema_version": 1,
+  "collected_at": "2026-10-26T18:01:39.435747+00:00",
+  "plan_sha256": "c5270b908bd7e2fd5bf56683d438fa42aa4c81e0e0ee592eac647abd9f833de7",
+  "plan_export_sha256": "30362fe56cc95815140fea650fa081a9dc960ddc298413f308e406d488c4d992",
+  "template_sha256": "92dc6168d5501b90a5c8e1e23fc05512207c7a5b53b76aa31fe6af8ec12fb4e0",
+  "backend": {
+    "id": "moss",
+    "url": "http://127.0.0.1:8198",
+    "comfy_commit": "63be2f9b82ad0dac88a7ceaa28a9cf3154125a18",
+    "shared_runtime_changed": false
+  },
+  "scope": "24 completed jobs,24 unique prompt IDs,24 exact recipe exports and image hashes; generated image bytes stay outside Git",
+  "timing_scope": "Studio job elapsed seconds include inference/model loading; Production preparation and repeated integrity hashing are outside this number. Shared-PC observations, not equal-compute benchmarks.",
+  "summary": {
+    "completed": 24,
+    "failed": 0,
+    "uncertain": 0,
+    "output_files": 24,
+    "distinct_output_hashes": 24,
+    "minimum_job_seconds": 48.54418730735779,
+    "median_job_seconds": 50.81379294395447,
+    "maximum_job_seconds": 86.80978226661682,
+    "primary_visual_reviews": 24,
+    "additional_independent_reviews": 6
+  },
+  "runs": [
+    {
+      "plan_index": 0,
+      "scene": "sorceress",
+      "seed": 2026102601,
+      "treatment": "base",
+      "project_id": "4a222a5230c045409d8000999b334bba",
+      "plan_sha256": "f9ade269061dfdc0efa565b7d40a900f5caa97fff128de5246effc188c73a7dd",
+      "job_id": "9ce82147-c2c1-5677-96a5-8c568dac0a80",
+      "prompt_ids": [
+        "f6bdbeab-1893-4dcf-8ee6-7f9e564f5c8e"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793031378.4116766,
+      "finished_at": 1793031476.3649104,
+      "job_elapsed_seconds": 68.70303463935852,
+      "recipe": "recipes/plan-00-00-base.json",
+      "recipe_sha256": "da67c52099f1adfd727a9e8d147521078628afd12398e0df3ec092b4d0709dbd",
+      "export_sha256": "3988edd4128f9506012b5b91e4a86aaa244c2219288c65ff2022796935e294f8",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-00\\00-base-0.png",
+        "sha256": "ee3a8c41964bf6fc69b7e304dbab377d34cc551189c0ccabdbe56c226ee04c3c",
+        "bytes": 1866505,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 0,
+      "scene": "sorceress",
+      "seed": 2026102601,
+      "treatment": "reverse-no-trigger",
+      "project_id": "4a222a5230c045409d8000999b334bba",
+      "plan_sha256": "f9ade269061dfdc0efa565b7d40a900f5caa97fff128de5246effc188c73a7dd",
+      "job_id": "dbf9b081-88e3-5220-8d2a-f75f7957b81e",
+      "prompt_ids": [
+        "fabcba25-318e-4421-93c8-ebf920e4d7c6"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793031476.9659586,
+      "finished_at": 1793031560.270136,
+      "job_elapsed_seconds": 54.593029260635376,
+      "recipe": "recipes/plan-00-01-reverse-no-trigger.json",
+      "recipe_sha256": "5b4784c9cd182c985f5ae5c83b3addc3373591fbae85ec041c0cd43b6f015577",
+      "export_sha256": "2c3739eb97e67a1ea95a22d8e70cd7f1036e29fb0ea885149adf1d5a9e4ed6dd",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-00\\01-reverse-no-trigger-0.png",
+        "sha256": "cc6255d2781770e0a9e23a16096937135633a52a5bfbc9969b22aebcf1988b77",
+        "bytes": 1615138,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 0,
+      "scene": "sorceress",
+      "seed": 2026102601,
+      "treatment": "reverse-trigger",
+      "project_id": "4a222a5230c045409d8000999b334bba",
+      "plan_sha256": "f9ade269061dfdc0efa565b7d40a900f5caa97fff128de5246effc188c73a7dd",
+      "job_id": "22165650-c88f-5959-af9e-1d18b2f3147c",
+      "prompt_ids": [
+        "bb024a37-9b6e-4ec9-aca1-f50a8c5159ab"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793031560.887994,
+      "finished_at": 1793031640.711176,
+      "job_elapsed_seconds": 50.81388211250305,
+      "recipe": "recipes/plan-00-02-reverse-trigger.json",
+      "recipe_sha256": "55361ea1f682d3e036f39cbd21bc2c29c61cbd74ef223b1fbe308ea37d02cc77",
+      "export_sha256": "480ec324fe9cb54d4cccc8120f1baeeaef42e51f52ed5ec919264e2fca62a9db",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-00\\02-reverse-trigger-0.png",
+        "sha256": "59f214667b864755857f5cd1869427fc1cd5eab2f57c53086fd4a6b488471653",
+        "bytes": 1633849,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 0,
+      "scene": "sorceress",
+      "seed": 2026102601,
+      "treatment": "reverse-1.2",
+      "project_id": "4a222a5230c045409d8000999b334bba",
+      "plan_sha256": "f9ade269061dfdc0efa565b7d40a900f5caa97fff128de5246effc188c73a7dd",
+      "job_id": "4a6556ac-4344-5ab7-ba47-e19664d01535",
+      "prompt_ids": [
+        "04b44314-1cff-4160-b02f-fccea6f5ed10"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793031641.1991792,
+      "finished_at": 1793031720.6322331,
+      "job_elapsed_seconds": 50.58802843093872,
+      "recipe": "recipes/plan-00-03-reverse-1.2.json",
+      "recipe_sha256": "3eaccb864cadfc45765f5543360cc65f282f838173a8ea7389248cad8951f05c",
+      "export_sha256": "690c778e898303b6103dbc7b2f6b73cab185f7b30d19eebdf52dff18d8bf7c1f",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-00\\03-reverse-1.2-0.png",
+        "sha256": "d248a823124c219239064c2e257a98d5a6478acd2b081eb229bfe77d0180c4e6",
+        "bytes": 1659545,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 0,
+      "scene": "sorceress",
+      "seed": 2026102601,
+      "treatment": "mikko",
+      "project_id": "4a222a5230c045409d8000999b334bba",
+      "plan_sha256": "f9ade269061dfdc0efa565b7d40a900f5caa97fff128de5246effc188c73a7dd",
+      "job_id": "c1a3f42a-ced2-5f5e-9ed0-6dd4c33d52f7",
+      "prompt_ids": [
+        "d8a14607-a70b-4a56-91ea-865638a5ceea"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793031721.0772705,
+      "finished_at": 1793031798.5146701,
+      "job_elapsed_seconds": 48.70678997039795,
+      "recipe": "recipes/plan-00-04-mikko.json",
+      "recipe_sha256": "93f37aeaf09702f0a29c198880351bde15117720d5a2fca33edde1716a0fe4a4",
+      "export_sha256": "c59776e3065337b33f7212507cf5982e75fa54bad82d0931ad78471c2a2d5604",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-00\\04-mikko-0.png",
+        "sha256": "9b268345ca86aba7b25e69363516d26bbc705e16aff5ff6299e5826b5da92772",
+        "bytes": 2080378,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 0,
+      "scene": "sorceress",
+      "seed": 2026102601,
+      "treatment": "mikko-impasto",
+      "project_id": "4a222a5230c045409d8000999b334bba",
+      "plan_sha256": "f9ade269061dfdc0efa565b7d40a900f5caa97fff128de5246effc188c73a7dd",
+      "job_id": "9372bf23-985d-5aa6-9204-5c3205eb0d49",
+      "prompt_ids": [
+        "941ad6de-ca86-463a-ad5d-7c0a67d514e5"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793031799.0004475,
+      "finished_at": 1793031880.9349694,
+      "job_elapsed_seconds": 52.67042899131775,
+      "recipe": "recipes/plan-00-05-mikko-impasto.json",
+      "recipe_sha256": "91a07e1fb26be8a880fbb25bf897d63473ce258f93e259b04513ae69b375a529",
+      "export_sha256": "4b3e39c1f58a3c0cb068a33dff9064e762c6dff1b054fb03c6e5a18e089557ab",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-00\\05-mikko-impasto-0.png",
+        "sha256": "2a987d54b503fe07c22e0e5529eefa4bd6d34ef5c1274ae67a91e52235fee216",
+        "bytes": 2036906,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 1,
+      "scene": "sorceress",
+      "seed": 2026102602,
+      "treatment": "base",
+      "project_id": "cd77e1f0a8874657bff56131bb544e2e",
+      "plan_sha256": "feeb3ca034124b15a71ff3872cade187dbff738fec8daf0f4ab669e7ecab01a7",
+      "job_id": "fbed070f-6d45-5259-9f5e-adb490a0e230",
+      "prompt_ids": [
+        "3d05293d-0d26-4017-9a07-6be8ef8f73c8"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793032916.3357277,
+      "finished_at": 1793033016.129743,
+      "job_elapsed_seconds": 70.95196104049683,
+      "recipe": "recipes/plan-01-00-base.json",
+      "recipe_sha256": "c84c048c7efe2861a2a299776d74cb2cdd2382d3fadeced89a5c8b2d538722b9",
+      "export_sha256": "45c286ccc98db926414272cf0012236896fd2db4f7bfef93cd8d1554b1db1da8",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-01\\00-base-0.png",
+        "sha256": "ab0f9aed2fdcfd815042a2ff2ba3022f69723b4c10fe16086d2bd3070980a6ec",
+        "bytes": 1717887,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 1,
+      "scene": "sorceress",
+      "seed": 2026102602,
+      "treatment": "reverse-no-trigger",
+      "project_id": "cd77e1f0a8874657bff56131bb544e2e",
+      "plan_sha256": "feeb3ca034124b15a71ff3872cade187dbff738fec8daf0f4ab669e7ecab01a7",
+      "job_id": "23642287-9cd0-5ef9-84fd-955102cbcb4b",
+      "prompt_ids": [
+        "4aba9b5c-e3e9-4808-abcd-9a4019f43e08"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793033016.664601,
+      "finished_at": 1793033099.7145298,
+      "job_elapsed_seconds": 52.699315309524536,
+      "recipe": "recipes/plan-01-01-reverse-no-trigger.json",
+      "recipe_sha256": "5b10fba253283cdedc146481ea8866852eae697503253fc5f80efb1df5c34213",
+      "export_sha256": "f30e2176ac40382b19faa2266fc934ee0fa8868701b47f8514b6036a6689b090",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-01\\01-reverse-no-trigger-0.png",
+        "sha256": "5a5c4b115fb8137db7ca4530babb014316f10eacd68f8ae2245b944496ba55d7",
+        "bytes": 1640570,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 1,
+      "scene": "sorceress",
+      "seed": 2026102602,
+      "treatment": "reverse-trigger",
+      "project_id": "cd77e1f0a8874657bff56131bb544e2e",
+      "plan_sha256": "feeb3ca034124b15a71ff3872cade187dbff738fec8daf0f4ab669e7ecab01a7",
+      "job_id": "fb035140-bb59-544a-aae4-d74a764c4805",
+      "prompt_ids": [
+        "cd59cd90-9e55-4577-a8fd-f8e5b3084ee1"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793033100.2941363,
+      "finished_at": 1793033179.0076988,
+      "job_elapsed_seconds": 48.7115261554718,
+      "recipe": "recipes/plan-01-02-reverse-trigger.json",
+      "recipe_sha256": "ae5fc543254a7e01e08e680dda1dfb3f31c08093b50a043b69b16d9f7c527f68",
+      "export_sha256": "cfeae0c8e2bdaddbebd55aab112d6d40c16c57a158b8732063eabc42787539e1",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-01\\02-reverse-trigger-0.png",
+        "sha256": "505efd194cee9e904161aa1c0b8cf1ca80ca500390d9a38019b646fc5d4dbdd1",
+        "bytes": 1669974,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 1,
+      "scene": "sorceress",
+      "seed": 2026102602,
+      "treatment": "reverse-1.2",
+      "project_id": "cd77e1f0a8874657bff56131bb544e2e",
+      "plan_sha256": "feeb3ca034124b15a71ff3872cade187dbff738fec8daf0f4ab669e7ecab01a7",
+      "job_id": "9eddcf4a-4be4-55a8-8eae-8f4267cabf13",
+      "prompt_ids": [
+        "91a2bb29-3234-424b-ae43-2f3feeeeeacc"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793033179.4718385,
+      "finished_at": 1793033259.3294134,
+      "job_elapsed_seconds": 50.801881074905396,
+      "recipe": "recipes/plan-01-03-reverse-1.2.json",
+      "recipe_sha256": "a3684b9fd6cb3239ea0751c2379b9b2bda00f802a07a0bfa43f048a463387085",
+      "export_sha256": "44e3e337f286722a1955314941769c5d3a46c3e5103113a202d3b0c61c1b258c",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-01\\03-reverse-1.2-0.png",
+        "sha256": "39d967392978c5f56f9080a1565e030dd7bd8029fed1d5624520cf1e9d61ddb6",
+        "bytes": 1644030,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 1,
+      "scene": "sorceress",
+      "seed": 2026102602,
+      "treatment": "mikko",
+      "project_id": "cd77e1f0a8874657bff56131bb544e2e",
+      "plan_sha256": "feeb3ca034124b15a71ff3872cade187dbff738fec8daf0f4ab669e7ecab01a7",
+      "job_id": "b0a95a7c-5ac6-5a04-bdc2-5abb5408ef7a",
+      "prompt_ids": [
+        "1b411a02-a479-4491-aaff-bc42c63b916e"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793033259.7684214,
+      "finished_at": 1793033337.375995,
+      "job_elapsed_seconds": 48.73397660255432,
+      "recipe": "recipes/plan-01-04-mikko.json",
+      "recipe_sha256": "91732b0c80bc0294b2d5687e6bc2eed69441ede008e033bec9f886a8a4cb6eb2",
+      "export_sha256": "09400dbc0ac727dab909b71f10cdd6a3e5e387cf3256e23b31ae9e48b58cd3f8",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-01\\04-mikko-0.png",
+        "sha256": "78fbe5abacc1f571143e3de42a7e0fa440bcf3262a8c7292f8bf32888387598a",
+        "bytes": 2194296,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 1,
+      "scene": "sorceress",
+      "seed": 2026102602,
+      "treatment": "mikko-impasto",
+      "project_id": "cd77e1f0a8874657bff56131bb544e2e",
+      "plan_sha256": "feeb3ca034124b15a71ff3872cade187dbff738fec8daf0f4ab669e7ecab01a7",
+      "job_id": "78a8252b-5d8d-55ec-a123-4516ef39c858",
+      "prompt_ids": [
+        "0594cb1c-f112-4645-8aa9-0dbcfa25e526"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793033337.8392491,
+      "finished_at": 1793033419.1406424,
+      "job_elapsed_seconds": 52.729066371917725,
+      "recipe": "recipes/plan-01-05-mikko-impasto.json",
+      "recipe_sha256": "4aaf24822216b36b77f5b5e462dc20cc226dae35b3cdcff139216f275e1d1616",
+      "export_sha256": "16bd50e41eafa8fd1d168b5b4c1026c22bf287b5a772df0488c4521cb46ef0b2",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-01\\05-mikko-impasto-0.png",
+        "sha256": "132df6a80b5703a3c4ab2d803493165aa760dadccdd9ed15c42d8407250a2d0e",
+        "bytes": 2123396,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 2,
+      "scene": "evening",
+      "seed": 2026102601,
+      "treatment": "base",
+      "project_id": "efabf1e32abe4bc3a3cd03cbcfab4df3",
+      "plan_sha256": "b746a9d8f9cf1ac80291b5cc0e8ff015460fdb35f25595fa7b0cd75da8f60536",
+      "job_id": "9887dfa1-d693-58d1-bf88-fa76ff8c1099",
+      "prompt_ids": [
+        "933fb3e1-b46b-45e1-8cb9-378d9ea68a2a"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793033750.044998,
+      "finished_at": 1793033866.233288,
+      "job_elapsed_seconds": 86.80978226661682,
+      "recipe": "recipes/plan-02-00-base.json",
+      "recipe_sha256": "4a2df117fab767772edb574bba782975d6f6d54f3cd7b4657c2e3211eb072c19",
+      "export_sha256": "f96e7e06a7447280d45ee075e865fbf95f57dad05992d641c02b376a647b7a8d",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-02\\00-base-0.png",
+        "sha256": "5a5c7178579a27ec4817d416169b0cfc463f39715bdb1bcc7a7705c17a11ff13",
+        "bytes": 1532293,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 2,
+      "scene": "evening",
+      "seed": 2026102601,
+      "treatment": "reverse-no-trigger",
+      "project_id": "efabf1e32abe4bc3a3cd03cbcfab4df3",
+      "plan_sha256": "b746a9d8f9cf1ac80291b5cc0e8ff015460fdb35f25595fa7b0cd75da8f60536",
+      "job_id": "6f4fbfc5-3a93-580a-8481-772cf1cdc4f9",
+      "prompt_ids": [
+        "c434dceb-1bc3-4de8-8013-58ea65bc7965"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793033866.7360296,
+      "finished_at": 1793033947.6751947,
+      "job_elapsed_seconds": 52.62928056716919,
+      "recipe": "recipes/plan-02-01-reverse-no-trigger.json",
+      "recipe_sha256": "f4b2a096675b01281b2e7108c75bab5f4d7bb62a8709b31a0fda872963b376a9",
+      "export_sha256": "ec36fdb4ae372cfe24ceb8a0851e0c564a478218c8cf93dc47fc0c5ba874f737",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-02\\01-reverse-no-trigger-0.png",
+        "sha256": "9395c7b086ff6d389df067f47324afda027fd1a856f6ec757a8d325396e1636b",
+        "bytes": 1408127,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 2,
+      "scene": "evening",
+      "seed": 2026102601,
+      "treatment": "reverse-trigger",
+      "project_id": "efabf1e32abe4bc3a3cd03cbcfab4df3",
+      "plan_sha256": "b746a9d8f9cf1ac80291b5cc0e8ff015460fdb35f25595fa7b0cd75da8f60536",
+      "job_id": "95c61e35-f1d8-5c06-aff8-9e27824a0c6f",
+      "prompt_ids": [
+        "bd4a353d-3578-4a59-8f43-0e2afb1948ca"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793033948.148101,
+      "finished_at": 1793034025.2540574,
+      "job_elapsed_seconds": 48.64029812812805,
+      "recipe": "recipes/plan-02-02-reverse-trigger.json",
+      "recipe_sha256": "66f6fac188e32b6d45bf10bb261f03d328d52f302999a5c4c703661f1d2fc7bb",
+      "export_sha256": "5899fb5a742018b888b99c575f2a402ad16e8113e653f8bbe2b96b5de0d7453e",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-02\\02-reverse-trigger-0.png",
+        "sha256": "a41bf6904e7b4345597605df6a2df89997687a9b9e0d16486cef587bf33e551d",
+        "bytes": 1298647,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 2,
+      "scene": "evening",
+      "seed": 2026102601,
+      "treatment": "reverse-1.2",
+      "project_id": "efabf1e32abe4bc3a3cd03cbcfab4df3",
+      "plan_sha256": "b746a9d8f9cf1ac80291b5cc0e8ff015460fdb35f25595fa7b0cd75da8f60536",
+      "job_id": "534e4159-3ac9-5df2-8114-2d1655232eea",
+      "prompt_ids": [
+        "b1b84c27-e025-4fef-a739-6e71da9bf036"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793034025.7548904,
+      "finished_at": 1793034106.5605488,
+      "job_elapsed_seconds": 50.72169280052185,
+      "recipe": "recipes/plan-02-03-reverse-1.2.json",
+      "recipe_sha256": "1a0c89ba930cc8d90bd6afca462d6693fa37fefe84df6e3ee2daa826a667ee23",
+      "export_sha256": "c0969786ee7211e6b8089183caaf4accb69b5ea15e9b247a703b75bc8ddad706",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-02\\03-reverse-1.2-0.png",
+        "sha256": "f3d913e73cbc169b88eb02b6581e89518a08075562f031245d49670156b27b32",
+        "bytes": 1318453,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 2,
+      "scene": "evening",
+      "seed": 2026102601,
+      "treatment": "mikko",
+      "project_id": "efabf1e32abe4bc3a3cd03cbcfab4df3",
+      "plan_sha256": "b746a9d8f9cf1ac80291b5cc0e8ff015460fdb35f25595fa7b0cd75da8f60536",
+      "job_id": "0a451048-5ff5-5f93-ba60-62d79b516001",
+      "prompt_ids": [
+        "bb5821a8-c05d-4331-ba8a-ff07fcb28e7e"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793034107.027067,
+      "finished_at": 1793034184.3311863,
+      "job_elapsed_seconds": 48.722872734069824,
+      "recipe": "recipes/plan-02-04-mikko.json",
+      "recipe_sha256": "cf1047f460858bb7552c6e559241ca229c5898a04153db65f374b3d6b8cee2cb",
+      "export_sha256": "e3fc39a22bb91e519315fcea2ee07760c82a99eae3829596f1868779e8f56498",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-02\\04-mikko-0.png",
+        "sha256": "3c57c0d279793ba5bc2b14b1890775ab49d4d274d9c2022ee50f9f6b7c19f745",
+        "bytes": 1773149,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 2,
+      "scene": "evening",
+      "seed": 2026102601,
+      "treatment": "mikko-impasto",
+      "project_id": "efabf1e32abe4bc3a3cd03cbcfab4df3",
+      "plan_sha256": "b746a9d8f9cf1ac80291b5cc0e8ff015460fdb35f25595fa7b0cd75da8f60536",
+      "job_id": "e34b0a63-bc7d-5a69-a627-8f4f3c81aec7",
+      "prompt_ids": [
+        "2610e84e-2c65-48b7-810e-4e588fdef66b"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793034184.8035367,
+      "finished_at": 1793034264.0105824,
+      "job_elapsed_seconds": 50.813703775405884,
+      "recipe": "recipes/plan-02-05-mikko-impasto.json",
+      "recipe_sha256": "a40ad958865ac3396f5ab821be93702d13b43b0551458270f4f9c4a68da9b776",
+      "export_sha256": "075f41301755b6f627c78c41eb79ed212a0930802bbc1755dc5389fe628ce18d",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-02\\05-mikko-impasto-0.png",
+        "sha256": "2c66b5f0466a5477ea7eed06d68854178c51d9d763e3fd098c1ed1156e6cfaf3",
+        "bytes": 1802054,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 3,
+      "scene": "evening",
+      "seed": 2026102602,
+      "treatment": "base",
+      "project_id": "3263579913514d80aa78fe1eebe73ede",
+      "plan_sha256": "af7201878c04d3ec5349854340d286fc27dbaa8c8096072f44b2c106956ea541",
+      "job_id": "cae35529-85b3-5c47-a17f-a4600baaf9c2",
+      "prompt_ids": [
+        "6f531265-dab8-4292-bd5d-d61c91752df1"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793034591.396464,
+      "finished_at": 1793034682.374023,
+      "job_elapsed_seconds": 62.78154468536377,
+      "recipe": "recipes/plan-03-00-base.json",
+      "recipe_sha256": "6b8541f3773e75055429e265418faec71233178f9ea8f631c4f6468854432e28",
+      "export_sha256": "9fc26d6e415d9ca551b0c5aa387adb91bb1ea9676686ac3dfe2dac59dcb3de3e",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-03\\00-base-0.png",
+        "sha256": "05232834b9db70c18ae36082a297cb5cd9f5467993954e9e98b7f3e0aca530e6",
+        "bytes": 1364842,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 3,
+      "scene": "evening",
+      "seed": 2026102602,
+      "treatment": "reverse-no-trigger",
+      "project_id": "3263579913514d80aa78fe1eebe73ede",
+      "plan_sha256": "af7201878c04d3ec5349854340d286fc27dbaa8c8096072f44b2c106956ea541",
+      "job_id": "5f8a0947-e2d4-512b-a061-45e0d8368735",
+      "prompt_ids": [
+        "dd68569a-09f7-46a8-b916-cca28232e31d"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793034682.8529584,
+      "finished_at": 1793034764.0120597,
+      "job_elapsed_seconds": 52.71930122375488,
+      "recipe": "recipes/plan-03-01-reverse-no-trigger.json",
+      "recipe_sha256": "bde7968acc862545695f96a39e5472cb29828fad4a9980036d68f2166ed0da99",
+      "export_sha256": "b6401f8e7a1c7ae31b1d1502acba7e6f21cd6b7152cbd3217ac9e2f7c2d55c4c",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-03\\01-reverse-no-trigger-0.png",
+        "sha256": "624b338dc2264b22d47c448188b98027d5ebcc7571aaf919b06b366d3aee0975",
+        "bytes": 1354911,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 3,
+      "scene": "evening",
+      "seed": 2026102602,
+      "treatment": "reverse-trigger",
+      "project_id": "3263579913514d80aa78fe1eebe73ede",
+      "plan_sha256": "af7201878c04d3ec5349854340d286fc27dbaa8c8096072f44b2c106956ea541",
+      "job_id": "7931d7bf-e7be-52c5-b643-fead6e407180",
+      "prompt_ids": [
+        "ffff545c-972b-491c-b7ea-ce2693303cd0"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793034764.5302107,
+      "finished_at": 1793034850.6941085,
+      "job_elapsed_seconds": 58.837029218673706,
+      "recipe": "recipes/plan-03-02-reverse-trigger.json",
+      "recipe_sha256": "65074e0e50e8e489d02c87a0e3b207f81dd9ed2dca12b44cdcb6686a9d90a48e",
+      "export_sha256": "573d49a2459fd44492b8b3980431dddb7622318b2f4bb022a673a54e7f9aaf52",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-03\\02-reverse-trigger-0.png",
+        "sha256": "494af2077f985f770fb4d7f9307872a248d9ae39e9d457314f7db915f723cf4e",
+        "bytes": 1341294,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 3,
+      "scene": "evening",
+      "seed": 2026102602,
+      "treatment": "reverse-1.2",
+      "project_id": "3263579913514d80aa78fe1eebe73ede",
+      "plan_sha256": "af7201878c04d3ec5349854340d286fc27dbaa8c8096072f44b2c106956ea541",
+      "job_id": "eba18a30-55f1-5fdf-b384-8db1a1503d61",
+      "prompt_ids": [
+        "20deb471-42bf-4e41-b315-2f8692b1512b"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793034851.161592,
+      "finished_at": 1793034930.133211,
+      "job_elapsed_seconds": 50.55301809310913,
+      "recipe": "recipes/plan-03-03-reverse-1.2.json",
+      "recipe_sha256": "69a1d10a019cca8108f5e5c52b3527611472e16381b3cb5399438009dedfc727",
+      "export_sha256": "c47ebef56fb64c5bc21f9f28c8945b2747cc33ab064df8e15612034634f74497",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-03\\03-reverse-1.2-0.png",
+        "sha256": "770c46852d8bac98a29b457cb4d6f78f64c192b597a3182e1f97f25fdb699a2c",
+        "bytes": 1380035,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 3,
+      "scene": "evening",
+      "seed": 2026102602,
+      "treatment": "mikko",
+      "project_id": "3263579913514d80aa78fe1eebe73ede",
+      "plan_sha256": "af7201878c04d3ec5349854340d286fc27dbaa8c8096072f44b2c106956ea541",
+      "job_id": "351079b3-d60e-59ed-b50a-3e0ff66601b1",
+      "prompt_ids": [
+        "5c0656b0-6dc4-4efe-8be4-060f5ad2c536"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793034930.6534266,
+      "finished_at": 1793035007.6713948,
+      "job_elapsed_seconds": 48.54418730735779,
+      "recipe": "recipes/plan-03-04-mikko.json",
+      "recipe_sha256": "d26603c648ae65666d37150d5f61660d61b20e1fec482ff520593dba656faf54",
+      "export_sha256": "6ddb52ffd902911118d0ce261cbb043073903c73db81e537d99bc4f0f9757c64",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-03\\04-mikko-0.png",
+        "sha256": "fec33a8655e93f6a095d079ea458685547aab081852deb3fc61c535b51786336",
+        "bytes": 1866412,
+        "width": 1024,
+        "height": 1536
+      }
+    },
+    {
+      "plan_index": 3,
+      "scene": "evening",
+      "seed": 2026102602,
+      "treatment": "mikko-impasto",
+      "project_id": "3263579913514d80aa78fe1eebe73ede",
+      "plan_sha256": "af7201878c04d3ec5349854340d286fc27dbaa8c8096072f44b2c106956ea541",
+      "job_id": "1e733d25-3026-59a4-aef5-5dc0d31314cb",
+      "prompt_ids": [
+        "ddde0307-d525-4f71-aa44-9dbf25c5a3a7"
+      ],
+      "backend_id": "moss",
+      "status": "completed",
+      "created_at": 1793035008.1882808,
+      "finished_at": 1793035086.618556,
+      "job_elapsed_seconds": 50.628114223480225,
+      "recipe": "recipes/plan-03-05-mikko-impasto.json",
+      "recipe_sha256": "5ca81d5c7de40513af7aecc02e971b4dc4632d2dbbe79e0ec2f9a5c7e5016f48",
+      "export_sha256": "88433fdca65e89d0dcd4afbd4f4129f5943cbbbe720155c58814a9fca8129d89",
+      "output": {
+        "file": "E:\\local-asset-studio-labs\\moss-20261026\\evidence\\plan-03\\05-mikko-impasto-0.png",
+        "sha256": "cdd55b8f074d11533a54d968378aed789ca07e6205d9b146913073b0e2c2469f",
+        "bytes": 1903106,
+        "width": 1024,
+        "height": 1536
+      }
+    }
+  ]
+}

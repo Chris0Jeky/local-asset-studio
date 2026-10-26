@@ -19,7 +19,7 @@ This attempt supplies dependency-failure evidence only.
 The parallel [0 ms job 121718555461](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/40364539027/job/121718555461)
 passed its executed assertions at the same merge. Its incidental synthetic
 family-owner exceptions are recorded and corrected in the
-[separate fixture qualification](2026-10-26-recovery-fixture-jobs.md). It does
+[separate fixture qualification](https://github.com/Chris0Jeky/local-asset-studio/pull/1666). It does
 not qualify the skipped 400 ms execution. The original cancellation remains
 retained when assessing any subsequent unchanged-head retry.
 

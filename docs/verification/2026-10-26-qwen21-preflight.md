@@ -78,6 +78,23 @@ red/green, earlier fixture-error and qualification logs are retained locally in
 hosted qualification on the published integrated head; no new local full-suite
 pass or hosted result is claimed by this checkpoint.
 
+## Windows qualification coverage
+
+Reviewing the first published #1667 head
+`be4922ecbe154431f64dd0989455527ded2489f3` found that the existing Windows
+runtime-safety workflow ran the backend safety tests but omitted the new
+direct-launcher test module. It also used the checkout action's default pull
+request merge revision. Run `40366989330` / job `121727250358` therefore cannot
+establish the requested three-case Windows launcher proof on the published head,
+regardless of that job's eventual result.
+
+The workflow now selects and records the pull request head (or the triggering
+commit for a push), runs the three direct-launcher cases, and includes the
+launcher and its test module in both change filters. Every existing test command,
+the Windows runner and the ten-minute job budget are preserved. Local structural
+comparison and the exact added three-test command pass; fresh hosted execution
+on the integrated head remains the Windows authority.
+
 The presence report still leaves `hash_verified` and `runtime_compatible` unknown.
 A nonempty source file is not proof of valid Python, node support, a compatible
 runtime or successful inference. No model download, installed-runtime change,
