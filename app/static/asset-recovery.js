@@ -5,6 +5,23 @@
   const workspace=value=>typeof value==='string' && /^[0-9a-f]{32}$/.test(value);
   const object=value=>value && typeof value==='object' && !Array.isArray(value);
   const form=value=>object(value) && ['title','tags','review','notes'].every(k=>typeof value[k]==='string');
+  const refusalCode=value=>typeof value==='string' && /^[A-Za-z0-9_-]{1,64}$/.test(value);
+  function validRefusal(value,pending,scope){
+    const fields=['version','workspace_id','request_id','status','message','observed_at'],command=pending?.command;
+    return object(value) && Object.keys(value).every(k=>fields.includes(k)||k==='code') && fields.every(k=>Object.hasOwn(value,k)) &&
+      value.version===1 && workspace(scope) && command?.workspace_id===scope && value.workspace_id===scope && value.request_id===command.request_id &&
+      typeof value.request_id==='string' && /^[A-Za-z0-9_-]{16,128}$/.test(value.request_id) &&
+      Number.isInteger(value.status) && value.status>=400 && value.status<500 &&
+      // At most 1,000 Unicode code points also bounds UTF-8 to 4,000 bytes.
+      typeof value.message==='string' && value.message.length>0 && value.message.length<=2000 && [...value.message].length<=1000 &&
+      Number.isSafeInteger(value.observed_at) && value.observed_at>=0 && value.observed_at<=8640000000000000 &&
+      (!Object.hasOwn(value,'code') || refusalCode(value.code));
+  }
+  function samePending(left,right){return operation(left) && operation(right) && left.body===right.body &&
+    left.command.workspace_id===right.command.workspace_id && left.command.request_id===right.command.request_id;}
+  function lastRefusal(value,pending){
+    return value?.version===2 && samePending(value.operation,pending) && validRefusal(value.last_refusal,pending,value.workspace_id)?JSON.parse(JSON.stringify(value.last_refusal)):null;
+  }
   function operation(value){
     const c=value?.command;
     if(!object(c) || typeof value.body!=='string' || value.body.length>128*1024 ||
@@ -21,6 +38,7 @@
        (value.operation && value.operation.command?.workspace_id!==value.workspace_id) ||
        (slot==='detail' && value.metadata?.workspace_id!==value.workspace_id) ||
        (value.conflict && (value.conflict.workspace_id!==value.workspace_id || !Array.isArray(value.conflict.current) || value.conflict.current.some(m=>m.workspace_id!==value.workspace_id)))))return false;
+    if(Object.hasOwn(value,'last_refusal') && (value.version!==2 || !validRefusal(value.last_refusal,value.operation,value.workspace_id)))return false;
     if(slot==='library')return operation(value.operation) && Array.isArray(value.selection) && value.selection.every(id=>typeof id==='string');
     const m=value.metadata;
     return slot==='detail' && typeof value.id==='string' && object(m) && m.id===value.id &&
@@ -54,6 +72,20 @@
       catch(_){throw Error('The save recovery record could not be cleared. Check its receipt again before another save.');}
       notify(slot,null);
     }
+    function recordRefusal(slot,pending,error,{current=()=>true,observedAt=Date.now()}={}){
+      if(!current() || !operation(pending) || !Number.isInteger(error?.status) || error.status<400 || error.status>=500 ||
+        typeof error.message!=='string' || !error.message.trim())return null;
+      const command=pending.command,data=error.data;
+      if(!workspace(command.workspace_id) || data?.code==='asset_workspace_conflict' ||
+        object(data) && (Object.hasOwn(data,'workspace_id') && data.workspace_id!==command.workspace_id ||
+          Object.hasOwn(data,'request_id') && data.request_id!==command.request_id))return null;
+      const retained=read(slot);if(retained?.version!==2 || !samePending(retained.operation,pending))return null;
+      const points=[...error.message.trim()],message=points.length>1000?points.slice(0,999).join('')+'…':points.join('');
+      const explanation={version:1,workspace_id:command.workspace_id,request_id:command.request_id,status:error.status,message,observed_at:observedAt};
+      if(refusalCode(data?.code))explanation.code=data.code;
+      if(!validRefusal(explanation,pending,retained.workspace_id) || !current())return null;
+      return write(slot,{...retained,last_refusal:explanation});
+    }
     function dispatch(slot,operation,send,current=()=>true){
       if(!checkpoint?.prepare)return send();
       const retained=read(slot);
@@ -64,7 +96,7 @@
       });
     }
     function connect(value){checkpoint=value;}
-    return {read,write,clear,dispatch,connect};
+    return {read,write,clear,dispatch,connect,recordRefusal};
   }
-  return {create,PREFIX,workspace};
+  return {create,PREFIX,workspace,validRefusal,lastRefusal};
 });

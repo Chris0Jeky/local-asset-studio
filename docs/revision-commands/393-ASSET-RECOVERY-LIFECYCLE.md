@@ -104,13 +104,24 @@ and stale file reads or import errors crossing dialog openings. Those results do
 all lifecycle/conflict journeys at that zoom, browser-menu operation, or an
 executed screen-reader pass.
 
+The [retained-refusal follow-up](393-REFUSED-RETRIES.md#retained-explanation--26-october-follow-up)
+adds a bounded explanation of the last recorded refusal to the existing journal
+and shelf payloads. It survives typing, reopening, reload and import without
+changing the pending command, and remains separate from current lifecycle
+observations.
+Its 32-assertion native qualification covers literal text, focus while a
+refusal completes and historical wording after a later lost reply. It does not
+establish the complete conflict keyboard journey or assistive-technology
+acceptance below.
+
 ## Remaining issue-level acceptance
 
 This is a bounded inspection slice, not closure of all #393. The existing editor
-still owns conflict/rebase and exact-retry decisions; broader retry-refusal
-presentation, focus after every asset/filter removal, browser-menu 200% zoom and
-screen-reader review remain to qualify. This PR does not rewrite the existing
-save/refusal state machine or grant retry permission based only on an observation.
+still owns conflict/rebase and exact-retry decisions; the complete keyboard
+recovery/conflict journey, focus after every asset/filter removal, browser-menu
+200% zoom and screen-reader review remain to qualify. This PR does not rewrite
+the existing save/refusal state machine or grant retry permission based only on
+an observation.
 
 #388 remains the separate collection editor PR. #394 owns durable browser-File
 staging and #395 owns shared setup history/forks/import commit; neither is

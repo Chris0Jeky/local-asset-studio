@@ -134,7 +134,8 @@ function rememberAssetDetails() {
   if(!assetDetailDirty() && !assetDetailPending && !assetDetailConflict){assetRecovery.clear('detail');assetRetainedDetail=null;return;}
   const metadata=Object.fromEntries(['id','workspace_id','metadata_revision','title','notes','tags','review','favorite','trashed_at'].map(k=>[k,activeAsset[k]]));
   const operation=assetDetailPending?Object.fromEntries(['command','body','kind','snapshot'].map(k=>[k,assetDetailPending[k]])):null;
-  assetRetainedDetail=assetRecovery.write('detail',{version:2,workspace_id:activeAsset.workspace_id,id:activeAsset.id,metadata,baseline:assetDetailBaseline,draft:assetDetailValues(),operation,conflict:assetDetailConflict});
+  const last_refusal=StudioAssetRecovery.lastRefusal(assetRetainedDetail,operation);
+  assetRetainedDetail=assetRecovery.write('detail',{version:2,workspace_id:activeAsset.workspace_id,id:activeAsset.id,metadata,baseline:assetDetailBaseline,draft:assetDetailValues(),operation,conflict:assetDetailConflict,...(last_refusal?{last_refusal}:{})});
 }
 function retainAssetDraft() {
   try{rememberAssetDetails();assetRecoveryError='';return true;}
@@ -235,9 +236,17 @@ function renderAssetRecoveryPanel(panel,html,hidden,selectors,fallback) {
     (target||fallback)?.focus();
   }
 }
+function assetRefusalHTML(record,operation){
+  const refusal=StudioAssetRecovery.lastRefusal(record,operation);if(!refusal)return '';
+  return '<p><b>Last recorded refusal (HTTP '+refusal.status+').</b> '+esc(refusal.message)+'</p><p>This describes that attempt only. The earlier command remains unconfirmed; check its receipt to learn its outcome.</p>';
+}
+function retainAssetRefusal(slot,operation,error,current){
+  try{const value=assetRecovery.recordRefusal(slot,operation,error,{current});if(slot==='detail'&&value)assetRetainedDetail=value;return '';}
+  catch(_){return ' The refusal explanation could not be retained. Keep this tab open and a copy of the explanation; the exact command remains unresolved.';}
+}
 function renderAssetSaveRecovery() {
   const panel=$('#assetDetailRecovery');
-  const html=assetDetailPending?'<p>The earlier save is unconfirmed. Check its receipt or retry that exact request; newer typing is not sent.</p><code>'+esc(assetDetailPending.command.request_id)+'</code><div class="asset-detail-actions"><button data-asset-save-check>Check save status</button><button data-asset-save-retry>Retry exact save</button></div>':'';
+  const html=assetDetailPending?'<p>The earlier save is unconfirmed. Check its receipt or retry that exact request; newer typing is not sent.</p><code>'+esc(assetDetailPending.command.request_id)+'</code>'+assetRefusalHTML(assetRetainedDetail,assetDetailPending)+'<div class="asset-detail-actions"><button data-asset-save-check>Check save status</button><button data-asset-save-retry>Retry exact save</button></div>':'';
   const fallback=assetDetailConflict?$('#assetDetailConflict').querySelector?.('[data-asset-rebase]')||$('#assetNotes'):$('#saveAssetDetails');
   renderAssetRecoveryPanel(panel,html,!assetDetailPending,['[data-asset-save-check]','[data-asset-save-retry]'],$('#assetDialog').open?fallback:null);
 }
@@ -278,6 +287,7 @@ async function performAssetSave(operation, observe=false) {
   const ownsRequest=()=>assetDetailRequest===request;
   const ownsEditor=()=>assetDetailContextCurrent(id,epoch) && assetDetailPending===operation && activeAsset.workspace_id===command.workspace_id;
   const current=()=>ownsRequest() && ownsEditor() && assetState.workspace_id===command.workspace_id && assetWorkspaceEpoch===workspaceEpoch;
+  let refusalPresentation=null;
   assetDetailBusy=true;assetDetailDiscarding=['trash','restore'].includes(command.action);assetDetailControls();
   assetDetailStatus(observe?'Checking the earlier save receipt…':'Saving this snapshot… Newer typing stays in your draft.');
   const timer=setTimeout(()=>controller.abort(),15000);
@@ -293,15 +303,18 @@ async function performAssetSave(operation, observe=false) {
   } catch(error) {
     if(!current())return false;
     const conflict=!observe && assetRevisionConflict(error,command);
+    const warning=!observe&&!conflict?retainAssetRefusal('detail',operation,error,current):'';
     if(error.data?.code==='asset_workspace_conflict'){
       assetDetailStatus('The server is using a different Workspace. No changes were applied there. The exact save is retained for the original Workspace.',true);
     } else if(conflict){
       assetDetailPending=null;assetDetailConflict=conflict;renderAssetConflict();assetDetailStatus('Conflict: this asset changed elsewhere. Compare the saved values with your draft before saving again.',true);
     } else if(error.data?.code==='asset_revision_conflict'){
-      assetDetailStatus('Conflict reply could not be verified for this save. The exact command and your draft remain retained. Check its receipt, inspect lifecycle, or explicitly discard local recovery before a different save. No comparison was loaded.',true);
+      const text='Conflict reply could not be verified for this save. '+error.message+' The exact command and your draft remain retained. Check its receipt, inspect lifecycle, or explicitly discard local recovery before a different save. No comparison was loaded.'+warning;
+      assetDetailStatus(text,true);if(warning)refusalPresentation=text;
     } else if(!observe && error.status>=400 && error.status<500){
       // A refusal describes this attempt, not the outcome of an earlier lost response.
-      assetDetailStatus('This attempt was refused. '+error.message+' The exact command and your draft remain retained. Check its receipt, or close and explicitly discard local recovery before a different save.',true);
+      const text='This attempt was refused. '+error.message+' The exact command and your draft remain retained. Check its receipt, or close and explicitly discard local recovery before a different save.'+warning;
+      assetDetailStatus(text,true);if(warning)refusalPresentation=text;
     } else {
       assetDetailStatus('Save not confirmed. '+(error.name==='AbortError'?'The request timed out.':error.message)+' Your edits remain here. No automatic retry was sent.',true);
     }
@@ -317,6 +330,7 @@ async function performAssetSave(operation, observe=false) {
          assetState.workspace_id===command.workspace_id && assetWorkspaceEpoch===workspaceEpoch &&
          (!assetDetailPending || assetDetailPending===operation)){
         assetDetailControls();renderAssetSaveRecovery();retainAssetDraft();
+        if(refusalPresentation)assetDetailStatus(refusalPresentation,true);
       }else if(ownsEditor()){
         assetDetailControls();renderAssetSaveRecovery();assetDetailStatus('The Workspace changed while this request was pending. The original recovery is retained; return to its Workspace and check status explicitly.',true);
       }
@@ -1005,10 +1019,11 @@ function renderLibraryRecovery() {
   observeAssetWorkspaceIdentity();
   if(assetRetainedSelection && StudioAssetRecovery.workspace(assetLibraryPending?.command.workspace_id) && assetLibraryPending.command.workspace_id===assetState.workspace_id){assetSelection=new Set(assetRetainedSelection);assetRetainedSelection=null;}
   const panel=$('#assetCommandRecovery');
-  const detail=assetRetainedDetail?'<p>This tab has a retained asset draft'+(assetRetainedDetail.operation?' and an unconfirmed save':'')+'. Reloading sends no save.</p><button data-asset-recover-open>Review retained draft</button><details><summary>Retained draft text</summary><pre>'+esc(JSON.stringify(assetRetainedDetail.draft,null,2))+'</pre></details>':'';
+  const detail=assetRetainedDetail?'<p>This tab has a retained asset draft'+(assetRetainedDetail.operation?' and an unconfirmed save':'')+'. Reloading sends no save.</p>'+assetRefusalHTML(assetRetainedDetail,assetRetainedDetail.operation)+'<button data-asset-recover-open>Review retained draft</button><details><summary>Retained draft text</summary><pre>'+esc(JSON.stringify(assetRetainedDetail.draft,null,2))+'</pre></details>':'';
+  let libraryRefusal='';if(assetLibraryPending)try{libraryRefusal=assetRefusalHTML(assetRecovery.read('library'),assetLibraryPending);}catch(error){libraryRefusal='<p>'+esc(error.message)+'</p>';}
   const scopeProblem=assetRetainedDetail?recoveryScopeMessage(assetRetainedDetail.workspace_id):assetLibraryPending?recoveryScopeMessage(assetLibraryPending.command.workspace_id):'';
   const discard=(assetRetainedDetail?'<button data-asset-recovery-discard="detail">Discard local draft and recovery</button>':'')+(assetLibraryPending?'<button data-asset-recovery-discard="library">Discard local update recovery</button>':'');
-  const html=(assetRecoveryError?'<p>'+esc(assetRecoveryError)+'</p>':'')+(scopeProblem?'<p>'+esc(scopeProblem)+'</p>':'')+detail+discard+(assetLibraryPending?'<p>The earlier library update is unconfirmed. Selection is retained.</p><code>'+esc(assetLibraryPending.command.request_id)+'</code><details><summary>Retained update details</summary><pre>'+esc(JSON.stringify(assetLibraryPending.command,null,2))+'</pre></details><div class="asset-detail-actions"><button data-asset-batch-check>Check update status</button><button data-asset-batch-retry>Retry exact update</button></div>':'');
+  const html=(assetRecoveryError?'<p>'+esc(assetRecoveryError)+'</p>':'')+(scopeProblem?'<p>'+esc(scopeProblem)+'</p>':'')+detail+discard+(assetLibraryPending?'<p>The earlier library update is unconfirmed. Selection is retained.</p><code>'+esc(assetLibraryPending.command.request_id)+'</code>'+libraryRefusal+'<details><summary>Retained update details</summary><pre>'+esc(JSON.stringify(assetLibraryPending.command,null,2))+'</pre></details><div class="asset-detail-actions"><button data-asset-batch-check>Check update status</button><button data-asset-batch-retry>Retry exact update</button></div>':'');
   renderAssetRecoveryPanel(panel,html,!assetLibraryPending && !assetRetainedDetail && !assetRecoveryError,
     ['[data-asset-recover-open]','[data-asset-batch-check]','[data-asset-batch-retry]','[data-asset-recovery-discard=\"detail\"]','[data-asset-recovery-discard=\"library\"]'],$('#workspaceRefresh'));
 }
@@ -1023,7 +1038,8 @@ async function performLibraryCommand(operation,observe=false) {
   try {
     if(assetRecoveryLoadError)throw Error(assetRecoveryLoadError);
     requireAssetScope(command.workspace_id);
-    assetRecovery.write('library',{version:2,workspace_id:command.workspace_id,operation,selection:operation.selection||[...assetSelection]});
+    const last_refusal=StudioAssetRecovery.lastRefusal(assetRecovery.read('library'),operation);
+    assetRecovery.write('library',{version:2,workspace_id:command.workspace_id,operation,selection:operation.selection||[...assetSelection],...(last_refusal?{last_refusal}:{})});
     const result=await (observe?api(assetReceiptURL(command),{signal:controller.signal}):assetRecovery.dispatch('library',operation,()=>api('/api/assets/update',{method:'POST',headers:{'Content-Type':'application/json'},body:operation.body,signal:controller.signal}),()=>current() && !controller.signal.aborted));
     if(!current())throw Error('The library or Workspace changed while this request was pending. Its original recovery is retained.');
     if(observe && result?.status==='unknown')throw Error('No receipt yet; the earlier update may still complete. No retry was sent.');
@@ -1031,7 +1047,10 @@ async function performLibraryCommand(operation,observe=false) {
     applyAssetReceipt(command,result);renderAssets();
     void refreshAssets();assetMessage('Library update confirmed.');return result;   // an overlapping read reanchors instead of restoring the pre-update snapshot
   } catch(error) {
-    if(current() && !observe && error.data?.code!=='asset_workspace_conflict' && error.status>=400 && error.status<500){throw Error('This attempt was refused. '+error.message+' The exact command and complete selection remain retained. Check its receipt or explicitly discard local recovery before a different update.');}
+    if(current() && !observe && error.data?.code!=='asset_workspace_conflict' && error.status>=400 && error.status<500){
+      const warning=retainAssetRefusal('library',operation,error,current);
+      throw Error('This attempt was refused. '+error.message+' The exact command and complete selection remain retained. Check its receipt or explicitly discard local recovery before a different update.'+warning);
+    }
     throw Error('Library update not confirmed. '+error.message+' No automatic retry was sent.');
   } finally {
     clearTimeout(timer);

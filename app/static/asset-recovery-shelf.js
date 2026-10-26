@@ -1,5 +1,5 @@
 /* Optional local review evidence, never an authoritative Workspace or a replay queue. */
-(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.StudioAssetRecoveryShelf=api;})(globalThis,function(){
+(function(root,factory){const api=factory(typeof module==='object'&&module.exports?require('./asset-recovery.js'):root.StudioAssetRecovery);if(typeof module==='object'&&module.exports)module.exports=api;else root.StudioAssetRecoveryShelf=api;})(globalThis,function(Journal){
   'use strict';
   const KEY='studio.asset-recovery.shelf.v1',LOCK=KEY+'.lock';
   const DATABASE='studio.asset-recovery.shelf.v2',STORE='shelf',ENTRY='current';
@@ -102,10 +102,11 @@
     if(!object(v)||![1,2].includes(v.version))fail('Unsupported recovery payload version.');
     const w=v.version===2?v.workspace_id:null;
     if(v.version===2&&!scope(w))fail('Invalid Workspace identity.');
+    if(Object.hasOwn(v,'last_refusal') && (v.version!==2 || !Journal.validRefusal(v.last_refusal,v.operation,w)))fail('Invalid bounded refusal annotation.');
     if(slot==='library'){
-      if(!keys(v,['version','workspace_id','operation','selection'],['version','operation','selection'])||!ids(v.selection)||!operation(v.operation,w,slot))fail('Invalid bounded library recovery.');
+      if(!keys(v,['version','workspace_id','operation','selection','last_refusal'],['version','operation','selection'])||!ids(v.selection)||!operation(v.operation,w,slot))fail('Invalid bounded library recovery.');
     }else if(slot==='detail'){
-      if(!keys(v,['version','workspace_id','id','metadata','baseline','draft','operation','conflict'],['version','id','metadata','baseline','draft','operation','conflict'])||
+      if(!keys(v,['version','workspace_id','id','metadata','baseline','draft','operation','conflict','last_refusal'],['version','id','metadata','baseline','draft','operation','conflict'])||
          !id(v.id)||!metadata(v.metadata,w)||v.metadata.id!==v.id||!baselineOk(v.baseline,v.metadata)||!draftOk(v.draft,v.baseline)||v.operation!==null&&!operation(v.operation,w,slot,v.id,v.baseline))fail('Invalid review recovery identity or field bound.');
       if(v.conflict!==null){
         const c=v.conflict;
@@ -121,7 +122,7 @@
     // Projection applies to trusted in-tab data only. Import validation below
     // rejects extra fields instead of silently accepting a different document.
     const pick=(v,names)=>Object.fromEntries(names.filter(k=>Object.hasOwn(v,k)).map(k=>[k,v[k]]));
-    const v=pick(input,slot==='detail'?['version','workspace_id','id','metadata','baseline','draft','operation','conflict']:['version','workspace_id','operation','selection']);
+    const v=pick(input,slot==='detail'?['version','workspace_id','id','metadata','baseline','draft','operation','conflict','last_refusal']:['version','workspace_id','operation','selection','last_refusal']);
     if(slot==='detail'){
       v.metadata=pick(input.metadata,metadataKeys);v.baseline=pick(input.baseline,formKeys);v.draft=pick(input.draft,formKeys);
       if(v.conflict){v.conflict=pick(v.conflict,['workspace_id','current','confirmed_request_id']);v.conflict.current=v.conflict.current.map(m=>pick(m,metadataKeys));}
