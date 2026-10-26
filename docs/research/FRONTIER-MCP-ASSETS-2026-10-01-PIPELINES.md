@@ -104,8 +104,11 @@ Every artifact that enters the repo or LAS library should carry:
 
 1. Source connector / MCP server id  
 2. Model or tool name as returned (no invented aliases)  
-3. Prompt / refs hashes or URLs  
-4. Cost acknowledgement if Weave/Comfy partner  
-5. Acceptance: reviewed true/false  
+3. The full resolved recipe: exact model/tool revisions, prompt text, reference hashes or URLs, every stage's parameters (including resolved defaults), seed, dimensions, sampling and output settings, and any preprocessing/adapters. Prompt/reference data alone is insufficient.
+4. Retain every known provider prompt/job/prediction ID, with provider and stage/attempt association; keep multiple IDs rather than replacing earlier ones. An unknown ID stays `null`, never invented or recovered by repeating an uncertain submission.
+5. Cost acknowledgement if Weave/Comfy partner; explicit owner scope before any paid execution.
+6. Independent execution success, `reviewed` and `accepted` values (`true` / `false` / `null` when unknown), plus separate nullable licensing and commercial review outcomes with terms/evidence for the intended use. A reviewed rejection is `reviewed: true, accepted: false`; completion or review never implies acceptance or licence clearance. Unknown licensing stays `null`, even for accepted art.
+
+This is a design checklist for a future bounded importer/receipt proposal, not an executable schema or an importer. Missing recipe details remain explicit gaps before promotion. See the [illustrative cloud receipts](../FRONTIER-ARCHITECTURE.md#illustrative-cloud-receipts); no example grants admission, paid scope or approval. P8's supported Studio admission, read-only `comfy-local` and leave-unexecuted fallback still apply.
 
 Prefer writing receipts under pack `_artifacts/` or LAS experiments root — **not** committing binaries to git.

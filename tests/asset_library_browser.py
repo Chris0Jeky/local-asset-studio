@@ -147,6 +147,17 @@ async def exercise(args):
                 await page.evaluate("window.librarySceneEscaped=false;document.querySelector('#createScene').addEventListener('click',e=>{window.librarySceneEscaped=true;e.preventDefault();})")
                 await page.click('#createScene')
                 check('LIB-11', 'Cancel hidden-item scene handoff stops activation before the link', not await page.evaluate('window.librarySceneEscaped'))
+                # A source the search left off the page, never resolved: Scene eligibility must not judge the loaded page alone.
+                await page.evaluate('assetSelection.clear();renderAssets()')
+                await search('')
+                await page.locator(f'[data-asset-check="{ids[2]}"]').check()
+                await search('Study 0')
+                check('LIB-42', 'An unresolved off-page scene source is not refused from the loaded page', await page.evaluate("assetSelectionInfo().unresolved===1&&document.querySelector('#createScene').getAttribute('aria-disabled')==='false'"))
+                await page.click('#createScene')
+                await page.wait_for_function('!assetSelectionInfo().unresolved')
+                check('LIB-43', 'Activation resolves the source, judges it eligible and does not open the link yet', await page.evaluate("document.querySelector('#createScene').getAttribute('aria-disabled')==='false'&&document.querySelector('#createScene').title.startsWith('Timing is chosen next')&&!window.librarySceneEscaped"))
+                await page.evaluate('assetSelection.clear();renderAssets()')
+                await select_two()
                 keep = page.locator('#keepVisibleSelection')
                 if await keep.count():
                     await keep.click()
@@ -227,6 +238,7 @@ async def exercise(args):
                 check('LIB-21', 'Manual 201st selection is refused without losing the first 200', await page.evaluate('assetSelection.size') == 200 and not await page.locator(f'[data-asset-check="{remaining}"]').is_checked())
                 await page.evaluate("assetSelection=new Set(['large-0','missing-record']);renderAssets()")
                 before = len(writes); await page.click('[data-bulk="trash"]')
+                await page.wait_for_function('!assetSelectionInfo().unresolved')  # the refusal resolves both IDs; LIB-23 reads the list after it lands
                 check('LIB-22', 'Unavailable selected IDs prevent bulk mutation without silent removal', len(writes) == before and await page.evaluate('assetSelection.size') == 2)
                 if await details.count() and not await details.locator('..').evaluate('(e)=>e.open'):
                     await details.click()

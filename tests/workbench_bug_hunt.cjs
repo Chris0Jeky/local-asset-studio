@@ -34,6 +34,25 @@ test('plan and one-press sends block Generate readiness and its handler until se
   }
 });
 
+test('Scene eligibility waits for selected sources a search moved off the loaded page',()=>{
+  const png={id:'png',media_type:'image',filename:'a.png'},wav={id:'wav',media_type:'audio',filename:'a.wav'},jpg={id:'jpg',media_type:'image',filename:'a.jpg'};
+  const page=new Map([['wav',wav]]),resolved=new Map(),attrs={},hooks={};
+  const b=box({assetSelection:new Set(['wav','png']),after:(name,fn)=>{hooks[name]=fn;},assetRecord:id=>resolved.get(id)||page.get(id),
+    assetSelectionInfo:()=>({unresolved:[...b.assetSelection].filter(id=>!b.assetRecord(id)).length})});
+  Object.assign(b.q('#createScene'),{setAttribute:(k,v)=>{attrs[k]=v;},classList:{toggle:()=>{}}});
+  vm.runInContext(section("  after('renderAssetSelection',","\n  document.addEventListener('click',e=>{const link=e.target.closest('#createScene')"),b);
+  hooks.renderAssetSelection();
+  // The page holds only the WAV; judging it alone would refuse the scene before activation can resolve the PNG.
+  assert.equal(attrs['aria-disabled'],'false','an unresolved off-page selection is not refused from the loaded page alone');
+  resolved.set('png',png);hooks.renderAssetSelection();
+  assert.equal(attrs['aria-disabled'],'false','the resolved PNG plus WAV is a valid scene');
+  b.assetSelection=new Set(['wav','jpg']);hooks.renderAssetSelection();
+  assert.equal(attrs['aria-disabled'],'false','still unresolved: not judged yet');
+  resolved.set('jpg',jpg);hooks.renderAssetSelection();
+  assert.equal(attrs['aria-disabled'],'true','once resolved, every selected source is validated');
+  assert.match(b.q('#createScene').title,/PNG, MP4 and WAV/);
+});
+
 const polish=section('  const polishBusy=new Set();','\n  // #1497 Vary from Make:');
 test('Polish refuses a concurrent Create send before copying or posting',async()=>{
   const b=box({submitting:true,readSource:async()=>{throw Error('should not read');}});
