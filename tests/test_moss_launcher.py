@@ -12,7 +12,7 @@ RUNNER='''import os,runpy,sys
 from pathlib import Path
 from unittest.mock import patch
 script,checkout,observation,fault,*extra=sys.argv[1:]
-encoder=Path(checkout)/'comfy/text_encoders/moss_image.py'
+encoder=(Path(checkout)/'comfy/text_encoders/moss_image.py').resolve()
 original_stat=Path.stat;original_chdir=os.chdir
 def observed_stat(path,*args,**kwargs):
     if fault=='encoder-stat-error' and path==encoder:raise PermissionError('injected encoder stat refusal')
@@ -58,15 +58,17 @@ class MossLauncherTests(unittest.TestCase):
     def test_complete_checkout_preserves_arguments_overlay_and_existing_input(self):
         inputs=self.checkout/'input';inputs.mkdir()
         existing=inputs/'existing-reference.png';existing.write_bytes(b'retained input')
+        # Match the launcher's canonical paths while still passing the original alias.
+        checkout=self.checkout.resolve()
         for extra,reserve in (((),'2'),(('--reserve-vram','1.25'),'1.25')):
             with self.subTest(extra=extra):
                 result=self.run_launcher(*extra)
                 self.assertEqual(result.returncode,0,result.stdout+result.stderr)
                 observed=json.loads((self.checkout/'launch-observed.json').read_text())
-                self.assertEqual(Path(observed['cwd']),self.checkout)
-                self.assertEqual(Path(self.chdir_marker.read_text()),self.checkout)
-                self.assertEqual(observed['path'],[str(self.checkout),str(self.checkout/'python_packages')])
-                self.assertEqual(observed['argv'],[str(self.checkout/'main.py'),'--windows-standalone-build',
+                self.assertEqual(Path(observed['cwd']),checkout)
+                self.assertEqual(Path(self.chdir_marker.read_text()),checkout)
+                self.assertEqual(observed['path'],[str(checkout),str(checkout/'python_packages')])
+                self.assertEqual(observed['argv'],[str(checkout/'main.py'),'--windows-standalone-build',
                     '--disable-auto-launch','--disable-api-nodes','--preview-method','latent2rgb','--listen','127.0.0.1',
                     '--port','8198','--reserve-vram',reserve,'--disable-pinned-memory'])
                 self.assertEqual(existing.read_bytes(),b'retained input')

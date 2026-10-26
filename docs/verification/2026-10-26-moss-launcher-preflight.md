@@ -48,3 +48,28 @@ Fresh hosted Windows and full-suite qualification are required on the published
 head. A nonempty stat result does not prove readable/importable Python, compatible
 nodes, valid model hashes, or inference. Manager admission, process ownership,
 launch arguments, model files, installed ComfyUI, and shared packages are unchanged.
+
+## Canonical path fixture correction
+
+The initial Windows Qwen launcher gate at parent
+`fc234d8197273e2ba18cc4322fe09ce604bd68b0` exposed a Windows short-path alias in
+the temporary checkout. The MOSS fixture shared that expectation and could also
+miss its encoder stat-error injection by comparing a raw alias with the canonical
+path used by the launcher. The failed parent job is retained as
+[run 40398249108, job 121836946830](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/40398249108/job/121836946830);
+it is not a passing MOSS or corrected-head qualification.
+
+The MOSS fixture now resolves its injected encoder path before installing the
+stat mock, and expects canonical cwd, observed chdir, overlay order, and main
+argument. It continues to pass the original path to the launcher. Both reserve
+controls and all refusal assertions remain exact. The MOSS production launcher
+remains Git blob `04f7db9ecb4c43c700bcd8b66389868d3e97e1b8` unchanged.
+
+A bounded Linux symlink-alias probe against the original MOSS fixture
+`295dc9313e696d5709e0afa5d5d32ffec7a1b944` reproduced two positive-control
+assertion failures and the missed PermissionError injection (inert main ran, exit
+0). With the fixture correction, all four MOSS cases and the three companion Qwen
+cases pass through that raw alias: 7 tests in 0.653 seconds, no skips, exit 0. The
+ordinary-path control also passes all 7 in 0.729 seconds. The copied real launcher
+bytes are identical for baseline and corrected fixture runs. Fresh hosted Windows
+and full-suite results must be collected for the newly published head.

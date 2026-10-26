@@ -44,8 +44,10 @@ class Qwen21LauncherTests(unittest.TestCase):
         result=self.run_launcher()
         self.assertEqual(result.returncode,0,result.stdout+result.stderr)
         observed=json.loads((self.checkout/'launch-observed.json').read_text())
-        self.assertEqual(Path(observed['cwd']),self.checkout)
-        self.assertEqual(observed['argv'],[str(self.checkout/'main.py'),'--windows-standalone-build',
+        # The launcher resolves input aliases (including Windows short temp paths).
+        checkout=self.checkout.resolve()
+        self.assertEqual(Path(observed['cwd']),checkout)
+        self.assertEqual(observed['argv'],[str(checkout/'main.py'),'--windows-standalone-build',
             '--disable-auto-launch','--disable-api-nodes','--preview-method','latent2rgb','--listen','127.0.0.1',
             '--port','8196','--reserve-vram','3','--disable-fast-disk','--disable-pinned-memory'])
         self.assertEqual(existing.read_bytes(),b'retained input')
