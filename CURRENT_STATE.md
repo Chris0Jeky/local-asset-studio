@@ -1,5 +1,52 @@
 # Current state — 13 October 2026
 
+## Unambiguous HTTP request framing - 26 October 2026
+
+The shared Handler now rejects duplicate Content-Length fields (including equal values),
+comma-separated or non-decimal lengths, and every Transfer-Encoding field before dispatch.
+Rejections return JSON 400 with `invalid_request_framing` and close the connection, preventing
+body bytes or a pipelined request from reaching core or composed routes. A single decimal length retains leading-zero
+and surrounding HTTP space/tab support; bodyless GET requests still work.
+
+The clean starting worktree matched origin/main at `14cbcde6`; the only open PR (#1654)
+covered incomplete composed bodies, not framing. Baselines passed 8 HTTP security and 4
+production-storage integration tests. Raw sockets then reproduced malformed requests queuing
+jobs with 201 responses. Disabling only the new parser method in a separate process produced
+18 failing subtests across the regression group; its valid-request control passed.
+
+The HTTP security suite passes all 13 tests; all 14 asset-read HTTP tests pass. The server
+suite passed 175 tests before the space/tab compatibility adjustment, which has its own
+red/green control. Repository validation passes 93 graph bindings and 187 pinned assets.
+An initial full run completed 6,090 tests in 808.229 seconds with three failures: the new
+rejection omitted the asset-read error code. The shared rejection now includes a typed code,
+with a regression assertion. The final full suite passed all 6,090 tests in 907.923 seconds
+(82 skipped). An earlier run was intentionally interrupted for the space/tab compatibility fix.
+Logs remain local-only in `.runtime/request-framing/`.
+
+PR #1655 merge review (26 October): both evidence entries were retained while resolving
+the conflict with main's composed-body work. Adversarial raw-socket probes found that
+a malformed header line could hide later framing fields from Python's header parser;
+two probes returned 201 and queued jobs. The admission check now also rejects header
+parser defects. Four new cases failed before that fix and pass afterward. Rejection
+tests keep the client's write side open and require server EOF, proving connection
+closure rather than relying on the client to close first. The final focused runs passed
+14 HTTP security, 175 server, 12 prompt-project and four storage integration tests;
+the merged seven-test composed-body and 14-test asset-read modules also passed.
+A separate fresh-context security review of the final source found no blockers.
+Repository validation and both diff whitespace checks pass. Full resource-lifetime
+qualification passed: shard 1/2 ran 3,087 tests in 761.991 seconds (51 skipped),
+and shard 2/2 ran 3,015 tests in 526.444 seconds (31 skipped). Together they cover
+6,102 tests with 82 skipped. Both report no retained non-daemon threads or active
+child processes; both lifetime wrappers exited successfully. All 11 recorded code
+hashes still match the tested working tree. Receipts are local-only in
+`.runtime/pr1655-finish/`. Conflict markers are removed, but the index remains
+unmerged because this finishing task prohibits Git writes. Hosted CI and remote
+review threads were not queried because network calls are prohibited.
+
+No installed runtime was changed or generation submitted; no Git write or PR publication was
+performed. The coordinator owns review, commit and publication. `HUMAN_TODO.md` is unchanged; creative, licensing and
+owner acceptance choices remain open. The storage-fixture isolation candidate remains separate.
+
 ## Remaining composed command bodies — 26 October 2026
 
 Six remaining composed readers now use the existing complete-body helper before
