@@ -75,6 +75,18 @@ class WorkflowAssetReadTests(unittest.TestCase):
         self.assertTrue(result['ok'], result)
         self.assertEqual(data(result)['filters']['source'], 'agent')
 
+    def test_exact_job_filter_uses_the_same_read_only_client_contract(self):
+        properties = self.bridge.definitions()['asset_page']['inputSchema']['properties']['filters']['properties']
+        self.assertEqual(properties['job_id']['maxLength'], 128)
+        self.fixture.page['filters']['job_id'] = 'same-run'
+        self.reply(self.fixture.page)
+        with patch.object(self.client.opener, 'open', wraps=self.client.opener.open) as calls:
+            result = self.bridge.invoke('asset_page', {'filters': {'job_id': 'same-run'}})
+        self.assertTrue(result['ok'], result)
+        self.assertEqual(data(result)['filters']['job_id'], 'same-run')
+        self.assertEqual(calls.call_count, 1)
+        self.assertIn('job_id=same-run', calls.call_args.args[0].full_url)
+
     def test_exact_page_uses_existing_transport_timeout_and_one_get(self):
         response = self.reply(self.fixture.page)
         with patch.object(self.client, 'request', side_effect=AssertionError('Loose decoder used')), \

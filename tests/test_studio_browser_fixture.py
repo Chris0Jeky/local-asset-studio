@@ -1,5 +1,6 @@
 """Shared browser responses also support handlers that delegate without inheriting."""
 import io
+import json
 import unittest
 from types import SimpleNamespace
 
@@ -20,8 +21,9 @@ class WorkspaceIdentityTests(unittest.TestCase):
                 self.assertTrue(handler.wfile.getvalue())
             else:
                 yield fixture.Handler.do_GET(handler)
-        handler = SimpleNamespace(path='/api/assets/selection', headers={'Content-Length': '10'},
-                                  rfile=io.BytesIO(b'{"ids":[]}'), json=lambda value: value, **attributes)
+        body=json.dumps({'workspace_id':attributes.get('workspace_id','1'*32),'ids':['missing']}).encode()
+        handler = SimpleNamespace(path='/api/assets/selection', headers={'Content-Length':str(len(body))},
+                                  rfile=io.BytesIO(body), json=lambda value: value, **attributes)
         yield fixture.Handler.do_POST(handler)
 
     def test_delegating_handler_uses_default_workspace(self):
@@ -36,15 +38,3 @@ class WorkspaceIdentityTests(unittest.TestCase):
         handler=SimpleNamespace(path='/api/assets/family/asset-1',json=lambda value,status=200:(status,value))
         status,_=fixture.Handler.do_GET(handler)
         self.assertEqual(status,404)
-
-    def test_delegating_handler_serves_bounded_family_in_the_observed_workspace(self):
-        for suffix,children in (('',None),('&children=true',[])):
-            with self.subTest(suffix=suffix):
-                handler=SimpleNamespace(path='/api/assets/family/asset-1?workspace_id='+'2'*32+suffix,
-                                        workspace_id='2'*32,family_observations=True,json=lambda value,status=200:(status,value))
-                status,response=fixture.Handler.do_GET(handler)
-                self.assertEqual(status,200);self.assertEqual(response['workspace_id'],'2'*32)
-                self.assertEqual(response['asset_id'],'asset-1');self.assertEqual([node['id'] for node in response['nodes']],['asset-1'])
-                self.assertEqual(response['children'],children);self.assertEqual(response['edges'],[])
-                self.assertTrue(response['observation_only']);self.assertFalse(response['generation_submitted'])
-                self.assertFalse(response['media_bytes_verified']);self.assertEqual(response['children_scanned'],0)

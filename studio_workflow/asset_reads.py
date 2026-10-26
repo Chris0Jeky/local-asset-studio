@@ -20,7 +20,7 @@ from .core import canonical, decode
 MAX_REVISION = 2**53 - 1
 MAX_PAGE = 100
 MAX_SELECTION = 200
-MAX_CURSOR = 2048
+MAX_CURSOR = 12288  # 1,024 title characters, six-byte JSON escapes, envelope and base64.
 MAX_RESPONSE_BYTES = 2 * 1024 * 1024
 ORDER = 'created_at_desc_id_desc'
 SORTS = {'newest':('a.created_at','DESC','<',ORDER),
@@ -31,19 +31,24 @@ HEX32 = re.compile(r'[0-9a-f]{32}\Z')
 HEX64 = re.compile(r'[0-9a-f]{64}\Z')
 DEFAULT_FILTERS = {'visibility':'active', 'media_type':None, 'review':None,
                    'favorite':None, 'collection_id':None}
-FILTER_KEYS = (*DEFAULT_FILTERS, 'source')
+FILTER_KEYS = (*DEFAULT_FILTERS, 'source', 'job_id')
 REVIEWS = ('unreviewed','selected','needs_work','rejected')
 DISPLAY_LIMITS = {'title':200, 'filename':256, 'preset_name':200}
 EPOCH_VALID = "typeof(epoch)='text' AND length(epoch)=32 AND instr(epoch,char(0))=0 AND epoch NOT GLOB '*[^0-9a-f]*'"
 
 
-def _projection(db):
+def _text_encoding(db):
     # CAST(TEXT AS BLOB) uses the database encoding, not Python's UTF-8 text
     # representation. Keep bounds and decoding local to this connection.
     encoding = {'UTF-8':'utf-8', 'UTF-16le':'utf-16-le', 'UTF-16be':'utf-16-be'}.get(
         db.execute('PRAGMA encoding').fetchone()[0])
     require(encoding is not None, 'Unsupported asset catalogue text encoding',
             code='asset_read_unavailable', status=503)
+    return encoding
+
+
+def _projection(db):
+    encoding = _text_encoding(db)
     width = 1 if encoding == 'utf-8' else 2
     # SQL bounds strings before they reach Python; no private JSON is decoded.
     return ','.join([
@@ -127,6 +132,7 @@ def migrate(db):
     _state(db)  # Never reset an existing invalid/unknown state or reuse old cursors.
     db.execute('CREATE INDEX IF NOT EXISTS asset_read_order_v1 ON assets(created_at DESC,id DESC)')
     db.execute('CREATE INDEX IF NOT EXISTS asset_read_active_v1 ON assets(created_at DESC,id DESC) WHERE trashed_at IS NULL')
+    db.execute('CREATE INDEX IF NOT EXISTS asset_read_job_v1 ON assets(job_id,created_at DESC,id DESC)')
     for table in ('assets','collections','collection_assets'):
         for action in ('INSERT','UPDATE','DELETE'):
             # Names come solely from the fixed schema above, never request input.
@@ -149,6 +155,9 @@ def normalize_filters(value=None):
     require(type(source) is str and source in ('all', 'mine', 'agent'), 'Invalid source filter')
     # Omitted/All keeps the original response shape and cursor identity.
     if source != 'all': result['source'] = source
+    job = result.pop('job_id', None)
+    require(job is None or type(job) is str and 1 <= len(job) <= 128 and job.isprintable(), 'Invalid job filter')
+    if job is not None: result['job_id'] = job
     require(type(result['visibility']) is str and result['visibility'] in ('active','trash','all'), 'Invalid visibility filter')
     kind = result['media_type']
     require(kind is None or _is_media_type(kind), 'Invalid media type filter')
@@ -275,8 +284,10 @@ class AssetReads:
     def __init__(self, workspace):
         self.workspace = workspace
 
-    def page(self, *, workspace_id=None, limit=50, cursor=None, filters=None, details=False, q=None, sort='newest'):
+    def page(self, *, workspace_id=None, limit=50, cursor=None, filters=None, details=False, q=None, sort='newest',
+             include_collections=False, reanchor=False):
         require(type(details) is bool, 'Details must be boolean')
+        require(type(include_collections) is bool and type(reanchor) is bool, 'Page options must be boolean')
         require(_integer(limit,1,MAX_PAGE),'Page size must be an integer between 1 and 100')
         query = normalize_filters(filters)
         page_options(q,sort)
@@ -299,7 +310,9 @@ class AssetReads:
             scope = self.workspace._check_scope(db,workspace_id)
             stamp = _state(db)
             if position is not None:
-                require(position['catalogue'] == stamp, 'Asset catalogue changed; explicitly refresh this query',
+                compatible = position['catalogue'] == stamp or reanchor and position['catalogue']['epoch'] == stamp['epoch'] \
+                    and position['catalogue']['revision'] <= stamp['revision']
+                require(compatible, 'Asset catalogue changed; explicitly refresh this query',
                         code='asset_cursor_stale',status=409)
             clauses, params = [], []
             if query.get('source') in ('mine', 'agent'):
@@ -311,6 +324,7 @@ class AssetReads:
                 clauses.append('a.trashed_at IS ' + ('NULL' if query['visibility']=='active' else 'NOT NULL'))
             for key in ('media_type','review','favorite'):
                 if query[key] is not None: clauses.append('a.'+key+'=?'); params.append(query[key])
+            if 'job_id' in query: clauses.append('a.job_id=?'); params.append(query['job_id'])
             if query['collection_id'] is not None:
                 require(db.execute('SELECT 1 FROM collections WHERE id=?',(query['collection_id'],)).fetchone() is not None,
                         'The selected collection no longer exists',code='asset_collection_unavailable',status=409)
@@ -332,18 +346,43 @@ class AssetReads:
             if sort == 'title': projection += ',CASE WHEN length(CAST(a.title AS BLOB))<=4096 THEN CAST(a.title AS BLOB) END AS _sort_title'
             rows = db.execute('SELECT '+projection+' FROM assets AS a'+where+
                               ' ORDER BY '+sort_key+' '+direction+',a.id '+direction+' LIMIT ?',[*params,limit+1]).fetchall()
-            items, last_key = [], None
+            summaries, keys = [], []
             for row in rows[:limit]:
                 value = dict(row)
+                last_key = None
                 if sort == 'title':
                     raw = value.pop('_sort_title')
                     require(type(raw) is bytes, 'Asset title sort key is invalid or exceeds its bound',code='asset_read_unavailable',status=503)
                     try: last_key = raw.decode(value['_text_encoding'])
                     except UnicodeError as exc: raise AssetReadError('Invalid title sort key encoding',code='asset_read_unavailable',status=503) from exc
-                items.append(_summary(value))
-            next_cursor = _encode_cursor(scope,stamp,query_hash,limit,items[-1],last_key) if len(rows)>limit else None
-            if details: items = self.workspace._library_assets(db,items,scope)
-            return _result('page',scope,stamp,filters=query,order=order,limit=limit,assets=items,next_cursor=next_cursor)
+                summaries.append(_summary(value)); keys.append(last_key)
+            extra = {}
+            if details or include_collections or reanchor:
+                extra['cursor'] = _encode_cursor(scope,stamp,query_hash,limit,
+                    {'id':position['last'][1],'created_at':position['last'][0]},position['last'][0]) if position else None
+            if include_collections:
+                extra['collection_page'] = self.workspace._collection_page(db,scope,stamp,limit=100)
+            count = len(summaries)
+            if details:
+                unavailable = []
+                projected = self.workspace._library_assets(db,summaries,scope,unavailable=unavailable)
+                by_id = {a['id']:a for a in projected}; errors = {e['id']:e for e in unavailable}
+                items, extra['unavailable_assets'], count = [], [], 0
+                # Preserve a prefix of observed rows, including unavailable IDs.
+                # Reserve the maximum next-cursor size; full editor fields are never cut.
+                empty = _result('page',scope,stamp,filters=query,order=order,limit=limit,assets=[],next_cursor=None,**extra)
+                used = len(json.dumps(empty,allow_nan=False).encode('utf-8')) + MAX_CURSOR + 8
+                for summary in summaries:
+                    identifier = summary['id']; item = by_id.get(identifier,errors.get(identifier))
+                    size = len(json.dumps(item,allow_nan=False).encode('utf-8')) + 2
+                    if used + size > MAX_RESPONSE_BYTES: break
+                    (items if identifier in by_id else extra['unavailable_assets']).append(item)
+                    used += size; count += 1
+                require(not summaries or count > 0, 'An asset observation exceeds its response bound',
+                        code='asset_read_unavailable',status=503)
+            else: items = summaries
+            next_cursor = _encode_cursor(scope,stamp,query_hash,limit,summaries[count-1],keys[count-1]) if len(rows)>count else None
+            return _result('page',scope,stamp,filters=query,order=order,limit=limit,assets=items,next_cursor=next_cursor,**extra)
 
     def selection(self, ids, *, workspace_id, details=False):
         require(type(details) is bool, 'Details must be boolean')

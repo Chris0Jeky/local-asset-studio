@@ -97,6 +97,50 @@ selection was inferred. Original ComfyUI outputs and the copied E: evidence stay
 intact, shared packages were unchanged, and no paid credits were used.
 `HUMAN_TODO.md` still owns art acceptance and MOSS Make-look wording/placement.
 
+## Library completion and recovery acceptance — 26 October 2026, 16:08 GMT
+
+The continuation reconciled the previous source archive against authoritative main
+`7a89410d34c2580c3b9d47ffd806193e006d4069`, retaining the intervening HTTP-body and
+framing corrections. PR **#1656** merged as `d89b36f32407482de99ddede5515a2f21919d872`
+after the 6,107-test full suite and its actual AV render gate passed. Its merged
+tree matches the qualified input-duration candidate.
+
+The separate output fault was reproduced with a short video track hidden by a
+full audio/container duration. PR **#1658** adds decoded-frame and video-duration
+verification. Its first full hosted suite passed **6,110 tests in 1,002.623 s,
+79 skips**, with clean lifetime shutdown and repository validation. Two dedicated
+AV attempts were cancelled during Ubuntu package downloads before media tests;
+that installation problem remains visible and is being corrected. Those cancelled
+attempts do not qualify the output-render gate.
+
+Recovery PR **#1659**, head `5640b01463d1d27f016dc89bd4d8b2c0f1bec5c8`, fixes import
+focus and stale inspection/import completions across reopened dialogs. Its native
+shelf protocol passed **50 checks on both Ubuntu and Windows**, including exact
+pending-command export, cleared storage, fresh-tab import and GET-only historical
+recovery. Genuine browser-owned 200% zoom was read back separately from CSS zoom.
+Broader hosted checks and final merge qualification remain in that PR.
+
+The Library completion candidate addresses #1627's remaining consumers, page
+preservation, one-transaction collection bundles, unavailable detail rows and
+browser fixture query drift. Local verification includes **48 new frontend
+contracts**, **16 backend completion tests**, the existing read/client/HTTP and
+recovery contracts, and a **15-check native journey over 205 SQLite assets**.
+Same-run outputs use explicit 20-record pages; Combine, family and figure consumers
+resolve exact off-page identities; unavailable records retain IDs/reasons without
+inventing editable metadata. Independent review reproduced and corrected queue
+completion, source-picker absence, malformed-text and escaped-title boundaries.
+The reviewed mobile disclosure wraps at 390 px. Its published-head hosted checks
+and actual merge-tree comparison remain required before closing #1627.
+
+Detailed executed evidence and retained failures:
+[backend](docs/verification/2026-10-26-library-read-completion.md),
+[frontend](docs/verification/2026-10-26-library-frontend-completion.md), and
+[recovery](docs/verification/2026-10-26-recovery-import-qualification.md).
+The explicit integration order is #1658, then #1659, then Library completion.
+The last-refusal explanation is a separate continuation of #393; its broader
+accessibility acceptance remains open. #177 still owns broader memory/query-time
+budgets. `HUMAN_TODO.md` decisions and art/model/runtime acceptance are unchanged.
+
 ## AV trims use the video track's duration - 26 October 2026
 
 Starting from clean `7a89410d` (matching origin/main), with no open PRs, a synthetic

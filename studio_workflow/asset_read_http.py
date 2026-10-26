@@ -14,7 +14,7 @@ SELECTION = '/api/assets/selection'
 FAMILY = '/api/assets/family/'
 RECALL = '/api/assets/recall/'
 MAX_QUERY = 4096
-MAX_PAGE_QUERY = 8192  # Percent-encoded 200-character search plus a bounded title cursor and all filters.
+MAX_PAGE_QUERY = 20480  # Bounded title cursor, percent-encoded Unicode search/job ID and all filters.
 MAX_BODY = 32768
 BODY_TIMEOUT = 5
 
@@ -34,15 +34,16 @@ def page_query(raw):
             'Relative asset page route required')
     require(re.search(r'%(?![0-9a-fA-F]{2})', parsed.query) is None, 'Malformed query escape')
     pairs = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True,
-                      encoding='utf-8', errors='strict', max_num_fields=12)
+                      encoding='utf-8', errors='strict', max_num_fields=16)
     query = dict(pairs)
     require(len(query) == len(pairs) and all(value for _, value in pairs),
             'Asset query fields must be nonempty and occur once')
-    require(set(query) <= set(FILTER_KEYS) | {'workspace_id', 'limit', 'cursor', 'details', 'q', 'sort'}, 'Unknown asset query field')
+    require(set(query) <= set(FILTER_KEYS) | {'workspace_id', 'limit', 'cursor', 'details', 'q', 'sort', 'include_collections', 'reanchor'}, 'Unknown asset query field')
     page_options(query.get('q'),query.get('sort','newest'))
-    if 'details' in query:
-        require(query['details'] in ('true','false'), 'Details must be true or false')
-        query['details'] = query['details'] == 'true'
+    for field in ('details','include_collections','reanchor'):
+        if field in query:
+            require(query[field] in ('true','false'), 'Page options must be true or false')
+            query[field] = query[field] == 'true'
     if 'limit' in query:
         require(re.fullmatch(r'[0-9]{1,3}', query['limit']) is not None, 'Invalid page size')
         query['limit'] = int(query['limit'])

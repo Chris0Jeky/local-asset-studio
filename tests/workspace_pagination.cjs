@@ -4,22 +4,22 @@ const assert=require('node:assert/strict');
 const {setup}=require('./asset_detail_contracts.cjs');
 const scope='1'.repeat(32),stamp={epoch:'a'.repeat(32),revision:1};
 const asset=(id,extra={})=>({id,workspace_id:scope,title:id,notes:'notes',tags:[],review:'unreviewed',favorite:false,media_type:'image',created_at:1,metadata_revision:0,source:{},lineage:[],collections:[],bytes:1,...extra});
-const page=(assets,next=null)=>({format:'studio.asset-page/v1',workspace_id:scope,catalogue:stamp,assets,next_cursor:next,observation_only:true});
+const page=(assets,next=null,cursor=null,collection_page=collections())=>({format:'studio.asset-page/v1',workspace_id:scope,catalogue:collection_page.catalogue,assets,cursor,next_cursor:next,unavailable_assets:[],collection_page,observation_only:true});
 const collections=(items=[],next=null)=>({format:'studio.collection-page/v1',workspace_id:scope,catalogue:stamp,collections:items,next_cursor:next,observation_only:true});
 const flush=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
 function init(){const s=setup({autoOpen:false});s.el('#assetType').value='all';s.el('#assetSort').value='newest';s.run('refreshAssets='+s.actualRefresh.toString());return s;}
 async function refresh(s,assets,next=null,cols=collections()){
   const n=s.reads.length,p=s.actualRefresh(true);await flush();
-  assert.match(s.reads[n].url,/^\/api\/assets\/page\?/);assert.match(s.reads[n+1].url,/^\/api\/collections\?/);
+  assert.match(s.reads[n].url,/^\/api\/assets\/page\?/);assert.match(s.reads[n].url,/include_collections=true/);
   assert.ok(!s.reads.some(r=>r.url==='/api/workspace'),'Library must not fetch a snapshot');
-  s.reads[n].resolve(page(assets,next));s.reads[n+1].resolve(cols);return p;
+  s.reads[n].resolve(page(assets,next,null,cols));return p;
 }
 let passed=0;
 async function test(name,fn){await fn();console.log('PASS',name);passed++;}
 (async()=>{
-  await test('Refresh reads one bounded asset page and one collection page',async()=>{
+  await test('Refresh reads one bounded asset page with its atomic collection page',async()=>{
     const s=init();assert.equal(await refresh(s,[asset('a')],'next'),true);
-    assert.equal(s.reads.length,2);assert.equal(s.writes.length,0);assert.equal(s.run('assetState.assets.length'),1);
+    assert.equal(s.reads.length,1);assert.equal(s.writes.length,0);assert.equal(s.run('assetState.assets.length'),1);
     assert.match(s.el('#assetPaging').innerHTML,/Next page/);assert.match(s.el('#assetVisibleCount').textContent,/page/i);
   });
   await test('Search is debounced, queries the server and resets paging',async()=>{
@@ -27,13 +27,13 @@ async function test(name,fn){await fn();console.log('PASS',name);passed++;}
     s.run("assetPaging.cursor='old';assetPaging.history=[null]");
     s.el('#assetSearch').value='off-page %_';s.el('#assetSearch').oninput();
     s.el('#assetSearch').value='off-page %_ needle';s.el('#assetSearch').oninput();
-    s.run('renderAssets()');assert.equal(s.reads.length,2,'repaints must respect the pending debounce');
-    const n=s.reads.length;assert.equal(s.timers.size,1);assert.equal(n,2);
+    s.run('renderAssets()');assert.equal(s.reads.length,1,'repaints must respect the pending debounce');
+    const n=s.reads.length;assert.equal(s.timers.size,1);assert.equal(n,1);
     const fn=[...s.timers.values()][0];s.timers.clear();fn();await flush();
-    assert.equal(s.reads.length,n+2,'debounced search must request a new server page');
+    assert.equal(s.reads.length,n+1,'debounced search must request a new server page');
     const query=new URL(s.reads[n].url,'http://fixture').searchParams;
     assert.equal(query.get('q'),'off-page %_ needle');assert.equal(query.get('sort'),'newest');assert.equal(query.has('cursor'),false);
-    s.reads[n].resolve(page([asset('found',{title:'off-page %_ needle'})]));s.reads[n+1].resolve(collections());await flush();
+    s.reads[n].resolve(page([asset('found',{title:'off-page %_ needle'})]));await flush();
     assert.equal(s.run('assetPaging.history.length'),0);assert.equal(s.run('visibleAssets()[0].id'),'found');
     assert.doesNotMatch(s.el('#assetVisibleCount').textContent,/search, sort/);
   });
@@ -42,16 +42,16 @@ async function test(name,fn){await fn();console.log('PASS',name);passed++;}
     s.el('#assetSort').value='title';const n=s.reads.length;s.el('#assetSort').onchange();await flush();
     const query=new URL(s.reads[n].url,'http://fixture').searchParams;
     assert.equal(query.get('sort'),'title');assert.equal(query.has('cursor'),false);assert.equal(query.has('q'),false);
-    s.reads[n].resolve(page([asset('a',{title:'same'}),asset('b',{title:'same'})]));s.reads[n+1].resolve(collections());await flush();
+    s.reads[n].resolve(page([asset('a',{title:'same'}),asset('b',{title:'same'})]));await flush();
     assert.equal(s.run('assetPaging.history.length'),0);assert.deepEqual(JSON.parse(s.run('JSON.stringify(visibleAssets().map(a=>a.id))')),['a','b']);
   });
   await test('A sort change during an in-flight read discards the old response and requests the latest query',async()=>{
     const s=init();await refresh(s,[asset('first')],'next');const n=s.reads.length,p=s.actualRefresh(true);await flush();
-    s.el('#assetSort').value='oldest';s.el('#assetSort').onchange();assert.equal(s.reads.length,n+2);
-    s.reads[n].resolve(page([asset('stale')]));s.reads[n+1].resolve(collections());assert.equal(await p,false);await flush();
-    assert.equal(s.run('assetState.assets[0].id'),'first');assert.equal(s.reads.length,n+4);
-    const query=new URL(s.reads[n+2].url,'http://fixture').searchParams;assert.equal(query.get('sort'),'oldest');assert.equal(query.has('cursor'),false);
-    s.reads[n+2].resolve(page([asset('oldest')]));s.reads[n+3].resolve(collections());await flush();assert.equal(s.run('assetState.assets[0].id'),'oldest');
+    s.el('#assetSort').value='oldest';s.el('#assetSort').onchange();assert.equal(s.reads.length,n+1);
+    s.reads[n].resolve(page([asset('stale')]));assert.equal(await p,false);await flush();
+    assert.equal(s.run('assetState.assets[0].id'),'first');assert.equal(s.reads.length,n+2);
+    const query=new URL(s.reads[n+1].url,'http://fixture').searchParams;assert.equal(query.get('sort'),'oldest');assert.equal(query.has('cursor'),false);
+    s.reads[n+1].resolve(page([asset('oldest')]));await flush();assert.equal(s.run('assetState.assets[0].id'),'oldest');
   });
   await test('Off-page is unresolved, never missing; explicit selection observation distinguishes Trash and deletion',async()=>{
     const s=init();await refresh(s,[asset('a')],'next');
@@ -76,25 +76,25 @@ async function test(name,fn){await fn();console.log('PASS',name);passed++;}
   });
   await test('A mixed Workspace refresh cannot replace the Library or retained selection',async()=>{
     const s=init();s.run("assetSelection=new Set(['a'])");const n=s.reads.length,p=s.actualRefresh(true);await flush();
-    s.reads[n].resolve(page([asset('new')]));s.reads[n+1].resolve({...collections(),workspace_id:'b'.repeat(32)});
+    s.reads[n].resolve(page([asset('new')],null,null,{...collections(),workspace_id:'b'.repeat(32)}));
     assert.equal(await p,false);assert.equal(s.run('assetSelection.has("a")'),true);assert.equal(s.run('assetState.assets[0].id'),'a');
   });
   await test('Next and previous pages are explicit and retain selected IDs',async()=>{
     const s=init();await refresh(s,[asset('first')],'cursor-two');s.run("assetSelection=new Set(['first'])");
     const n=s.reads.length,p=s.run('moveAssetPage(true)');await flush();
-    assert.match(s.reads[n].url,/cursor=cursor-two/);assert.equal(s.reads.length,n+2,'continuations must not auto-drain');
-    s.reads[n].resolve(page([asset('second')],'cursor-three'));s.reads[n+1].resolve(collections());assert.equal(await p,true);
+    assert.match(s.reads[n].url,/cursor=cursor-two/);assert.equal(s.reads.length,n+1,'continuations must not auto-drain');
+    s.reads[n].resolve(page([asset('second')],'cursor-three','cursor-two'));assert.equal(await p,true);
     assert.equal(s.run('assetSelection.has("first")'),true);assert.equal(s.run('assetSelectionInfo().unresolved'),1);assert.equal(s.run('assetSelectionInfo().missing'),0);
     assert.match(s.el('#assetPaging').innerHTML,/Page 2/);
     const before=s.reads.length,back=s.run('moveAssetPage(false)');await flush();assert.doesNotMatch(s.reads[before].url,/cursor=/);
-    s.reads[before].resolve(page([asset('first')],'cursor-two'));s.reads[before+1].resolve(collections());assert.equal(await back,true);
+    s.reads[before].resolve(page([asset('first')],'cursor-two'));assert.equal(await back,true);
     assert.equal(s.run('assetSelectionInfo().visible'),1);assert.match(s.el('#assetPaging').innerHTML,/Page 1/);
   });
   await test('A stale continuation keeps its page and stops without retries',async()=>{
     const s=init();await refresh(s,[asset('first')],'stale');
     const n=s.reads.length,p=s.run('moveAssetPage(true)');await flush();
-    s.reads[n].reject(Object.assign(Error('Catalogue changed; refresh'),{status:409,data:{code:'asset_cursor_stale'}}));s.reads[n+1].resolve(collections());
-    assert.equal(await p,false);await flush();assert.equal(s.reads.length,n+2);assert.equal(s.run('assetState.assets[0].id'),'first');assert.equal(s.run('assetPaging.cursor'),null);
+    s.reads[n].reject(Object.assign(Error('Catalogue changed; refresh'),{status:409,data:{code:'asset_cursor_stale'}}));
+    assert.equal(await p,false);await flush();assert.equal(s.reads.length,n+1);assert.equal(s.run('assetState.assets[0].id'),'first');assert.equal(s.run('assetPaging.cursor'),null);
   });
   await test('More collections uses one bound cursor and feeds the sidebar and destinations',async()=>{
     const s=init();await refresh(s,[asset('a')],null,collections([{id:'c1',name:'One',revision:1,count:0}],'more'));
@@ -126,15 +126,15 @@ async function test(name,fn){await fn();console.log('PASS',name);passed++;}
     assert.equal(await refresh(s,[asset('a')],'next'),true);
     assert.equal(s.run('assetResolved.has("old")'),true);assert.equal(s.run('assetSelectionInfo().unresolved'),0);
     const n=s.reads.length,q=s.actualRefresh(true);await flush();const changed={...stamp,revision:2};
-    s.reads[n].resolve({...page([asset('a')],'next'),catalogue:changed});s.reads[n+1].resolve({...collections(),catalogue:changed});assert.equal(await q,true);
+    s.reads[n].resolve(page([asset('a')],'next',null,{...collections(),catalogue:changed}));assert.equal(await q,true);
     assert.equal(s.run('assetResolved.has("old")'),false);assert.equal(s.run('assetSelectionInfo().unresolved'),1);
   });
   await test('A stale replayed cursor on a non-forced read falls back to page 1 with a notice; an explicit page move still stops',async()=>{
     const s=init();await refresh(s,[asset('first')],'next');s.run("assetPaging.cursor='old';assetPaging.history=[null]");
     const n=s.reads.length,p=s.actualRefresh();await flush();assert.match(s.reads[n].url,/cursor=old/);
-    s.reads[n].reject(Object.assign(Error('Catalogue changed; refresh'),{status:409,data:{code:'asset_cursor_stale'}}));s.reads[n+1].resolve(collections());await flush();
-    assert.equal(s.reads.length,n+4,'one retry, with both reads');assert.doesNotMatch(s.reads[n+2].url,/cursor=/);
-    s.reads[n+2].resolve(page([asset('fresh')],'next'));s.reads[n+3].resolve(collections());
+    s.reads[n].reject(Object.assign(Error('Catalogue changed; refresh'),{status:409,data:{code:'asset_cursor_stale'}}));await flush();
+    assert.equal(s.reads.length,n+2,'one retry of the atomic bundle');assert.doesNotMatch(s.reads[n+1].url,/cursor=/);
+    s.reads[n+1].resolve(page([asset('fresh')],'next'));
     assert.equal(await p,true);assert.equal(s.run('assetState.assets[0].id'),'fresh');assert.equal(s.run('assetPaging.cursor'),null);assert.equal(s.run('assetPaging.history.length'),0);
     assert.match(s.el('#assetMessage').textContent,/page 1 again/);assert.doesNotMatch(s.el('#assetMessage').textContent,/Catalogue changed/);
   });

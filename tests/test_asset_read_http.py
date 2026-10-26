@@ -73,6 +73,42 @@ class AssetReadHTTPTests(unittest.TestCase):
         self.assertEqual([x['state'] for x in result['items']],['active','missing','trashed'])
         self.assertTrue(result['observation_only']);self.assertFalse(result['generation_submitted'])
 
+    def test_combined_page_and_explicit_reanchor_are_read_only_production_routes(self):
+        collection=self.store.collection({'name':'Keeps'})['id']
+        with self.store.connection() as db:
+            db.executemany("UPDATE assets SET job_id='same run',output_index=? WHERE id=?",enumerate(self.ids))
+            db.execute('INSERT INTO collection_assets VALUES (?,?)',(collection,self.ids[2]))
+        query={'limit':1,'details':'true','include_collections':'true','job_id':'same run','workspace_id':self.scope}
+        status,first,_=self.request('GET',PAGE+'?'+urlencode(query))
+        self.assertEqual(status,200)
+        self.assertIsNone(first['cursor'])
+        self.assertEqual(first['collection_page']['catalogue'],first['catalogue'])
+        self.assertEqual(first['collection_page']['collections'][0]['count'],1)
+        query['cursor']=first['next_cursor']
+        with self.store.connection() as db:db.execute("UPDATE assets SET title='confirmed edit' WHERE id=?",(self.ids[1],))
+        before=self.store.snapshot()
+        status,stale,_=self.request('GET',PAGE+'?'+urlencode(query))
+        self.assertEqual(status,409);self.assertEqual(stale['code'],'asset_cursor_stale')
+        status,current,_=self.request('GET',PAGE+'?'+urlencode(dict(query,reanchor='true')))
+        self.assertEqual(status,200);self.assertEqual(current['assets'][0]['id'],self.ids[1])
+        self.assertEqual(current['assets'][0]['title'],'confirmed edit')
+        self.assertNotEqual(current['cursor'],query['cursor'])
+        self.assertEqual(current['collection_page']['catalogue'],current['catalogue'])
+        self.assertEqual(self.store.snapshot(),before)
+        with self.store.connection() as db:self.assertEqual(db.execute('SELECT COUNT(*) FROM asset_commands').fetchone()[0],0)
+        for invalid in ('include_collections=1','reanchor=1','reanchor=true&reanchor=false','job_id='):
+            self.assertEqual(self.request('GET',PAGE+'?'+invalid)[0],400)
+
+    def test_unavailable_row_is_named_without_hiding_the_other_http_records(self):
+        with self.store.connection() as db:db.execute('UPDATE assets SET source=? WHERE id=?',('x'*65537,self.ids[1]))
+        status,page,_=self.request('GET',PAGE+'?details=true&include_collections=true')
+        self.assertEqual(status,200)
+        self.assertEqual([a['id'] for a in page['assets']],[self.ids[2],self.ids[0]])
+        self.assertEqual([a['id'] for a in page['unavailable_assets']],[self.ids[1]])
+        self.assertEqual(page['unavailable_assets'][0]['code'],'asset_read_unavailable')
+        status,result,_=self.request('POST',SELECTION,{'workspace_id':self.scope,'ids':[self.ids[1]],'details':True})
+        self.assertEqual(status,503);self.assertEqual(result['code'],'asset_read_unavailable')
+
     def test_search_sort_and_mismatched_cursor_through_http(self):
         with self.store.connection() as db:db.execute("UPDATE assets SET title='Needle_100%'")
         query={'q':'NEEDLE_100%','sort':'oldest','limit':1,'details':'true','workspace_id':self.scope}
@@ -94,14 +130,17 @@ class AssetReadHTTPTests(unittest.TestCase):
         self.assertEqual(status,200)
 
     def test_search_title_continuation_fits_full_query_bound(self):
-        title=chr(0x1f31f)*200;col=self.store.collection({'name':'Full query'})['id']
+        title='\0'*1024;needle=chr(0x1f31f)*200;job=chr(0x1f319)*128;col=self.store.collection({'name':'Full query'})['id']
         with self.store.connection() as db:
-            db.execute('UPDATE assets SET title=?,favorite=1',(title,))
+            db.executemany('UPDATE assets SET title=?,job_id=?,output_index=?,notes=?,favorite=1 WHERE id=?',
+                           [(title,job,index,needle,key) for index,key in enumerate(self.ids)])
             db.executemany('INSERT INTO collection_assets VALUES (?,?)',[(col,key) for key in self.ids])
-        query={'q':title,'sort':'title','workspace_id':self.scope,'limit':1,'details':'true',
+        query={'q':needle,'sort':'title','workspace_id':self.scope,'limit':1,'details':'true',
+               'include_collections':'true','reanchor':'false','job_id':job,
                'visibility':'active','media_type':'image','review':'unreviewed','favorite':'true','collection_id':col,'source':'mine'}
         status,first,_=self.request('GET',PAGE+'?'+urlencode(query))
         self.assertEqual(status,200);query['cursor']=first['next_cursor']
+        self.assertGreater(len(query['cursor']),8192)
         status,second,_=self.request('GET',PAGE+'?'+urlencode(query))
         self.assertEqual(status,200);self.assertNotEqual(first['assets'][0]['id'],second['assets'][0]['id'])
 

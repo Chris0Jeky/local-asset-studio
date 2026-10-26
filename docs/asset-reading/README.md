@@ -1,8 +1,9 @@
 # Bounded asset observations
 
-This is the backend read-contract slice of #177. The existing `snapshot()` and
-Studio grid remain unchanged and unbounded. The APIs below neither read media nor
-modify assets, collections, metadata receipts, selections, or model jobs.
+The Library uses bounded asset and collection pages, with explicit selected-ID
+reads for records outside the visible page. The legacy `snapshot()` API remains
+available for existing callers. The APIs below neither read media nor modify
+assets, collections, metadata receipts, selections, or model jobs.
 
 ## Core API
 
@@ -35,7 +36,9 @@ silently removed and no retained write command is rewritten.
 
 Supported filters are `visibility` (`active`, `trash`, `all`), `media_type`,
 `review` (`unreviewed`, `selected`, `needs_work`, `rejected`), boolean `favorite`,
-exact `collection_id`, and `source` (`all`, `mine`, `agent`). Source filtering runs
+exact `collection_id`, exact `job_id`, and `source` (`all`, `mine`, `agent`). Job IDs
+are nonempty printable text up to 128 characters; omitted or null means all jobs.
+The same filter is available through the CLI (`--job-id`) and MCP. All filtering runs
 before the page limit. Mine includes unlabelled runs and labels beginning with
 the exact `Make · ` prefix; other nonempty run labels are Agent runs. Omitted or
 explicit `all` preserves the original normalized filter object and cursor hash.
@@ -70,7 +73,8 @@ serialized response is 2 MiB using the existing handler's default JSON escaping.
 Each read begins a SQLite transaction before observing Workspace identity,
 catalogue stamp, or asset rows. No reader is held between calls. A cursor binds
 scope, epoch/revision, normalized filters, page size, and the last ordering key.
-It is strict, bounded (2,048 characters), canonical JSON wrapped in URL-safe base64
+It is strict, bounded (12,288 characters, including a complete registered title
+with worst-case JSON escaping), canonical JSON wrapped in URL-safe base64
 with a checksum. It is **not signed**; a caller can construct a read position, but
 cannot acquire write authority or bypass scope/row validation with it.
 
@@ -79,7 +83,7 @@ stamp in the same transaction. A rollback rolls back the stamp. A concurrent WAL
 writer cannot mix new rows with an old identity/stamp inside a page read. After a
 committed mutation, continuing an earlier cursor returns `asset_cursor_stale`
 (409). The caller must explicitly refresh, preserving its separate selection and
-draft state. There is no automatic restart, retry, rebase, mutation, or promise of
+draft state. There is no automatic restart, retry, write rebase, mutation, or promise of
 uninterrupted paging during writes. Even an unrelated or no-op row update can
 conservatively invalidate a cursor. The stamp is not a user-command count.
 
@@ -89,9 +93,49 @@ Other typed refusals include `asset_cursor_invalid` (400),
 Malformed ordinary inputs use `asset_read_invalid` or the existing Workspace
 scope error. Refusals carry no selected foreign asset data.
 
+### Library details and one-snapshot collections
+
+The Library requests `details=true&include_collections=true` on
+`GET /api/assets/page`. The result contains complete editor records, a `cursor`
+for the current page's starting position (null on the first page), and a nested
+`collection_page` using the existing collection response contract. Assets,
+collection summaries, membership counts, identity and catalogue stamp are read
+inside **one SQLite transaction**. The collection bundle contains at most 100
+collections; further collection pages remain explicit reads with strict cursor
+validation. It is not an unbounded collection expansion or a global asset count.
+
+Full details preserve writer-accepted tags, notes and provenance. If one record's
+private metadata is invalid or exceeds its supported bound, that ID appears in
+`unavailable_assets` with a typed `asset_read_unavailable` error. It is omitted
+from `assets`; no partial editor baseline, missing state, or default review value
+is invented. Other usable records on that page remain available. Summary identity
+or scalar corruption still refuses the entire read. Explicit selected-ID details
+also remain strict: unavailable metadata refuses the requested observation.
+
+The existing 2 MiB response cap applies to the complete serialized bundle. A
+details page can contain fewer than `limit` observed rows to fit that cap without
+truncating an editor field. Continuation advances after the last observed row,
+including unavailable IDs, so an entirely unavailable page can still have a next
+page. Consumers display loaded-page counts and unavailable records separately.
+
+### Refreshing a retained page position
+
+`reanchor=true` explicitly reads the same cursor boundary against the current
+catalogue revision. It requires the same Workspace, catalogue epoch, query,
+ordering and page size; a future revision, another epoch or mismatched query
+still refuses. The returned `cursor` and `next_cursor` bind the current stamp.
+This is a position refresh: edits, deletion or reordering can change which rows
+follow the boundary. It does not promise a historical page or relax subsequent
+ordinary continuation checks.
+
+The Library uses this bounded refresh after a confirmed local metadata receipt
+and for an explicitly requested prior page whose retained position predates that
+receipt. Ordinary Next reads remain strict. Selections, drafts and write receipts
+retain their separate identity and concurrency rules.
+
 ## Migration, failure, and rollback
 
-Initialization adds one versioned stamp table, two ordering indexes, and nine
+Initialization adds one versioned stamp table, the asset ordering and job indexes, and nine
 fixed-name triggers to the existing database under its initialization writer
 transaction. Existing asset/collection/receipt schemas and response shapes stay
 unchanged. Reads never create or repair schema. Reopen retains epoch and revision;
@@ -141,8 +185,10 @@ accepted observations and confirmed receipts; page membership stays separate fro
 record freshness. The [canonical metadata verification](../verification/2026-10-26-library-canonical-metadata.md)
 records that correction and its limits.
 
-Other page-only consumers, cache coherence outside that bounded correction, bulk
-refresh page preservation and read transaction boundaries remain #1627 work.
+The #1627 completion contracts cover same-run filtering, retained page refresh,
+one-snapshot collection bundles, per-record unavailability and complete Unicode
+metadata under the response budget. Off-page UI consumers and browser acceptance
+are verified alongside their implementation rather than inferred from these reads.
 Broader media/proxy work, job-history and inventory costs, generation-aware resource
 scheduling, and actual before/after browser budget measurements remain #177 work.
 

@@ -5,14 +5,13 @@ const {setup}=require('./asset_detail_contracts.cjs');
 const scope='1'.repeat(32),catalogue={epoch:'a'.repeat(32),revision:1};
 const asset=(id,extra={})=>({id,workspace_id:scope,title:id,notes:'original',tags:[],review:'unreviewed',favorite:false,trashed_at:null,
   media_type:'image',preset_id:'hero',preset_name:'Hero',created_at:1,metadata_revision:0,source:{},lineage:[],collections:[],bytes:1,...extra});
-const page=assets=>({workspace_id:scope,catalogue,assets,next_cursor:'next'});
-const collections=()=>({workspace_id:scope,catalogue,collections:[],next_cursor:null});
+const page=(assets,cursor=null,stamp=catalogue)=>({workspace_id:scope,catalogue:stamp,assets,cursor,next_cursor:'next',unavailable_assets:[],collection_page:{workspace_id:scope,catalogue:stamp,collections:[],next_cursor:null}});
 const flush=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
 const value=(s,code)=>JSON.parse(s.run('JSON.stringify('+code+')'));
 async function load(s,assets,position=null,stamp){
   if(arguments.length<4)stamp=catalogue;
   const n=s.reads.length,p=s.actualRefresh(true,position);await flush();
-  s.reads[n].resolve({...page(assets),catalogue:stamp});s.reads[n+1].resolve({...collections(),catalogue:stamp});assert.equal(await p,true);
+  s.reads[n].resolve(page(assets,position?.cursor||null,stamp));assert.equal(await p,true);
 }
 async function observe(s,items,stamp=catalogue){
   const n=s.writes.length,p=s.run('resolveAssetIDs('+JSON.stringify(items.map(i=>i.id))+')');
@@ -125,10 +124,10 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
     await observe(s,[observed(asset('a',{metadata_revision:4,notes:'newer page'}))]);
     const r=s.reads.length,reading=s.actualRefresh(true);await flush();
     receipt.current=[asset('a',{metadata_revision:4,notes:'newer page'})];s.writes[n].resolve(receipt);await p;
-    s.reads[r].resolve(page([asset('a')]));s.reads[r+1].resolve(collections());await flush();
-    assert.equal(s.reads.length,r+4,'the pre-receipt page must be discarded and read again');
+    s.reads[r].resolve(page([asset('a')]));await flush();
+    assert.equal(s.reads.length,r+2,'the pre-receipt page must be discarded and read again');
     assert.equal(s.run("assetRecord('a').metadata_revision"),4);
-    s.reads[r+2].resolve(page([asset('b'),asset('a',{metadata_revision:4,notes:'newer page'})]));s.reads[r+3].resolve(collections());
+    s.reads[r+1].resolve(page([asset('b'),asset('a',{metadata_revision:4,notes:'newer page'})]));
     assert.equal(await reading,true);assert.equal(s.run("assetRecord('a').notes"),'newer page');
   });
   await test('Idempotent Trash and Restore receipts retain their unchanged revision and fields',async()=>{
@@ -153,13 +152,11 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
     const s=await ready(),r=s.reads.length,reading=s.actualRefresh(false);await flush();
     const n=s.writes.length,observing=s.run("resolveAssetIDs(['a'])"),latest=asset('a',{metadata_revision:2,title:'Newer selected read'});
     s.writes[n].resolve({workspace_id:scope,catalogue:{...catalogue,revision:3},items:[observed(latest)]});assert.equal(await observing,true);
-    s.reads[r].resolve({...page([asset('a',{metadata_revision:1,title:'Older held page'})]),catalogue:{...catalogue,revision:2}});
-    s.reads[r+1].resolve({...collections(),catalogue:{...catalogue,revision:2}});await flush();
+    s.reads[r].resolve(page([asset('a',{metadata_revision:1,title:'Older held page'})],'second',{...catalogue,revision:2}));await flush();
     assert.equal(s.run("assetRecord('a').metadata_revision"),2,'the older catalogue must not clear the newer observation');
-    assert.equal(s.reads.length,r+4,'the overlapping page is read again within the existing bounded loop');
-    assert.equal(new URL(s.reads[r+2].url,'http://fixture').searchParams.get('cursor'),'second','a read-only observation does not reset page navigation');
-    s.reads[r+2].resolve({...page([asset('b'),latest]),catalogue:{...catalogue,revision:3}});
-    s.reads[r+3].resolve({...collections(),catalogue:{...catalogue,revision:3}});assert.equal(await reading,true);
+    assert.equal(s.reads.length,r+2,'the overlapping page is read again within the existing bounded loop');
+    assert.equal(new URL(s.reads[r+1].url,'http://fixture').searchParams.get('cursor'),'second','a read-only observation does not reset page navigation');
+    s.reads[r+1].resolve(page([asset('b'),latest],'second',{...catalogue,revision:3}));assert.equal(await reading,true);
     assert.equal(s.run("assetRecord('a').title"),'Newer selected read');assert.equal(s.run('assetPaging.cursor'),'second');
     assert.deepEqual(value(s,'[...assetSelection]'),['a','off']);
   });
@@ -176,8 +173,7 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
     for(const old of [{id:'a',state:'missing',asset:null},observed(asset('a',{metadata_revision:1}))]){
       const s=await ready(),n=s.writes.length,observing=s.run("resolveAssetIDs(['a'])");
       const r=s.reads.length,reading=s.actualRefresh(true);await flush();
-      s.reads[r].resolve({...page([asset('a',{metadata_revision:2,title:'Newer page'})]),catalogue:{...catalogue,revision:3}});
-      s.reads[r+1].resolve({...collections(),catalogue:{...catalogue,revision:3}});assert.equal(await reading,true);
+      s.reads[r].resolve(page([asset('a',{metadata_revision:2,title:'Newer page'})],null,{...catalogue,revision:3}));assert.equal(await reading,true);
       s.writes[n].resolve({workspace_id:scope,catalogue,items:[old]});assert.equal(await observing,false);
       assert.equal(s.run("assetRecord('a').metadata_revision"),2);assert.match(s.el('#assetGrid').innerHTML,/Newer page/);
       await observe(s,[{id:'a',state:'missing',asset:null}],{...catalogue,revision:4});
@@ -199,13 +195,15 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
       assert.equal(s.writes.length,n+1,'the explicit observation is neither repeated nor replaced by a write');
     }
   });
-  await test('Equal unknown or invalid catalogue stamps cannot preserve an older selected-ID reply',async()=>{
+  await test('Unknown or invalid catalogue pages cannot replace accepted records or establish cache equality',async()=>{
     for(const stamp of [undefined,null,{}, {epoch:'invalid',revision:1}, {epoch:catalogue.epoch,revision:-1}, {epoch:catalogue.epoch,revision:Number.MAX_SAFE_INTEGER+1}]){
-      const s=await ready();await load(s,[asset('b')],null,stamp);
-      const n=s.writes.length,observing=s.run("resolveAssetIDs(['a'])");await load(s,[asset('b')],null,stamp);
-      s.writes[n].resolve({workspace_id:scope,catalogue:stamp,items:[{id:'a',state:'missing',asset:null}]});
-      assert.equal(await observing,false,'unproven catalogue equality cannot keep the earlier reply current');
-      assert.equal(s.run("assetResolved.has('a')"),false);
+      const s=await ready(),before=value(s,"[assetPaging,assetState,assetRecord('a')]");
+      for(let attempt=0;attempt<2;attempt++){
+        const n=s.reads.length,reading=s.actualRefresh(true),invalid=page([asset('a',{metadata_revision:9,title:'Unproven'})]);invalid.catalogue=stamp;invalid.collection_page.catalogue=stamp;s.reads[n].resolve(invalid);
+        assert.equal(await reading,false);assert.deepEqual(value(s,"[assetPaging,assetState,assetRecord('a')]"),before);
+      }
+      const n=s.writes.length,observing=s.run("resolveAssetIDs(['a'])");
+      s.writes[n].resolve({workspace_id:scope,catalogue,items:[observed(asset('a',{metadata_revision:2,title:'Verified'}))]});assert.equal(await observing,true);assert.equal(s.run("assetRecord('a').title"),'Verified');
     }
   });
   await test('Opening an off-page asset completes across an unchanged catalogue refresh',async()=>{

@@ -294,6 +294,9 @@ def live_allows(action, navigation, control_id='', label='', attributes=(), subm
 # --------------------------------------------------------------------------------------
 def build_handler():
     import studio_browser_smoke as fixture
+    from types import SimpleNamespace
+    from studio_workflow import asset_family
+    from studio_workflow.asset_read_http import family_query
     from studio_workflow.guides import guides
     from studio_workflow.core import catalog, new_document, compile_document
     from studio_prompt.http_extension import extend_handler
@@ -359,10 +362,17 @@ def build_handler():
             return self.json(value, status)
 
     class Handler(extend_handler(PromptFixtureBase)):
-        family_observations=True
         def do_GET(self):
             path = urlsplit(self.path).path
-            if path in ('/api/assets/page','/api/collections') or path.startswith('/api/assets/family/'): return fixture.Handler.do_GET(self)
+            if path in ('/api/assets/page','/api/collections'): return fixture.Handler.do_GET(self)
+            if path.startswith('/api/assets/family/'):
+                if not self._safe_host():
+                    return self.json(fixture.observation_error(ValueError('Loopback Host required')), 403)
+                def read_family(workspace):
+                    _, identifier, query = family_query(self.path)
+                    studio = SimpleNamespace(assets=workspace, jobs={job['id']: job for job in fixture.JOBS})
+                    return asset_family.observe(studio, identifier, **query)
+                return fixture.observe_fixture(self, read_family)
             if path == '/api/workflow-studio/guides': return self.json(guides())
             if path == '/api/workflow-studio/nodes': return self.json(schema)
             if path == '/api/workflow-studio/capabilities':
@@ -1275,7 +1285,7 @@ def _combine_loop(c):
         tile = '#uxPairResults .ux-result-tile:has([data-ux-check][data-asset="asset-2"])'
         assert c.page.locator(tile + ' [data-ux-check]').all_inner_texts() == ['pose', 'face', 'outfit', 'style', 'clean']
         engine_chip = '[data-ux-engine="%s"] .ux-engine-checks' % initial['preset_id']
-        assert c.page.locator(engine_chip).inner_text() == 'Not checked yet'
+        assert c.page.locator(engine_chip).inner_text() == 'Loaded checks: none'
         c.act('[data-ux-check="pose"][data-asset="asset-2"]', note='quick check: the pose carried over')
         c.page.wait_for_function('assetState.assets.find(a=>a.id === "asset-2").tags.includes("check:pose=yes")')
         c.act('[data-ux-check="face"][data-asset="asset-2"]', note="quick check: the face is the character's")
@@ -1288,8 +1298,8 @@ def _combine_loop(c):
         assert all('review' not in w for w in writes) and c.page.evaluate('assetState.assets.find(a=>a.id === "asset-2").review') == 'selected'
         assert c.page.locator('[data-ux-review="selected"][data-asset="asset-2"]').is_enabled()
         c.act(engine_chip, 'read', note="the engine chip counts this PC's answers")
-        assert c.page.locator(engine_chip).inner_text() == 'pose 1/1 · face 0/1', c.page.locator(engine_chip).inner_text()
-        assert c.page.locator('#uxPairResults .ux-run-group:has([data-asset="asset-2"]) .ux-run-checks').inner_text() == 'pose 1/1 · face 0/1'
+        assert c.page.locator(engine_chip).inner_text() == 'Loaded checks: pose 1/1 · face 0/1', c.page.locator(engine_chip).inner_text()
+        assert c.page.locator('#uxPairResults .ux-run-group:has([data-asset="asset-2"]) .ux-run-checks').inner_text() == 'Loaded checks: pose 1/1 · face 0/1'
         c.act('[data-ux-rerun="same"][data-job="combine-loop-0"]', note='stage the exact recorded seed, without running it')
         c.page.wait_for_function('getControl("seed").value === "42" && !referencePending')
         assert c.page.locator('#positive').input_value() == initial['controls']['positive']

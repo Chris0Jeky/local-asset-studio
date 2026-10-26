@@ -5,6 +5,12 @@
 .studio-main .asset-toolbar select{width:auto;flex:0 1 150px;min-width:0}
 #reviewNext{white-space:nowrap}
 #reviewNext[disabled]{opacity:.55}
+#assetPaging{flex-wrap:wrap;align-items:center;gap:8px}
+#assetPaging>span{white-space:nowrap}
+#assetPaging>.asset-unavailable-details{flex-basis:100%;margin-top:8px}
+.asset-unavailable-details{min-width:0;overflow-wrap:anywhere}
+.asset-unavailable-details ul{padding-inline-start:20px}
+.asset-unavailable-details code{white-space:normal;overflow-wrap:anywhere}
 
 .asset-grid.is-grouped{display:block}
 .asset-group{margin-bottom:26px}

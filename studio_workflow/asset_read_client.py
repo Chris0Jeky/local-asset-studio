@@ -179,6 +179,7 @@ def main(argv=None):
     page.add_argument('--media-type'); page.add_argument('--review', choices=contract.REVIEWS)
     page.add_argument('--favorite', choices=('true', 'false')); page.add_argument('--collection-id')
     page.add_argument('--source', choices=('all', 'mine', 'agent'), default='all')
+    page.add_argument('--job-id')
     selected = sub.add_parser('selection'); selected.add_argument('--workspace-id', required=True)
     selected.add_argument('ids', nargs='+')
     args = parser.parse_args(argv)

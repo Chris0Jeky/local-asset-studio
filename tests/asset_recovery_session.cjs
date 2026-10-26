@@ -9,8 +9,7 @@ const swap=s=>s.run("assetState={...assetState,workspace_id:'2'.repeat(32),asset
 const conflict=(s,index=0)=>Object.assign(Error('Changed'),{status:409,data:{code:'asset_revision_conflict',workspace_id:'1'.repeat(32),request_id:s.payload(index).request_id,current:s.receipt(index).current}});
 async function readLibrary(s,state){
   const start=s.reads.length,read=s.actualRefresh(true),catalogue={epoch:'a'.repeat(32),revision:1};
-  s.reads[start].resolve({...state,catalogue,next_cursor:null});
-  s.reads[start+1].resolve({workspace_id:state.workspace_id,catalogue,collections:state.collections,next_cursor:null});
+  s.reads[start].resolve({...state,catalogue,cursor:null,next_cursor:null,unavailable_assets:[],collection_page:{workspace_id:state.workspace_id,catalogue,collections:state.collections,next_cursor:null}});
   assert.equal(await read,true);
 }
 for(const outcome of ['success','conflict','failure'])test('detail '+outcome+' from a previous Workspace cannot change recovery or the active editor',async()=>{

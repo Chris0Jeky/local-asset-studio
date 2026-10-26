@@ -109,10 +109,18 @@
         if(typeof globalThis.api==='function')return globalThis.api(path,options);
         const response=await fetch(path,options),data=await response.json();if(!response.ok){const error=Error(data.error||response.statusText);error.status=response.status;error.data=data;throw error;}return data;
       },
-      async refresh(expectedIds=[]){
+      async refresh(expectedIds=[],expectedWorkspace=globals.asset()?.workspace_id){
         if(typeof globalThis.refreshAssets!=='function')return {ok:false,error:'Workspace refresh is unavailable.'};
+        const workspaceEpoch=typeof assetWorkspaceEpoch==='number'?assetWorkspaceEpoch:null;
+        const owns=()=>{try{
+          const workspace=typeof assetState==='object'&&assetState&&'workspace_id' in assetState?assetState.workspace_id:globals.asset()?.workspace_id;
+          return workspace===expectedWorkspace && (typeof assetWorkspaceEpoch==='number'?assetWorkspaceEpoch:null)===workspaceEpoch;
+        }catch(error){return false;}};
         const visible=()=>{
-          try{const records=typeof assetState==='object'&&Array.isArray(assetState.assets)?assetState.assets:[];return expectedIds.every(id=>records.some(asset=>asset?.id===id));}
+          try{const records=typeof assetState==='object'&&Array.isArray(assetState.assets)?assetState.assets:[];return expectedIds.every(id=>{
+            const asset=typeof assetRecord==='function'?assetRecord(id):records.find(record=>record?.id===id);
+            return asset&&asset.trashed_at==null&&(!asset.workspace_id||asset.workspace_id===expectedWorkspace);
+          });}
           catch(error){return false;}
         };
         const busy=()=>{try{return typeof assetRefreshing==='boolean'&&assetRefreshing;}catch(error){return false;}};
@@ -125,10 +133,18 @@
           return true;
         };
         for(let attempt=0;attempt<REFRESH_ATTEMPTS;attempt++){
-          const outcome=await globalThis.refreshAssets(true);
+          if(!owns())return {ok:false,error:'Workspace changed. Reopen the original Workspace to inspect its children.'};
+          const outcome=await globalThis.refreshAssets();
           if(outcome?.ok===false)return {ok:false,error:outcome.error||'Workspace refresh failed.'};
           if(!await waitForIdle())return {ok:false,error:'Workspace refresh is still in progress. Refresh the library before opening the children.'};
+          if(!owns())return {ok:false,error:'Workspace changed. Reopen the original Workspace to inspect its children.'};
           if(visible())return {ok:true};
+          if(typeof resolveAssetIDs==='function'){
+            const observed=await resolveAssetIDs(expectedIds);
+            if(!owns())return {ok:false,error:'Workspace changed. Reopen the original Workspace to inspect its children.'};
+            if(!observed)return {ok:false,error:'The Workspace changed while reading its child assets. Refresh before opening them.'};
+            return visible()?{ok:true}:{ok:false,error:'Some confirmed child assets are now unavailable. The original split receipt is retained.'};
+          }
         }
         return {ok:false,error:'The refreshed Workspace does not contain the new child assets yet.'};
       },
@@ -214,7 +230,7 @@
         }
         validateReceipt(result,request);clearPending(request);operation.pending=null;operation.receipt=result;operation.history=createHistory([]);
         let refreshError=null;
-        try{const refreshed=await globals.refresh(result.created);if(!refreshed?.ok)refreshError=Error(refreshed?.error||'Workspace refresh failed.');}catch(error){refreshError=error;}
+        try{const refreshed=await globals.refresh(result.created,request.workspace_id);if(!refreshed?.ok)refreshError=Error(refreshed?.error||'Workspace refresh failed.');}catch(error){refreshError=error;}
         if(!current()){
           globals.message('Figure split confirmed for '+operation.asset.title+'. Reopen that source to inspect its '+result.created.length+' child asset'+(result.created.length===1?'':'s')+'.'+(refreshError?' The Workspace refresh failed: '+refreshError.message:''),!!refreshError);
           return;

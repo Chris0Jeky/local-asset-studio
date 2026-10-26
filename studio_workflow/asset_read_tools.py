@@ -20,6 +20,7 @@ PAGE_ARGUMENTS = {
         'media_type': {'type': ['string', 'null'], 'pattern': r'^[^\x00-\x1f\x7f]+$', 'minLength': 1, 'maxLength': 32},
         'review': {'type': ['string', 'null'], 'enum': [*asset_reads.REVIEWS, None]},
         'favorite': {'type': ['boolean', 'null']},
+        'job_id': {'type': ['string', 'null'], 'pattern': r'^[^\x00-\x1f\x7f]+$', 'minLength': 1, 'maxLength': 128},
         'collection_id': {**ASSET_ID, 'type': ['string', 'null']}}}}
 SELECTION_ARGUMENTS = {
     'workspace_id': WORKSPACE,
