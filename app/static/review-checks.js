@@ -3,10 +3,11 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.StudioReviewChecks=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
   const COMBINE=['pose','face','outfit','style','clean'],CREATE=['style','anatomy','composition','clean'];
-  const HELP={pose:'Pose matches the pose picture',face:'Face is the character’s',outfit:'Clothes are right',style:'The look is right',clean:'No artifacts or broken details',anatomy:'Anatomy and hands look right',composition:'Framing and layout work'};
-  const TAG=/^check:(pose|face|outfit|style|clean|anatomy|composition)=(yes|no)$/;
-  // A Combine route judges what it carried across; every other picture is judged as a picture.
-  function forPreset(preset){return preset?.continuation_capability?.operation==='combine'?COMBINE:CREATE;}
+  const CHARACTER=['face','outfit','silhouette','hands','style'],BACKGROUND=['composition','depth','palette','clean'];
+  const HELP={pose:'Pose matches the pose picture',face:'Face is the character’s',outfit:'Clothes are right',style:'The look is right',clean:'No artifacts or broken details',anatomy:'Anatomy and hands look right',composition:'Framing and layout work',silhouette:'The character reads clearly in silhouette',hands:'Hands look right',depth:'Foreground and background feel separated',palette:'The colours work together'};
+  const TAG=/^check:(pose|face|outfit|style|clean|anatomy|composition|silhouette|hands|depth|palette)=(yes|no)$/;
+  // Combine judges the transfer; authored review_set selects a subject, and unknown routes keep Create's checks.
+  function forPreset(preset){return preset?.continuation_capability?.operation==='combine'?COMBINE:preset?.review_set==='character'?CHARACTER:preset?.review_set==='background'?BACKGROUND:CREATE;}
   function forAsset(asset,presets){return asset?.media_type!=='image'?[]:forPreset((presets||[]).find(p=>p.id===asset.preset_id));}
   function answers(tags){
     const seen={},clash=new Set();
@@ -33,5 +34,5 @@
     }).join('');
   }
   function keyIndex(e){return e.repeat||e.ctrlKey||e.metaKey||e.altKey||!/^[1-5]$/.test(e.key||'')?-1:Number(e.key)-1;}
-  return{COMBINE,CREATE,HELP,forPreset,forAsset,answers,answer,cycle,tally,summary,chipsHTML,keyIndex};
+  return{COMBINE,CREATE,CHARACTER,BACKGROUND,HELP,forPreset,forAsset,answers,answer,cycle,tally,summary,chipsHTML,keyIndex};
 });

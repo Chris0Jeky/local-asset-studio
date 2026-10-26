@@ -155,9 +155,12 @@ function renderPresets() {
   const card = p => {
     const pins = Array.isArray(pinMismatchByPreset[p.id]) ? pinMismatchByPreset[p.id] : [], missing = missingByPreset[p.id] || [], thumb = presetThumb(p), pace = presetPace(p);
     const pinBadge = pins.length ? '<em class="badge" title="' + esc(pins.join(', ')) + '">Model verification needs attention</em>' : '';
+    const checks = globalThis.StudioReviewChecks && (p.modality || 'image') === 'image'
+      ? StudioReviewChecks.summary((typeof assetState === 'undefined' ? [] : assetState.assets).map(a => typeof assetRecord === 'function' ? assetRecord(a.id) : a).filter(a => a && a.preset_id === p.id && a.media_type === 'image'), StudioReviewChecks.forPreset(p)) : null;
     return '<button class="preset ' + (selected?.id === p.id ? 'chosen' : '') + '" data-id="' + esc(p.id) + '" title="' + esc(p.description || '') + '" aria-describedby="preset-description-' + esc(p.id) + '">' + (thumb ? '<img class="preset-thumb" src="' + esc(thumb) + '" alt="" loading="lazy">' : '') + '<b>' + esc(p.name) + '</b><span id="preset-description-' + esc(p.id) + '">' + esc(p.description || '') + '</span><div class="recipe-meta"><span>' + esc(p.family || p.category) + '</span>'
       + (pace ? '<em class="badge pace ' + pace[0] + '" title="' + esc(pace[2]) + '">' + esc(pace[1]) + '</em>' : '')
-      + (missing.length ? '<em class="badge need" title="' + esc(missing.join(', ')) + '">Needs download</em>' : '') + pinBadge + '</div></button>';
+      + (missing.length ? '<em class="badge need" title="' + esc(missing.join(', ')) + '">Needs download</em>' : '') + pinBadge
+      + (checks !== null ? '<span class="preset-check-count muted" title="Owner answers from pictures on the loaded Library page">Loaded checks: ' + esc(checks || 'none') + '</span>' : '') + '</div></button>';
   };
   $('#presetList').innerHTML = PICKER_GROUPS.map(([id, label]) => [id, label, list.filter(p => presetGroup(p) === id)]).filter(g => g[2].length)
     .map(([id, label, items]) => '<section class="preset-group" data-group="' + id + '"><h3>' + esc(label) + '</h3><div class="preset-group-items">' + items.map(card).join('') + '</div></section>').join('') || '<p class="muted">No recipes match. Try another collection or search.</p>';

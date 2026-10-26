@@ -582,6 +582,7 @@
     },
     {
       "id": "qwen-character",
+      "review_set": "character",
       "name": "Qwen \u2022 character-pose study",
       "category": "Experimental",
       "description": "Earlier run changed style and failed the intended passing pose. Supply your own reference to experiment.",
@@ -629,6 +630,7 @@
     },
     {
       "id": "wai",
+      "review_set": "character",
       "name": "WAI v17 \u2022 illustration",
       "category": "Characters",
       "graph": "workflows/api/wai-api.json",
@@ -766,6 +768,7 @@
     },
     {
       "id": "wai-vary",
+      "review_set": "character",
       "name": "WAI v17 · vary (img2img, keeps the adapters)",
       "category": "Characters",
       "graph": "workflows/api/wai-vary-api.json",
@@ -898,6 +901,7 @@
     },
     {
       "id": "wai-pose",
+      "review_set": "character",
       "name": "WAI \u2022 pose guide",
       "category": "Characters",
       "description": "Uses a coloured OpenPose skeleton image, not a normal photo, to influence body position.",
@@ -946,6 +950,7 @@
     },
     {
       "id": "wai-skeleton",
+      "review_set": "character",
       "name": "WAI v17 \u00b7 drawn pose skeleton (Xinsir OpenPose, no detector)",
       "category": "Characters",
       "family": "WAI v17 (Illustrious)",
@@ -1037,6 +1042,7 @@
     },
     {
       "id": "anime",
+      "review_set": "character",
       "name": "Animagine \u2022 anime character",
       "category": "Characters",
       "graph": "workflows/api/anime-api.json",
@@ -1174,6 +1180,7 @@
     },
     {
       "id": "pose",
+      "review_set": "character",
       "name": "Animagine \u2022 pose guide",
       "category": "Characters",
       "description": "Uses a coloured OpenPose skeleton reference. Identity is not locked by pose control.",
@@ -1222,6 +1229,7 @@
     },
     {
       "id": "pony",
+      "review_set": "character",
       "name": "Pony V6 \u2022 stylized character",
       "category": "Characters",
       "graph": "workflows/api/pony-api.json",
@@ -2431,6 +2439,7 @@
     },
     {
       "id": "lineani-portrait",
+      "review_set": "character",
       "name": "Manga Line Art - Portrait",
       "category": "Manga & style",
       "collection": "workflow-lab",
@@ -2532,6 +2541,7 @@
     },
     {
       "id": "lineani-environment",
+      "review_set": "background",
       "name": "Manga Line Art - Environment",
       "category": "Manga & style",
       "collection": "workflow-lab",
@@ -2632,6 +2642,7 @@
     },
     {
       "id": "screentone-portrait",
+      "review_set": "character",
       "name": "Manga Ink and Screentone - Portrait",
       "category": "Manga & style",
       "collection": "workflow-lab",
@@ -2732,6 +2743,7 @@
     },
     {
       "id": "screentone-environment",
+      "review_set": "background",
       "name": "Manga Ink and Screentone - Environment",
       "category": "Manga & style",
       "collection": "workflow-lab",
@@ -2832,6 +2844,7 @@
     },
     {
       "id": "cinematic-lighting-portrait",
+      "review_set": "character",
       "name": "Cinematic Anime Lighting - Portrait",
       "category": "Manga & style",
       "collection": "workflow-lab",
@@ -2932,6 +2945,7 @@
     },
     {
       "id": "cinematic-lighting-environment",
+      "review_set": "background",
       "name": "Cinematic Anime Lighting - Environment",
       "category": "Manga & style",
       "collection": "workflow-lab",
@@ -3429,6 +3443,7 @@
     },
     {
       "id": "krea-portrait",
+      "review_set": "character",
       "name": "Krea 2 Retro Anime - Portrait",
       "category": "Anime flagship",
       "collection": "workflow-lab",
@@ -3541,6 +3556,7 @@
     },
     {
       "id": "krea-portrait-gguf",
+      "review_set": "character",
       "name": "Krea 2 Retro Anime - Portrait (GGUF, fast)",
       "category": "Anime flagship",
       "collection": "workflow-lab",
@@ -3653,6 +3669,7 @@
     },
     {
       "id": "krea-environment",
+      "review_set": "background",
       "name": "Krea 2 Retro Anime - Environment",
       "category": "Anime flagship",
       "collection": "workflow-lab",
@@ -3764,6 +3781,7 @@
     },
     {
       "id": "anima-portrait",
+      "review_set": "character",
       "name": "Anima Aesthetic 1.1 - Portrait",
       "category": "Anime flagship",
       "collection": "workflow-lab",
@@ -3833,6 +3851,7 @@
     },
     {
       "id": "anima-environment",
+      "review_set": "background",
       "name": "Anima Aesthetic 1.1 - Environment",
       "category": "Anime flagship",
       "collection": "workflow-lab",

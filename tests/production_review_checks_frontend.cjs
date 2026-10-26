@@ -122,5 +122,16 @@ vm.runInContext(`productionPlans=${JSON.stringify([plan])};productionId=${JSON.s
   assert.equal((videoHtml.match(/data-job-recipe="job-v\d"/g)||[]).length,2,'revealed: each candidate recipe is offered again');
   assert.match(videoHtml,/plan\.json\?download/,'revealed: the full plan download is offered again');
   vm.runInContext('blindComparison=true;',context);
+  // #1211: authored subject sets reach comparison chips and the existing number-key save path.
+  for(const [review_set,names] of [['character',['face','outfit','silhouette','hands','style']],['background',['composition','depth','palette','clean']]]){
+    assetState.assets.find(a=>a.id==='asset-b').tags=[];
+    vm.runInContext(`catalog.presets[0].review_set=${JSON.stringify(review_set)};productionPlans=${JSON.stringify([plan])};productionId=${JSON.stringify(plan.id)};renderProduction();`,context);
+    assert.deepEqual([...$('#productionDetail').innerHTML.matchAll(/data-candidate-check="(\w+)" data-asset="asset-b"/g)].map(m=>m[1]),names);
+    const checks=names.map(candidateCheck=>({dataset:{candidateCheck,asset:'asset-b'}})),candidate={querySelectorAll:()=>checks};
+    const before=updates.length,name=names[names.length-1];
+    await $('#productionDetail').onkeydown({key:String(names.length),target:{tagName:'BUTTON',closest:()=>candidate},preventDefault(){}});
+    assert.equal(updates.length,before+1);
+    assert.deepEqual(updates[before],{ids:['asset-b'],action:'edit',tags:['check:'+name+'=yes']});
+  }
   console.log('Comparison quick checks save one owner answer per press and count them per candidate.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

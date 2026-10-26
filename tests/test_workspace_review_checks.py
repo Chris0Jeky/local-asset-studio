@@ -39,12 +39,17 @@ class ReviewCheckTagTests(unittest.TestCase):
         self.assertEqual(reopened['metadata_revision'], before + 2)
 
     def test_every_check_in_the_vocabulary_accepts_yes_and_no(self):
-        self.assertEqual(workspace.REVIEW_CHECKS, ('pose', 'face', 'outfit', 'style', 'clean', 'anatomy', 'composition'))
+        self.assertEqual(workspace.REVIEW_CHECKS, ('pose', 'face', 'outfit', 'style', 'clean', 'anatomy', 'composition', 'silhouette', 'hands', 'depth', 'palette'))
         for name in workspace.REVIEW_CHECKS:
             for answer in ('yes', 'no'):
                 self.assertEqual(self.edit(tags=['check:%s=%s' % (name, answer)])['applied']['tags'], ['check:%s=%s' % (name, answer)])
         # Clearing every answer returns the check to "not checked"; nothing records a default no.
         self.assertEqual(self.edit(tags=[])['applied']['tags'], [])
+
+    def test_character_and_background_answers_survive_a_reopen(self):
+        tags = ['hero', 'check:silhouette=yes', 'check:hands=no', 'check:depth=yes', 'check:palette=no']
+        self.edit(tags=tags)
+        self.assertEqual(workspace.AssetWorkspace(self.root).get(self.asset)['tags'], tags)
 
     def test_malformed_unknown_or_contradictory_answers_change_nothing(self):
         self.edit(tags=['check:pose=yes'])
