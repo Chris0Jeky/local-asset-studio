@@ -32,11 +32,16 @@ class WorkspaceIdentityTests(unittest.TestCase):
         for response in self.responses({'workspace_id': '2' * 32}):
             self.assertEqual(response['workspace_id'], '2' * 32)
 
+    def test_legacy_fixture_does_not_replace_lineage_with_family_observations(self):
+        handler=SimpleNamespace(path='/api/assets/family/asset-1',json=lambda value,status=200:(status,value))
+        status,_=fixture.Handler.do_GET(handler)
+        self.assertEqual(status,404)
+
     def test_delegating_handler_serves_bounded_family_in_the_observed_workspace(self):
         for suffix,children in (('',None),('&children=true',[])):
             with self.subTest(suffix=suffix):
                 handler=SimpleNamespace(path='/api/assets/family/asset-1?workspace_id='+'2'*32+suffix,
-                                        workspace_id='2'*32,json=lambda value,status=200:(status,value))
+                                        workspace_id='2'*32,family_observations=True,json=lambda value,status=200:(status,value))
                 status,response=fixture.Handler.do_GET(handler)
                 self.assertEqual(status,200);self.assertEqual(response['workspace_id'],'2'*32)
                 self.assertEqual(response['asset_id'],'asset-1');self.assertEqual([node['id'] for node in response['nodes']],['asset-1'])

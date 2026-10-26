@@ -100,7 +100,7 @@ class Handler(BaseHTTPRequestHandler):
             assets=sorted(assets,key=lambda a:(a['title'].lower() if sort=='title' else a['created_at'],a['id']),reverse=sort=='newest')
             return self.json({'format':'studio.asset-page/v1','workspace_id':getattr(self,'workspace_id',Handler.workspace_id),'catalogue':{'epoch':'a'*32,'revision':1},'assets':assets[:100],'next_cursor':None})
         if path=='/api/collections':return self.json({'format':'studio.collection-page/v1','workspace_id':getattr(self,'workspace_id',Handler.workspace_id),'catalogue':{'epoch':'a'*32,'revision':1},'collections':[],'next_cursor':None})
-        if path.startswith('/api/assets/family/'):
+        if path.startswith('/api/assets/family/') and getattr(self,'family_observations',False):
             from urllib.parse import parse_qs
             asset_id=path.rsplit('/',1)[-1];asset=next((a for a in ASSETS if a['id']==asset_id),None)
             if not asset:return self.json({'error':'Fixture asset missing'},404)

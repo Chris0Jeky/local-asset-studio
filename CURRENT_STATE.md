@@ -32,6 +32,14 @@ pass 31 + 41 (one skip) + 3 tests. A fresh independent review found no blockers 
 the code/config changes. The latest validator and publication receipt travel with
 the milestone closeout; these suite counts describe the tested source snapshots.
 
+Initial PR CI caught the shared family fixture hiding legacy lineage buttons.
+The response is now opt-in for the deeper journey fixture; its new unit test failed
+before the fix, then four fixture tests and 48 asset-detail checks at both 0 and
+400 ms delay pass. A separate recovery-layout race was reproduced with a detached
+card and corrected by atomically reading the current DOM, retaining all layout
+assertions; three viewport cases pass. Scoped independent round-two review is clear.
+These test-only fixes use focused proof; they are later than the full-suite snapshot.
+
 Kromoss update 11000 source identities are pinned, with an unverified preset and
 eight **NOT RUN** comparisons. DMD2 downloaded and checksum-verified, but its
 checkpoint remains 2,587,306,298 / 5,413,698,958 bytes after three short transfers;

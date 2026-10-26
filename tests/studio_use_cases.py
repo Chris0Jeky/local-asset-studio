@@ -359,6 +359,7 @@ def build_handler():
             return self.json(value, status)
 
     class Handler(extend_handler(PromptFixtureBase)):
+        family_observations=True
         def do_GET(self):
             path = urlsplit(self.path).path
             if path in ('/api/assets/page','/api/collections') or path.startswith('/api/assets/family/'): return fixture.Handler.do_GET(self)

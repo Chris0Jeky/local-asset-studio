@@ -121,6 +121,19 @@ pass 31 AV tests, 41 Studio AV tests (one skip), and three new output tests. Liv
 MOSS schema validation passes without submitting a graph. Fresh independent review
 found no merge blockers in the readiness, fixture, pin and catalog changes.
 
+Hosted CI then exposed two browser-test defects. The shared family response hid
+legacy lineage controls; a new unit regression failed (200 rather than 404), and
+the asset-detail driver reproduced the invisible-lineage timeout. Family data is
+now opt-in only for the deeper journey handler: four fixture tests and all 48
+asset-detail checks pass, including another 48 with 400 ms response delay. A model
+recovery check could measure a detached card while asynchronous model-use rendering
+replaced it; a controlled reproduction returned width 0 / empty computed style,
+while the current card was width 277 / `pre-wrap`. The check now reads the current
+DOM atomically without dropping width, overflow or wrapping assertions; all three
+viewport cases pass. A scoped second independent review found no blockers in these
+four test-file fixes. The earlier full-suite result predates these test-only fixes;
+their proof is the focused regression/browser runs and final-head hosted CI.
+
 Four six-stage Production plans remain `awaiting_review` (all allowances consumed
 exactly once); all other 15 jobs are complete. Final snapshots show 39 completed
 jobs, unique prompt IDs and an empty ComfyUI queue. The owned Studio PID 29932 and
