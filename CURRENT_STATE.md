@@ -1,5 +1,20 @@
 # Current state — 26 October 2026
 
+## Reference intake test waits for admission release — 26 October 2026
+
+From merged `5a1720bb`, the EOF/reference-command regression now waits up to five
+seconds on the intake semaphore after each HTTP response, matching the bounded
+client timeout. Receiving the response does not prove the handler's `finally`
+release has run. Both refusal and successful-command probes retain their leak
+assertions; no production handler or shared transport behavior changed.
+The controlled response-before-release schedule fails before the test fix and
+passes afterward (all four actions, eight bounded probes). Removing the actual
+handler release in memory still fails the EOF leak assertion. The ordinary seven
+reference-command tests and four composed-body transport tests pass. Proof scripts
+and receipts are in `.runtime/intake-test-sync-20261026/`, copied to the private
+E: study evidence before retirement; this repairs the test race tracked in #1669.
+No generation or subjective `HUMAN_TODO.md` decision was performed by this slice.
+
 ## MOSS adapter and character qualification — 26 October 2026
 
 Starting from `d89b36f3` in an owned worktree (later integrating `b4515ca7`), the
