@@ -1256,7 +1256,9 @@
     document.dispatchEvent(new CustomEvent('studio:shortlist-source',{detail:source}));
   });
   after('renderAssets',()=>{if(assetScope==='unreviewed')q('#assetScopeTitle').textContent='Awaiting review';});
-  after('renderAssetSelection',()=>{const assets=[...assetSelection].map(id=>(typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id))).filter(Boolean),eligibility=U.sceneEligibility(assets),link=q('#createScene');link.setAttribute('aria-disabled',String(!eligibility.ok));link.title=eligibility.reason;link.classList.toggle('ux-disabled',!eligibility.ok);});
+  // A selection a search or page move left unresolved is not judged from the loaded page: activation resolves it
+  // through assetSelectionCanProceed (resolveAssetSelection), whose re-render judges every selected source.
+  after('renderAssetSelection',()=>{const unresolved=typeof assetSelectionInfo==='function'&&assetSelectionInfo().unresolved,assets=[...assetSelection].map(id=>(typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id))).filter(Boolean),eligibility=unresolved?{ok:true,reason:'Selected assets outside this page are checked before the scene opens.'}:U.sceneEligibility(assets),link=q('#createScene');link.setAttribute('aria-disabled',String(!eligibility.ok));link.title=eligibility.reason;link.classList.toggle('ux-disabled',!eligibility.ok);});
   document.addEventListener('click',e=>{const link=e.target.closest('#createScene');if(link&&link.getAttribute('aria-disabled')==='true'){e.preventDefault();e.stopImmediatePropagation();assetMessage(link.title,true);}},true);
   after('renderAssetSelection',()=>{
     let button=q('#uxFindSelectedRecipes');if(!button){button=element('button');button.id='uxFindSelectedRecipes';button.type='button';q('#createScene').before(button);}
