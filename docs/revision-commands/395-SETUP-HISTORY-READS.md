@@ -22,6 +22,61 @@ Duplicate/unknown query fields, noncanonical decimal integers, excessive query
 bytes, fragments and absolute URLs are refused. Older setup routes keep their
 existing no-query contract. POSTs to these new read routes do not commit commands.
 
+## SDK, CLI and MCP readers
+
+`WorkflowClient(...).setup_drafts` and `SetupDraftClient` expose `history`,
+`compare` and `export_revision` over these same routes. All require
+`workspace_id`; `expected_head` is optional for a first page, comparison or
+export, and mandatory with `before_revision`. The typed client validates the
+returned Workspace/draft/head, exact contiguous page and continuation, observation flags,
+comparison revisions and canonical export identity, including the exported
+draft's own `draft_sha256`. The ordinary Studio `Client` transport applies the
+1 MiB raw-response limit before decoding these three GET routes, including JSON
+whitespace, and reuses the strict decoder to reject duplicate keys. Operation
+receipts named `history`, `compare` or `export` keep their separate route and
+transport contract. Caller-supplied decoded transports remain supported; the
+typed client still validates their response identity, byte projection and shape.
+
+The module CLI offers the same reads:
+
+```console
+python -m studio_workflow.setup_draft_client history DRAFT_ID --workspace-id WORKSPACE_ID --limit 20
+python -m studio_workflow.setup_draft_client history DRAFT_ID --workspace-id WORKSPACE_ID --before-revision 81 --expected-head 100
+python -m studio_workflow.setup_draft_client compare DRAFT_ID 1 100 --workspace-id WORKSPACE_ID --expected-head 100
+python -m studio_workflow.setup_draft_client export DRAFT_ID 1 --workspace-id WORKSPACE_ID --expected-head 100
+```
+
+Substitute identities and revisions retained from the actual Workspace read.
+The MCP adapter exposes three read-mode tools through this existing typed client:
+
+| Tool | Required arguments | Optional arguments |
+| --- | --- | --- |
+| `setup_draft_history` | `draft_id`, `workspace_id` | `limit` (1–20, default 20), `before_revision`, `expected_head` |
+| `setup_draft_compare` | `draft_id`, `workspace_id`, `left`, `right` | `expected_head` |
+| `setup_draft_export_revision` | `draft_id`, `workspace_id`, `revision` | `expected_head` |
+
+All revision/head arguments are integers from 1 through the existing 256-revision
+limit. Booleans, unknown arguments and invalid identities refuse before HTTP.
+Each invocation makes one GET. To continue history, explicitly pass the returned
+`next_before_revision` as `before_revision` together with its observed
+`head_revision` as `expected_head`; the adapter never follows pages itself.
+Retain that head when comparing or exporting against the same observation.
+
+The ordinary MCP envelope retains all supplied read arguments in `context`,
+including on a stale-head or foreign-Workspace refusal. The existing HTTP status
+and code remain visible; lost, malformed or oversized reads are read failures,
+with no write-recovery instruction or automatic retry. The typed client's 1 MiB
+history response bound applies before MCP encoding. Canonical JSON and hashes
+are preserved in `data_json`, including seed values declared as text by the
+reviewed-setup owner. MCP annotation hints mark these tools as read-only,
+idempotent and closed-world; dispatch also enforces their permission scope.
+
+These tools return metadata for inspection. They do not load a browser draft,
+write an export file, initialize setup tables, verify live dependencies, copy
+media, stage inputs, switch backends, install models or submit generation.
+Restore remains a separate explicit setup command. Fork/import commands and the
+browser history surface remain under #395.
+
 ## Canonical v2 results and error policy
 
 The two unmerged v1 proposals used the same page format for different shapes.
@@ -104,6 +159,11 @@ current-head observation, so later appends/reopen do not change an older export.
 The canonical inspection document also has a separate 1 MiB cap.
 No media bytes are included. All JSON responses are limited to 1 MiB in the
 actual ASCII-escaped HTTP representation, not only their canonical UTF-8 form.
+The default SDK/CLI/MCP transport enforces that raw byte bound before materializing
+JSON. Page validation requires every expected revision up to the requested limit,
+and an explicit continuation exactly when older revisions remain. An empty page
+is valid after `before_revision=1`; an empty first page for a known positive head
+or a prematurely missing continuation is refused.
 
 Reads deliberately do not check live files, graphs, runtime readiness or models.
 They remain usable when a historical input is absent or the runtime is busy.
@@ -116,6 +176,7 @@ acceptance or permission to apply the revision.
 python -m unittest discover -s tests -p 'test_reviewed_setup_history*.py' -v
 python -m unittest discover -s tests -p test_recipe_shortlist_apply.py -v
 python -m unittest discover -s tests -p 'test_revision_consistency*.py' -v
+python -m unittest discover -s tests -p test_workflow_setup_history_mcp.py -v
 python tests/check_full_suite_lifetime.py
 python scripts/validate-repo.py
 ```
@@ -124,8 +185,14 @@ Real SQLite tests cover a 100-revision walk, concurrent head change, interleaved
 WAL writer, query-only connections, unchanged rows, invalid counters/digests,
 missing revisions, strict routes, typed preview bounds and metadata export.
 The read-only Ubuntu/Windows CI lane checks out the exact PR head.
+The separate Workflow MCP contracts lane installs the pinned optional SDK and
+executes the three-reader bridge, official SDK and real stdio/HTTP/SQLite tests.
+Those tests include a 100-revision explicit walk, context-preserving refusals,
+raw transport framing and byte bounds, nested export integrity, no retries and
+unchanged history/staging state. Ordinary discovery may skip its two optional
+SDK tests when that tools dependency is absent; the dedicated lane requires it.
 
-Remaining #395 work: browser history UI and accessibility, SDK/CLI/MCP exposure,
+Remaining #395 work: browser history UI and accessibility,
 operation/proposal receipt lineage, deliberate load/restore/fork/import commands,
 strict import validation and retention/compaction review. No new write authority
 or pruning is introduced. #394 selected browser-File preservation is separate.

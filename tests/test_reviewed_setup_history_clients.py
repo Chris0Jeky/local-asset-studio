@@ -144,6 +144,81 @@ class ReviewedSetupHistoryClientTests(unittest.TestCase):
             with self.subTest(change=list(change)),patch.object(self.client,'transport',return_value=dict(original,**change)):
                 with self.assertRaises(ValueError):self.page(limit=2)
 
+    def test_missing_revision_rows_and_false_end_of_history_refuse(self):
+        original=self.page(limit=2); full=self.page()
+        for change in ({'revisions':[],'next_before_revision':None},
+                       {'revisions':original['revisions'][:1],'next_before_revision':3},
+                       {'revisions':original['revisions'][1:],'next_before_revision':2},
+                       {'revisions':[full['revisions'][0],full['revisions'][2]],'next_before_revision':1},
+                       {'next_before_revision':None}):
+            with self.subTest(change=change),patch.object(self.client,'transport',return_value=dict(original,**change)):
+                with self.assertRaises(ValueError):self.page(limit=2)
+        final=self.page(limit=2,before_revision=2,expected_head=3)
+        with patch.object(self.client,'transport',return_value=dict(final,next_before_revision=1)),self.assertRaises(ValueError):
+            self.page(limit=2,before_revision=2,expected_head=3)
+        for options in ({'limit':20},{'limit':2,'before_revision':1,'expected_head':3}):
+            value=self.page(**options);value.pop('next_before_revision')
+            with patch.object(self.client,'transport',return_value=value),self.assertRaises(ValueError):self.page(**options)
+
+    def test_contiguous_full_partial_and_empty_pages_keep_their_exact_end(self):
+        for options,wanted,cursor in (({'limit':2},[3,2],2),
+                                     ({'limit':2,'before_revision':2,'expected_head':3},[1],None),
+                                     ({'limit':2,'before_revision':1,'expected_head':3},[],None),
+                                     ({'limit':20},[3,2,1],None)):
+            value=self.page(**options)
+            self.assertEqual([row['revision'] for row in value['revisions']],wanted)
+            self.assertEqual(value['next_before_revision'],cursor)
+        value=self.page()
+        with patch.object(self.client,'transport',return_value=dict(value,head_revision=0,revisions=[])),self.assertRaises(ValueError):
+            self.page()
+
+    def test_raw_history_response_cap_precedes_decoding_and_counts_whitespace(self):
+        sdk=WorkflowClient();calls=[];streams=[];reads=[]
+        class Response(io.BytesIO):
+            def read(self,size=-1):reads.append(size);return super().read(size)
+        def open_reply(request,timeout):
+            calls.append((request.get_method(),request.data))
+            raw=json.dumps(self.transport.request(request.selector)).encode()+b' '*MAX_READ_BYTES
+            stream=Response(raw);stream.headers={'Content-Length':str(len(raw))} if declared else {}
+            streams.append(stream);return stream
+        for declared in (True,False):
+            for method,args in ((sdk.setup_drafts.history,(self.key,)),
+                                (sdk.setup_drafts.compare,(self.key,1,3)),
+                                (sdk.setup_drafts.export_revision,(self.key,1))):
+                with self.subTest(declared=declared,method=method.__name__),patch.object(sdk.opener,'open',side_effect=open_reply):
+                    before=len(calls);read_before=len(reads)
+                    with self.assertRaises(ValueError):method(*args,workspace_id=self.scope)
+                    self.assertEqual(len(calls),before+1);self.assertTrue(streams[-1].closed)
+                    self.assertEqual(reads[read_before:],[] if declared else [MAX_READ_BYTES+1])
+        self.assertEqual(calls,[('GET',None)]*6)
+
+    def test_raw_duplicate_keys_refuse_in_every_history_reader(self):
+        sdk=WorkflowClient();streams=[];calls=[]
+        def open_reply(request,timeout):
+            calls.append(request.get_method())
+            raw=json.dumps(self.transport.request(request.selector)).encode()
+            raw=raw.replace(b'"head_revision": 3',b'"head_revision": 2, "head_revision": 3')
+            stream=io.BytesIO(raw);stream.headers={'Content-Length':str(len(raw))};streams.append(stream)
+            return stream
+        with patch.object(sdk.opener,'open',side_effect=open_reply):
+            for method,args in ((sdk.setup_drafts.history,(self.key,)),
+                                (sdk.setup_drafts.compare,(self.key,1,3)),
+                                (sdk.setup_drafts.export_revision,(self.key,1))):
+                with self.subTest(method=method.__name__),self.assertRaisesRegex(ValueError,'Duplicate JSON key'):
+                    method(*args,workspace_id=self.scope)
+        self.assertEqual(calls,['GET']*3);self.assertTrue(all(stream.closed for stream in streams))
+
+    def test_nonhistory_reads_and_post_keep_the_existing_raw_transport_contract(self):
+        client=Client();raw=json.dumps({'padding':'x'*MAX_READ_BYTES}).encode();streams=[]
+        def open_reply(request,timeout):
+            stream=io.BytesIO(raw);stream.headers={'Content-Length':str(len(raw))};streams.append(stream)
+            return stream
+        paths=[PREFIX+'/requests/'+action for action in ('history','compare','export')]+['/api/catalog']
+        with patch.object(client.opener,'open',side_effect=open_reply):
+            for path in paths:self.assertEqual(client.request(path)['padding'],'x'*MAX_READ_BYTES)
+            self.assertEqual(client.request(PREFIX+'/'+self.key+'/history',{'sentinel':'POST'})['padding'],'x'*MAX_READ_BYTES)
+        self.assertTrue(all(stream.closed for stream in streams))
+
     def test_comparison_revision_mismatch_refuses(self):
         original=self.compare()
         for change in ({'left_revision':2},{'right_revision':2},{'sections':None}):

@@ -7,7 +7,7 @@ import math
 from urllib.parse import urlsplit
 from urllib.request import Request, build_opener, HTTPRedirectHandler, ProxyHandler
 from urllib.error import HTTPError
-from .core import canonical, need
+from .core import canonical, decode, need
 
 
 class ClientError(ValueError):
@@ -64,13 +64,15 @@ class Client:
 
     def request(self, path, body=None):
         need(isinstance(path, str) and path.startswith('/api/') and not path.startswith('//'), 'Studio API path required')
+        from .setup_history import MAX_READ_BYTES, is_read_path
+        history_read = body is None and is_read_path(urlsplit(path).path)
         raw = canonical(body) if body is not None else None
         request = Request(self.base + path, data=raw,
                           headers={'Origin': self.base, 'Content-Type': 'application/json', 'Accept': 'application/json'})
         try:
             with self.opener.open(request, timeout=self.timeout) as response:
-                data = read_response(response, 16 * 1024 * 1024)
-                result = json.loads(data)
+                data = read_response(response, MAX_READ_BYTES if history_read else 16 * 1024 * 1024)
+                result = decode(data) if history_read else json.loads(data)
                 need(isinstance(result, dict), 'Studio returned a non-object response')
                 return result
         except HTTPError as exc:

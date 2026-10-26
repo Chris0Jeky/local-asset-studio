@@ -14,8 +14,10 @@ import threading
 from urllib.error import HTTPError
 
 from .client import Client, ClientError, read_response
-from .asset_read_tools import AssetToolClient, PAGE_ARGUMENTS, SELECTION_ARGUMENTS
+from .asset_read_tools import AssetToolClient, PAGE_ARGUMENTS, SELECTION_ARGUMENTS, WORKSPACE
 from .asset_reads import normalize_filters, selection_ids
+from .setup_drafts import MAX_REVISIONS as MAX_SETUP_REVISIONS
+from .setup_history import MAX_PAGE as MAX_SETUP_HISTORY_PAGE
 from .shortlist import GOALS
 from .shortlist_source import SOURCE_ROLES, validate_source_query
 from .core import MAX_BYTES, canonical, decode, digest, need
@@ -33,6 +35,8 @@ SETUP_COMMAND_JSON = {
                     'SHA-256; neither command submits generation.'),
 }
 IDENTIFIER = {'type': 'string', 'pattern': r'^[A-Za-z0-9_.-]{1,96}$', 'maxLength': 96}
+SETUP_REVISION = {'type': 'integer', 'minimum': 1, 'maximum': MAX_SETUP_REVISIONS}
+SETUP_HISTORY_ARGUMENTS = {'draft_id': IDENTIFIER, 'workspace_id': WORKSPACE, 'expected_head': SETUP_REVISION}
 REVISION = {'type': 'integer', 'minimum': 1, 'maximum': 2**53 - 1}
 HASH = {'type': 'string', 'pattern': r'^[0-9a-f]{64}$', 'maxLength': 64}
 OUTPUT_SCHEMA = {
@@ -59,6 +63,14 @@ TOOLS = {
         {'draft_id': IDENTIFIER, 'revision': {'type':'integer','minimum':1,'maximum':256}}, ('draft_id',)),
     'setup_draft_recover': tool('Read the original setup request receipt. Never repeats staging, application or generation.',
         {'request_id': IDENTIFIER}, ('request_id',)),
+    'setup_draft_history': tool('Read one bounded reviewed-setup history page (default and maximum 20). Requires the original Workspace identity; continuation requires next_before_revision as before_revision and the observed head_revision as expected_head. Changed heads refuse; refresh explicitly. No automatic paging, staging or generation.',
+        {**SETUP_HISTORY_ARGUMENTS, 'limit': {'type': 'integer', 'minimum': 1, 'maximum': MAX_SETUP_HISTORY_PAGE},
+         'before_revision': SETUP_REVISION}, ('draft_id', 'workspace_id')),
+    'setup_draft_compare': tool('Compare two retained setup revisions using typed sections and existing preview bounds. Requires the original Workspace identity; retain expected_head when comparing an observed history. No dependency checks, staging, restore or generation.',
+        {**SETUP_HISTORY_ARGUMENTS, 'left': SETUP_REVISION, 'right': SETUP_REVISION},
+        ('draft_id', 'workspace_id', 'left', 'right')),
+    'setup_draft_export_revision': tool('Read one hash-verified, canonical setup revision inspection export. Requires the original Workspace identity; expected_head can bind it to an observed history. Metadata only: no media copy, import authority, dependency checks, staging or generation.',
+        {**SETUP_HISTORY_ARGUMENTS, 'revision': SETUP_REVISION}, ('draft_id', 'workspace_id', 'revision')),
     'setup_draft_command': tool('Explicit Workspace setup create/replace/apply/substitute/restore/abandon. Requires exact workspace/request identity and revisions. Apply and substitute require the exact acknowledged proposal and SHA-256; substitute appends one complete reviewed draft revision without staging, while apply may copy reviewed source files. Both NEVER generate. Persist command JSON before calling; recover by original request ID after any unknown reply.',
         {'command_json': SETUP_COMMAND_JSON}, ('command_json',), 'author', True),
     'recipe_setup_proposal': tool('Preview a source-bound setup diff against a caller-declared browser draft. Read-only; no staging, application, saving or execution. Draft hashes are not server revisions.',
@@ -205,7 +217,12 @@ class AgentBridge:
             elif name.startswith('setup_draft_'):
                 from .setup_draft_client import SetupDraftClient
                 drafts=SetupDraftClient(request)
-                if name=='setup_draft_command':
+                readers={'setup_draft_history':drafts.history,'setup_draft_compare':drafts.compare,
+                         'setup_draft_export_revision':drafts.export_revision}
+                if name in readers:
+                    context.update(a)
+                    data=readers[name](a['draft_id'],**{key:value for key,value in a.items() if key!='draft_id'})
+                elif name=='setup_draft_command':
                     command=payload('command_json')
                     context.update({k:command[k] for k in ('request_id','draft_id','expected_revision','workspace_id') if k in command})
                     data=drafts.command(command)
