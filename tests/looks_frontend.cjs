@@ -77,7 +77,7 @@ function applyFixture(controls){
     applySaved(recipe){for(const [key,value] of Object.entries(recipe))inputs[key].value=value;},preparationStamp:()=>'',preparationEpoch:0,
     selectPreset(){L.clearApplication?.();inputs.seed.value='13';inputs.sampler.value='euler';inputs['#positive'].value='default words';},confirm:()=>true,
     status(text){status=text;},message(text){message=text;},updateLoraHints(){},updateReady(){},scheduleTimeEstimate(){},recipeChanged(){},Event:class{}};
-  vm.runInNewContext('let preparedShortcut;'+applySource+';apply(result)',{...sandbox,result:{preset_id:'demo',look:{id:'test',name:'Test'},controls}});
+  vm.runInNewContext('let preparedShortcut;'+applySource+';apply(result)',{...sandbox,result:{preset_id:'demo',look:{id:'test',name:'Test',revision:0},controls}});
   return {inputs,status,message};
 }
 test('a stale select choice cannot become a prepared success or partially apply the other controls',()=>{
@@ -132,5 +132,28 @@ test('actual controls are read back too and every write is restored when a live 
   sampler.cloneNode=()=>textControl('euler');
   assert.deepEqual(L.applyControls({positive:'new',sampler:'gone'},key=>key==='positive'?prompt:sampler),['sampler']);
   assert.equal(prompt.value,'old');assert.equal(sampler.value,'euler');
+});
+test('prepared provenance survives drafts, resets and edits without changing the recorded options',()=>{
+  const U=require('../app/static/studio-core.js');global.StudioLooks=L;
+  const look={id:'look-a',name:'Night Shift',revision:2,options:{quiet_wall:true}};
+  try{
+    L.restoreApplication(null,'demo',look);look.options.quiet_wall=false;
+    assert.equal(L.applicationPayload('demo').look.options.quiet_wall,true);
+    const draft=U.normalizeDraft({version:1,updatedAt:1,recipe:{preset:'demo',controls:{positive:'edited scene'},...L.applicationPayload('demo')}});
+    L.clearApplication();assert.deepEqual(L.applicationPayload('demo'),{});
+    L.restoreApplication(draft.recipe.look_application,'demo',draft.recipe.look);
+    assert.equal(L.applicationPayload('demo').look.revision,2);
+    assert.deepEqual(L.applicationPayload('other'),{});
+    assert.equal(U.normalizeDraft({...draft,recipe:{...draft.recipe,look:{...look,revision:true}}}),null);
+  }finally{L.clearApplication();delete global.StudioLooks;}
+});
+test('gallery shows numeric diagnostics and unavailable state without claiming acceptance',()=>{
+  const app=fs.readFileSync(require.resolve('../app/static/app.js'),'utf8');
+  const note=vm.runInNewContext(app.slice(app.indexOf('function lookNote('),app.indexOf('var expandedPrompts='))+';lookNote',{esc:v=>String(v).replaceAll('<','&lt;')});
+  const job={look:{name:'<Night Shift>',revision:2,options:{quiet_wall:true}}};
+  const html=note(job,{text_safe:{left_edge_density:0.02,right_edge_density:0.1,comparison:'left quieter'}});
+  assert.match(html,/&lt;Night Shift>/);assert.match(html,/left 2.0%, right 10.0%/);assert.match(html,/Detail proxy only/);
+  assert.match(note(job,{text_safe:{error:'bad image'}}),/check unavailable: bad image/);
+  assert.equal(note({},{}),'');
 });
 console.log(count+' total Look checks passed');

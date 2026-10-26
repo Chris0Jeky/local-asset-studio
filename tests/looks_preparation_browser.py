@@ -30,7 +30,7 @@ class Handler(fixture.Handler):
             if not RELEASE.wait(timeout=20):
                 return self.json({'error': 'Test did not release the prepared response'}, status=500)
             return self.json({'preset_id': 'zimage-fast', 'preset_name': 'Fixture recipe',
-                              'look': {'id': LOOK['id'], 'name': LOOK['name']}, 'controls': copy.deepcopy(CONTROLS)})
+                              'look': {'id': LOOK['id'], 'name': LOOK['name'], 'revision': LOOK['revision']}, 'controls': copy.deepcopy(CONTROLS)})
         return super().do_POST()
 
 
@@ -81,6 +81,7 @@ def main():
                                 if change == 'unchanged':
                                     assert page.locator('#positive').input_value() == CONTROLS['positive']
                                     assert 'Nothing was generated; press Generate' in page.locator('#lookStatus').inner_text()
+                                    assert page.evaluate('StudioSetupDraft.capture()')['recipe']['look'] == {key: LOOK[key] for key in ('id', 'name', 'revision')}
                                 else:
                                     assert page.locator('#positive').input_value() == old
                                     assert 'not applied' in page.locator('#lookStatus').inner_text()

@@ -32,10 +32,10 @@ test('Tune seeds follow the target recipe, including extra bindings and locked z
     const context={structuredClone,Uint32Array,crypto:{getRandomValues:a=>{a[0]=123;return a;}},
       presets:()=>[original,target],presetFor:()=>original,tuneOf:()=>tune,tuneSummary:()=>'',shapeSize:()=>[512,512],SLOTS:[],
       q:s=>({value:s==='#makeScene'?'a room':s==='#makeShape'?'square':'1'}),view:{querySelectorAll:()=>[]},
-      json:async(url,body)=>{requests.push({url,body});return{controls:{positive:'a room'}};}};
+      json:async(url,body)=>{requests.push({url,body});return{controls:{positive:'a room'},look:{id:'look',name:'Night Shift',revision:0,options:{quiet_wall:true}}};}};
     const prepared=vm.runInNewContext(make.match(/  const NAMED=.*\n/)[0]+between('  function applyTune(','  function renderTune(')+between('  async function prepared(','  let estimateEpoch=')+';prepared',context);
     const result=await prepared(look);
-    assert.equal(result.preset_id,'target');assert.equal(result.controls.seed,targetSeed?(reseed?123:0):undefined,JSON.stringify({originalSeed,targetSeed,reseed}));
+    assert.equal(result.look.id,'look');assert.equal(result.look.options.quiet_wall,true);assert.equal(result.preset_id,'target');assert.equal(result.controls.seed,targetSeed?(reseed?123:0):undefined,JSON.stringify({originalSeed,targetSeed,reseed}));
     assert.deepEqual(requests.map(r=>r.url),['/api/looks/prepare']);
   }
 });
@@ -150,7 +150,7 @@ function compareHarness(leaveAt,failure){
   const context={state,view,Uint32Array,crypto:{getRandomValues:a=>a},compareList:()=>[1,2,3].map(id=>({id:'look-'+id,name:'Look '+id,body:{}})),compareBlocker:()=>'',q:()=>({value:'a room'}),say:s=>statuses.push(s),
     MutationObserver:class{constructor(callback){this.callback=callback;observer=this;}observe(){}disconnect(){this.disconnected=true;}},
     presetFor:()=>({id:'preset'}),shapeSize:()=>[512,512],bound:()=>false,remember(){},renderRuns(){},poll:id=>polled.push(id),syncOperation(){},
-    json:async(url,body)=>{requests.push({url,body});if(url==='/api/looks/prepare'){if(leaveAt==='prepare')leave();return{controls:{},notices:['Swap '+body.id+'.']};}
+    json:async(url,body)=>{requests.push({url,body});if(url==='/api/looks/prepare'){if(leaveAt==='prepare')leave();return{controls:{},look:{id:body.id,name:body.id,revision:0},notices:['Swap '+body.id+'.']};}
       if(failure&&requests.filter(r=>r.url==='/api/jobs').length===(failure.at||2)){const e=Error('Request refused');if(failure.status!==undefined)e.status=failure.status;throw e;}
       if(leaveAt==='job')leave();return{id:'job-'+requests.filter(r=>r.url==='/api/jobs').length,status:'queued'};}};
   const generate=vm.runInNewContext(between('  function leaveWatch(){','  // Your pictures lives')+';generateCompare',context);
@@ -168,7 +168,7 @@ test('Compare navigation during prepare sends zero; navigation during a job keep
 });
 
 test('Compare still sends every look when Make stays visible',async()=>{
-  const h=compareHarness();await h.generate();assert.equal(h.state.runs.length,3);assert.equal(h.polled.length,3);assert.match(h.statuses.at(-1),/^Started 3 pictures/);assert.equal(h.state.busy,false);
+  const h=compareHarness();await h.generate();assert.deepEqual(h.requests.filter(r=>r.url==='/api/jobs').map(r=>r.body.look.id),['look-1','look-2','look-3']);assert.equal(h.state.runs.length,3);assert.equal(h.polled.length,3);assert.match(h.statuses.at(-1),/^Started 3 pictures/);assert.equal(h.state.busy,false);
 });
 
 test('Compare distinguishes an uncertain last send from an HTTP refusal, without retrying',async()=>{

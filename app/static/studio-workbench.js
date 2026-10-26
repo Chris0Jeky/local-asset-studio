@@ -1376,7 +1376,7 @@
       parentAssets=[...draft.recipe.parent_assets];parentByInput={...(draft.recipe.parent_by_input||{})};
       continuationState=draft.recipe.continuation?StudioContinuation.normalize(draft.recipe.continuation):null;continuationSource=null;sourceReadError='';
       tileState=draft.recipe.tile||null;parallaxState=draft.recipe.parallax||null;
-      if(typeof StudioLooks!=='undefined')StudioLooks.restoreApplication(draft.recipe.look_application,target.id);
+      if(typeof StudioLooks!=='undefined')StudioLooks.restoreApplication(draft.recipe.look_application,target.id,draft.recipe.look);
       recipeTemplateHash=draft.templateHash;pendingInputs.clear();q('#batch').value=String(draft.recipe.batch);
       renderReferenceSlots();updateLoraHints();syncCreate();
       const actual=values();for(const key of Object.keys(controls))if(String(actual[key]??'')!==String(controls[key]))throw Error('The editor could not retain control '+key+'. Inspect the Workspace revision and browser backup.');

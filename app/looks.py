@@ -305,6 +305,21 @@ def command(studio, payload):
     return dict(card, notices=notices) if notices else card
 
 
+def run_look(studio, value):
+    """Validate prepared attribution against the Workspace; edits to Create remain in job controls."""
+    if value is None: return None
+    if not isinstance(value, dict) or set(value) - {'id', 'name', 'revision', 'options'} or type(value.get('revision')) is not int:
+        raise WorkspaceError('A prepared look needs its id, integer revision and optional lines')
+    ensure_seeds(studio)
+    card = studio.assets.card(value.get('id'))
+    if card['kind'] != KIND or card['trashed_at']:
+        raise WorkspaceError('This prepared look is unavailable; prepare it again or reset the recipe')
+    if card['revision'] != value['revision']:
+        raise WorkspaceError('This prepared look changed; prepare it again or reset the recipe')
+    on = chosen_options(card['body'].get('options', []), value.get('options'))
+    return {'id': card['id'], 'name': card['name'], 'revision': card['revision'], **({'options': on} if on else {})}
+
+
 def prepare(studio, payload):
     """Create's fields for one look and one typed scene. Reads only; submits nothing (the owner presses Generate)."""
     ensure_seeds(studio)

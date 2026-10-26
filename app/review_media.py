@@ -18,6 +18,40 @@ PREVIEW_EDGE = 1536
 FULL_CROP = [0, 0, 10000, 10000]
 
 
+def text_safe_metrics(data):
+    """Detail proxy, never text legibility or art acceptance. EXIF-oriented, alpha on mid-grey.
+
+    Count adjacent luminance differences >=16 within each half at <=512px;
+    exclude the centre boundary so a plain two-tone picture has no internal detail.
+    """
+    if len(data) > MAX_IMAGE_BYTES: raise ValueError('Text-safe source exceeds the 32 MiB image budget')
+    image, _ = decode(data)
+    try:
+        from PIL import Image
+        image.thumbnail((512, 512), Image.Resampling.LANCZOS)
+        if image.width < 4 or image.height < 2: raise ValueError('Text-safe check needs at least 4 by 2 pixels')
+        with Image.new('RGBA', image.size, (128, 128, 128, 255)) as background:
+            background.alpha_composite(image)
+            with background.convert('L') as grey:
+                width, height = grey.size; pixels = grey.tobytes(); densities = []
+                for left, right in ((0, width // 2), (width // 2, width)):
+                    edges = pairs = 0
+                    for y in range(height):
+                        for x in range(left, right):
+                            value = pixels[y * width + x]
+                            if x + 1 < right:
+                                pairs += 1; edges += abs(value - pixels[y * width + x + 1]) >= 16
+                            if y + 1 < height:
+                                pairs += 1; edges += abs(value - pixels[(y + 1) * width + x]) >= 16
+                    densities.append(edges / pairs)
+        left, right = densities
+        return {'method': 'adjacent-luma-v1', 'sample_size': list(image.size), 'threshold': 16,
+                'left_edge_density': left, 'right_edge_density': right,
+                'left_right_ratio': left / right if right else None,
+                'comparison': 'left quieter' if left < right else 'left busier' if left > right else 'equal detail'}
+    finally: image.close()
+
+
 def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode('utf-8')
 
