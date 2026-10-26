@@ -11,6 +11,8 @@ on:
       - 'tests/test_backend*.py'
       - 'tests/test_qwen21_launcher.py'
       - 'scripts/qwen21-launch.py'
+      - 'tests/test_moss_launcher.py'
+      - 'scripts/moss-launch.py'
       - 'tests/test_model*.py'
       - 'tests/test_av_client*.py'
       - 'tests/test_mixed_batch_http.py'
@@ -37,6 +39,8 @@ on:
       - 'tests/test_backend*.py'
       - 'tests/test_qwen21_launcher.py'
       - 'scripts/qwen21-launch.py'
+      - 'tests/test_moss_launcher.py'
+      - 'scripts/moss-launch.py'
       - 'tests/test_model*.py'
       - 'tests/test_av_client*.py'
       - 'tests/test_mixed_batch_http.py'
@@ -79,6 +83,8 @@ jobs:
       - run: python -m unittest discover -s tests -p test_backend_safety.py -v
       - name: Qwen isolated launcher preflight
         run: python -m unittest discover -s tests -p test_qwen21_launcher.py -v
+      - name: MOSS isolated launcher preflight
+        run: python -m unittest discover -s tests -p test_moss_launcher.py -v
       - run: python -m unittest discover -s tests -p test_backend_startup_interlock.py -v
       - name: Shared backend switch ownership and native file locks
         run: python -m unittest discover -s tests -p test_backend_state.py -v
