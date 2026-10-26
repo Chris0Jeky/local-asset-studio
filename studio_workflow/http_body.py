@@ -1,4 +1,4 @@
-"""Bounded transport hygiene for early local HTTP refusals."""
+"""Bounded local HTTP body reads and refusal transport hygiene."""
 from __future__ import annotations
 
 import time
@@ -6,6 +6,16 @@ import time
 DRAIN_LIMIT = 1024 * 1024
 DRAIN_CHUNK = 64 * 1024
 DRAIN_TIMEOUT_SECONDS = 1.0
+
+
+def read_complete_body(handler, limit: int) -> bytes:
+    """Refuse an EOF-short body before its valid JSON prefix can be applied."""
+    size = handler._content_length(limit)
+    raw = handler.rfile.read(size)
+    if len(raw) != size:
+        handler.close_connection = True
+        raise ValueError('Incomplete request body')
+    return raw
 
 
 def drain_declared_body(handler) -> bool:

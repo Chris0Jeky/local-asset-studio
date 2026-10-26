@@ -1,5 +1,28 @@
 # Current state — 13 October 2026
 
+## Composed HTTP body completeness — 26 October 2026
+
+Prompt dispatch, figure splitting and workflow-document routes now reject EOF-short bodies
+before decoding or mutation. Four raw-socket regressions first failed: incomplete requests
+compiled a prompt, created a document, appended a revision and created a split-figure asset.
+They now pass, including real SQLite asset/receipt preservation and complete-request retries.
+The 114 related prompt, document, figure and body-drain tests also passed. Independent
+read-only review found no blockers and independently reran all four regressions successfully.
+
+Full lifetime gate: shard 1/2 passed 2,868 tests in 487.431 s (33 skipped); shard 2/2
+passed 3,212 tests in 501.428 s (82 skipped). Together they cover all 6,080 tests;
+both reported no retained non-daemon threads or active child processes. The earlier
+unsharded run completed 6,080 tests in 1077.168 s with one WinError 32 temporary-directory
+cleanup error in `test_spoken_brief_exports`. Its unchanged 36-test module passed both
+normally and under lifetime diagnostics in isolation; the cleanup cause remains unproven.
+The failed fixture directory was removed and its absence verified. Raw red/failed/full-shard
+logs and the review receipt remain local-only in `.runtime/composed-bodies/`.
+
+Repository validation passed. No installed runtime or generation was used. Other composed
+readers and ambiguous request framing remain separate follow-ups. `HUMAN_TODO.md` is
+unchanged; owner creative and licensing choices remain open. Git writes and PR publication
+belong to the coordinator for this worktree.
+
 ## Review workflow and download integrity follow-ups — 26 October 2026
 
 Quick-check edits preserve keyboard focus, compare tag sets without false dirty states, and

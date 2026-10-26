@@ -4,7 +4,7 @@ from urllib.parse import urlsplit
 from .core import decode, need
 from .commands import apply_commands, fields, StateConflict
 from .documents import WorkflowDocuments, DocumentError
-from .http_body import reject_json
+from .http_body import read_complete_body, reject_json
 
 PREFIX = '/api/workflow-studio/documents'
 
@@ -95,7 +95,7 @@ def extend_handler(base):
                 return reject_json(self, 400, {'error': 'application/json required', 'code': 'invalid_request',
                                                'generation_submitted': False})
             try:
-                value = decode(self.rfile.read(self._content_length(1048576)))
+                value = decode(read_complete_body(self, 1048576))
                 need(isinstance(value, dict), 'JSON object required')
             except (ValueError, OSError, RecursionError) as exc:
                 return self._json(400, {'error': str(exc), 'code': 'invalid_request', 'generation_submitted': False})
