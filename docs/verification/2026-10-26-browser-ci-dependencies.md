@@ -22,12 +22,17 @@ attempts, not evidence for a subsequently corrected head.
 
 ## Scoped correction
 
-Only the Recipe shortlist, asset conflict envelope, guided journey, and Restyle
-ownership workflows use the new helper. Their Linux runners are pinned to
+The initial correction applied the helper to Recipe shortlist, asset conflict
+envelope, guided journey, and Restyle ownership. Their Linux runners are pinned to
 Ubuntu 24.04. The existing job limits remain 8 minutes for both Recipe jobs,
 15 minutes for conflict envelope, and 10 minutes for Guided and Restyle. Existing
 test commands, package pins, checkout settings, assertions, and artifact settings
 are retained. The Windows jobs retain their original Playwright install command.
+
+Subsequent applications are qualified separately for the
+[recovery shelf](2026-10-26-shelf-transaction-qualification.md) and
+[asset-detail browser](2026-10-26-asset-detail-dependencies.md). The measurements
+below remain evidence for the original helper implementation.
 
 [`scripts/ci-install-chromium.sh`](../../scripts/ci-install-chromium.sh) creates
 temporary Deb822 sources for `noble`, `noble-updates`, and `noble-security` using
