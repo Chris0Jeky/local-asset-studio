@@ -6,6 +6,9 @@ Quick-check edits preserve keyboard focus, compare tag sets without false dirty 
 explicitly load unobserved comparison answers before displaying them. Create-card counts use
 confirmed metadata while retaining their loaded-page scope. Look attribution survives reviewed
 setup history and same-recipe reruns; Make results show the existing layout diagnostic.
+Mine/Agent filtering now runs before bounded pagination, so newer agent assets cannot hide
+older personal results. Source choices retain selection and remain available on empty pages;
+the broader #1627 remains open.
 
 The grid browser's two reproduced sort/read races now wait for the matching page, including a
 400 ms delayed-response case. Download failures retain complete recovery paths and cleanup
