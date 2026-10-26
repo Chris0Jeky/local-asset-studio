@@ -74,6 +74,60 @@ class PromptProjectHttpTests(unittest.TestCase):
         status,reply=self.request(f'status?workspace_id={self.scope}&request_id=prompt-request-0001')
         self.assertEqual(status,200);self.assertEqual(reply['project']['revision'],1)
         self.assertEqual(len(self.requests),1);self.assertEqual(self.fixture.count(),1)
+    def incomplete_request(self,action,payload):
+        raw=json.dumps(payload).encode()
+        headers=(f'POST /api/prompt/projects/{action} HTTP/1.1\r\n'
+                 f'Host: 127.0.0.1:{self.server.server_port}\r\nOrigin: {self.base}\r\n'
+                 f'Content-Type: application/json\r\nContent-Length: {len(raw)+1}\r\n\r\n')
+        with socket.create_connection(self.server.server_address,timeout=5) as sock:
+            sock.sendall(headers.encode()+raw);sock.shutdown(socket.SHUT_WR)
+            with http.client.HTTPResponse(sock) as reply:
+                reply.begin();return reply.status,json.loads(reply.read())
+    def assert_incomplete_preserves_database(self,action,payload):
+        with self.fixture.workspace.connection() as db:before='\n'.join(db.iterdump())
+        status,reply=self.incomplete_request(action,payload)
+        # Compare the real database, including heads, revisions and command receipts.
+        with self.fixture.workspace.connection() as db:self.assertEqual('\n'.join(db.iterdump()),before)
+        self.assertEqual(status,400,reply);self.assertIn('Incomplete request body',reply['error'])
+        self.assertEqual(self.request(f'status?workspace_id={self.scope}&request_id={payload["request_id"]}')[0],404)
+        # An explicit complete retry must commit once, rather than replaying an EOF-short save.
+        status,reply=self.request(action,payload)
+        self.assertEqual(status,200,reply);self.assertFalse(reply['replayed'])
+        self.assertEqual(self.request(action,payload)[1]['project'],reply['project'])
+        return reply['project']
+    def test_incomplete_create_never_publishes_a_project_or_receipt(self):
+        project=self.assert_incomplete_preserves_database('create',self.fixture.request)
+        self.assertEqual(project['revision'],1);self.assertEqual(self.fixture.count(),1)
+    def test_incomplete_save_preserves_the_current_document_and_revision(self):
+        created=self.fixture.create();document=copy.deepcopy(self.fixture.doc);document['name']='Changed'
+        payload={'workspace_id':self.scope,'request_id':'prompt-request-0002','id':created['project']['id'],
+                 'expected_revision':1,'document':document}
+        project=self.assert_incomplete_preserves_database('save',payload)
+        self.assertEqual(project['revision'],2);self.assertEqual(project['document'],document)
+        self.assertEqual(self.fixture.count(),2)
+    def test_incomplete_restore_preserves_the_newer_document_and_revision(self):
+        created=self.fixture.create();document=copy.deepcopy(self.fixture.doc);document['name']='Newer'
+        self.fixture.save(created,document=document)
+        payload={'workspace_id':self.scope,'request_id':'prompt-restore-0001','id':created['project']['id'],
+                 'expected_revision':2,'restore_revision':1}
+        project=self.assert_incomplete_preserves_database('restore',payload)
+        self.assertEqual(project['revision'],3);self.assertEqual(project['document'],self.fixture.doc)
+        self.assertEqual(self.fixture.count(),3)
+    def test_incomplete_save_through_production_handler_preserves_database(self):
+        from test_server import server
+        created=self.fixture.create();document=copy.deepcopy(self.fixture.doc);document['name']='Changed'
+        payload={'workspace_id':self.scope,'request_id':'prompt-request-0002','id':created['project']['id'],
+                 'expected_revision':1,'document':document}
+        service=self.fixture.service
+        class Handler(server.extend_handler(server.Handler)):
+            studio=SimpleNamespace(prompt_projects=service)
+        original=self.server.RequestHandlerClass
+        self.server.RequestHandlerClass=Handler
+        try:
+            with patch.object(server,'PORT',self.server.server_port):
+                project=self.assert_incomplete_preserves_database('save',payload)
+            self.assertEqual(project['revision'],2);self.assertEqual(self.fixture.count(),2)
+        finally:self.server.RequestHandlerClass=original
     def test_storage_error_is_unconfirmed_not_a_success(self):
         import sqlite3
         with patch.object(self.fixture.service,'command',side_effect=sqlite3.OperationalError('locked')):
