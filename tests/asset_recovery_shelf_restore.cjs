@@ -48,3 +48,12 @@ test('an unchanged imported Trash snapshot closes only after its historical rece
   assert.equal(next.writes.length,0);assert.equal(next.el('#assetDialog').open,false);
   assert.equal(next.storage.getItem(key),null);assert.equal(next.run('activeAsset.trashed_at'),123);
 });
+test('a refused attempt survives shelf export/import as literal text beside its exact command and newer draft',async()=>{
+  const first=setup();typing(first,'snapshot');await lose(first);const retry=first.run('performAssetSave(assetDetailPending)');
+  typing(first,'newer draft');first.writes[1].reject(Object.assign(Error('<script>literal refusal</script>'),{status:403,data:{}}));await retry;
+  const before=JSON.parse(first.storage.getItem(key));assert.equal(before.last_refusal?.message,'<script>literal refusal</script>');
+  const next=await roundTrip(first);assert.equal(next.run('assetDetailPending.body'),before.operation.body);assert.equal(next.el('#assetNotes').value,'newer draft');
+  assert.match(next.el('#assetDetailRecovery').innerHTML,/&lt;script&gt;literal refusal&lt;\/script&gt;/);assert.doesNotMatch(next.el('#assetDetailRecovery').innerHTML,/<script>/);
+  const check=next.run('checkAssetSave()');next.reads[0].resolve(first.receipt(0));await check;assert.equal(next.writes.length,0);
+  assert.equal(JSON.parse(next.storage.getItem(key)).last_refusal,undefined);assert.equal(next.el('#assetNotes').value,'newer draft');
+});

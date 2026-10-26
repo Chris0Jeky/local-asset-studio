@@ -77,3 +77,11 @@ for(const slot of ['detail','library'])test(slot+' callback stays stale across W
   s.writes[0].resolve(receipt);await p;
   assert.equal(journal(s,slot),bytes);assert.equal(s.run('!!'+(slot==='detail'?'assetDetailPending':'assetLibraryPending')),true);assert.equal(s.run('assetState.assets[0].metadata_revision'),0);
 });
+for(const slot of ['detail','library'])for(const owner of ['workspace','aba','request'])test(slot+' late refusal cannot annotate a newer '+owner+' owner',async()=>{
+  const s=setup({autoOpen:slot==='detail'}),p=slot==='detail'?begin(s):s.run("mutateAssets({ids:['a'],action:'edit',favorite:true})").catch(()=>{}),before=journal(s,slot);
+  const state=s.run('JSON.stringify(assetState)');
+  if(owner==='request')s.run(slot==='detail'?"assetDetailPending={...assetDetailPending};assetDetailRequest={}":"assetLibraryPending={...assetLibraryPending};assetLibraryRequest={}");
+  else {swap(s);s.run('renderAssets()');if(owner==='aba')s.run('assetState='+state+';renderAssets()');}
+  s.writes[0].reject(Object.assign(Error('late refusal must not persist'),{status:403,data:{}}));await p;
+  assert.equal(journal(s,slot),before);assert.equal(JSON.parse(journal(s,slot)).last_refusal,undefined);assert.equal(s.writes.length,1);
+});
