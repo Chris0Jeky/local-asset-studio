@@ -7,9 +7,10 @@ import sys
 import tempfile
 import unittest
 import wave
+from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT));sys.path.append(str(ROOT/'scripts'))
 from studio_av import project as p
-from studio_av.render import compile_project,render,inspect_wav,validate_media
+from studio_av.render import compile_project,render,inspect_wav,validate_media,probe,_run_owned
 try:import PIL;HAS_PIL=True
 except ImportError:HAS_PIL=False
 
@@ -149,6 +150,32 @@ class AVTests(unittest.TestCase):
         # Decode frame count, not only a container duration.
         data=subprocess.run(['ffprobe','-v','error','-count_frames','-select_streams','v:0','-show_entries','stream=nb_read_frames','-of','csv=p=0',str(self.root/'render-dissolves/preview.mp4')],capture_output=True,text=True,check=True)
         self.assertEqual(int(data.stdout.strip()),144)
+        self.assertEqual(result['probe']['streams'][0]['nb_read_frames'],'144')
+        self.assertTrue((self.root/'render-dissolves/receipt.json').is_file())
+        self.assertFalse((self.root/'render-dissolves/.incomplete').exists())
+    @unittest.skipUnless(shutil.which('ffmpeg') and shutil.which('ffprobe'),'FFmpeg not installed')
+    def test_short_picture_with_full_audio_cannot_publish_receipt(self):
+        for frames in (143,72):
+            with self.subTest(frames=frames):
+                out=self.root/f'render-short-picture-{frames}'
+                def shorten_picture(command,log_path,timeout,cancel):
+                    command=list(command)
+                    if log_path.name=='ffmpeg.log':
+                        command[command.index('-frames:v')+1]=str(frames)
+                    return _run_owned(command,log_path,timeout,cancel)
+                with patch('studio_av.render._run_owned',side_effect=shorten_picture):
+                    with self.assertRaisesRegex(ValueError,'Output video frame count mismatch'):
+                        render(self.doc,self.root,out)
+                # Real encoded video is short, while the mux duration and PCM
+                # mix satisfy the old checks because audio still lasts six seconds.
+                metadata=probe(out/'preview.mp4','video')
+                self.assertAlmostEqual(float(metadata['format']['duration']),6,places=2)
+                self.assertEqual(inspect_wav(out/'mix.wav')['samples'],288000)
+                count=subprocess.run([shutil.which('ffprobe'),'-v','error','-count_frames','-select_streams','v:0',
+                    '-show_entries','stream=nb_read_frames','-of','csv=p=0',str(out/'preview.mp4')],capture_output=True,text=True,check=True)
+                self.assertEqual(int(count.stdout.strip()),frames)
+                self.assertTrue((out/'.incomplete').is_file())
+                self.assertFalse((out/'receipt.json').exists())
     @unittest.skipUnless(shutil.which('ffmpeg') and shutil.which('ffprobe'),'FFmpeg not installed')
     def test_renamed_hls_is_rejected_without_rendering(self):
         clip=self.add_mp4_fixture('playlist-source.mp4');segment=self.root/'media'/'unregistered.ts'
