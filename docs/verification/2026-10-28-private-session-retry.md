@@ -63,3 +63,21 @@ The focused layout fixture had omitted that sibling. It now retains the actual
 intervening markup from index.html and reproduces 30px versus 16px padding before
 the correction. A general-sibling selector applies the intended padding; both
 status cases and keyboard/overflow checks pass without relaxing any threshold.
+
+## Downstream native fixture corrections
+
+On `a5284a3`, the complete Workshop application test now passes at **1693px**;
+Restyle passes both platforms, and all Linux privacy journeys pass. The next
+Workshop smoke step assumed Make reopened an untouched look gallery. It now
+waits for recovery, explicitly chooses Anime character and opens Change look
+when a look is already selected. No recovery bytes or model-link assertions
+are removed. The earlier finder journey and this Models journey share saved
+Make preferences; navigation alone must not erase them.
+
+All 24 Windows private-recovery behavior checks passed, but the fixture's final
+error gate counted `ConnectionAbortedError` (WinError 10053) during a cancelled
+read-only estimate response as a handler defect. Match the creation driver's
+existing disconnect classification; retain the event in `client_disconnects`.
+Two actual-handler tests reproduce this missing classification and verify that
+ValueError, RuntimeError, other OSError and TimeoutError still fail the gate.
+Native smoke and both privacy platforms remain required on the final head.

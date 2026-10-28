@@ -88,7 +88,7 @@ def run(output, app_root):
     server = browser_server(Handler)
     def server_error(request, address):
         error = sys.exc_info()[1]
-        if isinstance(error, (BrokenPipeError, ConnectionResetError)): disconnects.append(type(error).__name__)
+        if isinstance(error, (BrokenPipeError, ConnectionResetError, ConnectionAbortedError)): disconnects.append(type(error).__name__)
         else: server_errors.append(traceback.format_exc())
     server.handle_error = server_error
     thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
