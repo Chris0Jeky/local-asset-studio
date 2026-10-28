@@ -1,0 +1,111 @@
+diff --git a/docs/verification/2026-10-28-private-session-retry.md b/docs/verification/2026-10-28-private-session-retry.md
+index 61a505a..c216150 100644
+--- a/docs/verification/2026-10-28-private-session-retry.md
++++ b/docs/verification/2026-10-28-private-session-retry.md
+@@ -63,3 +63,21 @@ The focused layout fixture had omitted that sibling. It now retains the actual
+ intervening markup from index.html and reproduces 30px versus 16px padding before
+ the correction. A general-sibling selector applies the intended padding; both
+ status cases and keyboard/overflow checks pass without relaxing any threshold.
++
++## Downstream native fixture corrections
++
++On `a5284a3`, the complete Workshop application test now passes at **1693px**;
++Restyle passes both platforms, and all Linux privacy journeys pass. The next
++Workshop smoke step assumed Make reopened an untouched look gallery. It now
++waits for recovery, explicitly chooses Anime character and opens Change look
++when a look is already selected. No recovery bytes or model-link assertions
++are removed. The earlier finder journey and this Models journey share saved
++Make preferences; navigation alone must not erase them.
++
++All 24 Windows private-recovery behavior checks passed, but the fixture's final
++error gate counted `ConnectionAbortedError` (WinError 10053) during a cancelled
++read-only estimate response as a handler defect. Match the creation driver's
++existing disconnect classification; retain the event in `client_disconnects`.
++Two actual-handler tests reproduce this missing classification and verify that
++ValueError, RuntimeError, other OSError and TimeoutError still fail the gate.
++Native smoke and both privacy platforms remain required on the final head.
+diff --git a/tests/private_recovery_browser.py b/tests/private_recovery_browser.py
+index 6626c3e..a1d3a0b 100644
+--- a/tests/private_recovery_browser.py
++++ b/tests/private_recovery_browser.py
+@@ -88,7 +88,7 @@ def run(output, app_root):
+     server = browser_server(Handler)
+     def server_error(request, address):
+         error = sys.exc_info()[1]
+-        if isinstance(error, (BrokenPipeError, ConnectionResetError)): disconnects.append(type(error).__name__)
++        if isinstance(error, (BrokenPipeError, ConnectionResetError, ConnectionAbortedError)): disconnects.append(type(error).__name__)
+         else: server_errors.append(traceback.format_exc())
+     server.handle_error = server_error
+     thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
+diff --git a/tests/studio_browser_smoke.py b/tests/studio_browser_smoke.py
+index deda2d7..bd2cc66 100644
+--- a/tests/studio_browser_smoke.py
++++ b/tests/studio_browser_smoke.py
+@@ -390,7 +390,13 @@ def run(screenshots):
+             check(models.locator('#modelsView').is_visible(),'query need parameter also filters Models')
+             models.locator('[data-models-all]').click();models.wait_for_function('document.querySelectorAll("#modelCards .model-card").length>1 && !location.search.includes("need")')
+             check(models.locator('#modelsView').is_visible(),'Show everything clears a query need filter too')
+-            models.goto(origin+'/#make');models.wait_for_selector('[data-make-look="look-wai-fantasy-portrait"]');models.locator('[data-make-look="look-wai-fantasy-portrait"]').click()
++            models.goto(origin+'/#make')
++            models.wait_for_function('document.querySelector("#makeView").dataset.draftState === "ready"')
++            # Make now restores the remembered goal/look instead of assuming a fresh gallery.
++            # Use the same explicit controls as a person arriving from Models; do not erase recovery.
++            models.locator('[data-make-goal="character"]').click()
++            if models.locator('[data-make-change]').is_visible():models.locator('[data-make-change]').click()
++            models.wait_for_selector('[data-make-look="look-wai-fantasy-portrait"]');models.locator('[data-make-look="look-wai-fantasy-portrait"]').click()
+             check(models.locator('#makeWhy a').get_attribute('href')=='/#models?need=wai','composer blocker links to the preset files')
+             models.locator('[data-make-change]').click()  # choosing a look folds the gallery (S1); open it again to see the cards
+             card_link=models.locator('.make-look').filter(has=models.locator('[data-make-look="look-wai-fantasy-portrait"]')).locator('a')
+diff --git a/tests/test_browser_privacy_disconnects.py b/tests/test_browser_privacy_disconnects.py
+new file mode 100644
+index 0000000..f38f245
+--- /dev/null
++++ b/tests/test_browser_privacy_disconnects.py
+@@ -0,0 +1,47 @@
++"""Privacy browser receipts retain disconnects without hiding handler defects."""
++import ast
++from pathlib import Path
++import sys
++import traceback
++import unittest
++
++ROOT = Path(__file__).resolve().parents[1]
++
++
++class PrivacyBrowserDisconnectTests(unittest.TestCase):
++    def observe(self, filename, error):
++        tree = ast.parse((ROOT / 'tests' / filename).read_text(encoding='utf-8'))
++        handlers = [node for node in ast.walk(tree)
++                    if isinstance(node, ast.FunctionDef) and node.name == 'server_error']
++        self.assertEqual(len(handlers), 1)
++        namespace = {'sys': sys, 'traceback': traceback, 'disconnects': [], 'server_errors': []}
++        exec(compile(ast.Module(body=handlers, type_ignores=[]), filename, 'exec'), namespace)
++        try:
++            raise error
++        except Exception:
++            namespace['server_error'](None, ('127.0.0.1', 1))
++        return namespace['disconnects'], namespace['server_errors']
++
++    def test_closed_browser_connections_are_retained_as_disconnects(self):
++        for filename in ('private_creation_browser.py', 'private_recovery_browser.py'):
++            for error in (BrokenPipeError('closed'), ConnectionResetError('reset'),
++                          ConnectionAbortedError(10053, 'Windows browser cancelled the response')):
++                with self.subTest(driver=filename, error=type(error).__name__):
++                    disconnects, failures = self.observe(filename, error)
++                    self.assertEqual(disconnects, [type(error).__name__])
++                    self.assertEqual(failures, [])
++
++    def test_handler_and_other_io_failures_still_fail_the_gate(self):
++        for filename in ('private_creation_browser.py', 'private_recovery_browser.py'):
++            for error in (ValueError('bad response'), RuntimeError('handler failed'),
++                          OSError('unrelated I/O'), TimeoutError('server timeout')):
++                with self.subTest(driver=filename, error=type(error).__name__):
++                    disconnects, failures = self.observe(filename, error)
++                    self.assertEqual(disconnects, [])
++                    self.assertEqual(len(failures), 1)
++                    self.assertIn(type(error).__name__, failures[0])
++                    self.assertIn(str(error), failures[0])
++
++
++if __name__ == '__main__':
++    unittest.main(verbosity=2)
