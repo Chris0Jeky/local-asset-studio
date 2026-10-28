@@ -144,7 +144,7 @@
     const t=state.tune[look.id];delete savedTunes[look.id];
     if(t&&(tuneSummary(look,t)||!t.reseed)){const {composer,...rest}=t;savedTunes[look.id]={...rest,rev:look.revision};}
     const ids=Object.keys(savedTunes);for(const id of ids.slice(0,Math.max(0,ids.length-12)))delete savedTunes[id];
-    try{makeStorage.setItem(TUNES,JSON.stringify(savedTunes));}catch{}
+    writeTunes(savedTunes,creationPrivacy());
   }
   function tuneOf(look){
     if(state.tune[look.id])return state.tune[look.id];const saved=validTune(look,savedTunes[look.id]);if(saved)return state.tune[look.id]=saved;const p=presetFor(look),c=look.body.controls||{};
@@ -382,7 +382,7 @@
 
   view.innerHTML='<div class="make-heading"><span class="eyebrow">MAKE</span><h1 id="makeTitle" tabindex="-1">What are you making?</h1><p>Pick a goal, pick a look by its picture, describe your idea. The look brings the right model, LoRAs and settings.</p></div>'
     +'<div class="make-goals" role="radiogroup" aria-labelledby="makeTitle" id="makeGoals"></div>'
-    +'<div id="makeStatusSlot"></div>'
+    +'<div id="makeStatusSlot"></div><p id="makeDraftWarning" class="make-warn" role="status" hidden></p>'
     +'<div id="makeSplit" class="make-split"><div id="makeBody"></div><section class="make-runs" aria-labelledby="makeRunsTitle"><div class="section-title"><h2 id="makeRunsTitle">Your pictures</h2><a href="/#assets">Open the library ↗</a></div><div id="makeRuns" class="make-run-list" aria-live="polite" aria-relevant="additions text"></div></section></div>'
     +'<p class="make-advanced">Need every setting? <a href="/#create">Open the full editor</a> · <a href="/prompt-lab.html">Prompt Lab</a> · <a href="/#production">Compare settings side by side</a></p>';
 
@@ -400,7 +400,7 @@
   // Once a look is chosen the gallery folds to one line and the results sit beside the words, so Generate and its pictures share a screen.
   // The pictures column opens beside the words only once there are pictures; before that the composer takes the full width.
   function layout(){const focused=!goal().intent&&!!current()&&!state.picking&&!state.compare;q('#makeSplit').classList.toggle('make-has-look',focused&&state.runs.length>0);view.classList.toggle('make-focused',focused);}
-  function render(){renderGoals();const g=goal();if(g.intent)renderPictures(g);else renderLooks();renderRuns();layout();placeStatus();}
+  function render(){renderGoals();const g=goal();if(g.intent)renderPictures(g);else renderLooks();renderRuns();layout();placeStatus();draftWarning();}
   function renderLooks(){
     const body=q('#makeBody');
     if(state.error){body.innerHTML='<p class="make-error" role="alert">'+escape(state.error)+' <button type="button" data-make-retry>Try again</button></p>';placeStatus();return;}
@@ -453,8 +453,8 @@
       +(look.body.notes?'<details class="make-maint"><summary>Details for maintainers</summary><p class="muted">'+escape(look.body.notes)+'</p></details>':'')+'</details>'
       +'</div>'+goBar(why?blockerMarkup(look,why):'')+'</div>';
     syncOperation();
-    const scene=q('#makeScene');try{scene.value=sessionStorage.getItem(privateKey('studio.make.scene.'+state.goal))||'';}catch{}
-    scene.oninput=()=>{scene.removeAttribute('aria-invalid');scene.removeAttribute('aria-describedby');try{sessionStorage.setItem(privateKey('studio.make.scene.'+state.goal),scene.value);}catch{}settleMissing();};
+    const scene=q('#makeScene');try{scene.value=sceneDraftValue();}catch{}
+    scene.oninput=()=>{scene.removeAttribute('aria-invalid');scene.removeAttribute('aria-describedby');writeScene(scene.value);settleMissing();};
     if(q('#makeUseExample'))q('#makeUseExample').onclick=()=>{scene.value=example;scene.oninput();scene.focus();};
     q('#makeShape').onchange=q('#makeCount').onchange=()=>estimate();estimate();
     const strength=q('#makeStrength');if(strength)strength.oninput=()=>{const t=tuneOf(look);t.scale=Math.min(150,Math.max(0,Number(strength.value)||0));paintScale(t);tuneChanged(false);};
@@ -1019,8 +1019,8 @@
       +'<div class="make-row">'+(example?'<button type="button" id="makeUseExample">Use the example</button>':'')+'<small>Each look adds its own style and quality words and keeps its own shape.</small></div>'
       +'<p class="make-hint" id="makeCompareSum">'+(list.length?'Comparing '+list.map(l=>escape(l.name)).join(', ')+'.':'Choose two or three looks above.')+(list.length>1?' One picture per look, '+(seeded===list.length?'all from the same seed.':seeded?'the same seed for the '+seeded+' looks that take one.':'each from its own seed.'):'')+'</p></div>'
       +goBar(why?escape(why):'','Generate'+(list.length>1?' '+list.length+' pictures':''))+'</div>';
-    const scene=q('#makeScene');try{scene.value=sessionStorage.getItem(privateKey('studio.make.scene.'+state.goal))||'';}catch{}
-    scene.oninput=()=>{scene.removeAttribute('aria-invalid');scene.removeAttribute('aria-describedby');try{sessionStorage.setItem(privateKey('studio.make.scene.'+state.goal),scene.value);}catch{}settleMissing();};
+    const scene=q('#makeScene');try{scene.value=sceneDraftValue();}catch{}
+    scene.oninput=()=>{scene.removeAttribute('aria-invalid');scene.removeAttribute('aria-describedby');writeScene(scene.value);settleMissing();};
     if(q('#makeUseExample'))q('#makeUseExample').onclick=()=>{scene.value=example;scene.oninput();scene.focus();};
     syncOperation();void compareEstimate();
   }
@@ -1091,6 +1091,7 @@
       if(epoch!==privacyEpoch)return;state.looks=(listing.looks||listing.cards||[]).filter(l=>l.kind==='look'||l.body);
     }catch(error){if(epoch!==privacyEpoch)return;state.error='Could not read the looks: '+error.message;}
     if(epoch!==privacyEpoch)return;await restoreDraft(pendingDraft,epoch,revision);if(epoch!==privacyEpoch)return;draftReady=true;view.dataset.draftState='ready';
+    const navigation=pendingNavigation||takeNavigation();pendingNavigation=null;if(navigation)chooseNavigation(navigation);
     render();
     // Earlier Make runs come back from their job records; one the Studio says is gone (404) is dropped, one still running is followed
     // again, and one whose read fails is kept and checked again with back-off (#1438), never taken for deleted.
@@ -1180,7 +1181,7 @@
       // Edit and re-run brings the run's tune back with its look; another look starts from that look as made.
       if(!again.dataset.makeAnother){if(Array.isArray(run.tune?.rows)&&Array.isArray(run.tune.cleared)){state.tune[run.lookId]=structuredClone(run.tune);state.tuneOpen=state.tuneOpen||(!!run.tuned&&!final);}else{delete state.tune[run.lookId];delete savedTunes[run.lookId];}}
       // Make the final is Edit and re-run with the draft's steps put back to the look's own: the same words and seed, staged, never sent.
-      if(final&&state.tune[run.lookId]){state.tune[run.lookId].steps=null;delete state.tune[run.lookId].turbo;}try{sessionStorage.setItem(privateKey('studio.make.scene.'+run.goal),run.scene);}catch{}remember();render();
+      if(final&&state.tune[run.lookId]){state.tune[run.lookId].steps=null;delete state.tune[run.lookId].turbo;}writeScene(run.scene,run.goal);remember();render();
       if(final){say('The final is set up: the same words and seed at full detail. Press Generate to make it.');q('#makeGenerate')?.focus();return;}
       const scene=q('#makeScene');if(scene&&!state.picking){scene.focus();scene.select();}else q('.make-look.active [data-make-look]')?.focus();return;}
     const redo=e.target.closest('[data-make-redo]');if(redo){const run=state.runs.find(r=>r.job.id===redo.dataset.makeRedo);
@@ -1228,10 +1229,37 @@
       pose,poseMode:state.poseMode,poseRoute:state.poseRoute,styleLook:state.styleLook,styleWords:!!state.styleWords,fix:state.fix,scene:scene.slice(0,1000)};
   }
   const hasDraft=d=>!!(d?.source||d?.scene||Object.values(d?.form||{}).some(v=>v.trim()));
-  function writeDraft(d,privacy){try{const raw=JSON.stringify({...d,privacy});if(raw.length<=DRAFT_LIMIT)sessionStorage.setItem(privateKey(DRAFT_KEY,privacy),raw);}catch{}}
+  const pageDrafts=new Map(),pageScenes=new Map(),pageTunes=new Map();
+  function readTunes(privacy){
+    if(pageTunes.has(privacy))return pageTunes.get(privacy);
+    try{const value=JSON.parse(storedIn(privacy).getItem(privateKey(TUNES,privacy))||'{}');return value&&typeof value==='object'&&!Array.isArray(value)?value:{};}catch{return{};}
+  }
+  function writeTunes(value,privacy){
+    pageTunes.set(privacy,structuredClone(value));
+    try{const storage=storedIn(privacy),key=privateKey(TUNES,privacy),raw=JSON.stringify(value);storage.setItem(key,raw);
+      if(storage.getItem(key)!==raw)throw Error('Tune write was not retained');pageTunes.delete(privacy);draftWarning();return true;
+    }catch{draftWarning();return false;}
+  }
+  function writeScene(value,g=state.goal,privacy=creationPrivacy()){
+    const key=privateKey('studio.make.scene.'+g,privacy);pageScenes.set(key,value);
+    try{sessionStorage.setItem(key,value);}catch{}
+  }
+  function draftWarning(){const warning=q('#makeDraftWarning');if(!warning)return;
+    warning.hidden=!pageDrafts.has(creationPrivacy())&&!pageTunes.has(creationPrivacy());warning.textContent=warning.hidden?'':'Browser storage could not retain this draft. Keep this page open and copy your wording before reloading. Earlier recovery copies have not been removed.';}
+  function writeDraft(d,privacy){
+    const value={...d,privacy};pageDrafts.set(privacy,value);
+    try{const raw=JSON.stringify(value),key=privateKey(DRAFT_KEY,privacy);if(raw.length>DRAFT_LIMIT)throw Error('Draft exceeds storage limit');
+      sessionStorage.setItem(key,raw);if(sessionStorage.getItem(key)!==raw)throw Error('Draft write was not retained');
+      pageDrafts.delete(privacy);draftWarning();return true;
+    }catch{draftWarning();return false;}
+  }
+  function sceneDraftValue(){const pending=pageDrafts.get(creationPrivacy());
+    if(pending?.goal===state.goal)return pending.scene||'';
+    const key=privateKey('studio.make.scene.'+state.goal);return pageScenes.has(key)?pageScenes.get(key):sessionStorage.getItem(key)||'';
+  }
   function rememberDraft(){if(draftReady)writeDraft(draftSnapshot(),creationPrivacy());}
   function readDraft(privacy=creationPrivacy()){
-    try{const raw=sessionStorage.getItem(privateKey(DRAFT_KEY,privacy));if(!raw||raw.length>DRAFT_LIMIT)return null;const d=JSON.parse(raw);
+    try{const raw=pageDrafts.has(privacy)?JSON.stringify(pageDrafts.get(privacy)):sessionStorage.getItem(privateKey(DRAFT_KEY,privacy));if(!raw||raw.length>DRAFT_LIMIT)return null;const d=JSON.parse(raw);
       if(d?.version!==1||d.privacy!==privacy||!GOALS.some(g=>g.id===d.goal)||!d.form||typeof d.form!=='object'||Array.isArray(d.form))return null;
       if(d.source&&!safeId(d.source.id)||d.pose?.asset&&!safeId(d.pose.asset.id))return null;
       if(privacy==='regular'&&[d.source,d.pose?.asset].some(a=>a&&classified(a)==='private'))return null;
@@ -1244,7 +1272,7 @@
     state.poseMode=d.poseMode==='figure'?'figure':'picture';state.poseRoute=['copy','scene','depth'].includes(d.poseRoute)?d.poseRoute:'copy';
     state.pose=d.pose?.asset?{asset:draftAsset(d.pose.asset)}:PE()?.PRESETS?.some(p=>p.id===d.pose?.figure)?{figure:d.pose.figure,mirror:!!d.pose.mirror}:null;
     state.styleLook=safeId(d.styleLook);state.styleWords=!!d.styleWords;state.fix=POLISH[d.fix]?d.fix:'face';
-    if(typeof d.scene==='string')try{sessionStorage.setItem(privateKey('studio.make.scene.'+d.goal,d.privacy),d.scene.slice(0,1000));}catch{}
+    if(typeof d.scene==='string')writeScene(d.scene.slice(0,1000),d.goal,d.privacy);
   }
   async function restoreDraft(d,epoch=privacyEpoch,revision=draftRevision){
     if(!d)return;const resolved=[];
@@ -1265,22 +1293,44 @@
   document.addEventListener('studio:privacy-change',event=>{
     const {previousCreation='regular',creation=creationPrivacy()}=event.detail||{},before=draftSnapshot(previousCreation),migrate=previousCreation==='regular'&&creation==='private'&&hasDraft(before);
     if(draftReady&&hasDraft(before))writeDraft(before,previousCreation);
-    if(migrate){writeDraft(before,'private');try{sessionStorage.removeItem(privateKey(DRAFT_KEY,'regular'));sessionStorage.removeItem(privateKey('studio.make.scene.'+before.goal,'regular'));
-        // Move only this tab's exact active tune; a newer write from another tab is never erased.
-        if(!GOALS.find(g=>g.id===before.goal)?.intent&&savedTunes[before.look]){const regular=JSON.parse(localStorage.getItem(TUNES)||'{}'),privateTunes=JSON.parse(sessionStorage.getItem(privateKey(TUNES,'private'))||'{}'),own=savedTunes[before.look];
-          privateTunes[before.look]=own;sessionStorage.setItem(privateKey(TUNES,'private'),JSON.stringify(privateTunes));
+    if(migrate){const retained=writeDraft(before,'private');let tuneRetained=true;
+      // Copy and verify the active tune before retiring either regular recovery record.
+      // A failed write keeps a page-local private copy; another tab's newer tune is never erased.
+      if(!GOALS.find(g=>g.id===before.goal)?.intent&&savedTunes[before.look]){
+        const own=structuredClone(savedTunes[before.look]),privateTunes={...readTunes('private'),[before.look]:own};
+        tuneRetained=writeTunes(privateTunes,'private');
+        if(retained&&tuneRetained)try{const regular=JSON.parse(localStorage.getItem(TUNES)||'{}');
           if(JSON.stringify(regular[before.look])===JSON.stringify(own)){delete regular[before.look];localStorage.setItem(TUNES,JSON.stringify(regular));}}
-      }catch{}}
+        catch{}
+      }
+      if(retained&&tuneRetained)try{sessionStorage.removeItem(privateKey(DRAFT_KEY,'regular'));sessionStorage.removeItem(privateKey('studio.make.scene.'+before.goal,'regular'));pageDrafts.delete('regular');pageScenes.delete(privateKey('studio.make.scene.'+before.goal,'regular'));}catch{}
+    }
     privacyEpoch++;draftRevision++;draftReady=false;draftProblem='';view.dataset.draftState='restoring';
     for(const timer of timers.values())clearTimeout(timer);timers.clear();planning.clear();
     state.runs=[];state.pictures=null;state.characters=[];state.charStale=false;state.review={};state.polish={};state.queries={};state.allPictures=false;state.openers.clear();clearCharForms();
     state.status='';state.missing='';state.error='';state.compare=false;state.compareLooks=[];state.sweeps={};
     if(previousCreation!==creation){state.pick=null;state.pose=null;state.form={};state.character=null;state.styleLook=null;state.styleWords=false;state.repicking=false;state.posePicking=false;state.tune={};
-      try{const t=JSON.parse(makeStorage.getItem(TUNES)||'{}');savedTunes=t&&typeof t==='object'&&!Array.isArray(t)?t:{};}catch{savedTunes={};}
+      savedTunes=readTunes(creation);
       const next=readDraft();if(next)applyDraft(next);
     }
     restoredRuns=false;savedRuns=readSavedRuns();render();void load();
   });
-  window.StudioMake={goalOf:id=>GOALS.find(x=>x.looks?.includes(id))?.id||null,refreshReadiness:syncOperation,refresh(){if(!loaded){loaded=true;void load();}else render();}};
+  // The finder passes intent to this owner; old recovery cannot override an explicit choice.
+  let pendingNavigation=null;
+  function navigationValue(value){
+    const g=value&&GOALS.find(g=>g.id===value.goal);if(!g)return null;
+    const look=value.look??null;if(look!==null&&!g.looks?.includes(look))return null;
+    return{goal:g.id,look};
+  }
+  function takeNavigation(){try{const key='studio.make.navigation',raw=sessionStorage.getItem(key);if(!raw)return null;
+    sessionStorage.removeItem(key);if(sessionStorage.getItem(key)!==null)return null;
+    return raw.length<=512?navigationValue(JSON.parse(raw)):null;
+  }catch{return null;}}
+  function chooseNavigation(value){const next=navigationValue(value);if(!next)return false;
+    if(!draftReady){pendingNavigation=next;return true;}
+    draftRevision++;state.goal=next.goal;state.look=next.look;state.compare=false;state.compareLooks=[];state.picking=false;state.pictures=null;
+    remember();render();return true;
+  }
+  window.StudioMake={goalOf:id=>GOALS.find(x=>x.looks?.includes(id))?.id||null,choose:selection=>chooseNavigation(selection),refreshReadiness:syncOperation,refresh(){if(!loaded){loaded=true;void load();}else render();}};
   if(!view.hidden)window.StudioMake.refresh();
 })();

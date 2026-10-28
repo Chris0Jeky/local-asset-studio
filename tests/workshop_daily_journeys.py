@@ -494,13 +494,15 @@ window.state=()=>{syncContinuation();return [q('#uxRestoreSourcePrompt').disable
     def test_workspace_refresh_reports_success_failure_and_busy(self):
         refresh = region(source('workspace.js'), 'async function refreshAssets(', '// Scope, filters')
         observe = region(source('workspace.js'), 'function observeAssetWorkspaceIdentity(', 'function assetReceiptURL(')
+        privacy = region(source('workspace.js'), 'function assetPrivacyAllows(', 'function assetPrivacyStorage(')
         self.page.set_content('''<script>
+let assetActivePrivacy='regular',assetRefreshRequest=0,assetRefreshController=null;
 let assetRefreshing=false,assetState={workspace_id:'old'},assetObservedWorkspace='old',assetWorkspaceEpoch=0,assetSignature='',jobsSignature='',assetReceiptEpoch=0,assetObservationEpoch=0,assetPageEpoch=0,assetPaging=null,assetScopeRestored=false,assetSearchTimer=null,assetRetainedSelection=null,jobs=[],recentShown=10;
 const assetSelection=new Set(),assetResolved=new Map(),StudioAssetRecovery={workspace:id=>!!id};let assetLibraryPending=null;
 function assetPageQuery(){return 'q';}function assetPageFilters(){return {};}function assetReadURL(path,options){window.lastRead={path,options};return path;}function assetRecord(){return null;}async function resolveAssetIDs(){}
 function renderLibraryRecovery(){}function renderAssets(){}function renderJobs(){}function assetMessage(){};
 window.pending=[];function api(){return new Promise((resolve,reject)=>pending.push({resolve,reject}));}
-</script><script>'''+observe+refresh+'</script>')
+</script><script>'''+privacy+observe+refresh+'</script>')
         self.page.evaluate('()=>{window.first=refreshAssets()}')
         self.assertFalse(self.page.evaluate('refreshAssets()'))
         self.assertEqual(self.page.evaluate('pending.length'), 1, 'assets and collections share one observation')

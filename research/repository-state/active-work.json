@@ -1,15 +1,29 @@
 {
   "schema_version": 1,
-  "captured_at": "2026-10-21T00:38:19Z",
+  "captured_at": "2026-10-26T21:54:28Z",
   "repository": {
-    "head_sha": "646a947af794fd604269c30bb803055bf286fe5f",
+    "head_sha": "928df102faa524958892830bc8f63819318fab92",
     "default_branch": "main",
-    "facts_sha": "646a947af794fd604269c30bb803055bf286fe5f",
-    "catalog_blob_sha": "0163e626a968c30562e6f706d73cee51e60c6b2f",
-    "human_todo_blob_sha": "26d62fca9dbc4206af8230114a7d38cf2cb6ba57"
+    "facts_sha": "ce1cfe367277905c0e4104fbfa2d9a524bbbdf4d",
+    "catalog_blob_sha": "34f36407b906c0bd1999eddeae20b0ca0028d496",
+    "human_todo_blob_sha": "a49eb11df3ebbca2a51217964efd60fc4cd538e1"
   },
   "pull_requests": [],
   "issues": [
+    {
+      "number": 177,
+      "title": "Bound gallery media, job history and inventory work as the workspace grows",
+      "type": "slice",
+      "readiness": "ready",
+      "blocked_by": []
+    },
+    {
+      "number": 393,
+      "title": "Complete asset-recovery lifecycle and accessibility behavior",
+      "type": "slice",
+      "readiness": "ready",
+      "blocked_by": []
+    },
     {
       "number": 178,
       "title": "Extend stage-aware resource admission through the existing generation coordinator",
@@ -31,9 +45,26 @@
       "number": 315,
       "title": "Adopt a repository operating model: issue taxonomy, WIP limits and generated state",
       "type": "slice",
-      "readiness": "active",
+      "readiness": "review",
+      "blocked_by": []
+    },
+    {
+      "number": 395,
+      "title": "Add bounded reviewed-setup history, forks and import/export UX",
+      "type": "epic",
+      "readiness": "parked",
+      "blocked_by": []
+    },
+    {
+      "number": 123,
+      "title": "[Workflow Studio 6/6] Agent SDK and MCP parity over shared workflow commands",
+      "type": "epic",
+      "readiness": "parked",
       "blocked_by": []
     }
   ],
-  "next_ready": []
+  "next_ready": [
+    177,
+    393
+  ]
 }

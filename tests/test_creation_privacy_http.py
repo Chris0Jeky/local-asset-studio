@@ -58,6 +58,44 @@ class PrivateCreationHTTPTests(unittest.TestCase):
             status,body,_=self.request(path);self.assertEqual(status,404);self.assertNotIn(b'private canary',body)
             status,body,_=self.request(path+'?privacy=private');self.assertEqual(status,200);self.assertIn(b'private canary',body)
 
+    def test_mixed_job_ids_never_authorize_one_job_and_return_another(self):
+        regular,private=self.regular['id'],self.private['id']
+        for path in ('/api/jobs/'+regular+'/'+private,'/api/jobs/'+regular+'/unknown/'+private,
+                     '/api/jobs/'+regular+'//'+private,'/api/jobs/'+private+'/'+regular):
+            for scope in ('regular','private','all'):
+                with self.subTest(path=path,scope=scope):
+                    status,raw,_=self.request(path,headers={'X-Studio-Privacy':scope})
+                    self.assertEqual(status,404)
+                    self.assertNotIn(b'private canary',raw)
+        status,raw,_=self.request('/api/jobs/'+regular)
+        self.assertEqual(status,200);self.assertEqual(json.loads(raw)['id'],regular)
+
+    def test_noncanonical_targets_are_rejected_before_composed_document_dispatch(self):
+        # The composed document owner normalizes urlsplit(path), unlike a raw-prefix guard.
+        from studio_workflow.document_http import PREFIX, store
+        from test_workflow_documents import INFO, GRAPH, catalog, new_document
+        repository=store(self.studio)
+        before=repository.list()
+        document=new_document(GRAPH,catalog(INFO,'primary'),'Private target canary')
+        targets=('http://127.0.0.1:8191'+PREFIX, PREFIX+'#ignored-fragment',
+                 'https://localhost'+PREFIX, 'http://evil.test'+PREFIX)
+        for target in targets:
+            with self.subTest(target=target):
+                status,raw,_=self.request(target,headers={'X-Studio-Creation-Privacy':'private'},
+                                        body={'request_id':'private-target-probe','document':document},method='POST')
+                self.assertEqual(status,400)
+                self.assertEqual(json.loads(raw).get('code'),'privacy_invalid_target')
+                self.assertEqual(repository.list(),before)
+                status,raw,_=self.request(target)
+                self.assertEqual(status,400)
+                self.assertEqual(json.loads(raw).get('code'),'privacy_invalid_target')
+        # Canonical regular reads still reach the existing owner.
+        status,raw,_=self.request(PREFIX)
+        self.assertEqual(status,200);self.assertEqual(json.loads(raw),before)
+        status,raw,_=self.request(PREFIX,headers={'X-Studio-Creation-Privacy':'private'},body={},method='POST')
+        self.assertEqual(status,400)
+        self.assertEqual(json.loads(raw).get('code'),'private_workflow_unsupported')
+
     def test_private_upload_media_requires_scope_and_is_not_cached(self):
         value=self.studio.upload('private-image','image/png',fixture.png(),privacy='private')
         path='/api/uploads/'+value['file']

@@ -71,6 +71,8 @@ jobs:
         # Real shipped controller and views, synthetic local media and acknowledged jobs.
         # Uses ordinary Python subprocesses; never launches a backend or loads a model.
         run: python tests/private_creation_browser.py --out .runtime/private-creation-browser
+      - name: Native Make storage refusal and finder intent journeys
+        run: python tests/make_privacy_transitions_browser.py --out .runtime/make-privacy-transitions
       - name: Native private recovery and collection journey
         run: python tests/private_recovery_browser.py --out .runtime/private-recovery-browser
       - uses: actions/upload-artifact@v4
@@ -80,4 +82,5 @@ jobs:
           path: |
             .runtime/private-creation-browser
             .runtime/private-recovery-browser
+            .runtime/make-privacy-transitions
           retention-days: 7

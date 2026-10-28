@@ -214,6 +214,10 @@ class PrivacyWorkerProjectionTests(unittest.TestCase):
         self.assertEqual(result['worker_failure'],studio.worker_failure)
         self.assertIn(job['id'],trace);self.assertIn('PRIVATE-HEALTH-CANARY',trace)
 
+
+
+class PrivacyHealthFrontendTests(unittest.TestCase):
+    # No worker fixture: Windows subprocess capture starts its own reader threads.
     @unittest.skipUnless(shutil.which('node'), 'Node.js is required for the health view contract')
     def test_private_worker_alert_renders_without_identity_or_raw_error(self):
         result=subprocess.run([shutil.which('node'),str(Path(__file__).with_name('creation_privacy_health.cjs'))],

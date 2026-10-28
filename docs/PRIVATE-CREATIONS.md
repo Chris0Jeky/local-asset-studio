@@ -202,3 +202,21 @@ they do not establish human task time, artistic quality or owner acceptance.
 [The proposed owner trial](ux-qa/OWNER-ANIME-TRIAL-2026-10-26.md) provides a fixed
 adult-character brief, timed tasks, a bounded output budget and an empty quality
 scorecard for that configured-machine session. It has not been run.
+
+## Browser storage refusal and finder choices
+
+Moving an unfinished Make creation to Private verifies the private draft's saved
+bytes before removing its earlier regular recovery copy. When browser storage is
+full or unavailable, the current wording and selected sources stay in this page,
+with a warning to keep it open and copy the wording before reloading. The earlier
+regular recovery copy is **not removed** on that failure. This page-only fallback
+is not restart recovery; a later successful edit can persist the private draft.
+Changing only the Regular/Private/All browsing scope does not discard that draft.
+
+The tool finder passes an explicit goal/look to Make's own state owner. On the main
+page it does not reload the editor. From another Studio page it carries only a
+single-use catalog choice in tab storage, never private wording or a new regular
+persistent preference. An old recovered goal cannot overrule that explicit choice.
+
+Admission and failure tests are recorded in
+[the qualification note](verification/2026-10-28-private-creation-qualification.md).

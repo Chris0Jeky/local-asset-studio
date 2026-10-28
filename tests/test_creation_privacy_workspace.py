@@ -12,7 +12,7 @@ from test_workspace import workspace
 class CreationPrivacyWorkspaceTests(unittest.TestCase):
     def setUp(self):
         temp = tempfile.TemporaryDirectory(); self.addCleanup(temp.cleanup)
-        self.root = Path(temp.name); self.store = workspace.AssetWorkspace(self.root)
+        self.root = Path(temp.name).resolve(); self.store = workspace.AssetWorkspace(self.root)
         self.source = self.root / 'synthetic.png'; self.source.write_bytes(b'harmless synthetic image bytes')
         self.regular_job = {'id':'ordinary-job', 'created_at':1, 'preset_name':'Ordinary scene',
                             'outputs':[{'filename':'synthetic.png','media_type':'image'}]}

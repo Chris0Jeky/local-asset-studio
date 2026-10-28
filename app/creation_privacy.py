@@ -70,6 +70,16 @@ PRIVATE_POSTS=frozenset(('/api/jobs','/api/upload','/api/assets/import','/api/as
 PRIVATE_POST_PREFIXES=('/api/assets/','/api/collections/','/api/jobs/')
 
 
+def origin_target(raw):
+    """One interpretation of the request target before any composed route can dispatch."""
+    try:
+        parsed=urlsplit(raw)
+        if raw.startswith('/') and not raw.startswith('//') and not (parsed.scheme or parsed.netloc or parsed.fragment) and '#' not in raw:
+            return parsed.path
+    except ValueError:pass
+    raise PrivacyError('Use a relative origin-form request target without a fragment',code='privacy_invalid_target')
+
+
 def extend_handler(base):
     class PrivacyHandler(base):
         def _privacy_error(self, exc, *, drain=False):
@@ -77,19 +87,22 @@ def extend_handler(base):
             return self._json(exc.status,exc.response())
 
         def do_GET(self):
-            if self.path.startswith('/api/'):
+            try:path=origin_target(self.path)
+            except PrivacyError as exc:return self._privacy_error(exc)
+            if path.startswith('/api/'):
                 if not self._safe_host():return self._json(403,{'error':'Loopback Host required'})
                 try:scope_for_handler(self)
                 except PrivacyError as exc:return self._privacy_error(exc)
             return super().do_GET()
 
         def do_POST(self):
-            if self.path.startswith('/api/'):
+            try:path=origin_target(self.path)
+            except PrivacyError as exc:return self._privacy_error(exc,drain=True)
+            if path.startswith('/api/'):
                 if not self._safe_host():return self._json(403,{'error':'Loopback Host required'})
                 try:
                     scope_for_handler(self)
                     classification=creation_for_handler(self)
-                    path=urlsplit(self.path).path
                     if classification=='private' and path not in PRIVATE_POSTS and not path.startswith(PRIVATE_POST_PREFIXES):
                         raise PrivacyError('This workflow does not yet support private creation. Your draft is retained; choose an image workflow or deliberately switch this creation to regular.',code='private_workflow_unsupported')
                 except PrivacyError as exc:return self._privacy_error(exc,drain=True)

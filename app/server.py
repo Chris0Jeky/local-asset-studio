@@ -1865,7 +1865,7 @@ class Studio:
                 self.jobs[state_path.parent.name] = {"id": state_path.parent.name, "status": "uncertain", "created_at": 0,
                     **({'privacy':'private'} if classification=='private' else {}),
                     "preset_name": "Unreadable run record", "controls": {}, "outputs": [], "run_path": str(state_path.parent),
-                    "record_error": reason, "message": f"The run record could not be read ({reason}). Nothing was resubmitted." + (f" Known ComfyUI prompt IDs: {', '.join(ids[:8])}." if ids else "") + f" Inspect experiments/{state_path.parent.relative_to(self.experiments)}/ before deleting it."}
+                    "record_error": reason, "message": f"The run record could not be read ({reason}). Nothing was resubmitted." + (f" Known ComfyUI prompt IDs: {', '.join(ids[:8])}." if ids else "") + f" Inspect experiments/{state_path.parent.relative_to(self.experiments).as_posix()}/ before deleting it."}
                 continue
             defaults = {key: value for key, value in (('comfy_root', str(self.comfy_root)), ('comfy_url', self.comfy_url)) if key not in data}
             state_written = False
@@ -2968,7 +2968,9 @@ class Handler(BaseHTTPRequestHandler):
                 if len(parts) != 6 or parts[4] != "i2v-diagnostic": raise StudioError("Unknown diagnostic artifact")
                 return self._local_file(self.studio.i2v_diagnostic_file(parts[3], unquote(parts[5])))
             if path.startswith("/api/jobs/"):
-                job = self.studio.jobs.get(path.rsplit("/", 1)[-1]); return self._json(200, self.studio.public(job)) if job else self._json(404, {"error":"Unknown job"})
+                parts=path.split("/")
+                job=self._scoped_job(parts[3],scope) if len(parts)==4 else None
+                return self._json(200,self.studio.public(job)) if job else self._json(404,{"error":"Unknown job"})
             if path.startswith("/api/image/"):
                 _, _, _, job_id, index = path.split("/"); job = self.studio.jobs.get(job_id); index = int(index); outputs = job.get("outputs", []) if job else []; image = outputs[index] if 0 <= index < len(outputs) else None
                 if not image: return self._json(404, {"error":"Unknown image"})

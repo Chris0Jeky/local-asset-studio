@@ -90,13 +90,13 @@ test('choosing a character uses a live preferred Restyle look or the default and
 
 function restoreHarness(failure,status='completed'){
   const requests=[],queue=[],saved=[],state={runs:[]};let response=failure;
-  const context={state,window:{},view:{dataset:{}},readDraft:()=>null,restoreDraft:async()=>{},savedRuns:[{id:'saved',look:'My look',scene:'a room',tune:{seed:0}}],restoredRuns:false,
+  const context={state,window:{},view:{dataset:{}},sessionStorage:{getItem:()=>null,removeItem(){}},readDraft:()=>null,restoreDraft:async()=>{},savedRuns:[{id:'saved',look:'My look',scene:'a room',tune:{seed:0}}],restoredRuns:false,
     presets:()=>[{}],loadCharacters:async()=>{},render(){},renderRuns(){},refreshPickers(){},seedRuns:async()=>{throw Error('Must retain saved history');},
     remember:()=>saved.push(JSON.stringify(state.runs)),FINAL:['completed','failed','uncertain'],
     setTimeout:(fn,delay)=>{const timer={fn,delay};queue.push(timer);return timer;},clearTimeout:timer=>{const i=queue.indexOf(timer);if(i>=0)queue.splice(i,1);},
     fetch:async(url,options={})=>{requests.push({url,options});if(url==='/api/looks')return{ok:true,json:async()=>({looks:[]})};
       if(response==='network')throw TypeError('Network unavailable');return{ok:response===200,status:response,json:async()=>response===200?{id:'saved',status,outputs:[]}:({error:'Unavailable'})};}};
-  const api=vm.runInNewContext((make.match(/  const observing=.*\n/)?.[0]||'')+between('  const creationPrivacy=','  // Curated,')+between('  const timers=new Map();','  // A finished run')+between('  async function load(){','  // The gallery folds away')+';({load,pending:()=>timers.size})',context);
+  const api=vm.runInNewContext((make.match(/  const observing=.*\n/)?.[0]||'')+between('  const creationPrivacy=','  // Curated,')+between('  const timers=new Map();','  // A finished run')+between('  let pendingNavigation=null;','  window.StudioMake=')+between('  async function load(){','  // The gallery folds away')+';({load,pending:()=>timers.size})',context);
   return{...api,state,requests,saved,queue,respond:code=>{response=code;},jobStatus:next=>{status=next;},tick:async()=>{const timer=queue.shift();assert.ok(timer);await timer.fn();}};
 }
 
