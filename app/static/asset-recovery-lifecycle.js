@@ -53,20 +53,22 @@
         restored_since_retained:!!(knownTrash&&row.state==='active'&&relation==='newer')};
     })};
   }
-  function create({scope,read,validateReceipt,onUpdate,timeoutMs=15000}){
+  function create({scope,read,validateReceipt,onUpdate,timeoutMs=15000,privacy=()=> 'regular'}){
     let epoch=0,controller=null;
     function cancel(){epoch++;controller?.abort();controller=null;}
     async function load(input){
       cancel();
-      const record={slot:input.slot,payload:Shelf.project(input.slot,input.payload)};
+      const selected=input.privacy===undefined?privacy():input.privacy,view=privacy();
+      if(!['regular','private','all'].includes(selected)||view!=='all'&&selected!==view)throw Error('Choose the matching privacy view before inspecting this recovery.');
+      const record={slot:input.slot,payload:Shelf.project(input.slot,input.payload),...(selected==='regular'?{}:{privacy:selected})};
       const workspace=record.payload.workspace_id;
       if(record.payload.version!==2||workspace!==scope())throw Error('Another or unknown Workspace is local inspection/export/discard only. No read was sent.');
       const generation=epoch,own=new AbortController();controller=own;
-      const current=()=>generation===epoch&&workspace===scope();
+      const current=()=>generation===epoch&&workspace===scope()&&privacy()===view;
       onUpdate({phase:'loading',record,report:project(record,null,null)});
       const c=command(record),params=new URLSearchParams({workspace_id:workspace,ids:JSON.stringify(targets(record))});
       if(['add_collection','remove_collection'].includes(c?.action))params.set('collection_id',c.collection_id);
-      const options={method:'GET',signal:own.signal},timer=setTimeout(()=>own.abort(),timeoutMs);
+      const options={method:'GET',signal:own.signal,headers:{'X-Studio-Privacy':selected}},timer=setTimeout(()=>own.abort(),timeoutMs);
       try{
         const responses=await Promise.allSettled([
           c?read('/api/assets/commands/'+encodeURIComponent(c.request_id)+'?workspace_id='+workspace,options):Promise.resolve(null),
@@ -136,14 +138,14 @@
         results.append(entry);
       }
     }
-    const observer=create({scope:()=>assetState.workspace_id,read:(url,options)=>api(url,options),validateReceipt:validateAssetReceipt,onUpdate:render});
+    const observer=create({scope:()=>assetState.workspace_id,privacy:()=>typeof assetPrivacyScope==='function'?assetPrivacyScope():'regular',read:(url,options)=>api(url,options),validateReceipt:validateAssetReceipt,onUpdate:render});
     function empty(error){last=null;snapshot=null;localKey='';local.replaceChildren();results.replaceChildren();panel.hidden=false;status.textContent=error.message;}
     const load=record=>{
       const ticket=++viewEpoch;
       void observer.load(record).catch(error=>{
         if(ticket!==viewEpoch||!dialog.open)return;
         try{
-          const retained={slot:record.slot,payload:Shelf.project(record.slot,record.payload)};
+          const retained={slot:record.slot,payload:Shelf.project(record.slot,record.payload),...(record.privacy?{privacy:record.privacy}:{})};
           render({phase:'ready',record:retained,receipt:null,observation:null,receipt_error:'Not read for this context.',observation_error:error.message,report:project(retained,null,null)});
         }catch(_){empty(error);}
       });
@@ -155,6 +157,7 @@
       status.textContent='Inspection exported locally. It contains private review text and observations, not an importable shelf bundle. No server change was made.';
     };
     dialog.addEventListener('close',()=>{if(dialog.open)return;viewEpoch++;observer.cancel();panel.hidden=true;snapshot=null;last=null;localKey='';local.replaceChildren();results.replaceChildren();});
+    document.addEventListener?.('studio:privacy-change',event=>{if(event.detail?.previousScope===event.detail?.scope)return;viewEpoch++;observer.cancel();panel.hidden=true;snapshot=null;last=null;localKey='';status.textContent='';local.replaceChildren();results.replaceChildren();});
     dialog.addEventListener('click',event=>{
       const button=event.target.closest('[data-shelf-observe],[data-recovery-observe-slot]');if(!button||button.disabled)return;
       viewEpoch++;observer.cancel();

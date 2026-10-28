@@ -1,5 +1,14 @@
 # Status by goal — 26 October 2026
 
+## Private creation qualification — 28 October 2026
+
+The existing private-session implementation is in PR #1677, tracked by #1673.
+The continuation fixes two request-disclosure paths, failure-safe Make draft
+migration, finder intent and the six previously failing workflow families' known
+causes. See [qualification evidence](verification/2026-10-28-private-creation-qualification.md).
+Fresh final-head CI remains the merge gate; local renderer/contract passes are not
+claimed as configured-host rendering, human UX acceptance or archive completion.
+
 ## Current engineering delivery
 
 This section records the current repository work. The September percentages and workstation asset counts below are a historical assessment, not a fresh measurement. The dated ledger in [CURRENT_STATE.md](../CURRENT_STATE.md) and the [repository snapshot](generated/REPOSITORY-STATE.md) retain the source revisions and verification receipts. Completed implementation, successful model execution and owner art acceptance remain separate.

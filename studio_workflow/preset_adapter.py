@@ -11,6 +11,7 @@ import math
 import uuid
 from .core import canonical, catalog, decode, digest, document, need
 from .execution import NAMESPACE, prepare_ticket
+from .schema_privacy import public_node_info
 
 # This adapter's declared subset, not an alternative runtime control allow-list.
 # Studio.prepare still checks every projected control against the actual preset.
@@ -129,7 +130,7 @@ def prepare_document(studio, value, preset_id):
     value = document(value)  # One source snapshot, including the final equivalence proof.
     with studio.lock:
         need(not studio.backends.busy, 'Environment switch is in progress')
-        schema = catalog(studio.node_info(), studio.backends.active)
+        schema = catalog(public_node_info(studio), studio.backends.active)
         preset = studio.preset(preset_id)
         template, path = studio.graph_for(preset)
         raw = path.read_bytes()
@@ -148,7 +149,7 @@ def prepare_document(studio, value, preset_id):
              and ticket['pins']['template_sha256'] == recipe['expected_template_sha256'],
              'Prepared graph changed while issuing the ticket; prepare again before any execution')
         # A final identity check catches a changing schema without mutating its cache.
-        need(digest(studio.node_info()) == schema['schema_sha256'], 'Node schema changed during preparation')
+        need(digest(public_node_info(studio)) == schema['schema_sha256'], 'Node schema changed during preparation')
     return {**report, 'ticket': ticket, 'ticket_sha256': digest(ticket),
             'job_id': str(uuid.uuid5(NAMESPACE, ticket['request_id'])),
             'prepared_graph_sha256': ticket['pins']['graph_sha256'],

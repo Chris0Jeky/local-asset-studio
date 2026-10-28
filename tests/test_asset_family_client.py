@@ -33,6 +33,18 @@ class FamilyClientTests(unittest.TestCase):
         with self.assertRaises(ValueError): self.client.inspect('one', self.scope, children=1)
         self.transport.request.assert_not_called()
 
+    def test_explicit_privacy_scope_is_bounded_and_sent_only_when_requested(self):
+        self.assertEqual(self.client.inspect('one', self.scope, privacy='private'), self.result)
+        self.assertEqual(self.client.recall('one', self.scope, privacy='all'), self.result)
+        self.assertEqual(self.transport.request.call_args_list, [
+            unittest.mock.call('/api/assets/family/one?workspace_id='+self.scope+'&privacy=private'),
+            unittest.mock.call('/api/assets/recall/one?workspace_id='+self.scope+'&privacy=all')])
+        self.transport.request.reset_mock()
+        for value in (None, True, 'PRIVATE', 'unknown'):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                self.client.inspect('one', self.scope, privacy=value)
+        self.transport.request.assert_not_called()
+
     def test_foreign_or_mutating_reply_is_refused(self):
         for fields in ({'workspace_id': 'b'*32}, {'asset_id': 'another'}, {'generation_submitted': True},
                        {'version': 2}, {'observation_only': False}, {'media_bytes_verified': True}):

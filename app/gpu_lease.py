@@ -8,7 +8,7 @@ back: runtime recovery (when enabled) starts the selected backend on its next pa
 The lease stops only processes this Studio can prove it launched, and only after the same idle checks a backend switch
 uses: no queued, running or uncertain Studio work and an empty running+pending ComfyUI queue on every endpoint. One exception
 applies to the lease alone (#979): an 'uncertain' job with no recorded activity for STALE_UNCERTAIN_SECONDS no longer blocks
-a grant; its prompt IDs still get the in-memory history check, and the grant names it in `ignored_stale_uncertain`. It adds
+a grant; its prompt IDs still get the in-memory history check, and the grant names regular jobs in `ignored_stale_uncertain`. It adds
 no authentication: like every Studio mutation it relies on the loopback bind, the loopback Host check and the
 same-origin Origin check.
 """
@@ -176,6 +176,8 @@ class GpuLease:
 
     def acquire(self, payload):
         """Stop verified-idle Studio-owned ComfyUI processes and hold the GPU for `ttl_seconds`; the same holder renews."""
+        # The read-only launcher imports this module with app/ alone on sys.path.
+        from studio_workflow.privacy import is_regular
         holder = self._holder(payload, ("holder", "ttl_seconds"))
         ttl = payload.get("ttl_seconds")
         if type(ttl) is not int or not MIN_TTL_SECONDS <= ttl <= MAX_TTL_SECONDS:
@@ -197,9 +199,10 @@ class GpuLease:
             if manager.busy: raise GpuLeaseError("A backend switch is running; nothing was stopped", code="backend_switch_active")
             # Only the lease ages out old 'uncertain' records; the manager re-reads each status, so one resumed since is not exempt.
             stale = tuple(self.stale_uncertain(self.clock()))
+            public_stale = [key for key in stale if is_regular(getattr(self.studio, 'jobs', {}).get(key))]
             if manager._local_work(ignore_job_ids=stale):
                 raise GpuLeaseError("Studio has queued, running or unreconciled work; nothing was stopped", code="studio_work_active",
-                                    ignored_stale_uncertain=list(stale))
+                                    ignored_stale_uncertain=public_stale)
             try:
                 manager._check_retained_startup(); manager._check_startup_processes()
                 # Every endpoint, including work submitted directly through ComfyUI: running+pending must be empty.
@@ -237,8 +240,8 @@ class GpuLease:
             record = {"holder": holder, "acquired_at": now, "stopped_processes": stopped,
                       "renewed_at": None, "ttl_seconds": ttl, "expires_at": now + ttl}
             self._save(record, self.last_release)
-            self._log("granted", holder=holder, ttl_seconds=ttl, stopped_processes=stopped, ignored_stale_uncertain=list(stale))
-            return dict(self.snapshot(), granted=True, renewed=False, stopped_now=stopped, ignored_stale_uncertain=list(stale))
+            self._log("granted", holder=holder, ttl_seconds=ttl, stopped_processes=stopped, ignored_stale_uncertain=public_stale)
+            return dict(self.snapshot(), granted=True, renewed=False, stopped_now=stopped, ignored_stale_uncertain=public_stale)
 
     def release(self, payload):
         """Release by the holder; idempotent when nothing is held. Relaunch stays with runtime recovery."""

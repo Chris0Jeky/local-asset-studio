@@ -54,9 +54,9 @@ def tool(description, properties=None, required=(), mode='read', mutating=False)
 
 
 TOOLS = {
-    'asset_page': tool('Read one bounded asset summary page (default 50, maximum 100). Retain Workspace, filters, limit and non-null cursor for an explicit next call. A stale cursor requires explicit refresh; never mix catalogue revisions. No media reads, automatic paging or generation.',
+    'asset_page': tool('Read one bounded asset summary page (default 50, maximum 100). Private records are hidden unless filters.privacy is explicitly private or all. Retain Workspace, filters, limit and non-null cursor for an explicit next call. A stale cursor requires explicit refresh; never mix catalogue revisions. No media reads, automatic paging or generation.',
         PAGE_ARGUMENTS),
-    'asset_selection': tool('Inspect 1 to 200 unique retained asset IDs in exact order, including off-page, trashed and missing assets. Requires the original Workspace identity. Observation only despite HTTP POST; no metadata writes, media reads, retries or generation.',
+    'asset_selection': tool('Inspect 1 to 200 unique retained asset IDs in exact order, including off-page, trashed and missing assets. Requires the original Workspace identity. Private IDs appear missing unless privacy is explicitly private or all. Observation only despite HTTP POST; no metadata writes, media reads, retries or generation.',
         SELECTION_ARGUMENTS, ('workspace_id', 'ids')),
     'setup_draft_list': tool('List explicitly shared Create drafts. Never reads a browser-local draft or stages files.'),
     'setup_draft_get': tool('Read an immutable shared setup revision without loading it into a browser.',
@@ -135,8 +135,8 @@ TOOLS = {
         {'request_id': IDENTIFIER}, ('request_id',)),
     'saved_run_source': tool('Find an immutable saved workflow source/report from an expected job ID; returns no result for unindexed legacy runs.',
         {'job_id': IDENTIFIER}, ('job_id',)),
-    'job_status': tool('Observe an existing Studio job once. No resubmission, cancellation, queue clearing or automatic polling.',
-        {'job_id': IDENTIFIER}, ('job_id',)),
+    'job_status': tool('Observe an existing Studio job once. Private jobs require explicit privacy private or all. No resubmission, cancellation, queue clearing or automatic polling.',
+        {'job_id': IDENTIFIER, 'privacy': {'type':'string','enum':['regular','private','all'],'maxLength':7}}, ('job_id',)),
 }
 
 
@@ -158,6 +158,7 @@ def validate_arguments(spec, arguments):
             need(type(value) is int and rule['minimum'] <= value <= rule['maximum'], key + ' requires a bounded integer')
         else:
             need(type(value) is str and len(value) <= rule['maxLength'], key + ' requires bounded text')
+            if 'enum' in rule: need(value in rule['enum'], 'Invalid '+key)
             if 'pattern' in rule:
                 need(re.fullmatch(rule['pattern'], value) is not None and value not in ('.', '..', '__proto__', 'constructor', 'prototype'), 'Invalid ' + key)
     return arguments
@@ -296,7 +297,7 @@ class AgentBridge:
                 if type(ticket.get('request_id')) is str and len(ticket['request_id']) <= 96: context['request_id'] = ticket['request_id']
                 need(digest(ticket) == a['approved_ticket_sha256'], 'Approval must name the exact prepared ticket hash')
                 data = request(PREFIX + '/run', {'ticket': ticket, 'approved': True})
-            else: data = request('/api/jobs/' + a['job_id'])
+            else: data = request('/api/jobs/' + a['job_id'] + ('?privacy='+a['privacy'] if a.get('privacy','regular') != 'regular' else ''))
             need(isinstance(data, dict), 'Studio returned a non-object result')
             if name == 'recipe_run' and 'job' in data:
                 need(isinstance(data['job'], dict), 'Studio returned an invalid job object')

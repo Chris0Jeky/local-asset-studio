@@ -1,5 +1,11 @@
 // Editable drafts and immutable dispatch intents are separate, per-tab recovery evidence.
 let collectionSession=null, collectionEpoch=0;
+// Storage failure must not discard visible typing merely because a privacy
+// switch hides its dialog. One bounded fallback per classification is retained
+// in this page; a different target cannot replace it without review.
+const collectionUnstored=new Map();
+const collectionPrivacy=()=>globalThis.window?.StudioPrivacy?.scope?.()||'regular';
+const collectionCreation=()=>globalThis.window?.StudioPrivacy?.creation?.()||'regular';
 function collectionValues(){return {name:$('#collectionName').value,description:$('#collectionDescription').value};}
 // Canonical storage sorts object keys; equality belongs to fields, not insertion order.
 function collectionSameValues(a,b){return a.name===b.name&&a.description===b.description;}
@@ -49,7 +55,7 @@ function collectionPersist(s){
   try{
     if(collectionDirty(s)||s.pending)s.recovery=s.journal.keep(collectionDraft(s),s.pending);
     else {if(s.journal.get(s.id))s.journal.discard(s.id);s.recovery=null;}
-    s.storageError=false;return true;
+    s.storageError=false;if(collectionUnstored.get(s.privacy)?.entry.draft.id===s.id)collectionUnstored.delete(s.privacy);s.memoryRecovery=null;return true;
   }catch(e){s.storageError=true;collectionStatus('Local recovery could not be verified: '+e.message+' No new collection write was sent. Your visible input is kept; copy it before leaving if browser storage is unavailable.',true);return false;}
 }
 function collectionCanLeave(){
@@ -68,18 +74,23 @@ function collectionRecoveryList(s){
   }}catch(e){/* The visible storage refusal owns recovery; never parse an untrusted fallback. */}
   select.value=s.id??'';select.hidden=!s.recovery;
 }
-function openCollection(id=null){
+function openCollection(id=null,recoveryPrivacy=null){
   const col=id?assetState.collections.find(c=>c.id===id):null;
   if($('#collectionDialog').open){if(collectionSession?.id===id)return true;if(!collectionCanLeave())return false;}
   let journal,recovery=null,failure;
-  try{journal=new StudioCollectionRecovery.Journal(sessionStorage,assetState.workspace_id);recovery=journal.get(id);}catch(e){failure=e;}
+  const privacy=recoveryPrivacy||(col?.privacy==='private'?'private':id?'regular':collectionCreation());
+  if(collectionPrivacy()!=='all'&&id&&privacy!==collectionPrivacy()){assetMessage('Choose the '+privacy+' view before editing this collection.',true);return false;}
+  const memory=collectionUnstored.get(privacy);
+  if(memory&&(memory.scope!==assetState.workspace_id||memory.entry.draft.id!==id)){assetMessage('An unsaved '+privacy+' collection draft is held in this page because browser storage was unavailable. Review it through Collection recovery before opening another collection.',true);return false;}
+  try{journal=new StudioCollectionRecovery.Journal(sessionStorage,assetState.workspace_id,privacy);recovery=journal.get(id);}catch(e){failure=e;}
+  if(memory){recovery=memory.entry;failure=Error('Browser recovery could not be retained. Restore or copy this in-memory draft before reloading the page.');}
   if(id&&!col&&!recovery){if($('#collectionDialog').open)collectionStatus('This collection is no longer in the loaded Workspace. Your current edits were kept.',true);else assetMessage('Collection unavailable. Refresh the library to check it.',true);return false;}
-  const s={id,revision:col?.revision,scope:assetState.workspace_id,epoch:++collectionEpoch,baseline:{name:col?.name||'',description:col?.description||''},
-    busy:false,uncertain:!!recovery?.pending,pending:recovery?.pending??null,journal,recovery,restoreRequired:!!recovery,storageError:!!failure,observed:col??null,stale:false};
+  const s={id,privacy,revision:col?.revision,scope:assetState.workspace_id,epoch:++collectionEpoch,baseline:{name:col?.name||'',description:col?.description||''},
+    busy:false,uncertain:!!recovery?.pending,pending:recovery?.pending??null,journal,recovery,memoryRecovery:memory?.entry??null,restoreRequired:!!recovery,storageError:!!failure,observed:col??null,stale:false};
   collectionSession=s;collectionEditing=id;
   // A queued close event from an older session cannot own these controls.
   $('#collectionName').disabled=$('#collectionDescription').disabled=false;
-  $('#collectionDialogTitle').textContent=id?'Edit collection':'New collection';
+  $('#collectionDialogTitle').textContent=id?'Edit collection':privacy==='private'?'New private collection':'New collection';
   $('#collectionName').value=s.baseline.name;$('#collectionDescription').value=s.baseline.description;
   collectionStatus(failure?'Local recovery is unavailable: '+failure.message+' No collection write can be sent. Your input will remain visible.':recovery?'A local '+(s.pending?'unconfirmed command and draft':'draft')+' is retained in this tab for this Workspace. Restore it explicitly, or discard only the local evidence.':'Collections organize existing assets. Saving does not move files or add the current selection.',!!failure);
   collectionCompare(s);collectionRecoveryList(s);collectionControls();collectionRefreshValidation(false);
@@ -89,7 +100,7 @@ function restoreCollectionDraft(){
   const s=collectionSession;if(!s||!collectionCurrent(s)||s.busy)return;
   if(!collectionScope(s)){collectionStatus('Return to the original Workspace before restoring or discarding this retained draft.',true);return;}
   try{
-    const entry=s.journal.get(s.id);if(!entry)throw Error('The retained draft is no longer available');
+    const entry=s.memoryRecovery||s.journal.get(s.id);if(!entry)throw Error('The retained draft is no longer available');
     s.recovery=entry;s.id=entry.draft.id;s.revision=entry.draft.revision;s.baseline={...entry.draft.baseline};s.pending=entry.pending;s.uncertain=!!entry.pending;
     s.restoreRequired=false;s.storageError=false;collectionEditing=s.id;
     $('#collectionName').value=entry.draft.values.name;$('#collectionDescription').value=entry.draft.values.description;
@@ -105,9 +116,10 @@ function discardCollectionDraft(){
   const warning=all?'Discard all collection recovery for this Workspace in this tab? Corrupt evidence may include unconfirmed commands.':'Discard this collection’s local draft and retained command?';
   if(!window.confirm(warning+' This does not cancel, undo, or determine the outcome of any server work. Original assets are untouched.'))return;
   try{
-    if(all){s.journal=s.journal||new StudioCollectionRecovery.Journal(sessionStorage,s.scope);s.journal.reset();}
+    if(all){s.journal=s.journal||new StudioCollectionRecovery.Journal(sessionStorage,s.scope,s.privacy);s.journal.reset();}
     else s.journal.discard(s.id);
     s.pending=null;s.uncertain=false;s.recovery=null;s.restoreRequired=false;s.storageError=false;s.discarded=true;
+    collectionUnstored.delete(s.privacy);s.memoryRecovery=null;
     collectionRecoveryList(s);
     // Do not replace visible input or silently advance a stale source revision.
     collectionStatus('Local recovery discarded. This does not cancel or undo server work. Visible text remains here; close without editing to leave it discarded. Refresh and inspect the saved collection before sending another command.');
@@ -126,8 +138,9 @@ async function collectionRequest(s,pending,inspect=false,retry=false){
   collectionStatus(inspect?'Inspecting the retained request; no collection mutation will be sent…':'Sending the retained snapshot. Any newer typing remains a separate local draft.');
   const controller=new AbortController();let timer;
   try{
-    const request=inspect?api('/api/collections/commands/'+pending.request_id+'?workspace_id='+s.scope,{signal:controller.signal}):
-      api('/api/collections',{method:'POST',headers:{'Content-Type':'application/json'},body:pending.body,signal:controller.signal});
+    const headers={'X-Studio-Privacy':s.privacy,'X-Studio-Creation-Privacy':s.privacy};
+    const request=inspect?api('/api/collections/commands/'+pending.request_id+'?workspace_id='+s.scope,{headers,signal:controller.signal}):
+      api('/api/collections',{method:'POST',headers:{'Content-Type':'application/json',...headers},body:pending.body,signal:controller.signal});
     const deadline=new Promise((_,reject)=>{timer=setTimeout(()=>{const e=Error('The request timed out.');e.name='AbortError';reject(e);controller.abort();},15000);});
     const reply=await Promise.race([request,deadline]);
     if(!collectionCurrent(s))return;
@@ -211,11 +224,13 @@ async function recoverCollectionCommand(inspect){
 $('#newCollection').onclick=()=>openCollection();
 $('#renameCollection').onclick=()=>openCollection(assetScope.slice(11));
 $('#recoverCollections').onclick=()=>{
-  try{const entries=new StudioCollectionRecovery.Journal(sessionStorage,assetState.workspace_id).list().sort((a,b)=>b.draft.updated_at-a.draft.updated_at);
-    if(entries.length)return openCollection(entries[0].draft.id);assetMessage('No collection recovery is stored for this Workspace in this tab.');
+  try{const scopes=collectionPrivacy()==='all'?['regular','private']:[collectionPrivacy()];
+    for(const privacy of scopes){const memory=collectionUnstored.get(privacy);if(memory?.scope===assetState.workspace_id)return openCollection(memory.entry.draft.id,privacy);}
+    const entries=scopes.flatMap(privacy=>new StudioCollectionRecovery.Journal(sessionStorage,assetState.workspace_id,privacy).list().map(entry=>({...entry,privacy}))).sort((a,b)=>b.draft.updated_at-a.draft.updated_at);
+    if(entries.length)return openCollection(entries[0].draft.id,entries[0].privacy);assetMessage('No collection recovery is stored for this Workspace in this tab.');
   }catch(e){openCollection();}
 };
-$('#collectionRecoveredTargets').onchange=e=>openCollection(e.target.value||null);
+$('#collectionRecoveredTargets').onchange=e=>openCollection(e.target.value||null,collectionSession?.privacy);
 $('#restoreCollectionDraft').onclick=restoreCollectionDraft;
 $('#inspectCollectionCommand').onclick=()=>recoverCollectionCommand(true);
 $('#retryCollectionCommand').onclick=()=>recoverCollectionCommand(false);
@@ -225,6 +240,20 @@ $('#collectionDialog').addEventListener('cancel',e=>{e.preventDefault();closeCol
 $('#collectionDialog').addEventListener('close',()=>{
   if($('#collectionDialog').open)return;collectionEpoch++;collectionSession=null;collectionEditing=null;
   $('#collectionName').disabled=$('#collectionDescription').disabled=false;
+});
+document.addEventListener?.('studio:privacy-change',event=>{
+  const s=collectionSession;
+  if(event.detail?.previousScope===event.detail?.scope&&!(s&&!s.id&&event.detail?.previousCreation!==event.detail?.creation))return;
+  if(s&&!collectionPersist(s)){
+    const data=new Map(),memory={get length(){return data.size;},key:index=>[...data.keys()][index]??null,getItem:key=>data.get(key)??null,setItem:(key,value)=>data.set(key,value),removeItem:key=>data.delete(key)};
+    try{const entry=new StudioCollectionRecovery.Journal(memory,s.scope,s.privacy).keep(collectionDraft(s),s.pending);collectionUnstored.set(s.privacy,{scope:s.scope,entry});}
+    catch(error){collectionStatus(error.message,true);}
+  }
+  collectionEpoch++;collectionSession=null;collectionEditing=null;
+  if($('#collectionDialog').open)$('#collectionDialog').close();
+  for(const id of ['collectionName','collectionDescription']){$('#'+id).value='';$('#'+id).disabled=false;}
+  for(const id of ['collectionComparison','collectionStatus'])$('#'+id).textContent='';
+  $('#collectionRecoveredTargets').replaceChildren();
 });
 for(const id of ['collectionName','collectionDescription'])$('#'+id).addEventListener('input',()=>{
   const s=collectionSession;if(!s)return;

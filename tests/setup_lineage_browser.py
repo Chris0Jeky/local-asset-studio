@@ -10,14 +10,13 @@ import asyncio
 import hashlib
 import json
 import shutil
-import tempfile
 import threading
 from pathlib import Path
 
 from playwright.async_api import async_playwright
 import studio_browser_smoke as fixture
 from asset_detail_browser import inert_page
-from workspace import AssetWorkspace
+from workspace import WorkspaceError
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -38,7 +37,8 @@ class Handler(fixture.Handler):
         data = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
         fixture.POSTS.append({'path': self.path, 'data': data})
         if self.path == '/api/setups':
-            return self.json(self.store.save_setup(data))
+            try:return self.json(self.store.save_setup(data))
+            except WorkspaceError as error:return self.json(error.response(),error.status)
         type(self).checks += 1
         if self.fail_check:
             return self.json({'error': 'Synthetic availability outage'}, 503)
@@ -57,8 +57,9 @@ def draft(preset='gentle-variation', two=False, file='source.png'):
 
 async def run(args):
     args.out.mkdir(parents=True, exist_ok=True)
-    temporary = tempfile.TemporaryDirectory()
-    Handler.store = AssetWorkspace(temporary.name)
+    observations=fixture.FixtureObservations(fixture.Handler.workspace_id);observations.sync()
+    temporary=observations.temp
+    Handler.store=observations.workspace
     Handler.fail_check = True; Handler.checks = 0; fixture.POSTS.clear()
     server = fixture.browser_server(Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()

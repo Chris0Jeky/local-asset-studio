@@ -7,7 +7,7 @@ const draft=source.slice(source.indexOf('  function snapshot(){'),source.indexOf
 const clicks=source.slice(source.indexOf("  q('#createView').addEventListener('click'"),source.indexOf('  const originalLoadSetups='));
 function fixture(){
   const elements=new Map();const q=id=>{if(!elements.has(id))elements.set(id,{value:id==='#batch'?'1':'',files:[],dispatchEvent(){},focus(){},addEventListener(type,fn){this[type]=fn;}});return elements.get(id);};
-  const s={selected:{id:'old',name:'Old'},uploaded:'old.png',lastUploaded:null,parentAssets:['asset'],parentByInput:{reference:'asset'},referenceRecords:[],
+  const s={draftPrivacy:'regular',selected:{id:'old',name:'Old'},uploaded:'old.png',lastUploaded:null,parentAssets:['asset'],parentByInput:{reference:'asset'},referenceRecords:[],
     recipeTemplateHash:'a'.repeat(64),referencePending:0,wordingBack:{},pictureKept:null,wordingKept:null,q,wording:()=>({positive:'words',negative:''}),pickedFiles:()=>[],values:()=>({seed:s.seed,lora_name:q('lora_name').value,lora2_name:q('lora2_name').value}),seed:7,
     U:{normalizeDraft:value=>value},continuationPayload:()=>({}),tilePayload:()=>({}),parallaxPayload:()=>({}),attachedReferencePayload:()=>[],pendingInputs:new Set(),
     getControl:key=>q(key),updateReady(){},recipeChanged(){},syncReady(){},renderReferenceSlots(){},updateLoraHints(){s.hints++;s.hintedNames=[q('lora_name').value,q('lora2_name').value];},hints:0,saves:0,saveDraft(){s.saves++;s.savedDraft=s.draftSnapshot();},

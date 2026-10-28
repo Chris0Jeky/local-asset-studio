@@ -40,7 +40,7 @@
     return command;
   }
   class Journal{
-    constructor(storage,workspace){need(scope(workspace),'A valid Workspace identity is required for recovery');this.storage=storage;this.workspace=workspace;this.key=PREFIX+workspace;}
+    constructor(storage,workspace,privacy='regular'){need(scope(workspace),'A valid Workspace identity is required for recovery');need(['regular','private'].includes(privacy),'Invalid collection recovery privacy');this.storage=storage;this.workspace=workspace;this.privacy=privacy;this.prefix=PREFIX+(privacy==='private'?'private/':'');this.key=this.prefix+workspace;}
     _read(){
       const raw=this.storage.getItem(this.key);
       if(raw===null)return {raw,value:{format:FORMAT,workspace_id:this.workspace,entries:[]}};
@@ -55,7 +55,7 @@
     _change(change,cleanup=false){
       const {raw,value}=this._read();change(value.entries);need(value.entries.length<=MAX_ENTRIES,'Local collection recovery is full; no pending command was evicted');
       const next=value.entries.length?canonical(value):null;let total=next===null?0:bytes(next),count=next===null?0:1;
-      for(let i=0;i<this.storage.length;i++){const key=this.storage.key(i);if(key?.startsWith(PREFIX)&&key!==this.key){const other=this.storage.getItem(key);need(typeof other==='string','Local recovery changed during inspection');total+=bytes(other);count++;}}
+      for(let i=0;i<this.storage.length;i++){const key=this.storage.key(i);if(key?.startsWith(this.prefix)&&scope(key.slice(this.prefix.length))&&key!==this.key){const other=this.storage.getItem(key);need(typeof other==='string','Local recovery changed during inspection');total+=bytes(other);count++;}}
       need((cleanup&&raw!==null&&(next===null||bytes(next)<=bytes(raw)))||(count<=MAX_SCOPES&&total<=MAX_BYTES),'Local collection recovery byte or Workspace limit is full; nothing was evicted');
       need(this.storage.getItem(this.key)===raw,'Local collection recovery changed before writing');
       if(next===null)this.storage.removeItem(this.key);else this.storage.setItem(this.key,next);

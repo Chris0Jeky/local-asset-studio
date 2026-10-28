@@ -18,10 +18,10 @@ def page_query(raw):
     require(parsed.path == PREFIX, 'Relative collection list route required')
     require(re.search(r'%(?![0-9a-fA-F]{2})', parsed.query) is None, 'Malformed query escape')
     pairs = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True,
-                      encoding='utf-8', errors='strict', max_num_fields=3)
+                      encoding='utf-8', errors='strict', max_num_fields=4)
     query = dict(pairs)
     require(len(query) == len(pairs) and all(value for _, value in pairs)
-            and set(query) <= {'workspace_id','limit','cursor'}, 'Invalid collection query fields')
+            and set(query) <= {'workspace_id','limit','cursor','privacy'}, 'Invalid collection query fields')
     if 'limit' in query:
         require(re.fullmatch(r'[0-9]{1,3}',query['limit']) is not None, 'Invalid page size')
         query['limit'] = int(query['limit'])
@@ -43,7 +43,8 @@ def collection_cursor(value):
         envelope = decode(raw.decode('utf-8'))
         require(type(envelope) is dict and set(envelope) == {'position','sha256'}, 'Invalid collection cursor', **error)
         body = envelope['position']
-        require(type(body) is dict and set(body) == {'format','workspace_id','catalogue','limit','last'},
+        require(type(body) is dict and {'format','workspace_id','catalogue','limit','last'} <= set(body)
+                <= {'format','workspace_id','catalogue','limit','last','privacy'},
                 'Invalid collection cursor position', **error)
         stamp = body['catalogue']
         require(canonical(envelope) == raw and envelope['sha256'] == hashlib.sha256(canonical(body)).hexdigest()
@@ -52,7 +53,8 @@ def collection_cursor(value):
                 and _integer(body['limit'],1,100) and type(body['last']) is list and len(body['last']) == 2 and type(body['last'][0]) is str and 0 < len(body['last'][0]) <= 100
                 and type(body['last'][1]) is str and ENTITY.fullmatch(body['last'][1])
                 and type(stamp) is dict and set(stamp) == {'epoch','revision'}
-                and type(stamp['epoch']) is str and HEX32.fullmatch(stamp['epoch']) and _integer(stamp['revision']),
+                and type(stamp['epoch']) is str and HEX32.fullmatch(stamp['epoch']) and _integer(stamp['revision'])
+                and body.get('privacy','regular') in ('regular','private','all'),
                 'Invalid collection cursor values or checksum', **error)
         return body
     except (ValueError,TypeError,OverflowError,RecursionError) as exc:
@@ -66,13 +68,15 @@ def _path(raw):
     return parsed
 
 
-def status(raw, workspace):
+def status(raw, workspace, privacy=None):
     parsed = _path(raw)
     require(parsed.path.startswith(STATUS_PREFIX), 'Unknown collection status route')
     require(bool(parsed.query), 'Workspace identity is required', status=428, code='collection_precondition_required')
-    query = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True, max_num_fields=1)
-    require(len(query) == 1 and query[0][0] == 'workspace_id', 'Supply exactly one workspace_id query parameter')
-    return workspace.collection_status(parsed.path[len(STATUS_PREFIX):], query[0][1])
+    pairs = parse_qsl(parsed.query, keep_blank_values=True, strict_parsing=True, max_num_fields=2)
+    query = dict(pairs)
+    require(len(query) == len(pairs) and 'workspace_id' in query and set(query) <= {'workspace_id','privacy'}, 'Supply exactly one workspace_id query parameter')
+    require(privacy is None or 'privacy' not in query or query['privacy']==privacy, 'Privacy scopes disagree', code='privacy_invalid')
+    return workspace.collection_status(parsed.path[len(STATUS_PREFIX):], query['workspace_id'], privacy=privacy or query.get('privacy','regular'))
 
 
 def extend_handler(base):
@@ -104,7 +108,9 @@ def extend_handler(base):
                 from .asset_read_http import _error
                 try:
                     if not self._safe_host(): return self._json(403,_error(ValueError('Loopback Host required')))
-                    result, code = self.studio.assets.collection_page(**page_query(self.path)), 200
+                    from creation_privacy import scope_for_handler
+                    query = page_query(self.path); query['privacy'] = scope_for_handler(self)
+                    result, code = self.studio.assets.collection_page(**query), 200
                 except (ValueError,RecursionError) as exc:
                     result, code = _error(exc), getattr(exc,'status',400)
                 except (sqlite3.Error,OSError):
@@ -112,7 +118,10 @@ def extend_handler(base):
                 try: return self._json(code,result)
                 except (BrokenPipeError,ConnectionResetError): return None
             if not self._safe_host(): return self._json(403, CollectionError('Loopback Host required').response())
-            return self._collection_reply(lambda: status(self.path, self.studio.assets))
+            def observation():
+                from creation_privacy import scope_for_handler
+                return status(self.path, self.studio.assets, privacy=scope_for_handler(self))
+            return self._collection_reply(observation)
 
         def do_POST(self):
             if not self._collection_route(): return super().do_POST()
@@ -148,5 +157,12 @@ def extend_handler(base):
                     return self._json(400, CollectionError(str(exc)).response())
                 self.close_connection = True
                 return reject_json(self, 400, CollectionError(str(exc)).response())
-            return self._collection_reply(lambda: self.studio.assets.collection(value))
+            def command():
+                from creation_privacy import scope_for_handler, creation_for_handler
+                privacy = scope_for_handler(self)
+                if value.get('action','create') == 'create':
+                    privacy = (creation_for_handler(self,value) if 'privacy' in value or self.headers.get('X-Studio-Creation-Privacy') is not None
+                               else 'private' if privacy=='private' else 'regular')
+                return self.studio.assets.collection(value, privacy=privacy)
+            return self._collection_reply(command)
     return CollectionHandler

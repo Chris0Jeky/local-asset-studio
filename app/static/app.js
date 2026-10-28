@@ -13,8 +13,9 @@ let tileState = null;
 // Parallax layers (#1219): the server's plan for one stage (clean plate or isolate), sent with Generate; any recipe change or reset drops it.
 let parallaxState = null;
 let estimateTimer = null, estimateAbort = null, estimateKey = '', estimateResultKey = '';
-async function api(path, options={}) { const r = await fetch(path, options); const data = await r.json(); if (!r.ok) {const error=Error(data.error || 'Request failed');error.status=r.status;error.data=data;throw error;} return data; }
-const post = (path, data) => api(path, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+async function api(path, options={}) { const r = await (globalThis.StudioPrivacy?.fetch || fetch)(path, options); const data = await r.json(); if (!r.ok) {const error=Error(data.error || 'Request failed');error.status=r.status;error.data=data;throw error;} return data; }
+const post = (path, data, options={}) => api(path, {...options,method:'POST',headers:{'Content-Type':'application/json',...options.headers},body:JSON.stringify(data)});
+function privacyOptions(captured=globalThis.StudioPrivacy?.capture?.()) { return captured?{headers:{'X-Studio-Privacy':captured.scope,'X-Studio-Creation-Privacy':captured.privacy}}:{}; }
 const getControl = key => document.querySelector('[data-key="' + key + '"]');
 // Notification only: programmatic recipe changes do not emit DOM input/change.
 function recipeChanged() { document.dispatchEvent?.(new Event('studio:recipe')); }
@@ -454,7 +455,7 @@ async function refreshHealth() {
   try {
     const h=await api('/api/health'); online=h.online; workerAlive=h.worker_alive!==false; schemaAvailable=!!h.schema_available; healthError=false; missingByPreset=h.missing_models || {}; pinMismatchByPreset=h.pin_mismatch || {};
     if(typeof renderRecovery==='function')renderRecovery(h.recovery);
-    const failure=$('#workerFailure'),lost=h.worker_failure;if(failure){failure.hidden=!lost;failure.title=lost?String(lost.id):'';failure.textContent=lost?'Failure record not saved for job '+String(lost.id).slice(0,8)+' ('+lost.action+'). Nothing was resubmitted. Once no other program is holding files in the runs folder, open this job and note its prompt ID, or use Resume observation, before restarting the Studio.':'';}
+    const failure=$('#workerFailure'),lost=h.worker_failure;if(failure){failure.hidden=!lost;failure.title=lost&&!lost.private?String(lost.id):'';failure.textContent=lost?.private?'A private work failure could not be saved. Nothing was resubmitted. Open Private history to inspect it before restarting the Studio.':lost?'Failure record not saved for job '+String(lost.id).slice(0,8)+' ('+lost.action+'). Nothing was resubmitted. Once no other program is holding files in the runs folder, open this job and note its prompt ID, or use Resume observation, before restarting the Studio.':'';}
     if(h.devices?.[0]) $('#hardware').textContent=h.devices[0].name.replace(/^cuda:\d+ /,'').replace(' : native','') + ' · ' + (h.devices[0].vram_total/1024**3).toFixed(0) + ' GB VRAM';
     if(h.comfy_url) $('#comfyLink').href=safeUrl(h.comfy_url);
     updateReady();
@@ -471,13 +472,13 @@ function values() {
   if(selected.i2v_modes?.length && $('#i2vMode')?.value)c.mode=$('#i2vMode').value;
   if(selected.reference&&uploaded)c.reference=uploaded; if(selected.last_reference&&lastUploaded)c.last_reference=lastUploaded; return c;
 }
-async function uploadInput(id) {
-  const file=$('#'+id).files[0]; if(!file)return null;
+async function uploadInput(id,captured,file=$('#'+id).files[0]) {
+  if(!file)return null;
   if(file.size>20*1024*1024)throw Error('Reference image exceeds 20 MiB');
-  return (await api('/api/upload',{method:'POST',headers:{'Content-Type':file.type,'X-Filename':file.name},body:file})).file;
+  return (await api('/api/upload',{method:'POST',headers:{'Content-Type':file.type,'X-Filename':file.name,...privacyOptions(captured).headers},body:file})).file;
 }
 function mediaCard(job,index,output) {
-  const id=esc(job.id), url='/api/image/'+id+'/'+index, type=output.media_type || 'image', prompt=esc(job.controls.positive || job.preset_name), open=expandedPrompts.has(job.id+':'+index);
+  const id=esc(job.id), base='/api/image/'+id+'/'+index, url=globalThis.StudioPrivacy?.mediaUrl(base,job)||base, type=output.media_type || 'image', prompt=esc(job.controls.positive || job.preset_name), open=expandedPrompts.has(job.id+':'+index);
   const media=type==='video'?'<video controls preload="metadata" src="'+url+'"></video>':type==='audio'?'<audio controls src="'+url+'"></audio>':type==='3d'?'<model-viewer loading="lazy" camera-controls touch-action="pan-y" environment-image="neutral" shadow-intensity="0.7" src="'+url+'" alt="'+esc(job.preset_name)+' mesh"><span slot="poster">Load interactive 3D preview</span></model-viewer>':'<img loading="lazy" src="'+url+'" alt="'+esc(job.preset_name)+' output">';
   return '<article class="imageCard" data-output="'+id+':'+esc(index)+'">'+media+'<div class="card-actions">'+(type==='image'?'<button class="pin" data-job="'+id+'" data-index="'+index+'">Compare</button><button class="reference-output" data-job="'+id+'" data-index="'+index+'">Use as reference</button><button class="reference-output" data-preset="anime-detail-fix" data-job="'+id+'" data-index="'+index+'" title="Repaint detected hands and faces; review settings before generating">Fix hands &amp; face</button><button class="reference-output" data-preset="krea-refine" data-job="'+id+'" data-index="'+index+'" title="Open Krea image refinement; review settings before generating">Refine image</button><button class="reference-output" data-preset="wan22-i2v" data-job="'+id+'" data-index="'+index+'">Animate</button><button class="reference-output" data-preset="trellis-auto-cutout" data-job="'+id+'" data-index="'+index+'">Make 3D</button>':'')+'<a download="'+esc(output.filename || 'asset')+'" href="'+url+'">Download</a><button class="recipe" data-job="'+id+'">Recipe</button></div>'+(window.StudioOutputReview?.markup(output)||'')+'<p class="run-prompt'+(open?' run-prompt-expanded':'')+'" title="'+prompt+'">'+prompt+'</p><button type="button" class="make-link run-prompt-more" aria-expanded="'+open+'">'+(open?'Hide prompt':'Show prompt')+'</button><p><small>Seed '+esc(output.seed ?? job.controls.seed ?? 'default')+' · '+esc(job.preset_name)+'</small></p>'+lookNote(job,output)+tileNote(job,output)+parallaxNote(job,output)+'</article>';
 }
@@ -525,7 +526,7 @@ function parallaxNote(job,output){
   if(!parallaxAvailable)return '<p class="disabledReason"><small>This '+name[claim.stage]+' has no '+name[other]+' edit yet.</small></p><p class="disabledReason"><small>'+parallaxWhy+'</small></p><button class="parallaxStage" data-job="'+id+'" data-stage="'+other+'" disabled title="'+parallaxWhy+'">Load the '+name[other]+' edit</button>';
   return '<p class="disabledReason"><small>This '+name[claim.stage]+' has no '+name[other]+' edit yet.</small></p><button class="parallaxStage" data-job="'+id+'" data-stage="'+other+'" title="Load the '+name[other]+' words for this picture into Full editor. Nothing runs until you press Generate.">Load the '+name[other]+' edit</button>';
 }
-function renderCompare() { $('#compare').hidden=!pinned.length; $('#compareImages').innerHTML=pinned.map(p=>'<img src="/api/image/'+esc(p.job)+'/'+esc(p.index)+'" alt="Pinned comparison">').join(''); }
+function renderCompare() { $('#compare').hidden=!pinned.length; $('#compareImages').innerHTML=pinned.map(p=>{const url='/api/image/'+esc(p.job)+'/'+esc(p.index);return '<img src="'+esc(globalThis.StudioPrivacy?.mediaUrl(url,jobs.find(j=>j.id===p.job))||url)+'" alt="Pinned comparison">';}).join(''); }
 const mixedBatchCommands = new Map(), mixedBatchBusy = new Set();
 function renderMixedBatch(job) {
   const batch=job.mixed_batch;if(!batch)return '';
@@ -694,7 +695,7 @@ function renderRunCancel(){
   const why=job.can_cancel?cancelConsequence(job):requested?'Cancel requested. The Studio is checking ComfyUI for this job\'s prompt.':job.cancel_blocked_reason||'This run cannot be cancelled now.';
   button.title=why;if(reason)reason.textContent=why;
 }
-async function refreshJobs(){try{const response=await fetch('/api/jobs',jobsEtag?{headers:{'If-None-Match':jobsEtag}}:{});if(response.status===304){const current=response.headers?.get?.('ETag');if(current)jobsEtag=current;settleActiveJob(false);return;}if(!response.ok){let detail='Request failed';try{const data=await response.json();if(data&&data.error)detail=data.error;}catch{}const error=Error(detail);error.status=response.status;throw error;}const next=await response.json(),etag=response.headers?.get?.('ETag');jobsEtag=etag||null;const signature=JSON.stringify(next),historyChanged=signature!==jobsDataSignature;jobs=next;jobsDataSignature=signature;renderJobs(signature);if(historyChanged){estimateKey='';estimateResultKey='';scheduleTimeEstimate();}settleActiveJob();}catch(e){message(e.message,true);}}
+async function refreshJobs(){try{const response=await (globalThis.StudioPrivacy?.fetch || fetch)('/api/jobs',jobsEtag?{headers:{'If-None-Match':jobsEtag}}:{});if(response.status===304){const current=response.headers?.get?.('ETag');if(current)jobsEtag=current;settleActiveJob(false);return;}if(!response.ok){let detail='Request failed';try{const data=await response.json();if(data&&data.error)detail=data.error;}catch{}const error=Error(detail);error.status=response.status;throw error;}const next=await response.json(),etag=response.headers?.get?.('ETag');jobsEtag=etag||null;const signature=JSON.stringify(next),historyChanged=signature!==jobsDataSignature;jobs=next;jobsDataSignature=signature;renderJobs(signature);if(historyChanged){estimateKey='';estimateResultKey='';scheduleTimeEstimate();}settleActiveJob();}catch(e){message(e.message,true);}}
 // The run started here may already be settled in the list a 304 confirms (a fast failure seen by an earlier poll).
 // Every run started from this page is announced once when it settles, even after a newer Generate took the status line.
 // #1120: an id that can never be announced is dropped: one the list showed and then lost, or one the owner abandoned before a poll saw
@@ -832,6 +833,8 @@ function renderSaved(){$('#savedList').innerHTML=saved().map((s,i)=>'<span class
 function staleTilePlan(s,target){return s.tile!=null&&(!target?.tile_route||typeof StudioUX==='undefined'||!StudioUX.normalizePrepared({preset:s.preset,tile:s.tile})||(s.controls?.reference&&s.controls.reference!==s.tile.rolled_file)||!Array.isArray(s.parent_assets)||!s.parent_assets.includes(s.tile.source_asset_id));}
 function applySaved(s,{guessLegacyParent=false}={}){
   if(!s||!catalog.presets.some(p=>p.id===s.preset))throw Error('This recipe uses an unavailable preset');
+  if(s.privacy!==undefined&&!['regular','private'].includes(s.privacy))throw Error('This recipe has an invalid privacy setting.');
+  if(s.privacy==='private'&&globalThis.StudioPrivacy?.creation()!=='private')globalThis.StudioPrivacy?.setCreation('private');
   if(s.continuation!=null&&(!StudioContinuation.normalize(s.continuation)||s.continuation.preset_id!==s.preset))throw Error('Invalid saved continuation.');
   if(s.look_application!=null&&(typeof StudioLooks==='undefined'||!StudioLooks.normalizeApplication(s.look_application,s.preset)))throw Error('Invalid look application state.');
   if(s.look!=null&&(typeof StudioLooks==='undefined'||!StudioLooks.normalizeLook(s.look)))throw Error('Invalid prepared look.');
@@ -977,16 +980,18 @@ $('#reference').onchange=()=>{uploaded=null;releaseInputParent('reference');upda
 $('#generate').onclick=async()=>{
   if(submitting||!selected)return;const blocked=continuationBlockers();if(blocked.length){message(blocked.join(' '),true);if(selected.positive&&!String($('#positive').value).trim())$('#positive').focus();return;}submitting=true;updateReady();
   // The whole Create surface stays interactive while uploads are in flight: snapshot the intent the operator pressed Generate for.
-  const started=selected,startedHash=recipeTemplateHash,startedStamp=parallaxState?window.StudioSetupDraft?.stamp():null,intent={preset_id:selected.id,...continuationPayload(),...tilePayload(),...parallaxPayload(),...(typeof StudioLooks!=='undefined'?StudioLooks.applicationPayload(selected.id):{}),controls:values(),batch_count:$('#batch').value,expected_template_sha256:recipeTemplateHash,parent_assets:parentAssets,references:attachedReferencePayload()};
+  const captured=globalThis.StudioPrivacy?.capture?.(),started=selected,startedHash=recipeTemplateHash,startedStamp=parallaxState?window.StudioSetupDraft?.stamp():null,inputFiles={reference:$('#reference').files[0]||null,lastReference:$('#lastReference').files[0]||null},stagedFiles={reference:uploaded,lastReference:lastUploaded},intent={preset_id:selected.id,...(captured?.privacy==='private'?{privacy:'private'}:{}),...continuationPayload(),...tilePayload(),...parallaxPayload(),...(typeof StudioLooks!=='undefined'?StudioLooks.applicationPayload(selected.id):{}),controls:values(),batch_count:$('#batch').value,expected_template_sha256:recipeTemplateHash,parent_assets:[...parentAssets],references:attachedReferencePayload()};
+  const samePrivacy=()=>!captured||captured.revision===globalThis.StudioPrivacy?.capture?.().revision;
+  const requireDraft=()=>{if(selected!==started||recipeTemplateHash!==startedHash||!samePrivacy()||Object.entries(inputFiles).some(([id,file])=>($('#'+id).files[0]||null)!==file)||uploaded!==stagedFiles.reference||lastUploaded!==stagedFiles.lastReference)throw Error('The recipe, source or privacy choice changed while preparing this run; nothing was submitted. Review this draft, then press Generate again.');};
   try{
-    const reference=await uploadInput('reference'),lastReference=await uploadInput('lastReference');
-    if(selected!==started||recipeTemplateHash!==startedHash)throw Error('The recipe changed while the source was uploading; nothing was submitted. Press Generate again.');
-    uploaded=reference||uploaded;lastUploaded=lastReference||lastUploaded; // Bind the uploads only to the recipe they were made for.
+    const reference=await uploadInput('reference',captured,inputFiles.reference);requireDraft();
+    const lastReference=await uploadInput('lastReference',captured,inputFiles.lastReference);requireDraft();
+    uploaded=reference||stagedFiles.reference;lastUploaded=lastReference||stagedFiles.lastReference; // Bind only to the draft and File objects captured before the first await.
     if(selected.reference&&uploaded)intent.controls.reference=uploaded;if(selected.last_reference&&lastUploaded)intent.controls.last_reference=lastUploaded;
-    const job=await post('/api/jobs',intent);activeJobId=job.id;startedJobIds.add(job.id);message(job.message);
-    if(intent.parallax)try{await afterParallaxSubmit(job,intent.parallax,startedStamp);}catch(e){message('Queued. The next parallax edit could not be loaded: '+e.message+' Use Load the isolate edit on the clean plate card.',true);}
+    const job=await post('/api/jobs',intent,privacyOptions(captured));if(samePrivacy()&&(!globalThis.StudioPrivacy||globalThis.StudioPrivacy.allows(job))){activeJobId=job.id;message(job.message);}startedJobIds.add(job.id);globalThis.StudioPrivacy?.submitted(captured);
+    if(intent.parallax&&samePrivacy())try{await afterParallaxSubmit(job,intent.parallax,startedStamp);}catch(e){if(samePrivacy())message('Queued. The next parallax edit could not be loaded: '+e.message+' Use Load the isolate edit on the clean plate card.',true);}
     await refresh();
-  }catch(e){message(e.message,true);}finally{submitting=false;updateReady();}
+  }catch(e){if(samePrivacy())message(e.message,true);}finally{submitting=false;updateReady();}
 };
 // Ctrl+Enter (Cmd+Enter on a Mac) anywhere in Create does what one click on the Generate button does and nothing more:
 // it clicks the real button only while that button is visible and enabled, so the handler's busy guard, readiness gate and
@@ -1108,6 +1113,9 @@ document.addEventListener('click',async e=>{
 $('#importWorkflow').onchange=async e=>{
   try{const file=e.target.files[0];if(!file)return;if(file.size>1024*1024)throw Error('Workflow JSON must be under 1 MiB');const report=await post('/api/workflow-inspect',{workflow:JSON.parse(await file.text()),name:file.name});$('#importReport').innerHTML='<p><b>'+report.node_count+' nodes inspected</b> · '+esc(report.format)+'</p><p>Missing nodes: '+esc(report.missing_nodes.join(', ')||'none detected')+'</p><p>Model filenames: '+esc(report.models.join(', ')||'none found in saved values')+'</p><p>Missing files: '+esc(report.missing_models.join(', ')||'none detected')+'</p><small>'+esc(report.note)+'</small>';}catch(err){$('#importReport').textContent=err.message;}finally{e.target.value='';}
 };
+// A privacy view owns its visible history and comparisons, including in-flight reads.
+document.addEventListener?.('studio:privacy-change',event=>{if(event.detail.previousScope===event.detail.scope)return;jobsEtag=null;jobsSignature='';jobsDataSignature='';jobs=[];pinned=[];activeJobId=null;expandedPrompts.clear();renderJobs();renderCompare();void refresh();});
+
 (async()=>{
   // #1649: companion classic scripts define Workspace and polling readers after app.js in the document.
   if(document.readyState==='loading')await new Promise(resolve=>document.addEventListener('DOMContentLoaded',resolve,{once:true}));

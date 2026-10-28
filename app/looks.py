@@ -17,6 +17,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from workspace import CARD_ID, WorkspaceError
+from studio_workflow.privacy import is_regular, require_regular_creation
 
 KIND = "look"
 SLOT = "{scene}"
@@ -196,6 +197,7 @@ def validate_lineage(lineage):
     if not isinstance(lineage, list) or len(lineage) > 20: raise WorkspaceError("Lineage must be a list of up to 20 entries")
     for entry in lineage:
         if not isinstance(entry, dict) or entry.get("role") not in LINEAGE_ROLES: raise WorkspaceError("Each lineage entry names its role: " + ", ".join(LINEAGE_ROLES))
+        if not is_regular(entry): raise WorkspaceError('Private creation is not supported for this operation')
         if "sha256" in entry and not (isinstance(entry["sha256"], str) and re.fullmatch(r"[0-9a-f]{64}", entry["sha256"])): raise WorkspaceError("A lineage sha256 is 64 lowercase hexadecimal characters")
         if any(isinstance(v, (dict, list)) or (isinstance(v, str) and len(v) > 500) for v in entry.values()): raise WorkspaceError("Lineage values are short text or numbers")
     return lineage
@@ -285,8 +287,20 @@ def listing(studio):
 
 def command(studio, payload):
     """Create, edit, put away or restore a look. Bodies are checked against the recipe they name; the anchor comes from the Workspace."""
-    ensure_seeds(studio); notices = []
     if not isinstance(payload, dict): raise WorkspaceError("Look command must be an object")
+    require_regular_creation(payload)
+    # Refuse private sources before even materializing shipped regular cards.
+    anchor = None
+    if payload.get('action') == 'create' and payload.get('anchor_asset_id') is not None:
+        anchor = studio.assets.get(payload['anchor_asset_id'])
+        if not is_regular(anchor): raise WorkspaceError('Asset not found')
+    if 'lineage' in payload:
+        for entry in validate_lineage(payload['lineage']):
+            if 'asset_id' in entry and not is_regular(studio.assets.get(entry['asset_id'])):
+                raise WorkspaceError('Asset not found')
+            job = getattr(studio, 'jobs', {}).get(entry.get('job_id'))
+            if job is not None and not is_regular(job): raise WorkspaceError('Unknown job')
+    ensure_seeds(studio); notices = []
     payload, action = dict(payload), payload.get("action")
     if action == "create" and payload.get("kind") != KIND: raise WorkspaceError("This route saves looks; the card kind must be " + KIND)
     if action in ("edit", "trash", "restore") and studio.assets.card(payload.get("id"))["kind"] != KIND: raise WorkspaceError("That card is not a look")
@@ -297,7 +311,7 @@ def command(studio, payload):
     anchor_id = payload.pop("anchor_asset_id", None)
     if anchor_id is not None:
         if action != "create": raise WorkspaceError("The anchor picture is recorded when the look is saved")
-        asset = studio.assets.get(anchor_id)
+        asset = anchor
         payload["lineage"] = [{"role": "anchor", "asset_id": asset["id"], "sha256": asset["sha256"], "job_id": asset["job_id"],
                                **({"preset_id": asset["preset_id"]} if asset.get("preset_id") else {})}, *(payload.get("lineage") or [])]
     if "lineage" in payload: validate_lineage(payload["lineage"])

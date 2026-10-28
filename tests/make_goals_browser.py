@@ -732,6 +732,8 @@ def run(shots):
             assert 'Nothing was imported' not in page.locator('#makeBody').inner_text()
         finally: page.unroute('**/api/workspace', refuse)
         page.locator('[data-make-goal="combine"]').click(); page.wait_for_selector('#makeComposer')
+        # Draft recovery also restores the earlier figure choice; this case explicitly imports a picture pose.
+        page.locator('label:has([data-make-pose-mode="picture"])').click()
         if not page.locator('[data-make-import-file="makePosePictures"]').count(): page.locator('[data-make-pose-change]').first.click()
         page.set_input_files('[data-make-import-file="makePosePictures"]', files=[{'name': 'pose ref.jpg', 'mimeType': 'image/jpeg', 'buffer': png}])
         page.wait_for_selector('[data-make-pose-change]'); assert 'pose ref.jpg' in page.locator('#makeComposer').inner_text()

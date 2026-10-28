@@ -24,6 +24,7 @@ import project_storage
 import submission_evidence
 import mixed_batch
 import production_clock
+from studio_workflow.privacy import is_regular, require_regular_creation
 
 
 def fingerprint(value):
@@ -140,6 +141,7 @@ class Production:
         for index,stage in enumerate(plan.get('stages',[])):
             attempt=state.get('attempts',{}).get(str(index),{})
             job=self.studio.jobs.get(attempt.get('job_id'))
+            if not is_regular(job):job=None
             stages.append({'label':stage['label'],'operation':stage['operation'],'attempt':attempt,**{k:stage[k] for k in ('engine','seed') if k in stage},
                            'job':self.studio.public(job) if job else None})
         result={k:project[k] for k in ('id','root_id','created_at')}
@@ -308,6 +310,10 @@ class Production:
 
     def _create(self, payload, *, character_source=None, root_override=None, allowance_override=None, identifier_override=None, planned=None, combine=None):
         if not isinstance(payload,dict):raise ValueError('Experiment intent must be an object')
+        require_regular_creation(payload)
+        require_regular_creation(payload.get('recipe'))
+        if planned is not None:
+            for stage in planned:require_regular_creation(stage.get('request'))
         if any(k in payload for k in ('workflow','tasks','command','script')):raise ValueError('Use a Studio recipe intent; imported blueprints and commands are not executable')
         name=payload.get('name','')
         if not isinstance(name,str) or not 1<=len(name.strip())<=120:raise ValueError('Name the experiment (1–120 characters)')
@@ -531,6 +537,7 @@ class Production:
         for identifier in ids:
             asset=self.studio.assets.get(identifier);path=self.studio.assets.file(identifier)
             job=self.studio.jobs.get(asset['job_id'])
+            if job is not None and not is_regular(job):raise ValueError('Unknown asset')
             media_type={'.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.glb':'model/gltf-binary'}.get(path.suffix.lower())
             result.append({'id':'asset-'+identifier,'path':path.relative_to(self.studio.assets.media).as_posix(),
                            'filename':asset['filename'],'media_type':media_type,'sha256':asset['sha256'],

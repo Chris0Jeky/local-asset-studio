@@ -150,6 +150,8 @@ class CollectionListReadTests(unittest.TestCase):
 
     def test_http_get_and_query_validation_do_not_change_status_or_writes(self):
         class Base:
+            headers = {}
+
             def _safe_host(self):
                 return True
 

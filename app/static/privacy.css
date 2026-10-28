@@ -1,0 +1,15 @@
+.privacy-bar{display:flex;align-items:center;flex-wrap:wrap;gap:8px 20px;padding:10px 28px;border-bottom:1px solid var(--line,#d7d5d0);background:var(--panel,#fff)}
+.privacy-bar label{display:flex;align-items:center;gap:9px;margin:0;font-size:.85rem;white-space:nowrap}
+.privacy-bar .privacy-session{font-weight:700}.privacy-session input{width:18px;height:18px;accent-color:#6559b4}
+.privacy-bar select{width:auto;max-width:200px;margin:0;padding:7px 9px}.privacy-views{display:flex;align-items:center;flex-wrap:wrap;gap:5px}.privacy-views>span{margin-right:7px;font-size:.8rem}
+.privacy-views button{padding:7px 12px;border-radius:7px}.privacy-views button[aria-pressed=true]{background:#292337;color:#fff;border-color:#292337}
+.privacy-bar p{margin:0;font-size:.8rem;line-height:1.5}.privacy-bar #privacyStatus{flex:1 1 560px;color:var(--muted,#66616e)}
+.privacy-bar details{flex:0 1 auto;margin:0;padding:0;border:0;font-size:.8rem;max-width:900px}.privacy-bar details[open]{flex-basis:100%;max-width:none}.privacy-bar details p{margin-top:8px}.privacy-bar summary{cursor:pointer}
+@media(max-width:700px){.privacy-bar{padding:10px 16px;gap:8px 12px}.privacy-bar .privacy-views{flex-basis:100%}.privacy-bar select{max-width:170px}}
+/* Keep the desktop toolbar in one row, including its live status and help.
+   Its presence replaces some editor top spacing, not any controls or focus targets. */
+@media(min-width:1100px){
+  .privacy-bar{gap:6px 12px;padding:6px 28px}
+  .privacy-bar #privacyStatus{flex:1 1 150px;min-width:0}
+  body.workshop-active .privacy-bar ~ #studioMain{padding-top:16px}
+}

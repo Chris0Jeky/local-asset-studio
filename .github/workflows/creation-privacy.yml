@@ -1,0 +1,90 @@
+name: Private creation boundaries
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'studio_*/**'
+      - 'tests/**'
+      - 'integrations/workflow-mcp/**'
+      - 'research/game-assets/requirements-media.txt'
+      - 'scripts/ci-install-chromium.sh'
+      - '.github/workflows/creation-privacy.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'studio_*/**'
+      - 'tests/**'
+      - 'integrations/workflow-mcp/**'
+      - 'research/game-assets/requirements-media.txt'
+      - 'scripts/ci-install-chromium.sh'
+      - '.github/workflows/creation-privacy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: creation-privacy-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  boundaries:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install playwright==1.57.0 -r integrations/workflow-mcp/requirements.txt -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - name: Require the optional protocol SDK
+        run: python -c "import mcp"
+      - name: Privacy storage, HTTP, workflow and frontend contracts
+        run: python -m unittest discover -s tests -p 'test_*privacy*.py' -v
+      - name: Scoped agent contracts
+        run: python -m unittest discover -s tests -p test_workflow_agent_bridge.py -v
+      - name: Native asset MCP protocol contracts
+        run: python -m unittest discover -s tests -p test_workflow_asset_mcp.py -v
+      - name: Native workflow MCP protocol contracts
+        run: python -m unittest discover -s tests -p test_workflow_mcp.py -v
+      - name: Check bounded browser dependency setup
+        if: runner.os == 'Linux'
+        run: python -m unittest discover -s tests -p test_ci_browser_dependencies.py -v
+      - name: Install Chromium with bounded signed Ubuntu dependencies
+        if: runner.os == 'Linux'
+        timeout-minutes: 4
+        run: bash scripts/ci-install-chromium.sh
+      - name: Install Chromium on Windows
+        if: runner.os == 'Windows'
+        timeout-minutes: 4
+        run: python -m playwright install --with-deps chromium
+      - name: Browser callback installation contracts
+        run: python -m unittest discover -s tests -p test_browser_fixture_callbacks.py -v
+      - name: Privacy toolbar geometry and keyboard access
+        run: python tests/privacy_layout_browser.py
+      - name: Composed private creation browser journey
+        # Real shipped controller and views, synthetic local media and acknowledged jobs.
+        # Uses ordinary Python subprocesses; never launches a backend or loads a model.
+        run: python tests/private_creation_browser.py --out .runtime/private-creation-browser
+      - name: Native Make storage refusal and finder intent journeys
+        run: python tests/make_privacy_transitions_browser.py --out .runtime/make-privacy-transitions
+      - name: Native private recovery and collection journey
+        run: python tests/private_recovery_browser.py --out .runtime/private-recovery-browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: creation-privacy-${{ matrix.os }}
+          path: |
+            .runtime/private-creation-browser
+            .runtime/private-recovery-browser
+            .runtime/make-privacy-transitions
+          retention-days: 7

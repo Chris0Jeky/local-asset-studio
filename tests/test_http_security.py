@@ -195,7 +195,7 @@ class ResponseSecurityTests(unittest.TestCase):
         raw,_=self.secured(self.request(path,headers={'If-None-Match':'"stale"'}),200);self.assertEqual(raw,png())
         raw,headers=self.secured(self.request(path,headers={'Range':'bytes=0-7'}),206);self.assertEqual((raw,headers['etag']),(png()[:8],tag))
         entry=self.studio.assets.file_entry
-        with unittest.mock.patch.object(self.studio.assets,'file_entry',side_effect=lambda i:(entry(i)[0],dict(entry(i)[1],sha256='not-a-digest'))):
+        with unittest.mock.patch.object(self.studio.assets,'file_entry',side_effect=lambda i,privacy='regular':(entry(i,privacy=privacy)[0],dict(entry(i,privacy=privacy)[1],sha256='not-a-digest'))):
             raw,headers=self.secured(self.request(path,headers={'If-None-Match':'*'}),200)
         self.assertEqual(raw,png());self.assertNotIn('etag',headers);self.assertNotIn('cache-control',headers)
     def test_local_asset_thumbnail_is_cached_webp_with_its_own_tag(self):

@@ -14,6 +14,7 @@ import re
 import shutil
 import sys
 import zipfile
+from studio_workflow.privacy import is_regular
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -127,6 +128,8 @@ class NativeExports:
         seen = set()
         for index, raw in enumerate(assets):
             require(isinstance(raw, dict), f"Asset {index} must be an object")
+            require(is_regular(raw) and all(not isinstance(raw.get(field), dict) or is_regular(raw[field])
+                    for field in ('recipe', 'metadata')), 'Private creation is not supported for this operation')
             asset_id = _slug(raw.get("id"), "asset ID")
             require(asset_id not in seen, "Duplicate asset ID")
             seen.add(asset_id)

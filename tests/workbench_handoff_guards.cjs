@@ -6,6 +6,9 @@ const vm = require('node:vm');
 
 const source = fs.readFileSync(path.join(__dirname, '../app/static/studio-workbench.js'), 'utf8');
 const references = fs.readFileSync(path.join(__dirname, '../app/static/references.js'), 'utf8');
+const app = fs.readFileSync(path.join(__dirname, '../app/static/app.js'), 'utf8');
+const privacyOptionsSource = app.match(/^function privacyOptions\([^\n]+/m)?.[0];
+assert.ok(privacyOptionsSource, 'attachment handlers use the actual app privacy helper');
 const attachmentSource = references.slice(references.indexOf('const referenceAttachments='), references.indexOf('// The readiness model itself lives'));
 
 function between(start, end) {
@@ -91,7 +94,7 @@ function pullHarness() {
     "const notices=[];let stamp='before',finish,fail,uploaded='old-upload',draftDirty=false;",
     "const referenceRecords=[{parent_asset:'old-parent',file:'old.png',missing:false}];",
     "const selected={reference_slots:[{}],continuation_capability:{}};const StudioContinuation={sourceInput:()=> 'last_reference'};",
-    "let referenceEpoch=0,referencePending=0;const updateReady=()=>{};const $=()=>({textContent:''});",
+    "let referenceEpoch=0,referencePending=0,selectionEpoch=0;const updateReady=()=>{};const $=()=>({textContent:''});",
     "const post=()=>new Promise((resolve,reject)=>{finish=resolve;fail=reject;});",
     "const workbenchStamp=()=>stamp;let renderCount=0,replaceCount=0,saveCount=0,syncCount=0;",
     "const renderReferenceSlots=()=>{renderCount++};const replaceParentAsset=()=>{replaceCount++};",
@@ -145,7 +148,8 @@ const replaceSecondPictureSource = between("  q('#uxSecondReplace').onclick=asyn
 function replaceHarness() {
   const context = {StudioContinuation:require('../app/static/continuation-core.js')};
   vm.runInNewContext([
-    "let pickerBusy=false,handoffBusy=false,submitting=false,restoring=false,referencePending=0;let secondPicture={asset:{id:'replacement',sha256:'b'.repeat(64),title:'Replacement'}},continuationState={version:1,intent:'edit',preset_id:'recipe',reference_file:'a'.repeat(32)+'_old.png',source_asset_id:'source',source_sha256:'a'.repeat(64),template_sha256:'c'.repeat(64)};",
+    privacyOptionsSource,
+    "let pickerBusy=false,pickerBusyOwner=null,handoffBusy=false,submitting=false,restoring=false,referencePending=0;let secondPicture={asset:{id:'replacement',sha256:'b'.repeat(64),title:'Replacement'}},continuationState={version:1,intent:'edit',preset_id:'recipe',reference_file:'a'.repeat(32)+'_old.png',source_asset_id:'source',source_sha256:'a'.repeat(64),template_sha256:'c'.repeat(64)};",
     "const selected={id:'recipe'};let selectionEpoch=0,referenceEpoch=0,stamp='before',finish,fail,uploaded='old-upload',draftDirty=false;",
     "const notices=[];const nodes=new Map();const q=selector=>{if(!nodes.has(selector))nodes.set(selector,{value:'',files:[]});return nodes.get(selector);};",
     "const window={confirm:()=>true};const dismissSecondPicture=()=>{secondPicture=null};",

@@ -8,6 +8,7 @@ from .document_http import extend_handler as extend_documents
 from .run_http import extend_handler as extend_run_records
 from .http_body import read_complete_body, reject_json
 from . import pose_artifact_store
+from .schema_privacy import public_node_info
 
 PREFIX = '/api/workflow-studio'
 POSE_ARTIFACT_PREFIX = '/api/pose/artifacts/'
@@ -28,7 +29,7 @@ def schema(studio, refresh=False):
     # Existing cache and backend ownership; no parallel polling worker.
     with studio.lock:
         need(not studio.backends.busy, 'Environment switch is in progress')
-        return catalog(studio.node_info(refresh), studio.backends.active)
+        return catalog(public_node_info(studio,refresh), studio.backends.active)
 
 
 def get(path, studio):

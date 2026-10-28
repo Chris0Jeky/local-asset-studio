@@ -202,7 +202,8 @@ def request(value, studio, *, preset_id=None):
     info = None; schema_error = None
     if not runtime['switching']:
         try:
-            info = studio.node_info()
+            from .schema_privacy import public_node_info
+            info = public_node_info(studio)
             need(type(info) is dict and bool(info) and all(type(k) is str and type(v) is dict for k,v in info.items()), 'Node schema unavailable or malformed')
         except (ValueError, OSError, HTTPException) as exc:
             info = None; schema_error = _text(str(exc))

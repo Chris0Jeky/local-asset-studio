@@ -153,4 +153,3 @@ Generated source facts use `facts_sha: ce1cfe367277905c0e4104fbfa2d9a524bbbdf4d`
 The coordinating agents used disposable synthetic fixtures, real CPU media, native browser/HTTP/SQLite transports and inert launcher/process controls. They performed no model download, GPU generation, live backend switch, installed ComfyUI modification or shared-package change. MOSS records from the concurrent maintainer study were reviewed as source/receipt evidence; this pass did not independently certify their image quality or turn `human_accepted: false` into acceptance.
 
 Nonempty runtime-file presence still leaves hash verification and runtime compatibility unknown. It is not proof of valid Python, node compatibility or inference. [HUMAN_TODO.md](../../HUMAN_TODO.md) remains the owner-decision authority. Current status, the evidence ledger and the active-work snapshot each keep their distinct purpose; this document records what was actually qualified and merged.
-

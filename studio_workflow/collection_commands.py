@@ -7,6 +7,7 @@ from __future__ import annotations
 import re
 import time
 import uuid
+from .asset_reads import privacy_matches, privacy_scope, privacy_sql
 from .revision_consistency import (RequestState, byte_budget, canonical_value,
                                    classify_request, compare_head, exact_stored_value)
 
@@ -104,8 +105,9 @@ def migrate(db):
 
 
 class CollectionCommands:
-    def __init__(self, workspace):
+    def __init__(self, workspace, privacy='regular'):
         self.workspace = workspace  # No migration, cached identity, read or write here.
+        self.privacy = privacy_scope(privacy)
 
     def _scope(self, db, expected):
         _schema(db)
@@ -117,9 +119,9 @@ class CollectionCommands:
                 code='collection_workspace_conflict', status=409, workspace_id=current)
         return current
 
-    @staticmethod
-    def _current(db, key):
-        row = db.execute('SELECT id,name,description,revision FROM collections WHERE id=?', (key,)).fetchone()
+    def _current(self, db, key):
+        clause, params = privacy_sql(self.privacy)
+        row = db.execute('SELECT id,name,description,revision FROM collections WHERE id=? AND '+clause, [key,*params]).fetchone()
         if row is None: return None
         try:
             require(_match(ENTITY, row['id']), 'Invalid stored collection ID')
@@ -134,10 +136,11 @@ class CollectionCommands:
     def _receipt(self, db, request_id, scope):
         # Refuse oversized rows before loading their text into Python. This and
         # the subsequent content read share the caller's transaction snapshot.
-        row = db.execute('''SELECT request_id,version,workspace_id,collection_id,command_sha256,receipt_sha256,bytes,
+        row = db.execute('''SELECT request_id,version,workspace_id,collection_id,command_sha256,receipt_sha256,bytes,privacy,
             length(CAST(command AS BLOB)) AS command_bytes,length(CAST(receipt AS BLOB)) AS receipt_bytes
             FROM collection_commands_v1 WHERE request_id=?''', (request_id,)).fetchone()
         if row is None: return None
+        if not privacy_matches(row['privacy'], self.privacy): return None
         try:
             require(type(row['version']) is int and row['version'] == 1, 'Unknown stored receipt version')
             require(row['workspace_id'] == scope and row['request_id'] == request_id, 'Stored scope/request differs')
@@ -190,14 +193,16 @@ class CollectionCommands:
     def _mutate(self, db, value, *, legacy=False):
         action = value['action']
         if action == 'create':
+            privacy = 'private' if self.privacy == 'private' else 'regular'
             key, revision = uuid.uuid4().hex, 1
             name, description = value['name'].strip(), value['description'].strip()
-            db.execute('INSERT INTO collections (id,name,description,created_at,revision) VALUES (?,?,?,?,?)',
-                       (key, name, description, time.time(), revision))
+            db.execute('INSERT INTO collections (id,name,description,created_at,revision,privacy) VALUES (?,?,?,?,?,?)',
+                       (key, name, description, time.time(), revision, privacy))
             affected = 0
         else:
             key = value['id']; current = self._current(db, key)
             require(current is not None, 'Collection not found', code='collection_not_found', status=404)
+            privacy = db.execute('SELECT privacy FROM collections WHERE id=?', (key,)).fetchone()[0]
             if not legacy:
                 head = compare_head(value['expected_revision'], current['revision'])
                 require(head.matches, 'Collection changed; inspect current metadata before applying',
@@ -211,6 +216,9 @@ class CollectionCommands:
                 name, description = value['name'].strip(), value['description'].strip()
                 db.execute('UPDATE collections SET name=?,description=?,revision=? WHERE id=?', (name, description, revision, key))
             else:
+                require(not db.execute('''SELECT 1 FROM collection_assets m JOIN assets a ON a.id=m.asset_id
+                    WHERE m.collection_id=? AND (a.privacy IS NULL OR a.privacy!=?) LIMIT 1''', (key, privacy)).fetchone(),
+                    'Collection has incompatible member privacy; nothing changed', code='collection_privacy_conflict', status=409)
                 counts = db.execute('''SELECT COUNT(*) AS members,COUNT(a.id) AS assets,
                     COALESCE(SUM(CASE WHEN typeof(a.metadata_revision)!='integer' OR a.metadata_revision<0 THEN 1 ELSE 0 END),0) AS invalid,
                     COALESCE(SUM(CASE WHEN a.metadata_revision>=? THEN 1 ELSE 0 END),0) AS overflow
@@ -222,7 +230,7 @@ class CollectionCommands:
                 affected = counts['members']
                 db.execute('UPDATE assets SET metadata_revision=metadata_revision+1 WHERE id IN (SELECT asset_id FROM collection_assets WHERE collection_id=?)', (key,))
                 db.execute('DELETE FROM collections WHERE id=?', (key,))
-        return {'id': key, 'name': name, 'description': description, 'revision': revision, 'deleted': action == 'delete'}, affected
+        return {'id': key, 'name': name, 'description': description, 'revision': revision, 'deleted': action == 'delete'}, affected, privacy
 
     def _result(self, db, stored, *, replayed):
         receipt = stored['receipt']; value = receipt.value
@@ -241,6 +249,9 @@ class CollectionCommands:
         with self.workspace.connection() as db:
             db.execute('BEGIN IMMEDIATE')
             scope = self._scope(db, value['workspace_id'])
+            existing = db.execute('SELECT privacy FROM collection_commands_v1 WHERE request_id=?', (value['request_id'],)).fetchone()
+            require(existing is None or privacy_matches(existing['privacy'], self.privacy),
+                    'Collection command not found', code='collection_not_found', status=404)
             previous = self._receipt(db, value['request_id'], scope)
             state = classify_request(None if previous is None else previous['command'].observed_sha256, bound.sha256)
             require(state is not RequestState.CONFLICT, 'Request ID already identifies different collection bytes',
@@ -248,15 +259,17 @@ class CollectionCommands:
             if state is RequestState.REPLAY:
                 require(previous['command'].raw == bound.raw, 'Request bytes differ', code='collection_request_conflict', status=409)
                 return self._result(db, previous, replayed=True)
-            result, affected = self._mutate(db, value)
+            result, affected, privacy = self._mutate(db, value)
             receipt = canonical_value({'format': RECEIPT_FORMAT, 'workspace_id': scope, 'request_id': value['request_id'],
                 'request_sha256': bound.sha256, 'action': value['action'], 'status': 'committed',
                 'result': result, 'affected_asset_count': affected})
             require(receipt.bytes <= MAX_RECEIPT_BYTES, 'Collection receipt exceeds its bound')
             self._budget(db, bound.bytes + receipt.bytes)
-            db.execute('INSERT INTO collection_commands_v1 VALUES (?,?,?,?,?,?,?,?,?)',
+            db.execute('''INSERT INTO collection_commands_v1
+                       (request_id,version,workspace_id,collection_id,command,command_sha256,receipt,receipt_sha256,bytes,privacy)
+                       VALUES (?,?,?,?,?,?,?,?,?,?)''',
                        (value['request_id'], 1, scope, result['id'], bound.raw.decode('utf-8'), bound.sha256,
-                        receipt.raw.decode('utf-8'), receipt.sha256, bound.bytes + receipt.bytes))
+                        receipt.raw.decode('utf-8'), receipt.sha256, bound.bytes + receipt.bytes, privacy))
             return self._result(db, self._receipt(db, value['request_id'], scope), replayed=False)
 
     def status(self, request_id, workspace_id):
@@ -286,6 +299,6 @@ class CollectionCommands:
             command['description'] = _text(value.get('description', ''), 1000, 'Description')
         with self.workspace.connection() as db:
             db.execute('BEGIN IMMEDIATE'); self._scope(db, None)
-            result, _ = self._mutate(db, command, legacy=True)
+            result, _, _ = self._mutate(db, command, legacy=True)
         return ({'id': result['id'], 'deleted': True} if action == 'delete' else
                 {key: result[key] for key in ('id', 'name', 'description')})

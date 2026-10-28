@@ -297,7 +297,7 @@ class CollectionCommandTests(unittest.TestCase):
     def test_asset_and_collection_receipts_are_independently_typed(self):
         service()
         with self.workspace.connection() as db:
-            db.execute('INSERT INTO asset_commands VALUES (?,?,?,?)', ('create-request-0001', 'legacy-digest', '{"status":"legacy"}', 1))
+            db.execute('INSERT INTO asset_commands (request_id,fingerprint,result,created_at) VALUES (?,?,?,?)', ('create-request-0001', 'legacy-digest', '{"status":"legacy"}', 1))
         original = self.created()
         self.assertEqual(self.status('create-request-0001')['receipt']['result']['id'], original['id'])
         with self.workspace.connection() as db:

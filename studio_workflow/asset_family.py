@@ -9,7 +9,7 @@ import json
 import math
 import re
 
-from .asset_reads import AssetReadError, ENTITY, HEX32, require
+from .asset_reads import AssetReadError, ENTITY, HEX32, require, privacy_scope, privacy_matches, privacy_sql
 from .core import decode
 
 MAX_DEPTH = 12
@@ -21,7 +21,7 @@ MAX_CHILD_SCAN = 5000
 MAX_JSON = 16 * 1024
 MAX_RECIPE = 256 * 1024
 _COLUMNS = """id,job_id,output_index,substr(title,1,200) AS title,
-    substr(preset_name,1,200) AS preset_name,preset_id,media_type,trashed_at,
+    substr(preset_name,1,200) AS preset_name,preset_id,media_type,trashed_at,privacy,
     CASE WHEN length(CAST(lineage AS BLOB)) <= 16384 THEN lineage END AS lineage,
     CASE WHEN length(CAST(source AS BLOB)) <= 16384 THEN source END AS source"""
 
@@ -65,7 +65,8 @@ def _node(studio, asset_id, row):
                 'operation': None, 'seed': None, 'strength': None}
     source = _json(row['source'], dict) or {}
     job = studio.jobs.get(row['job_id'], {})
-    controls = job.get('controls') if type(job) is dict else None
+    # A scoped asset does not authorize a mismatched retained job, even in All.
+    controls = job.get('controls') if type(job) is dict and job.get('privacy','regular') == row['privacy'] else None
     controls = controls if type(controls) is dict else {}
     return {'id': asset_id, 'title': str(row['title'] or asset_id)[:200],
             'state': 'active' if row['trashed_at'] is None else 'trashed',
@@ -73,14 +74,17 @@ def _node(studio, asset_id, row):
             'seed': _scalar(source.get('seed')), 'strength': _scalar(controls.get('denoise'))}
 
 
-def observe(studio, asset_id, *, workspace_id, children=False):
+def observe(studio, asset_id, *, workspace_id, children=False, privacy='regular'):
     asset_id = _identity(asset_id); _identity(workspace_id, HEX32)
+    privacy_scope(privacy)
     require(type(children) is bool, 'Children must be true or false')
     nodes, edges, gaps, seen, visiting = [], [], [], set(), set()
     truncated = False
     with studio.assets.connection() as db:
         db.execute('BEGIN')
         studio.assets._check_scope(db, workspace_id)
+        root = _row(db, asset_id)
+        require(root is not None and privacy_matches(root['privacy'],privacy), 'Asset not found', code='asset_not_found', status=404)
 
         def visit(identifier, depth):
             nonlocal truncated
@@ -99,6 +103,8 @@ def observe(studio, asset_id, *, workspace_id, children=False):
                 if len(gaps) < MAX_NODES: gaps.append({'id': identifier, 'reason': 'invalid-lineage'})
             else:
                 for parent in parents:
+                    parent_row = _row(db, parent)
+                    if parent_row is not None and not privacy_matches(parent_row['privacy'],privacy): continue
                     if len(edges) >= MAX_EDGES:
                         truncated = True
                         break
@@ -113,8 +119,9 @@ def observe(studio, asset_id, *, workspace_id, children=False):
             descendants = []
             # No second relation store or unbounded JSON scan. Child discovery is
             # explicit, newest-first and discloses both result and search bounds.
-            cursor = db.execute('SELECT '+_COLUMNS+' FROM assets ORDER BY created_at DESC,id LIMIT ?',
-                                (MAX_CHILD_SCAN+1,))
+            clause, params = privacy_sql(privacy)
+            cursor = db.execute('SELECT '+_COLUMNS+' FROM assets WHERE '+clause+' ORDER BY created_at DESC,id LIMIT ?',
+                                [*params,MAX_CHILD_SCAN+1])
             for row in cursor:
                 if scanned == MAX_CHILD_SCAN:
                     child_truncated = True
@@ -160,14 +167,18 @@ def _copy_recipe(value):
     return json.loads(raw)
 
 
-def recall(studio, asset_id, *, workspace_id):
+def recall(studio, asset_id, *, workspace_id, privacy='regular'):
     asset_id = _identity(asset_id); _identity(workspace_id, HEX32)
+    privacy_scope(privacy)
     with studio.assets.connection() as db:
         db.execute('BEGIN'); studio.assets._check_scope(db, workspace_id)
         row = _row(db, asset_id)
-        require(row is not None and row['trashed_at'] is None, 'Restore an existing asset before recalling its recipe')
+        require(row is not None and privacy_matches(row['privacy'],privacy) and row['trashed_at'] is None,
+                'Restore an existing asset before recalling its recipe')
         job = studio.jobs.get(row['job_id'])
-        require(type(job) is dict and job.get('status') == 'completed' and not job.get('operation')
+        require(type(job) is dict and privacy_matches(job.get('privacy','regular'),privacy)
+                and job.get('privacy','regular') == row['privacy']
+                and job.get('status') == 'completed' and not job.get('operation')
                 and all(job.get(key) is None for key in ('tile', 'parallax', 'native_recipe')),
                 'This output needs its specialized or unresolved workflow; open its original recipe instead')
         source = _json(row['source'], dict)

@@ -220,7 +220,7 @@ def prune_empty_board(preset, graph):
     graph.update(working)
 
 
-def compile_board(preset, graph, supplied, uploads):
+def compile_board(preset, graph, supplied, uploads, *, resolve_upload=None):
     """A style board: every slot is optional, missing slots are pruned, no prompt guidance is written."""
     slots=preset.get('reference_slots',[]);spec=board_spec(preset);transform=board_transform(preset)
     supplied=[] if supplied is None else supplied
@@ -243,7 +243,7 @@ def compile_board(preset, graph, supplied, uploads):
         if not isinstance(role,str) or role not in ROLES: raise ValueError('Every reference needs an explicit supported role')
         name=reference['file']
         if not isinstance(name,str) or name!=Path(name).name: raise ValueError('Choose an uploaded image for every reference slot')
-        record=image_record(uploads,name)
+        record=image_record(resolve_upload(name).parent if resolve_upload else uploads,name)
         if reference.get('sha256') and reference['sha256']!=record['sha256']:
             raise ValueError('Reference bytes changed since this recipe was saved; reattach the intended image.')
         record.update(role=reference.get('role',slot.get('role')),slot=index+1,contribution='',avoid='',transform=copy.deepcopy(transform))
@@ -282,8 +282,8 @@ def guidance_text(records, brief):
     return guidance+"\n\nRequested result:\n"+brief
 
 
-def compile_references(preset, graph, supplied, uploads):
-    if preset.get('reference_board'): return compile_board(preset, graph, supplied, uploads)
+def compile_references(preset, graph, supplied, uploads, *, resolve_upload=None):
+    if preset.get('reference_board'): return compile_board(preset, graph, supplied, uploads, resolve_upload=resolve_upload)
     slots=preset.get('reference_slots',[])
     if not isinstance(supplied,list) or len(supplied)!=len(slots):
         raise ValueError(f'This recipe needs {len(slots)} reference images. Fill the slots or choose a different reference recipe.')
@@ -294,7 +294,7 @@ def compile_references(preset, graph, supplied, uploads):
         name=reference.get('file')
         if not isinstance(name,str) or name!=Path(name).name:
             raise ValueError('Choose an uploaded image for every reference slot')
-        record=image_record(uploads,name)
+        record=image_record(resolve_upload(name).parent if resolve_upload else uploads,name)
         if reference.get('sha256') and reference['sha256']!=record['sha256']:
             raise ValueError('Reference bytes changed since this recipe was saved; reattach the intended image.')
         for field in ('contribution','avoid'):

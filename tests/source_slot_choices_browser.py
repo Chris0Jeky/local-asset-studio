@@ -212,15 +212,22 @@ async def exercise_source_choices(page, check):
     check('deferred completion does not steal focus from active typing', await page.locator('#positive').evaluate('(n)=>n===document.activeElement'))
 
     await offer()
-    await page.evaluate('__choiceDelay=true;delete window.__choiceRelease')
+    await page.evaluate("""() => {
+      __choiceDelay=true;delete window.__choiceRelease;
+      const slots=document.querySelector('#uxSecondSlots');window.__choiceSlotHandler=slots.onclick;
+      slots.onclick=function(event){return window.__choiceSlotCompletion=__choiceSlotHandler.call(this,event)};
+    }""")
     await page.locator('[data-ux-second-slot="1"]').click()
     await page.wait_for_function("typeof window.__choiceRelease==='function'")
     await page.evaluate("selectPreset('anima-portrait',true,true)")
     before=await page.evaluate('__choiceSnapshot()')
-    await page.evaluate('__choiceRelease()')
-    await page.wait_for_function("document.querySelector('#uxNotice').textContent.includes('destination slot changed')")
+    notice=await page.locator('#uxNotice').inner_text()
+    # Await the actual async click owner, not a notice owned by the retired draft.
+    await page.evaluate('async()=>{__choiceRelease();await __choiceSlotCompletion}')
     check('late copy cannot change a replacement recipe', before==await page.evaluate('__choiceSnapshot()'))
-    await page.evaluate('__choiceDelay=false')
+    check('retired copy cannot replace current recipe feedback or readiness', notice==await page.locator('#uxNotice').inner_text() and await page.evaluate('referencePending===0'))
+    # A function-valued evaluate result is invoked by Playwright; restoring is not a click.
+    await page.evaluate("()=>{__choiceDelay=false;document.querySelector('#uxSecondSlots').onclick=__choiceSlotHandler;}")
 
 
 async def main(args):

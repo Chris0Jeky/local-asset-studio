@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+from collections import Counter
 import hashlib
 from http.client import HTTPException
 import io
@@ -60,12 +61,16 @@ import parallax
 import looks
 import review_media
 import characters
-from studio_prompt.http_extension import extend_handler
+import creation_privacy as privacy_scope
+from studio_prompt.http_extension import extend_handler as extend_prompt_handler
 from i2v_diagnostics import artifact_path as i2v_artifact_path
 from i2v_diagnostics import build_report as build_i2v_report
 from i2v_diagnostics import centered_crop_plan, image_metadata, locate_source
 
 HOST, PORT = "127.0.0.1", 8191
+
+def extend_handler(base):
+    return privacy_scope.extend_handler(extend_prompt_handler(base))
 IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
 MEDIA_OUTPUT_NODES = continuation.OUTPUTS | {"PreviewImage", "SaveAudio"}
 CONTROL_KEYS = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "lora", "reference", "last_reference", "frames", "fps", "style_weight", "pose_strength", "depth_cut", "sampler", "scheduler", "lora_name", "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name", "lora5", "lora5_name", "lora6", "lora6_name")
@@ -179,6 +184,7 @@ class Studio:
         self.config = read_json(self.root / "config/local.json", {}) or {}
         self.experiments = Path(self.config.get("experiments_root", self.root / "experiments")).resolve()
         self.runs = self.experiments / "runs"; self.runs.mkdir(parents=True, exist_ok=True)
+        self.private_runs = self._private_directory('runs'); self.private_runs.mkdir(parents=True, exist_ok=True)
         self.comfy_url = str(self.config.get("comfy_url", "http://127.0.0.1:8188")).rstrip("/")
         self.comfy_root = Path(self.config.get("comfy_root", "C:/AI/ComfyUI_windows_portable/ComfyUI")).resolve()
         self.library = ModelLibrary(self.root, self.comfy_root)
@@ -471,7 +477,12 @@ class Studio:
             raise StudioError('A backend switch is running. Wait for it to finish.')
         self.require_worker()
         if not isinstance(payload, dict): raise StudioError("JSON object required")
+        classification = privacy_scope.normalize(payload.get('privacy','regular'))
+        if classification == 'private' and any(payload.get(key) is not None for key in ('tile','parallax','project_id')):
+            raise StudioError('This project workflow does not yet support private creations. Use an ordinary image recipe.')
         preset = self.preset(payload.get("preset_id")); graph, graph_path = self.graph_for(preset)
+        if classification == 'private' and preset.get('modality','image') != 'image':
+            raise StudioError('Private creation currently supports image recipes. This workflow has not been qualified for private storage.')
         if preset.get("runtime_block"): raise StudioError(preset["runtime_block"])
         expected = payload.get("expected_template_sha256")
         if expected and expected != hashlib.sha256(graph_path.read_bytes()).hexdigest():
@@ -534,8 +545,7 @@ class Studio:
             if key not in controls: continue
             name = controls[key]
             if not isinstance(name, str) or name != Path(name).name or not re.fullmatch(r"[0-9a-f]{32}_[A-Za-z0-9._-]+\.(?:png|jpg|webp)", name): raise StudioError("Reference upload is invalid")
-            uploads = self.experiments / "uploads"
-            upload = inside(uploads.resolve(), uploads / name)
+            upload = self._upload_path(name,classification,allow_regular=True)
             if not upload.is_file(): raise StudioError("Reference upload is unavailable")
             if preset.get("requires_rgba_mask") and key == "reference": self._validate_rgba_mask_reference(preset, upload)
             self._bind_control(graph, preset, key, upload.name)
@@ -556,7 +566,8 @@ class Studio:
             except (KeyError, TypeError, IndexError): raise StudioError("Preset has an invalid workflow binding")
             if actual not in preset['resolution_choices']: raise StudioError('Choose an authored resolution pair from this recipe')
         if preset.get("reference_slots"):
-            preset["_prepared_references"] = compile_references(preset, graph, payload.get("references"), self.experiments / "uploads")
+            preset["_prepared_references"] = compile_references(preset, graph, payload.get("references"), self.experiments / "uploads",
+                resolve_upload=lambda name:self._upload_path(name,classification,allow_regular=True))
         elif payload.get("references"):
             raise StudioError("This recipe has no role-assigned reference slots; choose a Qwen Atelier recipe")
         batch = number(payload.get("batch_count", 1), "batch_count", 1, 4, True)
@@ -570,7 +581,10 @@ class Studio:
         continuation.validate(self, payload, preset, graph)
         tiles.validate(self, payload, preset, graph, batch)
         parallax.validate(self, payload, preset, graph, batch)
-        self.ensure_reference_inputs(graph)
+        self.ensure_reference_inputs(graph,classification)
+        if classification == 'private':
+            for node in graph.values():
+                if node.get('class_type') == 'SaveImage': node.setdefault('inputs',{})['filename_prefix']='local-asset-studio/private'
         self._validate_i2v_mode_source(preset, mode, graph, controls)
         wan_capacity.enforce(graph)
         if not _defer_host_commit_preflight:
@@ -862,14 +876,16 @@ class Studio:
                     node["inputs"][field] = replacement
         raise StudioError("Workflow LoRA chain could not be resolved")
 
-    def ensure_reference_inputs(self, graph):
+    def ensure_reference_inputs(self, graph, classification='regular'):
         for node in graph.values():
             if node.get('class_type') != 'LoadImage': continue
             name = node['inputs'].get('image')
             if not isinstance(name, str) or Path(name).name != name: continue
             target = self.comfy_root/'input'/name
             if target.is_file(): continue
-            for source in (self.experiments/'uploads'/name, self.root/'examples/references'/name):
+            sources=[self.experiments/'uploads'/name,self.root/'examples/references'/name]
+            if classification == 'private': sources.insert(0,self._private_directory('uploads')/name)
+            for source in sources:
                 if source.is_file():
                     target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(source, target); break
@@ -879,6 +895,12 @@ class Studio:
             return self._create_job(payload, enqueue, job_id)
 
     def _create_job(self, payload, enqueue=True, job_id=None):
+        classification = privacy_scope.normalize(payload.get('privacy','regular')) if isinstance(payload,dict) else 'regular'
+        # Validate lineage before preparing/staging anything. Private destination
+        # may deliberately use regular sources; the inverse is never implicit.
+        parents = payload.get('parent_assets',[]) if isinstance(payload,dict) else []
+        if not isinstance(parents,list) or len(parents)>8: raise StudioError('Use up to eight parent assets')
+        for parent in parents: self.assets.get(parent,privacy='all' if classification=='private' else 'regular')
         if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
         label = run_label(payload.get("label")) if isinstance(payload, dict) else None
         preset, graph, graph_path, controls, batch = self.prepare(payload, _defer_host_commit_preflight=True)
@@ -890,13 +912,11 @@ class Studio:
             # The worker's fresh pre-submit check stays the only admission; a shortfall here is queued for release-then-remeasure.
             if self.commit_release_seconds <= 0: raise
             reading = exc.details.get('reading'); deferred = exc
-        parents = payload.get("parent_assets", [])
-        if not isinstance(parents, list) or len(parents) > 8: raise StudioError("Use up to eight parent assets")
-        for parent in parents: self.assets.get(parent)
         job_id = job_id or str(uuid.uuid4())
         if job_id in self.jobs: raise StudioError('A job with this identity already exists; inspect it instead of resubmitting')
-        directory = self.runs / job_id; directory.mkdir(exist_ok=not enqueue)
+        directory = self._job_directory(job_id,classification); directory.mkdir(exist_ok=not enqueue)
         job = {"id": job_id, "status": "queued", "created_at": time.time(), "preset_id": preset["id"], "preset_name": preset.get("name", preset["id"]), "controls": controls, "batch_count": batch, "prompt_ids": [], "submissions": [], "outputs": [], "message": "Waiting for the local generation queue", "graph_path": str(graph_path.relative_to(self.root)), "graph": graph}
+        if classification == 'private': job['privacy']='private'
         if preset.get("_prepared_source"): job["preparation"] = preset["_prepared_source"]
         job["seed_bindings"] = ([preset["seed"]] if preset.get("seed") else []) + preset.get("bindings_extra", {}).get("seed", [])
         job["prompt_bindings"] = {key: ([preset[key]] if preset.get(key) else []) + preset.get("bindings_extra", {}).get(key, []) for key in ("positive", "negative")}
@@ -919,19 +939,21 @@ class Studio:
         if enqueue: self.queue.put(("generate", job_id))
         return self.public(job)
 
-    def workspace_snapshot(self):
+    def workspace_snapshot(self, privacy='regular'):
         """The Workspace snapshot; assets registered before excerpts were stored take one from their loaded job (a dict lookup each).
 
         Called unbound by the handler, so a studio that carries only a Workspace (the HTTP tests) still serves it."""
-        data = self.assets.snapshot(); jobs = getattr(self, "jobs", None) or {}
+        data = self.assets.snapshot(privacy=privacy); jobs = getattr(self, "jobs", None) or {}
         for asset in data["assets"]:
             job = jobs.get(asset.get("job_id")) if asset.get("prompt_excerpt") is None else None
-            if job: asset["prompt_excerpt"] = prompt_excerpt(job)
+            if job and job.get('privacy','regular') == asset.get('privacy','regular'):
+                asset["prompt_excerpt"] = prompt_excerpt(job)
         return data
 
     def public(self, job):
         allowed = ("id", "status", "created_at", "preset_id", "preset_name", "controls", "batch_count", "prompt_ids", "submissions", "outputs", "message", "failure", "parent_assets", "references", "project_id", "started_at", "finished_at", "elapsed_seconds", "tracking_disposition", "preparation", "continuation", "abandonment", "label", "cancellation", "commit_releases", "host_commit_windows", "tile", "tile_finish", "parallax", "parallax_finish")
         result = {k: job.get(k) for k in allowed}
+        if job.get('privacy') == 'private': result['privacy']='private'
         if job.get('look') is not None: result['look'] = job['look']
         if "record_error" in job: result.update(record_error=job["record_error"], run_path=job["run_path"])
         # Polling the gallery should not transfer every full graph every four seconds.
@@ -1069,6 +1091,7 @@ class Studio:
     def estimate(self, payload):
         """Estimate end-to-end time from completed local ComfyUI runs without mutating state."""
         if not isinstance(payload, dict): return {"available": False, "reason": "Estimate input must be an object."}
+        classification=privacy_scope.normalize(payload.get('privacy','regular'))
         try:
             presets = self.catalog().get("presets", [])
             preset = next(p for p in presets if p.get("id") == payload.get("preset_id"))
@@ -1087,6 +1110,7 @@ class Studio:
         target = self._estimate_features(preset, graph, controls, payload.get("batch_count", 1), references)
         samples = []
         for job in list(self.jobs.values()):
+            if not privacy_scope.matches(job.get('privacy','regular'),classification): continue
             if job.get("status") != "completed" or job.get("operation") or job.get("native_recipe") or not job.get("prompt_ids") or not isinstance(job.get("graph"), dict): continue
             elapsed = self._estimate_float(job.get("elapsed_seconds"), 0)
             if elapsed <= 0: continue
@@ -1145,6 +1169,7 @@ class Studio:
     def export_recipe(self, job):
         if "record_error" in job: raise StudioError("An unreadable run record has no recipe to export; inspect its folder first")
         return {"version": 2, "preset_id": job["preset_id"], "controls": job["controls"],
+                **({'privacy':'private'} if job.get('privacy')=='private' else {}),
                 **({'look': job['look']} if job.get('look') is not None else {}),
                 "batch_count": job["batch_count"], "created_at": job["created_at"],
                 "workflow": job["graph"], "submissions": job.get("submissions", []),
@@ -1154,6 +1179,7 @@ class Studio:
     def i2v_diagnostic(self, job_id):
         job = self.jobs.get(job_id)
         if not job: raise StudioError("Unknown job")
+        if job.get('privacy','regular')!='regular':raise StudioError('Video diagnostics are unavailable for private runs')
         try:
             return build_i2v_report(self, job_id)
         except (OSError, ValueError, KeyError, TypeError) as exc:
@@ -1161,6 +1187,7 @@ class Studio:
 
     def i2v_diagnostic_file(self, job_id, filename):
         if job_id not in self.jobs: raise StudioError("Unknown job")
+        if self.jobs[job_id].get('privacy','regular')!='regular':raise StudioError('Video diagnostics are unavailable for private runs')
         try:
             return i2v_artifact_path(self, job_id, filename)
         except (OSError, ValueError) as exc:
@@ -1173,10 +1200,10 @@ class Studio:
             base=(self.experiments/'projects'/identifier).resolve()
             return inside(base,base/output['native_path'])
         if (job or {}).get('operation') in (tiles.OPERATION,parallax.OPERATION):
-            base=(self.runs/job['id']).resolve()
+            base=(self._job_directory(job['id'])).resolve()
             return inside(base,base/output['run_file'])
         if (job or {}).get('operation')=='asset.import':
-            return inside((self.experiments/'uploads').resolve(),self.experiments/'uploads'/output['uploaded_file'])
+            return self._upload_path(output['uploaded_file'],job.get('privacy','regular'))
         if (job or {}).get('operation'): raise StudioError('Unsupported local output operation')
         root = Path((job or {}).get("comfy_root", self.comfy_root)).resolve()
         kind = output.get("type", "output")
@@ -1194,51 +1221,61 @@ class Studio:
             if (output.get('asset_id') and output.get('media_type', 'image') == 'image'
                     and (job.get('look') or {}).get('options', {}).get('quiet_wall') is True and 'text_safe' not in output):
                 try:
-                    path, asset = self.assets.file_entry(output['asset_id'])
+                    path, asset = self.assets.file_entry(output['asset_id'],privacy=job.get('privacy','regular'))
                     output['text_safe'] = review_media.text_safe_metrics(review_media.checked_bytes(path, asset['sha256']))
                 except (OSError, ValueError, sqlite3.Error) as exc:
                     output['text_safe'] = {'error': str(exc)[:200]}
 
-    def asset_reference(self, asset_id):
-        asset = self.assets.get(asset_id)
+    def asset_reference(self, asset_id, *, privacy='regular', creation_privacy='regular'):
+        classification=privacy_scope.normalize(creation_privacy)
+        asset = self.assets.get(asset_id,privacy=privacy)
+        if asset.get('privacy','regular')=='private' and classification!='private':
+            raise StudioError('Keep this private source private when continuing with it')
         if asset["media_type"] != "image": raise StudioError("Choose an image as the reference")
-        source = self.assets.file(asset_id)
+        source = self.assets.file(asset_id,privacy=privacy)
         if source.stat().st_size > 20 * 1024 * 1024: raise StudioError("Source exceeds the 20 MiB reference limit.")
-        context = continuation.source_context(self, asset_id)
+        context = continuation.source_context(self, asset_id,privacy=privacy)
         raw = source.read_bytes()
         if hashlib.sha256(raw).hexdigest() != context["sha256"]: raise StudioError("Source changed during attachment; reopen the handoff.")
-        result = self.upload(asset["filename"], mimetypes.guess_type(str(source))[0] or "", raw)
+        result = self.upload(asset["filename"], mimetypes.guess_type(str(source))[0] or "", raw,privacy=classification)
         result["parent_asset"] = asset_id
         result["context"] = context
         return result
 
-    def import_image(self, filename, content_type, body):
-        uploaded=self.upload(filename,content_type,body)
+    def import_image(self, filename, content_type, body, *, privacy='regular'):
+        classification=privacy_scope.normalize(privacy)
+        uploaded=self.upload(filename,content_type,body,privacy=classification)
         identifier=str(uuid.uuid4())
         job={'id':identifier,'operation':'asset.import','status':'completed','created_at':time.time(),
              'preset_id':'imported-image','preset_name':uploaded['original_name'],'controls':{},'batch_count':1,
              'prompt_ids':[],'submissions':[],'parent_assets':[],'references':[uploaded],
              'message':'Imported original image. No generation submitted.','graph_path':'','graph':{},
              'outputs':[{'filename':uploaded['original_name'],'uploaded_file':uploaded['file'],'type':'output','media_type':'image'}]}
+        if classification=='private':job['privacy']='private'
         self.index_outputs(job)
         if not job['outputs'][0].get('asset_id'):
             job['status']='failed'
             job['message']='Asset storage could not confirm this request. Check its receipt before retrying the exact command.'
-            (self.runs/identifier).mkdir()
+            self._job_directory(identifier,classification).mkdir()
             self._save(job)
             with self.lock:
                 self.jobs[identifier]=job
             raise sqlite3.Error(job['outputs'][0].get('snapshot_error') or 'Asset storage could not confirm this request')
-        (self.runs/identifier).mkdir()
+        self._job_directory(identifier,classification).mkdir()
         self._save(job)
         with self.lock:
             self.jobs[identifier] = job
-        return {'asset':self.assets.get(job['outputs'][0]['asset_id']),'job':self.public(job)}
+        return {'asset':self.assets.get(job['outputs'][0]['asset_id'],privacy=classification),'job':self.public(job)}
 
-    def export_assets(self, payload):
+    def export_assets(self, payload, *, privacy='regular'):
+        privacy_scope.normalize(privacy,allow_all=True)
         ids = payload.get("ids")
         if not isinstance(ids, list) or not 1 <= len(ids) <= 200 or not all(isinstance(i, str) for i in ids): raise StudioError("Select 1–200 assets to export")
-        assets = [self.assets.get(i) for i in dict.fromkeys(ids)]
+        assets = [self.assets.get(i,privacy=privacy) for i in dict.fromkeys(ids)]
+        for asset in assets:
+            job=self.jobs.get(asset['job_id'])
+            if job and job.get('privacy','regular') != asset.get('privacy','regular'):
+                raise StudioError('An asset recipe is unavailable. Inspect its retained record before exporting.')
         trashed = [a["id"] for a in assets if a["trashed_at"]]
         if trashed:
             rest = len(assets) - len(trashed)
@@ -1247,7 +1284,12 @@ class Studio:
             raise StudioError(message, code="export_has_trashed", trashed_ids=trashed[:200])
         total = sum(a["bytes"] for a in assets)
         if shutil.disk_usage(self.experiments).free - total < 2 * 1024**3: raise StudioError("Export needs more free disk space")
-        directory = self.assets.root / "exports"; directory.mkdir(exist_ok=True)
+        classification='private' if any(a.get('privacy')=='private' for a in assets) else 'regular'
+        storage=self.assets.storage_root(classification)
+        directory = storage / 'exports'
+        if directory.is_symlink() or directory.resolve().parent != storage.resolve():
+            raise StudioError('Export storage must remain in its own workspace directory')
+        directory.mkdir(parents=True,exist_ok=True)
         identifier = uuid.uuid4().hex
         target = directory / (identifier + ".zip")
         temporary = target.with_suffix(".part")
@@ -1255,7 +1297,7 @@ class Studio:
             written = []
             with zipfile.ZipFile(temporary, "x", compression=zipfile.ZIP_STORED) as archive:
                 for asset in assets:
-                    source = self.assets.file(asset["id"])
+                    source = self.assets.file(asset["id"],privacy=privacy)
                     if digest_file(source) != asset["sha256"]: raise StudioError("An asset changed; export stopped")
                     member = "assets/" + asset["id"] + source.suffix; archive.write(source, member); written.append((member, asset["sha256"]))
                     job = self.jobs.get(asset["job_id"])
@@ -1271,7 +1313,7 @@ class Studio:
             temporary.replace(target)
         finally:
             temporary.unlink(missing_ok=True)
-        return {"id": identifier, "url": "/api/exports/" + identifier, "count": len(assets)}
+        return {"id": identifier, "url": privacy_scope.scoped_url('/api/exports/'+identifier,classification), "count": len(assets)}
 
     def check_recipe(self, recipe):
         if not isinstance(recipe, dict) or not isinstance(recipe.get("workflow"), dict):
@@ -1287,13 +1329,13 @@ class Studio:
                 "batch_count":batch, "preparation":preset.get("_prepared_source"), "template_sha256":hashlib.sha256(graph_path.read_bytes()).hexdigest(),
                 "submitted":False}
 
-    def reference_status(self, payload):
+    def reference_status(self, payload, *, privacy='regular'):
         names=payload.get("files", [])
         if not isinstance(names,list) or len(names)>8: raise StudioError("Use up to eight reference files")
         records=[]
         for name in names:
             if not isinstance(name,str) or name!=Path(name).name: raise StudioError("Invalid reference filename")
-            try: records.append(dict(image_record(self.experiments/'uploads',name), available=True))
+            try: records.append(dict(image_record(self._upload_path(name,privacy,allow_regular=True).parent,name), available=True))
             except (ValueError,OSError): records.append({"file":name,"available":False})
         return records
 
@@ -1406,18 +1448,41 @@ class Studio:
         if isinstance(value, (list, tuple)): return [Studio._finite_state(v) for v in value]
         return value
 
-    def _job_directory(self, job_id):
+    def _private_directory(self, name):
+        root=self.experiments/'private'
+        path=root/name
+        if root.is_symlink() or path.is_symlink() or root.resolve().parent!=self.experiments.resolve():
+            raise StudioError('Private storage must remain inside its dedicated experiments folder')
+        return path
+
+    def _upload_path(self, name, classification='regular', *, allow_regular=False):
+        privacy_scope.normalize(classification,allow_all=True)
+        if not isinstance(name,str) or not name or name!=Path(name).name or re.search(r'[/\\:\x00-\x1f]',name):
+            raise StudioError('Invalid reference filename')
+        roots=[]
+        if classification in ('private','all'): roots.append(self._private_directory('uploads'))
+        if classification in ('regular','all') or allow_regular: roots.append(self.experiments/'uploads')
+        for root in roots:
+            path=inside(root.resolve(),root/name)
+            if path.is_file() and not (root/name).is_symlink(): return path
+        raise StudioError('Reference upload is unavailable')
+
+    def _job_directory(self, job_id, classification=None):
         if not isinstance(job_id, str) or not job_id or '..' in job_id or re.search(r'[/\\:\x00-\x1f]', job_id) or job_id.endswith(('.', ' ')):
             raise StudioError("Invalid job ID: expected a safe single path component")
-        directory = self.runs / job_id
-        if directory.resolve().parent != self.runs.resolve(): raise StudioError("Job directory escapes the runs folder")
+        if classification is None: classification=(getattr(self,'jobs',{}).get(job_id) or {}).get('privacy','regular')
+        privacy_scope.normalize(classification)
+        root=self._private_directory('runs') if classification=='private' else self.runs
+        directory = root / job_id
+        if directory.is_symlink() or directory.resolve().parent != root.resolve(): raise StudioError("Job directory escapes the runs folder")
         return directory
 
     def _save(self, job, durable=False):
         if "record_error" in job: raise StudioError("An unreadable run record cannot be saved; inspect its folder first")
-        directory = self._job_directory(job.get("id"))
+        directory = self._job_directory(job.get("id"),job.get('privacy','regular'))
         recipe = {"preset_id": job["preset_id"], "controls": job["controls"], "batch_count": job["batch_count"], "graph_path": job["graph_path"], "created_at": job["created_at"]}
         recipe.update(references=job.get("references", []), parent_assets=job.get("parent_assets", []))
+        if job.get('privacy')=='private':recipe['privacy']='private'
         if job.get('look') is not None: recipe['look'] = job['look']
         if job.get("continuation") is not None: recipe["continuation"] = job["continuation"]
         if job.get("tile") is not None: recipe["tile"] = job["tile"]
@@ -1503,7 +1568,7 @@ class Studio:
         def finite_constant(value):
             raise ValueError('Non-finite state value')
 
-        path = self.runs / job['id'] / 'state.json'
+        path = self._job_directory(job['id']) / 'state.json'
         with path.open('rb') as stream:
             raw = stream.read(observation_state.MAX_BYTES + 1)
         if len(raw) > observation_state.MAX_BYTES:
@@ -1568,7 +1633,7 @@ class Studio:
             raise StudioError('Retained disposition state changed; restart to inspect it')
         # Startup output indexing and legacy backend defaults belong to the live
         # view, not the retained disposition receipt this explicit call confirms.
-        self._write_observation_state(self.runs / job['id'] / 'state.json', state)
+        self._write_observation_state(self._job_directory(job['id']) / 'state.json', state)
         self._loaded_operator_dispositions.pop(key)
 
     def stop_tracking(self, job_id, reason):
@@ -1592,7 +1657,7 @@ class Studio:
             if history: disposition["history"] = history + [dict(recorded)]
             prospective = dict(job); prospective["tracking_disposition"] = disposition
             prospective = self._retained_operator_disposition(job, prospective, 'tracking_disposition')
-            self._write_observation_state(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
+            self._write_observation_state(self._job_directory(job_id) / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
             job["tracking_disposition"] = prospective['tracking_disposition']
             self._loaded_operator_dispositions.pop((job_id, 'tracking_disposition'), None)
             return self.public(job)
@@ -1630,7 +1695,7 @@ class Studio:
         # partial or uncertain outcome surfaces unacknowledged again.
         prospective.pop("put_away_at", None)
         # Keep the live stop disposition until the supported publication barriers pass.
-        state_path = self.runs / job["id"] / "state.json"
+        state_path = self._job_directory(job["id"]) / "state.json"
         state = {k: v for k, v in prospective.items() if k != "graph"}
         try:
             self._write_observation_state(state_path, state)
@@ -1669,7 +1734,7 @@ class Studio:
             # Commit one complete disposition before mutating memory. Keep the exact
             # recipe, workflow and pending marker; failure leaves the job recoverable.
             prospective = self._retained_operator_disposition(job, prospective, 'abandonment')
-            self._write_observation_state(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
+            self._write_observation_state(self._job_directory(job_id) / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
             job.update(status="abandoned", message=message, abandonment=prospective['abandonment'])
             self._loaded_operator_dispositions.pop((job_id, 'abandonment'), None)
             return self.public(job)
@@ -1689,11 +1754,11 @@ class Studio:
             if job_cancel.not_started(job):
                 record.update(state="cancelled", resolved_at=now, note="Removed from the Studio queue before submission; nothing was sent to ComfyUI.")
                 prospective = dict(job, status="cancelled", message=job_cancel.not_started_message(), cancellation=record, finished_at=now)
-                self._write_observation_state(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
+                self._write_observation_state(self._job_directory(job_id) / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
                 job.update(status=prospective["status"], message=prospective["message"], cancellation=record, finished_at=now)
                 return self.public(job)
             # The worker owns this job's state file; the request gets its own durable receipt.
-            self._write_json_atomic(self.runs / job_id / job_cancel.REQUEST_FILE, record)
+            self._write_json_atomic(self._job_directory(job_id) / job_cancel.REQUEST_FILE, record)
             self.cancel_requests[job_id] = record
             return self.public(job)
 
@@ -1727,7 +1792,7 @@ class Studio:
                 # An active job's record belongs to the worker until it settles again.
                 if job.get("status") in self.ACTIVE_JOB_STATUSES: raise StudioError("This job is queued or being observed; wait for it to settle")
                 prospective = {k: v for k, v in job.items() if k != "put_away_at"}
-            self._write_observation_state(self.runs / job_id / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
+            self._write_observation_state(self._job_directory(job_id) / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
             if put_away: job["put_away_at"] = prospective["put_away_at"]
             else: job.pop("put_away_at", None)
             # This successful state publication also includes any loaded disposition.
@@ -1768,26 +1833,39 @@ class Studio:
         if output_key and any(not isinstance(output.get(output_key), str) for output in data.get('outputs', [])): raise ValueError(f"Invalid output {output_key}")
 
     def _load_jobs(self):
-        for state_path in self.runs.glob("*/state.json"):
+        private_runs=self._private_directory('runs')
+        paths=[*self.runs.glob('*/state.json'),*private_runs.glob('*/state.json')]
+        duplicates={name for name,count in Counter(p.parent.name for p in paths).items() if count>1}
+        for state_path in paths:
+            classification='private' if state_path.parent.parent==private_runs or state_path.parent.name in duplicates else 'regular'
             data = {}; path = state_path
             try:
+                if state_path.parent.name in duplicates:raise ValueError('Duplicate job ID in regular and private storage; inspect both retained folders')
                 for path in (state_path, state_path.parent / "workflow.json"):
+                    if state_path.parent.is_symlink() or path.is_symlink() or path.resolve().parent != state_path.parent.resolve():
+                        classification='private'
+                        raise ValueError('Retained run records must not redirect through filesystem aliases')
                     record = self._read_job_record(path)
                     if path == state_path:
                         data = record
-                        directory = self._job_directory(data.get("id"))
+                        if privacy_scope.normalize(data.get('privacy','regular'))!=classification:raise ValueError('Job privacy does not match its run folder')
+                        directory = self._job_directory(data.get("id"),classification)
                         if data['id'] != state_path.parent.name or directory != state_path.parent: raise ValueError("Job ID does not match its run folder")
                         if data['id'] in self.jobs: raise ValueError("Duplicate job ID")
                     else: graph = record
                 path = state_path
                 self._validate_job_record(data)
             except (OSError, ValueError, TypeError, KeyError, AttributeError, RecursionError, OverflowError) as exc:
+                # An explicit private or malformed classification never becomes a
+                # public placeholder, even if somebody moved its retained folder.
+                if data.get('privacy','regular') != 'regular': classification='private'
                 reason = f"{path.name}: {exc}"; known = data.get("prompt_ids")
                 ids = [i for i in known if isinstance(i, str)] if isinstance(known, list) else []
                 # Missing evidence collections cannot prove non-submission or authorize a disposition.
                 self.jobs[state_path.parent.name] = {"id": state_path.parent.name, "status": "uncertain", "created_at": 0,
+                    **({'privacy':'private'} if classification=='private' else {}),
                     "preset_name": "Unreadable run record", "controls": {}, "outputs": [], "run_path": str(state_path.parent),
-                    "record_error": reason, "message": f"The run record could not be read ({reason}). Nothing was resubmitted." + (f" Known ComfyUI prompt IDs: {', '.join(ids[:8])}." if ids else "") + f" Inspect experiments/runs/{state_path.parent.name}/ before deleting it."}
+                    "record_error": reason, "message": f"The run record could not be read ({reason}). Nothing was resubmitted." + (f" Known ComfyUI prompt IDs: {', '.join(ids[:8])}." if ids else "") + f" Inspect experiments/{state_path.parent.relative_to(self.experiments).as_posix()}/ before deleting it."}
                 continue
             defaults = {key: value for key, value in (('comfy_root', str(self.comfy_root)), ('comfy_url', self.comfy_url)) if key not in data}
             state_written = False
@@ -1862,9 +1940,18 @@ class Studio:
                 try:self.backends.require_work_admission()
                 except backend_state.StateError as exc:raise StudioError(str(exc)) from exc
 
+    def public_worker_failure(self):
+        failure = copy.deepcopy(self.worker_failure)
+        if not isinstance(failure, dict): return failure
+        job = self.jobs.get(failure.get('id'))
+        if failure.get('privacy','regular') != 'regular' or isinstance(job,dict) and job.get('privacy','regular') != 'regular':
+            return {'private':True, 'action':'private-work', 'durable':False,
+                    'message':'A private work failure could not be saved. Open Private history to inspect it before restarting the Studio.'}
+        return failure
+
     def health(self, refresh=False):
         worker_alive = self.worker_available()
-        worker_failure = copy.deepcopy(self.worker_failure)
+        worker_failure = self.public_worker_failure()
         try:
             stats = self._request("/system_stats", timeout=3)
             try: info = self.node_info(refresh); info_available = isinstance(info, dict)
@@ -2000,7 +2087,7 @@ class Studio:
     def _run_folder_lock(self, job, exc):
         """A transient Windows refusal on a file inside this job's own run folder (another program held it open)."""
         if not file_replace.transient(exc) or not isinstance(job.get('id'), str): return False
-        folder = self.runs / job['id']
+        folder = self._job_directory(job['id'])
         return any(isinstance(name, (str, Path)) and Path(name).parent == folder for name in (exc.filename, getattr(exc, 'filename2', None)))
 
     def cache_release_status(self):
@@ -2068,7 +2155,11 @@ class Studio:
                     # consumer. Keep one bounded, explicitly non-durable alert.
                     self.worker_failure = {'action': action, 'id': job_id, 'error': type(exc).__name__,
                                            'recording_error': str(recording_error)[:500], 'durable': False}
-                    try: print('Studio worker could not persist failure:', self.worker_failure, file=sys.stderr, flush=True)
+                    # Keep full internal evidence but never copy private identities,
+                    # paths or exception text to shared health or stderr output.
+                    if job is not None and job.get('privacy','regular') != 'regular':
+                        self.worker_failure['privacy'] = job.get('privacy')
+                    try: print('Studio worker could not persist failure:', self.public_worker_failure(), file=sys.stderr, flush=True)
                     except Exception: pass
             finally: self._last_activity = time.monotonic()   # the idle clock starts when the action ends, not when it was dequeued
 
@@ -2215,6 +2306,7 @@ class Studio:
             job_cancel.finish(self, job)
 
     def _resource_observation_event(self, kind, job, **details):
+        if job.get('privacy')=='private': return  # Optional shared telemetry does not publish private run identities.
         observer = getattr(self, 'resource_observations', None)
         if observer is None: return
         # Optional evidence cannot mutate the job or become submission/save authority.
@@ -2471,7 +2563,7 @@ class Studio:
         # partial or uncertain outcome surfaces unacknowledged again.
         prospective.pop("put_away_at", None)
         state = {key: value for key, value in prospective.items() if key != "graph"}
-        state_path = self.runs / job_id / "state.json"
+        state_path = self._job_directory(job_id) / "state.json"
         # Readable replacement bytes cannot certify a failed synchronization.
         # Every failure preserves live/queue state until a later explicit retry,
         # except a demonstrably landed marker removal, which re-surfaces the job.
@@ -2519,7 +2611,8 @@ class Studio:
         tiles.finish_after_run(self, job)
         parallax.finish_after_run(self, job)
 
-    def upload(self, filename, content_type, body):
+    def upload(self, filename, content_type, body, privacy='regular'):
+        classification = privacy_scope.normalize(privacy)
         mime = content_type.split(";", 1)[0].lower()
         magic = {"image/png": b"\x89PNG\r\n\x1a\n", "image/jpeg": b"\xff\xd8\xff", "image/webp": b"RIFF"}
         if mime not in IMAGE_TYPES or len(body) > 20 * 1024 * 1024 or not body or not body.startswith(magic[mime]): raise StudioError("Upload must be a PNG, JPG, or WebP under 20 MiB")
@@ -2539,9 +2632,11 @@ class Studio:
         comfy_input = self.comfy_root / "input"
         if not comfy_input.is_dir():
             raise StudioError("Configured ComfyUI input folder is unavailable")
-        uploads = self.experiments / "uploads"; uploads.mkdir(parents=True, exist_ok=True)
+        uploads = self._private_directory('uploads') if classification=='private' else self.experiments / 'uploads'
+        uploads.mkdir(parents=True, exist_ok=True)
         name = f"{uuid.uuid4().hex}_{safe}{IMAGE_TYPES[mime]}"
         metadata = {"file": name, "sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body), "width": width, "height": height, "original_name": safe}
+        if classification=='private': metadata['privacy']='private'
         payloads = ((uploads / name, body), (comfy_input / name, body),
                     (uploads / (name + ".json"), json.dumps(metadata, indent=2).encode("utf-8")))
         owned = {}
@@ -2700,12 +2795,14 @@ class Handler(BaseHTTPRequestHandler):
             if exc.code != 416: raise
             with exc:
                 self.send_response(416)
+                if (job or {}).get('privacy')=='private':self.send_header('Cache-Control','no-store')
                 if exc.headers.get("Content-Range"): self.send_header("Content-Range", exc.headers["Content-Range"])
                 self.send_header("Content-Length", "0"); self.end_headers(); return
         # urlopen leaves getresponse() failures unwrapped; a stalled or vanished ComfyUI is still a ComfyUI error.
         except (TimeoutError, ConnectionError, HTTPException) as exc: raise URLError(exc) from exc
         with response:
             self.send_response(response.status)
+            if (job or {}).get('privacy')=='private':self.send_header('Cache-Control','no-store')
             for key in ("Content-Type", "Content-Length", "Content-Range", "Accept-Ranges", "ETag", "Last-Modified"):
                 if response.headers.get(key): self.send_header(key, response.headers[key])
             self.end_headers()
@@ -2717,7 +2814,8 @@ class Handler(BaseHTTPRequestHandler):
         # `immutable` only when the URL itself names the bytes (a thumbnail's ?v=<version>-<sha256 prefix>): an asset ID
         # can recur in another Workspace or a rebuilt catalogue with other bytes, so ID-only URLs revalidate (304 by ETag).
         self.send_header("ETag", etag); self.send_header("Cache-Control", "private, max-age=31536000, immutable" if immutable else "private, no-cache")
-    def _local_file(self, file, download=False, etag=None, content_type=None, immutable=False):
+    def _local_file(self, file, download=False, etag=None, content_type=None, immutable=False, private=False):
+        if private: etag=None
         if etag and any(tag.strip().removeprefix("W/") in (etag, "*") for tag in self.headers.get("If-None-Match", "").split(",")):
             self.send_response(304); self._cache_headers(etag, immutable); self.end_headers(); return
         size = file.stat().st_size
@@ -2730,10 +2828,13 @@ class Handler(BaseHTTPRequestHandler):
             if left: start, end = int(left), min(int(right), end) if right else end
             else: start = max(0, size - int(right))
             if start > end or start >= size:
-                self.send_response(416); self.send_header("Content-Range", f"bytes */{size}"); self.send_header("Content-Length", "0"); self.end_headers(); return
+                self.send_response(416)
+                if private:self.send_header('Cache-Control','no-store')
+                self.send_header("Content-Range", f"bytes */{size}"); self.send_header("Content-Length", "0"); self.end_headers(); return
         self.send_response(206 if requested else 200)
         self.send_header("Content-Type", content_type or mimetypes.guess_type(str(file))[0] or "application/octet-stream")
         self.send_header("Content-Length", str(end - start + 1)); self.send_header("Accept-Ranges", "bytes")
+        if private:self.send_header('Cache-Control','no-store')
         if etag: self._cache_headers(etag, immutable)
         if requested: self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
         if download: self.send_header("Content-Disposition", f'attachment; filename="{file.name}"')
@@ -2754,21 +2855,34 @@ class Handler(BaseHTTPRequestHandler):
             raise WorkspaceError("Supply exactly one Workspace identity")
         return scopes[0]
 
+    def _creation_payload(self):
+        payload=self._body_json()
+        classification=privacy_scope.creation_for_handler(self,payload)
+        if isinstance(payload,dict) and (classification=='private' or 'privacy' in payload):payload=dict(payload,privacy=classification)
+        return payload
+
+    def _scoped_job(self, identifier, scope):
+        job=self.studio.jobs.get(identifier)
+        return job if job and privacy_scope.matches(job.get('privacy','regular'),scope) else None
+
     def do_GET(self):
         if not self._safe_host(): return self._json(403, {"error":"Loopback Host required"})
         try:
             path = urlparse(self.path).path
+            scope=privacy_scope.scope_for_handler(self)
+            if path.startswith(('/api/jobs/','/api/image/')) and not self._scoped_job(path.split('/')[3],scope):
+                return self._json(404,{'error':'Unknown job'})
             if path == "/api/identity": return self._json(200, self.studio.identity())
             if path == '/api/backends':
                 result=self.studio.backends.snapshot();result['recovery']=self.studio.runtime_recovery.snapshot();lease=getattr(self.studio,'gpu_lease',None)
                 if lease: result['gpu_lease']=lease.snapshot()
                 return self._json(200,result)
             if path == '/api/gpu-lease': return self._json(200, self.studio.gpu_lease.snapshot())
-            if path == "/api/workspace": return self._json(200, Studio.workspace_snapshot(self.studio))
+            if path == "/api/workspace": return self._json(200, Studio.workspace_snapshot(self.studio,privacy=scope))
             if path.startswith("/api/assets/commands/") and len(path.split("/")) == 5:
-                return self._json(200, self.studio.assets.command_status(path.split("/")[4], self._asset_query_scope()))
+                return self._json(200, self.studio.assets.command_status(path.split("/")[4], self._asset_query_scope(),privacy=scope))
             if path.startswith("/api/assets/") and path.endswith("/metadata") and len(path.split("/")) == 5:
-                return self._json(200, self.studio.assets.metadata(path.split("/")[3], self._asset_query_scope()))
+                return self._json(200, self.studio.assets.metadata(path.split("/")[3], self._asset_query_scope(),privacy=scope))
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
             if path == "/api/looks": return self._json(200, looks.listing(self.studio))
             if path == "/api/characters": return self._json(200, characters.listing(self.studio))
@@ -2793,24 +2907,29 @@ class Handler(BaseHTTPRequestHandler):
                 from urllib.parse import unquote
                 name=unquote(path.rsplit("/",1)[-1])
                 if not re.fullmatch(r"[0-9a-f]{32}_[A-Za-z0-9._-]+\.(?:png|jpg|webp)",name): raise StudioError("Invalid upload")
-                return self._local_file(inside(self.studio.experiments/'uploads',self.studio.experiments/'uploads'/name))
+                file=self.studio._upload_path(name,scope)
+                return self._local_file(file,private=file.parent==self.studio._private_directory('uploads'))
             if path.startswith("/api/assets/") and path.endswith("/file"):
-                file, asset = self.studio.assets.file_entry(path.split("/")[3]); digest = asset.get("sha256")
+                file, asset = self.studio.assets.file_entry(path.split("/")[3],privacy=scope); digest = asset.get("sha256")
                 tag = '"' + digest + '"' if isinstance(digest, str) and asset_thumbs.SHA256.fullmatch(digest) else None
-                return self._local_file(file, urlparse(self.path).query == "download", tag)
+                return self._local_file(file, 'download' in parse_qs(urlparse(self.path).query,keep_blank_values=True), tag,private=asset.get('privacy')=='private')
             if path.startswith("/api/assets/") and path.endswith("/thumb") and len(path.split("/")) == 5:
                 query = parse_qs(urlparse(self.path).query, keep_blank_values=True)
-                file, etag = asset_thumbs.thumbnail(self.studio.assets, path.split("/")[3], asset_thumbs.requested_size(query.get("w")))
-                return self._local_file(file, etag=etag, content_type=asset_thumbs.CONTENT_TYPE, immutable=asset_thumbs.names_content(query.get("v"), etag))
+                asset_id=path.split('/')[3]
+                asset=self.studio.assets.get(asset_id,privacy=scope)
+                file, etag = asset_thumbs.thumbnail(self.studio.assets,asset_id,asset_thumbs.requested_size(query.get('w')),privacy=scope)
+                return self._local_file(file,etag=etag,content_type=asset_thumbs.CONTENT_TYPE,immutable=asset_thumbs.names_content(query.get('v'),etag),private=asset.get('privacy')=='private')
             if path.startswith("/api/exports/"):
                 identifier = path.rsplit("/", 1)[-1]
                 if not re.fullmatch(r"[0-9a-f]{32}", identifier): raise StudioError("Invalid export")
-                file = inside(self.studio.assets.root, self.studio.assets.root / "exports" / (identifier + ".zip"))
-                return self._local_file(file, True)
+                candidates=[self.studio.assets.storage_root(s)/'exports'/(identifier+'.zip') for s in (('regular','private') if scope=='all' else (scope,))]
+                file=next((p for p in candidates if p.is_file() and not p.is_symlink() and not p.parent.is_symlink() and p.resolve().parent==p.parent),None)
+                if file is None:return self._json(404,{'error':'Export not found'})
+                return self._local_file(file,True,private=file.parent.parent==self.studio.assets.storage_root('private'))
             if path.startswith("/api/tiles/source/") and len(path.split("/")) == 5: return self._json(200, tiles.source_status(self.studio, path.split("/")[4]))
             if path.startswith("/api/parallax/source/") and len(path.split("/")) == 5: return self._json(200, parallax.source_status(self.studio, path.split("/")[4]))
             if path.startswith("/api/assets/") and path.endswith("/context") and len(path.split("/")) == 5:
-                return self._json(200, continuation.source_context(self.studio, path.split("/")[3]))
+                return self._json(200, continuation.source_context(self.studio, path.split("/")[3],privacy=scope))
             if path == "/api/catalog": return self._json(200, self.studio.catalog())
             if path == "/api/wildcards": return self._json(200, {"wildcards": self.studio.wildcards()})
             if path == "/api/options": return self._json(200, self.studio.options(urlparse(self.path).query == "refresh", True))
@@ -2831,7 +2950,7 @@ class Handler(BaseHTTPRequestHandler):
                 data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", mimetypes.guess_type(str(file))[0] or "application/octet-stream"); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
             if path == "/api/jobs":
                 with self.studio.lock:
-                    snapshot = list(self.studio.jobs.values())
+                    snapshot = [job for job in self.studio.jobs.values() if privacy_scope.matches(job.get('privacy','regular'),scope)]
                 payload = [self.studio.public(x) for x in sorted(snapshot, key=lambda j:j["created_at"], reverse=True)]
                 raw = json.dumps(payload).encode()
                 etag = '"' + hashlib.sha256(raw).hexdigest() + '"'
@@ -2849,17 +2968,23 @@ class Handler(BaseHTTPRequestHandler):
                 if len(parts) != 6 or parts[4] != "i2v-diagnostic": raise StudioError("Unknown diagnostic artifact")
                 return self._local_file(self.studio.i2v_diagnostic_file(parts[3], unquote(parts[5])))
             if path.startswith("/api/jobs/"):
-                job = self.studio.jobs.get(path.rsplit("/", 1)[-1]); return self._json(200, self.studio.public(job)) if job else self._json(404, {"error":"Unknown job"})
+                parts=path.split("/")
+                job=self._scoped_job(parts[3],scope) if len(parts)==4 else None
+                return self._json(200,self.studio.public(job)) if job else self._json(404,{"error":"Unknown job"})
             if path.startswith("/api/image/"):
                 _, _, _, job_id, index = path.split("/"); job = self.studio.jobs.get(job_id); index = int(index); outputs = job.get("outputs", []) if job else []; image = outputs[index] if 0 <= index < len(outputs) else None
                 if not image: return self._json(404, {"error":"Unknown image"})
-                if image.get("asset_id"): return self._local_file(self.studio.assets.file(image["asset_id"]))
+                if image.get("asset_id"):
+                    file,asset=self.studio.assets.file_entry(image['asset_id'],privacy=scope)
+                    if asset.get('job_id')!=job_id or asset.get('output_index')!=index or asset.get('privacy','regular')!=job.get('privacy','regular'):
+                        return self._json(404,{'error':'Unknown image'})
+                    return self._local_file(file,private=asset.get('privacy')=='private')
                 # Local operations never produced a ComfyUI /view output. A failed snapshot must
                 # retain the original file identity, not borrow an unrelated matching filename (#1228).
                 if job.get("operation"):
                     try: file = self.studio.output_path(image, job)
                     except (StudioError, KeyError, TypeError): return self._json(404, {"error":"Unknown image"})
-                    return self._local_file(file) if file.is_file() else self._json(404, {"error":"Unknown image"})
+                    return self._local_file(file,private=job.get('privacy')=='private') if file.is_file() else self._json(404, {"error":"Unknown image"})
                 return self._media(image, job)
             if path == "/": path = "/index.html"
             if path.startswith("/static/"): path = path[7:]
@@ -2887,11 +3012,18 @@ class Handler(BaseHTTPRequestHandler):
             self._drain_refused_body()
             return self._json(403, {"error":"Local same-origin request required"})
         try:
-            if self.path == "/api/estimate": return self._json(200, self.studio.estimate(self._body_json()))
+            scope=privacy_scope.scope_for_handler(self)
+            if self.path.startswith('/api/jobs/'):
+                parts=self.path.split('/')
+                if len(parts)!=5:
+                    self._drain_refused_body();return self._json(400,{'error':'Invalid job action path'})
+                if not self._scoped_job(parts[3],scope):
+                    self._drain_refused_body();return self._json(400,{'error':'Unknown job'})
+            if self.path == "/api/estimate": return self._json(200, self.studio.estimate(self._creation_payload()))
             if self.path == '/api/gpu-lease': return self._json(200, self.studio.gpu_lease.acquire(self._body_json()))
             if self.path == '/api/gpu-lease/release': return self._json(200, self.studio.gpu_lease.release(self._body_json()))
             if self.path == "/api/jobs":
-                payload = self._body_json()
+                payload = self._creation_payload()
                 # Lease acquisition uses this same interlock. Keep admission and
                 # registration indivisible, without holding the lock for HTTP I/O.
                 with self.studio.lock:
@@ -2904,11 +3036,11 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == '/api/articulated': return self._json(201,self.studio.production.articulated(self._body_json()))
             if self.path == '/api/assets/import':
                 body=self._read_body(20*1024*1024)
-                try: return self._json(201,self.studio.import_image(self.headers.get('X-Filename','reference'),self.headers.get('Content-Type',''),body))
+                try: return self._json(201,self.studio.import_image(self.headers.get('X-Filename','reference'),self.headers.get('Content-Type',''),body,privacy=privacy_scope.creation_for_handler(self)))
                 except sqlite3.Error:
                     return self._json(503, {"error": "Asset storage could not confirm this request. Check its receipt before retrying the exact command.",
                                             "code": "asset_storage_unconfirmed"})
-            if self.path == "/api/preview": return self._json(200, self.studio.preview(self._body_json()))
+            if self.path == "/api/preview": return self._json(200, self.studio.preview(self._creation_payload()))
             if self.path == '/api/av':return self._json(201,self.studio.production.av.create(self._body_json()))
             if self.path == '/api/voice-baseline':return self._json(201,self.studio.production.voice_baseline(self._body_json()))
             if self.path.startswith('/api/av/'):
@@ -2933,22 +3065,26 @@ class Handler(BaseHTTPRequestHandler):
                     if len(parts)!=5:raise StudioError('Unknown put-away route')
                     return self._json(200,self.studio.production.put_away(identifier,payload))
                 return self._json(404, {"error":"Not found"})  # the body was read above: nothing is left to drain
-            if self.path == "/api/references/check": return self._json(200, self.studio.reference_status(self._body_object()))
+            if self.path == "/api/references/check":
+                payload=self._body_object()
+                return self._json(200, self.studio.reference_status(payload,privacy=privacy_scope.creation_for_handler(self,payload)))
             if self.path == "/api/assets/update":
-                try: return self._json(200, self.studio.assets.update(self._body_json()))
+                try: return self._json(200, self.studio.assets.update(self._body_json(),privacy=scope))
                 except sqlite3.Error:
                     return self._json(503, {"error": "Asset storage could not confirm this request. Check its receipt before retrying the exact command.",
                                             "code": "asset_storage_unconfirmed"})
-            if self.path == "/api/collections": return self._json(200, self.studio.assets.collection(self._body_json()))
+            if self.path == "/api/collections": return self._json(200, self.studio.assets.collection(self._body_json(),privacy=scope))
             if self.path == "/api/setups": return self._json(200, self.studio.assets.save_setup(self._body_json()))
             # Looks (#1221): save/edit/put away, and prepare Create's fields from a look and a scene. Neither creates a job.
             if self.path == "/api/looks": return self._json(200, looks.command(self.studio, self._body_json()))
             if self.path == "/api/looks/prepare": return self._json(200, looks.prepare(self.studio, self._body_json()))
             # Characters (#1205): save/edit/put away a character card from a keeper. Never creates a job.
             if self.path == "/api/characters": return self._json(200, characters.command(self.studio, self._body_json()))
-            if self.path == "/api/assets/reference": return self._json(200, self.studio.asset_reference(self._body_object().get("id")))
-            if self.path == "/api/assets/export": return self._json(201, self.studio.export_assets(self._body_object()))
-            if self.path == "/api/recipe-check": return self._json(200, self.studio.check_recipe(self._body_json()))
+            if self.path == "/api/assets/reference":
+                payload=self._body_object()
+                return self._json(200, self.studio.asset_reference(payload.get("id"),privacy=scope,creation_privacy=privacy_scope.creation_for_handler(self,payload)))
+            if self.path == "/api/assets/export": return self._json(201, self.studio.export_assets(self._body_object(),privacy=scope))
+            if self.path == "/api/recipe-check": return self._json(200, self.studio.check_recipe(self._creation_payload()))
             if self.path == "/api/folders/open": return self._json(200, self.studio.library.open_folder(self._body_object().get("id")))
             if self.path == "/api/models/install": return self._json(202, self.studio.library.start_install(self._body_object().get("id")))
             if self.path == "/api/workflow-inspect": return self._json(200, self.studio.inspect_workflow(self._body_json()))
@@ -2984,7 +3120,7 @@ class Handler(BaseHTTPRequestHandler):
                 if not isinstance(payload, dict): raise StudioError('Put-away command must be an object')
                 return self._json(200, self.studio.put_away_job(parts[3], payload.get('put_away')))
             if self.path == "/api/upload":
-                body = self._read_body(20 * 1024 * 1024); return self._json(201, self.studio.upload(self.headers.get("X-Filename", "reference"), self.headers.get("Content-Type", ""), body))
+                body = self._read_body(20 * 1024 * 1024); return self._json(201, self.studio.upload(self.headers.get("X-Filename", "reference"), self.headers.get("Content-Type", ""), body,privacy=privacy_scope.creation_for_handler(self)))
             # Draws a pose guide and stores it exactly as an upload; it reaches no model and queues nothing.
             # Make seamless (#1220): prepare stores a rolled seam cross as an upload; finish runs Pillow steps. Neither queues a generation.
             if self.path == "/api/tiles/prepare": return self._json(201, tiles.prepare(self.studio, self._body_object()))

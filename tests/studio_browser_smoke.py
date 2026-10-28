@@ -390,7 +390,13 @@ def run(screenshots):
             check(models.locator('#modelsView').is_visible(),'query need parameter also filters Models')
             models.locator('[data-models-all]').click();models.wait_for_function('document.querySelectorAll("#modelCards .model-card").length>1 && !location.search.includes("need")')
             check(models.locator('#modelsView').is_visible(),'Show everything clears a query need filter too')
-            models.goto(origin+'/#make');models.wait_for_selector('[data-make-look="look-wai-fantasy-portrait"]');models.locator('[data-make-look="look-wai-fantasy-portrait"]').click()
+            models.goto(origin+'/#make')
+            models.wait_for_function('document.querySelector("#makeView").dataset.draftState === "ready"')
+            # Make now restores the remembered goal/look instead of assuming a fresh gallery.
+            # Use the same explicit controls as a person arriving from Models; do not erase recovery.
+            models.locator('[data-make-goal="character"]').click()
+            if models.locator('[data-make-change]').is_visible():models.locator('[data-make-change]').click()
+            models.wait_for_selector('[data-make-look="look-wai-fantasy-portrait"]');models.locator('[data-make-look="look-wai-fantasy-portrait"]').click()
             check(models.locator('#makeWhy a').get_attribute('href')=='/#models?need=wai','composer blocker links to the preset files')
             models.locator('[data-make-change]').click()  # choosing a look folds the gallery (S1); open it again to see the cards
             card_link=models.locator('.make-look').filter(has=models.locator('[data-make-look="look-wai-fantasy-portrait"]')).locator('a')

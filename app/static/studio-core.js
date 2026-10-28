@@ -116,6 +116,7 @@
   }
   function normalizeDraft(value){
     if(!value||value.version!==1||!Number.isFinite(value.updatedAt)||!value.recipe||typeof value.recipe.preset!=='string'||!value.recipe.preset||value.recipe.preset.length>120)return null;
+    if(value.recipe.privacy!==undefined&&!['regular','private'].includes(value.recipe.privacy))return null;
     if(JSON.stringify(value).length>131072)return null;
     const input=value.recipe.controls;if(!input||typeof input!=='object'||Array.isArray(input))return null;const controls={};
     for(const [k,v]of Object.entries(input)){if(!/^[a-z][a-z0-9_]{0,63}$/.test(k)||['constructor','prototype','__proto__'].includes(k))return null;if(!(typeof v==='string'&&v.length<=20000)&&!(typeof v==='number'&&Number.isFinite(v)))return null;controls[k]=v;}
@@ -137,7 +138,7 @@
     // A stale or malformed seamless plan drops alone (#1230); everything else in the draft is kept.
     let prepared=normalizePrepared(value.recipe),tileDropped=false;if(!prepared&&value.recipe.tile!=null&&value.recipe.parallax==null){prepared=normalizePrepared({...value.recipe,tile:null});tileDropped=!!prepared;}if(!prepared)return null;
     const continuation=value.recipe.continuation;if(continuation!=null&&(typeof StudioContinuation==='undefined'||!StudioContinuation.normalize(continuation)||continuation.preset_id!==value.recipe.preset))return null;
-    return{version:1,updatedAt:value.updatedAt,...(tileDropped?{tileDropped:true}:{}),recipe:{preset:value.recipe.preset,controls,batch,...prepared,...(source?{look:StudioLooks.normalizeLook(source)}:{}),...(look?{look_application:StudioLooks.normalizeApplication(look,value.recipe.preset)}:{}),...(continuation?{continuation:StudioContinuation.normalize(continuation)}:{}),parent_assets:[...ids],...(attribution.length?{parent_by_input:Object.fromEntries(attribution)}:{}),references:refs.map(r=>({...r}))},pendingInputs:[...new Set(pending)],templateHash:typeof value.templateHash==='string'?value.templateHash:null};
+    return{version:1,updatedAt:value.updatedAt,...(tileDropped?{tileDropped:true}:{}),recipe:{preset:value.recipe.preset,...(value.recipe.privacy==='private'?{privacy:'private'}:{}),controls,batch,...prepared,...(source?{look:StudioLooks.normalizeLook(source)}:{}),...(look?{look_application:StudioLooks.normalizeApplication(look,value.recipe.preset)}:{}),...(continuation?{continuation:StudioContinuation.normalize(continuation)}:{}),parent_assets:[...ids],...(attribution.length?{parent_by_input:Object.fromEntries(attribution)}:{}),references:refs.map(r=>({...r}))},pendingInputs:[...new Set(pending)],templateHash:typeof value.templateHash==='string'?value.templateHash:null};
   }
   // Named recipes are a reading aid, never a selection: bounded, catalog-shaped ids only.
   function promptRecipes(value){const out=[];for(const id of Array.isArray(value)?value:[]){if(out.length>=8)break;if(typeof id==='string'&&/^[a-z0-9-]{1,60}$/.test(id)&&!out.includes(id))out.push(id);}return out;}

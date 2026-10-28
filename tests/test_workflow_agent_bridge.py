@@ -91,6 +91,17 @@ class BridgeTests(unittest.TestCase):
         for name, args, path in cases:
             self.client.result = {'revisions': []} if name == 'workflow_history' else {'status': 'ok'}
             self.assertTrue(self.bridge.invoke(name, args)['ok']); self.assertEqual(self.client.calls[-1], (path, None))
+
+    def test_job_privacy_is_explicit_and_invalid_scopes_never_contact_the_server(self):
+        for scope in ('regular','private','all'):
+            result = self.bridge.invoke('job_status', {'job_id':'job-1','privacy':scope})
+            self.assertTrue(result['ok'])
+            self.assertEqual(self.client.calls[-1], ('/api/jobs/job-1'+('' if scope=='regular' else '?privacy='+scope),None))
+        self.client.calls.clear()
+        for scope in (None,True,'PRIVATE','unknown'):
+            result = self.bridge.invoke('job_status', {'job_id':'job-1','privacy':scope})
+            self.assertFalse(result['ok']); self.assertEqual(result['error']['code'],'invalid_arguments')
+        self.assertEqual(self.client.calls,[])
     def test_create_fork_restore_preview_use_shared_shapes(self):
         cases = [('workflow_create', {'document_json': '{}', 'request_id': 'new'}, '/api/workflow-studio/documents', {'document': {}, 'request_id': 'new'}),
                  ('workflow_restore', {'document_id': 'a', 'revision': 1, 'expected_revision': 3, 'request_id': 'r'}, '/api/workflow-studio/documents/a/restore', {'revision': 1, 'expected_revision': 3, 'request_id': 'r'}),

@@ -19,6 +19,7 @@ from .revision_consistency import (RequestState, byte_budget, canonical_value,
                                    classify_request, compare_head, stored_value)
 from .setup_proposal import validate_draft, validate_reply, request as build_proposal
 from .setup_substitution import validate_reply as validate_substitution_reply
+from .privacy import is_regular
 
 PREFIX='/api/workflow-studio/setup-drafts'
 MAX_DRAFTS=128
@@ -159,6 +160,20 @@ class SetupDrafts:
         """Bind current staged bytes for later undo/load, without copying anything."""
         from app.references import image_record
         need(not draft['pendingInputs'],'Attach or remove pending local inputs before checkpointing; no browser File bytes are persisted')
+        recipe=draft['recipe'];parents=list(recipe['parent_assets'])
+        for row in recipe['references']:
+            parents.extend(row[key] for key in ('parent_asset','asset_id','source_asset_id') if key in row)
+        continuation=recipe.get('continuation') or {}
+        if 'source_asset_id' in continuation:parents.append(continuation['source_asset_id'])
+        seen=set()
+        for parent in parents:
+            unavailable='Setup source is unavailable; reselect it before checkpointing'
+            need(type(parent) is str,unavailable)
+            if parent in seen:continue
+            seen.add(parent)
+            try:asset=self.studio.assets.get(parent)
+            except (ValueError,KeyError):raise ValueError(unavailable) from None
+            need(is_regular(asset) and not asset.get('trashed_at'),unavailable)
         names={}
         for key in ('reference','last_reference'):
             value=draft['recipe']['controls'].get(key)

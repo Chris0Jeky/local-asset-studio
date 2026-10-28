@@ -253,6 +253,8 @@ class BackendManager:
         Stopping that process would discard the only descriptor of a completed result that Resume observation could still
         record. An endpoint that refuses connections with no listener has no history left to lose; any other failure is unknown.
         `extra_job_ids` (GPU lease only, #979) adds the stale uncertain records the lease exempted from `_local_work`."""
+        # primary-comfy-args imports the static launcher helpers without the repo package path.
+        from studio_workflow.privacy import is_regular
         stopped=[job for job in list(self.studio.jobs.values()) if self._stopped_record(job) or (job.get('status')=='uncertain' and job.get('id') in extra_job_ids)]
         if not stopped:return
         # A backend with no listening socket has no in-memory history to lose; ask the process table once per profile.
@@ -265,7 +267,9 @@ class BackendManager:
                     except OSError as exc:
                         raise ValueError('ComfyUI history is unknown for '+profile['name']+'; existing processes were preserved') from exc
                     if not isinstance(history,dict):raise ValueError('ComfyUI history is unknown for '+profile['name']+'; existing processes were preserved')
-                    if prompt_id in history:raise ValueError('Job '+str(job.get('id',''))[:8]+' has a result in '+profile['name']+"'s history; resume its observation before switching")
+                    if prompt_id in history:
+                        subject='Job '+str(job.get('id',''))[:8] if is_regular(job) else 'Private work'
+                        raise ValueError(subject+' has a result in '+profile['name']+"'s history; resume its observation before switching")
 
     @staticmethod
     def configured_reserve(value):

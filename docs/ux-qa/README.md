@@ -1,5 +1,11 @@
 # Studio UX QA — 13 September 2026
 
+## Creation journeys and Make draft recovery — 26 October 2026
+
+[Creation journeys](CREATION-JOURNEYS-2026-10-26.md) records ten bounded native-browser paths, input counts and automated elapsed time, the reproduced picture-draft reload loss, scoped per-tab recovery, and private request/storage checks. Synthetic interface evidence remains separate from configured-machine creative acceptance.
+
+[Owner anime trial](OWNER-ANIME-TRIAL-2026-10-26.md) is an unrun manual protocol with a fixed original adult character brief, ten tasks, separate human and machine timing, a six-output-image cap and an owner scorecard. The cap includes every image in Make's two- or four-image Vary round; optional pose, correction or upscale tasks stop at readiness when no budget remains. Its proposed targets and acceptance criteria are not measured results.
+
 ## Live journey pass — 24 September 2026
 
 [LIVE-JOURNEY-QA-2026-09-24.md](LIVE-JOURNEY-QA-2026-09-24.md): a read-only walkthrough on the owner's running Studio. Results: #775 and #769 verified and closed; findings filed as #939, #940 and #942; fixes in #944, #945 and #951.

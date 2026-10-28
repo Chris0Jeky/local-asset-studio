@@ -7,6 +7,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const source = fs.readFileSync(path.join(__dirname, '../app/static/studio-workbench.js'), 'utf8');
+const app = fs.readFileSync(path.join(__dirname, '../app/static/app.js'), 'utf8');
+const privacyOptionsSource = app.match(/^function privacyOptions\([^\n]+/m)?.[0] || '';
+assert.ok(privacyOptionsSource || !source.includes('privacyOptions('), 'Workbench privacy calls need the actual app helper');
 function between(start, end) {
   const first = source.indexOf(start);
   assert.notEqual(first, -1, 'missing ' + start);
@@ -24,7 +27,7 @@ function context(extra) {
     U, selected: {id: 'plain', name: 'Plain'}, online: true, schemaAvailable: true, workerAlive: true,
     missingByPreset: {}, continuationState: null, pendingInputs: [], uploaded: null, lastUploaded: null,
     secondPicture: null, sharedAdoptionError: null, varyUnapplied: null, sourceReadError: '',
-    submitting: false, handoffBusy: false, pickerBusy: false, restoring: false, pairActionBusy: false, poseBusy: false,
+    submitting: false, handoffBusy: false, pickerBusy: false, pickerBusyOwner: null, selectionEpoch: 0, restoring: false, pairActionBusy: false, poseBusy: false,
     referencePending: 0, varyBusy: false, tileBusy: false, parallaxBusy: false, planBusy: false, polishBusy: new Set(), makeVaryBusy: new Set(), catalog: {presets: [{id: 'plain', name: 'Plain'}]},
     draftDirty: false, recipeTemplateHash: null, selectedPositive: 'kept words',
     calls: [], notices: [], asked: [], answer: true, typed: '', negative: '', staged: false,
@@ -46,7 +49,7 @@ function context(extra) {
   };
   Object.assign(sandbox, extra || {});
   vm.createContext(sandbox);
-  vm.runInContext(readinessSource + '\n' + combineSource + '\n' + prepareSource + '\nthis.readinessItems=readinessItems;this.combineBusy=combineBusy;this.prepareVary=prepareVary;', sandbox);
+  vm.runInContext(privacyOptionsSource + '\n' + readinessSource + '\n' + combineSource + '\n' + prepareSource + '\nthis.readinessItems=readinessItems;this.combineBusy=combineBusy;this.prepareVary=prepareVary;', sandbox);
   return sandbox;
 }
 
@@ -162,7 +165,7 @@ function makeVaryBox(extra) {
   };
   Object.assign(box, extra || {});
   vm.createContext(box);
-  vm.runInContext(makeVarySource + '\nthis.vary=vary;this.varyPlanFor=varyPlanFor;', box);
+  vm.runInContext(privacyOptionsSource + '\n' + makeVarySource + '\nthis.vary=vary;this.varyPlanFor=varyPlanFor;', box);
   return box;
 }
 
@@ -297,6 +300,8 @@ test('each excluded Krea source uses its checked recorded recipe for a new-seed 
 
 // make.js side: one press calls StudioWorkbench.vary once, adds the run and polls it; a failure only says so.
 const makeSource = fs.readFileSync(path.join(__dirname, '../app/static/make.js'), 'utf8');
+const makePrivacySource = makeSource.slice(makeSource.indexOf('  const creationPrivacy='),makeSource.indexOf('  const json='))
+  + makeSource.slice(makeSource.indexOf('  const classified='),makeSource.indexOf('  // Curated,'));
 test('Make keeps disabled Vary visible with its linked reason (#1510)',()=>{
   const markup='<button type="button" disabled aria-describedby="vary-why">Vary</button><small id="vary-why">Needs a source picture.</small>';
   const box={state:{varying:new Set(),varyHeld:new Set(),polish:{},polishing:new Set()},escape:String,POLISH:{},
@@ -338,13 +343,13 @@ const varyPictureSource = makeSource.slice(varyPictureStart, makeSource.indexOf(
 function makeCard(vary) {
   const box = {VARY_HELD: 'held', state: {varying: new Set(), varyHeld: new Set(), runs: [{job: {id: 'run-1', outputs: [{asset_id: 'asset-1'}]}, look: 'Pearly', lookId: 'look-p', goal: 'character'}]}, said: [], polled: [],
     renderRuns() {}, remember() {}, poll(id) { box.polled.push(id); }, say(text) { box.said.push(text); }, window: {StudioWorkbench: {vary}}};
-  vm.createContext(box); vm.runInContext(varyPictureSource + '\nthis.varyPicture=varyPicture;', box); return box;
+  vm.createContext(box); vm.runInContext(makePrivacySource + varyPictureSource + '\nthis.varyPicture=varyPicture;', box); return box;
 }
 test('Make card Vary is wired to one StudioWorkbench.vary call per press (#1497)', async () => {
   assert.notEqual(varyPictureStart, -1, 'make.js has a Make-side Vary');
   assert.doesNotMatch(makeSource, /Prepare variations in the full editor/, 'the card no longer sends the owner to the full editor');
   assert.match(makeSource, /closest\('\[data-make-vary\]'\);if\(varying&&!varying\.disabled\)\{void varyPicture\(varying\)/);
-  let calls = 0, release; const box = makeCard((...args) => { calls++; assert.deepEqual(args, ['asset-1', 'wai', 'job-1', 'subtle', undefined]); return new Promise(r => { release = r; }); });
+  let calls = 0, release; const box = makeCard((...args) => { calls++; assert.equal(args.length,6); assert.deepEqual(args.slice(0,5), ['asset-1', 'wai', 'job-1', 'subtle', undefined]); assert.deepEqual(JSON.parse(JSON.stringify(args[5])),{scope:'regular',privacy:'regular'}); return new Promise(r => { release = r; }); });
   const button = {dataset: {asset: 'asset-1', preset: 'wai', job: 'job-1', makeVary: 'subtle'}};
   const first = box.varyPicture(button); await box.varyPicture(button);
   assert.equal(calls, 1, 'a double press sends once');

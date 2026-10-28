@@ -20,6 +20,7 @@ def make_studio(root):
     class Studio:
         def __init__(self):
             self.root = Path(root); self.catalog_path = self.root/'catalog.json'
+            self.experiments = self.root/'experiments'; self.jobs = {}
             self.catalog_path.write_text('{}', encoding='utf-8')
             self.backends = SimpleNamespace(active='primary', busy=False, operation=None)
             self.comfy_url = 'http://127.0.0.1:8188'; self.lock = threading.RLock()
