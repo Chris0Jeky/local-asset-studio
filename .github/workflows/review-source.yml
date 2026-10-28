@@ -1,46 +1,97 @@
-name: Review source receipt
+name: Publish qualified source objects
 on:
   push:
-    paths:
-      - '.github/workflows/review-source.yml'
-  workflow_dispatch:
+    branches: [codex/privacy-qualification-20261028]
+    paths: ['.github/workflows/review-source.yml']
 permissions:
-  contents: read
+  contents: write
 jobs:
   source:
     runs-on: ubuntu-24.04
-    timeout-minutes: 3
+    timeout-minutes: 6
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 4e753e3e9c1f5f1ac2cb2ed918e5ae6469edd74d
-          fetch-depth: 8
+          path: transport
           persist-credentials: false
-      - name: Export only changed integration documents with blob identities
+      - uses: actions/checkout@v4
+        with:
+          ref: 901e9ae30ee7e1eb10814ca273f073c17cf5409e
+          path: source
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 4e753e3e9c1f5f1ac2cb2ed918e5ae6469edd74d
+          path: integration
+          persist-credentials: false
+      - name: Verify and apply exact reviewed source changes
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
-          import hashlib, json, os, pathlib, subprocess
-          out=pathlib.Path(os.environ['RUNNER_TEMP'])/'review-source'
-          refs={'main':'4e753e3e9c1f5f1ac2cb2ed918e5ae6469edd74d','base':'928df102faa524958892830bc8f63819318fab92'}
-          files=['CLAUDE.md','CURRENT_STATE.md','docs/PROJECT-OPERATING-MODEL.md','docs/STATUS.md','docs/generated/REPOSITORY-STATE.md','docs/verification/2026-10-26-integration-closeout.md','docs/workflow-studio/MCP-AGENTS.md','experiments/curated/moss-study-20261026/closeout/README.md','research/repository-state/active-work.json','research/repository-state/test-receipt.json','research/repository-state/validation-receipt.json']
-          records=[]
-          for name,ref in refs.items():
-              for path in files:
-                  result=subprocess.run(['git','show',ref+':'+path],capture_output=True)
-                  if result.returncode:
-                      if name=='base' and path=='docs/verification/2026-10-26-integration-closeout.md':continue
-                      raise SystemExit(result.stderr.decode())
-                  target=out/name/path;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(result.stdout)
-                  blob=subprocess.check_output(['git','rev-parse',ref+':'+path],text=True).strip()
-                  assert hashlib.sha1(b'blob '+str(len(result.stdout)).encode()+b'\0'+result.stdout).hexdigest()==blob
-                  records.append({'path':str(target.relative_to(out)),'ref':ref,'blob':blob})
-          (out/'manifest.json').write_text(json.dumps(records,indent=2)+'\n')
+          import base64, gzip, hashlib, pathlib, subprocess
+          root=pathlib.Path.cwd(); src=root/'source'
+          def git(*args):return subprocess.check_output(['git',*args],cwd=src).decode().strip()
+          assert git('rev-parse','HEAD')=='901e9ae30ee7e1eb10814ca273f073c17cf5409e'
+          git('fetch','--no-tags','../integration','4e753e3e9c1f5f1ac2cb2ed918e5ae6469edd74d')
+          paths=['CLAUDE.md','docs/PROJECT-OPERATING-MODEL.md','docs/STATUS.md','docs/generated/REPOSITORY-STATE.md','docs/verification/2026-10-26-integration-closeout.md','docs/workflow-studio/MCP-AGENTS.md','experiments/curated/moss-study-20261026/closeout/README.md','research/repository-state/active-work.json','research/repository-state/test-receipt.json','research/repository-state/validation-receipt.json']
+          git('checkout','4e753e3e9c1f5f1ac2cb2ed918e5ae6469edd74d','--',*paths)
+          assert git('write-tree')=='27329032bf932ad0f005f42158b05d0e0ea34b51'
+          encoded=''.join((root/'transport/.github/qualification'/('part-'+str(i))).read_text() for i in range(1,5))
+          assert len(encoded)==24360
+          packed=base64.b64decode(encoded,validate=True)
+          assert hashlib.sha256(packed).hexdigest()=='6ecc0f08458418f7ac5cb50619173f7ec8aab08ee80bd70b7a1163fd709f3485'
+          patch=gzip.decompress(packed)
+          assert hashlib.sha256(patch).hexdigest()=='baa51a6fccfac0649b8f91c60b13ded9457aeff6e419aa49de1290361351d7aa'
+          path=root/'reviewed.patch';path.write_bytes(patch)
+          git('apply','--index','--unidiff-zero','--check',str(path))
+          git('apply','--index','--unidiff-zero',str(path))
+          git('diff','--cached','--check')
+          assert git('write-tree')=='ba3caf3f5ef15cde8b4f878aa994ce03fbf821c1'
+          print('Verified reviewed source tree ba3caf3f5ef15cde8b4f878aa994ce03fbf821c1')
+          PY
+          cd source
+          node --check app/static/make.js
+          node --check app/static/studio-shell.js
+          node --test tests/make_privacy_transitions.cjs tests/make_followups.cjs
+      - name: Publish verified Git objects only; do not move any branch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64,json,pathlib,subprocess
+          src=pathlib.Path('source');repo='repos/Chris0Jeky/local-asset-studio/git/'
+          def git(*args):return subprocess.check_output(['git',*args],cwd=src)
+          def api(endpoint,data):
+              result=subprocess.run(['gh','api','--method','POST',repo+endpoint,'--input','-'],input=json.dumps(data).encode(),stdout=subprocess.PIPE,check=True)
+              return json.loads(result.stdout)
+          def entries(tree):
+              result={}
+              for entry in git('ls-tree','-r','-z',tree).split(b'\0'):
+                  if not entry:continue
+                  meta,path=entry.split(b'\t',1);mode,kind,sha=meta.decode().split()
+                  result[path.decode()]={'path':path.decode(),'mode':mode,'type':kind,'sha':sha}
+              return result
+          base=entries('901e9ae30ee7e1eb10814ca273f073c17cf5409e');tree='ba3caf3f5ef15cde8b4f878aa994ce03fbf821c1';desired=entries(tree)
+          changed=[entry for path,entry in desired.items() if base.get(path)!=entry]
+          assert len(changed)==28 and set(base)<=set(desired)
+          assert all(entry['type']=='blob' and not entry['path'].startswith('.github/') for entry in changed)
+          for entry in changed:
+              data=git('cat-file','blob',entry['sha'])
+              created=api('blobs',{'content':base64.b64encode(data).decode(),'encoding':'base64'})
+              assert created['sha']==entry['sha']
+          result=api('trees',{'base_tree':'9dc9629596334a52cbcf979d5e62bf5c6e4ac6c7','tree':changed})
+          assert result['sha']==tree
+          receipt={'tree':tree,'parent':'901e9ae30ee7e1eb10814ca273f073c17cf5409e','main':'4e753e3e9c1f5f1ac2cb2ed918e5ae6469edd74d','changed':changed,'branch_moved':False}
+          pathlib.Path('publication.json').write_text(json.dumps(receipt,indent=2)+'\n')
+          print(json.dumps(receipt,indent=2))
           PY
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: integration-documents-${{ github.sha }}
-          path: ${{ runner.temp }}/review-source/
-          if-no-files-found: error
+          name: qualified-source-object-receipt
+          path: publication.json
+          if-no-files-found: warn
           retention-days: 7
