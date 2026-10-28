@@ -1,0 +1,66 @@
+diff --git a/docs/verification/2026-10-28-archive-schema-followthrough.md b/docs/verification/2026-10-28-archive-schema-followthrough.md
+index 513fd76..6527fe5 100644
+--- a/docs/verification/2026-10-28-archive-schema-followthrough.md
++++ b/docs/verification/2026-10-28-archive-schema-followthrough.md
+@@ -45,3 +45,28 @@ explicitly limited transport/storage evidence, not hosted native qualification.
+ Fresh exact-head full-suite, native Library and Linux/Windows Archive/runtime
+ qualification remain required. No model runs, owner media, workstation changes
+ or human creative/licensing acceptance are established by these corrections.
++
++## Independent Archive/Trash wording in the recovery inspector
++
++Both native lifecycle jobs in run 40788365638 reached LIFE-03 and rejected the
++old `Active now` label. The inspector deliberately says `Not in Trash now` so
++that an archived asset is not misleadingly described as active work. The old
++assertion failed in the inert driver too. The fixture now creates an archived
++live target and an archived trashed target through the real Workspace owner,
++then verifies their exact per-ID headings separately from missing and unarchived
++states. The ordinary active page correctly has nine rows; all twelve retained
++IDs remain accounted for in read-only inspection. All 20 inert checks pass,
++including every existing no-write, export, keyboard, late-response, foreign-scope
++and historical-receipt assertion. Native platform gates remain required.
++
++## Local full-suite disposition
++
++The initial tree completed 6,348 tests in 1,049.699 seconds with 54 explicit
++skips, one known figure-schema failure and one multiprocessing readiness error
++in `test_backend_state` (the `reserve` subprocess did not signal within five
++seconds). The identical readiness test passed standalone in 1.961 seconds.
++Its runtime owner and fixture are unchanged by Archive; this is not proof of a
++specific timeout cause. No timeout was increased or exception ignored. The
++complete initial run is failed evidence; hosted final-head full-suite approval
++is still required. The lifetime shutdown reported no retained non-daemon thread
++or active child process.
+diff --git a/tests/asset_recovery_lifecycle_browser.py b/tests/asset_recovery_lifecycle_browser.py
+index e406281..3f3227c 100644
+--- a/tests/asset_recovery_lifecycle_browser.py
++++ b/tests/asset_recovery_lifecycle_browser.py
+@@ -52,6 +52,8 @@ async def exercise(args):
+                 'operation':{'command':trash,'body':json.dumps(trash,indent=2),'kind':'trash','snapshot':form},'conflict':None}
+         store.update(command([ids[2]],'restore'))
+         store.update(command([ids[1]],'trash'))
++        # Archive is an independent axis: inspect both archived live and trashed targets.
++        store.update(command([ids[1],ids[3]],'archive'))
+         store.collection({'id':group['id'],'action':'delete'})
+         with store.connection() as db:db.execute('DELETE FROM assets WHERE id=?',(ids[0],))
+         frozen=store.snapshot()
+@@ -99,7 +101,7 @@ async def exercise(args):
+                         else:await page.goto(f'http://127.0.0.1:{http.server_port}/#assets')
+                         await page.wait_for_function('!!catalog && !!selected')
+                         await page.evaluate("showView('assets')")
+-                        await page.wait_for_function('assetState.assets.length===10')
++                        await page.wait_for_function('assetState.assets.length===9')
+                         await page.evaluate('''()=>{window.__lensCalls=[];const original=api;api=async(url,options)=>{const row={url,done:false};__lensCalls.push(row);try{return await original(url,options);}finally{row.done=true;}};}''')
+                         return page
+                     async def seed(page,local=detail):
+@@ -124,7 +126,9 @@ async def exercise(args):
+                     await inspect(page,'library')
+                     text=await page.locator('#assetLifecycleResults').inner_text()
+                     check('LIFE-02 mixed selection accounts for all twelve retained IDs',await page.locator('#assetLifecycleResults article').count()==12 and all(i in text for i in ids))
+-                    check('LIFE-03 missing, trashed and active states are distinct',all(s in text for s in ['Missing now','In Trash now','Active now']))
++                    headings=await page.locator('#assetLifecycleResults article h4').all_text_contents()
++                    check('LIFE-03 missing and Trash states stay distinct from Archive',headings[0]==ids[0]+' · Missing now' and headings[2]==ids[2]+' · Not in Trash now')
++                    check('LIFE-20 archived targets remain distinguishable inside and outside Trash',headings[1]==ids[1]+' · In Trash now · Archived' and headings[3]==ids[3]+' · Archived now · Not in Trash' and 'Current Archive state: active.' in text and 'Current Archive state: archived.' in text)
+                     check('LIFE-04 historical membership does not recreate its deleted collection','Confirmed historical request' in text and 'Target collection is missing' in text)
+                     check('LIFE-05 inspection preserves exact pending journal bytes',await page.evaluate("sessionStorage.getItem(StudioAssetRecovery.PREFIX+'library')")==raw and not metadata_posts)
+                     check('LIFE-06 keyboard action retains logical focus after receipt delivery',await page.evaluate("document.activeElement.id==='assetLifecycleTitle'"))
