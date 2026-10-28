@@ -1,0 +1,129 @@
+diff --git a/docs/verification/2026-10-28-archive-schema-followthrough.md b/docs/verification/2026-10-28-archive-schema-followthrough.md
+new file mode 100644
+index 0000000..513fd76
+--- /dev/null
++++ b/docs/verification/2026-10-28-archive-schema-followthrough.md
+@@ -0,0 +1,47 @@
++# Archive integration follow-through — 28 October 2026
++
++## First published source
++
++PR #1681 head `f0d475026793418f605d80e0f0b6103389317fca`, tree
++`c12a159229492327e66defcefaf5dd307d88349e`, passed exact-source Linux native
++Archive qualification (24 checks), actual SDK/stdio tests and focused contracts
++in run 40788141960. These are implementation evidence, not final-head approval.
++
++Broader PR CI identified two integration assumptions; neither is waived.
++
++## New cropped figures start active
++
++Windows runtime job 123167120133 failed the deliberate schema-drift guard:
++`archived_at` was not in the reviewed list of fields left to Workspace defaults.
++The same assertion failed locally. The decision is explicit: a newly created
++figure crop starts with NULL Archive state, even when its source is archived.
++Derivation is new active work; it must not unarchive the parent or inherit the
++parent's independent organization decision.
++
++The strict schema equality remains. Its reviewed default list now includes
++`archived_at`. A new production-Workspace integration test archives a sheet,
++creates a crop, and verifies active child paging, archived parent paging,
++unchanged parent metadata/original bytes, direct lineage and no generation.
++All 14 addressable-figure tests pass locally after reproducing the guard failure.
++No figure storage or crop implementation needed changing.
++
++## Observe the complete Library before asserting it is empty
++
++Asset detail job 123167119945 passed the 48 basic detail, 19 reload, 32 metadata
++and 25 Workspace checks, then failed LIB-39's whole-Library empty assertion.
++It selected All sources but left the new Archive filter at Active. A bounded
++active-only empty page cannot establish that no archived assets exist.
++
++The same LIB-39 failure reproduced in the explicitly limited inert driver.
++The fixture now selects Active & archived using the actual control before
++waiting for its query and observing the synthetic empty state. It restores the
++ordinary active view before the unrelated selection/review journeys. Its existing
++Make/import wording, primary action, file-chooser and subsequent selection
++assertions are unchanged. The application continues to distinguish a filtered
++empty view from a whole-Library empty state; no runtime behavior was relaxed.
++All 43 Library checks pass in the inert driver after the correction; that remains
++explicitly limited transport/storage evidence, not hosted native qualification.
++
++Fresh exact-head full-suite, native Library and Linux/Windows Archive/runtime
++qualification remain required. No model runs, owner media, workstation changes
++or human creative/licensing acceptance are established by these corrections.
+diff --git a/tests/asset_library_browser.py b/tests/asset_library_browser.py
+index d13fd4b..510ec72 100644
+--- a/tests/asset_library_browser.py
++++ b/tests/asset_library_browser.py
+@@ -89,9 +89,10 @@ async def exercise(args):
+                 await page.evaluate("showView('assets')")
+                 await page.wait_for_selector(f'[data-asset-check="{ids[0]}"]')
+                 check('LIB-38', 'Collection recovery sits below the list and fits the sidebar at 1440 px', await page.locator('#recoverCollections').evaluate("el=>{const sidebar=el.closest('.asset-sidebar').getBoundingClientRect(),rect=el.getBoundingClientRect();return el.previousElementSibling.id==='collectionPaging' && el.previousElementSibling.previousElementSibling.id==='assetCollections' && el.nextElementSibling.textContent.includes('An asset can belong') && el.textContent==='Recover a collection draft…' && rect.left>=sidebar.left && rect.right<=sidebar.right && el.scrollWidth<=el.clientWidth;}"))
+-                # An empty-library assertion observes All sources; a source-filtered
+-                # empty page must offer the other source rather than claim no assets exist.
++                # A whole-Library empty assertion observes All sources and Archive states.
++                # Filtered emptiness must not claim no assets exist outside this view.
+                 await page.select_option('#assetSource', 'all')
++                await page.select_option('#assetArchiveFilter', 'all')
+                 await page.wait_for_function('!assetRefreshing&&assetPaging.query===assetPageQuery()')
+                 await page.evaluate('window.libraryFixtureAssets=assetState.assets;assetState.assets=[];renderAssets()')
+                 check('LIB-39', 'Empty library explains Make and import', await page.locator('#assetGrid h3').inner_text() == 'Your library is empty' and await page.locator('#assetGrid p').inner_text() == 'Pictures you make in Make land here. You can also import images; importing makes nothing new.' and await page.locator('#assetGrid a.primary').get_attribute('href') == '/#make' and await page.locator('#assetGrid a.primary').inner_text() == 'Make a picture')
+@@ -100,6 +101,9 @@ async def exercise(args):
+                 check('LIB-40', 'Empty library import opens the existing file input', await (await chooser.value).element.get_attribute('id') == 'importAssets')
+                 check('LIB-41', 'Nothing to review stays disabled with its explanation', await page.locator('#reviewNext').inner_text() == 'Nothing to review' and await page.locator('#reviewNext').get_attribute('title') == 'Every asset shown has a review.' and await page.locator('#reviewNext').is_disabled())
+                 await page.evaluate('assetState.assets=window.libraryFixtureAssets;delete window.libraryFixtureAssets;renderAssets()')
++                # The remaining journeys exercise the ordinary active view.
++                await page.select_option('#assetArchiveFilter', 'active')
++                await page.wait_for_function('!assetRefreshing&&assetPaging.query===assetPageQuery()')
+                 async def text(selector):
+                     node = page.locator(selector)
+                     return await node.inner_text() if await node.count() else ''
+diff --git a/tests/test_addressable_figures_schema.py b/tests/test_addressable_figures_schema.py
+index 0f51821..4abaf70 100644
+--- a/tests/test_addressable_figures_schema.py
++++ b/tests/test_addressable_figures_schema.py
+@@ -8,8 +8,11 @@ SPEC = importlib.util.spec_from_file_location('asset_workspace', Path(__file__).
+ workspace = importlib.util.module_from_spec(SPEC); SPEC.loader.exec_module(workspace)
+ 
+ from studio_workflow import addressable_figures as figures
++import test_addressable_figures as fixture
+ 
+-LEFT_TO_WORKSPACE = frozenset(("tags", "favorite", "review", "notes", "trashed_at", "metadata_revision", "run_label", "prompt_excerpt"))
++# New crop results are active work, even when their parent was deliberately archived.
++# Leave archived_at NULL; do not copy the parent's independent organization state.
++LEFT_TO_WORKSPACE = frozenset(("tags", "favorite", "review", "notes", "trashed_at", "archived_at", "metadata_revision", "run_label", "prompt_excerpt"))
+ 
+ 
+ class FigureChildSchemaTests(unittest.TestCase):
+@@ -32,5 +35,31 @@ class FigureChildSchemaTests(unittest.TestCase):
+                             f"Workspace helper {helper!r} is missing or not callable")
+ 
+ 
++    def test_cropped_children_start_active_without_unarchiving_the_parent(self):
++        temp = tempfile.TemporaryDirectory(); self.addCleanup(temp.cleanup)
++        root = Path(temp.name); store = workspace.AssetWorkspace(root)
++        parent, source = fixture.register_sheet(store, root)
++        identity = store.snapshot()["workspace_id"]
++        original = source.read_bytes()
++        store.update({"workspace_id": identity, "ids": [parent], "action": "archive",
++                      "request_id": "archive-before-figure-crop", "expected_revisions": {parent: 0}})
++        before = store.get(parent)
++        result = figures.split_figures(store, {
++            "workspace_id": identity, "asset_id": parent,
++            "request_id": "crop-from-archived-parent", "parent_sha256": before["sha256"],
++            "rectangles": [{"x": 0, "y": 0, "width": 5000, "height": 10000}],
++            "require_non_overlapping": True,
++        })
++        self.assertEqual(store.get(parent), before, "Derivation does not change the parent's Archive state")
++        self.assertEqual(source.read_bytes(), original)
++        child = store.get(result["created"][0])
++        self.assertIsNone(child["archived_at"])
++        self.assertEqual(child["metadata_revision"], 0)
++        self.assertEqual(child["lineage"], [parent])
++        self.assertEqual([row["id"] for row in store.asset_page()["assets"]], [child["id"]])
++        self.assertEqual([row["id"] for row in store.asset_page(filters={"archive": "archived"})["assets"]], [parent])
++        self.assertFalse(result["generation_submitted"])
++
++
+ if __name__ == "__main__":
+     unittest.main()
