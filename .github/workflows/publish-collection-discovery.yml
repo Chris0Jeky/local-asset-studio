@@ -1,0 +1,86 @@
+name: Collection discovery source qualification
+on:
+  push:
+    branches: [codex/privacy-qualification-20261028]
+    paths: ['.github/workflows/publish-collection-discovery.yml']
+permissions:
+  contents: write
+jobs:
+  objects:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: transport
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: eeaaca2f12e4530ff3eda10e7e93180752b49611
+          path: source
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify exact reviewed source tree
+        run: |
+          python - <<'PY'
+          import base64,gzip,hashlib,pathlib,subprocess
+          encoded=pathlib.Path('transport/.github/qualification/collection-discovery.patch.gz.b64').read_text()
+          # Repair transcription in this transport only; hashes bind the exact reviewed bytes.
+          for before,after in [('X6ve7LFi7V','X6v9/LFi7V'),('PLxJfW4yoX','PLxJfWyoX'),('KA2mc0HPW','KA2n0HPW'),('opiml7qxtpm','opim7qxtpm'),('W/fXne3vXneLDc','W/fXneLDc')]:
+              encoded=encoded.replace(before,after)
+          packed=base64.b64decode(encoded,validate=True)
+          assert hashlib.sha256(packed).hexdigest()=='cc468cd852fecc08640fd12f67316f620957159f2e0778a3cccb83d84b62d7ab'
+          patch=gzip.decompress(packed)
+          assert hashlib.sha256(patch).hexdigest()=='d52bb4bffb4993eca4ba14d33306695b469cdbb87e8f894188b4a9bb20da8f6a'
+          target=pathlib.Path('reviewed-collection.patch');target.write_bytes(patch)
+          def git(*args):return subprocess.check_output(['git',*args],cwd='source').decode().strip()
+          assert git('rev-parse','HEAD')=='eeaaca2f12e4530ff3eda10e7e93180752b49611'
+          git('apply','--index','--check','../reviewed-collection.patch')
+          git('apply','--index','../reviewed-collection.patch')
+          git('diff','--cached','--check')
+          assert git('write-tree')=='dc2c2606338d4ac29061a5d08347f80927857926'
+          PY
+      - name: Install pinned protocol dependencies in disposable runner
+        working-directory: source
+        run: python -m pip install -r integrations/workflow-mcp/requirements.txt -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - name: Require and exercise real protocol without skipped qualification
+        working-directory: source
+        run: |
+          python -c "import mcp; import importlib.metadata; assert importlib.metadata.version('mcp') == '1.30.0'"
+          python -m unittest discover -s tests -p test_collection_read_client.py -v
+          python -m unittest discover -s tests -p test_workflow_collection_reads.py -v
+          python -m unittest discover -s tests -p test_workflow_collection_mcp.py -v
+      - name: Publish qualified blobs and tree, never shared refs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import base64,json,pathlib,subprocess
+          repo='repos/Chris0Jeky/local-asset-studio/git/'
+          def git(*args):return subprocess.check_output(['git',*args],cwd='source')
+          def api(endpoint,data):return json.loads(subprocess.check_output(['gh','api','--method','POST',repo+endpoint,'--input','-'],input=json.dumps(data).encode()))
+          paths=git('diff','--cached','--name-only','-z').decode().strip('\0').split('\0')
+          assert len(paths)==11
+          assert all(path=='CURRENT_STATE.md' or path=='.github/workflows/workflow-mcp.yml' or path.startswith(('docs/','tests/test_','studio_workflow/')) for path in paths)
+          entries=[]
+          for path in paths:
+              sha=git('rev-parse',':'+path).decode().strip();data=git('cat-file','blob',sha)
+              assert api('blobs',{'content':base64.b64encode(data).decode(),'encoding':'base64'})['sha']==sha
+              entries.append({'path':path,'mode':'100644','type':'blob','sha':sha})
+          tree=api('trees',{'base_tree':'3df14b6b69321ff22bcf549a1e1c4b5a18dcb70b','tree':entries})['sha']
+          assert tree=='dc2c2606338d4ac29061a5d08347f80927857926'
+          pathlib.Path('publication.json').write_text(json.dumps({'tree':tree,'branch_moved':False,'changed':entries},indent=2)+'\n')
+          print('Verified qualified source tree:',tree,'No branch moved.')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: collection-source-publication
+          path: |
+            publication.json
+            reviewed-collection.patch
+            transport/.github/qualification/collection-discovery.patch.gz.b64
+          if-no-files-found: error
+          retention-days: 2
