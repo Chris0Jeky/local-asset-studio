@@ -13,21 +13,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: 4e753e3e9c1f5f1ac2cb2ed918e5ae6469edd74d
+          fetch-depth: 8
           persist-credentials: false
-      - name: Archive tracked source and Git object manifest
+      - name: Export only changed integration documents with blob identities
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/review-source"
-          git rev-parse HEAD > "$RUNNER_TEMP/review-source/COMMIT.txt"
-          git rev-parse 'HEAD^{tree}' > "$RUNNER_TEMP/review-source/TREE.txt"
-          git ls-tree -r -z HEAD > "$RUNNER_TEMP/review-source/manifest.git"
-          git archive --format=tar HEAD > "$RUNNER_TEMP/review-source/source.tar"
-          cd "$RUNNER_TEMP/review-source"
-          sha256sum source.tar manifest.git > SHA256SUMS
+          python - <<'PY'
+          import hashlib, json, os, pathlib, subprocess
+          out=pathlib.Path(os.environ['RUNNER_TEMP'])/'review-source'
+          refs={'main':'4e753e3e9c1f5f1ac2cb2ed918e5ae6469edd74d','base':'928df102faa524958892830bc8f63819318fab92'}
+          files=['CLAUDE.md','CURRENT_STATE.md','docs/PROJECT-OPERATING-MODEL.md','docs/STATUS.md','docs/generated/REPOSITORY-STATE.md','docs/verification/2026-10-26-integration-closeout.md','docs/workflow-studio/MCP-AGENTS.md','experiments/curated/moss-study-20261026/closeout/README.md','research/repository-state/active-work.json','research/repository-state/test-receipt.json','research/repository-state/validation-receipt.json']
+          records=[]
+          for name,ref in refs.items():
+              for path in files:
+                  result=subprocess.run(['git','show',ref+':'+path],capture_output=True)
+                  if result.returncode:
+                      if name=='base' and path=='docs/verification/2026-10-26-integration-closeout.md':continue
+                      raise SystemExit(result.stderr.decode())
+                  target=out/name/path;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(result.stdout)
+                  blob=subprocess.check_output(['git','rev-parse',ref+':'+path],text=True).strip()
+                  assert hashlib.sha1(b'blob '+str(len(result.stdout)).encode()+b'\0'+result.stdout).hexdigest()==blob
+                  records.append({'path':str(target.relative_to(out)),'ref':ref,'blob':blob})
+          (out/'manifest.json').write_text(json.dumps(records,indent=2)+'\n')
+          PY
       - uses: actions/upload-artifact@v4
         with:
-          name: review-source-${{ github.sha }}
+          name: integration-documents-${{ github.sha }}
           path: ${{ runner.temp }}/review-source/
           if-no-files-found: error
           retention-days: 7
