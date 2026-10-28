@@ -1,0 +1,33 @@
+name: Review source receipt
+on:
+  push:
+    paths:
+      - '.github/workflows/review-source.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Archive tracked source and Git object manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/review-source"
+          git rev-parse HEAD > "$RUNNER_TEMP/review-source/COMMIT.txt"
+          git rev-parse 'HEAD^{tree}' > "$RUNNER_TEMP/review-source/TREE.txt"
+          git ls-tree -r -z HEAD > "$RUNNER_TEMP/review-source/manifest.git"
+          git archive --format=tar HEAD > "$RUNNER_TEMP/review-source/source.tar"
+          cd "$RUNNER_TEMP/review-source"
+          sha256sum source.tar manifest.git > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: review-source-${{ github.sha }}
+          path: ${{ runner.temp }}/review-source/
+          if-no-files-found: error
+          retention-days: 7
