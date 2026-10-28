@@ -1,0 +1,102 @@
+diff --git a/app/static/workspace.js b/app/static/workspace.js
+index c6597e1..45717be 100644
+--- a/app/static/workspace.js
++++ b/app/static/workspace.js
+@@ -1158,7 +1158,7 @@ function openAsset(id,owns=null) {
+   if(assetQueue){const at=assetQueue.ids.indexOf(id);if(at>=0)assetQueue.index=at;else{assetQueue=null;assetMessage('Left the review queue to open an asset outside it. Review next starts a fresh queue.');}}
+   renderAssetReasons();renderAssetSiblings(a);renderAssetQueue();
+   $('#assetDetails').innerHTML='<p>'+esc(a.preset_name)+' · '+new Date(a.created_at*1000).toLocaleString()+'</p><p>'+esc(a.filename)+' · '+(a.bytes/1024/1024).toFixed(2)+' MiB</p><p>Seed '+esc(a.source.seed??'not recorded')+'</p>'+((a.source.tile||a.source.tile_preview||a.source.parallax)?'<p class="tileNote">'+esc((a.source.tile||a.source.tile_preview||a.source.parallax).summary)+'</p>':'')+(a.prompt_excerpt?'<p class="asset-prompt-excerpt">Prompt text: '+esc(a.prompt_excerpt)+'</p>':'')+(assetIsAgentRun(a)?'<p>Run label: '+esc(a.run_label)+'</p>':'')+'<details><summary>File identity</summary><code>'+a.sha256+'</code><p>Prompt '+esc(a.source.prompt_id||'not recorded')+'</p></details>';
+-  $('#assetFavorite').textContent=a.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=a.trashed_at!=null?'Restore':'Move to Trash';
++  $('#assetFavorite').textContent=a.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=a.trashed_at!=null?'Restore':'Move to Trash';$('#assetArchive').textContent=a.archived_at!=null?'Return to active':'Archive';
+   $('#assetDownload').href=a.url+((a.url||'').includes('?')?'&':'?')+'download';
+   $('#assetHandoffs').innerHTML=a.media_type==='image'?'<button data-handoff="reference">Edit image</button><button data-handoff="anime-detail-fix" title="Repaint detected hands and faces; review settings before generating">Fix hands &amp; face</button><button data-handoff="krea-refine" title="Open Krea image refinement; review settings before generating">Refine image</button><button data-handoff="wan22-i2v">Animate</button><button data-handoff="trellis-auto-cutout">Make 3D</button><button data-handoff="anime-upscale">Upscale</button>':'';
+   renderI2VDiagnosticAction(a);
+diff --git a/docs/verification/2026-10-28-archive-schema-followthrough.md b/docs/verification/2026-10-28-archive-schema-followthrough.md
+index b93b946..1be388b 100644
+--- a/docs/verification/2026-10-28-archive-schema-followthrough.md
++++ b/docs/verification/2026-10-28-archive-schema-followthrough.md
+@@ -80,3 +80,20 @@ The two read boundaries now require a nonnegative finite Archive timestamp,
+ retaining zero as archived and omission as the legacy active summary. No general
+ created-at or Trash timestamp contract changes. The original negative fixtures
+ now pass, as do all 238 asset tests locally.
++
++## Reviewed ordinary-open action label
++
++Automated review comment 4407208333 identified a real label/action mismatch:
++ordinary `openAsset()` initialized Favorite and Trash, but Archive only gained
++its correct label after receipts or retained-draft recovery. A freshly opened
++archived item could therefore say Archive while dispatching unarchive.
++
++The new shipped-source Node case failed with Archive versus Return to active.
++It covers timestamp zero and positive timestamps, archived/active/archived
++switches without a retained draft, no writes on open, and matching click actions.
++The native driver now reloads before the ordinary archived open and checks both
++switch directions. Its limited local renderer run reproduced the active-item
++mismatch too. One ordinary-open initialization now sets the label from the
++current item's Archive state. All 13 frontend cases and 28 renderer checks pass;
++these renderer checks do not claim native reload/storage acceptance. Fresh
++hosted native platform and full-suite checks remain required on the final head.
+diff --git a/tests/asset_archive_browser.py b/tests/asset_archive_browser.py
+index eed49b7..c1f9fc9 100644
+--- a/tests/asset_archive_browser.py
++++ b/tests/asset_archive_browser.py
+@@ -135,10 +135,27 @@ async def run(args):
+             await page.select_option('#assetArchiveFilter','archived');await ready()
+             await page.wait_for_selector('#assetGrid [data-asset-card="'+ids[0]+'"]')
+             check('Archived filter retrieves the original ID',await page.locator('#assetGrid [data-asset-card]').count()==1)
+-            await open_asset(ids[0]);await page.locator('[data-asset-siblings="load"]').click()
++            # Ordinary opens have no retained draft to repair a stale button label.
++            # A native reload also exercises the initial label from shipped HTML.
++            if not args.inert:
++                await page.reload();await ready()
++                await page.wait_for_selector('#assetGrid [data-asset-card="'+ids[0]+'"]')
++            ordinary_writes=len(receipts)
++            await open_asset(ids[0])
++            check('Ordinary archived detail shows the unarchive action without recovery',await page.locator('#assetArchive').inner_text()=='Return to active' and not await page.evaluate('!!assetRetainedDetail'))
++            await page.locator('[data-asset-siblings="load"]').click()
+             await page.wait_for_function('assetSiblingPage?.loaded && !assetSiblingRequest')
+             check('Same-run inspection includes active and archived siblings',await page.locator('#assetSameRun [data-asset-open]').count()==4)
+             await page.locator('#closeAssetDialog').click()
++            await page.select_option('#assetArchiveFilter','active');await ready()
++            await open_asset(ids[1])
++            check('Opening an active asset resets a prior unarchive label',await page.locator('#assetArchive').inner_text()=='Archive')
++            await page.locator('#closeAssetDialog').click()
++            await page.select_option('#assetArchiveFilter','archived');await ready()
++            await open_asset(ids[0])
++            check('Reopening an archived asset resets a prior Archive label',await page.locator('#assetArchive').inner_text()=='Return to active')
++            await page.locator('#closeAssetDialog').click()
++            check('Ordinary Archive label initialization and switching perform no mutations',len(receipts)==ordinary_writes)
+             await page.locator('#assetGrid [data-asset-check="'+ids[0]+'"]') .check()
+             await page.select_option('#assetArchiveFilter','active');await ready()
+             await page.wait_for_selector('#assetGrid [data-asset-card="'+ids[1]+'"]')
+diff --git a/tests/asset_archive_frontend.cjs b/tests/asset_archive_frontend.cjs
+index aea60a3..41c642b 100644
+--- a/tests/asset_archive_frontend.cjs
++++ b/tests/asset_archive_frontend.cjs
+@@ -23,6 +23,26 @@ test('Archive view is independent of Trash, source and privacy, and retains off-
+   s.el('#assetArchiveFilter').value='all';assert.equal(s.run('assetPageFilters().archive'),'all');
+   s.el('#assetArchiveFilter').value='active';assert.equal(s.run("Object.hasOwn(assetPageFilters(),'archive')"),false);
+ });
++test('Ordinary detail opens initialize Archive labels from the current asset, not the previous button',async()=>{
++  for(const archived of [0,77]){
++    const s=configured({autoOpen:false});s.el('#assetArchive').textContent='Archive';
++    s.run(`assetState.assets[0].archived_at=${archived};`);
++    assert.equal(s.run('assetRetainedDetail'),null);
++    for(const [id,label] of [['a','Return to active'],['b','Archive'],['a','Return to active']]){
++      assert.equal(s.run(`openAsset('${id}')`),true);
++      assert.equal(s.el('#assetArchive').textContent,label);
++      assert.equal(s.run('assetRetainedDetail'),null,'opening alone must not create a draft');
++      assert.equal(s.writes.length,0,'opening and switching must not mutate either asset');
++      s.el('#closeAssetDialog').onclick();
++    }
++    s.run("openAsset('a')");const unarchive=s.el('#assetArchive').onclick();
++    assert.equal(s.payload(0).action,'unarchive');s.writes[0].resolve(receipt(s,0));await unarchive;
++    s.el('#closeAssetDialog').onclick();s.run("openAsset('b')");
++    assert.equal(s.el('#assetArchive').textContent,'Archive');
++    const archive=s.el('#assetArchive').onclick();assert.equal(s.payload(1).action,'archive');
++    s.writes[1].resolve(receipt(s,1));await archive;
++  }
++});
+ test('Archiving preserves the open dirty draft, collection state and original request identity',async()=>{
+   const s=configured();s.el('#assetNotes').value='unsaved before archive';s.el('#assetNotes').emit('input');
+   const done=s.el('#assetArchive').onclick();assert.equal(s.writes.length,1);
