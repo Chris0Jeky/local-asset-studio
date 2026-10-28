@@ -1,0 +1,76 @@
+name: Archive final source qualification
+on:
+  push:
+    branches: [codex/archive-qualification-20261028]
+    paths: ['.github/workflows/publish-archive-final.yml']
+permissions:
+  contents: write
+jobs:
+  source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: transport
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: f0d475026793418f605d80e0f0b6103389317fca
+          path: source
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify reviewed patch chain and final tree
+        working-directory: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = f0d475026793418f605d80e0f0b6103389317fca
+          git apply --index ../transport/.github/qualification/archive-integration-fix.patch
+          test "$(git write-tree)" = 54e422b9ae34eac865095688ad2e8188dd641b55
+          git apply --index ../transport/.github/qualification/archive-lifecycle-fix.patch
+          test "$(git write-tree)" = 34cd921e7add5169cd38062d2f690acc7d8d4655
+          git apply --index ../transport/.github/qualification/archive-read-scalar-fix.patch
+          git diff --cached --check
+          test "$(git write-tree)" = a58826715d8b4573ce5184b98d68f6726543346a
+      - name: Install disposable contract dependencies
+        working-directory: source
+        run: python -m pip install -r integrations/workflow-mcp/requirements.txt -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - name: Qualify Archive, figure defaults and actual MCP
+        working-directory: source
+        run: |
+          python -c "import mcp"
+          python -m unittest discover -s tests -p 'test_asset_archive*.py' -v
+          python -m unittest discover -s tests -p 'test_addressable_figures*.py' -v
+          python -m unittest discover -s tests -p test_workflow_archive_mcp.py -v
+          python scripts/validate-repo.py
+      - name: Publish qualified blobs only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import base64,json,pathlib,subprocess
+          def git(*args):return subprocess.check_output(['git',*args],cwd='source')
+          paths=git('diff','--cached','--name-only','-z').decode().strip('\0').split('\0')
+          assert set(paths)=={'docs/verification/2026-10-28-archive-schema-followthrough.md','tests/asset_library_browser.py','tests/asset_recovery_lifecycle_browser.py','tests/test_addressable_figures_schema.py','studio_workflow/asset_reads.py','studio_workflow/asset_read_client.py','tests/test_asset_archive.py','tests/test_asset_archive_client.py'}
+          tree=git('write-tree').decode().strip();assert tree=='a58826715d8b4573ce5184b98d68f6726543346a'
+          entries=[]
+          for path in paths:
+              sha=git('rev-parse',':'+path).decode().strip();data=git('cat-file','blob',sha)
+              result=json.loads(subprocess.check_output(['gh','api','--method','POST','repos/Chris0Jeky/local-asset-studio/git/blobs','--input','-'],input=json.dumps({'content':base64.b64encode(data).decode(),'encoding':'base64'}).encode()))
+              assert result['sha']==sha
+              entries.append({'path':path,'mode':'100644','type':'blob','sha':sha})
+          pathlib.Path('publication.json').write_text(json.dumps({'tree':tree,'branch_moved':False,'entries':entries},indent=2)+'\n')
+          print('Qualified source blobs:',tree,'No branch moved.')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: archive-final-publication
+          path: publication.json
+          if-no-files-found: warn
+          retention-days: 2
