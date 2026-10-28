@@ -1,0 +1,70 @@
+diff --git a/docs/verification/2026-10-28-archive-schema-followthrough.md b/docs/verification/2026-10-28-archive-schema-followthrough.md
+index 6527fe5..b93b946 100644
+--- a/docs/verification/2026-10-28-archive-schema-followthrough.md
++++ b/docs/verification/2026-10-28-archive-schema-followthrough.md
+@@ -70,3 +70,13 @@ specific timeout cause. No timeout was increased or exception ignored. The
+ complete initial run is failed evidence; hosted final-head full-suite approval
+ is still required. The lifetime shutdown reported no retained non-daemon thread
+ or active child process.
++
++## Strict read timestamp consistency
++
++Self-review found that bounded HTTP/SDK summaries accepted a negative Archive
++timestamp while the recovery inspector and editor refused it. Both actual
++read-owner and strict-client regressions reproduced the inconsistency with -1.
++The two read boundaries now require a nonnegative finite Archive timestamp,
++retaining zero as archived and omission as the legacy active summary. No general
++created-at or Trash timestamp contract changes. The original negative fixtures
++now pass, as do all 238 asset tests locally.
+diff --git a/studio_workflow/asset_read_client.py b/studio_workflow/asset_read_client.py
+index e402dfb..5f58871 100644
+--- a/studio_workflow/asset_read_client.py
++++ b/studio_workflow/asset_read_client.py
+@@ -72,7 +72,7 @@ def _number(value):
+ 
+ def _summary(asset, privacy='regular'):
+     _need(type(asset) is dict and set(asset) - {'privacy','archived_at'} == SUMMARY)
+-    _need('archived_at' not in asset or _number(asset['archived_at']))
++    _need('archived_at' not in asset or _number(asset['archived_at']) and asset['archived_at'] >= 0)
+     classification = asset.get('privacy', 'regular')
+     _need(contract.privacy_matches(classification, privacy), 'Asset response belongs to another privacy scope')
+     _need(contract._matches(contract.ENTITY, asset['id']) and contract._matches(contract.HEX64, asset['sha256']))
+diff --git a/studio_workflow/asset_reads.py b/studio_workflow/asset_reads.py
+index 7179cbe..e560f8a 100644
+--- a/studio_workflow/asset_reads.py
++++ b/studio_workflow/asset_reads.py
+@@ -306,7 +306,7 @@ def _summary(row):
+             and _finite(value['created_at']) and _integer(value['bytes'])
+             and _integer(value['metadata_revision'])
+             and ((value['trashed_at'] is None and trashed_null == 1) or _finite(value['trashed_at']))
+-            and ((value['archived_at'] is None and archived_null == 1) or _finite(value['archived_at']))
++            and ((value['archived_at'] is None and archived_null == 1) or _finite(value['archived_at']) and value['archived_at'] >= 0)
+             and ((value['preset_id'] is None and preset_null == 1) or _matches(ENTITY,value['preset_id'])),
+             'An asset summary has invalid identity or scalar metadata', **error)
+     if value['archived_at'] is None: value.pop('archived_at')
+diff --git a/tests/test_asset_archive.py b/tests/test_asset_archive.py
+index f7a66d3..572d1c9 100644
+--- a/tests/test_asset_archive.py
++++ b/tests/test_asset_archive.py
+@@ -166,7 +166,7 @@ class AssetArchiveTests(unittest.TestCase):
+         for value in (None,True,1,[],{},'trash','ARCHIVED',''):
+             with self.subTest(filter=value),self.assertRaises((workspace.WorkspaceError,ValueError)):
+                 self.store.asset_page(filters={'archive':value})
+-        for value in ('not a timestamp',float('inf'),b'bad'):
++        for value in ('not a timestamp',-1,float('inf'),b'bad'):
+             with self.subTest(stored=value):
+                 with self.store.connection() as db:db.execute('UPDATE assets SET archived_at=? WHERE id=?',(value,self.ids[0]))
+                 with self.assertRaises(workspace.WorkspaceError) as caught:self.store.asset_page(filters={'archive':'all'})
+diff --git a/tests/test_asset_archive_client.py b/tests/test_asset_archive_client.py
+index 9eabef8..acd7a0b 100644
+--- a/tests/test_asset_archive_client.py
++++ b/tests/test_asset_archive_client.py
+@@ -38,7 +38,7 @@ class AssetArchiveClientTests(unittest.TestCase):
+         self.page['filters']['archive']='archived';self.asset['archived_at']=12.5;self.fixture.reply(self.page)
+         try:self.client.page(filters={'archive':'archived'})
+         except ValueError as exc:self.fail('Archive response baseline is unsupported: '+str(exc))
+-        for value in (None,True,False,'12.5',[],{},float('inf')):
++        for value in (None,True,False,'12.5',[],{},-1,float('inf')):
+             with self.subTest(value=value):
+                 self.asset['archived_at']=value;self.fixture.reply(self.page)
+                 with self.assertRaises(ValueError):self.client.page(filters={'archive':'archived'})
