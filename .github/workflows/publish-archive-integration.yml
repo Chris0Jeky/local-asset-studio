@@ -1,0 +1,83 @@
+name: Archive integration qualification
+on:
+  push:
+    branches: [codex/archive-qualification-20261028]
+    paths: ['.github/workflows/publish-archive-integration.yml']
+permissions:
+  contents: write
+jobs:
+  qualify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: transport
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: f0d475026793418f605d80e0f0b6103389317fca
+          path: source
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply and verify exact reviewed integration correction
+        working-directory: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = f0d475026793418f605d80e0f0b6103389317fca
+          git apply --index --check ../transport/.github/qualification/archive-integration-fix.patch
+          git apply --index ../transport/.github/qualification/archive-integration-fix.patch
+          git diff --cached --check
+          test "$(git write-tree)" = 54e422b9ae34eac865095688ad2e8188dd641b55
+      - name: Install disposable test dependencies
+        working-directory: source
+        run: python -m pip install playwright==1.57.0 -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - name: New-crop defaults and inherited Archive contracts
+        working-directory: source
+        run: |
+          python -m unittest discover -s tests -p 'test_addressable_figures*.py' -v
+          python -m unittest discover -s tests -p 'test_asset_archive*.py' -v
+      - name: Install bounded Chromium dependencies
+        working-directory: source
+        timeout-minutes: 4
+        run: bash scripts/ci-install-chromium.sh
+      - name: Native Library and Archive journeys
+        working-directory: source
+        run: |
+          python tests/asset_library_browser.py --out .runtime/archive-library-integration
+          python tests/asset_archive_browser.py --out .runtime/asset-archive-integration
+      - name: Publish verified blobs only, never move a shared ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import base64,json,pathlib,subprocess
+          def git(*args):return subprocess.check_output(['git',*args],cwd='source')
+          paths=git('diff','--cached','--name-only','-z').decode().strip('\0').split('\0')
+          assert set(paths)=={'docs/verification/2026-10-28-archive-schema-followthrough.md','tests/asset_library_browser.py','tests/test_addressable_figures_schema.py'}
+          tree=git('write-tree').decode().strip();assert tree=='54e422b9ae34eac865095688ad2e8188dd641b55'
+          entries=[]
+          for path in paths:
+              sha=git('rev-parse',':'+path).decode().strip();data=git('cat-file','blob',sha)
+              result=json.loads(subprocess.check_output(['gh','api','--method','POST','repos/Chris0Jeky/local-asset-studio/git/blobs','--input','-'],input=json.dumps({'content':base64.b64encode(data).decode(),'encoding':'base64'}).encode()))
+              assert result['sha']==sha
+              entries.append({'path':path,'mode':'100644','type':'blob','sha':sha})
+          pathlib.Path('publication.json').write_text(json.dumps({'base':'f0d475026793418f605d80e0f0b6103389317fca','tree':tree,'branch_moved':False,'entries':entries},indent=2)+'\n')
+          print('Qualified integration blobs published:',tree,'No shared ref moved.')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: archive-integration-qualification
+          path: |
+            publication.json
+            transport/.github/qualification/archive-integration-fix.patch
+            source/.runtime/archive-library-integration
+            source/.runtime/asset-archive-integration
+          if-no-files-found: error
+          retention-days: 2
