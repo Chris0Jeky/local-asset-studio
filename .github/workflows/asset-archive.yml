@@ -1,0 +1,74 @@
+name: Reversible asset Archive
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'studio_workflow/**'
+      - 'tests/**'
+      - 'integrations/workflow-mcp/**'
+      - 'research/game-assets/requirements-media.txt'
+      - 'scripts/ci-install-chromium.sh'
+      - '.github/workflows/asset-archive.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'studio_workflow/**'
+      - 'tests/*archive*'
+      - '.github/workflows/asset-archive.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: asset-archive-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  archive:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - run: git show -s --format='%H %T'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install playwright==1.57.0 -r integrations/workflow-mcp/requirements.txt -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - name: Require installed protocol SDK
+        run: python -c "import mcp; import importlib.metadata; assert importlib.metadata.version('mcp') == '1.30.0'"
+      - name: Archive transactions, scoped HTTP, typed reads and shipped frontend
+        run: python -m unittest discover -s tests -p 'test_asset_archive*.py' -v
+      - name: Real SDK and stdio Archive discovery
+        run: python -m unittest discover -s tests -p test_workflow_archive_mcp.py -v
+      - name: Existing recovery ownership and lifecycle contracts
+        run: python -m unittest discover -s tests -p 'test_asset_recovery*.py' -v
+      - name: Check bounded browser dependency setup
+        if: runner.os == 'Linux'
+        run: python -m unittest discover -s tests -p test_ci_browser_dependencies.py -v
+      - name: Install Chromium with bounded signed Ubuntu dependencies
+        if: runner.os == 'Linux'
+        timeout-minutes: 4
+        run: bash scripts/ci-install-chromium.sh
+      - name: Install Chromium on Windows
+        if: runner.os == 'Windows'
+        timeout-minutes: 4
+        run: python -m playwright install --with-deps chromium
+      - name: Native Archive, lost-response recovery and scoped Library
+        run: python tests/asset_archive_browser.py --out .runtime/asset-archive
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: asset-archive-${{ matrix.os }}
+          path: .runtime/asset-archive
+          retention-days: 7

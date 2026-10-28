@@ -71,7 +71,8 @@ def _number(value):
 
 
 def _summary(asset, privacy='regular'):
-    _need(type(asset) is dict and set(asset) in (SUMMARY, SUMMARY | {'privacy'}))
+    _need(type(asset) is dict and set(asset) - {'privacy','archived_at'} == SUMMARY)
+    _need('archived_at' not in asset or _number(asset['archived_at']))
     classification = asset.get('privacy', 'regular')
     _need(contract.privacy_matches(classification, privacy), 'Asset response belongs to another privacy scope')
     _need(contract._matches(contract.ENTITY, asset['id']) and contract._matches(contract.HEX64, asset['sha256']))
@@ -144,6 +145,7 @@ class AssetReadClient(Client):
             _need(asset['id'] not in seen and (previous is None or order < previous), 'Assets are duplicated or out of order')
             seen.add(asset['id']); previous = order
             _need(query['visibility'] == 'all' or (asset['trashed_at'] is None) == (query['visibility'] == 'active'))
+            _need(query.get('archive') == 'all' or ('archived_at' not in asset) == (query.get('archive','active') == 'active'))
             for field in ('media_type', 'review', 'favorite'):
                 _need(query[field] is None or asset[field] == query[field])
         next_cursor = result['next_cursor']
@@ -185,6 +187,7 @@ def main(argv=None):
     page.add_argument('--favorite', choices=('true', 'false')); page.add_argument('--collection-id')
     page.add_argument('--source', choices=('all', 'mine', 'agent'), default='all')
     page.add_argument('--privacy', choices=('regular', 'private', 'all'), default='regular')
+    page.add_argument('--archive', choices=('active', 'archived', 'all'), default='active')
     page.add_argument('--job-id')
     selected = sub.add_parser('selection'); selected.add_argument('--workspace-id', required=True)
     selected.add_argument('--privacy', choices=('regular', 'private', 'all'), default='regular')

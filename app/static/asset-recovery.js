@@ -33,7 +33,7 @@
     const c=value?.command;
     if(!object(c) || typeof value.body!=='string' || value.body.length>128*1024 ||
        typeof c.request_id!=='string' || !/^[A-Za-z0-9_-]{16,128}$/.test(c.request_id) ||
-       !['edit','trash','restore','add_collection','remove_collection'].includes(c.action) ||
+       !['edit','trash','restore','archive','unarchive','add_collection','remove_collection'].includes(c.action) ||
        !Array.isArray(c.ids) || !c.ids.length || c.ids.length>200 || new Set(c.ids).size!==c.ids.length ||
        !object(c.expected_revisions) || Object.keys(c.expected_revisions).length!==c.ids.length ||
        c.ids.some(id=>typeof id!=='string' || !id || !Number.isSafeInteger(c.expected_revisions[id]) || c.expected_revisions[id]<0))return false;
@@ -53,7 +53,7 @@
       typeof m.notes==='string' && typeof m.review==='string' && typeof m.favorite==='boolean' &&
       Array.isArray(m.tags) && m.tags.every(t=>typeof t==='string') && form(value.baseline) && form(value.draft) &&
       (!value.operation || (operation(value.operation) && JSON.stringify(value.operation.command.ids)===JSON.stringify([value.id]) &&
-        ['details','favorite','trash'].includes(value.operation.kind) && form(value.operation.snapshot))) &&
+        ['details','favorite','trash','archive'].includes(value.operation.kind) && form(value.operation.snapshot))) &&
       (!value.conflict || (object(value.conflict) && Array.isArray(value.conflict.current)));
   }
   function create(storage){
