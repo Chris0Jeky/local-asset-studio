@@ -33,11 +33,13 @@ jobs:
           parts=[];okay=True
           for i,want in enumerate(expected,1):
               text=pathlib.Path(f'transport/.github/qualification/archive-delta-{i}.b64').read_text()
-              # Remove a duplicated transport span only; the reviewed per-part hash is mandatory.
+              # Repair transport transcription only; every reviewed hash remains mandatory.
               marker='WzUzNPebLUb'
               if i==1 and text.count(marker)==2:
                   start=text.index(marker)+len(marker);end=text.index(marker,start)+len(marker)
                   text=text[:start]+text[end:]
+              if i==4:
+                  text=text.replace('WwPPk+NXpy9L29PzhzLK','WwPPk+NXpy9LxL29PzhzLK')
               got=hashlib.sha256(text.encode()).hexdigest();print('part',i,'bytes',len(text),'sha256',got)
               okay=okay and got==want;parts.append(text)
           assert okay,'Transport does not match reviewed bytes; no source will be applied'
