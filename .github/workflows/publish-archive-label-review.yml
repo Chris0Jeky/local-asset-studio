@@ -1,0 +1,92 @@
+name: Archive label review qualification
+on:
+  push:
+    branches: [codex/archive-qualification-20261028]
+    paths: ['.github/workflows/publish-archive-label-review.yml']
+permissions:
+  contents: write
+jobs:
+  review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: transport
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 19d206c10f8b54ea872b076c87b4df1b1cc82e42
+          path: source
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify reviewed correction bytes and tree
+        working-directory: source
+        run: |
+          python - <<'PY'
+          import hashlib,pathlib,subprocess
+          def git(*args):return subprocess.check_output(['git',*args]).decode().strip()
+          assert git('rev-parse','HEAD')=='19d206c10f8b54ea872b076c87b4df1b1cc82e42'
+          patch=pathlib.Path('../transport/.github/qualification/archive-label-review.patch').read_text()
+          # Restore the unchanged context line from the pinned source; the full reviewed
+          # patch digest and resulting tree still have to match exactly.
+          context=next(line for line in pathlib.Path('tests/asset_archive_browser.py').read_text().splitlines()
+                       if '#assetGrid [data-asset-check=' in line and 'ids[0]' in line and '.check()' in line)
+          patch='\n'.join(' '+context if line.startswith(' ') and '#assetGrid [data-asset-check=' in line and 'ids[0]' in line and '.check()' in line else line for line in patch.splitlines())+'\n'
+          assert hashlib.sha256(patch.encode()).hexdigest()=='ea24f1140e3079fad898956c288843589001ec16594ddc8cdf1daa789e421693'
+          pathlib.Path('../reviewed-label.patch').write_text(patch)
+          git('apply','--index','--check','../reviewed-label.patch')
+          git('apply','--index','../reviewed-label.patch')
+          git('diff','--cached','--check')
+          assert git('write-tree')=='5b3a24b91710534610abd86833fcfb1f36aa724e'
+          PY
+      - name: Install disposable test dependencies
+        working-directory: source
+        run: python -m pip install playwright==1.57.0 -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - name: Archive and existing editor/recovery contracts
+        working-directory: source
+        run: |
+          python -m unittest discover -s tests -p 'test_asset_archive*.py' -v
+          node tests/asset_detail_contracts.cjs
+          node tests/asset_recovery_contracts.cjs
+      - name: Install bounded Chromium dependencies
+        working-directory: source
+        timeout-minutes: 4
+        run: bash scripts/ci-install-chromium.sh
+      - name: Native Archive reload and ordinary-open labels
+        working-directory: source
+        run: python tests/asset_archive_browser.py --out .runtime/archive-label-review
+      - name: Publish verified correction blobs only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import base64,json,pathlib,subprocess
+          def git(*args):return subprocess.check_output(['git',*args],cwd='source')
+          paths=git('diff','--cached','--name-only','-z').decode().strip('\0').split('\0')
+          assert set(paths)=={'app/static/workspace.js','docs/verification/2026-10-28-archive-schema-followthrough.md','tests/asset_archive_frontend.cjs','tests/asset_archive_browser.py'}
+          tree=git('write-tree').decode().strip();assert tree=='5b3a24b91710534610abd86833fcfb1f36aa724e'
+          entries=[]
+          for path in paths:
+              sha=git('rev-parse',':'+path).decode().strip();data=git('cat-file','blob',sha)
+              result=json.loads(subprocess.check_output(['gh','api','--method','POST','repos/Chris0Jeky/local-asset-studio/git/blobs','--input','-'],input=json.dumps({'content':base64.b64encode(data).decode(),'encoding':'base64'}).encode()))
+              assert result['sha']==sha
+              entries.append({'path':path,'mode':'100644','type':'blob','sha':sha})
+          pathlib.Path('publication.json').write_text(json.dumps({'tree':tree,'branch_moved':False,'entries':entries},indent=2)+'\n')
+          print('Qualified reviewed Archive label source:',tree,'No branch moved.')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: archive-label-review-qualification
+          path: |
+            publication.json
+            reviewed-label.patch
+            source/.runtime/archive-label-review
+          if-no-files-found: warn
+          retention-days: 2
