@@ -4,6 +4,7 @@ on:
     paths:
       - 'studio_workflow/**'
       - 'tests/test_workflow_*'
+      - 'tests/test_collection_read_client.py'
       - 'scripts/workflow-mcp.py'
       - 'integrations/workflow-mcp/**'
       - 'research/game-assets/requirements-media.txt'
@@ -14,6 +15,7 @@ on:
     paths:
       - 'studio_workflow/**'
       - 'tests/test_workflow_*'
+      - 'tests/test_collection_read_client.py'
       - 'scripts/workflow-mcp.py'
       - 'integrations/workflow-mcp/**'
       - 'research/game-assets/requirements-media.txt'
@@ -44,6 +46,9 @@ jobs:
       - run: python -m unittest discover -s tests -p test_workflow_agent_bridge.py -v
       - run: python -m unittest discover -s tests -p test_workflow_mcp.py -v
       - run: python -m unittest discover -s tests -p test_workflow_asset_mcp.py -v
+      - run: python -m unittest discover -s tests -p test_collection_read_client.py -v
+      - run: python -m unittest discover -s tests -p test_workflow_collection_reads.py -v
+      - run: python -m unittest discover -s tests -p test_workflow_collection_mcp.py -v
       - run: python -m unittest discover -s tests -p test_workflow_setup_history_mcp.py -v
       - run: python -m unittest discover -s tests -p test_workflow_asset_reads.py -v
       - run: python -m unittest discover -s tests -p test_workflow_saved_run_clients.py -v

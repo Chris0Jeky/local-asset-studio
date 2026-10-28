@@ -1,5 +1,19 @@
 # Current state — 28 October 2026
 
+## 2026-10-28 — bounded collection discovery follow-up (qualification pending)
+
+Added `collection_page` to the read-only agent/MCP surface plus a strict Python
+SDK/CLI over the existing collection page owner. Agents can discover stable IDs
+and privacy-scoped counts before requesting members; no automatic pagination,
+retry, metadata write, file move or generation. Default reads remain Regular.
+Local collection suite: 68 tests pass. Workflow suite: 445 exercised, 13 optional
+SDK skips, no failures. The two new real MCP tests require hosted Linux/Windows
+qualification; this entry is not merge approval. See
+[collection discovery](docs/workflow-studio/COLLECTION-DISCOVERY.md) and its
+[implementation evidence](docs/superpowers/plans/2026-10-28-collection-discovery.md).
+Archive/completed-run migration (#1678), organization writes and broad agent
+parity (#123), and owner artwork/workstation acceptance remain open.
+
 ## Private creation qualification resumed — 28 October 2026
 
 PR #1677 resumes from its published `901e9ae3` head. Two accepted disclosure
