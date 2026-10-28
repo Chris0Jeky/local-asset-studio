@@ -230,3 +230,20 @@ upgrades should run the same tests in isolation, not upgrade ComfyUI's environme
 Follow-ups remain #123 (host integration, artifact/event/operation parity), #119
 (schema adapters), #120 (reusable modules), #121 (native graphs), #122 (authored
 execution). This slice intentionally closes none of those wider issues.
+
+
+### Discover collections before choosing assets
+
+Use the read-only `collection_page` tool to discover stable collection IDs,
+scoped active-asset counts and descriptions, then pass the chosen ID to
+`asset_page` in `filters.collection_id`. Do not guess IDs from names. Regular
+collections are the default; `privacy: "private"` or `"all"` is explicit and must
+also be carried into `asset_page` as `filters.privacy`.
+
+Each call reads one page only. Preserve its Workspace identity, privacy, page
+size and non-null cursor for a deliberate continuation; a stale cursor needs a
+new, explicitly requested first page. This does not create, rename, archive,
+move or delete a collection or its members.
+
+See [collection discovery](COLLECTION-DISCOVERY.md) for SDK/CLI examples, response
+validation, pagination and privacy limits.
