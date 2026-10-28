@@ -52,3 +52,14 @@ No GPU/model generation, runtime installation, workstation restart, owner media
 or creative/licensing acceptance. Archive, completed-run privacy migration and
 broader agent organization remain independent follow-ups (#1678 / #123).
 PR #1677 remains draft until the corrected exact-head checks pass.
+
+## Native layout follow-through
+
+The first retry passed the entire Linux privacy chain (including all seven Make
+transition cases), but Workshop still measured 1707px. The toolbar reduction
+was effective; editor padding was not. The shipped hidden hero is a sibling
+between the privacy bar and main, so an adjacent-sibling selector missed main.
+The focused layout fixture had omitted that sibling. It now retains the actual
+intervening markup from index.html and reproduces 30px versus 16px padding before
+the correction. A general-sibling selector applies the intended padding; both
+status cases and keyboard/overflow checks pass without relaxing any threshold.

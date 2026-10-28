@@ -11,5 +11,5 @@
 @media(min-width:1100px){
   .privacy-bar{gap:6px 12px;padding:6px 28px}
   .privacy-bar #privacyStatus{flex:1 1 150px;min-width:0}
-  body.workshop-active .privacy-bar + #studioMain{padding-top:16px}
+  body.workshop-active .privacy-bar ~ #studioMain{padding-top:16px}
 }

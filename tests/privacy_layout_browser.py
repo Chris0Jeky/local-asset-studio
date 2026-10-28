@@ -20,11 +20,13 @@ class PrivacyLayout(unittest.TestCase):
         cls.browser = cls.pw.chromium.launch(**({'executable_path': executable} if executable else {}))
         index = (ROOT / 'app/static/index.html').read_text(encoding='utf-8')
         bar = re.search(r'<section class="privacy-bar".*?</section>', index, re.S).group(0)
+        # Preserve shipped siblings: the hidden hero separates the bar from main.
+        between = index.split(bar, 1)[1].split('<main', 1)[0]
         styles = ''.join('<style>' + (ROOT / 'app/static' / name).read_text(encoding='utf-8') + '</style>'
                          for name in ('style.css', 'privacy.css', 'studio.css', 'workshop.css'))
         cls.html = ('<!doctype html><html lang="en"><head><meta charset="utf-8">' + styles
                     + '</head><body class="studio-shell studio-main workshop-active">' + bar
-                    + '<main id="studioMain"><h1>Full editor</h1><textarea aria-label="Prompt"></textarea></main></body></html>')
+                    + between + '<main id="studioMain"><h1>Full editor</h1><textarea aria-label="Prompt"></textarea></main></body></html>')
 
     @classmethod
     def tearDownClass(cls):
