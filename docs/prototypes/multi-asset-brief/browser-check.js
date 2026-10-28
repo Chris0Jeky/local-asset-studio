@@ -1,0 +1,65 @@
+// Run as a script in the prototype's browser page. Uses the rendered UI, not internal model helpers.
+(async () => {
+  const results = [], key = 'studio.prototype.multi-asset-brief.v1';
+  const q = selector => document.querySelector(selector);
+  const check = (name, condition) => { results.push({name, passed:!!condition}); if (!condition) throw Error(name); };
+  const settle = () => new Promise(resolve => setTimeout(resolve, 80));
+  const click = async selector => { const element = q(selector); if (!element || element.disabled) throw Error(`Unavailable control: ${selector}`); element.click(); await settle(); };
+  const input = (selector, value) => { const element = q(selector); element.value = value; element.dispatchEvent(new Event('input',{bubbles:true})); };
+  const nav = async path => { location.hash = path; await settle(); };
+  const stored = () => JSON.parse(localStorage.getItem(key));
+  await click('#reset'); await click('#confirmReset');
+  check('Initial six slots, four missing', q('.slots').querySelectorAll('.slot-row').length === 6 && q('#gapCount').textContent === '4');
+  await click('a[href="#/slot/background/library"]'); input('#assetSearch','moon');
+  check('Library search narrows same-kind sample page', q('.library-grid').children.length === 1);
+  await click('[data-choose="marsh-moon"]');
+  check('Replacement returns to original slot', location.hash === '#/slot/background' && stored().slots.background.assetId === 'marsh-moon');
+  history.back(); await settle();
+  check('Back preserves slot and search context', location.hash === '#/slot/background/library' && q('#assetSearch').value === 'moon');
+  history.forward(); await settle();
+  check('Forward preserves chosen asset', location.hash === '#/slot/background' && q('.chosen').textContent.includes('Moonlit crossing'));
+  await click('[data-action="undo"]');
+  check('Restore previous retains prior asset', stored().slots.background.assetId === 'marsh-dusk');
+  await click('a[href="#/slot/background/library"]'); await click('[data-choose="marsh-moon"]');
+  q('.brief-editor').open = true;
+  input('[data-field="title"]','Lantern Marsh · browser proof');
+  input('[data-field="brief"]','Blue hour, warm lanterns and quiet reeds. Keep the bridge readable.');
+  check('Shared edits persist without losing focus', stored().title === 'Lantern Marsh · browser proof' && q('h1').textContent === stored().title);
+  await nav('/slot/icon'); input('[data-slot-field="intent"]','A silver key with a leaf-shaped bow.');
+  await click('a[href="#/slot/icon/prepare/icon"]');
+  check('Image request retains edited shared and slot wording', q('pre').textContent.includes('quiet reeds') && q('pre').textContent.includes('silver key'));
+  await click('[data-action="prepare"]');
+  check('Preparation alone assigns nothing', stored().slots.icon.assetId === null);
+  await click('[data-action="return"]');
+  check('Explicit synthetic return retains unreviewed state', location.hash === '#/slot/icon' && stored().slots.icon.assetId === 'synthetic-icon' && q('.chosen').textContent.includes('Unreviewed'));
+  await nav('/slot/loop/prepare/scene');
+  check('Scene handoff carries selected image and audio identities', q('pre').textContent.includes('marsh-moon') && q('pre').textContent.includes('marsh-bed'));
+  await click('[data-action="prepare"]'); await click('[data-action="return"]');
+  check('Loop candidate does not erase loop-seam gap', q('.slot-gap').textContent.includes('seamless loop'));
+  for (const [slot,route] of [['sprite','sprite'],['sound','voice'],['loop','h3'],['model','trellis'],['model','hunyuan']]) {
+    await nav(`/slot/${slot}/prepare/${route}`);
+    check(`Blocked/unsupported ${route} has no preparation or return control`, !q('[data-action="prepare"]') && !q('[data-action="return"]') && !!q('.empty'));
+  }
+  await nav('/slot/sound/library');
+  const changeMode = async value => { q('#libraryMode').value = value; q('#libraryMode').dispatchEvent(new Event('change',{bubbles:true})); await settle(); };
+  await changeMode('empty');
+  check('Empty state retains the current audio', q('.empty').textContent.includes('No matching audio') && stored().slots.sound.assetId === 'marsh-bed');
+  await click('[data-action="clear-search"]'); await changeMode('error');
+  check('Failed observation retains choice and gives retry', !!q('[data-action="retry"]') && stored().slots.sound.assetId === 'marsh-bed');
+  await click('[data-action="retry"]'); await click('[data-choose="keeper-line"]');
+  check('Audio replacement returns to sound slot', stored().slots.sound.assetId === 'keeper-line' && location.hash === '#/slot/sound');
+  await nav('/slot/sprite/library'); await click('[data-choose="keeper"]');
+  await nav('/slot/model/library'); await click('[data-choose="lantern-mesh"]');
+  await nav('/gaps');
+  check('All six candidates still retain six review gaps', q('#gapCount').textContent === '0' && q('.gap-list').children.length === 6 && q('.report').textContent.includes('None is marked owner accepted'));
+  await nav('/slot/background/prepare/hunyuan');
+  check('Forged cross-slot route is refused', q('#main').textContent.includes('This preview route is unavailable'));
+  await nav('/slot/background');
+  const payload = '<img src=x onerror=window.__briefInjected=1>';
+  input('[data-field="title"]', payload); await nav('/gaps');
+  check('Rendered input is escaped', q('h1').textContent === payload && !q('h1 img') && !window.__briefInjected);
+  input('[data-field="title"]', 'Lantern Marsh · browser proof'); await nav('/slot/background');
+  check('No API or external resource requested', performance.getEntriesByType('resource').every(r => !r.name.includes('/api/') && new URL(r.name).origin === location.origin));
+  check('No horizontal overflow at current viewport', document.documentElement.scrollWidth <= innerWidth);
+  return {checks:results, count:results.length, viewport:[innerWidth,innerHeight], reloadExpected:{title:stored().title, selected:stored().slots.background.assetId, sound:stored().slots.sound.assetId}, resources:performance.getEntriesByType('resource').map(r=>r.name)};
+})()
