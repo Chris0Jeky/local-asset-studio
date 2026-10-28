@@ -1,0 +1,114 @@
+name: Archive exact-source qualification
+on:
+  push:
+    branches: [codex/archive-qualification-20261028]
+    paths: ['.github/workflows/publish-archive-source.yml']
+permissions:
+  contents: write
+jobs:
+  qualify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: transport
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 3392d27bf0fa8ce5305bcc2c3a88009a33d87114
+          path: source
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reconstruct only hash-bound reviewed source
+        run: |
+          python - <<'PY'
+          import base64,gzip,hashlib,json,pathlib,subprocess
+          expected=['fe36bed1a1c94f359d035364505a15a04a76122639699afe8eafa157d064bc24','30dd7ad6a2da303037c62b7aacc91003b46288f1a0a8b1c0972c951efbd15c6e','48ff7180f337f1bf68db3c39842797d95d094572641fdf3249db4643e034a925','e97de2933817198c6ecd2f28bb8a4577b784ced1a35a7ce9ff0b92f32a8d11c0']
+          parts=[];okay=True
+          for i,want in enumerate(expected,1):
+              text=pathlib.Path(f'transport/.github/qualification/archive-delta-{i}.b64').read_text()
+              # Remove a duplicated transport span only; the reviewed per-part hash is mandatory.
+              marker='WzUzNPebLUb'
+              if i==1 and text.count(marker)==2:
+                  start=text.index(marker)+len(marker);end=text.index(marker,start)+len(marker)
+                  text=text[:start]+text[end:]
+              got=hashlib.sha256(text.encode()).hexdigest();print('part',i,'bytes',len(text),'sha256',got)
+              okay=okay and got==want;parts.append(text)
+          assert okay,'Transport does not match reviewed bytes; no source will be applied'
+          packed=base64.b64decode(''.join(parts),validate=True)
+          assert hashlib.sha256(packed).hexdigest()=='d3493bf9804b8c9ad887d5c176e185a3160e95d6b2f5026fcded103eacd06882'
+          raw=gzip.decompress(packed)
+          assert hashlib.sha256(raw).hexdigest()=='6732b50aa36f9b94a81b0be6e19efbbd9a10911d5ea1876666d238fac82df3db'
+          spec=json.loads(raw);src=pathlib.Path('source')
+          def git(*args,input=None):return subprocess.check_output(['git',*args],cwd=src,input=input)
+          assert git('rev-parse','HEAD').decode().strip()==spec['base']=='3392d27bf0fa8ce5305bcc2c3a88009a33d87114'
+          assert len(spec['changes'])==23
+          for entry in spec['changes']:
+              path=entry['path'];assert not pathlib.PurePosixPath(path).is_absolute() and '..' not in pathlib.PurePosixPath(path).parts
+              assert path=='CURRENT_STATE.md' or path=='.github/workflows/asset-archive.yml' or path.startswith(('app/','studio_workflow/','tests/','docs/'))
+              if entry['base_sha']:
+                  assert git('rev-parse','HEAD:'+path).decode().strip()==entry['base_sha']
+                  data=git('cat-file','blob',entry['base_sha'])
+              else:
+                  assert not (src/path).exists();data=b''
+              previous=0
+              for start,end,text in entry['edits']:
+                  assert previous<=start<=end<=len(data);previous=end
+              for start,end,text in reversed(entry['edits']):data=data[:start]+text.encode()+data[end:]
+              sha=git('hash-object','-w','--stdin',input=data).decode().strip();assert sha==entry['sha'],path
+              (src/path).parent.mkdir(parents=True,exist_ok=True);(src/path).write_bytes(data)
+              git('update-index','--add','--cacheinfo','100644',sha,path)
+          git('diff','--cached','--check')
+          assert git('write-tree').decode().strip()==spec['tree']=='c12a159229492327e66defcefaf5dd307d88349e'
+          pathlib.Path('verified-source.json').write_text(json.dumps(spec,indent=2)+'\n')
+          print('Exact reviewed Archive source tree verified:',spec['tree'])
+          PY
+      - name: Install disposable test dependencies
+        working-directory: source
+        run: python -m pip install playwright==1.57.0 -r integrations/workflow-mcp/requirements.txt -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - name: Causal contracts and real SDK protocol
+        working-directory: source
+        run: |
+          python -c "import mcp; import importlib.metadata; assert importlib.metadata.version('mcp') == '1.30.0'"
+          python -m unittest discover -s tests -p 'test_asset_archive*.py' -v
+          python -m unittest discover -s tests -p test_workflow_archive_mcp.py -v
+          python scripts/validate-repo.py
+      - name: Install bounded Chromium dependencies
+        working-directory: source
+        timeout-minutes: 4
+        run: bash scripts/ci-install-chromium.sh
+      - name: Actual native Archive journey
+        working-directory: source
+        run: python tests/asset_archive_browser.py --out .runtime/asset-archive
+      - name: Publish verified blobs only, never move a shared ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import base64,json,pathlib,subprocess
+          spec=json.loads(pathlib.Path('verified-source.json').read_text());entries=[]
+          for item in spec['changes']:
+              data=subprocess.check_output(['git','cat-file','blob',item['sha']],cwd='source')
+              result=json.loads(subprocess.check_output(['gh','api','--method','POST','repos/Chris0Jeky/local-asset-studio/git/blobs','--input','-'],input=json.dumps({'content':base64.b64encode(data).decode(),'encoding':'base64'}).encode()))
+              assert result['sha']==item['sha']
+              entries.append({'path':item['path'],'mode':'100644','type':'blob','sha':item['sha']})
+          pathlib.Path('publication.json').write_text(json.dumps({'base':spec['base'],'tree':spec['tree'],'branch_moved':False,'entries':entries},indent=2)+'\n')
+          print('Published verified source blobs only:',spec['tree'])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: archive-source-qualification
+          path: |
+            transport/.github/qualification/archive-delta-*.b64
+            verified-source.json
+            publication.json
+            source/.runtime/asset-archive
+          if-no-files-found: error
+          retention-days: 2
