@@ -306,7 +306,7 @@ def _summary(row):
             and _finite(value['created_at']) and _integer(value['bytes'])
             and _integer(value['metadata_revision'])
             and ((value['trashed_at'] is None and trashed_null == 1) or _finite(value['trashed_at']))
-            and ((value['archived_at'] is None and archived_null == 1) or _finite(value['archived_at']))
+            and ((value['archived_at'] is None and archived_null == 1) or _finite(value['archived_at']) and value['archived_at'] >= 0)
             and ((value['preset_id'] is None and preset_null == 1) or _matches(ENTITY,value['preset_id'])),
             'An asset summary has invalid identity or scalar metadata', **error)
     if value['archived_at'] is None: value.pop('archived_at')

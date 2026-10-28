@@ -166,7 +166,7 @@ class AssetArchiveTests(unittest.TestCase):
         for value in (None,True,1,[],{},'trash','ARCHIVED',''):
             with self.subTest(filter=value),self.assertRaises((workspace.WorkspaceError,ValueError)):
                 self.store.asset_page(filters={'archive':value})
-        for value in ('not a timestamp',float('inf'),b'bad'):
+        for value in ('not a timestamp',-1,float('inf'),b'bad'):
             with self.subTest(stored=value):
                 with self.store.connection() as db:db.execute('UPDATE assets SET archived_at=? WHERE id=?',(value,self.ids[0]))
                 with self.assertRaises(workspace.WorkspaceError) as caught:self.store.asset_page(filters={'archive':'all'})

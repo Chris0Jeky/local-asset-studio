@@ -38,7 +38,7 @@ class AssetArchiveClientTests(unittest.TestCase):
         self.page['filters']['archive']='archived';self.asset['archived_at']=12.5;self.fixture.reply(self.page)
         try:self.client.page(filters={'archive':'archived'})
         except ValueError as exc:self.fail('Archive response baseline is unsupported: '+str(exc))
-        for value in (None,True,False,'12.5',[],{},float('inf')):
+        for value in (None,True,False,'12.5',[],{},-1,float('inf')):
             with self.subTest(value=value):
                 self.asset['archived_at']=value;self.fixture.reply(self.page)
                 with self.assertRaises(ValueError):self.client.page(filters={'archive':'archived'})

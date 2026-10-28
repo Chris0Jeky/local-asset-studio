@@ -89,9 +89,10 @@ async def exercise(args):
                 await page.evaluate("showView('assets')")
                 await page.wait_for_selector(f'[data-asset-check="{ids[0]}"]')
                 check('LIB-38', 'Collection recovery sits below the list and fits the sidebar at 1440 px', await page.locator('#recoverCollections').evaluate("el=>{const sidebar=el.closest('.asset-sidebar').getBoundingClientRect(),rect=el.getBoundingClientRect();return el.previousElementSibling.id==='collectionPaging' && el.previousElementSibling.previousElementSibling.id==='assetCollections' && el.nextElementSibling.textContent.includes('An asset can belong') && el.textContent==='Recover a collection draft…' && rect.left>=sidebar.left && rect.right<=sidebar.right && el.scrollWidth<=el.clientWidth;}"))
-                # An empty-library assertion observes All sources; a source-filtered
-                # empty page must offer the other source rather than claim no assets exist.
+                # A whole-Library empty assertion observes All sources and Archive states.
+                # Filtered emptiness must not claim no assets exist outside this view.
                 await page.select_option('#assetSource', 'all')
+                await page.select_option('#assetArchiveFilter', 'all')
                 await page.wait_for_function('!assetRefreshing&&assetPaging.query===assetPageQuery()')
                 await page.evaluate('window.libraryFixtureAssets=assetState.assets;assetState.assets=[];renderAssets()')
                 check('LIB-39', 'Empty library explains Make and import', await page.locator('#assetGrid h3').inner_text() == 'Your library is empty' and await page.locator('#assetGrid p').inner_text() == 'Pictures you make in Make land here. You can also import images; importing makes nothing new.' and await page.locator('#assetGrid a.primary').get_attribute('href') == '/#make' and await page.locator('#assetGrid a.primary').inner_text() == 'Make a picture')
@@ -100,6 +101,9 @@ async def exercise(args):
                 check('LIB-40', 'Empty library import opens the existing file input', await (await chooser.value).element.get_attribute('id') == 'importAssets')
                 check('LIB-41', 'Nothing to review stays disabled with its explanation', await page.locator('#reviewNext').inner_text() == 'Nothing to review' and await page.locator('#reviewNext').get_attribute('title') == 'Every asset shown has a review.' and await page.locator('#reviewNext').is_disabled())
                 await page.evaluate('assetState.assets=window.libraryFixtureAssets;delete window.libraryFixtureAssets;renderAssets()')
+                # The remaining journeys exercise the ordinary active view.
+                await page.select_option('#assetArchiveFilter', 'active')
+                await page.wait_for_function('!assetRefreshing&&assetPaging.query===assetPageQuery()')
                 async def text(selector):
                     node = page.locator(selector)
                     return await node.inner_text() if await node.count() else ''

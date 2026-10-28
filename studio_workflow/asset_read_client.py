@@ -72,7 +72,7 @@ def _number(value):
 
 def _summary(asset, privacy='regular'):
     _need(type(asset) is dict and set(asset) - {'privacy','archived_at'} == SUMMARY)
-    _need('archived_at' not in asset or _number(asset['archived_at']))
+    _need('archived_at' not in asset or _number(asset['archived_at']) and asset['archived_at'] >= 0)
     classification = asset.get('privacy', 'regular')
     _need(contract.privacy_matches(classification, privacy), 'Asset response belongs to another privacy scope')
     _need(contract._matches(contract.ENTITY, asset['id']) and contract._matches(contract.HEX64, asset['sha256']))
