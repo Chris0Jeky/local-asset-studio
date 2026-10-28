@@ -1,0 +1,62 @@
+name: Publish fixture closeout objects
+on:
+  push:
+    branches: [codex/privacy-qualification-20261028]
+    paths: ['.github/workflows/publish-fixture-closeout.yml']
+permissions:
+  contents: write
+jobs:
+  objects:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: transport
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: a5284a39c57b7b02ab0bc7cd25cbe0c1248ca525
+          path: source
+          persist-credentials: false
+      - name: Apply pinned reviewed fixture patch and test classification
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = a5284a39c57b7b02ab0bc7cd25cbe0c1248ca525
+          git apply --index --check ../transport/.github/qualification/fixture-closeout.patch
+          git apply --index ../transport/.github/qualification/fixture-closeout.patch
+          git diff --cached --check
+          test "$(git write-tree)" = 3df14b6b69321ff22bcf549a1e1c4b5a18dcb70b
+          python -m unittest discover -s tests -p test_browser_privacy_disconnects.py -v
+          node --test tests/make_privacy_transitions.cjs tests/make_followups.cjs
+      - name: Publish verified blobs and tree only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import base64,json,pathlib,subprocess
+          src=pathlib.Path('source');repo='repos/Chris0Jeky/local-asset-studio/git/'
+          def git(*args):return subprocess.check_output(['git',*args],cwd=src)
+          def api(endpoint,data):
+              return json.loads(subprocess.check_output(['gh','api','--method','POST',repo+endpoint,'--input','-'],input=json.dumps(data).encode()))
+          paths=git('diff','--cached','--name-only','-z').decode().strip('\0').split('\0')
+          assert set(paths)=={'docs/verification/2026-10-28-private-session-retry.md','tests/private_recovery_browser.py','tests/studio_browser_smoke.py','tests/test_browser_privacy_disconnects.py'}
+          entries=[]
+          for path in paths:
+              sha=git('rev-parse',':'+path).decode().strip();data=git('cat-file','blob',sha)
+              assert api('blobs',{'content':base64.b64encode(data).decode(),'encoding':'base64'})['sha']==sha
+              entries.append({'path':path,'mode':'100644','type':'blob','sha':sha})
+          tree=api('trees',{'base_tree':'16b9fae2302ce4927eb135d1a6ec56d458bd873b','tree':entries})['sha']
+          assert tree=='3df14b6b69321ff22bcf549a1e1c4b5a18dcb70b'
+          pathlib.Path('publication.json').write_text(json.dumps({'tree':tree,'branch_moved':False,'changed':entries},indent=2)+'\n')
+          print('Verified source objects:',tree,'No branch moved.')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fixture-closeout-publication
+          path: publication.json
+          if-no-files-found: error
+          retention-days: 2
