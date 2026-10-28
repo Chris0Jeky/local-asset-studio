@@ -100,7 +100,7 @@ class MakePrivacyTransitions(unittest.TestCase):
         self.page.locator('[data-privacy-scope=all]').click();self.ready()
         with self.subTest(contract='scope-only transition keeps unsaved wording'):
             self.assertEqual(self.page.locator(selector).input_value(),TEXT)
-        self.page.evaluate('Storage.prototype.setItem=window.originalSetItem')
+        self.page.evaluate('()=>{Storage.prototype.setItem=window.originalSetItem;}')
         self.page.locator(selector).fill(TEXT+' Retried.')
         with self.subTest(contract='later successful save recovers'):
             self.assertIn(TEXT+' Retried.',self.page.evaluate('(key)=>sessionStorage.getItem(key)',DRAFT+'.private'))
@@ -123,11 +123,11 @@ class MakePrivacyTransitions(unittest.TestCase):
 
     def test_selective_scene_storage_failure_keeps_the_composer(self):
         selector,_=self.draft('scene')
-        self.page.evaluate("""window.sceneSetItem=Storage.prototype.setItem;
+        self.page.evaluate("""()=>{window.sceneSetItem=Storage.prototype.setItem;
           Storage.prototype.setItem=function(key,value){
             if(this===sessionStorage&&key.startsWith('studio.make.scene.')&&key.endsWith('.private'))throw new DOMException('Synthetic scene quota','QuotaExceededError');
             return sceneSetItem.call(this,key,value);
-          };""")
+          };}""")
         self.page.select_option('#creationPrivacy','private');self.ready()
         self.assertEqual(self.page.locator(selector).input_value(),TEXT)
         self.page.locator(selector).fill(TEXT+' Still editing.')

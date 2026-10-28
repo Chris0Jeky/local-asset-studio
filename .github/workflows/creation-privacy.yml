@@ -67,6 +67,10 @@ jobs:
         if: runner.os == 'Windows'
         timeout-minutes: 4
         run: python -m playwright install --with-deps chromium
+      - name: Browser callback installation contracts
+        run: python -m unittest discover -s tests -p test_browser_fixture_callbacks.py -v
+      - name: Privacy toolbar geometry and keyboard access
+        run: python tests/privacy_layout_browser.py
       - name: Composed private creation browser journey
         # Real shipped controller and views, synthetic local media and acknowledged jobs.
         # Uses ordinary Python subprocesses; never launches a backend or loads a model.

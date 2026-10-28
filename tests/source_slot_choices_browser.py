@@ -226,7 +226,8 @@ async def exercise_source_choices(page, check):
     await page.evaluate('async()=>{__choiceRelease();await __choiceSlotCompletion}')
     check('late copy cannot change a replacement recipe', before==await page.evaluate('__choiceSnapshot()'))
     check('retired copy cannot replace current recipe feedback or readiness', notice==await page.locator('#uxNotice').inner_text() and await page.evaluate('referencePending===0'))
-    await page.evaluate("__choiceDelay=false;document.querySelector('#uxSecondSlots').onclick=__choiceSlotHandler")
+    # A function-valued evaluate result is invoked by Playwright; restoring is not a click.
+    await page.evaluate("()=>{__choiceDelay=false;document.querySelector('#uxSecondSlots').onclick=__choiceSlotHandler;}")
 
 
 async def main(args):
