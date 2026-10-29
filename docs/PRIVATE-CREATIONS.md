@@ -68,11 +68,14 @@ reads, family/recall readers and agent tooling. Private and All are explicit vie
 An existing Library page may need one refresh after upgrading to the scoped
 catalogue. Subsequent private edits do not expire regular pagination or alter its
 catalogue revision.
-The existing active/trash filter remains separate: **Private + Trash** finds
-private items in Trash; **All + Active** finds active items of both classifications.
+The Trash scope remains separate: **Private + Trash** finds private items in
+Trash. The independent **Archive state** selector chooses Active assets, Archived
+assets or Active & archived within the current privacy and Trash scope. Selecting
+All privacy does not include archived assets unless the Archive filter does too.
 
-You can review, favorite, tag, annotate, collect, export and put private assets in
-reversible Trash through the scoped Library. A collection has one classification;
+You can review, favorite, tag, annotate, collect, export, archive and put private
+assets in reversible Trash through the scoped Library. **Return to active** reverses
+Archive without changing privacy or restoring from Trash. A collection has one classification;
 mixing regular and private members is refused as a whole operation. All view lets
 you inspect both classifications without creating a mixed collection.
 
@@ -174,10 +177,14 @@ its asset label would leave its siblings, original job and prompt visible.
 Completed-run conversion needs a preview of the entire affected run, a durable
 move journal, verified publication, crash recovery and Windows failure tests.
 
-Archive is also separate from privacy and Trash. This release keeps existing
-collections, labels, exports and reversible Trash; it does not introduce arbitrary
-folder moves, retention deletion or a new archive state. These storage changes
-must preserve shared blobs, lineage and unresolved submissions.
+The Library now has [reversible logical Archive](ASSET-ARCHIVE.md), separate from
+privacy and Trash. Archive hides finished assets from the default Library view;
+Return to active brings them back under the same privacy and Trash scope. It keeps
+original files, IDs, lineage, review and collection membership, retains unsaved
+editor wording, and uses the existing revisioned command/receipt recovery. It does
+not relocate files, reclaim disk space, reclassify completed runs, introduce a
+retention-deletion policy or resolve an uncertain generation. Completed-run
+privacy conversion remains separate work under #1678.
 
 ## Verification and workflow QA
 

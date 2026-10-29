@@ -1,4 +1,28 @@
-# Current state — 28 October 2026
+# Current state — 29 October 2026
+
+## 2026-10-29 — Archive delivery and documentation reconciliation
+
+Reversible logical Library Archive is implemented in
+[PR #1681](https://github.com/Chris0Jeky/local-asset-studio/pull/1681).
+Its reviewed code head is `3bd671cf13285e3a5146fb4de904a899ea22816a`, tree
+`5b3a24b91710534610abd86833fcfb1f36aa724e`. Final-head Archive run
+40791152077 passed Linux and Windows with 28 native checks per platform,
+26 Archive contracts and the two installed-SDK/stdio cases. The ordinary-open
+Archive-label review finding is corrected and its causal regression is retained.
+Local final-tree asset tests: 238 pass; validator: 94 graphs/bindings, 189 pinned
+assets, 164 LoRA names and 4,628 tracked paths. Counts overlap.
+
+**The PR's final qualification record owns the current full-suite and merge
+status.** The dated pending entries below remain historical implementation
+snapshots, not evidence that later qualification did or did not finish. This
+entry does not turn a pending full-suite run into a pass.
+
+The [private-creation guide](docs/PRIVATE-CREATIONS.md) now distinguishes Archive,
+Trash and privacy and links the [Archive guide](docs/ASSET-ARCHIVE.md), removing
+its superseded statement that Archive is unavailable. Archive does not move or
+delete bytes or free disk space. Completed-run privacy migration remains #1678;
+agent mutation parity remains #123. No model/GPU work, owner workstation restart,
+creative/licensing acceptance or `HUMAN_TODO.md` decision is claimed.
 
 ## 2026-10-28 — reversible Library Archive (qualification pending)
 
