@@ -308,6 +308,12 @@ empty outcomes and scope/media refusals:
 python tests/review_matrix_browser.py --out .runtime/review-matrix-browser
 ```
 
+The result JSON retains console locations and failed responses even when a
+check fails. Only the deliberate stale-save HTTP 400 at the exact review URL
+is expected; JavaScript exceptions and additional HTTP errors fail the run.
+Layout checks require the complete desktop table below the toolbar and phone
+output cards at least 88px wide.
+
 Refs #1204 for this engine/seed slice. Setting-value and variant axes, other pair
 surfaces, and registration in the broader use-case matrix remain separate work.
 Synthetic proof does not establish subjective image quality or screen-reader
