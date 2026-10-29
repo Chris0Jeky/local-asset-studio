@@ -133,6 +133,42 @@ def command(studio, payload, scope='regular'):
     return studio.assets.card_command(payload)
 
 
+def pack_sources(store, card, db):
+    """Revalidate the saved snapshot, including immediately before ZIP publication."""
+    row = db.execute('SELECT * FROM cards WHERE id=?', (card['id'],)).fetchone()
+    need(row is not None and store._card(row) == card and not card['trashed_at'],
+         'The brief changed. Reload and download the saved revision again.', status=409, code='card_revision_conflict')
+    body = shape(card['body']); store._check_scope(db, body['workspace_id'])
+    collection = body['collection_id']
+    if collection:
+        need(db.execute("SELECT 1 FROM collections WHERE id=? AND privacy='regular'", (collection,)).fetchone(),
+             'The brief collection is unavailable. Choose a current collection and save again.', status=409, code='brief_source_unavailable')
+    assets = {}
+    for key, kind in SLOTS.items():
+        ref = body['slots'][key]['selected']
+        if ref is None: continue
+        asset = source(db, ref, kind, collection)
+        literal = store.root / asset['path']
+        try: resolved = literal.resolve(strict=True)
+        except (OSError, RuntimeError) as exc:
+            raise WorkspaceError('A selected source file is unavailable; working pack stopped', status=409, code='brief_source_unavailable') from exc
+        need(resolved == literal and not literal.is_symlink() and store.media in resolved.parents,
+             'Selected source files must remain inside Workspace media without links', status=409, code='brief_source_unavailable')
+        store.file_entry(asset['id'], privacy='regular')
+        assets[asset['id']] = store._asset(asset)
+    return list(assets.values())
+
+
+def working_pack(studio, payload, scope='regular'):
+    regular(scope)
+    need(isinstance(payload, dict) and set(payload) == {'id','expected_revision','workspace_id'}, 'Supply the saved brief, revision and Workspace')
+    with studio.assets.connection() as db: studio.assets._check_scope(db, studio.assets._validate_scope(payload['workspace_id']))
+    card = read(studio.assets, payload['id'])
+    need(type(payload['expected_revision']) is int and payload['expected_revision'] == card['revision'] and not card['trashed_at'],
+         'The brief changed. Reload and download the saved revision again.', status=409, code='card_revision_conflict')
+    return studio.export_assets({}, privacy='regular', brief=card)
+
+
 def prepare(studio, payload, scope='regular'):
     regular(scope)
     need(isinstance(payload, dict) and not set(payload) - {'id','slot','expected_revision','look_id','look_revision'}, 'Unsupported preparation fields')

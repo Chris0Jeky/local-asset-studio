@@ -1,5 +1,35 @@
 # Current state — 29 October 2026
 
+## 2026-10-29 — Scene working packs (hosted qualification pending)
+
+Saved Scene briefs now offer **Download working pack** through the existing
+ZIP exporter. The manifest carries direction, role notes, explicit empty slots,
+selected identities, review labels and file/recipe hashes. Duplicate bytes are
+stored once. Revision, Workspace, collection, privacy, Trash, path and current
+byte checks refuse stale sources; interrupted writes leave no partial ZIP.
+The browser requires saved wording and discards delayed downloads after a view,
+privacy or Workspace change. Packaging changes no source or review state.
+
+Ten focused working-pack tests, all 23 scene tests, 21 frontend handoff tests
+and six existing Library export tests pass, including real ZIP bytes, a Windows
+junction refusal and changes during export. The shipped UI passes 27 real
+HTTP/SQLite/ZIP browser assertions and all 25 existing fixture UI journeys,
+with zero page errors. Exact downloaded source/recipe bytes, saved role mappings,
+unchanged review state, dirty/stale refusal, context cancellation, 390px layout
+and keyboard download are proved. Independent review found no blocking defect;
+long filename extensions (#1687) and stale cancellation status copy (#1689) are
+tracked non-blocking follow-ups. The existing picker race (#1686) is unchanged.
+
+The local full suite ran 6,395 tests in 841.945 seconds: 127 skipped and six errors
+at symlink creation in two unchanged privacy test modules. Independent file and
+directory probes reproduced missing Windows privilege (`WinError 1314`) without
+Studio. This local full run is not green. The validator passes (94 graphs,
+189 pinned assets, 4,656 tracked paths). Supported-runner exact-head CI remains
+the full qualification boundary; consult the PR checks and Git for merge state.
+See [Scene briefs](docs/SCENE-BRIEFS.md) for the journey and proving commands.
+No generation, render, licence, art or native creative acceptance is claimed;
+[HUMAN_TODO.md](HUMAN_TODO.md) retains those owner decisions.
+
 ## 2026-10-29 — Workspace scene-brief integration (qualification pending)
 
 The [Scene briefs route](docs/SCENE-BRIEFS.md) integrates the six-slot brief into

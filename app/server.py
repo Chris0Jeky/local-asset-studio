@@ -1267,11 +1267,16 @@ class Studio:
             self.jobs[identifier] = job
         return {'asset':self.assets.get(job['outputs'][0]['asset_id'],privacy=classification),'job':self.public(job)}
 
-    def export_assets(self, payload, *, privacy='regular'):
+    def export_assets(self, payload, *, privacy='regular', brief=None):
         privacy_scope.normalize(privacy,allow_all=True)
-        ids = payload.get("ids")
-        if not isinstance(ids, list) or not 1 <= len(ids) <= 200 or not all(isinstance(i, str) for i in ids): raise StudioError("Select 1–200 assets to export")
-        assets = [self.assets.get(i,privacy=privacy) for i in dict.fromkeys(ids)]
+        if brief is not None:
+            import scene_briefs
+            scene_briefs.regular(privacy)
+            with self.assets.connection() as db: assets = scene_briefs.pack_sources(self.assets, brief, db)
+        else:
+            ids = payload.get("ids")
+            if not isinstance(ids, list) or not 1 <= len(ids) <= 200 or not all(isinstance(i, str) for i in ids): raise StudioError("Select 1–200 assets to export")
+            assets = [self.assets.get(i,privacy=privacy) for i in dict.fromkeys(ids)]
         for asset in assets:
             job=self.jobs.get(asset['job_id'])
             if job and job.get('privacy','regular') != asset.get('privacy','regular'):
@@ -1294,26 +1299,60 @@ class Studio:
         target = directory / (identifier + ".zip")
         temporary = target.with_suffix(".part")
         try:
-            written = []
+            written = []; files = {}; packed = []
             with zipfile.ZipFile(temporary, "x", compression=zipfile.ZIP_STORED) as archive:
-                for asset in assets:
+                for index, asset in enumerate(assets, 1):
                     source = self.assets.file(asset["id"],privacy=privacy)
                     if digest_file(source) != asset["sha256"]: raise StudioError("An asset changed; export stopped")
-                    member = "assets/" + asset["id"] + source.suffix; archive.write(source, member); written.append((member, asset["sha256"]))
+                    name = re.sub(r'[^A-Za-z0-9._-]+', '-', asset['filename']).strip('.-')[:100] or 'asset'
+                    member = files.get(asset['sha256']) if brief is not None else None
+                    if member is None:
+                        member = f'assets/{index:02d}-{name}' if brief is not None else "assets/" + asset["id"] + source.suffix
+                        archive.write(source, member); written.append((member, asset["sha256"]))
+                        files[asset['sha256']] = member
+                    record = dict(asset, file=member, recipe=None)
                     job = self.jobs.get(asset["job_id"])
                     if job:
-                        archive.writestr("recipes/" + asset["id"] + ".json", json.dumps(self.export_recipe(job), indent=2))
-                archive.writestr("manifest.json", json.dumps({"version": 1, "assets": assets, "created_at": time.time(), "note": "Review states are creative selections, not model-license or engine acceptance."}, indent=2))
+                        recipe = json.dumps(self.export_recipe(job), indent=2).encode('utf-8')
+                        recipe_member = f'recipes/{index:02d}-{name}.json' if brief is not None else "recipes/" + asset["id"] + ".json"
+                        archive.writestr(recipe_member, recipe)
+                        record['recipe'] = {'file': recipe_member, 'sha256': hashlib.sha256(recipe).hexdigest()}
+                        if brief is not None: written.append((recipe_member, record['recipe']['sha256']))
+                    packed.append(record)
+                manifest = {"version": 1, "assets": packed if brief is not None else assets, "created_at": time.time(), "note": "Review states are creative selections, not model-license or engine acceptance."}
+                if brief is not None:
+                    body = brief['body']
+                    manifest['brief'] = {**{key:brief[key] for key in ('id','name','revision')},
+                        **{key:body[key] for key in ('workspace_id','collection_id','direction')},
+                        'slots': {key:{field:slot[field] for field in ('intent','criteria','selected')} for key,slot in body['slots'].items()}}
+                archive.writestr("manifest.json", json.dumps(manifest, indent=2))
             with zipfile.ZipFile(temporary) as archive:
                 for member, expected in written:
                     hashed = hashlib.sha256()
                     with archive.open(member) as stream:
                         for chunk in iter(lambda: stream.read(1024**2), b""): hashed.update(chunk)
                     if hashed.hexdigest() != expected: raise StudioError("An asset changed while the archive was written; export stopped")
-            temporary.replace(target)
+            if brief is not None:
+                for asset in packed:
+                    if digest_file(self.assets.file(asset['id'], privacy='regular')) != asset['sha256']:
+                        raise StudioError('A selected source changed while the working pack was written; export stopped')
+                    job = self.jobs.get(asset['job_id'])
+                    recipe_hash = hashlib.sha256(json.dumps(self.export_recipe(job), indent=2).encode('utf-8')).hexdigest() if job else None
+                    expected = asset['recipe']['sha256'] if asset['recipe'] else None
+                    if recipe_hash != expected or (job and job.get('privacy', 'regular') != 'regular'):
+                        raise StudioError('A selected recipe changed while the working pack was written; export stopped')
+                with self.assets.connection() as db:
+                    db.execute('BEGIN IMMEDIATE')
+                    scene_briefs.pack_sources(self.assets, brief, db)
+                    temporary.replace(target)
+            else: temporary.replace(target)
         finally:
             temporary.unlink(missing_ok=True)
-        return {"id": identifier, "url": privacy_scope.scoped_url('/api/exports/'+identifier,classification), "count": len(assets)}
+        result = {"id": identifier, "url": privacy_scope.scoped_url('/api/exports/'+identifier,classification), "count": len(assets)}
+        if brief is not None:
+            result['url'] += '?workspace_id=' + brief['body']['workspace_id']
+            result['filename'] = (re.sub(r'[^A-Za-z0-9_-]+', '-', brief['name']).strip('-')[:80] or 'scene') + '-working-pack.zip'
+        return result
 
     def check_recipe(self, recipe):
         if not isinstance(recipe, dict) or not isinstance(recipe.get("workflow"), dict):
@@ -2927,6 +2966,9 @@ class Handler(BaseHTTPRequestHandler):
             if path.startswith("/api/exports/"):
                 identifier = path.rsplit("/", 1)[-1]
                 if not re.fullmatch(r"[0-9a-f]{32}", identifier): raise StudioError("Invalid export")
+                expected_workspace = self._asset_query_scope()
+                if expected_workspace is not None:
+                    with self.studio.assets.connection() as db: self.studio.assets._check_scope(db, expected_workspace)
                 candidates=[self.studio.assets.storage_root(s)/'exports'/(identifier+'.zip') for s in (('regular','private') if scope=='all' else (scope,))]
                 file=next((p for p in candidates if p.is_file() and not p.is_symlink() and not p.parent.is_symlink() and p.resolve().parent==p.parent),None)
                 if file is None:return self._json(404,{'error':'Export not found'})
@@ -3083,12 +3125,12 @@ class Handler(BaseHTTPRequestHandler):
             # Looks (#1221): save/edit/put away, and prepare Create's fields from a look and a scene. Neither creates a job.
             if self.path == "/api/looks": return self._json(200, looks.command(self.studio, self._body_json()))
             if self.path == "/api/looks/prepare": return self._json(200, looks.prepare(self.studio, self._body_json()))
-            if self.path in ('/api/briefs','/api/briefs/prepare'):
+            if self.path in ('/api/briefs','/api/briefs/prepare','/api/briefs/export'):
                 import scene_briefs
                 payload = self._body_json()
                 scene_briefs.regular(privacy_scope.creation_for_handler(self, payload))
-                owner = scene_briefs.prepare if self.path.endswith('/prepare') else scene_briefs.command
-                return self._json(200, owner(self.studio, payload, scope))
+                owner = scene_briefs.working_pack if self.path.endswith('/export') else scene_briefs.prepare if self.path.endswith('/prepare') else scene_briefs.command
+                return self._json(201 if self.path.endswith('/export') else 200, owner(self.studio, payload, scope))
             # Characters (#1205): save/edit/put away a character card from a keeper. Never creates a job.
             if self.path == "/api/characters": return self._json(200, characters.command(self.studio, self._body_json()))
             if self.path == "/api/assets/reference":
