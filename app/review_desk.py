@@ -177,11 +177,11 @@ class ReviewDesk:
         if not stages or any(not isinstance(s.get('engine'), str) or not s['engine'].strip()
                              or type(s.get('seed')) is not int or not 0 <= s['seed'] <= 2**63-1 for s in stages):
             return None
-        # The saved session salt fixes an opaque order across reloads and Reveal,
-        # without publishing the original plan order or a new review state.
+        # The evidence digest stays hidden until Reveal. The session ID alone is
+        # public in preview URLs and would let known axes reconstruct the order.
         axes = []
         for field, prefix in (('engine', 'R'), ('seed', 'C')):
-            values = sorted({s[field] for s in stages}, key=lambda v: digest([document['session_id'], field, v]))
+            values = sorted({s[field] for s in stages}, key=lambda v: digest([document['session_id'], document['evidence_sha256'], field, v]))
             axes.append([(value, prefix + str(i + 1)) for i, value in enumerate(values)])
         rows, columns = axes
         cells = []

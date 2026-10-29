@@ -84,6 +84,21 @@ class ReviewTests(unittest.TestCase):
                          [(c['row'],c['column'],c['candidates']) for c in grid['cells']])
         self.assertTrue(self.studio.queue.empty());self.assertEqual(self.studio.network_calls,0)
 
+    def test_grid_order_cannot_be_reconstructed_from_public_session_and_known_axes(self):
+        self.id=seed_matrix(self.studio);blind=self.open();document=self.document()
+        session=blind['candidates'][0]['preview_url'].split('/reviews/')[1].split('/')[0]
+        self.assertEqual(session,document['session_id'])
+        self.assertNotIn('evidence_sha256',blind)
+        engines={s['engine'] for s in document['evidence']['plan']['stages']}
+        guessed=sorted(engines,key=lambda value:digest([session,'engine',value]))
+        # Hold every public input fixed while varying the hidden frozen evidence.
+        # An ordering derived only from the preview URL would expose every mapping.
+        document['revealed']=True;orders=[]
+        for index in range(16):
+            document['evidence_sha256']=digest(['private evidence fixture',index])
+            orders.append([row['engine'] for row in ReviewDesk._grid(document)['rows']])
+        self.assertTrue(any(order!=guessed for order in orders),'Public preview identifiers must not determine the hidden axis mapping')
+
     def test_grid_keeps_multiple_outputs_and_truthful_empty_outcomes(self):
         self.id=seed_matrix(self.studio);project=self.production._get(self.id)
         jobs=[self.studio.jobs[project['state']['attempts'][str(i)]['job_id']] for i in range(6)]
