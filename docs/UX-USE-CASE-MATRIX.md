@@ -1,5 +1,23 @@
 # UX use-case matrix
 
+## Plan comparison: two wordings — 29 October 2026
+
+The existing `compare-settings-from-recipe` journey retains its One setting route.
+The same dialog also offers **Two wordings**, with labelled A/B text fields, the
+shared seed and two-run budget visible before Prepare plan. Mode changes preserve
+both drafts. Prepare saves the candidates; Start comparison remains separate.
+
+| Route | Held fixed | Verification boundary |
+| --- | --- | --- |
+| Plan comparison → Two wordings | Captured seed, negative text, references, dimensions and every other recipe control | Saved synthetic graphs differ only at positive-text bindings; frozen reference bytes and maximum seed digits match; preparation creates no jobs or reservations |
+
+The production and shipped-handler regressions cover validation, shared allowance,
+mode retention and late replies. Wide/narrow native-dialog evidence, saved plans
+and the unchanged 25-journey run are recorded with
+[PR #1693](https://github.com/Chris0Jeky/local-asset-studio/pull/1693)'s qualification
+status. These checks establish planning behavior, not rendered quality or owner
+acceptance. No new engine matrix, ranking or use-case registry schema is added.
+
 ## Full editor: one readiness fold — 19 October 2026 (Brief K)
 
 The recipe header no longer has a Review readiness button. The dock offers **What’s missing?**

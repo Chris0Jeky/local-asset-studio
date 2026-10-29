@@ -12,9 +12,12 @@ or preparation replies cannot replace the current draft.
 The focused production, planner and frontend checks pass, including saved graphs
 whose only differences are the positive-text bindings, maximum 64-bit seed
 identity, frozen reference bytes and zero generation submissions. One independent
-source review found no confirmed blocker. Browser/journey proof and the full
-supported-runner suite/validator remain pending qualification; consult the PR's
-current-head evidence. No live model, rendering or artistic acceptance is claimed.
+source review found no confirmed blocker. The full supported-runner suite at
+`5fc669ee` passed 6,409 tests with 88 skips, followed by the repository validator.
+Native browser/journey qualification and final-head check status are recorded on
+[PR #1693](https://github.com/Chris0Jeky/local-asset-studio/pull/1693). The initial
+Windows recovery-shelf pointer interception is tracked in #1694. No live model,
+rendering or artistic acceptance is claimed.
 See [comparison instructions](docs/PRODUCTION-WORKSPACE.md#compare-two-wordings)
 and the unchanged [owner actions](HUMAN_TODO.md).
 
