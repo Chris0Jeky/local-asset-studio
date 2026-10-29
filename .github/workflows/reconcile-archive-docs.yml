@@ -1,0 +1,56 @@
+name: Reconciled Archive documentation objects
+on:
+  push:
+    branches: [codex/storage-resume-source-20261029]
+    paths: ['.github/workflows/reconcile-archive-docs.yml']
+permissions:
+  contents: write
+jobs:
+  objects:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: cfca66203233fc2b670c749533455eb55626a4b9
+          persist-credentials: false
+      - name: Reconcile the two documentation entries and verify exact tree
+        shell: bash
+        run: |
+          python - <<'PY'
+          import base64,gzip,hashlib,pathlib,subprocess
+          encoded='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'
+          patch=gzip.decompress(base64.b64decode(encoded,validate=True))
+          assert hashlib.sha256(patch).hexdigest()=='c33d79b6099ec4929761cb8798c07b7545305fbe5ece9b49c966fb2069a989b6'
+          pathlib.Path('/tmp/reconcile.patch').write_bytes(patch)
+          subprocess.run(['git','apply','--index','/tmp/reconcile.patch'],check=True)
+          subprocess.run(['git','diff','--cached','--check'],check=True)
+          assert subprocess.check_output(['git','write-tree']).decode().strip()=='d8e1bdebf5078e6ceec077855b3575a172b966ba'
+          PY
+          python scripts/validate-repo.py
+      - name: Publish verified documentation objects only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import base64,json,pathlib,subprocess
+          def git(*args):return subprocess.check_output(['git',*args])
+          def api(path,data):return json.loads(subprocess.check_output(['gh','api','--method','POST','repos/Chris0Jeky/local-asset-studio/git/'+path,'--input','-'],input=json.dumps(data).encode()))
+          paths=git('diff','--cached','--name-only').decode().splitlines()
+          assert paths==['CURRENT_STATE.md','docs/PRIVATE-CREATIONS.md']
+          entries=[]
+          for path in paths:
+              sha=git('rev-parse',':'+path).decode().strip()
+              assert api('blobs',{'encoding':'base64','content':base64.b64encode(git('cat-file','blob',sha)).decode()})['sha']==sha
+              entries.append({'path':path,'mode':'100644','type':'blob','sha':sha})
+          tree=api('trees',{'base_tree':'73aa67088c7b3a68a2b9a95178330a26965261af','tree':entries})['sha']
+          assert tree=='d8e1bdebf5078e6ceec077855b3575a172b966ba'
+          pathlib.Path('publication.json').write_text(json.dumps({'tree':tree,'entries':entries,'branch_moved':False},indent=2)+'\n')
+          print('Verified documentation tree:',tree,'No branch moved.')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reconciled-archive-documentation
+          path: publication.json
+          if-no-files-found: error
+          retention-days: 2
