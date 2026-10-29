@@ -1,0 +1,60 @@
+name: Archive documentation source
+on:
+  push:
+    branches: [codex/archive-qualification-20261028]
+    paths: ['.github/workflows/publish-archive-docs.yml']
+permissions:
+  contents: write
+jobs:
+  docs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: transport
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 3bd671cf13285e3a5146fb4de904a899ea22816a
+          path: source
+          persist-credentials: false
+      - name: Check exact documentation-only source
+        working-directory: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 3bd671cf13285e3a5146fb4de904a899ea22816a
+          test "$(sha256sum ../transport/.github/qualification/archive-docs-closeout.patch | cut -d' ' -f1)" = efd956cf3eb87159dad8c57f47a3e6903e975a817e71d50196aa97da4d6049e9
+          git apply --index --check ../transport/.github/qualification/archive-docs-closeout.patch
+          git apply --index ../transport/.github/qualification/archive-docs-closeout.patch
+          git diff --cached --check
+          test "$(git write-tree)" = 230ac51b6dbdd05dde273ef548f8b3b2552aa7fd
+          python scripts/validate-repo.py
+      - name: Validate guide links and publish only two documentation blobs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import base64,json,pathlib,subprocess
+          def git(*args):return subprocess.check_output(['git',*args],cwd='source')
+          paths=git('diff','--cached','--name-only','-z').decode().strip('\0').split('\0')
+          assert set(paths)=={'CURRENT_STATE.md','docs/PRIVATE-CREATIONS.md'}
+          text=pathlib.Path('source/docs/PRIVATE-CREATIONS.md').read_text()
+          assert '[reversible logical Archive](ASSET-ARCHIVE.md)' in text
+          assert pathlib.Path('source/docs/ASSET-ARCHIVE.md').is_file()
+          assert 'or a new archive state' not in text
+          entries=[]
+          for path in paths:
+              sha=git('rev-parse',':'+path).decode().strip();data=git('cat-file','blob',sha)
+              result=json.loads(subprocess.check_output(['gh','api','--method','POST','repos/Chris0Jeky/local-asset-studio/git/blobs','--input','-'],input=json.dumps({'content':base64.b64encode(data).decode(),'encoding':'base64'}).encode()))
+              assert result['sha']==sha
+              entries.append({'path':path,'mode':'100644','type':'blob','sha':sha})
+          pathlib.Path('publication.json').write_text(json.dumps({'tree':'230ac51b6dbdd05dde273ef548f8b3b2552aa7fd','branch_moved':False,'entries':entries},indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: archive-docs-publication
+          path: publication.json
+          if-no-files-found: warn
+          retention-days: 2
