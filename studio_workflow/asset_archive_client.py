@@ -118,6 +118,11 @@ def _receipt(result, plan, command, *, allow_unknown=False):
              'Current metadata predates the retained receipt')
         need('archived_at' in row and 'trashed_at' in row and _timestamp(row['archived_at']) and _timestamp(row['trashed_at']),
              'Current lifecycle metadata is unavailable')
+        if row['metadata_revision'] == revisions[identifier]:
+            reviewed = next(item['asset'] for item in plan['selection']['items'] if item['id'] == identifier)
+            archived = reviewed.get('archived_at') if identifier in unchanged else changes['archived_at']
+            need(row['archived_at'] == archived and row['trashed_at'] == reviewed['trashed_at'],
+                 'Same-revision current lifecycle contradicts the reviewed receipt')
         projected.append({key: row[key] for key in ('id', 'metadata_revision', 'archived_at', 'trashed_at')})
     need([row['id'] for row in projected] == [i for i in ids[:10] if i in seen], 'Current observations are out of order')
     return {'format': 'studio.asset-archive-result/v1', 'privacy': plan['privacy'],

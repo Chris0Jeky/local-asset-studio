@@ -199,5 +199,20 @@ class ArchiveClientTests(unittest.TestCase):
             self.assertEqual(self.module.main(['--url',self.client.base,'apply','--plan',str(file),'--approved-plan-sha256','0'*64]),2)
         self.assertEqual(json.loads(stderr.getvalue())['code'],'archive_failed')
 
+    def test_same_revision_current_metadata_cannot_contradict_the_receipt(self):
+        plan=self.preview();command=self.module.validate_plan(canonical(plan).decode())[1]
+        receipt=self.client._observe('/api/assets/update',command)
+        for field,value in [('archived_at',None),('trashed_at',123)]:
+            bad=copy.deepcopy(receipt);bad['current'][0][field]=value
+            with self.subTest(field=field),patch.object(self.client,'_observe',return_value=bad):
+                with self.assertRaises(self.module.ArchiveOutcomeUnknown):self.apply(plan)
+                with self.assertRaises(ValueError):self.recover(plan)
+        later=copy.deepcopy(receipt);later['current'][0].update(archived_at=None,trashed_at=123)
+        later['current'][0]['metadata_revision']+=1
+        with patch.object(self.client,'_observe',return_value=later):
+            result=self.recover(plan)
+        self.assertIsNone(result['current'][0]['archived_at'])
+        self.assertEqual(result['receipt']['applied'],receipt['applied'])
+
 
 if __name__=='__main__':unittest.main()
