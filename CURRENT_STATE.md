@@ -1,5 +1,28 @@
 # Current state — 29 October 2026
 
+## 2026-10-29 — Review desk engine-by-seed grid (qualification pending)
+
+Prepared Review desk sessions can switch between Pair and Grid when every saved
+stage records engine and seed metadata. Stable anonymous row/column and candidate
+aliases hide provenance until the existing recorded Reveal action. The grid
+retains every output and distinguishes unsuccessful, unstarted, empty and absent
+positions. Selecting an image uses the existing crop and revisioned assessment;
+focused K/W/X saves preserve notes and stale conflicts preserve local drafts.
+Large seed identities and displayed evidence JSON retain their exact digits.
+
+Focused Review desk, actual HTTP and frontend regressions pass, including blind
+projection, topology from recorded fields, multiple outputs, legacy fallback,
+stable reload/Reveal, eligibility and scope refusals, draft/focus preservation
+and integer precision. The full suite, real browser captures and hosted checks
+are pending; no complete qualification or merge is claimed here. The prepared
+synthetic browser driver is `tests/review_matrix_browser.py`. Source work holds
+no browser, model or generation allocation.
+
+This advances #1204 without closing its wider setting-axis, other-surface and
+use-case registration scope. See [Review desk](docs/REVIEW-DESK.md). Art, licence,
+runtime and assistive-technology acceptance remain separate;
+[HUMAN_TODO.md](HUMAN_TODO.md) remains authoritative and unchanged.
+
 ## 2026-10-29 — Scene working packs (hosted qualification pending)
 
 Saved Scene briefs now offer **Download working pack** through the existing

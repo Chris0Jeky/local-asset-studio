@@ -171,6 +171,37 @@ class ReviewDesk:
             raise ValueError('Reviewer must be local-user or local-agent; this is a declaration, not authentication')
         return reviewer
 
+    @staticmethod
+    def _grid(document):
+        stages = document['evidence']['plan'].get('stages', [])
+        if not stages or any(not isinstance(s.get('engine'), str) or not s['engine'].strip()
+                             or type(s.get('seed')) is not int or not 0 <= s['seed'] <= 2**63-1 for s in stages):
+            return None
+        # The saved session salt fixes an opaque order across reloads and Reveal,
+        # without publishing the original plan order or a new review state.
+        axes = []
+        for field, prefix in (('engine', 'R'), ('seed', 'C')):
+            values = sorted({s[field] for s in stages}, key=lambda v: digest([document['session_id'], field, v]))
+            axes.append([(value, prefix + str(i + 1)) for i, value in enumerate(values)])
+        rows, columns = axes
+        cells = []
+        for engine, row in rows:
+            for seed, column in columns:
+                positions = {i for i, s in enumerate(stages) if s['engine'] == engine and s['seed'] == seed}
+                runs = []
+                for index in sorted(positions):
+                    record = document['evidence']['stages'][index]
+                    status = record['status']
+                    if status not in ('completed', 'failed', 'cancelled', 'not_started', 'stopped', 'interrupted'):
+                        status = 'unavailable'
+                    if record['job_id'] is None and record['attempt'].get('job_id'):status = 'unavailable'
+                    runs.append({'status': status, 'candidates': [c['alias'] for c in document['candidates'] if c['stage'] == index]})
+                cells.append({'row': row, 'column': column,
+                              'candidates': [c['alias'] for c in document['candidates'] if c['stage'] in positions], 'runs': runs})
+        return {'rows': [{'alias': alias, **({'engine': value} if document['revealed'] else {})} for value, alias in rows],
+                'columns': [{'alias': alias, **({'seed': str(value)} if document['revealed'] else {})} for value, alias in columns],
+                'cells': cells}
+
     def _public(self, identifier, document):
         result = {key: copy.deepcopy(document[key]) for key in
                   ('revision', 'revealed', 'finalized', 'selected', 'notes', 'crop', 'background', 'created_at', 'finalized_by', 'finalized_at')}
@@ -180,6 +211,7 @@ class ReviewDesk:
         scope = character_review.context(document['evidence']['plan'])
         result.update(character_context=scope, character_review=copy.deepcopy(document.get('character_review')))
         result['candidates'] = []
+        result['grid'] = self._grid(document)
         for candidate in document['candidates']:
             item = {'alias': candidate['alias'], 'preview_url': self._url(identifier, candidate['preview_path']),
                     'assessment': copy.deepcopy(candidate['assessment'])}
@@ -191,6 +223,7 @@ class ReviewDesk:
             result['candidates'].append(item)
         if document['revealed']:
             result.update(evidence=copy.deepcopy(document['evidence']), evidence_sha256=document['evidence_sha256'])
+            result['evidence_json'] = json.dumps(document['evidence'], ensure_ascii=False, indent=2)
         with self.production.connect() as db:
             exported = db.execute('SELECT result FROM comparison_review_exports WHERE project_id=? AND revision=?',
                                   (identifier, document['revision'])).fetchone()

@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import patch
 import zipfile
 
-from review_fixture import FixtureStudio, seed
+from review_fixture import FixtureStudio, seed, seed_matrix
 from production import Production, fingerprint
 import review_desk
 from review_desk import ReviewDesk, rating
@@ -61,6 +61,109 @@ class ReviewTests(unittest.TestCase):
         state=self.open();encoded=json.dumps(state)
         for token in ('fixture-job','inert-prompt','original-','graph_sha256','PRIVATE-SEED','asset_id','fixture_recipe','plan','evidence_sha256'):
             self.assertNotIn(token,encoded)
+
+    def test_engine_seed_grid_is_anonymous_then_reveals_recorded_coordinates(self):
+        self.id=seed_matrix(self.studio);blind=self.open()
+        self.assertIsNotNone(blind.get('grid'),'A recorded 3x2 comparison must offer Grid')
+        grid=blind['grid'];self.assertEqual(len(grid['rows']),3);self.assertEqual(len(grid['columns']),2)
+        self.assertEqual(len(grid['cells']),6)
+        self.assertCountEqual([a for cell in grid['cells'] for a in cell['candidates']],list('ABCDEF'))
+        self.assertTrue(all(set(row)=={'alias'} for row in grid['rows']))
+        self.assertTrue(all(set(column)=={'alias'} for column in grid['columns']))
+        for token in ('engine-copper','engine-indigo','engine-jade','712031','915047','Do not derive','original-'):
+            self.assertNotIn(token,json.dumps(blind))
+        self.assertEqual(self.open()['grid'],grid)
+        revealed=self.change('reveal');actual=revealed['grid']
+        rows={r['alias']:r['engine'] for r in actual['rows']};columns={c['alias']:c['seed'] for c in actual['columns']}
+        sources={c['alias']:c['source']['filename'] for c in revealed['candidates']}
+        coordinates={(rows[cell['row']],columns[cell['column']]):[sources[a] for a in cell['candidates']] for cell in actual['cells']}
+        self.assertEqual(coordinates,{('engine-copper','712031'):['original-0.png'],('engine-copper','915047'):['original-1.png'],
+                                     ('engine-indigo','712031'):['original-2.png'],('engine-indigo','915047'):['original-3.png'],
+                                     ('engine-jade','712031'):['original-4.png'],('engine-jade','915047'):['original-5.png']})
+        self.assertEqual([(c['row'],c['column'],c['candidates']) for c in actual['cells']],
+                         [(c['row'],c['column'],c['candidates']) for c in grid['cells']])
+        self.assertTrue(self.studio.queue.empty());self.assertEqual(self.studio.network_calls,0)
+
+    def test_grid_keeps_multiple_outputs_and_truthful_empty_outcomes(self):
+        self.id=seed_matrix(self.studio);project=self.production._get(self.id)
+        jobs=[self.studio.jobs[project['state']['attempts'][str(i)]['job_id']] for i in range(6)]
+        first=jobs[0]['outputs'][0]['asset_id'];second='f'*32
+        self.studio.assets.paths[second]=self.studio.assets.paths[first]
+        self.studio.assets.records[second]={**self.studio.assets.records[first],'id':second,'output_index':1,'filename':'second-output.png'}
+        jobs[0]['outputs'].append({'asset_id':second,'media_type':'image'})
+        for index,status in ((1,'failed'),(2,'cancelled'),(3,'completed')):
+            jobs[index].update(status=status,outputs=[])
+        del project['state']['attempts']['4'];self.production._state(self.id,project['state'])
+        blind=self.open();self.assertEqual(len(blind['candidates']),3)
+        self.assertCountEqual([run['status'] for c in blind['grid']['cells'] for run in c['runs']],
+                              ['completed','failed','cancelled','completed','not_started','completed'])
+        revealed=self.change('reveal');grid=revealed['grid']
+        rows={r['alias']:r['engine'] for r in grid['rows']};columns={c['alias']:c['seed'] for c in grid['columns']}
+        cells={(rows[c['row']],columns[c['column']]):c for c in grid['cells']}
+        self.assertEqual(len(cells['engine-copper','712031']['candidates']),2)
+        self.assertEqual(cells['engine-copper','915047']['runs'],[{'status':'failed','candidates':[]}])
+        self.assertEqual(cells['engine-indigo','712031']['runs'],[{'status':'cancelled','candidates':[]}])
+        self.assertEqual(cells['engine-indigo','915047']['runs'],[{'status':'completed','candidates':[]}])
+        self.assertEqual(cells['engine-jade','712031']['runs'],[{'status':'not_started','candidates':[]}])
+
+    def test_grid_never_guesses_missing_or_invalid_coordinates(self):
+        for fields in ({'engine':'engine-copper'}, {'seed':712031}, {'engine':'','seed':1},
+                       {'engine':['engine-copper'],'seed':1}, {'engine':'engine-copper','seed':True},
+                       {'engine':'engine-copper','seed':'712031'}):
+            with self.subTest(fields=fields):
+                self.id=seed_matrix(self.studio);project=self.production._get(self.id)
+                stage=project['plan']['stages'][0];stage.pop('engine');stage.pop('seed');stage.update(fields)
+                stage['label']='engine-copper seed 712031';stage['request']['controls']['seed']=712031
+                project['plan']['sha256']=fingerprint({k:v for k,v in project['plan'].items() if k!='sha256'})
+                with self.production.connect() as db:db.execute('UPDATE projects SET plan=? WHERE id=?',(json.dumps(project['plan']),self.id))
+                state=self.open();self.assertIsNone(state['grid']);self.assertEqual(len(state['candidates']),6)
+
+    def test_grid_aliases_assessment_and_reveal_survive_restart(self):
+        self.id=seed_matrix(self.studio);before=self.open();alias=before['grid']['cells'][0]['candidates'][0]
+        saved=self.rate(alias,notes='Evidence, not an automatic winner')
+        self.assertEqual(saved['grid'],before['grid']);self.assertFalse(saved['revealed'])
+        self.studio.production=Production(self.studio);self.production=self.studio.production
+        self.assertEqual(self.get(),saved)
+        revealed=self.change('reveal');self.studio.production=Production(self.studio);self.production=self.studio.production
+        self.assertEqual(self.get(),revealed)
+
+    def test_grid_distinguishes_unplanned_positions_and_missing_job_records(self):
+        self.id=seed_matrix(self.studio);project=self.production._get(self.id)
+        project['plan']['stages'][5]['seed']=712031
+        project['plan']['sha256']=fingerprint({k:v for k,v in project['plan'].items() if k!='sha256'})
+        with self.production.connect() as db:db.execute('UPDATE projects SET plan=? WHERE id=?',(json.dumps(project['plan']),self.id))
+        del self.studio.jobs[project['state']['attempts']['1']['job_id']]
+        blind=self.open();self.assertEqual(sum(not c['runs'] for c in blind['grid']['cells']),1)
+        self.assertEqual(sum(r['status']=='unavailable' for c in blind['grid']['cells'] for r in c['runs']),1)
+        revealed=self.change('reveal');grid=revealed['grid']
+        row=next(r['alias'] for r in grid['rows'] if r['engine']=='engine-jade')
+        empty=next(c for c in grid['cells'] if c['row']==row and not c['runs'])
+        self.assertEqual(empty['candidates'],[])
+        retained=next(c for c in grid['cells'] if c['row']==row and c['runs'])
+        self.assertEqual(len(retained['candidates']),2);self.assertEqual(len(retained['runs']),2)
+
+    def test_grid_does_not_relax_live_private_or_revoked_source_refusals(self):
+        self.id=seed_matrix(self.studio);project=self.production._get(self.id)
+        job=self.studio.jobs[project['state']['attempts']['0']['job_id']]
+        for status in ('queued','waiting','submitting','running','uncertain'):
+            job['status']=status
+            with self.subTest(status=status),self.assertRaisesRegex(ValueError,'unresolved'):self.open()
+        job['status']='completed';job['privacy']='private'
+        with self.assertRaisesRegex(ValueError,'Unknown job'):self.open()
+        del job['privacy'];self.open();before=self.get()
+        asset=self.studio.assets.records[job['outputs'][0]['asset_id']];asset['trashed_at']=1
+        with self.assertRaisesRegex(ValueError,'Restore comparison outputs'):self.rate()
+        self.assertEqual(self.get(),before)
+
+    def test_grid_preserves_large_seed_identity_as_exact_json_text(self):
+        self.id=seed_matrix(self.studio);project=self.production._get(self.id)
+        project['plan']['stages'][0]['seed']=9223372036854775807
+        project['plan']['sha256']=fingerprint({k:v for k,v in project['plan'].items() if k!='sha256'})
+        with self.production.connect() as db:db.execute('UPDATE projects SET plan=? WHERE id=?',(json.dumps(project['plan']),self.id))
+        self.open();state=self.change('reveal')
+        self.assertIn('"seed": "9223372036854775807"',json.dumps(state['grid']))
+        self.assertIn('"seed": 9223372036854775807',state.get('evidence_json',''))
+        self.assertEqual(json.loads(state['evidence_json']),state['evidence'])
     def test_blind_previews_strip_embedded_prompt_and_metadata(self):
         from PIL import Image
         self.open()
