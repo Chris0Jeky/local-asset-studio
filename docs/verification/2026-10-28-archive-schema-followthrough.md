@@ -80,3 +80,20 @@ The two read boundaries now require a nonnegative finite Archive timestamp,
 retaining zero as archived and omission as the legacy active summary. No general
 created-at or Trash timestamp contract changes. The original negative fixtures
 now pass, as do all 238 asset tests locally.
+
+## Reviewed ordinary-open action label
+
+Automated review comment 4407208333 identified a real label/action mismatch:
+ordinary `openAsset()` initialized Favorite and Trash, but Archive only gained
+its correct label after receipts or retained-draft recovery. A freshly opened
+archived item could therefore say Archive while dispatching unarchive.
+
+The new shipped-source Node case failed with Archive versus Return to active.
+It covers timestamp zero and positive timestamps, archived/active/archived
+switches without a retained draft, no writes on open, and matching click actions.
+The native driver now reloads before the ordinary archived open and checks both
+switch directions. Its limited local renderer run reproduced the active-item
+mismatch too. One ordinary-open initialization now sets the label from the
+current item's Archive state. All 13 frontend cases and 28 renderer checks pass;
+these renderer checks do not claim native reload/storage acceptance. Fresh
+hosted native platform and full-suite checks remain required on the final head.

@@ -23,6 +23,26 @@ test('Archive view is independent of Trash, source and privacy, and retains off-
   s.el('#assetArchiveFilter').value='all';assert.equal(s.run('assetPageFilters().archive'),'all');
   s.el('#assetArchiveFilter').value='active';assert.equal(s.run("Object.hasOwn(assetPageFilters(),'archive')"),false);
 });
+test('Ordinary detail opens initialize Archive labels from the current asset, not the previous button',async()=>{
+  for(const archived of [0,77]){
+    const s=configured({autoOpen:false});s.el('#assetArchive').textContent='Archive';
+    s.run(`assetState.assets[0].archived_at=${archived};`);
+    assert.equal(s.run('assetRetainedDetail'),null);
+    for(const [id,label] of [['a','Return to active'],['b','Archive'],['a','Return to active']]){
+      assert.equal(s.run(`openAsset('${id}')`),true);
+      assert.equal(s.el('#assetArchive').textContent,label);
+      assert.equal(s.run('assetRetainedDetail'),null,'opening alone must not create a draft');
+      assert.equal(s.writes.length,0,'opening and switching must not mutate either asset');
+      s.el('#closeAssetDialog').onclick();
+    }
+    s.run("openAsset('a')");const unarchive=s.el('#assetArchive').onclick();
+    assert.equal(s.payload(0).action,'unarchive');s.writes[0].resolve(receipt(s,0));await unarchive;
+    s.el('#closeAssetDialog').onclick();s.run("openAsset('b')");
+    assert.equal(s.el('#assetArchive').textContent,'Archive');
+    const archive=s.el('#assetArchive').onclick();assert.equal(s.payload(1).action,'archive');
+    s.writes[1].resolve(receipt(s,1));await archive;
+  }
+});
 test('Archiving preserves the open dirty draft, collection state and original request identity',async()=>{
   const s=configured();s.el('#assetNotes').value='unsaved before archive';s.el('#assetNotes').emit('input');
   const done=s.el('#assetArchive').onclick();assert.equal(s.writes.length,1);
