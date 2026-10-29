@@ -61,7 +61,7 @@ diagnostics go to stderr. It waits for the host's MCP handshake, not keyboard in
 | Mode | Tools available | Deliberately absent |
 | --- | --- | --- |
 | `read` (default) | Capabilities, recipe catalog, paged installed nodes, saved list/read/history, edit preview, graph check, job observation | Document commits, reference staging, generation |
-| `author` | All read tools plus document create/apply/restore/fork | Recipe preparation and execution |
+| `author` | All read tools plus document create/apply/restore/fork and reviewed Archive apply | Recipe preparation and execution |
 | `execute` | All author tools plus registered-recipe prepare/run | Raw graph execution, arbitrary HTTP, shell/eval, model installs, environment switching, global interrupt |
 
 Both tool listing and dispatch enforce the mode. MCP annotations are descriptive
@@ -247,3 +247,19 @@ move or delete a collection or its members.
 
 See [collection discovery](COLLECTION-DISCOVERY.md) for SDK/CLI examples, response
 validation, pagination and privacy limits.
+
+
+### Put reviewed finished assets away without moving files
+
+`asset_archive_preview` observes 1–200 explicit IDs once and returns a hash-bound
+review document. Persist it before approval. `asset_archive_apply` is author-only
+and changes only Archive state through the existing revisioned Workspace owner;
+`asset_archive_recover` is read-only and inspects the original receipt without
+replaying. Private/All scope is explicit and retained. No automatic paging,
+revision refresh, generic metadata writes, file moves or generation is added.
+
+Use the **inner plan's `plan_sha256`**, not the envelope's `data_sha256`, for
+`approved_plan_sha256`. Hash matching is not independent human authorization.
+The immutable receipt and at-most-ten current rows are separate; inspect
+`current_complete` before treating the observation as a complete selection.
+See [reviewed agent Archive](AGENT-ARCHIVE.md) for the full flow and SDK/CLI usage.
