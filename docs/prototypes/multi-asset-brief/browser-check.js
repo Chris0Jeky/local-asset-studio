@@ -10,7 +10,10 @@
   const stored = () => JSON.parse(localStorage.getItem(key));
   await click('#reset'); await click('#confirmReset');
   check('Initial six slots, four missing', q('.slots').querySelectorAll('.slot-row').length === 6 && q('#gapCount').textContent === '4');
-  await click('a[href="#/slot/background/library"]'); input('#assetSearch','moon');
+  await click('.skip'); input('[data-slot-field="intent"]','Edited after keyboard skip');
+  check('Skip link preserves active slot and subsequent edits', location.hash === '#/slot/background' && stored().slots.background.intent === 'Edited after keyboard skip');
+  await click('a[href="#/slot/background/library"]'); await click('.skip'); input('#assetSearch','moon');
+  check('Skip link preserves Library route and search controls', location.hash === '#/slot/background/library');
   check('Library search narrows same-kind sample page', q('.library-grid').children.length === 1);
   await click('[data-choose="marsh-moon"]');
   check('Replacement returns to original slot', location.hash === '#/slot/background' && stored().slots.background.assetId === 'marsh-moon');

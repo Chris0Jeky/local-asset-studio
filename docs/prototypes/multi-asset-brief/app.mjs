@@ -156,7 +156,9 @@ $('#confirmReset').addEventListener('click', () => {
   Object.keys(searches).forEach(k => delete searches[k]); Object.keys(libraryModes).forEach(k => delete libraryModes[k]);
   persist(); $('#resetDialog').close(); go('/slot/background', notice);
 });
-window.addEventListener('hashchange', () => { if (location.hash === '#main') { $('#main').focus(); return; } render(); $('#main').focus({preventScroll:true}); announce('View changed. Your brief is retained.'); });
+// Focus navigation must not replace the hash that owns the active slot and handoff.
+$('.skip').addEventListener('click', event => { event.preventDefault(); $('#main').focus(); $('#main').scrollIntoView(); });
+window.addEventListener('hashchange', () => { render(); $('#main').focus({preventScroll:true}); announce('View changed. Your brief is retained.'); });
 window.addEventListener('storage', event => {
   if (event.key !== storageKey) return;
   preserveSaved = true; storageProblem = 'Another tab changed this demo. This tab will not overwrite it. Download your edits, then reload to read the saved draft.'; persist();
