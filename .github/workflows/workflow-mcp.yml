@@ -49,6 +49,8 @@ jobs:
       - run: python -m unittest discover -s tests -p test_collection_read_client.py -v
       - run: python -m unittest discover -s tests -p test_workflow_collection_reads.py -v
       - run: python -m unittest discover -s tests -p test_workflow_collection_mcp.py -v
+      - name: Reviewed Archive client, bridge and actual SDK/stdio
+        run: python -m unittest discover -s tests -p "test_workflow_asset_archive_*.py" -v
       - run: python -m unittest discover -s tests -p test_workflow_setup_history_mcp.py -v
       - run: python -m unittest discover -s tests -p test_workflow_asset_reads.py -v
       - run: python -m unittest discover -s tests -p test_workflow_saved_run_clients.py -v

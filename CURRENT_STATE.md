@@ -28,6 +28,28 @@ PR's exact-head checks for supported-runner qualification and Git for merge stat
 No runtime, model, generation, native render, art or licence acceptance occurred.
 `HUMAN_TODO.md` remains unchanged.
 
+## 2026-10-29 — reviewed Archive for agents (qualification pending)
+
+Adds bounded Archive preview/apply/recover through Python, CLI and MCP, reusing
+the existing Workspace HTTP/SQLite owner. Persisted review evidence binds explicit
+IDs, scope, request identity and metadata revisions; apply requires the exact
+inner plan hash. Missing targets and stale edits refuse the batch. Unknown replies
+retain the original plan and recover without automatic writes or revision refresh.
+Read mode exposes preview/recover; author/execute may apply. Original media,
+privacy, Trash and unrelated metadata stay untouched. See
+[agent Archive](docs/workflow-studio/AGENT-ARCHIVE.md).
+
+Initial local evidence: 15 client and five bridge tests pass against real
+HTTP/SQLite, including dropped acknowledgements, private scope, false no-op
+receipt refusal and bounded current metadata. Optional SDK is absent locally;
+Linux/Windows actual SDK/stdio and final-head full-suite CI remain required.
+This dated entry is not merge approval; the PR records later qualification.
+
+The independent Lantern Marsh prototype and Archive closeout below are preserved.
+Physical privacy migration remains #1678; broader agent parity remains #123.
+No GPU/model run, runtime change, owner media, human creative/licensing acceptance
+or `HUMAN_TODO.md` completion is claimed.
+
 ## 2026-10-29 — multi-asset brief prototype (synthetic, separate preview)
 
 The [Lantern Marsh prototype](docs/prototypes/multi-asset-brief/README.md) connects

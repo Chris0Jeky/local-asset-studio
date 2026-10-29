@@ -98,10 +98,14 @@ def _summary(asset, privacy='regular'):
 class AssetReadClient(Client):
     """A thin strict client; current metadata commands remain separate APIs."""
 
-    def _observe(self, path, body=None):
+    def _observe(self, path, body=None, *, privacy=None):
+        headers = {'Origin': self.base, 'Content-Type': 'application/json', 'Accept': 'application/json'}
+        if privacy is not None:
+            contract.privacy_scope(privacy)
+            headers['X-Studio-Privacy'] = privacy
         raw = canonical(body) if body is not None else None
         request = Request(self.base + path, data=raw,
-                          headers={'Origin': self.base, 'Content-Type': 'application/json', 'Accept': 'application/json'})
+                          headers=headers)
         try:
             with self.opener.open(request, timeout=self.timeout) as response:
                 _need(response.status == 200, 'Unexpected asset observation HTTP status')
