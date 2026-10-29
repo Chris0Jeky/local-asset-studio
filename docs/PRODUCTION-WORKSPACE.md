@@ -19,7 +19,7 @@ For the live PR/issue inventory, merged-work map and issue-closure decisions, se
 | Native 2K concepts or restyles | Switch to HiDream O1 | Eight-step audition, then optional higher-step variants |
 | Animate a still | Wan 2.2 Animate Image | Short audition, motion prompt, seed, frame count |
 | Organize useful results | Workspace | Collections, favorites, tags, notes, search, recoverable Trash |
-| Compare variations | Plan comparison | One numeric axis, at most four candidates, shared branch allowance |
+| Compare variations | Plan comparison | One setting or two positive wordings, shared branch allowance |
 | Edit layers in Krita | Workspace → Create native export | ORA/Krita format, top-first layer order and names |
 | Test a sprite in Godot | Workspace → Create native export | Order, individual frame timings, common anchor, filtering, loop |
 | Build a hinged blockout | Experiments → Build an articulated prop | Body/lid dimensions; editable BLEND, animated GLB and inspection views |
@@ -33,6 +33,21 @@ Image imports and native exports do not need the GPU. Source packs retain the
 original files, generation recipes, names/hashes and application reports. Selected
 whole images become flat layers; the Krita route does not automatically segment
 an illustration into body parts or infer masks.
+
+## Compare two wordings
+
+Open **Plan comparison** from the captured Full editor recipe and choose **Two
+wordings**. Wording A starts with the recipe's positive text; edit both texts before
+preparing. The dialog shows the shared fixed seed and the two-run allowance. Both
+candidates retain the negative text, references, dimensions and other settings.
+Changing modes keeps the setting and wording drafts. Cancelling closes this
+comparison; reopening starts a fresh one from the current recipe.
+
+**Prepare plan** validates and saves two labelled candidates. **Start comparison**
+is a separate action. Blank or duplicate wording, unsupported positive-text or
+seed controls, unresolved wildcards and insufficient shared allowance refuse
+preparation without clearing the open draft. Completed outputs use the existing
+anonymous Review desk and its recorded **Reveal** action.
 
 ## Incomplete project storage
 

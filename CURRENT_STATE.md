@@ -1,5 +1,23 @@
 # Current state — 29 October 2026
 
+## 2026-10-29 — Two wordings at one captured seed
+
+The comparison dialog offers **One setting / Two wordings**. The wording route
+prepares exactly two positive-text variants through the existing production API,
+with a shared fixed seed, recipe, references, negative text and other controls.
+It shows the two-run allowance and shared reservations before preparation; Start
+comparison remains explicit. Mode switches retain both drafts, and late planner
+or preparation replies cannot replace the current draft.
+
+The focused production, planner and frontend checks pass, including saved graphs
+whose only differences are the positive-text bindings, maximum 64-bit seed
+identity, frozen reference bytes and zero generation submissions. One independent
+source review found no confirmed blocker. Browser/journey proof and the full
+supported-runner suite/validator remain pending qualification; consult the PR's
+current-head evidence. No live model, rendering or artistic acceptance is claimed.
+See [comparison instructions](docs/PRODUCTION-WORKSPACE.md#compare-two-wordings)
+and the unchanged [owner actions](HUMAN_TODO.md).
+
 ## 2026-10-29 — Review desk engine-by-seed grid
 
 Prepared Review desk sessions can switch between Pair and Grid when every saved

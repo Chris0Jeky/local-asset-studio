@@ -2,6 +2,7 @@ let productionPlans=[], productionId=null, productionSignature='', productionRef
 let comparisonRecipe=null, comparisonParent=null, nativeAssets=[], blindComparison=true;
 let plannedVariants=null, plannerAxes=[], plannerAxisIds=[];
 let plannerWithheld=[], plannerNotice='', plannerRequestId=0;
+let comparisonPositive=false, comparisonSeed='', comparisonPreparing=false;
 // Stored plan names are identity: the plan file, its fingerprint and every
 // receipt keep the name a study was created with.  These helpers only make the
 // list and the detail header readable, and never write a name back.
@@ -180,6 +181,8 @@ async function openComparison(parent=null){
   if(!selected)return;++plannerRequestId;comparisonParent=parent;
   uploaded=(await uploadInput('reference'))||uploaded;lastUploaded=(await uploadInput('lastReference'))||lastUploaded;
   comparisonRecipe={preset_id:selected.id,...continuationPayload(),controls:values(),references:attachedReferencePayload(),parent_assets:[...parentAssets],expected_template_sha256:recipeTemplateHash};
+  comparisonPositive=!!selected.positive;comparisonSeed=selected.seed?String(comparisonRecipe.controls.seed??selected.defaults?.seed??''):'';
+  $('#experimentMode').value='setting';$('#experimentWordingA').value=comparisonRecipe.controls.positive||'';$('#experimentWordingB').value='';
   const axes=[['seed','Seed'],['lora','LoRA strength'],['cfg','Guidance'],['steps','Steps'],['denoise','Denoise']].filter(([key])=>selected[key]&&!(key==='lora'&&typeof selected.defaults?.lora==='string'));
   $('#experimentRecipe').textContent=selected.name;$('#experimentName').value=parent?'Branch · '+parent.name:selected.name+' · comparison';
   $('#experimentAxis').innerHTML=axes.map(([id,label])=>'<option value="'+id+'">'+label+'</option>').join('')||'<option value="">No single numeric setting on this recipe</option>';
@@ -221,16 +224,19 @@ function variantChanges(variant,base){
   return Object.keys(controls).sort().filter(key=>!PLANNER_PROSE.has(key)&&String(controls[key])!==String(from[key]??'')&&!stated(key)).map(key=>key+'='+controls[key]);
 }
 function renderPlanner(resizeBudget=true){
-  const planned=plannedVariants||[];
+  const wordings=comparingWordings(),planned=wordings?[]:plannedVariants||[];
+  $('#experimentSettings').hidden=wordings;$('#experimentWordings').hidden=!wordings;
+  $('#plannerBlock').hidden=wordings;$('#experimentDialog').classList.toggle('wording-comparison',wordings);
+  for(const id of ['experimentWordingA','experimentWordingB']){$('#'+id).required=wordings;$('#'+id).disabled=!wordings;}
   $('#plannerLimits').innerHTML=(plannerWithheld.length?'<p><b>Settings unavailable for this recipe</b></p><ul>'+plannerWithheld.map(a=>{const slots=a.accelerator_slots||[];return '<li><b>'+esc(a.id)+'</b>: '+esc(a.message)+(slots.length?' ('+esc(slots.join(', '))+')':'')+'</li>';}).join('')+'</ul>':'')+(plannerNotice?'<p>'+esc(plannerNotice)+'</p>':'');
   $('#plannerAxes').innerHTML=plannerAxes.length?'<small>Settings to vary</small>'+plannerAxes.map(a=>'<label class="planner-axis"><input type="checkbox" value="'+esc(a.id)+'" '+(plannerAxisIds.includes(a.id)?'checked':'')+'> '+esc(a.id)+' · '+esc(a.values.join(', '))+'</label>').join(''):'';
   $('#plannedVariants').innerHTML=planned.map((v,i)=>{const changes=variantChanges(v,comparisonRecipe?.controls);
     return '<article class="planned-variant"><b>'+esc(v.label)+'</b><button type="button" data-drop-variant="'+i+'" aria-label="Remove variant '+esc(v.label)+'">✕</button>'+(changes.length?'<small>'+esc(changes.join(', '))+'</small>':'')+(v.rationale?'<p class="muted">'+esc(v.rationale)+'</p>':'')+(v.sources||[]).map(s=>'<a href="'+safeUrl(s)+'" target="_blank" rel="noreferrer">source ↗</a>').join(' ')+'</article>';}).join('');
   $('#clearPlanned').hidden=!planned.length;
-  $('#experimentValues').required=!planned.length;$('#experimentValues').disabled=!!planned.length;
-  $('#experimentAxis').disabled=!!planned.length||!$('#experimentAxis').value;
+  $('#experimentValues').required=!wordings&&!planned.length;$('#experimentValues').disabled=wordings||!!planned.length;
+  $('#experimentAxis').disabled=wordings||!!planned.length||!$('#experimentAxis').value;
   if(resizeBudget&&planned.length&&!comparisonParent)sizeBudgetToCandidates();
-  $('#prepareExperiment').disabled=!planned.length&&!$('#experimentAxis').value;
+  $('#prepareExperiment').disabled=comparisonPreparing||(wordings?!!wordingProblem():!planned.length&&!$('#experimentAxis').value);
   if(planned.length&&$('#plannerAdvanced'))$('#plannerAdvanced').open=true;
   renderPlannerSummary();
 }
@@ -248,26 +254,37 @@ function measuredRunSeconds(){
 function estimatePending(){return /calculating/i.test(String($('#estimateValue')?.textContent||''));}
 let plannerSummaryRetry=0;
 function plannedValues(){return String($('#experimentValues').value||'').split(',').map(v=>v.trim()).filter(Boolean);}
+function comparingWordings(){return $('#experimentMode').value==='wordings';}
+function wordingProblem(){
+  if(!comparisonPositive)return 'This recipe has no editable positive wording. Choose a recipe with a positive prompt in Full editor.';
+  if(!/^\d+$/.test(comparisonSeed)||BigInt(comparisonSeed)>9223372036854775807n)return 'Set a fixed whole-number seed in Full editor before comparing two wordings.';
+  const a=$('#experimentWordingA').value,b=$('#experimentWordingB').value;
+  if(!a.trim()||!b.trim())return 'Enter both wordings before preparing the plan.';
+  if(a.length>8000||b.length>8000)return 'Each wording must be text up to 8000 characters.';
+  if(a.trim()===b.trim())return 'Use two different wordings; these differ only in surrounding space or are identical.';
+  const remaining=comparisonParent?comparisonParent.budget.allowance-comparisonParent.budget.reserved:Number($('#experimentBudget').value)||0;
+  return remaining<2?'Two wordings need 2 runs; only '+remaining+' remain in this budget.':'';
+}
 function renderPlannerSummary(){
   const summary=$('#experimentSummary'),note=$('#experimentBudgetNote');
   if(!summary)return;
-  const planned=plannedVariants||[],recipe=$('#experimentRecipe').textContent||'this recipe';
-  const axis=$('#experimentAxis').value,values=plannedValues(),candidates=planned.length||values.length;
+  const wordings=comparingWordings(),planned=wordings?[]:plannedVariants||[],recipe=$('#experimentRecipe').textContent||'this recipe';
+  const axis=$('#experimentAxis').value,values=plannedValues(),candidates=wordings?2:planned.length||values.length;
   const reserved=Number($('#experimentBudget').value)||0,per=measuredRunSeconds();
-  const what=planned.length?planned.length+' planned variants from the settings library':axis&&values.length?'Compare '+axis+' = '+values.join(', '):'Choose one setting and the values to compare';
+  const what=wordings?'Compare two wordings at shared seed '+(comparisonSeed||'(not fixed)'):planned.length?planned.length+' planned variants from the settings library':axis&&values.length?'Compare '+axis+' = '+values.join(', '):'Choose one setting and the values to compare';
   const pending=estimatePending(),batch=Math.max(1,Number($('#batch')?.value)||1);
   const time=!candidates?'':per?', about '+Math.max(1,Math.round(candidates*per/60))+' min at roughly '+(per/60).toFixed(1)+' min per run'+(batch>1?' (Create’s estimate for '+batch+' outputs, shared out)':' measured in Full editor'):pending?', timing still being measured':', no measured time for this recipe yet';
   summary.textContent=candidates?what+' on '+recipe+' → '+candidates+' graph run'+(candidates===1?'':'s')+time+'.':what+' on '+recipe+'.';
   // The estimator debounces and fetches; a summary opened mid-flight re-reads once it settles.
   if(typeof setTimeout==='function'){clearTimeout(plannerSummaryRetry);if(pending&&$('#experimentDialog')?.open!==false)plannerSummaryRetry=setTimeout(renderPlannerSummary,600);}
   if(note){
-    note.textContent=candidates?candidates+(planned.length?' variants':' values')+' × 1 seed = '+candidates+' run'+(candidates===1?'':'s')+'; '+reserved+' reserved. At least '+candidates+' must be reserved to prepare this study.'+(reserved<candidates?' Raise the total to at least '+candidates+'.':''):'';
-    note.classList.toggle('error',!!candidates&&reserved<candidates);
+    note.textContent=wordings?'2 wordings × 1 seed = 2 runs; '+reserved+' total allowance, '+(comparisonParent?.budget.reserved||0)+' already reserved. Both candidates share the recipe, references, negative prompt and other settings. Prepare saves the plan; Start comparison is separate.':candidates?candidates+(planned.length?' variants':' values')+' × 1 seed = '+candidates+' run'+(candidates===1?'':'s')+'; '+reserved+' reserved. At least '+candidates+' must be reserved to prepare this study.'+(reserved<candidates?' Raise the total to at least '+candidates+'.':''):'';
+    note.classList.toggle('error',wordings?!!wordingProblem():!!candidates&&reserved<candidates);
   }
   $('#experimentBudget').setCustomValidity?.(candidates&&reserved<candidates?'Reserve at least '+candidates+' graph runs for '+candidates+' candidates.':'');
 }
 async function requestPlan(mode){
-  if(!comparisonRecipe)return;
+  if(!comparisonRecipe||comparingWordings())return;
   const ticket=++plannerRequestId,recipe=comparisonRecipe,snapshot=JSON.stringify(recipe);
   const current=()=>ticket===plannerRequestId&&comparisonRecipe===recipe&&JSON.stringify(recipe)===snapshot&&$('#experimentDialog').open;
   $('#experimentStatus').textContent='Reading the documented settings for this family…';
@@ -291,19 +308,31 @@ function suggestComparisonValues(){const axis=$('#experimentAxis').value,value=N
 // The planner must not propose candidates it then refuses to run: the allowance follows its own
 // proposal. It only ever rises, so a total the operator raised is never reduced, and a branch that
 // shares its parent's budget (a disabled allowance) is left alone (#278 friction 5).
-function sizeBudgetToCandidates(){const field=$('#experimentBudget');if(!field||field.disabled)return;const need=(plannedVariants||[]).length||plannedValues().length;if(need>(Number(field.value)||0))field.value=need;}
+function sizeBudgetToCandidates(){const field=$('#experimentBudget');if(!field||field.disabled)return;const need=comparingWordings()?2:(plannedVariants||[]).length||plannedValues().length;if(need>(Number(field.value)||0))field.value=need;}
+function wordingDraftChanged(){++plannerRequestId;renderPlanner(false);$('#experimentStatus').textContent=comparingWordings()?wordingProblem()||'Only the positive wording changes. Prepare the plan when both texts are ready.':'Your setting comparison is retained. Nothing was submitted.';}
+$('#experimentMode').onchange=wordingDraftChanged;
+$('#experimentWordingA').oninput=wordingDraftChanged;$('#experimentWordingB').oninput=wordingDraftChanged;
+$('#experimentForm').oninput=()=>{++plannerRequestId;if(comparisonPreparing)$('#experimentStatus').textContent='Draft changed. The earlier plan may still be saved, but it will not start.';else if(!comparingWordings())$('#experimentStatus').textContent='Your comparison draft is retained. Prepare the plan when it is ready.';};
+$('#experimentDialog').onclose=()=>{++plannerRequestId;};
 $('#experimentAxis').onchange=()=>{suggestComparisonValues();sizeBudgetToCandidates();renderPlannerSummary();};$('#cancelExperiment').onclick=()=>{++plannerRequestId;$('#experimentDialog').close();};
-$('#experimentValues').oninput=renderPlannerSummary;$('#experimentBudget').oninput=renderPlannerSummary;
+$('#experimentValues').oninput=renderPlannerSummary;$('#experimentBudget').oninput=()=>comparingWordings()?wordingDraftChanged():renderPlannerSummary();
 $('#newExperiment').onclick=()=>openComparison().catch(e=>productionMessage(e.message,true));
 $('#planComparison').onclick=()=>openComparison().catch(e=>message(e.message,true));
 $('#refreshProduction').onclick=()=>refreshProduction(true);
-$('#experimentForm').onsubmit=async e=>{e.preventDefault();$('#prepareExperiment').disabled=true;$('#experimentStatus').textContent='Checking the recipe and local model fingerprints…';try{
+$('#experimentForm').onsubmit=async e=>{e.preventDefault();if(comparisonPreparing)return;
+  if(comparingWordings()&&wordingProblem()){$('#experimentStatus').textContent=wordingProblem();return;}
+  const ticket=++plannerRequestId,recipe=comparisonRecipe,current=()=>ticket===plannerRequestId&&comparisonRecipe===recipe&&$('#experimentDialog').open;
+  comparisonPreparing=true;$('#prepareExperiment').disabled=true;$('#experimentStatus').textContent='Checking the recipe and local model fingerprints…';try{
   const intent={name:$('#experimentName').value,recipe:comparisonRecipe,max_generations:Number($('#experimentBudget').value),max_seconds:Number($('#experimentMinutes').value)*60,parent_project:comparisonParent?.id};
-  if(plannedVariants&&plannedVariants.length)intent.variants=plannedVariants.map(v=>({label:v.label,controls:v.controls,rationale:v.rationale||'',sources:v.sources||[]}));
+  if(comparingWordings()){
+    intent.recipe={...comparisonRecipe,controls:{...comparisonRecipe.controls,seed:comparisonSeed}};
+    intent.variants=[{label:'Wording A',controls:{positive:$('#experimentWordingA').value}},{label:'Wording B',controls:{positive:$('#experimentWordingB').value}}];
+  }else if(plannedVariants&&plannedVariants.length)intent.variants=plannedVariants.map(v=>({label:v.label,controls:v.controls,rationale:v.rationale||'',sources:v.sources||[]}));
   else{intent.axis=$('#experimentAxis').value;intent.values=$('#experimentValues').value.split(',').map(v=>v.trim()).filter(Boolean);}
   const p=await post('/api/production',intent);
+  if(!current())return;
   productionId=p.id;$('#experimentDialog').close();showView('production');await refreshProduction(true);
-}catch(err){$('#experimentStatus').textContent=err.message;}finally{$('#prepareExperiment').disabled=false;}};
+}catch(err){if(current())$('#experimentStatus').textContent=err.message;}finally{comparisonPreparing=false;renderPlanner(false);}};
 // The empty state hands the operator the same route the header button uses:
 // Create, with the recipe that is already open, then the planner. It starts nothing.
 function planFromEmptyState(){
