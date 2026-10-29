@@ -1,0 +1,84 @@
+name: Reviewed agent Archive source qualification
+on:
+  push:
+    branches: [codex/storage-resume-source-20261029]
+    paths: ['.github/workflows/qualify-agent-archive.yml']
+permissions:
+  contents: write
+jobs:
+  objects:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: transport
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 97d5d2c106804ed3b7e1dd7c280401f09de65ab4
+          path: source
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Reconstruct exactly the reviewed source tree
+        run: |
+          python - <<'PY'
+          import base64,gzip,hashlib,pathlib,subprocess
+          encoded=''.join((pathlib.Path('transport/.github/qualification')/('agent-archive-part-'+str(i))).read_text() for i in range(1,5))
+          # Correct one identified transport transcription, never application bytes.
+          encoded=encoded.replace('GXT88cPB','GXT88PB',1)
+          assert len(encoded)==23824
+          packed=base64.b64decode(encoded,validate=True)
+          assert hashlib.sha256(packed).hexdigest()=='b5f584c5120c898971dbfb0a56cb9b66167335243a3f139f543aa0670e65b346'
+          patch=gzip.decompress(packed)
+          assert hashlib.sha256(patch).hexdigest()=='1afa92019a7e7887a474962088d56f6c4044583f900e9b5729886dd6a5673c98'
+          pathlib.Path('reviewed-agent-archive.patch').write_bytes(patch)
+          def git(*args):return subprocess.check_output(['git',*args],cwd='source').decode().strip()
+          assert git('rev-parse','HEAD')=='97d5d2c106804ed3b7e1dd7c280401f09de65ab4'
+          git('apply','--index','--check','../reviewed-agent-archive.patch')
+          git('apply','--index','../reviewed-agent-archive.patch')
+          git('diff','--cached','--check')
+          assert git('write-tree')=='649b2b289c74aa47cce8cb11d6e7e711d37e9d82'
+          PY
+      - name: Install isolated runner protocol dependencies
+        working-directory: source
+        run: python -m pip install -r integrations/workflow-mcp/requirements.txt -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - name: Require SDK and exercise reviewed Archive end to end
+        working-directory: source
+        run: |
+          python -c "import mcp; import importlib.metadata; assert importlib.metadata.version('mcp') == '1.30.0'"
+          python -m unittest discover -s tests -p 'test_workflow_asset_archive_*.py' -v
+          python scripts/validate-repo.py
+      - name: Publish verified blobs only, no branch or workflow tree writes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import base64,json,pathlib,subprocess
+          def git(*args):return subprocess.check_output(['git',*args],cwd='source')
+          paths=git('diff','--cached','--name-only').decode().splitlines()
+          assert len(paths)==12
+          assert all(p in ('CURRENT_STATE.md','.github/workflows/workflow-mcp.yml') or p.startswith(('docs/','studio_workflow/','tests/test_workflow_asset_archive_')) for p in paths)
+          entries=[]
+          for path in paths:
+              sha=git('rev-parse',':'+path).decode().strip();data=git('cat-file','blob',sha)
+              payload={'content':base64.b64encode(data).decode(),'encoding':'base64'}
+              result=json.loads(subprocess.check_output(['gh','api','--method','POST','repos/Chris0Jeky/local-asset-studio/git/blobs','--input','-'],input=json.dumps(payload).encode()))
+              assert result['sha']==sha
+              entries.append({'path':path,'mode':'100644','type':'blob','sha':sha})
+          receipt={'tree':'649b2b289c74aa47cce8cb11d6e7e711d37e9d82','parent':'97d5d2c106804ed3b7e1dd7c280401f09de65ab4','entries':entries,'branch_moved':False}
+          pathlib.Path('publication.json').write_text(json.dumps(receipt,indent=2)+'\n')
+          print(json.dumps(receipt,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reviewed-agent-archive-publication
+          path: |
+            publication.json
+            reviewed-agent-archive.patch
+            transport/.github/qualification/agent-archive-part-*
+          if-no-files-found: error
+          retention-days: 2
