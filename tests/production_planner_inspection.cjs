@@ -6,7 +6,7 @@ const $ = selector => {
   if(selector === '#plannerBlock') return mounted;
   if(!elements.has(selector)) elements.set(selector, {innerHTML:'', textContent:'', value:'', open:true,
     disabled:false, hidden:false, classList:{toggle(){}}, querySelectorAll:()=>[],
-    before(element){mounted = element;}, close(){this.open = false;}});
+    before(element){mounted = element;}, showModal(){this.open = true;}, close(){this.open = false;this.onclose?.();}});
   return elements.get(selector);
 };
 const esc = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -65,5 +65,78 @@ const inspect = {mode:'inspect', variants:[], axes_available:[], axes_withheld:[
   assert.equal(run('JSON.stringify(plannedVariants)'), JSON.stringify(saved));
   assert.equal($('#experimentStatus').textContent, 'Inspection unavailable');
   assert.doesNotMatch($('#plannerLimits').innerHTML, /&lt;script&gt;/, 'Stale reasons must not survive a failed read');
+  // Two wordings use the same captured recipe and only override positive text.
+  ctx.selected={id:'fixture',name:'Lantern recipe',positive:true,seed:true,defaults:{seed:7}};
+  ctx.uploadInput=async()=>null;ctx.uploaded=null;ctx.lastUploaded=null;
+  ctx.continuationPayload=()=>({});ctx.attachedReferencePayload=()=>[{reference_id:'pose',file:'retained.png'}];
+  ctx.parentAssets=['source-asset'];ctx.recipeTemplateHash='a'.repeat(64);
+  const captured={positive:'A lantern in rain',negative:'text, watermark',seed:'9223372036854775807',width:'512',steps:'8'};
+  ctx.values=()=>({...captured});
+  await run('openComparison()');
+  assert.equal(typeof $('#experimentMode').onchange,'function','The existing dialog must offer a working Two wordings mode');
+  $('#experimentMode').value='wordings';$('#experimentMode').onchange();
+  assert.equal($('#experimentWordingA').value,captured.positive);
+  $('#experimentWordingB').value='Rain glows around a lantern';$('#experimentWordingB').oninput();
+  assert.match($('#experimentSummary').textContent,/9223372036854775807/,'Shared seed digits remain exact');
+  assert.match($('#experimentBudgetNote').textContent,/2 wordings.*1 seed.*2 runs/);
+  assert.equal(requests.length,0,'Opening, switching and editing never prepares or generates');
+  wait=$('#experimentForm').onsubmit({preventDefault(){}});
+  const prepared=requests.shift();assert.equal(prepared.url,'/api/production');
+  assert.deepEqual(JSON.parse(JSON.stringify(prepared.body.recipe.controls)),captured);
+  assert.deepEqual(JSON.parse(JSON.stringify(prepared.body.variants)),[
+    {label:'Wording A',controls:{positive:'A lantern in rain'}},
+    {label:'Wording B',controls:{positive:'Rain glows around a lantern'}}]);
+  assert.deepEqual(JSON.parse(JSON.stringify(prepared.body.recipe.references)),[{reference_id:'pose',file:'retained.png'}]);
+  assert.deepEqual(JSON.parse(JSON.stringify(prepared.body.recipe.parent_assets)),['source-asset']);
+  prepared.resolve({id:'prepared-wordings'});await wait;
+  assert.equal(requests.length,0,'Preparing leaves Start comparison as a separate explicit action');
+
+  await run('openComparison()');
+  $('#experimentAxis').value='seed';$('#experimentValues').value='7, 8';
+  wait=run('requestPlan("grid")');const oldNumeric=requests.shift();
+  $('#experimentMode').value='wordings';$('#experimentMode').onchange();
+  $('#experimentWordingA').value='Edited A';$('#experimentWordingB').value='Edited B';$('#experimentWordingB').oninput();
+  oldNumeric.resolve({mode:'grid',variants:[{label:'Late numeric',controls:{seed:99}}],axes_available:[]});await wait;
+  assert.equal(run('plannedVariants'),null,'A superseded numeric offer cannot enter a wording draft');
+  assert.equal($('#experimentWordingA').value,'Edited A');assert.equal($('#experimentWordingB').value,'Edited B');
+  await run('requestPlan("grid")');assert.equal(requests.length,0,'Hidden numeric actions cannot send a wording draft to the settings planner');
+  $('#experimentMode').value='setting';$('#experimentMode').onchange();
+  assert.equal($('#experimentValues').value,'7, 8','Switching preserves the numeric draft');
+  $('#experimentMode').value='wordings';$('#experimentMode').onchange();
+  assert.equal($('#experimentWordingA').value,'Edited A');assert.equal($('#experimentWordingB').value,'Edited B');
+
+  for(const invalid of ['', '   ', ' Edited A ', 'x'.repeat(8001)]){
+    $('#experimentWordingB').value=invalid;$('#experimentWordingB').oninput();
+    await $('#experimentForm').onsubmit({preventDefault(){}});
+    assert.equal(requests.length,0,'Blank, duplicate and oversized wordings cannot prepare');
+    assert.equal($('#experimentWordingB').value,invalid,'Refusal retains the draft');
+    assert.equal($('#prepareExperiment').disabled,true);
+  }
+  $('#experimentWordingB').value='Edited B';$('#experimentWordingB').oninput();
+  run('comparisonParent={id:"parent",budget:{allowance:4,reserved:3}}');$('#experimentBudget').disabled=true;
+  $('#experimentMode').onchange();await $('#experimentForm').onsubmit({preventDefault(){}});
+  assert.equal(requests.length,0);assert.match($('#experimentStatus').textContent,/only 1 remain/,'Shared reservations reduce the available budget');
+  run('comparisonParent=null');$('#experimentBudget').disabled=false;
+  run('comparisonPositive=false');$('#experimentMode').onchange();
+  await $('#experimentForm').onsubmit({preventDefault(){}});assert.equal(requests.length,0);
+  assert.match($('#experimentStatus').textContent,/no editable positive wording/);
+  run('comparisonPositive=true;comparisonSeed="-1"');$('#experimentMode').onchange();
+  await $('#experimentForm').onsubmit({preventDefault(){}});assert.equal(requests.length,0);
+  assert.match($('#experimentStatus').textContent,/fixed whole-number seed/);
+  run('comparisonSeed="7"');$('#experimentMode').onchange();
+  wait=$('#experimentForm').onsubmit({preventDefault(){}});const refused=requests.shift();
+  refused.reject(new Error('Resolve prompt wildcards before planning'));await wait;
+  assert.equal($('#experimentWordingA').value,'Edited A');assert.equal($('#experimentWordingB').value,'Edited B');
+  assert.match($('#experimentStatus').textContent,/Resolve prompt wildcards/,'Server validation remains visible without losing either wording');
+
+  wait=$('#experimentForm').onsubmit({preventDefault(){}});const cancelledPreparation=requests.shift();
+  $('#cancelExperiment').onclick();await run('openComparison()');
+  $('#experimentMode').value='wordings';$('#experimentMode').onchange();
+  $('#experimentWordingB').value='New dialog draft';$('#experimentWordingB').oninput();
+  const currentPlan=run('productionId');
+  cancelledPreparation.resolve({id:'late-prepared-plan'});await wait;
+  assert.equal($('#experimentDialog').open,true,'Late preparation cannot close a replacement dialog');
+  assert.equal($('#experimentWordingB').value,'New dialog draft');assert.equal(run('productionId'),currentPlan);
+  assert.equal(requests.length,0,'Cancelling or replacing the draft never submits a generation');
   console.log('Planner inspection: explicit read, retained variants, escaped reasons, latest-action/context/close guards passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

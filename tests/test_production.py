@@ -301,6 +301,65 @@ class PlannedSweepTests(unittest.TestCase):
         return dict({'name':'Planned sweep','recipe':{'preset_id':'planned','controls':{}},'variants':variants,'max_generations':4},**extra)
     def variant(self,label,**controls):return {'label':label,'controls':controls,'rationale':'documented','sources':['https://example.invalid/steps']}
 
+    def wording_studio(self):
+        preset=copy.deepcopy(PLAN_PRESET);graph=copy.deepcopy(PLAN_GRAPH)
+        preset.update(negative=['1','negative'],width=['1','width'],height=['1','height'],reference=['22','image'],
+                      bindings_extra={'positive':[['20','text']],'seed':[['21','seed']]})
+        graph['1']['inputs'].update(negative='watermark',width=512,height=512)
+        graph.update({'20':{'class_type':'CLIPTextEncode','inputs':{'text':'base'}},
+                      '21':{'class_type':'KSampler','inputs':{'seed':1}},
+                      '22':{'class_type':'LoadImage','inputs':{'image':'default.png'}}})
+        (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[PRESET,preset]}))
+        (self.root/'workflows/api/planned-api.json').write_text(json.dumps(graph))
+        studio=FakeStudio(self.root,[])
+        studio.production_preflight=lambda *_:{'comfy_url':studio.comfy_url,'comfy_root':str(studio.comfy_root),
+            'models':[{'path':'synthetic-model.safetensors','sha256':'d'*64}],'inputs':[]}
+        upload='a'*32+'_pose.png';(studio.experiments/'uploads').mkdir(parents=True,exist_ok=True)
+        (studio.experiments/'uploads'/upload).write_bytes(png())
+        return studio,{'preset_id':'planned','controls':{'positive':'A lantern in rain','negative':'text, watermark',
+            'seed':'9223372036854775807','width':'512','height':'768','steps':'8','cfg':'1','reference':upload},
+            'parent_assets':['synthetic-source']}
+
+    def test_two_wordings_change_only_positive_bindings_and_prepare_without_submitting(self):
+        studio,recipe=self.wording_studio();before=copy.deepcopy(recipe)
+        variants=[{'label':'Wording A','controls':{'positive':'A lantern in rain'}},
+                  {'label':'Wording B','controls':{'positive':'Rain glows around a lantern'}}]
+        project=studio.production.create(self.intent(variants,recipe=recipe,max_generations=2))
+        plan=json.loads((studio.production.root/project['id']/'plan.json').read_text())
+        a,b=plan['stages'];self.assertEqual(len(plan['stages']),2)
+        changed={(node,key) for node in a['graph'] for key in a['graph'][node]['inputs']
+                 if a['graph'][node]['inputs'][key]!=b['graph'][node]['inputs'][key]}
+        self.assertEqual(changed,{('1','text'),('20','text')})
+        for stage,wording in zip(plan['stages'],['A lantern in rain','Rain glows around a lantern']):
+            self.assertEqual(stage['graph']['1']['inputs']['text'],wording)
+            self.assertEqual(stage['graph']['20']['inputs']['text'],wording)
+            self.assertEqual(stage['graph']['1']['inputs']['seed'],9223372036854775807)
+            self.assertEqual(stage['graph']['21']['inputs']['seed'],9223372036854775807)
+            self.assertEqual(stage['graph']['1']['inputs']['negative'],'text, watermark')
+            self.assertEqual(stage['graph']['1']['inputs']['height'],768)
+            self.assertEqual(stage['request']['controls'],dict(recipe['controls'],positive=wording))
+            self.assertEqual(stage['request']['parent_assets'],['synthetic-source'])
+            self.assertEqual((studio.comfy_root/'input'/stage['graph']['22']['inputs']['image']).read_bytes(),png())
+        self.assertEqual(recipe,before);self.assertEqual(project['values'],['Wording A','Wording B'])
+        self.assertEqual(project['state']['status'],'planned');self.assertEqual(project['budget'],{'allowance':2,'reserved':0})
+        self.assertEqual(studio.requests,[]);self.assertFalse(studio.jobs);self.assertEqual(studio.queue.qsize(),0)
+
+    def test_wording_variants_keep_existing_validation_and_shared_budget_refusals(self):
+        studio,recipe=self.wording_studio();lab=studio.production
+        for text,message in [('A lantern in rain','different graphs'),(7,'must be text'),
+                             ('x'*8001,'up to 8000'),('{rain|snow} around a lantern','Resolve prompt wildcards')]:
+            variants=[self.variant('Wording A',positive='A lantern in rain'),self.variant('Wording B',positive=text)]
+            with self.subTest(text=str(text)[:30]),self.assertRaisesRegex(ValueError,message):
+                lab.create(self.intent(variants,recipe=recipe))
+        self.assertEqual(lab.list(),[])
+        variants=[self.variant('Wording A',positive='A lantern in rain'),self.variant('Wording B',positive='Rain around a lantern')]
+        with self.assertRaisesRegex(ValueError,'exceeds the generation budget'):
+            lab.create(self.intent(variants,recipe=recipe,max_generations=1))
+        parent=lab.create(self.intent(variants,recipe=recipe,max_generations=2));lab.start(parent['id'])
+        with self.assertRaisesRegex(ValueError,'remaining generation budget is 0'):
+            lab.create(self.intent(variants,recipe=recipe,parent_project=parent['id']))
+        self.assertEqual(len(lab.list()),1);self.assertEqual(studio.requests,[])
+
     def test_planned_variants_become_labelled_candidates_and_record_the_library(self):
         studio=FakeStudio(self.root,[]);lab=studio.production
         project=lab.create(self.intent([self.variant('Fast 8-step euler',steps=8,sampler='euler'),
