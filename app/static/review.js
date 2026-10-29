@@ -23,6 +23,7 @@
   if(typeof document==='undefined')return;
   const $=s=>document.querySelector(s), project=new URLSearchParams(location.search).get('project');
   let state=null,busy=false,serial=0,drawSerial=0,viewDraft=null,summaryDraft=null,selectionDraft=null,characterDecisionDraft=null;
+  let presentation=new URLSearchParams(location.search).get('view')==='grid'?'grid':'pair';
   const drafts=new Map(),images=new Map();
   const cropIds=['cropLeft','cropTop','cropRight','cropBottom'];
   const el=(tag,text)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;return node;};
@@ -35,6 +36,7 @@
     const exportReason=busy?'':dirty()?'Save your unsaved changes first':!state?.finalized?'Finalize the review first':'';
     $('#export').title=exportReason;$('#exportHint').textContent=exportReason;
     $('#reveal').disabled=busy||!!state?.revealed;
+    $('#presentationGrid').disabled=busy||!state?.grid;
     $('#restore').disabled=busy||!$('#restoreRevision').value;
     $('#saveDraft').hidden=!dirty();$('#open').disabled=busy||!project||!/^[a-f0-9]{32}$/.test(project);
     $('#viewStatus').textContent=viewDraft?'Unsaved crop':'Saved crop';
@@ -49,13 +51,14 @@
     const value=await response.json();if(!response.ok)throw Error(value.error||'Review request failed.');return value;
   }
   async function operation(action,extra={},after=()=>{}){
-    if(busy)return;busy=true;message(action==='export'?'Exporting…':['inspect','open'].includes(action)?'Loading…':'Saving…');controls();const ticket=++serial;
+    if(busy)return;const focusedAlias=document.activeElement?.dataset?.gridCandidate;
+    busy=true;message(action==='export'?'Exporting…':['inspect','open'].includes(action)?'Loading…':'Saving…');controls();const ticket=++serial;
     try{
       const value=await request(action,extra);if(ticket!==serial)return;
       after(value);if(action==='export')state.export=value;else state=value;
       render();message(action==='inspect'?'Saved review loaded. No generation performed.':action==='export'?'Review evidence published with original sources and checksums.':'Saved. No generation performed.');
     }catch(error){message(error.message+' Your unsaved notes are retained; reload explicitly after resolving any conflict.',true);}
-    finally{if(ticket===serial){busy=false;controls();}}
+    finally{if(ticket===serial){busy=false;controls();if(focusedAlias)gridButtons().find(b=>b.dataset.gridCandidate===focusedAlias)?.focus({preventScroll:true});}}
   }
   function selectOptions(node,options,fallback){
     const current=node.value;node.replaceChildren(...options.map(([value,label])=>{const option=el('option',label);option.value=value;return option;}));
@@ -84,7 +87,82 @@
     }));
     $('#candidateSource').hidden=!state.revealed;
     $('#candidateSource').textContent=candidate.source?`${candidate.source.filename} · stage ${candidate.source.stage+1} · ${candidate.source.transform.oriented_size.join(' × ')} · SHA-256 ${candidate.source.sha256}`:'';
-    controls();
+    syncGridSelection();controls();
+  }
+  const runLabel=status=>({completed:'Completed',failed:'Failed',cancelled:'Cancelled',not_started:'Not started',stopped:'Stopped',interrupted:'Interrupted',unavailable:'Execution unavailable'}[status]||'Execution unavailable');
+  function gridButtons(){return [...$('#gridTable').querySelectorAll('[data-grid-candidate]')];}
+  function syncGridSelection(){
+    for(const button of gridButtons()){
+      const alias=button.dataset.gridCandidate,candidate=state?.candidates.find(c=>c.alias===alias);if(!candidate)continue;
+      const selected=alias===$('#candidate').value;button.setAttribute('aria-pressed',String(selected));button.classList.toggle('is-current',selected);
+      button.querySelector('small').textContent=verdictLabel((drafts.get(alias)||candidate.assessment).verdict)+(drafts.has(alias)?' · unsaved':'');
+    }
+  }
+  function applyPresentation(){
+    if(!state?.grid)presentation='pair';const grid=presentation==='grid';
+    $('#gridPanel').hidden=!grid;$('#comparisonLayout').classList.toggle('with-grid',grid);
+    $('#presentationPair').setAttribute('aria-pressed',String(!grid));$('#presentationGrid').setAttribute('aria-pressed',String(grid));
+    $('#gridHint').textContent=!state?.grid?'Grid needs recorded engine and seed fields. Pair is available for this review.':state.revealed?'Rows show recorded engines; columns show recorded seeds. Every retained image remains selectable.':'Rows group engines; columns group seeds. Their identities stay hidden until Reveal.';
+    const destination=$(grid?'#gridAssessment':'#assessmentHome');
+    if($('#assessment').parentElement!==destination)destination.append($('#assessment'));
+    $('#assessmentHome').hidden=grid;$('#assessmentHome').parentElement?.classList.toggle('grid-decision',grid);
+  }
+  function setPresentation(value){
+    if(busy||value==='grid'&&!state?.grid)return;presentation=value;applyPresentation();
+    const url=new URL(location.href);url.searchParams.set('view',presentation);history.replaceState(null,'',url);
+    draw().catch(error=>message(error.message,true));controls();
+  }
+  function selectGridCandidate(alias){
+    if(busy||!state?.candidates.some(c=>c.alias===alias))return;
+    const previous=$('#left').value;$('#candidate').value=alias;$('#left').value=alias;
+    if($('#right').value===alias&&previous!==alias)$('#right').value=previous;
+    $('#mode').value='pair';fillAssessment();draw().catch(error=>message(error.message,true));
+    message('Candidate '+alias+' selected. Its matched crop and assessment are open.');
+  }
+  function renderGrid(){
+    const table=$('#gridTable');table.replaceChildren();if(!state?.grid)return;
+    const grid=state.grid,caption=el('caption','Engine × seed comparison'),head=el('thead'),header=el('tr'),corner=el('th','');
+    header.append(corner);
+    for(const column of grid.columns){const th=el('th',state.revealed?'Seed '+column.seed:column.alias);th.scope='col';header.append(th);}
+    head.append(header);const body=el('tbody');
+    for(const row of grid.rows){
+      const tr=el('tr'),th=el('th',state.revealed?row.engine:row.alias);th.scope='row';tr.append(th);
+      for(const column of grid.columns){
+        const cell=grid.cells.find(c=>c.row===row.alias&&c.column===column.alias),td=el('td'),content=el('div');content.className='grid-cell';
+        const statuses=(cell?.runs||[]).map(run=>runLabel(run.status));
+        const status=el('p',statuses.length?[...new Set(statuses)].join(' · '):'Not planned');status.className='grid-outcome';content.append(status);
+        const aliases=cell?.candidates||[],outputs=el('div');outputs.className='grid-outputs';
+        for(const alias of aliases){
+          const button=el('button');button.type='button';button.className='grid-candidate';
+          button.dataset.gridCandidate=alias;button.dataset.gridRow=row.alias;button.dataset.gridColumn=column.alias;
+          const canvas=el('canvas');canvas.width=384;canvas.height=384;canvas.setAttribute('aria-hidden','true');
+          button.append(canvas,el('span','Candidate '+alias),el('small','Not reviewed'));
+          button.onclick=()=>selectGridCandidate(alias);outputs.append(button);
+        }
+        content.append(outputs,el('p',aliases.length?`${aliases.length} retained image${aliases.length===1?'':'s'}`:'No retained images'));
+        td.append(content);tr.append(td);
+      }
+      body.append(tr);
+    }
+    table.append(caption,head,body);syncGridSelection();
+  }
+  function gridKey(event){
+    const button=event.target.closest?.('[data-grid-candidate]');
+    if(!button||busy||event.altKey||event.ctrlKey||event.metaKey||event.repeat)return;
+    const buttons=gridButtons(),index=buttons.indexOf(button),key=event.key.toLowerCase();
+    if(['arrowleft','arrowright','arrowup','arrowdown'].includes(key)){
+      event.preventDefault();let next;
+      if(key==='arrowleft'||key==='arrowright')next=buttons[index+(key==='arrowleft'?-1:1)];
+      else{
+        const column=buttons.filter(b=>b.dataset.gridColumn===button.dataset.gridColumn),position=column.indexOf(button),direction=key==='arrowup'?-1:1;
+        for(let i=position+direction;i>=0&&i<column.length;i+=direction)if(column[i].dataset.gridRow!==button.dataset.gridRow){next=column[i];break;}
+      }
+      next?.focus();return;
+    }
+    const verdict={k:'keep',w:'needs_work',x:'reject'}[key];if(!verdict)return;
+    event.preventDefault();selectGridCandidate(button.dataset.gridCandidate);$('#verdict').value=verdict;
+    drafts.set($('#candidate').value,assessmentDraft());syncGridSelection();
+    $('#assessmentForm').onsubmit({preventDefault(){}});
   }
   function render(){
     if(!state?.exists){$('#start').hidden=false;$('#desk').hidden=true;return;}
@@ -93,8 +171,8 @@
     const options=state.candidates.map(c=>[c.alias,'Candidate '+c.alias]);
     selectOptions($('#left'),options,options[0][0]);selectOptions($('#right'),options,options[Math.min(1,options.length-1)][0]);selectOptions($('#candidate'),options,options[0][0]);
     const view=viewDraft||state;cropIds.forEach((id,i)=>{$('#'+id).value=view.crop[i]/100;});$('#background').value=view.background;
-    fillAssessment();$('#progress').replaceChildren(...state.candidates.map(c=>{const row=el('div');row.className='progress-row';row.append(el('b','Candidate '+c.alias),el('span',verdictLabel(c.assessment.verdict)));return row;}));
-    $('#decision').hidden=!state.revealed;$('#provenance').hidden=!state.revealed;$('#evidence').textContent=state.revealed?JSON.stringify(state.evidence,null,2):'';
+    renderGrid();applyPresentation();fillAssessment();$('#progress').replaceChildren(...state.candidates.map(c=>{const row=el('div');row.className='progress-row';row.append(el('b','Candidate '+c.alias),el('span',verdictLabel(c.assessment.verdict)));return row;}));
+    $('#decision').hidden=!state.revealed;$('#provenance').hidden=!state.revealed;$('#evidence').textContent=state.revealed?(state.evidence_json??JSON.stringify(state.evidence,null,2)):'';
     selectOptions($('#selected'),[['','None should progress'],...options],state.selected||'');$('#selected').value=selectionDraft??state.selected??'';$('#summary').value=summaryDraft??state.notes;
     $('#characterDecision').value=characterDecisionDraft??state.character_review?.review?.decision??'selected';
     $('#characterDecisionStatus').hidden=!state.character_context;
@@ -114,14 +192,24 @@
     if(!state?.exists)return;const ticket=++drawSerial;
     const crop=cropFromPercent(cropIds.map(id=>$('#'+id).value)),background=$('#background').value,mode=$('#mode').value;
     $('#leftFigure').hidden=mode==='right';$('#rightFigure').hidden=mode==='left';$('#canvases').classList.toggle('single',mode!=='pair');
-    await Promise.all(['left','right'].map(async side=>{
+    const previews=['left','right'].map(async side=>{
       const candidate=state.candidates.find(c=>c.alias===$('#'+side).value),image=await imageFor(candidate.preview_url);if(ticket!==drawSerial)return;
       const canvas=$('#'+side+'Canvas'),ctx=canvas.getContext('2d'),[l,t,r,b]=cropPixels(crop,image.naturalWidth,image.naturalHeight),scale=Math.min(canvas.width/(r-l),canvas.height/(b-t));
       ctx.fillStyle=background==='dark'?'#20232b':'#f1f2f5';ctx.fillRect(0,0,canvas.width,canvas.height);
       ctx.drawImage(image,l,t,r-l,b-t,(canvas.width-(r-l)*scale)/2,(canvas.height-(b-t)*scale)/2,(r-l)*scale,(b-t)*scale);
       canvas.setAttribute('aria-label','Candidate '+candidate.alias+' · shared cropped preview');
       $('#'+side+'Caption').textContent='Candidate '+candidate.alias+(candidate.source?' · '+candidate.source.filename:' · settings hidden');
-    }));
+    });
+    if(presentation==='grid')for(const button of gridButtons())previews.push((async()=>{
+      const candidate=state.candidates.find(c=>c.alias===button.dataset.gridCandidate),canvas=button.querySelector('canvas'),ctx=canvas.getContext('2d');
+      ctx.fillStyle=background==='dark'?'#20232b':'#f1f2f5';ctx.fillRect(0,0,canvas.width,canvas.height);
+      try{
+        const image=await imageFor(candidate.preview_url);if(ticket!==drawSerial)return;
+        const [l,t,r,b]=cropPixels(crop,image.naturalWidth,image.naturalHeight),scale=Math.min(canvas.width/(r-l),canvas.height/(b-t));
+        ctx.drawImage(image,l,t,r-l,b-t,(canvas.width-(r-l)*scale)/2,(canvas.height-(b-t)*scale)/2,(r-l)*scale,(b-t)*scale);
+      }catch(error){if(ticket===drawSerial){button.querySelector('small').textContent='Preview unavailable';message('Candidate '+candidate.alias+' preview is unavailable. Check its retained file, then reload.',true);}}
+    })());
+    await Promise.all(previews);
   }
   for(const [key,label] of Object.entries(CHECKS)){
     const wrap=el('label',label),select=el('select');select.id='check-'+key;
@@ -133,7 +221,8 @@
     operation('inspect',{},()=>{drafts.clear();viewDraft=summaryDraft=selectionDraft=characterDecisionDraft=null;});
   };
   $('#candidate').onchange=fillAssessment;
-  $('#assessmentForm').oninput=event=>{if(event.target.id==='candidate')return;drafts.set($('#candidate').value,assessmentDraft());controls();};
+  $('#assessmentForm').oninput=event=>{if(event.target.id==='candidate')return;drafts.set($('#candidate').value,assessmentDraft());syncGridSelection();controls();};
+  $('#presentationPair').onclick=()=>setPresentation('pair');$('#presentationGrid').onclick=()=>setPresentation('grid');$('#gridTable').addEventListener('keydown',gridKey);
   $('#assessmentForm').onsubmit=event=>{event.preventDefault();try{const alias=$('#candidate').value,extra=state.character_context?{character_checks:characterValues()}:{};operation('rate',{alias,assessment:assessmentValues(),...extra},()=>drafts.delete(alias));}catch(error){message(error.message,true);}};
   $('#cropForm').oninput=()=>{try{viewDraft={crop:cropFromPercent(cropIds.map(id=>$('#'+id).value)),background:$('#background').value};draw().catch(error=>message(error.message,true));}catch(error){viewDraft={crop:state.crop,background:$('#background').value};message(error.message,true);}controls();};
   $('#cropForm').onsubmit=event=>{event.preventDefault();try{operation('view',{crop:cropFromPercent(cropIds.map(id=>$('#'+id).value)),background:$('#background').value},()=>{viewDraft=null;});}catch(error){message(error.message,true);}};

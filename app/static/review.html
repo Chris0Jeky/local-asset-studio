@@ -15,13 +15,21 @@
   <div class="toolbar"><button id="reload" type="button">Reload saved review</button><span id="revision" class="muted"></span><button id="saveDraft" type="button" hidden>Download unsaved notes</button></div>
   <div id="desk" hidden>
     <section class="panel comparison" aria-labelledby="compareTitle">
-      <div class="section-heading"><div><span class="eyebrow">01 / LOOK CLOSELY</span><h2 id="compareTitle">Same region. Both candidates.</h2></div><span id="viewStatus" class="muted">Saved crop</span></div>
+      <div class="section-heading"><div><span class="eyebrow">01 / LOOK CLOSELY</span><h2 id="compareTitle">Compare candidates</h2></div><div class="presentation-switch" role="group" aria-label="Comparison presentation"><button id="presentationPair" type="button" aria-pressed="true">Pair</button><button id="presentationGrid" type="button" aria-pressed="false">Grid</button></div><span id="viewStatus" class="muted">Saved crop</span></div>
+      <p id="gridHint" class="muted"></p>
+      <div id="comparisonLayout" class="comparison-layout">
+        <div id="gridPanel" hidden><p id="gridHelp" class="muted">Select an image to compare and assess it. Arrow keys move between images. K: Keep · W: Needs work · X: Not this. Shortcuts save the focused candidate's assessment.</p><div class="grid-scroll"><table id="gridTable" class="review-grid" aria-describedby="gridHelp"></table></div></div>
+        <div id="pairPanel">
       <div class="selectors"><label>Left candidate<select id="left"></select></label><label>Right candidate<select id="right"></select></label><label>View<select id="mode"><option value="pair">Side by side</option><option value="left">Left only</option><option value="right">Right only</option></select></label><button id="swap" type="button">Swap sides</button></div>
       <div id="canvases" class="canvases"><figure id="leftFigure"><canvas id="leftCanvas" width="768" height="768" role="img" aria-label="Left candidate preview"></canvas><figcaption id="leftCaption"></figcaption></figure><figure id="rightFigure"><canvas id="rightCanvas" width="768" height="768" role="img" aria-label="Right candidate preview"></canvas><figcaption id="rightCaption"></figcaption></figure></div>
+          <div id="gridAssessment"></div>
+        </div>
+      </div>
       <form id="cropForm"><fieldset><legend>Shared crop · percent of each oriented source</legend><div class="crop-controls"><label>Left %<input id="cropLeft" type="number" min="0" max="99.99" step="0.01" value="0" required></label><label>Top %<input id="cropTop" type="number" min="0" max="99.99" step="0.01" value="0" required></label><label>Right %<input id="cropRight" type="number" min="0.01" max="100" step="0.01" value="100" required></label><label>Bottom %<input id="cropBottom" type="number" min="0.01" max="100" step="0.01" value="100" required></label><label>Alpha background<select id="background"><option value="dark">Dark</option><option value="light">Light</option></select></label></div><div class="button-row"><button type="button" data-crop="whole">Whole image</button><button type="button" data-crop="centre">Centre detail</button><button type="button" data-crop="upper">Upper half</button><button id="saveCrop" type="submit">Save crop</button></div></fieldset></form>
       <p class="muted">Previews are capped at 1536 px. Exported crops use the original snapshot resolution. Equal coordinates do not align anatomy or imply equal compute. No automatic sharpening or colour correction is applied.</p>
     </section>
     <div class="review-columns">
+      <div id="assessmentHome">
       <section class="panel" id="assessment" aria-labelledby="assessmentTitle"><span class="eyebrow">02 / RECORD WHAT YOU FOUND</span><h2 id="assessmentTitle">Candidate assessment</h2>
         <form id="assessmentForm"><label>Candidate<select id="candidate"></select></label><div id="candidateSource" class="source-note" hidden></div>
           <label>Verdict<select id="verdict"><option value="unreviewed">Not reviewed</option><option value="keep">Keep</option><option value="needs_work">Needs work</option><option value="reject">Not this</option></select></label>
@@ -32,6 +40,7 @@
           <div class="button-row"><button id="saveAssessment" type="submit" class="primary">Save assessment</button><span id="assessmentStatus" class="muted">Saved</span></div>
         </form>
       </section>
+      </div>
       <section class="panel" aria-labelledby="decisionTitle"><span class="eyebrow">03 / MAKE THE CALL</span><h2 id="decisionTitle">Decision & evidence</h2><div id="progress"></div>
         <button id="reveal" type="button">Reveal settings & provenance</button>
         <div id="decision" hidden><form id="decisionForm"><label>Selected result<select id="selected"></select></label><label id="characterDecisionLabel" hidden>Character decision<select id="characterDecision"><option value="selected">Select for further work</option><option value="accepted">I accept this result for this character case</option></select></label><label>Decision notes<textarea id="summary" maxlength="8000" rows="4" placeholder="Explain the selection, or why none should progress."></textarea></label><button id="finalize" class="primary" type="submit">Record decision</button></form><p id="characterDecisionStatus" class="muted" hidden></p><p class="muted">A selected result must be kept, have a completed execution, and have its constraints marked as passing. This records your assessment, not licence or engine clearance.</p></div>

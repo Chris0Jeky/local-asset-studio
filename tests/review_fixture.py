@@ -72,3 +72,18 @@ def seed(studio, count=3, failed_stage=False):
         db.execute('INSERT INTO projects VALUES (?,?,?,?,?)',(identifier,identifier,json.dumps(plan),json.dumps(state),time.time()))
     directory=studio.production.root/identifier;directory.mkdir();(directory/'plan.json').write_text(json.dumps(plan))
     return identifier
+
+
+def seed_matrix(studio):
+    """Three recorded engines by two recorded seeds, with deliberately opaque labels."""
+    identifier=seed(studio,count=6);project=studio.production._get(identifier)
+    coordinates=[('engine-copper',712031),('engine-copper',915047),
+                 ('engine-indigo',712031),('engine-indigo',915047),
+                 ('engine-jade',712031),('engine-jade',915047)]
+    for stage,(engine,seed_value) in zip(project['plan']['stages'],coordinates):
+        stage.update(engine=engine,seed=seed_value,label='Do not derive topology from this label')
+    project['plan']['sha256']=fingerprint({k:v for k,v in project['plan'].items() if k!='sha256'})
+    with studio.production.connect() as db:
+        db.execute('UPDATE projects SET plan=? WHERE id=?',(json.dumps(project['plan']),identifier))
+    (studio.production.root/identifier/'plan.json').write_text(json.dumps(project['plan']))
+    return identifier

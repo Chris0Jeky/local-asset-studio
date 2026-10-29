@@ -15,19 +15,19 @@ from types import MethodType
 import unittest
 
 from test_server import server
-from review_fixture import FixtureStudio, seed
+from review_fixture import FixtureStudio, seed_matrix
 
 
 class ReviewHTTPTests(unittest.TestCase):
     def setUp(self):
-        self.temporary=tempfile.TemporaryDirectory();self.studio=FixtureStudio(Path(self.temporary.name));self.identifier=seed(self.studio)
+        self.temporary=tempfile.TemporaryDirectory();self.studio=FixtureStudio(Path(self.temporary.name));self.identifier=seed_matrix(self.studio)
         for job in self.studio.jobs.values():
             graph=job['fixture_recipe']['graph']
             job.update(preset_id='inert-qa',controls={'seed':graph['1']['inputs']['seed']},batch_count=1,
                        created_at=1,graph=graph,submissions=[],references=[],parent_assets=[])
         self.studio.public=MethodType(server.Studio.public,self.studio)
         self.studio.export_recipe=MethodType(server.Studio.export_recipe,self.studio)
-        handler=type('ReviewTestHandler',(server.Handler,),{'studio':self.studio})
+        handler=type('ReviewTestHandler',(server.extend_handler(server.Handler),),{'studio':self.studio})
         self.http=ThreadingHTTPServer(('127.0.0.1',0),handler);self.worker=threading.Thread(target=self.http.serve_forever,daemon=True);self.worker.start()
     def tearDown(self):
         self.http.shutdown();self.http.server_close();self.worker.join(2);self.temporary.cleanup()
@@ -51,6 +51,18 @@ class ReviewHTTPTests(unittest.TestCase):
         revealed=json.loads(data);self.assertEqual(revealed['evidence']['stages'][0]['recipe']['version'],2)
         status,_,_=self.command({'action':'view','expected_revision':revealed['revision'],'crop':[0,0,10000,10000],'background':'light'})
         self.assertEqual(status,200);self.assertTrue(self.studio.queue.empty());self.assertEqual(self.studio.network_calls,0)
+
+    def test_grid_projection_uses_existing_http_scope_and_revision_guards(self):
+        status,data,_=self.command({'action':'open'});self.assertEqual(status,200);state=json.loads(data)
+        self.assertEqual(len(state['grid']['cells']),6)
+        self.assertNotIn(b'engine-copper',data);self.assertNotIn(b'712031',data)
+        payload={'action':'rate','expected_revision':state['revision'],'alias':'A','assessment':{'verdict':'keep'}}
+        status,data,_=self.command(payload,headers={'X-Studio-Creation-Privacy':'private'})
+        self.assertEqual(status,400);self.assertEqual(json.loads(data)['code'],'private_workflow_unsupported')
+        self.assertEqual(self.studio.production.reviews.inspect(self.identifier)['revision'],0)
+        self.assertEqual(self.command({**payload,'workspace_id':'another-workspace'})[0],400)
+        self.assertEqual(self.command(payload)[0],200)
+        self.assertEqual(self.command(payload)[0],400)
     def test_origin_and_host_are_enforced_before_open(self):
         for headers in ({'Origin':'https://evil.invalid'},{'Host':'evil.invalid'},{'Origin':'null'},{'Origin':'http://user@127.0.0.1:8191'}):
             with self.subTest(headers=headers):

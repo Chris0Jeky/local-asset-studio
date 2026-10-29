@@ -1,5 +1,37 @@
 # Current state — 29 October 2026
 
+## 2026-10-29 — Review desk engine-by-seed grid
+
+Prepared Review desk sessions can switch between Pair and Grid when every saved
+stage records engine and seed metadata. Stable anonymous row/column and candidate
+aliases hide provenance until the existing recorded Reveal action. The grid
+retains every output and distinguishes unsuccessful, unstarted, empty and absent
+positions. Selecting an image uses the existing crop and revisioned assessment;
+focused K/W/X saves preserve notes and stale conflicts preserve local drafts.
+Large seed identities and displayed evidence JSON retain their exact digits.
+
+The real HTTP/SQLite browser journey passes all 30 assertions: blind projection,
+recorded topology, multiple outputs, legacy fallback, reload/Reveal, scope and
+media refusals, draft/focus preservation and shared crops. Inspected captures
+show all three rows below the desktop toolbar and readable multi-output cards
+at 390px. Its sole console error is the deliberately rejected stale save at the
+exact expected review URL; there are no JavaScript errors. All 25 existing
+fixture UI journeys pass with zero page errors or generation submissions.
+
+The 156 focused Review desk/HTTP/frontend tests and 21 frontend handoff tests
+pass; the final bootstrap/diagnostic regressions also pass. Independent review
+found and reproduced public-session axis-order inference; ordering now includes
+the existing frozen evidence digest hidden until Reveal. Scoped verification
+found no remaining blocker. Repeated-run output association is tracked in #1692.
+The unchanged supported-runner workflow runs the full suite and validator;
+consult PR #1691's current-head results and Git for complete qualification and
+merge state. `tests/review_matrix_browser.py` reproduces the synthetic journey.
+
+This advances #1204 without closing its wider setting-axis, other-surface and
+use-case registration scope. See [Review desk](docs/REVIEW-DESK.md). Art, licence,
+runtime and assistive-technology acceptance remain separate;
+[HUMAN_TODO.md](HUMAN_TODO.md) remains authoritative and unchanged.
+
 ## 2026-10-29 — Scene working packs (hosted qualification pending)
 
 Saved Scene briefs now offer **Download working pack** through the existing
