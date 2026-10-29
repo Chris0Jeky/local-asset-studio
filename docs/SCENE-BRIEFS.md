@@ -37,6 +37,27 @@ prove that its bytes are usable by a renderer.
 
 ## Saving and recovery
 
+### Download a working pack
+
+Save the brief, then choose **Download working pack**. The ZIP contains a
+`manifest.json` with the saved direction, six slot roles and acceptance notes,
+brief revision, selected asset identities, review labels and SHA-256 hashes.
+Selected source files live in `assets/`; available recipes live in `recipes/`
+with their own hashes. Missing recipes and empty slots are explicit. Repeated
+source bytes are stored once while every slot keeps its own association.
+
+Save unsaved wording first. If a source has changed, disappeared, moved to Trash,
+become private or left the collection, the pack stops instead of omitting it.
+Reload the saved brief and choose the current candidate again. Changing view,
+privacy or Workspace while a download is pending discards that download; start
+again from the current brief. Packaging changes no brief, recipe or review label
+and does not grant art, licence or native-tool acceptance.
+
+**Download draft** remains available for unsaved wording and browser recovery.
+It downloads draft JSON; it does not collect selected source files.
+
+### Save and recover a draft
+
 **Save brief** writes the existing Workspace card store. It survives navigation,
 tab closure and Studio restarts. Each change compares the revision that the tab
 read; a newer revision wins without overwriting the losing tab's draft. Download
@@ -66,10 +87,14 @@ There is no new asset database or job queue. Unknown body versions are preserved
 and refused, never reinterpreted as empty briefs.
 
 Focused checks: `python -m unittest discover -s tests -p 'test_scene_brief*.py'`.
+Working-pack checks: `python -m unittest discover -s tests -p 'test_scene_working_pack.py'`.
 The native isolated journey is `python tests/scene_briefs_browser.py --out <dir>`;
 it uses production brief/card/asset owners, shipped frontend code, synthetic
 records and fixture startup responses. Run it under the applicable shared
 resource lease. Full repository qualification remains the unittest discovery
 suite and `python scripts/validate-repo.py`.
+`python tests/scene_working_pack_browser.py --out <dir>` exercises the shipped
+download action against real HTTP/SQLite and verifies the downloaded ZIP bytes,
+context changes, dirty drafts, stale sources and keyboard use at 390px.
 
 Owner art and workstation decisions remain in [HUMAN_TODO.md](../HUMAN_TODO.md).

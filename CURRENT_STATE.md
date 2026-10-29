@@ -1,5 +1,22 @@
 # Current state — 29 October 2026
 
+## 2026-10-29 — Scene working packs (qualification pending)
+
+Saved Scene briefs now offer **Download working pack** through the existing
+ZIP exporter. The manifest carries direction, role notes, explicit empty slots,
+selected identities, review labels and file/recipe hashes. Duplicate bytes are
+stored once. Revision, Workspace, collection, privacy, Trash, path and current
+byte checks refuse stale sources; interrupted writes leave no partial ZIP.
+The browser requires saved wording and discards delayed downloads after a view,
+privacy or Workspace change. Packaging changes no source or review state.
+
+Ten focused working-pack tests and all 23 scene tests pass, including real ZIP
+bytes, a Windows junction refusal and changes during export. Native browser
+download proof, full repository qualification and independent review are pending.
+See [Scene briefs](docs/SCENE-BRIEFS.md) for the journey and proving commands.
+No generation, render, licence, art or native creative acceptance is claimed;
+[HUMAN_TODO.md](HUMAN_TODO.md) retains those owner decisions.
+
 ## 2026-10-29 — Workspace scene-brief integration (qualification pending)
 
 The [Scene briefs route](docs/SCENE-BRIEFS.md) integrates the six-slot brief into
