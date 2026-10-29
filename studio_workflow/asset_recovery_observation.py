@@ -43,7 +43,7 @@ def observe(workspace, ids, workspace_id, collection_id=None, privacy='regular')
             if row is not None: collection['name'] = _text(row['name'], 100)
         targets = []
         for identifier in ids:
-            row = db.execute('SELECT id,title,metadata_revision,trashed_at FROM assets WHERE id=? AND '+clause, [identifier,*params]).fetchone()
+            row = db.execute('SELECT id,title,metadata_revision,trashed_at,archived_at FROM assets WHERE id=? AND '+clause, [identifier,*params]).fetchone()
             if row is None:
                 targets.append({'id': identifier, 'state': 'missing'})
                 continue
@@ -51,6 +51,10 @@ def observe(workspace, ids, workspace_id, collection_id=None, privacy='regular')
             if timestamp is not None and (type(timestamp) not in (int, float) or
                     not math.isfinite(timestamp) or timestamp < 0):
                 raise ValueError('Stored lifecycle state is unavailable')
+            archived = row['archived_at']
+            if archived is not None and (type(archived) not in (int, float) or
+                    not math.isfinite(archived) or archived < 0):
+                raise ValueError('Stored archive state is unavailable')
             revision = row['metadata_revision']
             if type(revision) is not int or not 0 <= revision <= 2**53 - 1:
                 raise ValueError('Stored metadata revision is unavailable')
@@ -58,6 +62,7 @@ def observe(workspace, ids, workspace_id, collection_id=None, privacy='regular')
             memberships = db.execute('SELECT c.id,c.name FROM collection_assets ca JOIN collections c ON c.id=ca.collection_id WHERE ca.asset_id=? AND '+membership_clause+' ORDER BY c.name,c.id LIMIT ?', [identifier,*membership_params,MAX_COLLECTIONS]).fetchall()
             target = {'id': identifier, 'state': 'active' if row['trashed_at'] is None else 'trashed',
                       'title': _text(row['title'], 200), 'metadata_revision': revision,
+                      'archived_at': archived,
                       'collection_count': count, 'collections_limited': count > MAX_COLLECTIONS,
                       'collections': [{'id': _text(c['id'], 128), 'name': _text(c['name'], 100)} for c in memberships]}
             if collection is not None:

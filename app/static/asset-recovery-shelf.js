@@ -67,7 +67,7 @@
     }
     const result=value(0);space();if(at!==raw.length)fail('Invalid trailing JSON.');return result;
   }
-  const metadataKeys=['id','workspace_id','metadata_revision','title','notes','tags','review','favorite','trashed_at'];
+  const metadataKeys=['id','workspace_id','metadata_revision','title','notes','tags','review','favorite','trashed_at','archived_at'];
   const formKeys=['title','tags','review','notes'];
   const commandKeys=['ids','action','workspace_id','expected_revisions','request_id','title','notes','tags','favorite','review','run_label','collection_id'];
   function formTitle(v,check){return keys(v,formKeys)&&check(v.title)&&text(v.tags)&&text(v.notes)&&reviews.includes(v.review);}
@@ -83,14 +83,15 @@
     return keys(v,metadataKeys,['id','metadata_revision','title','notes','tags','review','favorite'])&&id(v.id)&&integer(v.metadata_revision)&&
       (w===null?!Object.hasOwn(v,'workspace_id')||scope(v.workspace_id):v.workspace_id===w)&&registeredTitle(v.title)&&text(v.notes)&&
       Array.isArray(v.tags)&&v.tags.length<=200&&v.tags.every(t=>text(t,256))&&reviews.includes(v.review)&&typeof v.favorite==='boolean'&&
-      (v.trashed_at==null||typeof v.trashed_at==='number'&&Number.isFinite(v.trashed_at));
+      (v.trashed_at==null||typeof v.trashed_at==='number'&&Number.isFinite(v.trashed_at))&&
+      (v.archived_at==null||typeof v.archived_at==='number'&&Number.isFinite(v.archived_at)&&v.archived_at>=0);
   }
   function operation(v,w,slot,target,baseline){
     if(!keys(v,slot==='detail'?['command','body','kind','snapshot']:['command','body']))return false;
     const c=v.command;
     if(!keys(c,commandKeys,['ids','action','expected_revisions','request_id'])||!ids(c.ids)||!c.ids.length||!id(c.request_id)||c.request_id.length<16||
        (w!==null&&c.workspace_id!==w)||!keys(c.expected_revisions,c.ids)||c.ids.some(k=>!integer(c.expected_revisions[k]))||
-       !['edit','trash','restore','add_collection','remove_collection'].includes(c.action)||!text(v.body,128*1024))return false;
+       !['edit','trash','restore','archive','unarchive','add_collection','remove_collection'].includes(c.action)||!text(v.body,128*1024))return false;
     for(const field of ['title','notes','collection_id'])if(Object.hasOwn(c,field)&&!(field==='title'?title(c[field]):text(c[field])))return false;
     if(Object.hasOwn(c,'tags')&&(!Array.isArray(c.tags)||c.tags.length>200||c.tags.some(t=>!text(t,256))))return false;
     if(Object.hasOwn(c,'favorite')&&typeof c.favorite!=='boolean')return false;
@@ -98,7 +99,7 @@
     // A source mark (#939): null clears the label; otherwise at most 80 characters, as the server's run-label rule.
     if(Object.hasOwn(c,'run_label')&&c.run_label!==null&&!(typeof c.run_label==='string'&&c.run_label.trim().length>0&&[...c.run_label].length<=80&&c.run_label.length<=160))return false;
     if(!same(parse(v.body,128*1024),c))return false;
-    return slot!=='detail'||same(c.ids,[target])&&['details','favorite','trash'].includes(v.kind)&&snapshotOk(v.snapshot,baseline,c);
+    return slot!=='detail'||same(c.ids,[target])&&['details','favorite','trash','archive'].includes(v.kind)&&snapshotOk(v.snapshot,baseline,c);
   }
   function validatePayload(slot,v){
     if(!object(v)||![1,2].includes(v.version))fail('Unsupported recovery payload version.');

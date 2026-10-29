@@ -38,7 +38,7 @@ MAX_REVISION = 2**53 - 1
 REGISTERED_TITLE_MAX = 1024
 # The editor-conflict envelope: the editor, its conflict projection and the recovery shelf validate exactly these keys.
 # run_label is not an editor field; it travels in the receipt's applied values and in every full asset read (#939).
-METADATA_FIELDS = ("id", "title", "notes", "tags", "favorite", "review", "trashed_at", "metadata_revision")
+METADATA_FIELDS = ("id", "title", "notes", "tags", "favorite", "review", "trashed_at", "archived_at", "metadata_revision")
 # Additive, nullable asset columns: a Workspace created before them opens unchanged and its assets read as NULL (#939).
 ADDITIVE_COLUMNS = ("run_label", "prompt_excerpt")
 PROMPT_EXCERPT_CHARS = 60
@@ -157,6 +157,8 @@ class AssetWorkspace:
                 db.execute("ALTER TABLE assets ADD COLUMN metadata_revision INTEGER NOT NULL DEFAULT 0")
             for column in ADDITIVE_COLUMNS:
                 if column not in columns: db.execute(f"ALTER TABLE assets ADD COLUMN {column} TEXT")
+            if "archived_at" not in columns:
+                db.execute("ALTER TABLE assets ADD COLUMN archived_at REAL")
             from studio_workflow.collection_commands import migrate
             migrate(db)
             for table in ('assets', 'collections', 'asset_commands', 'collection_commands_v1'):
@@ -596,6 +598,8 @@ class AssetWorkspace:
                                      status=409, code="asset_revision_conflict", request_id=request_id,
                                      conflict_ids=conflicts, missing_ids=missing, current=current, workspace_id=identity)
             changed_ids = [i for i in ids if (not rows[i]["trashed_at"]) == (action == "trash")] if action in ("trash", "restore") else ids
+            if action in ("archive", "unarchive"):
+                changed_ids = [i for i in ids if (rows[i]["archived_at"] is None) == (action == "archive")]
             if any(rows[i]["metadata_revision"] >= MAX_REVISION for i in changed_ids):
                 raise WorkspaceError("Asset revision limit reached; nothing changed")
             applied = {}
@@ -623,6 +627,8 @@ class AssetWorkspace:
                 changes = {}
                 if action in ("trash", "restore"):
                     changes["trashed_at"] = time.time() if action == "trash" else None
+                elif action in ("archive", "unarchive"):
+                    changes["archived_at"] = time.time() if action == "archive" else None
                 elif action == "edit":
                     for field, maximum in (("title", 200), ("notes", 8000)):
                         if field in payload:

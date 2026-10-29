@@ -18,6 +18,8 @@ PAGE_ARGUMENTS = {
     'cursor': {'type': 'string', 'pattern': r'^[A-Za-z0-9_-]+$', 'maxLength': asset_reads.MAX_CURSOR},
     'filters': {'type': 'object', 'additionalProperties': False, 'properties': {
         'privacy': PRIVACY,
+        'archive': {'type': 'string', 'enum': ['active', 'archived', 'all'],
+                    'description': 'Independent of privacy and Trash; omitted means active (not archived).'},
         'visibility': {'type': 'string', 'enum': ['active', 'trash', 'all']},
         'source': {'type': 'string', 'enum': ['all', 'mine', 'agent']},
         'media_type': {'type': ['string', 'null'], 'pattern': r'^[^\x00-\x1f\x7f]+$', 'minLength': 1, 'maxLength': 32},

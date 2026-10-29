@@ -35,7 +35,9 @@ function rememberAssetObservation(item){
   const index=assetState.assets.findIndex(a=>a.id===item.id);
   if(asset && index>=0 && assetState.assets[index].workspace_id===asset.workspace_id)assetState.assets[index]=asset;
 }
-function assetPageFilters(){const filters={visibility:assetScope==='trash'?'trash':'active',sort:$('#assetSort').value||'newest',source:assetSourceChoice()},q=$('#assetSearch').value.trim();if(assetActivePrivacy!=='regular')filters.privacy=assetActivePrivacy;if(q)filters.q=q;if(assetScope==='favorite')filters.favorite=true;if(['selected','needs_work','unreviewed'].includes(assetScope))filters.review=assetScope;if(assetScope.startsWith('collection:'))filters.collection_id=assetScope.slice(11);if($('#assetType').value!=='all')filters.media_type=$('#assetType').value;return filters;}
+function assetArchiveChoice(){const value=$('#assetArchiveFilter').value;return ['active','archived','all'].includes(value)?value:'active';}
+function assetArchiveAllows(asset){const value=assetArchiveChoice();return value==='all'||(asset.archived_at==null)===(value==='active');}
+function assetPageFilters(){const filters={visibility:assetScope==='trash'?'trash':'active',sort:$('#assetSort').value||'newest',source:assetSourceChoice()},q=$('#assetSearch').value.trim();if(assetActivePrivacy!=='regular')filters.privacy=assetActivePrivacy;if(assetArchiveChoice()!=='active')filters.archive=assetArchiveChoice();if(q)filters.q=q;if(assetScope==='favorite')filters.favorite=true;if(['selected','needs_work','unreviewed'].includes(assetScope))filters.review=assetScope;if(assetScope.startsWith('collection:'))filters.collection_id=assetScope.slice(11);if($('#assetType').value!=='all')filters.media_type=$('#assetType').value;return filters;}
 function assetPageQuery(){return JSON.stringify(assetPageFilters());}
 function assetReadURL(path,query){return path+'?'+Object.entries(query).filter(([,v])=>v!==null&&v!==undefined).map(([k,v])=>encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');}
 async function resolveAssetIDs(ids){
@@ -114,6 +116,7 @@ function assetCardTitle(asset){if(!assetDefaultTitle(asset))return asset.title||
 function assetScopedCount(scope){
   const query=$('#assetSearch').value.trim().toLowerCase(),type=$('#assetType').value;
   const list=assetSourceFilter(assetPageRecords().filter(a=>{
+    if(!assetArchiveAllows(a))return false;
     if(scope==='trash')return a.trashed_at!=null;
     if(a.trashed_at!=null)return false;
     if(scope==='favorite'&&!a.favorite)return false;
@@ -140,7 +143,7 @@ function observeAssetWorkspaceIdentity() {
 function assetReceiptURL(command){return '/api/assets/commands/'+command.request_id+'?workspace_id='+encodeURIComponent(command.workspace_id);}
 
 function assetDetailRecoveryValue(){
-  const metadata=Object.fromEntries(['id','workspace_id','metadata_revision','title','notes','tags','review','favorite','trashed_at'].map(k=>[k,activeAsset[k]]));
+  const metadata=Object.fromEntries(['id','workspace_id','metadata_revision','title','notes','tags','review','favorite','trashed_at','archived_at'].map(k=>[k,activeAsset[k]]));
   const operation=assetDetailPending?Object.fromEntries(['command','body','kind','snapshot'].map(k=>[k,assetDetailPending[k]])):null;
   const last_refusal=StudioAssetRecovery.lastRefusal(assetRetainedDetail,operation);
   return {version:2,workspace_id:activeAsset.workspace_id,id:activeAsset.id,metadata,baseline:assetDetailBaseline,draft:assetDetailValues(),operation,conflict:assetDetailConflict,...(last_refusal?{last_refusal}:{})};
@@ -171,7 +174,8 @@ function validAssetMetadata(value) {
   return value && typeof value.id==='string' && Number.isSafeInteger(value.metadata_revision) && value.metadata_revision>=0 &&
     typeof value.title==='string' && typeof value.notes==='string' && Array.isArray(value.tags) && value.tags.every(t=>typeof t==='string') &&
     typeof value.favorite==='boolean' && ['unreviewed','selected','needs_work','rejected'].includes(value.review) &&
-    (value.trashed_at==null || (typeof value.trashed_at==='number' && Number.isFinite(value.trashed_at)));
+    (value.trashed_at==null || (typeof value.trashed_at==='number' && Number.isFinite(value.trashed_at))) &&
+    (value.archived_at==null || (typeof value.archived_at==='number' && Number.isFinite(value.archived_at) && value.archived_at>=0));
 }
 // Registered titles may exceed the 200-character edit limit (REGISTERED_TITLE_MAX in app/workspace.py).
 const assetRegisteredTitleMax=1024;
@@ -189,6 +193,7 @@ function assetRevisionConflict(error,command) {
   if(!validAssetMetadata(row) || !fields.every(k=>Object.hasOwn(row,k)) || row.id!==id || row.workspace_id!==command.workspace_id ||
      row.metadata_revision<=command.expected_revisions[id] || !text(row.title,assetRegisteredTitleMax) || !text(row.notes,8000) ||
      row.tags.length>30 || row.tags.some(tag=>!text(tag,60)))return null;
+  if(Object.hasOwn(row,'archived_at'))fields.push('archived_at');
   const metadata=Object.fromEntries(fields.map(k=>[k,k==='tags'?[...row.tags]:row[k]]));
   return {code:data.code,workspace_id:data.workspace_id,request_id:data.request_id,conflict_ids:[id],missing_ids:[],current:[metadata]};
 }
@@ -209,12 +214,13 @@ function validateAssetReceipt(result, command) {
   if(result?.status!=='applied' || result.request_id!==command.request_id || result.action!==command.action ||
      JSON.stringify(result.updated)!==JSON.stringify(command.ids) ||
      JSON.stringify(Object.keys(result.revisions||{}).sort())!==JSON.stringify([...command.ids].sort()) ||
-     (result.unchanged!==undefined&&(!Array.isArray(result.unchanged)||!['trash','restore'].includes(command.action)||result.unchanged.some(id=>!command.ids.includes(id))))||
+     (result.unchanged!==undefined&&(!Array.isArray(result.unchanged)||!['trash','restore','archive','unarchive'].includes(command.action)||result.unchanged.some(id=>!command.ids.includes(id))))||
      command.ids.some(id=>result.revisions[id]!==command.expected_revisions[id]+(result.unchanged?.includes(id)?0:1)))throw Error('The server did not return a matching save receipt.');
   const noop=result.unchanged?.length===command.ids.length&&JSON.stringify(result.applied)==='{}';   // every target was already in that state (#1405)
   const applied=result.applied, keys=command.action==='edit'?['title','notes','tags','favorite','review','run_label'].filter(k=>Object.hasOwn(command,k)):
-    ['trash','restore'].includes(command.action)?['trashed_at']:['collection_id'];
+    ['trash','restore'].includes(command.action)?['trashed_at']:['archive','unarchive'].includes(command.action)?['archived_at']:['collection_id'];
   if(!noop && (!applied || JSON.stringify(Object.keys(applied).sort())!==JSON.stringify(keys.sort()) || keys.some(k=>{
+    if(k==='archived_at')return command.action==='unarchive'?applied[k]!==null:typeof applied[k]!=='number' || !Number.isFinite(applied[k]) || applied[k]<0;
     if(k==='trashed_at')return command.action==='restore'?applied[k]!==null:typeof applied[k]!=='number' || !Number.isFinite(applied[k]);
     if(k==='tags')return !Array.isArray(applied[k]) || applied[k].some(t=>typeof t!=='string');
     if(k==='run_label')return command[k]===null?applied[k]!==null:applied[k]!==command[k].trim();
@@ -237,7 +243,7 @@ function assetDetailStatus(text, error=false) {
   status.textContent=text;status.classList.toggle('error',error);
 }
 function assetDetailControls() {
-  for(const id of ['saveAssetDetails','assetFavorite','assetTrash'])$('#'+id).disabled=assetDetailBusy || !!assetDetailConflict || (id!=='saveAssetDetails' && !!assetDetailPending);
+  for(const id of ['saveAssetDetails','assetFavorite','assetTrash','assetArchive'])$('#'+id).disabled=assetDetailBusy || !!assetDetailConflict || (id!=='saveAssetDetails' && !!assetDetailPending);
   $('#saveAssetDetails').textContent=assetDetailBusy?'Saving…':assetDetailPending?'Confirm earlier save':'Save details';
   for(const id of ['assetTitle','assetTags','assetReview','assetNotes'])$('#'+id).disabled=assetDetailBusy && assetDetailDiscarding;
 }
@@ -295,8 +301,9 @@ function resolveAssetConflict(keepEdits) {
   const local=assetDetailValues(),remote=metadataForm(current),previous=assetDetailBaseline;
   for(const [key,id] of Object.entries(assetFormIds))$('#'+id).value=keepEdits && local[key]!==previous[key]?local[key]:remote[key];
   for(const key of [...Object.keys(assetFormIds),'metadata_revision','favorite','trashed_at'])activeAsset[key]=current[key];
+  if(Object.hasOwn(current,'archived_at'))activeAsset.archived_at=current.archived_at;
   assetDetailBaseline=remote;assetDetailConflict=null;renderAssetConflict();assetDetailControls();
-  $('#assetFavorite').textContent=activeAsset.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=activeAsset.trashed_at!=null?'Restore':'Move to Trash';
+  $('#assetFavorite').textContent=activeAsset.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=activeAsset.trashed_at!=null?'Restore':'Move to Trash';$('#assetArchive').textContent=activeAsset.archived_at!=null?'Return to active':'Archive';
   assetDetailStatus(keepEdits?'Your edits are rebased for review, not saved. Check the fields, then Save details.':'Saved snapshot loaded. Nothing was written.');
   retainAssetDraft();
   $('#saveAssetDetails').focus();
@@ -364,7 +371,7 @@ async function performAssetSave(operation, observe=false) {
 // A confirmed single save updates the loaded record in place. A whole workspace refetch is not evidence of anything more.
 function syncAssetAfterSave(operation,result) {
   const updated=applyAssetReceipt(operation.command,result);
-  if(operation.kind==='trash')renderAssets();else updateAssetCard(operation.id);
+  if(['trash','archive'].includes(operation.kind))renderAssets();else updateAssetCard(operation.id);
   if(!updated)void refreshAssets(true);
 }
 function applyAssetSaveReceipt(operation,result) {
@@ -391,14 +398,15 @@ function applyAssetSaveReceipt(operation,result) {
     if(operation.kind==='trash' && unchanged && !changed){assetRecovery.clear('detail');assetRetainedDetail=null;}
     else rememberAssetDetails();
   }catch(error){assetDetailPending=operation;throw error;}
-  $('#assetFavorite').textContent=activeAsset.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=activeAsset.trashed_at!=null?'Restore':'Move to Trash';
+  $('#assetFavorite').textContent=activeAsset.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=activeAsset.trashed_at!=null?'Restore':'Move to Trash';$('#assetArchive').textContent=activeAsset.archived_at!=null?'Return to active':'Archive';
   renderAssetConflict();
   if(changed)assetDetailStatus('The earlier save is confirmed. Current saved metadata differs or is unavailable; review it alongside your retained draft.',true);
   else if(operation.kind==='trash'){
     const text=operation.command.action==='trash'?'Moved to Trash. Restore it at any time.':'Asset restored.';
     if(unchanged){assetDetailBaseline=null;$('#assetDialog').close();assetMessage(text);}
     else assetDetailStatus(text+(assetDetailDirty()?' Your newer edits are still unsaved.':' Your draft remains open.'));
-  }else assetDetailStatus(assetDetailDirty()?'Snapshot saved. Your newer edits are still unsaved.':'Details saved. Continue with this asset whenever you are ready.');
+  }else if(operation.kind==='archive')assetDetailStatus((operation.command.action==='archive'?'Archived. Original files and collection membership are retained.':'Returned to active. Privacy and Trash are unchanged.')+(assetDetailDirty()?' Your edits are still unsaved.':' Your draft remains open.'));
+  else assetDetailStatus(assetDetailDirty()?'Snapshot saved. Your newer edits are still unsaved.':'Details saved. Continue with this asset whenever you are ready.');
   renderLibraryRecovery();
 }
 // Receipt retries preserve immutable request bytes. They never become generation retries.
@@ -436,7 +444,7 @@ $('#importAssets').onchange=async e=>{
       const result=await api('/api/assets/import',{method:'POST',headers:{'Content-Type':file.type,'X-Filename':file.name,'X-Studio-Privacy':captured.scope,'X-Studio-Creation-Privacy':captured.privacy},body:file});ids.push(result.asset.id);
     }
     if(!current())return;
-    assetScope='all';$('#assetSearch').value='';await refreshAssets(true);assetSelection=new Set(ids);renderAssets();assetMessage('Imported '+ids.length+' originals. They are selected for organization or native export.');
+    assetScope='all';$('#assetSearch').value='';$('#assetArchiveFilter').value='active';await refreshAssets(true);assetSelection=new Set(ids);renderAssets();assetMessage('Imported '+ids.length+' originals. They are selected for organization or native export.');
   }catch(err){if(!current())return;await refreshAssets(true);if(current())assetMessage(err.message+' '+ids.length+' earlier imports are preserved.',true);}
   finally{e.target.value='';}
 };
@@ -525,14 +533,14 @@ function unavailableAssetDetails(items){return items?.length?'<details class="as
 const assetSelectionLimit=200;
 // View choices survive a reload (#939): scope, sort and media type persist like grouping and source; search text only for
 // this tab. Restored values are checked against the known options; a bad or missing store never blocks the library.
-const assetViewKeys={scope:'studio.assets.scope',sort:'studio.assets.sort',type:'studio.assets.type',search:'studio.assets.search'};
+const assetViewKeys={scope:'studio.assets.scope',sort:'studio.assets.sort',type:'studio.assets.type',search:'studio.assets.search',archive:'studio.assets.archive'};
 const assetSortModes=['newest','oldest','title'],assetTypeModes=['all','image','video','3d','audio'],assetFixedScopes=['all','favorite','selected','needs_work','unreviewed','trash'];
 let assetViewRemembered='',assetScopeRestored=false;
 function validAssetScope(value){return assetFixedScopes.includes(value) || typeof value==='string' && /^collection:[A-Za-z0-9_-]{1,128}$/.test(value);}
 function rememberAssetView(){
-  const view=[assetScope,$('#assetSort').value,$('#assetType').value,$('#assetSearch').value],key=JSON.stringify(view);
+  const view=[assetScope,$('#assetSort').value,$('#assetType').value,$('#assetSearch').value,assetArchiveChoice()],key=JSON.stringify(view);
   if(key===assetViewRemembered)return;assetViewRemembered=key;
-  try{const storage=assetPreferenceStorage();if(validAssetScope(view[0]))storage.setItem(assetViewKeys.scope,view[0]);if(assetSortModes.includes(view[1]))storage.setItem(assetViewKeys.sort,view[1]);if(assetTypeModes.includes(view[2]))storage.setItem(assetViewKeys.type,view[2]);}catch(error){}
+  try{const storage=assetPreferenceStorage();if(validAssetScope(view[0]))storage.setItem(assetViewKeys.scope,view[0]);if(assetSortModes.includes(view[1]))storage.setItem(assetViewKeys.sort,view[1]);if(assetTypeModes.includes(view[2]))storage.setItem(assetViewKeys.type,view[2]);storage.setItem(assetViewKeys.archive,view[4]);}catch(error){}
   try{if(typeof view[3]==='string' && view[3].length<=500)assetPrivacyStorage().setItem(assetViewKeys.search,view[3]);}catch(error){}
 }
 function restoreAssetView(){
@@ -541,6 +549,7 @@ function restoreAssetView(){
     if(validAssetScope(scope)){assetScope=scope;assetScopeRestored=scope!=='all';}
     if(assetSortModes.includes(sort))$('#assetSort').value=sort;
     if(assetTypeModes.includes(type))$('#assetType').value=type;
+    const archive=storage.getItem(assetViewKeys.archive);if(['active','archived','all'].includes(archive))$('#assetArchiveFilter').value=archive;
   }catch(error){}
   try{const search=assetPrivacyStorage().getItem(assetViewKeys.search);if(typeof search==='string' && search.length<=200)$('#assetSearch').value=search;}catch(error){}
 }
@@ -579,6 +588,7 @@ function toggleAssetCheck(box) {
 function assetScopeAssets() {
   if(assetScope.startsWith('collection:') && !assetState.collections.some(c=>'collection:'+c.id===assetScope) && !assetPaging?.collectionNext)return [];
   return assetPageRecords().filter(a=>{
+    if(!assetArchiveAllows(a))return false;
     if(assetScope==='trash'?a.trashed_at==null:a.trashed_at!=null)return false;
     if(assetScope==='favorite'&&!a.favorite)return false;
     if(['selected','needs_work','unreviewed'].includes(assetScope)&&(a.review||'unreviewed')!==assetScope)return false;
@@ -636,6 +646,9 @@ function assetEmptyState() {
     title=assetSource()==='mine'?'None of your own runs here':'No agent runs here';
     description='No '+(assetSource()==='mine'?'personal':'agent-run')+' assets match this view and its filters. Choose All sources to include every run.';
     action='<button data-asset-source="all">Show all sources</button>';
+  }else if(assetArchiveChoice()==='archived'){
+    title='No archived assets in this view';description='Archive puts finished work away without changing privacy, Trash or original files. Your search, source and collection choices still apply.';
+    action='<button data-asset-archive-view="all">Show active and archived assets</button>';
   }else if(assetScope==='trash'){
     title='Trash is empty';description='Assets moved to Trash remain recoverable here.';
   }else if(collection){
@@ -651,6 +664,9 @@ function assetEmptyState() {
   }else if(assetState.assets.some(a=>a.trashed_at)){
     title='Your assets are in Trash';description='Open Trash to review and restore them. Moving assets to Trash does not delete their originals.';
     action='<button data-scope="trash" data-asset-browse-scope>Open Trash</button>';
+  }else if(assetArchiveChoice()==='active' && (assetPaging || assetState.assets.some(a=>a.archived_at!=null))){
+    title='No active assets in this view';description='Archived work is hidden here, not deleted. Include archived assets to look for it, or make/import a new picture.';
+    action='<button data-asset-archive-view="all">Include archived assets</button> <a href="/#make">Make a picture</a> <button data-asset-import>Import images</button>';
   }else{
     title='Your library is empty';description='Pictures you make in Make land here. You can also import images; importing makes nothing new.';
     action='<a class="primary" href="/#make">Make a picture</a> <button data-asset-import>Import images</button>';
@@ -665,7 +681,7 @@ function assetSelectionCanProceed(action) {
   if(selection.missing){assetMessage(selection.missing+(selection.missing===1?' selected asset is unavailable.':' selected assets are unavailable.')+' Review the selection or keep only visible assets before continuing.',true);return false;}
   if(assetSelection.size>assetSelectionLimit){assetMessage('Choose at most '+assetSelectionLimit+' assets per action. The current selection has not been changed.',true);return false;}
   if(selection.entries.some(e=>e.asset.workspace_id && e.asset.workspace_id!==assetState.workspace_id)){assetMessage('Selected assets belong to a different Workspace. Refresh the library before continuing.',true);return false;}
-  const labels={trash:'Move to Trash',restore:'Restore',favorite:'Favorite',selected:'Keep',review:'Mark a review',add_collection:'Add to collection',remove_collection:'Remove from collection',agent_run:'Mark as agent run',mine:'Mark as mine',export:'Export pack',scene:'Create scene',native:'Create native export'};
+  const labels={archive:'Archive',unarchive:'Return to active',trash:'Move to Trash',restore:'Restore',favorite:'Favorite',selected:'Keep',review:'Mark a review',add_collection:'Add to collection',remove_collection:'Remove from collection',agent_run:'Mark as agent run',mine:'Mark as mine',export:'Export pack',scene:'Create scene',native:'Create native export'};
   return !selection.hidden || window.confirm((labels[action]||'This action')+' will include '+selection.hidden+(selection.hidden===1?' selected asset':' selected assets')+' outside this view. Continue with all '+assetSelection.size+' selected assets? Cancel to review the selection or keep only visible assets.');
 }
 function clearAssetFilters() {clearTimeout(assetSearchTimer);assetSearchTimer=null;$('#assetSearch').value='';$('#assetType').value='all';renderAssets();$('#assetSearch').focus();}
@@ -681,7 +697,7 @@ function assetPreview(asset, detail=false) {
   if(asset.media_type==='audio')return detail?'<audio controls aria-label="Play '+alt+'" src="'+url+'"></audio>':'<span class="asset-type-placeholder"><span aria-hidden="true">♫</span><small>Audio</small></span>';
   return detail?'<model-viewer camera-controls touch-action="pan-y" environment-image="neutral" src="'+url+'" alt="'+alt+'"></model-viewer>':'<span class="asset-type-placeholder"><span aria-hidden="true">◇</span><small>3D model</small></span>';
 }
-function assetCardHTML(a) {const display=assetCardTitle(a);return '<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'" data-asset-card="'+esc(a.id)+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(display)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(display)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(display)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(display)+'</button>'+(assetSubtitle(a)?'<small class="asset-card-prompt" title="'+esc(assetSubtitle(a))+'">'+esc(assetSubtitle(a))+'</small>':'')+'<div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(assetReviewLabels[a.review]||a.review)+'</span></div><div class="asset-tags">'+(assetIsAgentRun(a)?'<span class="asset-run-label" title="Agent run label">'+esc(a.run_label)+'</span>':'')+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>';}
+function assetCardHTML(a) {const display=assetCardTitle(a);return '<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'" data-asset-card="'+esc(a.id)+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(display)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(display)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(display)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(display)+'</button>'+(assetSubtitle(a)?'<small class="asset-card-prompt" title="'+esc(assetSubtitle(a))+'">'+esc(assetSubtitle(a))+'</small>':'')+'<div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(assetReviewLabels[a.review]||a.review)+'</span></div><div class="asset-tags">'+(a.archived_at!=null?'<span>Archived</span>':'')+(assetIsAgentRun(a)?'<span class="asset-run-label" title="Agent run label">'+esc(a.run_label)+'</span>':'')+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>';}
 function renderAssets() {
   observeAssetWorkspaceIdentity();
   if(assetPaging && assetPaging.query!==assetPageQuery()){if(!assetRefreshing&&!assetSearchTimer)void refreshAssets(true);return;}
@@ -699,9 +715,9 @@ function renderAssets() {
   $('#clearAssetFilters').hidden=!assetFiltersActive();
   $('#selectVisible').disabled=!assets.length;
   $('#selectVisible').textContent=assets.length>assetSelectionLimit?'Select first '+assetSelectionLimit+' of '+assets.length:'Select visible';
-  $('#assetScopeTitle').textContent=col?.name||({all:'All assets',unreviewed:'Awaiting review',favorite:'Favorites',selected:'Kept',needs_work:'Needs work',trash:'Trash'}[assetScope]||'Collection');
+  $('#assetScopeTitle').textContent=col?.name||({all:'All assets',unreviewed:'Awaiting review',favorite:'Favorites',selected:'Kept',needs_work:'Needs work',trash:'Trash'}[assetScope]||'Collection')+(assetArchiveChoice()==='archived'?' · Archived':assetArchiveChoice()==='all'?' · Active & archived':'');
   $('#collectionActions').hidden=!col;
-  $('#assetCollections').innerHTML=assetState.collections.map(c=>'<button data-scope="collection:'+c.id+'" class="'+(col?.id===c.id?'active':'')+'"><span>▱ '+esc(c.name)+'</span><small>'+c.count+'</small></button>').join('')||'<p class="muted">Collect a character, a project, or an idea.</p>';
+  $('#assetCollections').innerHTML=assetState.collections.map(c=>'<button data-scope="collection:'+c.id+'" title="Non-trash members, including archived assets" class="'+(col?.id===c.id?'active':'')+'"><span>▱ '+esc(c.name)+'</span><small>'+c.count+'</small></button>').join('')||'<p class="muted">Collect a character, a project, or an idea.</p>';
   document.querySelectorAll('#assetScopes [data-scope]').forEach(b=>b.classList.toggle('active',b.dataset.scope===assetScope));renderAssetScopeCounts();
   const destination=$('#bulkCollection').value;
   $('#bulkCollection').innerHTML='<option value="">Choose collection…</option>'+assetState.collections.map(c=>'<option value="'+c.id+'">'+esc(c.name)+'</option>').join('');
@@ -724,7 +740,7 @@ function renderAssetSelection() {
   const selection=assetSelectionInfo();
   $('#assetSelectionSummary').textContent=selection.visible+' visible · '+selection.hidden+' outside this view'+(selection.missing?' · '+selection.missing+' unavailable':'')+(selection.unresolved?' · '+selection.unresolved+' outside this page, not yet resolved':'')+'. Actions use the whole selection, not just matching results.';
   $('#keepVisibleSelection').disabled=!selection.hidden;
-  $('#assetSelectedList').innerHTML=selection.entries.slice(0,assetSelectionLimit).map(e=>'<li><span>'+esc(e.asset?.title||e.id)+'</span><small>'+(e.unresolved?'Outside this page · not resolved':!e.asset?'Unavailable':e.asset.trashed_at!=null?'In Trash':e.visible?'Visible':'Outside this view')+'</small></li>').join('')+(selection.unresolved?'<li><button data-asset-resolve-selection>Resolve selected assets</button></li>':'')+(selection.entries.length>assetSelectionLimit?'<li>Only the first '+assetSelectionLimit+' selections are listed. Reduce the selection before acting.</li>':'');
+  $('#assetSelectedList').innerHTML=selection.entries.slice(0,assetSelectionLimit).map(e=>'<li><span>'+esc(e.asset?.title||e.id)+'</span><small>'+(e.unresolved?'Outside this page · not resolved':!e.asset?'Unavailable':e.asset.trashed_at!=null?'In Trash'+(e.asset.archived_at!=null?' · Archived':''):e.asset.archived_at!=null?'Archived'+(e.visible?' · Visible':' · Outside this view'):e.visible?'Visible':'Outside this view')+'</small></li>').join('')+(selection.unresolved?'<li><button data-asset-resolve-selection>Resolve selected assets</button></li>':'')+(selection.entries.length>assetSelectionLimit?'<li>Only the first '+assetSelectionLimit+' selections are listed. Reduce the selection before acting.</li>':'');
   $('#createScene').href='/av.html?asset_ids='+encodeURIComponent([...assetSelection].join(','));
   document.querySelectorAll('[data-bulk="restore"]').forEach(b=>b.hidden=assetScope!=='trash');
   document.querySelectorAll('[data-bulk="trash"]').forEach(b=>b.hidden=assetScope==='trash');
@@ -841,7 +857,7 @@ async function loadAssetSiblings(action='load'){
   const current=()=>ownsView() && assetReceiptEpoch===request.receipt && assetPageEpoch===request.pageEpoch;
   assetSiblingRequest=request;assetSiblingPage=page?{...page,error:''}:{...request,loaded:false,error:''};renderAssetSiblings(asset);
   try{
-    const result=await api(assetReadURL('/api/assets/page',{workspace_id:request.workspace,job_id:request.job,visibility:'active',source:'all',sort:'oldest',limit:20,details:true,cursor}));
+    const result=await api(assetReadURL('/api/assets/page',{workspace_id:request.workspace,job_id:request.job,visibility:'active',archive:'all',source:'all',sort:'oldest',limit:20,details:true,cursor}));
     if(!current())return false;
     if(!validAssetPage(result,20) || result.workspace_id!==request.workspace || catalogue && (result.catalogue.epoch!==catalogue.epoch || result.catalogue.revision<catalogue.revision) || result.assets.some(a=>a.job_id!==request.job||a.trashed_at!=null))throw Error('The run-output observation is invalid. Reload the Library before continuing.');
     for(const asset of result.assets)rememberAssetObservation({id:asset.id,state:'active',asset});
@@ -866,7 +882,7 @@ function applyAssetReceipt(command,result) {
     const item=assetResolved.get(id);if(item?.state==='missing')continue;
     for(const record of new Set([assetState.assets.find(a=>a.id===id),item?.asset])){
       if(!record || record.workspace_id!==command.workspace_id || record.metadata_revision!==command.expected_revisions[id])continue;
-      Object.assign(record,['edit','trash','restore'].includes(command.action)&&!result.unchanged?.includes(id)?result.applied:{},{metadata_revision:result.revisions[id]});updated=true;
+      Object.assign(record,['edit','trash','restore','archive','unarchive'].includes(command.action)&&!result.unchanged?.includes(id)?result.applied:{},{metadata_revision:result.revisions[id]});updated=true;
     }
     if(item?.asset?.workspace_id===command.workspace_id)rememberAssetObservation(item);
   }
@@ -1142,7 +1158,7 @@ function openAsset(id,owns=null) {
   if(assetQueue){const at=assetQueue.ids.indexOf(id);if(at>=0)assetQueue.index=at;else{assetQueue=null;assetMessage('Left the review queue to open an asset outside it. Review next starts a fresh queue.');}}
   renderAssetReasons();renderAssetSiblings(a);renderAssetQueue();
   $('#assetDetails').innerHTML='<p>'+esc(a.preset_name)+' · '+new Date(a.created_at*1000).toLocaleString()+'</p><p>'+esc(a.filename)+' · '+(a.bytes/1024/1024).toFixed(2)+' MiB</p><p>Seed '+esc(a.source.seed??'not recorded')+'</p>'+((a.source.tile||a.source.tile_preview||a.source.parallax)?'<p class="tileNote">'+esc((a.source.tile||a.source.tile_preview||a.source.parallax).summary)+'</p>':'')+(a.prompt_excerpt?'<p class="asset-prompt-excerpt">Prompt text: '+esc(a.prompt_excerpt)+'</p>':'')+(assetIsAgentRun(a)?'<p>Run label: '+esc(a.run_label)+'</p>':'')+'<details><summary>File identity</summary><code>'+a.sha256+'</code><p>Prompt '+esc(a.source.prompt_id||'not recorded')+'</p></details>';
-  $('#assetFavorite').textContent=a.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=a.trashed_at!=null?'Restore':'Move to Trash';
+  $('#assetFavorite').textContent=a.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=a.trashed_at!=null?'Restore':'Move to Trash';$('#assetArchive').textContent=a.archived_at!=null?'Return to active':'Archive';
   $('#assetDownload').href=a.url+((a.url||'').includes('?')?'&':'?')+'download';
   $('#assetHandoffs').innerHTML=a.media_type==='image'?'<button data-handoff="reference">Edit image</button><button data-handoff="anime-detail-fix" title="Repaint detected hands and faces; review settings before generating">Fix hands &amp; face</button><button data-handoff="krea-refine" title="Open Krea image refinement; review settings before generating">Refine image</button><button data-handoff="wan22-i2v">Animate</button><button data-handoff="trellis-auto-cutout">Make 3D</button><button data-handoff="anime-upscale">Upscale</button>':'';
   renderI2VDiagnosticAction(a);
@@ -1151,7 +1167,7 @@ function openAsset(id,owns=null) {
     const retained=assetRetainedDetail;Object.assign(activeAsset,retained.metadata);assetDetailBaseline=retained.baseline;
     for(const [key,field] of Object.entries(assetFormIds))$('#'+field).value=retained.draft[key];
     assetDetailPending=retained.operation?{...retained.operation,id,epoch:assetDetailEpoch}:null;assetDetailConflict=retained.conflict;
-    $('#assetFavorite').textContent=activeAsset.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=activeAsset.trashed_at!=null?'Restore':'Move to Trash';
+    $('#assetFavorite').textContent=activeAsset.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=activeAsset.trashed_at!=null?'Restore':'Move to Trash';$('#assetArchive').textContent=activeAsset.archived_at!=null?'Return to active':'Archive';
     renderAssetConflict();renderAssetSaveRecovery();assetDetailControls();renderAssetReasons();assetDetailStatus('Retained draft restored. No save was sent. Review it or check the earlier save status.');
   }
   if(!$('#assetDialog').open){
@@ -1194,6 +1210,7 @@ async function refreshAssetsNow() {
 $('#workspaceRefresh').onclick=()=>refreshAssetsNow();
 // Typing reads a new first page once the operator pauses; every other control is immediate.
 $('#assetSearch').oninput=()=>{clearTimeout(assetSearchTimer);assetSearchTimer=setTimeout(()=>{assetSearchTimer=null;void refreshAssets(true);},150);};
+$('#assetArchiveFilter').onchange=renderAssets;
 $('#assetType').onchange=renderAssets;$('#assetSort').onchange=()=>{void refreshAssets(true);};
 function chooseAssetSource(value){assetSourceMode=assetSourceModes.includes(value)?value:null;try{assetPreferenceStorage().setItem(assetSourceStorageKey,assetSourceMode||'');}catch(error){}renderAssets();}
 $('#assetSource').onchange=()=>chooseAssetSource($('#assetSource').value);
@@ -1266,10 +1283,15 @@ $('#assetTrash').onclick=async()=>{
   const action=activeAsset.trashed_at!=null?'restore':'trash';
   await writeAssetDetails({action},'trash');
 };
+$('#assetArchive').onclick=async()=>{
+  if(!activeAsset || assetDetailBusy || assetDetailPending || assetDetailConflict)return;
+  await writeAssetDetails({action:activeAsset.archived_at!=null?'unarchive':'archive'},'archive');
+};
 $('#assetRecipe').onclick=()=>exportRecipe(activeAsset.job_id);
 document.addEventListener('click',async e=>{
   const privacyEpoch=assetWorkspaceEpoch;
   try{
+    const archiveView=e.target.closest('[data-asset-archive-view]');if(archiveView){const value=archiveView.dataset.assetArchiveView;if(['active','archived','all'].includes(value)){$('#assetArchiveFilter').value=value;renderAssets();$('#assetArchiveFilter').focus();}return;}
     const page=e.target.closest('[data-asset-page]');if(page){await moveAssetPage(page.dataset.assetPage==='next');return;}
     const siblings=e.target.closest('[data-asset-siblings]');if(siblings){await loadAssetSiblings(siblings.dataset.assetSiblings);return;}
     if(e.target.closest('[data-collection-more]')){await moreAssetCollections();return;}
@@ -1352,7 +1374,7 @@ document.addEventListener('click',async e=>{
       const payload={ids,action,collection_id:$('#bulkCollection').value};
       if(action==='favorite')Object.assign(payload,{action:'edit',favorite:true});
       if(action==='selected')Object.assign(payload,{action:'edit',review:'selected'});
-      await mutateAssets(payload);if(privacyEpoch!==assetWorkspaceEpoch)return;const changed=JSON.stringify([...assetSelection])!==JSON.stringify(ids);if(!changed)assetSelection.clear();renderAssets();assetMessage((action==='trash'?'Moved to Trash. Originals and recipes are preserved.':'Updated '+ids.length+' assets.')+(changed?' Your changed selection was kept.':''));
+      await mutateAssets(payload);if(privacyEpoch!==assetWorkspaceEpoch)return;const changed=JSON.stringify([...assetSelection])!==JSON.stringify(ids);if(!changed)assetSelection.clear();renderAssets();assetMessage((action==='archive'?'Archived '+ids.length+' selected assets. Originals, privacy and collection membership are preserved. Choose Archived assets to retrieve them.':action==='unarchive'?'Returned '+ids.length+' selected assets to active. Privacy and Trash are unchanged.':action==='trash'?'Moved to Trash. Originals and recipes are preserved.':'Updated '+ids.length+' assets.')+(changed?' Your changed selection was kept.':''));
     }
   }catch(err){if(privacyEpoch===assetWorkspaceEpoch){assetMessage(err.message,true);message(err.message,true);}}
 });
@@ -1402,7 +1424,7 @@ document.addEventListener('studio:privacy-change',event=>{
   if($('#assetDialog').open)$('#assetDialog').close();
   for(const id of ['assetTitle','assetTags','assetNotes','bulkRunLabel'])$('#'+id).value='';$('#assetReview').value='unreviewed';
   for(const id of ['assetDetailMedia','assetDiagnostic','assetSameRun','assetDetails','assetLineage','assetHandoffs','assetDetailConflict','assetDetailRecovery','assetCommandRecovery','assetBulkReviewStatus','assetDetailStatus']){const panel=$('#'+id);if(panel)panel.innerHTML='';}
-  $('#assetDownload').href='';$('#assetSearch').value='';$('#assetSort').value='newest';$('#assetType').value='all';assetScope='all';assetViewRemembered='';assetScopeRestored=false;
+  $('#assetDownload').href='';$('#assetSearch').value='';$('#assetSort').value='newest';$('#assetType').value='all';$('#assetArchiveFilter').value='active';assetScope='all';assetViewRemembered='';assetScopeRestored=false;
   assetActivePrivacy=next;assetRecovery=assetJournalFor(next);loadAssetRecoveryJournal();restoreAssetView();
   assetMessage('');renderAssetQueue();renderLibraryRecovery();renderAssets();void refreshAssets(true);
 });

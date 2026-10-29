@@ -1,5 +1,33 @@
 # Current state — 28 October 2026
 
+## 2026-10-28 — reversible Library Archive (qualification pending)
+
+The first #1678 slice adds logical Archive independent of privacy and Trash,
+with existing atomic revision/receipt ownership, active/archived/all filtering,
+retained off-page selection and unsaved editor wording. It moves no files and
+preserves IDs, lineage, reviews and collections. Bounded SDK/CLI/MCP reads expose
+the filter without adding mutation authority. Current recovery/conflict metadata
+names Archive state separately from historical receipts.
+
+See [Archive guide](docs/ASSET-ARCHIVE.md) and
+[causal implementation record](docs/superpowers/plans/2026-10-28-logical-archive.md).
+Local focused Archive tests, existing Workspace/privacy/recovery contracts and
+the repository validator pass; renderer/bridged-HTTP browser checks are explicitly
+not native storage acceptance. Fresh Linux/Windows and full-suite gates remain
+required. Completed-run privacy migration, physical relocation, agent write parity
+and owner workstation/art/licensing acceptance remain open.
+
+### Prior continuation closeout (supersedes pending entries below)
+
+Private-session #1677 and collection discovery #1680 are merged in main
+`3392d27bf0fa8ce5305bcc2c3a88009a33d87114`, tree
+`dc2c2606338d4ac29061a5d08347f80927857926`. Their final PR records contain
+completed hosted qualification: private-session full suite 6,302 total / 82
+skips, final collection slice 6,320 total / 82 skips, no failures, and native
+Linux/Windows gates. The collection record retains an initial Windows loopback
+setup failure and one successful identical-head retry. The earlier entries below
+remain historical evidence, not the latest status of those merged slices.
+
 ## 2026-10-28 — bounded collection discovery follow-up (qualification pending)
 
 Added `collection_page` to the read-only agent/MCP surface plus a strict Python

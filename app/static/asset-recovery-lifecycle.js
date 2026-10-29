@@ -16,7 +16,7 @@
     const c=command(record);
     if(!c||receipt.workspace_id!==record.payload.workspace_id)throw Error('Receipt Workspace does not match retained evidence.');
     if(receipt.request_id!==c.request_id||!['unknown','applied'].includes(receipt.status))throw Error('Receipt request identity or status is invalid.');
-    if(receipt.status==='applied'&&(receipt.action!==c.action||!same(receipt.updated,c.ids)||!keys(receipt.revisions,c.ids)||c.ids.some(id=>receipt.revisions[id]!==c.expected_revisions[id]+(['trash','restore'].includes(c.action)&&Array.isArray(receipt.unchanged)&&receipt.unchanged.includes(id)?0:1))))throw Error('Historical receipt does not match every retained target and revision.');
+    if(receipt.status==='applied'&&(receipt.action!==c.action||!same(receipt.updated,c.ids)||!keys(receipt.revisions,c.ids)||c.ids.some(id=>receipt.revisions[id]!==c.expected_revisions[id]+(['trash','restore','archive','unarchive'].includes(c.action)&&Array.isArray(receipt.unchanged)&&receipt.unchanged.includes(id)?0:1))))throw Error('Historical receipt does not match every retained target and revision.');
   }
   function validate(record,value){
     if(!keys(value,['format','workspace_id','observed_at','targets','collection','generation_submitted'])||value.format!==format||value.generation_submitted!==false||typeof value.observed_at!=='number'||!Number.isFinite(value.observed_at)||value.observed_at<0)throw Error('Invalid bounded lifecycle observation.');
@@ -30,7 +30,8 @@
     value.targets.forEach((row,index)=>{
       if(row?.id!==ids[index])throw Error('Observation target identity or order changed.');
       if(row.state==='missing'){if(!keys(row,['id','state']))throw Error('Missing target includes unexpected fields.');return;}
-      if(!keys(row,['id','state','title','metadata_revision','collection_count','collections','collections_limited',...(collectionId?['in_collection']:[])])||
+      if(!keys(row,['id','state','title','metadata_revision','collection_count','collections','collections_limited',...(Object.hasOwn(row,'archived_at')?['archived_at']:[]),...(collectionId?['in_collection']:[])])||
+         (row.archived_at!=null&&(typeof row.archived_at!=='number'||!Number.isFinite(row.archived_at)||row.archived_at<0))||
          !['active','trashed'].includes(row.state)||!text(row.title,200)||!integer(row.metadata_revision)||!integer(row.collection_count)||
          !Array.isArray(row.collections)||row.collections.length!==Math.min(row.collection_count,20)||row.collections_limited!==(row.collection_count>20)||
          row.collections.some(c=>!keys(c,['id','name'])||!text(c.id,128)||!c.id||!text(c.name,100))||new Set(row.collections.map(c=>c.id)).size!==row.collections.length||
@@ -128,8 +129,10 @@
       results.append(element('p',value.report.targets.length+' targets: '+Object.entries(counts).map(([k,v])=>v+' '+k).join(', ')+'.'));
       for(const row of value.report.targets){
         const entry=element('article');entry.className='asset-shelf-record';
-        entry.append(element('h4',row.id+' · '+({active:'Active now',trashed:'In Trash now',missing:'Missing now',unavailable:'Current state unavailable'}[row.state])));
+        entry.append(element('h4',row.id+' · '+({active:row.archived_at!=null?'Archived now · Not in Trash':'Not in Trash now',trashed:row.archived_at!=null?'In Trash now · Archived':'In Trash now',missing:'Missing now',unavailable:'Current state unavailable'}[row.state])));
         if(row.title)entry.append(element('p',row.title));
+        if(Object.hasOwn(row,'archived_at'))entry.append(element('p',row.archived_at==null?'Current Archive state: active. This is independent of Trash and privacy.':'Current Archive state: archived. Original files and collection membership are retained.'));
+        else if(['active','trashed'].includes(row.state))entry.append(element('p','Archive state was not supplied by this observation.'));
         entry.append(element('p','Retained revision '+row.expected_revision+' · Historical receipt revision '+(row.receipt_revision??'not confirmed')+' · Observed revision '+(row.metadata_revision??'unavailable')+(row.revision_relation?' ('+row.revision_relation+' than '+(row.receipt_revision!==null?'receipt':'retained baseline')+')':'')));
         if(row.restored_since_retained)entry.append(element('p','Active at a newer revision after the retained Trash state; observed as restored. No restore was sent by this inspection.'));
         if(row.state==='missing')entry.append(element('p','This target is absent from the scoped database. Its local text and historical receipt remain inspectable/exportable. No target was silently dropped.'));

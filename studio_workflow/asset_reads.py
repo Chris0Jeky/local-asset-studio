@@ -31,7 +31,7 @@ HEX32 = re.compile(r'[0-9a-f]{32}\Z')
 HEX64 = re.compile(r'[0-9a-f]{64}\Z')
 DEFAULT_FILTERS = {'visibility':'active', 'media_type':None, 'review':None,
                    'favorite':None, 'collection_id':None}
-FILTER_KEYS = (*DEFAULT_FILTERS, 'source', 'job_id', 'privacy')
+FILTER_KEYS = (*DEFAULT_FILTERS, 'source', 'job_id', 'privacy', 'archive')
 REVIEWS = ('unreviewed','selected','needs_work','rejected')
 DISPLAY_LIMITS = {'title':200, 'filename':256, 'preset_name':200}
 EPOCH_VALID = "typeof(epoch)='text' AND length(epoch)=32 AND instr(epoch,char(0))=0 AND epoch NOT GLOB '*[^0-9a-f]*'"
@@ -63,8 +63,9 @@ def _projection(db):
     *[f"CASE WHEN typeof(a.{key})='integer' THEN a.{key} END AS {key}"
       for key in ('bytes','metadata_revision','favorite')],
     *[f"CASE WHEN typeof(a.{key}) IN ('integer','real') THEN a.{key} END AS {key}"
-      for key in ('created_at','trashed_at')],
+      for key in ('created_at','trashed_at','archived_at')],
     'a.preset_id IS NULL AS preset_id_null','a.trashed_at IS NULL AS trashed_at_null',
+    'a.archived_at IS NULL AS archived_at_null',
     ])
 
 
@@ -198,6 +199,10 @@ def normalize_filters(value=None):
     value = {} if value is None else value
     require(set(value) <= set(FILTER_KEYS), 'Unsupported asset filter')
     result = dict(DEFAULT_FILTERS, **value)
+    archive = result.pop('archive', 'active')
+    require(type(archive) is str and archive in ('active','archived','all'), 'Invalid archive filter')
+    # Unarchived legacy pages keep their query shape. Explicit alternatives bind cursors.
+    if archive != 'active': result['archive'] = archive
     source = result.pop('source', 'all')
     require(type(source) is str and source in ('all', 'mine', 'agent'), 'Invalid source filter')
     # Omitted/All keeps the original response shape and cursor identity.
@@ -283,6 +288,7 @@ def _summary(row):
     value = dict(row)
     encoding = value.pop('_text_encoding')
     preset_null, trashed_null = value.pop('preset_id_null'), value.pop('trashed_at_null')
+    archived_null = value.pop('archived_at_null')
     error = {'code':'asset_read_unavailable','status':503}
     # Decode bounded scalar bytes here, not in SQLite's implicit TEXT converter.
     # Corrupt stored text must become the same typed refusal as other bad metadata.
@@ -300,8 +306,10 @@ def _summary(row):
             and _finite(value['created_at']) and _integer(value['bytes'])
             and _integer(value['metadata_revision'])
             and ((value['trashed_at'] is None and trashed_null == 1) or _finite(value['trashed_at']))
+            and ((value['archived_at'] is None and archived_null == 1) or _finite(value['archived_at']) and value['archived_at'] >= 0)
             and ((value['preset_id'] is None and preset_null == 1) or _matches(ENTITY,value['preset_id'])),
             'An asset summary has invalid identity or scalar metadata', **error)
+    if value['archived_at'] is None: value.pop('archived_at')
     value['truncated_fields'] = []
     for key,limit in DISPLAY_LIMITS.items():
         raw, size = value[key], value.pop(key+'_bytes')
@@ -369,6 +377,9 @@ class AssetReads:
                         code='asset_cursor_stale',status=409)
             privacy_clause, params = privacy_sql(privacy, 'a.')
             clauses = [privacy_clause]
+            archive = query.get('archive', 'active')
+            if archive != 'all':
+                clauses.append('a.archived_at IS ' + ('NULL' if archive == 'active' else 'NOT NULL'))
             if query.get('source') in ('mine', 'agent'):
                 # Match assetIsAgentRun exactly: Make labels are the owner's runs.
                 # substr equality stays case-sensitive, unlike SQLite's default LIKE.
