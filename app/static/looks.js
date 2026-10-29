@@ -193,6 +193,8 @@
     const text=L.readyMessage(result,switched,looks.find(l=>l.id===result.look.id));message(text);status(text);
     preparedShortcut={stamp:preparationStamp(),epoch:preparationEpoch};return true;
   }
+  // Briefs use the same guarded recipe application and rollback as the Looks panel.
+  L.openPrepared=apply;
   q('#lookSelect').addEventListener('change',sync);q('#lookScene').addEventListener('input',sync);q('#lookName').addEventListener('input',sync);
   q('#positive').addEventListener('input',sync);document.addEventListener('studio:recipe',()=>render(q('#lookSelect').value));
   q('#lookScene').addEventListener('keydown',e=>{

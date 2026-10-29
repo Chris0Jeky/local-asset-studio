@@ -1,5 +1,27 @@
 # Current state — 29 October 2026
 
+## 2026-10-29 — Workspace scene-brief integration (qualification pending)
+
+The [Scene briefs route](docs/SCENE-BRIEFS.md) integrates the six-slot brief into
+the real Studio shell and existing revisioned card store. Candidate selection
+uses actual paged Workspace records and checks ID, hash, metadata revision,
+type, privacy and collection membership. Full-editor look preparation and Scene
+editor source handoff reuse existing owners; neither submits a job or render.
+Unsupported sprite/audio/3D preparation remains explicit. Regular-only storage,
+same-tab draft recovery, conflict retention and corrupt-data refusal are part of
+the initial boundary.
+
+Thirteen focused storage/frontend checks, 66 existing look checks, eight existing
+shell checks and 24 native browser journey assertions pass. The isolated journey
+uses shipped UI and real SQLite/HTTP owners with synthetic records. It proves
+two-tab conflict retention, lost-response reconciliation, candidate paging,
+replacement/restore, preparation/return, storage refusal, corrupt recovery,
+privacy transitions, keyboard use and a 390px layout. The independent review's
+new-draft discovery defect is fixed and reproduced by the browser check.
+Full-repository qualification and final review remain pending; no merge or
+deployment is claimed by this entry. No runtime, model, generation, native render,
+art or licence acceptance occurred. `HUMAN_TODO.md` remains unchanged.
+
 ## 2026-10-29 — multi-asset brief prototype (synthetic, separate preview)
 
 The [Lantern Marsh prototype](docs/prototypes/multi-asset-brief/README.md) connects

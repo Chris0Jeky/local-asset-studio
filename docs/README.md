@@ -14,6 +14,7 @@ folder come first: [`README.md`](../README.md) (what the Studio is), [`CURRENT_S
 | [guides/MAKE-A-HIGH-END-ANIME-PICTURE.md](guides/MAKE-A-HIGH-END-ANIME-PICTURE.md) | The Make journey for an anime picture: pick a look, tune model and adapters, tweak, finish, troubleshoot |
 | [WORKFLOW-LAB.md](WORKFLOW-LAB.md) | The views, folder map, variants and the image-to-video/3D paths |
 | [WORKSPACE.md](WORKSPACE.md) | Collect, tag, favourite, compare and restore outputs |
+| [SCENE-BRIEFS.md](SCENE-BRIEFS.md) | One shared direction, six asset slots, revisioned candidates, preparation and same-tab draft recovery |
 | [PRIVATE-CREATIONS.md](PRIVATE-CREATIONS.md) | Private sessions and unfinished drafts, Regular/Private/All views, storage paths, recovery and agent scope |
 | [EXPERIMENTS.md](EXPERIMENTS.md) | Bounded comparisons and native finishing plans |
 | [UX-WORKFLOWS.md](UX-WORKFLOWS.md) | The workflow-first UX rework (12 September 2026): surfaces, handoffs, limits |

@@ -49,7 +49,7 @@ REVIEW_CHECKS = ("pose", "face", "outfit", "style", "clean", "anatomy", "composi
 CHECK_TAG = re.compile(r"check:(%s)=(yes|no)" % "|".join(REVIEW_CHECKS))
 # Cards (#1221, #1205): named, revisioned Workspace records that are not pictures. `body` is the kind's JSON (a look's wording
 # template and recipe, app/looks.py; a character's words, app/characters.py), `lineage` the pictures it came from.
-CARD_KINDS = ("look", "character")
+CARD_KINDS = ("look", "character", "brief")
 CARD_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{2,127}")
 CARD_BODY_MAX = 64 * 1024
 CARD_LINEAGE_MAX = 20
@@ -824,6 +824,9 @@ class AssetWorkspace:
                     same = existing["kind"] == payload["kind"] and existing["name"] == fields["name"] and json.loads(existing["body"]) == json.loads(fields["body"]) and json.loads(existing["lineage"]) == json.loads(fields["lineage"])
                     if not same: raise WorkspaceError("That card ID already names a different card; nothing changed", status=409, code="card_id_taken", current=self._card(existing))
                     return self._card(existing)
+                if payload['kind'] == 'brief':
+                    from scene_briefs import validate_write
+                    validate_write(self, db, json.loads(fields['body']))
                 db.execute("INSERT INTO cards (id,kind,name,body,lineage,origin,revision,created_at,updated_at) VALUES (?,?,?,?,?,'owner',0,?,?)",
                            (identifier, payload["kind"], fields["name"], fields["body"], fields["lineage"], now, now))
                 return self._card(db.execute("SELECT * FROM cards WHERE id=?", (identifier,)).fetchone())
@@ -838,6 +841,12 @@ class AssetWorkspace:
             if 'lineage' in fields: self._regular_record_sources(db, fields['lineage'])
             row = db.execute("SELECT * FROM cards WHERE id=?", (payload.get("id"),)).fetchone() if isinstance(payload.get("id"), str) else None
             if row is None: raise WorkspaceError("Card not found", status=404, code="card_not_found")
+            if row['kind'] == 'brief':
+                from scene_briefs import validate_write
+                try: prior = json.loads(row['body'])
+                except (ValueError, TypeError) as exc:
+                    raise WorkspaceError('Brief data is unreadable; the original is preserved', code='brief_unreadable') from exc
+                validate_write(self, db, json.loads(fields['body']) if 'body' in fields else prior, prior)
             if row["revision"] != expected:
                 raise WorkspaceError("This card changed since you read it; nothing changed. Reload it and try again.", status=409, code="card_revision_conflict", current=self._card(row))
             if action in ("trash", "restore") and (not row["trashed_at"]) != (action == "trash"): return self._card(row)

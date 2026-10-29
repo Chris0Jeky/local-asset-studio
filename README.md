@@ -79,6 +79,7 @@ Everything below exists in the code. Where a feature is only partly proven, the 
 - An asset workspace in SQLite (`assets.sqlite3`) with a content-addressed file store, favourites, tags, notes, collections and reversible trash (`app/workspace.py`).
 - [Private creations](docs/PRIVATE-CREATIONS.md): a per-tab private session or one-creation override, separate run/media folders, and independent Regular / Private / All history and Library views. Private drafts and recovery stay in tab-scoped storage; default agent reads remain regular. This is visibility and organization, not encryption.
 - Make picture drafts retain their goal, wording and source identities across a same-tab reload. Restoration checks the original Workspace and missing sources before another submission.
+- [Scene briefs](docs/SCENE-BRIEFS.md) connect shared direction to six typed asset slots, real paged candidates and explicit preparation/return. Saved briefs use revisioned Workspace cards; the initial integration is Regular only.
 - Krita OpenRaster round trip through a fixed, non-interactive adapter (`scripts/krita_roundtrip.py`).
 - Godot packages: sprite atlases and GLBs, verified by an explicitly selected Godot (`scripts/godot_asset_adapter.py`). The package step does not execute user code.
 - A Blender-authored articulated chest study through a fixed Blender script (`scripts/articulated_prop.py`).

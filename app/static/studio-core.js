@@ -1,7 +1,7 @@
 /* Presentation policy only: no network, DOM, execution or persisted mutations. */
 (function(root,factory){const core=factory();if(typeof module==='object'&&module.exports)module.exports=core;else root.StudioUX=core;})(globalThis,function(){
   'use strict';
-  const VIEWS=['make','home','create','assets','production','models','learn'];
+  const VIEWS=['make','home','create','assets','briefs','production','models','learn'];
   const ACTIVE=['queued','submitting','running','waiting','observing','rendering'];
   const ATTENTION=['failed','partial','uncertain','interrupted','stopped'];
   const INTENTS=[
