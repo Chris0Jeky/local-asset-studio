@@ -1,0 +1,63 @@
+name: Archive receipt consistency qualification
+on:
+  push:
+    branches: [codex/storage-resume-source-20261029]
+    paths: ['.github/workflows/qualify-archive-current.yml']
+permissions:
+  contents: write
+jobs:
+  objects:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: a51013d111093232f43762976a97ecd8abe1bd4b
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify exact reviewed correction
+        run: |
+          python - <<'PY'
+          import base64,gzip,hashlib,pathlib,subprocess
+          encoded='H4sIAAAAAAAC/5VWS4+jOBC+96/wDZgm6UAS8hghzWo0K+1lV9rXJYqQYxcTzxBgbZOe1mj/+1YZSKDTvZrOIYBd76/qs6XKczaZfFaW8QdjG6mq7LHSX/OienzgxoDNuBZHdYZMFApKO62f2OFHJe9UKeEbW0GyjtcwxwdAlPBltBSL1YKLudxESZKsxHq5nkE0nQoZcbGCQxzxZM0PsyhfJVGeSFjHUcw5X63nwKN4zqLZLFks7iaTyY/HfXd/f/+G2D98YJMoWocJu6dHFDFckZCzTIMAVVtfg2kKG7K64GXIRHU68VKG7F3IeIGWs6b8WlaPZfozLwwE2zs2+nkfG63RFzuB5ZJbzmoN+ATD7BGYxlVVgmSdNy+46pcA0ve6kGXGrcdUyXT1yDAA5lnNzfF2PbPqBMbyU+3j0m6kvw9eFBlY2gfhawkUKgfxJAq4pqIMa0p+5qrghwIw9vteS+XMme5FsZpnZVRVenuWpqz/Mjsl0bbKFej99qpOP5KBRyxNipX4Zn1l4YTpEI5oJK80oxVKnZDZeQYKENa52Hm0ZVAM42j1lGw9X/0FY3d9nVh68Tz9DHYMQOAMXkyQ86YUR15+RkVA/Fn7YZ7VfezKAXsLDoV3iYJwugGnLx0FN94Jxx5a5P7gJ5j0pWbiBkdRlWhDKmH7Zuwq/kIz1rr6guXFovC6hlL637/C09aFiC8tHvhCFfGp2CF7AXtcHGYcjpo4+Ldz58qzc8k71Mg0dTch3UfhSrFTbRvQjpJmt41mLeK0YADKfXht3+pgQJ85NYjBMgOrGlzMWaUl6D5THMdGl+y7h3ZPGNOWeS2RTF3fTbroJy0nPJwjyqHW6szFEwq3jdh/IyhySLw489a4/wstZa+T7xukOwKOpZjN5+t8vl7P15vlhs/mKyFXh81ythAiiTkgzS4P8XSawEqKwyKO8wXnG6RlMUeCTubzHDUWixlfi1isxGFMwG+JqCXht2g4It5swiUSMT7iGRGxKFCc/dQKf3Syf5JNvymVJbtT+vzIb4kX2SB3oGn76Z+GF75bOFWyKWB6Qs71d95k0ujCC91OF8gBTYUetnjx5IUoQIiihNV+rgoIaAk3dYUd7PYm5sjjZYKyM+9dskD6jAdDcxPEF1OV06Li0vjGYt9popgzLxrwg2DniUoCtk0/JFmOzAqSmrMdbzqXXDUNTvZlrLJusrPLwAlelpXNrvOd4XhfDjSKKhiQLeWRulDrlgH84H13zKXDqmGcik6ujBR89FGVSmBS9BlMJVD0lEY0oLvOZzqscdaOIvjeA69VezKbh6Ym217YeR6wM804sm0hQ1cpGu7dmJbDX6sSwfGHdBLiBSJ4fqYcuExFVT9htFDTi98FGLzHLQSgrSSeILP9zvncp87p2MyjsscWXNMcqAN9J5u6/yCsuRXHaXUgqvIHmYden7oXtkyTOeMp+g62twx+ddP20O9cGTCjTu5G47fGYt3gr/YqEmxbJeriFp0ftv03xfNJ60p3RrA+2Oz6uZkCsdKvldJtjos5beH1B6ilBFp4RSwlwJ55eIbIS9eJ+zS6Krms3lx+5yq4uX4Qxaf/V4RB+X4xlE13V3we9fgK9qJ+Sw+9en/+ki6CqJAD9mG3OFhCU8gMdOJlWUmMkKWpl2XEblnmbS8c6eguuPsPwLEjlgYMAAA='
+          patch=gzip.decompress(base64.b64decode(encoded,validate=True))
+          assert hashlib.sha256(patch).hexdigest()=='fecc84a4d49a71298de77622160eb87c29dcfe2fc24f644af55d169c4679d292'
+          pathlib.Path('/tmp/review.patch').write_bytes(patch)
+          subprocess.run(['git','apply','--index','/tmp/review.patch'],check=True)
+          subprocess.run(['git','diff','--cached','--check'],check=True)
+          assert subprocess.check_output(['git','write-tree']).decode().strip()=='a9ddd6f9e081c6796ef2dea625e31747f6025e0e'
+          PY
+      - run: python -m pip install -r integrations/workflow-mcp/requirements.txt -r research/game-assets/requirements-media.txt -r tests/requirements-runtime.txt
+      - name: Require SDK and run all reviewed Archive contracts
+        run: |
+          python -c "import mcp; import importlib.metadata; assert importlib.metadata.version('mcp') == '1.30.0'"
+          python -m unittest discover -s tests -p 'test_workflow_asset_archive_*.py' -v
+          python scripts/validate-repo.py
+      - name: Publish only the two verified source blobs and tree
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import base64,json,pathlib,subprocess
+          def git(*args):return subprocess.check_output(['git',*args])
+          def api(path,data):return json.loads(subprocess.check_output(['gh','api','--method','POST','repos/Chris0Jeky/local-asset-studio/git/'+path,'--input','-'],input=json.dumps(data).encode()))
+          paths=git('diff','--cached','--name-only').decode().splitlines()
+          assert paths==['studio_workflow/asset_archive_client.py','tests/test_workflow_asset_archive_client.py']
+          entries=[]
+          for path in paths:
+              sha=git('rev-parse',':'+path).decode().strip()
+              assert api('blobs',{'encoding':'base64','content':base64.b64encode(git('cat-file','blob',sha)).decode()})['sha']==sha
+              entries.append({'path':path,'mode':'100644','type':'blob','sha':sha})
+          tree=api('trees',{'base_tree':'649b2b289c74aa47cce8cb11d6e7e711d37e9d82','tree':entries})['sha']
+          assert tree=='a9ddd6f9e081c6796ef2dea625e31747f6025e0e'
+          receipt={'tree':tree,'branch_moved':False,'entries':entries}
+          pathlib.Path('publication.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps(receipt))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: archive-receipt-consistency-publication
+          path: publication.json
+          if-no-files-found: error
+          retention-days: 2
