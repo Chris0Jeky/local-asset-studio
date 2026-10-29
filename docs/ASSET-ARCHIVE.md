@@ -74,7 +74,9 @@ python -m studio_workflow.asset_read_client page --archive all --privacy private
 ```
 
 MCP `asset_page` accepts the same filter inside `filters`. It remains read-only;
-this change does **not** add an agent write tool. `asset_selection` and direct
+the separate [reviewed agent Archive workflow](workflow-studio/AGENT-ARCHIVE.md)
+adds read-only preview/recovery and author-only apply, not broad write access.
+`asset_selection` and direct
 asset reads remain exact-ID observations and can include archived assets.
 Unarchived summaries retain their previous field shape; archived summaries add a
 finite `archived_at` timestamp. Full editor metadata/current conflict observations
