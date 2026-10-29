@@ -18,9 +18,15 @@ two-tab conflict retention, lost-response reconciliation, candidate paging,
 replacement/restore, preparation/return, storage refusal, corrupt recovery,
 privacy transitions, keyboard use and a 390px layout. The independent review's
 new-draft discovery defect is fixed and reproduced by the browser check.
-Full-repository qualification and final review remain pending; no merge or
-deployment is claimed by this entry. No runtime, model, generation, native render,
-art or licence acceptance occurred. `HUMAN_TODO.md` remains unchanged.
+The full local run exercised 6,362 tests in 954.330 seconds: 127 skipped and six
+errors, all at Windows symlink fixture creation (`WinError 1314`) in two unchanged
+privacy test modules. Independent file/directory probes reproduce that missing
+host privilege without Studio code; this local run is not green. The repository
+validator passes (94 graphs, 189 pinned assets, 4,648 tracked paths). Independent
+review and its scoped fix/visual verification are complete. Consult the current
+PR's exact-head checks for supported-runner qualification and Git for merge state.
+No runtime, model, generation, native render, art or licence acceptance occurred.
+`HUMAN_TODO.md` remains unchanged.
 
 ## 2026-10-29 — multi-asset brief prototype (synthetic, separate preview)
 
