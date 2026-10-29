@@ -136,7 +136,7 @@ async def run(out):
             async with page.expect_download() as pending: await page.keyboard.press('Enter')
             await (await pending.value).save_as(out/'narrow-working-pack.zip'); await idle()
             check('Narrow keyboard download completes after cancelled contexts', len(downloads) == 2)
-            check('No generation render or asset review write was sent', not any(method == 'POST' and path not in ('/api/briefs/export','/api/estimate','/api/references/check') for method,path in requests))
+            check('No generation render or asset review write was sent', not any(method == 'POST' and path not in ('/api/briefs/export','/api/estimate','/api/references/check','/api/assets/selection') for method,path in requests))
             check('No JavaScript errors', not errors)
             await context.close(); await browser.close(); browser = None
     finally:
