@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="color-scheme" content="dark">
+  <title>Lantern Marsh · Asset brief preview</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.mjs"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to brief</a>
+  <aside class="sidebar">
+    <a class="brand" href="#/slot/background" aria-label="Asset Studio, scene brief">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 25 14 6h4l9 19M9 18h14M16 22v7"/></svg>
+      <span>ASSET STUDIO<small>Local creative workspace</small></span>
+    </a>
+    <nav aria-label="Prototype">
+      <a href="#/slot/background" data-nav="brief">Scene brief</a>
+      <a href="#/gaps" data-nav="gaps">Remaining gaps <span id="gapCount">4</span></a>
+      <a href="#/routes" data-nav="routes">Available routes</a>
+    </nav>
+    <div class="collection-note"><strong>Lantern Marsh</strong><span>One fictional collection</span><span>8 sample asset records · Regular</span></div>
+    <div class="sidebar-foot"><strong>Interactive prototype</strong><p>Synthetic records only.<br>No connected runtime.</p><button id="download">Download draft</button><button id="reset" class="quiet">Reset demo</button></div>
+  </aside>
+  <div class="shell">
+    <header class="topbar"><span>Studio <span class="separator">/</span> Scene asset set</span><span class="preview-label">PREVIEW · NO EXECUTION</span></header>
+    <div class="safety"><span>Explore the whole scene with sample assets. Nothing is generated, uploaded or accepted.</span><span id="saveState" role="status">Local draft</span></div>
+    <main id="main" tabindex="-1"></main>
+    <p id="announcement" class="sr-only" role="status" aria-live="polite"></p>
+  </div>
+  <dialog id="resetDialog" aria-labelledby="resetTitle"><h2 id="resetTitle">Reset this demo draft?</h2><p>Your prototype edits and selections will be replaced by the fictional starting brief. Download a copy first if you want to keep them.</p><div class="actions"><button id="cancelReset">Keep my draft</button><button id="confirmReset" class="primary">Reset demo</button></div></dialog>
+</body>
+</html>

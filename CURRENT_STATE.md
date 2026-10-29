@@ -1,4 +1,22 @@
-# Current state — 28 October 2026
+# Current state — 29 October 2026
+
+## 2026-10-29 — multi-asset brief prototype (synthetic, separate preview)
+
+The [Lantern Marsh prototype](docs/prototypes/multi-asset-brief/README.md) connects
+one editable scene brief to background, sprite, icon, video, sound/voice and 3D
+slots. It reuses current collection/asset observation shapes and maps to existing
+preparation owners. Replacement, retained context, explicit synthetic returns,
+blocked/unsupported routes and remaining review gaps are navigable. It is a
+standalone static preview, not a production Studio route or a new asset store.
+
+Fourteen model checks, production-reader fixture validation and 27 actual browser
+journey checks pass. Reload, keyboard, mobile/reduced-motion, storage refusal and
+zero API traffic were observed. Final wide/narrow captures include the metadata
+font correction. The skip-link context bug was reproduced and fixed;
+[verification](docs/prototypes/multi-asset-brief/VERIFICATION.md)
+records the exact scope. No generation, native export, deployment, licensing or
+owner art acceptance occurred. Production integration and #313/#772 remain open;
+`HUMAN_TODO.md` is unchanged.
 
 ## 2026-10-28 — reversible Library Archive (qualification pending)
 
