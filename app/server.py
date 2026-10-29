@@ -2879,6 +2879,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200,result)
             if path == '/api/gpu-lease': return self._json(200, self.studio.gpu_lease.snapshot())
             if path == "/api/workspace": return self._json(200, Studio.workspace_snapshot(self.studio,privacy=scope))
+            if path == '/api/briefs' or path.startswith('/api/briefs/'):
+                import scene_briefs
+                if path == '/api/briefs': return self._json(200, scene_briefs.listing(self.studio, scope))
+                if len(path.split('/')) == 4: return self._json(200, scene_briefs.inspect(self.studio, path.split('/')[3], scope))
+                raise WorkspaceError('Unknown brief route', status=404)
             if path.startswith("/api/assets/commands/") and len(path.split("/")) == 5:
                 return self._json(200, self.studio.assets.command_status(path.split("/")[4], self._asset_query_scope(),privacy=scope))
             if path.startswith("/api/assets/") and path.endswith("/metadata") and len(path.split("/")) == 5:
@@ -3078,6 +3083,12 @@ class Handler(BaseHTTPRequestHandler):
             # Looks (#1221): save/edit/put away, and prepare Create's fields from a look and a scene. Neither creates a job.
             if self.path == "/api/looks": return self._json(200, looks.command(self.studio, self._body_json()))
             if self.path == "/api/looks/prepare": return self._json(200, looks.prepare(self.studio, self._body_json()))
+            if self.path in ('/api/briefs','/api/briefs/prepare'):
+                import scene_briefs
+                payload = self._body_json()
+                scene_briefs.regular(privacy_scope.creation_for_handler(self, payload))
+                owner = scene_briefs.prepare if self.path.endswith('/prepare') else scene_briefs.command
+                return self._json(200, owner(self.studio, payload, scope))
             # Characters (#1205): save/edit/put away a character card from a keeper. Never creates a job.
             if self.path == "/api/characters": return self._json(200, characters.command(self.studio, self._body_json()))
             if self.path == "/api/assets/reference":
