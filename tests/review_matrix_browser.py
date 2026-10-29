@@ -10,14 +10,23 @@ import json
 import os
 from pathlib import Path
 import shutil
+import sys
 import tempfile
 import threading
 from types import MethodType
 from urllib.parse import urlsplit
 
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+
 from browser_ports import browser_server
 from review_fixture import FixtureStudio, seed, seed_matrix
 from test_server import server
+
+
+def expected_stale_save_only(errors, console_errors, page_failures, review_url):
+    return (not errors and len(console_errors)<=1
+            and all(error.get('url')==review_url and error['text'].startswith('Failed to load resource: the server responded with a status of 400 ') for error in console_errors)
+            and page_failures==[{'url':review_url,'status':400}])
 
 
 def extra_output(studio, identifier):
@@ -34,7 +43,7 @@ def extra_output(studio, identifier):
 async def run(out):
     from playwright.async_api import async_playwright, expect
     out.mkdir(parents=True,exist_ok=True)
-    checks=[];errors=[];console_errors=[];requests=[];commands=[];layout={};browser=None;page=None
+    checks=[];errors=[];console_errors=[];page_failures=[];requests=[];commands=[];layout={};browser=None
     def check(name,value):
         checks.append({'name':name,'passed':bool(value)});print(name,bool(value),flush=True);assert value,name
     with tempfile.TemporaryDirectory() as temporary:
@@ -77,7 +86,8 @@ async def run(out):
                 context=await browser.new_context(viewport={'width':1440,'height':900},reduced_motion='reduce',accept_downloads=True)
                 page=await context.new_page();page.set_default_timeout(10000)
                 page.on('pageerror',lambda error:errors.append(str(error)))
-                page.on('console',lambda event:console_errors.append(event.text) if event.type=='error' else None)
+                page.on('console',lambda event:console_errors.append({'text':event.text,**event.location}) if event.type=='error' else None)
+                page.on('response',lambda response:page_failures.append({'url':response.url,'status':response.status}) if response.status>=400 else None)
                 page.on('dialog',lambda dialog:dialog.accept())
                 async def idle():await expect(page.locator('#desk')).to_have_attribute('aria-busy','false')
                 async def open_review(key):
@@ -122,10 +132,10 @@ async def run(out):
                 count=len(commands);await page.locator('#notes').focus();await page.keyboard.type(' K W X')
                 check('Typing shortcut letters in notes never submits an assessment',len(commands)==count)
                 await page.locator('#saveAssessment').click();await idle()
-                await page.locator('#compareTitle').scroll_into_view_if_needed();await page.evaluate('scrollTo(0,0)')
-                layout['wide']=await page.locator('#gridTable').evaluate("node=>({table:node.getBoundingClientRect().toJSON(),cells:[...node.querySelectorAll('td')].map(c=>c.getBoundingClientRect().toJSON()),viewport:{width:innerWidth,height:innerHeight}})")
+                await page.locator('#gridTable').evaluate("node=>node.scrollIntoView({block:'center'})")
+                layout['wide']=await page.locator('#gridTable').evaluate("node=>({table:node.getBoundingClientRect().toJSON(),cells:[...node.querySelectorAll('td')].map(c=>c.getBoundingClientRect().toJSON()),headerBottom:document.querySelector('.studio-globalbar').getBoundingClientRect().bottom,viewport:{width:innerWidth,height:innerHeight}})")
                 await page.screenshot(path=str(out/'grid-wide.png'))
-                check('All three grid rows fit in one desktop viewport',layout['wide']['table']['height']<=900)
+                check('All three grid rows are visible together below the desktop toolbar',layout['wide']['table']['top']>=layout['wide']['headerBottom'] and layout['wide']['table']['bottom']<=900)
                 check('Desktop matrix uses equal cell widths and heights',all(abs(c['width']-layout['wide']['cells'][0]['width'])<1 and abs(c['height']-layout['wide']['cells'][0]['height'])<1 for c in layout['wide']['cells']))
                 await page.locator('#reveal').click();await idle();await expect(page.locator('#phase')).to_have_text('Settings revealed')
                 revealed=studio.production.reviews.inspect(identifier)
@@ -141,7 +151,9 @@ async def run(out):
                 await page.keyboard.press('Enter');check('Narrow Enter selects an output for assessment',await page.input_value('#candidate')==focused)
                 await page.keyboard.press('ArrowDown');moved=await page.evaluate('document.activeElement?.dataset.gridCandidate')
                 check('Arrow navigation reaches another matrix row',moved and moved!=focused)
+                check('Narrow multi-output images keep readable card widths',await page.locator('[data-grid-candidate]').evaluate_all('nodes=>nodes.every(node=>node.getBoundingClientRect().width>=88)'))
                 await page.locator('#gridPanel').scroll_into_view_if_needed();await page.screenshot(path=str(out/'grid-narrow.png'))
+                await target.locator('xpath=ancestor::td').scroll_into_view_if_needed();await page.screenshot(path=str(out/'grid-narrow-multiple.png'))
                 await open_review(legacy);check('Unknown topology retains Pair with a concise explanation',await page.locator('#presentationGrid').is_disabled() and 'recorded engine and seed' in await page.locator('#gridHint').inner_text())
                 await open_review(outcomes);await grid();text=await page.locator('#gridTable').inner_text()
                 check('Failed cancelled unstarted and empty completed positions remain visible',all(word in text for word in ('Failed','Cancelled','Not started','Completed','No retained images')))
@@ -161,17 +173,20 @@ async def run(out):
                 check('Modified preview bytes are refused by the real file route',response.status==400)
                 check('No generation or unrelated write was submitted',all(path.endswith('/review') for method,path in requests if method=='POST') and studio.network_calls==0 and studio.queue.empty())
                 check('Review interactions preserve jobs and generation budgets',studio.jobs==before_jobs and all(studio.production.get(key)['budget']==budget for key,budget in budgets.items()))
-                check('No unexpected console or JavaScript errors',not errors and not console_errors)
+                # The deliberately stale save returns HTTP 400 through page fetch.
+                # Retain its browser diagnostic; any other failure remains an error.
+                expected_url=origin+f'/api/production/{identifier}/review'
+                print('Browser diagnostics: '+json.dumps({'page_errors':errors,'console_errors':console_errors,'page_failures':page_failures}),flush=True)
+                check('No unexpected console or JavaScript errors',expected_stale_save_only(errors,console_errors,page_failures,expected_url))
                 (out/'blind-review.json').write_text(json.dumps(blind,indent=2),encoding='utf-8')
                 (out/'revealed-review.json').write_text(json.dumps(revealed,indent=2),encoding='utf-8')
                 await context.close();await browser.close();browser=None
         finally:
             Handler.studio=studio
-            if browser and page and not page.is_closed():await page.screenshot(path=str(out/'last-state.png'))
-            if browser:await browser.close()
+            if browser and browser.is_connected():await browser.close()
             http.shutdown();http.server_close();worker.join(2)
             (out/'result.json').write_text(json.dumps({'scope':'Synthetic assets and jobs; real production HTTP/serializers/ReviewDesk/SQLite/previews; not generation, art acceptance or assistive technology',
-                'checks':checks,'layout':layout,'page_errors':errors,'console_errors':console_errors,'commands':commands,'requests':requests},indent=2),encoding='utf-8')
+                'checks':checks,'layout':layout,'page_errors':errors,'console_errors':console_errors,'page_failures':page_failures,'commands':commands,'requests':requests},indent=2),encoding='utf-8')
     return checks
 
 
