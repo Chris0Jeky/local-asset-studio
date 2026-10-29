@@ -5,6 +5,7 @@ Blindness reduces accidental settings bias, not access by the local machine owne
 """
 from __future__ import annotations
 import copy
+from decimal import Decimal, InvalidOperation
 import hashlib
 import json
 from pathlib import Path
@@ -172,22 +173,69 @@ class ReviewDesk:
         return reviewer
 
     @staticmethod
+    def _grid_coordinates(plan):
+        stages = plan.get('stages', [])
+        if not stages:return None
+        if any('engine' in stage for stage in stages) or plan.get('axis') == 'engine':
+            if any(not isinstance(s.get('engine'), str) or not s['engine'].strip()
+                   or type(s.get('seed')) is not int or not 0 <= s['seed'] <= 2**63-1 for s in stages):return None
+            return 'engine', [(s['engine'], s['seed']) for s in stages], {s['engine']: {'engine': s['engine']} for s in stages}
+        axis = plan.get('axis');variants = plan.get('variants');recipe = plan.get('recipe')
+        if not isinstance(axis, str):return None
+        names = {'seed':'Shared settings', 'cfg':'Guidance', 'steps':'Steps', 'denoise':'Denoise', 'lora':'LoRA strength'}
+        if axis in names:
+            values = plan.get('values')
+            if variants is not None or not isinstance(values, list) or len(values) != len(stages):return None
+            if any(type(value) not in (int, float, str) for value in values):return None
+            try:normalized = [Decimal(str(value)) for value in values]
+            except InvalidOperation:return None
+            if any(not value.is_finite() for value in normalized) or len(set(normalized)) != len(values):return None
+            variants = [{'label':names[axis] if axis == 'seed' else f'{names[axis]} {value}', 'controls':{axis:value}} for value in values]
+        elif axis != 'variants':return None
+        if not isinstance(variants, list) or len(variants) != len(stages) or not isinstance(recipe, dict):return None
+        labels = [];coordinates = [];rows = {};shared = None
+        for index, (stage, variant) in enumerate(zip(stages, variants)):
+            if not isinstance(variant, dict):return None
+            label = variant.get('label');overrides = variant.get('controls')
+            if not isinstance(label, str) or not label.strip() or (axis != 'seed' and label in labels) or not isinstance(overrides, dict) or not overrides:return None
+            if any(not isinstance(k, str) or type(v) not in (str, int, float, bool) for k, v in overrides.items()):return None
+            expected = copy.deepcopy(recipe)
+            if not isinstance(expected.setdefault('controls', {}), dict):return None
+            expected['controls'].update(overrides)
+            request = stage.get('request')
+            if not isinstance(request, dict) or not isinstance(request.get('controls'), dict):return None
+            # Preparation adds these fields; every stage must still pin the same inputs.
+            if {k:v for k,v in request.items() if k not in ('references', 'expected_template_sha256')} != {k:v for k,v in expected.items() if k not in ('references', 'expected_template_sha256')}:return None
+            frozen = {k:v for k,v in request.items() if k != 'controls'}
+            if shared is not None and frozen != shared:return None
+            shared = frozen;seed = request['controls'].get('seed')
+            if type(seed) is not int and not (isinstance(seed, str) and re.fullmatch(r'[0-9]{1,19}', seed)):return None
+            seed = int(seed)
+            if not 0 <= seed <= 2**63-1:return None
+            row = 0 if axis == 'seed' else index
+            coordinates.append((row, seed));labels.append(label)
+            rows[row] = {'label': label}
+            if axis == 'variants':rows[row]['settings'] = {k:str(v) for k,v in overrides.items()}
+        if axis == 'variants' and plan.get('values') != labels:return None
+        return axis, coordinates, rows
+
+    @staticmethod
     def _grid(document):
-        stages = document['evidence']['plan'].get('stages', [])
-        if not stages or any(not isinstance(s.get('engine'), str) or not s['engine'].strip()
-                             or type(s.get('seed')) is not int or not 0 <= s['seed'] <= 2**63-1 for s in stages):
+        projected = ReviewDesk._grid_coordinates(document['evidence']['plan'])
+        if projected is None:
             return None
+        row_field, coordinates, row_details = projected
         # The evidence digest stays hidden until Reveal. The session ID alone is
         # public in preview URLs and would let known axes reconstruct the order.
         axes = []
-        for field, prefix in (('engine', 'R'), ('seed', 'C')):
-            values = sorted({s[field] for s in stages}, key=lambda v: digest([document['session_id'], document['evidence_sha256'], field, v]))
+        for index, (field, prefix) in enumerate(((row_field, 'R'), ('seed', 'C'))):
+            values = sorted({point[index] for point in coordinates}, key=lambda v: digest([document['session_id'], document['evidence_sha256'], field, v]))
             axes.append([(value, prefix + str(i + 1)) for i, value in enumerate(values)])
         rows, columns = axes
         cells = []
-        for engine, row in rows:
+        for value, row in rows:
             for seed, column in columns:
-                positions = {i for i, s in enumerate(stages) if s['engine'] == engine and s['seed'] == seed}
+                positions = {i for i, point in enumerate(coordinates) if point == (value, seed)}
                 runs = []
                 for index in sorted(positions):
                     record = document['evidence']['stages'][index]
@@ -198,7 +246,7 @@ class ReviewDesk:
                     runs.append({'status': status, 'candidates': [c['alias'] for c in document['candidates'] if c['stage'] == index]})
                 cells.append({'row': row, 'column': column,
                               'candidates': [c['alias'] for c in document['candidates'] if c['stage'] in positions], 'runs': runs})
-        return {'rows': [{'alias': alias, **({'engine': value} if document['revealed'] else {})} for value, alias in rows],
+        return {'rows': [{'alias': alias, **(row_details[value] if document['revealed'] else {})} for value, alias in rows],
                 'columns': [{'alias': alias, **({'seed': str(value)} if document['revealed'] else {})} for value, alias in columns],
                 'cells': cells}
 

@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import patch
 import zipfile
 
-from review_fixture import FixtureStudio, seed, seed_matrix
+from review_fixture import FixtureStudio, seed, seed_matrix, seed_comparison
 from production import Production, fingerprint
 import review_desk
 from review_desk import ReviewDesk, rating
@@ -82,6 +82,106 @@ class ReviewTests(unittest.TestCase):
                                      ('engine-jade','712031'):['original-4.png'],('engine-jade','915047'):['original-5.png']})
         self.assertEqual([(c['row'],c['column'],c['candidates']) for c in actual['cells']],
                          [(c['row'],c['column'],c['candidates']) for c in grid['cells']])
+        self.assertTrue(self.studio.queue.empty());self.assertEqual(self.studio.network_calls,0)
+
+    def test_wording_grid_uses_frozen_plan_and_reveals_both_texts_at_the_exact_shared_seed(self):
+        variants=[{'label':'Wording A','controls':{'positive':'A lantern in rain'}},
+                  {'label':'Wording B','controls':{'positive':'Rain glows around a lantern'}}]
+        self.id=seed_comparison(self.studio,'variants',variants)
+        before=copy.deepcopy(self.production._get(self.id)['plan'])
+        plan_path=self.production.root/self.id/'plan.json';before_bytes=plan_path.read_bytes()
+        blind=self.open();grid=blind.get('grid')
+        self.assertIsNotNone(grid,'Two prepared wordings must offer the existing Grid')
+        self.assertEqual((len(grid['rows']),len(grid['columns']),len(grid['cells'])),(2,1,2))
+        self.assertTrue(all(set(row)=={'alias'} for row in grid['rows']))
+        for token in ('Wording A','Wording B','lantern','9223372036854775807','positive'):
+            self.assertNotIn(token,json.dumps(blind))
+        self.studio.production=Production(self.studio);self.production=self.studio.production
+        self.assertEqual(self.get()['grid'],grid)
+        revealed=self.change('reveal')['grid']
+        self.assertEqual(revealed['columns'][0]['seed'],'9223372036854775807')
+        self.assertEqual({row['label']:row['settings']['positive'] for row in revealed['rows']},
+                         {'Wording A':'A lantern in rain','Wording B':'Rain glows around a lantern'})
+        self.assertEqual(revealed['cells'],grid['cells'])
+        self.assertEqual(self.production._get(self.id)['plan'],before)
+        self.assertEqual(plan_path.read_bytes(),before_bytes)
+        self.assertTrue(self.studio.queue.empty());self.assertEqual(self.studio.network_calls,0)
+
+    def test_setting_and_seed_grids_project_recorded_values_without_rewriting_plans(self):
+        for axis,values,prefix in (('cfg',[1,3,5],'Guidance'),('steps',[8,12,16],'Steps'),
+                                   ('denoise',[0.3,0.6,0.9],'Denoise'),
+                                   ('seed',[9223372036854775805,9223372036854775806,9223372036854775807],'Shared settings')):
+            with self.subTest(axis=axis):
+                self.id=seed_comparison(self.studio,axis,values)
+                before=copy.deepcopy(self.production._get(self.id)['plan'])
+                blind=self.open();grid=blind.get('grid')
+                self.assertIsNotNone(grid,'An ordinary saved comparison must offer Grid')
+                self.assertEqual((len(grid['rows']),len(grid['columns'])),(1,3) if axis=='seed' else (3,1))
+                self.assertCountEqual([alias for cell in grid['cells'] for alias in cell['candidates']],list('ABC'))
+                self.assertTrue(all(set(row)=={'alias'} for row in grid['rows']))
+                revealed=self.change('reveal')['grid']
+                if axis=='seed':
+                    self.assertEqual(revealed['rows'][0]['label'],'Shared settings')
+                    self.assertCountEqual([column['seed'] for column in revealed['columns']],[str(v) for v in values])
+                else:
+                    self.assertEqual(revealed['columns'][0]['seed'],'9223372036854775807')
+                    self.assertCountEqual([row['label'] for row in revealed['rows']],[f'{prefix} {v}' for v in values])
+                self.assertEqual(revealed['cells'],grid['cells'])
+                self.assertEqual(self.production._get(self.id)['plan'],before)
+        self.assertTrue(self.studio.queue.empty());self.assertEqual(self.studio.network_calls,0)
+
+    def test_ordinary_grid_falls_back_for_missing_ambiguous_or_conflicting_frozen_evidence(self):
+        variants=[{'label':'Wording A','controls':{'positive':'A lantern in rain'}},
+                  {'label':'Wording B','controls':{'positive':'Rain glows around a lantern'}}]
+        cases={
+            'missing axis':lambda p:p.pop('axis'),
+            'invalid axis':lambda p:p.update(axis=[]),
+            'missing recipe':lambda p:p.pop('recipe'),
+            'mismatched labels':lambda p:p.update(values=['A','B']),
+            'missing variant':lambda p:p['variants'].pop(),
+            'duplicate labels':lambda p:p['variants'][1].update(label='Wording A'),
+            'invalid override':lambda p:p['variants'][0].update(controls={'positive':{}}),
+            'missing seed':lambda p:p['stages'][0]['request']['controls'].pop('seed'),
+            'different seed':lambda p:p['stages'][0]['request']['controls'].update(seed='17'),
+            'different text':lambda p:p['stages'][0]['request']['controls'].update(positive='Unrecorded wording'),
+            'different recipe':lambda p:p['stages'][0]['request'].update(preset_id='other'),
+            'different template':lambda p:p['stages'][0]['request'].update(expected_template_sha256='e'*64),
+            'different references':lambda p:p['stages'][0]['request'].update(references=[{'role':'other'}]),
+        }
+        for name,mutate in cases.items():
+            with self.subTest(reason=name):
+                self.id=seed_comparison(self.studio,'variants',variants)
+                plan=self.production._get(self.id)['plan'];mutate(plan)
+                plan['sha256']=fingerprint({k:v for k,v in plan.items() if k!='sha256'})
+                with self.production.connect() as db:db.execute('UPDATE projects SET plan=? WHERE id=?',(json.dumps(plan),self.id))
+                state=self.open();self.assertIsNone(state['grid']);self.assertEqual(len(state['candidates']),2)
+                self.assertEqual(self.production._get(self.id)['plan'],plan)
+        self.assertTrue(self.studio.queue.empty());self.assertEqual(self.studio.network_calls,0)
+
+    def test_ordinary_grid_does_not_invent_a_seed_from_graphs_or_labels(self):
+        for value in (None,True,-1,'random','1e3',float(2**63-1),str(2**63)):
+            with self.subTest(seed=value):
+                self.id=seed_comparison(self.studio,'cfg',[1,3,5]);plan=self.production._get(self.id)['plan']
+                plan['recipe']['controls']['seed']=value
+                for stage in plan['stages']:stage['request']['controls']['seed']=value
+                plan['sha256']=fingerprint({k:v for k,v in plan.items() if k!='sha256'})
+                with self.production.connect() as db:db.execute('UPDATE projects SET plan=? WHERE id=?',(json.dumps(plan),self.id))
+                self.assertIsNone(self.open()['grid'])
+
+    def test_wording_grid_preserves_failed_and_multiple_outputs_without_creating_runs(self):
+        self.id=seed_comparison(self.studio,'variants',[{'label':'Wording A','controls':{'positive':'A lantern in rain'}},
+                                                      {'label':'Wording B','controls':{'positive':'Rain glows around a lantern'}}])
+        project=self.production._get(self.id);jobs=[self.studio.jobs[project['state']['attempts'][str(i)]['job_id']] for i in range(2)]
+        first=jobs[0]['outputs'][0]['asset_id'];extra='e'*32
+        self.studio.assets.paths[extra]=self.studio.assets.paths[first]
+        self.studio.assets.records[extra]={**self.studio.assets.records[first],'id':extra,'output_index':1,'filename':'extra-wording-output.png'}
+        jobs[0]['outputs'].append({'asset_id':extra,'media_type':'image'});jobs[1].update(status='failed',outputs=[])
+        before=copy.deepcopy(project);blind=self.open();grid=blind['grid']
+        self.assertEqual(len(grid['cells']),2)
+        self.assertCountEqual([len(cell['candidates']) for cell in grid['cells']],[2,0])
+        self.assertCountEqual([run['status'] for cell in grid['cells'] for run in cell['runs']],['completed','failed'])
+        after=self.production._get(self.id)
+        self.assertEqual(after['plan'],before['plan']);self.assertEqual(after['state']['attempts'],before['state']['attempts'])
         self.assertTrue(self.studio.queue.empty());self.assertEqual(self.studio.network_calls,0)
 
     def test_grid_order_cannot_be_reconstructed_from_public_session_and_known_axes(self):

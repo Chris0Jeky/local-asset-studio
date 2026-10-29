@@ -87,3 +87,33 @@ def seed_matrix(studio):
         db.execute('UPDATE projects SET plan=? WHERE id=?',(json.dumps(project['plan']),identifier))
     (studio.production.root/identifier/'plan.json').write_text(json.dumps(project['plan']))
     return identifier
+
+
+def seed_comparison(studio, axis, values):
+    """Retain synthetic outputs against an ordinary plan made by the real planner."""
+    from test_production import PlannedSweepTests
+    fixture=PlannedSweepTests()
+    try:
+        fixture.setUp()
+        planner,recipe=fixture.wording_studio()
+        if axis=='denoise':
+            catalog_path=fixture.root/'presets/catalog.json';catalog=json.loads(catalog_path.read_text())
+            catalog['presets'][1]['denoise']=['1','denoise'];catalog_path.write_text(json.dumps(catalog))
+            graph_path=fixture.root/'workflows/api/planned-api.json';graph=json.loads(graph_path.read_text())
+            graph['1']['inputs']['denoise']=1.0;graph_path.write_text(json.dumps(graph))
+        payload={'name':'Recorded comparison fixture','recipe':recipe,'max_generations':len(values)}
+        if axis=='variants':payload['variants']=values
+        else:payload.update(axis=axis,values=values)
+        prepared=planner.production.create(payload)
+        plan=planner.production._get(prepared['id'])['plan']
+        assert planner.requests==[] and not planner.jobs and planner.queue.empty()
+    finally:fixture.doCleanups()
+    identifier=seed(studio,count=len(values));project=studio.production._get(identifier)
+    for index,stage in enumerate(plan['stages']):
+        job=studio.jobs[project['state']['attempts'][str(index)]['job_id']]
+        job['fixture_recipe']={'scope':'inert-fixture-only','graph':copy.deepcopy(stage['graph']),
+                               'controls':copy.deepcopy(stage['request']['controls'])}
+    with studio.production.connect() as db:
+        db.execute('UPDATE projects SET plan=? WHERE id=?',(json.dumps(plan),identifier))
+    (studio.production.root/identifier/'plan.json').write_text(json.dumps(plan))
+    return identifier

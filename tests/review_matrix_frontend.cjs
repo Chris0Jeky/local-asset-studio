@@ -75,8 +75,22 @@ async function main(){
   assert.equal($('evidence').textContent,'{"seed": 9223372036854775807}');
   assert.equal($('gridTable').querySelector('thead').children[0].children[1].textContent,'Seed 9223372036854775807');
   assert.equal($('candidate').value,'D');assert.equal($('phase').textContent,'Settings revealed');
+  $('reload').click();state.revealed=false;
+  state.grid={rows:[{alias:'R1',label:'Wording A',settings:{positive:'Rain <img src=x> & lantern'}},{alias:'R2',label:'Wording B',settings:{positive:'Lantern in rain'}}],
+    columns:[{alias:'C1',seed:'9223372036854775807'}],cells:[{row:'R1',column:'C1',candidates:['A'],runs:[{status:'completed',candidates:['A']}]},{row:'R2',column:'C1',candidates:['B'],runs:[{status:'completed',candidates:['B']}]}]};
+  await respond();
+  assert.equal($('gridTable').querySelector('caption').textContent,'Comparison grid');
+  assert.equal($('gridTable').querySelector('tbody').children[0].children[0].textContent,'R1');
+  assert.equal($('gridTable').querySelector('details'),null,'A blind row must not attach hidden wording to the DOM');
+  $('reload').click();state.revealed=true;await respond();
+  const wording=$('gridTable').querySelector('tbody').children[0].children[0];
+  assert.equal(wording.textContent,'Wording A');
+  assert.equal(wording.querySelector('summary').textContent,'Settings');
+  assert.equal(wording.querySelector('p').textContent,'Wording: Rain <img src=x> & lantern');
+  assert.equal(wording.querySelector('img'),null,'Revealed wording stays text, never HTML');
+  assert.equal($('gridTable').querySelector('thead').children[0].children[1].textContent,'Seed 9223372036854775807');
   $('reload').click();state.grid=null;await respond();assert.equal($('presentationGrid').disabled,true);assert.equal($('gridPanel').hidden,true);
-  assert.match($('gridHint').textContent,/recorded engine and seed/);assert.ok(requests.every(r=>r.url.endsWith('/review')));
+  assert.match($('gridHint').textContent,/unambiguous saved settings and seeds/);assert.ok(requests.every(r=>r.url.endsWith('/review')));
   console.log('Review matrix interactions passed: selection, drafts, revisioned shortcuts, focus, Reveal and fallback');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});

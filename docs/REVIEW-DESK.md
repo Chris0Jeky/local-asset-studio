@@ -27,24 +27,34 @@ match another's dimensions. Previews are capped at 1536 px; exported crops start
 from the original snapshot resolution. Matching coordinates do not align faces,
 hands or camera views, and different model seeds do not establish equal compute.
 
-### Compare recorded engines and seeds
+### Compare recorded settings, wordings and seeds
 
-Choose **Grid** beside **Pair** to see a prepared comparison by engine row and
-seed column. This presentation is available when every saved stage records its
-engine and seed explicitly, including multi-engine Combine plans. Older reviews
-without those fields keep Pair with an explanation; labels, filenames and prompt
-wording are never used to invent a grid. Ordinary run history is unchanged.
+Choose **Grid** beside **Pair** to see a prepared comparison by row and seed
+column. Multi-engine plans use their recorded engine coordinates. Ordinary
+comparisons use the saved axis, values or labelled variants and each frozen
+request: guidance, steps, denoise and LoRA strength form rows; a seed sweep forms
+columns under one shared-settings row. Two wordings form two anonymous rows at
+their shared seed.
+
+This projection does not update the saved plan or read current recipe defaults.
+The declared overrides must match the frozen requests, with common pinned
+inputs and a concrete seed. Missing, conflicting or ambiguous evidence keeps
+Pair with an explanation. Random seeds, floating-point seeds and seeds recorded
+in scientific notation are not guessed from graphs, labels or filenames.
+Ordinary run history is unchanged.
 
 Before Reveal, rows and columns use stable opaque aliases such as R1 and C1.
 Candidate aliases and axis order stay fixed across edits and reloads. After the
 existing recorded **Reveal settings & provenance** action, headers show the exact
-recorded engine IDs and seed values. Seed identities are returned as decimal text
+recorded engine IDs, setting values or variant labels. A variant row's **Settings**
+disclosure shows its saved wording and overrides as text only after Reveal.
+Seed identities are returned as decimal text
 so the browser cannot round large integers; the displayed evidence JSON also
 preserves their exact digits. Changing presentations never reverses Reveal.
 
 Every retained image in a cell remains selectable. Failed, cancelled, unstarted
 and empty completed positions keep their recorded outcomes. A missing execution
-record is unavailable; an engine/seed combination absent from the saved stages
+record is unavailable; a row/seed combination absent from the saved stages
 is not planned. A terminal review still needs at least one retained image, and
 live or uncertain jobs retain the existing refusal. Grid adds no rerun action.
 
@@ -297,12 +307,16 @@ python -m playwright install chromium
 python tests/review_browser_smoke.py --out experiments/runs/review-browser-qa
 ```
 
-The engine/seed grid has a separate synthetic journey through the production
+The comparison grid has a separate synthetic journey through the production
 HTTP Handler, recipe serializers, ReviewDesk SQLite store and preview file
 validation. Its asset index and retained jobs are inert fixtures; no Studio
 worker, model or generation runs. It checks selection, shared crops, revision
 conflicts and downloaded drafts, Reveal/reload, 1440×900 and 390×844 layouts,
-empty outcomes and scope/media refusals:
+empty outcomes and scope/media refusals. Ordinary plans are prepared by the real
+production planner with fake model fingerprints, then paired with synthetic
+retained images. The journey covers wording2x1, guidance3x1, seed1x3 and
+engine3x2, exact large seeds, safe revealed text, reload-stable aliases and
+unchanged historical plan bytes:
 
 ```console
 python tests/review_matrix_browser.py --out .runtime/review-matrix-browser
@@ -314,8 +328,8 @@ is expected; JavaScript exceptions and additional HTTP errors fail the run.
 Layout checks require the complete desktop table below the toolbar and phone
 output cards at least 88px wide.
 
-Refs #1204 for this engine/seed slice. Setting-value and variant axes, other pair
-surfaces, and registration in the broader use-case matrix remain separate work.
+Refs #1204 for the Review desk comparison slice. Other pair surfaces and
+registration in the broader use-case journey registry remain separate work.
 Synthetic proof does not establish subjective image quality or screen-reader
 acceptance. The current delivery/PR records which commands actually ran.
 
