@@ -193,6 +193,11 @@ test('a refused recipe switch is announced, not thrown, and a handoff with no ma
   assert.deepEqual(b.notices.at(-1),['You are continuing an image.',true]);
   assert.equal(transferBox([]).q('#uxTransferRecipes').hidden,true);
 });
+test('pressing the already selected chip reloads nothing',()=>{
+  const b=transferBox(['a','b']);let calls=0;b.selectPreset=()=>{calls++;throw Error('You are continuing an image.');};
+  b.q('#uxTransferRecipes').chips[0].onclick();
+  assert.equal(calls,0,'no recipe reload, so no reference clear and no continuation refusal');assert.equal((b.notices||[]).length,0);
+});
 test('the handoff notice no longer carries the compiler/executor jargon',()=>{
   assert.doesNotMatch(code,/executor bindings|Naming them selects nothing/);
   assert.doesNotMatch(fs.readFileSync(require('node:path').join(__dirname,'../app/static/studio-core.js'),'utf8'),/executor bindings/);
