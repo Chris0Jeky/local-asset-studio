@@ -170,8 +170,8 @@ class RunMigrationApplyTests(unittest.TestCase):
     def test_blockers_direction_and_scope_are_refused_without_changes(self):
         s = self.scenario(); plan = self.plan(s)
         before = self.tree()
-        status, out = self.post(APPLY, self.body(s, plan, destination='regular'))
-        self.assertEqual((status, out['code']), (400, 'migration_direction_unsupported'))
+        status, out = self.post(APPLY, self.body(s, plan, destination='regular'))  # Both directions apply; a Regular run is already there
+        self.assertEqual((status, out['code']), (409, 'migration_blocked')); self.assertIn('already_in_destination', {b['code'] for b in out['blockers']})
         status, out = self.post(APPLY, self.body(s, plan), scope='regular')
         self.assertEqual((status, out['code']), (400, 'migration_scope_required'))
         self.studio.jobs[s['jid']]['status'] = 'uncertain'
@@ -321,7 +321,7 @@ class RunMigrationApplyTests(unittest.TestCase):
         targets = [p['target'] for p in self.journal(s)['placements']]
         with self.studio.assets.connection() as db:  # As if a later request had committed the same run onto these files.
             db.execute(run_migration.MARKER_TABLE)
-            db.execute('INSERT INTO run_migrations_v1 VALUES (?,?,?,?,?)', ('other-committed-request', '0'*64, json.dumps([s['jid']]), json.dumps(targets), 1))
+            db.execute('INSERT INTO run_migrations_v1 VALUES (?,?,?,?,?)', ('other-committed-request', '0'*64, json.dumps([s['jid']]), json.dumps(targets), self.journal(s)['created_at']+1))
         self.restart()
         self.assertTrue((self.studio.experiments/'private/runs'/s['jid']/'state.json').is_file())
         self.assertTrue((self.studio.experiments/'private/uploads'/s['upload']).is_file())
@@ -515,6 +515,176 @@ class RunMigrationApplyTests(unittest.TestCase):
         self.assertEqual(restarted.migration_recovery, [{'request_id': body['request_id'], 'from_stage': 'verified', 'stage': 'complete'}])
         self.assert_moved(s, restarted); self.assertEqual(self.journal(s)['remaining'], [])
         self.assertEqual((restarted.experiments/'private/runs'/s['jid']/'frames/deep/f0.png').read_bytes(), b'nested frame'); self.assertFalse((restarted.experiments/'runs'/s['jid']).exists())
+
+    # ---- Private -> Regular (#1678, last direction) ----
+    def private_scenario(self, outputs=3, seed=None):
+        """A completed Private run with a Private upload, a Private thumbnail, a whole Private collection and a Private child."""
+        job = self.completed(outputs, seed, privacy='private'); jid = job['id']; ids = [o['asset_id'] for o in job['outputs']]
+        upload = self.studio.upload('ref.png', 'image/png', fixture.png(), privacy='private')
+        job['references'] = [{'file': upload['file'], 'role': 'subject'}]; self.studio._save(job)
+        experiments = self.studio.experiments; thumbs = experiments/'private/thumbs'; thumbs.mkdir(exist_ok=True)
+        shas = [self.studio.assets.get(i, privacy='private')['sha256'] for i in ids]
+        (thumbs/f'{shas[1]}-256-v1.webp').write_bytes(b'private thumb')
+        with self.studio.assets.connection() as db:
+            db.execute("INSERT INTO collections (id,name,privacy,created_at) VALUES (?,?,'private',1)", ('c-'+jid, 'Whole'))
+            db.executemany('INSERT INTO collection_assets VALUES (?,?)', [('c-'+jid, i) for i in ids])
+        child = self.studio.jobs[self.studio.create_job({'preset_id': 'demo', 'controls': {'positive': 'child'}, 'privacy': 'private'}, enqueue=False)['id']]
+        child['parent_assets'] = [ids[0]]; self.studio._save(child)
+        folder = experiments/'private/runs'/jid
+        return dict(job=job, jid=jid, ids=ids, shas=shas, upload=upload['file'], child=child['id'], rows={i: self.studio.assets.get(i, privacy='private') for i in ids},
+                    run_files={p.relative_to(folder).as_posix(): sha(p) for p in folder.rglob('*') if p.is_file()},
+                    external={p.name: sha(p) for p in (self.root/'fake-comfy').rglob('*') if p.is_file()},
+                    state=json.loads((folder/'state.json').read_text()), recipe=json.loads((folder/'recipe.json').read_text()))
+
+    def back_body(self, s, request_id=None):
+        status, plan = self.post('/api/assets/migration-plan', {'workspace_id': self.workspace_id, 'destination': 'regular', 'job_ids': [s['jid']]})
+        self.assertEqual((status, plan['blockers'], plan['apply_available']), (200, [], True), plan)
+        return {'workspace_id': self.workspace_id, 'destination': 'regular', 'plan_sha256': plan['plan_sha256'], 'request_id': request_id or 'back-'+s['jid'][:16], 'job_ids': [s['jid']]}
+
+    def assert_back(self, s, studio):
+        """Everything the Private run owned now lives in the Regular roots, byte-identical except the classification field."""
+        experiments, jid = self.studio.experiments, s['jid']
+        job = studio.jobs[jid]; self.assertEqual(job.get('privacy', 'regular'), 'regular'); self.assertNotIn('record_error', job)
+        self.assertEqual([o['asset_id'] for o in job['outputs']], s['ids'])
+        self.assertFalse((experiments/'private/runs'/jid).exists())
+        regular = experiments/'runs'/jid
+        self.assertEqual({p.relative_to(regular).as_posix() for p in regular.rglob('*') if p.is_file()}, set(s['run_files']))
+        for name, digest in s['run_files'].items():
+            if name not in ('state.json', 'recipe.json'): self.assertEqual(sha(regular/name), digest, name)
+        self.assertEqual(s['recipe'].get('privacy'), 'private'); self.assertEqual(s['state']['privacy'], 'private')
+        self.assertEqual(json.loads((regular/'state.json').read_text()), dict(s['state'], privacy='regular'))
+        self.assertEqual(json.loads((regular/'recipe.json').read_text()), {k: v for k, v in s['recipe'].items() if k != 'privacy'})  # as _save writes a Regular recipe
+        for asset_id, before in s['rows'].items():
+            row = studio.assets.get(asset_id)
+            for key in ('id', 'job_id', 'output_index', 'sha256', 'bytes', 'path', 'lineage', 'source', 'title', 'tags'): self.assertEqual(row[key], before[key], key)
+            self.assertEqual((row['privacy'], row['metadata_revision']), ('regular', before['metadata_revision']+1))
+            self.assertEqual(sha(studio.assets.root/row['path']), row['sha256'])
+            self.assertFalse((experiments/'private'/row['path']).exists())
+        self.assertTrue(set(s['ids']) <= {a['id'] for a in studio.assets.snapshot('regular')['assets']})
+        self.assertFalse(set(s['ids']) & {a['id'] for a in studio.assets.snapshot('private')['assets']})
+        self.assertFalse(list((experiments/'private/thumbs').glob(s['shas'][1]+'*')))
+        self.assertFalse((experiments/'private/uploads'/s['upload']).exists()); self.assertFalse((experiments/'private/uploads'/(s['upload']+'.json')).exists())
+        self.assertEqual(sha(studio._upload_path(s['upload'], 'regular')), sha(self.root/'fake-comfy/input'/s['upload']))
+        with studio.assets.connection() as db: self.assertEqual(db.execute('SELECT privacy FROM collections WHERE id=?', ('c-'+jid,)).fetchone()[0], 'regular')
+        child = studio.jobs[s['child']]; self.assertEqual((child['privacy'], child['parent_assets']), ('private', [s['ids'][0]]))
+        self.assertEqual({p.name: sha(p) for p in (self.root/'fake-comfy').rglob('*') if p.is_file()}, s['external'])
+        self.assertFalse((experiments/'private/migrations'/('back-'+jid[:16])).exists())
+
+    def assert_still_private(self, s, studio):
+        experiments, jid = self.studio.experiments, s['jid']
+        self.assertEqual(studio.jobs[jid]['privacy'], 'private'); self.assertNotIn('record_error', studio.jobs[jid])
+        folder = experiments/'private/runs'/jid
+        self.assertEqual({p.relative_to(folder).as_posix(): sha(p) for p in folder.rglob('*') if p.is_file()}, s['run_files'])
+        self.assertFalse((experiments/'runs'/jid).exists())
+        for asset_id, before in s['rows'].items():
+            row = studio.assets.get(asset_id, privacy='private'); self.assertEqual((row['privacy'], row['metadata_revision']), ('private', before['metadata_revision']))
+            self.assertTrue((experiments/'private'/row['path']).is_file()); self.assertFalse((studio.assets.root/row['path']).exists())
+        self.assertTrue((experiments/'private/uploads'/s['upload']).is_file()); self.assertFalse((experiments/'uploads'/s['upload']).exists())
+        self.assertTrue(list((experiments/'private/thumbs').glob(s['shas'][1]+'*')))
+        self.assertNotIn(jid, self.regular_job_ids())
+        self.assertFalse((experiments/'private/migrations'/('back-'+jid[:16])).exists())
+
+    def test_private_to_regular_moves_the_whole_run_into_the_regular_roots_and_survives_restart(self):
+        s = self.private_scenario(); body = self.back_body(s)
+        self.assertNotIn(s['jid'], self.regular_job_ids()); self.assertEqual(self.get('/api/jobs/'+s['jid'])[0], 404)
+        status, out = self.post(APPLY, body)
+        self.assertEqual((status, out['stage'], out['published'], out['destination'], out['cleanup_remaining']), (200, 'complete', True, 'regular', []), out)
+        self.assertEqual((out['job_ids'], sorted(out['asset_ids']), out['collection_ids']), ([s['jid']], sorted(s['ids']), ['c-'+s['jid']]))
+        self.assert_back(s, self.studio)
+        self.assertIn(s['jid'], self.regular_job_ids()); self.assertEqual(self.get('/api/jobs/'+s['jid'])[0], 200)
+        journal = self.journal(s, body['request_id']); self.assertEqual((journal['source'], journal['destination'], journal['stage']), ('private', 'regular', 'complete'))
+        restarted = self.restart(); self.assertEqual(restarted.migration_recovery, []); self.assert_back(s, restarted)
+        self.assertIn(s['jid'], self.regular_job_ids())
+
+    def test_private_to_regular_replays_its_receipt_and_never_reexecutes(self):
+        s = self.private_scenario(); body = self.back_body(s); first = self.post(APPLY, body)
+        self.assertEqual(first[0], 200)
+        with patch.object(run_migration, 'plan', side_effect=AssertionError('replayed a mutation')):
+            self.assertEqual(self.post(APPLY, body), first)
+            self.assertEqual(self.post(APPLY, dict(body, destination='private'))[1]['code'], 'migration_request_conflict')  # the direction is part of the identity
+        self.assert_back(s, self.studio)
+
+    def test_a_private_upload_another_private_run_uses_is_copied_and_kept(self):
+        s = self.private_scenario(); sharer = self.completed(1, privacy='private')
+        sharer['references'] = [{'file': s['upload'], 'role': 'subject'}]; self.studio._save(sharer)
+        regular_user = self.completed(1); regular_user['references'] = [{'file': 'unrelated.png', 'role': 'subject'}]; self.studio._save(regular_user)
+        status, out = self.post(APPLY, self.back_body(s))
+        self.assertEqual((status, out['stage'], out['cleanup_remaining']), (200, 'complete', []), out)
+        kept = self.studio.experiments/'private/uploads'/s['upload']
+        self.assertTrue(kept.is_file() and (kept.parent/(s['upload']+'.json')).is_file(), 'the other Private run still reads its upload privately')
+        self.assertEqual(sha(self.studio._upload_path(s['upload'], 'regular')), sha(kept))
+        self.assertEqual(self.journal(s, 'back-'+s['jid'][:16])['keep_uploads'], ['private/uploads/'+s['upload'], 'private/uploads/'+s['upload']+'.json'])
+        self.assertEqual(run_migration._others(self.studio, {s['jid']}, 'private'), {s['upload']}, 'only Private runs read a Private upload')
+        self.assertEqual(run_migration._disk_consumers(self.studio, {s['jid']}, 'private'), {s['upload']})
+        self.assertIn('unrelated.png', run_migration._disk_consumers(self.studio, {s['jid']}, 'regular'))
+
+    def test_private_to_regular_crash_at_every_journal_boundary_recovers_without_leaving_two_copies(self):
+        cases = (('staging', 'staging', 'rolled-back'), ('verified', 'verified', 'rolled-back'), ('placed', 'verified', 'rolled-back'),
+                 ('committed', 'verified', 'complete'), ('published', 'published', 'complete'), ('cleanup', 'published', 'complete'))
+        for crash, from_stage, stage in cases:
+            with self.subTest(crash=crash):
+                s = self.private_scenario(); body = self.back_body(s)
+                with self.crash_at(crash), self.assertRaises(Crash): run_migration.apply(self.studio, body, 'all')
+                self.assertEqual(self.journal(s, body['request_id'])['stage'], from_stage)
+                restarted = self.studio = self.restart()
+                self.assertEqual(restarted.migration_recovery, [{'request_id': body['request_id'], 'from_stage': from_stage, 'stage': stage}])
+                if stage == 'complete': self.assert_back(s, restarted); self.assertIn(s['jid'], self.regular_job_ids())
+                else: self.assert_still_private(s, restarted)
+                status, out = run_migration.apply(restarted, body, 'all')
+                self.assertEqual((status, out['stage'], out['recovery']['from_stage'], out['published']), (200 if stage == 'complete' else 500, stage, from_stage, stage == 'complete'))
+                if stage == 'rolled-back': self.assertIn('stayed private', out['error'])
+
+    def test_a_run_moved_to_private_and_back_rolls_its_own_placement_back(self):
+        s = self.scenario(); self.assertEqual(self.post(APPLY, self.body(s, self.plan(s)))[1]['stage'], 'complete')
+        body = self.back_body(s)  # The earlier, committed Regular->Private request names this run; it must not shield the placement below.
+        with self.crash_at('placed'), self.assertRaises(Crash): run_migration.apply(self.studio, body, 'all')
+        self.assertTrue((self.studio.experiments/'runs'/s['jid']).is_dir())
+        restarted = self.studio = self.restart()
+        self.assertEqual(restarted.migration_recovery, [{'request_id': body['request_id'], 'from_stage': 'verified', 'stage': 'rolled-back'}])
+        self.assertFalse((self.studio.experiments/'runs'/s['jid']).exists(), 'a regular copy of a Private run was left behind')
+        self.assertEqual(restarted.jobs[s['jid']]['privacy'], 'private'); self.assertNotIn(s['jid'], self.regular_job_ids())
+        for asset_id in s['ids']: self.assertFalse((restarted.assets.root/s['rows'][asset_id]['path']).exists())
+        self.assertEqual(run_migration.apply(restarted, self.back_body(s, 'back-again-identity'), 'all')[1]['stage'], 'complete')
+        self.assertEqual(restarted.jobs[s['jid']]['privacy'], 'regular'); self.assertFalse((self.studio.experiments/'private/runs'/s['jid']).exists())
+
+    def test_a_journal_in_the_shape_written_before_private_to_regular_still_recovers(self):
+        for crash, stage in (('verified', 'rolled-back'), ('committed', 'complete')):
+            with self.subTest(crash=crash):
+                s = self.scenario(); body = self.body(s, self.plan(s))
+                with self.crash_at(crash), self.assertRaises(Crash): run_migration.apply(self.studio, body, 'all')
+                path = self.studio.experiments/'private/migrations'/(body['request_id']+'.json'); old = self.journal(s)
+                self.assertEqual(old.pop('source'), 'regular'); path.write_text(json.dumps(old))  # exactly the pre-change shape: no source field
+                restarted = self.studio = self.restart()
+                self.assertEqual(restarted.migration_recovery, [{'request_id': body['request_id'], 'from_stage': 'verified', 'stage': stage}])
+                if stage == 'complete': self.assert_moved(s, restarted)
+                else: self.assert_regular(s, restarted)
+                self.assertNotIn('source', self.journal(s))
+
+    def test_forged_journal_paths_are_rejected_in_the_private_to_regular_direction(self):
+        cases = (('asset source under the regular root', 'asset', {'source': 'workspace/media/victim.bin'}),
+                 ('upload source under regular uploads', 'upload', {'source': 'uploads/victim.bin'}),
+                 ('run_file source of another private run', 'run_file', {'source': 'private/runs/other-run/state.json'}),
+                 ('target that is not the derived destination', 'asset', {'target': 'uploads/victim.bin'}),
+                 ('placement that is no copy', None, {'placements': [{'target': 'uploads/victim.bin', 'created': True}]}),
+                 ('thumbnail under the regular thumbs', None, {'thumbnails': ['workspace/thumbs/victim.webp']}),
+                 ('a direction that moves nowhere', None, {'source': 'private', 'destination': 'private'}))
+        for name, kind, change in cases:
+            with self.subTest(name):
+                s = self.private_scenario(); body = self.back_body(s)
+                with self.crash_at('committed'), self.assertRaises(Crash): run_migration.apply(self.studio, body, 'all')
+                victims = [self.studio.experiments/p for p in ('uploads/victim.bin', 'workspace/media/victim.bin', 'private/runs/other-run/state.json', 'workspace/thumbs/victim.webp')]
+                for victim in victims: victim.parent.mkdir(parents=True, exist_ok=True); victim.write_bytes(b'precious')
+                journal_path = self.studio.experiments/'private/migrations'/(body['request_id']+'.json'); forged = self.journal(s, body['request_id'])
+                if kind: next(c for c in forged['copies'] if c['kind'] == kind).update(change)
+                else: forged.update(change)
+                journal_path.write_text(json.dumps(forged))
+                restarted = self.studio = self.restart()
+                try:
+                    for victim in victims: self.assertEqual(victim.read_bytes(), b'precious', victim)
+                    self.assertEqual([r['request_id'] for r in restarted.migration_recovery if 'error' in r], [body['request_id']]); self.assertEqual(json.loads(journal_path.read_text()), forged)
+                finally:
+                    for victim in victims: victim.unlink(missing_ok=True)
+                    shutil.rmtree(self.studio.experiments/'private/runs/other-run', ignore_errors=True); shutil.rmtree(self.studio.experiments/'private/migrations'/body['request_id'], ignore_errors=True); journal_path.unlink()
 
 if __name__ == '__main__':
     unittest.main()
