@@ -14,13 +14,13 @@ const asset=(id,extra={})=>({id,workspace_id:scope,title:id,notes:'',tags:[],rev
   media_type:'image',preset_id:'combine',job_id:'run',metadata_revision:0,source:{},lineage:[],collections:[],bytes:1,...extra});
 let passed=0,failed=0;
 async function test(name,run){try{await run();passed++;console.log('PASS',name);}catch(error){failed++;console.error('FAIL',name,'\n'+error.stack);}}
-function combine({page=[],known=[],ids=['far']}={}){
+function combine({page=[],known=[],ids=['far'],jobs}={}){
   const records=new Map(known.map(a=>[a.id,a])),calls=[],saves=[],notices=[],panel={hidden:false,innerHTML:'',querySelector:()=>null,querySelectorAll:()=>[]};
   const line={textContent:''},preset={id:'combine',name:'Combine',continuation_capability:{operation:'combine'}};
   const context={console,JSON,Date,StudioReviewChecks:Checks,StudioContinuation:{...Continuation,combineKind:()=>true,sameCombinePair:()=>true},
     selected:preset,catalog:{presets:[preset]},referenceRecords:[],lastUploaded:null,resultMarkup:'',pairActionBusy:false,
     resultPanel:panel,assetState:{workspace_id:scope,assets:page},assetWorkspaceEpoch:1,
-    assetRecord:id=>records.get(id),assetRecords:()=>[...records.values()],jobs:[{id:'run',status:'completed',preset_id:'combine',outputs:ids.map((id,i)=>({asset_id:id,media_type:'image',seed:i+1}))}],
+    assetRecord:id=>records.get(id),assetRecords:()=>[...records.values()],jobs:jobs||[{id:'run',status:'completed',preset_id:'combine',outputs:ids.map((id,i)=>({asset_id:id,media_type:'image',seed:i+1}))}],
     currentPair:()=>({}),combineBusy:()=>false,escape:String,durationLabel:String,submitting:false,poseBusy:false,posePositionDirty:()=>false,
     setupVersion:1,setupStamp:()=>String(context.setupVersion),q:()=>line,document:{activeElement:null},announce:(text,error)=>notices.push({text,error}),
     refreshAssets:async()=>true,resolveAssetIDs:async requested=>{calls.push([...requested]);for(const id of requested)records.set(id,asset(id,{review:'selected',tags:['check:pose=yes']}));return true;},
@@ -87,6 +87,39 @@ function pickerWorld(){
     const s=combine();s.context.resolveAssetIDs=async ids=>{s.calls.push([...ids]);return false;};
     await s.press({uxCheckLoad:'far',asset:'far'});assert.deepEqual(s.calls,[['far']]);assert.deepEqual(s.saves,[]);
     assert.match(s.line.textContent,/changed|could not/i);assert.doesNotMatch(s.line.textContent,/^Loaded saved/);
+  });
+  // #1204: the Grid on the Combine runs strip. Recipes are rows, seeds are columns; names of runs from a plan wait behind Reveal.
+  const run=(id,preset,status,seed,asset,extra={})=>({id,status,preset_id:preset,preset_name:preset.toUpperCase()+' ENGINE',created_at:Number(id.slice(1)),controls:{seed:String(seed)},message:preset.toUpperCase()+' ENGINE said so',outputs:asset?[{asset_id:asset,media_type:'image',seed}]:[],...extra});
+  const grid=(jobs,known=['a1','a2','a3','a4'])=>{const s=combine({jobs,known:known.map(id=>asset(id))});s.render();s.press({uxGrid:''});return s;};
+  const names=html=>[...html.matchAll(/role="rowheader"[^>]*>([^<]*)</g)].map(m=>m[1]),heads=html=>[...html.matchAll(/role="columnheader"[^>]*>([^<]*)</g)].map(m=>m[1]);
+  const plain=[run('r1','combine','completed',42,'a1'),run('r2','combine','completed',43,'a2'),run('r3','alt','completed',42,'a3'),run('r4','alt','failed',43,null)];
+  await test('Combine Grid puts recipes in rows and seeds in columns, one cell each, and offers no rerun',()=>{
+    const s=combine({jobs:plain,known:['a1','a2','a3'].map(id=>asset(id))});assert.match(s.render(),/aria-pressed="false"/);assert.doesNotMatch(s.panel.innerHTML,/role="grid"/);
+    s.press({uxGrid:''});const html=s.panel.innerHTML;
+    assert.match(html,/aria-pressed="true"/);assert.deepEqual(names(html),['ALT ENGINE','Combine']);assert.deepEqual(heads(html),['Recipe','Seed 42','Seed 43']);
+    assert.equal((html.match(/role="gridcell"/g)||[]).length,4);assert.doesNotMatch(html,/data-ux-rerun|Reveal/);assert.match(html,/data-ux-review="selected" data-asset="a3"/);
+    const failed=/data-ux-cell="0:1"[^>]*>(.*?)<\/div>/.exec(html)[1];assert.match(failed,/Failed/);assert.match(failed,/No picture/);assert.doesNotMatch(failed,/<button|<img/);
+  });
+  await test('Combine Grid is offered only when a run has a picture, and leaving it restores the list',()=>{
+    const s=combine({jobs:[run('r1','alt','failed',42,null)],known:[]});assert.doesNotMatch(s.render(),/data-ux-grid/);
+    const t=grid(plain);assert.match(t.panel.innerHTML,/role="grid"/);t.press({uxGrid:''});assert.doesNotMatch(t.panel.innerHTML,/role="grid"/);assert.match(t.panel.innerHTML,/ux-run-group/);
+  });
+  await test('Combine Grid shows the newest of repeated runs in one equal cell and says how many there are',()=>{
+    const html=grid([run('r1','combine','completed',42,'a1'),run('r2','combine','completed',42,'a2')]).panel.innerHTML;
+    assert.equal((html.match(/role="gridcell"/g)||[]).length,1);assert.match(html,/Newest of 2 pictures/);assert.equal((html.match(/<img /g)||[]).length,1);assert.match(html,/data-asset="a2"/);
+  });
+  await test('Combine Grid hides the recipe names of planned runs until Reveal, and hides them again on leaving',()=>{
+    const planned={project_id:'p'.repeat(32)},jobs=[run('r1','combine','completed',42,'a1'),run('r3','alt','completed',42,'a3',planned),run('r4','alt','failed',43,null,planned),run('r5','alt','not_submitted',44,null,planned)];
+    const s=grid(jobs);let html=s.panel.innerHTML;
+    assert.deepEqual(names(html),['Combine','Candidate A']);assert.doesNotMatch(html,/ALT ENGINE|alt result/);assert.match(html,/data-ux-reveal/);
+    assert.doesNotMatch(html,/data-ux-result-recipe="r5"/);assert.match(html,/data-ux-problem="r4"/);assert.match(html,/A planned run/);
+    s.press({uxReveal:''});html=s.panel.innerHTML;assert.deepEqual(names(html),['Combine','ALT ENGINE']);assert.doesNotMatch(html,/data-ux-reveal/);assert.match(html,/ALT ENGINE said so/);
+    s.press({uxGrid:''});s.press({uxGrid:''});html=s.panel.innerHTML;assert.deepEqual(names(html),['Combine','Candidate A']);assert.doesNotMatch(html,/ALT ENGINE/);
+  });
+  await test('Combine Grid keeps one tab stop on the held cell',()=>{
+    const s=grid(plain,['a1','a2','a3']);assert.equal((s.panel.innerHTML.match(/tabindex="0"/g)||[]).length,1);assert.match(s.panel.innerHTML,/tabindex="0" data-ux-cell="0:0"/);
+    s.panel.gridFocus='1:1';s.render();assert.match(s.panel.innerHTML,/tabindex="0" data-ux-cell="1:1"/);assert.equal((s.panel.innerHTML.match(/tabindex="0"/g)||[]).length,1);
+    s.panel.gridFocus='9:9';s.render();assert.match(s.panel.innerHTML,/tabindex="0" data-ux-cell="0:0"/);
   });
   await test('Family reference resolves its explicit off-page image through the existing picker',async()=>{
     const s=family();await s.adapter.reference('far');assert.deepEqual(s.calls,[['far']]);assert.equal(s.picked.length,1);
