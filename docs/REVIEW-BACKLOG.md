@@ -7,6 +7,16 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-10-30 (Claude flagship builder)
+
+- [ ] **No "Vary from the card" control** (#1205). Vary in Make is a button on each finished picture and always varies that picture with its own recipe; there is no "latest picture" default to replace, and the canon may be an imported picture with no recipe. Character-led variation goes through Change / New pose with the card chosen. Reverse: describe the Vary-from-card control you want on #1205.
+- [ ] **Canon swap keeps one previous canon** (#1718, PR #1750). "Use as canon" records the replaced canon once (not a history chain); the Line-up offers it back with its own "Use as canon". A re-imported copy of the same bytes is not a previous canon. Reverse: ask for a multi-step history or an Undo toast instead.
+- [ ] **Combine Grid hides recipe names only for runs from a plan** (#1204, PR #1720). Runs with a `project_id` read Candidate A, B… behind Reveal; ordinary runs show their names; Reveal covers only the plans on screen and leaving Grid hides them again (local view, not the Review desk's recorded reveal). Reverse: blind every Grid, or record the reveal.
+- [ ] **Make Tune copy is terse; the lab note and licence prose sit behind Why** (#1731, PR #1741). Visible line: "Draft ≈ half the time; in one lab test extra steps barely changed an Anima picture." The licence shows as the existing Non-commercial chip only when the recipe records it. Reverse: say which sentence should be visible again.
+- [ ] **Prompt Lab handoff names the recipe it fills; matching recipes are chips** (#1728, PR #1739). Button "Apply to <recipe>"; chips switch recipe and submit nothing; the compiler/executor sentences are gone. Reverse: restore the old note.
+- [ ] **Library skip link "Skip to Review next"** (#1746, PR #1749). Second tab stop from a fresh load, shown only while the Library is open and Review next is enabled. Reverse: remove the link.
+- [ ] **Blank-picture wording** (#1704, research session's #1715 shipped; this builder's softer wording in closed #1723 was not adopted). Reverse/adjust on #1704 if the merged wording reads too strong for deliberately flat assets.
+
 ## 2026-10-19 pass 2 (Brief K)
 
 - [ ] **Full editor readiness lives in "Readiness & run details"** (ux-lead-2 decision). Removed the recipe-header Review readiness button; the dock offers "What’s missing?" only while blocked. Ready shows the readiness line and time, and lost focus returns to that line when the button disappears. The ONE NEXT ACTION guidance is unchanged. Reverse: restore the two buttons.
