@@ -252,8 +252,9 @@ plan would add a budget and review step this quick look does not need. *Plan com
 Third live audit (PR #1484, `docs/ux-qa/JOURNEY-AUDIT-2026-10-16-v3.md`), N1-N6 and N8, plus the wave 6 pose-route ask.
 
 - **Pickers show your pictures** (N1): Make's picture and pose grids leave out agent runs the way the Library's Mine does
-  (`assetIsAgentRun`; Make runs count as yours). *Show all pictures (N more from agent runs)* brings them back, search
-  included; a search that only matches agent pictures says how many do.
+  (`assetIsAgentRun`; Make runs count as yours). *Show all pictures (including agent runs)* brings them back, search
+  included; a search that only matches agent pictures says they are hidden. The grids read the newest 60 at a time
+  (`/api/assets/page`, #1766) and **Show more** adds the next 60; the search runs on the server over all of them.
 - **Add an adapter by part of its name** (N2): any case, file name or label. One match is added; several are offered as
   buttons; Enter in the field presses Add. `make-anime-look-chosen-model-and-lora` now types `koukouya` and presses Enter:
   **8 → 7 clicks**, the same 12 steps.
@@ -278,7 +279,7 @@ Owner ask (16 October 2026): "the user should be able to do it without much conf
 
 - **Picture goals no longer leave Make.** Before, a goal tile led to a picture grid, then the *Where should it go next?*
   dialog asked the task again, then *Prepare in Create* opened the full editor, with other words, the prompt below the
-  fold and Generate renamed. Now each goal goes: pick the picture (a search box over your newest 60 pictures; masks stay
+  fold and Generate renamed. Now each goal goes: pick the picture (a search box over your pictures, 60 at a time with **Show more**; masks stay
   hidden), fill a short composer for that goal, then press Make's own **Generate**.
   - **Restyle**: choose the new look by its picture from Make's looks; that picture becomes the look board
     (`restyle-klein-picture`). *Describe the look in words instead* switches to `restyle-klein`, with the finish sentence

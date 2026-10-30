@@ -73,24 +73,24 @@ test('a tuned recipe replaces inherited sampler and scheduler with its offered d
   }
 });
 
-test('choosing a character uses a live preferred Restyle look or the default and shows its look note',()=>{
+test('choosing a character uses a live preferred Restyle look or the default and shows its look note',async()=>{
   const fallback={id:'default'},preferred={id:'preferred'},note="Its preferred look is put away; Make uses the goal's default look.";
   for(const [available,look_note,expected] of [[[fallback,preferred],null,'preferred'],[[fallback],note,'default'],[[fallback,preferred],note,'default'],[[fallback],"Its preferred look's recipe is no longer usable; Make uses the goal's default look.",'default'],[[],note,null],[[fallback,{id:'previous'}],note,'previous']]){
     const c={id:'mira',canon_asset_id:'canon',body:{who:'Mira',clothes:'green cloak',look_id:'preferred'},look_note},state={form:{},styleLook:'previous',styleWords:true};
-    let said='';const context={state,window:{},usableCharacters:()=>[c],lookPictures:()=>available,goal:()=>({intent:'restyle'}),choosePicture:id=>{state.pick={id};},renderPictures(){},say:text=>{said=text;},q:()=>null};
-    const choose=vm.runInNewContext(privacy+between('  function chooseCharacter(','  const chosenCharacter=')+';chooseCharacter',context);context.chooseCharacter=choose;
+    let said='';const context={state,window:{},usableCharacters:()=>[c],lookPictures:()=>available,goal:()=>({intent:'restyle'}),privacyEpoch:0,needAsset:async id=>({id}),choosePicture:(id,asset)=>{state.pick=asset;},renderPictures(){},say:text=>{said=text;},q:()=>null};
+    const choose=vm.runInNewContext(privacy+between('  async function chooseCharacter(','  const chosenCharacter=')+';chooseCharacter',context);context.chooseCharacter=choose;
     const click=vm.runInNewContext('(function(e){'+between("    const character=e.target.closest('[data-make-character]');","    const saveChar=e.target.closest(")+'})',context);
-    click({target:{closest:()=>({dataset:{makeCharacter:'mira'}})}});
+    click({target:{closest:()=>({dataset:{makeCharacter:'mira'}})}});await new Promise(r=>setImmediate(r));
     assert.equal(state.character,'mira');assert.equal(state.pick.id,'canon');assert.equal(state.form.who,'Mira');assert.equal(state.form.clothes,'green cloak');
     assert.equal(state.styleLook,expected);assert.equal(state.styleWords,!available.length);assert.ok(said.includes(look_note||'Your character is chosen'));
-    context.goal=()=>({intent:'edit'});said='';click({target:{closest:()=>({dataset:{makeCharacter:'mira'}})}});assert.ok(!said.includes('preferred'),'the look note is for Restyle only');context.goal=()=>({intent:'restyle'});
-    delete c.body.look_id;state.styleLook='own choice';choose('mira');assert.equal(state.styleLook,'own choice','no preferred look leaves the current choice alone');
+    context.goal=()=>({intent:'edit'});said='';click({target:{closest:()=>({dataset:{makeCharacter:'mira'}})}});await new Promise(r=>setImmediate(r));assert.ok(!said.includes('preferred'),'the look note is for Restyle only');context.goal=()=>({intent:'restyle'});
+    delete c.body.look_id;state.styleLook='own choice';await choose('mira');assert.equal(state.styleLook,'own choice','no preferred look leaves the current choice alone');
   }
 });
 
 test('a kept picture in the line-up can become the canon: one edit with the revision read, never a generation (#1205)',async()=>{
   const c={id:'mira',name:'Mira',revision:3,canon_asset_id:'canon',lineage:[{role:'canon',asset_id:'canon'}],body:{who:'Mira'}};
-  const state={pictures:[{id:'canon'},{id:'keep-a',lineage:['canon'],review:'selected'},{id:'skip',lineage:['canon'],review:'rejected'}],review:{},characters:[c]};
+  const state={library:[{id:'canon'},{id:'keep-a',lineage:['canon'],review:'selected'},{id:'skip',lineage:['canon'],review:'rejected'}],review:{},characters:[c]};
   const markup=vm.runInNewContext(privacy+between('  const LINEUP_MAX','  async function fillLineups')+';lineupMarkup',{state,escape:String,thumbUrl:a=>'/t/'+a.id,pictureLabel:a=>a.id});
   const html=markup(c);
   assert.equal((html.match(/data-make-canon="/g)||[]).length,1,'only a kept, non-canon picture offers the swap');
@@ -113,7 +113,7 @@ test('a kept picture in the line-up can become the canon: one edit with the revi
 
 test('the canon a swap replaced stays in the line-up with Use as canon, so one press swaps back (#1718)',async()=>{
   const c={id:'mira',name:'Mira',revision:3,canon_asset_id:'canon',previous_canon_asset_id:null,lineage:[{role:'canon',asset_id:'canon'}],body:{who:'Mira'}};
-  const state={pictures:[{id:'canon'},{id:'keep-a',lineage:['canon'],review:'selected'}],review:{},characters:[c]};
+  const state={library:[{id:'canon'},{id:'keep-a',lineage:['canon'],review:'selected'}],review:{},characters:[c]};
   const markup=vm.runInNewContext(privacy+between('  const LINEUP_MAX','  async function fillLineups')+';lineupMarkup',{state,escape:String,thumbUrl:a=>'/t/'+a.id,pictureLabel:a=>a.id});
   const calls=[],context={state,usableCharacters:()=>[c],requestPrivacy:()=>({privacy:'normal'}),classified:()=>'normal',privacyEpoch:1,CSS:{escape:String},q:()=>null,sayChars(){},refreshCharacters(){},loadCharacters:async()=>{},
     json:async(url,body)=>{calls.push(body);if(body.expected_revision!==c.revision)throw Object.assign(Error('stale'),{status:409});   // characters.py: the replaced canon becomes previous_canon, the revision moves
