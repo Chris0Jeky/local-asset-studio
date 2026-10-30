@@ -197,7 +197,7 @@ class Studio:
         self._host_commit = None; self._host_commit_at = 0
         self.build = build_info.build_info(self.root)   # read once at start; /api/health shows it so a console can spot a Studio running old code
         self._gpu_memory = None; self._gpu_memory_at = 0
-        self.jobs = {}; self.queue = Queue(); self.lock = threading.RLock(); self.worker_failure = None
+        self.jobs = {}; self.queue = Queue(); self.lock = threading.RLock(); self.worker_failure = None; self._worker_busy = False
         self._loaded_operator_dispositions = {}  # Readable terminal state still needs an explicit publication acknowledgment.
         self.cancel_requests = {}   # job id -> open owner cancel request; the worker that owns the job resolves it (app/job_cancel.py)
         # ComfyUI keeps every model family it loaded in host RAM after the VRAM is freed (measured 16 Sep 2026: 25.8 GB committed on an
@@ -219,13 +219,17 @@ class Studio:
         self._spill_unload_ineffective = None   # PID whose last spill-triggered unload left the spill in place (an outside cause)
         self._fingerprint_lock = threading.Lock()
         self._load_jobs()
+        # One query for the restart loop; a missing or differently classified output still goes through register(). A busy database
+        # falls back to the per-output path rather than aborting startup (#1770 review).
+        try: known = self.assets.registered_ids()
+        except (OSError, sqlite3.Error): known = None
         for job in self.jobs.values():
             # Failed or still-publishing native AV/voice attempts retain their
             # recipe and exact prior asset set for inspection; only completed
             # publication may be indexed on restart. Legacy jobs without a
             # publication marker keep the historical recovery path.
             if job.get("operation") in ("native.av-preview.v1","native.voice-baseline.v1") and "publication_status" in job and job["publication_status"] != "published": continue
-            self.index_outputs(job, advise=False)  # Restart re-registers known outputs only; the empty-picture decode is never backfilled.
+            self.index_outputs(job, advise=False, known=known)  # Restart re-registers known outputs only; the empty-picture decode is never backfilled.
         self.parallax_finisher = parallax.Finisher(self)
         self.production = Production(self)
         self.backends = BackendManager(self)
@@ -960,10 +964,15 @@ class Studio:
         if job.get('privacy') == 'private': result['privacy']='private'
         if job.get('look') is not None: result['look'] = job['look']
         if job.get('status') == 'queued':
-            # Read-only position (#1707): unfinished jobs created earlier pass the single worker first. A count only, so a private job
-            # ahead shows as a number, never as its content; an estimate of the wait, not a promise of order.
-            # No lock: Production.public() reaches here under its own lock, and Studio-then-Production is the order elsewhere (#1742 review).
-            result['queue_ahead'] = sum(1 for other in list(getattr(self, 'jobs', {}).values()) if other is not job and other.get('status') in Studio.ACTIVE_JOB_STATUSES and (other.get('created_at') or 0) < (job.get('created_at') or 0))
+            # Count every FIFO entry (#1707), exposing no private content. Never take self.lock: Production.public() holds its own lock (#1742).
+            pending = getattr(self, 'queue', None); queued = []
+            if pending is not None:
+                with pending.mutex: queued = list(pending.queue)
+            # A cancelled or failed run still in the FIFO is skipped instantly by the worker, so it is not counted (#1759 review).
+            live = lambda entry: not (isinstance(entry, tuple) and entry[:1] == ('generate',) and (getattr(self, 'jobs', {}).get(entry[1]) or {}).get('status') not in Studio.ACTIVE_JOB_STATUSES)
+            try: result['queue_ahead'] = sum(1 for entry in queued[:queued.index(('generate', job.get('id')))] if live(entry)) + int(getattr(self, '_worker_busy', False))
+            except ValueError:
+                result['queue_ahead'] = sum(1 for other in list(getattr(self, 'jobs', {}).values()) if other is not job and other.get('status') in Studio.ACTIVE_JOB_STATUSES and (other.get('created_at') or 0) < (job.get('created_at') or 0))
         if "record_error" in job: result.update(record_error=job["record_error"], run_path=job["run_path"])
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
@@ -1017,8 +1026,38 @@ class Studio:
             if total >= halfway: return value
         return ordered[-1][0]
 
-    def _estimate_graph(self, preset, controls):
-        graph, _ = self.graph_for(preset)
+    def _estimate_file_stamp(self, path):
+        try:
+            path = inside(self.root, path); stat = path.stat()
+            return str(path), stat.st_mtime_ns, stat.st_size, stat.st_ctime_ns, stat.st_ino   # inode: an atomic-replace save is always seen
+        except (OSError, StudioError): return None
+
+    def _estimate_presets(self, cache):
+        stamp = self._estimate_file_stamp(self.catalog_path)
+        if cache.get("catalog_stamp") == stamp and "presets" in cache and all(self._estimate_file_stamp(path) == version for path, version in cache["templates"]): return cache["presets"]
+        # Estimates need authored bindings/metadata, not catalog()'s inventory and UI projections.
+        data = read_json(self.catalog_path)
+        if not isinstance(data, dict) or not isinstance(data.get("presets"), list): raise StudioError("Invalid presets/catalog.json")
+        presets = {}
+        for preset in data["presets"]: presets.setdefault(preset.get("id"), preset)
+        paths = {self.root / str(preset.get("graph", "")) for preset in data["presets"]}
+        cache.update(catalog_stamp=stamp, presets=presets, templates=[(path, self._estimate_file_stamp(path)) for path in paths], graphs={})
+        return presets
+
+    def _estimate_cached_features(self, cache, key, preset, graph, controls, batch_count, reference_count, version=()):
+        controls = controls if isinstance(controls, dict) else {}
+        signature = (tuple(preset.get(field) for field in ("id", "name", "family", "modality")), len(preset.get("stages") or []),
+                     tuple(graph), graph, tuple(controls.get(field) for field in ("positive", "negative")), batch_count, reference_count, version)
+        cached = cache.get(key)
+        if cached is None or cached[0] != signature:
+            features = self._estimate_features(preset, graph, controls, batch_count, reference_count)
+            # Snapshot mutable inputs only on a miss, so in-place graph/control edits invalidate too.
+            cached = cache[key] = (copy.deepcopy(signature), features)
+        return cached[1]
+
+    def _estimate_graph(self, preset, controls, template=None):
+        if template is None: graph, _ = self.graph_for(preset)
+        else: graph = copy.deepcopy(template)
         controls = controls if isinstance(controls, dict) else {}
         numeric = {"seed", "steps", "cfg", "width", "height", "denoise", "frames", "fps", "style_weight", "pose_strength", "depth_cut", *LORA_SLOTS}
         extras = preset.get("bindings_extra") or {}
@@ -1101,32 +1140,41 @@ class Studio:
         """Estimate end-to-end time from completed local ComfyUI runs without mutating state."""
         if not isinstance(payload, dict): return {"available": False, "reason": "Estimate input must be an object."}
         classification=privacy_scope.normalize(payload.get('privacy','regular'))
-        try:
-            presets = self.catalog().get("presets", [])
-            preset = next(p for p in presets if p.get("id") == payload.get("preset_id"))
-            controls = payload.get("controls") if isinstance(payload.get("controls"), dict) else {}
-        except (StopIteration, StudioError, KeyError, TypeError, OSError):
-            return {"available": False, "reason": "Choose a supported recipe before estimating."}
-        try:
-            graph = self._estimate_graph(preset, controls)
-        except StudioError as exc:
-            if exc.code == "invalid_control":
-                return {"available": False, "reason": str(exc) or "Invalid estimate control."}
-            return {"available": False, "reason": "Choose a supported recipe before estimating."}
-        except (KeyError, TypeError, OSError):
-            return {"available": False, "reason": "Choose a supported recipe before estimating."}
-        references = payload.get("reference_count", 0)
-        target = self._estimate_features(preset, graph, controls, payload.get("batch_count", 1), references)
-        samples = []
-        for job in list(self.jobs.values()):
-            if not privacy_scope.matches(job.get('privacy','regular'),classification): continue
-            if job.get("status") != "completed" or job.get("operation") or job.get("native_recipe") or not job.get("prompt_ids") or not isinstance(job.get("graph"), dict): continue
-            elapsed = self._estimate_float(job.get("elapsed_seconds"), 0)
-            if elapsed <= 0: continue
-            sample_preset = next((p for p in presets if p.get("id") == job.get("preset_id")), None)
-            if not sample_preset: continue
-            sample = self._estimate_features(sample_preset, job["graph"], job.get("controls"), job.get("batch_count", 1), sum(1 for r in (job.get("references") or []) if not isinstance(r, dict) or r.get("file")))
-            sample["seconds"] = elapsed; samples.append(sample)
+        cache = self.__dict__.setdefault("_estimate_cache", {"lock": threading.Lock()})
+        with cache["lock"]:
+            try:
+                presets = self._estimate_presets(cache)
+                preset = presets[payload.get("preset_id")]
+                controls = payload.get("controls") if isinstance(payload.get("controls"), dict) else {}
+            except (StopIteration, StudioError, KeyError, TypeError, OSError):
+                return {"available": False, "reason": "Choose a supported recipe before estimating."}
+            try:
+                path = self.root / str(preset.get("graph", ""))
+                if path not in cache["graphs"]: cache["graphs"][path] = self.graph_for(preset)[0]
+                graph = self._estimate_graph(preset, controls, cache["graphs"][path])
+            except StudioError as exc:
+                if exc.code == "invalid_control":
+                    return {"available": False, "reason": str(exc) or "Invalid estimate control."}
+                return {"available": False, "reason": "Choose a supported recipe before estimating."}
+            except (KeyError, TypeError, OSError):
+                return {"available": False, "reason": "Choose a supported recipe before estimating."}
+            references = payload.get("reference_count", 0)
+            features = cache.setdefault("features", {})
+            jobs = dict(self.jobs)
+            for key in list(features):
+                if key != ("target",) and key[1] not in jobs: del features[key]
+            target = copy.deepcopy(self._estimate_cached_features(features, ("target",), preset, graph, controls, payload.get("batch_count", 1), references))
+            samples = []
+            for identifier, job in jobs.items():
+                if not privacy_scope.matches(job.get('privacy','regular'),classification): continue
+                if job.get("status") != "completed" or job.get("operation") or job.get("native_recipe") or not job.get("prompt_ids") or not isinstance(job.get("graph"), dict): continue
+                elapsed = self._estimate_float(job.get("elapsed_seconds"), 0)
+                if elapsed <= 0: continue
+                sample_preset = presets.get(job.get("preset_id")) if isinstance(job.get("preset_id"), str) else None   # a corrupt record is skipped, never a 500
+                if not sample_preset: continue
+                sample = self._estimate_cached_features(features, ("job", identifier), sample_preset, job["graph"], job.get("controls"), job.get("batch_count", 1), sum(1 for r in (job.get("references") or []) if not isinstance(r, dict) or r.get("file")),
+                                                        (job.get("status"), job.get("finished_at"), elapsed))
+                samples.append(dict(sample, seconds=elapsed))
 
         if samples:
             candidates = []
@@ -1219,10 +1267,12 @@ class Studio:
         if kind not in ("output", "temp"): raise StudioError("Unsupported output location")
         return inside(root / kind, root / kind / str(output.get("subfolder") or "") / str(output.get("filename") or ""))
 
-    def index_outputs(self, job, advise=True):
+    def index_outputs(self, job, advise=True, known=None):
         for index, output in enumerate(job.get("outputs", [])):
             try:
-                asset_id = self.assets.register(job, index, self.output_path(output, job))
+                source = self.output_path(output, job)
+                asset_id = self.assets.asset_id(job, index)   # register() returns this id untouched for a known output of the same privacy
+                if known is None or asset_id not in known or known[asset_id] != job.get('privacy', 'regular'): asset_id = self.assets.register(job, index, source)
                 if asset_id: output["asset_id"] = asset_id
             except (OSError, ValueError, sqlite3.Error) as exc:
                 # A storage fault while indexing a known output never changes the remote outcome.
@@ -2192,7 +2242,7 @@ class Studio:
 
     def _work(self):
         while True:
-            try: action, job_id = self.queue.get(timeout=30)
+            try: action, job_id = self.queue.get(timeout=30); self._worker_busy = True
             except Empty:
                 try: self._idle_tick()
                 except Exception: pass
@@ -2233,7 +2283,7 @@ class Studio:
                         self.worker_failure['privacy'] = job.get('privacy')
                     try: print('Studio worker could not persist failure:', self.public_worker_failure(), file=sys.stderr, flush=True)
                     except Exception: pass
-            finally: self._last_activity = time.monotonic()   # the idle clock starts when the action ends, not when it was dequeued
+            finally: self._worker_busy = False; self._last_activity = time.monotonic()   # the idle clock starts when the action ends, not when it was dequeued
 
     def _batch_graph(self, job, index, *, wildcard_files=None):
         graph = copy.deepcopy(job["graph"])

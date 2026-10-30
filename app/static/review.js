@@ -22,6 +22,7 @@
   if(typeof module!=='undefined'&&module.exports)module.exports={cropFromPercent,cropPixels,optionalInteger,artifactPath};
   if(typeof document==='undefined')return;
   const $=s=>document.querySelector(s), project=new URLSearchParams(location.search).get('project');
+  const drawn={left:null,right:null};   // the alias each preview canvas actually shows; K/W/X wait for it (#1760 review)
   let state=null,busy=false,serial=0,drawSerial=0,viewDraft=null,summaryDraft=null,selectionDraft=null,characterDecisionDraft=null;
   let presentation=new URLSearchParams(location.search).get('view')==='grid'?'grid':'pair';
   let primarySide='left',heldSide=null;
@@ -223,6 +224,20 @@
     if(holdCompare())event.preventDefault();
   });
   document.addEventListener('keyup',event=>{if(event.key===' ')releaseCompare();});
+  // K/W/X in Pair presentation save the candidate on show through the Grid's own save path (#1752); the Grid's keys stay on its tiles.
+  document.addEventListener('keydown',event=>{
+    const verdict={k:'keep',w:'needs_work',x:'reject'}[String(event.key).toLowerCase()];
+    if(!verdict||presentation!=='pair'||busy||!state?.exists||event.repeat||event.isComposing||event.altKey||event.ctrlKey||event.metaKey||event.shiftKey||editing(event.target))return;
+    event.preventDefault();
+    if(heldSide){message('Release Space first: the preview shows the other candidate.',true);return;}
+    // A rating after the decision would reopen it and clear the winner (review_desk.rate); a shortcut never does that silently (#1760 review).
+    if(state.finalized){message('The decision is recorded. Change an assessment with its form and Save to reopen it.',true);return;}
+    const mode=$('#mode').value,side=mode==='pair'?primarySide:mode,alias=$('#'+side).value;
+    if(drawn[side]!==alias){message('Wait for Candidate '+alias+' to appear before rating it.',true);return;}
+    $('#candidate').value=alias;fillAssessment();$('#verdict').value=verdict;
+    drafts.set(alias,assessmentDraft());syncGridSelection();
+    $('#assessmentForm').onsubmit({preventDefault(){}});
+  });
   document.addEventListener('focusin',event=>{if(editing(event.target))releaseCompare();});
   document.addEventListener('visibilitychange',releaseCompare);window.addEventListener('blur',releaseCompare);
   $('#holdCompare').onpointerdown=event=>{if(event.button!==0||event.altKey||event.ctrlKey||event.metaKey||event.shiftKey)return;event.preventDefault();$('#holdCompare').focus({preventScroll:true});holdCompare();};
@@ -239,6 +254,7 @@
       ctx.fillStyle=background==='dark'?'#20232b':'#f1f2f5';ctx.fillRect(0,0,canvas.width,canvas.height);
       ctx.drawImage(image,l,t,r-l,b-t,(canvas.width-(r-l)*scale)/2,(canvas.height-(b-t)*scale)/2,(r-l)*scale,(b-t)*scale);
       canvas.setAttribute('aria-label','Candidate '+preview.alias+' · shared cropped preview');
+      drawn[side]=preview.alias;
       $('#'+side+'Caption').textContent='Candidate '+candidate.alias+(candidate.source?' · '+candidate.source.filename:' · settings hidden');
     });
     if(presentation==='grid')for(const button of gridButtons())previews.push((async()=>{

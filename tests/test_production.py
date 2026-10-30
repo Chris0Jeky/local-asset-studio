@@ -453,6 +453,12 @@ class ExperimentsClarityFrontendTests(unittest.TestCase):
     """The browser rendering of plans and planner cards, in Node, without a browser."""
 
     @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_prepare_start_requires_an_explicit_owner_submission(self):
+        result=subprocess.run([shutil.which('node'),'--test',str(Path(__file__).with_name('production_prepare_start.cjs'))],
+                              capture_output=True,text=True,timeout=20)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
     def test_planner_cards_plan_names_and_comparison_arithmetic_read_once(self):
         result=subprocess.run([shutil.which('node'),str(Path(__file__).with_name('production_clarity_frontend.cjs'))],
                               capture_output=True,text=True,timeout=20)
