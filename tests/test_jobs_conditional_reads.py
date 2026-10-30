@@ -201,6 +201,33 @@ class JobsConditionalReadTests(unittest.TestCase):
         self.assertLessEqual(len(self.studio._jobs_views), 3)
         self.assertEqual({key[0] for key in self.studio._jobs_views}, {self.studio.jobs.rev})
 
+    def test_a_slow_builder_at_an_old_revision_never_evicts_a_newer_entry(self):
+        old_token, _ = self.studio.jobs_view_lookup('regular'); self.studio.bump_jobs_view()
+        new_token, _ = self.studio.jobs_view_lookup('regular')
+        self.studio.jobs_view_store(new_token, b'new', '"new"'); self.studio.jobs_view_store(old_token, b'old', '"old"')   # the slow builder finishes last
+        self.assertEqual(list(self.studio._jobs_views), [new_token[0]])
+        self.assertEqual(self.studio._jobs_views[new_token[0]][:2], (b'new', '"new"'))
+
+    def test_save_bumps_again_after_the_write_and_when_it_fails(self):
+        seen = []; original = self.studio._write_json_atomic
+        def spy(path, data): original(path, data); seen.append(self.studio.jobs.rev)
+        with patch.object(self.studio, '_write_json_atomic', spy): self.studio._save(self.job('done-a'))
+        self.assertGreater(self.studio.jobs.rev, seen[-1], 'the last write was never followed by a bump')
+        before = self.studio.jobs.rev
+        with patch.object(self.studio, '_write_json_atomic', side_effect=OSError('disk full')), self.assertRaises(OSError): self.studio._save(self.job('done-a'))
+        self.assertEqual(self.studio.jobs.rev, before + 2)   # one bump going in, one in the finally, though the write raised
+
+    def test_get_tolerates_a_studio_like_object_without_the_cache_methods(self):
+        fake = type('Fake', (), {})(); fake.lock = threading.RLock(); fake.jobs = self.studio.jobs; fake.public = self.studio.public   # no jobs_view_lookup, no jobs_view_store
+        handler = type('FakeHandler', (server.Handler,), {'studio': fake}); http = ThreadingHTTPServer(('127.0.0.1', 0), handler)
+        thread = threading.Thread(target=http.serve_forever, daemon=True); thread.start()
+        self.addCleanup(thread.join, 3); self.addCleanup(http.server_close); self.addCleanup(http.shutdown)
+        connection = HTTPConnection('127.0.0.1', http.server_port, timeout=10)
+        try:
+            connection.request('GET', '/api/jobs', None, {'Host': '127.0.0.1:8191', 'X-Studio-Privacy': 'regular'}); response = connection.getresponse(); body = response.read()
+        finally: connection.close()
+        self.assertEqual(response.status, 200); self.assertEqual(json.loads(body), self.fresh())
+
 
 class MigrationInvalidatesJobsViewTests(unittest.TestCase):
     base = plan_tests.RunMigrationPlanTests.__dict__

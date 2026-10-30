@@ -1678,26 +1678,29 @@ class Studio:
         if token is None: return
         key, started = token
         with self.lock:
+            if key[0] != getattr(self.jobs, 'rev', None): return   # a slow builder at an old revision must not evict the newer entries
             for old in [k for k in self._jobs_views if k[0] != key[0]]: del self._jobs_views[old]
             self._jobs_views[key] = (raw, etag, started)
 
     def _save(self, job, durable=False):
-        _bump_jobs(self)
-        if "record_error" in job: raise StudioError("An unreadable run record cannot be saved; inspect its folder first")
-        directory = self._job_directory(job.get("id"),job.get('privacy','regular'))
-        if job["id"] in getattr(self, "migrating", ()): raise StudioError("This run is moving to Private; nothing was saved. Try again when the move finishes", code="migration_in_progress")
-        recipe = {"preset_id": job["preset_id"], "controls": job["controls"], "batch_count": job["batch_count"], "graph_path": job["graph_path"], "created_at": job["created_at"]}
-        recipe.update(references=job.get("references", []), parent_assets=job.get("parent_assets", []))
-        if job.get('privacy')=='private':recipe['privacy']='private'
-        if job.get('look') is not None: recipe['look'] = job['look']
-        if job.get("continuation") is not None: recipe["continuation"] = job["continuation"]
-        if job.get("tile") is not None: recipe["tile"] = job["tile"]
-        if job.get("parallax") is not None: recipe["parallax"] = job["parallax"]
-        self._write_json_atomic(directory / "recipe.json", recipe)
-        state = {k:v for k,v in job.items() if k != "graph"}
-        if durable:   # #1459: restart (_load_jobs) reads workflow.json and state.json; both must survive an OS crash at the marker and receipt
-            self._write_observation_state(directory / "workflow.json", job["graph"]); self._write_observation_state(directory / "state.json", self._finite_state(state)); return
-        self._write_json_atomic(directory / "workflow.json", job["graph"]); self._write_json_atomic(directory / "state.json", state)
+        _bump_jobs(self)   # before too: several callers (voice_baseline, production, tiles) edit a settled job without studio.lock, then save
+        try:
+            if "record_error" in job: raise StudioError("An unreadable run record cannot be saved; inspect its folder first")
+            directory = self._job_directory(job.get("id"),job.get('privacy','regular'))
+            if job["id"] in getattr(self, "migrating", ()): raise StudioError("This run is moving to Private; nothing was saved. Try again when the move finishes", code="migration_in_progress")
+            recipe = {"preset_id": job["preset_id"], "controls": job["controls"], "batch_count": job["batch_count"], "graph_path": job["graph_path"], "created_at": job["created_at"]}
+            recipe.update(references=job.get("references", []), parent_assets=job.get("parent_assets", []))
+            if job.get('privacy')=='private':recipe['privacy']='private'
+            if job.get('look') is not None: recipe['look'] = job['look']
+            if job.get("continuation") is not None: recipe["continuation"] = job["continuation"]
+            if job.get("tile") is not None: recipe["tile"] = job["tile"]
+            if job.get("parallax") is not None: recipe["parallax"] = job["parallax"]
+            self._write_json_atomic(directory / "recipe.json", recipe)
+            state = {k:v for k,v in job.items() if k != "graph"}
+            if durable:   # #1459: restart (_load_jobs) reads workflow.json and state.json; both must survive an OS crash at the marker and receipt
+                self._write_observation_state(directory / "workflow.json", job["graph"]); self._write_observation_state(directory / "state.json", self._finite_state(state)); return
+            self._write_json_atomic(directory / "workflow.json", job["graph"]); self._write_json_atomic(directory / "state.json", state)
+        finally: _bump_jobs(self)   # and after the write, raise included: nothing cached while the files changed stays servable (#1808)
 
     def _save_outcome(self, job):
         """#1763: observed outputs and terminal states publish like the receipt (#1459). If that fails: uncertain, never resubmitted,
@@ -3197,7 +3200,7 @@ class Handler(BaseHTTPRequestHandler):
                 if file.suffix.lower() not in (".png", ".jpg", ".webp", ".gif", ".glb") or not file.is_file(): return self._json(404, {"error": "Example not found"})
                 data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", mimetypes.guess_type(str(file))[0] or "application/octet-stream"); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
             if path == "/api/jobs":
-                token, cached = self.studio.jobs_view_lookup(scope)   # unchanged jobs answer from the cached bytes: no projection, no hashing (#1767)
+                token, cached = self.studio.jobs_view_lookup(scope) if isinstance(self.studio, Studio) else (None, None)   # unchanged jobs answer from the cached bytes: no projection, no hashing (#1767)
                 if cached: raw, etag = cached[:2]
                 else:
                     with self.studio.lock:
@@ -3205,7 +3208,7 @@ class Handler(BaseHTTPRequestHandler):
                     payload = [self.studio.public(x) for x in sorted(snapshot, key=lambda j:j["created_at"], reverse=True)]
                     raw = json.dumps(payload).encode()
                     etag = '"' + hashlib.sha256(raw).hexdigest() + '"'
-                    self.studio.jobs_view_store(token, raw, etag)
+                    if token: self.studio.jobs_view_store(token, raw, etag)
                 if any(tag.strip().removeprefix("W/") in (etag, "*") for tag in self.headers.get("If-None-Match", "").split(",")):
                     self.send_response(304); self.send_header("ETag", etag); self.send_header("Cache-Control", "no-store"); self.send_header("Content-Length", "0"); self.end_headers(); return
                 self.send_response(200); self.send_header("Content-Type", "application/json"); self.send_header("Cache-Control", "no-store"); self.send_header("ETag", etag); self.send_header("Content-Length", str(len(raw))); self.end_headers(); self.wfile.write(raw); return
