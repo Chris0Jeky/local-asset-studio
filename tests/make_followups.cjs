@@ -120,7 +120,7 @@ test('restore drops only a confirmed 404 and does not poll the missing run',asyn
 function historyHarness(runs,saved=[]){
   const storage=new Map([['studio.make',JSON.stringify({runs:saved})]]),timers=new Map(runs.map(r=>[r.job.id,r.job.id])),cleared=[],state={goal:'character',runs};
   const policy=make.includes('  const observing=')?between('  const observing=','  const remember='):'';
-  const context={state,timers,window:{},rememberDraft(){},q:()=>({}),clearTimeout:id=>cleared.push(id),localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)}};
+  const context={state,timers,window:{},rememberDraft(){},runTitle(){},q:()=>({}),clearTimeout:id=>cleared.push(id),localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)}};
   const render=between('  function renderRuns(){','    planPolish(')+'return list;}';
   const api=vm.runInNewContext(privacy+make.match(/  const FINAL=.*\n/)[0]+policy+between('  const remember=','  const presets=')+render+';({remember,renderRuns,savedRuns,restored:()=>{restoredRuns=true;}})',context);
   return{...api,state,timers,cleared,saved:()=>JSON.parse(storage.get('studio.make')).runs};
@@ -215,7 +215,7 @@ test('Make single and comparison pictures show the recorded quiet-left diagnosti
     const job={id:'job-1',status:'completed',controls:{seed:4},look:{id:'look-night-shift',name:'<Night Shift>',revision:2,options:{quiet_wall:true}},outputs:[output]};
     const runs=[{job,look:'Night Shift',scene:'A room'}],cards=[{group,id:'job-1',runs}];let rendered='';
     const box={children:[],contains:()=>false,querySelectorAll:()=>[]};
-    const context={state:{runs},window:{},runCards:()=>cards,q:()=>box,planPolish(){},layout(){},observing:()=>false,
+    const context={state:{runs},window:{},runCards:()=>cards,q:()=>box,planPolish(){},layout(){},runTitle(){},tick(){},observing:()=>false,
       FINAL:['completed'],words:job=>job.status,picture:()=>true,pictureTitle:String,escape:String,esc:s=>String(s).replaceAll('<','&lt;'),
       recovery:()=>'',marks:()=>'',characterMarkup:()=>'',actions:()=>'',selectedOf:()=>null,draftRun:()=>false,
       document:{activeElement:{},createElement:()=>({children:[],set innerHTML(value){rendered=value;}})}};
@@ -244,4 +244,43 @@ test('recorded and new seed result handoffs retain Look provenance without submi
     assert.equal(saved.controls.seed,mode==='new'?'9':'4');
     assert.deepEqual(calls,['/api/recipe-check']);
   }
+});
+
+// Run clock and tab title: the real helpers with only document, timers and /api/estimate replaced.
+function clockHarness(runs){
+  const listeners={},requests=[],els=runs.map(r=>({dataset:{makeClock:r.job.id},textContent:''})),timers=[];
+  const document={title:'Local Asset Studio',hidden:false,addEventListener:(k,fn)=>{listeners[k]=fn;},querySelectorAll:()=>els};
+  const context={document,state:{runs},FINAL:['completed','failed'],Date,
+    rough:e=>e?.confidence==='none',duration:s=>s<90?Math.round(s)+' s':Math.round(s/60)+' min',
+    json:async(url,body)=>{requests.push({url,body});return{estimate_seconds:180,confidence:'medium'};},
+    setTimeout:fn=>{timers.push(fn);return timers.length;},clearTimeout(){}};
+  const api=vm.runInNewContext(between('  const PAINTING=','  function words(job)')+';({runClock,runTitle,tick})',context);
+  return{...api,document,listeners,requests,els,timers};
+}
+
+test('a painting card shows elapsed time against the usual time on this PC, and nothing once it ends',()=>{
+  const {runClock}=clockHarness([]),job={status:'running',started_at:1000},e={estimate_seconds:180,confidence:'medium'};
+  assert.equal(runClock(job,e,1080),'1:20 of about 3 min');
+  assert.equal(runClock(job,e,1300),'5:00, longer than the usual 3 min');
+  assert.equal(runClock(job,{estimate_seconds:180,confidence:'none'},1080),'1:20','a generic guess is not shown as the usual time');
+  assert.equal(runClock(job,null,1065),'1:05');
+  assert.equal(runClock({...job,status:'completed'},e,1080),'');
+  assert.equal(runClock({status:'queued'},e,1080),'','waiting has no painting clock');
+});
+
+test('the tab title counts unfinished runs and ticks a finish seen only after the tab returns',()=>{
+  const runs=[{job:{id:'a',status:'running'}},{job:{id:'b',status:'queued'}}],h=clockHarness(runs);
+  h.runTitle();assert.equal(h.document.title,'(2) Local Asset Studio');
+  h.document.hidden=true;runs[0].job.status='completed';runs[1].job.status='failed';h.runTitle();
+  assert.equal(h.document.title,'✓ Local Asset Studio');
+  h.document.hidden=false;h.listeners.visibilitychange();assert.equal(h.document.title,'Local Asset Studio');
+});
+
+test('tick fills each clock, asks /api/estimate once per run and stops when nothing paints',async()=>{
+  const now=Date.now()/1000,runs=[{job:{id:'a',status:'running',started_at:now-20,preset_id:'p',controls:{steps:8},batch_count:2,references:[{}]}}],h=clockHarness(runs);
+  h.tick();assert.match(h.els[0].textContent,/^ · 0:2\d$/);assert.equal(h.timers.length,1);
+  await new Promise(r=>setImmediate(r));h.tick();
+  assert.match(h.els[0].textContent,/^ · 0:2\d of about 3 min$/);
+  assert.equal(h.requests.length,1);assert.deepEqual(JSON.parse(JSON.stringify(h.requests[0])),{url:'/api/estimate',body:{preset_id:'p',controls:{steps:8},batch_count:2,reference_count:1}});
+  runs[0].job.status='completed';const before=h.timers.length;h.tick();assert.equal(h.els[0].textContent,'');assert.equal(h.timers.length,before,'no further tick is scheduled');
 });
