@@ -186,6 +186,8 @@ def run_label(value):
 
 JOBS_VIEW_MAX_AGE = 30.0   # seconds a cached /api/jobs answer may serve, so a job mutation that bumps nothing still heals (#1767)
 
+_JOBS_REV_GUARD = threading.Lock()
+
 def _bumping(name):
     method = getattr(dict, name)
     def wrapper(self, *args, **kwargs):
@@ -197,9 +199,8 @@ class JobsView(dict):
     """`Studio.jobs`: every insert or removal bumps `rev`, the key of the cached GET /api/jobs answer (#1767). In-place edits of a job
     bump through Studio._save or Studio.bump_jobs_view."""
     rev = 0
-    def __init__(self, *args, **kwargs): super().__init__(*args, **kwargs); self._rev_guard = threading.Lock()
     def bump(self):
-        with self._rev_guard: self.rev += 1
+        with _JOBS_REV_GUARD: self.rev += 1   # one module lock, so a deep copy of the dict (tests do) never meets a lock
     __setitem__ = _bumping('__setitem__'); __delitem__ = _bumping('__delitem__'); __ior__ = _bumping('__ior__'); pop = _bumping('pop')
     popitem = _bumping('popitem'); clear = _bumping('clear'); update = _bumping('update'); setdefault = _bumping('setdefault')
 
