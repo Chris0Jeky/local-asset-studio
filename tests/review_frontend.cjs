@@ -231,6 +231,7 @@ test('Review desk Choose as winner',async t=>{
       ['unreviewed candidate',s=>{s.candidates[2].assessment.verdict='unreviewed';},'A',/^Record a verdict for every candidate/],
       ['not kept',s=>{s.candidates[1].assessment.verdict='needs_work';},'B',/^Candidate B is not kept/],
       ['incomplete stage',s=>{s.evidence.stages[1].status='failed';},'B',/^An incomplete execution/],
+      ['already the winner',s=>{s.finalized=true;s.selected='A';},'A',/^Candidate A is already the recorded winner/],
     ];
     for(const [name,setup,alias,reason] of cases){
       const d=await desk(setup||undefined);choose(d,alias);assert.equal(d.$('chooseWinner').disabled,true,name);
@@ -261,8 +262,10 @@ test('Review desk Choose as winner',async t=>{
   });
   await t.test('a character case sends the chosen candidate\'s own saved checks and the usual character decision',async()=>{
     const d=await desk(s=>{s.character_context={required_checks:{face:'Face matches'}};s.character_review=null;s.candidates[0].character_checks={face:'pass'};s.candidates[1].character_checks={face:'uncertain'};s.candidates[2].character_checks={face:'fail'};});
-    choose(d,'B');await click(d);assert.deepEqual(sent(d)[0].character_checks,{face:'uncertain'},'not the form values of the candidate on show');
-    await d.respond(serve);assert.deepEqual([sent(d)[1].action,sent(d)[1].selected,sent(d)[1].character_decision,sent(d)[1].reviewer],['finalize','B','selected','local-user']);
+    choose(d,'B');await click(d);assert.equal(d.requests.length,1,'a check short of pass would let finalize fail after the mark');assert.match(d.$('message').textContent,/^Every character check for candidate B must pass/);
+    choose(d,'A');await click(d);assert.equal(d.requests.length,1,'no decision note yet');assert.match(d.$('message').textContent,/^Write the decision note first/);
+    d.$('summary').value='Face holds.';d.$('summary').oninput();choose(d,'A');await click(d);assert.deepEqual(sent(d)[0].character_checks,{face:'pass'},'the chosen candidate own saved checks, not the form values of the candidate on show');
+    await d.respond(serve);assert.deepEqual([sent(d)[1].action,sent(d)[1].selected,sent(d)[1].character_decision,sent(d)[1].reviewer,sent(d)[1].notes],['finalize','A','selected','local-user','Face holds.']);
   });
 });
 

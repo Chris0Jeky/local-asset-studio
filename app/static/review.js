@@ -40,6 +40,10 @@
     if(state.candidates.some(c=>c.assessment.verdict==='unreviewed'))return 'Record a verdict for every candidate, including rejected results.';
     if(candidate.assessment.verdict!=='keep')return 'Candidate '+candidate.alias+' is not kept; only a kept candidate can be the winner.';
     if(state.evidence?.stages?.[candidate.source?.stage]?.status!=='completed')return 'An incomplete execution may be reviewed but cannot become the selected result.';
+    if(state.finalized&&state.selected===candidate.alias)return 'Candidate '+candidate.alias+' is already the recorded winner.';
+    // A character case finalizes only with every character check passing and a decision note (character_review.validate_record), so refuse before the rate instead of half-claiming.
+    if(state.character_context&&Object.values(candidate.character_checks||{}).some(v=>v!=='pass'))return 'Every character check for candidate '+candidate.alias+' must pass first; save them in its assessment.';
+    if(state.character_context&&!$('#summary').value.trim())return 'Write the decision note first.';
     return '';
   }
   function controls(){
