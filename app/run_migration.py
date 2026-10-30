@@ -442,6 +442,7 @@ def _apply(studio, request, request_id, plan_sha256, fingerprint):
             committed = True
             _checkpoint('committed')
             for run_id in runs: studio.jobs[run_id]['privacy'] = 'private'
+            getattr(studio, 'bump_jobs_view', bool)()  # in-place classification change: the cached /api/jobs scopes are now wrong (#1767)
             stage = 'published'; _write(studio, journal, 'published')
         _checkpoint('published')
         _cleanup(studio, journal, live=True)
