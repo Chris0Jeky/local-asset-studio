@@ -213,6 +213,10 @@ def _upload(studio, add, block, guard, rel, run_id, name, classification):
 # ---- Apply: Regular -> Private only (#1678, third slice). Private -> Regular and the UI are later slices. ----
 APPLY_FIELDS = FIELDS | {'plan_sha256', 'request_id'}
 FORMAT = 'studio.run-migration/v1'
+MARKER_TABLE = 'CREATE TABLE IF NOT EXISTS run_migrations_v1 (request_id TEXT PRIMARY KEY, plan_sha256 TEXT NOT NULL, job_ids TEXT NOT NULL, targets TEXT NOT NULL, created_at REAL NOT NULL)'
+REQUEST_ID = re.compile(r'[A-Za-z0-9_-]{16,128}')
+SETTLED_STAGES = ('complete', 'rolled-back', 'cleanup-needed')  # Published or undone; anything else awaits recovery.
+MAX_SCANNED_RUNS = 20000
 _LOCK = threading.Lock()  # ponytail: one migration at a time Studio-wide; per-run locks if overlapping migrations ever matter
 
 
@@ -293,6 +297,8 @@ def apply(studio, payload, scope):
             if journal.get('fingerprint') != fingerprint:
                 raise WorkspaceError('This request ID already names a different migration; nothing changed', status=409, code='migration_request_conflict')
             return _outcome(journal)
+        if pending := _pending(studio):  # Recovery of an unfinished journal could otherwise undo files this request publishes.
+            raise WorkspaceError('An earlier migration has not finished; restart the Studio to recover it. Nothing changed', status=409, code='migration_recovery_pending', request_ids=pending[:10])
         return _apply(studio, request, request_id, payload['plan_sha256'], fingerprint)
     finally: _LOCK.release()
 
@@ -331,7 +337,7 @@ def _apply(studio, request, request_id, plan_sha256, fingerprint):
         for copy in journal['copies']:
             if copy['kind'] != 'run_file' and _at(studio, copy['target']).exists(): continue  # Private already holds this blob; verified below.
             staged = staging/copy['target']; staged.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(_at(studio, copy['source']), staged)
+            shutil.copyfile(_at(studio, copy['source']), staged); _durable(studio, staged)
         _checkpoint('staging')
         placements = []
         for copy in journal['copies']:
@@ -351,10 +357,12 @@ def _apply(studio, request, request_id, plan_sha256, fingerprint):
                 state = json.loads((folder/'state.json').read_text(encoding='utf-8')); state['privacy'] = 'private'
                 recipe = json.loads((folder/'recipe.json').read_text(encoding='utf-8')); recipe['privacy'] = 'private'
                 studio._write_observation_state(folder/'recipe.json', recipe); studio._write_observation_state(folder/'state.json', state)
-                folder.rename(studio._job_directory(run_id, 'private'))
+                _durable(studio, folder/'recipe.json'); _durable(studio, folder/'state.json')
+                folder.rename(studio._job_directory(run_id, 'private')); studio._sync_parent_directory(studio._job_directory(run_id, 'private').parent)
             for placement in placements:
                 if placement['created']:
                     final = _at(studio, placement['target']); final.parent.mkdir(parents=True, exist_ok=True); os.replace(staging/placement['target'], final)
+                    studio._sync_parent_directory(final.parent)
             _checkpoint('placed')
             _publish(studio, journal)
             committed = True
@@ -382,18 +390,20 @@ def _publish(studio, journal):
     with studio.assets.connection() as db:
         db.execute('BEGIN IMMEDIATE')
         studio.assets._check_scope(db, journal['workspace_id'])
-        db.execute('CREATE TABLE IF NOT EXISTS run_migrations_v1 (request_id TEXT PRIMARY KEY, plan_sha256 TEXT NOT NULL, job_ids TEXT NOT NULL, created_at REAL NOT NULL)')
+        db.execute(MARKER_TABLE)
         marks = ','.join('?'*len(journal['job_ids']))
         rows = {r['id']: r for r in db.execute('SELECT id,privacy,metadata_revision,sha256,path FROM assets WHERE job_id IN ('+marks+')', journal['job_ids'])}
         if set(rows) != set(asset_ids) or any(r['privacy'] != 'regular' or [r['metadata_revision'], r['sha256'], 'workspace/'+Path(r['path']).as_posix()] != journal['asset_revisions'][k] for k, r in rows.items()):
             raise WorkspaceError('An asset in this plan changed; nothing was published', status=409, code='migration_stale')
         for key, revision in journal['collection_revisions'].items():
             row = db.execute('SELECT privacy,revision FROM collections WHERE id=?', (key,)).fetchone()
-            if row is None or row['privacy'] != 'regular' or row['revision'] != revision:
+            members = {r[0] for r in db.execute('SELECT asset_id FROM collection_assets WHERE collection_id=?', (key,))}  # Adding a member bumps only that asset.
+            if row is None or row['privacy'] != 'regular' or row['revision'] != revision or not members <= set(asset_ids):
                 raise WorkspaceError('A collection in this plan changed; nothing was published', status=409, code='migration_stale')
         db.executemany("UPDATE assets SET privacy='private',metadata_revision=metadata_revision+1 WHERE id=?", [(k,) for k in asset_ids])
         db.executemany("UPDATE collections SET privacy='private',revision=revision+1 WHERE id=?", [(k,) for k in collection_ids])
-        db.execute('INSERT INTO run_migrations_v1 VALUES (?,?,?,?)', (journal['request_id'], journal['plan_sha256'], json.dumps(journal['job_ids']), time.time()))
+        db.execute('INSERT INTO run_migrations_v1 VALUES (?,?,?,?,?)', (journal['request_id'], journal['plan_sha256'], json.dumps(journal['job_ids']),
+                                                                      json.dumps([p['target'] for p in journal['placements']]), time.time()))
 
 
 def _committed(studio, request_id):
@@ -405,12 +415,14 @@ def _committed(studio, request_id):
 def _rollback(studio, journal):
     """Before publication only: remove what this journal placed or staged. Regular originals were never touched."""
     if journal.get('placements') is not None:  # Placement starts only after 'verified'; the occupied check proved these folders absent.
+        owned_runs, owned_targets = _owned(studio, journal['request_id'])  # Never undo what another, committed request published.
         for run_id in journal['job_ids']:
             folder = studio._job_directory(run_id, 'private')
-            if folder.exists(): shutil.rmtree(folder)
+            if folder.exists() and run_id not in owned_runs: shutil.rmtree(folder)
         with studio.assets.connection() as db: used = {Path(r[0]).as_posix() for r in db.execute("SELECT path FROM assets WHERE privacy='private'")}  # Windows rows hold media\x
         for placement in journal['placements']:
-            if placement['created'] and placement['target'].removeprefix('private/') not in used: _at(studio, placement['target']).unlink(missing_ok=True)
+            if placement['created'] and placement['target'] not in owned_targets and placement['target'].removeprefix('private/') not in used:
+                _at(studio, placement['target']).unlink(missing_ok=True)
     staging = _stage_root(studio, journal['request_id'])
     if staging.exists(): shutil.rmtree(staging)
 
@@ -436,9 +448,9 @@ def _cleanup(studio, journal, live):
     with studio.assets.connection() as db:
         regular_paths = {Path(r[0]).as_posix() for r in db.execute("SELECT path FROM assets WHERE privacy='regular'")}
         regular_shas = {r[0] for r in db.execute("SELECT sha256 FROM assets WHERE privacy='regular'")}
-    others = _others(studio, journal['job_ids']) if live else set()  # At start no job is loaded yet; the journal's own decision stands.
+    others = _others(studio, journal['job_ids']) if live else _disk_consumers(studio, journal['job_ids'])  # At start no job is loaded: read run records.
     retire = [c['source'] for c in journal['copies'] if c['kind'] == 'asset' and c['source'].removeprefix('workspace/') not in regular_paths]
-    retire += [c['source'] for c in journal['copies'] if c['kind'] == 'upload' and c['source'] not in journal['keep_uploads'] and _upload_base(c['source']) not in others]
+    retire += [c['source'] for c in journal['copies'] if c['kind'] == 'upload' and c['source'] not in journal['keep_uploads'] and others is not None and _upload_base(c['source']) not in others]
     retire += [t for t in journal['thumbnails'] if Path(t).name.split('-', 1)[0] not in regular_shas]  # A regenerable cache; Private renders its own.
     for rel in dict.fromkeys(retire):
         try: _at(studio, rel).unlink(missing_ok=True)
@@ -457,7 +469,10 @@ def recover(studio):
         try:
             journal = json.loads(path.read_text(encoding='utf-8')); stage = journal['stage']
             if stage in ('complete', 'rolled-back'): continue
-            if stage in ('staging', 'verified') and not _committed(studio, journal['request_id']):
+            _check_journal(studio, journal, path)
+            committed = _committed(studio, journal['request_id'])
+            if stage not in ('staging', 'verified') and not committed: raise ValueError('A published stage without its commit marker; left untouched')
+            if stage in ('staging', 'verified') and not committed:
                 _rollback(studio, journal)
                 journal.update(stage='rolled-back', failure=dict(status=500, code='migration_interrupted', failed_stage=stage,
                                                                  error='The Studio stopped before publication; the run stayed regular and nothing was published'))
@@ -467,3 +482,51 @@ def recover(studio):
         except (OSError, ValueError, KeyError, TypeError, sqlite3.Error) as exc:  # Left as found; job discovery still keeps duplicate run IDs private.
             reports.append(dict(request_id=path.stem, error=(str(exc) or type(exc).__name__)[:200]))
     return reports
+
+
+def _check_journal(studio, journal, path):
+    """A journal acts on nothing until its identity and run IDs are the ones its file name and format promise."""
+    if journal.get('format') != FORMAT or journal.get('request_id') != path.stem or not REQUEST_ID.fullmatch(path.stem): raise ValueError('Journal identity does not match its file')
+    runs = journal.get('job_ids')
+    if type(runs) is not list or not runs or not all(type(r) is str and IDENTITY.fullmatch(r) for r in runs): raise ValueError('Journal run IDs are invalid')
+    for run_id in runs: studio._job_directory(run_id, 'private')
+
+
+def _pending(studio):
+    folder = studio._private_directory('migrations')
+    if not folder.is_dir(): return []
+    pending = []
+    for path in sorted(folder.glob('*.json')):
+        try: stage = json.loads(path.read_text(encoding='utf-8')).get('stage')
+        except (OSError, ValueError, AttributeError): stage = None  # Unreadable counts as unfinished.
+        if stage not in SETTLED_STAGES: pending.append(path.stem)
+    return pending
+
+
+def _owned(studio, request_id):
+    """(run IDs, placement targets) published by every other committed request."""
+    runs, targets = set(), set()
+    with studio.assets.connection() as db:
+        if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='run_migrations_v1'").fetchone(): return runs, targets
+        for row in db.execute('SELECT job_ids,targets FROM run_migrations_v1 WHERE request_id<>?', (request_id,)):
+            runs.update(json.loads(row[0])); targets.update(json.loads(row[1]))
+    return runs, targets
+
+
+def _disk_consumers(studio, exclude):
+    """Upload names that retained run records outside `exclude` reference, or None when that cannot be established (keep them all)."""
+    names, count = set(), 0
+    for root in (studio.runs, studio._private_directory('runs')):
+        for state in root.glob('*/state.json'):
+            if state.parent.name in exclude: continue
+            count += 1
+            if count > MAX_SCANNED_RUNS: return None
+            try: names |= _upload_names(studio._read_job_record(state))
+            except (OSError, ValueError, RecursionError): return None
+    return names
+
+
+def _durable(studio, path):
+    """Flush one staged file (and, where supported, its folder) before anything depends on it, as snapshot_file does."""
+    with open(path, 'r+b') as stream: os.fsync(stream.fileno())
+    studio._sync_parent_directory(path.parent)
