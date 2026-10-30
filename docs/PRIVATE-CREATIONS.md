@@ -208,8 +208,15 @@ followed), more than 50 receipts naming one asset, native project runs (not
 supported), a production comparison stage that has not started and names an upload
 the move would copy (`pending_stage_upload`: that stage creates its run later and
 needs the Regular upload), and scene projects or production plans that cannot all be
-read (`production_unreadable`). A plan over 5,000 items is refused (413) before further hashing. Planning never cancels a run or clears
+read (`production_unreadable`, which also covers a stage whose request is not shaped as
+Production writes it). A plan over 5,000 items is refused (413) before further hashing,
+whether the items come from the runs or from scene projects and production plans. Planning never cancels a run or clears
 its uncertainty.
+
+A stage counts as not started whenever its run record does not exist, so an abandoned
+or cancelled comparison with an unstarted stage blocks the move of its shared upload
+until the comparison is finished or its project is deleted. The plan does not read the
+comparison's state to tell abandoned from waiting.
 
 The request's privacy scope binds the plan like any other read. Under Regular, a
 private ID is refused exactly like an unknown one. Private related items are left
@@ -276,13 +283,21 @@ journal. If the Workspace commit marker is absent it rolls back, which removes w
 was placed and leaves the regular originals untouched. If the marker exists, it
 finishes the cleanup; it keeps a regular upload that any retained run record or any
 production comparison stage not yet started still names, or every upload when the
-records or production plans cannot all be read (a loaded run whose record failed to
-load counts too, also at apply time). Uploads kept for that reason are listed in
+records or production plans cannot all be read. Recovery reads a record as strictly as
+the loader: one that parses but fails the loader's validation, names another folder or
+classification, or repeats a run ID counts as unreadable. Uploads kept for that reason are listed in
 `cleanup_remaining` and the journal stays `cleanup-needed`, so the next start retries
-them and finishes `complete` once every record reads. A rollback never removes
+them and finishes `complete` once every record reads. If a run record could not be read
+when the migration was applied, the journal records `keep_uploads: "all"`: those uploads
+stay regular for good, are listed in `cleanup_remaining`, and are not retried; remove
+them yourself once you have checked which runs use them. A rollback never removes
 a run folder or file that another committed request published. A journal whose
-identity, run IDs, file paths (every placement and copy target must lie under `private/`)
-or commit marker do not check out is reported and left untouched.
+identity, run IDs, file paths or commit marker do not check out is reported and left
+untouched. The paths are shape-checked before anything is deleted: every placement and
+copy target must lie under `private/`, every copy source under the Regular folder its
+kind comes from (`runs/<migrated run>/`, `uploads/` or `workspace/`), every thumbnail
+under `workspace/thumbs/`, and `..` is refused anywhere. That is a guard against a damaged
+or edited journal, not a defence against someone who can already write inside the experiments folder.
 
 Restarting cannot fix such a journal, and it blocks new migrations. Open
 `private/migrations/<request_id>.json` (named in the refusal) and inspect it and its
