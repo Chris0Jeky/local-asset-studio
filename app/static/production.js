@@ -127,15 +127,16 @@ function writeProductionDetail(plan,html){
   if(typeof focus?.scroll==='number')el.scrollTop=focus.scroll;
 }
 // Names the file to open for a completed native export.  It reads only recorded artifacts and recorded results; it never claims
-// the file was opened, inspected or accepted.  Blender's chest.blend is not an artifact of its own, so its card links the recorded pack.
-const NATIVE_ENTRY={ora:{tool:'Krita',path:'native/layers.ora',how:'Krita → File → Open, then choose the downloaded file.'},godot:{tool:'Godot',path:'native/godot/project.godot',how:'Unzip the source pack, then Godot Project Manager → Import → project.godot inside native/godot.'},articulated:{tool:'Blender',path:'export.zip',file:'chest.blend',how:'Unzip the source pack, then Blender → File → Open → chest.blend.'}};
+// the file was opened, inspected or accepted.  Godot and Blender entries only work with their siblings (scene, scripts, assets), so
+// their cards link the recorded pack and name the entry as it sits inside it (pack entries are relative to native/ for Godot, the root for Blender).
+const NATIVE_ENTRY={ora:{tool:'Krita',path:'native/layers.ora',how:'Krita → File → Open, then choose the downloaded file.'},godot:{tool:'Godot',path:'native/godot/project.godot',pack:'export.zip',inside:'godot/project.godot',how:'Unzip the whole pack, then Godot Project Manager → Import → godot/project.godot.'},articulated:{tool:'Blender',path:'export.zip',pack:'export.zip',inside:'chest.blend',how:'Unzip the pack, then Blender → File → Open → chest.blend.'}};
 function nativeOpenCard(p,artifacts){
   const entry=NATIVE_ENTRY[p.kind==='articulated'?'articulated':p.export_kind];
   if(!entry||p.state?.status!=='completed')return '';
-  const found=artifacts.find(a=>a.path===entry.path),head='<aside class="callout native-open" aria-label="Which file to open">';
-  if(!found)return head+'<b>Open this in '+entry.tool+':</b> entry file not recorded for this export.</aside>';
-  const name=entry.file||entry.path.split('/').pop(),record=entry.tool==='Krita'?(p.state.krita?'Recorded Krita roundtrip: saved and reopened roundtrip.kra, '+p.state.krita.kra.layers.length+' layer records retained.':'No Krita roundtrip was recorded.'):entry.tool==='Godot'?(p.state.engine?'Recorded Godot check: import and timed playback verified for this export.':'No Godot check was recorded.'):'No Blender check beyond the export run is recorded.';
-  return head+'<b>Open this in '+entry.tool+':</b> <a href="'+esc(found.url)+'?download" download>'+esc(name)+'</a>'+(entry.file?' <small>(inside '+esc(found.path)+')</small>':'')+'<br><small>'+esc(entry.how)+'</small><br><small>'+esc(record)+' Studio records no art acceptance.</small></aside>';
+  const found=artifacts.find(a=>a.path===entry.path),pack=entry.pack&&artifacts.find(a=>a.path===entry.pack),head='<aside class="callout native-open" aria-label="Which file to open">';
+  if(!found||entry.pack&&!pack)return head+'<b>Open this in '+entry.tool+':</b> entry file not recorded for this export.</aside>';
+  const link=pack||found,record=entry.tool==='Krita'?(p.state.krita?'Recorded Krita roundtrip: saved and reopened roundtrip.kra, '+p.state.krita.kra.layers.length+' layer records retained.':'No Krita roundtrip was recorded.'):entry.tool==='Godot'?(p.state.engine?'Recorded Godot check: import and timed playback verified for this export.':'No Godot check was recorded.'):'No Blender check beyond the export run is recorded.';
+  return head+'<b>Open this in '+entry.tool+':</b> '+(entry.inside?'<code>'+esc(entry.inside)+'</code> inside ':'')+'<a href="'+esc(link.url)+'?download" download>'+esc(link.path.split('/').pop())+'</a><br><small>'+esc(entry.how)+'</small><br><small>'+esc(record)+' Studio records no art acceptance.</small></aside>';
 }
 function renderProduction(){
   renderPlanList();
