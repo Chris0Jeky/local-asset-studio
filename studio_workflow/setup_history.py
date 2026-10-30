@@ -203,18 +203,16 @@ class SetupHistory:
         finally:
             db.text_factory = factory
         seen = set()
-        try:
-            for row in rows:
-                need(type(row['receipt']) is bytes and type(row['sha256']) is bytes, 'Stored setup receipt exceeds its integrity bound')
+        for row in rows:
+            try:  # advisory only: a receipt that cannot be verified leaves its revision's time unrecorded
+                need(type(row['receipt']) is bytes and type(row['sha256']) is bytes, 'Stored setup receipt exceeds its bound')
                 stored = stored_value(row['receipt'].decode('utf-8'), row['sha256'].decode('ascii')); receipt = stored.value
                 need(stored.matches and type(receipt) is dict and receipt.get('draft_id') == key and receipt.get('status') == 'committed'
-                     and receipt.get('revision') in times and receipt['revision'] not in seen, 'Stored setup receipt failed its integrity check')
-                seen.add(receipt['revision']); created = receipt.get('created_at')
-                times[receipt['revision']] = created if recorded_time(created) else None
-        except (ValueError, TypeError, KeyError, OverflowError, RecursionError) as exc:
-            if isinstance(exc, SetupError): raise
-            raise HistoryReadError('setup_history_corrupt',
-                                   'Stored setup receipt failed integrity validation: ' + str(exc)[:256], 503) from exc
+                     and type(receipt.get('revision')) is int and receipt['revision'] in times, 'Stored setup receipt is not verifiable')
+            except (ValueError, TypeError, KeyError, OverflowError, RecursionError):
+                continue
+            revision = receipt['revision']; created = receipt.get('created_at')
+            times[revision] = created if recorded_time(created) and revision not in seen else None; seen.add(revision)
         return times
 
     @staticmethod

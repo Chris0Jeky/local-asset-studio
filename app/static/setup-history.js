@@ -65,7 +65,7 @@
     list.id='setupHistoryList';list.setAttribute('aria-label','Setup revisions, newest first');view.id='setupHistoryComparison';view.setAttribute('aria-label','Revision comparison');
     for(const [b,id] of [[refresh,'setupHistoryRefresh'],[older,'setupHistoryOlder'],[compare,'setupHistoryCompare']]){b.type='button';b.id=id;b.dataset.key=id;}
     actions.append(refresh,older,compare);
-    details.append(el('summary','Workspace history (read-only)'),el('p','Browse the saved Workspace revisions of the shared setup and compare two of them. Viewing never changes Create, restores a revision, starts generation or copies files. Each revision shows when its save was recorded, when the Workspace has that time.'),status,actions,list,view);
+    details.append(el('summary','Workspace history (read-only)'),el('p','Browse the saved Workspace revisions of the shared setup and compare two of them. Viewing never changes Create, restores a revision, starts generation or copies files. Times come from the save record; older saves may show none.'),status,actions,list,view);
     panel.append(details);
     const history=new History({read:options.read||read,identity:options.identity||(()=>w.StudioSetupApply&&w.StudioSetupApply.controller&&w.StudioSetupApply.controller.state),emit:paint});
     function paint(event){

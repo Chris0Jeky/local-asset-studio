@@ -122,7 +122,9 @@ committing operation receipt for that revision, or `null` when no verified commi
 (nothing is invented, and no new storage was added). For `apply`/`substitute` that is when the request began,
 before staging, not the commit instant; the stored drafts carry only a zeroed `updatedAt`. The typed client,
 MCP readers and panel accept an absent or `null` value and refuse a boolean, string, non-finite value or one outside
-1970 to 2100; a receipt that fails its hash or shape check refuses the page as `setup_history_corrupt`.
+1970 to 2100. The time is advisory: a receipt that is unparseable, fails its hash, names another draft,
+is not `committed`, or is one of two receipts naming the same revision leaves that revision's time unrecorded
+(`null`); the page stays readable.
 Follow `next_before_revision` with the observed `expected_head`.
 Any changed head refuses continuation; explicitly restart rather than mixing
 observations. No automatic refresh, polling or mutation follows a stale page.
