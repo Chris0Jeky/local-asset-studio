@@ -2161,7 +2161,9 @@ class Studio:
                 uncertain = 'pending_submission' in job or bool(job.get('prompt_ids')) or bool(job.get('submissions'))
                 locked = not uncertain and submission_evidence.never_submitted(job) and self._run_folder_lock(job, exc)
                 job['status'] = 'uncertain' if uncertain else 'failed'
-                job['message'] = ('Local processing failed; remote outcome requires inspection. Nothing was resubmitted: ' if uncertain else 'Generation failed before submission: ') + str(exc)[:300]
+                # Keep the 'could not be saved durably' explanation: it tells the owner the record on disk is behind (#1774 review).
+                if not (uncertain and 'could not be saved durably' in str(job.get('message', ''))):
+                    job['message'] = ('Local processing failed; remote outcome requires inspection. Nothing was resubmitted: ' if uncertain else 'Generation failed before submission: ') + str(exc)[:300]
                 if locked: job['failure'] = {'kind': 'record_write_locked', 'title': "The Studio could not write this job's record", 'summary': "Another program had the run folder's file open. Nothing was sent to ComfyUI.", 'action': 'Safe to generate again with the same settings.', 'detail': str(exc)[:300]}
             self._save(job)
         job_cancel.finish(self, job)

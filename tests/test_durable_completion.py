@@ -91,6 +91,12 @@ class DurableCompletionTests(unittest.TestCase):
         self.assertEqual(self.posts(s),['/prompt']);self.assertEqual(job['submissions'][0]['status'],'failed')
         self.assert_restart_safe(s,job,['p1'])
 
+    def test_worker_failure_keeps_the_durable_save_explanation(self):
+        error={'p1':{'status':{'status_str':'error','messages':[]},'outputs':{}}}
+        s,job,_=self.run_job([IDLE,{'prompt_id':'p1'},error],publish=self.failing_outcome(lambda v:v.get('status')=='failed','fsync'),raises=server.StudioError)
+        s.record_job_failure(job,server.StudioError('ComfyUI reported an execution error'))
+        self.assertEqual(job['status'],'uncertain');self.assertIn('could not be saved durably',job['message'],'the owner still learns the record on disk is behind')
+
 
 if __name__=='__main__':
     unittest.main()
