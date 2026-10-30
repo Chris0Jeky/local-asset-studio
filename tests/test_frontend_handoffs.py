@@ -195,3 +195,13 @@ class MakeCompareSettingFrontendTests(unittest.TestCase):
             capture_output=True, text=True, timeout=15,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+
+class LibraryInspectLookFrontendTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_library_viewer_look_toggles_are_display_only(self):
+        result = subprocess.run(
+            [shutil.which('node'), '--test', str(Path(__file__).with_name('library_inspect_look.cjs'))],
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
