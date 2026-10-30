@@ -70,4 +70,15 @@ class QueueAheadTests(unittest.TestCase):
                 self.assertEqual(failure.call_count, int(fails))
 
 
+class QueueAheadSkipsSettledEntries(unittest.TestCase):
+    setUp = fixture.LookTests.setUp
+
+    def test_a_cancelled_run_left_in_the_queue_is_not_counted(self):
+        make = lambda: self.studio.jobs[self.studio.create_job({'preset_id': self.studio.catalog()['presets'][0]['id'], 'controls': {}}, enqueue=True)['id']]
+        first, second, third = make(), make(), make()
+        for job in (first, second, third): job['status'] = 'queued'
+        second['status'] = 'cancelled'
+        self.assertEqual(self.studio.public(third)['queue_ahead'], 1, 'only the first run is really ahead')
+
+
 if __name__ == '__main__': unittest.main()

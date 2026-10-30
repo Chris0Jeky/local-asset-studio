@@ -964,7 +964,9 @@ class Studio:
             pending = getattr(self, 'queue', None); queued = []
             if pending is not None:
                 with pending.mutex: queued = list(pending.queue)
-            try: result['queue_ahead'] = queued.index(('generate', job['id'])) + int(getattr(self, '_worker_busy', False))
+            # A cancelled or failed run still in the FIFO is skipped instantly by the worker, so it is not counted (#1759 review).
+            live = lambda entry: not (isinstance(entry, tuple) and entry[:1] == ('generate',) and (getattr(self, 'jobs', {}).get(entry[1]) or {}).get('status') not in Studio.ACTIVE_JOB_STATUSES)
+            try: result['queue_ahead'] = sum(1 for entry in queued[:queued.index(('generate', job.get('id')))] if live(entry)) + int(getattr(self, '_worker_busy', False))
             except ValueError:
                 result['queue_ahead'] = sum(1 for other in list(getattr(self, 'jobs', {}).values()) if other is not job and other.get('status') in Studio.ACTIVE_JOB_STATUSES and (other.get('created_at') or 0) < (job.get('created_at') or 0))
         if "record_error" in job: result.update(record_error=job["record_error"], run_path=job["run_path"])
