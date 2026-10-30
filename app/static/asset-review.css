@@ -3,6 +3,8 @@
 .studio-main .asset-toolbar{display:flex;gap:10px}
 .studio-main .asset-toolbar input{width:auto;flex:1 1 180px;min-width:0}
 .studio-main .asset-toolbar select{width:auto;flex:0 1 150px;min-width:0}
+.studio-skip-review{position:fixed;left:12px;top:-100px;background:var(--accent);color:#142015!important;z-index:200;padding:12px}
+.studio-skip-review:focus{top:10px}
 #reviewNext{white-space:nowrap}
 #reviewNext[disabled]{opacity:.55}
 #assetPaging{flex-wrap:wrap;align-items:center;gap:8px}

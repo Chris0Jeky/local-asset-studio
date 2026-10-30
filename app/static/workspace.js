@@ -725,7 +725,7 @@ function renderAssets() {
   const pending=assetUnreviewed(assets);
   $('#reviewNext').textContent=pending.length?'Review next ('+pending.length+' unreviewed)':'Nothing to review';
   $('#reviewNext').title=pending.length?'':'Every asset shown has a review.';
-  $('#reviewNext').disabled=!pending.length;
+  $('#reviewNext').disabled=!pending.length;$('#skipReview').hidden=!pending.length||!!$('#assetsView').hidden;
   const groups=assetGroups(assets,assetGroupMode),grouped=!!groups[0]?.key;
   $('#assetGrid').classList.toggle('is-grouped',grouped && !!assets.length);
   StudioAssetGrid.render($('#assetGrid'),assets,{groups,workspaceId:assetState.workspace_id,selected:assetSelection,cardHTML:assetCardHTML,cardTitle:assetCardTitle,groupActionsHTML:assetGroupActionsHTML,groupSourceHTML:assetGroupSourceHTML,emptyHTML:assets.length?'':assetEmptyState(),focusFallback:$('#assetSearch')});
@@ -1249,7 +1249,7 @@ $('#assetType').onchange=renderAssets;$('#assetSort').onchange=()=>{void refresh
 function chooseAssetSource(value){assetSourceMode=assetSourceModes.includes(value)?value:null;try{assetPreferenceStorage().setItem(assetSourceStorageKey,assetSourceMode||'');}catch(error){}renderAssets();}
 $('#assetSource').onchange=()=>chooseAssetSource($('#assetSource').value);
 $('#assetGroup').onchange=()=>{assetGroupMode=assetGroupModes.includes($('#assetGroup').value)?$('#assetGroup').value:'none';try{assetPreferenceStorage().setItem(assetGroupStorageKey,assetGroupMode);}catch(error){}renderAssets();};
-$('#reviewNext').onclick=()=>startReviewQueue();
+$('#reviewNext').onclick=()=>startReviewQueue();$('#skipReview').onclick=e=>{e.preventDefault();$('#reviewNext').focus();};
 $('#selectVisible').onclick=()=>{selectVisibleAssets();};
 $('#clearAssetFilters').onclick=clearAssetFilters;
 $('#keepVisibleSelection').onclick=()=>{const visible=new Set(visibleAssets().map(a=>a.id)),before=assetSelection.size;assetSelection=new Set([...assetSelection].filter(id=>visible.has(id)));renderAssets();$('#assetSearch').focus();const dropped=before-assetSelection.size;assetMessage('Selection now contains only visible assets'+(dropped?' ('+dropped+' outside this view removed)':'')+'. Any earlier unconfirmed command is unchanged.');};

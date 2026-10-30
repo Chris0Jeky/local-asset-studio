@@ -21,6 +21,13 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
     s.run("for(const asset of assetState.assets)asset.review='selected';renderAssets()");assert.equal(s.el('#reviewNext').textContent,'Nothing to review');assert.equal(s.el('#reviewNext').title,'Every asset shown has a review.');assert.equal(s.el('#reviewNext').disabled,true);
     s.run("assetState.assets[0].review='unreviewed';renderAssets()");assert.equal(s.el('#reviewNext').textContent,'Review next (1 unreviewed)');assert.equal(s.el('#reviewNext').title,'');assert.equal(s.el('#reviewNext').disabled,false);
   });
+  await test('Skip to Review next shows only while Review next is usable and moves focus to it',()=>{
+    const s=library(),skip=s.el('#skipReview');let focused=0,prevented=0;s.el('#reviewNext').focus=()=>{focused++;};
+    assert.equal(skip.hidden,false);skip.onclick({preventDefault(){prevented++;}});assert.equal(focused,1);assert.equal(prevented,1);
+    s.el('#assetsView').hidden=true;s.run('renderAssets()');assert.equal(skip.hidden,true);
+    s.el('#assetsView').hidden=false;s.run("for(const asset of assetState.assets)asset.review='selected';renderAssets()");assert.equal(skip.hidden,true);
+    s.run("assetState.assets[0].review='unreviewed';renderAssets()");assert.equal(skip.hidden,false);
+  });
   await test('Hidden selection is counted without silently changing its IDs',()=>{
     const s=library();s.run("assetSelection=new Set(['a0','a1']);");s.el('#assetSearch').value='Asset 0';s.run('renderAssets()');
     assert.match(s.el('#assetSelectionSummary').textContent,/1 visible.*1 outside/i);assert.equal(s.run('assetSelection.size'),2);
