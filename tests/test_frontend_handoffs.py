@@ -6,6 +6,11 @@ from pathlib import Path
 
 class GalleryHandoffTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_wildcard_wording_preview(self):
+        result = subprocess.run([shutil.which('node'), '--test', str(Path(__file__).with_name('wildcard_preview.cjs'))], capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
     def test_library_pagination_and_off_page_selection(self):
         result = subprocess.run(
             [shutil.which('node'), str(Path(__file__).with_name('workspace_pagination.cjs'))],
