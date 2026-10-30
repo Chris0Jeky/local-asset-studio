@@ -1445,7 +1445,7 @@ try{const stored=assetPreferenceStorage().getItem(assetGroupStorageKey);if(asset
 try{const stored=assetPreferenceStorage().getItem(assetSourceStorageKey);if(assetSourceModes.includes(stored))assetSourceMode=stored;}catch(error){}
 restoreAssetView();
 renderAssetReasons();renderLibraryRecovery();
-// #1678 read-only migration preview. The planner runs only from this explicit action and always under privacy=all; nothing here can apply, write or retry a move.
+// #1678 migration preview and apply. The planner runs only from this explicit action and always under privacy=all. A clean Regular-to-Private preview may be applied by one explicit click; no move is ever retried or re-sent automatically.
 const migrationBlockers={
   missing_run:'A selected asset names a run whose record cannot be found, so the run cannot move whole.',
   run_storage_alias:'A run folder or file is a link to somewhere else, and a move never follows links.',
@@ -1465,7 +1465,21 @@ const migrationBlockers={
   production_unreadable:'Scene projects or production plans could not all be read, so the copies they keep of these runs and pictures are unknown.',
   scope_partial:'This preview did not cover both privacy views; plan again under All.'};
 const migrationKinds={run:['run','runs'],run_file:['run file','run files'],asset:['output','outputs'],upload:['uploaded reference copy','uploaded reference copies'],thumbnail:['thumbnail','thumbnails'],collection:['collection','collections'],lineage_child:['related item that stays where it is','related items that stay where they are'],receipt:['past receipt that stays','past receipts that stay'],scene_copy:['scene project copy that stays Regular','scene project copies that stay Regular'],production_plan:['production plan that keeps a recipe','production plans that keep a recipe']};
-let migrationEpoch=0,migrationOpener=null;
+const migrationApplyErrors={
+  migration_blocked:['This move is blocked now, so nothing was moved. Preview again to see why.','preview'],
+  migration_stale:['Something changed since the preview, so nothing was moved. Preview again.','preview'],
+  migration_request_conflict:['That request already names a different move, so nothing was moved. Preview again.','preview'],
+  migration_busy:['Another move is running, possibly this one. Wait a moment, then press Check again.','check'],
+  migration_recovery_pending:['An earlier move did not finish, so nothing was moved. Restart the Studio to recover it, then preview again.',''],
+  migration_destination_occupied:['A Private run with the same ID already exists, so nothing was moved. Look in the Private view before trying again.',''],
+  migration_scope_required:['A move needs the All view, so nothing was moved. Switch to All and preview again.',''],
+  migration_direction_unsupported:['Moving a Private run back to Regular is not built yet. Nothing was moved.',''],
+  migration_in_progress:['This move has not finished. Restart the Studio to recover it; nothing is retried automatically.',''],
+  migration_storage_full:['The disk is full, so nothing was moved. Free space, then preview again.','preview'],
+  migration_verify_failed:['A copied file did not match its original, so nothing was moved. Preview again.','preview'],
+  migration_failed:['The move failed before anything was published, so nothing was moved. Preview again.','preview'],
+  migration_interrupted:['The move was interrupted and rolled back, so nothing was moved. Preview again.','preview']};
+let migrationEpoch=0,migrationOpener=null,migrationShown=null,migrationAttempt=null,migrationFlight=null;
 function migrationDestination(records){
   if(!records.length||!records.every(Boolean))return null;
   const kinds=new Set(records.map(a=>a.privacy===undefined?'regular':a.privacy));
@@ -1500,9 +1514,19 @@ function migrationHTML(plan){
 async function previewMigration(ids,destination,opener){
   const epoch=++migrationEpoch,privacyEpoch=assetPrivacyEpoch,workspace=assetState.workspace_id,status=$('#migrationStatus'),body=$('#migrationBody'),current=()=>epoch===migrationEpoch&&privacyEpoch===assetPrivacyEpoch;
   migrationOpener=opener||null;
-  $('#migrationTitle').textContent='Preview move to '+(destination==='private'?'Private':'Regular');body.innerHTML='';$('#migrationSwitch').hidden=true;
+  if(migrationFlight){assetMessage('A move is still running. Wait for it to finish, then preview again.',true);return;}
+  const pending=migrationAttempt?.sent?migrationAttempt:null;migrationShown=null;migrationAttempt=null;
+  $('#migrationTitle').textContent='Preview move to '+(destination==='private'?'Private':'Regular');body.innerHTML='';
+  for(const id of ['#migrationSwitch','#migrationApply','#migrationRecheck','#migrationRepreview'])$(id).hidden=true;
+  $('#migrationNote').innerHTML='<b>'+(destination==='private'?'This preview changes nothing.':'Moving back to Regular is not available yet; this preview changes nothing.')+'</b>';
   if(!$('#migrationDialog').open)$('#migrationDialog').showModal();
   $('#closeMigration').focus();
+  // A sent move whose outcome is unknown survives Close: until the server answers it, the only offer is Check again with the SAME request_id, never a new move.
+  if(pending){
+    migrationAttempt=pending;pending.shown=migrationShown={...pending.shown,epoch,privacyEpoch,workspaceEpoch:assetWorkspaceEpoch};
+    $('#migrationTitle').textContent='Earlier move: outcome unknown';status.textContent='An earlier move to Private may or may not have happened. Press Check again to ask about it before previewing another move.';
+    $('#migrationRecheck').hidden=false;$('#migrationRecheck').focus();return;
+  }
   if(assetActivePrivacy!=='all'){
     status.textContent='This preview needs the All view, so related Regular and Private items can both be found. Nothing was requested and the view has not changed. Switching clears the current selection.';
     $('#migrationSwitch').hidden=false;$('#migrationSwitch').focus();return;
@@ -1513,13 +1537,72 @@ async function previewMigration(ids,destination,opener){
     if(!current())return;
     const problem=migrationProblem(plan,ids,destination);if(problem)throw Error(problem);
     body.innerHTML=migrationHTML(plan);status.textContent='Preview ready: '+plan.items.length+' items, '+(plan.blockers.length?plan.blockers.length+(plan.blockers.length===1?' blocker':' blockers'):'no blockers')+'. Nothing was changed.';
+    const runs=plan.items.filter(i=>i.kind==='run').length;
+    if(destination==='private'&&plan.apply_available===true&&!plan.blockers.length&&runs){
+      migrationShown={epoch,privacyEpoch,workspaceEpoch:assetWorkspaceEpoch,workspace,ids:[...ids],destination,hash:plan.plan_sha256,runs};
+      $('#migrationApply').textContent='Move '+runs+(runs===1?' run':' runs')+' to Private';$('#migrationApply').hidden=false;
+      $('#migrationNote').innerHTML='<b>Moving copies each whole run into Private, then removes it from Regular. It cannot be moved back yet.</b>';
+    }
   }catch(error){if(current()){body.innerHTML='';status.textContent='No preview: '+(error.message||'the request failed')+' Nothing was changed.';}}
 }
 $('#previewMigration').onclick=async()=>{const ids=[...assetSelection],destination=migrationDestination(ids.map(assetRecord));if(destination&&assetSelectionCanProceed('migrate'))await previewMigration(ids,destination,$('#previewMigration'));};
 $('#assetMigrate').onclick=async()=>{const destination=activeAsset&&migrationDestination([activeAsset]);if(destination)await previewMigration([activeAsset.id],destination,$('#assetMigrate'));};
-$('#closeMigration').onclick=()=>$('#migrationDialog').close();
+const migrationBusyText='A move is in progress. Keep this window open; closing it would hide the result.';
+// One explicit click sends one request. A lost answer leaves the outcome unknown, so only the user may ask again, and only with the SAME request_id (the server replays its receipt, never a second move).
+async function migrationSend(attempt){
+  const shown=attempt.shown,status=$('#migrationStatus'),body=$('#migrationBody'),buttons=['#migrationApply','#migrationRecheck','#migrationRepreview','#closeMigration'];
+  if(migrationFlight)return;
+  if(!attempt.sent&&(shown.epoch!==migrationEpoch||shown.privacyEpoch!==assetPrivacyEpoch||shown.workspaceEpoch!==assetWorkspaceEpoch||shown.workspace!==assetState.workspace_id)){
+    migrationAttempt=null;for(const id of ['#migrationApply','#migrationRecheck'])$(id).hidden=true;$('#migrationRepreview').hidden=false;status.textContent='This preview is out of date. Nothing was sent. Preview again.';return;
+  }
+  attempt.sent=true;migrationFlight={privacyEpoch:assetPrivacyEpoch};for(const id of buttons)$(id).disabled=true;
+  status.textContent='Moving '+shown.runs+(shown.runs===1?' run':' runs')+' to Private… '+migrationBusyText;
+  let result=null,failure=null;
+  try{result=await api('/api/assets/migration-apply',{method:'POST',headers:{'Content-Type':'application/json',...assetPrivacyHeaders('all')},body:attempt.body});}catch(error){failure=error;}
+  migrationFlight=null;for(const id of buttons)$(id).disabled=false;
+  const here=shown.epoch===migrationEpoch,say=(text,error)=>{if(here)status.textContent=text;else assetMessage(text,error);};
+  for(const id of ['#migrationApply','#migrationRecheck','#migrationRepreview'])$(id).hidden=true;
+  if(!failure&&result&&result.published===true&&result.request_id===attempt.request_id&&result.destination==='private'&&Array.isArray(result.job_ids)&&Array.isArray(result.asset_ids)){
+    const left=Array.isArray(result.cleanup_remaining)?result.cleanup_remaining.length:0;
+    migrationAttempt=null;migrationShown=null;
+    say('Moved '+result.job_ids.length+(result.job_ids.length===1?' run':' runs')+' ('+result.asset_ids.length+(result.asset_ids.length===1?' output':' outputs')+') to Private.'+(left?' '+left+(left===1?' leftover copy':' leftover copies')+' in Regular could not be deleted yet and stays on disk.':''),false);
+    if(here){$('#migrationTitle').textContent='Moved to Private';body.innerHTML='';$('#migrationNote').innerHTML='<b>The runs are in Private now.</b>';}
+    assetSelection.clear();assetSelectionAnchor=null;
+    if(activeAsset&&result.asset_ids.includes(activeAsset.id))activeAsset.privacy='private';
+    renderAssets();if(here)$('#closeMigration').focus();
+    await refreshAssets(true);
+    return;
+  }
+  const code=failure?.data?.code,known=Object.hasOwn(migrationApplyErrors,code)?migrationApplyErrors[code]:null;
+  if(known){
+    migrationAttempt=known[1]==='check'?attempt:null;say(known[0],true);
+    if(here&&code==='migration_blocked'&&Array.isArray(failure.data.blockers))body.innerHTML='<ul>'+failure.data.blockers.map(b=>'<li>'+esc(migrationBlockers[b.code]||'Something blocks this move ('+b.code+').')+'</li>').join('')+'</ul>';
+    if(here){$('#migrationRecheck').hidden=known[1]!=='check';$('#migrationRepreview').hidden=known[1]!=='preview';($('#migrationRecheck').hidden?$('#migrationRepreview').hidden?$('#closeMigration'):$('#migrationRepreview'):$('#migrationRecheck')).focus();}
+    return;
+  }
+  // Any other structured server refusal is an answer, not a lost one: settle it so previews are never locked behind Check again.
+  if(failure&&typeof code==='string'&&code){
+    migrationAttempt=null;say('The move did not go through ('+(failure.data.error||code)+'). Preview again to see where the runs are; nothing is retried automatically.',true);
+    if(here){$('#migrationRepreview').hidden=false;$('#migrationRepreview').focus();}
+    return;
+  }
+  migrationAttempt=attempt;
+  say('The move may or may not have happened'+(failure?' ('+(failure.message||'the request failed')+')':': the answer was not understood')+'. Press Check again to ask about this same move; the server never moves it twice. Do not start a new move first, and reload the Library to see where the runs are.',true);
+  if(here){$('#migrationRecheck').hidden=false;$('#migrationRecheck').focus();}
+}
+$('#migrationApply').onclick=async()=>{
+  const shown=migrationShown;if(!shown||migrationFlight)return;
+  if(typeof globalThis.crypto?.randomUUID!=='function'){$('#migrationStatus').textContent='A secure request identity is unavailable. Nothing was sent.';return;}
+  const request_id=globalThis.crypto.randomUUID();
+  migrationAttempt={shown,request_id,body:JSON.stringify({workspace_id:shown.workspace,destination:shown.destination,asset_ids:shown.ids,plan_sha256:shown.hash,request_id})};
+  await migrationSend(migrationAttempt);
+};
+$('#migrationRecheck').onclick=async()=>{if(migrationAttempt)await migrationSend(migrationAttempt);};
+$('#migrationRepreview').onclick=async()=>{if(migrationShown&&!migrationFlight)await previewMigration(migrationShown.ids,'private',migrationOpener);};
+$('#closeMigration').onclick=()=>{if(migrationFlight){$('#migrationStatus').textContent=migrationBusyText;return;}$('#migrationDialog').close();};
+$('#migrationDialog').addEventListener('cancel',event=>{if(migrationFlight){event.preventDefault();$('#migrationStatus').textContent=migrationBusyText;}});
 $('#migrationSwitch').onclick=()=>{$('#migrationDialog').close();globalThis.window?.StudioPrivacy?.setScope?.('all');$('#assetSearch').focus();};
-$('#migrationDialog').addEventListener('close',()=>{migrationEpoch++;const opener=migrationOpener;migrationOpener=null;if(opener&&!opener.hidden&&opener.isConnected!==false)opener.focus?.();else $('#assetSearch').focus();});
+$('#migrationDialog').addEventListener('close',()=>{if(migrationFlight&&migrationFlight.privacyEpoch===assetPrivacyEpoch){$('#migrationDialog').showModal();$('#migrationStatus').textContent=migrationBusyText;return;}migrationEpoch++;const opener=migrationOpener;migrationOpener=null;if(opener&&!opener.hidden&&opener.isConnected!==false)opener.focus?.();else $('#assetSearch').focus();});
 document.addEventListener('studio:privacy-change',event=>{
   const next=event.detail?.scope||globalThis.window?.StudioPrivacy?.scope?.()||'regular';
   if(next===assetActivePrivacy||!['regular','private','all'].includes(next))return;
