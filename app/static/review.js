@@ -223,6 +223,17 @@
     if(holdCompare())event.preventDefault();
   });
   document.addEventListener('keyup',event=>{if(event.key===' ')releaseCompare();});
+  // K/W/X in Pair presentation save the candidate on show through the Grid's own save path (#1752); the Grid's keys stay on its tiles.
+  document.addEventListener('keydown',event=>{
+    const verdict={k:'keep',w:'needs_work',x:'reject'}[String(event.key).toLowerCase()];
+    if(!verdict||presentation!=='pair'||busy||!state?.exists||event.repeat||event.isComposing||event.altKey||event.ctrlKey||event.metaKey||event.shiftKey||editing(event.target))return;
+    event.preventDefault();
+    if(heldSide){message('Release Space first: the preview shows the other candidate.',true);return;}
+    const mode=$('#mode').value,alias=$('#'+(mode==='pair'?primarySide:mode)).value;
+    $('#candidate').value=alias;fillAssessment();$('#verdict').value=verdict;
+    drafts.set(alias,assessmentDraft());syncGridSelection();
+    $('#assessmentForm').onsubmit({preventDefault(){}});
+  });
   document.addEventListener('focusin',event=>{if(editing(event.target))releaseCompare();});
   document.addEventListener('visibilitychange',releaseCompare);window.addEventListener('blur',releaseCompare);
   $('#holdCompare').onpointerdown=event=>{if(event.button!==0||event.altKey||event.ctrlKey||event.metaKey||event.shiftKey)return;event.preventDefault();$('#holdCompare').focus({preventScroll:true});holdCompare();};
