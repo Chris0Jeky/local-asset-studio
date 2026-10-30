@@ -17,7 +17,7 @@
   const main=q('main'),editor=q('#createView .editor');
   function after(name,callback){const original=window[name];window[name]=function(...args){const result=original.apply(this,args);if(result?.then)return result.then(value=>{if(value!==false)callback(...args);return value;});callback(...args);return result;};}
   function element(tag,className,html){const el=document.createElement(tag);if(className)el.className=className;if(html)el.innerHTML=html;return el;}
-  function announce(text,error=false){message(text,error);q('#uxNotice').textContent=text;q('#uxNotice').classList.toggle('error',error);}
+  function announce(text,error=false,details=[]){message(text,error);q('#uxNotice').textContent=text;q('#uxNotice').classList.toggle('error',error);if(details.length){const fold=element('details','ux-notice-details','<summary>Details</summary>');for(const line of details)fold.append(Object.assign(element('div'),{textContent:line}));q('#uxNotice').append(fold);}}
   // #308: a Generate the memory check refuses says why in plain words; the server's own wording follows in brackets.
   const plainMessage=message;message=function(text,error=false){const plain=error?U.headroomExplanation?.(text):null;return plainMessage.call(this,plain?plain+' ('+text+')':text,error);};
   const notice=element('p','ux-notice');notice.id='uxNotice';notice.setAttribute('role','status');main.prepend(notice);
@@ -1073,7 +1073,7 @@
       if(q('#assetDialog').open)q('#assetDialog').close();
       draftDirty=true;showView('create');saveDraft();syncCreate();updateReady();scheduleTimeEstimate();recipeChanged();
       const words=selected?.positive&&!String(q('#positive').value||'').trim()?' No submitted wording was kept for this picture: describe it before running.':'';
-      announce(StudioContinuation.varyStatus(plan,strength==='reseed'?'subtle':strength,seed)+words);
+      announce(StudioContinuation.varyStatus(plan,strength==='reseed'?'subtle':strength,seed)+words,false,StudioContinuation.varyDefaults(plan));
     }catch(error){announce(error.message,true);}
     finally{varyBusy=false;syncReady();}
   }

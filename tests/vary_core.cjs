@@ -108,17 +108,18 @@ test('the status and hint say the checkpoint and adapters are kept',()=>{
   const plan=C.varyPlan(picture('wai',{job_id:'wai-job'}),waiShelf,[waiJob(recorded)],{},[]);
   const status=C.varyStatus(plan,'strong',3);
   assert.match(status,/Vary strong prepared on WAI vary/);assert.match(status,/noirpopwave\.safetensors at 1/);
-  assert.match(status,/lora2_name not recorded; using the recipe's current default: manga-ink-screentone\.safetensors/);
+  assert.ok(C.varyDefaults(plan).includes("lora2_name not recorded; using the recipe's current default: manga-ink-screentone.safetensors"),'the per-setting clause lives in the Details list');
+  assert.match(status,/2 settings not recorded: recipe defaults used\./);assert.doesNotMatch(status,/using the recipe's current default/);
   assert.doesNotMatch(status,/same checkpoint and adapters as this picture/);
   assert.match(status,/denoise 0\.7/);assert.match(status,/Nothing was generated/);
   const bare=C.varyPlan(picture('wai',{job_id:'wai-job'}),waiShelf,[waiJob({seed:5})],{},[]);
-  assert.match(C.varyStatus(bare,'subtle',3),/recipe's current default/);
+  assert.match(C.varyStatus(bare,'subtle',3),/6 settings not recorded: recipe defaults used\./);
   assert.equal(C.varyHint(plan),'On WAI vary · keeps its adapters · 2 pictures · denoise 0.5 / 0.7 (starting values)');
 });
 test('a value filled from the recipe default is named as a recipe default',()=>{
   const bare=C.varyPlan(picture('wai',{job_id:'wai-job'}),waiShelf,[waiJob({seed:5})],{},[]);
   const status=C.varyStatus(bare,'subtle',3);
-  assert.match(status,/lora not recorded; using the recipe's current default: 0/);
+  assert.ok(C.varyDefaults(bare).includes("lora not recorded; using the recipe's current default: 0"));
   assert.doesNotMatch(status,/it used none/);
   const recordedOff={seed:5,lora:0,lora_name:'cinematic lighting.safetensors',lora2:0,lora2_name:'manga-ink-screentone.safetensors',sampler:'euler',steps:24};
   const off=C.varyPlan(picture('wai',{job_id:'wai-job'}),waiShelf,[waiJob(recordedOff)],{},['cinematic lighting.safetensors','manga-ink-screentone.safetensors']);
@@ -132,7 +133,7 @@ test('enabled defaults and mixed recorded/default values never claim the origina
   for(const controls of [{seed:5},{...recorded,lora:undefined}]){
     const plan=C.varyPlan(picture('wai',{job_id:'wai-job'}),shelf,[waiJob(controls)],{},[]);
     const status=C.varyStatus(plan,'subtle',3);
-    assert.match(status,/lora not recorded; using the recipe's current default: 0\.8/);
+    assert.ok(C.varyDefaults(plan).includes("lora not recorded; using the recipe's current default: 0.8"));
     assert.doesNotMatch(status,/same checkpoint and adapters as this picture|it used none/);
   }
 });
@@ -181,7 +182,24 @@ test('Krea carry refuses absent runs and missing named files and discloses sourc
   delete job.controls.lora3_name;
   const fallback=C.varyPlan(picture(source),kreaShelf,[job],{},[]);
   assert.equal(fallback.kind,'img2img');assert.deepEqual(fallback.carryFallback,['lora3_name']);
-  assert.match(C.varyStatus(fallback,'subtle',1),/lora3_name not recorded; using the recipe's current default/);
+  assert.deepEqual(C.varyDefaults(fallback),["lora3_name not recorded; using the recipe's current default: "+fallback.carry.lora3_name]);
+  assert.match(C.varyStatus(fallback,'subtle',1),/1 setting not recorded: recipe defaults used\./);
   assert.doesNotMatch(C.varyStatus(fallback,'subtle',1),/same checkpoint and adapters as this picture/);
+});
+test('the status leads with what will run and folds the per-setting defaults into a Details list (#1726)',()=>{
+  const bare=C.varyPlan(picture('wai',{job_id:'wai-job'}),waiShelf,[waiJob({seed:5}),...runs('wai-vary',80)],{},[]);
+  const status=C.varyStatus(bare,'subtle',3),lines=C.varyDefaults(bare),at=text=>status.indexOf(text);
+  assert.equal(lines.length,6);assert.equal(bare.carryFallback.length,6);
+  // What runs comes first, then the count of unrecorded settings, then the reminder that nothing ran: no per-setting clause stands in the way.
+  assert.match(status,/^Vary subtle prepared on WAI vary from this picture: denoise 0\.5 \(a starting value, not yet judged\), 2 new seeds from 3, about 80 s per picture here/);
+  assert.ok(at('denoise 0.5')<at('2 new seeds from 3')&&at('2 new seeds from 3')<at('about 80 s per picture here')&&at('about 80 s per picture here')<at('6 settings not recorded: recipe defaults used.')&&at('6 settings not recorded: recipe defaults used.')<at('Nothing was generated'),status);
+  assert.ok(status.length<330,'the status is a sentence, not a list of clauses: '+status.length+' characters');
+  assert.doesNotMatch(status,/using the recipe's current default/);
+  // Nothing is dropped: every fallback key still has its clause, with the default it will use, in the Details list.
+  for(const key of bare.carryFallback)assert.ok(lines.includes(key+" not recorded; using the recipe's current default: "+bare.carry[key]),key);
+  // A plan that fell back on nothing has no list to fold, and a new-seeds round carries nothing.
+  const full=C.varyPlan(picture('wai',{job_id:'wai-job'}),waiShelf,[waiJob({...recorded,lora2:0,lora2_name:'manga-ink-screentone.safetensors'})],{},[]);
+  assert.deepEqual(C.varyDefaults(full),[]);assert.doesNotMatch(C.varyStatus(full,'subtle',3),/not recorded/);
+  assert.deepEqual(C.varyDefaults(C.varyPlan(picture('plain'),presets,[],{})),[]);
 });
 console.log(count+' Vary policy contracts passed');
