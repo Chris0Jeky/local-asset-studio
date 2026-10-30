@@ -24,6 +24,7 @@
   const $=s=>document.querySelector(s), project=new URLSearchParams(location.search).get('project');
   let state=null,busy=false,serial=0,drawSerial=0,viewDraft=null,summaryDraft=null,selectionDraft=null,characterDecisionDraft=null;
   let presentation=new URLSearchParams(location.search).get('view')==='grid'?'grid':'pair';
+  let primarySide='left',heldSide=null;
   const drafts=new Map(),images=new Map();
   const cropIds=['cropLeft','cropTop','cropRight','cropBottom'];
   const el=(tag,text)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;return node;};
@@ -52,6 +53,7 @@
   }
   async function operation(action,extra={},after=()=>{}){
     if(busy)return;const focusedAlias=document.activeElement?.dataset?.gridCandidate;
+    releaseCompare();
     busy=true;message(action==='export'?'Exporting…':['inspect','open'].includes(action)?'Loading…':'Saving…');controls();const ticket=++serial;
     try{
       const value=await request(action,extra);if(ticket!==serial)return;
@@ -75,6 +77,7 @@
             notes:$('#notes').value,cleanup_seconds:$('#cleanup').value,preference:$('#preference').value,character_checks:characterValues()};
   }
   function fillAssessment(){
+    releaseCompare();
     const candidate=state?.candidates.find(c=>c.alias===$('#candidate').value);if(!candidate)return;
     const value=drafts.get(candidate.alias)||candidate.assessment;
     $('#verdict').value=value.verdict;$('#notes').value=value.notes;$('#cleanup').value=value.cleanup_seconds??'';$('#preference').value=value.preference??'';
@@ -108,7 +111,7 @@
     $('#assessmentHome').hidden=grid;$('#assessmentHome').parentElement?.classList.toggle('grid-decision',grid);
   }
   function setPresentation(value){
-    if(busy||value==='grid'&&!state?.grid)return;presentation=value;applyPresentation();
+    if(busy||value==='grid'&&!state?.grid)return;releaseCompare();presentation=value;applyPresentation();
     const url=new URL(location.href);url.searchParams.set('view',presentation);history.replaceState(null,'',url);
     draw().catch(error=>message(error.message,true));controls();
   }
@@ -204,16 +207,38 @@
     if(!images.has(url)){const image=new Image();image.src=url;images.set(url,image.decode().then(()=>image).catch(error=>{images.delete(url);throw error;}));}
     return images.get(url);
   }
+  function holdCompare(){
+    if(busy||!state?.exists||heldSide)return false;
+    heldSide=$('#mode').value==='pair'?primarySide:$('#mode').value;$('#holdCompare').setAttribute('aria-pressed','true');
+    draw().catch(error=>message(error.message,true));return true;
+  }
+  function releaseCompare(){
+    if(!heldSide)return;heldSide=null;$('#holdCompare').setAttribute('aria-pressed','false');draw().catch(error=>message(error.message,true));
+  }
+  const editing=target=>target?.isContentEditable||!!target?.closest?.('input,textarea,select,[contenteditable]');
+  // Space keeps activating a focused control (#1744 review); only the canvases, the page and the hold button itself swap.
+  const activates=target=>{const control=target?.closest?.('button,a[href],summary,[role=button]');return !!control&&control.id!=='holdCompare';};
+  document.addEventListener('keydown',event=>{
+    if(event.key!==' '||event.repeat||event.isComposing||event.altKey||event.ctrlKey||event.metaKey||event.shiftKey||editing(event.target)||activates(event.target))return;
+    if(holdCompare())event.preventDefault();
+  });
+  document.addEventListener('keyup',event=>{if(event.key===' ')releaseCompare();});
+  document.addEventListener('focusin',event=>{if(editing(event.target))releaseCompare();});
+  document.addEventListener('visibilitychange',releaseCompare);window.addEventListener('blur',releaseCompare);
+  $('#holdCompare').onpointerdown=event=>{if(event.button!==0||event.altKey||event.ctrlKey||event.metaKey||event.shiftKey)return;event.preventDefault();$('#holdCompare').focus({preventScroll:true});holdCompare();};
+  for(const type of ['pointerup','pointercancel','pointerleave'])$('#holdCompare').addEventListener(type,releaseCompare);
+  window.addEventListener('pointerup',releaseCompare);window.addEventListener('pointercancel',releaseCompare);
+  for(const side of ['left','right']){$('#'+side+'Canvas').onfocus=()=>{primarySide=side;};$('#'+side+'Canvas').onpointerdown=()=>{primarySide=side;};}
   async function draw(){
     if(!state?.exists)return;const ticket=++drawSerial;
     const crop=cropFromPercent(cropIds.map(id=>$('#'+id).value)),background=$('#background').value,mode=$('#mode').value;
     $('#leftFigure').hidden=mode==='right';$('#rightFigure').hidden=mode==='left';$('#canvases').classList.toggle('single',mode!=='pair');
     const previews=['left','right'].map(async side=>{
-      const candidate=state.candidates.find(c=>c.alias===$('#'+side).value),image=await imageFor(candidate.preview_url);if(ticket!==drawSerial)return;
+      const candidate=state.candidates.find(c=>c.alias===$('#'+side).value),preview=heldSide===side?state.candidates.find(c=>c.alias===$('#'+(side==='left'?'right':'left')).value):candidate,image=await imageFor(preview.preview_url);if(ticket!==drawSerial)return;
       const canvas=$('#'+side+'Canvas'),ctx=canvas.getContext('2d'),[l,t,r,b]=cropPixels(crop,image.naturalWidth,image.naturalHeight),scale=Math.min(canvas.width/(r-l),canvas.height/(b-t));
       ctx.fillStyle=background==='dark'?'#20232b':'#f1f2f5';ctx.fillRect(0,0,canvas.width,canvas.height);
       ctx.drawImage(image,l,t,r-l,b-t,(canvas.width-(r-l)*scale)/2,(canvas.height-(b-t)*scale)/2,(r-l)*scale,(b-t)*scale);
-      canvas.setAttribute('aria-label','Candidate '+candidate.alias+' · shared cropped preview');
+      canvas.setAttribute('aria-label','Candidate '+preview.alias+' · shared cropped preview');
       $('#'+side+'Caption').textContent='Candidate '+candidate.alias+(candidate.source?' · '+candidate.source.filename:' · settings hidden');
     });
     if(presentation==='grid')for(const button of gridButtons())previews.push((async()=>{
@@ -243,8 +268,8 @@
   $('#cropForm').oninput=()=>{try{viewDraft={crop:cropFromPercent(cropIds.map(id=>$('#'+id).value)),background:$('#background').value};draw().catch(error=>message(error.message,true));}catch(error){viewDraft={crop:state.crop,background:$('#background').value};message(error.message,true);}controls();};
   $('#cropForm').onsubmit=event=>{event.preventDefault();try{operation('view',{crop:cropFromPercent(cropIds.map(id=>$('#'+id).value)),background:$('#background').value},()=>{viewDraft=null;});}catch(error){message(error.message,true);}};
   for(const button of document.querySelectorAll('[data-crop]'))button.onclick=()=>{const crop={whole:[0,0,10000,10000],centre:[2500,2500,7500,7500],upper:[0,0,10000,5000]}[button.dataset.crop];cropIds.forEach((id,i)=>{$('#'+id).value=crop[i]/100;});$('#cropForm').oninput();};
-  for(const side of ['left','right','mode'])$('#'+side).onchange=()=>draw().catch(error=>message(error.message,true));
-  $('#swap').onclick=()=>{const left=$('#left').value;$('#left').value=$('#right').value;$('#right').value=left;draw().catch(error=>message(error.message,true));};
+  for(const side of ['left','right','mode'])$('#'+side).onchange=()=>{releaseCompare();draw().catch(error=>message(error.message,true));};
+  $('#swap').onclick=()=>{releaseCompare();const left=$('#left').value;$('#left').value=$('#right').value;$('#right').value=left;draw().catch(error=>message(error.message,true));};
   $('#reveal').onclick=()=>{if(confirm('Reveal recipe settings and source identities? This is recorded and cannot be undone as a blind review.'))operation('reveal');};
   $('#summary').oninput=()=>{summaryDraft=$('#summary').value;controls();};$('#selected').onchange=()=>{selectionDraft=$('#selected').value;controls();};
   $('#characterDecision').onchange=()=>{characterDecisionDraft=$('#characterDecision').value;controls();};
