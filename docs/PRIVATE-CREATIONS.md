@@ -190,7 +190,11 @@ sha256 and revision: the run (`state.json` hash and status), each run-folder fil
 every output asset, snapshot thumbnails, staged upload copies and sidecars (from `references`
 and the `reference`/`last_reference` controls),
 collections, lineage children and historical command receipts. It also lists
-ComfyUI output/input originals that will remain (`external_copy`). It returns a
+ComfyUI output/input originals that will remain (`external_copy`), copies that
+scene projects made of a planned output in their own `inputs/` folder
+(`scene_copy`, served as Regular after the move) and production plans that keep a
+planned run's recipe, meaning its prompt and upload names (`production_plan`). Those
+three stay where they are, so they are listed, not blocked. It returns a
 `byte_estimate` and `plan_sha256`: SHA-256 of canonical JSON that binds the Workspace,
 scope, destination, requested IDs and each item's classification, bytes, sha256,
 revision and status. Any change to these produces a different hash.
@@ -200,8 +204,11 @@ Blockers refuse the plan (`applicable: false`) but are never acted on: an unsett
 unreadable record), a run already in the destination, a missing output sibling,
 snapshot or run record, a changed snapshot, a collection that holds other assets,
 an asset/run classification mismatch, a link or junction in a run folder (never
-followed), more than 50 receipts naming one asset, and native project runs (not
-supported). A plan over 5,000 items is refused (413) before further hashing. Planning never cancels a run or clears
+followed), more than 50 receipts naming one asset, native project runs (not
+supported), a production comparison stage that has not started and names an upload
+the move would copy (`pending_stage_upload`: that stage creates its run later and
+needs the Regular upload), and scene projects or production plans that cannot all be
+read (`production_unreadable`). A plan over 5,000 items is refused (413) before further hashing. Planning never cancels a run or clears
 its uncertainty.
 
 The request's privacy scope binds the plan like any other read. Under Regular, a
@@ -234,7 +241,7 @@ again inside the operation. It refuses, without changing anything, when:
 | `migration_destination_occupied` | 409 | A private run folder with that ID already exists |
 | `migration_busy` | 409 | Another migration is running |
 | `migration_request_conflict` | 409 | The request ID already names a different migration |
-| `migration_recovery_pending` | 409 | An earlier journal is still in staging, verified or published; restart the Studio to recover it first |
+| `migration_recovery_pending` | 409 | An earlier journal is still in staging, verified or published; the message names its file. Restart the Studio to recover it first; if recovery still reports it as invalid or unmarked, see below |
 
 Past those checks it keeps a journal at `private/migrations/<request_id>.json`:
 
@@ -267,16 +274,32 @@ ID is a new request: after completion it is refused as `already_in_destination`.
 At Studio start, before any run folder is read, recovery handles each unfinished
 journal. If the Workspace commit marker is absent it rolls back, which removes what
 was placed and leaves the regular originals untouched. If the marker exists, it
-finishes the cleanup; it keeps a regular upload that any retained run record still
-names, or every upload when the records cannot all be read. A rollback never removes
+finishes the cleanup; it keeps a regular upload that any retained run record or any
+production comparison stage not yet started still names, or every upload when the
+records or production plans cannot all be read (a loaded run whose record failed to
+load counts too, also at apply time). Uploads kept for that reason are listed in
+`cleanup_remaining` and the journal stays `cleanup-needed`, so the next start retries
+them and finishes `complete` once every record reads. A rollback never removes
 a run folder or file that another committed request published. A journal whose
-identity, run IDs or commit marker do not check out is reported and left untouched.
+identity, run IDs, file paths (every placement and copy target must lie under `private/`)
+or commit marker do not check out is reported and left untouched.
+
+Restarting cannot fix such a journal, and it blocks new migrations. Open
+`private/migrations/<request_id>.json` (named in the refusal) and inspect it and its
+sibling folder. Then move the file, and that folder if it exists, out of
+`private/migrations/`; never delete them unread. Check the run in both the regular and
+private views first.
 The receipt reports `recovery.from_stage` and the stage it
 reached. Recovery never cancels, resubmits or clears uncertainty. A run that is not
 settled is refused at apply time.
 
 IDs, output order, hashes, recipes, lineage, collections and receipts are kept.
-ComfyUI's own output/input copies (`external_copy`) are not touched.
+ComfyUI's own output/input copies (`external_copy`), scene project input copies
+(`scene_copy`) and production plans (`production_plan`) are not touched; the receipt
+lists them in `external_copies`. They stay Regular: a scene source stays readable
+through `GET /api/av/<id>/sources/<key>`, and a plan, contact sheet or review in a
+production project keeps the recipe in Regular. Neither is moved or hidden by this
+slice; a move that must remove them is later work.
 Thumbnails are not copied; Private renders its own.
 
 Not built: Private to Regular, a receipt-access policy for migrated targets,
