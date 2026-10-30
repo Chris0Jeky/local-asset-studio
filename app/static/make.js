@@ -81,6 +81,10 @@
   const PROOF_THUMBS=['look-preset-stylized-prop','look-preset-pixel-lora','look-preset-realvis','look-preset-zimage-fast'];
   const thumbOf=look=>{const r=recipeOf(look);return r&&state.examples[r]?.url||(look.anchor_asset_id?privateMedia('/api/assets/'+encodeURIComponent(look.anchor_asset_id)+'/thumb',classified(look)):PROOF_THUMBS.includes(look.id)?'/api/examples/make-looks-20261015/'+look.id+'.jpg':null);};
   const tried=look=>{const r=recipeOf(look),list=typeof atelierRecipes!=='undefined'?atelierRecipes:[];return list.find(x=>x.id===r)?.status==='executed';};
+  // The owner's own Keep / Not this marks on pictures made with a look (#1699, GET /api/looks/record); the slot lets a fresh mark redraw only this line.
+  const recordLine=l=>{const r=state.record?.[l?.id],kept=r?.kept||0,no=r?.not_this||0,parts=[kept&&kept+' kept',no&&no+' not this'].filter(Boolean);return parts.length?'<small class="make-record" title="Your Keep and Not this marks on pictures made with this look in this Studio">Your marks: '+parts.join(' · ')+'</small>':'';};
+  const recordSlot=l=>'<span data-make-record="'+escape(l.id)+'">'+recordLine(l)+'</span>';
+  const refreshRecord=async()=>{const epoch=privacyEpoch;try{const r=await json('/api/looks/record');if(epoch!==privacyEpoch)return;state.record=r.looks||{};for(const el of view.querySelectorAll('[data-make-record]'))el.innerHTML=recordLine({id:el.dataset.makeRecord});}catch{if(epoch===privacyEpoch)state.record={};}};
   const goal=()=>GOALS.find(g=>g.id===state.goal);
   const SLOTS=['lora','lora2','lora3','lora4','lora5','lora6'];
   // The look's active adapters: a strength above zero with a file. Style strength scales exactly these and nothing else.
@@ -411,10 +415,10 @@
     const on=l=>compare?state.compareLooks.includes(l.id):l.id===state.look;
     const cards=list.map(l=>{const p=presetFor(l),thumb=thumbOf(l),why=compare?blocker(l,p):blocker(l);return '<article class="make-look'+(on(l)?' active':'')+'"><button type="button" class="make-look-select" data-make-look="'+escape(l.id)+'" role="'+(compare?'checkbox':'radio')+'" tabindex="'+(compare||l.id===(state.look||list[0]?.id)?'0':'-1')+'" aria-checked="'+on(l)+'">'
       +(thumb?'<img src="'+escape(thumb)+'" alt="" loading="lazy">':'<span class="make-look-blank" aria-hidden="true">✦</span>')
-      +'<span class="make-look-text"><b>'+escape(l.name)+'</b>'+recipeLine(l)+pace(l)+tested(l)+licence(p)+bestFor(l)+(tried(l)?'<small>Run on this PC before</small>':'')+'</span></button>'+(why?'<small class="make-warn make-look-text">'+blockerMarkup(l,why)+'</small>':'')+'</article>';}).join('');
+      +'<span class="make-look-text"><b>'+escape(l.name)+'</b>'+recipeLine(l)+pace(l)+tested(l)+recordSlot(l)+licence(p)+bestFor(l)+(tried(l)?'<small>Run on this PC before</small>':'')+'</span></button>'+(why?'<small class="make-warn make-look-text">'+blockerMarkup(l,why)+'</small>':'')+'</article>';}).join('');
     const chosen=current();
     if(chosen&&!state.picking&&!compare){const p=presetFor(chosen),thumb=thumbOf(chosen);
-      body.innerHTML='<div class="make-chosen">'+(thumb?'<img src="'+escape(thumb)+'" alt="">':'<span class="make-look-blank" aria-hidden="true">✦</span>')+'<div><small>Look</small><b>'+escape(chosen.name)+'</b>'+recipeLine(chosen)+pace(chosen)+tested(chosen)+licence(p)+bestFor(chosen)+'</div><button type="button" data-make-change>Change look</button></div><div id="makeComposer"></div>';}
+      body.innerHTML='<div class="make-chosen">'+(thumb?'<img src="'+escape(thumb)+'" alt="">':'<span class="make-look-blank" aria-hidden="true">✦</span>')+'<div><small>Look</small><b>'+escape(chosen.name)+'</b>'+recipeLine(chosen)+pace(chosen)+tested(chosen)+recordSlot(chosen)+licence(p)+bestFor(chosen)+'</div><button type="button" data-make-change>Change look</button></div><div id="makeComposer"></div>';}
     else body.innerHTML='<div class="make-step"><span>1</span><h2>'+(compare?'Choose two or three looks to compare':'Choose a look')+'</h2>'+(chosen&&!compare?'<button type="button" class="make-link" data-make-keep-look>Stay with '+escape(chosen.name)+'</button>':'')+(list.length>1?'<button type="button" class="make-link" data-make-compare aria-pressed="'+compare+'">'+(compare?'Back to one look':'Compare looks')+'</button>':'')+'</div><div class="make-looks" role="'+(compare?'group':'radiogroup')+'" aria-label="'+(compare?'Looks to compare':'Look')+'">'+cards+'</div><div id="makeComposer"></div>';
     renderComposer();layout();
   }
@@ -563,7 +567,7 @@
     try{if(await refreshAssets(true)===false){await new Promise(r=>setTimeout(r,600));await refreshAssets(true);}
       if(epoch!==privacyEpoch)return;
       delete state.review[id];const value=reviewOf(id)===button.dataset.makeReview?'unreviewed':button.dataset.makeReview;
-      await mutateAssets({action:'edit',ids:[id],review:value});if(epoch!==privacyEpoch)return;state.review[id]=value;renderRuns();
+      await mutateAssets({action:'edit',ids:[id],review:value});if(epoch!==privacyEpoch)return;state.review[id]=value;renderRuns();void refreshRecord();
       say(value==='selected'?'Kept. Kept pictures are in the library under Kept.':value==='rejected'?'Marked: not this one.':'Decision cleared.');}
     catch(error){if(epoch!==privacyEpoch)return;button.disabled=false;say('Could not save that: '+error.message);}
   }
@@ -1116,7 +1120,7 @@
     // Speed, readiness and history read the recipe catalog that app.js loads; wait for it briefly instead of guessing.
     for(let i=0;i<40&&!presets().length;i++)await new Promise(r=>setTimeout(r,250));
     try{
-      const [listing]=await Promise.all([json('/api/looks'),loadCharacters(),import('/static/bundle-showcase.js').then(m=>{state.examples=m.default.examples||{};}).catch(()=>{})]);
+      const [listing]=await Promise.all([json('/api/looks'),refreshRecord(),loadCharacters(),import('/static/bundle-showcase.js').then(m=>{state.examples=m.default.examples||{};}).catch(()=>{})]);
       if(epoch!==privacyEpoch)return;state.looks=(listing.looks||listing.cards||[]).filter(l=>l.kind==='look'||l.body);
     }catch(error){if(epoch!==privacyEpoch)return;state.error='Could not read the looks: '+error.message;}
     if(epoch!==privacyEpoch)return;await restoreDraft(pendingDraft,epoch,revision);if(epoch!==privacyEpoch)return;draftReady=true;view.dataset.draftState='ready';
@@ -1337,7 +1341,7 @@
     }
     privacyEpoch++;draftRevision++;draftReady=false;draftProblem='';view.dataset.draftState='restoring';
     for(const timer of timers.values())clearTimeout(timer);timers.clear();planning.clear();
-    state.runs=[];state.pictures=null;state.characters=[];state.charStale=false;state.review={};state.polish={};state.queries={};state.allPictures=false;state.openers.clear();clearCharForms();
+    state.runs=[];state.pictures=null;state.characters=[];state.charStale=false;state.review={};state.record={};state.polish={};state.queries={};state.allPictures=false;state.openers.clear();clearCharForms();
     state.status='';state.missing='';state.error='';state.compare=false;state.compareLooks=[];state.sweeps={};
     if(previousCreation!==creation){state.pick=null;state.pose=null;state.form={};state.character=null;state.styleLook=null;state.styleWords=false;state.repicking=false;state.posePicking=false;state.tune={};
       savedTunes=readTunes(creation);

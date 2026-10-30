@@ -16,7 +16,8 @@ import re
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
-from workspace import CARD_ID, WorkspaceError
+import creation_privacy as privacy_scope
+from workspace import CARD_ID, WorkspaceError, privacy_sql
 from studio_workflow.privacy import is_regular, require_regular_creation
 
 KIND = "look"
@@ -283,6 +284,24 @@ def listing(studio):
                 and studio.assets.card_digest(card) == NIGHT_SHIFT_PREVIEW_DIGEST):
             result[-1]['visual_reference'] = dict(NIGHT_SHIFT_PREVIEW)
     return {"looks": result, "seed_errors": errors, "generation_submitted": False}
+
+
+def record(studio, scope='regular'):
+    """The owner's own marks per look (#1699): non-trashed pictures made by jobs that carry a look, counted by review state.
+
+    One pass over in-memory jobs plus one SQL query. A job and its asset must share a privacy class, and that class must be inside `scope`."""
+    with studio.lock: made = {j['id']: (j['look']['id'], j.get('privacy', 'regular')) for j in studio.jobs.values()
+                              if isinstance(j.get('look'), dict) and isinstance(j['look'].get('id'), str) and privacy_scope.matches(j.get('privacy', 'regular'), scope)}
+    clause, params = privacy_sql(scope); result = {}
+    with studio.assets.connection() as db:
+        for row in db.execute("SELECT job_id,review,privacy FROM assets WHERE trashed_at IS NULL AND " + clause, params):
+            look = made.get(row["job_id"])
+            if not look or look[1] != row["privacy"]: continue
+            count = result.setdefault(look[0], {"pictures": 0, "kept": 0, "not_this": 0, "needs_work": 0})
+            count["pictures"] += 1
+            key = {"selected": "kept", "rejected": "not_this", "needs_work": "needs_work"}.get(row["review"])
+            if key: count[key] += 1
+    return {"looks": result}
 
 
 def command(studio, payload):

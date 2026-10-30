@@ -2937,6 +2937,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, self.studio.assets.metadata(path.split("/")[3], self._asset_query_scope(),privacy=scope))
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
             if path == "/api/looks": return self._json(200, looks.listing(self.studio))
+            if path == "/api/looks/record": return self._json(200, looks.record(self.studio, scope))
             if path == "/api/characters": return self._json(200, characters.listing(self.studio))
             if path == '/api/production': return self._json(200,self.studio.production.list())
             if path.startswith('/api/production/campaigns/') and len(path.split('/'))==5:

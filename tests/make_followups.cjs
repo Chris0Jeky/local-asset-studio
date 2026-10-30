@@ -270,6 +270,21 @@ test('recorded and new seed result handoffs retain Look provenance without submi
   }
 });
 
+test('look cards and the chosen look show the owner\'s own Keep and Not this marks, only when there are some (#1699)',async()=>{
+  const slots=[{dataset:{makeRecord:'a'},innerHTML:'old'},{dataset:{makeRecord:'b'},innerHTML:'old'}],fetched=[];
+  const context={escape:v=>String(v),state:{record:{a:{pictures:5,kept:3,not_this:2,needs_work:1},b:{pictures:2,kept:0,not_this:0,needs_work:2},c:{pictures:1,kept:1,not_this:0,needs_work:0},d:{pictures:1,kept:0,not_this:1,needs_work:0}}},
+    privacyEpoch:0,json:async path=>{fetched.push(path);return{looks:{a:{pictures:6,kept:4,not_this:2,needs_work:0}}};},view:{querySelectorAll:s=>s==='[data-make-record]'?slots:[]}};
+  vm.createContext(context);vm.runInContext(between('  const recordLine=','  const goal=()')+';this.recordLine=recordLine;this.recordSlot=recordSlot;this.refreshRecord=refreshRecord;',context);
+  assert.match(context.recordLine({id:'a'}),/^<small class="make-record" title="[^"]*">Your marks: 3 kept · 2 not this<\/small>$/);
+  assert.match(context.recordLine({id:'c'}),/Your marks: 1 kept<\/small>$/);assert.match(context.recordLine({id:'d'}),/Your marks: 1 not this<\/small>$/);
+  assert.equal(context.recordLine({id:'b'}),'','Needs-work marks alone are not a Make mark');assert.equal(context.recordLine({id:'unknown'}),'');
+  context.state.record=undefined;assert.equal(context.recordLine({id:'a'}),'');
+  assert.match(make,/tested\(l\)\+recordSlot\(l\)\+/,'look cards carry the line next to Tested well');assert.match(make,/tested\(chosen\)\+recordSlot\(chosen\)\+/,'the chosen-look summary carries it too');
+  await context.refreshRecord();assert.deepEqual(fetched,['/api/looks/record']);
+  assert.match(slots[0].innerHTML,/Your marks: 4 kept · 2 not this/);assert.equal(slots[1].innerHTML,'');
+  assert.match(between('  async function saveReview(','  const reviewOf='),/state\.review\[id\]=value;renderRuns\(\);void refreshRecord\(\);/,'saving a mark refreshes the line');
+});
+
 // Run clock and tab title: the real helpers with only document, timers and /api/estimate replaced.
 function clockHarness(runs){
   const listeners={},requests=[],slows=runs.map(()=>({hidden:true,textContent:''})),els=runs.map((r,i)=>({dataset:{makeClock:r.job.id},textContent:'',closest:()=>({querySelector:()=>slows[i]})})),timers=[];
