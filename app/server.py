@@ -67,6 +67,7 @@ import looks
 import review_media
 import characters
 import run_migration
+import krita_edit
 import creation_privacy as privacy_scope
 from studio_prompt.http_extension import extend_handler as extend_prompt_handler
 from i2v_diagnostics import artifact_path as i2v_artifact_path
@@ -3135,6 +3136,7 @@ class Handler(BaseHTTPRequestHandler):
             if path.startswith(('/api/jobs/','/api/image/')) and not self._scoped_job(path.split('/')[3],scope):
                 return self._json(404,{'error':'Unknown job'})
             if path == "/api/identity": return self._json(200, self.studio.identity())
+            if path == '/api/edit-in-krita': return self._json(200, krita_edit.availability(self.studio))  # #1860: whether the Library can offer Edit in Krita
             if path == '/api/backends':
                 result=self.studio.backends.snapshot();result['recovery']=self.studio.runtime_recovery.snapshot();lease=getattr(self.studio,'gpu_lease',None)
                 if lease: result['gpu_lease']=lease.snapshot()
@@ -3345,6 +3347,16 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/references/check":
                 payload=self._body_object()
                 return self._json(200, self.studio.reference_status(payload,privacy=privacy_scope.creation_for_handler(self,payload)))
+            # #1860: open a picture in the configured Krita on a Studio-owned copy, and bring the saved file back as a linked repair. Neither generates.
+            krita=re.fullmatch(r'/api/assets/([^/]+)/edit-in-krita(/bring-back)?',urlparse(self.path).path)
+            if krita:
+                payload=self._body_object();creation=privacy_scope.creation_for_handler(self,payload)
+                try:
+                    if krita.group(2): return self._json(200,krita_edit.bring_back(self.studio,krita.group(1),payload.get('session'),privacy=creation,scope=scope))
+                    return self._json(201,krita_edit.start(self.studio,krita.group(1),privacy=creation,scope=scope))
+                except sqlite3.Error:
+                    return self._json(503, {"error": "Asset storage could not confirm this request. Check its receipt before retrying the exact command.",
+                                            "code": "asset_storage_unconfirmed"})
             if self.path == "/api/assets/update":
                 try: return self._json(200, self.studio.assets.update(self._body_json(),privacy=scope))
                 except sqlite3.Error:
