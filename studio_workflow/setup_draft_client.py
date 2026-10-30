@@ -12,7 +12,7 @@ from .client import ClientError, read_response
 from .core import canonical, decode, digest, need
 from .commands import identifier
 from .setup_drafts import PREFIX,MAX_COMMAND,MAX_REVISIONS,validate_command
-from .setup_history import FLAGS,MAX_PAGE,MAX_READ_BYTES,MAX_EXPORT_BYTES
+from .setup_history import FLAGS,MAX_PAGE,MAX_READ_BYTES,MAX_EXPORT_BYTES,recorded_time
 
 
 def _history_integer(value,maximum=MAX_REVISIONS):
@@ -82,7 +82,7 @@ class SetupDraftClient:
         start=before_revision if before_revision is not None else result['head_revision']+1
         expected=list(range(start-1,max(0,start-1-limit),-1));observed=[]
         for row in rows:
-            need(type(row) is dict,'Invalid setup history summary');revision=_history_integer(row.get('revision'))
+            need(type(row) is dict and recorded_time(row.get('recorded_at')),'Invalid setup history summary');revision=_history_integer(row.get('revision'))
             observed.append(revision)
         need(observed==expected,'Setup history page is incomplete or not contiguous')
         cursor=result.get('next_before_revision')

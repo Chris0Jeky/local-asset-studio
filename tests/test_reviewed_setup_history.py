@@ -54,6 +54,33 @@ class ReviewedSetupHistoryTests(unittest.TestCase):
         self.assertEqual(self.dump(), before)
         self.assertEqual(self.s.upload_count, 0)
 
+    def receipts(self, key):
+        with self.s.assets.connection() as db:
+            return {json.loads(r['receipt'])['revision']: json.loads(r['receipt'])['created_at']
+                    for r in db.execute("SELECT receipt FROM setup_operations_v1 WHERE draft_id=?", (key,))}
+
+    def test_each_summary_carries_the_time_its_committing_receipt_recorded(self):
+        key = self.revisions(3)
+        want = self.receipts(key)
+        self.assertEqual(sorted(want), [1, 2, 3])
+        rows = self.page(key)['revisions']
+        self.assertEqual({r['revision']: r['recorded_at'] for r in rows}, want)
+        self.assertTrue(all(type(t) is float and t > 1.6e9 for t in want.values()))
+        self.assertEqual([r['recorded_at'] for r in self.page(key, limit=1)['revisions']], [want[3]])
+
+    def test_a_revision_without_a_committed_receipt_has_no_time_instead_of_an_invented_one(self):
+        key = self.revisions(3)
+        with self.s.assets.connection() as db:
+            db.execute("DELETE FROM setup_operations_v1 WHERE draft_id=? AND request_id='history-2'", (key,))
+        self.assertEqual({r['revision']: r['recorded_at'] is None for r in self.page(key)['revisions']}, {3: False, 2: True, 1: False})
+
+    def test_a_receipt_that_fails_its_integrity_check_refuses_the_page(self):
+        key = self.revisions(2)
+        with self.s.assets.connection() as db:
+            db.execute("UPDATE setup_operations_v1 SET sha256=? WHERE draft_id=? AND request_id='history-2'", ('f' * 64, key))
+        with self.assertRaisesRegex(ValueError, 'receipt'):
+            self.page(key)
+
     def test_stale_head_continuation_refuses_without_erasing_history(self):
         key = self.revisions(3)
         page = self.page(key, limit=1)

@@ -117,7 +117,13 @@ without setup history reports unavailable history, without creating tables.
 History pages return at most 20 summaries in descending revision order. Summaries
 include exact revision/record/draft/graph hashes, canonical record byte length,
 preset/backend identity and input count, not complete drafts or private runtime
-roots/endpoints. Follow `next_before_revision` with the observed `expected_head`.
+roots/endpoints. Each summary also has `recorded_at`: the `created_at` epoch seconds (float) of the
+committing operation receipt for that revision, or `null` when no verified committed receipt names it
+(nothing is invented, and no new storage was added). For `apply`/`substitute` that is when the request began,
+before staging, not the commit instant; the stored drafts carry only a zeroed `updatedAt`. The typed client,
+MCP readers and panel accept an absent or `null` value and refuse a boolean, string, non-finite value or one outside
+1970 to 2100; a receipt that fails its hash or shape check refuses the page as `setup_history_corrupt`.
+Follow `next_before_revision` with the observed `expected_head`.
 Any changed head refuses continuation; explicitly restart rather than mixing
 observations. No automatic refresh, polling or mutation follows a stale page.
 The inherited owner still limits a line to 256 immutable revisions. Missing or
@@ -203,12 +209,12 @@ validated (format, Workspace and draft identity, read-only flags, contiguous ord
 continuation) and rendered with `textContent` only; truncation and redaction notes are shown
 as text. Each row links the existing export route for download. It sends no body, no POST and
 no storage or Create-draft call, so it cannot load, restore, fork, import or apply anything.
-The list shows identities and neighbour-to-neighbour differences, not save times: the page
-summary carries no timestamp, and the comparison shows the recorded authoring time.
+Each row starts with a `<time datetime>` element showing the revision's recorded save time in local time
+(`Save time not recorded` when the summary has none), then identities and neighbour-to-neighbour differences.
 Contract: `tests/setup_history_client.cjs`; real routes: `tests/setup_apply_browser.py`.
 
 Remaining #395 work: deliberate browser load/restore/fork/import commands,
-operation/proposal receipt lineage, save times in history summaries, browser history
+operation/proposal receipt lineage, browser history
 accessibility qualification (screen reader, 390px, 200% zoom), strict import validation and retention/compaction review. No new write authority
 or pruning is introduced. #394 selected browser-File preservation is separate.
 Owner creative/licensing/workstation acceptance in HUMAN_TODO is unchanged.

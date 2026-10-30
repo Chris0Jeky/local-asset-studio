@@ -6,6 +6,7 @@ these reads. The normal SetupDrafts command owner remains unchanged.
 from contextlib import contextmanager
 import hashlib
 import json
+import math
 import re
 from urllib.parse import parse_qsl, urlsplit
 
@@ -49,6 +50,11 @@ def _integer(value, maximum=MAX_REVISIONS):
 
 def _sha(value):
     return type(value) is str and re.fullmatch('[0-9a-f]{64}', value) is not None
+
+
+def recorded_time(value):
+    """A summary's save time: None, or finite epoch seconds from 1970 to 2100 (bool is not a number)."""
+    return value is None or type(value) in (int, float) and math.isfinite(value) and 0 < value < 4102444800
 
 
 def _bounded_reply(value):
@@ -179,6 +185,39 @@ class SetupHistory:
                                    'Stored setup history failed integrity validation: ' + str(exc)[:256], 503) from exc
 
     @staticmethod
+    def _times(db, key, revisions):
+        """Revision to the recorded time of the receipt that committed it, or None. Nothing new is stored: the setup
+        owner already writes created_at into each committing receipt (apply/substitute: when the request began)."""
+        times = {r: None for r in revisions}
+        if not revisions or db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='setup_operations_v1'").fetchone() is None:
+            return times
+        factory = db.text_factory
+        try:
+            db.text_factory = bytes
+            rows = db.execute(f"""SELECT
+                CASE WHEN typeof(receipt)='text' AND length(CAST(receipt AS BLOB))<=? THEN receipt END AS receipt,
+                CASE WHEN typeof(sha256)='text' AND length(sha256)=64 THEN sha256 END AS sha256
+                FROM setup_operations_v1 WHERE draft_id=? AND CASE WHEN typeof(receipt)='text' AND json_valid(receipt)
+                THEN json_extract(receipt,'$.status')='committed' AND json_extract(receipt,'$.revision') IN ({','.join('?' * len(revisions))}) END""",
+                (MAX_COMMAND, key, *revisions)).fetchall()
+        finally:
+            db.text_factory = factory
+        seen = set()
+        try:
+            for row in rows:
+                need(type(row['receipt']) is bytes and type(row['sha256']) is bytes, 'Stored setup receipt exceeds its integrity bound')
+                stored = stored_value(row['receipt'].decode('utf-8'), row['sha256'].decode('ascii')); receipt = stored.value
+                need(stored.matches and type(receipt) is dict and receipt.get('draft_id') == key and receipt.get('status') == 'committed'
+                     and receipt.get('revision') in times and receipt['revision'] not in seen, 'Stored setup receipt failed its integrity check')
+                seen.add(receipt['revision']); created = receipt.get('created_at')
+                times[receipt['revision']] = created if recorded_time(created) else None
+        except (ValueError, TypeError, KeyError, OverflowError, RecursionError) as exc:
+            if isinstance(exc, SetupError): raise
+            raise HistoryReadError('setup_history_corrupt',
+                                   'Stored setup receipt failed integrity validation: ' + str(exc)[:256], 503) from exc
+        return times
+
+    @staticmethod
     def _reply(kind, context, **values):
         return _bounded_reply({'format': 'studio.setup-history-' + kind + '/v2',
                                **context, **values, **FLAGS})
@@ -193,8 +232,8 @@ class SetupHistory:
             need(before_revision is None or before_revision <= head, 'Continuation is outside the observed head')
             rows = db.execute('SELECT revision FROM setup_versions_v1 WHERE draft_id=? AND revision<? ORDER BY revision DESC LIMIT ?',
                               (key, before_revision if before_revision is not None else head+1, limit+1)).fetchall()
-            summaries = [(current if r['revision'] == head else self._read(db, key, r['revision']))[1]
-                         for r in rows[:limit]]
+            wanted = [r['revision'] for r in rows[:limit]]; times = self._times(db, key, wanted)
+            summaries = [{**(current if n == head else self._read(db, key, n))[1], 'recorded_at': times[n]} for n in wanted]
             return self._reply('page', context, limit=limit, revisions=summaries,
                                next_before_revision=summaries[-1]['revision'] if len(rows) > limit else None)
 
