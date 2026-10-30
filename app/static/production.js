@@ -187,7 +187,7 @@ async function openComparison(parent=null){
   $('#experimentAxis').innerHTML=axes.map(([id,label])=>'<option value="'+id+'">'+label+'</option>').join('')||'<option value="">No single numeric setting on this recipe</option>';
   $('#experimentAxis').disabled=!axes.length;
   $('#experimentBudget').disabled=!!parent;$('#experimentBudget').value=parent?.budget.allowance||1;$('#experimentLimits').open=false;
-  $('#experimentStatus').textContent=parent?'This branch shares the original budget.':'Preparing a plan validates the live graph and fingerprints its model files. It does not generate.';
+  $('#experimentStatus').textContent=parent?'This branch shares the original budget.':'Prepare only validates the live graph and fingerprints its model files; Prepare and start also starts the runs.';
   plannedVariants=null;plannerAxes=[];plannerAxisIds=[];plannerWithheld=[];plannerNotice='';plannerBlock();renderPlanner(false);
   if(axes.length)suggestComparisonValues();else $('#experimentValues').value='';
   sizeBudgetToCandidates();
@@ -270,7 +270,7 @@ function renderPlannerSummary(){
   const wordings=comparingWordings(),planned=wordings?[]:plannedVariants||[],recipe=$('#experimentRecipe').textContent||'this recipe';
   const axis=$('#experimentAxis').value,values=plannedValues(),candidates=wordings?2:planned.length||values.length;
   const reserved=Number($('#experimentBudget').value)||0,per=measuredRunSeconds();
-  $('#experimentLimitsSummary').textContent='Limits: '+reserved+' runs · '+$('#experimentMinutes').value+' min';
+  $('#experimentLimitsSummary').textContent='Limits: '+reserved+' runs · '+$('#experimentMinutes').value+' min'+(candidates&&reserved<candidates?' · too few runs for '+candidates+' values':'');
   const what=wordings?'Compare two wordings at shared seed '+(comparisonSeed||'(not fixed)'):planned.length?planned.length+' planned variants from the settings library':axis&&values.length?'Compare '+axis+' = '+values.join(', '):'Choose one setting and the values to compare';
   const pending=estimatePending(),batch=Math.max(1,Number($('#batch')?.value)||1);
   const time=!candidates?'':per?', about '+Math.max(1,Math.round(candidates*per/60))+' min at roughly '+(per/60).toFixed(1)+' min per run'+(batch>1?' (Create’s estimate for '+batch+' outputs, shared out)':' measured in Full editor'):pending?', timing still being measured':', no measured time for this recipe yet';
@@ -317,7 +317,7 @@ $('#experimentDialog').onclose=()=>{++plannerRequestId;};
 $('#experimentAxis').onchange=()=>{suggestComparisonValues();sizeBudgetToCandidates();renderPlannerSummary();};$('#cancelExperiment').onclick=()=>{++plannerRequestId;$('#experimentDialog').close();};
 $('#experimentMinutes').oninput=renderPlannerSummary;
 for(const id of ['experimentBudget','experimentMinutes'])$('#'+id).oninvalid=()=>{$('#experimentLimits').open=true;};
-$('#experimentValues').oninput=renderPlannerSummary;$('#experimentBudget').oninput=()=>comparingWordings()?wordingDraftChanged():renderPlannerSummary();
+$('#experimentValues').oninput=()=>{sizeBudgetToCandidates();renderPlannerSummary();};$('#experimentBudget').oninput=()=>comparingWordings()?wordingDraftChanged():renderPlannerSummary();
 $('#newExperiment').onclick=()=>openComparison().catch(e=>productionMessage(e.message,true));
 $('#planComparison').onclick=()=>openComparison().catch(e=>message(e.message,true));
 $('#refreshProduction').onclick=()=>refreshProduction(true);

@@ -919,11 +919,10 @@ def _compare(c):
     c.stop_before(c.act('#planComparison'), 'stopped at Plan comparison: live mode never opens the planner a study is prepared from')
     c.act('#experimentAxis', 'select', typed='cfg')
     c.act('#experimentValues', 'read', note='proposed candidate values')
-    # The planner sizes the allowance up to the proposed values (never down); the driver still sets
-    # the total by hand so the step it measures stays the same across runs.
+    # The planner sizes the run limit to the proposed values (#1732), folded under Limits; the driver reads it, never types it.
     proposed = len([v for v in (c.page.locator('#experimentValues').input_value() or '').split(',') if v.strip()])
     before = c.studies()
-    c.act('#experimentBudget', 'fill', typed=str(max(proposed, 1)), note='%d proposed values need at least %d runs' % (proposed, proposed))
+    c.act('#experimentLimitsSummary', 'read', note='%d proposed values; limits line: %s' % (proposed, c.page.locator('#experimentLimitsSummary').inner_text()))
     c.act('#prepareExperimentOnly', note='prepare only: the journey measures preparing a study, not starting it (#1732)')
     fresh = c.wait_for_new_study(before)
     status = c.dialog_status('#experimentStatus')

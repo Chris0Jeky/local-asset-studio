@@ -23,6 +23,18 @@ test('limits are folded; inputs and safety rules stay inside Change',()=>{
   assert.match(dialog,/id="prepareExperiment"[^>]*>Prepare and start<\/button>/);assert.match(dialog,/id="prepareExperimentOnly"[^>]*>Prepare only<\/button>/);
   assert.match(index,/id="prepareNative"[^>]*>Prepare and start<\/button>/);assert.match(index,/id="prepareNativeOnly"[^>]*>Prepare only<\/button>/);
 });
+test('Enter in a field prepares only: Prepare only is the first submit button of each form (#1755 review)',()=>{
+  for(const [form,only,start] of [['experimentForm','prepareExperimentOnly','prepareExperiment'],['nativeForm','prepareNativeOnly','prepareNative']]){
+    const a=index.indexOf('<form id="'+form+'"'),html=index.slice(a,index.indexOf('</form>',a)),first=html.match(/<button(?![^>]*type="button")[^>]*id="([^"]+)"/)[1];
+    assert.equal(first,only,form+': the implicit-submission default must not start work');assert.ok(html.indexOf('id="'+start+'"')>html.indexOf('id="'+only+'"'));
+  }
+});
+test('editing values raises a short run limit and the folded summary says so',async()=>{
+  const h=harness();await h.open('comparison');h.$('#experimentValues').value='1,2,3,4';h.$('#experimentValues').oninput();
+  assert.equal(Number(h.$('#experimentBudget').value),4,'the limit follows the values up');
+  h.$('#experimentBudget').value='2';h.$('#experimentBudget').oninput();assert.match(h.$('#experimentLimitsSummary').textContent,/too few runs for 4 values/);
+  assert.equal(h.calls.length,0);
+});
 test('default runs equal chosen values times the single seed; manual limits and validity survive',async()=>{
   const h=harness();assert.equal(h.calls.length,0,'Page load sends nothing');await h.open('comparison');
   const count=h.$('#experimentValues').value.split(',').filter(v=>v.trim()).length;
