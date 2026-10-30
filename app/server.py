@@ -219,13 +219,17 @@ class Studio:
         self._spill_unload_ineffective = None   # PID whose last spill-triggered unload left the spill in place (an outside cause)
         self._fingerprint_lock = threading.Lock()
         self._load_jobs()
+        # One query for the restart loop; a missing or differently classified output still goes through register(). A busy database
+        # falls back to the per-output path rather than aborting startup (#1770 review).
+        try: known = self.assets.registered_ids()
+        except (OSError, sqlite3.Error): known = None
         for job in self.jobs.values():
             # Failed or still-publishing native AV/voice attempts retain their
             # recipe and exact prior asset set for inspection; only completed
             # publication may be indexed on restart. Legacy jobs without a
             # publication marker keep the historical recovery path.
             if job.get("operation") in ("native.av-preview.v1","native.voice-baseline.v1") and "publication_status" in job and job["publication_status"] != "published": continue
-            self.index_outputs(job, advise=False)  # Restart re-registers known outputs only; the empty-picture decode is never backfilled.
+            self.index_outputs(job, advise=False, known=known)  # Restart re-registers known outputs only; the empty-picture decode is never backfilled.
         self.parallax_finisher = parallax.Finisher(self)
         self.production = Production(self)
         self.backends = BackendManager(self)
@@ -1224,10 +1228,12 @@ class Studio:
         if kind not in ("output", "temp"): raise StudioError("Unsupported output location")
         return inside(root / kind, root / kind / str(output.get("subfolder") or "") / str(output.get("filename") or ""))
 
-    def index_outputs(self, job, advise=True):
+    def index_outputs(self, job, advise=True, known=None):
         for index, output in enumerate(job.get("outputs", [])):
             try:
-                asset_id = self.assets.register(job, index, self.output_path(output, job))
+                source = self.output_path(output, job)
+                asset_id = self.assets.asset_id(job, index)   # register() returns this id untouched for a known output of the same privacy
+                if known is None or asset_id not in known or known[asset_id] != job.get('privacy', 'regular'): asset_id = self.assets.register(job, index, source)
                 if asset_id: output["asset_id"] = asset_id
             except (OSError, ValueError, sqlite3.Error) as exc:
                 # A storage fault while indexing a known output never changes the remote outcome.

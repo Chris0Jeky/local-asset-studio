@@ -260,9 +260,16 @@ class AssetWorkspace:
         if digest_file(path) != expected:
             raise WorkspaceError("An existing asset snapshot has changed; original retained")
 
+    @staticmethod
+    def asset_id(job, index): return uuid.uuid5(uuid.NAMESPACE_URL, f"asset-studio:{job['id']}:{index}").hex
+
+    def registered_ids(self):
+        """{asset id: privacy} in one connection, so a restart need not look every known output up separately (#1761)."""
+        with self.connection() as db: return {row['id']: row['privacy'] for row in db.execute("SELECT id,privacy FROM assets")}
+
     def register(self, job, index, source):
         privacy = privacy_scope(job.get('privacy', 'regular'), creation=True)
-        asset_id = uuid.uuid5(uuid.NAMESPACE_URL, f"asset-studio:{job['id']}:{index}").hex
+        asset_id = self.asset_id(job, index)
         with self.connection() as db:
             existing = db.execute("SELECT id,privacy FROM assets WHERE id=?", (asset_id,)).fetchone()
             if existing:
