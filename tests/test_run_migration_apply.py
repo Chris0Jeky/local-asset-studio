@@ -476,19 +476,45 @@ class RunMigrationApplyTests(unittest.TestCase):
         self.assertEqual(restarted.migration_recovery, [{'request_id': body['request_id'], 'from_stage': 'verified', 'stage': 'cleanup-needed'}])
         self.assertTrue((self.studio.experiments/'uploads'/s['upload']).is_file()); self.assertIn('uploads/'+s['upload'], self.journal(s)['remaining'])
 
-    def test_a_keep_all_decided_at_apply_is_journaled_and_outlives_a_later_clean_read(self):
-        s = self.scenario(); bad = self.studio.experiments/'runs/unrelated-unreadable-run'; bad.mkdir(); (bad/'state.json').write_text('{ not json')
+    def keep_all_crash(self, s):
+        """Apply with an unreadable record on disk (journals keep_uploads 'all'), crash at the commit, leave the record broken."""
+        bad = self.studio.experiments/'runs/unrelated-unreadable-run'; bad.mkdir(); (bad/'state.json').write_text('{ not json')
         self.studio = self.restart(); body = self.body(s, self.plan(s))
         with self.crash_at('committed'), self.assertRaises(Crash): run_migration.apply(self.studio, body, 'all')
         self.assertEqual(self.journal(s)['keep_uploads'], 'all')
-        shutil.rmtree(bad)  # Every record reads now, but the decision was made on what apply could not read.
-        restarted = self.studio = self.restart()
-        self.assertEqual(restarted.migration_recovery, [{'request_id': body['request_id'], 'from_stage': 'verified', 'stage': 'cleanup-needed'}])
-        self.assertTrue((self.studio.experiments/'uploads'/s['upload']).is_file()); self.assertIn('uploads/'+s['upload'], self.journal(s)['remaining'])
-        self.assertEqual(sha(restarted._upload_path(s['upload'], 'private')), sha(self.root/'fake-comfy/input'/s['upload']))
-        invalid = self.journal(s); invalid['keep_uploads'] = 'some'; (self.studio.experiments/'private/migrations'/(body['request_id']+'.json')).write_text(json.dumps(invalid))
-        self.assertEqual([r['request_id'] for r in self.restart().migration_recovery if 'error' in r], [body['request_id']])  # The new field is validated, not trusted
+        return body, bad
 
+    def test_a_keep_all_is_kept_while_a_start_cannot_read_every_record_then_settles_normally(self):
+        s = self.scenario(); body, bad = self.keep_all_crash(s)
+        restarted = self.studio = self.restart()  # Still unreadable: fail closed, and the journal stays 'all'.
+        self.assertEqual(restarted.migration_recovery, [{'request_id': body['request_id'], 'from_stage': 'verified', 'stage': 'cleanup-needed'}])
+        self.assertTrue((self.studio.experiments/'uploads'/s['upload']).is_file()); self.assertIn('uploads/'+s['upload'], self.journal(s)['remaining']); self.assertEqual(self.journal(s)['keep_uploads'], 'all')
+        shutil.rmtree(bad)  # Every record reads now: the next start settles it as usual.
+        again = self.studio = self.restart()
+        self.assertEqual(again.migration_recovery, [{'request_id': body['request_id'], 'from_stage': 'cleanup-needed', 'stage': 'complete'}])
+        self.assertEqual((self.journal(s)['remaining'], self.journal(s)['keep_uploads']), ([], [])); self.assert_moved(s, again)
+        self.assertEqual(sha(again._upload_path(s['upload'], 'private')), sha(self.root/'fake-comfy/input'/s['upload']))
+        invalid = self.journal(s); invalid.update(stage='cleanup-needed', keep_uploads='some'); (self.studio.experiments/'private/migrations'/(body['request_id']+'.json')).write_text(json.dumps(invalid))
+        self.assertEqual([r['request_id'] for r in self.restart().migration_recovery if 'error' in r], [body['request_id']])  # The field is validated, not trusted
+
+    def test_a_settled_keep_all_still_keeps_an_upload_a_retained_run_names(self):
+        s = self.scenario(); sharer = self.completed(1); sharer['references'] = [{'file': s['upload'], 'role': 'subject'}]; self.studio._save(sharer)
+        body, bad = self.keep_all_crash(s); shutil.rmtree(bad)
+        again = self.studio = self.restart()
+        self.assertEqual(again.migration_recovery, [{'request_id': body['request_id'], 'from_stage': 'verified', 'stage': 'complete'}])
+        self.assertTrue((self.studio.experiments/'uploads'/s['upload']).is_file()); self.assertEqual(self.journal(s)['keep_uploads'], ['uploads/'+s['upload'], 'uploads/'+s['upload']+'.json'])
+
+    def test_a_real_journal_with_a_thumbnail_a_sidecar_and_a_nested_run_file_passes_the_stricter_check_and_recovers(self):
+        s = self.scenario(); nested = self.studio.experiments/'runs'/s['jid']/'frames/deep/f0.png'; nested.parent.mkdir(parents=True); nested.write_bytes(b'nested frame')
+        s['run_files']['runs/'+s['jid']+'/frames/deep/f0.png'] = sha(nested); body = self.body(s, self.plan(s))
+        with self.crash_at('committed'), self.assertRaises(Crash): run_migration.apply(self.studio, body, 'all')
+        journal = self.journal(s); sources = {c['source'] for c in journal['copies']}
+        self.assertIn('runs/'+s['jid']+'/frames/deep/f0.png', sources); self.assertTrue({'uploads/'+s['upload'], 'uploads/'+s['upload']+'.json'} <= sources); self.assertTrue(journal['thumbnails'])
+        run_migration._check_journal(self.studio, journal, self.studio.experiments/'private/migrations'/(body['request_id']+'.json'))  # the real shapes, not hand-built ones
+        restarted = self.studio = self.restart()
+        self.assertEqual(restarted.migration_recovery, [{'request_id': body['request_id'], 'from_stage': 'verified', 'stage': 'complete'}])
+        self.assert_moved(s, restarted); self.assertEqual(self.journal(s)['remaining'], [])
+        self.assertEqual((restarted.experiments/'private/runs'/s['jid']/'frames/deep/f0.png').read_bytes(), b'nested frame'); self.assertFalse((restarted.experiments/'runs'/s['jid']).exists())
 
 if __name__ == '__main__':
     unittest.main()

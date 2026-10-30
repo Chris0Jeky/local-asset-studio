@@ -525,10 +525,11 @@ def _cleanup(studio, journal, live):
         regular_shas = {r[0] for r in db.execute("SELECT sha256 FROM assets WHERE privacy='regular'")}
     others = _others(studio, journal['job_ids']) if live else _disk_consumers(studio, journal['job_ids'])  # At start no job is loaded: read run records.
     retire = [c['source'] for c in journal['copies'] if c['kind'] == 'asset' and c['source'].removeprefix('workspace/') not in regular_paths]
-    keep = journal['keep_uploads']  # 'all': apply could not read every record, so no upload is ever retired for this journal, whatever a later start reads.
+    keep = journal['keep_uploads']  # 'all': apply could not read every record, so nothing is retired until a start can; that start settles it below.
+    if keep == 'all' and not live and others is not None: keep = journal['keep_uploads'] = sorted(c['source'] for c in journal['copies'] if c['kind'] == 'upload' and _upload_base(c['source']) in others)  # Every record reads now: the usual keep set.
     uploads = [c['source'] for c in journal['copies'] if c['kind'] == 'upload' and (keep == 'all' or c['source'] not in keep)]
     retire += [u for u in uploads if keep != 'all' and others is not None and _upload_base(u) not in others]
-    if others is None or keep == 'all': remaining += uploads  # Who else uses them is unknown: kept and listed (a plain unknown is retried at the next start; 'all' is not).
+    if others is None or keep == 'all': remaining += uploads  # Who else uses them is unknown: kept and listed, and re-checked at every start until one can read every record.
     retire += [t for t in journal['thumbnails'] if Path(t).name.split('-', 1)[0] not in regular_shas]  # A regenerable cache; Private renders its own.
     for rel in dict.fromkeys(retire):
         try: _at(studio, rel).unlink(missing_ok=True)
