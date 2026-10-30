@@ -222,6 +222,7 @@ test('Make single and comparison pictures show the recorded quiet-left diagnosti
     const render=vm.runInNewContext(privacy+note+between('  function renderRuns(){','  // Picture goals stay in Make')+';renderRuns',context);
     render();
     assert.match(rendered,/Prepared with &lt;Night Shift>/);
+    assert.match(rendered,/<span data-make-clock="job-1" aria-hidden="true"><\/span>/,'every card carries a silent clock slot');
     if(unavailable)assert.match(rendered,/Quiet-left check unavailable: unsupported image/);
     else{assert.match(rendered,/left 2\.0%, right 10\.0%/);assert.match(rendered,/Detail proxy only/);}
   }
@@ -252,7 +253,8 @@ function clockHarness(runs){
   const document={title:'Local Asset Studio',hidden:false,addEventListener:(k,fn)=>{listeners[k]=fn;},querySelectorAll:()=>els};
   const context={document,state:{runs},FINAL:['completed','failed'],Date,
     rough:e=>e?.confidence==='none',duration:s=>s<90?Math.round(s)+' s':Math.round(s/60)+' min',
-    json:async(url,body)=>{requests.push({url,body});return{estimate_seconds:180,confidence:'medium'};},
+    json:async(url,body,captured)=>{requests.push({url,body,captured});return{estimate_seconds:180,confidence:'medium'};},
+    runPrivacy:r=>r.privacy||'regular',requestPrivacy:(scope,privacy)=>({scope,privacy}),
     setTimeout:fn=>{timers.push(fn);return timers.length;},clearTimeout(){}};
   const api=vm.runInNewContext(between('  const PAINTING=','  function words(job)')+';({runClock,runTitle,tick})',context);
   return{...api,document,listeners,requests,els,timers};
@@ -277,10 +279,10 @@ test('the tab title counts unfinished runs and ticks a finish seen only after th
 });
 
 test('tick fills each clock, asks /api/estimate once per run and stops when nothing paints',async()=>{
-  const now=Date.now()/1000,runs=[{job:{id:'a',status:'running',started_at:now-20,preset_id:'p',controls:{steps:8},batch_count:2,references:[{}]}}],h=clockHarness(runs);
+  const now=Date.now()/1000,runs=[{privacy:'private',job:{id:'a',status:'running',started_at:now-20,preset_id:'p',controls:{steps:8},batch_count:2,references:[{}]}}],h=clockHarness(runs);
   h.tick();assert.match(h.els[0].textContent,/^ · 0:2\d$/);assert.equal(h.timers.length,1);
   await new Promise(r=>setImmediate(r));h.tick();
   assert.match(h.els[0].textContent,/^ · 0:2\d of about 3 min$/);
-  assert.equal(h.requests.length,1);assert.deepEqual(JSON.parse(JSON.stringify(h.requests[0])),{url:'/api/estimate',body:{preset_id:'p',controls:{steps:8},batch_count:2,reference_count:1}});
+  assert.equal(h.requests.length,1);assert.deepEqual(JSON.parse(JSON.stringify(h.requests[0])),{url:'/api/estimate',body:{preset_id:'p',controls:{steps:8},batch_count:2,reference_count:1},captured:{scope:'private',privacy:'private'}},'the estimate reads the run’s own privacy history');
   runs[0].job.status='completed';const before=h.timers.length;h.tick();assert.equal(h.els[0].textContent,'');assert.equal(h.timers.length,before,'no further tick is scheduled');
 });
