@@ -27,10 +27,11 @@ def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 class RunMigrationApplyTests(unittest.TestCase):
     setUp, close, tree = Base['setUp'], Base['close'], Base['tree']
 
-    def completed(self, outputs=3, seed=None):
+    def completed(self, outputs=3, seed=None, privacy='regular'):
         """Base.completed, but each run's pictures are distinct unless a seed asks for identical bytes."""
         from PIL import Image
-        identifier = self.studio.create_job({'preset_id': 'demo', 'controls': {'positive': 'regular canary'}}, enqueue=False)['id']; job = self.studio.jobs[identifier]
+        payload = {'preset_id': 'demo', 'controls': {'positive': privacy+' canary'}, **({'privacy': 'private'} if privacy == 'private' else {})}
+        identifier = self.studio.create_job(payload, enqueue=False)['id']; job = self.studio.jobs[identifier]
         job.update(status='completed', prompt_ids=['p-'+identifier], submissions=[{'prompt_id': 'p-'+identifier, 'status': 'completed', 'graph': json.loads(json.dumps(job['graph']))}],
                    outputs=[{'filename': f'{identifier}-{i}.png', 'media_type': 'image', 'type': 'output', 'prompt_id': 'p-'+identifier} for i in range(outputs)])
         colour = hashlib.sha256((seed or identifier).encode()).digest()
@@ -275,6 +276,17 @@ class RunMigrationApplyTests(unittest.TestCase):
         self.assertEqual(sha(self.studio.assets.file(shared['id'])), shared['sha256'])  # the regular sibling's blob stays
         self.assertEqual(sha(self.studio.assets.file(s['ids'][0], privacy='private')), shared['sha256'])  # and Private holds its own copy
         self.assertNotEqual(self.studio.assets.file(shared['id']), self.studio.assets.file(s['ids'][0], privacy='private'))
+
+    def test_rollback_and_publication_keep_a_private_blob_they_did_not_create(self):
+        private = self.completed(1, seed='shared', privacy='private'); kept = self.studio.assets.file(private['outputs'][0]['asset_id'], privacy='private')
+        s = self.scenario(seed='shared'); body = self.body(s, self.plan(s)); self.assertEqual(sha(kept), s['shas'][0])
+        with self.crash_at('placed'), self.assertRaises(Crash): run_migration.apply(self.studio, body, 'all')
+        restarted = self.studio = self.restart()
+        self.assertEqual(restarted.migration_recovery[0]['stage'], 'rolled-back')
+        self.assertEqual(sha(kept), s['shas'][0])  # rollback removed only what it placed
+        status, out = run_migration.apply(restarted, self.body(s, self.plan(s), request_id='second-attempt-identity'), 'all')
+        self.assertEqual((status, out['stage']), (200, 'complete'))
+        self.assertEqual(restarted.assets.file(s['ids'][0], privacy='private'), kept); self.assertEqual(sha(kept), s['shas'][0])
 
 
 if __name__ == '__main__':
