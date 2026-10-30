@@ -198,7 +198,7 @@ def verdict(matrix):
 # Live-mode guard. Checked before every click in every mode; enforced in live mode.
 # --------------------------------------------------------------------------------------
 DENY_IDS = {
-    'generate', 'prepareExperiment', 'prepareNative', 'prepareArticulated', 'newExperiment',
+    'generate', 'prepareExperiment', 'prepareExperimentOnly', 'prepareNative', 'prepareNativeOnly', 'prepareArticulated', 'newExperiment',
     'planComparison', 'switchBackend', 'importAssets', 'importWorkflow', 'importRecipe',
     'saveAssetDetails', 'save', 'assetTrash', 'assetDownload', 'nativeExport', 'createScene',
     'saveSharedWorkflow', 'copySharedWorkflow', 'retrySharedWorkflow', 'prepareSavedRun',
@@ -924,7 +924,7 @@ def _compare(c):
     proposed = len([v for v in (c.page.locator('#experimentValues').input_value() or '').split(',') if v.strip()])
     before = c.studies()
     c.act('#experimentBudget', 'fill', typed=str(max(proposed, 1)), note='%d proposed values need at least %d runs' % (proposed, proposed))
-    c.act('#prepareExperiment')
+    c.act('#prepareExperimentOnly', note='prepare only: the journey measures preparing a study, not starting it (#1732)')
     fresh = c.wait_for_new_study(before)
     status = c.dialog_status('#experimentStatus')
     detail = '%d new study listed (allowance %d for %d values)%s' % (len(fresh), max(proposed, 1), proposed, '; planner said: ' + status if status else '')
@@ -1968,7 +1968,7 @@ def _native_export(c):
     c.act('#nativeKind', 'select', typed='atlas')
     c.act('#nativeAssetList input[data-native-duration]', 'fill', typed='120')
     before = c.studies()
-    c.act('#prepareNative')
+    c.act('#prepareNativeOnly', note='prepare only: starting is a separate press (#1732)')
     fresh = c.wait_for_new_study(before)
     status = c.dialog_status('#nativeStatus')
     detail = '%d new study listed%s' % (len(fresh), '; export dialog said: ' + status if status else '')

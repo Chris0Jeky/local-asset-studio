@@ -2,7 +2,7 @@ let productionPlans=[], productionId=null, productionSignature='', productionRef
 let comparisonRecipe=null, comparisonParent=null, nativeAssets=[], blindComparison=true;
 let plannedVariants=null, plannerAxes=[], plannerAxisIds=[];
 let plannerWithheld=[], plannerNotice='', plannerRequestId=0;
-let comparisonPositive=false, comparisonSeed='', comparisonPreparing=false;
+let comparisonPositive=false, comparisonSeed='', comparisonPreparing=false, nativePreparing=false, nativeRequestId=0;
 // Stored plan names are identity: the plan file, its fingerprint and every
 // receipt keep the name a study was created with.  These helpers only make the
 // list and the detail header readable, and never write a name back.
@@ -186,9 +186,9 @@ async function openComparison(parent=null){
   $('#experimentRecipe').textContent=selected.name;$('#experimentName').value=parent?'Branch · '+parent.name:selected.name+' · comparison';
   $('#experimentAxis').innerHTML=axes.map(([id,label])=>'<option value="'+id+'">'+label+'</option>').join('')||'<option value="">No single numeric setting on this recipe</option>';
   $('#experimentAxis').disabled=!axes.length;
-  $('#experimentBudget').disabled=!!parent;$('#experimentBudget').value=parent?.budget.allowance||4;
+  $('#experimentBudget').disabled=!!parent;$('#experimentBudget').value=parent?.budget.allowance||1;$('#experimentLimits').open=false;
   $('#experimentStatus').textContent=parent?'This branch shares the original budget.':'Preparing a plan validates the live graph and fingerprints its model files. It does not generate.';
-  plannedVariants=null;plannerAxes=[];plannerAxisIds=[];plannerWithheld=[];plannerNotice='';plannerBlock();renderPlanner();
+  plannedVariants=null;plannerAxes=[];plannerAxisIds=[];plannerWithheld=[];plannerNotice='';plannerBlock();renderPlanner(false);
   if(axes.length)suggestComparisonValues();else $('#experimentValues').value='';
   sizeBudgetToCandidates();
   renderPlannerSummary();
@@ -235,7 +235,7 @@ function renderPlanner(resizeBudget=true){
   $('#experimentValues').required=!wordings&&!planned.length;$('#experimentValues').disabled=wordings||!!planned.length;
   $('#experimentAxis').disabled=wordings||!!planned.length||!$('#experimentAxis').value;
   if(resizeBudget&&planned.length&&!comparisonParent)sizeBudgetToCandidates();
-  $('#prepareExperiment').disabled=comparisonPreparing||(wordings?!!wordingProblem():!planned.length&&!$('#experimentAxis').value);
+  for(const id of ['prepareExperiment','prepareExperimentOnly'])$('#'+id).disabled=comparisonPreparing||(wordings?!!wordingProblem():!planned.length&&!$('#experimentAxis').value);
   if(planned.length&&$('#plannerAdvanced'))$('#plannerAdvanced').open=true;
   renderPlannerSummary();
 }
@@ -270,6 +270,7 @@ function renderPlannerSummary(){
   const wordings=comparingWordings(),planned=wordings?[]:plannedVariants||[],recipe=$('#experimentRecipe').textContent||'this recipe';
   const axis=$('#experimentAxis').value,values=plannedValues(),candidates=wordings?2:planned.length||values.length;
   const reserved=Number($('#experimentBudget').value)||0,per=measuredRunSeconds();
+  $('#experimentLimitsSummary').textContent='Limits: '+reserved+' runs · '+$('#experimentMinutes').value+' min';
   const what=wordings?'Compare two wordings at shared seed '+(comparisonSeed||'(not fixed)'):planned.length?planned.length+' planned variants from the settings library':axis&&values.length?'Compare '+axis+' = '+values.join(', '):'Choose one setting and the values to compare';
   const pending=estimatePending(),batch=Math.max(1,Number($('#batch')?.value)||1);
   const time=!candidates?'':per?', about '+Math.max(1,Math.round(candidates*per/60))+' min at roughly '+(per/60).toFixed(1)+' min per run'+(batch>1?' (Create’s estimate for '+batch+' outputs, shared out)':' measured in Full editor'):pending?', timing still being measured':', no measured time for this recipe yet';
@@ -277,7 +278,7 @@ function renderPlannerSummary(){
   // The estimator debounces and fetches; a summary opened mid-flight re-reads once it settles.
   if(typeof setTimeout==='function'){clearTimeout(plannerSummaryRetry);if(pending&&$('#experimentDialog')?.open!==false)plannerSummaryRetry=setTimeout(renderPlannerSummary,600);}
   if(note){
-    note.textContent=wordings?'2 wordings × 1 seed = 2 runs; '+reserved+' total allowance, '+(comparisonParent?.budget.reserved||0)+' already reserved. Both candidates share the recipe, references, negative prompt and other settings. Prepare saves the plan; Start comparison is separate.':candidates?candidates+(planned.length?' variants':' values')+' × 1 seed = '+candidates+' run'+(candidates===1?'':'s')+'; '+reserved+' reserved. At least '+candidates+' must be reserved to prepare this study.'+(reserved<candidates?' Raise the total to at least '+candidates+'.':''):'';
+    note.textContent=wordings?'2 wordings × 1 seed = 2 runs; '+reserved+' total allowance, '+(comparisonParent?.budget.reserved||0)+' already reserved. Both candidates share the recipe, references, negative prompt and other settings. Prepare only saves the plan; Prepare and start also starts it.':candidates?candidates+(planned.length?' variants':' values')+' × 1 seed = '+candidates+' run'+(candidates===1?'':'s')+'; '+reserved+' reserved. At least '+candidates+' must be reserved to prepare this study.'+(reserved<candidates?' Raise the total to at least '+candidates+'.':''):'';
     note.classList.toggle('error',wordings?!!wordingProblem():!!candidates&&reserved<candidates);
   }
   $('#experimentBudget').setCustomValidity?.(candidates&&reserved<candidates?'Reserve at least '+candidates+' graph runs for '+candidates+' candidates.':'');
@@ -314,14 +315,16 @@ $('#experimentWordingA').oninput=wordingDraftChanged;$('#experimentWordingB').on
 $('#experimentForm').oninput=()=>{++plannerRequestId;if(comparisonPreparing)$('#experimentStatus').textContent='Draft changed. The earlier plan may still be saved, but it will not start.';else if(!comparingWordings())$('#experimentStatus').textContent='Your comparison draft is retained. Prepare the plan when it is ready.';};
 $('#experimentDialog').onclose=()=>{++plannerRequestId;};
 $('#experimentAxis').onchange=()=>{suggestComparisonValues();sizeBudgetToCandidates();renderPlannerSummary();};$('#cancelExperiment').onclick=()=>{++plannerRequestId;$('#experimentDialog').close();};
+$('#experimentMinutes').oninput=renderPlannerSummary;
+for(const id of ['experimentBudget','experimentMinutes'])$('#'+id).oninvalid=()=>{$('#experimentLimits').open=true;};
 $('#experimentValues').oninput=renderPlannerSummary;$('#experimentBudget').oninput=()=>comparingWordings()?wordingDraftChanged():renderPlannerSummary();
 $('#newExperiment').onclick=()=>openComparison().catch(e=>productionMessage(e.message,true));
 $('#planComparison').onclick=()=>openComparison().catch(e=>message(e.message,true));
 $('#refreshProduction').onclick=()=>refreshProduction(true);
-$('#experimentForm').onsubmit=async e=>{e.preventDefault();if(comparisonPreparing)return;
+$('#experimentForm').onsubmit=async e=>{e.preventDefault();if(comparisonPreparing||productionActionPending)return;
   if(comparingWordings()&&wordingProblem()){$('#experimentStatus').textContent=wordingProblem();return;}
-  const ticket=++plannerRequestId,recipe=comparisonRecipe,current=()=>ticket===plannerRequestId&&comparisonRecipe===recipe&&$('#experimentDialog').open;
-  comparisonPreparing=true;$('#prepareExperiment').disabled=true;$('#experimentStatus').textContent='Checking the recipe and local model fingerprints…';try{
+  const start=e.submitter?.id==='prepareExperiment',ticket=++plannerRequestId,recipe=comparisonRecipe,current=()=>ticket===plannerRequestId&&comparisonRecipe===recipe&&$('#experimentDialog').open;
+  comparisonPreparing=true;$('#prepareExperiment').disabled=true;$('#prepareExperimentOnly').disabled=true;$('#experimentStatus').textContent='Checking the recipe and local model fingerprints…';try{
   const intent={name:$('#experimentName').value,recipe:comparisonRecipe,max_generations:Number($('#experimentBudget').value),max_seconds:Number($('#experimentMinutes').value)*60,parent_project:comparisonParent?.id};
   if(comparingWordings()){
     intent.recipe={...comparisonRecipe,controls:{...comparisonRecipe.controls,seed:comparisonSeed}};
@@ -330,7 +333,7 @@ $('#experimentForm').onsubmit=async e=>{e.preventDefault();if(comparisonPreparin
   else{intent.axis=$('#experimentAxis').value;intent.values=$('#experimentValues').value.split(',').map(v=>v.trim()).filter(Boolean);}
   const p=await post('/api/production',intent);
   if(!current())return;
-  productionId=p.id;$('#experimentDialog').close();showView('production');await refreshProduction(true);
+  productionId=p.id;$('#experimentDialog').close();showView('production');if(start)await startPreparedPlan(p);await refreshProduction(true);
 }catch(err){if(current())$('#experimentStatus').textContent=err.message;}finally{comparisonPreparing=false;renderPlanner(false);}};
 // The empty state hands the operator the same route the header button uses:
 // Create, with the recipe that is already open, then the planner. It starts nothing.
@@ -404,6 +407,12 @@ async function checkCandidateAsset(id,name){
     productionMessage('Saved for this candidate: '+name+' '+(now===null?'not checked':now?'yes':'no')+'. The comparison outcome is unchanged.');
   }finally{candidateCheckBusy=false;}
 }
+async function productionPlanAction(p,action){await post('/api/production/'+p.id+'/'+action,{});dropProductionDrafts();}
+// Called only by an explicit Prepare and start submission, once its preparation succeeds.
+async function startPreparedPlan(p){
+  if(productionActionPending){productionMessage('Wait for the current action to finish. Nothing was sent.');return;}
+  productionActionPending=true;try{await productionPlanAction(p,'start');}catch(err){productionMessage(err.message,true);}finally{productionActionPending=false;}
+}
 $('#productionDetail').onclick=async e=>{if(e.target.closest('[data-plan-comparison]')){$('#newExperiment').click();return;}const actionButton=e.target.closest('[data-project-action]'),action=actionButton?.dataset.projectAction,coordinatorAction=['start','stop','resume','extend-time'].includes(action);
   if(coordinatorAction&&productionActionPending){productionMessage('Wait for the current action to finish. Nothing was sent.');return;}
   if(coordinatorAction){productionActionPending=true;actionButton.disabled=true;}
@@ -429,14 +438,15 @@ $('#productionDetail').onclick=async e=>{if(e.target.closest('[data-plan-compari
     await post('/api/production/'+p.id+'/extend-time',{seconds,reason,expected_revision:p.state.time_budget.revision});dropProductionDrafts({extendTimeMinutes:minutes,extendTimeReason:typed});
   }
   // A plan that starts, stops or resumes moves on; a time-extension draft from before must not come back later.
-  else if(['start','stop','resume'].includes(action)){await post('/api/production/'+p.id+'/'+action,{});dropProductionDrafts();}
+  else if(['start','stop','resume'].includes(action))await productionPlanAction(p,action);
   if(action||choice)await refreshProduction(true);
 }catch(err){productionMessage(err.message,true);}finally{if(coordinatorAction){productionActionPending=false;actionButton.disabled=false;}}};
 $('#productionDetail').onkeydown=async e=>{const index=globalThis.StudioReviewChecks?.keyIndex(e)??-1;if(index<0||index>4)return;const tag=(e.target?.tagName||'').toUpperCase();if(['INPUT','TEXTAREA','SELECT'].includes(tag))return;const candidate=e.target?.closest?.('article.candidate')||e.target?.closest?.('.candidate');if(!candidate)return;const chip=[...(candidate.querySelectorAll?.('[data-candidate-check]')||[])][index];if(!chip||chip.disabled)return;e.preventDefault();const {asset,candidateCheck:name}=chip.dataset;try{await checkCandidateAsset(asset,name);}catch(err){productionMessage(err.message,true);return;}const again=[...($('#productionDetail').querySelectorAll?.('[data-candidate-check]')||[])].find(c=>c.dataset?.asset===asset&&c.dataset?.candidateCheck===name);again?.focus?.({preventScroll:true});};
 function renderNativeAssets(){
   $('#nativeAssetList').innerHTML=nativeAssets.map((a,i)=>'<div class="native-source"><span>'+esc(a.title)+'</span><button type="button" data-native-up="'+i+'" '+(!i?'disabled':'')+' aria-label="Move source '+(i+1)+' earlier">↑</button><button type="button" data-native-down="'+i+'" '+(i===nativeAssets.length-1?'disabled':'')+' aria-label="Move source '+(i+1)+' later">↓</button>'+(a.media_type==='image'?'<label>Duration ms<input type="number" min="1" max="60000" data-native-duration="'+a.id+'" value="'+a.duration+'"></label><label>Layer name<input data-native-layer="'+a.id+'" value="'+esc(a.layerName)+'"></label>':'<small>Optional GLB</small>')+'</div>').join('');
 }
-$('#nativeExport').onclick=()=>{nativeAssets=[...assetSelection].map(id=>typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id)).filter(Boolean).map(a=>({...a,duration:100,layerName:a.title}));if(!nativeAssets.length){assetMessage('Select the source images first.',true);return;}$('#nativeStatus').textContent='Prepare the export, then start it from Compare & review.';renderNativeAssets();$('#nativeDialog').showModal();};
+$('#nativeExport').onclick=()=>{++nativeRequestId;nativeAssets=[...assetSelection].map(id=>typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id)).filter(Boolean).map(a=>({...a,duration:100,layerName:a.title}));if(!nativeAssets.length){assetMessage('Select the source images first.',true);return;}$('#nativeStatus').textContent='Prepare and start the export now, or prepare only to start it later.';renderNativeAssets();$('#nativeDialog').showModal();};
+$('#nativeDialog').onclose=()=>{++nativeRequestId;};$('#nativeForm').oninput=()=>{++nativeRequestId;};
 $('#cancelNative').onclick=()=>$('#nativeDialog').close();$('#nativeKind').onchange=()=>{$('#nativeEngineWrap').hidden=$('#nativeKind').value!=='godot';$('#nativeKritaWrap').hidden=$('#nativeKind').value!=='ora';};
 function readNativeInputs(){
   for(const input of $('#nativeAssetList').querySelectorAll('input')){
@@ -445,13 +455,15 @@ function readNativeInputs(){
   }
 }
 $('#nativeAssetList').oninput=readNativeInputs;
-$('#nativeAssetList').onclick=e=>{const up=e.target.closest('[data-native-up]'),down=e.target.closest('[data-native-down]');if(!up&&!down)return;const i=Number((up||down).dataset[up?'nativeUp':'nativeDown']),j=i+(up?-1:1);[nativeAssets[i],nativeAssets[j]]=[nativeAssets[j],nativeAssets[i]];renderNativeAssets();};
-$('#nativeForm').onsubmit=async e=>{e.preventDefault();$('#prepareNative').disabled=true;try{
+$('#nativeAssetList').onclick=e=>{const up=e.target.closest('[data-native-up]'),down=e.target.closest('[data-native-down]');if(!up&&!down)return;++nativeRequestId;const i=Number((up||down).dataset[up?'nativeUp':'nativeDown']),j=i+(up?-1:1);[nativeAssets[i],nativeAssets[j]]=[nativeAssets[j],nativeAssets[i]];renderNativeAssets();};
+$('#nativeForm').onsubmit=async e=>{e.preventDefault();if(nativePreparing||productionActionPending)return;
+  const start=e.submitter?.id==='prepareNative',ticket=++nativeRequestId,current=()=>ticket===nativeRequestId&&$('#nativeDialog').open;
+  nativePreparing=true;$('#prepareNative').disabled=true;$('#prepareNativeOnly').disabled=true;try{
   readNativeInputs();
   const images=nativeAssets.filter(a=>a.media_type==='image'),kind=$('#nativeKind').value,options={clip:$('#nativeClip').value,duration_ms:images.map(a=>a.duration),layer_names:images.map(a=>a.layerName),loop:$('#nativeLoop').checked,filter:$('#nativeFilter').value};
   const x=$('#nativeAnchorX').value,y=$('#nativeAnchorY').value;if(x!==''||y!==''){if(x===''||y==='')throw Error('Set both anchor coordinates, or leave both automatic.');options.anchor=[Number(x),Number(y)];}
-  const p=await post('/api/production-export',{kind,ids:nativeAssets.map(a=>a.id),options,verify_engine:kind==='godot'&&$('#nativeEngine').checked,verify_krita:kind==='ora'&&$('#nativeKrita').checked});productionId=p.id;$('#nativeDialog').close();showView('production');await refreshProduction(true);
-}catch(err){$('#nativeStatus').textContent=err.message;}finally{$('#prepareNative').disabled=false;}};
+  const p=await post('/api/production-export',{kind,ids:nativeAssets.map(a=>a.id),options,verify_engine:kind==='godot'&&$('#nativeEngine').checked,verify_krita:kind==='ora'&&$('#nativeKrita').checked});if(!current())return;productionId=p.id;$('#nativeDialog').close();showView('production');if(start)await startPreparedPlan(p);await refreshProduction(true);
+}catch(err){if(current())$('#nativeStatus').textContent=err.message;}finally{nativePreparing=false;$('#prepareNative').disabled=false;$('#prepareNativeOnly').disabled=false;}};
 
 $('#newArticulated').onclick=()=>$('#articulatedDialog').showModal();
 $('#cancelArticulated').onclick=()=>$('#articulatedDialog').close();
