@@ -399,3 +399,18 @@ test('a waiting card names how many runs are ahead, and a moved position redraws
   const stamp=vm.runInNewContext(make.match(/  const stamp=.*\n/)[0]+';stamp',{});
   assert.notEqual(stamp({status:'queued',queue_ahead:2}),stamp({status:'queued',queue_ahead:1}));
 });
+
+test('a hidden tab polls unfinished runs every 15 s, reads once on return, and keeps failure back-off',async()=>{
+  const queue=[],listeners={},doc={hidden:true,addEventListener:(k,fn)=>{listeners[k]=fn;}},requests=[];let fail=false;
+  const run={job:{id:'a',status:'running'}},state={runs:[run]};
+  const context={state,document:doc,privacyEpoch:0,observing:r=>r.job.status==='running',runPrivacy:()=>'regular',requestPrivacy:()=>({}),
+    renderRuns(){},remember(){},refreshPickers(){},json:async url=>{requests.push(url);if(fail)throw Error('down');return {id:'a',status:'running'};},
+    setTimeout:(fn,delay)=>{const t={fn,delay};queue.push(t);return t;},clearTimeout:t=>{const i=queue.indexOf(t);if(i>=0)queue.splice(i,1);}};
+  context.globalThis=context;
+  const api=vm.runInNewContext(between('  const timers=new Map();','  // A finished run')+';({poll})',context);
+  api.poll('a');assert.equal(queue.at(-1).delay,15000,'hidden: 15 s');
+  doc.hidden=false;listeners.visibilitychange();assert.equal(queue.at(-1).delay,2500,'return: an immediate normal-cadence read is scheduled');
+  await queue.shift().fn();assert.equal(queue.at(-1).delay,2500,'visible: 2.5 s');
+  doc.hidden=true;fail=true;await queue.shift().fn();assert.equal(queue.at(-1).delay,15000,'hidden floor applies to back-off too');
+  doc.hidden=false;for(let i=0;i<4;i++)await queue.shift().fn();assert.equal(queue.at(-1).delay,30000,'visible back-off still caps at 30 s');
+});
