@@ -36,7 +36,7 @@ class WildcardPreviewTests(unittest.TestCase):
             shared = copy.deepcopy(job['graph'])
             studio._resolve_prompts(shared, job['prompt_bindings'], seed, index)
             self.assertEqual(seed, 9007199254740993 + index)
-            self.assertEqual(member, {'index':index,'seed':seed,'seed_text':str(seed),'positive':submitted['1']['inputs']['text'],'negative':submitted['2']['inputs']['text']})
+            self.assertEqual(member, {'index':index,'seed':seed,'seed_text':str(seed),'positive':'\n\u2014 '.join(dict.fromkeys(submitted[n]['inputs']['text'] for n in ('1','3'))),'negative':submitted['2']['inputs']['text']})
             for node in ('1','2','3'): self.assertEqual(shared[node]['inputs']['text'], submitted[node]['inputs']['text'])
             self.assertEqual(submitted['3']['inputs']['seed'], seed)
         self.assertEqual(job['graph']['1']['inputs']['text'], payload['controls']['positive'])
@@ -53,8 +53,20 @@ class WildcardPreviewTests(unittest.TestCase):
             preview = studio.wildcard_preview(payload)
         self.assertEqual([m['index'] for m in preview['members']], list(range(16)))
         self.assertTrue(all(len(m['positive']) == len(m['negative']) == 2000 for m in preview['members']))
+        self.assertTrue(all(m['truncated'] is True for m in preview['members']))
         graph, _ = studio._batch_graph({'preset_id':'demo','graph':prepared[1]}, 0)
         self.assertEqual(len(graph['1']['inputs']['text']), 2101)
+
+    def test_distinct_bound_texts_and_exact_truncation_boundary(self):
+        studio = self.studio(); preset = studio.preset('demo')
+        preset['bindings_extra']['positive'] += [['3','text']]
+        for length in (2000,2001):
+            with self.subTest(length=length), patch.object(studio, 'preset', return_value=preset):
+                payload = {'preset_id':'demo','controls':{'negative':'plain'}}
+                prepared = studio.prepare(payload); prepared[1]['3']['inputs']['text'] = 'x'*(length-1)+'{a}'
+                with patch.object(studio, 'prepare', return_value=prepared): member = studio.wildcard_preview(payload)['members'][0]
+                self.assertEqual(member['positive'], ('x'*(length-1)+'a')[:2000])
+                self.assertEqual(member.get('truncated', False), length > 2000)
 
     def test_no_wildcards_returns_no_members_or_file_hashes(self):
         studio = self.studio()
@@ -68,13 +80,18 @@ class WildcardPreviewTests(unittest.TestCase):
         studio = self.studio()
         preview = studio.wildcard_preview({'preset_id':'demo','controls':{'negative':'plain'}})
         self.assertEqual(len(preview['members']), 1); self.assertIn('lighting', preview['wildcard_files'])
+        graph, _ = studio._batch_graph({'preset_id':'demo','graph':studio.prepare({'preset_id':'demo','controls':{'negative':'plain'}})[1]}, 0)
+        self.assertEqual(preview['members'][0]['positive'], graph['3']['inputs']['text'])
+        self.assertTrue(preview['members'][0]['positive'].startswith('extra '))
+        self.assertEqual(preview['members'][0]['negative'], '')
+        self.assertNotIn('truncated', preview['members'][0])
 
     def test_missing_seed_binding_is_unknown_and_still_uses_execution_rng(self):
         studio = self.studio(seed=False); payload = {'preset_id':'demo','controls':{'positive':'__lighting__'}}
         member = studio.wildcard_preview(payload)['members'][0]
         graph, seed = studio._batch_graph({'preset_id':'demo','graph':studio.prepare(payload)[1]}, 0)
         self.assertIsNone(seed); self.assertIsNone(member['seed']); self.assertTrue(member['seed_unknown'])
-        self.assertEqual(member['positive'], graph['1']['inputs']['text'])
+        self.assertEqual(member['positive'], '\n\u2014 '.join(dict.fromkeys(graph[n]['inputs']['text'] for n in ('1','3'))))
 
     def test_random_seed_sentinels_are_refused_as_in_execution(self):
         studio = self.studio()

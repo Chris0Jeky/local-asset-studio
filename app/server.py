@@ -383,7 +383,7 @@ class Studio:
                 return mode
         raise StudioError("Unsupported I2V mode")
 
-    def _validate_i2v_mode_source(self, preset, mode, graph, controls):
+    def _validate_i2v_mode_source(self, preset, mode, graph, controls, staged=True):
         """Fail closed when a mode promises one exact reference image."""
         required = (mode or {}).get("required_reference")
         if required is None:
@@ -406,7 +406,8 @@ class Studio:
         uploads = self.experiments / "uploads"
         upload = inside(uploads.resolve(), uploads / name)
         comfy_input = inside((self.comfy_root / "input").resolve(), self.comfy_root / "input" / name)
-        for source in (upload, comfy_input):
+        # A read-only preview stages nothing, so only the upload can be checked; execution checks the staged copy too.
+        for source in ((upload, comfy_input) if staged else (upload,)):
             if not source.is_file() or hashlib.sha256(source.read_bytes()).hexdigest() != expected:
                 raise StudioError(f"{who} requires the {label}; the selected source does not match")
 
@@ -585,7 +586,7 @@ class Studio:
         if classification == 'private':
             for node in graph.values():
                 if node.get('class_type') == 'SaveImage': node.setdefault('inputs',{})['filename_prefix']='local-asset-studio/private'
-        self._validate_i2v_mode_source(preset, mode, graph, controls)
+        self._validate_i2v_mode_source(preset, mode, graph, controls, staged=_stage_reference_inputs)
         wan_capacity.enforce(graph)
         if not _defer_host_commit_preflight:
             self.host_commit_preflight(preset, graph)
@@ -1372,12 +1373,14 @@ class Studio:
         preset, graph, _, _, batch = self.prepare(payload, _stage_reference_inputs=False)
         bindings = {key: ([preset[key]] if preset.get(key) else []) + (preset.get("bindings_extra") or {}).get(key, []) for key in ("positive", "negative")}
         result = {"members":[], "wildcard_files":{}}
-        if not any(prompting.has_wildcards(graph.get(str(b[0]), {}).get("inputs", {}).get(str(b[1]))) for group in bindings.values() for b in group): return result
+        preview_bindings = {key: [b for b in group if prompting.has_wildcards(graph.get(str(b[0]), {}).get("inputs", {}).get(str(b[1])))] for key, group in bindings.items()}
+        if not any(preview_bindings.values()): return result
         job = {"graph":graph, "prompt_bindings":bindings, "seed_bindings":([preset["seed"]] if preset.get("seed") else []) + (preset.get("bindings_extra") or {}).get("seed", [])}
         for index in range(min(batch, 16)):
             resolved, seed = self._batch_graph(job, index, wildcard_files=result["wildcard_files"])
-            texts = {key: str(resolved.get(str(group[0][0]), {}).get("inputs", {}).get(str(group[0][1]), ""))[:2000] if group else "" for key, group in bindings.items()}
-            member = {"index":index, "seed":seed, **texts}
+            texts = {key: "\n— ".join(dict.fromkeys(str(resolved.get(str(b[0]), {}).get("inputs", {}).get(str(b[1]), "")) for b in group)) for key, group in preview_bindings.items()}
+            member = {"index":index, "seed":seed, **{key: text[:2000] for key, text in texts.items()}}
+            if any(len(text) > 2000 for text in texts.values()): member["truncated"] = True
             if seed is None: member["seed_unknown"] = True
             elif seed > 2**53 - 1: member["seed_text"] = str(seed)  # JSON numbers lose these digits in JavaScript.
             result["members"].append(member)

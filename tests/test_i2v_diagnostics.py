@@ -121,6 +121,14 @@ class I2VDiagnosticTests(unittest.TestCase):
         self.assertEqual(studio.jobs, {})
         self.assertTrue(studio.queue.empty())
 
+    def test_unstaged_preparation_checks_the_canonical_upload_without_a_staged_copy(self):
+        studio = self.studio(); staged = self.root / "fake-comfy/input" / self.reference
+        studio.prepare({"preset_id": "wan22-i2v", "controls": {"mode": "canonical", "reference": self.reference}}, _stage_reference_inputs=False)
+        self.assertFalse(staged.exists(), "a read-only preparation stages nothing")
+        other = studio.upload("other.png", "image/png", png(768, 512))["file"]
+        with self.assertRaisesRegex(server.StudioError, "selected source does not match"):
+            studio.prepare({"preset_id": "wan22-i2v", "controls": {"mode": "canonical", "reference": other}}, _stage_reference_inputs=False)
+
     def test_diagnostic_accepts_only_recorded_wan_i2v_jobs(self):
         studio = self.studio()
         self.assertEqual(_supported_wan_job(studio, {"preset_id": "wan22-i2v", "graph": self.graph})["id"], "wan22-i2v")
