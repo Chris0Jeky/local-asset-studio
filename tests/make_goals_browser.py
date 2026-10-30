@@ -74,7 +74,9 @@ class Handler(fixture.Handler):
                 return self.json({'error': 'This card changed since you read it; nothing changed. Reload it and try again.', 'code': 'card_revision_conflict'}, 409)
             if data['action'] == 'edit':
                 card.update({k: data[k] for k in ('name', 'body') if k in data})   # characters.command: only the named fields change; a canon swap re-records the lineage
-                if 'canon_asset_id' in data: card.update(canon_asset_id=data['canon_asset_id'], lineage=[{'role': 'canon', 'asset_id': data['canon_asset_id'], 'sha256': 'a' * 64}])
+                if 'canon_asset_id' in data:   # the replaced canon is kept as previous_canon (#1718)
+                    old = card['canon_asset_id']; card.update(canon_asset_id=data['canon_asset_id'], previous_canon_asset_id=old if old != data['canon_asset_id'] else card.get('previous_canon_asset_id'),
+                                                              lineage=[{'role': 'canon', 'asset_id': data['canon_asset_id'], 'sha256': 'a' * 64}])
             else:
                 away = data['action'] == 'trash'
                 card.update(trashed_at=1789228800 if away else None, usable=not away, unusable_reason='This character is put away. Restore it to use it.' if away else None)
@@ -425,7 +427,16 @@ def run(shots):
         assert posted('/api/characters')[before_swap:] == [{'action': 'edit', 'id': 'character-0', 'expected_revision': revision - 1, 'canon_asset_id': 'asset-3'}, {'action': 'edit', 'id': 'character-0', 'expected_revision': revision, 'canon_asset_id': 'asset-3'}], posted('/api/characters')[before_swap:]
         assert fixture_card(0)['canon_asset_id'] == 'asset-3' and fixture_card(0)['body'].get('who'), 'the words stay'
         assert len(jobs()) == before_manage, 'choosing a new canon submits nothing'
-        fixture_card(0)['canon_asset_id'] = 'asset-0'; fixture_card(0)['lineage'][0]['asset_id'] = 'asset-0'; fixture_card(0)['revision'] -= 2; resync(); open_picker()
+        # Swap back (#1718): the replaced canon stays in the line-up tagged Previous canon, and one press on its Use as canon restores it.
+        if not page.locator(sc).evaluate('e=>e.open'): page.locator(sc + ' summary').click()
+        page.wait_for_selector(sc + ' [data-make-canon="asset-0"]'); assert 'Previous canon' in page.locator(sc).inner_text() and not page.locator(sc + ' [data-make-canon="asset-3"]').count(), 'the old canon is offered back, the new one is not'
+        back_revision = fixture_card(0)['revision']; page.locator(sc + ' [data-make-canon="asset-0"]').click()
+        for _ in range(50):
+            if fixture_card(0)['canon_asset_id'] == 'asset-0': break
+            page.wait_for_timeout(100)
+        assert posted('/api/characters')[-1] == {'action': 'edit', 'id': 'character-0', 'expected_revision': back_revision, 'canon_asset_id': 'asset-0'} and fixture_card(0)['previous_canon_asset_id'] == 'asset-3', 'one press restores the original canon'
+        assert len(jobs()) == before_manage, 'swapping back submits nothing'
+        fixture_card(0)['previous_canon_asset_id'] = None; fixture_card(0)['revision'] -= 3; resync(); open_picker()
         character_posts = len(posted('/api/characters'))
         # Edit: the words and the avoid words; a stale revision (changed elsewhere) reloads the card and saves nothing.
         page.locator('[data-make-character-edit="character-0"]').click(); form = page.locator('.make-characters .make-character-form')

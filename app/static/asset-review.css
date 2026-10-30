@@ -3,6 +3,8 @@
 .studio-main .asset-toolbar{display:flex;gap:10px}
 .studio-main .asset-toolbar input{width:auto;flex:1 1 180px;min-width:0}
 .studio-main .asset-toolbar select{width:auto;flex:0 1 150px;min-width:0}
+.studio-skip-review{position:fixed;left:12px;top:-100px;background:var(--accent);color:#142015!important;z-index:200;padding:12px}
+.studio-skip-review:focus{top:10px}
 #reviewNext{white-space:nowrap}
 #reviewNext[disabled]{opacity:.55}
 #assetPaging{flex-wrap:wrap;align-items:center;gap:8px}
@@ -32,6 +34,7 @@
 .asset-queue-actions{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 6px}
 .asset-queue-actions button{font-size:10px;padding:6px 8px}
 .asset-queue-actions kbd{font-size:9px;border:1px solid var(--line);border-radius:3px;padding:0 3px;margin-left:4px;color:var(--muted)}
+.asset-queue-actions button[aria-pressed="true"]{background:var(--accent);color:var(--bg);border-color:var(--accent)}.asset-queue-actions button[aria-pressed="true"] kbd{color:inherit;border-color:currentColor}
 .asset-queue-legend{display:block;font-size:10px;color:var(--muted);line-height:1.5}
 
 .asset-reasons{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0}

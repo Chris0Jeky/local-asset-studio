@@ -1081,6 +1081,161 @@
           "expect": "the next generation still needs an explicit click"
         }
       ]
+    },
+    {
+      "id": "make-generate-then-keep",
+      "goal": "Make a picture from one plain sentence in a couple of clicks, wait for it to finish, and keep it with the K key.",
+      "starting_view": "make",
+      "success_condition": "Generate is pressed once, the run card goes from waiting to done and shows the picture, K keeps it in the library, and a next step is offered beside it.",
+      "wrong_turn": false,
+      "steps": [
+        {
+          "intent": "say this is an anime character",
+          "expect": "looks to choose from are shown, each as a picture"
+        },
+        {
+          "intent": "choose a look by its picture",
+          "expect": "the look is chosen and asks for one sentence"
+        },
+        {
+          "intent": "describe the picture in one plain sentence",
+          "expect": "the sentence is held and Generate is ready"
+        },
+        {
+          "intent": "press Generate",
+          "expect": "the run starts and its card appears under the look's name"
+        },
+        {
+          "intent": "wait while the picture is painted",
+          "expect": "the card goes from waiting to painting to done and shows the picture"
+        },
+        {
+          "intent": "keep the picture with the K key",
+          "expect": "the picture is marked kept and saved to the library"
+        },
+        {
+          "intent": "look for what to do next with the kept picture",
+          "expect": "next steps such as Restyle are offered beside it"
+        }
+      ]
+    },
+    {
+      "id": "review-desk-by-keyboard",
+      "goal": "Open the review desk on a finished comparison of three candidates, judge each one from the keyboard, and record the winner.",
+      "starting_view": "production",
+      "success_condition": "Each of the three candidates is kept, marked needs work or marked not this with a key, the kept one passes its constraints check and is recorded as the winner with a note, and exporting the evidence is offered next.",
+      "wrong_turn": false,
+      "steps": [
+        {
+          "intent": "open the place where finished runs are reviewed",
+          "expect": "the list of studies is shown"
+        },
+        {
+          "intent": "choose the comparison with three candidates waiting for a decision",
+          "expect": "its candidates are shown"
+        },
+        {
+          "intent": "open the review desk",
+          "expect": "the desk opens on that study with nothing prepared yet"
+        },
+        {
+          "intent": "prepare the blind review",
+          "expect": "the three candidates are shown without their settings"
+        },
+        {
+          "intent": "switch to the grid",
+          "expect": "the candidates are tiles that take the keys"
+        },
+        {
+          "intent": "pick the first candidate",
+          "expect": "it is open to assess"
+        },
+        {
+          "intent": "keep it with the K key",
+          "expect": "the assessment is saved and the candidate reads Keep"
+        },
+        {
+          "intent": "move to the next candidate with the arrow key",
+          "expect": "focus moves to the next tile"
+        },
+        {
+          "intent": "mark it needs work with the W key",
+          "expect": "the assessment is saved and the candidate reads Needs work"
+        },
+        {
+          "intent": "move to the last candidate with the arrow key",
+          "expect": "focus moves to the last tile"
+        },
+        {
+          "intent": "mark it not this with the X key",
+          "expect": "the assessment is saved and every candidate has a verdict"
+        },
+        {
+          "intent": "open the kept candidate again",
+          "expect": "its assessment is open"
+        },
+        {
+          "intent": "confirm it meets the stated constraints",
+          "expect": "the check reads pass"
+        },
+        {
+          "intent": "save that assessment",
+          "expect": "the assessment is saved and the desk allows a decision"
+        },
+        {
+          "intent": "reveal the settings behind the candidates",
+          "expect": "the settings are shown and the decision form opens"
+        },
+        {
+          "intent": "choose the kept candidate as the winner",
+          "expect": "the winner is selected"
+        },
+        {
+          "intent": "write why it won",
+          "expect": "the note is held against the decision"
+        },
+        {
+          "intent": "record the decision",
+          "expect": "the desk reads decision recorded and nothing was generated"
+        },
+        {
+          "intent": "look for what comes next",
+          "expect": "exporting the review evidence is offered"
+        }
+      ]
+    },
+    {
+      "id": "library-review-next-by-keyboard",
+      "goal": "Go through the pictures still waiting for review one after another from the Library, deciding each with a key.",
+      "starting_view": "assets",
+      "success_condition": "Review next walks three unreviewed pictures, K, W and X each save a decision and move on, and the Library then says nothing is left to review.",
+      "wrong_turn": false,
+      "steps": [
+        {
+          "intent": "open the library of saved pictures",
+          "expect": "the pictures and a Review next button are shown"
+        },
+        {
+          "intent": "press Review next",
+          "expect": "the first unreviewed picture opens with its place in the queue"
+        },
+        {
+          "intent": "keep the first picture with the K key",
+          "expect": "the review is saved and the next picture opens"
+        },
+        {
+          "intent": "mark the second picture needs work with the W key",
+          "expect": "the review is saved and the next picture opens"
+        },
+        {
+          "intent": "mark the third picture not this with the X key",
+          "expect": "the review is saved and the queue ends"
+        },
+        {
+          "intent": "look for what comes next",
+          "expect": "Review next says nothing is left to review"
+        }
+      ]
     }
   ]
 }
