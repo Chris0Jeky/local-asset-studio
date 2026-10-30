@@ -550,4 +550,34 @@ class FamilyFixtureReads(unittest.TestCase):
                 self.assertTrue(body['observation_only']); self.assertFalse(body['generation_submitted'])
 
 
+class ProbeClosedDisclosures(unittest.TestCase):
+    """The word-count probe counts what a reader sees: #1740 (closed body) and #1754 (nested closed summary).
+    Needs Chromium (offsetParent behaviour is the thing under test); skips where Playwright cannot launch."""
+    PAGE = """<main><section class="view">
+      <p>visible-plain</p>
+      <details open><summary>sum-open</summary><p>body-open</p>
+        <details open><summary>sum-inner-open</summary><p>body-inner-open</p></details></details>
+      <details><summary>sum-closed</summary><p>body-closed</p>
+        <details open><summary>sum-closed-then-open</summary><p>body-closed-then-open</p></details>
+        <details><summary>sum-closed-then-closed</summary><p>body-closed-then-closed</p></details></details>
+      <details open><summary>sum-open-then-closed</summary>
+        <details><summary>sum-inner-closed</summary><p>body-inner-closed</p></details></details>
+    </section></main>"""
+
+    def test_text_counts_only_when_no_closed_disclosure_hides_it(self):
+        try:
+            from playwright.sync_api import sync_playwright
+            playwright = sync_playwright().start()
+        except Exception as error: self.skipTest('Playwright unavailable: %s' % error)
+        try:
+            try: browser = playwright.chromium.launch(headless=True, args=['--no-sandbox'])
+            except Exception as error: self.skipTest('Chromium cannot launch: %s' % error)
+            page = browser.new_page(); page.set_content(self.PAGE)
+            counted = set(page.evaluate(runner.PROBE_PAGE)['instructions'].split(' '))
+            browser.close()
+        finally: playwright.stop()
+        self.assertEqual(counted, {'visible-plain', 'sum-open', 'body-open', 'sum-inner-open', 'body-inner-open', 'sum-closed',
+                                   'sum-open-then-closed', 'sum-inner-closed'})
+
+
 if __name__ == '__main__': unittest.main()

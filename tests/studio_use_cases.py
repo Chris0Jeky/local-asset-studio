@@ -669,8 +669,12 @@ PROBE_PAGE = """() => {
   for (const node of panel.querySelectorAll('p,small,label,legend,summary,figcaption,.muted,.hint,.callout,[role=status],[role=alert]')) {
     if (!node.offsetParent && node !== panel) continue;
     // Chromium keeps offsetParent for text inside a closed <details>; only that details' own summary is on screen (#1740).
-    const closed = node.closest('details:not([open])');
-    if (closed && node.closest('summary')?.parentElement !== closed) continue;
+    // Every closed ancestor counts, so the summary of a closed details nested in another closed one stays off (#1754).
+    const summary = node.closest('summary');
+    let hidden = false;
+    for (let d = node.closest('details:not([open])'); d && !hidden; d = d.parentElement?.closest('details:not([open])'))
+      hidden = summary?.parentElement !== d;
+    if (hidden) continue;
     const own = [...node.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join(' ');
     const value = text(own || (node.children.length ? '' : node.textContent));
     if (value) seen.add(value);
