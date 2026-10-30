@@ -77,6 +77,30 @@ class CharacterTests(unittest.TestCase):
         with self.assertRaises(WorkspaceError) as caught: characters.command(self.studio, {"action": "edit", "id": card["id"], "name": "No revision"})
         self.assertEqual(caught.exception.status, 428)
 
+    def test_a_swap_keeps_the_replaced_canon_as_previous_and_swapping_back_restores_it(self):   # #1718
+        card = self.create(); other = self.picture("job-other", b"another keeper")
+        self.assertEqual(([e["role"] for e in card["lineage"]], self.listed()[card["id"]]["previous_canon_asset_id"]), (["canon"], None))
+        swapped = characters.command(self.studio, {"action": "edit", "id": card["id"], "expected_revision": 0, "canon_asset_id": other})
+        self.assertEqual([(e["role"], e["asset_id"]) for e in swapped["lineage"]], [("canon", other), ("previous_canon", self.canon)])
+        self.assertEqual(swapped["lineage"][1]["sha256"], self.studio.assets.get(self.canon)["sha256"])
+        entry = self.listed()[card["id"]]
+        self.assertEqual((entry["canon_asset_id"], entry["previous_canon_asset_id"]), (other, self.canon))
+        edited = characters.command(self.studio, {"action": "edit", "id": card["id"], "expected_revision": 1, "body": dict(BODY, avoid="glasses")})   # words alone leave both pictures
+        self.assertEqual([e["asset_id"] for e in edited["lineage"]], [other, self.canon])
+        back = characters.command(self.studio, {"action": "edit", "id": card["id"], "expected_revision": 2, "canon_asset_id": self.canon})
+        self.assertEqual([(e["role"], e["asset_id"]) for e in back["lineage"]], [("canon", self.canon), ("previous_canon", other)])
+        same = characters.command(self.studio, {"action": "edit", "id": card["id"], "expected_revision": 3, "canon_asset_id": self.canon})
+        self.assertEqual([e["role"] for e in same["lineage"]], ["canon"])   # naming the canon again replaces nothing, so no previous
+        self.assertEqual((self.studio.jobs, self.requests), ({}, []))
+
+    def test_a_put_away_previous_canon_is_not_offered_and_does_not_block_the_next_swap(self):   # #1718
+        card = self.create(); other = self.picture("job-other", b"another keeper"); third = self.picture("job-third", b"a third keeper")
+        characters.command(self.studio, {"action": "edit", "id": card["id"], "expected_revision": 0, "canon_asset_id": other})
+        self.trash_picture(self.canon)
+        self.assertIsNone(self.listed()[card["id"]]["previous_canon_asset_id"])
+        later = characters.command(self.studio, {"action": "edit", "id": card["id"], "expected_revision": 1, "canon_asset_id": third})
+        self.assertEqual([(e["role"], e["asset_id"]) for e in later["lineage"]], [("canon", third), ("previous_canon", other)])
+
     def test_create_route_accepts_any_picture_review_without_changing_it_or_submitting(self):
         for review in ('unreviewed', 'selected', 'rejected', 'needs_work'):
             with self.subTest(review=review):

@@ -3,7 +3,7 @@
 Owner decision (16 Oct 2026): any picture can be the canon, regardless of review; a character LoRA comes once about 20
 keepers exist (#411, out of scope). Consistency is the point: every new picture goes back to the canon as it is, never to an
 edit of an edit. body: who, clothes (with colours), avoid (optional), look_id (optional preferred look card). lineage: the
-canon, named by asset id and sha256 like a look's anchor, set only from the Workspace. Saving or choosing a card never submits.
+canon, named by asset id and sha256 like a look's anchor, set only from the Workspace; a swap also keeps the replaced canon as previous_canon. Saving or choosing a card never submits.
 """
 import re
 
@@ -41,13 +41,13 @@ def validate_body(body):
     return result
 
 
-def canon_of(card):
-    return next((entry for entry in card.get("lineage", []) if isinstance(entry, dict) and entry.get("role") == "canon"), None)
+def canon_of(card, role="canon"):
+    return next((entry for entry in card.get("lineage", []) if isinstance(entry, dict) and entry.get("role") == role), None)
 
 
-def canon_asset(studio, card):
-    """The live picture whose bytes are the canon, or None: the recorded asset if its bytes still match, else any live copy."""
-    entry = canon_of(card)
+def canon_asset(studio, card, role="canon"):
+    """The live picture whose bytes are the canon (or the previous canon), or None: the recorded asset if its bytes still match, else any live copy."""
+    entry = canon_of(card, role)
     if not entry or not isinstance(entry.get("sha256"), str) or not SHA256.fullmatch(entry["sha256"]): return None
     try:
         asset = studio.assets.get(entry.get("asset_id"))
@@ -60,6 +60,7 @@ def listing(studio):
     result, saved_looks = [], None
     for card in studio.assets.cards(KIND):
         asset, reason, body = canon_asset(studio, card), None, {}
+        previous = canon_asset(studio, card, "previous_canon")
         try: body = validate_body(card["body"])
         except WorkspaceError as error: reason = str(error)
         if asset is None: reason = reason or "Its canon picture is no longer in the library. Restore it, or make another picture the canon."
@@ -71,7 +72,8 @@ def listing(studio):
             look = saved_looks.get(body["look_id"])
             if look and look["trashed_at"]: look_note = "Its preferred look is put away; Make uses the goal's default look."
             elif not look or not look["usable"]: look_note = "Its preferred look's recipe is no longer usable; Make uses the goal's default look."
-        result.append(dict(card, usable=reason is None, unusable_reason=reason, canon_asset_id=asset["id"] if asset else None, look_note=look_note))
+        result.append(dict(card, usable=reason is None, unusable_reason=reason, canon_asset_id=asset["id"] if asset else None,
+                           previous_canon_asset_id=(previous or {}).get("id"), look_note=look_note))
     return {"characters": result, "generation_submitted": False}
 
 
@@ -96,6 +98,9 @@ def command(studio, payload):
         asset = studio.assets.get(canon_id)
         if asset.get("trashed_at"): raise WorkspaceError("That picture is put away; restore it before making it the canon")
         if (asset.get("media_type") or "image") != "image": raise WorkspaceError("A character's canon is a picture")
-        payload["lineage"] = [{"role": "canon", "asset_id": asset["id"], "sha256": asset["sha256"], "job_id": asset.get("job_id"),
-                               **({"preset_id": asset["preset_id"]} if asset.get("preset_id") else {})}]
+        record = lambda role, found: {"role": role, "asset_id": found["id"], "sha256": found["sha256"], "job_id": found.get("job_id"), **({"preset_id": found["preset_id"]} if found.get("preset_id") else {})}
+        payload["lineage"] = [record("canon", asset)]
+        # A swap keeps the one canon it replaces as previous_canon, so the Line-up can offer it back (#1718); one entry, never a chain.
+        old = canon_asset(studio, studio.assets.card(payload.get("id"))) if action == "edit" else None
+        if old and old["id"] != asset["id"]: payload["lineage"].append(record("previous_canon", old))
     return studio.assets.card_command(payload)
