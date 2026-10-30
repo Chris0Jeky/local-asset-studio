@@ -12,6 +12,7 @@ from pathlib import Path
 
 MAX_IMAGE_BYTES = 32 * 1024**2
 MAX_PIXELS = 16 * 1024**2
+MAX_BLANK_PIXELS = 64 * 1024**2
 MAX_TOTAL_BYTES = 256 * 1024**2
 MAX_CANDIDATES = 16
 PREVIEW_EDGE = 1536
@@ -50,6 +51,19 @@ def text_safe_metrics(data):
                 'left_right_ratio': left / right if right else None,
                 'comparison': 'left quieter' if left < right else 'left busier' if left > right else 'equal detail'}
     finally: image.close()
+
+
+def blank_kind(path):
+    """'transparent' or 'uniform' for a still picture with no content, else ''. Advisory only: exact extrema, first frame, never raises."""
+    try:
+        from PIL import Image
+        with Image.open(path) as image:
+            if image.width * image.height > MAX_BLANK_PIXELS: return ''
+            if image.mode in ('P', 'PA', 'RGBa', 'La') or 'transparency' in image.info: image = image.convert('RGBA')
+            extrema = image.getextrema(); bands = extrema if isinstance(extrema[0], (tuple, list)) else (extrema,)
+            if image.mode in ('RGBA', 'LA') and bands[-1][1] == 0: return 'transparent'
+            return 'uniform' if all(low == high for low, high in bands) else ''
+    except Exception: return ''
 
 
 def canonical(value):

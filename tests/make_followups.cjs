@@ -228,6 +228,26 @@ test('Make single and comparison pictures show the recorded quiet-left diagnosti
   }
 });
 
+test('a blank picture gets one plain advisory line on its Make card and nothing else changes (#1704)',()=>{
+  const app=fs.readFileSync(path.join(__dirname,'../app/static/app.js'),'utf8');
+  const note=app.slice(app.indexOf('function lookNote('),app.indexOf('var expandedPrompts='));
+  for(const group of [false,true])for(const blank of ['','uniform','transparent']){
+    const job={id:'job-1',status:'completed',controls:{seed:4},outputs:[{filename:'scene.png',asset_id:'picture-1',...(blank?{blank}:{})},{filename:'real.png',asset_id:'picture-2'}]};
+    const runs=[{job,look:'Night Shift',scene:'A room'}],cards=[{group,id:'job-1',runs}];let rendered='';
+    const box={children:[],contains:()=>false,querySelectorAll:()=>[]};
+    const context={state:{runs},window:{},runCards:()=>cards,q:()=>box,planPolish(){},layout(){},runTitle(){},tick(){},observing:()=>false,
+      FINAL:['completed'],words:job=>job.status,picture:()=>true,pictureTitle:String,escape:String,esc:String,
+      recovery:()=>'',marks:()=>'',characterMarkup:()=>'',actions:()=>'',selectedOf:()=>null,draftRun:()=>false,
+      document:{activeElement:{},createElement:()=>({children:[],set innerHTML(value){rendered=value;}})}};
+    const render=vm.runInNewContext(privacy+note+between('  function renderRuns(){','  // Picture goals stay in Make')+';renderRuns',context);
+    render();
+    const lines=rendered.match(/This picture is blank — likely a numeric failure, not a result\./g)||[];
+    assert.equal(lines.length,blank?1:0,'one line for the blank picture only, none for the real one');
+    if(blank)assert.ok(rendered.indexOf('picture-1')<rendered.indexOf(lines[0])&&rendered.indexOf(lines[0])<rendered.indexOf('picture-2'),'the line sits on the blank picture');
+    assert.match(rendered,/Picture 2 from Night Shift/);
+  }
+});
+
 test('recorded and new seed result handoffs retain Look provenance without submitting',async()=>{
   const source=fs.readFileSync(path.join(__dirname,'../app/static/studio-workbench.js'),'utf8');
   const handler=source.slice(source.indexOf('  resultPanel.onclick=async e=>{'),source.indexOf('  // Number keys 1-5'));

@@ -1218,6 +1218,10 @@ class Studio:
             except (OSError, ValueError, sqlite3.Error) as exc:
                 # A storage fault while indexing a known output never changes the remote outcome.
                 output["snapshot_error"] = str(exc)[:200]
+            if output.get('asset_id') and output.get('media_type', 'image') == 'image' and 'blank' not in output:
+                try: kind = review_media.blank_kind(self.output_path(output, job))
+                except (OSError, ValueError, StudioError): kind = ''
+                if kind: output['blank'] = kind  # advisory only: never changes status, rejects or accepts
             if (output.get('asset_id') and output.get('media_type', 'image') == 'image'
                     and (job.get('look') or {}).get('options', {}).get('quiet_wall') is True and 'text_safe' not in output):
                 try:
