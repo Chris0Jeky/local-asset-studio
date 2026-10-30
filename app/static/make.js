@@ -575,14 +575,17 @@
   const timers=new Map();
   const stamp=job=>job.status+'|'+(job.outputs||[]).map(o=>o.asset_id||'').join(',')+'|'+(job.message||'')+'|'+(job.tracking_disposition?.status||'')+'|'+(job.queue_ahead??'');
   // A failed read is not the end of a run (#1438): it keeps checking, backing off to 30 s, and says so on its card.
-  const POLL=2500,POLL_MAX=30000;
+  // A hidden tab reads unfinished runs every 15 s instead of 2.5 s (#1764): still often enough for the tab title's finish tick, and
+  // one immediate read on return. Failure back-off is unchanged.
+  const POLL=2500,POLL_MAX=30000,POLL_HIDDEN=15000;
+  globalThis.document?.addEventListener?.('visibilitychange',()=>{if(!document.hidden)for(const run of state.runs)if(observing(run))poll(run.job.id);});
   function poll(id,misses=0){clearTimeout(timers.get(id));timers.set(id,setTimeout(async()=>{
     const run=state.runs.find(r=>r.job.id===id),epoch=privacyEpoch;if(!run){timers.delete(id);return;}
     try{const job=await json('/api/jobs/'+encodeURIComponent(id),undefined,requestPrivacy(runPrivacy(run)));if(epoch!==privacyEpoch||!state.runs.includes(run))return;const changed=stamp(job)!==stamp(run.job)||run.lost;run.job={...job,privacy:job.privacy||runPrivacy(run)};run.lost=false;
       // Redraw only when something changed, so a poll never resets an open menu or steals keyboard focus.
       if(changed){renderRuns();remember();if(job.outputs?.some(o=>o.asset_id)){state.pictures=null;refreshPickers();}}
       if(observing(run))poll(id,run.job.status==='uncertain'?4:0);else timers.delete(id);}
-    catch{if(!state.runs.includes(run)){timers.delete(id);return;}if(!run.lost){run.lost=true;renderRuns();}poll(id,misses+1);}},Math.min(POLL_MAX,POLL*2**Math.min(misses,4))));}
+    catch{if(!state.runs.includes(run)){timers.delete(id);return;}if(!run.lost){run.lost=true;renderRuns();}poll(id,misses+1);}},Math.max(globalThis.document?.hidden?POLL_HIDDEN:0,Math.min(POLL_MAX,POLL*2**Math.min(misses,4)))));}
   // A finished run's pictures join an open picture grid at once, so the next goal can start from them.
   function refreshPickers(){const g=goal();if(!g.intent)return;for(const [id,attr] of [['makePictures','data-make-pick'],['makePosePictures','data-make-pose-pick']])if(q('#'+id))void fillPictures(g,id,attr);}
   // A painting card says how long it has run and, from /api/estimate, about how long such a run takes on this PC; the tab title
