@@ -234,17 +234,18 @@ again inside the operation. It refuses, without changing anything, when:
 | `migration_destination_occupied` | 409 | A private run folder with that ID already exists |
 | `migration_busy` | 409 | Another migration is running |
 | `migration_request_conflict` | 409 | The request ID already names a different migration |
+| `migration_recovery_pending` | 409 | An earlier journal is still in staging, verified or published; restart the Studio to recover it first |
 
 Past those checks it keeps a journal at `private/migrations/<request_id>.json`:
 
 1. **staging**: copies every run file, output snapshot and regular upload copy
-   (with its sidecar) under `private/migrations/<request_id>/`.
+   (with its sidecar) under `private/migrations/<request_id>/`, flushing each copy to disk.
 2. **verified**: every copy matches the planned size and SHA-256. A blob that
    Private already holds is checked in place, not copied again.
 3. **published**: only the run's `state.json` and `recipe.json` gain `privacy:
    private`; every other run file stays byte-identical. The run folder and files go
    into their private homes. Then one Workspace transaction rechecks every asset and
-   collection revision. It reclassifies them (revisions +1) and records the commit
+   collection revision, and that every collection member belongs to the move. It reclassifies them (revisions +1) and records the commit
    marker. Last, the in-memory job turns private.
 4. **complete** or **cleanup-needed**: the regular run folder is first renamed into
    the journal folder, so Regular never sees a partial run. Then the copied files are
@@ -266,7 +267,11 @@ ID is a new request: after completion it is refused as `already_in_destination`.
 At Studio start, before any run folder is read, recovery handles each unfinished
 journal. If the Workspace commit marker is absent it rolls back, which removes what
 was placed and leaves the regular originals untouched. If the marker exists, it
-finishes the cleanup. The receipt reports `recovery.from_stage` and the stage it
+finishes the cleanup; it keeps a regular upload that any retained run record still
+names, or every upload when the records cannot all be read. A rollback never removes
+a run folder or file that another committed request published. A journal whose
+identity, run IDs or commit marker do not check out is reported and left untouched.
+The receipt reports `recovery.from_stage` and the stage it
 reached. Recovery never cancels, resubmits or clears uncertainty. A run that is not
 settled is refused at apply time.
 
