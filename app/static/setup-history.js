@@ -28,24 +28,26 @@
     return parts.length?'Changed from revision '+older.revision+': '+parts.join(', ')+'.':'No draft, preset, backend, graph or input-count difference from revision '+older.revision+' in this summary.';
   }
   class History{
-    constructor(options){Object.assign(this,options);this.token=0;this.state={head:null,revisions:[],next:null,picked:[],comparison:null,busy:false};}
+    constructor(options){Object.assign(this,options);this.token=0;this.sel=0;this.state={head:null,revisions:[],next:null,picked:[],comparison:null,busy:false};}
     note(message,error=false){this.emit({message,error,state:this.state});}
     where(){const s=this.identity()||{};need(SCOPE.test(s.workspace_id||'')&&typeof s.draft_id==='string'&&s.draft_id,'No shared setup revision is saved in this session yet. Nothing was requested.');return {ws:s.workspace_id,id:s.draft_id};}
     url(kind,query){const {ws,id}=this.where();return API+'/'+encodeURIComponent(id)+'/'+kind+'?workspace_id='+ws+query;}
     exportUrl(revision){return this.url('export','&revision='+revision);}
-    async go(label,load,done){const t=++this.token;this.state.busy=true;this.note(label);
-      try{const value=await load(this.where());if(t!==this.token)return;done(value);this.state.busy=false;}
-      catch(e){if(t!==this.token)return;this.state.busy=false;this.note('History could not be read: '+e.message+' Nothing was changed.',true);}}
+    // A read is dropped, result or refusal, once a newer read began or its own `live` check (the selected pair) no longer holds.
+    async go(label,load,done,live=()=>true){const t=++this.token,fresh=()=>t===this.token&&live();this.state.busy=true;this.note(label);
+      try{const value=await load(this.where());if(!fresh()){if(t===this.token)this.state.busy=false;return;}done(value);this.state.busy=false;}
+      catch(e){if(!fresh()){if(t===this.token)this.state.busy=false;return;}this.state.busy=false;this.note('History could not be read: '+e.message+' Nothing was changed.',true);}}
     load(){return this.go('Reading the newest revisions. This is read-only.',async({ws,id})=>page(await this.read(this.url('history','&limit='+PAGE)),ws,id,null,null),v=>{
       Object.assign(this.state,{head:v.head_revision,revisions:v.revisions.slice(),next:v.next_before_revision,picked:[],comparison:null});
       this.note('Showing '+v.revisions.length+' of '+v.head_revision+' revisions, newest first.'+(v.next_before_revision?' Older revisions are available.':''));});}
     older(){const {head,next}=this.state;return this.go('Reading older revisions. This is read-only.',async({ws,id})=>{need(next,'No older revisions remain.');return page(await this.read(this.url('history','&limit='+PAGE+'&before_revision='+next+'&expected_head='+head)),ws,id,next,head);},v=>{
       this.state.revisions.push(...v.revisions);this.state.next=v.next_before_revision;this.note('Loaded '+v.revisions.length+' older revisions; '+this.state.revisions.length+' of '+head+' are listed.');});}
-    pick(revision,on){const p=this.state.picked;if(!on){this.state.picked=p.filter(n=>n!==revision);this.state.comparison=null;return true;}
-      if(p.length>=2){this.note('Two revisions are already selected. Clear one first.',true);return false;}this.state.picked=[...p,revision].sort((a,b)=>a-b);this.state.comparison=null;return true;}
-    compare(){const [left,right]=this.state.picked,head=this.state.head;
+    pick(revision,on){const p=this.state.picked;
+      if(on&&p.length>=2){this.note('Two revisions are already selected. Clear one first.',true);return false;}
+      this.state.picked=on?[...p,revision].sort((a,b)=>a-b):p.filter(n=>n!==revision);this.state.comparison=null;this.sel++;return true;}
+    compare(){const [left,right]=this.state.picked,head=this.state.head,sel=this.sel,same=()=>this.sel===sel&&this.state.picked.join()===left+','+right;
       return this.go('Comparing revisions '+left+' and '+right+'. This is read-only.',async({ws,id})=>{need(this.state.picked.length===2,'Select exactly two revisions to compare.');return compared(await this.read(this.url('compare','&left='+left+'&right='+right+'&expected_head='+head)),ws,id,head,left,right);},v=>{
-        this.state.comparison=v;this.note('Compared revision '+left+' with revision '+right+': '+v.sections.filter(s=>s.changed).length+' of '+v.sections.length+' sections differ.');});}
+        this.state.comparison=v;this.note('Compared revision '+left+' with revision '+right+': '+v.sections.filter(s=>s.changed).length+' of '+v.sections.length+' sections differ.');},same);}
   }
   function mount(w,options={}){
     const d=w.document;if(d.querySelector('#setupHistory'))return;const panel=d.querySelector('#sharedSetupPanel');

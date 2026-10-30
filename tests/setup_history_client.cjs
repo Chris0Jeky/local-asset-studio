@@ -114,3 +114,25 @@ test('a superseded response never overwrites a newer read',async()=>{
   p.details.open=true;p.details.fire('toggle');p.$('setupHistoryRefresh').click();await settle();release();await settle();
   assert.equal(p.rows().length,20);assert.match(p.status(),/of 45 revisions/);assert.match(p.rows()[0].textContent,/Revision 45/);
 });
+function gated(srv){const gates=[];return {gates,calls:srv.calls,fetch:(path,init)=>/\/compare\?/.test(path)?new Promise(r=>gates.push(()=>r(srv.fetch(path,init)))):srv.fetch(path,init)};}
+const shown=p=>p.$('setupHistoryComparison').textContent;
+test('changing the selection while Compare is pending never renders the old pair',async()=>{
+  const g=gated(server()),p=page(g);await p.open();
+  p.boxes()[0].click();p.boxes()[19].click();p.$('setupHistoryCompare').click();await settle();assert.equal(g.gates.length,1);
+  p.boxes()[19].click();p.boxes()[18].click();g.gates[0]();await settle();
+  assert.equal(shown(p),'');assert.doesNotMatch(p.status(),/sections differ|could not be read/);assert.equal(p.$('setupHistoryCompare').disabled,false);
+  p.$('setupHistoryCompare').click();await settle();g.gates[1]();await settle();
+  assert.match(g.calls.at(-1).path,/left=27&right=45&expected_head=45/);assert.match(shown(p),/Revision 27 compared with revision 45/);
+});
+test('clearing the selection while Compare is pending leaves nothing to reappear',async()=>{
+  const g=gated(server()),p=page(g);await p.open();
+  p.boxes()[0].click();p.boxes()[1].click();p.$('setupHistoryCompare').click();await settle();
+  p.boxes()[0].click();p.boxes()[1].click();assert.equal(p.boxes().filter(b=>b.checked).length,0);g.gates[0]();await settle();
+  assert.equal(shown(p),'');assert.equal(p.$('setupHistoryCompare').disabled,true);assert.doesNotMatch(p.status(),/sections differ/);
+});
+test('a stale head on Compare is shown as text and keeps the list and selection',async()=>{
+  const p=page(server({refuse:u=>u.pathname.endsWith('/compare'),refuseText:'Reviewed setup head changed; explicitly restart history inspection'}));await p.open();
+  p.boxes()[0].click();p.boxes()[1].click();p.$('setupHistoryCompare').click();await settle();
+  assert.match(p.status(),/History could not be read: Reviewed setup head changed; explicitly restart history inspection \(HTTP 409\)\. Nothing was changed\./);
+  assert.equal(p.rows().length,20);assert.equal(shown(p),'');assert.equal(p.boxes().filter(b=>b.checked).length,2);
+});
