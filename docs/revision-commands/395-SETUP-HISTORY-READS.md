@@ -192,9 +192,24 @@ raw transport framing and byte bounds, nested export integrity, no retries and
 unchanged history/staging state. Ordinary discovery may skip its two optional
 SDK tests when that tools dependency is absent; the dedicated lane requires it.
 
-Remaining #395 work: browser history UI and accessibility,
-operation/proposal receipt lineage, deliberate load/restore/fork/import commands,
-strict import validation and retention/compaction review. No new write authority
+## Browser history panel (read-only)
+
+`app/static/setup-history.js` adds a "Workspace history (read-only)" disclosure inside the
+"Shared setup & recovery" panel (the only browser surface that holds a Workspace and draft
+identity; the legacy named "Saved setups" are browser-local and have no revisions). Opening it
+issues GETs through the routes above: the newest 20 summaries, then explicit "Load older
+revisions" with the observed `expected_head`, and a two-revision comparison. Responses are
+validated (format, Workspace and draft identity, read-only flags, contiguous order, exact
+continuation) and rendered with `textContent` only; truncation and redaction notes are shown
+as text. Each row links the existing export route for download. It sends no body, no POST and
+no storage or Create-draft call, so it cannot load, restore, fork, import or apply anything.
+The list shows identities and neighbour-to-neighbour differences, not save times: the page
+summary carries no timestamp, and the comparison shows the recorded authoring time.
+Contract: `tests/setup_history_client.cjs`; real routes: `tests/setup_apply_browser.py`.
+
+Remaining #395 work: deliberate browser load/restore/fork/import commands,
+operation/proposal receipt lineage, save times in history summaries, browser history
+accessibility qualification (screen reader, 390px, 200% zoom), strict import validation and retention/compaction review. No new write authority
 or pruning is introduced. #394 selected browser-File preservation is separate.
 Owner creative/licensing/workstation acceptance in HUMAN_TODO is unchanged.
 
