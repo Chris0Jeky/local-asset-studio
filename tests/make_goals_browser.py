@@ -72,7 +72,9 @@ class Handler(fixture.Handler):
             card = next(c for c in CHARACTERS if c['id'] == data['id'])   # edit / trash / restore name the revision they read, as Workspace.card_command checks
             if data['expected_revision'] != card['revision']:
                 return self.json({'error': 'This card changed since you read it; nothing changed. Reload it and try again.', 'code': 'card_revision_conflict'}, 409)
-            if data['action'] == 'edit': card.update(name=data['name'], body=data['body'])
+            if data['action'] == 'edit':
+                card.update({k: data[k] for k in ('name', 'body') if k in data})   # characters.command: only the named fields change; a canon swap re-records the lineage
+                if 'canon_asset_id' in data: card.update(canon_asset_id=data['canon_asset_id'], lineage=[{'role': 'canon', 'asset_id': data['canon_asset_id'], 'sha256': 'a' * 64}])
             else:
                 away = data['action'] == 'trash'
                 card.update(trashed_at=1789228800 if away else None, usable=not away, unusable_reason='This character is put away. Restore it to use it.' if away else None)
@@ -411,6 +413,19 @@ def run(shots):
         for a, sha in zip(fixture.ASSETS, kept_shas): a['sha256'] = sha
         fixture_card(0)['lineage'][0]['sha256'] = 'a' * 64
         fixture_card(0)['revision'] -= 1; resync(); open_picker()
+        # Use as canon (#1205): a kept picture in the line-up becomes the canon with one edit that carries only the revision read. The canon itself
+        # offers no swap; a stale revision changes nothing and says so; nothing is submitted.
+        if not page.locator(sc).evaluate('e=>e.open'): page.locator(sc + ' summary').click()
+        page.wait_for_selector(sc + ' .make-lineup-item'); assert page.locator(sc + ' [data-make-canon="asset-3"]').count() == 1 and not page.locator(sc + ' [data-make-canon="asset-0"]').count(), 'a kept picture offers the swap, the canon does not'
+        fixture_card(0)['revision'] += 1; before_swap = len(posted('/api/characters'))
+        page.locator(sc + ' [data-make-canon="asset-3"]').click(); page.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("canon was not changed")')
+        assert fixture_card(0)['canon_asset_id'] == 'asset-0' and 'canon was not changed' in page.locator('#makeStatus').inner_text(), 'a stale swap changes nothing'
+        if not page.locator(sc).evaluate('e=>e.open'): page.locator(sc + ' summary').click()
+        revision = fixture_card(0)['revision']; page.locator(sc + ' [data-make-canon="asset-3"]').click(); page.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("now uses that picture")')
+        assert posted('/api/characters')[before_swap:] == [{'action': 'edit', 'id': 'character-0', 'expected_revision': revision - 1, 'canon_asset_id': 'asset-3'}, {'action': 'edit', 'id': 'character-0', 'expected_revision': revision, 'canon_asset_id': 'asset-3'}], posted('/api/characters')[before_swap:]
+        assert fixture_card(0)['canon_asset_id'] == 'asset-3' and fixture_card(0)['body'].get('who'), 'the words stay'
+        assert len(jobs()) == before_manage, 'choosing a new canon submits nothing'
+        fixture_card(0)['canon_asset_id'] = 'asset-0'; fixture_card(0)['lineage'][0]['asset_id'] = 'asset-0'; fixture_card(0)['revision'] -= 2; resync(); open_picker()
         character_posts = len(posted('/api/characters'))
         # Edit: the words and the avoid words; a stale revision (changed elsewhere) reloads the card and saves nothing.
         page.locator('[data-make-character-edit="character-0"]').click(); form = page.locator('.make-characters .make-character-form')
