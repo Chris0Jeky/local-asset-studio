@@ -142,6 +142,21 @@ def observe_fixture(handler, action):
     except (ValueError,RecursionError) as exc:
         return handler.json(observation_error(exc),getattr(exc,'status',400))
 
+def route_asset_pages(page, assets):
+    """Answer GET /api/assets/page for one Playwright page from a live list (#1766). It honours what Make's picker sends: media_type, visibility,
+    source (mine/agent, as assetIsAgentRun), q (a substring of the text fields), limit and cursor (an offset). Newest first."""
+    import re
+    from urllib.parse import parse_qsl
+    def agent(a): return isinstance(a.get('run_label'), str) and a['run_label'] != '' and not a['run_label'].startswith('Make · ')
+    def answer(route):
+        query = dict(parse_qsl(urlsplit(route.request.url).query)); source = query.get('source', 'all'); word = query.get('q', '').lower()
+        rows = [a for a in assets if a.get('media_type') == query.get('media_type', a.get('media_type')) and not a.get('trashed_at') and (source == 'all' or agent(a) == (source == 'agent'))
+                and (not word or word in ' '.join(str(a.get(k) or '') for k in ('title', 'filename', 'preset_name', 'notes', 'run_label', 'prompt_excerpt', 'tags')).lower())]
+        rows.sort(key=lambda a: -(a.get('created_at') or 0)); start = int(query.get('cursor', 0)); end = start + int(query.get('limit', 50))
+        route.fulfill(json={'assets': rows[start:end], 'next_cursor': str(end) if end < len(rows) else None})
+    page.route(re.compile(r'/api/assets/page(\?|$)'), answer)
+
+
 class Handler(BaseHTTPRequestHandler):
     workspace_id='1'*32
     def log_message(self, *args):

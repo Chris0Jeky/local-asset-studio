@@ -90,7 +90,7 @@ test('choosing a character uses a live preferred Restyle look or the default and
 
 test('a kept picture in the line-up can become the canon: one edit with the revision read, never a generation (#1205)',async()=>{
   const c={id:'mira',name:'Mira',revision:3,canon_asset_id:'canon',lineage:[{role:'canon',asset_id:'canon'}],body:{who:'Mira'}};
-  const state={pictures:[{id:'canon'},{id:'keep-a',lineage:['canon'],review:'selected'},{id:'skip',lineage:['canon'],review:'rejected'}],review:{},characters:[c]};
+  const state={library:[{id:'canon'},{id:'keep-a',lineage:['canon'],review:'selected'},{id:'skip',lineage:['canon'],review:'rejected'}],review:{},characters:[c]};
   const markup=vm.runInNewContext(privacy+between('  const LINEUP_MAX','  async function fillLineups')+';lineupMarkup',{state,escape:String,thumbUrl:a=>'/t/'+a.id,pictureLabel:a=>a.id});
   const html=markup(c);
   assert.equal((html.match(/data-make-canon="/g)||[]).length,1,'only a kept, non-canon picture offers the swap');
@@ -113,7 +113,7 @@ test('a kept picture in the line-up can become the canon: one edit with the revi
 
 test('the canon a swap replaced stays in the line-up with Use as canon, so one press swaps back (#1718)',async()=>{
   const c={id:'mira',name:'Mira',revision:3,canon_asset_id:'canon',previous_canon_asset_id:null,lineage:[{role:'canon',asset_id:'canon'}],body:{who:'Mira'}};
-  const state={pictures:[{id:'canon'},{id:'keep-a',lineage:['canon'],review:'selected'}],review:{},characters:[c]};
+  const state={library:[{id:'canon'},{id:'keep-a',lineage:['canon'],review:'selected'}],review:{},characters:[c]};
   const markup=vm.runInNewContext(privacy+between('  const LINEUP_MAX','  async function fillLineups')+';lineupMarkup',{state,escape:String,thumbUrl:a=>'/t/'+a.id,pictureLabel:a=>a.id});
   const calls=[],context={state,usableCharacters:()=>[c],requestPrivacy:()=>({privacy:'normal'}),classified:()=>'normal',privacyEpoch:1,CSS:{escape:String},q:()=>null,sayChars(){},refreshCharacters(){},loadCharacters:async()=>{},
     json:async(url,body)=>{calls.push(body);if(body.expected_revision!==c.revision)throw Object.assign(Error('stale'),{status:409});   // characters.py: the replaced canon becomes previous_canon, the revision moves

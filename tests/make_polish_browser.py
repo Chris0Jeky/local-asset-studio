@@ -209,7 +209,7 @@ def make_checks(browser, origin):
     assert saved[5]['id'] in shown and saved[5]['id'] in READS and saved[4]['id'] in READS, (shown, READS)
     # Workspace masks carry the same filename in source; titles use prompt excerpt and date.
     assets = [dict(fixture.ASSETS[0], id='mask', filename='opaque.png', source={'filename':'Anime-Face-Mask_00001_.png'}), dict(fixture.ASSETS[1], prompt_excerpt='A moonlit garden')]
-    page.route('**/api/workspace', lambda route: route.fulfill(json={'assets': assets}))
+    fixture.route_asset_pages(page, assets)
     page.locator('[data-make-goal="repair"]').click(); page.wait_for_selector('#makePictures button')
     assert page.locator('#makePictures button').count() == 1
     assert 'A moonlit garden' in page.locator('#makePictures').inner_text()
