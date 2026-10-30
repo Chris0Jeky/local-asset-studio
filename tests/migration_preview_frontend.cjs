@@ -228,6 +228,16 @@ test('A lost answer is uncertain: no automatic retry, and Check again re-sends t
     assert.match(s.el('#migrationStatus').textContent,/^Moved 1 run \(2 outputs\) to Private\. 1 leftover copy/);assert.equal(s.el('#migrationRecheck').hidden,true);assert.equal(s.writes.length,4);assert.equal(s.run('globalThis.refreshed'),1);
   }
 });
+test('An unknown outcome survives Close: previewing again offers only Check again with the same request ID until the server answers',async()=>{
+  const s=await previewed();let done=s.el('#migrationApply').onclick();const sent=s.writes[1].options.body;s.writes[1].reject(Error('network'));await done;await tick();
+  s.el('#migrationDialog').close();assert.equal(s.el('#migrationDialog').open,false);
+  s.el('#previewMigration').onclick();await tick();
+  assert.equal(s.writes.length,2,'no planner request and no new move while the outcome is unknown');assert.equal(s.el('#migrationDialog').open,true);
+  assert.equal(s.el('#migrationTitle').textContent,'Earlier move: outcome unknown');assert.equal(s.el('#migrationApply').hidden,true);assert.equal(s.el('#migrationRecheck').hidden,false);assert.equal(s.focused.at(-1),'#migrationRecheck');
+  done=s.el('#migrationRecheck').onclick();assert.equal(s.writes[2].url,APPLY);assert.equal(s.writes[2].options.body,sent,'the same body and request ID');
+  s.writes[2].resolve(receipt(JSON.parse(sent).request_id));await done;assert.match(s.el('#migrationStatus').textContent,/^Moved 1 run/);
+  s.el('#migrationDialog').close();select(s,['a','b']);s.el('#previewMigration').onclick();assert.equal(s.writes[3].url,PLAN,'a settled outcome lets a fresh preview start');
+});
 test('A receipt for another request, a non-private destination or an unfinished stage is never reported as a move',async()=>{
   for(const odd of [r=>({...r,request_id:'someone-elses-request-0001'}),r=>({...r,destination:'regular'}),r=>({...r,published:null}),r=>({...r,job_ids:undefined})]){
     const s=await previewed();const done=s.el('#migrationApply').onclick();s.writes[1].resolve(odd(receipt(JSON.parse(s.writes[1].options.body).request_id)));await done;

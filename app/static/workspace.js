@@ -1512,12 +1512,18 @@ async function previewMigration(ids,destination,opener){
   const epoch=++migrationEpoch,privacyEpoch=assetPrivacyEpoch,workspace=assetState.workspace_id,status=$('#migrationStatus'),body=$('#migrationBody'),current=()=>epoch===migrationEpoch&&privacyEpoch===assetPrivacyEpoch;
   migrationOpener=opener||null;
   if(migrationFlight){assetMessage('A move is still running. Wait for it to finish, then preview again.',true);return;}
-  migrationShown=null;migrationAttempt=null;
+  const pending=migrationAttempt?.sent?migrationAttempt:null;migrationShown=null;migrationAttempt=null;
   $('#migrationTitle').textContent='Preview move to '+(destination==='private'?'Private':'Regular');body.innerHTML='';
   for(const id of ['#migrationSwitch','#migrationApply','#migrationRecheck','#migrationRepreview'])$(id).hidden=true;
   $('#migrationNote').innerHTML='<b>'+(destination==='private'?'This preview changes nothing.':'Moving back to Regular is not available yet; this preview changes nothing.')+'</b>';
   if(!$('#migrationDialog').open)$('#migrationDialog').showModal();
   $('#closeMigration').focus();
+  // A sent move whose outcome is unknown survives Close: until the server answers it, the only offer is Check again with the SAME request_id, never a new move.
+  if(pending){
+    migrationAttempt=pending;pending.shown=migrationShown={...pending.shown,epoch,privacyEpoch,workspaceEpoch:assetWorkspaceEpoch};
+    $('#migrationTitle').textContent='Earlier move: outcome unknown';status.textContent='An earlier move to Private may or may not have happened. Press Check again to ask about it before previewing another move.';
+    $('#migrationRecheck').hidden=false;$('#migrationRecheck').focus();return;
+  }
   if(assetActivePrivacy!=='all'){
     status.textContent='This preview needs the All view, so related Regular and Private items can both be found. Nothing was requested and the view has not changed. Switching clears the current selection.';
     $('#migrationSwitch').hidden=false;$('#migrationSwitch').focus();return;
@@ -1543,10 +1549,10 @@ const migrationBusyText='A move is in progress. Keep this window open; closing i
 async function migrationSend(attempt){
   const shown=attempt.shown,status=$('#migrationStatus'),body=$('#migrationBody'),buttons=['#migrationApply','#migrationRecheck','#migrationRepreview','#closeMigration'];
   if(migrationFlight)return;
-  if(shown.epoch!==migrationEpoch||shown.privacyEpoch!==assetPrivacyEpoch||shown.workspaceEpoch!==assetWorkspaceEpoch||shown.workspace!==assetState.workspace_id){
-    for(const id of ['#migrationApply','#migrationRecheck'])$(id).hidden=true;$('#migrationRepreview').hidden=false;status.textContent='This preview is out of date. Nothing was sent. Preview again.';return;
+  if(!attempt.sent&&(shown.epoch!==migrationEpoch||shown.privacyEpoch!==assetPrivacyEpoch||shown.workspaceEpoch!==assetWorkspaceEpoch||shown.workspace!==assetState.workspace_id)){
+    migrationAttempt=null;for(const id of ['#migrationApply','#migrationRecheck'])$(id).hidden=true;$('#migrationRepreview').hidden=false;status.textContent='This preview is out of date. Nothing was sent. Preview again.';return;
   }
-  migrationFlight={privacyEpoch:assetPrivacyEpoch};for(const id of buttons)$(id).disabled=true;
+  attempt.sent=true;migrationFlight={privacyEpoch:assetPrivacyEpoch};for(const id of buttons)$(id).disabled=true;
   status.textContent='Moving '+shown.runs+(shown.runs===1?' run':' runs')+' to Private… '+migrationBusyText;
   let result=null,failure=null;
   try{result=await api('/api/assets/migration-apply',{method:'POST',headers:{'Content-Type':'application/json',...assetPrivacyHeaders('all')},body:attempt.body});}catch(error){failure=error;}
