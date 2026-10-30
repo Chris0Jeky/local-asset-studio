@@ -11,7 +11,8 @@ def summary(old, new):
             if field not in ('ckpt_name','checkpoint_name','lora_name','unet_name','vae_name','clip_name','clip_name1','clip_name2','model_name','diffusion_model'): return None
             item=item.replace('\\','/').rsplit('/',1)[-1]
             return label(item) if len(item)<=40 else None
-        return str(item) if item is None or isinstance(item,(bool,int,float)) else None
+        text=str(item) if item is None or isinstance(item,(bool,int,float)) else None
+        return text if text is not None and len(text)<=40 else None
     def link(item): return isinstance(item,list) and len(item)==2 and isinstance(item[0],str) and type(item[1]) is int
     changes=[]
     for node_id in sorted(old.keys() | new.keys(),key=order):

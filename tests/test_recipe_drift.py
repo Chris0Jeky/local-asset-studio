@@ -63,4 +63,16 @@ class RecipeDriftTests(unittest.TestCase):
         self.assertEqual(recipe_drift.summary(graph,copy.deepcopy(graph)),'')
 
 
+
+class HostileShapeTests(unittest.TestCase):
+    def test_untrusted_shapes_never_raise_and_stay_bounded(self):
+        shapes=[({'1':'x'},{'1':{'class_type':'A','inputs':{}}}),({'1':{'class_type':'A','inputs':None}},{'1':{'class_type':'A','inputs':{'v':[1,2,3]}}}),
+                ({'1':{'class_type':'A','inputs':{'v':{'a':1}}}},{'1':{'class_type':'A','inputs':{'v':['x','y']}}}),
+                ({'1':{'class_type':'A','inputs':{'v':float('nan')}}},{'1':{'class_type':'A','inputs':{'v':1}}}),
+                ({'1':{'class_type':'A','inputs':{'v':int('9'*4000)}}},{'1':{'class_type':'A','inputs':{'v':1}}})]
+        for old,new in shapes:
+            with self.subTest(old=str(old)[:60]):
+                result=recipe_drift.summary(old,new);self.assertIsInstance(result,str);self.assertLess(len(result),400)
+        self.assertIn('value changed',recipe_drift.summary(*shapes[-1]),'an oversized number is redacted, not dropped')
+
 if __name__ == '__main__': unittest.main()
