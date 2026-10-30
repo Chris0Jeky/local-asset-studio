@@ -163,4 +163,14 @@ class ParallelLoadJobsTests(unittest.TestCase):
         pool.assert_not_called(); self.assertIn('good-00', studio.jobs)
 
 
+    def test_each_runs_root_is_resolved_once_per_load(self):
+        """#1801: the containment guard resolves the runs root once per load, not once per run."""
+        studio = self.studio(); self.populate(studio); studio.jobs = {}
+        calls = Counter(); resolve = server.Path.resolve
+        def counted(path, *a, **k): calls[path] += 1; return resolve(path, *a, **k)
+        with patch.object(server.Path, 'resolve', counted): studio._load_jobs()
+        self.assertGreater(len(studio.jobs), 5)
+        # One for the load pass; the restart rewrite of the queued fixture saves through _save, outside it. Before #1801: one per run (21 here).
+        self.assertLessEqual(calls[studio.runs], 2, 'the runs root is not resolved once per run')
+
 if __name__ == '__main__': unittest.main()
