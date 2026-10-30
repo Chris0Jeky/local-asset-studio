@@ -1,5 +1,43 @@
 # UX use-case matrix
 
+## Generate and keyboard review: three journeys — 30 October 2026
+
+Until now no journey pressed Generate or took the keyboard through a review, so "a couple of clicks" and
+"keyboard review" (#313's journey cost) were unmeasured. Three fixture journeys now do, and the matrix counts
+**keys** and **waits** beside clicks. A key step is `CaseRun.key()`: it presses one key, or repeats Tab until a
+target has focus, and records how many presses it took; a wait is the pause for the interface (here, Make's next
+check of a job). Live mode presses no journey key and sends nothing.
+
+| Journey | Held fixed | Measured result |
+| --- | --- | --- |
+| `make-generate-and-keep-by-keyboard` | Make, the WAI fantasy look, one sentence; the fixture's fake job finishes on Make's next check | 4 clicks, 4 keys (3 Tab + K), 1 wait (2.3 s), 8 steps taken / 8 intended, 0 dead ends; PASS |
+| `review-desk-keyboard-winner` | The repo's inert review fixture (real Production/ReviewDesk/SQLite, synthetic pictures), three blind candidates as a 3 x 1 Grid | 9 clicks, 6 keys (1 Tab, 2 arrows, K, W, X), one native confirmation on Reveal, 17 steps taken / 17 intended, 0 dead ends; PASS |
+| `library-review-next-by-keyboard` | The Library with three unreviewed pictures | 0 clicks, 37 keys (33 Tab, Enter, K, W, X), 6 steps taken / 6 intended, 0 dead ends; PASS |
+
+What the numbers say, as measurements and not verdicts:
+
+- **Keeping a Make picture is cheap once you are there:** Generate is one click, the picture is three Tabs away,
+  K keeps it and the next step is one more click.
+- **A Review desk winner is not one key.** K only sets the verdict. A winner must also pass the stated
+  constraints (open the kept candidate, set the check, Save) after Reveal asks for a confirmation, so the 17 steps
+  include 3 for the constraints form.
+- **Reaching Review next by keyboard costs 33 Tab presses from a fresh load of the Library.** The queue itself is
+  four keys.
+
+**What "generation submissions" means now.** `make-generate-and-keep-by-keyboard` really presses Generate, so the page
+POSTs `/api/jobs`. The fixture answers that one route with a synthetic running job and finishes it on the next read
+(`FAKE_JOB` in `tests/studio_use_cases.py`); it holds no queue, engine or ComfyUI client, and every other generation
+route stays refused. The case declares `"fixture_job_submissions": 1` in `research/ux/use-cases.json`. The matrix
+reports those apart as `fixture_job_submissions` and keeps `generation_submissions` for everything else. A second
+job request, any other generation route and every request in live mode stay red (`split_submissions`, pinned in
+`tests/test_use_case_matrix.py`). The review-desk journey runs on its own inert server and counts no generation
+route at all. In live mode all three are written to end as a named STOP before Generate or the first key
+(a key may be a review, which writes); live mode was not run for this change.
+
+`python tests/studio_use_cases.py`: 29/29 PASS, 0 generation submissions, 1 job request to the fixture's fake
+`/api/jobs`, 0 page errors, 212 browser POSTs observed. The registry is now 29 cases. The pictures are fixture assets,
+so these runs establish the interaction path and its cost, not rendered quality or owner acceptance.
+
 ## Word counts no longer charge text behind a closed disclosure — 30 October 2026
 
 The runner counted every `p`, `small`, `label` and similar node whose `offsetParent` was set. Chromium keeps
@@ -668,7 +706,8 @@ Two consequences worth stating plainly:
 
 - **"Prepare" steps are honest; "start" steps are out of scope by design.** Preparing a comparison
   or a native export is measured end to end. Starting one, and everything downstream of a real job,
-  is not exercised anywhere in this suite.
+  is not exercised anywhere in this suite. The one exception (30 Oct 2026) is Make's Generate against the
+  fixture's fake job route, described at the top of this file.
 - **The review case runs against a synthetic finished comparison.** The decision path (reveal the
   settings, open a candidate, write a note, keep a winner) is real and measured; the pictures behind
   it are fixture assets, so nothing here is creative acceptance.

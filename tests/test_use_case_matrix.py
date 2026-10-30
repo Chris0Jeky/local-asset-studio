@@ -25,7 +25,7 @@ class Cases(unittest.TestCase):
         self.assertEqual(CASES['version'], 1)
         self.assertEqual(CASES['refs'], '#278')
         self.assertIsInstance(CASES['starting_views'], list)
-        self.assertTrue(8 <= len(CASES['cases']) <= 26, 'the original journeys plus Restyle, Combine, the same-pair experiment loop, the drawn pose, the several-recipe plan, Vary, a new scene in a saved look, Make seamless, Make parallax layers, and the 16 Oct Make tune, compare and Full editor adapter journeys')
+        self.assertTrue(8 <= len(CASES['cases']) <= 29, 'the original journeys plus Restyle, Combine, the same-pair experiment loop, the drawn pose, the several-recipe plan, Vary, a new scene in a saved look, Make seamless, Make parallax layers, the 16 Oct Make tune, compare and Full editor adapter journeys, the Combine Grid, and the three Generate and keyboard-review journeys')
 
     def test_unique_ids(self):
         ids = [case['id'] for case in CASES['cases']]
@@ -56,6 +56,10 @@ class Cases(unittest.TestCase):
         self.assertTrue(wrong, 'at least one case must take a deliberate wrong turn')
         joined = ' '.join(step['intent'] for step in wrong[0]['steps'])
         self.assertIn('text-only', joined)
+
+    def test_only_the_generate_journey_may_send_a_fixture_job(self):
+        declared = {case['id']: case['fixture_job_submissions'] for case in CASES['cases'] if 'fixture_job_submissions' in case}
+        self.assertEqual(declared, {'make-generate-and-keep-by-keyboard': 1}, 'a journey that sends a job to the fixture must say so, with its count')
 
     def test_every_case_has_a_driver(self):
         for case in CASES['cases']: self.assertIn(case['id'], runner.DRIVERS, case['id'])
@@ -148,6 +152,20 @@ class Totals(unittest.TestCase):
         observed = ['/api/pose/render', '/api/upload', '/api/jobs', '/api/av/projects/abc/render']
         self.assertEqual(runner.submissions(observed), ['/api/jobs', '/api/av/projects/abc/render'])
         self.assertEqual(runner.submissions(['/api/pose/render']), [])
+
+    def test_declared_fixture_job_requests_are_counted_apart_from_real_submissions(self):
+        observed = ['/api/estimate', '/api/jobs', '/api/assets/update']
+        self.assertEqual(runner.split_submissions(observed, 1), (1, 0))
+        self.assertEqual(runner.split_submissions(observed, 0), (0, 1), 'an undeclared journey (and live mode) keeps every submission red')
+        self.assertEqual(runner.split_submissions(observed + ['/api/jobs'], 1), (1, 1), 'a second job request past the declared count is a real submission')
+        self.assertEqual(runner.split_submissions(['/api/production/abc/start'], 1), (0, 1), 'only the faked /api/jobs route is ever excused')
+        self.assertEqual(runner.split_submissions([], 1), (0, 0))
+
+    def test_keys_and_waits_are_counted(self):
+        rows = [{'action': 'press', 'performed': True, 'keys': 7}, {'action': 'press', 'performed': False, 'keys': 0},
+                {'action': 'wait', 'performed': True}, {'action': 'wait', 'performed': False}, {'action': 'click', 'performed': True}]
+        totals = runner.case_totals(rows)
+        self.assertEqual((totals['keys'], totals['waits'], totals['clicks']), (7, 1, 1))
 
     def test_empty_case(self):
         empty = runner.case_totals([])

@@ -1081,6 +1081,158 @@
           "expect": "the next generation still needs an explicit click"
         }
       ]
+    },
+    {
+      "id": "make-generate-and-keep-by-keyboard",
+      "goal": "Make an anime character picture from a look and one sentence, press Generate, wait for it to finish, keep it with the keyboard and take the next step.",
+      "starting_view": "make",
+      "success_condition": "Generate sends exactly one job request, to the fixture's fake job route; the synthetic job finishes and its picture card appears; Tab reaches the picture and K keeps it through the library; Restyle opens with that picture chosen; no request reaches ComfyUI.",
+      "wrong_turn": false,
+      "fixture_job_submissions": 1,
+      "steps": [
+        {
+          "intent": "say this is an anime character",
+          "expect": "looks are shown as example pictures"
+        },
+        {
+          "intent": "choose a look by its picture",
+          "expect": "one description box and Generate"
+        },
+        {
+          "intent": "describe the picture in plain words",
+          "expect": "Generate is ready"
+        },
+        {
+          "intent": "press Generate",
+          "expect": "Make says it started and a card for the run appears"
+        },
+        {
+          "intent": "wait for the picture to finish",
+          "expect": "the card shows the finished picture with Keep and its next steps"
+        },
+        {
+          "intent": "reach the new picture with the Tab key",
+          "expect": "focus lands on the finished picture"
+        },
+        {
+          "intent": "keep the picture with the K key",
+          "expect": "the picture is marked kept and saved in the library"
+        },
+        {
+          "intent": "take the next step: restyle this picture",
+          "expect": "Make opens Restyle with this picture already chosen"
+        }
+      ]
+    },
+    {
+      "id": "review-desk-keyboard-winner",
+      "goal": "Open the Review desk on three blind candidates, mark them with the K, W and X keys, reveal the settings, record the kept one as the winner and export the evidence.",
+      "starting_view": "review",
+      "success_condition": "K, W and X each save one candidate's verdict from the Grid, after Reveal the kept candidate is marked as meeting the stated constraints and chosen as the winner, the decision is recorded and the evidence pack is offered; nothing is generated and ComfyUI is never contacted.",
+      "wrong_turn": false,
+      "steps": [
+        {
+          "intent": "open the Review desk for a finished comparison of three pictures",
+          "expect": "the desk offers to prepare a blind review"
+        },
+        {
+          "intent": "start the blind review",
+          "expect": "three candidates appear with their settings hidden"
+        },
+        {
+          "intent": "show the candidates as a grid",
+          "expect": "each candidate is one cell that takes keyboard focus"
+        },
+        {
+          "intent": "reach the first candidate with the Tab key",
+          "expect": "focus lands on a candidate"
+        },
+        {
+          "intent": "keep it with the K key",
+          "expect": "its verdict reads Keep"
+        },
+        {
+          "intent": "move to the next candidate with the arrow key",
+          "expect": "focus moves to the next cell"
+        },
+        {
+          "intent": "mark it needs work with the W key",
+          "expect": "its verdict reads Needs work"
+        },
+        {
+          "intent": "move to the third candidate with the arrow key",
+          "expect": "focus moves to the last cell"
+        },
+        {
+          "intent": "mark it not this one with the X key",
+          "expect": "its verdict reads Not this and none is left unreviewed"
+        },
+        {
+          "intent": "reveal the settings and accept the confirmation",
+          "expect": "the saved settings and the decision form appear"
+        },
+        {
+          "intent": "open the kept candidate again",
+          "expect": "its assessment form shows Keep and the stated constraints"
+        },
+        {
+          "intent": "say it meets the stated constraints",
+          "expect": "the check reads pass"
+        },
+        {
+          "intent": "save that assessment",
+          "expect": "the desk says Saved"
+        },
+        {
+          "intent": "choose the kept candidate as the winner",
+          "expect": "the winner is selected"
+        },
+        {
+          "intent": "say why in one line",
+          "expect": "the reason is in the decision"
+        },
+        {
+          "intent": "record the decision",
+          "expect": "the desk reads Decision recorded"
+        },
+        {
+          "intent": "take the next step: export the review evidence",
+          "expect": "the download links for the evidence pack appear"
+        }
+      ]
+    },
+    {
+      "id": "library-review-next-by-keyboard",
+      "goal": "Open the Library, reach Review next with the Tab key, open the queue with Enter and review three unreviewed pictures with the K, W and X keys.",
+      "starting_view": "assets",
+      "success_condition": "Tab reaches Review next, Enter opens the queue of three unreviewed pictures, K, W and X each save one review through the library and advance, and the queue ends with the button reading Nothing to review.",
+      "wrong_turn": false,
+      "steps": [
+        {
+          "intent": "read how many pictures wait for review",
+          "expect": "Review next names the count"
+        },
+        {
+          "intent": "reach Review next with the Tab key",
+          "expect": "focus lands on Review next"
+        },
+        {
+          "intent": "open the review queue with Enter",
+          "expect": "the first unreviewed picture opens with the queue's keys listed"
+        },
+        {
+          "intent": "keep it with the K key",
+          "expect": "the review is saved and the next picture opens"
+        },
+        {
+          "intent": "mark the next one needs work with the W key",
+          "expect": "the review is saved and the next picture opens"
+        },
+        {
+          "intent": "mark the last one not this with the X key",
+          "expect": "the review is saved and the queue finishes"
+        }
+      ]
     }
   ]
 }
