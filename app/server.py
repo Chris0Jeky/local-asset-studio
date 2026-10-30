@@ -1708,7 +1708,7 @@ class Studio:
         try:
             if "record_error" in job: raise StudioError("An unreadable run record cannot be saved; inspect its folder first")
             directory = self._job_directory(job.get("id"),job.get('privacy','regular'))
-            if job["id"] in getattr(self, "migrating", ()): raise StudioError("This run is moving to Private; nothing was saved. Try again when the move finishes", code="migration_in_progress")
+            if job["id"] in getattr(self, "migrating", ()): raise StudioError("This run is moving between Regular and Private; nothing was saved. Try again when the move finishes", code="migration_in_progress")
             recipe = {"preset_id": job["preset_id"], "controls": job["controls"], "batch_count": job["batch_count"], "graph_path": job["graph_path"], "created_at": job["created_at"]}
             recipe.update(references=job.get("references", []), parent_assets=job.get("parent_assets", []))
             if job.get('privacy')=='private':recipe['privacy']='private'

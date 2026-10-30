@@ -144,17 +144,18 @@ async function previewed(over,privacies,view){
   const s=configured(privacies,view);select(s,['a','b']);s.run("globalThis.refreshed=0;refreshAssets=async()=>{globalThis.refreshed++;return true;}");
   const done=s.el('#previewMigration').onclick();s.writes[0].resolve(ready(over));await done;return s;
 }
-test('The Move button shows only for a clean, applicable, current Regular-to-Private preview and carries the run count',async()=>{
+test('The Move button shows only for a clean, applicable, current preview and carries the run count',async()=>{
   let s=await previewed({items:[...plan().items,{kind:'run',id:'job-b'},{kind:'run',id:'job-c'}]});
   assert.equal(s.el('#migrationApply').hidden,false);assert.equal(s.el('#migrationApply').textContent,'Move 3 runs to Private');
-  assert.match(s.el('#migrationNote').innerHTML,/cannot be moved back yet/);
+  assert.match(s.el('#migrationNote').innerHTML,/can be moved back to Regular the same way/);assert.doesNotMatch(s.el('#migrationNote').innerHTML,/not available yet|cannot be moved back/);
   s=await previewed();assert.equal(s.el('#migrationApply').textContent,'Move 1 run to Private');
   s=await previewed({blockers:[{code:'run_not_settled',run_id:'job-a'}]});assert.equal(s.el('#migrationApply').hidden,true,'a blocker hides it');
   s=await previewed({apply_available:false});assert.equal(s.el('#migrationApply').hidden,true,'the server says apply is unavailable');
   s=await previewed({items:[{kind:'asset',id:'a'}]});assert.equal(s.el('#migrationApply').hidden,true,'no run, nothing to move');
   s=configured(['private','private']);select(s,['a','b']);let done=s.el('#previewMigration').onclick();
   s.writes[0].resolve(ready({destination:'regular'}));await done;
-  assert.equal(s.el('#migrationApply').hidden,true,'Private to Regular stays preview-only');assert.match(s.el('#migrationNote').innerHTML,/Moving back to Regular is not available yet; this preview changes nothing\./);
+  assert.equal(s.el('#migrationApply').hidden,false,'Private to Regular applies too');assert.equal(s.el('#migrationApply').textContent,'Move 1 run to Regular');
+  assert.match(s.el('#migrationNote').innerHTML,/become visible in the Regular view and to agents reading Regular/);assert.doesNotMatch(s.el('#migrationNote').innerHTML,/not available yet/);
   s=configured();select(s,['a','b']);done=s.el('#previewMigration').onclick();s.run('assetPrivacyEpoch++');s.writes[0].resolve(ready());await done;
   assert.equal(s.el('#migrationApply').hidden,true,'a stale privacy epoch never shows it');
   s=await previewed();s.run('migrationEpoch++');s.el('#migrationApply').onclick();await tick();
@@ -193,9 +194,8 @@ test('Each refusal code is one plain sentence, hides Apply, offers only what is 
     ['migration_busy',/^Another move is running, possibly this one\. Wait a moment, then press Check again\.$/,'check'],
     ['migration_request_conflict',/names a different move.*Preview again/,'preview'],
     ['migration_recovery_pending',/earlier move did not finish.*Restart the Studio/,''],
-    ['migration_destination_occupied',/same ID already exists.*Private view/,''],
+    ['migration_destination_occupied',/same ID already exists where this move would put it.*All view/,''],
     ['migration_scope_required',/needs the All view/,''],
-    ['migration_direction_unsupported',/back to Regular is not built yet/,''],
     ['migration_in_progress',/has not finished.*nothing is retried automatically/,''],
     ['migration_storage_full',/disk is full/,'preview'],['migration_verify_failed',/did not match its original/,'preview'],['migration_failed',/failed before anything was published/,'preview']];
   for(const [code,pattern,offer] of cases){
@@ -292,4 +292,27 @@ test('A hung apply is aborted after a generous timeout and treated as an unknown
   assert.equal(s.el('#closeMigration').disabled,false,'the modal is released');assert.equal(s.el('#migrationApply').disabled,false);assert.equal(s.run('globalThis.refreshed'),0);assert.equal(s.writes.length,2,'no automatic retry');
   const again=s.el('#migrationRecheck').onclick();assert.equal(s.writes[2].url,APPLY);assert.equal(s.writes[2].options.body,sent,'the same body and request ID');assert.equal(JSON.parse(s.writes[2].options.body).request_id,id);
   s.writes[2].resolve(receipt(id));await again;assert.match(s.el('#migrationStatus').textContent,/^Moved 1 run/);assert.equal(s.timers.size,0,'a settled apply leaves no timer');
+});
+// ---- Private to Regular: the last #1678 direction ----
+test('A Private-to-Regular move sends destination regular, reports Regular, and every follow-up keeps that direction',async()=>{
+  const s=await previewed({destination:'regular'},['private','private']);assert.equal(s.el('#migrationApply').textContent,'Move 1 run to Regular');
+  let done=s.el('#migrationApply').onclick();const body=JSON.parse(s.writes[1].options.body);
+  assert.equal(body.destination,'regular');assert.match(s.el('#migrationStatus').textContent,/^Moving 1 run to Regular…/);
+  s.writes[1].reject(Error('network'));await done;await tick();
+  s.el('#migrationDialog').close();s.el('#previewMigration').onclick();await tick();
+  assert.match(s.el('#migrationStatus').textContent,/^An earlier move to Regular may or may not have happened/);
+  done=s.el('#migrationRecheck').onclick();assert.equal(s.writes[2].options.body,s.writes[1].options.body,'the same body and request ID');
+  s.writes[2].resolve(receipt(body.request_id,{destination:'private'}));await done;
+  assert.match(s.el('#migrationStatus').textContent,/may or may not have happened/,'a receipt for the other direction is not this move');
+  done=s.el('#migrationRecheck').onclick();s.writes[3].resolve(receipt(body.request_id,{destination:'regular',cleanup_remaining:['x']}));await done;
+  assert.match(s.el('#migrationStatus').textContent,/^Moved 1 run \(2 outputs\) to Regular\. 1 leftover copy in Private could not be deleted yet/);
+  assert.equal(s.el('#migrationTitle').textContent,'Moved to Regular');assert.match(s.el('#migrationNote').innerHTML,/in Regular now/);assert.equal(s.run('globalThis.refreshed'),1);
+});
+test('After a stale Private-to-Regular move, Preview again plans the same direction, and an open asset learns it is Regular',async()=>{
+  let s=await previewed({destination:'regular'},['private','private']);let done=s.el('#migrationApply').onclick();s.writes[1].reject(fail('migration_stale'));await done;
+  done=s.el('#migrationRepreview').onclick();assert.equal(s.writes[2].url,PLAN);assert.equal(JSON.parse(s.writes[2].options.body).destination,'regular');s.writes[2].resolve(ready({destination:'regular'}));await done;
+  s=configured(['private','private']);s.run("globalThis.refreshed=0;refreshAssets=async()=>{globalThis.refreshed++;return true;}");s.run("openAsset('a')");
+  const pre=s.el('#assetMigrate').onclick();s.writes[0].resolve(ready({destination:'regular',asset_ids:['a']}));await pre;
+  done=s.el('#migrationApply').onclick();s.writes[1].resolve(receipt(JSON.parse(s.writes[1].options.body).request_id,{destination:'regular',asset_ids:['a']}));await done;
+  assert.equal(s.run('activeAsset.privacy'),'regular');assert.equal(s.el('#assetMigrate').textContent,'Preview move to Private…');
 });

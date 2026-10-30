@@ -112,7 +112,7 @@ class RunMigrationPlanTests(unittest.TestCase):
         self.assertIn('already_in_destination', self.codes(plan))
         self.assertEqual({i['classification'] for i in self.kinds(plan, 'asset')}, {'private'})
         regular = self.plan(headers={'X-Studio-Privacy': 'private'}, job_ids=[job['id']], destination='regular')
-        self.assertNotIn('already_in_destination', self.codes(regular))
+        self.assertNotIn('already_in_destination', self.codes(regular)); self.assertTrue(regular['apply_available'])  # Private->Regular applies too (#1678)
 
     def test_missing_sibling_and_missing_snapshot_are_blockers(self):
         job = self.completed(3); ids = [o['asset_id'] for o in job['outputs']]
