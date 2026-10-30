@@ -53,6 +53,12 @@ class RecipeProvenanceTests(unittest.TestCase):
         with patch.object(server, "digest_file", side_effect=AssertionError("hashed a model")): s, job = self.job(pin(ZERO))
         self.assertEqual(server.Studio(self.root).jobs[job["id"]]["provenance"], job["provenance"])
 
+    def test_a_provenance_fault_never_blocks_job_creation(self):
+        self.library(pin(ZERO)); s = server.Studio(self.root)
+        with patch.object(server.recipe_provenance, "build", side_effect=AttributeError("malformed node")):
+            job = s.jobs[s.create_job({"preset_id": "demo", "controls": {"positive": "x"}})["id"]]
+        self.assertEqual(job["status"], "queued"); self.assertIn("AttributeError", job["provenance"]["unavailable"])
+
     def test_export_copies_provenance_and_old_jobs_export_unchanged(self):
         s, job = self.job(pin(ZERO)); exported = s.export_recipe(job)
         self.assertEqual(exported["provenance"], job["provenance"])

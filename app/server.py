@@ -941,7 +941,7 @@ class Studio:
         if payload.get("tile") is not None: job["tile"] = copy.deepcopy(payload["tile"])
         if payload.get("parallax") is not None: job["parallax"] = copy.deepcopy(payload["parallax"])
         job["references"] = preset.get("_prepared_references", [])
-        job["provenance"] = self._provenance(preset, graph, job["references"])
+        job["provenance"] = Studio._provenance(self, preset, graph, job["references"])
         job["comfy_root"] = str(self.comfy_root); job["comfy_url"] = self.comfy_url
         if reading: job['host_commit_readings']=[dict(reading, phase='prepared', recorded_at=time.time(), **({'deferred': True} if deferred else {}))]
         if deferred:
@@ -1232,12 +1232,11 @@ class Studio:
 
     def _provenance(self, preset, graph, references):
         """#1765: model/environment identity from existing evidence only (pins, cached digests, build); computed once here, never at export, so a recipe's hash stays stable."""
-        rows, assets, unavailable = [], [], None
-        try: assets = self.library.manifest().get('assets', []); rows = self.preset_requirements(preset, graph, assets=assets, fingerprints=self.model_fingerprints())
-        except (ValueError, OSError, KeyError, TypeError) as exc: unavailable = 'model identity unavailable: ' + str(exc)[:200]
-        result = recipe_provenance.build((self.build or {}).get('sha'), preset.get('backend_id', 'primary'), rows, assets, self.library.models, references)
-        if unavailable: result['unavailable'] = unavailable
-        return result
+        # Advisory evidence: no fault here may block job creation, so anything unexpected becomes an explicit unavailable marker.
+        try:
+            assets = self.library.manifest().get('assets', []); rows = self.preset_requirements(preset, graph, assets=assets, fingerprints=self.model_fingerprints())
+            return recipe_provenance.build((self.build or {}).get('sha'), preset.get('backend_id', 'primary'), rows, assets, self.library.models, references)
+        except Exception as exc: return {'unavailable': 'model identity unavailable: ' + (type(exc).__name__ + ': ' + str(exc))[:200]}
 
     def export_recipe(self, job):
         if "record_error" in job: raise StudioError("An unreadable run record has no recipe to export; inspect its folder first")
