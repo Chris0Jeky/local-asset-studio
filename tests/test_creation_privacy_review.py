@@ -2,6 +2,8 @@
 import copy
 import io
 import json
+import os
+import tempfile
 import unittest
 from urllib.error import HTTPError
 from unittest.mock import patch
@@ -10,6 +12,14 @@ import zipfile
 import test_server as fixture
 import asset_thumbs
 import continuation
+
+
+def symlinks_available():
+    with tempfile.TemporaryDirectory() as name:
+        target = os.path.join(name, 'target'); os.mkdir(target)
+        try: os.symlink(target, os.path.join(name, 'link'), target_is_directory=True); return True
+        except (OSError, NotImplementedError): return False
+SYMLINKS_AVAILABLE = symlinks_available()
 
 
 class CorePrivacyReviewTests(unittest.TestCase):
@@ -78,6 +88,7 @@ class CorePrivacyReviewTests(unittest.TestCase):
         self.assertEqual(result['confidence'], 'none')
 
     def test_restart_never_copies_a_private_workflow_through_a_regular_record_symlink(self):
+        if not SYMLINKS_AVAILABLE: self.skipTest('symlinks unavailable on this host (needs the Windows symlink privilege)')
         studio = self.studio()
         regular = studio.create_job({'preset_id': 'demo', 'controls': {'positive': 'Regular source'}}, enqueue=False)
         private = studio.create_job({'preset_id': 'demo', 'privacy': 'private',
@@ -92,6 +103,7 @@ class CorePrivacyReviewTests(unittest.TestCase):
         self.assertTrue(regular_graph.is_symlink(), 'Refusal must retain the link as evidence, not materialize its private target')
 
     def test_private_thumbnail_directory_cannot_alias_regular_cache(self):
+        if not SYMLINKS_AVAILABLE: self.skipTest('symlinks unavailable on this host (needs the Windows symlink privilege)')
         studio = self.studio(); asset = studio.import_image('private', 'image/png', fixture.png(), privacy='private')['asset']
         regular = studio.assets.root / 'thumbs'; regular.mkdir(exist_ok=True)
         private = studio.assets.storage_root('private') / 'thumbs'
@@ -100,6 +112,7 @@ class CorePrivacyReviewTests(unittest.TestCase):
         self.assertEqual(list(regular.iterdir()), [])
 
     def test_cached_private_thumbnail_cannot_be_a_symbolic_link(self):
+        if not SYMLINKS_AVAILABLE: self.skipTest('symlinks unavailable on this host (needs the Windows symlink privilege)')
         studio = self.studio(); asset = studio.import_image('private', 'image/png', fixture.png(), privacy='private')['asset']
         folder = studio.assets.storage_root('private') / 'thumbs'; folder.mkdir()
         target = folder / f"{asset['sha256']}-{asset_thumbs.DEFAULT_SIZE}-v{asset_thumbs.THUMB_VERSION}.webp"
@@ -108,6 +121,7 @@ class CorePrivacyReviewTests(unittest.TestCase):
         with self.assertRaises(ValueError): asset_thumbs.thumbnail(studio.assets, asset['id'], privacy='private')
 
     def test_private_export_directory_cannot_alias_regular_exports(self):
+        if not SYMLINKS_AVAILABLE: self.skipTest('symlinks unavailable on this host (needs the Windows symlink privilege)')
         studio = self.studio(); asset = studio.import_image('private', 'image/png', fixture.png(), privacy='private')['asset']
         regular = studio.assets.root / 'exports'; regular.mkdir(exist_ok=True)
         private = studio.assets.storage_root('private') / 'exports'; private.symlink_to(regular, target_is_directory=True)
