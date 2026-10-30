@@ -73,18 +73,18 @@ test('a tuned recipe replaces inherited sampler and scheduler with its offered d
   }
 });
 
-test('choosing a character uses a live preferred Restyle look or the default and shows its look note',()=>{
+test('choosing a character uses a live preferred Restyle look or the default and shows its look note',async()=>{
   const fallback={id:'default'},preferred={id:'preferred'},note="Its preferred look is put away; Make uses the goal's default look.";
   for(const [available,look_note,expected] of [[[fallback,preferred],null,'preferred'],[[fallback],note,'default'],[[fallback,preferred],note,'default'],[[fallback],"Its preferred look's recipe is no longer usable; Make uses the goal's default look.",'default'],[[],note,null],[[fallback,{id:'previous'}],note,'previous']]){
     const c={id:'mira',canon_asset_id:'canon',body:{who:'Mira',clothes:'green cloak',look_id:'preferred'},look_note},state={form:{},styleLook:'previous',styleWords:true};
-    let said='';const context={state,window:{},usableCharacters:()=>[c],lookPictures:()=>available,goal:()=>({intent:'restyle'}),choosePicture:id=>{state.pick={id};},renderPictures(){},say:text=>{said=text;},q:()=>null};
-    const choose=vm.runInNewContext(privacy+between('  function chooseCharacter(','  const chosenCharacter=')+';chooseCharacter',context);context.chooseCharacter=choose;
+    let said='';const context={state,window:{},usableCharacters:()=>[c],lookPictures:()=>available,goal:()=>({intent:'restyle'}),privacyEpoch:0,needAsset:async id=>({id}),choosePicture:(id,asset)=>{state.pick=asset;},renderPictures(){},say:text=>{said=text;},q:()=>null};
+    const choose=vm.runInNewContext(privacy+between('  async function chooseCharacter(','  const chosenCharacter=')+';chooseCharacter',context);context.chooseCharacter=choose;
     const click=vm.runInNewContext('(function(e){'+between("    const character=e.target.closest('[data-make-character]');","    const saveChar=e.target.closest(")+'})',context);
-    click({target:{closest:()=>({dataset:{makeCharacter:'mira'}})}});
+    click({target:{closest:()=>({dataset:{makeCharacter:'mira'}})}});await new Promise(r=>setImmediate(r));
     assert.equal(state.character,'mira');assert.equal(state.pick.id,'canon');assert.equal(state.form.who,'Mira');assert.equal(state.form.clothes,'green cloak');
     assert.equal(state.styleLook,expected);assert.equal(state.styleWords,!available.length);assert.ok(said.includes(look_note||'Your character is chosen'));
-    context.goal=()=>({intent:'edit'});said='';click({target:{closest:()=>({dataset:{makeCharacter:'mira'}})}});assert.ok(!said.includes('preferred'),'the look note is for Restyle only');context.goal=()=>({intent:'restyle'});
-    delete c.body.look_id;state.styleLook='own choice';choose('mira');assert.equal(state.styleLook,'own choice','no preferred look leaves the current choice alone');
+    context.goal=()=>({intent:'edit'});said='';click({target:{closest:()=>({dataset:{makeCharacter:'mira'}})}});await new Promise(r=>setImmediate(r));assert.ok(!said.includes('preferred'),'the look note is for Restyle only');context.goal=()=>({intent:'restyle'});
+    delete c.body.look_id;state.styleLook='own choice';await choose('mira');assert.equal(state.styleLook,'own choice','no preferred look leaves the current choice alone');
   }
 });
 

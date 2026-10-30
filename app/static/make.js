@@ -53,9 +53,9 @@
   const licence=p=>nonCommercial(p)?'<small class="make-licence" title="'+escape(p.commercial_note)+'">Non-commercial</small>':'';
   const FINAL=['completed','failed','partial','uncertain','not_submitted','cancelled','abandoned'];
   const POLISH={face:'Fix face',details:'Fix hands and details',refine:'Refine 1.5\u00d7',upscale:'Upscale 2\u00d7'};
-  const state={selected:{},goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],grids:{},library:null,agentsAny:null,picking:false,review:{},polish:{},polishing:new Set(),varying:new Set(),varyHeld:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',poseRoute:'copy',pose:null,posePicking:false,compare:false,compareLooks:[],sweeps:{},characters:[],character:null,allPictures:false,charSave:null,charEdit:null,charMigrate:null,charStale:false,charForm:{},openers:new Set(),noteGone:false};
-  // state.pictures lists what the picker grids have loaded. Setting it to null drops every cached page, the line-up library and the agent-run probe.
-  let picturesLoaded=null,pictureGen=0;Object.defineProperty(state,'pictures',{enumerable:true,get:()=>picturesLoaded,set(v){picturesLoaded=v;if(v===null){pictureGen++;state.grids={};state.library=null;state.agentsAny=null;}}});
+  const state={selected:{},goal:'character',look:null,looks:null,examples:{},error:'',busy:false,status:'',missing:'',runs:[],grids:{},library:null,found:{},agentsAny:null,picking:false,review:{},polish:{},polishing:new Set(),varying:new Set(),varyHeld:new Set(),tune:{},tuneOpen:false,pick:null,repicking:false,queries:{},form:{},fix:'face',styleLook:null,styleWords:false,poseMode:'picture',poseRoute:'copy',pose:null,posePicking:false,compare:false,compareLooks:[],sweeps:{},characters:[],character:null,allPictures:false,charSave:null,charEdit:null,charMigrate:null,charStale:false,charForm:{},openers:new Set(),noteGone:false};
+  // state.pictures lists what the picker grids have loaded. Setting it to null drops every cached page, the line-up library, resolved off-page pictures and the agent-run probe.
+  let picturesLoaded=null,pictureGen=0;Object.defineProperty(state,'pictures',{enumerable:true,get:()=>picturesLoaded,set(v){picturesLoaded=v;if(v===null){pictureGen++;state.grids={};state.library=null;state.found={};state.agentsAny=null;}}});
   // Round 5 (#1492): Anima pictures send Fix face and Fix hands to one WAI face-then-hand repaint, so they are one button, and say what that costs.
   const MERGED='Fix face and hands',FIX_HINT='Repaints with a WAI model and can change this look’s face finish — keep the original and compare.',UP_HINT='Smooths fine texture; upscale the version you chose.',REFINE_HINT='Refine redraws lightly at 1.5\u00d7: on the 19 Oct lab picture it kept the face and added eye and lash detail. Compare with the original; upscale last.';
   const merged=id=>{const f=state.polish[id+':face'],d=state.polish[id+':details'];return !!(f?.ok&&d?.ok&&f.preset_id&&f.preset_id===d.preset_id);};
@@ -725,8 +725,8 @@
   // height. It reads the whole Workspace list once it is opened (each picture's lineage names its parent pictures): no new route, no
   // generation. A parent that is put away or not a picture breaks the chain there. Direct children only would miss edits of edits.
   const LINEUP_MAX=24;
-  function lineupMarkup(c){
-    const pics=state.library||[],canon=pics.find(a=>a.id===c.canon_asset_id)||{id:c.canon_asset_id,privacy:classified(c)},family=new Set([c.canon_asset_id]),rec=(c.lineage||[]).find(l=>l?.role==='canon');
+  function lineupMarkup(c,pics=state.library||[]){
+    const canon=pics.find(a=>a.id===c.canon_asset_id)||{id:c.canon_asset_id,privacy:classified(c)},family=new Set([c.canon_asset_id]),rec=(c.lineage||[]).find(l=>l?.role==='canon');
     // Seeded from the recorded canon identity too: when the recorded asset is put away and a live copy of its bytes stands in (characters.py
     // canon_asset), kept pictures still descend from the recorded asset or from any picture with the recorded sha256.
     if(rec?.asset_id)family.add(rec.asset_id);if(rec?.sha256)for(const a of pics)if(a.sha256===rec.sha256)family.add(a.id);
@@ -740,8 +740,8 @@
       +(kept.length>shown.length?'<p class="muted">'+(kept.length-shown.length)+' older kept picture'+(kept.length-shown.length===1?'':'s')+' not shown. The line-up holds the newest '+LINEUP_MAX+'.</p>':'');
   }
   async function fillLineups(){const boxes=[...view.querySelectorAll('[data-make-lineup]')].filter(b=>b.closest('details').open),epoch=privacyEpoch;if(!boxes.length)return;
-    try{await loadLibrary();if(epoch!==privacyEpoch)return;}catch(error){if(epoch!==privacyEpoch)return;for(const b of boxes)b.innerHTML='<p class="make-error">'+escape(error.message)+'</p>';return;}
-    for(const b of boxes){const c=usableCharacters().find(x=>x.id===b.dataset.makeLineup);if(c&&b.isConnected)b.innerHTML=lineupMarkup(c);}}
+    let library;try{library=await loadLibrary();if(epoch!==privacyEpoch)return;}catch(error){if(epoch!==privacyEpoch)return;for(const b of boxes)b.innerHTML='<p class="make-error">'+escape(error.message)+'</p>';return;}
+    for(const b of boxes){const c=usableCharacters().find(x=>x.id===b.dataset.makeLineup);if(c&&b.isConnected)b.innerHTML=lineupMarkup(c,library);}}
   // One-time migration: Combine used to remember who / clothes per picture in this browser only (studio-fills:<picture>). When no
   // character exists yet, kept pictures that still carry those answers can be saved as one. Offered, never automatic; "No thanks"
   // is remembered here (a failing store just means it stays quiet for this visit).
@@ -757,7 +757,7 @@
       +'<div class="make-row"><button type="button" class="make-link" data-make-note-dismiss>No thanks</button></div></section>';}
   function openMigration(id){const saved=rememberedAnswers()[id];if(!saved)return;clearCharForms();state.charMigrate=id;state.charForm={name:'',who:saved.who,clothes:saved.clothes};characterNote(goal());q('#makeCharNote [data-make-char="name"]')?.focus();}
   function dismissNote(){state.noteGone=true;try{makeStorage.setItem(NOTE_KEY,'dismissed');}catch{}clearCharForms();characterNote(goal());q('.make-step h2')?.focus();say('Okay, you will not be asked again.');}
-  function chooseCharacter(id){const c=usableCharacters().find(x=>x.id===id);if(!c||!usePrivacy(c)||choosePicture(c.canon_asset_id)===false)return false;
+  async function chooseCharacter(id){const c=usableCharacters().find(x=>x.id===id);if(!c||!usePrivacy(c))return false;const canon=await needAsset(c.canon_asset_id,classified(c));if(!canon||choosePicture(c.canon_asset_id,canon)===false)return false;
     state.character=c.id;state.form.who=c.body.who||'';state.form.clothes=c.body.clothes||'';
     if(goal().intent==='restyle'&&c.body.look_id){const list=lookPictures();state.styleLook=(!c.look_note&&list.find(l=>l.id===c.body.look_id)||list.find(l=>l.id===state.styleLook)||list[0])?.id||null;state.styleWords=!list.length;}
     return goal().intent==='restyle'&&c.body.look_id?c.look_note:null;}
@@ -936,24 +936,39 @@
   // The longest word narrows on the server (title, file, recipe, notes, prompt, tags); renderGrid then filters on every word.
   const gridWord=id=>String(state.queries[id]||'').toLowerCase().split(/\s+/).filter(Boolean).sort((a,b)=>b.length-a.length)[0]?.slice(0,200)||'';
   const gridKey=id=>readScope()+'|'+(state.allPictures?'all':'mine')+'|'+gridWord(id);
-  const pagePath=params=>assetReadURL('/api/assets/page',{media_type:'image',visibility:'active',limit:PICTURE_PAGE,...params});
+  const pagePath=params=>assetReadURL('/api/assets/page',{media_type:'image',visibility:'active',limit:PICTURE_PAGE,archive:'all',...params});   // archive=all: the old picker listed archived images too
   // The first page of grid `id` for its current search and scope, or with `more` the next page. A stale or invalid cursor restarts from the first page, never a mixed list.
   async function loadPictures(id,more){
     const epoch=privacyEpoch,gen=pictureGen,key=gridKey(id),had=state.grids[id];
     if(more?!had?.next||had.key!==key:had?.key===key)return had;
     const token=(reads.get(id)||0)+1;reads.set(id,token);
-    const gone=()=>epoch!==privacyEpoch||gen!==pictureGen||reads.get(id)!==token;
+    const gone=()=>epoch!==privacyEpoch||gen!==pictureGen||reads.get(id)!==token||gridKey(id)!==key;   // a reply for a query the box no longer holds is dropped
     const probe=()=>state.agentsAny===null?json(pagePath({source:'agent',limit:1})).then(p=>p.assets.length>0,()=>null):state.agentsAny;   // is there anything for Show all to add
     let from=more?had.next:undefined,items=more?had.items:[],restarted=false,data,agents;
     for(;;)try{[data,agents]=await Promise.all([json(pagePath({source:state.allPictures?undefined:'mine',q:gridWord(id)||undefined,details:true,cursor:from})),probe()]);break;}
       catch(error){if(gone())return state.grids[id];if(from===undefined||!STALE_CURSOR.includes(error.code))throw error;from=undefined;items=[];restarted=true;}
     if(gone())return state.grids[id];
     if(agents!==null)state.agentsAny=agents;
+    if(data.workspace_id)state.workspaceId=data.workspace_id;
     const grid=state.grids[id]={key,items:items.concat((data.assets||[]).filter(picture)),next:data.next_cursor||null,restarted};   // masks and mattes never reach the picker
     state.pictures=Object.values(state.grids).flatMap(x=>x.items);return grid;
   }
+  // A picture by id for a choice: loaded pages, the chosen or pose picture (a pinned card), then /api/assets/selection under the picture's privacy.
+  // null when it cannot be had (put in the Bin, another library, no access): callers refuse, they never choose a stub.
+  const MISSING='That picture is not available any more. Nothing was chosen.';
+  const knownAsset=id=>state.pictures?.find(x=>x.id===id)||[state.pick,state.pose?.asset].find(x=>x?.id===id)||state.found[id]||(typeof assetState!=='undefined'&&assetState?.assets?.find(x=>x.id===id))||null;
+  async function resolveAsset(id,privacy){
+    const known=knownAsset(id);if(known)return known;
+    const epoch=privacyEpoch,gen=pictureGen,captured=requestPrivacy(privacy||readScope());
+    try{const workspace=state.workspaceId||(await json(pagePath({limit:1}),undefined,captured)).workspace_id;
+      const result=await json('/api/assets/selection',{ids:[id],workspace_id:workspace,details:true},captured);if(epoch!==privacyEpoch)return null;
+      const item=result.items?.find(x=>x.id===id);if(item?.state!=='active'||!item.asset||item.asset.media_type!=='image')return null;
+      const asset={...item.asset,privacy:classified(item.asset)};if(gen===pictureGen)state.found[id]=asset;return asset;}
+    catch{return null;}
+  }
+  async function needAsset(id,privacy){const epoch=privacyEpoch,asset=await resolveAsset(id,privacy);if(epoch!==privacyEpoch)return null;if(!asset)say(MISSING);return asset;}
   // The line-up follows lineage through the whole library, so it still reads the Workspace list; only when a line-up is opened.
-  async function loadLibrary(){if(!state.library){const epoch=privacyEpoch,gen=pictureGen,data=await json('/api/workspace');if(epoch!==privacyEpoch)throw Error('Picture view changed while loading.');const list=(data.assets||[]).filter(a=>inScope(a)&&a.media_type==='image'&&picture(a)&&!a.trashed_at).sort((a,b)=>(b.created_at||0)-(a.created_at||0));if(gen!==pictureGen)return list;state.library=list;}return state.library;}
+  async function loadLibrary(){if(!state.library){const epoch=privacyEpoch,gen=pictureGen,data=await json('/api/workspace');if(epoch!==privacyEpoch)throw Error('Picture view changed while loading.');const list=(data.assets||[]).filter(a=>inScope(a)&&a.media_type==='image'&&picture(a)&&!a.trashed_at).sort((a,b)=>(b.created_at||0)-(a.created_at||0));if(gen!==pictureGen)return list;state.library=list;}return state.library;}   // a reset during the read still returns the list it read
   async function fillPictures(g,id,attr){
     const epoch=privacyEpoch;try{await loadPictures(id);
       if(epoch===privacyEpoch&&goal()===g)renderGrid(id,attr);}
@@ -1018,8 +1033,8 @@
   }
   // The answers a picture's Combine fields were given last time (the same store Create's fields use).
   const fillsKey=id=>'studio-fills:'+id;
-  function choosePicture(id){
-    const a=state.pictures?.find(x=>x.id===id)||(typeof assetState!=='undefined'&&assetState?.assets?.find(x=>x.id===id))||{id,title:''};
+  function choosePicture(id,a=knownAsset(id)){   // callers resolve first (needAsset): an unknown picture is refused, never stubbed
+    if(!a){say(MISSING);return false;}
     if(!usePrivacy(a))return false;
     if(state.pick?.id!==id){state.form={};try{const saved=JSON.parse(makeStorage.getItem(fillsKey(id))||'{}');for(const k of ['who','clothes'])if(typeof saved['@'+k]==='string')state.form[k]=saved['@'+k];}catch{}}
     // A new character that is the chosen pose picture leaves the pose empty, so one picture is never both.
@@ -1035,12 +1050,13 @@
   // storage, so every field is checked before use.
   const redoOf=(a,form,sel)=>({pick:a.id,form:Object.fromEntries(Object.entries(form).filter(([,v])=>typeof v==='string')),styleLook:sel.styleLook,styleWords:!!sel.styleWords,poseMode:sel.poseMode,poseRoute:sel.poseRoute,
     pose:sel.pose?.asset?{asset:sel.pose.asset.id}:sel.pose?.figure?{figure:sel.pose.figure,mirror:!!sel.pose.mirror}:null,fix:sel.fix});
-  function redoRun(run){const r=run.redo,g=GOALS.find(x=>x.id===run.goal);if(!g?.intent||!r||typeof r.pick!=='string'||!usePrivacy({privacy:runPrivacy(run)}))return false;
-    state.goal=g.id;state.compare=false;state.character=null;if(choosePicture(r.pick)===false)return false;
+  async function redoRun(run){const r=run.redo,g=GOALS.find(x=>x.id===run.goal);if(!g?.intent||!r||typeof r.pick!=='string'||!usePrivacy({privacy:runPrivacy(run)}))return false;
+    const hint=runPrivacy(run),picked=await needAsset(r.pick,hint),posed=picked&&typeof r.pose?.asset==='string'?await needAsset(r.pose.asset,hint):null;   // both pictures first: a refusal changes nothing
+    if(!picked||typeof r.pose?.asset==='string'&&!posed)return false;
+    state.goal=g.id;state.compare=false;state.character=null;if(choosePicture(r.pick,picked)===false)return false;
     state.form=Object.fromEntries(Object.entries(r.form&&typeof r.form==='object'?r.form:{}).filter(([,v])=>typeof v==='string'&&v.length<=2000));
     if(['picture','figure'].includes(r.poseMode))state.poseMode=r.poseMode;if(['copy','scene','depth'].includes(r.poseRoute))state.poseRoute=r.poseRoute;
-    const find=id=>state.pictures?.find(x=>x.id===id)||(typeof assetState!=='undefined'&&assetState?.assets?.find(x=>x.id===id))||{id,title:''};
-    state.pose=typeof r.pose?.asset==='string'?{asset:find(r.pose.asset)}:PE()?.PRESETS?.some(x=>x.id===r.pose?.figure)?{figure:r.pose.figure,mirror:!!r.pose.mirror}:null;state.posePicking=false;
+    state.pose=posed?{asset:posed}:PE()?.PRESETS?.some(x=>x.id===r.pose?.figure)?{figure:r.pose.figure,mirror:!!r.pose.mirror}:null;state.posePicking=false;
     if(typeof r.styleLook==='string')state.styleLook=r.styleLook;state.styleWords=!!r.styleWords;if(POLISH[r.fix])state.fix=r.fix;
     remember();render();return true;}
   async function goalGenerate(){
@@ -1191,7 +1207,7 @@
       // From here the asset exists (Codex P2 on #1576): it is chosen whatever happens next, and the list refresh is best effort.
       let a=data.asset,listed=true;state.pictures=null;try{await loadPictures(id);a=state.pictures.find(x=>x.id===a.id)||(state.grids[id].items.unshift(a),state.pictures.unshift(a),a);}catch{if(epoch!==privacyEpoch)return;listed=false;state.pictures=[a];}if(epoch!==privacyEpoch)return;
       if(goal()===g){if(id==='makePosePictures'){state.pose={asset:a};state.posePicking=false;renderGoalComposer(g);q('[data-make-pose-change]')?.focus();}
-        else{state.character=null;choosePicture(a.id);await renderPictures(g);if(epoch!==privacyEpoch)return;q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();}}
+        else{state.character=null;choosePicture(a.id,a);await renderPictures(g);if(epoch!==privacyEpoch)return;q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();}}
       if(!listed)state.pictures=null;   // the next picker reads the library again
       say('Imported '+file.name+'. It is chosen'+(listed?'.':'; the picture list could not refresh, so it will reload next time.'));rememberDraft();return;}
     catch(error){if(epoch!==privacyEpoch)return;if(button){button.disabled=false;button.textContent='Import a picture…';}fail(error.message);}
@@ -1219,8 +1235,8 @@
     if(l){state.look=l.dataset.makeLook;state.picking=false;remember();renderLooks();focusScene();return;}
     if(e.target.closest('[data-make-compare]')){state.compare=!state.compare;state.compareLooks=state.compare&&lookList().some(x=>x.id===state.look)?[state.look]:[];
       say(state.compare?'Compare looks: choose two or three looks, type one scene, then press Generate once.':'');renderLooks();q('[data-make-compare]')?.focus();return;}
-    const character=e.target.closest('[data-make-character]');if(character){const note=chooseCharacter(character.dataset.makeCharacter);if(note===false)return;renderPictures(goal());
-      say('Your character is chosen: its canon picture as it is'+(goal().intent==='combine'?', with its words.':'.')+(note?' '+note:''));q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();return;}
+    const character=e.target.closest('[data-make-character]');if(character){const epoch=privacyEpoch;void chooseCharacter(character.dataset.makeCharacter).then(note=>{if(note===false||epoch!==privacyEpoch)return;renderPictures(goal());
+      say('Your character is chosen: its canon picture as it is'+(goal().intent==='combine'?', with its words.':'.')+(note?' '+note:''));q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();});return;}
     const saveChar=e.target.closest('[data-make-character-save]');if(saveChar){openCharacterForm(saveChar.dataset.makeCharacterSave,saveChar.closest('[data-run]')?.dataset.run);return;}
     if(e.target.closest('[data-make-character-cancel]')){const a=state.charSave,edit=state.charEdit,move=state.charMigrate;clearCharForms();renderRuns();refreshCharacters();q(edit?'[data-make-character-edit="'+CSS.escape(edit)+'"]':move?'[data-make-migrate="'+CSS.escape(move)+'"]':'[data-make-character-save="'+CSS.escape(a||'')+'"]')?.focus();return;}
     const canon=e.target.closest('[data-make-canon]');if(canon){void once('character:'+canon.dataset.makeCanonOf,()=>swapCanon(canon.dataset.makeCanonOf,canon.dataset.makeCanon));return;}
@@ -1229,7 +1245,7 @@
     const restoreChar=e.target.closest('[data-make-character-restore]');if(restoreChar){void once('character:'+restoreChar.dataset.makeCharacterRestore,()=>characterCommand(restoreChar.dataset.makeCharacterRestore,'restore'));return;}
     const migrate=e.target.closest('[data-make-migrate]');if(migrate){openMigration(migrate.dataset.makeMigrate);return;}
     if(e.target.closest('[data-make-note-dismiss]')){dismissNote();return;}
-    const pick=e.target.closest('[data-make-pick]');if(pick){if(choosePicture(pick.dataset.makePick)===false)return;state.character=null;renderPictures(goal());q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();return;}
+    const pick=e.target.closest('[data-make-pick]');if(pick){void needAsset(pick.dataset.makePick).then(a=>{if(!a||choosePicture(pick.dataset.makePick,a)===false)return;state.character=null;renderPictures(goal());q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();});return;}
     const imp=e.target.closest('[data-make-import]');if(imp){q('[data-make-import-file="'+imp.dataset.makeImport+'"]')?.click();return;}
     const all=e.target.closest('[data-make-all]');if(all){state.allPictures=!state.allPictures;for(const [id,attr] of [['makePictures','data-make-pick'],['makePosePictures','data-make-pose-pick']]){renderGrid(id,attr);if(q('#'+id))void fillPictures(goal(),id,attr);}q('[data-make-all="'+all.dataset.makeAll+'"]')?.focus();return;}
     const more=e.target.closest('[data-make-more]');if(more){const id=more.dataset.makeMore,attr=more.dataset.makeAttr,g=goal(),epoch=privacyEpoch,seen=new Set((state.grids[id]?.items||[]).map(a=>a.id));more.disabled=true;more.textContent='Loading…';
@@ -1237,14 +1253,15 @@
         error=>{if(epoch!==privacyEpoch||goal()!==g||!q('#'+id))return;more.disabled=false;more.textContent='Show more';more.parentElement.insertAdjacentHTML('beforebegin','<p class="make-error" role="alert">'+escape(error.message)+'</p>');});return;}
     if(e.target.closest('[data-make-repick]')){state.repicking=true;renderPictures(goal());q('[data-make-search="makePictures"]')?.focus();return;}
     if(e.target.closest('[data-make-keep-picture]')){state.repicking=false;renderPictures(goal());q('#makeComposer .make-step h2')?.focus();return;}
-    const posePick=e.target.closest('[data-make-pose-pick]');if(posePick){const a=state.pictures?.find(x=>x.id===posePick.dataset.makePosePick);if(a&&usePrivacy(a)){state.pose={asset:a};state.posePicking=false;renderGoalComposer(goal());q('[data-make-pose-change]')?.focus();}return;}
+    const posePick=e.target.closest('[data-make-pose-pick]');if(posePick){void needAsset(posePick.dataset.makePosePick).then(a=>{if(a&&usePrivacy(a)){state.pose={asset:a};state.posePicking=false;renderGoalComposer(goal());q('[data-make-pose-change]')?.focus();}});return;}
     if(e.target.closest('[data-make-pose-change]')){state.posePicking=true;renderGoalComposer(goal());q('[data-make-search="makePosePictures"]')?.focus();return;}
     if(e.target.closest('[data-make-style-words]')){state.styleWords=true;renderGoalComposer(goal());q('#makeF-look')?.focus();return;}
     if(e.target.closest('[data-make-style-pictures]')){state.styleWords=false;renderGoalComposer(goal());q('[data-make-style]')?.focus();return;}
     // A result's next step opens that picture goal here with the picture already chosen.
     const pickNext=e.target.closest('[data-make-select]');if(pickNext){state.selected[pickNext.dataset.runId]=pickNext.dataset.makeSelect;renderRuns();q('.make-selected [data-make-select="'+CSS.escape(pickNext.dataset.makeSelect)+'"]')?.closest('figure')?.querySelector('.make-next button:not(:disabled),.make-next summary')?.focus();return;}
-    const from=e.target.closest('[data-make-from]');if(from){const next=GOALS.find(x=>x.intent===from.dataset.makeFrom),run=state.runs.find(r=>(r.job.outputs||[]).some(o=>o.asset_id===from.dataset.asset));if(!next||!usePrivacy({privacy:runPrivacy(run||{})})||choosePicture(from.dataset.asset)===false)return;state.goal=next.id;state.compare=false;state.character=null;remember();render();
-      say(next.name+': your picture is chosen. Fill in what is asked, then press Generate.');(q('#makeComposer textarea,#makeComposer input')||q('#makeGenerate'))?.focus();return;}
+    const from=e.target.closest('[data-make-from]');if(from){const next=GOALS.find(x=>x.intent===from.dataset.makeFrom),run=state.runs.find(r=>(r.job.outputs||[]).some(o=>o.asset_id===from.dataset.asset));if(!next||!usePrivacy({privacy:runPrivacy(run||{})}))return;
+      void needAsset(from.dataset.asset,runPrivacy(run||{})).then(a=>{if(!a||choosePicture(from.dataset.asset,a)===false)return;state.goal=next.id;state.compare=false;state.character=null;remember();render();
+        say(next.name+': your picture is chosen. Fill in what is asked, then press Generate.');(q('#makeComposer textarea,#makeComposer input')||q('#makeGenerate'))?.focus();});return;}
     if(e.target.closest('[data-make-change]')){state.picking=true;renderLooks();q('.make-look.active [data-make-look]')?.focus();return;}
     if(e.target.closest('[data-make-keep-look]')){state.picking=false;renderLooks();focusScene();return;}
     const again=e.target.closest('[data-make-rerun],[data-make-another],[data-make-final]');if(again){const run=state.runs.find(r=>r.job.id===(again.dataset.makeRerun||again.dataset.makeAnother||again.dataset.makeFinal)),final=!!again.dataset.makeFinal;if(!run||!usePrivacy({privacy:runPrivacy(run)}))return;
@@ -1256,7 +1273,7 @@
       if(final){say('The final is set up: the same words and seed at full detail. Press Generate to make it.');q('#makeGenerate')?.focus();return;}
       const scene=q('#makeScene');if(scene&&!state.picking){scene.focus();scene.select();}else q('.make-look.active [data-make-look]')?.focus();return;}
     const redo=e.target.closest('[data-make-redo]');if(redo){const run=state.runs.find(r=>r.job.id===redo.dataset.makeRedo);
-      if(run&&redoRun(run)){say('That run’s picture and answers are back. Change what you like, then press Generate.');(q('#makeComposer textarea,#makeComposer input:not([type=search])')||q('#makeGenerate'))?.focus();}return;}
+      if(run)void redoRun(run).then(ok=>{if(ok){say('That run’s picture and answers are back. Change what you like, then press Generate.');(q('#makeComposer textarea,#makeComposer input:not([type=search])')||q('#makeGenerate'))?.focus();}});return;}
     const recovering=e.target.closest('[data-make-resume],[data-make-stop]');if(recovering&&!recovering.disabled){void once('recover:'+(recovering.dataset.makeResume||recovering.dataset.makeStop),()=>recover(recovering));return;}
     const verdict=e.target.closest('[data-make-review]');if(verdict){void review(verdict);return;}
     const polishing=e.target.closest('[data-make-polish]');if(polishing&&!polishing.disabled){void polishPicture(polishing);return;}
@@ -1281,9 +1298,9 @@
   // them for the full editor. Leaving follows the dialog's own unsaved-changes rule; nothing is submitted.
   document.addEventListener('click',e=>{const b=e.target.closest('#assetDialog [data-make-open]');if(!b)return;const next=GOALS.find(x=>x.intent===b.dataset.makeOpen);
     if(!next||typeof assetDetailCanLeave==='function'&&!assetDetailCanLeave())return;
-    if(choosePicture(b.dataset.asset)===false)return;state.goal=next.id;state.compare=false;state.character=null;state.pictures=null;remember();state.status=next.name+': your picture is chosen. Fill in what is asked, then press Generate.';state.missing='';
-    document.querySelector('#assetDialog')?.close();if(typeof showView==='function')showView('make');else window.StudioMake.refresh();
-    (q('#makeComposer textarea,#makeComposer input:not([type=search])')||q('#makeGenerate'))?.focus();});
+    void needAsset(b.dataset.asset).then(a=>{if(!a||choosePicture(b.dataset.asset,a)===false)return;state.goal=next.id;state.compare=false;state.character=null;state.pictures=null;remember();state.status=next.name+': your picture is chosen. Fill in what is asked, then press Generate.';state.missing='';
+      document.querySelector('#assetDialog')?.close();if(typeof showView==='function')showView('make');else window.StudioMake.refresh();
+      (q('#makeComposer textarea,#makeComposer input:not([type=search])')||q('#makeGenerate'))?.focus();});});
   let loaded=false;
   // Models & setup lists the looks that are ready; a ready look in a Make goal offers "Use in Make" (owner, 19 Oct: browse models, then make).
   // It chooses the goal and the look and opens Make; nothing is sent.
