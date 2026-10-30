@@ -187,7 +187,8 @@ output pulls in its whole run.
 
 The response lists every affected item with its kind, ID, classification, bytes,
 sha256 and revision: the run (`state.json` hash and status), each run-folder file,
-every output asset, snapshot thumbnails, staged upload copies and sidecars,
+every output asset, snapshot thumbnails, staged upload copies and sidecars (from `references`
+and the `reference`/`last_reference` controls),
 collections, lineage children and historical command receipts. It also lists
 ComfyUI output/input originals that will remain (`external_copy`). It returns a
 `byte_estimate` and `plan_sha256`: SHA-256 of canonical JSON that binds the Workspace,
@@ -198,7 +199,9 @@ Blockers refuse the plan (`applicable: false`) but are never acted on: an unsett
 (queued, running, partial, uncertain, not submitted, a pending submission or an
 unreadable record), a run already in the destination, a missing output sibling,
 snapshot or run record, a changed snapshot, a collection that holds other assets,
-and an asset/run classification mismatch. Planning never cancels a run or clears
+an asset/run classification mismatch, a link or junction in a run folder (never
+followed), more than 50 receipts naming one asset, and native project runs (not
+supported). A plan over 5,000 items is refused (413) before further hashing. Planning never cancels a run or clears
 its uncertainty.
 
 The request's privacy scope binds the plan like any other read. Under Regular, a

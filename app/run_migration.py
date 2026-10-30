@@ -37,6 +37,7 @@ def _ids(payload, field):
 def _validate(payload):
     if type(payload) is not dict or not set(payload) <= FIELDS or 'workspace_id' not in payload or 'destination' not in payload:
         raise WorkspaceError('Supply workspace_id, destination and asset_ids and/or job_ids only')
+    if type(payload['workspace_id']) is not str: raise WorkspaceError('Workspace identity must be 32 lowercase hexadecimal characters')
     if payload['destination'] not in ('regular', 'private'):
         raise WorkspaceError('Destination must be regular or private', code='privacy_invalid')
     asset_ids, job_ids = _ids(payload, 'asset_ids'), _ids(payload, 'job_ids')
@@ -46,6 +47,7 @@ def _validate(payload):
 
 
 def _file(item_kind, path, label, classification, **extra):
+    extra.pop('guard')()
     stat = path.stat()
     return dict(kind=item_kind, id=label, classification=classification, bytes=stat.st_size, sha256=digest_file(path), **extra)
 
@@ -55,12 +57,16 @@ def plan(studio, payload, scope):
     asset_ids, job_ids = _validate(payload)
     destination, assets, experiments = payload['destination'], studio.assets, studio.experiments
     items, blockers = {}, []
-    def add(item): items[(item['kind'], item['id'])] = item
+    def guard():  # Refuse as soon as the bound is reached, before hashing another file.
+        if len(items) >= MAX_ITEMS: raise WorkspaceError(f'The migration closure exceeds {MAX_ITEMS} items; choose fewer runs', status=413, code='plan_too_large')
+    def add(item):
+        if (item['kind'], item['id']) not in items: guard()
+        items[(item['kind'], item['id'])] = item
     def block(code, message, **detail):
         if (entry := dict(code=code, message=message, **detail)) not in blockers: blockers.append(entry)
     def rel(path): return path.relative_to(experiments).as_posix()
     with studio.lock:  # One consistent view of the visible jobs; nothing in them is changed.
-        visible = {k: json.loads(json.dumps({f: v.get(f) for f in ('id', 'privacy', 'status', 'outputs', 'references', 'parent_assets', 'operation', 'comfy_root')}
+        visible = {k: json.loads(json.dumps({f: v.get(f) for f in ('id', 'privacy', 'status', 'outputs', 'references', 'parent_assets', 'operation', 'comfy_root', 'controls')}
                                             | {'pending': 'pending_submission' in v, 'record_error': 'record_error' in v}, default=str))
                    for k, v in studio.jobs.items() if privacy_matches(v.get('privacy', 'regular'), scope)}
     clause, params = privacy_sql(scope)
@@ -82,26 +88,33 @@ def plan(studio, payload, scope):
                 block('missing_run', 'An asset names a run whose record is unavailable in this scope', run_id=run_id); classification = None
             else:
                 classification = job['privacy'] or 'regular'
-                directory = studio._job_directory(run_id, classification)
-                state = directory/'state.json'
-                add(dict(kind='run', id=run_id, classification=classification, status=job['status'],
-                         revision=digest_file(state) if state.is_file() and not state.is_symlink() else None))
+                try: directory = studio._job_directory(run_id, classification)
+                except ValueError: directory = None; block('run_storage_alias', 'The run folder redirects through a filesystem alias', run_id=run_id)
+                state = directory/'state.json' if directory else None
+                readable = bool(state and state.is_file() and not state.is_symlink())
+                if readable: guard()
+                add(dict(kind='run', id=run_id, classification=classification, status=job['status'], revision=digest_file(state) if readable else None))
+                if str(job['operation'] or '').startswith('native.'):
+                    block('unsupported_operation', 'Native project runs keep their originals under projects/; their migration is not supported', run_id=run_id, operation=job['operation'])
                 if job['status'] not in SETTLED or job['pending'] or job['record_error']:
                     block('run_not_settled', 'Queued, running, partial, uncertain or unresolved submissions own their state; nothing is cancelled or cleared', run_id=run_id, status=job['status'])
                 if classification == destination: block('already_in_destination', 'This run is already '+destination, run_id=run_id)
-                if directory.is_symlink() or not directory.is_dir():
+                if directory is None: pass
+                elif _alias(directory) or not directory.is_dir():
                     block('missing_run_record', 'The run folder is missing or redirected', run_id=run_id)
                 else:
                     count = 0
                     for folder, names, files in os.walk(directory):
+                        for name in [n for n in names if _alias(Path(folder)/n)]:  # Never descend through a link or junction.
+                            names.remove(name); block('run_storage_alias', 'A run folder entry redirects through a filesystem alias', run_id=run_id, path=rel(Path(folder)/name))
                         for name in sorted(files):
                             path = Path(folder)/name; count += 1
                             if count > MAX_RUN_FILES: break
                             if path.is_symlink(): block('run_storage_alias', 'A run file redirects through a filesystem alias', run_id=run_id, path=rel(path)); continue
-                            add(_file('run_file', path, rel(path), classification, run_id=run_id))
+                            add(_file('run_file', path, rel(path), classification, run_id=run_id, guard=guard))
                         if count > MAX_RUN_FILES: block('run_too_large', f'The run folder holds more than {MAX_RUN_FILES} files', run_id=run_id); break
                     for name in ('recipe.json', 'state.json', 'workflow.json'):
-                        if ('run_file', rel(directory/name)) not in items: block('missing_run_record', 'A run record file is missing', run_id=run_id, path=rel(directory/name))
+                        if directory is not None and ('run_file', rel(directory/name)) not in items: block('missing_run_record', 'A run record file is missing', run_id=run_id, path=rel(directory/name))
                 indexed = {row['output_index'] for row in rows}
                 for index, output in enumerate(job['outputs'] or []):
                     if index not in indexed: block('missing_sibling', 'An output has no retained asset; the run cannot move whole', run_id=run_id, output_index=index)
@@ -114,9 +127,11 @@ def plan(studio, payload, scope):
                         if original is not None and original.is_file():
                             add(dict(kind='external_copy', id='comfyui/'+original.relative_to(Path(job['comfy_root'] or studio.comfy_root).resolve()).as_posix(),
                                      classification=None, bytes=original.stat().st_size, run_id=run_id, consequence='ComfyUI owns this original; it remains in place'))
-                    for name in references: _upload(studio, add, block, rel, run_id, name, classification)
-                for reference in job['references'] or []:
-                    if isinstance(reference, dict) and isinstance(reference.get('file'), str): _upload(studio, add, block, rel, run_id, reference['file'], classification)
+                    for name in references: _upload(studio, add, block, guard, rel, run_id, name, classification)
+                staged = [r['file'] for r in job['references'] or [] if isinstance(r, dict) and isinstance(r.get('file'), str)]
+                controls = job['controls'] if isinstance(job['controls'], dict) else {}  # Studio.prepare binds these uploads apart from references.
+                staged += [controls[k] for k in ('reference', 'last_reference') if isinstance(controls.get(k), str)]
+                for name in dict.fromkeys(staged): _upload(studio, add, block, guard, rel, run_id, name, classification)
             for row in rows:
                 closure.add(row['id'])
                 if classification and row['privacy'] != classification: block('privacy_mismatch', 'An asset and its run disagree on classification', asset_id=row['id'], run_id=run_id)
@@ -126,7 +141,7 @@ def plan(studio, payload, scope):
                             revision=row['metadata_revision'], run_id=run_id, output_index=row['output_index'], path=rel(media),
                             trashed=row['trashed_at'] is not None, archived=row['archived_at'] is not None)
                 if media.is_symlink() or not media.is_file(): block('missing_snapshot', 'An asset snapshot is missing', asset_id=row['id'])
-                elif digest_file(media) != row['sha256']: block('snapshot_changed', 'An asset snapshot no longer matches its hash', asset_id=row['id'])
+                elif guard() or digest_file(media) != row['sha256']: block('snapshot_changed', 'An asset snapshot no longer matches its hash', asset_id=row['id'])
                 shared = db.execute('SELECT COUNT(*) FROM assets WHERE sha256=? AND privacy=? AND job_id<>?', (row['sha256'], row['privacy'], run_id)).fetchone()[0]
                 if shared: item['consequence'] = 'Other assets in this classification share the snapshot; the source copy stays'
                 add(item)
@@ -147,15 +162,16 @@ def plan(studio, payload, scope):
                     add(dict(kind='lineage_child', id=row['id'], classification=row['privacy'], revision=row['metadata_revision'], parent=asset_id,
                              consequence='Stays where it is; its lineage keeps naming this parent'))
             for table, column in (('asset_commands', 'result'), ('collection_commands_v1', 'receipt')):
-                for row in db.execute('SELECT request_id,privacy FROM '+table+' WHERE '+column+' LIKE ? AND '+clause+' ORDER BY request_id LIMIT ?', [pattern, *params, MAX_RECEIPTS]):
-                    add(dict(kind='receipt', id=row['request_id'], classification=row['privacy'], table=table,
+                found = db.execute('SELECT request_id,privacy FROM '+table+' WHERE '+column+' LIKE ? AND '+clause+' ORDER BY request_id LIMIT ?', [pattern, *params, MAX_RECEIPTS+1]).fetchall()
+                if len(found) > MAX_RECEIPTS: block('receipts_overflow', f'More than {MAX_RECEIPTS} historical receipts name this asset; they are not all listed', asset_id=asset_id, table=table)
+                for row in found[:MAX_RECEIPTS]:
+                    add(dict(kind='receipt', id=table+'/'+row['request_id'], request_id=row['request_id'], classification=row['privacy'], table=table,
                              consequence='Immutable receipt keeps its classification and original target IDs'))
     for job in visible.values():
         parents = job['parent_assets'] if isinstance(job['parent_assets'], list) else []
         if job['id'] not in run_ids and closure.intersection(p for p in parents if isinstance(p, str)):
             add(dict(kind='lineage_child', id=job['id'], classification=job['privacy'] or 'regular', status=job['status'],
                      consequence='Stays where it is; its recipe keeps naming this parent'))
-    if len(items) > MAX_ITEMS: raise WorkspaceError(f'The migration closure exceeds {MAX_ITEMS} items; choose fewer runs', status=413, code='plan_too_large')
     if scope != 'all': block('scope_partial', SCOPE_PARTIAL)
     ordered = [items[key] for key in sorted(items)]
     bound = {'version': 1, 'workspace_id': identity, 'scope': scope, 'destination': destination, 'asset_ids': sorted(asset_ids), 'job_ids': sorted(job_ids),
@@ -167,13 +183,17 @@ def plan(studio, payload, scope):
             'remaining_copies': REMAINING, 'plan_sha256': digest, 'apply_available': False, 'writes': False}
 
 
-def _upload(studio, add, block, rel, run_id, name, classification):
+def _alias(path):
+    return path.is_symlink() or path.is_junction()
+
+
+def _upload(studio, add, block, guard, rel, run_id, name, classification):
     try: path = studio._upload_path(name, classification, allow_regular=True)
     except ValueError: return block('missing_reference', 'A staged reference copy is unavailable', run_id=run_id, file=name)
     owner = 'private' if path.parent == studio._private_directory('uploads').resolve() else 'regular'
-    add(_file('upload', path, rel(path), owner, run_id=run_id))
+    add(_file('upload', path, rel(path), owner, run_id=run_id, guard=guard))
     sidecar = path.with_name(path.name+'.json')
-    if sidecar.is_file() and not sidecar.is_symlink(): add(_file('upload', sidecar, rel(sidecar), owner, run_id=run_id))
+    if sidecar.is_file() and not sidecar.is_symlink(): add(_file('upload', sidecar, rel(sidecar), owner, run_id=run_id, guard=guard))
     original = studio.comfy_root/'input'/name
     if original.is_file() and not original.is_symlink():
         add(dict(kind='external_copy', id='comfyui/input/'+name, classification=None, bytes=original.stat().st_size, run_id=run_id,

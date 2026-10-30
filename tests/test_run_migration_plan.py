@@ -171,12 +171,61 @@ class RunMigrationPlanTests(unittest.TestCase):
         self.assertIn(private['id'], [i['id'] for i in self.kinds(visible, 'lineage_child')])
         self.assertNotIn('scope_partial', self.codes(visible))
 
+    def test_control_bound_reference_uploads_join_the_closure(self):
+        upload = self.studio.upload('pose.png', 'image/png', fixture.png())
+        identifier = self.studio.create_job({'preset_id': 'demo', 'controls': {'positive': 'ref run', 'reference': upload['file']}}, enqueue=False)['id']
+        job = self.studio.jobs[identifier]; job.update(status='completed'); self.assertEqual(job.get('references') or [], [])
+        plan = self.plan(job_ids=[identifier])
+        self.assertEqual({i['id'] for i in self.kinds(plan, 'upload')}, {'uploads/'+upload['file'], 'uploads/'+upload['file']+'.json'})
+        self.assertIn('comfyui/input/'+upload['file'], {i['id'] for i in self.kinds(plan, 'external_copy')})
+
+    def insert_receipts(self, asset_id, count, prefix='receipt'):
+        with self.studio.assets.connection() as db:
+            db.executemany("INSERT INTO asset_commands (request_id,fingerprint,result,created_at) VALUES (?,?,?,1)",
+                           [(f'{prefix}-{i:04d}-aaaaaaaa', 'f', json.dumps({'updated': [asset_id]})) for i in range(count)])
+
+    def test_receipt_overflow_blocks_and_shared_request_ids_do_not_collide(self):
+        job = self.completed(1); asset_id = job['outputs'][0]['asset_id']
+        self.insert_receipts(asset_id, 1)
+        with self.studio.assets.connection() as db:
+            db.execute("INSERT INTO collection_commands_v1 VALUES ('receipt-0000-aaaaaaaa',1,?,'c','{}','x',?,'y',2,'regular')", (self.workspace_id, json.dumps({'ids': [asset_id]})))
+        plan = self.plan(job_ids=[job['id']])
+        self.assertEqual(sorted(i['table'] for i in self.kinds(plan, 'receipt')), ['asset_commands', 'collection_commands_v1'])
+        self.assertNotIn('receipts_overflow', self.codes(plan))
+        self.insert_receipts(asset_id, 50, 'more')  # 51 receipts in asset_commands exceed the bound of 50
+        overflow = self.plan(job_ids=[job['id']])
+        self.assertIn('receipts_overflow', self.codes(overflow)); self.assertFalse(overflow['applicable'])
+
+    def test_native_operation_runs_are_unsupported(self):
+        job = self.completed(1); job['operation'] = 'native.articulated-prop.v1'
+        self.assertIn('unsupported_operation', self.codes(self.plan(job_ids=[job['id']])))
+
+    def test_item_bound_refuses_before_hashing_everything(self):
+        import run_migration
+        job = self.completed(5); calls = []
+        real = run_migration.digest_file
+        def counted(path): calls.append(path); return real(path)
+        with patch.object(run_migration, 'MAX_ITEMS', 3), patch.object(run_migration, 'digest_file', counted):
+            status, raw = self.request({'workspace_id': self.workspace_id, 'destination': 'private', 'job_ids': [job['id']]})
+        self.assertEqual(status, 413, raw); self.assertLessEqual(len(calls), 3)
+
+    def test_directory_alias_inside_run_folder_is_a_blocker_not_followed(self):
+        import os, subprocess
+        job = self.completed(1); outside = self.root/'outside'; outside.mkdir(); (outside/'secret.txt').write_text('x')
+        link = self.studio._job_directory(job['id'])/'linked'
+        try: os.symlink(outside, link, target_is_directory=True)
+        except OSError:
+            if os.name != 'nt' or subprocess.run(['cmd', '/c', 'mklink', '/J', str(link), str(outside)], capture_output=True).returncode: self.skipTest('no directory links here')
+        plan = self.plan(job_ids=[job['id']])
+        self.assertIn('run_storage_alias', self.codes(plan))
+        self.assertFalse(any('secret.txt' in i['id'] for i in plan['items']))
+
     def test_input_bounds_and_validation(self):
         job = self.completed(1); good = {'workspace_id': self.workspace_id, 'destination': 'private', 'job_ids': [job['id']]}
         cases = [dict(good, destination='all'), dict(good, destination=None), {k: v for k, v in good.items() if k != 'workspace_id'},
                  dict(good, job_ids=[]), dict(good, job_ids=[job['id'], job['id']]), dict(good, job_ids=['../x']),
                  dict(good, job_ids=[str(i) for i in range(51)]), dict(good, extra=True), dict(good, asset_ids='abc'),
-                 dict(good, workspace_id='nothex')]
+                 dict(good, workspace_id='nothex'), dict(good, workspace_id=None)]
         for body in cases:
             with self.subTest(body=body): self.assertEqual(self.request(body)[0], 400)
         self.assertEqual(self.request(None, raw='[]')[0], 400)
