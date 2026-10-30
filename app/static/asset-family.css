@@ -42,3 +42,5 @@
 .asset-inspect-sizes[data-render="pixel"] img{image-rendering:pixelated}.asset-inspect-sizes[data-render="smooth"] img{image-rendering:auto}
 #assetDialog[data-look-mirror] #assetDetailMedia>img,#assetDialog[data-look-mirror] .asset-inspect-row img{transform:scaleX(-1)}
 #assetDialog[data-look-grey] #assetDetailMedia>img,#assetDialog[data-look-grey] .asset-inspect-row img{filter:grayscale(1)}
+
+.asset-repair{margin:.75rem 0;padding:.5rem .75rem;border:1px solid var(--line,#8884);border-radius:6px}.asset-repair summary{cursor:pointer;font-weight:600}.asset-repair label{display:block;margin:.5rem 0}.asset-repair .error{color:var(--danger,#c0392b)}

@@ -1365,7 +1365,7 @@ class Studio:
     def import_image(self, filename, content_type, body, *, privacy='regular', parent=None, note=None, scope=None):
         classification=privacy_scope.normalize(privacy)
         parents=[self.repair_parent(parent,content_type,privacy=classification,scope=scope or classification)] if parent is not None else []
-        note=' '.join(note.split()) if isinstance(note,str) else ''
+        note=' '.join(note.split()) if parents and isinstance(note,str) else ''  # a note belongs to a repair; a plain import records none
         if len(note)>280 or not note.isprintable(): raise StudioError('Keep the editor note to 280 plain characters')
         uploaded=self.upload(filename,content_type,body,privacy=classification)
         identifier=str(uuid.uuid4())
@@ -3303,7 +3303,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == '/api/assets/import':
                 body=self._read_body(20*1024*1024)
                 try: return self._json(201,self.studio.import_image(self.headers.get('X-Filename','reference'),self.headers.get('Content-Type',''),body,privacy=privacy_scope.creation_for_handler(self),
-                                                                    parent=self.headers.get('X-Parent-Asset'),note=unquote(self.headers.get('X-Editor-Note','')),scope=scope))
+                                                                    **({'parent':self.headers['X-Parent-Asset'],'note':unquote(self.headers.get('X-Editor-Note','')),'scope':scope} if self.headers.get('X-Parent-Asset') is not None else {})))
                 except sqlite3.Error:
                     return self._json(503, {"error": "Asset storage could not confirm this request. Check its receipt before retrying the exact command.",
                                             "code": "asset_storage_unconfirmed"})

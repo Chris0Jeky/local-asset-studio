@@ -2,6 +2,8 @@
 import hashlib
 import io
 import json
+import shutil
+import subprocess
 import tempfile
 import threading
 import unittest
@@ -96,7 +98,7 @@ class ImportRepairedVersionTests(unittest.TestCase):
         self.assertEqual((child['privacy'], child['lineage']), ('private', [self.private['id']]))
 
     def test_without_a_parent_the_import_is_what_it_was(self):
-        result = self.studio.import_image('plain.png', 'image/png', repaired())
+        result = self.studio.import_image('plain.png', 'image/png', repaired(), note='not a repair')
         job = self.studio.jobs[result['job']['id']]
         self.assertEqual((result['asset']['lineage'], job['parent_assets']), ([], []))
         self.assertEqual(job['message'], 'Imported original image. No generation submitted.')
@@ -118,6 +120,13 @@ class ImportRepairedVersionTests(unittest.TestCase):
                 seen = {}; handler._json = lambda code, obj: seen.update(status=code, obj=obj)
                 handler.do_POST()
                 self.assertEqual(seen.get('status'), status, seen); check(seen['obj'])
+
+
+@unittest.skipUnless(shutil.which('node'), 'Node is required for frontend contracts')
+class RepairActionFrontendTests(unittest.TestCase):
+    def test_payload_privacy_scope_and_refusal_messages(self):
+        result = subprocess.run(['node', '--test', 'tests/test_asset_repair.cjs'], cwd=Path(__file__).resolve().parents[1], text=True, capture_output=True, timeout=60)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 
 if __name__ == '__main__':
