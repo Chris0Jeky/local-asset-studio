@@ -21,6 +21,7 @@ import threading
 import time
 from pathlib import Path
 
+import project_storage
 from workspace import WorkspaceError, digest_file, privacy_matches, privacy_scope, privacy_sql
 
 MAX_IDS = 50
@@ -30,11 +31,12 @@ MAX_RECEIPTS = 50
 IDENTITY = re.compile(r'[A-Za-z0-9_-]{1,128}')
 SETTLED = ('completed', 'failed', 'cancelled', 'abandoned')
 COPIED = ('run_file', 'asset', 'upload', 'thumbnail')
+OUTSIDE = ('external_copy', 'scene_copy', 'production_plan')  # Bytes that stay where they are; the receipt lists them.
 FIELDS = {'workspace_id', 'destination', 'asset_ids', 'job_ids'}
 SCOPE_PARTIAL = ('Related items in another privacy classification are not inspected under this scope. '
                  'Plan again with privacy=all before any apply.')
-REMAINING = ('ComfyUI history, earlier exports, browser downloads and backups may keep further copies; '
-             'migration neither finds nor erases them.')
+REMAINING = ('Scene project input copies and production plans that name these runs or assets are listed in the plan and stay regular. '
+             'ComfyUI history, earlier exports, browser downloads and backups may keep further copies; migration neither finds nor erases them.')
 
 
 def _ids(payload, field):
@@ -79,6 +81,7 @@ def plan(studio, payload, scope):
         visible = {k: json.loads(json.dumps({f: v.get(f) for f in ('id', 'privacy', 'status', 'outputs', 'references', 'parent_assets', 'operation', 'comfy_root', 'controls')}
                                             | {'pending': 'pending_submission' in v, 'record_error': 'record_error' in v}, default=str))
                    for k, v in studio.jobs.items() if privacy_matches(v.get('privacy', 'regular'), scope)}
+        loaded = set(studio.jobs)
     clause, params = privacy_sql(scope)
     with assets.connection() as db:
         db.execute('BEGIN')
@@ -177,6 +180,7 @@ def plan(studio, payload, scope):
                 for row in found[:MAX_RECEIPTS]:
                     add(dict(kind='receipt', id=table+'/'+row['request_id'], request_id=row['request_id'], classification=row['privacy'], table=table,
                              consequence='Immutable receipt keeps its classification and original target IDs'))
+    if privacy_matches('regular', scope): _production_refs(studio, add, block, items, run_ids, closure, loaded)  # Projects are always regular.
     for job in visible.values():
         parents = job['parent_assets'] if isinstance(job['parent_assets'], list) else []
         if job['id'] not in run_ids and closure.intersection(p for p in parents if isinstance(p, str)):
@@ -191,6 +195,64 @@ def plan(studio, payload, scope):
             'items': ordered, 'item_count': len(ordered), 'blockers': blockers, 'applicable': not blockers,
             'byte_estimate': sum(item['bytes'] for item in ordered if item['kind'] in COPIED),
             'remaining_copies': REMAINING, 'plan_sha256': digest, 'apply_available': destination == 'private', 'writes': False}
+
+
+def _production(studio):
+    """(plans [(project id, plan JSON)], scene documents [(project id, document JSON)]) read-only from the Production database, or None when they cannot all be read:
+    callers fail closed. Production itself does not exist yet when recover() runs, and its state column (attempts, artifacts) is never loaded."""
+    path = studio.experiments/'projects'/'projects.sqlite3'
+    if not path.is_file(): return [], []
+    try:
+        db = sqlite3.connect(path.resolve().as_uri()+'?mode=ro', uri=True, timeout=15)
+        try:
+            projects = db.execute('SELECT id,plan FROM projects LIMIT ?', (MAX_SCANNED_RUNS+1,)).fetchall()
+            scenes = db.execute('SELECT project_id,document FROM av_documents LIMIT ?', (MAX_SCANNED_RUNS+1,)).fetchall() if db.execute("SELECT 1 FROM sqlite_master WHERE name='av_documents'").fetchone() else []
+        finally: db.close()
+    except sqlite3.Error: return None
+    return None if max(len(projects), len(scenes)) > MAX_SCANNED_RUNS else (projects, scenes)
+
+
+def _stages(projects):
+    """(project id, plan, stage index, stage request) for every stage of every comparison plan; ValueError when a plan is not shaped as Production writes it."""
+    for pid, text in projects:
+        try:
+            plan = json.loads(text)
+            if plan.get('kind') != 'comparison': continue
+            for index, stage in enumerate(plan['stages']):
+                if type(stage['request']) is not dict: raise TypeError('stage request')
+                yield pid, plan, index, stage['request']
+        except (ValueError, KeyError, TypeError, AttributeError, RecursionError) as exc: raise ValueError(str(exc) or type(exc).__name__) from exc
+
+
+def _pending_uploads(studio, have, read=None):
+    """(project id, upload name) for each upload a comparison stage names whose run is not in `have` (not started, so no run record holds its uploads yet), or None when unreadable."""
+    read = read or _production(studio)
+    try: return None if read is None else [(pid, name) for pid, _, index, request in _stages(read[0]) if project_storage.stage_job_id(pid, index) not in have for name in sorted(_upload_names(request))]
+    except ValueError: return None
+
+
+def _production_refs(studio, add, block, items, run_ids, closure, loaded):
+    """Regular copies outside the closure that this move cannot move: scene inputs and production plans stay (listed), a stage yet to start would need a planned upload (blocked)."""
+    unreadable = ('production_unreadable', 'Scene projects or production plans could not all be read, so the copies they keep of these runs and assets are unknown')
+    read = _production(studio)
+    if read is None: return block(*unreadable)
+    try:
+        for pid, text in read[1]:
+            document = json.loads(text)
+            for source in document['sources']:
+                if source['asset_id'] in closure:
+                    add(dict(kind='scene_copy', id='projects/'+pid+'/'+document['project']['assets'][source['key']]['path'], classification=None, bytes=source['bytes'], sha256=source['sha256'],
+                             asset_id=source['asset_id'], project_id=pid, consequence='A scene project copied this asset into its own inputs folder; the copy stays regular'))
+        stages = {}
+        for pid, plan, index, request in _stages(read[0]):
+            if (job_id := project_storage.stage_job_id(pid, index)) in run_ids: stages.setdefault(pid, (plan, []))[1].append(job_id)
+        for pid, (plan, runs) in stages.items():
+            add(dict(kind='production_plan', id='projects/'+pid+'/plan.json', classification=None, bytes=len(json.dumps(plan, sort_keys=True).encode()), sha256=plan.get('sha256'),
+                     project_id=pid, run_ids=sorted(runs), consequence='The project plan keeps these runs recipes (prompt, upload names), and any contact sheet or review stays regular'))
+    except (ValueError, KeyError, TypeError, RecursionError): return block(*unreadable)
+    moving = {_upload_base(i['id']) for i in items.values() if i['kind'] == 'upload' and i['classification'] == 'regular'}
+    for pid, name in _pending_uploads(studio, loaded, read) or []:
+        if name in moving: block('pending_stage_upload', 'A production comparison stage that has not started needs this upload, which must stay regular for it', project_id=pid, file=name)
 
 
 def _alias(path):
@@ -261,10 +323,12 @@ def _upload_base(source):
 
 
 def _others(studio, runs):
-    """Upload names the loaded runs outside `runs` reference, or None (keep every upload) when one of them could not be read: its controls are unknown."""
+    """Upload names the loaded runs outside `runs` and the stages not yet started reference, or None (keep every upload) when one of them could not be read: its controls are unknown."""
     with studio.lock:
         others = [j for k, j in studio.jobs.items() if k not in runs]
-        return None if any('record_error' in j for j in others) else set().union(*(_upload_names(j) for j in others))
+        loaded = set(studio.jobs)
+    pending = _pending_uploads(studio, loaded)  # Stages not yet started have no run: their plans name their uploads.
+    return None if pending is None or any('record_error' in j for j in others) else set().union(*(_upload_names(j) for j in others), (n for _, n in pending))
 
 
 def _outcome(journal):
@@ -335,7 +399,7 @@ def _apply(studio, request, request_id, plan_sha256, fingerprint):
                    collection_revisions={i['id']: i['revision'] for i in items if i['kind'] == 'collection'},
                    copies=sorted(copies.values(), key=lambda c: c['target']), thumbnails=sorted(i['id'] for i in items if i['kind'] == 'thumbnail'),
                    keep_uploads=sorted(c['source'] for c in copies.values() if c['kind'] == 'upload' and others is not None and _upload_base(c['source']) in others),
-                   external_copies=sorted(i['id'] for i in items if i['kind'] == 'external_copy'), placements=None, remaining=[], created_at=time.time())
+                   external_copies=sorted(i['id'] for i in items if i['kind'] in OUTSIDE), placements=None, remaining=[], created_at=time.time())
     stage, committed, staging = 'staging', False, _stage_root(studio, request_id)
     try:
         with studio.lock: studio.migrating.update(runs)  # Studio._save refuses these runs until the finally below.
@@ -526,15 +590,17 @@ def _owned(studio, request_id):
 
 def _disk_consumers(studio, exclude):
     """Upload names that retained run records outside `exclude` reference, or None when that cannot be established (keep them all)."""
-    names, count = set(), 0
+    names, count, have = set(), 0, set()
     for root in (studio.runs, studio._private_directory('runs')):
         for state in root.glob('*/state.json'):
+            have.add(state.parent.name)
             if state.parent.name in exclude: continue
             count += 1
             if count > MAX_SCANNED_RUNS: return None
             try: names |= _upload_names(studio._read_job_record(state))
             except (OSError, ValueError, RecursionError): return None
-    return names
+    pending = _pending_uploads(studio, have)
+    return None if pending is None else names | {n for _, n in pending}
 
 
 def _durable(studio, path):

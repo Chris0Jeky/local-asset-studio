@@ -6,12 +6,14 @@ import sqlite3
 import tempfile
 import threading
 import unittest
+import uuid
 from http.client import HTTPConnection
 from pathlib import Path
 from unittest.mock import patch
 
 from http_test_server import ThreadingHTTPServer
 import test_server as fixture
+import project_storage
 
 ROUTE = '/api/assets/migration-plan'
 
@@ -33,10 +35,10 @@ class RunMigrationPlanTests(unittest.TestCase):
     def close(self):
         self.http.shutdown(); self.http.server_close(); self.thread.join(3)
 
-    def completed(self, outputs=3, privacy='regular', text='regular canary'):
+    def completed(self, outputs=3, privacy='regular', text='regular canary', job_id=None):
         payload = {'preset_id': 'demo', 'controls': {'positive': text}}
         if privacy == 'private': payload['privacy'] = 'private'
-        identifier = self.studio.create_job(payload, enqueue=False)['id']; job = self.studio.jobs[identifier]
+        identifier = self.studio.create_job(payload, enqueue=False, **({'job_id': job_id} if job_id else {}))['id']; job = self.studio.jobs[identifier]
         job.update(status='completed', prompt_ids=['p-'+identifier], submissions=[{'prompt_id': 'p-'+identifier, 'status': 'completed', 'graph': copy.deepcopy(job['graph'])}],
                    outputs=[{'filename': f'{identifier}-{i}.png', 'media_type': 'image', 'type': 'output', 'prompt_id': 'p-'+identifier} for i in range(outputs)])
         for index, output in enumerate(job['outputs']):
@@ -219,6 +221,63 @@ class RunMigrationPlanTests(unittest.TestCase):
         plan = self.plan(job_ids=[job['id']])
         self.assertIn('run_storage_alias', self.codes(plan))
         self.assertFalse(any('secret.txt' in i['id'] for i in plan['items']))
+
+    def project(self, plan, pid=None):
+        pid = pid or uuid.uuid4().hex
+        with self.studio.production.connect() as db:
+            db.execute('INSERT INTO budgets(id,allowance) VALUES (?,1)', (pid,))
+            db.execute('INSERT INTO projects VALUES (?,?,?,?,?)', (pid, pid, plan if isinstance(plan, str) else json.dumps(plan), json.dumps({'status': 'planned'}), 1))
+        return pid
+
+    def comparison(self, *requests, pid=None):
+        return self.project({'version': 1, 'kind': 'comparison', 'sha256': 'a'*64, 'stages': [{'label': chr(65+i), 'request': r} for i, r in enumerate(requests)]}, pid)
+
+    def scene(self, *asset_ids):
+        pid = self.project({'version': 1, 'kind': 'av', 'stages': [], 'source_assets': list(asset_ids)})
+        sources = [{'key': f'source{i}', 'asset_id': a, 'filename': 'x.png', 'kind': 'image', 'sha256': self.studio.assets.get(a)['sha256'], 'bytes': 7} for i, a in enumerate(asset_ids)]
+        document = {'revision': 0, 'project': {'assets': {s['key']: {'path': f"inputs/{s['key']}.png"} for s in sources}}, 'sources': sources}
+        with self.studio.production.connect() as db: db.execute('INSERT INTO av_documents VALUES (?,0,?)', (pid, json.dumps(document)))
+        return pid
+
+    def test_scene_project_input_copies_of_a_planned_asset_are_listed_as_staying_regular(self):
+        job, other = self.completed(2), self.completed(1)
+        before = self.plan(job_ids=[job['id']])
+        pid = self.scene(job['outputs'][0]['asset_id'], other['outputs'][0]['asset_id'])
+        plan = self.plan(job_ids=[job['id']])
+        copies = self.kinds(plan, 'scene_copy')
+        self.assertEqual([(i['id'], i['asset_id'], i['classification'], i['bytes']) for i in copies], [(f'projects/{pid}/inputs/source0.png', job['outputs'][0]['asset_id'], None, 7)])
+        self.assertEqual(self.codes(plan), {'scope_partial'})  # a note, not a blocker: those bytes stay where they are
+        self.assertNotEqual(plan['plan_sha256'], before['plan_sha256']); self.assertEqual(plan['byte_estimate'], before['byte_estimate'])
+
+    def test_a_production_plan_that_keeps_the_runs_recipe_is_listed(self):
+        pid = uuid.uuid4().hex; job = self.completed(1, job_id=project_storage.stage_job_id(pid, 1)); bystander = self.completed(1)
+        self.comparison({'controls': {'positive': 'a'}}, {'controls': {'positive': 'b'}}, pid=pid)
+        plan = self.plan(job_ids=[job['id']])
+        self.assertEqual([(i['id'], i['run_ids'], i['classification']) for i in self.kinds(plan, 'production_plan')], [(f'projects/{pid}/plan.json', [job['id']], None)])
+        self.assertEqual(self.codes(plan), {'scope_partial'})
+        self.assertEqual(self.kinds(self.plan(job_ids=[bystander['id']]), 'production_plan'), [])
+
+    def test_a_stage_that_has_not_started_blocks_a_move_of_the_upload_it_will_use(self):
+        upload = self.studio.upload('ref.png', 'image/png', fixture.png()); job = self.completed(1)
+        job['references'] = [{'file': upload['file'], 'role': 'subject'}]; self.studio._save(job)
+        pid = self.comparison({'references': [{'file': upload['file']}], 'controls': {}})
+        plan = self.plan(job_ids=[job['id']])
+        self.assertIn('pending_stage_upload', self.codes(plan)); self.assertFalse(plan['applicable'])
+        self.assertEqual([(b['project_id'], b['file']) for b in plan['blockers'] if b['code'] == 'pending_stage_upload'], [(pid, upload['file'])])
+        control = self.studio.upload('other.png', 'image/png', fixture.png())  # naming an upload this plan does not move is no conflict
+        with self.studio.production.connect() as db: db.execute('DELETE FROM projects WHERE id=?', (pid,))
+        self.comparison({'controls': {'reference': control['file']}})
+        self.assertNotIn('pending_stage_upload', self.codes(self.plan(job_ids=[job['id']])))
+        # Once the stage's run exists it is an ordinary run that shares the upload, not a pending stage.
+        started = uuid.uuid4().hex; self.comparison({'references': [{'file': upload['file']}]}, pid=started)
+        self.studio.create_job({'preset_id': 'demo', 'controls': {'positive': 'stage'}}, enqueue=False, job_id=project_storage.stage_job_id(started, 0))
+        self.assertEqual([b for b in self.plan(job_ids=[job['id']])['blockers'] if b['code'] == 'pending_stage_upload' and b['project_id'] == started], [])
+
+    def test_unreadable_production_storage_is_a_blocker_not_an_empty_answer(self):
+        job = self.completed(1); self.assertNotIn('production_unreadable', self.codes(self.plan(job_ids=[job['id']])))
+        self.project('{ not json')
+        plan = self.plan(job_ids=[job['id']])
+        self.assertIn('production_unreadable', self.codes(plan)); self.assertFalse(plan['applicable'])
 
     def test_input_bounds_and_validation(self):
         job = self.completed(1); good = {'workspace_id': self.workspace_id, 'destination': 'private', 'job_ids': [job['id']]}
