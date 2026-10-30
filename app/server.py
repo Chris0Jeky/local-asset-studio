@@ -63,6 +63,7 @@ import continuation
 import pose_guide
 import tiles
 import parallax
+import region_repair
 import looks
 import review_media
 import characters
@@ -3412,6 +3413,9 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == "/api/tiles/prepare": return self._json(201, tiles.prepare(self.studio, self._body_object()))
             if self.path == "/api/tiles/finish":
                 job = tiles.finish(self.studio, self._body_object().get("job_id")); return self._json(200, {"job": self.studio.public(job)})
+            # Repair a marked region (#1857): prepare composes the owner's boxes into an RGBA upload for a masked-repair recipe; nothing queues.
+            if urlparse(self.path).path == "/api/repair/prepare":
+                body = self._body_object(); return self._json(201, region_repair.prepare(self.studio, body, scope, privacy_scope.creation_for_handler(self, body)))
             # Parallax layers (#1219): prepare attaches the source and returns the plate stage; stage returns the other edit's
             # wording for Create; finish runs Pillow steps on a completed plate + isolate pair. None queues a generation.
             if self.path == "/api/parallax/prepare": return self._json(201, parallax.prepare(self.studio, self._body_object()))

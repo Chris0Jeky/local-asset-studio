@@ -8,7 +8,7 @@
   const U=StudioUX,q=s=>document.querySelector(s),escape=esc;
   let sharedAdoptionError='';
   let selectionEpoch=0,sourceContext=null,handoffBaseline=null,sourceReadError='',varyUnapplied=null;
-  let intentId='create',handoffId=null,handoffIntent='edit',handoffBusy=false,pickerBusy=false,pickerLoading=false,sourcePickerEpoch=0,handoffEpoch=0,handoffBusyOwner=null,pickerBusyOwner=null;
+  let intentId='create',handoffId=null,handoffIntent='edit',handoffBusy=false,pickerBusy=false,pickerLoading=false,sourcePickerEpoch=0,handoffEpoch=0,handoffBusyOwner=null,pickerBusyOwner=null,handoffAsset=null,repairBoxes=[],repairDrag=null;
   let draftPrefix=null,draftPaused=false,draftDirty=false,restoring=false,draftTimer=null,knownDrafts=new Map(),pendingInputs=new Set();
   let draftPrivacy=globalThis.StudioPrivacy?.creation()||'regular',knownFills=new Map();
   const draftStorage=(classification=draftPrivacy)=>classification==='private'?sessionStorage:localStorage;
@@ -937,16 +937,17 @@
     }finally{if(pickerBusyOwner===busyOwner){pickerBusyOwner=null;pickerBusy=false;button.disabled=false;secondPanel.setAttribute('aria-busy','false');syncReady();}}
   };
   // A modal handoff carries IDs, not paths; selecting a destination never runs it.
-  const handoff=element('dialog','studio-dialog ux-handoff');handoff.id='uxHandoff';handoff.setAttribute('aria-labelledby','uxHandoffTitle');handoff.innerHTML='<div class="dialog-heading"><div><span class="eyebrow">CONTINUE WITH THIS ASSET</span><h2 id="uxHandoffTitle">Where should it go next?</h2></div><button data-ux-close="uxHandoff" aria-label="Close handoff">✕</button></div><div class="ux-handoff-layout"><div id="uxHandoffSource"></div><div><div id="uxHandoffIntents" class="ux-handoff-intents"></div><label for="uxDestination">Destination recipe<select id="uxDestination"></select></label><div id="uxHandoffDetails"></div><details><summary>Wording prepared for this pass</summary><pre id="uxHandoffPrompt"></pre></details><details><summary>Technical recipe notes</summary><p id="uxHandoffTechnical"></p></details><p class="callout">Prepare attaches a copy and fills the settings. Nothing runs until you press Generate.</p><p id="uxHandoffStatus" role="status"></p><button id="uxPrepareHandoff" class="primary">Prepare in Create →</button><p class="disabledReason"><small id="uxPrepareReason"></small></p></div></div>';document.body.append(handoff);
+  const handoff=element('dialog','studio-dialog ux-handoff');handoff.id='uxHandoff';handoff.setAttribute('aria-labelledby','uxHandoffTitle');handoff.innerHTML='<div class="dialog-heading"><div><span class="eyebrow">CONTINUE WITH THIS ASSET</span><h2 id="uxHandoffTitle">Where should it go next?</h2></div><button data-ux-close="uxHandoff" aria-label="Close handoff">✕</button></div><div class="ux-handoff-layout"><div id="uxHandoffSource"></div><div><div id="uxHandoffIntents" class="ux-handoff-intents"></div><label for="uxDestination">Destination recipe<select id="uxDestination"></select></label><div id="uxHandoffDetails"></div><div id="uxRepairMark" class="ux-repair" hidden role="group" aria-labelledby="uxRepairTitle"><h3 id="uxRepairTitle">Mark the region to repair</h3><p>Drag a box over each part to redraw, such as a broken hand. Only the boxes are repainted; the rest of the picture is protected.</p><div class="ux-repair-pick"><img alt="Drag on the picture to mark the region to repair" draggable="false"></div><label for="uxRepairType">Or type a box in picture pixels<input id="uxRepairType" autocomplete="off" placeholder="x0,y0,x1,y1; …"></label><button type="button" data-ux-repair-add>Add box</button><ul id="uxRepairList" aria-label="Marked boxes"></ul></div><details><summary>Wording prepared for this pass</summary><pre id="uxHandoffPrompt"></pre></details><details><summary>Technical recipe notes</summary><p id="uxHandoffTechnical"></p></details><p class="callout">Prepare attaches a copy and fills the settings. Nothing runs until you press Generate.</p><p id="uxHandoffStatus" role="status"></p><button id="uxPrepareHandoff" class="primary">Prepare in Create →</button><p class="disabledReason"><small id="uxPrepareReason"></small></p></div></div>';document.body.append(handoff);
   function destinationDetails(){
     const p=catalog?.presets.find(p=>p.id===q('#uxDestination').value),cap=p?.continuation_capability;
     q('#uxHandoffDetails').innerHTML=p?StudioContinuation.guidance(p,sourceContext).map(text=>'<p>'+escape(text)+'</p>').join(''):'No supported source-consuming recipe is available for this task.';
     q('#uxHandoffTechnical').textContent=p?.description||'';
     const prepared=p?StudioContinuation.promptFor(p,sourceContext):null;
     q('#uxHandoffPrompt').textContent=cap?.prompt_role==='none'?'No prompt is used.':prepared!=null?prepared:cap?.prompt_role==='description'&&sourceContext?.prompt_role==='description'&&typeof sourceContext.positive==='string'?sourceContext.positive:'No recipe example will be inserted. '+(cap?.prompt_role==='instruction'?'Write the requested change after preparing.':cap?.prompt_role==='motion'?'Write a motion brief after preparing.':'Write a description of the intended image after preparing.');
-    q('#uxPrepareHandoff').disabled=!p||!sourceContext||!!cap?.requires_mask||handoffBusy||submitting;q('#uxPrepareReason').textContent=cap?.requires_mask?'This recipe needs a mask, which this handoff cannot prepare. Choose another destination recipe.':'';q('#uxDestination').disabled=handoffBusy;
+    const repair=!!cap?.requires_mask,why=repair?repairReason(repairBoxes,sourceContext):'';q('#uxRepairMark').hidden=!repair;if(repair)renderRepair();
+    q('#uxPrepareHandoff').disabled=!p||!sourceContext||!!why||handoffBusy||submitting;q('#uxPrepareReason').textContent=why||'';q('#uxDestination').disabled=handoffBusy;
   }
-  function handoffRecipes(preferred){q('#uxHandoffIntents').innerHTML=U.INTENTS.filter(i=>i.id!=='create').map(i=>'<button data-ux-destination="'+i.id+'" aria-pressed="'+(i.id===handoffIntent)+'">'+i.verb+'</button>').join('');const recipes=StudioContinuation.destinations(handoffIntent,catalog?.presets||[],sourceContext);q('#uxDestination').innerHTML=recipes.map(p=>'<option value="'+escape(p.id)+'">'+escape(p.name)+(p.continuation_capability.requires_mask?' · mask preparation required':'')+'</option>').join('');if(recipes.some(p=>p.id===preferred))q('#uxDestination').value=preferred;destinationDetails();}
+  function handoffRecipes(preferred){q('#uxHandoffIntents').innerHTML=U.INTENTS.filter(i=>i.id!=='create').map(i=>'<button data-ux-destination="'+i.id+'" aria-pressed="'+(i.id===handoffIntent)+'">'+i.verb+'</button>').join('');const recipes=StudioContinuation.destinations(handoffIntent,catalog?.presets||[],sourceContext);q('#uxDestination').innerHTML=recipes.map(p=>'<option value="'+escape(p.id)+'">'+escape(p.name)+(p.continuation_capability.requires_mask?' · mark the region to repair':'')+'</option>').join('');if(recipes.some(p=>p.id===preferred))q('#uxDestination').value=preferred;destinationDetails();}
   function assetDetailsDirty(){return q('#assetDialog').open&&activeAsset&&(q('#assetTitle').value!==activeAsset.title||q('#assetNotes').value!==activeAsset.notes||!assetTagsEqual(q('#assetTags').value,activeAsset.tags.join(', '))||q('#assetReview').value!==activeAsset.review);}
   function warnUnsavedAsset(){let notice=q('#uxAssetUnsaved');if(!notice){notice=element('p','callout');notice.id='uxAssetUnsaved';notice.setAttribute('role','status');q('#assetHandoffs').before(notice);}notice.textContent='Save your asset details before continuing. Your changes are still here.';q('#saveAssetDetails').focus();}
   document.addEventListener('click',e=>{if(e.target.closest('.ux-scene-link,#assetRecipe')&&assetDetailsDirty()){e.preventDefault();e.stopImmediatePropagation();warnUnsavedAsset();}},true);
@@ -954,14 +955,74 @@
     if(epoch!=null&&epoch!==handoffEpoch)return false;const request=++handoffEpoch;
     if(assetDetailsDirty()){warnUnsavedAsset();return false;}if(!catalog){announce('Recipes are still loading.');return false;}
     const a=(typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id));if(!a||a.trashed_at||a.media_type!=='image'){announce('Choose an available image from the Asset library.',true);return false;}
-    handoffId=id;sourceContext=null;handoffBaseline=workbenchStamp();
-    handoffIntent=intent||(/wan|h3/.test(preferred||'')?'animate':/trellis|hunyuan/.test(preferred||'')?'mesh':/^combine-/.test(preferred||'')?'combine':/style-pose|restyle-/.test(preferred||'')?'restyle':/fix|refine|upscale|esrgan/.test(preferred||'')?'repair':'edit');
+    handoffId=id;handoffAsset=a;repairBoxes=[];sourceContext=null;handoffBaseline=workbenchStamp();
+    handoffIntent=intent||(/wan|h3/.test(preferred||'')?'animate':/trellis|hunyuan/.test(preferred||'')?'mesh':/^combine-/.test(preferred||'')?'combine':/style-pose|restyle-/.test(preferred||'')?'restyle':/fix|refine|upscale|esrgan|repair/.test(preferred||'')?'repair':'edit');
     q('#uxHandoffSource').innerHTML=assetPreview(a,true)+'<b>'+escape(a.title)+'</b><small>Source preserved · '+escape(({selected:'Kept',needs_work:'Needs work',rejected:'Not this',unreviewed:'Unreviewed'}[a.review||'unreviewed']||a.review))+'</small>';
     q('#uxHandoffStatus').textContent='Reading this output’s exact submitted prompt…';handoffRecipes(preferred);handoff.showModal();
     readSource(id).then(source=>{if(request!==handoffEpoch||!handoff.open)return;if(source?.version!==1||source.asset_id!==id||source.sha256!==a.sha256)throw Error('Source identity changed; refresh the library.');sourceContext=source;q('#uxHandoffStatus').textContent=source.warning||'Source and output-specific wording found. Preparing remains separate from running.';const current=q('#uxDestination').value;handoffRecipes(preferred||current);}).catch(error=>{if(request===handoffEpoch&&handoff.open){q('#uxHandoffStatus').textContent='Could not read source context: '+error.message;sourceContext=null;destinationDetails();}});
     return true;
   }
   q('#uxDestination').onchange=destinationDetails;
+  // #1857 Repair a marked region: a masked-repair recipe reads an RGBA picture whose transparent part is the repair region. The owner
+  // drags boxes on the picture (or types x0,y0,x1,y1); Prepare composes that input on the server and attaches it like any reference.
+  // The mask is the owner's, never detected. Generate stays the owner's press.
+  function repairParse(text){
+    const boxes=String(text||'').split(';').map(part=>part.trim()).filter(Boolean).map(part=>part.split(/[\s,]+/).filter(Boolean).map(Number));
+    return boxes.length&&boxes.every(box=>box.length===4&&box.every(Number.isInteger))?boxes:null;
+  }
+  function repairReason(boxes,source){
+    if(!source)return 'Reading the picture…';
+    if(source.width%8||source.height%8)return 'Masked repair needs a width and height divisible by 8; this picture is '+source.width+' × '+source.height+'.';
+    if(!boxes.length)return 'Mark the region to repair: drag a box over it on the picture, or type x0,y0,x1,y1 and press Add box.';
+    if(boxes.length>16)return 'Mark at most 16 boxes.';
+    const outside=boxes.find(([x0,y0,x1,y1])=>!(0<=x0&&x0<x1&&x1<=source.width&&0<=y0&&y0<y1&&y1<=source.height));
+    if(outside)return 'The box '+outside.join(',')+' is not inside the '+source.width+' × '+source.height+' picture.';
+    const small=boxes.find(([x0,y0,x1,y1])=>x1-x0<8||y1-y0<8);
+    return small?'The box '+small.join(',')+' is too small: each side needs at least 8 px.':null;
+  }
+  // The picture is shown scaled; a point on it maps back to source pixels.
+  function repairPoint(pick,e,source){const r=pick.getBoundingClientRect();return [Math.round(Math.max(0,Math.min(1,(e.clientX-r.left)/r.width))*source.width),Math.round(Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))*source.height)];}
+  function renderRepair(){
+    const pick=q('#uxRepairMark').querySelector('.ux-repair-pick'),img=pick.querySelector('img');if(handoffAsset?.url&&img.getAttribute('src')!==handoffAsset.url)img.setAttribute('src',handoffAsset.url);
+    pick.querySelectorAll('.ux-parallax-box').forEach(box=>box.remove());
+    if(sourceContext?.width)for(const [x0,y0,x1,y1] of repairBoxes){const box=element('span','ux-parallax-box');Object.assign(box.style,{left:100*x0/sourceContext.width+'%',top:100*y0/sourceContext.height+'%',width:100*(x1-x0)/sourceContext.width+'%',height:100*(y1-y0)/sourceContext.height+'%'});pick.append(box);}
+    q('#uxRepairList').innerHTML=repairBoxes.map((box,i)=>'<li>'+escape(box.join(', '))+' <button type="button" data-ux-repair-remove="'+i+'" aria-label="Remove box '+escape(box.join(','))+'">Remove</button></li>').join('');
+  }
+  function repairAdd(boxes){if(!handoffBusy){repairBoxes=repairBoxes.concat(boxes);destinationDetails();}}
+  document.addEventListener('pointerdown',e=>{const pick=e.target.closest?.('.ux-repair-pick');if(!pick||e.button!==0||handoffBusy||!sourceContext?.width)return;e.preventDefault();repairDrag={pick,start:repairPoint(pick,e,sourceContext)};pick.setPointerCapture?.(e.pointerId);});
+  document.addEventListener('pointerup',e=>{
+    if(!repairDrag)return;const {pick,start}=repairDrag;repairDrag=null;if(!sourceContext?.width)return;const end=repairPoint(pick,e,sourceContext);
+    if(![...start,...end].every(Number.isFinite)){q('#uxHandoffStatus').textContent='The picture has not loaded yet; wait for it, then drag again.';return;}
+    const box=[Math.min(start[0],end[0]),Math.min(start[1],end[1]),Math.max(start[0],end[0]),Math.max(start[1],end[1])];
+    if(box[2]-box[0]<8||box[3]-box[1]<8){q('#uxHandoffStatus').textContent='A repair box needs at least 8 px on each side; drag a larger box.';return;}
+    repairAdd([box]);
+  });
+  document.addEventListener('pointercancel',()=>{repairDrag=null;});
+  const repairTyped=()=>{const boxes=repairParse(q('#uxRepairType').value);if(!boxes){q('#uxHandoffStatus').textContent='Type boxes as x0,y0,x1,y1 in picture pixels, separated by semicolons.';return;}q('#uxRepairType').value='';repairAdd(boxes);};
+  document.addEventListener('click',e=>{if(e.target.closest('[data-ux-repair-add]'))repairTyped();const remove=e.target.closest('[data-ux-repair-remove]');if(remove&&!handoffBusy){repairBoxes=repairBoxes.filter((_,i)=>i!==Number(remove.dataset.uxRepairRemove));destinationDetails();}});
+  q('#uxRepairType').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();repairTyped();}});
+  // The prepared RGBA input becomes this recipe's picture and the source its parent, as Make seamless attaches its seam cross.
+  function beginRepair(result){
+    const target=catalog.presets.find(p=>p.id===result?.preset_id&&p.requires_rgba_mask),context=result.context;
+    if(!target)throw Error('The masked-repair recipe is unavailable.');
+    if(submitting)throw Error('Wait for the current submission before preparing a repair.');
+    // Blank prompt: an imported picture or an output without retained wording must not be repaired with the recipe's example.
+    selectPreset(target.id,true,true,true);
+    uploaded=result.file;setHandoffParent('reference',result.plan.source_asset_id);q('#reference').value='';
+    if(context?.prompt_origin==='submitted-output'&&context.prompt_role==='description'){if(target.positive&&typeof context.positive==='string')q('#positive').value=context.positive;if(target.negative&&typeof context.negative==='string')q('#negative').value=context.negative;}
+    q('#batch').value=1;
+    q('#referenceHint').textContent='Repair input from '+(context?.title||'the picture')+' · '+result.width+' × '+result.height+' · '+result.plan.boxes.length+' marked box'+(result.plan.boxes.length===1?'':'es')+'. Only the marked region is repainted.';
+    updateReady();
+  }
+  async function prepareRepair(id,preset,source,current){
+    const boxes=repairBoxes.map(box=>[...box]);
+    const result=await post('/api/repair/prepare',{asset_id:id,preset_id:preset,boxes});
+    if(!current())return false;
+    if(!handoff.open||preset!==q('#uxDestination').value||handoffBaseline!==workbenchStamp()||JSON.stringify(boxes)!==JSON.stringify(repairBoxes))throw Error('The task or the marked boxes changed while the repair input was being prepared. Nothing was applied; press Prepare again.');
+    if(result?.generation_submitted!==false||result.plan?.source_asset_id!==id||result.plan.source_sha256!==source.sha256||result.file!==result.plan.mask_file||JSON.stringify(result.plan.boxes)!==JSON.stringify(boxes))throw Error('The prepared repair input could not be verified. Nothing was applied.');
+    beginRepair(result);
+    return true;
+  }
   q('#uxPrepareHandoff').onclick=async()=>{
     if(handoffBusy||q('#uxPrepareHandoff').disabled)return;
     const id=handoffId,preset=q('#uxDestination').value,epoch=handoffEpoch,selection=selectionEpoch,source=sourceContext;
@@ -969,6 +1030,11 @@
     const busyOwner={};handoffBusyOwner=busyOwner;handoffBusy=true;destinationDetails();syncReady();
     try{
       if(handoffBaseline!==workbenchStamp())throw Error('The workbench changed while this handoff was open. Reopen it to review the current task.');
+      if(typeof catalog!=='undefined'&&catalog?.presets?.find(p=>p.id===preset)?.requires_rgba_mask){
+        const count=repairBoxes.length;if(!await prepareRepair(id,preset,source,current))return;
+        q('#assetDialog').close();handoff.close();draftDirty=true;showView('create');saveDraft();syncCreate();
+        announce('Repair input attached: '+count+' marked box'+(count===1?' is':'es are')+' transparent and the rest of the picture is protected. '+(q('#positive').value.trim()?'Check the prompt, then press Generate.':'Describe the picture as it should look, then press Generate.'));contextPanel.scrollIntoView({block:'center'});return;
+      }
       const result=await api('/api/assets/reference',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id}),signal:AbortSignal.timeout(30000)});
       if(!current())return;
       if(!handoff.open||preset!==q('#uxDestination').value||handoffBaseline!==workbenchStamp())throw Error('The task changed during attachment. The copy was staged but not applied; reopen the handoff.');

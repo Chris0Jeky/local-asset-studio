@@ -175,10 +175,10 @@ def route(studio):
 route_problems = continuation.tile_route_problems   # Pillow-free, so scripts/validate-repo.py runs in the payload lane
 
 
-def _source(studio, asset_id):
+def _source(studio, asset_id, privacy="regular"):
     """(context, RGB picture) of a library image whose bytes still match its record."""
-    context = continuation.source_context(studio, asset_id)
-    raw = studio.assets.file(asset_id).read_bytes()
+    context = continuation.source_context(studio, asset_id, privacy=privacy)
+    raw = studio.assets.file(asset_id, privacy=privacy).read_bytes()
     if hashlib.sha256(raw).hexdigest() != context["sha256"]: raise ValueError("Source bytes changed. Restore the original asset before making it seamless.")
     # Match the displayed picture and the engine loader without rewriting source bytes.
     with Image.open(io.BytesIO(raw)) as decoded:
