@@ -279,6 +279,30 @@ class RunMigrationPlanTests(unittest.TestCase):
         plan = self.plan(job_ids=[job['id']])
         self.assertIn('production_unreadable', self.codes(plan)); self.assertFalse(plan['applicable'])
 
+    # ---- Closure hardening (#1799) ----
+    def test_production_items_past_the_item_bound_keep_the_413_instead_of_a_production_unreadable_blocker(self):
+        import run_migration
+        job = self.completed(1); base = self.plan(job_ids=[job['id']])['item_count']
+        self.scene(job['outputs'][0]['asset_id'])  # one scene_copy item more than the bound allows
+        with patch.object(run_migration, 'MAX_ITEMS', base):
+            status, raw = self.request({'workspace_id': self.workspace_id, 'destination': 'private', 'job_ids': [job['id']]})
+        self.assertEqual((status, json.loads(raw)['code']), (413, 'plan_too_large'), raw)
+
+    def test_a_stage_whose_references_cannot_be_iterated_blocks_the_plan_and_keeps_every_upload(self):
+        import run_migration
+        job = self.completed(1); self.comparison({'references': 5, 'controls': {}})
+        plan = self.plan(job_ids=[job['id']])
+        self.assertIn('production_unreadable', self.codes(plan)); self.assertFalse(plan['applicable'])
+        self.assertIsNone(run_migration._others(self.studio, {job['id']}))
+
+    def test_a_missing_projects_database_blocks_nothing(self):
+        import run_migration
+        job = self.completed(1); path = self.studio.experiments/'projects'/'projects.sqlite3'; path.unlink(missing_ok=True)
+        self.assertEqual(run_migration._production(self.studio), ([], []))
+        plan = self.plan(job_ids=[job['id']])
+        self.assertEqual(self.codes(plan), {'scope_partial'}); self.assertEqual(self.kinds(plan, 'production_plan') + self.kinds(plan, 'scene_copy'), [])
+        self.assertEqual(run_migration._others(self.studio, {job['id']}), set())
+
     def test_input_bounds_and_validation(self):
         job = self.completed(1); good = {'workspace_id': self.workspace_id, 'destination': 'private', 'job_ids': [job['id']]}
         cases = [dict(good, destination='all'), dict(good, destination=None), {k: v for k, v in good.items() if k != 'workspace_id'},

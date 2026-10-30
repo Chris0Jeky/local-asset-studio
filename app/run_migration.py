@@ -21,6 +21,7 @@ import threading
 import time
 from pathlib import Path
 
+import creation_privacy
 import project_storage
 from workspace import WorkspaceError, digest_file, privacy_matches, privacy_scope, privacy_sql
 
@@ -228,7 +229,7 @@ def _pending_uploads(studio, have, read=None):
     """(project id, upload name) for each upload a comparison stage names whose run is not in `have` (not started, so no run record holds its uploads yet), or None when unreadable."""
     read = read or _production(studio)
     try: return None if read is None else [(pid, name) for pid, _, index, request in _stages(read[0]) if project_storage.stage_job_id(pid, index) not in have for name in sorted(_upload_names(request))]
-    except ValueError: return None
+    except (ValueError, TypeError): return None  # TypeError: a stage whose references are not iterable.
 
 
 def _production_refs(studio, add, block, items, run_ids, closure, loaded):
@@ -249,9 +250,11 @@ def _production_refs(studio, add, block, items, run_ids, closure, loaded):
         for pid, (plan, runs) in stages.items():
             add(dict(kind='production_plan', id='projects/'+pid+'/plan.json', classification=None, bytes=len(json.dumps(plan, sort_keys=True).encode()), sha256=plan.get('sha256'),
                      project_id=pid, run_ids=sorted(runs), consequence='The project plan keeps these runs recipes (prompt, upload names), and any contact sheet or review stays regular'))
+    except WorkspaceError: raise  # plan_too_large stays the documented 413, not a production_unreadable blocker.
     except (ValueError, KeyError, TypeError, RecursionError): return block(*unreadable)
     moving = {_upload_base(i['id']) for i in items.values() if i['kind'] == 'upload' and i['classification'] == 'regular'}
-    for pid, name in _pending_uploads(studio, loaded, read) or []:
+    if (pending := _pending_uploads(studio, loaded, read)) is None: return block(*unreadable)
+    for pid, name in pending:
         if name in moving: block('pending_stage_upload', 'A production comparison stage that has not started needs this upload, which must stay regular for it', project_id=pid, file=name)
 
 
@@ -279,6 +282,7 @@ MARKER_TABLE = 'CREATE TABLE IF NOT EXISTS run_migrations_v1 (request_id TEXT PR
 REQUEST_ID = re.compile(r'[A-Za-z0-9_-]{16,128}')
 SETTLED_STAGES = ('complete', 'rolled-back', 'cleanup-needed')  # Published or undone; anything else awaits recovery.
 MAX_SCANNED_RUNS = 20000
+COPY_ROOTS = {'run_file': 'runs', 'upload': 'uploads', 'asset': 'workspace'}  # experiments/ folder each copied kind comes from
 _LOCK = threading.Lock()  # ponytail: one migration at a time Studio-wide; per-run locks if overlapping migrations ever matter
 
 
@@ -398,7 +402,7 @@ def _apply(studio, request, request_id, plan_sha256, fingerprint):
                    asset_revisions={i['id']: [i['revision'], i['sha256'], i['path']] for i in items if i['kind'] == 'asset'},
                    collection_revisions={i['id']: i['revision'] for i in items if i['kind'] == 'collection'},
                    copies=sorted(copies.values(), key=lambda c: c['target']), thumbnails=sorted(i['id'] for i in items if i['kind'] == 'thumbnail'),
-                   keep_uploads=sorted(c['source'] for c in copies.values() if c['kind'] == 'upload' and others is not None and _upload_base(c['source']) in others),
+                   keep_uploads='all' if others is None else sorted(c['source'] for c in copies.values() if c['kind'] == 'upload' and _upload_base(c['source']) in others),
                    external_copies=sorted(i['id'] for i in items if i['kind'] in OUTSIDE), placements=None, remaining=[], created_at=time.time())
     stage, committed, staging = 'staging', False, _stage_root(studio, request_id)
     try:
@@ -520,9 +524,10 @@ def _cleanup(studio, journal, live):
         regular_shas = {r[0] for r in db.execute("SELECT sha256 FROM assets WHERE privacy='regular'")}
     others = _others(studio, journal['job_ids']) if live else _disk_consumers(studio, journal['job_ids'])  # At start no job is loaded: read run records.
     retire = [c['source'] for c in journal['copies'] if c['kind'] == 'asset' and c['source'].removeprefix('workspace/') not in regular_paths]
-    uploads = [c['source'] for c in journal['copies'] if c['kind'] == 'upload' and c['source'] not in journal['keep_uploads']]
-    retire += [u for u in uploads if others is not None and _upload_base(u) not in others]
-    if others is None: remaining += uploads  # Who else uses them is unknown: kept, and listed so the next start retries.
+    keep = journal['keep_uploads']  # 'all': apply could not read every record, so no upload is ever retired for this journal, whatever a later start reads.
+    uploads = [c['source'] for c in journal['copies'] if c['kind'] == 'upload' and (keep == 'all' or c['source'] not in keep)]
+    retire += [u for u in uploads if keep != 'all' and others is not None and _upload_base(u) not in others]
+    if others is None or keep == 'all': remaining += uploads  # Who else uses them is unknown: kept and listed (a plain unknown is retried at the next start; 'all' is not).
     retire += [t for t in journal['thumbnails'] if Path(t).name.split('-', 1)[0] not in regular_shas]  # A regenerable cache; Private renders its own.
     for rel in dict.fromkeys(retire):
         try: _at(studio, rel).unlink(missing_ok=True)
@@ -565,6 +570,14 @@ def _check_journal(studio, journal, path):
     for entry in (journal.get('placements') or []) + (journal.get('copies') or []):  # Rollback unlinks these: they must be private files.
         target = entry.get('target') if type(entry) is dict else None
         if type(target) is not str or not target.startswith('private/') or '..' in Path(target).parts: raise ValueError('Journal names a file outside private/')
+    for entry in journal.get('copies') or []:  # Cleanup unlinks these Regular originals: each must sit under the root its kind copies from.
+        parts = Path(entry['source']).parts if type(entry.get('source')) is str else ()
+        if not (len(parts) > 1 and '..' not in parts and parts[0] == COPY_ROOTS.get(entry.get('kind')) and (entry['kind'] != 'run_file' or parts[1] in runs)):
+            raise ValueError('Journal names a copy source outside the Regular roots')
+    thumbnails = journal.get('thumbnails')
+    if type(thumbnails) is not list or any(type(t) is not str or len(Path(t).parts) != 3 or Path(t).parts[:2] != ('workspace', 'thumbs') or '..' in Path(t).parts or not t.endswith('.webp') for t in thumbnails):
+        raise ValueError('Journal names a thumbnail outside workspace/thumbs/')
+    if journal.get('keep_uploads') != 'all' and (type(journal.get('keep_uploads')) is not list or not all(type(u) is str for u in journal['keep_uploads'])): raise ValueError('Journal keep_uploads is invalid')
 
 
 def _pending(studio):
@@ -591,14 +604,19 @@ def _owned(studio, request_id):
 def _disk_consumers(studio, exclude):
     """Upload names that retained run records outside `exclude` reference, or None when that cannot be established (keep them all)."""
     names, count, have = set(), 0, set()
-    for root in (studio.runs, studio._private_directory('runs')):
+    for classification, root in (('regular', studio.runs), ('private', studio._private_directory('runs'))):
         for state in root.glob('*/state.json'):
-            have.add(state.parent.name)
-            if state.parent.name in exclude: continue
+            name = state.parent.name
+            if name in have and name not in exclude: return None  # The loader marks a duplicate ID unreadable.
+            have.add(name)
+            if name in exclude: continue
             count += 1
             if count > MAX_SCANNED_RUNS: return None
-            try: names |= _upload_names(studio._read_job_record(state))
-            except (OSError, ValueError, RecursionError): return None
+            try:  # As strict as the loader: a record it would mark record_error says nothing about which uploads it uses.
+                record = studio._read_job_record(state); studio._validate_job_record(record); studio._read_job_record(state.parent/'workflow.json')
+                if state.is_symlink() or state.parent.is_symlink() or record.get('id') != name or creation_privacy.normalize(record.get('privacy', 'regular')) != classification: return None
+                names |= _upload_names(record)
+            except (OSError, ValueError, TypeError, KeyError, AttributeError, RecursionError, OverflowError): return None
     pending = _pending_uploads(studio, have)
     return None if pending is None else names | {n for _, n in pending}
 
