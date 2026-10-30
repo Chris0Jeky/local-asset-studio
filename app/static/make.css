@@ -17,7 +17,7 @@
 .make-look-text{display:flex;flex-direction:column;gap:4px;padding:11px 12px 13px}.make-look-text b{font-size:13px;font-weight:600;line-height:1.3}.make-look-text small{font-size:11px;color:var(--muted)}
 .make-look:hover{border-color:#6f8a5c}.make-look.active{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
 .make-pace.slow{color:#e3c27a!important}.make-pace.fast{color:#a5d6cd!important}.make-pace.medium{color:#d3d68f!important}
-.make-look-text small.make-licence,.make-chosen small.make-licence{align-self:flex-start;color:#e0a98a;border:1px solid #6b4a3c;border-radius:999px;padding:1px 8px;font-size:11px}.make-best{font-style:italic}
+.make-look-text small.make-licence,.make-chosen small.make-licence,.make-tune-group small.make-licence{align-self:flex-start;color:#e0a98a;border:1px solid #6b4a3c;border-radius:999px;padding:1px 8px;font-size:11px}.make-best{font-style:italic}
 .make-recover{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:-4px 0 12px}.make-recover p{flex-basis:100%;margin:0;font-size:12px}.make-recover button{font-size:11px;padding:6px 10px;min-height:32px}.make-recover label{display:flex;flex-direction:column;gap:4px;font-size:12px}
 .make-polish-why,.make-polish-hint{display:block;flex-basis:100%;font-size:11px}
 .make-look-text small.make-tested,.make-chosen small.make-tested{align-self:flex-start;color:#a9d68f;border:1px solid #4d6b3c;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:600}
@@ -136,7 +136,7 @@
 .make-note{border:1px solid var(--make-edge);border-radius:12px;padding:10px 14px;margin:0 0 16px;background:var(--panel)}.make-note h3{margin:0 0 6px;font-size:14px}.make-note p{margin:0 0 8px;font-size:12px;color:var(--muted)}.make-note .make-row{margin-top:6px}
 .make-pose-routes{margin:4px 0 6px}.make-pose-routes small{display:block;margin:-4px 0 8px 26px;font-size:11px}.make-tune-row .make-lab{color:var(--accent)}
 /* Quality (19 Oct): Draft, As made, Fine as one radio group in the composer side. */
-.make-quality{border:1px solid var(--make-edge);border-radius:10px;padding:8px 12px 10px;margin:0;display:flex;flex-direction:column;gap:4px}.make-quality legend{font-size:12px;font-weight:600;padding:0 4px}.make-quality small{font-size:11px}
+.make-quality{border:1px solid var(--make-edge);border-radius:10px;padding:8px 12px 10px;margin:0;display:flex;flex-direction:column;gap:4px}.make-quality legend{font-size:12px;font-weight:600;padding:0 4px}.make-quality small{font-size:11px}.make-why summary{font-size:11px;color:var(--muted);cursor:pointer;min-height:24px;padding:4px 0}.make-why small{display:block}
 
 /* The chosen look carries a check mark, not only the accent border (WCAG 1.4.1). Compare looks has its own round check (above), so not there. */
 .make-look.active:has(>.make-look-select[role=radio])::after{content:"\2713  Chosen";position:absolute;top:8px;right:8px;padding:3px 8px;border-radius:999px;background:var(--accent);color:#10201a;font-size:11px;font-weight:700;pointer-events:none}
