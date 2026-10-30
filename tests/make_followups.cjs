@@ -88,6 +88,29 @@ test('choosing a character uses a live preferred Restyle look or the default and
   }
 });
 
+test('a kept picture in the line-up can become the canon: one edit with the revision read, never a generation (#1205)',async()=>{
+  const c={id:'mira',name:'Mira',revision:3,canon_asset_id:'canon',lineage:[{role:'canon',asset_id:'canon'}],body:{who:'Mira'}};
+  const state={pictures:[{id:'canon'},{id:'keep-a',lineage:['canon'],review:'selected'},{id:'skip',lineage:['canon'],review:'rejected'}],review:{},characters:[c]};
+  const markup=vm.runInNewContext(privacy+between('  const LINEUP_MAX','  async function fillLineups')+';lineupMarkup',{state,escape:String,thumbUrl:a=>'/t/'+a.id,pictureLabel:a=>a.id});
+  const html=markup(c);
+  assert.equal((html.match(/data-make-canon="/g)||[]).length,1,'only a kept, non-canon picture offers the swap');
+  assert.match(html,/data-make-canon="keep-a" data-make-canon-of="mira"[^>]*>Use as canon</);
+  const swap=between('  async function swapCanon(','  // A failed read keeps')+';swapCanon';
+  const run=async(reply)=>{const calls=[],said=[];let reloaded=0;
+    const context={state,usableCharacters:()=>[c],requestPrivacy:()=>({privacy:'normal'}),classified:()=>'normal',privacyEpoch:1,CSS:{escape:String},
+      json:async(url,body)=>{calls.push({url,body});if(reply)throw reply;return{};},loadCharacters:async()=>{reloaded++;},refreshCharacters(){},q:()=>null,sayChars:t=>said.push(t)};
+    const swapCanon=vm.runInNewContext(swap,context);await swapCanon('mira','keep-a');await swapCanon('mira','canon');   // the canon itself is a no-op
+    return{calls,said,reloaded};};
+  const ok=await run();
+  assert.equal(JSON.stringify(ok.calls),JSON.stringify([{url:'/api/characters',body:{action:'edit',id:'mira',expected_revision:3,canon_asset_id:'keep-a'}}]));
+  assert.equal(ok.reloaded,1);assert.match(ok.said[0],/now uses that picture as its canon/);
+  const stale=await run(Object.assign(Error('stale'),{status:409}));
+  assert.equal(stale.reloaded,1);assert.match(stale.said[0],/changed somewhere else.*canon was not changed/);
+  const refused=await run(Object.assign(Error('That picture is put away; restore it before making it the canon'),{status:400}));
+  assert.equal(refused.reloaded,0);assert.match(refused.said[0],/Could not change the canon: That picture is put away/);
+  assert.match(make,/const canon=e\.target\.closest\('\[data-make-canon\]'\);if\(canon\)\{void once\('character:'/,'the press runs through the per-character in-flight guard');
+});
+
 function restoreHarness(failure,status='completed'){
   const requests=[],queue=[],saved=[],state={runs:[]};let response=failure;
   const context={state,window:{},view:{dataset:{}},sessionStorage:{getItem:()=>null,removeItem(){}},readDraft:()=>null,restoreDraft:async()=>{},savedRuns:[{id:'saved',look:'My look',scene:'a room',tune:{seed:0}}],restoredRuns:false,
