@@ -83,7 +83,7 @@ assert.equal($('#productionDetail').innerHTML,emptyDetail,'An empty filtered lis
 run("productionPlans=[];setPlanFilter({type:'all'});");
 const review=fs.readFileSync(path.join(__dirname,'../app/static/review.html'),'utf8');
 assert.match(review,/<span id="phase" class="badge">No comparison open<\/span>/);
-assert.match(review,/in <a href="\/#production">Compare &amp; review<\/a>, open a comparison plan/);
+assert.match(review,/in <a href="\/#production">Compare &amp; review<\/a>, choose Review on a comparison awaiting review/);
 
 // 6 · The live summary states the arithmetic and refuses a budget below the candidates.
 $('#experimentRecipe').textContent='Anima portrait';$('#experimentAxis').value='steps';
