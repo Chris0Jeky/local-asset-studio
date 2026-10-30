@@ -169,6 +169,11 @@ class Totals(unittest.TestCase):
 class GenerateAllowance(unittest.TestCase):
     """#1729: one fixture journey may press Generate. The exception is named, per case and per route, fixture-only, and counted."""
 
+    def test_main_passes_live_and_reconciles_every_observed_submission(self):
+        source = inspect.getsource(runner.main)
+        self.assertIn("split_submissions(spec['id'], OBSERVED_POSTS[seen:], live)", source, 'the live flag must reach the per-case split')
+        self.assertIn('surplus = len(submissions(OBSERVED_POSTS))', source, 'a submission landing after a case slice still turns the run red')
+
     def test_the_allowance_names_only_known_cases_and_generation_routes(self):
         ids = {case['id'] for case in CASES['cases']}
         for case_id, routes in runner.FIXTURE_GENERATE.items():

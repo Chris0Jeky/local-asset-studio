@@ -328,9 +328,11 @@ def restoring_fixture():
     no later case sees their pictures, reviews or jobs. A no-op in live mode, where there is no synthetic state."""
     fixture = SYNTHETIC.get('fixture')
     saved = {name: copy.deepcopy(getattr(fixture, name)) for name in ('ASSETS', 'JOBS', 'PLANS')} if fixture else {}
+    posts = len(fixture.POSTS) if fixture else 0   # later drivers assert on fixture.POSTS (#1751 review)
     try: yield
     finally:
         for name, value in saved.items(): getattr(fixture, name)[:] = value
+        if fixture: del fixture.POSTS[posts:]
 
 
 def build_handler():
@@ -2328,6 +2330,9 @@ def main(argv=None):
         if server: server.shutdown(); server.server_close()
         if thread: thread.join(timeout=5)
 
+    # Total gate (#1751 review): a submission that lands after a case's slice (during page or context close) still counts.
+    surplus = len(submissions(OBSERVED_POSTS)) - len(unexpected) - sum(len(paths) for paths in allowed.values())
+    if surplus > 0: unexpected += submissions(OBSERVED_POSTS)[-surplus:]
     submitted = unexpected   # only what no FIXTURE_GENERATE entry allows is red; `allowed` is reported beside it
     matrix = {'version': 1, 'refs': data.get('refs'), 'mode': 'live-readonly' if live else 'fixture',
               'origin': origin if live else 'fixture server', 'seconds': round(time.time() - started, 1),
