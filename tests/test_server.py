@@ -1601,6 +1601,16 @@ class ServerTests(unittest.TestCase):
         live=FakeStudio(self.root,[{},{}]).health()
         self.assertIn("demo",live["missing_models"])
 
+    def test_health_reports_build_sha_and_start_time_online_and_offline(self):
+        """#1714: build.sha is the 40-hex HEAD read once at Studio start (None without .git); build.started_at is a UTC ISO-8601 time and does not move between calls."""
+        from datetime import datetime, timedelta
+        for health in (FakeStudio(self.root,[URLError("offline")]).health(),FakeStudio(self.root,[{},{}]).health()):
+            self.assertIsNone(health["build"]["sha"]); self.assertEqual(datetime.fromisoformat(health["build"]["started_at"]).utcoffset(),timedelta(0))
+        (self.root/".git").mkdir(); (self.root/".git/HEAD").write_text("a"*40+"\n")
+        studio=FakeStudio(self.root,[URLError("offline"),URLError("offline")]); first=studio.health()["build"]
+        self.assertRegex(first["sha"],r"[0-9a-f]{40}"); self.assertEqual(first["sha"],"a"*40)
+        self.assertEqual(studio.health()["build"],first)
+
     def test_health_reads_a_garbled_comfy_body_as_offline_or_schema_unavailable(self):
         garbled=lambda:UnicodeDecodeError('utf-8',b'\xff',0,1,'invalid start byte')
         self.assertFalse(FakeStudio(self.root,[garbled()]).health()["online"])
