@@ -28,6 +28,14 @@ class GalleryHandoffTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_region_repair_marks_boxes_and_attaches_the_prepared_input(self):
+        result = subprocess.run(
+            [shutil.which('node'), '--test', str(Path(__file__).with_name('region_repair_workbench.cjs'))],
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
     def test_make_target_seed_and_restored_run_retries(self):
         result = subprocess.run(
             [shutil.which('node'), '--test', str(Path(__file__).with_name('make_followups.cjs'))],
