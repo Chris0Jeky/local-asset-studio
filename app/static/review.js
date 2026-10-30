@@ -22,6 +22,7 @@
   if(typeof module!=='undefined'&&module.exports)module.exports={cropFromPercent,cropPixels,optionalInteger,artifactPath};
   if(typeof document==='undefined')return;
   const $=s=>document.querySelector(s), project=new URLSearchParams(location.search).get('project');
+  const drawn={left:null,right:null};   // the alias each preview canvas actually shows; K/W/X wait for it (#1760 review)
   let state=null,busy=false,serial=0,drawSerial=0,viewDraft=null,summaryDraft=null,selectionDraft=null,characterDecisionDraft=null;
   let presentation=new URLSearchParams(location.search).get('view')==='grid'?'grid':'pair';
   let primarySide='left',heldSide=null;
@@ -231,7 +232,8 @@
     if(heldSide){message('Release Space first: the preview shows the other candidate.',true);return;}
     // A rating after the decision would reopen it and clear the winner (review_desk.rate); a shortcut never does that silently (#1760 review).
     if(state.finalized){message('The decision is recorded. Change an assessment with its form and Save to reopen it.',true);return;}
-    const mode=$('#mode').value,alias=$('#'+(mode==='pair'?primarySide:mode)).value;
+    const mode=$('#mode').value,side=mode==='pair'?primarySide:mode,alias=$('#'+side).value;
+    if(drawn[side]!==alias){message('Wait for Candidate '+alias+' to appear before rating it.',true);return;}
     $('#candidate').value=alias;fillAssessment();$('#verdict').value=verdict;
     drafts.set(alias,assessmentDraft());syncGridSelection();
     $('#assessmentForm').onsubmit({preventDefault(){}});
@@ -252,6 +254,7 @@
       ctx.fillStyle=background==='dark'?'#20232b':'#f1f2f5';ctx.fillRect(0,0,canvas.width,canvas.height);
       ctx.drawImage(image,l,t,r-l,b-t,(canvas.width-(r-l)*scale)/2,(canvas.height-(b-t)*scale)/2,(r-l)*scale,(b-t)*scale);
       canvas.setAttribute('aria-label','Candidate '+preview.alias+' · shared cropped preview');
+      drawn[side]=preview.alias;
       $('#'+side+'Caption').textContent='Candidate '+candidate.alias+(candidate.source?' · '+candidate.source.filename:' · settings hidden');
     });
     if(presentation==='grid')for(const button of gridButtons())previews.push((async()=>{

@@ -133,7 +133,7 @@ test('Review desk Pair-view K/W/X',async t=>{
   await t.test('Left only and Right only save the side on show, whichever preview was last focused',async()=>{
     const desk=await holdDesk({saves:true});
     desk.$('rightCanvas').focus();desk.$('mode').value='left';desk.$('mode').onchange();press(desk,'k');await desk.tick();await desk.answer();
-    desk.$('leftCanvas').focus();desk.$('mode').value='right';desk.$('right').value='C';desk.$('mode').onchange();press(desk,'x');await desk.tick();
+    desk.$('leftCanvas').focus();desk.$('mode').value='right';desk.$('right').value='C';desk.$('mode').onchange();await desk.tick();press(desk,'x');await desk.tick();
     assert.deepEqual(saved(desk).map(b=>[b.alias,b.assessment.verdict]),[['A','keep'],['C','reject']]);
   });
   await t.test('an unsaved draft of the shown candidate is saved with the verdict',async()=>{
@@ -160,6 +160,12 @@ test('Review desk Pair-view K/W/X',async t=>{
     assert.equal(press(desk,'k').prevented,true);await desk.tick();assert.equal(desk.requests.length,1);
     assert.match(desk.$('message').textContent,/^Release Space first/);
     desk.emit('document','keyup');await desk.tick();press(desk,'k');await desk.tick();assert.equal(saved(desk).length,1);assert.equal(saved(desk)[0].alias,'A');
+  });
+  await t.test('a preview still loading is never rated: the key waits for the shown candidate',async()=>{
+    const desk=await holdDesk({saves:true,delayB:true});desk.$('swap').onclick();await desk.tick();
+    assert.equal(desk.$('left').value,'B');assert.equal(press(desk,'k').prevented,true);await desk.tick();
+    assert.equal(desk.requests.length,1,'no rating while the left canvas still shows A');assert.match(desk.$('message').textContent,/^Wait for Candidate B/);
+    desk.decodeB();await desk.tick();await desk.tick();press(desk,'k');await desk.tick();assert.deepEqual(saved(desk).map(b=>b.alias),['B']);
   });
   await t.test('a recorded decision is never reopened by a shortcut',async()=>{
     const desk=await holdDesk({saves:true,finalized:true});
