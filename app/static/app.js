@@ -358,7 +358,7 @@ async function previewWildcardWording() {
     const result = await post('/api/wildcards/preview', {preset_id:selected.id,...continuationPayload(),...tilePayload(),...parallaxPayload(),controls:values(),references:attachedReferencePayload(),parent_assets:parentAssets,batch_count:$('#batch').value,expected_template_sha256:recipeTemplateHash}, privacyOptions(captured));
     if (!current()) return;
     wildcardPreviewDigests = result.members.length && Object.keys(result.wildcard_files || {}).length ? result.wildcard_files : null;
-    output.innerHTML = result.members.length ? '<p class="muted">Preview only. When you press Generate, it refuses if a wildcard file changed since this preview.</p><ol>' + result.members.map(m => '<li><small>Picture ' + esc(m.index + 1) + ' · Seed ' + esc(m.seed_unknown ? 'unknown' : m.seed_text ?? m.seed) + '</small><div>' + esc(m.positive) + '</div>' + (m.negative ? '<div><small>Avoid: ' + esc(m.negative) + '</small></div>' : '') + (m.truncated ? '…' : '') + '</li>').join('') + '</ol>' : '<p class="muted">No wildcards in this prompt.</p>';
+    output.innerHTML = result.members.length ? '<p class="muted">Preview only. Generate refuses if a file changed since.</p><ol>' + result.members.map(m => '<li><small>Picture ' + esc(m.index + 1) + ' · Seed ' + esc(m.seed_unknown ? 'unknown' : m.seed_text ?? m.seed) + '</small><div>' + esc(m.positive) + '</div>' + (m.negative ? '<div><small>Avoid: ' + esc(m.negative) + '</small></div>' : '') + (m.truncated ? '…' : '') + '</li>').join('') + '</ol>' : '<p class="muted">No wildcards in this prompt.</p>';
   } catch (e) { if (current()) output.innerHTML = '<p class="error">' + esc(e.message) + '</p>'; }
   finally { if (current()) button.disabled = !!wildcardPreviewReason(); }
 }
