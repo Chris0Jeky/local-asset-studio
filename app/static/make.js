@@ -585,6 +585,21 @@
     catch{if(!state.runs.includes(run)){timers.delete(id);return;}if(!run.lost){run.lost=true;renderRuns();}poll(id,misses+1);}},Math.min(POLL_MAX,POLL*2**Math.min(misses,4))));}
   // A finished run's pictures join an open picture grid at once, so the next goal can start from them.
   function refreshPickers(){const g=goal();if(!g.intent)return;for(const [id,attr] of [['makePictures','data-make-pick'],['makePosePictures','data-make-pose-pick']])if(q('#'+id))void fillPictures(g,id,attr);}
+  // A painting card says how long it has run and, from /api/estimate, about how long such a run takes on this PC; the tab title
+  // counts unfinished runs and shows a tick when one finished unseen. Text only: no notification, sound or extra press. The clock is
+  // aria-hidden inside the live #makeRuns region so it never announces every second; the estimate reads the run's own privacy history.
+  const PAINTING=['submitting','running','observing'],clock=s=>{s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');};
+  function runClock(job,e,now){if(!PAINTING.includes(job.status)||!job.started_at)return '';const spent=now-Number(job.started_at),t=rough(e)?0:Number(e?.estimate_seconds)||0;
+    return clock(spent)+(t?(spent>t*1.5?', longer than the usual '+duration(t):' of about '+duration(t)):'');}
+  const estimates=new Map(),baseTitle=document.title;let clockTimer=0,wasBusy=0,doneUnseen=false;
+  function runTitle(){const busy=state.runs.filter(r=>!FINAL.includes(r.job.status)).length;if(busy<wasBusy&&document.hidden)doneUnseen=true;wasBusy=busy;
+    const next=(busy?'('+busy+') ':doneUnseen?'✓ ':'')+baseTitle;if(document.title!==next)document.title=next;}
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&doneUnseen){doneUnseen=false;runTitle();}});
+  function tick(){const now=Date.now()/1000;let live=false;clearTimeout(clockTimer);
+    for(const el of document.querySelectorAll('[data-make-clock]')){const run=state.runs.find(r=>r.job.id===el.dataset.makeClock),job=run?.job;if(!job)continue;const rp=runPrivacy(run);
+      if(PAINTING.includes(job.status)&&job.started_at&&!estimates.has(job.id)){estimates.set(job.id,null);json('/api/estimate',{preset_id:job.preset_id,controls:job.controls||{},batch_count:job.batch_count||1,reference_count:(job.references||[]).length},requestPrivacy(rp,rp)).then(e=>estimates.set(job.id,e),()=>{});}
+      const text=runClock(job,estimates.get(job.id),now),shown=text?' · '+text:'';live||=!!text;if(el.textContent!==shown)el.textContent=shown;}
+    runTitle();clockTimer=live?setTimeout(tick,1000):0;}
   function words(job){return({queued:'Waiting its turn',waiting:'Waiting for memory',submitting:'Sending',running:'Painting',observing:'Painting',completed:'Done',failed:'Did not finish',partial:'Some pictures did not finish',uncertain:'Outcome unknown: nothing was sent again',cancelled:'Cancelled',not_submitted:'Not sent'})[job.status]||job.status;}
   // An uncertain or partial run offers what the full editor's Problems list offers, on its own card: Resume observation reads
   // ComfyUI again for the retained prompt IDs, Stop tracking records a reason. Neither ever sends the picture again.
@@ -762,7 +777,7 @@
   const picture=o=>(!o.media_type||o.media_type==='image')&&!/(?:^|[/_\\-])(mask|matte)(?:[_.-]|$)/i.test(o.source?.filename||o.filename||'');
   const pictureTitle=(scene,date)=>String(scene||'Picture').slice(0,100)+(date?' \u00b7 '+new Date(Number(date)*1000).toLocaleDateString():'');
   function renderRuns(){
-    const box=q('#makeRuns');if(!box)return;
+    runTitle();const box=q('#makeRuns');if(!box)return;
     const visible=state.runs.filter(r=>readScope()==='all'||runPrivacy(r)===readScope()),list=runCards(visible);
     const shown=new Set(list.flatMap(c=>c.runs));if(shown.size<visible.length){for(const r of visible)if(!shown.has(r)){clearTimeout(timers.get(r.job.id));timers.delete(r.job.id);}state.runs=state.runs.filter(r=>!visible.includes(r)||shown.has(r));remember();}
     planPolish(list.flatMap(c=>c.runs));
@@ -775,10 +790,10 @@
     const markup=list.map(({group,id,runs})=>{
       if(group){const done=runs.filter(r=>!observing(r)).length,first=runs[0];
         return '<article class="make-run make-compare" data-run="'+escape(id)+'"><header><div><b>'+(first.axis?'Compare a setting · ':'Compare looks · ')+escape(pictureTitle(first.scene,first.job.created_at))+'</b><small>'+(first.axis?escape(first.look)+' · '+runs.length+' values of '+escape(first.axis)+', one picture each':runs.length+' looks, one picture each')+(runs.every(r=>r.job.controls?.seed!=null&&r.job.controls.seed===first.job.controls?.seed)?', same seed':'')+'</small></div><span class="make-run-state '+(done===runs.length?'completed':'running')+'">'+(done===runs.length?'Done':done+' of '+runs.length+' done')+'</span></header><div class="make-compare-grid">'
-          +runs.map(({job,look,value,lost})=>(look=value||look,'<figure><figcaption><b>'+escape(look)+'</b><small class="make-run-state '+escape(lost?'uncertain':job.status)+'">'+escape(lost?'Lost contact; still checking':words(job))+'</small></figcaption>'+(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')+(lost?'':recovery(job))
+          +runs.map(({job,look,value,lost})=>(look=value||look,'<figure><figcaption><b>'+escape(look)+'</b><small class="make-run-state '+escape(lost?'uncertain':job.status)+'">'+escape(lost?'Lost contact; still checking':words(job))+(lost?'':'<span data-make-clock="'+escape(job.id)+'" aria-hidden="true"></span>')+'</small></figcaption>'+(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')+(lost?'':recovery(job))
             +(job.outputs||[]).map((o,i)=>picture(o)?img(job,o,i,look)+(o.asset_id?'<div class="make-actions">'+marks(o.asset_id)+characterMarkup(job,o.asset_id)+'</div>':'<small class="muted">Saving to the library…</small>'):'').join('')+pending(job,1)+'</figure>')).join('')+'</div></article>';}
       const {job,look,scene,tuned,title,lost}=runs[0];
-      return '<article class="make-run" data-run="'+escape(job.id)+'"><header><div><b>'+escape(pictureTitle(scene||title||job.controls?.positive||look,job.created_at))+'</b>'+(scene?'<small>'+escape(scene)+'</small>':look&&!scene?'<small>'+escape(look)+'</small>':'')+(tuned?'<small class="make-tuned">'+escape(tuned)+'</small>':'')+'</div><span class="make-run-state '+escape(lost?'uncertain':job.status)+'">'+escape(lost?'Lost contact with this run; still checking':words(job))+'</span></header>'
+      return '<article class="make-run" data-run="'+escape(job.id)+'"><header><div><b>'+escape(pictureTitle(scene||title||job.controls?.positive||look,job.created_at))+'</b>'+(scene?'<small>'+escape(scene)+'</small>':look&&!scene?'<small>'+escape(look)+'</small>':'')+(tuned?'<small class="make-tuned">'+escape(tuned)+'</small>':'')+'</div><span class="make-run-state '+escape(lost?'uncertain':job.status)+'">'+escape(lost?'Lost contact with this run; still checking':words(job))+(lost?'':'<span data-make-clock="'+escape(job.id)+'" aria-hidden="true"></span>')+'</span></header>'
       +(scene?'<div class="make-run-tools">'+(draftRun(runs[0])?'<button type="button" data-make-final="'+escape(job.id)+'">Make the final</button>':'')+'<button type="button" data-make-rerun="'+escape(job.id)+'">Edit and re-run</button><button type="button" data-make-another="'+escape(job.id)+'">Same words, another look</button></div>':runs[0].redo?'<div class="make-run-tools"><button type="button" data-make-redo="'+escape(job.id)+'">Edit and re-run</button></div>':'')
       +(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')+(lost?'':recovery(job))
       +'<div class="make-outputs">'+(job.outputs||[]).map((o,i)=>!picture(o)?other(o):'<figure'+(o.asset_id&&o.asset_id===selectedOf(job)?' class="make-selected"':'')+'>'+img(job,o,i,look)+actions(job,o)+'</figure>').join('')+pending(job)+'</div></article>';});
@@ -788,6 +803,7 @@
     for(const [i,card] of [...next.children].entries()){const old=[...box.children].find(e=>e.dataset.run===card.dataset.run);if(old&&old.dataset.markup===card.outerHTML)continue;card.dataset.markup=card.outerHTML;if(old)old.replaceWith(card);else box.insertBefore(card,box.children[i]||null);}
     for(const menu of box.querySelectorAll('details'))menu.open=open.includes(menu.dataset.more);
     if(focusKey&&document.activeElement!==focus)[...box.querySelectorAll('button,summary,a')].find(e=>key(e)===focusKey)?.focus();
+    tick();
   }
   // Picture goals stay in Make (owner ask, 16 Oct 2026; journey audit #5-#7): pick the picture, answer a few plain fields, press
   // Make's own Generate. The request is the one the handoff prepares (studio-workbench.js polish/openHandoff): the source is
