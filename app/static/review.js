@@ -31,6 +31,17 @@
   const el=(tag,text)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;return node;};
   function message(text,error=false){$('#message').textContent=text;$('#message').classList.toggle('error',error);}
   function dirty(){return drafts.size>0||viewDraft!==null||summaryDraft!==null||selectionDraft!==null||characterDecisionDraft!==null;}
+  // #1752: the one-click winner path. The click itself is the human declaration that the stated constraints hold; nothing else sets that check.
+  const winnerTarget=()=>state?.candidates?.find(c=>c.alias===$('#selected').value)||null;
+  function winnerBlock(candidate){
+    if(!state?.revealed)return 'Reveal the settings first.';
+    if(drafts.size||viewDraft)return 'Save candidate assessments and the shared crop first.';
+    if(!candidate)return 'Choose a kept candidate under Selected result first.';
+    if(state.candidates.some(c=>c.assessment.verdict==='unreviewed'))return 'Record a verdict for every candidate, including rejected results.';
+    if(candidate.assessment.verdict!=='keep')return 'Candidate '+candidate.alias+' is not kept; only a kept candidate can be the winner.';
+    if(state.evidence?.stages?.[candidate.source?.stage]?.status!=='completed')return 'An incomplete execution may be reviewed but cannot become the selected result.';
+    return '';
+  }
   function controls(){
     for(const node of document.querySelectorAll('button,input,select,textarea'))node.disabled=busy;
     $('#desk').setAttribute('aria-busy',busy?'true':'false');
@@ -43,6 +54,9 @@
     $('#saveDraft').hidden=!dirty();$('#open').disabled=busy||!project||!/^[a-f0-9]{32}$/.test(project);
     $('#viewStatus').textContent=viewDraft?'Unsaved crop':'Saved crop';
     $('#assessmentStatus').textContent=drafts.has($('#candidate').value)?'Unsaved assessment':'Saved';
+    const target=winnerTarget(),block=winnerBlock(target);
+    $('#chooseWinner').textContent=(target?'Candidate '+target.alias+' meets':'Meets')+' the stated constraints — choose as winner';
+    $('#chooseWinner').disabled=busy||!!block;$('#chooseWinner').title=block;$('#chooseWinnerHint').textContent=busy?'':block;
     const characterSelected=!!state?.character_context&&!!$('#selected').value;
     $('#characterDecisionLabel').hidden=!characterSelected;$('#summary').required=characterSelected;
   }
@@ -59,8 +73,8 @@
     try{
       const value=await request(action,extra);if(ticket!==serial)return;
       after(value);if(action==='export')state.export=value;else state=value;
-      render();message(action==='inspect'?'Saved review loaded. No generation performed.':action==='export'?'Review evidence published with original sources and checksums.':'Saved. No generation performed.');
-    }catch(error){message(error.message+' Your unsaved notes are retained; reload explicitly after resolving any conflict.',true);}
+      render();message(action==='inspect'?'Saved review loaded. No generation performed.':action==='export'?'Review evidence published with original sources and checksums.':'Saved. No generation performed.');return '';
+    }catch(error){message(error.message+' Your unsaved notes are retained; reload explicitly after resolving any conflict.',true);return error.message;}
     finally{if(ticket===serial){busy=false;controls();if(focusedAlias)gridButtons().find(b=>b.dataset.gridCandidate===focusedAlias)?.focus({preventScroll:true});}}
   }
   function selectOptions(node,options,fallback){
@@ -289,7 +303,19 @@
   $('#reveal').onclick=()=>{if(confirm('Reveal recipe settings and source identities? This is recorded and cannot be undone as a blind review.'))operation('reveal');};
   $('#summary').oninput=()=>{summaryDraft=$('#summary').value;controls();};$('#selected').onchange=()=>{selectionDraft=$('#selected').value;controls();};
   $('#characterDecision').onchange=()=>{characterDecisionDraft=$('#characterDecision').value;controls();};
-  $('#decisionForm').onsubmit=event=>{event.preventDefault();if(drafts.size||viewDraft){message('Save candidate assessments and the shared crop before recording the decision.',true);return;}const selected=$('#selected').value||null,extra=state.character_context&&selected?{character_decision:$('#characterDecision').value,reviewer:'local-user'}:{};operation('finalize',{selected,notes:$('#summary').value,...extra},()=>{summaryDraft=selectionDraft=characterDecisionDraft=null;});};
+  const decide=selected=>{const extra=state.character_context&&selected?{character_decision:$('#characterDecision').value,reviewer:'local-user'}:{};return operation('finalize',{selected,notes:$('#summary').value,...extra},()=>{summaryDraft=selectionDraft=characterDecisionDraft=null;});};
+  $('#decisionForm').onsubmit=event=>{event.preventDefault();if(drafts.size||viewDraft){message('Save candidate assessments and the shared crop before recording the decision.',true);return;}decide($('#selected').value||null);};
+  $('#chooseWinner').onclick=async()=>{
+    const candidate=winnerTarget(),block=winnerBlock(candidate);if(busy||block){message(block||'Wait for the save to finish.',true);return;}
+    const alias=candidate.alias,seen=candidate.assessment;let marked=false;
+    if(seen.observations.constraints!=='pass'){   // the rate keeps every other field of the saved assessment and character check as it was
+      const failure=await operation('rate',{alias,assessment:{...seen,observations:{...seen.observations,constraints:'pass'}},...(state.character_context?{character_checks:candidate.character_checks}:{})});
+      if(failure!=='')return;marked=true;
+    }
+    const failure=await decide(alias);
+    if(failure==='')message('Candidate '+alias+(marked?': stated constraints marked Pass and ':' ')+'recorded as the winner. No generation performed.');
+    else message((marked?'Candidate '+alias+' stated constraints were saved as Pass, but the decision was not recorded. ':'The decision was not recorded. ')+(failure||'Try again.'),true);
+  };
   $('#export').onclick=()=>operation('export');$('#restoreRevision').onchange=controls;
   $('#restore').onclick=()=>{if(dirty()){message('Save or download your local drafts before restoring an earlier assessment.',true);return;}operation('restore',{source_revision:Number($('#restoreRevision').value)});};
   $('#saveDraft').onclick=()=>{
