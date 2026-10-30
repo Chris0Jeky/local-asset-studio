@@ -111,6 +111,27 @@ test('a kept picture in the line-up can become the canon: one edit with the revi
   assert.match(make,/const canon=e\.target\.closest\('\[data-make-canon\]'\);if\(canon\)\{void once\('character:'/,'the press runs through the per-character in-flight guard');
 });
 
+test('the canon a swap replaced stays in the line-up with Use as canon, so one press swaps back (#1718)',async()=>{
+  const c={id:'mira',name:'Mira',revision:3,canon_asset_id:'canon',previous_canon_asset_id:null,lineage:[{role:'canon',asset_id:'canon'}],body:{who:'Mira'}};
+  const state={pictures:[{id:'canon'},{id:'keep-a',lineage:['canon'],review:'selected'}],review:{},characters:[c]};
+  const markup=vm.runInNewContext(privacy+between('  const LINEUP_MAX','  async function fillLineups')+';lineupMarkup',{state,escape:String,thumbUrl:a=>'/t/'+a.id,pictureLabel:a=>a.id});
+  const calls=[],context={state,usableCharacters:()=>[c],requestPrivacy:()=>({privacy:'normal'}),classified:()=>'normal',privacyEpoch:1,CSS:{escape:String},q:()=>null,sayChars(){},refreshCharacters(){},loadCharacters:async()=>{},
+    json:async(url,body)=>{calls.push(body);if(body.expected_revision!==c.revision)throw Object.assign(Error('stale'),{status:409});   // characters.py: the replaced canon becomes previous_canon, the revision moves
+      c.previous_canon_asset_id=c.canon_asset_id;c.canon_asset_id=body.canon_asset_id;c.revision++;return{};}};
+  const swapCanon=vm.runInNewContext(between('  async function swapCanon(','  // A failed read keeps')+';swapCanon',context);
+  assert.doesNotMatch(markup(c),/Previous canon/,'nothing to go back to before a swap');
+  await swapCanon('mira','keep-a');
+  assert.equal(c.canon_asset_id,'keep-a');
+  const after=markup(c);
+  assert.match(after,/data-make-canon="canon" data-make-canon-of="mira"[^>]*>Use as canon</,'the replaced canon is offered back');
+  assert.match(after,/Previous canon/);assert.equal((after.match(/data-make-canon="/g)||[]).length,1,'the new canon offers nothing');
+  await swapCanon('mira','canon');
+  assert.equal(JSON.stringify(calls),JSON.stringify([{action:'edit',id:'mira',expected_revision:3,canon_asset_id:'keep-a'},{action:'edit',id:'mira',expected_revision:4,canon_asset_id:'canon'}]));
+  assert.equal(c.canon_asset_id,'canon');assert.match(markup(c),/data-make-canon="keep-a" data-make-canon-of="mira"[^>]*>Use as canon</,'and the swap can be undone again');
+  assert.equal((markup(c).match(/data-make-canon="keep-a"/g)||[]).length,1,'a previous canon that is also a descendant shows once');
+  c.previous_canon_asset_id='gone';assert.doesNotMatch(markup(c),/Previous canon/,'a previous canon no longer in the library is not offered');
+});
+
 function restoreHarness(failure,status='completed'){
   const requests=[],queue=[],saved=[],state={runs:[]};let response=failure;
   const context={state,window:{},view:{dataset:{}},sessionStorage:{getItem:()=>null,removeItem(){}},readDraft:()=>null,restoreDraft:async()=>{},savedRuns:[{id:'saved',look:'My look',scene:'a room',tune:{seed:0}}],restoredRuns:false,
