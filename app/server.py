@@ -472,7 +472,7 @@ class Studio:
         if installed and name not in installed: raise StudioError("Unknown LoRA file: " + name)
         return name
 
-    def prepare(self, payload, *, _defer_host_commit_preflight=False):
+    def prepare(self, payload, *, _defer_host_commit_preflight=False, _stage_reference_inputs=True):
         if hasattr(self,'backends') and self.backends.busy:
             raise StudioError('A backend switch is running. Wait for it to finish.')
         self.require_worker()
@@ -581,7 +581,7 @@ class Studio:
         continuation.validate(self, payload, preset, graph)
         tiles.validate(self, payload, preset, graph, batch)
         parallax.validate(self, payload, preset, graph, batch)
-        self.ensure_reference_inputs(graph,classification)
+        if _stage_reference_inputs: self.ensure_reference_inputs(graph,classification)
         if classification == 'private':
             for node in graph.values():
                 if node.get('class_type') == 'SaveImage': node.setdefault('inputs',{})['filename_prefix']='local-asset-studio/private'
@@ -1367,6 +1367,21 @@ class Studio:
         return {"preset_id":preset["id"], "workflow":graph, "references":preset.get("_prepared_references", []),
                 "batch_count":batch, "preparation":preset.get("_prepared_source"), "template_sha256":hashlib.sha256(graph_path.read_bytes()).hexdigest(),
                 "submitted":False}
+
+    def wildcard_preview(self, payload):
+        preset, graph, _, _, batch = self.prepare(payload, _stage_reference_inputs=False)
+        bindings = {key: ([preset[key]] if preset.get(key) else []) + (preset.get("bindings_extra") or {}).get(key, []) for key in ("positive", "negative")}
+        result = {"members":[], "wildcard_files":{}}
+        if not any(prompting.has_wildcards(graph.get(str(b[0]), {}).get("inputs", {}).get(str(b[1]))) for group in bindings.values() for b in group): return result
+        job = {"graph":graph, "prompt_bindings":bindings, "seed_bindings":([preset["seed"]] if preset.get("seed") else []) + (preset.get("bindings_extra") or {}).get("seed", [])}
+        for index in range(min(batch, 16)):
+            resolved, seed = self._batch_graph(job, index, wildcard_files=result["wildcard_files"])
+            texts = {key: str(resolved.get(str(group[0][0]), {}).get("inputs", {}).get(str(group[0][1]), ""))[:2000] if group else "" for key, group in bindings.items()}
+            member = {"index":index, "seed":seed, **texts}
+            if seed is None: member["seed_unknown"] = True
+            elif seed > 2**53 - 1: member["seed_text"] = str(seed)  # JSON numbers lose these digits in JavaScript.
+            result["members"].append(member)
+        return result
 
     def reference_status(self, payload, *, privacy='regular'):
         names=payload.get("files", [])
@@ -2202,7 +2217,7 @@ class Studio:
                     except Exception: pass
             finally: self._last_activity = time.monotonic()   # the idle clock starts when the action ends, not when it was dequeued
 
-    def _batch_graph(self, job, index):
+    def _batch_graph(self, job, index, *, wildcard_files=None):
         graph = copy.deepcopy(job["graph"])
         bindings = job.get("seed_bindings")
         if bindings is None:
@@ -2216,27 +2231,30 @@ class Studio:
             seed = number(base, "seed", 0, 2**63 - 1, True) + index
             if seed > 2**63 - 1: raise StudioError("seed plus batch count exceeds supported range")
             for bound in bindings: self._bind(graph, bound, seed)
-        self._expand_prompts(job, graph, seed, index)
+        self._expand_prompts(job, graph, seed, index, wildcard_files=wildcard_files)
         return graph, seed
 
-    def _expand_prompts(self, job, graph, seed, index):
+    def _expand_prompts(self, job, graph, seed, index, *, wildcard_files=None):
         """Resolve prompt wildcards per batch member; controls keep the template."""
         bindings = job.get("prompt_bindings")
         if bindings is None:
             try: preset = self.preset(job["preset_id"])
             except StudioError: return
             bindings = {key: ([preset[key]] if preset.get(key) else []) + (preset.get("bindings_extra") or {}).get(key, []) for key in ("positive", "negative")}
+        self._resolve_prompts(graph, bindings, seed, index, wildcard_files=wildcard_files)
+
+    def _resolve_prompts(self, graph, bindings, seed, index, *, wildcard_files=None):
         rng = random.Random(f"{seed}:{index}")
-        try: self._expand_bound_prompts(graph, bindings, rng)
+        try: self._expand_bound_prompts(graph, bindings, rng, wildcard_files=wildcard_files)
         except ValueError as exc: raise StudioError(str(exc))
 
-    def _expand_bound_prompts(self, graph, bindings, rng):
+    def _expand_bound_prompts(self, graph, bindings, rng, *, wildcard_files=None):
         for key in ("positive", "negative"):
             for binding in bindings.get(key) or []:
                 try: node, field = str(binding[0]), str(binding[1]); text = graph[node]["inputs"][field]
                 except (KeyError, TypeError, IndexError): continue
                 if not prompting.has_wildcards(text): continue
-                graph[node]["inputs"][field] = prompting.expand(text, rng, self.root)
+                graph[node]["inputs"][field] = prompting.expand(text, rng, self.root, wildcard_files=wildcard_files)
 
     def _config_number(self, key, raw, *, default, maximum=None):
         """A config number, including a numeric string. A bad value keeps the fail-safe default and is named on /api/health. Zero and below stay the documented off switch; above maximum clamps with no warning."""
@@ -3088,6 +3106,7 @@ class Handler(BaseHTTPRequestHandler):
                     return self._json(503, {"error": "Asset storage could not confirm this request. Check its receipt before retrying the exact command.",
                                             "code": "asset_storage_unconfirmed"})
             if self.path == "/api/preview": return self._json(200, self.studio.preview(self._creation_payload()))
+            if self.path == "/api/wildcards/preview": return self._json(200, self.studio.wildcard_preview(self._creation_payload()))
             if self.path == '/api/av':return self._json(201,self.studio.production.av.create(self._body_json()))
             if self.path == '/api/voice-baseline':return self._json(201,self.studio.production.voice_baseline(self._body_json()))
             if self.path.startswith('/api/av/'):

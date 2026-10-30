@@ -6,6 +6,7 @@ literal so a typo never silently empties a prompt.
 """
 from __future__ import annotations
 
+import hashlib
 import re
 from pathlib import Path
 
@@ -22,28 +23,29 @@ def names(root):
     if not folder.is_dir(): return []
     return sorted(path.stem for path in folder.glob("*.txt") if NAME.fullmatch(path.stem))
 
-def options(root, name):
+def options(root, name, wildcard_files=None):
     """Lines of presets/wildcards/<name>.txt; '#' comments and blanks dropped."""
     if root is None or not isinstance(name, str) or not NAME.fullmatch(name): return []
     path = Path(root) / "presets/wildcards" / (name + ".txt")
-    try: raw = path.read_text(encoding="utf-8")
+    try: data = path.read_bytes(); raw = data.decode("utf-8")
     except (OSError, UnicodeDecodeError): return []
+    if wildcard_files is not None: wildcard_files[name] = hashlib.sha256(data).hexdigest()
     return [line.strip() for line in raw.splitlines() if line.strip() and not line.lstrip().startswith("#")]
 
-def _pick(root, name, rng, literal):
-    choices = options(root, name)
+def _pick(root, name, rng, literal, wildcard_files):
+    choices = options(root, name, wildcard_files)
     return rng.choice(choices) if choices else literal
 
-def _once(text, rng, root):
+def _once(text, rng, root, wildcard_files):
     # Wildcards first, then the innermost {a|b}: one nesting level per pass.
-    text = WILDCARD.sub(lambda m: _pick(root, m.group(1), rng, m.group(0)), text)
+    text = WILDCARD.sub(lambda m: _pick(root, m.group(1), rng, m.group(0), wildcard_files), text)
     return CHOICE.sub(lambda m: rng.choice([part.strip() for part in m.group(1).split("|")]), text)
 
-def expand(text, rng, root=None, depth=DEPTH):
+def expand(text, rng, root=None, depth=DEPTH, *, wildcard_files=None):
     """Resolve alternatives and wildcards deterministically from `rng`."""
     if not isinstance(text, str): return text
     for _ in range(max(1, int(depth))):
-        grown = _once(text, rng, root)
+        grown = _once(text, rng, root, wildcard_files)
         if len(grown) > LIMIT: raise ValueError(f"Prompt wildcards expand past {LIMIT} characters")
         if grown == text: return text
         text = grown

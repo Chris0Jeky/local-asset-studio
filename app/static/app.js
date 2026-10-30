@@ -330,10 +330,27 @@ function insertWildcard(name) {
 function renderWildcardChips() {
   const host = $('#wildcardChips'); if (!host) return;
   const list = catalog?.wildcards || [];
-  if (!selected?.positive || !list.length) { host.hidden = true; host.innerHTML = ''; return; }
+  if (!selected?.positive && !selected?.negative) { host.hidden = true; host.innerHTML = ''; return; }
   host.hidden = false;
-  host.innerHTML = '<p class="muted">Insert a wildcard. Server expands __name__ from presets/wildcards at Generate, one line per batch member.</p>'
-    + list.map(item => '<button type="button" data-wildcard="' + esc(item.name) + '" title="' + esc(item.count) + ' options">' + esc(item.name) + '</button>').join('');
+  const reason = wildcardPreviewReason();
+  host.innerHTML = '<p class="muted">Insert __name__ or {a|b}. Preview each picture’s wording before Generate.</p>'
+    + list.map(item => '<button type="button" data-wildcard="' + esc(item.name) + '" title="' + esc(item.count) + ' options">' + esc(item.name) + '</button>').join('')
+    + '<button type="button" data-wildcard-preview aria-describedby="wildcardPreviewReason"' + (reason ? ' disabled' : '') + '>Preview wording</button><small id="wildcardPreviewReason">' + esc(reason) + '</small><div id="wildcardPreview" role="status"></div>';
+}
+function wildcardPreviewReason() {
+  return ['positive','negative'].some(key => selected?.[key] && /\{|__/.test($('#' + key)?.value || '')) ? '' : 'No wildcards in this prompt.';
+}
+async function previewWildcardWording() {
+  const button = $('[data-wildcard-preview]'), output = $('#wildcardPreview');
+  if (!button || !output || button.disabled || wildcardPreviewReason()) return;
+  const captured = globalThis.StudioPrivacy?.capture?.(), current = () => output === $('#wildcardPreview') && (!captured || captured.revision === globalThis.StudioPrivacy?.capture?.().revision);
+  button.disabled = true; output.textContent = 'Previewing wording…';
+  try {
+    const result = await post('/api/wildcards/preview', {preset_id:selected.id,...continuationPayload(),...tilePayload(),...parallaxPayload(),controls:values(),references:attachedReferencePayload(),parent_assets:parentAssets,batch_count:$('#batch').value,expected_template_sha256:recipeTemplateHash}, privacyOptions(captured));
+    if (!current()) return;
+    output.innerHTML = result.members.length ? '<p class="muted">Preview only. Generate uses current settings and wildcard files.</p><ol>' + result.members.map(m => '<li><small>Picture ' + esc(m.index + 1) + ' · Seed ' + esc(m.seed_unknown ? 'unknown' : m.seed_text ?? m.seed) + '</small><div>' + esc(m.positive) + '</div>' + (m.negative ? '<div><small>Avoid: ' + esc(m.negative) + '</small></div>' : '') + '</li>').join('') + '</ol>' : '<p class="muted">No wildcards in this prompt.</p>';
+  } catch (e) { if (current()) output.innerHTML = '<p class="error">' + esc(e.message) + '</p>'; }
+  finally { button.disabled = !!wildcardPreviewReason(); }
 }
 function renderNsfwIntel(recipe=null) {
   const box = $('#nsfwIntel'), body = $('#nsfwIntelBody');
@@ -961,9 +978,12 @@ $('#presetSearch').oninput=renderPresets;$('#categorySelect').onchange=renderPre
 $('#modalities').onclick=e=>{if(!e.target.dataset.mode)return;mode=e.target.dataset.mode;$('#categorySelect').value='All';document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));renderPresets();};
 $('#presetList').onclick=e=>{const id=e.target.closest('[data-id]')?.dataset.id;if(id)try{selectPreset(id);}catch(err){message(err.message,true);}};
 $('#wildcardChips')?.addEventListener('click', e => {
+  if (e.target.closest('[data-wildcard-preview]')) { void previewWildcardWording(); return; }
   const name = e.target.closest('[data-wildcard]')?.dataset.wildcard;
   if (name) insertWildcard(name);
 });
+for (const event of ['input','change']) document.addEventListener(event, e => { if (e.target === $('#positive') || e.target === $('#negative') || e.target.closest?.('#createView')) renderWildcardChips(); });
+for (const event of ['studio:recipe','studio:privacy-change']) document.addEventListener(event, renderWildcardChips);
 $('#variants').onclick=e=>{const i=e.target.closest('[data-variant]')?.dataset.variant;if(i===undefined)return;const v=(selected.variants||[{name:'3-seed audition',batch_count:3}])[i];const controls=selected.reference?StudioContinuation.settings(selected,v.controls,values()):(v.controls||{});Object.entries(controls).forEach(([k,val])=>{const input=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(input)input.value=val;});$('#batch').value=v.batch_count||1;updateLoraHints();updateReady();scheduleTimeEstimate();message(v.name+' loaded. Press Generate to run.');recipeChanged();};
 $('#controls').oninput=()=>updateReady();
 $('#controls').onchange=e=>{if(e.target.id==='i2vMode')applyI2VMode(e.target.value);else updateReady();};
