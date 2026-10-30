@@ -183,6 +183,12 @@ def number(value, name, lo, hi, integer=False):
     result = int(raw) if integer else float(raw)
     return result
 
+def editor_note(raw):
+    """#1837: the percent-decoded X-Editor-Note header; bytes that are not UTF-8 are refused, never replaced."""
+    try: return unquote(raw,errors='strict')
+    except UnicodeDecodeError as exc: raise StudioError('Send the editor note as plain UTF-8 text') from exc
+
+
 def run_label(value):
     """An optional caller label for a run (#939): None, or trimmed printable text of 1-80 characters."""
     try: return clean_run_label(value)
@@ -3303,7 +3309,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == '/api/assets/import':
                 body=self._read_body(20*1024*1024)
                 try: return self._json(201,self.studio.import_image(self.headers.get('X-Filename','reference'),self.headers.get('Content-Type',''),body,privacy=privacy_scope.creation_for_handler(self),
-                                                                    **({'parent':self.headers['X-Parent-Asset'],'note':unquote(self.headers.get('X-Editor-Note','')),'scope':scope} if self.headers.get('X-Parent-Asset') is not None else {})))
+                                                                    **({'parent':self.headers['X-Parent-Asset'],'note':editor_note(self.headers.get('X-Editor-Note','')),'scope':scope} if self.headers.get('X-Parent-Asset') is not None else {})))
                 except sqlite3.Error:
                     return self._json(503, {"error": "Asset storage could not confirm this request. Check its receipt before retrying the exact command.",
                                             "code": "asset_storage_unconfirmed"})

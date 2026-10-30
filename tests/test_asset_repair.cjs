@@ -33,9 +33,21 @@ test('refusals say why, before any request',async()=>{
 test('success needs the recorded link and reports whether the editor still shows the picture',async()=>{
   const parent=asset(),child='b'.repeat(32);let seen;
   const api=async(path,options)=>{seen={path,options};return {asset:{id:child,lineage:[parent.id]}};};
-  assert.deepEqual(await R.submit({asset:parent,file:png(),note:'',state:idle,api,current:()=>true}),{id:child,parent:parent.id,current:true});
+  assert.deepEqual(await R.submit({asset:parent,file:png(),note:'',state:idle,api,current:()=>true}),{id:child,parent:parent.id});
   assert.equal(seen.options.headers['X-Parent-Asset'],parent.id);
-  assert.equal((await R.submit({asset:parent,file:png(),note:'',state:idle,api,current:()=>false})).current,false);
   await assert.rejects(R.submit({asset:parent,file:png(),note:'',state:idle,api:async()=>({asset:{id:child,lineage:[]}}),current:()=>true}),/link to this one was not confirmed/);
   await assert.rejects(R.submit({asset:parent,file:png(),note:'',state:idle,api:async()=>{throw Error('Asset not found');},current:()=>true}),/Asset not found/);
+});
+
+test('completion after the library refresh re-checks the picture and never speaks in an unrelated dialog',async()=>{
+  const done={id:'b'.repeat(32),parent:'a'.repeat(32)};
+  for(const [name,moves] of [['stays',false],['navigates during the refresh',true]]){
+    let viewing=true;const shown=[],notices=[];
+    await R.settle(done,{refresh:async()=>{if(moves)viewing=false;},current:()=>viewing,show:(id,text)=>shown.push([id,text]),notice:text=>notices.push(text)});
+    if(moves){assert.deepEqual(shown,[],name);assert.equal(notices.length,1);assert.doesNotMatch(notices[0],/of this one/);}
+    else{assert.equal(shown.length,1,name);assert.equal(shown[0][0],done.id);assert.deepEqual(notices,[]);}
+  }
+  let viewing=true;const shown=[];
+  await R.settle(done,{refresh:async()=>{throw Error('offline');},current:()=>viewing,show:(...a)=>shown.push(a),notice:()=>assert.fail('a failed refresh is not a navigation')});
+  assert.equal(shown.length,1);
 });

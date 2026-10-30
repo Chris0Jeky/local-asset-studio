@@ -33,14 +33,20 @@
       'X-Filename':/^[\x20-\x7e]*$/.test(file.name)?file.name:'repaired.png','X-Studio-Privacy':privacy,'X-Studio-Creation-Privacy':privacy,
       'X-Parent-Asset':asset.id,...(text?{'X-Editor-Note':encodeURIComponent(text)}:{})}}};
   }
-  // One import. `current()` says whether the editor still shows this picture; the result is returned either way so the caller can still report the link.
-  async function submit({asset,file,note,state,api,current}){
+  // One import. The confirmed result is returned; whether the editor still shows this picture is decided later, by settle().
+  async function submit({asset,file,note,state,api}){
     const problem=blocked(asset,state())||fileProblem(file)||noteProblem(note);if(problem)throw Error(problem);
     const {path,options}=request(asset,file,note),result=await api(path,options);
     if(!result?.asset?.id||!Array.isArray(result.asset.lineage)||!result.asset.lineage.includes(asset.id))throw Error('The picture was imported but its link to this one was not confirmed. Check the family before importing again.');
-    return {id:result.asset.id,parent:asset.id,current:current()};
+    return {id:result.asset.id,parent:asset.id};
   }
-  return {blocked,fileProblem,noteProblem,request,submit,NOTE_MAX};
+  // After the library refresh (which can outlast the owner's navigation) the dialog is only updated if it still shows the parent; otherwise the page-level notice carries the news.
+  async function settle(done,{refresh,current,show,notice}){
+    try{await refresh();}catch(_){/* The import is already confirmed; the library refreshes on its next read. */}
+    if(current())show(done.id,'Imported. The new picture is linked as a repair of this one, unreviewed. This picture is unchanged.');
+    else notice('Imported. The new picture is linked as a repair of the picture you were viewing, unreviewed. Find it in the Library.');
+  }
+  return {blocked,fileProblem,noteProblem,request,submit,settle,NOTE_MAX};
 });
 
 (function(){
@@ -64,13 +70,11 @@
     open.hidden=true;
     try{
       // submit() checks the reasons synchronously before its first await, so the single-flight flag goes up only after it has started.
-      const run=R.submit({asset,file,note:q('#assetRepairNote').value,state,api,current:()=>assetDetailContextCurrent(id,epoch)&&assetState.workspace_id===workspace});
+      const run=R.submit({asset,file,note:q('#assetRepairNote').value,state,api});
       importing=true;sync();say('Importing the repaired version… Nothing is generated.');
-      const done=await run;
-      try{await refreshAssets(true);}catch(_){/* The import is already confirmed; the library refreshes on its next read. */}
-      const text='Imported. The new picture is linked as a repair of this one, unreviewed. This picture is unchanged.';
-      if(done.current){q('#assetRepairFile').value='';q('#assetRepairNote').value='';open.dataset.id=done.id;open.hidden=false;say(text);}
-      else message(text);
+      await R.settle(await run,{refresh:()=>refreshAssets(true),notice:message,
+        current:()=>assetDetailContextCurrent(id,epoch)&&assetState.workspace_id===workspace,
+        show:(newId,text)=>{q('#assetRepairFile').value='';q('#assetRepairNote').value='';open.dataset.id=newId;open.hidden=false;say(text);}});
     }catch(error){say(error.message,true);}
     finally{importing=false;sync();}
   };

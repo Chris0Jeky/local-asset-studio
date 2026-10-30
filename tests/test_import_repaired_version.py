@@ -109,7 +109,9 @@ class ImportRepairedVersionTests(unittest.TestCase):
         for headers, status, check in (
                 ({'X-Parent-Asset': self.parent['id'], 'X-Editor-Note': 'Fixed%20the%20eyes%20%E2%9C%93'}, 201,
                  lambda o: self.assertEqual((o['asset']['lineage'], o['asset']['source']['editor_note']), ([self.parent['id']], 'Fixed the eyes ✓'))),
-                ({'X-Parent-Asset': self.private['id']}, 400, lambda o: self.assertIn('not in this Library', o['error']))):
+                ({'X-Parent-Asset': self.private['id']}, 400, lambda o: self.assertIn('not in this Library', o['error'])),
+                ({'X-Parent-Asset': self.parent['id'], 'X-Editor-Note': 'bad%ffbytes'}, 400, lambda o: self.assertIn('UTF-8', o['error']))):
+            before = self.tree()
             with self.subTest(status):
                 handler = server.Handler.__new__(server.Handler)
                 handler.studio = self.studio; handler.path = '/api/assets/import'
@@ -120,6 +122,7 @@ class ImportRepairedVersionTests(unittest.TestCase):
                 seen = {}; handler._json = lambda code, obj: seen.update(status=code, obj=obj)
                 handler.do_POST()
                 self.assertEqual(seen.get('status'), status, seen); check(seen['obj'])
+            if status == 400: self.assertEqual(self.tree(), before)
 
 
 @unittest.skipUnless(shutil.which('node'), 'Node is required for frontend contracts')
