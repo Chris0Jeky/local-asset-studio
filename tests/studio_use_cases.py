@@ -951,6 +951,7 @@ def _review(c):
         try: c.page.click('#closeAssetDialog', timeout=3000); c.page.wait_for_timeout(300)
         except Exception: pass
     c.act('#productionNotes', 'fill', typed='Candidate A keeps the silhouette and the lantern glow; B loses the face.')
+    c.act('#productionDetail .candidate-quick-pick summary', note='open Quick pick (the review desk is the primary path, #1730)')
     c.stop_before(c.act('#productionDetail [data-choose-candidate]', note='keep the winner'),
                   'stopped before recording the winner: that writes the study review')
     c.page.wait_for_timeout(600)
