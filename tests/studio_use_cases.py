@@ -222,6 +222,7 @@ DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-candidate-re
 # app/static on 22 Sep 2026; a control that starts writing must leave this list.
 LOCAL_CONTROLS = {
     '#lookBlock > summary': 'opens the saved-looks disclosure',
+    '#productionDetail .candidate-quick-pick summary': 'opens the Quick pick disclosure in this page; nothing is sent',
     '#lookSelect': 'chooses a saved look in this page; nothing is sent',
     '#lookOptions [data-look-option]': "ticks one of the look's optional lines in this page; nothing is sent",
     '#workshopRecipeChange': 'opens the recipe picker',
