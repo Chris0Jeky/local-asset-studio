@@ -195,6 +195,9 @@ def _bumping(name):
         finally: self.bump()
     wrapper.__name__ = name; return wrapper
 
+def _bump_jobs(owner):
+    getattr(getattr(owner, 'jobs', None), 'bump', bool)()   # any Studio-like owner (tests borrow Studio methods onto fakes); a plain dict needs nothing (#1767)
+
 class JobsView(dict):
     """`Studio.jobs`: every insert or removal bumps `rev`, the key of the cached GET /api/jobs answer (#1767). In-place edits of a job
     bump through Studio._save or Studio.bump_jobs_view."""
@@ -1652,9 +1655,7 @@ class Studio:
         if directory.is_symlink() or directory.resolve().parent != root.resolve(): raise StudioError("Job directory escapes the runs folder")
         return directory
 
-    def bump_jobs_view(self):
-        bump = getattr(self.jobs, "bump", None)
-        if bump: bump()
+    def bump_jobs_view(self): _bump_jobs(self)
 
     def jobs_view_lookup(self, scope):
         """(token, cached) for GET /api/jobs. The token keys `jobs_view_store`; it is None, with nothing served, while the answer can
@@ -1675,7 +1676,7 @@ class Studio:
             self._jobs_views[key] = (raw, etag, started)
 
     def _save(self, job, durable=False):
-        self.bump_jobs_view()
+        _bump_jobs(self)
         if "record_error" in job: raise StudioError("An unreadable run record cannot be saved; inspect its folder first")
         directory = self._job_directory(job.get("id"),job.get('privacy','regular'))
         if job["id"] in getattr(self, "migrating", ()): raise StudioError("This run is moving to Private; nothing was saved. Try again when the move finishes", code="migration_in_progress")
@@ -1867,7 +1868,7 @@ class Studio:
             prospective = dict(job); prospective["tracking_disposition"] = disposition
             prospective = self._retained_operator_disposition(job, prospective, 'tracking_disposition')
             self._write_observation_state(self._job_directory(job_id) / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
-            job["tracking_disposition"] = prospective['tracking_disposition']; self.bump_jobs_view()
+            job["tracking_disposition"] = prospective['tracking_disposition']; _bump_jobs(self)
             self._loaded_operator_dispositions.pop((job_id, 'tracking_disposition'), None)
             return self.public(job)
 
@@ -1912,7 +1913,7 @@ class Studio:
             self._reconcile_landed_marker_removal(state_path, state, job)
             raise
         job.update(status=prospective["status"], message=prospective["message"], tracking_disposition=resumed)
-        job.pop("put_away_at", None); self.bump_jobs_view()
+        job.pop("put_away_at", None); _bump_jobs(self)
         self.queue.put(("observe", job["id"]))
         return self.public(job)
 
@@ -1944,7 +1945,7 @@ class Studio:
             # recipe, workflow and pending marker; failure leaves the job recoverable.
             prospective = self._retained_operator_disposition(job, prospective, 'abandonment')
             self._write_observation_state(self._job_directory(job_id) / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
-            job.update(status="abandoned", message=message, abandonment=prospective['abandonment']); self.bump_jobs_view()
+            job.update(status="abandoned", message=message, abandonment=prospective['abandonment']); _bump_jobs(self)
             self._loaded_operator_dispositions.pop((job_id, 'abandonment'), None)
             return self.public(job)
 
@@ -1964,11 +1965,11 @@ class Studio:
                 record.update(state="cancelled", resolved_at=now, note="Removed from the Studio queue before submission; nothing was sent to ComfyUI.")
                 prospective = dict(job, status="cancelled", message=job_cancel.not_started_message(), cancellation=record, finished_at=now)
                 self._write_observation_state(self._job_directory(job_id) / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
-                job.update(status=prospective["status"], message=prospective["message"], cancellation=record, finished_at=now); self.bump_jobs_view()
+                job.update(status=prospective["status"], message=prospective["message"], cancellation=record, finished_at=now); _bump_jobs(self)
                 return self.public(job)
             # The worker owns this job's state file; the request gets its own durable receipt.
             self._write_json_atomic(self._job_directory(job_id) / job_cancel.REQUEST_FILE, record)
-            self.cancel_requests[job_id] = record; self.bump_jobs_view()
+            self.cancel_requests[job_id] = record; _bump_jobs(self)
             return self.public(job)
 
     ACTIVE_JOB_STATUSES = ("queued", "waiting", "submitting", "running")
@@ -2004,7 +2005,7 @@ class Studio:
             self._write_observation_state(self._job_directory(job_id) / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
             if put_away: job["put_away_at"] = prospective["put_away_at"]
             else: job.pop("put_away_at", None)
-            self.bump_jobs_view()
+            _bump_jobs(self)
             # This successful state publication also includes any loaded disposition.
             self._loaded_operator_dispositions.pop((job_id, 'tracking_disposition'), None)
             self._loaded_operator_dispositions.pop((job_id, 'abandonment'), None)
