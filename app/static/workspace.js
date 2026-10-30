@@ -1443,6 +1443,7 @@ document.addEventListener('studio:privacy-change',event=>{
   if($('#assetDialog').open)$('#assetDialog').close();
   for(const id of ['assetTitle','assetTags','assetNotes','bulkRunLabel'])$('#'+id).value='';$('#assetReview').value='unreviewed';
   for(const id of ['assetDetailMedia','assetDiagnostic','assetSameRun','assetDetails','assetLineage','assetHandoffs','assetDetailConflict','assetDetailRecovery','assetCommandRecovery','assetBulkReviewStatus','assetDetailStatus']){const panel=$('#'+id);if(panel)panel.innerHTML='';}
+  assetInspect=assetInspectOff();renderAssetInspect(null);
   $('#assetDownload').href='';$('#assetSearch').value='';$('#assetSort').value='newest';$('#assetType').value='all';$('#assetArchiveFilter').value='active';assetScope='all';assetViewRemembered='';assetScopeRestored=false;
   assetActivePrivacy=next;assetRecovery=assetJournalFor(next);loadAssetRecoveryJournal();restoreAssetView();
   assetMessage('');renderAssetQueue();renderLibraryRecovery();renderAssets();void refreshAssets(true);
