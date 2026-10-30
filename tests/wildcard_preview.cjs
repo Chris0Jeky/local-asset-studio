@@ -44,10 +44,10 @@ function page(){
   const reachable=el=>{for(let n=el;n;n=n.parentNode)if(n.hidden||n.tagName==='details'&&!n.open)return false;return true;};
   return {context,node,writes,state,listeners,document,details,mutations,reachable,reply:data=>respond(data),run:js=>vm.runInContext(js,context)};
 }
-test('plain prompts disable wording preview with a visible accessible reason and send nothing',async()=>{
+test('plain prompts hide wording preview, keep it disabled with its reason, and send nothing',async()=>{
   const h=page();h.node('#positive').value='plain';h.run('renderWildcardChips()');
   assert.equal(h.node('[data-wildcard-preview]').disabled,true);assert.equal(h.node('[data-wildcard-preview]').describedBy,'wildcardPreviewReason');
-  assert.equal(h.node('#wildcardPreviewReason').textContent,'No wildcards in this prompt.');assert.equal(h.reachable(h.node('[data-wildcard-preview]')),true);
+  assert.equal(h.node('#wildcardPreviewReason').textContent,'No wildcards in this prompt.');assert.equal(h.reachable(h.node('[data-wildcard-preview]')),false,'hidden while there is nothing to preview');
   await h.run('previewWildcardWording()');assert.equal(h.writes.length,0);
 });
 test('either prompt enables preview even with no named wildcard lists',()=>{
