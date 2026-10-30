@@ -80,6 +80,24 @@ async function pendingPack(h) {
 }
 const settled = h => assert.ok(!h.root.innerHTML.includes('Preparing working pack') && !h.calls.includes('GET /api/exports/pack'));
 
+test('Picker candidates recover after navigating back during a pending working pack', async () => {
+  const first = '#briefs?id=brief-one&slot=background&picker=1';
+  const h = harness(first);
+  await wait(50);
+  assert.equal(h.candidates('one-'), 12);
+  h.delayNextPage = 200;
+  h.click('next');
+  const release = await pendingPack(h);
+  assert.ok(h.calls.includes('GET /api/assets/page?cursor=c2'));
+  h.setHash(first);
+  await wait(20);
+  release();
+  await wait(300);
+  assert.equal(h.candidates('one-'), 12);
+  assert.equal(h.candidates('two-'), 0);
+  settled(h);
+});
+
 test('Leaving the brief while a working pack is pending clears its progress text and downloads nothing', async () => {
   const h = harness('#briefs?id=brief-one&slot=background');
   const release = await pendingPack(h);
