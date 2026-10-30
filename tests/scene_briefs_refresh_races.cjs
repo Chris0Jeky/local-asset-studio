@@ -18,7 +18,10 @@ function harness(hash) {
   sandbox.location = {get hash() {return current;}, set hash(value) {current = value; setTimeout(() => sandbox.window.StudioBriefs.refresh(), 0);}};
   sandbox.sessionStorage = {get length() {return store.size;}, key: i => [...store.keys()][i] ?? null, getItem: key => store.get(key) ?? null, setItem: (key, value) => store.set(key, String(value)), removeItem: key => store.delete(key)};
   sandbox.document = {querySelector: selector => selector === '#briefsView' ? root : null, addEventListener: (type, fn) => {documentHandlers[type] = fn;}};
-  sandbox.window = {addEventListener() {}};
+  h.privacy = {scope: () => h.scope, creation: () => 'regular', fetch: (target, options) => sandbox.fetch(target, options)};
+  h.scope = 'regular';
+  sandbox.StudioPrivacy = h.privacy;
+  sandbox.window = {addEventListener() {}, StudioPrivacy: h.privacy};
   const json = body => ({ok: true, json: async () => body});
   sandbox.fetch = async (target, options = {}) => {
     const url = new URL(target, 'http://studio.test'), key = (options.method || 'GET') + ' ' + url.pathname;
@@ -49,4 +52,40 @@ test('First page keeps its candidates when navigation and the hash refresh overl
   await wait(400);
   assert.equal(h.candidates('one-'), 12);
   assert.ok(!h.root.innerHTML.includes('No active candidates match'));
+});
+
+// A pending working-pack export that is discarded must not leave "Preparing working pack…" behind.
+async function pendingPack(h) {
+  await wait(50);
+  let release;
+  h.onOther = key => key === 'POST /api/briefs/export' ? new Promise(resolve => {release = () => resolve({ok: true, json: async () => ({url: '/api/exports/pack', filename: 'pack.zip'})});}) : Promise.reject(Error('Unexpected request ' + key));
+  h.click('workingPack');
+  await wait(20);
+  assert.ok(release, 'export request reached the delayed boundary');
+  return release;
+}
+const settled = h => assert.ok(!h.root.innerHTML.includes('Preparing working pack') && !h.calls.includes('GET /api/exports/pack'));
+
+test('Leaving the brief while a working pack is pending clears its progress text and downloads nothing', async () => {
+  const h = harness('#briefs?id=brief-one&slot=background');
+  const release = await pendingPack(h);
+  h.setHash('#assets');
+  release();
+  await wait(50);
+  h.setHash('#briefs?id=brief-one&slot=background');
+  await wait(50);
+  assert.ok(h.root.innerHTML.includes('data-action="workingPack"'));
+  settled(h);
+});
+
+test('Switching privacy while a working pack is pending clears its progress text and downloads nothing', async () => {
+  const h = harness('#briefs?id=brief-one&slot=background');
+  const release = await pendingPack(h);
+  h.scope = 'private'; h.documentHandlers['studio:privacy-change']();
+  await wait(20);
+  h.scope = 'regular'; h.documentHandlers['studio:privacy-change']();
+  release();
+  await wait(50);
+  assert.ok(h.root.innerHTML.includes('data-action="workingPack"'));
+  settled(h);
 });
