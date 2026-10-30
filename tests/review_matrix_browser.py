@@ -20,7 +20,7 @@ from urllib.parse import urlsplit
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 
 from browser_ports import browser_server
-from review_fixture import FixtureStudio, seed, seed_matrix, seed_comparison
+from review_fixture import FixtureStudio, seed, seed_matrix, seed_comparison, seed_repeats
 from production import fingerprint
 from test_server import server
 
@@ -67,6 +67,7 @@ async def run(out):
         for index,status in ((0,'failed'),(1,'cancelled'),(2,'completed')):
             studio.jobs[project['state']['attempts'][str(index)]['job_id']].update(status=status,outputs=[])
         del project['state']['attempts']['3'];project['state']['status']='failed';studio.production._state(outcomes,project['state'])
+        repeats=seed_repeats(studio)
         other=FixtureStudio(Path(temporary)/'two')
         for job in studio.jobs.values():
             graph=job['fixture_recipe']['graph']
@@ -74,7 +75,7 @@ async def run(out):
                        created_at=1,graph=graph,submissions=[],references=[],parent_assets=[])
         studio.public=MethodType(server.Studio.public,studio);studio.export_recipe=MethodType(server.Studio.export_recipe,studio)
         before_jobs=copy.deepcopy(studio.jobs)
-        project_ids=(identifier,legacy,outcomes,*ordinary.values())
+        project_ids=(identifier,legacy,outcomes,repeats,*ordinary.values())
         budgets={key:studio.production.get(key)['budget'] for key in project_ids}
         plans={key:copy.deepcopy(studio.production._get(key)['plan']) for key in project_ids}
         plan_bytes={key:(studio.production.root/key/'plan.json').read_bytes() for key in project_ids}
@@ -208,6 +209,14 @@ async def run(out):
                 await open_review(legacy);check('Unknown topology retains Pair with a concise explanation',await page.locator('#presentationGrid').is_disabled() and 'unambiguous saved settings and seeds' in await page.locator('#gridHint').inner_text())
                 await open_review(outcomes);await grid();text=await page.locator('#gridTable').inner_text()
                 check('Failed cancelled unstarted and empty completed positions remain visible',all(word in text for word in ('Failed','Cancelled','Not started','Completed','No retained images')))
+
+                await open_review(repeats);await grid();text=await page.locator('#gridTable').inner_text();content=await page.content()
+                check('Repeated runs keep their outcome beside their own retained image before Reveal',text.count('2 runs')==2 and all(label in text for label in ('Run 1 · Completed','Run 2 · Completed','Run 2 · Failed')) and await page.locator('[data-grid-run="Run 2 · Failed"]').count()==1)
+                check('Repeated-run labels reveal no engine or seed',not any(v in content for v in ('engine-copper','engine-indigo','engine-jade','712031','915047')))
+                await page.set_viewport_size({'width':390,'height':844});await page.locator('#gridPanel').scroll_into_view_if_needed()
+                check('Repeated runs fit the phone page with readable output cards',await page.evaluate('document.documentElement.scrollWidth<=innerWidth') and await page.locator('[data-grid-candidate]').evaluate_all('nodes=>nodes.every(node=>node.getBoundingClientRect().width>=88)'))
+                await page.locator('[data-grid-run="Run 2 · Failed"]').scroll_into_view_if_needed();await page.screenshot(path=str(out/'grid-repeated-runs-narrow.png'))
+                await page.set_viewport_size({'width':1440,'height':900})
 
                 revision=studio.production.reviews.inspect(identifier)['revision']
                 payload={'action':'rate','expected_revision':revision,'alias':chosen,'assessment':{'verdict':'keep'}}

@@ -89,6 +89,18 @@ def seed_matrix(studio):
     return identifier
 
 
+def seed_repeats(studio):
+    """seed_matrix with repeated runs: copper and jade each hold two stages at one seed; the last jade run failed but kept its image."""
+    identifier=seed_matrix(studio);project=studio.production._get(identifier)
+    for index in (1,5):project['plan']['stages'][index]['seed']=712031
+    project['plan']['sha256']=fingerprint({k:v for k,v in project['plan'].items() if k!='sha256'})
+    with studio.production.connect() as db:
+        db.execute('UPDATE projects SET plan=? WHERE id=?',(json.dumps(project['plan']),identifier))
+    (studio.production.root/identifier/'plan.json').write_text(json.dumps(project['plan']))
+    studio.jobs[project['state']['attempts']['5']['job_id']]['status']='failed'
+    return identifier
+
+
 def seed_comparison(studio, axis, values):
     """Retain synthetic outputs against an ordinary plan made by the real planner."""
     from test_production import PlannedSweepTests

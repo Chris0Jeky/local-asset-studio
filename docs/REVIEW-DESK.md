@@ -57,6 +57,9 @@ and empty completed positions keep their recorded outcomes. A missing execution
 record is unavailable; a row/seed combination absent from the saved stages
 is not planned. A terminal review still needs at least one retained image, and
 live or uncertain jobs retain the existing refusal. Grid adds no rerun action.
+When one position holds several recorded runs (same engine and seed), the cell reads
+"N runs" and each run's images sit under an ordinal "Run 1 · Failed" style label, so a failed run's retained
+image is never pooled with a completed run's. These labels carry only order and outcome, never an engine or recipe name.
 
 Select an image to open its existing assessment and left matched-crop preview.
 On wide screens these sit alongside the matrix; on narrow screens they follow it.
