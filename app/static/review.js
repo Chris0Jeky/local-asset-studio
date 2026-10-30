@@ -216,8 +216,10 @@
     if(!heldSide)return;heldSide=null;$('#holdCompare').setAttribute('aria-pressed','false');draw().catch(error=>message(error.message,true));
   }
   const editing=target=>target?.isContentEditable||!!target?.closest?.('input,textarea,select,[contenteditable]');
+  // Space keeps activating a focused control (#1744 review); only the canvases, the page and the hold button itself swap.
+  const activates=target=>{const control=target?.closest?.('button,a[href],summary,[role=button]');return !!control&&control.id!=='holdCompare';};
   document.addEventListener('keydown',event=>{
-    if(event.key!==' '||event.repeat||event.isComposing||event.altKey||event.ctrlKey||event.metaKey||event.shiftKey||editing(event.target))return;
+    if(event.key!==' '||event.repeat||event.isComposing||event.altKey||event.ctrlKey||event.metaKey||event.shiftKey||editing(event.target)||activates(event.target))return;
     if(holdCompare())event.preventDefault();
   });
   document.addEventListener('keyup',event=>{if(event.key===' ')releaseCompare();});

@@ -91,7 +91,7 @@ test('Review desk hold-to-compare',async t=>{
   });
   await t.test('typing, modifiers, repeats and other keys do nothing',async()=>{
     const editable=new Node('div');editable.contentEditable='true';const child=new Node('span');editable.append(child);
-    for(const target of [$('cropLeft'),$('notes'),$('mode'),editable,child]){assert.equal(down({target}).prevented,false);await tick();shown('left','A');}
+    for(const target of [$('cropLeft'),$('notes'),$('mode'),editable,child,$('swap')]){assert.equal(down({target}).prevented,false);await tick();shown('left','A');}
     for(const extra of [{altKey:true},{ctrlKey:true},{metaKey:true},{shiftKey:true},{repeat:true},{isComposing:true},{key:'s'}]){assert.equal(down(extra).prevented,false);await tick();shown('left','A');}
     down();await tick();emit('document','focusin',{target:$('notes')});await tick();shown('left','A');
   });
