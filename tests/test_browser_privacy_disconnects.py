@@ -6,6 +6,7 @@ import traceback
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+DRIVERS = ('private_creation_browser.py', 'private_recovery_browser.py', 'make_draft_browser.py', 'make_privacy_browser.py')
 
 
 class PrivacyBrowserDisconnectTests(unittest.TestCase):
@@ -23,7 +24,7 @@ class PrivacyBrowserDisconnectTests(unittest.TestCase):
         return namespace['disconnects'], namespace['server_errors']
 
     def test_closed_browser_connections_are_retained_as_disconnects(self):
-        for filename in ('private_creation_browser.py', 'private_recovery_browser.py'):
+        for filename in DRIVERS:
             for error in (BrokenPipeError('closed'), ConnectionResetError('reset'),
                           ConnectionAbortedError(10053, 'Windows browser cancelled the response')):
                 with self.subTest(driver=filename, error=type(error).__name__):
@@ -32,7 +33,7 @@ class PrivacyBrowserDisconnectTests(unittest.TestCase):
                     self.assertEqual(failures, [])
 
     def test_handler_and_other_io_failures_still_fail_the_gate(self):
-        for filename in ('private_creation_browser.py', 'private_recovery_browser.py'):
+        for filename in DRIVERS:
             for error in (ValueError('bad response'), RuntimeError('handler failed'),
                           OSError('unrelated I/O'), TimeoutError('server timeout')):
                 with self.subTest(driver=filename, error=type(error).__name__):

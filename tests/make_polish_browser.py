@@ -79,11 +79,12 @@ def make_checks(browser, origin):
     assert page.locator('#makeScene').evaluate('(e)=>e===document.activeElement')
     # No width in the Look or prepare result: catalog dimensions still reach the exact estimate and submit.
     page.evaluate("()=>{const p=catalog.presets.find(p=>p.id==='zimage-fast');p.defaults.width=1024;p.defaults.height=1024;p.dimension_multiple=64;}")
-    page.expose_function('makeEstimateAfter', lambda after: next((p['data'] for p in reversed(fixture.POSTS[after:]) if p['path'] == '/api/estimate' and p['data'].get('preset_id') == 'zimage-fast'), None))
+    # Wait on the request itself: a wait_for_function with an async predicate resolves on its first (possibly null) answer, so it raced the estimate (#1791).
+    wanted = lambda size: lambda r: r.url.endswith('/api/estimate') and (r.post_data_json or {}).get('preset_id') == 'zimage-fast' and [(r.post_data_json['controls'] or {}).get(k) for k in ('width', 'height')] == size
     for shape, size in [('portrait', [832, 1280]), ('landscape', [1280, 832]), ('square', [1024, 1024])]:
-        after = len(fixture.POSTS)
-        page.locator('#makeScene').fill('A quiet garden'); page.locator('#makeShape').select_option(shape)
-        estimate = page.wait_for_function('async({after,size})=>{const e=await makeEstimateAfter(after);return e&&e.controls.width===size[0]&&e.controls.height===size[1]&&e;}', arg={'after': after, 'size': size}).json_value()
+        with page.expect_request(wanted(size)) as sent_estimate:
+            page.locator('#makeScene').fill('A quiet garden'); page.locator('#makeShape').select_option(shape)
+        estimate = sent_estimate.value.post_data_json
         before = len(jobs())
         page.evaluate("()=>{document.querySelector('#makeGenerate').click();document.querySelector('#makeGenerate').click();document.querySelector('#makeEditor').click();}")
         page.wait_for_function("!document.querySelector('#makeGenerate').disabled")
@@ -135,7 +136,7 @@ def make_checks(browser, origin):
     saved = [dict(id='make-restore-'+str(i), look='First look', lookId=LOOKS[0]['id'], goal='character', scene='A quiet garden') for i in range(6)]
     for r in saved: MAKE_JOBS[r['id']] = dict(id=r['id'], status='running', outputs=[], created_at=1789228800)
     RESTORE_DELAY = 0.8
-    page.evaluate('(runs)=>localStorage.setItem("studio.make",JSON.stringify({goal:"character",look:null,runs}))', saved)
+    page.evaluate('(runs)=>{sessionStorage.clear();localStorage.setItem("studio.make",JSON.stringify({goal:"character",look:null,runs}))}', saved)  # the tab's unsent draft would reopen the editor, not the looks (#1791)
     page.goto(origin+'/?restore-test#make'); page.wait_for_selector('[data-make-look]'); page.locator('[data-make-goal="scene"]').click()
     assert page.evaluate('JSON.parse(localStorage.getItem("studio.make")).runs.map(r=>r.id)') == [r['id'] for r in saved]
     page.wait_for_function('document.querySelectorAll("#makeRuns .make-run").length===6'); RESTORE_DELAY = 0
