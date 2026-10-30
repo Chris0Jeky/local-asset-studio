@@ -45,7 +45,7 @@ function context(extra) {
     async post(url) { sandbox.calls.push(url); return {template_sha256: 'checked-graph'}; },
     varyPlanFor: () => ({kind: 'reseed', route: {id: 'plain', name: 'Plain'}, round: {count: 2}}),
     workbenchStamp: () => 'stamp',
-    StudioContinuation: {varyStatus: () => 'prepared', unfilled: () => []},
+    StudioContinuation: {varyStatus: () => 'prepared', varyDefaults: () => [], unfilled: () => []},
   };
   Object.assign(sandbox, extra || {});
   vm.createContext(sandbox);

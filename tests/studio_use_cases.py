@@ -1396,7 +1396,8 @@ VARY_STATE = """() => ({preset: selected.id, intent: continuationState && contin
   denoise: getControl('denoise') ? getControl('denoise').value : null, seed: getControl('seed') ? getControl('seed').value : null,
   batch: document.querySelector('#batch').value, positive: document.querySelector('#positive').value,
   kept: Object.fromEntries(['lora', 'lora_name', 'lora2', 'lora2_name', 'sampler', 'scheduler', 'cfg', 'steps'].map(k => [k, getControl(k) ? getControl(k).value : null])),
-  notice: document.querySelector('#uxNotice').textContent})"""
+  notice: document.querySelector('#uxNotice').textContent,
+  fold: (d => d ? {open: d.open, lines: d.querySelectorAll('div').length} : null)(document.querySelector('#uxNotice > details'))})"""
 
 
 @driver('vary-a-keeper')
@@ -1465,6 +1466,10 @@ def _vary(c):
                    and first['parents'] == ['asset-2'] and first['denoise'] == '0.45' and first['batch'] == '2'
                    and first['seed'] not in (None, '', '7') and 'Vary subtle prepared on' in first['notice']
                    and 'Nothing was generated' in first['notice'] and '4 min per picture here' in first['notice'])
+        # #1726: the status leads with what will run and counts the unrecorded settings; the per-setting list is folded, closed, under Details.
+        terse = c.live or (first['notice'].index('denoise 0.45') < first['notice'].index('settings not recorded: recipe defaults used.') < first['notice'].index('Nothing was generated')
+                 < first['notice'].index('Details') < first['notice'].index('not recorded; using the recipe') and first['fold'] == {'open': False, 'lines': int(first['notice'].split(' settings not recorded')[0].split()[-1])}
+                 and second['fold'] is None and third['fold'] is None)
         reseed = (second['preset'] == 'anima-portrait' and second['intent'] is None and second['parents'] == ['asset-0']
                   and second['batch'] == '4' and second['seed'] not in (None, '', '42')
                   and second['positive'] == fixture.JOBS[len(added)]['controls']['positive']
@@ -1477,7 +1482,7 @@ def _vary(c):
         wai = wai and blocked['generate'] and 'Vary could not keep lora = not-a-number' in blocked['blocker']
         disabled = 'No Studio recipe is recorded' in why
         asks = bool(asked) and all('Vary replaces the current Create setup' in text and 'Nothing will be generated' in text for text in asked)
-        return img2img and reseed and wai and disabled and asks, 'vary subtle: %s; fallback: %s; wai strong: %s; asset panel: %s; replace questions: %d' % (
+        return img2img and terse and reseed and wai and disabled and asks, 'vary subtle: %s; fallback: %s; wai strong: %s; asset panel: %s; replace questions: %d' % (
             {k: first[k] for k in ('preset', 'source', 'parents', 'denoise', 'batch')}, {k: second[k] for k in ('preset', 'parents', 'batch')},
             dict({k: third[k] for k in ('preset', 'parents', 'denoise', 'batch', 'kept')}, unapplied=blocked), why or 'no disabled reason', len(asked))
     finally:
@@ -1556,6 +1561,7 @@ def _parallax(c):
     if c.page.locator('#assetNextSteps > .asset-unavailable:not([open])').count(): c.act('#assetNextSteps > .asset-unavailable > summary', note='read unavailable actions')
     c.act('#assetDialog .ux-parallax [data-ux-parallax]', 'read', note='Make parallax layers and why it is not offered')
     why = c.page.evaluate(WHY_PARALLAX)
+    refused_listed = c.page.evaluate("!!document.querySelector('#assetNextSteps > .asset-unavailable > .ux-parallax')")  # #1727: a refused picture lists the tool under Not available, not above the next steps
     c.act('#closeAssetDialog', navigation=True, note='close the small picture', supplementary=True)
     wide = c.pick('asset-1', '#assetGrid [data-asset-open]', 'image asset in the Asset library', keep=LIVE_IMAGE_ASSET)
     c.act('[data-asset-open="%s"]' % wide, note='open a wide scene')
@@ -1574,6 +1580,7 @@ def _parallax(c):
     except Exception as error: drawn = 'drag failed: ' + str(error)[:120]
     c.act('#uxParallaxView', 'read', note='the dragged far view box: ' + drawn)
     offered = c.page.evaluate(WHY_PARALLAX)
+    qualifying_shown = c.page.evaluate("!document.querySelector('#assetNextSteps > .asset-unavailable > .ux-parallax') && !!document.querySelector('#assetNextSteps > .ux-parallax #uxParallaxObjects')")  # a qualifying picture keeps the tool in the main list
     c.stop_before(c.act('#assetDialog [data-ux-parallax]', note='prepares the clean-plate edit'), 'stopped before preparing: Make parallax layers attaches the picture as an upload')
     c.page.wait_for_timeout(800)
     state = c.page.evaluate(PARALLAX_STATE)
@@ -1586,7 +1593,7 @@ def _parallax(c):
                 and state['reference'] == 'f' * 32 + '_forest-hero.png' and (state['width'], state['height']) == ('1344', '768')
                 and state['positive'] == parallax.words('plate', PARALLAX_OBJECTS) and len(state['view'] or []) == 1
                 and 'Press Generate' in state['notice'] and 'edit 1 of 2, the clean plate' in state['hint'])
-    disabled = why.startswith('disabled: ') and '128 × 128' in why
+    disabled = why.startswith('disabled: ') and '128 × 128' in why and refused_listed and qualifying_shown
     guided = waiting.startswith('disabled: ') and 'Name the foreground' in waiting and offered.startswith('enabled: ') and 'not detected' in offered
     marked = len(boxes) == 1 and boxes[0][0] > 800 and boxes[0][2] > boxes[0][0] + 100
     return prepared and disabled and guided and marked and not submitted, 'prepared: %s; small picture: %s; before naming: %s; view: %s; generation posts: %d' % (
