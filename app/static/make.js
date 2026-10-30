@@ -602,10 +602,23 @@
   function runTitle(){const busy=state.runs.filter(r=>!FINAL.includes(r.job.status)).length;if(busy<wasBusy&&document.hidden)doneUnseen=true;wasBusy=busy;
     const next=(busy?'('+busy+') ':doneUnseen?'✓ ':'')+baseTitle;if(document.title!==next)document.title=next;}
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&doneUnseen){doneUnseen=false;runTitle();}});
+  // A waiting card adds "about M min" (#1707) only when every job ahead is a card here, in the same privacy, with a medium or high estimate; the running one counts
+  // what is left of its usual time (at least TURN_FLOOR s). An unknown job ahead, a gap in the server's count or a job waiting for memory leaves just "N ahead".
+  // Each estimate is fetched once (two at a time) and cached, so a poll or a tick never calls /api/estimate again.
+  const TURN_BUSY=['waiting','submitting','running','observing'],TURN_FLOOR=30,sound=e=>e?.available!==false&&['medium','high'].includes(e?.confidence)&&Number(e.estimate_seconds)>0;let estimating=0;
+  function fetchEstimate(run){const job=run.job,rp=runPrivacy(run),epoch=privacyEpoch;if(estimates.has(job.id)||estimating>=2)return;
+    if(!job.preset_id){estimates.set(job.id,{available:false});return;}estimates.set(job.id,null);estimating++;
+    json('/api/estimate',{preset_id:job.preset_id,controls:job.controls||{},batch_count:job.batch_count||1,reference_count:(job.references||[]).length},requestPrivacy(rp,rp)).catch(()=>({available:false})).then(e=>{estimating--;if(epoch===privacyEpoch)estimates.set(job.id,e);});}
+  const turnAhead=(run,runs)=>{const job=run.job,mine=Number(job.created_at)||0,rp=runPrivacy(run),list=runs.filter(r=>r!==run&&(TURN_BUSY.includes(r.job.status)||r.job.status==='queued'&&Number(r.job.created_at)<mine));
+    return list.length===job.queue_ahead&&list.every(r=>runPrivacy(r)===rp)?list:null;};
+  function turnSeconds(run,runs,now){const list=turnAhead(run,runs);if(!list)return null;let total=0;
+    for(const {job} of list){const e=estimates.get(job.id);if(job.status==='waiting'||!sound(e))return null;const t=Number(e.estimate_seconds);total+=job.status==='queued'||!job.started_at?t:Math.max(TURN_FLOOR,t-(now-Number(job.started_at)));}
+    return total;}
   function tick(){const now=Date.now()/1000;let live=false;clearTimeout(clockTimer);
-    for(const el of document.querySelectorAll('[data-make-clock]')){const run=state.runs.find(r=>r.job.id===el.dataset.makeClock),job=run?.job;if(!job)continue;const rp=runPrivacy(run);
-      if(PAINTING.includes(job.status)&&job.started_at&&!estimates.has(job.id)){estimates.set(job.id,null);json('/api/estimate',{preset_id:job.preset_id,controls:job.controls||{},batch_count:job.batch_count||1,reference_count:(job.references||[]).length},requestPrivacy(rp,rp)).then(e=>estimates.set(job.id,e),()=>{});}
-      const text=runClock(job,estimates.get(job.id),now),shown=text?' · '+text:'';live||=!!text;if(el.textContent!==shown)el.textContent=shown;
+    for(const el of document.querySelectorAll('[data-make-clock]')){const run=state.runs.find(r=>r.job.id===el.dataset.makeClock),job=run?.job;if(!job)continue;
+      if(PAINTING.includes(job.status)&&job.started_at)fetchEstimate(run);
+      let pending=false;if(job.status==='queued'&&job.queue_ahead>0){const list=turnAhead(run,state.runs)||[];for(const r of list)if(r.job.status!=='waiting')fetchEstimate(r);pending=list.some(r=>r.job.status!=='waiting'&&!estimates.get(r.job.id));}
+      const turn=job.status==='queued'?turnSeconds(run,state.runs,now):null,text=runClock(job,estimates.get(job.id),now)||(turn==null?'':'about '+Math.max(1,Math.round(turn/60))+' min'),shown=text?' · '+text:'';live||=!!text||pending;if(el.textContent!==shown)el.textContent=shown;
       const slow=el.closest?.('[data-run]')?.querySelector('[data-make-slow]');if(slow){const on=slowRun(job,estimates.get(job.id),now);if(slow.hidden===on){slow.hidden=!on;slow.textContent=on?SLOW:'';}}}
     runTitle();clockTimer=live?setTimeout(tick,1000):0;}
   function words(job){return({queued:'Waiting its turn'+(job.queue_ahead>0?' · '+job.queue_ahead+' ahead':''),waiting:'Waiting for memory',submitting:'Sending',running:'Painting',observing:'Painting',completed:'Done',failed:'Did not finish',partial:'Some pictures did not finish',uncertain:'Outcome unknown: nothing was sent again',cancelled:'Cancelled',not_submitted:'Not sent'})[job.status]||job.status;}
@@ -1345,7 +1358,7 @@
     }
     privacyEpoch++;draftRevision++;draftReady=false;draftProblem='';view.dataset.draftState='restoring';
     for(const timer of timers.values())clearTimeout(timer);timers.clear();planning.clear();
-    state.runs=[];state.pictures=null;state.characters=[];state.charStale=false;state.review={};state.record={};state.polish={};state.queries={};state.allPictures=false;state.openers.clear();clearCharForms();
+    state.runs=[];estimates.clear();state.pictures=null;state.characters=[];state.charStale=false;state.review={};state.record={};state.polish={};state.queries={};state.allPictures=false;state.openers.clear();clearCharForms();
     state.status='';state.missing='';state.error='';state.compare=false;state.compareLooks=[];state.sweeps={};
     if(previousCreation!==creation){state.pick=null;state.pose=null;state.form={};state.character=null;state.styleLook=null;state.styleWords=false;state.repicking=false;state.posePicking=false;state.tune={};
       savedTunes=readTunes(creation);
