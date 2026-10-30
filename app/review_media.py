@@ -54,11 +54,11 @@ def text_safe_metrics(data):
 
 
 def blank_kind(path):
-    """'transparent' or 'uniform' for a still picture with no content, else ''. Advisory only: exact extrema, first frame, never raises."""
+    """'transparent' or 'uniform' for a still picture with no content, else ''. Advisory only: exact extrema, stills only, never raises."""
     try:
         from PIL import Image
         with Image.open(path) as image:
-            if image.width * image.height > MAX_BLANK_PIXELS: return ''
+            if image.width * image.height > MAX_BLANK_PIXELS or getattr(image, 'n_frames', 1) > 1: return ''  # animations may start blank on purpose
             if image.mode in ('P', 'PA', 'RGBa', 'La') or 'transparency' in image.info: image = image.convert('RGBA')
             extrema = image.getextrema(); bands = extrema if isinstance(extrema[0], (tuple, list)) else (extrema,)
             if image.mode in ('RGBA', 'LA') and bands[-1][1] == 0: return 'transparent'

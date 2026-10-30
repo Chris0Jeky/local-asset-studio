@@ -241,7 +241,7 @@ test('a blank picture gets one plain advisory line on its Make card and nothing 
       document:{activeElement:{},createElement:()=>({children:[],set innerHTML(value){rendered=value;}})}};
     const render=vm.runInNewContext(privacy+note+between('  function renderRuns(){','  // Picture goals stay in Make')+';renderRuns',context);
     render();
-    const lines=rendered.match(/This picture is blank — likely a numeric failure, not a result\./g)||[];
+    const lines=rendered.match(/This picture is blank or one flat colour — often a numeric failure, not a result\./g)||[];
     assert.equal(lines.length,blank?1:0,'one line for the blank picture only, none for the real one');
     if(blank)assert.ok(rendered.indexOf('picture-1')<rendered.indexOf(lines[0])&&rendered.indexOf(lines[0])<rendered.indexOf('picture-2'),'the line sits on the blank picture');
     assert.match(rendered,/Picture 2 from Night Shift/);

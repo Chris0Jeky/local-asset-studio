@@ -64,6 +64,22 @@ class BlankOutputAdvisoryTests(unittest.TestCase):
             self.index('clip.png', png(Image.new('RGB', (4, 4))), media_type='video')
         check.assert_not_called()
 
+    def test_already_indexed_outputs_are_not_measured_again(self):
+        job = self.job('again.png', png(varied())); self.studio.index_outputs(job)  # a clean picture stores no marker, so only the fresh gate stops a startup re-decode
+        with patch('review_media.blank_kind') as check: self.studio.index_outputs(job)
+        check.assert_not_called(); self.assertNotIn('blank', job['outputs'][0])
+
+    def test_the_saved_snapshot_is_measured_not_the_comfy_original(self):
+        seen = []
+        with patch('review_media.blank_kind', side_effect=lambda path: seen.append(Path(path)) or ''):
+            output = self.index('snap.png', png(varied()))
+        self.assertEqual(len(seen), 1); self.assertNotEqual(seen[0], (self.root / 'fake-comfy/output/snap.png').resolve())
+        self.assertEqual(seen[0], self.studio.assets.file_entry(output['asset_id'])[0])
+
+    def test_animated_pictures_are_not_flagged(self):
+        frames = [Image.new('RGB', (8, 8), '#000000'), varied().resize((8, 8))]; data = io.BytesIO()
+        frames[0].save(data, 'GIF', save_all=True, append_images=frames[1:]); self.assertNotIn('blank', self.index('fade.gif', data.getvalue()))
+
     def test_advisory_reaches_the_public_job_without_changing_status(self):
         job = self.job('p.png', png(Image.new('RGB', (8, 8))))
         self.studio.index_outputs(job)
