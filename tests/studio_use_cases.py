@@ -247,6 +247,7 @@ DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-candidate-re
 # app/static on 22 Sep 2026; a control that starts writing must leave this list.
 LOCAL_CONTROLS = {
     '#lookBlock > summary': 'opens the saved-looks disclosure',
+    '#productionDetail .candidate-quick-pick summary': 'opens the Quick pick disclosure in this page; nothing is sent',
     '#lookSelect': 'chooses a saved look in this page; nothing is sent',
     '#lookOptions [data-look-option]': "ticks one of the look's optional lines in this page; nothing is sent",
     '#workshopRecipeChange': 'opens the recipe picker',
@@ -1085,6 +1086,7 @@ def _review(c):
         try: c.page.click('#closeAssetDialog', timeout=3000); c.page.wait_for_timeout(300)
         except Exception: pass
     c.act('#productionNotes', 'fill', typed='Candidate A keeps the silhouette and the lantern glow; B loses the face.')
+    c.act('#productionDetail .candidate-quick-pick summary', note='open Quick pick (the review desk is the primary path, #1730)')
     c.stop_before(c.act('#productionDetail [data-choose-candidate]', note='keep the winner'),
                   'stopped before recording the winner: that writes the study review')
     c.page.wait_for_timeout(600)

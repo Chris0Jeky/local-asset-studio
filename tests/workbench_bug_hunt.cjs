@@ -149,3 +149,63 @@ test('Vary and Polish refuse unsettled jobs but allow saved partial, completed o
   b.readSource=async()=>({asset_id:'other'});await assert.rejects(b.polishPlan('asset','face'),/could not be verified/);
   const loaded=b.catalog;b.catalog=null;await assert.rejects(b.polishPlan('asset','face'),/Recipes are still loading/);b.catalog=loaded;
 });
+
+// #1728: the Prompt Lab handoff names the recipe it fills; matching recipes are chips that only switch recipe.
+const transferChoices=section('  let promptHandoff=null;\n','\n  async function initializeDrafts');
+function transferBox(recipes){
+  const a={id:'a',name:'Anima portrait',positive:['1','text']},b2={id:'b',name:'Qwen edit',positive:['2','text']},c={id:'c',name:'Unrelated',positive:['3','text']};
+  const b=box({catalog:{presets:[a,b2,c]},selected:a,transfer:{hidden:false},submitted:0,generate:()=>b.submitted++,
+    element:(tag)=>({tag,attrs:{},setAttribute(k,v){this.attrs[k]=v;}}),
+    after:(name,callback)=>{const original=b[name];b[name]=(...args)=>{const result=original(...args);callback(...args);return result;};},
+    selectPreset:id=>{b.selected=b.catalog.presets.find(p=>p.id===id);}});
+  b.q('#positive').value='typed wording';
+  b.q('#uxTransferRecipes').replaceChildren=(...nodes)=>{b.q('#uxTransferRecipes').chips=nodes;};
+  vm.runInContext(transferChoices+'\nthis.setHandoff=h=>{promptHandoff=h;};this.renderTransferChoices=renderTransferChoices;',b);
+  b.setHandoff({positive:'A lantern',negative:'',recipes});b.renderTransferChoices();
+  return b;
+}
+test('Prompt Lab handoff button names the selected recipe and follows a recipe switch',()=>{
+  const b=transferBox(['a','b']);
+  assert.equal(b.q('#uxApplyPrompt').textContent,'Apply to Anima portrait');
+  b.selectPreset('c');assert.equal(b.q('#uxApplyPrompt').textContent,'Apply to Unrelated','any selection path refreshes the label');
+});
+test('matching recipes are chips: the selected one is pressed, a click switches recipe and submits nothing',()=>{
+  const b=transferBox(['a','b','not-in-catalog']);
+  const group=b.q('#uxTransferRecipes');
+  assert.deepEqual(group.chips.map(c=>c.textContent),['Anima portrait','Qwen edit'],'unknown recipes are not offered');
+  assert.equal(group.hidden,false);
+  assert.deepEqual(group.chips.map(c=>c.attrs['aria-pressed']),['true','false']);
+  assert.ok(group.chips.every(c=>c.tag==='button'&&c.type==='button'));
+  group.chips[1].onclick();
+  assert.equal(b.selected.id,'b');
+  assert.deepEqual(group.chips.map(c=>c.attrs['aria-pressed']),['false','true'],'the chip row follows the new selection');
+  assert.equal(b.q('#uxApplyPrompt').textContent,'Apply to Qwen edit');
+  assert.equal(b.submitted,0,'switching never generates');
+  assert.equal(b.q('#positive').value,'typed wording','switching does not touch the form');
+  assert.equal(b.transfer.hidden,false,'the transferred wording stays offered');
+  b.q('#uxApplyPrompt').onclick();
+  assert.equal(b.q('#positive').value,'A lantern','the wording survives the switch and fills the switched-to recipe');
+});
+test('a refused recipe switch is announced, not thrown, and a handoff with no matches shows no chips',()=>{
+  const b=transferBox(['a','b']);
+  b.selectPreset=()=>{throw Error('You are continuing an image.');};
+  b.q('#uxTransferRecipes').chips[1].onclick();
+  assert.deepEqual(b.notices.at(-1),['You are continuing an image.',true]);
+  assert.equal(transferBox([]).q('#uxTransferRecipes').hidden,true);
+});
+test('a keyboard chip switch keeps focus on the newly chosen chip, and never steals focus from elsewhere',()=>{
+  const b=transferBox(['a','b']),focused=[];b.element=tag=>({tag,attrs:{},setAttribute(k,v){this.attrs[k]=v;},focus(){focused.push(this.textContent);}});
+  b.document={activeElement:{closest:s=>s==='#uxTransferRecipes'}};b.renderTransferChoices();focused.length=0;
+  b.q('#uxTransferRecipes').chips[1].onclick();assert.deepEqual(focused,['Qwen edit']);
+  b.document={activeElement:{closest:()=>null}};focused.length=0;b.selectPreset('a');assert.deepEqual(focused,[]);
+});
+test('pressing the already selected chip reloads nothing',()=>{
+  const b=transferBox(['a','b']);let calls=0;b.selectPreset=()=>{calls++;throw Error('You are continuing an image.');};
+  b.q('#uxTransferRecipes').chips[0].onclick();
+  assert.equal(calls,0,'no recipe reload, so no reference clear and no continuation refusal');assert.equal((b.notices||[]).length,0);
+});
+test('the handoff notice no longer carries the compiler/executor jargon',()=>{
+  assert.doesNotMatch(code,/executor bindings|Naming them selects nothing/);
+  assert.doesNotMatch(fs.readFileSync(require('node:path').join(__dirname,'../app/static/studio-core.js'),'utf8'),/executor bindings/);
+  assert.doesNotMatch(U.promptTransfer({profile:{id:'p'},fields:{positive:'x'}}).notice,/executor|compiler/i);
+});

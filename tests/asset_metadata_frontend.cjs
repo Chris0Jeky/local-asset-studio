@@ -109,7 +109,7 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
     assert.equal(s.run('assetQueue.ids.length'),2);assert.equal(s.run('activeAsset.id'),'b');
     s.run("openAsset('c')");
     assert.equal(s.run('activeAsset.id'),'c');assert.equal(s.run('assetQueue'),null);
-    assert.equal(s.el('#assetQueue').hidden,true);assert.match(s.el('#assetMessage').textContent,/Left the review queue/);
+    assert.equal(s.el('#assetQueue').hidden,false,'the panel now carries the open picture verdict row (#1725)');assert.doesNotMatch(s.el('#assetQueue').innerHTML,/ of \d|data-queue-(skip|step|exit)/,'no queue controls once the queue ended');assert.match(s.el('#assetMessage').textContent,/Left the review queue/);
   });
   await check('The end of the queue still asks before discarding unsaved typing',()=>{
     const s=library();s.run('startReviewQueue()');

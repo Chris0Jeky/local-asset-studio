@@ -567,7 +567,7 @@ function durationLabel(s){return Math.round(s)+' s';}</script><script>"""+source
         self.settle({'id': 'lost', 'status': 'uncertain', 'message': 'Submission outcome is uncertain.'})
         # The exact sentence: it must promise no re-run and invite none.
         self.assertEqual(self.page.locator('.run-outcome-summary').inner_text(), 'Outcome unknown. It will not be run again; inspect it before starting new work.')
-        self.assertEqual(self.page.evaluate("[...document.querySelectorAll('#runOutcome button')].map(b=>b.textContent)"), ['Inspect →', 'Dismiss'])
+        self.assertEqual(self.page.evaluate("[...document.querySelectorAll('#runOutcome button')].map(b=>b.textContent)"), ['Inspect →', 'Copy details', 'Dismiss'], 'a prompt-free copy, never a re-run (#1710)')
         self.page.click('[data-run-outcome="show"]')
         self.assertIn('not shown here yet', self.page.evaluate('said.at(-1)[0]'))
         self.page.click('[data-run-outcome="dismiss"]')

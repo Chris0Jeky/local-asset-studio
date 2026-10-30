@@ -48,6 +48,7 @@ from gpu_lease import GpuLease, GpuLeaseError
 from large_job_prep_common import PreparationError
 from studio_workflow.http_body import drain_for_reset
 import prompting
+import build_info
 import submission_evidence
 import job_cancel
 import observation_state
@@ -194,6 +195,7 @@ class Studio:
         self._schema = None; self._schema_at = 0
         self._options = None; self._options_at = 0
         self._host_commit = None; self._host_commit_at = 0
+        self.build = build_info.build_info(self.root)   # read once at start; /api/health shows it so a console can spot a Studio running old code
         self._gpu_memory = None; self._gpu_memory_at = 0
         self.jobs = {}; self.queue = Queue(); self.lock = threading.RLock(); self.worker_failure = None
         self._loaded_operator_dispositions = {}  # Readable terminal state still needs an explicit publication acknowledgment.
@@ -384,7 +386,7 @@ class Studio:
                 return mode
         raise StudioError("Unsupported I2V mode")
 
-    def _validate_i2v_mode_source(self, preset, mode, graph, controls):
+    def _validate_i2v_mode_source(self, preset, mode, graph, controls, staged=True):
         """Fail closed when a mode promises one exact reference image."""
         required = (mode or {}).get("required_reference")
         if required is None:
@@ -407,7 +409,8 @@ class Studio:
         uploads = self.experiments / "uploads"
         upload = inside(uploads.resolve(), uploads / name)
         comfy_input = inside((self.comfy_root / "input").resolve(), self.comfy_root / "input" / name)
-        for source in (upload, comfy_input):
+        # A read-only preview stages nothing, so only the upload can be checked; execution checks the staged copy too.
+        for source in ((upload, comfy_input) if staged else (upload,)):
             if not source.is_file() or hashlib.sha256(source.read_bytes()).hexdigest() != expected:
                 raise StudioError(f"{who} requires the {label}; the selected source does not match")
 
@@ -473,7 +476,7 @@ class Studio:
         if installed and name not in installed: raise StudioError("Unknown LoRA file: " + name)
         return name
 
-    def prepare(self, payload, *, _defer_host_commit_preflight=False):
+    def prepare(self, payload, *, _defer_host_commit_preflight=False, _stage_reference_inputs=True):
         if hasattr(self,'backends') and self.backends.busy:
             raise StudioError('A backend switch is running. Wait for it to finish.')
         self.require_worker()
@@ -582,11 +585,11 @@ class Studio:
         continuation.validate(self, payload, preset, graph)
         tiles.validate(self, payload, preset, graph, batch)
         parallax.validate(self, payload, preset, graph, batch)
-        self.ensure_reference_inputs(graph,classification)
+        if _stage_reference_inputs: self.ensure_reference_inputs(graph,classification)
         if classification == 'private':
             for node in graph.values():
                 if node.get('class_type') == 'SaveImage': node.setdefault('inputs',{})['filename_prefix']='local-asset-studio/private'
-        self._validate_i2v_mode_source(preset, mode, graph, controls)
+        self._validate_i2v_mode_source(preset, mode, graph, controls, staged=_stage_reference_inputs)
         wan_capacity.enforce(graph)
         if not _defer_host_commit_preflight:
             self.host_commit_preflight(preset, graph)
@@ -956,6 +959,11 @@ class Studio:
         result = {k: job.get(k) for k in allowed}
         if job.get('privacy') == 'private': result['privacy']='private'
         if job.get('look') is not None: result['look'] = job['look']
+        if job.get('status') == 'queued':
+            # Read-only position (#1707): unfinished jobs created earlier pass the single worker first. A count only, so a private job
+            # ahead shows as a number, never as its content; an estimate of the wait, not a promise of order.
+            # No lock: Production.public() reaches here under its own lock, and Studio-then-Production is the order elsewhere (#1742 review).
+            result['queue_ahead'] = sum(1 for other in list(getattr(self, 'jobs', {}).values()) if other is not job and other.get('status') in Studio.ACTIVE_JOB_STATUSES and (other.get('created_at') or 0) < (job.get('created_at') or 0))
         if "record_error" in job: result.update(record_error=job["record_error"], run_path=job["run_path"])
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
@@ -1375,6 +1383,23 @@ class Studio:
         return {"preset_id":preset["id"], "workflow":graph, "references":preset.get("_prepared_references", []),
                 "batch_count":batch, "preparation":preset.get("_prepared_source"), "template_sha256":hashlib.sha256(graph_path.read_bytes()).hexdigest(),
                 "submitted":False}
+
+    def wildcard_preview(self, payload):
+        preset, graph, _, _, batch = self.prepare(payload, _stage_reference_inputs=False)
+        bindings = {key: ([preset[key]] if preset.get(key) else []) + (preset.get("bindings_extra") or {}).get(key, []) for key in ("positive", "negative")}
+        result = {"members":[], "wildcard_files":{}}
+        preview_bindings = {key: [b for b in group if prompting.has_wildcards(graph.get(str(b[0]), {}).get("inputs", {}).get(str(b[1])))] for key, group in bindings.items()}
+        if not any(preview_bindings.values()): return result
+        job = {"graph":graph, "prompt_bindings":bindings, "seed_bindings":([preset["seed"]] if preset.get("seed") else []) + (preset.get("bindings_extra") or {}).get("seed", [])}
+        for index in range(min(batch, 16)):
+            resolved, seed = self._batch_graph(job, index, wildcard_files=result["wildcard_files"])
+            texts = {key: "\n— ".join(dict.fromkeys(str(resolved.get(str(b[0]), {}).get("inputs", {}).get(str(b[1]), "")) for b in group)) for key, group in preview_bindings.items()}
+            member = {"index":index, "seed":seed, **{key: text[:2000] for key, text in texts.items()}}
+            if any(len(text) > 2000 for text in texts.values()): member["truncated"] = True
+            if seed is None: member["seed_unknown"] = True
+            elif seed > 2**53 - 1: member["seed_text"] = str(seed)  # JSON numbers lose these digits in JavaScript.
+            result["members"].append(member)
+        return result
 
     def reference_status(self, payload, *, privacy='regular'):
         names=payload.get("files", [])
@@ -2030,8 +2055,8 @@ class Studio:
                 except (ValueError, OSError, AttributeError, TypeError) as exc:
                     missing.setdefault(preset.get('id'), []).append('Dependency inspection unavailable: ' + str(exc)[:250])
             missing = {key: list(dict.fromkeys(values)) for key, values in missing.items()}
-            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "pin_mismatch": pin_warnings, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "vram_guard": self.vram_guard_status(), "cache_release": self.cache_release_status(), "config_warnings": list(self.config_warnings)}
-        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError, UnicodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "pin_mismatch": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "cache_release": self.cache_release_status(), "config_warnings": list(self.config_warnings)}
+            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "pin_mismatch": pin_warnings, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "build": self.build, "host_commit": self.host_commit_reading(),"gpu_memory": self.gpu_memory_reading(), "vram_guard": self.vram_guard_status(), "cache_release": self.cache_release_status(), "config_warnings": list(self.config_warnings)}
+        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError, UnicodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "pin_mismatch": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "build": self.build, "host_commit": self.host_commit_reading(),"gpu_memory": self.gpu_memory_reading(), "cache_release": self.cache_release_status(), "config_warnings": list(self.config_warnings)}
 
     def model_fingerprints(self):
         # Read-only view of production preflight's digest cache; readiness never hashes.
@@ -2210,7 +2235,7 @@ class Studio:
                     except Exception: pass
             finally: self._last_activity = time.monotonic()   # the idle clock starts when the action ends, not when it was dequeued
 
-    def _batch_graph(self, job, index):
+    def _batch_graph(self, job, index, *, wildcard_files=None):
         graph = copy.deepcopy(job["graph"])
         bindings = job.get("seed_bindings")
         if bindings is None:
@@ -2224,27 +2249,30 @@ class Studio:
             seed = number(base, "seed", 0, 2**63 - 1, True) + index
             if seed > 2**63 - 1: raise StudioError("seed plus batch count exceeds supported range")
             for bound in bindings: self._bind(graph, bound, seed)
-        self._expand_prompts(job, graph, seed, index)
+        self._expand_prompts(job, graph, seed, index, wildcard_files=wildcard_files)
         return graph, seed
 
-    def _expand_prompts(self, job, graph, seed, index):
+    def _expand_prompts(self, job, graph, seed, index, *, wildcard_files=None):
         """Resolve prompt wildcards per batch member; controls keep the template."""
         bindings = job.get("prompt_bindings")
         if bindings is None:
             try: preset = self.preset(job["preset_id"])
             except StudioError: return
             bindings = {key: ([preset[key]] if preset.get(key) else []) + (preset.get("bindings_extra") or {}).get(key, []) for key in ("positive", "negative")}
+        self._resolve_prompts(graph, bindings, seed, index, wildcard_files=wildcard_files)
+
+    def _resolve_prompts(self, graph, bindings, seed, index, *, wildcard_files=None):
         rng = random.Random(f"{seed}:{index}")
-        try: self._expand_bound_prompts(graph, bindings, rng)
+        try: self._expand_bound_prompts(graph, bindings, rng, wildcard_files=wildcard_files)
         except ValueError as exc: raise StudioError(str(exc))
 
-    def _expand_bound_prompts(self, graph, bindings, rng):
+    def _expand_bound_prompts(self, graph, bindings, rng, *, wildcard_files=None):
         for key in ("positive", "negative"):
             for binding in bindings.get(key) or []:
                 try: node, field = str(binding[0]), str(binding[1]); text = graph[node]["inputs"][field]
                 except (KeyError, TypeError, IndexError): continue
                 if not prompting.has_wildcards(text): continue
-                graph[node]["inputs"][field] = prompting.expand(text, rng, self.root)
+                graph[node]["inputs"][field] = prompting.expand(text, rng, self.root, wildcard_files=wildcard_files)
 
     def _config_number(self, key, raw, *, default, maximum=None):
         """A config number, including a numeric string. A bad value keeps the fail-safe default and is named on /api/health. Zero and below stay the documented off switch; above maximum clamps with no warning."""
@@ -2937,6 +2965,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, self.studio.assets.metadata(path.split("/")[3], self._asset_query_scope(),privacy=scope))
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
             if path == "/api/looks": return self._json(200, looks.listing(self.studio))
+            if path == "/api/looks/record": return self._json(200, looks.record(self.studio, scope))
             if path == "/api/characters": return self._json(200, characters.listing(self.studio))
             if path == '/api/production': return self._json(200,self.studio.production.list())
             if path.startswith('/api/production/campaigns/') and len(path.split('/'))==5:
@@ -3096,6 +3125,7 @@ class Handler(BaseHTTPRequestHandler):
                     return self._json(503, {"error": "Asset storage could not confirm this request. Check its receipt before retrying the exact command.",
                                             "code": "asset_storage_unconfirmed"})
             if self.path == "/api/preview": return self._json(200, self.studio.preview(self._creation_payload()))
+            if self.path == "/api/wildcards/preview": return self._json(200, self.studio.wildcard_preview(self._creation_payload()))
             if self.path == '/api/av':return self._json(201,self.studio.production.av.create(self._body_json()))
             if self.path == '/api/voice-baseline':return self._json(201,self.studio.production.voice_baseline(self._body_json()))
             if self.path.startswith('/api/av/'):
