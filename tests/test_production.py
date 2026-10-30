@@ -459,6 +459,12 @@ class ExperimentsClarityFrontendTests(unittest.TestCase):
         self.assertEqual(result.returncode,0,result.stdout+result.stderr)
 
     @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_native_export_rows_show_thumbnails_and_keep_pairs_when_reordered(self):
+        result=subprocess.run([shutil.which('node'),'--test',str(Path(__file__).with_name('production_native_thumbs.cjs'))],
+                              capture_output=True,text=True,timeout=20)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
     def test_planner_cards_plan_names_and_comparison_arithmetic_read_once(self):
         result=subprocess.run([shutil.which('node'),str(Path(__file__).with_name('production_clarity_frontend.cjs'))],
                               capture_output=True,text=True,timeout=20)
