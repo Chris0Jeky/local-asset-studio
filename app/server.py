@@ -1020,7 +1020,7 @@ class Studio:
     def _estimate_file_stamp(self, path):
         try:
             path = inside(self.root, path); stat = path.stat()
-            return str(path), stat.st_mtime_ns, stat.st_size, stat.st_ctime_ns
+            return str(path), stat.st_mtime_ns, stat.st_size, stat.st_ctime_ns, stat.st_ino   # inode: an atomic-replace save is always seen
         except (OSError, StudioError): return None
 
     def _estimate_presets(self, cache):
@@ -1161,7 +1161,7 @@ class Studio:
                 if job.get("status") != "completed" or job.get("operation") or job.get("native_recipe") or not job.get("prompt_ids") or not isinstance(job.get("graph"), dict): continue
                 elapsed = self._estimate_float(job.get("elapsed_seconds"), 0)
                 if elapsed <= 0: continue
-                sample_preset = presets.get(job.get("preset_id"))
+                sample_preset = presets.get(job.get("preset_id")) if isinstance(job.get("preset_id"), str) else None   # a corrupt record is skipped, never a 500
                 if not sample_preset: continue
                 sample = self._estimate_cached_features(features, ("job", identifier), sample_preset, job["graph"], job.get("controls"), job.get("batch_count", 1), sum(1 for r in (job.get("references") or []) if not isinstance(r, dict) or r.get("file")),
                                                         (job.get("status"), job.get("finished_at"), elapsed))
