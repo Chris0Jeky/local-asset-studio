@@ -57,9 +57,33 @@ test('Prepare posts the boxes to the repair route and attaches the returned uplo
   assert.equal(await b.api.prepareRepair('asset','anime-masked-repair',b.sourceContext,()=>true),true);
   same(b.posts,[['/api/repair/prepare',{asset_id:'asset',preset_id:'anime-masked-repair',boxes:[[40,40,240,360]]}]],'one prepare call and never /api/jobs');
   assert.equal(b.uploaded,'f'.repeat(32)+'_repair-mask.png');
-  same(b.calls.filter(c=>c[0]!=='ready'),[['selectPreset','anime-masked-repair',true,true],['parent','reference','asset']]);
+  same(b.calls.filter(c=>c[0]!=='ready'),[['selectPreset','anime-masked-repair',true,true,true],['parent','reference','asset']]);
   assert.equal(b.q('#positive').value,'1girl, raised hand');assert.equal(b.q('#negative').value,'bad hands');assert.equal(b.q('#reference').value,'');
   assert.match(b.q('#referenceHint').textContent,/1 marked box\./);
+});
+
+test('without verified source wording the prompt stays blank instead of the recipe example',async()=>{
+  for(const context of [{title:'Imported'},{prompt_origin:'unavailable',prompt_role:'unknown',positive:null},{prompt_origin:'submitted-output',prompt_role:'instruction',positive:'Make it night'}]){
+    const b=box({repairBoxes:[[40,40,240,360]]});b.q('#positive').value='';b.q('#negative').value='';
+    b.reply=body=>({generation_submitted:false,file:'x.png',width:800,height:400,preset_id:'anime-masked-repair',plan:{source_asset_id:'asset',source_sha256:'s'.repeat(64),mask_file:'x.png',boxes:body.boxes},context});
+    assert.equal(await b.api.prepareRepair('asset','anime-masked-repair',b.sourceContext,()=>true),true);
+    same(b.calls.find(c=>c[0]==='selectPreset'),['selectPreset','anime-masked-repair',true,true,true],'selected with a blank prompt');
+    assert.equal(b.q('#positive').value,'',JSON.stringify(context));assert.equal(b.q('#negative').value,'');
+  }
+});
+
+test('Continue never offers the seamless-tile repaint, which only Make seamless prepares',()=>{
+  const C=require('../app/static/continuation-core.js'),cap={consumes_source:true,operation:'masked-repair',requires_mask:true};
+  const presets=[{id:'zimage-seam-repair',name:'Seam',tile_route:true,continuation_capability:cap},{id:'anime-masked-repair',name:'Mask',requires_rgba_mask:true,continuation_capability:cap}];
+  assert.deepEqual(C.destinations('repair',presets,null).map(p=>p.id),['anime-masked-repair']);
+});
+
+test('a drag over a picture that has not loaded adds no box, and a cancelled pointer ends the drag',()=>{
+  const b=box(),blank={getBoundingClientRect:()=>({left:0,top:0,width:0,height:0}),setPointerCapture(){}};
+  const on=(x,y)=>({...at(x,y),target:{closest:s=>s==='.ux-repair-pick'?blank:null}});
+  b.listeners.pointerdown[0](on(0,0));b.listeners.pointerup[0](on(60,60));
+  same(b.repairBoxes,[]);assert.match(b.q('#uxHandoffStatus').textContent,/not loaded yet/);
+  b.listeners.pointerdown[0](at(110,60));assert.ok(b.repairDrag);b.listeners.pointercancel[0]();assert.equal(b.repairDrag,null);
 });
 
 test('an unverifiable or overtaken Prepare attaches nothing',async()=>{

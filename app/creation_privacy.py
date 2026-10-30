@@ -66,7 +66,8 @@ PRIVATE_POSTS=frozenset(('/api/jobs','/api/upload','/api/assets/import','/api/as
     '/api/assets/export','/api/assets/update','/api/collections','/api/looks/prepare',
     '/api/preview','/api/wildcards/preview','/api/recipe-check','/api/estimate','/api/references/check',
     '/api/backends/switch','/api/backends/resolve-switch','/api/runtime-recovery/retry',
-    '/api/gpu-lease','/api/gpu-lease/release','/api/models/install','/api/folders/open','/api/workflow-inspect'))
+    '/api/gpu-lease','/api/gpu-lease/release','/api/models/install','/api/folders/open','/api/workflow-inspect',
+    '/api/repair/prepare'))
 PRIVATE_POST_PREFIXES=('/api/assets/','/api/collections/','/api/jobs/')
 
 

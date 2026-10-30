@@ -27,7 +27,8 @@
     // Combine's declared 9B leads follow a strong pose (Copy Pose first, then the drawn skeleton: owner decision q-28, 23 September 2026) and must outrank a 4B source-family match; hard runtime/mask blockers still win.
     const lead=p=>intent==='combine'&&['combine-klein-9b-copypose','combine-klein-9b-skeleton','combine-klein-9b-depth','combine-klein-9b-replace','combine-klein-9b'].includes(p.id)?-200:0;
     const score=p=>(p.runtime_block?1000:0)+(p.continuation_capability.requires_mask?500:0)+(intent==='restyle'&&p.continuation_capability.keeps_picture?-300:0)+lead(p)+(family&&p.family===family?-100:0)+rank(p);
-    return presets.filter(p=>p.continuation_capability?.consumes_source&&routes[intent]?.includes(p.continuation_capability.operation)).sort((a,b)=>score(a)-score(b)||a.name.localeCompare(b.name));
+    // The seamless-tile repaint is a masked repair reached only from Make seamless; Continue cannot prepare its rolled input.
+    return presets.filter(p=>!p.tile_route&&p.continuation_capability?.consumes_source&&routes[intent]?.includes(p.continuation_capability.operation)).sort((a,b)=>score(a)-score(b)||a.name.localeCompare(b.name));
   }
   function initial(source,preset,intent,file){
     const cap=preset?.continuation_capability;

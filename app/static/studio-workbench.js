@@ -992,10 +992,12 @@
   document.addEventListener('pointerdown',e=>{const pick=e.target.closest?.('.ux-repair-pick');if(!pick||e.button!==0||handoffBusy||!sourceContext?.width)return;e.preventDefault();repairDrag={pick,start:repairPoint(pick,e,sourceContext)};pick.setPointerCapture?.(e.pointerId);});
   document.addEventListener('pointerup',e=>{
     if(!repairDrag)return;const {pick,start}=repairDrag;repairDrag=null;if(!sourceContext?.width)return;const end=repairPoint(pick,e,sourceContext);
+    if(![...start,...end].every(Number.isFinite)){q('#uxHandoffStatus').textContent='The picture has not loaded yet; wait for it, then drag again.';return;}
     const box=[Math.min(start[0],end[0]),Math.min(start[1],end[1]),Math.max(start[0],end[0]),Math.max(start[1],end[1])];
     if(box[2]-box[0]<8||box[3]-box[1]<8){q('#uxHandoffStatus').textContent='A repair box needs at least 8 px on each side; drag a larger box.';return;}
     repairAdd([box]);
   });
+  document.addEventListener('pointercancel',()=>{repairDrag=null;});
   const repairTyped=()=>{const boxes=repairParse(q('#uxRepairType').value);if(!boxes){q('#uxHandoffStatus').textContent='Type boxes as x0,y0,x1,y1 in picture pixels, separated by semicolons.';return;}q('#uxRepairType').value='';repairAdd(boxes);};
   document.addEventListener('click',e=>{if(e.target.closest('[data-ux-repair-add]'))repairTyped();const remove=e.target.closest('[data-ux-repair-remove]');if(remove&&!handoffBusy){repairBoxes=repairBoxes.filter((_,i)=>i!==Number(remove.dataset.uxRepairRemove));destinationDetails();}});
   q('#uxRepairType').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();repairTyped();}});
@@ -1004,7 +1006,8 @@
     const target=catalog.presets.find(p=>p.id===result?.preset_id&&p.requires_rgba_mask),context=result.context;
     if(!target)throw Error('The masked-repair recipe is unavailable.');
     if(submitting)throw Error('Wait for the current submission before preparing a repair.');
-    selectPreset(target.id,true,true);
+    // Blank prompt: an imported picture or an output without retained wording must not be repaired with the recipe's example.
+    selectPreset(target.id,true,true,true);
     uploaded=result.file;setHandoffParent('reference',result.plan.source_asset_id);q('#reference').value='';
     if(context?.prompt_origin==='submitted-output'&&context.prompt_role==='description'){if(target.positive&&typeof context.positive==='string')q('#positive').value=context.positive;if(target.negative&&typeof context.negative==='string')q('#negative').value=context.negative;}
     q('#batch').value=1;
@@ -1027,10 +1030,10 @@
     const busyOwner={};handoffBusyOwner=busyOwner;handoffBusy=true;destinationDetails();syncReady();
     try{
       if(handoffBaseline!==workbenchStamp())throw Error('The workbench changed while this handoff was open. Reopen it to review the current task.');
-      if(catalog.presets.find(p=>p.id===preset)?.requires_rgba_mask){
+      if(typeof catalog!=='undefined'&&catalog?.presets?.find(p=>p.id===preset)?.requires_rgba_mask){
         const count=repairBoxes.length;if(!await prepareRepair(id,preset,source,current))return;
         q('#assetDialog').close();handoff.close();draftDirty=true;showView('create');saveDraft();syncCreate();
-        announce('Repair input attached: '+count+' marked box'+(count===1?' is':'es are')+' transparent and the rest of the picture is protected. Check the prompt, then press Generate.');contextPanel.scrollIntoView({block:'center'});return;
+        announce('Repair input attached: '+count+' marked box'+(count===1?' is':'es are')+' transparent and the rest of the picture is protected. '+(q('#positive').value.trim()?'Check the prompt, then press Generate.':'Describe the picture as it should look, then press Generate.'));contextPanel.scrollIntoView({block:'center'});return;
       }
       const result=await api('/api/assets/reference',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id}),signal:AbortSignal.timeout(30000)});
       if(!current())return;

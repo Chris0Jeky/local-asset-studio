@@ -143,10 +143,10 @@ class HttpRouteTests(unittest.TestCase):
         thread = threading.Thread(target=self.http.serve_forever, daemon=True); thread.start()
         self.addCleanup(thread.join, 5); self.addCleanup(self.http.server_close); self.addCleanup(self.http.shutdown)
 
-    def call(self, body, origin="http://127.0.0.1:8191"):
+    def call(self, body, origin="http://127.0.0.1:8191", **headers):
         connection = HTTPConnection("127.0.0.1", self.http.server_port, timeout=10)
         try:
-            connection.request("POST", "/api/repair/prepare", json.dumps(body), headers={"Host": "127.0.0.1:8191", "Origin": origin, "Content-Type": "application/json"})
+            connection.request("POST", "/api/repair/prepare", json.dumps(body), headers={"Host": "127.0.0.1:8191", "Origin": origin, "Content-Type": "application/json", **headers})
             reply = connection.getresponse(); return reply.status, json.loads(reply.read())
         finally: connection.close()
 
@@ -160,6 +160,18 @@ class HttpRouteTests(unittest.TestCase):
         self.assertEqual(status, 400); self.assertIn("drag at least one box", body["error"])
         self.assertEqual(self.call({"asset_id": asset["id"], "preset_id": REPAIR["id"], "boxes": [[8, 8, 32, 32]]}, origin="https://evil.invalid")[0], 403)
         self.assertEqual(set(self.studio.jobs), jobs, "no job was created"); self.assertEqual(self.studio.requests, [], "no route reaches ComfyUI")
+
+    def test_a_private_picture_is_prepared_under_private_creation(self):
+        asset = self.studio.import_image("hand.png", "image/png", png(picture()), privacy="private")["asset"]
+        body = {"asset_id": asset["id"], "preset_id": REPAIR["id"], "boxes": [[8, 8, 32, 32]]}
+        private = {"X-Studio-Privacy": "all", "X-Studio-Creation-Privacy": "private"}
+        status, reply = self.call(body, **private)
+        self.assertEqual(status, 201, reply); self.assertFalse(reply["generation_submitted"])
+        self.assertTrue((self.root / "experiments/private/uploads" / reply["file"]).is_file())
+        self.assertFalse((self.root / "experiments/uploads" / reply["file"]).exists())
+        status, reply = self.call(body, **{"X-Studio-Privacy": "all"})
+        self.assertEqual(status, 400); self.assertIn("Keep this private picture private", reply["error"])
+        self.assertEqual(self.studio.requests, [])
 
 
 if __name__ == "__main__": unittest.main()
