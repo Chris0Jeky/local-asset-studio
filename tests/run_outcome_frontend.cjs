@@ -131,12 +131,12 @@ test('clear discards the displayed and queued notices without touching a newer s
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 const canaryJob=(overrides={})=>({id:'run-1',status:'failed',preset_id:'anime-detail',preset_name:'Anime detail',privacy:'regular',controls:{positive:'SECRET-PROMPT'},
   message:'SECRET-PROMPT failed',references:[{path:'C:/x/SECRET-PROMPT.png'}],outputs:[],look:{name:'Quiet look',options:{note:'SECRET-PROMPT'}},backend_id:'primary',
-  failure:{code:'oom',title:'Out of memory',message:'SECRET-PROMPT'},elapsed_seconds:12.34,prompt_ids:['p1','p2'],...overrides});
+  failure:{kind:'memory_allocation',title:'Out of memory',message:'SECRET-PROMPT'},elapsed_seconds:12.34,prompt_ids:['p1','p2'],...overrides});
 const details=s=>s.run('window.StudioRunOutcome.failureDetails');
 
 test('failure details carry only allow-listed fields and never the canary',()=>{
   const s=sandbox(),text=details(s)(canaryJob());
-  assert.equal(text,'Run run-1\nstatus failed\nrecipe anime-detail\nlook Quiet look\nbackend primary\nfailure oom Out of memory\ntook 12.3 s\nprompt ids p1,p2');
+  assert.equal(text,'Run run-1\nstatus failed\nrecipe anime-detail\nlook Quiet look\nbackend primary\nfailure memory_allocation Out of memory\ntook 12.3 s\nprompt ids p1,p2');
   assert.doesNotMatch(text,/SECRET-PROMPT|C:\/x|controls|Synthetic/);
 });
 
@@ -178,7 +178,7 @@ test('copy details writes the note, says Copied, and leaves the job and the requ
   const failed=canaryJob(),before=JSON.stringify(failed),requestsBefore=s.requests.length;
   s.settle(failed);const summaryText=s.summary().textContent;
   s.click(s.button('copy'));await flush();
-  assert.deepEqual(written,['Run run-1\nstatus failed\nrecipe anime-detail\nlook Quiet look\nbackend primary\nfailure oom Out of memory\ntook 12.3 s\nprompt ids p1,p2']);
+  assert.deepEqual(written,['Run run-1\nstatus failed\nrecipe anime-detail\nlook Quiet look\nbackend primary\nfailure memory_allocation Out of memory\ntook 12.3 s\nprompt ids p1,p2']);
   assert.equal(s.button('copy').textContent,'Copied');
   assert.equal(s.summary().textContent,summaryText);
   assert.equal(JSON.stringify(failed),before,'the job is not changed');
@@ -188,13 +188,13 @@ test('copy details writes the note, says Copied, and leaves the job and the requ
 test('a refused clipboard names the fallback without a request',async()=>{
   const s=sandbox(),requestsBefore=s.requests.length;s.navigator.clipboard={writeText:async()=>{throw new Error('denied');}};
   s.settle(canaryJob());s.click(s.button('copy'));await flush();
-  assert.equal(s.button('copy').textContent,'Copy failed — select the text in Problems instead');
+  assert.equal(s.button('copy').textContent,'Copy failed — select the run record text instead');
   assert.equal(s.requests.length,requestsBefore);
 });
 
 test('a missing clipboard API names the same fallback',async()=>{
   const s=sandbox(),requestsBefore=s.requests.length;
   s.settle(canaryJob());s.click(s.button('copy'));await flush();
-  assert.equal(s.button('copy').textContent,'Copy failed — select the text in Problems instead');
+  assert.equal(s.button('copy').textContent,'Copy failed — select the run record text instead');
   assert.equal(s.requests.length,requestsBefore);
 });

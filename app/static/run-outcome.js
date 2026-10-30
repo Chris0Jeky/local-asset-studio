@@ -30,7 +30,7 @@
     const id=detailText(job.id),status=detailText(job.status),lines=[id?'Run '+id:'',status?'status '+status:''];
     if(job.privacy!=='private'){
       const recipe=detailText(job.preset_id),look=detailText(job.look?.name),backend=detailText(job.backend_id),seconds=job.elapsed_seconds,ids=Array.isArray(job.prompt_ids)?job.prompt_ids.slice(0,4).map(detailText).filter(Boolean):[],
-        failure=job.failure&&typeof job.failure==='object'?[detailText(job.failure.code),detailText(job.failure.title)].filter(Boolean).join(' '):'';
+        failure=job.failure&&typeof job.failure==='object'?[detailText(job.failure.kind||job.failure.code),detailText(job.failure.title)].filter(Boolean).join(' '):'';
       lines.push(recipe?'recipe '+recipe:'',look?'look '+look:'',backend?'backend '+backend:'',failure?'failure '+failure:'',typeof seconds==='number'&&Number.isFinite(seconds)&&seconds>=0?'took '+detailText(Math.round(seconds*10)/10)+' s':'',ids.length?'prompt ids '+detailText(ids.join(',')):'');
     }
     let text='';for(const line of lines.filter(Boolean)){const next=text?text+'\n'+line:line;if(next.length>600)break;text=next;}return text;
@@ -77,7 +77,7 @@
   // The clipboard write starts inside the click, so the browser sees the user gesture; a refusal or a missing API names the fallback.
   async function copyDetails(button,job){
     try{await navigator.clipboard.writeText(failureDetails(job));button.textContent='Copied';}
-    catch{button.textContent='Copy failed — select the text in Problems instead';}
+    catch{button.textContent='Copy failed — select the run record text instead';}
   }
   document.addEventListener('studio:job-settled',e=>{if(e.detail?.id)render(e.detail);});
   document.addEventListener('click',e=>{
