@@ -17,7 +17,7 @@ class El{
   querySelectorAll(sel){assert.equal(sel,'[data-key]');return this.all().filter(n=>n.dataset.key!==undefined);}
 }
 const settle=async()=>{for(let i=0;i<8;i++)await new Promise(r=>setImmediate(r));};
-function summary(r){return {revision:r,record_sha256:sha(r),draft_sha256:sha(Math.ceil(r/2)),graph_sha256:hex('c'),record_bytes:900+r,preset_id:r>30?'late-preset':'early-preset',backend_id:'primary',input_count:r>40?2:1};}
+function summary(r){return {revision:r,record_sha256:sha(r),draft_sha256:sha(Math.ceil(r/2)),graph_sha256:hex('c'),record_bytes:900+r,preset_id:r>30?'late-preset':'early-preset',backend_id:'primary',input_count:r>40?2:1,recorded_at:r===44?null:1760000000+r*3600};}
 function server(options={}){
   const calls=[],head=options.head??HEAD;
   const reply=(v,status=200)=>({ok:status<400,status,text:async()=>JSON.stringify(v)});
@@ -25,7 +25,7 @@ function server(options={}){
   const side=text=>({sha256:hex('d'),bytes:text.length,preview:text,truncated:false,omitted_bytes:0,redacted:false});
   async function fetch(path,init={}){
     calls.push({path,init});const u=new URL(path,'http://127.0.0.1');const q=Object.fromEntries(u.searchParams);if(options.refuse?.(u,q))return reply({error:options.refuseText||'Refused for the test'},options.status||409);
-    if(u.pathname.endsWith('/history')){const before=q.before_revision?+q.before_revision:head+1,limit=+q.limit,revisions=[];for(let r=before-1;r>=1&&revisions.length<limit;r--)revisions.push(summary(r));
+    if(u.pathname.endsWith('/history')){const before=q.before_revision?+q.before_revision:head+1,limit=+q.limit,revisions=[];for(let r=before-1;r>=1&&revisions.length<limit;r--)revisions.push({...summary(r),...options.rowEdit?.(r)});
       const last=revisions.at(-1)?.revision;return reply({format:'studio.setup-history-page/v2',...base(),limit,revisions,next_before_revision:last>1?last:null,...options.pageEdit});}
     if(u.pathname.endsWith('/compare')){const hostile='<img src=x onerror=alert(1)> & "quote" ‮';
       return reply({format:'studio.setup-history-compare/v2',...base(),left_revision:+q.left,right_revision:+q.right,left_record_sha256:sha(+q.left),right_record_sha256:sha(+q.right),sections:[
@@ -65,6 +65,15 @@ test('opening lists the newest bounded page and follows the explicit continuatio
   p.$('setupHistoryOlder').click();await settle();assert.match(srv.calls[2].path,/before_revision=6&expected_head=45/);
   assert.equal(p.rows().length,45);assert.equal(p.$('setupHistoryOlder').hidden,true);assert.match(p.rows()[44].textContent,/First revision\./);
   assert.match(p.status(),/Loaded 5 older revisions; 45 of 45/);
+});
+test('each row starts with its recorded save time as a time element, or says none was recorded',async()=>{
+  const srv=server(),p=page(srv);await p.open();const row=p.rows()[0],first=row.children[0],at=new Date((1760000000+45*3600)*1000);
+  assert.equal(first.tag,'time');assert.equal(first.textContent,at.toLocaleString());assert.equal(first.attrs.datetime,at.toISOString());assert.match(row.textContent,/^[^R]+Revision 45 \(current head\)/,'the time precedes the label');
+  const none=p.rows()[1];assert.equal(none.children[0].tag,'div');assert.equal(none.children[0].textContent,'Save time not recorded');assert.equal(none.children[0].attrs.datetime,undefined);
+  assert.equal(srv.calls.length,1,'the time comes from the same single read');
+});
+test('a hostile save time is refused, never rendered',async()=>{
+  for(const bad of [true,'1760000000',-1,0,4102444801,'<b>x</b>']){const p=page(server({rowEdit:r=>r===45?{recorded_at:bad}:{}}));await p.open();assert.match(p.status(),/History could not be read/,String(bad));assert.equal(p.rows().length,0);}
 });
 test('two selected revisions show the typed comparison with literal escaped text and notes',async()=>{
   const srv=server(),p=page(srv);await p.open();

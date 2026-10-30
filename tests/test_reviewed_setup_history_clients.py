@@ -144,6 +144,17 @@ class ReviewedSetupHistoryClientTests(unittest.TestCase):
             with self.subTest(change=list(change)),patch.object(self.client,'transport',return_value=dict(original,**change)):
                 with self.assertRaises(ValueError):self.page(limit=2)
 
+    def test_summary_save_time_is_accepted_when_absent_or_null_and_refused_when_malformed(self):
+        original=self.page(limit=2);first=original['revisions'][0]
+        self.assertTrue(all(type(row['recorded_at']) is float and row['recorded_at']>1.6e9 for row in original['revisions']))
+        absent={k:v for k,v in first.items() if k!='recorded_at'}
+        for good in (absent,dict(first,recorded_at=None),dict(first,recorded_at=1700000000)):
+            with self.subTest(good=good.get('recorded_at','absent')),patch.object(self.client,'transport',return_value=dict(original,revisions=[good]+original['revisions'][1:])):
+                self.assertEqual(len(self.page(limit=2)['revisions']),2)
+        for bad in (True,'1700000000',[],-1,0,4102444801,float('nan'),float('inf')):
+            with self.subTest(bad=bad),patch.object(self.client,'transport',return_value=dict(original,revisions=[dict(first,recorded_at=bad)]+original['revisions'][1:])):
+                with self.assertRaises(ValueError):self.page(limit=2)
+
     def test_missing_revision_rows_and_false_end_of_history_refuse(self):
         original=self.page(limit=2); full=self.page()
         for change in ({'revisions':[],'next_before_revision':None},
