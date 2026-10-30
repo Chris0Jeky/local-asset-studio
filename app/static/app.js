@@ -18,7 +18,7 @@ const post = (path, data, options={}) => api(path, {...options,method:'POST',hea
 function privacyOptions(captured=globalThis.StudioPrivacy?.capture?.()) { return captured?{headers:{'X-Studio-Privacy':captured.scope,'X-Studio-Creation-Privacy':captured.privacy}}:{}; }
 const getControl = key => document.querySelector('[data-key="' + key + '"]');
 // Notification only: programmatic recipe changes do not emit DOM input/change.
-function recipeChanged() { document.dispatchEvent?.(new Event('studio:recipe')); }
+function recipeChanged() { document.dispatchEvent?.(new Event('studio:recipe')); if (typeof updateWildcardPreview === 'function') updateWildcardPreview(); }
 function i2vModeBlocker() {
   const mode = selected?.i2v_modes?.find(spec => spec.id === $('#i2vMode')?.value);
   const capacity = selected?.wan_decode_capacity;
@@ -344,8 +344,9 @@ function wildcardPreviewReason() {
 function updateWildcardPreview() {
   wildcardPreviewRevision++; wildcardPreviewDigests = null;
   const controls = $('#wildcardPreviewControls'); if (!controls) return;
-  controls.hidden = !selected?.positive && !selected?.negative;
   const reason = wildcardPreviewReason();
+  // Shown only when the prompt has wildcard syntax: a preview of nothing is noise and the Create view keeps its height budget.
+  controls.hidden = (!selected?.positive && !selected?.negative) || !!reason;
   $('[data-wildcard-preview]').disabled = !!reason; $('#wildcardPreviewReason').textContent = reason; $('#wildcardPreview').textContent = '';
 }
 async function previewWildcardWording() {
@@ -992,7 +993,6 @@ $('#wildcardChips')?.addEventListener('click', e => {
 });
 $('#wildcardPreviewControls')?.addEventListener('click', e => { if (e.target.closest('[data-wildcard-preview]')) void previewWildcardWording(); });
 for (const event of ['input','change']) document.addEventListener(event, e => { if (e.target === $('#positive') || e.target === $('#negative') || e.target.closest?.('#createView')) updateWildcardPreview(); });
-document.addEventListener('studio:recipe', updateWildcardPreview);
 document.addEventListener('studio:privacy-change', renderWildcardChips);
 $('#variants').onclick=e=>{const i=e.target.closest('[data-variant]')?.dataset.variant;if(i===undefined)return;const v=(selected.variants||[{name:'3-seed audition',batch_count:3}])[i];const controls=selected.reference?StudioContinuation.settings(selected,v.controls,values()):(v.controls||{});Object.entries(controls).forEach(([k,val])=>{const input=k==='positive'?$('#positive'):k==='negative'?$('#negative'):getControl(k);if(input)input.value=val;});$('#batch').value=v.batch_count||1;updateLoraHints();updateReady();scheduleTimeEstimate();message(v.name+' loaded. Press Generate to run.');recipeChanged();};
 $('#controls').oninput=()=>updateReady();
