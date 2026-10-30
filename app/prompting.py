@@ -23,6 +23,12 @@ def names(root):
     if not folder.is_dir(): return []
     return sorted(path.stem for path in folder.glob("*.txt") if NAME.fullmatch(path.stem))
 
+def digest(root, name):
+    """sha256 of presets/wildcards/<name>.txt as options() reads it, or None when the name is invalid or the file unreadable."""
+    if root is None or not isinstance(name, str) or not NAME.fullmatch(name): return None
+    try: return hashlib.sha256((Path(root) / "presets/wildcards" / (name + ".txt")).read_bytes()).hexdigest()
+    except OSError: return None
+
 def options(root, name, wildcard_files=None):
     """Lines of presets/wildcards/<name>.txt; '#' comments and blanks dropped."""
     if root is None or not isinstance(name, str) or not NAME.fullmatch(name): return []

@@ -134,6 +134,9 @@ class StudioError(ValueError):
 class UploadStorageError(StudioError):
     status = 503
 
+class StaleWildcardsError(StudioError):
+    status = 409
+
 class QueueWaitUnavailable(StudioError): pass
 
 class HostCommitShortfall(StudioError):
@@ -904,6 +907,7 @@ class Studio:
         for parent in parents: self.assets.get(parent,privacy='all' if classification=='private' else 'regular')
         if getattr(self, "reference_jobs", None): self.reference_jobs.require_available()
         label = run_label(payload.get("label")) if isinstance(payload, dict) else None
+        self.require_fresh_wildcards(payload)
         preset, graph, graph_path, controls, batch = self.prepare(payload, _defer_host_commit_preflight=True)
         look = looks.run_look(self, payload.get('look'))
         deferred = None
@@ -1368,6 +1372,16 @@ class Studio:
         return {"preset_id":preset["id"], "workflow":graph, "references":preset.get("_prepared_references", []),
                 "batch_count":batch, "preparation":preset.get("_prepared_source"), "template_sha256":hashlib.sha256(graph_path.read_bytes()).hexdigest(),
                 "submitted":False}
+
+    def require_fresh_wildcards(self, payload):
+        """Generate carries the digests a shown preview recorded; any changed or missing file refuses the run. No digests, no check."""
+        seen = payload.get("wildcard_digests") if isinstance(payload, dict) else None
+        if seen is None: return
+        if not isinstance(seen, dict) or len(seen) > 64: raise StudioError("wildcard_digests must be an object of up to 64 wildcard files")
+        for name, digest in seen.items():
+            if not isinstance(name, str) or not prompting.NAME.fullmatch(name) or not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest): raise StudioError("wildcard_digests must map wildcard names to sha256 digests")
+        changed = sorted(name for name, digest in seen.items() if prompting.digest(self.root, name) != digest)
+        if changed: raise StaleWildcardsError("The wildcard files changed since your preview. Preview again.", code="wildcards_changed", files=changed)
 
     def wildcard_preview(self, payload):
         preset, graph, _, _, batch = self.prepare(payload, _stage_reference_inputs=False)
@@ -3066,7 +3080,7 @@ class Handler(BaseHTTPRequestHandler):
                 static_type = "image/webp"
             if not file.is_file() or static_type is None: return self._json(404, {"error":"Not found"})
             data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", static_type); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data)
-        except (GpuLeaseError, WorkspaceError, UploadStorageError) as exc: self._json(exc.status, exc.response())
+        except (GpuLeaseError, WorkspaceError, UploadStorageError, StaleWildcardsError) as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, IndexError) as exc: self._json(400, {"error": str(exc)})
         except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError): return
         except (URLError, HTTPError): self._json(502, {"error": "ComfyUI did not return this image. Check that ComfyUI is running (Models & setup shows its state), then reload."})
@@ -3209,7 +3223,7 @@ class Handler(BaseHTTPRequestHandler):
                 body = self._body_object(); job = parallax.finish(self.studio, body.get("job_id"), body.get("other_job_id")); return self._json(200, {"job": self.studio.public(job)})
             if self.path == "/api/pose/render": return self._json(201, pose_guide.render(self.studio, self._body_json(pose_guide.MAX_BODY_BYTES)))
             self._drain_refused_body(); return self._json(404, {"error":"Not found"})
-        except (GpuLeaseError, WorkspaceError, UploadStorageError) as exc: self._json(exc.status, exc.response())
+        except (GpuLeaseError, WorkspaceError, UploadStorageError, StaleWildcardsError) as exc: self._json(exc.status, exc.response())
         except (StudioError, ValueError, json.JSONDecodeError) as exc:
             if isinstance(exc, StudioError) and getattr(exc, "code", None): self._json(400, exc.response())
             else: self._json(400, {"error": str(exc)})

@@ -95,3 +95,15 @@ test('prompt edits invalidate an in-flight preview with a persistent output elem
   h.reply({members:[{index:0,seed:42,positive:'STALE-CANARY',negative:''}]});await pending;
   assert.equal(h.node('#wildcardPreview').innerHTML,'');assert.equal(h.node('[data-wildcard-preview]').disabled,false);
 });
+test('a shown preview records its file digests for Generate and any re-render drops them',async()=>{
+  const h=page();h.node('#positive').value='__lighting__';h.run('renderWildcardChips()');
+  const pending=h.run('previewWildcardWording()');
+  h.reply({members:[{index:0,seed:42,positive:'a',negative:''}],wildcard_files:{lighting:'a'.repeat(64)}});await pending;
+  assert.deepEqual(h.run('wildcardPreviewDigests'),{lighting:'a'.repeat(64)});
+  h.node('#positive').value='__lighting__ more';h.node('#positive').dispatchEvent({type:'input',bubbles:true});
+  assert.equal(h.run('wildcardPreviewDigests'),null);
+  const empty=page();empty.node('#positive').value='{a|b}';empty.run('renderWildcardChips()');const none=empty.run('previewWildcardWording()');
+  empty.reply({members:[{index:0,seed:1,positive:'a',negative:''}],wildcard_files:{}});await none;
+  assert.equal(empty.run('wildcardPreviewDigests'),null);
+  assert.ok(source.includes('{wildcard_digests:{...wildcardPreviewDigests}}'));
+});
