@@ -51,6 +51,7 @@ import prompting
 import submission_evidence
 import job_cancel
 import observation_state
+import recipe_drift
 import file_replace
 import asset_thumbs
 import job_resources
@@ -1360,7 +1361,8 @@ class Studio:
             raise StudioError("This older recipe has no embedded workflow. Load its settings as a saved setup, or open its original workflow in ComfyUI.")
         _, graph, path, _, _ = self.prepare(recipe)
         if graph != recipe["workflow"]:
-            raise StudioError("The exported workflow differs from the current preset. Nothing was loaded or queued. Open the embedded workflow in ComfyUI, or select the current preset to start a new experiment.")
+            drift=recipe_drift.summary(recipe["workflow"],graph)
+            raise StudioError("The exported workflow differs from the current preset" + (": "+drift if drift else "") + ". Nothing was loaded or queued. Open the embedded workflow in ComfyUI, or select the current preset to start a new experiment.")
         return {"matches": True, "template_sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
 
     def preview(self, payload):
