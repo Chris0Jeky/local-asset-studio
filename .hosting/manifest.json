@@ -5,7 +5,7 @@
   "reviewed_on": "2026-10-30",
   "status": "local-only",
   "workload": {"class": "local", "serves": "dynamic", "package": "native", "host_bound": true, "always_on": false},
-  "state": {"authority": "files", "writers": "single", "replicas": 1, "ephemeral": true},
+  "state": {"authority": "files", "writers": "single", "replicas": 1, "ephemeral": false},
   "ingress": {"mode": "loopback", "private_by_design": true, "access_layer": null, "hostnames": []},
   "data_classes": ["personal", "third-party-content"],
   "backup": {"policy": "none-needed"},
@@ -18,7 +18,7 @@
   "notes": [
     "Stdlib server on 127.0.0.1:8191 (Host and same-origin checked), started on demand by Start Studio.cmd or scripts/Start-Studio.ps1; not a resident service.",
     "Host-bound: it drives a locally installed ComfyUI on 8188 and the Radeon GPU, and writes under experiments/ (workspace SQLite index, content-addressed store, runs). Models and outputs live outside Git by design.",
-    "Backup policy is none-needed on a documented basis, not a verified one: docs/OPERATIONS.md leaves backing up experiments/runs and ComfyUI input/output to the owner. There is no automated snapshot or restore drill, so a loss is tolerated and outputs are regenerated from the kept recipes.",
+    "State is durable, not ephemeral: the Workspace SQLite (notes, reviews, tags, collections), production projects and experiments/runs (exact submitted graphs and prompt IDs) cannot be regenerated. Backup policy none-needed records a gap, not a tolerance: docs/OPERATIONS.md leaves backing up the experiments root and ComfyUI input/output to the owner, and there is no automated snapshot or restore drill.",
     "/api/health reports build {sha, started_at}: the git HEAD read once at Studio start and the UTC start time, so an observer can tell a Studio running older code than its checkout. Only readiness is declared as a signal. /api/health asks ComfyUI for its stats and node schema, so the observer should poll it sparingly; online:false means ComfyUI is down, not the Studio.",
     "Run from a checkout that sessions fast-forward, so a long-running Studio can be stale until restarted; restart only when no queued, running or partial Studio work exists."
   ],
