@@ -25,7 +25,7 @@ class Cases(unittest.TestCase):
         self.assertEqual(CASES['version'], 1)
         self.assertEqual(CASES['refs'], '#278')
         self.assertIsInstance(CASES['starting_views'], list)
-        self.assertTrue(8 <= len(CASES['cases']) <= 26, 'the original journeys plus Restyle, Combine, the same-pair experiment loop, the drawn pose, the several-recipe plan, Vary, a new scene in a saved look, Make seamless, Make parallax layers, and the 16 Oct Make tune, compare and Full editor adapter journeys')
+        self.assertTrue(8 <= len(CASES['cases']) <= 29, 'the original journeys plus Restyle, Combine, the same-pair experiment loop, the drawn pose, the several-recipe plan, Vary, a new scene in a saved look, Make seamless, Make parallax layers, the 16 Oct Make tune, compare and Full editor adapter journeys, and the three Generate and keyboard-review journeys of #1729')
 
     def test_unique_ids(self):
         ids = [case['id'] for case in CASES['cases']]
@@ -164,6 +164,39 @@ class Totals(unittest.TestCase):
         rows = [{'id': 'b', 'dead_ends': 0, 'clicks': 9}, {'id': 'a', 'dead_ends': 2, 'clicks': 1},
                 {'id': 'c', 'dead_ends': 2, 'clicks': 5}, {'id': 'd', 'dead_ends': 0, 'clicks': 9}]
         self.assertEqual([row['id'] for row in runner.friction_points(rows)], ['c', 'a', 'b', 'd'])
+
+
+class GenerateAllowance(unittest.TestCase):
+    """#1729: one fixture journey may press Generate. The exception is named, per case and per route, fixture-only, and counted."""
+
+    def test_the_allowance_names_only_known_cases_and_generation_routes(self):
+        ids = {case['id'] for case in CASES['cases']}
+        for case_id, routes in runner.FIXTURE_GENERATE.items():
+            self.assertIn(case_id, ids)
+            for route in routes: self.assertTrue(runner.GENERATION_ROUTE.search(route), route)
+
+    def test_the_named_case_may_submit_once_and_a_second_press_is_unexpected(self):
+        self.assertEqual(runner.split_submissions('make-generate-then-keep', ['/api/estimate', '/api/jobs']), ([], ['/api/jobs']))
+        self.assertEqual(runner.split_submissions('make-generate-then-keep', ['/api/jobs', '/api/jobs']), (['/api/jobs'], ['/api/jobs']))
+
+    def test_no_other_case_and_no_other_route_may_submit(self):
+        self.assertEqual(runner.split_submissions('review-and-keep-winner', ['/api/jobs']), (['/api/jobs'], []))
+        self.assertEqual(runner.split_submissions('make-generate-then-keep', ['/api/production/abc/start']), (['/api/production/abc/start'], []))
+
+    def test_live_mode_never_consults_the_allowance(self):
+        self.assertEqual(runner.split_submissions('make-generate-then-keep', ['/api/jobs'], live=True), (['/api/jobs'], []))
+
+    def test_generate_and_keyboard_decisions_are_refused_live(self):
+        self.assertTrue(runner.deny_reason('makeGenerate', 'Generate'))
+        self.assertIn('read-only', runner.live_allows('press', False, selector='keyboard:k'))
+        self.assertIn('read-only', runner.live_allows('press', False, selector='.make-outputs figure .make-open'))
+
+    def test_keys_and_waits_are_counted_apart_from_clicks(self):
+        rows = [{'action': 'click', 'performed': True}, {'action': 'press', 'performed': True}, {'action': 'press', 'performed': True},
+                {'action': 'press', 'performed': False, 'skipped_live': 'refused'}, {'action': 'wait', 'performed': True, 'wait_seconds': 4.84},
+                {'action': 'wait', 'performed': False, 'wait_seconds': 15.0}]
+        totals = runner.case_totals(rows)
+        self.assertEqual((totals['clicks'], totals['keys'], totals['waits'], totals['wait_seconds']), (1, 2, 1, 4.8))
 
 
 class LiveGuard(unittest.TestCase):
