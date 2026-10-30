@@ -27,7 +27,7 @@ console.log('Review frontend contracts passed: helpers, source URL scope and exi
 
 // Run the shipped desk against DOM/canvas boundaries; only the initial inspect is stubbed.
 const test=require('node:test');
-async function holdDesk({delayB=false,saves=false,finalized=false}={}){
+async function holdDesk({delayB=false,saves=false,finalized=false,setup}={}){
   const nodes=new Map(),all=[],requests=[],listeners={document:{},window:{}},gate=[];let active=null,decodeB;
   const matches=(node,selector)=>selector.split(',').some(s=>s.startsWith('#')?node.id===s.slice(1):s==='[contenteditable]'?node.contentEditable==='true':node.tagName.toLowerCase()===s);
   class Node {
@@ -49,6 +49,7 @@ async function holdDesk({delayB=false,saves=false,finalized=false}={}){
   for(const [id,value] of Object.entries({cropLeft:'25',cropTop:'25',cropRight:'75',cropBottom:'75',background:'dark',mode:'pair'}))$(id).value=value;
   const state={exists:true,revision:0,revealed:false,finalized,selected:null,notes:'',crop:[2500,2500,7500,7500],background:'dark',history:[],export:null,grid:null,
     candidates:[...'ABC'].map(alias=>({alias,preview_url:url.replace('preview-A.png',alias+'.png'),assessment:{verdict:'unreviewed',notes:'',observations:{},cleanup_seconds:null,preference:null}}))};
+  setup?.(state);
   const document={querySelector:s=>$(s.slice(1)),querySelectorAll:s=>all.filter(n=>matches(n,s)),createElement:tag=>new Node(tag),get activeElement(){return active;},addEventListener:(type,fn)=>(listeners.document[type]??=[]).push(fn)};
   const sandbox={document,location:{search:'?project='+project},URLSearchParams,console,
     window:{addEventListener:(type,fn)=>(listeners.window[type]??=[]).push(fn)},
@@ -58,7 +59,9 @@ async function holdDesk({delayB=false,saves=false,finalized=false}={}){
   vm.runInNewContext(source,sandbox);await tick();
   // A save stays in flight until answered; the reply is the saved review one revision on, as the server returns it.
   const answer=async()=>{const body=JSON.parse(requests.at(-1).options.body),saved=structuredClone(state);saved.revision=body.expected_revision+1;saved.candidates.find(c=>c.alias===body.alias).assessment=body.assessment;gate.shift()({ok:true,json:async()=>saved});await tick();await tick();};
-  return {$,emit,tick,document,requests,Node,answer,decodeB:()=>decodeB(),draw:side=>$(side+'Canvas').draws.at(-1)};
+  // Answer the oldest in-flight request with make(body,state), then let the continuation (the next request) run.
+  const respond=async make=>{gate.shift()(make(JSON.parse(requests.at(-1).options.body),state));for(let i=0;i<4;i++)await tick();};
+  return {$,emit,tick,document,requests,Node,answer,respond,state,decodeB:()=>decodeB(),draw:side=>$(side+'Canvas').draws.at(-1)};
 }
 test('Review desk hold-to-compare',async t=>{
   const {$,emit,tick,document,requests,Node,draw}=await holdDesk();
@@ -176,6 +179,93 @@ test('Review desk Pair-view K/W/X',async t=>{
     const desk=await holdDesk({saves:true});press(desk,'k');await desk.tick();await desk.answer();
     assert.match(desk.$('leftCaption').textContent,/^Candidate A .*settings hidden$/);assert.match(desk.$('rightCaption').textContent,/^Candidate B .*settings hidden$/);
     assert.doesNotMatch(desk.$('message').textContent,/engine|seed/i);
+  });
+});
+
+// #1752: the winner path. The click is the human declaration of the constraints check; nothing else sets it, and Reveal stays separate.
+test('Review desk Choose as winner',async t=>{
+  const desk=setup=>holdDesk({saves:true,setup(state){
+    state.revealed=true;state.evidence={stages:[{status:'completed'},{status:'completed'},{status:'failed'}]};
+    state.candidates.forEach((c,i)=>{c.source={filename:c.alias+'.png',stage:i,sha256:'0'.repeat(64),transform:{oriented_size:[200,400]}};c.assessment={verdict:['keep','keep','reject'][i],notes:'note '+c.alias,cleanup_seconds:30,preference:4,
+      observations:{constraints:'not_assessed',identity:'pass',pose_contact:'not_assessed',composition:'fail',detail:'not_assessed'}};});
+    setup?.(state);}});
+  // review_desk.change: a rating reopens the decision; finalize records it.
+  const serve=(body,state)=>{
+    state.revision=body.expected_revision+1;
+    if(body.action==='rate'){state.candidates.find(c=>c.alias===body.alias).assessment=body.assessment;state.finalized=false;state.selected=null;}
+    else{state.finalized=true;state.selected=body.selected;state.notes=body.notes;}
+    const saved=structuredClone(state);return {ok:true,json:async()=>saved};
+  };
+  const refuse=error=>()=>({ok:false,json:async()=>({error})});
+  const choose=(d,alias)=>{d.$('selected').value=alias;d.$('selected').onchange();};
+  const sent=d=>d.requests.slice(1).map(r=>JSON.parse(r.options.body)),actions=d=>d.requests.map(r=>JSON.parse(r.options.body).action);
+  const click=async d=>{d.$('chooseWinner').onclick();await d.tick();};
+  await t.test('names its reason while it cannot act, and is ready for a kept, completed candidate',async()=>{
+    const d=await desk();assert.equal(d.$('decision').hidden,false);
+    assert.equal(d.$('chooseWinner').disabled,true);assert.match(d.$('chooseWinnerHint').textContent,/^Choose a kept candidate under Selected result/);
+    choose(d,'C');assert.match(d.$('chooseWinnerHint').textContent,/^Candidate C is not kept/);
+    choose(d,'A');assert.equal(d.$('chooseWinner').disabled,false);assert.equal(d.$('chooseWinnerHint').textContent,'');
+    assert.equal(d.$('chooseWinner').textContent,'Candidate A meets the stated constraints — choose as winner');
+    assert.equal(d.requests.length,1,'looking never writes');
+  });
+  await t.test('the click marks constraints Pass through rate, keeps the rest, then finalizes the same candidate with the notes',async()=>{
+    const d=await desk();choose(d,'A');d.$('summary').value='Keeps the silhouette';d.$('summary').oninput();
+    await click(d);assert.equal(d.requests.length,2);
+    assert.deepEqual(sent(d)[0],{action:'rate',alias:'A',expected_revision:0,assessment:{verdict:'keep',notes:'note A',cleanup_seconds:30,preference:4,
+      observations:{constraints:'pass',identity:'pass',pose_contact:'not_assessed',composition:'fail',detail:'not_assessed'}}});
+    assert.equal(d.$('message').textContent,'Saving…');await d.respond(serve);
+    assert.deepEqual(sent(d)[1],{action:'finalize',selected:'A',notes:'Keeps the silhouette',expected_revision:1});
+    await d.respond(serve);
+    assert.deepEqual(actions(d),['inspect','rate','finalize'],'no reveal, no extra rating');
+    assert.equal(d.$('message').textContent,'Candidate A: stated constraints marked Pass and recorded as the winner. No generation performed.');
+    assert.equal(d.$('phase').textContent,'Decision recorded');assert.equal(d.state.candidates[0].assessment.observations.constraints,'pass');
+  });
+  await t.test('an already passed candidate is finalized without a second rating',async()=>{
+    const d=await desk(s=>{s.candidates[0].assessment.observations.constraints='pass';});choose(d,'A');
+    await click(d);assert.deepEqual(sent(d).map(b=>[b.action,b.selected,b.expected_revision]),[['finalize','A',0]]);await d.respond(serve);
+    assert.equal(d.$('message').textContent,'Candidate A recorded as the winner. No generation performed.');
+  });
+  await t.test('a failed precondition sends nothing and says why',async()=>{
+    const cases=[
+      ['nothing selected',null,'',/^Choose a kept candidate/],
+      ['unreviewed candidate',s=>{s.candidates[2].assessment.verdict='unreviewed';},'A',/^Record a verdict for every candidate/],
+      ['not kept',s=>{s.candidates[1].assessment.verdict='needs_work';},'B',/^Candidate B is not kept/],
+      ['incomplete stage',s=>{s.evidence.stages[1].status='failed';},'B',/^An incomplete execution/],
+      ['already the winner',s=>{s.finalized=true;s.selected='A';},'A',/^Candidate A is already the recorded winner/],
+    ];
+    for(const [name,setup,alias,reason] of cases){
+      const d=await desk(setup||undefined);choose(d,alias);assert.equal(d.$('chooseWinner').disabled,true,name);
+      await click(d);assert.equal(d.requests.length,1,name+' sends nothing');assert.match(d.$('message').textContent,reason,name);
+    }
+    const d=await desk(s=>{s.revealed=false;});assert.equal(d.$('decision').hidden,true);await click(d);assert.equal(d.requests.length,1,'blind review: no declaration, no reveal');
+  });
+  await t.test('unsaved assessments and crop drafts block it with no request',async()=>{
+    const d=await desk();choose(d,'A');d.$('notes').value='half typed';d.emit(d.$('assessmentForm'),'input',{target:d.$('notes')});
+    assert.equal(d.$('chooseWinner').disabled,true);assert.match(d.$('chooseWinnerHint').textContent,/^Save candidate assessments/);
+    await click(d);assert.equal(d.requests.length,1);assert.match(d.$('message').textContent,/^Save candidate assessments/);
+    const e=await desk();choose(e,'A');e.$('cropLeft').value='10';e.$('cropForm').oninput();
+    await click(e);assert.equal(e.requests.length,1,'an unsaved crop blocks it too');
+  });
+  await t.test('nothing is sent while a save is in flight',async()=>{
+    const d=await desk();choose(d,'A');await click(d);assert.equal(d.requests.length,2);await click(d);assert.equal(d.requests.length,2);
+  });
+  await t.test('a refused rating changes nothing and stops before finalizing',async()=>{
+    const d=await desk();choose(d,'A');await click(d);await d.respond(refuse('This review changed in another window; reload it'));
+    assert.deepEqual(actions(d),['inspect','rate']);assert.match(d.$('message').textContent,/^This review changed in another window/);
+    assert.equal(d.state.candidates[0].assessment.observations.constraints,'not_assessed');
+  });
+  await t.test('a refused decision after a saved mark says the mark was saved and why finalize did not happen',async()=>{
+    const d=await desk();choose(d,'A');await click(d);await d.respond(serve);
+    assert.deepEqual(actions(d),['inspect','rate','finalize']);await d.respond(refuse('Character acceptance needs an explicit local-user human declaration'));
+    assert.match(d.$('message').textContent,/^Candidate A stated constraints were saved as Pass, but the decision was not recorded\. Character acceptance/);
+    assert.equal(d.state.candidates[0].assessment.observations.constraints,'pass');assert.equal(d.state.finalized,false);assert.equal(d.requests.length,3);
+  });
+  await t.test('a character case sends the chosen candidate\'s own saved checks and the usual character decision',async()=>{
+    const d=await desk(s=>{s.character_context={required_checks:{face:'Face matches'}};s.character_review=null;s.candidates[0].character_checks={face:'pass'};s.candidates[1].character_checks={face:'uncertain'};s.candidates[2].character_checks={face:'fail'};});
+    choose(d,'B');await click(d);assert.equal(d.requests.length,1,'a check short of pass would let finalize fail after the mark');assert.match(d.$('message').textContent,/^Every character check for candidate B must pass/);
+    choose(d,'A');await click(d);assert.equal(d.requests.length,1,'no decision note yet');assert.match(d.$('message').textContent,/^Write the decision note first/);
+    d.$('summary').value='Face holds.';d.$('summary').oninput();choose(d,'A');await click(d);assert.deepEqual(sent(d)[0].character_checks,{face:'pass'},'the chosen candidate own saved checks, not the form values of the candidate on show');
+    await d.respond(serve);assert.deepEqual([sent(d)[1].action,sent(d)[1].selected,sent(d)[1].character_decision,sent(d)[1].reviewer,sent(d)[1].notes],['finalize','A','selected','local-user','Face holds.']);
   });
 });
 

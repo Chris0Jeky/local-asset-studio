@@ -59,7 +59,7 @@ The Studio lost the answer from ComfyUI. The card says nothing was sent again, a
 
 ## 4. Start from a picture you already have
 
-Under "From a picture you have", the goals take a picture instead of words. Choose the picture (search the box if it is not among the newest 60; use the library's import first if it is not there), answer the one or two fields, and press **Generate**.
+Under "From a picture you have", the goals take a picture instead of words. Choose the picture (search the box, or press Show more, if it is not among the first 60; use the library's import first if it is not there), answer the one or two fields, and press **Generate**.
 
 | Goal | What it does |
 | --- | --- |

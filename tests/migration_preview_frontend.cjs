@@ -23,9 +23,29 @@ test('The action appears only for a homogeneous selection and names the opposite
   select(s,['a','b']);assert.equal(s.el('#previewMigration').hidden,false);assert.equal(s.el('#previewMigration').textContent,'Preview move to Private…');
   select(s,[]);assert.equal(s.el('#previewMigration').hidden,true);
   s=configured(['private','private']);select(s,['a','b']);assert.equal(s.el('#previewMigration').hidden,false);assert.equal(s.el('#previewMigration').textContent,'Preview move to Regular…');
-  s=configured(['regular','private']);select(s,['a','b']);assert.equal(s.el('#previewMigration').hidden,true,'mixed selections get no action');
-  select(s,['b']);assert.equal(s.el('#previewMigration').hidden,false);
-  select(s,['a','missing']);assert.equal(s.el('#previewMigration').hidden,true,'an unresolved ID has no known classification');
+  s=configured(['regular','private']);select(s,['a','b']);assert.equal(s.el('#previewMigration').hidden,false,'a mixed selection keeps the action visible, disabled');assert.equal(s.el('#previewMigration').disabled,true);
+  select(s,['b']);assert.equal(s.el('#previewMigration').hidden,false);assert.equal(s.el('#previewMigration').disabled,false);
+});
+const REASON='#previewMigrationReason',MIXED='Select only Regular or only Private items to preview a move.',LOAD='Load the off-page items first.';
+test('A selection that cannot be previewed shows the action disabled with one visible reason and sends nothing',async()=>{
+  let s=configured(['regular','private']);select(s,['a','b']);
+  assert.equal(s.el('#previewMigration').hidden,false);assert.equal(s.el('#previewMigration').disabled,true);assert.equal(s.el(REASON).hidden,false);assert.equal(s.el(REASON).textContent,MIXED);
+  await s.el('#previewMigration').onclick();assert.equal(s.writes.length+s.reads.length,0,'no request while unavailable');assert.equal(s.el('#migrationDialog').open,false);
+  select(s,['a','missing']);
+  assert.equal(s.el('#previewMigration').hidden,false);assert.equal(s.el('#previewMigration').disabled,true);assert.equal(s.el(REASON).textContent,LOAD,'an unresolved ID has no known classification');
+  await s.el('#previewMigration').onclick();assert.equal(s.writes.length+s.reads.length,0);
+  select(s,['b']);assert.equal(s.el('#previewMigration').disabled,false);assert.equal(s.el(REASON).hidden,true);assert.equal(s.el(REASON).textContent,'','the reason clears once the selection is homogeneous');
+  select(s,[]);assert.equal(s.el('#previewMigration').hidden,true);assert.equal(s.el(REASON).hidden,true);
+  s=configured();select(s,['a','b']);assert.equal(s.el('#previewMigration').disabled,false);assert.equal(s.el(REASON).hidden,true);assert.equal(s.el(REASON).textContent,'');
+});
+test('A Regular or Private view never says "mixed": an unresolved ID gets the neutral wording',()=>{
+  for(const view of ['regular','private']){
+    const s=configured([view,view],view);select(s,['a','missing']);
+    assert.equal(s.el('#previewMigration').disabled,true);assert.equal(s.el(REASON).textContent,LOAD);assert.doesNotMatch(s.el(REASON).textContent,/mixed|Private|Regular/i);
+    select(s,['a','b']);assert.equal(s.el('#previewMigration').disabled,false);assert.equal(s.el(REASON).hidden,true);
+    s.run(`assetState.assets[1].privacy=${JSON.stringify(view==='regular'?'private':'regular')};renderAssetSelection();`);
+    assert.doesNotMatch(s.el(REASON).textContent,/Select only|mixed/i,'the view alone never explains a hidden classification');
+  }
 });
 test('Preview sends one read-only planner request under the All header and renders counts, bytes, external copies and the short hash',async()=>{
   const s=configured();select(s,['a','b']);const done=s.el('#previewMigration').onclick();
@@ -111,7 +131,7 @@ test('Markup is a native, labelled dialog with a live status and every move cont
   assert.match(dialog,/aria-labelledby="migrationTitle"/);assert.match(dialog,/id="migrationStatus" role="status" aria-live="polite"/);
   assert.match(dialog,/id="migrationNote"><b>This preview changes nothing\.<\/b>/);assert.doesNotMatch(dialog,/not available yet/);
   assert.deepEqual([...dialog.matchAll(/<button[^>]*id="(\w+)"([^>]*)>/g)].map(m=>[m[1],/ hidden/.test(m[2])]),[['migrationApply',true],['migrationRecheck',true],['migrationRepreview',true],['migrationSwitch',true],['closeMigration',false]]);
-  assert.match(html,/id="previewMigration" hidden/);assert.match(html,/id="assetMigrate" hidden/);
+  assert.match(html,/id="previewMigration" hidden/);assert.match(html,/id="assetMigrate" hidden/);assert.match(html,/<small id="previewMigrationReason" role="status" aria-live="polite" hidden><\/small>/);
   const s=configured(),event={preventDefault(){this.prevented=true;}};s.el('#migrationDialog').emit('cancel',event);assert.notEqual(event.prevented,true,'with no move in flight Escape keeps the native close');
 });
 

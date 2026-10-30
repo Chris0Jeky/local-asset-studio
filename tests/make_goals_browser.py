@@ -8,6 +8,7 @@ recipe placeholders never reach the page.
 from browser_ports import evidence_screenshot
 import argparse
 import json
+import re
 import sys
 import threading
 import time
@@ -21,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SHIPPED = [dict(entry, origin='seed', revision=0, trashed_at=None, usable=True, unusable_reason=None, anchor_asset_id=None)
            for entry in json.loads((ROOT / 'presets/looks.json').read_text(encoding='utf-8'))['looks']]
 JOBS = {}
+PAGES = re.compile(r'/api/assets/page(\?|$)')  # the Make picker reads this route
 UPLOAD = 'f' * 32 + '_look.jpg'
 SLOW = []  # non-empty: the source context answers slowly, so the page can be changed while Generate runs
 CHARACTERS = []  # character cards saved through POST /api/characters, listed as app/characters.py lists them
@@ -436,6 +438,7 @@ def run(shots):
             page.wait_for_timeout(100)
         assert posted('/api/characters')[-1] == {'action': 'edit', 'id': 'character-0', 'expected_revision': back_revision, 'canon_asset_id': 'asset-0'} and fixture_card(0)['previous_canon_asset_id'] == 'asset-3', 'one press restores the original canon'
         assert len(jobs()) == before_manage, 'swapping back submits nothing'
+        page.wait_for_function('s=>!!document.querySelector(s+" [data-make-canon=\\"asset-3\\"]")', arg=sc)   # the page has reloaded the character before the fixture revision moves
         fixture_card(0)['previous_canon_asset_id'] = None; fixture_card(0)['revision'] -= 3; resync(); open_picker()
         character_posts = len(posted('/api/characters'))
         # Edit: the words and the avoid words; a stale revision (changed elsewhere) reloads the card and saves nothing.
@@ -664,15 +667,18 @@ def run(shots):
         assert len(jobs()) == before, 'a mismatched copy sends no job'
         page.unroute('**/api/assets/reference')
         assert all(p['path'] != '/api/jobs' or p['data'].get('label', '').startswith('Make') for p in fixture.POSTS)
-        # The whole library stays searchable: the grid shows the newest 60, and an older picture is found by searching (#1442 review).
+        # The picker reads pages of 60 (#1766): Show more adds the next page, and an older picture is found by searching (#1442 review).
         many = [dict(fixture.ASSETS[0], id='old-%02d' % i, title='Picture %02d' % i, prompt_excerpt='scene %02d' % i, filename='p%02d.png' % i, created_at=1000 + i, media_type='image', trashed_at=None, tags=[]) for i in range(65)]
         many[0]['prompt_excerpt'] = 'the oldest lighthouse'
-        page.route('**/api/workspace', lambda route: route.fulfill(json={'assets': many}))
+        fixture.route_asset_pages(page, many)
         page.goto(origin + '/#make'); page.wait_for_selector('[data-make-goal="edit"]'); page.click('[data-make-goal="edit"]')
         if page.locator('[data-make-repick]').count(): page.click('[data-make-repick]')
         page.locator('[data-make-search="makePictures"]').fill('')
-        page.wait_for_function('document.querySelectorAll("#makePictures [data-make-pick]").length===60')
-        assert 'older picture' in page.locator('#makePictures').inner_text()
+        # The chosen picture (asset-1, an earlier step) is not on the first page, so it stays in the grid ahead of the 60.
+        page.wait_for_function('document.querySelectorAll("#makePictures [data-make-pick]").length===61')
+        assert page.locator('#makePictures [data-make-pick]').first.get_attribute('data-make-pick') == 'asset-1' and page.locator('#makePictures [data-make-more]').count() == 1
+        page.locator('#makePictures [data-make-more]').click(); page.wait_for_function('document.querySelectorAll("#makePictures [data-make-pick]").length===66')
+        assert page.locator('#makePictures [data-make-more]').count() == 0 and page.evaluate('document.activeElement.dataset.makePick') == 'old-04', 'the last page ends the list and focus moves to the first new picture'
         page.locator('[data-make-search="makePictures"]').fill('lighthouse')
         page.wait_for_function('document.querySelectorAll("#makePictures [data-make-pick]").length===1')
         assert page.locator('#makePictures [data-make-pick="old-00"]').count() == 1
@@ -686,7 +692,7 @@ def run(shots):
         seeded_job = dict(id='seeded-1', status='completed', label='Make · Flat pastel close-up', preset_id='anima-portrait', created_at=now - 120, batch_count=1, controls={'positive': 'pixel art inventory icon, a red potion', 'seed': 7},
                           outputs=[dict(filename='out.png', asset_id='mine-make', media_type='image')])
         other = browser.new_page(viewport={'width': 1440, 'height': 900}); other.on('pageerror', lambda e: errors.append(str(e)))
-        other.route('**/api/workspace', lambda route: route.fulfill(json={'assets': mixed}))
+        fixture.route_asset_pages(other, mixed)
         other.route('**/api/jobs/seeded-1', lambda route: route.fulfill(json=seeded_job))
         other.goto(origin + '/#make'); other.wait_for_selector('.make-run[data-run="seeded-1"]', timeout=8000)
         assert other.evaluate('JSON.parse(localStorage.getItem("studio.make")).runs.map(r=>r.id)') == ['seeded-1'], 'the seeded run is kept in this browser'
@@ -694,12 +700,12 @@ def run(shots):
         other.click('[data-make-goal="edit"]'); other.wait_for_selector('#makePictures [data-make-pick]')
         assert other.eval_on_selector_all('#makePictures [data-make-pick]', 'n=>n.map(e=>e.dataset.makePick)') == ['mine-make', 'mine-plain']
         toggle = other.locator('[data-make-all="makePictures"]')
-        assert toggle.is_visible() and toggle.inner_text() == 'Show all pictures (5 more from agent runs)' and toggle.get_attribute('aria-pressed') == 'false'
+        assert toggle.is_visible() and toggle.inner_text() == 'Show all pictures (including agent runs)' and toggle.get_attribute('aria-pressed') == 'false'
         meta = other.eval_on_selector_all('#makePictures .make-pic-meta', 'n=>n.map(e=>e.textContent)')
         assert meta[0] == 'Flat pastel close-up · 2 min ago · seed 7' and meta[1] == 'Synthetic UX fixture · 2 h ago · seed 8', meta
         assert 'pixel art inventory icon, a red potion' in other.get_attribute('[data-make-pick="mine-make"]', 'title')
         other.fill('[data-make-search="makePictures"]', 'sword')
-        assert 'No picture matches' in other.locator('#makePictures').inner_text() and '5 from agent runs do' in other.locator('#makePictures').inner_text()
+        assert 'No picture matches' in other.locator('#makePictures').inner_text() and 'agent runs are hidden' in other.locator('#makePictures').inner_text()
         toggle.click(); other.wait_for_function('document.querySelectorAll("#makePictures [data-make-pick]").length===5')
         assert toggle.inner_text() == 'Show only my pictures' and toggle.get_attribute('aria-pressed') == 'true' and other.evaluate('document.activeElement.dataset.makeAll') == 'makePictures'
         other.fill('[data-make-search="makePictures"]', ''); other.wait_for_function('document.querySelectorAll("#makePictures [data-make-pick]").length===7')
@@ -750,13 +756,13 @@ def run(shots):
         assert posted('/api/assets/import')[-1] == {'filename': 'my sketch.png', 'type': 'image/png'} and not [p for p in fixture.POSTS[-1:] if p['path'] == '/api/jobs']
         # Codex P2 on #1576: the import landed but the list refresh fails; the picture is still chosen and nobody is told "Nothing was imported".
         page.locator('[data-make-repick]').first.click(); page.wait_for_selector('[data-make-import="makePictures"]'); imports = len(posted('/api/assets/import'))
-        refuse = lambda route: route.fulfill(status=503, json={'error': 'Fixture workspace unavailable'}); page.route('**/api/workspace', refuse)
+        refuse = lambda route: route.fulfill(status=503, json={'error': 'Fixture workspace unavailable'}); page.route(PAGES, refuse)
         try:
             page.set_input_files('[data-make-import-file="makePictures"]', files=[{'name': 'second.png', 'mimeType': 'image/png', 'buffer': png}])
             page.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("could not refresh")')
             assert 'second.png' in page.locator('.make-picked').inner_text() and len(posted('/api/assets/import')) == imports + 1
             assert 'Nothing was imported' not in page.locator('#makeBody').inner_text()
-        finally: page.unroute('**/api/workspace', refuse)
+        finally: page.unroute(PAGES, refuse)
         page.locator('[data-make-goal="combine"]').click(); page.wait_for_selector('#makeComposer')
         # Draft recovery also restores the earlier figure choice; this case explicitly imports a picture pose.
         page.locator('label:has([data-make-pose-mode="picture"])').click()

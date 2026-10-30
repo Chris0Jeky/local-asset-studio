@@ -1,5 +1,31 @@
 # UX use-case matrix
 
+## Review desk: choosing the winner in one press — 30 October 2026 (#1752)
+
+After **Reveal**, the decision panel gains **Meets the stated constraints — choose as winner** (named for the candidate
+in *Selected result*). Pressing it is the human declaration: it saves that kept candidate's stated-constraints check as
+Pass through the existing `rate` command (the saved verdict, other checks, notes, cleanup, preference and character
+checks unchanged, at the current revision), then records the decision with the same `finalize` command and notes as
+**Record decision**, which is unchanged. Nothing else sets the check, and nothing reveals settings: Reveal stays its own
+press. It refuses, sends nothing and says why when settings are hidden, a candidate is unreviewed or not kept, the
+execution is incomplete, or crop or assessment drafts are unsaved. If the mark saves and the decision then fails, the
+status says the mark was saved and gives the reason. An already passed candidate is finalized without a second rating.
+
+`review-desk-by-keyboard`, same three-candidate fixture study, K, W and X in Pair view, then the winner:
+
+| Winner path | Clicks | Keys | Steps taken |
+| --- | --- | --- | --- |
+| Constraints declared after the verdicts (open the kept candidate, set Pass, Save, Reveal, select, Record decision) | 13 | 3 | 19 |
+| Constraints folded into the first candidate's K save (the journey as shipped by #1760) | 11 | 3 | 17 |
+| One press (Reveal, select, **Choose as winner**) | 10 | 3 | 16 |
+
+The first row is the cost the issue measured, repeated on today's Pair-view code by temporarily moving the check to
+after the three verdicts; the second is the journey before this change, where the check only costs a click because it
+rides along with a K the person was pressing anyway. The one-press path removes the check-and-save detour and the
+separate Record decision press (3 clicks fewer than the issue's path, 1 fewer than the folded one) and still needs the
+winner picked in *Selected result* and the note written. The journey asserts the winner's check read `not_assessed`
+before the press and `pass` after, and a recorded decision in the real desk store.
+
 ## Generate and keyboard review journeys — 30 October 2026 (#1729)
 
 Three fixture journeys measure what the earlier ones could not: pressing Generate, and deciding by keyboard.
@@ -226,8 +252,9 @@ plan would add a budget and review step this quick look does not need. *Plan com
 Third live audit (PR #1484, `docs/ux-qa/JOURNEY-AUDIT-2026-10-16-v3.md`), N1-N6 and N8, plus the wave 6 pose-route ask.
 
 - **Pickers show your pictures** (N1): Make's picture and pose grids leave out agent runs the way the Library's Mine does
-  (`assetIsAgentRun`; Make runs count as yours). *Show all pictures (N more from agent runs)* brings them back, search
-  included; a search that only matches agent pictures says how many do.
+  (`assetIsAgentRun`; Make runs count as yours). *Show all pictures (including agent runs)* brings them back, search
+  included; a search that only matches agent pictures says they are hidden. The grids read the newest 60 at a time
+  (`/api/assets/page`, #1766) and **Show more** adds the next 60; the search runs on the server over all of them.
 - **Add an adapter by part of its name** (N2): any case, file name or label. One match is added; several are offered as
   buttons; Enter in the field presses Add. `make-anime-look-chosen-model-and-lora` now types `koukouya` and presses Enter:
   **8 → 7 clicks**, the same 12 steps.
@@ -252,7 +279,7 @@ Owner ask (16 October 2026): "the user should be able to do it without much conf
 
 - **Picture goals no longer leave Make.** Before, a goal tile led to a picture grid, then the *Where should it go next?*
   dialog asked the task again, then *Prepare in Create* opened the full editor, with other words, the prompt below the
-  fold and Generate renamed. Now each goal goes: pick the picture (a search box over your newest 60 pictures; masks stay
+  fold and Generate renamed. Now each goal goes: pick the picture (a search box over your pictures, 60 at a time with **Show more**; masks stay
   hidden), fill a short composer for that goal, then press Make's own **Generate**.
   - **Restyle**: choose the new look by its picture from Make's looks; that picture becomes the look board
     (`restyle-klein-picture`). *Describe the look in words instead* switches to `restyle-klein`, with the finish sentence

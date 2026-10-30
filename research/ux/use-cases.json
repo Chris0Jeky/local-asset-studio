@@ -1143,44 +1143,16 @@
           "expect": "the three candidates are shown without their settings"
         },
         {
-          "intent": "switch to the grid",
-          "expect": "the candidates are tiles that take the keys"
-        },
-        {
-          "intent": "pick the first candidate",
-          "expect": "it is open to assess"
-        },
-        {
-          "intent": "keep it with the K key",
+          "intent": "judge the first candidate with the K key",
           "expect": "the assessment is saved and the candidate reads Keep"
         },
         {
-          "intent": "move to the next candidate with the arrow key",
-          "expect": "focus moves to the next tile"
-        },
-        {
-          "intent": "mark it needs work with the W key",
+          "intent": "judge the second candidate with the W key",
           "expect": "the assessment is saved and the candidate reads Needs work"
         },
         {
-          "intent": "move to the last candidate with the arrow key",
-          "expect": "focus moves to the last tile"
-        },
-        {
-          "intent": "mark it not this with the X key",
+          "intent": "show the third candidate and mark it not this with the X key",
           "expect": "the assessment is saved and every candidate has a verdict"
-        },
-        {
-          "intent": "open the kept candidate again",
-          "expect": "its assessment is open"
-        },
-        {
-          "intent": "confirm it meets the stated constraints",
-          "expect": "the check reads pass"
-        },
-        {
-          "intent": "save that assessment",
-          "expect": "the assessment is saved and the desk allows a decision"
         },
         {
           "intent": "reveal the settings behind the candidates",
@@ -1195,8 +1167,8 @@
           "expect": "the note is held against the decision"
         },
         {
-          "intent": "record the decision",
-          "expect": "the desk reads decision recorded and nothing was generated"
+          "intent": "declare the stated constraints met and choose it as the winner in one press",
+          "expect": "the constraints check is saved as pass, the decision is recorded and nothing was generated"
         },
         {
           "intent": "look for what comes next",

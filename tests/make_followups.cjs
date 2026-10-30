@@ -73,24 +73,24 @@ test('a tuned recipe replaces inherited sampler and scheduler with its offered d
   }
 });
 
-test('choosing a character uses a live preferred Restyle look or the default and shows its look note',()=>{
+test('choosing a character uses a live preferred Restyle look or the default and shows its look note',async()=>{
   const fallback={id:'default'},preferred={id:'preferred'},note="Its preferred look is put away; Make uses the goal's default look.";
   for(const [available,look_note,expected] of [[[fallback,preferred],null,'preferred'],[[fallback],note,'default'],[[fallback,preferred],note,'default'],[[fallback],"Its preferred look's recipe is no longer usable; Make uses the goal's default look.",'default'],[[],note,null],[[fallback,{id:'previous'}],note,'previous']]){
     const c={id:'mira',canon_asset_id:'canon',body:{who:'Mira',clothes:'green cloak',look_id:'preferred'},look_note},state={form:{},styleLook:'previous',styleWords:true};
-    let said='';const context={state,window:{},usableCharacters:()=>[c],lookPictures:()=>available,goal:()=>({intent:'restyle'}),choosePicture:id=>{state.pick={id};},renderPictures(){},say:text=>{said=text;},q:()=>null};
-    const choose=vm.runInNewContext(privacy+between('  function chooseCharacter(','  const chosenCharacter=')+';chooseCharacter',context);context.chooseCharacter=choose;
+    let said='';const context={state,window:{},usableCharacters:()=>[c],lookPictures:()=>available,goal:()=>({intent:'restyle'}),privacyEpoch:0,needAsset:async id=>({id}),choosePicture:(id,asset)=>{state.pick=asset;},renderPictures(){},say:text=>{said=text;},q:()=>null};
+    const choose=vm.runInNewContext(privacy+between('  async function chooseCharacter(','  const chosenCharacter=')+';chooseCharacter',context);context.chooseCharacter=choose;
     const click=vm.runInNewContext('(function(e){'+between("    const character=e.target.closest('[data-make-character]');","    const saveChar=e.target.closest(")+'})',context);
-    click({target:{closest:()=>({dataset:{makeCharacter:'mira'}})}});
+    click({target:{closest:()=>({dataset:{makeCharacter:'mira'}})}});await new Promise(r=>setImmediate(r));
     assert.equal(state.character,'mira');assert.equal(state.pick.id,'canon');assert.equal(state.form.who,'Mira');assert.equal(state.form.clothes,'green cloak');
     assert.equal(state.styleLook,expected);assert.equal(state.styleWords,!available.length);assert.ok(said.includes(look_note||'Your character is chosen'));
-    context.goal=()=>({intent:'edit'});said='';click({target:{closest:()=>({dataset:{makeCharacter:'mira'}})}});assert.ok(!said.includes('preferred'),'the look note is for Restyle only');context.goal=()=>({intent:'restyle'});
-    delete c.body.look_id;state.styleLook='own choice';choose('mira');assert.equal(state.styleLook,'own choice','no preferred look leaves the current choice alone');
+    context.goal=()=>({intent:'edit'});said='';click({target:{closest:()=>({dataset:{makeCharacter:'mira'}})}});await new Promise(r=>setImmediate(r));assert.ok(!said.includes('preferred'),'the look note is for Restyle only');context.goal=()=>({intent:'restyle'});
+    delete c.body.look_id;state.styleLook='own choice';await choose('mira');assert.equal(state.styleLook,'own choice','no preferred look leaves the current choice alone');
   }
 });
 
 test('a kept picture in the line-up can become the canon: one edit with the revision read, never a generation (#1205)',async()=>{
   const c={id:'mira',name:'Mira',revision:3,canon_asset_id:'canon',lineage:[{role:'canon',asset_id:'canon'}],body:{who:'Mira'}};
-  const state={pictures:[{id:'canon'},{id:'keep-a',lineage:['canon'],review:'selected'},{id:'skip',lineage:['canon'],review:'rejected'}],review:{},characters:[c]};
+  const state={library:[{id:'canon'},{id:'keep-a',lineage:['canon'],review:'selected'},{id:'skip',lineage:['canon'],review:'rejected'}],review:{},characters:[c]};
   const markup=vm.runInNewContext(privacy+between('  const LINEUP_MAX','  async function fillLineups')+';lineupMarkup',{state,escape:String,thumbUrl:a=>'/t/'+a.id,pictureLabel:a=>a.id});
   const html=markup(c);
   assert.equal((html.match(/data-make-canon="/g)||[]).length,1,'only a kept, non-canon picture offers the swap');
@@ -113,7 +113,7 @@ test('a kept picture in the line-up can become the canon: one edit with the revi
 
 test('the canon a swap replaced stays in the line-up with Use as canon, so one press swaps back (#1718)',async()=>{
   const c={id:'mira',name:'Mira',revision:3,canon_asset_id:'canon',previous_canon_asset_id:null,lineage:[{role:'canon',asset_id:'canon'}],body:{who:'Mira'}};
-  const state={pictures:[{id:'canon'},{id:'keep-a',lineage:['canon'],review:'selected'}],review:{},characters:[c]};
+  const state={library:[{id:'canon'},{id:'keep-a',lineage:['canon'],review:'selected'}],review:{},characters:[c]};
   const markup=vm.runInNewContext(privacy+between('  const LINEUP_MAX','  async function fillLineups')+';lineupMarkup',{state,escape:String,thumbUrl:a=>'/t/'+a.id,pictureLabel:a=>a.id});
   const calls=[],context={state,usableCharacters:()=>[c],requestPrivacy:()=>({privacy:'normal'}),classified:()=>'normal',privacyEpoch:1,CSS:{escape:String},q:()=>null,sayChars(){},refreshCharacters(){},loadCharacters:async()=>{},
     json:async(url,body)=>{calls.push(body);if(body.expected_revision!==c.revision)throw Object.assign(Error('stale'),{status:409});   // characters.py: the replaced canon becomes previous_canon, the revision moves
@@ -310,12 +310,12 @@ test('look cards and the chosen look show the owner\'s own Keep and Not this mar
 function clockHarness(runs){
   const listeners={},requests=[],slows=runs.map(()=>({hidden:true,textContent:''})),els=runs.map((r,i)=>({dataset:{makeClock:r.job.id},textContent:'',closest:()=>({querySelector:()=>slows[i]})})),timers=[];
   const document={title:'Local Asset Studio',hidden:false,addEventListener:(k,fn)=>{listeners[k]=fn;},querySelectorAll:()=>els};
-  const context={document,state:{runs},FINAL:['completed','failed'],Date,
+  const context={document,state:{runs},FINAL:['completed','failed'],Date,privacyEpoch:0,
     rough:e=>e?.confidence==='none',duration:s=>s<90?Math.round(s)+' s':Math.round(s/60)+' min',
     json:async(url,body,captured)=>{requests.push({url,body,captured});return{estimate_seconds:180,confidence:'medium'};},
     runPrivacy:r=>r.privacy||'regular',requestPrivacy:(scope,privacy)=>({scope,privacy}),
     setTimeout:fn=>{timers.push(fn);return timers.length;},clearTimeout(){}};
-  const api=vm.runInNewContext(between('  const PAINTING=','  function words(job)')+';({runClock,runTitle,tick,slowRun,SLOW})',context);
+  const api=vm.runInNewContext(between('  const PAINTING=','  function words(job)')+';({runClock,runTitle,tick,slowRun,SLOW,estimates})',context);
   return{...api,document,listeners,requests,els,slows,timers,context};
 }
 
@@ -375,6 +375,41 @@ test('Base model line shows the file and the Non-commercial chip only for a reco
   assert.doesNotMatch(free.box.innerHTML,/make-licence/);
   assert.match(free.box.innerHTML,/<summary>Why<\/summary><small class="muted">No other model in the library takes this look’s words and LoRAs\.<\/small>/);
 });
+test('a waiting card adds about how long until its turn only when every run ahead has a usable estimate (#1707)',async()=>{
+  const usual={fast:{estimate_seconds:60,confidence:'high'},slow:{estimate_seconds:180,confidence:'medium'},guess:{estimate_seconds:60,confidence:'low'},none:{estimate_seconds:60,confidence:'none'}};
+  const scene=(now,{ahead=2,second='fast',firstPrivacy,first='slow',only}={})=>{
+    const runs=[{job:{id:'r',status:'running',created_at:1,started_at:1000,preset_id:first}},{job:{id:'q1',status:'queued',created_at:2,preset_id:second,queue_ahead:1}},{job:{id:'me',status:'queued',created_at:3,preset_id:'fast',queue_ahead:ahead}}];
+    if(firstPrivacy)runs[0].privacy=firstPrivacy;
+    if(only){runs.splice(1,1);runs[1].job.queue_ahead=1;}
+    const h=clockHarness(runs);h.context.Date={now:()=>now*1000};h.context.json=async(url,body)=>{h.requests.push({url,body});return usual[body.preset_id];};
+    return{h,runs,mine:h.els[runs.length-1]};
+  };
+  const settle=async h=>{h.tick();await new Promise(r=>setImmediate(r));h.tick();await new Promise(r=>setImmediate(r));h.tick();};
+  // The running run has 120 s of its 180 s left (1060 - 1000 spent), plus the queued run's 60 s: 180 s, about 3 min.
+  let {h,runs,mine}=scene(1060);h.tick();assert.equal(mine.textContent,'','no minutes before every estimate is known');
+  assert.ok(h.timers.length>0,'the tick keeps running while estimates load');
+  await settle(h);assert.equal(mine.textContent,' · about 3 min');
+  const calls=h.requests.length;assert.equal(calls,2,'one estimate per run ahead, none for the waiting card itself');
+  runs[0].job.started_at=1030;h.tick();h.tick();assert.equal(mine.textContent,' · about 4 min','the running run counts only what is left of its usual time (150 s + 60 s)');
+  assert.equal(h.requests.length,calls,'ticks and polls reuse the cached estimates');
+  // Rounding: whole minutes, never under one, and the running run's remainder is floored at 30 s.
+  for(const [now,text] of [[1090,' · about 2 min'],[1100,' · about 1 min'],[5000,' · about 1 min']]){
+    const s=scene(now,{only:true});await settle(s.h);assert.equal(s.mine.textContent,text,'now '+now);}
+  // Anything unknown ahead leaves only "N ahead": a low or generic estimate, a gap in the count, another privacy, a run waiting for memory.
+  for(const [name,options,edit] of [['low confidence',{second:'guess'}],['generic guess',{second:'none'}],['a run not shown here',{ahead:3}],['another privacy',{firstPrivacy:'private'}],['waiting for memory',{},r=>{r[0].job.status='waiting';}]]){
+    const s=scene(1060,options);if(edit)edit(s.runs);await settle(s.h);assert.equal(s.mine.textContent,'',name+': no partial sum');}
+  // Nothing ahead (queue_ahead 0) and no other card: no made-up minute.
+  {const s=scene(1060,{only:true});s.runs[1].job.queue_ahead=0;s.runs[0].job.status='completed';await settle(s.h);assert.equal(s.mine.textContent,'','queue_ahead 0 shows no minutes');
+    const t=scene(1060,{only:true});t.runs[1].job.queue_ahead=0;await settle(t.h);assert.equal(t.mine.textContent,'','queue_ahead 0 with a running card shows no minutes');}
+  // Two hung estimate requests never starve a painting card's own: each painting card asks regardless of the two-at-a-time cap.
+  {const runs=['a','b','c'].map(id=>({job:{id,status:'running',started_at:1000,preset_id:'fast'}})),h=clockHarness(runs);h.context.json=(url,body)=>{h.requests.push({url,body});return new Promise(()=>{});};
+    h.tick();assert.equal(h.requests.length,3);}
+  // A privacy switch clears the cache, and an answer already on its way for the old privacy is dropped.
+  ({h,runs,mine}=scene(1060));let release;h.context.json=()=>new Promise(r=>{release=()=>r(usual.fast);});h.tick();
+  h.context.privacyEpoch=1;h.estimates.clear();release();await new Promise(r=>setImmediate(r));assert.equal(h.estimates.size,0,'a late answer for the old privacy is not cached');
+  assert.match(between('    privacyEpoch++;draftRevision++','    restoredRuns=false;'),/estimates\.clear\(\)/,'the privacy switch clears cached estimates');
+});
+
 test('the slow-state hint needs a well-measured usual time and a large overrun, and is advice only',async()=>{
   const {slowRun}=clockHarness([]),job={status:'running',started_at:1000},high={estimate_seconds:60,confidence:'high'};
   assert.equal(slowRun(job,high,1000+170),false,'under usual+120 s');

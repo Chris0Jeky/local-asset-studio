@@ -1482,9 +1482,12 @@ function migrationDestination(records){
   const kinds=new Set(records.map(a=>a.privacy===undefined?'regular':a.privacy));
   return kinds.size===1&&kinds.has('regular')?'private':kinds.size===1&&kinds.has('private')?'regular':null;
 }
+// A selection that cannot be previewed says why, but only what the current view may know: a Regular or Private view never reveals the other side, so an unresolved ID gets the neutral wording and "mixed" is said only under All.
 function renderMigrationAction(){
-  for(const [id,records] of [['#previewMigration',[...assetSelection].map(assetRecord)],['#assetMigrate',activeAsset?[activeAsset]:[]]]){
-    const destination=migrationDestination(records),button=$(id);button.hidden=!destination;if(destination)button.textContent='Preview move to '+(destination==='private'?'Private':'Regular')+'…';
+  for(const [id,records,note] of [['#previewMigration',[...assetSelection].map(assetRecord),'#previewMigrationReason'],['#assetMigrate',activeAsset?[activeAsset]:[]]]){
+    const destination=migrationDestination(records),button=$(id),reason=destination||!records.length?'':!records.every(Boolean)?'Load the off-page items first.':assetActivePrivacy==='all'?'Select only Regular or only Private items to preview a move.':'';
+    button.hidden=!destination&&!reason;button.disabled=!destination;if(destination)button.textContent='Preview move to '+(destination==='private'?'Private':'Regular')+'…';
+    if(note){const small=$(note);small.hidden=!reason;small.textContent=reason;}
   }
 }
 // The answer must be an All-scope plan for exactly what was asked; anything else is shown as a refusal, never as a preview.
