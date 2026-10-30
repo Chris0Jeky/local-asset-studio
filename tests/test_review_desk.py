@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import patch
 import zipfile
 
-from review_fixture import FixtureStudio, seed, seed_matrix, seed_comparison
+from review_fixture import FixtureStudio, seed, seed_matrix, seed_comparison, seed_repeats
 from production import Production, fingerprint
 import review_desk
 from review_desk import ReviewDesk, rating
@@ -256,6 +256,22 @@ class ReviewTests(unittest.TestCase):
         self.assertEqual(empty['candidates'],[])
         retained=next(c for c in grid['cells'] if c['row']==row and c['runs'])
         self.assertEqual(len(retained['candidates']),2);self.assertEqual(len(retained['runs']),2)
+
+    def test_grid_run_candidates_separate_repeated_completed_failed_and_same_status_runs(self):
+        self.id=seed_repeats(self.studio)
+        blind=self.open();encoded=json.dumps(blind)
+        for token in ('engine-copper','engine-indigo','engine-jade','712031','original-'):self.assertNotIn(token,encoded)
+        cells=[c for c in blind['grid']['cells'] if len(c['runs'])>1];self.assertEqual(len(cells),2)
+        for cell in cells:
+            self.assertEqual(sorted(a for run in cell['runs'] for a in run['candidates']),sorted(cell['candidates']))
+            self.assertTrue(all(len(run['candidates'])==1 for run in cell['runs']))
+        self.assertCountEqual([[run['status'] for run in c['runs']] for c in cells],[['completed','completed'],['completed','failed']])
+        revealed=self.change('reveal');sources={c['alias']:c['source']['filename'] for c in revealed['candidates']}
+        rows={r['alias']:r['engine'] for r in revealed['grid']['rows']}
+        by_engine={rows[c['row']]:[(run['status'],[sources[a] for a in run['candidates']]) for run in c['runs']] for c in revealed['grid']['cells'] if len(c['runs'])>1}
+        self.assertEqual(by_engine,{'engine-copper':[('completed',['original-0.png']),('completed',['original-1.png'])],
+                                    'engine-jade':[('completed',['original-4.png']),('failed',['original-5.png'])]})
+        self.assertTrue(self.studio.queue.empty());self.assertEqual(self.studio.network_calls,0)
 
     def test_grid_does_not_relax_live_private_or_revoked_source_refusals(self):
         self.id=seed_matrix(self.studio);project=self.production._get(self.id)
