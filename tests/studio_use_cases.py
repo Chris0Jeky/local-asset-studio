@@ -1336,6 +1336,10 @@ def _draw_pose(c):
 
 @driver('combine-same-pair-second-engine')
 def _combine_loop(c):
+    with restoring_fixture(): return _combine_loop_run(c)   # reviews, quick-check tags and revisions it wrote are handed back (#1747)
+
+
+def _combine_loop_run(c):
     """Real page controls over synthetic completed jobs; recipe switches and reruns never submit."""
     ready, detail = _combine(c)
     if not ready or c.live: return False, 'Needs the prepared fixture pair; live attachment is deliberately skipped. ' + detail
