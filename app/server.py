@@ -222,6 +222,8 @@ class Studio:
         self._resident = None   # {'url', 'pid', 'models'} of the last graph this Studio posted
         self._spill_unload_ineffective = None   # PID whose last spill-triggered unload left the spill in place (an outside cause)
         self._fingerprint_lock = threading.Lock()
+        # #1678: finish or undo an interrupted Regular->Private move before any run folder is read, so no reader sees half of one.
+        self.migrating = set(); self.migration_recovery = run_migration.recover(self)
         self._load_jobs()
         # One query for the restart loop; a missing or differently classified output still goes through register(). A busy database
         # falls back to the per-output path rather than aborting startup (#1770 review).
@@ -1616,6 +1618,7 @@ class Studio:
 
     def _save(self, job, durable=False):
         if "record_error" in job: raise StudioError("An unreadable run record cannot be saved; inspect its folder first")
+        if job.get("id") in getattr(self, "migrating", ()): raise StudioError("This run is moving to Private; nothing was saved. Try again when the move finishes", code="migration_in_progress")
         directory = self._job_directory(job.get("id"),job.get('privacy','regular'))
         recipe = {"preset_id": job["preset_id"], "controls": job["controls"], "batch_count": job["batch_count"], "graph_path": job["graph_path"], "created_at": job["created_at"]}
         recipe.update(references=job.get("references", []), parent_assets=job.get("parent_assets", []))
@@ -3252,8 +3255,9 @@ class Handler(BaseHTTPRequestHandler):
                 payload=self._body_object()
                 return self._json(200, self.studio.asset_reference(payload.get("id"),privacy=scope,creation_privacy=privacy_scope.creation_for_handler(self,payload)))
             if self.path == "/api/assets/export": return self._json(201, self.studio.export_assets(self._body_object(),privacy=scope))
-            # #1678 first slice: a read-only migration plan; POST only because it carries a bounded body. No apply route exists.
+            # #1678: a read-only migration plan (POST only because it carries a bounded body), and its Regular->Private apply.
             if urlparse(self.path).path == '/api/assets/migration-plan': return self._json(200, run_migration.plan(self.studio, self._body_object(), scope))
+            if urlparse(self.path).path == '/api/assets/migration-apply': return self._json(*run_migration.apply(self.studio, self._body_object(), scope))
             if self.path == "/api/recipe-check": return self._json(200, self.studio.check_recipe(self._creation_payload()))
             if self.path == "/api/folders/open": return self._json(200, self.studio.library.open_folder(self._body_object().get("id")))
             if self.path == "/api/models/install": return self._json(202, self.studio.library.start_install(self._body_object().get("id")))
