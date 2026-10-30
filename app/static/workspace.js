@@ -1475,7 +1475,8 @@ const migrationApplyErrors={
   migration_in_progress:['This move has not finished. Restart the Studio to recover it; nothing is retried automatically.',''],
   migration_storage_full:['The disk is full, so nothing was moved. Free space, then preview again.','preview'],
   migration_verify_failed:['A copied file did not match its original, so nothing was moved. Preview again.','preview'],
-  migration_failed:['The move failed before anything was published, so nothing was moved. Preview again.','preview']};
+  migration_failed:['The move failed before anything was published, so nothing was moved. Preview again.','preview'],
+  migration_interrupted:['The move was interrupted and rolled back, so nothing was moved. Preview again.','preview']};
 let migrationEpoch=0,migrationOpener=null,migrationShown=null,migrationAttempt=null,migrationFlight=null;
 function migrationDestination(records){
   if(!records.length||!records.every(Boolean))return null;
@@ -1575,6 +1576,12 @@ async function migrationSend(attempt){
     migrationAttempt=known[1]==='check'?attempt:null;say(known[0],true);
     if(here&&code==='migration_blocked'&&Array.isArray(failure.data.blockers))body.innerHTML='<ul>'+failure.data.blockers.map(b=>'<li>'+esc(migrationBlockers[b.code]||'Something blocks this move ('+b.code+').')+'</li>').join('')+'</ul>';
     if(here){$('#migrationRecheck').hidden=known[1]!=='check';$('#migrationRepreview').hidden=known[1]!=='preview';($('#migrationRecheck').hidden?$('#migrationRepreview').hidden?$('#closeMigration'):$('#migrationRepreview'):$('#migrationRecheck')).focus();}
+    return;
+  }
+  // Any other structured server refusal is an answer, not a lost one: settle it so previews are never locked behind Check again.
+  if(failure&&typeof code==='string'&&code){
+    migrationAttempt=null;say('The move did not go through ('+(failure.data.error||code)+'). Preview again to see where the runs are; nothing is retried automatically.',true);
+    if(here){$('#migrationRepreview').hidden=false;$('#migrationRepreview').focus();}
     return;
   }
   migrationAttempt=attempt;

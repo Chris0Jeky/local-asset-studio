@@ -238,6 +238,15 @@ test('An unknown outcome survives Close: previewing again offers only Check agai
   s.writes[2].resolve(receipt(JSON.parse(sent).request_id));await done;assert.match(s.el('#migrationStatus').textContent,/^Moved 1 run/);
   s.el('#migrationDialog').close();select(s,['a','b']);s.el('#previewMigration').onclick();assert.equal(s.writes[3].url,PLAN,'a settled outcome lets a fresh preview start');
 });
+test('A definitive refusal on Check again settles the unknown outcome, mapped or not, so previews are never locked',async()=>{
+  for(const [answer,text] of [[fail('migration_interrupted',500),/^The move was interrupted and rolled back/],[fail('not_found',404),/^The move did not go through \(server words not_found\)\. Preview again/]]){
+    const s=await previewed();let done=s.el('#migrationApply').onclick();s.writes[1].reject(Error('network'));await done;await tick();
+    s.el('#migrationDialog').close();s.el('#previewMigration').onclick();await tick();assert.equal(s.writes.length,2);
+    done=s.el('#migrationRecheck').onclick();s.writes[2].reject(answer);await done;await tick();
+    assert.match(s.el('#migrationStatus').textContent,text);assert.equal(s.el('#migrationRecheck').hidden,true);assert.equal(s.el('#migrationRepreview').hidden,false);
+    s.el('#migrationDialog').close();select(s,['a','b']);s.el('#previewMigration').onclick();assert.equal(s.writes.length,4);assert.equal(s.writes[3].url,PLAN,'a fresh preview starts after a definitive answer');
+  }
+});
 test('A receipt for another request, a non-private destination or an unfinished stage is never reported as a move',async()=>{
   for(const odd of [r=>({...r,request_id:'someone-elses-request-0001'}),r=>({...r,destination:'regular'}),r=>({...r,published:null}),r=>({...r,job_ids:undefined})]){
     const s=await previewed();const done=s.el('#migrationApply').onclick();s.writes[1].resolve(odd(receipt(JSON.parse(s.writes[1].options.body).request_id)));await done;
