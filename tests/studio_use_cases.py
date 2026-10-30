@@ -417,7 +417,9 @@ def build_handler():
         with studio.production.connect() as db: db.execute('UPDATE projects SET plan=? WHERE id=?', (json.dumps(project['plan']), identifier))
         (studio.production.root / identifier / 'plan.json').write_text(json.dumps(project['plan']))
         desk.update(id=identifier, studio=studio, holder=holder)
-        fixture.PLANS.insert(0, dict(id=identifier, name='Lantern keeper · three candidates', kind='comparison', axis='engine', values=['A', 'B', 'C'], stages=[],
+        fixture.PLANS.insert(0, dict(id=identifier, name='Lantern keeper · three candidates', kind='comparison', axis='engine', values=['A', 'B', 'C'],
+                                     # Candidate outputs, as a real finished comparison lists them: the Review link needs them (#1735).
+                                     stages=[{'label': alias, 'job': {'status': 'completed', 'outputs': [{'asset_id': 'desk-' + alias.lower(), 'media_type': 'image'}]}} for alias in 'ABC'],
                                      state={'status': 'awaiting_review', 'message': 'Synthetic finished comparison; no model ran.'}, budget={'allowance': 3, 'reserved': 3}))
         return identifier
     SYNTHETIC.update(open_desk=open_desk, fixture=fixture, desk=desk)
@@ -2150,7 +2152,8 @@ def _review_desk(c):
                             " && (p.stages || []).some(s => ((s.job || {}).outputs || []).some(o => o.asset_id)))"
                             "(productionPlans.find(p => p.id === id))")
         c.act('#productionList [data-project="%s"]' % study, note='the finished comparison')
-        c.act('a[href^="/review.html?project="]', navigation=True, wait=900, note='open the review desk')
+        # This study's own Review link: the list carries one per awaiting study (#1735), so the first match may be another study.
+        c.act('a[href="/review.html?project=%s"]' % study, navigation=True, wait=900, note='open the review desk')
         c.stop_before(c.act('#open', note='prepare the blind review'), 'stopped before Prepare review: that snapshots the retained pictures')
         c.page.wait_for_function('!document.querySelector("#desk").hidden', timeout=8000)
         c.act('#presentationGrid', navigation=True, note='switch to the grid: the keys work on its candidates')
