@@ -184,6 +184,25 @@ def run_label(value):
     try: return clean_run_label(value)
     except ValueError as error: raise StudioError(str(error)) from None
 
+JOBS_VIEW_MAX_AGE = 30.0   # seconds a cached /api/jobs answer may serve, so a job mutation that bumps nothing still heals (#1767)
+
+def _bumping(name):
+    method = getattr(dict, name)
+    def wrapper(self, *args, **kwargs):
+        try: return method(self, *args, **kwargs)
+        finally: self.bump()
+    wrapper.__name__ = name; return wrapper
+
+class JobsView(dict):
+    """`Studio.jobs`: every insert or removal bumps `rev`, the key of the cached GET /api/jobs answer (#1767). In-place edits of a job
+    bump through Studio._save or Studio.bump_jobs_view."""
+    rev = 0
+    def __init__(self, *args, **kwargs): super().__init__(*args, **kwargs); self._rev_guard = threading.Lock()
+    def bump(self):
+        with self._rev_guard: self.rev += 1
+    __setitem__ = _bumping('__setitem__'); __delitem__ = _bumping('__delitem__'); __ior__ = _bumping('__ior__'); pop = _bumping('pop')
+    popitem = _bumping('popitem'); clear = _bumping('clear'); update = _bumping('update'); setdefault = _bumping('setdefault')
+
 class Studio:
     def __init__(self, repo_root: Path, port=None):
         self.root = repo_root.resolve(); self.port = PORT if port is None else port   # RuntimeRecovery autostarts only on the default port (#1584)
@@ -202,7 +221,7 @@ class Studio:
         self._host_commit = None; self._host_commit_at = 0
         self.build = build_info.build_info(self.root)   # read once at start; /api/health shows it so a console can spot a Studio running old code
         self._gpu_memory = None; self._gpu_memory_at = 0
-        self.jobs = {}; self.queue = Queue(); self.lock = threading.RLock(); self.worker_failure = None; self._worker_busy = False
+        self.jobs = JobsView(); self._jobs_views = {}; self.queue = Queue(); self.lock = threading.RLock(); self.worker_failure = None; self._worker_busy = False
         self._loaded_operator_dispositions = {}  # Readable terminal state still needs an explicit publication acknowledgment.
         self.cancel_requests = {}   # job id -> open owner cancel request; the worker that owns the job resolves it (app/job_cancel.py)
         # ComfyUI keeps every model family it loaded in host RAM after the VRAM is freed (measured 16 Sep 2026: 25.8 GB committed on an
@@ -1632,7 +1651,30 @@ class Studio:
         if directory.is_symlink() or directory.resolve().parent != root.resolve(): raise StudioError("Job directory escapes the runs folder")
         return directory
 
+    def bump_jobs_view(self):
+        bump = getattr(self.jobs, "bump", None)
+        if bump: bump()
+
+    def jobs_view_lookup(self, scope):
+        """(token, cached) for GET /api/jobs. The token keys `jobs_view_store`; it is None, with nothing served, while the answer can
+        change without a bump: a queued, running or observed job (worker edits), a busy worker, an open cancel request or a plain jobs dict."""
+        with self.lock:
+            jobs = self.jobs
+            if (not isinstance(jobs, JobsView) or self._worker_busy or self.cancel_requests or not self.queue.empty()
+                    or any(j.get("status") in self.ACTIVE_JOB_STATUSES for j in list(jobs.values()))): return None, None
+            now = time.monotonic(); key = (jobs.rev, scope); hit = self._jobs_views.get(key)
+            return (key, now), (hit if hit and now - hit[2] < JOBS_VIEW_MAX_AGE else None)
+
+    def jobs_view_store(self, token, raw, etag):
+        """Keep bytes built after `jobs_view_lookup` under its pre-build revision: a mutation during the build leaves them unreachable."""
+        if token is None: return
+        key, started = token
+        with self.lock:
+            for old in [k for k in self._jobs_views if k[0] != key[0]]: del self._jobs_views[old]
+            self._jobs_views[key] = (raw, etag, started)
+
     def _save(self, job, durable=False):
+        self.bump_jobs_view()
         if "record_error" in job: raise StudioError("An unreadable run record cannot be saved; inspect its folder first")
         directory = self._job_directory(job.get("id"),job.get('privacy','regular'))
         if job["id"] in getattr(self, "migrating", ()): raise StudioError("This run is moving to Private; nothing was saved. Try again when the move finishes", code="migration_in_progress")
@@ -1824,7 +1866,7 @@ class Studio:
             prospective = dict(job); prospective["tracking_disposition"] = disposition
             prospective = self._retained_operator_disposition(job, prospective, 'tracking_disposition')
             self._write_observation_state(self._job_directory(job_id) / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
-            job["tracking_disposition"] = prospective['tracking_disposition']
+            job["tracking_disposition"] = prospective['tracking_disposition']; self.bump_jobs_view()
             self._loaded_operator_dispositions.pop((job_id, 'tracking_disposition'), None)
             return self.public(job)
 
@@ -1869,7 +1911,7 @@ class Studio:
             self._reconcile_landed_marker_removal(state_path, state, job)
             raise
         job.update(status=prospective["status"], message=prospective["message"], tracking_disposition=resumed)
-        job.pop("put_away_at", None)
+        job.pop("put_away_at", None); self.bump_jobs_view()
         self.queue.put(("observe", job["id"]))
         return self.public(job)
 
@@ -1901,7 +1943,7 @@ class Studio:
             # recipe, workflow and pending marker; failure leaves the job recoverable.
             prospective = self._retained_operator_disposition(job, prospective, 'abandonment')
             self._write_observation_state(self._job_directory(job_id) / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
-            job.update(status="abandoned", message=message, abandonment=prospective['abandonment'])
+            job.update(status="abandoned", message=message, abandonment=prospective['abandonment']); self.bump_jobs_view()
             self._loaded_operator_dispositions.pop((job_id, 'abandonment'), None)
             return self.public(job)
 
@@ -1921,11 +1963,11 @@ class Studio:
                 record.update(state="cancelled", resolved_at=now, note="Removed from the Studio queue before submission; nothing was sent to ComfyUI.")
                 prospective = dict(job, status="cancelled", message=job_cancel.not_started_message(), cancellation=record, finished_at=now)
                 self._write_observation_state(self._job_directory(job_id) / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
-                job.update(status=prospective["status"], message=prospective["message"], cancellation=record, finished_at=now)
+                job.update(status=prospective["status"], message=prospective["message"], cancellation=record, finished_at=now); self.bump_jobs_view()
                 return self.public(job)
             # The worker owns this job's state file; the request gets its own durable receipt.
             self._write_json_atomic(self._job_directory(job_id) / job_cancel.REQUEST_FILE, record)
-            self.cancel_requests[job_id] = record
+            self.cancel_requests[job_id] = record; self.bump_jobs_view()
             return self.public(job)
 
     ACTIVE_JOB_STATUSES = ("queued", "waiting", "submitting", "running")
@@ -1961,6 +2003,7 @@ class Studio:
             self._write_observation_state(self._job_directory(job_id) / "state.json", {k: v for k, v in prospective.items() if k != "graph"})
             if put_away: job["put_away_at"] = prospective["put_away_at"]
             else: job.pop("put_away_at", None)
+            self.bump_jobs_view()
             # This successful state publication also includes any loaded disposition.
             self._loaded_operator_dispositions.pop((job_id, 'tracking_disposition'), None)
             self._loaded_operator_dispositions.pop((job_id, 'abandonment'), None)
@@ -2899,6 +2942,7 @@ class Handler(BaseHTTPRequestHandler):
     studio: Studio = None
     def log_message(self, fmt, *args): pass
     def _json(self, status, obj):
+        if getattr(self, "command", None) == "POST": getattr(getattr(self, "studio", None), "bump_jobs_view", bool)()   # every POST answer follows its mutation (#1767)
         raw = json.dumps(obj).encode(); self.send_response(status); self.send_header("Content-Type", "application/json"); self.send_header("Cache-Control", "no-store"); self.send_header("Content-Length", str(len(raw))); self.end_headers(); self.wfile.write(raw)
     def _safe_host(self):
         return self.headers.get("Host", "") in (f"127.0.0.1:{PORT}", f"localhost:{PORT}")
@@ -3129,11 +3173,15 @@ class Handler(BaseHTTPRequestHandler):
                 if file.suffix.lower() not in (".png", ".jpg", ".webp", ".gif", ".glb") or not file.is_file(): return self._json(404, {"error": "Example not found"})
                 data = file.read_bytes(); self.send_response(200); self.send_header("Content-Type", mimetypes.guess_type(str(file))[0] or "application/octet-stream"); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data); return
             if path == "/api/jobs":
-                with self.studio.lock:
-                    snapshot = [job for job in self.studio.jobs.values() if privacy_scope.matches(job.get('privacy','regular'),scope)]
-                payload = [self.studio.public(x) for x in sorted(snapshot, key=lambda j:j["created_at"], reverse=True)]
-                raw = json.dumps(payload).encode()
-                etag = '"' + hashlib.sha256(raw).hexdigest() + '"'
+                token, cached = self.studio.jobs_view_lookup(scope)   # unchanged jobs answer from the cached bytes: no projection, no hashing (#1767)
+                if cached: raw, etag = cached[:2]
+                else:
+                    with self.studio.lock:
+                        snapshot = [job for job in self.studio.jobs.values() if privacy_scope.matches(job.get('privacy','regular'),scope)]
+                    payload = [self.studio.public(x) for x in sorted(snapshot, key=lambda j:j["created_at"], reverse=True)]
+                    raw = json.dumps(payload).encode()
+                    etag = '"' + hashlib.sha256(raw).hexdigest() + '"'
+                    self.studio.jobs_view_store(token, raw, etag)
                 if any(tag.strip().removeprefix("W/") in (etag, "*") for tag in self.headers.get("If-None-Match", "").split(",")):
                     self.send_response(304); self.send_header("ETag", etag); self.send_header("Cache-Control", "no-store"); self.send_header("Content-Length", "0"); self.end_headers(); return
                 self.send_response(200); self.send_header("Content-Type", "application/json"); self.send_header("Cache-Control", "no-store"); self.send_header("ETag", etag); self.send_header("Content-Length", str(len(raw))); self.end_headers(); self.wfile.write(raw); return
