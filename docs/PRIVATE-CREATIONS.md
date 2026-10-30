@@ -209,6 +209,13 @@ private ID is refused exactly like an unknown one. Private related items are lef
 out and not counted. A constant `scope_partial` blocker says that an apply-grade
 plan must be made with `privacy=all`.
 
+The Library previews this plan (read-only). With a selection that is all Regular or
+all Private (or an open asset), **Preview move to Private…** / **Preview move to
+Regular…** asks the planner under `privacy=all` and shows counts by kind, the byte
+estimate, ComfyUI copies that remain, every blocker in one sentence and the short plan
+hash. Outside the All view it asks you to switch and requests nothing; it never
+switches for you. The dialog has no apply control; apply (below) is API-only for now.
+
 `apply_available` is true for `destination: private`.
 
 ### Migration apply (Regular to Private only)

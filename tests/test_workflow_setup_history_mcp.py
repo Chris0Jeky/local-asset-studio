@@ -192,6 +192,15 @@ class SetupHistoryBridgeTests(HistoryFixture, unittest.TestCase):
                 self.assertNotIn('recovery', result['error'])
         self.assert_read_only(before)
 
+    def test_history_rows_carry_a_save_time_and_a_malformed_one_is_not_success(self):
+        page = self.result_data(self.bridge.invoke(READS[0], self.arguments(READS[0])))
+        self.assertTrue(all(type(row['recorded_at']) is float and row['recorded_at'] > 1.6e9 for row in page['revisions']), page['revisions'])
+        for bad in (True, '1700000000', -1, 0, 4102444801, 1e308):
+            with self.subTest(bad=bad):
+                self.opener.transform = lambda value, bad=bad: dict(value, revisions=[dict(value['revisions'][0], recorded_at=bad)] + value['revisions'][1:])
+                result = self.bridge.invoke(READS[0], self.arguments(READS[0]))
+                self.assertFalse(result['ok']); self.assertEqual(result['error']['code'], 'request_failed')
+
     def test_rehashed_export_with_wrong_nested_draft_digest_refuses(self):
         def corrupt(value):
             value['export']['draft']['recipe']['controls']['positive'] = 'Unapproved replacement'

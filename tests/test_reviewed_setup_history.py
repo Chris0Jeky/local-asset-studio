@@ -54,6 +54,72 @@ class ReviewedSetupHistoryTests(unittest.TestCase):
         self.assertEqual(self.dump(), before)
         self.assertEqual(self.s.upload_count, 0)
 
+    def receipts(self, key):
+        with self.s.assets.connection() as db:
+            return {json.loads(r['receipt'])['revision']: json.loads(r['receipt'])['created_at']
+                    for r in db.execute("SELECT receipt FROM setup_operations_v1 WHERE draft_id=?", (key,))}
+
+    def test_each_summary_carries_the_time_its_committing_receipt_recorded(self):
+        key = self.revisions(3)
+        want = self.receipts(key)
+        self.assertEqual(sorted(want), [1, 2, 3])
+        rows = self.page(key)['revisions']
+        self.assertEqual({r['revision']: r['recorded_at'] for r in rows}, want)
+        self.assertTrue(all(type(t) is float and t > 1.6e9 for t in want.values()))
+        self.assertEqual([r['recorded_at'] for r in self.page(key, limit=1)['revisions']], [want[3]])
+
+    def test_a_revision_without_a_committed_receipt_has_no_time_instead_of_an_invented_one(self):
+        key = self.revisions(3)
+        with self.s.assets.connection() as db:
+            db.execute("DELETE FROM setup_operations_v1 WHERE draft_id=? AND request_id='history-2'", (key,))
+        self.assertEqual({r['revision']: r['recorded_at'] is None for r in self.page(key)['revisions']}, {3: False, 2: True, 1: False})
+
+    def extra_receipt(self, key, request_id, **change):
+        """A well-formed, correctly hashed receipt for the draft, changed as asked."""
+        with self.s.assets.connection() as db:
+            receipt = json.loads(db.execute("SELECT receipt FROM setup_operations_v1 WHERE draft_id=? AND request_id='history-2'", (key,)).fetchone()['receipt'])
+            receipt.update(request_id=request_id, **change)
+            db.execute('INSERT INTO setup_operations_v1 VALUES(?,?,?,?,?,?)',
+                       (request_id, 'x' * 64, key, canonical(receipt).decode(), digest(receipt), len(canonical(receipt))))
+
+    def times(self, key):
+        return {r['revision']: r['recorded_at'] for r in self.page(key)['revisions']}
+
+    def test_failed_and_abandoned_receipts_naming_a_revision_give_it_no_time(self):
+        key = self.revisions(3)
+        real = self.receipts(key)
+        self.extra_receipt(key, 'late-failed', status='failed', revision=3, created_at=1.9e9)
+        self.extra_receipt(key, 'late-abandoned', status='abandoned', revision=1, created_at=1.9e9)
+        self.assertEqual(self.times(key), real, 'a non-committed receipt neither replaces nor adds a time')
+        self.extra_receipt(key, 'only-failed', status='failed', revision=2, created_at=1.9e9)
+        with self.s.assets.connection() as db:
+            db.execute("DELETE FROM setup_operations_v1 WHERE draft_id=? AND request_id='history-2'", (key,))
+        self.assertEqual(self.times(key), {3: real[3], 2: None, 1: real[1]})
+
+    def test_unparseable_or_hash_mismatched_receipts_leave_the_time_unrecorded_and_the_page_readable(self):
+        key = self.revisions(3)
+        real = self.receipts(key)
+        with self.s.assets.connection() as db:
+            db.execute("UPDATE setup_operations_v1 SET receipt=? WHERE draft_id=? AND request_id='history-2'", ('not JSON', key))
+            db.execute("UPDATE setup_operations_v1 SET sha256=? WHERE draft_id=? AND request_id='history-3'", ('f' * 64, key))
+        self.assertEqual(self.times(key), {3: None, 2: None, 1: real[1]})
+        self.assertEqual(route(self.url(key, 'history'), None, self.s)['head_revision'], 3)
+
+    def test_two_committed_receipts_naming_one_revision_are_ambiguous_so_unrecorded(self):
+        key = self.revisions(3)
+        real = self.receipts(key)
+        self.extra_receipt(key, 'twin', status='committed', revision=3, created_at=1.9e9)
+        self.assertEqual(self.times(key), {3: None, 2: real[2], 1: real[1]})
+
+    def test_a_receipt_for_another_draft_or_with_a_bad_time_does_not_supply_a_time(self):
+        key = self.revisions(3)
+        real = self.receipts(key)
+        self.extra_receipt(key, 'foreign', status='committed', revision=2, draft_id='another-draft')
+        self.extra_receipt(key, 'bad-time', status='committed', revision=3, created_at='yesterday')
+        with self.s.assets.connection() as db:
+            db.execute("DELETE FROM setup_operations_v1 WHERE draft_id=? AND request_id IN ('history-2','history-3')", (key,))
+        self.assertEqual(self.times(key), {3: None, 2: None, 1: real[1]})
+
     def test_stale_head_continuation_refuses_without_erasing_history(self):
         key = self.revisions(3)
         page = self.page(key, limit=1)
