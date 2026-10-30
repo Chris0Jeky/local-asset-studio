@@ -897,7 +897,7 @@ class Production:
             if not self._tracking_continuation_allowed(identifier):return
             # Inspect retained evidence BEFORE a time/stop gate. A deadline is
             # not permission to discard a known prompt or repeat an unknown POST.
-            job_id=str(uuid.uuid5(uuid.NAMESPACE_URL,f'asset-studio:{identifier}:stage:{index}'))
+            job_id=project_storage.stage_job_id(identifier,index)
             self._attempt(identifier,index,job_id=job_id,operation=stage['operation'])
             job=self.studio.jobs.get(job_id)
             if job:
