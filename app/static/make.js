@@ -573,7 +573,7 @@
   }
   const reviewOf=id=>state.review[id]??(typeof assetState!=='undefined'&&assetState?.assets?.find(x=>x.id===id)?.review)??'unreviewed';
   const timers=new Map();
-  const stamp=job=>job.status+'|'+(job.outputs||[]).map(o=>o.asset_id||'').join(',')+'|'+(job.message||'')+'|'+(job.tracking_disposition?.status||'');
+  const stamp=job=>job.status+'|'+(job.outputs||[]).map(o=>o.asset_id||'').join(',')+'|'+(job.message||'')+'|'+(job.tracking_disposition?.status||'')+'|'+(job.queue_ahead??'');
   // A failed read is not the end of a run (#1438): it keeps checking, backing off to 30 s, and says so on its card.
   const POLL=2500,POLL_MAX=30000;
   function poll(id,misses=0){clearTimeout(timers.get(id));timers.set(id,setTimeout(async()=>{
@@ -605,7 +605,7 @@
       const text=runClock(job,estimates.get(job.id),now),shown=text?' · '+text:'';live||=!!text;if(el.textContent!==shown)el.textContent=shown;
       const slow=el.closest?.('[data-run]')?.querySelector('[data-make-slow]');if(slow){const on=slowRun(job,estimates.get(job.id),now);if(slow.hidden===on){slow.hidden=!on;slow.textContent=on?SLOW:'';}}}
     runTitle();clockTimer=live?setTimeout(tick,1000):0;}
-  function words(job){return({queued:'Waiting its turn',waiting:'Waiting for memory',submitting:'Sending',running:'Painting',observing:'Painting',completed:'Done',failed:'Did not finish',partial:'Some pictures did not finish',uncertain:'Outcome unknown: nothing was sent again',cancelled:'Cancelled',not_submitted:'Not sent'})[job.status]||job.status;}
+  function words(job){return({queued:'Waiting its turn'+(job.queue_ahead>0?' · '+job.queue_ahead+' ahead':''),waiting:'Waiting for memory',submitting:'Sending',running:'Painting',observing:'Painting',completed:'Done',failed:'Did not finish',partial:'Some pictures did not finish',uncertain:'Outcome unknown: nothing was sent again',cancelled:'Cancelled',not_submitted:'Not sent'})[job.status]||job.status;}
   // An uncertain or partial run offers what the full editor's Problems list offers, on its own card: Resume observation reads
   // ComfyUI again for the retained prompt IDs, Stop tracking records a reason. Neither ever sends the picture again.
   function recovery(job){
