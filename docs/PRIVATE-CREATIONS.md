@@ -228,50 +228,63 @@ all Private (or an open asset), **Preview move to Private…** / **Preview move 
 Regular…** asks the planner under `privacy=all` and shows counts by kind, the byte
 estimate, ComfyUI copies that remain, every blocker in one sentence and the short plan
 hash. Outside the All view it asks you to switch and requests nothing; it never
-switches for you. Only a Regular-to-Private preview with `apply_available`, no blockers and at least one run shows **Move N runs to Private**; Private to Regular stays preview-only. One click sends one request with a fresh request ID. If the answer is lost, the dialog never retries by itself: **Check again** (pressed by you) re-sends the identical body and request ID, which the server answers from its receipt without moving anything twice.
+switches for you. A preview with `apply_available`, no blockers and at least one run shows **Move N runs to Private** or **Move N runs to Regular**. The Regular note says plainly that the runs and their pictures become visible in the Regular view and to agents reading Regular. One click sends one request with a fresh request ID. If the answer is lost, the dialog never retries by itself: **Check again** (pressed by you) re-sends the identical body and request ID, which the server answers from its receipt without moving anything twice.
 
-`apply_available` is true for `destination: private`.
+`apply_available` is true for both destinations.
 
-### Migration apply (Regular to Private only)
+### Migration apply (both directions)
 
-`POST /api/assets/migration-apply` moves the planned runs into Private. Send it with
+`POST /api/assets/migration-apply` moves the planned runs to the plan's destination:
+Regular to Private, or Private back to Regular. Both directions run the same code and
+the same journal, which records `source` and `destination`. A journal written before
+Private to Regular existed has no `source` field and means Regular to Private; it still
+validates and recovers exactly as before. Send it with
 `X-Studio-Privacy: all` and the same body as the plan plus `plan_sha256` (from an
 all-scope plan) and a `request_id` (16-128 letters, digits, `_` or `-`). It plans
 again inside the operation. It refuses, without changing anything, when:
 
 | Code | Status | Meaning |
 | --- | --- | --- |
-| `migration_direction_unsupported` | 400 | `destination: regular`; Private to Regular is not built |
 | `migration_scope_required` | 400 | The request scope is not `all` |
 | `migration_blocked` | 409 | The fresh plan has blockers (listed), including `already_in_destination` after a completed move |
 | `migration_stale` | 409 | The fresh plan hash differs; the response does not carry the new hash, so review a new plan |
-| `migration_destination_occupied` | 409 | A private run folder with that ID already exists |
+| `migration_destination_occupied` | 409 | A run folder with that ID already exists in the destination |
 | `migration_busy` | 409 | Another migration is running |
 | `migration_request_conflict` | 409 | The request ID already names a different migration |
 | `migration_recovery_pending` | 409 | An earlier journal is still in staging, verified or published; the message names its file. Restart the Studio to recover it first; if recovery still reports it as invalid or unmarked, see below |
 
 Past those checks it keeps a journal at `private/migrations/<request_id>.json`:
 
-1. **staging**: copies every run file, output snapshot and regular upload copy
-   (with its sidecar) under `private/migrations/<request_id>/`, flushing each copy to disk.
+The paths below are for Regular to Private; Private to Regular is the mirror image
+(`private/runs/` to `runs/`, `private/media/` to `workspace/media/`, `private/uploads/`
+to `uploads/`, `private/thumbs/` retired like `workspace/thumbs/`).
+
+1. **staging**: copies every run file, output snapshot and source-classification upload
+   copy (with its sidecar) under `private/migrations/<request_id>/`, flushing each copy to
+   disk. A Private run may name a Regular upload; that upload stays where it is.
 2. **verified**: every copy matches the planned size and SHA-256. A blob that
-   Private already holds is checked in place, not copied again.
-3. **published**: only the run's `state.json` and `recipe.json` gain `privacy:
-   private`; every other run file stays byte-identical. The run folder and files go
-   into their private homes. Then one Workspace transaction rechecks every asset and
+   the destination already holds is checked in place, not copied again.
+3. **published**: only the run's `state.json` and `recipe.json` change classification
+   (`privacy: private`; moving back, `state.json` says `regular` and `recipe.json` drops
+   the field, as a Regular save writes it); every other run file stays byte-identical. The
+   run folder and files go into their destination homes. An upload's sidecar is copied
+   byte-for-byte, so a Private upload moved to Regular keeps its original `privacy` note. Then one Workspace transaction rechecks every asset and
    collection revision, and that every collection member belongs to the move. It reclassifies them (revisions +1) and records the commit
-   marker. Last, the in-memory job turns private.
-4. **complete** or **cleanup-needed**: the regular run folder is first renamed into
-   the journal folder, so Regular never sees a partial run. Then the copied files are
-   deleted. Regular snapshots, thumbnails and uploads are deleted unless a regular
-   asset or another run still uses them. A file that cannot be deleted (a Windows
+   marker. Last, the in-memory job changes classification.
+4. **complete** or **cleanup-needed**: the source run folder is first renamed into
+   the journal folder, so the source view never sees a partial run. Then the copied files
+   are deleted. Source snapshots, thumbnails and uploads are deleted unless an asset in
+   the source classification, or another run that can read that upload, still uses them.
+   Every run (and every production stage not yet started) reads Regular uploads; only
+   Private runs read Private ones. So moving to Regular keeps a Private upload another
+   Private run names: it is copied to Regular and kept in Private. A file that cannot be deleted (a Windows
    lock, say) is listed in `cleanup_remaining`. A file that appeared after planning
    is kept in the journal folder and listed.
 
 A failure before publication (disk full: 507 `migration_storage_full`; hash mismatch:
 409 `migration_verify_failed`; a concurrent asset edit: 409 `migration_stale`; other
 copy errors: 500 `migration_failed`) removes the staged and placed copies. The
-journal ends `rolled-back` and the run stays regular. Writes to a run being moved
+journal ends `rolled-back` and the run stays where it was. Writes to a run being moved
 are refused (`migration_in_progress`).
 
 Every outcome after the journal exists is a receipt. Repeating the same request ID
@@ -280,9 +293,9 @@ ID is a new request: after completion it is refused as `already_in_destination`.
 
 At Studio start, before any run folder is read, recovery handles each unfinished
 journal. If the Workspace commit marker is absent it rolls back, which removes what
-was placed and leaves the regular originals untouched. If the marker exists, it
-finishes the cleanup; it keeps a regular upload that any retained run record or any
-production comparison stage not yet started still names, or every upload when the
+was placed and leaves the source originals untouched. If the marker exists, it
+finishes the cleanup; it keeps a source upload that any retained run record able to read
+it, or (for Regular uploads) any production comparison stage not yet started, still names, or every upload when the
 records or production plans cannot all be read. Recovery reads a record as strictly as
 the loader: one that parses but fails the loader's validation, names another folder or
 classification, or repeats a run ID counts as unreadable. Uploads kept for that reason are listed in
@@ -294,12 +307,15 @@ stay regular and are listed in `cleanup_remaining`, and every start re-reads the
 it as usual: uploads no record or pending stage still names are retired, the rest stay.
 Until then they are kept, and you can remove them yourself once you have checked which
 runs use them. A rollback never removes
-a run folder or file that another committed request published. A journal whose
+a run folder or file that another request committed after this journal began published;
+an earlier one (a run moved to Private and now back) does not shield this request's own placement. A journal whose
 identity, run IDs, file paths or commit marker do not check out is reported and left
-untouched. The paths are shape-checked before anything is deleted: every placement and
-copy target must lie under `private/`, every copy source under the Regular folder its
-kind comes from (`runs/<migrated run>/`, `uploads/` or `workspace/`), every thumbnail
-under `workspace/thumbs/`, and `..` is refused anywhere. That is a guard against a damaged
+untouched. The paths are shape-checked before anything is deleted: the direction must be Regular to
+Private or Private to Regular; every copy source must lie under the source folder its kind
+comes from (`runs/<migrated run>/`, `uploads/` or `workspace/media/`, or their `private/`
+counterparts), every copy target must be exactly the destination path derived from that
+source, every placement must be one of those targets, every thumbnail must lie directly
+in the source `thumbs/`, and `..` is refused anywhere. That is a guard against a damaged
 or edited journal, not a defence against someone who can already write inside the experiments folder.
 
 Restarting cannot fix such a journal, and it blocks new migrations. Open
@@ -318,9 +334,9 @@ lists them in `external_copies`. They stay Regular: a scene source stays readabl
 through `GET /api/av/<id>/sources/<key>`, and a plan, contact sheet or review in a
 production project keeps the recipe in Regular. Neither is moved or hidden by this
 slice; a move that must remove them is later work.
-Thumbnails are not copied; Private renders its own.
+Thumbnails are not copied; the destination renders its own.
 
-Not built: Private to Regular, a receipt-access policy for migrated targets,
+Not built: a receipt-access policy for migrated targets,
 SDK/MCP tools and a progress display. Cross-volume `experiments` layouts
 and real Windows lock behaviour are not separately qualified.
 
