@@ -2153,8 +2153,8 @@ def _make_generate(c):
 
 @driver('review-desk-by-keyboard')
 def _review_desk(c):
-    """#1729: the Review desk with three candidates, assessed with K, W and X in Pair view, then a winner chosen and the next
-    step shown. The desk is the shipped one (Production.review over synthetic retained images); live mode stops at Prepare review."""
+    """#1729, #1752: the Review desk with three candidates, assessed with K, W and X in Pair view, then a winner chosen with the one
+    control that declares the stated-constraints check and records the decision, and the next step shown. The desk is the shipped one (Production.review over synthetic retained images); live mode stops at Prepare review."""
     with restoring_fixture():
         study = None if c.live else SYNTHETIC['open_desk']()
         c.boot('#production')
@@ -2170,8 +2170,7 @@ def _review_desk(c):
         c.page.wait_for_function('!document.querySelector("#desk").hidden', timeout=8000)
         reviewed = lambda n: c.page.wait_for_function("n => document.querySelector('#desk').getAttribute('aria-busy') === 'false' && "
                                                       "[...document.querySelectorAll('#progress .progress-row span')].filter(s => s.textContent !== 'Not reviewed').length === n", arg=n, timeout=8000)
-        # Pair view (#1752): K, W and X save the candidate on show, so the first candidate takes its constraints check and K together.
-        c.act('#check-constraints', 'select', typed='pass', note='confirm the first candidate meets the stated constraints')
+        # Pair view (#1752): K, W and X save the candidate on show; the constraints check is left to the winner's own declaration below.
         c.act('#leftCanvas', note='focus the first candidate')
         c.stop_before(c.key('k', note='K keeps the first candidate'), 'stopped before the first assessment: that saves a review revision')
         reviewed(1)
@@ -2189,14 +2188,16 @@ def _review_desk(c):
         c.page.wait_for_function('!document.querySelector("#decision").hidden', timeout=8000)
         c.act('#selected', 'select', typed=winner, note='choose the kept candidate as the winner')
         c.act('#summary', 'fill', typed='Candidate %s keeps the silhouette and the lantern glow; the other two lose the face.' % winner, note='say why')
-        c.act('#finalize', note='record the decision')
+        constraints = lambda: next(k['assessment']['observations']['constraints'] for k in SYNTHETIC['desk']['studio'].production.reviews.inspect(SYNTHETIC['desk']['id'])['candidates'] if k['alias'] == winner)
+        marked = None if c.live else constraints()   # the human has not declared it yet: K never set it
+        c.act('#chooseWinner', note='declare the stated constraints met and choose it as the winner (one press)')
         c.page.wait_for_function('document.querySelector("#phase").textContent === "Decision recorded"', timeout=8000)
         c.act('#export', 'read', note='the next step: export the review evidence')
         state = c.page.evaluate("({phase: document.querySelector('#phase').textContent, exportable: !document.querySelector('#export').disabled, rows: document.querySelector('#progress').innerText})")
         stored = {} if c.live else SYNTHETIC['desk']['studio'].production.reviews.inspect(SYNTHETIC['desk']['id'])
         ok = (state['phase'] == 'Decision recorded' and state['exportable'] and bool(winner) and sorted(v for _, v in marks) == ['Keep', 'Needs work', 'Not this']
-              and (c.live or (stored.get('finalized') and stored.get('selected') == winner)))
-        return ok, 'assessed %s; winner %s; desk reads %r; Export review evidence enabled %s' % (marks, winner, state['phase'], state['exportable'])
+              and (c.live or (stored.get('finalized') and stored.get('selected') == winner and marked == 'not_assessed' and constraints() == 'pass')))
+        return ok, 'assessed %s; winner %s (constraints %s before the press); desk reads %r; Export review evidence enabled %s' % (marks, winner, marked, state['phase'], state['exportable'])
 
 
 @driver('library-review-next-by-keyboard')
