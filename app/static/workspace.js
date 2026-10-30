@@ -791,13 +791,15 @@ async function assetQueueDecide(review) {
   // A shortcut must never re-send an unrelated unconfirmed command as if it were this decision.
   if(assetDetailPending || assetDetailConflict){assetDetailStatus('Resolve the earlier save for this asset before recording '+(solo?'a review mark.':'a queue decision.'),true);return false;}
   if(!solo&&assetQueue.ids[assetQueue.index]!==activeAsset.id)return false;
+  // A verdict saves every edited field with it (as the queue does); outside the queue the status names them (#1738 review).
+  const others=solo?Object.entries(assetDetailValues()).filter(([key,value])=>key!=='review'&&!assetDetailFieldEqual(key,value,assetDetailBaseline[key])).map(([key])=>key):[];
   $('#assetReview').value=review;renderAssetReasons();
   const target=activeAsset.id;
   const saved=await saveAssetDetails();
   // Only a confirmed save advances: an unconfirmed, conflicted or refused save keeps this asset and its reason on screen.
   if(!saved || assetDetailBusy || assetDetailPending || assetDetailConflict || activeAsset?.id!==target)return false;
   if(assetRecord(target)?.review!==review)return false;
-  if(solo){if(!assetDetailDirty())assetDetailStatus('Marked '+assetReviewLabels[review]+'. Saved for this picture.');return true;}
+  if(solo){if(!assetDetailDirty())assetDetailStatus('Marked '+assetReviewLabels[review]+'. Saved for this picture'+(others.length?', with your edits to '+others.join(' and ')+'.':'.'));return true;}
   return assetQueueStep(1);
 }
 function assetTagList(value=$('#assetTags').value){

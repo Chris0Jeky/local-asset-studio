@@ -46,6 +46,11 @@ async function test(name,fn){await fn();count++;console.log('PASS',name);}
     const s=open('selected');await key(s,'k');assert.equal(s.writes.length,0,'re-marking the saved mark sends nothing');
     const change=key(s,'w');s.accept(0);await change;const back=key(s,'k');assert.equal(s.payload(1).expected_revisions.a,1,'the second mark carries the confirmed revision');s.accept(1);await back;assert.deepEqual(pressed(s),['selected']);
   });
+  await test('A verdict outside the queue names the other edits it saved with the mark',async()=>{
+    const s=open();s.el('#assetTitle').value='Half-typed title';const pending=key(s,'k');
+    assert.equal(s.metadata(0).title,'Half-typed title','the same bundled save as the queue');s.accept(0);await pending;
+    assert.match(s.el('#assetDetailStatus').textContent,/^Marked .*Saved for this picture, with your edits to title\.$/);
+  });
   await test('A verdict button press saves the same way and keeps its focus after repainting',async()=>{
     const s=open(),document=s.run('document');
     const button={dataset:{queueReview:'needs_work'}};
