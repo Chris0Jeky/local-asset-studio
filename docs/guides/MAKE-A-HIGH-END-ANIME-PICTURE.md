@@ -167,7 +167,7 @@ Round 5 of the lab measured these passes on clean pictures, which had no named d
 ### Fix or upscale (a goal)
 
 1. Press **Fix or upscale** in the goals row (under "From a picture you have").
-2. Choose the picture. Use the search box if the right one is not in the newest 60.
+2. Choose the picture. Use the search box, or **Show more**, if the right one is not in the first 60.
 3. Under **Choose one**, pick **Fix face**, **Fix hands and details** or **Upscale 2×**. An option that cannot run says why under it.
 4. Press **Generate**.
 
