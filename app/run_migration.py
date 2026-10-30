@@ -94,7 +94,7 @@ def plan(studio, payload, scope):
             row = db.execute('SELECT job_id FROM assets WHERE id=? AND '+clause, [identifier, *params]).fetchone()
             if row is None: raise WorkspaceError('Asset not found')
             if row['job_id'] not in run_ids: run_ids.append(row['job_id'])
-        closure = set()
+        closure, unfinished = set(), _unfinished(studio)
         for run_id in run_ids:
             job = visible.get(run_id)
             rows = db.execute('SELECT * FROM assets WHERE job_id=? AND '+clause+' ORDER BY output_index', [run_id, *params]).fetchall()
@@ -113,6 +113,8 @@ def plan(studio, payload, scope):
                 if job['status'] not in SETTLED or job['pending'] or job['record_error']:
                     block('run_not_settled', 'Queued, running, partial, uncertain or unresolved submissions own their state; nothing is cancelled or cleared', run_id=run_id, status=job['status'])
                 if classification == destination: block('already_in_destination', 'This run is already '+destination, run_id=run_id)
+                if run_id in unfinished:  # Its pending cleanup would retire whatever then sits in its source root: the copy this move puts back.
+                    block('migration_cleanup_pending', 'An earlier move of this run has not finished cleaning up ('+_journal_file(unfinished[run_id])+'); restart the Studio so recovery can finish it, then preview again', run_id=run_id)
                 if directory is None: pass
                 elif _alias(directory) or not directory.is_dir():
                     block('missing_run_record', 'The run folder is missing or redirected', run_id=run_id)
@@ -524,11 +526,12 @@ def _cleanup(studio, journal, live):
     and is retried at the next start."""
     remaining, staging, origin = [], _stage_root(studio, journal['request_id']), _origin(journal)
     copied = {c['source'] for c in journal['copies']}
+    moved = {r for r in journal['job_ids'] if not (studio.experiments/('/'.join(ROOTS[journal['destination']]['run_file'])+'/'+r)).is_dir()}  # A later move took these back: the source root holds that copy now.
     for run_id in journal['job_ids']:
         base = '/'.join(ROOTS[origin]['run_file'])+'/'+run_id
         original, retired = studio.experiments/base, staging/'retired'/run_id
         try:
-            if original.exists(): retired.parent.mkdir(parents=True, exist_ok=True); original.rename(retired)  # Atomic: the source view never shows a partial run.
+            if original.exists() and run_id not in moved: retired.parent.mkdir(parents=True, exist_ok=True); original.rename(retired)  # Atomic: the source view never shows a partial run.
             if retired.exists():
                 for path in sorted(retired.rglob('*'), reverse=True):
                     tail = path.relative_to(retired).as_posix()
@@ -542,7 +545,8 @@ def _cleanup(studio, journal, live):
     with studio.assets.connection() as db:
         source_paths = {Path(r[0]).as_posix() for r in db.execute('SELECT path FROM assets WHERE privacy=?', (origin,))}
         source_shas = {r[0] for r in db.execute('SELECT sha256 FROM assets WHERE privacy=?', (origin,))}
-    others = _others(studio, journal['job_ids'], origin) if live else _disk_consumers(studio, journal['job_ids'], origin)  # At start no job is loaded: read run records.
+    excluded = [r for r in journal['job_ids'] if r not in moved]  # A run moved back is a consumer of its uploads again.
+    others = _others(studio, excluded, origin) if live else _disk_consumers(studio, excluded, origin)  # At start no job is loaded: read run records.
     retire = [c['source'] for c in journal['copies'] if c['kind'] == 'asset' and c['source'].removeprefix(ASSET_ROOT[origin]) not in source_paths]
     keep = journal['keep_uploads']  # 'all': apply could not read every record, so nothing is retired until a start can; that start settles it below.
     if keep == 'all' and not live and others is not None: keep = journal['keep_uploads'] = sorted(c['source'] for c in journal['copies'] if c['kind'] == 'upload' and _upload_base(c['source']) in others)  # Every record reads now: the usual keep set.
@@ -612,6 +616,17 @@ def _pending(studio):
         except (OSError, ValueError, AttributeError): stage = None  # Unreadable counts as unfinished.
         if stage not in SETTLED_STAGES: pending.append(path.stem)
     return pending
+
+
+def _unfinished(studio):
+    """{run_id: request_id} for runs a published journal still has to clean up. Earlier stages are refused at apply by _pending."""
+    folder, runs = studio._private_directory('migrations'), {}
+    if not folder.is_dir(): return runs
+    for path in sorted(folder.glob('*.json')):
+        try: journal = json.loads(path.read_text(encoding='utf-8')); stage, ids = journal.get('stage'), journal.get('job_ids')
+        except (OSError, ValueError, AttributeError): continue  # Unreadable: _pending refuses every apply until it is resolved.
+        if stage == 'cleanup-needed' and type(ids) is list: runs.update((i, path.stem) for i in ids if type(i) is str)
+    return runs
 
 
 def _origin(journal): return journal.get('source', 'regular')  # A journal written before both directions existed moved Regular -> Private.

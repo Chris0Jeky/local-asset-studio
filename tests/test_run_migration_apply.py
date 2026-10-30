@@ -662,6 +662,24 @@ class RunMigrationApplyTests(unittest.TestCase):
         self.assertEqual(run_migration.apply(restarted, self.back_body(s, 'back-again-identity'), 'all')[1]['stage'], 'complete')
         self.assertEqual(restarted.jobs[s['jid']]['privacy'], 'regular'); self.assertFalse((self.studio.experiments/'private/runs'/s['jid']).exists())
 
+    def test_an_unfinished_cleanup_blocks_moving_the_run_back_and_never_retires_it_once_moved(self):
+        s = self.scenario(); first = self.body(s, self.plan(s)); self.assertEqual(self.post(APPLY, first)[1]['stage'], 'complete')
+        path = self.studio.experiments/'private/migrations'/(first['request_id']+'.json')
+        def stage(name, remaining):
+            journal = json.loads(path.read_text(encoding='utf-8')); journal.update(stage=name, remaining=remaining); path.write_text(json.dumps(journal))
+        stage('cleanup-needed', ['uploads/stuck.png'])  # e.g. an upload that could not be deleted
+        status, plan = self.post('/api/assets/migration-plan', {'workspace_id': self.workspace_id, 'destination': 'regular', 'job_ids': [s['jid']]})
+        self.assertEqual((status, [b['code'] for b in plan['blockers']]), (200, ['migration_cleanup_pending']), plan)
+        self.assertIn(first['request_id'], plan['blockers'][0]['message'])
+        stage('complete', []); self.assertEqual(self.post(APPLY, self.back_body(s, 'back-after-cleanup'))[1]['stage'], 'complete')
+        returned = self.studio.experiments/'runs'/s['jid']; before = sorted(p.relative_to(returned).as_posix() for p in returned.rglob('*'))
+        stage('cleanup-needed', ['uploads/stuck.png'])  # a journal left unfinished by older code, replayed at the next start
+        restarted = self.studio = self.restart()
+        self.assertTrue((returned/'state.json').is_file(), 'recovery retired the run that a later move put back')
+        self.assertEqual(sorted(p.relative_to(returned).as_posix() for p in returned.rglob('*')), before)
+        self.assertEqual(restarted.jobs[s['jid']]['privacy'], 'regular')
+        self.assertTrue((self.studio.experiments/'uploads'/s['upload']).is_file(), 'recovery retired the upload of the run moved back')
+
     def test_a_journal_in_the_shape_written_before_private_to_regular_still_recovers(self):
         for crash, stage in (('verified', 'rolled-back'), ('committed', 'complete')):
             with self.subTest(crash=crash):

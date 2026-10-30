@@ -1452,6 +1452,7 @@ const migrationBlockers={
   unsupported_operation:'Native project runs keep their originals under projects/, so moving them is not supported.',
   run_not_settled:'The run is queued, running, partial or uncertain; a move never cancels it or clears that uncertainty.',
   already_in_destination:'This run is already in the destination.',
+  migration_cleanup_pending:'An earlier move of this run has not finished cleaning up. Restart the Studio, then preview again.',
   missing_run_record:'The run folder or one of its record files is missing.',
   run_too_large:'The run folder holds more files than a move can handle.',
   missing_sibling:'An output of the run has no retained asset, so the run cannot move whole.',

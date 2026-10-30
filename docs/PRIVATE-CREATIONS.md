@@ -290,6 +290,9 @@ are refused (`migration_in_progress`).
 Every outcome after the journal exists is a receipt. Repeating the same request ID
 returns it, with the current stage, and never runs the move again. A new request
 ID is a new request: after completion it is refused as `already_in_destination`.
+A run named by an earlier move that has not finished cleaning up (`cleanup-needed`) is
+blocked (`migration_cleanup_pending`) until a restart lets recovery finish it, and cleanup
+never retires a source run folder once a later move has taken the run back there.
 
 At Studio start, before any run folder is read, recovery handles each unfinished
 journal. If the Workspace commit marker is absent it rolls back, which removes what
