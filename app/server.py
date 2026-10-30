@@ -4,6 +4,8 @@ from __future__ import annotations
 import argparse
 import copy
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import nullcontext
 import hashlib
 from http.client import HTTPException
 import io
@@ -88,6 +90,8 @@ HISTORY_READ_STRIKES = 3                 # consecutive failed /history reads bef
 TERMINAL_RECEIPTS = ("completed", "failed", "cancelled")  # receipt statuses Resume reconciles from the record, never re-reads
 MAX_JOB_RECORD_BYTES = 8 * 1024**2       # per state/workflow file; recovery never reads an unbounded run record
 MAX_JOB_RECORD_DEPTH = 100              # reject recursive payloads before normalization can rewrite any evidence
+_RECORD_ERRORS = (OSError, ValueError, TypeError, KeyError, AttributeError, RecursionError, OverflowError)
+_THREAD_START = threading.Thread.start  # a stubbed Thread.start (tests) leaves pool workers unstarted, so the loader then runs inline
 HISTORY_READ_BACKOFF_SECONDS = 2         # wait after the n-th consecutive failed read: n times this (2 s, then 4 s)
 HISTORY_READ_ERRORS_KEPT = 20            # failed reads recorded per submission; history_read_error_count keeps the total
 GPU_SAMPLE_EVERY = 5                    # empty history polls between merges of the sampler thread's GPU memory peaks (app/gpu_memory.py)
@@ -1998,20 +2002,36 @@ class Studio:
                       'native.articulated-prop.v1': 'native_path', 'native.av-preview.v1': 'native_path', 'native.voice-baseline.v1': 'native_path'}.get(data.get('operation'))
         if output_key and any(not isinstance(output.get(output_key), str) for output in data.get('outputs', [])): raise ValueError(f"Invalid output {output_key}")
 
+    @classmethod
+    def _read_run_records(cls, state_path):
+        # Pure and thread-safe (no self, no writes): [(path, record, error, aliased)] for state.json then workflow.json, stopping at the first failure.
+        parent = state_path.parent; real = None; out = []
+        for path in (state_path, parent / "workflow.json"):
+            try:
+                if parent.is_symlink() or path.is_symlink() or path.resolve().parent != (real := real or parent.resolve()):
+                    out.append((path, None, ValueError('Retained run records must not redirect through filesystem aliases'), True)); break
+                out.append((path, cls._read_job_record(path), None, False))
+            except _RECORD_ERRORS as exc: out.append((path, None, exc, False)); break
+        return out
+
+    LOAD_WORKERS = 8
+
     def _load_jobs(self):
         private_runs=self._private_directory('runs')
         paths=[*self.runs.glob('*/state.json'),*private_runs.glob('*/state.json')]
         duplicates={name for name,count in Counter(p.parent.name for p in paths).items() if count>1}
-        for state_path in paths:
+        read = lambda p: [] if p.parent.name in duplicates else self._read_run_records(p)
+        parallel = self.LOAD_WORKERS > 1 and len(paths) > 1 and threading.Thread.start is _THREAD_START
+        # Phase A reads every run's records on a bounded pool; phase B applies them here in path order, so duplicates, placeholders and restart rewrites match the serial loader.
+        with ThreadPoolExecutor(self.LOAD_WORKERS) if parallel else nullcontext() as pool:
+          for state_path, results in zip(paths, pool.map(read, paths) if parallel else map(read, paths)):
             classification='private' if state_path.parent.parent==private_runs or state_path.parent.name in duplicates else 'regular'
             data = {}; path = state_path
             try:
                 if state_path.parent.name in duplicates:raise ValueError('Duplicate job ID in regular and private storage; inspect both retained folders')
-                for path in (state_path, state_path.parent / "workflow.json"):
-                    if state_path.parent.is_symlink() or path.is_symlink() or path.resolve().parent != state_path.parent.resolve():
-                        classification='private'
-                        raise ValueError('Retained run records must not redirect through filesystem aliases')
-                    record = self._read_job_record(path)
+                for path, record, error, aliased in results:
+                    if aliased: classification='private'
+                    if error: raise error
                     if path == state_path:
                         data = record
                         if privacy_scope.normalize(data.get('privacy','regular'))!=classification:raise ValueError('Job privacy does not match its run folder')
@@ -2021,7 +2041,7 @@ class Studio:
                     else: graph = record
                 path = state_path
                 self._validate_job_record(data)
-            except (OSError, ValueError, TypeError, KeyError, AttributeError, RecursionError, OverflowError) as exc:
+            except _RECORD_ERRORS as exc:
                 # An explicit private or malformed classification never becomes a
                 # public placeholder, even if somebody moved its retained folder.
                 if data.get('privacy','regular') != 'regular': classification='private'
