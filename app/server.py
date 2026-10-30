@@ -2944,7 +2944,7 @@ class Handler(BaseHTTPRequestHandler):
     studio: Studio = None
     def log_message(self, fmt, *args): pass
     def _json(self, status, obj):
-        if getattr(self, "command", None) == "POST": getattr(getattr(self, "studio", None), "bump_jobs_view", bool)()   # every POST answer follows its mutation (#1767)
+        if getattr(self, "command", None) == "POST" and isinstance(self.studio, Studio): self.studio.bump_jobs_view()   # every POST answer follows its mutation (#1767); strict test fakes are left untouched
         raw = json.dumps(obj).encode(); self.send_response(status); self.send_header("Content-Type", "application/json"); self.send_header("Cache-Control", "no-store"); self.send_header("Content-Length", str(len(raw))); self.end_headers(); self.wfile.write(raw)
     def _safe_host(self):
         return self.headers.get("Host", "") in (f"127.0.0.1:{PORT}", f"localhost:{PORT}")
