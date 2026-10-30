@@ -27,7 +27,7 @@ console.log('Review frontend contracts passed: helpers, source URL scope and exi
 
 // Run the shipped desk against DOM/canvas boundaries; only the initial inspect is stubbed.
 const test=require('node:test');
-async function holdDesk({delayB=false,saves=false}={}){
+async function holdDesk({delayB=false,saves=false,finalized=false}={}){
   const nodes=new Map(),all=[],requests=[],listeners={document:{},window:{}},gate=[];let active=null,decodeB;
   const matches=(node,selector)=>selector.split(',').some(s=>s.startsWith('#')?node.id===s.slice(1):s==='[contenteditable]'?node.contentEditable==='true':node.tagName.toLowerCase()===s);
   class Node {
@@ -47,7 +47,7 @@ async function holdDesk({delayB=false,saves=false}={}){
   const $=id=>nodes.get(id)||all.find(n=>n.id===id),tick=()=>new Promise(resolve=>setImmediate(resolve));
   function emit(surface,type,extra={}){const event={target:$('leftCanvas'),key:' ',button:0,prevented:false,preventDefault(){this.prevented=true;},...extra};for(const fn of (typeof surface==='string'?listeners[surface]:surface.events)[type]||[])fn(event);if(typeof surface!=='string')surface['on'+type]?.(event);return event;}
   for(const [id,value] of Object.entries({cropLeft:'25',cropTop:'25',cropRight:'75',cropBottom:'75',background:'dark',mode:'pair'}))$(id).value=value;
-  const state={exists:true,revision:0,revealed:false,finalized:false,selected:null,notes:'',crop:[2500,2500,7500,7500],background:'dark',history:[],export:null,grid:null,
+  const state={exists:true,revision:0,revealed:false,finalized,selected:null,notes:'',crop:[2500,2500,7500,7500],background:'dark',history:[],export:null,grid:null,
     candidates:[...'ABC'].map(alias=>({alias,preview_url:url.replace('preview-A.png',alias+'.png'),assessment:{verdict:'unreviewed',notes:'',observations:{},cleanup_seconds:null,preference:null}}))};
   const document={querySelector:s=>$(s.slice(1)),querySelectorAll:s=>all.filter(n=>matches(n,s)),createElement:tag=>new Node(tag),get activeElement(){return active;},addEventListener:(type,fn)=>(listeners.document[type]??=[]).push(fn)};
   const sandbox={document,location:{search:'?project='+project},URLSearchParams,console,
@@ -160,6 +160,11 @@ test('Review desk Pair-view K/W/X',async t=>{
     assert.equal(press(desk,'k').prevented,true);await desk.tick();assert.equal(desk.requests.length,1);
     assert.match(desk.$('message').textContent,/^Release Space first/);
     desk.emit('document','keyup');await desk.tick();press(desk,'k');await desk.tick();assert.equal(saved(desk).length,1);assert.equal(saved(desk)[0].alias,'A');
+  });
+  await t.test('a recorded decision is never reopened by a shortcut',async()=>{
+    const desk=await holdDesk({saves:true,finalized:true});
+    assert.equal(press(desk,'k').prevented,true);await desk.tick();assert.equal(desk.requests.length,1,'no rating request');
+    assert.match(desk.$('message').textContent,/^The decision is recorded/);
   });
   await t.test('blind captions keep their candidate letters and hidden settings',async()=>{
     const desk=await holdDesk({saves:true});press(desk,'k');await desk.tick();await desk.answer();

@@ -229,6 +229,8 @@
     if(!verdict||presentation!=='pair'||busy||!state?.exists||event.repeat||event.isComposing||event.altKey||event.ctrlKey||event.metaKey||event.shiftKey||editing(event.target))return;
     event.preventDefault();
     if(heldSide){message('Release Space first: the preview shows the other candidate.',true);return;}
+    // A rating after the decision would reopen it and clear the winner (review_desk.rate); a shortcut never does that silently (#1760 review).
+    if(state.finalized){message('The decision is recorded. Change an assessment with its form and Save to reopen it.',true);return;}
     const mode=$('#mode').value,alias=$('#'+(mode==='pair'?primarySide:mode)).value;
     $('#candidate').value=alias;fillAssessment();$('#verdict').value=verdict;
     drafts.set(alias,assessmentDraft());syncGridSelection();
