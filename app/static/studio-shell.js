@@ -95,7 +95,7 @@
     const disclosure=document.createElement('script');disclosure.src='/static/create-progressive-disclosure.js';document.body.append(disclosure);
     const parallaxRecovery=document.createElement('script');parallaxRecovery.src='/static/parallax-stage-recovery.js';document.body.append(parallaxRecovery);
     const proposalStyle=document.createElement('link');proposalStyle.rel='stylesheet';proposalStyle.href='/static/setup-proposal.css';document.head.append(proposalStyle);
-    const proposal=document.createElement('script');proposal.src='/static/setup-proposal.js';proposal.onload=()=>{const apply=document.createElement('script');apply.src='/static/setup-apply.js';apply.onload=()=>{window.StudioSetupApply.mount(window);window.StudioSetupProposal.mount(window);};document.body.append(apply);};document.body.append(proposal);
+    const proposal=document.createElement('script');proposal.src='/static/setup-proposal.js';proposal.onload=()=>{const apply=document.createElement('script');apply.src='/static/setup-apply.js';apply.onload=()=>{window.StudioSetupApply.mount(window);window.StudioSetupProposal.mount(window);const history=document.createElement('script');history.src='/static/setup-history.js';history.onload=()=>window.StudioSetupHistory.mount(window);document.body.append(history);};document.body.append(apply);};document.body.append(proposal);
     const css=document.createElement('link');css.rel='stylesheet';css.href='/static/bundle-explorer.css';document.head.append(css);
     const core=document.createElement('script');core.src='/static/bundle-core.js';core.onload=()=>{const ui=document.createElement('script');ui.src='/static/bundle-explorer.js';document.body.append(ui);};document.body.append(core);
   }

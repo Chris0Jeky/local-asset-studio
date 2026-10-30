@@ -132,6 +132,15 @@ async def run(out,inert=False):
             check(await page.evaluate("selected.id!=='qwen-3ref'"),'receipt recovery does not silently load the committed revision')
             page.once('dialog',lambda dialog:dialog.accept());await page.click('#loadSharedSetup');await page.wait_for_function("!StudioSetupApply.controller.running&&selected.id==='qwen-3ref'")
             check(s.upload_count==6,'explicit checked load uses existing staged inputs, without another copy')
+            # Read-only Workspace history (#395): the real routes, SQLite rows and page; Create and the recovery journal stay as they are.
+            draft_now=await page.evaluate('StudioSetupDraft.capture()');state_now=await page.evaluate('JSON.stringify(StudioSetupApply.controller.state)');writes=len(COMMANDS);uploads=s.upload_count
+            await page.locator('#setupHistory summary').click();await page.wait_for_function("document.querySelectorAll('#setupHistoryList li').length>=3")
+            check('current head' in await page.locator('#setupHistoryList li').first.inner_text(),'history lists the newest revision as the current head')
+            await page.locator('#setupHistoryList input[type=checkbox]').nth(0).check();await page.locator('#setupHistoryList input[type=checkbox]').nth(2).check()
+            await page.click('#setupHistoryCompare');await page.wait_for_function("document.querySelector('#setupHistoryComparison').textContent.includes('sections differ')||document.querySelector('#setupHistoryStatus').textContent.includes('sections differ')")
+            check('Recipe and graph' in await page.locator('#setupHistoryComparison').inner_text(),'history comparison shows typed setup sections')
+            check((await page.locator('#setupHistoryList a').first.get_attribute('href')).endswith('/export?workspace_id='+state['workspace_id']+'&revision='+str(json.loads(state_now)['revision'])),'history offers the existing export route')
+            check(await page.evaluate('StudioSetupDraft.capture()')==draft_now and await page.evaluate('JSON.stringify(StudioSetupApply.controller.state)')==state_now and len(COMMANDS)==writes and s.upload_count==uploads,'history leaves Create, the recovery journal, writes and copies unchanged')
             check(not errors,'zero page exceptions')
             seen=('/api/estimate','/api/assets/selection')  # the Library's read-only observation of off-page IDs
             forbidden=[x for x in advice.CALLS if x not in (advice.PREFIX,advice.PROPOSAL)+seen]+[x['path'] for x in advice.fixture.POSTS if x['path'] not in seen]
