@@ -126,6 +126,17 @@ function writeProductionDetail(plan,html){
   try{if(typeof focus?.start==='number'&&typeof focus?.end==='number')el.setSelectionRange(focus.start,focus.end,focus.direction||'none');}catch(err){}
   if(typeof focus?.scroll==='number')el.scrollTop=focus.scroll;
 }
+// Names the file to open for a completed native export.  It reads only recorded artifacts and recorded results; it never claims
+// the file was opened, inspected or accepted.  Blender's chest.blend is not an artifact of its own, so its card links the recorded pack.
+const NATIVE_ENTRY={ora:{tool:'Krita',path:'native/layers.ora',how:'Krita → File → Open, then choose the downloaded file.'},godot:{tool:'Godot',path:'native/godot/project.godot',how:'Unzip the source pack, then Godot Project Manager → Import → project.godot inside native/godot.'},articulated:{tool:'Blender',path:'export.zip',file:'chest.blend',how:'Unzip the source pack, then Blender → File → Open → chest.blend.'}};
+function nativeOpenCard(p,artifacts){
+  const entry=NATIVE_ENTRY[p.kind==='articulated'?'articulated':p.export_kind];
+  if(!entry||p.state?.status!=='completed')return '';
+  const found=artifacts.find(a=>a.path===entry.path),head='<aside class="callout native-open" aria-label="Which file to open">';
+  if(!found)return head+'<b>Open this in '+entry.tool+':</b> entry file not recorded for this export.</aside>';
+  const name=entry.file||entry.path.split('/').pop(),record=entry.tool==='Krita'?(p.state.krita?'Recorded Krita roundtrip: saved and reopened roundtrip.kra, '+p.state.krita.kra.layers.length+' layer records retained.':'No Krita roundtrip was recorded.'):entry.tool==='Godot'?(p.state.engine?'Recorded Godot check: import and timed playback verified for this export.':'No Godot check was recorded.'):'No Blender check beyond the export run is recorded.';
+  return head+'<b>Open this in '+entry.tool+':</b> <a href="'+esc(found.url)+'?download" download>'+esc(name)+'</a>'+(entry.file?' <small>(inside '+esc(found.path)+')</small>':'')+'<br><small>'+esc(entry.how)+'</small><br><small>'+esc(record)+' Studio records no art acceptance.</small></aside>';
+}
 function renderProduction(){
   renderPlanList();
   const p=productionPlans.find(p=>p.id===productionId);if(!p){const groups=planGroups(productionPlans);writeProductionDetail(null,groups.recent.length+groups.older.length?'<p>Choose a plan on the left. Plans are budgeted, blind comparisons; quick side-by-sides live in Make.</p><p>Native sprite atlases, layered images and Godot projects start from selected Workspace assets.</p>':'<p>No plans yet. <button type="button" data-plan-comparison><b>Plan a comparison</b></button> runs one change across a few candidates and reviews them blind. For a quick side-by-side, use <a href="/#make"><b>Compare looks</b> in Make</a>.</p>');return;}
@@ -168,6 +179,7 @@ function renderProduction(){
   }else if(p.kind==='native'&&p.state.measurements)html+='<p>'+p.state.measurements.image_count+' images · '+p.state.measurements.canvas.join(' × ')+' · anchor '+p.state.measurements.anchor.join(', ')+'</p><p>Frame durations: '+p.state.measurements.durations_ms.join(' / ')+' ms</p>';
   const artifacts=p.state.artifacts||[],pack=artifacts.find(a=>a.path==='export.zip');
   if(pack)html+='<p><a class="primary artifact-download" href="'+pack.url+'?download" download>Download native source pack</a></p>';
+  html+=nativeOpenCard(p,artifacts);
   for(const a of artifacts.filter(a=>a.role==='animated-glb'))html+='<model-viewer class="native-model" camera-controls autoplay animation-name="ChestLidOpenHoldClose" src="'+a.url+'" alt="Articulated chest animation"></model-viewer>';
   for(const a of artifacts.filter(a=>a.role==='inspection-render'))html+='<img class="native-inspection" src="'+a.url+'" alt="'+esc(a.path)+'">';
   for(const a of artifacts.filter(a=>a.role==='comparison'||a.path==='native/atlas/atlas.png'))html+='<img class="comparison-sheet" src="'+a.url+'" alt="'+esc(a.role==='comparison'?'Candidate contact sheet':'Sprite atlas')+'">';

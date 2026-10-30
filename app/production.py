@@ -148,7 +148,7 @@ class Production:
         result.update(name=plan['name'],kind=plan['kind'],parent_project=plan.get('parent_project'),
                       plan_sha256=plan['sha256'],budget=budget,stages=stages,state=state,
                        recipe=plan.get('recipe'),axis=plan.get('axis'),values=plan.get('values'),
-                       variants=plan.get('variants'),knowledge_sha256=plan.get('knowledge_sha256'),combine=plan.get('combine'))
+                       variants=plan.get('variants'),knowledge_sha256=plan.get('knowledge_sha256'),combine=plan.get('combine'),export_kind=plan.get('export_kind'))
         result['can_reconcile_tracking']=state['status'] in ('interrupted','uncertain','stopped') and bool(self._tracking_terminal_records(project))
         mixed=self._mixed_batch_jobs(project)
         ownership_error=self._mixed_batch_ownership_error(project,mixed)

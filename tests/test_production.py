@@ -76,8 +76,9 @@ class ProductionTests(unittest.TestCase):
             self.assertEqual(execute.call_count,0)
             studio.production.start(project['id']);studio.production.run(project['id'])
         execute.assert_called_once()
-        state=studio.production.get(project['id'])['state']
+        public=studio.production.get(project['id']);state=public['state']
         self.assertTrue(state['krita']['native_kra_save_reopen_proved'])
+        self.assertEqual(public['export_kind'],'ora');self.assertIn('native/layers.ora',[a['path'] for a in state['artifacts']])  # the UI's open-this-file card reads both
         with zipfile.ZipFile(studio.production.root/project['id']/'export.zip') as archive:
             self.assertIn('krita/roundtrip.kra',archive.namelist());self.assertIn('layers.ora',archive.namelist())
         self.assertEqual(self.post_count(studio),0)
