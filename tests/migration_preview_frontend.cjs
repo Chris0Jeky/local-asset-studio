@@ -1,12 +1,12 @@
 'use strict';
-// #1678 second slice: the Library's read-only preview of POST /api/assets/migration-plan (actual workspace.js, inert DOM, controllable I/O).
+// #1678 second and fourth slices: the Library's preview of POST /api/assets/migration-plan and its Move to Private control for POST /api/assets/migration-apply (actual workspace.js, inert DOM, controllable I/O).
 const assert=require('node:assert/strict'),test=require('node:test'),fs=require('node:fs');
 const {setup}=require('./asset_detail_contracts.cjs');
-const PLAN='/api/assets/migration-plan',HASH='0123456789abcdef'.repeat(4);
+const PLAN='/api/assets/migration-plan',APPLY='/api/assets/migration-apply',HASH='0123456789abcdef'.repeat(4);
 function configured(privacies=['regular','regular'],view='all'){
   const s=setup({autoOpen:false});s.el('#assetType').value='all';s.el('#assetSort').value='newest';s.el('#assetArchiveFilter').value='active';
   s.run(`assetActivePrivacy=${JSON.stringify(view)};assetState.assets[0].privacy=${JSON.stringify(privacies[0])};assetState.assets[1].privacy=${JSON.stringify(privacies[1])};`);
-  s.focused=[];for(const id of ['#closeMigration','#migrationSwitch','#previewMigration','#assetMigrate'])s.el(id).focus=()=>s.focused.push(id);
+  s.focused=[];for(const id of ['#closeMigration','#migrationSwitch','#migrationApply','#migrationRecheck','#migrationRepreview','#previewMigration','#assetMigrate'])s.el(id).focus=()=>s.focused.push(id);
   s.run('window.switched=[];window.StudioPrivacy={setScope(v){window.switched.push(v);}};');s.switched=()=>JSON.parse(s.run('JSON.stringify(window.switched)'));
   return s;
 }
@@ -106,11 +106,128 @@ test('Closing returns focus to the opener, ignores a late answer and a reopened 
   const second=s.el('#previewMigration').onclick();assert.equal(s.writes.length,2);assert.equal(s.el('#migrationBody').innerHTML,'');
   s.run('assetPrivacyEpoch++');s.writes[1].resolve(plan());await second;assert.equal(s.el('#migrationBody').innerHTML,'','a privacy change makes the answer stale');
 });
-test('Markup is a native, labelled dialog with a live status, the not-available line and no apply control',()=>{
+test('Markup is a native, labelled dialog with a live status and every move control hidden until the script shows it',()=>{
   const html=fs.readFileSync('app/static/index.html','utf8'),dialog=html.match(/<dialog id="migrationDialog"[\s\S]*?<\/dialog>/)[0];
   assert.match(dialog,/aria-labelledby="migrationTitle"/);assert.match(dialog,/id="migrationStatus" role="status" aria-live="polite"/);
-  assert.match(dialog,/Moving is not available yet; this preview changes nothing\./);
-  assert.deepEqual([...dialog.matchAll(/<button[^>]*id="(\w+)"/g)].map(m=>m[1]),['migrationSwitch','closeMigration']);
-  assert.doesNotMatch(dialog,/apply|move now|confirm/i);assert.match(html,/id="previewMigration" hidden/);assert.match(html,/id="assetMigrate" hidden/);
-  const s=configured();assert.equal(s.el('#migrationDialog').events.cancel,undefined,'Escape keeps the native close');
+  assert.match(dialog,/id="migrationNote"><b>This preview changes nothing\.<\/b>/);assert.doesNotMatch(dialog,/not available yet/);
+  assert.deepEqual([...dialog.matchAll(/<button[^>]*id="(\w+)"([^>]*)>/g)].map(m=>[m[1],/ hidden/.test(m[2])]),[['migrationApply',true],['migrationRecheck',true],['migrationRepreview',true],['migrationSwitch',true],['closeMigration',false]]);
+  assert.match(html,/id="previewMigration" hidden/);assert.match(html,/id="assetMigrate" hidden/);
+  const s=configured(),event={preventDefault(){this.prevented=true;}};s.el('#migrationDialog').emit('cancel',event);assert.notEqual(event.prevented,true,'with no move in flight Escape keeps the native close');
+});
+
+// ---- Apply (Move to Private): the fourth #1678 slice ----
+const ready=(over={})=>plan({apply_available:true,...over});
+const fail=(code,status=409,extra={})=>Object.assign(Error('server words '+code),{status,data:{code,error:'server words '+code,...extra}});
+const receipt=(id,over={})=>({request_id:id,plan_sha256:HASH,destination:'private',stage:'complete',published:true,job_ids:['job-a'],asset_ids:['a','b'],collection_ids:[],cleanup_remaining:[],external_copies:[],...over});
+const tick=()=>new Promise(r=>setImmediate(r));
+async function previewed(over,privacies,view){
+  const s=configured(privacies,view);select(s,['a','b']);s.run("globalThis.refreshed=0;refreshAssets=async()=>{globalThis.refreshed++;return true;}");
+  const done=s.el('#previewMigration').onclick();s.writes[0].resolve(ready(over));await done;return s;
+}
+test('The Move button shows only for a clean, applicable, current Regular-to-Private preview and carries the run count',async()=>{
+  let s=await previewed({items:[...plan().items,{kind:'run',id:'job-b'},{kind:'run',id:'job-c'}]});
+  assert.equal(s.el('#migrationApply').hidden,false);assert.equal(s.el('#migrationApply').textContent,'Move 3 runs to Private');
+  assert.match(s.el('#migrationNote').innerHTML,/cannot be moved back yet/);
+  s=await previewed();assert.equal(s.el('#migrationApply').textContent,'Move 1 run to Private');
+  s=await previewed({blockers:[{code:'run_not_settled',run_id:'job-a'}]});assert.equal(s.el('#migrationApply').hidden,true,'a blocker hides it');
+  s=await previewed({apply_available:false});assert.equal(s.el('#migrationApply').hidden,true,'the server says apply is unavailable');
+  s=await previewed({items:[{kind:'asset',id:'a'}]});assert.equal(s.el('#migrationApply').hidden,true,'no run, nothing to move');
+  s=configured(['private','private']);select(s,['a','b']);let done=s.el('#previewMigration').onclick();
+  s.writes[0].resolve(ready({destination:'regular'}));await done;
+  assert.equal(s.el('#migrationApply').hidden,true,'Private to Regular stays preview-only');assert.match(s.el('#migrationNote').innerHTML,/Moving back to Regular is not available yet; this preview changes nothing\./);
+  s=configured();select(s,['a','b']);done=s.el('#previewMigration').onclick();s.run('assetPrivacyEpoch++');s.writes[0].resolve(ready());await done;
+  assert.equal(s.el('#migrationApply').hidden,true,'a stale privacy epoch never shows it');
+  s=await previewed();s.run('migrationEpoch++');s.el('#migrationApply').onclick();await tick();
+  assert.equal(s.writes.length,1,'a stale preview epoch sends nothing');assert.match(s.el('#migrationStatus').textContent,/out of date\. Nothing was sent/);assert.equal(s.el('#migrationApply').hidden,true);assert.equal(s.el('#migrationRepreview').hidden,false);
+  s=await previewed();s.run('assetWorkspaceEpoch++');s.el('#migrationApply').onclick();await tick();assert.equal(s.writes.length,1,'a changed Workspace epoch sends nothing');
+  s=await previewed();s.run("assetState.workspace_id='2'.repeat(32)");s.el('#migrationApply').onclick();await tick();assert.equal(s.writes.length,1,'a different Workspace sends nothing');
+});
+test('One click sends one apply request with the plan hash, a fresh request ID and the All header; the dialog holds until it answers',async()=>{
+  const s=await previewed();s.el('#assetSearch').focus=()=>s.focused.push('#assetSearch');const done=s.el('#migrationApply').onclick();
+  assert.equal(s.writes.length,2);const w=s.writes[1];assert.equal(w.url,APPLY);assert.equal(w.options.method,'POST');assert.equal(w.options.headers['X-Studio-Privacy'],'all');
+  const body=JSON.parse(w.options.body);assert.deepEqual(Object.keys(body).sort(),['asset_ids','destination','plan_sha256','request_id','workspace_id']);
+  assert.deepEqual({...body,request_id:0},{workspace_id:'1'.repeat(32),destination:'private',asset_ids:['a','b'],plan_sha256:HASH,request_id:0});assert.match(body.request_id,/^[A-Za-z0-9_-]{16,128}$/);
+  assert.equal(s.el('#migrationApply').disabled,true);assert.equal(s.el('#closeMigration').disabled,true);assert.match(s.el('#migrationStatus').textContent,/Moving 1 run to Private.*closing it would hide the result/);
+  s.el('#migrationApply').onclick();s.el('#migrationApply').onclick();assert.equal(s.writes.length,2,'no double submit while in flight');
+  s.el('#closeMigration').onclick();assert.equal(s.el('#migrationDialog').open,true,'Close is held while the move runs');
+  const cancel={preventDefault(){this.prevented=true;}};s.el('#migrationDialog').emit('cancel',cancel);assert.equal(cancel.prevented,true,'Escape is cancelled');
+  s.el('#migrationDialog').close();assert.equal(s.el('#migrationDialog').open,true,'a close that slips past cancel reopens the modal');
+  assert.equal(s.focused.includes('#previewMigration'),false,'no opener focus while the move runs');
+  w.resolve(receipt(body.request_id));await done;
+  assert.match(s.el('#migrationStatus').textContent,/^Moved 1 run \(2 outputs\) to Private\.$/);assert.equal(s.el('#migrationTitle').textContent,'Moved to Private');
+  assert.equal(s.el('#migrationApply').hidden,true);assert.equal(s.el('#migrationApply').disabled,false);assert.equal(s.el('#closeMigration').disabled,false);assert.equal(s.focused.at(-1),'#closeMigration');
+  assert.equal(s.run('globalThis.refreshed'),1,'the Library is refreshed once');assert.equal(s.run('assetSelection.size'),0);assert.equal(s.writes.length,2);
+  assert.equal(s.el('#migrationDialog').open,true);s.el('#closeMigration').onclick();assert.equal(s.el('#migrationDialog').open,false);assert.equal(s.focused.at(-1),'#assetSearch','the hidden opener hands focus to the search box');
+});
+test('Leftover Regular copies are reported with the success, and an open asset detail learns it is Private',async()=>{
+  const s=configured(['regular','regular']);s.run("globalThis.refreshed=0;refreshAssets=async()=>{globalThis.refreshed++;return true;}");s.run("openAsset('a')");
+  const pre=s.el('#assetMigrate').onclick();s.writes[0].resolve(ready({asset_ids:['a']}));await pre;
+  const done=s.el('#migrationApply').onclick();assert.deepEqual(JSON.parse(s.writes[1].options.body).asset_ids,['a']);
+  s.writes[1].resolve(receipt(JSON.parse(s.writes[1].options.body).request_id,{asset_ids:['a'],cleanup_remaining:['x','y']}));await done;
+  assert.match(s.el('#migrationStatus').textContent,/Moved 1 run \(1 output\) to Private\. 2 leftover copies in Regular could not be deleted yet/);
+  assert.equal(s.run('activeAsset.privacy'),'private');assert.equal(s.el('#assetMigrate').textContent,'Preview move to Regular…');
+});
+test('Each refusal code is one plain sentence, hides Apply, offers only what is safe, and never sends a second request by itself',async()=>{
+  const cases=[['migration_blocked',/^This move is blocked now, so nothing was moved\. Preview again to see why\.$/,'preview'],
+    ['migration_stale',/^Something changed since the preview, so nothing was moved\. Preview again\.$/,'preview'],
+    ['migration_busy',/^Another move is running, possibly this one\. Wait a moment, then press Check again\.$/,'check'],
+    ['migration_request_conflict',/names a different move.*Preview again/,'preview'],
+    ['migration_recovery_pending',/earlier move did not finish.*Restart the Studio/,''],
+    ['migration_destination_occupied',/same ID already exists.*Private view/,''],
+    ['migration_scope_required',/needs the All view/,''],
+    ['migration_direction_unsupported',/back to Regular is not built yet/,''],
+    ['migration_in_progress',/has not finished.*nothing is retried automatically/,''],
+    ['migration_storage_full',/disk is full/,'preview'],['migration_verify_failed',/did not match its original/,'preview'],['migration_failed',/failed before anything was published/,'preview']];
+  for(const [code,pattern,offer] of cases){
+    const s=await previewed();const done=s.el('#migrationApply').onclick();s.writes[1].reject(fail(code,code==='migration_failed'?500:409,{blockers:[{code:'run_not_settled',run_id:'job-a'}]}));await done;await tick();
+    const text=s.el('#migrationStatus').textContent;assert.match(text,pattern,code);assert.doesNotMatch(text,/server words/,'the mapped sentence, not the server text');
+    assert.equal(s.el('#migrationApply').hidden,true,code);assert.equal(s.el('#migrationRecheck').hidden,offer!=='check',code);assert.equal(s.el('#migrationRepreview').hidden,offer!=='preview',code);
+    assert.equal(s.el('#migrationApply').disabled,false);assert.equal(s.el('#closeMigration').disabled,false);assert.equal(s.writes.length,2,code+': no automatic second request');assert.equal(s.run('globalThis.refreshed'),0,'a refusal changes nothing, so nothing is refreshed');
+    if(code==='migration_blocked')assert.match(s.el('#migrationBody').innerHTML,/queued, running, partial or uncertain/,'the fresh blockers are listed in plain words');
+  }
+});
+test('After migration_stale, Preview again asks the planner afresh and the next Move click uses a new request ID',async()=>{
+  const s=await previewed();let done=s.el('#migrationApply').onclick();const first=JSON.parse(s.writes[1].options.body);s.writes[1].reject(fail('migration_stale'));await done;
+  done=s.el('#migrationRepreview').onclick();assert.equal(s.writes.length,3);assert.equal(s.writes[2].url,PLAN);assert.deepEqual(JSON.parse(s.writes[2].options.body),{workspace_id:'1'.repeat(32),destination:'private',asset_ids:['a','b']});
+  assert.equal(s.el('#migrationRepreview').hidden,true);assert.equal(s.el('#migrationApply').hidden,true);
+  s.writes[2].resolve(ready({plan_sha256:'f'.repeat(64)}));await done;assert.equal(s.el('#migrationApply').hidden,false);
+  done=s.el('#migrationApply').onclick();const second=JSON.parse(s.writes[3].options.body);
+  assert.equal(second.plan_sha256,'f'.repeat(64));assert.notEqual(second.request_id,first.request_id);s.writes[3].resolve(receipt(second.request_id));await done;assert.match(s.el('#migrationStatus').textContent,/^Moved/);
+});
+test('A lost answer is uncertain: no automatic retry, and Check again re-sends the SAME body and request ID until the server answers',async()=>{
+  for(const lost of [Error('NetworkError when attempting to fetch'),Object.assign(Error('boom'),{status:500,data:{error:'boom'}}),'garbled',{published:false,request_id:'x'}]){
+    const s=await previewed();let done=s.el('#migrationApply').onclick();const sent=s.writes[1].options.body,id=JSON.parse(sent).request_id;
+    if(lost instanceof Error)s.writes[1].reject(lost);else s.writes[1].resolve(lost);await done;await tick();
+    assert.match(s.el('#migrationStatus').textContent,/^The move may or may not have happened/);assert.match(s.el('#migrationStatus').textContent,/same move; the server never moves it twice\. Do not start a new move first, and reload the Library/);
+    assert.equal(s.writes.length,2,'no automatic retry');assert.equal(s.el('#migrationApply').hidden,true,'no fresh Apply');assert.equal(s.el('#migrationRecheck').hidden,false);assert.equal(s.focused.at(-1),'#migrationRecheck');assert.equal(s.run('globalThis.refreshed'),0);
+    done=s.el('#migrationRecheck').onclick();assert.equal(s.writes.length,3);assert.equal(s.writes[2].url,APPLY);assert.equal(s.writes[2].options.body,sent,'identical body');assert.equal(JSON.parse(s.writes[2].options.body).request_id,id);assert.equal(s.writes[2].options.headers['X-Studio-Privacy'],'all');
+    assert.equal(s.el('#migrationRecheck').disabled,true);
+    s.writes[2].reject(fail('migration_busy'));await done;await tick();assert.match(s.el('#migrationStatus').textContent,/Wait a moment, then press Check again/);assert.equal(s.writes.length,3);assert.equal(s.el('#migrationRecheck').hidden,false);
+    done=s.el('#migrationRecheck').onclick();assert.equal(s.writes[3].options.body,sent,'busy keeps the same identity');
+    s.writes[3].resolve(receipt(id,{stage:'cleanup-needed',cleanup_remaining:['one']}));await done;
+    assert.match(s.el('#migrationStatus').textContent,/^Moved 1 run \(2 outputs\) to Private\. 1 leftover copy/);assert.equal(s.el('#migrationRecheck').hidden,true);assert.equal(s.writes.length,4);assert.equal(s.run('globalThis.refreshed'),1);
+  }
+});
+test('A receipt for another request, a non-private destination or an unfinished stage is never reported as a move',async()=>{
+  for(const odd of [r=>({...r,request_id:'someone-elses-request-0001'}),r=>({...r,destination:'regular'}),r=>({...r,published:null}),r=>({...r,job_ids:undefined})]){
+    const s=await previewed();const done=s.el('#migrationApply').onclick();s.writes[1].resolve(odd(receipt(JSON.parse(s.writes[1].options.body).request_id)));await done;
+    assert.match(s.el('#migrationStatus').textContent,/may or may not have happened/);assert.equal(s.el('#migrationRecheck').hidden,false);assert.equal(s.run('globalThis.refreshed'),0);
+  }
+});
+test('A move that outlives a privacy change still reports through the Library message and never repaints another preview',async()=>{
+  const s=await previewed();const done=s.el('#migrationApply').onclick();const id=JSON.parse(s.writes[1].options.body).request_id;
+  s.run('assetPrivacyEpoch++');s.el('#migrationDialog').close();assert.equal(s.el('#migrationDialog').open,false,'a scope change may close the dialog even mid-move');
+  s.el('#previewMigration').onclick();assert.equal(s.writes.length,2,'no second planner request while the move runs');assert.match(s.el('#assetMessage').textContent,/A move is still running/);
+  s.writes[1].resolve(receipt(id));await done;
+  assert.match(s.el('#assetMessage').textContent,/^Moved 1 run \(2 outputs\) to Private\.$/);assert.equal(s.el('#migrationTitle').textContent,'Preview move to Private','the closed dialog is not repainted');assert.equal(s.run('globalThis.refreshed'),1);
+  const lost=await previewed();const d2=lost.el('#migrationApply').onclick();lost.run('assetPrivacyEpoch++');lost.el('#migrationDialog').close();lost.writes[1].reject(Error('network'));await d2;
+  assert.match(lost.el('#assetMessage').textContent,/may or may not have happened/);assert.equal(lost.writes.length,2);
+});
+test('Library shortcuts stay inert for the whole life of the Move dialog, including while a move is in flight',async()=>{
+  const s=configured();s.run(fs.readFileSync('app/static/review-checks.js','utf8'));s.run("assetQueue={ids:['a','b'],index:0};openAsset('a')");
+  const pre=s.el('#assetMigrate').onclick();s.writes[0].resolve(ready({asset_ids:['a']}));await pre;
+  const done=s.el('#migrationApply').onclick();assert.equal(s.writes.length,2);
+  for(const k of ['k','w','x','s','ArrowRight','1','5']){const event={key:k,target:{tagName:'BUTTON'},preventDefault(){this.prevented=true;}};await s.dispatch('keydown',event);assert.notEqual(event.prevented,true,k);}
+  assert.equal(s.writes.length,2,'no metadata write from a shortcut');s.writes[1].resolve(receipt(JSON.parse(s.writes[1].options.body).request_id,{asset_ids:['a']}));await done;
+  const event={key:'k',target:{tagName:'BUTTON'},preventDefault(){this.prevented=true;}};await s.dispatch('keydown',event);assert.equal(s.writes.length,2,'still inert after the move while the dialog is open');
 });
