@@ -94,7 +94,7 @@ class RunMigrationPlanTests(unittest.TestCase):
         self.assertEqual(plan['blockers'], [{'code': 'scope_partial', 'message': plan['blockers'][0]['message']}])
         copied = sum(i['bytes'] for i in plan['items'] if i['kind'] in ('run_file', 'asset', 'upload', 'thumbnail'))
         self.assertEqual(plan['byte_estimate'], copied); self.assertGreater(copied, 0)
-        self.assertFalse(plan['apply_available']); self.assertRegex(plan['plan_sha256'], '^[0-9a-f]{64}$')
+        self.assertTrue(plan['apply_available']); self.assertRegex(plan['plan_sha256'], '^[0-9a-f]{64}$')  # Regular->Private apply exists (#1678 slice 3)
 
     def test_running_uncertain_partial_and_pending_submission_runs_are_blocked_and_left_unchanged(self):
         for status, extra in (('running', {}), ('uncertain', {}), ('partial', {}), ('queued', {}), ('completed', {'pending_submission': {'index': 0}})):

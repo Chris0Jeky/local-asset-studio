@@ -2,13 +2,23 @@
 
 It resolves each run's closure (run folder, every output sibling, snapshots, thumbnails, upload copies,
 collections, lineage children, receipts, external ComfyUI copies), reports blockers and binds the result
-with a plan hash. It never writes: no journal, metadata, thumbnail render or file move. Apply is not built.
+with a plan hash. plan() never writes: no journal, metadata, thumbnail render or file move.
 Visibility follows the request's privacy scope exactly; anything outside it is neither listed nor counted.
+
+apply() (third slice) moves Regular -> Private only, for a re-planned closure with no blockers, through a
+durable journal under private/migrations/: staging -> verified -> published -> cleanup-needed/complete, or
+rolled-back. The workspace commit marker (run_migrations_v1) is the publication point; recover() runs at
+Studio start before job discovery and rolls an interrupted journal back or forward from that truth.
 """
+import errno
 import hashlib
 import json
 import os
 import re
+import shutil
+import sqlite3
+import threading
+import time
 from pathlib import Path
 
 from workspace import WorkspaceError, digest_file, privacy_matches, privacy_scope, privacy_sql
@@ -180,7 +190,7 @@ def plan(studio, payload, scope):
     return {'workspace_id': identity, 'scope': scope, 'destination': destination, 'asset_ids': asset_ids, 'job_ids': job_ids,
             'items': ordered, 'item_count': len(ordered), 'blockers': blockers, 'applicable': not blockers,
             'byte_estimate': sum(item['bytes'] for item in ordered if item['kind'] in COPIED),
-            'remaining_copies': REMAINING, 'plan_sha256': digest, 'apply_available': False, 'writes': False}
+            'remaining_copies': REMAINING, 'plan_sha256': digest, 'apply_available': destination == 'private', 'writes': False}
 
 
 def _alias(path):
@@ -198,3 +208,325 @@ def _upload(studio, add, block, guard, rel, run_id, name, classification):
     if original.is_file() and not original.is_symlink():
         add(dict(kind='external_copy', id='comfyui/input/'+name, classification=None, bytes=original.stat().st_size, run_id=run_id,
                  consequence='ComfyUI input copy; it remains in place'))
+
+
+# ---- Apply: Regular -> Private only (#1678, third slice). Private -> Regular and the UI are later slices. ----
+APPLY_FIELDS = FIELDS | {'plan_sha256', 'request_id'}
+FORMAT = 'studio.run-migration/v1'
+MARKER_TABLE = 'CREATE TABLE IF NOT EXISTS run_migrations_v1 (request_id TEXT PRIMARY KEY, plan_sha256 TEXT NOT NULL, job_ids TEXT NOT NULL, targets TEXT NOT NULL, created_at REAL NOT NULL)'
+REQUEST_ID = re.compile(r'[A-Za-z0-9_-]{16,128}')
+SETTLED_STAGES = ('complete', 'rolled-back', 'cleanup-needed')  # Published or undone; anything else awaits recovery.
+MAX_SCANNED_RUNS = 20000
+_LOCK = threading.Lock()  # ponytail: one migration at a time Studio-wide; per-run locks if overlapping migrations ever matter
+
+
+def _checkpoint(stage):
+    """A journal boundary. Tests replace this to simulate a crash (a BaseException skips every rollback)."""
+
+
+def _journal_path(studio, request_id): return studio._private_directory('migrations')/(request_id+'.json')
+
+
+def _stage_root(studio, request_id): return studio._private_directory('migrations')/request_id
+
+
+def _write(studio, journal, stage, **fields):
+    journal.update(fields, stage=stage, updated_at=time.time())
+    path = _journal_path(studio, journal['request_id']); path.parent.mkdir(parents=True, exist_ok=True)
+    studio._write_observation_state(path, journal)
+
+
+def _at(studio, rel):
+    """A journal path, contained in experiments; a journal never names anything outside it."""
+    path = studio.experiments/rel
+    if type(rel) is not str or Path(rel).is_absolute() or '..' in Path(rel).parts or studio.experiments not in path.resolve().parents:
+        raise WorkspaceError('A migration journal path escapes the experiments folder', status=500, code='migration_journal_invalid')
+    return path
+
+
+def _upload_names(job):
+    names = [r.get('file') for r in job.get('references') or [] if isinstance(r, dict)]
+    controls = job.get('controls') if isinstance(job.get('controls'), dict) else {}
+    names += [controls.get(k) for k in ('reference', 'last_reference')]
+    names += [o.get('uploaded_file') for o in job.get('outputs') or [] if isinstance(o, dict)]
+    return {n for n in names if isinstance(n, str)}
+
+
+def _upload_base(source):
+    name = Path(source).name
+    return name[:-5] if name.endswith('.json') else name  # A sidecar follows its upload.
+
+
+def _others(studio, runs):
+    with studio.lock: return set().union(*(_upload_names(j) for k, j in studio.jobs.items() if k not in runs))
+
+
+def _outcome(journal):
+    """The receipt for this request identity: the same answer after a lost acknowledgement, with the current stage."""
+    recovery = {'recovery': journal['recovery']} if journal.get('recovery') else {}
+    common = dict(request_id=journal['request_id'], plan_sha256=journal['plan_sha256'], destination=journal['destination'], stage=journal['stage'], **recovery)
+    if journal['stage'] == 'rolled-back':
+        failure = journal['failure']
+        return failure['status'], dict(common, error=failure['error'], code=failure['code'], failed_stage=failure['failed_stage'], published=False)
+    if journal['stage'] not in ('complete', 'cleanup-needed'):
+        return 409, dict(common, error='This migration has not finished; restart the Studio to recover it. Nothing is retried automatically.', code='migration_in_progress', published=None)
+    return 200, dict(common, published=True, job_ids=journal['job_ids'], asset_ids=journal['asset_ids'], collection_ids=journal['collection_ids'],
+                     cleanup_remaining=journal['remaining'], external_copies=journal['external_copies'], remaining_copies=REMAINING)
+
+
+def apply(studio, payload, scope):
+    """(status, body). Refusals before the journal exists change nothing and leave no receipt; afterwards every outcome is a receipt."""
+    if type(payload) is not dict or not set(payload) <= APPLY_FIELDS or 'plan_sha256' not in payload or 'request_id' not in payload:
+        raise WorkspaceError('Supply workspace_id, destination, plan_sha256, request_id and asset_ids and/or job_ids only')
+    request_id = studio.assets.request_id(payload['request_id'])
+    if type(payload['plan_sha256']) is not str or not re.fullmatch('[0-9a-f]{64}', payload['plan_sha256']):
+        raise WorkspaceError('plan_sha256 must be 64 lowercase hexadecimal characters')
+    request = {k: v for k, v in payload.items() if k in FIELDS}
+    asset_ids, job_ids = _validate(request)
+    if request['destination'] != 'private':
+        raise WorkspaceError('Moving private runs back to regular is not built yet; nothing changed', code='migration_direction_unsupported')
+    if privacy_scope(scope) != 'all':
+        raise WorkspaceError('Apply plans again under the all privacy scope; send X-Studio-Privacy: all. Nothing changed', code='migration_scope_required')
+    fingerprint = hashlib.sha256(json.dumps({'workspace_id': request['workspace_id'], 'destination': 'private', 'plan_sha256': payload['plan_sha256'],
+                                             'asset_ids': sorted(asset_ids), 'job_ids': sorted(job_ids)}, sort_keys=True).encode()).hexdigest()
+    if not _LOCK.acquire(blocking=False): raise WorkspaceError('Another migration is running; nothing changed', status=409, code='migration_busy')
+    try:
+        path = _journal_path(studio, request_id)
+        if path.exists():
+            journal = json.loads(path.read_text(encoding='utf-8'))
+            if journal.get('fingerprint') != fingerprint:
+                raise WorkspaceError('This request ID already names a different migration; nothing changed', status=409, code='migration_request_conflict')
+            return _outcome(journal)
+        if pending := _pending(studio):  # Recovery of an unfinished journal could otherwise undo files this request publishes.
+            raise WorkspaceError('An earlier migration has not finished; restart the Studio to recover it. Nothing changed', status=409, code='migration_recovery_pending', request_ids=pending[:10])
+        return _apply(studio, request, request_id, payload['plan_sha256'], fingerprint)
+    finally: _LOCK.release()
+
+
+def _apply(studio, request, request_id, plan_sha256, fingerprint):
+    current = plan(studio, request, 'all')
+    if current['blockers']:
+        raise WorkspaceError('The migration is blocked; nothing changed', status=409, code='migration_blocked', blockers=current['blockers'])
+    if current['plan_sha256'] != plan_sha256:
+        raise WorkspaceError('The plan is stale: something in it changed. Review a fresh plan; nothing changed', status=409, code='migration_stale')
+    items = current['items']
+    runs = {i['id']: i['revision'] for i in items if i['kind'] == 'run'}
+    for run_id in runs:
+        if studio._job_directory(run_id, 'private').exists():
+            raise WorkspaceError('A private run folder with this ID already exists; nothing changed', status=409, code='migration_destination_occupied', run_id=run_id)
+    copies = {}
+    for item in items:
+        if item['kind'] in ('run_file', 'upload') and item['classification'] == 'regular': source = item['id']
+        elif item['kind'] == 'asset': source = item['path']
+        else: continue
+        target = 'private/'+source.removeprefix('workspace/')
+        copies[target] = dict(kind=item['kind'], source=source, target=target, sha256=item['sha256'], bytes=item['bytes'])
+    others = _others(studio, runs)  # Uploads still named by any run outside this closure stay where they are.
+    journal = dict(format=FORMAT, request_id=request_id, fingerprint=fingerprint, plan_sha256=plan_sha256, workspace_id=current['workspace_id'],
+                   destination='private', job_ids=sorted(runs), asset_ids=sorted(i['id'] for i in items if i['kind'] == 'asset'),
+                   collection_ids=sorted(i['id'] for i in items if i['kind'] == 'collection'),
+                   asset_revisions={i['id']: [i['revision'], i['sha256'], i['path']] for i in items if i['kind'] == 'asset'},
+                   collection_revisions={i['id']: i['revision'] for i in items if i['kind'] == 'collection'},
+                   copies=sorted(copies.values(), key=lambda c: c['target']), thumbnails=sorted(i['id'] for i in items if i['kind'] == 'thumbnail'),
+                   keep_uploads=sorted(c['source'] for c in copies.values() if c['kind'] == 'upload' and _upload_base(c['source']) in others),
+                   external_copies=sorted(i['id'] for i in items if i['kind'] == 'external_copy'), placements=None, remaining=[], created_at=time.time())
+    stage, committed, staging = 'staging', False, _stage_root(studio, request_id)
+    try:
+        with studio.lock: studio.migrating.update(runs)  # Studio._save refuses these runs until the finally below.
+        _write(studio, journal, 'staging')
+        for copy in journal['copies']:
+            if copy['kind'] != 'run_file' and _at(studio, copy['target']).exists(): continue  # Private already holds this blob; verified below.
+            staged = staging/copy['target']; staged.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(_at(studio, copy['source']), staged); _durable(studio, staged)
+        _checkpoint('staging')
+        placements = []
+        for copy in journal['copies']:
+            staged = staging/copy['target']; existing = copy['kind'] != 'run_file' and not staged.exists()
+            checked = _at(studio, copy['target']) if existing else staged
+            if checked.is_symlink() or not checked.is_file() or checked.stat().st_size != copy['bytes'] or digest_file(checked) != copy['sha256']:
+                raise WorkspaceError('A copied file did not match its planned SHA-256; nothing was published', status=409, code='migration_verify_failed', file=copy['source'])
+            if copy['kind'] != 'run_file': placements.append(dict(target=copy['target'], created=not existing))
+        stage = 'verified'; _write(studio, journal, 'verified', placements=placements)
+        _checkpoint('verified')
+        with studio.lock:
+            for run_id, revision in runs.items():  # Job writes for these runs are refused now; this catches one that landed before.
+                if digest_file(studio._job_directory(run_id, 'regular')/'state.json') != revision:
+                    raise WorkspaceError('A run changed while it was being copied; nothing was published', status=409, code='migration_stale', run_id=run_id)
+            for run_id in runs:  # Only the classification changes; every other run file stays byte-identical.
+                folder = staging/'private/runs'/run_id
+                state = json.loads((folder/'state.json').read_text(encoding='utf-8')); state['privacy'] = 'private'
+                recipe = json.loads((folder/'recipe.json').read_text(encoding='utf-8')); recipe['privacy'] = 'private'
+                studio._write_observation_state(folder/'recipe.json', recipe); studio._write_observation_state(folder/'state.json', state)
+                _durable(studio, folder/'recipe.json'); _durable(studio, folder/'state.json')
+                folder.rename(studio._job_directory(run_id, 'private')); studio._sync_parent_directory(studio._job_directory(run_id, 'private').parent)
+            for placement in placements:
+                if placement['created']:
+                    final = _at(studio, placement['target']); final.parent.mkdir(parents=True, exist_ok=True); os.replace(staging/placement['target'], final)
+                    studio._sync_parent_directory(final.parent)
+            _checkpoint('placed')
+            _publish(studio, journal)
+            committed = True
+            _checkpoint('committed')
+            for run_id in runs: studio.jobs[run_id]['privacy'] = 'private'
+            stage = 'published'; _write(studio, journal, 'published')
+        _checkpoint('published')
+        _cleanup(studio, journal, live=True)
+        return _outcome(journal)
+    except Exception as exc:
+        if committed: raise  # Published is never rolled back; the commit marker lets recovery finish the cleanup.
+        if isinstance(exc, WorkspaceError): status, code, message = exc.status, exc.code, str(exc)
+        elif isinstance(exc, OSError) and exc.errno == errno.ENOSPC: status, code, message = 507, 'migration_storage_full', 'The disk is full; nothing was published and the copies were removed'
+        else: status, code, message = 500, 'migration_failed', 'The migration failed before publication; nothing was published ('+(str(exc) or type(exc).__name__)[:200]+')'
+        _rollback(studio, journal)
+        _write(studio, journal, 'rolled-back', failure=dict(status=status, code=code, error=message, failed_stage=stage))
+        return _outcome(journal)
+    finally:
+        with studio.lock: studio.migrating.difference_update(runs)
+
+
+def _publish(studio, journal):
+    """The one publication step: every asset and collection changes classification with the commit marker, or nothing does."""
+    asset_ids, collection_ids = journal['asset_ids'], journal['collection_ids']
+    with studio.assets.connection() as db:
+        db.execute('BEGIN IMMEDIATE')
+        studio.assets._check_scope(db, journal['workspace_id'])
+        db.execute(MARKER_TABLE)
+        marks = ','.join('?'*len(journal['job_ids']))
+        rows = {r['id']: r for r in db.execute('SELECT id,privacy,metadata_revision,sha256,path FROM assets WHERE job_id IN ('+marks+')', journal['job_ids'])}
+        if set(rows) != set(asset_ids) or any(r['privacy'] != 'regular' or [r['metadata_revision'], r['sha256'], 'workspace/'+Path(r['path']).as_posix()] != journal['asset_revisions'][k] for k, r in rows.items()):
+            raise WorkspaceError('An asset in this plan changed; nothing was published', status=409, code='migration_stale')
+        for key, revision in journal['collection_revisions'].items():
+            row = db.execute('SELECT privacy,revision FROM collections WHERE id=?', (key,)).fetchone()
+            members = {r[0] for r in db.execute('SELECT asset_id FROM collection_assets WHERE collection_id=?', (key,))}  # Adding a member bumps only that asset.
+            if row is None or row['privacy'] != 'regular' or row['revision'] != revision or not members <= set(asset_ids):
+                raise WorkspaceError('A collection in this plan changed; nothing was published', status=409, code='migration_stale')
+        db.executemany("UPDATE assets SET privacy='private',metadata_revision=metadata_revision+1 WHERE id=?", [(k,) for k in asset_ids])
+        db.executemany("UPDATE collections SET privacy='private',revision=revision+1 WHERE id=?", [(k,) for k in collection_ids])
+        db.execute('INSERT INTO run_migrations_v1 VALUES (?,?,?,?,?)', (journal['request_id'], journal['plan_sha256'], json.dumps(journal['job_ids']),
+                                                                      json.dumps([p['target'] for p in journal['placements']]), time.time()))
+
+
+def _committed(studio, request_id):
+    with studio.assets.connection() as db:
+        if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='run_migrations_v1'").fetchone(): return False
+        return db.execute('SELECT 1 FROM run_migrations_v1 WHERE request_id=?', (request_id,)).fetchone() is not None
+
+
+def _rollback(studio, journal):
+    """Before publication only: remove what this journal placed or staged. Regular originals were never touched."""
+    if journal.get('placements') is not None:  # Placement starts only after 'verified'; the occupied check proved these folders absent.
+        owned_runs, owned_targets = _owned(studio, journal['request_id'])  # Never undo what another, committed request published.
+        for run_id in journal['job_ids']:
+            folder = studio._job_directory(run_id, 'private')
+            if folder.exists() and run_id not in owned_runs: shutil.rmtree(folder)
+        with studio.assets.connection() as db: used = {Path(r[0]).as_posix() for r in db.execute("SELECT path FROM assets WHERE privacy='private'")}  # Windows rows hold media\x
+        for placement in journal['placements']:
+            if placement['created'] and placement['target'] not in owned_targets and placement['target'].removeprefix('private/') not in used:
+                _at(studio, placement['target']).unlink(missing_ok=True)
+    staging = _stage_root(studio, journal['request_id'])
+    if staging.exists(): shutil.rmtree(staging)
+
+
+def _cleanup(studio, journal, live):
+    """After publication: retire regular originals. A failure stays listed (cleanup-needed) and is retried at the next start."""
+    remaining, staging = [], _stage_root(studio, journal['request_id'])
+    copied = {c['source'] for c in journal['copies']}
+    for run_id in journal['job_ids']:
+        regular, retired = studio.experiments/'runs'/run_id, staging/'retired'/run_id
+        try:
+            if regular.exists(): retired.parent.mkdir(parents=True, exist_ok=True); regular.rename(retired)  # Atomic: Regular never shows a partial run.
+            if retired.exists():
+                for path in sorted(retired.rglob('*'), reverse=True):
+                    rel = 'runs/'+run_id+'/'+path.relative_to(retired).as_posix()
+                    if path.is_dir() and not path.is_symlink():
+                        if not any(path.iterdir()): path.rmdir()
+                    elif rel in copied: path.unlink()
+                    else: remaining.append('private/migrations/'+journal['request_id']+'/retired/'+rel[5:])  # Appeared after planning: kept for inspection.
+                if not any(retired.iterdir()): retired.rmdir()
+        except OSError: remaining.append('runs/'+run_id)
+    _checkpoint('cleanup')
+    with studio.assets.connection() as db:
+        regular_paths = {Path(r[0]).as_posix() for r in db.execute("SELECT path FROM assets WHERE privacy='regular'")}
+        regular_shas = {r[0] for r in db.execute("SELECT sha256 FROM assets WHERE privacy='regular'")}
+    others = _others(studio, journal['job_ids']) if live else _disk_consumers(studio, journal['job_ids'])  # At start no job is loaded: read run records.
+    retire = [c['source'] for c in journal['copies'] if c['kind'] == 'asset' and c['source'].removeprefix('workspace/') not in regular_paths]
+    retire += [c['source'] for c in journal['copies'] if c['kind'] == 'upload' and c['source'] not in journal['keep_uploads'] and others is not None and _upload_base(c['source']) not in others]
+    retire += [t for t in journal['thumbnails'] if Path(t).name.split('-', 1)[0] not in regular_shas]  # A regenerable cache; Private renders its own.
+    for rel in dict.fromkeys(retire):
+        try: _at(studio, rel).unlink(missing_ok=True)
+        except OSError: remaining.append(rel)
+    if not remaining and staging.exists():
+        try: shutil.rmtree(staging)
+        except OSError: remaining.append('private/migrations/'+journal['request_id'])
+    _write(studio, journal, 'cleanup-needed' if remaining else 'complete', remaining=remaining)
+
+
+def recover(studio):
+    """At Studio start, before job discovery: finish or undo each interrupted journal. One report per journal acted on."""
+    reports, folder = [], studio._private_directory('migrations')
+    if not folder.is_dir(): return reports
+    for path in sorted(folder.glob('*.json')):
+        try:
+            journal = json.loads(path.read_text(encoding='utf-8')); stage = journal['stage']
+            if stage in ('complete', 'rolled-back'): continue
+            _check_journal(studio, journal, path)
+            committed = _committed(studio, journal['request_id'])
+            if stage not in ('staging', 'verified') and not committed: raise ValueError('A published stage without its commit marker; left untouched')
+            if stage in ('staging', 'verified') and not committed:
+                _rollback(studio, journal)
+                journal.update(stage='rolled-back', failure=dict(status=500, code='migration_interrupted', failed_stage=stage,
+                                                                 error='The Studio stopped before publication; the run stayed regular and nothing was published'))
+            else: _cleanup(studio, journal, live=False)  # Published: the commit marker proves it even when the journal missed that write.
+            _write(studio, journal, journal['stage'], recovery=dict(from_stage=stage, stage=journal['stage'], at=time.time()))
+            reports.append(dict(request_id=journal['request_id'], from_stage=stage, stage=journal['stage']))
+        except (OSError, ValueError, KeyError, TypeError, sqlite3.Error) as exc:  # Left as found; job discovery still keeps duplicate run IDs private.
+            reports.append(dict(request_id=path.stem, error=(str(exc) or type(exc).__name__)[:200]))
+    return reports
+
+
+def _check_journal(studio, journal, path):
+    """A journal acts on nothing until its identity and run IDs are the ones its file name and format promise."""
+    if journal.get('format') != FORMAT or journal.get('request_id') != path.stem or not REQUEST_ID.fullmatch(path.stem): raise ValueError('Journal identity does not match its file')
+    runs = journal.get('job_ids')
+    if type(runs) is not list or not runs or not all(type(r) is str and IDENTITY.fullmatch(r) for r in runs): raise ValueError('Journal run IDs are invalid')
+    for run_id in runs: studio._job_directory(run_id, 'private')
+
+
+def _pending(studio):
+    folder = studio._private_directory('migrations')
+    if not folder.is_dir(): return []
+    pending = []
+    for path in sorted(folder.glob('*.json')):
+        try: stage = json.loads(path.read_text(encoding='utf-8')).get('stage')
+        except (OSError, ValueError, AttributeError): stage = None  # Unreadable counts as unfinished.
+        if stage not in SETTLED_STAGES: pending.append(path.stem)
+    return pending
+
+
+def _owned(studio, request_id):
+    """(run IDs, placement targets) published by every other committed request."""
+    runs, targets = set(), set()
+    with studio.assets.connection() as db:
+        if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='run_migrations_v1'").fetchone(): return runs, targets
+        for row in db.execute('SELECT job_ids,targets FROM run_migrations_v1 WHERE request_id<>?', (request_id,)):
+            runs.update(json.loads(row[0])); targets.update(json.loads(row[1]))
+    return runs, targets
+
+
+def _disk_consumers(studio, exclude):
+    """Upload names that retained run records outside `exclude` reference, or None when that cannot be established (keep them all)."""
+    names, count = set(), 0
+    for root in (studio.runs, studio._private_directory('runs')):
+        for state in root.glob('*/state.json'):
+            if state.parent.name in exclude: continue
+            count += 1
+            if count > MAX_SCANNED_RUNS: return None
+            try: names |= _upload_names(studio._read_job_record(state))
+            except (OSError, ValueError, RecursionError): return None
+    return names
+
+
+def _durable(studio, path):
+    """Flush one staged file (and, where supported, its folder) before anything depends on it, as snapshot_file does."""
+    with open(path, 'r+b') as stream: os.fsync(stream.fileno())
+    studio._sync_parent_directory(path.parent)

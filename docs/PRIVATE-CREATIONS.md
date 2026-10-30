@@ -172,12 +172,12 @@ handoffs, tiles, parallax, video and 3D generation. Existing regular workflows k
 their regular behavior. A button being available in All does not authorize a
 private-to-regular derivative.
 
-An already generated regular run cannot yet be moved into Private. Changing only
-its asset label would leave its siblings, original job and prompt visible.
-Completed-run conversion needs a preview of the entire affected run, a durable
-move journal, verified publication, crash recovery and Windows failure tests.
+A completed regular run can now be moved into Private through the API below. There
+is no button for it yet. Changing only an asset's label would leave its siblings,
+original job and prompt visible, so the move always covers the whole run. A private
+run cannot yet be moved back to Regular.
 
-### Migration plan (read-only; apply is not built)
+### Migration plan (read-only)
 
 `POST /api/assets/migration-plan` (owner: `app/run_migration.py`, #1678) previews moving
 complete runs. It is POST only because it carries a body; it writes nothing (no journal,
@@ -214,10 +214,74 @@ all Private (or an open asset), **Preview move to Private…** / **Preview move 
 Regular…** asks the planner under `privacy=all` and shows counts by kind, the byte
 estimate, ComfyUI copies that remain, every blocker in one sentence and the short plan
 hash. Outside the All view it asks you to switch and requests nothing; it never
-switches for you. The dialog has no apply control: moving is not available yet.
+switches for you. The dialog has no apply control; apply (below) is API-only for now.
 
-Not built: apply, the move journal, recovery, a receipt-access policy for migrated
-targets, and SDK/MCP tools.
+`apply_available` is true for `destination: private`.
+
+### Migration apply (Regular to Private only)
+
+`POST /api/assets/migration-apply` moves the planned runs into Private. Send it with
+`X-Studio-Privacy: all` and the same body as the plan plus `plan_sha256` (from an
+all-scope plan) and a `request_id` (16-128 letters, digits, `_` or `-`). It plans
+again inside the operation. It refuses, without changing anything, when:
+
+| Code | Status | Meaning |
+| --- | --- | --- |
+| `migration_direction_unsupported` | 400 | `destination: regular`; Private to Regular is not built |
+| `migration_scope_required` | 400 | The request scope is not `all` |
+| `migration_blocked` | 409 | The fresh plan has blockers (listed), including `already_in_destination` after a completed move |
+| `migration_stale` | 409 | The fresh plan hash differs; the response does not carry the new hash, so review a new plan |
+| `migration_destination_occupied` | 409 | A private run folder with that ID already exists |
+| `migration_busy` | 409 | Another migration is running |
+| `migration_request_conflict` | 409 | The request ID already names a different migration |
+| `migration_recovery_pending` | 409 | An earlier journal is still in staging, verified or published; restart the Studio to recover it first |
+
+Past those checks it keeps a journal at `private/migrations/<request_id>.json`:
+
+1. **staging**: copies every run file, output snapshot and regular upload copy
+   (with its sidecar) under `private/migrations/<request_id>/`, flushing each copy to disk.
+2. **verified**: every copy matches the planned size and SHA-256. A blob that
+   Private already holds is checked in place, not copied again.
+3. **published**: only the run's `state.json` and `recipe.json` gain `privacy:
+   private`; every other run file stays byte-identical. The run folder and files go
+   into their private homes. Then one Workspace transaction rechecks every asset and
+   collection revision, and that every collection member belongs to the move. It reclassifies them (revisions +1) and records the commit
+   marker. Last, the in-memory job turns private.
+4. **complete** or **cleanup-needed**: the regular run folder is first renamed into
+   the journal folder, so Regular never sees a partial run. Then the copied files are
+   deleted. Regular snapshots, thumbnails and uploads are deleted unless a regular
+   asset or another run still uses them. A file that cannot be deleted (a Windows
+   lock, say) is listed in `cleanup_remaining`. A file that appeared after planning
+   is kept in the journal folder and listed.
+
+A failure before publication (disk full: 507 `migration_storage_full`; hash mismatch:
+409 `migration_verify_failed`; a concurrent asset edit: 409 `migration_stale`; other
+copy errors: 500 `migration_failed`) removes the staged and placed copies. The
+journal ends `rolled-back` and the run stays regular. Writes to a run being moved
+are refused (`migration_in_progress`).
+
+Every outcome after the journal exists is a receipt. Repeating the same request ID
+returns it, with the current stage, and never runs the move again. A new request
+ID is a new request: after completion it is refused as `already_in_destination`.
+
+At Studio start, before any run folder is read, recovery handles each unfinished
+journal. If the Workspace commit marker is absent it rolls back, which removes what
+was placed and leaves the regular originals untouched. If the marker exists, it
+finishes the cleanup; it keeps a regular upload that any retained run record still
+names, or every upload when the records cannot all be read. A rollback never removes
+a run folder or file that another committed request published. A journal whose
+identity, run IDs or commit marker do not check out is reported and left untouched.
+The receipt reports `recovery.from_stage` and the stage it
+reached. Recovery never cancels, resubmits or clears uncertainty. A run that is not
+settled is refused at apply time.
+
+IDs, output order, hashes, recipes, lineage, collections and receipts are kept.
+ComfyUI's own output/input copies (`external_copy`) are not touched.
+Thumbnails are not copied; Private renders its own.
+
+Not built: Private to Regular, a receipt-access policy for migrated targets,
+SDK/MCP tools, the Apply button and progress UI. Cross-volume `experiments` layouts
+and real Windows lock behaviour are not separately qualified.
 
 The Library now has [reversible logical Archive](ASSET-ARCHIVE.md), separate from
 privacy and Trash. Archive hides finished assets from the default Library view;
