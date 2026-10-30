@@ -324,7 +324,7 @@ const tuneHarness=()=>{
 const visible=html=>html.split('<details')[0];
 test('Anima Quality help is one terse line; the lab anecdote sits verbatim behind Why',()=>{
   const html=tuneHarness().draftMarkup({id:'l'}),hint=html.match(/<small id="makeDraftHint"[^>]*>(.*?)<\/small>/)[1];
-  assert.equal(hint,'Draft ≈ half the time; extra steps barely change Anima pictures.');
+  assert.equal(hint,'Draft ≈ half the time; in one lab test extra steps barely changed an Anima picture.');
   assert.doesNotMatch(visible(html),/19 Oct|lab picture|Make the final/);
   const why=html.match(/<details class="make-why"><summary>Why<\/summary><small class="muted">(.*?)<\/small><\/details>/)[1];
   assert.equal(why,'On Anima models the turbo Draft takes about half the time; on one 19 Oct lab picture it came close to a full run, and 20, 30 and 40 steps looked alike, so there is no Fine. Compare with As made on your own picture. A draft card offers “Make the final” at the full 30 steps.');
