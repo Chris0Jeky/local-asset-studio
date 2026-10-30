@@ -441,5 +441,54 @@ class RunMigrationApplyTests(unittest.TestCase):
                 shutil.rmtree(self.studio.experiments/'private/migrations'/body['request_id'], ignore_errors=True); journal_path.unlink()
 
 
+    # ---- Journal hardening (#1796) ----
+    def test_a_forged_cleanup_source_or_thumbnail_is_rejected_before_cleanup_deletes_it(self):
+        cases = (('asset source under uploads/', lambda j: j['copies'], 'asset', {'source': 'uploads/victim.bin'}),
+                 ('upload source under runs/', lambda j: j['copies'], 'upload', {'source': 'runs/other-run/state.json'}),
+                 ('run_file source of another run', lambda j: j['copies'], 'run_file', {'source': 'runs/other-run/state.json'}),
+                 ('dot-dot source', lambda j: j['copies'], 'asset', {'source': 'workspace/../uploads/victim.bin'}),
+                 ('thumbnail outside thumbs/', None, None, {'thumbnails': ['uploads/victim.bin']}))
+        for name, pick, kind, change in cases:
+            with self.subTest(name):
+                s = self.scenario(); body = self.body(s, self.plan(s))
+                with self.crash_at('committed'), self.assertRaises(Crash): run_migration.apply(self.studio, body, 'all')
+                victim = self.studio.experiments/'uploads/victim.bin'; victim.write_bytes(b'precious')
+                other = self.studio.experiments/'runs/other-run/state.json'; other.parent.mkdir(parents=True, exist_ok=True); other.write_bytes(b'precious')
+                journal_path = self.studio.experiments/'private/migrations'/(body['request_id']+'.json'); forged = self.journal(s)
+                if pick: next(c for c in pick(forged) if c['kind'] == kind).update(change)
+                else: forged.update(change)
+                journal_path.write_text(json.dumps(forged))
+                restarted = self.studio = self.restart()  # The journal is committed, so recovery would run cleanup, which unlinks these paths.
+                try:
+                    self.assertTrue(victim.is_file() and other.is_file(), 'cleanup deleted a path outside the Regular copy roots')
+                    self.assertEqual([r['request_id'] for r in restarted.migration_recovery if 'error' in r], [body['request_id']]); self.assertEqual(json.loads(journal_path.read_text()), forged)
+                finally:
+                    shutil.rmtree(other.parent); victim.unlink(missing_ok=True); shutil.rmtree(self.studio.experiments/'private/migrations'/body['request_id'], ignore_errors=True); journal_path.unlink()
+
+    def test_recovery_reads_a_record_that_fails_loader_validation_as_unreadable(self):
+        s = self.scenario(); sharer = self.completed(1); self.assertIsNotNone(run_migration._disk_consumers(self.studio, {s['jid']}))
+        state_path = self.studio.experiments/'runs'/sharer['id']/'state.json'; state = json.loads(state_path.read_text())
+        body = self.body(s, self.plan(s))
+        with self.crash_at('committed'), self.assertRaises(Crash): run_migration.apply(self.studio, body, 'all')
+        state['references'] = {'file': s['upload']}; state_path.write_text(json.dumps(state))  # Parses, fails _validate_job_record, and names the upload where no list can show it.
+        self.assertIsNone(run_migration._disk_consumers(self.studio, {s['jid']}))
+        restarted = self.studio = self.restart()
+        self.assertEqual(restarted.migration_recovery, [{'request_id': body['request_id'], 'from_stage': 'verified', 'stage': 'cleanup-needed'}])
+        self.assertTrue((self.studio.experiments/'uploads'/s['upload']).is_file()); self.assertIn('uploads/'+s['upload'], self.journal(s)['remaining'])
+
+    def test_a_keep_all_decided_at_apply_is_journaled_and_outlives_a_later_clean_read(self):
+        s = self.scenario(); bad = self.studio.experiments/'runs/unrelated-unreadable-run'; bad.mkdir(); (bad/'state.json').write_text('{ not json')
+        self.studio = self.restart(); body = self.body(s, self.plan(s))
+        with self.crash_at('committed'), self.assertRaises(Crash): run_migration.apply(self.studio, body, 'all')
+        self.assertEqual(self.journal(s)['keep_uploads'], 'all')
+        shutil.rmtree(bad)  # Every record reads now, but the decision was made on what apply could not read.
+        restarted = self.studio = self.restart()
+        self.assertEqual(restarted.migration_recovery, [{'request_id': body['request_id'], 'from_stage': 'verified', 'stage': 'cleanup-needed'}])
+        self.assertTrue((self.studio.experiments/'uploads'/s['upload']).is_file()); self.assertIn('uploads/'+s['upload'], self.journal(s)['remaining'])
+        self.assertEqual(sha(restarted._upload_path(s['upload'], 'private')), sha(self.root/'fake-comfy/input'/s['upload']))
+        invalid = self.journal(s); invalid['keep_uploads'] = 'some'; (self.studio.experiments/'private/migrations'/(body['request_id']+'.json')).write_text(json.dumps(invalid))
+        self.assertEqual([r['request_id'] for r in self.restart().migration_recovery if 'error' in r], [body['request_id']])  # The new field is validated, not trusted
+
+
 if __name__ == '__main__':
     unittest.main()
