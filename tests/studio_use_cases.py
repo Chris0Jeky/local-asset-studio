@@ -223,7 +223,7 @@ def verdict(matrix):
 # Live-mode guard. Checked before every click in every mode; enforced in live mode.
 # --------------------------------------------------------------------------------------
 DENY_IDS = {
-    'generate', 'prepareExperiment', 'prepareNative', 'prepareArticulated', 'newExperiment',
+    'generate', 'prepareExperiment', 'prepareExperimentOnly', 'prepareNative', 'prepareNativeOnly', 'prepareArticulated', 'newExperiment',
     'planComparison', 'switchBackend', 'importAssets', 'importWorkflow', 'importRecipe',
     'saveAssetDetails', 'save', 'assetTrash', 'assetDownload', 'nativeExport', 'createScene',
     'saveSharedWorkflow', 'copySharedWorkflow', 'retrySharedWorkflow', 'prepareSavedRun',
@@ -1055,12 +1055,11 @@ def _compare(c):
     c.stop_before(c.act('#planComparison'), 'stopped at Plan comparison: live mode never opens the planner a study is prepared from')
     c.act('#experimentAxis', 'select', typed='cfg')
     c.act('#experimentValues', 'read', note='proposed candidate values')
-    # The planner sizes the allowance up to the proposed values (never down); the driver still sets
-    # the total by hand so the step it measures stays the same across runs.
+    # The planner sizes the run limit to the proposed values (#1732), folded under Limits; the driver reads it, never types it.
     proposed = len([v for v in (c.page.locator('#experimentValues').input_value() or '').split(',') if v.strip()])
     before = c.studies()
-    c.act('#experimentBudget', 'fill', typed=str(max(proposed, 1)), note='%d proposed values need at least %d runs' % (proposed, proposed))
-    c.act('#prepareExperiment')
+    c.act('#experimentLimitsSummary', 'read', note='%d proposed values; limits line: %s' % (proposed, c.page.locator('#experimentLimitsSummary').inner_text()))
+    c.act('#prepareExperimentOnly', note='prepare only: the journey measures preparing a study, not starting it (#1732)')
     fresh = c.wait_for_new_study(before)
     status = c.dialog_status('#experimentStatus')
     detail = '%d new study listed (allowance %d for %d values)%s' % (len(fresh), max(proposed, 1), proposed, '; planner said: ' + status if status else '')
@@ -2031,7 +2030,9 @@ def _prompt_lab(c):
     except Exception: pass
     c.act('#uxTransferPreview', 'read', note='transferred text reviewed before applying')
     c.act('#uxApplyPrompt')
-    c.page.wait_for_timeout(400)
+    # Wait for the applied wording, not a fixed delay: 400 ms flaked in full sweeps (#1753).
+    try: c.page.wait_for_function("(document.querySelector('#positive')?.value || '').trim().length > 0", timeout=5000)
+    except Exception: pass
     applied = c.page.locator('#positive').input_value() if c.page.locator('#positive').count() else ''
     return bool(applied.strip()), 'brief field holds %d characters' % len(applied)
 
@@ -2104,7 +2105,7 @@ def _native_export(c):
     c.act('#nativeKind', 'select', typed='atlas')
     c.act('#nativeAssetList input[data-native-duration]', 'fill', typed='120')
     before = c.studies()
-    c.act('#prepareNative')
+    c.act('#prepareNativeOnly', note='prepare only: starting is a separate press (#1732)')
     fresh = c.wait_for_new_study(before)
     status = c.dialog_status('#nativeStatus')
     detail = '%d new study listed%s' % (len(fresh), '; export dialog said: ' + status if status else '')

@@ -27,6 +27,10 @@
 .experiment-arithmetic{margin:-4px 0 12px;font-size:12px;color:var(--muted)}
 .experiment-arithmetic:empty{display:none}
 .experiment-arithmetic.error{color:var(--danger)}
+.experiment-limits{margin:12px 0}
+.experiment-limits>summary{cursor:pointer;font-size:12px;color:var(--muted)}
+.experiment-limits-change{margin-left:8px;color:var(--accent);text-decoration:underline}
+.experiment-limits .controls{margin:12px 0}
 .experiment-values{flex:1 1 22ch;min-width:20ch}
 .experiment-values input{width:100%}
 #experimentDialog.wording-comparison{width:min(720px,calc(100vw - 32px))}

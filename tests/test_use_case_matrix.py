@@ -260,7 +260,7 @@ class LiveGuard(unittest.TestCase):
 
     def test_writing_controls_stay_off_the_local_list(self):
         for selector in ('#uxPrepareHandoff', '[data-ux-pull="a"]', '#productionDetail [data-choose-candidate="a"]',
-                         '#prepareExperiment', '#nativeExport', '#saveSharedWorkflow', '#generate'):
+                         '#prepareExperiment', '#prepareExperimentOnly', '#prepareNativeOnly', '#nativeExport', '#saveSharedWorkflow', '#generate'):
             self.assertNotIn(runner.control_kind(selector), runner.LOCAL_CONTROLS, selector)
             control_id = selector[1:] if selector.startswith('#') and ' ' not in selector else selector
             self.assertTrue(runner.live_allows('click', False, control_id, 'x', (), False, selector), selector)
