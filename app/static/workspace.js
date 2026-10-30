@@ -681,7 +681,7 @@ function assetSelectionCanProceed(action) {
   if(selection.missing){assetMessage(selection.missing+(selection.missing===1?' selected asset is unavailable.':' selected assets are unavailable.')+' Review the selection or keep only visible assets before continuing.',true);return false;}
   if(assetSelection.size>assetSelectionLimit){assetMessage('Choose at most '+assetSelectionLimit+' assets per action. The current selection has not been changed.',true);return false;}
   if(selection.entries.some(e=>e.asset.workspace_id && e.asset.workspace_id!==assetState.workspace_id)){assetMessage('Selected assets belong to a different Workspace. Refresh the library before continuing.',true);return false;}
-  const labels={archive:'Archive',unarchive:'Return to active',trash:'Move to Trash',restore:'Restore',favorite:'Favorite',selected:'Keep',review:'Mark a review',add_collection:'Add to collection',remove_collection:'Remove from collection',agent_run:'Mark as agent run',mine:'Mark as mine',export:'Export pack',scene:'Create scene',native:'Create native export'};
+  const labels={archive:'Archive',unarchive:'Return to active',trash:'Move to Trash',restore:'Restore',favorite:'Favorite',selected:'Keep',review:'Mark a review',add_collection:'Add to collection',remove_collection:'Remove from collection',agent_run:'Mark as agent run',mine:'Mark as mine',export:'Export pack',scene:'Create scene',native:'Create native export',migrate:'Preview move'};
   return !selection.hidden || window.confirm((labels[action]||'This action')+' will include '+selection.hidden+(selection.hidden===1?' selected asset':' selected assets')+' outside this view. Continue with all '+assetSelection.size+' selected assets? Cancel to review the selection or keep only visible assets.');
 }
 function clearAssetFilters() {clearTimeout(assetSearchTimer);assetSearchTimer=null;$('#assetSearch').value='';$('#assetType').value='all';renderAssets();$('#assetSearch').focus();}
@@ -742,6 +742,7 @@ function renderAssetSelection() {
   $('#keepVisibleSelection').disabled=!selection.hidden;
   $('#assetSelectedList').innerHTML=selection.entries.slice(0,assetSelectionLimit).map(e=>'<li><span>'+esc(e.asset?.title||e.id)+'</span><small>'+(e.unresolved?'Outside this page · not resolved':!e.asset?'Unavailable':e.asset.trashed_at!=null?'In Trash'+(e.asset.archived_at!=null?' · Archived':''):e.asset.archived_at!=null?'Archived'+(e.visible?' · Visible':' · Outside this view'):e.visible?'Visible':'Outside this view')+'</small></li>').join('')+(selection.unresolved?'<li><button data-asset-resolve-selection>Resolve selected assets</button></li>':'')+(selection.entries.length>assetSelectionLimit?'<li>Only the first '+assetSelectionLimit+' selections are listed. Reduce the selection before acting.</li>':'');
   $('#createScene').href='/av.html?asset_ids='+encodeURIComponent([...assetSelection].join(','));
+  renderMigrationAction();
   document.querySelectorAll('[data-bulk="restore"]').forEach(b=>b.hidden=assetScope!=='trash');
   document.querySelectorAll('[data-bulk="trash"]').forEach(b=>b.hidden=assetScope==='trash');
 }
@@ -1192,7 +1193,7 @@ function openAsset(id,owns=null) {
   if(assetQueue){const at=assetQueue.ids.indexOf(id);if(at>=0)assetQueue.index=at;else{assetQueue=null;assetMessage('Left the review queue to open an asset outside it. Review next starts a fresh queue.');}}
   renderAssetReasons();renderAssetSiblings(a);renderAssetQueue();
   $('#assetDetails').innerHTML='<p>'+esc(a.preset_name)+' · '+new Date(a.created_at*1000).toLocaleString()+'</p><p>'+esc(a.filename)+' · '+(a.bytes/1024/1024).toFixed(2)+' MiB</p><p>Seed '+esc(a.source.seed??'not recorded')+'</p>'+((a.source.tile||a.source.tile_preview||a.source.parallax)?'<p class="tileNote">'+esc((a.source.tile||a.source.tile_preview||a.source.parallax).summary)+'</p>':'')+(a.prompt_excerpt?'<p class="asset-prompt-excerpt">Prompt text: '+esc(a.prompt_excerpt)+'</p>':'')+(assetIsAgentRun(a)?'<p>Run label: '+esc(a.run_label)+'</p>':'')+'<details><summary>File identity</summary><code>'+a.sha256+'</code><p>Prompt '+esc(a.source.prompt_id||'not recorded')+'</p></details>';
-  $('#assetFavorite').textContent=a.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=a.trashed_at!=null?'Restore':'Move to Trash';$('#assetArchive').textContent=a.archived_at!=null?'Return to active':'Archive';
+  $('#assetFavorite').textContent=a.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=a.trashed_at!=null?'Restore':'Move to Trash';$('#assetArchive').textContent=a.archived_at!=null?'Return to active':'Archive';renderMigrationAction();
   $('#assetDownload').href=a.url+((a.url||'').includes('?')?'&':'?')+'download';
   $('#assetHandoffs').innerHTML=a.media_type==='image'?'<button data-handoff="reference">Edit image</button><button data-handoff="anime-detail-fix" title="Repaint detected hands and faces; review settings before generating">Fix hands &amp; face</button><button data-handoff="krea-refine" title="Open Krea image refinement; review settings before generating">Refine image</button><button data-handoff="wan22-i2v">Animate</button><button data-handoff="trellis-auto-cutout">Make 3D</button><button data-handoff="anime-upscale">Upscale</button>':'';
   renderI2VDiagnosticAction(a);
@@ -1444,6 +1445,76 @@ try{const stored=assetPreferenceStorage().getItem(assetGroupStorageKey);if(asset
 try{const stored=assetPreferenceStorage().getItem(assetSourceStorageKey);if(assetSourceModes.includes(stored))assetSourceMode=stored;}catch(error){}
 restoreAssetView();
 renderAssetReasons();renderLibraryRecovery();
+// #1678 read-only migration preview. The planner runs only from this explicit action and always under privacy=all; nothing here can apply, write or retry a move.
+const migrationBlockers={
+  missing_run:'A selected asset names a run whose record cannot be found, so the run cannot move whole.',
+  run_storage_alias:'A run folder or file is a link to somewhere else, and a move never follows links.',
+  unsupported_operation:'Native project runs keep their originals under projects/, so moving them is not supported.',
+  run_not_settled:'The run is queued, running, partial or uncertain; a move never cancels it or clears that uncertainty.',
+  already_in_destination:'This run is already in the destination.',
+  missing_run_record:'The run folder or one of its record files is missing.',
+  run_too_large:'The run folder holds more files than a move can handle.',
+  missing_sibling:'An output of the run has no retained asset, so the run cannot move whole.',
+  missing_reference:'A reference picture used by the run is no longer available.',
+  privacy_mismatch:'An asset and its run disagree about being Regular or Private.',
+  missing_snapshot:'A saved original file of an asset is missing.',
+  snapshot_changed:'A saved original file no longer matches its recorded hash.',
+  collection_mixed:'A collection also holds assets outside this move, and one collection keeps one classification.',
+  receipts_overflow:'More past command receipts name this asset than can be listed.',
+  scope_partial:'This preview did not cover both privacy views; plan again under All.'};
+const migrationKinds={run:['run','runs'],run_file:['run file','run files'],asset:['output','outputs'],upload:['uploaded reference copy','uploaded reference copies'],thumbnail:['thumbnail','thumbnails'],collection:['collection','collections'],lineage_child:['related item that stays where it is','related items that stay where they are'],receipt:['past receipt that stays','past receipts that stay']};
+let migrationEpoch=0,migrationOpener=null;
+function migrationDestination(records){
+  if(!records.length||!records.every(Boolean))return null;
+  const kinds=new Set(records.map(a=>a.privacy===undefined?'regular':a.privacy));
+  return kinds.size===1&&kinds.has('regular')?'private':kinds.size===1&&kinds.has('private')?'regular':null;
+}
+function renderMigrationAction(){
+  for(const [id,records] of [['#previewMigration',[...assetSelection].map(assetRecord)],['#assetMigrate',activeAsset?[activeAsset]:[]]]){
+    const destination=migrationDestination(records),button=$(id);button.hidden=!destination;if(destination)button.textContent='Preview move to '+(destination==='private'?'Private':'Regular')+'…';
+  }
+}
+// The answer must be an All-scope plan for exactly what was asked; anything else is shown as a refusal, never as a preview.
+function migrationProblem(plan,ids,destination){
+  if(!plan||typeof plan!=='object'||!Array.isArray(plan.items)||!Array.isArray(plan.blockers)||!Array.isArray(plan.asset_ids))return 'The preview answer was not understood.';
+  if(plan.scope!=='all')return 'The answer did not cover both privacy views, so it is not a usable preview.';
+  if(plan.destination!==destination||[...plan.asset_ids].sort().join()!==[...ids].sort().join())return 'The answer describes a different move than the one requested.';
+  if(typeof plan.plan_sha256!=='string'||!/^[0-9a-f]{64}$/.test(plan.plan_sha256)||!Number.isFinite(plan.byte_estimate))return 'The preview answer was incomplete.';
+  return '';
+}
+function migrationHTML(plan){
+  const count={},size=n=>n>=1048576?(n/1048576).toFixed(1)+' MiB':Math.ceil(n/1024)+' KiB',outside=plan.items.filter(i=>i.kind==='external_copy');
+  for(const item of plan.items)if(item.kind!=='external_copy')count[item.kind]=(count[item.kind]||0)+1;
+  const subject=b=>['run_id','asset_id','collection_id','path','file'].map(k=>b[k]).find(Boolean);
+  return '<h3>What the move covers</h3><ul>'+(Object.entries(count).map(([k,n])=>'<li>'+n+' '+(migrationKinds[k]||['other item','other items'])[n===1?0:1]+'</li>').join('')||'<li>Nothing was found.</li>')+'</ul>'+
+    '<p>About '+size(plan.byte_estimate)+' of runs, outputs, uploads and thumbnails would be copied.</p>'+
+    '<h3>Copies that remain</h3><p>'+esc(plan.remaining_copies||'')+'</p>'+(outside.length?'<p>'+outside.length+' ComfyUI '+(outside.length===1?'copy was':'copies were')+' found and would stay in place:</p><ul>'+outside.slice(0,20).map(i=>'<li><code>'+esc(i.id)+'</code> · '+size(i.bytes||0)+'</li>').join('')+(outside.length>20?'<li>and '+(outside.length-20)+' more</li>':'')+'</ul>':'')+
+    '<h3>'+(plan.blockers.length?'Blockers ('+plan.blockers.length+')':'No blockers')+'</h3>'+(plan.blockers.length?'<ul>'+plan.blockers.map(b=>'<li>'+esc(migrationBlockers[b.code]||'Something blocks this move ('+b.code+').')+(subject(b)?' <small>'+esc(subject(b))+'</small>':'')+'</li>').join('')+'</ul>':'<p>Nothing in this preview stops a move.</p>')+
+    '<p>Plan <code>'+esc(plan.plan_sha256.slice(0,12))+'</code></p>';
+}
+async function previewMigration(ids,destination,opener){
+  const epoch=++migrationEpoch,privacyEpoch=assetPrivacyEpoch,workspace=assetState.workspace_id,status=$('#migrationStatus'),body=$('#migrationBody'),current=()=>epoch===migrationEpoch&&privacyEpoch===assetPrivacyEpoch;
+  migrationOpener=opener||null;
+  $('#migrationTitle').textContent='Preview move to '+(destination==='private'?'Private':'Regular');body.innerHTML='';$('#migrationSwitch').hidden=true;
+  if(!$('#migrationDialog').open)$('#migrationDialog').showModal();
+  $('#closeMigration').focus();
+  if(assetActivePrivacy!=='all'){
+    status.textContent='This preview needs the All view, so related Regular and Private items can both be found. Nothing was requested and the view has not changed. Switching clears the current selection.';
+    $('#migrationSwitch').hidden=false;$('#migrationSwitch').focus();return;
+  }
+  status.textContent='Preparing the preview… Nothing is changed.';
+  try{
+    const plan=await api('/api/assets/migration-plan',{method:'POST',headers:{'Content-Type':'application/json',...assetPrivacyHeaders('all')},body:JSON.stringify({workspace_id:workspace,destination,asset_ids:ids})});
+    if(!current())return;
+    const problem=migrationProblem(plan,ids,destination);if(problem)throw Error(problem);
+    body.innerHTML=migrationHTML(plan);status.textContent='Preview ready: '+plan.items.length+' items, '+(plan.blockers.length?plan.blockers.length+(plan.blockers.length===1?' blocker':' blockers'):'no blockers')+'. Nothing was changed.';
+  }catch(error){if(current()){body.innerHTML='';status.textContent='No preview: '+(error.message||'the request failed')+' Nothing was changed.';}}
+}
+$('#previewMigration').onclick=async()=>{const ids=[...assetSelection],destination=migrationDestination(ids.map(assetRecord));if(destination&&assetSelectionCanProceed('migrate'))await previewMigration(ids,destination,$('#previewMigration'));};
+$('#assetMigrate').onclick=async()=>{const destination=activeAsset&&migrationDestination([activeAsset]);if(destination)await previewMigration([activeAsset.id],destination,$('#assetMigrate'));};
+$('#closeMigration').onclick=()=>$('#migrationDialog').close();
+$('#migrationSwitch').onclick=()=>{$('#migrationDialog').close();globalThis.window?.StudioPrivacy?.setScope?.('all');};
+$('#migrationDialog').addEventListener('close',()=>{migrationEpoch++;const opener=migrationOpener;migrationOpener=null;if(opener&&!opener.hidden&&opener.isConnected!==false)opener.focus?.();else $('#assetSearch').focus();});
 document.addEventListener('studio:privacy-change',event=>{
   const next=event.detail?.scope||globalThis.window?.StudioPrivacy?.scope?.()||'regular';
   if(next===assetActivePrivacy||!['regular','private','all'].includes(next))return;
@@ -1458,6 +1529,7 @@ document.addEventListener('studio:privacy-change',event=>{
   assetSelection.clear();assetSelectionAnchor=null;assetResolved.clear();assetSiblingPage=null;assetSiblingRequest=null;
   assetState={assets:[],collections:[],workspace_id:assetState.workspace_id};assetPaging=null;assetSignature='';
   if($('#assetDialog').open)$('#assetDialog').close();
+  if($('#migrationDialog').open)$('#migrationDialog').close();
   for(const id of ['assetTitle','assetTags','assetNotes','bulkRunLabel'])$('#'+id).value='';$('#assetReview').value='unreviewed';
   for(const id of ['assetDetailMedia','assetDiagnostic','assetSameRun','assetDetails','assetLineage','assetHandoffs','assetDetailConflict','assetDetailRecovery','assetCommandRecovery','assetBulkReviewStatus','assetDetailStatus']){const panel=$('#'+id);if(panel)panel.innerHTML='';}
   assetInspect=assetInspectOff();renderAssetInspect(null);
