@@ -1554,8 +1554,9 @@ class Studio:
 
     def _write_json_atomic(self, path, value):
         temp = path.with_name(path.name + "." + uuid.uuid4().hex + ".tmp")
-        temp.write_text(json.dumps(value, indent=2), encoding="utf-8")
-        try: file_replace.replace(temp, path)   # a reader holding the target open on Windows refuses briefly
+        try:
+            temp.write_text(json.dumps(value, indent=2), encoding="utf-8")
+            file_replace.replace(temp, path)   # a reader holding the target open on Windows refuses briefly
         except BaseException:
             try: temp.unlink(missing_ok=True)   # a lasting refusal leaves no stray .tmp in the run folder (#1776); the error still propagates
             except OSError: pass
