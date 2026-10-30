@@ -959,7 +959,8 @@ class Studio:
         if job.get('status') == 'queued':
             # Read-only position (#1707): unfinished jobs created earlier pass the single worker first. A count only, so a private job
             # ahead shows as a number, never as its content; an estimate of the wait, not a promise of order.
-            with self.lock: result['queue_ahead'] = sum(1 for other in getattr(self, 'jobs', {}).values() if other is not job and other.get('status') in Studio.ACTIVE_JOB_STATUSES and (other.get('created_at') or 0) < (job.get('created_at') or 0))
+            # No lock: Production.public() reaches here under its own lock, and Studio-then-Production is the order elsewhere (#1742 review).
+            result['queue_ahead'] = sum(1 for other in list(getattr(self, 'jobs', {}).values()) if other is not job and other.get('status') in Studio.ACTIVE_JOB_STATUSES and (other.get('created_at') or 0) < (job.get('created_at') or 0))
         if "record_error" in job: result.update(record_error=job["record_error"], run_path=job["run_path"])
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
