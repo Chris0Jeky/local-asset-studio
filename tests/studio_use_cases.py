@@ -2041,11 +2041,12 @@ def _prompt_lab(c):
     try: c.page.wait_for_selector('#uxTransfer:not([hidden])', timeout=8000)
     except Exception: pass
     c.act('#uxTransferPreview', 'read', note='transferred text reviewed before applying')
+    expected = c.page.evaluate("sep => ((document.querySelector('#uxTransferPreview') || {}).textContent || '').split(sep)[0]", '\n\nNegative (applied only when supported):')   # the positive the preview shows
     c.act('#uxApplyPrompt')
-    try: c.page.wait_for_function("() => (document.querySelector('#positive') || {}).value", timeout=8000)   # the applied value, not a fixed sleep (#1753)
+    try: c.page.wait_for_function("t => t && ((document.querySelector('#positive') || {}).value || '') === t", arg=expected, timeout=8000)   # the transferred value itself, not a fixed sleep or any non-empty text (#1753)
     except Exception: pass
     applied = c.page.locator('#positive').input_value() if c.page.locator('#positive').count() else ''
-    return bool(applied.strip()), 'brief field holds %d characters' % len(applied)
+    return bool(applied.strip()) and applied == expected, 'brief field holds %d characters%s' % (len(applied), '' if applied == expected else ', not the transferred wording')
 
 
 @driver('guided-edit-or-preserve-character')
