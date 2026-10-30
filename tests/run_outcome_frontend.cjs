@@ -20,7 +20,7 @@ function sandbox() {
     focus() {if(!this.disabled&&!this.hidden)document.activeElement=this;}
     closest(selector) {return selector==='[data-run-outcome]'&&this.dataset.runOutcome?this:selector==='#generate'&&this.id==='generate'?this:selector==='.wk-run-dock'&&this.parentElement?.className==='wk-run-dock'?this.parentElement:null;}
   }
-  const nodes=new Map(),listeners=new Map(),requests=[];
+  const nodes=new Map(),listeners=new Map(),requests=[],navigatorObject={};
   const element=selector=>{if(!nodes.has(selector))nodes.set(selector,new Element());return nodes.get(selector);};
   const descendants=node=>[node,...node.children.flatMap(descendants)];
   const document={querySelector:selector=>selector.startsWith('#runOutcome [data-run-outcome=')?element('#runOutcome').children.find(n=>n.dataset.runOutcome==='dismiss'):element(selector),
@@ -29,7 +29,7 @@ function sandbox() {
     dispatchEvent(event) {for(const handler of listeners.get(event.type)||[])handler(event);}};
   let response={status:304,ok:false};
   element('#status');
-  const context=vm.createContext({document,window:{},location:{hash:''},URL,Blob,setInterval(){},CSS:{escape:s=>s},
+  const context=vm.createContext({document,window:{},navigator:navigatorObject,location:{hash:''},URL,Blob,setInterval(){},CSS:{escape:s=>s},
     CustomEvent:class {constructor(type,options){this.type=type;this.detail=options.detail;}},sessionStorage:{getItem(){return null;}},
     fetch:async(url,options={})=>{if(url==='/api/catalog')return new Promise(()=>{});requests.push({url,options});return response;}});
   for(const file of ['app.js','run-outcome.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../app/static',file),'utf8'),context);
@@ -44,7 +44,7 @@ function sandbox() {
   const target=(id,completed=true)=>{const record=new Element('ARTICLE'),details=new Element('DETAILS');details.append(record);
     if(completed)record.append(new Element('BUTTON'));
     nodes.set(completed?'#gallery [data-output^="'+id+':"]':'[data-problem="'+id+'"]',record);return {record,details};};
-  return {run,element,requests,document,poll,click,outcome,summary,button,target,
+  return {run,element,requests,navigator:navigatorObject,document,poll,click,outcome,summary,button,target,
     start(...ids){run(ids.map(id=>'startedJobIds.add('+JSON.stringify(id)+');').join('')+'activeJobId='+JSON.stringify(ids.at(-1))+';');},
     settle(job){document.dispatchEvent({type:'studio:job-settled',detail:job});},
     async error(){response={status:503,ok:false,json:async()=>({error:'Jobs temporarily unavailable'})};await run('refreshJobs()');},
@@ -125,4 +125,76 @@ test('clear discards the displayed and queued notices without touching a newer s
   const s=sandbox();s.settle(job('first'));s.settle(job('second'));s.run("message('Newer status');window.StudioRunOutcome.clear();");
   assert.equal(s.outcome().hidden,true);s.settle(job('fresh','failed'));assert.doesNotMatch(s.outcome().textContent,/more runs settled/);
   assert.equal(s.element('#status').textContent,'Newer status');
+});
+
+// #1710: the copied failure note. The canary sits in every field the note must never carry.
+const flush=()=>new Promise(resolve=>setImmediate(resolve));
+const canaryJob=(overrides={})=>({id:'run-1',status:'failed',preset_id:'anime-detail',preset_name:'Anime detail',privacy:'regular',controls:{positive:'SECRET-PROMPT'},
+  message:'SECRET-PROMPT failed',references:[{path:'C:/x/SECRET-PROMPT.png'}],outputs:[],look:{name:'Quiet look',options:{note:'SECRET-PROMPT'}},backend_id:'primary',
+  failure:{code:'oom',title:'Out of memory',message:'SECRET-PROMPT'},elapsed_seconds:12.34,prompt_ids:['p1','p2'],...overrides});
+const details=s=>s.run('window.StudioRunOutcome.failureDetails');
+
+test('failure details carry only allow-listed fields and never the canary',()=>{
+  const s=sandbox(),text=details(s)(canaryJob());
+  assert.equal(text,'Run run-1\nstatus failed\nrecipe anime-detail\nlook Quiet look\nbackend primary\nfailure oom Out of memory\ntook 12.3 s\nprompt ids p1,p2');
+  assert.doesNotMatch(text,/SECRET-PROMPT|C:\/x|controls|Synthetic/);
+});
+
+test('a private run keeps only its id and status',()=>{
+  const s=sandbox();assert.equal(details(s)(canaryJob({privacy:'private'})),'Run run-1\nstatus failed');
+});
+
+test('failure details strip newlines, cap each value at 120 characters and keep the total under 600',()=>{
+  const s=sandbox(),long='x'.repeat(500);
+  const text=details(s)(canaryJob({id:'run\nid-'+long,preset_id:long,look:{name:long},backend_id:'b'.repeat(300),failure:{code:'c'.repeat(200),title:'t\r\nlong'.repeat(60)},elapsed_seconds:5,prompt_ids:[long,long,long,long,long]}));
+  assert.ok(text.length<=600,'total is capped at 600 characters');
+  assert.doesNotMatch(text,/\r/);
+  const lines=text.split('\n');
+  assert.equal(lines[0],'Run run id-'+'x'.repeat(113),'the id is one line capped at 120 characters');
+  assert.equal(lines.find(l=>l.startsWith('recipe ')),'recipe '+'x'.repeat(120));
+  assert.equal(lines.find(l=>l.startsWith('backend ')),'backend '+'b'.repeat(120));
+  assert.ok(lines.every(l=>/^(Run |status |recipe |look |backend |failure |took |prompt ids )/.test(l)),'every kept line is a whole allow-listed field');
+});
+
+test('missing or unusable fields are omitted rather than printed',()=>{
+  const s=sandbox(),text=details(s);
+  assert.equal(text({id:'run-2',status:'partial',backend_id:null,elapsed_seconds:'NaN',failure:null,prompt_ids:['a','b','c','d','e']}),'Run run-2\nstatus partial\nprompt ids a,b,c,d');
+  assert.equal(text({id:'run-3',status:'failed',elapsed_seconds:Infinity}),'Run run-3\nstatus failed');
+  assert.equal(text({status:'failed'}),'status failed');
+  assert.equal(text(null),'');
+});
+
+test('the copy button appears only for error outcomes',()=>{
+  const expected={completed:false,cancelled:false,partial:true,not_submitted:true,uncertain:true,failed:true};
+  for(const [status,offered] of Object.entries(expected)){
+    const s=sandbox();s.settle(job('run-'+status,status));
+    assert.equal(!!s.button('copy'),offered,status);
+    if(offered)assert.equal(s.button('copy').textContent,'Copy details');
+  }
+});
+
+test('copy details writes the note, says Copied, and leaves the job and the requests untouched',async()=>{
+  const s=sandbox(),written=[];s.navigator.clipboard={writeText:async text=>{written.push(text);}};
+  const failed=canaryJob(),before=JSON.stringify(failed),requestsBefore=s.requests.length;
+  s.settle(failed);const summaryText=s.summary().textContent;
+  s.click(s.button('copy'));await flush();
+  assert.deepEqual(written,['Run run-1\nstatus failed\nrecipe anime-detail\nlook Quiet look\nbackend primary\nfailure oom Out of memory\ntook 12.3 s\nprompt ids p1,p2']);
+  assert.equal(s.button('copy').textContent,'Copied');
+  assert.equal(s.summary().textContent,summaryText);
+  assert.equal(JSON.stringify(failed),before,'the job is not changed');
+  assert.equal(s.requests.length,requestsBefore,'no fetch or POST');
+});
+
+test('a refused clipboard names the fallback without a request',async()=>{
+  const s=sandbox(),requestsBefore=s.requests.length;s.navigator.clipboard={writeText:async()=>{throw new Error('denied');}};
+  s.settle(canaryJob());s.click(s.button('copy'));await flush();
+  assert.equal(s.button('copy').textContent,'Copy failed — select the text in Problems instead');
+  assert.equal(s.requests.length,requestsBefore);
+});
+
+test('a missing clipboard API names the same fallback',async()=>{
+  const s=sandbox(),requestsBefore=s.requests.length;
+  s.settle(canaryJob());s.click(s.button('copy'));await flush();
+  assert.equal(s.button('copy').textContent,'Copy failed — select the text in Problems instead');
+  assert.equal(s.requests.length,requestsBefore);
 });
