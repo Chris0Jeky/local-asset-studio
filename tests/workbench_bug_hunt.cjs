@@ -193,6 +193,12 @@ test('a refused recipe switch is announced, not thrown, and a handoff with no ma
   assert.deepEqual(b.notices.at(-1),['You are continuing an image.',true]);
   assert.equal(transferBox([]).q('#uxTransferRecipes').hidden,true);
 });
+test('a keyboard chip switch keeps focus on the newly chosen chip, and never steals focus from elsewhere',()=>{
+  const b=transferBox(['a','b']),focused=[];b.element=tag=>({tag,attrs:{},setAttribute(k,v){this.attrs[k]=v;},focus(){focused.push(this.textContent);}});
+  b.document={activeElement:{closest:s=>s==='#uxTransferRecipes'}};b.renderTransferChoices();focused.length=0;
+  b.q('#uxTransferRecipes').chips[1].onclick();assert.deepEqual(focused,['Qwen edit']);
+  b.document={activeElement:{closest:()=>null}};focused.length=0;b.selectPreset('a');assert.deepEqual(focused,[]);
+});
 test('pressing the already selected chip reloads nothing',()=>{
   const b=transferBox(['a','b']);let calls=0;b.selectPreset=()=>{calls++;throw Error('You are continuing an image.');};
   b.q('#uxTransferRecipes').chips[0].onclick();
