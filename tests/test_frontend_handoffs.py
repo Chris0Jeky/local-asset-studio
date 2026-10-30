@@ -36,6 +36,14 @@ class GalleryHandoffTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_make_saves_a_tuned_look_as_a_named_look(self):
+        result = subprocess.run(
+            [shutil.which('node'), '--test', str(Path(__file__).with_name('make_save_tuned_look.cjs'))],
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
     def test_make_picture_picker_reads_pages_of_at_most_sixty(self):
         result = subprocess.run(
             [shutil.which('node'), '--test', str(Path(__file__).with_name('make_picker_pages.cjs'))],
