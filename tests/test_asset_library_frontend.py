@@ -13,7 +13,7 @@ class AssetLibraryFrontend(unittest.TestCase):
             capture_output=True, text=True, timeout=20,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn('Asset library contracts: 41 passed, 0 failed', result.stdout)
+        self.assertIn('Asset library contracts: 42 passed, 0 failed', result.stdout)
 
     @unittest.skipUnless(shutil.which('node'), 'Node.js required')
     def test_paged_source_filter_contracts(self):
