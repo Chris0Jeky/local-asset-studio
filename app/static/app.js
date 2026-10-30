@@ -483,8 +483,11 @@ function mediaCard(job,index,output) {
   return '<article class="imageCard" data-output="'+id+':'+esc(index)+'">'+media+'<div class="card-actions">'+(type==='image'?'<button class="pin" data-job="'+id+'" data-index="'+index+'">Compare</button><button class="reference-output" data-job="'+id+'" data-index="'+index+'">Use as reference</button><button class="reference-output" data-preset="anime-detail-fix" data-job="'+id+'" data-index="'+index+'" title="Repaint detected hands and faces; review settings before generating">Fix hands &amp; face</button><button class="reference-output" data-preset="krea-refine" data-job="'+id+'" data-index="'+index+'" title="Open Krea image refinement; review settings before generating">Refine image</button><button class="reference-output" data-preset="wan22-i2v" data-job="'+id+'" data-index="'+index+'">Animate</button><button class="reference-output" data-preset="trellis-auto-cutout" data-job="'+id+'" data-index="'+index+'">Make 3D</button>':'')+'<a download="'+esc(output.filename || 'asset')+'" href="'+url+'">Download</a><button class="recipe" data-job="'+id+'">Recipe</button></div>'+(window.StudioOutputReview?.markup(output)||'')+'<p class="run-prompt'+(open?' run-prompt-expanded':'')+'" title="'+prompt+'">'+prompt+'</p><button type="button" class="make-link run-prompt-more" aria-expanded="'+open+'">'+(open?'Hide prompt':'Show prompt')+'</button><p><small>Seed '+esc(output.seed ?? job.controls.seed ?? 'default')+' · '+esc(job.preset_name)+'</small></p>'+lookNote(job,output)+tileNote(job,output)+parallaxNote(job,output)+'</article>';
 }
 // Prompts the user opened stay open across gallery rerenders (polls, filters, Show more) (Codex P2 on #1588); kept beside mediaCard for tests that slice it.
+// Also carries the empty-picture advisory (#1704): a completed job whose still is one flat colour or fully transparent is said so,
+// next to the picture, and nothing else changes (no rejection, deletion or acceptance).
 function lookNote(job,output){
-  if(!job.look)return '';
+  const empty=output.empty_picture?'<p class="make-warn"><small>'+(output.empty_picture==='transparent'?'Fully transparent':'One flat colour')+': most likely a failed run, not a result.</small></p>':'';
+  if(!job.look)return empty;
   const origin='Prepared with '+job.look.name+' (revision '+job.look.revision+')',metrics=output.text_safe;
   let detail='';
   if(job.look.options?.quiet_wall){
@@ -492,7 +495,7 @@ function lookNote(job,output){
     else if(metrics)detail='Quiet-left detail check: left '+(metrics.left_edge_density*100).toFixed(1)+'%, right '+(metrics.right_edge_density*100).toFixed(1)+'% edge density; '+metrics.comparison+'. Detail proxy only; review text legibility yourself.';
     else detail='Quiet-left detail check unavailable.';
   }
-  return '<p><small>'+esc(origin)+(detail?'<br>'+esc(detail):'')+'</small></p>';
+  return empty+'<p><small>'+esc(origin)+(detail?'<br>'+esc(detail):'')+'</small></p>';
 }
 var expandedPrompts=expandedPrompts||new Set();
 function toggleRunPrompt(button){

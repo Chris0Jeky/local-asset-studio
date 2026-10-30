@@ -52,6 +52,17 @@ def text_safe_metrics(data):
     finally: image.close()
 
 
+def empty_picture(data):
+    """Advisory, never art judgement (#1704): 'transparent' when no pixel is visible, 'uniform' when the whole RGBA canvas is one
+    flat colour (each band spans at most 2 levels; a silhouette on transparency varies in alpha and is not flagged), else ''."""
+    image, _ = decode(data)
+    try:
+        bands = image.getextrema()
+        if bands[3][1] == 0: return 'transparent'
+        return 'uniform' if all(high - low <= 2 for low, high in bands) else ''
+    finally: image.close()
+
+
 def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode('utf-8')
 
