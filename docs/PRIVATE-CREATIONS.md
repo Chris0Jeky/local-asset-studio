@@ -234,7 +234,7 @@ again inside the operation. It refuses, without changing anything, when:
 | `migration_destination_occupied` | 409 | A private run folder with that ID already exists |
 | `migration_busy` | 409 | Another migration is running |
 | `migration_request_conflict` | 409 | The request ID already names a different migration |
-| `migration_recovery_pending` | 409 | An earlier journal is still in staging, verified or published; restart the Studio to recover it first |
+| `migration_recovery_pending` | 409 | An earlier journal is still in staging, verified or published; the message names its file. Restart the Studio to recover it first; if recovery still reports it as invalid or unmarked, see below |
 
 Past those checks it keeps a journal at `private/migrations/<request_id>.json`:
 
@@ -268,9 +268,19 @@ At Studio start, before any run folder is read, recovery handles each unfinished
 journal. If the Workspace commit marker is absent it rolls back, which removes what
 was placed and leaves the regular originals untouched. If the marker exists, it
 finishes the cleanup; it keeps a regular upload that any retained run record still
-names, or every upload when the records cannot all be read. A rollback never removes
+names, or every upload when the records cannot all be read (a loaded run whose record
+failed to load counts too, also at apply time). Uploads kept for that reason are listed in
+`cleanup_remaining` and the journal stays `cleanup-needed`, so the next start retries
+them and finishes `complete` once every record reads. A rollback never removes
 a run folder or file that another committed request published. A journal whose
-identity, run IDs or commit marker do not check out is reported and left untouched.
+identity, run IDs, file paths (every placement and copy target must lie under `private/`)
+or commit marker do not check out is reported and left untouched.
+
+Restarting cannot fix such a journal, and it blocks new migrations. Open
+`private/migrations/<request_id>.json` (named in the refusal) and inspect it and its
+sibling folder. Then move the file, and that folder if it exists, out of
+`private/migrations/`; never delete them unread. Check the run in both the regular and
+private views first.
 The receipt reports `recovery.from_stage` and the stage it
 reached. Recovery never cancels, resubmits or clears uncertainty. A run that is not
 settled is refused at apply time.
