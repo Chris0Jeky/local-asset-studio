@@ -22,6 +22,21 @@
     const why=job.failure?.title||String(job.message||'').split(/(?<=\.)\s/)[0]||'No reason was recorded.';
     return {text:'Failed: '+why,action:'See why',error:true};
   }
+  function failureDetails(job){
+    const fields=[['Status',job.status],['Job',job.id]];
+    if(job.privacy!=='private'){
+      const preset=typeof catalog!=='undefined'?catalog?.presets?.find(p=>p.id===job.preset_id):null;
+      // Never include message, failure detail, controls or whole nested records: they can contain prompts and paths.
+      fields.push(['Preset',job.preset_id],['Recipe',job.preset_name],['Look',job.look?.id],['Look title',job.look?.name],
+        ['Backend',job.backend_id||preset?.backend_id||(preset?'primary':null)],['Failure code',job.failure?.code||job.failure?.kind],['Failure title',job.failure?.title],
+        ['Queued',job.created_at],['Started',job.started_at],['Finished',job.finished_at],['Elapsed',Number.isFinite(job.elapsed_seconds)&&job.elapsed_seconds>=0?job.elapsed_seconds+' s':null]);
+    }
+    return fields.filter(([,v])=>typeof v==='string'&&v.trim()||typeof v==='number'&&Number.isFinite(v)).map(([k,v])=>k+': '+String(v).replace(/\s+/g,' ').trim()).join('; ')+'.';
+  }
+  async function copyFailure(job){
+    try{if(!globalThis.navigator?.clipboard?.writeText)throw Error('Clipboard unavailable');await navigator.clipboard.writeText(failureDetails(job));message('Copied');}
+    catch{message('Clipboard unavailable. See the run record.',true);}
+  }
   function box(){
     let el=document.getElementById('runOutcome');if(el)return el;
     const status=document.getElementById('status');if(!status)return null;
@@ -48,7 +63,7 @@
     const more=document.createElement('small');more.id='runOutcomeWaiting';more.setAttribute('role','status');
     const go=document.createElement('button');go.type='button';go.dataset.runOutcome='show';go.textContent=s.action+' →';
     const close=document.createElement('button');close.type='button';close.dataset.runOutcome='dismiss';close.textContent='Dismiss';close.setAttribute('aria-label','Dismiss this run summary');
-    el.append(text,more,go,close);el.hidden=false;waiting();
+    el.append(text,more,go);if(['failed','uncertain'].includes(job.status)){const copy=document.createElement('button');copy.type='button';copy.dataset.runOutcome='copy';copy.textContent='Copy failure details';el.append(copy);}el.append(close);el.hidden=false;waiting();
   }
   // A single poll can settle several started runs. Keep the current controls/focus until Dismiss,
   // and own the summary text so a poll error or a newer Generate cannot erase the notice (#1250).
@@ -60,9 +75,9 @@
     for(const target of [status,status?.closest('.wk-run-dock'),status?.closest('.editor')])if(target){if(!target.hasAttribute('tabindex'))target.tabIndex=-1;target.focus({preventScroll:true});if(document.activeElement===target)return;}
   }
   document.addEventListener('studio:job-settled',e=>{if(e.detail?.id)render(e.detail);});
-  document.addEventListener('click',e=>{
+  document.addEventListener('click',async e=>{
     const b=e.target.closest?.('[data-run-outcome]');
-    if(b){if(b.dataset.runOutcome==='dismiss'){const focused=document.activeElement===b,next=pending.shift();if(next){display(next);if(focused)document.querySelector('#runOutcome [data-run-outcome="dismiss"]')?.focus();}else{clear();if(focused)returnFocus();}}else if(shown){const job=(typeof jobs!=='undefined'&&jobs.find(j=>j.id===shown.id))||shown;reveal(job);}return;}
+    if(b){if(b.dataset.runOutcome==='dismiss'){const focused=document.activeElement===b,next=pending.shift();if(next){display(next);if(focused)document.querySelector('#runOutcome [data-run-outcome="dismiss"]')?.focus();}else{clear();if(focused)returnFocus();}}else if(shown){const job=(typeof jobs!=='undefined'&&jobs.find(j=>j.id===shown.id))||shown;if(b.dataset.runOutcome==='copy')await copyFailure(job);else reveal(job);}return;}
   },true);
   window.StudioRunOutcome={summary,render,clear,reveal,tight};
 })();

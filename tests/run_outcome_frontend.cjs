@@ -20,16 +20,16 @@ function sandbox() {
     focus() {if(!this.disabled&&!this.hidden)document.activeElement=this;}
     closest(selector) {return selector==='[data-run-outcome]'&&this.dataset.runOutcome?this:selector==='#generate'&&this.id==='generate'?this:selector==='.wk-run-dock'&&this.parentElement?.className==='wk-run-dock'?this.parentElement:null;}
   }
-  const nodes=new Map(),listeners=new Map(),requests=[];
+  const nodes=new Map(),listeners=new Map(),requests=[],copies=[],navigator={clipboard:{writeText:async text=>{copies.push(text);}}};
   const element=selector=>{if(!nodes.has(selector))nodes.set(selector,new Element());return nodes.get(selector);};
   const descendants=node=>[node,...node.children.flatMap(descendants)];
   const document={querySelector:selector=>selector.startsWith('#runOutcome [data-run-outcome=')?element('#runOutcome').children.find(n=>n.dataset.runOutcome==='dismiss'):element(selector),
     querySelectorAll:()=>[],getElementById:id=>nodes.get('#'+id)||[...nodes.values()].flatMap(descendants).find(n=>n.id===id)||null,createElement:tag=>new Element(tag.toUpperCase()),
     addEventListener(name,handler) {if(!listeners.has(name))listeners.set(name,[]);listeners.get(name).push(handler);},
-    dispatchEvent(event) {for(const handler of listeners.get(event.type)||[])handler(event);}};
+    dispatchEvent(event) {return Promise.all((listeners.get(event.type)||[]).map(handler=>handler(event)));}};
   let response={status:304,ok:false};
   element('#status');
-  const context=vm.createContext({document,window:{},location:{hash:''},URL,Blob,setInterval(){},CSS:{escape:s=>s},
+  const context=vm.createContext({document,window:{},navigator,location:{hash:''},URL,Blob,setInterval(){},CSS:{escape:s=>s},
     CustomEvent:class {constructor(type,options){this.type=type;this.detail=options.detail;}},sessionStorage:{getItem(){return null;}},
     fetch:async(url,options={})=>{if(url==='/api/catalog')return new Promise(()=>{});requests.push({url,options});return response;}});
   for(const file of ['app.js','run-outcome.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../app/static',file),'utf8'),context);
@@ -44,7 +44,7 @@ function sandbox() {
   const target=(id,completed=true)=>{const record=new Element('ARTICLE'),details=new Element('DETAILS');details.append(record);
     if(completed)record.append(new Element('BUTTON'));
     nodes.set(completed?'#gallery [data-output^="'+id+':"]':'[data-problem="'+id+'"]',record);return {record,details};};
-  return {run,element,requests,document,poll,click,outcome,summary,button,target,
+  return {run,element,requests,copies,navigator,document,poll,click,outcome,summary,button,target,
     start(...ids){run(ids.map(id=>'startedJobIds.add('+JSON.stringify(id)+');').join('')+'activeJobId='+JSON.stringify(ids.at(-1))+';');},
     settle(job){document.dispatchEvent({type:'studio:job-settled',detail:job});},
     async error(){response={status:503,ok:false,json:async()=>({error:'Jobs temporarily unavailable'})};await run('refreshJobs()');},
@@ -125,4 +125,49 @@ test('clear discards the displayed and queued notices without touching a newer s
   const s=sandbox();s.settle(job('first'));s.settle(job('second'));s.run("message('Newer status');window.StudioRunOutcome.clear();");
   assert.equal(s.outcome().hidden,true);s.settle(job('fresh','failed'));assert.doesNotMatch(s.outcome().textContent,/more runs settled/);
   assert.equal(s.element('#status').textContent,'Newer status');
+});
+
+test('only failed and uncertain outcomes offer Copy failure details',()=>{
+  for(const status of ['failed','uncertain','completed','partial','not_submitted','cancelled']) {
+    const s=sandbox();s.settle(job('copy',status));
+    if(['failed','uncertain'].includes(status))assert.equal(s.button('copy').textContent,'Copy failure details');
+    else assert.equal(s.button('copy'),undefined);
+  }
+});
+
+test('copy uses named outcome fields and excludes prompts, references, output names and logs',async()=>{
+  const s=sandbox();s.run("catalog={presets:[{id:'paint',backend_id:'qwen21'}]};");
+  s.settle({...job('failure','failed'),preset_id:'paint',preset_name:'Painted scene',look:{id:'night-shift',name:'Night Shift',scene:'secret look prompt'},
+    failure:{kind:'memory_allocation',title:'Memory allocation failed',detail:'secret raw log'},created_at:100,started_at:120,finished_at:180,elapsed_seconds:60,
+    controls:{positive:'secret positive prompt',negative:'secret negative prompt'},references:[{path:'C:/private/reference.png'}],outputs:[{filename:'secret-output.png',path:'C:/outputs/secret-output.png'}],message:'secret raw message'});
+  const original=s.summary().textContent;await s.click(s.button('copy'));
+  assert.equal(s.copies.length,1);const text=s.copies[0];
+  for(const value of ['failed','failure','paint','Painted scene','night-shift','Night Shift','qwen21','memory_allocation','Memory allocation failed','60 s'])assert.ok(text.includes(value),value);
+  assert.match(text,/Queued: 100/);assert.match(text,/Started: 120/);assert.match(text,/Finished: 180/);
+  assert.doesNotMatch(text,/secret|C:\/|reference\.png|secret-output\.png|\n/);
+  assert.equal(s.element('#status').textContent,'Copied');assert.equal(s.summary().textContent,original);
+  assert.equal(s.requests.filter(r=>r.options.method==='POST').length,0);
+});
+
+test('private failures and uncertain runs copy only job id and status',async()=>{
+  for(const status of ['failed','uncertain']) {
+    const s=sandbox();s.settle({...job('private-job',status),privacy:'private',preset_id:'private-preset',backend_id:'private-backend',
+      look:{id:'private-look',name:'Private look'},failure:{kind:'private-code',title:'Private failure'},created_at:100,started_at:120,finished_at:180});
+    await s.click(s.button('copy'));assert.deepEqual(s.copies,['Status: '+status+'; Job: private-job.']);
+  }
+});
+
+test('an uncertain run without structured failure details never copies its raw message',async()=>{
+  const s=sandbox();s.settle({...job('unknown','uncertain'),backend_id:'moss',failure:{code:'tracking_lost'},elapsed_seconds:null,message:'secret prompt and C:/private/reference.png'});
+  await s.click(s.button('copy'));assert.match(s.copies[0],/Backend: moss/);assert.match(s.copies[0],/Failure code: tracking_lost/);
+  assert.doesNotMatch(s.copies[0],/secret|reference|Elapsed/);
+});
+
+test('clipboard absence, rejection and synchronous errors give a plain fallback',async()=>{
+  for(const clipboard of [undefined,{}, {writeText:async()=>{throw Error('secret clipboard error');}}, {writeText(){throw Error('secret clipboard error');}}]) {
+    const s=sandbox();s.navigator.clipboard=clipboard;s.settle(job('failure','failed'));
+    await assert.doesNotReject(()=>s.click(s.button('copy')));assert.deepEqual(s.copies,[]);
+    assert.equal(s.element('#status').textContent,'Clipboard unavailable. See the run record.');
+    assert.equal(s.outcome().hidden,false);
+  }
 });
