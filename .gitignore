@@ -28,6 +28,7 @@ experiments/private/
 experiments/projects/
 experiments/diagnostics/
 experiments/pose-artifacts/
+experiments/edits/
 .runtime/
 .runtime-test-source/
 .runtime-codex/
