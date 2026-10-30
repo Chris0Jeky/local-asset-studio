@@ -302,3 +302,12 @@ test('the slow-state hint needs a well-measured usual time and a large overrun, 
   assert.ok(h.requests.every(r=>r.url==='/api/estimate'),'only the estimate is read; nothing is cancelled or sent');
   runs[0].job.status='completed';h.tick();assert.equal(h.slows[0].hidden,true);assert.equal(h.slows[0].textContent,'');
 });
+
+test('a waiting card names how many runs are ahead, and a moved position redraws the card',()=>{
+  const words=vm.runInNewContext(make.match(/  function words\(job\).*\n/)[0]+';words',{});
+  assert.equal(words({status:'queued',queue_ahead:2}),'Waiting its turn · 2 ahead');
+  assert.equal(words({status:'queued',queue_ahead:0}),'Waiting its turn');
+  assert.equal(words({status:'queued'}),'Waiting its turn');
+  const stamp=vm.runInNewContext(make.match(/  const stamp=.*\n/)[0]+';stamp',{});
+  assert.notEqual(stamp({status:'queued',queue_ahead:2}),stamp({status:'queued',queue_ahead:1}));
+});
