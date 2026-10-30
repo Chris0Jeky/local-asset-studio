@@ -129,6 +129,19 @@ class LookTests(unittest.TestCase):
         self.assertEqual(self.studio.assets.card(card["id"])["lineage"], expected)
         self.assertEqual(lineage, [{"role": "evidence", "note": "caller evidence"}, {"role": "canon", "note": "caller canon"}])
 
+    def test_a_look_saved_from_make_tune_records_its_base_and_stays_a_scene_slot(self):
+        """Make's Save as a new look (#1847): the tune's controls and the base look's wording, with the base named in lineage; no job."""
+        base = self.create()
+        tuned = dict(BODY, template="{scene}", negative="", controls={"seed": 77, "steps": 12})
+        lineage = [{"role": "evidence", "evidence": "Tuned from Night Shift", "tuned_from": base["id"], "tuned_root": base["id"]}]
+        card = looks.command(self.studio, {"action": "create", "kind": "look", "name": "Night Shift, quick", "body": tuned, "lineage": lineage})
+        self.assertEqual((card["body"]["controls"], card["lineage"]), ({"seed": 77, "steps": 12}, lineage))
+        listed = {entry["id"]: entry for entry in looks.listing(self.studio)["looks"]}
+        self.assertEqual((listed[card["id"]]["usable"], listed[card["id"]]["lineage"], listed[base["id"]]["usable"]), (True, lineage, True))
+        ready = looks.prepare(self.studio, {"id": card["id"], "scene": "a lantern"})
+        self.assertEqual((ready["controls"]["positive"], ready["controls"]["steps"], ready["generation_submitted"]), ("a lantern", 12, False))
+        self.assertEqual((self.studio.jobs, self.requests), ({}, []))
+
     def test_edits_are_validated_and_revision_guarded(self):
         card = self.create()
         with self.assertRaises(WorkspaceError): looks.command(self.studio, {"action": "edit", "id": card["id"], "expected_revision": 0, "body": dict(BODY, template="no slot")})

@@ -92,7 +92,9 @@
   // The look's active adapters: a strength above zero with a file. Style strength scales exactly these and nothing else.
   const adapters=look=>{const c=look?.body?.controls||{},p=presetFor(look),bound=k=>!!(p?.[k]||p?.bindings_extra?.[k]);
     return SLOTS.filter(k=>Number(c[k])>0&&(typeof c[k+'_name']==='string'&&c[k+'_name']||p&&!bound(k+'_name'))).map(k=>({key:k,name:c[k+'_name']||'the recipe’s own LoRA',strength:Number(c[k])}));};
-  const lookList=()=>{const g=goal();if(!g?.looks||!state.looks)return[];return g.looks.map(id=>state.looks.find(l=>l.id===id)).filter(l=>l&&!l.trashed_at);};
+  // A look saved from Tune (#1847) records its goal-listed root in lineage (tuned_root); it is listed right after that root, in the root's goal.
+  const tunedFrom=l=>(l?.lineage||[]).find(e=>typeof e?.tuned_root==='string')||null;
+  const lookList=()=>{const g=goal();if(!g?.looks||!state.looks)return[];return g.looks.flatMap(id=>[state.looks.find(l=>l.id===id),...state.looks.filter(l=>tunedFrom(l)?.tuned_root===id)]).filter(l=>l&&!l.trashed_at);};
   const current=()=>state.looks?.find(l=>l.id===state.look&&!l.trashed_at)||null;
   // Honest speed (#1448): median seconds per picture measured in the 16 Oct look lab (docs/looks/LOOK-LAB-2026-10-16.md, R1 table,
   // "Median s/image": load, encode, sample and decode on this PC; two pictures each, cold and warm mixed). Update from the doc, not by hand.
@@ -326,6 +328,47 @@
     return false;
   }
 
+  // Keep a tune as its own look (#1847): "Save as a new look…" creates a Workspace look through the Full editor's route (POST /api/looks, create), so the
+  // server checks it as it does there. The body is the base look's wording (its one {scene} slot stays a slot; no scene text is saved) with the controls
+  // Generate would send for this tune; lineage records tuned_from and tuned_root. Saving never prepares or submits, and a private creation cannot save one.
+  function tunedLookBody(look,t,notes){
+    const p=presetFor(look),tp=byId(t.preset)||p,c={...look.body.controls,positive:look.body.template};
+    applyTune(c,look,t);if(!t.reseed&&t.seed!=null&&bound(tp,'seed'))c.seed=t.seed;
+    const template=c.positive,negative=bound(tp,'negative')?t.negative??look.body.negative:'';delete c.positive;delete c.negative;
+    return{preset_id:tp.id,template,controls:c,...(negative?{negative}:{}),...(look.body.options?.length?{options:look.body.options}:{}),...(look.body.scene_example?{scene_example:look.body.scene_example}:{}),...(notes?{notes}:{})};
+  }
+  let savingLook=false;
+  async function saveTunedLook(look,name,notes){
+    if(savingLook)return null;
+    const captured=requestPrivacy(),epoch=privacyEpoch,clean=String(name||'').trim();
+    if(captured.privacy==='private')throw Error('Looks are kept in your regular Workspace, so a private creation cannot save one. Choose Regular for this creation first.');
+    if(!presetFor(look))throw Error('This look\u2019s recipe is not in the library, so it cannot be saved here.');
+    if(!clean)throw Error('Name the look.');
+    if(clean.length>120)throw Error('Keep the name under 120 characters.');
+    if((state.looks||[]).some(l=>String(l.name).trim().toLowerCase()===clean.toLowerCase()))throw Error('A look named \u201c'+clean+'\u201d already exists. Choose another name.');
+    // As prepared() does: an added adapter that is no longer installed is left out of the look, and the owner is told.
+    const t=structuredClone(tuneOf(look)),inv=typeof installedLoras!=='undefined'&&installedLoras.length?new Set(installedLoras):null,gone=inv?t.rows.filter(r=>r.added&&!inv.has(r.name)):[];
+    t.rows=t.rows.filter(r=>!gone.includes(r));
+    const body=tunedLookBody(look,t,String(notes||'').trim().slice(0,1000));
+    savingLook=true;
+    try{
+      const saved=await json('/api/looks',{action:'create',kind:'look',name:clean,body,lineage:[{role:'evidence',evidence:('Tuned from '+look.name).slice(0,200),tuned_from:look.id,tuned_root:tunedFrom(look)?.tuned_root||look.id}]},captured);
+      if(epoch===privacyEpoch)state.looks=[...(state.looks||[]),{...saved,usable:true}];
+      return gone.length?{...saved,notices:[...(saved.notices||[]),'Left out '+gone.map(r=>r.name.replace(/\.safetensors$/,'')).join(', ')+' from the saved look: no longer installed.']}:saved;
+    }finally{savingLook=false;}
+  }
+  async function saveLookUi(action){
+    const look=current(),form=q('#makeSaveForm'),open=q('#makeSaveOpen');if(!look||!form)return;
+    if(action!=='go'){form.hidden=action==='cancel';open.setAttribute('aria-expanded',String(!form.hidden));q('#makeSaveMsg').textContent='';(form.hidden?open:q('#makeSaveName')).focus();return;}
+    const go=q('#makeSaveGo'),show=text=>{const msg=q('#makeSaveMsg');if(msg)msg.textContent=text;else say(text);};
+    go.disabled=true;q('#makeSaveMsg').textContent='';
+    try{const saved=await saveTunedLook(look,q('#makeSaveName').value,q('#makeSaveNotes').value);
+      if(saved){const name=q('#makeSaveName');if(name){name.value='';q('#makeSaveNotes').value='';q('#makeSaveForm').hidden=true;q('#makeSaveOpen').setAttribute('aria-expanded','false');}
+        say('Saved \u201c'+saved.name+'\u201d in your Workspace. Choose it under Change look in '+goal().name+' next time. Nothing was generated.'+(saved.notices||[]).map(n=>' '+n).join(''));}}
+    catch(error){show(error.message);}
+    finally{if(go.isConnected)go.disabled=false;}
+  }
+
   // Compare one setting (#1496): one look with its Tune, one setting varied over two or three values, the words and seed held.
   // One press sends one job per value into one card, as Compare looks does: a light group in this browser, not a planned
   // comparison (Blind until Reveal belongs to planned comparisons only, owner 27 Sep), so every picture is labelled with its value.
@@ -425,7 +468,7 @@
     renderComposer();layout();
   }
   // A look names its model and LoRA count on its card (owner, 19 Oct: someone choosing a model should see which look uses which).
-  const recipeLine=l=>{const p=presetFor(l),n=adapters(l).length;return p?'<small class="make-recipe">'+escape(family(p))+' model'+(n?' · '+n+' LoRA'+(n>1?'s':''):'')+'</small>':'';};
+  const recipeLine=l=>{const p=presetFor(l),n=adapters(l).length;return(p?'<small class="make-recipe">'+escape(family(p))+' model'+(n?' · '+n+' LoRA'+(n>1?'s':''):'')+'</small>':'')+(tunedFrom(l)?'<small class="make-recipe">'+escape(tunedFrom(l).evidence||'Your tune')+'</small>':'');};
   function shapeSize(preset,look,shape){
     const w=Number(look.body.controls.width||preset?.defaults?.width||1024),h=Number(look.body.controls.height||preset?.defaults?.height||1024),grid=preset?.dimension_multiple||64,round=v=>Math.max(grid,Math.round(v/grid)*grid);
     if(shape==='design')return[w,h];const area=w*h,long=Math.max(w,h),short=Math.min(w,h);
@@ -444,7 +487,11 @@
       +'<textarea id="makeScene" rows="3" maxlength="1000" placeholder="'+escape(example)+'"></textarea>'
       +'<div class="make-row">'+(example?'<button type="button" id="makeUseExample">Use the example</button>':'')+'<small>Plain words are fine. The look adds its own style and quality words.</small></div>'
       +options.map(o=>'<label class="make-check"><input type="checkbox" data-make-option="'+escape(o.id)+'"'+(o.default?' checked':'')+'> '+escape(o.label)+'</label>').join('')
-      +'<details class="make-tune" id="makeTune"'+(state.tuneOpen?' open':'')+'><summary>Model, LoRAs and settings <small id="makeTuneSum"></small></summary><div id="makeTuneBody"></div></details>'
+      +'<details class="make-tune" id="makeTune"'+(state.tuneOpen?' open':'')+'><summary>Model, LoRAs and settings <small id="makeTuneSum"></small></summary><div id="makeTuneBody"></div>'
+      +'<div class="make-save"><button type="button" class="make-link" id="makeSaveOpen" data-make-save="open" aria-expanded="false" aria-controls="makeSaveForm">Save as a new look\u2026</button>'
+      +'<div id="makeSaveForm" class="make-character-form" hidden><label>Name<input id="makeSaveName" maxlength="120" autocomplete="off" aria-describedby="makeSaveHint"></label><label>Notes <small>optional</small><textarea id="makeSaveNotes" rows="2" maxlength="1000"></textarea></label>'
+      +'<div class="make-row"><button type="button" id="makeSaveGo" data-make-save="go">Save look</button><button type="button" class="make-link" data-make-save="cancel">Cancel</button></div>'
+      +'<small id="makeSaveHint" class="muted">Keeps the model, LoRAs and settings as tuned here, with the look\u2019s own wording and its scene slot. Your scene words are not saved. Nothing is generated.</small><p id="makeSaveMsg" class="make-warn" role="status"></p></div></div></details>'
       +'<details class="make-tune" id="makeSweep"'+(sweepOf(look).open?' open':'')+'><summary>Compare one setting <small id="makeSweepSum"></small></summary><div id="makeSweepBody"></div></details>'
       +'</div><div class="make-compose-side">'
       +'<div class="make-pair"><label>Shape<select id="makeShape">'+Object.entries(SHAPES).map(([k,v])=>'<option value="'+k+'"'+(k===shapeDefault(look)?' selected':'')+'>'+v+(k==='design'?' · '+escape(look.body.controls.width||'')+'×'+escape(look.body.controls.height||''):'')+'</option>').join('')+'</select></label>'
@@ -1236,6 +1283,7 @@
     if(t.dataset.makeFigure){const fig=PE().PRESETS.find(x=>x.id===t.dataset.makeFigure);state.pose={figure:fig.id,mirror:!!state.pose?.mirror};state.form.pose=fig.label.toLowerCase();redraw('#makeFigure-'+fig.id);return;}
     if('makeMirror' in t.dataset&&state.pose?.figure){state.pose.mirror=t.checked;redraw('#makeMirror');}});
   view.addEventListener('click',e=>{
+    const save=e.target.closest('[data-make-save]');if(save){void saveLookUi(save.dataset.makeSave);return;}
     if(e.target.closest('#makeTune')&&tuneClick(e.target))return;
     const g=e.target.closest('[data-make-goal]');if(g){state.goal=g.dataset.makeGoal;state.pictures=null;remember();render();q('[data-make-goal="'+state.goal+'"]')?.focus();return;}
     const l=e.target.closest('[data-make-look]');if(l&&state.compare){const id=l.dataset.makeLook,i=state.compareLooks.indexOf(id);
