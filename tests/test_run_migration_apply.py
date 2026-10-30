@@ -305,6 +305,7 @@ class RunMigrationApplyTests(unittest.TestCase):
         second = self.body(s, self.plan(s), request_id='second-request-identity')
         with self.assertRaises(run_migration.WorkspaceError) as caught: run_migration.apply(self.studio, second, 'all')
         self.assertEqual((caught.exception.status, caught.exception.code), (409, 'migration_recovery_pending'))
+        self.assertIn('private/migrations/'+body['request_id']+'.json', str(caught.exception)); self.assertIn('move', str(caught.exception))  # Names the file and the way out
         self.assertFalse((self.studio.experiments/'private/runs'/s['jid']).exists())
         self.assertFalse((self.studio.experiments/'private/migrations/second-request-identity.json').exists())
         restarted = self.studio = self.restart()
@@ -366,6 +367,45 @@ class RunMigrationApplyTests(unittest.TestCase):
         self.assertEqual(bogus.read_bytes(), raw); self.assertEqual(json.loads(journal_path.read_text()), forged)
         self.assertEqual({p.relative_to(self.studio.experiments).as_posix(): sha(p) for p in (self.studio.experiments/'runs'/s['jid']).rglob('*') if p.is_file()}, s['run_files'])
         self.assertEqual(restarted.jobs[s['jid']].get('privacy', 'regular'), 'regular')
+
+
+    # ---- Follow-ups (#1785) ----
+    def test_an_unreadable_run_record_keeps_every_upload_in_regular(self):
+        s = self.scenario(); sharer = self.completed(1); sharer['references'] = [{'file': s['upload'], 'role': 'subject'}]; self.studio._save(sharer)
+        (self.studio.experiments/'runs'/sharer['id']/'state.json').write_text('{ not json')  # Its controls cannot load, so it looks like it uses nothing.
+        self.studio = self.restart(); self.assertIn('record_error', self.studio.jobs[sharer['id']])
+        status, out = self.post(APPLY, self.body(s, self.plan(s)))
+        self.assertTrue((self.studio.experiments/'uploads'/s['upload']).is_file())  # Regular keeps it, Private holds its own copy
+        self.assertEqual((status, out['published'], out['stage']), (200, True, 'cleanup-needed'), out)
+        self.assertIn('uploads/'+s['upload'], out['cleanup_remaining'])
+        self.assertEqual(sha(self.studio._upload_path(s['upload'], 'private')), sha(self.studio.experiments/'uploads'/s['upload']))
+
+    def test_recovery_with_unreadable_records_keeps_uploads_listed_then_a_later_start_clears_them(self):
+        s = self.scenario(); body = self.body(s, self.plan(s))
+        with self.crash_at('committed'), self.assertRaises(Crash): run_migration.apply(self.studio, body, 'all')
+        bad = self.studio.experiments/'runs/unrelated-unreadable-run'; bad.mkdir(); (bad/'state.json').write_text('{ not json')
+        restarted = self.studio = self.restart()
+        self.assertTrue((self.studio.experiments/'uploads'/s['upload']).is_file())
+        self.assertEqual(restarted.migration_recovery, [{'request_id': body['request_id'], 'from_stage': 'verified', 'stage': 'cleanup-needed'}])
+        self.assertIn('uploads/'+s['upload'], self.journal(s)['remaining'])
+        shutil.rmtree(bad)  # The owner dealt with the unreadable record.
+        again = self.studio = self.restart()
+        self.assertEqual(again.migration_recovery, [{'request_id': body['request_id'], 'from_stage': 'cleanup-needed', 'stage': 'complete'}])
+        self.assertEqual(self.journal(s)['remaining'], []); self.assert_moved(s, again)
+
+    def test_a_forged_journal_path_outside_private_is_rejected_before_anything_is_deleted(self):
+        for field in ('placements', 'copies'):
+            with self.subTest(field):
+                s = self.scenario(); body = self.body(s, self.plan(s))
+                with self.crash_at('verified'), self.assertRaises(Crash): run_migration.apply(self.studio, body, 'all')
+                victim = self.studio.experiments/('uploads/victim-'+field+'.bin'); victim.write_bytes(b'precious')
+                journal_path = self.studio.experiments/'private/migrations'/(body['request_id']+'.json')
+                forged = self.journal(s); forged[field][0].update(target='uploads/victim-'+field+'.bin', **({'created': True} if field == 'placements' else {}))
+                journal_path.write_text(json.dumps(forged))
+                restarted = self.studio = self.restart()
+                self.assertTrue(victim.is_file()); self.assertEqual(victim.read_bytes(), b'precious')
+                self.assertEqual([r['request_id'] for r in restarted.migration_recovery if 'error' in r], [body['request_id']]); self.assertEqual(json.loads(journal_path.read_text()), forged)
+                shutil.rmtree(self.studio.experiments/'private/migrations'/body['request_id'], ignore_errors=True); journal_path.unlink()
 
 
 if __name__ == '__main__':

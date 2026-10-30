@@ -227,6 +227,9 @@ def _checkpoint(stage):
 def _journal_path(studio, request_id): return studio._private_directory('migrations')/(request_id+'.json')
 
 
+def _journal_file(request_id): return 'private/migrations/'+request_id+'.json'
+
+
 def _stage_root(studio, request_id): return studio._private_directory('migrations')/request_id
 
 
@@ -258,7 +261,10 @@ def _upload_base(source):
 
 
 def _others(studio, runs):
-    with studio.lock: return set().union(*(_upload_names(j) for k, j in studio.jobs.items() if k not in runs))
+    """Upload names the loaded runs outside `runs` reference, or None (keep every upload) when one of them could not be read: its controls are unknown."""
+    with studio.lock:
+        others = [j for k, j in studio.jobs.items() if k not in runs]
+        return None if any('record_error' in j for j in others) else set().union(*(_upload_names(j) for j in others))
 
 
 def _outcome(journal):
@@ -269,7 +275,7 @@ def _outcome(journal):
         failure = journal['failure']
         return failure['status'], dict(common, error=failure['error'], code=failure['code'], failed_stage=failure['failed_stage'], published=False)
     if journal['stage'] not in ('complete', 'cleanup-needed'):
-        return 409, dict(common, error='This migration has not finished; restart the Studio to recover it. Nothing is retried automatically.', code='migration_in_progress', published=None)
+        return 409, dict(common, error='This migration has not finished; restart the Studio to recover it. If recovery still reports '+_journal_file(journal['request_id'])+' as invalid or unmarked, inspect it and move it out of private/migrations/. Nothing is retried automatically.', code='migration_in_progress', published=None)
     return 200, dict(common, published=True, job_ids=journal['job_ids'], asset_ids=journal['asset_ids'], collection_ids=journal['collection_ids'],
                      cleanup_remaining=journal['remaining'], external_copies=journal['external_copies'], remaining_copies=REMAINING)
 
@@ -298,7 +304,7 @@ def apply(studio, payload, scope):
                 raise WorkspaceError('This request ID already names a different migration; nothing changed', status=409, code='migration_request_conflict')
             return _outcome(journal)
         if pending := _pending(studio):  # Recovery of an unfinished journal could otherwise undo files this request publishes.
-            raise WorkspaceError('An earlier migration has not finished; restart the Studio to recover it. Nothing changed', status=409, code='migration_recovery_pending', request_ids=pending[:10])
+            raise WorkspaceError('An earlier migration has not finished ('+', '.join(map(_journal_file, pending[:3]))+'); restart the Studio to recover it. If recovery still reports a journal as invalid or unmarked, inspect that file and move it out of private/migrations/. Nothing changed', status=409, code='migration_recovery_pending', request_ids=pending[:10])
         return _apply(studio, request, request_id, payload['plan_sha256'], fingerprint)
     finally: _LOCK.release()
 
@@ -328,7 +334,7 @@ def _apply(studio, request, request_id, plan_sha256, fingerprint):
                    asset_revisions={i['id']: [i['revision'], i['sha256'], i['path']] for i in items if i['kind'] == 'asset'},
                    collection_revisions={i['id']: i['revision'] for i in items if i['kind'] == 'collection'},
                    copies=sorted(copies.values(), key=lambda c: c['target']), thumbnails=sorted(i['id'] for i in items if i['kind'] == 'thumbnail'),
-                   keep_uploads=sorted(c['source'] for c in copies.values() if c['kind'] == 'upload' and _upload_base(c['source']) in others),
+                   keep_uploads=sorted(c['source'] for c in copies.values() if c['kind'] == 'upload' and others is not None and _upload_base(c['source']) in others),
                    external_copies=sorted(i['id'] for i in items if i['kind'] == 'external_copy'), placements=None, remaining=[], created_at=time.time())
     stage, committed, staging = 'staging', False, _stage_root(studio, request_id)
     try:
@@ -450,7 +456,9 @@ def _cleanup(studio, journal, live):
         regular_shas = {r[0] for r in db.execute("SELECT sha256 FROM assets WHERE privacy='regular'")}
     others = _others(studio, journal['job_ids']) if live else _disk_consumers(studio, journal['job_ids'])  # At start no job is loaded: read run records.
     retire = [c['source'] for c in journal['copies'] if c['kind'] == 'asset' and c['source'].removeprefix('workspace/') not in regular_paths]
-    retire += [c['source'] for c in journal['copies'] if c['kind'] == 'upload' and c['source'] not in journal['keep_uploads'] and others is not None and _upload_base(c['source']) not in others]
+    uploads = [c['source'] for c in journal['copies'] if c['kind'] == 'upload' and c['source'] not in journal['keep_uploads']]
+    retire += [u for u in uploads if others is not None and _upload_base(u) not in others]
+    if others is None: remaining += uploads  # Who else uses them is unknown: kept, and listed so the next start retries.
     retire += [t for t in journal['thumbnails'] if Path(t).name.split('-', 1)[0] not in regular_shas]  # A regenerable cache; Private renders its own.
     for rel in dict.fromkeys(retire):
         try: _at(studio, rel).unlink(missing_ok=True)
@@ -490,6 +498,9 @@ def _check_journal(studio, journal, path):
     runs = journal.get('job_ids')
     if type(runs) is not list or not runs or not all(type(r) is str and IDENTITY.fullmatch(r) for r in runs): raise ValueError('Journal run IDs are invalid')
     for run_id in runs: studio._job_directory(run_id, 'private')
+    for entry in (journal.get('placements') or []) + (journal.get('copies') or []):  # Rollback unlinks these: they must be private files.
+        target = entry.get('target') if type(entry) is dict else None
+        if type(target) is not str or not target.startswith('private/') or '..' in Path(target).parts: raise ValueError('Journal names a file outside private/')
 
 
 def _pending(studio):
