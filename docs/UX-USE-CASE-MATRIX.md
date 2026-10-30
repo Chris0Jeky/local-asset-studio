@@ -30,6 +30,60 @@ case) and zero page errors. Two earlier sweeps on this branch failed `prompt-lab
 characters", the same Prompt Lab flake the 30 October Combine note records) and a third sweep passed it. These runs
 establish structure and cost on synthetic data, not rendered quality or owner acceptance.
 
+## Word counts no longer charge text behind a closed disclosure — 30 October 2026
+
+The runner counted every `p`, `small`, `label` and similar node whose `offsetParent` was set. Chromium keeps
+`offsetParent` for text inside a closed `<details>`, so prose moved behind a Why or More disclosure still counted
+toward `instruction_words` and `instruction_words_peak`, and a copy-terseness change could not show a drop
+(#1740). The probe now skips a node inside a closed `<details>` unless it belongs to that details' own
+`<summary>`; a details that is open, or sits in an open one, is counted as before. The check covers every closed
+ancestor, not just the nearest (#1754): the summary of a closed details nested in another closed one is off screen
+too. `tests/test_use_case_matrix.py` (`ProbeClosedDisclosures`) pins both on a static page in Chromium and skips
+where Chromium cannot launch.
+
+**Every word baseline in this file from before this date overstates what a reader sees; compare new runs with the
+column below, not with the older tables.** Both columns are one full fixture sweep each of the same 29 journeys on
+the same code, differing only in the probe (`python tests/studio_use_cases.py`: 29/29 PASS both times, zero
+unexpected generation submissions, one allowed to `make-generate-then-keep`, zero page errors). Steps taken, clicks,
+page switches and dead ends are identical in every journey. Words are one run each and a few journeys move by tens
+of words between runs on the same code (`prompt-lab-to-create` read 434, 389 and 1040 in different sweeps), so
+read a change of that size as noise.
+
+| Journey | words before | words after | peak before | peak after |
+| --- | --- | --- | --- | --- |
+| `first-image-from-brief` | 731 | 330 | 441 | 212 |
+| `reference-edit-one-source` | 537 | 136 | 447 | 116 |
+| `three-reference-identity-pose-style` | 594 | 174 | 473 | 132 |
+| `compare-settings-from-recipe` | 667 | 239 | 416 | 121 |
+| `review-and-keep-winner` | 313 | 240 | 193 | 151 |
+| `reuse-keeper-as-reference` | 270 | 189 | 501 | 161 |
+| `reference-analysis-review-and-apply` | 645 | 333 | 760 | 414 |
+| `prompt-lab-to-create` | 1040 | 394 | 645 | 339 |
+| `guided-edit-or-preserve-character` | 884 | 508 | 492 | 393 |
+| `build-and-prepare-node-workflow` | 428 | 393 | 444 | 398 |
+| `frames-to-native-export` | 132 | 122 | 123 | 87 |
+| `restyle-recent-output-with-a-look` | 137 | 137 | 146 | 137 |
+| `combine-character-with-another-pose` | 136 | 136 | 262 | 245 |
+| `combine-same-pair-second-engine` | 589 | 235 | 1246 | 766 |
+| `combine-several-engines-one-plan` | 589 | 235 | 818 | 444 |
+| `draw-a-pose-for-combine` | 571 | 217 | 888 | 432 |
+| `vary-a-keeper` | 679 | 370 | 642 | 273 |
+| `new-scene-in-an-accepted-look` | 416 | 103 | 497 | 195 |
+| `make-a-texture-tile` | 270 | 189 | 506 | 186 |
+| `split-a-scene-into-parallax-layers` | 235 | 159 | 459 | 181 |
+| `make-an-anime-character` | 644 | 298 | 702 | 212 |
+| `make-tune-a-look` | 609 | 263 | 970 | 284 |
+| `specific-lora-in-full-editor` | 541 | 116 | 440 | 132 |
+| `make-anime-look-chosen-model-and-lora` | 682 | 298 | 587 | 309 |
+| `make-compare-looks` | 212 | 212 | 262 | 262 |
+| `combine-runs-grid` | 589 | 235 | 1094 | 626 |
+| `make-generate-then-keep` | 212 | 212 | 799 | 213 |
+| `review-desk-by-keyboard` | 265 | 218 | 290 | 272 |
+| `library-review-next-by-keyboard` | 240 | 193 | 205 | 157 |
+
+This measures the probe, not the interface: it says how many words are on screen at once, not whether a person
+can find the text behind a disclosure.
+
 ## Combine: runs as a Grid — 30 October 2026
 
 **Runs for these pictures** gains a **Grid** switch. Rows are recipes and columns are seeds, every cell one

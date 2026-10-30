@@ -668,6 +668,13 @@ PROBE_PAGE = """() => {
   const seen = new Set();
   for (const node of panel.querySelectorAll('p,small,label,legend,summary,figcaption,.muted,.hint,.callout,[role=status],[role=alert]')) {
     if (!node.offsetParent && node !== panel) continue;
+    // Chromium keeps offsetParent for text inside a closed <details>; only that details' own summary is on screen (#1740).
+    // Every closed ancestor counts, so the summary of a closed details nested in another closed one stays off (#1754).
+    const summary = node.closest('summary');
+    let hidden = false;
+    for (let d = node.closest('details:not([open])'); d && !hidden; d = d.parentElement?.closest('details:not([open])'))
+      hidden = summary?.parentElement !== d;
+    if (hidden) continue;
     const own = [...node.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join(' ');
     const value = text(own || (node.children.length ? '' : node.textContent));
     if (value) seen.add(value);
@@ -1328,6 +1335,10 @@ def _draw_pose(c):
 
 @driver('combine-same-pair-second-engine')
 def _combine_loop(c):
+    with restoring_fixture(): return _combine_loop_run(c)   # reviews, quick-check tags and revisions it wrote are handed back (#1747)
+
+
+def _combine_loop_run(c):
     """Real page controls over synthetic completed jobs; recipe switches and reruns never submit."""
     ready, detail = _combine(c)
     if not ready or c.live: return False, 'Needs the prepared fixture pair; live attachment is deliberately skipped. ' + detail
@@ -2029,12 +2040,12 @@ def _prompt_lab(c):
     try: c.page.wait_for_selector('#uxTransfer:not([hidden])', timeout=8000)
     except Exception: pass
     c.act('#uxTransferPreview', 'read', note='transferred text reviewed before applying')
+    expected = c.page.evaluate("sep => ((document.querySelector('#uxTransferPreview') || {}).textContent || '').split(sep)[0]", '\n\nNegative (applied only when supported):')   # the positive the preview shows
     c.act('#uxApplyPrompt')
-    # Wait for the applied wording, not a fixed delay: 400 ms flaked in full sweeps (#1753).
-    try: c.page.wait_for_function("(document.querySelector('#positive')?.value || '').trim().length > 0", timeout=5000)
+    try: c.page.wait_for_function("t => t && ((document.querySelector('#positive') || {}).value || '') === t", arg=expected, timeout=8000)   # the transferred value itself, not a fixed sleep or any non-empty text (#1753)
     except Exception: pass
     applied = c.page.locator('#positive').input_value() if c.page.locator('#positive').count() else ''
-    return bool(applied.strip()), 'brief field holds %d characters' % len(applied)
+    return bool(applied.strip()) and applied == expected, 'brief field holds %d characters%s' % (len(applied), '' if applied == expected else ', not the transferred wording')
 
 
 @driver('guided-edit-or-preserve-character')
