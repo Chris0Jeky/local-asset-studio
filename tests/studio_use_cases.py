@@ -1318,6 +1318,79 @@ def _combine_loop(c):
             else: asset['preset_id'] = preset_id
 
 
+@driver('combine-runs-grid')
+def _combine_runs_grid(c):
+    """#1204: the Combine runs as a Grid. Real page controls over synthetic completed and failed jobs; nothing submits."""
+    ready, detail = _combine(c)
+    if not ready or c.live: return False, 'Needs the prepared fixture pair; live attachment is deliberately skipped. ' + detail
+    import studio_browser_smoke as fixture
+    initial = c.page.evaluate('({preset_id:selected.id,controls:values(),continuation:continuationState,references:attachedReferencePayload(),parent_assets:parentAssets})')
+    klein = 'combine-klein'
+    # Two recipes at two seeds; the second recipe's seed 43 failed. Newest last, so the Klein row leads.
+    spec = (('combine-grid-0', initial['preset_id'], 'completed', 42, 'asset-2'), ('combine-grid-1', initial['preset_id'], 'completed', 43, 'asset-3'),
+            ('combine-grid-2', klein, 'completed', 42, 'asset-4'), ('combine-grid-3', klein, 'failed', 43, None))
+    added = []
+    for index, (identifier, preset_id, status, seed, asset) in enumerate(spec):
+        engine = next(p for p in fixture.CATALOG['presets'] if p['id'] == preset_id)
+        job = dict(copy.deepcopy(initial), id=identifier, status=status, preset_id=preset_id, preset_name=engine['name'], elapsed_seconds=80,
+                   batch_count=1, created_at=1789228800 + 60 * index, message='Synthetic ' + status + ' receipt; no model ran.',
+                   outputs=[dict(filename='fixture.png', asset_id=asset, media_type='image', seed=seed)] if asset else [])
+        job['controls']['seed'] = str(seed)
+        added.append(job)
+    fixture.JOBS[:0] = added
+    saved = {a['id']: a.get('review') for a in fixture.ASSETS}
+    grid, cells = '#uxPairResults [role=grid]', '#uxPairResults [role=grid] [role=gridcell]'
+    try:
+        c.page.evaluate('refreshJobs()')
+        c.page.wait_for_selector('#uxPairResults .ux-result-tile')
+        c.act('[data-ux-grid]', note='show the runs as a grid')
+        c.page.wait_for_selector(grid)
+        assert c.page.locator('[data-ux-grid]').get_attribute('aria-pressed') == 'true'
+        mine = c.page.evaluate('StudioContinuation.combineEngineLabel(selected)')
+        assert c.page.locator(grid + ' [role=rowheader]').all_inner_texts() == ['Klein 4B', mine], 'ordinary runs show their recipe names'
+        assert c.page.locator(grid + ' [role=columnheader]').all_inner_texts() == ['Recipe', 'Seed 42', 'Seed 43']
+        sizes = c.page.evaluate("[...document.querySelectorAll('%s')].map(el => { const r = el.getBoundingClientRect(); return Math.round(r.width) + 'x' + Math.round(r.height); })" % cells)
+        c.observe('every cell is the same size', len(sizes) == 4 and len(set(sizes)) == 1, str(sizes))
+        assert len(sizes) == 4 and len(set(sizes)) == 1, sizes
+        # The failed run's cell shows its state and offers nothing: no rerun anywhere, no review button in it.
+        failed = c.page.locator(cells).nth(1)
+        c.act(cells + ' >> nth=1', 'read', note='the failed run says so and cannot be run again here')
+        assert 'Failed' in failed.inner_text() and 'No picture' in failed.inner_text() and failed.locator('button').count() == 0
+        assert c.page.locator('#uxPairResults [role=grid] [data-ux-rerun]').count() == 0 and c.page.locator('#uxPairResults [data-ux-rerun]').count() == 0
+        # One tab stop; arrows move between cells; K keeps the focused picture through the library's own review write.
+        c.page.focus(cells + ' >> nth=0')
+        for key, at in (('ArrowRight', '0:1'), ('ArrowDown', '1:1'), ('ArrowLeft', '1:0')):
+            c.page.keyboard.press(key)
+            assert c.page.evaluate('document.activeElement.dataset.uxCell') == at, (key, at)
+        c.page.keyboard.press('k')
+        c.page.wait_for_function('assetState.assets.find(a=>a.id === "asset-2").review === "selected"')
+        c.page.wait_for_function('document.activeElement && document.activeElement.dataset.uxCell === "1:0"')
+        c.observe('K kept the focused picture and focus stayed on its cell', True, 'asset-2 review: selected')
+        # Runs from a plan keep their recipe names behind Reveal; the ordinary Klein row keeps its own.
+        for job in added[:2]: job['project_id'] = 'c' * 32
+        c.page.evaluate('refreshJobs()')
+        c.page.wait_for_function('[...document.querySelectorAll("#uxPairResults [role=rowheader]")].some(n => n.textContent === "Candidate A")')
+        assert c.page.locator(grid + ' [role=rowheader]').all_inner_texts() == ['Klein 4B', 'Candidate A']
+        hidden = c.page.locator(grid).evaluate('el => el.outerHTML')
+        assert mine not in hidden and 'Reveal recipes' not in hidden and c.page.locator('[data-ux-reveal]').count() == 1
+        c.act('[data-ux-reveal]', note='reveal the planned recipes')
+        assert c.page.locator(grid + ' [role=rowheader]').all_inner_texts() == ['Klein 4B', mine] and c.page.locator('[data-ux-reveal]').count() == 0
+        # Leaving Grid hides them again; the list still names its runs.
+        c.act('[data-ux-grid]', note='back to the list')
+        assert c.page.locator('#uxPairResults .ux-run-group').count() == 3 and c.page.locator(grid).count() == 0
+        c.act('[data-ux-grid]', note='the grid again, blind once more', supplementary=True)
+        assert c.page.locator(grid + ' [role=rowheader]').all_inner_texts() == ['Klein 4B', 'Candidate A']
+        c.act('[data-ux-grid]', note='leave the grid', supplementary=True)
+        assert not [p for p in fixture.POSTS if p['path'] == '/api/jobs'], 'the grid never generates'
+        c.act('#generate', 'read', note='the only generation action still requires a separate explicit click')
+        return c.ready(), 'recipes x seeds in equal cells; the failed cell names its state with no rerun; arrows and K work; planned names hidden until Reveal and hidden again after leaving Grid; zero generation requests'
+    finally:
+        fixture.JOBS[:] = [job for job in fixture.JOBS if not job['id'].startswith('combine-grid-')]
+        for asset in fixture.ASSETS:
+            if saved[asset['id']] is None: asset.pop('review', None)
+            else: asset['review'] = saved[asset['id']]
+
+
 VARY_STATE = """() => ({preset: selected.id, intent: continuationState && continuationState.intent,
   source: continuationState && continuationState.source_asset_id, parents: parentAssets.slice(),
   denoise: getControl('denoise') ? getControl('denoise').value : null, seed: getControl('seed') ? getControl('seed').value : null,

@@ -75,9 +75,13 @@
 .ux-result-tile{flex:0 0 172px;min-width:0;display:flex;flex-direction:column;gap:5px;border:1px solid var(--line,#455b56);border-radius:8px;padding:8px}
 .ux-result-tile>img{width:100%;height:150px;object-fit:contain}.ux-result-tile>b{font-size:12px}.ux-result-tile>span{font-size:11px}
 .ux-result-actions{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:auto}.ux-result-actions button{font-size:10px;min-height:32px;padding:4px 6px}
+.ux-grid-tools{margin:0 0 8px}.ux-grid-tools button{font-size:11px;min-height:32px;padding:4px 12px}.ux-grid-tools [aria-pressed=true]{border-color:var(--accent,#c6dd94);background:#273b30}.ux-grid-note{font-size:12px}.ux-grid-note button{font-size:11px;min-height:30px;padding:3px 10px}
+.ux-grid{display:flex;flex-direction:column;gap:8px;overflow-x:auto;padding:4px 0 10px}.ux-grid-row{display:grid;grid-template-columns:120px repeat(var(--cols,1),172px);gap:8px;align-items:stretch;width:max-content}
+.ux-grid-row>[role=columnheader],.ux-grid-name{font-size:12px;font-weight:600;overflow-wrap:anywhere}.ux-grid-cell{display:flex;flex-direction:column;gap:4px;height:236px;min-width:0;border:1px solid var(--line,#455b56);border-radius:8px;padding:8px;overflow:hidden;font-size:11px}
+.ux-grid-cell:focus-visible{outline:2px solid var(--accent,#c6dd94);outline-offset:2px}.ux-grid-cell>img{width:100%;height:130px;object-fit:contain;flex:none}.ux-grid-cell>small{opacity:.85}.ux-grid-state{font-weight:600}
 .ux-run-live{font-weight:600}.ux-run-attention{font-size:12px}.ux-run-attention summary{cursor:pointer}.ux-run-attention button{font-size:10px;min-height:30px;padding:3px 8px}
 .ux-no-results{min-width:180px;align-self:center}.job-problems{grid-column:1/-1;padding:14px;border:1px solid var(--line,#455b56);border-radius:9px}.job-problems summary{cursor:pointer}.job-problems .jobStatus{margin-top:12px}
-@media(max-width:700px){.ux-pair-tile img{max-height:180px}.ux-result-tile{flex-basis:160px}.ux-result-actions{grid-template-columns:1fr}.ux-result-actions button,.ux-run-head button,.ux-run-attention button{min-height:44px}}
+@media(max-width:700px){.ux-pair-tile img{max-height:180px}.ux-result-tile{flex-basis:160px}.ux-result-actions{grid-template-columns:1fr}.ux-result-actions button,.ux-run-head button,.ux-run-attention button{min-height:44px}.ux-grid-cell{height:auto;min-height:236px}.ux-grid-cell .ux-result-actions{grid-template-columns:1fr 1fr}}
 
 /* Draw the pose: a stick figure on black, the skeleton recipe's image 1. Drawing submits nothing. */
 .ux-pose-editor{margin:18px 0;padding:16px;border:1px solid var(--line,#455b56);border-radius:12px;min-width:0}

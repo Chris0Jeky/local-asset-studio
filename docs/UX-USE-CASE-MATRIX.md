@@ -1,5 +1,32 @@
 # UX use-case matrix
 
+## Combine: runs as a Grid — 30 October 2026
+
+**Runs for these pictures** gains a **Grid** switch. Rows are recipes and columns are seeds, every cell one
+size; the list stays the default. A cell shows the newest picture for that recipe and seed (with "Newest of N
+pictures" when it was made more than once), its saved review, and the same **Keep** and **Needs work** writes
+the list already had. A failed, uncertain, queued or missing cell names its state and offers no rerun; the
+list's **Prepare same/new seed** buttons are not in the Grid. Arrow keys move between cells (one tab stop);
+**K** and **W** press the focused cell's Keep and Needs work. There is no X key: this strip has no "Not this"
+write and none was added.
+
+Per the owner's 27 Sep decision on #1204, recipe names are hidden only for runs that came from a plan (the
+job's `project_id`, shown as "from a plan" in the list): they read **Candidate A, B, ...** in a fixed order that
+is not the plan's own, with a **Reveal recipes** button. Ordinary runs show their names. Reveal belongs to this
+view only; it is not recorded, and leaving Grid hides the names again. The Review desk keeps the recorded
+blind review. The list view always names its runs, as before.
+
+| Journey | Held fixed | Measured result |
+| --- | --- | --- |
+| `combine-runs-grid` (new) | Same two-picture pair, four synthetic runs (two recipes x seeds 42 and 43, one failed), no generation | 11 clicks, 23 steps taken / 8 intended, 4 view switches, 0 dead ends, 0 unexplained disabled controls; PASS |
+
+`python tests/studio_use_cases.py`: 25/26 PASS with zero generation submissions and zero page errors.
+`prompt-lab-to-create` failed that sweep ("brief field holds 0 characters", a Prompt Lab seam this change does
+not touch) and passed on its own immediately after. The unmoved journeys' counts above are unchanged; the registry
+is now 26 cases. The Node harness (`tests/library_offpage_frontend.cjs`) pins the row, column, rerun-absence,
+blind-until-Reveal, reorder-free Reveal and single-tab-stop contracts. These checks establish structure and
+behavior on synthetic jobs, not rendered quality or owner acceptance of the layout.
+
 ## Review desk: settings and wordings in Grid — 29 October 2026
 
 The existing Review desk **Pair / Grid** switch also projects ordinary saved

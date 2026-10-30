@@ -1040,6 +1040,47 @@
           "expect": "Generate names three pictures and nothing has been submitted"
         }
       ]
+    },
+    {
+      "id": "combine-runs-grid",
+      "goal": "Compare the runs made from one character and pose pair as a grid of recipes by seeds, keeping the recipe names hidden when the runs came from a plan.",
+      "starting_view": "create",
+      "success_condition": "A Grid switch on the runs for these pictures shows recipes as rows and seeds as columns in equal cells, shows a failed or missing cell as its state with no rerun, moves between cells and keeps a picture from the keyboard, hides the names of planned runs until Reveal, and submits no generation.",
+      "wrong_turn": false,
+      "steps": [
+        {
+          "intent": "continue a saved character through Combine",
+          "expect": "the source-bound workbench opens"
+        },
+        {
+          "intent": "choose a pose picture and describe the result",
+          "expect": "both source images and the named answers are retained"
+        },
+        {
+          "intent": "switch the runs for these pictures to a grid",
+          "expect": "recipes are rows, seeds are columns and every cell is the same size"
+        },
+        {
+          "intent": "read the cell of a run that failed",
+          "expect": "it names its state and offers no way to run it again"
+        },
+        {
+          "intent": "move between the cells and keep one picture from the keyboard",
+          "expect": "the arrow keys move focus and the keeper is saved through the library"
+        },
+        {
+          "intent": "read the grid when two of the runs came from a plan",
+          "expect": "their names are hidden and a Reveal control is offered"
+        },
+        {
+          "intent": "reveal the recipe names",
+          "expect": "the names appear and nothing is recorded or generated"
+        },
+        {
+          "intent": "read the run control",
+          "expect": "the next generation still needs an explicit click"
+        }
+      ]
     }
   ]
 }
