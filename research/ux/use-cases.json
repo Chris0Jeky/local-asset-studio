@@ -890,6 +890,51 @@
       ]
     },
     {
+      "id": "repair-a-hand-region",
+      "goal": "Fix one broken hand in a library picture with a masked-repair recipe without leaving the Studio: mark the hand, prepare the repair input, and stop at Generate. Nothing is generated.",
+      "starting_view": "assets",
+      "success_condition": "Choosing a masked-repair recipe in Continue with this asks for the region with a reason on the disabled Prepare; one box dragged on the picture is listed, and one press attaches the RGBA repair input with the picture as its recorded parent and its own wording, leaves Generate enabled and requests no generation.",
+      "wrong_turn": false,
+      "steps": [
+        {
+          "intent": "open the picture with the broken hand from my library",
+          "expect": "its details open"
+        },
+        {
+          "intent": "continue with this picture",
+          "expect": "a handoff asks where the picture should go next"
+        },
+        {
+          "intent": "say I want to fix it",
+          "expect": "fix and repair recipes are offered"
+        },
+        {
+          "intent": "choose the masked repair recipe",
+          "expect": "the handoff shows the picture and asks me to mark the region to repair"
+        },
+        {
+          "intent": "see why Prepare is not offered yet",
+          "expect": "Prepare is disabled and its reason asks for a marked region"
+        },
+        {
+          "intent": "drag a box over the hand on the picture",
+          "expect": "the box is listed with a remove button and Prepare is offered"
+        },
+        {
+          "intent": "prepare the repair without running it",
+          "expect": "Create opens with the repair input attached and the picture as its parent"
+        },
+        {
+          "intent": "check what was attached",
+          "expect": "the picture note names the source and one marked box"
+        },
+        {
+          "intent": "check the repair is ready to run",
+          "expect": "Generate is enabled and nothing has been submitted"
+        }
+      ]
+    },
+    {
       "id": "make-an-anime-character",
       "goal": "Make a polished anime character picture from one plain sentence, without knowing which model, adapters or quality tags to use.",
       "starting_view": "make",

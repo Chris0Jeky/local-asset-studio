@@ -347,6 +347,7 @@ def build_handler():
     from test_server import server
     import tiles   # app/ is on sys.path once server.py is loaded; a bare name, never `from app import`
     import parallax
+    import region_repair
     import combine_plan
     from PIL import Image
 
@@ -554,6 +555,20 @@ def build_handler():
                         'source_file': 'f' * 32 + '_' + asset['filename'], 'width': status['width'], 'height': status['height'], 'objects': objects, 'view_polygons': view}
                 plan['plan_id'] = parallax.plan_id(plan)
                 return self.json(parallax.stage_payload(plan, 'plate', fixture.source_context(asset)), 201)
+            if path == '/api/repair/prepare':
+                # The same body app/region_repair.py accepts and its result shape; the boxes are checked by its own rule. Nothing is queued.
+                data = json.loads(self.rfile.read(length) or b'{}'); fixture.POSTS.append({'path': path, 'data': data})
+                asset = next((a for a in fixture.ASSETS if isinstance(data, dict) and a['id'] == data.get('asset_id')), None)
+                preset = next((p for p in fixture.CATALOG['presets'] if isinstance(data, dict) and p['id'] == data.get('preset_id')), {})
+                if asset is None or set(data) - region_repair.FIELDS or not preset.get('requires_rgba_mask'): return self.json({'error': 'Unknown fixture asset or recipe'}, 400)
+                context = fixture.source_context(asset)
+                try: boxes = region_repair.boxes_value(data.get('boxes'), context['width'], context['height'])
+                except ValueError as error: return self.json({'error': str(error)}, 400)
+                file = 'f' * 32 + '_repair-mask.png'
+                plan = {'version': region_repair.VERSION, 'preset_id': preset['id'], 'source_asset_id': asset['id'], 'source_sha256': asset['sha256'],
+                        'mask_file': file, 'mask_sha256': 'd' * 64, 'boxes': boxes, 'size': [context['width'], context['height']]}
+                return self.json({'plan': plan, 'file': file, 'sha256': 'd' * 64, 'width': context['width'], 'height': context['height'],
+                                  'preset_id': preset['id'], 'context': context, 'generation_submitted': False}, 201)
             if path == '/api/recipe-check':
                 data = json.loads(self.rfile.read(length)); fixture.POSTS.append({'path': path, 'data': data})
                 preset = next(p for p in fixture.CATALOG['presets'] if p['id'] == data['preset_id'])
@@ -1746,6 +1761,53 @@ def _parallax(c):
     marked = len(boxes) == 1 and boxes[0][0] > 800 and boxes[0][2] > boxes[0][0] + 100
     return prepared and disabled and guided and marked and not submitted, 'prepared: %s; small picture: %s; before naming: %s; view: %s; generation posts: %d' % (
         {k: state[k] for k in ('preset', 'stage', 'source', 'parents', 'view')}, why or 'no control', waiting or 'no control', drawn or 'none', len(submitted))
+
+
+REPAIR_STATE = """() => ({preset: selected.id, parents: parentAssets, reference: uploaded, positive: document.querySelector('#positive').value,
+  notice: document.querySelector('#uxNotice').textContent, hint: document.querySelector('#referenceHint').textContent,
+  generate: !document.querySelector('#generate').disabled})"""
+
+
+@driver('repair-a-hand-region')
+def _repair_region(c):
+    """#1857: a masked-repair recipe from Continue with this asks for the region instead of dead-ending; one dragged box and
+    Prepare attach the RGBA repair input with the picture as its parent. Generate stays the owner's press and is never pressed."""
+    import studio_browser_smoke as fixture
+    c.need_recipe('anime-masked-repair')
+    c.boot('#assets')
+    c.page.wait_for_timeout(600)
+    picture = c.pick('asset-1', '#assetGrid [data-asset-open]', 'image asset in the Asset library', keep=LIVE_IMAGE_ASSET)
+    c.act('[data-asset-open="%s"]' % picture, note='open the picture with the broken hand')
+    if not c.live: c.page.wait_for_function('document.querySelectorAll("#assetFamily [data-family-step]").length === 1')
+    c.act('[data-ux-handoff="%s"]' % picture, note='continue with this picture')
+    c.act('#uxHandoffIntents [data-ux-destination="repair"]', note='choose to fix it')
+    c.need_destination('anime-masked-repair')
+    c.act('#uxDestination', 'select', typed='anime-masked-repair')
+    c.page.wait_for_timeout(800)
+    waiting = c.page.evaluate("[document.querySelector('#uxPrepareHandoff').disabled, document.querySelector('#uxPrepareReason').textContent]")
+    c.act('#uxPrepareReason', 'read', note='Prepare waits: ' + waiting[1])
+    marked = ''
+    try:   # a drag only adds a box on this page; nothing is stored
+        box = c.page.locator('#uxRepairMark .ux-repair-pick img').bounding_box()
+        c.page.mouse.move(box['x'] + box['width'] * 0.30, box['y'] + box['height'] * 0.40); c.page.mouse.down()
+        c.page.mouse.move(box['x'] + box['width'] * 0.55, box['y'] + box['height'] * 0.65, steps=6); c.page.mouse.up()
+        c.page.wait_for_timeout(200); marked = c.page.evaluate("document.querySelector('#uxRepairList').textContent")
+    except Exception as error: marked = 'drag failed: ' + str(error)[:120]
+    c.act('#uxRepairList', 'read', note='the marked box: ' + marked)
+    offered = c.page.evaluate("!document.querySelector('#uxPrepareHandoff').disabled")
+    c.stop_before(c.act('#uxPrepareHandoff', note='prepares the RGBA repair input'), 'stopped before preparing: Prepare stores the repair input as an upload')
+    c.page.wait_for_timeout(800)
+    state = c.page.evaluate(REPAIR_STATE)
+    c.act('#referenceHint', 'read', note=state['hint'][:200])
+    c.act('#generate', 'read', note='readiness only; never pressed')
+    submitted = [p for p in fixture.POSTS if p['path'] == '/api/jobs']
+    prepares = [p['data'] for p in fixture.POSTS if p['path'] == '/api/repair/prepare']
+    guided = waiting[0] and 'Mark the region to repair' in waiting[1] and offered
+    prepared = (state['preset'] == 'anime-masked-repair' and state['parents'] == [picture] and state['reference'] == 'f' * 32 + '_repair-mask.png'
+                and 'press Generate' in state['notice'] and '1 marked box' in state['hint'] and state['generate']
+                and len(prepares) == 1 and len(prepares[0]['boxes']) == 1)
+    return guided and prepared and not submitted, 'prepared: %s; before marking: %s; marked: %s; generation posts: %d' % (
+        {k: state[k] for k in ('preset', 'parents', 'reference', 'generate')}, waiting[1] or 'no reason', marked or 'none', len(submitted))
 
 
 MAKE_SCENE = 'an adult elf archer with long white hair, standing on a cliff at sunset'

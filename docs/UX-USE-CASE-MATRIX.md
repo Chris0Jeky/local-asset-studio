@@ -1,5 +1,21 @@
 # UX use-case matrix
 
+## Repair a marked region — 30 October 2026 (#1857, first slice)
+
+Choosing a masked-repair recipe (`anime-masked-repair`, `sdxl-inpaint-fix`) in *Continue with this* no longer dead-ends on
+*This recipe needs a mask*. The handoff shows the picture under **Mark the region to repair**: drag a box over each part to
+redraw, or type `x0,y0,x1,y1` and press **Add box**; each box is listed with **Remove**. Prepare stays disabled with its
+reason until a box is marked (and for a picture whose sides are not multiples of 8). One press asks the Studio
+(`/api/repair/prepare`) to compose the RGBA input, the picture in RGB with the boxes transparent and the rest opaque, and
+attaches it to the recipe's picture slot with the picture as the recorded parent and its own wording. Generate stays your
+press. The server refuses empty, out-of-bounds, under-8-px, more-than-16-box and 60 %-or-more marks with the reason.
+
+`python tests/studio_use_cases.py` passed **30/30** journeys with **zero generation submissions** beyond the one allowed to
+`make-generate-then-keep`. The new `repair-a-hand-region` journey opens a library picture, continues with it, chooses Refine
+and the masked repair recipe, reads the disabled Prepare's reason, drags one box, prepares and reads the attached input
+and an enabled Generate: 9 steps, 5 clicks, 0 dead ends, 237 instruction words. Live mode stops before Prepare, which
+stores an upload. These are fixture screens; no model ran and no repair has been rendered through this route yet.
+
 ## Review desk: choosing the winner in one press — 30 October 2026 (#1752)
 
 After **Reveal**, the decision panel gains **Meets the stated constraints — choose as winner** (named for the candidate
