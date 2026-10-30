@@ -222,7 +222,7 @@ class Studio:
             # publication may be indexed on restart. Legacy jobs without a
             # publication marker keep the historical recovery path.
             if job.get("operation") in ("native.av-preview.v1","native.voice-baseline.v1") and "publication_status" in job and job["publication_status"] != "published": continue
-            self.index_outputs(job)
+            self.index_outputs(job, advise=False)  # Restart re-registers known outputs only; the empty-picture decode is never backfilled.
         self.parallax_finisher = parallax.Finisher(self)
         self.production = Production(self)
         self.backends = BackendManager(self)
@@ -1210,7 +1210,7 @@ class Studio:
         if kind not in ("output", "temp"): raise StudioError("Unsupported output location")
         return inside(root / kind, root / kind / str(output.get("subfolder") or "") / str(output.get("filename") or ""))
 
-    def index_outputs(self, job):
+    def index_outputs(self, job, advise=True):
         for index, output in enumerate(job.get("outputs", [])):
             try:
                 asset_id = self.assets.register(job, index, self.output_path(output, job))
@@ -1225,11 +1225,11 @@ class Studio:
                     output['text_safe'] = review_media.text_safe_metrics(review_media.checked_bytes(path, asset['sha256']))
                 except (OSError, ValueError, sqlite3.Error) as exc:
                     output['text_safe'] = {'error': str(exc)[:200]}
-            if output.get('asset_id') and output.get('media_type', 'image') == 'image' and 'empty_picture' not in output:
+            if advise and output.get('asset_id') and output.get('media_type', 'image') == 'image' and 'empty_picture' not in output:
                 try:
                     path, asset = self.assets.file_entry(output['asset_id'],privacy=job.get('privacy','regular'))
                     output['empty_picture'] = review_media.empty_picture(review_media.checked_bytes(path, asset['sha256']))
-                except (OSError, ValueError, sqlite3.Error): pass  # Advisory only: an unreadable picture keeps its recorded outcome.
+                except Exception: output['empty_picture'] = ''  # Advisory only: an unreadable picture keeps its outcome and is not retried.
 
     def asset_reference(self, asset_id, *, privacy='regular', creation_privacy='regular'):
         classification=privacy_scope.normalize(creation_privacy)

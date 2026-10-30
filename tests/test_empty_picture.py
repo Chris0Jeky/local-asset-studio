@@ -18,7 +18,9 @@ def png(mode='RGB', colour='#000000', size=(64, 48), draw=None):
 class EmptyPictureTests(unittest.TestCase):
     def test_flat_transparent_and_ordinary_pictures(self):
         self.assertEqual(review_media.empty_picture(png()), 'uniform')
-        self.assertEqual(review_media.empty_picture(png(colour='#7f7f80')), 'uniform', 'near-flat noise still reads as one colour')
+        noise = lambda spread: png(colour='#808080', draw=lambda d: [d.point((x, 0), fill=(128 + spread, 128, 128)) for x in range(0, 64, 2)])
+        self.assertEqual(review_media.empty_picture(noise(2)), 'uniform', 'a 2-level spread still reads as one colour')
+        self.assertEqual(review_media.empty_picture(noise(3)), '', 'a 3-level spread is a picture')
         self.assertEqual(review_media.empty_picture(png('RGBA', (0, 0, 0, 0))), 'transparent')
         self.assertEqual(review_media.empty_picture(png(draw=lambda d: d.rectangle((10, 10, 20, 20), fill='white'))), '')
         silhouette = png('RGBA', (0, 0, 0, 0), draw=lambda d: d.ellipse((8, 8, 40, 40), fill=(0, 0, 0, 255)))
@@ -47,13 +49,21 @@ class EmptyPictureIndexTests(unittest.TestCase):
         self.assertEqual(stored['outputs'][0]['empty_picture'], 'uniform')
         self.assertEqual(stored['status'], 'completed')
 
-    def test_ordinary_still_records_empty_string_and_unreadable_one_records_nothing(self):
+    def test_ordinary_and_unreadable_stills_record_empty_string_once(self):
         stored = self.stored(png(draw=lambda d: d.line((0, 0, 63, 47), fill='white')))
         self.studio.index_outputs(stored); self.assertEqual(stored['outputs'][0]['empty_picture'], '')
         stored = self.stored(png())
-        with patch.object(review_media, 'empty_picture', side_effect=ValueError('bad')): self.studio.index_outputs(stored)
-        self.assertNotIn('empty_picture', stored['outputs'][0])
+        with patch.object(review_media, 'empty_picture', side_effect=TypeError('odd exif')): self.studio.index_outputs(stored)
+        self.assertEqual(stored['outputs'][0]['empty_picture'], '', 'any decode failure is advisory and is not retried')
         self.assertIn('asset_id', stored['outputs'][0])
+
+
+    def test_restart_reindexing_never_backfills_the_decode(self):
+        stored = self.stored(png()); stored['status'] = 'completed'; self.studio.index_outputs(stored, advise=False); self.studio._save(stored)
+        self.assertIn('asset_id', stored['outputs'][0]); self.assertNotIn('empty_picture', stored['outputs'][0])
+        with patch.object(review_media, 'empty_picture') as metric:
+            type(self.studio)(self.root)
+        metric.assert_not_called()
 
 
 if __name__ == '__main__': unittest.main()
