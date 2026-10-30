@@ -63,6 +63,7 @@ import parallax
 import looks
 import review_media
 import characters
+import run_migration
 import creation_privacy as privacy_scope
 from studio_prompt.http_extension import extend_handler as extend_prompt_handler
 from i2v_diagnostics import artifact_path as i2v_artifact_path
@@ -3251,6 +3252,8 @@ class Handler(BaseHTTPRequestHandler):
                 payload=self._body_object()
                 return self._json(200, self.studio.asset_reference(payload.get("id"),privacy=scope,creation_privacy=privacy_scope.creation_for_handler(self,payload)))
             if self.path == "/api/assets/export": return self._json(201, self.studio.export_assets(self._body_object(),privacy=scope))
+            # #1678 first slice: a read-only migration plan; POST only because it carries a bounded body. No apply route exists.
+            if urlparse(self.path).path == '/api/assets/migration-plan': return self._json(200, run_migration.plan(self.studio, self._body_object(), scope))
             if self.path == "/api/recipe-check": return self._json(200, self.studio.check_recipe(self._creation_payload()))
             if self.path == "/api/folders/open": return self._json(200, self.studio.library.open_folder(self._body_object().get("id")))
             if self.path == "/api/models/install": return self._json(202, self.studio.library.start_install(self._body_object().get("id")))
