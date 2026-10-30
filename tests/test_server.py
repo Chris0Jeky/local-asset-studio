@@ -467,7 +467,9 @@ class ServerTests(unittest.TestCase):
         with patch.object(server.observation_state,'publish',side_effect=spy):s._run(job)
         self.assertEqual(job['status'],'completed');self.assertEqual([args[0] for args,_ in s.requests if args],['/queue','/prompt','/history/p1'])
         # Marker: workflow.json + state.json synced after /queue, before /prompt. Receipt: both synced right after /prompt.
-        self.assertEqual(calls,[('workflow.json',1,False,[]),('state.json',1,True,[]),('workflow.json',2,False,[]),('state.json',2,False,['p1'])])
+        # Then the observed outcome and the terminal record, both after /history (#1763).
+        self.assertEqual(calls,[('workflow.json',1,False,[]),('state.json',1,True,[]),('workflow.json',2,False,[]),('state.json',2,False,['p1']),
+                                ('workflow.json',3,False,[]),('state.json',3,False,['p1']),('workflow.json',3,False,[]),('state.json',3,False,['p1'])])
 
     def test_marker_publish_failure_sends_no_prompt_and_leaves_a_clear_not_sent_state(self):
         for error in (OSError('disk full'),ValueError('Out of range float values are not JSON compliant')):
@@ -1248,7 +1250,9 @@ class ServerTests(unittest.TestCase):
                 studio,job=self._output_history_job({});job['graph']=graph
                 submission={'prompt_id':'media','status':'observing'};job.update(prompt_ids=['media'],submissions=[submission])
                 studio.replies=iter([{'media':{'status':{'status_str':'success'},'outputs':{}}}])
-                self.assertTrue(studio._observe_history(job,submission));self.assertEqual(submission['status'],'completed')
+                # A non-object graph cannot be a durable workflow.json (#1763); loaded records are always objects, so only the expectation is under test.
+                with patch.object(studio,'_save_outcome',return_value=True):self.assertTrue(studio._observe_history(job,submission))
+                self.assertEqual(submission['status'],'completed')
 
     def test_observe_expected_outputs_uses_submission_graph_before_job_graph(self):
         for class_type,failed in (('SaveImage',True),('UnknownOutput',False)):

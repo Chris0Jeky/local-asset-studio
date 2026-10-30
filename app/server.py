@@ -1615,6 +1615,16 @@ class Studio:
             self._write_observation_state(directory / "workflow.json", job["graph"]); self._write_observation_state(directory / "state.json", self._finite_state(state)); return
         self._write_json_atomic(directory / "workflow.json", job["graph"]); self._write_json_atomic(directory / "state.json", state)
 
+    def _save_outcome(self, job):
+        """#1763: observed outputs and terminal states publish like the receipt (#1459). If that fails: uncertain, never resubmitted,
+        prompt IDs and in-memory outputs kept; the durable receipt already on disk restarts as uncertain. False stops the batch."""
+        try: self._save(job, durable=True); return True
+        except (OSError, ValueError) as exc:
+            job["status"] = "uncertain"; job["message"] = "ComfyUI finished a known prompt, but its outcome could not be saved durably (" + (str(exc) or type(exc).__name__)[:200] + "). It was not resubmitted and its prompt IDs are kept; use Resume observation."
+            try: self._save(job)
+            except (OSError, ValueError): pass   # the durable receipt on disk still restarts as uncertain, never not_submitted
+            return False
+
     @staticmethod
     def _tracking_stopped(job):
         disposition = job.get("tracking_disposition")
@@ -2201,7 +2211,9 @@ class Studio:
                 uncertain = 'pending_submission' in job or bool(job.get('prompt_ids')) or bool(job.get('submissions'))
                 locked = not uncertain and submission_evidence.never_submitted(job) and self._run_folder_lock(job, exc)
                 job['status'] = 'uncertain' if uncertain else 'failed'
-                job['message'] = ('Local processing failed; remote outcome requires inspection. Nothing was resubmitted: ' if uncertain else 'Generation failed before submission: ') + str(exc)[:300]
+                # Keep the 'could not be saved durably' explanation: it tells the owner the record on disk is behind (#1774 review).
+                if not (uncertain and 'could not be saved durably' in str(job.get('message', ''))):
+                    job['message'] = ('Local processing failed; remote outcome requires inspection. Nothing was resubmitted: ' if uncertain else 'Generation failed before submission: ') + str(exc)[:300]
                 if locked: job['failure'] = {'kind': 'record_write_locked', 'title': "The Studio could not write this job's record", 'summary': "Another program had the run folder's file open. Nothing was sent to ComfyUI.", 'action': 'Safe to generate again with the same settings.', 'detail': str(exc)[:300]}
             self._save(job)
         job_cancel.finish(self, job)
@@ -2404,7 +2416,7 @@ class Studio:
         submissions = job.get("submissions")
         completed = any(isinstance(s, dict) and s.get("status") == "completed" for s in submissions) if isinstance(submissions, list) else False
         job["status"] = "partial" if completed else "failed"; job["message"] = message
-        self._stamp_finished(job); self._save(job)
+        self._stamp_finished(job); self._save_outcome(job)
 
     def _stamp_finished(self, job):
         """Terminal bookkeeping shared by engine errors, ComfyUI 400 rejections and pre-submit refusals."""
@@ -2528,7 +2540,7 @@ class Studio:
             if not self._wait_history(job, submission): return
         job["status"] = "completed"; job["message"] = "Complete"
         if job.get('gpu_spill'): job["message"] = self.spill_message(job)
-        job['finished_at']=time.time();job['elapsed_seconds']=job['finished_at']-job['started_at'];self._save(job)
+        job['finished_at']=time.time();job['elapsed_seconds']=job['finished_at']-job['started_at'];self._save_outcome(job)
         tiles.finish_after_run(self, job)   # deterministic Pillow steps on a completed seam repaint; never a generation
         parallax.finish_after_run(self, job)   # bounded CPU handoff; the next generation does not wait for layer splitting
 
@@ -2631,7 +2643,7 @@ class Studio:
                     message = "ComfyUI finished this prompt but returned no output files; it was not resubmitted."
                     self._record_history_failure(job, submission, message)
                     raise StudioError(message)
-                submission["status"] = "completed"; self.index_outputs(job); self._save(job); return True
+                submission["status"] = "completed"; self.index_outputs(job); return self._save_outcome(job)
             empty_polls += 1
             if empty_polls % GPU_SAMPLE_EVERY == 1: self._sample_gpu_memory(job, submission, sampler)
             if empty_polls % HISTORY_QUEUE_CHECK_EVERY == 0:
@@ -2732,7 +2744,7 @@ class Studio:
             self.index_outputs(job)
             message = prior_message if status == prior_status and prior_message else "Reconciled from retained receipts: " + message
         job["status"] = status; job["message"] = message
-        self._save(job)
+        self._save_outcome(job)
         tiles.finish_after_run(self, job)
         parallax.finish_after_run(self, job)
 
