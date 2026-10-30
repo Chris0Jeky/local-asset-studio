@@ -172,8 +172,8 @@ handoffs, tiles, parallax, video and 3D generation. Existing regular workflows k
 their regular behavior. A button being available in All does not authorize a
 private-to-regular derivative.
 
-A completed regular run can now be moved into Private through the API below. There
-is no button for it yet. Changing only an asset's label would leave its siblings,
+A completed regular run can now be moved into Private from the Library's move preview
+(**Move N runs to Private**) or through the API below. Changing only an asset's label would leave its siblings,
 original job and prompt visible, so the move always covers the whole run. A private
 run cannot yet be moved back to Regular.
 
@@ -214,7 +214,7 @@ all Private (or an open asset), **Preview move to Private…** / **Preview move 
 Regular…** asks the planner under `privacy=all` and shows counts by kind, the byte
 estimate, ComfyUI copies that remain, every blocker in one sentence and the short plan
 hash. Outside the All view it asks you to switch and requests nothing; it never
-switches for you. The dialog has no apply control; apply (below) is API-only for now.
+switches for you. Only a Regular-to-Private preview with `apply_available`, no blockers and at least one run shows **Move N runs to Private**; Private to Regular stays preview-only. One click sends one request with a fresh request ID. If the answer is lost, the dialog never retries by itself: **Check again** (pressed by you) re-sends the identical body and request ID, which the server answers from its receipt without moving anything twice.
 
 `apply_available` is true for `destination: private`.
 
@@ -280,7 +280,7 @@ ComfyUI's own output/input copies (`external_copy`) are not touched.
 Thumbnails are not copied; Private renders its own.
 
 Not built: Private to Regular, a receipt-access policy for migrated targets,
-SDK/MCP tools, the Apply button and progress UI. Cross-volume `experiments` layouts
+SDK/MCP tools and a progress display. Cross-volume `experiments` layouts
 and real Windows lock behaviour are not separately qualified.
 
 The Library now has [reversible logical Archive](ASSET-ARCHIVE.md), separate from
