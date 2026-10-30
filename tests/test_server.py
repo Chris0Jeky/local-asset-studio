@@ -1811,7 +1811,7 @@ class ServerTests(unittest.TestCase):
         self.assertTrue((shared/'runs'/job['id']/'workflow.json').is_file())
         self.assertEqual(self.studio().jobs[job['id']]['status'],'not_submitted')
 
-    def test_import_checks_exact_graph_and_freezes_template_contract(self):
+    def test_recipe_import_checks_exact_graph_and_freezes_template_contract(self):
         s=self.studio();job=s.jobs[s.create_job({'preset_id':'demo','controls':{'seed':'9007199254740993'}})['id']]
         exported=s.export_recipe(job);checked=s.check_recipe(exported)
         self.assertTrue(checked['matches'])
@@ -1819,7 +1819,10 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(graph['1']['inputs']['seed'],12)
         changed=json.loads(json.dumps(GRAPH));changed['1']['inputs']['text']='Different template prompt'
         (self.root/'workflows/api/demo-api.json').write_text(json.dumps(changed))
-        with self.assertRaisesRegex(server.StudioError,'differs'):s.check_recipe(exported)
+        jobs_before=dict(s.jobs);queued_before=list(s.queue.queue)
+        with self.assertRaisesRegex(server.StudioError,'differs from the current preset: node 1 text text changed.*Nothing was loaded or queued') as error:s.check_recipe(exported)
+        self.assertNotIn('Different template prompt',str(error.exception))
+        self.assertEqual(s.jobs,jobs_before);self.assertEqual(list(s.queue.queue),queued_before)
         with self.assertRaisesRegex(server.StudioError,'changed'):s.prepare({'preset_id':'demo','expected_template_sha256':checked['template_sha256']})
         # A queued job keeps its own seed socket even if the catalog is later edited.
         edited=dict(PRESET,seed=['2','width'])
