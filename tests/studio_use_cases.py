@@ -2038,7 +2038,8 @@ def _prompt_lab(c):
     except Exception: pass
     c.act('#uxTransferPreview', 'read', note='transferred text reviewed before applying')
     c.act('#uxApplyPrompt')
-    c.page.wait_for_timeout(400)
+    try: c.page.wait_for_function("() => (document.querySelector('#positive') || {}).value", timeout=8000)   # the applied value, not a fixed sleep (#1753)
+    except Exception: pass
     applied = c.page.locator('#positive').input_value() if c.page.locator('#positive').count() else ''
     return bool(applied.strip()), 'brief field holds %d characters' % len(applied)
 
