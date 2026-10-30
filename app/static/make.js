@@ -346,12 +346,15 @@
     if(!clean)throw Error('Name the look.');
     if(clean.length>120)throw Error('Keep the name under 120 characters.');
     if((state.looks||[]).some(l=>String(l.name).trim().toLowerCase()===clean.toLowerCase()))throw Error('A look named \u201c'+clean+'\u201d already exists. Choose another name.');
-    const body=tunedLookBody(look,structuredClone(tuneOf(look)),String(notes||'').trim().slice(0,1000));
+    // As prepared() does: an added adapter that is no longer installed is left out of the look, and the owner is told.
+    const t=structuredClone(tuneOf(look)),inv=typeof installedLoras!=='undefined'&&installedLoras.length?new Set(installedLoras):null,gone=inv?t.rows.filter(r=>r.added&&!inv.has(r.name)):[];
+    t.rows=t.rows.filter(r=>!gone.includes(r));
+    const body=tunedLookBody(look,t,String(notes||'').trim().slice(0,1000));
     savingLook=true;
     try{
       const saved=await json('/api/looks',{action:'create',kind:'look',name:clean,body,lineage:[{role:'evidence',evidence:('Tuned from '+look.name).slice(0,200),tuned_from:look.id,tuned_root:tunedFrom(look)?.tuned_root||look.id}]},captured);
       if(epoch===privacyEpoch)state.looks=[...(state.looks||[]),{...saved,usable:true}];
-      return saved;
+      return gone.length?{...saved,notices:[...(saved.notices||[]),'Left out '+gone.map(r=>r.name.replace(/\.safetensors$/,'')).join(', ')+' from the saved look: no longer installed.']}:saved;
     }finally{savingLook=false;}
   }
   async function saveLookUi(action){

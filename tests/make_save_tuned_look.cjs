@@ -33,13 +33,13 @@ const baseLook = () => ({
 });
 const tune = (over = {}) => ({preset: 'anima', rows: [{slot: 'lora', name: 'fern.safetensors', strength: 0.8, on: true}], cleared: [], steps: null, sampler: '', negative: null, seed: null, reseed: true, scale: 100, ...over});
 
-function fixture({privacy = 'regular', refuse = null} = {}) {
+function fixture({privacy = 'regular', refuse = null, installed = null} = {}) {
   const calls = [], els = {};
   for (const id of ['#makeSaveForm', '#makeSaveOpen', '#makeSaveName', '#makeSaveNotes', '#makeSaveMsg', '#makeSaveGo'])
     els[id] = {value: '', textContent: '', hidden: true, disabled: false, isConnected: true, focus() {}, setAttribute() {}};
   let n = 0, release = null;
   const context = {
-    structuredClone, Error, String, Object, Array, JSON, PRESETS: [preset()], knowledge: KNOWLEDGE, calls, els, said: [],
+    structuredClone, Error, String, Object, Array, JSON, PRESETS: [preset()], knowledge: KNOWLEDGE, calls, els, said: [], installedLoras: installed || [],
     state: {looks: [baseLook()], tune: {}, goal: 'character'}, privacyEpoch: 0,
     GOALS: [{id: 'character', name: 'Anime character', looks: ['look-base']}],
     requestPrivacy: () => ({scope: 'regular', privacy}),
@@ -149,4 +149,15 @@ test('a second press while a save is in flight sends nothing', async () => {
   await second; done(); await first;
   assert.equal(f.calls.length, 1);
   assert.equal(f.context.state.looks.length, 2);
+});
+
+test('an added LoRA that is no longer installed is left out of the saved look, and the owner is told', async () => {
+  const f = fixture({installed: ['fern.safetensors', 'dawn.safetensors']});
+  const t = tune({rows: [{slot: 'lora', name: 'fern.safetensors', strength: 0.8, on: true}, {slot: 'lora2', name: 'gone.safetensors', strength: 0.6, on: true, added: true}]});
+  await f.press(f.context.state.looks[0], t, 'Without the missing one');
+  const {controls} = f.calls[0].body.body;
+  assert.deepEqual(Object.keys(controls).filter(k => k.startsWith('lora')).sort(), ['lora', 'lora_name']);
+  assert.ok(!JSON.stringify(f.calls[0].body).includes('gone.safetensors'));
+  assert.match(f.context.said.join(), /Left out gone from the saved look: no longer installed/);
+  assert.ok(f.context.said.join().includes('Saved'));
 });
