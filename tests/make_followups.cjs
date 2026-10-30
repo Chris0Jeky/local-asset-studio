@@ -398,6 +398,12 @@ test('a waiting card adds about how long until its turn only when every run ahea
   // Anything unknown ahead leaves only "N ahead": a low or generic estimate, a gap in the count, another privacy, a run waiting for memory.
   for(const [name,options,edit] of [['low confidence',{second:'guess'}],['generic guess',{second:'none'}],['a run not shown here',{ahead:3}],['another privacy',{firstPrivacy:'private'}],['waiting for memory',{},r=>{r[0].job.status='waiting';}]]){
     const s=scene(1060,options);if(edit)edit(s.runs);await settle(s.h);assert.equal(s.mine.textContent,'',name+': no partial sum');}
+  // Nothing ahead (queue_ahead 0) and no other card: no made-up minute.
+  {const s=scene(1060,{only:true});s.runs[1].job.queue_ahead=0;s.runs[0].job.status='completed';await settle(s.h);assert.equal(s.mine.textContent,'','queue_ahead 0 shows no minutes');
+    const t=scene(1060,{only:true});t.runs[1].job.queue_ahead=0;await settle(t.h);assert.equal(t.mine.textContent,'','queue_ahead 0 with a running card shows no minutes');}
+  // Two hung estimate requests never starve a painting card's own: each painting card asks regardless of the two-at-a-time cap.
+  {const runs=['a','b','c'].map(id=>({job:{id,status:'running',started_at:1000,preset_id:'fast'}})),h=clockHarness(runs);h.context.json=(url,body)=>{h.requests.push({url,body});return new Promise(()=>{});};
+    h.tick();assert.equal(h.requests.length,3);}
   // A privacy switch clears the cache, and an answer already on its way for the old privacy is dropped.
   ({h,runs,mine}=scene(1060));let release;h.context.json=()=>new Promise(r=>{release=()=>r(usual.fast);});h.tick();
   h.context.privacyEpoch=1;h.estimates.clear();release();await new Promise(r=>setImmediate(r));assert.equal(h.estimates.size,0,'a late answer for the old privacy is not cached');
