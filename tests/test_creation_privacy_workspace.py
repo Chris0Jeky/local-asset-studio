@@ -1,5 +1,6 @@
 """Private catalogue boundaries use synthetic bytes and the real SQLite owner."""
 import json
+import os
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
@@ -7,6 +8,14 @@ import unittest
 import uuid
 
 from test_workspace import workspace
+
+
+def symlinks_available():
+    with tempfile.TemporaryDirectory() as name:
+        target = os.path.join(name, 'target'); os.mkdir(target)
+        try: os.symlink(target, os.path.join(name, 'link'), target_is_directory=True); return True
+        except (OSError, NotImplementedError): return False
+SYMLINKS_AVAILABLE = symlinks_available()
 
 
 class CreationPrivacyWorkspaceTests(unittest.TestCase):
@@ -131,6 +140,7 @@ class CreationPrivacyWorkspaceTests(unittest.TestCase):
         with self.assertRaises(workspace.WorkspaceError): self.store.file(self.private, privacy='all')
 
     def test_private_storage_refuses_symlinked_roots_and_media_before_writing(self):
+        if not SYMLINKS_AVAILABLE: self.skipTest('symlinks unavailable on this host (needs the Windows symlink privilege)')
         for directory in ('private', 'private/media'):
             with self.subTest(directory=directory), tempfile.TemporaryDirectory() as name:
                 root = Path(name); store = workspace.AssetWorkspace(root)
