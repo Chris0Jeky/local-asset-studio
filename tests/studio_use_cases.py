@@ -222,6 +222,7 @@ DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-candidate-re
 # app/static on 22 Sep 2026; a control that starts writing must leave this list.
 LOCAL_CONTROLS = {
     '#lookBlock > summary': 'opens the saved-looks disclosure',
+    '#productionDetail .candidate-quick-pick summary': 'opens the Quick pick disclosure in this page; nothing is sent',
     '#lookSelect': 'chooses a saved look in this page; nothing is sent',
     '#lookOptions [data-look-option]': "ticks one of the look's optional lines in this page; nothing is sent",
     '#workshopRecipeChange': 'opens the recipe picker',
@@ -951,6 +952,7 @@ def _review(c):
         try: c.page.click('#closeAssetDialog', timeout=3000); c.page.wait_for_timeout(300)
         except Exception: pass
     c.act('#productionNotes', 'fill', typed='Candidate A keeps the silhouette and the lantern glow; B loses the face.')
+    c.act('#productionDetail .candidate-quick-pick summary', note='open Quick pick (the review desk is the primary path, #1730)')
     c.stop_before(c.act('#productionDetail [data-choose-candidate]', note='keep the winner'),
                   'stopped before recording the winner: that writes the study review')
     c.page.wait_for_timeout(600)
@@ -1318,12 +1320,86 @@ def _combine_loop(c):
             else: asset['preset_id'] = preset_id
 
 
+@driver('combine-runs-grid')
+def _combine_runs_grid(c):
+    """#1204: the Combine runs as a Grid. Real page controls over synthetic completed and failed jobs; nothing submits."""
+    ready, detail = _combine(c)
+    if not ready or c.live: return False, 'Needs the prepared fixture pair; live attachment is deliberately skipped. ' + detail
+    import studio_browser_smoke as fixture
+    initial = c.page.evaluate('({preset_id:selected.id,controls:values(),continuation:continuationState,references:attachedReferencePayload(),parent_assets:parentAssets})')
+    klein = 'combine-klein'
+    # Two recipes at two seeds; the second recipe's seed 43 failed. Newest last, so the Klein row leads.
+    spec = (('combine-grid-0', initial['preset_id'], 'completed', 42, 'asset-2'), ('combine-grid-1', initial['preset_id'], 'completed', 43, 'asset-3'),
+            ('combine-grid-2', klein, 'completed', 42, 'asset-4'), ('combine-grid-3', klein, 'failed', 43, None))
+    added = []
+    for index, (identifier, preset_id, status, seed, asset) in enumerate(spec):
+        engine = next(p for p in fixture.CATALOG['presets'] if p['id'] == preset_id)
+        job = dict(copy.deepcopy(initial), id=identifier, status=status, preset_id=preset_id, preset_name=engine['name'], elapsed_seconds=80,
+                   batch_count=1, created_at=1789228800 + 60 * index, message='Synthetic ' + status + ' receipt; no model ran.',
+                   outputs=[dict(filename='fixture.png', asset_id=asset, media_type='image', seed=seed)] if asset else [])
+        job['controls']['seed'] = str(seed)
+        added.append(job)
+    fixture.JOBS[:0] = added
+    saved = {a['id']: a.get('review') for a in fixture.ASSETS}
+    grid, cells = '#uxPairResults [role=grid]', '#uxPairResults [role=grid] [role=gridcell]'
+    try:
+        c.page.evaluate('refreshJobs()')
+        c.page.wait_for_selector('#uxPairResults .ux-result-tile')
+        c.act('[data-ux-grid]', note='show the runs as a grid')
+        c.page.wait_for_selector(grid)
+        assert c.page.locator('[data-ux-grid]').get_attribute('aria-pressed') == 'true'
+        mine = c.page.evaluate('StudioContinuation.combineEngineLabel(selected)')
+        assert c.page.locator(grid + ' [role=rowheader]').all_inner_texts() == ['Klein 4B', mine], 'ordinary runs show their recipe names'
+        assert c.page.locator(grid + ' [role=columnheader]').all_inner_texts() == ['Recipe', 'Seed 42', 'Seed 43']
+        sizes = c.page.evaluate("[...document.querySelectorAll('%s')].map(el => { const r = el.getBoundingClientRect(); return Math.round(r.width) + 'x' + Math.round(r.height); })" % cells)
+        c.observe('every cell is the same size', len(sizes) == 4 and len(set(sizes)) == 1, str(sizes))
+        assert len(sizes) == 4 and len(set(sizes)) == 1, sizes
+        # The failed run's cell shows its state and offers nothing: no rerun anywhere, no review button in it.
+        failed = c.page.locator(cells).nth(1)
+        c.act(cells + ' >> nth=1', 'read', note='the failed run says so and cannot be run again here')
+        assert 'Failed' in failed.inner_text() and 'No picture' in failed.inner_text() and failed.locator('button').count() == 0
+        assert c.page.locator('#uxPairResults [role=grid] [data-ux-rerun]').count() == 0 and c.page.locator('#uxPairResults [data-ux-rerun]').count() == 0
+        # One tab stop; arrows move between cells; K keeps the focused picture through the library's own review write.
+        c.page.focus(cells + ' >> nth=0')
+        for key, at in (('ArrowRight', '0:1'), ('ArrowDown', '1:1'), ('ArrowLeft', '1:0')):
+            c.page.keyboard.press(key)
+            assert c.page.evaluate('document.activeElement.dataset.uxCell') == at, (key, at)
+        c.page.keyboard.press('k')
+        c.page.wait_for_function('assetState.assets.find(a=>a.id === "asset-2").review === "selected"')
+        c.page.wait_for_function('document.activeElement && document.activeElement.dataset.uxCell === "1:0"')
+        c.observe('K kept the focused picture and focus stayed on its cell', True, 'asset-2 review: selected')
+        # Runs from a plan keep their recipe names behind Reveal; the ordinary Klein row keeps its own.
+        for job in added[:2]: job['project_id'] = 'c' * 32
+        c.page.evaluate('refreshJobs()')
+        c.page.wait_for_function('[...document.querySelectorAll("#uxPairResults [role=rowheader]")].some(n => n.textContent === "Candidate A")')
+        assert c.page.locator(grid + ' [role=rowheader]').all_inner_texts() == ['Klein 4B', 'Candidate A']
+        hidden = c.page.locator(grid).evaluate('el => el.outerHTML')
+        assert mine not in hidden and 'Reveal recipes' not in hidden and c.page.locator('[data-ux-reveal]').count() == 1
+        c.act('[data-ux-reveal]', note='reveal the planned recipes')
+        assert c.page.locator(grid + ' [role=rowheader]').all_inner_texts() == ['Klein 4B', mine] and c.page.locator('[data-ux-reveal]').count() == 0
+        # Leaving Grid hides them again; the list still names its runs.
+        c.act('[data-ux-grid]', note='back to the list')
+        assert c.page.locator('#uxPairResults .ux-run-group').count() == 3 and c.page.locator(grid).count() == 0
+        c.act('[data-ux-grid]', note='the grid again, blind once more', supplementary=True)
+        assert c.page.locator(grid + ' [role=rowheader]').all_inner_texts() == ['Klein 4B', 'Candidate A']
+        c.act('[data-ux-grid]', note='leave the grid', supplementary=True)
+        assert not [p for p in fixture.POSTS if p['path'] == '/api/jobs'], 'the grid never generates'
+        c.act('#generate', 'read', note='the only generation action still requires a separate explicit click')
+        return c.ready(), 'recipes x seeds in equal cells; the failed cell names its state with no rerun; arrows and K work; planned names hidden until Reveal and hidden again after leaving Grid; zero generation requests'
+    finally:
+        fixture.JOBS[:] = [job for job in fixture.JOBS if not job['id'].startswith('combine-grid-')]
+        for asset in fixture.ASSETS:
+            if saved[asset['id']] is None: asset.pop('review', None)
+            else: asset['review'] = saved[asset['id']]
+
+
 VARY_STATE = """() => ({preset: selected.id, intent: continuationState && continuationState.intent,
   source: continuationState && continuationState.source_asset_id, parents: parentAssets.slice(),
   denoise: getControl('denoise') ? getControl('denoise').value : null, seed: getControl('seed') ? getControl('seed').value : null,
   batch: document.querySelector('#batch').value, positive: document.querySelector('#positive').value,
   kept: Object.fromEntries(['lora', 'lora_name', 'lora2', 'lora2_name', 'sampler', 'scheduler', 'cfg', 'steps'].map(k => [k, getControl(k) ? getControl(k).value : null])),
-  notice: document.querySelector('#uxNotice').textContent})"""
+  notice: document.querySelector('#uxNotice').textContent,
+  fold: (d => d ? {open: d.open, lines: d.querySelectorAll('div').length} : null)(document.querySelector('#uxNotice > details'))})"""
 
 
 @driver('vary-a-keeper')
@@ -1392,6 +1468,10 @@ def _vary(c):
                    and first['parents'] == ['asset-2'] and first['denoise'] == '0.45' and first['batch'] == '2'
                    and first['seed'] not in (None, '', '7') and 'Vary subtle prepared on' in first['notice']
                    and 'Nothing was generated' in first['notice'] and '4 min per picture here' in first['notice'])
+        # #1726: the status leads with what will run and counts the unrecorded settings; the per-setting list is folded, closed, under Details.
+        terse = c.live or (first['notice'].index('denoise 0.45') < first['notice'].index('settings not recorded: recipe defaults used.') < first['notice'].index('Nothing was generated')
+                 < first['notice'].index('Details') < first['notice'].index('not recorded; using the recipe') and first['fold'] == {'open': False, 'lines': int(first['notice'].split(' settings not recorded')[0].split()[-1])}
+                 and second['fold'] is None and third['fold'] is None)
         reseed = (second['preset'] == 'anima-portrait' and second['intent'] is None and second['parents'] == ['asset-0']
                   and second['batch'] == '4' and second['seed'] not in (None, '', '42')
                   and second['positive'] == fixture.JOBS[len(added)]['controls']['positive']
@@ -1404,7 +1484,7 @@ def _vary(c):
         wai = wai and blocked['generate'] and 'Vary could not keep lora = not-a-number' in blocked['blocker']
         disabled = 'No Studio recipe is recorded' in why
         asks = bool(asked) and all('Vary replaces the current Create setup' in text and 'Nothing will be generated' in text for text in asked)
-        return img2img and reseed and wai and disabled and asks, 'vary subtle: %s; fallback: %s; wai strong: %s; asset panel: %s; replace questions: %d' % (
+        return img2img and terse and reseed and wai and disabled and asks, 'vary subtle: %s; fallback: %s; wai strong: %s; asset panel: %s; replace questions: %d' % (
             {k: first[k] for k in ('preset', 'source', 'parents', 'denoise', 'batch')}, {k: second[k] for k in ('preset', 'parents', 'batch')},
             dict({k: third[k] for k in ('preset', 'parents', 'denoise', 'batch', 'kept')}, unapplied=blocked), why or 'no disabled reason', len(asked))
     finally:
@@ -1483,6 +1563,7 @@ def _parallax(c):
     if c.page.locator('#assetNextSteps > .asset-unavailable:not([open])').count(): c.act('#assetNextSteps > .asset-unavailable > summary', note='read unavailable actions')
     c.act('#assetDialog .ux-parallax [data-ux-parallax]', 'read', note='Make parallax layers and why it is not offered')
     why = c.page.evaluate(WHY_PARALLAX)
+    refused_listed = c.page.evaluate("!!document.querySelector('#assetNextSteps > .asset-unavailable > .ux-parallax')")  # #1727: a refused picture lists the tool under Not available, not above the next steps
     c.act('#closeAssetDialog', navigation=True, note='close the small picture', supplementary=True)
     wide = c.pick('asset-1', '#assetGrid [data-asset-open]', 'image asset in the Asset library', keep=LIVE_IMAGE_ASSET)
     c.act('[data-asset-open="%s"]' % wide, note='open a wide scene')
@@ -1501,6 +1582,7 @@ def _parallax(c):
     except Exception as error: drawn = 'drag failed: ' + str(error)[:120]
     c.act('#uxParallaxView', 'read', note='the dragged far view box: ' + drawn)
     offered = c.page.evaluate(WHY_PARALLAX)
+    qualifying_shown = c.page.evaluate("!document.querySelector('#assetNextSteps > .asset-unavailable > .ux-parallax') && !!document.querySelector('#assetNextSteps > .ux-parallax #uxParallaxObjects')")  # a qualifying picture keeps the tool in the main list
     c.stop_before(c.act('#assetDialog [data-ux-parallax]', note='prepares the clean-plate edit'), 'stopped before preparing: Make parallax layers attaches the picture as an upload')
     c.page.wait_for_timeout(800)
     state = c.page.evaluate(PARALLAX_STATE)
@@ -1513,7 +1595,7 @@ def _parallax(c):
                 and state['reference'] == 'f' * 32 + '_forest-hero.png' and (state['width'], state['height']) == ('1344', '768')
                 and state['positive'] == parallax.words('plate', PARALLAX_OBJECTS) and len(state['view'] or []) == 1
                 and 'Press Generate' in state['notice'] and 'edit 1 of 2, the clean plate' in state['hint'])
-    disabled = why.startswith('disabled: ') and '128 × 128' in why
+    disabled = why.startswith('disabled: ') and '128 × 128' in why and refused_listed and qualifying_shown
     guided = waiting.startswith('disabled: ') and 'Name the foreground' in waiting and offered.startswith('enabled: ') and 'not detected' in offered
     marked = len(boxes) == 1 and boxes[0][0] > 800 and boxes[0][2] > boxes[0][0] + 100
     return prepared and disabled and guided and marked and not submitted, 'prepared: %s; small picture: %s; before naming: %s; view: %s; generation posts: %d' % (

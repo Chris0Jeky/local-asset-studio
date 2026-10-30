@@ -48,9 +48,11 @@ from gpu_lease import GpuLease, GpuLeaseError
 from large_job_prep_common import PreparationError
 from studio_workflow.http_body import drain_for_reset
 import prompting
+import build_info
 import submission_evidence
 import job_cancel
 import observation_state
+import recipe_drift
 import file_replace
 import asset_thumbs
 import job_resources
@@ -196,6 +198,7 @@ class Studio:
         self._schema = None; self._schema_at = 0
         self._options = None; self._options_at = 0
         self._host_commit = None; self._host_commit_at = 0
+        self.build = build_info.build_info(self.root)   # read once at start; /api/health shows it so a console can spot a Studio running old code
         self._gpu_memory = None; self._gpu_memory_at = 0
         self.jobs = {}; self.queue = Queue(); self.lock = threading.RLock(); self.worker_failure = None
         self._loaded_operator_dispositions = {}  # Readable terminal state still needs an explicit publication acknowledgment.
@@ -225,7 +228,7 @@ class Studio:
             # publication may be indexed on restart. Legacy jobs without a
             # publication marker keep the historical recovery path.
             if job.get("operation") in ("native.av-preview.v1","native.voice-baseline.v1") and "publication_status" in job and job["publication_status"] != "published": continue
-            self.index_outputs(job)
+            self.index_outputs(job, advise=False)  # Restart re-registers known outputs only; the empty-picture decode is never backfilled.
         self.parallax_finisher = parallax.Finisher(self)
         self.production = Production(self)
         self.backends = BackendManager(self)
@@ -960,6 +963,11 @@ class Studio:
         result = {k: job.get(k) for k in allowed}
         if job.get('privacy') == 'private': result['privacy']='private'
         if job.get('look') is not None: result['look'] = job['look']
+        if job.get('status') == 'queued':
+            # Read-only position (#1707): unfinished jobs created earlier pass the single worker first. A count only, so a private job
+            # ahead shows as a number, never as its content; an estimate of the wait, not a promise of order.
+            # No lock: Production.public() reaches here under its own lock, and Studio-then-Production is the order elsewhere (#1742 review).
+            result['queue_ahead'] = sum(1 for other in list(getattr(self, 'jobs', {}).values()) if other is not job and other.get('status') in Studio.ACTIVE_JOB_STATUSES and (other.get('created_at') or 0) < (job.get('created_at') or 0))
         if "record_error" in job: result.update(record_error=job["record_error"], run_path=job["run_path"])
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
@@ -1215,7 +1223,7 @@ class Studio:
         if kind not in ("output", "temp"): raise StudioError("Unsupported output location")
         return inside(root / kind, root / kind / str(output.get("subfolder") or "") / str(output.get("filename") or ""))
 
-    def index_outputs(self, job):
+    def index_outputs(self, job, advise=True):
         for index, output in enumerate(job.get("outputs", [])):
             try:
                 asset_id = self.assets.register(job, index, self.output_path(output, job))
@@ -1230,6 +1238,11 @@ class Studio:
                     output['text_safe'] = review_media.text_safe_metrics(review_media.checked_bytes(path, asset['sha256']))
                 except (OSError, ValueError, sqlite3.Error) as exc:
                     output['text_safe'] = {'error': str(exc)[:200]}
+            if advise and output.get('asset_id') and output.get('media_type', 'image') == 'image' and 'empty_picture' not in output:
+                try:
+                    path, asset = self.assets.file_entry(output['asset_id'],privacy=job.get('privacy','regular'))
+                    output['empty_picture'] = review_media.empty_picture(review_media.checked_bytes(path, asset['sha256']))
+                except Exception: output['empty_picture'] = ''  # Advisory only: an unreadable picture keeps its outcome and is not retried.
 
     def asset_reference(self, asset_id, *, privacy='regular', creation_privacy='regular'):
         classification=privacy_scope.normalize(creation_privacy)
@@ -1309,7 +1322,8 @@ class Studio:
                 for index, asset in enumerate(assets, 1):
                     source = self.assets.file(asset["id"],privacy=privacy)
                     if digest_file(source) != asset["sha256"]: raise StudioError("An asset changed; export stopped")
-                    name = re.sub(r'[^A-Za-z0-9._-]+', '-', asset['filename']).strip('.-')[:100] or 'asset'
+                    name = re.sub(r'[^A-Za-z0-9._-]+', '-', asset['filename']).strip('.-') or 'asset'
+                    if len(name) > 100: suffix = Path(name).suffix if len(Path(name).suffix) <= 16 else ''; name = (name[:100 - len(suffix)].rstrip('.-') or 'asset') + suffix
                     member = files.get(asset['sha256']) if brief is not None else None
                     if member is None:
                         member = f'assets/{index:02d}-{name}' if brief is not None else "assets/" + asset["id"] + source.suffix
@@ -1364,7 +1378,8 @@ class Studio:
             raise StudioError("This older recipe has no embedded workflow. Load its settings as a saved setup, or open its original workflow in ComfyUI.")
         _, graph, path, _, _ = self.prepare(recipe)
         if graph != recipe["workflow"]:
-            raise StudioError("The exported workflow differs from the current preset. Nothing was loaded or queued. Open the embedded workflow in ComfyUI, or select the current preset to start a new experiment.")
+            drift=recipe_drift.summary(recipe["workflow"],graph)
+            raise StudioError("The exported workflow differs from the current preset" + (": "+drift if drift else "") + ". Nothing was loaded or queued. Open the embedded workflow in ComfyUI, or select the current preset to start a new experiment.")
         return {"matches": True, "template_sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
 
     def preview(self, payload):
@@ -2054,8 +2069,8 @@ class Studio:
                 except (ValueError, OSError, AttributeError, TypeError) as exc:
                     missing.setdefault(preset.get('id'), []).append('Dependency inspection unavailable: ' + str(exc)[:250])
             missing = {key: list(dict.fromkeys(values)) for key, values in missing.items()}
-            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "pin_mismatch": pin_warnings, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "vram_guard": self.vram_guard_status(), "cache_release": self.cache_release_status(), "config_warnings": list(self.config_warnings)}
-        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError, UnicodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "pin_mismatch": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "host_commit": self.host_commit_reading(), "gpu_memory": self.gpu_memory_reading(), "cache_release": self.cache_release_status(), "config_warnings": list(self.config_warnings)}
+            return {"app": "local-asset-studio", "workspace": str(self.root), "online": True, "schema_available": info_available, "missing_models": missing, "pin_mismatch": pin_warnings, "system": stats.get("system", {}), "devices": stats.get("devices", []), "comfy_url": self.comfy_url, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "build": self.build, "host_commit": self.host_commit_reading(),"gpu_memory": self.gpu_memory_reading(), "vram_guard": self.vram_guard_status(), "cache_release": self.cache_release_status(), "config_warnings": list(self.config_warnings)}
+        except (URLError, HTTPError, TimeoutError, OSError, json.JSONDecodeError, UnicodeError): return {"app": "local-asset-studio", "workspace": str(self.root), "online": False, "missing_models": {}, "pin_mismatch": {}, "worker_alive": worker_alive, "degraded": not worker_alive or worker_failure is not None, "worker_failure": worker_failure, "recovery": self.runtime_recovery.snapshot(), "build": self.build, "host_commit": self.host_commit_reading(),"gpu_memory": self.gpu_memory_reading(), "cache_release": self.cache_release_status(), "config_warnings": list(self.config_warnings)}
 
     def model_fingerprints(self):
         # Read-only view of production preflight's digest cache; readiness never hashes.
@@ -2964,6 +2979,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200, self.studio.assets.metadata(path.split("/")[3], self._asset_query_scope(),privacy=scope))
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
             if path == "/api/looks": return self._json(200, looks.listing(self.studio))
+            if path == "/api/looks/record": return self._json(200, looks.record(self.studio, scope))
             if path == "/api/characters": return self._json(200, characters.listing(self.studio))
             if path == '/api/production': return self._json(200,self.studio.production.list())
             if path.startswith('/api/production/campaigns/') and len(path.split('/'))==5:

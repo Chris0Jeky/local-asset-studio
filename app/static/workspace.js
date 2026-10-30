@@ -302,7 +302,7 @@ function resolveAssetConflict(keepEdits) {
   for(const [key,id] of Object.entries(assetFormIds))$('#'+id).value=keepEdits && local[key]!==previous[key]?local[key]:remote[key];
   for(const key of [...Object.keys(assetFormIds),'metadata_revision','favorite','trashed_at'])activeAsset[key]=current[key];
   if(Object.hasOwn(current,'archived_at'))activeAsset.archived_at=current.archived_at;
-  assetDetailBaseline=remote;assetDetailConflict=null;renderAssetConflict();assetDetailControls();
+  assetDetailBaseline=remote;assetDetailConflict=null;renderAssetConflict();assetDetailControls();if(!assetQueue)renderAssetQueue();
   $('#assetFavorite').textContent=activeAsset.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=activeAsset.trashed_at!=null?'Restore':'Move to Trash';$('#assetArchive').textContent=activeAsset.archived_at!=null?'Return to active':'Archive';
   assetDetailStatus(keepEdits?'Your edits are rebased for review, not saved. Check the fields, then Save details.':'Saved snapshot loaded. Nothing was written.');
   retainAssetDraft();
@@ -399,7 +399,7 @@ function applyAssetSaveReceipt(operation,result) {
     else rememberAssetDetails();
   }catch(error){assetDetailPending=operation;throw error;}
   $('#assetFavorite').textContent=activeAsset.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=activeAsset.trashed_at!=null?'Restore':'Move to Trash';$('#assetArchive').textContent=activeAsset.archived_at!=null?'Return to active':'Archive';
-  renderAssetConflict();
+  renderAssetConflict();if(!assetQueue)renderAssetQueue();
   if(changed)assetDetailStatus('The earlier save is confirmed. Current saved metadata differs or is unavailable; review it alongside your retained draft.',true);
   else if(operation.kind==='trash'){
     const text=operation.command.action==='trash'?'Moved to Trash. Restore it at any time.':'Asset restored.';
@@ -747,7 +747,17 @@ function renderAssetSelection() {
 }
 function renderAssetQueue() {
   const panel=$('#assetQueue');
-  panel.hidden=!assetQueue;
+  // Outside the queue the same panel carries a verdict-only row for the open picture (#1725): saved mark pressed, same buttons and K/W/X keys, no advance.
+  const solo=!assetQueue&&!!activeAsset&&!!assetDetailBaseline;
+  panel.hidden=!assetQueue&&!solo;
+  if(solo){
+    const focused=document.activeElement?.closest?.('#assetQueue [data-queue-review]')?.dataset.queueReview,mark=assetReviewLabels[activeAsset.review]?activeAsset.review:'unreviewed';
+    panel.innerHTML='<div class="asset-queue-head"><b>Review</b><span role="status" aria-live="polite">'+(mark==='unreviewed'?'Not reviewed yet':'Marked '+assetReviewLabels[mark])+'</span></div>'+
+      '<div class="asset-queue-actions" role="group" aria-label="Review this picture">'+[['selected','Keep','K'],['needs_work','Needs work','W'],['rejected','Not this','X']].map(([value,label,key])=>'<button type="button" data-queue-review="'+value+'" aria-pressed="'+(mark===value?'true':'false')+'">'+label+' <kbd>'+key+'</kbd></button>').join('')+'</div>'+
+      '<small class="asset-queue-legend">K Keep · W Needs work · X Not this. Saves through Save details and stays on this picture. Typing in a field is never a shortcut.</small>';
+    if(focused)panel.querySelector?.('[data-queue-review="'+focused+'"]')?.focus?.({preventScroll:true});
+    return;
+  }
   if(!assetQueue){panel.innerHTML='';return;}
   panel.innerHTML='<div class="asset-queue-head"><b>Review queue</b><span role="status" aria-live="polite">'+(assetQueue.index+1)+' of '+assetQueue.ids.length+'</span></div>'+
     '<div class="asset-queue-actions"><button type="button" data-queue-review="selected">Keep <kbd>K</kbd></button><button type="button" data-queue-review="needs_work">Needs work <kbd>W</kbd></button><button type="button" data-queue-review="rejected">Not this <kbd>X</kbd></button><button type="button" data-queue-skip>Skip <kbd>S</kbd></button><button type="button" data-queue-step="-1">← Previous</button><button type="button" data-queue-step="1">Next →</button><button type="button" data-queue-exit>Leave queue</button></div>'+
@@ -775,16 +785,21 @@ function assetQueueStep(delta) {
   const opened=openAsset(queue.ids[next],()=>owns()&&queue.index===previous);return opened?.then?opened.then(finish):finish(opened);
 }
 async function assetQueueDecide(review) {
-  if(!assetQueue || !activeAsset || assetDetailBusy || !assetReviewLabels[review] || review==='unreviewed')return false;
+  // Without a queue this is the open picture's own verdict row: the same save, no advance (#1725).
+  const solo=!assetQueue;
+  if(!activeAsset || !assetDetailBaseline || assetDetailBusy || !assetReviewLabels[review] || review==='unreviewed')return false;
   // A shortcut must never re-send an unrelated unconfirmed command as if it were this decision.
-  if(assetDetailPending || assetDetailConflict){assetDetailStatus('Resolve the earlier save for this asset before recording a queue decision.',true);return false;}
-  if(assetQueue.ids[assetQueue.index]!==activeAsset.id)return false;
+  if(assetDetailPending || assetDetailConflict){assetDetailStatus('Resolve the earlier save for this asset before recording '+(solo?'a review mark.':'a queue decision.'),true);return false;}
+  if(!solo&&assetQueue.ids[assetQueue.index]!==activeAsset.id)return false;
+  // A verdict saves every edited field with it (as the queue does); outside the queue the status names them (#1738 review).
+  const others=solo?Object.entries(assetDetailValues()).filter(([key,value])=>key!=='review'&&!assetDetailFieldEqual(key,value,assetDetailBaseline[key])).map(([key])=>key):[];
   $('#assetReview').value=review;renderAssetReasons();
   const target=activeAsset.id;
   const saved=await saveAssetDetails();
   // Only a confirmed save advances: an unconfirmed, conflicted or refused save keeps this asset and its reason on screen.
   if(!saved || assetDetailBusy || assetDetailPending || assetDetailConflict || activeAsset?.id!==target)return false;
   if(assetRecord(target)?.review!==review)return false;
+  if(solo){if(!assetDetailDirty())assetDetailStatus('Marked '+assetReviewLabels[review]+'. Saved for this picture'+(others.length?', with your edits to '+others.join(' and ')+'.':'.'));return true;}
   return assetQueueStep(1);
 }
 function assetTagList(value=$('#assetTags').value){
@@ -1128,6 +1143,25 @@ function renderI2VDiagnosticAction(asset,error='') {
   const supported=asset?.media_type==='video'&&asset?.job_id&&asset?.preset_id==='wan22-i2v';
   $('#assetDiagnostic').innerHTML=supported?'<button data-i2v-diagnostic="'+esc(asset.job_id)+'">Offline I2V diagnostic</button><small>Reads the existing video and recipe only; no generation is submitted.</small>'+(error?'<p class="i2v-warning">'+esc(error)+'</p>':''):'';
 }
+// Library look checks (#1703): display-only toggles on the open still image. Nothing here sends a request or touches bytes, review state or crop; the state resets whenever another asset opens.
+const assetInspectOff=()=>({sizes:false,mirror:false,grey:false,pixel:false});
+let assetInspect=assetInspectOff();
+function renderAssetInspect(a,focusKey) {
+  const box=$('#assetInspect'),flags=$('#assetDialog').dataset||{};if(!box)return;
+  const s=assetInspect,on=!!(a&&a.media_type==='image'&&a.url);
+  if(!on){assetInspect=assetInspectOff();box.hidden=true;box.innerHTML='';delete flags.lookMirror;delete flags.lookGrey;return;}
+  if(s.mirror)flags.lookMirror='1';else delete flags.lookMirror;
+  if(s.grey)flags.lookGrey='1';else delete flags.lookGrey;
+  const btn=(k,label,v)=>'<button type="button" data-asset-look="'+k+'" aria-pressed="'+(v?'true':'false')+'">'+label+'</button>';
+  box.hidden=false;
+  box.innerHTML='<div class="asset-inspect-bar" role="group" aria-label="View checks, display only">'+btn('sizes','Sizes',s.sizes)+btn('mirror','Mirror',s.mirror)+btn('grey','Greyscale',s.grey)+'</div>'+(s.sizes?'<div class="asset-inspect-sizes" data-render="'+(s.pixel?'pixel':'smooth')+'"><div class="asset-inspect-bar" role="group" aria-label="Scaling">'+btn('smooth','Smooth',!s.pixel)+btn('pixel','Pixel',s.pixel)+'</div><div class="asset-inspect-row">'+[64,128,256].map(n=>'<figure><img src="'+esc(a.url)+'" alt="" data-px="'+n+'" loading="lazy" decoding="async"><figcaption>'+n+'</figcaption></figure>').join('')+'</div></div>':'');
+  if(focusKey)box.querySelector?.('[data-asset-look="'+focusKey+'"]')?.focus?.();
+}
+$('#assetDialog').addEventListener('click',e=>{
+  const b=e.target?.closest?.('[data-asset-look]');if(!b)return;
+  const k=b.dataset.assetLook;if(k==='smooth'||k==='pixel')assetInspect.pixel=k==='pixel';else if(k in assetInspect)assetInspect[k]=!assetInspect[k];else return;
+  renderAssetInspect(activeAsset,k);
+});
 function openAsset(id,owns=null) {
   if(owns&&!owns())return false;
   if(assetRetainedDetail){const problem=recoveryScopeMessage(assetRetainedDetail.workspace_id);if(problem){assetMessage(problem,true);renderLibraryRecovery();return false;}}
@@ -1150,7 +1184,7 @@ function openAsset(id,owns=null) {
   }
   activeAsset={...candidate,workspace_id:assetState.workspace_id};assetDetailEpoch++;assetDiagnosticRequest++;assetDetailPending=null;assetDetailConflict=null;renderAssetConflict();renderAssetSaveRecovery();
   const a=activeAsset;
-  $('#assetDetailMedia').innerHTML=assetPreview(a,true);
+  $('#assetDetailMedia').innerHTML=assetPreview(a,true);assetInspect=assetInspectOff();renderAssetInspect(a);
   $('#assetTitle').value=a.title||'';$('#assetTags').value=(a.tags||[]).join(', ');$('#assetReview').value=a.review||'unreviewed';$('#assetNotes').value=a.notes||'';
   assetDetailBaseline=assetDetailValues();assetDetailControls();assetDetailStatus('No unsaved changes.');
   // Opening something outside the queue (a Same run sibling, lineage, the library) ends queue mode:
@@ -1168,7 +1202,7 @@ function openAsset(id,owns=null) {
     for(const [key,field] of Object.entries(assetFormIds))$('#'+field).value=retained.draft[key];
     assetDetailPending=retained.operation?{...retained.operation,id,epoch:assetDetailEpoch}:null;assetDetailConflict=retained.conflict;
     $('#assetFavorite').textContent=activeAsset.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=activeAsset.trashed_at!=null?'Restore':'Move to Trash';$('#assetArchive').textContent=activeAsset.archived_at!=null?'Return to active':'Archive';
-    renderAssetConflict();renderAssetSaveRecovery();assetDetailControls();renderAssetReasons();assetDetailStatus('Retained draft restored. No save was sent. Review it or check the earlier save status.');
+    renderAssetConflict();renderAssetSaveRecovery();assetDetailControls();renderAssetReasons();if(!assetQueue)renderAssetQueue();assetDetailStatus('Retained draft restored. No save was sent. Review it or check the earlier save status.');
   }
   if(!$('#assetDialog').open){
     // Closing returns focus to what opened the dialog (normally the card), or to that asset's card after a re-render.
@@ -1235,7 +1269,7 @@ $('#assetDialog').addEventListener('close',()=>{
   if(assetDetailPending || assetDetailConflict)retainAssetDraft();
   else if(!assetRecoveryLoadError)try{assetRecovery.clear('detail');assetRetainedDetail=null;}catch(error){assetRecoveryError=error.message;}
   assetDetailEpoch++;assetDiagnosticRequest++;assetDetailBaseline=null;assetQueue=null;renderAssetQueue();
-  $('#assetDetailMedia').innerHTML='';$('#assetDiagnostic').innerHTML='';$('#assetSameRun').innerHTML='';$('#assetSameRun').hidden=true;
+  $('#assetDetailMedia').innerHTML='';assetInspect=assetInspectOff();renderAssetInspect(null);$('#assetDiagnostic').innerHTML='';$('#assetSameRun').innerHTML='';$('#assetSameRun').hidden=true;
   renderLibraryRecovery();
   const opener=assetDialogOpener;assetDialogOpener=null;
   // Only reclaim focus left on <body>: a handoff that moved elsewhere (Create) keeps its own focus.
@@ -1244,13 +1278,15 @@ $('#assetDialog').addEventListener('close',()=>{
     card?.focus?.({preventScroll:true});
   }
 });
-// Queue shortcuts never fire while an editor has focus, and never while a decision is in flight.
+// K/W/X (and the queue's S and arrows) never fire while an editor has focus, and never while a decision is in flight.
+// Outside the queue only K/W/X act, on the open picture, and Shift keeps them out.
 document.addEventListener('keydown',e=>{
-  if(!assetQueue || !$('#assetDialog').open || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey)return;
+  if(!activeAsset || !$('#assetDialog').open || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || (!assetQueue&&e.shiftKey))return;
   const tag=(e.target?.tagName||'').toUpperCase();
   if(['INPUT','TEXTAREA','SELECT'].includes(tag) || e.target?.isContentEditable)return;
   const key=(e.key||'').toLowerCase();
   if(assetReviewShortcuts[key]){e.preventDefault();void assetQueueDecide(assetReviewShortcuts[key]);return;}
+  if(!assetQueue)return;
   if(key==='s'){e.preventDefault();assetDetailStatus('Skipped. No review was saved for this asset.');assetQueueStep(1);return;}
   if(e.key==='ArrowRight'){e.preventDefault();assetQueueStep(1);return;}
   if(e.key==='ArrowLeft'){e.preventDefault();assetQueueStep(-1);}
@@ -1424,6 +1460,7 @@ document.addEventListener('studio:privacy-change',event=>{
   if($('#assetDialog').open)$('#assetDialog').close();
   for(const id of ['assetTitle','assetTags','assetNotes','bulkRunLabel'])$('#'+id).value='';$('#assetReview').value='unreviewed';
   for(const id of ['assetDetailMedia','assetDiagnostic','assetSameRun','assetDetails','assetLineage','assetHandoffs','assetDetailConflict','assetDetailRecovery','assetCommandRecovery','assetBulkReviewStatus','assetDetailStatus']){const panel=$('#'+id);if(panel)panel.innerHTML='';}
+  assetInspect=assetInspectOff();renderAssetInspect(null);
   $('#assetDownload').href='';$('#assetSearch').value='';$('#assetSort').value='newest';$('#assetType').value='all';$('#assetArchiveFilter').value='active';assetScope='all';assetViewRemembered='';assetScopeRestored=false;
   assetActivePrivacy=next;assetRecovery=assetJournalFor(next);loadAssetRecoveryJournal();restoreAssetView();
   assetMessage('');renderAssetQueue();renderLibraryRecovery();renderAssets();void refreshAssets(true);

@@ -181,6 +181,12 @@ async def exercise(args):
                 async def shelf(page, details=False):
                     # S6: the library launcher sits in the Recovery disclosure; open it the way a person would.
                     if not details and not await page.evaluate("document.getElementById('assetRecoveryDisclosure')?.open ?? true"): await page.click('#assetRecoveryDisclosure > summary')
+                    if details:
+                        # #1694: a normal click needs the launcher itself under its centre, not the sticky action row.
+                        await page.locator('#openAssetRecoveryShelfDetails').scroll_into_view_if_needed()
+                        hit = await page.evaluate('''() => {const b=document.getElementById('openAssetRecoveryShelfDetails'),r=b.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2,t=document.elementFromPoint(x,y),a=document.querySelector('#saveAssetDetails').parentElement.getBoundingClientRect();
+                          return {ok:(t===b||b.contains(t))&&(r.bottom<=a.top||r.top>=a.bottom),target:t&&(t.id||t.className||t.tagName),launcher:[r.top,r.bottom],actions:[a.top,a.bottom]};}''')
+                        check('SHELF-00 detail launcher centre and box are clear of the sticky action row', hit['ok'], str(hit))
                     await page.click('#openAssetRecoveryShelfDetails' if details else '#openAssetRecoveryShelf')
                     await page.wait_for_function('!assetShelfReading')
 

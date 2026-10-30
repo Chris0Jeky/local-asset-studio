@@ -187,8 +187,8 @@
     }
     return out;
   }
-  // Text-only transfer. A compiler profile is NOT proof of executor compatibility.
-  function promptTransfer(compilation){if(!compilation||compilation.state==='blocked')return null;const fields=compilation.fields||{};const positive=fields.positive||fields.prompt;if(typeof positive!=='string'||!positive.trim()||positive.length>8000||typeof fields.negative==='string'&&fields.negative.length>8000)return null;return{version:1,positive,negative:typeof fields.negative==='string'?fields.negative:'',profile:String(compilation.profile?.id||compilation.profile_id||'Prompt Lab'),recipes:promptRecipes(compilation.recipes||compilation.profile?.recipes),notice:'Text only. Choose a matching recipe and reattach required references; compiler settings are not executor bindings.'};}
+  // Text-only transfer. A compiler profile is NOT proof of recipe compatibility.
+  function promptTransfer(compilation){if(!compilation||compilation.state==='blocked')return null;const fields=compilation.fields||{};const positive=fields.positive||fields.prompt;if(typeof positive!=='string'||!positive.trim()||positive.length>8000||typeof fields.negative==='string'&&fields.negative.length>8000)return null;return{version:1,positive,negative:typeof fields.negative==='string'?fields.negative:'',profile:String(compilation.profile?.id||compilation.profile_id||'Prompt Lab'),recipes:promptRecipes(compilation.recipes||compilation.profile?.recipes),notice:'Text only. References and sampling settings are not carried over.'};}
   // #1220 seam band (owner, 27 Sep 2026): the server's measured widths (app/tiles.py band_choices). A width the texture is too
   // small for stays listed but disabled, and its reason is shown beside the control; a picture that cannot tile offers none.
   function tileBands(status){const choices=status?.eligible&&Array.isArray(status.band_choices)?status.band_choices:[];

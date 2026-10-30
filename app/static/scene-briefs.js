@@ -27,7 +27,7 @@
     if(conflict)throw Error('Reload the saved brief before downloading a working pack.');
     const token=epoch,id=card.id,revision=base,workspace=scope;
     const current=()=>token===epoch&&allowed()&&route().view==='briefs'&&route().id===id&&card?.id===id&&base===revision&&scope===workspace&&!dirty();
-    message('Preparing working pack…');
+    const pending='Preparing working pack…';message(pending);try{
     const result=await api('/api/briefs/export',{id,expected_revision:revision,workspace_id:workspace});
     if(!current())return;
     const response=await (window.StudioPrivacy?StudioPrivacy.fetch(result.url):fetch(result.url));
@@ -38,6 +38,7 @@
     if(latest.card.body.workspace_id!==workspace||latest.card.revision!==revision)throw Error('The brief or Workspace changed. Reload the saved brief and try again.');
     const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=result.filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
     message('Working pack downloaded.');
+    }finally{if(notice===pending)message('');}// a discarded or failed transfer must not leave the progress text; act() writes any error after this
   }
   async function loadCollections(cursor=null){const p=new URLSearchParams({workspace_id:scope,limit:'30'});if(cursor)p.set('cursor',cursor);const data=await api('/api/collections?'+p);return data;}
   async function loadCard(identifier,token){
@@ -67,7 +68,7 @@
       if(!r.id){remember();card=null;saved=null;}
       if(token!==epoch||!allowed())return;
       if(card&&r.returned!==null&&r.returned!==base)notice='This brief changed since preparation. Review its saved revision before choosing a return candidate.';
-      if(loadedRoute!==location.hash){loadedRoute=location.hash;await loadPicker(token);}
+      if(loadedRoute!==location.hash){const loading=location.hash;loadedRoute='';await loadPicker(token);if(token===epoch)loadedRoute=loading;}// loadPicker clears the picker, so no route counts as loaded until its own request lands; an invalidated request leaves it unloaded for the next refresh
       if(token!==epoch||!allowed())return;
       const slotChanged=lastRoute&&lastRoute.slot!==r.slot;render();lastRoute=r;if(slotChanged)q('#briefSlotTitle')?.focus({preventScroll:true});
     }catch(error){if(token!==epoch||!allowed())return;notice=error.message;render();}
@@ -89,7 +90,7 @@
     if(!allowed())return;
     root.innerHTML=`<div class="view-heading"><div><span class="eyebrow">ONE SCENE · SIX ASSET TYPES</span><h1>Scene briefs</h1><p>Keep the direction, candidates and next step together. Browser drafts recover in this tab; Save brief keeps them in Workspace.</p></div><button type="button" data-action="new" ${busy?'disabled':''}>New brief</button></div><div class="brief-toolbar"><label>Open brief<select id="briefSelect" ${busy?'disabled':''}><option value="">Choose a brief…</option>${briefs.map(b=>`<option value="${esc(b.id)}" ${b.id===card?.id?'selected':''}>${esc(b.name)}${b.available?'':' · unreadable'}</option>`).join('')}${recoveredChoices().map(d=>`<option value="${esc(d.id)}">${esc(d.name)} · browser draft</option>`).join('')}${card&&!briefs.some(b=>b.id===card.id)?`<option value="${esc(card.id)}" selected>${esc(card.name)} · new</option>`:''}</select></label>${card?`<button type="button" data-action="save" class="primary" ${busy||blockedRaw!==null||conflict?'disabled':''}>Save brief</button><button type="button" data-action="reload" ${busy?'disabled':''}>Reload saved brief</button><button type="button" data-action="download">Download draft</button><button type="button" data-action="workingPack" ${busy||blockedRaw!==null?'disabled':''}>Download working pack</button><span id="briefSaveState">${dirty()?'Unsaved changes':'Saved · revision '+base}</span>`:''}</div><p id="briefStatus" role="status" aria-live="polite">${esc(notice)}</p>${conflict?'<div class="brief-warning" role="alert">A newer saved revision exists. Your draft is retained. Download it before reloading the saved brief; no automatic overwrite is available.</div>':''}${blockedRaw!==null?'<div class="brief-warning" role="alert">Unrecognized recovery data is preserved. <button data-action="downloadRecovery">Download original recovery</button> <button data-action="discardRecovery">Discard this recovery copy</button></div>':''}${recoveryFailed?'<p class="brief-warning">Browser recovery is unavailable. Keep this tab open until you save or download your draft.</p>':''}${card?editor():'<div class="brief-empty"><h2>A shared direction, six open slots</h2><p>Start a brief for a scene or collection. Add background, sprite, icon, video, audio and 3D candidates as they become available.</p></div>'}`;
   }
-  async function act(work){if(busy)return;busy=true;const token=epoch;render();try{await work();}catch(error){if(token===epoch&&allowed()){if(error.status===409&&error.code==='card_revision_conflict')conflict=true;notice=error.message+' Your draft is retained.';}}finally{busy=false;if(allowed()&&route().view==='briefs'){if(route().id!==card?.id)refresh();else render();}}}
+  async function act(work){if(busy)return;busy=true;const token=epoch;render();try{await work();}catch(error){if(token===epoch&&allowed()){if(error.status===409&&error.code==='card_revision_conflict')conflict=true;notice=error.message+' Your draft is retained.';}}finally{busy=false;if(allowed()&&route().view==='briefs'){if(route().id!==card?.id||loadedRoute!==location.hash)refresh();else render();}}}
   async function save(){
     if(!card.name.trim())throw Error('Give the brief a name.');
     const before=C.copy(card),id=card.id,payload=base===null?{action:'create',kind:'brief',id,name:card.name,body:card.body}:{action:'edit',id,expected_revision:base,name:card.name,body:card.body};

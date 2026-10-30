@@ -110,6 +110,7 @@ async def run(out):
             await page.evaluate("StudioPrivacy.setScope('private');StudioPrivacy.setScope('regular')")
             release.set(); await idle()
             check('Privacy out and back discards a delayed download', len(downloads) == 1)
+            check('Privacy cancellation clears the preparing status', 'Preparing working pack' not in await page.locator('#briefStatus').inner_text())
             await delayed()
             with store.connection() as db: db.execute('UPDATE workspace_identity SET id=?', ('b'*32,))
             release.set(); await status('different Workspace'); await idle()
@@ -120,6 +121,7 @@ async def run(out):
             release.set(); await page.wait_for_function("!document.querySelector('#assetsView').hidden")
             await page.evaluate("location.hash='#briefs?id=pack-brief'"); await idle()
             check('Leaving the brief discards a delayed download', len(downloads) == 1)
+            check('Navigation cancellation clears the preparing status', 'Preparing working pack' not in await page.locator('#briefStatus').inner_text())
 
             # Real download URL remains scoped independently of the browser guard.
             export_path = next(path for method,path in requests if method == 'GET' and path.startswith('/api/exports/'))

@@ -88,6 +88,50 @@ test('choosing a character uses a live preferred Restyle look or the default and
   }
 });
 
+test('a kept picture in the line-up can become the canon: one edit with the revision read, never a generation (#1205)',async()=>{
+  const c={id:'mira',name:'Mira',revision:3,canon_asset_id:'canon',lineage:[{role:'canon',asset_id:'canon'}],body:{who:'Mira'}};
+  const state={pictures:[{id:'canon'},{id:'keep-a',lineage:['canon'],review:'selected'},{id:'skip',lineage:['canon'],review:'rejected'}],review:{},characters:[c]};
+  const markup=vm.runInNewContext(privacy+between('  const LINEUP_MAX','  async function fillLineups')+';lineupMarkup',{state,escape:String,thumbUrl:a=>'/t/'+a.id,pictureLabel:a=>a.id});
+  const html=markup(c);
+  assert.equal((html.match(/data-make-canon="/g)||[]).length,1,'only a kept, non-canon picture offers the swap');
+  assert.match(html,/data-make-canon="keep-a" data-make-canon-of="mira"[^>]*>Use as canon</);
+  const swap=between('  async function swapCanon(','  // A failed read keeps')+';swapCanon';
+  const run=async(reply)=>{const calls=[],said=[];let reloaded=0;
+    const context={state,usableCharacters:()=>[c],requestPrivacy:()=>({privacy:'normal'}),classified:()=>'normal',privacyEpoch:1,CSS:{escape:String},
+      json:async(url,body)=>{calls.push({url,body});if(reply)throw reply;return{};},loadCharacters:async()=>{reloaded++;},refreshCharacters(){},q:()=>null,sayChars:t=>said.push(t)};
+    const swapCanon=vm.runInNewContext(swap,context);await swapCanon('mira','keep-a');await swapCanon('mira','canon');   // the canon itself is a no-op
+    return{calls,said,reloaded};};
+  const ok=await run();
+  assert.equal(JSON.stringify(ok.calls),JSON.stringify([{url:'/api/characters',body:{action:'edit',id:'mira',expected_revision:3,canon_asset_id:'keep-a'}}]));
+  assert.equal(ok.reloaded,1);assert.match(ok.said[0],/now uses that picture as its canon/);
+  const stale=await run(Object.assign(Error('stale'),{status:409}));
+  assert.equal(stale.reloaded,1);assert.match(stale.said[0],/changed somewhere else.*canon was not changed/);
+  const refused=await run(Object.assign(Error('That picture is put away; restore it before making it the canon'),{status:400}));
+  assert.equal(refused.reloaded,0);assert.match(refused.said[0],/Could not change the canon: That picture is put away/);
+  assert.match(make,/const canon=e\.target\.closest\('\[data-make-canon\]'\);if\(canon\)\{void once\('character:'/,'the press runs through the per-character in-flight guard');
+});
+
+test('the canon a swap replaced stays in the line-up with Use as canon, so one press swaps back (#1718)',async()=>{
+  const c={id:'mira',name:'Mira',revision:3,canon_asset_id:'canon',previous_canon_asset_id:null,lineage:[{role:'canon',asset_id:'canon'}],body:{who:'Mira'}};
+  const state={pictures:[{id:'canon'},{id:'keep-a',lineage:['canon'],review:'selected'}],review:{},characters:[c]};
+  const markup=vm.runInNewContext(privacy+between('  const LINEUP_MAX','  async function fillLineups')+';lineupMarkup',{state,escape:String,thumbUrl:a=>'/t/'+a.id,pictureLabel:a=>a.id});
+  const calls=[],context={state,usableCharacters:()=>[c],requestPrivacy:()=>({privacy:'normal'}),classified:()=>'normal',privacyEpoch:1,CSS:{escape:String},q:()=>null,sayChars(){},refreshCharacters(){},loadCharacters:async()=>{},
+    json:async(url,body)=>{calls.push(body);if(body.expected_revision!==c.revision)throw Object.assign(Error('stale'),{status:409});   // characters.py: the replaced canon becomes previous_canon, the revision moves
+      c.previous_canon_asset_id=c.canon_asset_id;c.canon_asset_id=body.canon_asset_id;c.revision++;return{};}};
+  const swapCanon=vm.runInNewContext(between('  async function swapCanon(','  // A failed read keeps')+';swapCanon',context);
+  assert.doesNotMatch(markup(c),/Previous canon/,'nothing to go back to before a swap');
+  await swapCanon('mira','keep-a');
+  assert.equal(c.canon_asset_id,'keep-a');
+  const after=markup(c);
+  assert.match(after,/data-make-canon="canon" data-make-canon-of="mira"[^>]*>Use as canon</,'the replaced canon is offered back');
+  assert.match(after,/Previous canon/);assert.equal((after.match(/data-make-canon="/g)||[]).length,1,'the new canon offers nothing');
+  await swapCanon('mira','canon');
+  assert.equal(JSON.stringify(calls),JSON.stringify([{action:'edit',id:'mira',expected_revision:3,canon_asset_id:'keep-a'},{action:'edit',id:'mira',expected_revision:4,canon_asset_id:'canon'}]));
+  assert.equal(c.canon_asset_id,'canon');assert.match(markup(c),/data-make-canon="keep-a" data-make-canon-of="mira"[^>]*>Use as canon</,'and the swap can be undone again');
+  assert.equal((markup(c).match(/data-make-canon="keep-a"/g)||[]).length,1,'a previous canon that is also a descendant shows once');
+  c.previous_canon_asset_id='gone';assert.doesNotMatch(markup(c),/Previous canon/,'a previous canon no longer in the library is not offered');
+});
+
 function restoreHarness(failure,status='completed'){
   const requests=[],queue=[],saved=[],state={runs:[]};let response=failure;
   const context={state,window:{},view:{dataset:{}},sessionStorage:{getItem:()=>null,removeItem(){}},readDraft:()=>null,restoreDraft:async()=>{},savedRuns:[{id:'saved',look:'My look',scene:'a room',tune:{seed:0}}],restoredRuns:false,
@@ -120,7 +164,7 @@ test('restore drops only a confirmed 404 and does not poll the missing run',asyn
 function historyHarness(runs,saved=[]){
   const storage=new Map([['studio.make',JSON.stringify({runs:saved})]]),timers=new Map(runs.map(r=>[r.job.id,r.job.id])),cleared=[],state={goal:'character',runs};
   const policy=make.includes('  const observing=')?between('  const observing=','  const remember='):'';
-  const context={state,timers,window:{},rememberDraft(){},q:()=>({}),clearTimeout:id=>cleared.push(id),localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)}};
+  const context={state,timers,window:{},rememberDraft(){},runTitle(){},q:()=>({}),clearTimeout:id=>cleared.push(id),localStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)}};
   const render=between('  function renderRuns(){','    planPolish(')+'return list;}';
   const api=vm.runInNewContext(privacy+make.match(/  const FINAL=.*\n/)[0]+policy+between('  const remember=','  const presets=')+render+';({remember,renderRuns,savedRuns,restored:()=>{restoredRuns=true;}})',context);
   return{...api,state,timers,cleared,saved:()=>JSON.parse(storage.get('studio.make')).runs};
@@ -215,13 +259,14 @@ test('Make single and comparison pictures show the recorded quiet-left diagnosti
     const job={id:'job-1',status:'completed',controls:{seed:4},look:{id:'look-night-shift',name:'<Night Shift>',revision:2,options:{quiet_wall:true}},outputs:[output]};
     const runs=[{job,look:'Night Shift',scene:'A room'}],cards=[{group,id:'job-1',runs}];let rendered='';
     const box={children:[],contains:()=>false,querySelectorAll:()=>[]};
-    const context={state:{runs},window:{},runCards:()=>cards,q:()=>box,planPolish(){},layout(){},observing:()=>false,
+    const context={state:{runs},window:{},runCards:()=>cards,q:()=>box,planPolish(){},layout(){},runTitle(){},tick(){},observing:()=>false,
       FINAL:['completed'],words:job=>job.status,picture:()=>true,pictureTitle:String,escape:String,esc:s=>String(s).replaceAll('<','&lt;'),
       recovery:()=>'',marks:()=>'',characterMarkup:()=>'',actions:()=>'',selectedOf:()=>null,draftRun:()=>false,
       document:{activeElement:{},createElement:()=>({children:[],set innerHTML(value){rendered=value;}})}};
     const render=vm.runInNewContext(privacy+note+between('  function renderRuns(){','  // Picture goals stay in Make')+';renderRuns',context);
     render();
     assert.match(rendered,/Prepared with &lt;Night Shift>/);
+    assert.match(rendered,/<span data-make-clock="job-1" aria-hidden="true"><\/span>/,'every card carries a silent clock slot');
     if(unavailable)assert.match(rendered,/Quiet-left check unavailable: unsupported image/);
     else{assert.match(rendered,/left 2\.0%, right 10\.0%/);assert.match(rendered,/Detail proxy only/);}
   }
@@ -244,4 +289,113 @@ test('recorded and new seed result handoffs retain Look provenance without submi
     assert.equal(saved.controls.seed,mode==='new'?'9':'4');
     assert.deepEqual(calls,['/api/recipe-check']);
   }
+});
+
+test('look cards and the chosen look show the owner\'s own Keep and Not this marks, only when there are some (#1699)',async()=>{
+  const slots=[{dataset:{makeRecord:'a'},innerHTML:'old'},{dataset:{makeRecord:'b'},innerHTML:'old'}],fetched=[];
+  const context={escape:v=>String(v),state:{record:{a:{pictures:5,kept:3,not_this:2,needs_work:1},b:{pictures:2,kept:0,not_this:0,needs_work:2},c:{pictures:1,kept:1,not_this:0,needs_work:0},d:{pictures:1,kept:0,not_this:1,needs_work:0}}},
+    privacyEpoch:0,json:async path=>{fetched.push(path);return{looks:{a:{pictures:6,kept:4,not_this:2,needs_work:0}}};},view:{querySelectorAll:s=>s==='[data-make-record]'?slots:[]}};
+  vm.createContext(context);vm.runInContext(between('  const recordLine=','  const goal=()')+';this.recordLine=recordLine;this.recordSlot=recordSlot;this.refreshRecord=refreshRecord;',context);
+  assert.match(context.recordLine({id:'a'}),/^<small class="make-record" title="[^"]*">Your marks: 3 kept · 2 not this<\/small>$/);
+  assert.match(context.recordLine({id:'c'}),/Your marks: 1 kept<\/small>$/);assert.match(context.recordLine({id:'d'}),/Your marks: 1 not this<\/small>$/);
+  assert.equal(context.recordLine({id:'b'}),'','Needs-work marks alone are not a Make mark');assert.equal(context.recordLine({id:'unknown'}),'');
+  context.state.record=undefined;assert.equal(context.recordLine({id:'a'}),'');
+  assert.match(make,/tested\(l\)\+recordSlot\(l\)\+/,'look cards carry the line next to Tested well');assert.match(make,/tested\(chosen\)\+recordSlot\(chosen\)\+/,'the chosen-look summary carries it too');
+  await context.refreshRecord();assert.deepEqual(fetched,['/api/looks/record']);
+  assert.match(slots[0].innerHTML,/Your marks: 4 kept · 2 not this/);assert.equal(slots[1].innerHTML,'');
+  assert.match(between('  async function saveReview(','  const reviewOf='),/state\.review\[id\]=value;renderRuns\(\);void refreshRecord\(\);/,'saving a mark refreshes the line');
+});
+
+// Run clock and tab title: the real helpers with only document, timers and /api/estimate replaced.
+function clockHarness(runs){
+  const listeners={},requests=[],slows=runs.map(()=>({hidden:true,textContent:''})),els=runs.map((r,i)=>({dataset:{makeClock:r.job.id},textContent:'',closest:()=>({querySelector:()=>slows[i]})})),timers=[];
+  const document={title:'Local Asset Studio',hidden:false,addEventListener:(k,fn)=>{listeners[k]=fn;},querySelectorAll:()=>els};
+  const context={document,state:{runs},FINAL:['completed','failed'],Date,
+    rough:e=>e?.confidence==='none',duration:s=>s<90?Math.round(s)+' s':Math.round(s/60)+' min',
+    json:async(url,body,captured)=>{requests.push({url,body,captured});return{estimate_seconds:180,confidence:'medium'};},
+    runPrivacy:r=>r.privacy||'regular',requestPrivacy:(scope,privacy)=>({scope,privacy}),
+    setTimeout:fn=>{timers.push(fn);return timers.length;},clearTimeout(){}};
+  const api=vm.runInNewContext(between('  const PAINTING=','  function words(job)')+';({runClock,runTitle,tick,slowRun,SLOW})',context);
+  return{...api,document,listeners,requests,els,slows,timers,context};
+}
+
+test('a painting card shows elapsed time against the usual time on this PC, and nothing once it ends',()=>{
+  const {runClock}=clockHarness([]),job={status:'running',started_at:1000},e={estimate_seconds:180,confidence:'medium'};
+  assert.equal(runClock(job,e,1080),'1:20 of about 3 min');
+  assert.equal(runClock(job,e,1300),'5:00, longer than the usual 3 min');
+  assert.equal(runClock(job,{estimate_seconds:180,confidence:'none'},1080),'1:20','a generic guess is not shown as the usual time');
+  assert.equal(runClock(job,null,1065),'1:05');
+  assert.equal(runClock({...job,status:'completed'},e,1080),'');
+  assert.equal(runClock({status:'queued'},e,1080),'','waiting has no painting clock');
+});
+
+test('the tab title counts unfinished runs and ticks a finish seen only after the tab returns',()=>{
+  const runs=[{job:{id:'a',status:'running'}},{job:{id:'b',status:'queued'}}],h=clockHarness(runs);
+  h.runTitle();assert.equal(h.document.title,'(2) Local Asset Studio');
+  h.document.hidden=true;runs[0].job.status='completed';runs[1].job.status='failed';h.runTitle();
+  assert.equal(h.document.title,'✓ Local Asset Studio');
+  h.document.hidden=false;h.listeners.visibilitychange();assert.equal(h.document.title,'Local Asset Studio');
+});
+
+test('tick fills each clock, asks /api/estimate once per run and stops when nothing paints',async()=>{
+  const now=Date.now()/1000,runs=[{privacy:'private',job:{id:'a',status:'running',started_at:now-20,preset_id:'p',controls:{steps:8},batch_count:2,references:[{}]}}],h=clockHarness(runs);
+  h.tick();assert.match(h.els[0].textContent,/^ · 0:2\d$/);assert.equal(h.timers.length,1);
+  await new Promise(r=>setImmediate(r));h.tick();
+  assert.match(h.els[0].textContent,/^ · 0:2\d of about 3 min$/);
+  assert.equal(h.requests.length,1);assert.deepEqual(JSON.parse(JSON.stringify(h.requests[0])),{url:'/api/estimate',body:{preset_id:'p',controls:{steps:8},batch_count:2,reference_count:1},captured:{scope:'private',privacy:'private'}},'the estimate reads the run’s own privacy history');
+  runs[0].job.status='completed';const before=h.timers.length;h.tick();assert.equal(h.els[0].textContent,'');assert.equal(h.timers.length,before,'no further tick is scheduled');
+});
+
+// #1731: Tune's Quality help and Base model line are terse; the lab anecdote, the licence note and the model-type explanation sit verbatim behind a native Why disclosure.
+const tuneHarness=()=>{
+  const box={innerHTML:''},context={tp:{id:'tp',name:'Tuned',model:{file:'diffusion_models/m.safetensors'},commercial_note:''},look:{id:'l',body:{controls:{}}},list:[],SLOTS:[],box,
+    escape:s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'),state:{tune:{}}};
+  Object.assign(context,{current:()=>context.look,q:id=>id==='#makeTuneBody'?box:null,presetFor:()=>context.tp,tuneOf:()=>({rows:[],cleared:[]}),tunedPreset:()=>context.tp,models:()=>context.list,missingFor:()=>[],
+    compatible:()=>[],freeSlot:()=>null,halve:n=>n,bound:()=>false,modelLabel:p=>p.name,tuneChanged(){},
+    fullSteps:()=>30,turboFits:()=>true,speed:()=>['fast'],draftOf:()=>15,TURBO:{steps:8}});
+  vm.createContext(context);
+  vm.runInContext(make.match(/  const nonCommercial=.*\n/)[0]+make.match(/  const licence=.*\n/)[0]+between('  function draftMarkup(','  const draftRun=')+between('  function renderTune(){','  // A tune change redraws'),context);
+  return context;
+};
+const visible=html=>html.split('<details')[0];
+test('Anima Quality help is one terse line; the lab anecdote sits verbatim behind Why',()=>{
+  const html=tuneHarness().draftMarkup({id:'l'}),hint=html.match(/<small id="makeDraftHint"[^>]*>(.*?)<\/small>/)[1];
+  assert.equal(hint,'Draft ≈ half the time; in one lab test extra steps barely changed an Anima picture.');
+  assert.doesNotMatch(visible(html),/19 Oct|lab picture|Make the final/);
+  const why=html.match(/<details class="make-why"><summary>Why<\/summary><small class="muted">(.*?)<\/small><\/details>/)[1];
+  assert.equal(why,'On Anima models the turbo Draft takes about half the time; on one 19 Oct lab picture it came close to a full run, and 20, 30 and 40 steps looked alike, so there is no Fine. Compare with As made on your own picture. A draft card offers “Make the final” at the full 30 steps.');
+});
+test('Base model line shows the file and the Non-commercial chip only for a recorded non-commercial recipe; the notes sit behind Why',()=>{
+  const note='Non-commercial only: see the licence.',c=tuneHarness();
+  c.tp={...c.tp,commercial_note:note};c.list=[{id:'o',name:'Other'}];c.renderTune();
+  const html=c.box.innerHTML,after=html.slice(html.indexOf('Base model'));
+  assert.match(after,/diffusion_models\/m\.safetensors <small class="make-licence" title="Non-commercial only: see the licence\.">Non-commercial<\/small><\/small><details class="make-why"><summary>Why<\/summary><small class="muted">Non-commercial only: see the licence\. · Same model type: the look’s words and LoRAs carry over; pictures will differ\.<\/small><\/details>/);
+  assert.doesNotMatch(visible(after).replace(/<[^>]*>/g,''),/Same model type|see the licence\./);
+  const free=tuneHarness();free.renderTune();
+  assert.doesNotMatch(free.box.innerHTML,/make-licence/);
+  assert.match(free.box.innerHTML,/<summary>Why<\/summary><small class="muted">No other model in the library takes this look’s words and LoRAs\.<\/small>/);
+});
+test('the slow-state hint needs a well-measured usual time and a large overrun, and is advice only',async()=>{
+  const {slowRun}=clockHarness([]),job={status:'running',started_at:1000},high={estimate_seconds:60,confidence:'high'};
+  assert.equal(slowRun(job,high,1000+170),false,'under usual+120 s');
+  assert.equal(slowRun(job,high,1000+181),true,'past both 3x and usual+120 s');
+  assert.equal(slowRun(job,{estimate_seconds:600,confidence:'high'},1000+1801),true,'3x governs long runs');
+  assert.equal(slowRun(job,{estimate_seconds:600,confidence:'high'},1000+1700),false);
+  assert.equal(slowRun(job,{estimate_seconds:60,confidence:'medium'},1000+9999),false,'medium confidence never warns');
+  assert.equal(slowRun({...job,status:'completed'},high,1000+9999),false);
+  const now=Date.now()/1000,runs=[{job:{id:'a',status:'running',started_at:now-400,preset_id:'p'}}],h=clockHarness(runs);
+  h.context.json=async(url,body)=>{h.requests.push({url,body});return{estimate_seconds:60,confidence:'high'};};
+  h.tick();assert.equal(h.slows[0].hidden,true,'no hint before the estimate is known');
+  await new Promise(r=>setImmediate(r));h.tick();assert.equal(h.slows[0].hidden,false);assert.equal(h.slows[0].textContent,h.SLOW);
+  assert.ok(h.requests.every(r=>r.url==='/api/estimate'),'only the estimate is read; nothing is cancelled or sent');
+  runs[0].job.status='completed';h.tick();assert.equal(h.slows[0].hidden,true);assert.equal(h.slows[0].textContent,'');
+});
+
+test('a waiting card names how many runs are ahead, and a moved position redraws the card',()=>{
+  const words=vm.runInNewContext(make.match(/  function words\(job\).*\n/)[0]+';words',{});
+  assert.equal(words({status:'queued',queue_ahead:2}),'Waiting its turn · 2 ahead');
+  assert.equal(words({status:'queued',queue_ahead:0}),'Waiting its turn');
+  assert.equal(words({status:'queued'}),'Waiting its turn');
+  const stamp=vm.runInNewContext(make.match(/  const stamp=.*\n/)[0]+';stamp',{});
+  assert.notEqual(stamp({status:'queued',queue_ahead:2}),stamp({status:'queued',queue_ahead:1}));
 });

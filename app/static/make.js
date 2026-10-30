@@ -81,6 +81,10 @@
   const PROOF_THUMBS=['look-preset-stylized-prop','look-preset-pixel-lora','look-preset-realvis','look-preset-zimage-fast'];
   const thumbOf=look=>{const r=recipeOf(look);return r&&state.examples[r]?.url||(look.anchor_asset_id?privateMedia('/api/assets/'+encodeURIComponent(look.anchor_asset_id)+'/thumb',classified(look)):PROOF_THUMBS.includes(look.id)?'/api/examples/make-looks-20261015/'+look.id+'.jpg':null);};
   const tried=look=>{const r=recipeOf(look),list=typeof atelierRecipes!=='undefined'?atelierRecipes:[];return list.find(x=>x.id===r)?.status==='executed';};
+  // The owner's own Keep / Not this marks on pictures made with a look (#1699, GET /api/looks/record); the slot lets a fresh mark redraw only this line.
+  const recordLine=l=>{const r=state.record?.[l?.id],kept=r?.kept||0,no=r?.not_this||0,parts=[kept&&kept+' kept',no&&no+' not this'].filter(Boolean);return parts.length?'<small class="make-record" title="Your Keep and Not this marks on pictures made with this look in this Studio">Your marks: '+parts.join(' · ')+'</small>':'';};
+  const recordSlot=l=>'<span data-make-record="'+escape(l.id)+'">'+recordLine(l)+'</span>';
+  const refreshRecord=async()=>{const epoch=privacyEpoch;try{const r=await json('/api/looks/record');if(epoch!==privacyEpoch)return;state.record=r.looks||{};for(const el of view.querySelectorAll('[data-make-record]'))el.innerHTML=recordLine({id:el.dataset.makeRecord});}catch{if(epoch===privacyEpoch)state.record={};}};
   const goal=()=>GOALS.find(g=>g.id===state.goal);
   const SLOTS=['lora','lora2','lora3','lora4','lora5','lora6'];
   // The look's active adapters: a strength above zero with a file. Style strength scales exactly these and nothing else.
@@ -191,7 +195,7 @@
     // Quality is one visible choice (owner, 19 Oct): Draft, As made or Fine are Tune's own step counts, so the estimate follows the choice.
     const fine=Math.min(150,Math.round(full*1.5)),radio=(id,value,label,on)=>'<label class="make-check"><input type="radio" name="makeQuality" id="'+id+'" value="'+value+'"'+(on?' checked':'')+(id==='makeDraft'?' aria-describedby="makeDraftHint"':'')+'> '+label+'</label>';
     if(turbo)return '<fieldset class="make-quality"><legend>Quality</legend>'+radio('makeDraft','turbo','Draft · turbo LoRA, 8 steps, quickest',!!t?.turbo)+radio('makeStandard','','As made · '+full+' steps',!t?.turbo&&t?.steps==null)
-      +'<small id="makeDraftHint" class="muted">On Anima models the turbo Draft takes about half the time; on one 19 Oct lab picture it came close to a full run, and 20, 30 and 40 steps looked alike, so there is no Fine. Compare with As made on your own picture. A draft card offers “Make the final” at the full '+full+' steps.</small></fieldset>';
+      +'<small id="makeDraftHint" class="muted">Draft ≈ half the time; in one lab test extra steps barely changed an Anima picture.</small><details class="make-why"><summary>Why</summary><small class="muted">On Anima models the turbo Draft takes about half the time; on one 19 Oct lab picture it came close to a full run, and 20, 30 and 40 steps looked alike, so there is no Fine. Compare with As made on your own picture. A draft card offers “Make the final” at the full '+full+' steps.</small></details></fieldset>';
     return '<fieldset class="make-quality"><legend>Quality</legend>'+radio('makeDraft',n,'Draft · '+n+' steps, rougher but quicker',t?.steps===n)+radio('makeStandard','','As made · '+full+' steps',t?.steps==null&&!t?.turbo)+(fine>full?radio('makeFine',fine,'Fine · '+fine+' steps, slower',t?.steps===fine):'')
       +'<small id="makeDraftHint" class="muted">A draft card offers “Make the final”: the same words and seed at the full '+full+' steps.</small></fieldset>';}
   const draftRun=run=>{const look=state.looks?.find(l=>l.id===run.lookId);return!!look&&run.scene&&FINAL.includes(run.job.status)&&(run.job.outputs||[]).length>0&&(!!run.tune?.turbo||run.tune?.steps!=null&&run.tune.steps===draftOf(look,byId(run.tune.preset)||presetFor(look)));};
@@ -241,7 +245,7 @@
     const all=[p,...list],made=files.filter(f=>fits(look,f)).length,other=files.length-made;
     box.innerHTML='<div class="make-tune-group"><h3>Model</h3>'
       +'<label>Base model<select id="makeModel" data-tune="model">'+option(p.id,'As made · '+modelLabel(p,all)+(nonCommercial(p)?' · non-commercial':'')+(missingFor(p).length?' · needs download':''),tp===p)+list.map(m=>option(m.id,modelLabel(m,all)+(nonCommercial(m)?' · non-commercial':'')+(missingFor(m).length?' · needs download':''),tp===m)).join('')+'</select></label>'
-      +'<small class="muted">'+escape(tp?.model?.file||tp?.name||'')+(nonCommercial(tp)?' · '+escape(tp.commercial_note):'')+(list.length?' · Same model type: the look’s words and LoRAs carry over; pictures will differ.':' · No other model in the library takes this look’s words and LoRAs.')+'</small>'
+      +'<small class="muted">'+escape(tp?.model?.file||tp?.name||'')+(nonCommercial(tp)?' '+licence(tp):'')+'</small><details class="make-why"><summary>Why</summary><small class="muted">'+(nonCommercial(tp)?escape(tp.commercial_note)+' · ':'')+(list.length?'Same model type: the look’s words and LoRAs carry over; pictures will differ.':'No other model in the library takes this look’s words and LoRAs.')+'</small></details>'
       +(missing.length?'<p class="make-warn" id="makeTuneWhy">Needs '+missing.length+' model file'+(missing.length>1?'s':'')+' first. <a href="/#models?need='+escape(encodeURIComponent(tp.id))+'">Open Models & setup</a></p>':'')+'</div>'
       +'<div class="make-tune-group"><h3>LoRAs</h3>'
       +(t.rows.length?'<label class="make-tune-scale">All LoRAs × <output id="makeTuneScaleOut">'+scaleOf(t)+'%</output><input type="range" id="makeTuneScale" data-tune="scale" min="0" max="150" step="10" value="'+scaleOf(t)+'" aria-describedby="makeTuneScaleHint"></label><small id="makeTuneScaleHint" class="muted">Multiplies every strength below; the arrow shows what is sent. 100% sends them as set.</small>'+t.rows.map(row).join(''):'<p class="muted">None: the model and the words carry this look.</p>')
@@ -411,10 +415,10 @@
     const on=l=>compare?state.compareLooks.includes(l.id):l.id===state.look;
     const cards=list.map(l=>{const p=presetFor(l),thumb=thumbOf(l),why=compare?blocker(l,p):blocker(l);return '<article class="make-look'+(on(l)?' active':'')+'"><button type="button" class="make-look-select" data-make-look="'+escape(l.id)+'" role="'+(compare?'checkbox':'radio')+'" tabindex="'+(compare||l.id===(state.look||list[0]?.id)?'0':'-1')+'" aria-checked="'+on(l)+'">'
       +(thumb?'<img src="'+escape(thumb)+'" alt="" loading="lazy">':'<span class="make-look-blank" aria-hidden="true">✦</span>')
-      +'<span class="make-look-text"><b>'+escape(l.name)+'</b>'+recipeLine(l)+pace(l)+tested(l)+licence(p)+bestFor(l)+(tried(l)?'<small>Run on this PC before</small>':'')+'</span></button>'+(why?'<small class="make-warn make-look-text">'+blockerMarkup(l,why)+'</small>':'')+'</article>';}).join('');
+      +'<span class="make-look-text"><b>'+escape(l.name)+'</b>'+recipeLine(l)+pace(l)+tested(l)+recordSlot(l)+licence(p)+bestFor(l)+(tried(l)?'<small>Run on this PC before</small>':'')+'</span></button>'+(why?'<small class="make-warn make-look-text">'+blockerMarkup(l,why)+'</small>':'')+'</article>';}).join('');
     const chosen=current();
     if(chosen&&!state.picking&&!compare){const p=presetFor(chosen),thumb=thumbOf(chosen);
-      body.innerHTML='<div class="make-chosen">'+(thumb?'<img src="'+escape(thumb)+'" alt="">':'<span class="make-look-blank" aria-hidden="true">✦</span>')+'<div><small>Look</small><b>'+escape(chosen.name)+'</b>'+recipeLine(chosen)+pace(chosen)+tested(chosen)+licence(p)+bestFor(chosen)+'</div><button type="button" data-make-change>Change look</button></div><div id="makeComposer"></div>';}
+      body.innerHTML='<div class="make-chosen">'+(thumb?'<img src="'+escape(thumb)+'" alt="">':'<span class="make-look-blank" aria-hidden="true">✦</span>')+'<div><small>Look</small><b>'+escape(chosen.name)+'</b>'+recipeLine(chosen)+pace(chosen)+tested(chosen)+recordSlot(chosen)+licence(p)+bestFor(chosen)+'</div><button type="button" data-make-change>Change look</button></div><div id="makeComposer"></div>';}
     else body.innerHTML='<div class="make-step"><span>1</span><h2>'+(compare?'Choose two or three looks to compare':'Choose a look')+'</h2>'+(chosen&&!compare?'<button type="button" class="make-link" data-make-keep-look>Stay with '+escape(chosen.name)+'</button>':'')+(list.length>1?'<button type="button" class="make-link" data-make-compare aria-pressed="'+compare+'">'+(compare?'Back to one look':'Compare looks')+'</button>':'')+'</div><div class="make-looks" role="'+(compare?'group':'radiogroup')+'" aria-label="'+(compare?'Looks to compare':'Look')+'">'+cards+'</div><div id="makeComposer"></div>';
     renderComposer();layout();
   }
@@ -563,13 +567,13 @@
     try{if(await refreshAssets(true)===false){await new Promise(r=>setTimeout(r,600));await refreshAssets(true);}
       if(epoch!==privacyEpoch)return;
       delete state.review[id];const value=reviewOf(id)===button.dataset.makeReview?'unreviewed':button.dataset.makeReview;
-      await mutateAssets({action:'edit',ids:[id],review:value});if(epoch!==privacyEpoch)return;state.review[id]=value;renderRuns();
+      await mutateAssets({action:'edit',ids:[id],review:value});if(epoch!==privacyEpoch)return;state.review[id]=value;renderRuns();void refreshRecord();
       say(value==='selected'?'Kept. Kept pictures are in the library under Kept.':value==='rejected'?'Marked: not this one.':'Decision cleared.');}
     catch(error){if(epoch!==privacyEpoch)return;button.disabled=false;say('Could not save that: '+error.message);}
   }
   const reviewOf=id=>state.review[id]??(typeof assetState!=='undefined'&&assetState?.assets?.find(x=>x.id===id)?.review)??'unreviewed';
   const timers=new Map();
-  const stamp=job=>job.status+'|'+(job.outputs||[]).map(o=>o.asset_id||'').join(',')+'|'+(job.message||'')+'|'+(job.tracking_disposition?.status||'');
+  const stamp=job=>job.status+'|'+(job.outputs||[]).map(o=>o.asset_id||'').join(',')+'|'+(job.message||'')+'|'+(job.tracking_disposition?.status||'')+'|'+(job.queue_ahead??'');
   // A failed read is not the end of a run (#1438): it keeps checking, backing off to 30 s, and says so on its card.
   const POLL=2500,POLL_MAX=30000;
   function poll(id,misses=0){clearTimeout(timers.get(id));timers.set(id,setTimeout(async()=>{
@@ -581,7 +585,27 @@
     catch{if(!state.runs.includes(run)){timers.delete(id);return;}if(!run.lost){run.lost=true;renderRuns();}poll(id,misses+1);}},Math.min(POLL_MAX,POLL*2**Math.min(misses,4))));}
   // A finished run's pictures join an open picture grid at once, so the next goal can start from them.
   function refreshPickers(){const g=goal();if(!g.intent)return;for(const [id,attr] of [['makePictures','data-make-pick'],['makePosePictures','data-make-pose-pick']])if(q('#'+id))void fillPictures(g,id,attr);}
-  function words(job){return({queued:'Waiting its turn',waiting:'Waiting for memory',submitting:'Sending',running:'Painting',observing:'Painting',completed:'Done',failed:'Did not finish',partial:'Some pictures did not finish',uncertain:'Outcome unknown: nothing was sent again',cancelled:'Cancelled',not_submitted:'Not sent'})[job.status]||job.status;}
+  // A painting card says how long it has run and, from /api/estimate, about how long such a run takes on this PC; the tab title
+  // counts unfinished runs and shows a tick when one finished unseen. Text only: no notification, sound or extra press. The clock is
+  // aria-hidden inside the live #makeRuns region so it never announces every second; the estimate reads the run's own privacy history.
+  const PAINTING=['submitting','running','observing'],clock=s=>{s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');};
+  function runClock(job,e,now){if(!PAINTING.includes(job.status)||!job.started_at)return '';const spent=now-Number(job.started_at),t=rough(e)?0:Number(e?.estimate_seconds)||0;
+    return clock(spent)+(t?(spent>t*1.5?', longer than the usual '+duration(t):' of about '+duration(t)):'');}
+  // ComfyUI's slow state on this PC (Klein 9B at 53-63 s/step instead of 6.5) survives idle and /free; only a restart cures it (#1702).
+  // Said once, only against a well-measured usual time, and only as advice: nothing is cancelled, restarted or sent again.
+  const SLOW='Much slower than usual on this PC. If the next run is slow too, restart ComfyUI between runs.';
+  const slowRun=(job,e,now)=>PAINTING.includes(job.status)&&!!job.started_at&&e?.confidence==='high'&&(t=>t>0&&now-job.started_at>Math.max(3*t,t+120))(Number(e.estimate_seconds)||0);
+  const estimates=new Map(),baseTitle=document.title;let clockTimer=0,wasBusy=0,doneUnseen=false;
+  function runTitle(){const busy=state.runs.filter(r=>!FINAL.includes(r.job.status)).length;if(busy<wasBusy&&document.hidden)doneUnseen=true;wasBusy=busy;
+    const next=(busy?'('+busy+') ':doneUnseen?'✓ ':'')+baseTitle;if(document.title!==next)document.title=next;}
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&doneUnseen){doneUnseen=false;runTitle();}});
+  function tick(){const now=Date.now()/1000;let live=false;clearTimeout(clockTimer);
+    for(const el of document.querySelectorAll('[data-make-clock]')){const run=state.runs.find(r=>r.job.id===el.dataset.makeClock),job=run?.job;if(!job)continue;const rp=runPrivacy(run);
+      if(PAINTING.includes(job.status)&&job.started_at&&!estimates.has(job.id)){estimates.set(job.id,null);json('/api/estimate',{preset_id:job.preset_id,controls:job.controls||{},batch_count:job.batch_count||1,reference_count:(job.references||[]).length},requestPrivacy(rp,rp)).then(e=>estimates.set(job.id,e),()=>{});}
+      const text=runClock(job,estimates.get(job.id),now),shown=text?' · '+text:'';live||=!!text;if(el.textContent!==shown)el.textContent=shown;
+      const slow=el.closest?.('[data-run]')?.querySelector('[data-make-slow]');if(slow){const on=slowRun(job,estimates.get(job.id),now);if(slow.hidden===on){slow.hidden=!on;slow.textContent=on?SLOW:'';}}}
+    runTitle();clockTimer=live?setTimeout(tick,1000):0;}
+  function words(job){return({queued:'Waiting its turn'+(job.queue_ahead>0?' · '+job.queue_ahead+' ahead':''),waiting:'Waiting for memory',submitting:'Sending',running:'Painting',observing:'Painting',completed:'Done',failed:'Did not finish',partial:'Some pictures did not finish',uncertain:'Outcome unknown: nothing was sent again',cancelled:'Cancelled',not_submitted:'Not sent'})[job.status]||job.status;}
   // An uncertain or partial run offers what the full editor's Problems list offers, on its own card: Resume observation reads
   // ComfyUI again for the retained prompt IDs, Stop tracking records a reason. Neither ever sends the picture again.
   function recovery(job){
@@ -669,6 +693,12 @@
       else{q('[data-make-character="'+CSS.escape(id)+'"]')?.focus();sayChars('Restored “'+c.name+'”.');}}
     catch(error){if(epoch!==privacyEpoch)return;if(error.status===409){await loadCharacters();if(epoch!==privacyEpoch)return;refreshCharacters();sayChars('“'+c.name+'” changed somewhere else, so it was reloaded. Nothing was changed.');return;}say('Could not '+(action==='trash'?'put it away':'restore it')+': '+error.message);}
   }
+  // Use as canon: one edit with only canon_asset_id and the revision read; the words are untouched. The server refuses a put-away picture; a 409 reloads and changes nothing.
+  async function swapCanon(id,asset){const c=usableCharacters().find(x=>x.id===id),captured=requestPrivacy(),epoch=privacyEpoch;if(!c||asset===c.canon_asset_id)return;
+    try{await json('/api/characters',{action:'edit',id,expected_revision:c.revision,canon_asset_id:asset},{...captured,scope:classified(c)});if(epoch!==privacyEpoch)return;
+      await loadCharacters();if(epoch!==privacyEpoch)return;refreshCharacters();q('[data-make-character="'+CSS.escape(id)+'"]')?.focus();sayChars('“'+c.name+'” now uses that picture as its canon. Choose the character again to use it. The old canon stays in the Line-up: press Use as canon on it to go back.');}
+    catch(error){if(epoch!==privacyEpoch)return;if(error.status===409){await loadCharacters();if(epoch!==privacyEpoch)return;refreshCharacters();sayChars('“'+c.name+'” changed somewhere else, so it was reloaded. The canon was not changed.');return;}sayChars('Could not change the canon: '+error.message);}
+  }
   // A failed read keeps the list already shown and says so; the saying that follows a command appends it, so it is not overwritten.
   const STALE=' Your characters could not be refreshed, so the list shown may be out of date.';
   // A chosen character whose words changed (edited here or elsewhere) refreshes the form's who and clothes, which were copied when it was chosen.
@@ -696,9 +726,12 @@
     // canon_asset), kept pictures still descend from the recorded asset or from any picture with the recorded sha256.
     if(rec?.asset_id)family.add(rec.asset_id);if(rec?.sha256)for(const a of pics)if(a.sha256===rec.sha256)family.add(a.id);
     for(let grew=true;grew;){grew=false;for(const a of pics)if(!family.has(a.id)&&(a.lineage||[]).some(p=>family.has(p?.asset_id??p))){family.add(a.id);grew=true;}}
-    const kept=pics.filter(a=>a.id!==c.canon_asset_id&&family.has(a.id)&&(state.review[a.id]??a.review)==='selected'),shown=kept.slice(0,LINEUP_MAX);
-    const item=(a,canonTag)=>'<button type="button" class="make-lineup-item'+(canonTag?' make-lineup-canon':'')+'" data-ux-open-asset="'+escape(a.id)+'"><img src="'+thumbUrl(a)+'" alt="'+escape(canonTag?'Canon picture of '+c.name:pictureLabel(a))+'" loading="lazy">'+(canonTag?'<small class="make-lineup-tag">Canon</small>':'')+'</button>';
-    return '<div class="make-lineup-strip">'+item(canon,true)+shown.map(a=>item(a)).join('')+'</div>'+(kept.length?'':'<p class="muted">No kept picture comes from the canon yet. Keep one made from it and it appears here.</p>')
+    const prev=c.previous_canon_asset_id&&c.previous_canon_asset_id!==c.canon_asset_id?pics.find(a=>a.id===c.previous_canon_asset_id):null;   // the canon a swap replaced (#1718), offered back while it is still a live picture
+    const kept=pics.filter(a=>a.id!==c.canon_asset_id&&a.id!==prev?.id&&family.has(a.id)&&(state.review[a.id]??a.review)==='selected'),shown=kept.slice(0,LINEUP_MAX);
+    const item=(a,canonTag,prevTag)=>'<button type="button" class="make-lineup-item'+(canonTag?' make-lineup-canon':'')+'" data-ux-open-asset="'+escape(a.id)+'"><img src="'+thumbUrl(a)+'" alt="'+escape(canonTag?'Canon picture of '+c.name:pictureLabel(a))+'" loading="lazy">'+(canonTag?'<small class="make-lineup-tag">Canon</small>':prevTag?'<small class="make-lineup-tag">Previous canon</small>':'')+'</button>';
+    // Each kept picture can become the canon: the owner's own press, never inferred (#1205, owner 27 Sep). Saving makes no picture.
+    const cell=(a,prevTag)=>'<div class="make-lineup-cell">'+item(a,false,prevTag)+'<button type="button" class="make-link" data-make-canon="'+escape(a.id)+'" data-make-canon-of="'+escape(c.id)+'" aria-label="Use this picture as the canon of '+escape(c.name)+'">Use as canon</button></div>';
+    return '<div class="make-lineup-strip">'+item(canon,true)+(prev?cell(prev,true):'')+shown.map(a=>cell(a)).join('')+'</div>'+(kept.length?'':'<p class="muted">No kept picture comes from the canon yet. Keep one made from it and it appears here.</p>')
       +(kept.length>shown.length?'<p class="muted">'+(kept.length-shown.length)+' older kept picture'+(kept.length-shown.length===1?'':'s')+' not shown. The line-up holds the newest '+LINEUP_MAX+'.</p>':'');
   }
   async function fillLineups(){const boxes=[...view.querySelectorAll('[data-make-lineup]')].filter(b=>b.closest('details').open),epoch=privacyEpoch;if(!boxes.length)return;
@@ -758,7 +791,7 @@
   const picture=o=>(!o.media_type||o.media_type==='image')&&!/(?:^|[/_\\-])(mask|matte)(?:[_.-]|$)/i.test(o.source?.filename||o.filename||'');
   const pictureTitle=(scene,date)=>String(scene||'Picture').slice(0,100)+(date?' \u00b7 '+new Date(Number(date)*1000).toLocaleDateString():'');
   function renderRuns(){
-    const box=q('#makeRuns');if(!box)return;
+    runTitle();const box=q('#makeRuns');if(!box)return;
     const visible=state.runs.filter(r=>readScope()==='all'||runPrivacy(r)===readScope()),list=runCards(visible);
     const shown=new Set(list.flatMap(c=>c.runs));if(shown.size<visible.length){for(const r of visible)if(!shown.has(r)){clearTimeout(timers.get(r.job.id));timers.delete(r.job.id);}state.runs=state.runs.filter(r=>!visible.includes(r)||shown.has(r));remember();}
     planPolish(list.flatMap(c=>c.runs));
@@ -771,10 +804,10 @@
     const markup=list.map(({group,id,runs})=>{
       if(group){const done=runs.filter(r=>!observing(r)).length,first=runs[0];
         return '<article class="make-run make-compare" data-run="'+escape(id)+'"><header><div><b>'+(first.axis?'Compare a setting · ':'Compare looks · ')+escape(pictureTitle(first.scene,first.job.created_at))+'</b><small>'+(first.axis?escape(first.look)+' · '+runs.length+' values of '+escape(first.axis)+', one picture each':runs.length+' looks, one picture each')+(runs.every(r=>r.job.controls?.seed!=null&&r.job.controls.seed===first.job.controls?.seed)?', same seed':'')+'</small></div><span class="make-run-state '+(done===runs.length?'completed':'running')+'">'+(done===runs.length?'Done':done+' of '+runs.length+' done')+'</span></header><div class="make-compare-grid">'
-          +runs.map(({job,look,value,lost})=>(look=value||look,'<figure><figcaption><b>'+escape(look)+'</b><small class="make-run-state '+escape(lost?'uncertain':job.status)+'">'+escape(lost?'Lost contact; still checking':words(job))+'</small></figcaption>'+(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')+(lost?'':recovery(job))
+          +runs.map(({job,look,value,lost})=>(look=value||look,'<figure><figcaption><b>'+escape(look)+'</b><small class="make-run-state '+escape(lost?'uncertain':job.status)+'">'+escape(lost?'Lost contact; still checking':words(job))+(lost?'':'<span data-make-clock="'+escape(job.id)+'" aria-hidden="true"></span>')+'</small></figcaption>'+(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')+(lost?'':recovery(job))
             +(job.outputs||[]).map((o,i)=>picture(o)?img(job,o,i,look)+(o.asset_id?'<div class="make-actions">'+marks(o.asset_id)+characterMarkup(job,o.asset_id)+'</div>':'<small class="muted">Saving to the library…</small>'):'').join('')+pending(job,1)+'</figure>')).join('')+'</div></article>';}
       const {job,look,scene,tuned,title,lost}=runs[0];
-      return '<article class="make-run" data-run="'+escape(job.id)+'"><header><div><b>'+escape(pictureTitle(scene||title||job.controls?.positive||look,job.created_at))+'</b>'+(scene?'<small>'+escape(scene)+'</small>':look&&!scene?'<small>'+escape(look)+'</small>':'')+(tuned?'<small class="make-tuned">'+escape(tuned)+'</small>':'')+'</div><span class="make-run-state '+escape(lost?'uncertain':job.status)+'">'+escape(lost?'Lost contact with this run; still checking':words(job))+'</span></header>'
+      return '<article class="make-run" data-run="'+escape(job.id)+'"><header><div><b>'+escape(pictureTitle(scene||title||job.controls?.positive||look,job.created_at))+'</b>'+(scene?'<small>'+escape(scene)+'</small>':look&&!scene?'<small>'+escape(look)+'</small>':'')+(tuned?'<small class="make-tuned">'+escape(tuned)+'</small>':'')+'</div><span class="make-run-state '+escape(lost?'uncertain':job.status)+'">'+escape(lost?'Lost contact with this run; still checking':words(job))+(lost?'':'<span data-make-clock="'+escape(job.id)+'" aria-hidden="true"></span>')+'</span></header>'+(lost?'':'<p class="make-warn" data-make-slow hidden></p>')
       +(scene?'<div class="make-run-tools">'+(draftRun(runs[0])?'<button type="button" data-make-final="'+escape(job.id)+'">Make the final</button>':'')+'<button type="button" data-make-rerun="'+escape(job.id)+'">Edit and re-run</button><button type="button" data-make-another="'+escape(job.id)+'">Same words, another look</button></div>':runs[0].redo?'<div class="make-run-tools"><button type="button" data-make-redo="'+escape(job.id)+'">Edit and re-run</button></div>':'')
       +(job.status==='failed'&&job.message?'<p class="make-warn">'+escape(job.message)+'</p>':'')+(lost?'':recovery(job))
       +'<div class="make-outputs">'+(job.outputs||[]).map((o,i)=>!picture(o)?other(o):'<figure'+(o.asset_id&&o.asset_id===selectedOf(job)?' class="make-selected"':'')+'>'+img(job,o,i,look)+actions(job,o)+'</figure>').join('')+pending(job)+'</div></article>';});
@@ -784,6 +817,7 @@
     for(const [i,card] of [...next.children].entries()){const old=[...box.children].find(e=>e.dataset.run===card.dataset.run);if(old&&old.dataset.markup===card.outerHTML)continue;card.dataset.markup=card.outerHTML;if(old)old.replaceWith(card);else box.insertBefore(card,box.children[i]||null);}
     for(const menu of box.querySelectorAll('details'))menu.open=open.includes(menu.dataset.more);
     if(focusKey&&document.activeElement!==focus)[...box.querySelectorAll('button,summary,a')].find(e=>key(e)===focusKey)?.focus();
+    tick();
   }
   // Picture goals stay in Make (owner ask, 16 Oct 2026; journey audit #5-#7): pick the picture, answer a few plain fields, press
   // Make's own Generate. The request is the one the handoff prepares (studio-workbench.js polish/openHandoff): the source is
@@ -1087,7 +1121,7 @@
     // Speed, readiness and history read the recipe catalog that app.js loads; wait for it briefly instead of guessing.
     for(let i=0;i<40&&!presets().length;i++)await new Promise(r=>setTimeout(r,250));
     try{
-      const [listing]=await Promise.all([json('/api/looks'),loadCharacters(),import('/static/bundle-showcase.js').then(m=>{state.examples=m.default.examples||{};}).catch(()=>{})]);
+      const [listing]=await Promise.all([json('/api/looks'),refreshRecord(),loadCharacters(),import('/static/bundle-showcase.js').then(m=>{state.examples=m.default.examples||{};}).catch(()=>{})]);
       if(epoch!==privacyEpoch)return;state.looks=(listing.looks||listing.cards||[]).filter(l=>l.kind==='look'||l.body);
     }catch(error){if(epoch!==privacyEpoch)return;state.error='Could not read the looks: '+error.message;}
     if(epoch!==privacyEpoch)return;await restoreDraft(pendingDraft,epoch,revision);if(epoch!==privacyEpoch)return;draftReady=true;view.dataset.draftState='ready';
@@ -1156,6 +1190,7 @@
       say('Your character is chosen: its canon picture as it is'+(goal().intent==='combine'?', with its words.':'.')+(note?' '+note:''));q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();return;}
     const saveChar=e.target.closest('[data-make-character-save]');if(saveChar){openCharacterForm(saveChar.dataset.makeCharacterSave,saveChar.closest('[data-run]')?.dataset.run);return;}
     if(e.target.closest('[data-make-character-cancel]')){const a=state.charSave,edit=state.charEdit,move=state.charMigrate;clearCharForms();renderRuns();refreshCharacters();q(edit?'[data-make-character-edit="'+CSS.escape(edit)+'"]':move?'[data-make-migrate="'+CSS.escape(move)+'"]':'[data-make-character-save="'+CSS.escape(a||'')+'"]')?.focus();return;}
+    const canon=e.target.closest('[data-make-canon]');if(canon){void once('character:'+canon.dataset.makeCanonOf,()=>swapCanon(canon.dataset.makeCanonOf,canon.dataset.makeCanon));return;}
     const editChar=e.target.closest('[data-make-character-edit]');if(editChar){openCharacterEdit(editChar.dataset.makeCharacterEdit);return;}
     const awayChar=e.target.closest('[data-make-character-away]');if(awayChar){void once('character:'+awayChar.dataset.makeCharacterAway,()=>characterCommand(awayChar.dataset.makeCharacterAway,'trash'));return;}
     const restoreChar=e.target.closest('[data-make-character-restore]');if(restoreChar){void once('character:'+restoreChar.dataset.makeCharacterRestore,()=>characterCommand(restoreChar.dataset.makeCharacterRestore,'restore'));return;}
@@ -1307,7 +1342,7 @@
     }
     privacyEpoch++;draftRevision++;draftReady=false;draftProblem='';view.dataset.draftState='restoring';
     for(const timer of timers.values())clearTimeout(timer);timers.clear();planning.clear();
-    state.runs=[];state.pictures=null;state.characters=[];state.charStale=false;state.review={};state.polish={};state.queries={};state.allPictures=false;state.openers.clear();clearCharForms();
+    state.runs=[];state.pictures=null;state.characters=[];state.charStale=false;state.review={};state.record={};state.polish={};state.queries={};state.allPictures=false;state.openers.clear();clearCharForms();
     state.status='';state.missing='';state.error='';state.compare=false;state.compareLooks=[];state.sweeps={};
     if(previousCreation!==creation){state.pick=null;state.pose=null;state.form={};state.character=null;state.styleLook=null;state.styleWords=false;state.repicking=false;state.posePicking=false;state.tune={};
       savedTunes=readTunes(creation);

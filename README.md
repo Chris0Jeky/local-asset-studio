@@ -177,7 +177,7 @@ python -m pip install -r tests/requirements-runtime.txt -r research/game-assets/
 python app/server.py --repo-root .
 ```
 
-Then open `http://127.0.0.1:8191`. `GET /api/identity` returns the app name and workspace path. `GET /api/health` reports `"online": false` until ComfyUI is reachable at `comfy_url`, which defaults to `http://127.0.0.1:8188`. Generation needs ComfyUI running. It is not a complete fresh-machine installer: install ComfyUI, the custom nodes and the model files separately.
+Then open `http://127.0.0.1:8191`. `GET /api/identity` returns the app name and workspace path. `GET /api/health` reports `"online": false` until ComfyUI is reachable at `comfy_url`, which defaults to `http://127.0.0.1:8188`. It also carries `build: {sha, started_at}`, the git HEAD read once when the Studio started (`null` without git) and the UTC start time, so a console can tell a Studio running older code than its checkout (`.hosting/manifest.json` declares it to the estate console). Generation needs ComfyUI running. It is not a complete fresh-machine installer: install ComfyUI, the custom nodes and the model files separately.
 
 Python 3.12 or newer is required. CI uses 3.12. Pillow is used for validation and finishing, and psutil for the resource probe.
 

@@ -401,14 +401,16 @@
     const s=timing.seconds,label=s<90?Math.round(s)+' s':(s/60).toFixed(1).replace(/\.0$/,'')+' min';
     return 'about '+label+' per picture here · '+timing.count+' run'+(timing.count===1?'':'s');
   }
+  // The settings the picture's run did not record, each with the recipe default now used; shown folded under Details, never dropped.
+  function varyDefaults(plan){return plan.carry&&Array.isArray(plan.carryFallback)?plan.carryFallback.map(key=>key+" not recorded; using the recipe's current default: "+plan.carry[key]):[];}
   function varyStatus(plan,strength,seed){
     const count=plan.round.count,seeds=count+' new seeds from '+seed;
     if(plan.kind==='reseed')return 'Vary prepared as new seeds, same recipe ('+plan.route.name+'): '+seeds+', '+varyTime(plan.round.timing)+'. No close-variation route is recorded for this recipe, so each picture starts afresh from the same words. Nothing was generated; press Generate to run the round.';
     const controls=plan.strengths[strength].controls;
-    const adapters=varyAdapters(plan.carry),fellBack=Array.isArray(plan.carryFallback)&&plan.carryFallback.length;
-    const defaults=fellBack?plan.carryFallback.map(key=>key+" not recorded; using the recipe's current default: "+plan.carry[key]).join('; '):'';
-    const kept=!plan.carry?'':fellBack?', same checkpoint, '+(adapters.length?'adapters prepared ('+adapters.join(', ')+'), ':'')+defaults:adapters.length?', same checkpoint and adapters as this picture ('+adapters.join(', ')+')':', same checkpoint as this picture, no adapters (it used none)';
-    return 'Vary '+strength+' prepared on '+plan.route.name+' from this picture'+kept+': denoise '+controls.denoise+(plan.starting?' (a starting value, not yet judged)':'')+', '+seeds+', '+varyTime(plan.round.timing)+'. Nothing was generated; press Generate to run the round.';
+    const adapters=varyAdapters(plan.carry),fellBack=varyDefaults(plan).length;
+    const kept=!plan.carry?'':fellBack?', same checkpoint'+(adapters.length?', adapters prepared ('+adapters.join(', ')+')':''):adapters.length?', same checkpoint and adapters as this picture ('+adapters.join(', ')+')':', same checkpoint as this picture, no adapters (it used none)';
+    const defaults=fellBack?' '+fellBack+' setting'+(fellBack===1?'':'s')+' not recorded: recipe defaults used.':'';
+    return 'Vary '+strength+' prepared on '+plan.route.name+' from this picture: denoise '+controls.denoise+(plan.starting?' (a starting value, not yet judged)':'')+', '+seeds+', '+varyTime(plan.round.timing)+kept+'.'+defaults+' Nothing was generated; press Generate to run the round.';
   }
   function varyHint(plan){
     if(plan.kind==='none')return plan.reason;
@@ -416,5 +418,5 @@
     if(plan.kind==='reseed')return 'Starts afresh from the same words · '+round;
     return 'On '+plan.route.name+(plan.carry?' · keeps its adapters':'')+' · '+round+' · denoise '+plan.strengths.subtle.controls.denoise+' / '+plan.strengths.strong.controls.denoise+(plan.starting?' (starting values)':'');
   }
-  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineGuideAnswers,combineSwitchReason,combinePoseReplacementReason,combineReferences,sameCombinePair,combineRuns,combineInProblems,combineEngineLabel,combineEngineHint,combineTiming,combinePlanSeeds,combinePlanTime,combinePlanFills,varyRoute,varyRound,varyPlan,varyStatus,varyHint,wording,polishRoute,POLISH};
+  return{normalize,initial,settings,blockers,blockerItems,guidance,variantHelp,destinations,sourceInput,sourceLabel,promptFor,canvasFor,unfilled,fills,assemble,combineKind,fillMeaning,combineFillValues,combineGuideAnswers,combineSwitchReason,combinePoseReplacementReason,combineReferences,sameCombinePair,combineRuns,combineInProblems,combineEngineLabel,combineEngineHint,combineTiming,combinePlanSeeds,combinePlanTime,combinePlanFills,varyRoute,varyRound,varyPlan,varyStatus,varyDefaults,varyHint,wording,polishRoute,POLISH};
 });

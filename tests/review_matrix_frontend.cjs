@@ -89,6 +89,22 @@ async function main(){
   assert.equal(wording.querySelector('p').textContent,'Wording: Rain <img src=x> & lantern');
   assert.equal(wording.querySelector('img'),null,'Revealed wording stays text, never HTML');
   assert.equal($('gridTable').querySelector('thead').children[0].children[1].textContent,'Seed 9223372036854775807');
+  // Repeated runs at one coordinate: a failed run's retained image must be told apart from a completed run's before Reveal.
+  $('reload').click();state.revealed=false;state.grid={rows:[{alias:'R1'},{alias:'R2'},{alias:'R3'}],columns:[{alias:'C1'}],cells:[
+    {row:'R1',column:'C1',candidates:['A','B'],runs:[{status:'completed',candidates:['A']},{status:'failed',candidates:['B']}]},
+    {row:'R2',column:'C1',candidates:['C','D'],runs:[{status:'completed',candidates:['C']},{status:'completed',candidates:['D']}]},
+    {row:'R3',column:'C1',candidates:['E'],runs:[{status:'completed',candidates:['E']},{status:'failed',candidates:[]}]}]};
+  await respond();
+  const cells=[0,1,2].map(i=>$('gridTable').querySelector('tbody').children[i].children[1]),texts=cell=>cell.querySelectorAll('p').map(p=>p.textContent);
+  assert.deepEqual(texts(cells[0]),['2 runs','Run 1 · Completed','Run 2 · Failed','2 retained images']);
+  assert.deepEqual(texts(cells[1]),['2 runs','Run 1 · Completed','Run 2 · Completed','2 retained images'],'Same-status repeats are counted and told apart');
+  assert.deepEqual(texts(cells[2]),['2 runs','Run 1 · Completed','Run 2 · Failed','No retained image','1 retained image']);
+  const run=alias=>output(alias).dataset.gridRun;
+  assert.deepEqual(['A','B','C','D','E'].map(run),['Run 1 · Completed','Run 2 · Failed','Run 1 · Completed','Run 2 · Completed','Run 1 · Completed']);
+  assert.equal(cells[0].querySelectorAll('[data-grid-candidate]').length,2);assert.equal($('gridTable').querySelectorAll('[data-grid-candidate]').length,5);
+  assert.doesNotMatch((function walk(n){return n.textContent+n.children.map(walk).join(' ');})($('gridTable')),/engine-|Seed \d/,'Blind runs carry no engine or seed identity');
+  output('B').click();assert.equal($('candidate').value,'B','A failed run retained image remains selectable');
+  assert.equal(output('B').attributes['aria-pressed'],'true');
   $('reload').click();state.grid=null;await respond();assert.equal($('presentationGrid').disabled,true);assert.equal($('gridPanel').hidden,true);
   assert.match($('gridHint').textContent,/unambiguous saved settings and seeds/);assert.ok(requests.every(r=>r.url.endsWith('/review')));
   console.log('Review matrix interactions passed: selection, drafts, revisioned shortcuts, focus, Reveal and fallback');
