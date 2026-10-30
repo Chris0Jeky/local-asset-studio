@@ -1225,6 +1225,11 @@ class Studio:
                     output['text_safe'] = review_media.text_safe_metrics(review_media.checked_bytes(path, asset['sha256']))
                 except (OSError, ValueError, sqlite3.Error) as exc:
                     output['text_safe'] = {'error': str(exc)[:200]}
+            if output.get('asset_id') and output.get('media_type', 'image') == 'image' and 'empty_picture' not in output:
+                try:
+                    path, asset = self.assets.file_entry(output['asset_id'],privacy=job.get('privacy','regular'))
+                    output['empty_picture'] = review_media.empty_picture(review_media.checked_bytes(path, asset['sha256']))
+                except (OSError, ValueError, sqlite3.Error): pass  # Advisory only: an unreadable picture keeps its recorded outcome.
 
     def asset_reference(self, asset_id, *, privacy='regular', creation_privacy='regular'):
         classification=privacy_scope.normalize(creation_privacy)
