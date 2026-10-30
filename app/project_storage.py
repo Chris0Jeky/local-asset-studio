@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import re
+import uuid
 
 KINDS = frozenset(('comparison', 'native', 'articulated'))
 PLAN_LIMIT = 16 * 1024**2
@@ -21,6 +22,11 @@ def _canonical(value):
 
 def _linked(path):
     return path.is_symlink() or (hasattr(path, 'is_junction') and path.is_junction())
+
+
+def stage_job_id(identifier, index):
+    """The run ID of a comparison stage, fixed before its job exists (Production._run_comparison; run_migration reads it for stages not yet started)."""
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, f'asset-studio:{identifier}:stage:{index}'))
 
 
 def directory(root, identifier):

@@ -12,6 +12,7 @@ from unittest.mock import patch
 import test_server as fixture  # puts app/ on sys.path first
 import run_migration
 import test_run_migration_plan as planning
+import project_storage
 
 APPLY = '/api/assets/migration-apply'
 Base = planning.RunMigrationPlanTests.__dict__  # functions only: a TestCase class here would rerun the plan tests
@@ -26,6 +27,7 @@ def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 class RunMigrationApplyTests(unittest.TestCase):
     setUp, close, tree = Base['setUp'], Base['close'], Base['tree']
+    project, comparison, scene = Base['project'], Base['comparison'], Base['scene']
 
     def completed(self, outputs=3, seed=None, privacy='regular'):
         """Base.completed, but each run's pictures are distinct unless a seed asks for identical bytes."""
@@ -370,6 +372,37 @@ class RunMigrationApplyTests(unittest.TestCase):
 
 
     # ---- Follow-ups (#1785) ----
+    def test_a_pending_stage_blocks_the_move_and_its_upload_stays_regular_if_one_appears_after_publication(self):
+        s = self.scenario(); plan = self.plan(s)
+        pid = self.comparison({'references': [{'file': s['upload']}], 'controls': {}})
+        status, out = self.post(APPLY, self.body(s, plan))  # the pending stage appeared after this plan was made
+        self.assertEqual((status, out['code']), (409, 'migration_blocked'), out)
+        self.assertIn('pending_stage_upload', {b['code'] for b in out['blockers']}); self.assert_regular(s, self.studio)
+        with self.studio.production.connect() as db: db.execute('DELETE FROM projects WHERE id=?', (pid,))
+        body = self.body(s, self.plan(s))
+        with self.crash_at('committed'), self.assertRaises(Crash): run_migration.apply(self.studio, body, 'all')
+        self.comparison({'references': [{'file': s['upload']}], 'controls': {}})  # created between publication and the start-time cleanup
+        restarted = self.restart()
+        self.assertEqual(restarted.migration_recovery[0]['stage'], 'complete')
+        self.assertEqual(sha(restarted._upload_path(s['upload'], 'regular')), sha(self.root/'fake-comfy/input'/s['upload']))
+        self.assertEqual(restarted.jobs[s['jid']]['privacy'], 'private')
+
+    def test_uploads_named_by_pending_stages_are_protected_and_unreadable_plans_protect_everything(self):
+        s = self.scenario(); pid = self.comparison({'references': [{'file': s['upload']}], 'controls': {'reference': 'second.png'}}, {'controls': {'last_reference': 'third.png'}})
+        self.assertEqual(run_migration._others(self.studio, {s['jid']}), {s['upload'], 'second.png', 'third.png'})
+        self.studio.create_job({'preset_id': 'demo', 'controls': {'positive': 'stage'}}, enqueue=False, job_id=project_storage.stage_job_id(pid, 1))
+        self.assertEqual(run_migration._others(self.studio, {s['jid']}), {s['upload'], 'second.png'})  # stage B has a run now: its own job names its uploads
+        self.project('{ not json')
+        self.assertIsNone(run_migration._others(self.studio, {s['jid']})); self.assertIsNone(run_migration._disk_consumers(self.studio, {s['jid']}))
+
+    def test_scene_project_copies_stay_in_place_and_are_part_of_the_receipt(self):
+        s = self.scenario(); pid = self.scene(s['ids'][0]); path = self.studio.experiments/'projects'/pid/'inputs/source0.png'
+        path.parent.mkdir(parents=True); path.write_bytes(b'scene bytes')
+        plan = self.plan(s); self.assertIn(f'projects/{pid}/inputs/source0.png', {i['id'] for i in plan['items'] if i['kind'] == 'scene_copy'})
+        status, out = self.post(APPLY, self.body(s, plan))
+        self.assertEqual((status, out['stage']), (200, 'complete'), out)
+        self.assertIn(f'projects/{pid}/inputs/source0.png', out['external_copies']); self.assertEqual(path.read_bytes(), b'scene bytes')
+
     def test_an_unreadable_run_record_keeps_every_upload_in_regular(self):
         s = self.scenario(); sharer = self.completed(1); sharer['references'] = [{'file': s['upload'], 'role': 'subject'}]; self.studio._save(sharer)
         (self.studio.experiments/'runs'/sharer['id']/'state.json').write_text('{ not json')  # Its controls cannot load, so it looks like it uses nothing.

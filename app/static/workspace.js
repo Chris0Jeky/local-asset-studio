@@ -1461,8 +1461,10 @@ const migrationBlockers={
   snapshot_changed:'A saved original file no longer matches its recorded hash.',
   collection_mixed:'A collection also holds assets outside this move, and one collection keeps one classification.',
   receipts_overflow:'More past command receipts name this asset than can be listed.',
+  pending_stage_upload:'A production comparison stage that has not started still needs a reference picture this move would copy, and that picture must stay Regular for it.',
+  production_unreadable:'Scene projects or production plans could not all be read, so the copies they keep of these runs and pictures are unknown.',
   scope_partial:'This preview did not cover both privacy views; plan again under All.'};
-const migrationKinds={run:['run','runs'],run_file:['run file','run files'],asset:['output','outputs'],upload:['uploaded reference copy','uploaded reference copies'],thumbnail:['thumbnail','thumbnails'],collection:['collection','collections'],lineage_child:['related item that stays where it is','related items that stay where they are'],receipt:['past receipt that stays','past receipts that stay']};
+const migrationKinds={run:['run','runs'],run_file:['run file','run files'],asset:['output','outputs'],upload:['uploaded reference copy','uploaded reference copies'],thumbnail:['thumbnail','thumbnails'],collection:['collection','collections'],lineage_child:['related item that stays where it is','related items that stay where they are'],receipt:['past receipt that stays','past receipts that stay'],scene_copy:['scene project copy that stays Regular','scene project copies that stay Regular'],production_plan:['production plan that keeps a recipe','production plans that keep a recipe']};
 let migrationEpoch=0,migrationOpener=null;
 function migrationDestination(records){
   if(!records.length||!records.every(Boolean))return null;
