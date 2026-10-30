@@ -504,6 +504,21 @@ class RunMigrationApplyTests(unittest.TestCase):
         self.assertEqual(again.migration_recovery, [{'request_id': body['request_id'], 'from_stage': 'verified', 'stage': 'complete'}])
         self.assertTrue((self.studio.experiments/'uploads'/s['upload']).is_file()); self.assertEqual(self.journal(s)['keep_uploads'], ['uploads/'+s['upload'], 'uploads/'+s['upload']+'.json'])
 
+    def test_a_live_cleanup_of_a_keep_all_journal_keeps_every_regular_upload_even_when_every_record_reads(self):  # #1811 item 1: the `not live` guard
+        s = self.scenario(); body, bad = self.keep_all_crash(s); shutil.rmtree(bad)  # every record reads now, but the journal still says 'all'
+        journal = self.journal(s)
+        with patch.object(run_migration, '_others', return_value=set()): run_migration._cleanup(self.studio, journal, live=True)  # apply's own call after publication
+        self.assertTrue((self.studio.experiments/'uploads'/s['upload']).is_file()); self.assertTrue((self.studio.experiments/'uploads'/(s['upload']+'.json')).is_file())
+        self.assertEqual(self.journal(s)['keep_uploads'], 'all'); self.assertIn('uploads/'+s['upload'], self.journal(s)['remaining'])
+
+    def test_a_recovery_settle_of_a_keep_all_keeps_an_upload_that_an_unstarted_production_stage_names(self):  # #1811 item 2: _pending_uploads in _disk_consumers
+        s = self.scenario(); body, bad = self.keep_all_crash(s); shutil.rmtree(bad)  # every record reads at recovery; the journal says 'all'
+        self.comparison({'references': [{'file': s['upload']}], 'controls': {}})  # a stage that has not started names the upload
+        restarted = self.studio = self.restart()
+        self.assertEqual(restarted.migration_recovery, [{'request_id': body['request_id'], 'from_stage': 'verified', 'stage': 'complete'}])
+        self.assertTrue((self.studio.experiments/'uploads'/s['upload']).is_file()); self.assertTrue((self.studio.experiments/'uploads'/(s['upload']+'.json')).is_file())
+        self.assertEqual(self.journal(s)['keep_uploads'], ['uploads/'+s['upload'], 'uploads/'+s['upload']+'.json'])
+
     def test_a_real_journal_with_a_thumbnail_a_sidecar_and_a_nested_run_file_passes_the_stricter_check_and_recovers(self):
         s = self.scenario(); nested = self.studio.experiments/'runs'/s['jid']/'frames/deep/f0.png'; nested.parent.mkdir(parents=True); nested.write_bytes(b'nested frame')
         s['run_files']['runs/'+s['jid']+'/frames/deep/f0.png'] = sha(nested); body = self.body(s, self.plan(s))
