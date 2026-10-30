@@ -1471,9 +1471,8 @@ const migrationApplyErrors={
   migration_request_conflict:['That request already names a different move, so nothing was moved. Preview again.','preview'],
   migration_busy:['Another move is running, possibly this one. Wait a moment, then press Check again.','check'],
   migration_recovery_pending:['An earlier move did not finish, so nothing was moved. Restart the Studio to recover it, then preview again.',''],
-  migration_destination_occupied:['A Private run with the same ID already exists, so nothing was moved. Look in the Private view before trying again.',''],
+  migration_destination_occupied:['A run with the same ID already exists where this move would put it, so nothing was moved. Look in the All view before trying again.',''],
   migration_scope_required:['A move needs the All view, so nothing was moved. Switch to All and preview again.',''],
-  migration_direction_unsupported:['Moving a Private run back to Regular is not built yet. Nothing was moved.',''],
   migration_in_progress:['This move has not finished. Restart the Studio to recover it; nothing is retried automatically.',''],
   migration_storage_full:['The disk is full, so nothing was moved. Free space, then preview again.','preview'],
   migration_verify_failed:['A copied file did not match its original, so nothing was moved. Preview again.','preview'],
@@ -1520,13 +1519,13 @@ async function previewMigration(ids,destination,opener){
   const pending=migrationAttempt?.sent?migrationAttempt:null;migrationShown=null;migrationAttempt=null;
   $('#migrationTitle').textContent='Preview move to '+(destination==='private'?'Private':'Regular');body.innerHTML='';
   for(const id of ['#migrationSwitch','#migrationApply','#migrationRecheck','#migrationRepreview'])$(id).hidden=true;
-  $('#migrationNote').innerHTML='<b>'+(destination==='private'?'This preview changes nothing.':'Moving back to Regular is not available yet; this preview changes nothing.')+'</b>';
+  $('#migrationNote').innerHTML='<b>This preview changes nothing.</b>';
   if(!$('#migrationDialog').open)$('#migrationDialog').showModal();
   $('#closeMigration').focus();
   // A sent move whose outcome is unknown survives Close: until the server answers it, the only offer is Check again with the SAME request_id, never a new move.
   if(pending){
     migrationAttempt=pending;pending.shown=migrationShown={...pending.shown,epoch,privacyEpoch,workspaceEpoch:assetWorkspaceEpoch};
-    $('#migrationTitle').textContent='Earlier move: outcome unknown';status.textContent='An earlier move to Private may or may not have happened. Press Check again to ask about it before previewing another move.';
+    $('#migrationTitle').textContent='Earlier move: outcome unknown';status.textContent='An earlier move to '+(pending.shown.destination==='private'?'Private':'Regular')+' may or may not have happened. Press Check again to ask about it before previewing another move.';
     $('#migrationRecheck').hidden=false;$('#migrationRecheck').focus();return;
   }
   if(assetActivePrivacy!=='all'){
@@ -1540,10 +1539,11 @@ async function previewMigration(ids,destination,opener){
     const problem=migrationProblem(plan,ids,destination);if(problem)throw Error(problem);
     body.innerHTML=migrationHTML(plan);status.textContent='Preview ready: '+plan.items.length+' items, '+(plan.blockers.length?plan.blockers.length+(plan.blockers.length===1?' blocker':' blockers'):'no blockers')+'. Nothing was changed.';
     const runs=plan.items.filter(i=>i.kind==='run').length;
-    if(destination==='private'&&plan.apply_available===true&&!plan.blockers.length&&runs){
+    if(plan.apply_available===true&&!plan.blockers.length&&runs){
       migrationShown={epoch,privacyEpoch,workspaceEpoch:assetWorkspaceEpoch,workspace,ids:[...ids],destination,hash:plan.plan_sha256,runs};
-      $('#migrationApply').textContent='Move '+runs+(runs===1?' run':' runs')+' to Private';$('#migrationApply').hidden=false;
-      $('#migrationNote').innerHTML='<b>Moving copies each whole run into Private, then removes it from Regular. It cannot be moved back yet.</b>';
+      $('#migrationApply').textContent='Move '+runs+(runs===1?' run':' runs')+' to '+(destination==='private'?'Private':'Regular');$('#migrationApply').hidden=false;
+      $('#migrationNote').innerHTML=destination==='private'?'<b>Moving copies each whole run into Private, then removes it from Regular. It can be moved back to Regular the same way.</b>'
+        :'<b>Moving copies each whole run into Regular, then removes it from Private. The runs and their pictures become visible in the Regular view and to agents reading Regular.</b>';
     }
   }catch(error){if(current()){body.innerHTML='';status.textContent='No preview: '+(error.message||'the request failed')+' Nothing was changed.';}}
 }
@@ -1558,7 +1558,8 @@ async function migrationSend(attempt){
     migrationAttempt=null;for(const id of ['#migrationApply','#migrationRecheck'])$(id).hidden=true;$('#migrationRepreview').hidden=false;status.textContent='This preview is out of date. Nothing was sent. Preview again.';return;
   }
   attempt.sent=true;migrationFlight={privacyEpoch:assetPrivacyEpoch};for(const id of buttons)$(id).disabled=true;
-  status.textContent='Moving '+shown.runs+(shown.runs===1?' run':' runs')+' to Private… '+migrationBusyText;
+  const to=shown.destination==='private'?'Private':'Regular',from=shown.destination==='private'?'Regular':'Private';
+  status.textContent='Moving '+shown.runs+(shown.runs===1?' run':' runs')+' to '+to+'… '+migrationBusyText;
   let result=null,failure=null;
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),migrationApplyTimeoutMs);
   try{result=await api('/api/assets/migration-apply',{method:'POST',headers:{'Content-Type':'application/json',...assetPrivacyHeaders('all')},body:attempt.body,signal:controller.signal});}catch(error){failure=error;}
@@ -1566,13 +1567,13 @@ async function migrationSend(attempt){
   migrationFlight=null;for(const id of buttons)$(id).disabled=false;
   const here=shown.epoch===migrationEpoch,say=(text,error)=>{if(here)status.textContent=text;else assetMessage(text.replace('press Check again','preview the move again to check it'),error);};
   for(const id of ['#migrationApply','#migrationRecheck','#migrationRepreview'])$(id).hidden=true;
-  if(!failure&&result&&result.published===true&&result.request_id===attempt.request_id&&result.destination==='private'&&Array.isArray(result.job_ids)&&Array.isArray(result.asset_ids)){
+  if(!failure&&result&&result.published===true&&result.request_id===attempt.request_id&&result.destination===shown.destination&&Array.isArray(result.job_ids)&&Array.isArray(result.asset_ids)){
     const left=Array.isArray(result.cleanup_remaining)?result.cleanup_remaining.length:0;
     migrationAttempt=null;migrationShown=null;
-    say('Moved '+result.job_ids.length+(result.job_ids.length===1?' run':' runs')+' ('+result.asset_ids.length+(result.asset_ids.length===1?' output':' outputs')+') to Private.'+(left?' '+left+(left===1?' leftover copy':' leftover copies')+' in Regular could not be deleted yet and stays on disk.':''),false);
-    if(here){$('#migrationTitle').textContent='Moved to Private';body.innerHTML='';$('#migrationNote').innerHTML='<b>The runs are in Private now.</b>';}
+    say('Moved '+result.job_ids.length+(result.job_ids.length===1?' run':' runs')+' ('+result.asset_ids.length+(result.asset_ids.length===1?' output':' outputs')+') to '+to+'.'+(left?' '+left+(left===1?' leftover copy':' leftover copies')+' in '+from+' could not be deleted yet and stays on disk.':''),false);
+    if(here){$('#migrationTitle').textContent='Moved to '+to;body.innerHTML='';$('#migrationNote').innerHTML='<b>The runs are in '+to+' now.</b>';}
     assetSelection.clear();assetSelectionAnchor=null;
-    if(activeAsset&&result.asset_ids.includes(activeAsset.id))activeAsset.privacy='private';
+    if(activeAsset&&result.asset_ids.includes(activeAsset.id))activeAsset.privacy=shown.destination;
     renderAssets();if(here)$('#closeMigration').focus();
     await refreshAssets(true);
     return;
@@ -1602,7 +1603,7 @@ $('#migrationApply').onclick=async()=>{
   await migrationSend(migrationAttempt);
 };
 $('#migrationRecheck').onclick=async()=>{if(migrationAttempt)await migrationSend(migrationAttempt);};
-$('#migrationRepreview').onclick=async()=>{if(migrationShown&&!migrationFlight)await previewMigration(migrationShown.ids,'private',migrationOpener);};
+$('#migrationRepreview').onclick=async()=>{if(migrationShown&&!migrationFlight)await previewMigration(migrationShown.ids,migrationShown.destination,migrationOpener);};
 $('#closeMigration').onclick=()=>{if(migrationFlight){$('#migrationStatus').textContent=migrationBusyText;return;}$('#migrationDialog').close();};
 $('#migrationDialog').addEventListener('cancel',event=>{if(migrationFlight){event.preventDefault();$('#migrationStatus').textContent=migrationBusyText;}});
 $('#migrationSwitch').onclick=()=>{$('#migrationDialog').close();globalThis.window?.StudioPrivacy?.setScope?.('all');$('#assetSearch').focus();};
