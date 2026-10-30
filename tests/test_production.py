@@ -76,8 +76,9 @@ class ProductionTests(unittest.TestCase):
             self.assertEqual(execute.call_count,0)
             studio.production.start(project['id']);studio.production.run(project['id'])
         execute.assert_called_once()
-        state=studio.production.get(project['id'])['state']
+        public=studio.production.get(project['id']);state=public['state']
         self.assertTrue(state['krita']['native_kra_save_reopen_proved'])
+        self.assertEqual(public['export_kind'],'ora');self.assertIn('native/layers.ora',[a['path'] for a in state['artifacts']])  # the UI's open-this-file card reads both
         with zipfile.ZipFile(studio.production.root/project['id']/'export.zip') as archive:
             self.assertIn('krita/roundtrip.kra',archive.namelist());self.assertIn('layers.ora',archive.namelist())
         self.assertEqual(self.post_count(studio),0)
@@ -455,6 +456,12 @@ class ExperimentsClarityFrontendTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
     def test_prepare_start_requires_an_explicit_owner_submission(self):
         result=subprocess.run([shutil.which('node'),'--test',str(Path(__file__).with_name('production_prepare_start.cjs'))],
+                              capture_output=True,text=True,timeout=20)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_native_export_rows_show_thumbnails_and_keep_pairs_when_reordered(self):
+        result=subprocess.run([shutil.which('node'),'--test',str(Path(__file__).with_name('production_native_thumbs.cjs'))],
                               capture_output=True,text=True,timeout=20)
         self.assertEqual(result.returncode,0,result.stdout+result.stderr)
 

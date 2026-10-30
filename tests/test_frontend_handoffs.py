@@ -190,6 +190,17 @@ class ProductionClockFrontendTests(unittest.TestCase):
         self.assertIn('Production time extension controls preserve', result.stdout)
 
 
+class ProductionNativeOpenFrontendTests(unittest.TestCase):
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_native_export_card_names_the_recorded_entry_file(self):
+        result = subprocess.run(
+            [shutil.which('node'), str(Path(__file__).with_name('production_native_open_frontend.cjs'))],
+            capture_output=True, text=True, timeout=15,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('Native open-this-file card', result.stdout)
+
+
 class MakeShapesTuneFrontendTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
     def test_make_shape_size_and_tune_apply_contracts(self):

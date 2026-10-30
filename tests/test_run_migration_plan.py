@@ -303,6 +303,24 @@ class RunMigrationPlanTests(unittest.TestCase):
         self.assertEqual(self.codes(plan), {'scope_partial'}); self.assertEqual(self.kinds(plan, 'production_plan') + self.kinds(plan, 'scene_copy'), [])
         self.assertEqual(run_migration._others(self.studio, {job['id']}), set())
 
+    def test_a_locked_projects_database_fails_closed_as_unreadable_without_raising(self):  # #1799 item 4: BEGIN EXCLUSIVE held by another connection
+        import run_migration
+        job = self.completed(1); path = self.studio.experiments/'projects'/'projects.sqlite3'
+        holder = sqlite3.connect(str(path), isolation_level=None); self.addCleanup(holder.close)  # built before the patch below
+        real_connect = sqlite3.connect
+        def short_wait(target, *args, **kwargs):  # production's read waits 15 s for the lock; 50 ms here, the same error path
+            return real_connect(target, *args, **({**kwargs, 'timeout': .05} if 'projects.sqlite3' in str(target) else kwargs))
+        holder.execute('BEGIN EXCLUSIVE')  # readers cannot take their SHARED lock on the projects database
+        try:
+            with patch.object(run_migration.sqlite3, 'connect', short_wait):
+                self.assertIsNone(run_migration._production(self.studio))
+                plan = self.plan(job_ids=[job['id']])
+                self.assertIn('production_unreadable', self.codes(plan)); self.assertFalse(plan['applicable'])
+                self.assertEqual(self.kinds(plan, 'production_plan') + self.kinds(plan, 'scene_copy'), [])
+                self.assertIsNone(run_migration._others(self.studio, {job['id']}))  # uploads: every one stays
+        finally: holder.execute('ROLLBACK')
+        self.assertNotIn('production_unreadable', self.codes(self.plan(job_ids=[job['id']])))  # released: the same plan reads cleanly
+
     def test_input_bounds_and_validation(self):
         job = self.completed(1); good = {'workspace_id': self.workspace_id, 'destination': 'private', 'job_ids': [job['id']]}
         cases = [dict(good, destination='all'), dict(good, destination=None), {k: v for k, v in good.items() if k != 'workspace_id'},
