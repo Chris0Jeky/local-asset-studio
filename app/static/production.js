@@ -410,6 +410,7 @@ async function checkCandidateAsset(id,name){
 async function productionPlanAction(p,action){await post('/api/production/'+p.id+'/'+action,{});dropProductionDrafts();}
 // Called only by an explicit Prepare and start submission, once its preparation succeeds.
 async function startPreparedPlan(p){
+  if(!p?.id){productionMessage('The plan was not confirmed, so nothing was started.',true);return;}
   if(productionActionPending){productionMessage('Wait for the current action to finish. Nothing was sent.');return;}
   productionActionPending=true;try{await productionPlanAction(p,'start');}catch(err){productionMessage(err.message,true);}finally{productionActionPending=false;}
 }

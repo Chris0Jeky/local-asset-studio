@@ -36,13 +36,14 @@ test('editing values raises a short run limit and the folded summary says so',as
   assert.equal(h.calls.length,0);
 });
 test('default runs equal chosen values times the single seed; manual limits and validity survive',async()=>{
-  const h=harness();assert.equal(h.calls.length,0,'Page load sends nothing');await h.open('comparison');
+  const h=harness();await tick();await h.run('refreshProduction(true)');await tick();assert.equal(h.calls.length,0,'Page load and a refresh send nothing');await h.open('comparison');
   const count=h.$('#experimentValues').value.split(',').filter(v=>v.trim()).length;
   assert.equal(Number(h.$('#experimentBudget').value),count);assert.equal(count,3);
   assert.equal(h.$('#experimentLimitsSummary').textContent,'Limits: 3 runs · 30 min');
   h.$('#experimentBudget').value='2';h.$('#experimentBudget').oninput();assert.match(h.$('#experimentBudget').validationMessage,/at least 3/);
   h.$('#experimentBudget').oninvalid();assert.equal(h.$('#experimentLimits').open,true,'Invalid folded inputs can receive focus');
   h.$('#experimentBudget').value='9';h.$('#experimentBudget').oninput();h.$('#experimentMinutes').value='12';h.$('#experimentMinutes').oninput();
+  h.$('#experimentValues').value='1,2';h.$('#experimentValues').oninput();assert.equal(Number(h.$('#experimentBudget').value),9,'a typed limit is never lowered by a value edit');
   assert.equal(h.$('#experimentLimitsSummary').textContent,'Limits: 9 runs · 12 min');assert.equal(h.$('#experimentBudget').validationMessage,'');assert.equal(h.calls.length,0);
 });
 for(const kind of ['comparison','native']){
@@ -50,6 +51,8 @@ for(const kind of ['comparison','native']){
   test(kind+': Prepare only saves without starting',async()=>{const h=harness();await h.open(kind);const wait=h.submit(kind,false);assert.equal(h.requests[0].url,endpoint);h.requests.shift().resolve({id:'prepared'});await wait;assert.equal(h.calls.length,1);});
   test(kind+': explicit prepare/start awaits preparation and starts exactly once',async()=>{const h=harness();await h.open(kind);const wait=h.submit(kind,true);assert.equal(h.calls.length,1);const duplicate=h.submit(kind,true);assert.equal(h.calls.length,1,'Double click does not duplicate preparation');await duplicate;h.requests.shift().resolve({id:'prepared'});await tick();assert.equal(h.requests.length,1);assert.equal(h.requests[0].url,'/api/production/prepared/start');h.requests.shift().resolve({});await wait;assert.equal(h.calls.length,2);});
   test(kind+': failed prepare never starts',async()=>{const h=harness();await h.open(kind);const wait=h.submit(kind,true);h.requests.shift().reject(Error('Prepare refused'));await wait;assert.equal(h.calls.length,1);assert.match(h.$(status).textContent,/Prepare refused/);assert.equal(h.$(dialog).open,true);});
-  test(kind+': uncertain start is visible and never retried',async()=>{const h=harness();await h.open(kind);const wait=h.submit(kind,true);h.requests.shift().resolve({id:'prepared'});await tick();assert.equal(h.requests[0]?.url,'/api/production/prepared/start');h.requests.shift().reject(Error('Start outcome uncertain'));await wait;await h.run('refreshProduction(true)');assert.equal(h.calls.length,2);assert.match(h.$('#productionMessage').textContent,/Start outcome uncertain/);});
+  test(kind+': a submit without a submitter (Enter, requestSubmit) prepares only',async()=>{for(const submitter of [undefined,null]){const h=harness();await h.open(kind);const form=h.$(kind==='comparison'?'#experimentForm':'#nativeForm');const wait=form.onsubmit({preventDefault(){},submitter});assert.equal(h.requests[0].url,endpoint);h.requests.shift().resolve({id:'prepared'});await wait;await tick();assert.equal(h.calls.length,1,'no start without the explicit Prepare and start press');}});
+  test(kind+': a prepare reply without an id never starts',async()=>{const h=harness();await h.open(kind);const wait=h.submit(kind,true);h.requests.shift().resolve({});await tick();for(const held of h.requests.splice(0))held.resolve({});await wait;await tick();assert.ok(h.calls.every(c=>!/\/start$/.test(c.url)),'no /undefined/start');});
+  test(kind+': uncertain start is visible and never retried',async()=>{const h=harness();await h.open(kind);const wait=h.submit(kind,true);h.requests.shift().resolve({id:'prepared'});await tick();assert.equal(h.requests[0]?.url,'/api/production/prepared/start');h.requests.shift().reject(Error('Start outcome uncertain'));await wait;await tick();await h.run('refreshProduction(true)');await tick();assert.equal(h.calls.length,2);assert.match(h.$('#productionMessage').textContent,/Start outcome uncertain/);});
   for(const change of ['edit','close'])test(kind+': '+change+' during prepare prevents a stale start',async()=>{const h=harness();await h.open(kind);const wait=h.submit(kind,true);if(change==='close')h.$(dialog).close();else h.$(kind==='comparison'?'#experimentForm':'#nativeForm').oninput();h.requests.shift().resolve({id:'late'});await wait;assert.equal(h.calls.length,1);});
 }
