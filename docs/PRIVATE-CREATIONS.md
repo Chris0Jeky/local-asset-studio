@@ -289,8 +289,11 @@ classification, or repeats a run ID counts as unreadable. Uploads kept for that 
 `cleanup_remaining` and the journal stays `cleanup-needed`, so the next start retries
 them and finishes `complete` once every record reads. If a run record could not be read
 when the migration was applied, the journal records `keep_uploads: "all"`: those uploads
-stay regular for good, are listed in `cleanup_remaining`, and are not retried; remove
-them yourself once you have checked which runs use them. A rollback never removes
+stay regular and are listed in `cleanup_remaining`, and every start re-reads the records
+(the journal stays `cleanup-needed`). The first start that can read every record settles
+it as usual: uploads no record or pending stage still names are retired, the rest stay.
+Until then they are kept, and you can remove them yourself once you have checked which
+runs use them. A rollback never removes
 a run folder or file that another committed request published. A journal whose
 identity, run IDs, file paths or commit marker do not check out is reported and left
 untouched. The paths are shape-checked before anything is deleted: every placement and
