@@ -1279,10 +1279,10 @@ $('#assetDialog').addEventListener('close',()=>{
     card?.focus?.({preventScroll:true});
   }
 });
-// K/W/X (and the queue's S and arrows) never fire while an editor has focus, and never while a decision is in flight.
+// K/W/X (and the queue's S and arrows) never fire while an editor has focus or the read-only migration preview (a second modal over this dialog) is open, and never while a decision is in flight.
 // Outside the queue only K/W/X act, on the open picture, and Shift keeps them out.
 document.addEventListener('keydown',e=>{
-  if(!activeAsset || !$('#assetDialog').open || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || (!assetQueue&&e.shiftKey))return;
+  if(!activeAsset || !$('#assetDialog').open || $('#migrationDialog').open || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || (!assetQueue&&e.shiftKey))return;
   const tag=(e.target?.tagName||'').toUpperCase();
   if(['INPUT','TEXTAREA','SELECT'].includes(tag) || e.target?.isContentEditable)return;
   const key=(e.key||'').toLowerCase();
@@ -1294,7 +1294,7 @@ document.addEventListener('keydown',e=>{
 });
 // Number keys press the open picture's quick checks, in or out of the queue; typing in a field is never a shortcut.
 document.addEventListener('keydown',e=>{
-  if(!globalThis.StudioReviewChecks || !activeAsset || !$('#assetDialog').open || e.defaultPrevented)return;
+  if(!globalThis.StudioReviewChecks || !activeAsset || !$('#assetDialog').open || $('#migrationDialog').open || e.defaultPrevented)return;
   const tag=(e.target?.tagName||'').toUpperCase();
   if(['INPUT','TEXTAREA','SELECT'].includes(tag) || e.target?.isContentEditable)return;
   const name=assetCheckNames()[StudioReviewChecks.keyIndex(e)];if(name){e.preventDefault();toggleAssetReviewCheck(name);}
@@ -1513,7 +1513,7 @@ async function previewMigration(ids,destination,opener){
 $('#previewMigration').onclick=async()=>{const ids=[...assetSelection],destination=migrationDestination(ids.map(assetRecord));if(destination&&assetSelectionCanProceed('migrate'))await previewMigration(ids,destination,$('#previewMigration'));};
 $('#assetMigrate').onclick=async()=>{const destination=activeAsset&&migrationDestination([activeAsset]);if(destination)await previewMigration([activeAsset.id],destination,$('#assetMigrate'));};
 $('#closeMigration').onclick=()=>$('#migrationDialog').close();
-$('#migrationSwitch').onclick=()=>{$('#migrationDialog').close();globalThis.window?.StudioPrivacy?.setScope?.('all');};
+$('#migrationSwitch').onclick=()=>{$('#migrationDialog').close();globalThis.window?.StudioPrivacy?.setScope?.('all');$('#assetSearch').focus();};
 $('#migrationDialog').addEventListener('close',()=>{migrationEpoch++;const opener=migrationOpener;migrationOpener=null;if(opener&&!opener.hidden&&opener.isConnected!==false)opener.focus?.();else $('#assetSearch').focus();});
 document.addEventListener('studio:privacy-change',event=>{
   const next=event.detail?.scope||globalThis.window?.StudioPrivacy?.scope?.()||'regular';

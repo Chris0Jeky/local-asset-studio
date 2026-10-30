@@ -83,6 +83,22 @@ test('The open asset gets the same preview from the detail dialog',async()=>{
   assert.deepEqual(JSON.parse(s.writes[0].options.body),{workspace_id:'1'.repeat(32),destination:'regular',asset_ids:['a']});assert.equal(s.writes[0].options.headers['X-Studio-Privacy'],'all');
   s.writes[0].resolve(plan({destination:'regular',asset_ids:['a']}));await done;assert.match(s.el('#migrationBody').innerHTML,/No blockers/);
 });
+test('Review shortcuts are inert while the preview is open over the details dialog, and work again once it closes',async()=>{
+  const s=configured();s.run(fs.readFileSync('app/static/review-checks.js','utf8'));s.run("assetQueue={ids:['a','b'],index:0};openAsset('a')");
+  const key=(k,extra={})=>s.dispatch('keydown',{key:k,target:{tagName:'BUTTON'},preventDefault(){this.prevented=true;},...extra});
+  const done=s.el('#assetMigrate').onclick();assert.equal(s.writes.length,1);assert.equal(s.el('#assetDialog').open,true);assert.equal(s.el('#migrationDialog').open,true);
+  const tags=s.el('#assetTags').value;
+  for(const k of ['k','w','x','K','s','ArrowRight','ArrowLeft','1','2','3','4','5']){const event={key:k,target:{tagName:'BUTTON'},preventDefault(){this.prevented=true;}};await s.dispatch('keydown',event);assert.notEqual(event.prevented,true,k+' must not be claimed by the dialog underneath');}
+  assert.equal(s.writes.length,1,'only the planner request exists: no /api/assets/update from a shortcut');assert.equal(s.run('assetQueue.index'),0);assert.equal(s.run('activeAsset.id'),'a');assert.equal(s.el('#assetTags').value,tags);assert.equal(s.run('assetDetailDirty()'),false);
+  s.writes[0].resolve(plan({asset_ids:['a'],destination:'private'}));await done;
+  s.el('#closeMigration').onclick();await key('k');
+  assert.equal(s.writes.length,2,'the same key acts again on the details dialog once the preview is closed');assert.match(s.writes[1].url,/^\/api\/assets/);
+});
+test('Switching to All leaves focus on the search box, not on a hidden opener',()=>{
+  const s=configured(['regular','regular'],'regular');s.el('#assetSearch').focus=()=>s.focused.push('#assetSearch');select(s,['a']);
+  s.el('#previewMigration').onclick();s.focused.length=0;s.el('#migrationSwitch').onclick();
+  assert.equal(s.focused.at(-1),'#assetSearch');
+});
 test('Closing returns focus to the opener, ignores a late answer and a reopened preview starts clean',async()=>{
   const s=configured();select(s,['a','b']);const first=s.el('#previewMigration').onclick();
   s.el('#closeMigration').onclick();assert.equal(s.el('#migrationDialog').open,false);assert.equal(s.focused.at(-1),'#previewMigration');
