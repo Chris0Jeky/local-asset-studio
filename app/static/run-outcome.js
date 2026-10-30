@@ -22,6 +22,19 @@
     const why=job.failure?.title||String(job.message||'').split(/(?<=\.)\s/)[0]||'No reason was recorded.';
     return {text:'Failed: '+why,action:'See why',error:true};
   }
+  // #1710: the failure note copied to the clipboard names only these fields. Newlines are stripped and each value capped at
+  // 120 characters; a private run keeps just its id and status. A line that would pass the 600-character total is dropped whole.
+  const detailText=v=>typeof v==='string'||(typeof v==='number'&&Number.isFinite(v))?String(v).replace(/[\r\n\u2028\u2029]+/g,' ').trim().slice(0,120):'';
+  function failureDetails(job){
+    if(!job||typeof job!=='object')return '';
+    const id=detailText(job.id),status=detailText(job.status),lines=[id?'Run '+id:'',status?'status '+status:''];
+    if(job.privacy!=='private'){
+      const recipe=detailText(job.preset_id),look=detailText(job.look?.name),backend=detailText(job.backend_id),seconds=job.elapsed_seconds,ids=Array.isArray(job.prompt_ids)?job.prompt_ids.slice(0,4).map(detailText).filter(Boolean):[],
+        failure=job.failure&&typeof job.failure==='object'?[detailText(job.failure.kind||job.failure.code),detailText(job.failure.title)].filter(Boolean).join(' '):'';
+      lines.push(recipe?'recipe '+recipe:'',look?'look '+look:'',backend?'backend '+backend:'',failure?'failure '+failure:'',typeof seconds==='number'&&Number.isFinite(seconds)&&seconds>=0?'took '+detailText(Math.round(seconds*10)/10)+' s':'',ids.length?'prompt ids '+detailText(ids.join(',')):'');
+    }
+    let text='';for(const line of lines.filter(Boolean)){const next=text?text+'\n'+line:line;if(next.length>600)break;text=next;}return text;
+  }
   function box(){
     let el=document.getElementById('runOutcome');if(el)return el;
     const status=document.getElementById('status');if(!status)return null;
@@ -48,7 +61,9 @@
     const more=document.createElement('small');more.id='runOutcomeWaiting';more.setAttribute('role','status');
     const go=document.createElement('button');go.type='button';go.dataset.runOutcome='show';go.textContent=s.action+' →';
     const close=document.createElement('button');close.type='button';close.dataset.runOutcome='dismiss';close.textContent='Dismiss';close.setAttribute('aria-label','Dismiss this run summary');
-    el.append(text,more,go,close);el.hidden=false;waiting();
+    // Only an error outcome offers the copy; it writes the allow-listed failure note and changes nothing else.
+    const copyBtn=document.createElement('button');copyBtn.type='button';copyBtn.dataset.runOutcome='copy';copyBtn.textContent='Copy details';
+    el.append(text,more,go,...(s.error?[copyBtn]:[]),close);el.hidden=false;waiting();
   }
   // A single poll can settle several started runs. Keep the current controls/focus until Dismiss,
   // and own the summary text so a poll error or a newer Generate cannot erase the notice (#1250).
@@ -59,10 +74,15 @@
     const status=document.getElementById('status');
     for(const target of [status,status?.closest('.wk-run-dock'),status?.closest('.editor')])if(target){if(!target.hasAttribute('tabindex'))target.tabIndex=-1;target.focus({preventScroll:true});if(document.activeElement===target)return;}
   }
+  // The clipboard write starts inside the click, so the browser sees the user gesture; a refusal or a missing API names the fallback.
+  async function copyDetails(button,job){
+    try{await navigator.clipboard.writeText(failureDetails(job));button.textContent='Copied';}
+    catch{button.textContent='Copy failed — select the run record text instead';}
+  }
   document.addEventListener('studio:job-settled',e=>{if(e.detail?.id)render(e.detail);});
   document.addEventListener('click',e=>{
     const b=e.target.closest?.('[data-run-outcome]');
-    if(b){if(b.dataset.runOutcome==='dismiss'){const focused=document.activeElement===b,next=pending.shift();if(next){display(next);if(focused)document.querySelector('#runOutcome [data-run-outcome="dismiss"]')?.focus();}else{clear();if(focused)returnFocus();}}else if(shown){const job=(typeof jobs!=='undefined'&&jobs.find(j=>j.id===shown.id))||shown;reveal(job);}return;}
+    if(b){if(b.dataset.runOutcome==='dismiss'){const focused=document.activeElement===b,next=pending.shift();if(next){display(next);if(focused)document.querySelector('#runOutcome [data-run-outcome="dismiss"]')?.focus();}else{clear();if(focused)returnFocus();}}else if(b.dataset.runOutcome==='copy'){if(shown)copyDetails(b,shown);}else if(shown){const job=(typeof jobs!=='undefined'&&jobs.find(j=>j.id===shown.id))||shown;reveal(job);}return;}
   },true);
-  window.StudioRunOutcome={summary,render,clear,reveal,tight};
+  window.StudioRunOutcome={summary,render,clear,reveal,tight,failureDetails};
 })();
