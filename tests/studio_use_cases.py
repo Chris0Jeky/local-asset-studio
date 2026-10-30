@@ -561,6 +561,9 @@ PROBE_PAGE = """() => {
   const seen = new Set();
   for (const node of panel.querySelectorAll('p,small,label,legend,summary,figcaption,.muted,.hint,.callout,[role=status],[role=alert]')) {
     if (!node.offsetParent && node !== panel) continue;
+    // Chromium keeps offsetParent for text inside a closed <details>; only that details' own summary is on screen (#1740).
+    const closed = node.closest('details:not([open])');
+    if (closed && node.closest('summary')?.parentElement !== closed) continue;
     const own = [...node.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join(' ');
     const value = text(own || (node.children.length ? '' : node.textContent));
     if (value) seen.add(value);
