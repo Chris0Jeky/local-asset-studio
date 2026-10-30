@@ -155,5 +155,9 @@ test('gallery shows numeric diagnostics and unavailable state without claiming a
   assert.match(html,/&lt;Night Shift>/);assert.match(html,/left 2.0%, right 10.0%/);assert.match(html,/Detail proxy only/);
   assert.match(note(job,{text_safe:{error:'bad image'}}),/check unavailable: bad image/);
   assert.equal(note({},{}),'');
+  // #1704: an empty still is said so with or without a Look, and an ordinary one adds nothing.
+  assert.match(note({},{empty_picture:'uniform'}),/One flat colour: most likely a failed run, not a result/);
+  assert.match(note(job,{empty_picture:'transparent',text_safe:{error:'x'}}),/^<p class="make-warn"><small>Fully transparent[^]*Night Shift/);
+  assert.equal(note({},{empty_picture:''}),'');
 });
 console.log(count+' total Look checks passed');

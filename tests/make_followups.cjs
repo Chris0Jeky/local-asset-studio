@@ -272,15 +272,15 @@ test('recorded and new seed result handoffs retain Look provenance without submi
 
 // Run clock and tab title: the real helpers with only document, timers and /api/estimate replaced.
 function clockHarness(runs){
-  const listeners={},requests=[],els=runs.map(r=>({dataset:{makeClock:r.job.id},textContent:''})),timers=[];
+  const listeners={},requests=[],slows=runs.map(()=>({hidden:true,textContent:''})),els=runs.map((r,i)=>({dataset:{makeClock:r.job.id},textContent:'',closest:()=>({querySelector:()=>slows[i]})})),timers=[];
   const document={title:'Local Asset Studio',hidden:false,addEventListener:(k,fn)=>{listeners[k]=fn;},querySelectorAll:()=>els};
   const context={document,state:{runs},FINAL:['completed','failed'],Date,
     rough:e=>e?.confidence==='none',duration:s=>s<90?Math.round(s)+' s':Math.round(s/60)+' min',
     json:async(url,body,captured)=>{requests.push({url,body,captured});return{estimate_seconds:180,confidence:'medium'};},
     runPrivacy:r=>r.privacy||'regular',requestPrivacy:(scope,privacy)=>({scope,privacy}),
     setTimeout:fn=>{timers.push(fn);return timers.length;},clearTimeout(){}};
-  const api=vm.runInNewContext(between('  const PAINTING=','  function words(job)')+';({runClock,runTitle,tick})',context);
-  return{...api,document,listeners,requests,els,timers};
+  const api=vm.runInNewContext(between('  const PAINTING=','  function words(job)')+';({runClock,runTitle,tick,slowRun,SLOW})',context);
+  return{...api,document,listeners,requests,els,slows,timers,context};
 }
 
 test('a painting card shows elapsed time against the usual time on this PC, and nothing once it ends',()=>{
@@ -338,4 +338,19 @@ test('Base model line shows the file and the Non-commercial chip only for a reco
   const free=tuneHarness();free.renderTune();
   assert.doesNotMatch(free.box.innerHTML,/make-licence/);
   assert.match(free.box.innerHTML,/<summary>Why<\/summary><small class="muted">No other model in the library takes this look’s words and LoRAs\.<\/small>/);
+});
+test('the slow-state hint needs a well-measured usual time and a large overrun, and is advice only',async()=>{
+  const {slowRun}=clockHarness([]),job={status:'running',started_at:1000},high={estimate_seconds:60,confidence:'high'};
+  assert.equal(slowRun(job,high,1000+170),false,'under usual+120 s');
+  assert.equal(slowRun(job,high,1000+181),true,'past both 3x and usual+120 s');
+  assert.equal(slowRun(job,{estimate_seconds:600,confidence:'high'},1000+1801),true,'3x governs long runs');
+  assert.equal(slowRun(job,{estimate_seconds:600,confidence:'high'},1000+1700),false);
+  assert.equal(slowRun(job,{estimate_seconds:60,confidence:'medium'},1000+9999),false,'medium confidence never warns');
+  assert.equal(slowRun({...job,status:'completed'},high,1000+9999),false);
+  const now=Date.now()/1000,runs=[{job:{id:'a',status:'running',started_at:now-400,preset_id:'p'}}],h=clockHarness(runs);
+  h.context.json=async(url,body)=>{h.requests.push({url,body});return{estimate_seconds:60,confidence:'high'};};
+  h.tick();assert.equal(h.slows[0].hidden,true,'no hint before the estimate is known');
+  await new Promise(r=>setImmediate(r));h.tick();assert.equal(h.slows[0].hidden,false);assert.equal(h.slows[0].textContent,h.SLOW);
+  assert.ok(h.requests.every(r=>r.url==='/api/estimate'),'only the estimate is read; nothing is cancelled or sent');
+  runs[0].job.status='completed';h.tick();assert.equal(h.slows[0].hidden,true);assert.equal(h.slows[0].textContent,'');
 });
