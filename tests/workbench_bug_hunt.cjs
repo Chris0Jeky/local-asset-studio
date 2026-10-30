@@ -169,6 +169,12 @@ test('Prompt Lab handoff button names the selected recipe and follows a recipe s
   assert.equal(b.q('#uxApplyPrompt').textContent,'Apply to Anima portrait');
   b.selectPreset('c');assert.equal(b.q('#uxApplyPrompt').textContent,'Apply to Unrelated','any selection path refreshes the label');
 });
+test('Apply waits, with its reason, until a recipe with a text prompt is selected (no refusal for an early press)',()=>{
+  const b=transferBox(['a','b']);b.selected=null;b.renderTransferChoices();
+  assert.equal(b.q('#uxApplyPrompt').disabled,true);assert.equal(b.q('#uxApplyPrompt').title,'Choose a recipe with a text prompt first.');
+  b.selectPreset('a');assert.equal(b.q('#uxApplyPrompt').disabled,false,'selecting a text recipe enables it');assert.equal(b.q('#uxApplyPrompt').title,'');
+  b.catalog.presets.push({id:'img',name:'Image only'});b.selectPreset('img');assert.equal(b.q('#uxApplyPrompt').disabled,true,'a recipe without a text prompt disables it again');
+});
 test('matching recipes are chips: the selected one is pressed, a click switches recipe and submits nothing',()=>{
   const b=transferBox(['a','b','not-in-catalog']);
   const group=b.q('#uxTransferRecipes');
