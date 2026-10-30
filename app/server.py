@@ -1304,7 +1304,8 @@ class Studio:
                 for index, asset in enumerate(assets, 1):
                     source = self.assets.file(asset["id"],privacy=privacy)
                     if digest_file(source) != asset["sha256"]: raise StudioError("An asset changed; export stopped")
-                    name = re.sub(r'[^A-Za-z0-9._-]+', '-', asset['filename']).strip('.-')[:100] or 'asset'
+                    name = re.sub(r'[^A-Za-z0-9._-]+', '-', asset['filename']).strip('.-') or 'asset'
+                    if len(name) > 100: suffix = Path(name).suffix if len(Path(name).suffix) <= 16 else ''; name = (name[:100 - len(suffix)].rstrip('.-') or 'asset') + suffix
                     member = files.get(asset['sha256']) if brief is not None else None
                     if member is None:
                         member = f'assets/{index:02d}-{name}' if brief is not None else "assets/" + asset["id"] + source.suffix

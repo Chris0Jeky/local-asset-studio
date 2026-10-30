@@ -223,5 +223,17 @@ class SceneWorkingPackTests(unittest.TestCase):
             self.assertEqual(archive.namelist(), ['manifest.json']); self.assertEqual(manifest['assets'], [])
             self.assertTrue(all(slot['selected'] is None for slot in manifest['brief']['slots'].values()))
 
+    def test_long_source_name_keeps_its_extension_inside_the_member_limit(self):
+        payload = self.pack_fixture(); long = 'a' * 100 + '.png'; path = self.root / long; path.write_bytes(b'long named source')
+        identifier = self.store.register({'id':'long','outputs':[{'filename':long,'media_type':'image'}]},0,path)
+        asset = self.store.get(identifier); body = copy.deepcopy(self.brief['body'])
+        body['slots']['icon']['selected'] = {'asset_id':identifier,'sha256':asset['sha256'],'metadata_revision':0}
+        self.store.card_command({'action':'edit','id':payload['id'],'expected_revision':0,'body':body})
+        status, result = self.post('/api/briefs/export', {**payload,'expected_revision':1})
+        self.assertEqual(status, 201, result)
+        with server.zipfile.ZipFile(self.store.root / 'exports' / (result['id']+'.zip')) as archive:
+            member = {a['id']:a for a in json.loads(archive.read('manifest.json'))['assets']}[identifier]['file']
+            self.assertRegex(member, r'^assets/\d{2}-a{96}\.png$')
+            self.assertEqual(archive.read(member), b'long named source')
 
 if __name__ == '__main__': unittest.main()
