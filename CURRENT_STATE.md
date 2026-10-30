@@ -1,5 +1,25 @@
 # Current state — 29 October 2026
 
+## 2026-10-29 — Ordinary comparisons in Review desk Grid (qualification pending)
+
+The existing Grid now projects saved wording variants and numeric settings into
+rows, and seed sweeps into columns, using only the frozen plan and requests.
+Missing or conflicting evidence retains Pair. Stable anonymous aliases and the
+existing Reveal, crop and assessment commands are preserved; revealed variant
+wording is safe text in a Settings disclosure. Historical plans are not rewritten.
+
+The missing wording and numeric/seed grids were reproduced before implementation.
+All 13 focused Grid tests pass, covering the existing engine grid, exact large
+seeds, anonymous reloads, failed/multiple outputs and ambiguous-evidence fallback.
+The broader Review desk suite passes 69 tests with one skip, and all 21 frontend
+handoff checks and the repository validator pass. The shipped frontend harness
+passes. The extended native HTTP/SQLite/browser
+journey and full supported-runner gate are prepared, not yet executed for this
+head. Qualification receipts live outside Git and will be linked from the PR.
+Refs #1204; other pair surfaces and use-case registry integration remain open.
+No generation, live model, art, licence or assistive-technology acceptance is
+claimed. [HUMAN_TODO.md](HUMAN_TODO.md) remains unchanged.
+
 ## 2026-10-29 — Two wordings at one captured seed
 
 The comparison dialog offers **One setting / Two wordings**. The wording route

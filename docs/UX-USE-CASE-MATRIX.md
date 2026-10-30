@@ -1,5 +1,20 @@
 # UX use-case matrix
 
+## Review desk: settings and wordings in Grid — 29 October 2026
+
+The existing Review desk **Pair / Grid** switch also projects ordinary saved
+comparisons. Two wordings use two rows at their fixed seed; numeric settings use
+rows and seed sweeps use columns. Reveal names the saved values and exposes
+variant wording through each row's Settings disclosure. Ambiguous saved evidence
+retains Pair. No plan, job or budget is changed by this presentation.
+
+`tests/review_matrix_browser.py` covers these shapes through production HTTP,
+SQLite and synthetic retained images. This remains separate from the existing
+25-case `studio_use_cases.py` registry; neither registry coverage nor execution
+is inferred from a test definition. Current qualification records which source,
+wide/phone captures and unchanged journeys actually ran. Refs #1204; other pair
+surfaces and registry integration remain open.
+
 ## Plan comparison: two wordings — 29 October 2026
 
 The existing `compare-settings-from-recipe` journey retains its One setting route.

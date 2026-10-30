@@ -13,13 +13,15 @@ import shutil
 import sys
 import tempfile
 import threading
+import uuid
 from types import MethodType
 from urllib.parse import urlsplit
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 
 from browser_ports import browser_server
-from review_fixture import FixtureStudio, seed, seed_matrix
+from review_fixture import FixtureStudio, seed, seed_matrix, seed_comparison
+from production import fingerprint
 from test_server import server
 
 
@@ -32,8 +34,8 @@ def expected_stale_save_only(errors, console_errors, page_failures, review_url):
 def extra_output(studio, identifier):
     project=studio.production._get(identifier)
     first=studio.jobs[project['state']['attempts']['0']['job_id']]
-    last=studio.jobs[project['state']['attempts']['5']['job_id']]
-    original=last['outputs'][0]['asset_id'];identifier_asset='f'*32
+    last=studio.jobs[project['state']['attempts'][str(len(project['plan']['stages'])-1)]['job_id']]
+    original=last['outputs'][0]['asset_id'];identifier_asset=uuid.uuid4().hex
     studio.assets.paths[identifier_asset]=studio.assets.paths[original]
     studio.assets.records[identifier_asset]={**studio.assets.records[original], 'id':identifier_asset,
         'job_id':first['id'], 'output_index':1, 'filename':'second-retained-output.png'}
@@ -49,6 +51,18 @@ async def run(out):
     with tempfile.TemporaryDirectory() as temporary:
         studio=FixtureStudio(Path(temporary)/'one');identifier=seed_matrix(studio);extra_output(studio,identifier)
         legacy=seed(studio);outcomes=seed_matrix(studio)
+        legacy_plan=studio.production._get(legacy)['plan'];legacy_plan.pop('axis')
+        legacy_plan['sha256']=fingerprint({k:v for k,v in legacy_plan.items() if k!='sha256'})
+        with studio.production.connect() as db:db.execute('UPDATE projects SET plan=? WHERE id=?',(json.dumps(legacy_plan),legacy))
+        (studio.production.root/legacy/'plan.json').write_text(json.dumps(legacy_plan))
+        wordings=[{'label':'Wording A','controls':{'positive':'A lantern in rain <img src=x>'}},
+                  {'label':'Wording B','controls':{'positive':'Rain glows around a lantern'}}]
+        ordinary={
+            'wording':seed_comparison(studio,'variants',wordings),
+            'guidance':seed_comparison(studio,'cfg',[1,3,5]),
+            'seed':seed_comparison(studio,'seed',[9223372036854775805,9223372036854775806,9223372036854775807]),
+        }
+        extra_output(studio,ordinary['wording'])
         project=studio.production._get(outcomes)
         for index,status in ((0,'failed'),(1,'cancelled'),(2,'completed')):
             studio.jobs[project['state']['attempts'][str(index)]['job_id']].update(status=status,outputs=[])
@@ -60,7 +74,10 @@ async def run(out):
                        created_at=1,graph=graph,submissions=[],references=[],parent_assets=[])
         studio.public=MethodType(server.Studio.public,studio);studio.export_recipe=MethodType(server.Studio.export_recipe,studio)
         before_jobs=copy.deepcopy(studio.jobs)
-        budgets={key:studio.production.get(key)['budget'] for key in (identifier,legacy,outcomes)}
+        project_ids=(identifier,legacy,outcomes,*ordinary.values())
+        budgets={key:studio.production.get(key)['budget'] for key in project_ids}
+        plans={key:copy.deepcopy(studio.production._get(key)['plan']) for key in project_ids}
+        plan_bytes={key:(studio.production.root/key/'plan.json').read_bytes() for key in project_ids}
 
         class Base(server.Handler):
             def log_message(self,*args):pass
@@ -154,7 +171,41 @@ async def run(out):
                 check('Narrow multi-output images keep readable card widths',await page.locator('[data-grid-candidate]').evaluate_all('nodes=>nodes.every(node=>node.getBoundingClientRect().width>=88)'))
                 await page.locator('#gridPanel').scroll_into_view_if_needed();await page.screenshot(path=str(out/'grid-narrow.png'))
                 await target.locator('xpath=ancestor::td').scroll_into_view_if_needed();await page.screenshot(path=str(out/'grid-narrow-multiple.png'))
-                await open_review(legacy);check('Unknown topology retains Pair with a concise explanation',await page.locator('#presentationGrid').is_disabled() and 'recorded engine and seed' in await page.locator('#gridHint').inner_text())
+                for kind,key in ordinary.items():
+                    await page.set_viewport_size({'width':1440,'height':900});await open_review(key);await grid()
+                    saved=studio.production.reviews.inspect(key);shape=(len(saved['grid']['rows']),len(saved['grid']['columns']))
+                    check(kind+' uses its saved topology',shape==({'wording':(2,1),'guidance':(3,1),'seed':(1,3)}[kind]))
+                    content=await page.content()
+                    check(kind+' hides wording settings and seed identities before Reveal',not any(token in content for token in ('Wording A','Wording B','lantern in rain','Guidance 1','Guidance 3','Guidance 5','9223372036854775805','9223372036854775806','9223372036854775807')))
+                    await page.reload();await idle();await expect(page.locator('#gridPanel')).to_be_visible()
+                    check(kind+' keeps anonymous coordinates across reload',studio.production.reviews.inspect(key)['grid']==saved['grid'])
+                    retained=next(cell for cell in saved['grid']['cells'] if cell['candidates'])
+                    alias=retained['candidates'][-1];button=page.locator('[data-grid-candidate="'+alias+'"]')
+                    await button.click();await page.locator('#notes').fill('Retained '+kind+' review note')
+                    await page.locator('#presentationPair').click();await grid()
+                    check(kind+' preserves its draft through Pair and Grid',await page.input_value('#notes')=='Retained '+kind+' review note')
+                    shortcut,verdict={'wording':('k','keep'),'guidance':('w','needs_work'),'seed':('x','reject')}[kind]
+                    await button.focus();await page.keyboard.press(shortcut);await idle()
+                    check(kind+' saves '+shortcut.upper()+' through the existing assessment',commands[-1]['action']=='rate' and commands[-1]['alias']==alias and commands[-1]['assessment']['verdict']==verdict and commands[-1]['assessment']['notes']=='Retained '+kind+' review note')
+                    await page.locator('#gridTable').evaluate("node=>node.scrollIntoView({block:'center'})")
+                    await page.screenshot(path=str(out/(kind+'-blind-wide.png')))
+                    if kind=='wording':check('Wording grid retains all outputs in its two planned cells',len(saved['candidates'])==3 and sorted(len(cell['candidates']) for cell in saved['grid']['cells'])==[1,2])
+                    await page.locator('#reveal').click();await idle();actual=studio.production.reviews.inspect(key)
+                    check(kind+' Reveal preserves grouping',actual['grid']['cells']==saved['grid']['cells'])
+                    for details in await page.locator('.grid-settings summary').all():await details.click()
+                    text=await page.locator('#gridTable').inner_text()
+                    expected={'wording':['Wording A','Wording B',wordings[0]['controls']['positive'],wordings[1]['controls']['positive'],'9223372036854775807'],
+                              'guidance':['Guidance 1','Guidance 3','Guidance 5','9223372036854775807'],
+                              'seed':['Shared settings','9223372036854775805','9223372036854775806','9223372036854775807']}[kind]
+                    check(kind+' Reveal displays the exact recorded labels and values',all(value in text for value in expected) and await page.locator('#gridTable img').count()==0)
+                    await page.locator('#gridTable').evaluate("node=>node.scrollIntoView({block:'center'})")
+                    await page.screenshot(path=str(out/(kind+'-revealed-wide.png')))
+                    await page.set_viewport_size({'width':390,'height':844});await page.locator('#gridPanel').scroll_into_view_if_needed()
+                    check(kind+' fits the phone page while keeping images selectable',await page.evaluate('document.documentElement.scrollWidth<=innerWidth') and await page.locator('[data-grid-candidate]').count()==len(saved['candidates']))
+                    await page.screenshot(path=str(out/(kind+'-revealed-narrow.png')))
+                    (out/(kind+'-blind.json')).write_text(json.dumps(saved,indent=2),encoding='utf-8')
+                    (out/(kind+'-revealed.json')).write_text(json.dumps(actual,indent=2),encoding='utf-8')
+                await open_review(legacy);check('Unknown topology retains Pair with a concise explanation',await page.locator('#presentationGrid').is_disabled() and 'unambiguous saved settings and seeds' in await page.locator('#gridHint').inner_text())
                 await open_review(outcomes);await grid();text=await page.locator('#gridTable').inner_text()
                 check('Failed cancelled unstarted and empty completed positions remain visible',all(word in text for word in ('Failed','Cancelled','Not started','Completed','No retained images')))
 
@@ -173,6 +224,7 @@ async def run(out):
                 check('Modified preview bytes are refused by the real file route',response.status==400)
                 check('No generation or unrelated write was submitted',all(path.endswith('/review') for method,path in requests if method=='POST') and studio.network_calls==0 and studio.queue.empty())
                 check('Review interactions preserve jobs and generation budgets',studio.jobs==before_jobs and all(studio.production.get(key)['budget']==budget for key,budget in budgets.items()))
+                check('Review interactions leave every historical plan and saved plan file unchanged',all(studio.production._get(key)['plan']==plan and (studio.production.root/key/'plan.json').read_bytes()==plan_bytes[key] for key,plan in plans.items()))
                 # The deliberately stale save returns HTTP 400 through page fetch.
                 # Retain its browser diagnostic; any other failure remains an error.
                 expected_url=origin+f'/api/production/{identifier}/review'
@@ -180,6 +232,7 @@ async def run(out):
                 check('No unexpected console or JavaScript errors',expected_stale_save_only(errors,console_errors,page_failures,expected_url))
                 (out/'blind-review.json').write_text(json.dumps(blind,indent=2),encoding='utf-8')
                 (out/'revealed-review.json').write_text(json.dumps(revealed,indent=2),encoding='utf-8')
+                (out/'frozen-plans.json').write_text(json.dumps(plans,indent=2),encoding='utf-8')
                 await context.close();await browser.close();browser=None
         finally:
             Handler.studio=studio

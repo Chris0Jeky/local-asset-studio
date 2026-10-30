@@ -102,7 +102,7 @@
     if(!state?.grid)presentation='pair';const grid=presentation==='grid';
     $('#gridPanel').hidden=!grid;$('#comparisonLayout').classList.toggle('with-grid',grid);
     $('#presentationPair').setAttribute('aria-pressed',String(!grid));$('#presentationGrid').setAttribute('aria-pressed',String(grid));
-    $('#gridHint').textContent=!state?.grid?'Grid needs recorded engine and seed fields. Pair is available for this review.':state.revealed?'Rows show recorded engines; columns show recorded seeds. Every retained image remains selectable.':'Rows group engines; columns group seeds. Their identities stay hidden until Reveal.';
+    $('#gridHint').textContent=!state?.grid?'Grid needs unambiguous saved settings and seeds. Pair is available for this review.':state.revealed?'Rows show the saved comparisons; columns show their seeds. Every retained image remains selectable.':'Rows group comparisons; columns group seeds. Their identities stay hidden until Reveal.';
     const destination=$(grid?'#gridAssessment':'#assessmentHome');
     if($('#assessment').parentElement!==destination)destination.append($('#assessment'));
     $('#assessmentHome').hidden=grid;$('#assessmentHome').parentElement?.classList.toggle('grid-decision',grid);
@@ -121,12 +121,19 @@
   }
   function renderGrid(){
     const table=$('#gridTable');table.replaceChildren();if(!state?.grid)return;
-    const grid=state.grid,caption=el('caption','Engine × seed comparison'),head=el('thead'),header=el('tr'),corner=el('th','');
+    const grid=state.grid,caption=el('caption','Comparison grid'),head=el('thead'),header=el('tr'),corner=el('th','');
+    table.classList.toggle('has-settings',state.revealed&&grid.rows.some(row=>row.settings));
     header.append(corner);
     for(const column of grid.columns){const th=el('th',state.revealed?'Seed '+column.seed:column.alias);th.scope='col';header.append(th);}
     head.append(header);const body=el('tbody');
     for(const row of grid.rows){
-      const tr=el('tr'),th=el('th',state.revealed?row.engine:row.alias);th.scope='row';tr.append(th);
+      const tr=el('tr'),th=el('th',state.revealed?(row.label??row.engine):row.alias);th.scope='row';tr.append(th);
+      if(state.revealed&&row.settings){
+        const details=el('details'),names={positive:'Wording',negative:'Negative text',seed:'Seed',cfg:'Guidance',steps:'Steps',denoise:'Denoise',lora:'LoRA strength'};
+        details.className='grid-settings';details.append(el('summary','Settings'));
+        for(const [key,value] of Object.entries(row.settings))details.append(el('p',(names[key]||key)+': '+value));
+        th.append(details);
+      }
       for(const column of grid.columns){
         const cell=grid.cells.find(c=>c.row===row.alias&&c.column===column.alias),td=el('td'),content=el('div');content.className='grid-cell';
         const statuses=(cell?.runs||[]).map(run=>runLabel(run.status));
