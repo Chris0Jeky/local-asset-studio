@@ -11,7 +11,7 @@ const workspace = 'a'.repeat(32), wait = ms => new Promise(resolve => setTimeout
 const page = (prefix, next) => ({assets: Array.from({length: 12}, (_, i) => ({id: prefix + i, title: prefix + i, filename: prefix + i + '.png', media_type: 'image', metadata_revision: 1})), next_cursor: next});
 
 function harness(hash) {
-  const handlers = {}, calls = [], documentHandlers = {}, store = new Map(), h = {calls, delayFirstPage: 0, gate: null};
+  const handlers = {}, calls = [], documentHandlers = {}, store = new Map(), h = {calls, delayFirstPage: 0, delayNextPage: 0, gate: null};
   const root = {innerHTML: '', querySelector: () => null, addEventListener: (type, fn) => {handlers[type] = fn;}};
   const sandbox = {StudioBriefCore: core, URL, URLSearchParams, Blob, setTimeout, confirm: () => true};
   let current = hash;
@@ -31,7 +31,7 @@ function harness(hash) {
     if (key === 'GET /api/looks') return json({looks: []});
     if (key === 'GET /api/briefs/brief-one') return json({card: {...core.newCard(workspace, 'brief-one'), name: 'Lantern', revision: 0}, candidates: {}, collection_available: true});
     if (key === 'GET /api/assets/page') {
-      if (url.searchParams.get('cursor')) return json(page('two-', null));
+      if (url.searchParams.get('cursor')) {if (h.delayNextPage) await wait(h.delayNextPage); return json(page('two-', null));}
       if (h.delayFirstPage) await wait(h.delayFirstPage);
       return json(page('one-', 'c2'));
     }
@@ -52,6 +52,20 @@ test('First page keeps its candidates when navigation and the hash refresh overl
   await wait(400);
   assert.equal(h.candidates('one-'), 12);
   assert.ok(!h.root.innerHTML.includes('No active candidates match'));
+});
+
+test('Going back to the first page while the next page is still loading reloads the first page', async () => {
+  const first = '#briefs?id=brief-one&slot=background&picker=1';
+  const h = harness(first);
+  await wait(50);
+  assert.equal(h.candidates('one-'), 12);
+  h.delayNextPage = 150;
+  h.click('next');
+  await wait(20);
+  h.setHash(first);
+  await wait(400);
+  assert.equal(h.candidates('one-'), 12);
+  assert.equal(h.candidates('two-'), 0);
 });
 
 // A pending working-pack export that is discarded must not leave "Preparing working pack…" behind.

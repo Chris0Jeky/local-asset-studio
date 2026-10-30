@@ -68,7 +68,7 @@
       if(!r.id){remember();card=null;saved=null;}
       if(token!==epoch||!allowed())return;
       if(card&&r.returned!==null&&r.returned!==base)notice='This brief changed since preparation. Review its saved revision before choosing a return candidate.';
-      if(loadedRoute!==location.hash){const loading=location.hash;await loadPicker(token);if(token===epoch)loadedRoute=loading;}// an invalidated request leaves the route unloaded so the next refresh reloads it
+      if(loadedRoute!==location.hash){const loading=location.hash;loadedRoute='';await loadPicker(token);if(token===epoch)loadedRoute=loading;}// loadPicker clears the picker, so no route counts as loaded until its own request lands; an invalidated request leaves it unloaded for the next refresh
       if(token!==epoch||!allowed())return;
       const slotChanged=lastRoute&&lastRoute.slot!==r.slot;render();lastRoute=r;if(slotChanged)q('#briefSlotTitle')?.focus({preventScroll:true});
     }catch(error){if(token!==epoch||!allowed())return;notice=error.message;render();}
