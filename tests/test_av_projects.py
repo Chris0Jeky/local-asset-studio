@@ -352,8 +352,10 @@ class SceneTests(unittest.TestCase):
                            {'filename':'mix.wav','native_path':'renders/legacy/mix.wav','type':'output','media_type':'audio'}]}
         self.studio.jobs[legacy['id']]=legacy;(self.studio.runs/legacy['id']).mkdir();self.studio._save(legacy)
         restarted,calls=self._restart_with_register_spy()
-        self.assertCountEqual([job_id for job_id,index in calls], [attempt,attempt,legacy['id'],legacy['id']])
-        self.assertTrue(all(restarted.jobs[job_id]['outputs'][index].get('asset_id') for job_id,index in calls))
+        # Outputs the run already registered keep their ids from the one startup query (#1761); only the unregistered legacy outputs reach register().
+        self.assertCountEqual([job_id for job_id,index in calls], [legacy['id'],legacy['id']])
+        self.assertTrue(all(output.get('asset_id') for job_id in (attempt,legacy['id']) for output in restarted.jobs[job_id]['outputs']))
+        self.assertEqual(len(restarted.jobs[attempt]['outputs']),2)
 
     def test_publication_register_and_later_save_failure_retains_recipe_and_partial_assets(self):
         doc=self.create();queued=self.change(doc,'render');attempt=queued['render']['id']
