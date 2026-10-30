@@ -84,7 +84,7 @@
   // The owner's own Keep / Not this marks on pictures made with a look (#1699, GET /api/looks/record); the slot lets a fresh mark redraw only this line.
   const recordLine=l=>{const r=state.record?.[l?.id],kept=r?.kept||0,no=r?.not_this||0,parts=[kept&&kept+' kept',no&&no+' not this'].filter(Boolean);return parts.length?'<small class="make-record" title="Your Keep and Not this marks on pictures made with this look in this Studio">Your marks: '+parts.join(' · ')+'</small>':'';};
   const recordSlot=l=>'<span data-make-record="'+escape(l.id)+'">'+recordLine(l)+'</span>';
-  const refreshRecord=async()=>{const epoch=privacyEpoch;try{const r=await json('/api/looks/record');if(epoch!==privacyEpoch)return;state.record=r.looks||{};for(const el of view.querySelectorAll('[data-make-record]'))el.innerHTML=recordLine({id:el.dataset.makeRecord});}catch{}};
+  const refreshRecord=async()=>{const epoch=privacyEpoch;try{const r=await json('/api/looks/record');if(epoch!==privacyEpoch)return;state.record=r.looks||{};for(const el of view.querySelectorAll('[data-make-record]'))el.innerHTML=recordLine({id:el.dataset.makeRecord});}catch{if(epoch===privacyEpoch)state.record={};}};
   const goal=()=>GOALS.find(g=>g.id===state.goal);
   const SLOTS=['lora','lora2','lora3','lora4','lora5','lora6'];
   // The look's active adapters: a strength above zero with a file. Style strength scales exactly these and nothing else.
@@ -1311,7 +1311,7 @@
     }
     privacyEpoch++;draftRevision++;draftReady=false;draftProblem='';view.dataset.draftState='restoring';
     for(const timer of timers.values())clearTimeout(timer);timers.clear();planning.clear();
-    state.runs=[];state.pictures=null;state.characters=[];state.charStale=false;state.review={};state.polish={};state.queries={};state.allPictures=false;state.openers.clear();clearCharForms();
+    state.runs=[];state.pictures=null;state.characters=[];state.charStale=false;state.review={};state.record={};state.polish={};state.queries={};state.allPictures=false;state.openers.clear();clearCharForms();
     state.status='';state.missing='';state.error='';state.compare=false;state.compareLooks=[];state.sweeps={};
     if(previousCreation!==creation){state.pick=null;state.pose=null;state.form={};state.character=null;state.styleLook=null;state.styleWords=false;state.repicking=false;state.posePicking=false;state.tune={};
       savedTunes=readTunes(creation);
