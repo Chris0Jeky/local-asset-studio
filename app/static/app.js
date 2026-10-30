@@ -327,6 +327,7 @@ function insertWildcard(name) {
   field.dispatchEvent(new Event('input', {bubbles: true}));
   if (typeof updateReady === 'function') updateReady();
 }
+let wildcardPreviewDigests = null;  // set only while a preview is shown; Generate carries it so a changed wildcard file is refused
 function renderWildcardChips() {
   const host = $('#wildcardChips'); if (!host) return;
   const list = catalog?.wildcards || [];
@@ -341,7 +342,7 @@ function wildcardPreviewReason() {
   return ['positive','negative'].some(key => selected?.[key] && /\{|__/.test($('#' + key)?.value || '')) ? '' : 'No wildcards in this prompt.';
 }
 function updateWildcardPreview() {
-  wildcardPreviewRevision++;
+  wildcardPreviewRevision++; wildcardPreviewDigests = null;
   const controls = $('#wildcardPreviewControls'); if (!controls) return;
   const reason = wildcardPreviewReason();
   // Shown only when the prompt has wildcard syntax: a preview of nothing is noise and the Create view keeps its height budget.
@@ -356,7 +357,8 @@ async function previewWildcardWording() {
   try {
     const result = await post('/api/wildcards/preview', {preset_id:selected.id,...continuationPayload(),...tilePayload(),...parallaxPayload(),controls:values(),references:attachedReferencePayload(),parent_assets:parentAssets,batch_count:$('#batch').value,expected_template_sha256:recipeTemplateHash}, privacyOptions(captured));
     if (!current()) return;
-    output.innerHTML = result.members.length ? '<p class="muted">Preview only. Generate uses current settings and wildcard files.</p><ol>' + result.members.map(m => '<li><small>Picture ' + esc(m.index + 1) + ' · Seed ' + esc(m.seed_unknown ? 'unknown' : m.seed_text ?? m.seed) + '</small><div>' + esc(m.positive) + '</div>' + (m.negative ? '<div><small>Avoid: ' + esc(m.negative) + '</small></div>' : '') + (m.truncated ? '…' : '') + '</li>').join('') + '</ol>' : '<p class="muted">No wildcards in this prompt.</p>';
+    wildcardPreviewDigests = result.members.length && Object.keys(result.wildcard_files || {}).length ? result.wildcard_files : null;
+    output.innerHTML = result.members.length ? '<p class="muted">Preview only. Generate refuses if a file changed since.</p><ol>' + result.members.map(m => '<li><small>Picture ' + esc(m.index + 1) + ' · Seed ' + esc(m.seed_unknown ? 'unknown' : m.seed_text ?? m.seed) + '</small><div>' + esc(m.positive) + '</div>' + (m.negative ? '<div><small>Avoid: ' + esc(m.negative) + '</small></div>' : '') + (m.truncated ? '…' : '') + '</li>').join('') + '</ol>' : '<p class="muted">No wildcards in this prompt.</p>';
   } catch (e) { if (current()) output.innerHTML = '<p class="error">' + esc(e.message) + '</p>'; }
   finally { if (current()) button.disabled = !!wildcardPreviewReason(); }
 }
@@ -1011,7 +1013,7 @@ $('#reference').onchange=()=>{uploaded=null;releaseInputParent('reference');upda
 $('#generate').onclick=async()=>{
   if(submitting||!selected)return;const blocked=continuationBlockers();if(blocked.length){message(blocked.join(' '),true);if(selected.positive&&!String($('#positive').value).trim())$('#positive').focus();return;}submitting=true;updateReady();
   // The whole Create surface stays interactive while uploads are in flight: snapshot the intent the operator pressed Generate for.
-  const captured=globalThis.StudioPrivacy?.capture?.(),started=selected,startedHash=recipeTemplateHash,startedStamp=parallaxState?window.StudioSetupDraft?.stamp():null,inputFiles={reference:$('#reference').files[0]||null,lastReference:$('#lastReference').files[0]||null},stagedFiles={reference:uploaded,lastReference:lastUploaded},intent={preset_id:selected.id,...(captured?.privacy==='private'?{privacy:'private'}:{}),...continuationPayload(),...tilePayload(),...parallaxPayload(),...(typeof StudioLooks!=='undefined'?StudioLooks.applicationPayload(selected.id):{}),controls:values(),batch_count:$('#batch').value,expected_template_sha256:recipeTemplateHash,parent_assets:[...parentAssets],references:attachedReferencePayload()};
+  const captured=globalThis.StudioPrivacy?.capture?.(),started=selected,startedHash=recipeTemplateHash,startedStamp=parallaxState?window.StudioSetupDraft?.stamp():null,inputFiles={reference:$('#reference').files[0]||null,lastReference:$('#lastReference').files[0]||null},stagedFiles={reference:uploaded,lastReference:lastUploaded},intent={preset_id:selected.id,...(captured?.privacy==='private'?{privacy:'private'}:{}),...continuationPayload(),...tilePayload(),...parallaxPayload(),...(typeof StudioLooks!=='undefined'?StudioLooks.applicationPayload(selected.id):{}),controls:values(),batch_count:$('#batch').value,expected_template_sha256:recipeTemplateHash,parent_assets:[...parentAssets],references:attachedReferencePayload(),...(typeof wildcardPreviewDigests!=='undefined'&&wildcardPreviewDigests?{wildcard_digests:{...wildcardPreviewDigests}}:{})};
   const samePrivacy=()=>!captured||captured.revision===globalThis.StudioPrivacy?.capture?.().revision;
   const requireDraft=()=>{if(selected!==started||recipeTemplateHash!==startedHash||!samePrivacy()||Object.entries(inputFiles).some(([id,file])=>($('#'+id).files[0]||null)!==file)||uploaded!==stagedFiles.reference||lastUploaded!==stagedFiles.lastReference)throw Error('The recipe, source or privacy choice changed while preparing this run; nothing was submitted. Review this draft, then press Generate again.');};
   try{
