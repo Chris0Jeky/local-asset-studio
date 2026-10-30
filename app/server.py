@@ -29,7 +29,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from queue import Empty, Queue
 from urllib.error import HTTPError, URLError
-from urllib.parse import parse_qs, quote, urlencode, urlparse
+from urllib.parse import parse_qs, quote, unquote, urlencode, urlparse
 from urllib.request import Request, urlopen
 
 # The portable Python includes ComfyUI's own `app` package in its search path.
@@ -1351,15 +1351,29 @@ class Studio:
         result["context"] = context
         return result
 
-    def import_image(self, filename, content_type, body, *, privacy='regular'):
+    def repair_parent(self, parent, content_type, *, privacy, scope):
+        """#1837: the picture an externally repaired import continues. Refused, before anything is written, unless it is a live image of the same privacy; the repair itself must be a PNG."""
+        if type(parent) is not str: raise StudioError('Choose the picture this repairs')
+        if content_type.split(';',1)[0].lower()!='image/png': raise StudioError('Import the repaired version as a PNG')
+        try: asset=self.assets.get(parent,privacy=scope)
+        except (ValueError,sqlite3.Error) as exc: raise StudioError('The picture to repair is not in this Library') from exc
+        if asset['media_type']!='image': raise StudioError('Only a picture can have a repaired version')
+        if asset.get('trashed_at'): raise StudioError('That picture is in the Bin; restore it before importing its repair')
+        if asset.get('privacy','regular')!=privacy: raise StudioError('A private picture and a regular one are never linked; import the repair under the same privacy')
+        return asset['id']
+
+    def import_image(self, filename, content_type, body, *, privacy='regular', parent=None, note=None, scope=None):
         classification=privacy_scope.normalize(privacy)
+        parents=[self.repair_parent(parent,content_type,privacy=classification,scope=scope or classification)] if parent is not None else []
+        note=' '.join(note.split()) if isinstance(note,str) else ''
+        if len(note)>280 or not note.isprintable(): raise StudioError('Keep the editor note to 280 plain characters')
         uploaded=self.upload(filename,content_type,body,privacy=classification)
         identifier=str(uuid.uuid4())
         job={'id':identifier,'operation':'asset.import','status':'completed','created_at':time.time(),
              'preset_id':'imported-image','preset_name':uploaded['original_name'],'controls':{},'batch_count':1,
-             'prompt_ids':[],'submissions':[],'parent_assets':[],'references':[uploaded],
-             'message':'Imported original image. No generation submitted.','graph_path':'','graph':{},
-             'outputs':[{'filename':uploaded['original_name'],'uploaded_file':uploaded['file'],'type':'output','media_type':'image'}]}
+             'prompt_ids':[],'submissions':[],'parent_assets':parents,'references':[uploaded],
+             'message':'Imported a repaired version. No generation submitted.' if parents else 'Imported original image. No generation submitted.','graph_path':'','graph':{},
+             'outputs':[{'filename':uploaded['original_name'],'uploaded_file':uploaded['file'],'type':'output','media_type':'image',**({'editor_note':note} if note else {})}]}
         if classification=='private':job['privacy']='private'
         self.index_outputs(job)
         if not job['outputs'][0].get('asset_id'):
@@ -3288,7 +3302,8 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == '/api/articulated': return self._json(201,self.studio.production.articulated(self._body_json()))
             if self.path == '/api/assets/import':
                 body=self._read_body(20*1024*1024)
-                try: return self._json(201,self.studio.import_image(self.headers.get('X-Filename','reference'),self.headers.get('Content-Type',''),body,privacy=privacy_scope.creation_for_handler(self)))
+                try: return self._json(201,self.studio.import_image(self.headers.get('X-Filename','reference'),self.headers.get('Content-Type',''),body,privacy=privacy_scope.creation_for_handler(self),
+                                                                    parent=self.headers.get('X-Parent-Asset'),note=unquote(self.headers.get('X-Editor-Note','')),scope=scope))
                 except sqlite3.Error:
                     return self._json(503, {"error": "Asset storage could not confirm this request. Check its receipt before retrying the exact command.",
                                             "code": "asset_storage_unconfirmed"})
