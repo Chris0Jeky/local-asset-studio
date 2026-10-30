@@ -2141,7 +2141,7 @@ def _make_generate(c):
 
 @driver('review-desk-by-keyboard')
 def _review_desk(c):
-    """#1729: the Review desk with three candidates, assessed with K, W and X and arrow keys, then a winner chosen and the next
+    """#1729: the Review desk with three candidates, assessed with K, W and X in Pair view, then a winner chosen and the next
     step shown. The desk is the shipped one (Production.review over synthetic retained images); live mode stops at Prepare review."""
     with restoring_fixture():
         study = None if c.live else SYNTHETIC['open_desk']()
@@ -2156,26 +2156,22 @@ def _review_desk(c):
         c.act('a[href="/review.html?project=%s"]' % study, navigation=True, wait=900, note='open the review desk')
         c.stop_before(c.act('#open', note='prepare the blind review'), 'stopped before Prepare review: that snapshots the retained pictures')
         c.page.wait_for_function('!document.querySelector("#desk").hidden', timeout=8000)
-        c.act('#presentationGrid', navigation=True, note='switch to the grid: the keys work on its candidates')
-        c.act('[data-grid-candidate]', note='pick the first candidate')
         reviewed = lambda n: c.page.wait_for_function("n => document.querySelector('#desk').getAttribute('aria-busy') === 'false' && "
                                                       "[...document.querySelectorAll('#progress .progress-row span')].filter(s => s.textContent !== 'Not reviewed').length === n", arg=n, timeout=8000)
+        # Pair view (#1752): K, W and X save the candidate on show, so the first candidate takes its constraints check and K together.
+        c.act('#check-constraints', 'select', typed='pass', note='confirm the first candidate meets the stated constraints')
+        c.act('#leftCanvas', note='focus the first candidate')
         c.stop_before(c.key('k', note='K keeps the first candidate'), 'stopped before the first assessment: that saves a review revision')
         reviewed(1)
-        c.key('ArrowDown', note='arrow down moves to the next candidate')
+        c.act('#rightCanvas', note='focus the second candidate')
         c.key('w', note='W marks it needs work')
         reviewed(2)
-        c.key('ArrowDown', note='arrow down moves to the last candidate')
+        c.act('#right', 'select', typed='C', note='show the third candidate')
+        c.act('#rightCanvas', note='focus the third candidate')
         c.key('x', note='X marks it not this')
         reviewed(3)
         marks = c.page.evaluate("[...document.querySelectorAll('#progress .progress-row')].map(r => [r.querySelector('b').textContent.replace('Candidate ', ''), r.querySelector('span').textContent])")
         winner = next((alias for alias, verdict in marks if verdict == 'Keep'), '')
-        # The desk will not record a winner until its stated-constraints check passes, and K saves the verdict alone (measured, #1729):
-        # opening the winner, passing that check and saving it are three more steps between the last key and the decision.
-        c.act('[data-grid-candidate="%s"]' % winner, note='open the kept candidate again')
-        c.act('#check-constraints', 'select', typed='pass', note='confirm it meets the stated constraints')
-        c.act('#saveAssessment', note='save that assessment')
-        c.page.wait_for_function('document.querySelector("#desk").getAttribute("aria-busy") === "false" && document.querySelector("#assessmentStatus").textContent === "Saved"', timeout=8000)
         c.page.once('dialog', lambda dialog: dialog.accept())
         c.act('#reveal', note='reveal the settings behind the candidates')
         c.page.wait_for_function('!document.querySelector("#decision").hidden', timeout=8000)

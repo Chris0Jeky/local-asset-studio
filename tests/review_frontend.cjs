@@ -27,8 +27,8 @@ console.log('Review frontend contracts passed: helpers, source URL scope and exi
 
 // Run the shipped desk against DOM/canvas boundaries; only the initial inspect is stubbed.
 const test=require('node:test');
-async function holdDesk({delayB=false}={}){
-  const nodes=new Map(),all=[],requests=[],listeners={document:{},window:{}};let active=null,decodeB;
+async function holdDesk({delayB=false,saves=false,finalized=false}={}){
+  const nodes=new Map(),all=[],requests=[],listeners={document:{},window:{}},gate=[];let active=null,decodeB;
   const matches=(node,selector)=>selector.split(',').some(s=>s.startsWith('#')?node.id===s.slice(1):s==='[contenteditable]'?node.contentEditable==='true':node.tagName.toLowerCase()===s);
   class Node {
     constructor(tag,id=''){this.tagName=tag.toUpperCase();this.id=id;this.children=[];this.dataset={};this.attributes={};this.value='';this.hidden=false;this.disabled=false;this.textContent='';this.parentElement=null;this.events={};this.width=this.height=768;this.draws=[];this.classList={toggle(){}};all.push(this);}
@@ -47,16 +47,18 @@ async function holdDesk({delayB=false}={}){
   const $=id=>nodes.get(id)||all.find(n=>n.id===id),tick=()=>new Promise(resolve=>setImmediate(resolve));
   function emit(surface,type,extra={}){const event={target:$('leftCanvas'),key:' ',button:0,prevented:false,preventDefault(){this.prevented=true;},...extra};for(const fn of (typeof surface==='string'?listeners[surface]:surface.events)[type]||[])fn(event);if(typeof surface!=='string')surface['on'+type]?.(event);return event;}
   for(const [id,value] of Object.entries({cropLeft:'25',cropTop:'25',cropRight:'75',cropBottom:'75',background:'dark',mode:'pair'}))$(id).value=value;
-  const state={exists:true,revision:0,revealed:false,finalized:false,selected:null,notes:'',crop:[2500,2500,7500,7500],background:'dark',history:[],export:null,grid:null,
+  const state={exists:true,revision:0,revealed:false,finalized,selected:null,notes:'',crop:[2500,2500,7500,7500],background:'dark',history:[],export:null,grid:null,
     candidates:[...'ABC'].map(alias=>({alias,preview_url:url.replace('preview-A.png',alias+'.png'),assessment:{verdict:'unreviewed',notes:'',observations:{},cleanup_seconds:null,preference:null}}))};
   const document={querySelector:s=>$(s.slice(1)),querySelectorAll:s=>all.filter(n=>matches(n,s)),createElement:tag=>new Node(tag),get activeElement(){return active;},addEventListener:(type,fn)=>(listeners.document[type]??=[]).push(fn)};
   const sandbox={document,location:{search:'?project='+project},URLSearchParams,console,
     window:{addEventListener:(type,fn)=>(listeners.window[type]??=[]).push(fn)},
     Image:class {decode(){this.naturalWidth=this.src.endsWith('/B.png')?400:200;this.naturalHeight=this.naturalWidth*2;return delayB&&this.src.endsWith('/B.png')?new Promise(resolve=>{decodeB=resolve;}):Promise.resolve();}},
-    fetch:async(url,options)=>{requests.push({url,options});assert.equal(requests.length,1,'Hold interactions must never fetch or POST');return {ok:true,json:async()=>state};}};
+    fetch:async(url,options)=>{requests.push({url,options});if(!saves||requests.length===1){assert.equal(requests.length,1,'Hold interactions must never fetch or POST');return {ok:true,json:async()=>state};}return new Promise(resolve=>gate.push(resolve));}};
   const source=process.env.REVIEW_TEST_REF?require('node:child_process').execFileSync('git',['show',process.env.REVIEW_TEST_REF+':app/static/review.js'],{encoding:'utf8'}):fs.readFileSync(require.resolve('../app/static/review.js'),'utf8');
   vm.runInNewContext(source,sandbox);await tick();
-  return {$,emit,tick,document,requests,Node,decodeB:()=>decodeB(),draw:side=>$(side+'Canvas').draws.at(-1)};
+  // A save stays in flight until answered; the reply is the saved review one revision on, as the server returns it.
+  const answer=async()=>{const body=JSON.parse(requests.at(-1).options.body),saved=structuredClone(state);saved.revision=body.expected_revision+1;saved.candidates.find(c=>c.alias===body.alias).assessment=body.assessment;gate.shift()({ok:true,json:async()=>saved});await tick();await tick();};
+  return {$,emit,tick,document,requests,Node,answer,decodeB:()=>decodeB(),draw:side=>$(side+'Canvas').draws.at(-1)};
 }
 test('Review desk hold-to-compare',async t=>{
   const {$,emit,tick,document,requests,Node,draw}=await holdDesk();
@@ -104,6 +106,76 @@ test('Review desk hold-to-compare',async t=>{
     const desk=await holdDesk({delayB:true});
     desk.emit('document','keydown');desk.emit('document','keyup',{target:desk.$('notes'),ctrlKey:true});desk.decodeB();await desk.tick();
     assert.ok(desk.$('leftCanvas').draws.every(args=>args[0].src.endsWith('/A.png')));assert.ok(desk.draw('right')[0].src.endsWith('/B.png'));assert.equal(desk.$('holdCompare').getAttribute('aria-pressed'),'false');assert.equal(desk.requests.length,1);
+  });
+});
+
+// #1752: K/W/X in Pair and single views save the candidate on show through the Grid's own save path.
+test('Review desk Pair-view K/W/X',async t=>{
+  const press=(desk,key,extra={})=>desk.emit('document','keydown',{key,...extra}),saved=desk=>desk.requests.slice(1).map(r=>JSON.parse(r.options.body));
+  await t.test('loading never saves; K saves the left candidate by default with the Grid request shape',async()=>{
+    const desk=await holdDesk({saves:true});assert.equal(desk.requests.length,1);
+    assert.equal(press(desk,'k').prevented,true);await desk.tick();
+    const [body]=saved(desk);assert.equal(desk.requests.length,2);assert.equal(JSON.parse(desk.requests[0].options.body).action,'inspect');
+    assert.deepEqual(Object.keys(body).sort(),['action','alias','assessment','expected_revision']);
+    assert.deepEqual([body.action,body.alias,body.expected_revision,body.assessment.verdict],['rate','A',0,'keep']);
+    assert.deepEqual(Object.keys(body.assessment).sort(),['cleanup_seconds','notes','observations','preference','verdict']);
+    assert.equal(desk.$('message').textContent,'Saving…');await desk.answer();
+    assert.equal(desk.$('message').textContent,'Saved. No generation performed.');
+    assert.deepEqual([desk.$('left').value,desk.$('right').value,desk.$('mode').value],['A','B','pair'],'the layout stays as the owner left it');
+    assert.match(desk.$('progress').children[0].children[1].textContent,/Keep/);
+  });
+  await t.test('the focused or pressed preview is the one saved; W and X map to Needs work and Not this',async()=>{
+    const desk=await holdDesk({saves:true});
+    desk.$('rightCanvas').focus();press(desk,'w');await desk.tick();await desk.answer();
+    desk.emit(desk.$('leftCanvas'),'pointerdown',{});press(desk,'X');await desk.tick();
+    assert.deepEqual(saved(desk).map(b=>[b.alias,b.assessment.verdict,b.expected_revision]),[['B','needs_work',0],['A','reject',1]]);
+  });
+  await t.test('Left only and Right only save the side on show, whichever preview was last focused',async()=>{
+    const desk=await holdDesk({saves:true});
+    desk.$('rightCanvas').focus();desk.$('mode').value='left';desk.$('mode').onchange();press(desk,'k');await desk.tick();await desk.answer();
+    desk.$('leftCanvas').focus();desk.$('mode').value='right';desk.$('right').value='C';desk.$('mode').onchange();await desk.tick();press(desk,'x');await desk.tick();
+    assert.deepEqual(saved(desk).map(b=>[b.alias,b.assessment.verdict]),[['A','keep'],['C','reject']]);
+  });
+  await t.test('an unsaved draft of the shown candidate is saved with the verdict',async()=>{
+    const desk=await holdDesk({saves:true});
+    desk.$('check-constraints').value='pass';desk.$('notes').value='Lantern glow holds';desk.emit(desk.$('assessmentForm'),'input',{target:desk.$('check-constraints')});
+    press(desk,'k');await desk.tick();const [body]=saved(desk);
+    assert.deepEqual([body.alias,body.assessment.verdict,body.assessment.observations.constraints,body.assessment.notes],['A','keep','pass','Lantern glow holds']);
+  });
+  await t.test('typing, modifiers, repeats, composition and other keys never save',async()=>{
+    const desk=await holdDesk({saves:true}),editable=new desk.Node('div');editable.contentEditable='true';const child=new desk.Node('span');editable.append(child);
+    for(const target of [desk.$('notes'),desk.$('cropLeft'),desk.$('mode'),desk.$('candidate'),editable,child])assert.equal(press(desk,'k',{target}).prevented,false);
+    for(const extra of [{altKey:true},{ctrlKey:true},{metaKey:true},{shiftKey:true},{repeat:true},{isComposing:true}])assert.equal(press(desk,'w',extra).prevented,false);
+    for(const other of ['s','Enter','ArrowDown'])assert.equal(press(desk,other).prevented,false);
+    await desk.tick();assert.equal(desk.requests.length,1);
+  });
+  await t.test('nothing saves while a save is in flight',async()=>{
+    const desk=await holdDesk({saves:true});press(desk,'k');await desk.tick();assert.equal(desk.requests.length,2);
+    assert.equal(press(desk,'x').prevented,false);await desk.tick();assert.equal(desk.requests.length,2);
+    await desk.answer();press(desk,'x');await desk.tick();assert.deepEqual(saved(desk).map(b=>[b.alias,b.assessment.verdict,b.expected_revision]),[['A','keep',0],['A','reject',1]]);
+  });
+  await t.test('while Space is held the shown image is the other candidate, so the key is refused',async()=>{
+    const desk=await holdDesk({saves:true});desk.emit('document','keydown');await desk.tick();
+    assert.equal(desk.$('holdCompare').getAttribute('aria-pressed'),'true');
+    assert.equal(press(desk,'k').prevented,true);await desk.tick();assert.equal(desk.requests.length,1);
+    assert.match(desk.$('message').textContent,/^Release Space first/);
+    desk.emit('document','keyup');await desk.tick();press(desk,'k');await desk.tick();assert.equal(saved(desk).length,1);assert.equal(saved(desk)[0].alias,'A');
+  });
+  await t.test('a preview still loading is never rated: the key waits for the shown candidate',async()=>{
+    const desk=await holdDesk({saves:true,delayB:true});desk.$('swap').onclick();await desk.tick();
+    assert.equal(desk.$('left').value,'B');assert.equal(press(desk,'k').prevented,true);await desk.tick();
+    assert.equal(desk.requests.length,1,'no rating while the left canvas still shows A');assert.match(desk.$('message').textContent,/^Wait for Candidate B/);
+    desk.decodeB();await desk.tick();await desk.tick();press(desk,'k');await desk.tick();assert.deepEqual(saved(desk).map(b=>b.alias),['B']);
+  });
+  await t.test('a recorded decision is never reopened by a shortcut',async()=>{
+    const desk=await holdDesk({saves:true,finalized:true});
+    assert.equal(press(desk,'k').prevented,true);await desk.tick();assert.equal(desk.requests.length,1,'no rating request');
+    assert.match(desk.$('message').textContent,/^The decision is recorded/);
+  });
+  await t.test('blind captions keep their candidate letters and hidden settings',async()=>{
+    const desk=await holdDesk({saves:true});press(desk,'k');await desk.tick();await desk.answer();
+    assert.match(desk.$('leftCaption').textContent,/^Candidate A .*settings hidden$/);assert.match(desk.$('rightCaption').textContent,/^Candidate B .*settings hidden$/);
+    assert.doesNotMatch(desk.$('message').textContent,/engine|seed/i);
   });
 });
 
