@@ -116,6 +116,12 @@ function pickerWorld(){
     s.press({uxReveal:''});html=s.panel.innerHTML;assert.deepEqual(names(html),['Combine','ALT ENGINE']);assert.doesNotMatch(html,/data-ux-reveal/);assert.match(html,/ALT ENGINE said so/);
     s.press({uxGrid:''});s.press({uxGrid:''});html=s.panel.innerHTML;assert.deepEqual(names(html),['Combine','Candidate A']);assert.doesNotMatch(html,/ALT ENGINE/);
   });
+  await test('Combine Grid Reveal covers only the plans on screen: a plan that arrives later stays blind',()=>{
+    const jobs=[run('r1','combine','completed',42,'a1'),run('r3','alt','completed',42,'a3',{project_id:'p'.repeat(32)})],s=grid(jobs);
+    s.press({uxReveal:''});assert.deepEqual(names(s.panel.innerHTML),['Combine','ALT ENGINE']);
+    jobs.push(run('r6','other','completed',42,'a4',{project_id:'q'.repeat(32)}));s.render();const html=s.panel.innerHTML;
+    assert.ok(names(html).includes('ALT ENGINE'));assert.ok(names(html).includes('Candidate A'));assert.doesNotMatch(html,/OTHER ENGINE/);assert.match(html,/data-ux-reveal/);
+  });
   await test('Combine Grid keeps one tab stop on the held cell',()=>{
     const s=grid(plain,['a1','a2','a3']);assert.equal((s.panel.innerHTML.match(/tabindex="0"/g)||[]).length,1);assert.match(s.panel.innerHTML,/tabindex="0" data-ux-cell="0:0"/);
     s.panel.gridFocus='1:1';s.render();assert.match(s.panel.innerHTML,/tabindex="0" data-ux-cell="1:1"/);assert.equal((s.panel.innerHTML.match(/tabindex="0"/g)||[]).length,1);

@@ -701,7 +701,7 @@
       return '<div class="ux-run-group"><div class="ux-run-head"><b>'+escape(engine(job))+'</b><small>'+escape(facts)+'</small>'+(checked?'<small class="ux-run-checks">Loaded checks: '+escape(checked)+'</small>':'')+'<button type="button" data-ux-result-recipe="'+escape(job.id)+'">Recipe</button></div><div class="ux-run-seeds">'+shown.map(({output,index})=>tile(job,output,index)).join('')+'</div></div>';
     }).join('');
     // Grid (#1204): rows are recipes, columns are seeds, every cell one size. Recipe names of runs from a plan (project_id) stay behind Reveal; ordinary runs show theirs. A cell without a picture shows its state and offers no rerun.
-    const grid=resultPanel.grid===true&&groups.runs.length>0,revealed=resultPanel.revealed===true,hidden=job=>grid&&!revealed&&!!job.project_id,call=job=>hidden(job)?'A planned run':engine(job);
+    const grid=resultPanel.grid===true&&groups.runs.length>0,plans=groups.runs.concat(groups.active,groups.attention).map(({job})=>job.project_id).filter(Boolean),shown=resultPanel.revealedPlans instanceof Set?resultPanel.revealedPlans:new Set(),revealed=plans.some(id=>shown.has(id)),hidden=job=>grid&&!!job.project_id&&!shown.has(job.project_id),call=job=>hidden(job)?'A planned run':engine(job);resultPanel.hiddenPlans=plans.filter(id=>!shown.has(id));// Reveal covers only the plans on screen when pressed: another pair's plan or a new plan stays blind
     const gridMarkup=()=>{
       const rows=new Map(),seeds=new Set();let left=RESULT_LIMIT;
       const cell=(job,seed)=>{const key=(job.project_id?job.project_id+'|':'')+job.preset_id,k=String(seed??'unknown');if(!rows.has(key))rows.set(key,{key,job,cells:new Map()});const row=rows.get(key);seeds.add(k);if(!row.cells.has(k))row.cells.set(k,{done:[],other:[]});return row.cells.get(k);};
@@ -736,7 +736,7 @@
     const button=e.target.closest('button');
     // Switching the view or revealing recipe names reads only what is already loaded; it never waits on an action.
     if(button&&!button.disabled&&(button.dataset.uxGrid!==undefined||button.dataset.uxReveal!==undefined)){
-      const view=button.dataset.uxGrid!==undefined;if(view){resultPanel.grid=!resultPanel.grid;resultPanel.revealed=false;}else resultPanel.revealed=true;
+      const view=button.dataset.uxGrid!==undefined;if(view){resultPanel.grid=!resultPanel.grid;resultPanel.revealedPlans=new Set();}else resultPanel.revealedPlans=new Set([...(resultPanel.revealedPlans||[]),...(resultPanel.hiddenPlans||[])]);
       syncCombineResults();resultPanel.querySelector(view?'[data-ux-grid]':'[data-ux-cell][tabindex="0"]')?.focus();return;}
     if(!button||button.disabled||pairActionBusy)return;
     if(button.dataset.uxResultRecipe){try{await exportRecipe(button.dataset.uxResultRecipe);}catch(error){announce(error.message,true);}return;}
