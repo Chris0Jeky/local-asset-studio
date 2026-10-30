@@ -51,6 +51,7 @@ import prompting
 import submission_evidence
 import job_cancel
 import observation_state
+import recipe_drift
 import file_replace
 import asset_thumbs
 import job_resources
@@ -222,7 +223,7 @@ class Studio:
             # publication may be indexed on restart. Legacy jobs without a
             # publication marker keep the historical recovery path.
             if job.get("operation") in ("native.av-preview.v1","native.voice-baseline.v1") and "publication_status" in job and job["publication_status"] != "published": continue
-            self.index_outputs(job)
+            self.index_outputs(job, advise=False)  # Restart re-registers known outputs only; the empty-picture decode is never backfilled.
         self.parallax_finisher = parallax.Finisher(self)
         self.production = Production(self)
         self.backends = BackendManager(self)
@@ -1214,7 +1215,7 @@ class Studio:
         if kind not in ("output", "temp"): raise StudioError("Unsupported output location")
         return inside(root / kind, root / kind / str(output.get("subfolder") or "") / str(output.get("filename") or ""))
 
-    def index_outputs(self, job):
+    def index_outputs(self, job, advise=True):
         for index, output in enumerate(job.get("outputs", [])):
             try:
                 asset_id = self.assets.register(job, index, self.output_path(output, job))
@@ -1229,6 +1230,11 @@ class Studio:
                     output['text_safe'] = review_media.text_safe_metrics(review_media.checked_bytes(path, asset['sha256']))
                 except (OSError, ValueError, sqlite3.Error) as exc:
                     output['text_safe'] = {'error': str(exc)[:200]}
+            if advise and output.get('asset_id') and output.get('media_type', 'image') == 'image' and 'empty_picture' not in output:
+                try:
+                    path, asset = self.assets.file_entry(output['asset_id'],privacy=job.get('privacy','regular'))
+                    output['empty_picture'] = review_media.empty_picture(review_media.checked_bytes(path, asset['sha256']))
+                except Exception: output['empty_picture'] = ''  # Advisory only: an unreadable picture keeps its outcome and is not retried.
 
     def asset_reference(self, asset_id, *, privacy='regular', creation_privacy='regular'):
         classification=privacy_scope.normalize(creation_privacy)
@@ -1308,7 +1314,8 @@ class Studio:
                 for index, asset in enumerate(assets, 1):
                     source = self.assets.file(asset["id"],privacy=privacy)
                     if digest_file(source) != asset["sha256"]: raise StudioError("An asset changed; export stopped")
-                    name = re.sub(r'[^A-Za-z0-9._-]+', '-', asset['filename']).strip('.-')[:100] or 'asset'
+                    name = re.sub(r'[^A-Za-z0-9._-]+', '-', asset['filename']).strip('.-') or 'asset'
+                    if len(name) > 100: suffix = Path(name).suffix if len(Path(name).suffix) <= 16 else ''; name = (name[:100 - len(suffix)].rstrip('.-') or 'asset') + suffix
                     member = files.get(asset['sha256']) if brief is not None else None
                     if member is None:
                         member = f'assets/{index:02d}-{name}' if brief is not None else "assets/" + asset["id"] + source.suffix
@@ -1363,7 +1370,8 @@ class Studio:
             raise StudioError("This older recipe has no embedded workflow. Load its settings as a saved setup, or open its original workflow in ComfyUI.")
         _, graph, path, _, _ = self.prepare(recipe)
         if graph != recipe["workflow"]:
-            raise StudioError("The exported workflow differs from the current preset. Nothing was loaded or queued. Open the embedded workflow in ComfyUI, or select the current preset to start a new experiment.")
+            drift=recipe_drift.summary(recipe["workflow"],graph)
+            raise StudioError("The exported workflow differs from the current preset" + (": "+drift if drift else "") + ". Nothing was loaded or queued. Open the embedded workflow in ComfyUI, or select the current preset to start a new experiment.")
         return {"matches": True, "template_sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
 
     def preview(self, payload):

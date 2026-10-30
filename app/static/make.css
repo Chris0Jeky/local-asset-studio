@@ -128,6 +128,7 @@
 .make-characters>.make-character-form,.make-note .make-character-form{margin:10px 0}
 .make-lineup,.make-away{margin:8px 0;border:1px solid var(--make-edge);border-radius:10px;padding:2px 12px}.make-lineup summary,.make-away summary{font-size:12px;cursor:pointer;padding:8px 0;min-height:32px}
 .make-lineup-strip{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px}
+.make-lineup-cell{flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:2px}
 .make-lineup-item{flex:none;position:relative;padding:0!important;border:1px solid var(--make-edge)!important;border-radius:8px;overflow:hidden;background:#11191a!important;line-height:0}
 .make-lineup-item img{height:160px;min-width:72px;width:auto;display:block}.make-lineup-canon{border-color:var(--accent)!important;box-shadow:0 0 0 1px var(--accent)}
 .make-lineup-tag{position:absolute;left:0;bottom:0;padding:2px 8px!important;font-size:11px;line-height:1.4;background:#13200f;color:var(--accent);border-top-right-radius:8px}

@@ -11,3 +11,9 @@ class BriefFrontendTests(unittest.TestCase):
         if not node:self.skipTest('Node is unavailable')
         result=subprocess.run([node,str(Path(__file__).with_name('scene_brief_core.cjs'))],capture_output=True,text=True,timeout=30)
         self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+
+    def test_refresh_races(self):
+        node=shutil.which('node')
+        if not node:self.skipTest('Node is unavailable')
+        result=subprocess.run([node,str(Path(__file__).with_name('scene_briefs_refresh_races.cjs'))],capture_output=True,text=True,timeout=60)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)

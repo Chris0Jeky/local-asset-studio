@@ -27,7 +27,7 @@
     if(conflict)throw Error('Reload the saved brief before downloading a working pack.');
     const token=epoch,id=card.id,revision=base,workspace=scope;
     const current=()=>token===epoch&&allowed()&&route().view==='briefs'&&route().id===id&&card?.id===id&&base===revision&&scope===workspace&&!dirty();
-    message('Preparing working pack…');
+    const pending='Preparing working pack…';message(pending);try{
     const result=await api('/api/briefs/export',{id,expected_revision:revision,workspace_id:workspace});
     if(!current())return;
     const response=await (window.StudioPrivacy?StudioPrivacy.fetch(result.url):fetch(result.url));
@@ -38,6 +38,7 @@
     if(latest.card.body.workspace_id!==workspace||latest.card.revision!==revision)throw Error('The brief or Workspace changed. Reload the saved brief and try again.');
     const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=result.filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
     message('Working pack downloaded.');
+    }finally{if(notice===pending)message('');}// a discarded or failed transfer must not leave the progress text; act() writes any error after this
   }
   async function loadCollections(cursor=null){const p=new URLSearchParams({workspace_id:scope,limit:'30'});if(cursor)p.set('cursor',cursor);const data=await api('/api/collections?'+p);return data;}
   async function loadCard(identifier,token){
@@ -67,7 +68,7 @@
       if(!r.id){remember();card=null;saved=null;}
       if(token!==epoch||!allowed())return;
       if(card&&r.returned!==null&&r.returned!==base)notice='This brief changed since preparation. Review its saved revision before choosing a return candidate.';
-      if(loadedRoute!==location.hash){loadedRoute=location.hash;await loadPicker(token);}
+      if(loadedRoute!==location.hash){const loading=location.hash;loadedRoute='';await loadPicker(token);if(token===epoch)loadedRoute=loading;}// loadPicker clears the picker, so no route counts as loaded until its own request lands; an invalidated request leaves it unloaded for the next refresh
       if(token!==epoch||!allowed())return;
       const slotChanged=lastRoute&&lastRoute.slot!==r.slot;render();lastRoute=r;if(slotChanged)q('#briefSlotTitle')?.focus({preventScroll:true});
     }catch(error){if(token!==epoch||!allowed())return;notice=error.message;render();}

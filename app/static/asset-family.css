@@ -32,3 +32,13 @@
 .asset-family-actions button{min-width:0;overflow-wrap:anywhere}
 
 .asset-unavailable{min-width:0}.asset-unavailable>summary{cursor:pointer}.asset-unavailable[open]{display:grid;gap:8px}
+/* Library look checks (#1703): display only, on the shown image and the Sizes strip. */
+.asset-inspect{display:grid;gap:8px;margin:0 0 12px}.asset-inspect[hidden]{display:none}
+.asset-inspect-bar{display:flex;flex-wrap:wrap;gap:6px}.asset-inspect-bar button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+.asset-inspect-sizes{display:grid;gap:6px}.asset-inspect-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px}
+.asset-inspect-row figure{margin:0;display:grid;justify-items:start;gap:2px}.asset-inspect-row figcaption{font-size:11px;color:var(--muted)}
+.asset-inspect-row img{object-fit:contain;background:var(--panel2)}
+.asset-inspect-row img[data-px="64"]{width:64px;height:64px}.asset-inspect-row img[data-px="128"]{width:128px;height:128px}.asset-inspect-row img[data-px="256"]{width:256px;height:256px;max-width:100%}
+.asset-inspect-sizes[data-render="pixel"] img{image-rendering:pixelated}.asset-inspect-sizes[data-render="smooth"] img{image-rendering:auto}
+#assetDialog[data-look-mirror] #assetDetailMedia>img,#assetDialog[data-look-mirror] .asset-inspect-row img{transform:scaleX(-1)}
+#assetDialog[data-look-grey] #assetDetailMedia>img,#assetDialog[data-look-grey] .asset-inspect-row img{filter:grayscale(1)}

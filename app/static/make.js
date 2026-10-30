@@ -689,6 +689,12 @@
       else{q('[data-make-character="'+CSS.escape(id)+'"]')?.focus();sayChars('Restored “'+c.name+'”.');}}
     catch(error){if(epoch!==privacyEpoch)return;if(error.status===409){await loadCharacters();if(epoch!==privacyEpoch)return;refreshCharacters();sayChars('“'+c.name+'” changed somewhere else, so it was reloaded. Nothing was changed.');return;}say('Could not '+(action==='trash'?'put it away':'restore it')+': '+error.message);}
   }
+  // Use as canon: one edit with only canon_asset_id and the revision read; the words are untouched. The server refuses a put-away picture; a 409 reloads and changes nothing.
+  async function swapCanon(id,asset){const c=usableCharacters().find(x=>x.id===id),captured=requestPrivacy(),epoch=privacyEpoch;if(!c||asset===c.canon_asset_id)return;
+    try{await json('/api/characters',{action:'edit',id,expected_revision:c.revision,canon_asset_id:asset},{...captured,scope:classified(c)});if(epoch!==privacyEpoch)return;
+      await loadCharacters();if(epoch!==privacyEpoch)return;refreshCharacters();q('[data-make-character="'+CSS.escape(id)+'"]')?.focus();sayChars('“'+c.name+'” now uses that picture as its canon. Choose the character again to use it.');}
+    catch(error){if(epoch!==privacyEpoch)return;if(error.status===409){await loadCharacters();if(epoch!==privacyEpoch)return;refreshCharacters();sayChars('“'+c.name+'” changed somewhere else, so it was reloaded. The canon was not changed.');return;}sayChars('Could not change the canon: '+error.message);}
+  }
   // A failed read keeps the list already shown and says so; the saying that follows a command appends it, so it is not overwritten.
   const STALE=' Your characters could not be refreshed, so the list shown may be out of date.';
   // A chosen character whose words changed (edited here or elsewhere) refreshes the form's who and clothes, which were copied when it was chosen.
@@ -718,7 +724,9 @@
     for(let grew=true;grew;){grew=false;for(const a of pics)if(!family.has(a.id)&&(a.lineage||[]).some(p=>family.has(p?.asset_id??p))){family.add(a.id);grew=true;}}
     const kept=pics.filter(a=>a.id!==c.canon_asset_id&&family.has(a.id)&&(state.review[a.id]??a.review)==='selected'),shown=kept.slice(0,LINEUP_MAX);
     const item=(a,canonTag)=>'<button type="button" class="make-lineup-item'+(canonTag?' make-lineup-canon':'')+'" data-ux-open-asset="'+escape(a.id)+'"><img src="'+thumbUrl(a)+'" alt="'+escape(canonTag?'Canon picture of '+c.name:pictureLabel(a))+'" loading="lazy">'+(canonTag?'<small class="make-lineup-tag">Canon</small>':'')+'</button>';
-    return '<div class="make-lineup-strip">'+item(canon,true)+shown.map(a=>item(a)).join('')+'</div>'+(kept.length?'':'<p class="muted">No kept picture comes from the canon yet. Keep one made from it and it appears here.</p>')
+    // Each kept picture can become the canon: the owner's own press, never inferred (#1205, owner 27 Sep). Saving makes no picture.
+    const cell=a=>'<div class="make-lineup-cell">'+item(a)+'<button type="button" class="make-link" data-make-canon="'+escape(a.id)+'" data-make-canon-of="'+escape(c.id)+'" aria-label="Use this picture as the canon of '+escape(c.name)+'">Use as canon</button></div>';
+    return '<div class="make-lineup-strip">'+item(canon,true)+shown.map(cell).join('')+'</div>'+(kept.length?'':'<p class="muted">No kept picture comes from the canon yet. Keep one made from it and it appears here.</p>')
       +(kept.length>shown.length?'<p class="muted">'+(kept.length-shown.length)+' older kept picture'+(kept.length-shown.length===1?'':'s')+' not shown. The line-up holds the newest '+LINEUP_MAX+'.</p>':'');
   }
   async function fillLineups(){const boxes=[...view.querySelectorAll('[data-make-lineup]')].filter(b=>b.closest('details').open),epoch=privacyEpoch;if(!boxes.length)return;
@@ -1177,6 +1185,7 @@
       say('Your character is chosen: its canon picture as it is'+(goal().intent==='combine'?', with its words.':'.')+(note?' '+note:''));q('#makeComposer textarea,#makeComposer input:not([type=search])')?.focus();return;}
     const saveChar=e.target.closest('[data-make-character-save]');if(saveChar){openCharacterForm(saveChar.dataset.makeCharacterSave,saveChar.closest('[data-run]')?.dataset.run);return;}
     if(e.target.closest('[data-make-character-cancel]')){const a=state.charSave,edit=state.charEdit,move=state.charMigrate;clearCharForms();renderRuns();refreshCharacters();q(edit?'[data-make-character-edit="'+CSS.escape(edit)+'"]':move?'[data-make-migrate="'+CSS.escape(move)+'"]':'[data-make-character-save="'+CSS.escape(a||'')+'"]')?.focus();return;}
+    const canon=e.target.closest('[data-make-canon]');if(canon){void once('character:'+canon.dataset.makeCanonOf,()=>swapCanon(canon.dataset.makeCanonOf,canon.dataset.makeCanon));return;}
     const editChar=e.target.closest('[data-make-character-edit]');if(editChar){openCharacterEdit(editChar.dataset.makeCharacterEdit);return;}
     const awayChar=e.target.closest('[data-make-character-away]');if(awayChar){void once('character:'+awayChar.dataset.makeCharacterAway,()=>characterCommand(awayChar.dataset.makeCharacterAway,'trash'));return;}
     const restoreChar=e.target.closest('[data-make-character-restore]');if(restoreChar){void once('character:'+restoreChar.dataset.makeCharacterRestore,()=>characterCommand(restoreChar.dataset.makeCharacterRestore,'restore'));return;}

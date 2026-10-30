@@ -136,17 +136,26 @@
       }
       for(const column of grid.columns){
         const cell=grid.cells.find(c=>c.row===row.alias&&c.column===column.alias),td=el('td'),content=el('div');content.className='grid-cell';
-        const statuses=(cell?.runs||[]).map(run=>runLabel(run.status));
-        const status=el('p',statuses.length?[...new Set(statuses)].join(' · '):'Not planned');status.className='grid-outcome';content.append(status);
-        const aliases=cell?.candidates||[],outputs=el('div');outputs.className='grid-outputs';
-        for(const alias of aliases){
-          const button=el('button');button.type='button';button.className='grid-candidate';
-          button.dataset.gridCandidate=alias;button.dataset.gridRow=row.alias;button.dataset.gridColumn=column.alias;
-          const canvas=el('canvas');canvas.width=384;canvas.height=384;canvas.setAttribute('aria-hidden','true');
-          button.append(canvas,el('span','Candidate '+alias),el('small','Not reviewed'));
-          button.onclick=()=>selectGridCandidate(alias);outputs.append(button);
+        const runs=cell?.runs||[],many=runs.length>1,aliases=cell?.candidates||[],claimed=new Set(runs.flatMap(run=>run.candidates||[]));
+        const status=el('p',many?runs.length+' runs':runs.length?runLabel(runs[0].status):'Not planned');status.className='grid-outcome';content.append(status);
+        // Run labels are ordinal and status-only: repeated coordinates share engine and seed, so Run N reveals nothing hidden.
+        const groups=many?runs.map((run,i)=>({label:`Run ${i+1} · ${runLabel(run.status)}`,aliases:(run.candidates||[]).filter(a=>aliases.includes(a))})):[{aliases}];
+        const extra=aliases.filter(a=>!claimed.has(a));if(many&&extra.length)groups.push({label:'Other retained images',aliases:extra});
+        for(const group of groups){
+          const outputs=el('div');outputs.className='grid-outputs';let box=outputs;
+          if(many){box=el('div');box.className='grid-run';box.setAttribute('role','group');box.setAttribute('aria-label',group.label);const label=el('p',group.label);label.className='grid-run-label';box.append(label,outputs);}
+          for(const alias of group.aliases){
+            const button=el('button');button.type='button';button.className='grid-candidate';
+            button.dataset.gridCandidate=alias;button.dataset.gridRow=row.alias;button.dataset.gridColumn=column.alias;
+            if(many)button.dataset.gridRun=group.label;
+            const canvas=el('canvas');canvas.width=384;canvas.height=384;canvas.setAttribute('aria-hidden','true');
+            button.append(canvas,el('span','Candidate '+alias),el('small','Not reviewed'));
+            button.onclick=()=>selectGridCandidate(alias);outputs.append(button);
+          }
+          if(many&&!group.aliases.length)box.append(el('p','No retained image'));
+          content.append(box);
         }
-        content.append(outputs,el('p',aliases.length?`${aliases.length} retained image${aliases.length===1?'':'s'}`:'No retained images'));
+        content.append(el('p',aliases.length?`${aliases.length} retained image${aliases.length===1?'':'s'}`:'No retained images'));
         td.append(content);tr.append(td);
       }
       body.append(tr);
