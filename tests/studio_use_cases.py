@@ -20,19 +20,24 @@ live here, one driver per case id, so the matrix reports the pipeline, not the m
 Writes research/ux/use-case-matrix.json and .runtime/ux-use-cases/<case>/NN.png.
 
 Exit code: 0 only when every measured journey reached its success condition with no page
-error, no generation submitted and at least one case run. In live mode the journey results
+error, no unexpected generation submitted and at least one case run. Exactly one fixture journey
+presses Generate, against the synthetic job route, through the named FIXTURE_GENERATE allowance (#1729);
+any other submission, and every submission in live mode, is red. In live mode the journey results
 (PASS/STOP/SKIP/FAIL) are advisory - the deny list refuses most deciding clicks by design - but a submitted generation, a
 page exception or an empty run are still red. The report is written either way, so a red run
 still leaves its evidence; see verdict() and tests/test_use_case_matrix.py.
 """
 from browser_ports import evidence_screenshot
 import argparse
+import contextlib
 import copy
 import json
+import mimetypes
 import os
 import re
 import shutil
 import sys
+import tempfile
 import threading
 import time
 from browser_ports import browser_server
@@ -87,6 +92,23 @@ def submissions(paths):
     return [path for path in paths if path not in DRAWING_ROUTES and GENERATION_ROUTE.search(path)]
 
 
+# The one named exception to "no generation submitted" (#1729): a fixture journey that presses Make's Generate to measure
+# the clicks, keys and waits from a sentence to a kept picture. The allowance is per case and per route, once each, and
+# fixture mode only: the synthetic server fakes the job and nothing reaches ComfyUI. Live mode never consults it.
+FIXTURE_GENERATE = {'make-generate-then-keep': ('/api/jobs',)}
+
+
+def split_submissions(case_id, paths, live=False):
+    """(unexpected, allowed) among the observed POSTs of one case. Only a named fixture case may submit, and only the
+    routes listed for it, once each; a second press, another route or any live-mode submission is unexpected."""
+    remaining = [] if live else list(FIXTURE_GENERATE.get(case_id, ()))
+    unexpected, allowed = [], []
+    for path in submissions(paths):
+        if path in remaining: remaining.remove(path); allowed.append(path)
+        else: unexpected.append(path)
+    return unexpected, allowed
+
+
 def case_totals(records):
     """Roll one case's step records up into the matrix row counters.
 
@@ -96,6 +118,8 @@ def case_totals(records):
     dead = [r for r in records if r.get('dead_end')]
     unexplained = [r for r in records if r.get('dead_end') == 'unexplained-disabled']
     clicks = len([r for r in records if r.get('action') in CLICK_ACTIONS and r.get('performed')])
+    keys = len([r for r in records if r.get('action') == 'press' and r.get('performed')])
+    waits = [r for r in records if r.get('action') == 'wait' and r.get('performed')]
     switches, words, previous, charged = 0, 0, None, set()
     for record in records:
         where = (record.get('page'), record.get('view'))
@@ -103,7 +127,8 @@ def case_totals(records):
         previous = where
         panel = (record.get('page'), record.get('panel'))
         if panel not in charged: words += int(record.get('instruction_words') or 0); charged.add(panel)
-    return {'steps_taken': len(records), 'clicks': clicks, 'page_switches': switches,
+    return {'steps_taken': len(records), 'clicks': clicks, 'keys': keys, 'waits': len(waits),
+            'wait_seconds': round(sum(float(r.get('wait_seconds') or 0) for r in waits), 1), 'page_switches': switches,
             'dead_ends': len(dead), 'unexplained_disabled': len(unexplained),
             'instruction_words': words,
             'instruction_words_peak': max([int(r.get('instruction_words') or 0) for r in records] or [0]),
@@ -293,6 +318,24 @@ def live_allows(action, navigation, control_id='', label='', attributes=(), subm
 # --------------------------------------------------------------------------------------
 # Fixture server: studio_browser_smoke's data plus the extra read routes these journeys need.
 # --------------------------------------------------------------------------------------
+# Set by build_handler(): the synthetic server's hooks and state module (fixture mode only; empty in live mode, so a
+# driver that needs them must branch on c.live first). restoring_fixture() hands the shared state back as it found it.
+SYNTHETIC = {}
+
+
+@contextlib.contextmanager
+def restoring_fixture():
+    """Journeys that write (a kept picture, a review decision, a faked job) leave the shared synthetic state as they found it, so
+    no later case sees their pictures, reviews or jobs. A no-op in live mode, where there is no synthetic state."""
+    fixture = SYNTHETIC.get('fixture')
+    saved = {name: copy.deepcopy(getattr(fixture, name)) for name in ('ASSETS', 'JOBS', 'PLANS')} if fixture else {}
+    posts = len(fixture.POSTS) if fixture else 0   # later drivers assert on fixture.POSTS (#1751 review)
+    try: yield
+    finally:
+        for name, value in saved.items(): getattr(fixture, name)[:] = value
+        if fixture: del fixture.POSTS[posts:]
+
+
 def build_handler():
     import studio_browser_smoke as fixture
     from types import SimpleNamespace
@@ -335,6 +378,51 @@ def build_handler():
                            'job': dict(fixture.JOBS[0], id='candidate-b', elapsed_seconds=13.0,
                                        outputs=[{'filename': 'b.png', 'asset_id': 'asset-1', 'media_type': 'image', 'seed': 43}])}])
     if not any(plan['id'] == keeper['id'] for plan in fixture.PLANS): fixture.PLANS.insert(0, keeper)
+
+    # #1729: the fake job lifecycle behind the one journey that presses Generate. POST /api/jobs queues a synthetic job, its
+    # first poll reports it running and its second completes it with one output whose picture joins the Workspace list.
+    # Nothing reaches ComfyUI; the job and picture are removed again by restoring_fixture() when the journey ends.
+    generated = {}
+
+    def queue_job(data):
+        job = dict(data, id='fixture-gen-%d' % (len(generated) + 1), status='queued', created_at=int(time.time()), outputs=[], batch_count=int(data.get('batch_count') or 1),
+                   prompt_ids=[], message='Synthetic job; no model ran.', preset_name=next((p['name'] for p in fixture.CATALOG['presets'] if p['id'] == data.get('preset_id')), ''))
+        generated[job['id']] = 0; fixture.JOBS.insert(0, job)
+        return job
+
+    def advance_job(job):
+        generated[job['id']] += 1
+        if generated[job['id']] == 1: job.update(status='running', started_at=time.time(), message='Synthetic run; no model ran.')
+        elif job['status'] != 'completed':
+            asset = dict(fixture.ASSETS[1], id=job['id'].replace('fixture-gen', 'asset-gen'), title='Synthetic picture · ' + str(job.get('label') or 'Make'), review='unreviewed', job_id=job['id'],
+                         created_at=int(time.time()), metadata_revision=0, sha256='b' * 64, preset_name=job['preset_name'], tags=['fixture'], source={'seed': 42})
+            fixture.ASSETS.insert(0, asset)
+            job.update(status='completed', elapsed_seconds=1.0, message='Completed fixture, not a model run',
+                       outputs=[{'filename': 'generated.png', 'asset_id': asset['id'], 'media_type': 'image', 'seed': 42}])
+        return job
+
+    # #1729: the Review desk journey runs the real Production.review / ReviewDesk store against synthetic retained images, as
+    # tests/review_http_fixture.py does, so the desk, its blind aliases and its assessment saves are the shipped ones.
+    desk = {}
+
+    def open_desk():
+        """A fresh study with three candidates (three recorded engines, one seed: the shape that offers the Grid) listed as awaiting review."""
+        from review_fixture import FixtureStudio, seed
+        from production import fingerprint
+        if desk: desk['holder'].cleanup(); fixture.PLANS[:] = [plan for plan in fixture.PLANS if plan['id'] != desk['id']]
+        holder = tempfile.TemporaryDirectory(prefix='studio-use-case-review-', ignore_cleanup_errors=True)
+        studio = FixtureStudio(Path(holder.name)); identifier = seed(studio, count=3); project = studio.production._get(identifier)
+        for stage, engine in zip(project['plan']['stages'], ('engine-copper', 'engine-indigo', 'engine-jade')): stage.update(engine=engine, seed=712031, label='Do not derive topology from this label')
+        project['plan']['sha256'] = fingerprint({k: v for k, v in project['plan'].items() if k != 'sha256'})
+        with studio.production.connect() as db: db.execute('UPDATE projects SET plan=? WHERE id=?', (json.dumps(project['plan']), identifier))
+        (studio.production.root / identifier / 'plan.json').write_text(json.dumps(project['plan']))
+        desk.update(id=identifier, studio=studio, holder=holder)
+        fixture.PLANS.insert(0, dict(id=identifier, name='Lantern keeper · three candidates', kind='comparison', axis='engine', values=['A', 'B', 'C'],
+                                     # Candidate outputs, as a real finished comparison lists them: the Review link needs them (#1735).
+                                     stages=[{'label': alias, 'job': {'status': 'completed', 'outputs': [{'asset_id': 'desk-' + alias.lower(), 'media_type': 'image'}]}} for alias in 'ABC'],
+                                     state={'status': 'awaiting_review', 'message': 'Synthetic finished comparison; no model ran.'}, budget={'allowance': 3, 'reserved': 3}))
+        return identifier
+    SYNTHETIC.update(open_desk=open_desk, fixture=fixture, desk=desk)
 
     # The shipped looks as /api/looks lists them (app/looks.py listing), and the real composer for Prepare (#1221).
     import looks
@@ -401,8 +489,18 @@ def build_handler():
                 return self.json(dict(version=2, preset_id=job['preset_id'], controls=job['controls'],
                                       continuation=job.get('continuation'), references=job.get('references', []),
                                       parent_assets=job.get('parent_assets', []), batch_count=1))
+            if path.startswith('/api/jobs/') and path.rsplit('/', 1)[-1] in generated:
+                return self.json(advance_job(next(job for job in fixture.JOBS if job['id'] == path.rsplit('/', 1)[-1])))
             if path.startswith('/api/jobs/'):
                 return self.json(next((job for job in fixture.JOBS if job['id'] == path.rsplit('/', 1)[-1]), {'error': 'Missing synthetic job'}))
+            if path.startswith('/api/assets/') and path.endswith('/thumb'):   # the picture itself stands in for its thumbnail
+                asset = next((a for a in fixture.ASSETS if a['id'] == path.split('/')[3]), None)
+                if asset: self.path = '/api/assets/%s/file' % asset['id']
+            if desk and path.startswith('/api/production/%s/files/' % desk['id']):
+                try: file = desk['studio'].production.file(desk['id'], path.split('/files/', 1)[1])
+                except (ValueError, OSError, KeyError) as error: return self.json({'error': str(error)}, 400)
+                raw = file.read_bytes(); self.send_response(200); self.send_header('Content-Type', mimetypes.guess_type(file.name)[0] or 'application/octet-stream')
+                self.send_header('Content-Length', str(len(raw))); self.end_headers(); self.wfile.write(raw); return
             return super().do_GET()
 
         def do_POST(self):
@@ -515,9 +613,17 @@ def build_handler():
                             state={'status': 'planned', 'message': 'Export prepared in the fixture. Start it explicitly.'},
                             stages=[], budget={'allowance': 0, 'reserved': 0})
                 fixture.PLANS.insert(0, plan); return self.json(plan)
+            if path == '/api/jobs':
+                data = json.loads(self.rfile.read(length) or b'{}'); fixture.POSTS.append({'path': path, 'data': data})
+                if not isinstance(data.get('controls'), dict) or not any(p['id'] == data.get('preset_id') for p in fixture.CATALOG['presets']):
+                    return self.json({'error': 'The fixture accepts one catalog recipe with its controls and nothing else'}, 400)
+                return self.json(queue_job(data))
             if path.startswith('/api/production/') and path.endswith('/review'):
                 data = json.loads(self.rfile.read(length) or b'{}'); fixture.POSTS.append({'path': path, 'data': data})
                 identifier = path.split('/')[3]
+                if desk and identifier == desk['id']:
+                    try: return self.json(desk['studio'].production.review(identifier, data))
+                    except (ValueError, OSError, KeyError) as error: return self.json({'error': str(error)}, 400)
                 for plan in fixture.PLANS:
                     if plan['id'] == identifier:
                         plan['state'] = dict(plan['state'], status='reviewed', message='Choice recorded in the fixture.',
@@ -686,6 +792,36 @@ class CaseRun:
                   'control': description, 'control_name': description, 'control_missing': not ok,
                   'control_hidden': False, 'enabled': None, 'visible_before_scroll': None, 'disabled_reason': '',
                   'performed': True, 'skipped_live': '', 'failure': '' if ok else detail}
+        return self._finish(record)
+
+    def key(self, key, note='', wait=250, supplementary=False):
+        """One key pressed with the focus where it already is (K, W, X, an arrow): counted as a key, never as a click.
+        Live mode refuses it like any press, so a journey that keeps or rejects by keyboard stops before it writes."""
+        step = {'intent': note, 'expect': 'The key does what its legend says.'} if supplementary else self._intent()
+        record = {'index': len(self.records) + 1, 'intent': step['intent'], 'expect': step.get('expect', ''),
+                  'action': 'press', 'selector': 'keyboard:' + key, 'typed': key, 'note': note, 'control': 'keyboard', 'control_name': key,
+                  'control_missing': False, 'control_hidden': False, 'enabled': True, 'visible_before_scroll': True, 'disabled_reason': '',
+                  'performed': False, 'skipped_live': '', 'failure': ''}
+        blocked = live_allows('press', False, selector='keyboard:' + key) if self.live else ''
+        if blocked:
+            record['skipped_live'] = blocked
+            return self._finish(record)
+        try: self.page.keyboard.press(key); record['performed'] = True
+        except Exception as error: record['failure'] = str(error).splitlines()[0][:200]
+        self.page.wait_for_timeout(wait)
+        return self._finish(record)
+
+    def wait_for(self, description, condition, timeout=15000, note='', supplementary=False):
+        """A wait the person sits through: nothing is pressed and the clock runs until the page shows `condition` (a JS expression).
+        Counted as a wait with its seconds; one that never ends is a missing control. Not for sync points the person never feels."""
+        step = {'intent': note or description, 'expect': 'The page shows the result.'} if supplementary else self._intent()
+        started = time.time()
+        try: self.page.wait_for_function(condition, timeout=timeout, polling=100); ok, failure = True, ''
+        except Exception as error: ok, failure = False, 'still waiting after %d s: %s' % (timeout // 1000, str(error).splitlines()[0][:120])
+        record = {'index': len(self.records) + 1, 'intent': step['intent'], 'expect': step.get('expect', ''),
+                  'action': 'wait', 'selector': description, 'typed': None, 'note': note or description, 'control': description, 'control_name': description,
+                  'control_missing': not ok, 'control_hidden': False, 'enabled': None, 'visible_before_scroll': None, 'disabled_reason': '',
+                  'performed': ok, 'skipped_live': '', 'failure': failure, 'wait_seconds': round(time.time() - started, 1)}
         return self._finish(record)
 
     # -- helpers used by drivers --------------------------------------------------------
@@ -1976,6 +2112,112 @@ def _native_export(c):
     return bool(fresh), detail
 
 
+@driver('make-generate-then-keep')
+def _make_generate(c):
+    """#1729, #313: the journey no other case measures. Make's own Generate is pressed against the synthetic job route (the one
+    named FIXTURE_GENERATE allowance; live mode stops here, refused), the fake job runs queued, running, completed, the run card
+    shows the picture, and K on it keeps it with a next step beside it. Counts the clicks, keys and waits from first press to keeper."""
+    with restoring_fixture():
+        c.boot('#make')
+        c.need_recipe('wai')
+        c.act('[data-make-goal="character"]', navigation=True, note='say this is an anime character')
+        c.act('[data-make-look="look-wai-fantasy-portrait"]', navigation=True, note='choose the look by its picture')
+        c.act('#makeScene', 'fill', typed=MAKE_SCENE, note='describe the picture in plain words')
+        c.stop_before(c.act('#makeGenerate', note='press Generate'), 'stopped at Generate: pressing it queues a job on the engine')
+        c.wait_for('the picture to be painted', "(() => { const run = document.querySelector('[data-run] .make-run-state'); return !!run && run.classList.contains('completed') && "
+                   "[...document.querySelectorAll('.make-outputs img')].some(i => i.complete && i.naturalWidth > 0); })()", timeout=30000)
+        c.act('.make-outputs figure .make-open', 'press', typed='k', note='keep the picture with K')
+        c.page.wait_for_function("!!document.querySelector('[data-make-review=\"selected\"][aria-pressed=\"true\"]')", timeout=8000)   # the save lands; not a wait the person feels
+        step = c.page.evaluate("""() => { const next = document.querySelector('.make-selected [data-make-from="restyle"]'), keep = document.querySelector('[data-make-review="selected"]');
+          const box = next?.getBoundingClientRect(); return {next: !!next && !!box && box.width > 0 && box.height > 0, kept: keep?.getAttribute('aria-pressed') === 'true',
+          status: document.querySelector('#makeStatus')?.textContent || ''}; }""")
+        c.act('.make-selected [data-make-from="restyle"]', 'read', note='a next step is on the kept picture')
+        fixture = SYNTHETIC['fixture']
+        posted = [post for post in fixture.POSTS if post['path'] == '/api/jobs']
+        saved = [a['review'] for a in fixture.ASSETS if (a.get('job_id') or '').startswith('fixture-gen')]
+        ok = step['kept'] and step['next'] and len(posted) == 1 and saved == ['selected']
+        return ok, 'jobs posted %d; kept in the library %s; Keep pressed %s; next step visible %s; status %r' % (len(posted), saved, step['kept'], step['next'], step['status'])
+
+
+@driver('review-desk-by-keyboard')
+def _review_desk(c):
+    """#1729: the Review desk with three candidates, assessed with K, W and X and arrow keys, then a winner chosen and the next
+    step shown. The desk is the shipped one (Production.review over synthetic retained images); live mode stops at Prepare review."""
+    with restoring_fixture():
+        study = None if c.live else SYNTHETIC['open_desk']()
+        c.boot('#production')
+        c.act('#productionList', 'read', note='%d studies listed' % c.wait_for_studies())
+        study = c.pick(study, '#productionList [data-project]', 'finished comparison awaiting review with candidate pictures',
+                       keep="(p => !!p && p.kind === 'comparison' && ['awaiting_review', 'reviewed'].includes((p.state || {}).status)"
+                            " && (p.stages || []).some(s => ((s.job || {}).outputs || []).some(o => o.asset_id)))"
+                            "(productionPlans.find(p => p.id === id))")
+        c.act('#productionList [data-project="%s"]' % study, note='the finished comparison')
+        # This study's own Review link: the list carries one per awaiting study (#1735), so the first match may be another study.
+        c.act('a[href="/review.html?project=%s"]' % study, navigation=True, wait=900, note='open the review desk')
+        c.stop_before(c.act('#open', note='prepare the blind review'), 'stopped before Prepare review: that snapshots the retained pictures')
+        c.page.wait_for_function('!document.querySelector("#desk").hidden', timeout=8000)
+        c.act('#presentationGrid', navigation=True, note='switch to the grid: the keys work on its candidates')
+        c.act('[data-grid-candidate]', note='pick the first candidate')
+        reviewed = lambda n: c.page.wait_for_function("n => document.querySelector('#desk').getAttribute('aria-busy') === 'false' && "
+                                                      "[...document.querySelectorAll('#progress .progress-row span')].filter(s => s.textContent !== 'Not reviewed').length === n", arg=n, timeout=8000)
+        c.stop_before(c.key('k', note='K keeps the first candidate'), 'stopped before the first assessment: that saves a review revision')
+        reviewed(1)
+        c.key('ArrowDown', note='arrow down moves to the next candidate')
+        c.key('w', note='W marks it needs work')
+        reviewed(2)
+        c.key('ArrowDown', note='arrow down moves to the last candidate')
+        c.key('x', note='X marks it not this')
+        reviewed(3)
+        marks = c.page.evaluate("[...document.querySelectorAll('#progress .progress-row')].map(r => [r.querySelector('b').textContent.replace('Candidate ', ''), r.querySelector('span').textContent])")
+        winner = next((alias for alias, verdict in marks if verdict == 'Keep'), '')
+        # The desk will not record a winner until its stated-constraints check passes, and K saves the verdict alone (measured, #1729):
+        # opening the winner, passing that check and saving it are three more steps between the last key and the decision.
+        c.act('[data-grid-candidate="%s"]' % winner, note='open the kept candidate again')
+        c.act('#check-constraints', 'select', typed='pass', note='confirm it meets the stated constraints')
+        c.act('#saveAssessment', note='save that assessment')
+        c.page.wait_for_function('document.querySelector("#desk").getAttribute("aria-busy") === "false" && document.querySelector("#assessmentStatus").textContent === "Saved"', timeout=8000)
+        c.page.once('dialog', lambda dialog: dialog.accept())
+        c.act('#reveal', note='reveal the settings behind the candidates')
+        c.page.wait_for_function('!document.querySelector("#decision").hidden', timeout=8000)
+        c.act('#selected', 'select', typed=winner, note='choose the kept candidate as the winner')
+        c.act('#summary', 'fill', typed='Candidate %s keeps the silhouette and the lantern glow; the other two lose the face.' % winner, note='say why')
+        c.act('#finalize', note='record the decision')
+        c.page.wait_for_function('document.querySelector("#phase").textContent === "Decision recorded"', timeout=8000)
+        c.act('#export', 'read', note='the next step: export the review evidence')
+        state = c.page.evaluate("({phase: document.querySelector('#phase').textContent, exportable: !document.querySelector('#export').disabled, rows: document.querySelector('#progress').innerText})")
+        stored = {} if c.live else SYNTHETIC['desk']['studio'].production.reviews.inspect(SYNTHETIC['desk']['id'])
+        ok = (state['phase'] == 'Decision recorded' and state['exportable'] and bool(winner) and sorted(v for _, v in marks) == ['Keep', 'Needs work', 'Not this']
+              and (c.live or (stored.get('finalized') and stored.get('selected') == winner)))
+        return ok, 'assessed %s; winner %s; desk reads %r; Export review evidence enabled %s' % (marks, winner, state['phase'], state['exportable'])
+
+
+@driver('library-review-next-by-keyboard')
+def _library_review_next(c):
+    """#1729: Library > Review next with three unreviewed pictures, decided with K, W and X; each decision saves and moves on, and the
+    queue ends. Live mode stops before the first decision."""
+    with restoring_fixture():
+        fixture = SYNTHETIC.get('fixture')
+        if fixture:  # exactly three pictures wait for review, whatever an earlier case did to the shared pictures
+            for asset in fixture.ASSETS: asset['review'] = 'unreviewed' if asset['id'] in ('asset-0', 'asset-3', 'asset-5') else 'selected'
+        c.boot('#assets')
+        c.page.wait_for_timeout(600)
+        c.act('#assetGrid', 'read', note='saved pictures listed')
+        if c.live and not c.page.locator('#reviewNext').is_enabled(): raise LiveCaseSkip('no unreviewed picture in the Library', 'missing')
+        c.act('#reviewNext', navigation=True, note='press Review next')
+        c.page.wait_for_function("!!document.querySelector('#assetDialog[open]') && typeof assetQueue !== 'undefined' && !!assetQueue && !assetDetailBusy", timeout=8000)
+        total = c.page.evaluate('assetQueue.ids.length')
+        decisions = (('k', 'selected'), ('w', 'needs_work'), ('x', 'rejected'))
+        for number, (key, review) in enumerate(decisions, 1):
+            record = c.key(key, note='%s decides picture %d of %d' % (key.upper(), number, total))
+            if number == 1: c.stop_before(record, 'stopped before the first decision: it saves the picture\'s review')
+            c.page.wait_for_function("n => n === 3 ? assetQueue === null : !!assetQueue && assetQueue.index === n && !assetDetailBusy && activeAsset?.id === assetQueue.ids[n]", arg=number, timeout=8000)
+        c.act('#reviewNext', 'read', note='the next step: nothing is left to review')
+        left = c.page.evaluate("({button: document.querySelector('#reviewNext').textContent, off: document.querySelector('#reviewNext').disabled, text: document.body.innerText.includes('Review queue finished')})")
+        reviews = {a['id']: a['review'] for a in fixture.ASSETS if a['id'] in ('asset-0', 'asset-3', 'asset-5')} if fixture else {}
+        ok = total == 3 and left['off'] and left['button'] == 'Nothing to review' and (not fixture or reviews == {'asset-0': 'selected', 'asset-3': 'needs_work', 'asset-5': 'rejected'})
+        return ok, '%d in the queue; reviews saved %s; Review next reads %r; queue finished %s' % (total, reviews, left['button'], left['text'])
+
+
 # --------------------------------------------------------------------------------------
 # Runner
 # --------------------------------------------------------------------------------------
@@ -2014,9 +2256,9 @@ def run_case(spec, page, origin, live, screenshots, island_default=False):
 
 
 def table(rows):
-    header = ['case', 'int', 'took', 'clk', 'sw', 'dead', 'unexp', 'words', 'result']
+    header = ['case', 'int', 'took', 'clk', 'key', 'wait', 'sw', 'dead', 'unexp', 'words', 'result']
     body = [[row['id'][:34], str(row['steps_intended']), str(row['steps_taken']), str(row['clicks']),
-             str(row['page_switches']), str(row['dead_ends']), str(row['unexplained_disabled']),
+             str(row.get('keys', 0)), '%ds' % round(row.get('wait_seconds', 0)) if row.get('waits') else '-', str(row['page_switches']), str(row['dead_ends']), str(row['unexplained_disabled']),
              str(row['instruction_words']), case_result(row)] for row in rows]
     widths = [max(len(header[i]), *(len(line[i]) for line in body)) for i in range(len(header))] if body else [len(h) for h in header]
     out = ['  '.join(header[i].ljust(widths[i]) for i in range(len(header))),
@@ -2063,7 +2305,7 @@ def main(argv=None):
         thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
         origin = 'http://127.0.0.1:' + str(server.server_port)
 
-    rows, errors = [], []
+    rows, errors, unexpected, allowed = [], [], [], {}
     started = time.time()
     try:
         with sync_playwright() as playwright:
@@ -2081,7 +2323,11 @@ def main(argv=None):
                 page.on('pageerror', lambda error, case=spec['id']: errors.append(case + ': ' + str(error)[:200]))
                 page.on('request', lambda request: OBSERVED_POSTS.append(urlsplit(request.url).path) if request.method == 'POST' else None)
                 print('--- ' + spec['id'], flush=True)
+                seen = len(OBSERVED_POSTS)
                 rows.append(run_case(spec, page, origin, live, args.screenshots, island_default=args.island_default))
+                refused, permitted = split_submissions(spec['id'], OBSERVED_POSTS[seen:], live)
+                unexpected += refused; rows[-1]['generation_submitted'] = len(permitted)
+                if permitted: allowed[spec['id']] = permitted
                 print(case_result(rows[-1]) + ' ' + spec['id'] + ' · ' + (rows[-1]['detail'] or rows[-1]['failure']), flush=True)
                 page.close(); context.close()
             browser.close()
@@ -2089,12 +2335,15 @@ def main(argv=None):
         if server: server.shutdown(); server.server_close()
         if thread: thread.join(timeout=5)
 
-    submitted = submissions(OBSERVED_POSTS)
+    # Total gate (#1751 review): a submission that lands after a case's slice (during page or context close) still counts.
+    surplus = len(submissions(OBSERVED_POSTS)) - len(unexpected) - sum(len(paths) for paths in allowed.values())
+    if surplus > 0: unexpected += submissions(OBSERVED_POSTS)[-surplus:]
+    submitted = unexpected   # only what no FIXTURE_GENERATE entry allows is red; `allowed` is reported beside it
     matrix = {'version': 1, 'refs': data.get('refs'), 'mode': 'live-readonly' if live else 'fixture',
               'origin': origin if live else 'fixture server', 'seconds': round(time.time() - started, 1),
               'presentation': 'candidate-island-default' if args.island_default else 'normal', 'zoom_equivalent_percent': args.zoom,
               'cases': len(rows), **outcome_counts(rows),
-              'generation_submissions': len(submitted), 'posts_observed': len(OBSERVED_POSTS),
+              'generation_submissions': len(submitted), 'generation_submissions_allowed': allowed, 'posts_observed': len(OBSERVED_POSTS),
               'post_routes': sorted(set(OBSERVED_POSTS)), 'page_errors': errors,
               'screenshots': str(args.screenshots.relative_to(ROOT)).replace('\\', '/') if args.screenshots.is_relative_to(ROOT) else str(args.screenshots),
               'rows': rows}
@@ -2105,15 +2354,15 @@ def main(argv=None):
     print()
     print('Top friction (dead ends, then clicks):')
     for row in friction_points(rows)[:5]:
-        print('  %-34s dead=%d clicks=%d unexplained=%d words=%d' % (row['id'], row['dead_ends'], row['clicks'], row['unexplained_disabled'], row['instruction_words']))
+        print('  %-34s dead=%d clicks=%d keys=%d waits=%d (%ss) unexplained=%d words=%d' % (row['id'], row['dead_ends'], row['clicks'], row.get('keys', 0), row.get('waits', 0), row.get('wait_seconds', 0), row['unexplained_disabled'], row['instruction_words']))
     print()
     if live:
         for row in rows:
             if row['skip_kind']: print('  %-4s %-34s %s' % (case_result(row), row['id'], row['skip_reason']))
         print()
-    print('mode=%s cases=%d passed=%d stopped=%d skipped=%d failed=%d reached=%d generation submissions=%d of %d browser POSTs observed, page errors=%d' % (
+    print('mode=%s cases=%d passed=%d stopped=%d skipped=%d failed=%d reached=%d generation submissions=%d (plus %s allowed to the named fixture journeys) of %d browser POSTs observed, page errors=%d' % (
         matrix['mode'], matrix['cases'], matrix['passed'], matrix['stopped'], matrix['skipped'], matrix['failed'], matrix['reached'],
-        matrix['generation_submissions'], len(OBSERVED_POSTS), len(errors)))
+        matrix['generation_submissions'], ', '.join('%s x%d' % (case, len(paths)) for case, paths in allowed.items()) or 'none', len(OBSERVED_POSTS), len(errors)))
     print('POST routes: ' + (', '.join(matrix['post_routes']) or 'none'))
     print('matrix -> ' + str(args.out))
     reasons = verdict(matrix)

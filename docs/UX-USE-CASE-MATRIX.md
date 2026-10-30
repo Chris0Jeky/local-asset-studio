@@ -1,5 +1,35 @@
 # UX use-case matrix
 
+## Generate and keyboard review journeys — 30 October 2026 (#1729)
+
+Three fixture journeys measure what the earlier ones could not: pressing Generate, and deciding by keyboard.
+The runner now also counts **keys** (a key pressed with no control named: K, W, X, an arrow, or a press on a
+focused control) and **waits** (the person's own wait, with its seconds) beside clicks. Fixture mode used to treat
+any generation submission as red; exactly one case, `make-generate-then-keep`, may now submit, once, to `/api/jobs`
+on the synthetic server (the named `FIXTURE_GENERATE` allowance). Any other case, a second press, another route and
+every live-mode submission is still red; the report carries the allowed ones beside `generation_submissions`.
+Nothing reaches ComfyUI: the fixture fakes the job (queued, running on the first poll, completed on the second) and
+the Review desk journey runs the shipped `Production.review` over synthetic retained images.
+
+| Journey | Held fixed | Measured result |
+| --- | --- | --- |
+| `make-generate-then-keep` (new) | Anime character, the WAI look, one sentence, one fake job with one picture | 3 clicks + 1 typed sentence + 1 key (K), 1 wait of 4.8 s (two 2.5 s polls), 7 steps, 0 dead ends; PASS |
+| `review-desk-by-keyboard` (new) | Study of three candidates (three recorded engines, one seed), real desk store | 11 clicks, 5 keys (K, down, W, down, X), 0 waits, 19 steps, 0 dead ends; PASS |
+| `library-review-next-by-keyboard` (new) | Three unreviewed pictures | 1 click (Review next), 3 keys (K, W, X), 6 steps, 0 dead ends; PASS |
+
+What the numbers say. Make reaches a kept picture in three presses and a sentence, with the 4.8 s wait being the
+poll interval (the fake job is instant). The Library queue is the cheapest keyboard review: one click, then one key
+per picture. The Review desk is not: K, W and X only work on its Grid tiles (so **Grid** is one more click), and K
+saves the verdict alone while the desk refuses a winner until the stated-constraints check passes, so choosing the
+winner takes three more clicks (open it, set the check to pass, save) after the last key, plus Reveal and Finalize.
+Those are measured costs, not changed behavior. In live mode all three stop before their first write (Generate,
+Prepare review, the first K), checked against the fixture server served as a loopback "live" origin.
+
+`python tests/studio_use_cases.py`: 29/29 PASS with zero unexpected generation submissions, one allowed (the named
+case) and zero page errors. Two earlier sweeps on this branch failed `prompt-lab-to-create` ("brief field holds 0
+characters", the same Prompt Lab flake the 30 October Combine note records) and a third sweep passed it. These runs
+establish structure and cost on synthetic data, not rendered quality or owner acceptance.
+
 ## Combine: runs as a Grid — 30 October 2026
 
 **Runs for these pictures** gains a **Grid** switch. Rows are recipes and columns are seeds, every cell one
