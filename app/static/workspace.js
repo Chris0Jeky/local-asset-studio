@@ -302,7 +302,7 @@ function resolveAssetConflict(keepEdits) {
   for(const [key,id] of Object.entries(assetFormIds))$('#'+id).value=keepEdits && local[key]!==previous[key]?local[key]:remote[key];
   for(const key of [...Object.keys(assetFormIds),'metadata_revision','favorite','trashed_at'])activeAsset[key]=current[key];
   if(Object.hasOwn(current,'archived_at'))activeAsset.archived_at=current.archived_at;
-  assetDetailBaseline=remote;assetDetailConflict=null;renderAssetConflict();assetDetailControls();
+  assetDetailBaseline=remote;assetDetailConflict=null;renderAssetConflict();assetDetailControls();if(!assetQueue)renderAssetQueue();
   $('#assetFavorite').textContent=activeAsset.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=activeAsset.trashed_at!=null?'Restore':'Move to Trash';$('#assetArchive').textContent=activeAsset.archived_at!=null?'Return to active':'Archive';
   assetDetailStatus(keepEdits?'Your edits are rebased for review, not saved. Check the fields, then Save details.':'Saved snapshot loaded. Nothing was written.');
   retainAssetDraft();
@@ -399,7 +399,7 @@ function applyAssetSaveReceipt(operation,result) {
     else rememberAssetDetails();
   }catch(error){assetDetailPending=operation;throw error;}
   $('#assetFavorite').textContent=activeAsset.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=activeAsset.trashed_at!=null?'Restore':'Move to Trash';$('#assetArchive').textContent=activeAsset.archived_at!=null?'Return to active':'Archive';
-  renderAssetConflict();
+  renderAssetConflict();if(!assetQueue)renderAssetQueue();
   if(changed)assetDetailStatus('The earlier save is confirmed. Current saved metadata differs or is unavailable; review it alongside your retained draft.',true);
   else if(operation.kind==='trash'){
     const text=operation.command.action==='trash'?'Moved to Trash. Restore it at any time.':'Asset restored.';
@@ -747,7 +747,17 @@ function renderAssetSelection() {
 }
 function renderAssetQueue() {
   const panel=$('#assetQueue');
-  panel.hidden=!assetQueue;
+  // Outside the queue the same panel carries a verdict-only row for the open picture (#1725): saved mark pressed, same buttons and K/W/X keys, no advance.
+  const solo=!assetQueue&&!!activeAsset&&!!assetDetailBaseline;
+  panel.hidden=!assetQueue&&!solo;
+  if(solo){
+    const focused=document.activeElement?.closest?.('#assetQueue [data-queue-review]')?.dataset.queueReview,mark=assetReviewLabels[activeAsset.review]?activeAsset.review:'unreviewed';
+    panel.innerHTML='<div class="asset-queue-head"><b>Review</b><span role="status" aria-live="polite">'+(mark==='unreviewed'?'Not reviewed yet':'Marked '+assetReviewLabels[mark])+'</span></div>'+
+      '<div class="asset-queue-actions" role="group" aria-label="Review this picture">'+[['selected','Keep','K'],['needs_work','Needs work','W'],['rejected','Not this','X']].map(([value,label,key])=>'<button type="button" data-queue-review="'+value+'" aria-pressed="'+(mark===value?'true':'false')+'">'+label+' <kbd>'+key+'</kbd></button>').join('')+'</div>'+
+      '<small class="asset-queue-legend">K Keep · W Needs work · X Not this. Saves through Save details and stays on this picture. Typing in a field is never a shortcut.</small>';
+    if(focused)panel.querySelector?.('[data-queue-review="'+focused+'"]')?.focus?.({preventScroll:true});
+    return;
+  }
   if(!assetQueue){panel.innerHTML='';return;}
   panel.innerHTML='<div class="asset-queue-head"><b>Review queue</b><span role="status" aria-live="polite">'+(assetQueue.index+1)+' of '+assetQueue.ids.length+'</span></div>'+
     '<div class="asset-queue-actions"><button type="button" data-queue-review="selected">Keep <kbd>K</kbd></button><button type="button" data-queue-review="needs_work">Needs work <kbd>W</kbd></button><button type="button" data-queue-review="rejected">Not this <kbd>X</kbd></button><button type="button" data-queue-skip>Skip <kbd>S</kbd></button><button type="button" data-queue-step="-1">← Previous</button><button type="button" data-queue-step="1">Next →</button><button type="button" data-queue-exit>Leave queue</button></div>'+
@@ -775,16 +785,19 @@ function assetQueueStep(delta) {
   const opened=openAsset(queue.ids[next],()=>owns()&&queue.index===previous);return opened?.then?opened.then(finish):finish(opened);
 }
 async function assetQueueDecide(review) {
-  if(!assetQueue || !activeAsset || assetDetailBusy || !assetReviewLabels[review] || review==='unreviewed')return false;
+  // Without a queue this is the open picture's own verdict row: the same save, no advance (#1725).
+  const solo=!assetQueue;
+  if(!activeAsset || !assetDetailBaseline || assetDetailBusy || !assetReviewLabels[review] || review==='unreviewed')return false;
   // A shortcut must never re-send an unrelated unconfirmed command as if it were this decision.
-  if(assetDetailPending || assetDetailConflict){assetDetailStatus('Resolve the earlier save for this asset before recording a queue decision.',true);return false;}
-  if(assetQueue.ids[assetQueue.index]!==activeAsset.id)return false;
+  if(assetDetailPending || assetDetailConflict){assetDetailStatus('Resolve the earlier save for this asset before recording '+(solo?'a review mark.':'a queue decision.'),true);return false;}
+  if(!solo&&assetQueue.ids[assetQueue.index]!==activeAsset.id)return false;
   $('#assetReview').value=review;renderAssetReasons();
   const target=activeAsset.id;
   const saved=await saveAssetDetails();
   // Only a confirmed save advances: an unconfirmed, conflicted or refused save keeps this asset and its reason on screen.
   if(!saved || assetDetailBusy || assetDetailPending || assetDetailConflict || activeAsset?.id!==target)return false;
   if(assetRecord(target)?.review!==review)return false;
+  if(solo){if(!assetDetailDirty())assetDetailStatus('Marked '+assetReviewLabels[review]+'. Saved for this picture.');return true;}
   return assetQueueStep(1);
 }
 function assetTagList(value=$('#assetTags').value){
@@ -1168,7 +1181,7 @@ function openAsset(id,owns=null) {
     for(const [key,field] of Object.entries(assetFormIds))$('#'+field).value=retained.draft[key];
     assetDetailPending=retained.operation?{...retained.operation,id,epoch:assetDetailEpoch}:null;assetDetailConflict=retained.conflict;
     $('#assetFavorite').textContent=activeAsset.favorite?'★ Favorited':'☆ Favorite';$('#assetTrash').textContent=activeAsset.trashed_at!=null?'Restore':'Move to Trash';$('#assetArchive').textContent=activeAsset.archived_at!=null?'Return to active':'Archive';
-    renderAssetConflict();renderAssetSaveRecovery();assetDetailControls();renderAssetReasons();assetDetailStatus('Retained draft restored. No save was sent. Review it or check the earlier save status.');
+    renderAssetConflict();renderAssetSaveRecovery();assetDetailControls();renderAssetReasons();if(!assetQueue)renderAssetQueue();assetDetailStatus('Retained draft restored. No save was sent. Review it or check the earlier save status.');
   }
   if(!$('#assetDialog').open){
     // Closing returns focus to what opened the dialog (normally the card), or to that asset's card after a re-render.
@@ -1244,13 +1257,15 @@ $('#assetDialog').addEventListener('close',()=>{
     card?.focus?.({preventScroll:true});
   }
 });
-// Queue shortcuts never fire while an editor has focus, and never while a decision is in flight.
+// K/W/X (and the queue's S and arrows) never fire while an editor has focus, and never while a decision is in flight.
+// Outside the queue only K/W/X act, on the open picture, and Shift keeps them out.
 document.addEventListener('keydown',e=>{
-  if(!assetQueue || !$('#assetDialog').open || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey)return;
+  if(!activeAsset || !$('#assetDialog').open || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || (!assetQueue&&e.shiftKey))return;
   const tag=(e.target?.tagName||'').toUpperCase();
   if(['INPUT','TEXTAREA','SELECT'].includes(tag) || e.target?.isContentEditable)return;
   const key=(e.key||'').toLowerCase();
   if(assetReviewShortcuts[key]){e.preventDefault();void assetQueueDecide(assetReviewShortcuts[key]);return;}
+  if(!assetQueue)return;
   if(key==='s'){e.preventDefault();assetDetailStatus('Skipped. No review was saved for this asset.');assetQueueStep(1);return;}
   if(e.key==='ArrowRight'){e.preventDefault();assetQueueStep(1);return;}
   if(e.key==='ArrowLeft'){e.preventDefault();assetQueueStep(-1);}

@@ -28,3 +28,9 @@ class AssetMetadataFrontend(unittest.TestCase):
         result=subprocess.run([shutil.which('node'),str(Path(__file__).with_name('asset_recovery_contracts.cjs'))],capture_output=True,text=True,timeout=20)
         self.assertEqual(result.returncode,0,result.stdout+result.stderr)
         self.assertIn('Asset reload recovery contracts passed: 14',result.stdout)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js required')
+    def test_verdict_row_outside_the_queue(self):
+        result=subprocess.run([shutil.which('node'),str(Path(__file__).with_name('asset_verdict_row.cjs'))],capture_output=True,text=True,timeout=20)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertIn('Asset verdict row contracts passed: 7',result.stdout)
