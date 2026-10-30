@@ -100,3 +100,14 @@ test('applying and switching never submit a job or fetch anything', async () => 
   assert.equal(p.nodes['#positive'].value, 'A lantern');
   assert.deepEqual(p.network, ['/api/identity']);
 });
+
+test('a keyboard chip switch keeps focus on the newly chosen chip after the row is rebuilt', async () => {
+  const p = page(); await p.ready;
+  const focused = [];p.context.document = { activeElement: { closest: sel => sel === '#uxTransferRecipes' } };
+  p.context.element = () => { const n = { hidden: false, textContent: '', children: [], dataset: {}, attrs: {}, setAttribute(k, v) { this.attrs[k] = v; }, focus() { focused.push(this.dataset.recipe); } }; return n; };
+  p.nodes['#uxTransferRecipes'].onclick({ target: { closest: () => ({ dataset: { recipe: 'a-one' } }) } });
+  assert.deepEqual(focused, ['a-one']);
+  p.context.document = { activeElement: { closest: () => false } };focused.length = 0;
+  p.nodes['#uxTransferRecipes'].onclick({ target: { closest: () => ({ dataset: { recipe: 'b-two' } }) } });
+  assert.deepEqual(focused, [], 'focus is not stolen when it was elsewhere');
+});
