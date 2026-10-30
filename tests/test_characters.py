@@ -101,6 +101,11 @@ class CharacterTests(unittest.TestCase):
         later = characters.command(self.studio, {"action": "edit", "id": card["id"], "expected_revision": 1, "canon_asset_id": third})
         self.assertEqual([(e["role"], e["asset_id"]) for e in later["lineage"]], [("canon", third), ("previous_canon", other)])
 
+    def test_swapping_to_a_reimported_copy_of_the_canon_records_no_previous(self):   # #1718: the canon is content, not a row
+        card = self.create(); copy = self.picture("job-copy", b"canon keeper bytes")
+        swapped = characters.command(self.studio, {"action": "edit", "id": card["id"], "expected_revision": 0, "canon_asset_id": copy})
+        self.assertEqual([(e["role"], e["asset_id"]) for e in swapped["lineage"]], [("canon", copy)])
+
     def test_create_route_accepts_any_picture_review_without_changing_it_or_submitting(self):
         for review in ('unreviewed', 'selected', 'rejected', 'needs_work'):
             with self.subTest(review=review):

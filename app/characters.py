@@ -102,5 +102,5 @@ def command(studio, payload):
         payload["lineage"] = [record("canon", asset)]
         # A swap keeps the one canon it replaces as previous_canon, so the Line-up can offer it back (#1718); one entry, never a chain.
         old = canon_asset(studio, studio.assets.card(payload.get("id"))) if action == "edit" else None
-        if old and old["id"] != asset["id"]: payload["lineage"].append(record("previous_canon", old))
+        if old and old["sha256"] != asset["sha256"]: payload["lineage"].append(record("previous_canon", old))  # the canon is content: a re-imported copy is not a previous one
     return studio.assets.card_command(payload)
