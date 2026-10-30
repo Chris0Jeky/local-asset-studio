@@ -117,6 +117,12 @@ test('Edit and re-run resolves an off-page picture and pose, and a missing one r
   const u=setup();u.state.pick=asset(1);u.context.selectionReply=reply(privateCanon);
   assert.equal(await u.run('redoRun')({goal:'edit',redo:{pick:'canon-old',form:{},pose:{asset:'pose-gone'}}}),false);
   assert.equal(u.state.pick.id,'a1','nothing changed');assert.equal(u.state.pose,null);assert.match(u.said.at(-1),/not available/);
+
+  // A private pose picture under a regular run is refused before any state write (#1790 verification review).
+  const v=setup();v.state.pick=asset(1);v.context.usePrivacy=a=>a.privacy!=='private';
+  v.context.selectionReply=body=>({items:body.ids.map(id=>({id,state:'active',asset:id==='pose-old'?{...pose,privacy:'private'}:{...pose,id,title:'Regular pick'}}))});
+  assert.equal(await v.run('redoRun')({goal:'edit',redo:{pick:'pick-regular',form:{},pose:{asset:'pose-old'}}}),false);
+  assert.equal(v.state.pick.id,'a1','nothing changed');assert.equal(v.state.goal,undefined);
 });
 
 test('a reply for a query the box no longer holds is dropped (cleared back to the cached query)',async()=>{

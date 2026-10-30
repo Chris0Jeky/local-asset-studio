@@ -1052,7 +1052,7 @@
     pose:sel.pose?.asset?{asset:sel.pose.asset.id}:sel.pose?.figure?{figure:sel.pose.figure,mirror:!!sel.pose.mirror}:null,fix:sel.fix});
   async function redoRun(run){const r=run.redo,g=GOALS.find(x=>x.id===run.goal);if(!g?.intent||!r||typeof r.pick!=='string'||!usePrivacy({privacy:runPrivacy(run)}))return false;
     const hint=runPrivacy(run),picked=await needAsset(r.pick,hint),posed=picked&&typeof r.pose?.asset==='string'?await needAsset(r.pose.asset,hint):null;   // both pictures first: a refusal changes nothing
-    if(!picked||typeof r.pose?.asset==='string'&&!posed)return false;
+    if(!picked||typeof r.pose?.asset==='string'&&!posed||!usePrivacy(picked)||posed&&!usePrivacy(posed))return false;   // privacy checked for both before any state write
     state.goal=g.id;state.compare=false;state.character=null;if(choosePicture(r.pick,picked)===false)return false;
     state.form=Object.fromEntries(Object.entries(r.form&&typeof r.form==='object'?r.form:{}).filter(([,v])=>typeof v==='string'&&v.length<=2000));
     if(['picture','figure'].includes(r.poseMode))state.poseMode=r.poseMode;if(['copy','scene','depth'].includes(r.poseRoute))state.poseRoute=r.poseRoute;
