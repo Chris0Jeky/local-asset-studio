@@ -1128,6 +1128,25 @@ function renderI2VDiagnosticAction(asset,error='') {
   const supported=asset?.media_type==='video'&&asset?.job_id&&asset?.preset_id==='wan22-i2v';
   $('#assetDiagnostic').innerHTML=supported?'<button data-i2v-diagnostic="'+esc(asset.job_id)+'">Offline I2V diagnostic</button><small>Reads the existing video and recipe only; no generation is submitted.</small>'+(error?'<p class="i2v-warning">'+esc(error)+'</p>':''):'';
 }
+// Library look checks (#1703): display-only toggles on the open still image. Nothing here sends a request or touches bytes, review state or crop; the state resets whenever another asset opens.
+const assetInspectOff=()=>({sizes:false,mirror:false,grey:false,pixel:false});
+let assetInspect=assetInspectOff();
+function renderAssetInspect(a,focusKey) {
+  const box=$('#assetInspect'),flags=$('#assetDialog').dataset||{};if(!box)return;
+  const s=assetInspect,on=!!(a&&a.media_type==='image'&&a.url);
+  if(!on){assetInspect=assetInspectOff();box.hidden=true;box.innerHTML='';delete flags.lookMirror;delete flags.lookGrey;return;}
+  if(s.mirror)flags.lookMirror='1';else delete flags.lookMirror;
+  if(s.grey)flags.lookGrey='1';else delete flags.lookGrey;
+  const btn=(k,label,v)=>'<button type="button" data-asset-look="'+k+'" aria-pressed="'+(v?'true':'false')+'">'+label+'</button>';
+  box.hidden=false;
+  box.innerHTML='<div class="asset-inspect-bar" role="group" aria-label="View checks, display only">'+btn('sizes','Sizes',s.sizes)+btn('mirror','Mirror',s.mirror)+btn('grey','Greyscale',s.grey)+'</div>'+(s.sizes?'<div class="asset-inspect-sizes" data-render="'+(s.pixel?'pixel':'smooth')+'"><div class="asset-inspect-bar" role="group" aria-label="Scaling">'+btn('smooth','Smooth',!s.pixel)+btn('pixel','Pixel',s.pixel)+'</div><div class="asset-inspect-row">'+[64,128,256].map(n=>'<figure><img src="'+esc(a.url)+'" alt="" data-px="'+n+'" loading="lazy" decoding="async"><figcaption>'+n+'</figcaption></figure>').join('')+'</div></div>':'');
+  if(focusKey)box.querySelector?.('[data-asset-look="'+focusKey+'"]')?.focus?.();
+}
+$('#assetDialog').addEventListener('click',e=>{
+  const b=e.target?.closest?.('[data-asset-look]');if(!b)return;
+  const k=b.dataset.assetLook;if(k==='smooth'||k==='pixel')assetInspect.pixel=k==='pixel';else if(k in assetInspect)assetInspect[k]=!assetInspect[k];else return;
+  renderAssetInspect(activeAsset,k);
+});
 function openAsset(id,owns=null) {
   if(owns&&!owns())return false;
   if(assetRetainedDetail){const problem=recoveryScopeMessage(assetRetainedDetail.workspace_id);if(problem){assetMessage(problem,true);renderLibraryRecovery();return false;}}
@@ -1150,7 +1169,7 @@ function openAsset(id,owns=null) {
   }
   activeAsset={...candidate,workspace_id:assetState.workspace_id};assetDetailEpoch++;assetDiagnosticRequest++;assetDetailPending=null;assetDetailConflict=null;renderAssetConflict();renderAssetSaveRecovery();
   const a=activeAsset;
-  $('#assetDetailMedia').innerHTML=assetPreview(a,true);
+  $('#assetDetailMedia').innerHTML=assetPreview(a,true);assetInspect=assetInspectOff();renderAssetInspect(a);
   $('#assetTitle').value=a.title||'';$('#assetTags').value=(a.tags||[]).join(', ');$('#assetReview').value=a.review||'unreviewed';$('#assetNotes').value=a.notes||'';
   assetDetailBaseline=assetDetailValues();assetDetailControls();assetDetailStatus('No unsaved changes.');
   // Opening something outside the queue (a Same run sibling, lineage, the library) ends queue mode:
@@ -1235,7 +1254,7 @@ $('#assetDialog').addEventListener('close',()=>{
   if(assetDetailPending || assetDetailConflict)retainAssetDraft();
   else if(!assetRecoveryLoadError)try{assetRecovery.clear('detail');assetRetainedDetail=null;}catch(error){assetRecoveryError=error.message;}
   assetDetailEpoch++;assetDiagnosticRequest++;assetDetailBaseline=null;assetQueue=null;renderAssetQueue();
-  $('#assetDetailMedia').innerHTML='';$('#assetDiagnostic').innerHTML='';$('#assetSameRun').innerHTML='';$('#assetSameRun').hidden=true;
+  $('#assetDetailMedia').innerHTML='';assetInspect=assetInspectOff();renderAssetInspect(null);$('#assetDiagnostic').innerHTML='';$('#assetSameRun').innerHTML='';$('#assetSameRun').hidden=true;
   renderLibraryRecovery();
   const opener=assetDialogOpener;assetDialogOpener=null;
   // Only reclaim focus left on <body>: a handoff that moved elsewhere (Create) keeps its own focus.
