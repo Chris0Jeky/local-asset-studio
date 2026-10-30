@@ -197,7 +197,7 @@ class Studio:
         self._host_commit = None; self._host_commit_at = 0
         self.build = build_info.build_info(self.root)   # read once at start; /api/health shows it so a console can spot a Studio running old code
         self._gpu_memory = None; self._gpu_memory_at = 0
-        self.jobs = {}; self.queue = Queue(); self.lock = threading.RLock(); self.worker_failure = None
+        self.jobs = {}; self.queue = Queue(); self.lock = threading.RLock(); self.worker_failure = None; self._worker_busy = False
         self._loaded_operator_dispositions = {}  # Readable terminal state still needs an explicit publication acknowledgment.
         self.cancel_requests = {}   # job id -> open owner cancel request; the worker that owns the job resolves it (app/job_cancel.py)
         # ComfyUI keeps every model family it loaded in host RAM after the VRAM is freed (measured 16 Sep 2026: 25.8 GB committed on an
@@ -960,10 +960,15 @@ class Studio:
         if job.get('privacy') == 'private': result['privacy']='private'
         if job.get('look') is not None: result['look'] = job['look']
         if job.get('status') == 'queued':
-            # Read-only position (#1707): unfinished jobs created earlier pass the single worker first. A count only, so a private job
-            # ahead shows as a number, never as its content; an estimate of the wait, not a promise of order.
-            # No lock: Production.public() reaches here under its own lock, and Studio-then-Production is the order elsewhere (#1742 review).
-            result['queue_ahead'] = sum(1 for other in list(getattr(self, 'jobs', {}).values()) if other is not job and other.get('status') in Studio.ACTIVE_JOB_STATUSES and (other.get('created_at') or 0) < (job.get('created_at') or 0))
+            # Count every FIFO entry (#1707), exposing no private content. Never take self.lock: Production.public() holds its own lock (#1742).
+            pending = getattr(self, 'queue', None); queued = []
+            if pending is not None:
+                with pending.mutex: queued = list(pending.queue)
+            # A cancelled or failed run still in the FIFO is skipped instantly by the worker, so it is not counted (#1759 review).
+            live = lambda entry: not (isinstance(entry, tuple) and entry[:1] == ('generate',) and (getattr(self, 'jobs', {}).get(entry[1]) or {}).get('status') not in Studio.ACTIVE_JOB_STATUSES)
+            try: result['queue_ahead'] = sum(1 for entry in queued[:queued.index(('generate', job.get('id')))] if live(entry)) + int(getattr(self, '_worker_busy', False))
+            except ValueError:
+                result['queue_ahead'] = sum(1 for other in list(getattr(self, 'jobs', {}).values()) if other is not job and other.get('status') in Studio.ACTIVE_JOB_STATUSES and (other.get('created_at') or 0) < (job.get('created_at') or 0))
         if "record_error" in job: result.update(record_error=job["record_error"], run_path=job["run_path"])
         # Polling the gallery should not transfer every full graph every four seconds.
         result["submissions"] = [{k: v for k, v in s.items() if k != "graph"} for s in job.get("submissions", [])]
@@ -2192,7 +2197,7 @@ class Studio:
 
     def _work(self):
         while True:
-            try: action, job_id = self.queue.get(timeout=30)
+            try: action, job_id = self.queue.get(timeout=30); self._worker_busy = True
             except Empty:
                 try: self._idle_tick()
                 except Exception: pass
@@ -2233,7 +2238,7 @@ class Studio:
                         self.worker_failure['privacy'] = job.get('privacy')
                     try: print('Studio worker could not persist failure:', self.public_worker_failure(), file=sys.stderr, flush=True)
                     except Exception: pass
-            finally: self._last_activity = time.monotonic()   # the idle clock starts when the action ends, not when it was dequeued
+            finally: self._worker_busy = False; self._last_activity = time.monotonic()   # the idle clock starts when the action ends, not when it was dequeued
 
     def _batch_graph(self, job, index, *, wildcard_files=None):
         graph = copy.deepcopy(job["graph"])
