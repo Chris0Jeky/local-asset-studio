@@ -219,7 +219,10 @@ class Studio:
         self._spill_unload_ineffective = None   # PID whose last spill-triggered unload left the spill in place (an outside cause)
         self._fingerprint_lock = threading.Lock()
         self._load_jobs()
-        known = self.assets.registered_ids()   # One query for the restart loop; a missing or differently classified output still goes through register().
+        # One query for the restart loop; a missing or differently classified output still goes through register(). A busy database
+        # falls back to the per-output path rather than aborting startup (#1770 review).
+        try: known = self.assets.registered_ids()
+        except (OSError, sqlite3.Error): known = None
         for job in self.jobs.values():
             # Failed or still-publishing native AV/voice attempts retain their
             # recipe and exact prior asset set for inspection; only completed
