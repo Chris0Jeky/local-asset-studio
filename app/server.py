@@ -1626,14 +1626,16 @@ class Studio:
             if path.is_file() and not (root/name).is_symlink(): return path
         raise StudioError('Reference upload is unavailable')
 
-    def _job_directory(self, job_id, classification=None):
+    def _job_directory(self, job_id, classification=None, roots=None):
         if not isinstance(job_id, str) or not job_id or '..' in job_id or re.search(r'[/\\:\x00-\x1f]', job_id) or job_id.endswith(('.', ' ')):
             raise StudioError("Invalid job ID: expected a safe single path component")
         if classification is None: classification=(getattr(self,'jobs',{}).get(job_id) or {}).get('privacy','regular')
         privacy_scope.normalize(classification)
         root=self._private_directory('runs') if classification=='private' else self.runs
         directory = root / job_id
-        if directory.is_symlink() or directory.resolve().parent != root.resolve(): raise StudioError("Job directory escapes the runs folder")
+        # roots: a caller-held {root: resolved root} for one pass (#1801), so a load of N runs resolves each root once, not N times.
+        real = root.resolve() if roots is None else roots[root] if root in roots else roots.setdefault(root, root.resolve())
+        if directory.is_symlink() or directory.resolve().parent != real: raise StudioError("Job directory escapes the runs folder")
         return directory
 
     def _save(self, job, durable=False):
@@ -2020,7 +2022,7 @@ class Studio:
         private_runs=self._private_directory('runs')
         paths=[*self.runs.glob('*/state.json'),*private_runs.glob('*/state.json')]
         duplicates={name for name,count in Counter(p.parent.name for p in paths).items() if count>1}
-        read = lambda p: [] if p.parent.name in duplicates else self._read_run_records(p)
+        read = lambda p: [] if p.parent.name in duplicates else self._read_run_records(p); roots = {}
         parallel = self.LOAD_WORKERS > 1 and len(paths) > 1 and threading.Thread.start is _THREAD_START
         # Phase A reads every run's records on a bounded pool; phase B applies them here in path order, so duplicates, placeholders and restart rewrites match the serial loader.
         with ThreadPoolExecutor(self.LOAD_WORKERS) if parallel else nullcontext() as pool:
@@ -2035,7 +2037,7 @@ class Studio:
                     if path == state_path:
                         data = record
                         if privacy_scope.normalize(data.get('privacy','regular'))!=classification:raise ValueError('Job privacy does not match its run folder')
-                        directory = self._job_directory(data.get("id"),classification)
+                        directory = self._job_directory(data.get("id"),classification,roots)
                         if data['id'] != state_path.parent.name or directory != state_path.parent: raise ValueError("Job ID does not match its run folder")
                         if data['id'] in self.jobs: raise ValueError("Duplicate job ID")
                     else: graph = record
