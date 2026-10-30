@@ -1480,6 +1480,7 @@ const migrationApplyErrors={
   migration_failed:['The move failed before anything was published, so nothing was moved. Preview again.','preview'],
   migration_interrupted:['The move was interrupted and rolled back, so nothing was moved. Preview again.','preview']};
 let migrationEpoch=0,migrationOpener=null,migrationShown=null,migrationAttempt=null,migrationFlight=null;
+const migrationApplyTimeoutMs=600000; // moves copy whole runs; only a hung server should hit this, and then the outcome is unknown, not failed
 function migrationDestination(records){
   if(!records.length||!records.every(Boolean))return null;
   const kinds=new Set(records.map(a=>a.privacy===undefined?'regular':a.privacy));
@@ -1514,6 +1515,7 @@ function migrationHTML(plan){
 async function previewMigration(ids,destination,opener){
   const epoch=++migrationEpoch,privacyEpoch=assetPrivacyEpoch,workspace=assetState.workspace_id,status=$('#migrationStatus'),body=$('#migrationBody'),current=()=>epoch===migrationEpoch&&privacyEpoch===assetPrivacyEpoch;
   migrationOpener=opener||null;
+  // Epoch and opener are set BEFORE the flight refusal on purpose: a refused preview must still mark the shown dialog stale (the in-flight answer then reports via assetMessage) and keep the opener for the close handler's focus return.
   if(migrationFlight){assetMessage('A move is still running. Wait for it to finish, then preview again.',true);return;}
   const pending=migrationAttempt?.sent?migrationAttempt:null;migrationShown=null;migrationAttempt=null;
   $('#migrationTitle').textContent='Preview move to '+(destination==='private'?'Private':'Regular');body.innerHTML='';
@@ -1558,9 +1560,11 @@ async function migrationSend(attempt){
   attempt.sent=true;migrationFlight={privacyEpoch:assetPrivacyEpoch};for(const id of buttons)$(id).disabled=true;
   status.textContent='Moving '+shown.runs+(shown.runs===1?' run':' runs')+' to Private… '+migrationBusyText;
   let result=null,failure=null;
-  try{result=await api('/api/assets/migration-apply',{method:'POST',headers:{'Content-Type':'application/json',...assetPrivacyHeaders('all')},body:attempt.body});}catch(error){failure=error;}
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),migrationApplyTimeoutMs);
+  try{result=await api('/api/assets/migration-apply',{method:'POST',headers:{'Content-Type':'application/json',...assetPrivacyHeaders('all')},body:attempt.body,signal:controller.signal});}catch(error){failure=error;}
+  clearTimeout(timer);
   migrationFlight=null;for(const id of buttons)$(id).disabled=false;
-  const here=shown.epoch===migrationEpoch,say=(text,error)=>{if(here)status.textContent=text;else assetMessage(text,error);};
+  const here=shown.epoch===migrationEpoch,say=(text,error)=>{if(here)status.textContent=text;else assetMessage(text.replace('press Check again','preview the move again to check it'),error);};
   for(const id of ['#migrationApply','#migrationRecheck','#migrationRepreview'])$(id).hidden=true;
   if(!failure&&result&&result.published===true&&result.request_id===attempt.request_id&&result.destination==='private'&&Array.isArray(result.job_ids)&&Array.isArray(result.asset_ids)){
     const left=Array.isArray(result.cleanup_remaining)?result.cleanup_remaining.length:0;
@@ -1587,7 +1591,7 @@ async function migrationSend(attempt){
     return;
   }
   migrationAttempt=attempt;
-  say('The move may or may not have happened'+(failure?' ('+(failure.message||'the request failed')+')':': the answer was not understood')+'. Press Check again to ask about this same move; the server never moves it twice. Do not start a new move first, and reload the Library to see where the runs are.',true);
+  say('The move may or may not have happened'+(failure?' ('+(controller.signal.aborted?'no answer within '+migrationApplyTimeoutMs/60000+' minutes':failure.message||'the request failed')+')':': the answer was not understood')+'. '+(here?'Press Check again to ask about this same move':'Preview the move again to check this same move')+'; the server never moves it twice. Do not start a new move first, and reload the Library to see where the runs are.',true);
   if(here){$('#migrationRecheck').hidden=false;$('#migrationRecheck').focus();}
 }
 $('#migrationApply').onclick=async()=>{

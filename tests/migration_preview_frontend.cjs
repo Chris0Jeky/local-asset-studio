@@ -270,3 +270,26 @@ test('Library shortcuts stay inert for the whole life of the Move dialog, includ
   assert.equal(s.writes.length,2,'no metadata write from a shortcut');s.writes[1].resolve(receipt(JSON.parse(s.writes[1].options.body).request_id,{asset_ids:['a']}));await done;
   const event={key:'k',target:{tagName:'BUTTON'},preventDefault(){this.prevented=true;}};await s.dispatch('keydown',event);assert.equal(s.writes.length,2,'still inert after the move while the dialog is open');
 });
+// ---- #1797 polish ----
+test('With the dialog gone, an uncertain or busy answer says to preview again; with it open the Check again text is unchanged',async()=>{
+  const gone=async answer=>{const s=await previewed();const done=s.el('#migrationApply').onclick();s.run('assetPrivacyEpoch++');s.el('#migrationDialog').close();s.writes[1].reject(answer);await done;return s;};
+  let s=await gone(Error('network'));let text=s.el('#assetMessage').textContent;
+  assert.match(text,/^The move may or may not have happened \(network\)\. Preview the move again to check this same move; the server never moves it twice\./);assert.doesNotMatch(text,/Check again/,'no pointer at a dialog that is not open');
+  s.el('#previewMigration').onclick();await tick();assert.equal(s.el('#migrationDialog').open,true,'previewing again does reopen the Check again state the text promises');
+  assert.equal(s.el('#migrationTitle').textContent,'Earlier move: outcome unknown');assert.equal(s.el('#migrationRecheck').hidden,false);assert.equal(s.writes.length,2);
+  s=await gone(fail('migration_busy'));text=s.el('#assetMessage').textContent;assert.match(text,/^Another move is running, possibly this one\. Wait a moment, then preview the move again to check it\.$/);
+  s=await previewed();const done=s.el('#migrationApply').onclick();s.writes[1].reject(Error('network'));await done;
+  assert.match(s.el('#migrationStatus').textContent,/^The move may or may not have happened \(network\)\. Press Check again to ask about this same move; the server never moves it twice\./,'in-dialog text unchanged');
+});
+test('A hung apply is aborted after a generous timeout and treated as an unknown outcome, never a failure',async()=>{
+  const s=await previewed();assert.ok(s.run('migrationApplyTimeoutMs')>=300000,'big runs copy many bytes: the limit must be generous');
+  const done=s.el('#migrationApply').onclick();const w=s.writes[1],sent=w.options.body,id=JSON.parse(sent).request_id;
+  assert.equal(w.options.signal.aborted,false);assert.equal(s.timers.size,1,'one timer guards the apply');assert.equal(s.el('#closeMigration').disabled,true);
+  [...s.timers.values()][0]();await done;await tick();
+  assert.equal(w.options.signal.aborted,true);assert.equal(s.timers.size,0);
+  assert.match(s.el('#migrationStatus').textContent,/^The move may or may not have happened \(no answer within 10 minutes\)\. Press Check again to ask about this same move/);
+  assert.equal(s.el('#migrationRecheck').hidden,false);assert.equal(s.el('#migrationApply').hidden,true);assert.equal(s.el('#migrationRepreview').hidden,true,'no fresh Move offer');
+  assert.equal(s.el('#closeMigration').disabled,false,'the modal is released');assert.equal(s.el('#migrationApply').disabled,false);assert.equal(s.run('globalThis.refreshed'),0);assert.equal(s.writes.length,2,'no automatic retry');
+  const again=s.el('#migrationRecheck').onclick();assert.equal(s.writes[2].url,APPLY);assert.equal(s.writes[2].options.body,sent,'the same body and request ID');assert.equal(JSON.parse(s.writes[2].options.body).request_id,id);
+  s.writes[2].resolve(receipt(id));await again;assert.match(s.el('#migrationStatus').textContent,/^Moved 1 run/);assert.equal(s.timers.size,0,'a settled apply leaves no timer');
+});
