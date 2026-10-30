@@ -1017,8 +1017,38 @@ class Studio:
             if total >= halfway: return value
         return ordered[-1][0]
 
-    def _estimate_graph(self, preset, controls):
-        graph, _ = self.graph_for(preset)
+    def _estimate_file_stamp(self, path):
+        try:
+            path = inside(self.root, path); stat = path.stat()
+            return str(path), stat.st_mtime_ns, stat.st_size, stat.st_ctime_ns
+        except (OSError, StudioError): return None
+
+    def _estimate_presets(self, cache):
+        stamp = self._estimate_file_stamp(self.catalog_path)
+        if cache.get("catalog_stamp") == stamp and "presets" in cache and all(self._estimate_file_stamp(path) == version for path, version in cache["templates"]): return cache["presets"]
+        # Estimates need authored bindings/metadata, not catalog()'s inventory and UI projections.
+        data = read_json(self.catalog_path)
+        if not isinstance(data, dict) or not isinstance(data.get("presets"), list): raise StudioError("Invalid presets/catalog.json")
+        presets = {}
+        for preset in data["presets"]: presets.setdefault(preset.get("id"), preset)
+        paths = {self.root / str(preset.get("graph", "")) for preset in data["presets"]}
+        cache.update(catalog_stamp=stamp, presets=presets, templates=[(path, self._estimate_file_stamp(path)) for path in paths], graphs={})
+        return presets
+
+    def _estimate_cached_features(self, cache, key, preset, graph, controls, batch_count, reference_count, version=()):
+        controls = controls if isinstance(controls, dict) else {}
+        signature = (tuple(preset.get(field) for field in ("id", "name", "family", "modality")), len(preset.get("stages") or []),
+                     tuple(graph), graph, tuple(controls.get(field) for field in ("positive", "negative")), batch_count, reference_count, version)
+        cached = cache.get(key)
+        if cached is None or cached[0] != signature:
+            features = self._estimate_features(preset, graph, controls, batch_count, reference_count)
+            # Snapshot mutable inputs only on a miss, so in-place graph/control edits invalidate too.
+            cached = cache[key] = (copy.deepcopy(signature), features)
+        return cached[1]
+
+    def _estimate_graph(self, preset, controls, template=None):
+        if template is None: graph, _ = self.graph_for(preset)
+        else: graph = copy.deepcopy(template)
         controls = controls if isinstance(controls, dict) else {}
         numeric = {"seed", "steps", "cfg", "width", "height", "denoise", "frames", "fps", "style_weight", "pose_strength", "depth_cut", *LORA_SLOTS}
         extras = preset.get("bindings_extra") or {}
@@ -1101,32 +1131,41 @@ class Studio:
         """Estimate end-to-end time from completed local ComfyUI runs without mutating state."""
         if not isinstance(payload, dict): return {"available": False, "reason": "Estimate input must be an object."}
         classification=privacy_scope.normalize(payload.get('privacy','regular'))
-        try:
-            presets = self.catalog().get("presets", [])
-            preset = next(p for p in presets if p.get("id") == payload.get("preset_id"))
-            controls = payload.get("controls") if isinstance(payload.get("controls"), dict) else {}
-        except (StopIteration, StudioError, KeyError, TypeError, OSError):
-            return {"available": False, "reason": "Choose a supported recipe before estimating."}
-        try:
-            graph = self._estimate_graph(preset, controls)
-        except StudioError as exc:
-            if exc.code == "invalid_control":
-                return {"available": False, "reason": str(exc) or "Invalid estimate control."}
-            return {"available": False, "reason": "Choose a supported recipe before estimating."}
-        except (KeyError, TypeError, OSError):
-            return {"available": False, "reason": "Choose a supported recipe before estimating."}
-        references = payload.get("reference_count", 0)
-        target = self._estimate_features(preset, graph, controls, payload.get("batch_count", 1), references)
-        samples = []
-        for job in list(self.jobs.values()):
-            if not privacy_scope.matches(job.get('privacy','regular'),classification): continue
-            if job.get("status") != "completed" or job.get("operation") or job.get("native_recipe") or not job.get("prompt_ids") or not isinstance(job.get("graph"), dict): continue
-            elapsed = self._estimate_float(job.get("elapsed_seconds"), 0)
-            if elapsed <= 0: continue
-            sample_preset = next((p for p in presets if p.get("id") == job.get("preset_id")), None)
-            if not sample_preset: continue
-            sample = self._estimate_features(sample_preset, job["graph"], job.get("controls"), job.get("batch_count", 1), sum(1 for r in (job.get("references") or []) if not isinstance(r, dict) or r.get("file")))
-            sample["seconds"] = elapsed; samples.append(sample)
+        cache = self.__dict__.setdefault("_estimate_cache", {"lock": threading.Lock()})
+        with cache["lock"]:
+            try:
+                presets = self._estimate_presets(cache)
+                preset = presets[payload.get("preset_id")]
+                controls = payload.get("controls") if isinstance(payload.get("controls"), dict) else {}
+            except (StopIteration, StudioError, KeyError, TypeError, OSError):
+                return {"available": False, "reason": "Choose a supported recipe before estimating."}
+            try:
+                path = self.root / str(preset.get("graph", ""))
+                if path not in cache["graphs"]: cache["graphs"][path] = self.graph_for(preset)[0]
+                graph = self._estimate_graph(preset, controls, cache["graphs"][path])
+            except StudioError as exc:
+                if exc.code == "invalid_control":
+                    return {"available": False, "reason": str(exc) or "Invalid estimate control."}
+                return {"available": False, "reason": "Choose a supported recipe before estimating."}
+            except (KeyError, TypeError, OSError):
+                return {"available": False, "reason": "Choose a supported recipe before estimating."}
+            references = payload.get("reference_count", 0)
+            features = cache.setdefault("features", {})
+            jobs = dict(self.jobs)
+            for key in list(features):
+                if key != ("target",) and key[1] not in jobs: del features[key]
+            target = copy.deepcopy(self._estimate_cached_features(features, ("target",), preset, graph, controls, payload.get("batch_count", 1), references))
+            samples = []
+            for identifier, job in jobs.items():
+                if not privacy_scope.matches(job.get('privacy','regular'),classification): continue
+                if job.get("status") != "completed" or job.get("operation") or job.get("native_recipe") or not job.get("prompt_ids") or not isinstance(job.get("graph"), dict): continue
+                elapsed = self._estimate_float(job.get("elapsed_seconds"), 0)
+                if elapsed <= 0: continue
+                sample_preset = presets.get(job.get("preset_id"))
+                if not sample_preset: continue
+                sample = self._estimate_cached_features(features, ("job", identifier), sample_preset, job["graph"], job.get("controls"), job.get("batch_count", 1), sum(1 for r in (job.get("references") or []) if not isinstance(r, dict) or r.get("file")),
+                                                        (job.get("status"), job.get("finished_at"), elapsed))
+                samples.append(dict(sample, seconds=elapsed))
 
         if samples:
             candidates = []
