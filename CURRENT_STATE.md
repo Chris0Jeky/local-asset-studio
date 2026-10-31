@@ -7,12 +7,21 @@ Workspace and privacy view. Scope/collection, sort, media type, search, archive,
 source and grouping reuse their existing owners. Restoring a view preserves
 checkbox selections and asset metadata. Regular saves persist in this browser;
 Private and All saves stay in the current tab. Invalid storage, duplicate names,
-missing collections and stale contexts preserve existing records. Refs #1817.
+missing collections and stale contexts preserve existing records. Refs #1817;
+[PR #1870](https://github.com/Chris0Jeky/local-asset-studio/pull/1870).
 
 The 14 new Node contracts, existing Library/paging/privacy contracts and 28
-frontend handoff tests pass. Browser qualification and the hosted full gate are
-pending at this source checkpoint. No live generation, model, native application,
-art acceptance or unanswered #1832 placement decision was exercised or inferred.
+frontend handoff tests pass. Independent review found a deleted-collection edge
+case beyond the first collection page; the bounded preflight fix passed its
+regression and scoped review. At source `3e5634e5`, the allocated browser sequence
+passed 20 named-view assertions (including 102 collections) and all 30 unchanged
+Studio fixture journeys. Actual 1440/390 captures were inspected. The sequence
+finished in 160.219 seconds with no owned child process left and no browser JS
+errors. Its only simulated generation was the existing explicitly named
+`make-generate-then-keep` fixture; no live generation occurred. The first attempt's
+fixture setup failure and inadequate narrow capture remain preserved separately.
+The final-head hosted suite remains a merge prerequisite. No model, native
+application, art acceptance or unanswered #1832 placement choice was exercised.
 
 ## 2026-10-31 — Find native exports from their source picture
 
