@@ -1163,6 +1163,38 @@ $('#assetDialog').addEventListener('click',e=>{
   const k=b.dataset.assetLook;if(k==='smooth'||k==='pixel')assetInspect.pixel=k==='pixel';else if(k in assetInspect)assetInspect[k]=!assetInspect[k];else return;
   renderAssetInspect(activeAsset,k);
 });
+let assetExportHistory=null;
+function resetAssetExports(asset=null){
+  assetExportHistory=asset&&asset.media_type==='image'&&asset.privacy!=='private'?{id:asset.id,workspace:assetState.workspace_id,epoch:assetDetailEpoch,workspaceEpoch:assetWorkspaceEpoch,privacyEpoch:assetPrivacyEpoch,plans:[],offset:'0',loaded:false,busy:false}:null;
+  $('#assetNativeExports').open=false;$('#assetNativeExports').hidden=!asset||asset.media_type!=='image'||asset.privacy==='private';
+  $('#assetExportsList').innerHTML='';$('#assetExportsStatus').textContent='Saved plans and recorded files. Opening this list starts nothing.';
+  $('#assetExportsMore').hidden=true;$('#assetExportsRefresh').disabled=false;
+}
+function renderAssetExports(state){
+  const labels={planned:'Prepared',completed:'Completed',failed:'Failed',interrupted:'Interrupted',uncertain:'Outcome uncertain'};
+  $('#assetExportsList').innerHTML=state.plans.map(p=>'<li><strong>'+esc(p.name)+'</strong><p>'+esc(labels[p.status]||p.status)+' · '+esc(new Date(p.created_at*1000).toLocaleString())+'</p>'+
+    (p.historical_source?'<p>Uses an earlier saved version of this picture.</p>':'')+
+    (p.available?'<a href="/?plan='+encodeURIComponent(p.id)+'#production" target="_blank" rel="noopener">Open plan in a new tab</a>':'<p>Saved plan evidence is unavailable or inconsistent.</p>')+
+    (p.artifacts.length?'<ul>'+p.artifacts.map(a=>'<li>'+(a.available?'<a href="'+esc(a.url)+'" download>'+esc(a.name)+'</a>':'Recorded file unavailable')+'</li>').join('')+'</ul>':p.available?'<p>No produced files recorded.</p>':'<p>Recorded files cannot be checked.</p>')+
+    (p.more_artifacts?'<p>More recorded files are listed in the plan.</p>':'')+
+    (p.source_sha256?'<details><summary>Recorded source identity</summary><code>'+esc(p.source_sha256)+'</code><p>Plan '+esc(p.plan_sha256)+'</p></details>':'')+'</li>').join('');
+  $('#assetExportsMore').hidden=!state.loaded||state.offset===null;$('#assetExportsMore').disabled=state.busy;$('#assetExportsRefresh').disabled=state.busy;
+}
+async function loadAssetExports(refresh=false){
+  const state=assetExportHistory;if(!state||state.busy||!refresh&&state.offset===null)return;
+  const current=()=>assetExportHistory===state&&assetDetailContextCurrent(state.id,state.epoch)&&assetState.workspace_id===state.workspace&&assetWorkspaceEpoch===state.workspaceEpoch&&assetPrivacyEpoch===state.privacyEpoch;
+  state.busy=true;$('#assetExportsStatus').textContent='Reading saved export records…';$('#assetExportsRefresh').disabled=true;$('#assetExportsMore').disabled=true;
+  try{
+    const data=await api('/api/assets/'+encodeURIComponent(state.id)+'/native-exports?workspace_id='+encodeURIComponent(state.workspace)+'&offset='+(refresh?'0':state.offset),{headers:{'X-Studio-Privacy':'regular'}});
+    if(!current())return;
+    if(data.workspace_id!==state.workspace||data.asset_id!==state.id)throw Error('The response belongs to a different picture or Workspace.');
+    state.plans=refresh?data.plans:state.plans.concat(data.plans);state.offset=data.next_offset;state.loaded=true;
+    $('#assetExportsStatus').textContent=(state.plans.length?'Recorded files are checked against their receipt when downloaded.':'No visible native export plans in this page.')+(data.unavailable?' Some saved records could not be read.':'')+' Export completion is separate from art or licence acceptance.';
+  }catch(error){if(current())$('#assetExportsStatus').textContent='Export history unavailable. '+error.message;}
+  finally{if(current()){state.busy=false;renderAssetExports(state);}}
+}
+$('#assetNativeExports').addEventListener('toggle',()=>{if($('#assetNativeExports').open&&!assetExportHistory?.loaded)void loadAssetExports();});
+$('#assetExportsRefresh').onclick=()=>loadAssetExports(true);$('#assetExportsMore').onclick=()=>loadAssetExports();
 function openAsset(id,owns=null) {
   if(owns&&!owns())return false;
   if(assetRetainedDetail){const problem=recoveryScopeMessage(assetRetainedDetail.workspace_id);if(problem){assetMessage(problem,true);renderLibraryRecovery();return false;}}
@@ -1185,6 +1217,7 @@ function openAsset(id,owns=null) {
   }
   activeAsset={...candidate,workspace_id:assetState.workspace_id};assetDetailEpoch++;assetDiagnosticRequest++;assetDetailPending=null;assetDetailConflict=null;renderAssetConflict();renderAssetSaveRecovery();
   const a=activeAsset;
+  resetAssetExports(a);
   $('#assetDetailMedia').innerHTML=assetPreview(a,true);assetInspect=assetInspectOff();renderAssetInspect(a);
   $('#assetTitle').value=a.title||'';$('#assetTags').value=(a.tags||[]).join(', ');$('#assetReview').value=a.review||'unreviewed';$('#assetNotes').value=a.notes||'';
   assetDetailBaseline=assetDetailValues();assetDetailControls();assetDetailStatus('No unsaved changes.');
@@ -1269,7 +1302,7 @@ $('#assetDialog').addEventListener('close',()=>{
   if(!activeAsset&&!assetDetailBaseline)return; // A privacy change already retained and retired this editor.
   if(assetDetailPending || assetDetailConflict)retainAssetDraft();
   else if(!assetRecoveryLoadError)try{assetRecovery.clear('detail');assetRetainedDetail=null;}catch(error){assetRecoveryError=error.message;}
-  assetDetailEpoch++;assetDiagnosticRequest++;assetDetailBaseline=null;assetQueue=null;renderAssetQueue();
+  assetDetailEpoch++;assetDiagnosticRequest++;assetDetailBaseline=null;assetQueue=null;renderAssetQueue();resetAssetExports();
   $('#assetDetailMedia').innerHTML='';assetInspect=assetInspectOff();renderAssetInspect(null);$('#assetDiagnostic').innerHTML='';$('#assetSameRun').innerHTML='';$('#assetSameRun').hidden=true;
   renderLibraryRecovery();
   const opener=assetDialogOpener;assetDialogOpener=null;
@@ -1619,7 +1652,7 @@ document.addEventListener('studio:privacy-change',event=>{
   assetResolveRequest++;assetOpenRequest++;assetRefreshRequest++;assetRefreshController?.abort();assetRefreshController=null;
   clearTimeout(assetSearchTimer);assetSearchTimer=null;assetRefreshing=false;assetCollectionBusy=false;assetBulkReviewBusy=false;assetBulkRequest=null;
   assetDetailRequest=null;assetLibraryRequest=null;assetDetailBusy=false;assetLibraryBusy=false;assetDetailDiscarding=false;
-  activeAsset=null;assetDetailBaseline=null;assetDetailPending=null;assetDetailConflict=null;assetQueue=null;assetDialogOpener=null;
+  activeAsset=null;assetDetailBaseline=null;assetDetailPending=null;assetDetailConflict=null;assetQueue=null;assetDialogOpener=null;resetAssetExports();
   assetSelection.clear();assetSelectionAnchor=null;assetResolved.clear();assetSiblingPage=null;assetSiblingRequest=null;
   assetState={assets:[],collections:[],workspace_id:assetState.workspace_id};assetPaging=null;assetSignature='';
   if($('#assetDialog').open)$('#assetDialog').close();

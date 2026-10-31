@@ -32,4 +32,9 @@ for(const [kind,ek,tool,paths] of [['native','ora','Krita',['export.zip','native
 // No wording that claims the file was opened, inspected or accepted.
 for(const html of [plan('native','ora',['native/layers.ora']),plan('native','godot',['native/godot/project.godot']),plan('articulated',undefined,['export.zip']),plan('native','ora',['native/layers.ora'],{krita:{kra:{layers:[1]}}})].map(p=>card(render(p)))){
   assert.doesNotMatch(html.replace('Studio records no art acceptance.',''),/accept|approved|inspected|looks good|ready/i);assert.doesNotMatch(html,/\b(was|has been|were) opened\b|opened in/i);}
+for(const [search,expected] of [['?plan='+id,id],['?plan=other',null],['',null]]){
+  const linked=vm.createContext({$,URLSearchParams,location:{search},document:{querySelector:$,querySelectorAll:()=>[]},esc,setInterval(){},showView(){},api:async()=>[],post:async()=>({})});
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'../app/static/production.js'),'utf8'),linked);
+  assert.equal(vm.runInContext('productionId',linked),expected,'Library links select only the exact well-formed plan');
+}
 console.log('Native open-this-file card names the recorded entry artifact and claims no opening or acceptance.');

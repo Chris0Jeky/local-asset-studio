@@ -3204,6 +3204,18 @@ class Handler(BaseHTTPRequestHandler):
             if path.startswith("/api/parallax/source/") and len(path.split("/")) == 5: return self._json(200, parallax.source_status(self.studio, path.split("/")[4]))
             if path.startswith("/api/assets/") and path.endswith("/context") and len(path.split("/")) == 5:
                 return self._json(200, continuation.source_context(self.studio, path.split("/")[3],privacy=scope))
+            if path.startswith('/api/assets/') and len(path.split('/')) >= 5 and path.split('/')[4] == 'native-exports':
+                import native_export_history
+                parts=path.split('/');query=parse_qs(urlparse(self.path).query,keep_blank_values=True)
+                if len(parts)==5:
+                    pages=query.get('offset',['0'])
+                    if len(pages)!=1:raise StudioError('Supply one export history page')
+                    return self._json(200,native_export_history.inspect(self.studio,parts[3],self._asset_query_scope(),scope,pages[0]))
+                if len(parts)==8 and parts[6]=='files':
+                    digests=query.get('sha256',[])
+                    if len(digests)!=1:raise StudioError('Supply the recorded file hash')
+                    return self._local_file(native_export_history.file(self.studio,parts[3],parts[5],parts[7],self._asset_query_scope(),digests[0],scope),True)
+                raise StudioError('Unknown export history route')
             if path == "/api/catalog": return self._json(200, self.studio.catalog())
             if path == "/api/wildcards": return self._json(200, {"wildcards": self.studio.wildcards()})
             if path == "/api/options": return self._json(200, self.studio.options(urlparse(self.path).query == "refresh", True))

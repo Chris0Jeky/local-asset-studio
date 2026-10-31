@@ -6,6 +6,18 @@ names or frame timings, then prepare and explicitly Start the plan in
 Experiments. [Native exports](NATIVE-EXPORTS.md) include ORA/Krita documents,
 sprite atlases and actual Godot import/playback checks.
 
+In a Regular picture's detail, expand **Exports using this picture** to find
+its saved native export plans, including prepared, failed and interrupted
+attempts. **Open plan in a new tab** leaves your current picture notes intact.
+The list reads 20 records at a time; use **More export plans** or **Refresh exports**
+explicitly. Shared exports appear only while all their source pictures remain Regular.
+
+A prepared plan does not mean a file was produced. Recorded downloads retain
+their receipt hash and refuse changed or missing files. The source identity
+remains the one saved with the plan; an earlier source version is labelled.
+Missing or inconsistent plan evidence stays unavailable. Reading this history
+starts no export or native application and grants no art or licence acceptance.
+
 Open **Workspace** in the Studio to browse images, video, audio and 3D outputs.
 Search matches titles, recipe names, tags and notes. Media and date filters help
 find a study among repeated experiments.

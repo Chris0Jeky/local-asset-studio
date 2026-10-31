@@ -44,3 +44,5 @@
 #assetDialog[data-look-grey] #assetDetailMedia>img,#assetDialog[data-look-grey] .asset-inspect-row img{filter:grayscale(1)}
 
 .asset-repair{margin:.75rem 0;padding:.5rem .75rem;border:1px solid var(--line,#8884);border-radius:6px}.asset-repair summary{cursor:pointer;font-weight:600}.asset-repair label{display:block;margin:.5rem 0}.asset-repair .error{color:var(--danger,#c0392b)}
+#assetExportsList{padding-left:1.2rem}#assetExportsList>li{margin:.75rem 0;padding-bottom:.75rem;border-bottom:1px solid var(--line,#8884)}
+#assetNativeExports code,#assetNativeExports a{overflow-wrap:anywhere;white-space:normal}
