@@ -111,7 +111,8 @@ class ContinueCardTests(unittest.TestCase):
         newest=self.fixture.prepare()
         with self.studio.production.connect() as db:
             saved=dict(db.execute('SELECT plan,state FROM projects WHERE id=?',(newest['id'],)).fetchone())
-        for field,value in (('id','../escape'),('state','[]'),('plan','null'),('plan','{}'),('created','invalid')):
+        typo=json.loads(saved['plan']);typo['kind']='nativ'
+        for field,value in (('id','../escape'),('state','[]'),('plan','null'),('plan','{}'),('plan',json.dumps(typo)),('created','invalid')):
             with self.subTest(field=field,value=value):
                 with self.studio.production.connect() as db:db.execute('UPDATE projects SET '+field+'=? WHERE id=?',(value,newest['id']))
                 self.assertEqual(self.request()[1]['native']['state'],'unavailable')

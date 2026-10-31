@@ -22,7 +22,7 @@ def latest_native(studio, workspace_id):
             CASE WHEN length(state)<=? THEN state END AS state
             FROM projects WHERE NOT json_valid(plan)
             OR json_extract(CASE WHEN json_valid(plan) THEN plan ELSE '{}' END,'$.kind') IS NULL
-            OR json_extract(CASE WHEN json_valid(plan) THEN plan ELSE '{}' END,'$.kind')='native'
+            OR json_extract(CASE WHEN json_valid(plan) THEN plan ELSE '{}' END,'$.kind') NOT IN ('comparison','articulated','av')
             ORDER BY (typeof(created) NOT IN ('integer','real')) DESC,created DESC,id DESC LIMIT ?''',
             (project_storage.PLAN_LIMIT, project_storage.PLAN_LIMIT, PLAN_WINDOW+1))
         for index,row in enumerate(rows):
