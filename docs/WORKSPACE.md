@@ -33,14 +33,27 @@ visible** does (the first 200) and <kbd>Esc</kbd> clears the selection, as does
 **Clear selection**; neither shortcut acts while you type in a field or while a
 dialog is open. One action takes at most 200 assets, and a range that would pass
 that limit changes nothing. Search and filters keep the selection (the summary
-counts what is outside the view); changing scope starts a new one and says how
-many were cleared.
+counts what is outside the view); choosing a scope in the sidebar starts a new
+selection and says how many were cleared.
 
 **Group by** arranges the grid into sections by recipe, day or run, each with a
 count. The choice is remembered in this browser only; it changes nothing that is
 saved with an asset. Scope, sort and media type are remembered the same way, and
 the search text for this tab only, so a reload keeps your view; a remembered
 collection that has since been deleted opens All assets.
+
+Use **Saved views** to keep up to 20 named working sets for each Workspace and
+privacy view. **Save this view** records scope or collection, search, media,
+archive state, source, sorting and grouping. Choose a saved name and press
+**Use view** to restore all those filters together while keeping checkbox
+selection and asset metadata unchanged. **Remove view** removes only that saved
+filter configuration. Duplicate names leave the existing view intact.
+
+An explicit Regular save keeps the name and search in this browser. Private and
+All views stay in this tab's separate storage, including across reloads; they do
+not enter Regular storage. Clearing browser data removes saved views. Unavailable
+collections are not silently replaced by All assets, and denied or invalid storage
+leaves the stored record intact with an explanation beside the controls.
 
 **Source** (*Mine / Agent runs / All sources*) stays available in the paged
 Library, including an empty filtered page. Agent runs have a nonempty run label
