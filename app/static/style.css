@@ -96,3 +96,5 @@ model-viewer{display:block;width:100%;height:320px;background:radial-gradient(ci
 .model-files>summary{cursor:pointer;font-size:16px;font-weight:600}.model-files[open]>summary{margin-bottom:14px}
 #recoverCollections{background:transparent;border:0;padding:4px 0;font-size:11px;color:var(--purple);text-align:left;text-decoration:underline}
 .migration-dialog{width:min(640px,94vw)}.migration-dialog h3{font-size:13px;margin:16px 0 4px}.migration-dialog ul{margin:4px 0;padding-left:20px;overflow-wrap:anywhere}.migration-dialog small{color:var(--muted)}.migration-dialog .actions{display:flex;gap:8px;justify-content:flex-end}
+.asset-named-views{margin:12px 0}.asset-named-views .asset-toolbar{display:flex;flex-wrap:wrap;align-items:flex-end;margin:12px 0}
+.asset-named-views .asset-toolbar label{flex:1 1 12rem;min-width:0}.asset-named-views .asset-toolbar input,.asset-named-views .asset-toolbar select{width:100%;min-width:0;max-width:100%}

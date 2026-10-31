@@ -7,6 +7,15 @@ from pathlib import Path
 
 class AssetLibraryFrontend(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node.js required')
+    def test_named_views(self):
+        result = subprocess.run(
+            [shutil.which('node'), '--test', str(Path(__file__).with_name('asset_named_views.cjs'))],
+            capture_output=True, text=True, timeout=20,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('tests 11', result.stdout)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js required')
     def test_selection_and_filter_contracts(self):
         result = subprocess.run(
             [shutil.which('node'), str(Path(__file__).with_name('asset_library_contracts.cjs'))],

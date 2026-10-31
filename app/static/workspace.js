@@ -553,6 +553,70 @@ function restoreAssetView(){
   }catch(error){}
   try{const search=assetPrivacyStorage().getItem(assetViewKeys.search);if(typeof search==='string' && search.length<=200)$('#assetSearch').value=search;}catch(error){}
 }
+let assetNamedContext=null;
+function validAssetNamedView(view){
+  return view&&typeof view.name==='string'&&view.name.trim()===view.name&&view.name.length>0&&view.name.length<=60&&!/[\x00-\x1f\x7f]/.test(view.name)&&
+    validAssetScope(view.scope)&&assetSortModes.includes(view.sort)&&assetTypeModes.includes(view.type)&&
+    typeof view.search==='string'&&view.search.length<=200&&['active','archived','all'].includes(view.archive)&&
+    assetSourceModes.includes(view.source)&&['none',...assetGroupModes].includes(view.group);
+}
+function readAssetNamedViews(){
+  const workspace_id=assetState.workspace_id,privacy=assetActivePrivacy,context=JSON.stringify([workspace_id,privacy]);
+  if(!StudioAssetRecovery.workspace(workspace_id))throw Error('Refresh the Library to establish its Workspace before saving a view.');
+  const storage=assetPreferenceStorage(),key='studio.assets.named-views.v1:'+context,raw=storage.getItem(key);
+  let views=[];
+  if(raw!==null){
+    if(typeof raw!=='string'||raw.length>32768)throw Error('Saved views exceed the supported size. The stored record was not changed.');
+    const saved=JSON.parse(raw);
+    if(saved?.version!==1||saved.workspace_id!==workspace_id||saved.privacy!==privacy||!Array.isArray(saved.views)||saved.views.length>20||saved.views.some(view=>!validAssetNamedView(view))||new Set(saved.views.map(view=>view.name)).size!==saved.views.length)throw Error('Saved views are unavailable or belong to another context. The stored record was not changed.');
+    views=saved.views;
+  }
+  return {workspace_id,privacy,context,storage,key,views};
+}
+function assetNamedMessage(message,error=false){const el=$('#assetNamedStatus');if(el.textContent!==message)el.textContent=message;el.classList.toggle('error',error);}
+function renderAssetNamedViews(preferredName){
+  const context=JSON.stringify([assetState.workspace_id,assetActivePrivacy]),select=$('#assetNamedViews');
+  if(context!==assetNamedContext){assetNamedContext=context;select.value='';$('#assetNamedName').value='';}
+  let views=[],error='';try{views=readAssetNamedViews().views;}catch(problem){error='Saved views unavailable: '+problem.message;}
+  const requested=typeof preferredName==='string'?preferredName:select.value,selected=views.some(view=>view.name===requested)?requested:'';
+  const html='<option value="">Choose a saved view…</option>'+views.map(view=>'<option value="'+esc(view.name)+'">'+esc(view.name)+'</option>').join('');
+  if(select.innerHTML!==html)select.innerHTML=html;select.value=selected;
+  select.disabled=!!error||!views.length;$('#assetNamedRestore').disabled=!!error||!selected;$('#assetNamedRemove').disabled=!!error||!selected;
+  $('#assetNamedSave').disabled=!!error||views.length>=20;
+  $('#assetNamedHelp').textContent=(assetActivePrivacy==='regular'?'Saved in this browser for this Workspace and Regular view.':'Saved only in this tab for this Workspace and '+(assetActivePrivacy==='private'?'Private':'All')+' view.')+' Filters only; pictures and checkbox selection stay unchanged.';
+  assetNamedMessage(error||(views.length+' of 20 saved views.'+(views.length===20?' Remove one before saving another.':'')),!!error);
+}
+function assetNamedViewAction(action){
+  try{
+    const state=readAssetNamedViews();
+    if(state.context!==assetNamedContext||state.workspace_id!==assetState.workspace_id||state.privacy!==assetActivePrivacy)throw Error('The Library context changed. Choose the view again.');
+    const selected=$('#assetNamedViews').value,found=state.views.find(view=>view.name===selected);
+    if(action==='restore'){
+      if(!found)throw Error('That saved view is unavailable. Choose another view.');
+      if(found.scope.startsWith('collection:')&&!assetState.collections.some(c=>'collection:'+c.id===found.scope)&&!assetPaging?.collectionNext)throw Error('That collection is unavailable. Your current filters and saved view were kept.');
+      clearTimeout(assetSearchTimer);assetSearchTimer=null;
+      assetScope=found.scope;assetScopeRestored=false;assetSourceMode=found.source;assetGroupMode=found.group;
+      for(const [key,id] of Object.entries({sort:'assetSort',type:'assetType',search:'assetSearch',archive:'assetArchiveFilter',group:'assetGroup'}))$('#'+id).value=found[key];
+      try{state.storage.setItem(assetSourceStorageKey,found.source);state.storage.setItem(assetGroupStorageKey,found.group);}catch(error){}
+      renderAssets();assetNamedMessage('View restored. Your checkbox selection is unchanged.');return true;
+    }
+    let views,name;
+    if(action==='save'){
+      name=$('#assetNamedName').value.trim();
+      const view={name,scope:assetScope,sort:$('#assetSort').value,type:$('#assetType').value,search:$('#assetSearch').value,archive:assetArchiveChoice(),source:assetSourceChoice(),group:assetGroupMode};
+      if(!validAssetNamedView(view))throw Error('Use a name of 1–60 characters and valid Library filters (search up to 200 characters).');
+      if(state.views.some(view=>view.name===name))throw Error('A view with that name already exists. Choose another name; the saved view was kept.');
+      if(state.views.length>=20)throw Error('Remove a saved view before adding another; the limit is 20.');
+      views=[...state.views,view];
+    }else if(action==='remove'){
+      if(!found)throw Error('That saved view is unavailable. Choose another view.');
+      views=state.views.filter(view=>view.name!==selected);
+    }else return false;
+    state.storage.setItem(state.key,JSON.stringify({version:1,workspace_id:state.workspace_id,privacy:state.privacy,views}));
+    if(action==='save')$('#assetNamedName').value='';
+    renderAssetNamedViews(name);assetNamedMessage(action==='save'?'View saved.':'Saved view removed. Your pictures and current filters are unchanged.');return true;
+  }catch(error){renderAssetNamedViews();assetNamedMessage(error.message,true);return false;}
+}
 // Selection ergonomics: grid order is the grouped reading order, so a Shift range matches what the operator sees.
 let assetSelectionAnchor=null,assetCheckShift=false;
 function assetVisibleOrder(){return assetGroups(visibleAssets(),assetGroupMode).flatMap(g=>g.assets);}
@@ -699,6 +763,7 @@ function assetPreview(asset, detail=false) {
 }
 function assetCardHTML(a) {const display=assetCardTitle(a);return '<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'" data-asset-card="'+esc(a.id)+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(display)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(display)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(display)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(display)+'</button>'+(assetSubtitle(a)?'<small class="asset-card-prompt" title="'+esc(assetSubtitle(a))+'">'+esc(assetSubtitle(a))+'</small>':'')+'<div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(assetReviewLabels[a.review]||a.review)+'</span></div><div class="asset-tags">'+(a.archived_at!=null?'<span>Archived</span>':'')+(assetIsAgentRun(a)?'<span class="asset-run-label" title="Agent run label">'+esc(a.run_label)+'</span>':'')+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>';}
 function renderAssets() {
+  renderAssetNamedViews();
   observeAssetWorkspaceIdentity();
   if(assetPaging && assetPaging.query!==assetPageQuery()){if(!assetRefreshing&&!assetSearchTimer)void refreshAssets(true);return;}
   // A remembered collection that no longer exists opens All assets rather than an unavailable view.
@@ -1279,6 +1344,11 @@ $('#workspaceRefresh').onclick=()=>refreshAssetsNow();
 // Typing reads a new first page once the operator pauses; every other control is immediate.
 $('#assetSearch').oninput=()=>{clearTimeout(assetSearchTimer);assetSearchTimer=setTimeout(()=>{assetSearchTimer=null;void refreshAssets(true);},150);};
 $('#assetArchiveFilter').onchange=renderAssets;
+$('#assetNamedViews').onchange=renderAssetNamedViews;
+$('#assetNamedSave').onclick=()=>assetNamedViewAction('save');
+$('#assetNamedRestore').onclick=()=>assetNamedViewAction('restore');
+$('#assetNamedRemove').onclick=()=>assetNamedViewAction('remove');
+$('#assetNamedViewsPanel').addEventListener('toggle',()=>{if($('#assetNamedViewsPanel').open)renderAssetNamedViews();});
 $('#assetType').onchange=renderAssets;$('#assetSort').onchange=()=>{void refreshAssets(true);};
 function chooseAssetSource(value){assetSourceMode=assetSourceModes.includes(value)?value:null;try{assetPreferenceStorage().setItem(assetSourceStorageKey,assetSourceMode||'');}catch(error){}renderAssets();}
 $('#assetSource').onchange=()=>chooseAssetSource($('#assetSource').value);

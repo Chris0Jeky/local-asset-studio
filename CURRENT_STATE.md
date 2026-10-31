@@ -1,5 +1,19 @@
 # Current state — 31 October 2026
 
+## 2026-10-31 — Save named Library working views
+
+The Library now saves, restores and removes named filter sets for the exact
+Workspace and privacy view. Scope/collection, sort, media type, search, archive,
+source and grouping reuse their existing owners. Restoring a view preserves
+checkbox selections and asset metadata. Regular saves persist in this browser;
+Private and All saves stay in the current tab. Invalid storage, duplicate names,
+missing collections and stale contexts preserve existing records. Refs #1817.
+
+The 11 new Node contracts, existing Library/paging/privacy contracts and 28
+frontend handoff tests pass. Browser qualification and the hosted full gate are
+pending at this source checkpoint. No live generation, model, native application,
+art acceptance or unanswered #1832 placement decision was exercised or inferred.
+
 ## 2026-10-31 — Find native exports from their source picture
 
 Library picture details now offer **Exports using this picture**, a bounded,
