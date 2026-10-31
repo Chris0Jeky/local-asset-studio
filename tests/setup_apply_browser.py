@@ -163,6 +163,10 @@ async def run(out,inert=False):
                 check(len(COMMANDS)==writes and await page.evaluate('StudioSetupDraft.capture()')==local,'cancelled history restore preserves the complete local draft')
                 check(await page.evaluate('document.activeElement.dataset.key')=='restore-1','cancel returns keyboard focus to the historical row')
                 await review(1)
+                await page.evaluate("window.qaHeld=false;window.qaLock=navigator.locks.request('studio-shared-setup-v1',()=>new Promise(resolve=>{window.qaHeld=true;window.qaRelease=resolve}));void 0")
+                await page.wait_for_function('window.qaHeld');await page.click('#setupHistoryRestoreConfirm');await page.wait_for_function('!StudioSetupApply.controller.running')
+                check(len(COMMANDS)==writes and await page.evaluate('StudioSetupDraft.capture()')==local,'native Web Lock contention prevents both history restore commands')
+                await page.evaluate('window.qaRelease();window.qaLock');await review(1)
                 for width,zoom,name in ((1440,'1','restore-wide'),(390,'1','restore-narrow'),(1440,'2','restore-zoom')):
                     await page.set_viewport_size({'width':width,'height':1100 if width==1440 else 844});await page.evaluate('(z)=>document.body.style.zoom=z',zoom)
                     await page.locator('#setupHistoryRestore').scroll_into_view_if_needed()
@@ -185,6 +189,13 @@ async def run(out,inert=False):
                 check(len(COMMANDS)==writes+1 and COMMANDS[-1]['action']=='replace','late editor change preserves checkpoint and prevents the restore command')
                 check(await page.locator('#positive').input_value()=='Later edit while checkpoint reply was held','late local editor wording survives')
                 check('saved as revision' in await page.locator('#sharedSetupStatus').inner_text(),'partial completion names the saved checkpoint honestly')
+                # A changed editor after the restore commit keeps that revision without adopting it.
+                await review(2);HOLD_ACTION='restore';HELD.clear();RELEASE.clear();writes=len(COMMANDS)
+                await page.click('#setupHistoryRestoreConfirm');check(await asyncio.to_thread(HELD.wait,5),'restore response is held after its real SQLite commit')
+                await page.fill('#positive','Editor changed after the restore committed');RELEASE.set();HOLD_ACTION=None
+                await page.wait_for_function('!StudioSetupApply.controller.running')
+                check([q['action'] for q in COMMANDS[writes:]]==['replace','restore'] and store.get(key)['record_json']==originals[2],'the completed restore remains in SQLite after a late editor change')
+                check(await page.locator('#positive').input_value()=='Editor changed after the restore committed','late editor change prevents adoption of a committed historical restore')
                 # Private/All are observation scopes, not new setup command authority.
                 await page.click('#setupHistoryRefresh');await page.wait_for_function('!StudioSetupHistory.history.state.busy');writes=len(COMMANDS)
                 await page.evaluate("StudioPrivacy.setScope('all')");await page.click('[data-key="restore-1"]')
