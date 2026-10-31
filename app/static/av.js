@@ -1,6 +1,7 @@
 'use strict';
 const $=selector=>document.querySelector(selector),esc=value=>String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 let avProjects=[],avId=null,avDocument=null,avDrafts=new Map(),avSelection=null,avPolling=null,avPollBusy=false,avWorkspace=[],avDraftRevision=null,avMutationBusy=false,avReadEpoch=0,avLoadRequest=0;
+let avSourceChoice=null,avSourceItems=[],avSourceSelected=null,avSourceCursor=null,avSourceEpoch=0,avSourcePosting=false,avSourceUnconfirmed=false;
 const activeRenderStatuses=new Set(['queued','running','rendering']);
 function avMessage(text,error=false){const el=$('#avStatus');el.textContent=text;el.classList.toggle('error',error);}
 async function avApi(path,options={}){const response=await fetch(path,options);let data={};try{data=await response.json();}catch(_){throw Error('The Studio returned an unreadable response.');}if(!response.ok)throw Error(data.error||'Request failed');return data;}
@@ -26,7 +27,7 @@ function updateDraftControls(){
   for(const button of document.querySelectorAll('#avContent button')){
     const d=button.dataset;let disabled=busy;
     if(d.renderAction==='render')disabled||=dirty||!avDocument?.capabilities?.render_ready;
-    else if(d.renderAction==='export'||Object.hasOwn(d,'remove')||Object.hasOwn(d,'restore')||Object.hasOwn(d,'split'))disabled||=dirty;
+    else if(d.renderAction==='export'||Object.hasOwn(d,'remove')||Object.hasOwn(d,'restore')||Object.hasOwn(d,'split')||d.workspaceSource)disabled||=dirty;
     else if(d.add)disabled||=dirty||!sectionSources(d.add).length;
     else if(d.move)disabled||=dirty||index<0||(Number(d.move)<0?index===0:index===shots.length-1);
     button.disabled=disabled;
@@ -93,7 +94,7 @@ function renderPreview(doc){
   return '<section class="panel av-preview"><div class="av-preview-media">'+preview+'</div><div class="av-preview-meta"><div><span class="eyebrow">RENDER</span><h3><span class="av-status-dot '+(active?'active':'')+'"></span> '+esc(status)+'</h3><p>'+esc(render?.message||'Rendering never starts automatically.')+'</p></div><p class="'+(stale?'av-warning':'muted')+'">'+label+'</p>'+(Number.isFinite(render?.progress)?'<p>Progress '+Math.round(render.progress)+'%</p>':'')+'<div class="av-document-actions">'+(active?'<button data-render-action="cancel">Cancel this render</button>':'<button class="primary" data-render-action="render" '+(!ready||hasDrafts()?'disabled':'')+'>Render scene</button>')+'<button data-render-action="export"'+draftActionDisabled()+'>Export companion ZIP</button></div><div class="av-render-artifacts">'+artifacts+'</div></div></section>';
 }
 function sectionSources(section){const sources=avDocument?.sources||[];return sources.filter(source=>section==='audio'?source.kind==='audio':section==='overlays'?source.kind==='image':['image','video'].includes(source.kind));}
-function addControl(section){const sources=sectionSources(section);return '<div class="av-add"><select data-add-source="'+section+'" aria-label="Source for new '+section+'">'+sources.map(source=>'<option value="'+esc(source.key)+'">'+esc(source.filename)+' · '+esc(source.kind)+'</option>').join('')+'</select><button data-add="'+section+'" '+(!sources.length||hasDrafts()?'disabled':'')+'>Add</button></div>';}
+function addControl(section){const sources=sectionSources(section);return '<div class="av-add"><select data-add-source="'+section+'" aria-label="Source for new '+section+'">'+sources.map(source=>'<option value="'+esc(source.key)+'">'+esc(source.filename)+' · '+esc(source.kind)+'</option>').join('')+'</select><button data-add="'+section+'" '+(!sources.length||hasDrafts()?'disabled':'')+'>Add</button><button data-workspace-source="'+section+'"'+draftActionDisabled()+'>Add from Workspace</button></div>';}
 function renderClip(section,clip){
   const doc=avDocument,rate=frameRate(doc),sampleRate=Number(doc.project.sample_rate||48000),isShot=section==='shots',isAudio=section==='audio';
   let inputs='';
@@ -102,7 +103,7 @@ function renderClip(section,clip){
   else inputs=clipInput(section,clip,'start','Start','integer','frames · '+seconds(draftValue(section,clip,'start'),rate),0,doc.timing?.frames??'')+clipInput(section,clip,'frames','Length','integer','frames · '+seconds(draftValue(section,clip,'frames'),rate),1,doc.timing?.frames??'')+clipInput(section,clip,'x','X','integer','pixels',0,doc.project.size?.[0]??'')+clipInput(section,clip,'y','Y','integer','pixels',0,doc.project.size?.[1]??'')+clipInput(section,clip,'width','Width','integer','pixels',1,doc.project.size?.[0]??'')+clipInput(section,clip,'height','Height','integer','pixels',1,doc.project.size?.[1]??'')+clipInput(section,clip,'opacity','Opacity','number','0 to 1',0,1);
   const source=sourceMap().get(clip.asset),timing=(doc.timing?.shots||[]).find(item=>item.id===clip.id);
   const title=(source?.filename||clip.asset)+' · '+(timing?timing.start_frame+'–'+timing.end_frame+' frames':section);
-  return '<article class="av-clip '+(selected(section,clip.id)?'selected':'')+'" data-select-clip="'+section+':'+clip.id+'"><div class="av-clip-title"><h4>'+esc(title)+'</h4><small>'+esc(clip.id)+'</small></div><div class="av-controls">'+inputs+'</div><div class="av-clip-actions"><button class="primary" data-save="'+section+':'+clip.id+'">Save changes</button><button data-remove="'+section+':'+clip.id+'"'+draftActionDisabled()+'>Remove</button></div></article>';
+  return '<article class="av-clip '+(selected(section,clip.id)?'selected':'')+'" data-select-clip="'+section+':'+clip.id+'"><div class="av-clip-title"><h4 tabindex="-1">'+esc(title)+'</h4><small>'+esc(clip.id)+'</small></div><div class="av-controls">'+inputs+'</div><div class="av-clip-actions"><button class="primary" data-save="'+section+':'+clip.id+'">Save changes</button><button data-workspace-source="'+section+'" data-replace="'+clip.id+'"'+draftActionDisabled()+'>Replace source</button><button data-remove="'+section+':'+clip.id+'"'+draftActionDisabled()+'>Remove</button></div></article>';
 }
 function renderSection(section,label){const clips=avDocument.project[section]||[];return '<section class="av-section"><div class="av-section-head"><div><h3>'+label+'</h3><small>'+clips.length+' clip'+(clips.length===1?'':'s')+'</small></div>'+addControl(section)+'</div>'+clips.map(clip=>renderClip(section,clip)).join('')+'</section>';}
 function splitChoices(){return ['shots','audio'].flatMap(section=>(avDocument?.project?.[section]||[]).map(clip=>'<option value="'+section+':'+esc(clip.id)+'" '+(selected(section,clip.id)?'selected':'')+'>'+section.slice(0,-1)+' · '+esc(sourceLabel(clip.asset))+'</option>')).join('');}
@@ -134,6 +135,66 @@ async function mutate(body,success){
     else avMessage(body.action==='render'?'Render queued for revision '+doc.revision+'.':body.action==='cancel'?'Cancel requested for this render.':'Saved revision '+doc.revision+'.');
   }catch(error){if(/^Scene conflict:/i.test(error.message)){if(avSelection)draftFor(avSelection.section,avSelection.id).conflict=true;renderDocument();}avMessage(error.message,true);}finally{endOperation();}
 }
+function sourceControls(){
+  for(const id of ['sceneSourceKind','sceneSourceSearch','sceneSourceFind','sceneSourceFirst'])$('#'+id).disabled=avMutationBusy;
+  $('#sceneSourceNext').disabled=avMutationBusy||!avSourceCursor;
+  $('#sceneSourceApply').disabled=avMutationBusy||!avSourceSelected||avSourceUnconfirmed;
+  $('#sceneSourceCancel').disabled=avSourcePosting;
+}
+function closeSourceChoice(){
+  if(avSourcePosting)return;const opener=avSourceChoice?.opener;++avSourceEpoch;avSourceChoice=null;
+  $('#sceneSourceDialog').close();if(opener)$(opener)?.focus();
+}
+async function sourcePage(cursor=''){
+  if(!avSourceChoice||!beginOperation())return;
+  const token=++avSourceEpoch,choice=avSourceChoice;avSourceItems=[];avSourceSelected=null;avSourceCursor=null;
+  $('#sceneSourceList').innerHTML='';$('#sceneSourceStatus').textContent='Loading Workspace assets…';sourceControls();
+  try{
+    const query=new URLSearchParams({workspace_id:choice.workspace_id,limit:'12',media_type:$('#sceneSourceKind').value});
+    const term=$('#sceneSourceSearch').value.trim();if(term)query.set('q',term);if(cursor)query.set('cursor',cursor);
+    const page=await avApi('/api/assets/page?'+query);if(token!==avSourceEpoch||choice!==avSourceChoice)return;
+    avSourceItems=(page.assets||[]).filter(asset=>!asset.trashed_at&&/\.(png|mp4|wav)$/i.test(asset.filename||''));avSourceCursor=page.next_cursor||null;
+    $('#sceneSourceList').innerHTML=avSourceItems.map(asset=>{
+      const url=sameOriginUrl(asset.url),preview=asset.media_type==='image'?'<img loading="lazy" src="'+esc(url)+'" alt="">':asset.media_type==='video'?'<video controls preload="metadata" src="'+esc(url)+'" aria-label="Preview '+esc(asset.title||asset.filename)+'"></video>':'<audio controls preload="metadata" src="'+esc(url)+'" aria-label="Preview '+esc(asset.title||asset.filename)+'"></audio>';
+      return '<div class="av-workspace-source">'+preview+'<label class="av-source-choice"><input type="radio" name="sceneSource" value="'+esc(asset.id)+'"><span><b>'+esc(asset.title||asset.filename)+'</b><small>'+esc(asset.filename)+' · '+esc(asset.media_type)+'</small></span></label></div>';
+    }).join('')||'<p>No supported assets on this page. Try another search or page.</p>';
+    $('#sceneSourceStatus').textContent='Choose one asset. This saves a scene revision; rendering stays separate.';
+  }catch(error){if(token===avSourceEpoch)$('#sceneSourceStatus').textContent=error.message;}
+  finally{endOperation();sourceControls();}
+}
+async function openSourceChoice(section,clipId=null){
+  if(avMutationBusy||!requireSavedDocument('choosing another source'))return;
+  if(!avDocument?.workspace_id){avMessage('Reload this scene to confirm its Workspace before choosing a source.',true);return;}
+  const replace=clipId!==null,clip=replace?clipBy(section,clipId):null;if(replace&&!clip)return;
+  avSourceChoice={scene_id:avId,expected_revision:avDocument.revision,workspace_id:avDocument.workspace_id,section,clip_id:clipId,
+    action:replace?'replace_source':'add_source',opener:'[data-workspace-source="'+CSS.escape(section)+'"]'+(replace?'[data-replace="'+CSS.escape(clipId)+'"]':':not([data-replace])')};
+  avSourceUnconfirmed=false;const kinds=section==='audio'?['audio']:section==='overlays'?['image']:['image','video'];
+  $('#sceneSourceKind').innerHTML=kinds.map(kind=>'<option value="'+kind+'">'+({image:'PNG images',video:'MP4 videos',audio:'PCM WAV audio'}[kind])+'</option>').join('');
+  $('#sceneSourceKind').value=replace?sourceMap().get(clip.asset)?.kind||kinds[0]:kinds[0];$('#sceneSourceSearch').value='';
+  $('#sceneSourceTitle').textContent=replace?'Replace source':'Add from Workspace';$('#sceneSourceApply').textContent=replace?'Replace source':'Add to scene';
+  $('#sceneSourceContext').textContent=replace?'Replacing '+sourceLabel(clip.asset)+'. Timing and other clip settings stay the same. A source that does not fit is refused.':'Add a source to '+({shots:'Shots',overlays:'Static overlays',audio:'Audio'}[section])+'. Existing clips stay as arranged.';
+  $('#sceneSourceDialog').showModal();await sourcePage();
+}
+async function applySourceChoice(event){
+  event.preventDefault();if(!avSourceChoice||!avSourceSelected||avSourceUnconfirmed||avMutationBusy||!requireSavedDocument('changing sources'))return;
+  const choice=avSourceChoice,asset=avSourceSelected;if(choice.scene_id!==avId||!beginOperation())return;
+  avSourcePosting=true;sourceControls();$('#sceneSourceStatus').textContent='Saving the selected source…';
+  try{
+    const payload={action:choice.action,expected_revision:choice.expected_revision,workspace_id:choice.workspace_id,section:choice.section,
+      asset_id:asset.id,sha256:asset.sha256,metadata_revision:asset.metadata_revision};if(choice.clip_id)payload.clip_id=choice.clip_id;
+    const saved=await avPost('/api/av/'+encodeURIComponent(choice.scene_id),payload);
+    avDocument=saved;avSelection={section:choice.section,id:choice.clip_id||saved.project[choice.section].at(-1).id};avSourcePosting=false;closeSourceChoice();renderDocument();
+    $('[data-select-clip="'+CSS.escape(avSelection.section+':'+avSelection.id)+'"] h4')?.focus();maintainPolling();await refreshProjects(avId);
+    avMessage('Saved revision '+saved.revision+'. The source is pinned; render when you are ready.');
+  }catch(error){avSourceUnconfirmed=true;$('#sceneSourceStatus').textContent=error.message+' Close this chooser and reload the scene before trying again. Your clip fields are retained; nothing is retried automatically.';}
+  finally{avSourcePosting=false;endOperation();sourceControls();}
+}
+$('#sceneSourceForm').onsubmit=applySourceChoice;
+$('#sceneSourceList').onchange=event=>{if(avMutationBusy)return;avSourceSelected=avSourceItems.find(asset=>asset.id===event.target.value)||null;sourceControls();};
+$('#sceneSourceKind').onchange=()=>sourcePage();$('#sceneSourceFind').onclick=()=>sourcePage();$('#sceneSourceFirst').onclick=()=>sourcePage();$('#sceneSourceNext').onclick=()=>sourcePage(avSourceCursor);
+$('#sceneSourceSearch').onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();sourcePage();}};
+$('#sceneSourceCancel').onclick=closeSourceChoice;$('#sceneSourceDialog').oncancel=event=>{event.preventDefault();closeSourceChoice();};
+
 async function openNewScene(){
   if(avMutationBusy||!requireSavedDocument('opening a new scene')||!beginOperation())return;
   $('#sceneCreateStatus').textContent='Loading registered Workspace media…';$('#sceneAssets').innerHTML='';$('#sceneDialog').showModal();
@@ -147,6 +208,7 @@ $('#avContent').addEventListener('input',event=>{const input=event.target;if(!in
 $('#avContent').addEventListener('change',event=>{if(event.target.id==='splitClip'){const section=event.target.value.split(':')[0];$('#splitUnit').textContent=section==='audio'?'samples':'frames';}});
 $('#avContent').onclick=async event=>{
   if(avMutationBusy)return;
+  const workspaceSource=event.target.closest('[data-workspace-source]');if(workspaceSource){await openSourceChoice(workspaceSource.dataset.workspaceSource,workspaceSource.dataset.replace??null);return;}
   if(event.target.closest('#documentReload')){await loadScene(avId);return;}
   if(event.target.closest('[data-discard-drafts]')){clearDrafts();renderDocument();avMessage('Discarded unsaved clip changes.');return;}
   const save=event.target.closest('[data-save]');if(save){const [section,id]=save.dataset.save.split(':');avSelection={section,id};await mutate({action:'edit',section,clip_id:id,changes:collectChanges(section,id)},()=>clearDraft(section,id));return;}

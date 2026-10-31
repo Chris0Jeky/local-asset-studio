@@ -1,5 +1,20 @@
 # Current state — 31 October 2026
 
+## 2026-10-31 — Later Workspace sources in an existing scene
+
+The Scene editor adds **Add from Workspace** and per-clip **Replace source** (#1883,
+Refs #30). Each action binds the exact Workspace/asset/hash/metadata revision and saves
+one scene revision. Original inputs and restored history survive, retained files count
+against source limits, and incompatible replacements are refused without changing timing.
+Continue checks the original intake plus later source-event evidence; render requests keep
+their frozen sources. CLI and explicitly enabled MCP edits use the same command owner.
+
+Direct source, HTTP/CAS, client and frontend regressions cover the changed seam. The separate
+`tests/scene_source_revisions_browser.py` journey uses disposable registered media, actual
+HTTP/SQLite, browser interaction and one explicit CPU render; its execution receipt remains
+separate from source checks. No neural generation, personal activation, licence clearance
+or artistic acceptance is implied. See [Scene editor](docs/SCENE-EDITOR.md).
+
 ## 2026-10-31 — Start and recover a previewed Spoken Brief
 
 The existing Spoken Briefs page now offers explicit **Start narration** after its

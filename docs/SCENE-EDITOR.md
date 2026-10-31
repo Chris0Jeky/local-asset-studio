@@ -6,6 +6,20 @@ bytes and SHA-256 hashes, preserves their Workspace asset IDs, and starts no ren
 The first slice has cuts, dissolves, static overlays, audio trim/gain/fades/mute/bus, shot ordering and
 shot/audio splits. Sources are served by local range-capable URLs rather than embedded in the page.
 
+Use **Add from Workspace** in Shots, Audio or Static overlays to bring a later asset into the open
+scene. **Replace source** on a clip keeps its timing, placement and audio settings when the selected
+source fits; an incompatible kind or a short source is refused without shortening the clip. The chooser
+searches one bounded page at a time. Save or discard unsaved clip fields before changing sources.
+The source and clip operation save together as one new revision; they never start a render.
+
+Every selection carries the exact Workspace, asset ID, hash and metadata revision. The scene copies
+the selected bytes into a new input file and keeps historical inputs, including after a restore.
+Unavailable, private, linked or changed sources are refused. Retained inputs count toward the
+64-source, 512 MiB-per-source and 1 GiB-total limits; repeated replacements cannot evade them.
+Continue verifies later sources against their intake events while preserving the original plan.
+After an error or an unconfirmed reply, the chooser keeps its selection and disables submission:
+close it and reload the scene before deciding what to do. It never retries a mutation automatically.
+
 Use **Save changes** on a clip, then **Render scene**. While one or more clip fields are unsaved, the
 editor labels the preview as a saved revision and blocks render, export, restore, add, move, split and
 remove. The unsaved notice and disabled actions update immediately while typing, retaining keyboard
@@ -47,6 +61,11 @@ Inspect the scene for its actual clip IDs and current revision. The client makes
 request with no redirects, proxy or retries. A lost response is uncertain: inspect/list before
 deciding what to do; never blindly repeat create, edit or render.
 
+For a later source, send `add_source` with `section`, or `replace_source` with `section` and `clip_id`.
+Both require `expected_revision`, `workspace_id`, `asset_id`, `sha256` and `metadata_revision` from the
+current scene and selected Workspace record. These commands also use MCP's existing `edit_scene`
+tool only when `--allow-edit` is present. They do not grant render access.
+
 The optional MCP SDK remains pinned by the existing AV requirements. Studio mode defaults to
 list/inspect/source inventory/propose. `--allow-edit` adds persisted create/edit/restore/export;
 `--allow-render` separately adds explicit render/cancel. The older `--workspace PATH` offline adapter
@@ -84,6 +103,14 @@ are rehashed before edits, source access, render and export. Video trims beyond 
 beyond decoded sample bounds are rejected. Timing uses exact rational, ties-to-even sample rounding.
 
 ## Evidence and remaining work
+
+The source-revision regressions in `tests/test_av_source_revisions.py` exercise real disposable
+Workspace/scene stores and HTTP/CAS, with media-probe doubles for the short-input edge cases.
+`tests/scene_source_revisions_browser.py --out PATH` is the separate synthetic production-route
+journey: later PNG/MP4/WAV sources, restore, conflict/lost reply, wide/narrow and native 200% zoom,
+then an explicitly requested CPU render and return to the brief. It requires installed Chromium,
+FFmpeg and FFprobe plus an allocated proving window. The render oracle is 47 decoded video frames
+and 94,000 PCM samples. This does not establish model quality or owner acceptance.
 
 12 September Windows proof used real Chromium 151 and FFmpeg 9.0.1: create without rendering, focused
 keyboard input, UI/CLI stale-write rejection, explicit reload, clip split, overlay, queued six-second

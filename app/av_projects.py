@@ -69,11 +69,12 @@ class AVProjects:
         av.need(type(payload.get('expected_revision')) is int and payload['expected_revision']==document['revision'],
                 'Scene conflict: reload the current revision before applying this change')
 
-    def _save(self, db, identifier, document, action, actor, summary):
+    def _save(self, db, identifier, document, action, actor, summary, source=None):
         raw=json.dumps(document);revision=document['revision']
         db.execute('INSERT INTO av_documents VALUES (?,?,?) ON CONFLICT(project_id) DO UPDATE SET revision=excluded.revision,document=excluded.document',
                    (identifier,revision,raw))
         event={'revision':revision,'action':action,'actor':actor,'at':time.time(),'summary':summary}
+        if source is not None:event['source']=source
         db.execute('INSERT INTO av_events VALUES (?,?,?,?)',(identifier,revision,json.dumps(event),raw))
 
     def list(self):
@@ -84,6 +85,45 @@ class AVProjects:
                              'render_stale':bool(s['render'] and s['render']['stale']),
                              'preview_url':s['render']['preview_url'] if s['render'] else None} for s in scenes],
                 'capabilities':self.capabilities()}
+
+    def _source_evidence(self, db, identifier, document, intake):
+        def history(revision):
+            row=db.execute('''SELECT CASE WHEN length(CAST(event AS BLOB))<=? THEN event END AS event,
+                CASE WHEN length(CAST(document AS BLOB))<=? THEN document END AS document
+                FROM av_events WHERE project_id=? AND revision=?''',
+                (project_storage.PLAN_LIMIT,project_storage.PLAN_LIMIT,identifier,revision)).fetchone()
+            av.need(row is not None,'Scene source revision is unavailable')
+            return json.loads(row['event']),json.loads(row['document'])
+        av.need(history(document['revision'])[1]==document,'Scene differs from its saved revision')
+        originals={s['key']:s for s in intake['sources']};known=dict(originals)
+        sources=document.get('sources')
+        av.need(isinstance(sources,list) and 1<=len(sources)<=64 and all(isinstance(s,dict) and isinstance(s.get('key'),str) for s in sources),
+                'Scene source membership changed')
+        for source in sources:
+            key=source['key'];asset=document['project']['assets'].get(key)
+            if key in originals:
+                av.need(source==originals[key] and asset==intake['project']['assets'].get(key),'Original scene source changed')
+                continue
+            revision=source.get('intake_revision')
+            av.need(type(revision) is int and 1<=revision<=document['revision'],'Scene source intake revision is unavailable')
+            event,saved=history(revision);_,prior=history(revision-1)
+            av.need(event.get('revision')==revision and event.get('action') in ('add_source','replace_source')
+                    and event.get('source')==source,'Scene source intake receipt changed')
+            av.need(saved.get('workspace_id')==prior.get('workspace_id')==document['workspace_id']
+                    and saved.get('revision')==revision and prior.get('revision')==revision-1,'Scene source Workspace evidence changed')
+            av.need(key not in prior['project']['assets'] and saved['sources']==prior['sources']+[source]
+                    and saved['project']['assets']=={**prior['project']['assets'],key:asset},'Scene source membership was not introduced by its receipt')
+            known[key]=source
+        for saved in (document,intake):
+            av.validate(saved.get('project'))
+            av.need(len({s['key'] for s in saved['sources']})==len(saved['sources'])
+                    and set(saved['project']['assets'])=={s['key'] for s in saved['sources']},'Scene source membership changed')
+            for source in saved['sources']:
+                asset=saved['project']['assets'][source['key']]
+                av.need(asset['sha256']==source.get('sha256') and asset['kind']==source.get('kind'),'Scene source snapshot changed')
+        av.need(len(known)<=64 and all(type(s.get('bytes')) is int and 0<s['bytes']<=av.MAX_ASSET for s in known.values())
+                and sum(s['bytes'] for s in known.values())<=av.MAX_TOTAL,'Scene retained source evidence exceeds its budget')
+        return list(known.values())
 
     def continue_observation(self, workspace_id):
         """Observe saved scene identities without media inspection or execution admission."""
@@ -124,7 +164,11 @@ class AVProjects:
                 av.need(isinstance(ids,list) and 1<=len(ids)<=48 and all(isinstance(key,str) and re.fullmatch('[A-Za-z0-9_-]{1,128}',key) for key in ids)
                         and len(set(ids))==len(ids),'Invalid scene source identities')
                 av.need(isinstance(sources,list) and len(sources)==len(ids) and all(isinstance(source,dict) for source in sources)
-                        and [source.get('asset_id') for source in sources]==ids and document.get('sources')==sources,'Scene source lineage changed')
+                        and [source.get('asset_id') for source in sources]==ids,'Scene source lineage changed')
+                av.need(type(revision) is int and 0<=revision<=500 and type(document.get('revision')) is int and document['revision']==revision
+                        and type(intake.get('revision')) is int and intake['revision']==0,'Scene revision unavailable')
+                sources=self._source_evidence(db,row['id'],document,intake)
+                ids=[source['asset_id'] for source in sources]
                 if any(source.get('privacy')=='private' for source in sources):continue
                 av.need(all(is_regular(source) for source in sources),'Invalid scene source classification')
                 with self.studio.assets.connection() as assets:
@@ -133,16 +177,20 @@ class AVProjects:
                 if any(asset is not None and asset['privacy']=='private' for asset in current):continue
                 av.need(all(asset is not None and asset['privacy']=='regular' for asset in current),'Scene sources unavailable')
                 if any(self.studio.jobs.get(asset['job_id']) is not None and not is_regular(self.studio.jobs[asset['job_id']]) for asset in current):continue
-                av.need(type(revision) is int and 0<=revision<=500 and type(document.get('revision')) is int and document['revision']==revision
-                        and type(intake.get('revision')) is int and intake['revision']==0,'Scene revision unavailable')
-                for saved in (document,intake):av.validate(saved.get('project'))
                 for source,asset in zip(sources,current):
                     digest=source.get('sha256');key=source.get('key')
                     av.need(isinstance(digest,str) and re.fullmatch('[a-f0-9]{64}',digest) and digest==asset['sha256']
                             and isinstance(key,str) and type(source.get('bytes')) is int and 0<source['bytes']<=av.MAX_TOTAL,'Scene source identity changed')
-                    av.need(all(saved['project']['assets'].get(key,{}).get('sha256')==digest for saved in (document,intake)),'Scene source snapshot changed')
-                av.need(len({source['key'] for source in sources})==len(ids)
-                        and all(set(saved['project']['assets'])=={source['key'] for source in sources} for saved in (document,intake)),'Scene source membership changed')
+                checked=set()
+                for saved in (document,intake):
+                    for source in saved['sources']:
+                        asset=saved['project']['assets'][source['key']];path=av.safe_path(directory,asset['path'])
+                        literal=directory/asset['path']
+                        av.need(path==literal and not any(project_storage._linked(p) for p in (literal,*literal.parents)),
+                                'Scene source is linked')
+                        if path in checked:continue
+                        av.need(path.stat().st_size==source['bytes'] and av.file_hash(path)==asset['sha256'],'Scene source bytes changed')
+                        checked.add(path)
                 created=row['created'];status=state.get('status');name=plan.get('name')
                 av.need(type(created) in (int,float) and math.isfinite(created) and isinstance(status,str) and 0<len(status)<=40
                         and isinstance(name,str) and 0<len(name)<=200,'Scene recorded date or state unavailable')
@@ -175,7 +223,7 @@ class AVProjects:
             attempt={'id':row['id'],'status':row['status'],'revision':row['revision'],'preview_revision':preview['revision'] if preview else None,
                      'stale':not preview or preview['revision']!=document['revision'],'preview_url':preview_artifact['url'] if preview_artifact else None,
                      'progress':details.get('progress',0),'message':details.get('message',''),'artifacts':details.get('artifacts',[])}
-        return {'id':identifier,'name':document['project']['name'],'revision':document['revision'],'project':document['project'],
+        return {'id':identifier,'workspace_id':document.get('workspace_id'),'name':document['project']['name'],'revision':document['revision'],'project':document['project'],
                 'timing':av.validate(document['project']),'sources':[{**s,'url':f'/api/av/{identifier}/sources/{s["key"]}'} for s in document['sources']],
                 'history':history,'render':attempt,'status':state['status'],'capabilities':self.capabilities()}
 
@@ -284,14 +332,90 @@ class AVProjects:
             clips.insert(clips.index(clip)+1,second)
         return result
 
+    def _source_command(self, identifier, payload):
+        workspace=self.studio.assets;target=None;created=False;committed=False
+        try:
+            # Hold both owners until the scene revision commits; source selection cannot change underneath it.
+            with self.production.lock,workspace.connection() as assets:
+                assets.execute('BEGIN IMMEDIATE')
+                owner=workspace._check_scope(assets,workspace._validate_scope(payload['workspace_id']))
+                with self.production.connect() as db:
+                    db.execute('BEGIN IMMEDIATE');document=self._read(db,identifier);self._expected(document,payload)
+                    av.need(document.get('workspace_id')==owner,'Scene belongs to a different Workspace')
+                    av.need(document['revision']<500,'Scene revision budget reached; export and branch explicitly')
+                    section=payload['section'];av.need(isinstance(section,str) and section in EDITABLE,'Choose a supported scene section')
+                    av.need(isinstance(payload['asset_id'],str),'Choose a registered Workspace asset')
+                    row=assets.execute("SELECT * FROM assets WHERE id=? AND privacy='regular'",(payload['asset_id'],)).fetchone()
+                    av.need(row is not None and not row['trashed_at'],'Workspace source is unavailable')
+                    asset=workspace._asset(row)
+                    av.need(is_regular(asset) and is_regular(self.studio.jobs.get(asset['job_id'],{})),'Workspace source is unavailable')
+                    av.need(isinstance(payload['sha256'],str) and re.fullmatch('[a-f0-9]{64}',payload['sha256'])
+                            and payload['sha256']==asset['sha256'] and type(payload['metadata_revision']) is int
+                            and payload['metadata_revision']==asset['metadata_revision'],'Workspace source changed; choose its current record')
+                    original,_=workspace.file_entry(asset['id'],privacy='regular');literal=workspace.root/asset['path']
+                    av.need(original==literal and not any(project_storage._linked(p) for p in (literal,*literal.parents)),
+                            'Workspace source links are not supported')
+                    kind=asset['media_type'];suffix=original.suffix.lower()
+                    av.need((kind,suffix) in (('image','.png'),('video','.mp4'),('audio','.wav')),
+                            'Scenes accept PNG, MP4 and 48 kHz PCM WAV; convert other media explicitly first')
+                    av.need(kind in ({'image','video'} if section=='shots' else {'image'} if section=='overlays' else {'audio'}),
+                            'Source type is incompatible with this clip section')
+                    directory=project_storage.directory(self.production.root,identifier);inputs=directory/'inputs'
+                    av.need(directory==self.directory(identifier) and inputs.is_dir() and inputs.resolve()==inputs
+                            and not project_storage._linked(inputs),'Scene input directory is unavailable or linked')
+                    retained=list(inputs.iterdir())
+                    av.need(all(p.is_file() and not project_storage._linked(p) for p in retained),'Scene inputs contain an unavailable file or link')
+                    size=asset['bytes'];av.need(type(size) is int and 0<size<=av.MAX_ASSET and original.stat().st_size==size,'Workspace source size changed or exceeds the byte limit')
+                    av.need(len(retained)<64,'Scene source item budget includes retained history; export and branch explicitly')
+                    av.need(sum(p.stat().st_size for p in retained)+size<=av.MAX_TOTAL,'Scene source byte budget includes retained history')
+                    av.need(shutil.disk_usage(directory).free>=size+2*1024**3,'Scene intake needs source space plus 2 GiB free')
+                    key='source-'+uuid.uuid4().hex;relative='inputs/'+key+suffix;target=directory/relative
+                    with original.open('rb') as src,target.open('xb') as dst:
+                        created=True;remaining=size
+                        while remaining:
+                            block=src.read(min(1024**2,remaining));av.need(block,'Workspace source changed during intake')
+                            dst.write(block);remaining-=len(block)
+                        av.need(not src.read(1),'Workspace source changed during intake')
+                    av.need(av.file_hash(target)==asset['sha256'] and av.file_hash(original)==asset['sha256'],'Workspace source changed during intake')
+                    changed=copy.deepcopy(document);changed['project']['assets'][key]={'path':relative,'kind':kind,'sha256':asset['sha256']}
+                    source={'key':key,'asset_id':asset['id'],'filename':asset['filename'],'kind':kind,'sha256':asset['sha256'],
+                            'bytes':size,'metadata_revision':asset['metadata_revision'],'intake_revision':document['revision']+1}
+                    changed['sources'].append(source)
+                    if payload['action']=='add_source':
+                        changed=self._edited(changed,{'action':'add','section':section,'asset_key':key},directory)
+                    else:
+                        clips=[c for c in changed['project'][section] if c['id']==payload['clip_id']]
+                        av.need(len(clips)==1,'Unknown scene clip');clips[0]['asset']=key
+                    validate_media(changed['project'],directory,self.executables())
+                    av.need(original==literal.resolve() and not any(project_storage._linked(p) for p in (literal,*literal.parents)),
+                            'Workspace source changed during intake')
+                    av.need(av.file_hash(original)==asset['sha256'] and is_regular(self.studio.jobs.get(asset['job_id'],{})),
+                            'Workspace source changed during intake')
+                    workspace._check_scope(assets,owner)
+                    av.need(inputs.resolve()==inputs and target.resolve()==target
+                            and not any(project_storage._linked(p) for p in (target,*target.parents)),
+                            'Scene input changed during intake')
+                    changed['revision']=document['revision']+1
+                    self._save(db,identifier,changed,payload['action'],self.actor(payload),
+                               ('Add source to ' if payload['action']=='add_source' else 'Replace source in ')+section,source)
+                committed=True
+        except BaseException:
+            if created and not committed and target.resolve()==target and not any(project_storage._linked(p) for p in (target,*target.parents)):
+                target.unlink(missing_ok=True)
+            raise
+        return self.inspect(identifier)
+
     def command(self, identifier, payload):
         av.need(isinstance(payload,dict),'Scene command must be an object');action=payload.get('action');actor=self.actor(payload)
         fields={'edit':('section','clip_id','changes'),'preview':('section','clip_id','changes'),'move':('clip_id','index'),
                 'split':('section','clip_id','at'),'add':('section','asset_key'),'remove':('section','clip_id'),
-                'restore':('source_revision',),'render':(),'export':(),'cancel':('render_id',)}
+                'restore':('source_revision',),'render':(),'export':(),'cancel':('render_id',),
+                'add_source':('section','workspace_id','asset_id','sha256','metadata_revision'),
+                'replace_source':('section','clip_id','workspace_id','asset_id','sha256','metadata_revision')}
         av.need(isinstance(action,str) and action in fields,'Unsupported scene action')
         av.fields(payload,('action',)+fields[action]+(() if action=='cancel' else ('expected_revision',)),('actor',))
         if action=='cancel':return self.cancel(identifier,payload['render_id'])
+        if action in ('add_source','replace_source'):return self._source_command(identifier,payload)
         directory=self.directory(identifier)
         with self.production.connect() as db:document=self._read(db,identifier)
         self._expected(document,payload)

@@ -89,7 +89,7 @@ def build_studio_server(studio, allow_edit=False, allow_render=False):
         @server.tool(structured_output=True)
         def edit_scene(scene_id: str, request_json: str) -> dict[str, Any]:
             """Apply one non-render scene command with its exact expected revision."""
-            request=_json_object(request_json,'Scene command');need(request.get('action') in ('edit','move','split','add','remove'),'Unsupported editable scene action')
+            request=_json_object(request_json,'Scene command');need(request.get('action') in ('edit','move','split','add','remove','add_source','replace_source'),'Unsupported editable scene action')
             return client.command(scene_id,request,'agent')
         @server.tool(structured_output=True)
         def restore_scene(scene_id: str, expected_revision: int, source_revision: int) -> dict[str, Any]:

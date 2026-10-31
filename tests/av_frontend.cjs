@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const nodes=new Map();
-function node(selector){if(!nodes.has(selector)){const classes=new Set();nodes.set(selector,{innerHTML:'',textContent:'',hidden:false,value:'',checked:false,disabled:false,dataset:{},handlers:{},classList:{toggle(name,on){on?classes.add(name):classes.delete(name);},contains(name){return classes.has(name);}},addEventListener(name,handler){this.handlers[name]=handler;},querySelector(){return null;},getAttribute(){return null;},replaceWith(){},showModal(){this.open=true;},close(){this.open=false;}});}return nodes.get(selector);}
+function node(selector){if(!nodes.has(selector)){const classes=new Set();nodes.set(selector,{innerHTML:'',textContent:'',hidden:false,value:'',checked:false,disabled:false,dataset:{},handlers:{},classList:{toggle(name,on){on?classes.add(name):classes.delete(name);},contains(name){return classes.has(name);}},addEventListener(name,handler){this.handlers[name]=handler;},querySelector(){return null;},getAttribute(){return null;},replaceWith(){},focus(){this.focused=true;},showModal(){this.open=true;},close(){this.open=false;}});}return nodes.get(selector);}
 const controls=[['render',{renderAction:'render'}],['export',{renderAction:'export'}],['save',{save:'shots:shot-a'}],['discard',{discardDrafts:''}],['reload',{}]].map(([name,dataset])=>Object.assign(node(name),{dataset}));
 const liveInput=Object.assign(node('live-input'),{dataset:{field:'frames',section:'shots',clip:'shot-a'},type:'number',value:'72'});
 const fixture={id:'scene-a',name:'Opening scene',revision:2,status:'saved',project:{fps:[24,1],size:[640,360],sample_rate:48000,shots:[{id:'shot-a',asset:'hero',source_in:0,frames:72,transition_frames:12}],audio:[{id:'audio-a',asset:'music',bus:'music',start_sample:0,source_sample:0,samples:96000,gain_db:-12,fade_in:4800,fade_out:4800,mute:false}],overlays:[{id:'overlay-a',asset:'title',start:4,frames:32,x:12,y:18,width:280,height:48,opacity:0.9}]},timing:{frames:72,samples:144000,shots:[{id:'shot-a',start_frame:0,end_frame:72}]},sources:[{key:'hero',asset_id:'asset-image',filename:'hero.png',kind:'image',sha256:'a'.repeat(64),bytes:100,url:'/api/av/scene-a/sources/hero'},{key:'music',asset_id:'asset-audio',filename:'music.wav',kind:'audio',sha256:'b'.repeat(64),bytes:100,url:'/api/av/scene-a/sources/music'},{key:'title',asset_id:'asset-title',filename:'title.png',kind:'image',sha256:'c'.repeat(64),bytes:100,url:'/api/av/scene-a/sources/title'}],history:[{revision:1,action:'create',actor:'user',at:'now',summary:'Created'},{revision:2,action:'edit',actor:'user',at:'now',summary:'Trimmed music'}],render:{id:'attempt-a',status:'completed',revision:2,preview_revision:1,stale:true,preview_url:'/api/production/scene-a/files/preview.mp4',progress:1,message:'Done',artifacts:[]},capabilities:{render_ready:true,missing_tools:[],supported:['png','mp4','wav']}};
@@ -14,6 +14,7 @@ async function click(matches){await node('#avContent').onclick({target:target(ma
 setImmediate(()=>{(async()=>{
   let html=node('#avContent').innerHTML;
   assert.match(html,/Source offset/);assert.match(html,/Dissolve/);assert.match(html,/Static overlays/);
+  assert.match(html,/Add from Workspace/);assert.match(html,/Replace source/);
   assert.match(html,/Preview from saved revision 1/);assert.match(html,/older than saved scene/);
   assert.match(html,/Render scene/);vm.runInContext("avDocument.render.status='running';renderDocument()",sandbox);assert.match(node('#avContent').innerHTML,/Cancel this render/);
   assert.match(html,/Restore as new revision/);assert.doesNotMatch(html,/base64/i);
@@ -53,5 +54,32 @@ setImmediate(()=>{(async()=>{
   assert.equal(posts.at(-1).action,'cancel');assert.equal(Object.hasOwn(posts.at(-1),'expected_revision'),false,'cancel must retain its attempt-scoped request contract');
   holdNextRead=true;const reload=node('#reloadScene').onclick();const beforeReloadPosts=posts.length;await click({'[data-render-action]':{dataset:{renderAction:'render'}}});assert.equal(posts.length,beforeReloadPosts);releaseRead();await reload;
   vm.runInContext("avMessage('Render queued for revision 5.');avDocument.render.status='running'",sandbox);await vm.runInContext("loadScene('scene-a',true)",sandbox);assert.equal(node('#avStatus').textContent,'Done');
-  console.log('Scene editor updates drafts without replacing fields and serializes commands against stale reads.');
+  const originalFetch=sandbox.fetch,source={id:'later-image',filename:'later.png',title:'Later image',media_type:'image',sha256:'d'.repeat(64),metadata_revision:17,url:'/api/assets/later-image/file'};
+  fixture.workspace_id='a'.repeat(32);vm.runInContext("avDocument.workspace_id='a'.repeat(32)",sandbox);
+  let sourceFailure=false;
+  sandbox.fetch=async(url,options={})=>{
+    if(url.startsWith('/api/assets/page?')){calls.push({url,method:'GET'});return {ok:true,json:async()=>({assets:[source],next_cursor:'next-page'})};}
+    if(sourceFailure&&options.method==='POST'){posts.push(JSON.parse(options.body));throw Error('Connection lost after send');}
+    return originalFetch(url,options);
+  };
+  vm.runInContext("setDraft('audio','audio-a','gain_db','-4')",sandbox);let beforeSource=calls.length;
+  await vm.runInContext("openSourceChoice('shots','shot-a')",sandbox);assert.equal(calls.length,beforeSource);assert.equal(vm.runInContext('avDrafts.size',sandbox),1);
+  vm.runInContext('clearDrafts()',sandbox);await vm.runInContext("openSourceChoice('shots','shot-a')",sandbox);
+  const sourceQuery=new URL(calls.at(-1).url,'http://localhost').searchParams;
+  assert.equal(sourceQuery.get('workspace_id'),'a'.repeat(32));assert.equal(sourceQuery.get('limit'),'12');assert.equal(sourceQuery.get('media_type'),'image');
+  assert.equal(node('#sceneSourceDialog').open,true);node('#sceneSourceList').onchange({target:{value:source.id}});
+  const expected=vm.runInContext('avDocument.revision',sandbox);holdNextPost=true;
+  const replacing=node('#sceneSourceForm').onsubmit({preventDefault(){}});const during=posts.length;
+  node('#sceneSourceDialog').oncancel({preventDefault(){}});assert.equal(node('#sceneSourceDialog').open,true);
+  await node('#sceneSourceForm').onsubmit({preventDefault(){}});assert.equal(posts.length,during);
+  releasePost();await replacing;
+  assert.deepEqual(posts.at(-1),{action:'replace_source',expected_revision:expected,workspace_id:'a'.repeat(32),section:'shots',asset_id:'later-image',sha256:'d'.repeat(64),metadata_revision:17,clip_id:'shot-a'});
+  assert.equal(node('#sceneSourceDialog').open,false);assert.equal(node('[data-select-clip="shots\\:shot-a"] h4').focused||node('[data-select-clip="shots:shot-a"] h4').focused,true);
+  await vm.runInContext("openSourceChoice('overlays')",sandbox);node('#sceneSourceList').onchange({target:{value:source.id}});sourceFailure=true;
+  await node('#sceneSourceForm').onsubmit({preventDefault(){}});const lostCount=posts.length;
+  assert.equal(posts.at(-1).action,'add_source');assert.equal(Object.hasOwn(posts.at(-1),'clip_id'),false);
+  assert.equal(node('#sceneSourceApply').disabled,true);assert.match(node('#sceneSourceStatus').textContent,/nothing is retried automatically/);
+  await node('#sceneSourceForm').onsubmit({preventDefault(){}});assert.equal(posts.length,lostCount);
+  assert.equal(node('#sceneSourceDialog').open,true);assert.equal(vm.runInContext('avSourceSelected.id',sandbox),source.id);
+  console.log('Scene editor updates drafts and verifies source identity, lost replies, focus and serialized revision commands.');
 })().catch(error=>{console.error(error);process.exitCode=1;});});

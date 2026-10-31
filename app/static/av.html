@@ -11,5 +11,13 @@
   </section>
 </main>
 <dialog id="sceneDialog" class="av-dialog"><form id="sceneForm"><span class="eyebrow">REGISTERED WORKSPACE SOURCES</span><h2>New scene</h2><label>Name<input id="sceneName" maxlength="120" required placeholder="Chapter one · opening"></label><p class="muted">PNG, MP4 and 48 kHz PCM WAV only. Source files are snapshotted into the scene; paths and uploads are not accepted.</p><div id="sceneAssets" class="av-source-picker"></div><p id="sceneCreateStatus" class="status" role="status"></p><div class="actions"><button type="button" id="cancelScene">Cancel</button><button id="createScene" class="primary">Create scene</button></div></form></dialog>
+<dialog id="sceneSourceDialog" class="av-dialog" aria-labelledby="sceneSourceTitle"><form id="sceneSourceForm">
+  <h2 id="sceneSourceTitle">Add from Workspace</h2><p id="sceneSourceContext" class="muted"></p>
+  <div class="av-source-search"><label>Media<select id="sceneSourceKind"></select></label><label>Find an asset<input id="sceneSourceSearch" type="search" maxlength="200"></label><button id="sceneSourceFind" type="button">Search</button></div>
+  <div id="sceneSourceList" class="av-source-picker" aria-label="Workspace assets"></div>
+  <div class="actions"><button id="sceneSourceFirst" type="button">First page</button><button id="sceneSourceNext" type="button" disabled>Next page</button></div>
+  <p id="sceneSourceStatus" class="status" role="status" aria-live="polite"></p>
+  <div class="actions"><button id="sceneSourceCancel" type="button">Cancel</button><button id="sceneSourceApply" class="primary" disabled>Add to scene</button></div>
+</form></dialog>
 <script src="/static/av.js"></script>
 <script src="/static/studio-core.js"></script><script src="/static/studio-shell.js"></script><script src="/static/privacy.js"></script><script src="/static/scene-brief-core.js"></script><script src="/static/scene-brief-return.js"></script></body></html>

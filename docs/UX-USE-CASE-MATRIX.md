@@ -1,5 +1,20 @@
 # UX use-case matrix
 
+## Revise scene sources — 31 October 2026 (#1883)
+
+An existing scene can add later Workspace media or replace one clip's source without
+rebuilding its arrangement. The chooser uses the current scene revision and exact selected
+asset; a refused or unconfirmed request retains the choice and requires an explicit reload.
+Render and brief candidate selection remain deliberate, separate actions.
+
+The dedicated `tests/scene_source_revisions_browser.py` journey records its actual clicks,
+keys, searches, HTTP commands, persisted revisions and media receipts in `result.json`.
+It covers PNG replacement, MP4 addition, WAV replacement, restore, competing edits,
+lost acknowledgment, narrow layout, keyboard/focus, native browser 200% zoom, one CPU
+render and return to the saved brief. Source/Node checks do not claim those browser results;
+the finite execution receipt supplies measured outcomes. The existing `studio_use_cases.py`
+matrix remains the broader navigation regression baseline.
+
 ## Repair a marked region — 30 October 2026 (#1857, first slice)
 
 Choosing a masked-repair recipe (`anime-masked-repair`, `sdxl-inpaint-fix`) in *Continue with this* no longer dead-ends on

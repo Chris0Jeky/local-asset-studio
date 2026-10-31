@@ -61,6 +61,17 @@ class ClientTests(unittest.TestCase):
         output=io.StringIO()
         with redirect_stdout(output):self.assertEqual(main(['studio','--url',self.url,'list']),0)
         self.assertEqual(json.loads(output.getvalue()),{'projects':[]});self.assertEqual(Fixture.calls[0][1],'/api/av')
+    def test_cli_source_command_preserves_workspace_hash_revision_and_actor(self):
+        from studio_av.__main__ import main
+        from tempfile import TemporaryDirectory
+        payload={'action':'replace_source','section':'shots','clip_id':'clip1','expected_revision':7,
+            'workspace_id':'a'*32,'asset_id':'later-image','sha256':'b'*64,'metadata_revision':19}
+        with TemporaryDirectory() as folder:
+            request=Path(folder)/'command.json';request.write_text(json.dumps(payload),encoding='utf-8')
+            output=io.StringIO()
+            with redirect_stdout(output):self.assertEqual(main(['studio','--url',self.url,'command','scene1',str(request)]),0)
+        self.assertEqual(json.loads(output.getvalue())['received'],{**payload,'actor':'cli'})
+        self.assertEqual(len(Fixture.calls),1)
     def test_studio_mcp_defaults_to_read_and_preview_tools(self):
         class FakeServer:
             def __init__(self,*_args,**_kwargs):self.tools={}
@@ -72,6 +83,17 @@ class ClientTests(unittest.TestCase):
             from studio_av.mcp_server import build_studio_server
             tools=build_studio_server(self.url).tools
             proposed=tools['propose_edit']('scene1',7,'shots','clip1','{"frames":48}')
+            editable=build_studio_server(self.url,allow_edit=True).tools
+            self.assertNotIn('render_scene',editable);self.assertNotIn('cancel_render',editable)
+            for action in ('add_source','replace_source'):
+                request={'action':action,'expected_revision':7,'section':'shots','workspace_id':'a'*32,
+                    'asset_id':'later-image','sha256':'b'*64,'metadata_revision':19}
+                if action=='replace_source':request['clip_id']='clip1'
+                reply=editable['edit_scene']('scene1',json.dumps(request))
+                self.assertEqual(reply['received'],{**request,'actor':'agent'})
+            before=len(Fixture.calls)
+            with self.assertRaises(ValueError):editable['edit_scene']('scene1','{"action":"render","expected_revision":7}')
+            self.assertEqual(len(Fixture.calls),before)
         finally:
             for key,value in original.items():
                 if value is None:sys.modules.pop(key,None)
