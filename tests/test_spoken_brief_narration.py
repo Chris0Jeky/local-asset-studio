@@ -148,6 +148,33 @@ class NarrationTests(unittest.TestCase):
         self.assertEqual(self.settled(results[0][1]['key'])['status'], 'completed')
         self.assertEqual(len(self.posts()), 2)
 
+    def test_start_and_coordinator_preserve_prepared_manifest_identity(self):
+        from spoken_brief_runtime import plan
+        manifest = Path(plan(self.source)['manifest'])
+        before = manifest.stat()
+        code, value = self.start()
+        self.assertEqual(code, 202, value)
+        self.assertEqual(self.settled(value['key'])['status'], 'completed')
+        after = manifest.stat()
+        self.assertEqual((after.st_ino, after.st_mtime_ns), (before.st_ino, before.st_mtime_ns))
+        self.assertEqual(len(self.posts()), 2)
+
+    def test_duplicate_admission_does_not_read_changing_progress(self):
+        import studio_spoken.narration as narration
+        from spoken_brief_compile import SpokenBriefError
+        value = self.settled(self.start()[1]['key']); before = self.posts()
+        checked = narration.checked_json
+        def changing_progress(path):
+            if path.name == 'state.json': raise SpokenBriefError('File changed while reading: state.json')
+            return checked(path)
+        with patch.object(narration, 'checked_json', side_effect=changing_progress):
+            code, result = self.start()
+            self.assertEqual(code, 202, result); self.assertTrue(result['reused'])
+            code, result = self.f.request('/narration', {'key': value['key'], 'root_id': self.root_id})
+            self.assertEqual(code, 400, result)
+            self.assertIn('File changed while reading', result['error'])
+        self.assertEqual(self.posts(), before)
+
     def test_lost_create_reply_never_creates_replacement_on_reload_or_recovery(self):
         from studio_spoken.narration import Narrations
         self.f.lose_create = True; preview = self.preview()

@@ -41,13 +41,13 @@ class Narrations:
                 'root_lineage': lineage, 'producer_config_sha256': value['producer_config_sha256']})
         return value
 
-    def _load(self, key, root_id):
+    def _load(self, key, root_id, *, include_state=True):
         access = self.access(); digest(root_id)
         if access.status()['source_root_id'] != root_id: raise AccessError('Source root changed; refresh source access', 409)
         with access._directory(key) as directory:
             record = checked_json(directory / 'studio-start.json')[0]
             manifest = checked_json(directory / 'manifest.json')[0]
-            state = checked_json(directory / 'state.json')[0]
+            state = checked_json(directory / 'state.json')[0] if include_state else None
             try:
                 fields(record, ('schema_version', 'kind', 'root_id', 'source_key', 'manifest_sha256', 'preview_sha256', 'started_at'))
                 if (record['schema_version'] != 1 or record['kind'] != 'spoken-brief' or record['root_id'] != root_id
@@ -58,7 +58,8 @@ class Narrations:
                 _key(source.relative_to(access._root()).as_posix())
                 if run_directory(source, manifest['manifest_sha256']) != directory:
                     raise AccessError('Narration directory differs from its manifest', 409)
-                digest(record['preview_sha256']); validate_state(state, manifest, batch_segments(manifest['segments']))
+                digest(record['preview_sha256'])
+                if include_state: validate_state(state, manifest, batch_segments(manifest['segments']))
             except (KeyError, TypeError, ValueError) as exc:
                 raise AccessError('Invalid retained narration: ' + str(exc), 409) from exc
             return directory, record, manifest, state
@@ -130,20 +131,22 @@ class Narrations:
             require_executable(manifest['voice_profile'])
             key = preview['run_key']; root = self.access()._root(); directory = root.joinpath(*_key(key))
             if (directory / 'studio-start.json').exists():
-                self._load(key, value['root_id'])
+                self._load(key, value['root_id'], include_state=False)
                 return {'key': key, 'root_id': value['root_id'], 'manifest_sha256': value['manifest_sha256'], 'reused': True}
             if self.threads: raise AccessError('Another narration is being followed; inspect its retained progress first', 409)
             prepare_directory(directory)
             with _claim(directory, value['manifest_sha256']) as verify:
                 if (directory / 'studio-start.json').exists():
-                    self._load(key, value['root_id'])
+                    self._load(key, value['root_id'], include_state=False)
                     return {'key': key, 'root_id': value['root_id'], 'manifest_sha256': value['manifest_sha256'], 'reused': True}
                 if self.preview(value['key'], value['root_id'])['preview_sha256'] != value['preview_sha256']:
                     raise AccessError('Preview changed before admission', 409)
                 retained = (directory / 'state.json').exists()
-                if (directory / 'manifest.json').exists() and checked_json(directory / 'manifest.json')[0] != manifest:
-                    raise AccessError('Retained manifest differs; no files replaced', 409)
-                write_json(directory / 'manifest.json', manifest, guard=verify)
+                if (directory / 'manifest.json').exists():
+                    if checked_json(directory / 'manifest.json')[0] != manifest:
+                        raise AccessError('Retained manifest differs; no files replaced', 409)
+                else:
+                    write_json(directory / 'manifest.json', manifest, guard=verify)
                 if not retained: write_json(directory / 'state.json', initial_state(manifest), guard=verify)
                 record = {'schema_version': 1, 'kind': 'spoken-brief', 'root_id': value['root_id'],
                           'source_key': value['key'], 'manifest_sha256': value['manifest_sha256'],

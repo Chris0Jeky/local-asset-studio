@@ -127,9 +127,11 @@ def run(pack, *, base_url='http://127.0.0.1:8191',
         def current():
             guard()
             if before_request: before_request()
-        if manifest_path.is_file() and read_json(manifest_path) != manifest:
-            raise SpokenBriefError('Retained manifest differs for this source hash')
-        write_json(manifest_path, manifest, guard=guard)
+        if manifest_path.is_file():
+            if read_json(manifest_path) != manifest:
+                raise SpokenBriefError('Retained manifest differs for this source hash')
+        else:
+            write_json(manifest_path, manifest, guard=guard)
         state = read_json(state_path) if state_path.is_file() else initial_state(manifest)
         batches = batch_segments(manifest['segments'])
         validate_state(state, manifest, batches)
