@@ -11,7 +11,7 @@ from studio_workflow.privacy import is_regular
 from workspace import WorkspaceError
 
 PLAN_WINDOW = 40
-READ_ERRORS = (OSError, ValueError, TypeError, KeyError, AttributeError, sqlite3.DatabaseError)
+READ_ERRORS = (OSError, ValueError, TypeError, KeyError, AttributeError, RecursionError, sqlite3.DatabaseError)
 
 
 def latest_native(studio, workspace_id):
@@ -74,6 +74,11 @@ def inspect(studio, workspace_id=None, scope='regular'):
         try:result['native']=latest_native(studio,identity)
         except READ_ERRORS:result['native']={'state':'unavailable'}
     result['native']['scope']='regular'
+    if scope=='private':result['scene']={'state':'excluded'}
+    else:
+        try:result['scene']=studio.production.av.continue_observation(identity)
+        except READ_ERRORS:result['scene']={'state':'unavailable'}
+    result['scene']['scope']='regular'
     with studio.assets.connection() as db:
         studio.assets._check_scope(db,identity)
         if _state(db,scope)!=stamp:

@@ -4,6 +4,7 @@ import copy
 import json
 import math
 from pathlib import Path
+import re
 import shutil
 import time
 import uuid
@@ -11,8 +12,11 @@ import zipfile
 
 from studio_av import project as av
 from studio_av.render import render, validate_media, probe, video_duration, tool, RenderCancelled
+import project_storage
+from studio_workflow.privacy import is_regular
 
 ACTIVE = ('queued','running')
+CONTINUE_WINDOW = 40
 EDITABLE = {'shots':{'source_in','frames','transition_frames'},
             'audio':{'bus','start_sample','source_sample','samples','gain_db','fade_in','fade_out','mute'},
             'overlays':{'start','frames','x','y','width','height','opacity'}}
@@ -80,6 +84,77 @@ class AVProjects:
                              'render_stale':bool(s['render'] and s['render']['stale']),
                              'preview_url':s['render']['preview_url'] if s['render'] else None} for s in scenes],
                 'capabilities':self.capabilities()}
+
+    def continue_observation(self, workspace_id):
+        """Observe saved scene identities without media inspection or execution admission."""
+        from production import fingerprint
+        with self.production.connect() as db:
+            db.execute('BEGIN')
+            rows=db.execute('''WITH candidates AS (
+                SELECT id FROM projects WHERE json_extract(CASE WHEN json_valid(plan) THEN plan ELSE '{}' END,'$.kind')='av'
+                UNION SELECT project_id FROM av_documents UNION SELECT project_id FROM av_events)
+                SELECT c.id,p.created,d.revision,
+                    CASE WHEN length(CAST(p.plan AS BLOB))<=? THEN p.plan END AS plan,
+                    CASE WHEN length(CAST(p.state AS BLOB))<=? THEN p.state END AS state,
+                    CASE WHEN length(CAST(d.document AS BLOB))<=? THEN d.document END AS document,
+                    CASE WHEN length(CAST(e.document AS BLOB))<=? THEN e.document END AS intake
+                FROM candidates c LEFT JOIN projects p ON p.id=c.id
+                LEFT JOIN av_documents d ON d.project_id=c.id
+                LEFT JOIN av_events e ON e.project_id=c.id AND e.revision=0
+                ORDER BY (typeof(p.created) NOT IN ('integer','real')) DESC,p.created DESC,c.id DESC LIMIT ?''',
+                (project_storage.PLAN_LIMIT,)*4+(CONTINUE_WINDOW+1,))
+            for index,row in enumerate(rows):
+                if index==CONTINUE_WINDOW:return {'state':'incomplete'}
+                plan,state,document,intake=(json.loads(row[key]) for key in ('plan','state','document','intake'))
+                av.need(all(isinstance(value,dict) for value in (plan,state,document,intake)),'Saved scene metadata unavailable')
+                if any(value.get('privacy')=='private' for value in (plan,document,intake)):continue
+                av.need(all(is_regular(value) for value in (plan,document,intake)) and plan.get('kind')=='av','Invalid scene owner')
+                ids=plan.get('source_assets');sources=intake.get('sources');revision=row['revision']
+                av.need(isinstance(ids,list) and 1<=len(ids)<=48 and all(isinstance(key,str) and re.fullmatch('[A-Za-z0-9_-]{1,128}',key) for key in ids)
+                        and len(set(ids))==len(ids),'Invalid scene source identities')
+                av.need(isinstance(sources,list) and len(sources)==len(ids) and all(isinstance(source,dict) for source in sources)
+                        and [source.get('asset_id') for source in sources]==ids and document.get('sources')==sources,'Scene source lineage changed')
+                if any(source.get('privacy')=='private' for source in sources):continue
+                av.need(all(is_regular(source) for source in sources),'Invalid scene source classification')
+                with self.studio.assets.connection() as assets:
+                    self.studio.assets._check_scope(assets,workspace_id)
+                    current=[assets.execute('SELECT id,sha256,privacy,job_id FROM assets WHERE id=?',(key,)).fetchone() for key in ids]
+                if any(asset is not None and asset['privacy']=='private' for asset in current):continue
+                av.need(all(asset is not None and asset['privacy']=='regular' for asset in current),'Scene sources unavailable')
+                if any(self.studio.jobs.get(asset['job_id']) is not None and not is_regular(self.studio.jobs[asset['job_id']]) for asset in current):continue
+                av.need(type(revision) is int and 0<=revision<=500 and type(document.get('revision')) is int and document['revision']==revision
+                        and type(intake.get('revision')) is int and intake['revision']==0,'Scene revision unavailable')
+                for saved in (document,intake):av.validate(saved.get('project'))
+                for source,asset in zip(sources,current):
+                    digest=source.get('sha256');key=source.get('key')
+                    av.need(isinstance(digest,str) and re.fullmatch('[a-f0-9]{64}',digest) and digest==asset['sha256']
+                            and isinstance(key,str) and type(source.get('bytes')) is int and 0<source['bytes']<=av.MAX_TOTAL,'Scene source identity changed')
+                    av.need(all(saved['project']['assets'].get(key,{}).get('sha256')==digest for saved in (document,intake)),'Scene source snapshot changed')
+                av.need(len({source['key'] for source in sources})==len(ids)
+                        and all(set(saved['project']['assets'])=={source['key'] for source in sources} for saved in (document,intake)),'Scene source membership changed')
+                directory=project_storage.directory(self.production.root,row['id']);target=directory/'plan.json';marker=directory/project_storage.MARKER
+                av.need(directory.is_dir() and not marker.exists() and not project_storage._linked(marker)
+                        and target.is_file() and not project_storage._linked(target),'Scene intake evidence unavailable')
+                with target.open('rb') as stream:raw=stream.read(project_storage.PLAN_LIMIT+1)
+                av.need(len(raw)<=project_storage.PLAN_LIMIT,'Scene plan exceeds inspection limit')
+                av.need(fingerprint(json.loads(raw))==fingerprint(plan)
+                        and plan.get('sha256')==fingerprint({key:value for key,value in plan.items() if key!='sha256'}),'Scene plan evidence changed')
+                created=row['created'];status=state.get('status');name=plan.get('name')
+                av.need(type(created) in (int,float) and math.isfinite(created) and isinstance(status,str) and 0<len(status)<=40
+                        and isinstance(name,str) and 0<len(name)<=200,'Scene recorded date or state unavailable')
+                latest=db.execute('''SELECT id,revision,status,created FROM av_renders WHERE project_id=?
+                    ORDER BY (typeof(created) NOT IN ('integer','real')) DESC,created DESC,id DESC LIMIT 1''',(row['id'],)).fetchone()
+                completed=db.execute('''SELECT id,revision,status,created FROM av_renders WHERE project_id=? AND status='completed'
+                    ORDER BY (typeof(created) NOT IN ('integer','real')) DESC,created DESC,id DESC LIMIT 1''',(row['id'],)).fetchone()
+                for record in (latest,completed):
+                    if record is not None:
+                        av.need(isinstance(record['id'],str) and re.fullmatch('[a-f0-9]{32}',record['id']) and type(record['revision']) is int
+                                and 0<=record['revision']<=revision and isinstance(record['status'],str) and 0<len(record['status'])<=40
+                                and type(record['created']) in (int,float) and math.isfinite(record['created']),'Scene render record unavailable')
+                return {'state':'ready','plan':{'id':row['id'],'name':name,'created_at':created,'revision':revision,'status':status,
+                    'render':{'revision':latest['revision'],'status':latest['status']} if latest else None,
+                    'completed_revision':completed['revision'] if completed else None}}
+        return {'state':'empty'}
 
     def inspect(self, identifier):
         self.directory(identifier)

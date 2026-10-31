@@ -1,5 +1,31 @@
 # Current state — 31 October 2026
 
+## 2026-10-31 — Return to a saved scene from Continue
+
+Make's optional **Continue** card now also links to the newest eligible saved
+Scene editor project. The AV owner reads bounded metadata from the existing
+Production store, anchors source IDs/hashes to the intake event and current
+Regular Workspace, and keeps missing, malformed and capped evidence distinct
+from empty history. Created date, saved revision and recorded render revisions
+remain separate; an older completed render does not imply a current preview.
+Private performs no AV/Production read. The separate native export, kept picture
+and Needs work destinations retain their existing owners. The exact scene link
+opens a new tab, preserving the current composer. Refs #1822; broader history
+and the #1832 owner-acceptance park remain unchanged.
+
+The disposable SQLite baseline reproduced eight saved scenes being absent from
+Continue while their existing GET destinations were available. The first route
+regression failed because no scene result existed; controller regressions failed
+because the scene link and revision presentation were absent. Focused source
+checks pass: 22 Continue tests (one unavailable Windows symlink fixture skipped),
+10 native-history tests, 28 frontend handoff tests, 11 controller cases, syntax
+checks and the repository validator. Independent review, actual HTTP/SQLite
+browser proof and the exact-head hosted gate remain separate qualification
+obligations recorded in the PR evidence.
+No native media execution, live generation, deployment, artistic acceptance or
+licensing is established by this discovery feature. HUMAN_TODO.md remains
+authoritative.
+
 ## 2026-10-31 — Return to existing work from Make
 
 Make has an initially collapsed **Continue** card. Explicit reads find the

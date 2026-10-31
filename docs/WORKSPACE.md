@@ -3,7 +3,7 @@
 In **Make**, expand **Continue** to return to existing work. It reads the newest
 created kept picture in your current privacy view (active, unarchived, Mine),
 links to the existing **Needs work** Library view, and shows the newest eligible
-native-export plan. **Refresh** makes another explicit observation; the card
+native-export plan and saved Scene editor project. **Refresh** makes another explicit observation; the card
 does not poll or remember whether it was open. Clearing browser history does
 not erase these server records.
 
@@ -14,6 +14,16 @@ does not read them and All labels that boundary. The reader inspects at most
 search or missing, malformed or stale evidence stays incomplete or unavailable.
 The plan opens in a new tab, preserving your current draft. The card starts no
 generation, export or native application.
+
+**Newest scene** opens the exact Scene editor project in a new tab. It shows
+the saved revision alongside recorded state and render revisions; an older
+completed render is labelled as older, not presented as the current result.
+Scene discovery separately inspects at most 40 candidates and anchors every
+source ID/hash to its retained intake event and the current Regular Workspace.
+Missing or changed source identities, plan files or revision records stay
+unavailable. Private does not read scenes; All labels their Regular-only scope.
+The native export and scene sections can fail independently without hiding the
+other saved destination. Opening a scene neither renders nor exports it.
 
 **Import images** adds your existing PNG/JPEG/WebP originals without generation.
 Select images and use **Create native export** to arrange their order, layer
