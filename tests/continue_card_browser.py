@@ -67,6 +67,7 @@ async def run(out):
         def _safe_mutation(self):return self._safe_host() and self.headers.get('Origin')=='http://'+self.headers.get('Host','')
         def do_GET(self):
             path=urlsplit(self.path).path
+            if path=='/api/looks':return self._json(200,json.loads((shell.ROOT/'presets/looks.json').read_text(encoding='utf-8')))
             if path=='/api/workspace/continue' and gate['pause']:
                 gate['pause']=False;entered.set()
                 if not release.wait(15):raise RuntimeError('Continue delay timed out')
@@ -99,7 +100,7 @@ async def run(out):
             await expect(page.locator('#makeContinue>summary')).to_be_visible()
             check('Fresh browser storage leaves Continue collapsed and unread',not await page.locator('#makeContinue').evaluate('(n)=>n.open') and not any('/workspace/continue' in p for _,p in requests))
             await page.locator('#makeGoals [data-make-goal="character"]').click()
-            await page.locator('#makeBody [data-make-look]').first.click()
+            await page.locator('#makeBody [data-make-look="look-wai-fantasy-portrait"]').click()
             await page.locator('#makeScene').fill('Unfinished Make wording')
             await expand()
             await expect(page.locator('[data-continue-asset]')).to_have_text('Older kept picture')
