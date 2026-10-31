@@ -176,6 +176,17 @@ def exercise(out, browser_executable=None):
                         page.wait_for_function('document.querySelectorAll("#assetSourceImages img").length===2&&[...document.querySelectorAll("#assetSourceImages img")].every(i=>i.complete&&i.naturalWidth)')
                     page.evaluate('document.documentElement.style.zoom="1"')
                     page.set_viewport_size({'width': 1440, 'height': 1000})
+                    page.locator('[data-family-compare-close]').click()
+                    page.locator('#assetCompareSource').click()
+                    controls['entered'].clear(); controls['release'].clear(); controls['hold'] = True
+                    page.locator('[data-family-source]').click()
+                    assert controls['entered'].wait(5), 'Comparison response did not reach the Notes hold'
+                    page.locator('#assetNotes').focus()
+                    controls['release'].set()
+                    page.wait_for_function('document.querySelectorAll("#assetSourceImages img").length===2&&[...document.querySelectorAll("#assetSourceImages img")].every(i=>i.complete&&i.naturalWidth)')
+                    check(page.locator('#assetNotes').evaluate('(e)=>e===document.activeElement'), 'Held comparison response preserves Notes focus')
+                    page.keyboard.type(' kwx')
+                    check(page.locator('#assetNotes').input_value().endswith(' kwx') and studio.assets.get(ids['child'])['review'] == 'unreviewed', 'K/W/X typing after a held response stays in Notes and does not review')
                     check('/api/assets/update' not in requests, 'Opening, choosing and closing comparison perform no metadata writes')
                     controls['allow_review'] = True
                     page.locator('#assetSourceTitle').focus()

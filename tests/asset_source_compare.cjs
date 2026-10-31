@@ -1,6 +1,24 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),F=require('../app/static/asset-family.js');
 const workspace='a'.repeat(32),hash='b'.repeat(64),sourceHash='c'.repeat(64);
+test('a held comparison render preserves focus moved into Notes',async()=>{
+  // Exercise the actual private renderer without adding a browser dependency to this contract suite.
+  const source=require('node:fs').readFileSync(require('node:path').join(__dirname,'../app/static/asset-family.js'),'utf8');
+  const start=source.indexOf('    async function chooseSource(parent){'),end=source.indexOf('\n    function clear(){',start);
+  assert(start>0&&end>start);
+  let release;
+  const notes={tagName:'TEXTAREA'},box={replaceChildren(){},append(){}},line={};
+  const d={activeElement:{tagName:'BUTTON'},createElement:()=>({addEventListener(){},append(){}})};
+  const title={focus(){d.activeElement=title;}};
+  const scope={d,dialog:{open:true},comparisonReport:{},comparisonPanel:{hidden:false,querySelectorAll:()=>[]},
+    comparison:{choose:()=>new Promise(resolve=>{release=resolve;})},
+    q:selector=>({'#assetSourceImages':box,'#assetSourceStatus':line,'#assetSourceTitle':title}[selector])};
+  const vm=require('node:vm');vm.createContext(scope);vm.runInContext(source.slice(start,end)+'\nthis.chooseSource=chooseSource;',scope);
+  const pending=scope.chooseSource('source');d.activeElement=notes;
+  release({current:()=>true,child:{title:'child',url:'/child'},source:{title:'source',url:'/source'}});
+  await pending;
+  assert.equal(d.activeElement,notes,'Delayed image display must not move typing into K/W/X review shortcuts');
+});
 const asset=(id,sha,extra={})=>({id,sha256:sha,workspace_id:workspace,media_type:'image',privacy:'regular',trashed_at:null,title:id,url:'/api/assets/'+id+'/file',...extra});
 const report=()=>({version:1,asset_id:'repair',workspace_id:workspace,nodes:['source','repair'].map(id=>({id,state:'active',title:id,operation:null,seed:null,strength:null})),edges:[{parent:'source',child:'repair'}],gaps:[],truncated:false,children:null,children_truncated:false,children_scanned:0,observation_only:true,generation_submitted:false,media_bytes_verified:false});
 function fixture(){

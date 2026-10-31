@@ -138,7 +138,6 @@
         image.addEventListener('error',()=>{if(!current())return;comparison.cancel();box.replaceChildren();line.textContent='A picture could not be loaded. Nothing was changed. Choose a source again to retry.';});
         figure.append(image,caption,size);box.append(figure);image.src=a.url;
       }
-      if(current())q('#assetSourceTitle').focus();
     }
     function clear(){epoch++;controller?.abort();controller=null;recall.cancel();clearComparison();comparisonReport=null;comparisonScope=null;currentId=null;panel.replaceChildren();q('#assetLineage').hidden=false;
       q('#assetFamilyActions')?.replaceChildren();const line=q('#assetFamilyStatus');if(line){line.textContent='';line.classList.remove('error');}}
