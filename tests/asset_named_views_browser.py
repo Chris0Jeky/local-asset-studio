@@ -144,7 +144,7 @@ async def run(out):
                 await page.select_option('#assetNamedViews', 'Collection study'); await page.locator('#assetNamedRestore').click()
                 await expect(page.locator('#assetNamedStatus')).to_contain_text('collection is unavailable')
                 check('Missing collection keeps the current filters and saved view', await fields() == previous and await page.locator('#assetNamedViews option').count() == 4)
-                await page.evaluate("window.fixtureSetItem=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k.startsWith('studio.assets.named-views.v1:'))throw Error('Synthetic storage refusal');return window.fixtureSetItem.call(this,k,v)}")
+                await page.evaluate("()=>{window.fixtureSetItem=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k.startsWith('studio.assets.named-views.v1:'))throw Error('Synthetic storage refusal');return window.fixtureSetItem.call(this,k,v)};}")
                 await page.locator('#assetNamedName').fill('Denied save'); await page.locator('#assetNamedSave').click()
                 await expect(page.locator('#assetNamedStatus')).to_contain_text('Synthetic storage refusal')
                 check('Storage failure preserves saved views and filters', await fields() == previous and await page.locator('#assetNamedViews option').count() == 4)
