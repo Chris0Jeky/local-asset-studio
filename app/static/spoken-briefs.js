@@ -28,6 +28,49 @@
     return value;
   }
   const session = new SpokenReview.ReviewSession(request), drafts = new Map();
+  const sourceSession = new SpokenReview.SourcePreviewSession(request);
+  function clearSource(message) {
+    $('sourcePreview').hidden = true;
+    for (const id of ['sourceIdentity','sourceProfile','sourceOmissions','sourceSegments','sourceManifest','sourceCounts']) $(id).replaceChildren();
+    $('sourceStatus').textContent = message;
+  }
+  $('sourceKey').oninput = () => {
+    sourceSession.invalidate(); clearSource('Selection changed. Choose Preview narration to read this source.');
+  };
+  $('sourceForm').onsubmit = async event => {
+    event.preventDefault(); clearSource('Reading a bounded source snapshot…');
+    try {
+      const value = await sourceSession.preview($('sourceKey').value);
+      if (!value) return;
+      const manifest = value.manifest, profile = manifest.voice_profile;
+      $('sourceCounts').textContent = `${manifest.segments.length} segments · ${value.batch_count} batches · ${manifest.source.bytes} source bytes`;
+      $('sourceIdentity').textContent = `${manifest.source.path}\nSHA-256: ${manifest.source.sha256}`;
+      $('sourceProfile').textContent = `${profile.name} (${profile.id}, revision ${profile.revision}) · ${profile.status}\nDelivery: ${profile.delivery.name} · ${profile.delivery.status} · Speaker: ${manifest.speaker_id}`;
+      for (const [kind, count] of Object.entries(manifest.omissions)) {
+        const item = document.createElement('li'); item.textContent = `${kind.replaceAll('_', ' ')}: ${count}`;
+        $('sourceOmissions').append(item);
+      }
+      for (const segment of manifest.segments) {
+        const item = document.createElement('li'), label = document.createElement('span'), text = document.createElement('p');
+        label.className = 'muted'; label.textContent = `${segment.id} · ${segment.kind} · block ${segment.block + 1}`;
+        text.textContent = segment.text; item.append(label, text); $('sourceSegments').append(item);
+      }
+      $('sourceManifest').textContent = JSON.stringify(manifest, null, 2);
+      $('sourcePreview').hidden = false;
+      $('sourceStatus').textContent = 'Preview complete. No audio was generated and no files were saved.';
+    } catch (error) { clearSource(error.message); }
+  };
+  async function refreshSource() {
+    clearSource('Checking source access…'); $('previewSource').disabled = true;
+    try {
+      const value = await sourceSession.refresh();
+      if (!value) return;
+      $('previewSource').disabled = !value.enabled;
+      $('sourceStatus').textContent = value.enabled ? 'No source has been read. Choose Preview narration when ready.' : 'Source preview is disabled until an archive root is configured.';
+      return value;
+    } catch (error) { clearSource(error.message); throw error; }
+  }
+  $('refreshSource').onclick = () => { refreshSource().catch(() => {}); };
   let playerBinding=null, pendingSeek=null, loop=null, chosenReview=null, discoveryTicket=0, discardDraft=false, reviewBaseline=null;
   const status = text => { $('status').textContent=text; };
   const option = (value,text) => { const e=document.createElement('option'); e.value=value; e.textContent=text; return e; };
@@ -229,7 +272,8 @@
       status(`Listening review saved for ${out.key}: ${out.result.id}. No replacement was started.`);
     } catch(e) { status(e.message); } finally { buttons(); }
   };
-  request('/capabilities').then(value=>{
+  refreshSource().then(value=>{
+    if (!value) return;
     $('discover').disabled=!value.enabled;
     $('configuration').textContent=value.enabled ? 'Archive access enabled. Discovery and all saves are explicit.'
       : 'Archive access is disabled. Set spoken_briefs.archive_root to an absolute local directory in config/local.json, then restart Studio.';

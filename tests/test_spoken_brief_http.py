@@ -84,6 +84,42 @@ class SpokenHTTPTests(unittest.TestCase):
         self.assertEqual(self.pin, json.loads(raw)['archive_sha256']); self.assertEqual(200, code)
         self.assertFalse((self.f.directory / 'playback.json').exists())
 
+    def test_source_preview_matches_cli_and_never_changes_archive(self):
+        from spoken_brief_compile import compile_source, batch_segments
+        root = self.f.source.parent
+        source = root / 'COMPRESSED.md'
+        source.write_bytes(b'# Fictional handoff\r\n\r\nKeep the lantern blue.\r\n\r\n```\r\nprivate_code()\r\n```\r\n')
+        before = {p.relative_to(root): p.read_bytes() for p in root.rglob('*') if p.is_file()}
+        capabilities = json.loads(self.request('/capabilities')[2])
+        with patch('spoken_brief_runtime.StudioClient', side_effect=AssertionError('No inference')):
+            code, _, raw = self.request('/source-preview', query={
+                'key': '.', 'root_id': capabilities.get('source_root_id', '0' * 64)})
+        self.assertEqual(200, code, raw)
+        value = json.loads(raw)
+        expected = compile_source(source)
+        self.assertEqual(expected, value['manifest'])
+        self.assertEqual(len(batch_segments(expected['segments'])), value['batch_count'])
+        self.assertFalse(value['generation_submitted'])
+        self.assertEqual(before, {p.relative_to(root): p.read_bytes() for p in root.rglob('*') if p.is_file()})
+
+    def test_source_preview_has_exact_query_and_root_ownership(self):
+        source = self.f.source.parent / 'COMPRESSED.md'; source.write_bytes(b'# Fictional\n\nText.')
+        root_id = json.loads(self.request('/capabilities')[2])['source_root_id']
+        query = {'key': '.', 'root_id': root_id}
+        self.assertEqual(400, self.request('/source-preview', query={'key': '.'})[0])
+        self.assertEqual(400, self.request('/source-preview', query={**query, 'extra': 'x'})[0])
+        self.assertEqual(409, self.request('/source-preview', query={**query, 'root_id': 'a' * 64})[0])
+        self.assertEqual(403, self.request('/source-preview', query=query, headers={'Host': 'evil.example'})[0])
+        self.assertEqual(405, self.request('/source-preview', query=query, method='HEAD')[0])
+        from studio_spoken.core import ArchiveAccess
+        original = ArchiveAccess.source_preview
+        def changed(access, *args):
+            value = original(access, *args)
+            self.server.RequestHandlerClass.studio.config['spoken_briefs'] = {}
+            return value
+        with patch.object(ArchiveAccess, 'source_preview', changed):
+            self.assertEqual(409, self.request('/source-preview', query=query)[0])
+
     def test_unrelated_routes_delegate_without_changing_existing_handler(self):
         conn = http.client.HTTPConnection('127.0.0.1', self.server.server_port, timeout=5)
         try:

@@ -25,3 +25,22 @@ python -m unittest discover -s tests -p "test_spoken_brief_cli_preview.py" -v
 ```
 
 Routing tests cover argument forwarding, success/failure output and unchanged plan/run controls. Real compiler tests cover CRLF source identity, caveat retention, code omission, fallback, invalid UTF-8, and byte-identical retained uncertain state. They use synthetic text and the checked-in profile catalogue, not a speech model or owner listening acceptance. See the implementation PR for executed results and remaining native checks. Refs #635 and the provenance architecture in #851.
+## Studio source preview
+
+The existing **Spoken Briefs** page also previews a handoff within the opt-in
+`spoken_briefs.archive_root`. Enter a relative pack path (or `.` for the root),
+or an explicit `.md` path, then choose **Preview narration**. A folder chooses
+`COMPRESSED.md`, then `INDEX.md`. Selection and navigation do not read the source.
+
+The page uses the same compiler manifest and default `kokoro-af-heart-control-v1`
+profile with `calm-brief` delivery as the CLI. It shows the exact source byte hash,
+ordered segments, omission counts, profile status, and segment/batch counts.
+No duration is estimated. The preview does not check engine availability, establish
+run readiness, or infer voice acceptance. Use the CLI when selecting another profile.
+
+Source reads are bounded to 512 KiB, strict UTF-8, and the configured local root;
+traversal, symlinks, and Windows reparse points are refused. Source and retained
+archive files are not written. An in-flight source change is refused; a completed
+preview remains a snapshot until another explicit preview. Changing the path or
+refreshing source access clears the snapshot and discards delayed results. Paths
+and narration remain local and are not saved in browser storage.
