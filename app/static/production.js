@@ -1,4 +1,8 @@
 let productionPlans=[], productionId=null, productionSignature='', productionRefreshing=false, productionActionPending=false;
+if(typeof location!=='undefined'&&typeof URLSearchParams!=='undefined'){
+  const linkedPlan=new URLSearchParams(location.search).get('plan');
+  if(/^[a-f0-9]{32}$/.test(linkedPlan||''))productionId=linkedPlan;
+}
 let comparisonRecipe=null, comparisonParent=null, nativeAssets=[], blindComparison=true;
 let plannedVariants=null, plannerAxes=[], plannerAxisIds=[];
 let plannerWithheld=[], plannerNotice='', plannerRequestId=0;

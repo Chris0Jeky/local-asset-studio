@@ -208,6 +208,12 @@ class ProductionClockFrontendTests(unittest.TestCase):
 
 class ProductionNativeOpenFrontendTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_library_native_export_history(self):
+        result = subprocess.run([shutil.which('node'), '--test', str(Path(__file__).with_name('native_export_history_frontend.cjs'))],
+                                capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
     def test_native_export_card_names_the_recorded_entry_file(self):
         result = subprocess.run(
             [shutil.which('node'), str(Path(__file__).with_name('production_native_open_frontend.cjs'))],
