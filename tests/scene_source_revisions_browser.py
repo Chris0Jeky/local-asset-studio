@@ -39,6 +39,8 @@ async def run(out):
             stream.setparams((1,2,48000,0,'NONE',''));stream.writeframes(b'\0\0'*samples)
         return register(path,'audio')
     try:
+        # Media subprocess pipe readers need the real threading restored after fixture construction.
+        for mocked in reversed(case.fixture.patches):mocked.stop()
         studio.config.update({name:shutil.which(name) for name in ('ffmpeg','ffprobe')})
         assert all(studio.config[name] for name in ('ffmpeg','ffprobe')),'Installed media tools required'
         audio=wav('original-audio.wav',96000)
@@ -62,8 +64,6 @@ async def run(out):
         brief=store.card_command({'action':'create','id':'scene-source-journey','kind':'brief','name':'Synthetic scene brief',
             'body':{'format':'studio.scene-brief/v1','workspace_id':scope,'collection_id':None,
                     'direction':'Assemble the registered fixture media.','slots':slots}})
-        for mocked in reversed(case.fixture.patches):mocked.stop()
-
         class Base(BoundPortGuard,server.Handler):
             json=shell.Handler.json
             def log_message(self,*_):pass
