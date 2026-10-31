@@ -430,6 +430,7 @@
     sweepPaint();syncOperation();estimate();}
 
   view.innerHTML='<div class="make-heading"><span class="eyebrow">MAKE</span><h1 id="makeTitle" tabindex="-1">What are you making?</h1><p>Pick a goal, pick a look by its picture, describe your idea. The look brings the right model, LoRAs and settings.</p></div>'
+    +'<details id="makeContinue" class="make-continue"><summary>Continue <span>Return to existing work</span></summary><div class="make-continue-body"><button type="button" data-continue-refresh>Refresh</button><div data-continue-result aria-live="polite"></div></div></details>'
     +'<div class="make-goals" role="radiogroup" aria-labelledby="makeTitle" id="makeGoals"></div>'
     +'<div id="makeStatusSlot"></div><p id="makeDraftWarning" class="make-warn" role="status" hidden></p>'
     +'<div id="makeSplit" class="make-split"><div id="makeBody"></div><section class="make-runs" aria-labelledby="makeRunsTitle"><div class="section-title"><h2 id="makeRunsTitle">Your pictures</h2><a href="/#assets">Open the library ↗</a></div><div id="makeRuns" class="make-run-list" aria-live="polite" aria-relevant="additions text"></div></section></div>'

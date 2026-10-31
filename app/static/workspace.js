@@ -138,7 +138,7 @@ function recoveryScopeMessage(scope) {
 function requireAssetScope(scope){const problem=recoveryScopeMessage(scope);if(problem)throw Error(problem);}
 // Gallery handoffs and ordinary refreshes both render the observed Workspace.
 function observeAssetWorkspaceIdentity() {
-  if(assetObservedWorkspace!==assetState.workspace_id){assetObservedWorkspace=assetState.workspace_id;assetWorkspaceEpoch++;}
+  if(assetObservedWorkspace!==assetState.workspace_id){const previous=assetObservedWorkspace;assetObservedWorkspace=assetState.workspace_id;assetWorkspaceEpoch++;document.dispatchEvent?.(new CustomEvent('studio:workspace-change',{detail:{previous,workspace_id:assetObservedWorkspace}}));}
 }
 function assetReceiptURL(command){return '/api/assets/commands/'+command.request_id+'?workspace_id='+encodeURIComponent(command.workspace_id);}
 
