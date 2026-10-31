@@ -25,15 +25,21 @@ from studio_workflow.setup_draft_http import extend_handler
 from studio_workflow.setup_drafts import PREFIX,SetupDrafts
 from server import Handler as ProductionHandler
 
-COMMANDS=[];READS=[];LOSE=False
+COMMANDS=[];READS=[];LOSE=False;LOSE_RESTORE=False;HOLD_ACTION=None;HOLD_CHECK=False
+HELD=threading.Event();RELEASE=threading.Event()
 class Handler(extend_handler(advice.Handler)):
     _content_length=ProductionHandler._content_length
     def _safe_host(self):return self.headers.get('Host')=='127.0.0.1:'+str(self.server.server_port)
     def _safe_mutation(self):return self._safe_host() and self.headers.get('Origin')=='http://127.0.0.1:'+str(self.server.server_port)
     def _json(self,status,value):
-        global LOSE
+        global LOSE,LOSE_RESTORE
+        if value.get('action')==HOLD_ACTION and HOLD_ACTION or HOLD_CHECK and value.get('inputs_available') is True:
+            HELD.set()
+            if not RELEASE.wait(15):return self.json({'error':'Fixture response hold expired'},503)
         if LOSE and value.get('action')=='apply' and value.get('status')=='committed':
             LOSE=False;return self.json({'error':'Injected response failure after the commit'},503)
+        if LOSE_RESTORE and value.get('action')=='restore' and value.get('status')=='committed':
+            LOSE_RESTORE=False;return self.json({'error':'Injected restore response failure after the commit'},503)
         return self.json(value,status)
     def _setup_reply(self,value):
         if value is not None:COMMANDS.append(copy.deepcopy(value))
@@ -41,7 +47,7 @@ class Handler(extend_handler(advice.Handler)):
         return super()._setup_reply(value)
 
 async def run(out,inert=False):
-    global LOSE
+    global LOSE,LOSE_RESTORE,HOLD_ACTION,HOLD_CHECK
     from playwright.async_api import async_playwright
     out.mkdir(parents=True,exist_ok=True);checks=[];errors=[]
     def check(ok,label):
@@ -141,11 +147,75 @@ async def run(out,inert=False):
             check('Recipe and graph' in await page.locator('#setupHistoryComparison').inner_text(),'history comparison shows typed setup sections')
             check((await page.locator('#setupHistoryList a').first.get_attribute('href')).endswith('/export?workspace_id='+state['workspace_id']+'&revision='+str(json.loads(state_now)['revision'])),'history offers the existing export route')
             check(await page.evaluate('StudioSetupDraft.capture()')==draft_now and await page.evaluate('JSON.stringify(StudioSetupApply.controller.state)')==state_now and len(COMMANDS)==writes and s.upload_count==uploads,'history leaves Create, the recovery journal, writes and copies unchanged')
+            if not inert:
+                # Historical restore uses those same real routes and SQLite, with native Web Locks and crypto.
+                key=json.loads(state_now)['draft_id'];head=json.loads(state_now)['revision'];store=SetupDrafts(s)
+                originals={n:store.get(key,n)['record_json'] for n in range(1,head+1)}
+                await page.fill('#positive','Keep my complete current wording before restoring')
+                local=await page.evaluate('StudioSetupDraft.capture()');writes=len(COMMANDS);uploads=s.upload_count
+                async def review(revision):
+                    await page.click('#setupHistoryRefresh');await page.wait_for_function('!StudioSetupHistory.history.state.busy')
+                    await page.click('[data-key="restore-'+str(revision)+'"]')
+                    await page.wait_for_function('!!StudioSetupHistory.history.state.restoration&&!StudioSetupHistory.history.state.busy')
+                await review(1)
+                check(len(COMMANDS)==writes and s.upload_count==uploads,'restore review checks dependencies and compares records without writes or copies')
+                await page.click('#setupHistoryRestoreCancel')
+                check(len(COMMANDS)==writes and await page.evaluate('StudioSetupDraft.capture()')==local,'cancelled history restore preserves the complete local draft')
+                check(await page.evaluate('document.activeElement.dataset.key')=='restore-1','cancel returns keyboard focus to the historical row')
+                await review(1)
+                for width,zoom,name in ((1440,'1','restore-wide'),(390,'1','restore-narrow'),(1440,'2','restore-zoom')):
+                    await page.set_viewport_size({'width':width,'height':1100 if width==1440 else 844});await page.evaluate('(z)=>document.body.style.zoom=z',zoom)
+                    await page.locator('#setupHistoryRestore').scroll_into_view_if_needed()
+                    check(await page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'history restore fits '+str(width)+'px at '+zoom+'x zoom')
+                    await page.screenshot(path=str(out/(name+'.png')),animations='disabled')
+                await page.evaluate('document.body.style.zoom="1"');await page.set_viewport_size({'width':1440,'height':1100})
+                await page.locator('#setupHistoryRestoreConfirm').focus();await page.keyboard.press('Enter')
+                await page.wait_for_function('(n)=>StudioSetupApply.controller.state.revision===n&&!StudioSetupApply.controller.running',arg=head+2)
+                check([q['action'] for q in COMMANDS[writes:]]==['replace','restore'],'explicit historical restore makes exactly one checkpoint and one restore command')
+                check(store.get(key,head+1)['draft']==local,'checkpoint retains the complete current Create draft')
+                check(store.get(key,head+2)['record_json']==originals[1] and await page.evaluate('StudioSetupDraft.capture()')==before,'historical restore keeps exact original bytes and loads the selected setup')
+                check({n:store.get(key,n)['record_json'] for n in originals}==originals,'all earlier SQLite revision records remain byte-identical')
+                check(s.upload_count==uploads,'historical restore neither stages nor deletes input files')
+                await page.locator('#sharedSetupStatus').scroll_into_view_if_needed();await page.screenshot(path=str(out/'restore-result.png'),animations='disabled')
+                # A local edit after the actual checkpoint commit stops the second command.
+                await review(2);HOLD_ACTION='replace';HELD.clear();RELEASE.clear();writes=len(COMMANDS)
+                await page.click('#setupHistoryRestoreConfirm');check(await asyncio.to_thread(HELD.wait,5),'checkpoint response is held after its real SQLite commit')
+                await page.fill('#positive','Later edit while checkpoint reply was held');RELEASE.set();HOLD_ACTION=None
+                await page.wait_for_function('!StudioSetupApply.controller.running')
+                check(len(COMMANDS)==writes+1 and COMMANDS[-1]['action']=='replace','late editor change preserves checkpoint and prevents the restore command')
+                check(await page.locator('#positive').input_value()=='Later edit while checkpoint reply was held','late local editor wording survives')
+                check('saved as revision' in await page.locator('#sharedSetupStatus').inner_text(),'partial completion names the saved checkpoint honestly')
+                # Private/All are observation scopes, not new setup command authority.
+                await page.click('#setupHistoryRefresh');await page.wait_for_function('!StudioSetupHistory.history.state.busy');writes=len(COMMANDS)
+                await page.evaluate("StudioPrivacy.setScope('all')");await page.click('[data-key="restore-1"]')
+                await page.wait_for_function("document.querySelector('#setupHistoryStatus').textContent.includes('only for a Regular')")
+                check(len(COMMANDS)==writes and not await page.locator('#setupHistoryRestore').is_visible(),'All view cannot authorize a Regular history restore')
+                await page.evaluate("StudioPrivacy.setScope('regular')")
+                # Inject A-B-A context events while an actual checked-read response is held.
+                for change,label in (("StudioPrivacy.setScope('private');StudioPrivacy.setScope('regular')",'privacy'),("const ws=assetState.workspace_id;assetState.workspace_id='f'.repeat(32);document.dispatchEvent(new CustomEvent('studio:workspace-change',{detail:{workspace_id:assetState.workspace_id}}));assetState.workspace_id=ws;document.dispatchEvent(new CustomEvent('studio:workspace-change',{detail:{workspace_id:ws}}))",'Workspace')):
+                    await page.click('#setupHistoryRefresh');await page.wait_for_function('!StudioSetupHistory.history.state.busy');HOLD_CHECK=True;HELD.clear();RELEASE.clear()
+                    await page.click('[data-key="restore-1"]');check(await asyncio.to_thread(HELD.wait,5),label+' checked read is held')
+                    await page.evaluate(change);RELEASE.set();HOLD_CHECK=False
+                    await page.wait_for_function('!StudioSetupHistory.history.state.busy')
+                    check(not await page.locator('#setupHistoryRestore').is_visible() and len(COMMANDS)==writes,label+' A-B-A cannot reopen a stale restore action')
+                # The server commits the restoration before losing its reply; reload/recovery never repeats it.
+                await review(1);before_lost=await page.evaluate('StudioSetupDraft.capture()');LOSE_RESTORE=True
+                await page.click('#setupHistoryRestoreConfirm');await page.wait_for_function('!!StudioSetupApply.controller.state.pending&&!StudioSetupApply.controller.running')
+                pending=await page.evaluate('StudioSetupApply.controller.state.pending');writes=len(COMMANDS);committed=store.get(key)['revision']
+                check(pending['action']=='restore' and store.get(key,committed)['record_json']==originals[1],'lost restore reply retains the exact original request after a real commit')
+                check(await page.evaluate('StudioSetupDraft.capture()')==before_lost,'lost restore reply does not adopt the selected revision')
+                await page.reload();await page.wait_for_function('!!StudioSetupApply.controller&&!!selected')
+                check(await page.evaluate('StudioSetupApply.controller.state.pending.request_id')==pending['request_id'],'reload keeps the original restore request identity')
+                reload_draft=await page.evaluate('StudioSetupDraft.capture()')
+                await page.click('#recoverSharedSetup');await page.wait_for_function('!StudioSetupApply.controller.state.pending&&!StudioSetupApply.controller.running')
+                check(len(COMMANDS)==writes and s.upload_count==uploads and READS[-1].endswith('/'+pending['request_id']),'restore recovery is GET-only with zero additional writes or copies')
+                check(await page.evaluate('StudioSetupDraft.capture()')==reload_draft,'restore recovery leaves the reopened editor untouched')
+                await page.locator('#sharedSetupPanel').scroll_into_view_if_needed();await page.screenshot(path=str(out/'restore-recovered.png'),animations='disabled')
             check(not errors,'zero page exceptions')
             seen=('/api/estimate','/api/assets/selection')  # the Library's read-only observation of off-page IDs
             forbidden=[x for x in advice.CALLS if x not in (advice.PREFIX,advice.PROPOSAL)+seen]+[x['path'] for x in advice.fixture.POSTS if x['path'] not in seen]
             check(not forbidden,'zero generation, installation, switching or unrelated asset-write calls: '+str(forbidden))
-            (out/'result.json').write_text(json.dumps({'checks':checks,'passed':len(checks),'native':not inert,'commands':COMMANDS,'reads':READS,'uploads':s.upload_count,'errors':errors,'source_sha256':{f:hashlib.sha256((ROOT/f).read_bytes()).hexdigest() for f in ('app/static/setup-apply.js','app/static/studio-workbench.js','studio_workflow/setup_drafts.py')}},indent=2))
+            (out/'result.json').write_text(json.dumps({'checks':checks,'passed':len(checks),'native':not inert,'commands':COMMANDS,'reads':READS,'uploads':s.upload_count,'errors':errors,'source_sha256':{f:hashlib.sha256((ROOT/f).read_bytes()).hexdigest() for f in ('app/static/setup-apply.js','app/static/setup-history.js','app/static/setup-proposal.css','app/static/studio-workbench.js','studio_workflow/setup_drafts.py')}},indent=2))
             await browser.close()
     finally:http.shutdown();http.server_close();thread.join(5);case.doCleanups()
 

@@ -32,17 +32,17 @@ function server(options={}){
         {section:'wording',changed:true,left:side('old '+hostile),right:{...side('new '+hostile),truncated:true,omitted_bytes:77}},
         {section:'controls',changed:false,left:side('{"seed":"1"}'),right:side('{"seed":"1"}')},
         {section:'runtime',changed:true,left:{...side(''),preview:null,redacted:true},right:{...side(''),preview:null,redacted:true}},
-        {section:'<b>odd</b>',changed:true,left:side('x'),right:side('y')}]});}
+        {section:'<b>odd</b>',changed:true,left:side('x'),right:side('y')}],...options.compareEdit});}
     throw Error('Unexpected request '+path);
   }
   return {fetch,calls};
 }
-function page(srv,state={workspace_id:WS,draft_id:ID,revision:HEAD}){
+function page(srv,state={workspace_id:WS,draft_id:ID,revision:HEAD},operations={}){
   const doc={ids:new Map(),activeElement:null,listeners:{},querySelector(s){return this.ids.get(s.slice(1))||null;},addEventListener(k,f){this.listeners[k]=f;},createElement(t){return new El(t,this);}};
   const panel=new El('section',doc);panel.id='sharedSetupPanel';
   const counts={adopt:0,capture:0,stamp:0,storage:0},frozen=JSON.stringify(state);
   const w={document:doc,AbortController,setTimeout,clearTimeout,fetch:srv.fetch,
-    StudioSetupApply:{controller:{state}},
+    StudioSetupApply:{controller:{state,...operations}},
     StudioSetupDraft:{adopt(){counts.adopt++;},capture(){counts.capture++;return {};},stamp(){counts.stamp++;}},
     get localStorage(){counts.storage++;throw Error('history must not touch browser storage');},
     get sessionStorage(){counts.storage++;throw Error('history must not touch browser storage');}};
@@ -144,4 +144,34 @@ test('a stale head on Compare is shown as text and keeps the list and selection'
   p.boxes()[0].click();p.boxes()[1].click();p.$('setupHistoryCompare').click();await settle();
   assert.match(p.status(),/History could not be read: Reviewed setup head changed; explicitly restart history inspection \(HTTP 409\)\. Nothing was changed\./);
   assert.equal(p.rows().length,20);assert.equal(shown(p),'');assert.equal(p.boxes().filter(b=>b.checked).length,2);
+});
+
+function restoration(srv=server()){
+  const previews=[],writes=[];let valid=true,gate=null;
+  const p=page(srv,undefined,{async reviewRestore(target,matches){previews.push(target);if(gate)await gate;return {...target,current:()=>valid&&matches()};},async restoreHistory(r){writes.push(r);if(gate)await gate;}});
+  const review=()=>p.details.all().find(n=>n.dataset.key==='restore-44');
+  return {p,srv,previews,writes,review,invalidate:()=>valid=false,hold:promise=>gate=promise};
+}
+test('review restore shows the exact comparison and two append steps, but only explicit confirmation reaches the command owner',async()=>{
+  const f=restoration(),{p}=f;await p.open();assert.equal(p.details.all().some(n=>n.dataset.key==='restore-45'),false);
+  f.review().click();await settle();assert.deepEqual(f.previews,[{workspace_id:WS,draft_id:ID,revision:44,head_revision:45,record_sha256:sha(44)}]);
+  assert.match(f.srv.calls.at(-1).path,/left=44&right=45&expected_head=45/);assert.equal(f.writes.length,0);
+  assert.equal(p.$('setupHistoryRestore').hidden,false);assert.equal(p.$('setupHistoryRestoreConfirm').disabled,false);
+  assert.match(p.$('setupHistoryRestore').textContent,/save your complete current Create draft as revision 46, then restore revision 44 as revision 47/i);
+  assert.equal(p.doc.activeElement,p.$('setupHistoryRestore'));assert.equal(p.$('setupHistoryRestoreConfirm').textContent,'Save my current draft and restore revision 44');
+  p.$('setupHistoryRestoreConfirm').click();await settle();assert.equal(f.writes.length,1);assert.equal(f.writes[0].revision,44);assert.equal(p.$('setupHistoryRestore').hidden,true);
+});
+test('cancel returns keyboard focus to the selected row and a second confirmation during a pending command does nothing',async()=>{
+  const f=restoration(),{p}=f;await p.open();f.review().click();await settle();p.$('setupHistoryRestoreCancel').click();assert.equal(f.writes.length,0);assert.equal(p.doc.activeElement.dataset.key,'restore-44');
+  f.review().click();await settle();let release;f.hold(new Promise(r=>release=r));p.$('setupHistoryRestoreConfirm').click();p.$('setupHistoryRestoreConfirm').click();assert.equal(f.writes.length,1);release();await settle();
+});
+test('closing, refreshing or changing privacy/Workspace during a restore read cannot expose a late confirm action',async()=>{
+  for(const cancel of [p=>{p.details.open=false;p.details.fire('toggle');},p=>p.$('setupHistoryRefresh').click(),p=>p.doc.listeners['studio:privacy-change']({}),p=>p.doc.listeners['studio:workspace-change']({})]){
+    const f=restoration(),{p}=f;await p.open();let release;f.hold(new Promise(r=>release=r));f.review().click();await settle();cancel(p);release();await settle();
+    assert.equal(p.$('setupHistoryRestore').hidden,true);assert.equal(f.writes.length,0);
+  }
+});
+test('mismatched comparison hashes or a changed Create context keep the restore action unavailable',async()=>{
+  for(const field of ['left_record_sha256','right_record_sha256','head_record_sha256']){const f=restoration(server({compareEdit:{[field]:hex('f')}}));await f.p.open();f.review().click();await settle();assert.equal(f.p.$('setupHistoryRestore').hidden,true);assert.match(f.p.status(),/differs from the selected history/);assert.equal(f.writes.length,0);}
+  const f=restoration();await f.p.open();f.invalidate();f.review().click();await settle();assert.equal(f.p.$('setupHistoryRestore').hidden,true);assert.match(f.p.status(),/context changed/);
 });

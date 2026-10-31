@@ -202,20 +202,48 @@ SDK tests when that tools dependency is absent; the dedicated lane requires it.
 
 ## Browser history panel (read-only)
 
-`app/static/setup-history.js` adds a "Workspace history (read-only)" disclosure inside the
+`app/static/setup-history.js` adds a "Workspace history" disclosure inside the
 "Shared setup & recovery" panel (the only browser surface that holds a Workspace and draft
 identity; the legacy named "Saved setups" are browser-local and have no revisions). Opening it
 issues GETs through the routes above: the newest 20 summaries, then explicit "Load older
 revisions" with the observed `expected_head`, and a two-revision comparison. Responses are
 validated (format, Workspace and draft identity, read-only flags, contiguous order, exact
 continuation) and rendered with `textContent` only; truncation and redaction notes are shown
-as text. Each row links the existing export route for download. It sends no body, no POST and
-no storage or Create-draft call, so it cannot load, restore, fork, import or apply anything.
+as text. Each row links the existing export route for download. History inspection sends no
+body and makes no storage or Create-draft call. Explicit restoration delegates to the existing
+setup application controller, as described below; opening history never starts a command.
 Each row starts with a `<time datetime>` element showing the revision's recorded save time in local time
 (`Save time not recorded` when the summary has none), then identities and neighbour-to-neighbour differences.
 Contract: `tests/setup_history_client.cjs`; real routes: `tests/setup_apply_browser.py`.
 
-Remaining #395 work: deliberate browser load/restore/fork/import commands,
+### Deliberate historical restore
+
+An older row offers **Review restore**. The selected immutable record, observed head and
+typed comparison must agree. The existing checked-revision route checks the saved backend,
+graph and staged input bytes; it does not switch an environment or copy a missing source.
+The review binds the Workspace, draft, source hash, head, complete current Create draft,
+editor stamp and privacy/context epochs. Only a Regular draft in the Regular view is supported.
+
+**Save my current draft and restore revision N** is the explicit write action. Under the
+existing Web Lock and verified recovery journal, it appends the current draft as H+1, then
+appends the selected historical record as H+2. It needs two available revision slots. Earlier
+records remain byte-identical. Pending local Files, busy editor operations, unresolved
+requests, changed dependencies, stale contexts and exhausted budgets refuse the action.
+No generation, source staging, backend switch or acceptance is implied.
+
+If the checkpoint commits but the editor/context changes or restore fails, the saved current
+draft remains in history and the editor is preserved. A lost reply retains its exact request;
+**Inspect original request** performs a GET without replaying either command or adopting the
+result. Reopening the browser retains that journal. A restore committed after an editor change
+stays in history; loading it remains a separate explicit action. Closing or canceling a review
+does not erase a checkpoint, a committed restoration or a pending request.
+
+Contracts: `tests/setup_history_restore_client.cjs`, `tests/setup_history_client.cjs` and the
+real SQLite cases in `tests/test_recipe_shortlist_apply.py`. The actual HTTP/SQLite journey is
+in `tests/setup_apply_browser.py` (native mode only for historical restore); its run evidence
+must be recorded separately from source/controller tests.
+
+Remaining #395 work: standalone historical Load-as-local-draft, fork/import commands,
 operation/proposal receipt lineage, browser history
 accessibility qualification (screen reader, 390px, 200% zoom), strict import validation and retention/compaction review. No new write authority
 or pruning is introduced. #394 selected browser-File preservation is separate.

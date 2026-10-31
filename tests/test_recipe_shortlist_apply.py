@@ -153,6 +153,38 @@ class SetupApplyTests(unittest.TestCase):
         self.assertEqual(self.s.upload_count,3)
         self.assertEqual(len(list((self.s.comfy_root/'input').iterdir())),3)
 
+    def test_history_restore_pair_preserves_current_draft_original_records_and_get_only_recovery(self):
+        from studio_workflow.setup_draft_http import route as setup_route
+        from studio_workflow.setup_drafts import PREFIX
+        first=self.create();key=first['draft_id'];later=copy.deepcopy(self.before)
+        later['recipe']['controls']['positive']='Later saved wording'
+        self.command('replace',draft_id=key,expected_revision=1,draft=later)
+        originals={n:self.store().get(key,n)['record_json'] for n in (1,2)}
+        current=copy.deepcopy(later);current['recipe']['controls'].update(positive='Unsaved words',seed='18446744073709551615')
+        checked=setup_route(PREFIX+'/'+key+'/check/1',None,self.s)
+        self.assertEqual((checked['revision'],checked['head_revision']),(1,2))
+        checkpoint=setup_route(PREFIX,dict(action='replace',workspace_id=self.scope,request_id='history-checkpoint',draft_id=key,expected_revision=2,draft=current),self.s)
+        restored=setup_route(PREFIX,dict(action='restore',workspace_id=self.scope,request_id='history-restore',draft_id=key,expected_revision=3,revision=1),self.s)
+        self.assertEqual(checkpoint['draft'],current);self.assertEqual(restored['revision'],4)
+        self.assertEqual(restored['record_json'],originals[1])
+        self.assertEqual({n:self.store().get(key,n)['record_json'] for n in (1,2)},originals)
+        with self.s.assets.connection() as db:before=list(db.iterdump())
+        self.assertEqual(setup_route(PREFIX+'/requests/history-restore',None,self.s)['record_sha256'],checked['record_sha256'])
+        with self.assertRaisesRegex(ValueError,'revision changed'):
+            setup_route(PREFIX,dict(action='restore',workspace_id=self.scope,request_id='stale-other-client',draft_id=key,expected_revision=3,revision=2),self.s)
+        with self.s.assets.connection() as db:self.assertEqual(list(db.iterdump()),before)
+        self.assertEqual(self.s.upload_count,0);self.assertFalse(restored['generation_submitted'])
+
+    def test_history_restore_failure_after_checkpoint_keeps_the_saved_current_draft(self):
+        first=self.create();current=copy.deepcopy(self.before);current['recipe']['controls']['positive']='Keep these unsaved words'
+        checkpoint=self.command('replace',draft_id=first['draft_id'],expected_revision=1,draft=current)
+        self.s.comfy_url='http://127.0.0.1:9999'
+        with self.assertRaisesRegex(ValueError,'backend'):
+            self.command('restore',draft_id=first['draft_id'],expected_revision=2,revision=1)
+        self.assertEqual(self.store().get(first['draft_id'])['draft'],current)
+        self.assertEqual(self.store().get(first['draft_id'],1)['record_json'],first['record_json'])
+        self.assertEqual(checkpoint['revision'],2);self.assertEqual(self.s.upload_count,0)
+
     def test_pending_local_inputs_refuse_checkpoint_without_discarding_anything(self):
         value=copy.deepcopy(self.before);value['pendingInputs']=['reference']
         with self.assertRaisesRegex(ValueError,'pending|local|attach'):self.command('create',draft=value)

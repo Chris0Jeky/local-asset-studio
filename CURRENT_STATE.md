@@ -1,5 +1,24 @@
 # Current state — 31 October 2026
 
+## 2026-10-31 — Deliberately restore an older shared setup (source preparation)
+
+Workspace history now offers **Review restore** for an older revision. It checks the
+exact saved record and dependencies and shows a typed comparison with the observed
+head. The explicit **Save my current draft and restore revision N** action uses the
+existing setup controller, Web Lock and recovery journal: checkpoint H+1, then restore
+H+2. Earlier records remain unchanged and the complete current draft is retained.
+The action supports Regular drafts in the Regular view; pending local Files,
+uncertain requests, stale contexts and insufficient revision capacity refuse it.
+Late changes preserve any committed checkpoint or restoration without replacing
+the editor. Lost replies recover by GET only; no write is replayed automatically.
+
+Focused controller and real-SQLite checks cover these contracts. The actual
+HTTP/SQLite browser fixture is prepared, but its new restore journey has not yet
+run under this mission's separate browser allocation. Hosted qualification and
+visual inspection remain pending. No live generation, native/provider execution,
+deployment, licence clearance or artistic acceptance is established. Refs #395;
+broader fork/import/retention work and HUMAN_TODO.md choices remain open.
+
 ## 2026-10-31 — Return to a saved scene from Continue
 
 Make's optional **Continue** card now also links to the newest eligible saved
