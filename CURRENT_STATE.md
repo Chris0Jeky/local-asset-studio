@@ -1,5 +1,30 @@
 # Current state — 31 October 2026
 
+## 2026-10-31 — Find native exports from their source picture
+
+Library picture details now offer **Exports using this picture**, a bounded,
+explicit read of existing native plans and retained file receipts. Prepared,
+completed, failed and interrupted attempts keep their original source identity;
+opening a plan in a new tab preserves unsaved picture notes. Shared private
+sources, missing evidence and changed file receipts remain excluded or unavailable.
+Opening the panel starts no export and records no acceptance. Refs #1842;
+[PR #1869](https://github.com/Chris0Jeky/local-asset-studio/pull/1869).
+
+All 10 focused backend tests and 28 frontend handoff tests passed. A fresh-context
+security/correctness review found no actionable finding. At source `90e160bd`,
+the allocated browser sequence passed 15 discovery assertions and all 30 unchanged
+fixture journeys in 161.012 seconds, with no JavaScript errors or unexpected
+generation submissions. One existing journey made its explicitly allowed synthetic
+submission. All four discovery wide/narrow/linked-plan captures were inspected;
+no blocking visual defect was found. The owned process container closed completely.
+
+The first browser attempt stopped on an ambiguous test locator; its raw evidence
+is retained alongside the corrected proof in the external mission34 delivery.
+This proves inert plans and synthetic receipts, not live native execution, art,
+licensing or assistive-technology acceptance. Exact-head hosted checks remain the
+merge gate recorded on the PR. Acceptance placement #1832 remains unanswered;
+[HUMAN_TODO.md](HUMAN_TODO.md) is unchanged.
+
 ## 2026-10-31 — Ordinary Grid comparison qualification reconciled
 
 [PR #1695](https://github.com/Chris0Jeky/local-asset-studio/pull/1695) merged on
