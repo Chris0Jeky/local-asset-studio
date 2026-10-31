@@ -4,8 +4,9 @@
 
 Make's optional **Continue** card now also links to the newest eligible saved
 Scene editor project. The AV owner reads bounded metadata from the existing
-Production store, anchors source IDs/hashes to the intake event and current
-Regular Workspace, and keeps missing, malformed and capped evidence distinct
+Production store, anchors source IDs/hashes and the originating Workspace
+identity to the intake event and current Regular Workspace, and keeps missing,
+malformed and capped evidence distinct
 from empty history. Created date, saved revision and recorded render revisions
 remain separate; an older completed render does not imply a current preview.
 Private performs no AV/Production read. The separate native export, kept picture
@@ -17,11 +18,14 @@ The disposable SQLite baseline reproduced eight saved scenes being absent from
 Continue while their existing GET destinations were available. The first route
 regression failed because no scene result existed; controller regressions failed
 because the scene link and revision presentation were absent. Focused source
-checks pass: 22 Continue tests (one unavailable Windows symlink fixture skipped),
+checks pass: 25 Continue tests (one unavailable Windows symlink fixture skipped),
 10 native-history tests, 28 frontend handoff tests, 11 controller cases, syntax
 checks and the repository validator. Independent review, actual HTTP/SQLite
 browser proof and the exact-head hosted gate remain separate qualification
-obligations recorded in the PR evidence.
+obligations recorded in the PR evidence. Independent review reproduced a copied
+Workspace exposing an unrelated scene through matching source IDs/hashes. New
+intake now records immutable Workspace ownership; older unanchored scenes remain
+unavailable in Continue without changing their existing Scene editor access.
 No native media execution, live generation, deployment, artistic acceptance or
 licensing is established by this discovery feature. HUMAN_TODO.md remains
 authoritative.

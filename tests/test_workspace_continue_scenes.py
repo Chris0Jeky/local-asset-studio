@@ -57,6 +57,44 @@ class ContinueSceneTests(unittest.TestCase):
             self.assertEqual((entry['id'],entry['created_at'],entry['status']),(newest,12,status))
             self.assertIsNone(entry['render']);self.assertIsNone(entry['completed_revision'])
 
+    def test_identical_sources_in_another_workspace_do_not_establish_scene_ownership(self):
+        from workspace import AssetWorkspace
+        scene=self.scene();original=self.studio.assets
+        second=AssetWorkspace(self.fixture.fixture.root/'scene-other-workspace')
+        with original.connection() as source,second.connection() as target:
+            source.backup(target)
+            target.execute("UPDATE workspace_identity SET id=? WHERE singleton=1",('f'*32,))
+        self.studio.assets=second
+        try:
+            code,result=self.request(workspace='f'*32)
+            self.assertEqual(code,200,result)
+            self.assertEqual(result['scene']['state'],'empty',result)
+            self.assertNotIn(scene['id'],json.dumps(result))
+        finally:self.studio.assets=original
+
+    def test_scene_without_matching_immutable_workspace_evidence_is_unavailable(self):
+        scene=self.scene();identifier=scene['id']
+        with self.studio.production.connect() as db:
+            saved=db.execute('SELECT document FROM av_events WHERE project_id=? AND revision=0',(identifier,)).fetchone()[0]
+        for identity in (None,'bad','f'*32):
+            document=json.loads(saved)
+            if identity is None:document.pop('workspace_id',None)
+            else:document['workspace_id']=identity
+            with self.studio.production.connect() as db:
+                db.execute('UPDATE av_events SET document=? WHERE project_id=? AND revision=0',(json.dumps(document),identifier))
+            self.assertEqual(self.request()[1]['scene']['state'],'unavailable')
+
+    def test_workspace_identity_change_during_intake_cannot_commit_a_scene(self):
+        from workspace import WorkspaceError
+        def change(*args):
+            with self.studio.assets.connection() as db:
+                db.execute("UPDATE workspace_identity SET id=? WHERE singleton=1",('f'*32,))
+        with patch.object(av_projects,'validate_media',side_effect=change):
+            with self.assertRaisesRegex(WorkspaceError,'different Workspace'):self.scene()
+        with self.studio.production.connect() as db:
+            self.assertEqual(db.execute('SELECT count(*) FROM av_documents').fetchone()[0],0)
+        self.assertFalse(self.studio.requests);self.assertTrue(self.studio.queue.empty())
+
     def test_newer_failed_attempt_and_older_completed_revision_remain_distinct(self):
         scene=self.scene();identifier=scene['id']
         self.studio.production.av.command(identifier,{'action':'edit','expected_revision':0,

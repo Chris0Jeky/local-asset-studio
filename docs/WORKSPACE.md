@@ -20,7 +20,10 @@ the saved revision alongside recorded state and render revisions; an older
 completed render is labelled as older, not presented as the current result.
 Scene discovery separately inspects at most 40 candidates and anchors every
 source ID/hash to its retained intake event and the current Regular Workspace.
-Missing or changed source identities, plan files or revision records stay
+New scenes retain their originating Workspace identity in the plan and revision
+history. Older scenes without that evidence remain available through the Scene
+editor, but cannot be attributed to this Workspace in Continue. Missing or
+changed source identities, plan files or revision records stay
 unavailable. Private does not read scenes; All labels their Regular-only scope.
 The native export and scene sections can fail independently without hiding the
 other saved destination. Opening a scene neither renders nor exports it.

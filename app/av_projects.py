@@ -109,6 +109,17 @@ class AVProjects:
                 av.need(all(isinstance(value,dict) for value in (plan,state,document,intake)),'Saved scene metadata unavailable')
                 if any(value.get('privacy')=='private' for value in (plan,document,intake)):continue
                 av.need(all(is_regular(value) for value in (plan,document,intake)) and plan.get('kind')=='av','Invalid scene owner')
+                directory=project_storage.directory(self.production.root,row['id']);target=directory/'plan.json';marker=directory/project_storage.MARKER
+                av.need(directory.is_dir() and not marker.exists() and not project_storage._linked(marker)
+                        and target.is_file() and not project_storage._linked(target),'Scene intake evidence unavailable')
+                with target.open('rb') as stream:raw=stream.read(project_storage.PLAN_LIMIT+1)
+                av.need(len(raw)<=project_storage.PLAN_LIMIT,'Scene plan exceeds inspection limit')
+                av.need(fingerprint(json.loads(raw))==fingerprint(plan)
+                        and plan.get('sha256')==fingerprint({key:value for key,value in plan.items() if key!='sha256'}),'Scene plan evidence changed')
+                owner=plan.get('workspace_id')
+                av.need(isinstance(owner,str) and re.fullmatch('[a-f0-9]{32}',owner)
+                        and all(saved.get('workspace_id')==owner for saved in (document,intake)),'Scene Workspace ownership unavailable')
+                if owner!=workspace_id:continue
                 ids=plan.get('source_assets');sources=intake.get('sources');revision=row['revision']
                 av.need(isinstance(ids,list) and 1<=len(ids)<=48 and all(isinstance(key,str) and re.fullmatch('[A-Za-z0-9_-]{1,128}',key) for key in ids)
                         and len(set(ids))==len(ids),'Invalid scene source identities')
@@ -132,13 +143,6 @@ class AVProjects:
                     av.need(all(saved['project']['assets'].get(key,{}).get('sha256')==digest for saved in (document,intake)),'Scene source snapshot changed')
                 av.need(len({source['key'] for source in sources})==len(ids)
                         and all(set(saved['project']['assets'])=={source['key'] for source in sources} for saved in (document,intake)),'Scene source membership changed')
-                directory=project_storage.directory(self.production.root,row['id']);target=directory/'plan.json';marker=directory/project_storage.MARKER
-                av.need(directory.is_dir() and not marker.exists() and not project_storage._linked(marker)
-                        and target.is_file() and not project_storage._linked(target),'Scene intake evidence unavailable')
-                with target.open('rb') as stream:raw=stream.read(project_storage.PLAN_LIMIT+1)
-                av.need(len(raw)<=project_storage.PLAN_LIMIT,'Scene plan exceeds inspection limit')
-                av.need(fingerprint(json.loads(raw))==fingerprint(plan)
-                        and plan.get('sha256')==fingerprint({key:value for key,value in plan.items() if key!='sha256'}),'Scene plan evidence changed')
                 created=row['created'];status=state.get('status');name=plan.get('name')
                 av.need(type(created) in (int,float) and math.isfinite(created) and isinstance(status,str) and 0<len(status)<=40
                         and isinstance(name,str) and 0<len(name)<=200,'Scene recorded date or state unavailable')
@@ -179,7 +183,9 @@ class AVProjects:
         av.fields(payload,('action','name','asset_ids'),('fps','size','frames_per_shot','actor'))
         av.need(payload['action']=='create','Unknown scene action');actor=self.actor(payload);av.text(payload['name'])
         ids=payload['asset_ids'];av.need(isinstance(ids,list) and 1<=len(ids)<=48 and all(isinstance(i,str) for i in ids) and len(set(ids))==len(ids),'Select distinct scene sources')
-        assets=[self.studio.assets.get(i) for i in ids]
+        workspace=self.studio.assets
+        with workspace.connection() as db:workspace_id=workspace._check_scope(db,None)
+        assets=[workspace.get(i) for i in ids]
         av.need(not any(a['trashed_at'] for a in assets),'Restore trashed scene sources first')
         av.need(sum(a['bytes'] for a in assets)<=av.MAX_TOTAL,'Scene source byte budget exceeded')
         tools=self.executables();frames=payload.get('frames_per_shot',72);av.number(frames,1,7200,'shot frames',True)
@@ -194,7 +200,7 @@ class AVProjects:
         try:
             av.need(shutil.disk_usage(directory).free>=sum(a['bytes'] for a in assets)+2*1024**3,'Scene intake needs source space plus 2 GiB free')
             for i,asset in enumerate(assets):
-                original=self.studio.assets.file(asset['id']);kind=asset['media_type'];suffix=original.suffix.lower()
+                original=workspace.file(asset['id']);kind=asset['media_type'];suffix=original.suffix.lower()
                 av.need((kind,suffix) in (('image','.png'),('video','.mp4'),('audio','.wav')),'Scenes accept PNG, MP4 and 48 kHz PCM WAV; convert other media explicitly first')
                 key='source'+str(i);relative=f'inputs/{key}{suffix}';target=directory/relative
                 with original.open('rb') as src,target.open('xb') as dst:shutil.copyfileobj(src,dst,1024**2)
@@ -215,11 +221,12 @@ class AVProjects:
                 project['audio'].append({'id':'audio'+str(i),'asset':key,'bus':'music','start_sample':0,'source_sample':0,'samples':count,
                                          'gain_db':0,'fade_in':0,'fade_out':0,'mute':False})
             validate_media(project,directory,tools)
-            plan={'version':1,'kind':'av','name':project['name'],'source_assets':ids,'stages':[],'created_at':time.time()}
+            with workspace.connection() as db:workspace._check_scope(db,workspace_id)
+            plan={'version':1,'kind':'av','name':project['name'],'workspace_id':workspace_id,'source_assets':ids,'stages':[],'created_at':time.time()}
             from production import fingerprint
             plan['sha256']=fingerprint(plan)
             state={'status':'planned','message':'Scene created. Edits are saved revisions; render explicitly.','attempts':{},'artifacts':[],'stop_requested':False,'review':{'status':'unreviewed'}}
-            document={'revision':0,'project':project,'sources':sources}
+            document={'revision':0,'workspace_id':workspace_id,'project':project,'sources':sources}
             self.studio._write_json_atomic(directory/'plan.json',plan)
             with self.production.connect() as db:
                 db.execute('BEGIN IMMEDIATE');db.execute('INSERT INTO budgets(id,allowance) VALUES (?,0)',(identifier,))
