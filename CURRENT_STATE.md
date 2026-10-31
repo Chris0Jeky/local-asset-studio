@@ -1,4 +1,27 @@
-# Current state — 29 October 2026
+# Current state — 31 October 2026
+
+## 2026-10-31 — Ordinary Grid comparison qualification reconciled
+
+[PR #1695](https://github.com/Chris0Jeky/local-asset-studio/pull/1695) merged on
+30 October as `24d12fea`; its tree exactly matches tested head `d112baa8`.
+All 20 checks on that PR passed, including the full supported-runner suite
+(6,414 tests, 88 skips) and validator. Independent source review and the
+automatic Codex review found no blocker.
+
+The allocated native HTTP/SQLite/browser run on 29 October passed all 56 Grid
+assertions and all 25 unchanged fixture journeys, with no generation submissions
+or JavaScript errors. The sole console error was the expected stale-save HTTP
+400. All 12 saved wide/phone Grid captures were inspected on 31 October; no
+blocking visual defect was found. Frozen plan bytes, exact large seeds, Reveal,
+Pair fallback, failed/multiple outputs and unsaved drafts are covered. The
+131.271-second run ended with no owned processes remaining.
+
+This supersedes the pending qualification below. Proof is scoped to `d112baa8`,
+not later changes on main. Logs, source archive, images and the final receipt are
+preserved outside Git in the flagship-capacity `studio-comparison-grid` delivery;
+PR #1695 records the evidence. Refs #1204; remaining pair surfaces and registry
+integration are separate. No live generation, art, licensing or assistive-
+technology acceptance is claimed. [HUMAN_TODO.md](HUMAN_TODO.md) remains unchanged.
 
 ## 2026-10-29 — Ordinary comparisons in Review desk Grid (qualification pending)
 
