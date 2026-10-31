@@ -9,12 +9,26 @@ are bounded and anchored to the Workspace and privacy view. Private does not
 read native exports; All names the Regular boundary. Incomplete and unavailable
 evidence stays distinct from empty history. No background polling, preference
 store, execution, acceptance or last-worked-on time was added. Refs #1822;
-non-native export histories remain outside this first slice.
+[PR #1871](https://github.com/Chris0Jeky/local-asset-studio/pull/1871).
+Non-native export histories remain outside this first slice.
 
-Source checks and actual-browser qualification are recorded in the mission42
-delivery; the latter and exact-head hosted full-suite/validator remain pending
-at this implementation checkpoint. Owner choices in HUMAN_TODO.md, including
-the separately parked #1832 acceptance/placement question, remain unchanged.
+Ten focused tests (including nine Node contracts), ten native-history tests and
+28 frontend handoff tests passed. Independent review found a malformed-kind
+false-empty case; its reproduced regression and minimal fix passed scoped
+verification. At source `996c3273`, the allocated actual HTTP/SQLite browser
+sequence passed 21 Continue checks and all 30 unchanged Studio fixture journeys.
+Actual 1440/390 and unavailable-state captures were inspected. The 158.443-second
+sequence left no owned child processes and reported no JavaScript errors or
+unexpected generation submissions. The unchanged journey's explicitly allowed
+`make-generate-then-keep` submission was synthetic; no live generation occurred.
+The first attempt stopped on an ambiguous fixture locator, with raw evidence
+preserved. The corrected fixture still refuses timing reads, asset/plan writes
+and generation; only existing selected-ID observation POSTs are served.
+
+The final-head hosted full-suite/validator remains a merge prerequisite. Native
+execution, artistic acceptance and licensing are not proved. Owner choices in
+HUMAN_TODO.md, including the separately parked #1832 acceptance/placement question,
+remain unchanged.
 
 ## 2026-10-31 — Save named Library working views
 
