@@ -1,5 +1,20 @@
 # Your asset workspace
 
+In **Make**, expand **Continue** to return to existing work. It reads the newest
+created kept picture in your current privacy view (active, unarchived, Mine),
+links to the existing **Needs work** Library view, and shows the newest eligible
+native-export plan. **Refresh** makes another explicit observation; the card
+does not poll or remember whether it was open. Clearing browser history does
+not erase these server records.
+
+Dates mean **Created**, and export states are recorded states, not acceptance
+or proof that output files still exist. Native exports are Regular-only; Private
+does not read them and All labels that boundary. The reader inspects at most
+40 candidate plans, checking every source's current Regular ownership. A capped
+search or missing, malformed or stale evidence stays incomplete or unavailable.
+The plan opens in a new tab, preserving your current draft. The card starts no
+generation, export or native application.
+
 **Import images** adds your existing PNG/JPEG/WebP originals without generation.
 Select images and use **Create native export** to arrange their order, layer
 names or frame timings, then prepare and explicitly Start the plan in

@@ -1,5 +1,21 @@
 # Current state — 31 October 2026
 
+## 2026-10-31 — Return to existing work from Make
+
+Make has an initially collapsed **Continue** card. Explicit reads find the
+newest created eligible kept picture, reuse Needs work Library navigation, and
+link to the newest eligible native-export plan with its recorded state. Reads
+are bounded and anchored to the Workspace and privacy view. Private does not
+read native exports; All names the Regular boundary. Incomplete and unavailable
+evidence stays distinct from empty history. No background polling, preference
+store, execution, acceptance or last-worked-on time was added. Refs #1822;
+non-native export histories remain outside this first slice.
+
+Source checks and actual-browser qualification are recorded in the mission42
+delivery; the latter and exact-head hosted full-suite/validator remain pending
+at this implementation checkpoint. Owner choices in HUMAN_TODO.md, including
+the separately parked #1832 acceptance/placement question, remain unchanged.
+
 ## 2026-10-31 — Save named Library working views
 
 The Library now saves, restores and removes named filter sets for the exact

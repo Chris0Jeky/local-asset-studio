@@ -3144,6 +3144,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(200,result)
             if path == '/api/gpu-lease': return self._json(200, self.studio.gpu_lease.snapshot())
             if path == "/api/workspace": return self._json(200, Studio.workspace_snapshot(self.studio,privacy=scope))
+            if path == '/api/workspace/continue':
+                import workspace_continue
+                return self._json(200, workspace_continue.inspect(self.studio,self._asset_query_scope(),scope))
             if path == '/api/briefs' or path.startswith('/api/briefs/'):
                 import scene_briefs
                 if path == '/api/briefs': return self._json(200, scene_briefs.listing(self.studio, scope))
