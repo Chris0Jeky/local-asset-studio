@@ -153,7 +153,7 @@ def exercise(out, browser_executable=None):
 
                 def capture(name):
                     page.locator('#assetSourceTitle').focus()
-                    page.screenshot(path=str(out/(name+'.png')), full_page=True, animations='disabled')
+                    page.screenshot(path=str(out/(name+'.png')), full_page=False, animations='disabled')
 
                 try:
                     page.goto(origin+'/#assets', wait_until='domcontentloaded')
@@ -270,7 +270,7 @@ def exercise(out, browser_executable=None):
                     check(page.locator('#assetSourceComparison img').count() == 0, 'Leaving private view removes comparison media')
                 except Exception as error:
                     (out/'failure.json').write_text(json.dumps({'error': str(error), 'checks': checks, 'page_errors': errors}, indent=2)+'\n')
-                    page.screenshot(path=str(out/'failure.png'), full_page=True, timeout=5000)
+                    page.screenshot(path=str(out/'failure.png'), full_page=False, timeout=5000)
                     raise
                 finally:
                     controls['release'].set()
