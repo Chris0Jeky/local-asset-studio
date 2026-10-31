@@ -14,7 +14,8 @@ from spoken_brief_archive import (
     ArchiveConflict, MAX_MASTER_BYTES, checked_directory, hash_stream,
     inspect_run, opened_file, require_archive,
 )
-from spoken_brief_compile import SpokenBriefError, canonical_digest
+from spoken_brief_compile import (MAX_SOURCE_BYTES, SpokenBriefError, batch_segments,
+                                 canonical_digest, compile_snapshot)
 from spoken_brief_exports import _load_playback, save_playback
 from spoken_brief_inbox import HEX, _lineage, _plain
 from spoken_brief_qa import load_report, load_review, record_review
@@ -72,7 +73,8 @@ class ArchiveAccess:
 
     def status(self):
         return {'enabled': self.root is not None, 'generation_submitted': False,
-                'mode': 'retained-archive-review', 'automatic_saves': False}
+                'mode': 'retained-archive-review', 'automatic_saves': False,
+                'source_root_id': canonical_digest(str(self.root)) if self.root is not None else None}
 
     def _root(self):
         if self.root is None:
@@ -94,6 +96,35 @@ class ArchiveAccess:
         finally:
             if _lineage(root) != lineage or _lineage(directory) != directory_lineage:
                 raise AccessError('Archive directory changed during this operation', 409)
+
+    def source_preview(self, key, root_id):
+        digest(root_id)
+        if root_id != self.status()['source_root_id']:
+            raise AccessError('Source root changed; refresh source access before previewing', 409)
+        parts = _key(key)
+        with self._directory('.') as root:
+            source = root.joinpath(*parts)
+            _lineage(source)
+            if stat.S_ISDIR(source.lstat().st_mode):
+                for name in ('COMPRESSED.md', 'INDEX.md'):
+                    candidate = source / name
+                    try:
+                        info = candidate.lstat()
+                    except FileNotFoundError:
+                        continue
+                    if not _plain(info):
+                        raise AccessError('Symlink/reparse source refused')
+                    if stat.S_ISREG(info.st_mode):
+                        source = candidate
+                        break
+                else:
+                    raise AccessError('Choose a pack containing COMPRESSED.md or INDEX.md, or an explicit Markdown file')
+            if source.suffix.lower() != '.md':
+                raise AccessError('Source must be a Markdown file')
+            with opened_file(source, MAX_SOURCE_BYTES) as stream:
+                manifest = compile_snapshot(source, stream.read(MAX_SOURCE_BYTES + 1))
+        return {'root_id': root_id, 'manifest': manifest,
+                'batch_count': len(batch_segments(manifest['segments'])), 'generation_submitted': False}
 
     def archives(self):
         root = self._root(); lineage = _lineage(root)

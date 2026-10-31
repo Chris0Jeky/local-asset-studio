@@ -1,6 +1,6 @@
 'use strict';
 const assert = require('node:assert/strict');
-const {ReviewSession} = require('../app/static/spoken-brief-session.js');
+const {ReviewSession, SourcePreviewSession} = require('../app/static/spoken-brief-session.js');
 const digest = 'a'.repeat(64), other = 'b'.repeat(64), revision = 'c'.repeat(64);
 function snapshot(key) {
   return {archive_sha256:digest, playback_sha256:revision, reports:[], reviews:[],
@@ -65,6 +65,29 @@ async function run() {
     const h=harness(); await opened(h); const a=h.s.savedReview(digest); await opened(h,'B');
     h.requests[1].resolve({review_sha256:digest,archive:{manifest_sha256:digest,master_sha256:other}}); assert.equal(await a,null);
   }
-  console.log('8 Spoken Brief request-ownership scenarios passed');
+  {
+    const requests = [], s = new SourcePreviewSession((route, query, body) => new Promise((resolve, reject) => requests.push({route,query,body,resolve,reject})));
+    assert.equal(requests.length, 0);
+    s.invalidate(); assert.equal(requests.length, 0);
+    await assert.rejects(s.preview('.'), /Refresh/);
+    const refresh = s.refresh(); requests.at(-1).resolve({enabled:true,source_root_id:digest}); await refresh;
+    const value = {root_id:digest,manifest:{source:{sha256:other},segments:[{text:'Fictional'}],omissions:{}},batch_count:1,generation_submitted:false};
+    const a = s.preview('A'), aRequest = requests.at(-1);
+    s.invalidate(); // A -> B -> A still invalidates the first A.
+    const b = s.preview('A'); requests.at(-1).resolve(value); assert.deepEqual(await b, value);
+    aRequest.resolve(value); assert.equal(await a, null);
+    const stale = s.preview('A'), staleRequest = requests.at(-1);
+    s.invalidate(); staleRequest.reject(Error('Old refusal')); assert.equal(await stale, null);
+    const oldRoot = s.preview('A'), oldRootRequest = requests.at(-1);
+    const firstRoot = s.refresh(), firstRequest = requests.at(-1), secondRoot = s.refresh();
+    requests.at(-1).resolve({enabled:true,source_root_id:other}); await secondRoot;
+    firstRequest.resolve({enabled:true,source_root_id:digest}); assert.equal(await firstRoot, null);
+    oldRootRequest.resolve(value); assert.equal(await oldRoot, null); assert.equal(s.root, other);
+    const wrong = s.preview('A'); requests.at(-1).resolve(value); await assert.rejects(wrong, /identity/);
+    const disabled = s.refresh(); requests.at(-1).resolve({enabled:false,source_root_id:null}); await disabled;
+    await assert.rejects(s.preview('A'), /Refresh/);
+    assert.ok(requests.every(r => r.body === undefined));
+  }
+  console.log('Spoken Brief archive and source-preview ownership scenarios passed');
 }
 run().catch(e=>{console.error(e); process.exitCode=1;});

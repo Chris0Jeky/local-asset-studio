@@ -1,5 +1,19 @@
 # Current state — 31 October 2026
 
+## 2026-10-31 — Preview a local handoff in Spoken Briefs
+
+Spoken Briefs now has an explicit **Preview narration** action for a relative pack
+or Markdown path inside `spoken_briefs.archive_root`. It uses the existing compiler
+and default control profile, showing source hash, ordered narration, omission
+counts and exact segment/batch counts. No duration estimate or run-readiness claim
+is made. Changing selection or refreshing source access clears the snapshot and
+invalidates delayed reads. The retained player and listening review remain separate.
+
+This is a confined, read-only source preview: no preparation, queue, inference,
+archive write or voice acceptance. First-generation orchestration and the broader
+Spoken Briefs project remain open under #638/#635. See
+[`CLI-PREVIEW.md`](docs/spoken-briefs/CLI-PREVIEW.md#studio-source-preview).
+
 ## 2026-10-31 — Deliberately restore an older shared setup
 
 Workspace history now offers **Review restore** for an older revision. It checks the

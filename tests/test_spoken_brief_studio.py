@@ -47,6 +47,73 @@ class StudioArchiveTests(unittest.TestCase):
         for config in ({'archive_root': '.'}, {'archive_root': str(self.root), 'auto_start': True}, [], True):
             with self.subTest(config=config), self.assertRaises(SpokenBriefError): self.m.ArchiveAccess(config)
 
+    def preview(self, key='.'):
+        return self.access.source_preview(key, self.access.status()['source_root_id'])
+
+    def test_source_selection_uses_compiler_precedence_and_exact_bytes(self):
+        from spoken_brief_compile import compile_source
+        pack = self.root / 'fictional-pack'; pack.mkdir()
+        index = pack / 'INDEX.md'; index.write_text('# Index\n\nFallback text.', encoding='utf-8')
+        self.assertEqual(compile_source(index), self.preview('fictional-pack')['manifest'])
+        compressed = pack / 'COMPRESSED.md'; compressed.write_bytes(b'# Lantern\r\n\r\nKeep blue.\r\n')
+        self.assertEqual(compile_source(compressed), self.preview('fictional-pack')['manifest'])
+        self.assertEqual(compile_source(index), self.preview('fictional-pack/INDEX.md')['manifest'])
+        first = self.preview('fictional-pack')['manifest']['source']['sha256']
+        compressed.write_text('# Lantern\n\nNow green.', encoding='utf-8')
+        self.assertNotEqual(first, self.preview('fictional-pack')['manifest']['source']['sha256'])
+
+    def test_source_refusals_do_not_write_or_invoke_runtime(self):
+        from spoken_brief_compile import MAX_SOURCE_BYTES
+        source = self.root / 'COMPRESSED.md'
+        for raw, message in [(b'\xff', 'UTF-8'), (b'', 'regular file'),
+                             (b'x' * (MAX_SOURCE_BYTES + 1), 'regular file'),
+                             (b'```\ncode only\n```', 'no narratable')]:
+            source.write_bytes(raw); before = self.snapshot()
+            with self.subTest(message=message), self.assertRaisesRegex(SpokenBriefError, message):
+                self.preview()
+            self.assertEqual(before, self.snapshot())
+        for key in ('../outside.md', '/outside.md', 'C:/outside.md', 'a\\b.md', 'pack/../brief.md', 'absent.md'):
+            with self.subTest(key=key), self.assertRaises((SpokenBriefError, OSError)):
+                self.preview(key)
+        source.rename(self.root / 'source.txt')
+        with self.assertRaisesRegex(SpokenBriefError, 'Markdown'):
+            self.preview('source.txt')
+        with self.assertRaisesRegex(SpokenBriefError, 'root changed'):
+            self.access.source_preview('.', 'a' * 64)
+
+    def test_source_changed_during_compilation_is_refused(self):
+        source = self.root / 'COMPRESSED.md'; source.write_bytes(b'# Before\n\nSnapshot.')
+        compile_snapshot = self.m.compile_snapshot
+        def changing(path, raw):
+            result = compile_snapshot(path, raw)
+            source.write_bytes(b'# After\n\nDifferent source.')
+            return result
+        with patch.object(self.m, 'compile_snapshot', side_effect=changing):
+            with self.assertRaisesRegex(SpokenBriefError, 'changed'):
+                self.preview()
+
+    def test_source_links_cannot_escape_configured_root(self):
+        link = self.root / 'COMPRESSED.md'
+        try: link.symlink_to(self.f.source)
+        except OSError: self.skipTest('Symlink creation unavailable')
+        with self.assertRaisesRegex(SpokenBriefError, 'Symlink/reparse'):
+            self.preview()
+        with self.assertRaisesRegex(SpokenBriefError, 'Symlink/reparse'):
+            self.preview('COMPRESSED.md')
+
+    def test_source_windows_reparse_marker_is_refused_before_open(self):
+        from types import SimpleNamespace
+        source = self.root / 'COMPRESSED.md'; source.write_bytes(b'# Fictional\n\nText.')
+        original = Path.lstat
+        def reparse(path, *args, **kwargs):
+            info = original(path, *args, **kwargs)
+            if path == source:
+                return SimpleNamespace(st_mode=info.st_mode, st_file_attributes=0x400)
+            return info
+        with patch.object(Path, 'lstat', reparse), patch('os.open', side_effect=AssertionError('Must refuse before opening')):
+            with self.assertRaisesRegex(SpokenBriefError, 'Symlink/reparse'):
+                self.preview()
+
     def test_listing_and_inspection_are_read_only_and_never_create_clients(self):
         before = self.snapshot()
         with patch('spoken_brief_runtime.StudioClient', side_effect=AssertionError('No inference')):

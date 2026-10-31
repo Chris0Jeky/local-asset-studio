@@ -76,7 +76,36 @@
     bookmark(value) { return this.write('/bookmark', value); }
     review(value) { return this.write('/review', value); }
   }
-  const api = {ReviewSession};
+  class SourcePreviewSession {
+    constructor(request) { this.request = request; this.root = null; this.epoch = 0; this.rootTicket = 0; }
+    invalidate() { ++this.epoch; }
+    async refresh() {
+      const ticket = ++this.rootTicket;
+      this.root = null; this.invalidate();
+      try {
+        const value = await this.request('/capabilities');
+        if (ticket !== this.rootTicket) return null;
+        if (value.enabled && !hash(value.source_root_id)) throw Error('Invalid source root identity');
+        this.root = value.enabled ? value.source_root_id : null;
+        return value;
+      } catch (error) { if (ticket !== this.rootTicket) return null; throw error; }
+    }
+    async preview(key) {
+      const epoch = ++this.epoch, root = this.root;
+      if (!root) throw Error('Refresh source access before previewing');
+      try {
+        const value = await this.request('/source-preview', {key, root_id:root});
+        if (epoch !== this.epoch || root !== this.root) return null;
+        if (value.root_id !== root || !hash(value.manifest?.source?.sha256)
+            || !Array.isArray(value.manifest?.segments) || !value.manifest?.omissions
+            || typeof value.manifest.omissions !== 'object' || Array.isArray(value.manifest.omissions)
+            || !Number.isSafeInteger(value.batch_count) || value.batch_count < 1
+            || value.generation_submitted !== false) throw Error('Invalid source preview identity');
+        return value;
+      } catch (error) { if (epoch !== this.epoch || root !== this.root) return null; throw error; }
+    }
+  }
+  const api = {ReviewSession, SourcePreviewSession};
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.SpokenReview = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

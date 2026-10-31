@@ -156,6 +156,12 @@ def extend_handler(base):
                     return self._json(200, access.status() if route == '/capabilities' else access.archives())
                 if route == '/archive':
                     fields(query, ('key',)); return self._json(200, access.inspect(query['key']))
+                if route == '/source-preview':
+                    fields(query, ('key', 'root_id'))
+                    value = access.source_preview(query['key'], query['root_id'])
+                    if self._spoken_access().status()['source_root_id'] != query['root_id']:
+                        raise AccessError('Source root changed during preview; refresh source access', 409)
+                    return self._json(200, value)
                 if route in ('/report', '/review'):
                     fields(query, ('key', 'archive_sha256', 'id'))
                     reader = access.report if route == '/report' else access.saved_review
