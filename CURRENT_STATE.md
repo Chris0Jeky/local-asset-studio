@@ -1,5 +1,23 @@
 # Current state — 31 October 2026
 
+## 2026-10-31 — Compare a repaired picture with its recorded source
+
+Library detail now offers **Compare with source**, with explicit direct-parent
+choice and equally sized, contained Current version / Recorded source previews.
+Off-page sources use the existing bounded selected-ID observation. Missing,
+trashed, non-image, mixed-privacy and incomplete evidence stays unavailable.
+The family adapter binds reads and focus to the child hash and detail, Workspace
+and privacy epochs; changes and errors clear comparison media. The existing
+Workspace editor remains the sole metadata, review and dirty-draft owner.
+
+Source checkpoint: 53 focused Node contracts pass, including source selection,
+media identity and late-response refusals. The real 75-asset SQLite fixture reopens
+its repair and constructs its HTTP handler without starting a socket or browser.
+Feature browser captures, hosted full-suite/all-30 journeys and final qualification
+are pending at this checkpoint. Refs #1837 and #243; no broader closure. #1832
+acceptance and HUMAN_TODO remain unchanged. No live generation, paid runtime,
+native editor, model licensing or artistic acceptance is claimed.
+
 ## 2026-10-31 — Deliberately restore an older shared setup
 
 Workspace history now offers **Review restore** for an older revision. It checks the
