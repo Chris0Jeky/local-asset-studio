@@ -1,5 +1,5 @@
-/* Read-only Workspace history for the shared setup (#395). GET only: it never loads, restores, forks, imports or adopts
-   a revision, and never reads or writes the Create draft or the setup recovery journal. */
+/* Workspace history (#395). Reads stay GET-only; explicit restoration belongs to StudioSetupApply's command owner.
+   This panel never reads or writes the Create draft or the setup recovery journal. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.StudioSetupHistory=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
   const API='/api/workflow-studio/setup-drafts',SHA=/^[a-f0-9]{64}$/,SCOPE=/^[a-f0-9]{32}$/,PAGE=20,MAX=256,NAMES={recipe_graph:'Recipe and graph',wording:'Wording',references:'References and inputs',controls:'Controls',lineage:'Lineage',batch:'Batch',pending_inputs:'Pending inputs',authoring:'Authoring time (browser clock)',runtime:'Recorded runtime'};
@@ -28,26 +28,42 @@
     return parts.length?'Changed from revision '+older.revision+': '+parts.join(', ')+'.':'No draft, preset, backend, graph or input-count difference from revision '+older.revision+' in this summary.';
   }
   class History{
-    constructor(options){Object.assign(this,options);this.token=0;this.sel=0;this.state={head:null,revisions:[],next:null,picked:[],comparison:null,busy:false};}
+    constructor(options){Object.assign(this,options);this.token=0;this.sel=0;this.restoreTarget=null;this.state={head:null,revisions:[],next:null,picked:[],comparison:null,restoration:null,busy:false};}
     note(message,error=false){this.emit({message,error,state:this.state});}
     where(){const s=this.identity()||{};need(SCOPE.test(s.workspace_id||'')&&typeof s.draft_id==='string'&&s.draft_id,'No shared setup revision is saved in this session yet. Nothing was requested.');return {ws:s.workspace_id,id:s.draft_id};}
     url(kind,query){const {ws,id}=this.where();return API+'/'+encodeURIComponent(id)+'/'+kind+'?workspace_id='+ws+query;}
     exportUrl(revision){return this.url('export','&revision='+revision);}
     // A read is dropped, result or refusal, once a newer read began or its own `live` check (the selected pair) no longer holds.
     async go(label,load,done,live=()=>true){const t=++this.token,fresh=()=>t===this.token&&live();this.state.busy=true;this.note(label);
-      try{const value=await load(this.where());if(!fresh()){if(t===this.token)this.state.busy=false;return;}done(value);this.state.busy=false;}
+      try{const value=await load(this.where());if(!fresh()){if(t===this.token)this.state.busy=false;return;}this.state.busy=false;done(value);}
       catch(e){if(!fresh()){if(t===this.token)this.state.busy=false;return;}this.state.busy=false;this.note('History could not be read: '+e.message+' Nothing was changed.',true);}}
-    load(){return this.go('Reading the newest revisions. This is read-only.',async({ws,id})=>page(await this.read(this.url('history','&limit='+PAGE)),ws,id,null,null),v=>{
+    load(){this.cancelRestore();return this.go('Reading the newest revisions. This is read-only.',async({ws,id})=>page(await this.read(this.url('history','&limit='+PAGE)),ws,id,null,null),v=>{
       Object.assign(this.state,{head:v.head_revision,revisions:v.revisions.slice(),next:v.next_before_revision,picked:[],comparison:null});
       this.note('Showing '+v.revisions.length+' of '+v.head_revision+' revisions, newest first.'+(v.next_before_revision?' Older revisions are available.':''));});}
-    older(){const {head,next}=this.state;return this.go('Reading older revisions. This is read-only.',async({ws,id})=>{need(next,'No older revisions remain.');return page(await this.read(this.url('history','&limit='+PAGE+'&before_revision='+next+'&expected_head='+head)),ws,id,next,head);},v=>{
+    older(){this.cancelRestore();const {head,next}=this.state;return this.go('Reading older revisions. This is read-only.',async({ws,id})=>{need(next,'No older revisions remain.');return page(await this.read(this.url('history','&limit='+PAGE+'&before_revision='+next+'&expected_head='+head)),ws,id,next,head);},v=>{
       this.state.revisions.push(...v.revisions);this.state.next=v.next_before_revision;this.note('Loaded '+v.revisions.length+' older revisions; '+this.state.revisions.length+' of '+head+' are listed.');});}
     pick(revision,on){const p=this.state.picked;
       if(on&&p.length>=2){this.note('Two revisions are already selected. Clear one first.',true);return false;}
-      this.state.picked=on?[...p,revision].sort((a,b)=>a-b):p.filter(n=>n!==revision);this.state.comparison=null;this.sel++;return true;}
+      this.restoreTarget=null;this.state.restoration=null;this.state.picked=on?[...p,revision].sort((a,b)=>a-b):p.filter(n=>n!==revision);this.state.comparison=null;this.sel++;return true;}
     compare(){const [left,right]=this.state.picked,head=this.state.head,sel=this.sel,same=()=>this.sel===sel&&this.state.picked.join()===left+','+right;
       return this.go('Comparing revisions '+left+' and '+right+'. This is read-only.',async({ws,id})=>{need(this.state.picked.length===2,'Select exactly two revisions to compare.');return compared(await this.read(this.url('compare','&left='+left+'&right='+right+'&expected_head='+head)),ws,id,head,left,right);},v=>{
         this.state.comparison=v;this.note('Compared revision '+left+' with revision '+right+': '+v.sections.filter(s=>s.changed).length+' of '+v.sections.length+' sections differ.');},same);}
+    cancelRestore(message){if(this.restoreTarget===null)return;this.restoreTarget=null;this.sel++;this.token++;Object.assign(this.state,{restoration:null,comparison:null,busy:false});if(message)this.note(message);}
+    review(revision){
+      const head=this.state.head,row=this.state.revisions.find(r=>r.revision===revision),latest=this.state.revisions.find(r=>r.revision===head),sel=++this.sel,same=()=>this.sel===sel;
+      this.restoreTarget=revision;Object.assign(this.state,{picked:[],comparison:null,restoration:null});
+      return this.go('Checking the selected revision and comparing it with the current head. Nothing is being saved.',async({ws,id})=>{
+        need(row&&latest&&revision<head,'Select an older revision from the current history.');
+        const review=await this.prepareRestore({workspace_id:ws,draft_id:id,revision,head_revision:head,record_sha256:row.record_sha256},same);
+        const comparison=compared(await this.read(this.url('compare','&left='+revision+'&right='+head+'&expected_head='+head)),ws,id,head,revision,head);
+        need(comparison.left_record_sha256===row.record_sha256&&comparison.right_record_sha256===latest.record_sha256&&comparison.head_record_sha256===latest.record_sha256,'The comparison differs from the selected history records. Refresh history.');
+        need(review.current(),'Create or the restore context changed. Review the restore again.');return {review,comparison,row};
+      },v=>{this.state.restoration=v;this.state.comparison=v.comparison;this.note('Revision '+revision+' is available on the current backend. Review the changes before saving your current draft and restoring.');},same);
+    }
+    async commitRestore(){const r=this.state.restoration,sel=this.sel;if(!r||this.state.busy)return;this.state.busy=true;this.note('Saving the current draft, then restoring the reviewed revision.');
+      try{const message=await this.restore(r.review);if(this.sel===sel){this.cancelRestore();this.note(message||'Inspect Shared setup & recovery for the original request and saved revision. Refresh history before another restore.');}}
+      catch(e){if(this.sel===sel){this.cancelRestore();this.note('Restore could not finish: '+e.message+' Inspect Shared setup & recovery before continuing.',true);}}
+    }
   }
   function mount(w,options={}){
     const d=w.document;if(d.querySelector('#setupHistory'))return;const panel=d.querySelector('#sharedSetupPanel');
@@ -61,13 +77,18 @@
       finally{w.clearTimeout(timer);}
     }
     const details=el('details'),status=el('p'),list=el('ul'),view=el('section'),refresh=el('button','Refresh history'),older=el('button','Load older revisions'),compare=el('button','Compare selected revisions'),actions=el('div');
+    const restoreBox=el('section'),restoreNote=el('p'),restoreActions=el('div'),confirm=el('button'),cancel=el('button','Cancel restore');
+    restoreBox.id='setupHistoryRestore';restoreBox.className='setup-history-restore';restoreBox.hidden=true;restoreBox.setAttribute('aria-label','Review restore');restoreBox.tabIndex=-1;
+    confirm.id='setupHistoryRestoreConfirm';cancel.id='setupHistoryRestoreCancel';for(const b of [confirm,cancel]){b.type='button';b.dataset.key=b.id;}
+    restoreActions.append(confirm,cancel);restoreBox.append(el('h4','Review restore'),restoreNote,restoreActions);
     details.id='setupHistory';details.className='shared-setup-history';status.id='setupHistoryStatus';status.tabIndex=-1;status.setAttribute('role','status');status.setAttribute('aria-live','polite');
     list.id='setupHistoryList';list.setAttribute('aria-label','Setup revisions, newest first');view.id='setupHistoryComparison';view.setAttribute('aria-label','Revision comparison');
     for(const [b,id] of [[refresh,'setupHistoryRefresh'],[older,'setupHistoryOlder'],[compare,'setupHistoryCompare']]){b.type='button';b.id=id;b.dataset.key=id;}
     actions.append(refresh,older,compare);
-    details.append(el('summary','Workspace history (read-only)'),el('p','Browse the saved Workspace revisions of the shared setup and compare two of them. Viewing never changes Create, restores a revision, starts generation or copies files. Times come from the save record; older saves may show none.'),status,actions,list,view);
+    details.append(el('summary','Workspace history'),el('p','Browse and compare saved revisions without changing Create. Review restore lets you deliberately save your current draft and return to an older setup. Times come from the save record; older saves may show none.'),status,actions,list,view,restoreBox);
     panel.append(details);
-    const history=new History({read:options.read||read,identity:options.identity||(()=>w.StudioSetupApply&&w.StudioSetupApply.controller&&w.StudioSetupApply.controller.state),emit:paint});
+    const owner=()=>w.StudioSetupApply?.controller;
+    const history=new History({read:options.read||read,identity:options.identity||(()=>owner()?.state),prepareRestore:(...args)=>owner().reviewRestore(...args),restore:async r=>{await owner().restoreHistory(r);return d.querySelector('#sharedSetupStatus')?.textContent;},emit:paint});
     function paint(event){
       const s=event.state,held=d.activeElement&&d.activeElement.dataset&&d.activeElement.dataset.key;status.textContent=event.message||'';
       older.hidden=!s.next;compare.disabled=s.picked.length!==2;
@@ -77,14 +98,19 @@
         box.type='checkbox';box.checked=s.picked.includes(r.revision);box.disabled=!box.checked&&s.picked.length>=2;box.dataset.key='pick-'+r.revision;box.addEventListener('change',()=>{if(!history.pick(r.revision,box.checked)){box.checked=false;return;}paint({state:history.state,message:history.state.picked.length===2?'Revisions '+history.state.picked.join(' and ')+' selected. Compare is ready.':'Selected revisions: '+(history.state.picked.join(', ')||'none')+'.'});});
         label.append(box,' Revision '+r.revision+(r.revision===s.head?' (current head)':''));
         link.href=history.exportUrl(r.revision);link.setAttribute('download','setup-revision-'+r.revision+'-inspection.json');link.dataset.key='export-'+r.revision;
-        li.append(when,label,el('div','Preset'+r.preset_id+' · backend '+r.backend_id+' · '+r.input_count+' input file'+(r.input_count===1?'':'s')+' · record '+r.record_sha256.slice(0,12)),el('div',change(r,i,s.revisions)),link);return li;}));
+        li.append(when,label,el('div','Preset '+r.preset_id+' · backend '+r.backend_id+' · '+r.input_count+' input file'+(r.input_count===1?'':'s')+' · record '+r.record_sha256.slice(0,12)),el('div',change(r,i,s.revisions)),link);
+        if(r.revision<s.head){const review=el('button','Review restore, revision '+r.revision);review.type='button';review.dataset.key='restore-'+r.revision;review.disabled=s.busy;review.addEventListener('click',async()=>{await history.review(r.revision);if(history.state.restoration)restoreBox.focus();});li.append(review);}return li;}));
       const c=s.comparison;view.replaceChildren(...(c?[el('h4','Revision '+c.left_revision+' compared with revision '+c.right_revision),el('p','Previews are shown as stored text; they are not a replacement revision and carry no authority.'),(()=>{const ul=el('ul');ul.append(...c.sections.map(x=>{
         const li=el('li'),side=(name,v)=>{const box=el('div'),pre=el('pre',v.redacted?'Redacted: only the hash and byte length are shown.':v.preview);box.append(el('strong',name+' · '+v.bytes+' bytes · sha256 '+v.sha256.slice(0,12)),pre);if(v.truncated)box.append(el('small','Truncated: '+v.omitted_bytes+' bytes are not shown.'));return box;};
         li.append(el('strong',(NAMES[x.section]||x.section)+': '+(x.changed?'changed':'unchanged')));if(x.changed)li.append(side('Revision '+c.left_revision,x.left),side('Revision '+c.right_revision,x.right));return li;}));return ul;})()]:[]));
+      const r=s.restoration;restoreBox.hidden=!r;confirm.disabled=s.busy;
+      if(r){const n=r.review.revision,h=r.review.head_revision;confirm.textContent='Save my current draft and restore revision '+n;restoreNote.textContent='Selected revision '+n+(r.row.recorded_at==null?' (save time not recorded)':' from '+new Date(r.row.recorded_at*1000).toLocaleString())+'. Current shared head: '+h+'. First save your complete current Create draft as revision '+(h+1)+', then restore revision '+n+' as revision '+(h+2)+'. Earlier revisions remain unchanged. No generation, source copying or backend switch is requested.';}
       if(held){const again=[...details.querySelectorAll('[data-key]')].find(n=>n.dataset.key===held&&!n.hidden&&!n.disabled);if(again){if(again!==d.activeElement)again.focus();}else status.focus();}
     }
-    details.addEventListener('toggle',()=>{if(details.open)history.load().catch(()=>{});});
+    details.addEventListener('toggle',()=>{if(details.open)history.load().catch(()=>{});else history.cancelRestore('Restore review closed. Saved revisions and pending requests remain in Shared setup & recovery.');});
     refresh.addEventListener('click',()=>history.load());older.addEventListener('click',()=>history.older());compare.addEventListener('click',()=>history.compare());
+    confirm.addEventListener('click',()=>history.commitRestore());cancel.addEventListener('click',()=>{const revision=history.restoreTarget;history.cancelRestore('Restore review closed. Saved revisions and pending requests remain in Shared setup & recovery.');const button=[...list.querySelectorAll('[data-key]')].find(b=>b.dataset.key==='restore-'+revision);(button||status).focus();});
+    for(const type of ['studio:workspace-change','studio:privacy-change','studio:recipe','input','change'])d.addEventListener(type,e=>{if(!['input','change'].includes(type)||e.target.closest?.('#createView'))history.cancelRestore('Create or its context changed. Review the restore again; any saved revision or pending request was retained.');});
     w.StudioSetupHistory=Object.assign(w.StudioSetupHistory||{},{history});
   }
   return {History,mount,page,compared,change};

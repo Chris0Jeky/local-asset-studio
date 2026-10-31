@@ -1,5 +1,40 @@
 # Current state — 31 October 2026
 
+## 2026-10-31 — Deliberately restore an older shared setup
+
+Workspace history now offers **Review restore** for an older revision. It checks the
+exact saved record and dependencies and shows a typed comparison with the observed
+head. The explicit **Save my current draft and restore revision N** action uses the
+existing setup controller, Web Lock and recovery journal: checkpoint H+1, then restore
+H+2. Earlier records remain unchanged and the complete current draft is retained.
+The action supports Regular drafts in the Regular view; pending local Files,
+uncertain requests, stale contexts and insufficient revision capacity refuse it.
+Late changes preserve any committed checkpoint or restoration without replacing
+the editor. Lost replies recover by GET only; no write is replayed automatically.
+
+Focused controller and real-SQLite checks cover these contracts. The actual local
+HTTP/SQLite fixture passed 59 checks with native browser locks and crypto; a
+separate 15-check diagnostic verified keyboard confirmation/cancellation at CSS
+200% scale. Wide, 390px, focused zoom, restored and recovered captures were
+inspected. The first zoom diagnostic falsely sampled outside rounded button
+corners; its corrected probes retain full header/footer clearance and record
+failure measurements. No product change was needed for that diagnostic error.
+
+The existing hosted UX workflow passed all 30 unchanged journeys and its final
+aggregate checks, with zero page errors or unpermitted generation submissions
+(one named synthetic fixture submission is allowed). Its exact PR source tree,
+raw log, artifact digest, all 505 ZIP members and 337 screenshot references were
+verified. The hosted full offline suite passed 6,673 tests with 89 skips. Two
+resource-interrupted local journey runs remain preserved; the prepared third
+local attempt was not needed or launched. Runtime proof and failed attempts are
+retained in the Mission51 delivery bundle and session closeout.
+
+Non-blocking post-success history snapshot feedback is tracked in #1874.
+Native browser Ctrl zoom, human screen-reader acceptance, live generation,
+native/provider execution, deployment, licence clearance and artistic acceptance
+are not established. Refs #395; broader fork/import/retention work, #1832 and
+HUMAN_TODO.md choices remain open.
+
 ## 2026-10-31 — Return to a saved scene from Continue
 
 Make's optional **Continue** card now also links to the newest eligible saved

@@ -8,7 +8,7 @@ class SetupHistoryFrontend(unittest.TestCase):
     def test_read_only_history_panel_contracts(self):
         node=shutil.which('node')
         if not node:self.skipTest('Node is not installed')
-        result=subprocess.run([node,'--test',str(ROOT/'tests/setup_history_client.cjs')],capture_output=True,text=True,timeout=60)
+        result=subprocess.run([node,'--test','--test-concurrency=1',str(ROOT/'tests/setup_history_client.cjs'),str(ROOT/'tests/setup_history_restore_client.cjs')],capture_output=True,text=True,timeout=60)
         self.assertEqual(result.returncode,0,result.stdout+result.stderr)
 
     def test_shell_loads_the_panel_after_the_apply_panel_exists(self):
