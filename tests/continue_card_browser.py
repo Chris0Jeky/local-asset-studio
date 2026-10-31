@@ -55,7 +55,7 @@ async def run(out):
                     for table in ('projects','av_documents','av_events','av_renders','av_exports')}
     scenes_before=scene_records()
     second=server.AssetWorkspace(case.root/'second-workspace')
-    for patch in reversed(case.fixture.patches):patch.stop()
+    for mocked in reversed(case.fixture.patches):mocked.stop()
     before=copy.deepcopy(store.snapshot(privacy='all')['assets'])
     plan_before=[copy.deepcopy(studio.production._get(p['id'])) for p in plans]
     gate={'pause':False};entered=threading.Event();release=threading.Event()
