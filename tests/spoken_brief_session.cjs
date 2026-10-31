@@ -1,6 +1,6 @@
 'use strict';
 const assert = require('node:assert/strict');
-const {ReviewSession, SourcePreviewSession} = require('../app/static/spoken-brief-session.js');
+const {ReviewSession, SourcePreviewSession, NarrationSession} = require('../app/static/spoken-brief-session.js');
 const digest = 'a'.repeat(64), other = 'b'.repeat(64), revision = 'c'.repeat(64);
 function snapshot(key) {
   return {archive_sha256:digest, playback_sha256:revision, reports:[], reviews:[],
@@ -88,6 +88,29 @@ async function run() {
     await assert.rejects(s.preview('A'), /Refresh/);
     assert.ok(requests.every(r => r.body === undefined));
   }
-  console.log('Spoken Brief archive and source-preview ownership scenarios passed');
+  {
+    const requests=[], s=new NarrationSession((route,query,body)=>new Promise((resolve,reject)=>requests.push({route,query,body,resolve,reject})));
+    const preview={root_id:digest,preview_sha256:revision,manifest:{manifest_sha256:other},run_key:'A/_spoken/run'};
+    const ack={key:preview.run_key,root_id:digest,manifest_sha256:other};
+    s.select(ack.key,digest,other); assert.equal(requests.length,0);
+    const read=s.refresh(); assert.equal(requests[0].body,undefined);
+    s.select('B',digest); requests[0].resolve({...ack,status:'completed'}); assert.equal(await read,null);
+    const start=s.start('A',preview);
+    assert.equal(requests[1].route,'/narration/start'); assert.equal(requests[1].body.preview_sha256,revision);
+    await assert.rejects(s.start('A',preview),/already requested/); assert.equal(requests.length,2);
+    requests[1].reject(Error('Lost reply')); await assert.rejects(start,/no create or Start was retried/);
+    const afterLoss=s.refresh(); assert.equal(requests.at(-1).body,undefined);
+    requests.at(-1).resolve({...ack,status:'uncertain'}); await afterLoss;
+    const recovery=s.recover(); assert.equal(requests.at(-1).route,'/narration/recover');
+    const recoveryRequest=requests.at(-1); s.select('B',digest);
+    recoveryRequest.resolve(ack); assert.equal(await recovery,null); assert.equal(s.current.key,'B');
+    const old=s.refresh(), oldRequest=requests.at(-1); s.select(null); oldRequest.reject(Error('Old failure')); assert.equal(await old,null);
+    const restored=new NarrationSession(s.request); restored.select(ack.key,digest);
+    const reload=restored.refresh(); assert.equal(requests.at(-1).route,'/narration'); assert.equal(requests.at(-1).body,undefined);
+    requests.at(-1).resolve(ack); await reload; assert.equal(restored.current.manifest_sha256,other);
+    const wrong=restored.refresh(); requests.at(-1).resolve({...ack,manifest_sha256:revision}); await assert.rejects(wrong,/identity/);
+    assert.equal(requests.filter(r=>r.route==='/narration/start').length,1);
+  }
+  console.log('Spoken Brief archive, source-preview and narration ownership scenarios passed');
 }
 run().catch(e=>{console.error(e); process.exitCode=1;});

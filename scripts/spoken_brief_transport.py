@@ -24,11 +24,12 @@ PROJECT_ID = re.compile(r'[0-9a-f]{32}\Z')
 
 
 def digest_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
+    from spoken_brief_archive import opened_file
     if type(chunk_size) is not int or chunk_size <= 0:
         raise SpokenBriefError('File hash chunk size must be a positive integer')
     hasher = hashlib.sha256()
     try:
-        with Path(path).open('rb') as stream:
+        with opened_file(Path(path), 1024 * 1024 * 1024) as stream:
             while True:
                 chunk = stream.read(chunk_size)
                 if not chunk:
@@ -192,13 +193,32 @@ def _sync_parent(path: Path) -> None:
         os.close(descriptor)
 
 
-def write_json(path: Path, value) -> None:
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
+def prepare_directory(path: Path) -> Path:
+    from spoken_brief_inbox import _lineage
+    path = Path(path).absolute(); missing = []; current = path
+    while not os.path.lexists(current):
+        missing.append(current); current = current.parent
+    _lineage(current)
+    for directory in reversed(missing):
+        _lineage(directory.parent); directory.mkdir(exist_ok=True); _lineage(directory)
+    _lineage(path)
+    return path
+
+
+def write_json(path: Path, value, *, guard=None) -> None:
     try:
         raw = (json.dumps(value, indent=2, ensure_ascii=False) + '\n').encode('utf-8')
     except (TypeError, ValueError, RecursionError) as exc:
         raise SpokenBriefError(f'Cannot serialize spoken-brief state: {path}') from exc
+    write_bytes(path, raw, guard=guard)
+
+
+def write_bytes(path: Path, raw: bytes, *, guard=None) -> None:
+    from spoken_brief_inbox import _lineage
+    path = Path(path)
+    if guard: guard()
+    prepare_directory(path.parent); lineage = _lineage(path.parent)
+    if os.path.lexists(path): _lineage(path)
     descriptor, temporary_name = tempfile.mkstemp(prefix=f'.{path.name}-', suffix='.tmp', dir=path.parent)
     temporary = Path(temporary_name)
     try:
@@ -206,6 +226,9 @@ def write_json(path: Path, value) -> None:
             stream.write(raw)
             stream.flush()
             os.fsync(stream.fileno())
+        if guard: guard()
+        if _lineage(path.parent) != lineage: raise SpokenBriefError('Output directory changed before persistence')
+        if os.path.lexists(path): _lineage(path)
         os.replace(temporary, path)
         _sync_parent(path)
     finally:
@@ -216,11 +239,10 @@ def write_json(path: Path, value) -> None:
 
 
 def read_json(path: Path):
+    from spoken_brief_inbox import _capture
     path = Path(path)
     try:
-        if not path.is_file() or path.stat().st_size > MAX_JSON_BYTES:
-            raise OSError('missing or oversized state')
-        return json.loads(path.read_text(encoding='utf-8'))
+        return json.loads(_capture(path, MAX_JSON_BYTES)[0].decode('utf-8'))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise SpokenBriefError(f'Cannot read retained spoken-brief state: {path}') from exc
 
@@ -322,9 +344,10 @@ def _validate_wav_details(details: dict) -> None:
 
 
 def _wav_snapshot(path: Path) -> tuple[dict, bytes, str]:
+    from spoken_brief_archive import opened_file
     path = Path(path)
     try:
-        with path.open('rb') as stream:
+        with opened_file(path, MAX_AUDIO_BYTES) as stream:
             raw = stream.read(MAX_AUDIO_BYTES + 1)
     except OSError as exc:
         raise SpokenBriefError(f'Cannot read WAV artifact: {path}') from exc
@@ -348,11 +371,14 @@ def _wav_snapshot(path: Path) -> tuple[dict, bytes, str]:
     return details, frames, digest_bytes(raw)
 
 
-def assemble_wav(entries: list[dict], output: Path) -> dict:
+def assemble_wav(entries: list[dict], output: Path, *, guard=None) -> dict:
+    from spoken_brief_inbox import _lineage
     if not entries:
         raise SpokenBriefError('No voice segments are available to assemble')
     output = Path(output)
-    output.parent.mkdir(parents=True, exist_ok=True)
+    if guard: guard()
+    prepare_directory(output.parent); lineage = _lineage(output.parent)
+    if os.path.lexists(output): _lineage(output)
     descriptor, temporary_name = tempfile.mkstemp(prefix=f'.{output.name}-', suffix='.tmp', dir=output.parent)
     os.close(descriptor)
     temporary = Path(temporary_name)
@@ -388,6 +414,9 @@ def assemble_wav(entries: list[dict], output: Path) -> dict:
                 })
         with temporary.open('r+b') as stream:
             os.fsync(stream.fileno())
+        if guard: guard()
+        if _lineage(output.parent) != lineage: raise SpokenBriefError('Assembly directory changed')
+        if os.path.lexists(output): _lineage(output)
         os.replace(temporary, output)
         _sync_parent(output)
     finally:

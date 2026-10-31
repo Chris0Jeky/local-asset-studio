@@ -19,7 +19,8 @@
 .spoken-briefs #status { min-height:2rem; padding:.6rem .8rem; border-left:3px solid var(--accent); overflow-wrap:anywhere;} .spoken-briefs #configuration { color:var(--muted);} .spoken-briefs #recordWarnings { color:#ffcf8a;}
 .spoken-briefs .layout>aside, .spoken-briefs #archivePanel { min-width:0; }
 .spoken-briefs [hidden] { display:none !important; }
-.spoken-briefs #sourcePanel { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:1.4rem; margin-bottom:1.5rem; min-width:0; }
+.spoken-briefs #sourcePanel, .spoken-briefs #narrationPanel { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:1.4rem; margin-bottom:1.5rem; min-width:0; }
+.spoken-briefs #sourceDestination, .spoken-briefs #narrationIdentity, .spoken-briefs #narrationStatus, .spoken-briefs #narrationBatches { overflow-wrap:anywhere; }
 .spoken-briefs #sourcePanel h2 { margin-top:0; } .spoken-briefs #sourcePanel input { box-sizing:border-box; }
 .spoken-briefs #sourceStatus, .spoken-briefs #sourceProfile, .spoken-briefs #sourceSegments { overflow-wrap:anywhere; }
 .spoken-briefs #sourceSegments { padding-left:1.6rem; max-height:30rem; overflow:auto; }

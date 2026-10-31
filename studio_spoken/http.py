@@ -1,11 +1,13 @@
-"""Strict loopback routes on the existing Studio server; no inference routes."""
+"""Strict loopback archive routes and explicit existing-coordinator admission."""
 from __future__ import annotations
 
 import json
 import re
+import threading
 from urllib.parse import parse_qsl, urlsplit
 
 from .core import ArchiveAccess, AccessError, digest, fields
+from .narration import Narrations
 from studio_workflow.http_body import drain_for_reset
 from spoken_brief_archive import ArchiveConflict, require_archive
 from spoken_brief_compile import SpokenBriefError
@@ -42,6 +44,7 @@ def byte_range(value, size):
 
 
 def extend_handler(base):
+    narration_lock = threading.Lock()
     class SpokenHandler(base):
         def _spoken_error(self, exc):
             self.close_connection = True
@@ -52,7 +55,8 @@ def extend_handler(base):
             if not getattr(self, '_spoken_body_consumed', False): drain_for_reset(self)
             status = (409 if isinstance(exc, (ArchiveConflict, PlaybackConflict))
                       else exc.status if isinstance(exc, AccessError) else 400)
-            return self._json(status, {'error': str(exc)[:800], 'generation_submitted': False})
+            submitted = None if urlsplit(self.path).path.startswith(PREFIX + '/narration') else False
+            return self._json(status, {'error': str(exc)[:800], 'generation_submitted': submitted})
 
         def _spoken_query(self):
             parsed = urlsplit(self.path)
@@ -76,6 +80,13 @@ def extend_handler(base):
 
         def _spoken_access(self):
             return ArchiveAccess(self.studio.config.get('spoken_briefs'))
+
+        def _spoken_narrations(self):
+            with narration_lock:
+                if not hasattr(self.server, 'spoken_narrations'):
+                    studio = self.studio
+                    self.server.spoken_narrations = Narrations(lambda: studio.config, f'http://127.0.0.1:{self.server.server_port}')
+                return self.server.spoken_narrations
 
         def _spoken_body(self):
             if (self.headers.get_all('Transfer-Encoding') or len(self.headers.get_all('Content-Length', [])) != 1
@@ -158,10 +169,13 @@ def extend_handler(base):
                     fields(query, ('key',)); return self._json(200, access.inspect(query['key']))
                 if route == '/source-preview':
                     fields(query, ('key', 'root_id'))
-                    value = access.source_preview(query['key'], query['root_id'])
+                    value = self._spoken_narrations().preview(query['key'], query['root_id'])
                     if self._spoken_access().status()['source_root_id'] != query['root_id']:
                         raise AccessError('Source root changed during preview; refresh source access', 409)
                     return self._json(200, value)
+                if route == '/narration':
+                    fields(query, ('key', 'root_id'))
+                    return self._json(200, self._spoken_narrations().inspect(query['key'], query['root_id']))
                 if route in ('/report', '/review'):
                     fields(query, ('key', 'archive_sha256', 'id'))
                     reader = access.report if route == '/report' else access.saved_review
@@ -196,6 +210,11 @@ def extend_handler(base):
             if not self._spoken_origin(): return self._spoken_error(AccessError('Exact local same-origin request required', 403))
             try:
                 path, query = self._spoken_query()
+                if path in (PREFIX + '/narration/start', PREFIX + '/narration/recover'):
+                    fields(query, ())
+                    value = self._spoken_body(); narrations = self._spoken_narrations()
+                    action = narrations.start if path.endswith('/start') else narrations.recover
+                    return self._json(202, action(value))
                 if path not in (PREFIX + '/bookmark', PREFIX + '/review'):
                     raise AccessError('Unknown Spoken Brief write operation', 404)
                 fields(query, ('key',)); value = self._spoken_body(); access = self._spoken_access()

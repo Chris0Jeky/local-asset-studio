@@ -105,7 +105,54 @@
       } catch (error) { if (epoch !== this.epoch || root !== this.root) return null; throw error; }
     }
   }
-  const api = {ReviewSession, SourcePreviewSession};
+  class NarrationSession {
+    constructor(request) { this.request=request; this.epoch=0; this.ticket=0; this.current=null; this.attempted=new Set(); this.pending=new Set(); }
+    select(key, root, manifest=null) { ++this.epoch; ++this.ticket; this.current=key ? {key,root_id:root,manifest_sha256:manifest,value:null} : null; }
+    async refresh() {
+      const selected=this.current, epoch=this.epoch, ticket=++this.ticket;
+      if (!selected || !hash(selected.root_id)) throw Error('Select a retained narration first');
+      try {
+        const value=await this.request('/narration',{key:selected.key,root_id:selected.root_id});
+        if (epoch!==this.epoch || ticket!==this.ticket) return null;
+        if (value.key!==selected.key || value.root_id!==selected.root_id || !hash(value.manifest_sha256)
+            || (selected.manifest_sha256 && value.manifest_sha256!==selected.manifest_sha256)) throw Error('Narration identity differs from the selection');
+        selected.manifest_sha256=value.manifest_sha256; selected.value=value;
+        return value;
+      } catch(error) { if(epoch!==this.epoch || ticket!==this.ticket) return null; throw error; }
+    }
+    async start(key, preview) {
+      if (!hash(preview?.root_id) || !hash(preview?.preview_sha256) || !hash(preview?.manifest?.manifest_sha256)
+          || typeof preview.run_key!=='string' || !preview.run_key) throw Error('Preview this source before Start');
+      const id=preview.root_id+':'+preview.run_key;
+      if(this.attempted.has(id)) {
+        if(this.current?.key!==preview.run_key || this.current?.root_id!==preview.root_id)
+          this.select(preview.run_key,preview.root_id,preview.manifest.manifest_sha256);
+        throw Error('Start was already requested. Refresh retained progress; no retry was sent.');
+      }
+      this.select(preview.run_key,preview.root_id,preview.manifest.manifest_sha256); this.attempted.add(id);
+      return this.write('/narration/start',{key,root_id:preview.root_id,manifest_sha256:preview.manifest.manifest_sha256,preview_sha256:preview.preview_sha256});
+    }
+    async recover() {
+      const selected=this.current;
+      if(!selected || !hash(selected.manifest_sha256)) throw Error('Refresh retained progress before recovery');
+      return this.write('/narration/recover',{key:selected.key,root_id:selected.root_id,manifest_sha256:selected.manifest_sha256});
+    }
+    async write(route, body) {
+      const selected=this.current, epoch=this.epoch, id=selected.root_id+':'+selected.key;
+      if(this.pending.has(id)) throw Error('This narration request is still pending');
+      this.pending.add(id); ++this.ticket;
+      try {
+        const value=await this.request(route,{},body);
+        if(epoch!==this.epoch) return null;
+        if(value.key!==selected.key || value.root_id!==selected.root_id || value.manifest_sha256!==selected.manifest_sha256) throw Error('Narration acknowledgement identity differs');
+        return value;
+      } catch(error) {
+        if(epoch!==this.epoch) return null;
+        throw Error(`${error.message}. Refresh retained progress; no create or Start was retried.`);
+      } finally { this.pending.delete(id); }
+    }
+  }
+  const api = {ReviewSession, SourcePreviewSession, NarrationSession};
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.SpokenReview = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -15,7 +15,7 @@ from spoken_brief_archive import (
     inspect_run, opened_file, require_archive,
 )
 from spoken_brief_compile import (MAX_SOURCE_BYTES, SpokenBriefError, batch_segments,
-                                 canonical_digest, compile_snapshot)
+                                 canonical_digest, compile_snapshot, run_directory)
 from spoken_brief_exports import _load_playback, save_playback
 from spoken_brief_inbox import HEX, _lineage, _plain
 from spoken_brief_qa import load_report, load_review, record_review
@@ -123,7 +123,10 @@ class ArchiveAccess:
                 raise AccessError('Source must be a Markdown file')
             with opened_file(source, MAX_SOURCE_BYTES) as stream:
                 manifest = compile_snapshot(source, stream.read(MAX_SOURCE_BYTES + 1))
+        directory = run_directory(source, manifest['manifest_sha256'])
         return {'root_id': root_id, 'manifest': manifest,
+                'run_key': directory.relative_to(root).as_posix(),
+                'destination': str(directory / (source.stem + '.spoken.wav')),
                 'batch_count': len(batch_segments(manifest['segments'])), 'generation_submitted': False}
 
     def archives(self):
