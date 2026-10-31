@@ -115,6 +115,8 @@ async def run(out):
                 await page.locator('#assetNamedRestore').focus()
                 check('Narrow Use view control is keyboard reachable', await page.locator('#assetNamedRestore').evaluate('(n)=>n===document.activeElement'))
                 check('Narrow saved-view controls do not overflow', await page.locator('#assetNamedViewsPanel').evaluate('(n)=>n.scrollWidth<=n.clientWidth+1'))
+                await page.locator('#assetNamedViewsPanel').scroll_into_view_if_needed()
+                check('Narrow capture contains the saved-view controls', await page.locator('#assetNamedViewsPanel').evaluate('(n)=>{const r=n.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight}'))
                 await page.screenshot(path=str(out/'named-views-narrow.png'))
                 await page.set_viewport_size({'width': 1440, 'height': 900})
 
