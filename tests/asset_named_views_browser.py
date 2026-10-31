@@ -46,7 +46,8 @@ async def run(out):
                               'expected_revisions': {identifier: 0}, 'request_id': uuid.uuid4().hex}, privacy=privacy)
                 ids.append(identifier)
             stores.append(store); identifiers.append(ids)
-        collection = stores[0].collection({'name': 'Temporary study collection'})
+        for i in range(101): stores[0].collection({'name': f'Fixture collection {i:03}'})
+        collection = stores[0].collection({'name': 'ZZZ temporary study collection'})
         before = [copy.deepcopy(store.snapshot(privacy='all')['assets']) for store in stores]
 
         class Handler(BoundPortGuard, production.extend_handler(production.Handler)):
@@ -135,6 +136,7 @@ async def run(out):
                 await page.locator('#workspaceRefresh').click(); await settle()
                 check('Returning to workspace A recovers only its two views', await page.locator('#assetNamedViews option').all_text_contents() == ['Choose a saved view…', 'Forest favorites', 'Dusk repairs'])
 
+                await page.locator('#collectionPaging button').click()
                 await page.locator('[data-scope="collection:'+collection['id']+'"]').click(); await settle(); await save('Collection study')
                 await restore('Forest favorites'); previous = await fields()
                 stores[0].collection({'action': 'delete', 'id': collection['id']})

@@ -586,7 +586,7 @@ function renderAssetNamedViews(preferredName){
   $('#assetNamedHelp').textContent=(assetActivePrivacy==='regular'?'Saved in this browser for this Workspace and Regular view.':'Saved only in this tab for this Workspace and '+(assetActivePrivacy==='private'?'Private':'All')+' view.')+' Filters only; pictures and checkbox selection stay unchanged.';
   assetNamedMessage(error||(views.length+' of 20 saved views.'+(views.length===20?' Remove one before saving another.':'')),!!error);
 }
-function assetNamedViewAction(action){
+function assetNamedViewAction(action,checkedCollection=null){
   try{
     const state=readAssetNamedViews();
     if(state.context!==assetNamedContext||state.workspace_id!==assetState.workspace_id||state.privacy!==assetActivePrivacy)throw Error('The Library context changed. Choose the view again.');
@@ -594,6 +594,18 @@ function assetNamedViewAction(action){
     if(action==='restore'){
       if(!found)throw Error('That saved view is unavailable. Choose another view.');
       if(found.scope.startsWith('collection:')&&!assetState.collections.some(c=>'collection:'+c.id===found.scope)&&!assetPaging?.collectionNext)throw Error('That collection is unavailable. Your current filters and saved view were kept.');
+      if(found.scope.startsWith('collection:')&&checkedCollection!==found.scope){
+        const query=assetPageQuery(),group=assetGroupMode,epoch=assetWorkspaceEpoch,privacyEpoch=assetPrivacyEpoch;
+        const current=()=>state.context===assetNamedContext&&state.workspace_id===assetState.workspace_id&&epoch===assetWorkspaceEpoch&&privacyEpoch===assetPrivacyEpoch&&query===assetPageQuery()&&group===assetGroupMode&&selected===$('#assetNamedViews').value;
+        assetNamedMessage('Checking the saved collection…');
+        // The first collection page cannot establish whether an unloaded collection still exists.
+        return api(assetReadURL('/api/assets/page',{workspace_id:state.workspace_id,collection_id:found.scope.slice(11),limit:1,details:true}),{headers:assetPrivacyHeaders()}).then(page=>{
+          if(!current())return false;
+          if(!validAssetPage(page,1)||page.workspace_id!==state.workspace_id)throw Error('The collection read changed Workspace or returned invalid details. Your filters were kept.');
+          if(JSON.stringify(readAssetNamedViews().views.find(view=>view.name===selected))!==JSON.stringify(found))throw Error('The saved view changed. Choose it again.');
+          return assetNamedViewAction(action,found.scope);
+        }).catch(error=>{if(current())assetNamedMessage(error.data?.code==='asset_collection_unavailable'?'That collection is unavailable. Your current filters and saved view were kept.':error.message,true);return false;});
+      }
       clearTimeout(assetSearchTimer);assetSearchTimer=null;
       assetScope=found.scope;assetScopeRestored=false;assetSourceMode=found.source;assetGroupMode=found.group;
       for(const [key,id] of Object.entries({sort:'assetSort',type:'assetType',search:'assetSearch',archive:'assetArchiveFilter',group:'assetGroup'}))$('#'+id).value=found[key];

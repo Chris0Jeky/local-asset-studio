@@ -100,6 +100,39 @@ test('an unavailable collection leaves its saved view and current filters intact
   assert.equal(restore(s,'Collection view'),false);assert.deepEqual(snapshot(s),before);assert.equal(s.local.getItem(key),original);assert.match(s.el('#assetNamedStatus').textContent,/collection is unavailable/i);
 });
 
+test('a deleted collection beyond the loaded collection page preserves filters and the saved record',async()=>{
+  const s=start();view(s,{...forest,scope:'collection:c'});save(s,'Collection view');view(s,repairs);
+  s.run("assetPaging={query:assetPageQuery(),collectionNext:'next'};api=async()=>{throw Object.assign(Error('Deleted collection'),{data:{code:'asset_collection_unavailable'}})}");
+  const before=snapshot(s),key=savedKey(s),original=s.local.getItem(key);
+  assert.equal(await restore(s,'Collection view'),false);assert.deepEqual(snapshot(s),before);assert.equal(s.local.getItem(key),original);
+  assert.match(s.el('#assetNamedStatus').textContent,/collection is unavailable/i);
+});
+
+test('an unloaded saved collection is checked through the bounded page owner before filters change',async()=>{
+  const s=start();view(s,{...forest,scope:'collection:c'});save(s,'Collection view');view(s,repairs);const before=snapshot(s);
+  s.run("assetPaging={query:assetPageQuery(),collectionNext:'next'};globalThis.collectionRead=null;api=(url,options)=>new Promise(resolve=>{collectionRead={url,options,resolve}});refreshAssets=async()=>true;assetSelection=new Set(['a'])");
+  const pending=restore(s,'Collection view');assert.deepEqual(snapshot(s),before);
+  assert.match(s.run('collectionRead.url'),/collection_id=c/);assert.match(s.run('collectionRead.url'),/limit=1/);
+  assert.equal(s.run("collectionRead.options.headers['X-Studio-Privacy']"),'regular');
+  s.run("collectionRead.resolve({workspace_id:assetState.workspace_id,catalogue:{epoch:'1'.repeat(32),revision:0},assets:[],unavailable_assets:[],cursor:null,next_cursor:null})");
+  assert.equal(await pending,true);assert.deepEqual(snapshot(s),{...forest,scope:'collection:c'});assert.equal(s.run('JSON.stringify([...assetSelection])'),'["a"]');assert.equal(s.writes.length,0);
+});
+
+test('a late or malformed collection check cannot replace changed filters, context or saved records',async()=>{
+  for(const change of ['filters','privacy','workspace','stored','malformed']){
+    const s=start();view(s,{...forest,scope:'collection:c'});save(s,'Collection view');view(s,repairs);
+    s.run("assetPaging={query:assetPageQuery(),collectionNext:'next'};globalThis.collectionFinish=null;api=()=>new Promise(resolve=>collectionFinish=resolve)");
+    const pending=restore(s,'Collection view');
+    if(change==='filters')s.el('#assetSearch').value='newer search';
+    if(change==='privacy')s.run("assetActivePrivacy='private';assetPrivacyEpoch++");
+    if(change==='workspace')s.run("assetState.workspace_id='2'.repeat(32);assetWorkspaceEpoch++");
+    if(change==='stored'){const key=savedKey(s),saved=JSON.parse(s.local.getItem(key));saved.views[0].search='other tab';s.local.setItem(key,JSON.stringify(saved));}
+    const before=snapshot(s);
+    s.run("collectionFinish("+(change==='malformed'?"{}":"{workspace_id:assetState.workspace_id,catalogue:{epoch:'1'.repeat(32),revision:0},assets:[],unavailable_assets:[],cursor:null,next_cursor:null}")+")");
+    assert.equal(await pending,false);assert.deepEqual(snapshot(s),before);assert.equal(s.writes.length,0);
+  }
+});
+
 test('restoration sends one coherent page query through the existing read owner',()=>{
   const s=start();view(s,forest);save(s,'Forest');view(s,repairs);
   s.run("assetPaging={query:assetPageQuery()};globalThis.namedQueries=[];refreshAssets=async()=>{namedQueries.push(assetPageFilters());};assetSelection=new Set(['a'])");

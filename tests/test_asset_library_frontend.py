@@ -13,7 +13,7 @@ class AssetLibraryFrontend(unittest.TestCase):
             capture_output=True, text=True, timeout=20,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn('tests 11', result.stdout)
+        self.assertIn('tests 14', result.stdout)
 
     @unittest.skipUnless(shutil.which('node'), 'Node.js required')
     def test_selection_and_filter_contracts(self):

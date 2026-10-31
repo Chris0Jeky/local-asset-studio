@@ -9,7 +9,7 @@ checkbox selections and asset metadata. Regular saves persist in this browser;
 Private and All saves stay in the current tab. Invalid storage, duplicate names,
 missing collections and stale contexts preserve existing records. Refs #1817.
 
-The 11 new Node contracts, existing Library/paging/privacy contracts and 28
+The 14 new Node contracts, existing Library/paging/privacy contracts and 28
 frontend handoff tests pass. Browser qualification and the hosted full gate are
 pending at this source checkpoint. No live generation, model, native application,
 art acceptance or unanswered #1832 placement decision was exercised or inferred.
