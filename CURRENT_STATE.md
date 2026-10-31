@@ -20,12 +20,19 @@ regression failed because no scene result existed; controller regressions failed
 because the scene link and revision presentation were absent. Focused source
 checks pass: 25 Continue tests (one unavailable Windows symlink fixture skipped),
 10 native-history tests, 28 frontend handoff tests, 11 controller cases, syntax
-checks and the repository validator. Independent review, actual HTTP/SQLite
-browser proof and the exact-head hosted gate remain separate qualification
-obligations recorded in the PR evidence. Independent review reproduced a copied
+checks and the repository validator. Independent review reproduced a copied
 Workspace exposing an unrelated scene through matching source IDs/hashes. New
 intake now records immutable Workspace ownership; older unanchored scenes remain
 unavailable in Continue without changing their existing Scene editor access.
+Scoped independent verification found no remaining blockers. Actual HTTP/SQLite
+browser proof passed 29 checks at 1440/390 pixels, including the exact Scene
+destination, retained Make wording, independent unavailable states and late
+privacy/Workspace A-B-A responses. All 30 unchanged Studio use cases passed;
+neither journey reported page errors or generation submissions. Actual captures
+were inspected. Two earlier fixture setup failures and the successful final
+158.956-second guarded sequence are retained in the external evidence bundle.
+All owned processes ended and the browser allocation was released. The PR
+records exact-source hosted qualification separately.
 No native media execution, live generation, deployment, artistic acceptance or
 licensing is established by this discovery feature. HUMAN_TODO.md remains
 authoritative.
