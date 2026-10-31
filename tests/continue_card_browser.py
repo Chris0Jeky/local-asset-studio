@@ -99,7 +99,7 @@ async def run(out):
             check('Draft remains unsaved',await page.input_value('#assetNotes')=='Unfinished notes must remain')
             await page.locator('#assetNotes').fill('');await page.evaluate('closeAssetDetails()')
             await page.locator('[data-continue-needs]').click()
-            await expect(page.locator('#assetGrid [data-asset-open="'+ids[1]+'"]')).to_be_visible()
+            await expect(page.locator('#assetGrid button.asset-open[data-asset-open="'+ids[1]+'"]')).to_be_visible()
             check('Needs work uses the existing Library scope',await page.evaluate('assetScope')=='needs_work')
             await page.evaluate("showView('make')")
             await scope('private');await expand()
@@ -128,7 +128,8 @@ async def run(out):
             check('Expansion is not persisted',not await page.locator('#makeContinue').evaluate('(n)=>n.open'))
             check('Asset metadata unchanged by the browser',store.snapshot(privacy='all')['assets']==before)
             check('Native records unchanged by the browser',[studio.production._get(p['id']) for p in plans]==plan_before)
-            check('No write or generation route requested',all(method=='GET' or path=='/api/assets/selection' for method,path in requests))
+            # The existing shell requests a timing estimate at startup; this fixture still refuses it.
+            check('Only selection and the existing read-only timing request use POST',all(method=='GET' or path in ('/api/assets/selection','/api/estimate') for method,path in requests))
             check('No JavaScript page errors',not errors)
     finally:
         release.set();studio.assets=store
