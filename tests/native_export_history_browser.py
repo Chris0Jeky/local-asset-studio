@@ -61,7 +61,7 @@ async def run(out):
             context=await browser.new_context(viewport={'width':1440,'height':900},reduced_motion='reduce',accept_downloads=True)
             page=await context.new_page();page.set_default_timeout(10000);page.on('pageerror',lambda e:errors.append(str(e)))
             async def open_asset(identifier):
-                await page.locator('#assetGrid [data-asset-open="'+identifier+'"]').click()
+                await page.locator('#assetGrid button.asset-open[data-asset-open="'+identifier+'"]').click()
                 await expect(page.locator('#assetDialog')).to_be_visible()
             async def expand():
                 await page.locator('#assetNativeExports>summary').focus();await page.keyboard.press('Enter')
