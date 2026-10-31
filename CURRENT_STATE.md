@@ -12,7 +12,7 @@ Workspace editor remains the sole metadata, review and dirty-draft owner.
 
 Source checkpoint: 54 focused Node contracts pass, including source selection,
 media identity, late-response refusals and preserving Notes focus during delayed
-comparison display. The real 75-asset SQLite fixture reopens
+comparison display. The real 125-asset SQLite fixture reopens
 its repair and constructs its HTTP handler without starting a socket or browser.
 Feature browser captures, hosted full-suite/all-30 journeys and final qualification
 are pending at this checkpoint. Refs #1837 and #243; no broader closure. #1832

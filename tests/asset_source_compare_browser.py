@@ -37,7 +37,7 @@ def build_fixture(root):
         return identifier
 
     # The normal first page cannot supply the old parent: comparison must resolve its ID.
-    for index in range(61):
+    for index in range(111):
         recorded('other-'+str(index), [], created=20+index)
     private = recorded('private-source', [], privacy='private')
     video = recorded('video-source', [], media='video')
@@ -73,6 +73,11 @@ def comparison_handler(studio, requests, controls):
 
         def do_GET(self):
             path = urlsplit(self.path).path
+            if path == '/api/jobs':
+                # Older sources remain in SQLite; only the newest repair is in this Recent runs fixture.
+                scope = scope_for_handler(self)
+                return self.json([job for job in self.studio.jobs.values() if job.get('operation') == 'asset.import'
+                                  and (scope == 'all' or job.get('privacy', 'regular') == scope)])
             if path == '/api/workspace':
                 return self.json(self.studio.assets.snapshot(privacy=scope_for_handler(self)))
             if path.startswith('/api/assets/') and path.endswith('/metadata'):
@@ -129,8 +134,11 @@ def exercise(out, browser_executable=None):
                 context = browser.new_context(viewport={'width': 1440, 'height': 1000}, reduced_motion='reduce')
                 page = context.new_page()
                 page.set_default_timeout(10000)
-                page.on('pageerror', lambda error: errors.append(str(error)))
+                page.on('pageerror', lambda error: errors.append(error.stack or str(error)))
                 page.on('dialog', lambda dialog: dialog.dismiss())
+
+                def ready():
+                    page.wait_for_function('window.StudioSetupDraft&&backendActive==="primary"&&catalog?.presets?.some(p=>p.id==="anima-portrait")&&selected?.id&&assetPaging&&!assetRefreshing')
 
                 def open_asset(identifier):
                     page.evaluate('(id)=>openAsset(id)', identifier)
@@ -149,7 +157,7 @@ def exercise(out, browser_executable=None):
 
                 try:
                     page.goto(origin+'/#assets', wait_until='domcontentloaded')
-                    page.wait_for_function('window.StudioSetupDraft&&backendActive==="primary"&&assetState.workspace_id')
+                    ready()
                     open_asset(ids['child'])
                     check(page.locator('#assetReview').input_value() == 'unreviewed', 'Reopened SQLite repair starts unreviewed')
                     check(page.evaluate('(id)=>!assetState.assets.some(a=>a.id===id)&&!assetResolved.has(id)', ids['parent']), 'Recorded parent starts off-page and unresolved')
@@ -200,7 +208,7 @@ def exercise(out, browser_executable=None):
                     check(studio.assets.get(ids['child'])['notes'] == 'Saved child notes after comparison', 'Existing Save persists only the child notes')
                     page.locator('#closeAssetDialog').click()
                     page.reload(wait_until='domcontentloaded')
-                    page.wait_for_function('assetState.workspace_id')
+                    ready()
                     open_asset(ids['child'])
                     check(page.locator('#assetReview').input_value() == 'selected' and page.locator('#assetNotes').input_value() == 'Saved child notes after comparison', 'Review and notes survive reopening')
 
