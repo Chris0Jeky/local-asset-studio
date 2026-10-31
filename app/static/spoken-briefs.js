@@ -1,4 +1,4 @@
-/* Native local player and explicit evidence saves. No inference or background writes. */
+/* Explicit narration admission, retained observation, native player and evidence saves. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id), prefix = '/api/spoken-briefs';
@@ -29,16 +29,78 @@
   }
   const session = new SpokenReview.ReviewSession(request), drafts = new Map();
   const sourceSession = new SpokenReview.SourcePreviewSession(request);
+  const narration = new SpokenReview.NarrationSession(request);
+  let sourcePreview=null, narrationTimer=null;
+  function narrationAddress(key, root) {
+    const address=new URL(location.href);
+    if(key) { address.searchParams.set('narration',key); address.searchParams.set('sourceRoot',root); }
+    else { address.searchParams.delete('narration'); address.searchParams.delete('sourceRoot'); }
+    history.replaceState(null,'',address);
+  }
+  function clearNarration() {
+    clearTimeout(narrationTimer); narration.select(null); $('narrationPanel').hidden=true;
+    narrationAddress(null);
+  }
+  function renderNarration(value) {
+    $('narrationPanel').hidden=false;
+    $('narrationStatus').textContent=`${value.status} · ${value.message}`;
+    $('narrationIdentity').textContent=`${value.key}\nManifest SHA-256: ${value.manifest_sha256}`;
+    $('recoverNarration').disabled=value.active || value.status==='completed';
+    $('listenNarration').disabled=value.status!=='completed';
+    $('narrationBatches').replaceChildren();
+    for(const batch of value.state.batches) {
+      const item=document.createElement('li'), text=document.createElement('p');
+      text.textContent=`${batch.id}: ${batch.status} · ${batch.line_ids.length} segments`; item.append(text);
+      if(/^[0-9a-f]{32}$/.test(batch.project_id || '')) {
+        const link=document.createElement('a'); link.href=`/?plan=${batch.project_id}#production`;
+        link.textContent=`Inspect retained Voice project ${batch.project_id}`; item.append(link);
+      }
+      if(batch.last_error) { const error=document.createElement('p'); error.textContent=batch.last_error; item.append(error); }
+      $('narrationBatches').append(item);
+    }
+    $('narrationDetail').textContent=JSON.stringify(value,null,2);
+  }
+  async function refreshNarration() {
+    clearTimeout(narrationTimer);
+    try {
+      const value=await narration.refresh(); if(!value) return;
+      renderNarration(value);
+      if(value.active) narrationTimer=setTimeout(refreshNarration,1000);
+    } catch(error) { $('narrationStatus').textContent=error.message; }
+  }
+  function followNarration(key, root) {
+    clearTimeout(narrationTimer); narration.select(key,root); narrationAddress(key,root);
+    $('narrationPanel').hidden=false; $('narrationStatus').textContent='Reading retained narration…';
+    $('recoverNarration').disabled=true; $('listenNarration').disabled=true;
+    $('narrationBatches').replaceChildren(); $('narrationDetail').textContent='';
+    return refreshNarration();
+  }
+  $('refreshNarration').onclick=refreshNarration;
+  $('recoverNarration').onclick=async()=>{
+    $('recoverNarration').disabled=true;
+    try { if(await narration.recover()) await refreshNarration(); }
+    catch(error) { $('narrationStatus').textContent=error.message; }
+  };
+  $('startNarration').onclick=async()=>{
+    if(!sourcePreview) return;
+    const snapshot=sourcePreview; $('startNarration').disabled=true;
+    narrationAddress(snapshot.value.run_key,snapshot.value.root_id);
+    $('narrationPanel').hidden=false; $('narrationStatus').textContent='Requesting narration once. This selection is retained in the page address.';
+    $('recoverNarration').disabled=true; $('listenNarration').disabled=true;
+    try { if(await narration.start(snapshot.key,snapshot.value)) await refreshNarration(); }
+    catch(error) { $('narrationStatus').textContent=error.message; }
+  };
   function clearSource(message) {
+    sourcePreview=null; $('startNarration').disabled=true; $('sourceDestination').textContent='';
     $('sourcePreview').hidden = true;
     for (const id of ['sourceIdentity','sourceProfile','sourceOmissions','sourceSegments','sourceManifest','sourceCounts']) $(id).replaceChildren();
     $('sourceStatus').textContent = message;
   }
   $('sourceKey').oninput = () => {
-    sourceSession.invalidate(); clearSource('Selection changed. Choose Preview narration to read this source.');
+    sourceSession.invalidate(); clearNarration(); clearSource('Selection changed. Choose Preview narration to read this source.');
   };
   $('sourceForm').onsubmit = async event => {
-    event.preventDefault(); clearSource('Reading a bounded source snapshot…');
+    event.preventDefault(); clearNarration(); clearSource('Reading a bounded source snapshot…');
     try {
       const value = await sourceSession.preview($('sourceKey').value);
       if (!value) return;
@@ -56,6 +118,9 @@
         text.textContent = segment.text; item.append(label, text); $('sourceSegments').append(item);
       }
       $('sourceManifest').textContent = JSON.stringify(manifest, null, 2);
+      sourcePreview={key:$('sourceKey').value,value};
+      $('sourceDestination').textContent=value.destination;
+      $('startNarration').disabled=false;
       $('sourcePreview').hidden = false;
       $('sourceStatus').textContent = 'Preview complete. No audio was generated and no files were saved.';
     } catch (error) { clearSource(error.message); }
@@ -70,7 +135,7 @@
       return value;
     } catch (error) { clearSource(error.message); throw error; }
   }
-  $('refreshSource').onclick = () => { refreshSource().catch(() => {}); };
+  $('refreshSource').onclick = () => { clearNarration(); refreshSource().catch(() => {}); };
   let playerBinding=null, pendingSeek=null, loop=null, chosenReview=null, discoveryTicket=0, discardDraft=false, reviewBaseline=null;
   const status = text => { $('status').textContent=text; };
   const option = (value,text) => { const e=document.createElement('option'); e.value=value; e.textContent=text; return e; };
@@ -196,19 +261,23 @@
       $('archiveList').replaceChildren(...result.archives.map(x=>option(x.key,x.key)));
       if(result.archives.length) $('archiveList').selectedIndex=0;
       $('inspect').disabled=!result.archives.length;
+      $('followNarration').disabled=!result.archives.length;
       $('listStatus').textContent=`${result.archives.length} possible archives. ${result.truncated ? 'Discovery limit reached; narrow archive_root.' : 'Not yet audio-verified.'}`;
       $('refusals').textContent=result.refusals.length ? JSON.stringify(result.refusals,null,2) : 'None observed.';
       status('Discovery complete. Select an archive and inspect it.');
     } catch(e) { status(e.message); } finally { if(ticket===discoveryTicket) $('discover').disabled=false; }
   };
-  $('inspect').onclick=async()=>{
-    if (!$('archiveList').value) return;
+  async function openArchive(key) {
+    if (!key) return;
     if (!retainDraft()) return; resetPlayer(); $('archivePanel').hidden=true; status('Verifying the retained archive and its actual PCM samples…');
     try {
-      const result=await session.open($('archiveList').value);
+      const result=await session.open(key);
       if (result) { renderInspection(); status('Archive verified. Playing and reviewing remain separate actions.'); }
     } catch(e) { status(e.message); } finally { buttons(); }
-  };
+  }
+  $('inspect').onclick=()=>openArchive($('archiveList').value);
+  $('followNarration').onclick=()=>followNarration($('archiveList').value,sourceSession.root);
+  $('listenNarration').onclick=()=>openArchive(narration.current?.key);
   $('resume').onclick=()=>selectAudio('master',session.current.snapshot.playback.sample);
   $('savePosition').onclick=async()=>{
     if (!playerReady()) { status('Load the selected audio and let seeking finish before saving its position. No save was sent.'); buttons(); return; }
@@ -277,6 +346,8 @@
     $('discover').disabled=!value.enabled;
     $('configuration').textContent=value.enabled ? 'Archive access enabled. Discovery and all saves are explicit.'
       : 'Archive access is disabled. Set spoken_briefs.archive_root to an absolute local directory in config/local.json, then restart Studio.';
-    status('No archive has been opened. No generation is available on this page.');
+    status('No archive has been opened. Narration starts only with the explicit Start action.');
+    const address=new URL(location.href), key=address.searchParams.get('narration'), root=address.searchParams.get('sourceRoot');
+    if(key && root===value.source_root_id) followNarration(key,root);
   }).catch(e=>{ $('discover').disabled=true; $('configuration').textContent=e.message; status('Archive access unavailable. Other Studio tools are unchanged.'); });
 })();

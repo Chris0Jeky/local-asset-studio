@@ -1,5 +1,27 @@
 # Current state — 31 October 2026
 
+## 2026-10-31 — Start and recover a previewed Spoken Brief
+
+The existing Spoken Briefs page now offers explicit **Start narration** after its
+confined compiler preview. A durable run record binds source/profile/root and
+producer configuration, then admits the existing CLI coordinator through the
+Production Voice worker. Progress retains exact child IDs and plan/producer
+provenance; completed WAVs use the existing archive verifier, player and download.
+
+Duplicate Start returns retained state. Reload and Refresh only read; explicit
+Recover observes existing children and may assemble verified completed audio,
+without another Create or Start. Unknown creation, attempted Start, missing
+children and stale claims remain blocked for inspection. Source changes after a
+successful Create retain the acknowledged child ID before blocking further work.
+The broader #638/#635 acceptance remains open, as recorded in
+[`CLI-PREVIEW.md`](docs/spoken-briefs/CLI-PREVIEW.md#studio-first-narration).
+
+Focused loopback fixtures reproduce the previously missing Start route and cover
+success, duplicate admission, lost replies, partial recovery, changed source/
+profile/producer, root changes and reparse refusal. They use fictional text and
+synthetic PCM. Actual browser/full-gate results belong to the qualification receipt;
+this source entry makes no native speech, GPU, voice-quality or owner-acceptance claim.
+
 ## 2026-10-31 — Preview a local handoff in Spoken Briefs
 
 Spoken Briefs now has an explicit **Preview narration** action for a relative pack

@@ -3,7 +3,7 @@
 <title>Spoken Briefs · Local Asset Studio</title><link rel="stylesheet" href="/static/style.css"><link rel="stylesheet" href="/static/spoken-briefs.css"><link rel="stylesheet" href="/static/studio.css"></head>
 <body><header class="topbar spoken-fallback"><a class="brand" href="/">ASSET STUDIO</a><nav aria-label="Studio views"><a href="/voice.html">Voice takes</a><a href="/#production">Compare &amp; review</a><a href="/spoken-briefs.html" aria-current="page">Spoken Briefs</a></nav></header>
 <main class="spoken-briefs"><p class="eyebrow">LOCAL LISTENING · RETAINED ARCHIVES</p><h1>Spoken Briefs</h1>
-<p>Listen to the verified master, inspect its transcript evidence, and record your own review. This page cannot create or start a generation.</p>
+<p>Preview a handoff, explicitly start its narration, then listen to the verified WAV and record your own review.</p>
 <p id="configuration">Checking archive access…</p><p id="status" role="status" aria-live="polite"></p>
 <section id="sourcePanel" aria-labelledby="sourceHeading"><h2 id="sourceHeading">Preview a handoff</h2>
 <p>Read what the narration compiler would say, before generating audio. Choose a pack or Markdown file inside the configured archive root.</p>
@@ -13,16 +13,24 @@
 <div class="actions"><button id="previewSource" disabled>Preview narration</button><button id="refreshSource" type="button">Refresh source access</button></div></form>
 <p id="sourceStatus" role="status" aria-live="polite">No source has been read.</p>
 <div id="sourcePreview" hidden><h3>Compiler snapshot</h3><p id="sourceCounts"></p>
-<p class="muted">This is a read-only snapshot. Changed source needs a new preview. Nothing has been prepared or submitted; this does not establish run readiness.</p>
+<p class="muted">Preview alone does not prepare or submit audio. Changed source needs a new preview; a snapshot does not establish run readiness.</p>
 <details open><summary>Source identity</summary><pre id="sourceIdentity"></pre></details>
 <h3>Baseline profile</h3><p id="sourceProfile"></p><p class="muted">Uses the compiler’s default control profile. Engine availability and voice quality have not been checked.</p>
 <h3>Omitted material</h3><p>Counts reported by the compiler; exact omission locations are not available.</p><ul id="sourceOmissions"></ul>
 <h3>Narration in order</h3><ol id="sourceSegments"></ol>
-<details><summary>Exact compiler manifest and profile binding</summary><pre id="sourceManifest"></pre></details></div></section>
+<details><summary>Exact compiler manifest and profile binding</summary><pre id="sourceManifest"></pre></details>
+<h3>Save the narration here</h3><p id="sourceDestination"></p>
+<p class="muted">Start uses the existing Voice worker. The source, baseline profile and producer configuration are checked again; a changed preview is refused.</p>
+<button id="startNarration" type="button" disabled>Start narration</button></div></section>
+<section id="narrationPanel" aria-labelledby="narrationHeading" hidden><h2 id="narrationHeading" tabindex="-1">Narration progress</h2>
+<p id="narrationStatus" role="status" aria-live="polite"></p><p id="narrationIdentity"></p>
+<div class="actions"><button id="refreshNarration" type="button">Refresh progress</button><button id="recoverNarration" type="button" disabled>Recover retained progress</button><button id="listenNarration" type="button" disabled>Inspect completed WAV</button></div>
+<p class="muted">Reload and Refresh only read retained state. Recover observes known children and assembles verified audio; it never creates or starts a take. Uncertain or uncreated children remain blocked for inspection.</p>
+<ol id="narrationBatches"></ol><details><summary>Exact source, profile, child plans and output evidence</summary><pre id="narrationDetail"></pre></details></section>
 <div class="layout"><aside><h2>Archives</h2><p>Discovery lists possible archives. Inspect one to verify the source receipt and every audio segment.</p>
 <button id="discover" disabled>Discover archives</button><label for="archiveList">Configured archive root</label><select id="archiveList" size="7" aria-label="Available archives"></select>
-<button id="inspect" disabled>Inspect selected archive</button><p id="listStatus"></p><details><summary>Discovery refusals</summary><pre id="refusals">None observed.</pre></details>
-<p class="muted">New narration and replacements still use the explicit CLI workflow. A “replace” review here only records your decision.</p></aside>
+<button id="inspect" disabled>Inspect selected archive</button><button id="followNarration" disabled>Follow selected narration</button><p id="listStatus"></p><details><summary>Discovery refusals</summary><pre id="refusals">None observed.</pre></details>
+<p class="muted">Follow opens progress for narration started here, including incomplete runs. Replacements still use the explicit CLI workflow. A “replace” review here only records your decision.</p></aside>
 <section id="archivePanel" hidden><div class="heading"><h2 id="archiveTitle"></h2><span id="duration"></span></div>
 <p id="savedPosition"></p><label for="audioTarget">Listen to</label><select id="audioTarget"></select>
 <audio id="player" controls preload="none" aria-label="Verified Spoken Brief audio"></audio>
