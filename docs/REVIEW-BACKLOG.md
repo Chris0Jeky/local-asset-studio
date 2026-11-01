@@ -7,6 +7,15 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-11-01: MOSS-Image in Make (`moss-look-1019`)
+
+Rebuilt fresh on current main after the owner chose "Rebuild it fresh" (the 19 Oct draft on `ux2/make-moss` was not merged). HUMAN_TODO `moss-look-1019` stays open until the owner ticks it.
+
+- [ ] **A MOSS-Image look, "Detailed painted anime, rich costumes", is third under Anime character** (after the two round-7 Anima mixes). Wording is the 19 Oct lab tail plus its close-up fix ("2D anime illustration with cel shading and clean lineart"); empty negative (model card); 1024×1536, 30 steps, CFG 3, euler / sgm_uniform. Badge "Tested well" (18 of 19 lab pictures kept: 9 of 9 scenes, 9 of 10 costumes); Best for "Rich costumes and props, full body, lettering; close-ups may turn photographic"; speed ~75 s (lab median on a shared PC; the 26 Oct study's 39 jobs ran 49-87 s) and its tooltip says the first picture after a switch takes about 2 min. The whole template was not rendered as one string. Reverse: the entry in `presets/looks.json`, its id in the GOALS lists of `make.js` and `studio-shell.js`, and its TESTED / BEST_FOR / LAB_OTHER lines.
+- [ ] **A look on another model environment says "Runs in MOSS-Image · isolated, not the running Main library." and offers "Switch to MOSS-Image · isolated" as one press** (on its card and beside the disabled Generate; "Stops Main library. About a minute. Nothing is generated."). The press is the explicit switch, the same click as Models & setup's Switch environment, so its idle and shared-state refusals apply unchanged. Make then waits and says "<name> is running. Press Generate when ready."; Main library looks offer the way back the same way. Nothing switches on load or on choosing the look. Compare looks cannot mix environments (it names the look that needs the switch). Reverse: `switchMarkup()`/`switchEnvironment()` and the `data-make-switch` click in `app/static/make.js`.
+- [ ] **MOSS looks offer no Fine** (20/30/50 steps tied in the lab); Tune's Steps still can. Note Draft is half the steps (15), a count the lab did not test (it tried 20). Reverse: `NO_FINE`.
+- [ ] **Not carried over from the draft:** the six MOSS style LoRAs in the knowledge base (`presets/settings-kb.json`; the look itself ships with both LoRA slots off), because the 26 Oct study updated the author guidance (Reverse 1999 trigger `reversesty`, strength 1.0-1.4) and that needs its own pass.
+
 ## 2026-10-30 (Claude flagship builder)
 
 - [ ] **No "Vary from the card" control** (#1205). Vary in Make is a button on each finished picture and always varies that picture with its own recipe; there is no "latest picture" default to replace, and the canon may be an imported picture with no recipe. Character-led variation goes through Change / New pose with the card chosen. Reverse: describe the Vary-from-card control you want on #1205.
