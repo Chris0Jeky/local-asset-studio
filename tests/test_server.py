@@ -1664,6 +1664,19 @@ class ServerTests(unittest.TestCase):
         (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[PRESET]}))
         with self.assertRaises(server.StudioError): self.studio().prepare({'preset_id':'demo','controls':{'depth_cut':86}})
 
+    def test_ref_guidance_binds_at_the_anima_ref_adapter_node(self):
+        """The Anima reference adapter exposes its reference strength as a 0-10 control bound to node 5 of the shipped preset."""
+        preset=dict(PRESET, ref_guidance=["5","ref_guidance"])
+        graph=json.loads(json.dumps(GRAPH)); graph['5']={'class_type':'AnimaRefAdapter','inputs':{'ref_guidance':4.5}}
+        (self.root/'presets/catalog.json').write_text(json.dumps({'presets':[preset]}))
+        (self.root/'workflows/api/demo-api.json').write_text(json.dumps(graph))
+        s=self.studio()
+        with self.assertRaisesRegex(server.StudioError,'between 0 and 10'): s.prepare({'preset_id':'demo','controls':{'ref_guidance':10.5}})
+        _,bound,_,_,_=s.prepare({'preset_id':'demo','controls':{'ref_guidance':6.0}})
+        self.assertEqual(bound['5']['inputs']['ref_guidance'],6.0)
+        shipped=json.loads((Path(__file__).resolve().parents[1]/'presets/catalog.json').read_text(encoding='utf-8'))['presets']
+        self.assertEqual(next(p for p in shipped if p['id']=='anima-ref-adapter')['ref_guidance'],['5','ref_guidance'])
+
     def test_style_weight_and_pose_strength_bind_through_the_catalog(self):
         """The Style + Pose recipes expose IP-Adapter weight and ControlNet strength as plain 0-2 controls."""
         preset=dict(PRESET, style_weight=["1","style_weight"], pose_strength=["2","pose_strength"], last_reference=["2","last_reference"])

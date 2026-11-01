@@ -3798,12 +3798,14 @@
       "scheduler": ["9", "scheduler"],
       "choices": {"sampler": ["er_sde", "euler", "euler_ancestral"], "scheduler": ["simple", "normal", "beta"]},
       "reference": ["4", "image"],
+      "ref_guidance": ["5", "ref_guidance"],
       "modality": "image",
       "family": "Anima",
       "dimension_multiple": 16,
       "description": "Character and style from one reference picture; the prompt sets the pose, scene and framing. Describe only the scene: no character name, artist or outfit tags. Needs the ComfyUI-Anima-Ref-Adapter custom node.",
       "stages": ["Reference", "Anima base v1.0", "Ref adapter LoRA", "30-step sampling", "Qwen VAE", "PNG"],
       "source": "https://github.com/ArcAnima/ComfyUI-Anima-Ref-Adapter",
+      "variants": [{"name": "Gentle reference (1.0)", "controls": {"ref_guidance": 1.0}}],
       "execution_note": "Studio job 953363be-06cc-49a2-84fb-9c7cbe3171ac (prompt 03573334-76e7-48e0-97f0-4698fbc4ebc0, 1 November 2026, 40.0 s) completed and the image was inspected by an agent; pixel-identical to a direct graph run with the same seed. Generated and agent-inspected, not art acceptance. Receipts: experiments/curated/anima-ref-adapter/README.md."
     },
     {

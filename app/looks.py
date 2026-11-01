@@ -42,7 +42,7 @@ NIGHT_SHIFT_PREVIEW = {
 }
 # Exact server control vocabulary minus wording and references. A parity test guards drift.
 CONTROL_KEYS = frozenset(("width", "height", "seed", "steps", "cfg", "denoise", "lora", "frames", "fps",
-                          "style_weight", "pose_strength", "depth_cut", "sampler", "scheduler", "lora_name",
+                          "style_weight", "pose_strength", "ref_guidance", "depth_cut", "sampler", "scheduler", "lora_name",
                           "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name",
                           "lora5", "lora5_name", "lora6", "lora6_name"))
 LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
@@ -51,7 +51,7 @@ LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
 # server.py NUMBER_RANGES plus its LoRA strength, frames and fps ranges (a parity test guards drift): a saved control outside
 # them would only fail later, when /api/jobs binds it, after Prepare had already handed it to the page.
 NUMBER_RANGES = {"seed": (0, 2**63-1, True), "steps": (1, 150, True), "cfg": (0, 30, False), "denoise": (0, 1, False),
-                 "style_weight": (0, 2, False), "pose_strength": (0, 2, False), "depth_cut": (0, 100, True),
+                 "style_weight": (0, 2, False), "pose_strength": (0, 2, False), "ref_guidance": (0, 10, False), "depth_cut": (0, 100, True),
                  "frames": (5, 365, True), "fps": (1, 60, True), **{k: (0, 2, False) for k in LORA_SLOTS}}
 
 
