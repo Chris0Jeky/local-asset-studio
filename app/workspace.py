@@ -151,8 +151,7 @@ class AssetWorkspace:
                 CREATE TABLE IF NOT EXISTS asset_acceptances (
                     id TEXT PRIMARY KEY, asset_id TEXT NOT NULL REFERENCES assets(id), sha256 TEXT NOT NULL,
                     use TEXT NOT NULL, note TEXT NOT NULL DEFAULT '', reviewer TEXT NOT NULL,
-                    accepted_at REAL NOT NULL, withdrawn_at REAL);
-                CREATE UNIQUE INDEX IF NOT EXISTS asset_acceptances_live ON asset_acceptances(asset_id, use COLLATE NOCASE) WHERE withdrawn_at IS NULL;
+                    accepted_at REAL NOT NULL, withdrawn_at REAL, brief_id TEXT, slot TEXT, criteria TEXT);
             """)
             # Serialize migration discovery with the ALTER, including simultaneous clients.
             db.execute("BEGIN IMMEDIATE")
@@ -163,6 +162,12 @@ class AssetWorkspace:
                 db.execute("ALTER TABLE assets ADD COLUMN metadata_revision INTEGER NOT NULL DEFAULT 0")
             for column in ADDITIVE_COLUMNS:
                 if column not in columns: db.execute(f"ALTER TABLE assets ADD COLUMN {column} TEXT")
+            # #1832: a scene-brief slot acceptance names its brief, slot and the criteria shown; one live row per (picture, use) or per (picture, brief slot).
+            have = {r["name"] for r in db.execute("PRAGMA table_info(asset_acceptances)")}
+            for column in ("brief_id", "slot", "criteria"):
+                if column not in have: db.execute(f"ALTER TABLE asset_acceptances ADD COLUMN {column} TEXT")
+            db.execute("DROP INDEX IF EXISTS asset_acceptances_live")
+            db.execute("CREATE UNIQUE INDEX IF NOT EXISTS asset_acceptances_once ON asset_acceptances(asset_id, COALESCE('b:'||brief_id||'/'||slot, 'u:'||lower(use))) WHERE withdrawn_at IS NULL")
             if "archived_at" not in columns:
                 db.execute("ALTER TABLE assets ADD COLUMN archived_at REAL")
             from studio_workflow.collection_commands import migrate
@@ -750,7 +755,7 @@ class AssetWorkspace:
         with self.connection() as db:
             workspace = self._workspace_id(db); rows = db.execute("SELECT * FROM asset_acceptances WHERE asset_id=? ORDER BY accepted_at DESC,id", (asset['id'],)).fetchall()
         return {'asset_id': asset['id'], 'sha256': asset['sha256'], 'workspace_id': workspace,
-                'acceptances': [{**{k: r[k] for k in ('id', 'asset_id', 'sha256', 'use', 'note', 'reviewer', 'accepted_at', 'withdrawn_at')}, 'reviewer_kind': 'human'} for r in rows],
+                'acceptances': [{**{k: r[k] for k in ('id', 'asset_id', 'sha256', 'use', 'note', 'reviewer', 'accepted_at', 'withdrawn_at', 'brief_id', 'slot', 'criteria')}, 'reviewer_kind': 'human'} for r in rows],
                 'scope': 'Acceptance for the named use only; independent of Keep, Needs work, Not this and licence state'}
 
     def accept(self, asset_id, payload):
@@ -771,15 +776,23 @@ class AssetWorkspace:
         with self.connection() as db:
             db.execute("BEGIN IMMEDIATE")   # one transaction: the identity and bytes checked are the ones written against
             try: self._check_scope(db, scope)
-            except WorkspaceError as error: raise changed from error
+            except WorkspaceError as error:
+                if error.code != 'asset_workspace_conflict': raise   # a 503 "identity unavailable" is not "a different picture"
+                raise changed from error
             row = db.execute("SELECT id,sha256,trashed_at FROM assets WHERE id=? AND "+clause, [asset_id, *params]).fetchone()
             if row is None: raise WorkspaceError("Asset not found")
             if action != 'withdraw' and row['sha256'] != digest: raise changed
             if action != 'withdraw' and row['trashed_at'] is not None: raise WorkspaceError("Restore this picture from Trash first")
             if action == 'accept':
-                use = " ".join(self.text(payload.get('use'), "Use", 80).split()); note = self.text(payload.get('note', ''), "Note", 500)
-                if not use: raise WorkspaceError("Name the use this picture is accepted for")
-                unchanged = db.execute("INSERT OR IGNORE INTO asset_acceptances VALUES (?,?,?,?,?,?,?,NULL)", (uuid.uuid4().hex, row['id'], row['sha256'], use, note, 'local-user', now)).rowcount == 0  # a repeat press for a live use keeps the first record, note included
+                note = self.text(payload.get('note', ''), "Note", 500)
+                if payload.get('brief') is not None:   # a scene-brief slot: scene_briefs checks the saved card; its words, not the client's, name the use
+                    from scene_briefs import acceptance_target
+                    use, brief_id, slot, criteria = acceptance_target(self, db, payload['brief'], row['id'])
+                else:
+                    use = " ".join(self.text(payload.get('use'), "Use", 80).split()); brief_id = slot = criteria = None
+                    if not use: raise WorkspaceError("Name the use this picture is accepted for")
+                unchanged = db.execute("INSERT OR IGNORE INTO asset_acceptances(id,asset_id,sha256,use,note,reviewer,accepted_at,brief_id,slot,criteria) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                                       (uuid.uuid4().hex, row['id'], row['sha256'], use, note, 'local-user', now, brief_id, slot, criteria)).rowcount == 0  # a repeat press for a live use keeps the first record, note included
             else:
                 identifier = payload.get('acceptance_id')
                 if not isinstance(identifier, str) or not identifier: raise WorkspaceError("Acceptance ID is required")
