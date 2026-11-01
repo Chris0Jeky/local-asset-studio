@@ -36,3 +36,12 @@ test('a response for other bytes is refused and the control stays usable',async(
   s.requests[0].resolve(s.result([s.row()],{sha256:'b'.repeat(64)}));await new Promise(r=>setImmediate(r));
   assert.match(s.$('#assetAcceptStatus').textContent,/different picture or Workspace/);assert.equal(s.$('#assetAcceptList').innerHTML,'');
 });
+test('a failed send does not leave the list empty when it dropped the first read',async()=>{
+  const s=setup(),read=s.run('loadAssetAcceptance()');
+  s.$('#assetAcceptUse').value='Game sprite';s.$('#assetAcceptGo').onclick();
+  s.requests[1].reject(Error('offline'));await new Promise(r=>setImmediate(r));
+  s.requests[0].resolve(s.result([s.row()]));await read;   // dropped: it is older than the failed write
+  assert.match(s.$('#assetAcceptStatus').textContent,/Not saved/);assert.equal(s.requests.length,3);assert.equal(s.requests[2].options?.method,undefined);
+  s.requests[2].resolve(s.result([s.row()]));await new Promise(r=>setImmediate(r));
+  assert.match(s.$('#assetAcceptList').innerHTML,/Game sprite/);
+});
