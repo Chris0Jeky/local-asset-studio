@@ -92,3 +92,40 @@ maid-style outfit, and the cafe setting. Cup, pose and background vary across se
 earlier Studio job `953363be`, so the first picture is expected to repeat it.
 
 Not verified: a numeric identity score, other references, and whether the overflow changes the output beyond timing.
+
+## Reference strength sweep, measured (1 November 2026)
+
+Same reference, cafe prompt and settings as run A, through the direct graph: seven `ref_guidance` values on three seeds
+(20261029, 20261030, 20261031), 21 images at 26 to 45 s each. Lower CCIP distance is closer. Scored with
+`scripts/identity_score.py`; CCIP's published same-character threshold is 0.178.
+
+| `ref_guidance` | seed 29 | seed 30 | seed 31 | mean |
+| --- | --- | --- | --- | --- |
+| 0.0 | 0.2507 | 0.2030 | 0.3274 | 0.2604 |
+| 1.0 | 0.2152 | 0.2050 | 0.2125 | 0.2109 |
+| 2.0 | 0.2118 | 0.1933 | 0.2083 | 0.2045 |
+| 3.0 | 0.2064 | 0.1854 | 0.1929 | 0.1949 |
+| 4.5 | 0.2006 | 0.1913 | 0.1988 | 0.1969 |
+| 6.0 | 0.1943 | 0.1869 | 0.2241 | 0.2018 |
+| 8.0 | 0.1883 | 0.1883 | 0.1871 | 0.1879 |
+
+First and last prompt IDs: `674cff70-07bf-4697-8a2d-5b8efd59c3a5` (0.0, seed 29) and `047897e8-b4d9-4496-a4ac-f1dac4d742ce` (8.0, seed 31). The full
+list is in the session's `sweep_rg.jsonl`, not in Git. Outputs are local under `output/lab-1101/rg/`; the reference is the
+node author's showcase sheet, so the renders are not committed.
+
+What the numbers say:
+
+- Any strength is far better and far steadier than 0.0, whose spread across seeds is 0.12 against 0.03 or less above 1.0
+  on most rows. The largest gain is from 0.0 to 1.0.
+- Above 3.0 the mean barely moves, and 6.0 has one outlier. Three seeds cannot separate 3.0, 4.5 and 8.0.
+- No setting reaches the same-character threshold against this reference. The reference is a whole sheet, not a single
+  portrait, so this may understate the match. No unrelated character was scored for calibration.
+
+What an agent saw on the contact sheet, with no owner judgement: the reference's pink eyes arrive at about 2.0. At 6.0 and
+above hair turns over-curled with stray yellow strands and contrast climbs. 2.0 to 4.5 looks like the working range, which
+keeps the shipped default of 4.5 and suggests the *Gentle reference (1.0)* variant trades eye colour for a softer finish.
+
+Not verified: other references, a single-portrait reference, any calibration against unrelated characters, and the Studio
+route for values other than 4.5.
+
+Correction beside the Studio note above: since PR #1888 the Studio can set this value; these runs did not use it.

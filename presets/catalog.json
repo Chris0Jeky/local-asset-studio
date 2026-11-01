@@ -7401,6 +7401,49 @@
       ]
     },
     {
+      "id": "character-sheet-klein-9b",
+      "name": "Character sheet: front, side and back (FLUX.2 Klein 9B, TripleView)",
+      "category": "Characters",
+      "family": "FLUX.2 Klein 9B",
+      "graph": "workflows/api/character-sheet-klein-9b-api.json",
+      "verified": false,
+      "execution_note": "Direct ComfyUI graph runs on 2026-11-01, not Studio jobs: prompt a3380649-f5d7-46ea-8a16-e72d139dae86 104.0 s (first load), e1f56ff7-8c61-431c-9075-1062780eade7 62.0 s, ab5ffe70-9b32-4f6a-a3c0-3258c3d58673 84.5 s, a7cc2c5a-c537-465b-b416-96804b3185b2 43.8 s. Direct ComfyUI graph, not a Studio job; generated and agent-inspected, not art acceptance. Seeds 20261101 and 20261102 at 1536x1024 on two anime full-body pictures: all four sheets showed front, side and back on a white ground; eye colour and proportions drifted from the source. The first run includes model loading. Not yet proved through the Studio, so verified stays false.",
+      "modality": "image",
+      "commercial_note": "FLUX.2 Klein 9B is released under the FLUX non-commercial licence (black-forest-labs/FLUX.2-klein-9B; GGUF quantisation by unsloth), so this recipe is for private experiments only; the Qwen3 8B text encoder and the FLUX.2 VAE follow their own cards. The TripleView LoRA (Alissonerdx/CharacterSheet, civitai model 2764727) is under the Civitai Model License: its card was read on 2026-11-01 but the licence page itself was not opened (models/library.json). Your reference picture keeps its own terms. A successful render is not legal clearance.",
+      "positive": ["4", "text"],
+      "seed": ["7", "noise_seed"],
+      "steps": ["9", "steps"],
+      "cfg": ["6", "cfg"],
+      "width": ["10", "width"],
+      "height": ["10", "height"],
+      "bindings_extra": {
+        "width": [["9", "width"]],
+        "height": [["9", "height"]]
+      },
+      "dimension_multiple": 16,
+      "reference": ["14", "image"],
+      "reference_label": "Character picture",
+      "reference_hint": "One picture of the character. The LoRA redraws it as a front, side and back full-body sheet on a white ground. Its training focused on human characters, so non-human subjects may drift.",
+      "stages": [
+        "FLUX.2 Klein 9B Q6_K GGUF (distilled) + TripleView LoRA (TripleView_klein9b_v1, strength 1.0, model only) + Qwen3 8B fp8 text encoder + FLUX.2 VAE",
+        "Character picture: scaled to ~1 megapixel, VAE-encoded and attached to the prompt as a reference latent",
+        "Wording: the LoRA's trigger sentence, which asks for front, side and back full body views",
+        "8 Euler steps on the Flux2 schedule at CFG 1.0 (distilled: no negative prompt); 44-104 s on the 9070 XT in direct runs",
+        "1536x1024 canvas",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "source": "https://huggingface.co/Alissonerdx/CharacterSheet",
+      "description": "One picture of a character becomes a front, side and back full-body sheet on a white ground. Uses the TripleView LoRA on FLUX.2 Klein 9B.",
+      "lora": ["40", "strength_model"],
+      "lora_name": ["40", "lora_name"]
+    },
+    {
       "id": "combine-klein-9b-replace",
       "name": "Put this character into another picture (FLUX.2 Klein 9B, replace character: that picture keeps everything but the person)",
       "category": "Characters",
@@ -8532,6 +8575,125 @@
         }
       ],
       "graph": "workflows/api/kromoss-t2i-api.json"
+    },
+    {
+      "id": "union-repaint-wai",
+      "name": "Repaint a picture, keep its shapes (WAI v17 + Union ControlNet: depth + line art)",
+      "category": "Image editing",
+      "family": "WAI v17 (Illustrious)",
+      "graph": "workflows/api/union-repaint-wai-api.json",
+      "model_files": [
+        "checkpoints/waiIllustriousSDXL_v170.safetensors",
+        "controlnet/xinsir-union-sdxl-promax.safetensors"
+      ],
+      "verified": false,
+      "modality": "image",
+      "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved. The Xinsir Union ProMax ControlNet is apache-2.0. The depth map comes from Depth Anything V2 Large (cc-by-nc-4.0 per the Hugging Face API on 2026-09-15; fetched by the comfyui_controlnet_aux node), so treat this recipe as private-experiment only until that is cleared; the line-art detector's weights are not yet recorded. Each carried LoRA keeps its own terms; a repainted picture inherits its source's rights questions. A successful render is not legal clearance.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ],
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "width": [
+        "11",
+        "width"
+      ],
+      "height": [
+        "11",
+        "height"
+      ],
+      "pose_strength": [
+        "16",
+        "strength"
+      ],
+      "choices": {
+        "sampler": [
+          "euler_ancestral",
+          "euler",
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "dpmpp_sde"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "sgm_uniform",
+          "beta",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "lora_name": [
+        "8",
+        "lora_name"
+      ],
+      "lora2": [
+        "9",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "9",
+        "lora_name"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ],
+        "lora2": [
+          [
+            "9",
+            "strength_clip"
+          ]
+        ]
+      },
+      "description": "Repaint a picture in the WAI v17 look while keeping its shapes. Depth and line art from your picture are meant to hold the geometry.",
+      "stages": [
+        "Your picture, scaled and centre-cropped to the canvas (832x1216 by default)",
+        "Depth Anything V2 Large depth map -> Union ProMax ControlNet (depth type, strength 0.8: Pose strength)",
+        "Line-art pass -> the same ControlNet (canny/lineart type, strength 0.6, fixed in the graph), chained after the depth pass",
+        "WAI v17 checkpoint (both LoRA slots off) + VAE encode of the picture as the starting latent",
+        "30-step re-sample at Denoise 0.45, CFG 5",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/xinsir/controlnet-union-sdxl-1.0",
+      "execution_note": "Direct ComfyUI graph, not a Studio job, seed 20261101 on one anime picture: denoise 0.45 (prompt e564cfda-1507-44eb-b9ef-3c1cf6770cd1) and 0.7 (prompt b3fc1971-43d5-4e1c-8e5a-ac816b19671b, 13.7 s warm). Pose, costume, props and background held in both and the finish moved; generated and agent-inspected, not art acceptance. Strengths and other defaults are unswept. First use downloads line-art weights, which stalled ComfyUI for minutes."
     }
   ]
 }

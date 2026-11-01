@@ -61,6 +61,7 @@ writing a file it cannot verify through the download path. Copy them in by hand.
 | `clip_vision/clip-vision_vit-h.safetensors` | 2,528,373,448 | `6ca9667da1ca` | [h94/IP-Adapter](https://huggingface.co/h94/IP-Adapter) | apache-2.0 |
 | `controlnet/xinsir-openpose-sdxl.safetensors` | 2,502,139,104 | `b8524e557a7d` | [xinsir/controlnet-openpose-sdxl-1.0](https://huggingface.co/xinsir/controlnet-openpose-sdxl-1.0) | apache-2.0 |
 | `controlnet/xinsir-union-sdxl-1.0.safetensors` | 2,512,030,408 | `a9e13fd61f31` | [xinsir/controlnet-union-sdxl-1.0](https://huggingface.co/xinsir/controlnet-union-sdxl-1.0) | apache-2.0 |
+| `controlnet/xinsir-union-sdxl-promax.safetensors` | 2,513,342,408 | `9fae2e50cb43` | [xinsir/controlnet-union-sdxl-1.0](https://huggingface.co/xinsir/controlnet-union-sdxl-1.0) | apache-2.0 |
 | `diffusion_models/flux-2-klein-4b-fp8.safetensors` | 4,070,624,520 | `97ed34fe0567` | [black-forest-labs/FLUX.2-klein-4b-fp8](https://huggingface.co/black-forest-labs/FLUX.2-klein-4b-fp8) | apache-2.0 |
 | `diffusion_models/flux2-dev-Q4_K_M.gguf` | 20,082,414,560 | `fca680c7b221` | [city96/FLUX.2-dev-gguf](https://huggingface.co/city96/FLUX.2-dev-gguf) | other |
 | `diffusion_models/qwen-image-edit-2511-Q4_K_M.gguf` | 13,244,758,624 | `8677bac90627` | [unsloth/Qwen-Image-Edit-2511-GGUF](https://huggingface.co/unsloth/Qwen-Image-Edit-2511-GGUF) | apache-2.0 |
@@ -85,6 +86,7 @@ writing a file it cannot verify through the download path. Copy them in by hand.
 | `loras/Detail_enhancer_IL_v2.safetensors` | 228,492,876 | `54a203f0a909` | [civitai model 1450571](https://civitai.com/models/1450571) | civitai flags RentCivit/Image/Rent (no Sell) · trigger `—` |
 | `loras/ST_Momoko_Roshidere_0R.safetensors` | 202,694,260 | `d80eb6f9dcdc` | [civitai model 1516990](https://civitai.com/models/1516990) | civitai flags Image/RentCivit/Rent/Sell · trigger `momokoroshidere` |
 | `loras/shiny_nai_ilxl_goofy_remade.safetensors` | 114,428,780 | `f6186b476517` | [civitai model 618752](https://civitai.com/models/618752) | civitai flags RentCivit/Rent (no Image, no Sell) · trigger `shiny skin` |
+| `loras/TripleView_klein9b_v1.safetensors` | 331,379,568 | `2db1f0bb7995` | [Alissonerdx/CharacterSheet](https://huggingface.co/Alissonerdx/CharacterSheet) | Civitai Model License (page not opened) · Klein 9B · trigger `Convert the character in the image to a Character Sheet showing front, side and back full body views` |
 | `text_encoders/Mistral-Small-3.2-24B-Instruct-2506-Q4_K_M.gguf` | 14,333,922,848 | `a3cc56310807` | [unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF](https://huggingface.co/unsloth/Mistral-Small-3.2-24B-Instruct-2506-GGUF) | apache-2.0 |
 | `text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors` | 9,384,670,680 | `cb5636d852a0` | [Comfy-Org/Qwen-Image_ComfyUI](https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI) | apache-2.0 |
 | `text_encoders/qwen_3_4b.safetensors` | 8,044,982,048 | `6c671498573a` | [Comfy-Org/z_image_turbo](https://huggingface.co/Comfy-Org/z_image_turbo) | apache-2.0 |

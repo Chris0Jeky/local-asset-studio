@@ -1210,6 +1210,21 @@
       "trigger": ""
     },
     {
+      "id": "controlnet-xinsir-union-sdxl-promax",
+      "name": "Xinsir Union SDXL 1.0 ProMax / multi-control",
+      "file": "controlnet/xinsir-union-sdxl-promax.safetensors",
+      "repo": "xinsir/controlnet-union-sdxl-1.0",
+      "revision": "801a4a3fa3d4c936f4feea95b98607bc6726f80c",
+      "source": "https://huggingface.co/xinsir/controlnet-union-sdxl-1.0",
+      "url": "https://huggingface.co/xinsir/controlnet-union-sdxl-1.0/resolve/801a4a3fa3d4c936f4feea95b98607bc6726f80c/diffusion_pytorch_model_promax.safetensors",
+      "bytes": 2513342408,
+      "sha256": "9fae2e50cb431bfcbe05822b59ec2228df545ef27f711dea8949e9f4ed9f7cdc",
+      "license": "apache-2.0",
+      "family": "SDXL 1.0",
+      "terms": "Licence \"apache-2.0\" declared in the xinsir/controlnet-union-sdxl-1.0 repository card, read from the Hugging Face API on 2026-11-01. SHA-256 and size of the installed file match the Hugging Face LFS oid and size for diffusion_pytorch_model_promax.safetensors at revision 801a4a3fa3d4 (checked 2026-11-01); a hash match proves the bytes, not the creator. Installed under a shortened filename; the repository file is diffusion_pytorch_model_promax.safetensors.",
+      "trigger": ""
+    },
+    {
       "id": "flux2-klein-4b-fp8",
       "name": "FLUX.2 Klein 4B FP8 / diffusion backbone",
       "file": "diffusion_models/flux-2-klein-4b-fp8.safetensors",
@@ -2164,6 +2179,25 @@
       "terms": "civitai model 2380153 'Copy Pose [Qwen & Klein]' (creator ReltivlyObjectv) flags read 2026-09-15: allowCommercialUse RentCivit/Rent (no Image, no Sell), derivatives yes, noCredit yes; the description states 'provided for non-commercial use only'. Trained on synthetic image sets. Image 1 = the character to re-pose, image 2 = the pose; trigger 'change the actions and poses in Image 1 to match those in Image 2'; the author notes subject bleed on Klein 9B. civitai version 2701726 of model 2380153: the version payload carries no permission flags; read https://civitai.com/models/2380153 (or /api/v1/models/2380153) before any commercial use. Base model 'Flux.2 Klein 9B-base'.",
       "family": "FLUX.2 Klein 9B",
       "trigger": "change the actions and poses in Image 1 to match those in Image 2",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "id": "tripleview-klein9b-v1",
+      "name": "TripleView_klein9b_v1.safetensors",
+      "file": "loras/TripleView_klein9b_v1.safetensors",
+      "repo": "Alissonerdx/CharacterSheet",
+      "revision": "3dc4295163dacc924d213168d67bf16850fd954f",
+      "source": "https://huggingface.co/Alissonerdx/CharacterSheet",
+      "url": "https://huggingface.co/Alissonerdx/CharacterSheet/resolve/3dc4295163dacc924d213168d67bf16850fd954f/TripleView_klein9b_v1.safetensors",
+      "bytes": 331379568,
+      "sha256": "2db1f0bb7995e936b58011fb864b4f9909c3858548f2c8d8206514f06694454e",
+      "license": "Civitai Model License (see the link on the Hugging Face card)",
+      "terms": "Read 2026-11-01 from the Hugging Face card, whose licence link is https://civitai.red/models/2764727/tripleview. The licence page itself was not opened. The card says training focused on human characters. Trigger: 'Convert the character in the image to a Character Sheet showing front, side and back full body views'. Base model FLUX.2 Klein 9B.",
+      "family": "FLUX.2 Klein 9B",
+      "trigger": "Convert the character in the image to a Character Sheet showing front, side and back full body views",
       "strength": [
         1.0,
         1.0

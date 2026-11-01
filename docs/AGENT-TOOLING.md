@@ -23,6 +23,9 @@ All three agents are wired to the same server binary:
 | Claude Code | `comfy-local` (stdio, `COMFY_BIN` and `COMFY_WHERE=local` env) | `~/.claude.json`, user scope (`claude mcp get comfy-local` → Connected) |
 | Grok | `comfy-local` (stdio, `COMFY_BIN` and `COMFY_WHERE=local` env) | `~/.grok/config.toml`, user scope (replaces the Claude-compat copy of the same name; `MCP_DOCKER` stays disabled in Grok until the gateway handshakes) |
 
+`scripts/identity_score.py` measures character identity against a reference with CCIP, in its own environment at
+`C:\AI\agent-tools\identity`, never the shared ComfyUI runtime. It sees identity only: it barely moves for changes of form.
+
 The repository carries no `.mcp.json` on purpose: the paths are machine-specific and the estate rule is one
 declaration per server per runtime. Grok's project `.grok/config.toml` therefore has permissions only.
 The cloud connection is not registered for Claude or Grok; add it with
