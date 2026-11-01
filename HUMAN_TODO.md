@@ -278,7 +278,7 @@ Raised by the overnight coordinator and its gpu-lab and ux-lead agents. Agent ve
 ## Character sheets, repaint and engines (1 November 2026) - open
 
 - [ ] **character-sheet-art-1101** (owner judgment; agents do not tick this): the two new presets are agent-inspected only. Try *character-sheet-klein-9b* and *union-repaint-wai* on your own pictures and say whether the views and the repaint are usable. Eye colour drifted in both. Evidence: the catalog notes and `CURRENT_STATE.md`.
-- [ ] **unreal-install-1101** (owner decision and action; agents do not tick this): install Unreal Engine 5.8 only if you want Wuthering Waves-class shading tested. It needs your Epic sign-in at some point, roughly 70 to 150 GB on E:, and hours of agent time. Godot already covers import, skinning and toon proofs at no cost. Details: [try-queue](docs/research/WAIFU-TECH-TRY-QUEUE-2026-11-01.md#engines).
+- [ ] **unreal-install-1101** (owner decision and action; agents do not tick this): install Unreal Engine 5.8 only if you want Wuthering Waves-class shading tested. It needs your Epic sign-in at some point, roughly 70 to 150 GB on E:, and hours of agent time. Godot already covers import, skinning and toon proofs at no cost. Details: [try-queue](docs/research/WAIFU-TECH-TRY-QUEUE-2026-11-01.md#engines). **Owner answer, 1 November 2026 (in chat):** "I actually have an epic account and I'm downloading the epic installer. So Unreal Engine can be actioned (even in parallel) if you want". Still open until the engine is installed; sign-in and licence acceptance stay with the owner.
 
 ## Things to glance at when convenient (not blockers)
 
