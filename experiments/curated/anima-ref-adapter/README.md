@@ -34,6 +34,8 @@ block. Both fixed before the runs recorded here.
 - This is a visual judgement by one agent. It is not a measured identity score, and no second seed was run.
 - Run B used `ref_guidance` 1.0 through the direct graph. The preset does not bind `ref_guidance`, so the Studio cannot
   reproduce run B; only the direct graph can. A follow-up would expose it as a control.
+  Correction, 1 November 2026: PR #1888 binds `ref_guidance` as the *Reference strength* control, so the Studio can now
+  reproduce run B. The runs above stay as recorded.
 
 ## Not verified
 
