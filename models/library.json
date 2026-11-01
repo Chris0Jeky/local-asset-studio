@@ -198,6 +198,7 @@
       "sha256": "3c1868387a3a1ff504bbb87c33678321965ead381fcf87afbd0264daa600c082",
       "family": "Anima",
       "license": "CircleStone Labs Non-Commercial weights; see output terms",
+      "terms": "Read 2026-11-01 at https://huggingface.co/circlestone-labs/Anima (revision f973fc41ec7545364ac9776c2440285f43ff2a30): the card names the CircleStone Labs Non-Commercial License and says the restriction applies to the Model, not to generated Outputs; the Model is subject to the NVIDIA Open Model License insofar as it applies to Derivative Models. The licence files themselves were not re-read here.",
       "trigger": ""
     },
     {
@@ -212,6 +213,7 @@
       "sha256": "cd2a512003e2f9f3cd3c32a9c3573f820bb28c940f73c57b1ddaa983d9223eba",
       "family": "Anima",
       "license": "CircleStone Labs Non-Commercial weights; see output terms",
+      "terms": "Read 2026-11-01 at https://huggingface.co/circlestone-labs/Anima (revision f973fc41ec7545364ac9776c2440285f43ff2a30): the card names the CircleStone Labs Non-Commercial License and says the restriction applies to the Model, not to generated Outputs; the Model is subject to the NVIDIA Open Model License insofar as it applies to Derivative Models. The licence files themselves were not re-read here.",
       "trigger": ""
     },
     {
