@@ -2168,6 +2168,25 @@
       ]
     },
     {
+      "id": "tripleview-klein9b-v1",
+      "name": "TripleView_klein9b_v1.safetensors",
+      "file": "loras/TripleView_klein9b_v1.safetensors",
+      "repo": "Alissonerdx/CharacterSheet",
+      "revision": "3dc4295163dacc924d213168d67bf16850fd954f",
+      "source": "https://huggingface.co/Alissonerdx/CharacterSheet",
+      "url": "https://huggingface.co/Alissonerdx/CharacterSheet/resolve/3dc4295163dacc924d213168d67bf16850fd954f/TripleView_klein9b_v1.safetensors",
+      "bytes": 331379568,
+      "sha256": "2db1f0bb7995e936b58011fb864b4f9909c3858548f2c8d8206514f06694454e",
+      "license": "Civitai Model License (see the link on the Hugging Face card)",
+      "terms": "Read 2026-11-01 from the Hugging Face card, whose licence link is https://civitai.red/models/2764727/tripleview. The licence page itself was not opened. The card says training focused on human characters. Trigger: 'Convert the character in the image to a Character Sheet showing front, side and back full body views'. Base model FLUX.2 Klein 9B.",
+      "family": "FLUX.2 Klein 9B",
+      "trigger": "Convert the character in the image to a Character Sheet showing front, side and back full body views",
+      "strength": [
+        1.0,
+        1.0
+      ]
+    },
+    {
       "id": "replace-character-v1-klein",
       "name": "replace_character_v1_klein.safetensors",
       "file": "loras/replace_character_v1_klein.safetensors",
