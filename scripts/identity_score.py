@@ -3,14 +3,15 @@
 
 Needs its own environment, never the shared ComfyUI runtime:
     py -3.12 -m venv C:/AI/agent-tools/identity
-    C:/AI/agent-tools/identity/Scripts/pip install 
+    C:/AI/agent-tools/identity/Scripts/pip install dghs-imgutils==0.19.0 onnxruntime==1.31.1
 
     C:/AI/agent-tools/identity/Scripts/python scripts/identity_score.py reference.png render1.png render2.png
     ... --group "rg([0-9.]+)_"   # also report the mean per regex capture
 
 CCIP is trained on illustrations. It measures character identity only: it barely moves for changes of form, so a good
 score does not mean better art, and renders of 3D models read further away than the same character drawn. Publish the
-threshold beside any score; it belongs to the CCIP model snapshot, deepghs/ccip_onnx `eb2acdd2` as of 1 November 2026. Calibrate with an unrelated character when a number will decide something.
+threshold beside any score; it belongs to the CCIP model snapshot, deepghs/ccip_onnx `eb2acdd2` as of 1 November 2026.
+Calibrate with an unrelated character when a number will decide something.
 """
 import argparse, json, re, statistics, sys
 
