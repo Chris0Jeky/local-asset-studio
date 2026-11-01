@@ -8640,7 +8640,7 @@
           ]
         ]
       },
-      "description": "Repaint a picture in the WAI v17 look while keeping its shapes. Depth and line art from your picture hold the geometry, so a 3D view stays the same.",
+      "description": "Repaint a picture in the WAI v17 look while keeping its shapes. Depth and line art from your picture are meant to hold the geometry.",
       "stages": [
         "Your picture, scaled and centre-cropped to the canvas (832x1216 by default)",
         "Depth Anything V2 Large depth map -> Union ProMax ControlNet (depth type, strength 0.8: Pose strength)",
@@ -8650,7 +8650,7 @@
         "PNG"
       ],
       "source": "https://huggingface.co/xinsir/controlnet-union-sdxl-1.0",
-      "execution_note": "No render yet. Graph authored and statically checked only (validate-repo, validate-live); the first Studio job is pending, so the depth/line-art strengths, the 0.45 denoise and the preprocessor choice (DepthAnythingV2Preprocessor, LineArtPreprocessor) are unproven defaults."
+      "execution_note": "Direct ComfyUI graph, not a Studio job, seed 20261101 on one anime picture: denoise 0.45 (prompt e564cfda-1507-44eb-b9ef-3c1cf6770cd1) and 0.7 (prompt b3fc1971-43d5-4e1c-8e5a-ac816b19671b, 13.7 s warm). Pose, costume, props and background held in both and the finish moved; generated and agent-inspected, not art acceptance. Strengths and other defaults are unswept. First use downloads line-art weights, which stalled ComfyUI for minutes."
     }
   ]
 }
