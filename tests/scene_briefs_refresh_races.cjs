@@ -29,7 +29,7 @@ function harness(hash) {
     if (key === 'GET /api/briefs') return json({workspace_id: workspace, briefs: [{id: 'brief-one', name: 'Lantern', available: true}]});
     if (key === 'GET /api/collections') return json({collections: [], next_cursor: null});
     if (key === 'GET /api/looks') return json({looks: []});
-    if (key === 'GET /api/briefs/brief-one') return json({card: {...core.newCard(workspace, 'brief-one'), name: 'Lantern', revision: 0}, candidates: {}, collection_available: true});
+    if (key === 'GET /api/briefs/brief-one') return json(h.inspect || {card: {...core.newCard(workspace, 'brief-one'), name: 'Lantern', revision: 0}, candidates: {}, collection_available: true});
     if (key === 'GET /api/assets/page') {
       if (url.searchParams.get('cursor')) {if (h.delayNextPage) await wait(h.delayNextPage); return json(page('two-', null));}
       if (h.delayFirstPage) await wait(h.delayFirstPage);
@@ -39,8 +39,8 @@ function harness(hash) {
     throw Error('Unexpected request ' + key);
   };
   vm.runInContext(code, vm.createContext(sandbox));
-  const click = action => handlers.click({target: {closest: () => ({dataset: {action}, disabled: false})}});
-  return Object.assign(h, {root, click, documentHandlers, sandbox, refresh: () => sandbox.window.StudioBriefs.refresh(), setHash: value => {sandbox.location.hash = value;}, candidates: prefix => (root.innerHTML.match(new RegExp('data-candidate="' + prefix, 'g')) || []).length});
+  const click = (action, extra = {}) => handlers.click({target: {closest: () => ({dataset: {action, ...extra}, disabled: false})}});
+  return Object.assign(h, {root, click, input: event => handlers.input(event), documentHandlers, sandbox, refresh: () => sandbox.window.StudioBriefs.refresh(), setHash: value => {sandbox.location.hash = value;}, candidates: prefix => (root.innerHTML.match(new RegExp('data-candidate="' + prefix, 'g')) || []).length});
 }
 
 test('First page keeps its candidates when navigation and the hash refresh overlap a delayed response', async () => {
@@ -120,4 +120,57 @@ test('Switching privacy while a working pack is pending clears its progress text
   await wait(50);
   assert.ok(h.root.innerHTML.includes('data-action="workingPack"'));
   settled(h);
+});
+
+// #1832: accepting a scene-brief slot is the owner's own press, against the saved brief and the bytes shown.
+const sha = 'b'.repeat(64), ref = id => ({asset_id: id, sha256: sha, metadata_revision: 0});
+function withCandidate(accepted = [], id = 'asset-1') {
+  const card = core.newCard(workspace, 'brief-one'); card.name = 'Lantern'; card.revision = 3; card.body.slots.background.selected = ref(id); card.body.slots.background.criteria = 'Readable at 64 px';
+  return {card, candidates: {background: {state: 'selected', title: 'Marsh'}}, collection_available: true, acceptances: {background: accepted}};
+}
+const row = (extra = {}) => ({id: 'acc-1', asset_id: 'asset-1', sha256: sha, note: '', criteria: 'Readable at 64 px', accepted_at: 1, withdrawn_at: null, current: true, ...extra});
+
+test('Accepting posts the saved revision and displayed bytes, then shows the acceptance and a Withdraw button', async () => {
+  const h = harness('#briefs?id=brief-one&slot=background'); h.inspect = withCandidate();
+  await wait(50);
+  assert.ok(h.root.innerHTML.includes('Not accepted') && !h.root.innerHTML.includes('data-action="accept" disabled'));
+  let sent;
+  h.onOther = (key, options) => {sent = {key, body: JSON.parse(options.body)}; h.inspect = withCandidate([row()]); return {ok: true, json: async () => ({asset_id: 'asset-1', sha256: sha, workspace_id: workspace, unchanged: false, acceptances: [row()]})};};
+  h.click('accept'); await wait(50);
+  assert.equal(sent.key, 'POST /api/assets/asset-1/acceptances');
+  assert.deepEqual([sent.body.reviewer, sent.body.sha256, sent.body.workspace_id, sent.body.action, sent.body.brief], ['local-user', sha, workspace, 'accept', {id: 'brief-one', slot: 'background', expected_revision: 3}]);
+  assert.ok(h.root.innerHTML.includes('<strong>Accepted</strong>') && h.root.innerHTML.includes('data-action="withdrawAccept"'));
+});
+
+test('An unsaved edit disables Accept and says why; nothing is sent', async () => {
+  const h = harness('#briefs?id=brief-one&slot=background'); h.inspect = withCandidate();
+  await wait(50);
+  h.onOther = key => {throw Error('must not send ' + key);};
+  h.input({target: {id: 'briefIntent', value: 'edited'}}); h.click('refreshCollections'); await wait(50);
+  assert.ok(h.root.innerHTML.includes('data-action="accept" disabled title="Save the brief first."'));
+  assert.ok(!h.calls.some(c => c.startsWith('POST')));
+});
+
+test('A replaced candidate shows the earlier acceptance as history and is not accepted', async () => {
+  const h = harness('#briefs?id=brief-one&slot=background'); h.inspect = withCandidate([row({current: false})], 'asset-2');
+  await wait(50);
+  assert.ok(h.root.innerHTML.includes('Not accepted') && h.root.innerHTML.includes('Earlier acceptances (1)') && h.root.innerHTML.includes('for an earlier candidate'));
+  assert.ok(!h.root.innerHTML.includes('data-action="withdrawAccept"'));
+});
+
+test('A typed Accept note is sent, survives a refused press, and Withdraw sends the id read before the re-render', async () => {
+  const h = harness('#briefs?id=brief-one&slot=background'); h.inspect = withCandidate();
+  await wait(50);
+  h.input({target: {id: 'briefAcceptNote', value: 'Reads well'}});   // act() re-renders before the work runs, so the note cannot be read from the field then
+  h.onOther = () => ({ok: false, status: 503, json: async () => ({error: 'Storage is busy.'})});
+  h.click('accept'); await wait(50);
+  assert.ok(h.root.innerHTML.includes('value="Reads well"'), 'a refused press keeps the typed note');
+  let sent;
+  h.onOther = (key, options) => {sent = JSON.parse(options.body); h.inspect = withCandidate([row()]); return {ok: true, json: async () => ({asset_id: 'asset-1', sha256: sha, workspace_id: workspace, unchanged: false, acceptances: [row({note: sent.note})]})};};
+  h.click('accept'); await wait(50);
+  assert.equal(sent.note, 'Reads well');
+  h.inspect = withCandidate([row()]); h.onOther = (key, options) => {sent = JSON.parse(options.body); h.inspect = withCandidate([row({withdrawn_at: 5, current: false})]); return {ok: true, json: async () => ({asset_id: 'asset-1', sha256: sha, workspace_id: workspace, acceptances: []})};};
+  h.click('withdrawAccept', {acceptance: 'acc-1'}); await wait(50);
+  assert.deepEqual([sent.action, sent.acceptance_id, sent.sha256], ['withdraw', 'acc-1', sha]);
+  assert.ok(!h.root.innerHTML.includes('value="Reads well"'), 'a recorded press clears the note');
 });

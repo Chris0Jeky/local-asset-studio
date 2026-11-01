@@ -1298,7 +1298,7 @@ async function sendAssetAcceptance(body){
     state.rows=data.acceptances;state.loaded=true;if(body.action==='accept'||!body.action){$('#assetAcceptUse').value='';$('#assetAcceptNote').value='';}
     $('#assetAcceptStatus').textContent=(data.unchanged?'Already accepted for this use. Nothing changed; its first note stays.':({withdraw:'Withdrawn. You can accept it again.',restore:'Accepted again.'}[body.action]||'Recorded.')+' Keep and licence are unchanged.');
   }catch(error){if(current())$('#assetAcceptStatus').textContent='Not saved. '+error.message;}
-  finally{if(current()){state.busy=false;renderAssetAcceptance();}}
+  finally{if(current()){state.busy=false;renderAssetAcceptance();if(!state.loaded)void loadAssetAcceptance();}}   // a failed send dropped an in-flight first read: ask again rather than leave the list empty
 }
 async function loadAssetAcceptance(){
   const state=assetAcceptance;if(!state||state.loaded||state.busy)return;const token=state.token;
