@@ -754,27 +754,41 @@ class AssetWorkspace:
                 'scope': 'Acceptance for the named use only; independent of Keep, Needs work, Not this and licence state'}
 
     def accept(self, asset_id, payload):
-        """accept / withdraw / restore. Only an explicit local-user declaration records anything (the Review desk's rule); agents are refused."""
+        """accept / withdraw / restore. Only an explicit local-user declaration records anything (the Review desk's rule); agents are refused.
+        Asset IDs are deterministic (job, index), so another Workspace can hold the same ID with other bytes: the caller names the bytes it
+        showed (sha256) and, like other mutations, its Workspace; a mismatch is a 409 before anything is written."""
         if not isinstance(payload, dict): raise WorkspaceError("Acceptance request must be an object")
         action = payload.get('action', 'accept')
         if action not in ('accept', 'withdraw', 'restore'): raise WorkspaceError("Unknown acceptance action")
         if payload.get('reviewer') != 'local-user': raise WorkspaceError("Acceptance needs an explicit local-user declaration", code="acceptance_not_declared")
-        asset = self.get(asset_id)
-        if asset.get('privacy', 'regular') != 'regular': raise WorkspaceError("Asset not found")
-        if action != 'withdraw' and asset['trashed_at'] is not None: raise WorkspaceError("Restore this picture from Trash first")
-        now = time.time()
+        digest = payload.get('sha256')
+        if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest): raise WorkspaceError("Send the sha256 of the picture you are looking at")
+        scope = self._validate_scope(payload['workspace_id']) if payload.get('workspace_id') is not None else None
+        changed = WorkspaceError("This is not the picture you were looking at (its Workspace or bytes changed). Reopen it; nothing was recorded.", status=409, code="acceptance_picture_changed")
+        if not isinstance(asset_id, str): raise WorkspaceError("Asset not found")
+        clause, params = privacy_sql('regular')
+        now = time.time(); unchanged = False
         with self.connection() as db:
+            db.execute("BEGIN IMMEDIATE")   # one transaction: the identity and bytes checked are the ones written against
+            try: self._check_scope(db, scope)
+            except WorkspaceError as error: raise changed from error
+            row = db.execute("SELECT id,sha256,trashed_at FROM assets WHERE id=? AND "+clause, [asset_id, *params]).fetchone()
+            if row is None: raise WorkspaceError("Asset not found")
+            if action != 'withdraw' and row['sha256'] != digest: raise changed
+            if action != 'withdraw' and row['trashed_at'] is not None: raise WorkspaceError("Restore this picture from Trash first")
             if action == 'accept':
                 use = " ".join(self.text(payload.get('use'), "Use", 80).split()); note = self.text(payload.get('note', ''), "Note", 500)
                 if not use: raise WorkspaceError("Name the use this picture is accepted for")
-                db.execute("INSERT OR IGNORE INTO asset_acceptances VALUES (?,?,?,?,?,?,?,NULL)", (uuid.uuid4().hex, asset['id'], asset['sha256'], use, note, 'local-user', now))  # a repeat press for the same live use is a no-op
+                unchanged = db.execute("INSERT OR IGNORE INTO asset_acceptances VALUES (?,?,?,?,?,?,?,NULL)", (uuid.uuid4().hex, row['id'], row['sha256'], use, note, 'local-user', now)).rowcount == 0  # a repeat press for a live use keeps the first record, note included
             else:
                 identifier = payload.get('acceptance_id')
                 if not isinstance(identifier, str) or not identifier: raise WorkspaceError("Acceptance ID is required")
-                if db.execute("SELECT 1 FROM asset_acceptances WHERE id=? AND asset_id=?", (identifier, asset['id'])).fetchone() is None: raise WorkspaceError("Acceptance not found", status=404, code="acceptance_not_found")
+                found = db.execute("SELECT sha256 FROM asset_acceptances WHERE id=? AND asset_id=?", (identifier, row['id'])).fetchone()
+                if found is None: raise WorkspaceError("Acceptance not found", status=404, code="acceptance_not_found")
+                if found['sha256'] != digest: raise changed
                 try: db.execute("UPDATE asset_acceptances SET withdrawn_at=" + ("COALESCE(withdrawn_at,?)" if action == 'withdraw' else "?") + " WHERE id=?", (now if action == 'withdraw' else None, identifier))
                 except sqlite3.IntegrityError as error: raise WorkspaceError("This picture is already accepted for that use", status=409, code="acceptance_exists") from error
-        return self.acceptances(asset['id'])
+        return dict(self.acceptances(row['id']), unchanged=unchanged)
 
     def asset_by_sha256(self, digest, privacy='regular'):
         """The oldest live asset whose snapshot has these bytes, or None: a card's lineage names pictures by content, not by row."""

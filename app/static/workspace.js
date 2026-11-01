@@ -1275,7 +1275,7 @@ $('#assetExportsRefresh').onclick=()=>loadAssetExports(true);$('#assetExportsMor
 // #1832: "I accept this picture for <use>". Its own record: Keep, favourite and licence never write or imply it, and only these buttons do.
 let assetAcceptance=null;
 function resetAssetAcceptance(asset=null){
-  assetAcceptance=asset&&asset.privacy!=='private'?{id:asset.id,workspace:assetState.workspace_id,epoch:assetDetailEpoch,workspaceEpoch:assetWorkspaceEpoch,privacyEpoch:assetPrivacyEpoch,rows:[],loaded:false,busy:false,trashed:asset.trashed_at!=null}:null;
+  assetAcceptance=asset&&asset.privacy!=='private'?{id:asset.id,workspace:assetState.workspace_id,epoch:assetDetailEpoch,workspaceEpoch:assetWorkspaceEpoch,privacyEpoch:assetPrivacyEpoch,rows:[],loaded:false,busy:false,token:0,sha:asset.sha256,trashed:asset.trashed_at!=null}:null;
   const box=$('#assetAcceptance');box.open=false;box.hidden=!assetAcceptance;$('#assetAcceptList').innerHTML='';$('#assetAcceptUse').value='';$('#assetAcceptNote').value='';
   $('#assetAcceptStatus').textContent='Separate from Keep and licence. Nothing is accepted until you press Accept.';renderAssetAcceptance();
 }
@@ -1289,23 +1289,24 @@ function renderAssetAcceptance(){
 async function sendAssetAcceptance(body){
   const state=assetAcceptance;if(!state||state.busy)return;
   const current=()=>assetAcceptance===state&&assetDetailContextCurrent(state.id,state.epoch)&&assetState.workspace_id===state.workspace&&assetWorkspaceEpoch===state.workspaceEpoch&&assetPrivacyEpoch===state.privacyEpoch;
-  state.busy=true;renderAssetAcceptance();
+  state.busy=true;state.token++;renderAssetAcceptance();   // a read still in flight is older than this write: loadAssetAcceptance drops it
   try{
-    const data=await api('/api/assets/'+encodeURIComponent(state.id)+'/acceptances',{method:'POST',headers:{'Content-Type':'application/json','X-Studio-Privacy':'regular'},body:JSON.stringify(Object.assign({reviewer:'local-user'},body))});
+    // The bytes and Workspace this dialog showed: the server refuses (409) rather than record against another picture that shares the ID.
+    const data=await api('/api/assets/'+encodeURIComponent(state.id)+'/acceptances',{method:'POST',headers:{'Content-Type':'application/json','X-Studio-Privacy':'regular'},body:JSON.stringify(Object.assign({reviewer:'local-user',sha256:state.sha,workspace_id:state.workspace},body))});
     if(!current())return;
-    if(data.workspace_id!==state.workspace||data.asset_id!==state.id)throw Error('The response belongs to a different picture or Workspace.');
+    if(data.workspace_id!==state.workspace||data.asset_id!==state.id||data.sha256!==state.sha)throw Error('The response belongs to a different picture or Workspace.');
     state.rows=data.acceptances;state.loaded=true;if(body.action==='accept'||!body.action){$('#assetAcceptUse').value='';$('#assetAcceptNote').value='';}
-    $('#assetAcceptStatus').textContent=({withdraw:'Withdrawn. You can accept it again.',restore:'Accepted again.'}[body.action]||'Recorded.')+' Keep and licence are unchanged.';
+    $('#assetAcceptStatus').textContent=(data.unchanged?'Already accepted for this use. Nothing changed; its first note stays.':({withdraw:'Withdrawn. You can accept it again.',restore:'Accepted again.'}[body.action]||'Recorded.')+' Keep and licence are unchanged.');
   }catch(error){if(current())$('#assetAcceptStatus').textContent='Not saved. '+error.message;}
   finally{if(current()){state.busy=false;renderAssetAcceptance();}}
 }
 async function loadAssetAcceptance(){
-  const state=assetAcceptance;if(!state||state.loaded||state.busy)return;
-  const current=()=>assetAcceptance===state&&assetDetailContextCurrent(state.id,state.epoch)&&assetState.workspace_id===state.workspace&&assetWorkspaceEpoch===state.workspaceEpoch&&assetPrivacyEpoch===state.privacyEpoch;
+  const state=assetAcceptance;if(!state||state.loaded||state.busy)return;const token=state.token;
+  const current=()=>assetAcceptance===state&&state.token===token&&assetDetailContextCurrent(state.id,state.epoch)&&assetState.workspace_id===state.workspace&&assetWorkspaceEpoch===state.workspaceEpoch&&assetPrivacyEpoch===state.privacyEpoch;
   try{
     const data=await api('/api/assets/'+encodeURIComponent(state.id)+'/acceptances',{headers:{'X-Studio-Privacy':'regular'}});
     if(!current())return;
-    if(data.workspace_id!==state.workspace||data.asset_id!==state.id)throw Error('The response belongs to a different picture or Workspace.');
+    if(data.workspace_id!==state.workspace||data.asset_id!==state.id||data.sha256!==state.sha)throw Error('The response belongs to a different picture or Workspace.');
     state.rows=data.acceptances;state.loaded=true;
   }catch(error){if(current())$('#assetAcceptStatus').textContent='Acceptances unavailable. '+error.message;}
   finally{if(current())renderAssetAcceptance();}
