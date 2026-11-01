@@ -1272,6 +1272,48 @@ async function loadAssetExports(refresh=false){
 }
 $('#assetNativeExports').addEventListener('toggle',()=>{if($('#assetNativeExports').open&&!assetExportHistory?.loaded)void loadAssetExports();});
 $('#assetExportsRefresh').onclick=()=>loadAssetExports(true);$('#assetExportsMore').onclick=()=>loadAssetExports();
+// #1832: "I accept this picture for <use>". Its own record: Keep, favourite and licence never write or imply it, and only these buttons do.
+let assetAcceptance=null;
+function resetAssetAcceptance(asset=null){
+  assetAcceptance=asset&&asset.privacy!=='private'?{id:asset.id,workspace:assetState.workspace_id,epoch:assetDetailEpoch,workspaceEpoch:assetWorkspaceEpoch,privacyEpoch:assetPrivacyEpoch,rows:[],loaded:false,busy:false,trashed:asset.trashed_at!=null}:null;
+  const box=$('#assetAcceptance');box.open=false;box.hidden=!assetAcceptance;$('#assetAcceptList').innerHTML='';$('#assetAcceptUse').value='';$('#assetAcceptNote').value='';
+  $('#assetAcceptStatus').textContent='Separate from Keep and licence. Nothing is accepted until you press Accept.';renderAssetAcceptance();
+}
+function renderAssetAcceptance(){
+  const s=assetAcceptance;if(!s)return;
+  $('#assetAcceptList').innerHTML=s.rows.map(r=>'<li>'+(r.withdrawn_at?'<s>'+esc(r.use)+'</s> · withdrawn '+esc(new Date(r.withdrawn_at*1000).toLocaleDateString()):'<strong>'+esc(r.use)+'</strong> · accepted '+esc(new Date(r.accepted_at*1000).toLocaleDateString()))+(r.note?'<p>'+esc(r.note)+'</p>':'')+
+    ' <button type="button" data-accept-act="'+(r.withdrawn_at?'restore':'withdraw')+'" data-accept-id="'+esc(r.id)+'"'+(s.busy||r.withdrawn_at&&s.trashed?' disabled':'')+'>'+(r.withdrawn_at?'Accept again':'Withdraw')+'</button></li>').join('');
+  const use=!!$('#assetAcceptUse').value.trim(),go=$('#assetAcceptGo');go.disabled=s.busy||s.trashed||!use;
+  go.title=s.trashed?'Restore this picture from Trash first':s.busy?'Saving…':use?'':'Name a use first';
+}
+async function sendAssetAcceptance(body){
+  const state=assetAcceptance;if(!state||state.busy)return;
+  const current=()=>assetAcceptance===state&&assetDetailContextCurrent(state.id,state.epoch)&&assetState.workspace_id===state.workspace&&assetWorkspaceEpoch===state.workspaceEpoch&&assetPrivacyEpoch===state.privacyEpoch;
+  state.busy=true;renderAssetAcceptance();
+  try{
+    const data=await api('/api/assets/'+encodeURIComponent(state.id)+'/acceptances',{method:'POST',headers:{'Content-Type':'application/json','X-Studio-Privacy':'regular'},body:JSON.stringify(Object.assign({reviewer:'local-user'},body))});
+    if(!current())return;
+    if(data.workspace_id!==state.workspace||data.asset_id!==state.id)throw Error('The response belongs to a different picture or Workspace.');
+    state.rows=data.acceptances;state.loaded=true;if(body.action==='accept'||!body.action){$('#assetAcceptUse').value='';$('#assetAcceptNote').value='';}
+    $('#assetAcceptStatus').textContent=({withdraw:'Withdrawn. You can accept it again.',restore:'Accepted again.'}[body.action]||'Recorded.')+' Keep and licence are unchanged.';
+  }catch(error){if(current())$('#assetAcceptStatus').textContent='Not saved. '+error.message;}
+  finally{if(current()){state.busy=false;renderAssetAcceptance();}}
+}
+async function loadAssetAcceptance(){
+  const state=assetAcceptance;if(!state||state.loaded||state.busy)return;
+  const current=()=>assetAcceptance===state&&assetDetailContextCurrent(state.id,state.epoch)&&assetState.workspace_id===state.workspace&&assetWorkspaceEpoch===state.workspaceEpoch&&assetPrivacyEpoch===state.privacyEpoch;
+  try{
+    const data=await api('/api/assets/'+encodeURIComponent(state.id)+'/acceptances',{headers:{'X-Studio-Privacy':'regular'}});
+    if(!current())return;
+    if(data.workspace_id!==state.workspace||data.asset_id!==state.id)throw Error('The response belongs to a different picture or Workspace.');
+    state.rows=data.acceptances;state.loaded=true;
+  }catch(error){if(current())$('#assetAcceptStatus').textContent='Acceptances unavailable. '+error.message;}
+  finally{if(current())renderAssetAcceptance();}
+}
+$('#assetAcceptance').addEventListener('toggle',()=>{if($('#assetAcceptance').open)void loadAssetAcceptance();});
+$('#assetAcceptUse').addEventListener('input',renderAssetAcceptance);
+$('#assetAcceptGo').onclick=()=>{const use=$('#assetAcceptUse').value.trim();if(use)void sendAssetAcceptance({action:'accept',use,note:$('#assetAcceptNote').value.trim()});};
+$('#assetAcceptList').addEventListener('click',e=>{const b=e.target?.closest?.('[data-accept-act]');if(b)void sendAssetAcceptance({action:b.dataset.acceptAct,acceptance_id:b.dataset.acceptId});});
 function openAsset(id,owns=null) {
   if(owns&&!owns())return false;
   if(assetRetainedDetail){const problem=recoveryScopeMessage(assetRetainedDetail.workspace_id);if(problem){assetMessage(problem,true);renderLibraryRecovery();return false;}}
@@ -1295,6 +1337,7 @@ function openAsset(id,owns=null) {
   activeAsset={...candidate,workspace_id:assetState.workspace_id};assetDetailEpoch++;assetDiagnosticRequest++;assetDetailPending=null;assetDetailConflict=null;renderAssetConflict();renderAssetSaveRecovery();
   const a=activeAsset;
   resetAssetExports(a);
+  resetAssetAcceptance(a);
   $('#assetDetailMedia').innerHTML=assetPreview(a,true);assetInspect=assetInspectOff();renderAssetInspect(a);
   $('#assetTitle').value=a.title||'';$('#assetTags').value=(a.tags||[]).join(', ');$('#assetReview').value=a.review||'unreviewed';$('#assetNotes').value=a.notes||'';
   assetDetailBaseline=assetDetailValues();assetDetailControls();assetDetailStatus('No unsaved changes.');
@@ -1384,7 +1427,7 @@ $('#assetDialog').addEventListener('close',()=>{
   if(!activeAsset&&!assetDetailBaseline)return; // A privacy change already retained and retired this editor.
   if(assetDetailPending || assetDetailConflict)retainAssetDraft();
   else if(!assetRecoveryLoadError)try{assetRecovery.clear('detail');assetRetainedDetail=null;}catch(error){assetRecoveryError=error.message;}
-  assetDetailEpoch++;assetDiagnosticRequest++;assetDetailBaseline=null;assetQueue=null;renderAssetQueue();resetAssetExports();
+  assetDetailEpoch++;assetDiagnosticRequest++;assetDetailBaseline=null;assetQueue=null;renderAssetQueue();resetAssetExports();resetAssetAcceptance();
   $('#assetDetailMedia').innerHTML='';assetInspect=assetInspectOff();renderAssetInspect(null);$('#assetDiagnostic').innerHTML='';$('#assetSameRun').innerHTML='';$('#assetSameRun').hidden=true;
   renderLibraryRecovery();
   const opener=assetDialogOpener;assetDialogOpener=null;
@@ -1734,7 +1777,7 @@ document.addEventListener('studio:privacy-change',event=>{
   assetResolveRequest++;assetOpenRequest++;assetRefreshRequest++;assetRefreshController?.abort();assetRefreshController=null;
   clearTimeout(assetSearchTimer);assetSearchTimer=null;assetRefreshing=false;assetCollectionBusy=false;assetBulkReviewBusy=false;assetBulkRequest=null;
   assetDetailRequest=null;assetLibraryRequest=null;assetDetailBusy=false;assetLibraryBusy=false;assetDetailDiscarding=false;
-  activeAsset=null;assetDetailBaseline=null;assetDetailPending=null;assetDetailConflict=null;assetQueue=null;assetDialogOpener=null;resetAssetExports();
+  activeAsset=null;assetDetailBaseline=null;assetDetailPending=null;assetDetailConflict=null;assetQueue=null;assetDialogOpener=null;resetAssetExports();resetAssetAcceptance();
   assetSelection.clear();assetSelectionAnchor=null;assetResolved.clear();assetSiblingPage=null;assetSiblingRequest=null;
   assetState={assets:[],collections:[],workspace_id:assetState.workspace_id};assetPaging=null;assetSignature='';
   if($('#assetDialog').open)$('#assetDialog').close();
