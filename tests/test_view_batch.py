@@ -27,7 +27,7 @@ class StubStudio:
     """Scripted Studio. `final[view]` is the status its job settles on (default completed); a view in `drop` gets its
     job created but the reply is cut, which is exactly an uncertain submission."""
     def __init__(self):
-        self.uploads=[];self.creations=[];self.jobs={};self.final={};self.drop=set();self.bad_origin=0;self.stalls=0
+        self.uploads=[];self.creations=[];self.jobs={};self.final={};self.drop=set();self.bad_origin=0;self.stalls=0;self.abandonment=None
 
     def handler(self):
         stub=self
@@ -54,7 +54,7 @@ class StubStudio:
                 if parts[2]=='image': return self.reply(200,b'out-'+job['view'].encode(),'image/png')
                 if stub.stalls: stub.stalls-=1;return self.reply(503,{'error':'busy'})
                 job['polls']+=1;status=stub.final.get(job['view'],'completed') if job['polls']>1 else 'running'
-                self.reply(200,{'id':parts[3],'status':status,'prompt_ids':['p-'+parts[3]],'message':'scripted '+status,'outputs':[{'filename':'x.png'}] if status=='completed' else []})
+                self.reply(200,{'id':parts[3],'status':status,'elapsed_seconds':12.5,'abandonment':stub.abandonment,'prompt_ids':['p-'+parts[3]],'message':'scripted '+status,'outputs':[{'filename':'x.png'}] if status=='completed' else []})
         return Handler
 
 
@@ -142,6 +142,30 @@ class ViewBatchTests(unittest.TestCase):
         self.stub.stalls=10**6
         self.run_batch('--silence','0',expect_stop='Lost sight of job job-1')
         self.assertEqual(len(self.stub.creations),1)
+
+    def test_an_abandoned_job_of_unknown_outcome_is_never_resubmitted(self):
+        self.stub.final['a']='abandoned';self.stub.abandonment={'basis':'outcome_unknown'}
+        self.run_batch(expect_stop='an outcome this run cannot confirm')
+        self.run_batch(expect_stop='an outcome this run cannot confirm')
+        self.assertEqual(len(self.stub.creations),1)
+
+    def test_a_job_abandoned_as_never_submitted_may_run_again(self):
+        self.stub.final['a']='abandoned';self.stub.abandonment={'basis':'never_submitted'}
+        self.run_batch(expect_stop='View a failed')
+        del self.stub.final['a'];self.stub.abandonment=None
+        self.run_batch()
+        self.assertEqual(len(self.stub.creations),4)
+
+    def test_a_second_run_on_the_same_folder_is_refused(self):
+        self.out.mkdir();(self.out/'.view_batch.lock').write_text('')
+        self.run_batch(expect_stop='Another run holds')
+        self.assertEqual(self.stub.creations,[])
+
+    def test_seconds_is_the_jobs_own_time_and_the_lock_is_released(self):
+        self.run_batch()
+        manifest=json.loads((self.out/'manifest.json').read_text(encoding='utf-8'))
+        self.assertEqual({v['seconds'] for v in manifest['views'].values()},{12.5})
+        self.assertFalse((self.out/'.view_batch.lock').exists())
 
     def test_lost_submit_reply_is_never_resubmitted(self):
         self.stub.drop.add('b')

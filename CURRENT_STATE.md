@@ -9,16 +9,17 @@ strength* on `anima-ref-adapter`, and a Studio run at 2.0 came out pixel-identic
 
 `scripts/identity_score.py` measures CCIP identity. A 21-render sweep of `ref_guidance` and a second model are in
 [the adapter's evidence](experiments/curated/anima-ref-adapter/README.md). `scripts/view_batch.py` runs one preset over a
-folder of named pictures, with predictable names and a manifest. It ran on the real Studio for 3 of its 4 jobs.
+folder of named pictures, with predictable names and a manifest. On the real Studio it completed three jobs; the fourth is the uncertain job below.
+Proof receipts: [sheet and repaint](experiments/curated/sheet-and-repaint-20261101/README.md).
 
 **Host limit found:** after several model families in a row, ComfyUI held 30 GB, free RAM reached zero and Windows sockets
 failed with error 10055. Job `49323960` ended uncertain, prompt `8b0d63fa`, and was not resubmitted. `POST /free` recovered
-14 GB within minutes, and the same work passed one family at a time with a free between. `union-repaint-wai` is now
-`host_commit_heavy`. Nothing frees models automatically between families.
+14 GB within minutes, and the same work passed one family at a time with a free between. Nothing frees models automatically between
+families yet (#1893), and the commit gate does not cover `union-repaint-wai`, whose canvas is below 1 MP.
 
 Mesh work moved to a separate private tool, agent-sculpt, not in this repository. Engine verdict and the frontier queue:
-[try-queue](docs/research/WAIFU-TECH-TRY-QUEUE-2026-11-01.md). Not verified: the fresh `C:/AI/agent-tools/identity` venv, and
-Anima Turbo v1.1, still downloading. Restored from the archive drive by hand for these runs: Klein 9B Q6 GGUF and its text
+[try-queue](docs/research/WAIFU-TECH-TRY-QUEUE-2026-11-01.md). The fresh `C:/AI/agent-tools/identity` venv reproduced a sweep score
+exactly (0.2064). Not verified: Anima Turbo v1.1, still downloading. Restored from the archive drive by hand for these runs: Klein 9B Q6 GGUF and its text
 encoder.
 
 ## 2026-10-31 — Start and recover a previewed Spoken Brief

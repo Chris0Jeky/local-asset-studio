@@ -11,14 +11,15 @@ A job whose outcome is uncertain (lost submit response, `uncertain` or any unrec
 stops and names the job id. A failed job stops the run. Existing output files are never overwritten without --force.
 Stdlib only; talks to a running Studio and touches no ComfyUI.
 """
-import argparse, hashlib, json, os, sys, time
+import argparse, hashlib, http.client, json, os, sys, time
 from pathlib import Path
 from urllib import request as urlrequest
 from urllib.error import HTTPError
 
 ORIGIN='http://127.0.0.1:8191'  # the Studio accepts mutations only from its own loopback origin
 ACTIVE=('queued','waiting','submitting','running')
-RETRYABLE=('failed','partial','cancelled','abandoned','refused')  # known definite outcomes: a rerun may submit again
+RETRYABLE=('failed','partial','cancelled','not_submitted','refused')  # known definite outcomes: a rerun may submit again
+# `abandoned` is not one: the Studio abandons jobs whose remote outcome is unknown, unless it says never_submitted
 TYPES={'.png':'image/png','.jpg':'image/jpeg'}
 
 def digest(data): return hashlib.sha256(data).hexdigest()
@@ -80,7 +81,7 @@ def wait(args,job_id):
         try:
             job=json.loads(call(args,'GET','/api/jobs/'+job_id));heard=time.monotonic()
             if job.get('status') not in ACTIVE: return job
-        except (OSError,ValueError) as exc:
+        except (OSError,ValueError,http.client.HTTPException) as exc:
             if time.monotonic()-heard>args.silence: raise SystemExit('Lost sight of job %s (%s); it was not resubmitted. Check it in the Studio.'%(job_id,detail(exc)))
         if time.monotonic()>deadline: raise SystemExit('Job %s is still running after %ds; it was not resubmitted. Check it in the Studio.'%(job_id,args.timeout))
         time.sleep(args.poll)
@@ -100,11 +101,13 @@ def submit(args,manifest,entry,path,controls):
     except (OSError,ValueError) as exc: job=exc
     if not isinstance(job,dict) or not job.get('id'):
         raise SystemExit('Submission of %s has an unknown outcome (%s). Not resubmitted: look for it in the Studio job list, then delete this view from the manifest to run it again.'%(path.name,detail(job) if isinstance(job,Exception) else 'no job id in the reply'))
+    print('job    %s %s'%(path.stem,job['id']),flush=True)  # before the save: a locked manifest must not lose the id
     entry.update(job_id=job['id'],status=job.get('status') or 'queued');save(args.manifest_path,manifest)
     return job['id']
 
-def finish(args,manifest,name,entry,job,output,began):
+def finish(args,manifest,name,entry,job,output):
     status=job.get('status')
+    if status=='abandoned' and (job.get('abandonment') or {}).get('basis')=='never_submitted': status='not_submitted'
     entry.update(status=status,prompt_id=(job.get('prompt_ids') or [None])[0],message=job.get('message'))
     if status!='completed':
         save(args.manifest_path,manifest)
@@ -118,7 +121,7 @@ def finish(args,manifest,name,entry,job,output,began):
         entry['status']='running';save(args.manifest_path,manifest)
         raise SystemExit('View %s: job %s completed but its image could not be fetched (%s). Rerun to fetch it; nothing is resubmitted.'%(name,entry['job_id'],detail(exc)))
     tmp=output.with_name(output.name+'.tmp');tmp.write_bytes(data);os.replace(tmp,output)
-    entry.update(status='completed',output=str(output),output_sha256=digest(data),seconds=round(time.monotonic()-began,1))
+    entry.update(status='completed',output=str(output),output_sha256=digest(data),seconds=job.get('elapsed_seconds'))
     save(args.manifest_path,manifest)
 
 def main(argv=None):
@@ -155,15 +158,22 @@ def main(argv=None):
         print('%-6s %s <- %s %s'%(action,name,path,json.dumps(controls,sort_keys=True)))
     if args.dry_run: return 0
     args.out.mkdir(parents=True,exist_ok=True)
+    lock=args.out/'.view_batch.lock'
+    try: os.close(os.open(lock,os.O_CREAT|os.O_EXCL|os.O_WRONLY))
+    except FileExistsError: raise SystemExit('Another run holds %s. Two runs would submit the same views twice. Delete it only if no run is active.'%lock)
+    try: run_plan(args,manifest,plan)
+    finally: lock.unlink(missing_ok=True)
+    return 0
+
+def run_plan(args,manifest,plan):
     for name,path,sha,controls,output,action in plan:
         if action=='skip': continue
-        began=time.monotonic()
         if action=='run':
             entry=manifest['views'][name]=dict(source=str(path),source_sha256=sha,controls=controls,job_id=None,prompt_id=None,status='submitting',output=None,output_sha256=None,seconds=None,message=None)
             submit(args,manifest,entry,path,controls)
         entry=manifest['views'][name]
         print('wait   %s job %s'%(name,entry['job_id']),flush=True)
-        finish(args,manifest,name,entry,wait(args,entry['job_id']),output,began)
+        finish(args,manifest,name,entry,wait(args,entry['job_id']),output)
         print('done   %s -> %s'%(name,output),flush=True)
     return 0
 

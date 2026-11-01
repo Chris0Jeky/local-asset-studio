@@ -134,7 +134,7 @@ Correction beside the Studio note above: since PR #1888 the Studio can set this 
 
 Studio job `3b8d66fd-f155-4ca8-b7b1-dc54a845dc2b`, prompt `2f5cda6c-a3d9-42b4-8345-45e1db740906`, `ref_guidance` 2.0, seed
 20261030: output pixel-identical to the sweep's direct render for those values, CCIP 0.1933 both ways. So the *Reference
-strength* control reaches the node. The batch client's seconds field read 0.0 for this job and is not a timing.
+strength* control reaches the node. The batch client recorded no timing for this job.
 
 The adapter was trained on Anima Base. It also runs on Anima Aesthetic 1.1, the model the Studio's looks use, by changing
 only the UNet file. Direct graph, same reference and seeds:

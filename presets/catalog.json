@@ -8586,7 +8586,6 @@
         "checkpoints/waiIllustriousSDXL_v170.safetensors",
         "controlnet/xinsir-union-sdxl-promax.safetensors"
       ],
-      "host_commit_heavy": true,
       "verified": true,
       "modality": "image",
       "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved. The Xinsir Union ProMax ControlNet is apache-2.0. The depth map comes from Depth Anything V2 Large (cc-by-nc-4.0 per the Hugging Face API on 2026-09-15; fetched by the comfyui_controlnet_aux node), so treat this recipe as private-experiment only until that is cleared; the line-art detector's weights are not yet recorded. Each carried LoRA keeps its own terms; a repainted picture inherits its source's rights questions. A successful render is not legal clearance.",
