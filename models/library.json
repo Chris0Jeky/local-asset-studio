@@ -1076,6 +1076,24 @@
       "repo": "circlestone-labs/Anima"
     },
     {
+      "id": "anima-role-ref-kv-v1-0",
+      "name": "Anima Role Ref KV v1.0",
+      "file": "loras/anima-role-ref-kv-v1.0.safetensors",
+      "source": "https://huggingface.co/AnticPan/Anima-Role-Ref-KV",
+      "url": "https://huggingface.co/AnticPan/Anima-Role-Ref-KV/resolve/259a0dce876ed70fc8835b888139756e23fb8a9f/comfy/anima-role-ref-kv-v1.0.safetensors",
+      "bytes": 528546184,
+      "sha256": "102dcc38b48f984844305fff5c04730a857603f8796f47e92b67c61baef124bb",
+      "family": "Anima",
+      "license": "CircleStone Labs Non-Commercial License, as stated on the model card; its ComfyUI node code is GPL-3.0",
+      "terms": "Read 2026-11-01 at the model card (revision 259a0dce876ed70fc8835b888139756e23fb8a9f). The weights' licence file itself was not read. No preset uses this yet; it needs the anima-role-ref-kv custom node, which stays local and is not redistributed.",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ],
+      "repo": "AnticPan/Anima-Role-Ref-KV"
+    },
+    {
       "id": "anima-newanimastyle-v1",
       "name": "NEWANIMASTYLE / V1",
       "file": "loras/anima-newanimastyle-v1.safetensors",

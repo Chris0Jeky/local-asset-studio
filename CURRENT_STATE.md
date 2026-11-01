@@ -20,7 +20,9 @@ families yet (#1893), and the commit gate does not cover `union-repaint-wai`, wh
 Mesh work moved to a separate private tool, agent-sculpt, not in this repository. Engine verdict and the frontier queue:
 [try-queue](docs/research/WAIFU-TECH-TRY-QUEUE-2026-11-01.md). The fresh `C:/AI/agent-tools/identity` venv reproduced a sweep score
 exactly (0.2064). Anima Turbo v1.1 now has its own preset, `anima-ref-adapter-turbo`: 4.6 s against 27 s with identity level at strength 1.0
-([receipts](experiments/curated/anima-ref-adapter/README.md#anima-turbo-v11)); not judged by the owner. Restored from the archive drive by hand for these runs: Klein 9B Q6 GGUF and its text
+([receipts](experiments/curated/anima-ref-adapter/README.md#anima-turbo-v11)); not judged by the owner. Later that evening: the repaint gained a colour lock after the owner rejected its eye drift
+([receipts](experiments/curated/sheet-and-repaint-20261101/README.md#colour-lock)), Kromoss ran its saved comparison
+([results](docs/MOSS-IMAGE.md)), Anima Role Ref KV ran level with the adapter, and #1832's Library half merged. Art verdicts are pending. Restored from the archive drive by hand for these runs: Klein 9B Q6 GGUF and its text
 encoder.
 
 ## 2026-10-31 — Start and recover a previewed Spoken Brief

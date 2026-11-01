@@ -168,3 +168,20 @@ so the preset stays at 1.0. Three seeds and one reference, so this is a directio
 Through the Studio (preview on the PR branch): job `b8fef553-10b4-4695-976a-67fd906ad5b9`, prompt
 `83393a50-dd8d-4a67-8dca-7fad2f195b99`, 6.3 s, pixel-identical to the direct seed 30 run. Not tested: other references, other
 samplers, or Base's best strength against Turbo's on a harder pose. Not judged by the owner.
+
+## Anima Role Ref KV head to head
+
+`anima-role-ref-kv-v1.0.safetensors` (sha256 `102dcc38…124bb`, Hugging Face `AnticPan/Anima-Role-Ref-KV` at `259a0dce`) through its own
+node, which needs no strength and runs its own sampler, with the same reference, prompt and seeds as the sweeps above. The node's code was
+read before install: no network, no subprocess, safe weight loading.
+
+| model | steps, cfg | seed 29 | seed 30 | seed 31 | mean | time | adapter's best mean |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Base v1.0 | 28, 4 | 0.2114 | 0.1998 | 0.1933 | 0.2015 | 27 s | 0.1949 |
+| Aesthetic v1.1 | 28, 4 | 0.2114 | 0.1897 | 0.1858 | 0.1956 | 27 s | 0.1929 |
+| Turbo v1.1 | 8, 1 | 0.2109 | 0.2045 | 0.2018 | 0.2057 | 10.6 s | 0.2091 |
+
+Every prompt ID, score, setting and the exact graph are in [role-ref-kv-runs.json](role-ref-kv-runs.json). It runs on this card and also on Turbo, which its card does not claim. The gaps from the adapter
+are within noise on three seeds, so identity scores do not separate the two methods, and all sit above the 0.178 threshold. The owner
+said the adapter was "very close" with "some drifts", and the two methods are set up for the owner's own head-to-head. An agent saw the
+character and outfit hold on all nine. No preset uses Role Ref KV yet.
