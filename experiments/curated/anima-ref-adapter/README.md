@@ -129,3 +129,21 @@ Not verified: other references, a single-portrait reference, any calibration aga
 route for values other than 4.5.
 
 Correction beside the Studio note above: since PR #1888 the Studio can set this value; these runs did not use it.
+
+## Reference strength through the Studio, and on Aesthetic 1.1 (1 November 2026)
+
+Studio job `3b8d66fd-f155-4ca8-b7b1-dc54a845dc2b`, prompt `2f5cda6c-a3d9-42b4-8345-45e1db740906`, `ref_guidance` 2.0, seed
+20261030: output pixel-identical to the sweep's direct render for those values, CCIP 0.1933 both ways. So the *Reference
+strength* control reaches the node. The batch client's seconds field read 0.0 for this job and is not a timing.
+
+The adapter was trained on Anima Base. It also runs on Anima Aesthetic 1.1, the model the Studio's looks use, by changing
+only the UNet file. Direct graph, same reference and seeds:
+
+| `ref_guidance` | seed 29 | seed 30 | seed 31 | mean | Base mean |
+| --- | --- | --- | --- | --- | --- |
+| 3.0 | 0.1917 | 0.1899 | 0.1971 | 0.1929 | 0.1949 |
+| 4.5 | 0.2004 | 0.1904 | 0.1912 | 0.1940 | 0.1969 |
+
+Prompts `d8af3bdc-829d-4699-8f40-61f170233d63` to `61e8405b-e7c8-4c41-88bc-46e19af1f71e`, 36 to 53 s. Aesthetic 1.1 matches
+Base within noise on three seeds, and an agent saw the character hold with a cleaner finish. Nothing here shows it is better.
+No preset uses this yet.
