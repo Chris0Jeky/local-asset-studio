@@ -7399,6 +7399,49 @@
       ]
     },
     {
+      "id": "character-sheet-klein-9b",
+      "name": "Character sheet: front, side and back (FLUX.2 Klein 9B, TripleView)",
+      "category": "Characters",
+      "family": "FLUX.2 Klein 9B",
+      "graph": "workflows/api/character-sheet-klein-9b-api.json",
+      "verified": false,
+      "execution_note": "Direct ComfyUI graph runs on 2026-11-01, not Studio jobs: prompt a3380649-f5d7-46ea-8a16-e72d139dae86 104.0 s (first load), e1f56ff7-8c61-431c-9075-1062780eade7 62.0 s, ab5ffe70-9b32-4f6a-a3c0-3258c3d58673 84.5 s, a7cc2c5a-c537-465b-b416-96804b3185b2 43.8 s. Direct ComfyUI graph, not a Studio job; generated and agent-inspected, not art acceptance. Not yet proved through the Studio, so verified stays false.",
+      "modality": "image",
+      "commercial_note": "FLUX.2 Klein 9B is released under the FLUX non-commercial licence (black-forest-labs/FLUX.2-klein-9B; GGUF quantisation by unsloth), so this recipe is for private experiments only; the Qwen3 8B text encoder and the FLUX.2 VAE follow their own cards. The TripleView LoRA (Alissonerdx/CharacterSheet, civitai model 2764727) is under the Civitai Model License: its card was read on 2026-11-01 but the licence page itself was not opened (models/library.json). Your reference picture keeps its own terms. A successful render is not legal clearance.",
+      "positive": ["4", "text"],
+      "seed": ["7", "noise_seed"],
+      "steps": ["9", "steps"],
+      "cfg": ["6", "cfg"],
+      "width": ["10", "width"],
+      "height": ["10", "height"],
+      "bindings_extra": {
+        "width": [["9", "width"]],
+        "height": [["9", "height"]]
+      },
+      "dimension_multiple": 16,
+      "reference": ["14", "image"],
+      "reference_label": "Character picture",
+      "reference_hint": "One picture of the character. The LoRA redraws it as a front, side and back full-body sheet on a white ground. Its training focused on human characters, so non-human subjects may drift.",
+      "stages": [
+        "FLUX.2 Klein 9B Q6_K GGUF (distilled) + TripleView LoRA (TripleView_klein9b_v1, strength 1.0, model only) + Qwen3 8B fp8 text encoder + FLUX.2 VAE",
+        "Character picture: scaled to ~1 megapixel, VAE-encoded and attached to the prompt as a reference latent",
+        "Wording: the LoRA's trigger sentence, which asks for front, side and back full body views",
+        "8 Euler steps on the Flux2 schedule at CFG 1.0 (distilled: no negative prompt); 44-104 s on the 9070 XT in direct runs",
+        "1536x1024 canvas",
+        "PNG"
+      ],
+      "variants": [
+        {
+          "name": "3-seed audition",
+          "batch_count": 3
+        }
+      ],
+      "source": "https://huggingface.co/Alissonerdx/CharacterSheet",
+      "description": "One picture of a character becomes a front, side and back full-body sheet on a white ground. Uses the TripleView LoRA on FLUX.2 Klein 9B.",
+      "lora": ["40", "strength_model"],
+      "lora_name": ["40", "lora_name"]
+    },
+    {
       "id": "combine-klein-9b-replace",
       "name": "Put this character into another picture (FLUX.2 Klein 9B, replace character: that picture keeps everything but the person)",
       "category": "Characters",
