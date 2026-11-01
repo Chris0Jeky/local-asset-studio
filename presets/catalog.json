@@ -3784,6 +3784,7 @@
       "name": "Anima Reference Adapter (v2, one reference)",
       "category": "Anime flagship",
       "graph": "workflows/api/anima-ref-adapter-api.json",
+      "model_files": ["loras/anima_ref_adapter_v2_r64.safetensors"],
       "verified": true,
       "commercial_note": "CircleStone Labs Non-Commercial base weights; the adapter weights (ElectronGirl/anima-ref-adapter) carry the CircleStone Non-Commercial licence too. Code is Apache-2.0 (ArcAnima/ComfyUI-Anima-Ref-Adapter). Generated outputs have separate terms.",
       "positive": ["6", "text"],
