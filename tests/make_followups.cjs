@@ -449,3 +449,19 @@ test('a hidden tab polls unfinished runs every 15 s, reads once on return, and k
   doc.hidden=true;fail=true;await queue.shift().fn();assert.equal(queue.at(-1).delay,15000,'hidden floor applies to back-off too');
   doc.hidden=false;for(let i=0;i<4;i++)await queue.shift().fn();assert.equal(queue.at(-1).delay,30000,'visible back-off still caps at 30 s');
 });
+
+test('a look on another model environment offers an explicit switch; the press clicks the environment switch once and never generates (moss-look-1019)',()=>{
+  const moss={id:'moss-t2i',backend_id:'moss',runtime_block:'Switch to MOSS-Image · isolated to use this recipe.'},said=[],clicks=[],intervals=[];
+  const options={moss:{textContent:'MOSS-Image · isolated · online'},primary:{textContent:'Main library · online'}},choice={value:'primary'},go={disabled:false,click(){clicks.push(choice.value);}};
+  const context={escape:s=>String(s).replace(/&/g,'&amp;'),byId:id=>id==='moss-t2i'?moss:null,tunedPreset:()=>moss,backendActive:'primary',backendSwitching:false,say:t=>said.push(t),render(){},CSS:{escape:String},
+    document:{querySelector:s=>s==='#backendChoice'?choice:s==='#switchBackend'?go:options[/value="(\w+)"/.exec(s)?.[1]]||null},setInterval:fn=>{intervals.push(fn);return 1;},clearInterval(){}};
+  const api=vm.runInNewContext(between('  const blockerMarkup=','  // Tune this look')+';({blockerMarkup,switchEnvironment})',context);
+  const html=api.blockerMarkup({},moss.runtime_block,'moss-t2i');
+  assert.match(html,/^Runs in MOSS-Image · isolated, not the running Main library\./);assert.match(html,/data-make-switch="moss"[^>]*>Switch to MOSS-Image · isolated</);assert.match(html,/Stops Main library\. About a minute\. Nothing is generated\./);
+  assert.doesNotMatch(api.blockerMarkup({},'Needs 1 model file first: open Models & setup.','moss-t2i'),/data-make-switch/,'only the environment refusal offers a switch');
+  assert.doesNotMatch(api.blockerMarkup({},'Switch to MOSS-Image · isolated to use this recipe. And more.','moss-t2i'),/data-make-switch/,'a reworded refusal is not guessed at');
+  assert.deepEqual(clicks,[],'building the markup switches nothing');
+  go.disabled=true;api.switchEnvironment('moss');assert.deepEqual(clicks,[]);assert.match(said.at(-1),/operation is running/);
+  go.disabled=false;api.switchEnvironment('moss');assert.deepEqual(clicks,['moss'],'one click on the environment switch');assert.match(said.at(-1),/Switching to MOSS-Image · isolated… Nothing is generated/);
+  context.backendActive='moss';intervals.at(-1)();assert.match(said.at(-1),/MOSS-Image · isolated is running\. Press Generate when ready\./);assert.deepEqual(clicks,['moss']);
+});
