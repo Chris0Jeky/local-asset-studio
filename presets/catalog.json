@@ -3878,7 +3878,7 @@
       "modality": "image",
       "family": "Anima",
       "dimension_multiple": 16,
-      "description": "Same reference route at about an eighth of the time: 8 steps at CFG 1. Keep Reference strength at 1.0; at 3.0 the colours fringed in testing. Describe only the scene: no character name, artist or outfit tags. Needs the ComfyUI-Anima-Ref-Adapter custom node.",
+      "description": "Same reference route at about a sixth of the time: 8 steps at CFG 1. Keep Reference strength at 1.0; at 3.0 the colours fringed in testing. Describe only the scene: no character name, artist or outfit tags. Needs the ComfyUI-Anima-Ref-Adapter custom node.",
       "stages": [
         "Reference",
         "Anima Turbo v1.1",

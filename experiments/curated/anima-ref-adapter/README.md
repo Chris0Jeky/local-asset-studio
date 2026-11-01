@@ -161,7 +161,7 @@ same adapter, cfg 1, er_sde, simple. Direct graph, same reference and seeds, 4.6
 | 3.0 | 12 | 0.2141 | 0.2091 | 0.2035 | 0.2089 | 10.6 s | 0.1949 |
 
 Prompts `a1010183-…` to `40e26a1f-9c7e-430a-96da-3b8393fca0e0`. Lower CCIP is closer, and all of these sit above the 0.178 same-character
-threshold, as Base does. At strength 1.0 Turbo matches Base within noise at about an eighth of Base's 35 s. Raising the strength
+threshold, as Base does. At strength 1.0 Turbo matches Base within noise at about a sixth of Base's 27 s (25.7 to 27.1 s in the sweep above). Raising the strength
 to 3.0 costs time and gains nothing: an agent saw teal and yellow colour fringes in the hair on that row, and a halo on one image,
 so the preset stays at 1.0. Three seeds and one reference, so this is a direction, not a ranking.
 
