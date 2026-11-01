@@ -209,6 +209,19 @@ PR #1695 records the evidence. Refs #1204; remaining pair surfaces and registry
 integration are separate. No live generation, art, licensing or assistive-
 technology acceptance is claimed. [HUMAN_TODO.md](HUMAN_TODO.md) remains unchanged.
 
+
+## 2026-11-01 - Anima Reference Adapter preset (PR #1885)
+
+Preset `anima-ref-adapter` runs Anima base v1.0 with the Anima Reference Adapter v2 r64 LoRA through the
+`ComfyUI-Anima-Ref-Adapter` custom node (pinned 99c222e), one reference picture and a scene-only prompt. Studio job
+`953363be-06cc-49a2-84fb-9c7cbe3171ac` (prompt `03573334-76e7-48e0-97f0-4698fbc4ebc0`) completed in 40.0 s and its
+output is pixel-identical to a direct graph run with the same seed. The agent-inspected image keeps the reference's
+hair, clip, eye colour and outfit. Generated and agent-inspected only: not art acceptance, not licence clearance.
+The adapter weights are CircleStone Non-Commercial v1.2; the existing `anima-base-v1-0` pin records different civitai
+terms, which is left as is and listed in HUMAN_TODO for the owner. Receipts and the untested list:
+[experiments/curated/anima-ref-adapter/README.md](experiments/curated/anima-ref-adapter/README.md). The preset needs the
+custom node, installed in the primary ComfyUI and not part of this repository.
+
 ## 2026-10-29 — Ordinary comparisons in Review desk Grid (qualification pending)
 
 The existing Grid now projects saved wording variants and numeric settings into
