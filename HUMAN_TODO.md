@@ -269,6 +269,12 @@ Raised by the overnight coordinator and its gpu-lab and ux-lead agents. Agent ve
 - [x] **las-land-1291-1292: Land local-asset-studio #1291 and #1292.** Verified 11 October 2026: both PRs are MERGED on GitHub, as `d4107a3ba9fa5d8f719d2dbc91ae4a18887b5890` and `7343f5232b6e311e939b646c1bbf594e8d8cfa35`. The owner's cockpit answer **a** at `2026-10-07T03:07:19Z` records that the merges were owner-directed. Agent HQ reconciled the canonical decision as **acted** in PR #356, merged as `02bb2e9`; its summary verifies both merges and states nothing remains to land. The obsolete merge commands have been removed.
   - Source: `decisions/las-land-1291-1292.json` at agent-hq commit `02bb2e9`, acted `2026-10-10T22:47:46Z`. Other open PR failures are separate work and do not reopen this completed action.
 
+
+## Anima Reference Adapter preset (1 November 2026) - open
+
+- [ ] **anima-ref-terms-1101** (owner decision; agents do not tick this): the adapter weights are CircleStone Non-Commercial License v1.2 (Hugging Face `ElectronGirl/anima-ref-adapter`). The existing `anima-base-v1-0` pin in `models/library.json` records civitai terms (`allowCommercialUse Image`) for the same checkpoint, and the Hugging Face repo states the CircleStone non-commercial licence. Decide which record the Studio should follow for commercial use, or confirm all outputs stay non-commercial. Evidence: [experiments/curated/anima-ref-adapter/README.md](experiments/curated/anima-ref-adapter/README.md).
+- [ ] **anima-ref-art-1101** (owner judgment; agents do not tick this): the preset's one Studio output (job `953363be`, `experiments/curated/anima-ref-adapter`) was judged by an agent only. Say whether the reference identity is good enough for the look you want, or whether the adapter should stay parked. The ComfyUI-Anima-Ref-Adapter node is third-party code installed in the primary ComfyUI, not in this repository.
+
 ## Things to glance at when convenient (not blockers)
 
 [docs/OWNER-REVIEW-QUEUE.md](docs/OWNER-REVIEW-QUEUE.md) lists the design defaults, copy changes and small decisions agents made on your behalf. Each row has a place to acknowledge or object. Nothing there blocks work.
