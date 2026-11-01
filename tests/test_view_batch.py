@@ -27,7 +27,7 @@ class StubStudio:
     """Scripted Studio. `final[view]` is the status its job settles on (default completed); a view in `drop` gets its
     job created but the reply is cut, which is exactly an uncertain submission."""
     def __init__(self):
-        self.uploads=[];self.creations=[];self.jobs={};self.final={};self.drop=set();self.bad_origin=0
+        self.uploads=[];self.creations=[];self.jobs={};self.final={};self.drop=set();self.bad_origin=0;self.stalls=0
 
     def handler(self):
         stub=self
@@ -52,6 +52,7 @@ class StubStudio:
                 job=stub.jobs.get(parts[3]) if len(parts)>3 else None
                 if not job: return self.reply(404,{'error':'Unknown job'})
                 if parts[2]=='image': return self.reply(200,b'out-'+job['view'].encode(),'image/png')
+                if stub.stalls: stub.stalls-=1;return self.reply(503,{'error':'busy'})
                 job['polls']+=1;status=stub.final.get(job['view'],'completed') if job['polls']>1 else 'running'
                 self.reply(200,{'id':parts[3],'status':status,'prompt_ids':['p-'+parts[3]],'message':'scripted '+status,'outputs':[{'filename':'x.png'}] if status=='completed' else []})
         return Handler
@@ -130,6 +131,17 @@ class ViewBatchTests(unittest.TestCase):
         self.stub.final['b']='completed'
         self.run_batch();self.assertEqual(len(self.stub.creations),3)  # only c is new: b resumed on its own job
         self.assertEqual(self.manifest()['views']['b']['job_id'],'job-2')
+
+    def test_a_slow_studio_is_polled_again_without_a_second_job(self):
+        self.stub.stalls=5
+        self.run_batch()
+        self.assertEqual(self.stub.stalls,0)
+        self.assertEqual(len(self.stub.creations),len(self.stub.uploads))
+
+    def test_a_silent_studio_stops_the_run_and_resubmits_nothing(self):
+        self.stub.stalls=10**6
+        self.run_batch('--silence','0',expect_stop='Lost sight of job job-1')
+        self.assertEqual(len(self.stub.creations),1)
 
     def test_lost_submit_reply_is_never_resubmitted(self):
         self.stub.drop.add('b')

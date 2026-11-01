@@ -73,15 +73,15 @@ def decide(entry,sha,controls,output):
         '' if same or not entry.get('job_id') else ' and its source or controls have changed'))
 
 def wait(args,job_id):
-    """The job once it leaves the active states; a poll that keeps failing, or a timeout, stops the run (never resubmits)."""
-    deadline=time.monotonic()+args.timeout;bad=0
+    """The job once it leaves the active states. Polls only read, so a slow Studio is retried; ten silent minutes or the
+    timeout stops the run (never resubmits). A host out of memory can stall every reply for minutes."""
+    deadline=time.monotonic()+args.timeout;heard=time.monotonic()
     while True:
         try:
-            job=json.loads(call(args,'GET','/api/jobs/'+job_id));bad=0
+            job=json.loads(call(args,'GET','/api/jobs/'+job_id));heard=time.monotonic()
             if job.get('status') not in ACTIVE: return job
         except (OSError,ValueError) as exc:
-            bad+=1
-            if bad>=3: raise SystemExit('Lost sight of job %s (%s); it was not resubmitted. Check it in the Studio.'%(job_id,detail(exc)))
+            if time.monotonic()-heard>args.silence: raise SystemExit('Lost sight of job %s (%s); it was not resubmitted. Check it in the Studio.'%(job_id,detail(exc)))
         if time.monotonic()>deadline: raise SystemExit('Job %s is still running after %ds; it was not resubmitted. Check it in the Studio.'%(job_id,args.timeout))
         time.sleep(args.poll)
 
@@ -129,6 +129,7 @@ def main(argv=None):
     parser.add_argument('--url',default='http://127.0.0.1:8191');parser.add_argument('--force',action='store_true',help='overwrite existing output files')
     parser.add_argument('--dry-run',action='store_true',help='print the plan and submit nothing');parser.add_argument('--poll',type=float,default=2.0,help='seconds between job polls')
     parser.add_argument('--timeout',type=int,default=3600,help='seconds to wait for one job before stopping')
+    parser.add_argument('--silence',type=int,default=600,help='seconds of failed polls before stopping')
     args=parser.parse_args(argv)
     if not args.inp.is_dir(): parser.error('--in is not a folder: '+str(args.inp))
     base={}
