@@ -43,3 +43,24 @@ run 3. `POST /free` recovered 14 GB, and later runs passed with a free between f
 
 Not verified: identity scores for these presets, a real 3D view as the repaint source, and any owner judgement
 (`character-sheet-art-1101`).
+
+## Colour lock
+
+The owner judged the unlocked repaint not usable: "the strong eye drifts and imperfections stand out way too much as is". On one
+source picture with violet eyes, nine direct renders (seeds 20261101 to 20261103, about 21 s each):
+
+| prompt | denoise | eyes | face chroma error | with the lock |
+| --- | --- | --- | --- | --- |
+| no colours named | 0.45 | blue | 6.55 to 8.63 | 1.84 to 1.88 |
+| colours named | 0.45 | pink-red | 5.95 to 7.70 | 1.85 to 1.89 |
+| colours named | 0.30 | pink-red | 5.02 to 5.85 | 1.84 to 1.85 |
+
+Prompts `b92bc981-c8d4-480e-9a64-1102ef2c02f3` to `d0c76fa0-f08b-4f6b-ab0d-60489883e9b7`. Naming the colour did not hold it, and
+"pink" was the agent's word for violet eyes. The lock keeps the repaint's lightness and takes per-pixel colour from the source.
+
+Through the Studio with the lock: job `4dce7a5b-e9cd-4c30-8236-98f24a58334e`, prompt `fed045ef-c71d-4714-95d0-1bf63a2f465a`, 94.8 s
+after a model switch with 10.3 GB overflowing into system memory (#1893), face chroma error 1.94. An agent compared the eyes with
+the source and they match. One source picture only. The owner has not judged locked output.
+
+Earlier uncertain job `49323960-bd2a-4c7e-b924-6524980260bd`: ComfyUI's history still held prompt `8b0d63fa-c270-4166-aacc-f44d8e3b68da`
+as a success, so Resume observation closed it as completed on 1 November 2026. Nothing was resubmitted.

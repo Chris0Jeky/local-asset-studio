@@ -13,8 +13,8 @@ recipes, unique prompt IDs and hash-bound judgments in the
 [study results](../experiments/curated/moss-study-20261026/RESULTS.md). The tested
 scope is SFT int8, 1024×1536, Euler / sgm_uniform, 30 steps, CFG 3, empty negative;
 `moss-t2i` now records that execution. Three executed recipes are saved. This is
-agent pre-review, not art acceptance. Kromoss is still unverified and its eight
-saved comparison jobs did not run.
+agent pre-review, not art acceptance. Kromoss was unverified at that point and its eight
+saved comparison jobs had not run; they ran on 1 November 2026, see below.
 
 MOSS-Image (OpenMOSS, released 16 October 2026) is a 5B single-stream DiT with a Qwen3.5-9B text encoder and the FLUX.2 VAE (small decoder). It makes text-to-image from natural language, booru tags or a JSON layout. The **local `moss-t2i` workflow has no edit input or ControlNet**; its pose control is prompt wording and layout boxes. Community edit and color/depth adapters are now listed by [Comfy-Org](https://huggingface.co/Comfy-Org/MOSS-Image) (checked 26 October); they are not installed or proven by this local recipe. OpenMOSS weights and code are Apache-2.0; adapters have separate terms.
 
@@ -211,7 +211,26 @@ preserved and a fresh target was used.
   This proves file identity, not compatibility or quality. The author's recipe is
   8 steps, CFG 1, Euler / simple, strength 1.
 
-The new `kromoss-t2i` preset stays **unverified**. Its graph reuses the MOSS backend,
+**1 November 2026:** the checkpoint was downloaded afresh, its SHA-256 matched, and the saved plan ran through the Studio with two
+same-seed MOSS SFT baselines added. Ten jobs, all completed, at 1024×1536:
+
+| scene | recipe | seconds | Studio job | prompt |
+| --- | --- | ---: | --- | --- |
+| sorceress | MOSS SFT, 30 steps | 84.5 | `0e249a8b` | `bbd28dea-4271-4a96-ba62-73d6f2901b04` |
+| sorceress | Kromoss, 30 steps | 52.4 | `5932b9c0` | `1455d1fc-a8c0-4707-ae05-69828122d5aa` |
+| sorceress | Kromoss, 50 steps | 70.4 | `02b173ae` | `498a83fc-72a7-4139-9c81-eb1da92797e1` |
+| sorceress | Kromoss + DMD2, 8 steps | 16.7 | `38aeeb9e` | `9dcea34a-81f4-44b5-8f12-5a2beca66a48` |
+| sorceress | Kromoss + DMD2 + Mikko style, 8 steps | 12.3 | `9558d967` | `358820bb-3dc3-4e95-b3fb-96071d0bed4c` |
+| evening | MOSS SFT, 30 steps | 64.5 | `6e9327b7` | `31c43156-f4e1-43cc-a732-0953d0633481` |
+| evening | Kromoss, 30 steps | 52.5 | `2836db98` | `2fd26b33-eead-4531-aadb-f9a1688e4b0f` |
+| evening | Kromoss, 50 steps | 70.4 | `75c65311` | `9950ac88-30bc-4420-96a9-b5364be006f6` |
+| evening | Kromoss + DMD2, 8 steps | 22.3 | `5522f1a3` | `1c29cc22-440c-473c-8ae9-4848f7a98178` |
+| evening | Kromoss + DMD2 + Mikko style, 8 steps | 12.3 | `6162370c` | `87b5de6b-a52f-459d-9f07-d9a49b10638b` |
+
+Agent's words, not art acceptance: all ten are coherent. Kromoss at 30 and 50 steps looks flatter, with odd body proportions and a soft
+background. The DMD2 versions are crisper and richer in colour at a fifth of the time. The owner's ranking is pending.
+
+The new `kromoss-t2i` preset stayed **unverified** until that run. Its graph reuses the MOSS backend,
 encoder, small VAE and two adapter slots; the model choice has its own pinned
 filename. The [saved eight-image plan](../experiments/curated/moss-study-20261026/kromoss-plan.json)
 is explicitly NOT RUN. [Issue #1662](https://github.com/Chris0Jeky/local-asset-studio/issues/1662)
