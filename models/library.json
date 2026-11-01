@@ -226,12 +226,8 @@
       "sha256": "71dda6079e18d354e16e3347bc49a9b710afd9495c378efbb833d30cac9cb81b",
       "family": "Anima",
       "license": "CircleStone Labs Non-Commercial License v1.2 (weights are a Derivative; outputs are not)",
-      "terms": "Non-commercial and non-production use only, per https://huggingface.co/ElectronGirl/anima-ref-adapter/blob/main/LICENSE.md (CircleStone Labs Non-Commercial License v1.2). Code is Apache-2.0 (ArcAnima/ComfyUI-Anima-Ref-Adapter, commit 99c222e1). The node downloads this file on first use; the Studio preset anima-ref-adapter requires the node.",
-      "trigger": "",
-      "strength": [
-        1.0,
-        1.0
-      ]
+      "terms": "Read 2026-11-01 at https://huggingface.co/ElectronGirl/anima-ref-adapter/blob/b729afd0c3307f27438df42697ccafaecf051d26/LICENSE.md. Weights are non-commercial and non-production use only (sections 1(a), 1(c)); outputs are not Derivatives (section 1(d)) and may be used for any purpose (section 2(e)). Whether a commercial project's pipeline is a Non-Commercial Purpose is not settled here; see HUMAN_TODO. Code is Apache-2.0 (ArcAnima/ComfyUI-Anima-Ref-Adapter, commit 99c222e1). The node downloads this file on first use; the Studio preset anima-ref-adapter requires the node.",
+      "trigger": ""
     },
     {
       "id": "trellis-diffusion",

@@ -32,6 +32,8 @@ block. Both fixed before the runs recorded here.
 - Run B keeps the hair and outfit in broad strokes, but the eyes are purple rather than pink, the clip is thinner,
   and the pose drifts. So `ref_guidance` changes the output in the direction of the reference.
 - This is a visual judgement by one agent. It is not a measured identity score, and no second seed was run.
+- Run B used `ref_guidance` 1.0 through the direct graph. The preset does not bind `ref_guidance`, so the Studio cannot
+  reproduce run B; only the direct graph can. A follow-up would expose it as a control.
 
 ## Not verified
 
@@ -43,10 +45,12 @@ block. Both fixed before the runs recorded here.
 
 ## Licence and terms
 
-Weights are non-commercial (CircleStone Labs Non-Commercial License v1.2; LoRA weights are Derivatives; outputs are not).
-The existing `anima-base-v1-0` pin in `models/library.json` records civitai terms (`allowCommercialUse Image`) while the
-Hugging Face repo states the CircleStone non-commercial licence. The two disagree; this is recorded here and not
-resolved. Do not publish outputs commercially on either reading until the owner decides.
+The adapter weights are under CircleStone Labs Non-Commercial License v1.2, read 1 November 2026 at commit `b729afd0`.
+LoRA weights are Derivatives; outputs are not, and section 2(e) lets outputs be used for any purpose. Whether a
+commercial project's pipeline counts as a Non-Commercial Purpose (section 1(c)) is an open owner question, recorded in
+HUMAN_TODO as `anima-ref-terms-1101`. This is advisory, not legal advice.
+The existing `anima-base-v1-0` pin has an empty licence field and civitai terms for the same file. A separate PR should
+fill it from the CircleStone licence; this PR does not change it.
 
 ## Status
 
