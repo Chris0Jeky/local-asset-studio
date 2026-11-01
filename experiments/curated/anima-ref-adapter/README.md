@@ -147,3 +147,24 @@ only the UNet file. Direct graph, same reference and seeds:
 Prompts `d8af3bdc-829d-4699-8f40-61f170233d63` to `61e8405b-e7c8-4c41-88bc-46e19af1f71e`, 36 to 53 s. Aesthetic 1.1 matches
 Base within noise on three seeds, and an agent saw the character hold with a cleaner finish. Nothing here shows it is better.
 No preset uses this yet.
+
+## Anima Turbo v1.1
+
+Preset `anima-ref-adapter-turbo`: `anima-turbo-v1.1.safetensors` (sha256 `fba11953…f7eb`, Hugging Face at `f973fc41`) with the
+same adapter, cfg 1, er_sde, simple. Direct graph, same reference and seeds, 4.6 s to 10.6 s a picture once loaded:
+
+| `ref_guidance` | steps | seed 29 | seed 30 | seed 31 | mean | time | Base mean at 30 steps |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1.0 | 8 | 0.2080 | 0.2121 | 0.2072 | 0.2091 | 4.6 s | 0.2109 |
+| 1.0 | 12 | 0.2151 | 0.2071 | 0.2092 | 0.2105 | 6.1 s | 0.2109 |
+| 3.0 | 8 | 0.2178 | 0.2135 | 0.2222 | 0.2178 | 7.6 s | 0.1949 |
+| 3.0 | 12 | 0.2141 | 0.2091 | 0.2035 | 0.2089 | 10.6 s | 0.1949 |
+
+Prompts `a1010183-…` to `40e26a1f-9c7e-430a-96da-3b8393fca0e0`. Lower CCIP is closer, and all of these sit above the 0.178 same-character
+threshold, as Base does. At strength 1.0 Turbo matches Base within noise at about an eighth of Base's 35 s. Raising the strength
+to 3.0 costs time and gains nothing: an agent saw teal and yellow colour fringes in the hair on that row, and a halo on one image,
+so the preset stays at 1.0. Three seeds and one reference, so this is a direction, not a ranking.
+
+Through the Studio (preview on the PR branch): job `b8fef553-10b4-4695-976a-67fd906ad5b9`, prompt
+`83393a50-dd8d-4a67-8dca-7fad2f195b99`, 6.3 s, pixel-identical to the direct seed 30 run. Not tested: other references, other
+samplers, or Base's best strength against Turbo's on a harder pose. Not judged by the owner.

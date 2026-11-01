@@ -7,7 +7,7 @@ Reddit and Civitai pages returned nothing usable, so nothing below rests on them
 | # | Candidate | What it uniquely adds | Status here |
 | --- | --- | --- | --- |
 | 1 | [Character sheet LoRAs](https://huggingface.co/Alissonerdx/CharacterSheet) (TripleView, Klein 9B) | Front, side and back from one picture. Stock LoRA loader, no custom node | **Shipped** as `character-sheet-klein-9b`. Clean anime turnarounds on white with head and feet level. Agent-inspected only |
-| 2 | Anima Turbo v1.1 (in [`circlestone-labs/Anima`](https://huggingface.co/circlestone-labs/Anima)) | CFG 1 at 8 to 12 steps. One blog reports about 4x speed with the reference adapter, only at `ref_guidance` 1.0 | Downloading; transfer is slow |
+| 2 | Anima Turbo v1.1 (in [`circlestone-labs/Anima`](https://huggingface.co/circlestone-labs/Anima)) | CFG 1 at 8 to 12 steps. One blog reports about 4x speed with the reference adapter, only at `ref_guidance` 1.0 | **Proven.** 4.6 s against 35 s, and 0.2091 against 0.2109 at strength 1.0. Preset `anima-ref-adapter-turbo`. Receipts: [adapter notes](../../experiments/curated/anima-ref-adapter/README.md#anima-turbo-v11) |
 | 3 | [See-through](https://github.com/shitagaki-lab/see-through) (Apache-2.0, SIGGRAPH 2026) | One anime image to up to 23 RGBA layers in a PSD. README names a ROCm wheel | Not tried. Needs its own environment, not the shared runtime |
 | 4 | [Anima-LLLite](https://huggingface.co/kohya-ss/Anima-LLLite) | Masked inpainting and line-art control for Anima, which has had neither | Not tried. Node is marked experimental |
 | 5 | [Anima Role Ref KV](https://huggingface.co/AnticPan/Anima-Role-Ref-KV) (26 October) | A rival one-reference method, cached once | Not tried. `scripts/identity_score.py` can now settle it head to head |
@@ -53,7 +53,7 @@ Adopt now:
 
 | Tool | Value | Notes |
 | --- | --- | --- |
-| [gltfpack](https://github.com/zeux/meshoptimizer) 1.3 (MIT) | Merges meshes and materials | **Tried.** On a real 316-mesh character GLB, Godot's peak draw calls went from 660 to 64 with bones and vertices intact. Morph count read 230 then 115, not yet explained, and no morph was played. Use `-noq` for Godot |
+| [gltfpack](https://github.com/zeux/meshoptimizer) 1.3 (MIT) | Merges meshes and materials | **Tried.** On a real 316-mesh character GLB, Godot's peak draw calls went from 660 to 64 with bones and vertices intact. Morphs went 230 to 115 because two meshes sharing the same 115 were merged: no name was lost, and all 103 that move kept the same peak displacement. Data checked, no morph played yet. Use `-noq` for Godot |
 | [glTF-Validator](https://github.com/KhronosGroup/glTF-Validator) (Apache-2.0) | Gate for every export | Already used by `scripts/godot_asset_adapter.py` |
 | [glTF-Transform](https://github.com/donmccurdy/glTF-Transform) (MIT) | Scriptable glTF edits and texture compression | Not tried |
 | [VRM Add-on for Blender](https://github.com/saturday06/VRM-Addon-for-Blender) 4.10.3 (MIT) | VRM export, states Blender 2.93 to 5.2 | Not tried |
@@ -76,5 +76,11 @@ MetaHuman-DNA-Calibration (proprietary, Maya only), Blender Lab MCP (needs Blend
 cloud project and a subscription). RealityScan, raddebugger, GLTFWebViewer, PythonSamples, deadline and
 PixelStreamingInfrastructure have no use here. No official agent skill or MCP repository was found for Godot, OpenUSD or
 Khronos, and none could be located for Houdini or Substance. Whether Unreal 5.8 runs well on an RX 9070 XT is still unknown.
+
+Launcher fix, measured 1 November 2026: on a new account with launcher 20.3.x, Install Engine and + do nothing and the log says
+`found 0 entitled apps`. Adding the free Game Animation Sample from the Samples tab and pressing Create project brought the engine list back
+([forum report](https://forums.unrealengine.com/t/launcher-20-3-5-install-engine-and-do-nothing-0-entitled-apps-eula-never-shown/2840448)).
+It needs the owner to accept the Fab EULA. Install error `DP-01` right after can be a timed-out Windows admin prompt (log: `Error Code 1223`),
+not a real permissions fault.
 
 Licences above are as stated on the pages read, not cleared. See each model's pin in `models/library.json` before use.

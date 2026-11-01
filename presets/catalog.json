@@ -3809,6 +3809,88 @@
       "execution_note": "Studio job 953363be-06cc-49a2-84fb-9c7cbe3171ac (prompt 03573334-76e7-48e0-97f0-4698fbc4ebc0, 1 November 2026, 40.0 s) completed and the image was inspected by an agent; pixel-identical to a direct graph run with the same seed. Generated and agent-inspected, not art acceptance. Receipts: experiments/curated/anima-ref-adapter/README.md."
     },
     {
+      "id": "anima-ref-adapter-turbo",
+      "name": "Anima Reference Adapter Turbo (v2, one reference)",
+      "category": "Anime flagship",
+      "graph": "workflows/api/anima-ref-adapter-turbo-api.json",
+      "model_files": [
+        "diffusion_models/anima-turbo-v1.1.safetensors",
+        "loras/anima_ref_adapter_v2_r64.safetensors"
+      ],
+      "verified": true,
+      "commercial_note": "CircleStone Labs Non-Commercial base weights; the adapter weights (ElectronGirl/anima-ref-adapter) carry the CircleStone Non-Commercial licence too. Code is Apache-2.0 (ArcAnima/ComfyUI-Anima-Ref-Adapter). Generated outputs have separate terms.",
+      "positive": [
+        "6",
+        "text"
+      ],
+      "negative": [
+        "7",
+        "text"
+      ],
+      "width": [
+        "8",
+        "width"
+      ],
+      "height": [
+        "8",
+        "height"
+      ],
+      "seed": [
+        "9",
+        "seed"
+      ],
+      "steps": [
+        "9",
+        "steps"
+      ],
+      "cfg": [
+        "9",
+        "cfg"
+      ],
+      "sampler": [
+        "9",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "9",
+        "scheduler"
+      ],
+      "choices": {
+        "sampler": [
+          "er_sde",
+          "euler",
+          "euler_ancestral"
+        ],
+        "scheduler": [
+          "simple",
+          "normal",
+          "beta"
+        ]
+      },
+      "reference": [
+        "4",
+        "image"
+      ],
+      "ref_guidance": [
+        "5",
+        "ref_guidance"
+      ],
+      "modality": "image",
+      "family": "Anima",
+      "dimension_multiple": 16,
+      "description": "Same reference route at about an eighth of the time: 8 steps at CFG 1. Keep Reference strength at 1.0; at 3.0 the colours fringed in testing. Describe only the scene: no character name, artist or outfit tags. Needs the ComfyUI-Anima-Ref-Adapter custom node.",
+      "stages": [
+        "Reference",
+        "Anima Turbo v1.1",
+        "Ref adapter LoRA",
+        "8-step sampling",
+        "Qwen VAE",
+        "PNG"
+      ],
+      "source": "https://github.com/ArcAnima/ComfyUI-Anima-Ref-Adapter",
+      "execution_note": "Studio job b8fef553-10b4-4695-976a-67fd906ad5b9 (prompt 83393a50-dd8d-4a67-8dca-7fad2f195b99, 1 November 2026, 6.3 s, preview Studio on this branch) completed; pixel-identical to a direct graph run with the same seed, and an agent inspected a 12-image sheet. Generated and agent-inspected, not art acceptance. Receipts: experiments/curated/anima-ref-adapter/README.md."
+    },
+    {
       "id": "anima-portrait",
       "review_set": "character",
       "name": "Anima Aesthetic 1.1 - Portrait",
