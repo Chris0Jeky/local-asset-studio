@@ -1058,6 +1058,24 @@
       "repo": "circlestone-labs/Anima"
     },
     {
+      "id": "anima-turbo-v1-1",
+      "name": "Anima / turbo-v1.1",
+      "file": "diffusion_models/anima-turbo-v1.1.safetensors",
+      "source": "https://huggingface.co/circlestone-labs/Anima",
+      "url": "https://huggingface.co/circlestone-labs/Anima/resolve/f973fc41ec7545364ac9776c2440285f43ff2a30/split_files/diffusion_models/anima-turbo-v1.1.safetensors",
+      "bytes": 4182230656,
+      "sha256": "fba11953276b57edf59d1dc4f1857ac05aa079c56f982b4d7c20298d57d3f7eb",
+      "family": "Anima",
+      "license": "CircleStone Labs Non-Commercial License; Derivative Model of NVIDIA Cosmos-Predict2-2B-Text2Image under the NVIDIA Open Model License",
+      "terms": "Read 2026-11-01 at https://huggingface.co/circlestone-labs/Anima (revision f973fc41ec7545364ac9776c2440285f43ff2a30): the same card and licence terms as anima-base-v1-0; the card says the restriction applies to the Model, not to generated Outputs. The licence files themselves were not re-read here.",
+      "trigger": "",
+      "strength": [
+        1.0,
+        1.0
+      ],
+      "repo": "circlestone-labs/Anima"
+    },
+    {
       "id": "anima-newanimastyle-v1",
       "name": "NEWANIMASTYLE / V1",
       "file": "loras/anima-newanimastyle-v1.safetensors",
