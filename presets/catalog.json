@@ -8530,6 +8530,125 @@
         }
       ],
       "graph": "workflows/api/kromoss-t2i-api.json"
+    },
+    {
+      "id": "union-repaint-wai",
+      "name": "Repaint a picture, keep its shapes (WAI v17 + Union ControlNet: depth + line art)",
+      "category": "Image editing",
+      "family": "WAI v17 (Illustrious)",
+      "graph": "workflows/api/union-repaint-wai-api.json",
+      "model_files": [
+        "checkpoints/waiIllustriousSDXL_v170.safetensors",
+        "controlnet/xinsir-union-sdxl-promax.safetensors"
+      ],
+      "verified": false,
+      "modality": "image",
+      "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved. The Xinsir Union ProMax ControlNet is apache-2.0. The depth map comes from Depth Anything V2 Large (cc-by-nc-4.0 per the Hugging Face API on 2026-09-15; fetched by the comfyui_controlnet_aux node), so treat this recipe as private-experiment only until that is cleared; the line-art detector's weights are not yet recorded. Each carried LoRA keeps its own terms; a repainted picture inherits its source's rights questions. A successful render is not legal clearance.",
+      "positive": [
+        "2",
+        "text"
+      ],
+      "negative": [
+        "3",
+        "text"
+      ],
+      "reference": [
+        "4",
+        "image"
+      ],
+      "seed": [
+        "5",
+        "seed"
+      ],
+      "steps": [
+        "5",
+        "steps"
+      ],
+      "cfg": [
+        "5",
+        "cfg"
+      ],
+      "denoise": [
+        "5",
+        "denoise"
+      ],
+      "sampler": [
+        "5",
+        "sampler_name"
+      ],
+      "scheduler": [
+        "5",
+        "scheduler"
+      ],
+      "width": [
+        "11",
+        "width"
+      ],
+      "height": [
+        "11",
+        "height"
+      ],
+      "pose_strength": [
+        "16",
+        "strength"
+      ],
+      "choices": {
+        "sampler": [
+          "euler_ancestral",
+          "euler",
+          "dpmpp_2m",
+          "dpmpp_2m_sde",
+          "dpmpp_sde"
+        ],
+        "scheduler": [
+          "normal",
+          "karras",
+          "sgm_uniform",
+          "beta",
+          "simple"
+        ]
+      },
+      "lora": [
+        "8",
+        "strength_model"
+      ],
+      "lora_name": [
+        "8",
+        "lora_name"
+      ],
+      "lora2": [
+        "9",
+        "strength_model"
+      ],
+      "lora2_name": [
+        "9",
+        "lora_name"
+      ],
+      "bindings_extra": {
+        "lora": [
+          [
+            "8",
+            "strength_clip"
+          ]
+        ],
+        "lora2": [
+          [
+            "9",
+            "strength_clip"
+          ]
+        ]
+      },
+      "description": "Repaint a picture in the WAI v17 look while keeping its shapes. Depth and line art from your picture hold the geometry, so a 3D view stays the same.",
+      "stages": [
+        "Your picture, scaled and centre-cropped to the canvas (832x1216 by default)",
+        "Depth Anything V2 Large depth map -> Union ProMax ControlNet (depth type, strength 0.8: Pose strength)",
+        "Line-art pass -> the same ControlNet (canny/lineart type, strength 0.6, fixed in the graph), chained after the depth pass",
+        "WAI v17 checkpoint (both LoRA slots off) + VAE encode of the picture as the starting latent",
+        "30-step re-sample at Denoise 0.45, CFG 5",
+        "PNG"
+      ],
+      "source": "https://huggingface.co/xinsir/controlnet-union-sdxl-1.0",
+      "execution_note": "No render yet. Graph authored and statically checked only (validate-repo, validate-live); the first Studio job is pending, so the depth/line-art strengths, the 0.45 denoise and the preprocessor choice (DepthAnythingV2Preprocessor, LineArtPreprocessor) are unproven defaults."
     }
   ]
 }
