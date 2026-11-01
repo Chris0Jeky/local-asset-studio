@@ -73,3 +73,20 @@ not art acceptance and not a licence clearance; the catalog's `verified` flag me
 
 Tests: `python -m unittest discover -s tests -p test_server.py` ran 176 tests, all OK. `validate-repo.py` passes
 (95 preset graphs, 190 pinned assets). `validate-live.py --preset anima-ref-adapter` passed against the live schema.
+
+## Seed stability (Studio batch, 1 November 2026)
+
+Same reference, prompt, settings and `ref_guidance` 4.5, submitted as one Studio job with `batch_count` 3.
+
+| item | value |
+| --- | --- |
+| Studio job | `dc95441f-c219-4e38-8e77-afdb6e526d9f`, status `completed`, 125.1 s for three images |
+| Seeds and prompt IDs | 20261029 `e43f8c49-8e5f-48ba-8f1f-e47611bbf625`; 20261030 `59784e4d-f2b0-4f19-8430-1ade0e0400a3`; 20261031 `780a8a67-3b15-4046-9e31-5943f8f20213` |
+| Output files | `anima_ref_adapter/image_00002_.png`, `image_00003_.png`, `image_00004_.png` |
+| Studio note | GPU memory overflowed about 1.7 GB into system RAM during the run, which slows the steps it touches |
+
+Inspected by an agent: all three keep the reference's pink eyes, red hair clip, long blonde hair, the black-and-white
+maid-style outfit, and the cafe setting. Cup, pose and background vary across seeds. Seed 20261029 is the same seed as the
+earlier Studio job `953363be`, so the first picture is expected to repeat it.
+
+Not verified: a numeric identity score, other references, and whether the overflow changes the output beyond timing.
