@@ -181,7 +181,7 @@ read before install: no network, no subprocess, safe weight loading.
 | Aesthetic v1.1 | 28, 4 | 0.2114 | 0.1897 | 0.1858 | 0.1956 | 27 s | 0.1929 |
 | Turbo v1.1 | 8, 1 | 0.2109 | 0.2045 | 0.2018 | 0.2057 | 10.6 s | 0.2091 |
 
-Prompts `753308ee-…` to `71fab1e4-…`. It runs on this card and also on Turbo, which its card does not claim. The gaps from the adapter
+Every prompt ID, score, setting and the exact graph are in [role-ref-kv-runs.json](role-ref-kv-runs.json). It runs on this card and also on Turbo, which its card does not claim. The gaps from the adapter
 are within noise on three seeds, so identity scores do not separate the two methods, and all sit above the 0.178 threshold. The owner
 said the adapter was "very close" with "some drifts", and the two methods are set up for the owner's own head-to-head. An agent saw the
 character and outfit hold on all nine. No preset uses Role Ref KV yet.
