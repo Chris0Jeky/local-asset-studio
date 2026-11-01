@@ -7406,8 +7406,8 @@
       "category": "Characters",
       "family": "FLUX.2 Klein 9B",
       "graph": "workflows/api/character-sheet-klein-9b-api.json",
-      "verified": false,
-      "execution_note": "Direct ComfyUI graph runs on 2026-11-01, not Studio jobs: prompt a3380649-f5d7-46ea-8a16-e72d139dae86 104.0 s (first load), e1f56ff7-8c61-431c-9075-1062780eade7 62.0 s, ab5ffe70-9b32-4f6a-a3c0-3258c3d58673 84.5 s, a7cc2c5a-c537-465b-b416-96804b3185b2 43.8 s. Direct ComfyUI graph, not a Studio job; generated and agent-inspected, not art acceptance. Seeds 20261101 and 20261102 at 1536x1024 on two anime full-body pictures: all four sheets showed front, side and back on a white ground; eye colour and proportions drifted from the source. The first run includes model loading. Not yet proved through the Studio, so verified stays false.",
+      "verified": true,
+      "execution_note": "Studio job 842dcb86-715c-4959-81b3-2aefe8306683 (prompt 3ed470e8-19f2-4641-a258-44c58e4bf25b, 1 November 2026, 104.5 s after a model switch) completed and was inspected by an agent: front, side and back on white with head and feet level. Four direct graph runs before it took 44 to 104 s, a3380649-f5d7-46ea-8a16-e72d139dae86 to a7cc2c5a-c537-465b-b416-96804b3185b2. Eye colour and proportions drift from the source. Generated and agent-inspected, not art acceptance.",
       "modality": "image",
       "commercial_note": "FLUX.2 Klein 9B is released under the FLUX non-commercial licence (black-forest-labs/FLUX.2-klein-9B; GGUF quantisation by unsloth), so this recipe is for private experiments only; the Qwen3 8B text encoder and the FLUX.2 VAE follow their own cards. The TripleView LoRA (Alissonerdx/CharacterSheet, civitai model 2764727) is under the Civitai Model License: its card was read on 2026-11-01 but the licence page itself was not opened (models/library.json). Your reference picture keeps its own terms. A successful render is not legal clearance.",
       "positive": ["4", "text"],
@@ -8586,7 +8586,7 @@
         "checkpoints/waiIllustriousSDXL_v170.safetensors",
         "controlnet/xinsir-union-sdxl-promax.safetensors"
       ],
-      "verified": false,
+      "verified": true,
       "modality": "image",
       "commercial_note": "HF mirror agreement is verified; creator authentication and original commercial terms remain unresolved. The Xinsir Union ProMax ControlNet is apache-2.0. The depth map comes from Depth Anything V2 Large (cc-by-nc-4.0 per the Hugging Face API on 2026-09-15; fetched by the comfyui_controlnet_aux node), so treat this recipe as private-experiment only until that is cleared; the line-art detector's weights are not yet recorded. Each carried LoRA keeps its own terms; a repainted picture inherits its source's rights questions. A successful render is not legal clearance.",
       "positive": [
@@ -8693,7 +8693,7 @@
         "PNG"
       ],
       "source": "https://huggingface.co/xinsir/controlnet-union-sdxl-1.0",
-      "execution_note": "Direct ComfyUI graph, not a Studio job, seed 20261101 on one anime picture: denoise 0.45 (prompt e564cfda-1507-44eb-b9ef-3c1cf6770cd1) and 0.7 (prompt b3fc1971-43d5-4e1c-8e5a-ac816b19671b, 13.7 s warm). Pose, costume, props and background held in both and the finish moved; generated and agent-inspected, not art acceptance. Strengths and other defaults are unswept. First use downloads line-art weights, which stalled ComfyUI for minutes."
+      "execution_note": "Studio job 49c9f6f4-d433-4605-aecf-b586a50e1ea4 (prompt f0135ee3-081f-4a46-bfaf-92cb12da66cd, 1 November 2026, 120.8 s after a model switch) completed and was inspected by an agent: shapes held, finish softer, eye colour moved from pink to blue, so colour is not locked. Direct graph runs at denoise 0.45 and 0.7 held too (13.7 s warm). A second job the same run ended uncertain (49323960-bd2a-4c7e-b924-6524980260bd, prompt 8b0d63fa-c270-4166-aacc-f44d8e3b68da) when the host ran out of memory after several model families; it was not resubmitted. Generated and agent-inspected, not art acceptance. Strengths are unswept."
     }
   ]
 }
