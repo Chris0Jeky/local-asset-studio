@@ -198,6 +198,7 @@
       "sha256": "3c1868387a3a1ff504bbb87c33678321965ead381fcf87afbd0264daa600c082",
       "family": "Anima",
       "license": "CircleStone Labs Non-Commercial weights; see output terms",
+      "terms": "Read 2026-11-01 at https://huggingface.co/circlestone-labs/Anima (revision f973fc41ec7545364ac9776c2440285f43ff2a30): the card names the CircleStone Labs Non-Commercial License and says the restriction applies to the Model, not to generated Outputs; the Model is subject to the NVIDIA Open Model License insofar as it applies to Derivative Models. The licence files themselves were not re-read here. Read the model page before any commercial use.",
       "trigger": ""
     },
     {
@@ -212,6 +213,7 @@
       "sha256": "cd2a512003e2f9f3cd3c32a9c3573f820bb28c940f73c57b1ddaa983d9223eba",
       "family": "Anima",
       "license": "CircleStone Labs Non-Commercial weights; see output terms",
+      "terms": "Read 2026-11-01 at https://huggingface.co/circlestone-labs/Anima (revision f973fc41ec7545364ac9776c2440285f43ff2a30): the card lists this Qwen text encoder among the repository files and gives no licence terms for it, so its own licence is not confirmed here. Read the model page before any commercial use.",
       "trigger": ""
     },
     {
@@ -1046,8 +1048,8 @@
       "bytes": 4182218328,
       "sha256": "bd43b7cffe1ed1153d9c41e7beb2f18cb1273eafbaa3af3edd6a173dc90a006e",
       "family": "Anima",
-      "license": "",
-      "terms": "civitai listing for model 2458426 (read from /api/v1/models on 2026-09-12): allowCommercialUse Image, RentCivit; derivatives allowed; different licence NOT allowed; credit not required. Read the model page before any commercial use.",
+      "license": "CircleStone Labs Non-Commercial License; Derivative Model of NVIDIA Cosmos-Predict2-2B-Text2Image under the NVIDIA Open Model License",
+      "terms": "Read 2026-11-01 at https://huggingface.co/circlestone-labs/Anima (revision f973fc41ec7545364ac9776c2440285f43ff2a30): the card names the CircleStone Labs Non-Commercial License and says the restriction applies to the Model, not to generated Outputs; the Model is subject to the NVIDIA Open Model License insofar as it applies to Derivative Models. The licence files themselves were not re-read here. Separately, the civitai listing for model 2458426 (read from /api/v1/models on 2026-09-12): allowCommercialUse Image, RentCivit; derivatives allowed; different licence NOT allowed; credit not required. Read the model page before any commercial use.",
       "trigger": "",
       "strength": [
         1.0,

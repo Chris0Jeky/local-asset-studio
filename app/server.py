@@ -81,7 +81,7 @@ def extend_handler(base):
     return privacy_scope.extend_handler(extend_prompt_handler(base))
 IMAGE_TYPES = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
 MEDIA_OUTPUT_NODES = continuation.OUTPUTS | {"PreviewImage", "SaveAudio"}
-CONTROL_KEYS = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "lora", "reference", "last_reference", "frames", "fps", "style_weight", "pose_strength", "depth_cut", "sampler", "scheduler", "lora_name", "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name", "lora5", "lora5_name", "lora6", "lora6_name")
+CONTROL_KEYS = ("positive", "negative", "width", "height", "seed", "steps", "cfg", "denoise", "lora", "reference", "last_reference", "frames", "fps", "style_weight", "pose_strength", "ref_guidance", "depth_cut", "sampler", "scheduler", "lora_name", "lora2", "lora2_name", "lora3", "lora3_name", "lora4", "lora4_name", "lora5", "lora5_name", "lora6", "lora6_name")
 METADATA_CONTROL_KEYS = ("mode",)
 LORA_SLOTS = ("lora", "lora2", "lora3", "lora4", "lora5", "lora6")
 PRE_SUBMIT_QUEUE_WAIT_SECONDS = 60     # yield the single worker; never submit into an unobserved/busy queue
@@ -119,7 +119,7 @@ def commit_release_blocked(available):
     return not isinstance(available, int) or isinstance(available, bool) or available <= COMMIT_RELEASE_FLOOR_BYTES
 LORA_NAME_KEYS = tuple(k + "_name" for k in LORA_SLOTS)
 # Plain numeric controls and their accepted range; app/looks.py keeps the same table for saved looks (parity test).
-NUMBER_RANGES = (("seed", 0, 2**63-1, True), ("steps", 1, 150, True), ("cfg", 0, 30, False), ("denoise", 0, 1, False), ("style_weight", 0, 2, False), ("pose_strength", 0, 2, False), ("depth_cut", 0, 100, True))
+NUMBER_RANGES = (("seed", 0, 2**63-1, True), ("steps", 1, 150, True), ("cfg", 0, 30, False), ("denoise", 0, 1, False), ("style_weight", 0, 2, False), ("pose_strength", 0, 2, False), ("ref_guidance", 0, 10, False), ("depth_cut", 0, 100, True))
 
 def _post_failure_detail(exc):
     code = getattr(exc, 'code', None); reason = getattr(exc, 'reason', None) or exc
@@ -1103,10 +1103,10 @@ class Studio:
         if template is None: graph, _ = self.graph_for(preset)
         else: graph = copy.deepcopy(template)
         controls = controls if isinstance(controls, dict) else {}
-        numeric = {"seed", "steps", "cfg", "width", "height", "denoise", "frames", "fps", "style_weight", "pose_strength", "depth_cut", *LORA_SLOTS}
+        numeric = {"seed", "steps", "cfg", "width", "height", "denoise", "frames", "fps", "style_weight", "pose_strength", "ref_guidance", "depth_cut", *LORA_SLOTS}
         extras = preset.get("bindings_extra") or {}
         limits = {"seed": (0, 2**63 - 1, True), "steps": (1, 150, True), "cfg": (0, 30, False), "denoise": (0, 1, False),
-                  "style_weight": (0, 2, False), "pose_strength": (0, 2, False), "depth_cut": (0, 100, True),
+                  "style_weight": (0, 2, False), "pose_strength": (0, 2, False), "ref_guidance": (0, 10, False), "depth_cut": (0, 100, True),
                   "frames": (5, 365, True), "fps": (1, 60, True)}
         for key, raw in controls.items():
             if key not in CONTROL_KEYS or not (preset.get(key) or extras.get(key)): continue
