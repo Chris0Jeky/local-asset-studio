@@ -157,3 +157,20 @@ test('A replaced candidate shows the earlier acceptance as history and is not ac
   assert.ok(h.root.innerHTML.includes('Not accepted') && h.root.innerHTML.includes('Earlier acceptances (1)') && h.root.innerHTML.includes('for an earlier candidate'));
   assert.ok(!h.root.innerHTML.includes('data-action="withdrawAccept"'));
 });
+
+test('A typed Accept note is sent, survives a refused press, and Withdraw sends the id read before the re-render', async () => {
+  const h = harness('#briefs?id=brief-one&slot=background'); h.inspect = withCandidate();
+  await wait(50);
+  h.input({target: {id: 'briefAcceptNote', value: 'Reads well'}});   // act() re-renders before the work runs, so the note cannot be read from the field then
+  h.onOther = () => ({ok: false, status: 503, json: async () => ({error: 'Storage is busy.'})});
+  h.click('accept'); await wait(50);
+  assert.ok(h.root.innerHTML.includes('value="Reads well"'), 'a refused press keeps the typed note');
+  let sent;
+  h.onOther = (key, options) => {sent = JSON.parse(options.body); h.inspect = withCandidate([row()]); return {ok: true, json: async () => ({asset_id: 'asset-1', sha256: sha, workspace_id: workspace, unchanged: false, acceptances: [row({note: sent.note})]})};};
+  h.click('accept'); await wait(50);
+  assert.equal(sent.note, 'Reads well');
+  h.inspect = withCandidate([row()]); h.onOther = (key, options) => {sent = JSON.parse(options.body); h.inspect = withCandidate([row({withdrawn_at: 5, current: false})]); return {ok: true, json: async () => ({asset_id: 'asset-1', sha256: sha, workspace_id: workspace, acceptances: []})};};
+  h.click('withdrawAccept', {acceptance: 'acc-1'}); await wait(50);
+  assert.deepEqual([sent.action, sent.acceptance_id, sent.sha256], ['withdraw', 'acc-1', sha]);
+  assert.ok(!h.root.innerHTML.includes('value="Reads well"'), 'a recorded press clears the note');
+});

@@ -7,6 +7,7 @@
   let scope=null,briefs=[],card=null,saved=null,base=null,states={},acceptances={},collectionAvailable=true,collections=[],collectionCursor=null,looks=[];
   let busy=false,epoch=0,notice='',blockedRaw=null,recoveryFailed=false,conflict=false,picker=null,pickerError='',loadedRoute='',lastRoute=null;
   const memories=new Map();
+  let acceptNote={key:'',text:''};const noteKey=()=>card.id+'/'+route().slot,noteHere=()=>acceptNote.key===noteKey()?acceptNote.text:'';   // typed outside the DOM: act() re-renders before the work runs, which would empty the field
   const allowed=()=>!window.StudioPrivacy||(StudioPrivacy.scope()==='regular'&&StudioPrivacy.creation()==='regular');
   const dirty=()=>!!card&&(!saved||!same(card,saved));
   const route=()=>C.route(location.hash);
@@ -43,12 +44,12 @@
   async function acceptSlot(withdraw,acceptanceId){   // #1832: one explicit press; the server checks the SAVED brief, slot, revision, bytes and Workspace
     const r=route(),id=card.id,revision=base,ref=card.body.slots[r.slot].selected;
     if(!ref||dirty()||conflict)throw Error('Save the brief first.');
-    const note=q('#briefAcceptNote')?.value.trim()||'';
+    const note=noteHere().trim();
     const data=await api('/api/assets/'+encodeURIComponent(ref.asset_id)+'/acceptances',{reviewer:'local-user',sha256:ref.sha256,workspace_id:scope,...(withdraw?{action:'withdraw',acceptance_id:acceptanceId}:{action:'accept',note,brief:{id,slot:r.slot,expected_revision:revision}})});
     if(data.asset_id!==ref.asset_id||data.sha256!==ref.sha256||data.workspace_id!==scope)throw Error('The response belongs to a different picture or Workspace.');
     const inspected=await api('/api/briefs/'+encodeURIComponent(id));
     if(card?.id!==id||base!==revision)return;
-    acceptances=inspected.acceptances||{};notice=withdraw?'Acceptance withdrawn. Accept again whenever you choose.':data.unchanged?'Already accepted. Nothing changed; its first note stays.':'Accepted for this slot. Replacing the candidate later keeps this as history.';
+    acceptances=inspected.acceptances||{};if(!withdraw)acceptNote={key:'',text:''};notice=withdraw?'Acceptance withdrawn. Accept again whenever you choose.':data.unchanged?'Already accepted. Nothing changed; its first note stays.':'Accepted for this slot. Replacing the candidate later keeps this as history.';
   }
   async function loadCollections(cursor=null){const p=new URLSearchParams({workspace_id:scope,limit:'30'});if(cursor)p.set('cursor',cursor);const data=await api('/api/collections?'+p);return data;}
   async function loadCard(identifier,token){
@@ -86,7 +87,7 @@
   function acceptanceMarkup(r,slot,unchanged,unavailable){   // #1832: the owner's own press; a candidate stays a candidate until then
     const rows=acceptances[r.slot]||[],live=unchanged&&slot.selected?rows.find(a=>a.current):null,earlier=rows.filter(a=>a!==live),day=t=>new Date(t*1000).toLocaleDateString();
     const why=!slot.selected?'Choose a candidate first.':dirty()||!unchanged?'Save the brief first.':conflict?'Reload the saved brief first.':unavailable?'The saved candidate is unavailable.':'';
-    return `<section class="brief-accept" aria-label="Accept this slot"><h3>Acceptance</h3>${live?`<p><strong>Accepted</strong> · ${esc(day(live.accepted_at))} · these exact bytes${live.note?' · '+esc(live.note):''}</p>${live.criteria!==slot.criteria?'<small>The acceptance notes changed since.</small>':''}<button type="button" data-action="withdrawAccept" data-acceptance="${esc(live.id)}">Withdraw acceptance</button>`:`<p>Not accepted. A candidate stays a candidate until you press Accept.</p><label>Note (optional)<input id="briefAcceptNote" maxlength="500"></label><button type="button" data-action="accept" ${why?`disabled title="${esc(why)}"`:''}>Accept this picture for this slot</button>${why?'<small>'+esc(why)+'</small>':''}`}${earlier.length?`<details><summary>Earlier acceptances (${earlier.length})</summary><ul>${earlier.map(a=>`<li>${esc(a.asset_id)} · ${esc(day(a.accepted_at))}${a.withdrawn_at?' · withdrawn '+esc(day(a.withdrawn_at)):' · for an earlier candidate'}</li>`).join('')}</ul></details>`:''}<small class="muted">Records your decision for these bytes in this slot. Keep and licence are unchanged.</small></section>`;
+    return `<section class="brief-accept" aria-label="Accept this slot"><h3>Acceptance</h3>${live?`<p><strong>Accepted</strong> · ${esc(day(live.accepted_at))} · these exact bytes${live.note?' · '+esc(live.note):''}</p>${live.criteria!==slot.criteria?'<small>The acceptance notes changed since.</small>':''}<button type="button" data-action="withdrawAccept" data-acceptance="${esc(live.id)}">Withdraw acceptance</button>`:`<p>Not accepted. A candidate stays a candidate until you press Accept.</p><label>Note (optional)<input id="briefAcceptNote" maxlength="500" value="${esc(noteHere())}"></label><button type="button" data-action="accept" ${why?`disabled title="${esc(why)}"`:''}>Accept this picture for this slot</button>${why?'<small>'+esc(why)+'</small>':''}`}${earlier.length?`<details><summary>Earlier acceptances (${earlier.length})</summary><ul>${earlier.map(a=>`<li>${esc(a.asset_id)} · ${esc(day(a.accepted_at))}${a.withdrawn_at?' · withdrawn '+esc(day(a.withdrawn_at)):' · for an earlier candidate'}</li>`).join('')}</ul></details>`:''}<small class="muted">Records your decision for these bytes in this slot. Keep and licence are unchanged.</small></section>`;
   }
   function editor(){
     const r=route(),slot=card.body.slots[r.slot],candidate=states[r.slot],unchanged=JSON.stringify(saved?.body.slots[r.slot].selected)===JSON.stringify(slot.selected);
@@ -116,7 +117,7 @@
     card=C.copy(result);saved=C.copy(result);base=result.revision;conflict=false;notice='Saved to Workspace. Candidate selection is separate from acceptance.';
     briefs=briefs.filter(b=>b.id!==id);briefs.unshift({id,name:result.name,available:true});const inspected=await api('/api/briefs/'+id);if(card?.id===id){states=inspected.candidates;acceptances=inspected.acceptances||{};collectionAvailable=inspected.collection_available;}remember();
   }
-  root.addEventListener('input',event=>{if(!card||busy||blockedRaw!==null)return;const r=route(),value=event.target.value;switch(event.target.id){case 'briefName':card.name=value;break;case 'briefDirection':card.body.direction=value;break;case 'briefIntent':card.body.slots[r.slot].intent=value;break;case 'briefCriteria':card.body.slots[r.slot].criteria=value;break;default:return;}remember();const state=q('#briefSaveState');if(state)state.textContent='Unsaved changes';q('[data-action="prepare"]')?.setAttribute('disabled','');q('[data-action="accept"]')?.setAttribute('disabled','');});
+  root.addEventListener('input',event=>{if(!card||busy||blockedRaw!==null)return;const r=route(),value=event.target.value;if(event.target.id==='briefAcceptNote'){acceptNote={key:noteKey(),text:value};return;}switch(event.target.id){case 'briefName':card.name=value;break;case 'briefDirection':card.body.direction=value;break;case 'briefIntent':card.body.slots[r.slot].intent=value;break;case 'briefCriteria':card.body.slots[r.slot].criteria=value;break;default:return;}remember();const state=q('#briefSaveState');if(state)state.textContent='Unsaved changes';q('[data-action="prepare"]')?.setAttribute('disabled','');q('[data-action="accept"]')?.setAttribute('disabled','');});
   root.addEventListener('change',event=>{if(event.target.id==='briefSelect'){navigate({id:event.target.value||null,picker:false,cursor:'',returned:null});return;}if(event.target.id==='briefCollection'&&card&&!busy){card.body.collection_id=event.target.value||null;collectionAvailable=true;for(const s of Object.values(card.body.slots)){s.previous=s.selected;s.selected=null;}notice='Collection changed. Current candidates moved to each slot’s previous candidate; they must be checked before restoring.';remember();loadedRoute='';navigate({cursor:'',returned:null});refresh();}});
   root.addEventListener('submit',event=>{if(event.target.id!=='briefSearch')return;event.preventDefault();navigate({q:new FormData(event.target).get('q').trim(),cursor:''});});
   root.addEventListener('click',event=>{const button=event.target.closest('[data-action],[data-candidate]');if(!button||button.disabled||busy)return;const action=button.dataset.action,r=route();
@@ -128,11 +129,11 @@
     if(action==='picker'){navigate({picker:true,cursor:'',q:''});return;}if(action==='closePicker'){navigate({picker:false,cursor:'',returned:null});return;}
     if(action==='first'||action==='refreshPicker'){loadedRoute='';navigate({cursor:''});refresh();return;}if(action==='next'){navigate({cursor:picker.next_cursor});return;}
     if(action==='clear'){const s=card.body.slots[r.slot];s.previous=s.selected;s.selected=null;remember();render();return;}
-    const chosenLook=looks.find(l=>l.id===q('#briefLook')?.value);
+    const chosenLook=looks.find(l=>l.id===q('#briefLook')?.value),acceptanceId=button.dataset.acceptance;   // read before act() re-renders
     act(async()=>{
       if(action==='save')await save();
       else if(action==='workingPack')await workingPack();
-      else if(action==='accept'||action==='withdrawAccept')await acceptSlot(action==='withdrawAccept',button.dataset.acceptance);
+      else if(action==='accept'||action==='withdrawAccept')await acceptSlot(action==='withdrawAccept',acceptanceId);
       else if(action==='reload'){if(dirty()&&!confirm('Replace this tab’s draft with the saved brief? Download your draft first if you need both.'))return;memories.delete(card.id);sessionStorage.removeItem(C.storageKey(scope,card.id));card=null;await loadCard(r.id,epoch);notice='Loaded the saved revision.';}
       else if(action==='restore'){const ref=card.body.slots[r.slot].previous;const data=await api('/api/assets/selection',{workspace_id:scope,ids:[ref.asset_id]});const item=data.items[0];const asset=item?.asset||item;if(!asset||asset.sha256!==ref.sha256||asset.metadata_revision!==ref.metadata_revision)throw Error('Previous candidate changed or is unavailable. Choose its current record in the picker.');card=C.choose(card,r.slot,asset);remember();notice='Previous candidate restored in the draft. Save to keep it.';}
       else if(action==='collections'||action==='refreshCollections'){const data=await loadCollections(action==='collections'?collectionCursor:null);collections=action==='collections'?[...collections,...data.collections]:data.collections;collectionCursor=data.next_cursor;}
