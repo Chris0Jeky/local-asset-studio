@@ -795,9 +795,11 @@ def run(shots):
         assert page.locator('#makeGenerate').is_disabled() and page.locator('#makeWhy [data-make-switch="moss"]').count() == 1
         assert page.locator('#makeDraft').count() == 1 and not page.locator('#makeFine').count(), 'MOSS: 20/30/50 steps tied in the lab, so no Fine'
         assert SWITCHES == [], 'choosing the look must not switch'
+        page.locator('#makeCount').select_option('1'); page.locator('#makeShape').select_option('square')
         sent = len(jobs()); page.locator('#makeWhy [data-make-switch="moss"]').click()
         page.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("MOSS-Image · isolated is running")', timeout=15000)
         assert SWITCHES == [{'id': 'moss'}] and len(jobs()) == sent, (SWITCHES, len(jobs()) - sent)
+        assert page.locator('#makeCount').input_value() == '1' and page.locator('#makeShape').input_value() == 'square', 'the redraw after the switch keeps How many and Shape (Codex P2 on #1898)'
         assert not page.locator('#makeGenerate').is_disabled() and not page.locator('#makeWhy [data-make-switch]').count()
         page.locator('[data-make-change]').click()   # back on the gallery, the Main library looks now offer the way back
         assert page.locator('.make-look:has([data-make-look="look-pearly-anima-mix-v10-showcase"]) [data-make-switch="primary"]').count() == 1

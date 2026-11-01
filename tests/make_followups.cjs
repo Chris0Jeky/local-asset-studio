@@ -450,12 +450,19 @@ test('a hidden tab polls unfinished runs every 15 s, reads once on return, and k
   doc.hidden=false;for(let i=0;i<4;i++)await queue.shift().fn();assert.equal(queue.at(-1).delay,30000,'visible back-off still caps at 30 s');
 });
 
-test('a look on another model environment offers an explicit switch; the press clicks the environment switch once and never generates (moss-look-1019)',()=>{
-  const moss={id:'moss-t2i',backend_id:'moss',runtime_block:'Switch to MOSS-Image · isolated to use this recipe.'},said=[],clicks=[],intervals=[];
+// A fake page for the switch tests: the composer's Shape, How many and option boxes are recreated with defaults by render(), as renderComposer does.
+function switchHarness(status='One model environment at a time. Switching never starts a generation.'){
+  const moss={id:'moss-t2i',backend_id:'moss',runtime_block:'Switch to MOSS-Image · isolated to use this recipe.'},said=[],clicks=[],intervals=[],cleared=[],renders=[],estimates=[];
   const options={moss:{textContent:'MOSS-Image · isolated · online'},primary:{textContent:'Main library · online'}},choice={value:'primary'},go={disabled:false,click(){clicks.push(choice.value);}};
-  const context={escape:s=>String(s).replace(/&/g,'&amp;'),byId:id=>id==='moss-t2i'?moss:null,tunedPreset:()=>moss,backendActive:'primary',backendSwitching:false,say:t=>said.push(t),render(){},CSS:{escape:String},
-    document:{querySelector:s=>s==='#backendChoice'?choice:s==='#switchBackend'?go:options[/value="(\w+)"/.exec(s)?.[1]]||null},setInterval:fn=>{intervals.push(fn);return 1;},clearInterval(){}};
+  const nodes={'#makeShape':{value:'design'},'#makeCount':{value:'4'},'[data-make-option="x"]':{dataset:{makeOption:'x'},checked:true}},fresh=()=>{nodes['#makeShape']={value:'design'};nodes['#makeCount']={value:'4'};nodes['[data-make-option="x"]']={dataset:{makeOption:'x'},checked:true};};
+  const context={escape:s=>String(s).replace(/&/g,'&amp;'),byId:id=>id==='moss-t2i'?moss:null,tunedPreset:()=>moss,backendActive:'primary',backendSwitching:false,say:t=>said.push(t),CSS:{escape:String},state:{compare:false},
+    render(){renders.push(1);fresh();},estimate(){estimates.push(1);},q:sel=>nodes[sel]||null,view:{querySelectorAll:()=>[nodes['[data-make-option="x"]']]},
+    document:{querySelector:s=>s==='#backendChoice'?choice:s==='#switchBackend'?go:s==='#backendStatus'?{textContent:status}:options[/value="(\w+)"/.exec(s)?.[1]]||null},setInterval:fn=>{intervals.push(fn);return 1;},clearInterval(t){cleared.push(t);}};
   const api=vm.runInNewContext(between('  const blockerMarkup=','  // Tune this look')+';({blockerMarkup,switchEnvironment})',context);
+  return {api,context,moss,said,clicks,intervals,cleared,renders,estimates,choice,go,nodes};
+}
+test('a look on another model environment offers an explicit switch; the press clicks the environment switch once and never generates (moss-look-1019)',()=>{
+  const {api,context,moss,said,clicks,intervals,choice,go}=switchHarness();
   const html=api.blockerMarkup({},moss.runtime_block,'moss-t2i');
   assert.match(html,/^Runs in MOSS-Image · isolated, not the running Main library\./);assert.match(html,/data-make-switch="moss"[^>]*>Switch to MOSS-Image · isolated</);assert.match(html,/Stops Main library\. About a minute\. Nothing is generated\./);
   assert.doesNotMatch(api.blockerMarkup({},'Needs 1 model file first: open Models & setup.','moss-t2i'),/data-make-switch/,'only the environment refusal offers a switch');
@@ -463,5 +470,20 @@ test('a look on another model environment offers an explicit switch; the press c
   assert.deepEqual(clicks,[],'building the markup switches nothing');
   go.disabled=true;api.switchEnvironment('moss');assert.deepEqual(clicks,[]);assert.match(said.at(-1),/operation is running/);
   go.disabled=false;api.switchEnvironment('moss');assert.deepEqual(clicks,['moss'],'one click on the environment switch');assert.match(said.at(-1),/Switching to MOSS-Image · isolated… Nothing is generated/);
-  context.backendActive='moss';intervals.at(-1)();assert.match(said.at(-1),/MOSS-Image · isolated is running\. Press Generate when ready\./);assert.deepEqual(clicks,['moss']);
+  context.backendSwitching=true;intervals.at(-1)();assert.match(said.at(-1),/Switching to/,'still switching: the watcher waits');
+  context.backendSwitching=false;context.backendActive='moss';intervals.at(-1)();assert.match(said.at(-1),/MOSS-Image · isolated is running\. Press Generate when ready\./);assert.deepEqual(clicks,['moss']);
+});
+test('the redraw after a switch keeps Shape, How many and the option boxes the user set (Codex P2 on #1898)',()=>{
+  const h=switchHarness();h.nodes['#makeShape'].value='portrait';h.nodes['#makeCount'].value='1';h.nodes['[data-make-option="x"]'].checked=false;
+  h.api.switchEnvironment('moss');h.context.backendActive='moss';h.intervals.at(-1)();
+  assert.equal(h.renders.length,1,'the gallery is redrawn');assert.equal(h.nodes['#makeShape'].value,'portrait');assert.equal(h.nodes['#makeCount'].value,'1','one picture stays one, not four');assert.equal(h.nodes['[data-make-option="x"]'].checked,false);
+  assert.equal(h.estimates.length,1,'the estimate follows the restored values');
+});
+test('a server refusal of the switch is shown in Make, stops the watcher and puts the dropdown back (review of #1898)',()=>{
+  const reason='Finish or reconcile active Studio work before switching backends.',h=switchHarness(reason);
+  h.api.switchEnvironment('moss');assert.equal(h.choice.value,'moss');
+  h.context.backendSwitching=false;h.context.backendActive='primary';h.intervals.at(-1)();
+  assert.match(h.said.at(-1),/Did not switch to MOSS-Image · isolated: Finish or reconcile active Studio work before switching backends\. Nothing was generated\./);
+  assert.equal(h.choice.value,'primary','the dropdown is not left on MOSS');assert.equal(h.cleared.length,2,'the watcher stops (once when started, once on the refusal)');assert.equal(h.renders.length,0);
+  const quiet=switchHarness();quiet.api.switchEnvironment('moss');quiet.context.backendActive='primary';quiet.intervals.at(-1)();assert.match(quiet.said.at(-1),/Did not switch to .*Models & setup shows why/,'with no reason on the status line it still says it did not switch');
 });

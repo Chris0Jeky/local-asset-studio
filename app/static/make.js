@@ -133,8 +133,15 @@
     if(!running())return say('Still reading the model environments. Try again in a moment.');
     if(!choice||!go||go.disabled)return say('A local operation is running. Try the switch again when it finishes.');
     choice.value=to;if(choice.value!==to)return say(name+' is not installed. Models & setup lists what it needs.');
-    go.click();say('Switching to '+name+'… Nothing is generated. Generate comes back when it is ready.');clearInterval(switchWatch);const started=Date.now();
-    switchWatch=setInterval(()=>{if(typeof backendSwitching!=='undefined'&&!backendSwitching&&backendActive===to){clearInterval(switchWatch);render();say(name+' is running. Press Generate when ready.');}
+    const from=running();go.click();say('Switching to '+name+'… Nothing is generated. Generate comes back when it is ready.');clearInterval(switchWatch);const started=Date.now();
+    // Inlined, not a helper: the composer's Shape, How many and option boxes are recreated with defaults by render(), so they are read first and put back.
+    switchWatch=setInterval(()=>{const settled=typeof backendSwitching!=='undefined'&&!backendSwitching;
+      if(settled&&backendActive===to){clearInterval(switchWatch);const shape=q('#makeShape'),count=q('#makeCount'),options=[...view.querySelectorAll('[data-make-option]')].map(i=>[i.dataset.makeOption,i.checked]),kept=shape&&count&&!state.compare?{shape:shape.value,count:count.value}:null;
+        render();if(kept&&q('#makeShape')&&q('#makeCount')){q('#makeShape').value=kept.shape;q('#makeCount').value=kept.count;for(const [id,on] of options){const box=q('[data-make-option="'+id+'"]');if(box)box.checked=on;}estimate();}
+        say(name+' is running. Press Generate when ready.');}
+      // The server refused (for example while Studio work is queued or running): backends.js has put its reason in #backendStatus and kept the old environment.
+      else if(settled){clearInterval(switchWatch);choice.value=backendActive||from;const why=document.querySelector('#backendStatus')?.textContent.trim();
+        say('Did not switch to '+name+': '+(why&&!/^One model environment at a time/.test(why)?why:'the Studio refused. Models & setup shows why.')+' Nothing was generated.');}
       else if(Date.now()-started>240000){clearInterval(switchWatch);say('The switch to '+name+' has not finished. Models & setup shows its progress.');}},1000);}
 
   // Tune this look (owner ask, 16 Oct 2026): see and change the look's model, adapters, steps, negative and seed without the
