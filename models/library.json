@@ -1210,6 +1210,21 @@
       "trigger": ""
     },
     {
+      "id": "controlnet-xinsir-union-sdxl-promax",
+      "name": "Xinsir Union SDXL 1.0 ProMax / multi-control",
+      "file": "controlnet/xinsir-union-sdxl-promax.safetensors",
+      "repo": "xinsir/controlnet-union-sdxl-1.0",
+      "revision": "801a4a3fa3d4c936f4feea95b98607bc6726f80c",
+      "source": "https://huggingface.co/xinsir/controlnet-union-sdxl-1.0",
+      "url": "https://huggingface.co/xinsir/controlnet-union-sdxl-1.0/resolve/801a4a3fa3d4c936f4feea95b98607bc6726f80c/diffusion_pytorch_model_promax.safetensors",
+      "bytes": 2513342408,
+      "sha256": "9fae2e50cb431bfcbe05822b59ec2228df545ef27f711dea8949e9f4ed9f7cdc",
+      "license": "apache-2.0",
+      "family": "SDXL 1.0",
+      "terms": "Licence \"apache-2.0\" declared in the xinsir/controlnet-union-sdxl-1.0 repository card, read from the Hugging Face API on 2026-11-01. SHA-256 and size of the installed file match the Hugging Face LFS oid and size for diffusion_pytorch_model_promax.safetensors at revision 801a4a3fa3d4 (checked 2026-11-01); a hash match proves the bytes, not the creator. Installed under a shortened filename; the repository file is diffusion_pytorch_model_promax.safetensors.",
+      "trigger": ""
+    },
+    {
       "id": "flux2-klein-4b-fp8",
       "name": "FLUX.2 Klein 4B FP8 / diffusion backbone",
       "file": "diffusion_models/flux-2-klein-4b-fp8.safetensors",

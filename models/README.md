@@ -61,6 +61,7 @@ writing a file it cannot verify through the download path. Copy them in by hand.
 | `clip_vision/clip-vision_vit-h.safetensors` | 2,528,373,448 | `6ca9667da1ca` | [h94/IP-Adapter](https://huggingface.co/h94/IP-Adapter) | apache-2.0 |
 | `controlnet/xinsir-openpose-sdxl.safetensors` | 2,502,139,104 | `b8524e557a7d` | [xinsir/controlnet-openpose-sdxl-1.0](https://huggingface.co/xinsir/controlnet-openpose-sdxl-1.0) | apache-2.0 |
 | `controlnet/xinsir-union-sdxl-1.0.safetensors` | 2,512,030,408 | `a9e13fd61f31` | [xinsir/controlnet-union-sdxl-1.0](https://huggingface.co/xinsir/controlnet-union-sdxl-1.0) | apache-2.0 |
+| `controlnet/xinsir-union-sdxl-promax.safetensors` | 2,513,342,408 | `9fae2e50cb43` | [xinsir/controlnet-union-sdxl-1.0](https://huggingface.co/xinsir/controlnet-union-sdxl-1.0) | apache-2.0 |
 | `diffusion_models/flux-2-klein-4b-fp8.safetensors` | 4,070,624,520 | `97ed34fe0567` | [black-forest-labs/FLUX.2-klein-4b-fp8](https://huggingface.co/black-forest-labs/FLUX.2-klein-4b-fp8) | apache-2.0 |
 | `diffusion_models/flux2-dev-Q4_K_M.gguf` | 20,082,414,560 | `fca680c7b221` | [city96/FLUX.2-dev-gguf](https://huggingface.co/city96/FLUX.2-dev-gguf) | other |
 | `diffusion_models/qwen-image-edit-2511-Q4_K_M.gguf` | 13,244,758,624 | `8677bac90627` | [unsloth/Qwen-Image-Edit-2511-GGUF](https://huggingface.co/unsloth/Qwen-Image-Edit-2511-GGUF) | apache-2.0 |
