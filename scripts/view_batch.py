@@ -14,9 +14,9 @@ Stdlib only; talks to a running Studio and touches no ComfyUI.
 import argparse, hashlib, http.client, json, os, sys, time
 from pathlib import Path
 from urllib import request as urlrequest
+from urllib.parse import urlsplit
 from urllib.error import HTTPError
 
-ORIGIN='http://127.0.0.1:8191'  # the Studio accepts mutations only from its own loopback origin
 ACTIVE=('queued','waiting','submitting','running')
 RETRYABLE=('failed','partial','cancelled','not_submitted','refused')  # known definite outcomes: a rerun may submit again
 # `abandoned` is not one: the Studio abandons jobs whose remote outcome is unknown, unless it says never_submitted
@@ -24,9 +24,13 @@ TYPES={'.png':'image/png','.jpg':'image/jpeg'}
 
 def digest(data): return hashlib.sha256(data).hexdigest()
 
+def origin(url):
+    """The Studio accepts mutations only from its own origin, so derive it from the Studio we are talking to."""
+    parts=urlsplit(url);return '%s://%s'%(parts.scheme,parts.netloc)
+
 def call(args,method,path,body=None,headers=None,timeout=60):
     """Raw response bytes; HTTPError, URLError and OSError propagate so each caller decides what an error means."""
-    req=urlrequest.Request(args.url.rstrip('/')+path,data=body,method=method,headers=dict({'Origin':ORIGIN},**(headers or {})))
+    req=urlrequest.Request(args.url.rstrip('/')+path,data=body,method=method,headers=dict({'Origin':origin(args.url)},**(headers or {})))
     with urlrequest.urlopen(req,timeout=timeout) as response: return response.read()
 
 def detail(exc):

@@ -47,4 +47,34 @@ falls under "RX-6000 series or newer" for Lumen by inference, and no run or benc
 5.8 release notes and specs read 1 November 2026; size and sign-in come from forum posts or search text, so re-check them
 before any install.
 
+## Vendor tools (read 1 November 2026, from primary repositories)
+
+Adopt now:
+
+| Tool | Value | Notes |
+| --- | --- | --- |
+| [gltfpack](https://github.com/zeux/meshoptimizer) 1.3 (MIT) | Merges meshes and materials | **Tried.** On a real 316-mesh character GLB, Godot's peak draw calls went from 660 to 64 with bones and vertices intact. Morph count read 230 then 115, not yet explained, and no morph was played. Use `-noq` for Godot |
+| [glTF-Validator](https://github.com/KhronosGroup/glTF-Validator) (Apache-2.0) | Gate for every export | Already used by `scripts/godot_asset_adapter.py` |
+| [glTF-Transform](https://github.com/donmccurdy/glTF-Transform) (MIT) | Scriptable glTF edits and texture compression | Not tried |
+| [VRM Add-on for Blender](https://github.com/saturday06/VRM-Addon-for-Blender) 4.10.3 (MIT) | VRM export, states Blender 2.93 to 5.2 | Not tried |
+| [KTX-Software](https://github.com/KhronosGroup/KTX-Software) | GPU texture compression | Licence mix unread |
+| [godot-vrm](https://github.com/V-Sekai/godot-vrm) | VRM and MToon in Godot | Community project, licence unstated by GitHub |
+
+When Unreal is installed:
+
+| Tool | Value | Notes |
+| --- | --- | --- |
+| [Epic's Claude Code plugin](https://github.com/EpicGames/unreal-engine-skills-for-claude-code-plugin) 3.1.2 (MIT) | Three skills (`unreal-mcp`, `create-toolset`, `unreal-skill`) over the editor's own MCP server | Needs a running 5.8 editor with the ModelContextProtocol and AllToolsets plugins. Its `execute_tool_script` runs arbitrary Python in the editor, and its README warns localhost is no trust boundary. Enable per project, not globally |
+| Substrate Toon BSDF and Toon Profile | The first toon route to try | Experimental in 5.8. No open Unreal toon plugin was found in a primary repository |
+| IK Retargeter foot-plane and morph-target split tools | New in 5.8 | From Epic's release notes |
+| [VRM4U](https://github.com/ruyo/VRM4U) | VRM import, zips for UE 5.2 to 5.8 | GitHub reports no licence, its README says MIT |
+| [OpenRigLogic](https://github.com/EpicGames/OpenRigLogic) (MIT) | MetaHuman rig logic, no Unreal dependency | Only with authored DNA files, so of little use for anime faces |
+| [poly-hammer BlenderTools](https://github.com/poly-hammer/BlenderTools) (MIT) | Maintained Send to Unreal fork | No Blender 4.5 claim. Epic's own BlenderTools last released in 2023. Use only if glTF or FBX import falls short |
+
+Skip for now: [Lore](https://github.com/EpicGames/lore) (0.12, on-disk formats may change, revisit after 1.0),
+MetaHuman-DNA-Calibration (proprietary, Maya only), Blender Lab MCP (needs Blender 5.1), UniRig (CUDA), Unity's MCP (needs a
+cloud project and a subscription). RealityScan, raddebugger, GLTFWebViewer, PythonSamples, deadline and
+PixelStreamingInfrastructure have no use here. No official agent skill or MCP repository was found for Godot, OpenUSD or
+Khronos, and none could be located for Houdini or Substance. Whether Unreal 5.8 runs well on an RX 9070 XT is still unknown.
+
 Licences above are as stated on the pages read, not cleared. See each model's pin in `models/library.json` before use.

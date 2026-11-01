@@ -20,7 +20,6 @@ sys.path.insert(0,str(ROOT/'tests'))
 from http_test_server import ThreadingHTTPServer
 spec=importlib.util.spec_from_file_location('view_batch_fixture',ROOT/'scripts/view_batch.py')
 vb=importlib.util.module_from_spec(spec);spec.loader.exec_module(vb)
-ORIGIN='http://127.0.0.1:8191'
 
 
 class StubStudio:
@@ -38,7 +37,7 @@ class StubStudio:
                 self.send_response(code);self.send_header('Content-Type',kind);self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
             def do_POST(self):
                 body=self.rfile.read(int(self.headers.get('Content-Length','0')))
-                if self.headers.get('Origin')!=ORIGIN: stub.bad_origin+=1;return self.reply(403,{'error':'Local same-origin request required'})
+                if self.headers.get('Origin')!='http://'+self.headers['Host']: stub.bad_origin+=1;return self.reply(403,{'error':'Local same-origin request required'})
                 if self.path=='/api/upload':
                     name='%032x_%s'%(len(stub.uploads),self.headers['X-Filename']);stub.uploads.append((name,body,self.headers['Content-Type']))
                     return self.reply(201,{'file':name})
@@ -166,6 +165,10 @@ class ViewBatchTests(unittest.TestCase):
         manifest=json.loads((self.out/'manifest.json').read_text(encoding='utf-8'))
         self.assertEqual({v['seconds'] for v in manifest['views'].values()},{12.5})
         self.assertFalse((self.out/'.view_batch.lock').exists())
+
+    def test_origin_follows_the_chosen_studio(self):
+        self.assertEqual(vb.origin('http://127.0.0.1:8199/'),'http://127.0.0.1:8199')
+        self.assertEqual(vb.origin('http://127.0.0.1:8191'),'http://127.0.0.1:8191')
 
     def test_lost_submit_reply_is_never_resubmitted(self):
         self.stub.drop.add('b')
