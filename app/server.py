@@ -3154,6 +3154,8 @@ class Handler(BaseHTTPRequestHandler):
                 raise WorkspaceError('Unknown brief route', status=404)
             if path.startswith("/api/assets/commands/") and len(path.split("/")) == 5:
                 return self._json(200, self.studio.assets.command_status(path.split("/")[4], self._asset_query_scope(),privacy=scope))
+            if path.startswith("/api/assets/") and path.endswith("/acceptances") and len(path.split("/")) == 5:   # #1832: read-only
+                return self._json(200, self.studio.assets.acceptances(path.split("/")[3]))
             if path.startswith("/api/assets/") and path.endswith("/metadata") and len(path.split("/")) == 5:
                 return self._json(200, self.studio.assets.metadata(path.split("/")[3], self._asset_query_scope(),privacy=scope))
             if path == "/api/setups": return self._json(200, self.studio.assets.setups())
@@ -3378,6 +3380,8 @@ class Handler(BaseHTTPRequestHandler):
                 except sqlite3.Error:
                     return self._json(503, {"error": "Asset storage could not confirm this request. Check its receipt before retrying the exact command.",
                                             "code": "asset_storage_unconfirmed"})
+            acceptance=re.fullmatch(r'/api/assets/([^/]+)/acceptances',urlparse(self.path).path)   # #1832: accept / withdraw / restore, one explicit press each
+            if acceptance: return self._json(200, self.studio.assets.accept(acceptance.group(1),self._body_object()))
             if self.path == "/api/collections": return self._json(200, self.studio.assets.collection(self._body_json(),privacy=scope))
             if self.path == "/api/setups": return self._json(200, self.studio.assets.save_setup(self._body_json()))
             # Looks (#1221): save/edit/put away, and prepare Create's fields from a look and a scene. Neither creates a job.

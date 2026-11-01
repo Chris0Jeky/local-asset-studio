@@ -147,6 +147,12 @@ class AssetWorkspace:
                     body TEXT NOT NULL DEFAULT '{}', lineage TEXT NOT NULL DEFAULT '[]',
                     origin TEXT NOT NULL DEFAULT 'owner', revision INTEGER NOT NULL DEFAULT 0,
                     created_at REAL NOT NULL, updated_at REAL NOT NULL, trashed_at REAL);
+                -- #1832: an owner's "accept for this use" is its own record; never derived from review, favourite or licence. Withdrawn rows stay (reversible).
+                CREATE TABLE IF NOT EXISTS asset_acceptances (
+                    id TEXT PRIMARY KEY, asset_id TEXT NOT NULL REFERENCES assets(id), sha256 TEXT NOT NULL,
+                    use TEXT NOT NULL, note TEXT NOT NULL DEFAULT '', reviewer TEXT NOT NULL,
+                    accepted_at REAL NOT NULL, withdrawn_at REAL);
+                CREATE UNIQUE INDEX IF NOT EXISTS asset_acceptances_live ON asset_acceptances(asset_id, use COLLATE NOCASE) WHERE withdrawn_at IS NULL;
             """)
             # Serialize migration discovery with the ALTER, including simultaneous clients.
             db.execute("BEGIN IMMEDIATE")
@@ -736,6 +742,39 @@ class AssetWorkspace:
                     if winner["name"] != name or json.loads(winner["recipe"]) != recipe:
                         raise WorkspaceError("That setup ID already exists; the original was preserved. Save with a new ID.")
         return {"id": identifier, "name": name}
+
+    def acceptances(self, asset_id, privacy='regular'):
+        """#1832: the owner's recorded acceptances of one regular picture, newest first, withdrawn ones kept. Reads only."""
+        asset = self.get(asset_id, privacy=privacy)
+        if asset.get('privacy', 'regular') != 'regular': raise WorkspaceError("Asset not found")
+        with self.connection() as db:
+            workspace = self._workspace_id(db); rows = db.execute("SELECT * FROM asset_acceptances WHERE asset_id=? ORDER BY accepted_at DESC,id", (asset['id'],)).fetchall()
+        return {'asset_id': asset['id'], 'sha256': asset['sha256'], 'workspace_id': workspace,
+                'acceptances': [{**{k: r[k] for k in ('id', 'asset_id', 'sha256', 'use', 'note', 'reviewer', 'accepted_at', 'withdrawn_at')}, 'reviewer_kind': 'human'} for r in rows],
+                'scope': 'Acceptance for the named use only; independent of Keep, Needs work, Not this and licence state'}
+
+    def accept(self, asset_id, payload):
+        """accept / withdraw / restore. Only an explicit local-user declaration records anything (the Review desk's rule); agents are refused."""
+        if not isinstance(payload, dict): raise WorkspaceError("Acceptance request must be an object")
+        action = payload.get('action', 'accept')
+        if action not in ('accept', 'withdraw', 'restore'): raise WorkspaceError("Unknown acceptance action")
+        if payload.get('reviewer') != 'local-user': raise WorkspaceError("Acceptance needs an explicit local-user declaration", code="acceptance_not_declared")
+        asset = self.get(asset_id)
+        if asset.get('privacy', 'regular') != 'regular': raise WorkspaceError("Asset not found")
+        if action != 'withdraw' and asset['trashed_at'] is not None: raise WorkspaceError("Restore this picture from Trash first")
+        now = time.time()
+        with self.connection() as db:
+            if action == 'accept':
+                use = " ".join(self.text(payload.get('use'), "Use", 80).split()); note = self.text(payload.get('note', ''), "Note", 500)
+                if not use: raise WorkspaceError("Name the use this picture is accepted for")
+                db.execute("INSERT OR IGNORE INTO asset_acceptances VALUES (?,?,?,?,?,?,?,NULL)", (uuid.uuid4().hex, asset['id'], asset['sha256'], use, note, 'local-user', now))  # a repeat press for the same live use is a no-op
+            else:
+                identifier = payload.get('acceptance_id')
+                if not isinstance(identifier, str) or not identifier: raise WorkspaceError("Acceptance ID is required")
+                if db.execute("SELECT 1 FROM asset_acceptances WHERE id=? AND asset_id=?", (identifier, asset['id'])).fetchone() is None: raise WorkspaceError("Acceptance not found", status=404, code="acceptance_not_found")
+                try: db.execute("UPDATE asset_acceptances SET withdrawn_at=" + ("COALESCE(withdrawn_at,?)" if action == 'withdraw' else "?") + " WHERE id=?", (now if action == 'withdraw' else None, identifier))
+                except sqlite3.IntegrityError as error: raise WorkspaceError("This picture is already accepted for that use", status=409, code="acceptance_exists") from error
+        return self.acceptances(asset['id'])
 
     def asset_by_sha256(self, digest, privacy='regular'):
         """The oldest live asset whose snapshot has these bytes, or None: a card's lineage names pictures by content, not by row."""
