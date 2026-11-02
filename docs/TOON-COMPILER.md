@@ -57,7 +57,7 @@ Godot's `light()` sees only `LIGHT_COLOR`, which is colour x energy x pi. The co
 sets each Godot light's colour to the Blender colour and its energy to what Blender's Light Info reports as Power
 (measured: strength / pi for a sun, power / (4 pi^2) for a point). In the shader Power is the brightest channel of
 `LIGHT_COLOR / PI` and Color is the rest. Products such as Color x Power are exact; each alone is exact when the light
-colour's brightest channel is 1, true of every light in the kit and MIRA rigs. Light Info Position, Light Evaluation
+colour's brightest channel is 1, true of every light in the kit. Light Info Position, Light Evaluation
 Distance for point lights (read as 1, exact for suns), and Transmission Light have no `light()` equivalent.
 
 Shadow Raycast becomes `ATTENUATION`. For suns that is the shadow alone. For omni lights Godot folds its distance
