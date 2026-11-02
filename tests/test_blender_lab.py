@@ -211,6 +211,18 @@ class LiveProbeTests(unittest.TestCase):
             result = lab.manifest(LIVE_BLENDER, Path(tmp) / "chest" / "chest.blend", Path(tmp) / "manifest.json")
         self.assertEqual(result["semantic_checksum"], load(FIXTURES / "manifest-articulated-chest.json")["semantic_checksum"])
 
+    def test_live_dcc_bundles_compare_strictly(self):
+        sys.path.insert(0, str(ROOT))
+        from studio_workflow.dcc_evidence import compare_bundles
+        with tempfile.TemporaryDirectory() as tmp:
+            blend = lab.make_fixture(LIVE_BLENDER, Path(tmp) / "asset")
+            one = lab.dcc_bundle(LIVE_BLENDER, blend, Path(tmp) / "one")
+            lab.dcc_bundle(LIVE_BLENDER, blend, Path(tmp) / "two", cameras=Path(tmp) / "one" / "cameras.json")
+            views = one["capture_contract"]["view_ids"]
+            result = compare_bundles(Path(tmp) / "one", Path(tmp) / "two", views, views[:2], 0)
+        self.assertEqual(len(views), 16)
+        self.assertEqual(result["status"], "within_declared_tolerance", result.get("reason"))
+
     def test_live_scene_v1_rerun_is_exactly_equal(self):
         sys.path.insert(0, str(ROOT))
         from studio_workflow.dcc_evidence import compare_scenes

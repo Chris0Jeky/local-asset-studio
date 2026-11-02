@@ -320,6 +320,7 @@ open PRs #1916, #1924, #1931 and #1936.
 | Capability qualification | `blender_lab.py probe` | feature tests per build, never version checks |
 | Exact scene observation (`studio.dcc-scene/v1`) | `blender_lab.py scene-v1`, which runs the stdlib-only collector `scripts/blender_scene_probe.py` | strict same-build change detection: unchanged reruns, before/after an edit; float-exact, UV coordinates, weights, material links |
 | Strict comparison and evidence receipts | `studio_workflow/dcc_evidence.py` (`compare_scenes`, `compare_bundles`, `probe_intent`) | exact equality and hardened PNG/receipt validation; no tolerance or GLB forgiveness |
+| Strict capture bundle (`studio.dcc-evidence/v1`) | `blender_lab.py dcc-bundle` (scene-v1 plus the 16 fixed-camera renders, copied and hashed) | input to `compare_bundles`; pass the first bundle's `cameras.json` to the second |
 | Planning summary and cross-build identity | `blender_lab.py manifest` (`semantic_checksum`) | what an agent may edit; the same scene on 4.5 and 5.4; worker preconditions |
 | GLB export → reimport parity (plan Task 3) | `scripts/blender_sentinel.py` | target-aware structure (format losses, expected exclusions), tolerant renders with region boxes |
 | Persistent session and agent façade | `scripts/blender_worker.py`, `scripts/blender_mcp.py` | many typed calls without per-call start-up |
@@ -336,3 +337,21 @@ following:
 
 So use the exact observation within one build, and the manifest across builds. Evidence:
 `E:/local-asset-studio-labs/rnd-20261102/blender-worker/evidence/scene-v1-qualification-2026-11-02/`.
+
+## Strict capture bundles
+
+```bash
+python scripts/blender_lab.py dcc-bundle --blender <blender.exe> --blend <file.blend> --out-dir one
+python scripts/blender_lab.py dcc-bundle --blender <blender.exe> --blend <edited.blend> --out-dir two --cameras one/cameras.json
+```
+
+A bundle is `evidence.json` in the `studio.dcc-evidence/v1` format, holding:
+- the capture contract: view IDs, resolution, the camera-rig SHA-256 and the render settings;
+- the 16 view PNGs with their hashes;
+- `scene.json`, the exact `scene-v1` observation.
+
+`studio_workflow.dcc_evidence.compare_bundles` reads it directly. Measured on 2 Nov 2026 on 5.4 alpha:
+- An unchanged rerun of the lab asset is bit-identical in all 16 views (max channel delta 0, Cycles included) and
+  comes back `within_declared_tolerance`.
+- The corpus `transform-offset` variant comes back `different`, with the exact structural path
+  `/objects/Head/matrix_world`.
