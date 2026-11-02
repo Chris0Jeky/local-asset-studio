@@ -42,6 +42,72 @@ class ImportRepairedVersionTests(unittest.TestCase):
         from studio_workflow import asset_family
         return asset_family.observe(studio, asset_id, workspace_id=studio.assets.snapshot()['workspace_id'], children=True)
 
+    def http_import(self, path, headers=None, on_read=None):
+        body = repaired()
+        class Body(io.BytesIO):
+            def read(stream, size=-1):
+                raw = super().read(size)
+                if on_read: on_read()
+                return raw
+        handler = server.Handler.__new__(server.Handler)
+        handler.studio = self.studio; handler.path = path
+        handler.headers = {'X-Filename': 'fixed.png', 'Content-Type': 'image/png', **(headers or {})}
+        handler.rfile = Body(body)
+        handler._safe_mutation = lambda: True; handler._content_length = lambda limit: len(body)
+        handler._drain_refused_body = lambda: None
+        seen = {}; handler._json = lambda code, obj: seen.update(status=code, obj=obj)
+        handler.do_POST()
+        return seen
+
+    def test_parented_http_import_requires_one_current_workspace_before_writing(self):
+        identity = self.studio.assets.snapshot()['workspace_id']
+        before = self.tree()
+        for query, status in (('', 400), ('?workspace_id=', 400), ('?workspace_id=bad', 400),
+                              ('?workspace_id='+identity+'&workspace_id='+identity, 400),
+                              ('?workspace_id='+'0'*32, 409)):
+            with self.subTest(query=query):
+                reply = self.http_import('/api/assets/import'+query, {'X-Parent-Asset': self.parent['id']})
+                self.assertEqual(reply['status'], status, reply)
+                self.assertEqual(self.tree(), before, 'A refused repair must leave uploads, runs and assets untouched')
+
+    def test_identity_changed_while_http_body_is_read_refuses_without_writes(self):
+        identity = self.studio.assets.snapshot()['workspace_id']; before = self.tree()
+        def change_workspace():
+            with self.studio.assets.connection() as db:
+                db.execute('UPDATE workspace_identity SET id=? WHERE singleton=1', ('f'*32,))
+        reply = self.http_import('/api/assets/import?workspace_id='+identity,
+                                 {'X-Parent-Asset': self.parent['id']}, change_workspace)
+        self.assertEqual(reply['status'], 409, reply)
+        self.assertEqual(reply['obj']['code'], 'asset_workspace_conflict')
+        self.assertEqual(self.tree(), before)
+
+    def test_studio_refuses_supplied_stale_workspace_before_upload(self):
+        before = self.tree()
+        with self.assertRaises(server.WorkspaceError):
+            self.studio.import_image('fixed.png', 'image/png', repaired(), parent=self.parent['id'],
+                                     expected_workspace_id='0'*32)
+        self.assertEqual(self.tree(), before)
+
+    def test_unparented_http_import_keeps_the_existing_unscoped_path(self):
+        reply = self.http_import('/api/assets/import')
+        self.assertEqual(reply['status'], 201, reply)
+        self.assertEqual(reply['obj']['asset']['lineage'], [])
+        self.assertNotIn('editor_note', reply['obj']['asset']['source'])
+
+    def test_current_workspace_http_import_keeps_private_parent_and_child_private(self):
+        identity = self.studio.assets.snapshot()['workspace_id']
+        parent = self.studio.assets.get(self.private['id'], privacy='private')
+        digest = hashlib.sha256(self.studio.assets.file(self.private['id'], privacy='private').read_bytes()).hexdigest()
+        reply = self.http_import('/api/assets/import?workspace_id='+identity,
+                                 {'X-Parent-Asset': self.private['id'], 'X-Studio-Privacy': 'private',
+                                  'X-Studio-Creation-Privacy': 'private'})
+        self.assertEqual(reply['status'], 201, reply)
+        child = reply['obj']['asset']
+        self.assertEqual((child['privacy'], child['lineage'], child['review']),
+                         ('private', [self.private['id']], 'unreviewed'))
+        self.assertEqual(self.studio.assets.get(self.private['id'], privacy='private'), parent)
+        self.assertEqual(hashlib.sha256(self.studio.assets.file(self.private['id'], privacy='private').read_bytes()).hexdigest(), digest)
+
     def test_repair_links_to_its_parent_and_survives_a_restart(self):
         child = self.studio.import_image('fixed.png', 'image/png', repaired(), parent=self.parent['id'], note='  Cleaned the hand in Krita ')['asset']
         self.assertEqual(child['lineage'], [self.parent['id']])
@@ -114,7 +180,7 @@ class ImportRepairedVersionTests(unittest.TestCase):
             before = self.tree()
             with self.subTest(status):
                 handler = server.Handler.__new__(server.Handler)
-                handler.studio = self.studio; handler.path = '/api/assets/import'
+                handler.studio = self.studio; handler.path = '/api/assets/import?workspace_id='+self.studio.assets.snapshot()['workspace_id']
                 handler.headers = {'X-Filename': 'fixed.png', 'Content-Type': 'image/png', **headers}
                 handler.rfile = io.BytesIO(body)
                 handler._safe_mutation = lambda: True; handler._content_length = lambda limit: len(body)

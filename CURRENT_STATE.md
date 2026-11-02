@@ -17,6 +17,18 @@ exact-head hosted result belongs to the follow-up PR. Refs #1875. The earlier
 comparison head `5e06c25` passed all 37 original browser checks with unchanged
 parent bytes and no generation; that report is baseline evidence for this follow-up.
 
+## 2026-11-02 — Repaired PNG imports bind the opened Workspace
+
+Parented HTTP imports now require the captured Workspace identity and validate
+it after body reading, before any upload or registration. The page confirms the
+parent and refuses a stale Workspace/privacy/detail/hash observation before
+sending the PNG. Ordinary imports and trusted internal Krita calls retain their
+existing API. The focused 73-test group, five import/upload tests, five browser
+installer tests and eight real HTTP checks passed; the Node wrapper runs sixteen
+causal cases. [Evidence and pending hosted browser qualification](docs/verification/2026-11-02-repaired-import-workspace.md).
+Refs #1837; its other stated remainder, #243, #1832 and HUMAN_TODO choices remain
+open. No generation, native-app, art or licensing acceptance is inferred.
+
 ## 2026-11-02 — Imported repair sources follow displayed image orientation
 
 Marked repair, seamless tiles and parallax now use the same displayed coordinates
