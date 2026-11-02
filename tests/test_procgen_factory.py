@@ -190,6 +190,15 @@ class BuildRejection(unittest.TestCase):
             self.assertEqual(json.loads((out / "report.json").read_text(encoding="utf-8"))["state"], "rejected")
             self.assertFalse((out / "request.json").exists())
 
+    def test_blender_failure_still_writes_a_failed_report(self):
+        with tempfile.TemporaryDirectory() as directory:
+            out = Path(directory) / "run"
+            report = factory.build("prop", {}, out, blender=sys.executable)   # "-b" is not a Python flag: exits non-zero
+            self.assertEqual(report["state"], "failed")
+            self.assertEqual(report["failed_gates"], ["blender"])
+            self.assertEqual(json.loads((out / "report.json").read_text(encoding="utf-8"))["failed_gates"], ["blender"])
+            self.assertTrue((out / "blender-stderr.log").exists())
+
     def test_output_directory_must_be_new(self):
         with tempfile.TemporaryDirectory() as directory:
             with self.assertRaises(FileExistsError):
