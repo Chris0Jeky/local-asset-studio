@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 import tempfile
 import threading
+import time
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -141,6 +142,44 @@ class BrainTest(unittest.TestCase):
         try: done = cl.Brain(url, FakeVoice(), self.tmp, self.tmp / "persona.md", self.tmp / "memory.json").respond("Hi", events.append)
         finally: srv.shutdown(); srv.server_close()
         self.assertIn("error", done["ms"]); self.assertEqual(events[-1]["type"], "done")
+
+    def test_voice_failure_still_finishes_the_turn_after_the_stream(self):
+        class Broken(FakeVoice):
+            def say(self, text, path, speed=1.0): raise OSError("disk full")
+        srv, url, _ = stub_llm([{"content": "[happy] One sentence here. "}, {"content": "Two sentences here."}])
+        events = []
+        try: done = cl.Brain(url, Broken(), self.tmp, self.tmp / "persona.md", self.tmp / "memory.json").respond("Hi", events.append)
+        finally: srv.shutdown(); srv.server_close()
+        self.assertIn("disk full", done["ms"]["error"]); self.assertEqual(events[-1]["type"], "done")
+        self.assertEqual(done["reply"], "[happy] One sentence here. Two sentences here.")   # the stream ran to its end first
+
+    def test_concurrent_clients_take_turns(self):
+        class Slow(FakeVoice):
+            def say(self, text, path, speed=1.0): time.sleep(0.05); return super().say(text, path, speed)
+        srv, url, seen = stub_llm([{"content": "[happy] Hello there, friend."}])
+        brain = cl.Brain(url, Slow(), self.tmp, self.tmp / "persona.md", self.tmp / "memory.json")
+        try:
+            ts = [threading.Thread(target=brain.respond, args=(f"line {k}", lambda e: None)) for k in range(2)]
+            for t in ts: t.start()
+            for t in ts: t.join()
+        finally: srv.shutdown(); srv.server_close()
+        self.assertEqual(sorted(len(r["messages"]) for r in seen), [2, 4])            # the second turn saw the first one
+        self.assertEqual([m["role"] for m in brain.history], ["user", "assistant", "user", "assistant"])
+
+    def test_history_is_trimmed_in_blocks(self):
+        srv, url, seen = stub_llm([{"content": "[happy] Sure thing, friend."}])
+        brain = cl.Brain(url, FakeVoice(), self.tmp, self.tmp / "persona.md", self.tmp / "memory.json")
+        try:
+            for k in range(8): brain.respond(f"line {k}", lambda e: None)
+        finally: srv.shutdown(); srv.server_close()
+        self.assertEqual([len(r["messages"]) for r in seen], [2, 4, 6, 8, 10, 12, 14, 8])   # 12 kept, then cut to 6
+        self.assertNotIn("[remember", "".join(m["content"] for m in seen[-1]["messages"]))
+
+
+class StageDirectionTest(unittest.TestCase):
+    def test_a_period_inside_asterisks_does_not_cut(self):
+        s = cl.Splitter(); out = s.feed("This is a long sentence. *waves. Happily* Another sentence follows. ") + s.flush()
+        self.assertEqual(out, [("This is a long sentence.", "happy"), ("Another sentence follows.", "happy")])
 
 
 if __name__ == "__main__":

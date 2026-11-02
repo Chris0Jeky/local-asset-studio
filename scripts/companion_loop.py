@@ -60,7 +60,8 @@ class Splitter:
         self.buf, self.held, self.emotion, self.facts, self.first = "", "", emotion, [], True
 
     def _cut(self):
-        closed = lambda m: self.buf.count("[", 0, m.end()) <= self.buf.count("]", 0, m.end())
+        closed = lambda m: (self.buf.count("[", 0, m.end()) <= self.buf.count("]", 0, m.end())   # not inside a [tag]
+                            and self.buf.count("*", 0, m.end()) % 2 == 0)                          # nor a *stage direction*
         ends = [m for m in END.finditer(self.buf) if closed(m)]
         if self.first:
             ends += [m for m in CLAUSE.finditer(self.buf) if closed(m) and len(TAG.sub("", self.held + self.buf[:m.end()]).strip()) >= FIRST_CLAUSE]
@@ -165,6 +166,7 @@ class Brain:
         self.persona, self.memory_path = Path(persona).read_text(encoding="utf-8").strip(), Path(memory)
         self.memory = json.loads(self.memory_path.read_text(encoding="utf-8")); self.history, self.turn = [], 0
         self.memory.setdefault("self", []); self.memory.setdefault("friend", [])
+        self.lock = threading.Lock()                                        # one turn at a time across all clients
 
     def system(self):
         s = self.persona + "\n\nWhat you remember:\n" + "\n".join("- " + f for f in self.memory["self"])
@@ -172,9 +174,13 @@ class Brain:
         return s
 
     def respond(self, text, send):
+        with self.lock: return self._respond(text, send)
+
+    def _respond(self, text, send):
         t0 = time.perf_counter(); ms = lambda: round((time.perf_counter() - t0) * 1000)
         self.turn += 1; turn = self.turn
-        messages = [{"role": "system", "content": self.system()}, *self.history[-12:], {"role": "user", "content": text}]
+        if len(self.history) > 12: self.history = self.history[-6:]       # in blocks: a sliding window misses the prompt cache
+        messages = [{"role": "system", "content": self.system()}, *self.history, {"role": "user", "content": text}]
         sentences, split, raw, stamps = queue.Queue(), Splitter(), [], {}
 
         def produce():
@@ -189,20 +195,25 @@ class Brain:
 
         threading.Thread(target=produce, daemon=True).start()
         i, out = 0, []
-        while (item := sentences.get()) is not None:
-            (s, emotion), t_split = item
-            wav = self.run / f"t{turn:02d}-s{i}.wav"
-            audio, cues = self.voice.say(s, wav, SPEED.get(emotion, 1.0)); t_tts = ms()
-            if self.visemes == "rhubarb": cues = self.voice.lipsync(wav, s)
-            t_lip = ms()
-            ev = {"type": "sentence", "turn": turn, "i": i, "text": s, "emotion": emotion, "wav": str(wav), "cues": cues,
-                  "lead_s": round(leading_silence(audio), 3), "audio_s": round(len(audio) / 24000, 3),
-                  "ms": {"split": t_split, "tts": t_tts, "lipsync": t_lip}}
-            send(ev); out.append(ev); i += 1
+        try:
+            while (item := sentences.get()) is not None:
+                (s, emotion), t_split = item
+                wav = self.run / f"t{turn:02d}-s{i}.wav"
+                audio, cues = self.voice.say(s, wav, SPEED.get(emotion, 1.0)); t_tts = ms()
+                if self.visemes == "rhubarb": cues = self.voice.lipsync(wav, s)
+                t_lip = ms()
+                ev = {"type": "sentence", "turn": turn, "i": i, "text": s, "emotion": emotion, "wav": str(wav), "cues": cues,
+                      "lead_s": round(leading_silence(audio), 3), "audio_s": round(len(audio) / 24000, 3),
+                      "ms": {"split": t_split, "tts": t_tts, "lipsync": t_lip}}
+                send(ev); out.append(ev); i += 1
+        except Exception as e:                                              # a voice failure still ends the turn with done
+            stamps["error"] = repr(e)
+            while sentences.get() is not None: pass                         # let the stream finish before done goes out
         reply = "".join(raw)
         if split.facts:
             self.memory["friend"] += [f for f in split.facts if f not in self.memory["friend"]]
-            self.memory_path.write_text(json.dumps(self.memory, indent=2) + "\n", encoding="utf-8")
+            tmp = self.memory_path.with_name(self.memory_path.name + ".tmp")   # never truncate the only copy
+            tmp.write_text(json.dumps(self.memory, indent=2) + "\n", encoding="utf-8"); os.replace(tmp, self.memory_path)
         self.history += [{"role": "user", "content": text}, {"role": "assistant", "content": reply}]
         done = {"type": "done", "turn": turn, "user": text, "reply": reply, "emotion": split.emotion, "facts": split.facts,
                 "ms": {**stamps, "total": ms()}, "sentences": [{k: e[k] for k in ("text", "emotion", "lead_s", "audio_s", "ms")} for e in out]}
