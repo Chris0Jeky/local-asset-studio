@@ -92,10 +92,12 @@ const PLAN_RUNNING=['queued','submitting','running','waiting','observing','rende
 function planStageLine(p){
   const stages=p.stages||[],total=stages.length,made=stages.filter(s=>s.job?.status==='completed').length,status=p.state?.status||'',chosen=p.state?.review?.asset_id;
   const winner=chosen&&stages.find(s=>(s.job?.outputs||[]).some(o=>o.asset_id===chosen));
-  const [at,text]=status==='planned'?[0,'Planned; nothing is made yet. Start makes '+total+' candidates, the same recipe with one setting changed each time. It never starts on its own.']
+  const desk=!!p.state?.review?.desk_url,again=p.combine?'':' Branch this study to try again from here.';
+  const [at,text]=status==='planned'?[0,'Planned; nothing is made yet. Start makes '+total+' candidates, each with the change this plan tests. It never starts on its own.']
     :PLAN_RUNNING.includes(status)?[1,'Making the candidates: '+made+' of '+total+' done. You can leave this page; it carries on and the pictures appear here.']
-    :status==='awaiting_review'?[2,(total===2?'Both':'All '+total)+' candidates are made. Compare them: Review opens the side-by-side desk, or use Quick pick under a picture. If none is right, press Needs another pass.']
-    :status==='reviewed'?[3,winner?'Decided: Candidate '+winner.label+' won. Branch this study to try another change from here.':'Decided: none was right yet. Nothing new was made; Branch this study to try again.']
+    :status==='awaiting_review'?[2,(total===2?'Both':'All '+total)+' candidates are made. '+(desk?'You started this choice in the review desk; press Review to finish it there.':'Compare them: Review opens the side-by-side desk, or use Quick pick under a picture. If none is right, press Needs another pass.')]
+    :status==='reviewed'?[3,(winner?'Decided: Candidate '+winner.label+' won.':'Decided: none was right yet. Nothing new was made.')+again]
+    :status==='uncertain'?[1,'Outcome uncertain: '+made+' of '+total+' candidates are recorded and a submission may still be running. Read the message above first; nothing is retried on its own.']
     :[1,'Stopped with '+made+' of '+total+' candidates made; the message above says why. Nothing is retried on its own.'];
   return '<ol class="plan-stages" aria-label="Stages of this comparison">'+['Plan','Make the candidates','Compare','Decide'].map((name,i)=>'<li'+(i===at?' aria-current="step"':'')+(i<at?' data-done':'')+'>'+(i+1)+' · '+name+'</li>').join('')+'</ol><p class="plan-stage-now">'+esc(text)+'</p>';
 }
