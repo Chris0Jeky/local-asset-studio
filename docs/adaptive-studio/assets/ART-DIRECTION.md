@@ -1,5 +1,12 @@
 # Art direction and world continuity
 
+**Draft update for #1923, 2 November 2026 (the direction choice is the owner's).** The owner rejected the neutral
+illustration wave: "we're not just creating neutral assets". The Studio's own illustrations are now characterful anime with
+a recurring original cast, made with the Studio's own presets first. Three candidate directions (Suzu's Harbour Studio,
+Impasto Atelier, Night Shift '89) are briefed in [DIRECTIONS-1923.md](DIRECTIONS-1923.md) and wait for the owner's pick in
+the Versus contest "Studio art directions (#1923)". Until then, "the guide" and "the canon" below mean the chosen
+direction's character; the environment worlds and the composition contract are unchanged.
+
 ## The visual proposition
 
 The user should feel they have entered a personal animation workshop, not opened a settings form with wallpaper behind it. The environment has depth and character, but the actual workbench stays quiet, opaque enough to read, and spatially stable. The art occupies purposeful windows, margins and empty-state moments. The output the user is making remains the most important image on the page.
@@ -31,13 +38,25 @@ Parallax requires a single camera and scene registration. Derive the far archite
 
 ## Illustration families
 
-**Workflow vignettes:** a restrained visual metaphor for the operation, not a fake example of success. Use the same frame/folio/node motif, angle and line weight across tasks. Identity and geometry must appear as distinct sources. Compare cards should be equally prominent rather than declaring a winner visually. A repair illustration cannot stand in for a functioning mask editor.
+**Workflow vignettes:** the guide acting out the operation in the direction's own room and props, not a fake example of
+success and not an empty object. The action is the explanation: a first stroke on a blank sheet for Create, three pictures
+pinned around one blank canvas for Combine, a receipt tucked safely into a satchel for Recover. Keep one room, one prop set
+and one line language across all sixteen. Identity and geometry still appear as distinct sources. Compare cards stay
+equally prominent rather than declaring a winner. A repair illustration cannot stand in for a functioning mask editor.
 
-**Reference examples:** original, public-safe material designed to teach roles. One clearly adult original explorer may supply the canon for identity, outfit and sheet examples. Keep the pose example's geometry independently readable. Use character-free artwork for style and environment examples. Store the role caption outside the image. A nice example is not a measured route benchmark.
+**Reference examples:** identity and outfit come from the guide's approved canon; the pose, style, composition, lighting and
+background examples stay character-free so each teaches one role. Keep the pose example's geometry independently readable.
+Store the role caption outside the image. A nice example is not a measured route benchmark.
 
-**Helper states:** quiet geometric forms with meaningful HTML alongside. Distinguish absent internet, inaccessible Studio, unavailable backend and failed optional media. Uncertain execution uses a retained-receipt motif, not a retry arrow. Conflict shows two equal candidates. Completion has no artistic-approval stars.
+**Helper states:** friendly empty states (first run, an empty library) are pictures of the guide inviting you to fill the
+room (owner answer, 27 September 2026). Error and recovery states stay themeable SVG with meaningful HTML alongside; the
+guide may appear there only as a small vector sticker. Distinguish absent internet, inaccessible Studio, unavailable backend
+and failed optional media. Uncertain execution uses a retained-receipt motif, not a retry arrow. Conflict shows two equal
+candidates. Completion has no artistic-approval stars.
 
-**Optional guide:** an original nonhuman folio-and-star companion. Its expressions are consistent and deliberately modest. It does not bounce for attention, sit over controls or replace explanations. Prefer a neutral abstract helper before commissioning a human/anime host. Any later character host needs a separate adult canon, costume and expression brief; it is not a required onboarding dependency.
+**The guide:** an original adult character (or, in Night Shift '89, a human lead plus a small nonhuman helper) with a
+written bible, a palette and a canon sheet. The guide has personality and expressions, but never sits over controls, never
+bounces for attention and never replaces an explanation. No franchise look-alikes; every character is an adult; SFW only.
 
 ## Texture and motion restraint
 
