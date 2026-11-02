@@ -102,7 +102,8 @@ def check(images, rubric=RUBRIC, reference=(), server=DEFAULT_SERVER, timeout=60
     if reference and diff_only is not None:
         diff = pixel_diff(images, reference)
         # A candidate view with no reference view cannot be cleared by the diff, so it goes to the model (fail open).
-        changed = sum(v["changed_px"] for v in diff.values()) >= DIFF_MIN_PX or len(diff) < len(images)
+        changed = (sum(v["changed_px"] for v in diff.values()) >= DIFF_MIN_PX or len(diff) < len(images)
+                   or any("size_mismatch" in v for v in diff.values()))
         if diff_only or not changed: return {"defects": [], "pixel_diff": diff, "changed": changed, "model": None}
         return dict(check(images, rubric, reference, server, timeout, max_tokens, diff_only=None), pixel_diff=diff, changed=True)
     body = {"messages": messages(images, rubric, reference), "temperature": 0, "max_tokens": max_tokens, "cache_prompt": True,
@@ -182,7 +183,8 @@ def score(rows, rubric=RUBRIC, threshold=0.0):
         for d in r["defects"]:  # keep the most confident report per type
             c = float(d.get("confidence", 1))
             if c >= threshold and c >= float(found.get(d["type"], {}).get("confidence", -1)): found[d["type"]] = d
-        flagged, defective = bool(found), t["category"] != "clean"  # sample level: anything wrong, whatever the label
+        # Sample level: anything wrong, whatever the label. In reference mode the pixel gate decides that, not the model.
+        flagged, defective = r.get("changed", bool(found)), t["category"] != "clean"
         detect["tp" if flagged and defective else "fp" if flagged else "fn" if defective else "tn"] += 1
         for k in rubric:
             v = found.get(k, {}); pred = bool(v)

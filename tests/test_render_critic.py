@@ -52,6 +52,12 @@ class ScoreTest(unittest.TestCase):
         self.assertEqual((s["asymmetry"]["region_ok"], s["asymmetry"]["side_ok"], s["asymmetry"]["side_n"]), (1, 0, 1))
         self.assertEqual((s["omitted_mesh"]["region_ok"], s["omitted_mesh"]["side_ok"]), (0, 1))
 
+    def test_reference_mode_detection_uses_the_pixel_gate(self):
+        hit = dict(row("omitted_mesh", {}, part="hand.L", side="L"), changed=True)   # gate saw it, model named nothing
+        quiet = dict(row("clean", {}), id="c", changed=False)
+        s = rc.score([hit, quiet])
+        self.assertEqual((s["detection"]["tp"], s["detection"]["tn"], s["categories"]["omitted_mesh"]["fn"]), (1, 1, 1))
+
     def test_missed_defect_and_errors(self):
         rows = [row("backside_hole", {}, part="torso"), {"id": "x", "error": "timeout"}]
         summary = rc.score(rows)
@@ -91,6 +97,11 @@ class PixelGateTest(unittest.TestCase):
             Image.new("RGB", (20, 20)).save(Path(d) / "c" / "view_front.png"); Image.new("RGB", (10, 10)).save(Path(d) / "r" / "view_front.png")
             r = rc.check([Path(d) / "c" / "view_front.png"], reference=[Path(d) / "r" / "view_front.png"], server="http://127.0.0.1:9", diff_only=True)
         self.assertTrue(r["changed"]); self.assertEqual(r["pixel_diff"]["front"]["changed_px"], 400)
+        with tempfile.TemporaryDirectory() as d:  # a tiny candidate is below the pixel floor but still a change
+            Image.new("RGB", (1, 1)).save(Path(d) / "view_front.png"); (Path(d) / "r").mkdir()
+            Image.new("RGB", (32, 32)).save(Path(d) / "r" / "view_front.png")
+            r = rc.check([Path(d) / "view_front.png"], reference=[Path(d) / "r" / "view_front.png"], server="http://127.0.0.1:9", diff_only=True)
+        self.assertTrue(r["changed"])
 
     def test_noise_below_the_pixel_floor_is_cleared(self):
         from PIL import Image
@@ -180,6 +191,13 @@ class ModelPathTest(unittest.TestCase):
             self.assertNotIn("clean-1", rows)                 # its own reference: skipped
             self.assertNotIn("error", rows["omitted_mesh-1"])  # the earlier error was retried and replaced
             self.assertIn("missing views", rows["asymmetry-1"]["error"])
+            # A reference root without the clean sample, or with an incomplete one, is an error, never reference-free.
+            empty = Path(d) / "noref"; empty.mkdir(); out2 = Path(d) / "r2.jsonl"
+            rc.evaluate(sets, out2, reference_root=empty, server=self.url)
+            self.assertTrue(all("missing views" in r["error"] for r in rc.load_rows(out2)))
+            (sets / "clean-1" / "view_left.png").unlink(); out3 = Path(d) / "r3.jsonl"
+            rc.evaluate(sets, out3, reference_root=sets, server=self.url)
+            self.assertIn("missing views", {r["id"]: r for r in rc.load_rows(out3)}["omitted_mesh-1"]["error"])
             n = len(_Canned.bodies); rc.evaluate(sets, out, reference_root=sets, server=self.url)
             self.assertEqual(len(_Canned.bodies), n)          # completed rows are not re-run (the error row is retried, no request)
 
