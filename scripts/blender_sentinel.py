@@ -287,7 +287,8 @@ def sentinel(blender_path, blend_path, out_dir, seed_defect=None, timeout=600, s
     target = Path(out_dir).expanduser().resolve()
     require(not target.exists(), "out_dir must be new")
     require(seed_defect in (None, *lab.bpy_side.SEEDED_DEFECTS), "Unknown seeded defect")
-    lease = lab.StudioGpuLease(studio_lease) if studio_lease else None  # validate before any file or process exists
+    # Validate before any file or process exists; the TTL covers both Blender processes at their timeouts.
+    lease = lab.StudioGpuLease(studio_lease, ttl_seconds=min(4 * 3600, 2 * timeout + 300)) if studio_lease else None
     target.mkdir(parents=True)
     before = lab.file_sha(blend)
     glb = target / "export.glb"

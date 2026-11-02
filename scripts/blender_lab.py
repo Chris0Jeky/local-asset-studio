@@ -101,11 +101,15 @@ class StudioGpuLease:
     """Hold the Studio's GPU lease (POST /api/gpu-lease) around a Blender run. The Studio grants it only when its own
     work is idle and then pauses its ComfyUI, so take it only for heavy GPU work, never by default."""
 
-    def __init__(self, studio_url, holder="blender-lab", ttl_seconds=900):
+    def __init__(self, studio_url, holder=None, ttl_seconds=900):
         parts = urlsplit(studio_url)
         require(parts.scheme == "http" and parts.hostname in ("127.0.0.1", "localhost") and parts.port
                 and not parts.username and parts.path in ("", "/"), "studio_url must be http://127.0.0.1:<port>")
         require(type(ttl_seconds) is int and 60 <= ttl_seconds <= 4 * 3600, "ttl_seconds must be 60..14400")
+        import uuid
+        # One holder per run: the Studio treats a repeat acquire by the same holder as a renewal, so a shared name would
+        # let one run release the lease another run is still rendering under.
+        holder = holder or f"blender-lab-{uuid.uuid4().hex[:12]}"
         self.origin, self.holder, self.ttl, self.grant = f"http://{parts.hostname}:{parts.port}", holder, ttl_seconds, None
 
     def _post(self, path, payload):
@@ -120,7 +124,13 @@ class StudioGpuLease:
             raise BlenderLabError(f"Studio GPU lease {path} unreachable: {exc}") from exc
 
     def __enter__(self):
-        self.grant = self._post("/api/gpu-lease", {"holder": self.holder, "ttl_seconds": self.ttl})
+        try:
+            self.grant = self._post("/api/gpu-lease", {"holder": self.holder, "ttl_seconds": self.ttl})
+        except BlenderLabError as exc:
+            if "refused (" not in str(exc):  # the grant may have happened: release this run's own holder, best effort
+                try: self._post("/api/gpu-lease/release", {"holder": self.holder})
+                except BlenderLabError: pass
+            raise
         require(self.grant.get("granted") is True, "Studio did not grant the GPU lease")
         return self.grant
 

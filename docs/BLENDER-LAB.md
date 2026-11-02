@@ -301,7 +301,7 @@ on the lab asset takes about 1.9 s on the GPU (Workbench) and 0.7 s on the CPU (
 lease.
 
 For heavy work, `--studio-lease http://127.0.0.1:8191` holds the Studio's own GPU lease (`POST /api/gpu-lease`,
-holder `blender-lab`) around both Blender processes and releases it afterwards. Only loopback http URLs are accepted.
+holder `blender-lab-<random>`, one per run, with a TTL covering both processes at their timeouts) around both Blender processes and releases it afterwards, on failure paths too. If the grant response is lost, the run releases its own holder before raising. Only loopback http URLs are accepted.
 The Studio grants the lease only when its own work and ComfyUI queues are idle, and then pauses its ComfyUI. If the
 lease is refused, the run raises before any Blender process starts. The lease is never taken by default. It was
 tested against a local fake Studio only, not taken live, because other lanes share ComfyUI tonight.
