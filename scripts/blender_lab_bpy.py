@@ -418,19 +418,26 @@ def _deform_samples(scene, view_layer, poses):
         rig = next((m.object for m in obj.modifiers if m.type == "ARMATURE" and m.object), None)
         plan[obj.name] = (poses.get(rig.name, {}).get("frames") if rig else None) or [scene.frame_start]
     samples = {name: {"frames": frames, "moments": []} for name, frames in plan.items()}
-    for frame in sorted({f for frames in plan.values() for f in frames}):
-        scene.frame_set(frame)
-        depsgraph = bpy.context.evaluated_depsgraph_get()
-        for name, frames in plan.items():
-            if frame not in frames: continue
-            evaluated = scene.objects[name].evaluated_get(depsgraph)
-            mesh = evaluated.to_mesh()
-            local = np.unique(_foreach(mesh.vertices, "co", 3, np.float32).reshape(-1, 3), axis=0)
-            evaluated.to_mesh_clear()
-            matrix = np.array(evaluated.matrix_world, dtype=np.float64)
-            world = local.astype(np.float64) @ matrix[:3, :3].T + matrix[:3, 3]
-            samples[name]["moments"].append(_moments(world, max(float(np.abs(local).max()), float(np.abs(world).max())) if len(local) else 0.0))
-    scene.frame_set(current)
+    # Sample what the LAS export writes: skinning only. It does not apply other modifiers (they are reported as
+    # format losses), so evaluating them here would flag a clean roundtrip. Viewport flags are restored afterwards.
+    toggled = [(m, m.show_viewport) for name in plan for m in scene.objects[name].modifiers]
+    for modifier, _ in toggled: modifier.show_viewport = modifier.type == "ARMATURE"
+    try:
+        for frame in sorted({f for frames in plan.values() for f in frames}):
+            scene.frame_set(frame)
+            depsgraph = bpy.context.evaluated_depsgraph_get()
+            for name, frames in plan.items():
+                if frame not in frames: continue
+                evaluated = scene.objects[name].evaluated_get(depsgraph)
+                mesh = evaluated.to_mesh()
+                local = np.unique(_foreach(mesh.vertices, "co", 3, np.float32).reshape(-1, 3), axis=0)
+                evaluated.to_mesh_clear()
+                matrix = np.array(evaluated.matrix_world, dtype=np.float64)
+                world = local.astype(np.float64) @ matrix[:3, :3].T + matrix[:3, 3]
+                samples[name]["moments"].append(_moments(world, max(float(np.abs(local).max()), float(np.abs(world).max())) if len(local) else 0.0))
+    finally:
+        for modifier, shown in toggled: modifier.show_viewport = shown
+        scene.frame_set(current)
     return samples
 
 
