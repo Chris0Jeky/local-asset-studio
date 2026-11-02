@@ -169,7 +169,8 @@
           pending:mainPage && typeof referencePending !== 'undefined' ? referencePending > 0 : false},
         switching:mainPage && typeof backendSwitching !== 'undefined' ? backendSwitching : false,
         backend:mainPage && typeof backendActive !== 'undefined' ? backendActive : null,
-        comparison:mainPage && location.hash === '#production' && typeof productionPlans !== 'undefined' ? (plan => C.comparison(plan, plan && typeof planHumanTitle === 'function' ? planHumanTitle(plan) : ''))(productionPlans.find(p => p?.id === productionId)) : null,
+        // The plan rendered in the detail (productionDetailPlan), not productionId, which can move before a re-render.
+        comparison:mainPage && location.hash === '#production' && typeof productionPlans !== 'undefined' && typeof productionDetailPlan !== 'undefined' ? (plan => C.comparison(plan, plan && typeof planHumanTitle === 'function' ? planHumanTitle(plan) : ''))(productionPlans.find(p => p?.id === productionDetailPlan)) : null,
         authoring:window.WorkflowStudio?.authoringStatus?.() || null,
         project:window.WorkflowProject?.snapshot?.() || null,
         selection:mainPage && typeof assetSelection !== 'undefined' ? assetSelection.size : 0,

@@ -42,4 +42,6 @@ test('#1939: compare stages read the comparison on screen, never assume one',()=
   }
   assert.match(C.evaluate('comparison_decided',{comparison:plan('reviewed',3,{asset_id:'aB'})}).message,/Candidate B won.*not art acceptance/);
   assert.match(C.evaluate('comparison_made',{comparison:plan('running',1)}).message,/1 of 3 done.*never start a second plan/);
+  assert.equal(state('comparison_decided',{comparison:plan('failed',2,{status:'selected',asset_id:'aB'})}),'met','a finalized desk choice on a failed plan is decided');
+  assert.equal(state('comparison_decided',{comparison:plan('awaiting_review',3,{status:'in_progress'})}),'blocked','a desk review in progress is not a decision');
 });

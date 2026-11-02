@@ -87,12 +87,12 @@
       const name = (c.title ? '“' + c.title + '”' : 'The comparison on screen') + ', ' + c.total + ' candidates';
       if (check === 'comparison_plan') return met(name + ', is prepared. Check it is yours; it starts only when you press Start comparison.');
       if (!c.total) return unknown(name + ': no candidates are recorded for this plan. Inspect its message before relying on it.');
+      if (check === 'comparison_decided' && c.decided) return met(c.winner ? 'Decided: Candidate ' + c.winner + ' won. The choice records preference, not art acceptance or licence clearance.' : 'Decided: none was right yet. Branch the study for another pass.');
       if (c.status === 'planned') return blocked(name + ': press Start comparison. Nothing runs until you do.');
       if (['queued','submitting','running','waiting','observing','rendering'].includes(c.status)) return unknown('Making the candidates: ' + c.made + ' of ' + c.total + ' done. Re-check when it finishes; never start a second plan to retry.');
       if (!['awaiting_review','reviewed'].includes(c.status)) return blocked(name + ' stopped (' + c.status.replaceAll('_',' ') + ') with ' + c.made + ' made. Read its message; nothing is retried on its own.');
       if (check === 'comparison_made') return met('All ' + c.total + ' candidates are made. Compare them at full size before choosing; a finished run is not art acceptance.');
-      if (c.status !== 'reviewed') return blocked('Choose a winner with Review or Quick pick, or press Needs another pass.');
-      return met(c.winner ? 'Decided: Candidate ' + c.winner + ' won. The choice records preference, not art acceptance or licence clearance.' : 'Decided: none was right yet. Branch the study for another pass.');
+      return blocked('Choose a winner with Review or Quick pick, or press Needs another pass.');
     }
     return unknown('This step has no evidence adapter yet. Continue manually without a completion claim.');
   }
@@ -152,7 +152,9 @@
     const stages = Array.isArray(p.stages) ? p.stages : [], chosen = p.state.review?.asset_id;
     const winner = chosen ? stages.find(s => (s?.job?.outputs || []).some(o => o?.asset_id === chosen)) : null;
     return {id:String(p.id || ''), title:String(title || p.name || '').slice(0, 120), status:String(p.state.status || ''), total:stages.length,
-      made:stages.filter(s => s?.job?.status === 'completed').length, winner:winner ? String(winner.label || '') : ''};
+      made:stages.filter(s => s?.job?.status === 'completed').length, winner:winner ? String(winner.label || '') : '',
+      // A finalized review desk records the choice even on a failed plan, whose execution status stays 'failed'.
+      decided:p.state.status === 'reviewed' || ['selected','needs_work'].includes(p.state.review?.status)};
   }
   const api = {evaluate, unknown, referenceSlots, comparison, peekTarget, visibleTarget, revealTarget, route};
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.StudioGuideState = Object.freeze(api);
