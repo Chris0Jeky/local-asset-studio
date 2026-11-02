@@ -128,11 +128,12 @@ class B:
         self.set(_enabled(n.inputs, 'Value')[0], part)
         return self.node('GeometryNodeSetMaterial', Geometry=n.outputs[0], Selection=selection, Material=self.m[role]).outputs[0]
 
-    def instance_at(self, points, geo, rot_z, selection=None):
-        """Instance geo on points rotated about z by a field (radial boxes stay radial), optional selection."""
+    def instance_at(self, points, geo, rot_z, selection=None, scale=None):
+        """Instance geo on points rotated about z by a field (radial boxes stay radial), optional selection and scale."""
         n = self.node('GeometryNodeInstanceOnPoints', Points=points, Instance=geo)
         self.set(_enabled(n.inputs, 'Rotation')[0], self.vec(0.0, 0.0, rot_z))
         if selection is not None: self.set(_enabled(n.inputs, 'Selection')[0], selection)
+        if scale is not None: self.set(_enabled(n.inputs, 'Scale')[0], scale)
         return self.node('GeometryNodeRealizeInstances', Geometry=n.outputs[0]).outputs[0]
 
     def vec(self, x, y, z):
@@ -536,8 +537,67 @@ def tide_pools(b, P):
     return b.join(*g)
 
 
+def market_street(b, P):
+    """Harbour-town night market on a paved slab (top at z=0.1): terrace houses with gable roofs, doors, noren and
+    windows down both sides, stalls alternating sides with a lantern under each canopy, paper lanterns strung across
+    the street over the stalls, and an optional singer's stage with its own lanterns at the far end. Front at y=0, the
+    street runs along +y."""
+    L, W, D, H, rh, z0 = P['length'], P['width'], P['house_depth'], P['house_height'], P['roof_height'], 0.1
+    g = [b.box((-W / 2 - D - 0.5, 0, 0), (W / 2 + D + 0.5, L, z0), 1, 'stone')]
+    def sides(count, y_of, x):
+        """count points alternating left (-x, even i) and right (+x) of the centre line at y_of(i); the left ones turn
+        to face +x, so geometry built facing -x always faces the street."""
+        i = b.index(); s = 2 * b.math('FLOORED_MODULO', i, 2) - 1
+        pts = b.node('GeometryNodeSetPosition', Geometry=b.line(count, (0, 0, 0), (0, 0, 0)), Position=b.vec(s * x, y_of(i), z0)).outputs[0]
+        return pts, (1 - s) * (math.pi / 2)
+    # Houses: equal frontages filling the street length, front at x=0 facing -x, base at z=0; each house (roof included)
+    # gets a seeded height of 0.9..1.15x.
+    nh = b.max(b.math('FLOOR', L / P['house_width']), 1.0)
+    hw = L / nh
+    house = b.join(b.box((0, -hw / 2 + 0.02, 0), (D, hw / 2 - 0.02, H), 2, 'wall'),
+                   b.box((-0.04, -0.45, 0), (0, 0.45, 2.0), 2, 'wood_dark'),                              # door
+                   b.box((-0.06, -0.55, 1.45), (-0.04, 0.55, 2.0), 2, 'fabric'),                          # noren over it
+                   *[b.box((-0.03, c - 0.35, 2.6), (0, c + 0.35, 3.4), 2, 'glass') for c in (-hw / 4, hw / 4)])
+    # Gable roof: a 3-gon cylinder (first vertex on +x) turned so that vertex points up and the axis runs along y. At unit
+    # radius it is sqrt(3) wide and 1.5 tall with its base 0.5 below the centre; scaled to the house plus 0.2 m eaves.
+    prism = b.node('GeometryNodeMeshCylinder', Vertices=3, Radius=1.0, Depth=hw)
+    roof = b.place(prism, 3, 'terracotta', (D / 2, 0, H + rh / 3), (0, -math.pi / 2, math.pi / 2), (rh / 1.5, (D + 0.4) / math.sqrt(3), 1.0))
+    pts, rot = sides(2 * nh, lambda i: (b.math('FLOOR', i / 2) + 0.5) * hw, W / 2)
+    g.append(b.instance_at(pts, b.join(house, roof), rot, scale=b.vec(1.0, 1.0, b.random(0.9, 1.15, P['seed'] + 1))))
+    full = b.detail; b.detail = b.math('MINIMUM', full, 12)          # lanterns are small: past 12 segments only the budget grows
+    def lantern(part):
+        """A paper lantern hanging from z=0: vermilion caps on a cream paper body (Godot lights the 'paper' surfaces)."""
+        return b.join(b.cyl(0.08, 0.04, (0, 0, -0.04), part, 'vermilion'), b.sphere((0, 0, -0.23), (0.15, 0.15, 0.19), part, 'paper'),
+                      b.cyl(0.08, 0.04, (0, 0, -0.46), part, 'vermilion'))
+    # Stalls alternate sides along the stretch in front of the stage, facing the street (counter, posts, canopy, goods).
+    sl = L - 2.6 * P['stage']
+    ns = P['stalls']; pitch = sl / (ns + 1)
+    stall = b.join(b.box((-0.65, -0.85, 0), (-0.2, 0.85, 0.9), 4, 'wood'),
+                   *[b.box((px - 0.03, py - 0.03, 0), (px + 0.03, py + 0.03, 2.3), 4, 'wood_dark') for px in (-0.68, 0.62) for py in (-0.92, 0.92)],
+                   b.box((-0.8, -1.0, 2.3), (0.7, 1.0, 2.36), 4, 'vermilion'),
+                   b.box((-0.6, -0.7, 0.9), (-0.3, -0.4, 1.05), 4, 'accent'), b.box((-0.6, -0.15, 0.9), (-0.3, 0.15, 1.1), 4, 'terracotta'),
+                   b.box((-0.6, 0.4, 0.9), (-0.3, 0.7, 1.0), 4, 'foliage'))
+    pts, rot = sides(ns, lambda i: (i + 1) * pitch, W / 2 - 0.9)
+    g.append(b.instance_at(pts, stall, rot))
+    g.append(b.instance_at(pts, b.transform(lantern(6), (-0.72, 0, 2.3)), rot))
+    # Lantern rows: a cord across the street (stopping 5 cm short of the house fronts) with lanterns every 0.8 m.
+    k = b.math('FLOOR', (W - 0.6) / 0.8)
+    row = b.join(b.box((-W / 2 + 0.05, -0.01, -0.02), (W / 2 - 0.05, 0.01, 0), 5, 'black'),
+                 b.instance(b.line(k, (-(k - 1) * 0.4, 0, -0.02), (0.8, 0, 0)), lantern(5)))
+    nr = P['lantern_rows']
+    g.append(b.instance(b.line(nr, (0, sl / (nr + 1), z0 + P['lantern_height']), (0, sl / (nr + 1), 0)), row))
+    # Stage: platform, back panel and a vermilion frame whose beam carries three lanterns.
+    ys = L - 2.4
+    stage = b.join(b.box((-1.6, ys, z0), (1.6, L - 0.2, z0 + 0.5), 7, 'wood'), b.box((-1.6, L - 0.3, z0 + 0.5), (1.6, L - 0.2, z0 + 2.9), 7, 'wood_dark'),
+                   b.box((-1.8, ys, z0), (-1.6, ys + 0.2, z0 + 3.2), 7, 'vermilion'), b.box((1.6, ys, z0), (1.8, ys + 0.2, z0 + 3.2), 7, 'vermilion'),
+                   b.box((-1.9, ys, z0 + 3.2), (1.9, ys + 0.2, z0 + 3.4), 7, 'vermilion'))
+    g.append(b.switch(P['stage'], b.join(stage, b.instance(b.line(3, (-1.0, ys + 0.1, z0 + 3.2), (1.0, 0, 0)), lantern(8)))))
+    b.detail = full
+    return b.join(*g)
+
+
 GENERATORS = {'room_kit': room_kit, 'prop': prop, 'shrine': shrine, 'lighthouse_room': lighthouse_room, 'pier': pier,
-              'coastal_path': coastal_path, 'tide_pools': tide_pools}
+              'coastal_path': coastal_path, 'tide_pools': tide_pools, 'market_street': market_street}
 
 
 def make_materials(palette):

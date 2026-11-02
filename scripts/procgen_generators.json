@@ -231,6 +231,39 @@
         "6": {"name": "shells", "group": "props", "collision": false, "solid": false, "when": {"shells": [1, 12]}},
         "7": {"name": "sea", "group": "water", "open": true, "collision": false, "solid": false}
       }
+    },
+    "market_street": {
+      "description": "Harbour-town night market street (Hana's market) on a paved slab: terrace houses with gable roofs, doors, noren and windows down both sides, stalls alternating sides with a lantern under each canopy, paper lanterns strung across the street, and an optional singer's stage at the far end. Front at y=0, runs along +y; street surface at z=0.1.",
+      "tri_budget": 30000,
+      "params": {
+        "length": {"type": "float", "min": 6.0, "max": 24.0, "default": 14.0},
+        "width": {"type": "float", "min": 5.0, "max": 10.0, "default": 6.5, "doc": "street width between the house fronts"},
+        "house_width": {"type": "float", "min": 3.0, "max": 6.0, "default": 4.0, "doc": "target frontage; houses split the length evenly"},
+        "house_depth": {"type": "float", "min": 3.0, "max": 6.0, "default": 4.0},
+        "house_height": {"type": "float", "min": 4.0, "max": 7.0, "default": 5.0, "doc": "eave height before the seeded 0.9..1.15x"},
+        "roof_height": {"type": "float", "min": 0.8, "max": 2.5, "default": 1.4},
+        "stalls": {"type": "int", "min": 0, "max": 8, "default": 4, "doc": "market stalls, alternating sides"},
+        "lantern_rows": {"type": "int", "min": 0, "max": 8, "default": 4, "doc": "lantern strings across the street"},
+        "lantern_height": {"type": "float", "min": 3.0, "max": 4.0, "default": 3.2, "doc": "lantern cord height above the street"},
+        "stage": {"type": "int", "min": 0, "max": 1, "default": 1, "doc": "Hana's stage at the far end"},
+        "detail": {"type": "int", "min": 4, "max": 48, "default": 16},
+        "seed": {"type": "int", "min": 0, "max": 9999, "default": 3},
+        "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false, "doc": "flat toon palette: 0 day, 1 dusk, 2 sakura, 3 autumn"}
+      },
+      "constraints": [
+        {"terms": {"stage": 2.6, "stalls": 1.05, "length": -1}, "le": -1.05, "doc": "stalls 2 m wide alternate sides: same-side neighbours never touch and the stage stays clear", "when": {"stalls": [1, 8]}},
+        {"terms": {"lantern_height": 1, "house_height": -0.9}, "le": -0.1, "doc": "lantern cords hang below the lowest eaves", "when": {"lantern_rows": [1, 8]}}
+      ],
+      "parts": {
+        "1": {"name": "street", "group": "ground"},
+        "2": {"name": "houses", "group": "buildings"},
+        "3": {"name": "roofs", "group": "buildings", "collision": false},
+        "4": {"name": "stalls", "group": "stalls", "when": {"stalls": [1, 8]}},
+        "5": {"name": "lanterns", "group": "lanterns", "collision": false, "when": {"lantern_rows": [1, 8]}},
+        "6": {"name": "stall_lanterns", "group": "lanterns", "collision": false, "when": {"stalls": [1, 8]}},
+        "7": {"name": "stage", "group": "stage", "when": {"stage": [1, 1]}},
+        "8": {"name": "stage_lanterns", "group": "lanterns", "collision": false, "when": {"stage": [1, 1]}}
+      }
     }
   }
 }
