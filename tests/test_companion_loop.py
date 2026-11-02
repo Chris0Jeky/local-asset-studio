@@ -213,6 +213,11 @@ class GroundedFactTest(unittest.TestCase):
         self.assertFalse(cl.grounded("likes dogs", ["My friend likes dogs."]))
         self.assertTrue(cl.grounded("her sister likes dogs", ["My sister likes dogs."]))
 
+    def test_negation_and_owners_are_checked_per_clause(self):   # Terra r2 on #1989
+        self.assertFalse(cl.grounded("doesn't like dogs", ["I like dogs but I don't like cats"]))
+        self.assertTrue(cl.grounded("doesn't like cats", ["I like dogs but I don't like cats"]))
+        self.assertFalse(cl.grounded("friend likes dogs and has a sister", ["My sister likes dogs."]))
+
     def test_inflections_match(self):
         self.assertTrue(cl.grounded("moved to Paris", ["I am moving to Paris."]))
 

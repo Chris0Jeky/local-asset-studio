@@ -169,27 +169,28 @@ RELATION = set("name named called likes like loves love enjoys enjoy favourite f
 
 NEGATION = re.compile(r"\b(not|no|never|nothing|nobody|cannot)\b|n't\b")
 OWNED = re.compile(r"\b(?:my|his|her|their|our)\s+([a-z]+)")
+CLAUSE_BREAK = re.compile(r"[.!?;,]+|\b(?:but|and|although|though|while|whereas)\b")
 
 
 def _stem(w): return re.sub(r"(ing|ed|es|s)$", "", w)[:5] if len(w) > 4 else w
 
 
 def grounded(fact, said):
-    """True when one message the user typed supports a [remember: fact]: it holds every content word of the fact
-    (suffixes stripped, so moved/moving and harbour/harbor agree), has the same negation ("I don't love cats" never
-    grounds "loves cats"), and whatever it says belongs to someone ("my sister", "his job") is in the fact too, so a
-    friend's preference is not filed as the user's. Relation words ('name', 'likes', ...) need no support. Lexical:
-    synonyms are rejected (the safe side)."""
+    """True when one message the user typed supports a [remember: fact], clause by clause: every content word of the
+    fact (suffixes stripped, so moved/moving and harbour/harbor agree) sits in a clause of that message whose negation
+    matches the fact clause holding the word ("I like dogs but I don't like cats" never grounds "doesn't like dogs"),
+    and whose owners ("my sister", "his job") are named in that same fact clause, so a sister's taste is not filed as
+    the user's. Relation words ('name', 'likes', ...) need no support. Lexical: synonyms are rejected (the safe side)."""
     low = lambda t: re.sub(r"'s\b", "", t.lower())
     words = lambda t: [w for w in re.findall(r"[a-z0-9]+", low(t)) if w not in STOP and len(w) > 1]
+    clauses = lambda t: [(c, {_stem(w) for w in re.findall(r"[a-z0-9]+", c)}, bool(NEGATION.search(c)), {_stem(o) for o in OWNED.findall(c)})
+                         for c in CLAUSE_BREAK.split(low(t)) if c.strip()]
     content = {_stem(w) for w in words(fact) if w not in RELATION}
-    every = {_stem(w) for w in re.findall(r"[a-z0-9]+", low(fact))}
-    neg = bool(NEGATION.search(low(fact)))
-    for m in said:
-        heard = {_stem(w) for w in words(m)}
-        if content and content <= heard and bool(NEGATION.search(low(m))) == neg \
-                and all(_stem(o) in every for o in OWNED.findall(low(m))): return True
-    return False
+    facts = clauses(fact)
+    def supported(w, heard):
+        fc = next(c for c in facts if w in c[1])
+        return any(w in h[1] and h[2] == fc[2] and (h[3] - {w}) <= fc[1] for h in heard)
+    return bool(content) and any(all(supported(w, clauses(m)) for w in content) for m in said)
 
 
 def lock_memory(path):
