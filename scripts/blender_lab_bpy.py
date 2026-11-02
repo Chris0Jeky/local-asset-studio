@@ -1090,9 +1090,14 @@ def corpus_defect(kind):
         while target.data.uv_layers: target.data.uv_layers.remove(target.data.uv_layers[0])
         return {"kind": kind, "object": target.name}
     if kind == "broken-weights":
-        skinned = [o for o in visible if len(o.vertex_groups) >= 2]
-        target = _pick("Body", skinned, faces, largest=True)
-        group = target.vertex_groups["Spine"] if "Spine" in target.vertex_groups else target.vertex_groups[-1]
+        def deforming(o):  # weighted groups named after a bone of the mesh's armature: only those move vertices
+            rig = next((m.object for m in o.modifiers if m.type == "ARMATURE" and m.object), None)
+            bones = set(rig.data.bones.keys()) if rig else set()
+            return {o.vertex_groups[g.group].name for v in o.data.vertices for g in v.groups if g.weight > 0} & bones
+        skinned = [o for o in visible if len(deforming(o)) >= 2]
+        target = _pick("Body", skinned, faces, largest=True)  # NotApplicable when no mesh is really skinned
+        names = deforming(target)
+        group = target.vertex_groups["Spine" if "Spine" in names else sorted(names)[-1]]
         group.add([v.index for v in target.data.vertices], 0.0, "REPLACE")
         return {"kind": kind, "object": target.name, "group": group.name}
     if kind == "mesh-hole":
