@@ -20,7 +20,8 @@ var player: AudioStreamPlayer
 var speaking := {}                     # the sentence now playing
 var mood := "happy"
 var mood_w := {}                       # eased expression weights
-var waiting := false                   # enter pressed, no audio yet
+var waiting := false                   # enter pressed, no audio yet (thinking pose)
+var busy := false                      # a turn is in flight: until its done event has arrived and its audio has played
 var wave_from := -100.0                # gesture clock
 var nod_from := -100.0
 var turn := {}                         # timing record for the current turn
@@ -92,11 +93,11 @@ func _say_system(s: String) -> void: log_box.append_text("[color=#8a93a6][i]%s[/
 
 func _submit(text: String) -> void:
 	text = text.strip_edges()
-	if text.is_empty() or waiting or not speaking.is_empty() or tcp.get_status() != StreamPeerTCP.STATUS_CONNECTED: return
+	if text.is_empty() or busy or tcp.get_status() != StreamPeerTCP.STATUS_CONNECTED: return
 	input.clear()
 	log_box.append_text("[color=#9fd3ff][b]You:[/b] %s[/color]\n" % text.replace("[", "[lb]"))
 	turn = {"user": text, "enter_us": Time.get_ticks_usec(), "movie": movie}
-	waiting = true; bubble = ""
+	waiting = true; busy = true; bubble = ""
 	var low := text.to_lower()
 	if GREETING.any(func(g): return low.begins_with(g) or low.contains(" " + g)): turn["wave"] = true
 	tcp.put_data((JSON.stringify({"type": "say", "text": text}) + "\n").to_utf8_buffer())
@@ -106,6 +107,9 @@ func _poll() -> void:
 	tcp.poll()
 	var st := tcp.get_status()
 	if st == StreamPeerTCP.STATUS_ERROR or st == StreamPeerTCP.STATUS_NONE:
+		if busy:                                                             # the sidecar went away mid-turn: end it here
+			_say_system("Lost the connection; reconnecting."); turn["done"] = true; rx.clear()
+			if speaking.is_empty(): _finish_turn()
 		tcp = StreamPeerTCP.new(); tcp.connect_to_host("127.0.0.1", port); return
 	if st != StreamPeerTCP.STATUS_CONNECTED: return
 	var n := tcp.get_available_bytes()
@@ -130,6 +134,7 @@ func _on_event(ev: Dictionary) -> void:
 			turn["done_us"] = Time.get_ticks_usec(); turn["reply"] = ev.reply; turn["sidecar"] = ev.ms; turn["sentences"] = ev.sentences.size()
 			var shown := " ".join(ev.sentences.map(func(s): return s.text))
 			log_box.append_text("[color=#ffd9a8][b]%s[/b] [i](%s)[/i]: %s[/color]\n" % [cfg.name, ev.emotion, shown.replace("[", "[lb]")])
+			if ev.sentences.is_empty(): _say_system("No spoken reply (%s)." % ev.ms.get("error", "empty"))
 			for f in ev.facts: _say_system("%s will remember: %s" % [cfg.name, f])
 			turn["done"] = true
 			if speaking.is_empty() and pending.is_empty(): _finish_turn()
@@ -152,6 +157,7 @@ func _next_sentence() -> void:
 
 
 func _finish_turn() -> void:
+	waiting = false; busy = false
 	if not turn.has("enter_us") or turn.has("logged"): return
 	turn["logged"] = true
 	var e: int = turn.enter_us
