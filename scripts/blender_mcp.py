@@ -78,9 +78,14 @@ class Facade:
             result = {"tools": [{"name": n, "description": d, "inputSchema": s} for n, (d, s) in TOOLS.items()]}
         elif method == "tools/call":
             params = message.get("params") or {}
-            name, args = params.get("name"), params.get("arguments") or {}
-            if name not in TOOLS or not isinstance(args, dict):
-                return {"jsonrpc": "2.0", "id": ident, "error": {"code": -32602, "message": f"unknown tool {name!r}"}}
+            name = params.get("name") if isinstance(params, dict) else None
+            args = (params.get("arguments") or {}) if isinstance(params, dict) else None
+            if not isinstance(name, str) or name not in TOOLS or not isinstance(args, dict):
+                return {"jsonrpc": "2.0", "id": ident, "error": {"code": -32602, "message": f"unknown tool or bad arguments: {name!r}"[:200]}}
+            schema = TOOLS[name][1]
+            if not set(args) <= set(schema["properties"]) or not set(schema["required"]) <= set(args):
+                # only advertised arguments reach the worker (no client-chosen timeouts or internals)
+                return {"jsonrpc": "2.0", "id": ident, "error": {"code": -32602, "message": f"{name} takes {sorted(schema['properties'])}"}}
             try:
                 result = {"content": [{"type": "text", "text": json.dumps(self.call(name, args), sort_keys=True)}], "isError": False}
             except (lab.BlenderLabError, OSError, ValueError, TypeError) as exc:
@@ -101,8 +106,12 @@ def serve(facade, stdin=sys.stdin, stdout=sys.stdout):
             except ValueError:
                 reply = {"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "parse error"}}
             else:
-                reply = facade.handle(message) if isinstance(message, dict) else {
-                    "jsonrpc": "2.0", "id": None, "error": {"code": -32600, "message": "invalid request"}}
+                try:
+                    reply = facade.handle(message) if isinstance(message, dict) else {
+                        "jsonrpc": "2.0", "id": None, "error": {"code": -32600, "message": "invalid request"}}
+                except Exception as exc:  # no request may take the server down
+                    ident = message.get("id") if isinstance(message, dict) else None
+                    reply = {"jsonrpc": "2.0", "id": ident, "error": {"code": -32603, "message": f"{type(exc).__name__}: {exc}"[:500]}}
             if reply is not None:
                 stdout.write(json.dumps(reply) + "\n"); stdout.flush()
     finally:

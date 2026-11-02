@@ -51,6 +51,15 @@ class ProtocolTests(unittest.TestCase):
             self.assertEqual(rpc(server, "resources/list")["error"]["code"], -32601)
             self.assertIsNone(server.handle({"jsonrpc": "2.0", "method": "notifications/initialized"}))
 
+    def test_malformed_params_and_unadvertised_arguments_are_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            server = facade(tmp)
+            for params in ([1], {"name": []}, {"name": "blender_ping", "arguments": [1]},
+                           {"name": "blender_export", "arguments": {"path": "a.glb", "timeout": None}},
+                           {"name": "blender_export", "arguments": {}}):
+                self.assertEqual(rpc(server, "tools/call", params)["error"]["code"], -32602, params)
+            self.assertEqual(server.worker.calls, [])
+
     def test_open_is_confined_to_the_read_tree(self):
         with tempfile.TemporaryDirectory() as tmp:
             server = facade(tmp)
