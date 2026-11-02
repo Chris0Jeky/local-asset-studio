@@ -747,9 +747,14 @@ class Worker:
         import os
         import time
         import bpy
+        scene = bpy.context.scene
         return {"pong": True, "pid": os.getpid(), "uptime_s": round(time.time() - self.started, 3), "calls": self.calls,
                 "source": self.source, "datablocks": {name: len(getattr(bpy.data, name)) for name in
-                ("objects", "meshes", "materials", "images", "cameras", "lights", "worlds", "collections", "actions")}}
+                ("objects", "meshes", "materials", "images", "cameras", "lights", "worlds", "collections", "actions")},
+                "state": {"frame": scene.frame_current, "engine": scene.render.engine, "camera": scene.camera.name if scene.camera else None,
+                          "world": scene.world.name if scene.world else None,
+                          "resolution": [scene.render.resolution_x, scene.render.resolution_y, scene.render.resolution_percentage],
+                          "view_transform": scene.view_settings.view_transform}}
 
     def caps(self):
         return self.capabilities
@@ -757,6 +762,7 @@ class Worker:
     def open(self, blend, allow_edit=()):
         import os
         _need(isinstance(blend, str) and blend.lower().endswith(".blend") and os.path.isfile(blend), "blend must be an existing .blend")
+        self.source, self.allowed = None, set()  # a refused open must not keep the previous scene's authority
         open_blend(blend)
         import bpy
         names = {o.name for o in bpy.context.scene.objects}
@@ -771,10 +777,19 @@ class Worker:
 
     def render_views(self, out_dir, size=256, samples=16, cameras=None):
         import os
-        import bpy
         self._loaded()
-        target = self._out(out_dir, directory=True)
         size, samples = int(_finite(size, 64, 512)), int(_finite(samples, 1, 64))
+        if cameras is not None:  # view names become file names: only the fixed rig's views are accepted
+            _need(isinstance(cameras, dict) and set(cameras) == {"target", "ortho_scale", "views", "frame"}
+                  and isinstance(cameras["views"], dict) and set(cameras["views"]) <= set(VIEWS), "cameras must be a camera spec over the fixed views")
+            _need(isinstance(cameras["target"], list) and len(cameras["target"]) == 3, "cameras.target must be [x, y, z]")
+            [_finite(v, -1e4, 1e4) for v in cameras["target"]]; _finite(cameras["ortho_scale"], 1e-3, 1e4)
+            _need(type(cameras["frame"]) is int, "cameras.frame must be an integer")
+            for pair in cameras["views"].values():
+                _need(isinstance(pair, list) and len(pair) == 2, "views must map to [azimuth, elevation]")
+                [_finite(v, -360, 360) for v in pair]
+        target = self._out(out_dir, directory=True)
+        import bpy
         # ponytail: snapshot/reload costs one save+open per render; a targeted restore if big scenes make that slow.
         snapshot = os.path.join(self.scratch, f"snapshot-{self.calls}.blend")
         bpy.ops.wm.save_as_mainfile(filepath=snapshot, copy=True, relative_remap=True)
@@ -812,11 +827,14 @@ class Worker:
             _need(isinstance(value, dict) and set(value) == {"slot", "material"}, "value must be {slot, material}")
             _need(type(value["slot"]) is int and 0 <= value["slot"] < len(obj.material_slots), "slot out of range")
             _need(value["material"] in bpy.data.materials, "material must already exist")
+            _need(obj.material_slots[value["slot"]].link == "OBJECT" or obj.data.users == 1,
+                  "slot is linked to mesh data shared with other objects")
             obj.material_slots[value["slot"]].material = bpy.data.materials[value["material"]]
         else:
             keys = obj.data.shape_keys if obj.type == "MESH" else None
             _need(keys is not None and isinstance(value, dict) and set(value) == {"key", "value"} and value["key"] in keys.key_blocks,
                   "value must be {key, value} for an existing shape key")
+            _need(obj.data.users == 1, "shape keys live on mesh data shared with other objects")
             block = keys.key_blocks[value["key"]]
             block.value = _finite(value["value"], block.slider_min, block.slider_max)
         bpy.context.view_layer.update()  # matrix_world is stale until the depsgraph re-evaluates

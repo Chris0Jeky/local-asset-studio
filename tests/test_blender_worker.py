@@ -45,6 +45,19 @@ class ClientTests(unittest.TestCase):
             with self.assertRaises(bw.WorkerFailed): worker.call("bad")
             self.assertEqual(worker.call("ping"), {})
 
+    def test_oversized_request_is_refused_before_writing(self):
+        with tempfile.TemporaryDirectory() as tmp, self.worker(tmp) as worker:
+            with self.assertRaisesRegex(bw.lab.BlenderLabError, "too large"): worker.call("ping", blob="x" * bw.MAX_REQUEST_BYTES)
+            self.assertEqual(worker.call("ping"), {})
+
+    def test_reimport_validate_out_dir_must_be_a_plain_name(self):
+        client = object.__new__(bw.BlenderWorker)
+        with tempfile.TemporaryDirectory() as tmp:
+            client.root = Path(tmp)
+            for bad in ("../escape", "..", "a/b", str(Path(tmp).parent / "x"), ""):
+                with self.assertRaises(bw.lab.BlenderLabError, msg=bad): client.reimport_validate(bad)
+            self.assertEqual(list(Path(tmp).iterdir()), [])
+
     def test_timeout_kills_and_exit_is_reported(self):
         with tempfile.TemporaryDirectory() as tmp:
             worker = self.worker(tmp)
@@ -63,6 +76,15 @@ class VocabularyTests(unittest.TestCase):
             self.assertTrue(worker._out("a/b.glb", ".glb").endswith("b.glb"))
             for bad in ("../x.glb", "taken.glb", "x.png", "", os.path.join(tmp, "..", "y.glb")):
                 with self.assertRaises(bpy_side.WorkerError, msg=bad): worker._out(bad, ".glb")
+
+    def test_camera_view_names_cannot_become_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            worker = object.__new__(bpy_side.Worker); worker.root, worker.source = os.path.realpath(tmp), "x.blend"
+            spec = {"target": [0, 0, 0], "ortho_scale": 2.0, "frame": 1, "views": {"../../victim": [0.0, 0.0]}}
+            with self.assertRaisesRegex(bpy_side.WorkerError, "fixed views"): worker.render_views("r", cameras=spec)
+            spec["views"] = {"front": [0.0, "x"]}
+            with self.assertRaises(bpy_side.WorkerError): worker.render_views("r", cameras=spec)
+            self.assertEqual(os.listdir(tmp), [])
 
     def test_numbers_are_finite_and_bounded(self):
         self.assertEqual(bpy_side._finite(2, 0, 5), 2.0)
@@ -89,9 +111,14 @@ class LiveWorkerTests(unittest.TestCase):
             blend = bw.lab.make_fixture(LIVE_BLENDER, Path(tmp) / "asset")
             (Path(tmp) / "root").mkdir()
             with bw.BlenderWorker(LIVE_BLENDER, Path(tmp) / "root") as worker:
+                with self.assertRaisesRegex(bw.WorkerFailed, "allow_edit"): worker.call("open", blend=str(blend), allow_edit=["Nope"])
+                with self.assertRaisesRegex(bw.WorkerFailed, "open a .blend first"):  # the refused open left no authority
+                    worker.call("apply_edit", object="Badge", op="hide_render", value=True, expect_checksum="x")
                 start = worker.call("open", blend=str(blend), allow_edit=["Badge"])["semantic_checksum"]
+                state = worker.call("ping")["state"]
                 worker.call("render_views", out_dir="r", size=64, samples=1)
                 self.assertEqual(worker.call("describe_scene")["semantic_checksum"], start)
+                self.assertEqual(worker.call("ping")["state"], state)
                 moved = worker.call("apply_edit", object="Badge", op="location", value=[0.22, -0.37, 1.3], expect_checksum=start)
                 self.assertNotEqual(moved["after"], start)
                 with self.assertRaisesRegex(bw.WorkerFailed, "precondition"):

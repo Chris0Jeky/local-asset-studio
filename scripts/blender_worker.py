@@ -13,6 +13,7 @@ import argparse
 import json
 from pathlib import Path
 import queue
+import re
 import statistics
 import subprocess
 import sys
@@ -27,6 +28,8 @@ import blender_sentinel as sentinel
 from blender_lab import require
 
 REPLY = "@@LAS@@ "
+MAX_REQUEST_BYTES = 32 * 1024
+OUT_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}")
 
 
 class WorkerFailed(lab.BlenderLabError):
@@ -62,7 +65,10 @@ class BlenderWorker:
     def call(self, cmd, timeout=300, **args):
         require(self.process.poll() is None, "Worker is not running")
         self.next_id += 1
-        self.process.stdin.write(json.dumps({"id": self.next_id, "cmd": cmd, "args": args}) + "\n")
+        line = json.dumps({"id": self.next_id, "cmd": cmd, "args": args}) + "\n"
+        # Requests go one at a time and the worker reads between calls, so a line below the pipe buffer never blocks.
+        require(len(line.encode()) < MAX_REQUEST_BYTES, "request too large")
+        self.process.stdin.write(line)
         self.process.stdin.flush()
         reply = self._reply(timeout)
         require(reply.get("id") == self.next_id, "Worker reply out of order")
@@ -71,6 +77,7 @@ class BlenderWorker:
 
     def reimport_validate(self, out_dir, timeout=600):
         """Worker-side evidence and export, then the sentinel's new-process reimport and comparison."""
+        require(isinstance(out_dir, str) and OUT_NAME.fullmatch(out_dir) is not None and set(out_dir) != {"."}, "out_dir must be a plain name")
         target = self.root / out_dir
         require(not target.exists(), "out_dir must be new")
         (target / "source").mkdir(parents=True)
@@ -156,7 +163,7 @@ def bench(blender_path, blend, out_dir, calls=30, edit_object=None):
             if worker:
                 worker.call("open", blend=str(blend), allow_edit=[edit_object])
                 checks["initial"] = worker.call("describe_scene")["semantic_checksum"]
-                checks["datablocks_before"] = worker.call("ping")["datablocks"]
+                checks["datablocks_before"], checks["state_before"] = (lambda p: (p["datablocks"], p["state"]))(worker.call("ping"))
             checksum = fresh_call(blender_path, root, blend, "describe_scene")["semantic_checksum"] if not worker else checks["initial"]
             for index, cmd in enumerate(plan):
                 name, args = args_for(index, cmd, checksum)
@@ -173,7 +180,7 @@ def bench(blender_path, blend, out_dir, calls=30, edit_object=None):
                     if after != before: checks[f"{name.split('_')[0]}_leaks"].append(index)
             if worker:
                 checks["final"] = worker.call("describe_scene")["semantic_checksum"]
-                checks["datablocks_after"] = worker.call("ping")["datablocks"]
+                checks["datablocks_after"], checks["state_after"] = (lambda p: (p["datablocks"], p["state"]))(worker.call("ping"))
                 checks["fresh_process_checksum"] = fresh_call(blender_path, root, blend, "describe_scene")["semantic_checksum"]
                 import psutil
                 checks["worker_rss_mb"] = round(psutil.Process(worker.process.pid).memory_info().rss / 2 ** 20, 1)
@@ -193,7 +200,7 @@ def bench(blender_path, blend, out_dir, calls=30, edit_object=None):
         "speedup_calls": round(f["calls_s"] / p["calls_s"], 2), "saved_s": round(f["calls_s"] - p["calls_s"], 3),
         "median_speedup_by_cmd": {k: round(f["median_by_cmd"][k] / v, 1) for k, v in p["median_by_cmd"].items() if v},
         "no_state_leak": not c["render_leaks"] and not c["export_leaks"] and c["initial"] == c["final"] == c["fresh_process_checksum"]
-                         and c["datablocks_before"] == c["datablocks_after"]}
+                         and c["datablocks_before"] == c["datablocks_after"] and c["state_before"] == c["state_after"]}
     (target / "bench.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return report
 
