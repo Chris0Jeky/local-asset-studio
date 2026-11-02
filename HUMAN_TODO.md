@@ -283,7 +283,7 @@ Raised by the overnight coordinator and its gpu-lab and ux-lead agents. Agent ve
 
 ## Studio art direction (#1923, 2 November 2026) - open
 
-Three characterful directions were made with the Studio's own presets on the same five slots; briefs and receipts in [DIRECTIONS-1923.md](docs/adaptive-studio/assets/DIRECTIONS-1923.md). Press the Versus contests "Studio art directions (#1923)" (within each slot) and "Studio art directions (#1923): whole sets" (`python -m versus serve --no-open` in the versus checkout, then http://127.0.0.1:8277), or answer in the cockpit. Agents checked defects only; the direction is your choice.
+Three characterful directions were made with the Studio's own presets on the same five slots; briefs and receipts in [DIRECTIONS-1923.md](docs/adaptive-studio/assets/DIRECTIONS-1923.md). Press the Versus contests "Studio art directions (#1923)" (within each slot), "Studio art directions (#1923): whole sets" and "Studio art directions (#1923): Suzu in each style" (the same guide in all three styles) (`python -m versus serve --no-open` in the versus checkout, then http://127.0.0.1:8277), or answer in the cockpit. Agents checked defects only; the direction is your choice.
 
 - [ ] **las-art-direction-1923: Local Asset Studio: which art direction should the Studio's own illustrations take (#1923)?**
   - (a) A: Suzu's Harbour Studio: Suzu becomes the Studio's guide; her canon and turnaround are approved first, then every illustration row is made with anima-portrait / anima-ref-adapter-turbo; the deferred guide expressions are un-deferred.
