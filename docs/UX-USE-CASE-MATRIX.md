@@ -1,5 +1,44 @@
 # UX use-case matrix
 
+## Compare & review: a comparison names its stage and what each button does, 2 November 2026 (#1921)
+
+The owner reached three candidates from a guided workflow but "didn't know what was happening at any stage". A
+comparison plan now shows four stages (Plan, Make the candidates, Compare, Decide) with the current one marked, and one
+plain sentence for its state: planned and waiting for Start; making the candidates, N of M done; all made, compare
+them (Review opens the desk, or Quick pick); decided, with the winner or "none was right yet". One line under the
+blind toggle says Keep / Needs work only mark the picture in the Library, and that the chips are the owner's own yes/no
+notes ("style 1/1" = 1 yes of 1 answered). Needs another pass now says it ends the comparison without a winner and
+makes nothing new.
+
+| Journey | Before | After | Proof |
+| --- | --- | --- | --- |
+| `review-and-keep-winner` | stages and button meanings not shown | same clicks; reads *3 · Compare* with "candidates are made … Review opens the side-by-side desk" before the choice and *4 · Decide*, "Decided: Candidate …" after it | `tests/studio_use_cases.py --case review-and-keep-winner`; fails on main's `production.js` |
+
+Not changed: the guide coach panel (it still does not advance by itself when a plan starts), the review desk, the plan
+list.
+## Full editor: a step strip that says where you are and what comes next, 2 November 2026 (#1920)
+
+The owner got a good first picture in the Full editor but felt lost beyond it. The editor card now opens with five
+short steps (Recipe, Describe, Your picture, Generate, Next) with the current one marked and done ones ticked, and one
+sentence saying what to do now. After a run started in this tab finishes with a picture, Next becomes current and the
+sentence names the moves: keep it with K, Continue with this to edit or restyle, change the words and generate again,
+Plan comparison. Each step only scrolls to or opens what is already on the page.
+
+| Journey | Before | After | Proof |
+| --- | --- | --- | --- |
+| `first-image-from-brief` | 5 clicks, 10 steps taken, 349 instruction words | 5 clicks, 10 steps taken (unchanged), 368 words (+19, the strip); the strip reads *2 Describe* before the brief and *4 Generate* with "Now: press Generate image" after it | `tests/studio_use_cases.py --case first-image-from-brief`; fails without `editor-steps.js` |
+
+Not changed: the recipe picker, the run dock, the folds (Fine-tune the recipe, Recipe details, Readiness) and Recent runs.
+## Workspace: Review next keys on the first screen, 2 November 2026 (#1919)
+
+The owner had to scroll to find what the review buttons do. In a Review next queue the panel (Keep K, Needs work W,
+Not this X, Skip S, Previous, Next, Leave queue, and the key legend) now leads the details column instead of sitting
+under the next-step tools and the sticky Save bar. The single-picture verdict row (#1725) keeps its place.
+
+| Journey | Before | After | Proof |
+| --- | --- | --- | --- |
+| `library-review-next-by-keyboard` | 1 click, 3 keys, 6 steps; keys below the fold at 1366x768 | 1 click, 3 keys, 7 steps (one added read: keys visible unscrolled at 1366x768 and 1920x1080), 0 dead ends; PASS | `tests/studio_use_cases.py --case library-review-next-by-keyboard`; fails with the panel in its old place |
+
 ## Make: a look on another model environment (MOSS-Image), 1 November 2026 (`moss-look-1019`)
 
 MOSS-Image runs on its own ComfyUI (#1575, port 8198). Before this, a MOSS recipe was reachable only through the Full editor,

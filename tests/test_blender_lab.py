@@ -23,9 +23,9 @@ def load(path): return json.loads(path.read_text(encoding="utf-8"))
 class CommandTests(unittest.TestCase):
     def test_fixed_argv_never_loads_user_startup_or_autoexec(self):
         command = lab.command_for("C:/blender.exe", "probe", "--out", "x.json")
-        self.assertEqual(command[:6], ["C:/blender.exe", "--background", "--factory-startup", "--disable-autoexec",
-                                       "--python", str(lab.BPY_SCRIPT)])
-        self.assertEqual(command[6:], ["--", "probe", "--out", "x.json"])
+        self.assertEqual(command[:8], ["C:/blender.exe", "--background", "--factory-startup", "--disable-autoexec",
+                                       "--python-exit-code", "1", "--python", str(lab.BPY_SCRIPT)])
+        self.assertEqual(command[8:], ["--", "probe", "--out", "x.json"])
 
     def test_executable_must_be_absolute_existing_blender(self):
         with self.assertRaises(lab.BlenderLabError): lab.executable("blender.exe")
@@ -182,6 +182,20 @@ class ManifestTests(unittest.TestCase):
             with self.assertRaises(lab.BlenderLabError): lab.manifest(exe, exe, Path(tmp) / "m.json")
 
 
+class SceneV1RoutingTests(unittest.TestCase):
+    def test_probe_intent_plans_the_blender_lab_entry_point(self):
+        sys.path.insert(0, str(ROOT))
+        from studio_workflow import dcc_evidence
+        with tempfile.TemporaryDirectory() as tmp:
+            exe = Path(tmp) / "blender.exe"; exe.write_bytes(b"x")
+            asset = Path(tmp) / "a.blend"; asset.write_bytes(b"y")
+            cfg = Path(tmp) / "local.json"; cfg.write_text(json.dumps({"blender": str(exe)}))
+            plan = dcc_evidence.probe_intent(cfg, asset, Path(tmp) / "run")
+        self.assertEqual(Path(plan["argv"][plan["argv"].index("--python") + 1]).name, "blender_lab_bpy.py")
+        self.assertEqual(plan["argv"][plan["argv"].index("--") + 1], "scene-v1")
+        self.assertEqual(Path(plan["collector"]["path"]).name, "blender_scene_probe.py")
+
+
 @unittest.skipUnless(LIVE_BLENDER, "set LAS_BLENDER_LAB_EXE to a Blender executable for the live probe")
 class LiveProbeTests(unittest.TestCase):
     def test_live_probe(self):
@@ -196,6 +210,16 @@ class LiveProbeTests(unittest.TestCase):
             articulated_prop.execute(Path(tmp) / "chest", {"render_size": 64, "samples": 1}, LIVE_BLENDER)
             result = lab.manifest(LIVE_BLENDER, Path(tmp) / "chest" / "chest.blend", Path(tmp) / "manifest.json")
         self.assertEqual(result["semantic_checksum"], load(FIXTURES / "manifest-articulated-chest.json")["semantic_checksum"])
+
+    def test_live_scene_v1_rerun_is_exactly_equal(self):
+        sys.path.insert(0, str(ROOT))
+        from studio_workflow.dcc_evidence import compare_scenes
+        with tempfile.TemporaryDirectory() as tmp:
+            blend = lab.make_fixture(LIVE_BLENDER, Path(tmp) / "asset")
+            first = lab.scene_v1(LIVE_BLENDER, blend, Path(tmp) / "one.json")
+            second = lab.scene_v1(LIVE_BLENDER, blend, Path(tmp) / "two.json")
+        self.assertTrue(compare_scenes(first, second)["equal"])
+        self.assertEqual(set(first["content"]["objects"]), {"Badge", "Body", "Head", "Rig"})
 
     def test_live_fixture_manifest_is_deterministic_and_leaves_source_untouched(self):
         with tempfile.TemporaryDirectory() as tmp:

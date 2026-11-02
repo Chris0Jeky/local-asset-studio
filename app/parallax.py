@@ -165,11 +165,12 @@ def _cost(patch, other, x, y, patch_sum):
     """Normalised edge mismatch, 0 (same edges) to 1 (no shared edge): SAD over the two windows' edge mass, so a window moved
     onto an empty area (the isolate's white) scores as the worst match, not the best one."""
     window = other.crop((x, y, x + patch.size[0], y + patch.size[1]))
-    return sum(ImageStat.Stat(ImageChops.difference(patch, window)).sum) / (patch_sum + sum(ImageStat.Stat(window).sum) + 1)
+    # edge_map yields 8-bit L images: byte totals are exact without building a histogram for every candidate.
+    return sum(ImageChops.difference(patch, window).tobytes()) / (patch_sum + sum(window.tobytes()) + 1)
 
 
 def _search(patch, other, x, y, centre, radius):
-    width, height = patch.size; costs = {}; patch_sum = sum(ImageStat.Stat(patch).sum)
+    width, height = patch.size; costs = {}; patch_sum = sum(patch.tobytes())
     for dy in range(centre[1] - radius, centre[1] + radius + 1):
         for dx in range(centre[0] - radius, centre[0] + radius + 1):
             if 0 <= x + dx and 0 <= y + dy and x + dx + width <= other.size[0] and y + dy + height <= other.size[1]: costs[(dx, dy)] = _cost(patch, other, x + dx, y + dy, patch_sum)

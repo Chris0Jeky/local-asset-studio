@@ -18,6 +18,16 @@ No private asset in public fixtures. No install/upgrade. Explicit executable sel
 - Missing reimport renders, stale image hashes or incomplete process receipts are not a successful parity run.
 - Resource release and process termination must match the actual job lifetime, including failure paths.
 
+## Convergence with Blender Lab (2 Nov 2026)
+
+Owners per seam are in `docs/BLENDER-LAB.md`, "Which tool for what". The probe now runs only through
+`blender_lab_bpy.py scene-v1`, and `probe_intent` plans that argv. Task 1 was qualified natively on 4.5.13 and 5.4 alpha:
+unchanged reruns were exactly equal; cross-build differences were limited to Principled inputs and regenerated UVs.
+Task 3's export/reimport derivative is `scripts/blender_sentinel.py` (seeded missing texture, omitted mesh and material
+mismatch are caught on both builds). Its object identity mapping is still by name, so the declared-mapping item stays
+open. Task 2 is partly covered by the sentinel's fixed-camera renderer, but its renders are not yet `compare_bundles`
+receipts. Task 4 is open.
+
 ## Task 1: qualify the existing probe
 
 - [ ] Run focused offline tests, then admit a 120-second read-only probe on an owned prop copy using the configured Blender path and generated intent.

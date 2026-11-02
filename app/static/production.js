@@ -88,6 +88,19 @@ function planPutAway(p){
   return '';
 }
 const PLAN_RUNNING=['queued','submitting','running','waiting','observing','rendering'];
+// #1921: where a comparison is, what the Studio is doing and what you decide next, in plain words. Display only.
+function planStageLine(p){
+  const stages=p.stages||[],total=stages.length,made=stages.filter(s=>s.job?.status==='completed').length,status=p.state?.status||'',chosen=p.state?.review?.asset_id;
+  const winner=chosen&&stages.find(s=>(s.job?.outputs||[]).some(o=>o.asset_id===chosen));
+  const desk=!!p.state?.review?.desk_url,again=p.combine?'':' Branch this study to try again from here.';
+  const [at,text]=status==='planned'?[0,'Planned; nothing is made yet. Start makes '+total+' candidates, each with the change this plan tests. It never starts on its own.']
+    :PLAN_RUNNING.includes(status)?[1,'Making the candidates: '+made+' of '+total+' done. You can leave this page; it carries on and the pictures appear here.']
+    :status==='awaiting_review'?[2,(total===2?'Both':'All '+total)+' candidates are made. '+(desk?'You started this choice in the review desk; press Review to finish it there.':'Compare them: Review opens the side-by-side desk, or use Quick pick under a picture. If none is right, press Needs another pass.')]
+    :status==='reviewed'?[3,(winner?'Decided: Candidate '+winner.label+' won.':'Decided: none was right yet. Nothing new was made.')+again]
+    :status==='uncertain'?[1,'Outcome uncertain: '+made+' of '+total+' candidates are recorded and a submission may still be running. Read the message above first; nothing is retried on its own.']
+    :[1,'Stopped with '+made+' of '+total+' candidates made; the message above says why. Nothing is retried on its own.'];
+  return '<ol class="plan-stages" aria-label="Stages of this comparison">'+['Plan','Make the candidates','Compare','Decide'].map((name,i)=>'<li'+(i===at?' aria-current="step"':'')+(i<at?' data-done':'')+'>'+(i+1)+' · '+name+'</li>').join('')+'</ol><p class="plan-stage-now">'+esc(text)+'</p>';
+}
 // One terse line above the plans: what needs the owner first. Counts follow the
 // type filter; older folds the same Older group the list shows. Never submits.
 function renderPlanSummary(){
@@ -153,6 +166,7 @@ function renderProduction(){
   const resume=resumable?'<button data-project-action="resume" '+(trackingRecoveryPending?'disabled':'')+'>'+(terminalReconciliation?'Reconcile outcome only':p.kind==='voice'?'Resume unstarted take':'Reconcile and resume')+'</button>':'';
   let html='<div class="section-title"><div><span class="eyebrow">'+esc(p.kind)+'</span><h2 title="'+esc(p.name)+'">'+esc(planHumanTitle(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p>'+(terminalReconciliation?'<p class="callout">Record the retained failed/partial outcome or local batch disposition. No retry or later stage will start; repairs require an explicit branch.</p>':'')+(trackingRecoveryPending?'<p class="muted">Resume is unavailable until the retained prompt observation reaches a terminal record. Its execution record and reservation remain available for inspection.</p>':'')+'<div class="production-actions">'+(p.state.status==='planned'?'<button class="primary" data-project-action="start">Start '+(p.kind==='comparison'?'comparison':p.kind==='voice'?'voice take':'export')+'</button>':'')+(active?'<button data-project-action="stop">Stop after current stage</button>':'')+resume+(p.kind==='comparison'&&!p.combine?'<button data-project-action="branch">Branch this study</button>':'')+(p.kind==='comparison'&&blindComparison?'<small class="muted">Full plan hidden while comparing blind. Reveal settings to download it.</small>':'<a href="/api/production/'+p.id+'/files/plan.json?download" download>Full plan</a>')+'</div>';
   if(p.kind==='comparison'){
+    html+=planStageLine(p);
     const clock=p.state.time_budget;
     if(clock&&!p.state.time_budget_error){
       const minutes=seconds=>(seconds/60).toFixed(1);
@@ -160,7 +174,7 @@ function renderProduction(){
       if(resumable&&!active&&!clock.active&&clock.limit_seconds<=14340)html+='<div class="timeExtension"><label>Additional minutes<input id="extendTimeMinutes" type="number" min="1" max="'+Math.floor((14400-clock.limit_seconds)/60)+'" value="'+Math.min(15,Math.floor((14400-clock.limit_seconds)/60))+'" required></label><label>Reason for extending time<input id="extendTimeReason" maxlength="1000" required></label><button data-project-action="extend-time">Extend time only</button><small>No generation is started and no generation allowance is added. Resume separately.</small></div>';
     }else if(p.state.time_budget_error)html+='<p role="alert">'+esc(p.state.time_budget_error)+'</p>';
     if(['reviewed','failed'].includes(p.state.status))html+='<p><a class="primary artifact-download" href="/review.html?project='+p.id+'">Open review desk</a> <span class="muted">Stable blind candidates, matched crops, findings and an evidence pack. No generation.</span></p>';
-    html+='<p class="muted">'+p.budget.reserved+' of '+p.budget.allowance+' graph runs reserved across this study and its branches. Uncertain attempts keep their reservation. No automatic repair runs.</p><label class="blind-toggle"><input id="blindComparison" type="checkbox" '+(blindComparison?'checked':'')+'> Hide settings while comparing</label><div class="candidate-grid">';
+    html+='<p class="muted">'+p.budget.reserved+' of '+p.budget.allowance+' graph runs reserved across this study and its branches. Uncertain attempts keep their reservation. No automatic repair runs.</p><label class="blind-toggle"><input id="blindComparison" type="checkbox" '+(blindComparison?'checked':'')+'> Hide settings while comparing</label><p class="muted plan-candidate-help">Under each picture: Keep or Needs work marks it in your Library and does not decide this comparison. The check chips are your own yes/no notes; “style 1/1” means 1 yes of 1 answered.</p><div class="candidate-grid">';
     for(const s of p.stages){const j=s.job,images=(j?.outputs||[]).filter(o=>o.asset_id);
       const index=p.stages.indexOf(s),variant=(p.variants||[])[index],checked=images.map(o=>candidateCheckAsset(o.asset_id)).filter(Boolean),counted=checked.length?StudioReviewChecks.summary(checked,candidateCheckNames(j)):'';
       html+='<article class="candidate"><h3>Candidate '+esc(s.label)+'</h3>'+(blindComparison?'':'<small>'+esc(variant?variant.label:p.axis+' '+p.values[index])+'</small>'+(variant?.rationale?'<p class="muted">'+esc(variant.rationale)+'</p>':'')+(variant?.sources||[]).map(u=>'<a href="'+safeUrl(u)+'" target="_blank" rel="noreferrer">source ↗</a>').join(' '))+'<p class="muted">'+esc(j?.status||'not started')+(j?.elapsed_seconds?' · '+j.elapsed_seconds.toFixed(1)+' s':'')+'</p>'+(counted?'<p class="muted candidate-check-count">'+esc(counted)+'</p>':'');
@@ -180,7 +194,7 @@ function renderProduction(){
       html+='</article>';
     }
     html+='</div>';
-    if(['awaiting_review','reviewed'].includes(p.state.status)&&!p.state.review?.desk_url)html+='<label>Review notes<textarea id="productionNotes" rows="3" placeholder="Identity, pose, silhouette, linework… What should the next pass address?">'+esc(p.state.review?.notes||'')+'</textarea></label><button data-project-action="needs_work">Needs another pass</button><p class="muted">Your choice records creative preference. Model terms and engine acceptance are separate.</p>';
+    if(['awaiting_review','reviewed'].includes(p.state.status)&&!p.state.review?.desk_url)html+='<label>Review notes<textarea id="productionNotes" rows="3" placeholder="Identity, pose, silhouette, linework… What should the next pass address?">'+esc(p.state.review?.notes||'')+'</textarea></label><button data-project-action="needs_work">Needs another pass</button><p class="muted">Needs another pass ends this comparison without a winner and keeps your notes; nothing new is made. Your choice records creative preference. Model terms and engine acceptance are separate.</p>';
   }else if(p.kind==='native'&&p.state.measurements)html+='<p>'+p.state.measurements.image_count+' images · '+p.state.measurements.canvas.join(' × ')+' · anchor '+p.state.measurements.anchor.join(', ')+'</p><p>Frame durations: '+p.state.measurements.durations_ms.join(' / ')+' ms</p>';
   const artifacts=p.state.artifacts||[],pack=artifacts.find(a=>a.path==='export.zip');
   if(pack)html+='<p><a class="primary artifact-download" href="'+pack.url+'?download" download>Download native source pack</a></p>';
