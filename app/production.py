@@ -556,6 +556,15 @@ class Production:
         project_storage.complete(self.root,identifier,plan)
         return self.get(identifier)
 
+    def check_export(self, identifier):
+        """Run (or recover) the export parity check of a completed articulated build and keep it on the project."""
+        import parity_check
+        project=self._get(identifier)
+        if project['plan']['kind']!='articulated':raise ValueError('Check this export applies to articulated builds')
+        result=parity_check.run_check(self.studio,identifier)
+        self._mutate(identifier,parity_check=result)
+        return self.get(identifier)
+
     def voice_baseline(self, payload):
         from voice_baseline import prepare
         return prepare(self,payload)

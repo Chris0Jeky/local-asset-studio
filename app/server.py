@@ -3370,6 +3370,9 @@ class Handler(BaseHTTPRequestHandler):
                     if len(parts)!=5:raise StudioError('Unknown time extension route')
                     return self._json(200,self.studio.production.extend_time(identifier,payload))
                 if parts[-1]=='review':return self._json(200,self.studio.production.review(identifier,payload))
+                if parts[-1]=='check':
+                    if len(parts)!=5:raise StudioError('Unknown export-check route')
+                    return self._json(200,self.studio.production.check_export(identifier))
                 if parts[-1]=='put-away':
                     if len(parts)!=5:raise StudioError('Unknown put-away route')
                     return self._json(200,self.studio.production.put_away(identifier,payload))

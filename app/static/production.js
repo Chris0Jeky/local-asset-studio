@@ -155,6 +155,15 @@ function nativeOpenCard(p,artifacts){
   const link=pack||found,record=entry.tool==='Krita'?(p.state.krita?'Recorded Krita roundtrip: saved and reopened roundtrip.kra, '+p.state.krita.kra.layers.length+' layer records retained.':'No Krita roundtrip was recorded.'):entry.tool==='Godot'?(p.state.engine?'Recorded Godot check: import and timed playback verified for this export.':'No Godot check was recorded.'):'No Blender check beyond the export run is recorded.';
   return head+'<b>Open this in '+entry.tool+':</b> '+(entry.inside?'<code>'+esc(entry.inside)+'</code> inside ':'')+'<a href="'+esc(link.url)+'?download" download>'+esc(link.path.split('/').pop())+'</a><br><small>'+esc(entry.how)+'</small><br><small>'+esc(record)+' Studio records no art acceptance.</small></aside>';
 }
+// Check this export: runs the export parity check once on a completed articulated build and lists what it localised.
+function exportCheckCard(p){
+  if(p.kind!=='articulated'||p.state?.status!=='completed')return '';
+  const c=p.state.parity_check,head='<aside class="callout export-check" aria-label="Export check">';
+  if(!c)return head+'<button type="button" data-export-check>Check this export</button><br><small>Exports the GLB, reimports it in a fresh Blender and compares the two. About a minute; nothing is generated.</small></aside>';
+  if(c.status!=='completed')return head+'<b>Export check '+esc(c.status)+':</b> '+esc(c.message)+'</aside>';
+  const s=c.summary,items=[s.localisation,s.structural_failures,s.visual_warnings].find(list=>list?.length)||[].slice(0,8);
+  return head+'<b>'+(s.pass?'Export check passed':'Export check found differences')+'</b>'+(items.length?'<ul>'+items.map(i=>'<li>'+esc(i)+'</li>').join('')+'</ul>':'')+'<small>'+esc(c.message)+'</small></aside>';
+}
 function renderProduction(){
   renderPlanList();
   const p=productionPlans.find(p=>p.id===productionId);if(!p){const groups=planGroups(productionPlans);writeProductionDetail(null,groups.recent.length+groups.older.length?'<p>Choose a plan on the left. Plans are budgeted, blind comparisons; quick side-by-sides live in Make.</p><p>Native sprite atlases, layered images and Godot projects start from selected Workspace assets.</p>':'<p>No plans yet. <button type="button" data-plan-comparison><b>Plan a comparison</b></button> runs one change across a few candidates and reviews them blind. For a quick side-by-side, use <a href="/#make"><b>Compare looks</b> in Make</a>.</p>');return;}
@@ -198,7 +207,7 @@ function renderProduction(){
   }else if(p.kind==='native'&&p.state.measurements)html+='<p>'+p.state.measurements.image_count+' images · '+p.state.measurements.canvas.join(' × ')+' · anchor '+p.state.measurements.anchor.join(', ')+'</p><p>Frame durations: '+p.state.measurements.durations_ms.join(' / ')+' ms</p>';
   const artifacts=p.state.artifacts||[],pack=artifacts.find(a=>a.path==='export.zip');
   if(pack)html+='<p><a class="primary artifact-download" href="'+pack.url+'?download" download>Download native source pack</a></p>';
-  html+=nativeOpenCard(p,artifacts);
+  html+=nativeOpenCard(p,artifacts)+exportCheckCard(p);
   for(const a of artifacts.filter(a=>a.role==='animated-glb'))html+='<model-viewer class="native-model" camera-controls autoplay animation-name="ChestLidOpenHoldClose" src="'+a.url+'" alt="Articulated chest animation"></model-viewer>';
   for(const a of artifacts.filter(a=>a.role==='inspection-render'))html+='<img class="native-inspection" src="'+a.url+'" alt="'+esc(a.path)+'">';
   for(const a of artifacts.filter(a=>a.role==='comparison'||a.path==='native/atlas/atlas.png'))html+='<img class="comparison-sheet" src="'+a.url+'" alt="'+esc(a.role==='comparison'?'Candidate contact sheet':'Sprite atlas')+'">';
@@ -454,6 +463,10 @@ $('#productionDetail').onclick=async e=>{if(e.target.closest('[data-plan-compari
   if(putAway){if(productionActionPending){productionMessage('Wait for the current action to finish. Nothing was sent.');return;}productionActionPending=true;putAway.disabled=true;const away=putAway.dataset.planPutAway==='true';
     try{await post('/api/production/'+p.id+'/put-away',{put_away:away});productionMessage(away?'Put away. Status: All statuses in Your plans still lists it; Bring back returns it to your desk.':'Back on your desk and in the in-progress list.');await refreshProduction(true);}
     finally{productionActionPending=false;putAway.disabled=false;}return;}
+  const exportCheck=e.target.closest('[data-export-check]');
+  if(exportCheck){if(productionActionPending){productionMessage('Wait for the current action to finish. Nothing was sent.');return;}productionActionPending=true;exportCheck.disabled=true;exportCheck.textContent='Checking…';
+    try{await post('/api/production/'+p.id+'/check',{});await refreshProduction(true);}catch(err){productionMessage(err.message);exportCheck.disabled=false;exportCheck.textContent='Check this export';}
+    finally{productionActionPending=false;}return;}
   const choice=e.target.closest('[data-choose-candidate]')?.dataset.chooseCandidate;
   const open=e.target.closest('[data-candidate-open]')?.dataset.candidateOpen;
   const recipe=e.target.closest('[data-job-recipe]')?.dataset.jobRecipe;
