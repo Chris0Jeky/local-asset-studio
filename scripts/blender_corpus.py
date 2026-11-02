@@ -38,12 +38,12 @@ def build(blender_path, out_dir, timeout=600, source=None):
     if source is None:
         clean = lab.make_fixture(exe, assets)  # variants are saved beside it so the relative texture path resolves
     else:
-        import shutil
         source = Path(source).expanduser().resolve()
         require(source.is_file() and source.suffix.lower() == ".blend", "source must be an existing .blend")
         assets.mkdir(parents=True)
-        clean = assets / "control.blend"
-        shutil.copyfile(source, clean)  # never touch the original asset
+        clean = assets / "control.blend"  # Blender's save-as keeps relative textures and libraries resolvable; the original is only read
+        lab.run(exe, ["copy-blend", "--blend", source, "--out-blend", clean, "--out", logs / "control.copy.json"], logs / "control.copy.log.json", timeout)
+        require(clean.is_file(), "copying the source .blend failed; see logs/control.copy.log.json")
     labels, skipped = {"control": None}, {}
     for kind in sorted(lab.bpy_side.CORPUS_DEFECTS):
         record = target / "logs" / f"{kind}.variant.json"

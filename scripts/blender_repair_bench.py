@@ -14,6 +14,7 @@ import json
 import os
 from pathlib import Path
 import re
+import statistics
 import subprocess
 import sys
 import time
@@ -270,15 +271,17 @@ def combine(run_dirs, out_path):
 
 def aggregate(report_paths):
     """Totals over several per-asset reports: repair rate on repairable cases, declines, collateral, failures."""
-    rows = [dict(row, asset=Path(path).parent.name) for path in report_paths
-            for row in json.loads(Path(path).read_text(encoding="utf-8"))["rows"]]
+    reports = {Path(path).parent.name: json.loads(Path(path).read_text(encoding="utf-8")) for path in report_paths}
+    require(len(reports) == len(report_paths), "each report must be a different asset")
+    require(len({report["agent"] for report in reports.values()}) == 1, "reports from different agents")
+    rows = [dict(row, asset=asset) for asset, report in reports.items() for row in report["rows"]]
     repairable = [r for r in rows if r["repairable_by_vocabulary"]]
     tally = {}
     for row in rows: tally[row["outcome"]] = tally.get(row["outcome"], 0) + 1
     return {"cases": len(rows), "outcomes": tally,
             "repairable_exact": sum(r["exact"] for r in repairable), "repairable_total": len(repairable),
             "collateral_cases": sorted(f"{r['asset']}/{r['case']}" for r in rows if r["collateral"]),
-            "median_seconds": sorted(r["seconds"] for r in rows)[len(rows) // 2] if rows else None}
+            "median_seconds": statistics.median(r["seconds"] for r in rows) if rows else None}
 
 
 def main(argv=None):

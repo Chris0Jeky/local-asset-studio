@@ -500,11 +500,11 @@ python scripts/blender_corpus.py build --blender <blender.exe> --out-dir <new> -
 python scripts/blender_repair_bench.py aggregate --reports <run>/repair-bench.json ...
 ```
 
-`--source` builds the corpus from a real `.blend` instead of the generated lab asset. The asset is copied first, so
-the original is never touched. Defects target objects by role, and the offset scales with the target. A defect that
+`--source` builds the corpus from a real `.blend` instead of the generated lab asset. Blender opens the asset and
+saves a copy with relative paths remapped, so textures and libraries still resolve; the original is only read. Defects target objects by role, and the offset scales with the target. A defect that
 does not apply to the asset is recorded in `not_applicable` instead of failing the build: for example, no armature
 or no shape keys. `blender_apply_edit` gained `delete`, behind the same allow-list and precondition checksum, so a
-duplicate can now be removed instead of hidden. `compare_manifests` now also fails a lost UV map.
+duplicate can now be removed instead of hidden. Deletion is refused for an object that other objects or scenes depend on (children, constraint or modifier targets, the scene camera). `compare_manifests` now also fails a lost UV map.
 
 Corpora: the LAS articulated chest plus six procgen-lab factory outputs (prop-0-1, prop-2-1, room-default-1, the
 room-kit crate and plant, shrine-default-1). That is 7 assets and 57 cases: 7 or 8 defects each, plus the control.

@@ -797,6 +797,7 @@ def seed_defect(kind):
             rest = curve.keyframe_points[0].co[1]
             for point in curve.keyframe_points: point.co[1] = point.handle_left[1] = point.handle_right[1] = rest
             flattened.append(f"{curve.data_path}[{curve.array_index}]")
+        if not flattened: raise IndexError("no rotation curves to flatten")  # never label an unchanged asset defective
         return {"kind": kind, "action": action.name, "flattened": flattened}
     if kind == "shape-key-interior-damage":  # zero one non-extreme vertex delta: extrema and max delta are unchanged
         mesh = sorted((m for m in bpy.data.meshes if m.users and m.shape_keys), key=lambda m: m.name)[0]
@@ -970,6 +971,10 @@ class Worker:
             setattr(obj, op, [_finite(v, 1e-4 if op == "scale" else -1e4, 1e4) for v in value])
         elif op == "delete":  # remove the object only; its data goes when nothing else uses it
             _need(value is True, "value must be true to delete")
+            users = bpy.data.user_map(subset={obj})[obj]  # children, constraint and modifier targets use it too
+            _need(len(obj.users_scene) == 1 and obj is not bpy.context.scene.camera
+                  and all(isinstance(u, (bpy.types.Collection, bpy.types.Scene)) for u in users),
+                  "delete refused: other objects or scenes depend on this object")
             bpy.data.objects.remove(obj)
             self.allowed.discard(object)
         elif op == "hide_render":
@@ -1219,6 +1224,10 @@ def _main(argv):
     probe_parser.add_argument("--out-dir", required=True)
     probe_parser.add_argument("--size", type=int, default=96)
     probe_parser.add_argument("--out", required=True)
+    copy_parser = commands.add_parser("copy-blend")  # save-as remaps relative texture and library paths
+    copy_parser.add_argument("--blend", required=True)
+    copy_parser.add_argument("--out-blend", required=True)
+    copy_parser.add_argument("--out", required=True)
     variant_parser = commands.add_parser("corpus-variant")
     variant_parser.add_argument("--blend", required=True)
     variant_parser.add_argument("--kind", required=True, choices=sorted(CORPUS_DEFECTS))
@@ -1241,6 +1250,10 @@ def _main(argv):
         import os
         open_blend(args.blend); result = manifest(os.path.basename(args.blend))
     elif args.command == "evidence": result = _evidence(args)
+    elif args.command == "copy-blend":
+        import bpy
+        open_blend(args.blend); bpy.ops.wm.save_as_mainfile(filepath=args.out_blend, copy=True, relative_remap=True)
+        result = {"kind": "copy-blend", "blend": args.out_blend}
     elif args.command == "corpus-variant": result = make_corpus_variant(args.blend, args.kind, args.out_blend)
     elif args.command == "render-probe":
         open_blend(args.blend)

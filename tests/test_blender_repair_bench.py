@@ -82,10 +82,15 @@ class AggregateTests(unittest.TestCase):
                                         "collateral": [], "seconds": 10}]),
                                 ("b", [{"case": "mesh-hole", "outcome": "declined (correct)", "exact": False, "repairable_by_vocabulary": False,
                                         "collateral": [], "seconds": 20}])):
-                (Path(tmp) / asset).mkdir(); (Path(tmp) / asset / "repair-bench.json").write_text(json.dumps({"rows": rows}))
-            totals = bench.aggregate([Path(tmp) / "a" / "repair-bench.json", Path(tmp) / "b" / "repair-bench.json"])
+                (Path(tmp) / asset).mkdir(); (Path(tmp) / asset / "repair-bench.json").write_text(json.dumps({"agent": "codex-sol", "rows": rows}))
+            a, b = Path(tmp) / "a" / "repair-bench.json", Path(tmp) / "b" / "repair-bench.json"
+            totals = bench.aggregate([a, b])
+            with self.assertRaises(ValueError): bench.aggregate([a, a])  # the same asset twice
+            (Path(tmp) / "c").mkdir(); (Path(tmp) / "c" / "repair-bench.json").write_text(json.dumps({"agent": "claude-haiku", "rows": []}))
+            with self.assertRaises(ValueError): bench.aggregate([a, Path(tmp) / "c" / "repair-bench.json"])  # mixed agents
         self.assertEqual((totals["cases"], totals["repairable_exact"], totals["repairable_total"]), (2, 1, 1))
         self.assertEqual(totals["outcomes"], {"exact repair": 1, "declined (correct)": 1})
+        self.assertEqual(totals["median_seconds"], 15)
 
 
 class ScoreTests(unittest.TestCase):
