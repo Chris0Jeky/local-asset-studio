@@ -34,17 +34,18 @@ def render(splat, data, out, engine):
 
 
 def score(data, out):
-    import numpy as np
-    from PIL import Image
+    from PIL import Image, ImageChops  # Pillow only: the CI test environment has no NumPy
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import render_critic as rc
     def white(p):
-        a = np.asarray(Image.open(p).convert("RGBA"), dtype=np.float64) / 255; return a[..., :3] * a[..., 3:] + (1 - a[..., 3:])
+        im = Image.open(p).convert("RGBA"); return Image.alpha_composite(Image.new("RGBA", im.size, (255, 255, 255, 255)), im).convert("RGB")
     rows = []
     for gt in sorted((Path(data) / "test").glob("r_*.png")):
-        pr = Path(out) / gt.name; g, r = white(gt), white(pr); mse = float(((g - r) ** 2).mean())
+        g, r = white(gt), white(Path(out) / gt.name)
+        hist = ImageChops.difference(g, r).histogram()  # 3 x 256 bins of |difference| per channel
+        mse = sum(n * (i % 256) ** 2 for i, n in enumerate(hist)) / (g.width * g.height * 3 * 255 ** 2)
         (Path(out) / "gt_white").mkdir(exist_ok=True); (Path(out) / "pr_white").mkdir(exist_ok=True)  # same names: the critic matches views by label
-        Image.fromarray((g * 255).astype("uint8")).save(Path(out) / "gt_white" / gt.name); Image.fromarray((r * 255).astype("uint8")).save(Path(out) / "pr_white" / gt.name)
+        g.save(Path(out) / "gt_white" / gt.name); r.save(Path(out) / "pr_white" / gt.name)
         px = rc.pixel_diff([Path(out) / "pr_white" / gt.name], [Path(out) / "gt_white" / gt.name])
         rows.append({"view": gt.name, "psnr": round(10 * math.log10(1 / max(mse, 1e-12)), 2), "changed_px": next(iter(px.values()))["changed_px"]})
     summary = {"mean_psnr": round(sum(r["psnr"] for r in rows) / len(rows), 2), "min_psnr": min(r["psnr"] for r in rows),
