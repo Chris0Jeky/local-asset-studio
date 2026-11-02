@@ -28,6 +28,10 @@ HELPERS = {
     "b_world": "vec3 b_world(vec3 v) {\n\treturn vec3(v.x, -v.z, v.y);\n}",  # Godot world (Y up) -> Blender world (Z up)
     "g_world": "vec3 g_world(vec3 v) {\n\treturn vec3(v.x, v.z, -v.y);\n}",
     "safe_div": "float safe_div(float a, float b) {\n\tfloat z = 1.0 - step(1e-30, abs(b));\n\treturn a * (1.0 - z) / (b + z);\n}",
+    # Light convention: Godot light_color = Blender colour, light_energy = Blender Light Info Power. Power is the brightest
+    # channel of LIGHT_COLOR / PI and Color the rest: exact when the colour's brightest channel is 1, products always.
+    "light_rgb": "vec3 light_rgb(vec3 c) {\n\treturn c / max(max(c.x, max(c.y, c.z)), 1e-8);\n}",
+    "light_power": "float light_power(vec3 c) {\n\treturn max(c.x, max(c.y, c.z));\n}",
     "lin01": "float lin01(float v, float a, float b) {\n\treturn clamp(safe_div(v - a, b - a), 0.0, 1.0);\n}",
     "fresnel_cos": ("float fresnel_cos(float cosi, float eta) {\n\tfloat c = abs(cosi);\n\tfloat g = eta * eta - 1.0 + c * c;\n"
                     "\tfloat ok = step(1e-30, g);\n\tg = sqrt(max(g, 1e-30));\n\tfloat a = (g - c) / (g + c);\n"
@@ -397,9 +401,9 @@ class Compiler:
                 return "1.0"
             raise Unsupported(f"{n['name']}: Light Evaluation {out}")
         if t == "LIGHT_INFO":
-            if out == "Color":
-                return "LIGHT_COLOR / PI"  # light convention: Godot light_energy 1.0, light_color = Blender colour
-            raise Unsupported(f"{n['name']}: Light Info {out} (Godot light() exposes colour x energy only)")
+            if out in ("Color", "Power"):
+                return f"{self.helper('light_rgb' if out == 'Color' else 'light_power')}(LIGHT_COLOR / PI)"
+            raise Unsupported(f"{n['name']}: Light Info {out} (Godot light() has no light position)")
         if t == "SHADOW_RAYCAST":
             if out == "Color":
                 return "vec3(ATTENUATION)"
@@ -688,14 +692,14 @@ def cameras(spec: list) -> list:
 
 
 def lights(ir_lights: list) -> list:
-    """Godot light rig under the compiler's convention: energy 1.0 and the Blender colour, so Light Info.Color is
-    LIGHT_COLOR / PI in the shader. Blender's power does not reach a compiled toon material (Info.Power is refused)."""
+    """Godot light rig under the compiler's convention: the Blender colour, and as energy the value Blender's Light Info
+    reports as Power (measured: strength / pi for suns, power / (4 pi^2) for points), so LIGHT_COLOR / PI = colour x Power."""
     out = []
     for L in ir_lights:
         if L["type"] not in ("SUN", "POINT"):
             continue
         out.append({"name": L["name"], "type": "directional" if L["type"] == "SUN" else "omni", "transform": godot_transform(L["matrix"]),
-                    "color": L["color"][:3], "energy": 1.0, "shadow": L.get("shadow", True),
+                    "color": L["color"][:3], "energy": L.get("energy", 1.0) / (math.pi if L["type"] == "SUN" else 4 * math.pi ** 2), "shadow": L.get("shadow", True),
                     "angular_distance": math.degrees(L.get("angle", 0.0)), "blender_energy": L.get("energy")})
     return out
 
@@ -720,7 +724,7 @@ def compile_ir(ir: dict, out_dir: Path) -> dict:
         except Unsupported as e:
             mt[name] = {"error": str(e)}
     summary = {s: sum(1 for r in report.values() if r["status"] == s) for s in ("ok", "partial", "unsupported")}
-    doc = {"summary": summary, "materials": report, "images": images, "light_convention": "Godot light_energy 1.0, light_color = Blender colour"}
+    doc = {"summary": summary, "materials": report, "images": images, "light_convention": "Godot light_color = Blender colour, light_energy = Blender Light Info Power"}
     (out_dir / "report.json").write_text(json.dumps(doc, indent=1), encoding="utf-8")
     (out_dir / "mtoon.json").write_text(json.dumps(mt, indent=1), encoding="utf-8")
     (out_dir / "lights.json").write_text(json.dumps(lights(ir.get("lights", [])), indent=1), encoding="utf-8")

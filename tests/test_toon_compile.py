@@ -353,9 +353,19 @@ class Nodes(unittest.TestCase):
         self.assertEqual(r["status"], "unsupported")
         self.assertNotIn("shader", r)
         b = B()
-        info = b.node("LIGHT_INFO", {}, {"Power": "VALUE"})
-        acc = b.out(b.node("LIGHT_ACCUMULATION", {"Diffuse Light": ("RGBA", b.out(info, "Power")), "Diffuse Color": [1, 1, 1, 1]}, {"BSDF": "SHADER"}), "BSDF")
-        self.assertIn("Power", compile_one(b.mat(acc))["unsupported"][0])
+        info = b.node("LIGHT_INFO", {}, {"Position": "VECTOR"})
+        acc = b.out(b.node("LIGHT_ACCUMULATION", {"Diffuse Light": ("RGBA", b.out(info, "Position")), "Diffuse Color": [1, 1, 1, 1]}, {"BSDF": "SHADER"}), "BSDF")
+        self.assertIn("Position", compile_one(b.mat(acc))["unsupported"][0])
+
+    def test_light_info_split(self):
+        # Godot sees colour x Power; Power is its brightest channel, Color the normalised rest; their product is exact.
+        for out, want in (("Power", [2.0] * 3), ("Color", [1.0, 0.5, 0.25])):
+            b = B()
+            info = b.node("LIGHT_INFO", {}, {"Color": "RGBA", "Power": "VALUE"})
+            acc = b.out(b.node("LIGHT_ACCUMULATION", {"Diffuse Light": ("RGBA", b.out(info, out)), "Diffuse Color": [1, 1, 1, 1]}, {"BSDF": "SHADER"}), "BSDF")
+            r = compile_one(b.mat(acc))
+            got = run(r["shader"], (0, -1, 0), [((0, -1, 0), (2.0, 1.0, 0.5), 1.0)])[0]
+            self.assertTrue(close(got, want), f"{out}: {got}")
 
     def test_object_space_vector(self):
         # Godot MODEL_MATRIX rotated 90 degrees about Godot Y (= Blender Z): a world +X light is object -Y in Blender axes.
@@ -390,11 +400,12 @@ class Scene(unittest.TestCase):
         self.assertAlmostEqual(c[0]["godot_size"], 2.0)
         self.assertAlmostEqual(c[1]["godot_fov"], math.degrees(2 * math.atan(math.tan(math.radians(30)) / 2)))
 
-    def test_lights_use_the_energy_one_convention(self):
+    def test_lights_carry_blender_power(self):
         out = tc.lights([{"name": "Key", "type": "SUN", "color": [1, .9, .8], "energy": 3.0, "angle": math.radians(2),
                           "matrix": [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]}, {"name": "A", "type": "AREA", "color": [1, 1, 1], "matrix": []}])
         self.assertEqual(len(out), 1)
-        self.assertEqual((out[0]["type"], out[0]["energy"], out[0]["blender_energy"]), ("directional", 1.0, 3.0))
+        self.assertEqual((out[0]["type"], out[0]["blender_energy"]), ("directional", 3.0))
+        self.assertAlmostEqual(out[0]["energy"], 3.0 / math.pi)        # Light Info Power of a 3 W/m2 sun
         self.assertAlmostEqual(out[0]["angular_distance"], 2.0)
 
 
