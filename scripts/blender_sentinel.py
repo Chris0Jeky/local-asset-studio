@@ -92,6 +92,15 @@ def compare_manifests(source, roundtrip):
         before, after = src_data.get(obj["data"], {}), rt_data.get(other["data"], {})
         if before.get("triangles") != after.get("triangles"):
             failures.append(f"{name}: triangles {before.get('triangles')} -> {after.get('triangles')}")
+        if before.get("closed") and after.get("closed") is False:
+            failures.append(f"{name}: closed surface became open")
+        volume, new_volume = before.get("signed_volume"), after.get("signed_volume")
+        # Signed volume means something only for closed surfaces: an open one's value moves with translation.
+        if before.get("closed") and after.get("closed") and volume is not None and new_volume is not None:
+            if volume * new_volume < 0:
+                failures.append(f"{name}: signed volume {volume} -> {new_volume} (normals flipped)")
+            elif abs(volume - new_volume) > 1e-3 * max(abs(volume), abs(new_volume)) + 1e-9:
+                failures.append(f"{name}: signed volume {volume} -> {new_volume}")
         slots, rt_slots = [s["material"] for s in obj["material_slots"]], [s["material"] for s in other["material_slots"]]
         if slots != rt_slots: failures.append(f"{name}: materials {slots} -> {rt_slots}")
         used.update(m for m in slots if m)

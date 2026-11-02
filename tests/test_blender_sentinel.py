@@ -114,6 +114,25 @@ class StructuralTests(unittest.TestCase):
         source["object_samples"]["CollisionProxy"] = copy.deepcopy(chest["object_samples"]["ChestLid"])
         self.assertEqual(sentinel.compare_manifests(source, chest)["failures"], [])
 
+    def test_flipped_normals_show_as_a_signed_volume_sign_change(self):
+        roundtrip = copy.deepcopy(MANIFEST)
+        head = next(m for m in roundtrip["meshes"] if m["name"] == "Head")
+        original = head["signed_volume"]; head["signed_volume"] = -original
+        self.assertGreater(original, 0)
+        self.assertEqual(sentinel.compare_manifests(MANIFEST, roundtrip)["failures"],
+                         [f"Head: signed volume {original} -> {-original} (normals flipped)"])
+
+    def test_small_closed_meshes_flip_and_open_meshes_skip_volume(self):
+        source, roundtrip = copy.deepcopy(MANIFEST), copy.deepcopy(MANIFEST)
+        for manifest, volume in ((source, 0.0004), (roundtrip, -0.0004)):
+            next(m for m in manifest["meshes"] if m["name"] == "Badge")["signed_volume"] = volume
+        self.assertEqual(sentinel.compare_manifests(source, roundtrip)["failures"], ["Badge: signed volume 0.0004 -> -0.0004 (normals flipped)"])
+        for manifest in (source, roundtrip): next(m for m in manifest["meshes"] if m["name"] == "Badge")["closed"] = False
+        next(m for m in roundtrip["meshes"] if m["name"] == "Badge")["signed_volume"] = 0.1667  # translated open surface
+        self.assertEqual(sentinel.compare_manifests(source, roundtrip)["failures"], [])
+        next(m for m in source["meshes"] if m["name"] == "Badge")["closed"] = True
+        self.assertIn("Badge: closed surface became open", sentinel.compare_manifests(source, roundtrip)["failures"])
+
     def test_unexpected_mesh_and_missing_source_image(self):
         source, roundtrip = copy.deepcopy(MANIFEST), copy.deepcopy(MANIFEST)
         source["images"][0]["missing"] = True
