@@ -32,7 +32,7 @@ TOL = 0.001          # 1 mm for exact box dimensions and pivots
 OVERLAP_SHRINK = 0.002
 UV_RES = 512
 # Pivot rule per generator: assets stand on z=0; rooms and shrines start at y=0 (open front / first step).
-FRONT_ANCHORED = {'room_kit', 'shrine'}
+FRONT_ANCHORED = {'room_kit', 'shrine', 'pier'}
 
 
 def load_schema(path=SCHEMA_PATH):
@@ -98,6 +98,10 @@ def expected_bounds(generator, p, detail=None):
         c = math.cos(math.pi / p['panels'])
         corner = (p['radius'] + p['wall_thickness']) / c
         return [2 * corner, 2 * corner, p['height']], [1 - c, 1 - c, 0]
+    if generator == 'pier':
+        top = p['water_level'] + p['deck_height']
+        z = top + (2.6 + 0.12 if p['lamps'] else 1.0 if p['railing'] else 0.40 if p['bollards'] else 0.0)
+        return [p['width'] + 6, p['length'] + 3, z], [0, 0, 0]
     raise EvidenceError(f'unknown generator {generator!r}')
 
 
