@@ -137,6 +137,20 @@ reason without typing; they save with the asset, not on their own. **Same run**
 lists the other outputs of the same job so you can compare them without leaving
 the dialog.
 
+**Compare with source** shows the current picture beside a recorded direct source
+inside the same detail dialog. Choose the source explicitly, including when only
+one is recorded. Both pictures fit equal display boxes without cropping; different
+dimensions are disclosed rather than treated as pixel alignment. Missing, trashed,
+non-image, mixed-privacy or incomplete family evidence cannot supply a comparison.
+An off-page source is resolved by its recorded ID, never inferred from similarity.
+Opening, changing and closing comparison preserve the current picture and typed
+notes. The existing Keep / Needs work / Not this and Save controls still write only
+the current version. Comparison does not edit images, generate, launch an editor,
+verify media bytes or certify art or licensing. Close comparison to return to the
+ordinary preview; changing picture, Workspace or privacy clears comparison media.
+A confirmed metadata save also refreshes this observation; reopen comparison and
+choose the source again to continue inspecting it (#1875).
+
 **Make seamless** and **Make parallax layers** prepare a source for Create.
 Generate stays unavailable while either preparation is pending. Closing the
 asset dialog, reopening it or changing the Create intent discards the late

@@ -33,6 +33,42 @@
     const value=random();need(Number.isInteger(value)&&value>=0&&value<=4294967295,'A new seed could not be prepared');
     return String(BigInt(original)===BigInt(value)?(value+1)%4294967296:value);
   }
+  function directSources(report,id,scope){
+    validate(report,id,scope);
+    need(!report.truncated&&!report.gaps.length,'Family evidence is incomplete. Source comparison is unavailable.');
+    const ids=report.edges.filter(e=>e.child===id).map(e=>e.parent);
+    need(new Set(ids).size===ids.length&&ids.every(parent=>parent!==id&&report.nodes.some(n=>n.id===parent)),'Recorded sources are ambiguous or unavailable.');
+    return ids.map(parent=>report.nodes.find(n=>n.id===parent));
+  }
+  function createComparison(options){
+    let epoch=0;
+    const cancel=()=>{epoch++;};
+    async function choose(report,parent){
+      const child=options.asset(),context=options.context(),stamp=JSON.stringify(context),serial=++epoch;
+      need(child&&identity(child.id)&&HASH.test(child.sha256),'The current picture is unavailable.');
+      const id=child.id,sha=child.sha256,privacy=child.privacy===undefined?'regular':child.privacy;
+      const source=directSources(report,id,context.workspace).find(n=>n.id===parent);
+      need(source,'Choose a recorded direct source.');
+      need(source.state==='active','This recorded source is missing or in Trash.');
+      const current=()=>serial===epoch&&JSON.stringify(options.context())===stamp&&options.asset()?.id===id&&options.asset()?.sha256===sha;
+      try{
+        const resolved=await options.resolve([id,parent]);
+        if(!current())return null;
+        need(resolved!==false,'The Library changed while reading the pictures. Choose the source again.');
+        const image=(key)=>{
+          const a=options.lookup(key),classification=a?.privacy===undefined?'regular':a.privacy;
+          need(a&&a.id===key&&a.workspace_id===context.workspace&&a.media_type==='image'&&a.trashed_at==null,'A comparison picture is missing, in Trash or is not an image.');
+          need(['regular','private'].includes(privacy)&&classification===privacy,'The source and current picture must have the same privacy.');
+          need(HASH.test(a.sha256)&&a.url==='/api/assets/'+encodeURIComponent(key)+'/file'+(privacy==='private'?'?privacy=private':''),'Recorded image media is unavailable.');
+          return {...a};
+        };
+        const now=image(id),original=image(parent);
+        need(now.sha256===sha,'The current picture changed. Reopen it before comparing.');
+        return {child:now,source:original,current};
+      }catch(error){if(!current())return null;throw error;}
+    }
+    return {choose,cancel};
+  }
   function createRecall(options){
     let epoch=0,busy=false,abort=null;
     function cancel(){epoch++;abort?.abort();abort=null;busy=false;}
@@ -65,17 +101,51 @@
   function install(options){
     const d=options.document||document,q=s=>d.querySelector(s),dialog=q('#assetDialog');if(!dialog)return null;
     const panel=d.createElement('section');panel.id='assetFamily';panel.className='asset-family';q('#assetLineage').after(panel);
-    let epoch=0,controller=null,currentId=null;
+    const comparisonPanel=d.createElement('section');comparisonPanel.id='assetSourceComparison';comparisonPanel.className='asset-source-comparison';comparisonPanel.hidden=true;q('#assetDetailMedia').before(comparisonPanel);
+    let epoch=0,controller=null,currentId=null,comparisonReport=null,comparisonScope=null;
     const button=(label,attribute,value)=>{const b=d.createElement('button');b.type='button';b.textContent=label;b.dataset[attribute]=value;return b;};
     function say(message,error=false){const line=q('#assetFamilyStatus');if(line){line.textContent=message;line.classList.toggle('error',error);}options.say(message,error);}
     // The status line and next-step buttons sit above the form, where the picture's actions are; the family strip stays below.
     const recall=createRecall({...options,context:id=>options.context(id),say});
-    function clear(){epoch++;controller?.abort();controller=null;recall.cancel();currentId=null;panel.replaceChildren();q('#assetLineage').hidden=false;
+    const comparison=createComparison({...options,context:options.comparisonContext});
+    function clearComparison(focus=false){
+      const current=dialog.open&&comparisonScope===JSON.stringify(options.comparisonContext());
+      comparison.cancel();comparisonPanel.replaceChildren();comparisonPanel.hidden=true;dialog.classList.remove('asset-source-mode');
+      if(focus&&current)q('#assetCompareSource')?.focus();
+    }
+    function showComparison(){
+      need(comparisonReport&&comparisonScope===JSON.stringify(options.comparisonContext()),'The picture or Library changed. Reopen its details to compare.');
+      const sources=directSources(comparisonReport,currentId,options.comparisonContext().workspace);
+      clearComparison();comparisonPanel.hidden=false;dialog.classList.add('asset-source-mode');
+      comparisonPanel.innerHTML='<div class="asset-source-heading"><h3 id="assetSourceTitle" tabindex="-1">Compare with source</h3><button type="button" data-family-compare-close>Close comparison</button></div><p>Choose a recorded direct source. Review and Save below still apply to the current version only.</p><div class="asset-source-choices" role="group" aria-label="Recorded direct sources"></div><p id="assetSourceStatus" role="status" aria-live="polite">No source chosen.</p><div id="assetSourceImages" class="asset-source-images"></div>';
+      comparisonPanel.setAttribute('aria-labelledby','assetSourceTitle');
+      for(const source of sources){const b=button(source.title+(source.state==='active'?'':source.state==='trashed'?' · In Trash':' · Unavailable'),'familySource',source.id);b.disabled=source.state!=='active';b.setAttribute('aria-pressed','false');q('.asset-source-choices').append(b);}
+      q('#assetSourceTitle').focus();
+    }
+    async function chooseSource(parent){
+      q('#assetSourceImages').replaceChildren();q('#assetSourceStatus').textContent='Reading the recorded pictures…';
+      for(const b of comparisonPanel.querySelectorAll('[data-family-source]'))b.setAttribute('aria-pressed',String(b.dataset.familySource===parent));
+      const pair=await comparison.choose(comparisonReport,parent);if(!pair)return;
+      const box=q('#assetSourceImages'),line=q('#assetSourceStatus');
+      const current=()=>pair.current()&&dialog.open&&!comparisonPanel.hidden&&box===q('#assetSourceImages');
+      if(!current())return;
+      line.textContent='Saved pictures, shown without alignment. Keep, Needs work, Not this and Save apply only to the current version.';
+      const sizes=[];
+      for(const [index,a,label] of [[0,pair.child,'Current version'],[1,pair.source,'Recorded source']]){
+        const figure=d.createElement('figure'),image=d.createElement('img'),caption=d.createElement('figcaption'),size=d.createElement('small');
+        caption.textContent=label+' · '+a.title;image.alt=label+': '+a.title;image.decoding='async';
+        image.addEventListener('load',()=>{if(!current())return;sizes[index]=image.naturalWidth+' × '+image.naturalHeight;size.textContent=sizes[index]+' px';if(sizes.length===2&&sizes[0]&&sizes[1]&&sizes[0]!==sizes[1])line.textContent='Different image dimensions. Both fit the same display size; they are not pixel-aligned. Review and Save apply only to the current version.';});
+        image.addEventListener('error',()=>{if(!current())return;comparison.cancel();box.replaceChildren();line.textContent='A picture could not be loaded. Nothing was changed. Choose a source again to retry.';});
+        figure.append(image,caption,size);box.append(figure);image.src=a.url;
+      }
+    }
+    function clear(){epoch++;controller?.abort();controller=null;recall.cancel();clearComparison();comparisonReport=null;comparisonScope=null;currentId=null;panel.replaceChildren();q('#assetLineage').hidden=false;
       q('#assetFamilyActions')?.replaceChildren();const line=q('#assetFamilyStatus');if(line){line.textContent='';line.classList.remove('error');}}
-    function actions(id){const box=d.createElement('div');box.className='asset-family-actions';box.append(button('Same recipe, new seed','familyRecall','new'),button('Same seed, edit words','familyRecall','words'),button('Use as reference','familyReference',id));return box;}
+    function actions(id){const box=d.createElement('div');box.className='asset-family-actions';box.append(button('Same recipe, new seed','familyRecall','new'),button('Same seed, edit words','familyRecall','words'),button('Use as reference','familyReference',id));
+      if(options.asset()?.media_type==='image'){const b=button('Compare with source','familyCompare',id);b.id='assetCompareSource';b.disabled=true;box.append(b);}return box;}
     async function opened(){
       const asset=options.asset();if(!dialog.open||!asset)return;
-      clear();currentId=asset.id;const serial=epoch,scope=options.context(asset.id).workspace,own=new AbortController();controller=own;
+      clear();currentId=asset.id;const serial=epoch,scope=options.context(asset.id).workspace,observed=JSON.stringify(options.comparisonContext()),own=new AbortController();controller=own;
       panel.innerHTML='<h3>Family &amp; reuse</h3><div id="assetFamilyTree"></div><div id="assetFamilyChildren"></div>';
       q('#assetFamilyActions')?.replaceChildren(actions(asset.id));
       const status=q('#assetFamilyStatus');if(status)status.textContent='Reading the recorded family…';
@@ -83,9 +153,13 @@
       const timer=setTimeout(()=>own.abort(),15000);
       try{
         const report=validate(await options.read('/api/assets/family/'+asset.id+'?workspace_id='+scope,{signal:own.signal}),asset.id,scope);
-        if(serial!==epoch||!dialog.open||options.context(asset.id).workspace!==scope)return;
+        if(serial!==epoch||!dialog.open||options.context(asset.id).workspace!==scope||observed!==JSON.stringify(options.comparisonContext()))return;
         q('#assetFamilyTree').innerHTML=treeMarkup(report);q('#assetLineage').hidden=true;
         q('#assetFamilyStatus').textContent='Recorded steps, oldest first. Missing or put-away steps stay visible. No generation submitted.';
+        if(q('#assetCompareSource'))try{
+          const sources=directSources(report,asset.id,scope);need(sources.length,'No recorded direct source is available for comparison.');
+          comparisonReport=report;comparisonScope=observed;q('#assetCompareSource').disabled=false;
+        }catch(error){q('#assetFamilyStatus').textContent+=' '+error.message;}
       }catch(e){if(serial===epoch&&dialog.open)say('Family unavailable: '+e.message,true);}
       finally{clearTimeout(timer);if(serial===epoch)controller=null;}
     }
@@ -93,6 +167,9 @@
     const onClick=async event=>{
       const b=event.target.closest('button');if(!b||b.disabled)return;const actionEpoch=epoch;
       try{
+        if(b.dataset.familyCompare){showComparison();return;}
+        if(b.hasAttribute('data-family-compare-close')){clearComparison(true);return;}
+        if(b.dataset.familySource){try{await chooseSource(b.dataset.familySource);}catch(error){if(actionEpoch===epoch&&!comparisonPanel.hidden){q('#assetSourceImages').replaceChildren();q('#assetSourceStatus').textContent=error.message;}}return;}
         if(b.dataset.familyOpen){options.open(b.dataset.familyOpen);return;}
         if(b.dataset.familyRecall){await recall.prepare(currentId,b.dataset.familyRecall);return;}
         if(b.dataset.familyReference){await options.reference(b.dataset.familyReference);return;}
@@ -108,7 +185,7 @@
         }
       }catch(e){if(actionEpoch===epoch&&dialog.open)say(e.message,true);}
     };
-    panel.addEventListener('click',onClick);q('#assetFamilyActions')?.addEventListener('click',onClick);
+    panel.addEventListener('click',onClick);comparisonPanel.addEventListener('click',onClick);q('#assetFamilyActions')?.addEventListener('click',onClick);
     dialog.addEventListener('close',()=>{if(!dialog.open)clear();});
     function decorateResults(){
       for(const card of d.querySelectorAll('#gallery .imageCard')){
@@ -133,5 +210,5 @@
     }
     return {opened,decorateResults,clear,recall};
   }
-  return {validate,treeMarkup,newSeed,createRecall,install};
+  return {validate,treeMarkup,newSeed,directSources,createComparison,createRecall,install};
 });

@@ -74,6 +74,44 @@ archive write or voice acceptance. First-generation orchestration and the broade
 Spoken Briefs project remain open under #638/#635. See
 [`CLI-PREVIEW.md`](docs/spoken-briefs/CLI-PREVIEW.md#studio-source-preview).
 
+## 2026-10-31 — Compare a repaired picture with its recorded source
+
+Library detail now offers **Compare with source**, with explicit direct-parent
+choice and equally sized, contained Current version / Recorded source previews.
+Off-page sources use the existing bounded selected-ID observation. Missing,
+trashed, non-image, mixed-privacy and incomplete evidence stays unavailable.
+The family adapter binds reads and focus to the child hash and detail, Workspace
+and privacy epochs; changes and errors clear comparison media. The existing
+Workspace editor remains the sole metadata, review and dirty-draft owner.
+
+Source checkpoint: 54 focused Node contracts pass, including source selection,
+media identity, late-response refusals and preserving Notes focus during delayed
+comparison display. The real 125-asset SQLite fixture reopens
+its repair and constructs its HTTP handler without starting a socket or browser.
+Feature browser captures, hosted full-suite/all-30 journeys and final qualification
+are pending at this checkpoint. Refs #1837 and #243; no broader closure. #1832
+acceptance and HUMAN_TODO remain unchanged. No live generation, paid runtime,
+native editor, model licensing or artistic acceptance is claimed.
+
+2 November integration: the comparison changes reconcile cleanly with main
+`84b66fba0da1b70be895caf8ec3831cb0a9055bd`. The 17 family observations,
+eight repair-import checks, three family frontend wrappers, detail contract wrapper
+and 29 frontend handoffs pass, as does repository validation. The disposable
+125-asset fixture reopens with the parent unchanged and repair unreviewed. Local
+browser execution was unavailable because Chromium installation failed before
+launch; no browser assertion or capture is claimed. The existing Linux family
+workflow now runs the complete comparison fixture and retains its wide, narrow,
+CSS-200, failure and report artifacts. That hosted result and the integrated full
+suite remain pending; the earlier partial browser evidence is not upgraded.
+
+Hosted run `41385708468` at `a954ec3` then passed all 34 comparison interaction
+assertions and retained wide, narrow and CSS-200 captures, but failed the final
+page-error check. Its error details were not retained. The fixture's bare Workspace
+events reproduce a TypeError in the existing Continue listener; the fixture now
+uses the production identity observer for both A-B-A transitions. Failed checks
+retain their errors and request log, and page-error stacks are printed. These
+changes pass focused fault probes; the complete hosted result remains pending.
+
 ## 2026-10-31 — Deliberately restore an older shared setup
 
 Workspace history now offers **Review restore** for an older revision. It checks the
