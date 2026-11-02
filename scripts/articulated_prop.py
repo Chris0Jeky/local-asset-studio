@@ -197,9 +197,8 @@ for frame, angle in ((config["keyframes"]["closed"], 0), (config["keyframes"]["o
     lid.keyframe_insert(data_path="rotation_euler", index=0, frame=frame)
 action = lid.animation_data.action
 action.name = "ChestLidOpenHoldClose"
-for curve in action.fcurves:
-    for point in curve.keyframe_points:
-        point.interpolation = "LINEAR"
+for point in action.fcurve_ensure_for_datablock(lid, "rotation_euler", index=0).keyframe_points:
+    point.interpolation = "LINEAR"
 
 bpy.ops.object.camera_add()
 camera = bpy.context.object

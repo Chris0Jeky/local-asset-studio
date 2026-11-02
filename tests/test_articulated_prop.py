@@ -1,7 +1,9 @@
 from pathlib import Path
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest.mock import Mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -9,6 +11,18 @@ import articulated_prop as prop
 
 
 class ArticulatedPropContractTests(unittest.TestCase):
+    def test_lid_interpolation_uses_the_assigned_datablock_curve(self):
+        points = [SimpleNamespace(interpolation="BEZIER") for _ in range(4)]
+        curve = SimpleNamespace(keyframe_points=points)
+        action = SimpleNamespace(fcurve_ensure_for_datablock=Mock(return_value=curve))
+        lid = SimpleNamespace(animation_data=SimpleNamespace(action=action))
+        script = prop._script()
+        animation = script[script.index('action = lid.animation_data.action'):script.index('bpy.ops.object.camera_add()')]
+        exec(animation, {"lid": lid})
+        action.fcurve_ensure_for_datablock.assert_called_once_with(lid, "rotation_euler", index=0)
+        self.assertEqual(action.name, "ChestLidOpenHoldClose")
+        self.assertEqual([point.interpolation for point in points], ["LINEAR"] * 4)
+
     def test_describe_and_generated_script_keep_fixed_safety_contract(self):
         self.assertEqual(prop.describe()["fixed_argv"][:3], ["--background", "--factory-startup", "--disable-autoexec"])
         script = prop._script()
