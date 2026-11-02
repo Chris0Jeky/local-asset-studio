@@ -1,5 +1,6 @@
 """The Studio archive facade uses retained evidence, never generation authority."""
 import copy
+import errno
 import importlib
 import importlib.util
 import json
@@ -93,13 +94,23 @@ class StudioArchiveTests(unittest.TestCase):
                 self.preview()
 
     def test_source_links_cannot_escape_configured_root(self):
-        link = self.root / 'COMPRESSED.md'
-        try: link.symlink_to(self.f.source)
-        except OSError: self.skipTest('Symlink creation unavailable')
+        source_before = self.f.source.read_bytes()
+        link = self.root / 'source-alias.md'
+        pack = self.root / 'linked-pack'; pack.mkdir()
+        candidate = pack / 'COMPRESSED.md'
+        try:
+            link.symlink_to(self.f.source)
+            candidate.symlink_to(self.f.source)
+        except OSError as error:
+            if error.errno in (errno.EPERM, errno.EACCES, errno.ENOSYS, errno.ENOTSUP) or getattr(error, 'winerror', None) == 1314:
+                self.skipTest(f'Symlink creation unavailable: {error}')
+            raise
         with self.assertRaisesRegex(SpokenBriefError, 'Symlink/reparse'):
-            self.preview()
+            self.preview('linked-pack')
         with self.assertRaisesRegex(SpokenBriefError, 'Symlink/reparse'):
-            self.preview('COMPRESSED.md')
+            self.preview('source-alias.md')
+        self.assertEqual(source_before, self.f.source.read_bytes())
+        self.assertFalse(self.f.source.is_symlink())
 
     def test_source_windows_reparse_marker_is_refused_before_open(self):
         from types import SimpleNamespace
