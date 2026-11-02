@@ -16,6 +16,12 @@ The pending read/check retains the Workspace, Create stamp, Asset session/epoch,
 
 **Use as reference** invokes the existing Pull-from-library button handler. Its current recipe, slot choice, loading guard and source-copy consent remain authoritative. The selected asset is searched and focused after the read only if the Workspace and Create stamp still match. Opening the picker copies no file; the user presses its existing attachment choice.
 
+## Opening the Library during startup
+
+The Library can finish loading before the recipe catalog and Atelier reads initialize Create. Family strips, child lists and result ancestry read the existing Workspace observation without capturing Create controls. Their Workspace and stale-response checks still apply. Recall and reference actions explicitly refuse until a real selected recipe exists; they do not manufacture an empty setup stamp, copy a source or adopt a draft while initialization is incomplete.
+
+Five causal Node regressions failed before this guard and now pass alongside the original 20 adapter contracts. The repair-import browser fixture also holds the catalog and Atelier responses, opens an actual visible Library card, reads its family and children, checks early action refusals, and then releases initialization before continuing the normal import journey. That new browser coverage requires its own exact-head hosted result; local Node and fixture preflight checks are not a browser pass.
+
 ## Qualification
 
 - 20 Node tests cover public-owner delegation, draft/metadata/backend refusal, source-picker ownership, identity/type/authority validation and no mutation after failure.

@@ -6,12 +6,15 @@
   'use strict';
   const need=(condition,message)=>{if(!condition)throw Error(message);};
   function create(options){
+    const ready=()=>need(options.ready?.()!==false,'Create setup is still loading. Try again when a recipe is ready. Your work was kept.');
     function context(){
+      ready();
       const state=options.state();
       return {workspace:state.workspace,stamp:JSON.stringify([options.owner.stamp(),state.assetId,state.assetEpoch,
         state.workspaceEpoch,state.fields,state.pending,state.conflict,state.metadataBusy,state.specialized])};
     }
     function idle(){
+      ready();
       const state=options.state();
       need(!state.dirty&&!state.pending&&!state.conflict&&!state.metadataBusy,
         'Finish the current edit or pending asset save first. Your work was kept.');
@@ -64,7 +67,7 @@
       assetId:q('#assetDialog').open?activeAsset?.id:null,assetEpoch:assetDetailEpoch,fields:assetDetailValues(),
       dirty:assetDetailDirty(),pending:!!assetDetailPending,conflict:!!assetDetailConflict,metadataBusy:assetDetailBusy,
       specialized:!!continuationState||!!tileState||!!parallaxState||q('#uxPoseEditor')?.hidden===false});
-    const adapter=StudioFamilyAdapter.create({owner,state,presets:()=>catalog?.presets||[],backend:()=>backendActive,
+    const adapter=StudioFamilyAdapter.create({owner,state,ready:()=>!!selected?.id,presets:()=>catalog?.presets||[],backend:()=>backendActive,
       asset:id=>typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id),
       resolve:ids=>typeof resolveAssetIDs==='function'?resolveAssetIDs(ids):Promise.resolve(false),
       finish:(mode,target,seed)=>{

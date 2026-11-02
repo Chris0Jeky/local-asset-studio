@@ -53,6 +53,11 @@ def import_handler(studio, requests, controls):
 
         def do_GET(self):
             path = urlsplit(self.path).path
+            if path == controls.get('startup_path'):
+                controls['startup_entered'].set()
+                assert controls['startup_release'].wait(15), 'Held Create initialization was not released'
+            if path.startswith('/api/assets/recall/'):
+                controls.setdefault('recall_reads', []).append(self.path)
             if path == '/api/jobs': return self.json([])  # The retained Library is independent of Recent runs.
             if path == '/api/workspace': return self.json(self.studio.assets.snapshot(privacy=scope_for_handler(self)))
             if path.startswith('/api/assets/') and path.endswith('/metadata'):
@@ -75,7 +80,8 @@ def import_handler(studio, requests, controls):
 def exercise(out, browser_executable=None):
     out = Path(out); out.mkdir(parents=True, exist_ok=True)
     checks, errors, requests, children = [], [], [], []
-    controls = {'hold': False, 'entered': threading.Event(), 'release': threading.Event()}
+    controls = {'hold': False, 'entered': threading.Event(), 'release': threading.Event(),
+                'startup_entered': threading.Event(), 'startup_release': threading.Event(), 'recall_reads': []}
 
     def check(condition, label):
         if not condition: raise AssertionError(label)
@@ -105,11 +111,41 @@ def exercise(out, browser_executable=None):
                         page = context.new_page(); page.set_default_timeout(10000); page.on('pageerror', page_error)
 
                         def ready(scope):
-                            # Family observations also read the Create owner's stamp; Workspace can load first.
+                            # The ordinary import journey waits for the full page; startup cases hold it below.
                             page.wait_for_function('(scope)=>window.StudioSetupDraft&&backendActive==="primary"&&catalog?.presets?.some(p=>p.id==="anima-portrait")&&selected?.id&&assetActivePrivacy===scope&&!!assetState.workspace_id&&assetPaging&&!assetRefreshing', arg=scope)
 
-                        page.goto(origin+'/#assets', wait_until='domcontentloaded')
-                        ready('regular')
+                        before_startup = storage(studio)
+                        for label, endpoint in (('catalog', '/api/catalog'), ('Atelier', '/api/options')):
+                            controls['startup_path'] = endpoint
+                            controls['startup_entered'].clear(); controls['startup_release'].clear()
+                            try:
+                                if label == 'catalog': page.goto(origin+'/#assets', wait_until='domcontentloaded')
+                                else: page.reload(wait_until='domcontentloaded')
+                                check(controls['startup_entered'].wait(5), 'Create initialization is held at '+label)
+                                page.wait_for_function('!!assetState.workspace_id&&assetPaging&&!assetRefreshing')
+                                check(page.evaluate('!selected'), 'The Library is ready before a Create recipe: '+label)
+                                page.locator('#assetGrid .asset-open[data-asset-open="'+ids[0]+'"]').click()
+                                page.wait_for_function('(id)=>activeAsset?.id===id&&document.querySelectorAll("#assetFamily [data-family-step]").length===1', arg=ids[0])
+                                check(page.locator('#assetFamily [data-family-step]').get_attribute('data-family-step') == ids[0],
+                                      'A visible Library card opens its recorded family while Create loads: '+label)
+                                page.locator('[data-family-children]').click()
+                                page.wait_for_function('(id)=>[...document.querySelectorAll("#assetFamilyChildren [data-family-open]")].some(e=>e.dataset.familyOpen===id)', arg=ids[1])
+                                check(not errors, 'Early family and child reads have no JavaScript page errors: '+label)
+                                for selector in ('[data-family-recall="new"]', '[data-family-reference]'):
+                                    page.locator(selector).click()
+                                    page.wait_for_function('document.querySelector("#assetFamilyStatus").textContent.includes("Create setup is still loading")')
+                                check(not controls['recall_reads'] and storage(studio) == before_startup,
+                                      'Incomplete Create actions refuse before recall or storage mutation: '+label)
+                                page.locator('#assetFamily').scroll_into_view_if_needed()
+                                evidence_screenshot(page, path=str(out/('startup-'+label.lower()+'.png')), full_page=False)
+                            finally:
+                                controls['startup_path'] = None; controls['startup_release'].set()
+                            ready('regular')
+                            check(page.evaluate('!!StudioSetupDraft.capture()?.recipe?.preset&&typeof StudioSetupDraft.stamp()==="string"'),
+                                  'The real Create owner becomes available after '+label+' finishes')
+                            check(page.locator('#assetFamily [data-family-step]').get_attribute('data-family-step') == ids[0],
+                                  'Initialization preserves the opened family: '+label)
+                            page.locator('#closeAssetDialog').click()
 
                         def open_parent(identifier):
                             if page.locator('#assetDialog').evaluate('(el)=>el.open'):
@@ -196,15 +232,15 @@ def exercise(out, browser_executable=None):
             check(all(studio.assets.get(identifier, privacy=scope) == originals[scope] and
                       hashlib.sha256(studio.assets.file(identifier, privacy=scope).read_bytes()).hexdigest() == hashes[scope]
                       for scope, identifier in parents.items()), 'Both original records and byte hashes remain unchanged after restart')
-            report = {'checks': checks, 'page_errors': errors, 'post_routes': requests, 'children': children,
+            report = {'checks': checks, 'page_errors': errors, 'post_routes': requests, 'recall_reads': controls['recall_reads'], 'children': children,
                       'parent_unchanged': True, 'generation_submitted': False}
             (out/'report.json').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
         except BaseException as error:
             (out/'failure.json').write_text(json.dumps({'error': str(error), 'checks': checks, 'page_errors': errors,
-                                                       'post_routes': requests}, indent=2)+'\n', encoding='utf-8')
+                                                       'post_routes': requests, 'recall_reads': controls['recall_reads']}, indent=2)+'\n', encoding='utf-8')
             raise
         finally:
-            controls['release'].set(); http.shutdown(); http.server_close(); thread.join(timeout=2)
+            controls['release'].set(); controls['startup_release'].set(); http.shutdown(); http.server_close(); thread.join(timeout=2)
 
 
 if __name__ == '__main__':
