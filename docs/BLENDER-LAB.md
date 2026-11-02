@@ -67,6 +67,83 @@ Findings from building a deterministic asset:
   ordered geometry hash flags this correctly, so the lab asset builds its sphere from explicit data.
 - `shape_key_add` creates keys at value 0.0 on 4.5 and 1.0 on 5.4 alpha. Set values explicitly.
 
+## Asset Parity Sentinel v1
+
+```bash
+python scripts/blender_sentinel.py --blender <blender.exe> --blend <asset.blend> --out-dir <new-dir> [--seed-defect missing-texture|omitted-mesh|material-mismatch]
+```
+
+Process 1 opens the source without scripts and writes `source/manifest.json`. It then renders the evidence set and
+writes `source/evidence.json` (camera spec, render settings, ID palette). It reloads the untouched file, applies the
+optional seeded defect in memory, and exports `export.glb` with the existing LAS settings (`LAS_GLTF_SETTINGS`, the
+same call as `articulated_prop.py`). Process 2 is a new Blender, factory-empty. It imports the GLB and renders the
+same evidence with the source's `cameras.json`. The host then compares and writes `result.json`, which holds `pass`,
+`structural_failures`, `format_losses`, `expected_exclusions`, `visual_warnings`, per-view metrics, export settings,
+both semantic checksums, and every artifact with its SHA-256. The exit code is 0 for pass, 1 for fail and 2 for error.
+The source SHA-256 must be unchanged at the end.
+
+Evidence is 4 orthographic views (front, three-quarter, profile, back) × 4 passes at 256 px:
+- `lit`: Cycles CPU, 16 samples, fixed seed, no denoise.
+- `clay`: Workbench studio, single grey.
+- `object_id`: Workbench flat, per-object colour from SHA-256 of the name.
+- `material_id`: the same, per material.
+
+The views use a fixed two-sun rig in a `_LAS_Evidence` collection. Authored lights are hidden, because the LAS export
+excludes lights, and authored cameras are untouched. The silhouette is the `object_id` alpha, reported as IoU.
+
+Each view and pass gets a ×4 diff PNG under `diff/`. It also gets the changed fraction (largest channel difference
+over a per-pass pixel threshold) and changed-region boxes (8 px tiles, 8-connected). In ID passes, each box is
+attributed to the object or material names present before and after.
+
+Measured on 2 Nov 2026 with the generated lab asset, CPU only, about 7 s per run on 4.5 and 11 s on 5.4:
+
+| Run | 4.5.13 | 5.4 alpha |
+| --- | --- | --- |
+| Unchanged control | pass. Noise: lit max \|Δ\| 1/255, ID passes exact, IoU 1.0 | pass. Noise: lit max \|Δ\| 13/255 on a few pixels, ID passes exact, IoU 1.0 |
+| A missing texture | fail: texture lost, base colour unlinked, lit 5.6–10.1 % | same |
+| B omitted mesh (`Body` hidden, dropped by `use_renderable`) | fail: mesh missing, 16 visual warnings attributed `Body` → none | same |
+| C material mismatch (`Badge` gets `BodyTextured`) | fail: slot changed, material_id boxes attributed `BadgeGreen` → `BodyTextured` | same |
+| D truncated animation (scene end halved, so `export_frame_range` clips the action) | fail: sampled frames `[1, 7, 12, 18, 24]` → `[1, 4, 6, 9, 12]`, no visual warning | same |
+| E shape-key damage (deltas halved) | fail: `Squash` max delta 0.096 → 0.048, no visual warning | same |
+
+Known gaps, tracked in #1918: `pose_samples` holds bone heads only, so a twist or a leaf-bone rotation is not caught
+(the lab fixture's own sway is a twist). Shape-key checks hold extrema only, so damage to non-extreme vertex deltas
+passes. A sentinel pass is evidence about what it measures, not acceptance.
+
+D and E pass every render. Only the manifest catches them. It records `pose_samples` (world-space bone heads at 5
+frames over each action's range; no tails, because glTF stores none) and split-invariant shape-key
+`delta_max`/`delta_bbox` (they survive the vertex duplication of a roundtrip). The ortho scale comes from the bounding
+sphere, so diagonal views are not cropped.
+
+The importer adds a hidden `Icosphere` bone-shape object in a `glTF_not_exported` collection. The sentinel ignores it
+because it is not visible. Thresholds are in `blender_sentinel.THRESHOLDS`. They come from this control, so a
+smooth-shaded asset or one with custom normals needs its own control run before the thresholds can be trusted on it.
+
+### Review corrections and offline evidence (2 Nov 2026)
+
+The evidence renderer now sets the intended frame before evaluating mesh bounds. Source captures use
+`frame_start`; roundtrip captures reuse the source camera specification and its frame. Render Region and Crop to
+Render Region are disabled for every pass. These changes affect the temporary evidence scene, preserving authored
+camera data and the original source bytes.
+
+The host requires exactly one PNG for each of the four declared views and four passes in both evidence receipts.
+It validates that complete set before joining receipt filenames to output paths, refusing missing, duplicate or
+foreign names. It rechecks the source SHA-256 after both processes, image comparisons and artifact hashing,
+immediately before writing `result.json`. A refusal retains partial artifacts and does not publish a passing receipt.
+
+Verification against the reviewed `ac65a7e5c9c7de9925bd0a32c87207dacb92e727` base:
+
+- Renderer fixtures reproduced evaluation at saved frame 37 instead of evidence frame 3, and inherited crop flags
+  across all 16 passes. Both failed before the correction; supplied-camera and authored-data controls passed.
+- Full host fixtures reproduced a passing receipt after a concurrent source save during the second worker or final
+  artifact hashing, and a pass with zero image comparisons when both receipts listed no files. Those cases now refuse;
+  a complete synthetic control still compares all 16 PNG pairs and preserves its source. Missing, duplicate and
+  foreign names are also covered, with partial artifacts retained on refusal.
+- With `LAS_BLENDER_LAB_EXE` unset, `python -m unittest discover -s tests -p "test_blender_*.py" -v` discovered 41 tests:
+  38 passed and the three native Blender tests skipped. Renderer inputs use API-shaped scene fixtures; host checks
+  use synthetic worker receipts and real PNG comparisons. No native Blender execution occurred in this review.
+
+The earlier native measurements and the remaining rotation and shape-key limits above retain their original scope.
 ## Which tool for what
 
 Two stacks were built in parallel on 2 Nov 2026: this lab, and the offline DCC evidence work from #1911. They now

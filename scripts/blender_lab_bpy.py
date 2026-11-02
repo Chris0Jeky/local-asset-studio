@@ -281,11 +281,12 @@ def _mesh(mesh):
     coords = _foreach(mesh.vertices, "co", 3, np.float32)
     loop_totals = _foreach(mesh.polygons, "loop_total", 1, np.int32)
     loop_verts = _foreach(mesh.loops, "vertex_index", 1, np.int32)
+    edge_verts = _foreach(mesh.edges, "vertices", 2, np.int32)
     material_index = _foreach(mesh.polygons, "material_index", 1, np.int32)
     pts = coords.reshape(-1, 3)
     entry = {"name": mesh.name, "vertices": len(mesh.vertices), "edges": len(mesh.edges), "faces": len(mesh.polygons),
              "loops": len(mesh.loops), "triangles": int(np.maximum(loop_totals - 2, 0).sum()),
-             "geometry_hash": _quantised_hash(coords, loop_totals, loop_verts),
+             "geometry_hash": _quantised_hash(coords, loop_totals, loop_verts, edge_verts),
              "bbox": {"min": vec(pts.min(0)), "max": vec(pts.max(0))} if len(pts) else None,
              "uv_maps": [uv.name for uv in mesh.uv_layers],
              "color_attributes": sorted(a.name for a in mesh.color_attributes),
@@ -293,10 +294,18 @@ def _mesh(mesh):
              "shape_keys": None}
     keys = mesh.shape_keys
     if keys is not None:
+        reference = _foreach(keys.reference_key.data, "co", 3, np.float32).reshape(-1, 3)
+
+        def deltas(block):  # split-invariant summary: survives the vertex duplication a GLB roundtrip introduces
+            delta = _foreach(block.data, "co", 3, np.float32).reshape(-1, 3) - reference
+            return {"delta_max": rnd(np.linalg.norm(delta, axis=1).max()) if len(delta) else 0.0,
+                    "delta_bbox": {"min": vec(delta.min(0)), "max": vec(delta.max(0))} if len(delta) else None}
+
         entry["shape_keys"] = {"use_relative": keys.use_relative, "reference": keys.reference_key.name, "keys": [
             {"name": block.name, "relative_key": block.relative_key.name, "value": rnd(block.value), "mute": block.mute,
              "vertex_group": block.vertex_group or None, "range": [rnd(block.slider_min), rnd(block.slider_max)],
-             "data_hash": _quantised_hash(_foreach(block.data, "co", 3, np.float32))} for block in keys.key_blocks]}
+             "data_hash": _quantised_hash(_foreach(block.data, "co", 3, np.float32)), **deltas(block)}
+            for block in keys.key_blocks]}
     return entry
 
 
@@ -351,11 +360,16 @@ def _armature(arm):
             "max_depth": max((b["depth"] for b in bones), default=0)}
 
 
+EASING = ("CONSTANT", "LINEAR", "BEZIER", "SINE", "QUAD", "CUBIC", "QUART", "QUINT", "EXPO", "CIRC", "BACK", "BOUNCE", "ELASTIC")
+
+
 def _fcurve(curve, slot=None):
     import numpy as np
     points = curve.keyframe_points
     return {"slot": slot, "data_path": curve.data_path, "index": curve.array_index, "keys": len(points),
-            "keys_hash": _quantised_hash(_foreach(points, "co", 2, np.float32)),
+            "keys_hash": _quantised_hash(_foreach(points, "co", 2, np.float32), _foreach(points, "handle_left", 2, np.float32),
+                                         _foreach(points, "handle_right", 2, np.float32),
+                                         [EASING.index(p.interpolation) if p.interpolation in EASING else -1 for p in points]),
             "interpolation": sorted({p.interpolation for p in points})}
 
 
@@ -372,6 +386,25 @@ def _action(action):
         curves = [_fcurve(c) for c in action.fcurves]
     return {"name": action.name, "frame_range": vec(action.frame_range), "slots": slots,
             "fcurves": sorted(curves, key=lambda c: (c["slot"] or "", c["data_path"], c["index"]))}
+
+
+def _pose_samples(scene, count=5):
+    """World-space bone heads at evenly spaced frames over the action's range (rest frame without an action):
+    evaluated motion that survives the curve resampling and channel renames of a GLB roundtrip, so lost or truncated
+    animation shows. Tails are left out because glTF stores none and the importer guesses bone length."""
+    samples, current = {}, scene.frame_current
+    for obj in sorted((o for o in scene.objects if o.type == "ARMATURE"), key=lambda o: o.name):
+        action = obj.animation_data.action if obj.animation_data else None
+        low, high = action.frame_range if action is not None else (scene.frame_start, scene.frame_start)
+        frames = sorted({int(round(low + (high - low) * i / (count - 1))) for i in range(count)})
+        bones = {bone.name: [] for bone in obj.pose.bones}
+        for frame in frames:
+            scene.frame_set(frame)
+            for bone in obj.pose.bones:
+                bones[bone.name].append(vec(obj.matrix_world @ bone.head))
+        samples[obj.name] = {"frames": frames, "bones": bones}
+    scene.frame_set(current)
+    return samples
 
 
 def manifest(source_label=None):
@@ -398,6 +431,7 @@ def manifest(source_label=None):
                            for c in data.cameras if c.users), key=lambda c: c["name"]),
         "lights": sorted(({"name": l.name, "type": l.type, "energy": rnd(l.energy), "color": vec(l.color)}
                           for l in data.lights if l.users), key=lambda l: l["name"]),
+        "pose_samples": _pose_samples(scene),
     }
     result["counts"] = {key: len(result[key]) for key in ("objects", "meshes", "materials", "images", "armatures", "actions")}
     result["counts"]["triangles"] = sum(m["triangles"] for m in result["meshes"])
@@ -503,6 +537,192 @@ def make_fixture(out_dir):
     return path
 
 
+# ---- evidence renders, GLB export and reimport ----------------------------------------------------------------------
+
+VIEWS = {"front": (0.0, 0.0), "three_quarter": (45.0, 15.0), "profile": (90.0, 0.0), "back": (180.0, 0.0)}
+PASSES = ("lit", "clay", "object_id", "material_id")
+# The existing LAS export settings (scripts/articulated_prop.py); recorded verbatim in every export record.
+LAS_GLTF_SETTINGS = {"export_format": "GLB", "export_materials": "EXPORT", "export_cameras": False, "export_lights": False,
+                     "export_animations": True, "export_frame_range": True, "export_force_sampling": True,
+                     "use_renderable": True}
+SEEDED_DEFECTS = ("missing-texture", "omitted-mesh", "material-mismatch", "truncated-animation", "shape-key-damage")
+
+
+def id_colour(name):
+    """Stable colour per name, so ID passes map back to object and material names."""
+    import hashlib
+    digest = hashlib.sha256(name.encode()).digest()
+    return [round(0.15 + 0.7 * b / 255, 4) for b in digest[:3]]
+
+
+def _evidence_meshes(scene, view_layer):
+    return [o for o in scene.objects if o.type == "MESH" and not o.hide_render and o.visible_get(view_layer=view_layer)]
+
+
+def camera_spec(scene, view_layer):
+    """Fixed orthographic rig framed on the visible meshes; stored outside the asset and reused for the roundtrip."""
+    import bpy
+    from mathutils import Vector
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    points = []
+    for obj in _evidence_meshes(scene, view_layer):
+        evaluated = obj.evaluated_get(depsgraph)
+        points += [evaluated.matrix_world @ Vector(c) for c in evaluated.bound_box]
+    if not points: raise RuntimeError("No visible mesh to frame")
+    low = [min(p[i] for p in points) for i in range(3)]
+    high = [max(p[i] for p in points) for i in range(3)]
+    centre = Vector([(a + b) / 2 for a, b in zip(low, high)])
+    radius = max((p - centre).length for p in points)  # a bounding sphere frames every view direction uncropped
+    return {"target": vec(centre), "ortho_scale": rnd(radius * 2.1),
+            "views": VIEWS, "frame": scene.frame_start}
+
+
+def _rig(scene, spec):
+    """Add evidence cameras and lights in their own collection; authored cameras are never touched."""
+    import math
+    import bpy
+    from mathutils import Vector
+    collection = bpy.data.collections.new("_LAS_Evidence")
+    scene.collection.children.link(collection)
+    target, distance = Vector(spec["target"]), spec["ortho_scale"] * 4
+    cameras = {}
+    for name, (azimuth, elevation) in spec["views"].items():
+        az, el = math.radians(azimuth), math.radians(elevation)
+        data = bpy.data.cameras.new(f"_LAS_{name}")
+        data.type, data.ortho_scale, data.clip_end = "ORTHO", spec["ortho_scale"], distance * 4
+        camera = bpy.data.objects.new(f"_LAS_{name}", data)
+        collection.objects.link(camera)
+        camera.location = target + Vector((math.sin(az) * math.cos(el), -math.cos(az) * math.cos(el), math.sin(el))) * distance
+        camera.rotation_euler = (target - camera.location).to_track_quat("-Z", "Y").to_euler()
+        cameras[name] = camera
+    for name, rotation, energy in (("key", (0.8, 0.0, 0.6), 3.0), ("fill", (1.1, 0.0, -2.4), 1.2)):
+        data = bpy.data.lights.new(f"_LAS_{name}", "SUN"); data.energy = energy
+        light = bpy.data.objects.new(f"_LAS_{name}", data); light.rotation_euler = rotation
+        collection.objects.link(light)
+    return cameras
+
+
+def render_evidence(out_dir, spec=None, size=256, samples=16):
+    """Render every view x pass with fixed settings; returns the evidence record including the camera spec used."""
+    import os
+    import bpy
+    scene, view_layer = bpy.context.scene, bpy.context.view_layer
+    # Evaluate bounds in the same pose that will be rendered, regardless of the saved frame.
+    scene.frame_set(spec["frame"] if spec is not None else scene.frame_start)
+    if spec is None:
+        spec = camera_spec(scene, view_layer)
+    for obj in scene.objects:  # authored lights would differ after a GLB roundtrip that excludes lights
+        if obj.type == "LIGHT": obj.hide_render = True
+    cameras = _rig(scene, spec)
+    world = bpy.data.worlds.new("_LAS_World"); scene.world = world
+    world.color = (0.05, 0.05, 0.05)
+    if hasattr(world, "use_nodes"): world.use_nodes = False
+    render = scene.render
+    render.resolution_x = render.resolution_y = size
+    render.resolution_percentage = 100
+    render.use_border = render.use_crop_to_border = False
+    render.film_transparent = True
+    render.image_settings.file_format, render.image_settings.color_mode = "PNG", "RGBA"
+    scene.view_settings.view_transform, scene.view_settings.look = "Standard", "None"
+    palette = {"object": {}, "material": {}}
+    for obj in _evidence_meshes(scene, view_layer):
+        obj.color = (*id_colour(obj.name), 1.0); palette["object"][obj.name] = id_colour(obj.name)
+    for mat in bpy.data.materials:
+        mat.diffuse_color = (*id_colour(mat.name), 1.0); palette["material"][mat.name] = id_colour(mat.name)
+    os.makedirs(out_dir, exist_ok=True)
+    files = []
+    for pass_name in PASSES:
+        if pass_name == "lit":
+            render.engine = "CYCLES"
+            scene.cycles.device, scene.cycles.samples, scene.cycles.seed = "CPU", samples, 20261102
+            scene.cycles.use_denoising = False
+            render.threads_mode, render.threads = "FIXED", 4
+        else:
+            render.engine = "BLENDER_WORKBENCH"
+            shading = scene.display.shading
+            scene.display.render_aa = "OFF"
+            shading.light = "STUDIO" if pass_name == "clay" else "FLAT"
+            shading.color_type = {"clay": "SINGLE", "object_id": "OBJECT", "material_id": "MATERIAL"}[pass_name]
+            shading.single_color = (0.8, 0.8, 0.8)
+            shading.show_cavity = shading.show_shadows = shading.show_specular_highlight = False
+            shading.show_object_outline = False
+        for view, camera in cameras.items():
+            scene.camera = camera
+            render.filepath = os.path.join(out_dir, f"{view}.{pass_name}.png")
+            bpy.ops.render.render(write_still=True)
+            files.append(f"{view}.{pass_name}.png")
+    return {"camera_spec": spec, "size": size, "lit": {"engine": "CYCLES", "device": "CPU", "samples": samples, "seed": 20261102},
+            "id_passes": {"engine": "BLENDER_WORKBENCH", "aa": "OFF"}, "palette": palette, "files": files,
+            "view_transform": "Standard"}
+
+
+def seed_defect(kind):
+    """Deliberately break the in-memory scene after the source evidence and before export (sentinel self-test only)."""
+    import bpy
+    scene, view_layer = bpy.context.scene, bpy.context.view_layer
+    if kind not in SEEDED_DEFECTS: raise ValueError(f"Unknown seeded defect {kind}")
+    if kind == "missing-texture":
+        image = sorted((i for i in bpy.data.images if i.users and i.source == "FILE"), key=lambda i: i.name)[0]
+        if image.packed_file is not None: image.unpack(method="REMOVE")
+        image.filepath = "//_las_seeded_missing_texture.png"
+        image.reload()
+        return {"kind": kind, "image": image.name}
+    meshes = sorted(_evidence_meshes(scene, view_layer), key=lambda o: (len(o.data.polygons), o.name))
+    if kind == "truncated-animation":  # export_frame_range=True then clips the action to the scene range
+        action = sorted((a for a in bpy.data.actions if a.users), key=lambda a: a.name)[0]
+        scene.frame_end = int((action.frame_range[0] + action.frame_range[1]) // 2)
+        return {"kind": kind, "action": action.name, "scene_frame_end": scene.frame_end}
+    if kind == "shape-key-damage":
+        mesh = sorted((m for m in bpy.data.meshes if m.users and m.shape_keys), key=lambda m: m.name)[0]
+        block = mesh.shape_keys.key_blocks[-1]
+        for point, base in zip(block.data, mesh.shape_keys.reference_key.data): point.co = base.co + (point.co - base.co) * 0.5
+        return {"kind": kind, "mesh": mesh.name, "key": block.name}
+    if kind == "omitted-mesh":
+        meshes[0].hide_render = True
+        return {"kind": kind, "object": meshes[0].name}
+    target = next(o for o in sorted(meshes, key=lambda o: o.name) if o.material_slots and o.material_slots[0].material)
+    current = target.material_slots[0].material
+    other = next(m for m in sorted(bpy.data.materials, key=lambda m: m.name) if m != current and m.users)
+    target.material_slots[0].material = other
+    return {"kind": kind, "object": target.name, "from": current.name, "to": other.name}
+
+
+def export_glb(path):
+    import bpy
+    bpy.ops.export_scene.gltf(filepath=str(path), **LAS_GLTF_SETTINGS)
+    return {"settings": LAS_GLTF_SETTINGS, "path": str(path)}
+
+
+def import_glb(path):
+    import bpy
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    bpy.ops.import_scene.gltf(filepath=str(path))
+
+
+def _evidence(args):
+    """manifest -> fixed-camera evidence -> (fresh reload -> optional seeded defect -> LAS GLB export)."""
+    import os
+    os.makedirs(args.out_dir, exist_ok=True)
+    if args.export and not args.blend: raise ValueError("--export needs --blend")
+    open_blend(args.blend) if args.blend else import_glb(args.glb)
+    label = os.path.basename(args.blend or args.glb)
+
+    def write(name, value):
+        with open(os.path.join(args.out_dir, name), "w", encoding="utf-8", newline="\n") as stream:
+            stream.write(json.dumps(value, indent=2, sort_keys=True) + "\n")
+
+    write("manifest.json", manifest(label))
+    spec = json.load(open(args.cameras, encoding="utf-8")) if args.cameras else None
+    evidence = render_evidence(os.path.join(args.out_dir, "renders"), spec)
+    write("evidence.json", evidence)
+    result = {"kind": "evidence", "source": label, "evidence": "evidence.json", "manifest": "manifest.json"}
+    if args.export:
+        open_blend(args.blend)  # export from the untouched file, not from the evidence-rigged scene
+        result["seeded_defect"] = seed_defect(args.seed_defect) if args.seed_defect else None
+        result["export"] = export_glb(args.export)
+    return result
+
+
 def _main(argv):
     import argparse
     parser = argparse.ArgumentParser(prog="blender_lab_bpy")
@@ -514,6 +734,15 @@ def _main(argv):
     fixture_parser = commands.add_parser("make-fixture")
     fixture_parser.add_argument("--out-dir", required=True)
     fixture_parser.add_argument("--out", required=True)
+    evidence_parser = commands.add_parser("evidence")
+    source = evidence_parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--blend")
+    source.add_argument("--glb")
+    evidence_parser.add_argument("--out-dir", required=True)
+    evidence_parser.add_argument("--out", required=True)
+    evidence_parser.add_argument("--cameras")
+    evidence_parser.add_argument("--export")
+    evidence_parser.add_argument("--seed-defect", choices=SEEDED_DEFECTS)
     scene_parser = commands.add_parser("scene-v1")  # exact studio.dcc-scene/v1 observation (blender_scene_probe)
     scene_parser.add_argument("--blend", required=True)
     scene_parser.add_argument("--out", required=True)
@@ -528,6 +757,7 @@ def _main(argv):
     elif args.command == "manifest":
         import os
         open_blend(args.blend); result = manifest(os.path.basename(args.blend))
+    elif args.command == "evidence": result = _evidence(args)
     else: result = {"kind": "fixture", "blend": make_fixture(args.out_dir)}
     with open(args.out, "w", encoding="utf-8", newline="\n") as stream:
         json.dump(result, stream, indent=2, sort_keys=True)
