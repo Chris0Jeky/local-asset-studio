@@ -8,6 +8,10 @@ number, before anything edits a scene.
 - `scripts/blender_lab.py` is the host CLI: it validates the executable path, starts it with a fixed argv and a timeout,
   and keeps argv, exit code, stdout and stderr in `<out>.log.json`.
 
+An `OSError`, including an executable disappearing before launch, leaves a receipt with `returncode: "os-error"`,
+elapsed time and an `error` containing the exception type and message (at most 1,000 characters). The CLI exits
+with status 2 and does not retry. Existing receipts remain protected from replacement.
+
 ## Capability probe
 
 ```bash

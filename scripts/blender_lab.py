@@ -59,17 +59,23 @@ def run(blender_path, args, log_path, timeout=300):
     """Run one Blender-side command; keep argv, exit code, stdout and stderr next to the output."""
     command = command_for(blender_path, *args)
     with Path(log_path).open("x", encoding="utf-8", newline="\n") as log:  # never replace an earlier receipt
-        started = time.perf_counter()
+        started = time.perf_counter(); error = None
         try:
             completed = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace",
                                        timeout=timeout, check=False, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
             returncode, stdout, stderr = completed.returncode, completed.stdout, completed.stderr
         except subprocess.TimeoutExpired as exc:
             returncode, stdout, stderr = "timeout", exc.stdout, exc.stderr
+        except OSError as exc:
+            returncode, stdout, stderr = "os-error", None, None
+            error = f"{type(exc).__name__}: {exc}"[:1000]
         seconds = round(time.perf_counter() - started, 3)
         decode = lambda value: value.decode("utf-8", "replace") if isinstance(value, bytes) else value
-        log.write(json.dumps({"argv": command, "returncode": returncode, "seconds": seconds,
-                              "stdout": decode(stdout), "stderr": decode(stderr)}, indent=2) + "\n")
+        receipt = {"argv": command, "returncode": returncode, "seconds": seconds,
+                   "stdout": decode(stdout), "stderr": decode(stderr)}
+        if error is not None: receipt["error"] = error
+        log.write(json.dumps(receipt, indent=2) + "\n")
+    require(returncode != "os-error", f"Blender did not return a result; see {log_path}")
     require(returncode == 0, f"Blender exited {returncode}; see {log_path}")
     return seconds
 
