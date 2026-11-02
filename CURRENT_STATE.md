@@ -1,4 +1,17 @@
-# Current state — 1 November 2026
+# Current state — 2 November 2026
+
+## 2026-11-02 — Blender alpha compatibility
+
+The articulated-prop adapter now uses the assigned lid datablock's F-Curve API.
+Blender 5.4.0 Alpha (`67c9bdddb88b`) reproduced an `Action.fcurves` AttributeError
+before the fix. The corrected adapter completed on both that build and 4.5.13 LTS:
+BLEND save, animated GLB export/reimport, metadata and four inspected 128px CPU
+views. Render inspection also caught white materials on 5.4; setting the Principled
+shader inputs preserves the authored colours. Both regressions fail on the old code;
+all ten articulated tests pass. Final local receipts are in
+`C:/AI/blender-agentic/20261102/las-final-{5.4,4.5}`;
+the original failed attempt remains in `.runtime/blender-alpha-20261102/articulated`.
+This is compatibility evidence for the authored chest, not art acceptance.
 
 ## 2026-11-01 — Character sheets, locked repaints, measured identity, and a batch client
 
