@@ -228,7 +228,10 @@ same-seed MOSS SFT baselines added. Ten jobs, all completed, at 1024×1536:
 | evening | Kromoss + DMD2 + Mikko style, 8 steps | 12.3 | `6162370c` | `87b5de6b-a52f-459d-9f07-d9a49b10638b` |
 
 Agent's words, not art acceptance: all ten are coherent. Kromoss at 30 and 50 steps looks flatter, with odd body proportions and a soft
-background. The DMD2 versions are crisper and richer in colour at a fifth of the time. The owner's ranking is pending.
+background. The DMD2 versions are crisper and richer in colour at a fifth of the time. **2 November:** the owner's Versus contest 2
+(Kromoss vs MOSS) put Kromoss pictures in every top place, and DMD2+Mikko beat no adapter at 98% confidence (DMD2 alone was weaker).
+The owner chose to make it a one-press Make look (PR #1926): `look-kromoss-dmd2-mikko` in `presets/looks.json` carries the
+DMD2+Mikko recipe exactly as the two winners' PNG metadata records it.
 
 The new `kromoss-t2i` preset stayed **unverified** until that run. Its graph reuses the MOSS backend,
 encoder, small VAE and two adapter slots; the model choice has its own pinned
