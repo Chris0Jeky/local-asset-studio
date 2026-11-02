@@ -160,18 +160,72 @@ class Voice:
         return json.loads(cues.read_text(encoding="utf-8"))["mouthCues"]
 
 
+STOP = set("a an the and or but so to of in on at for with from into by as is are was were be been am i me my you your "
+           "she her he his they them their it its this that has have had will would can could just very really about some "
+           "all not new friend friends user don doesn didn isn aren wasn weren won couldn wouldn haven hasn".split())
+RELATION = set("name named called likes like loves love enjoys enjoy favourite favorite wants want plans plan works work "
+               "lives live feels feel prefers prefer".split())
+
+
+NEGATION = re.compile(r"\b(not|no|never|nothing|nobody|cannot)\b|n't\b")
+OWNED = re.compile(r"\b(?:my|his|her|their|our)\s+([a-z]+)")
+CLAUSE_BREAK = re.compile(r"[.!?;,]+|\b(?:but|and|although|though|while|whereas)\b")
+
+
+def _stem(w): return re.sub(r"(ing|ed|es|s)$", "", w)[:5] if len(w) > 4 and not w.isdigit() else w   # numbers stay exact
+
+
+def grounded(fact, said):
+    """True when one message the user typed supports a [remember: fact], clause by clause: every content word of the
+    fact (suffixes stripped, so moved/moving and harbour/harbor agree) sits in a clause of that message whose negation
+    matches the fact clause holding the word ("I like dogs but I don't like cats" never grounds "doesn't like dogs"),
+    and whose owners ("my sister", "his job") are named in that same fact clause, so a sister's taste is not filed as
+    the user's. Relation words ('name', 'likes', ...) need no support. Lexical: synonyms are rejected (the safe side)."""
+    low = lambda t: re.sub(r"'s\b", "", t.lower())
+    words = lambda t: [w for w in re.findall(r"[a-z0-9]+", low(t)) if w not in STOP and (len(w) > 1 or w.isdigit())]
+    clauses = lambda t: [(c, {_stem(w) for w in re.findall(r"[a-z0-9]+", c)}, bool(NEGATION.search(c)), {_stem(o) for o in OWNED.findall(c)})
+                         for c in CLAUSE_BREAK.split(low(t)) if c.strip()]
+    content = {_stem(w) for w in words(fact) if w not in RELATION}
+    facts = clauses(fact)
+    def supported(w, heard):
+        fc = next(c for c in facts if w in c[1])
+        return any(w in h[1] and h[2] == fc[2] and (h[3] - {w}) <= fc[1] for h in heard)
+    return bool(content) and any(all(supported(w, clauses(m)) for w in content) for m in said)
+
+
+def lock_memory(path):
+    """Hold an exclusive OS lock on <memory>.lock for this process's life (released when it exits), so a second
+    sidecar cannot load the same memory and overwrite the first one's updates."""
+    f = open(str(path) + ".lock", "a+"); f.seek(0)
+    try:
+        if os.name == "nt": import msvcrt; msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+        else: import fcntl; fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError: f.close(); raise SystemExit(f"{path} is in use by another companion sidecar")
+    return f
+
+
 class Brain:
-    def __init__(self, llm, voice, run_dir, persona, memory, visemes="kokoro"):
-        self.llm, self.voice, self.run, self.visemes = llm, voice, Path(run_dir), visemes
+    """One conversation. memory.json: {"self": [bible facts], "friend": [grounded facts], "recent": [last messages]};
+    it survives restarts. scene: [{"id", "say", "aliases"}] objects around the character; a sentence naming one carries
+    its id as "look"."""
+
+    def __init__(self, llm, voice, run_dir, persona, memory, visemes="kokoro", scene=()):
+        self.llm, self.voice, self.run, self.visemes, self.scene = llm, voice, Path(run_dir), visemes, list(scene)
         self.persona, self.memory_path = Path(persona).read_text(encoding="utf-8").strip(), Path(memory)
-        self.memory = json.loads(self.memory_path.read_text(encoding="utf-8")); self.history, self.turn = [], 0
-        self.memory.setdefault("self", []); self.memory.setdefault("friend", [])
+        self.memory = json.loads(self.memory_path.read_text(encoding="utf-8")); self.turn = 0
+        for k in ("self", "friend", "recent"): self.memory.setdefault(k, [])
+        self.history = list(self.memory["recent"])                          # pick the conversation up after a restart
         self.lock = threading.Lock()                                        # one turn at a time across all clients
 
     def system(self):
         s = self.persona + "\n\nWhat you remember:\n" + "\n".join("- " + f for f in self.memory["self"])
         if self.memory["friend"]: s += "\nAbout your friend:\n" + "\n".join("- " + f for f in self.memory["friend"])
+        if self.scene: s += "\n\nAround you right now (mention them naturally when it fits):\n" + "\n".join("- " + o["say"] for o in self.scene)
         return s
+
+    def look(self, sentence):
+        low = sentence.lower()
+        return next((o["id"] for o in self.scene if any(re.search(r"\b%s\b" % re.escape(a.lower()), low) for a in o["aliases"])), None)
 
     def respond(self, text, send):
         with self.lock: return self._respond(text, send)
@@ -203,21 +257,24 @@ class Brain:
                 if self.visemes == "rhubarb": cues = self.voice.lipsync(wav, s)
                 t_lip = ms()
                 ev = {"type": "sentence", "turn": turn, "i": i, "text": s, "emotion": emotion, "wav": str(wav), "cues": cues,
-                      "lead_s": round(leading_silence(audio), 3), "audio_s": round(len(audio) / 24000, 3),
+                      "lead_s": round(leading_silence(audio), 3), "audio_s": round(len(audio) / 24000, 3), "look": self.look(s),
                       "ms": {"split": t_split, "tts": t_tts, "lipsync": t_lip}}
                 send(ev); out.append(ev); i += 1
         except Exception as e:                                              # a voice failure still ends the turn with done
             stamps["error"] = repr(e)
             while sentences.get() is not None: pass                         # let the stream finish before done goes out
         reply = "".join(raw)
+        said = [m["content"] for m in self.history if m["role"] == "user"][-3:] + [text]
+        kept = [f for f in split.facts if grounded(f, said)][:2]              # only what the user actually said
         self.history += [{"role": "user", "content": text}, {"role": "assistant", "content": reply}]
+        self.memory["friend"] += [f for f in kept if f not in self.memory["friend"]]
+        self.memory["recent"] = self.history[-6:]
         try:                                                                # persistence failing must not swallow done
-            if split.facts:
-                self.memory["friend"] += [f for f in split.facts if f not in self.memory["friend"]]
-                tmp = self.memory_path.with_name(self.memory_path.name + ".tmp")   # never truncate the only copy
-                tmp.write_text(json.dumps(self.memory, indent=2) + "\n", encoding="utf-8"); os.replace(tmp, self.memory_path)
+            tmp = self.memory_path.with_name(f"{self.memory_path.name}.{os.getpid()}.tmp")   # never truncate the only copy
+            tmp.write_text(json.dumps(self.memory, indent=2) + "\n", encoding="utf-8"); os.replace(tmp, self.memory_path)
         except OSError as e: stamps["save_error"] = repr(e)
-        done = {"type": "done", "turn": turn, "user": text, "reply": reply, "emotion": split.emotion, "facts": split.facts,
+        done = {"type": "done", "turn": turn, "user": text, "reply": reply, "emotion": split.emotion, "facts": kept,
+                "rejected_facts": [f for f in split.facts if f not in kept],
                 "ms": {**stamps, "total": ms()}, "sentences": [{k: e[k] for k in ("text", "emotion", "lead_s", "audio_s", "ms")} for e in out]}
         try:
             with (self.run / "turns.jsonl").open("a", encoding="utf-8") as f: f.write(json.dumps(done) + "\n")
@@ -228,7 +285,9 @@ class Brain:
 
 def serve(args):
     run = Path(args.runs).resolve() / time.strftime("%Y%m%d-%H%M%S"); run.mkdir(parents=True)
-    brain = Brain(args.llm, Voice(run, args.kokoro, args.rhubarb), run, args.persona, args.memory, visemes=args.visemes)
+    held = lock_memory(args.memory)                                       # stays open: the lock lives as long as we do
+    scene = json.loads(Path(args.scene).read_text(encoding="utf-8")) if args.scene else ()
+    brain = Brain(args.llm, Voice(run, args.kokoro, args.rhubarb), run, args.persona, args.memory, visemes=args.visemes, scene=scene)
     lock = threading.Lock()
 
     class Handler(socketserver.StreamRequestHandler):
@@ -260,7 +319,7 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser(); sub = p.add_subparsers(dest="cmd", required=True)
     a = sub.add_parser("serve"); a.add_argument("--llm", default="http://127.0.0.1:8090"); a.add_argument("--port", type=int, default=8095)
     a.add_argument("--visemes", choices=("kokoro", "rhubarb"), default="kokoro")
-    a.add_argument("--persona", required=True); a.add_argument("--memory", required=True)
+    a.add_argument("--persona", required=True); a.add_argument("--memory", required=True); a.add_argument("--scene")
     a.add_argument("--runs", default=".runtime/companion"); a.add_argument("--kokoro", default=str(KOKORO)); a.add_argument("--rhubarb", default=str(RHUBARB))
     b = sub.add_parser("ask"); b.add_argument("lines", nargs="+"); b.add_argument("--port", type=int, default=8095)
     args = p.parse_args(); serve(args) if args.cmd == "serve" else ask(args)

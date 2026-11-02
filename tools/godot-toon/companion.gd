@@ -33,6 +33,9 @@ var demo_state := "idle"; var demo_at := 0.0; var demo_typed := 0
 var movie := false; var wall0 := 0
 var cam: Camera3D
 var eye_rest := {}
+var props := {}                        # set node name -> world-space centre, for "look" (scene awareness)
+var look_w := 0.0                      # eased weight of the look toward a named prop
+var look_at_prop := Vector3.ZERO
 var mouth_log := PackedStringArray(["t,talking,open"])     # Movie Maker runs: frame n is audio time n / fps
 
 
@@ -58,6 +61,9 @@ func _ready() -> void:
 func _dress_set() -> void:
 	var set: Node3D = load("res://set.glb").instantiate(); add_child(set)
 	for mi in _all(set, func(n): return n is MeshInstance3D):
+		var box: AABB = mi.global_transform * mi.get_aabb(); var up: Node = mi      # every named node up to the set root
+		while up != set.get_parent():                                                   # gets the merged bounds of its meshes
+			props[String(up.name)] = props[String(up.name)].merge(box) if props.has(String(up.name)) else box; up = up.get_parent()
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		for s in mi.mesh.get_surface_count():
 			var src = mi.get_active_material(s)
@@ -217,7 +223,17 @@ func _process(delta: float) -> void:
 	var nod := sin(clampf((t - nod_from) / 0.5, 0.0, 1.0) * PI) * 8.0
 	var tilt: float = {"curious": 10.0, "thinking": -6.0, "apologetic": 4.0}.get(mood, 0.0) * (0.0 if waiting else 1.0) + 9.0 * think
 	var bow: float = {"apologetic": 8.0}.get(mood, 0.0) + nod - 7.0 * think
-	_rot_basis("J_Bip_C_Head", Basis(Vector3.FORWARD, deg_to_rad(tilt + 3.0 * sin(t * 0.9))) * Basis(Vector3.RIGHT, deg_to_rad(bow)))
+	# a sentence that names a set prop turns the head (up to 35 deg) and eyes toward it while it plays
+	var prop = props[speaking.look].get_center() if talking_now() and props.has(str(speaking.get("look", ""))) else null
+	look_w = lerpf(look_w, 1.0 if prop != null else 0.0, clampf(delta * 4.0, 0.0, 1.0))
+	if prop != null: look_at_prop = prop
+	var d := (skel.global_transform.basis.inverse() * (look_at_prop - skel.global_transform * skel.get_bone_global_pose(skel.find_bone("J_Bip_C_Head")).origin)).normalized()
+	var full := rad_to_deg(atan2(d.x, d.z))
+	if absf(full) > 100.0:                                                     # behind her: glance to the side it shows on screen
+		var head_x := (cam.global_transform.affine_inverse() * (skel.global_transform * skel.get_bone_global_pose(skel.find_bone("J_Bip_C_Head")).origin)).x
+		full = 35.0 if (cam.global_transform.affine_inverse() * look_at_prop).x > head_x else -35.0
+	var yaw := clampf(full, -35.0, 35.0) * look_w; var pitch := clampf(rad_to_deg(asin(d.y)), -20.0, 20.0) * look_w
+	_rot_basis("J_Bip_C_Head", Basis(Vector3.UP, deg_to_rad(yaw)) * Basis(Vector3.RIGHT, deg_to_rad(-pitch + bow)) * Basis(Vector3.FORWARD, deg_to_rad(tilt + 3.0 * sin(t * 0.9))))
 	_gaze(think)
 	_apply_constraints()
 	# face: blink, mood, mouth from the sentence cues on the audio clock
@@ -248,7 +264,7 @@ func _process(delta: float) -> void:
 func _gaze(think: float) -> void:
 	# VRM bone lookAt: eyes turn toward the target by up to 10 degrees (the model's range map: 90 in -> 10 out).
 	var head := skel.global_transform * skel.get_bone_global_pose(skel.find_bone("J_Bip_C_Head"))
-	var target := cam.global_position.lerp(head.origin + head.basis * Vector3(0.6, 0.5, 1.0), think)
+	var target := cam.global_position.lerp(head.origin + head.basis * Vector3(0.6, 0.5, 1.0), think).lerp(look_at_prop, look_w)
 	var local := (head.basis.inverse() * (target - head.origin)).normalized()
 	var yaw := clampf(rad_to_deg(atan2(local.x, local.z)) / 9.0, -10.0, 10.0)
 	var pitch := clampf(rad_to_deg(asin(local.y)) / 9.0, -10.0, 10.0)
@@ -271,3 +287,6 @@ func _quit() -> void:
 	if movie:
 		var f := FileAccess.open(log_path.get_basename() + "-mouth.csv", FileAccess.WRITE); f.store_string("\n".join(mouth_log) + "\n"); f.close()
 	get_tree().quit()
+
+
+func talking_now() -> bool: return not speaking.is_empty() and player.playing

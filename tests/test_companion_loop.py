@@ -193,5 +193,78 @@ class StageDirectionTest(unittest.TestCase):
         self.assertEqual(out, [("This is a long sentence.", "happy"), ("Another sentence follows.", "happy")])
 
 
+class GroundedFactTest(unittest.TestCase):
+    # Real [remember] tags from the 2 Nov A/B (Gemma 4 12B and Qwen3.5-9B), against what the user had typed.
+    def test_facts_the_user_said_are_kept(self):
+        self.assertTrue(cl.grounded("Ana's name is Ana and she just moved to the town.", ["I'm Ana. I just moved to the harbour town."]))
+        self.assertTrue(cl.grounded("her name is Ana", ["Hi Suzu!", "I'm Ana.", "Do you remember my name?"]))
+        self.assertTrue(cl.grounded("friend is nervous about starting a new job tomorrow", ["I'm a bit nervous about starting my new job tomorrow."]))
+        self.assertTrue(cl.grounded("loves the harbor at night", ["I love the harbour, especially at night."]))   # spelling, inflection
+
+    def test_invented_facts_are_rejected(self):
+        self.assertFalse(cl.grounded("her favourite colour is blue", ["What's your favourite colour?"]))   # Suzu's answer, not the user's
+        self.assertFalse(cl.grounded("Ana wears blue socks", ["Thanks, Suzu. I should go now. See you tomorrow!"]))
+        self.assertFalse(cl.grounded("her name is", ["I'm Ana."]))                                          # nothing to support
+
+    def test_negation_and_someone_elses_things_do_not_ground(self):   # Terra r1 on #1989
+        self.assertFalse(cl.grounded("loves cats", ["I do not love cats"]))
+        self.assertFalse(cl.grounded("loves cats", ["I don't love cats."]))
+        self.assertTrue(cl.grounded("doesn't like spiders", ["I don't like spiders at all"]))
+        self.assertFalse(cl.grounded("likes dogs", ["My friend likes dogs."]))
+        self.assertTrue(cl.grounded("her sister likes dogs", ["My sister likes dogs."]))
+
+    def test_negation_and_owners_are_checked_per_clause(self):   # Terra r2 on #1989
+        self.assertFalse(cl.grounded("doesn't like dogs", ["I like dogs but I don't like cats"]))
+        self.assertTrue(cl.grounded("doesn't like cats", ["I like dogs but I don't like cats"]))
+        self.assertFalse(cl.grounded("friend likes dogs and has a sister", ["My sister likes dogs."]))
+
+    def test_numbers_must_match_exactly(self):   # Codex P2 on #1989
+        self.assertFalse(cl.grounded("friend has 3 cats", ["I have 2 cats."]))
+        self.assertFalse(cl.grounded("born in 19850", ["I was born in 19851"]))
+        self.assertTrue(cl.grounded("friend has 3 cats", ["I have 3 cats."]))
+
+    def test_inflections_match(self):
+        self.assertTrue(cl.grounded("moved to Paris", ["I am moving to Paris."]))
+
+    def test_a_second_sidecar_cannot_take_the_same_memory(self):
+        mem = Path(tempfile.mkdtemp()) / "memory.json"; mem.write_text("{}", encoding="utf-8")
+        held = cl.lock_memory(mem)
+        try:
+            with self.assertRaises(SystemExit): cl.lock_memory(mem)
+        finally: held.close()
+        cl.lock_memory(mem).close()                                                                      # free again once released
+
+
+class MemoryAndSceneTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        (self.tmp / "persona.md").write_text("You are Suzu.", encoding="utf-8")
+        (self.tmp / "memory.json").write_text(json.dumps({"self": ["You map tide pools."]}), encoding="utf-8")
+
+    def brain(self, url, **kw): return cl.Brain(url, FakeVoice(), self.tmp, self.tmp / "persona.md", self.tmp / "memory.json", **kw)
+
+    def test_only_grounded_facts_are_stored_and_the_conversation_survives_a_restart(self):
+        srv, url, seen = stub_llm([{"content": "[happy] Lovely to meet you, Ana! [remember: friend is Ana] [remember: her favourite colour is blue]"}])
+        try:
+            done = self.brain(url).respond("Hi, I'm Ana", lambda e: None)
+            self.brain(url).respond("Still there?", lambda e: None)                   # a fresh process, same memory file
+        finally: srv.shutdown(); srv.server_close()
+        self.assertEqual((done["facts"], done["rejected_facts"]), (["friend is Ana"], ["her favourite colour is blue"]))
+        mem = json.loads((self.tmp / "memory.json").read_text(encoding="utf-8"))
+        self.assertEqual(mem["friend"], ["friend is Ana"]); self.assertEqual(mem["self"], ["You map tide pools."])
+        self.assertEqual([m["content"] for m in seen[1]["messages"][1:3]], ["Hi, I'm Ana", done["reply"]])   # history reloaded
+        self.assertEqual(len(mem["recent"]), 4)
+
+    def test_scene_objects_reach_the_prompt_and_a_mention_carries_a_look(self):
+        scene = [{"id": "window_glass", "say": "the big window over the harbour", "aliases": ["window", "harbour"]},
+                 {"id": "stool", "say": "a little stool", "aliases": ["stool"]}]
+        srv, url, seen = stub_llm([{"content": "[happy] Look out of the window at the boats! I love sketching here, really."}])
+        events = []
+        try: self.brain(url, scene=scene).respond("What can you see?", events.append)
+        finally: srv.shutdown(); srv.server_close()
+        self.assertIn("the big window over the harbour", seen[0]["messages"][0]["content"])
+        self.assertEqual([e["look"] for e in events if e["type"] == "sentence"], ["window_glass", None])
+
+
 if __name__ == "__main__":
     unittest.main()
