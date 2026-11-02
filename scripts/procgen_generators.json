@@ -130,6 +130,33 @@
         "9": {"name": "window_glass", "group": "structure", "collision": false},
         "10": {"name": "charts", "group": "shelf", "collision": false}
       }
+    },
+    "pier": {
+      "description": "Harbour pier set piece on a seabed at z=0 (Suzu's harbour): piles, stringers and planks, optional railing, lamp posts on the left, mooring bollards on the right, open water plane. Shore end at y=0, runs out along +y.",
+      "tri_budget": 30000,
+      "params": {
+        "length": {"type": "float", "min": 4.0, "max": 20.0, "default": 10.0},
+        "width": {"type": "float", "min": 1.5, "max": 4.0, "default": 2.6},
+        "water_level": {"type": "float", "min": 0.3, "max": 2.0, "default": 0.8, "doc": "water surface height above the seabed"},
+        "deck_height": {"type": "float", "min": 0.5, "max": 2.0, "default": 0.9, "doc": "deck surface above the water"},
+        "pile_spacing": {"type": "float", "min": 1.2, "max": 4.0, "default": 2.0, "doc": "pile pairs every ~this many metres"},
+        "pile_radius": {"type": "float", "min": 0.08, "max": 0.25, "default": 0.14},
+        "railing": {"type": "int", "min": 0, "max": 1, "default": 1},
+        "lamps": {"type": "int", "min": 0, "max": 4, "default": 2, "doc": "lamp posts on the left edge"},
+        "bollards": {"type": "int", "min": 0, "max": 6, "default": 3, "doc": "mooring bollards on the right edge"},
+        "detail": {"type": "int", "min": 4, "max": 48, "default": 16},
+        "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false, "doc": "flat toon palette: 0 day, 1 dusk, 2 sakura, 3 autumn"}
+      },
+      "constraints": [],
+      "parts": {
+        "1": {"name": "piles", "group": "pier"},
+        "2": {"name": "stringers", "group": "pier"},
+        "3": {"name": "deck", "group": "pier"},
+        "4": {"name": "railing", "group": "pier", "when": {"railing": [1, 1]}},
+        "5": {"name": "lamp_posts", "group": "lamps", "when": {"lamps": [1, 4]}},
+        "6": {"name": "bollards", "group": "bollards", "when": {"bollards": [1, 6]}},
+        "7": {"name": "water", "group": "water", "open": true, "collision": false, "solid": false}
+      }
     }
   }
 }

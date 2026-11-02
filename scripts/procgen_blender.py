@@ -18,17 +18,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from procgen_factory import SNAP_EPS, uv_degenerate, uv_overlap_texels  # noqa: E402
 
 ROLES = ('wall', 'floor', 'wood', 'wood_dark', 'linen', 'fabric', 'fabric_alt', 'glass', 'paper', 'metal', 'stone',
-         'vermilion', 'black', 'foliage', 'soil', 'terracotta', 'accent', 'rug')
+         'vermilion', 'black', 'foliage', 'soil', 'terracotta', 'accent', 'rug', 'water')
 # Flat toon-friendly base colours per palette (linear RGB): 0 day, 1 dusk, 2 sakura, 3 autumn.
 PALETTES = [
     [(.86, .80, .70), (.42, .26, .15), (.62, .42, .25), (.28, .16, .09), (.92, .92, .9), (.30, .50, .80), (.90, .70, .75), (.60, .80, .92), (.96, .88, .66),
-     (.25, .25, .27), (.55, .55, .53), (.80, .12, .05), (.05, .05, .06), (.20, .50, .18), (.18, .11, .06), (.70, .30, .16), (.95, .65, .15), (.45, .62, .78)],
+     (.25, .25, .27), (.55, .55, .53), (.80, .12, .05), (.05, .05, .06), (.20, .50, .18), (.18, .11, .06), (.70, .30, .16), (.95, .65, .15), (.45, .62, .78), (.16, .45, .62)],
     [(.42, .44, .60), (.22, .16, .20), (.38, .28, .30), (.14, .10, .14), (.70, .72, .82), (.20, .25, .50), (.55, .40, .65), (.40, .55, .80), (.98, .78, .45),
-     (.18, .18, .22), (.40, .40, .48), (.70, .15, .20), (.04, .04, .07), (.12, .30, .25), (.10, .07, .07), (.50, .25, .22), (.95, .55, .25), (.30, .30, .55)],
+     (.18, .18, .22), (.40, .40, .48), (.70, .15, .20), (.04, .04, .07), (.12, .30, .25), (.10, .07, .07), (.50, .25, .22), (.95, .55, .25), (.30, .30, .55), (.10, .18, .38)],
     [(.95, .86, .88), (.60, .42, .38), (.80, .62, .55), (.42, .28, .26), (.98, .95, .96), (.92, .55, .68), (.98, .80, .85), (.75, .88, .95), (.99, .92, .90),
-     (.35, .32, .36), (.70, .66, .68), (.90, .30, .38), (.10, .07, .09), (.45, .65, .40), (.22, .14, .12), (.80, .45, .40), (.98, .70, .78), (.85, .60, .72)],
+     (.35, .32, .36), (.70, .66, .68), (.90, .30, .38), (.10, .07, .09), (.45, .65, .40), (.22, .14, .12), (.80, .45, .40), (.98, .70, .78), (.85, .60, .72), (.40, .62, .78)],
     [(.88, .78, .62), (.48, .28, .14), (.70, .45, .22), (.34, .18, .08), (.95, .90, .82), (.62, .30, .12), (.85, .62, .30), (.70, .80, .82), (.98, .85, .60),
-     (.30, .26, .22), (.58, .54, .48), (.85, .28, .06), (.08, .06, .05), (.65, .45, .10), (.20, .12, .06), (.75, .35, .15), (.90, .50, .08), (.70, .40, .20)],
+     (.30, .26, .22), (.58, .54, .48), (.85, .28, .06), (.08, .06, .05), (.65, .45, .10), (.20, .12, .06), (.75, .35, .15), (.90, .50, .08), (.70, .40, .20), (.22, .40, .48)],
 ]
 
 
@@ -50,7 +50,8 @@ class S:
 FOLD = {'ADD': lambda a, b: a + b, 'SUBTRACT': lambda a, b: a - b, 'MULTIPLY': lambda a, b: a * b,
         'DIVIDE': lambda a, b: a / b, 'MAXIMUM': max, 'MINIMUM': min, 'CEIL': lambda a, b: math.ceil(a),
         'SINE': lambda a, b: math.sin(a), 'COSINE': lambda a, b: math.cos(a), 'FLOORED_MODULO': lambda a, b: a % b,
-        'POWER': lambda a, b: a ** b, 'ARCTAN2': math.atan2, 'TANGENT': lambda a, b: math.tan(a)}
+        'POWER': lambda a, b: a ** b, 'ARCTAN2': math.atan2, 'TANGENT': lambda a, b: math.tan(a),
+        'FLOOR': lambda a, b: math.floor(a)}
 
 
 def _enabled(sockets, name=None):
@@ -333,7 +334,44 @@ def shrine(b, P):
     return b.join(*g)
 
 
-GENERATORS = {'room_kit': room_kit, 'prop': prop, 'shrine': shrine, 'lighthouse_room': lighthouse_room}
+def pier(b, P):
+    """Harbour pier on a seabed at z=0: piles, stringers and planks, optional railing, lamp posts and bollards, water plane.
+    The shore end sits at y=0 and the pier runs out along +y."""
+    L, W, wl, pr = P['length'], P['width'], P['water_level'], P['pile_radius']
+    top = wl + P['deck_height']                                    # deck surface
+    n_piles = b.math('FLOOR', L / P['pile_spacing']) + 1
+    inset = b.max(0.2, pr + 0.02)                                  # piles stay inside the deck ends, whatever their radius
+    sp = (L - 2 * inset) / (n_piles - 1)
+    g = []
+    for sx in (-1, 1):
+        x = sx * (W / 2 - 0.15)
+        g.append(b.instance(b.line(n_piles, (x, inset, 0), (0, sp, 0)), b.cyl(pr, top - 0.24, (0, 0, 0), 1, 'wood_dark')))
+        g.append(b.box((x - 0.08, 0, top - 0.24), (x + 0.08, L, top - 0.06), 2, 'wood_dark'))          # stringer
+    planks = b.math('FLOOR', L / 0.2)
+    g.append(b.instance(b.line(planks, (0, L / planks / 2, top - 0.06), (0, L / planks, 0)),
+                        b.box((-W / 2, -L / planks / 2 + 0.01, 0), (W / 2, L / planks / 2 - 0.01, 0.06), 3, 'wood')))
+    # Railing: posts every ~1.5 m on both sides with a top rail, standing on the deck.
+    posts = b.math('FLOOR', L / 1.5) + 1
+    rail = []
+    for sx in (-1, 1):
+        x = sx * (W / 2 - 0.05)
+        rail += [b.instance(b.line(posts, (x, 0.05, top), (0, (L - 0.1) / (posts - 1), 0)), b.box((-0.04, -0.04, 0), (0.04, 0.04, 0.95), 4, 'wood_dark')),
+                 b.box((x - 0.05, 0.01, top + 0.95), (x + 0.05, L - 0.01, top + 1.0), 4, 'wood')]
+    g.append(b.switch(P['railing'], b.join(*rail)))
+    # Lamp posts down the left side and mooring bollards down the right, evenly spaced along the deck.
+    lamp = b.join(b.cyl(0.05, 2.3, (0, 0, 0), 5, 'black'), b.box((-0.13, -0.13, 2.3), (0.13, 0.13, 2.6), 5, 'paper'),
+                  b.cyl(0.2, 0.12, (0, 0, 2.6), 5, 'black', top=0.02, segs=4, rot=(0, 0, math.pi / 4)))
+    nl = P['lamps']
+    g.append(b.instance(b.line(nl, (-W / 2 + 0.35, L / (nl + 1), top), (0, L / (nl + 1), 0)), lamp))
+    nb = P['bollards']
+    bollard = b.join(b.cyl(0.11, 0.35, (0, 0, 0), 6, 'black'), b.cyl(0.15, 0.05, (0, 0, 0.35), 6, 'black'))
+    g.append(b.instance(b.line(nb, (W / 2 - 0.35, L / (nb + 1), top), (0, L / (nb + 1), 0)), bollard))
+    # Water: an open plane (two-sided surface, not a solid) 3 m beyond the pier on each side and the far end.
+    g.append(b.grid(W + 6, L + 3, (0, (L + 3) / 2, wl), (0, 0, 0), 7, 'water'))
+    return b.join(*g)
+
+
+GENERATORS = {'room_kit': room_kit, 'prop': prop, 'shrine': shrine, 'lighthouse_room': lighthouse_room, 'pier': pier}
 
 
 def make_materials(palette):

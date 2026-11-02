@@ -88,6 +88,14 @@ class ParamsAndConstraints(unittest.TestCase):
         self.assertAlmostEqual(size[0] * (1 - slack[0]), 2 * rt)                   # n-gon faces at the apothem
         self.assertEqual(slack[0], slack[1])
 
+    def test_pier_bounds_follow_the_tallest_fixture(self):
+        spec = SCHEMA["generators"]["pier"]
+        lamps, _ = factory.resolve_params(spec, {"length": 8.0, "width": 2.0, "water_level": 0.5, "deck_height": 1.0, "lamps": 2})
+        bare, _ = factory.resolve_params(spec, {"water_level": 0.5, "deck_height": 1.0, "lamps": 0, "railing": 0, "bollards": 0})
+        self.assertEqual(factory.expected_bounds("pier", lamps)[0][:2], [8.0, 11.0])        # water plane: +6 wide, +3 long
+        self.assertAlmostEqual(factory.expected_bounds("pier", lamps)[0][2], 1.5 + 2.72)     # lamp roof top
+        self.assertAlmostEqual(factory.expected_bounds("pier", bare)[0][2], 1.5)             # bare deck surface
+
     def test_lod_details_halve_with_floor(self):
         self.assertEqual(factory.lod_details(16), [16, 8, 4])
         self.assertEqual(factory.lod_details(6), [6, 4, 4])
