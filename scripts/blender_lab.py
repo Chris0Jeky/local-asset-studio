@@ -6,6 +6,7 @@ The Blender half lives in `blender_lab_bpy.py`; nothing caller-supplied is ever 
     python scripts/blender_lab.py probe --blender <blender.exe> --out <probe.json>
     python scripts/blender_lab.py make-fixture --blender <blender.exe> --out-dir <new-dir>
     python scripts/blender_lab.py manifest --blender <blender.exe> --blend <file.blend> --out <manifest.json>
+    python scripts/blender_lab.py scene-v1 --blender <blender.exe> --blend <file.blend> --out <scene.json>
 """
 from __future__ import annotations
 
@@ -53,7 +54,9 @@ def executable(blender_path):
 
 
 def command_for(blender_path, *args):
-    return [str(blender_path), "--background", "--factory-startup", "--disable-autoexec", "--python", str(BPY_SCRIPT),
+    # --python-exit-code 1: a Python exception inside Blender must not leave a receipt with exit code 0.
+    return [str(blender_path), "--background", "--factory-startup", "--disable-autoexec", "--python-exit-code", "1",
+            "--python", str(BPY_SCRIPT),
             "--", *map(str, args)]
 
 
@@ -181,6 +184,24 @@ def make_fixture(blender_path, out_dir, timeout=300):
     return blend
 
 
+def scene_v1(blender_path, blend_path, out_path, timeout=120):
+    """Exact `studio.dcc-scene/v1` observation for `studio_workflow.dcc_evidence.compare_scenes`."""
+    exe = executable(blender_path)
+    # The collector refuses symlinks; check the caller's paths before resolving would hide them.
+    raw_blend, raw_out = Path(blend_path).expanduser(), Path(out_path).expanduser()
+    require(not raw_blend.is_symlink() and not raw_out.is_symlink(), "blend and out must not be symlinks")
+    blend, out = raw_blend.resolve(), raw_out.resolve()
+    require(blend.is_file() and blend.suffix.lower() == ".blend", "blend must be an existing .blend file")
+    require(not out.exists(), "out must be a new file")
+    before = file_sha(blend)
+    run(exe, ["scene-v1", "--blend", blend, "--out", out], out.with_name(out.stem + ".log.json"), timeout)
+    require(file_sha(blend) == before, "Source .blend changed during the observation")
+    observation = json.loads(out.read_text(encoding="utf-8"))
+    require(observation.get("format") == "studio.dcc-scene/v1" and observation.get("complete") is True,
+            "Observation is not a complete studio.dcc-scene/v1 record")
+    return observation
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -194,8 +215,16 @@ def main(argv=None):
     fixture_parser = commands.add_parser("make-fixture")
     fixture_parser.add_argument("--blender", required=True)
     fixture_parser.add_argument("--out-dir", required=True)
+    scene_parser = commands.add_parser("scene-v1")
+    scene_parser.add_argument("--blender", required=True)
+    scene_parser.add_argument("--blend", required=True)
+    scene_parser.add_argument("--out", required=True)
     args = parser.parse_args(argv)
     try:
+        if args.command == "scene-v1":
+            result = scene_v1(args.blender, args.blend, args.out)
+            print(json.dumps({"out": args.out, "objects": len(result["content"]["objects"]), "findings": result["findings"]}))
+            return 0
         if args.command == "manifest":
             result = manifest(args.blender, args.blend, args.out)
             print(json.dumps({"out": args.out, "semantic_checksum": result["semantic_checksum"], "counts": result["counts"]}))

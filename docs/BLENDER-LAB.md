@@ -305,3 +305,34 @@ holder `blender-lab-<random>`, one per run, with a TTL covering both processes a
 The Studio grants the lease only when its own work and ComfyUI queues are idle, and then pauses its ComfyUI. If the
 lease is refused, the run raises before any Blender process starts. The lease is never taken by default. It was
 tested against a local fake Studio only, not taken live, because other lanes share ComfyUI tonight.
+
+## Which tool for what
+
+Two stacks were built in parallel on 2 Nov 2026: this lab, and the offline DCC evidence work from #1911. They now
+have one owner per seam and no parallel copies.
+
+Status on 2 Nov 2026: the probe, manifest and `scene-v1` are on `main`. The sentinel, worker and MCP façade are in
+open PRs #1916, #1924, #1931 and #1936.
+
+| Seam | Canonical tool | Use it for |
+| --- | --- | --- |
+| Starting Blender | `blender_lab_bpy.py`, through the host runner `scripts/blender_lab.py` (fixed argv, log, timeout) or a `probe_intent` plan of the same argv | every native run, including the exact observation below |
+| Capability qualification | `blender_lab.py probe` | feature tests per build, never version checks |
+| Exact scene observation (`studio.dcc-scene/v1`) | `blender_lab.py scene-v1`, which runs the stdlib-only collector `scripts/blender_scene_probe.py` | strict same-build change detection: unchanged reruns, before/after an edit; float-exact, UV coordinates, weights, material links |
+| Strict comparison and evidence receipts | `studio_workflow/dcc_evidence.py` (`compare_scenes`, `compare_bundles`, `probe_intent`) | exact equality and hardened PNG/receipt validation; no tolerance or GLB forgiveness |
+| Planning summary and cross-build identity | `blender_lab.py manifest` (`semantic_checksum`) | what an agent may edit; the same scene on 4.5 and 5.4; worker preconditions |
+| GLB export → reimport parity (plan Task 3) | `scripts/blender_sentinel.py` | target-aware structure (format losses, expected exclusions), tolerant renders with region boxes |
+| Persistent session and agent façade | `scripts/blender_worker.py`, `scripts/blender_mcp.py` | many typed calls without per-call start-up |
+| Offline synthetic corpus and research CLI | `studio_workflow/dcc_fixture.py`, `dcc_lab.py` | comparator protocol tests; no Blender |
+
+There are two observation contracts on purpose. A quantised manifest cannot produce the exact observation without
+weakening strict equality. Native qualification of `scene-v1` on the lab asset and the articulated chest found the
+following:
+- Unchanged reruns are exactly equal on both builds.
+- The same file read by 4.5 and by 5.4 differs only in Principled BSDF input records, because 5.4 changed the socket
+  list.
+- The chest built on each build also differs in UV coordinates.
+- The semantic checksum is identical in all of these cases.
+
+So use the exact observation within one build, and the manifest across builds. Evidence:
+`E:/local-asset-studio-labs/rnd-20261102/blender-worker/evidence/scene-v1-qualification-2026-11-02/`.
