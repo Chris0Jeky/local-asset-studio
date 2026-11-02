@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -35,6 +36,19 @@ class CommandTests(unittest.TestCase):
             out = Path(tmp) / "probe.json"; out.write_text("{}")
             exe = Path(tmp) / "blender.exe"; exe.write_bytes(b"")
             with self.assertRaises(lab.BlenderLabError): lab.probe(exe, out)
+
+    def test_run_never_replaces_an_existing_log(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            log = Path(tmp) / "probe.log.json"; log.write_text("earlier receipt")
+            with self.assertRaises(FileExistsError): lab.run(sys.executable, ["probe"], log)
+            self.assertEqual(log.read_text(), "earlier receipt")
+
+    def test_timeout_still_writes_a_receipt(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            log = Path(tmp) / "slow.log.json"
+            with mock.patch.object(lab, "command_for", return_value=[sys.executable, "-c", "import time; time.sleep(5)"]):
+                with self.assertRaises(lab.BlenderLabError): lab.run(sys.executable, [], log, timeout=0.5)
+            self.assertEqual(json.loads(log.read_text(encoding="utf-8"))["returncode"], "timeout")
 
     def test_blender_side_script_compiles(self):
         compile(lab.BPY_SCRIPT.read_text(encoding="utf-8"), str(lab.BPY_SCRIPT), "exec")

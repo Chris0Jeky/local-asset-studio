@@ -53,14 +53,19 @@ def command_for(blender_path, *args):
 def run(blender_path, args, log_path, timeout=300):
     """Run one Blender-side command; keep argv, exit code, stdout and stderr next to the output."""
     command = command_for(blender_path, *args)
-    started = time.perf_counter()
-    completed = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout,
-                               check=False, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-    seconds = round(time.perf_counter() - started, 3)
-    Path(log_path).write_text(json.dumps({"argv": command, "returncode": completed.returncode, "seconds": seconds,
-                                          "stdout": completed.stdout, "stderr": completed.stderr}, indent=2) + "\n",
-                              encoding="utf-8", newline="\n")
-    require(completed.returncode == 0, f"Blender exited {completed.returncode}; see {log_path}")
+    with Path(log_path).open("x", encoding="utf-8", newline="\n") as log:  # never replace an earlier receipt
+        started = time.perf_counter()
+        try:
+            completed = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                                       timeout=timeout, check=False, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            returncode, stdout, stderr = completed.returncode, completed.stdout, completed.stderr
+        except subprocess.TimeoutExpired as exc:
+            returncode, stdout, stderr = "timeout", exc.stdout, exc.stderr
+        seconds = round(time.perf_counter() - started, 3)
+        decode = lambda value: value.decode("utf-8", "replace") if isinstance(value, bytes) else value
+        log.write(json.dumps({"argv": command, "returncode": returncode, "seconds": seconds,
+                              "stdout": decode(stdout), "stderr": decode(stderr)}, indent=2) + "\n")
+    require(returncode == 0, f"Blender exited {returncode}; see {log_path}")
     return seconds
 
 
@@ -68,7 +73,7 @@ def probe(blender_path, out_path, timeout=300):
     exe = executable(blender_path)
     out = Path(out_path).expanduser().resolve()
     require(not out.exists(), "out must be a new file")
-    seconds = run(exe, ["probe", "--out", out], out.with_suffix(".log.json"), timeout)
+    seconds = run(exe, ["probe", "--out", out], out.with_name(out.stem + ".log.json"), timeout)
     result = json.loads(out.read_text(encoding="utf-8"))
     require(result.get("kind") == "capability-probe", "Probe output has the wrong kind")
     result["runtime"] = {"executable": exe.as_posix(), "sha256": file_sha(exe), "wall_seconds": seconds}
