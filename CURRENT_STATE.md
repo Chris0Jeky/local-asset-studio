@@ -1,5 +1,74 @@
 # Current state — 2 November 2026
 
+## 2026-11-02 — Narration observes an owned state replacement once
+
+A retained narration read now permits one full fresh observation when its live
+coordinator replaces only `state.json`. Ownership is captured before reading, so
+the terminal write can still be observed after the coordinator exits. Snapshot,
+root, parent, record, manifest and state checks remain; repeated replacement,
+in-place edits, malformed content and unsafe identities still refuse. Create
+and Start are never repeated. The targeted group ran 129 tests with 128 passes
+and one existing native-Windows-junction skip. The added actual-page race awaits
+hosted Chromium qualification. [Causal evidence and historical limits](docs/verification/2026-11-02-browser-lane-failures.md)
+keep #1901 and its unresolved Windows script-load cause open. No owner runtime,
+art or HUMAN_TODO acceptance is inferred.
+
+## 2026-11-02 — Browser lane failures retain transport evidence
+
+The private-creation and Spoken Brief fixtures now retain bounded failed request,
+HTTP status and server route/errno evidence, without request bodies or URL secrets.
+Existing page-error assertions, waits and installation behavior remain. Seven
+diagnostic checks pass; exact-head native browser qualification remains pending.
+[Original failures, distinct baselines and limits](docs/verification/2026-11-02-browser-lane-failures.md)
+preserve the unresolved Windows script-load cause and distinguish a separately
+reproduced narration state-read race from historical proof. Refs #1901;
+owner runtime, art and HUMAN_TODO acceptance remain open.
+
+## 2026-11-02 — Deliberate source comparison survives child metadata saves
+
+Confirmed single-child detail saves now notify the existing comparison view to
+revalidate its deliberately chosen pair. Images stay withheld until fresh family
+and selected-ID observations confirm both identities, hashes and privacy. Newer
+receipts, choices, navigation or scope changes invalidate older replies, and a
+completion cannot take focus away from newer Notes typing. Workspace still owns
+metadata writes, drafts and recovery. The comparison heading also reserves room
+for the dialog close button.
+
+All 55 comparison Node contracts, three family wrappers, 28 detail contracts and
+the frontend handoffs pass. The expanded browser journey covers saved-pair/focus
+continuity, held reads, changed source evidence and close-button spacing; its
+exact-head hosted result belongs to the follow-up PR. Refs #1875. The earlier
+comparison head `5e06c25` passed all 37 original browser checks with unchanged
+parent bytes and no generation; that report is baseline evidence for this follow-up.
+
+## 2026-11-02 — Repaired PNG imports bind the opened Workspace
+
+Parented HTTP imports now require the captured Workspace identity and validate
+it after body reading, before any upload or registration. The page confirms the
+parent and refuses a stale Workspace/privacy/detail/hash observation before
+sending the PNG. Ordinary imports and trusted internal Krita calls retain their
+existing API. The focused 73-test group, five import/upload tests, five browser
+installer tests and eight real HTTP checks passed; the Node wrapper runs sixteen
+causal cases. [Evidence and pending hosted browser qualification](docs/verification/2026-11-02-repaired-import-workspace.md).
+Refs #1837; its other stated remainder, #243, #1832 and HUMAN_TODO choices remain
+open. No generation, native-app, art or licensing acceptance is inferred.
+
+## 2026-11-02 — Imported repair sources follow displayed image orientation
+
+Marked repair, seamless tiles and parallax now use the same displayed coordinates
+for JPEG, PNG and WebP EXIF orientations. Source files and their hashes remain
+unchanged. Repair preparation names an oversized composed PNG before any upload,
+and editing refuses 16-bit or ambiguous-header PNGs with guidance to convert a
+copy to 8-bit RGB. Both source readers enforce the strict pixel limit before decode.
+Raw import remains available; this is not a colour-management or generation claim.
+
+The focused source and route group passed 169 tests with no skips, including all
+eight transforms, late PNG EXIF, private preparation, mask union/alpha behavior,
+CMYK conversion and the encoded-size boundary. Pillow-free static validation
+passed. [Causal evidence and limits](docs/reconciliation/2026-11-02-region-repair-sources.md)
+record the exact source contract; integrated hosted qualification remains pending.
+Refs #1861. Owner art acceptance and native generated-output quality remain open.
+
 ## 2026-11-02 — Contract discovery parses each runner once
 
 The frontend-contract wiring gate now shares one parsed runner snapshot across

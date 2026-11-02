@@ -4,23 +4,10 @@ import json
 from pathlib import Path
 import sys
 import time
-from urllib.parse import urlsplit
+from browser_failure_diagnostics import url_identity as _url
 
 
 def _text(value,limit=256):return str(value)[:limit]
-
-
-def _url(value):
-    """Keep bounded route identity, without credentials, query values or media data."""
-    try:
-        parts=urlsplit(str(value))
-        if parts.scheme and parts.scheme not in ('http','https'):return _text(parts.scheme)+':<redacted>'
-        host=parts.hostname or ''
-        if ':' in host:host='['+host+']'
-        origin=(parts.scheme+'://'+host+(':'+str(parts.port) if parts.port else '')) if parts.netloc else ''
-        keys=[field.partition('=')[0][:32]+'=<redacted>' for field in parts.query.split('&')[:8] if field]
-        return _text(origin+parts.path+('?'+'&'.join(keys) if keys else ''))
-    except ValueError:return '<invalid-url>'
 
 
 class GuideNavigationDiagnostics:

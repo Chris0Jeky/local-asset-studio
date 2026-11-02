@@ -2,12 +2,14 @@
 import http.client
 import hashlib
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 import json
 import os
 from pathlib import Path
 import sys
 import tempfile
 import socket
+import threading
 from types import SimpleNamespace
 import unittest
 from urllib.parse import urlencode
@@ -68,6 +70,30 @@ class NarrationFixture(Fixture):
             return response.status, json.loads(response.read())
         finally: connection.close()
 
+    @contextmanager
+    def change_during_capture(self, key, change, *, filename='state.json', every_read=False, phase='opening'):
+        """Schedule a real file change at a deterministic snapshot boundary."""
+        import studio_spoken.narration as narration
+        path = self.root / key / filename
+        checked, lstat = narration.checked_json, Path.lstat
+        reads = []; current = {'thread': None, 'stats': 0, 'changing': False}
+        def capture(target):
+            if target != path: return checked(target)
+            reads.append(target); current.update(thread=threading.get_ident(), stats=0)
+            try: return checked(target)
+            finally: current['thread'] = None
+        def before_open(target, *args, **kwargs):
+            before = lstat(target, *args, **kwargs)
+            if target == path and current['thread'] == threading.get_ident() and not current['changing']:
+                current['stats'] += 1
+                if current['stats'] == (2 if phase == 'opening' else 3) and (len(reads) == 1 or every_read):
+                    current['changing'] = True
+                    try: change(target)
+                    finally: current['changing'] = False
+            return before
+        with patch.object(narration, 'checked_json', capture), patch.object(Path, 'lstat', before_open):
+            yield reads
+
 
 class NarrationTests(unittest.TestCase):
     def setUp(self):
@@ -103,6 +129,153 @@ class NarrationTests(unittest.TestCase):
             'key': value['key'], 'root_id': self.root_id, 'manifest_sha256': value['manifest_sha256']})
         self.assertEqual(code, 202, result)
         return self.settled(value['key'])
+
+    def held_create(self):
+        entered, release = threading.Event(), threading.Event()
+        def hold(project):
+            entered.set()
+            if not release.wait(5): raise AssertionError('Test did not release its synthetic create response')
+        self.f.after_create = hold; self.addCleanup(release.set)
+        code, value = self.start()
+        self.assertEqual(code, 202, value); self.assertTrue(entered.wait(3))
+        return value, release
+
+    def inspect_during_change(self, value, change, *, filename='state.json', every_read=False, phase='opening'):
+        """Change a real file after its baseline stat or after its handle was read."""
+        with self.f.change_during_capture(value['key'], change, filename=filename,
+                every_read=every_read, phase=phase) as reads:
+            result = self.f.request('/narration', {'key': value['key'], 'root_id': self.root_id})
+        return result, len(reads)
+
+    def test_live_coordinator_state_replacement_gets_one_fresh_observation(self):
+        starting, release_start = threading.Event(), threading.Event(); self.addCleanup(release_start.set)
+        def hold_start(project):
+            starting.set()
+            if not release_start.wait(5): raise AssertionError('Test did not release its synthetic Start response')
+        self.f.after_start = hold_start
+        value, release_create = self.held_create()
+        def advance(path):
+            release_create.set(); self.assertTrue(starting.wait(3))
+        try:
+            (code, observed), reads = self.inspect_during_change(value, advance)
+            self.assertEqual(code, 200, observed)
+            self.assertTrue(observed['active']); self.assertEqual(reads, 2)
+        finally: release_start.set()
+        self.assertEqual(self.settled(value['key'])['status'], 'completed')
+        self.assertEqual([path for path, _ in self.posts()], ['/api/voice-baseline',
+            '/api/production/00000000000000000000000000000001/start'])
+
+    def test_coordinator_finishing_during_capture_still_gets_one_fresh_observation(self):
+        self.check_finished_coordinator_replacement('opening')
+
+    def test_state_replaced_after_handle_read_gets_one_fresh_observation(self):
+        self.check_finished_coordinator_replacement('reading')
+
+    def check_finished_coordinator_replacement(self, phase):
+        value, release = self.held_create()
+        manager = self.f.server.spoken_narrations
+        thread = manager.threads[(self.root_id, value['key'])]
+        def complete(path):
+            release.set(); thread.join(5)
+            self.assertFalse(thread.is_alive()); self.assertFalse(manager.threads)
+        (code, observed), reads = self.inspect_during_change(value, complete, phase=phase)
+        self.assertEqual(code, 200, observed)
+        self.assertEqual(observed['status'], 'completed'); self.assertFalse(observed['active'])
+        self.assertEqual(reads, 2)
+        self.assertEqual([path for path, _ in self.posts()], ['/api/voice-baseline',
+            '/api/production/00000000000000000000000000000001/start'])
+
+    def test_persistent_state_replacement_exhausts_the_single_fresh_observation(self):
+        from spoken_brief_transport import write_bytes
+        value, release = self.held_create(); before = self.posts()
+        def replace(path): write_bytes(path, path.read_bytes())
+        (code, error), reads = self.inspect_during_change(value, replace, every_read=True)
+        self.assertEqual(code, 400, error); self.assertEqual(reads, 2)
+        self.assertIn('File changed while opening', error['error'])
+        self.assertEqual(self.posts(), before)
+        release.set(); self.assertEqual(self.settled(value['key'])['status'], 'completed')
+        self.assertEqual(len(self.posts()), 2)
+
+    def test_fresh_observation_rechecks_root_record_manifest_and_state(self):
+        from spoken_brief_transport import write_bytes, write_json
+        value, release = self.held_create(); before = self.posts()
+        directory = self.root / value['key']; config = self.f.server.RequestHandlerClass.studio.config
+        original_config = config['spoken_briefs']; other = self.root / 'different-root'; other.mkdir()
+        originals = {name: (directory / name).read_bytes() for name in ('state.json', 'manifest.json', 'studio-start.json')}
+        for kind, status, message in [('root', 409, 'Source root changed'),
+                ('record', 409, 'Retained narration identity differs'),
+                ('manifest', 409, 'Retained narration identity differs'),
+                ('state', 409, 'manifest'), ('malformed', 400, 'JSON')]:
+            with self.subTest(kind=kind):
+                def change(path):
+                    if kind not in ('state', 'malformed'): write_bytes(path, originals['state.json'])
+                    if kind == 'root': config['spoken_briefs'] = {'archive_root': str(other)}
+                    elif kind == 'record':
+                        record = json.loads(originals['studio-start.json']); record['root_id'] = '0' * 64
+                        write_json(directory / 'studio-start.json', record)
+                    elif kind == 'manifest':
+                        manifest = json.loads(originals['manifest.json']); manifest['manifest_sha256'] = '0' * 64
+                        write_json(directory / 'manifest.json', manifest)
+                    elif kind == 'state':
+                        state = json.loads(originals['state.json']); state['manifest_sha256'] = '0' * 64
+                        write_json(path, state)
+                    else: write_bytes(path, b'{ invalid JSON')
+                try:
+                    (code, error), reads = self.inspect_during_change(value, change)
+                    self.assertEqual(code, status, error); self.assertIn(message, error['error'])
+                    self.assertEqual(reads, 1 if kind == 'root' else 2)
+                    self.assertEqual(self.posts(), before); self.assertFalse(list(other.iterdir()))
+                finally:
+                    config['spoken_briefs'] = original_config
+                    for name, raw in originals.items(): write_bytes(directory / name, raw)
+        release.set(); self.assertEqual(self.settled(value['key'])['status'], 'completed')
+        self.assertEqual(len(self.posts()), 2)
+
+    def test_other_file_and_in_place_changes_are_not_retried(self):
+        from spoken_brief_transport import write_bytes
+        value, release = self.held_create(); before = self.posts()
+        for name in ('manifest.json', 'studio-start.json', 'state.json'):
+            with self.subTest(filename=name):
+                original = (self.root / value['key'] / name).read_bytes()
+                def change(path):
+                    if name == 'state.json':
+                        # Same inode, changed size: not the coordinator's atomic writer.
+                        with path.open('ab') as stream: stream.write(b' ')
+                    else: write_bytes(path, original)
+                try:
+                    (code, error), reads = self.inspect_during_change(value, change, filename=name)
+                    self.assertEqual(code, 400, error); self.assertEqual(reads, 1)
+                    self.assertIn('File changed while opening', error['error'])
+                    self.assertEqual(self.posts(), before)
+                finally: write_bytes(self.root / value['key'] / name, original)
+        release.set(); self.assertEqual(self.settled(value['key'])['status'], 'completed')
+        self.assertEqual(len(self.posts()), 2)
+
+    def test_state_replacement_without_an_owned_live_coordinator_is_not_retried(self):
+        from spoken_brief_transport import write_bytes
+        value = self.settled(self.start()[1]['key']); before = self.posts()
+        self.assertFalse(self.f.server.spoken_narrations.threads)
+        (code, error), reads = self.inspect_during_change(value, lambda path: write_bytes(path, path.read_bytes()))
+        self.assertEqual(code, 400, error); self.assertEqual(reads, 1)
+        self.assertIn('File changed while opening', error['error']); self.assertEqual(self.posts(), before)
+
+    def test_state_replacement_does_not_retry_a_parent_reparse_refusal(self):
+        from spoken_brief_transport import write_bytes
+        value, release = self.held_create(); before = self.posts()
+        directory = self.root / value['key']; original = Path.lstat; linked = {'value': False}
+        def reparse(path, *args, **kwargs):
+            info = original(path, *args, **kwargs)
+            if path == directory and linked['value']:
+                return SimpleNamespace(st_mode=info.st_mode, st_dev=info.st_dev, st_ino=info.st_ino, st_file_attributes=0x400)
+            return info
+        def change(path):
+            write_bytes(path, path.read_bytes()); linked['value'] = True
+        with patch.object(Path, 'lstat', reparse):
+            (code, error), reads = self.inspect_during_change(value, change)
+        self.assertEqual(code, 400, error); self.assertEqual(reads, 1)
+        self.assertIn('Symlink/reparse point refused', error['error']); self.assertEqual(self.posts(), before)
+        release.set(); self.assertEqual(self.settled(value['key'])['status'], 'completed')
+        self.assertEqual(len(self.posts()), 2)
 
     def test_explicit_start_accepts_exact_preview_without_preview_inference(self):
         value = self.preview()

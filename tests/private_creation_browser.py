@@ -21,6 +21,7 @@ from urllib.parse import urlsplit
 
 from playwright.sync_api import sync_playwright
 from browser_ports import browser_server, evidence_screenshot
+from browser_failure_diagnostics import BrowserFailureDiagnostics
 
 ROOT = Path(__file__).resolve().parents[1]
 EDITOR = 'PRIVATE EDITOR CANARY: adult elf in a blue travelling coat.'
@@ -49,6 +50,7 @@ def run(output, app_root):
                                     preset_name=PRIVATE_JOB, controls={'positive': PRIVATE_JOB, 'seed':42},
                                     outputs=[{'filename':'private-synthetic.png','asset_id':'asset-private','media_type':'image'}]))
     rows, errors, server_errors, disconnects, requests, sent = [], [], [], [], [], []
+    diagnostics = BrowserFailureDiagnostics()
     layout={}
     held, release = threading.Event(), threading.Event()
     hold = {'path': None, 'scope': None}
@@ -62,6 +64,11 @@ def run(output, app_root):
         return result
 
     class Handler(fixture.Handler):
+        def handle_one_request(self):
+            try: return super().handle_one_request()
+            except Exception as error:
+                diagnostics.server_error(self, error)
+                raise
         def scope(self): return self.headers.get('X-Studio-Privacy', 'regular')
         def json(self, value, status=200):
             scope = self.scope()
@@ -129,7 +136,11 @@ def run(output, app_root):
     def check(name, condition, detail=None):
         rows.append({'name':name,'passed':bool(condition),'detail':detail}); print(('PASS ' if condition else 'FAIL ')+name, flush=True)
     def stores(page): return page.evaluate('({local:{...localStorage},session:{...sessionStorage}})')
-    def ready(page): page.wait_for_function('!!catalog?.presets?.length&&!!selected&&!!StudioWorkbench&&!!StudioPrivacy')
+    def ready(page):
+        try: page.wait_for_function('!!catalog?.presets?.length&&!!selected&&!!StudioWorkbench&&!!StudioPrivacy')
+        except Exception:
+            diagnostics.capture_page(page)
+            raise
     def settled_make(page): page.wait_for_function('document.querySelector("#makeView").dataset.draftState==="ready"')
     def measure_layout(page,name):
         layout[name]=page.evaluate('({width:innerWidth,height:innerHeight,privacy_bar_height:document.querySelector(".privacy-bar").getBoundingClientRect().height,horizontal_overflow:document.documentElement.scrollWidth>innerWidth})')
@@ -145,6 +156,7 @@ def run(output, app_root):
             browser_version = browser.version
             context = browser.new_context(viewport={'width':1440,'height':900},reduced_motion='reduce',accept_downloads=True)
             page = context.new_page(); page.set_default_timeout(8000); page.on('pageerror',lambda e:errors.append(str(e))); page.on('dialog',lambda dialog:dialog.accept())
+            diagnostics.watch(page, 'editor')
             page.goto(origin+'/#create'); ready(page)
             check('real privacy module starts regular',page.evaluate('StudioPrivacy.creation()==="regular"&&StudioPrivacy.scope()==="regular"&&typeof StudioPrivacy.capture==="function"'))
             choose_recipe(page,'wai'); page.locator('#positive').fill(EDITOR)
@@ -179,6 +191,7 @@ def run(output, app_root):
             page.locator('#creationPrivacy').select_option('regular');page.locator('#positive').fill('REGULAR TAB A CANARY')
             page.wait_for_function('localStorage.getItem("studio-draft-v1:ux-test-workspace:wai")?.includes("REGULAR TAB A CANARY")')
             other=context.new_page();other.set_default_timeout(8000);other.on('pageerror',lambda e:errors.append(str(e)));other.on('dialog',lambda dialog:dialog.accept())
+            diagnostics.watch(other, 'competing-editor')
             other.goto(origin+'/#create');ready(other);choose_recipe(other,'wai');other.locator('#positive').fill('REGULAR TAB B CANARY')
             other.wait_for_function('localStorage.getItem("studio-draft-v1:ux-test-workspace:wai")?.includes("REGULAR TAB B CANARY")')
             newer=other.evaluate('localStorage.getItem("studio-draft-v1:ux-test-workspace:wai")')
@@ -200,6 +213,7 @@ def run(output, app_root):
 
             context=browser.new_context(viewport={'width':390,'height':844},reduced_motion='reduce')
             page=context.new_page();page.set_default_timeout(8000);page.on('pageerror',lambda e:errors.append(str(e)))
+            diagnostics.watch(page, 'mobile')
             page.goto(origin+'/#make');page.wait_for_selector('[data-make-look]');settled_make(page)
             page.locator('[data-make-goal="edit"]').click();page.locator('[data-make-pick="asset-1"]').click();page.locator('#makeF-change').fill('REGULAR EDIT RECOVERY CANARY')
             page.reload();settled_make(page)
@@ -231,7 +245,8 @@ def run(output, app_root):
             evidence_screenshot(page,path=str(output/'all-library-mobile.png'))
             page.locator('[data-privacy-scope="regular"]').click()
             check('Regular Library clears private DOM immediately',PRIVATE_ASSET not in page.locator('#assetGrid').inner_text())
-            fresh=context.new_page();fresh.set_default_timeout(8000);fresh.on('pageerror',lambda e:errors.append(str(e)));fresh.goto(origin+'/#make');settled_make(fresh)
+            fresh=context.new_page();fresh.set_default_timeout(8000);fresh.on('pageerror',lambda e:errors.append(str(e)))
+            diagnostics.watch(fresh, 'independent-mobile');fresh.goto(origin+'/#make');settled_make(fresh)
             check('new independent tab starts regular without private text',fresh.evaluate('StudioPrivacy.creation()==="regular"&&StudioPrivacy.scope()==="regular"') and MAKE not in fresh.locator('#makeView').evaluate('(e)=>e.textContent+" "+[...e.querySelectorAll("input,textarea")].map(x=>x.value).join(" ")'))
             fresh.close();context.close();browser.close()
     except Exception as error:
@@ -242,6 +257,7 @@ def run(output, app_root):
     unchanged=all(hashlib.sha256((app_root/path).read_bytes()).hexdigest()==value for path,value in hashes.items())
     check('served source remained unchanged during the run',unchanged)
     receipt={'mode':'native-http-real-privacy-owner-synthetic-api','rows':rows,'requests':requests,'inert_jobs':len(sent),'client_disconnects':disconnects,'layout':layout,
+             'failure_diagnostics': diagnostics.snapshot(),
              'provenance':{'app_root':str(app_root),'python':platform.python_version(),'playwright':version('playwright'),
                            'chromium':browser_version,'source_sha256':hashes,'driver_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest()},
              'limits':'Production privacy controller/frontend and production read contracts over temporary synthetic SQLite data. No running Studio instance, user workspace, model execution, owner media, artistic acceptance or human task-time claim.'}

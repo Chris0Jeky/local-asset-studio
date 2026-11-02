@@ -30,6 +30,14 @@ SETTLE_SECONDS = 2.0
 HEX = re.compile(r'[0-9a-f]{64}\Z')
 
 
+class CaptureChanged(SpokenBriefError):
+    """An unchanged-path/handle check refused this snapshot; no bytes were accepted."""
+    def __init__(self, message, path, lineage):
+        super().__init__(message)
+        self.path = path
+        self.lineage = tuple(lineage)
+
+
 def _plain(info):
     return not stat.S_ISLNK(info.st_mode) and not (getattr(info, 'st_file_attributes', 0) & 0x400)
 
@@ -68,13 +76,13 @@ def _capture(path: Path, limit: int):
             # Compare their common identity here, then each full timestamp
             # signature against a second observation from the same API.
             if not stat.S_ISREG(opened.st_mode) or _identity(opened)[:4] != _identity(before)[:4]:
-                raise SpokenBriefError(f'File changed while opening: {path}')
+                raise CaptureChanged(f'File changed while opening: {path}', path, lineage)
             raw = stream.read(limit + 1)
             after = os.fstat(stream.fileno())
         if (not 1 <= len(raw) <= limit or len(raw) != before.st_size
                 or _identity(opened) != _identity(after) or _lineage(path) != lineage
                 or _identity(path.lstat()) != _identity(before)):
-            raise SpokenBriefError(f'File changed while reading: {path}')
+            raise CaptureChanged(f'File changed while reading: {path}', path, lineage)
         return raw, (*_identity(before), digest_bytes(raw))
     except OSError as exc:
         raise SpokenBriefError(f'Cannot capture {path}: {exc}') from exc

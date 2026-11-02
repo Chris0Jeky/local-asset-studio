@@ -82,3 +82,79 @@ test('invalid request identity must not issue a recall read',async()=>{
   let reads=0;const recall=F.createRecall({context:()=>({workspace:scope,stamp:'a'}),read:async()=>{reads++;return{};}});
   await assert.rejects(recall.prepare(1,'words'),/identity/);assert.equal(reads,0);
 });
+
+test('the shipped adapter refuses an incomplete Create owner without capturing or adopting a fake setup',async()=>{
+  const vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
+  const dialog={open:true};let installed,captures=0,adoptions=0,reads=0;
+  const owner={stamp(){captures++;if(!state.selected)throw Error('owner captured before a preset existed');return 'initialized-setup';},busy:()=>false,adopt(){adoptions++;}};
+  const state={document:{querySelector:s=>s==='#assetDialog'?dialog:s==='#gallery'?{}:null,addEventListener(){}},
+    MutationObserver:class{observe(){}},addEventListener(){},confirm(){return true;},
+    StudioAssetFamily:{install:options=>{installed=options;return {opened(){},clear(){},decorateResults(){}};}},StudioSetupDraft:owner,
+    assetState:{workspace_id:scope,assets:[]},activeAsset:{id:'one',media_type:'image'},assetWorkspaceEpoch:1,assetPrivacyEpoch:0,assetReceiptEpoch:0,assetDetailEpoch:1,
+    assetPrivacyScope:()=> 'regular',assetDetailValues:()=>({}),assetDetailDirty:()=>false,assetDetailPending:null,assetDetailConflict:null,assetDetailBusy:false,
+    continuationState:null,tileState:null,parallaxState:null,selected:undefined,catalog:null,backendActive:'primary',api(){reads++;},message(){}};
+  vm.createContext(state);vm.runInContext(fs.readFileSync(path.join(__dirname,'../app/static/asset-family-adapter.js'),'utf8'),state);
+  assert.throws(()=>installed.context(),/Create setup is still loading/);
+  assert.throws(()=>installed.apply({},{}),/Create setup is still loading/);
+  await assert.rejects(installed.reference('one'),/Create setup is still loading/);
+  await assert.rejects(F.createRecall({...installed,read:async()=>{reads++;}}).prepare('one','words'),/Create setup is still loading/);
+  assert.equal(captures,0);assert.equal(adoptions,0);assert.equal(reads,0);
+  state.selected={id:'p'};state.catalog={presets:[state.selected]};
+  assert.match(installed.context().stamp,/initialized-setup/);assert.equal(captures,1);
+});
+
+function earlyFamily(){
+  const elements=new Map(),cards=[],document={querySelector:s=>elements.get(s.slice(1))||null,
+    querySelectorAll:()=>cards,createElement:tag=>new Element(tag)};
+  class Element{
+    constructor(tag='div'){this.tagName=tag.toUpperCase();this.children=[];this.dataset={};this.listeners={};this.hidden=false;this.isConnected=true;this.innerHTML='';
+      this.classList={add(){},remove(){},toggle(){}};}
+    set id(value){this._id=value;elements.set(value,this);}get id(){return this._id;}
+    append(...nodes){this.children.push(...nodes);}replaceChildren(...nodes){this.children=nodes;this.innerHTML='';}
+    before(){}after(){}setAttribute(){}removeAttribute(){}hasAttribute(){return false;}
+    addEventListener(name,callback){this.listeners[name]=callback;}
+    contains(value){return this===value||this.children.some(node=>node.contains?.(value));}
+    querySelector(selector){if(selector==='.asset-family-result')return this.children.find(node=>node.className==='asset-family-result');return document.querySelector(selector);}
+  }
+  for(const id of ['assetDialog','assetLineage','assetDetailMedia','assetFamilyActions','assetFamilyStatus','assetFamilyTree','assetFamilyChildren']){
+    const element=new Element();element.id=id;
+  }
+  elements.get('assetDialog').open=true;document.body=new Element('body');document.activeElement=document.body;
+  let workspace=scope,ownerCalls=0;const reads=[],messages=[];
+  const report=()=>({version:1,asset_id:'one',workspace_id:scope,nodes:[{id:'one',state:'active',title:'One',operation:null,seed:null,strength:null}],
+    edges:[],gaps:[],children:null,truncated:false,children_truncated:false,children_scanned:0,observation_only:true,generation_submitted:false,media_bytes_verified:false});
+  const options={document,asset:()=>({id:'one',media_type:'image'}),context:()=>{ownerCalls++;throw Error('Create owner is not initialized');},
+    comparisonContext:()=>({workspace,session:'detail',stamp:'detail'}),say:message=>messages.push(message),
+    read:async url=>{reads.push(url);return report();}};
+  const family=F.install(options);
+  return {family,options,report,reads,messages,elements,cards,Element,workspace:value=>workspace=value,ownerCalls:()=>ownerCalls};
+}
+test('opening the Library family before Create initialization reads the real Workspace without a setup stamp',async()=>{
+  const f=earlyFamily();await f.family.opened();
+  assert.deepEqual(f.reads,['/api/assets/family/one?workspace_id='+scope]);assert.equal(f.ownerCalls(),0);
+  assert.match(f.elements.get('assetFamilyTree').innerHTML,/One/);assert.equal(f.elements.get('assetLineage').hidden,true);
+});
+test('a held early family read still refuses a replaced Workspace',async()=>{
+  const f=earlyFamily();let release;f.options.read=()=>new Promise(resolve=>release=resolve);
+  const pending=f.family.opened();if(!release){await assert.doesNotReject(pending);return;}
+  f.workspace('c'.repeat(32));release(f.report());await pending;
+  assert.equal(f.elements.get('assetFamilyTree').innerHTML,'');assert.equal(f.ownerCalls(),0);
+});
+test('reading children before Create initialization uses only the Workspace observation',async()=>{
+  const f=earlyFamily();await f.family.opened();
+  const child={id:'child',state:'active',title:'Child',operation:'repair',seed:null,strength:null};
+  f.options.read=async url=>{f.reads.push(url);return {...f.report(),children:[child]};};
+  const button=new f.Element('button');button.dataset.familyChildren='one';
+  await f.elements.get('assetFamily').listeners.click({target:{closest:()=>button}});
+  assert.equal(f.reads.at(-1),'/api/assets/family/one?workspace_id='+scope+'&children=true');
+  assert.match(f.elements.get('assetFamilyChildren').innerHTML,/Child/);assert.equal(f.ownerCalls(),0);
+});
+test('result family expansion never captures an incomplete Create owner and discards a stale Workspace reply',async()=>{
+  const f=earlyFamily(),card=new f.Element(),review=new f.Element();review.dataset.reviewAsset='one';
+  const query=card.querySelector.bind(card);card.querySelector=selector=>selector==='[data-review-asset]'?review:query(selector);
+  f.cards.push(card);f.family.decorateResults();const box=card.children[0];box.open=true;
+  await box.listeners.toggle();assert.match(box.children[1].innerHTML,/One/);assert.equal(f.ownerCalls(),0);
+  delete box.dataset.loaded;let release;f.options.read=()=>new Promise(resolve=>release=resolve);
+  const pending=box.listeners.toggle();f.workspace('d'.repeat(32));release(f.report());await pending;
+  assert.match(box.children[1].textContent,/Workspace changed/);assert.equal(box.dataset.loaded,undefined);assert.equal(f.ownerCalls(),0);
+});
