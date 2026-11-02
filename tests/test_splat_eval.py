@@ -18,7 +18,9 @@ class ScoreTest(unittest.TestCase):
             with self.assertRaises(FileNotFoundError): splat_eval.score(data, out)   # no manifest: render never finished
             (out / "rendered.json").write_text(json.dumps({"views": ["r_000.png"]}))
             with self.assertRaises(ValueError): splat_eval.score(data, out)          # partial view set
-            (out / "rendered.json").write_text(json.dumps({"views": ["r_000.png", "r_001.png"]}))
+            (out / "rendered.json").write_text(json.dumps({"views": ["r_000.png", "r_001.png"], "cameras": "other dataset"}))
+            with self.assertRaises(ValueError): splat_eval.score(data, out)          # renders from another dataset's cameras
+            (out / "rendered.json").write_text(json.dumps({"views": ["r_000.png", "r_001.png"], "cameras": splat_eval.cameras_hash(data)}))
             splat_eval.score(data, out)
             s = json.loads((out / "score.json").read_text())
             Image.new("RGBA", (1, 1)).save(out / "r_001.png")

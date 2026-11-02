@@ -13,7 +13,13 @@ import json, math, sys
 from pathlib import Path
 
 
+def cameras_hash(data):
+    """Identity of a dataset's held-out cameras: renders are only comparable with the transforms they were made from."""
+    import hashlib; return hashlib.sha256((Path(data) / "transforms_test.json").read_bytes()).hexdigest()
+
+
 def render(splat, data, out, engine):
+    out = Path(out); out.mkdir(parents=True, exist_ok=True); (out / "rendered.json").unlink(missing_ok=True)  # first: a failed run leaves none
     import bpy
     from mathutils import Matrix
     bpy.ops.wm.read_factory_settings(use_empty=True); sc = bpy.context.scene
@@ -26,12 +32,11 @@ def render(splat, data, out, engine):
     sc.render.image_settings.color_mode = "RGBA"
     if engine == "cycles": sc.render.engine = "CYCLES"; sc.cycles.samples = 64; sc.cycles.use_denoising = False
     else: sc.render.engine = "BLENDER_EEVEE"; sc.eevee.taa_render_samples = 64
-    out = Path(out); out.mkdir(parents=True, exist_ok=True); (out / "rendered.json").unlink(missing_ok=True)  # no manifest until done
     import time; t = time.perf_counter()
     for i, f in enumerate(meta["frames"]):
         cam.matrix_world = Matrix(f["transform_matrix"]); sc.render.filepath = str(out / f"r_{i:03d}.png"); bpy.ops.render.render(write_still=True)
     names = [Path(f["file_path"]).name + ".png" for f in meta["frames"]]
-    (out / "rendered.json").write_text(json.dumps({"splat": str(splat), "dataset": str(data), "views": names}))
+    (out / "rendered.json").write_text(json.dumps({"splat": str(splat), "dataset": str(data), "views": names, "cameras": cameras_hash(data)}))
     print("RENDERED", len(meta["frames"]), round(time.perf_counter() - t, 2))
 
 
@@ -44,8 +49,9 @@ def score(data, out):
     # Score exactly the held-out frames the dataset declares, and only renders whose run finished (render writes the
     # manifest last, after deleting any old one), so a missing, stale or partial view set fails instead of skewing the mean.
     views = [Path(f["file_path"]).name + ".png" for f in json.loads((Path(data) / "transforms_test.json").read_text())["frames"]]
-    done = json.loads((Path(out) / "rendered.json").read_text())["views"]
-    if done != views: raise ValueError(f"rendered views {len(done)} do not match the dataset's {len(views)} held-out views")
+    manifest = json.loads((Path(out) / "rendered.json").read_text())
+    if manifest["views"] != views: raise ValueError(f"rendered views {len(manifest['views'])} do not match the dataset's {len(views)} held-out views")
+    if manifest.get("cameras") != cameras_hash(data): raise ValueError("renders were made from another dataset's held-out cameras")
     rows = []
     for name in views:
         gt = Path(data) / "test" / name; g, r = white(gt), white(Path(out) / name)
