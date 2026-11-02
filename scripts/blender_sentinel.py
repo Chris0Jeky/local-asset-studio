@@ -276,6 +276,29 @@ def _shares(image, mask, palette, minimum=0.05):
     return sorted(name for name, count in counts.items() if count >= minimum * total)
 
 
+def _namer(palette):
+    """Pixel -> name by nearest ID colour within tolerance (cached per colour)."""
+    targets = {name: [_srgb(c) for c in colour] for name, colour in palette.items()}
+    cache = {}
+    def name(pixel):
+        if pixel not in cache:
+            best = min(targets.items(), key=lambda item: sum(abs(a - b) for a, b in zip(item[1], pixel[:3])), default=None)
+            cache[pixel] = best[0] if best and pixel[3] >= 128 and sum(abs(a - b) for a, b in zip(best[1], pixel[:3])) <= 9 else None
+        return cache[pixel]
+    return name
+
+
+def _material_transitions(ref_mat, cand_mat, ref_obj, mask, ref_pal, cand_pal, min_px):
+    """Group changed pixels by (material before, material after, mesh) so reciprocal swaps are not cancelled out."""
+    before, after, mesh = _namer(ref_pal["material"]), _namer(cand_pal["material"]), _namer(ref_pal["object"])
+    counts = {}
+    for keep, a, b, o in zip(mask.getdata(), ref_mat.getdata(), cand_mat.getdata(), ref_obj.getdata()):
+        if not keep: continue
+        key = (before(a), after(b), mesh(o))
+        if key[0] != key[1]: counts[key] = counts.get(key, 0) + 1
+    return sorted(key for key, count in counts.items() if count >= min_px)
+
+
 def _change_mask(a, b, level):
     from PIL import ImageChops
     channels = ImageChops.difference(a, b).split()
@@ -320,11 +343,8 @@ def localise(views, reference_dir, candidate_dir, evidence, candidate_evidence=N
             same_object = ImageChops.subtract(mat_mask, obj_mask)  # a swap is a material change on an unchanged object
             explained = ImageChops.lighter(explained, mat_mask)
             if count(same_object) >= min_px:
-                before, after = set(_shares(ref_mat, same_object, ref_pal["material"])), set(_shares(cand_mat, same_object, cand_pal["material"]))
-                lost, gained = sorted(before - after), sorted(after - before)
-                if lost and gained: note(f"material {', '.join(lost)} -> {', '.join(gained)} on {on(same_object)}", view)
-                elif lost: note(f"material {', '.join(lost)} no longer visible on {on(same_object)}", view)
-                elif gained: note(f"material {', '.join(gained)} newly visible on {on(same_object)}", view)
+                for old, new, mesh in _material_transitions(ref_mat, cand_mat, ref_obj, same_object, ref_pal, cand_pal, min_px):
+                    note(f"material {old or 'unknown'} -> {new or 'unknown'} on {mesh or 'unknown mesh'}", view)
         from PIL import ImageFilter
         halo = explained.filter(ImageFilter.MaxFilter(7))  # anti-aliased edges around an ID change belong to it
         for pass_name in ("lit", "clay"):

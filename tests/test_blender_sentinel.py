@@ -209,6 +209,11 @@ class LocaliseTests(unittest.TestCase):
                                     [((120, 60, 20, 255), (0, 0, 40, 64)), ((120, 60, 20, 255), (40, 20, 60, 40))]), {"lit", "material_id"})
         self.assertEqual(statements, ["material Brass -> Wood on Badge"])
 
+    def test_reciprocal_material_swap_is_reported_both_ways(self):
+        statements = self.run_case(([("Body", (0, 0, 40, 64)), ("Badge", (40, 20, 60, 40))], [("Brass", (0, 0, 40, 64)), ("Wood", (40, 20, 60, 40))],
+                                    [((120, 60, 20, 255), (0, 0, 40, 64)), ((200, 160, 40, 255), (40, 20, 60, 40))]), {"material_id"})
+        self.assertEqual(sorted(statements), ["material Brass -> Wood on Badge", "material Wood -> Brass on Body"])
+
     def test_empty_palette_names_nothing_instead_of_crashing(self):
         mask = Image.new("L", (4, 4), 255)
         self.assertEqual(sentinel._shares(Image.new("RGBA", (4, 4), (10, 20, 30, 255)), mask, {}), [])
