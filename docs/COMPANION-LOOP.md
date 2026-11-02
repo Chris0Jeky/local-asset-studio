@@ -67,7 +67,9 @@ may also end at a comma once 24 characters long, but Gemma's opening sentences r
 
 ## Limits
 
-One user, one turn at a time, no barge-in (a new line waits until she finishes). The loopback port has no
-authentication: any local process can make her speak. Licences: Gemma (Apache-2.0), Kokoro-82M (Apache-2.0),
+One user, one turn at a time (the server serialises turns across clients), no barge-in (a new line waits until she
+finishes). The loopback port has no authentication: any local process can make her speak and, through a reply's
+`[remember: …]`, add lines to `memory.json` that later turns read as context. Run it only on a single-user machine.
+History is trimmed in blocks (over 12 messages, keep the last 6) so llama-server's prompt cache still matches. Licences: Gemma (Apache-2.0), Kokoro-82M (Apache-2.0),
 Rhubarb (MIT), llama.cpp (MIT); a character's persona and voice choice are yours to record. Not verified: other GPUs,
 other voices or languages, a physical (microphone) measurement of audio output latency, long sessions beyond 20 turns.
