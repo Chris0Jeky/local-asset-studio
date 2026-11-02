@@ -2301,9 +2301,11 @@ def _review_desk_grid(c):
         fit = c.page.evaluate("""() => { const table = document.querySelector('#gridTable'), bar = document.querySelector('.studio-globalbar');
             const top = bar && getComputedStyle(bar).position === 'fixed' ? bar.getBoundingClientRect().bottom : 0;
             table.scrollIntoView({block: 'start'}); scrollBy(0, -top - 8);
-            const boxes = [...table.querySelectorAll('thead th, [data-grid-candidate]')].map(b => b.getBoundingClientRect());
+            const cells = [...table.querySelectorAll('tbody td')], boxes = [...table.querySelectorAll('thead th'), ...cells].map(b => b.getBoundingClientRect());
+            // Each cell holds exactly one candidate and has a real size: six buttons crowded into one cell would fail here.
+            const occupied = cells.length === 6 && cells.every(td => td.querySelectorAll('[data-grid-candidate]').length === 1 && td.getBoundingClientRect().height > 40);
             return {rows: table.querySelectorAll('tbody tr').length, columns: table.querySelectorAll('thead th').length - 1,
-                    inside: boxes.every(r => r.top >= top && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth)}; }""")
+                    inside: occupied && boxes.every(r => r.top >= top && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth)}; }""")
         c.observe('all six cells, three engines by two seeds, on one 1440x900 screen', fit == {'rows': 3, 'columns': 2, 'inside': True}, 'grid %s' % fit)
         hidden = c.page.evaluate("""() => { const panel = document.querySelector('#gridPanel'), words = [panel.innerText];
             for (const n of panel.querySelectorAll('*')) for (const a of ['alt', 'title', 'aria-label']) if (n.getAttribute(a)) words.push(n.getAttribute(a));
@@ -2317,9 +2319,10 @@ def _review_desk_grid(c):
         stored = {} if c.live else SYNTHETIC['desk']['studio'].production.reviews.inspect(SYNTHETIC['desk']['id'])
         decision = None if c.live else next((k['assessment'].get('verdict') for k in stored['candidates'] if k['alias'] == first), None)
         c.page.set_viewport_size({'width': 390, 'height': 844})
-        narrow = c.page.evaluate("""() => { const box = document.querySelector('#gridPanel .grid-scroll');
-            const cells = [...document.querySelectorAll('#gridTable [data-grid-candidate]')].map(b => b.getBoundingClientRect());
-            return {page: document.documentElement.scrollWidth <= innerWidth, fits: cells.every(r => r.width > 40 && r.left >= 0 && r.right <= innerWidth), scrolls: document.documentElement.scrollHeight > innerHeight || box.scrollWidth > box.clientWidth}; }""")
+        narrow = c.page.evaluate("""() => { const box = document.querySelector('#gridPanel .grid-scroll').getBoundingClientRect();
+            const cells = [...document.querySelectorAll('#gridTable tbody td')].map(b => b.getBoundingClientRect());
+            // Not clipped by the Grid's own scroll box or the screen, and the page itself scrolls down.
+            return {page: document.documentElement.scrollWidth <= innerWidth, fits: cells.length === 6 && cells.every(r => r.width > 40 && r.left >= Math.max(0, box.left) && r.right <= Math.min(innerWidth, box.right)), scrolls: document.documentElement.scrollHeight > innerHeight}; }""")
         c.observe('at 390x844 every cell fits the width and the page scrolls down without sideways overflow', narrow == {'page': True, 'fits': True, 'scrolls': True}, 'narrow %s' % narrow)
         c.page.set_viewport_size(before)
         ok = fit == {'rows': 3, 'columns': 2, 'inside': True} and hidden and (c.live or decision == 'keep') and narrow == {'page': True, 'fits': True, 'scrolls': True}
