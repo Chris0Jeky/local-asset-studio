@@ -214,6 +214,26 @@ def compare_renders(source_dir, roundtrip_dir, evidence, out_dir):
     return views, warnings
 
 
+def roundtrip_and_compare(exe, target, timeout=600):
+    """Given <target>/source/{manifest,evidence}.json, renders and <target>/export.glb: reimport in a NEW Blender
+    process with the source cameras and compare both sides."""
+    load = lambda path: json.loads(path.read_text(encoding="utf-8"))
+    evidence = load(target / "source" / "evidence.json")
+    files = _evidence_files(evidence, "Source")
+    cameras = target / "cameras.json"
+    cameras.write_text(json.dumps(evidence["camera_spec"], indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
+    seconds = lab.run(exe, ["evidence", "--glb", target / "export.glb", "--out-dir", target / "roundtrip", "--out",
+                            target / "roundtrip.json", "--cameras", cameras], target / "roundtrip.log.json", timeout)
+    src_manifest, rt_manifest = load(target / "source" / "manifest.json"), load(target / "roundtrip" / "manifest.json")
+    _evidence_files(load(target / "roundtrip" / "evidence.json"), "Roundtrip")
+    for name in files:
+        require((target / "source" / "renders" / name).is_file() and (target / "roundtrip" / "renders" / name).is_file(),
+                f"Missing render {name}")
+    structure = compare_manifests(src_manifest, rt_manifest)
+    views, warnings = compare_renders(target / "source" / "renders", target / "roundtrip" / "renders", evidence, target / "diff")
+    return src_manifest, rt_manifest, evidence, structure, views, warnings, seconds
+
+
 def sentinel(blender_path, blend_path, out_dir, seed_defect=None, timeout=600):
     exe = lab.executable(blender_path)
     blend = Path(blend_path).expanduser().resolve()
@@ -230,21 +250,7 @@ def sentinel(blender_path, blend_path, out_dir, seed_defect=None, timeout=600):
     require(lab.file_sha(blend) == before, "Source .blend changed during the sentinel run")
     require(glb.is_file() and glb.stat().st_size > 0, "GLB export is missing")
     source_record = json.loads((target / "source.json").read_text(encoding="utf-8"))
-    evidence = json.loads((target / "source" / "evidence.json").read_text(encoding="utf-8"))
-    files = _evidence_files(evidence, "Source")
-    cameras = target / "cameras.json"
-    cameras.write_text(json.dumps(evidence["camera_spec"], indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
-    seconds_roundtrip = lab.run(exe, ["evidence", "--glb", glb, "--out-dir", target / "roundtrip", "--out", target / "roundtrip.json",
-                                      "--cameras", cameras], target / "roundtrip.log.json", timeout)
-    load = lambda path: json.loads(path.read_text(encoding="utf-8"))
-    src_manifest, rt_manifest = load(target / "source" / "manifest.json"), load(target / "roundtrip" / "manifest.json")
-    rt_evidence = load(target / "roundtrip" / "evidence.json")
-    _evidence_files(rt_evidence, "Roundtrip")
-    for name in files:
-        require((target / "source" / "renders" / name).is_file() and (target / "roundtrip" / "renders" / name).is_file(),
-                f"Missing render {name}")
-    structure = compare_manifests(src_manifest, rt_manifest)
-    views, warnings = compare_renders(target / "source" / "renders", target / "roundtrip" / "renders", evidence, target / "diff")
+    src_manifest, rt_manifest, evidence, structure, views, warnings, seconds_roundtrip = roundtrip_and_compare(exe, target, timeout)
     result = {
         "schema": "las.asset-parity-sentinel.v1", "pass": not structure["failures"] and not warnings,
         "blender": {"executable": exe.as_posix(), "sha256": lab.file_sha(exe), "version_string": src_manifest["blender"]["version_string"],

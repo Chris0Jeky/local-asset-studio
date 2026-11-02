@@ -699,6 +699,190 @@ def import_glb(path):
     bpy.ops.import_scene.gltf(filepath=str(path))
 
 
+# ---- typed persistent worker ----------------------------------------------------------------------------------------
+
+REPLY = "@@LAS@@ "
+EDIT_OPS = ("location", "rotation_euler", "scale", "hide_render", "material", "shape_key")
+
+
+class WorkerError(ValueError):
+    """A worker request is outside the typed vocabulary or its preconditions."""
+
+
+def _need(condition, message):
+    if not condition: raise WorkerError(message)
+
+
+def _finite(value, low, high):
+    import math
+    _need(type(value) in (int, float) and math.isfinite(value) and low <= value <= high, f"value must be a finite number in {low}..{high}")
+    return float(value)
+
+
+class Worker:
+    """Long-lived background Blender with a closed command set. Reads are allowed anywhere; every write goes to a new
+    path inside `root`. There is no command that evaluates caller-supplied code."""
+
+    def __init__(self, root):
+        import os
+        import tempfile
+        import time
+        self.root = os.path.realpath(root)
+        _need(os.path.isdir(self.root), "root must be an existing directory")
+        self.scratch = tempfile.mkdtemp(prefix="las-worker-")
+        self.started, self.calls, self.source, self.allowed = time.time(), 0, None, set()
+        self.capabilities = probe()  # resets to factory-empty, so it runs before any file is opened
+
+    def _out(self, value, suffix=None, directory=False):
+        import os
+        _need(isinstance(value, str) and value and "\0" not in value, "path must be a string")
+        path = os.path.realpath(os.path.join(self.root, value))
+        _need(os.path.commonpath([path, self.root]) == self.root and path != self.root, "path escapes the worker root")
+        _need(not os.path.exists(path), "output path must be new")
+        _need(suffix is None or path.lower().endswith(suffix), f"output must end with {suffix}")
+        os.makedirs(path if directory else os.path.dirname(path), exist_ok=True)
+        return path
+
+    def _loaded(self):
+        _need(self.source is not None, "open a .blend first")
+
+    def ping(self):
+        import os
+        import time
+        import bpy
+        scene = bpy.context.scene
+        return {"pong": True, "pid": os.getpid(), "uptime_s": round(time.time() - self.started, 3), "calls": self.calls,
+                "source": self.source, "datablocks": {name: len(getattr(bpy.data, name)) for name in
+                ("objects", "meshes", "materials", "images", "cameras", "lights", "worlds", "collections", "actions")},
+                "state": {"frame": scene.frame_current, "engine": scene.render.engine, "camera": scene.camera.name if scene.camera else None,
+                          "world": scene.world.name if scene.world else None,
+                          "resolution": [scene.render.resolution_x, scene.render.resolution_y, scene.render.resolution_percentage],
+                          "view_transform": scene.view_settings.view_transform}}
+
+    def caps(self):
+        return self.capabilities
+
+    def open(self, blend, allow_edit=()):
+        import os
+        self.source, self.allowed = None, set()  # any open attempt drops the previous scene's authority
+        _need(isinstance(blend, str) and blend.lower().endswith(".blend") and os.path.isfile(blend), "blend must be an existing .blend")
+        open_blend(blend)
+        import bpy
+        names = {o.name for o in bpy.context.scene.objects}
+        _need(isinstance(allow_edit, (list, tuple)) and set(allow_edit) <= names, "allow_edit must name existing objects")
+        self.source, self.allowed = os.path.realpath(blend), set(allow_edit)
+        return {"opened": os.path.basename(blend), "allow_edit": sorted(self.allowed), "semantic_checksum": manifest()["semantic_checksum"]}
+
+    def describe_scene(self):
+        import os
+        self._loaded()
+        return manifest(os.path.basename(self.source))
+
+    def render_views(self, out_dir, size=256, samples=16, cameras=None):
+        import os
+        self._loaded()
+        size, samples = int(_finite(size, 64, 512)), int(_finite(samples, 1, 64))
+        if cameras is not None:  # view names become file names: only the fixed rig's views are accepted
+            _need(isinstance(cameras, dict) and set(cameras) == {"target", "ortho_scale", "views", "frame"}
+                  and isinstance(cameras["views"], dict) and set(cameras["views"]) <= set(VIEWS), "cameras must be a camera spec over the fixed views")
+            _need(isinstance(cameras["target"], list) and len(cameras["target"]) == 3, "cameras.target must be [x, y, z]")
+            [_finite(v, -1e4, 1e4) for v in cameras["target"]]; _finite(cameras["ortho_scale"], 1e-3, 1e4)
+            _need(type(cameras["frame"]) is int, "cameras.frame must be an integer")
+            for pair in cameras["views"].values():
+                _need(isinstance(pair, list) and len(pair) == 2, "views must map to [azimuth, elevation]")
+                [_finite(v, -360, 360) for v in pair]
+        target = self._out(out_dir, directory=True)
+        import bpy
+        # ponytail: snapshot/reload costs one save+open per render; a targeted restore if big scenes make that slow.
+        snapshot = os.path.join(self.scratch, f"snapshot-{self.calls}.blend")
+        bpy.ops.wm.save_as_mainfile(filepath=snapshot, copy=True, relative_remap=True)
+        try:
+            return render_evidence(target, cameras, size, samples)
+        finally:
+            open_blend(snapshot)
+            os.remove(snapshot)
+
+    def save_copy(self, path):
+        import bpy
+        self._loaded()
+        target = self._out(path, ".blend")
+        bpy.ops.wm.save_as_mainfile(filepath=target, copy=True, relative_remap=True)
+        return {"path": target}
+
+    def export(self, path):
+        self._loaded()
+        return export_glb(self._out(path, ".glb"))
+
+    def apply_edit(self, object, op, value, expect_checksum):
+        import bpy
+        self._loaded()
+        _need(object in self.allowed, f"{object!r} is not in this session's allow_edit list")
+        _need(op in EDIT_OPS, f"op must be one of {EDIT_OPS}")
+        before = manifest()["semantic_checksum"]
+        _need(expect_checksum == before, "precondition failed: the scene changed since expect_checksum was read")
+        obj = bpy.context.scene.objects[object]
+        if op in ("location", "rotation_euler", "scale"):
+            _need(isinstance(value, list) and len(value) == 3, "value must be [x, y, z]")
+            setattr(obj, op, [_finite(v, 1e-4 if op == "scale" else -1e4, 1e4) for v in value])
+        elif op == "hide_render":
+            _need(type(value) is bool, "value must be a boolean"); obj.hide_render = value
+        elif op == "material":
+            _need(isinstance(value, dict) and set(value) == {"slot", "material"}, "value must be {slot, material}")
+            _need(type(value["slot"]) is int and 0 <= value["slot"] < len(obj.material_slots), "slot out of range")
+            _need(value["material"] in bpy.data.materials, "material must already exist")
+            _need(obj.material_slots[value["slot"]].link == "OBJECT" or obj.data.users == 1,
+                  "slot is linked to mesh data shared with other objects")
+            obj.material_slots[value["slot"]].material = bpy.data.materials[value["material"]]
+        else:
+            keys = obj.data.shape_keys if obj.type == "MESH" else None
+            _need(keys is not None and isinstance(value, dict) and set(value) == {"key", "value"} and value["key"] in keys.key_blocks,
+                  "value must be {key, value} for an existing shape key")
+            _need(obj.data.users == 1, "shape keys live on mesh data shared with other objects")
+            block = keys.key_blocks[value["key"]]
+            block.value = _finite(value["value"], block.slider_min, block.slider_max)
+        bpy.context.view_layer.update()  # matrix_world is stale until the depsgraph re-evaluates
+        return {"object": object, "op": op, "before": before, "after": manifest()["semantic_checksum"]}
+
+    def handle(self, request):
+        import time
+        started = time.perf_counter()
+        command, args = request.get("cmd"), request.get("args") or {}
+        handlers = {"ping": self.ping, "caps": self.caps, "open": self.open, "describe_scene": self.describe_scene,
+                    "render_views": self.render_views, "save_copy": self.save_copy, "export": self.export,
+                    "apply_edit": self.apply_edit}
+        try:
+            _need(command in handlers, f"unknown command {command!r}")
+            _need(isinstance(args, dict), "args must be an object")
+            result = {"ok": True, "result": handlers[command](**args)}
+        except (WorkerError, TypeError) as exc:
+            result = {"ok": False, "error": f"{type(exc).__name__}: {exc}"[:500]}
+        except Exception as exc:  # a Blender failure is reported, and the worker stays alive for the next call
+            result = {"ok": False, "error": f"{type(exc).__name__}: {exc}"[:500]}
+        self.calls += 1
+        return {"id": request.get("id"), "ms": round((time.perf_counter() - started) * 1000, 2), **result}
+
+
+def serve(root):
+    """JSON lines on stdin; each reply is one stdout line prefixed REPLY, so Blender's own output is ignorable."""
+    worker = Worker(root)
+    sys.stdout.write(REPLY + json.dumps({"ready": True, "blender": worker.capabilities["blender"]["version_string"]}) + "\n")
+    sys.stdout.flush()
+    try:
+        for line in sys.stdin:
+            line = line.strip()
+            if not line: continue
+            try: request = json.loads(line)
+            except ValueError: request = {"cmd": None}
+            if not isinstance(request, dict): request = {"cmd": None}
+            if request.get("cmd") == "quit": break
+            reply = worker.handle(request)
+            sys.stdout.write(REPLY + json.dumps(reply, allow_nan=False) + "\n")
+            sys.stdout.flush()
+    finally:
+        import shutil
+        shutil.rmtree(worker.scratch, ignore_errors=True)  # snapshot scratch is private to this worker
+
+
 def _evidence(args):
     """manifest -> fixed-camera evidence -> (fresh reload -> optional seeded defect -> LAS GLB export)."""
     import os
@@ -743,10 +927,12 @@ def _main(argv):
     evidence_parser.add_argument("--cameras")
     evidence_parser.add_argument("--export")
     evidence_parser.add_argument("--seed-defect", choices=SEEDED_DEFECTS)
+    commands.add_parser("serve").add_argument("--root", required=True)
     scene_parser = commands.add_parser("scene-v1")  # exact studio.dcc-scene/v1 observation (blender_scene_probe)
     scene_parser.add_argument("--blend", required=True)
     scene_parser.add_argument("--out", required=True)
     args = parser.parse_args(argv)
+    if args.command == "serve": return serve(args.root)
     if args.command == "scene-v1":
         import os
         import bpy
