@@ -221,15 +221,16 @@ def probe_intent(config_path: Path, source: Path, destination: Path) -> dict:
     need(source.suffix.lower() == '.blend', 'Probe source must be a .blend copy')
     need(not destination.exists() and not destination.is_symlink() and destination.parent.is_dir(),
          'Choose a new output directory with an existing parent')
-    tool = ROOT / 'scripts' / 'blender_scene_probe.py'
+    tool = ROOT / 'scripts' / 'blender_lab_bpy.py'  # the one Blender entry point; scene-v1 runs the exact collector
     pins = {key: pin_file(path) for key, path in
-            [('source', source), ('blender', executable), ('probe', tool)]}
+            [('source', source), ('blender', executable), ('probe', tool),
+             ('collector', ROOT / 'scripts' / 'blender_scene_probe.py')]}
     output = str(destination.resolve() / 'scene.json')
     result = {'format': 'studio.dcc-probe-intent/v1', 'executable': False, 'process_started': False,
               **pins, 'config_sha256': sha(config_bytes), 'output': output,
               'argv': [pins['blender']['path'], '--background', '--factory-startup', '--disable-autoexec',
                        '--python-exit-code', '1', '--python', pins['probe']['path'], '--',
-                       '--source', pins['source']['path'], '--out', output],
+                       'scene-v1', '--blend', pins['source']['path'], '--out', output],
               'requires': ['Recheck all pins immediately before execution',
                            'Existing LAS resource admission or explicit bounded native admission',
                            'Timeout and native stdout/stderr retention'],
