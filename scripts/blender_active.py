@@ -56,6 +56,7 @@ def refine(config, step=15):
 def changed_px(a_path, b_path, level=LEVEL):
     from PIL import Image, ImageChops
     with Image.open(a_path) as a, Image.open(b_path) as b:
+        require(a.size == b.size, f"render sizes differ: {a_path} vs {b_path}")  # Pillow would silently crop
         channels = ImageChops.difference(a.convert("RGBA"), b.convert("RGBA")).split()
     peak = channels[0]
     for channel in channels[1:]: peak = ImageChops.lighter(peak, channel)
@@ -79,12 +80,14 @@ def search(blender_path, before, after, out_dir, size=96, top=3, timeout=900, be
     require(not target.exists(), "out_dir must be new")
     target.mkdir(parents=True)
     started = time.perf_counter()
+    key = {"before_sha256": lab.file_sha(before), "blender": exe.as_posix(), "size": size}
+    require(before_cache is None or before_cache.get("key") == key, "before_cache was made for another asset, Blender or size")
     if before_cache is None:
         manifest = lab.manifest(exe, before, target / "before-manifest.json")
         spec, frames, weights = plan_from(manifest)
         configs = grid(frames, weights)
         before_renders = render_set(exe, before, spec, configs, target / "before-grid", size, timeout)
-        before_cache = {"spec": spec, "configs": configs, "renders": before_renders}
+        before_cache = {"key": key, "spec": spec, "configs": configs, "renders": before_renders}
     spec, configs = before_cache["spec"], before_cache["configs"]
     after_renders = render_set(exe, after, spec, configs, target / "after-grid", size, timeout)
     scored = sorted(({"config": c, "changed_px": changed_px(a, b)} for c, a, b in zip(configs, before_cache["renders"], after_renders)),
@@ -116,12 +119,20 @@ def corpus(blender_path, corpus_dir, out_dir, size=96):
     target = Path(out_dir).expanduser().resolve()
     require(not target.exists(), "out_dir must be new")
     target.mkdir(parents=True)
+    import re
     entries = {e["id"]: e for e in index["entries"]}
-    control = root / entries["control"]["blend"]
+    def contained(entry):  # a crafted corpus must not reach outside its root or our output
+        require(re.fullmatch(r"[a-z0-9][a-z0-9-]{0,63}", entry["id"]) is not None, f"bad corpus entry id {entry['id']!r}")
+        blend = (root / entry["blend"]).resolve()
+        require(blend.is_relative_to(root) and blend.suffix == ".blend", f"corpus blend escapes the corpus: {entry['blend']}")
+        return blend
+    require("control" in entries, "corpus has no control entry")
+    blends = {entry_id: contained(entry) for entry_id, entry in entries.items()}  # all checked before any Blender run
+    control = blends["control"]
     cache, rows = None, []
     for entry_id in sorted(entries, key=lambda k: (k != "control", k)):
         entry = entries[entry_id]
-        result, cache = search(blender_path, control, root / entry["blend"], target / entry_id, size, before_cache=cache)
+        result, cache = search(blender_path, control, blends[entry_id], target / entry_id, size, before_cache=cache)
         rows.append({"id": entry_id, "expected": entry["expected"], "fixed_views": entry["baseline"]["caught_by_renders"],
                      "manifest": entry["baseline"]["caught_by_manifest"], "active": result["detected"],
                      "max_changed_px": result["max_changed_px"], "best": result["best"],

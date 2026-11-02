@@ -30,6 +30,21 @@ class PlanTests(unittest.TestCase):
         self.assertTrue(all(0 <= n["azimuth"] < 360 and -80 <= n["elevation"] <= 80 for n in neighbours))
         self.assertIn(5, {n["azimuth"] for n in neighbours})
 
+    def test_different_render_sizes_are_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            a, b = Path(tmp) / "a.png", Path(tmp) / "b.png"
+            Image.new("RGBA", (16, 16)).save(a); Image.new("RGBA", (8, 8)).save(b)
+            with self.assertRaises(active.lab.BlenderLabError): active.changed_px(a, b)
+
+    def test_corpus_entries_cannot_escape_their_roots(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "corpus"; root.mkdir()
+            exe = Path(tmp) / "blender.exe"; exe.write_bytes(b"")
+            for entries in ([{"id": "control", "blend": "../outside.blend"}],
+                            [{"id": "control", "blend": "a.blend"}, {"id": "../x", "blend": "b.blend"}], [{"id": "x", "blend": "a.blend"}]):
+                (root / "corpus.json").write_text(json.dumps({"entries": entries}))
+                with self.assertRaises(active.lab.BlenderLabError): active.corpus(exe, root, Path(tmp) / f"out{len(list(Path(tmp).iterdir()))}")
+
     def test_changed_px_uses_the_level_gate(self):
         with tempfile.TemporaryDirectory() as tmp:
             a, b = Path(tmp) / "a.png", Path(tmp) / "b.png"
@@ -49,7 +64,7 @@ class LiveActiveTests(unittest.TestCase):
                            "--out-blend", broken, "--out", Path(tmp) / "variant.json"], Path(tmp) / "variant.log.json")
             control, cache = active.search(LIVE_BLENDER, clean, clean, Path(tmp) / "control")
             found, _ = active.search(LIVE_BLENDER, clean, broken, Path(tmp) / "found", before_cache=cache)
-        self.assertFalse(control["detected"])
+        self.assertEqual(control["max_changed_px"], 0)  # identical revisions render identically, not merely below the gate
         self.assertTrue(found["detected"])
         self.assertEqual(found["best_with_default"]["frame"], 0)  # invisible at the rest frame
 

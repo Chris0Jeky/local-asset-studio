@@ -1113,6 +1113,7 @@ def render_probe(plan, out_dir, size=96):
     render.film_transparent = True
     render.image_settings.file_format, render.image_settings.color_mode, render.image_settings.color_depth = "PNG", "RGBA", "8"
     scene.view_settings.view_transform, scene.view_settings.look = "Standard", "None"
+    scene.view_settings.exposure, scene.view_settings.gamma = 0.0, 1.0  # authored colour management never counts
     scene.display.render_aa = "OFF"
     shading = scene.display.shading
     shading.light, shading.color_type, shading.single_color = "STUDIO", "SINGLE", (0.8, 0.8, 0.8)
