@@ -1,0 +1,992 @@
+{
+  "actions": [
+    {
+      "fcurves": [
+        {
+          "data_path": "rotation_euler",
+          "index": 0,
+          "interpolation": [
+            "LINEAR"
+          ],
+          "keys": 4,
+          "keys_hash": "d30b5b4a869ba5837168bd58c2ea991e498f1f0bea365d66dd68170030edf09f",
+          "slot": "OBChestLid"
+        }
+      ],
+      "frame_range": [
+        1.0,
+        60.0
+      ],
+      "name": "ChestLidOpenHoldClose",
+      "slots": [
+        {
+          "identifier": "OBChestLid",
+          "target_id_type": "OBJECT"
+        }
+      ]
+    }
+  ],
+  "armatures": [],
+  "blender": {
+    "build_hash": "67c9bdddb88b",
+    "version_string": "5.4.0 Alpha"
+  },
+  "cameras": [
+    {
+      "lens": 52.0,
+      "name": "Camera",
+      "ortho_scale": 6.0,
+      "type": "PERSP"
+    }
+  ],
+  "collections": [],
+  "counts": {
+    "actions": 1,
+    "armatures": 0,
+    "images": 0,
+    "materials": 2,
+    "meshes": 5,
+    "missing_images": 0,
+    "objects": 8,
+    "triangles": 316
+  },
+  "deform_samples": {
+    "ChestBody": {
+      "frames": [
+        1
+      ],
+      "moments": [
+        {
+          "count": 56,
+          "products": [
+            77.604409866,
+            0.0,
+            0.0,
+            25.687101685,
+            0.0,
+            26.760183952
+          ],
+          "scale": 1.2,
+          "sum": [
+            0.0,
+            0.0,
+            28.0
+          ]
+        }
+      ]
+    },
+    "ChestLid": {
+      "frames": [
+        1
+      ],
+      "moments": [
+        {
+          "count": 56,
+          "products": [
+            77.604409866,
+            0.0,
+            0.0,
+            25.687100085,
+            1.615e-06,
+            107.941522413
+          ],
+          "scale": 1.68,
+          "sum": [
+            0.0,
+            1.192e-06,
+            75.879997969
+          ]
+        }
+      ]
+    },
+    "HingePinLeft": {
+      "frames": [
+        1
+      ],
+      "moments": [
+        {
+          "count": 24,
+          "products": [
+            18.800640945,
+            -14.929920981,
+            -21.358079998,
+            12.477900989,
+            17.798400213,
+            25.497898586
+          ],
+          "scale": 1.085,
+          "sum": [
+            -20.736000538,
+            17.280000687,
+            24.719999313
+          ]
+        }
+      ]
+    },
+    "HingePinRight": {
+      "frames": [
+        1
+      ],
+      "moments": [
+        {
+          "count": 24,
+          "products": [
+            18.800640945,
+            14.929920981,
+            21.358079924,
+            12.477900989,
+            17.798400213,
+            25.497898586
+          ],
+          "scale": 1.085,
+          "sum": [
+            20.736000538,
+            17.280000687,
+            24.719999313
+          ]
+        }
+      ]
+    }
+  },
+  "images": [],
+  "kind": "scene-manifest",
+  "lights": [
+    {
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "energy": 850.0,
+      "name": "Area",
+      "type": "AREA"
+    },
+    {
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "energy": 500.0,
+      "name": "Area.001",
+      "type": "AREA"
+    }
+  ],
+  "materials": [
+    {
+      "diffuse_color": [
+        0.22,
+        0.07,
+        0.025,
+        1.0
+      ],
+      "images": [],
+      "name": "Chest wood",
+      "node_types": {
+        "ShaderNodeBsdfPrincipled": 1,
+        "ShaderNodeOutputMaterial": 1
+      },
+      "principled": {
+        "alpha": 1.0,
+        "base_color": [
+          0.22,
+          0.07,
+          0.025,
+          1.0
+        ],
+        "metallic": 0.0,
+        "roughness": 0.42
+      }
+    },
+    {
+      "diffuse_color": [
+        0.34,
+        0.16,
+        0.025,
+        1.0
+      ],
+      "images": [],
+      "name": "Hinge brass",
+      "node_types": {
+        "ShaderNodeBsdfPrincipled": 1,
+        "ShaderNodeOutputMaterial": 1
+      },
+      "principled": {
+        "alpha": 1.0,
+        "base_color": [
+          0.34,
+          0.16,
+          0.025,
+          1.0
+        ],
+        "metallic": 0.7,
+        "roughness": 0.42
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "bbox": {
+        "max": [
+          1.2,
+          0.7,
+          0.5
+        ],
+        "min": [
+          -1.2,
+          -0.7,
+          -0.5
+        ]
+      },
+      "color_attributes": [],
+      "edges": 108,
+      "faces": 54,
+      "geometry_hash": "333099475a575c33bc336e356637a41a1159dfb1f899736ad2fbeb02a7c14d8f",
+      "loops": 216,
+      "material_face_counts": [
+        54
+      ],
+      "name": "Cube",
+      "shape_keys": null,
+      "triangles": 108,
+      "uv_maps": [
+        "UVMap"
+      ],
+      "vertices": 56
+    },
+    {
+      "bbox": {
+        "max": [
+          1.2,
+          0.0,
+          0.65
+        ],
+        "min": [
+          -1.2,
+          -1.4,
+          0.0
+        ]
+      },
+      "color_attributes": [],
+      "edges": 108,
+      "faces": 54,
+      "geometry_hash": "66aaed02fd654a7babdff275d97dc32a97c15838b5c45e1c234631327949f0f2",
+      "loops": 216,
+      "material_face_counts": [
+        54
+      ],
+      "name": "Cube.001",
+      "shape_keys": null,
+      "triangles": 108,
+      "uv_maps": [
+        "UVMap"
+      ],
+      "vertices": 56
+    },
+    {
+      "bbox": {
+        "max": [
+          1.224,
+          0.714,
+          0.825
+        ],
+        "min": [
+          -1.224,
+          -0.714,
+          -0.825
+        ]
+      },
+      "color_attributes": [],
+      "edges": 12,
+      "faces": 6,
+      "geometry_hash": "34c865ae063ba8046bcf7de9b13de209c0ccc334e22796ff1d528e635f3460fa",
+      "loops": 24,
+      "material_face_counts": [
+        6
+      ],
+      "name": "Cube.002",
+      "shape_keys": null,
+      "triangles": 12,
+      "uv_maps": [
+        "UVMap"
+      ],
+      "vertices": 8
+    },
+    {
+      "bbox": {
+        "max": [
+          0.055,
+          0.055,
+          0.192
+        ],
+        "min": [
+          -0.055,
+          -0.055,
+          -0.192
+        ]
+      },
+      "color_attributes": [],
+      "edges": 36,
+      "faces": 14,
+      "geometry_hash": "840e9d79e1c4b25266ccf713bbfd2588d95bf9eb6f7468100cb31b64f3f6d750",
+      "loops": 72,
+      "material_face_counts": [
+        14
+      ],
+      "name": "Cylinder",
+      "shape_keys": null,
+      "triangles": 44,
+      "uv_maps": [
+        "UVMap"
+      ],
+      "vertices": 24
+    },
+    {
+      "bbox": {
+        "max": [
+          0.055,
+          0.055,
+          0.192
+        ],
+        "min": [
+          -0.055,
+          -0.055,
+          -0.192
+        ]
+      },
+      "color_attributes": [],
+      "edges": 36,
+      "faces": 14,
+      "geometry_hash": "840e9d79e1c4b25266ccf713bbfd2588d95bf9eb6f7468100cb31b64f3f6d750",
+      "loops": 72,
+      "material_face_counts": [
+        14
+      ],
+      "name": "Cylinder.001",
+      "shape_keys": null,
+      "triangles": 44,
+      "uv_maps": [
+        "UVMap"
+      ],
+      "vertices": 24
+    }
+  ],
+  "object_samples": {
+    "ChestLid": {
+      "frames": [
+        1,
+        16,
+        30,
+        45,
+        60
+      ],
+      "matrices": [
+        [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.7
+          ],
+          [
+            0.0,
+            0.0,
+            1.0,
+            1.03
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.56981,
+            0.82178,
+            0.7
+          ],
+          [
+            0.0,
+            -0.82178,
+            0.56981,
+            1.03
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.34202,
+            0.93969,
+            0.7
+          ],
+          [
+            0.0,
+            -0.93969,
+            0.34202,
+            1.03
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.60876,
+            0.79335,
+            0.7
+          ],
+          [
+            0.0,
+            -0.79335,
+            0.60876,
+            1.03
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        [
+          [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.7
+          ],
+          [
+            0.0,
+            0.0,
+            1.0,
+            1.03
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      ]
+    }
+  },
+  "objects": [
+    {
+      "animation": null,
+      "collections": [
+        "Scene Collection"
+      ],
+      "constraints": [],
+      "data": "Area",
+      "hide_render": false,
+      "material_slots": [],
+      "matrix_world": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          3.6
+        ],
+        [
+          0.0,
+          0.87758,
+          -0.47943,
+          -4.2
+        ],
+        [
+          0.0,
+          0.47943,
+          0.87758,
+          4.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "modifiers": [],
+      "name": "Area",
+      "parent": null,
+      "parent_bone": null,
+      "parent_type": "OBJECT",
+      "type": "LIGHT",
+      "vertex_groups": [],
+      "vertex_weights": null,
+      "visible": true,
+      "world_bbox": null
+    },
+    {
+      "animation": null,
+      "collections": [
+        "Scene Collection"
+      ],
+      "constraints": [],
+      "data": "Area.001",
+      "hide_render": false,
+      "material_slots": [],
+      "matrix_world": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          -3.0
+        ],
+        [
+          0.0,
+          0.87758,
+          -0.47943,
+          -2.0
+        ],
+        [
+          0.0,
+          0.47943,
+          0.87758,
+          3.4
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "modifiers": [],
+      "name": "Area.001",
+      "parent": null,
+      "parent_bone": null,
+      "parent_type": "OBJECT",
+      "type": "LIGHT",
+      "vertex_groups": [],
+      "vertex_weights": null,
+      "visible": true,
+      "world_bbox": null
+    },
+    {
+      "animation": null,
+      "collections": [
+        "Scene Collection"
+      ],
+      "constraints": [],
+      "data": "Cube",
+      "hide_render": false,
+      "material_slots": [
+        {
+          "link": "DATA",
+          "material": "Chest wood"
+        }
+      ],
+      "matrix_world": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.5
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "modifiers": [],
+      "name": "ChestBody",
+      "parent": null,
+      "parent_bone": null,
+      "parent_type": "OBJECT",
+      "type": "MESH",
+      "vertex_groups": [],
+      "vertex_weights": null,
+      "visible": true,
+      "world_bbox": {
+        "max": [
+          1.2,
+          0.7,
+          1.0
+        ],
+        "min": [
+          -1.2,
+          -0.7,
+          0.0
+        ]
+      }
+    },
+    {
+      "animation": {
+        "action": "ChestLidOpenHoldClose",
+        "slot": "OBChestLid"
+      },
+      "collections": [
+        "Scene Collection"
+      ],
+      "constraints": [],
+      "data": "Cube.001",
+      "hide_render": false,
+      "material_slots": [
+        {
+          "link": "DATA",
+          "material": "Chest wood"
+        }
+      ],
+      "matrix_world": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.7
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          1.03
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "modifiers": [],
+      "name": "ChestLid",
+      "parent": null,
+      "parent_bone": null,
+      "parent_type": "OBJECT",
+      "type": "MESH",
+      "vertex_groups": [],
+      "vertex_weights": null,
+      "visible": true,
+      "world_bbox": {
+        "max": [
+          1.2,
+          0.7,
+          1.68
+        ],
+        "min": [
+          -1.2,
+          -0.7,
+          1.03
+        ]
+      }
+    },
+    {
+      "animation": null,
+      "collections": [
+        "Scene Collection"
+      ],
+      "constraints": [],
+      "data": "Cube.002",
+      "hide_render": true,
+      "material_slots": [
+        {
+          "link": "DATA",
+          "material": "Hinge brass"
+        }
+      ],
+      "matrix_world": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.825
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "modifiers": [],
+      "name": "CollisionProxy",
+      "parent": null,
+      "parent_bone": null,
+      "parent_type": "OBJECT",
+      "type": "MESH",
+      "vertex_groups": [],
+      "vertex_weights": null,
+      "visible": true,
+      "world_bbox": {
+        "max": [
+          1.224,
+          0.714,
+          1.65
+        ],
+        "min": [
+          -1.224,
+          -0.714,
+          0.0
+        ]
+      }
+    },
+    {
+      "animation": null,
+      "collections": [
+        "Scene Collection"
+      ],
+      "constraints": [],
+      "data": "Cylinder",
+      "hide_render": false,
+      "material_slots": [
+        {
+          "link": "DATA",
+          "material": "Hinge brass"
+        }
+      ],
+      "matrix_world": [
+        [
+          0.0,
+          0.0,
+          1.0,
+          -0.864
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.72
+        ],
+        [
+          -1.0,
+          0.0,
+          0.0,
+          1.03
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "modifiers": [],
+      "name": "HingePinLeft",
+      "parent": null,
+      "parent_bone": null,
+      "parent_type": "OBJECT",
+      "type": "MESH",
+      "vertex_groups": [],
+      "vertex_weights": null,
+      "visible": true,
+      "world_bbox": {
+        "max": [
+          -0.672,
+          0.775,
+          1.085
+        ],
+        "min": [
+          -1.056,
+          0.665,
+          0.975
+        ]
+      }
+    },
+    {
+      "animation": null,
+      "collections": [
+        "Scene Collection"
+      ],
+      "constraints": [],
+      "data": "Cylinder.001",
+      "hide_render": false,
+      "material_slots": [
+        {
+          "link": "DATA",
+          "material": "Hinge brass"
+        }
+      ],
+      "matrix_world": [
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.864
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.72
+        ],
+        [
+          -1.0,
+          0.0,
+          0.0,
+          1.03
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "modifiers": [],
+      "name": "HingePinRight",
+      "parent": null,
+      "parent_bone": null,
+      "parent_type": "OBJECT",
+      "type": "MESH",
+      "vertex_groups": [],
+      "vertex_weights": null,
+      "visible": true,
+      "world_bbox": {
+        "max": [
+          1.056,
+          0.775,
+          1.085
+        ],
+        "min": [
+          0.672,
+          0.665,
+          0.975
+        ]
+      }
+    },
+    {
+      "animation": null,
+      "collections": [
+        "Scene Collection"
+      ],
+      "constraints": [],
+      "data": "Camera",
+      "hide_render": false,
+      "material_slots": [],
+      "matrix_world": [
+        [
+          0.0,
+          -0.341,
+          0.94006,
+          5.1
+        ],
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.94006,
+          0.341,
+          2.5
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "modifiers": [],
+      "name": "InspectionCamera",
+      "parent": null,
+      "parent_bone": null,
+      "parent_type": "OBJECT",
+      "type": "CAMERA",
+      "vertex_groups": [],
+      "vertex_weights": null,
+      "visible": true,
+      "world_bbox": null
+    }
+  ],
+  "pose_samples": {},
+  "runtime": {
+    "executable": "C:/AI/blender-5.4.0-alpha+main.67c9bdddb88b-windows.amd64-release/blender.exe",
+    "wall_seconds": 0.832
+  },
+  "scene": {
+    "camera": "InspectionCamera",
+    "fps": 24.0,
+    "frame_range": [
+      1,
+      60
+    ],
+    "name": "Scene",
+    "unit_scale": 1.0,
+    "unit_system": "METRIC"
+  },
+  "schema": "las.blender-lab.v1",
+  "semantic_checksum": "d73125723d824e004486096bb9dfcec601b4c5e2d1a234f34de34103801e0429",
+  "source": {
+    "file": "chest.blend",
+    "sha256": "efe95814cfbb740115e0185282be6db30f3329ea648558e0b9e6f4b1a94ada66"
+  }
+}

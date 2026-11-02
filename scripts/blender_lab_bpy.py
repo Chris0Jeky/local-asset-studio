@@ -441,6 +441,24 @@ def _deform_samples(scene, view_layer, poses):
     return samples
 
 
+def _object_samples(scene, count=5):
+    """World matrices of every object with its own action, at evenly spaced frames over that action's range, so
+    lost or truncated object-level animation (a hinged lid, a door) shows without an armature."""
+    samples, current = {}, scene.frame_current
+    animated = [o for o in scene.objects if o.animation_data and o.animation_data.action]
+    for obj in sorted(animated, key=lambda o: o.name):
+        low, high = obj.animation_data.action.frame_range
+        samples[obj.name] = {"frames": sorted({int(round(low + (high - low) * i / (count - 1))) for i in range(count)}),
+                             "matrices": []}
+    for frame in sorted({f for sample in samples.values() for f in sample["frames"]}):
+        scene.frame_set(frame)
+        for name, sample in samples.items():
+            if frame in sample["frames"]:
+                sample["matrices"].append([vec(row) for row in scene.objects[name].matrix_world])
+    scene.frame_set(current)
+    return samples
+
+
 def _pose_samples(scene, count=5):
     """World-space bone heads at evenly spaced frames over the action's range (rest frame without an action):
     evaluated motion that survives the curve resampling and channel renames of a GLB roundtrip, so lost or truncated
@@ -485,6 +503,7 @@ def manifest(source_label=None):
         "lights": sorted(({"name": l.name, "type": l.type, "energy": rnd(l.energy), "color": vec(l.color)}
                           for l in data.lights if l.users), key=lambda l: l["name"]),
         "pose_samples": _pose_samples(scene),
+        "object_samples": _object_samples(scene),
     }
     result["deform_samples"] = _deform_samples(scene, view_layer, result["pose_samples"])
     result["counts"] = {key: len(result[key]) for key in ("objects", "meshes", "materials", "images", "armatures", "actions")}

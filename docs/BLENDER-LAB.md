@@ -239,3 +239,20 @@ Measured on 2 Nov 2026 with 5.4 alpha:
 - Claude Haiku 5.5 opened the lab asset, described it, moved `Badge`, and was refused when it tried to hide `Head`
   (not allow-listed). It then ran `blender_reimport_validate`, which passed with no failures (8 turns, $0.018).
 - Codex GPT-6.1 Sol read the same semantic checksum through the same server.
+
+## Real LAS asset: the articulated chest
+
+`scripts/articulated_prop.py` builds a LAS-authored asset: a chest whose lid is animated at object level, with no
+armature. Measured on 2 Nov 2026:
+- Its manifest checksum is identical whether 4.5.13 or 5.4 alpha builds the chest, and whether either reads it. The
+  live test `test_live_articulated_chest_keeps_its_cross_build_checksum` pins it against
+  `tests/fixtures/blender_lab/manifest-articulated-chest.json`.
+- The sentinel passes on both builds. The hidden `CollisionProxy`, the lights and the camera are reported as expected
+  exclusions.
+
+The chest exposed a gap: object-level animation was not sampled, so a flattened or truncated lid animation passed.
+`object_samples` now hold world matrices at 5 frames over each animated object's action range. The sentinel compares
+them for exported objects and skips excluded helpers. Seeded on the chest, on both builds:
+- `bone-twist-lost`, which flattens rotation curves, fails with `ChestLid: object transform differs at frame 16`.
+- `truncated-animation` fails with `ChestLid: object animation frames [1, 16, 30, 45, 60] -> [1, 8, 16, 23, 30]`.
+- Neither produces a visual warning.

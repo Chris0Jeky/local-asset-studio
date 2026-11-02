@@ -190,6 +190,13 @@ class LiveProbeTests(unittest.TestCase):
         self.assertEqual({k for k, v in result["features"].items() if not v["ok"]}, set())
         self.assertTrue(result["blender"]["background"])
 
+    def test_live_articulated_chest_keeps_its_cross_build_checksum(self):
+        import articulated_prop
+        with tempfile.TemporaryDirectory() as tmp:
+            articulated_prop.execute(Path(tmp) / "chest", {"render_size": 64, "samples": 1}, LIVE_BLENDER)
+            result = lab.manifest(LIVE_BLENDER, Path(tmp) / "chest" / "chest.blend", Path(tmp) / "manifest.json")
+        self.assertEqual(result["semantic_checksum"], load(FIXTURES / "manifest-articulated-chest.json")["semantic_checksum"])
+
     def test_live_fixture_manifest_is_deterministic_and_leaves_source_untouched(self):
         with tempfile.TemporaryDirectory() as tmp:
             blend = lab.make_fixture(LIVE_BLENDER, Path(tmp) / "asset")
