@@ -1,0 +1,723 @@
+{
+  "artifacts": [
+    {
+      "bytes": 297,
+      "path": "cameras.json",
+      "sha256": "52faec30c9ee4af216b1702b6676ae0e6428288d0092bc19accabd3f921f821d"
+    },
+    {
+      "bytes": 482,
+      "path": "diff/back.clay.diff.png",
+      "sha256": "2090e28ce52b34c745557356c33c1507e22c0dc8c345275f03e96b6b84b47d2b"
+    },
+    {
+      "bytes": 1046,
+      "path": "diff/back.lit.diff.png",
+      "sha256": "1ae2dd378ddbfde9f6506acb7a1f1d8a142893a23e16dba9aff561950eaa344b"
+    },
+    {
+      "bytes": 703,
+      "path": "diff/back.material_id.diff.png",
+      "sha256": "22e7c0beefe2b8f775771533bea935d08928d6246a0ca6aa44fee65e608c9f67"
+    },
+    {
+      "bytes": 482,
+      "path": "diff/back.object_id.diff.png",
+      "sha256": "2090e28ce52b34c745557356c33c1507e22c0dc8c345275f03e96b6b84b47d2b"
+    },
+    {
+      "bytes": 482,
+      "path": "diff/front.clay.diff.png",
+      "sha256": "2090e28ce52b34c745557356c33c1507e22c0dc8c345275f03e96b6b84b47d2b"
+    },
+    {
+      "bytes": 3122,
+      "path": "diff/front.lit.diff.png",
+      "sha256": "5c1e225873aac6666298469507c55de85b51953b7eb5cfcef83abd7039b3d220"
+    },
+    {
+      "bytes": 893,
+      "path": "diff/front.material_id.diff.png",
+      "sha256": "2152741f1d7f5db2ac5ec793dd1f328e80a280a4856273ac150309c8260db7e6"
+    },
+    {
+      "bytes": 482,
+      "path": "diff/front.object_id.diff.png",
+      "sha256": "2090e28ce52b34c745557356c33c1507e22c0dc8c345275f03e96b6b84b47d2b"
+    },
+    {
+      "bytes": 506,
+      "path": "diff/profile.clay.diff.png",
+      "sha256": "b71e119accfeaa7801f19bdec463d88039b3e4d9520f82ee3463c5d2cbc055ab"
+    },
+    {
+      "bytes": 1493,
+      "path": "diff/profile.lit.diff.png",
+      "sha256": "fe0f2823e1a32b1e581c29fa0b64c01cbb8d72468b745ce30af0d948cc373af0"
+    },
+    {
+      "bytes": 669,
+      "path": "diff/profile.material_id.diff.png",
+      "sha256": "48455843be4d2379e77b46d4d54b2bfa1d409b2a6843773767f02d2909612e39"
+    },
+    {
+      "bytes": 482,
+      "path": "diff/profile.object_id.diff.png",
+      "sha256": "2090e28ce52b34c745557356c33c1507e22c0dc8c345275f03e96b6b84b47d2b"
+    },
+    {
+      "bytes": 482,
+      "path": "diff/three_quarter.clay.diff.png",
+      "sha256": "2090e28ce52b34c745557356c33c1507e22c0dc8c345275f03e96b6b84b47d2b"
+    },
+    {
+      "bytes": 2529,
+      "path": "diff/three_quarter.lit.diff.png",
+      "sha256": "0599adcdb15a2255b84defd7d23ea5b1d1a142be2d8434feaed6e09e5c261138"
+    },
+    {
+      "bytes": 865,
+      "path": "diff/three_quarter.material_id.diff.png",
+      "sha256": "dce0379b85617113e444cecd0b29cdcd036ad4647fe72eeb25d1abd830e4f590"
+    },
+    {
+      "bytes": 482,
+      "path": "diff/three_quarter.object_id.diff.png",
+      "sha256": "2090e28ce52b34c745557356c33c1507e22c0dc8c345275f03e96b6b84b47d2b"
+    },
+    {
+      "bytes": 92980,
+      "path": "export.glb",
+      "sha256": "55e10b353921a577b9f1e32125b5606904970e1c980d193aa7a3a4c8e13a37a3"
+    },
+    {
+      "bytes": 1473,
+      "path": "roundtrip/evidence.json",
+      "sha256": "2a7eca1a720c153a2ff6d6071f1cd786508239ed6f1f828652fad530cfe7752b"
+    },
+    {
+      "bytes": 22803,
+      "path": "roundtrip/manifest.json",
+      "sha256": "e6b17caac992ee2c693ca7ad5e06aaf98fe5a0df9b9daafb143176b73bc90b3c"
+    },
+    {
+      "bytes": 29097,
+      "path": "roundtrip/renders/back.clay.png",
+      "sha256": "7d74700221cc65feb46446e81f235a95248e9e609697303f7c84a9211cd83f24"
+    },
+    {
+      "bytes": 38111,
+      "path": "roundtrip/renders/back.lit.png",
+      "sha256": "8e0f5476491526bc3dc758141b3a08bc64999345a8af7c991f1ccf171c1810a1"
+    },
+    {
+      "bytes": 29219,
+      "path": "roundtrip/renders/back.material_id.png",
+      "sha256": "a898c668f7cda2314dec8f74a678569c00a079ad9599e1007c16d44868a17cf8"
+    },
+    {
+      "bytes": 28692,
+      "path": "roundtrip/renders/back.object_id.png",
+      "sha256": "e614658619c157c5d384cd90a48bc85741e5a5e01564b7066ec67306108251b5"
+    },
+    {
+      "bytes": 29056,
+      "path": "roundtrip/renders/front.clay.png",
+      "sha256": "114b3eec364d9d9ee480d42bbfd2acee48837667fa7969b10e4232b8d3b61650"
+    },
+    {
+      "bytes": 41043,
+      "path": "roundtrip/renders/front.lit.png",
+      "sha256": "5e755bf242f2718fc02878ab0af4fcbfcbeb841c4f8e1a4ba77659ca32240ea8"
+    },
+    {
+      "bytes": 29295,
+      "path": "roundtrip/renders/front.material_id.png",
+      "sha256": "ff9dceeb9034cdd5369085b691338b2de0cbf62e2c4a1e38710b6ef71fb6e3a4"
+    },
+    {
+      "bytes": 28677,
+      "path": "roundtrip/renders/front.object_id.png",
+      "sha256": "17cd3373ce8cd65e25773abd136f171d1a0d0ea8170ca313e191f0a67ff468c0"
+    },
+    {
+      "bytes": 28013,
+      "path": "roundtrip/renders/profile.clay.png",
+      "sha256": "31c721bac4934c4a18c656742b8abafbcfda25ccaccb4f7bf482975765d45dc8"
+    },
+    {
+      "bytes": 36660,
+      "path": "roundtrip/renders/profile.lit.png",
+      "sha256": "df19b49ae1ba3bb3186e79b99623ddda12e1825de5c31bc6a339541510ed837b"
+    },
+    {
+      "bytes": 27568,
+      "path": "roundtrip/renders/profile.material_id.png",
+      "sha256": "6affcffb406bc88294e03cfa0c129e220a7d36b89872d57f2dcc2ab50235d4be"
+    },
+    {
+      "bytes": 27273,
+      "path": "roundtrip/renders/profile.object_id.png",
+      "sha256": "45443d61f2114a928de7072577754fea449bd9f351922067db908a11ae760e7f"
+    },
+    {
+      "bytes": 31391,
+      "path": "roundtrip/renders/three_quarter.clay.png",
+      "sha256": "d1d7388fcf9ebf9695d2e0b7b1154fcb209015fa1b250cd245a5f2444c4b9411"
+    },
+    {
+      "bytes": 44870,
+      "path": "roundtrip/renders/three_quarter.lit.png",
+      "sha256": "c067d3806f334e46b6b1f2933f41beeadd2fef8fffce51bfde72cecd9509cde0"
+    },
+    {
+      "bytes": 29849,
+      "path": "roundtrip/renders/three_quarter.material_id.png",
+      "sha256": "a440c877deb1f64f064a52e59eaedec9ad39db0db8044ede4e682f20676e3422"
+    },
+    {
+      "bytes": 29082,
+      "path": "roundtrip/renders/three_quarter.object_id.png",
+      "sha256": "bdbe8d8c48808eb3aec30291bbebb62d47c44a7fc9e2ad38ed411d65aab38ee3"
+    },
+    {
+      "bytes": 113,
+      "path": "roundtrip.json",
+      "sha256": "878aa96d0ec476148f7c0dc1cd97075952f100a6d604126a735a1b1959d7112d"
+    },
+    {
+      "bytes": 4130,
+      "path": "roundtrip.log.json",
+      "sha256": "9785e7fcc4342f55495e30d4b61f8f458b9d38769d38993e9f9a0c5338f4e1f5"
+    },
+    {
+      "bytes": 1551,
+      "path": "source/evidence.json",
+      "sha256": "34965a24223eae58a5c441a9a36a583f0d21793a7b134b41a3bc64491179282f"
+    },
+    {
+      "bytes": 12807,
+      "path": "source/manifest.json",
+      "sha256": "901e46defae435b96f616b011da90daca81b2b0614ce8042aaf0881a5b508295"
+    },
+    {
+      "bytes": 29147,
+      "path": "source/renders/back.clay.png",
+      "sha256": "fafcc1790113d1b8f346c02c8282a56b8aaddf6cd2fac529d54f531bc22e91d5"
+    },
+    {
+      "bytes": 38000,
+      "path": "source/renders/back.lit.png",
+      "sha256": "21c0b2437968ba7cc7fad2aebd7eb8f53d78d6f858b6b799a697ac8f0f9a2aea"
+    },
+    {
+      "bytes": 29259,
+      "path": "source/renders/back.material_id.png",
+      "sha256": "7ee44cce0895dbe549cc2578660cb1360ac21a28ac972305163b4953fdfa146f"
+    },
+    {
+      "bytes": 28742,
+      "path": "source/renders/back.object_id.png",
+      "sha256": "3daf86508547afb1defad554ccd732a05b9e56f1437908e8f0fb887cb18a90f5"
+    },
+    {
+      "bytes": 29106,
+      "path": "source/renders/front.clay.png",
+      "sha256": "d171164c1671287ceb7564b22f0b3b2ee8515c83c070f24d1c26592f2c4377fb"
+    },
+    {
+      "bytes": 40457,
+      "path": "source/renders/front.lit.png",
+      "sha256": "bbaee64b25685bcd85845a8d8ab84c4781a6c9cb1d81850aeb1024ec0490ec9c"
+    },
+    {
+      "bytes": 29309,
+      "path": "source/renders/front.material_id.png",
+      "sha256": "15845a3945656542908ae30e185865ad09a5b9176564ba512a9b32f7b65b9fc7"
+    },
+    {
+      "bytes": 28727,
+      "path": "source/renders/front.object_id.png",
+      "sha256": "7db19decf044b4d4c1428b645be3eb2a21fcfd7836acf54324e8986e483203bc"
+    },
+    {
+      "bytes": 28065,
+      "path": "source/renders/profile.clay.png",
+      "sha256": "87185aea072c7c570ba9ec8317593f92df05d99866c48785f4a7d72e50fe30ba"
+    },
+    {
+      "bytes": 36480,
+      "path": "source/renders/profile.lit.png",
+      "sha256": "a1c54da3c40d13ca55cc1a79919b6a77ec61a23914206ee528b01cffe14e86c4"
+    },
+    {
+      "bytes": 27606,
+      "path": "source/renders/profile.material_id.png",
+      "sha256": "f8445d2ac1cbe302d624d522725e550e66b652ef20bef7091938590e2834ef2a"
+    },
+    {
+      "bytes": 27323,
+      "path": "source/renders/profile.object_id.png",
+      "sha256": "9649955b21dc325163b3fc7653cb6b056748b5f16850bf852161c9d7c2f7f14e"
+    },
+    {
+      "bytes": 31441,
+      "path": "source/renders/three_quarter.clay.png",
+      "sha256": "2f872be79eb4ed9ad533ac89ef4f13be5d8feb757109ffa476dc48cad62a3858"
+    },
+    {
+      "bytes": 44225,
+      "path": "source/renders/three_quarter.lit.png",
+      "sha256": "f5725ed51ec73a3fd2ad2a69b843c5b8c802c0b318838f2ffe9020736c1a95d6"
+    },
+    {
+      "bytes": 29922,
+      "path": "source/renders/three_quarter.material_id.png",
+      "sha256": "a54b024986e0509ee5e2726e61ee18a674cd461afd68b28d77d50ccb3258be53"
+    },
+    {
+      "bytes": 29132,
+      "path": "source/renders/three_quarter.object_id.png",
+      "sha256": "01035de9bd947c1f9ef5963fe933f0ef55ea3af350cf6d4e30ca5d699a430b73"
+    },
+    {
+      "bytes": 646,
+      "path": "source.json",
+      "sha256": "d8a33045e2901f5cc0cdf7d47924abd94198ed0bf5a91f0dcef81cdf6f47f4c0"
+    },
+    {
+      "bytes": 4776,
+      "path": "source.log.json",
+      "sha256": "b0506d05cdbfc113bf2fba783979192dd031ce967d174a9215c1a561f7b8db3e"
+    }
+  ],
+  "blender": {
+    "build_hash": "67c9bdddb88b",
+    "executable": "C:/AI/blender-5.4.0-alpha+main.67c9bdddb88b-windows.amd64-release/blender.exe",
+    "sha256": "a3f0735da67e0f882773081550f9cd1220450f1b38f4f13d8abe2b52a4761b46",
+    "version_string": "5.4.0 Alpha"
+  },
+  "cameras": {
+    "frame": 1,
+    "ortho_scale": 2.24375,
+    "target": [
+      0.02,
+      -0.04,
+      1.2725
+    ],
+    "views": {
+      "back": [
+        180.0,
+        0.0
+      ],
+      "front": [
+        0.0,
+        0.0
+      ],
+      "profile": [
+        90.0,
+        0.0
+      ],
+      "three_quarter": [
+        45.0,
+        15.0
+      ]
+    }
+  },
+  "expected_exclusions": [],
+  "export": {
+    "glb_bytes": 92980,
+    "glb_sha256": "55e10b353921a577b9f1e32125b5606904970e1c980d193aa7a3a4c8e13a37a3",
+    "settings": {
+      "export_animations": true,
+      "export_cameras": false,
+      "export_force_sampling": true,
+      "export_format": "GLB",
+      "export_frame_range": true,
+      "export_lights": false,
+      "export_materials": "EXPORT",
+      "use_renderable": true
+    }
+  },
+  "format_losses": [
+    "action LabSway: keys are resampled per frame (export_force_sampling)"
+  ],
+  "pass": false,
+  "render": {
+    "id_passes": {
+      "aa": "OFF",
+      "engine": "BLENDER_WORKBENCH"
+    },
+    "lit": {
+      "device": "CPU",
+      "engine": "CYCLES",
+      "samples": 16,
+      "seed": 20261102
+    },
+    "size": 256,
+    "view_transform": "Standard"
+  },
+  "roundtrip": {
+    "counts": {
+      "actions": 1,
+      "armatures": 1,
+      "images": 1,
+      "materials": 2,
+      "meshes": 4,
+      "missing_images": 0,
+      "objects": 5,
+      "triangles": 680
+    },
+    "process": "new Blender process, factory-empty scene, glTF import",
+    "seconds": 3.277,
+    "semantic_checksum": "cfbe2ec0c5b482caf2750d71ad92931fdb993b02f3c8ee7c206c2dad8ce0b4ba"
+  },
+  "schema": "las.asset-parity-sentinel.v1",
+  "seeded_defect": {
+    "from": "BadgeGreen",
+    "kind": "material-mismatch",
+    "object": "Badge",
+    "to": "BodyTextured"
+  },
+  "source": {
+    "counts": {
+      "actions": 1,
+      "armatures": 1,
+      "images": 1,
+      "materials": 3,
+      "meshes": 3,
+      "missing_images": 0,
+      "objects": 4,
+      "triangles": 600
+    },
+    "file": "lab-asset.blend",
+    "seconds": 4.427,
+    "semantic_checksum": "4c73caf97087a941b9112b511c6eecf89aa2d623509ba4194f27be45d10885b2",
+    "sha256": "e5f57b05560c63ac8c767fe01fe738105811f2167e32ccd2b34b2e57435e49e0",
+    "unchanged": true
+  },
+  "structural_failures": [
+    "Badge: materials ['BadgeGreen'] -> ['BodyTextured']"
+  ],
+  "views": {
+    "back": {
+      "clay": {
+        "boxes": [],
+        "changed_fraction": 0.0,
+        "max_abs_diff": 0,
+        "mean_abs_diff": 0.0,
+        "thresholds": {
+          "fraction": 0.002,
+          "pixel": 12
+        },
+        "warn": false
+      },
+      "lit": {
+        "boxes": [
+          [
+            88,
+            136,
+            120,
+            168
+          ]
+        ],
+        "changed_fraction": 0.003983,
+        "max_abs_diff": 94,
+        "mean_abs_diff": 0.3121,
+        "thresholds": {
+          "fraction": 0.004,
+          "pixel": 40
+        },
+        "warn": false
+      },
+      "material_id": {
+        "attribution": [
+          {
+            "box": [
+              88,
+              136,
+              120,
+              168
+            ],
+            "roundtrip": [
+              "BodyTextured"
+            ],
+            "source": [
+              "BadgeGreen",
+              "BodyTextured"
+            ]
+          }
+        ],
+        "boxes": [
+          [
+            88,
+            136,
+            120,
+            168
+          ]
+        ],
+        "changed_fraction": 0.003784,
+        "max_abs_diff": 39,
+        "mean_abs_diff": 0.1466,
+        "thresholds": {
+          "fraction": 0.001,
+          "pixel": 12
+        },
+        "warn": true
+      },
+      "object_id": {
+        "boxes": [],
+        "changed_fraction": 0.0,
+        "max_abs_diff": 0,
+        "mean_abs_diff": 0.0,
+        "silhouette_iou": 1.0,
+        "thresholds": {
+          "fraction": 0.001,
+          "pixel": 12
+        },
+        "warn": false
+      }
+    },
+    "front": {
+      "clay": {
+        "boxes": [],
+        "changed_fraction": 0.0,
+        "max_abs_diff": 0,
+        "mean_abs_diff": 0.0,
+        "thresholds": {
+          "fraction": 0.002,
+          "pixel": 12
+        },
+        "warn": false
+      },
+      "lit": {
+        "boxes": [
+          [
+            128,
+            136,
+            168,
+            176
+          ]
+        ],
+        "changed_fraction": 0.012756,
+        "max_abs_diff": 109,
+        "mean_abs_diff": 1.2903,
+        "thresholds": {
+          "fraction": 0.004,
+          "pixel": 40
+        },
+        "warn": true
+      },
+      "material_id": {
+        "attribution": [
+          {
+            "box": [
+              128,
+              136,
+              168,
+              176
+            ],
+            "roundtrip": [
+              "BodyTextured"
+            ],
+            "source": [
+              "BadgeGreen",
+              "BodyTextured"
+            ]
+          }
+        ],
+        "boxes": [
+          [
+            128,
+            136,
+            168,
+            176
+          ]
+        ],
+        "changed_fraction": 0.011932,
+        "max_abs_diff": 39,
+        "mean_abs_diff": 0.4625,
+        "thresholds": {
+          "fraction": 0.001,
+          "pixel": 12
+        },
+        "warn": true
+      },
+      "object_id": {
+        "boxes": [],
+        "changed_fraction": 0.0,
+        "max_abs_diff": 0,
+        "mean_abs_diff": 0.0,
+        "silhouette_iou": 1.0,
+        "thresholds": {
+          "fraction": 0.001,
+          "pixel": 12
+        },
+        "warn": false
+      }
+    },
+    "profile": {
+      "clay": {
+        "boxes": [],
+        "changed_fraction": 0.0,
+        "max_abs_diff": 1,
+        "mean_abs_diff": 0.0001,
+        "thresholds": {
+          "fraction": 0.002,
+          "pixel": 12
+        },
+        "warn": false
+      },
+      "lit": {
+        "boxes": [
+          [
+            80,
+            136,
+            96,
+            160
+          ]
+        ],
+        "changed_fraction": 0.003082,
+        "max_abs_diff": 125,
+        "mean_abs_diff": 0.3121,
+        "thresholds": {
+          "fraction": 0.004,
+          "pixel": 40
+        },
+        "warn": false
+      },
+      "material_id": {
+        "attribution": [
+          {
+            "box": [
+              80,
+              136,
+              96,
+              176
+            ],
+            "roundtrip": [
+              "BodyTextured"
+            ],
+            "source": [
+              "BadgeGreen"
+            ]
+          }
+        ],
+        "boxes": [
+          [
+            80,
+            136,
+            96,
+            176
+          ]
+        ],
+        "changed_fraction": 0.003418,
+        "max_abs_diff": 39,
+        "mean_abs_diff": 0.1324,
+        "thresholds": {
+          "fraction": 0.001,
+          "pixel": 12
+        },
+        "warn": true
+      },
+      "object_id": {
+        "boxes": [],
+        "changed_fraction": 0.0,
+        "max_abs_diff": 0,
+        "mean_abs_diff": 0.0,
+        "silhouette_iou": 1.0,
+        "thresholds": {
+          "fraction": 0.001,
+          "pixel": 12
+        },
+        "warn": false
+      }
+    },
+    "three_quarter": {
+      "clay": {
+        "boxes": [],
+        "changed_fraction": 0.0,
+        "max_abs_diff": 0,
+        "mean_abs_diff": 0.0,
+        "thresholds": {
+          "fraction": 0.002,
+          "pixel": 12
+        },
+        "warn": false
+      },
+      "lit": {
+        "boxes": [
+          [
+            104,
+            144,
+            136,
+            184
+          ]
+        ],
+        "changed_fraction": 0.010376,
+        "max_abs_diff": 115,
+        "mean_abs_diff": 1.0072,
+        "thresholds": {
+          "fraction": 0.004,
+          "pixel": 40
+        },
+        "warn": true
+      },
+      "material_id": {
+        "attribution": [
+          {
+            "box": [
+              104,
+              144,
+              136,
+              184
+            ],
+            "roundtrip": [
+              "BodyTextured"
+            ],
+            "source": [
+              "BadgeGreen",
+              "BodyTextured"
+            ]
+          }
+        ],
+        "boxes": [
+          [
+            104,
+            144,
+            136,
+            184
+          ]
+        ],
+        "changed_fraction": 0.01062,
+        "max_abs_diff": 39,
+        "mean_abs_diff": 0.4115,
+        "thresholds": {
+          "fraction": 0.001,
+          "pixel": 12
+        },
+        "warn": true
+      },
+      "object_id": {
+        "boxes": [],
+        "changed_fraction": 0.0,
+        "max_abs_diff": 0,
+        "mean_abs_diff": 0.0,
+        "silhouette_iou": 1.0,
+        "thresholds": {
+          "fraction": 0.001,
+          "pixel": 12
+        },
+        "warn": false
+      }
+    }
+  },
+  "visual_warnings": [
+    "front/lit: 1.28% of pixels changed in 1 region(s)",
+    "three_quarter/lit: 1.04% of pixels changed in 1 region(s)",
+    "front/material_id: 1.19% of pixels changed in 1 region(s): ['BadgeGreen', 'BodyTextured'] -> ['BodyTextured'] at [128, 136, 168, 176]",
+    "three_quarter/material_id: 1.06% of pixels changed in 1 region(s): ['BadgeGreen', 'BodyTextured'] -> ['BodyTextured'] at [104, 144, 136, 184]",
+    "profile/material_id: 0.34% of pixels changed in 1 region(s): ['BadgeGreen'] -> ['BodyTextured'] at [80, 136, 96, 176]",
+    "back/material_id: 0.38% of pixels changed in 1 region(s): ['BadgeGreen', 'BodyTextured'] -> ['BodyTextured'] at [88, 136, 120, 168]"
+  ]
+}
