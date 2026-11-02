@@ -25,8 +25,9 @@ Owners per seam are in `docs/BLENDER-LAB.md`, "Which tool for what". The probe n
 unchanged reruns were exactly equal; cross-build differences were limited to Principled inputs and regenerated UVs.
 Task 3's export/reimport derivative is `scripts/blender_sentinel.py` (seeded missing texture, omitted mesh and material
 mismatch are caught on both builds). Its object identity mapping is still by name, so the declared-mapping item stays
-open. Task 2 is partly covered by the sentinel's fixed-camera renderer, but its renders are not yet `compare_bundles`
-receipts. Task 4 is open.
+open. Task 2's producer side exists: `blender_lab.py dcc-bundle` writes `studio.dcc-evidence/v1` bundles (scene-v1 plus the
+sentinel's 16 fixed-camera views). An unchanged rerun is bit-identical; an edit is reported `different` with exact paths.
+Hold-out views and a frozen baseline rig remain policy choices for the caller. Task 4 is open.
 
 ## Task 1: qualify the existing probe
 
