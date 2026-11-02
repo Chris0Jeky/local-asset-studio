@@ -81,11 +81,39 @@ class ProbeTests(unittest.TestCase):
         material = NS(name='Paint', library=None, diffuse_color=(1., 0., 0., 1.),
                       use_nodes=True, node_tree=NS(nodes=[NS(name='Principled BSDF',
                       bl_idname='ShaderNodeBsdfPrincipled', inputs=[NS(name='Base Color',
-                      identifier='Base Color', default_value=(1., 0., 0., 1.))])], links=[]))
+                      identifier='Base Color', default_value=(1., 0., 0., 1.))], outputs=[])], links=[]))
         one = probe.material_record(material, probe.Budget())
         material.node_tree.nodes[0].inputs[0].default_value = (1., 1., 1., 1.)
         two = probe.material_record(material, probe.Budget())
         self.assertNotEqual(one, two)
+
+    def test_editable_output_defaults_are_observed(self):
+        for kind, identifier, original, changed in (
+            ('ShaderNodeRGB', 'Color', (1., 0., 0., 1.), (0., 1., 0., 1.)),
+            ('ShaderNodeValue', 'Value', 0.25, 0.75),
+        ):
+            with self.subTest(node=kind):
+                socket = NS(identifier=identifier, default_value=original)
+                node = NS(name='Constant', bl_idname=kind, inputs=[], outputs=[socket])
+                material = NS(name='Paint', library=None, diffuse_color=(1., 1., 1., 1.),
+                              use_nodes=True, node_tree=NS(nodes=[node], links=[]))
+                before = probe.material_record(material, probe.Budget())
+                socket.default_value = changed
+                after = probe.material_record(material, probe.Budget())
+                self.assertNotEqual(before, after, 'An authored output value changed')
+                socket.default_value = original
+                self.assertEqual(before, probe.material_record(material, probe.Budget()))
+
+    def test_output_defaults_keep_scalar_and_finite_value_limits(self):
+        socket = NS(identifier='Value', default_value=0.5)
+        node = NS(name='Constant', bl_idname='ShaderNodeValue', inputs=[], outputs=[socket])
+        material = NS(name='Paint', library=None, diffuse_color=(1., 1., 1., 1.),
+                      use_nodes=True, node_tree=NS(nodes=[node], links=[]))
+        with self.assertRaisesRegex(ValueError, 'budget'):
+            probe.material_record(material, probe.Budget(1))
+        socket.default_value = float('nan')
+        with self.assertRaisesRegex(ValueError, 'Non-finite'):
+            probe.material_record(material, probe.Budget())
 
     def test_identity_includes_linked_library(self):
         self.assertNotEqual(probe.identity(NS(name='Mesh', library=None)),

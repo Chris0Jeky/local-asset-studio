@@ -11,7 +11,7 @@ The production articulated adapter and its tests were synchronized to that newer
 Blender compatibility fix before feature verification. The new PR is based on the
 live main tree, preserving its other documentation and unrelated work.
 
-## Executed checks
+## Original implementation checks (`af3306ca`)
 
 | Check | Result | Scope |
 |---|---|---|
@@ -39,6 +39,50 @@ Both complete supplied research exports were imported and their archives reverif
 Original JSON bytes and original Markdown remain intact; readable Markdown and source
 indexes are separately derived. Unresolved private-source citation tokens remain
 visible. Archives are private; no complete report or character asset is published in LAS.
+
+## Independent review corrections
+
+Review of PR #1911 at `af3306ca20ef1773731bd73d0cb942c60f393c1b` reproduced two
+false matches while all 47 original new tests passed. The exact source tree was
+`b3d3e6120db5e90b43b4dcd5f6451758ee460b89`. The PR head and discussion were
+refreshed before implementing this follow-up; the reviewed source was unchanged.
+
+1. An API-shaped RGB node changed its authored output from red to green, but
+   the material records remained identical and `compare_scenes` reported
+   `equal: true` with no changes. Material snapshots now record exposed output
+   socket defaults as well as inputs, using the existing bounded, finite-value
+   serializer. RGB and Value nodes are covered. No shader evaluation, animation
+   authoring or broader node-state serialization was added.
+2. Valid 16-bit RGB and RGBA PNGs with red samples 32768 and 33023 were both
+   exposed by Pillow as 8-bit RGB/RGBA. Correctly hashed evidence bundles then
+   reported `within_declared_tolerance` at zero tolerance. Comparison now checks
+   the encoded sample depth before opening pixels. A bounded chunk-framing walk
+   requires one leading 13-byte IHDR and refuses repeated headers, including an
+   8-bit header followed by a 16-bit header. It neither decompresses chunks nor
+   allocates their declared lengths. Existing byte, resolution, frame and pixel
+   bounds remain in force. Unsupported evidence is refused; files are not
+   converted or rewritten.
+
+The test-first run of the two affected files ran 34 methods and reproduced
+**15 failures across the five new methods**: missing output-value observations,
+missing output-value budget refusal, truecolour depth reduction, leading/repeated
+IHDR acceptance, and forbidden pixel decoding before refusal. The same 34 methods
+passed after the fixes. Supported 8-bit RGB/RGBA controls still detect one-unit
+sample changes; source bytes remain unchanged on refusal. Output defaults retain
+the existing scalar-budget and non-finite-value checks.
+
+The final focused set passed **92 tests with no skips or failures** on Linux,
+Python 3.12.14 and Pillow 13.0.0: the five new modules now contain 52 tests, plus
+30 frontier tests and both articulated modules' 10 tests. The source probe remains
+stdlib-only; no Blender process or live engine was started. Repository validation
+also passed with site packages disabled (`python -S scripts/validate-repo.py`):
+98 graphs/bindings, 194 pinned assets, 167 LoRA names and 4,753 tracked paths.
+
+These corrections do not qualify native Blender/Windows/AMD behavior or supply
+the missing full-suite result below. They do not reverify private report archives
+that are outside the public PR. Fresh hosted checks and integration against the
+current base remain required before merge; owner artistic and distribution
+decisions remain open.
 
 ## Full-suite limitation
 

@@ -34,7 +34,7 @@ The private companion handoff and downloadable complete private archive preserve
 
 ## Evidence bundle contract
 
-A directory contains `evidence.json`, a `scene.json` observation, and single-frame 8-bit RGB/RGBA PNGs. Paths are relative, canonical, non-symlink paths. Each artifact is bound by SHA-256. Scene JSON follows `studio.dcc-scene/v1`; the standalone probe writes that format. Images are limited to 1,048,576 pixels and 16 MiB each; at most 16 views are accepted.
+A directory contains `evidence.json`, a `scene.json` observation, and single-frame 8-bit RGB/RGBA PNGs. PNGs require one leading 13-byte IHDR; leading metadata, repeated IHDR chunks and higher sample depths are refused before pixel decoding. The comparator never silently reduces sample depth. Paths are relative, canonical, non-symlink paths. Each artifact is bound by SHA-256. Scene JSON follows `studio.dcc-scene/v1`; the standalone probe writes that format. Images are limited to 1,048,576 pixels and 16 MiB each; at most 16 views are accepted.
 
 ```json
 {
@@ -64,7 +64,7 @@ The caller independently specifies required and hold-out views. A missing hold-o
 
 ## Current implementation limits
 
-Read-only probe source exists and has offline API-fixture tests. **It has not been run on the owner's Blender/Windows/AMD stack by this implementation pass.** It observes base mesh connectivity/positions, UVs, weights, shape keys, rest bones, material socket defaults, links/ramps, image presence and layered/legacy actions. It intentionally does not call mutating animation `ensure` APIs.
+Read-only probe source exists and has offline API-fixture tests. **It has not been run on the owner's Blender/Windows/AMD stack by this implementation pass.** It observes base mesh connectivity/positions, UVs, weights, shape keys, rest bones, material input/output socket defaults (including authored RGB and Value outputs), links/ramps, image presence and layered/legacy actions. It intentionally does not call mutating animation `ensure` APIs or evaluate shader outputs.
 
 It does not evaluate modifiers or posed geometry, fully serialize constraints/nested shader graphs, hash texture pixels, generate controlled renders, map GLB identities, or inspect motion. `complete: true` means the declared observation scope finished, not that every Blender feature was serialized. Exact object/library names are used; intentional GLB renaming or triangulation needs a target-aware mapping, not a blanket ignore rule. The native parity renderer, native resource bridge, private artifact registration and live app/MCP routes are **planned, not implemented**.
 

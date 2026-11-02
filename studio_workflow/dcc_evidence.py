@@ -116,7 +116,26 @@ def _bundle(root: Path):
     return value, observed
 
 
+def _png_sample_depth(raw: bytes):
+    """Bounded framing only: Pillow may accept a late/repeated IHDR or expose RGB16 as RGB8."""
+    refusal = 'PNG evidence requires one canonical first IHDR and complete chunk framing'
+    need(len(raw) <= MAX_ARTIFACT, 'PNG exceeds bounded artifact limit')
+    need(raw[:8] == b'\x89PNG\r\n\x1a\n' and raw[8:16] == b'\x00\x00\x00\rIHDR', refusal)
+    position = 8
+    while position + 12 <= len(raw):
+        length = int.from_bytes(raw[position:position + 4], 'big')
+        kind = raw[position + 4:position + 8]
+        end = position + length + 12
+        need(end <= len(raw) and (kind != b'IHDR' or position == 8), refusal)
+        if kind == b'IEND':
+            need(length == 0, refusal)
+            return raw[24]
+        position = end
+    raise ValueError(refusal)
+
+
 def _pixels(raw: bytes, resolution):
+    need(_png_sample_depth(raw) == 8, 'Expected single-frame 8-bit RGB/RGBA PNG')
     with open_bounded(BytesIO(raw)) as image:
         need(image.format == 'PNG' and image.mode in {'RGB', 'RGBA'}
              and getattr(image, 'n_frames', 1) == 1, 'Expected single-frame 8-bit RGB/RGBA PNG')

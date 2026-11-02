@@ -16,7 +16,7 @@ import sys
 FORMAT = 'studio.dcc-scene/v1'
 LIMITATIONS = [
     'Base meshes only: no evaluated modifiers, pose deformation, contact or temporal checks.',
-    'Material socket defaults, links and ramps are observed; nested node-group internals are not.',
+    'Material input/output socket defaults, links and ramps are observed; nested node-group internals are not.',
     'Image paths/packing/presence are observed; texture pixels and packed bytes are not hashed.',
     'Constraints/modifiers and animation modifiers are inventoried, not fully serialized.',
     'Object/library names are identities here; GLB renaming/triangulation needs an explicit mapping.',
@@ -112,7 +112,9 @@ def material_record(material, budget):
         budget.take()
         entry = {'type': node.bl_idname, 'mute': getattr(node, 'mute', False),
                  'inputs': [{'id': socket.identifier, 'value': _value(socket.default_value, budget)}
-                            for socket in node.inputs if hasattr(socket, 'default_value')]}
+                            for socket in node.inputs if hasattr(socket, 'default_value')],
+                 'outputs': [{'id': socket.identifier, 'value': _value(socket.default_value, budget)}
+                             for socket in node.outputs if hasattr(socket, 'default_value')]}
         for field in ('image', 'node_tree'):
             target = getattr(node, field, None)
             if target is not None:

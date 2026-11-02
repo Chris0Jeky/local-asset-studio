@@ -1,8 +1,11 @@
 import copy
 import json
 from pathlib import Path
+import struct
 import tempfile
 import unittest
+from unittest.mock import patch
+import zlib
 
 from PIL import Image
 from studio_workflow.core import canonical, digest
@@ -36,6 +39,20 @@ def bundle(root, color=(50, 100, 150, 255)):
 
 def save(root, doc):
     (root / 'evidence.json').write_bytes(canonical(doc))
+
+
+def png_chunk(kind, content):
+    return (struct.pack('>I', len(content)) + kind + content
+            + struct.pack('>I', zlib.crc32(kind + content) & 0xffffffff))
+
+
+def truecolor_png(depth, alpha, sample):
+    # Real PNG framing/sample bytes, independent of Pillow's RGB8 writer.
+    pixel = (sample, 0, 0) + ((2**depth - 1,) if alpha else ())
+    row = b'\0' + struct.pack('>' + ('H' if depth == 16 else 'B') * len(pixel), *pixel) * 8
+    return (b'\x89PNG\r\n\x1a\n'
+            + png_chunk(b'IHDR', struct.pack('>IIBBBBB', 8, 8, depth, 6 if alpha else 2, 0, 0, 0))
+            + png_chunk(b'IDAT', zlib.compress(row * 8)) + png_chunk(b'IEND', b''))
 
 
 class EvidenceTests(unittest.TestCase):
@@ -77,6 +94,53 @@ class EvidenceTests(unittest.TestCase):
             self.assertEqual(result['views']['front']['max_channel_delta'], 1)
             self.assertEqual(result['views']['front']['changed_pixel_fraction'], 1 / 64)
             self.assertEqual(self.compare(a, b, max_channel_delta=1)['status'], 'within_declared_tolerance')
+
+    def test_16_bit_truecolor_pngs_cannot_match_after_silent_reduction(self):
+        for alpha in (False, True):
+            with self.subTest(alpha=alpha), tempfile.TemporaryDirectory() as tmp:
+                # The supported 8-bit contract still observes a one-unit change.
+                control = de._image_delta(truecolor_png(8, alpha, 128), truecolor_png(8, alpha, 129), [8, 8])
+                self.assertEqual(control['max_channel_delta'], 1)
+                a, b = Path(tmp) / 'a', Path(tmp) / 'b'
+                ad, bd = bundle(a), bundle(b)
+                raw_a, raw_b = truecolor_png(16, alpha, 32768), truecolor_png(16, alpha, 33023)
+                for root, doc, raw in ((a, ad, raw_a), (b, bd, raw_b)):
+                    (root / 'front.png').write_bytes(raw)
+                    doc['views']['front']['sha256'] = sha(raw); save(root, doc)
+                with self.assertRaisesRegex(ValueError, '8-bit'):
+                    self.compare(a, b)
+                self.assertEqual((a / 'front.png').read_bytes(), raw_a)
+                self.assertEqual((b / 'front.png').read_bytes(), raw_b)
+
+    def test_ambiguous_ihdr_layout_cannot_bypass_the_png_contract(self):
+        for depth in (8, 16):
+            for alpha in (False, True):
+                raw = truecolor_png(depth, alpha, 128 if depth == 8 else 32768)
+                # Pillow accepts both layouts. The extra 8-bit IHDR can hide a
+                # later 16-bit IHDR from a guard that trusts only byte offset 24.
+                extra_header = png_chunk(b'IHDR', raw[16:24] + b'\x08' + raw[25:29])
+                for name, prefix in (('leading metadata', png_chunk(b'tEXt', b'note\0fixture')),
+                                     ('repeated IHDR', extra_header)):
+                    with self.subTest(depth=depth, alpha=alpha, layout=name), tempfile.TemporaryDirectory() as tmp:
+                        a, b = Path(tmp) / 'a', Path(tmp) / 'b'
+                        bundle(a, (128, 0, 0, 255)); doc = bundle(b, (128, 0, 0, 255))
+                        ambiguous = raw[:8] + prefix + raw[8:]
+                        (b / 'front.png').write_bytes(ambiguous)
+                        doc['views']['front']['sha256'] = sha(ambiguous); save(b, doc)
+                        with self.assertRaisesRegex(ValueError, 'IHDR'):
+                            self.compare(a, b)
+                        self.assertEqual((b / 'front.png').read_bytes(), ambiguous)
+
+    def test_unsupported_png_depth_and_layout_refuse_before_pixel_decode(self):
+        high_depth = truecolor_png(16, True, 32768)
+        rgb8 = truecolor_png(8, False, 128)
+        repeated = rgb8[:33] + rgb8[8:]
+        for raw in (high_depth, repeated):
+            with self.subTest(header=raw[8:33]), patch('PIL.PngImagePlugin.PngImageFile.load',
+                    side_effect=AssertionError('Unsupported source must not inflate pixels')) as load:
+                with self.assertRaises(ValueError):
+                    de._pixels(raw, [8, 8])
+                load.assert_not_called()
 
     def test_missing_holdout_is_incomplete_not_pass(self):
         with tempfile.TemporaryDirectory() as tmp:
