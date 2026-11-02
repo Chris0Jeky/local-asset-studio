@@ -1,5 +1,6 @@
 """Native Chromium journeys on the actual composed Studio handler, inert storage only."""
 from browser_ports import evidence_screenshot
+from browser_failure_diagnostics import BrowserFailureDiagnostics
 import importlib.util
 import json
 import os
@@ -43,7 +44,13 @@ class SpokenBrowserTests(unittest.TestCase):
                     'master_sha256': self.archive['master']['sha256'], 'observations': []}
         self.report_id = save_report(self.f.directory, evidence)['id']
         self.traffic = []; traffic = self.traffic
+        self.failure_diagnostics = BrowserFailureDiagnostics(); diagnostics = self.failure_diagnostics
         class Handler(extend_handler(server_module.Handler)):
+            def handle_one_request(inner):
+                try: return super().handle_one_request()
+                except Exception as error:
+                    diagnostics.server_error(inner, error)
+                    raise
             def _safe_host(inner): return inner.headers.get('Host') == f'127.0.0.1:{inner.server.server_port}'
             def _safe_mutation(inner): return inner._safe_host() and inner.headers.get('Origin') == 'http://' + inner.headers['Host']
             def do_GET(inner): traffic.append(('GET', inner.path)); return super().do_GET()
@@ -55,6 +62,7 @@ class SpokenBrowserTests(unittest.TestCase):
         self.context = self.browser.new_context(viewport={'width': 1280, 'height': 900})
         self.addCleanup(self.context.close)
         self.page = self.context.new_page(); self.errors = []
+        self.failure_diagnostics.watch(self.page, self._testMethodName)
         self.page.on('pageerror', lambda e: self.errors.append(str(e)))
         self.addCleanup(self.save_diagnostics)
         self.page.route('**/api/catalog', lambda route: route.fulfill(json={'presets': []}))
@@ -72,7 +80,9 @@ class SpokenBrowserTests(unittest.TestCase):
         if output:
             target = Path(output).with_name(self._testMethodName + '.json')
             target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(json.dumps({'page_errors': self.errors, 'traffic': self.traffic}, indent=2), encoding='utf-8')
+            self.failure_diagnostics.capture_page(self.page)
+            target.write_text(json.dumps({'page_errors': self.errors, 'traffic': self.traffic,
+                'failure_diagnostics': self.failure_diagnostics.snapshot()}, indent=2), encoding='utf-8')
 
     def inspect(self):
         self.page.locator('#discover').click()
@@ -463,28 +473,39 @@ class NarrationBrowserTests(unittest.TestCase):
 
     def setUp(self):
         from test_spoken_brief_narration import NarrationFixture
+        self.failure_diagnostics = BrowserFailureDiagnostics(); diagnostics = self.failure_diagnostics
         class BrowserFixture(NarrationFixture):
-            def handler(self): return super().handler(server_module.Handler, extend_handler)
+            def handler(self):
+                base = super().handler(server_module.Handler, extend_handler)
+                class Handler(base):
+                    def handle_one_request(inner):
+                        try: return super().handle_one_request()
+                        except Exception as error:
+                            diagnostics.server_error(inner, error)
+                            raise
+                return Handler
         temporary = tempfile.TemporaryDirectory(); self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name).resolve(); self.source = self.root / 'COMPRESSED.md'
         self.source.write_text('# Lantern handoff\n\nKeep the lantern blue.\n\n```\nomitted_code()\n```\n', encoding='utf-8')
         self.f = BrowserFixture(self.root); self.addCleanup(self.f.close)
         self.context = self.browser.new_context(viewport={'width': 1280, 'height': 900})
         self.addCleanup(self.context.close); self.page = self.context.new_page(); self.errors = []
+        self.failure_diagnostics.watch(self.page, self._testMethodName)
         self.page.on('pageerror', lambda e: self.errors.append(str(e)))
+        self.addCleanup(self.diagnostics)
         self.page.route('**/api/catalog', lambda route: route.fulfill(json={'presets': []}))
         self.page.route('**/api/looks', lambda route: route.fulfill(json={'looks': []}))
         self.page.set_default_timeout(10000)
         self.page.goto(self.f.base_url + '/spoken-briefs.html')
         self.page.wait_for_function("!document.querySelector('#previewSource').disabled")
-        self.addCleanup(self.diagnostics)
 
     def diagnostics(self):
         output = os.environ.get('SPOKEN_BROWSER_SCREENSHOT')
         if output:
             path = Path(output).with_name(self._testMethodName + '.json'); path.parent.mkdir(parents=True, exist_ok=True)
+            self.failure_diagnostics.capture_page(self.page)
             path.write_text(json.dumps({'page_errors': self.errors, 'traffic': self.f.traffic,
-                'producer_requests': self.f.requests}, indent=2), encoding='utf-8')
+                'producer_requests': self.f.requests, 'failure_diagnostics': self.failure_diagnostics.snapshot()}, indent=2), encoding='utf-8')
 
     def posts(self): return [(path, body) for method, path, _, body in self.f.requests if method == 'POST']
 

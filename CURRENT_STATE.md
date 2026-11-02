@@ -1,5 +1,16 @@
 # Current state — 2 November 2026
 
+## 2026-11-02 — Browser lane failures retain transport evidence
+
+The private-creation and Spoken Brief fixtures now retain bounded failed request,
+HTTP status and server route/errno evidence, without request bodies or URL secrets.
+Existing page-error assertions, waits and installation behavior remain. Seven
+diagnostic checks pass; exact-head native browser qualification remains pending.
+[Original failures, distinct baselines and limits](docs/verification/2026-11-02-browser-lane-failures.md)
+preserve the unresolved Windows script-load cause and distinguish a separately
+reproduced narration state-read race from historical proof. Refs #1901;
+owner runtime, art and HUMAN_TODO acceptance remain open.
+
 ## 2026-11-02 — Deliberate source comparison survives child metadata saves
 
 Confirmed single-child detail saves now notify the existing comparison view to
