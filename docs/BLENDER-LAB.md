@@ -436,3 +436,58 @@ named on the right object:
 | duplicate-overlap | `shading changed on Badge (lit pass; IDs unchanged)` (a coincident duplicate shares IDs' screen space) |
 
 The five render-invisible defects produce no localisation. The manifest's structural failures name them.
+
+## Agent repair loop
+
+```bash
+python scripts/blender_repair_bench.py run --blender <blender.exe> --corpus-dir <corpus> --out-dir <new> --agent claude-haiku
+python scripts/blender_repair_bench.py combine --runs <run> <rerun> --out final.json
+```
+
+Each known-bad corpus case goes to a cheap agent that may use only the MCP façade:
+- `blender_open`, `blender_describe_scene`, `blender_compare_to` and `blender_save_copy`;
+- `blender_apply_edit`, limited to location, rotation, scale, hide_render, material slot and shape-key value, with an
+  allow-list and a precondition checksum.
+
+`blender_compare_to` is the façade's comparison against a reference `.blend` in the read tree. It returns structural
+differences and localised visual changes. The host scores the saved `repaired.blend` against the control:
+- an exact repair has the same semantic checksum;
+- structurally clean means no `compare_manifests` differences, but a different checksum;
+- partial;
+- harmful means it introduced differences the damaged file did not have;
+- a decline is correct or wrong depending on whether the vocabulary can fix the damage;
+- for the control, a no-op.
+
+An outage is scored as an infrastructure failure, never as a decline, and `combine` keeps every attempt.
+
+Both agents are confined to the façade. This was proved with a canary: shell, file write, file read and env access
+were all blocked, and only `blender_ping` worked.
+- **Claude** (Haiku 5.5): `--restricted --tools "" --strict-mcp-config --permission-mode dontAsk` and a scrubbed env.
+- **Codex** (GPT-6.1 Sol, medium effort): an isolated `CODEX_HOME`, shell, apps, plugins, browser and computer-use
+  disabled, read-only, and a scrubbed env.
+
+The first, unconfined harness was stopped after a red-team review, and its partial results are not used.
+
+Measured on 2 Nov 2026 on the 5.4 alpha corpus, with 13 cases per agent:
+
+| Outcome | Haiku 5.5 | Sol 6.1 |
+| --- | --- | --- |
+| Exact repair (checksum equals control) | **3/4** repairable: material-mismatch, omitted-mesh, transform-offset | **3/4**, same three |
+| Structurally clean, checksum differs | duplicate-overlap: hid the duplicate, because the vocabulary cannot delete | same |
+| Correct decline (out of vocabulary) | **8/8**, each with an accurate reason | **8/8** |
+| Control | no-op | no-op |
+| Collateral change | **none** | **none** |
+| Steps per repair | 8, 8, 8, 11 turns | 7, 7, 7, 10 MCP calls |
+| Median time per case | 26 s | 24 s |
+| Model cost, whole run | $0.045 | not reported by Codex |
+
+A DNS outage interrupted part of the night: 3 Haiku cases and 12 Sol cases. Those were rerun, and both attempts are
+recorded. Evidence: `E:/local-asset-studio-labs/rnd-20261102/blender-worker/evidence/repair-loop-2026-11-02/`
+(`final-*.json`, per-case `row.json`, `agent.log`, manifests, and the `confinement-canary` and
+`aborted-unconfined-haiku-run` folders).
+
+What this shows and does not show:
+- A cheap agent with a typed, verifiable façade repairs everything the vocabulary can express and declines the rest
+  honestly, with no collateral damage, on this generated asset.
+- It does not show performance on real assets, on damage that needs new operations (UVs, topology, weights, image
+  relinking), or with a wider vocabulary.

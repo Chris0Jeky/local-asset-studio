@@ -878,6 +878,7 @@ class Worker:
     def _out(self, value, suffix=None, directory=False):
         import os
         _need(isinstance(value, str) and value and "\0" not in value, "path must be a string")
+        _need(not value.startswith(("\\", "//", "/", "\\")) and ":" not in value, "path must be relative to the worker root")
         path = os.path.realpath(os.path.join(self.root, value))
         _need(os.path.commonpath([path, self.root]) == self.root and path != self.root, "path escapes the worker root")
         _need(not os.path.exists(path), "output path must be new")
@@ -1048,6 +1049,8 @@ CORPUS_DEFECTS = {
 def corpus_defect(kind):
     import bpy
     if kind not in CORPUS_DEFECTS: raise ValueError(f"Unknown corpus defect {kind}")
+    if kind == "material-mismatch":  # a real wrong-material bug leaves the right material in the file
+        for material in bpy.data.materials: material.use_fake_user = True
     if kind in SEEDED_DEFECTS: return seed_defect(kind)
     objects = bpy.data.objects
     if kind == "flipped-normals":

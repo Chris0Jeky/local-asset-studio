@@ -39,6 +39,10 @@ TOOLS = {
                                 "op": {"type": "string", "enum": ["location", "rotation_euler", "scale", "hide_render", "material", "shape_key"]},
                                 "value": {"description": "[x,y,z] | bool | {slot, material} | {key, value}"},
                                 "expect_checksum": {"type": "string"}}, ["object", "op", "value", "expect_checksum"])),
+    "blender_compare_to": ("Compare the open scene with a reference .blend under the read tree: semantic checksums, structural "
+                           "differences (phrased reference -> current; 'after the roundtrip' means 'in the current scene') and "
+                           "localised visual changes ('material A -> B on Mesh', 'object X is missing or hidden here').",
+                           OBJ({"reference": {"type": "string"}}, ["reference"])),
     "blender_reimport_validate": ("Export, reimport in a NEW Blender process and compare structure and renders (Asset Parity Sentinel).",
                                   OBJ({"out_dir": {"type": "string", "description": "a new plain folder name"}}, ["out_dir"])),
 }
@@ -58,11 +62,18 @@ class Facade:
 
     def call(self, name, args):
         command = name.removeprefix("blender_")
-        if command == "open":
-            blend = Path(str(args.get("blend", ""))).expanduser()
-            blend = (self.blend_root / blend if not blend.is_absolute() else blend).resolve()
-            lab.require(blend.is_relative_to(self.blend_root), "blend must be inside the configured read tree")
-            args = {**args, "blend": str(blend)}
+        for key in ("blend", "reference"):  # every .blend the client names must sit inside the read tree
+            if key not in args: continue
+            given = str(args[key])
+            # Refuse absolute, drive, UNC and parent paths before touching the filesystem (a UNC resolve sends SMB/NTLM).
+            parts = given.replace("\\", "/").split("/")
+            lab.require(given and not given.startswith(("\\", "/")) and ":" not in given and ".." not in parts,
+                        f"{key} must be a relative path inside the configured read tree")
+            blend = (self.blend_root / given).resolve()
+            lab.require(blend.is_relative_to(self.blend_root) and blend.suffix.lower() == ".blend" and blend.is_file(),
+                        f"{key} must be an existing .blend inside the configured read tree")
+            args = {**args, key: str(blend)}
+        if command == "compare_to": return self._worker().compare_to(**args)
         if command == "reimport_validate": return self._worker().reimport_validate(**args)
         return self._worker().call(command, **args)
 
