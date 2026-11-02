@@ -4,6 +4,8 @@ Only the executable path supplied by the caller is started, with a literal argum
 The Blender half lives in `blender_lab_bpy.py`; nothing caller-supplied is ever executed as Python.
 
     python scripts/blender_lab.py probe --blender <blender.exe> --out <probe.json>
+    python scripts/blender_lab.py make-fixture --blender <blender.exe> --out-dir <new-dir>
+    python scripts/blender_lab.py manifest --blender <blender.exe> --blend <file.blend> --out <manifest.json>
 """
 from __future__ import annotations
 
@@ -18,6 +20,9 @@ import time
 
 HERE = Path(__file__).resolve().parent
 BPY_SCRIPT = HERE / "blender_lab_bpy.py"
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
+import blender_lab_bpy as bpy_side  # pure helpers only; bpy is imported lazily inside Blender
 
 
 class BlenderLabError(ValueError):
@@ -81,14 +86,59 @@ def probe(blender_path, out_path, timeout=300):
     return result
 
 
+def manifest(blender_path, blend_path, out_path, timeout=300):
+    """Describe a .blend without saving it; the source bytes must be identical afterwards."""
+    exe = executable(blender_path)
+    blend = Path(blend_path).expanduser().resolve()
+    require(blend.is_file() and blend.suffix.lower() == ".blend", "blend must be an existing .blend file")
+    out = Path(out_path).expanduser().resolve()
+    require(not out.exists(), "out must be a new file")
+    before = file_sha(blend)
+    seconds = run(exe, ["manifest", "--blend", blend, "--out", out], out.with_name(out.stem + ".log.json"), timeout)
+    require(file_sha(blend) == before, "Source .blend changed during the manifest run")
+    result = json.loads(out.read_text(encoding="utf-8"))
+    require(result.get("kind") == "scene-manifest", "Manifest output has the wrong kind")
+    require(bpy_side.semantic_checksum(result) == result.get("semantic_checksum"), "Manifest checksum does not verify")
+    result["source"]["sha256"] = before
+    result["runtime"] = {"executable": exe.as_posix(), "wall_seconds": seconds}
+    out.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
+    return result
+
+
+def make_fixture(blender_path, out_dir, timeout=300):
+    """Generate the lab test asset (never a real character) into a new directory."""
+    exe = executable(blender_path)
+    target = Path(out_dir).expanduser().resolve()
+    require(not target.exists(), "out_dir must be new")
+    target.mkdir(parents=True)
+    run(exe, ["make-fixture", "--out-dir", target, "--out", target / "fixture.json"], target / "fixture.log.json", timeout)
+    blend = target / "lab-asset.blend"
+    require(blend.is_file() and (target / "lab-checker.png").is_file(), "Fixture generation left no asset")
+    return blend
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     probe_parser = commands.add_parser("probe")
     probe_parser.add_argument("--blender", required=True)
     probe_parser.add_argument("--out", required=True)
+    manifest_parser = commands.add_parser("manifest")
+    manifest_parser.add_argument("--blender", required=True)
+    manifest_parser.add_argument("--blend", required=True)
+    manifest_parser.add_argument("--out", required=True)
+    fixture_parser = commands.add_parser("make-fixture")
+    fixture_parser.add_argument("--blender", required=True)
+    fixture_parser.add_argument("--out-dir", required=True)
     args = parser.parse_args(argv)
     try:
+        if args.command == "manifest":
+            result = manifest(args.blender, args.blend, args.out)
+            print(json.dumps({"out": args.out, "semantic_checksum": result["semantic_checksum"], "counts": result["counts"]}))
+            return 0
+        if args.command == "make-fixture":
+            print(json.dumps({"blend": str(make_fixture(args.blender, args.out_dir))}))
+            return 0
         result = probe(args.blender, args.out)
         print(json.dumps({"out": args.out, "blender": result["blender"]["version_string"],
                           "failed_features": sorted(k for k, v in result["features"].items() if not v["ok"])}))

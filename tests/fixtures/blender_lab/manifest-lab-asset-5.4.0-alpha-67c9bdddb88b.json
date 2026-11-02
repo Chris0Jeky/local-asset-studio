@@ -1,0 +1,678 @@
+{
+  "actions": [
+    {
+      "fcurves": [
+        {
+          "data_path": "pose.bones[\"Spine\"].rotation_euler",
+          "index": 0,
+          "interpolation": [
+            "BEZIER"
+          ],
+          "keys": 3,
+          "keys_hash": "dc3244a15ee5203ff39b1c1c7ba2013b90dbc4b67f6e16e18356498a51c4b4b6",
+          "slot": "OBRig"
+        },
+        {
+          "data_path": "pose.bones[\"Spine\"].rotation_euler",
+          "index": 1,
+          "interpolation": [
+            "BEZIER"
+          ],
+          "keys": 3,
+          "keys_hash": "cd1c9eb9886557f6909dc67c766f378adbe60e839908461769bccc0c2d116fb7",
+          "slot": "OBRig"
+        },
+        {
+          "data_path": "pose.bones[\"Spine\"].rotation_euler",
+          "index": 2,
+          "interpolation": [
+            "BEZIER"
+          ],
+          "keys": 3,
+          "keys_hash": "dc3244a15ee5203ff39b1c1c7ba2013b90dbc4b67f6e16e18356498a51c4b4b6",
+          "slot": "OBRig"
+        }
+      ],
+      "frame_range": [
+        1.0,
+        24.0
+      ],
+      "name": "LabSway",
+      "slots": [
+        {
+          "identifier": "OBRig",
+          "target_id_type": "OBJECT"
+        }
+      ]
+    }
+  ],
+  "armatures": [
+    {
+      "bone_count": 3,
+      "bones": [
+        {
+          "connected": true,
+          "deform": true,
+          "depth": 2,
+          "head": [
+            0.0,
+            0.0,
+            1.5
+          ],
+          "name": "Neck",
+          "parent": "Spine",
+          "tail": [
+            0.0,
+            0.0,
+            1.85
+          ]
+        },
+        {
+          "connected": false,
+          "deform": true,
+          "depth": 0,
+          "head": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "name": "Root",
+          "parent": null,
+          "tail": [
+            0.0,
+            0.0,
+            0.75
+          ]
+        },
+        {
+          "connected": true,
+          "deform": true,
+          "depth": 1,
+          "head": [
+            0.0,
+            0.0,
+            0.75
+          ],
+          "name": "Spine",
+          "parent": "Root",
+          "tail": [
+            0.0,
+            0.0,
+            1.5
+          ]
+        }
+      ],
+      "max_depth": 2,
+      "name": "Rig",
+      "roots": [
+        "Root"
+      ]
+    }
+  ],
+  "blender": {
+    "build_hash": "67c9bdddb88b",
+    "version_string": "5.4.0 Alpha"
+  },
+  "cameras": [],
+  "collections": [],
+  "counts": {
+    "actions": 1,
+    "armatures": 1,
+    "images": 1,
+    "materials": 3,
+    "meshes": 3,
+    "missing_images": 0,
+    "objects": 4,
+    "triangles": 600
+  },
+  "images": [
+    {
+      "colorspace": "sRGB",
+      "file": "lab-checker.png",
+      "missing": false,
+      "name": "lab-checker",
+      "packed": false,
+      "size": [
+        64,
+        64
+      ],
+      "source": "FILE"
+    }
+  ],
+  "kind": "scene-manifest",
+  "lights": [],
+  "materials": [
+    {
+      "diffuse_color": [
+        0.1,
+        0.7,
+        0.2,
+        1.0
+      ],
+      "images": [],
+      "name": "BadgeGreen",
+      "node_types": {
+        "ShaderNodeBsdfPrincipled": 1,
+        "ShaderNodeOutputMaterial": 1
+      },
+      "principled": {
+        "alpha": 1.0,
+        "base_color": [
+          0.1,
+          0.7,
+          0.2,
+          1.0
+        ],
+        "metallic": 0.0,
+        "roughness": 0.6
+      }
+    },
+    {
+      "diffuse_color": [
+        0.8,
+        0.8,
+        0.8,
+        1.0
+      ],
+      "images": [
+        "lab-checker"
+      ],
+      "name": "BodyTextured",
+      "node_types": {
+        "ShaderNodeBsdfPrincipled": 1,
+        "ShaderNodeOutputMaterial": 1,
+        "ShaderNodeTexImage": 1
+      },
+      "principled": {
+        "alpha": 1.0,
+        "base_color": "linked:ShaderNodeTexImage",
+        "metallic": 0.0,
+        "roughness": 0.6
+      }
+    },
+    {
+      "diffuse_color": [
+        0.8,
+        0.08,
+        0.06,
+        1.0
+      ],
+      "images": [],
+      "name": "HeadRed",
+      "node_types": {
+        "ShaderNodeBsdfPrincipled": 1,
+        "ShaderNodeOutputMaterial": 1
+      },
+      "principled": {
+        "alpha": 1.0,
+        "base_color": [
+          0.8,
+          0.08,
+          0.06,
+          1.0
+        ],
+        "metallic": 0.0,
+        "roughness": 0.6
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "bbox": {
+        "max": [
+          0.14,
+          0.14,
+          0.03
+        ],
+        "min": [
+          -0.14,
+          -0.14,
+          -0.03
+        ]
+      },
+      "color_attributes": [],
+      "edges": 48,
+      "faces": 18,
+      "geometry_hash": "6e79b829a43b98e4b20b891befdc092d326333609bc3c26de1472fd8f6a32af2",
+      "loops": 96,
+      "material_face_counts": [
+        18
+      ],
+      "name": "Badge",
+      "shape_keys": null,
+      "triangles": 60,
+      "uv_maps": [
+        "UVMap"
+      ],
+      "vertices": 32
+    },
+    {
+      "bbox": {
+        "max": [
+          0.3,
+          0.175,
+          0.375
+        ],
+        "min": [
+          -0.3,
+          -0.175,
+          -0.375
+        ]
+      },
+      "color_attributes": [],
+      "edges": 12,
+      "faces": 6,
+      "geometry_hash": "094eb68e1607c3f8c90935c1d16e5c33b79fd8ecb8aae142b3bccd4d1d45c3bc",
+      "loops": 24,
+      "material_face_counts": [
+        6
+      ],
+      "name": "Body",
+      "shape_keys": null,
+      "triangles": 12,
+      "uv_maps": [
+        "UVMap"
+      ],
+      "vertices": 8
+    },
+    {
+      "bbox": {
+        "max": [
+          0.32,
+          0.32,
+          0.32
+        ],
+        "min": [
+          -0.32,
+          -0.32,
+          -0.32
+        ]
+      },
+      "color_attributes": [],
+      "edges": 552,
+      "faces": 288,
+      "geometry_hash": "b304fc7ee84c9aa91a1d1864920fa016d04f116510d8a5c6ba6e744555160048",
+      "loops": 1104,
+      "material_face_counts": [
+        288
+      ],
+      "name": "Head",
+      "shape_keys": {
+        "keys": [
+          {
+            "data_hash": "28cd5e2b64370034f8550c99be7bfcb328361b75f4da9bceec39811c162532b4",
+            "mute": false,
+            "name": "Basis",
+            "range": [
+              0.0,
+              1.0
+            ],
+            "relative_key": "Basis",
+            "value": 0.0,
+            "vertex_group": null
+          },
+          {
+            "data_hash": "3f39c87ed14f3c55aa11162943d358f6a8c25d33e5c1605fc13f243962089b13",
+            "mute": false,
+            "name": "Squash",
+            "range": [
+              0.0,
+              1.0
+            ],
+            "relative_key": "Basis",
+            "value": 0.0,
+            "vertex_group": null
+          }
+        ],
+        "reference": "Basis",
+        "use_relative": true
+      },
+      "triangles": 528,
+      "uv_maps": [],
+      "vertices": 266
+    }
+  ],
+  "objects": [
+    {
+      "animation": null,
+      "collections": [
+        "Scene Collection"
+      ],
+      "constraints": [],
+      "data": "Badge",
+      "hide_render": false,
+      "material_slots": [
+        {
+          "link": "DATA",
+          "material": "BadgeGreen"
+        }
+      ],
+      "matrix_world": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.22
+        ],
+        [
+          0.0,
+          0.0,
+          -1.0,
+          -0.37
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          1.05
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "object": "Rig",
+          "show_render": true,
+          "show_viewport": true,
+          "type": "ARMATURE"
+        }
+      ],
+      "name": "Badge",
+      "parent": "Rig",
+      "parent_bone": null,
+      "parent_type": "OBJECT",
+      "type": "MESH",
+      "vertex_groups": [
+        "Spine"
+      ],
+      "vertex_weights": {
+        "groups": {
+          "Spine": {
+            "max": 1.0,
+            "vertices": 32
+          }
+        },
+        "influence_histogram": {
+          "1": 32
+        },
+        "max_influences": 1,
+        "unnormalised_vertices": 0,
+        "unweighted_vertices": 0
+      },
+      "visible": true,
+      "world_bbox": {
+        "max": [
+          0.36,
+          -0.34,
+          1.19
+        ],
+        "min": [
+          0.08,
+          -0.4,
+          0.91
+        ]
+      }
+    },
+    {
+      "animation": null,
+      "collections": [
+        "Scene Collection"
+      ],
+      "constraints": [],
+      "data": "Body",
+      "hide_render": false,
+      "material_slots": [
+        {
+          "link": "DATA",
+          "material": "BodyTextured"
+        }
+      ],
+      "matrix_world": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.75
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "object": "Rig",
+          "show_render": true,
+          "show_viewport": true,
+          "type": "ARMATURE"
+        }
+      ],
+      "name": "Body",
+      "parent": "Rig",
+      "parent_bone": null,
+      "parent_type": "OBJECT",
+      "type": "MESH",
+      "vertex_groups": [
+        "Root",
+        "Spine"
+      ],
+      "vertex_weights": {
+        "groups": {
+          "Root": {
+            "max": 0.75,
+            "vertices": 8
+          },
+          "Spine": {
+            "max": 0.75,
+            "vertices": 8
+          }
+        },
+        "influence_histogram": {
+          "2": 8
+        },
+        "max_influences": 2,
+        "unnormalised_vertices": 0,
+        "unweighted_vertices": 0
+      },
+      "visible": true,
+      "world_bbox": {
+        "max": [
+          0.3,
+          0.175,
+          1.125
+        ],
+        "min": [
+          -0.3,
+          -0.175,
+          0.375
+        ]
+      }
+    },
+    {
+      "animation": null,
+      "collections": [
+        "Scene Collection"
+      ],
+      "constraints": [],
+      "data": "Head",
+      "hide_render": false,
+      "material_slots": [
+        {
+          "link": "DATA",
+          "material": "HeadRed"
+        }
+      ],
+      "matrix_world": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          1.85
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "modifiers": [
+        {
+          "name": "Armature",
+          "object": "Rig",
+          "show_render": true,
+          "show_viewport": true,
+          "type": "ARMATURE"
+        }
+      ],
+      "name": "Head",
+      "parent": "Rig",
+      "parent_bone": null,
+      "parent_type": "OBJECT",
+      "type": "MESH",
+      "vertex_groups": [
+        "Neck"
+      ],
+      "vertex_weights": {
+        "groups": {
+          "Neck": {
+            "max": 1.0,
+            "vertices": 266
+          }
+        },
+        "influence_histogram": {
+          "1": 266
+        },
+        "max_influences": 1,
+        "unnormalised_vertices": 0,
+        "unweighted_vertices": 0
+      },
+      "visible": true,
+      "world_bbox": {
+        "max": [
+          0.32,
+          0.32,
+          2.17
+        ],
+        "min": [
+          -0.32,
+          -0.32,
+          1.53
+        ]
+      }
+    },
+    {
+      "animation": {
+        "action": "LabSway",
+        "slot": "OBRig"
+      },
+      "collections": [
+        "Scene Collection"
+      ],
+      "constraints": [],
+      "data": "Rig",
+      "hide_render": false,
+      "material_slots": [],
+      "matrix_world": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "modifiers": [],
+      "name": "Rig",
+      "parent": null,
+      "parent_bone": null,
+      "parent_type": "OBJECT",
+      "type": "ARMATURE",
+      "vertex_groups": [],
+      "vertex_weights": null,
+      "visible": true,
+      "world_bbox": {
+        "max": [
+          0.0,
+          0.0,
+          1.85
+        ],
+        "min": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    }
+  ],
+  "runtime": {
+    "executable": "C:/AI/blender-5.4.0-alpha+main.67c9bdddb88b-windows.amd64-release/blender.exe",
+    "wall_seconds": 0.653
+  },
+  "scene": {
+    "camera": null,
+    "fps": 24.0,
+    "frame_range": [
+      1,
+      24
+    ],
+    "name": "Scene",
+    "unit_scale": 1.0,
+    "unit_system": "METRIC"
+  },
+  "schema": "las.blender-lab.v1",
+  "semantic_checksum": "4c73caf97087a941b9112b511c6eecf89aa2d623509ba4194f27be45d10885b2",
+  "source": {
+    "file": "lab-asset.blend",
+    "sha256": "f928ff44b78ab2af573af86ef48460d6122e5f038ec217436bd0835619bafd75"
+  }
+}
