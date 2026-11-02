@@ -10,7 +10,7 @@ sampled peak of dedicated VRAM over the pre-run baseline (Windows `GPU Adapter M
 GPU must be otherwise idle), the sha256 of every output's decoded pixels and the timed repeats' drift. Frames go to a
 per-run folder; a run counts only if Blender printed its result and exited 0 within `--timeout`. `--table bench.jsonl` prints a Markdown summary. Cycles devices: CPU, HIP (HIP RT off), HIPRT (HIP RT on).
 """
-import argparse, hashlib, json, os, statistics, subprocess, sys, threading, time
+import argparse, hashlib, json, os, statistics, subprocess, sys, tempfile, threading, time
 from pathlib import Path
 
 INNER_FLAG = "--blender-bench-inner"
@@ -132,24 +132,31 @@ def summarise(res, returncode, lines, out_dir, warmup):
 
 def kill_tree(proc):
     import psutil
-    try:
-        for c in psutil.Process(proc.pid).children(recursive=True): c.kill()
-    except Exception: pass
+    try: children = psutil.Process(proc.pid).children(recursive=True)
+    except Exception: children = []
+    for c in children:  # one child exiting first must not spare the rest
+        try: c.kill()
+        except Exception: pass
     proc.kill()
 
 
 def run(a):
-    stamp = time.strftime("%Y%m%d-%H%M%S")  # every run gets its own frames, so earlier records stay reproducible
+    stamp = time.strftime("%Y%m%d-%H%M%S"); root = Path(a.out).with_suffix(""); root.mkdir(parents=True, exist_ok=True)
+    # Every run gets its own, atomically created frame folder, so earlier records stay reproducible.
+    run_dir = tempfile.mkdtemp(prefix=f"{Path(a.blender).parent.name}-{a.engine}-{a.device or a.gpu_backend}-{stamp}-", dir=root)
     cfg = {"engine": a.engine, "device": a.device, "samples": a.samples or (128 if a.engine == "cycles" else 64),
            "res": [a.width, a.height], "warmup": a.warmup, "repeats": a.repeats, "blend": a.blend,
-           "out_dir": str(Path(a.out).with_suffix("") / f"{Path(a.blender).parent.name}-{a.engine}-{a.device or a.gpu_backend}-{stamp}")}
+           "out_dir": run_dir}
     argv = [a.blender, "--factory-startup", "-b"] + (["--gpu-backend", a.gpu_backend] if a.gpu_backend else []) + \
            ["--python", __file__, "--", INNER_FLAG, json.dumps(cfg)]
     base = vram_bytes(); t = time.perf_counter()
     proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, text=True)
     peaks = Peaks(proc.pid)
     try: out, _ = proc.communicate(timeout=a.timeout); timed_out = False
-    except subprocess.TimeoutExpired: kill_tree(proc); out, _ = proc.communicate(); timed_out = True
+    except subprocess.TimeoutExpired:
+        kill_tree(proc); timed_out = True
+        try: out, _ = proc.communicate(timeout=30)
+        except subprocess.TimeoutExpired: out = ""  # a grandchild still holds the pipe; give up on the log tail
     peaks.close(); lines = out.splitlines(keepends=True)
     rec = {"blender_exe": a.blender, "engine": a.engine, "device": a.device, "gpu_backend": a.gpu_backend, "config": cfg,
            "exit_code": proc.returncode, "process_wall_s": round(time.perf_counter() - t, 2),
