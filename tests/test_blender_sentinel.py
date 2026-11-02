@@ -54,6 +54,21 @@ class StructuralTests(unittest.TestCase):
         self.assertEqual(result["expected_exclusions"], ["Badge (MESH, hidden) is not exported by the LAS settings"])
         self.assertIn("Head: SUBSURF modifier 'Smooth' is not applied by the LAS export settings", result["format_losses"])
 
+    def test_damaged_shape_key_deformation_fails(self):
+        roundtrip = copy.deepcopy(MANIFEST)
+        head = next(m for m in roundtrip["meshes"] if m["name"] == "Head")
+        head["shape_keys"]["keys"][1]["delta_max"] /= 2
+        self.assertEqual(sentinel.compare_manifests(MANIFEST, roundtrip)["failures"],
+                         ["Head: shape key Squash deformation changed (max delta 0.096 -> 0.048)"])
+
+    def test_truncated_or_altered_animation_fails(self):
+        truncated = copy.deepcopy(MANIFEST)
+        truncated["pose_samples"]["Rig"]["frames"] = [1, 4, 6, 9, 12]
+        self.assertIn("armature Rig: sampled frames", sentinel.compare_manifests(MANIFEST, truncated)["failures"][0])
+        moved = copy.deepcopy(MANIFEST)
+        moved["pose_samples"]["Rig"]["bones"]["Neck"][2][0] += 0.01
+        self.assertEqual(sentinel.compare_manifests(MANIFEST, moved)["failures"], ["armature Rig: bone Neck moved at frame 12"])
+
     def test_unexpected_mesh_and_missing_source_image(self):
         source, roundtrip = copy.deepcopy(MANIFEST), copy.deepcopy(MANIFEST)
         source["images"][0]["missing"] = True
@@ -125,7 +140,9 @@ class LiveSentinelTests(unittest.TestCase):
             for defect in sentinel.lab.bpy_side.SEEDED_DEFECTS:
                 result = sentinel.sentinel(LIVE_BLENDER, blend, Path(tmp) / defect, defect)
                 self.assertFalse(result["pass"], defect)
-                self.assertTrue(result["structural_failures"] and result["visual_warnings"], defect)
+                self.assertTrue(result["structural_failures"], defect)
+                # Animation and shape-key damage are invisible at the evidence frame; only the manifest catches them.
+                self.assertEqual(bool(result["visual_warnings"]), defect in ("missing-texture", "omitted-mesh", "material-mismatch"), defect)
 
 
 if __name__ == "__main__":

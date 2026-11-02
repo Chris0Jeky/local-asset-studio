@@ -99,6 +99,13 @@ Measured on 2 Nov 2026 with the generated lab asset, CPU only, about 7 s per run
 | A missing texture | fail: texture lost, base colour unlinked, lit 5.6–10.1 % | same |
 | B omitted mesh (`Body` hidden, dropped by `use_renderable`) | fail: mesh missing, 16 visual warnings attributed `Body` → none | same |
 | C material mismatch (`Badge` gets `BodyTextured`) | fail: slot changed, material_id boxes attributed `BadgeGreen` → `BodyTextured` | same |
+| D truncated animation (scene end halved, so `export_frame_range` clips the action) | fail: sampled frames `[1, 7, 12, 18, 24]` → `[1, 4, 6, 9, 12]`, no visual warning | same |
+| E shape-key damage (deltas halved) | fail: `Squash` max delta 0.096 → 0.048, no visual warning | same |
+
+D and E pass every render. Only the manifest catches them. It records `pose_samples` (world-space bone heads at 5
+frames over each action's range; no tails, because glTF stores none) and split-invariant shape-key
+`delta_max`/`delta_bbox` (they survive the vertex duplication of a roundtrip). The ortho scale comes from the bounding
+sphere, so diagonal views are not cropped.
 
 The importer adds a hidden `Icosphere` bone-shape object in a `glTF_not_exported` collection. The sentinel ignores it
 because it is not visible. Thresholds are in `blender_sentinel.THRESHOLDS`. They come from this control, so a

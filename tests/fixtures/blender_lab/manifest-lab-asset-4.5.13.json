@@ -301,6 +301,19 @@
         "keys": [
           {
             "data_hash": "28cd5e2b64370034f8550c99be7bfcb328361b75f4da9bceec39811c162532b4",
+            "delta_bbox": {
+              "max": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "min": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "delta_max": 0.0,
             "mute": false,
             "name": "Basis",
             "range": [
@@ -313,6 +326,19 @@
           },
           {
             "data_hash": "3f39c87ed14f3c55aa11162943d358f6a8c25d33e5c1605fc13f243962089b13",
+            "delta_bbox": {
+              "max": [
+                0.0,
+                0.0,
+                0.096
+              ],
+              "min": [
+                0.0,
+                0.0,
+                -0.096
+              ]
+            },
+            "delta_max": 0.096,
             "mute": false,
             "name": "Squash",
             "range": [
@@ -654,9 +680,103 @@
       }
     }
   ],
+  "pose_samples": {
+    "Rig": {
+      "bones": {
+        "Neck": [
+          [
+            0.0,
+            0.0,
+            1.5
+          ],
+          [
+            0.0,
+            0.0,
+            1.5
+          ],
+          [
+            0.0,
+            0.0,
+            1.5
+          ],
+          [
+            0.0,
+            0.0,
+            1.5
+          ],
+          [
+            0.0,
+            0.0,
+            1.5
+          ]
+        ],
+        "Root": [
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0
+          ]
+        ],
+        "Spine": [
+          [
+            0.0,
+            0.0,
+            0.75
+          ],
+          [
+            0.0,
+            0.0,
+            0.75
+          ],
+          [
+            0.0,
+            0.0,
+            0.75
+          ],
+          [
+            0.0,
+            0.0,
+            0.75
+          ],
+          [
+            0.0,
+            0.0,
+            0.75
+          ]
+        ]
+      },
+      "frames": [
+        1,
+        7,
+        12,
+        18,
+        24
+      ]
+    }
+  },
   "runtime": {
     "executable": "C:/AI/blender-4.5.13-windows-x64/blender.exe",
-    "wall_seconds": 0.574
+    "wall_seconds": 0.594
   },
   "scene": {
     "camera": null,
@@ -670,9 +790,9 @@
     "unit_system": "METRIC"
   },
   "schema": "las.blender-lab.v1",
-  "semantic_checksum": "4c73caf97087a941b9112b511c6eecf89aa2d623509ba4194f27be45d10885b2",
+  "semantic_checksum": "4b3bb1af8cfd6b6531651270df8a8ab5fdfcc1b096d160730fc146b046209f98",
   "source": {
     "file": "lab-asset.blend",
-    "sha256": "a043c3075c007f185085214028da061add9a1aba20b0a8623137f898653fdc65"
+    "sha256": "47211f97441242697f25821bfde3b5bacbb5e9b1d1dbec5a7bf7282026bb8219"
   }
 }

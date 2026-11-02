@@ -293,10 +293,18 @@ def _mesh(mesh):
              "shape_keys": None}
     keys = mesh.shape_keys
     if keys is not None:
+        reference = _foreach(keys.reference_key.data, "co", 3, np.float32).reshape(-1, 3)
+
+        def deltas(block):  # split-invariant summary: survives the vertex duplication a GLB roundtrip introduces
+            delta = _foreach(block.data, "co", 3, np.float32).reshape(-1, 3) - reference
+            return {"delta_max": rnd(np.linalg.norm(delta, axis=1).max()) if len(delta) else 0.0,
+                    "delta_bbox": {"min": vec(delta.min(0)), "max": vec(delta.max(0))} if len(delta) else None}
+
         entry["shape_keys"] = {"use_relative": keys.use_relative, "reference": keys.reference_key.name, "keys": [
             {"name": block.name, "relative_key": block.relative_key.name, "value": rnd(block.value), "mute": block.mute,
              "vertex_group": block.vertex_group or None, "range": [rnd(block.slider_min), rnd(block.slider_max)],
-             "data_hash": _quantised_hash(_foreach(block.data, "co", 3, np.float32))} for block in keys.key_blocks]}
+             "data_hash": _quantised_hash(_foreach(block.data, "co", 3, np.float32)), **deltas(block)}
+            for block in keys.key_blocks]}
     return entry
 
 
@@ -374,6 +382,25 @@ def _action(action):
             "fcurves": sorted(curves, key=lambda c: (c["slot"] or "", c["data_path"], c["index"]))}
 
 
+def _pose_samples(scene, count=5):
+    """World-space bone heads at evenly spaced frames over the action's range (rest frame without an action):
+    evaluated motion that survives the curve resampling and channel renames of a GLB roundtrip, so lost or truncated
+    animation shows. Tails are left out because glTF stores none and the importer guesses bone length."""
+    samples, current = {}, scene.frame_current
+    for obj in sorted((o for o in scene.objects if o.type == "ARMATURE"), key=lambda o: o.name):
+        action = obj.animation_data.action if obj.animation_data else None
+        low, high = action.frame_range if action is not None else (scene.frame_start, scene.frame_start)
+        frames = sorted({int(round(low + (high - low) * i / (count - 1))) for i in range(count)})
+        bones = {bone.name: [] for bone in obj.pose.bones}
+        for frame in frames:
+            scene.frame_set(frame)
+            for bone in obj.pose.bones:
+                bones[bone.name].append(vec(obj.matrix_world @ bone.head))
+        samples[obj.name] = {"frames": frames, "bones": bones}
+    scene.frame_set(current)
+    return samples
+
+
 def manifest(source_label=None):
     """Task-oriented summary of the open scene for planning and parity; not a serialisation of Blender."""
     import bpy
@@ -398,6 +425,7 @@ def manifest(source_label=None):
                            for c in data.cameras if c.users), key=lambda c: c["name"]),
         "lights": sorted(({"name": l.name, "type": l.type, "energy": rnd(l.energy), "color": vec(l.color)}
                           for l in data.lights if l.users), key=lambda l: l["name"]),
+        "pose_samples": _pose_samples(scene),
     }
     result["counts"] = {key: len(result[key]) for key in ("objects", "meshes", "materials", "images", "armatures", "actions")}
     result["counts"]["triangles"] = sum(m["triangles"] for m in result["meshes"])
@@ -511,7 +539,7 @@ PASSES = ("lit", "clay", "object_id", "material_id")
 LAS_GLTF_SETTINGS = {"export_format": "GLB", "export_materials": "EXPORT", "export_cameras": False, "export_lights": False,
                      "export_animations": True, "export_frame_range": True, "export_force_sampling": True,
                      "use_renderable": True}
-SEEDED_DEFECTS = ("missing-texture", "omitted-mesh", "material-mismatch")
+SEEDED_DEFECTS = ("missing-texture", "omitted-mesh", "material-mismatch", "truncated-animation", "shape-key-damage")
 
 
 def id_colour(name):
@@ -537,7 +565,9 @@ def camera_spec(scene, view_layer):
     if not points: raise RuntimeError("No visible mesh to frame")
     low = [min(p[i] for p in points) for i in range(3)]
     high = [max(p[i] for p in points) for i in range(3)]
-    return {"target": vec((a + b) / 2 for a, b in zip(low, high)), "ortho_scale": rnd(max(b - a for a, b in zip(low, high)) * 1.25),
+    centre = Vector([(a + b) / 2 for a, b in zip(low, high)])
+    radius = max((p - centre).length for p in points)  # a bounding sphere frames every view direction uncropped
+    return {"target": vec(centre), "ortho_scale": rnd(radius * 2.1),
             "views": VIEWS, "frame": scene.frame_start}
 
 
@@ -629,6 +659,15 @@ def seed_defect(kind):
         image.reload()
         return {"kind": kind, "image": image.name}
     meshes = sorted(_evidence_meshes(scene, view_layer), key=lambda o: (len(o.data.polygons), o.name))
+    if kind == "truncated-animation":  # export_frame_range=True then clips the action to the scene range
+        action = sorted((a for a in bpy.data.actions if a.users), key=lambda a: a.name)[0]
+        scene.frame_end = int((action.frame_range[0] + action.frame_range[1]) // 2)
+        return {"kind": kind, "action": action.name, "scene_frame_end": scene.frame_end}
+    if kind == "shape-key-damage":
+        mesh = sorted((m for m in bpy.data.meshes if m.users and m.shape_keys), key=lambda m: m.name)[0]
+        block = mesh.shape_keys.key_blocks[-1]
+        for point, base in zip(block.data, mesh.shape_keys.reference_key.data): point.co = base.co + (point.co - base.co) * 0.5
+        return {"kind": kind, "mesh": mesh.name, "key": block.name}
     if kind == "omitted-mesh":
         meshes[0].hide_render = True
         return {"kind": kind, "object": meshes[0].name}

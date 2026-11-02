@@ -32,6 +32,23 @@ TILE = 8
 PRINCIPLED_TOLERANCE = 2e-3
 
 
+SHAPE_TOLERANCE = 1e-3
+POSE_TOLERANCE = 1e-3
+
+
+def _flat(value, *keys):
+    """Numbers of a nested JSON value (optionally only some keys), in a stable order."""
+    if keys: value = [value.get(k) for k in keys]
+    if isinstance(value, dict): return [n for k in sorted(value) for n in _flat(value[k])]
+    if isinstance(value, list): return [n for item in value for n in _flat(item)]
+    return [] if value is None else [value]
+
+
+def _drift(a, b):
+    a, b = _flat(a), _flat(b)
+    return float("inf") if len(a) != len(b) else max((abs(x - y) for x, y in zip(a, b)), default=0.0)
+
+
 def _visible_meshes(manifest):
     return {o["name"]: o for o in manifest["objects"] if o["type"] == "MESH" and o["visible"] and not o["hide_render"]}
 
@@ -61,8 +78,12 @@ def compare_manifests(source, roundtrip):
         slots, rt_slots = [s["material"] for s in obj["material_slots"]], [s["material"] for s in other["material_slots"]]
         if slots != rt_slots: failures.append(f"{name}: materials {slots} -> {rt_slots}")
         used.update(m for m in slots if m)
-        keys = lambda mesh: [k["name"] for k in (mesh.get("shape_keys") or {"keys": []})["keys"]]
-        if keys(before) != keys(after): failures.append(f"{name}: shape keys {keys(before)} -> {keys(after)}")
+        keys = lambda mesh: {k["name"]: k for k in (mesh.get("shape_keys") or {"keys": []})["keys"]}
+        if list(keys(before)) != list(keys(after)): failures.append(f"{name}: shape keys {list(keys(before))} -> {list(keys(after))}")
+        for key_name, key in keys(before).items():
+            other_key = keys(after).get(key_name)
+            if other_key and _drift(_flat(key, "delta_max", "delta_bbox"), _flat(other_key, "delta_max", "delta_bbox")) > SHAPE_TOLERANCE:
+                failures.append(f"{name}: shape key {key_name} deformation changed (max delta {key.get('delta_max')} -> {other_key.get('delta_max')})")
         for modifier in obj["modifiers"]:
             if modifier["type"] != "ARMATURE":
                 losses.append(f"{name}: {modifier['type']} modifier {modifier['name']!r} is not applied by the LAS export settings")
@@ -92,6 +113,16 @@ def compare_manifests(source, roundtrip):
     for action in source["actions"]:
         if action["name"] not in rt_actions: failures.append(f"action {action['name']} is missing after the roundtrip")
         else: losses.append(f"action {action['name']}: keys are resampled per frame (export_force_sampling)")
+    rt_poses = roundtrip.get("pose_samples", {})
+    for name, sample in sorted(source.get("pose_samples", {}).items()):
+        other = rt_poses.get(name)
+        if other is None or other["frames"] != sample["frames"]:
+            failures.append(f"armature {name}: sampled frames {sample['frames']} -> {other and other['frames']}"); continue
+        for bone, track in sorted(sample["bones"].items()):
+            if bone not in other["bones"]: continue  # bone graph comparison already reported it
+            for frame, a, b in zip(sample["frames"], track, other["bones"][bone]):
+                if _drift(a, b) > POSE_TOLERANCE:
+                    failures.append(f"armature {name}: bone {bone} moved at frame {frame}"); break
     return {"failures": failures, "format_losses": losses, "expected_exclusions": exclusions}
 
 
