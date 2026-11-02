@@ -98,6 +98,25 @@ one level (see `BLENDER-BENCHMARK-2026-11-02.md`), and denoisers drift more.
   0.185–0.212, and it ranks the owner's 11–2 winner near the bottom.
 - **Neither is an identity critic for this criterion.**
 
+### Second model: Gemma 4 12B QAT q4_0
+
+Gemma 4 12B (Apache-2.0; `google/gemma-4-12B-it-qat-q4_0-gguf`, sha256 `93567e57…`) ran the same sets as Qwen.
+
+| | Gemma 4 12B | Qwen3.8-27B |
+|---|---|---|
+| speed: `llama-bench` generation | **71.2 t/s on Vulkan**, 65.3 t/s on ROCm | 1.0 t/s on Vulkan, 7.9 t/s on ROCm |
+| dev set, reference-free: missing texture | 2/3 | 3/3 |
+| dev set, reference-free: asymmetry false alarms | 19 | 15 |
+| corpus with its control as reference: correct labels | 2/5 | 4/5 |
+| waifu-lab 2D images: clean images flagged | 2 of 9 | 6 of 9 |
+| Versus pairwise: agreement with the owner | 33/63 | 36/63 |
+| Versus pairwise: picks position A | 89 % | 33 % |
+| Versus pairwise: same answer in both orders | 15 of 63 pairs | 33 of 63 pairs |
+
+- **Speed:** the gap shows Qwen's slowness came from the GSQ-RCO quant, not the card.
+- **Verdict:** Gemma 4 12B is faster but a weaker namer, so Qwen stays the critic model. A standard Qwen K-quant would
+  probably give Qwen's judgement at Gemma's speed. It is untested: the download was not possible on that night's link.
+
 ## Runtime facts (this PC)
 
 - **llama.cpp b12032:** the Windows ROCm 10.0 zip lacks `hipblas.dll`. It ran after copying `hipblas.dll`,
