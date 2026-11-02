@@ -62,8 +62,41 @@ one level (see `BLENDER-BENCHMARK-2026-11-02.md`), and denoisers drift more.
   from one side only are normal; pose is not asymmetry.
 - **Stop list until v2 is measured:** asymmetry, omitted_mesh, flipped_normals, white_material and material_swap. Do
   not act on these labels reference-free.
-- **PENDING:** rubric v2 on the dev set, the held-out test set, the corpus model pass, and waifu-lab's real concept and
-  turnaround images. Each waits for a GPU slot.
+- See the follow-up runs below. The held-out test set has not been run: the dev results made a test-set run of the
+  reference-free labels pointless.
+
+### Model, follow-up runs (2 Nov, 07:29–07:46)
+
+- **Rubric v2, reference-free, dev set:** no improvement.
+  - "asymmetry" is the model's fallback whenever it is unsure: 15 false alarms, every clean sample included.
+  - The stop list stands. Usable reference-free: `missing_texture` (3/3) and `broken_weights` (precision 1.0, recall
+    0.67). `backside_hole` also held precision 1.0 but caught only 1 of 3.
+- **blender-worker corpus, with its control as reference:**
+  - The gate flags 7/7 render-visible defects and 0/5 invisible ones.
+  - The model then names 4 of the 5 mappable defects correctly: material mismatch, missing texture, missing UVs (as
+    missing texture), omitted mesh. It labelled the mesh hole as `material_swap`.
+  - On an asset it was never tuned on, the model is a useful *namer of a detected change*.
+- **The same corpus without a reference:**
+  - It flags all 13 entries, the clean control included.
+  - Labels are right on 1 of 5.
+  - It is not a detector.
+- **Real 2D images (waifu-lab concepts and turnaround sheets, reference-free, a 2D sheet rubric):**
+  - Both known defects were flagged, one of them under the wrong type.
+  - 6 of 9 clean images were also flagged.
+  - Not usable reference-free.
+
+### Identity against the owner's Versus presses
+
+- **Set:** contest "Anima reference methods", criterion "Most like the reference character". The owner made 68 presses:
+  63 decided, 5 draws. The reference is the adapter's showcase `pilot_girl.jpg`.
+- **Data access:** read from the Versus DB in read-only mode.
+- **Qwen pairwise** (reference + A + B, 640 px):
+  - 36/63 = 57.1 % agreement (one-sided p ≈ 0.16).
+  - Flipping the A/B order changed its answer on 30 of 63 pairs.
+  - On the 33 pairs where both orders agree, it matched the owner 20 times (60.6 %, p ≈ 0.11).
+- **CCIP** (`scripts/identity_score.py`): 27/63 = 42.9 %, also indistinguishable from chance. Its differences bunch at
+  0.185–0.212, and it ranks the owner's 11–2 winner near the bottom.
+- **Neither is an identity critic for this criterion.**
 
 ## Runtime facts (this PC)
 
@@ -77,8 +110,12 @@ one level (see `BLENDER-BENCHMARK-2026-11-02.md`), and denoisers drift more.
   - ROCm: prompt 114 t/s, generation 7.9 t/s.
   - Both are far below the card's bandwidth, which suggests this mixed-precision quant hits slow kernels.
   - In service, ROCm took about 30 s per 4-view sample (prompt 72 t/s, generation 4.5 t/s).
-- **Host memory:** a default (mmap) load held 19 GB of private host memory. `serve` now passes `--load-mode none` (this
-  build has no `--no-mmap`).
+- **Host memory:** under ROCm, the server holds about 19 GB of private host memory whether or not the weights are mmapped:
+  - default load: 19.1 GB private, 17.3 GB working set;
+  - `--load-mode none`: 19.2 GB private, 10.7 GB working set.
+
+  `serve` keeps `--load-mode none` (this build has no `--no-mmap`). Stop the server when not in use, because on a 32 GB
+  machine that footprint crowds out other work.
 - **Serving:**
 
 ```bash
