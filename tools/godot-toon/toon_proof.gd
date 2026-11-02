@@ -17,11 +17,14 @@ const VISEMES := {"A": {}, "B": {"ih": .35}, "C": {"ee": .6, "aa": .2}, "D": {"a
 		"F": {"ou": .85}, "G": {"ih": .3}, "H": {"aa": .45}, "X": {}}
 const VOICE_START := 0.5
 var cues := []
+var action := "idle"                                                         # -- --action=idle|wave|walk
 var mouth := {"aa": 0.0, "ih": 0.0, "ou": 0.0, "ee": 0.0, "oh": 0.0}
 var t := 0.0
 
 
 func _ready() -> void:
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--action="): action = a.trim_prefix("--action=")
 	root = load("res://model.glb").instantiate()
 	add_child(root)
 	skel = _find(root, func(n): return n is Skeleton3D)
@@ -34,7 +37,9 @@ func _ready() -> void:
 		var voice := AudioStreamPlayer.new(); voice.stream = load("res://voice.wav"); add_child(voice)
 		get_tree().create_timer(VOICE_START).timeout.connect(voice.play)
 	var cam := Camera3D.new(); add_child(cam)
-	if cues.is_empty():
+	if action == "walk":                                                    # side-on, so the stride reads
+		cam.position = Vector3(2.7, 1.0, 1.2); cam.look_at(Vector3(0, 0.85, 0)); cam.fov = 35
+	elif cues.is_empty():
 		cam.position = Vector3(0.9, 1.15, 2.6); cam.look_at(Vector3(0, 0.88, 0)); cam.fov = 35
 	else:                                                                   # talking portrait
 		cam.position = Vector3(0.32, 1.40, 1.05); cam.look_at(Vector3(0, 1.36, 0)); cam.fov = 28
@@ -156,25 +161,58 @@ func _apply_constraints() -> void:
 
 func _rot_global(bone: String, axis: Vector3, deg: float) -> void:
 	# Rotate a bone about a skeleton-space axis relative to its rest, written as a local pose rotation.
+	_rot_basis(bone, Basis(axis, deg_to_rad(deg)))
+
+
+func _rot_basis(bone: String, rot: Basis) -> void:
 	var i := skel.find_bone(bone); var p := skel.get_bone_parent(i)
-	var want := Basis(axis, deg_to_rad(deg)) * skel.get_bone_global_rest(i).basis
+	var want := rot * skel.get_bone_global_rest(i).basis
 	skel.set_bone_pose_rotation(i, (skel.get_bone_global_pose(p).basis.inverse() * want).get_rotation_quaternion())
+
+
+func _walk(t: float) -> void:
+	# In-place procedural walk, 1.1 s per cycle: thighs swing 22 deg, knees bend on the passing leg, feet stay level,
+	# arms counter-swing, hips bob and sway. Character faces +Z; a negative angle about +X swings a leg forward.
+	var ph := TAU * t / 1.1
+	for side in [["L", 0.0], ["R", PI]]:
+		var s: float = sin(ph + side[1]); var knee := 38.0 * maxf(0.0, -cos(ph + side[1])) + 4.0
+		var thigh := -22.0 * s
+		_rot_global("J_Bip_%s_UpperLeg" % side[0], Vector3.RIGHT, thigh)
+		_rot_global("J_Bip_%s_LowerLeg" % side[0], Vector3.RIGHT, thigh + knee)
+		_rot_global("J_Bip_%s_Foot" % side[0], Vector3.RIGHT, -4.0 * s)
+		var lower := 68.0 if side[0] == "L" else -68.0
+		_rot_basis("J_Bip_%s_UpperArm" % side[0], Basis(Vector3.RIGHT, deg_to_rad(18.0 * s)) * Basis(Vector3.FORWARD, deg_to_rad(lower)))
+	skel.set_bone_pose_position(skel.find_bone("J_Bip_C_Hips"), skel.get_bone_rest(skel.find_bone("J_Bip_C_Hips")).origin + Vector3(0, 0.015 * cos(2.0 * ph) - 0.01, 0))
+	_rot_global("J_Bip_C_Hips", Vector3.UP, 5.0 * sin(ph))
+	_rot_global("J_Bip_C_Spine", Vector3.UP, -6.0 * sin(ph))
+
+
+func _wave(t: float) -> void:
+	# Right arm up, forearm waving side to side in the frontal plane; left arm relaxed.
+	var up := smoothstep(0.3, 0.9, t)
+	_rot_global("J_Bip_R_UpperArm", Vector3.FORWARD, lerpf(-62.0, 48.0, up))
+	_rot_global("J_Bip_R_LowerArm", Vector3.FORWARD, lerpf(-62.0, 95.0 + 22.0 * sin(t * 9.0) * up, up))
+	_rot_global("J_Bip_R_Hand", Vector3.FORWARD, lerpf(-62.0, 95.0 + 30.0 * sin(t * 9.0 - 0.6) * up, up))
+	_rot_global("J_Bip_L_UpperArm", Vector3.FORWARD, 62.0 + 3.0 * sin(t * 1.3))
 
 
 func _process(delta: float) -> void:
 	t += delta
-	var turn := 28.0 * smoothstep(1.6, 2.1, t) * (1.0 - smoothstep(3.2, 3.7, t)) if cues.is_empty() else 0.0   # one quick turn and back
+	var turn := 28.0 * smoothstep(1.6, 2.1, t) * (1.0 - smoothstep(3.2, 3.7, t)) if cues.is_empty() and action == "idle" else 0.0   # one quick turn and back
 	root.rotation_degrees.y = turn
 	_rot_global("J_Bip_C_Hips", Vector3.UP, 3.0 * sin(t * 1.3))
 	_rot_global("J_Bip_C_Spine", Vector3.UP, 3.0 * sin(t * 1.3))
 	_rot_global("J_Bip_C_Chest", Vector3.RIGHT, 1.5 * sin(t * 2.4))
 	_rot_global("J_Bip_C_Neck", Vector3.UP, 3.0 * sin(t * 1.3))
 	_rot_global("J_Bip_C_Head", Vector3.FORWARD, 4.0 * sin(t * 0.9))
-	_rot_global("J_Bip_L_UpperArm", Vector3.FORWARD, 62.0 + 3.0 * sin(t * 1.3))
-	_rot_global("J_Bip_R_UpperArm", Vector3.FORWARD, -62.0 + 3.0 * sin(t * 1.3))
+	if action == "walk": _walk(t)
+	elif action == "wave": _wave(t)
+	else:
+		_rot_global("J_Bip_L_UpperArm", Vector3.FORWARD, 62.0 + 3.0 * sin(t * 1.3))
+		_rot_global("J_Bip_R_UpperArm", Vector3.FORWARD, -62.0 + 3.0 * sin(t * 1.3))
 	_apply_constraints()
 	var blink := 1.0 - smoothstep(0.0, 0.07, absf(fmod(t, 3.1) - 2.9))      # a 0.14 s blink every 3.1 s
-	var joy := smoothstep(1.4, 1.9, t) * (1.0 - smoothstep(3.6, 4.2, t)) if cues.is_empty() else 0.0   # smiles through the turn
+	var joy := (smoothstep(1.4, 1.9, t) * (1.0 - smoothstep(3.6, 4.2, t)) if action == "idle" else smoothstep(0.6, 1.0, t) if action == "wave" else 0.0) if cues.is_empty() else 0.0
 	_expr("happy", joy); _expr("blink", blink * (1.0 - joy))
 	if not cues.is_empty():
 		var shape := "X"

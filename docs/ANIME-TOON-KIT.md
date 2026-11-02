@@ -80,6 +80,10 @@ weight. Ordering looks only at sources, not at constrained ancestors (#1928). `v
 writes them into `springs.json`, together with the VRM's expressions (morph-target binds by node and target name);
 the idle plays a blink every 3.1 s and the `happy` expression through the turn.
 
+Actions: `godot --path . -- --action=wave` raises the right arm and waves the forearm with the `happy` expression;
+`--action=walk` plays an in-place procedural walk (1.1 s cycle, side camera) whose skirt and hair motion comes from the
+springs. Both are procedural, not retargeted motion capture.
+
 Lip sync: put a `voice.wav` and its Rhubarb Lip Sync cues (`rhubarb -f json -o cues.json --dialogFile line.txt
 voice.wav`) beside the model and the proof becomes a talking portrait. Rhubarb's mouth shapes map to the VRM visemes
 (B -> ih, C -> ee, D -> aa, E -> oh, F -> ou, G/H -> light ih/aa, A and X closed), eased over about 60 ms. Movie Maker
