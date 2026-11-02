@@ -208,3 +208,34 @@ A rerun after the review fixes (state check now also covers frame, engine, camer
 transform) ran while another lane held the GPU for a 27B VLM. It measured 4.07 s vs 32.0 s (7.9×) on 4.5, where one
 cold first render took 2.5 s, and 3.02 s vs 54.0 s (17.9×) on 5.4. The leak checks passed on both. Read the speed-up as
 8–26× depending on machine load.
+
+## MCP façade (stdio)
+
+`scripts/blender_mcp.py` is a narrow MCP server: JSON-RPC over stdio with no new dependency. Its nine tools map one to
+one onto the worker's typed commands: `blender_ping`, `blender_caps`, `blender_open`, `blender_describe_scene`,
+`blender_render_views`, `blender_save_copy`, `blender_export`, `blender_apply_edit` and `blender_reimport_validate`.
+There is no tool for arbitrary Python. The Blender executable, the write root and the read tree for `.blend` files are
+fixed at launch; `blender_open` refuses paths outside `--blend-root`. The worker starts on the first call and restarts
+after a crash or kill.
+
+Wire it per invocation, never into shared settings. For Claude:
+
+```bash
+claude -p --strict-mcp-config --mcp-config las-blender.mcp.json --allowedTools "mcp__las-blender__blender_open,mcp__las-blender__blender_describe_scene" "..."
+```
+
+`las-blender.mcp.json` holds
+`{"mcpServers": {"las-blender": {"type": "stdio", "command": "python", "args": ["scripts/blender_mcp.py", "--blender", "<blender.exe>", "--root", "<write-dir>", "--blend-root", "<read-dir>"]}}}`.
+
+For Codex:
+
+```bash
+codex exec -c 'mcp_servers.las_blender.command="python"' -c 'mcp_servers.las_blender.args=["scripts/blender_mcp.py","--blender","<blender.exe>","--root","<write-dir>","--blend-root","<read-dir>"]' -c 'mcp_servers.las_blender.default_tools_approval_mode="approve"' "..."
+```
+
+Without the approval override, `codex exec` blocks MCP calls under its `never` approval policy.
+
+Measured on 2 Nov 2026 with 5.4 alpha:
+- Claude Haiku 5.5 opened the lab asset, described it, moved `Badge`, and was refused when it tried to hide `Head`
+  (not allow-listed). It then ran `blender_reimport_validate`, which passed with no failures (8 turns, $0.018).
+- Codex GPT-6.1 Sol read the same semantic checksum through the same server.
