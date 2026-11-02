@@ -74,7 +74,31 @@ def messages(images, rubric, reference=()):
     return [{"role": "user", "content": content}]
 
 
-def check(images, rubric=RUBRIC, reference=(), server=DEFAULT_SERVER, timeout=600, max_tokens=1500):
+# Measured on 2 Nov: 4.5 vs 5.4 renders of one scene differ in at most 2 px over level 8; the smallest seeded defect
+# changed 171 px. Recalibrate both for other scenes, samplers or denoisers.
+DIFF_LEVEL, DIFF_MIN_PX = 8, 20
+
+
+def pixel_diff(images, reference, level=DIFF_LEVEL):
+    """Per view (matched by label): pixels whose largest channel difference exceeds `level`, and their bounding box."""
+    from PIL import Image, ImageChops
+    refs = {_label(p): p for p in reference}; out = {}
+    for p in images:
+        if _label(p) not in refs: continue
+        with Image.open(p) as a, Image.open(refs[_label(p)]) as b: d = ImageChops.difference(a.convert("RGB"), b.convert("RGB"))
+        r, g, bl = d.split(); m = ImageChops.lighter(ImageChops.lighter(r, g), bl).point(lambda x: 255 if x > level else 0)
+        out[_label(p)] = {"changed_px": m.histogram()[255], "bbox": m.getbbox()}
+    return out
+
+
+def check(images, rubric=RUBRIC, reference=(), server=DEFAULT_SERVER, timeout=600, max_tokens=1500, diff_only=False):
+    """With a reference, a pixel diff decides whether anything changed and the model only names what changed; an
+    unchanged candidate never reaches the model, which removes its false alarms on clean renders. (diff_only=None is
+    the internal 'gate passed' call.)"""
+    if reference and diff_only is not None:
+        diff = pixel_diff(images, reference); changed = sum(v["changed_px"] for v in diff.values()) >= DIFF_MIN_PX
+        if diff_only or not changed: return {"defects": [], "pixel_diff": diff, "changed": changed, "model": None}
+        return dict(check(images, rubric, reference, server, timeout, max_tokens, diff_only=None), pixel_diff=diff, changed=True)
     body = {"messages": messages(images, rubric, reference), "temperature": 0, "max_tokens": max_tokens, "cache_prompt": True,
             "chat_template_kwargs": {"enable_thinking": False},
             "response_format": {"type": "json_schema", "json_schema": {"name": "critique", "schema": schema(rubric)}}}
@@ -173,6 +197,7 @@ def table(summary):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0]); sub = ap.add_subparsers(dest="cmd", required=True)
     c = sub.add_parser("check"); c.add_argument("images", nargs="+"); c.add_argument("--reference", nargs="*", default=())
+    c.add_argument("--diff-only", action="store_true", help="with --reference: pixel diff only, no model call")
     e = sub.add_parser("eval"); e.add_argument("set_dir"); e.add_argument("--out", required=True)
     e.add_argument("--reference-root"); e.add_argument("--limit", type=int)
     s = sub.add_parser("score"); s.add_argument("results"); s.add_argument("--threshold", type=float, default=0.0)
@@ -182,7 +207,7 @@ def main(argv=None):
     for p in (c, e): p.add_argument("--rubric"); p.add_argument("--server", default=DEFAULT_SERVER)
     a = ap.parse_args(argv)
     rubric = json.loads(Path(a.rubric).read_text(encoding="utf-8")) if getattr(a, "rubric", None) else RUBRIC
-    if a.cmd == "check": print(json.dumps(check(a.images, rubric, a.reference, a.server), indent=1))
+    if a.cmd == "check": print(json.dumps(check(a.images, rubric, a.reference, a.server, diff_only=a.diff_only), indent=1))
     elif a.cmd == "eval": evaluate(a.set_dir, a.out, rubric, a.reference_root, a.server, a.limit)
     elif a.cmd == "score":
         rows = [json.loads(l) for l in Path(a.results).read_text(encoding="utf-8").splitlines() if l.strip()]

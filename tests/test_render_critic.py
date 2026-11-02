@@ -46,6 +46,22 @@ class ScoreTest(unittest.TestCase):
         self.assertEqual(rc.region_family("left_hand"), "hand")
 
 
+class PixelGateTest(unittest.TestCase):
+    def test_unchanged_candidate_never_reaches_the_model(self):
+        from PIL import Image
+        with tempfile.TemporaryDirectory() as d:
+            ref, same, broken = (Path(d) / n for n in ("ref", "same", "broken"))
+            for folder in (ref, same, broken): folder.mkdir()
+            base = Image.new("RGB", (32, 32), (100, 100, 100))
+            base.save(ref / "view_front.png"); base.point(lambda x: x + 3).save(same / "view_front.png")  # noise below level
+            hole = base.copy(); hole.paste((255, 255, 255), (4, 4, 10, 10)); hole.save(broken / "view_front.png")
+            # A dead server address proves no request is made when nothing changed or diff_only is set.
+            quiet = rc.check([same / "view_front.png"], reference=[ref / "view_front.png"], server="http://127.0.0.1:9")
+            diff = rc.check([broken / "view_front.png"], reference=[ref / "view_front.png"], server="http://127.0.0.1:9", diff_only=True)
+        self.assertEqual((quiet["changed"], quiet["defects"], quiet["pixel_diff"]["front"]["changed_px"]), (False, [], 0))
+        self.assertEqual((diff["changed"], diff["pixel_diff"]["front"]), (True, {"changed_px": 36, "bbox": (4, 4, 10, 10)}))
+
+
 class RequestTest(unittest.TestCase):
     def test_schema_constrains_types_and_regions(self):
         item = rc.schema(rc.RUBRIC)["properties"]["defects"]["items"]["properties"]
