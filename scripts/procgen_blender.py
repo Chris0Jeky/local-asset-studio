@@ -152,14 +152,15 @@ class B:
 
 def room_kit(b, P):
     W, D, H, T, F = P['width'], P['depth'], P['height'], P['wall_thickness'], 0.06
+    # Walls stand on the floor slab: overlapping coplanar faces of two objects give ambiguous depth/ID labels.
     g = [b.box((-W / 2 - T, 0, 0), (W / 2 + T, D + T, F), 1, 'floor'),
-         b.box((-W / 2 - T, 0, 0), (-W / 2, D + T, H), 3, 'wall'),
-         b.box((W / 2, 0, 0), (W / 2 + T, D + T, H), 4, 'wall')]
+         b.box((-W / 2 - T, 0, F), (-W / 2, D + T, H), 3, 'wall'),
+         b.box((W / 2, 0, F), (W / 2 + T, D + T, H), 4, 'wall')]
     wx, ww = P['window_offset'], P['window_width']
     x0, x1 = wx - ww / 2, wx + ww / 2
     z0 = F + P['window_sill']; z1 = z0 + P['window_height']
-    for lo, hi in (((-W / 2, D, 0), (x0, D + T, H)), ((x1, D, 0), (W / 2, D + T, H)),
-                   ((x0, D, 0), (x1, D + T, z0)), ((x0, D, z1), (x1, D + T, H))):
+    for lo, hi in (((-W / 2, D, F), (x0, D + T, H)), ((x1, D, F), (W / 2, D + T, H)),
+                   ((x0, D, F), (x1, D + T, z0)), ((x0, D, z1), (x1, D + T, H))):
         g.append(b.box(lo, hi, 2, 'wall'))
     ft = 0.05
     for lo, hi in (((x0, D, z0), (x0 + ft, D + T, z1)), ((x1 - ft, D, z0), (x1, D + T, z1)),
@@ -213,9 +214,10 @@ def prop(b, P):
     scatter = b.set_position(b.line(5, (0, 0, 0), (0, 0, 0)),
                              b.random(b.vec(-0.2 * w, -0.2 * w, pot_h + 0.6 * rz), b.vec(0.2 * w, 0.2 * w, h - 1.2 * rz), P['seed'], 'FLOAT_VECTOR'))
     rx = b.random(0.2 * w, 0.27 * w, P['seed'] + 1)
-    plant = b.join(b.cyl(0.3 * w, pot_h, (0, 0, 0), 6, 'terracotta', top=0.4 * w),
+    # The cone stops under the rim and the soil sits on the rim, so no visible faces of two parts coincide.
+    plant = b.join(b.cyl(0.3 * w, pot_h - 0.05 * h, (0, 0, 0), 6, 'terracotta', top=0.4 * w),
                    b.cyl(0.43 * w, 0.05 * h, (0, 0, pot_h - 0.05 * h), 6, 'terracotta'),
-                   b.cyl(0.37 * w, 0.02 * h, (0, 0, pot_h - 0.03 * h), 7, 'soil'),
+                   b.cyl(0.37 * w, 0.01 * h, (0, 0, pot_h), 7, 'soil'),
                    b.sphere((0, 0, h - rz), (0.28 * w, 0.28 * w, rz), 8, 'foliage'),
                    b.instance(scatter, b.sphere((0, 0, 0), (1, 1, 1), 8, 'foliage'), scale=b.vec(rx, rx, rz)))
     return b.index_switch(P['kind'], [lantern, b.join(*crate), plant])
