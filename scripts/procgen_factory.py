@@ -66,6 +66,7 @@ def resolve_params(spec, params):
 def check_constraints(spec, p):
     failures = []
     for rule in spec.get('constraints', []):
+        if not _expected_part(rule, p): continue                      # a constraint on a disabled feature does not apply
         total = sum(coef * p[name] for name, coef in rule['terms'].items())
         if total > rule['le'] + 1e-9: failures.append(f'{rule["doc"]} (value {total:.3f} > {rule["le"]})')
     return failures
@@ -116,7 +117,8 @@ def expected_bounds(generator, p, detail=None):
         # vertex can sit 0.25 m down in a basin.
         n = math.ceil((p['stair_top'] - p['shelf_height']) / 0.18 - SNAP_EPS)
         y0 = p['stair'] * (0.6 + n * 0.3)
-        rock = p['shelf_height'] + p['roughness'] + (0.6 * (0.2 + 0.75) if p['boulders'] else 0.0)
+        props = 0.6 * (0.2 + 0.75) if p['boulders'] else 0.02 if p['starfish'] or p['shells'] else 0.0   # starfish, shells <= 2 cm
+        rock = p['shelf_height'] + p['roughness'] + props
         upper = max(p['stair_top'] if p['stair'] else 0.0, rock)
         lower = max(p['stair_top'] if p['stair'] else 0.0, p['shelf_height'] - 0.25)
         return [p['width'] + 6, y0 + p['length'] + 3, upper], [0, 0, 1 - lower / upper]

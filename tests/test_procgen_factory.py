@@ -116,8 +116,16 @@ class ParamsAndConstraints(unittest.TestCase):
         bare, _ = factory.resolve_params(spec, {"stair": 0, "shelf_height": 0.5, "roughness": 0.1, "boulders": 0})
         size, slack = factory.expected_bounds("tide_pools", bare)
         self.assertAlmostEqual(size[1], bare["length"] + 3.0)                    # no stair: the shelf starts at y=0
-        self.assertAlmostEqual(size[2], 0.6)
+        self.assertAlmostEqual(size[2], 0.62)                                    # starfish/shells add <= 2 cm
         self.assertAlmostEqual(size[2] * (1 - slack[2]), 0.25)                  # a basin floor
+
+    def test_constraints_on_disabled_features_do_not_apply(self):
+        spec = SCHEMA["generators"]["tide_pools"]
+        flat, _ = factory.resolve_params(spec, {"stair": 0, "stair_top": 0.8, "shelf_height": 0.8, "water_level": 0.3,
+                                                "pools": 0, "width": 3.0, "pool_radius": 1.2})
+        self.assertEqual(factory.check_constraints(spec, flat), [])
+        on, _ = factory.resolve_params(spec, {**flat, "stair": 1, "pools": 2})
+        self.assertEqual(len(factory.check_constraints(spec, on)), 2)            # stair descent + basin across the width
 
     def test_lod_details_halve_with_floor(self):
         self.assertEqual(factory.lod_details(16), [16, 8, 4])
