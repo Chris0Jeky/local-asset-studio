@@ -114,8 +114,11 @@ def recover(studio, project_id):
         return job
     result_path = directory / FOLDER / "sentinel" / "result.json"
     if result_path.is_file():
-        result = json.loads(result_path.read_text(encoding="utf-8"))
-        summary = summarise(result, delivered=_delivered(directory))
+        try:
+            summary = summarise(json.loads(result_path.read_text(encoding="utf-8")), delivered=_delivered(directory))
+        except (OSError, ValueError, KeyError, TypeError) as exc:  # a result.json cut short by the interruption
+            job.update(status="uncertain", message=f"An earlier export check left an unreadable result ({exc}). Its files are kept; Blender was not run again."[:400])
+            return job
         job.update(status="completed", summary=summary, finished_at=job.get("finished_at") or time.time(),
                    message=_verdict(summary) + " Recovered from the retained result; Blender was not run again.")
         _write(directory / RECEIPT, job)

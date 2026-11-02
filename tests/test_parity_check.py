@@ -97,6 +97,8 @@ class ParityCheckTests(unittest.TestCase):
             (directory / parity_check.RECEIPT).write_text(json.dumps({"operation": parity_check.OPERATION, "status": "running"}))
             self.assertEqual(parity_check.recover(studio, PROJECT)["status"], "uncertain")
             (directory / parity_check.FOLDER / "sentinel").mkdir(parents=True)
+            (directory / parity_check.FOLDER / "sentinel" / "result.json").write_text('{"pass": fal')  # cut short
+            self.assertEqual(parity_check.recover(studio, PROJECT)["status"], "uncertain")
             (directory / parity_check.FOLDER / "sentinel" / "result.json").write_text(json.dumps(RESULT))
             recovered = parity_check.recover(studio, PROJECT)
             self.assertEqual(recovered["status"], "completed")

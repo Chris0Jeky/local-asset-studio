@@ -1032,6 +1032,7 @@ class Production:
         base=(self.root/project['id']).resolve();path=(base/relative).resolve()
         if not path.is_relative_to(base) or not path.is_file():raise ValueError('Artifact unavailable')
         allowed={a['path'] for a in project['state'].get('artifacts',[])}|{'plan.json','comparison.json'}
+        if project['state'].get('parity_check',{}).get('status')=='completed':allowed.add('parity-check/sentinel/result.json') # the export-check report
         if relative not in allowed:raise ValueError('This file is not a published experiment artifact')
         if project['plan']['kind']=='voice' and relative!='plan.json':
             artifact=next((a for a in project['state'].get('artifacts',[]) if a['path']==relative),None)
