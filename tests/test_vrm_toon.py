@@ -128,5 +128,21 @@ class ConstraintTests(unittest.TestCase):
             self.assertEqual(json.loads(dst.read_text(encoding="utf-8"))["constraints"][0]["axis"], [0, 0, -1])
 
 
+class ExpressionTests(unittest.TestCase):
+    def test_expression_binds_resolve_node_and_target_names(self):
+        doc = {"nodes": [{"name": "Root"}, {"name": "Face", "mesh": 0}],
+               "meshes": [{"extras": {"targetNames": ["Fcl_ALL_Neutral", "Fcl_ALL_Joy", "Fcl_EYE_Close"]}}],
+               "extensions": {"VRMC_vrm": {"expressions": {
+                   "preset": {"blink": {"morphTargetBinds": [{"node": 1, "index": 2, "weight": 1.0}]},
+                              "happy": {"isBinary": True, "morphTargetBinds": [{"node": 1, "index": 1}]},
+                              "lookUp": {"morphTargetBinds": []}},
+                   "custom": {"wink": {"morphTargetBinds": [{"node": 1, "index": 9, "weight": .5}]}}}}}}
+        out = vrm_toon.vrm_expressions(doc)
+        self.assertEqual(out["blink"], {"binds": [{"node": "Face", "index": 2, "weight": 1.0, "name": "Fcl_EYE_Close"}], "binary": False})
+        self.assertTrue(out["happy"]["binary"]); self.assertEqual(out["happy"]["binds"][0]["weight"], 1.0)
+        self.assertNotIn("lookUp", out)                                  # bone-driven, no morph binds
+        self.assertIsNone(out["wink"]["binds"][0]["name"])               # index past the names list keeps the index only
+
+
 if __name__ == "__main__":
     unittest.main()

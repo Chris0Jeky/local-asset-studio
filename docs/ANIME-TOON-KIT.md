@@ -77,7 +77,8 @@ now evaluates them each frame before the spring step, in dependency order: aim t
 source bone; rotation applies the source's rotation from its rest; roll carries that rotation into the destination's
 rest frame and keeps only the twist about the axis, as in the specification's reference code. Each is blended by
 weight. Ordering looks only at sources, not at constrained ancestors (#1928). `vrm_toon.py springs`
-writes them into `springs.json`.
+writes them into `springs.json`, together with the VRM's expressions (morph-target binds by node and target name);
+the idle plays a blink every 3.1 s and the `happy` expression through the turn.
 
 The toon shader writes `EMISSION = albedo x shade` and `DIFFUSE_LIGHT += light x lit x (1 - shade + rim)`. Its ambient
 source is disabled, so the result matches Blender's. `LIGHT_COLOR` already includes PI and is divided back out.

@@ -1,8 +1,8 @@
 extends Node3D
 ## VRM toon runtime proof (see docs/ANIME-TOON-KIT.md). Copy a VRM 1.0 file in as res://model.glb, its spring data as
-## res://springs.json (`python scripts/vrm_toon.py springs`, which also carries VRM node constraints) and its SDF face map as res://face_sdf.png, then run the
+## res://springs.json (`python scripts/vrm_toon.py springs`, which also carries VRM node constraints and expressions) and its SDF face map as res://face_sdf.png, then run the
 ## project. Toon light() shader, hull outlines, SpringBoneSimulator3D from the VRM's own springs, a procedural idle with
-## one quick body turn so skirt and hair visibly swing. Material roles follow `vrm_toon.material_role`.
+## one quick body turn so skirt and hair visibly swing, plus a blink and a smile from the VRM's expressions. Material roles follow `vrm_toon.material_role`.
 
 const SHADE := {"skin": Vector3(.93, .76, .74), "face": Vector3(.93, .76, .74), "hair": Vector3(.50, .64, .74), "cloth": Vector3(.62, .62, .78)}
 
@@ -11,6 +11,7 @@ var root: Node3D
 var face_mats: Array[ShaderMaterial] = []
 var head_rest: Basis
 var constraints := []
+var expressions := {}
 var t := 0.0
 
 
@@ -67,6 +68,7 @@ func _role(name: String) -> String:
 func _springs() -> void:
 	var data = JSON.parse_string(FileAccess.get_file_as_string("res://springs.json"))
 	constraints = _dependency_order(data.get("constraints", []))
+	expressions = data.get("expressions", {})
 	var sim := SpringBoneSimulator3D.new(); skel.add_child(sim)
 	var cols: Array[SpringBoneCollision3D] = []
 	for c in data.colliders:
@@ -158,9 +160,22 @@ func _process(delta: float) -> void:
 	_rot_global("J_Bip_L_UpperArm", Vector3.FORWARD, 62.0 + 3.0 * sin(t * 1.3))
 	_rot_global("J_Bip_R_UpperArm", Vector3.FORWARD, -62.0 + 3.0 * sin(t * 1.3))
 	_apply_constraints()
+	var blink := 1.0 - smoothstep(0.0, 0.07, absf(fmod(t, 3.1) - 2.9))      # a 0.14 s blink every 3.1 s
+	var joy := smoothstep(1.4, 1.9, t) * (1.0 - smoothstep(3.6, 4.2, t))    # smiles through the turn
+	_expr("happy", joy); _expr("blink", blink * (1.0 - joy))
 	var hb := (skel.global_transform.basis * skel.get_bone_global_pose(skel.find_bone("J_Bip_C_Head")).basis * head_rest.inverse()).orthonormalized()
 	for m in face_mats:
 		m.set_shader_parameter("face_forward", hb * Vector3(0, 0, 1)); m.set_shader_parameter("face_left", hb * Vector3(1, 0, 0))
+
+
+func _expr(preset: String, w: float) -> void:
+	# Drive a VRM expression's morph-target binds; Godot names blend shapes after glTF targetNames.
+	if not expressions.has(preset): return
+	for b in expressions[preset].binds:
+		var mi := root.find_child(b.node, true, false) as MeshInstance3D
+		if mi == null: continue
+		var i := mi.find_blend_shape_by_name(b.name) if b.name else int(b.index)
+		if i >= 0: mi.set_blend_shape_value(i, clampf(w * b.weight, 0.0, 1.0))
 
 
 func _find(n: Node, pred: Callable) -> Node:
