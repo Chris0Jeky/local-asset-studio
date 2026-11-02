@@ -54,3 +54,5 @@
 #characterCasePrompt{white-space:pre-wrap;overflow-wrap:anywhere}
 #characterCaseSummary,#characterImportStatus{overflow-wrap:anywhere}
 @media(max-width:560px){#characterImportInputs .controls{grid-template-columns:1fr}}
+/* #1921: a comparison's four stages; the current one carries the accent. */
+.plan-stages{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 6px;padding:0}.plan-stages li{font-size:11px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}.plan-stages li[data-done]{opacity:.75}.plan-stages li[aria-current="step"]{border-color:var(--accent);color:var(--accent)}.plan-stage-now{margin:0 0 12px;font-size:12px;line-height:1.55}.plan-candidate-help{font-size:11px;line-height:1.55}
