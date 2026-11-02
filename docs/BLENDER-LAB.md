@@ -12,6 +12,42 @@ An `OSError`, including an executable disappearing before launch, leaves a recei
 elapsed time and an `error` containing the exception type and message (at most 1,000 characters). The CLI exits
 with status 2 and does not retry. Existing receipts remain protected from replacement.
 
+## Resume here (2 Nov 2026 closeout)
+
+- **State:** every lab PR has merged (through #1982). Nothing is running, and the heavy-work lease is not held.
+- **Open issues:**
+  - #1970: the critic's noise floor flags a clean chest;
+  - #1983: material-mismatch seeding leaves an orphan `Material`;
+  - #1984: `blender_describe_scene` overflows on big scenes.
+- **Next steps:**
+  1. Fix #1983, then rerun material-mismatch on `E:/local-asset-studio-labs/rnd-20261102/blender-worker/corpus/realistic-v2`
+     (`blender_repair_bench.py run ... --cases material-mismatch`, one asset at a time, under the heavy-work lease).
+  2. Fix #1970, so that a clean export passes the Studio "Check this export" card.
+  3. Add an FBX leg to the sentinel for Unreal work (see below), or check the FBX by hand in Unreal.
+- **Lab notes and evidence:** the lab tracker is at
+  `E:/local-asset-studio-labs/rnd-20261102/blender-worker/TRACKER.md`. A kept articulated chest (`chest.blend`,
+  `chest.glb`) is at `.../blender-worker/assets-keep/chest54/`.
+
+### Checking assets bound for Unreal Engine 5
+
+The sentinel checks a `.blend` by exporting a GLB with `LAS_GLTF_SETTINGS`, reimporting it in a fresh Blender and
+comparing. It does not read FBX.
+
+- **GLB route:** Unreal can import glTF. Run the check on the source `.blend` before export:
+  `python scripts/blender_sentinel.py --blender <blender.exe> --blend <asset.blend> --out-dir <new>`.
+  A pass means the GLB keeps the meshes, materials, UV set count, transforms and animation.
+  `LAS_GLTF_SETTINGS` exports renderable objects only, with cameras and lights off and animation force-sampled over
+  the frame range. Ship the GLB that the check produced, `<out>/export.glb` (see `result["export"]`), or compare its
+  sha against `export.glb_sha256`.
+- **FBX route:** Lanternfall's own pipeline uses FBX. FBX is not covered: the sentinel would only prove the GLB
+  path. Until an FBX leg exists, check FBX assets in Unreal. These are the usual FBX-to-Unreal settings; they were
+  not measured in this lab:
+  - Blender's default metres, FBX scale 1.0 with "Apply Unit", forward -Y, up Z;
+  - "Add Leaf Bones" off for skeletal meshes;
+  - "Bake Animation" on.
+- **Not covered by the checks:** Unreal-side material conversion, Nanite or LOD settings, and how skeletons are
+  retargeted.
+
 ## Capability probe
 
 ```bash
