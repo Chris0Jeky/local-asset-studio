@@ -60,9 +60,10 @@ def render(pool_dir, out, blender, scenes=14, views=15, timeout=3600):
     return sorted(out.glob('scene_*/view_*/rgb.png'))
 
 
-def validate(dataset, pool_dir, blender, stride=2, timeout=3600):
+def validate(dataset, pool_dir, blender, stride=1, timeout=3600):
     dataset = Path(dataset)
-    _blender(blender, ['validate', dataset.resolve(), Path(pool_dir).resolve(), stride], dataset, 'validate', timeout)
+    label = next(f'validate{n}' for n in range(1, 10000) if not (dataset / f'validate{n}-exit.json').exists())   # reruns keep earlier logs
+    _blender(blender, ['validate', dataset.resolve(), Path(pool_dir).resolve(), stride], dataset, label, timeout)
     return read_json(dataset / 'label-validation.json')['summary']
 
 
@@ -73,7 +74,7 @@ def main(argv=None):
     p = sub.add_parser('pool'); p.add_argument('out'); p.add_argument('--rooms', type=int, default=8); p.add_argument('--shrines', type=int, default=6)
     p.add_argument('--props-per-kind', type=int, default=8); p.add_argument('--seed', type=int, default=20261102)
     r = sub.add_parser('render'); r.add_argument('pool'); r.add_argument('out'); r.add_argument('--scenes', type=int, default=14); r.add_argument('--views', type=int, default=15)
-    v = sub.add_parser('validate'); v.add_argument('dataset'); v.add_argument('pool'); v.add_argument('--stride', type=int, default=2)
+    v = sub.add_parser('validate'); v.add_argument('dataset'); v.add_argument('pool'); v.add_argument('--stride', type=int, default=1, help='ray-check 1 of stride^2 pixels; only 1 certifies')
     args = parser.parse_args(argv)
     blender = factory._config('blender', args.blender)
     if not blender: raise SystemExit('Set blender in config/local.json or pass --blender')
@@ -83,7 +84,7 @@ def main(argv=None):
     elif args.command == 'render': print(json.dumps({'views': len(render(args.pool, args.out, blender, args.scenes, args.views))}))
     else:
         summary = validate(args.dataset, args.pool, blender, args.stride); print(json.dumps(summary))
-        return 0 if summary['views'] and summary['passed'] == summary['views'] else 1
+        return 0 if summary['certified'] else 1
     return 0
 
 

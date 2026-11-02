@@ -19,6 +19,8 @@ import numpy as np
 import OpenImageIO as oiio
 
 RES = (512, 384)
+BACKGROUND_DEPTH = 1e10
+VIEW_FILES = ('rgb.png', 'depth.exr', 'normal.exr', 'mask.png', 'camera.json')
 COLLISION = ('-colonly', '-convcolonly')
 GROUND = [(-20, -16, 0), (20, -16, 0), (20, 24, 0), (-20, 24, 0)]
 THRESH = {'mask_agreement': 0.995, 'planar_rel_err_p99': 1e-4, 'reproj_m_p99': 1e-3, 'normal_deg_p99': 1.0}
@@ -151,6 +153,7 @@ def render(pool, out, first, count, views):
         sdir = out / f'scene_{s:02d}'; sdir.mkdir(parents=True, exist_ok=True)
         (sdir / 'objects.json').write_text(json.dumps({'kind': kind, 'base': base, 'objects': registry, 'instances': instances}, indent=1))
         blockers = [world_aabb([o]) for o in bpy.data.objects if o.type == 'MESH' and o.name != 'ground']
+        done = []
         for v in range(views):
             if not pick_camera(kind, p, rng, cam, blockers): continue
             vdir = sdir / f'view_{v:02d}'; vdir.mkdir(exist_ok=True)
@@ -170,6 +173,10 @@ def render(pool, out, first, count, views):
                 'depth': 'planar (camera-space -Z), metres; background 1e10', 'normal': 'world space, shading normal',
                 'convention': 'Blender camera looks down -Z, +Y up; OpenCV cam_to_world = cam_to_world @ diag(1,-1,-1,1); pixel centres at +0.5',
                 'clip': [cam.data.clip_start, cam.data.clip_end], 'exr_channels': channels}, indent=1))
+            done.append(vdir.name)
+        # The validator requires exactly these views, each with every file in VIEW_FILES.
+        (sdir / 'objects.json').write_text(json.dumps({'kind': kind, 'base': base, 'objects': registry, 'instances': instances,
+                                                       'views': done, 'views_requested': views}, indent=1))
         print('SCENE_DONE', s, kind, base, len(registry), flush=True)
 
 
@@ -196,7 +203,7 @@ def scene_geometry(pool, meta):
     return verts, tris, tri_id, tri_normals
 
 
-def check_view(vdir, bvh, verts, tris, tri_id, tri_normals, stride):
+def check_view(vdir, bvh, verts, tris, tri_id, tri_normals, stride, valid_ids):
     cam = json.loads((vdir / 'camera.json').read_text())
     (fx, _, cx), (_, fy, cy), _ = cam['K']; c2w = Matrix(cam['cam_to_world'])
     origin, rot = c2w.translation, c2w.to_3x3(); fwd = (rot @ Vector((0, 0, -1))).normalized()
@@ -204,6 +211,13 @@ def check_view(vdir, bvh, verts, tris, tri_id, tri_normals, stride):
     depth = oiio.ImageBuf(str(vdir / 'depth.exr')).get_pixels(oiio.FLOAT)[:, :, 0]
     normal = oiio.ImageBuf(str(vdir / 'normal.exr')).get_pixels(oiio.FLOAT)
     h, w = mask.shape
+    # Every pixel, not just the sampled rays: ids exist, foreground depth/normals are valid, background is exactly empty.
+    fg = mask > 0; nlen = np.linalg.norm(normal[:, :, :3], axis=2)
+    full = {'unknown_ids': int(np.isin(mask, [0] + valid_ids, invert=True).sum()),
+            'bad_foreground_depth': int((fg & ~(np.isfinite(depth) & (depth > 0) & (depth < BACKGROUND_DEPTH / 10))).sum()),
+            'bad_background_depth': int((~fg & (depth != np.float32(BACKGROUND_DEPTH))).sum()),
+            'bad_foreground_normals': int((fg & ~(np.isfinite(nlen) & (np.abs(nlen - 1) < 1e-3))).sum()),
+            'bad_background_normals': int((~fg & (nlen != 0)).sum())}
     pixels = disagree = 0; planar, rng_err, reproj, ndeg = [], [], [], []
     for v in range(stride // 2, h, stride):
         for u in range(stride // 2, w, stride):
@@ -218,29 +232,58 @@ def check_view(vdir, bvh, verts, tris, tri_id, tri_normals, stride):
             wts = poly_3d_calc([Vector(verts[i]) for i in tris[idx]], loc)
             n = sum((Vector(tri_normals[idx][k]) * wts[k] for k in range(3)), Vector()).normalized()
             rn = Vector(normal[v, u, :3])
-            if rn.length > 0.5: ndeg.append(math.degrees(n.angle(rn.normalized(), math.pi)))
+            ndeg.append(math.degrees(n.angle(rn.normalized(), math.pi)) if rn.length > 0.5 else 180.0)   # invalid normal = worst case
     q = lambda xs, p: float(np.percentile(xs, p)) if xs else None
     r = {'view': f'{vdir.parent.name}/{vdir.name}', 'pixels': pixels, 'hits': len(planar), 'mask_agreement': 1 - disagree / pixels,
          'planar_rel_err_p50': q(planar, 50), 'planar_rel_err_p99': q(planar, 99), 'range_rel_err_p50': q(rng_err, 50),
          'reproj_m_p99': q(reproj, 99), 'reproj_m_max': max(reproj) if reproj else None,
          'normal_deg_p99': q(ndeg, 99), 'normal_deg_max': max(ndeg) if ndeg else None,
-         'normal_nonzero_frac': float(np.mean(np.array(ndeg) > 1e-6)) if ndeg else None}
+         'normal_nonzero_frac': float(np.mean(np.array(ndeg) > 1e-6)) if ndeg else None, 'stride': stride, 'full_image': full}
     r['passed'] = bool(r['hits'] and r['mask_agreement'] >= THRESH['mask_agreement'] and r['planar_rel_err_p99'] <= THRESH['planar_rel_err_p99']
-                       and r['reproj_m_p99'] <= THRESH['reproj_m_p99'] and r['normal_deg_p99'] is not None and r['normal_deg_p99'] <= THRESH['normal_deg_p99'])
+                       and r['reproj_m_p99'] <= THRESH['reproj_m_p99'] and r['normal_deg_p99'] is not None and r['normal_deg_p99'] <= THRESH['normal_deg_p99']
+                       and not any(full.values()))
     return r
 
 
+SCHEMA = Path(__file__).with_name('procgen_generators.json')
+
+
+def registry_problems(pool, meta, parts):
+    """ids unique and positive; part/class must be a part name of the instance's generator (or the ground)."""
+    out, ids = [], [o['id'] for o in meta['objects']]
+    if len(set(ids)) != len(ids) or 0 in ids: out.append(f'object ids not unique and positive: {ids}')
+    for o in meta['objects']:
+        if o['build'] is None: allowed = {'ground'}
+        else: allowed = parts[json.loads((pool / (o['build'] + '.json')).read_text())['generator']]
+        if o['part'] not in allowed or o['class'] != o['part']:
+            out.append(f"{o['object']}: part/class {o['part']}/{o['class']} is not a part of its generator")
+    return out
+
+
 def validate(data, pool, stride):
-    results, t0 = [], time.time()
+    results, problems, t0 = [], [], time.time()
+    parts = {g: {p['name'] for p in spec['parts'].values()} for g, spec in json.loads(SCHEMA.read_text())['generators'].items()}
     for sdir in sorted(data.glob('scene_*')):
         meta = json.loads((sdir / 'objects.json').read_text())
+        problems += [f'{sdir.name}: {p}' for p in registry_problems(pool, meta, parts)]
+        listed, found = meta.get('views', []), sorted(d.name for d in sdir.glob('view_*'))
+        if not listed or found != sorted(listed): problems.append(f'{sdir.name}: views on disk {found} != listed {listed}')
         verts, tris, tri_id, tri_normals = scene_geometry(pool, meta)
         bvh = BVHTree.FromPolygons(verts, tris, all_triangles=True)
-        for vdir in sorted(sdir.glob('view_*')):
-            if (vdir / 'camera.json').exists():
-                results.append(check_view(vdir, bvh, verts, tris, tri_id, tri_normals, stride)); print('VIEW', json.dumps(results[-1]), flush=True)
+        for name in listed:
+            vdir = sdir / name
+            missing = [f for f in VIEW_FILES if not (vdir / f).is_file()]
+            specs = [oiio.ImageBuf(str(vdir / f)).spec() for f in VIEW_FILES if f.endswith(('.png', '.exr')) and f not in missing]
+            sizes = {(spec.width, spec.height) for spec in specs}
+            if missing or sizes != {RES}:
+                problems.append(f'{sdir.name}/{name}: missing {missing}, image sizes {sorted(sizes)}'); continue
+            results.append(check_view(vdir, bvh, verts, tris, tri_id, tri_normals, stride, [o['id'] for o in meta['objects']]))
+            print('VIEW', json.dumps(results[-1]), flush=True)
     hit = [r for r in results if r['hits']]
-    summary = {'views': len(results), 'passed': sum(r['passed'] for r in results), 'thresholds': THRESH, 'stride': stride,
+    summary = {'views': len(results), 'passed': sum(r['passed'] for r in results), 'problems': problems,
+               'certified': bool(results) and not problems and all(r['passed'] for r in results) and stride == 1,
+               'thresholds': THRESH, 'stride': stride,
+               'sampling': 'every pixel' if stride == 1 else f'rays on 1 of {stride * stride} pixels; full-image checks on every pixel',
                'ray_cast_pixels': sum(r['pixels'] for r in results), 'worst_mask_agreement': min((r['mask_agreement'] for r in results), default=None),
                'median_planar_rel_err': float(np.median([r['planar_rel_err_p50'] for r in hit])) if hit else None,
                'median_range_rel_err': float(np.median([r['range_rel_err_p50'] for r in hit])) if hit else None,
@@ -254,7 +297,7 @@ def seed(sdir):
         a = fn(oiio.ImageBuf(str(path)).get_pixels(fmt)); write_image(a, path, fmt)
     rw(sdir / 'view_01/mask.png', lambda a: np.roll(a, 1, axis=1), oiio.UINT16)
     rw(sdir / 'view_02/depth.exr', lambda a: a * 1.01, oiio.FLOAT)
-    rw(sdir / 'view_03/normal.exr', lambda a: -a, oiio.FLOAT)
+    rw(sdir / 'view_03/normal.exr', lambda a: np.where((np.arange(a.shape[0]) % 2 == 1)[:, None, None], 0, a), oiio.FLOAT)   # odd rows zeroed
     cam = json.loads((sdir / 'view_04/camera.json').read_text()); cam['K'][0][0] *= 1.02; cam['K'][1][1] *= 1.02
     (sdir / 'view_04/camera.json').write_text(json.dumps(cam))
     rw(sdir / 'view_05/mask.png', lambda a: np.where(a == a.max(), 0, a), oiio.UINT16)
