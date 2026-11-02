@@ -153,6 +153,17 @@ class BrainTest(unittest.TestCase):
         self.assertIn("disk full", done["ms"]["error"]); self.assertEqual(events[-1]["type"], "done")
         self.assertEqual(done["reply"], "[happy] One sentence here. Two sentences here.")   # the stream ran to its end first
 
+    def test_storage_failures_still_send_done(self):
+        srv, url, _ = stub_llm([{"content": "[happy] Lovely to meet you, Ana! [remember: friend is Ana]"}])
+        events = []
+        brain = cl.Brain(url, FakeVoice(), self.tmp, self.tmp / "persona.md", self.tmp / "memory.json")
+        brain.run = self.tmp / "missing-run-dir"                                  # turns.jsonl append fails
+        brain.memory_path = self.tmp / "no-such-dir" / "memory.json"               # memory save fails
+        try: done = brain.respond("I'm Ana", events.append)
+        finally: srv.shutdown(); srv.server_close()
+        self.assertEqual(events[-1]["type"], "done"); self.assertIn("save_error", done["ms"])
+        self.assertEqual(len(brain.history), 2)
+
     def test_concurrent_clients_take_turns(self):
         class Slow(FakeVoice):
             def say(self, text, path, speed=1.0): time.sleep(0.05); return super().say(text, path, speed)

@@ -210,14 +210,18 @@ class Brain:
             stamps["error"] = repr(e)
             while sentences.get() is not None: pass                         # let the stream finish before done goes out
         reply = "".join(raw)
-        if split.facts:
-            self.memory["friend"] += [f for f in split.facts if f not in self.memory["friend"]]
-            tmp = self.memory_path.with_name(self.memory_path.name + ".tmp")   # never truncate the only copy
-            tmp.write_text(json.dumps(self.memory, indent=2) + "\n", encoding="utf-8"); os.replace(tmp, self.memory_path)
         self.history += [{"role": "user", "content": text}, {"role": "assistant", "content": reply}]
+        try:                                                                # persistence failing must not swallow done
+            if split.facts:
+                self.memory["friend"] += [f for f in split.facts if f not in self.memory["friend"]]
+                tmp = self.memory_path.with_name(self.memory_path.name + ".tmp")   # never truncate the only copy
+                tmp.write_text(json.dumps(self.memory, indent=2) + "\n", encoding="utf-8"); os.replace(tmp, self.memory_path)
+        except OSError as e: stamps["save_error"] = repr(e)
         done = {"type": "done", "turn": turn, "user": text, "reply": reply, "emotion": split.emotion, "facts": split.facts,
                 "ms": {**stamps, "total": ms()}, "sentences": [{k: e[k] for k in ("text", "emotion", "lead_s", "audio_s", "ms")} for e in out]}
-        with (self.run / "turns.jsonl").open("a", encoding="utf-8") as f: f.write(json.dumps(done) + "\n")
+        try:
+            with (self.run / "turns.jsonl").open("a", encoding="utf-8") as f: f.write(json.dumps(done) + "\n")
+        except OSError as e: done["ms"]["save_error"] = repr(e)
         send(done)
         return done
 
