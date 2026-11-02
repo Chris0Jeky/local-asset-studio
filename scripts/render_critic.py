@@ -165,6 +165,7 @@ def main(argv=None):
     s = sub.add_parser("score"); s.add_argument("results"); s.add_argument("--threshold", type=float, default=0.0)
     v = sub.add_parser("serve"); v.add_argument("--exe", required=True); v.add_argument("--model", required=True)
     v.add_argument("--mmproj", required=True); v.add_argument("--port", type=int, default=8290); v.add_argument("--ctx", type=int, default=8192)
+    v.add_argument("--device", required=True, help="one llama.cpp device, e.g. Vulkan0 or ROCm0 (see llama-server --list-devices)")
     for p in (c, e): p.add_argument("--rubric"); p.add_argument("--server", default=DEFAULT_SERVER)
     a = ap.parse_args(argv)
     rubric = json.loads(Path(a.rubric).read_text(encoding="utf-8")) if getattr(a, "rubric", None) else RUBRIC
@@ -174,9 +175,10 @@ def main(argv=None):
         rows = [json.loads(l) for l in Path(a.results).read_text(encoding="utf-8").splitlines() if l.strip()]
         summary = score(rows, threshold=a.threshold); print(table(summary)); print(json.dumps({k: v for k, v in summary.items() if k != "categories"}))
     elif a.cmd == "serve":
-        # Loopback only, one slot (requests are sequential), every layer on the GPU, multimodal projector on the GPU.
+        # Loopback only, one slot (requests are sequential), every layer on ONE named device: the Vulkan build also sees
+        # the Intel iGPU and by default splits layers across both, which ran generation at ~1 token/s here.
         sys.exit(subprocess.call([a.exe, "-m", a.model, "--mmproj", a.mmproj, "--host", "127.0.0.1", "--port", str(a.port),
-                                  "-c", str(a.ctx), "-ngl", "999", "-np", "1", "--no-webui"]))
+                                  "-c", str(a.ctx), "-ngl", "999", "-np", "1", "--no-webui", "--device", a.device]))
 
 
 if __name__ == "__main__":
