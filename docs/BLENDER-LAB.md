@@ -102,6 +102,10 @@ Measured on 2 Nov 2026 with the generated lab asset, CPU only, about 7 s per run
 | D truncated animation (scene end halved, so `export_frame_range` clips the action) | fail: sampled frames `[1, 7, 12, 18, 24]` → `[1, 4, 6, 9, 12]`, no visual warning | same |
 | E shape-key damage (deltas halved) | fail: `Squash` max delta 0.096 → 0.048, no visual warning | same |
 
+Known gaps, tracked in #1918: `pose_samples` holds bone heads only, so a twist or a leaf-bone rotation is not caught
+(the lab fixture's own sway is a twist). Shape-key checks hold extrema only, so damage to non-extreme vertex deltas
+passes. A sentinel pass is evidence about what it measures, not acceptance.
+
 D and E pass every render. Only the manifest catches them. It records `pose_samples` (world-space bone heads at 5
 frames over each action's range; no tails, because glTF stores none) and split-invariant shape-key
 `delta_max`/`delta_bbox` (they survive the vertex duplication of a roundtrip). The ortho scale comes from the bounding
