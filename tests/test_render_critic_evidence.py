@@ -24,6 +24,19 @@ def png16(path, value, colour_type=2):
                      + chunk(b'IDAT', zlib.compress(scan * 8)) + chunk(b'IEND', b''))
 
 
+def tiff16(path, value):
+    """Uncompressed little-endian RGB16 TIFF; no optional TIFF-writing dependency."""
+    count = 10
+    bits_offset = 8 + 2 + count * 12 + 4
+    pixels_offset = bits_offset + 6
+    entries = [(256, 4, 1, 8), (257, 4, 1, 8), (258, 3, 3, bits_offset),
+               (259, 3, 1, 1), (262, 3, 1, 2), (273, 4, 1, pixels_offset),
+               (277, 3, 1, 3), (278, 4, 1, 8), (279, 4, 1, 8 * 8 * 3 * 2), (284, 3, 1, 1)]
+    header = b'II' + struct.pack('<HIH', 42, 8, count)
+    table = b''.join(struct.pack('<HHII', *e) for e in entries) + struct.pack('<I', 0)
+    path.write_bytes(header + table + struct.pack('<HHH', 16, 16, 16) + struct.pack('<H', value) * (8 * 8 * 3))
+
+
 class ReferenceEvidenceTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
@@ -127,6 +140,25 @@ class ReferenceEvidenceTests(unittest.TestCase):
         im = Image.new('RGBA', (8, 8), (80, 90, 100, 255))
         im.save(c, save_all=True, append_images=[Image.new('RGBA', (8, 8), (255, 0, 0, 255))], duration=10)
         self.assert_incomplete(self.check([c], [r]))
+
+    def test_rgb16_tiff_cannot_hide_behind_rgb_mode(self):
+        c, r = self.cand / 'front.tiff', self.ref / 'front.tiff'
+        tiff16(c, 0x4001); tiff16(r, 0x4000)
+        with Image.open(c) as image:
+            self.assertEqual(image.mode, 'RGB')
+            self.assertEqual(tuple(image.tag_v2[258]), (16, 16, 16))
+        self.assert_incomplete(self.check([c], [r]))
+
+    def test_unknown_container_precision_is_not_inferred_from_mode(self):
+        c, r = self.cand / 'front.ppm', self.ref / 'front.ppm'
+        for p, value in ((c, 0x4001), (r, 0x4000)):
+            p.write_bytes(b'P6\n8 8\n65535\n' + struct.pack('>H', value) * (8 * 8 * 3))
+        with Image.open(c) as image: self.assertEqual(image.mode, 'RGB')
+        self.assert_incomplete(self.check([c], [r]))
+
+    def test_eight_bit_tiff_remains_usable(self):
+        c = self.image(self.cand, 'front.tiff'); r = self.image(self.ref, 'front.tiff')
+        self.assertFalse(self.check([c], [r])['changed'])
 
     def test_diff_only_without_reference_never_calls_model(self):
         c, _ = self.pair()

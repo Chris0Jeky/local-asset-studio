@@ -99,6 +99,12 @@ def _rgba8(image):
     if getattr(image, "n_frames", 1) != 1: raise ReferenceEvidenceError("multi-frame evidence is not supported")
     if image.mode not in ("1", "L", "LA", "P", "RGB", "RGBA"):
         raise ReferenceEvidenceError(f"unsupported evidence mode {image.mode}; use an explicitly converted 8-bit copy")
+    if image.format not in ("PNG", "TIFF", "JPEG", "WEBP", "GIF", "BMP"):
+        raise ReferenceEvidenceError(f"unqualified evidence container {image.format}; use an explicitly converted 8-bit PNG copy")
+    if image.format == "TIFF" and any(bits > 8 for bits in image.tag_v2.get(258, (1,))):
+        raise ReferenceEvidenceError("high-bit TIFF evidence is not supported; convert a copy explicitly")
+    if image.format == "JPEG" and getattr(image, "bits", 8) > 8:
+        raise ReferenceEvidenceError("high-bit JPEG evidence is not supported; convert a copy explicitly")
     if image.format == "PNG":
         # PNG RGB16/RGBA16 is exposed as RGB/RGBA by Pillow, so checking image.mode alone loses low bits.
         position = image.fp.tell()
@@ -205,7 +211,7 @@ def load_rows(path):
 
 
 FAMILY = {"arm": "arm", "hand": "hand", "leg": "leg", "eye": "eye", "shoe": "feet", "head": "head", "torso": "torso"}
-MATERIAL_REGIONS = {"shirt": {"torso", "arm"}, "pants": {"leg"}, "skin": {"head", "face", "hand"}}
+MATERIAL_REGIONS = {"shirt": {"torso", "arm"}, "pants": {"leg"}, "skin": {"head", "face", "hand", "whole"}}
 
 
 def accepted_regions(truth):
