@@ -92,6 +92,10 @@ def compare_manifests(source, roundtrip):
         before, after = src_data.get(obj["data"], {}), rt_data.get(other["data"], {})
         if before.get("triangles") != after.get("triangles"):
             failures.append(f"{name}: triangles {before.get('triangles')} -> {after.get('triangles')}")
+        volume, new_volume = before.get("signed_volume"), after.get("signed_volume")
+        if volume is not None and new_volume is not None and abs(volume - new_volume) > 1e-3 * max(1.0, abs(volume)):
+            failures.append(f"{name}: signed volume {volume} -> {new_volume}"
+                            + (" (normals flipped)" if volume * new_volume < 0 else ""))
         slots, rt_slots = [s["material"] for s in obj["material_slots"]], [s["material"] for s in other["material_slots"]]
         if slots != rt_slots: failures.append(f"{name}: materials {slots} -> {rt_slots}")
         used.update(m for m in slots if m)

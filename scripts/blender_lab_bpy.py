@@ -276,6 +276,16 @@ def _image(image):
             "missing": image.source == "FILE" and (size == [0, 0] or (not packed and not os.path.isfile(path)))}
 
 
+def _signed_volume(mesh, points):
+    """Divergence-theorem volume of the triangulated surface: positive for a closed mesh with outward normals,
+    negative when its faces are wound inward. Split-invariant, so it survives a GLB roundtrip."""
+    import numpy as np
+    mesh.calc_loop_triangles()
+    if not len(mesh.loop_triangles) or not len(points): return 0.0
+    tris = points[_foreach(mesh.loop_triangles, "vertices", 3, np.int32).reshape(-1, 3)].astype(np.float64)
+    return rnd(np.einsum("ij,ij->i", tris[:, 0], np.cross(tris[:, 1], tris[:, 2])).sum() / 6.0)
+
+
 def _mesh(mesh):
     import numpy as np
     coords = _foreach(mesh.vertices, "co", 3, np.float32)
@@ -287,6 +297,7 @@ def _mesh(mesh):
     entry = {"name": mesh.name, "vertices": len(mesh.vertices), "edges": len(mesh.edges), "faces": len(mesh.polygons),
              "loops": len(mesh.loops), "triangles": int(np.maximum(loop_totals - 2, 0).sum()),
              "geometry_hash": _quantised_hash(coords, loop_totals, loop_verts, edge_verts),
+             "signed_volume": _signed_volume(mesh, pts),
              "bbox": {"min": vec(pts.min(0)), "max": vec(pts.max(0))} if len(pts) else None,
              "uv_maps": [uv.name for uv in mesh.uv_layers],
              "color_attributes": sorted(a.name for a in mesh.color_attributes),
@@ -995,6 +1006,67 @@ def serve(root):
         shutil.rmtree(worker.scratch, ignore_errors=True)  # snapshot scratch is private to this worker
 
 
+# ---- known-bad corpus -----------------------------------------------------------------------------------------------
+
+# Source-level defects for the benchmark corpus: each variant is the lab asset with exactly one labelled fault saved
+# into the .blend. Kinds shared with the sentinel reuse seed_defect; the rest are corpus-only.
+CORPUS_DEFECTS = {
+    "flipped-normals": "Head faces wound inward (normals point into the sphere)",
+    "missing-uvs": "Body loses its only UV map, so its checker texture samples one texel",
+    "broken-weights": "Body's Spine group weights zeroed: upper vertices no longer follow the spine",
+    "mesh-hole": "Body loses two faces: an open, non-manifold box",
+    "transform-offset": "Head moved 0.12 up, off the neck",
+    "duplicate-overlap": "Badge duplicated in place: coincident overlapping geometry",
+    "missing-texture": "Body's external texture file path broken",
+    "material-mismatch": "Badge shows Body's textured material",
+    "omitted-mesh": "Body hidden from render",
+    "shape-key-damage": "Head Squash key deltas halved",
+    "shape-key-interior-damage": "one interior Squash vertex delta zeroed",
+    "bone-twist-lost": "Spine twist keys flattened (keys and range kept)",
+}
+
+
+def corpus_defect(kind):
+    import bpy
+    if kind not in CORPUS_DEFECTS: raise ValueError(f"Unknown corpus defect {kind}")
+    if kind in SEEDED_DEFECTS: return seed_defect(kind)
+    objects = bpy.data.objects
+    if kind == "flipped-normals":
+        mesh = objects["Head"].data
+        for polygon in mesh.polygons: polygon.flip()
+        mesh.update()
+        return {"kind": kind, "object": "Head"}
+    if kind == "missing-uvs":
+        mesh = objects["Body"].data
+        while mesh.uv_layers: mesh.uv_layers.remove(mesh.uv_layers[0])
+        return {"kind": kind, "object": "Body"}
+    if kind == "broken-weights":
+        body = objects["Body"]
+        body.vertex_groups["Spine"].add([v.index for v in body.data.vertices], 0.0, "REPLACE")
+        return {"kind": kind, "object": "Body", "group": "Spine"}
+    if kind == "mesh-hole":
+        import bmesh
+        mesh = objects["Body"].data
+        work = bmesh.new(); work.from_mesh(mesh); work.faces.ensure_lookup_table()
+        bmesh.ops.delete(work, geom=[work.faces[0], work.faces[1]], context="FACES_ONLY")
+        work.to_mesh(mesh); work.free(); mesh.update()
+        return {"kind": kind, "object": "Body", "faces_removed": 2}
+    if kind == "transform-offset":
+        objects["Head"].location.z += 0.12
+        return {"kind": kind, "object": "Head", "dz": 0.12}
+    twin = objects["Badge"].copy(); twin.data = objects["Badge"].data.copy(); twin.name = "BadgeDuplicate"
+    bpy.context.scene.collection.objects.link(twin)
+    return {"kind": kind, "object": "BadgeDuplicate"}
+
+
+def make_corpus_variant(clean_blend, kind, out_path):
+    import bpy
+    open_blend(clean_blend)
+    label = corpus_defect(kind)
+    bpy.ops.wm.save_as_mainfile(filepath=str(out_path), copy=True, relative_remap=True)
+    return {"kind": "corpus-variant", "label": label, "blend": str(out_path)}
+
+
 def _evidence(args):
     """manifest -> fixed-camera evidence -> (fresh reload -> optional seeded defect -> LAS GLB export)."""
     import os
@@ -1040,6 +1112,11 @@ def _main(argv):
     evidence_parser.add_argument("--cameras")
     evidence_parser.add_argument("--export")
     evidence_parser.add_argument("--seed-defect", choices=SEEDED_DEFECTS)
+    variant_parser = commands.add_parser("corpus-variant")
+    variant_parser.add_argument("--blend", required=True)
+    variant_parser.add_argument("--kind", required=True, choices=sorted(CORPUS_DEFECTS))
+    variant_parser.add_argument("--out-blend", required=True)
+    variant_parser.add_argument("--out", required=True)
     commands.add_parser("serve").add_argument("--root", required=True)
     args = parser.parse_args(argv)
     if args.command == "serve": return serve(args.root)
@@ -1048,6 +1125,7 @@ def _main(argv):
         import os
         open_blend(args.blend); result = manifest(os.path.basename(args.blend))
     elif args.command == "evidence": result = _evidence(args)
+    elif args.command == "corpus-variant": result = make_corpus_variant(args.blend, args.kind, args.out_blend)
     else: result = {"kind": "fixture", "blend": make_fixture(args.out_dir)}
     with open(args.out, "w", encoding="utf-8", newline="\n") as stream:
         json.dump(result, stream, indent=2, sort_keys=True)

@@ -114,6 +114,14 @@ class StructuralTests(unittest.TestCase):
         source["object_samples"]["CollisionProxy"] = copy.deepcopy(chest["object_samples"]["ChestLid"])
         self.assertEqual(sentinel.compare_manifests(source, chest)["failures"], [])
 
+    def test_flipped_normals_show_as_a_signed_volume_sign_change(self):
+        roundtrip = copy.deepcopy(MANIFEST)
+        head = next(m for m in roundtrip["meshes"] if m["name"] == "Head")
+        original = head["signed_volume"]; head["signed_volume"] = -original
+        self.assertGreater(original, 0)
+        self.assertEqual(sentinel.compare_manifests(MANIFEST, roundtrip)["failures"],
+                         [f"Head: signed volume {original} -> {-original} (normals flipped)"])
+
     def test_unexpected_mesh_and_missing_source_image(self):
         source, roundtrip = copy.deepcopy(MANIFEST), copy.deepcopy(MANIFEST)
         source["images"][0]["missing"] = True

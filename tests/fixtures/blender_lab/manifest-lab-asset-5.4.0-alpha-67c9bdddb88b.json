@@ -530,6 +530,7 @@
       ],
       "name": "Badge",
       "shape_keys": null,
+      "signed_volume": 0.0036,
       "triangles": 60,
       "uv_maps": [
         "UVMap"
@@ -559,6 +560,7 @@
       ],
       "name": "Body",
       "shape_keys": null,
+      "signed_volume": 0.1575,
       "triangles": 12,
       "uv_maps": [
         "UVMap"
@@ -713,6 +715,7 @@
         "reference": "Basis",
         "use_relative": true
       },
+      "signed_volume": 0.13338,
       "triangles": 528,
       "uv_maps": [],
       "vertices": 266
@@ -1793,7 +1796,7 @@
   },
   "runtime": {
     "executable": "C:/AI/blender-5.4.0-alpha+main.67c9bdddb88b-windows.amd64-release/blender.exe",
-    "wall_seconds": 1.989
+    "wall_seconds": 0.75
   },
   "scene": {
     "camera": null,
@@ -1807,9 +1810,9 @@
     "unit_system": "METRIC"
   },
   "schema": "las.blender-lab.v1",
-  "semantic_checksum": "49a1e8b8cc4024f99f70691eddb5757b05cc79a18c16f41e282f1bfaff51153b",
+  "semantic_checksum": "e842b51f0efb6daa8dbb430293f2d67a182fddfc18340daeb7696b0b6a981b0a",
   "source": {
     "file": "lab-asset.blend",
-    "sha256": "fc59382cc900b2f1c0c038d4716c8b27e8197e386fbb6ed108406764b24eb4f1"
+    "sha256": "7cfe3c2d3936280214dcffd91ff4478eb17ec628825b5f1b98eebf86eae6897f"
   }
 }

@@ -265,3 +265,29 @@ them for exported objects and skips excluded helpers. Seeded on the chest, on bo
 - `bone-twist-lost`, which flattens rotation curves, fails with `ChestLid: object transform differs at frame 16`.
 - `truncated-animation` fails with `ChestLid: object animation frames [1, 16, 30, 45, 60] -> [1, 8, 16, 23, 30]`.
 - Neither produces a visual warning.
+
+## Known-bad asset corpus
+
+```bash
+python scripts/blender_corpus.py build --blender <blender.exe> --out-dir <new-dir>
+```
+
+The corpus is the generated lab asset (geometric shapes only) plus one saved variant per labelled defect. Each entry
+has the sentinel's 16 fixed-camera renders (shared cameras from the control), a manifest, and a SHA-256. `corpus.json`
+holds the ground-truth label (`expected: clean | defective`, defect kind, target object) and a baseline: the control
+compared with each variant through `compare_manifests` and `compare_renders`.
+
+The 12 defects are: flipped normals, missing UVs, broken weights, a mesh hole, a transform offset, a duplicate
+overlapping mesh, a missing texture, a material mismatch, an omitted mesh, shape-key damage, interior shape-key
+damage, and a lost bone twist. Inverted normals were the one miss in the first build. The manifest now records each
+mesh's `signed_volume`, positive for outward normals and split-invariant, and the sentinel fails on a sign change.
+
+Measured on 2 Nov 2026, on both 4.5.13 and 5.4 alpha, at about 45–60 s per build:
+- The control is clean, and 12 of 12 defects are caught.
+- Five are caught by the manifest only, so they are invisible in renders: lost twist, broken weights, flipped normals,
+  shape-key damage and interior shape-key damage.
+- One is caught by renders only: missing UVs.
+
+To score a critic, have it read `evidence/<id>/renders` and answer clean or defective, optionally naming the object.
+Compare its answers with `expected`. A render-only critic cannot be blamed for the manifest-only five. Local builds
+are in `E:/local-asset-studio-labs/rnd-20261102/blender-worker/corpus/known-bad-v1b-*`. Lab media stays out of Git.

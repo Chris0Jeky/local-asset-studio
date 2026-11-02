@@ -248,6 +248,7 @@
       ],
       "name": "Cube",
       "shape_keys": null,
+      "signed_volume": 3.35115,
       "triangles": 108,
       "uv_maps": [
         "UVMap"
@@ -277,6 +278,7 @@
       ],
       "name": "Cube.001",
       "shape_keys": null,
+      "signed_volume": 2.17581,
       "triangles": 108,
       "uv_maps": [
         "UVMap"
@@ -306,6 +308,7 @@
       ],
       "name": "Cube.002",
       "shape_keys": null,
+      "signed_volume": 5.76798,
       "triangles": 12,
       "uv_maps": [
         "UVMap"
@@ -335,6 +338,7 @@
       ],
       "name": "Cylinder",
       "shape_keys": null,
+      "signed_volume": 0.00348,
       "triangles": 44,
       "uv_maps": [
         "UVMap"
@@ -364,6 +368,7 @@
       ],
       "name": "Cylinder.001",
       "shape_keys": null,
+      "signed_volume": 0.00348,
       "triangles": 44,
       "uv_maps": [
         "UVMap"
@@ -2456,7 +2461,7 @@
   "pose_samples": {},
   "runtime": {
     "executable": "C:/AI/blender-5.4.0-alpha+main.67c9bdddb88b-windows.amd64-release/blender.exe",
-    "wall_seconds": 3.458
+    "wall_seconds": 0.62
   },
   "scene": {
     "camera": "InspectionCamera",
@@ -2470,9 +2475,9 @@
     "unit_system": "METRIC"
   },
   "schema": "las.blender-lab.v1",
-  "semantic_checksum": "0c31555cec2a157fd5cb7ffd41ecb721ec5fb700a05e08964b433bdb5ac92ff8",
+  "semantic_checksum": "f4ee2053d12c8495ef9b9434a31db117db12f9ddfc7d2e69cf7e6fcecd7603d6",
   "source": {
     "file": "chest.blend",
-    "sha256": "e1f4756a2a19b96ab08c7e7611ab55846efdcbe44ef0f3503d33ca71a9dd32d1"
+    "sha256": "b3ab4780aa2da5911d3ae52341e863f1c986621ffdae708358ad86bca9b7eb4b"
   }
 }
