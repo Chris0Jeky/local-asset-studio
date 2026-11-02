@@ -511,9 +511,11 @@ does not see, so a clean export currently reads "found differences" with that on
 - **Evidence:** everything is kept under `experiments/projects/<id>/parity-check/` (`probe.json`, `sentinel/`), also on
   failure. An interrupted check is recovered from a retained `sentinel/result.json`, or else reported `uncertain`.
 - **Which file:** the sentinel exports the BLEND afresh. The verdict covers the delivered `articulated/chest.glb` only when
-  its bytes match that export (they did in the live run). Otherwise the card reads "Delivered GLB not verified".
-- **Next step and report:** a difference adds "Fix the source in Blender, rebuild, then check the new build". "Open report"
-  serves `parity-check/sentinel/result.json` once the check has completed.
+  its bytes match that export (they did in the live run). Otherwise the card reads "Passed, but the delivered GLB was not the one
+  checked".
+- **Next step and report:** a difference adds "Fix the source in Blender, rebuild, then check the new build". "Open report
+  (JSON)" serves `parity-check/sentinel/result.json` once the check has completed.
+- **Failure:** a failed check is never retried; the card says "A new check needs a new build."
 - **Recovery:** the receipt is rewritten atomically. A check left `uncertain` offers "Recover export check", which reads
   the retained result and never starts Blender. An unreadable, cut-short `result.json` also leaves the check `uncertain`.
 - **Not decided here:** a pass is export parity only. It is neither art acceptance nor licence clearance.
