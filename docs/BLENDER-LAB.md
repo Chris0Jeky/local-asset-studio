@@ -373,3 +373,38 @@ Measured on 2 Nov 2026 with #1956's critic:
   render-visible defects change 1,820 to 26,587 px. The control and the five render-invisible defects change 0 px.
 - On sentinel roundtrips (5.4), the critic agrees on the control (0 px), missing texture (26,628 px), omitted mesh,
   material mismatch, and shape-key damage (0 px, a manifest-only defect).
+
+## Render-space active testing
+
+```bash
+python scripts/blender_active.py search --blender <blender.exe> --before a.blend --after b.blend --out-dir <new-dir>
+python scripts/blender_active.py corpus --blender <blender.exe> --corpus-dir <known-bad corpus> --out-dir <new-dir>
+```
+
+Fixed views can only show what their pose, camera and shading happen to expose. This search, from research report #1,
+looks for the render-space configuration where two revisions disagree most:
+- Both revisions are rendered as deterministic Workbench clay at 96 px, on a camera sphere framed from `before`.
+- The coarse grid covers azimuth (8) × elevation (3) × animation frame (up to 3 from the manifest's samples) ×
+  shape-key weight (0 or 1) × backface culling (off or on): 288 renders for the lab asset.
+- Configurations are ranked by changed pixels (largest channel > 8 levels, the render critic's gate, at least 20 px).
+- The search refines ±15° around the top three.
+- `best_with_default` reports the best disagreement when a dimension is held at its default, which shows which
+  dimension exposed the defect.
+
+Measured on 2 Nov 2026 on the known-bad corpus. Both builds give the same verdicts. 5.4 alpha takes about 5–15 s per
+variant once the control's grid is cached (100 s for the whole corpus); 4.5 takes 67 s.
+
+| Defect | Fixed views | Active search | Exposed by |
+| --- | --- | --- | --- |
+| control | clean | **clean (0 px)** | - |
+| bone-twist-lost | missed | **913 px** | posed frame (0 px at rest) |
+| broken-weights | missed | **657 px** | posed frame |
+| flipped-normals | missed | **589 px** | backface culling (0 px without) |
+| shape-key-damage | missed | **262 px** | shape-key weight 1 (0 px at 0) |
+| shape-key-interior-damage | missed | **25 px** | shape-key weight 1, just above the 20 px gate |
+| mesh-hole, omitted-mesh, transform-offset | caught | caught | any configuration |
+| missing-texture, missing-uvs, material-mismatch, duplicate-overlap | caught | missed | clay shows no materials, and coincident geometry looks identical |
+
+The active search finds all five defects the fixed views miss. Together, the two render paths catch 12 of 12 without
+the manifest. The interior shape-key case clears the gate by a small margin at 96 px, so render it larger before
+relying on it. Evidence: `E:/local-asset-studio-labs/rnd-20261102/blender-worker/evidence/active-testing-2026-11-02/`.

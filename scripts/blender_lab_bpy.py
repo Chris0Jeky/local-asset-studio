@@ -1086,6 +1086,53 @@ def make_corpus_variant(clean_blend, kind, out_path):
     return {"kind": "corpus-variant", "label": label, "blend": str(out_path)}
 
 
+# ---- render-space active testing ------------------------------------------------------------------------------------
+
+def render_probe(plan, out_dir, size=96):
+    """Render one Workbench clay image per configuration in `plan`: camera azimuth/elevation on the shared spec,
+    animation frame, every non-reference shape key at one weight, and backface culling. Deterministic and cheap, so a
+    host-side search can look for the render-space configuration where two revisions disagree most."""
+    import math
+    import os
+    import bpy
+    from mathutils import Vector
+    scene = bpy.context.scene
+    spec = plan["camera_spec"]
+    for obj in scene.objects:
+        if obj.type == "LIGHT": obj.hide_render = True
+    data = bpy.data.cameras.new("_LAS_probe"); data.type, data.ortho_scale = "ORTHO", spec["ortho_scale"]
+    camera = bpy.data.objects.new("_LAS_probe", data); scene.collection.objects.link(camera); scene.camera = camera
+    target, distance = Vector(spec["target"]), spec["ortho_scale"] * 4
+    data.clip_end = distance * 4
+    render = scene.render
+    render.engine = "BLENDER_WORKBENCH"
+    render.resolution_x = render.resolution_y = size
+    render.resolution_percentage = 100
+    render.use_border = render.use_crop_to_border = False
+    render.pixel_aspect_x = render.pixel_aspect_y = 1.0
+    render.film_transparent = True
+    render.image_settings.file_format, render.image_settings.color_mode, render.image_settings.color_depth = "PNG", "RGBA", "8"
+    scene.view_settings.view_transform, scene.view_settings.look = "Standard", "None"
+    scene.display.render_aa = "OFF"
+    shading = scene.display.shading
+    shading.light, shading.color_type, shading.single_color = "STUDIO", "SINGLE", (0.8, 0.8, 0.8)
+    shading.show_cavity = shading.show_shadows = shading.show_specular_highlight = shading.show_object_outline = False
+    keyed = [m.shape_keys for m in bpy.data.meshes if m.users and m.shape_keys]
+    os.makedirs(out_dir, exist_ok=True)
+    for index, config in enumerate(plan["configs"]):
+        scene.frame_set(int(config["frame"]))
+        for keys in keyed:
+            for block in keys.key_blocks:
+                if block != keys.reference_key: block.value = float(config["shape_keys"])
+        shading.show_backface_culling = bool(config["backface_culling"])
+        az, el = math.radians(config["azimuth"]), math.radians(config["elevation"])
+        camera.location = target + Vector((math.sin(az) * math.cos(el), -math.cos(az) * math.cos(el), math.sin(el))) * distance
+        camera.rotation_euler = (target - camera.location).to_track_quat("-Z", "Y").to_euler()
+        render.filepath = os.path.join(out_dir, f"{index:04d}.png")
+        bpy.ops.render.render(write_still=True)
+    return {"kind": "render-probe", "renders": len(plan["configs"]), "size": size}
+
+
 def _evidence(args):
     """manifest -> fixed-camera evidence -> (fresh reload -> optional seeded defect -> LAS GLB export)."""
     import os
@@ -1131,6 +1178,12 @@ def _main(argv):
     evidence_parser.add_argument("--cameras")
     evidence_parser.add_argument("--export")
     evidence_parser.add_argument("--seed-defect", choices=SEEDED_DEFECTS)
+    probe_parser = commands.add_parser("render-probe")
+    probe_parser.add_argument("--blend", required=True)
+    probe_parser.add_argument("--plan", required=True)
+    probe_parser.add_argument("--out-dir", required=True)
+    probe_parser.add_argument("--size", type=int, default=96)
+    probe_parser.add_argument("--out", required=True)
     variant_parser = commands.add_parser("corpus-variant")
     variant_parser.add_argument("--blend", required=True)
     variant_parser.add_argument("--kind", required=True, choices=sorted(CORPUS_DEFECTS))
@@ -1154,6 +1207,9 @@ def _main(argv):
         open_blend(args.blend); result = manifest(os.path.basename(args.blend))
     elif args.command == "evidence": result = _evidence(args)
     elif args.command == "corpus-variant": result = make_corpus_variant(args.blend, args.kind, args.out_blend)
+    elif args.command == "render-probe":
+        open_blend(args.blend)
+        result = render_probe(json.load(open(args.plan, encoding="utf-8")), args.out_dir, args.size)
     else: result = {"kind": "fixture", "blend": make_fixture(args.out_dir)}
     with open(args.out, "w", encoding="utf-8", newline="\n") as stream:
         json.dump(result, stream, indent=2, sort_keys=True)
