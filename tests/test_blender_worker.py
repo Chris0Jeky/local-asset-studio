@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+import time
 import unittest
 from unittest import mock
 
@@ -20,6 +21,7 @@ for line in sys.stdin:
     request = json.loads(line)
     if request["cmd"] == "quit": break
     if request["cmd"] == "hang": time.sleep(30)
+    if request["cmd"] == "deaf": time.sleep(30)  # stops reading stdin
     if request["cmd"] == "die": sys.exit(3)
     print("Fra:1 render noise", flush=True)
     ok = request["cmd"] != "bad"
@@ -44,6 +46,16 @@ class ClientTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp, self.worker(tmp) as worker:
             with self.assertRaises(bw.WorkerFailed): worker.call("bad")
             self.assertEqual(worker.call("ping"), {})
+
+    def test_a_worker_that_stops_reading_cannot_block_past_the_deadline(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            worker = self.worker(tmp)
+            worker.process.stdin.write(json.dumps({"id": 0, "cmd": "deaf", "args": {}}) + "\n"); worker.process.stdin.flush()
+            started = time.monotonic()
+            with self.assertRaises(bw.WorkerFailed):
+                for _ in range(40): worker.call("ping", blob="x" * 16000, timeout=1)
+            self.assertLess(time.monotonic() - started, 10)
+            self.assertIsNotNone(worker.process.poll()); worker.close()
 
     def test_oversized_request_is_refused_before_writing(self):
         with tempfile.TemporaryDirectory() as tmp, self.worker(tmp) as worker:

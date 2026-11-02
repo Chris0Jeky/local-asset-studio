@@ -55,6 +55,12 @@ class BlenderWorker:
             if line.startswith(REPLY): self.lines.put(json.loads(line[len(REPLY):]))
         self.lines.put(None)  # stdout closed: the process ended
 
+    def _send(self, line):
+        try:
+            self.process.stdin.write(line); self.process.stdin.flush()
+        except OSError:
+            pass  # a dead worker is reported by the reply wait
+
     def _reply(self, timeout):
         try: reply = self.lines.get(timeout=timeout)
         except queue.Empty:
@@ -66,11 +72,14 @@ class BlenderWorker:
         require(self.process.poll() is None, "Worker is not running")
         self.next_id += 1
         line = json.dumps({"id": self.next_id, "cmd": cmd, "args": args}) + "\n"
-        # Requests go one at a time and the worker reads between calls, so a line below the pipe buffer never blocks.
         require(len(line.encode()) < MAX_REQUEST_BYTES, "request too large")
-        self.process.stdin.write(line)
-        self.process.stdin.flush()
-        reply = self._reply(timeout)
+        started = time.monotonic()
+        writer = threading.Thread(target=self._send, args=(line,), daemon=True)
+        writer.start()
+        writer.join(timeout)  # a worker that stops reading must not block past the deadline
+        if writer.is_alive():
+            self.kill(); raise WorkerFailed(f"Worker did not accept the request within {timeout} s; killed")
+        reply = self._reply(max(0.1, timeout - (time.monotonic() - started)))
         require(reply.get("id") == self.next_id, "Worker reply out of order")
         if not reply["ok"]: raise WorkerFailed(reply["error"])
         return reply["result"]

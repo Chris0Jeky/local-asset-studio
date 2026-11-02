@@ -761,8 +761,8 @@ class Worker:
 
     def open(self, blend, allow_edit=()):
         import os
+        self.source, self.allowed = None, set()  # any open attempt drops the previous scene's authority
         _need(isinstance(blend, str) and blend.lower().endswith(".blend") and os.path.isfile(blend), "blend must be an existing .blend")
-        self.source, self.allowed = None, set()  # a refused open must not keep the previous scene's authority
         open_blend(blend)
         import bpy
         names = {o.name for o in bpy.context.scene.objects}
