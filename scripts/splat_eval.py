@@ -26,10 +26,12 @@ def render(splat, data, out, engine):
     sc.render.image_settings.color_mode = "RGBA"
     if engine == "cycles": sc.render.engine = "CYCLES"; sc.cycles.samples = 64; sc.cycles.use_denoising = False
     else: sc.render.engine = "BLENDER_EEVEE"; sc.eevee.taa_render_samples = 64
-    out = Path(out); out.mkdir(parents=True, exist_ok=True)
+    out = Path(out); out.mkdir(parents=True, exist_ok=True); (out / "rendered.json").unlink(missing_ok=True)  # no manifest until done
     import time; t = time.perf_counter()
     for i, f in enumerate(meta["frames"]):
         cam.matrix_world = Matrix(f["transform_matrix"]); sc.render.filepath = str(out / f"r_{i:03d}.png"); bpy.ops.render.render(write_still=True)
+    names = [Path(f["file_path"]).name + ".png" for f in meta["frames"]]
+    (out / "rendered.json").write_text(json.dumps({"splat": str(splat), "dataset": str(data), "views": names}))
     print("RENDERED", len(meta["frames"]), round(time.perf_counter() - t, 2))
 
 
@@ -39,9 +41,15 @@ def score(data, out):
     import render_critic as rc
     def white(p):
         im = Image.open(p).convert("RGBA"); return Image.alpha_composite(Image.new("RGBA", im.size, (255, 255, 255, 255)), im).convert("RGB")
+    # Score exactly the held-out frames the dataset declares, and only renders whose run finished (render writes the
+    # manifest last, after deleting any old one), so a missing, stale or partial view set fails instead of skewing the mean.
+    views = [Path(f["file_path"]).name + ".png" for f in json.loads((Path(data) / "transforms_test.json").read_text())["frames"]]
+    done = json.loads((Path(out) / "rendered.json").read_text())["views"]
+    if done != views: raise ValueError(f"rendered views {len(done)} do not match the dataset's {len(views)} held-out views")
     rows = []
-    for gt in sorted((Path(data) / "test").glob("r_*.png")):
-        g, r = white(gt), white(Path(out) / gt.name)
+    for name in views:
+        gt = Path(data) / "test" / name; g, r = white(gt), white(Path(out) / name)
+        if g.size != r.size: raise ValueError(f"{name}: render {r.size} vs truth {g.size}")
         hist = ImageChops.difference(g, r).histogram()  # 3 x 256 bins of |difference| per channel
         mse = sum(n * (i % 256) ** 2 for i, n in enumerate(hist)) / (g.width * g.height * 3 * 255 ** 2)
         (Path(out) / "gt_white").mkdir(exist_ok=True); (Path(out) / "pr_white").mkdir(exist_ok=True)  # same names: the critic matches views by label
