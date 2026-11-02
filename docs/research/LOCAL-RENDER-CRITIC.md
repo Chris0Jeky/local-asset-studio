@@ -99,6 +99,12 @@ python scripts/render_critic.py score results.jsonl
   `score` reports per-type and sample-level precision and recall. Calibration sets come from
   `blender --factory-startup -b --python scripts/critic_defect_scene.py -- <out> <seed> <category>`.
 
+## Calibration set caveat
+
+The `broken_weights` fixture re-weights part of one body part to a distant bone, then rotates that bone. The bone's own
+limb (and its hand or shoe) moves with it, so the sample carries a pose change on top of the stretched geometry. Its
+pixel and model results therefore measure "weight explosion plus pose change", not the weight damage alone.
+
 ## Not verified
 
 - The model on the held-out test set.

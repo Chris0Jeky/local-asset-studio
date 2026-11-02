@@ -34,8 +34,8 @@ RUBRIC = {
                  "or shorter than its partner. A missing partner is omitted_mesh; a different pose or angle is fine.",
     "backside_hole": "A hole in the surface through which the background or the inside of the model shows.",
 }
-REGIONS = ("none", "head", "face", "torso", "left_arm", "right_arm", "left_hand", "right_hand", "left_leg", "right_leg",
-           "feet", "whole")
+REGIONS = ("none", "head", "face", "left_eye", "right_eye", "torso", "left_arm", "right_arm", "left_hand", "right_hand",
+           "left_leg", "right_leg", "feet", "whole")
 
 
 def schema(rubric):
@@ -85,7 +85,10 @@ def pixel_diff(images, reference, level=DIFF_LEVEL):
     refs = {_label(p): p for p in reference}; out = {}
     for p in images:
         if _label(p) not in refs: continue
-        with Image.open(p) as a, Image.open(refs[_label(p)]) as b: d = ImageChops.difference(a.convert("RGB"), b.convert("RGB"))
+        with Image.open(p) as a, Image.open(refs[_label(p)]) as b:
+            if a.size != b.size:  # ImageChops compares only the overlap; a size change is itself a change
+                out[_label(p)] = {"changed_px": a.width * a.height, "bbox": (0, 0) + a.size, "size_mismatch": [a.size, b.size]}; continue
+            d = ImageChops.difference(a.convert("RGB"), b.convert("RGB"))
         r, g, bl = d.split(); m = ImageChops.lighter(ImageChops.lighter(r, g), bl).point(lambda x: 255 if x > level else 0)
         out[_label(p)] = {"changed_px": m.histogram()[255], "bbox": m.getbbox()}
     return out
@@ -95,6 +98,7 @@ def check(images, rubric=RUBRIC, reference=(), server=DEFAULT_SERVER, timeout=60
     """With a reference, a pixel diff decides whether anything changed and the model only names what changed; an
     unchanged candidate never reaches the model, which removes its false alarms on clean renders. (diff_only=None is
     the internal 'gate passed' call.)"""
+    if not images: raise ValueError("no candidate views")
     if reference and diff_only is not None:
         diff = pixel_diff(images, reference)
         # A candidate view with no reference view cannot be cleared by the diff, so it goes to the model (fail open).
@@ -133,14 +137,22 @@ def evaluate(set_dir, out, rubric=RUBRIC, reference_root=None, server=DEFAULT_SE
         ref_dir = Path(reference_root) / f"clean-{truth['seed']}" if reference_root else None
         if ref_dir and ref_dir.resolve() == d.resolve(): continue
         ref = views(ref_dir) if ref_dir else ()
-        try: r = check(views(d), rubric, ref, server)
+        try:
+            # A sample or reference with missing views would silently drop them (or fall back to reference-free).
+            if len(views(d)) < len(VIEWS) or (ref_dir and len(ref) < len(VIEWS)): raise FileNotFoundError(f"missing views for {d.name}")
+            r = check(views(d), rubric, ref, server)
         except Exception as e: r = {"error": repr(e)}
         r.update(id=d.name, truth=truth, reference=bool(ref))
         with out.open("a", encoding="utf-8") as f: f.write(json.dumps(r) + "\n")
         n += 1; print(d.name, r.get("wall_s"), "ERROR" if "error" in r else "", flush=True)
 
 
-FAMILY = {"arm": "arm", "hand": "hand", "leg": "leg", "eye": "face", "shoe": "feet", "head": "head", "torso": "torso"}
+def load_rows(path):
+    """Result rows, last row per sample id: a resumed run's retry replaces the earlier error row."""
+    return list({r["id"]: r for r in map(json.loads, filter(str.strip, Path(path).read_text(encoding="utf-8").splitlines()))}.values())
+
+
+FAMILY = {"arm": "arm", "hand": "hand", "leg": "leg", "eye": "eye", "shoe": "feet", "head": "head", "torso": "torso"}
 MATERIAL_REGIONS = {"shirt": {"torso", "arm"}, "pants": {"leg"}, "skin": {"head", "face", "hand"}}
 
 
@@ -150,7 +162,7 @@ def accepted_regions(truth):
     if truth["category"] in ("material_swap", "white_material", "missing_texture"):
         fam = set().union(*(MATERIAL_REGIONS.get(p, set()) for p in re.split(r"\+", part.replace("arms", "arm"))))
         return fam | ({"torso", "arm"} if "torso" in part else set()) | {"whole"}
-    return {FAMILY.get(part.split(".")[0], part.split(".")[0])} | ({"head"} if part.startswith("eye") else set())
+    return {FAMILY.get(part.split(".")[0], part.split(".")[0])} | ({"face", "head"} if part.startswith("eye") else set())
 
 
 def region_family(region): return region.split("_", 1)[1] if region.startswith(("left_", "right_")) else region
@@ -212,7 +224,7 @@ def main(argv=None):
     if a.cmd == "check": print(json.dumps(check(a.images, rubric, a.reference, a.server, diff_only=a.diff_only), indent=1))
     elif a.cmd == "eval": evaluate(a.set_dir, a.out, rubric, a.reference_root, a.server, a.limit)
     elif a.cmd == "score":
-        rows = list({r["id"]: r for r in map(json.loads, filter(str.strip, Path(a.results).read_text(encoding="utf-8").splitlines()))}.values())  # last row per sample: resumed retries replace errors
+        rows = load_rows(a.results)
         summary = score(rows, threshold=a.threshold); print(table(summary))
         print(json.dumps({k: v for k, v in summary.items() if k not in ("categories", "detection")}))
     elif a.cmd == "serve":
