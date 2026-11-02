@@ -7,6 +7,12 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-11-02: Kromoss + DMD2 + Mikko in Make
+
+The owner chose "Yes, make the look" after Versus contest 2 (Kromoss vs MOSS) put Kromoss in every top place and DMD2+Mikko beat no adapter (98%); recorded in PR #1926. The recipe is read from the winners' PNG metadata, not chosen here; the placement and wording below are agent judgements.
+
+- [ ] **"Crisp cel anime, quick (Kromoss)" is third under Anime character**, before the MOSS look and after the two round-7 Anima mixes. Recipe of `kromoss-t2i_00004_`/`_00008_`: Kromoss u11000 int8, DMD2 adapter 1.0, mikkoani 0.9, 8 steps, CFG 1, euler / simple, 1024×1536, seed 2026102601, empty negative; the template is the winners' fixed prefix and tail around the scene, so it reproduces `_00008_` exactly. Badge "Tested well" (2 of 2 study pictures coherent, agent check); Best for "Adult characters in fashion; name what the clothing covers, as the winners did" (the live proof's plate armour came out with bare chest and thighs the brief did not ask for; both winning briefs named opaque layers); speed ~12 s (both study pictures, warm). Its "fashion illustration" tail may pull other scenes toward fashion: only two adult fashion briefs were run. No Draft while it measures Fast (Make offers one only to looks of 10+ steps or a Slow median) and no Fine (MOSS family). Make's default "Different pictures each time" replaces the seed, as for every look. Reverse: the entry in `presets/looks.json`, its id in the GOALS lists of `make.js` and `studio-shell.js`, and its TESTED / BEST_FOR / LAB_OTHER lines.
+
 ## 2026-11-02: five-minute tour fixes (#1919, #1920, #1921)
 
 - [ ] **Review next keys lead the details column during a queue** (#1919, PR #1930). The single-picture verdict row keeps its place under the next-step tools. Reverse: drop the `anchor.after(panel)` line in `renderAssetQueue()`.
