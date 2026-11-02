@@ -1,7 +1,7 @@
 # Render a GLB in Godot 4.7 with shaders from scripts/toon_compile.py, under the compiler's lights and cameras:
 #   godot --path tools/toon-compiler --script res://render.gd -- <config.json>
 # config: {"glb", "compiled" (a toon_compile output dir), "out", "background" (linear RGB), "shadow_max_distance",
-# "msaa", "taa" (default true: accumulates the soft-shadow noise that Blender's samples average out)}. Writes
+# "shadow_bias", "shadow_normal_bias" (Godot defaults if absent), "msaa", "taa" (default true: accumulates the soft-shadow noise that Blender's samples average out)}. Writes
 # <out>/<camera>.png per camera in <compiled>/cameras.json. Surfaces without a compiled shader keep their imported
 # material and are listed on stdout.
 extends SceneTree
@@ -91,6 +91,8 @@ func _initialize() -> void:
 		l.light_color = Color(L["color"][0], L["color"][1], L["color"][2])
 		l.light_energy = float(L["energy"])
 		l.shadow_enabled = bool(L["shadow"])
+		l.shadow_bias = float(cfg.get("shadow_bias", l.shadow_bias))
+		l.shadow_normal_bias = float(cfg.get("shadow_normal_bias", l.shadow_normal_bias))
 		world.add_child(l)
 		l.transform = xform(L["transform"])
 	var env := Environment.new()
