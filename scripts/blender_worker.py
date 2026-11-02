@@ -84,6 +84,30 @@ class BlenderWorker:
         if not reply["ok"]: raise WorkerFailed(reply["error"])
         return reply["result"]
 
+    def compare_to(self, reference, timeout=300):
+        """Compare the open scene with a reference .blend: manifest structure, fixed-camera renders on the reference's
+        camera spec, and localised visual changes. The reference is read in a fresh process and never saved."""
+        self.compares = getattr(self, "compares", 0) + 1
+        while (self.root / f"compare-{self.compares:03d}").exists(): self.compares += 1  # survives a worker restart
+        target = self.root / f"compare-{self.compares:03d}"
+        (target / "reference").mkdir(parents=True)
+        reference = Path(reference).resolve()
+        require(reference.is_file() and reference.suffix.lower() == ".blend", "reference must be an existing .blend")
+        current = self.call("describe_scene")
+        lab.run(self.exe, ["evidence", "--blend", reference, "--out-dir", target / "reference", "--out", target / "reference.json"],
+                target / "reference.log.json", timeout)
+        load = lambda path: json.loads(path.read_text(encoding="utf-8"))
+        ref_manifest, ref_evidence = load(target / "reference" / "manifest.json"), load(target / "reference" / "evidence.json")
+        current_evidence = self.call("render_views", out_dir=f"{target.name}/current", cameras=ref_evidence["camera_spec"])
+        structure = sentinel.compare_manifests(ref_manifest, current)
+        views, warnings = sentinel.compare_renders(target / "reference" / "renders", target / "current", ref_evidence, target / "diff")
+        localisation = sentinel.localise(views, target / "reference" / "renders", target / "current", ref_evidence, current_evidence)
+        # Stated from the reference's side: "missing after the roundtrip" reads "missing from the current scene".
+        return {"matches_reference": current["semantic_checksum"] == ref_manifest["semantic_checksum"],
+                "current_checksum": current["semantic_checksum"], "reference_checksum": ref_manifest["semantic_checksum"],
+                "structural_differences": structure["failures"], "visual_warnings": warnings,
+                "localisation": [l["statement"] for l in localisation], "current_render_files": len(current_evidence["files"])}
+
     def reimport_validate(self, out_dir, timeout=600):
         """Worker-side evidence and export, then the sentinel's new-process reimport and comparison."""
         require(isinstance(out_dir, str) and OUT_NAME.fullmatch(out_dir) is not None and set(out_dir) != {"."}, "out_dir must be a plain name")
@@ -103,7 +127,7 @@ class BlenderWorker:
                                 "process": "new Blender process, factory-empty scene, glTF import"},
                   "structural_failures": structure["failures"], "format_losses": structure["format_losses"],
                   "expected_exclusions": structure["expected_exclusions"], "visual_warnings": warnings, "views": views,
-                  "second_signal": critic}
+                  "second_signal": critic, "localisation": structure.get("localisation", [])}
         (target / "result.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         return result
 

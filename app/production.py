@@ -556,6 +556,15 @@ class Production:
         project_storage.complete(self.root,identifier,plan)
         return self.get(identifier)
 
+    def check_export(self, identifier):
+        """Run (or recover) the export parity check of a completed articulated build and keep it on the project."""
+        import parity_check
+        project=self._get(identifier)
+        if project['plan']['kind']!='articulated':raise ValueError('Check this export applies to articulated builds')
+        result=parity_check.run_check(self.studio,identifier)
+        self._mutate(identifier,parity_check=result)
+        return self.get(identifier)
+
     def voice_baseline(self, payload):
         from voice_baseline import prepare
         return prepare(self,payload)
@@ -1023,6 +1032,7 @@ class Production:
         base=(self.root/project['id']).resolve();path=(base/relative).resolve()
         if not path.is_relative_to(base) or not path.is_file():raise ValueError('Artifact unavailable')
         allowed={a['path'] for a in project['state'].get('artifacts',[])}|{'plan.json','comparison.json'}
+        if project['state'].get('parity_check',{}).get('status')=='completed':allowed.add('parity-check/sentinel/result.json') # the export-check report
         if relative not in allowed:raise ValueError('This file is not a published experiment artifact')
         if project['plan']['kind']=='voice' and relative!='plan.json':
             artifact=next((a for a in project['state'].get('artifacts',[]) if a['path']==relative),None)

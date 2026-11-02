@@ -98,6 +98,49 @@ brush_app.exe <dataset> --total-steps 30000 --growth-grad-threshold 0.00002 --ex
 - The critic's parity gate flags every view (on average 4.5 % of pixels change). That is correct: its thresholds are
   for exact parity, not splat fidelity.
 
+### A whole set as a backdrop: the procgen pier
+
+The input is procgen-lab's pier GLB (`sets/pier/run-default-1`, sha256 `2abf280f…`). Both runs used 30k steps with a
+growth threshold of 2e-5.
+
+| training views | wall | splats | held-out PSNR mean (min) |
+|---|---:|---:|---:|
+| 150, far orbit only (512²) | 142 s | 6,373 | 26.4 (25.0) |
+| 240, every other view at 0.45× distance (`near` 0.45, 640²) | 179 s | 37,804 | **35.4 (34.1)** |
+
+Both are scored from the same 20 far held-out cameras. A splat holds up only at the distances its training views
+covered: the far-only splat went soft behind a mesh character seen from 8 m.
+
+### A live mesh in front of a trained splat
+
+The scene is Suzu (a VRM-derived glTF mesh) standing on the pier. For each fix below, the splat render and the
+all-mesh render come from the same camera and are compared by PSNR, for the whole frame and for a crop around her feet.
+
+| step | frame dB | feet dB |
+|---|---:|---:|
+| ad-hoc light rig on the live mesh | 18.3 | 18.0 |
+| live mesh relit with the rig the training views were rendered with (now in `scene.json`) | 28.9 | 20.5 |
+| plus a contact shadow by compositing (below) | **29.4** | **22.7** |
+
+- **Contact shadow:**
+  - A shadow-catcher plane in the same Cycles render as the splat picks up stripes: the splat deck shadows it.
+    Setting `visible_shadow = False` on the splat does not stop that.
+  - What works is two passes:
+    1. Render Suzu plus a shadow catcher in Cycles with a transparent film. Make the pier **mesh** a holdout that
+       casts no shadows, so railings in front still cover her, and leave the splat out.
+    2. Alpha-over that pass onto the splat render.
+- **Floaters:**
+  - `scripts/splat_prune.py --min-opacity 0.1` removes 19 % of the splats and raises held-out PSNR from 35.39 to
+    35.74 dB.
+  - Higher cuts cost real geometry: 34.1, 31.9 and 29.8 dB at 0.2, 0.35 and 0.5.
+- **The streak that stays:** one purple-yellow streak on a thin railing post survives every cut tried:
+  - opacity;
+  - DC-only colour, which shows it isn't view-dependent;
+  - longest-to-middle axis caps of 50 to 1000, which shows it isn't a needle.
+
+  It looks like under-fitted thin geometry seen against sky and water in training. More near views of thin parts, or
+  a depth or normal prior, are the next levers.
+
 ## Blender Lab MCP (`projects.blender.org/lab/blender_mcp`)
 
 ### Setup

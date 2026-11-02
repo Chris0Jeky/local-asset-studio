@@ -375,3 +375,147 @@ Measured on 2 Nov 2026 with #1956's critic:
 - On sentinel roundtrips (5.4), the critic agrees on the control (0 px), missing texture (26,628 px), omitted mesh,
   material mismatch, and shape-key damage (0 px, a manifest-only defect).
 
+## Render-space active testing
+
+```bash
+python scripts/blender_active.py search --blender <blender.exe> --before a.blend --after b.blend --out-dir <new-dir>
+python scripts/blender_active.py corpus --blender <blender.exe> --corpus-dir <known-bad corpus> --out-dir <new-dir>
+```
+
+Fixed views can only show what their pose, camera and shading happen to expose. This search, from research report #1,
+looks for the render-space configuration where two revisions disagree most:
+- Both revisions are rendered as deterministic Workbench clay at 96 px, on a camera sphere framed from `before`.
+- The coarse grid covers azimuth (8) × elevation (3) × animation frame (up to 3 from the manifest's samples) ×
+  shape-key weight (0 or 1) × backface culling (off or on): 288 renders for the lab asset.
+- Configurations are ranked by changed pixels (largest channel > 8 levels, the render critic's gate, at least 20 px).
+- The search refines ±15° around the top three.
+- `best_with_default` reports the best disagreement when a dimension is held at its default, which shows which
+  dimension exposed the defect.
+
+Measured on 2 Nov 2026 on the known-bad corpus. Both builds give the same verdicts. 5.4 alpha takes about 5–15 s per
+variant once the control's grid is cached (100 s for the whole corpus); 4.5 takes 67 s.
+
+| Defect | Fixed views | Active search | Exposed by |
+| --- | --- | --- | --- |
+| control | clean | **clean (0 px)** | - |
+| bone-twist-lost | missed | **913 px** | posed frame (0 px at rest) |
+| broken-weights | missed | **657 px** | posed frame |
+| flipped-normals | missed | **589 px** | backface culling (0 px without) |
+| shape-key-damage | missed | **262 px** | shape-key weight 1 (0 px at 0) |
+| shape-key-interior-damage | missed | **25 px** | shape-key weight 1, just above the 20 px gate |
+| mesh-hole, omitted-mesh, transform-offset | caught | caught | any configuration |
+| missing-texture, missing-uvs, material-mismatch, duplicate-overlap | caught | missed | clay shows no materials, and coincident geometry looks identical |
+
+The active search finds all five defects the fixed views miss. Together, the two render paths catch 12 of 12 without
+the manifest. The interior shape-key case clears the gate by a small margin at 96 px, so render it larger before
+relying on it. Evidence: `E:/local-asset-studio-labs/rnd-20261102/blender-worker/evidence/active-testing-2026-11-02/`.
+
+## Visual delta localisation
+
+The sentinel's `result.json` (and the worker's `reimport_validate` and each corpus baseline) carries `localisation`:
+statements about objects and materials instead of pixel counts. For each view:
+- The object-ID change mask names objects that are missing or hidden, appeared, revealed (were covered there before),
+  or whose geometry moved.
+- The material-ID mask names material swaps and the meshes under them, but only where the object ID did not change, so
+  occlusion is never reported as a swap.
+- A lit or clay change outside both ID masks (dilated 3 px for anti-aliasing) is attributed to the objects covering at
+  least 5% of it. It is reported only when it clears the pass's own warning bar, so shadows and bounce light beside an
+  ID change stay quiet.
+- Candidate pixels are named with the candidate's palette.
+
+Statements are deduplicated across views and ranked by how many views agree.
+
+Measured on 2 Nov 2026 on the known-bad corpus, identical on 4.5.13 and 5.4 alpha. Every render-visible defect is
+named on the right object:
+
+| Defect | Localisation |
+| --- | --- |
+| material-mismatch | `material BadgeGreen -> BodyTextured on Badge` (all 4 views) |
+| transform-offset | `geometry of Head moved or changed` |
+| omitted-mesh | `object Body is missing or hidden here`, `object Badge revealed (was covered here)` |
+| missing-texture, missing-uvs, mesh-hole | `shading changed on Body (lit pass; IDs unchanged)` |
+| duplicate-overlap | `shading changed on Badge (lit pass; IDs unchanged)` (a coincident duplicate shares IDs' screen space) |
+
+The five render-invisible defects produce no localisation. The manifest's structural failures name them.
+
+## Agent repair loop
+
+```bash
+python scripts/blender_repair_bench.py run --blender <blender.exe> --corpus-dir <corpus> --out-dir <new> --agent claude-haiku
+python scripts/blender_repair_bench.py combine --runs <run> <rerun> --out final.json
+```
+
+Each known-bad corpus case goes to a cheap agent that may use only the MCP façade:
+- `blender_open`, `blender_describe_scene`, `blender_compare_to` and `blender_save_copy`;
+- `blender_apply_edit`, limited to location, rotation, scale, hide_render, material slot and shape-key value, with an
+  allow-list and a precondition checksum.
+
+`blender_compare_to` is the façade's comparison against a reference `.blend` in the read tree. It returns structural
+differences and localised visual changes. The host scores the saved `repaired.blend` against the control:
+- an exact repair has the same semantic checksum;
+- structurally clean means no `compare_manifests` differences, but a different checksum;
+- partial;
+- harmful means it introduced differences the damaged file did not have;
+- a decline is correct or wrong depending on whether the vocabulary can fix the damage;
+- for the control, a no-op.
+
+An outage is scored as an infrastructure failure, never as a decline, and `combine` keeps every attempt.
+
+Both agents are confined to the façade. This was proved with a canary: shell, file write, file read and env access
+were all blocked, and only `blender_ping` worked.
+- **Claude** (Haiku 5.5): `--restricted --tools "" --strict-mcp-config --permission-mode dontAsk` and a scrubbed env.
+- **Codex** (GPT-6.1 Sol, medium effort): an isolated `CODEX_HOME`, shell, apps, plugins, browser and computer-use
+  disabled, read-only, and a scrubbed env.
+
+The first, unconfined harness was stopped after a red-team review, and its partial results are not used.
+
+Measured on 2 Nov 2026 on the 5.4 alpha corpus, with 13 cases per agent:
+
+| Outcome | Haiku 5.5 | Sol 6.1 |
+| --- | --- | --- |
+| Exact repair (checksum equals control) | **3/4** repairable: material-mismatch, omitted-mesh, transform-offset | **3/4**, same three |
+| Structurally clean, checksum differs | duplicate-overlap: hid the duplicate, because the vocabulary cannot delete | same |
+| Correct decline (out of vocabulary) | **8/8**, each with an accurate reason | **8/8** |
+| Control | no-op | no-op |
+| Collateral change | **none** | **none** |
+| Steps per repair | 8, 8, 8, 11 turns | 7, 7, 7, 10 MCP calls |
+| Median time per case | 26 s | 24 s |
+| Model cost, whole run | $0.045 | not reported by Codex |
+
+A DNS outage interrupted part of the night: 3 Haiku cases and 12 Sol cases. Those were rerun, and both attempts are
+recorded. Evidence: `E:/local-asset-studio-labs/rnd-20261102/blender-worker/evidence/repair-loop-2026-11-02/`
+(`final-*.json`, per-case `row.json`, `agent.log`, manifests, and the `confinement-canary` and
+`aborted-unconfined-haiku-run` folders).
+
+What this shows and does not show:
+- A cheap agent with a typed, verifiable façade repairs everything the vocabulary can express and declines the rest
+  honestly, with no collateral damage, on this generated asset.
+- It does not show performance on real assets, on damage that needs new operations (UVs, topology, weights, image
+  relinking), or with a wider vocabulary.
+
+
+## Check this export (Studio job)
+
+A completed articulated build in the Studio's Experiments view shows a **Check this export** card. The button runs
+`app/parity_check.py`: `blender_lab.probe` on the Blender configured in `config/local.json` (`blender`), then
+`blender_sentinel.sentinel` on the project's own `articulated/chest.blend`. That covers the GLB export with the LAS
+settings, the reimport in a new process, the structural diff, the localised visual diff and the render critic when
+one is reachable. The card lists the localised statements, or else the structural failures, or else the visual warnings. On a clean
+chest (Blender 5.4 alpha, 2 Nov) the only warning is the critic's: 26 px over the lit views that the primary diff
+does not see, so a clean export currently reads "found differences" with that one line.
+
+- **Route:** `POST /api/production/<id>/check`, synchronous, about a minute. No ComfyUI prompt is submitted and the
+  Studio GPU lease is not taken; the renders are light-class.
+- **At most once per project:** `parity-check-job.json` is created exclusively before Blender starts. A second request,
+  a concurrent one or a request after a restart recovers that receipt instead of running Blender again.
+- **Evidence:** everything is kept under `experiments/projects/<id>/parity-check/` (`probe.json`, `sentinel/`), also on
+  failure. An interrupted check is recovered from a retained `sentinel/result.json`, or else reported `uncertain`.
+- **Which file:** the sentinel exports the BLEND afresh. The verdict covers the delivered `articulated/chest.glb` only when
+  its bytes match that export (they did in the live run). Otherwise the card reads "Passed, but the delivered GLB was not the one
+  checked".
+- **Next step and report:** a difference adds "Fix the source in Blender, rebuild, then check the new build". "Open report
+  (JSON)" serves `parity-check/sentinel/result.json` once the check has completed.
+- **Failure:** a failed check is never retried; the card says "A new check needs a new build."
+- **Recovery:** the receipt is rewritten atomically. A check left `uncertain` offers "Recover export check", which reads
+  the retained result and never starts Blender. An unreadable, cut-short `result.json` also leaves the check `uncertain`.
+- **Not decided here:** a pass is export parity only. It is neither art acceptance nor licence clearance.

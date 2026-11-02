@@ -194,6 +194,43 @@
         "5": {"name": "rocks", "group": "rocks", "when": {"rocks": [1, 8]}},
         "6": {"name": "sea", "group": "water", "open": true, "collision": false, "solid": false}
       }
+    },
+    "tide_pools": {
+      "description": "Tide pools below Suzu's cliff: a stair from stair_top (e.g. the coastal path height) down to a wet rock shelf with carved pool basins and water discs, boulders, starfish and shells on the rock, and an open sea plane. Stair top at y=0, runs along +y.",
+      "tri_budget": 40000,
+      "params": {
+        "width": {"type": "float", "min": 3.0, "max": 10.0, "default": 6.0},
+        "length": {"type": "float", "min": 4.0, "max": 14.0, "default": 8.0, "doc": "shelf length after the stair"},
+        "shelf_height": {"type": "float", "min": 0.3, "max": 1.0, "default": 0.5, "doc": "rock shelf top above the seabed"},
+        "roughness": {"type": "float", "min": 0.0, "max": 0.3, "default": 0.12},
+        "water_level": {"type": "float", "min": 0.1, "max": 0.8, "default": 0.3, "doc": "sea plane height"},
+        "pools": {"type": "int", "min": 0, "max": 6, "default": 4},
+        "pool_radius": {"type": "float", "min": 0.5, "max": 1.2, "default": 0.8, "doc": "largest pool radius; each pool is 0.6-1.0 of it"},
+        "boulders": {"type": "int", "min": 0, "max": 10, "default": 5},
+        "starfish": {"type": "int", "min": 0, "max": 8, "default": 4},
+        "shells": {"type": "int", "min": 0, "max": 12, "default": 6},
+        "stair": {"type": "int", "min": 0, "max": 1, "default": 1, "doc": "1 adds the stair down from stair_top"},
+        "stair_top": {"type": "float", "min": 0.8, "max": 3.0, "default": 1.95, "doc": "stair top height (the coastal path sits at land_height - 0.05)"},
+        "stair_width": {"type": "float", "min": 0.8, "max": 2.0, "default": 1.4},
+        "detail": {"type": "int", "min": 4, "max": 48, "default": 16, "doc": "shelf grid density and round segments; LODs halve it"},
+        "seed": {"type": "int", "min": 0, "max": 9999, "default": 7},
+        "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false, "doc": "flat toon palette: 0 day, 1 dusk, 2 sakura, 3 autumn"}
+      },
+      "constraints": [
+        {"terms": {"water_level": 1, "shelf_height": -1}, "le": -0.15, "doc": "the shelf stays 0.15 m above the sea"},
+        {"terms": {"shelf_height": 1, "stair_top": -1}, "le": -0.3, "doc": "the stair descends at least 0.3 m", "when": {"stair": [1, 1]}},
+        {"terms": {"pool_radius": 1.3, "width": -0.5}, "le": -0.9, "doc": "the largest basin fits across the shelf, clear of its tapered sides", "when": {"pools": [1, 6]}},
+        {"terms": {"pool_radius": 1.3, "length": -0.5}, "le": -0.9, "doc": "the largest basin fits along the shelf, clear of its far end", "when": {"pools": [1, 6]}}
+      ],
+      "parts": {
+        "1": {"name": "rock_shelf", "group": "ground", "open": true, "collision": false, "solid": false},
+        "2": {"name": "stairs", "group": "ground", "when": {"stair": [1, 1]}},
+        "3": {"name": "boulders", "group": "rocks", "when": {"boulders": [1, 10]}},
+        "4": {"name": "pools", "group": "water", "open": true, "collision": false, "solid": false, "when": {"pools": [1, 6]}},
+        "5": {"name": "starfish", "group": "props", "collision": false, "solid": false, "when": {"starfish": [1, 8]}},
+        "6": {"name": "shells", "group": "props", "collision": false, "solid": false, "when": {"shells": [1, 12]}},
+        "7": {"name": "sea", "group": "water", "open": true, "collision": false, "solid": false}
+      }
     }
   }
 }
