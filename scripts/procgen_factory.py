@@ -93,6 +93,12 @@ def expected_bounds(generator, p, detail=None):
         width = _snap_up(max(kasagi, gw + 2 * pr) + 1.0)
         n = p['step_count']
         return [width, n * p['step_run'] + 3.0, (n + 1) * p['step_rise'] + p['gate_height']], [0, 0, 0]
+    if generator == 'lighthouse_room':
+        # Tapered radial panels reach at most their outer corners (half-width = arc/2 at rt) and at least the floor polygon.
+        rt = p['radius'] + p['wall_thickness']
+        corner = math.hypot(rt, math.pi * rt / p['panels'])
+        s = 1 - min(math.cos(math.pi / p['panels']), math.cos(math.pi / detail)) * rt / corner
+        return [2 * corner, 2 * corner, p['height']], [s, s, 0]
     raise EvidenceError(f'unknown generator {generator!r}')
 
 

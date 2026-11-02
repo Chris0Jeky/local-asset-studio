@@ -48,7 +48,9 @@ class S:
 
 
 FOLD = {'ADD': lambda a, b: a + b, 'SUBTRACT': lambda a, b: a - b, 'MULTIPLY': lambda a, b: a * b,
-        'DIVIDE': lambda a, b: a / b, 'MAXIMUM': max, 'CEIL': lambda a, b: math.ceil(a)}
+        'DIVIDE': lambda a, b: a / b, 'MAXIMUM': max, 'MINIMUM': min, 'CEIL': lambda a, b: math.ceil(a),
+        'SINE': lambda a, b: math.sin(a), 'COSINE': lambda a, b: math.cos(a), 'FLOORED_MODULO': lambda a, b: a % b,
+        'POWER': lambda a, b: a ** b, 'ARCTAN2': math.atan2}
 
 
 def _enabled(sockets, name=None):
@@ -79,6 +81,42 @@ class B:
 
     def max(self, a, b): return self.math('MAXIMUM', a, b)
     def ceil(self, a): return self.math('CEIL', a)
+    def sin(self, a): return self.math('SINE', a)
+    def cos(self, a): return self.math('COSINE', a)
+    def sqrt(self, a): return self.math('POWER', a, 0.5)
+
+    def compare(self, op, a, b):
+        n = self.node('FunctionNodeCompare', {'data_type': 'FLOAT', 'operation': op})
+        self.set(_enabled(n.inputs, 'A')[0], a); self.set(_enabled(n.inputs, 'B')[0], b)
+        return n.outputs['Result']
+
+    def both(self, a, b):
+        n = self.node('FunctionNodeBooleanMath', {'operation': 'AND'}); self.set(n.inputs[0], a); self.set(n.inputs[1], b)
+        return n.outputs[0]
+
+    def transform(self, geo, loc=(0, 0, 0), rot_z=0.0):
+        t = self.node('GeometryNodeTransform', Geometry=geo, Translation=self.vec(*loc))
+        _enabled(t.inputs, 'Rotation')[0].default_value = (0, 0, rot_z)
+        return t.outputs[0]
+
+    def polar(self, count, radius, angle0, step, z0=0.0, dz=0.0):
+        """Points i = 0..count-1 at angle0 + i*step on a circle, rising dz per point; returns (points, angle field)."""
+        i = self.index(); angle = angle0 + i * step
+        pos = self.vec(radius * self.cos(angle), radius * self.sin(angle), z0 + i * dz)
+        return self.node('GeometryNodeSetPosition', Geometry=self.line(count, (0, 0, 0), (0, 0, 0)), Position=pos).outputs[0], angle
+
+    def taper(self, geo, rm):
+        """Scale y by (rm + x) / rm so a radial panel's width tracks the arc: ring panels meet edge to edge."""
+        pos = self.node('ShaderNodeSeparateXYZ', Vector=self.node('GeometryNodeInputPosition').outputs[0]).outputs
+        x, y, z = (S(self, o) for o in pos)
+        return self.node('GeometryNodeSetPosition', Geometry=geo, Position=self.vec(x, y * (rm + x) / rm, z)).outputs[0]
+
+    def instance_at(self, points, geo, rot_z, selection=None):
+        """Instance geo on points rotated about z by a field (radial boxes stay radial), optional selection."""
+        n = self.node('GeometryNodeInstanceOnPoints', Points=points, Instance=geo)
+        self.set(_enabled(n.inputs, 'Rotation')[0], self.vec(0.0, 0.0, rot_z))
+        if selection is not None: self.set(_enabled(n.inputs, 'Selection')[0], selection)
+        return self.node('GeometryNodeRealizeInstances', Geometry=n.outputs[0]).outputs[0]
 
     def vec(self, x, y, z):
         if not any(isinstance(v, S) for v in (x, y, z)): return (x, y, z)
@@ -185,14 +223,55 @@ def room_kit(b, P):
           b.box((bx0 + 0.02, by0 + 0.02, F + 0.46), (bx1 - 0.02, by0 + 0.62 * P['bed_length'], F + 0.5), 11, 'fabric'),
           b.sphere(((bx0 + bx1) / 2, by1 - 0.3, F + 0.52), (P['bed_width'] * 0.32, 0.17, 0.06), 12, 'fabric_alt')]
     # Bookshelf on the left wall in front of the desk; seeded book heights.
-    n = P['shelf_count']; sx0 = -W / 2; sy1 = dy0 - 0.08; sy0 = sy1 - 0.8; hh = n * 0.35 + 0.02; sc = (sy0 + sy1) / 2
-    g += [b.box((sx0, sy0, F), (sx0 + 0.3, sy0 + 0.02, F + hh), 13, 'wood'),
-          b.box((sx0, sy1 - 0.02, F), (sx0 + 0.3, sy1, F + hh), 13, 'wood'),
-          b.instance(b.line(n + 1, (sx0 + 0.15, sc, F), (0, 0, 0.35)), b.box((-0.15, -0.38, 0), (0.15, 0.38, 0.02), 13, 'wood'))]
-    row = b.instance(b.line(8, (0, -0.3, 0), (0, 0.085, 0)), b.box((-0.1, -0.018, 0), (0.1, 0.018, 1.0), 14, 'accent'),
-                     scale=b.vec(1.0, 1.0, b.random(0.18, 0.3, P['seed'])))
-    g.append(b.instance(b.line(n, (sx0 + 0.15, sc, F + 0.02), (0, 0, 0.35)), row))
+    g.append(b.transform(bookshelf(b, P['shelf_count'], P['seed'], 13, 14), (-W / 2, dy0 - 0.88, F)))
     g.append(b.cyl(P['rug_radius'], 0.01, (0, D * 0.45, F), 15, 'rug'))
+    return b.join(*g)
+
+
+def bookshelf(b, n, seed, shelf_part, books_part):
+    """Room-kit bookshelf in local space: back against x=0, 0.3 deep (+x), 0.8 wide (y 0..0.8), standing on z=0."""
+    hh = n * 0.35 + 0.02
+    g = [b.box((0, 0, 0), (0.3, 0.02, hh), shelf_part, 'wood'), b.box((0, 0.78, 0), (0.3, 0.8, hh), shelf_part, 'wood'),
+         b.instance(b.line(n + 1, (0.15, 0.4, 0), (0, 0, 0.35)), b.box((-0.15, -0.38, 0), (0.15, 0.38, 0.02), shelf_part, 'wood'))]
+    row = b.instance(b.line(8, (0, -0.3, 0), (0, 0.085, 0)), b.box((-0.1, -0.018, 0), (0.1, 0.018, 1.0), books_part, 'accent'),
+                     scale=b.vec(1.0, 1.0, b.random(0.18, 0.3, seed)))
+    g.append(b.instance(b.line(n, (0.15, 0.4, 0.02), (0, 0, 0.35)), row))
+    return b.join(*g)
+
+
+def lighthouse_room(b, P):
+    """Round lighthouse map room: ring wall of radial panels with windows, spiral steps on the wall, central map table."""
+    R_, T, H, F, n = P['radius'], P['wall_thickness'], P['height'], 0.06, P['panels']
+    step = 2 * math.pi / n
+    w = 2 * math.pi * (R_ + T / 2) / n                              # arc at the panel centre line; taper() follows the arc
+    g = [b.cyl(R_ + T, F, (0, 0, 0), 1, 'floor')]
+    pts, angle = b.polar(n, R_ + T / 2, -math.pi / 2, step)         # panel 0 faces the front (-y)
+    i = b.index()
+    window = b.compare('LESS_THAN', b.math('FLOORED_MODULO', i, P['window_every']), 0.5)
+    keep = b.compare('GREATER_THAN', i, P['cutaway'] * 2.5)        # cutaway removes panels 0..2 and n-2..n-1 at the front
+    keep = b.both(keep, b.compare('LESS_THAN', i, n - P['cutaway'] * 2.5))
+    solid = b.both(keep, b.compare('GREATER_THAN', b.math('FLOORED_MODULO', i, P['window_every']), 0.5))
+    z0, z1 = F + P['window_sill'], F + P['window_sill'] + P['window_height']
+    panel = lambda lo, hi: b.taper(b.box((-T / 2, -w / 2, lo), (T / 2, w / 2, hi), 2, 'wall'), R_ + T / 2)
+    g += [b.instance_at(pts, panel(F, H), angle, solid),
+          b.instance_at(pts, b.join(panel(F, z0), panel(z1, H)), angle, b.both(keep, window)),
+          b.instance_at(pts, b.box((-0.02, -w / 2 + 0.03, z0), (0.02, w / 2 - 0.03, z1), 9, 'glass'), angle, b.both(keep, window))]
+    # Spiral steps cantilevered from the wall on the left, rising toward a hatch.
+    rise = (H - F) / (P['stair_steps'] + 1)
+    # First step starts past the chart shelf's corner as seen from the centre (0.65 m off-axis at radius R - 0.9).
+    start = math.pi / 2 + b.math('ARCTAN2', 0.65, R_ - 0.9) + 0.12
+    spts, sangle = b.polar(P['stair_steps'], R_ - 0.4, start, 0.22, F + rise, rise)
+    g.append(b.instance_at(spts, b.box((-0.4, -0.2, -0.05), (0.4, 0.2, 0.0), 3, 'wood_dark'), sangle))
+    # Central map table with an unrolled chart, a stool, and a rug under them.
+    tr = P['table_radius']
+    g += [b.cyl(tr, 0.05, (0, 0, F + 0.72), 4, 'wood'), b.cyl(0.08, 0.72, (0, 0, F), 4, 'wood_dark'),
+          b.cyl(0.35, 0.03, (0, 0, F), 4, 'wood_dark'),
+          b.box((-0.6 * tr, -0.4 * tr, F + 0.77), (0.6 * tr, 0.4 * tr, F + 0.775), 5, 'paper'),
+          b.cyl(0.18, 0.04, (tr + 0.35, 0, F + 0.42), 6, 'wood'), b.cyl(0.04, 0.42, (tr + 0.35, 0, F), 6, 'wood_dark'),
+          b.cyl(tr + 0.55, 0.01, (0, 0, F), 8, 'rug')]
+    # Room-kit bookshelf of charts at the back, turned to face the room, clear of the panel AABBs.
+    back = R_ * b.cos(1.5 * step) - 0.05                           # inside every panel's axis-aligned box
+    g.append(b.transform(bookshelf(b, P['shelf_count'], P['seed'], 7, 10), (-0.4, back, F), -math.pi / 2))
     return b.join(*g)
 
 
@@ -252,7 +331,7 @@ def shrine(b, P):
     return b.join(*g)
 
 
-GENERATORS = {'room_kit': room_kit, 'prop': prop, 'shrine': shrine}
+GENERATORS = {'room_kit': room_kit, 'prop': prop, 'shrine': shrine, 'lighthouse_room': lighthouse_room}
 
 
 def make_materials(palette):
