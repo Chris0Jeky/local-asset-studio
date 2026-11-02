@@ -93,6 +93,14 @@ otherwise), and it becomes a talking portrait. Rhubarb's mouth shapes map to the
 writes the audio beside the frames (`f.wav`), so `ffmpeg -i f%08d.png -i f.wav` muxes the clip. Measured on a 7.65 s
 Kokoro line: Rhubarb 3.9 s for 45 cues.
 
+Several characters in one scene: each is a `toon_proof.gd` (or `actor.gd`) node whose `model_path`, `springs_path`,
+`sdf_path`, `voice_path`, `cues_path` and `voice_start` are set before it enters the tree, with `standalone = false` so
+it skips the camera, lights and environment that the host scene owns. A dialogue gives each actor one voice track (its
+lines at their timeline offsets, silence elsewhere) and that track's Rhubarb cues; Movie Maker mixes the players into
+`f.wav`. `actor.gd` adds a head-yaw schedule (`look`: `[[time_s, yaw_deg], ...]`) so speaker and listener can turn to
+each other. Set `action = "listen"` on an actor to skip the idle's one quick turn. Checked 2 Nov headless on a
+two-character, four-line exchange (Suzu and Kiri, 21.2 s): both VRMs load with their own springs (34 and 23 chains) and cues.
+
 The toon shader writes `EMISSION = albedo x shade` and `DIFFUSE_LIGHT += light x lit x (1 - shade + rim)`. Its ambient
 source is disabled, so the result matches Blender's. `LIGHT_COLOR` already includes PI and is divided back out.
 
