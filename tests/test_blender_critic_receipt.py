@@ -37,7 +37,7 @@ class CriticReceiptTests(unittest.TestCase):
         for folder in (self.ref, self.cand):
             for v in sentinel.lab.bpy_side.VIEWS:
                 Image.new('RGBA', (8, 8), (50, 60, 70, 255)).save(folder / f'{v}.lit.png')
-        self.first = f'{sentinel.lab.bpy_side.VIEWS[0]}.lit.png'
+        self.first = f'{next(iter(sentinel.lab.bpy_side.VIEWS))}.lit.png'
 
     def test_unsupported_real_evidence_cannot_agree_with_warning_primary(self):
         png16(self.ref / self.first, 0x4000); png16(self.cand / self.first, 0xf000)
