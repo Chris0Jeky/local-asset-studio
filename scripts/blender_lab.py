@@ -16,6 +16,8 @@ from pathlib import Path
 import subprocess
 import sys
 import time
+from urllib import error as url_error, request as url_request
+from urllib.parse import urlsplit
 
 
 HERE = Path(__file__).resolve().parent
@@ -78,6 +80,52 @@ def run(blender_path, args, log_path, timeout=300):
     require(returncode != "os-error", f"Blender did not return a result; see {log_path}")
     require(returncode == 0, f"Blender exited {returncode}; see {log_path}")
     return seconds
+
+
+GPU_ENGINES = {"BLENDER_WORKBENCH", "BLENDER_EEVEE", "BLENDER_EEVEE_NEXT"}
+HEAVY_GPU_SECONDS = 30  # the R&D programme's lease threshold for renders
+
+
+def gpu_cost(*evidence_records):
+    """Measured render time split by device from evidence records, and its class at the 30 s lease threshold."""
+    gpu = cpu = 0.0
+    for evidence in evidence_records:
+        for pass_name, seconds in (evidence.get("timings") or {}).items():
+            on_gpu = (evidence["id_passes"]["engine"] in GPU_ENGINES) if pass_name != "lit" else evidence["lit"]["device"] != "CPU"
+            gpu, cpu = (gpu + seconds, cpu) if on_gpu else (gpu, cpu + seconds)
+    return {"gpu_seconds": round(gpu, 3), "cpu_seconds": round(cpu, 3),
+            "class": "heavy" if gpu > HEAVY_GPU_SECONDS else "light", "heavy_above_gpu_seconds": HEAVY_GPU_SECONDS}
+
+
+class StudioGpuLease:
+    """Hold the Studio's GPU lease (POST /api/gpu-lease) around a Blender run. The Studio grants it only when its own
+    work is idle and then pauses its ComfyUI, so take it only for heavy GPU work, never by default."""
+
+    def __init__(self, studio_url, holder="blender-lab", ttl_seconds=900):
+        parts = urlsplit(studio_url)
+        require(parts.scheme == "http" and parts.hostname in ("127.0.0.1", "localhost") and parts.port
+                and not parts.username and parts.path in ("", "/"), "studio_url must be http://127.0.0.1:<port>")
+        require(type(ttl_seconds) is int and 60 <= ttl_seconds <= 4 * 3600, "ttl_seconds must be 60..14400")
+        self.origin, self.holder, self.ttl, self.grant = f"http://{parts.hostname}:{parts.port}", holder, ttl_seconds, None
+
+    def _post(self, path, payload):
+        call = url_request.Request(self.origin + path, data=json.dumps(payload).encode(), method="POST",
+                                   headers={"Content-Type": "application/json", "Origin": self.origin})
+        try:
+            with url_request.urlopen(call, timeout=60) as response: return json.loads(response.read() or b"{}")
+        except url_error.HTTPError as exc:
+            detail = json.loads(exc.read() or b"{}") if exc.headers.get("Content-Type", "").startswith("application/json") else {}
+            raise BlenderLabError(f"Studio GPU lease {path} refused ({exc.code}): {detail.get('code')}: {detail.get('error')}") from exc
+        except (url_error.URLError, OSError) as exc:
+            raise BlenderLabError(f"Studio GPU lease {path} unreachable: {exc}") from exc
+
+    def __enter__(self):
+        self.grant = self._post("/api/gpu-lease", {"holder": self.holder, "ttl_seconds": self.ttl})
+        require(self.grant.get("granted") is True, "Studio did not grant the GPU lease")
+        return self.grant
+
+    def __exit__(self, *exc):
+        self.released = self._post("/api/gpu-lease/release", {"holder": self.holder})
 
 
 def probe(blender_path, out_path, timeout=300):

@@ -735,8 +735,10 @@ def render_evidence(out_dir, spec=None, size=256, samples=16):
     for mat in bpy.data.materials:
         mat.diffuse_color = (*id_colour(mat.name), 1.0); palette["material"][mat.name] = id_colour(mat.name)
     os.makedirs(out_dir, exist_ok=True)
-    files = []
+    files, timings = [], {}
+    import time
     for pass_name in PASSES:
+        started = time.perf_counter()
         if pass_name == "lit":
             render.engine = "CYCLES"
             scene.cycles.device, scene.cycles.samples, scene.cycles.seed = "CPU", samples, 20261102
@@ -756,7 +758,8 @@ def render_evidence(out_dir, spec=None, size=256, samples=16):
             render.filepath = os.path.join(out_dir, f"{view}.{pass_name}.png")
             bpy.ops.render.render(write_still=True)
             files.append(f"{view}.{pass_name}.png")
-    return {"camera_spec": spec, "size": size, "lit": {"engine": "CYCLES", "device": "CPU", "samples": samples, "seed": 20261102},
+        timings[pass_name] = round(time.perf_counter() - started, 3)
+    return {"timings": timings, "camera_spec": spec, "size": size, "lit": {"engine": "CYCLES", "device": "CPU", "samples": samples, "seed": 20261102},
             "id_passes": {"engine": "BLENDER_WORKBENCH", "aa": "OFF"}, "palette": palette, "files": files,
             "view_transform": "Standard"}
 

@@ -12,6 +12,7 @@ and before export, to prove the sentinel catches that class of failure. It never
 from __future__ import annotations
 
 import argparse
+from contextlib import nullcontext
 import json
 from pathlib import Path
 import sys
@@ -279,23 +280,26 @@ def roundtrip_and_compare(exe, target, timeout=600):
     return src_manifest, rt_manifest, evidence, structure, views, warnings, seconds
 
 
-def sentinel(blender_path, blend_path, out_dir, seed_defect=None, timeout=600):
+def sentinel(blender_path, blend_path, out_dir, seed_defect=None, timeout=600, studio_lease=None):
     exe = lab.executable(blender_path)
     blend = Path(blend_path).expanduser().resolve()
     require(blend.is_file() and blend.suffix.lower() == ".blend", "blend must be an existing .blend file")
     target = Path(out_dir).expanduser().resolve()
     require(not target.exists(), "out_dir must be new")
     require(seed_defect in (None, *lab.bpy_side.SEEDED_DEFECTS), "Unknown seeded defect")
+    lease = lab.StudioGpuLease(studio_lease) if studio_lease else None  # validate before any file or process exists
     target.mkdir(parents=True)
     before = lab.file_sha(blend)
     glb = target / "export.glb"
     args = ["evidence", "--blend", blend, "--out-dir", target / "source", "--out", target / "source.json", "--export", glb]
     if seed_defect: args += ["--seed-defect", seed_defect]
-    seconds_source = lab.run(exe, args, target / "source.log.json", timeout)
-    require(lab.file_sha(blend) == before, "Source .blend changed during the sentinel run")
-    require(glb.is_file() and glb.stat().st_size > 0, "GLB export is missing")
-    source_record = json.loads((target / "source.json").read_text(encoding="utf-8"))
-    src_manifest, rt_manifest, evidence, structure, views, warnings, seconds_roundtrip = roundtrip_and_compare(exe, target, timeout)
+    with lease or nullcontext() as grant:  # a refused lease raises before Blender starts
+        seconds_source = lab.run(exe, args, target / "source.log.json", timeout)
+        require(lab.file_sha(blend) == before, "Source .blend changed during the sentinel run")
+        require(glb.is_file() and glb.stat().st_size > 0, "GLB export is missing")
+        source_record = json.loads((target / "source.json").read_text(encoding="utf-8"))
+        src_manifest, rt_manifest, evidence, structure, views, warnings, seconds_roundtrip = roundtrip_and_compare(exe, target, timeout)
+    rt_evidence = json.loads((target / "roundtrip" / "evidence.json").read_text(encoding="utf-8"))
     result = {
         "schema": "las.asset-parity-sentinel.v1", "pass": not structure["failures"] and not warnings,
         "blender": {"executable": exe.as_posix(), "sha256": lab.file_sha(exe), "version_string": src_manifest["blender"]["version_string"],
@@ -307,6 +311,9 @@ def sentinel(blender_path, blend_path, out_dir, seed_defect=None, timeout=600):
         "roundtrip": {"semantic_checksum": rt_manifest["semantic_checksum"], "counts": rt_manifest["counts"],
                       "seconds": seconds_roundtrip, "process": "new Blender process, factory-empty scene, glTF import"},
         "cameras": evidence["camera_spec"], "render": {k: evidence[k] for k in ("size", "lit", "id_passes", "view_transform")},
+        "gpu_cost": lab.gpu_cost(evidence, rt_evidence),
+        "studio_lease": None if lease is None else {"holder": lease.holder, "granted": bool(grant and grant.get("granted")),
+                                                    "released": bool(getattr(lease, "released", {}).get("released"))},
         "structural_failures": structure["failures"], "format_losses": structure["format_losses"],
         "expected_exclusions": structure["expected_exclusions"], "visual_warnings": warnings, "views": views,
         "artifacts": [{"path": p.relative_to(target).as_posix(), "sha256": lab.file_sha(p), "bytes": p.stat().st_size}
@@ -324,9 +331,12 @@ def main(argv=None):
     parser.add_argument("--blend", required=True)
     parser.add_argument("--out-dir", required=True)
     parser.add_argument("--seed-defect", choices=lab.bpy_side.SEEDED_DEFECTS)
+    parser.add_argument("--studio-lease", metavar="URL",
+                        help="hold the Studio GPU lease (pauses its ComfyUI) for the run, e.g. http://127.0.0.1:8191; "
+                             "only for heavy GPU work, see result.gpu_cost")
     args = parser.parse_args(argv)
     try:
-        result = sentinel(args.blender, args.blend, args.out_dir, args.seed_defect)
+        result = sentinel(args.blender, args.blend, args.out_dir, args.seed_defect, studio_lease=args.studio_lease)
     except (lab.BlenderLabError, OSError, ValueError) as exc:
         print(json.dumps({"error": str(exc)}), file=sys.stderr)
         return 2
