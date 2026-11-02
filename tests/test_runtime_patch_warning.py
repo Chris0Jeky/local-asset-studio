@@ -21,7 +21,9 @@ PATCHED = b'raise AssertionError("Patch checking must never import this source")
 class RuntimePatchFiles:
     def setUp(self):
         temporary = tempfile.TemporaryDirectory(); self.addCleanup(temporary.cleanup)
-        self.root = Path(temporary.name)
+        # Windows may provide an 8.3 TEMP alias while PowerShell and the checker
+        # resolve its long name. Keep every fixture identity on that same path.
+        self.root = Path(temporary.name).resolve()
         self.comfy = self.root / 'comfy'
         self.target = self.comfy / TARGET
         self.target.parent.mkdir(parents=True)

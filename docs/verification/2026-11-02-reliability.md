@@ -54,6 +54,13 @@ doubles. The existing Windows launcher workflow runs these cases in addition to
 its unchanged GPU-lease checks, within the existing five-minute budget. Local
 PowerShell was unavailable; its hosted result belongs to the PR evidence.
 
+The first hosted Windows run at `2a653eec` passed all 15 existing lease tests and
+the new child-mode warning/nonblocking test. Four new assertions failed because
+Windows supplied an 8.3 temporary-directory alias while PowerShell and the checker
+resolved its long name: three parent-log comparisons and the mocked unreadable-file
+match. The fixture now resolves its root once before creating files; its assertions
+and production code are unchanged. The final hosted result remains pending.
+
 ## Spoken Brief access and preview evidence — #1877, #1879, #1880
 
 Every current access refresh now updates both source preview and archive discovery.
