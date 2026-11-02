@@ -110,3 +110,48 @@ sphere, so diagonal views are not cropped.
 The importer adds a hidden `Icosphere` bone-shape object in a `glTF_not_exported` collection. The sentinel ignores it
 because it is not visible. Thresholds are in `blender_sentinel.THRESHOLDS`. They come from this control, so a
 smooth-shaded asset or one with custom normals needs its own control run before the thresholds can be trusted on it.
+
+## Typed persistent worker
+
+`scripts/blender_worker.py` keeps one background Blender alive and talks JSON lines over its stdin and stdout pipes.
+Pipes rather than a socket mean no other process can connect. Replies are stdout lines prefixed `@@LAS@@ `, so
+Blender's own output is ignored. The vocabulary is closed:
+
+| Command | Effect |
+| --- | --- |
+| `ping` | pid, uptime, call count, datablock counts |
+| `caps` | the capability probe, taken at start-up |
+| `open {blend, allow_edit}` | opens a `.blend` without scripts and sets this session's editable objects |
+| `describe_scene` | the scene manifest |
+| `render_views {out_dir, size, samples, cameras}` | the sentinel evidence set; the scene is snapshotted and reloaded, so nothing leaks |
+| `save_copy {path}` / `export {path}` | a `.blend` copy, or a GLB with the LAS settings |
+| `apply_edit {object, op, value, expect_checksum}` | location, rotation, scale, render visibility, material slot or shape-key value; only on allow-listed objects, only when `expect_checksum` matches the current semantic checksum, values finite and bounded |
+| `reimport_validate {out_dir}` (host side) | worker evidence and export, then the sentinel's reimport in a new process and its comparison |
+
+Every write goes to a new path inside the worker root. No command evaluates caller-supplied code. A refused request
+leaves the worker running. `fresh_call` is the one-process-per-call fallback.
+
+```bash
+python scripts/blender_worker.py bench --blender <blender.exe> --blend <asset.blend> --out-dir <new-dir> --calls 30
+```
+
+Measured on 2 Nov 2026 with the lab asset. The 30 calls were a mix of ping, describe, an edit and its revert, export,
+128 px renders and save_copy:
+
+| | 4.5.13 | 5.4 alpha |
+| --- | --- | --- |
+| Persistent: start-up, then 30 calls | 0.56 s + 0.96 s | 0.83 s + 2.28 s |
+| Fresh process per call: 30 calls | 25.3 s | 42.6 s |
+| Speed-up | 26× | 19× |
+| Median `describe_scene`, persistent vs fresh | 3 ms vs 0.77 s | 3 ms vs 1.33 s |
+| Median `render_views` (16 renders at 128 px), persistent vs fresh | 0.12 s vs 1.43 s | 0.51 s vs 1.82 s |
+| State-leak checks | pass | pass |
+| Worker RSS after 30 calls | 435 MB | 432 MB |
+
+The state-leak checks are:
+- the semantic checksum is unchanged across every render and export;
+- the start checksum equals the end checksum after edit and revert pairs;
+- the end checksum equals a fresh process reading the same file;
+- the datablock counts are unchanged.
+
+Fixed start-up cost dominates fresh calls; on 5.4 alpha it is about 1.3 s.
