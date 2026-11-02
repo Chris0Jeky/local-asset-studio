@@ -471,31 +471,46 @@ def tide_pools(b, P):
     # Pool centres: one seeded value per pool (constant ids), kept inside the shelf.
     pools = []
     for i in range(6):
-        r = b.random(0.3, 1.0, P['seed'] + 11, id=i) * P['pool_radius']
+        r = b.random(0.6, 1.0, P['seed'] + 11, id=i) * P['pool_radius']
         # Centres keep the whole basin (1.3 r) 0.9 m clear of the tapered sides and far end, where the rim would sink.
         cx = b.random(-1.0, 1.0, P['seed'] + 12, id=i) * (W / 2 - 0.9 - 1.3 * r)
         cy = y0 + L / 2 + b.random(-1.0, 1.0, P['seed'] + 13, id=i) * (L / 2 - 0.9 - 1.3 * r)
         pools.append((cx, cy, r, b.compare('LESS_THAN', i, P['pools'])))
     def height(x, y):
-        # Noise ramps in over 0.8 m after the stair, so the last step meets the rock with no up-step.
-        z = sh + P['roughness'] * b.noise01(b.vec(x, y, P['seed'] * 0.71), 0.8) * b.clamp01((y - y0) / 0.8)
+        """Rock height and basin depth (0..1) at x, y."""
         dip = 0.0                                                      # overlapping basins merge (max), never stack
         for cx, cy, r, on in pools:
             d = b.sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy))
             t = b.clamp01((d - 0.7 * r) / (0.6 * r)); t = t * t * (3 - 2 * t)
             dip = b.max(dip, (1 - t) * on)
-        z = z - 0.25 * dip
-        # The shelf rises out of the seabed over 0.8 m at its sides and far end; the stair end stays full height.
-        edge = b.clamp01((W / 2 - b.math('ABSOLUTE', x)) / 0.8) * b.clamp01((y0 + L - y) / 0.8)
-        return z * edge
-    vx = b.math('FLOOR', P['detail'] * W / 4) + 2; vy = b.math('FLOOR', P['detail'] * L / 4) + 2
+        # Noise ramps in over 0.8 m after the stair (the last step meets the rock with no up-step) and stays out of the
+        # basins, so a basin floor is always 0.25 m down and holds water.
+        noise = b.noise01(b.vec(x, y, P['seed'] * 0.71), 0.8) * b.clamp01((y - y0) / 0.8) * (1 - dip)
+        z = sh + P['roughness'] * noise - 0.25 * dip
+        # The shelf rises out of the seabed over 0.8 m at its sides and far end, but never under the stair's landing.
+        side = b.clamp01((W / 2 - b.math('ABSOLUTE', x)) / 0.8)
+        landing = P['stair'] * b.compare('LESS_THAN', b.math('ABSOLUTE', x), sw + 0.2) * b.compare('LESS_THAN', y, y0 + 0.8)
+        return z * b.max(side, landing) * b.clamp01((y0 + L - y) / 0.8), dip
+    # Grid: density follows detail, but never coarser than 0.4 m, so every pool (radius >= 0.3 m) holds wet vertices at
+    # every LOD.
+    vx = b.max(b.math('FLOOR', P['detail'] * W / 6) + 2, b.ceil(W / 0.4) + 2)
+    vy = b.max(b.math('FLOOR', P['detail'] * L / 6) + 2, b.ceil(L / 0.4) + 2)
     grid = b.node('GeometryNodeMeshGrid', Size_X=W, Size_Y=L, Vertices_X=vx, Vertices_Y=vy)
     shelf = b.place(grid, 1, 'wet_rock', (0, y0 + L / 2, 0))
     x, y, _ = b.position()
-    shelf = b.node('GeometryNodeSetPosition', Geometry=shelf, Offset=b.vec(0.0, 0.0, height(x, y))).outputs[0]
+    shelf = b.node('GeometryNodeSetPosition', Geometry=shelf, Offset=b.vec(0.0, 0.0, height(x, y)[0])).outputs[0]
     g.append(shelf)
-    for cx, cy, r, on in pools:                                        # water sits 6 cm below the rim, out to the basin wall
-        g.append(b.switch(on, b.cyl(1.08 * r, 0.01, (cx, cy, sh - 0.07), 4, 'water')))
+    # Pool water is the same grid, flattened 6 cm under the rim: keep every face with a corner that is in a basin and
+    # under the water line. The rock is linear per face, so this covers all water and the cut edges lie under rock.
+    water = b.place(grid, 4, 'water', (0, y0 + L / 2, 0))
+    wx, wy, _ = b.position()
+    wz, wdip = height(wx, wy)
+    level = sh - 0.06
+    water = b.store(water, 'wet', 'FLOAT', 'POINT', b.both(b.compare('LESS_THAN', wz, level), b.compare('GREATER_THAN', wdip, 0.001)))
+    wet = S(b, b.node('GeometryNodeInputNamedAttribute', {'data_type': 'FLOAT'}, Name='wet').outputs['Attribute'])
+    water = b.node('GeometryNodeDeleteGeometry', {'domain': 'FACE'}, Geometry=water, Selection=b.compare('LESS_THAN', wet, 0.001)).outputs[0]
+    water = b.node('GeometryNodeRemoveAttribute', Geometry=water, Name='wet').outputs[0]   # face read = corner average: > 0 if any corner is wet
+    g.append(b.node('GeometryNodeSetPosition', Geometry=water, Offset=b.vec(0.0, 0.0, level)).outputs[0])
     def scatter(count, seed, inset, geo, scale):
         """Seeded points on the shelf (independent of the grid), ray cast onto this LOD's rock."""
         px = b.random(-W / 2 + inset, W / 2 - inset, seed); py = b.random(y0 + inset, y0 + L - inset, seed + 1)
@@ -504,6 +519,7 @@ def tide_pools(b, P):
         ray = b.node('GeometryNodeRaycast', Target_Geometry=shelf, Source_Position=b.vec(qx, qy, sh + 5.0), Ray_Direction=(0.0, 0.0, -1.0), Ray_Length=50.0)
         pts = b.node('GeometryNodeSetPosition', Geometry=pts, Position=ray.outputs['Hit Position']).outputs[0]
         return b.instance(pts, geo, scale=scale)
+    full = b.detail; b.detail = b.math('MINIMUM', full, 16)          # props are small: past 16 segments only the budget grows
     br = b.random(0.25, 0.6, P['seed'] + 21)
     g.append(scatter(P['boulders'], P['seed'] + 20, 1.2, b.sphere((0, 0, 0.2), (1, 1, 0.75), 3, 'stone'), b.vec(br, 0.8 * br, br)))
     arms, aangle = b.polar(5, 0.06, 0.0, 2 * math.pi / 5)
@@ -513,6 +529,7 @@ def tide_pools(b, P):
     g.append(scatter(P['starfish'], P['seed'] + 30, 0.6, star, b.vec(ss, ss, ss)))
     sc = b.random(0.7, 1.3, P['seed'] + 41)
     g.append(scatter(P['shells'], P['seed'] + 40, 0.6, b.sphere((0, 0, 0.0), (0.04, 0.03, 0.015), 6, 'fabric_alt'), b.vec(sc, sc, sc)))
+    b.detail = full
     g.append(b.grid(W + 6, y0 + L + 3 - y0, (0, (y0 + y0 + L + 3) / 2, P['water_level']), (0, 0, 0), 7, 'water'))
     return b.join(*g)
 
