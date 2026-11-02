@@ -66,6 +66,7 @@ func _role(name: String) -> String:
 func _springs() -> void:
 	var data = JSON.parse_string(FileAccess.get_file_as_string("res://springs.json"))
 	var sim := SpringBoneSimulator3D.new(); skel.add_child(sim)
+	var cols: Array[SpringBoneCollision3D] = []
 	for c in data.colliders:
 		var col: SpringBoneCollision3D
 		var off := Vector3(c.offset[0], c.offset[1], c.offset[2])
@@ -77,13 +78,15 @@ func _springs() -> void:
 			col.position_offset = (off + tail) * 0.5
 			if axis.length() > 1e-5: col.rotation_offset = Quaternion(Vector3.UP, axis.normalized())
 		col.bone_name = c.bone
-		sim.add_child(col)
+		sim.add_child(col); cols.append(col)
 	sim.set_setting_count(data.chains.size())
 	for i in data.chains.size():
 		var ch = data.chains[i]
 		sim.set_root_bone_name(i, ch.root); sim.set_end_bone_name(i, ch.end)
 		sim.set_stiffness(i, ch.stiffness); sim.set_drag(i, ch.drag); sim.set_gravity(i, ch.gravity); sim.set_radius(i, ch.radius)
-		sim.set_enable_all_child_collisions(i, true)
+		sim.set_enable_all_child_collisions(i, false)                 # only the colliders in this spring's VRM groups
+		sim.set_collision_count(i, ch.colliders.size())
+		for k in ch.colliders.size(): sim.set_collision_path(i, k, sim.get_path_to(cols[int(ch.colliders[k])]))
 	print("TOON springs=", sim.get_setting_count(), " colliders=", data.colliders.size())
 
 

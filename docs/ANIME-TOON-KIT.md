@@ -77,6 +77,8 @@ source is disabled, so the result matches Blender's. `LIGHT_COLOR` already inclu
 ## Limits
 
 - One model, one Blender alpha build, one Godot version. The VRM add-on cap raise is a local patch, not upstream support.
+- Springs carry each chain's first-joint settings and its collider groups; per-joint settings, `gravityDir` and
+  `center` are not exported yet, and position maps assume one mesh per material.
 - Shadow Raycast noise shows as speckle on large self-shadowed cloth areas.
 - The SDF map assumes a VRoid-like face facing -Y with Z up in the position map.
 - Validator: the exported VRM and GLB passed glTF-Validator 2.0.0-dev.3.10 with 0 errors. The VRM had 19 warnings, 15 of them

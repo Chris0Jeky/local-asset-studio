@@ -20,8 +20,10 @@ SPRING_DOC = {
     "nodes": [{"name": "J_Bip_C_Hips"}, {"name": "Skirt0_1"}, {"name": "Skirt0_2"}, {"name": "Skirt0_end"}, {"name": "J_Bip_L_UpperLeg"}],
     "extensions": {"VRMC_springBone": {
         "colliders": [{"node": 4, "shape": {"capsule": {"offset": [0, 0, 0], "tail": [0, -.3, 0], "radius": .077}}},
-                      {"node": 0, "shape": {"sphere": {"offset": [0, .05, 0], "radius": .11}}}],
-        "springs": [{"name": "Skirt0", "joints": [{"node": 1, "stiffness": .9, "dragForce": .25, "gravityPower": .05, "hitRadius": .02},
+                      {"node": 0, "shape": {"sphere": {"offset": [0, .05, 0], "radius": .11}}},
+                      {"node": 0, "shape": {"capsule": {}}}],
+        "colliderGroups": [{"colliders": [0]}, {"colliders": [1, 0]}, {"colliders": [2]}],
+        "springs": [{"name": "Skirt0", "colliderGroups": [1, 0], "joints": [{"node": 1, "stiffness": .9, "dragForce": .25, "gravityPower": .05, "hitRadius": .02},
                                                   {"node": 2}, {"node": 3}]},
                     {"name": "lonely", "joints": [{"node": 2}]}]}}}
 
@@ -82,9 +84,10 @@ class SpringTests(unittest.TestCase):
     def test_chains_and_colliders_come_out_by_bone_name(self):
         out = vrm_toon.vrm_springs(SPRING_DOC)
         self.assertEqual(out["chains"], [{"name": "Skirt0", "root": "Skirt0_1", "end": "Skirt0_end", "joints": 3,
-                                          "stiffness": .9, "drag": .25, "gravity": .05, "radius": .02}])
+                                          "stiffness": .9, "drag": .25, "gravity": .05, "radius": .02, "colliders": [0, 1]}])
         self.assertEqual(out["colliders"][0], {"bone": "J_Bip_L_UpperLeg", "type": "capsule", "offset": [0, 0, 0], "tail": [0, -.3, 0], "radius": .077})
         self.assertEqual(out["colliders"][1]["type"], "sphere"); self.assertIsNone(out["colliders"][1]["tail"])
+        self.assertEqual(out["colliders"][2], {"bone": "J_Bip_C_Hips", "type": "capsule", "offset": [0, 0, 0], "tail": [0, 0, 0], "radius": 0.0})
 
     def test_glb_round_trip_and_cli(self):
         with tempfile.TemporaryDirectory() as d:
@@ -97,6 +100,12 @@ class SpringTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             bad = Path(d) / "bad.vrm"; bad.write_bytes(b"glTF" + b"\0" * 30)
             with self.assertRaises(ValueError): vrm_toon.read_glb_json(bad)
+            good = glb(SPRING_DOC)
+            for name, data in {"version 1": good[:4] + struct.pack("<I", 1) + good[8:],
+                               "declared too short": good[:8] + struct.pack("<I", 12) + good[12:]}.items():
+                with self.subTest(name=name):
+                    bad.write_bytes(data)
+                    with self.assertRaises(ValueError): vrm_toon.read_glb_json(bad)
         with self.assertRaises(ValueError): vrm_toon.vrm_springs({"nodes": [], "extensions": {"VRM": {}}})
 
 

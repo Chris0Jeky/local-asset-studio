@@ -29,7 +29,8 @@ void light() {
 		float lz = dot(lw, face_forward);
 		float ang = acos(clamp(lz / max(length(vec2(lx, lz)), 1e-4), -1.0, 1.0)) / PI;
 		vec4 s = texture(sdf_tex, UV);
-		lit = smoothstep(-softness, softness, (lx > 0.0 ? s.r : s.g) - ang) * mix(0.5, 1.0, ATTENUATION);
+		float facing = smoothstep(0.0, 0.02, dot(NORMAL, LIGHT));   // no light through the back of the head
+		lit = smoothstep(-softness, softness, (lx > 0.0 ? s.r : s.g) - ang) * facing * mix(0.5, 1.0, ATTENUATION);
 	} else {
 		lit = smoothstep(threshold - softness, threshold + softness, dot(NORMAL, LIGHT) * ATTENUATION);
 	}

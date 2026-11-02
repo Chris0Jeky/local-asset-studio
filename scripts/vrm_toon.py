@@ -85,23 +85,26 @@ def face_sdf_image(npz: Path, out: Path) -> dict:
 def read_glb_json(path: Path) -> dict:
     data = Path(path).read_bytes()
     if len(data) < 20: raise ValueError('not a GLB: too short')
-    magic, _version, length = struct.unpack_from('<III', data, 0)
-    if magic != GLB_MAGIC or length > len(data): raise ValueError('not a GLB: bad header')
+    magic, version, length = struct.unpack_from('<III', data, 0)
+    if magic != GLB_MAGIC or version != 2 or not 20 <= length <= len(data): raise ValueError('not a GLB 2.0: bad header')
     size, kind = struct.unpack_from('<II', data, 12)
-    if kind != JSON_CHUNK or 20 + size > len(data): raise ValueError('GLB first chunk is not JSON')
+    if kind != JSON_CHUNK or 20 + size > length: raise ValueError('GLB first chunk is not JSON')
     return json.loads(data[20:20 + size])
 
 
 def vrm_springs(doc: dict) -> dict:
-    """VRMC_springBone chains (root, end, first-joint settings) and colliders, by node name."""
+    """VRMC_springBone chains (root, end, first-joint settings, collider indices from their groups) and colliders.
+
+    Per-joint settings beyond the first joint, gravityDir and center are not carried over."""
     names = [n.get('name', f'node{i}') for i, n in enumerate(doc.get('nodes', []))]
     sb = doc.get('extensions', {}).get('VRMC_springBone')
     if not sb: raise ValueError('no VRMC_springBone extension (VRM 1.0 required)')
-    colliders = []
+    colliders = []                                              # schema defaults: offset/tail [0,0,0], radius 0
     for c in sb.get('colliders', []):
         shape = c['shape']; kind = 'sphere' if 'sphere' in shape else 'capsule'; s = shape[kind]
         colliders.append({'bone': names[c['node']], 'type': kind, 'offset': s.get('offset', [0, 0, 0]),
-                          'tail': s.get('tail') if kind == 'capsule' else None, 'radius': s['radius']})
+                          'tail': s.get('tail', [0, 0, 0]) if kind == 'capsule' else None, 'radius': s.get('radius', 0.0)})
+    groups = [g.get('colliders', []) for g in sb.get('colliderGroups', [])]
     chains = []
     for s in sb.get('springs', []):
         joints = s.get('joints', [])
@@ -109,7 +112,8 @@ def vrm_springs(doc: dict) -> dict:
         first = joints[0]
         chains.append({'name': s.get('name', ''), 'root': names[first['node']], 'end': names[joints[-1]['node']],
                        'joints': len(joints), 'stiffness': first.get('stiffness', 1.0), 'drag': first.get('dragForce', .5),
-                       'gravity': first.get('gravityPower', 0.0), 'radius': first.get('hitRadius', 0.0)})
+                       'gravity': first.get('gravityPower', 0.0), 'radius': first.get('hitRadius', 0.0),
+                       'colliders': sorted({c for g in s.get('colliderGroups', []) for c in groups[g]})})
     return {'chains': chains, 'colliders': colliders}
 
 
