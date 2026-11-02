@@ -808,11 +808,12 @@ def seed_defect(kind):
     if kind == "omitted-mesh":
         meshes[0].hide_render = True
         return {"kind": kind, "object": meshes[0].name}
-    target = next(o for o in sorted(meshes, key=lambda o: o.name) if o.material_slots and o.material_slots[0].material)
-    current = target.material_slots[0].material
+    # The first slot that holds a material (real assets often keep slot 0 empty).
+    target, slot = next((o, i) for o in sorted(meshes, key=lambda o: o.name) for i, s in enumerate(o.material_slots) if s.material)
+    current = target.material_slots[slot].material
     other = next(m for m in sorted(bpy.data.materials, key=lambda m: m.name) if m != current and m.users)
-    target.material_slots[0].material = other
-    return {"kind": kind, "object": target.name, "from": current.name, "to": other.name}
+    target.material_slots[slot].material = other
+    return {"kind": kind, "object": target.name, "slot": slot, "from": current.name, "to": other.name}
 
 
 def export_glb(path):
@@ -844,7 +845,7 @@ def import_glb(path):
 # ---- typed persistent worker ----------------------------------------------------------------------------------------
 
 REPLY = "@@LAS@@ "
-EDIT_OPS = ("location", "rotation_euler", "scale", "hide_render", "material", "shape_key")
+EDIT_OPS = ("location", "rotation_euler", "scale", "hide_render", "material", "shape_key", "delete")
 
 
 class WorkerError(ValueError):
@@ -967,6 +968,10 @@ class Worker:
         if op in ("location", "rotation_euler", "scale"):
             _need(isinstance(value, list) and len(value) == 3, "value must be [x, y, z]")
             setattr(obj, op, [_finite(v, 1e-4 if op == "scale" else -1e4, 1e4) for v in value])
+        elif op == "delete":  # remove the object only; its data goes when nothing else uses it
+            _need(value is True, "value must be true to delete")
+            bpy.data.objects.remove(obj)
+            self.allowed.discard(object)
         elif op == "hide_render":
             _need(type(value) is bool, "value must be a boolean"); obj.hide_render = value
         elif op == "material":
@@ -1046,45 +1051,71 @@ CORPUS_DEFECTS = {
 }
 
 
+class NotApplicable(ValueError):
+    """The asset has nothing this defect can act on (no textures, rig, shape keys...)."""
+
+
+def _pick(preferred, candidates, key, largest):
+    """The lab asset keeps its historical targets; any other asset gets a deterministic role-based target."""
+    import bpy
+    if preferred in bpy.data.objects and bpy.data.objects[preferred] in candidates: return bpy.data.objects[preferred]
+    if not candidates: raise NotApplicable("no suitable mesh")
+    return sorted(candidates, key=lambda o: (key(o), o.name))[-1 if largest else 0]
+
+
 def corpus_defect(kind):
     import bpy
     if kind not in CORPUS_DEFECTS: raise ValueError(f"Unknown corpus defect {kind}")
+    scene, view_layer = bpy.context.scene, bpy.context.view_layer
+    visible = _evidence_meshes(scene, view_layer)
+    faces = lambda o: len(o.data.polygons)
+    closed = [o for o in visible if faces(o) >= 4 and _closed(o.data, _foreach(o.data.vertices, "co", 3, __import__("numpy").float32).reshape(-1, 3))]
     if kind == "material-mismatch":  # a real wrong-material bug leaves the right material in the file
         for material in bpy.data.materials: material.use_fake_user = True
-    if kind in SEEDED_DEFECTS: return seed_defect(kind)
-    objects = bpy.data.objects
+    if kind in SEEDED_DEFECTS:
+        try: return seed_defect(kind)
+        except (IndexError, StopIteration, KeyError, AttributeError) as exc: raise NotApplicable(f"{kind}: {exc}") from exc
     if kind == "flipped-normals":
-        mesh = objects["Head"].data
-        for polygon in mesh.polygons: polygon.flip()
-        mesh.update()
-        return {"kind": kind, "object": "Head"}
+        target = _pick("Head", closed, faces, largest=True)
+        for polygon in target.data.polygons: polygon.flip()
+        target.data.update()
+        return {"kind": kind, "object": target.name}
     if kind == "missing-uvs":
-        mesh = objects["Body"].data
-        while mesh.uv_layers: mesh.uv_layers.remove(mesh.uv_layers[0])
-        return {"kind": kind, "object": "Body"}
+        target = _pick("Body", [o for o in visible if len(o.data.uv_layers)], faces, largest=True)
+        while target.data.uv_layers: target.data.uv_layers.remove(target.data.uv_layers[0])
+        return {"kind": kind, "object": target.name}
     if kind == "broken-weights":
-        body = objects["Body"]
-        body.vertex_groups["Spine"].add([v.index for v in body.data.vertices], 0.0, "REPLACE")
-        return {"kind": kind, "object": "Body", "group": "Spine"}
+        skinned = [o for o in visible if len(o.vertex_groups) >= 2]
+        target = _pick("Body", skinned, faces, largest=True)
+        group = target.vertex_groups["Spine"] if "Spine" in target.vertex_groups else target.vertex_groups[-1]
+        group.add([v.index for v in target.data.vertices], 0.0, "REPLACE")
+        return {"kind": kind, "object": target.name, "group": group.name}
     if kind == "mesh-hole":
         import bmesh
-        mesh = objects["Body"].data
-        work = bmesh.new(); work.from_mesh(mesh); work.faces.ensure_lookup_table()
+        target = _pick("Body", closed, faces, largest=False)
+        work = bmesh.new(); work.from_mesh(target.data); work.faces.ensure_lookup_table()
         bmesh.ops.delete(work, geom=[work.faces[0], work.faces[1]], context="FACES_ONLY")
-        work.to_mesh(mesh); work.free(); mesh.update()
-        return {"kind": kind, "object": "Body", "faces_removed": 2}
+        work.to_mesh(target.data); work.free(); target.data.update()
+        return {"kind": kind, "object": target.name, "faces_removed": 2}
     if kind == "transform-offset":
-        objects["Head"].location.z += 0.12
-        return {"kind": kind, "object": "Head", "dz": 0.12}
-    twin = objects["Badge"].copy(); twin.data = objects["Badge"].data.copy(); twin.name = "BadgeDuplicate"
-    bpy.context.scene.collection.objects.link(twin)
-    return {"kind": kind, "object": "BadgeDuplicate"}
+        target = _pick("Head", visible, faces, largest=True)
+        size = max(target.dimensions) or 1.0
+        offset = 0.12 if target.name == "Head" else round(0.15 * size, 4)  # visible at any asset scale
+        target.location.z += offset
+        return {"kind": kind, "object": target.name, "dz": offset}
+    source = _pick("Badge", visible, faces, largest=False)
+    twin = source.copy(); twin.data = source.data.copy(); twin.name = f"{source.name}Duplicate"
+    for collection in source.users_collection: collection.objects.link(twin)
+    return {"kind": kind, "object": twin.name}
 
 
 def make_corpus_variant(clean_blend, kind, out_path):
     import bpy
     open_blend(clean_blend)
-    label = corpus_defect(kind)
+    try:
+        label = corpus_defect(kind)
+    except NotApplicable as exc:
+        return {"kind": "corpus-variant", "label": None, "not_applicable": str(exc)}
     bpy.ops.wm.save_as_mainfile(filepath=str(out_path), copy=True, relative_remap=True)
     return {"kind": "corpus-variant", "label": label, "blend": str(out_path)}
 

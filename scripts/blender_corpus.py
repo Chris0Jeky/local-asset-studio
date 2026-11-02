@@ -28,20 +28,30 @@ def _json(path, value):
     Path(path).write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
 
 
-def build(blender_path, out_dir, timeout=600):
+def build(blender_path, out_dir, timeout=600, source=None):
     exe = lab.executable(blender_path)
     target = Path(out_dir).expanduser().resolve()
     require(not target.exists(), "out_dir must be new")
     target.mkdir(parents=True)
     assets, logs = target / "assets", target / "logs"
     logs.mkdir()
-    clean = lab.make_fixture(exe, assets)  # variants are saved beside it so the relative texture path resolves
-    labels = {"control": None}
+    if source is None:
+        clean = lab.make_fixture(exe, assets)  # variants are saved beside it so the relative texture path resolves
+    else:
+        import shutil
+        source = Path(source).expanduser().resolve()
+        require(source.is_file() and source.suffix.lower() == ".blend", "source must be an existing .blend")
+        assets.mkdir(parents=True)
+        clean = assets / "control.blend"
+        shutil.copyfile(source, clean)  # never touch the original asset
+    labels, skipped = {"control": None}, {}
     for kind in sorted(lab.bpy_side.CORPUS_DEFECTS):
         record = target / "logs" / f"{kind}.variant.json"
         lab.run(exe, ["corpus-variant", "--blend", clean, "--kind", kind, "--out-blend", assets / f"{kind}.blend",
                       "--out", record], logs / f"{kind}.variant.log.json", timeout)
-        labels[kind] = json.loads(record.read_text(encoding="utf-8"))["label"]
+        result = json.loads(record.read_text(encoding="utf-8"))
+        if result.get("not_applicable"): skipped[kind] = result["not_applicable"]; continue
+        labels[kind] = result["label"]
     blends = {"control": clean, **{kind: assets / f"{kind}.blend" for kind in labels if kind != "control"}}
     for entry, blend in blends.items():
         args = ["evidence", "--blend", blend, "--out-dir", target / "evidence" / entry, "--out", logs / f"{entry}.evidence.json"]
@@ -73,6 +83,7 @@ def build(blender_path, out_dir, timeout=600):
                          "caught": bool(structure["failures"] or warnings)}})
     defective = [e for e in entries if e["expected"] == "defective"]
     corpus = {"schema": SCHEMA, "blender": control_manifest["blender"], "cameras": "cameras.json",
+              "source": str(source) if source else "generated lab asset", "not_applicable": skipped,
               "passes": list(lab.bpy_side.PASSES), "views": list(lab.bpy_side.VIEWS), "entries": entries,
               "summary": {"defects": len(defective), "caught": sum(e["baseline"]["caught"] for e in defective),
                           "caught_by_manifest_only": sorted(e["id"] for e in defective if e["baseline"]["caught_by_manifest"] and not e["baseline"]["caught_by_renders"]),
@@ -96,9 +107,10 @@ def main(argv=None):
     build_parser = commands.add_parser("build")
     build_parser.add_argument("--blender", required=True)
     build_parser.add_argument("--out-dir", required=True)
+    build_parser.add_argument("--source", help="build the corpus from this .blend (copied) instead of the generated lab asset")
     args = parser.parse_args(argv)
     try:
-        corpus = build(args.blender, args.out_dir)
+        corpus = build(args.blender, args.out_dir, source=args.source)
     except (lab.BlenderLabError, OSError, ValueError) as exc:
         print(json.dumps({"error": str(exc)}), file=sys.stderr)
         return 2

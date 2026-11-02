@@ -26,6 +26,15 @@ class CorpusContractTests(unittest.TestCase):
 
 @unittest.skipUnless(LIVE_BLENDER, "set LAS_BLENDER_LAB_EXE to a Blender executable for the live corpus build")
 class LiveCorpusTests(unittest.TestCase):
+    def test_a_real_asset_source_records_inapplicable_defects(self):
+        import articulated_prop
+        with tempfile.TemporaryDirectory() as tmp:
+            articulated_prop.execute(Path(tmp) / "chest", {"render_size": 64, "samples": 1}, LIVE_BLENDER)
+            result = corpus.build(LIVE_BLENDER, Path(tmp) / "corpus", source=Path(tmp) / "chest" / "chest.blend")
+        self.assertIn("shape-key-damage", result["not_applicable"])  # the chest has no shape keys
+        self.assertIn("material-mismatch", {e["id"] for e in result["entries"]})
+        self.assertTrue(result["summary"]["control_clean"])
+
     def test_corpus_labels_every_defect_and_the_control_is_clean(self):
         with tempfile.TemporaryDirectory() as tmp:
             result = corpus.build(LIVE_BLENDER, Path(tmp) / "corpus")

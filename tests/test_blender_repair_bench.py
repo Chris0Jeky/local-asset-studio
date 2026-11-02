@@ -75,6 +75,19 @@ class FailureAndTreeTests(unittest.TestCase):
             self.assertNotIn(str(child), alive)
 
 
+class AggregateTests(unittest.TestCase):
+    def test_aggregate_totals_across_assets(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            for asset, rows in (("a", [{"case": "omitted-mesh", "outcome": "exact repair", "exact": True, "repairable_by_vocabulary": True,
+                                        "collateral": [], "seconds": 10}]),
+                                ("b", [{"case": "mesh-hole", "outcome": "declined (correct)", "exact": False, "repairable_by_vocabulary": False,
+                                        "collateral": [], "seconds": 20}])):
+                (Path(tmp) / asset).mkdir(); (Path(tmp) / asset / "repair-bench.json").write_text(json.dumps({"rows": rows}))
+            totals = bench.aggregate([Path(tmp) / "a" / "repair-bench.json", Path(tmp) / "b" / "repair-bench.json"])
+        self.assertEqual((totals["cases"], totals["repairable_exact"], totals["repairable_total"]), (2, 1, 1))
+        self.assertEqual(totals["outcomes"], {"exact repair": 1, "declined (correct)": 1})
+
+
 class ScoreTests(unittest.TestCase):
     def test_new_damage_hidden_behind_an_existing_difference_is_collateral(self):
         damaged = copy.deepcopy(MANIFEST); obj(damaged, "Head")["matrix_world"][2][3] += 0.12
@@ -107,6 +120,23 @@ class ScoreTests(unittest.TestCase):
 
 @unittest.skipUnless(LIVE_BLENDER, "set LAS_BLENDER_LAB_EXE to a Blender executable for the live compare_to check")
 class LiveCompareToTests(unittest.TestCase):
+    def test_delete_fully_repairs_a_duplicate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            clean = bw.lab.make_fixture(LIVE_BLENDER, Path(tmp) / "assets")
+            damaged = clean.parent / "duplicate-overlap.blend"
+            bw.lab.run(bw.lab.executable(LIVE_BLENDER), ["corpus-variant", "--blend", clean, "--kind", "duplicate-overlap",
+                       "--out-blend", damaged, "--out", Path(tmp) / "v.json"], Path(tmp) / "v.log.json")
+            (Path(tmp) / "root").mkdir()
+            with bw.BlenderWorker(LIVE_BLENDER, Path(tmp) / "root") as worker:
+                worker.call("open", blend=str(damaged), allow_edit=["BadgeDuplicate"])
+                before = worker.compare_to(str(clean))
+                worker.call("apply_edit", object="BadgeDuplicate", op="delete", value=True, expect_checksum=before["current_checksum"])
+                after = worker.compare_to(str(clean))
+                with self.assertRaises(bw.WorkerFailed):  # the deleted object is no longer editable
+                    worker.call("apply_edit", object="BadgeDuplicate", op="hide_render", value=True, expect_checksum=after["current_checksum"])
+        self.assertFalse(before["matches_reference"])
+        self.assertTrue(after["matches_reference"])
+
     def test_compare_to_localises_and_confirms_a_repair(self):
         with tempfile.TemporaryDirectory() as tmp:
             clean = bw.lab.make_fixture(LIVE_BLENDER, Path(tmp) / "assets")

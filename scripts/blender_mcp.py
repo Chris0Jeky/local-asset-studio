@@ -36,7 +36,7 @@ TOOLS = {
     "blender_export": ("Export a GLB with the existing LAS settings to a new path inside the worker root.", OBJ({"path": NAME}, ["path"])),
     "blender_apply_edit": ("Bounded edit on an allow-listed object; refused unless expect_checksum equals the current semantic checksum.",
                            OBJ({"object": {"type": "string"},
-                                "op": {"type": "string", "enum": ["location", "rotation_euler", "scale", "hide_render", "material", "shape_key"]},
+                                "op": {"type": "string", "enum": ["location", "rotation_euler", "scale", "hide_render", "material", "shape_key", "delete"]},
                                 "value": {"description": "[x,y,z] | bool | {slot, material} | {key, value}"},
                                 "expect_checksum": {"type": "string"}}, ["object", "op", "value", "expect_checksum"])),
     "blender_compare_to": ("Compare the open scene with a reference .blend under the read tree: semantic checksums, structural "
