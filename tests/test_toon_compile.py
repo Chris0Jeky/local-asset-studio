@@ -367,6 +367,17 @@ class Nodes(unittest.TestCase):
             got = run(r["shader"], (0, -1, 0), [((0, -1, 0), (2.0, 1.0, 0.5), 1.0)])[0]
             self.assertTrue(close(got, want), f"{out}: {got}")
 
+    def test_glossy_factor(self):
+        # Fitted to Blender 5.4: GGX D (alpha = rough^2) x N.L. Normal on the half vector: D = 1 / (pi alpha^2).
+        b = B()
+        ev = b.node("LIGHT_EVALUATION", {"Roughness": 0.5}, {"Factor": "VALUE"}, mode="GLOSSY")
+        acc = b.out(b.node("LIGHT_ACCUMULATION", {"Diffuse Light": ("RGBA", b.out(ev, "Factor")), "Diffuse Color": [1, 1, 1, 1]}, {"BSDF": "SHADER"}), "BSDF")
+        r = compile_one(b.mat(acc))
+        th = math.radians(60)
+        got = run(r["shader"], (math.sin(th / 2), -math.cos(th / 2), 0), [((math.sin(th), -math.cos(th), 0), (1.0, 1.0, 1.0), 1.0)])[0]
+        want = 1 / (math.pi * 0.0625) * math.cos(th / 2)
+        self.assertTrue(close(got, [want] * 3, 1e-3), got)
+
     def test_object_space_vector(self):
         # Godot MODEL_MATRIX rotated 90 degrees about Godot Y (= Blender Z): a world +X light is object -Y in Blender axes.
         b = B()

@@ -36,13 +36,12 @@ HELPERS = {
     "fresnel_cos": ("float fresnel_cos(float cosi, float eta) {\n\tfloat c = abs(cosi);\n\tfloat g = eta * eta - 1.0 + c * c;\n"
                     "\tfloat ok = step(1e-30, g);\n\tg = sqrt(max(g, 1e-30));\n\tfloat a = (g - c) / (g + c);\n"
                     "\tfloat b = (c * (g + c) - 1.0) / (c * (g - c) + 1.0);\n\treturn mix(1.0, 0.5 * a * a * (1.0 + b * b), ok);\n}"),
-    # Light Evaluation (Glossy) Factor, fitted to Blender 5.4 in docs/TOON-COMPILER.md: GGX lobe times N.L.
+    # Light Evaluation (Glossy) Factor, fitted to Blender 5.4 (docs/TOON-COMPILER.md, Measured): GGX D (alpha = rough^2)
+    # times N.L, no geometry or 1/(4 N.V) term.
     "ggx_factor": ("float ggx_factor(vec3 n, vec3 l, vec3 v, float rough) {\n\tvec3 h = normalize(l + v);\n"
                    "\tfloat a2 = max(rough * rough * rough * rough, 1e-7);\n\tfloat nh = max(dot(n, h), 0.0);\n"
-                   "\tfloat d = nh * nh * (a2 - 1.0) + 1.0;\n\tfloat nl = max(dot(n, l), 0.0);\n"
-                   "\tfloat nv = max(dot(n, v), 1e-4);\n\tfloat k = rough * rough * 0.5;\n"
-                   "\tfloat g = (nl / (nl * (1.0 - k) + k)) * (nv / (nv * (1.0 - k) + k));\n"
-                   "\treturn a2 / (3.14159265 * d * d) * g / (4.0 * nv);\n}"),
+                   "\tfloat d = nh * nh * (a2 - 1.0) + 1.0;\n"
+                   "\treturn a2 / (3.14159265 * d * d) * max(dot(n, l), 0.0);\n}"),
 }
 HELPER_DEPS = {"lin01": ["safe_div"]}
 
@@ -756,9 +755,9 @@ def parity(ref_dir: Path, cand_dir: Path, out_dir: Path, background) -> dict:
                 res[ref.stem] = {"size_mismatch": [a.size, b.size]}
                 continue
             plate = Image.new("RGB", a.size, bg)
-            subj = [max(px) > 6 for px in zip(*(ch.getdata() for ch in ImageChops.difference(a, plate).split()))]
-            subj = [s or max(px) > 6 for s, px in zip(subj, zip(*(ch.getdata() for ch in ImageChops.difference(b, plate).split())))]
-            d = [max(px) for px in zip(*(ch.getdata() for ch in ImageChops.difference(a, b).split()))]
+            subj = [max(px) > 6 for px in zip(*(ch.tobytes() for ch in ImageChops.difference(a, plate).split()))]
+            subj = [s or max(px) > 6 for s, px in zip(subj, zip(*(ch.tobytes() for ch in ImageChops.difference(b, plate).split())))]
+            d = [max(px) for px in zip(*(ch.tobytes() for ch in ImageChops.difference(a, b).split()))]
         inside = [v for v, s in zip(d, subj) if s]
         n = max(1, len(inside))
         res[ref.stem] = {"subject_px": len(inside), "mean_abs": round(sum(inside) / n, 2),

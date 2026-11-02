@@ -1,8 +1,9 @@
 # Render a GLB in Godot 4.7 with shaders from scripts/toon_compile.py, under the compiler's lights and cameras:
 #   godot --path tools/toon-compiler --script res://render.gd -- <config.json>
 # config: {"glb", "compiled" (a toon_compile output dir), "out", "background" (linear RGB), "shadow_max_distance",
-# "msaa"}. Writes <out>/<camera>.png per camera in <compiled>/cameras.json. Surfaces without a compiled shader keep
-# their imported material and are listed on stdout.
+# "msaa", "taa" (default true: accumulates the soft-shadow noise that Blender's samples average out)}. Writes
+# <out>/<camera>.png per camera in <compiled>/cameras.json. Surfaces without a compiled shader keep their imported
+# material and are listed on stdout.
 extends SceneTree
 
 var cfg: Dictionary
@@ -43,6 +44,7 @@ func _initialize() -> void:
 	view = SubViewport.new()
 	view.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	view.msaa_3d = int(cfg.get("msaa", Viewport.MSAA_4X))
+	view.use_taa = bool(cfg.get("taa", true))
 	view.positional_shadow_atlas_size = 4096
 	get_root().add_child(view)
 	var world := Node3D.new()
@@ -126,5 +128,5 @@ func _process(_delta: float) -> bool:
 	else:
 		cam.projection = Camera3D.PROJECTION_PERSPECTIVE
 		cam.fov = float(c["godot_fov"])
-	settle = 8
+	settle = 32
 	return false
