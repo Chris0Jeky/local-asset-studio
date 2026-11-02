@@ -510,4 +510,8 @@ does not see, so a clean export currently reads "found differences" with that on
   a concurrent one or a request after a restart recovers that receipt instead of running Blender again.
 - **Evidence:** everything is kept under `experiments/projects/<id>/parity-check/` (`probe.json`, `sentinel/`), also on
   failure. An interrupted check is recovered from a retained `sentinel/result.json`, or else reported `uncertain`.
+- **Which file:** the sentinel exports the BLEND afresh. The verdict covers the delivered `articulated/chest.glb` only when
+  its bytes match that export (they did in the live run). Otherwise the card reads "Delivered GLB not verified".
+- **Recovery:** the receipt is rewritten atomically. A check left `uncertain` offers "Recover export check", which reads
+  the retained result and never starts Blender.
 - **Not decided here:** a pass is export parity only. It is neither art acceptance nor licence clearance.

@@ -160,9 +160,9 @@ function exportCheckCard(p){
   if(p.kind!=='articulated'||p.state?.status!=='completed')return '';
   const c=p.state.parity_check,head='<aside class="callout export-check" aria-label="Export check">';
   if(!c)return head+'<button type="button" data-export-check>Check this export</button><br><small>Exports the GLB, reimports it in a fresh Blender and compares the two. About a minute; nothing is generated.</small></aside>';
-  if(c.status!=='completed')return head+'<b>Export check '+esc(c.status)+':</b> '+esc(c.message)+'</aside>';
-  const s=c.summary,items=[s.localisation,s.structural_failures,s.visual_warnings].find(list=>list?.length)||[].slice(0,8);
-  return head+'<b>'+(s.pass?'Export check passed':'Export check found differences')+'</b>'+(items.length?'<ul>'+items.map(i=>'<li>'+esc(i)+'</li>').join('')+'</ul>':'')+'<small>'+esc(c.message)+'</small></aside>';
+  if(c.status!=='completed')return head+'<b>Export check '+esc(c.status)+':</b> '+esc(c.message)+(c.status==='uncertain'?'<br><button type="button" data-export-check>Recover export check</button><br><small>Reads the retained result; Blender is not run again.</small>':'')+'</aside>';
+  const s=c.summary,items=([s.localisation,s.structural_failures,s.visual_warnings].find(list=>list?.length)||[]).slice(0,8);
+  return head+'<b>'+(!s.pass?'Export check found differences':s.delivered_glb_checked?'Export check passed':'Delivered GLB not verified')+'</b>'+(items.length?'<ul>'+items.map(i=>'<li>'+esc(i)+'</li>').join('')+'</ul>':'')+'<small>'+esc(c.message)+'</small></aside>';
 }
 function renderProduction(){
   renderPlanList();

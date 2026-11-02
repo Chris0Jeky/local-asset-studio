@@ -11,7 +11,8 @@ sys.path.insert(0, str(ROOT / "app"))
 import parity_check
 
 PROJECT = "a" * 32
-RESULT = {"pass": False, "structural_failures": ["Badge: materials ['A'] -> ['B']"], "visual_warnings": ["front/material_id: 1%"],
+GLB_SHA = __import__("hashlib").sha256(b"glb").hexdigest()
+RESULT = {"pass": False, "export": {"glb_sha256": GLB_SHA}, "structural_failures": ["Badge: materials ['A'] -> ['B']"], "visual_warnings": ["front/material_id: 1%"],
           "format_losses": [], "expected_exclusions": ["CollisionProxy (MESH, hidden) is not exported by the LAS settings"],
           "localisation": [{"statement": "material A -> B on Badge", "views": ["front"]}],
           "second_signal": {"available": True, "changed": True, "agrees_with_primary": True},
@@ -29,7 +30,7 @@ class FakeStudio:
 def completed_build(studio):
     directory = studio.experiments / "projects" / PROJECT / "articulated"
     directory.mkdir(parents=True)
-    (directory / "chest.blend").write_bytes(b"blend")
+    (directory / "chest.blend").write_bytes(b"blend"); (directory / "chest.glb").write_bytes(b"glb")
     (directory.parent / "articulated-job.json").write_text(json.dumps({"status": "completed"}))
     return directory.parent
 
@@ -59,6 +60,24 @@ class ParityCheckTests(unittest.TestCase):
             self.assertEqual(again["summary"], job["summary"])
             receipt = json.loads((directory / parity_check.RECEIPT).read_text())
             self.assertEqual(receipt["source"]["path"], "articulated/chest.blend")
+
+    def test_a_pass_covers_the_delivered_glb_only_when_it_is_the_checked_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            studio = FakeStudio(tmp); directory = completed_build(studio)
+            (directory / "articulated" / "chest.glb").write_bytes(b"replaced after the build")
+            with mock.patch.object(parity_check.blender_lab, "probe", return_value=PROBE), \
+                 mock.patch.object(parity_check.blender_sentinel, "sentinel", return_value=dict(RESULT, **{"pass": True})):
+                job = parity_check.run_check(studio, PROJECT)
+        self.assertFalse(job["summary"]["delivered_glb_checked"])
+        self.assertIn("was not verified", job["message"])
+        self.assertTrue(parity_check.summarise(dict(RESULT, **{"pass": True}), delivered=GLB_SHA)["delivered_glb_checked"])
+
+    def test_an_interrupted_receipt_rewrite_keeps_the_previous_receipt(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "receipt.json"; parity_check._write(path, {"status": "running"}, exclusive=True)
+            with mock.patch.object(parity_check.os, "replace", side_effect=OSError("power cut")), self.assertRaises(OSError):
+                parity_check._write(path, {"status": "completed"})
+            self.assertEqual(json.loads(path.read_text()), {"status": "running"})
 
     def test_failure_keeps_a_failed_receipt_and_is_never_retried(self):
         with tempfile.TemporaryDirectory() as tmp:

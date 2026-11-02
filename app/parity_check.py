@@ -9,6 +9,7 @@ No ComfyUI prompt is submitted and no art or licence decision is made.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import sys
 import time
@@ -34,10 +35,13 @@ def require(condition, message):
         raise ParityCheckError(message)
 
 
-def summarise(result, probe=None):
-    """What the Studio shows: the verdict, localised findings first, then the structural and visual detail."""
+def summarise(result, probe=None, delivered=None):
+    """What the Studio shows: the verdict, localised findings first, then the structural and visual detail. The sentinel
+    checks a fresh export of the BLEND, so the verdict covers the delivered chest.glb only when the bytes are identical."""
     critic = result.get("second_signal") or {}
-    return {"pass": bool(result["pass"]), "localisation": [entry["statement"] for entry in result.get("localisation", [])],
+    checked = result.get("export", {}).get("glb_sha256")
+    return {"pass": bool(result["pass"]), "delivered_glb_checked": bool(delivered and checked and delivered == checked),
+            "localisation": [entry["statement"] for entry in result.get("localisation", [])],
             "structural_failures": result["structural_failures"], "visual_warnings": result["visual_warnings"],
             "format_losses": result["format_losses"], "expected_exclusions": result["expected_exclusions"],
             "second_signal": ({"changed": critic.get("changed"), "agrees_with_primary": critic.get("agrees_with_primary")}
@@ -47,8 +51,23 @@ def summarise(result, probe=None):
 
 
 def _write(path, value, exclusive=False):
-    with Path(path).open("x" if exclusive else "w", encoding="utf-8", newline="\n") as stream:
-        stream.write(json.dumps(value, ensure_ascii=False, allow_nan=False, indent=2) + "\n")
+    text, path = json.dumps(value, ensure_ascii=False, allow_nan=False, indent=2) + "\n", Path(path)
+    if exclusive:
+        with path.open("x", encoding="utf-8", newline="\n") as stream: stream.write(text)
+        return
+    partial = path.with_name(path.name + ".partial")  # an interrupted rewrite never leaves a truncated receipt
+    partial.write_text(text, encoding="utf-8", newline="\n"); os.replace(partial, path)
+
+
+def _delivered(directory):
+    glb = directory / "articulated" / "chest.glb"
+    return blender_lab.file_sha(glb) if glb.is_file() else None
+
+
+def _verdict(summary):
+    if not summary["pass"]: return "Export check found differences between the source and the reimported GLB."
+    if summary["delivered_glb_checked"]: return "Export check passed: the delivered chest.glb reimports to match the source."
+    return "A fresh export passed, but the delivered chest.glb is missing or differs from it, so the delivered file was not verified."
 
 
 def run_check(studio, project_id, timeout=600):
@@ -74,9 +93,8 @@ def run_check(studio, project_id, timeout=600):
         target.mkdir()
         probe = blender_lab.probe(blender["path"], target / "probe.json", timeout)
         result = blender_sentinel.sentinel(blender["path"], source, target / "sentinel", timeout=timeout)
-        job.update(status="completed", finished_at=time.time(), summary=summarise(result, probe),
-                   message="Export check passed: the reimported GLB matches the source." if result["pass"]
-                   else "Export check found differences between the source and the reimported GLB.")
+        summary = summarise(result, probe, _delivered(directory))
+        job.update(status="completed", finished_at=time.time(), summary=summary, message=_verdict(summary))
     except Exception as exc:  # keep every file; never retry automatically
         job.update(status="failed", finished_at=time.time(), message=f"Export check failed: {str(exc)[:400]}", failure_files=True)
     _write(receipt, job)
@@ -97,8 +115,9 @@ def recover(studio, project_id):
     result_path = directory / FOLDER / "sentinel" / "result.json"
     if result_path.is_file():
         result = json.loads(result_path.read_text(encoding="utf-8"))
-        job.update(status="completed", summary=summarise(result), finished_at=job.get("finished_at") or time.time(),
-                   message="Recovered a finished export check from its retained result. Blender was not run again.")
+        summary = summarise(result, delivered=_delivered(directory))
+        job.update(status="completed", summary=summary, finished_at=job.get("finished_at") or time.time(),
+                   message=_verdict(summary) + " Recovered from the retained result; Blender was not run again.")
         _write(directory / RECEIPT, job)
         return job
     job.update(status="uncertain", message="An earlier export check did not finish. Its files are kept; Blender was not run again.")
