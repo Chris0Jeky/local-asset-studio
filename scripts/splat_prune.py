@@ -9,10 +9,11 @@ bands (view-dependent colour).
 """
 import argparse, json, math, struct, sys
 from array import array
+from pathlib import Path
 
 
 def read(path):
-    raw = open(path, "rb").read(); end = raw.index(b"end_header\n") + len(b"end_header\n"); head = raw[:end].decode()
+    raw = Path(path).read_bytes(); end = raw.index(b"end_header\n") + len(b"end_header\n"); head = raw[:end].decode()
     lines = head.splitlines()
     if "format binary_little_endian 1.0" not in lines: raise ValueError("only binary little-endian PLY is supported")
     elements = [l.split() for l in lines if l.startswith("element")]
@@ -29,7 +30,7 @@ def write(path, head, rows, width):
     lines = [l if not l.startswith("element vertex") else f"element vertex {len(rows) // width}" for l in head.splitlines()]
     out = array("f", rows)
     if sys.byteorder != "little": out.byteswap()
-    open(path, "wb").write(("\n".join(lines) + "\n").encode() + out.tobytes())
+    Path(path).write_bytes(("\n".join(lines) + "\n").encode() + out.tobytes())  # closes the file: CI fails on ResourceWarning
 
 
 def prune(src, dst, min_opacity=0.0, max_needle=0.0, dc_only=False):
