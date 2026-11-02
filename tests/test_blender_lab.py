@@ -182,6 +182,30 @@ class ManifestTests(unittest.TestCase):
             with self.assertRaises(lab.BlenderLabError): lab.manifest(exe, exe, Path(tmp) / "m.json")
 
 
+class CameraSpecTests(unittest.TestCase):
+    def spec(self, **change):
+        value = {"target": [0, 0, 1], "ortho_scale": 2.0, "frame": 1,
+                 "views": {name: [0.0, 0.0] for name in lab.bpy_side.VIEWS}}
+        value.update(change); return value
+
+    def test_only_the_full_fixed_rig_passes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "cameras.json"
+            path.write_text(json.dumps(self.spec())); self.assertEqual(len(lab.camera_spec_file(path)["views"]), 4)
+            for bad in (self.spec(views={"../../victim": [0, 0]}), self.spec(views={}), self.spec(ortho_scale=float("inf")),
+                        self.spec(views={**self.spec()["views"], "extra": [0, 0]}), {"views": {}}):
+                path.write_text(json.dumps(bad, allow_nan=True))
+                with self.assertRaises(lab.BlenderLabError, msg=str(bad)[:60]): lab.camera_spec_file(path)
+
+    def test_bundle_refuses_bad_cameras_before_creating_output(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            exe = Path(tmp) / "blender.exe"; exe.write_bytes(b"")
+            blend = Path(tmp) / "a.blend"; blend.write_bytes(b"")
+            cams = Path(tmp) / "cameras.json"; cams.write_text(json.dumps(self.spec(views={"../x": [0, 0]})))
+            with self.assertRaises(lab.BlenderLabError): lab.dcc_bundle(exe, blend, Path(tmp) / "out", cameras=cams)
+            self.assertFalse((Path(tmp) / "out").exists())
+
+
 class SceneV1RoutingTests(unittest.TestCase):
     def test_probe_intent_plans_the_blender_lab_entry_point(self):
         sys.path.insert(0, str(ROOT))

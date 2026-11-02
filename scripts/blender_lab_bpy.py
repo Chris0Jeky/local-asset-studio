@@ -726,6 +726,8 @@ def render_evidence(out_dir, spec=None, size=256, samples=16):
     render.resolution_x = render.resolution_y = size
     render.resolution_percentage = 100
     render.use_border = render.use_crop_to_border = False
+    render.pixel_aspect_x = render.pixel_aspect_y = 1.0  # the camera spec alone then defines the projection
+    render.image_settings.color_depth = "8"  # strict PNG consumers require 8-bit samples
     render.film_transparent = True
     render.image_settings.file_format, render.image_settings.color_mode = "PNG", "RGBA"
     scene.view_settings.view_transform, scene.view_settings.look = "Standard", "None"

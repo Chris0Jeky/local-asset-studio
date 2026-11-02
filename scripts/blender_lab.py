@@ -202,6 +202,20 @@ def scene_v1(blender_path, blend_path, out_path, timeout=120):
     return observation
 
 
+def camera_spec_file(path):
+    """A caller-supplied camera spec over exactly the fixed rig; view names become file names, so nothing else passes."""
+    import math
+    spec = json.loads(Path(path).expanduser().read_text(encoding="utf-8"))
+    finite = lambda v, low, high: type(v) in (int, float) and math.isfinite(v) and low <= v <= high
+    require(isinstance(spec, dict) and set(spec) == {"target", "ortho_scale", "views", "frame"}, "cameras must be a camera spec")
+    require(isinstance(spec["views"], dict) and set(spec["views"]) == set(bpy_side.VIEWS), "cameras must cover exactly the fixed views")
+    require(all(isinstance(p, list) and len(p) == 2 and all(finite(v, -360, 360) for v in p) for p in spec["views"].values()),
+            "views must map to [azimuth, elevation]")
+    require(isinstance(spec["target"], list) and len(spec["target"]) == 3 and all(finite(v, -1e4, 1e4) for v in spec["target"])
+            and finite(spec["ortho_scale"], 1e-3, 1e4) and type(spec["frame"]) is int, "camera target, scale or frame invalid")
+    return spec
+
+
 def dcc_bundle(blender_path, blend_path, out_dir, cameras=None, timeout=300):
     """Exact observation plus the fixed-camera renders of one .blend, written as a `studio.dcc-evidence/v1` bundle so
     `studio_workflow.dcc_evidence.compare_bundles` can strictly compare two captures (an unchanged rerun, before and
@@ -212,12 +226,15 @@ def dcc_bundle(blender_path, blend_path, out_dir, cameras=None, timeout=300):
     require(not target.exists(), "out_dir must be new")
     blend = Path(blend_path).expanduser().resolve()
     require(blend.is_file() and blend.suffix.lower() == ".blend", "blend must be an existing .blend file")
+    if cameras: camera_spec_file(cameras)  # refuse before any directory or Blender process exists
+    before = file_sha(blend)
     target.mkdir(parents=True)
     work = target / "work"; work.mkdir()
     scene_v1(exe, blend, target / "scene.json", timeout)
     args = ["evidence", "--blend", blend, "--out-dir", work / "capture", "--out", work / "capture.json"]
     if cameras: args += ["--cameras", Path(cameras).expanduser().resolve()]
     run(exe, args, work / "capture.log.json", timeout)
+    require(file_sha(blend) == before, "Source .blend changed between the observation and the renders")
     evidence = json.loads((work / "capture" / "evidence.json").read_text(encoding="utf-8"))
     spec = evidence["camera_spec"]
     (target / "cameras.json").write_text(json.dumps(spec, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
@@ -233,7 +250,7 @@ def dcc_bundle(blender_path, blend_path, out_dir, cameras=None, timeout=300):
                                    "camera_rig_sha256": hashlib.sha256(canonical(spec)).hexdigest(),
                                    "render_settings": {k: evidence[k] for k in ("lit", "id_passes", "view_transform")}},
               "views": views, "scene": {"path": "scene.json", "sha256": file_sha(target / "scene.json")},
-              "producer": {"tool": "scripts/blender_lab.py dcc-bundle", "blender": exe.as_posix(), "source_sha256": file_sha(blend)}}
+              "producer": {"tool": "scripts/blender_lab.py dcc-bundle", "blender": exe.as_posix(), "source_sha256": before}}
     (target / "evidence.json").write_text(json.dumps(bundle, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
     return bundle
 
