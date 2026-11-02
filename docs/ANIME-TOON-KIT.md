@@ -73,9 +73,10 @@ itself rather than a separate Blender glTF export, whose bone frames can differ.
 
 Godot's glTF import ignores `VRMC_node_constraint`. VRoid bases drive their sleeve, shoulder and twist helper bones
 with aim and roll constraints (14 on the test model), so with the arms lowered the sleeves stayed horizontal. The proof
-now evaluates them each frame before the spring step: aim turns the bone's rest axis toward the source bone, and roll
-and rotation copy the source's rotation from its rest (roll keeps only the twist about the axis), each blended by
-weight. `vrm_toon.py springs` writes them into `springs.json`. Roll is a twist approximation, not the full VRM rule.
+now evaluates them each frame before the spring step, in dependency order: aim turns the bone's rest axis toward the
+source bone; roll and rotation carry the source's rotation from its rest into the destination's rest frame (roll keeps
+only the twist about the axis, as in the specification's reference code), each blended by weight. `vrm_toon.py springs`
+writes them into `springs.json`.
 
 The toon shader writes `EMISSION = albedo x shade` and `DIFFUSE_LIGHT += light x lit x (1 - shade + rim)`. Its ambient
 source is disabled, so the result matches Blender's. `LIGHT_COLOR` already includes PI and is divided back out.

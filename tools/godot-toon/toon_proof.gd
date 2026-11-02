@@ -66,7 +66,7 @@ func _role(name: String) -> String:
 
 func _springs() -> void:
 	var data = JSON.parse_string(FileAccess.get_file_as_string("res://springs.json"))
-	constraints = data.get("constraints", [])
+	constraints = _dependency_order(data.get("constraints", []))
 	var sim := SpringBoneSimulator3D.new(); skel.add_child(sim)
 	var cols: Array[SpringBoneCollision3D] = []
 	for c in data.colliders:
@@ -92,6 +92,23 @@ func _springs() -> void:
 	print("TOON springs=", sim.get_setting_count(), " colliders=", data.colliders.size(), " constraints=", constraints.size())
 
 
+func _dependency_order(list: Array) -> Array:
+	# A constraint whose source is itself constrained runs after it (VRMC_node_constraint dependency resolution);
+	# a cycle falls back to file order.
+	var targets := {}
+	for c in list: targets[c.bone] = true
+	var done := {}; var order := []; var pending := list.duplicate()
+	for _pass in list.size():
+		var waiting := []
+		for c in pending:
+			if targets.has(c.source) and not done.has(c.source): waiting.append(c)
+			else: order.append(c); done[c.bone] = true
+		pending = waiting
+		if pending.is_empty(): break
+	order.append_array(pending)
+	return order
+
+
 func _apply_constraints() -> void:
 	# VRMC_node_constraint, which glTF import ignores: aim turns the bone's rest axis toward the source bone; roll and
 	# rotation copy the source's rotation from its rest (roll: only the twist about the axis), each blended by weight.
@@ -110,13 +127,15 @@ func _apply_constraints() -> void:
 			var arc := Quaternion.IDENTITY.slerp(Quaternion(from, to.normalized()), c.weight)
 			skel.set_bone_pose_rotation(i, (parent.basis.inverse() * Basis(arc) * at.basis).get_rotation_quaternion())
 		else:
-			var d := skel.get_bone_rest(s).basis.get_rotation_quaternion().inverse() * skel.get_bone_pose_rotation(s)
-			if c.type == "roll":
-				var ax := Vector3(c.axis[0], c.axis[1], c.axis[2]); var v := ax * Vector3(d.x, d.y, d.z).dot(ax)
-				d = Quaternion(v.x, v.y, v.z, d.w)
-				if d.length() < 1e-6: continue
-				d = d.normalized()
-			skel.set_bone_pose_rotation(i, rest_rot * Quaternion.IDENTITY.slerp(d, c.weight))
+			# The source's rotation from its rest, carried into the destination's rest frame (spec reference code).
+			var src_rest := skel.get_bone_rest(s).basis.get_rotation_quaternion()
+			var d := src_rest.inverse() * skel.get_bone_pose_rotation(s)
+			d = (rest_rot.inverse() * (src_rest * d * src_rest.inverse()) * rest_rot).normalized()
+			if c.type == "roll":                                                        # keep only the twist about the axis
+				var ax := Vector3(c.axis[0], c.axis[1], c.axis[2]); var to := d * ax
+				if ax.dot(to) < -0.9999: continue
+				d = (Quaternion(ax, to).inverse() * d).normalized()
+			skel.set_bone_pose_rotation(i, rest_rot.slerp(rest_rot * d, c.weight))
 
 
 func _rot_global(bone: String, axis: Vector3, deg: float) -> void:
