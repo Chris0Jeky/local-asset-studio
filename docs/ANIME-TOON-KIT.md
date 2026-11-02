@@ -96,6 +96,34 @@ Kokoro line: Rhubarb 3.9 s for 45 cues.
 The toon shader writes `EMISSION = albedo x shade` and `DIFFUSE_LIGHT += light x lit x (1 - shade + rim)`. Its ambient
 source is disabled, so the result matches Blender's. `LIGHT_COLOR` already includes PI and is divided back out.
 
+## Grounded locomotion (mocap gait + foot IK)
+
+`python scripts/bvh_joints.py IN.bvh OUT.json` turns a BVH clip into per-frame joint world positions. Output is in metres,
+Y up, the figure's left on +X, and a travelling clip's path straightened onto +Z so loops don't drift.
+`tools/godot-toon/mocap_gait.gd` plays such clips on a VRoid-style skeleton, for a host built on `toon_proof.gd` that
+moves itself (a CharacterBody3D, a path follower):
+
+```gdscript
+var gait = preload("res://mocap_gait.gd").new()
+func _ready() -> void: super(); gait.setup(self)
+func _process(delta: float) -> void: super(delta); gait.drive(self, delta, Vector3(body.velocity.x, 0, body.velocity.z))
+```
+
+It expects `res://mocap/walk.json` and `run.json`. Mocap data is not in Git; record its licence where you keep it.
+
+- **Retarget.** At runtime it matches bone directions: each mapped bone swings from its rest direction onto the mocap
+  bone's direction, and the hips and chest take full frames from two vectors. VRM rest rotations need not be world-aligned.
+- **Gait.** The cycle advances by distance travelled divided by the clip's stride, so the feet match whatever speed the
+  host moves at. Idle applies below 0.05 m/s; the run blends in from 1.7 to 2.3 m/s.
+- **Feet.** `TwoBoneIK3D` targets come from downward rays onto the level's colliders, and a foot stays locked where it
+  planted while its ankle is within 1.5 cm of rest height. Measure foot sliding after the modifiers have run (the
+  skeleton's `skeleton_updated` signal); a pose read in `_process` is from before the IK.
+
+Measured on 2 Nov 2026 on a VRoid model with Bandai Namco Research Motiondataset 1 clips (CC BY-NC 4.0). The test moved
+the body like a game controller: idle, a 1.1 m/s walk, a 2.6 m/s run, then a stop. Mean stance-phase foot slide fell from
+2.26 m/s with the old in-place procedural walk to 0.038 m/s with the gait (p95 from 4.21 to 0.046). The retarget is
+swing-only: limbs get no twist, and the hands and head keep the idle pose.
+
 ## Limits
 
 - One model, one Blender alpha build, one Godot version. The VRM add-on cap raise is a local patch, not upstream support.
