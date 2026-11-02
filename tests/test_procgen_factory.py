@@ -1,6 +1,7 @@
 import copy
 import importlib.util
 import json
+import math
 import os
 from pathlib import Path
 import sys
@@ -77,6 +78,15 @@ class ParamsAndConstraints(unittest.TestCase):
         self.assertEqual(size[0], 5.0)          # 1.3*2.6 + 0.6 = 3.98, +1 = 4.98 -> 5.0
         self.assertAlmostEqual(size[1], 3 * 0.32 + 3.0)
         self.assertEqual(slack, [0, 0, 0])
+
+    def test_lighthouse_bounds_cover_panel_corners_and_floor_polygon(self):
+        params, _ = factory.resolve_params(SCHEMA["generators"]["lighthouse_room"], {"radius": 2.0, "wall_thickness": 0.2, "panels": 12, "detail": 5})
+        size, slack = factory.expected_bounds("lighthouse_room", params)
+        rt = 2.2
+        self.assertAlmostEqual(size[2], params["height"])
+        self.assertAlmostEqual(size[0] / 2, rt / math.cos(math.pi / 12))          # n-gon vertices (panel corners, floor)
+        self.assertAlmostEqual(size[0] * (1 - slack[0]), 2 * rt)                   # n-gon faces at the apothem
+        self.assertEqual(slack[0], slack[1])
 
     def test_lod_details_halve_with_floor(self):
         self.assertEqual(factory.lod_details(16), [16, 8, 4])
