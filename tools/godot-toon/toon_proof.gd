@@ -1,6 +1,6 @@
 extends Node3D
 ## VRM toon runtime proof (see docs/ANIME-TOON-KIT.md). Copy a VRM 1.0 file in as res://model.glb, its spring data as
-## res://springs.json (`python scripts/vrm_toon.py springs`) and its SDF face map as res://face_sdf.png, then run the
+## res://springs.json (`python scripts/vrm_toon.py springs`, which also carries VRM node constraints) and its SDF face map as res://face_sdf.png, then run the
 ## project. Toon light() shader, hull outlines, SpringBoneSimulator3D from the VRM's own springs, a procedural idle with
 ## one quick body turn so skirt and hair visibly swing. Material roles follow `vrm_toon.material_role`.
 
@@ -10,6 +10,7 @@ var skel: Skeleton3D
 var root: Node3D
 var face_mats: Array[ShaderMaterial] = []
 var head_rest: Basis
+var constraints := []
 var t := 0.0
 
 
@@ -65,6 +66,7 @@ func _role(name: String) -> String:
 
 func _springs() -> void:
 	var data = JSON.parse_string(FileAccess.get_file_as_string("res://springs.json"))
+	constraints = data.get("constraints", [])
 	var sim := SpringBoneSimulator3D.new(); skel.add_child(sim)
 	var cols: Array[SpringBoneCollision3D] = []
 	for c in data.colliders:
@@ -87,7 +89,34 @@ func _springs() -> void:
 		sim.set_enable_all_child_collisions(i, false)                 # only the colliders in this spring's VRM groups
 		sim.set_collision_count(i, ch.colliders.size())
 		for k in ch.colliders.size(): sim.set_collision_path(i, k, sim.get_path_to(cols[int(ch.colliders[k])]))
-	print("TOON springs=", sim.get_setting_count(), " colliders=", data.colliders.size())
+	print("TOON springs=", sim.get_setting_count(), " colliders=", data.colliders.size(), " constraints=", constraints.size())
+
+
+func _apply_constraints() -> void:
+	# VRMC_node_constraint, which glTF import ignores: aim turns the bone's rest axis toward the source bone; roll and
+	# rotation copy the source's rotation from its rest (roll: only the twist about the axis), each blended by weight.
+	for c in constraints:
+		var i := skel.find_bone(c.bone); var s := skel.find_bone(c.source)
+		if i < 0 or s < 0: continue
+		var p := skel.get_bone_parent(i)
+		var parent := skel.get_bone_global_pose(p) if p >= 0 else Transform3D()
+		var rest := skel.get_bone_rest(i)
+		var rest_rot := rest.basis.get_rotation_quaternion()
+		if c.type == "aim":
+			var at := parent * rest
+			var from := (at.basis * Vector3(c.axis[0], c.axis[1], c.axis[2])).normalized()
+			var to := skel.get_bone_global_pose(s).origin - at.origin
+			if to.length() < 1e-6: continue
+			var arc := Quaternion.IDENTITY.slerp(Quaternion(from, to.normalized()), c.weight)
+			skel.set_bone_pose_rotation(i, (parent.basis.inverse() * Basis(arc) * at.basis).get_rotation_quaternion())
+		else:
+			var d := skel.get_bone_rest(s).basis.get_rotation_quaternion().inverse() * skel.get_bone_pose_rotation(s)
+			if c.type == "roll":
+				var ax := Vector3(c.axis[0], c.axis[1], c.axis[2]); var v := ax * Vector3(d.x, d.y, d.z).dot(ax)
+				d = Quaternion(v.x, v.y, v.z, d.w)
+				if d.length() < 1e-6: continue
+				d = d.normalized()
+			skel.set_bone_pose_rotation(i, rest_rot * Quaternion.IDENTITY.slerp(d, c.weight))
 
 
 func _rot_global(bone: String, axis: Vector3, deg: float) -> void:
@@ -108,6 +137,7 @@ func _process(delta: float) -> void:
 	_rot_global("J_Bip_C_Head", Vector3.FORWARD, 4.0 * sin(t * 0.9))
 	_rot_global("J_Bip_L_UpperArm", Vector3.FORWARD, 62.0 + 3.0 * sin(t * 1.3))
 	_rot_global("J_Bip_R_UpperArm", Vector3.FORWARD, -62.0 + 3.0 * sin(t * 1.3))
+	_apply_constraints()
 	var hb := (skel.global_transform.basis * skel.get_bone_global_pose(skel.find_bone("J_Bip_C_Head")).basis * head_rest.inverse()).orthonormalized()
 	for m in face_mats:
 		m.set_shader_parameter("face_forward", hb * Vector3(0, 0, 1)); m.set_shader_parameter("face_left", hb * Vector3(1, 0, 0))
