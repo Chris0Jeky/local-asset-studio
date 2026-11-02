@@ -867,16 +867,20 @@ def serve(root):
     worker = Worker(root)
     sys.stdout.write(REPLY + json.dumps({"ready": True, "blender": worker.capabilities["blender"]["version_string"]}) + "\n")
     sys.stdout.flush()
-    for line in sys.stdin:
-        line = line.strip()
-        if not line: continue
-        try: request = json.loads(line)
-        except ValueError: request = {"cmd": None}
-        if not isinstance(request, dict): request = {"cmd": None}
-        if request.get("cmd") == "quit": break
-        reply = worker.handle(request)
-        sys.stdout.write(REPLY + json.dumps(reply, allow_nan=False) + "\n")
-        sys.stdout.flush()
+    try:
+        for line in sys.stdin:
+            line = line.strip()
+            if not line: continue
+            try: request = json.loads(line)
+            except ValueError: request = {"cmd": None}
+            if not isinstance(request, dict): request = {"cmd": None}
+            if request.get("cmd") == "quit": break
+            reply = worker.handle(request)
+            sys.stdout.write(REPLY + json.dumps(reply, allow_nan=False) + "\n")
+            sys.stdout.flush()
+    finally:
+        import shutil
+        shutil.rmtree(worker.scratch, ignore_errors=True)  # snapshot scratch is private to this worker
 
 
 def _evidence(args):
