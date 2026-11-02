@@ -1,5 +1,18 @@
 # Current state — 2 November 2026
 
+## 2026-11-02 — R&D programme "Harbour Night" closed out (coordinator)
+
+The two-day agent R&D programme is closed. The full record, with results, failures, incidents and resume points, is in
+[docs/research/RND-2026-11-02-HARBOUR-NIGHT.md](docs/research/RND-2026-11-02-HARBOUR-NIGHT.md); the visual brief is a private artifact.
+
+- 63 LAS PRs and 4 mira-companion PRs merged by 15:42 (`gh pr list --state merged`), with three docs and code PRs in the queue.
+- Lab media and lane trackers stay outside Git under `E:/local-asset-studio-labs/rnd-20261102/`; each `TRACKER.md` opens with "Resume here".
+- Unreal handoff: characters, sets, audio and UI art are staged in `E:/UnrealProjects/Lanternfall/assets/las-rnd/` with a
+  sha256 manifest and per-file licences; the import guide is `docs/LAS-RND-ASSETS.md` there. Nothing has been imported into Unreal yet.
+- Machine rules after two hard freezes: one heavy job at a time through the lease, at least 6 GB free RAM, and no local full suites while lanes run.
+
+Generated and agent-inspected only. Owner taste (Versus contests), art acceptance and licence clearance stay open.
+
 ## 2026-11-02 — An original anime character from design to Godot (waifu-lab, R&D night)
 
 An original SFW character, Suzu, went from a written design to a rigged, toon-shaded model in Blender 5.4 and Godot
