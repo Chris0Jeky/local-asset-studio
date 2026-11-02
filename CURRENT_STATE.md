@@ -16,6 +16,8 @@ An original SFW character, Suzu, went from a written design to a rigged, toon-sh
 - **Toon.** [The toon kit](docs/ANIME-TOON-KIT.md) on the 5.4 Material Lighting nodes. An 8-angle key-light sweep compared it with Shader-to-RGB: the two look alike on cloth and hair, and the SDF face shadow is cleaner on the face.
 - **Export.** The VRM 1.0 and GLB passed glTF-Validator 2.0.0-dev.3.10 with 0 errors.
 - **Runtime.** Godot 4.7.2 ran a 150-frame clip: 34 spring chains, 13 colliders, 14 node constraints, a blink and a smile.
+  - A 9 s talking portrait: a Kokoro 82M line (7.65 s of audio in 5.7 s on CPU) and 45 Rhubarb cues (3.9 s) drove the VRM visemes.
+  - Procedural wave and walk actions.
 
 Generated and agent-inspected for defects only. Owner taste, art acceptance and licence clearance stay open.
 
