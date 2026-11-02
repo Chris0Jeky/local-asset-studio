@@ -127,14 +127,15 @@ func _apply_constraints() -> void:
 			var arc := Quaternion.IDENTITY.slerp(Quaternion(from, to.normalized()), c.weight)
 			skel.set_bone_pose_rotation(i, (parent.basis.inverse() * Basis(arc) * at.basis).get_rotation_quaternion())
 		else:
-			# The source's rotation from its rest, carried into the destination's rest frame (spec reference code).
+			# The source's rotation from its rest (spec reference code). Rotation applies it as is; roll first carries it
+			# into the destination's rest frame and keeps only the twist about the axis.
 			var src_rest := skel.get_bone_rest(s).basis.get_rotation_quaternion()
 			var d := src_rest.inverse() * skel.get_bone_pose_rotation(s)
-			d = (rest_rot.inverse() * (src_rest * d * src_rest.inverse()) * rest_rot).normalized()
-			if c.type == "roll":                                                        # keep only the twist about the axis
+			if c.type == "roll":
+				d = (rest_rot.inverse() * (src_rest * d * src_rest.inverse()) * rest_rot).normalized()
 				var ax := Vector3(c.axis[0], c.axis[1], c.axis[2]); var to := d * ax
-				if ax.dot(to) < -0.9999: continue
-				d = (Quaternion(ax, to).inverse() * d).normalized()
+				var swing := Quaternion(ax.cross(Vector3.UP if absf(ax.y) < .9 else Vector3.RIGHT).normalized(), PI) if ax.dot(to) < -0.9999 else Quaternion(ax, to)
+				d = (swing.inverse() * d).normalized()
 			skel.set_bone_pose_rotation(i, rest_rot.slerp(rest_rot * d, c.weight))
 
 
