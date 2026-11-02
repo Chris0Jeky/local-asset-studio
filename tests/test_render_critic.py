@@ -6,9 +6,8 @@ import render_critic as rc
 
 
 def row(category, verdicts, part=None, side=None):
-    full = {k: {"present": False, "confidence": 0.9, "region": "none", "evidence": ""} for k in rc.RUBRIC}
-    full.update(verdicts)
-    return {"id": category, "truth": {"category": category, "part": part, "side": side, "seed": 1}, "verdicts": full}
+    defects = [dict(v, type=k, evidence="") for k, v in verdicts.items() if v.get("present", True)]
+    return {"id": category, "truth": {"category": category, "part": part, "side": side, "seed": 1}, "defects": defects}
 
 
 class ScoreTest(unittest.TestCase):
@@ -23,6 +22,13 @@ class ScoreTest(unittest.TestCase):
         self.assertEqual((s["omitted_mesh"]["region_ok"], s["omitted_mesh"]["side_ok"], s["omitted_mesh"]["side_n"]), (1, 1, 1))
         # A confidence threshold drops the low-confidence clean false alarm only.
         self.assertEqual(rc.score(rows, threshold=0.5)["categories"]["asymmetry"]["fp"], 1)
+
+    def test_duplicate_reports_keep_the_most_confident(self):
+        r = row("asymmetry", {}, part="arm.L", side="L")
+        r["defects"] = [{"type": "asymmetry", "region": "right_arm", "confidence": 0.4, "evidence": ""},
+                        {"type": "asymmetry", "region": "left_arm", "confidence": 0.8, "evidence": ""}]
+        s = rc.score([r])["categories"]["asymmetry"]
+        self.assertEqual((s["tp"], s["side_ok"], s["side_n"]), (1, 1, 1))
 
     def test_missed_defect_and_errors(self):
         rows = [row("backside_hole", {}, part="torso"), {"id": "x", "error": "timeout"}]
@@ -39,10 +45,10 @@ class ScoreTest(unittest.TestCase):
 
 
 class RequestTest(unittest.TestCase):
-    def test_schema_requires_every_category(self):
-        s = rc.schema(rc.RUBRIC)
-        self.assertEqual(set(s["required"]), set(rc.RUBRIC))
-        self.assertEqual(s["properties"]["asymmetry"]["properties"]["region"]["enum"], list(rc.REGIONS))
+    def test_schema_constrains_types_and_regions(self):
+        item = rc.schema(rc.RUBRIC)["properties"]["defects"]["items"]["properties"]
+        self.assertEqual(item["type"]["enum"], list(rc.RUBRIC))
+        self.assertEqual(item["region"]["enum"], list(rc.REGIONS))
 
     def test_messages_label_reference_and_candidate_views(self):
         with tempfile.TemporaryDirectory() as d:

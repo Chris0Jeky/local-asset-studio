@@ -1,12 +1,13 @@
-"""Local render critic: ask a vision model served by llama-server a fixed defect checklist about render views.
+"""Local render critic: ask a vision model served by llama-server which rubric defects render views show.
 
   python scripts/render_critic.py check view_front.png view_back.png [--reference ref_front.png ...] [--rubric r.json]
   python scripts/render_critic.py eval <set_dir> --out results.jsonl [--reference-root <dir>] [--limit N]
   python scripts/render_critic.py score results.jsonl [--threshold 0.5]
   python scripts/render_critic.py serve --exe <llama-server.exe> --model <gguf> --mmproj <gguf> [--port 8290]
 
-The answer is constrained to a JSON schema (one verdict per rubric category: evidence, present, confidence, region).
-`check` prints that JSON; `eval` runs it over a `scripts/critic_defect_scene.py` set and `score` reports precision and
+The answer is constrained to a JSON schema: a list of at most four defects, each a rubric type, region, confidence and
+one short evidence phrase (an empty list means no defect). A list keeps output short: generation dominates the cost on a
+local GPU. `check` prints that JSON; `eval` runs it over a `scripts/critic_defect_scene.py` set and `score` reports precision and
 recall per category. Trust only categories whose measured precision held; see docs/research/LOCAL-RENDER-CRITIC.md.
 Stdlib only; the model server is the HTTP service (OpenAI-compatible `/v1/chat/completions`).
 """
@@ -35,11 +36,11 @@ REGIONS = ("none", "head", "face", "torso", "left_arm", "right_arm", "left_hand"
 
 
 def schema(rubric):
-    verdict = {"type": "object", "additionalProperties": False, "required": ["evidence", "present", "confidence", "region"],
-               "properties": {"evidence": {"type": "string"}, "present": {"type": "boolean"},
-                              "confidence": {"type": "number"}, "region": {"type": "string", "enum": list(REGIONS)}}}
-    return {"type": "object", "additionalProperties": False, "required": list(rubric),
-            "properties": {k: verdict for k in rubric}}
+    defect = {"type": "object", "additionalProperties": False, "required": ["type", "region", "confidence", "evidence"],
+              "properties": {"type": {"type": "string", "enum": list(rubric)}, "region": {"type": "string", "enum": list(REGIONS)},
+                             "confidence": {"type": "number"}, "evidence": {"type": "string", "maxLength": 120}}}
+    return {"type": "object", "additionalProperties": False, "required": ["defects"],
+            "properties": {"defects": {"type": "array", "items": defect, "maxItems": 4}}}
 
 
 def _image(path):
@@ -63,9 +64,9 @@ def messages(images, rubric, reference=()):
         prefix = "CANDIDATE "
     else: prefix = ""
     for p in images: content += [{"type": "text", "text": f"{prefix}{_label(p)} view:"}, _image(p)]
-    content.append({"type": "text", "text": task + "For every category below give one short evidence sentence, whether "
-                    "it is present, your confidence 0-1 that your present/absent answer is right, and the region "
-                    "('none' if absent).\n" + checklist})
+    content.append({"type": "text", "text": task + "Check the views against every defect type below. List each defect you "
+                    "can see with its type, region, your confidence 0-1 and a short evidence phrase; return an empty "
+                    "list if the model has none of them.\n" + checklist})
     return [{"role": "user", "content": content}]
 
 
@@ -78,7 +79,7 @@ def check(images, rubric=RUBRIC, reference=(), server=DEFAULT_SERVER, timeout=60
     t = time.perf_counter()
     with urllib.request.urlopen(req, timeout=timeout) as r: resp = json.load(r)
     out = json.loads(resp["choices"][0]["message"]["content"])
-    return {"verdicts": out, "wall_s": round(time.perf_counter() - t, 3), "timings": resp.get("timings", {}),
+    return {"defects": out["defects"], "wall_s": round(time.perf_counter() - t, 3), "timings": resp.get("timings", {}),
             "model": resp.get("model")}
 
 
@@ -135,8 +136,12 @@ def score(rows, rubric=RUBRIC, threshold=0.0):
     for r in rows:
         if "error" in r: errors += 1; continue
         t = r["truth"]
+        found = {}
+        for d in r["defects"]:  # keep the most confident report per type
+            c = float(d.get("confidence", 1))
+            if c >= threshold and c >= float(found.get(d["type"], {}).get("confidence", -1)): found[d["type"]] = d
         for k in rubric:
-            v = r["verdicts"].get(k, {}); pred = bool(v.get("present")) and float(v.get("confidence", 1)) >= threshold
+            v = found.get(k, {}); pred = bool(v)
             actual = t["category"] == k; s = stats[k]
             s["tp" if pred and actual else "fp" if pred else "fn" if actual else "tn"] += 1
             if pred and actual:
