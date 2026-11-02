@@ -231,7 +231,7 @@ class Compiler:
             var = f"vy_{len(self.varyings)}"
             self.varyings[var] = (GLSL_TYPE[typ], code)
             res = (var, typ)
-        elif stage == "fragment" and light:
+        elif stage == "fragment" and node["type"] in LIGHT_SOURCES:  # ordinary nodes downstream still compute
             res = (self.outside_loop(node, out), otype)
         else:
             res = (self.emit(stage, otype, self.node_code(node, node["outputs"][out]["name"], stage)), otype)

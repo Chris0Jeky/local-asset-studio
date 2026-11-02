@@ -343,6 +343,11 @@ class Nodes(unittest.TestCase):
         self.assertEqual(r["status"], "ok")
         self.assertTrue(r["warnings"])                                      # Blender's default (1.0), flagged
         self.assertTrue(close(run(r["shader"], (0, -1, 0), [])[0], [1.0] * 3))
+        b = B()  # a node downstream of the light source still computes, on the default
+        ev = b.node("LIGHT_EVALUATION", {}, {"Factor": "VALUE"}, mode="DIFFUSE")
+        r = compile_one(self.emit(b, math_(b, "MULTIPLY", b.out(ev, "Factor"), 0.5)))
+        self.assertEqual(r["status"], "ok", r)
+        self.assertTrue(close(run(r["shader"], (0, -1, 0), [])[0], [0.5] * 3))
         b = B()
         info = b.node("LIGHT_INFO", {}, {"Color": "RGBA"})
         self.assertEqual(compile_one(self.emit(b, b.out(info, "Color")))["status"], "unsupported")
