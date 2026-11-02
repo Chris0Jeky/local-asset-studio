@@ -1222,6 +1222,55 @@
       ]
     },
     {
+      "id": "review-desk-grid",
+      "goal": "See a comparison of three engines on two seeds at a glance, judge one picture from the grid, without the settings giving anything away.",
+      "starting_view": "production",
+      "success_condition": "The Review desk Grid shows three engines by two seeds on one 1440x900 screen with no engine or seed visible before Reveal, K on a cell saves a keep, and at 390x844 every cell fits the width with no page overflow.",
+      "wrong_turn": false,
+      "steps": [
+        {
+          "intent": "open Compare & review",
+          "expect": "finished comparisons are listed"
+        },
+        {
+          "intent": "open the finished comparison",
+          "expect": "its candidates and a Review link are shown"
+        },
+        {
+          "intent": "open the review desk",
+          "expect": "the desk offers to prepare a blind review"
+        },
+        {
+          "intent": "prepare the blind review",
+          "expect": "the candidates are ready to assess"
+        },
+        {
+          "intent": "switch to Grid",
+          "expect": "the candidates appear as engines by seeds"
+        },
+        {
+          "intent": "see every candidate at once",
+          "expect": "all six cells fit one 1440x900 screen"
+        },
+        {
+          "intent": "check nothing gives away the settings",
+          "expect": "no engine name or seed shows before Reveal"
+        },
+        {
+          "intent": "select one cell",
+          "expect": "that candidate is ready to assess"
+        },
+        {
+          "intent": "keep it with the K key",
+          "expect": "the same assessment as Pair is saved"
+        },
+        {
+          "intent": "read the grid at phone width",
+          "expect": "every cell fits the width and the page scrolls down, with no sideways overflow"
+        }
+      ]
+    },
+    {
       "id": "library-review-next-by-keyboard",
       "goal": "Go through the pictures still waiting for review one after another from the Library, deciding each with a key.",
       "starting_view": "assets",
