@@ -49,8 +49,8 @@ equally prominent rather than declaring a winner. A repair illustration cannot s
 background examples stay character-free so each teaches one role. Keep the pose example's geometry independently readable.
 Store the role caption outside the image. A nice example is not a measured route benchmark.
 
-**Helper states:** friendly empty states (first run, an empty library) are pictures of the guide inviting you to fill the
-room (owner answer, 27 September 2026). Error and recovery states stay themeable SVG with meaningful HTML alongside; the
+**Helper states:** friendly empty states (first run, an empty library) may be pictures (owner answer, 27 September 2026);
+this draft proposes pictures of the guide inviting you to fill the room. Error and recovery states stay themeable SVG with meaningful HTML alongside; the
 guide may appear there only as a small vector sticker. Distinguish absent internet, inaccessible Studio, unavailable backend
 and failed optional media. Uncertain execution uses a retained-receipt motif, not a retry arrow. Conflict shows two equal
 candidates. Completion has no artistic-approval stars.
