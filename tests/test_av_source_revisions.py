@@ -1,7 +1,11 @@
 """Later scene sources use the same real Workspace and revision store."""
 import copy
+from contextlib import closing, contextmanager
 import json
 from pathlib import Path
+import sqlite3
+import subprocess
+import sys
 import unittest
 import wave
 from unittest.mock import patch
@@ -25,6 +29,132 @@ class SceneSourceRevisionTests(unittest.TestCase):
                  'asset_id':self.asset['id'],'sha256':self.asset['sha256'],'metadata_revision':self.asset['metadata_revision'],
                  'section':'shots',**changes}
         return self.scenes.command(self.scene['id'],payload)
+
+    @contextmanager
+    def interrupt_source_commit(self, after_commit=None):
+        connect=self.studio.production.connect;pending=True
+        @contextmanager
+        def interrupted():
+            nonlocal pending
+            with connect() as db:
+                yield db
+                wrote=pending and db.in_transaction
+            # The real SQLite context has committed and closed; _source_command
+            # has not yet received its acknowledgment or set committed=True.
+            if wrote:
+                pending=False
+                if after_commit:after_commit()
+                raise KeyboardInterrupt('source commit acknowledgment interrupted')
+        with patch.object(self.studio.production,'connect',interrupted):yield
+        self.assertFalse(pending,'The fixture must cross a real writer commit')
+
+    def test_retention_after_commit_before_acknowledgment(self):
+        for action in ('add_source','replace_source'):
+            with self.subTest(action=action):
+                self.scene=self.fixture.scene()
+                with self.interrupt_source_commit(),self.assertRaisesRegex(KeyboardInterrupt,'acknowledgment'):
+                    self.command(action,**({'clip_id':'shot0'} if action=='replace_source' else {}))
+                saved=self.scenes.inspect(self.scene['id'])
+                self.assertEqual(saved['revision'],1);self.assertEqual(len(saved['history']),2)
+                source=saved['sources'][-1]
+                path=self.scenes.directory(saved['id'])/saved['project']['assets'][source['key']]['path']
+                self.assertTrue(path.is_file(),'The durable revision must retain its new source')
+                self.assertEqual(path.read_bytes(),rgba_png(9,7))
+        self.assertTrue(self.studio.queue.empty());self.assertFalse(self.studio.requests)
+
+    def test_retention_checks_history_after_current_document_restores(self):
+        introduced=[]
+        def restore():
+            introduced.append(self.scenes.inspect(self.scene['id']))
+            self.scenes.command(self.scene['id'],{'action':'restore','expected_revision':1,'source_revision':0})
+        with self.interrupt_source_commit(restore),self.assertRaisesRegex(KeyboardInterrupt,'acknowledgment'):
+            self.command('replace_source',clip_id='shot0')
+        saved=self.scenes.inspect(self.scene['id'])
+        self.assertEqual(saved['revision'],2);self.assertEqual(len(saved['history']),3)
+        self.assertEqual(saved['project']['assets'],self.scene['project']['assets'])
+        source=introduced[0]['sources'][-1]
+        path=self.scenes.directory(saved['id'])/introduced[0]['project']['assets'][source['key']]['path']
+        self.assertTrue(path.is_file(),'An older durable revision still references this source')
+        self.assertEqual(path.read_bytes(),rgba_png(9,7))
+
+    def test_retention_still_removes_a_copy_after_actual_transaction_rollback(self):
+        inputs=self.scenes.directory(self.scene['id'])/'inputs';before=set(inputs.iterdir());save=self.scenes._save
+        def interrupted(*args,**kwargs):
+            save(*args,**kwargs)
+            raise KeyboardInterrupt('abort before source commit')
+        with patch.object(self.scenes,'_save',side_effect=interrupted),self.assertRaisesRegex(KeyboardInterrupt,'before source commit'):
+            self.command()
+        saved=self.scenes.inspect(self.scene['id'])
+        self.assertEqual(saved['revision'],0);self.assertEqual(len(saved['history']),1)
+        self.assertEqual(set(inputs.iterdir()),before)
+
+    def test_retention_preserves_copy_when_history_cannot_be_parsed(self):
+        inputs=self.scenes.directory(self.scene['id'])/'inputs'
+        with self.studio.production.connect() as db:
+            original=db.execute('SELECT document FROM av_events WHERE project_id=? AND revision=0',(self.scene['id'],)).fetchone()[0]
+        try:
+            for damaged in ('{','[]','{"project":{"assets":[]}}'):
+                with self.subTest(document=damaged):
+                    with self.studio.production.connect() as db:
+                        db.execute('UPDATE av_events SET document=? WHERE project_id=? AND revision=0',(damaged,self.scene['id']))
+                    before=set(inputs.iterdir())
+                    with patch('av_projects.validate_media',side_effect=ValueError('media validation failed')):
+                        with self.assertRaisesRegex(ValueError,'media validation failed'):self.command()
+                    added=set(inputs.iterdir())-before
+                    self.assertEqual(len(added),1,'Unreadable history cannot authorize deleting a new source')
+                    self.assertEqual(added.pop().read_bytes(),rgba_png(9,7))
+        finally:
+            with self.studio.production.connect() as db:
+                db.execute('UPDATE av_events SET document=? WHERE project_id=? AND revision=0',(original,self.scene['id']))
+
+    def test_retention_observes_a_hot_database_without_recovering_it(self):
+        production=self.studio.production;connect=production.connect;path=production.db
+        inputs=self.scenes.directory(self.scene['id'])/'inputs';before=set(inputs.iterdir())
+        with connect() as db:
+            self.assertEqual(db.execute('PRAGMA journal_mode=DELETE').fetchone()[0],'delete')
+            db.execute('CREATE TABLE retention_fixture(padding TEXT NOT NULL)')
+            db.execute('INSERT INTO retention_fixture VALUES (?)',('A'*(128*1024),))
+        committed=path.read_bytes();journal=path.with_name(path.name+'-journal');hot={}
+        fault=ValueError('media validation failed')
+        # A finite writer spills actual changed pages, then exits without commit.
+        script="""import os, sqlite3, sys
+db=sqlite3.connect(sys.argv[1],timeout=1,isolation_level=None)
+db.execute('PRAGMA synchronous=FULL')
+db.execute('PRAGMA cache_size=2')
+db.execute('PRAGMA cache_spill=ON')
+db.execute('BEGIN IMMEDIATE')
+db.execute('UPDATE retention_fixture SET padding=?',('B'*(128*1024),))
+os._exit(73)
+"""
+        @contextmanager
+        def interrupted():
+            try:
+                with connect() as db:yield db
+            except ValueError as exc:
+                if exc is fault:
+                    # The ordinary scene rollback has closed before the separate
+                    # process leaves an unknown database outcome for cleanup.
+                    child=subprocess.run([sys.executable,'-c',script,str(path)],capture_output=True,text=True,timeout=10)
+                    self.assertEqual(child.returncode,73,child.stdout+child.stderr)
+                    hot.update(database=path.read_bytes(),journal=journal.read_bytes())
+                raise
+        try:
+            with patch.object(production,'connect',interrupted),patch('av_projects.validate_media',side_effect=fault):
+                with self.assertRaises(ValueError) as caught:self.command()
+            self.assertIs(caught.exception,fault)
+            self.assertNotEqual(hot['database'],committed);self.assertGreater(len(hot['journal']),512)
+            self.assertEqual(path.read_bytes(),hot['database']);self.assertEqual(journal.read_bytes(),hot['journal'])
+            with closing(sqlite3.connect(path.resolve().as_uri()+'?mode=ro',uri=True,timeout=1)) as db:
+                with self.assertRaises(sqlite3.OperationalError) as unreadable:db.execute('SELECT document FROM av_events').fetchall()
+                self.assertEqual(unreadable.exception.sqlite_errorcode,sqlite3.SQLITE_READONLY_ROLLBACK)
+            added=set(inputs.iterdir())-before
+            self.assertEqual(len(added),1,'An unknown database outcome must retain the copied input')
+            self.assertEqual(added.pop().read_bytes(),rgba_png(9,7))
+        finally:
+            # Recovery is explicit fixture cleanup only, after byte-preservation
+            # assertions; this also proves that the journal contains valid rollback.
+            with connect() as db:self.assertEqual(db.execute('SELECT padding FROM retention_fixture').fetchone()[0],'A'*(128*1024))
+        self.assertFalse(journal.exists())
 
     def test_later_source_and_clip_are_one_revision_without_recreating_scene(self):
         self.scene=self.scenes.command(self.scene['id'],{'action':'edit','expected_revision':0,
