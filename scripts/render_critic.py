@@ -219,7 +219,8 @@ def main(argv=None):
         # Loopback only, one slot (requests are sequential), every layer on ONE named device: the Vulkan build also sees
         # the Intel iGPU and by default splits layers across both, which ran generation at ~1 token/s here.
         sys.exit(subprocess.call([a.exe, "-m", a.model, "--mmproj", a.mmproj, "--host", "127.0.0.1", "--port", str(a.port),
-                                  "-c", str(a.ctx), "-ngl", "999", "-np", "1", "--no-webui", "--device", a.device]))
+                                  "-c", str(a.ctx), "-ngl", "999", "-np", "1", "--no-webui", "--device", a.device,
+                                  "--load-mode", "none"]))  # no mmap: weights live in VRAM, not 17 GB of host RAM
 
 
 if __name__ == "__main__":
