@@ -1,11 +1,13 @@
 """Versioned scenes in the existing Production database and owned worker queue."""
 from __future__ import annotations
+from contextlib import closing
 import copy
 import json
 import math
 from pathlib import Path
 import re
 import shutil
+import sqlite3
 import time
 import uuid
 import zipfile
@@ -332,6 +334,33 @@ class AVProjects:
             clips.insert(clips.index(clip)+1,second)
         return result
 
+    def _source_unreferenced(self, identifier, relative):
+        """With the production lock held, prove cleanup cannot remove a saved input; unknown means retain."""
+        try:
+            # A new read-only connection cannot recover a hot rollback journal or
+            # create a missing database while deciding whether a copy is disposable.
+            with closing(sqlite3.connect(self.production.db.resolve().as_uri()+'?mode=ro',uri=True,timeout=15)) as db:
+                rows=db.execute('''SELECT kind,CASE WHEN length(CAST(document AS BLOB))<=? THEN document END
+                    FROM (SELECT 0 AS kind,document FROM av_documents WHERE project_id=?
+                          UNION ALL SELECT 1 AS kind,document FROM av_events WHERE project_id=?) LIMIT 503''',
+                    (project_storage.PLAN_LIMIT,identifier,identifier))
+                seen=set();size=0
+                for index,(kind,raw) in enumerate(rows):
+                    # One current document plus revisions 0..500, within one bounded
+                    # metadata inspection. Missing, oversized or malformed evidence stays unknown.
+                    if index>=502 or raw is None:return False
+                    size+=len(raw.encode('utf-8'))
+                    if size>project_storage.PLAN_LIMIT:return False
+                    assets=json.loads(raw)['project']['assets']
+                    if not isinstance(assets,dict) or not assets:return False
+                    for asset in assets.values():
+                        path=asset['path']
+                        if not isinstance(path,str) or not path or path==relative:return False
+                    seen.add(kind)
+                return seen=={0,1}
+        except BaseException:
+            return False  # Preserve the original failure and the potentially committed input.
+
     def _source_command(self, identifier, payload):
         workspace=self.studio.assets;target=None;created=False;committed=False
         try:
@@ -400,8 +429,10 @@ class AVProjects:
                                ('Add source to ' if payload['action']=='add_source' else 'Replace source in ')+section,source)
                 committed=True
         except BaseException:
-            if created and not committed and target.resolve()==target and not any(project_storage._linked(p) for p in (target,*target.parents)):
-                target.unlink(missing_ok=True)
+            with self.production.lock:
+                if (created and not committed and target.resolve()==target and not any(project_storage._linked(p) for p in (target,*target.parents))
+                        and self._source_unreferenced(identifier,relative)):
+                    target.unlink(missing_ok=True)
             raise
         return self.inspect(identifier)
 
