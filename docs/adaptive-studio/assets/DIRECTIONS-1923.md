@@ -57,8 +57,7 @@ step and later exists as a toon 3D model (VRM/GLB) for a living guide.
 **Idea.** The Studio is a lamplit painter's atelier at night, run by **Maestra Ilse**, an original 34-year-old painter
 (auburn hair pinned up with a brush, green eyes, beauty mark, oxblood corset vest over a paint-stained linen shirt), with
 a small black cat. Built on MOSS-Image with the mikkoani and Impasto 2.5D adapters, the look the session brief reported the owner's
-Versus presses favoured; the repository records no ranking for it (the "Kromoss vs MOSS" contest is unsettled)
-adapters.
+Versus presses favoured; the repository records no ranking for it (the "Kromoss vs MOSS" contest is unsettled).
 
 | | |
 | --- | --- |
