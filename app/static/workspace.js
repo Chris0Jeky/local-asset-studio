@@ -831,6 +831,8 @@ function renderAssetQueue() {
   // Outside the queue the same panel carries a verdict-only row for the open picture (#1725): saved mark pressed, same buttons and K/W/X keys, no advance.
   const solo=!assetQueue&&!!activeAsset&&!!assetDetailBaseline;
   panel.hidden=!assetQueue&&!solo;
+  // #1919: in the queue the keys lead the column so they show without scrolling; the solo row stays under the next steps.
+  const anchor=assetQueue?$('#assetDialogTitle'):$('#assetNextSteps');if(anchor?.after&&anchor.nextElementSibling!==panel)anchor.after(panel);
   if(solo){
     const focused=document.activeElement?.closest?.('#assetQueue [data-queue-review]')?.dataset.queueReview,mark=assetReviewLabels[activeAsset.review]?activeAsset.review:'unreviewed';
     panel.innerHTML='<div class="asset-queue-head"><b>Review</b><span role="status" aria-live="polite">'+(mark==='unreviewed'?'Not reviewed yet':'Marked '+assetReviewLabels[mark])+'</span></div>'+
