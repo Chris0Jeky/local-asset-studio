@@ -3,7 +3,7 @@
 Used by `vrm_toon_bpy.py` (Blender 5.4 toon materials), `vrm_posmap_bpy.py` (per-texel position maps) and the
 Godot proof in `tools/godot-toon/`. See docs/ANIME-TOON-KIT.md.
 
-  python scripts/vrm_toon.py springs MODEL.vrm OUT.json      chains + colliders for Godot's SpringBoneSimulator3D
+  python scripts/vrm_toon.py springs MODEL.vrm OUT.json      chains, colliders and node constraints for the Godot proof
   python scripts/vrm_toon.py face-sdf FACE.npz OUT.png       SDF face map from a face position map (needs numpy, Pillow)
 """
 from __future__ import annotations
@@ -117,10 +117,28 @@ def vrm_springs(doc: dict) -> dict:
     return {'chains': chains, 'colliders': colliders}
 
 
+AXES = {'PositiveX': (1, 0, 0), 'NegativeX': (-1, 0, 0), 'PositiveY': (0, 1, 0), 'NegativeY': (0, -1, 0),
+        'PositiveZ': (0, 0, 1), 'NegativeZ': (0, 0, -1), 'X': (1, 0, 0), 'Y': (0, 1, 0), 'Z': (0, 0, 1)}
+
+
+def vrm_constraints(doc: dict) -> list:
+    """VRMC_node_constraint entries (aim, roll, rotation) by node name, in file order; glTF engines ignore them."""
+    names = [n.get('name', f'node{i}') for i, n in enumerate(doc.get('nodes', []))]; out = []
+    for i, node in enumerate(doc.get('nodes', [])):
+        c = node.get('extensions', {}).get('VRMC_node_constraint', {}).get('constraint', {})
+        for kind in ('aim', 'roll', 'rotation'):
+            if kind in c:
+                v = c[kind]; axis = v.get('aimAxis') or v.get('rollAxis')
+                out.append({'bone': names[i], 'type': kind, 'source': names[v['source']], 'weight': v.get('weight', 1.0),
+                            'axis': list(AXES[axis]) if axis else None})
+    return out
+
+
 def main(argv) -> int:
     if len(argv) == 3 and argv[0] == 'springs':
-        out = vrm_springs(read_glb_json(Path(argv[1]))); Path(argv[2]).write_text(json.dumps(out, indent=1), encoding='utf-8')
-        print(len(out['chains']), 'chains,', len(out['colliders']), 'colliders'); return 0
+        doc = read_glb_json(Path(argv[1])); out = vrm_springs(doc); out['constraints'] = vrm_constraints(doc)
+        Path(argv[2]).write_text(json.dumps(out, indent=1), encoding='utf-8')
+        print(len(out['chains']), 'chains,', len(out['colliders']), 'colliders,', len(out['constraints']), 'constraints'); return 0
     if len(argv) == 3 and argv[0] == 'face-sdf':
         print(json.dumps(face_sdf_image(Path(argv[1]), Path(argv[2])))); return 0
     print(__doc__); return 2
