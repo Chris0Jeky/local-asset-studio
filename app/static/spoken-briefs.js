@@ -122,18 +122,25 @@
       $('sourceDestination').textContent=value.destination;
       $('startNarration').disabled=false;
       $('sourcePreview').hidden = false;
-      $('sourceStatus').textContent = 'Preview complete. No audio was generated and no files were saved.';
+      $('sourceStatus').textContent = 'Source preview complete. The preview did not generate audio or save files.';
     } catch (error) { clearSource(error.message); }
   };
   async function refreshSource() {
     clearSource('Checking source access…'); $('previewSource').disabled = true;
+    ++discoveryTicket; $('discover').disabled = true; $('configuration').textContent = 'Checking archive access…';
     try {
       const value = await sourceSession.refresh();
       if (!value) return;
       $('previewSource').disabled = !value.enabled;
+      $('discover').disabled = !value.enabled;
+      $('configuration').textContent = value.enabled ? 'Archive access enabled. Discovery and all saves are explicit.'
+        : 'Archive access is disabled. Set spoken_briefs.archive_root to an absolute local directory in config/local.json, then restart Studio.';
       $('sourceStatus').textContent = value.enabled ? 'No source has been read. Choose Preview narration when ready.' : 'Source preview is disabled until an archive root is configured.';
       return value;
-    } catch (error) { clearSource(error.message); throw error; }
+    } catch (error) {
+      clearSource(error.message); $('discover').disabled = true; $('configuration').textContent = error.message;
+      status('Archive access unavailable. Other Studio tools are unchanged.'); throw error;
+    }
   }
   $('refreshSource').onclick = () => { clearNarration(); refreshSource().catch(() => {}); };
   let playerBinding=null, pendingSeek=null, loop=null, chosenReview=null, discoveryTicket=0, discardDraft=false, reviewBaseline=null;
@@ -265,7 +272,7 @@
       $('listStatus').textContent=`${result.archives.length} possible archives. ${result.truncated ? 'Discovery limit reached; narrow archive_root.' : 'Not yet audio-verified.'}`;
       $('refusals').textContent=result.refusals.length ? JSON.stringify(result.refusals,null,2) : 'None observed.';
       status('Discovery complete. Select an archive and inspect it.');
-    } catch(e) { status(e.message); } finally { if(ticket===discoveryTicket) $('discover').disabled=false; }
+    } catch(e) { if(ticket===discoveryTicket) status(e.message); } finally { if(ticket===discoveryTicket) $('discover').disabled=false; }
   };
   async function openArchive(key) {
     if (!key) return;
@@ -343,11 +350,8 @@
   };
   refreshSource().then(value=>{
     if (!value) return;
-    $('discover').disabled=!value.enabled;
-    $('configuration').textContent=value.enabled ? 'Archive access enabled. Discovery and all saves are explicit.'
-      : 'Archive access is disabled. Set spoken_briefs.archive_root to an absolute local directory in config/local.json, then restart Studio.';
     status('No archive has been opened. Narration starts only with the explicit Start action.');
     const address=new URL(location.href), key=address.searchParams.get('narration'), root=address.searchParams.get('sourceRoot');
     if(key && root===value.source_root_id) followNarration(key,root);
-  }).catch(e=>{ $('discover').disabled=true; $('configuration').textContent=e.message; status('Archive access unavailable. Other Studio tools are unchanged.'); });
+  }).catch(()=>{});
 })();
