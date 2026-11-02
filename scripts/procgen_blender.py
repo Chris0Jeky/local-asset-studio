@@ -18,17 +18,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from procgen_factory import SNAP_EPS, uv_degenerate, uv_overlap_texels  # noqa: E402
 
 ROLES = ('wall', 'floor', 'wood', 'wood_dark', 'linen', 'fabric', 'fabric_alt', 'glass', 'paper', 'metal', 'stone',
-         'vermilion', 'black', 'foliage', 'soil', 'terracotta', 'accent', 'rug', 'water')
+         'vermilion', 'black', 'foliage', 'soil', 'terracotta', 'accent', 'rug', 'water', 'wet_rock')
 # Flat toon-friendly base colours per palette (linear RGB): 0 day, 1 dusk, 2 sakura, 3 autumn.
 PALETTES = [
     [(.86, .80, .70), (.42, .26, .15), (.62, .42, .25), (.28, .16, .09), (.92, .92, .9), (.30, .50, .80), (.90, .70, .75), (.60, .80, .92), (.96, .88, .66),
-     (.25, .25, .27), (.55, .55, .53), (.80, .12, .05), (.05, .05, .06), (.20, .50, .18), (.18, .11, .06), (.70, .30, .16), (.95, .65, .15), (.45, .62, .78), (.16, .45, .62)],
+     (.25, .25, .27), (.55, .55, .53), (.80, .12, .05), (.05, .05, .06), (.20, .50, .18), (.18, .11, .06), (.70, .30, .16), (.95, .65, .15), (.45, .62, .78), (.16, .45, .62), (.22, .26, .30)],
     [(.42, .44, .60), (.22, .16, .20), (.38, .28, .30), (.14, .10, .14), (.70, .72, .82), (.20, .25, .50), (.55, .40, .65), (.40, .55, .80), (.98, .78, .45),
-     (.18, .18, .22), (.40, .40, .48), (.70, .15, .20), (.04, .04, .07), (.12, .30, .25), (.10, .07, .07), (.50, .25, .22), (.95, .55, .25), (.30, .30, .55), (.10, .18, .38)],
+     (.18, .18, .22), (.40, .40, .48), (.70, .15, .20), (.04, .04, .07), (.12, .30, .25), (.10, .07, .07), (.50, .25, .22), (.95, .55, .25), (.30, .30, .55), (.10, .18, .38), (.14, .15, .22)],
     [(.95, .86, .88), (.60, .42, .38), (.80, .62, .55), (.42, .28, .26), (.98, .95, .96), (.92, .55, .68), (.98, .80, .85), (.75, .88, .95), (.99, .92, .90),
-     (.35, .32, .36), (.70, .66, .68), (.90, .30, .38), (.10, .07, .09), (.45, .65, .40), (.22, .14, .12), (.80, .45, .40), (.98, .70, .78), (.85, .60, .72), (.40, .62, .78)],
+     (.35, .32, .36), (.70, .66, .68), (.90, .30, .38), (.10, .07, .09), (.45, .65, .40), (.22, .14, .12), (.80, .45, .40), (.98, .70, .78), (.85, .60, .72), (.40, .62, .78), (.36, .34, .40)],
     [(.88, .78, .62), (.48, .28, .14), (.70, .45, .22), (.34, .18, .08), (.95, .90, .82), (.62, .30, .12), (.85, .62, .30), (.70, .80, .82), (.98, .85, .60),
-     (.30, .26, .22), (.58, .54, .48), (.85, .28, .06), (.08, .06, .05), (.65, .45, .10), (.20, .12, .06), (.75, .35, .15), (.90, .50, .08), (.70, .40, .20), (.22, .40, .48)],
+     (.30, .26, .22), (.58, .54, .48), (.85, .28, .06), (.08, .06, .05), (.65, .45, .10), (.20, .12, .06), (.75, .35, .15), (.90, .50, .08), (.70, .40, .20), (.22, .40, .48), (.28, .24, .22)],
 ]
 
 
@@ -51,7 +51,7 @@ FOLD = {'ADD': lambda a, b: a + b, 'SUBTRACT': lambda a, b: a - b, 'MULTIPLY': l
         'DIVIDE': lambda a, b: a / b, 'MAXIMUM': max, 'MINIMUM': min, 'CEIL': lambda a, b: math.ceil(a),
         'SINE': lambda a, b: math.sin(a), 'COSINE': lambda a, b: math.cos(a), 'FLOORED_MODULO': lambda a, b: a % b,
         'POWER': lambda a, b: a ** b, 'ARCTAN2': math.atan2, 'TANGENT': lambda a, b: math.tan(a),
-        'FLOOR': lambda a, b: math.floor(a)}
+        'FLOOR': lambda a, b: math.floor(a), 'ABSOLUTE': lambda a, b: abs(a)}
 
 
 def _enabled(sockets, name=None):
@@ -112,6 +112,22 @@ class B:
         x, y, z = (S(self, o) for o in pos)
         return self.node('GeometryNodeSetPosition', Geometry=geo, Position=self.vec(x, y * (rm + x) / rm, z)).outputs[0]
 
+    def clamp01(self, a): return self.math('MINIMUM', self.math('MAXIMUM', a, 0.0), 1.0)
+
+    def position(self):
+        pos = self.node('ShaderNodeSeparateXYZ', Vector=self.node('GeometryNodeInputPosition').outputs[0]).outputs
+        return tuple(S(self, o) for o in pos)
+
+    def noise01(self, vec, scale):
+        n = self.node('ShaderNodeTexNoise', Vector=vec, Scale=scale)
+        return self.clamp01(S(self, _enabled(n.outputs)[0]))
+
+    def relabel(self, geo, part, role, selection):
+        """Re-tag selected faces with another part id and material (one surface, two labelled parts)."""
+        n = self.node('GeometryNodeStoreNamedAttribute', {'data_type': 'INT', 'domain': 'FACE'}, Geometry=geo, Selection=selection, Name='part_id')
+        self.set(_enabled(n.inputs, 'Value')[0], part)
+        return self.node('GeometryNodeSetMaterial', Geometry=n.outputs[0], Selection=selection, Material=self.m[role]).outputs[0]
+
     def instance_at(self, points, geo, rot_z, selection=None):
         """Instance geo on points rotated about z by a field (radial boxes stay radial), optional selection."""
         n = self.node('GeometryNodeInstanceOnPoints', Points=points, Instance=geo)
@@ -162,8 +178,10 @@ class B:
         if scale is not None: self.set(_enabled(n.inputs, 'Scale')[0], scale)
         return self.node('GeometryNodeRealizeInstances', Geometry=n.outputs[0]).outputs[0]
 
-    def random(self, lo, hi, seed, data_type='FLOAT'):
+    def random(self, lo, hi, seed, data_type='FLOAT', id=None):
         n = self.node('FunctionNodeRandomValue', {'data_type': data_type}, Seed=seed)
+        if id is not None:   # link a constant: an unlinked ID is the implicit index field, whatever its default_value says
+            self.set(_enabled(n.inputs, 'ID')[0], self.node('FunctionNodeInputInt', {'integer': id}).outputs[0])
         self.set(_enabled(n.inputs, 'Min')[0], lo); self.set(_enabled(n.inputs, 'Max')[0], hi)
         return S(self, _enabled(n.outputs)[0])
 
@@ -371,7 +389,155 @@ def pier(b, P):
     return b.join(*g)
 
 
-GENERATORS = {'room_kit': room_kit, 'prop': prop, 'shrine': shrine, 'lighthouse_room': lighthouse_room, 'pier': pier}
+def coastal_path(b, P):
+    """Coastal path strip: noisy grass land on -x, a meandering cliff edge dropping to a beach at z=0 on +x, a flattened
+    path inland of the edge (its faces labelled as their own part), fence posts on the path's cliff side, grass tufts,
+    beach rocks and an open sea plane. Runs along +y from y=0."""
+    L, W, land, F_ = P['length'], P['width'], P['land_height'], 0.05
+    wave = 2 * math.pi / 9.0
+    edge = lambda y: P['cliff_x'] + P['meander'] * b.sin(y * wave + P['seed'])
+    pw = P['path_width'] / 2
+    def height(x, y):
+        """Land + clamped noise, path flattened to land - 0.05, then a smoothstep cliff down to the z=0 beach."""
+        terrain = land + P['roughness'] * b.noise01(b.vec(x, y, P['seed'] * 1.37), 0.35)
+        dx = x - (edge(y) - P['path_inset'])
+        d = b.math('ABSOLUTE', dx)
+        flat = 1 - b.clamp01((d - pw) / 0.4)
+        h = terrain + (land - F_ - terrain) * flat
+        t = b.clamp01((x - edge(y)) / P['cliff_drop'])
+        t = t * t * (3 - 2 * t)
+        return h * (1 - t), flat, t
+    # Across the strip the grid never gets coarser than half the path width, so every LOD keeps labelled path faces.
+    vx = b.max(b.math('FLOOR', P['detail'] * W / 6) + 2, b.ceil(2 * W / P['path_width']) + 2)
+    vy = b.math('FLOOR', P['detail'] * L / 6) + 2
+    grid = b.node('GeometryNodeMeshGrid', Size_X=W, Size_Y=L, Vertices_X=vx, Vertices_Y=vy)
+    ground = b.place(grid, 1, 'foliage', (0, L / 2, 0))
+    x, y, _ = b.position()
+    h, flat, t = height(x, y)
+    ground = b.node('GeometryNodeSetPosition', Geometry=ground, Offset=b.vec(0.0, 0.0, h)).outputs[0]
+    ground = b.relabel(ground, 2, 'soil', b.compare('GREATER_THAN', flat, 0.5))          # the path, for segmentation
+    ground = b.node('GeometryNodeSetMaterial', Geometry=ground, Selection=b.compare('GREATER_THAN', t, 0.6), Material=b.m['stone']).outputs[0]
+    g = [ground]
+    # Fence posts on the cliff side of the path, standing on its flat band.
+    sp = P['fence_spacing']; n = b.math('FLOOR', (L - 0.6) / sp) + 1
+    line = b.line(n, (0, 0.3, 0), (0, sp, 0))
+    py = b.position()[1]
+    px_post = edge(py) - P['path_inset'] + pw - 0.12
+    # Ray cast onto this LOD's ground: a coarse grid interpolates below the ideal flat path height.
+    hit = b.node('GeometryNodeRaycast', Target_Geometry=ground, Source_Position=b.vec(px_post, py, land + 5.0), Ray_Direction=(0.0, 0.0, -1.0), Ray_Length=50.0)
+    line = b.node('GeometryNodeSetPosition', Geometry=line, Position=hit.outputs['Hit Position']).outputs[0]
+    post = b.join(b.box((-0.05, -0.05, 0), (0.05, 0.05, 0.9), 3, 'wood_dark'), b.box((-0.07, -0.07, 0.9), (0.07, 0.07, 0.95), 3, 'wood'))
+    g.append(b.switch(P['fence'], b.instance(line, post)))
+    # Grass tufts: seeded positions independent of the grid (same count at every LOD), dropped where they would land on
+    # the path or the cliff, then ray cast down onto this LOD's actual ground so they sit exactly on its surface.
+    density = P['grass_density'] * b.compare('GREATER_EQUAL', P['grass_density'], 0.5)   # same threshold as the schema's `when`
+    x_hi = P['cliff_x'] - P['meander'] - 0.1                          # inland of the edge's furthest swing
+    count = b.math('FLOOR', density * (L - 0.3) * b.max(x_hi + W / 2 - 0.15, 0.0))
+    tx = b.random(-W / 2 + 0.15, x_hi, P['seed'] + 6); ty = b.random(0.15, L - 0.15, P['seed'] + 7)
+    pts = b.node('GeometryNodeSetPosition', Geometry=b.line(count, (0, 0, 0), (0, 0, 0)), Position=b.vec(tx, ty, 0.0)).outputs[0]
+    px, py2, _ = b.position()
+    _, pflat, pt = height(px, py2)
+    drop = b.node('FunctionNodeBooleanMath', {'operation': 'OR'})
+    b.set(drop.inputs[0], b.compare('GREATER_THAN', pflat, 0.05)); b.set(drop.inputs[1], b.compare('GREATER_THAN', pt, 0.02))
+    pts = b.node('GeometryNodeDeleteGeometry', {'domain': 'POINT'}, Geometry=pts, Selection=drop.outputs[0]).outputs[0]
+    ray = b.node('GeometryNodeRaycast', Target_Geometry=ground, Source_Position=b.vec(px, py2, land + 5.0), Ray_Direction=(0.0, 0.0, -1.0), Ray_Length=50.0)
+    pts = b.node('GeometryNodeSetPosition', Geometry=pts, Position=ray.outputs['Hit Position']).outputs[0]
+    tuft = b.cyl(0.06, 0.25, (0, 0, 0), 4, 'foliage', top=0.0, segs=b.max(b.detail / 4, 3.0))
+    scale = b.random(0.7, 1.3, P['seed'] + 2)
+    g.append(b.instance(pts, tuft, scale=b.vec(scale, scale, scale)))
+    # Beach rocks: flattened spheres resting on z=0 beyond the cliff foot.
+    ry = b.random(0.6, L - 0.6, P['seed'] + 3)
+    rlen = b.random(0.25, 0.55, P['seed'] + 4)
+    rocks = b.line(P['rocks'], (0, 0, 0), (0, 0, 0))
+    rx = b.math('MINIMUM', edge(ry) + P['cliff_drop'] + 0.3 + b.random(0.0, 0.8, P['seed'] + 5), W / 2 - rlen - 0.02)   # stay on the strip
+    rocks = b.node('GeometryNodeSetPosition', Geometry=rocks, Position=b.vec(rx, ry, 0.45 * rlen)).outputs[0]
+    g.append(b.instance(rocks, b.sphere((0, 0, 0), (1, 1, 1), 5, 'stone'), scale=b.vec(rlen, 0.8 * rlen, 0.45 * rlen)))
+    g.append(b.grid(W + 6, L, (0, L / 2, P['sea_level']), (0, 0, 0), 6, 'water'))
+    return b.join(*g)
+
+
+def tide_pools(b, P):
+    """Tide pools below a cliff: a stair from stair_top down to a wet rock shelf with carved pool basins and water discs,
+    boulders, starfish and shells resting on the rock, and an open sea plane. Front (stair top) at y=0, runs along +y."""
+    W, L, sh, F_ = P['width'], P['length'], P['shelf_height'], 0.6
+    n = b.ceil((P['stair_top'] - sh) / 0.18 - SNAP_EPS)
+    rise = (P['stair_top'] - sh) / n
+    y0 = P['stair'] * (F_ + n * 0.3)                                   # the shelf starts where the stair ends
+    sw = P['stair_width'] / 2
+    stair = b.join(b.box((-sw, 0, 0), (sw, F_, P['stair_top']), 2, 'stone'),
+                   b.instance(b.line(n, (0, F_, 0), (0, 0.3, 0)), b.box((-sw, 0, 0), (sw, 0.3, 1.0), 2, 'stone'),
+                              scale=b.vec(1.0, 1.0, P['stair_top'] - (b.index() + 1) * rise)))
+    g = [b.switch(P['stair'], stair)]
+    # Pool centres: one seeded value per pool (constant ids), kept inside the shelf.
+    pools = []
+    for i in range(6):
+        r = b.random(0.6, 1.0, P['seed'] + 11, id=i) * P['pool_radius']
+        # Centres keep the whole basin (1.3 r) 0.9 m clear of the tapered sides and far end, where the rim would sink.
+        cx = b.random(-1.0, 1.0, P['seed'] + 12, id=i) * (W / 2 - 0.9 - 1.3 * r)
+        cy = y0 + L / 2 + b.random(-1.0, 1.0, P['seed'] + 13, id=i) * (L / 2 - 0.9 - 1.3 * r)
+        pools.append((cx, cy, r, b.compare('LESS_THAN', i, P['pools'])))
+    def height(x, y):
+        """Rock height and basin depth (0..1) at x, y."""
+        dip = 0.0                                                      # overlapping basins merge (max), never stack
+        for cx, cy, r, on in pools:
+            d = b.sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy))
+            t = b.clamp01((d - 0.7 * r) / (0.6 * r)); t = t * t * (3 - 2 * t)
+            dip = b.max(dip, (1 - t) * on)
+        # Noise ramps in over 0.8 m after the stair (the last step meets the rock with no up-step) and stays out of the
+        # basins, so a basin floor is always 0.25 m down and holds water.
+        noise = b.noise01(b.vec(x, y, P['seed'] * 0.71), 0.8) * b.clamp01((y - y0) / 0.8) * (1 - dip)
+        z = sh + P['roughness'] * noise - 0.25 * dip
+        # The shelf rises out of the seabed over 0.8 m at its sides and far end, but never under the stair's landing. The
+        # landing reaches 0.45 m past the stair sides, more than one grid cell (< 0.4 m), so the vertices bracketing the
+        # stair edge are both untapered.
+        side = b.clamp01((W / 2 - b.math('ABSOLUTE', x)) / 0.8)
+        landing = P['stair'] * b.compare('LESS_THAN', b.math('ABSOLUTE', x), sw + 0.45) * b.compare('LESS_THAN', y, y0 + 0.8)
+        return z * b.max(side, landing) * b.clamp01((y0 + L - y) / 0.8), dip
+    # Grid: density follows detail, but never coarser than 0.4 m, so every pool (radius >= 0.3 m) holds wet vertices at
+    # every LOD.
+    vx = b.max(b.math('FLOOR', P['detail'] * W / 6) + 2, b.ceil(W / 0.4) + 2)
+    vy = b.max(b.math('FLOOR', P['detail'] * L / 6) + 2, b.ceil(L / 0.4) + 2)
+    grid = b.node('GeometryNodeMeshGrid', Size_X=W, Size_Y=L, Vertices_X=vx, Vertices_Y=vy)
+    shelf = b.place(grid, 1, 'wet_rock', (0, y0 + L / 2, 0))
+    x, y, _ = b.position()
+    shelf = b.node('GeometryNodeSetPosition', Geometry=shelf, Offset=b.vec(0.0, 0.0, height(x, y)[0])).outputs[0]
+    g.append(shelf)
+    # Pool water is the same grid, flattened 6 cm under the rim: keep every face with a corner that is in a basin and
+    # under the water line. The rock is linear per face, so this covers all water and the cut edges lie under rock.
+    water = b.place(grid, 4, 'water', (0, y0 + L / 2, 0))
+    wx, wy, _ = b.position()
+    wz, wdip = height(wx, wy)
+    level = sh - 0.06
+    water = b.store(water, 'wet', 'FLOAT', 'POINT', b.both(b.compare('LESS_THAN', wz, level), b.compare('GREATER_THAN', wdip, 0.001)))
+    wet = S(b, b.node('GeometryNodeInputNamedAttribute', {'data_type': 'FLOAT'}, Name='wet').outputs['Attribute'])
+    water = b.node('GeometryNodeDeleteGeometry', {'domain': 'FACE'}, Geometry=water, Selection=b.compare('LESS_THAN', wet, 0.001)).outputs[0]
+    water = b.node('GeometryNodeRemoveAttribute', Geometry=water, Name='wet').outputs[0]   # face read = corner average: > 0 if any corner is wet
+    g.append(b.node('GeometryNodeSetPosition', Geometry=water, Offset=b.vec(0.0, 0.0, level)).outputs[0])
+    def scatter(count, seed, inset, geo, scale):
+        """Seeded points on the shelf (independent of the grid), ray cast onto this LOD's rock."""
+        px = b.random(-W / 2 + inset, W / 2 - inset, seed); py = b.random(y0 + inset, y0 + L - inset, seed + 1)
+        pts = b.node('GeometryNodeSetPosition', Geometry=b.line(count, (0, 0, 0), (0, 0, 0)), Position=b.vec(px, py, 0.0)).outputs[0]
+        qx, qy, _ = b.position()
+        ray = b.node('GeometryNodeRaycast', Target_Geometry=shelf, Source_Position=b.vec(qx, qy, sh + 5.0), Ray_Direction=(0.0, 0.0, -1.0), Ray_Length=50.0)
+        pts = b.node('GeometryNodeSetPosition', Geometry=pts, Position=ray.outputs['Hit Position']).outputs[0]
+        return b.instance(pts, geo, scale=scale)
+    full = b.detail; b.detail = b.math('MINIMUM', full, 16)          # props are small: past 16 segments only the budget grows
+    br = b.random(0.25, 0.6, P['seed'] + 21)
+    g.append(scatter(P['boulders'], P['seed'] + 20, 1.2, b.sphere((0, 0, 0.2), (1, 1, 0.75), 3, 'stone'), b.vec(br, 0.8 * br, br)))
+    arms, aangle = b.polar(5, 0.06, 0.0, 2 * math.pi / 5)
+    star = b.join(b.cyl(0.035, 0.015, (0, 0, 0), 5, 'vermilion'),
+                  b.instance_at(arms, b.box((-0.06, -0.015, 0), (0.06, 0.015, 0.012), 5, 'vermilion'), aangle))
+    ss = b.random(0.7, 1.3, P['seed'] + 31)
+    g.append(scatter(P['starfish'], P['seed'] + 30, 0.6, star, b.vec(ss, ss, ss)))
+    sc = b.random(0.7, 1.3, P['seed'] + 41)
+    g.append(scatter(P['shells'], P['seed'] + 40, 0.6, b.sphere((0, 0, 0.0), (0.04, 0.03, 0.015), 6, 'fabric_alt'), b.vec(sc, sc, sc)))
+    b.detail = full
+    g.append(b.grid(W + 6, y0 + L + 3 - y0, (0, (y0 + y0 + L + 3) / 2, P['water_level']), (0, 0, 0), 7, 'water'))
+    return b.join(*g)
+
+
+GENERATORS = {'room_kit': room_kit, 'prop': prop, 'shrine': shrine, 'lighthouse_room': lighthouse_room, 'pier': pier,
+              'coastal_path': coastal_path, 'tide_pools': tide_pools}
 
 
 def make_materials(palette):
@@ -468,6 +634,7 @@ def stats(obj):
               'nonmanifold_edges': sum(1 for e in bm.edges if len(e.link_faces) not in (1, 2)),
               'inconsistent_edges': sum(1 for e in bm.edges if len(e.link_faces) == 2 and not e.is_contiguous),
               'degenerate_faces': sum(1 for f in bm.faces if f.calc_area() < 1e-10),
+              'loose_verts': sum(1 for v in bm.verts if not v.link_faces),      # e.g. a failed node leaving bare points
               'islands': [lo + hi for lo, hi in boxes.values()]}
     bm.free()
     co = np.empty(len(me.vertices) * 3); me.vertices.foreach_get('co', co); co = co.reshape(-1, 3) + np.array(origin)

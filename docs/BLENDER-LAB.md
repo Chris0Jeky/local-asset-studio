@@ -493,7 +493,6 @@ What this shows and does not show:
 - It does not show performance on real assets, on damage that needs new operations (UVs, topology, weights, image
   relinking), or with a wider vocabulary.
 
-
 ### Realistic repair benchmark (2 Nov 2026)
 
 ```bash
@@ -555,3 +554,29 @@ Evidence is under `E:/local-asset-studio-labs/rnd-20261102/blender-worker/`:
     `codex-sol/articulated-chest-combined`, built from the original run plus the rerun of its 5 network-failed cases.
   - Sol's interrupted partial folders (`prop-2-1`, `room-default-1`) were superseded by their `-b` reruns and are
     not counted.
+
+## Check this export (Studio job)
+
+A completed articulated build in the Studio's Experiments view shows a **Check this export** card. The button runs
+`app/parity_check.py`: `blender_lab.probe` on the Blender configured in `config/local.json` (`blender`), then
+`blender_sentinel.sentinel` on the project's own `articulated/chest.blend`. That covers the GLB export with the LAS
+settings, the reimport in a new process, the structural diff, the localised visual diff and the render critic when
+one is reachable. The card lists the localised statements, or else the structural failures, or else the visual warnings. On a clean
+chest (Blender 5.4 alpha, 2 Nov) the only warning is the critic's: 26 px over the lit views that the primary diff
+does not see, so a clean export currently reads "found differences" with that one line.
+
+- **Route:** `POST /api/production/<id>/check`, synchronous, about a minute. No ComfyUI prompt is submitted and the
+  Studio GPU lease is not taken; the renders are light-class.
+- **At most once per project:** `parity-check-job.json` is created exclusively before Blender starts. A second request,
+  a concurrent one or a request after a restart recovers that receipt instead of running Blender again.
+- **Evidence:** everything is kept under `experiments/projects/<id>/parity-check/` (`probe.json`, `sentinel/`), also on
+  failure. An interrupted check is recovered from a retained `sentinel/result.json`, or else reported `uncertain`.
+- **Which file:** the sentinel exports the BLEND afresh. The verdict covers the delivered `articulated/chest.glb` only when
+  its bytes match that export (they did in the live run). Otherwise the card reads "Passed, but the delivered GLB was not the one
+  checked".
+- **Next step and report:** a difference adds "Fix the source in Blender, rebuild, then check the new build". "Open report
+  (JSON)" serves `parity-check/sentinel/result.json` once the check has completed.
+- **Failure:** a failed check is never retried; the card says "A new check needs a new build."
+- **Recovery:** the receipt is rewritten atomically. A check left `uncertain` offers "Recover export check", which reads
+  the retained result and never starts Blender. An unreadable, cut-short `result.json` also leaves the check `uncertain`.
+- **Not decided here:** a pass is export parity only. It is neither art acceptance nor licence clearance.

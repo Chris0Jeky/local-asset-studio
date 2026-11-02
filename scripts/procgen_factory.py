@@ -32,7 +32,7 @@ TOL = 0.001          # 1 mm for exact box dimensions and pivots
 OVERLAP_SHRINK = 0.002
 UV_RES = 512
 # Pivot rule per generator: assets stand on z=0; rooms and shrines start at y=0 (open front / first step).
-FRONT_ANCHORED = {'room_kit', 'shrine', 'pier'}
+FRONT_ANCHORED = {'room_kit', 'shrine', 'pier', 'coastal_path', 'tide_pools'}
 
 
 def load_schema(path=SCHEMA_PATH):
@@ -66,6 +66,7 @@ def resolve_params(spec, params):
 def check_constraints(spec, p):
     failures = []
     for rule in spec.get('constraints', []):
+        if not _expected_part(rule, p): continue                      # a constraint on a disabled feature does not apply
         total = sum(coef * p[name] for name, coef in rule['terms'].items())
         if total > rule['le'] + 1e-9: failures.append(f'{rule["doc"]} (value {total:.3f} > {rule["le"]})')
     return failures
@@ -102,6 +103,25 @@ def expected_bounds(generator, p, detail=None):
         top = p['water_level'] + p['deck_height']
         z = top + (2.6 + 0.12 if p['lamps'] else 1.0 if p['railing'] else 0.40 if p['bollards'] else 0.0)
         return [p['width'] + 6, p['length'] + 3, z], [0, 0, 0]
+    if generator == 'coastal_path':
+        # Top: noise ceiling + tufts (<= 0.33 m) or fence tops (posts ray cast to the ground, 0.95 m tall), whichever is
+        # higher. Floor: the flattened path at land - 0.05, which always has vertices (a narrow strip may have no other land).
+        land = p['land_height']
+        grass = p['grass_density'] >= 0.5
+        # A ray cast post base is interpolated ground: anywhere up to the highest vertex (land + roughness).
+        upper = land + p['roughness'] + max(0.33 if grass else 0.0, 0.95 if p['fence'] else 0.0)
+        return [p['width'] + 6, p['length'], upper], [0, 0, 1 - (land - 0.05) / upper]
+    if generator == 'tide_pools':
+        # The stair (if any) ends where the shelf starts; the sea runs 3 m past the shelf. Top: the stair top, or the shelf
+        # (noise ceiling) plus a boulder (radius <= 0.6, centre 0.2 m up in its own scale, z-scale 0.75); floor: a shelf
+        # vertex can sit 0.25 m down in a basin.
+        n = math.ceil((p['stair_top'] - p['shelf_height']) / 0.18 - SNAP_EPS)
+        y0 = p['stair'] * (0.6 + n * 0.3)
+        props = 0.6 * (0.2 + 0.75) if p['boulders'] else 0.02 if p['starfish'] or p['shells'] else 0.0   # starfish, shells <= 2 cm
+        rock = p['shelf_height'] + p['roughness'] + props
+        upper = max(p['stair_top'] if p['stair'] else 0.0, rock)
+        lower = max(p['stair_top'] if p['stair'] else 0.0, p['shelf_height'] - 0.25)
+        return [p['width'] + 6, y0 + p['length'] + 3, upper], [0, 0, 1 - lower / upper]
     raise EvidenceError(f'unknown generator {generator!r}')
 
 
@@ -189,8 +209,8 @@ def evaluate_gates(generator, spec, p, m):
     for level, level_parts in levels:
         for part in level_parts:
             rule, name = spec['parts'][str(part['id'])], f'{level} {part["name"]}'
-            for key in ('nonmanifold_edges', 'inconsistent_edges', 'degenerate_faces') + (() if rule.get('open') else ('boundary_edges',)):
-                if part[key]: manifold.append(f'{name}: {part[key]} {key}')
+            for key in ('nonmanifold_edges', 'inconsistent_edges', 'degenerate_faces', 'loose_verts') + (() if rule.get('open') else ('boundary_edges',)):
+                if part.get(key, 0): manifold.append(f'{name}: {part[key]} {key}')
             if not part['uv0_present'] or not part['uv0_finite']: uv.append(f'{name}: UVMap missing or non-finite')
             if not part['uv1_present'] or not part['uv1_in_unit']: uv.append(f'{name}: UVLightmap missing or outside 0..1')
             else:

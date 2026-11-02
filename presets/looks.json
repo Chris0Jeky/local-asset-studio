@@ -869,6 +869,38 @@
           "evidence": "docs/MOSS-IMAGE.md · 19 Oct 2026 MOSS-Image lab (PR #1575)"
         }
       ]
+    },
+    {
+      "id": "look-kromoss-dmd2-mikko",
+      "kind": "look",
+      "name": "Crisp cel anime, quick (Kromoss)",
+      "body": {
+        "preset_id": "kromoss-t2i",
+        "template": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. {scene}. Tasteful non-explicit fashion illustration.",
+        "negative": "",
+        "controls": {
+          "width": 1024,
+          "height": 1536,
+          "seed": 2026102601,
+          "steps": 8,
+          "cfg": 1,
+          "sampler": "euler",
+          "scheduler": "simple",
+          "lora_name": "kromoss-u11000-8steps-dmd2.safetensors",
+          "lora": 1.0,
+          "lora2_name": "moss-mikkoani-v1.safetensors",
+          "lora2": 0.9
+        },
+        "scene_example": "An original 32-year-old woman with a visibly mature adult face and curvy adult proportions, a black wavy bob and emerald eyes. Waist-up editorial portrait, direct eye contact, playful wink and a warm sly smile, shoulders turned slightly, one gloved hand resting on her waist and the other hand holding the stem of a single red rose below her shoulder. She wears a fitted crimson off-the-shoulder evening dress with a structured opaque bodice and long black opera gloves, gold earrings. A strong fitted silhouette, polished elegant fashion, softly lit art-deco lounge in the background",
+        "source_prompt": "2D anime illustration, clean lineart, expressive eyes, deliberate cel shading. An original 32-year-old woman with a visibly mature adult face and curvy adult proportions, a black wavy bob and emerald eyes. Waist-up editorial portrait, direct eye contact, playful wink and a warm sly smile, shoulders turned slightly, one gloved hand resting on her waist and the other hand holding the stem of a single red rose below her shoulder. She wears a fitted crimson off-the-shoulder evening dress with a structured opaque bodice and long black opera gloves, gold earrings. A strong fitted silhouette, polished elegant fashion, softly lit art-deco lounge in the background. Tasteful non-explicit fashion illustration.",
+        "notes": "The recipe of the owner's Versus contest 2 winners (Kromoss vs MOSS, 2 Nov 2026; owner chose 'Yes, make the look', recorded in PR #1926), read from the PNG prompt metadata of kromoss-t2i_00004_ and _00008_ and matched to Studio jobs 9558d967 and 6162370c (prompts 358820bb, 87b5de6b; 12.3 s each): Kromoss u11000 int8, DMD2 8-step adapter at 1.0, mikkoani style adapter at 0.9, 8 steps, CFG 1, euler / simple, 1024x1536, empty negative. With the scene example the template reproduces the _00008_ prompt exactly. Only two adult fashion briefs were run; the 'fashion illustration' tail may pull other scenes toward fashion. Runs only on the isolated MOSS-Image backend (port 8198): Make offers the switch as an explicit press and never switches on its own. Mikko's civitai flags allow no selling of pictures (models/library.json). Owner contest result and agent defect checks, not art acceptance."
+      },
+      "lineage": [
+        {
+          "role": "evidence",
+          "evidence": "docs/MOSS-IMAGE.md · 1 Nov 2026 Kromoss study; Versus contest 2, owner decision in PR #1926"
+        }
+      ]
     }
   ]
 }

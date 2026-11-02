@@ -19,7 +19,15 @@ const MOUTHS := ["aa", "ih", "ou", "ee", "oh"]
 # Rhubarb mouth shapes -> VRM visemes (A closed lips, X rest): optional res://voice.wav + res://cues.json (rhubarb -f json)
 const VISEMES := {"A": {}, "B": {"ih": .35}, "C": {"ee": .6, "aa": .2}, "D": {"aa": 1.0}, "E": {"oh": .75},
 		"F": {"ou": .85}, "G": {"ih": .3}, "H": {"aa": .45}, "X": {}}
-const VOICE_START := 0.5
+# Resource paths and options, overridable before the node enters the tree, so several actors can share one scene
+# (each loads its own model, springs and voice; only a standalone actor makes the camera, lights and environment).
+var model_path := "res://model.glb"
+var springs_path := "res://springs.json"
+var sdf_path := "res://face_sdf.png"
+var voice_path := "res://voice.wav"
+var cues_path := "res://cues.json"
+var voice_start := 0.5
+var standalone := true
 var cues := []
 var action := "idle"                                                         # -- --action=idle|wave|walk
 var mouth := {"aa": 0.0, "ih": 0.0, "ou": 0.0, "ee": 0.0, "oh": 0.0}
@@ -28,21 +36,23 @@ var t := 0.0
 
 func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
-		if a.begins_with("--action="): action = a.trim_prefix("--action=")
-	root = load("res://model.glb").instantiate()
+		if standalone and a.begins_with("--action="): action = a.trim_prefix("--action=")   # a host sets each actor's own
+	root = load(model_path).instantiate()
 	add_child(root)
 	skel = _find(root, func(n): return n is Skeleton3D)
 	for mi in _all(root, func(n): return n is MeshInstance3D):
 		_restyle(mi)
 	_springs()
 	head_rest = skel.get_bone_global_rest(skel.find_bone("J_Bip_C_Head")).basis
-	if FileAccess.file_exists("res://cues.json") and not ResourceLoader.exists("res://voice.wav"):
+	if FileAccess.file_exists(cues_path) and not ResourceLoader.exists(voice_path):
 		push_warning("TOON cues.json found but voice.wav is not imported: run godot --headless --import first")
 		print("TOON lip sync off: voice.wav not imported")
-	if FileAccess.file_exists("res://cues.json") and ResourceLoader.exists("res://voice.wav"):
-		cues = JSON.parse_string(FileAccess.get_file_as_string("res://cues.json")).mouthCues
-		var voice := AudioStreamPlayer.new(); voice.stream = load("res://voice.wav"); add_child(voice)
-		get_tree().create_timer(VOICE_START).timeout.connect(voice.play)
+	if FileAccess.file_exists(cues_path) and ResourceLoader.exists(voice_path):
+		cues = JSON.parse_string(FileAccess.get_file_as_string(cues_path)).mouthCues
+		var voice := AudioStreamPlayer.new(); voice.stream = load(voice_path); add_child(voice)
+		get_tree().create_timer(voice_start).timeout.connect(voice.play)
+	if not standalone:
+		print("TOON ready: ", model_path); return
 	var cam := Camera3D.new(); add_child(cam)
 	if action == "walk":                                                    # side-on, so the stride reads
 		cam.position = Vector3(2.7, 1.0, 1.2); cam.look_at(Vector3(0, 0.85, 0)); cam.fov = 35
@@ -72,9 +82,10 @@ func _restyle(mi: MeshInstance3D) -> void:
 		else:
 			m.shader = load("res://toon.gdshader")
 			m.set_shader_parameter("shade_tint", SHADE[kind])
+			if src is BaseMaterial3D: m.set_shader_parameter("albedo_color", src.albedo_color)
 			if kind == "hair": m.set_shader_parameter("spec_amount", .45)
 			if kind == "face":
-				m.set_shader_parameter("face_sdf", true); m.set_shader_parameter("sdf_tex", load("res://face_sdf.png")); face_mats.append(m)
+				m.set_shader_parameter("face_sdf", true); m.set_shader_parameter("sdf_tex", load(sdf_path)); face_mats.append(m)
 			var o := ShaderMaterial.new(); o.shader = load("res://outline.gdshader"); o.set_shader_parameter("albedo_tex", tex)
 			o.set_shader_parameter("width", .0010 if kind == "face" else .0018)
 			m.next_pass = o
@@ -91,7 +102,7 @@ func _role(name: String) -> String:
 
 
 func _springs() -> void:
-	var data = JSON.parse_string(FileAccess.get_file_as_string("res://springs.json"))
+	var data = JSON.parse_string(FileAccess.get_file_as_string(springs_path))
 	constraints = _dependency_order(data.get("constraints", []))
 	expressions = data.get("expressions", {})
 	for p in expressions:                                                     # resolve each bind to [mesh, blend shape] once
@@ -234,10 +245,15 @@ func _process(delta: float) -> void:
 	if not cues.is_empty():
 		var shape := "X"
 		for c in cues:
-			if t - VOICE_START >= c.start and t - VOICE_START < c.end: shape = c.value
+			if t - voice_start >= c.start and t - voice_start < c.end: shape = c.value
 		for v in mouth:                                                     # ease toward the cue's shape, ~60 ms
 			mouth[v] = lerpf(mouth[v], VISEMES[shape].get(v, 0.0), clampf(delta * 16.0, 0.0, 1.0)); _expr(v, mouth[v])
 	_apply_expressions()
+	_face_dirs()
+
+
+func _face_dirs() -> void:
+	# The SDF face shadow reads the head's current facing: call again after any later change to the head pose.
 	var hb := (skel.global_transform.basis * skel.get_bone_global_pose(skel.find_bone("J_Bip_C_Head")).basis * head_rest.inverse()).orthonormalized()
 	for m in face_mats:
 		m.set_shader_parameter("face_forward", hb * Vector3(0, 0, 1)); m.set_shader_parameter("face_left", hb * Vector3(1, 0, 0))

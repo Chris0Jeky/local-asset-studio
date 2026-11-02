@@ -96,6 +96,37 @@ class ParamsAndConstraints(unittest.TestCase):
         self.assertAlmostEqual(factory.expected_bounds("pier", lamps)[0][2], 1.5 + 2.72)     # lamp roof top
         self.assertAlmostEqual(factory.expected_bounds("pier", bare)[0][2], 1.5)             # bare deck surface
 
+    def test_coastal_bounds_band_between_land_and_tallest_feature(self):
+        spec = SCHEMA["generators"]["coastal_path"]
+        fenced, _ = factory.resolve_params(spec, {"land_height": 2.0, "roughness": 0.2, "fence": 1, "grass_density": 3.0})
+        bare, _ = factory.resolve_params(spec, {"land_height": 2.0, "roughness": 0.2, "fence": 0, "grass_density": 0.0})
+        size, slack = factory.expected_bounds("coastal_path", fenced)
+        self.assertAlmostEqual(size[2], 3.15)                        # post on the highest ground (2.2) + 0.95 beats tufts
+        self.assertAlmostEqual(size[2] * (1 - slack[2]), 1.95)       # floor: the flattened path
+        size, slack = factory.expected_bounds("coastal_path", bare)
+        self.assertAlmostEqual(size[2], 2.2)                         # noise ceiling only
+        self.assertAlmostEqual(size[2] * (1 - slack[2]), 1.95)       # a narrow strip may be all path blend
+
+    def test_tide_pool_bounds_follow_the_stair_and_the_shelf(self):
+        spec = SCHEMA["generators"]["tide_pools"]
+        stair, _ = factory.resolve_params(spec, {"shelf_height": 0.5, "stair_top": 1.95, "length": 8.0, "width": 6.0})
+        size, slack = factory.expected_bounds("tide_pools", stair)
+        self.assertEqual(size[:2], [12.0, 0.6 + 9 * 0.3 + 8.0 + 3.0])           # 9 steps of <= 0.18 m, then shelf, then 3 m of sea
+        self.assertAlmostEqual(size[2], 1.95)
+        bare, _ = factory.resolve_params(spec, {"stair": 0, "shelf_height": 0.5, "roughness": 0.1, "boulders": 0})
+        size, slack = factory.expected_bounds("tide_pools", bare)
+        self.assertAlmostEqual(size[1], bare["length"] + 3.0)                    # no stair: the shelf starts at y=0
+        self.assertAlmostEqual(size[2], 0.62)                                    # starfish/shells add <= 2 cm
+        self.assertAlmostEqual(size[2] * (1 - slack[2]), 0.25)                  # a basin floor
+
+    def test_constraints_on_disabled_features_do_not_apply(self):
+        spec = SCHEMA["generators"]["tide_pools"]
+        flat, _ = factory.resolve_params(spec, {"stair": 0, "stair_top": 0.8, "shelf_height": 0.8, "water_level": 0.3,
+                                                "pools": 0, "width": 3.0, "pool_radius": 1.2})
+        self.assertEqual(factory.check_constraints(spec, flat), [])
+        on, _ = factory.resolve_params(spec, {**flat, "stair": 1, "pools": 2})
+        self.assertEqual(len(factory.check_constraints(spec, on)), 2)            # stair descent + basin across the width
+
     def test_lod_details_halve_with_floor(self):
         self.assertEqual(factory.lod_details(16), [16, 8, 4])
         self.assertEqual(factory.lod_details(6), [6, 4, 4])
@@ -126,6 +157,7 @@ class GateEvaluation(unittest.TestCase):
             ("parts_present", lambda m: m["parts"].append({**m["parts"][0], "id": 1, "name": "lantern_body"})),
             ("manifold", lambda m: m["lods"][1]["parts"][1].update(nonmanifold_edges=2)),      # lower LODs are gated too
             ("uv", lambda m: m["parts"][0].update(uv1_degenerate=3)),
+            ("manifold", lambda m: m["parts"][1].update(loose_verts=4)),                         # bare points from a failed node
             ("naming", lambda m: m.update(collision_boxes=1)),
             ("lod_chain", lambda m: m["lods"][1].update(bbox_min=[98.8, 98.8, 99.0], bbox_max=[99.2, 99.2, 99.6])),   # LOD moved
         ]

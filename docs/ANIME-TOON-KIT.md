@@ -53,7 +53,8 @@ Per light, in `ml`: lit = smoothstep around 0.18 of Factor x Shadow Raycast; rim
 replaces N.L with the SDF test: the light's direction in object space gives its angle from the face's forward axis,
 and a texel is lit while that angle (as a fraction of pi) is below its threshold in the SDF map, choosing the R or G
 channel by the side the light is on. An emission term carries base x shade colour, so a fully lit texel shows exactly
-its base colour.
+its base colour. The material's glTF base colour factor multiplies the base texture in Blender and Godot alike:
+VRoid Studio stores outfit colour tints there rather than in the texture.
 
 Verdict from an 8-angle key-light sweep on the same model: cloth and hair look alike in both styles. The face is where
 `ml` wins: a clean half-face split at side light and no blotches at front light, where classic N.L leaves patches by
@@ -93,8 +94,54 @@ otherwise), and it becomes a talking portrait. Rhubarb's mouth shapes map to the
 writes the audio beside the frames (`f.wav`), so `ffmpeg -i f%08d.png -i f.wav` muxes the clip. Measured on a 7.65 s
 Kokoro line: Rhubarb 3.9 s for 45 cues.
 
+Several characters in one scene: each is a `toon_proof.gd` (or `actor.gd`) node whose `model_path`, `springs_path`,
+`sdf_path`, `voice_path`, `cues_path` and `voice_start` are set before it enters the tree, with `standalone = false` so
+it skips the camera, lights and environment that the host scene owns. A dialogue gives each actor one voice track (its
+lines at their timeline offsets, silence elsewhere) and that track's Rhubarb cues; Movie Maker mixes the players into
+`f.wav`. `actor.gd` adds a head-yaw schedule (`look`: `[[time_s, yaw_deg], ...]`) so speaker and listener can turn to
+each other. Set `action = "listen"` on an actor to skip the idle's one quick turn. Checked 2 Nov headless on a
+two-character, four-line exchange (Suzu and Kiri, 21.2 s): both VRMs load with their own springs (34 and 23 chains) and cues.
+
 The toon shader writes `EMISSION = albedo x shade` and `DIFFUSE_LIGHT += light x lit x (1 - shade + rim)`. Its ambient
 source is disabled, so the result matches Blender's. `LIGHT_COLOR` already includes PI and is divided back out.
+
+## Grounded locomotion (mocap gait + foot IK)
+
+`python scripts/bvh_joints.py IN.bvh OUT.json` turns a BVH clip into per-frame joint world positions. Output is in metres,
+Y up, the figure's left on +X, and a travelling clip's path straightened onto +Z so loops don't drift. BVH files store
+joint position channels either as the whole translation or relative to OFFSET; `--positions=auto` guesses from each
+channel's median and prints its decision, and `--positions=absolute|relative` forces it.
+`tools/godot-toon/mocap_gait.gd` plays such clips on a VRoid-style skeleton, for a host built on `toon_proof.gd` that
+moves itself (a CharacterBody3D, a path follower):
+
+```gdscript
+var gait = preload("res://mocap_gait.gd").new()
+func _ready() -> void: super(); gait.setup(self, [body])   # exclude the host's own capsule from the foot rays
+func _process(delta: float) -> void: super(delta); gait.drive(self, delta, Vector3(body.velocity.x, 0, body.velocity.z))
+```
+
+It expects `res://mocap/walk.json` and `run.json`. Mocap data is not in Git; record its licence where you keep it.
+
+- **Retarget.** At runtime it matches bone directions: each mapped bone swings from its rest direction onto the mocap
+  bone's direction, and the hips and chest take full frames from two vectors. VRM rest rotations need not be world-aligned.
+- **Gait.** The cycle advances by distance travelled divided by the clip's stride, so the feet match whatever speed the
+  host moves at. Idle applies below 0.05 m/s; the run blends in from 1.7 to 2.3 m/s.
+- **Feet.** `TwoBoneIK3D` targets come from downward rays onto the level's colliders, and a foot stays locked where it
+  planted while its ankle is within 1.5 cm of rest height. Measure foot sliding after the modifiers have run (the
+  skeleton's `skeleton_updated` signal); a pose read in `_process` is from before the IK.
+- **Re-stepping.** When the body turns or drifts so far that the pose wants a planted foot more than 18 cm away, that
+  foot lifts 6 cm, arcs to where the pose wants it over 0.25 s and re-locks, one foot at a time. Turning in place and
+  heading changes mid-walk become small steps instead of a twisted leg. Set `gait.restep = false` to turn it off.
+
+Measured on 2 Nov 2026 on a VRoid model with Bandai Namco Research Motiondataset 1 clips (CC BY-NC 4.0). The test moved
+the body like a game controller: idle, a 1.1 m/s walk, a 2.6 m/s run, then a stop. Mean stance-phase foot slide fell from
+2.26 m/s with the old in-place procedural walk to 0.017 m/s with the gait (p95 from 4.21 to 0.003; the mean carries a few rare spikes).
+On a turning route (curves at up to 40 degrees per second, then a 180-degree turn in place), re-stepping cut the largest
+distance between a planted foot and where the pose wanted it from 0.335 m to 0.186 m; mean stance slide went from 0.068
+to 0.072 m/s. Those are re-measurements made after two machine restarts, headless at a fixed 30 fps. On the straight route
+the same test now gives 0.081 m/s for both the re-stepping version and the earlier one, so the 0.017 m/s above did not
+reproduce; the cause was not found. The retarget is
+swing-only: limbs get no twist, and the hands and head keep the idle pose.
 
 ## Limits
 

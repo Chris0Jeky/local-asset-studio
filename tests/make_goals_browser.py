@@ -151,11 +151,11 @@ def run(shots):
         def pick_look(look_id):
             if page.locator('[data-make-change]').count(): page.locator('[data-make-change]').click()
             page.locator('[data-make-look="%s"]' % look_id).click(); page.wait_for_selector('#makeScene')
-        CHARACTERS = ['look-oneobsession-anima-v20-showcase', 'look-pearly-anima-mix-v10-showcase', 'look-moss-detailed-anime', 'look-anima-pearly-petiflow', 'look-anifox-ringeko', 'look-wai-fantasy-portrait', 'look-anima-fantasy-portrait', 'look-animagine-fantasy-portrait']
+        CHARACTERS = ['look-oneobsession-anima-v20-showcase', 'look-pearly-anima-mix-v10-showcase', 'look-kromoss-dmd2-mikko', 'look-moss-detailed-anime', 'look-anima-pearly-petiflow', 'look-anifox-ringeko', 'look-wai-fantasy-portrait', 'look-anima-fantasy-portrait', 'look-animagine-fantasy-portrait']
         assert looks_of('character') == CHARACTERS, 'proven first, rejects after them, no oil-paint look under Anime character'
         shot('looks-character', '.make-looks')
         badged = page.eval_on_selector_all('.make-look', 'n=>n.filter(e=>e.querySelector(".make-tested")).map(e=>e.querySelector("[data-make-look]").dataset.makeLook)')
-        assert badged == ['look-oneobsession-anima-v20-showcase', 'look-pearly-anima-mix-v10-showcase', 'look-moss-detailed-anime', 'look-anima-pearly-petiflow'], badged  # kept in most test pictures (rounds 1-2); AniFox kept 0 of 2 new seeds
+        assert badged == ['look-oneobsession-anima-v20-showcase', 'look-pearly-anima-mix-v10-showcase', 'look-kromoss-dmd2-mikko', 'look-moss-detailed-anime', 'look-anima-pearly-petiflow'], badged  # kept in most test pictures (rounds 1-2); AniFox kept 0 of 2 new seeds
         assert page.locator('.make-tested').first.inner_text() == 'Tested well' and '12 of 12' in page.locator('.make-tested').first.get_attribute('title')
         # A look picked low in the gallery leaves "Describe your picture" in view below the fixed bar, and every goal chip
         # wraps on screen (audit N8).
@@ -547,7 +547,7 @@ def run(shots):
         page.locator('[data-make-goal="character"]').click(); page.wait_for_selector('[data-make-look]')
         if page.locator('[data-make-change]').count(): page.locator('[data-make-change]').click()
         page.locator('[data-make-compare]').first.click()
-        ids = [i for i in page.eval_on_selector_all('[data-make-look]', 'n=>n.map(e=>e.dataset.makeLook)') if i != 'look-moss-detailed-anime']  # another environment
+        ids = [i for i in page.eval_on_selector_all('[data-make-look]', 'n=>n.map(e=>e.dataset.makeLook)') if i not in ('look-moss-detailed-anime', 'look-kromoss-dmd2-mikko')]  # another environment
         for look in ids[:4]: page.locator('[data-make-look="%s"]' % look).click()
         assert page.locator('[data-make-look][aria-checked=true]').count() == 3 and 'at most' in page.locator('#makeStatus').inner_text()
         # From the second look on, the scene box comes into view with the keyboard in it (audit v3 N4); unchoosing keeps focus on the card.
@@ -790,6 +790,8 @@ def run(shots):
         moss = page.locator('.make-look:has([data-make-look="look-moss-detailed-anime"])')
         assert 'Runs in MOSS-Image · isolated, not the running Main library.' in moss.inner_text() and moss.locator('[data-make-switch="moss"]').inner_text() == 'Switch to MOSS-Image · isolated', moss.inner_text()
         assert 'Stops Main library. About a minute. Nothing is generated.' in moss.inner_text() and 'MOSS-Image model' in moss.inner_text() and 'Medium · ~75 s' in moss.inner_text()
+        kromoss = page.locator('.make-look:has([data-make-look="look-kromoss-dmd2-mikko"])')  # owner's Versus contest 2 pick (PR #1926)
+        assert 'Runs in MOSS-Image · isolated' in kromoss.inner_text() and kromoss.locator('[data-make-switch="moss"]').count() == 1 and 'Fast · ~12 s' in kromoss.inner_text(), kromoss.inner_text()
         assert not page.locator('.make-look:has([data-make-look="look-pearly-anima-mix-v10-showcase"]) [data-make-switch]').count()
         page.locator('[data-make-look="look-moss-detailed-anime"]').click(); page.wait_for_selector('#makeScene'); page.locator('#makeScene').fill('a knight in plate armour')
         assert page.locator('#makeGenerate').is_disabled() and page.locator('#makeWhy [data-make-switch="moss"]').count() == 1
