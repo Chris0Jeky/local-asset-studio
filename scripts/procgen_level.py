@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 from pathlib import Path
 import shutil
 import sys
@@ -21,6 +20,8 @@ import procgen_factory as factory
 LEVEL_SCRIPT = Path(__file__).with_name('procgen_level.gd')
 PROJECT = ('config_version=5\n\n[application]\nconfig/name="Procgen level"\nrun/main_scene="res://level.tscn"\n\n'
            '[rendering]\nrenderer/rendering_method="gl_compatibility"\n')
+WINDOWS_RESERVED = {'con', 'prn', 'aux', 'nul', *(f'com{i}' for i in range(1, 10)), *(f'lpt{i}' for i in range(1, 10))}
+MAX_COORD = 10_000.0      # metres; also keeps placements well inside Godot's single-precision Vector3
 SCENE = '[gd_scene load_steps=2 format=3]\n\n[ext_resource type="Script" path="res://procgen_level.gd" id="1"]\n\n[node name="Level" type="Node3D"]\nscript = ExtResource("1")\n'
 
 
@@ -29,20 +30,26 @@ def trimesh_parts(spec):
     return sorted(p['name'] for p in spec['parts'].values() if p['group'] == 'ground' and not p.get('collision', True))
 
 
+def _coord(v):
+    # Compare before any float conversion: a huge JSON integer would overflow math.isfinite, and NaN fails the bound.
+    return type(v) in (int, float) and -MAX_COORD <= v <= MAX_COORD
+
+
 def check_level(level, schema):
     errors, names = [], set()
     pieces = level.get('pieces') if isinstance(level, dict) else None
     if not isinstance(pieces, list) or not pieces: return ['level needs a non-empty "pieces" list']
     for i, piece in enumerate(pieces):
         name = piece.get('name') if isinstance(piece, dict) else None
-        if not isinstance(name, str) or not factory.NAME_RE.match(name): errors.append(f'piece {i}: name must match {factory.NAME_RE.pattern}'); continue
+        if not isinstance(name, str) or not factory.NAME_RE.fullmatch(name) or name in WINDOWS_RESERVED:   # names become file names
+            errors.append(f'piece {i}: name must fully match {factory.NAME_RE.pattern} and not be a Windows device name'); continue
         if name in names: errors.append(f'piece {name}: duplicate name')
         names.add(name)
         if piece.get('generator') not in schema['generators']: errors.append(f'piece {name}: unknown generator {piece.get("generator")!r}')
         pos, yaw = piece.get('position', [0, 0, 0]), piece.get('yaw_deg', 0.0)
-        if not (isinstance(pos, list) and len(pos) == 3 and all(type(v) in (int, float) and math.isfinite(v) for v in pos)):
-            errors.append(f'piece {name}: position must be three finite numbers')
-        if type(yaw) not in (int, float) or not math.isfinite(yaw): errors.append(f'piece {name}: yaw_deg must be a finite number')
+        if not (isinstance(pos, list) and len(pos) == 3 and all(_coord(v) for v in pos)):
+            errors.append(f'piece {name}: position must be three numbers within +-{MAX_COORD:g} m')
+        if not _coord(yaw): errors.append(f'piece {name}: yaw_deg must be a number within +-{MAX_COORD:g}')
     return errors
 
 

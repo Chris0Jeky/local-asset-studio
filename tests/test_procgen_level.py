@@ -28,6 +28,10 @@ class LevelChecks(unittest.TestCase):
         self.assertTrue(any("duplicate name" in e for e in errors))
         self.assertTrue(any("unknown generator" in e for e in errors))
         self.assertEqual(level.check_level({"pieces": []}, SCHEMA), ['level needs a non-empty "pieces" list'])
+        for name in ("con", "coast\n", "lpt1"):                                         # file-name hazards on Windows
+            self.assertEqual(len(level.check_level({"pieces": [{"name": name, "generator": "pier"}]}, SCHEMA)), 1, name)
+        for pos in ([10 ** 400, 0, 0], [1e40, 0, 0], [float("nan"), 0, 0]):              # no overflow crash, no unusable placement
+            self.assertEqual(len(level.check_level({"pieces": [{"name": "p", "generator": "pier", "position": pos}]}, SCHEMA)), 1, pos)
         good = {"pieces": [{"name": "coast", "generator": "coastal_path", "position": [0, 0, 0], "yaw_deg": 0}]}
         self.assertEqual(level.check_level(good, SCHEMA), [])
 
