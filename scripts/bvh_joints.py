@@ -5,6 +5,7 @@ Positions come out in metres (scale default 0.01 for centimetre BVH), Y up, the 
 its left side (UpperLeg_L - UpperLeg_R) points to +X and it faces +Z (Godot glTF convention, matching a VRM import).
 Rotation channels are applied in the order they are listed (intrinsic), e.g. "Zrotation Xrotation Yrotation" -> Rz Rx Ry."""
 import json, math, sys
+from pathlib import Path
 
 
 def mat_mul(a, b): return [[sum(a[i][k] * b[k][j] for k in range(4)) for j in range(4)] for i in range(4)]
@@ -18,7 +19,7 @@ def rot(axis, deg):
 
 
 def parse(path):
-    tok = open(path, encoding="utf-8").read().split(); i = 0; joints = []; stack = []
+    tok = Path(path).read_text(encoding="utf-8").split(); i = 0; joints = []; stack = []
     while tok[i] != "MOTION":
         t = tok[i]
         if t in ("ROOT", "JOINT"):
@@ -79,7 +80,7 @@ def main(src, out, scale=0.01, positions="auto"):
     if math.hypot(dx, dz) > 0.3:                                              # travelling clip: put its path on +Z, no drift
         t = math.atan2(dx, dz); c2, s2 = math.cos(t), math.sin(t)
         frames = [{n: [round(c2 * p[0] - s2 * p[2], 5), p[1], round(s2 * p[0] + c2 * p[2], 5)] for n, p in f.items()} for f in frames]
-    json.dump({"source": src.replace("\\", "/").split("/")[-1], "fps": round(1 / dt, 3), "frames": frames}, open(out, "w"))
+    Path(out).write_text(json.dumps({"source": src.replace("\\", "/").split("/")[-1], "fps": round(1 / dt, 3), "frames": frames}), encoding="utf-8")
     xs = [f["Hips"] for f in frames]
     print(f"{len(frames)} frames @ {1 / dt:.1f} fps, hips travel {[round(xs[-1][i] - xs[0][i], 3) for i in range(3)]} m, hips height {xs[0][1]:.3f} m")
 
