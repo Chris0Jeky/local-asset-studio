@@ -42,4 +42,24 @@ Files: add `research/agentic-creation/critic-observations/` evidence and README;
 - [x] Regenerate the owned 24-case study using exact implementation hashes.
 - [x] Commit compact raw observations, outcomes and deterministic verification instructions; do not commit private/media archives.
 - [x] Record executed versus unexecuted checks, review limitations and the remaining native acceptance.
-- [ ] Publish all changed files on a focused branch/PR and verify remote blob identities and checks.
+- [x] Publish all changed files on a focused branch/PR, verify remote blob identities and inspect check status (successful CI remains a separate merge gate).
+
+## Publication receipt
+
+Published in [PR #1981](https://github.com/Chris0Jeky/local-asset-studio/pull/1981),
+branch `codex/critic-observation-replay`. Implementation commit:
+`41eb25edbfa6ab8f3dab74c023f98c688d159cef`; tree:
+`8e6dfb1c93233193263d24a74548692223b44427`.
+
+All 17 published file identities matched the tested local manifest. Recreating the
+remote tree from those blob identities returned the same tree. The final local
+rerun passed 83 focused tests (69 + 13 + 1), zero skips, with ResourceWarnings as
+errors; local-snapshot validation and whitespace checks passed. The limitations in
+`docs/verification/critic-observation-2026-11-02.json` still apply.
+
+At the publication check, the implementation commit's Check studio, Private
+creation boundaries and Reversible asset Archive workflows were in progress.
+This is not a green full-tree result. This documentation-only receipt does not
+promote a runtime, threshold, artistic baseline or merge. Exact-head hosted checks
+and independent review remain required; consult the live PR rather than treating
+this dated observation as its current status.
