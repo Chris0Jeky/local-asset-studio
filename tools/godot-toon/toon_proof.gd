@@ -1,8 +1,8 @@
 extends Node3D
 ## VRM toon runtime proof (see docs/ANIME-TOON-KIT.md). Copy a VRM 1.0 file in as res://model.glb, its spring data as
-## res://springs.json (`python scripts/vrm_toon.py springs`, which also carries VRM node constraints) and its SDF face map as res://face_sdf.png, then run the
+## res://springs.json (`python scripts/vrm_toon.py springs`, which also carries VRM node constraints and expressions) and its SDF face map as res://face_sdf.png, then run the
 ## project. Toon light() shader, hull outlines, SpringBoneSimulator3D from the VRM's own springs, a procedural idle with
-## one quick body turn so skirt and hair visibly swing. Material roles follow `vrm_toon.material_role`.
+## one quick body turn so skirt and hair visibly swing, plus a blink and a smile from the VRM's expressions. Material roles follow `vrm_toon.material_role`.
 
 const SHADE := {"skin": Vector3(.93, .76, .74), "face": Vector3(.93, .76, .74), "hair": Vector3(.50, .64, .74), "cloth": Vector3(.62, .62, .78)}
 
@@ -11,10 +11,24 @@ var root: Node3D
 var face_mats: Array[ShaderMaterial] = []
 var head_rest: Basis
 var constraints := []
+var expressions := {}
+var expr_w := {}                                                             # this frame's requested expression weights
+var expr_targets := []                                                       # every [mesh, blend shape] an expression drives
+const BLINKS := ["blink", "blinkLeft", "blinkRight"]
+const MOUTHS := ["aa", "ih", "ou", "ee", "oh"]
+# Rhubarb mouth shapes -> VRM visemes (A closed lips, X rest): optional res://voice.wav + res://cues.json (rhubarb -f json)
+const VISEMES := {"A": {}, "B": {"ih": .35}, "C": {"ee": .6, "aa": .2}, "D": {"aa": 1.0}, "E": {"oh": .75},
+		"F": {"ou": .85}, "G": {"ih": .3}, "H": {"aa": .45}, "X": {}}
+const VOICE_START := 0.5
+var cues := []
+var action := "idle"                                                         # -- --action=idle|wave|walk
+var mouth := {"aa": 0.0, "ih": 0.0, "ou": 0.0, "ee": 0.0, "oh": 0.0}
 var t := 0.0
 
 
 func _ready() -> void:
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--action="): action = a.trim_prefix("--action=")
 	root = load("res://model.glb").instantiate()
 	add_child(root)
 	skel = _find(root, func(n): return n is Skeleton3D)
@@ -22,8 +36,20 @@ func _ready() -> void:
 		_restyle(mi)
 	_springs()
 	head_rest = skel.get_bone_global_rest(skel.find_bone("J_Bip_C_Head")).basis
+	if FileAccess.file_exists("res://cues.json") and not ResourceLoader.exists("res://voice.wav"):
+		push_warning("TOON cues.json found but voice.wav is not imported: run godot --headless --import first")
+		print("TOON lip sync off: voice.wav not imported")
+	if FileAccess.file_exists("res://cues.json") and ResourceLoader.exists("res://voice.wav"):
+		cues = JSON.parse_string(FileAccess.get_file_as_string("res://cues.json")).mouthCues
+		var voice := AudioStreamPlayer.new(); voice.stream = load("res://voice.wav"); add_child(voice)
+		get_tree().create_timer(VOICE_START).timeout.connect(voice.play)
 	var cam := Camera3D.new(); add_child(cam)
-	cam.position = Vector3(0.9, 1.15, 2.6); cam.look_at(Vector3(0, 0.88, 0)); cam.fov = 35
+	if action == "walk":                                                    # side-on, so the stride reads
+		cam.position = Vector3(2.7, 1.0, 1.2); cam.look_at(Vector3(0, 0.85, 0)); cam.fov = 35
+	elif cues.is_empty():
+		cam.position = Vector3(0.9, 1.15, 2.6); cam.look_at(Vector3(0, 0.88, 0)); cam.fov = 35
+	else:                                                                   # talking portrait
+		cam.position = Vector3(0.32, 1.40, 1.05); cam.look_at(Vector3(0, 1.36, 0)); cam.fov = 28
 	var key := DirectionalLight3D.new(); add_child(key); key.shadow_enabled = true
 	key.rotation_degrees = Vector3(-40, 35, 0); key.light_color = Color(1, .97, .92); key.light_energy = 1.0
 	var rim := DirectionalLight3D.new(); add_child(rim); rim.rotation_degrees = Vector3(-20, 200, 0)
@@ -67,6 +93,17 @@ func _role(name: String) -> String:
 func _springs() -> void:
 	var data = JSON.parse_string(FileAccess.get_file_as_string("res://springs.json"))
 	constraints = _dependency_order(data.get("constraints", []))
+	expressions = data.get("expressions", {})
+	for p in expressions:                                                     # resolve each bind to [mesh, blend shape] once
+		var resolved := []
+		for b in expressions[p].binds:
+			var mi := root.find_child(b.node, true, false) as MeshInstance3D
+			if mi == null: continue
+			var i := mi.find_blend_shape_by_name(b.name) if b.name else int(b.index)
+			if i < 0: continue
+			resolved.append([mi, i, float(b.weight)])
+			if not expr_targets.any(func(x): return x[0] == mi and x[1] == i): expr_targets.append([mi, i])
+		expressions[p]["resolved"] = resolved
 	var sim := SpringBoneSimulator3D.new(); skel.add_child(sim)
 	var cols: Array[SpringBoneCollision3D] = []
 	for c in data.colliders:
@@ -141,26 +178,94 @@ func _apply_constraints() -> void:
 
 func _rot_global(bone: String, axis: Vector3, deg: float) -> void:
 	# Rotate a bone about a skeleton-space axis relative to its rest, written as a local pose rotation.
+	_rot_basis(bone, Basis(axis, deg_to_rad(deg)))
+
+
+func _rot_basis(bone: String, rot: Basis) -> void:
 	var i := skel.find_bone(bone); var p := skel.get_bone_parent(i)
-	var want := Basis(axis, deg_to_rad(deg)) * skel.get_bone_global_rest(i).basis
+	var want := rot * skel.get_bone_global_rest(i).basis
 	skel.set_bone_pose_rotation(i, (skel.get_bone_global_pose(p).basis.inverse() * want).get_rotation_quaternion())
+
+
+func _walk(t: float) -> void:
+	# In-place procedural walk, 1.1 s per cycle: thighs swing 22 deg, knees bend on the passing leg, feet stay level,
+	# arms counter-swing, hips bob and sway. Character faces +Z; a negative angle about +X swings a leg forward.
+	var ph := TAU * t / 1.1
+	for side in [["L", 0.0], ["R", PI]]:
+		var s: float = sin(ph + side[1]); var knee := 38.0 * maxf(0.0, -cos(ph + side[1])) + 4.0
+		var thigh := -22.0 * s
+		_rot_global("J_Bip_%s_UpperLeg" % side[0], Vector3.RIGHT, thigh)
+		_rot_global("J_Bip_%s_LowerLeg" % side[0], Vector3.RIGHT, thigh + knee)
+		_rot_global("J_Bip_%s_Foot" % side[0], Vector3.RIGHT, -4.0 * s)
+		var lower := 68.0 if side[0] == "L" else -68.0
+		_rot_basis("J_Bip_%s_UpperArm" % side[0], Basis(Vector3.RIGHT, deg_to_rad(18.0 * s)) * Basis(Vector3.FORWARD, deg_to_rad(lower)))
+	skel.set_bone_pose_position(skel.find_bone("J_Bip_C_Hips"), skel.get_bone_rest(skel.find_bone("J_Bip_C_Hips")).origin + Vector3(0, 0.015 * cos(2.0 * ph) - 0.01, 0))
+	_rot_global("J_Bip_C_Hips", Vector3.UP, 5.0 * sin(ph))
+	_rot_global("J_Bip_C_Spine", Vector3.UP, -6.0 * sin(ph))
+
+
+func _wave(t: float) -> void:
+	# Right arm up, forearm waving side to side in the frontal plane; left arm relaxed.
+	var up := smoothstep(0.3, 0.9, t)
+	_rot_global("J_Bip_R_UpperArm", Vector3.FORWARD, lerpf(-62.0, 48.0, up))
+	_rot_global("J_Bip_R_LowerArm", Vector3.FORWARD, lerpf(-62.0, 95.0 + 22.0 * sin(t * 9.0) * up, up))
+	_rot_global("J_Bip_R_Hand", Vector3.FORWARD, lerpf(-62.0, 95.0 + 30.0 * sin(t * 9.0 - 0.6) * up, up))
+	_rot_global("J_Bip_L_UpperArm", Vector3.FORWARD, 62.0 + 3.0 * sin(t * 1.3))
 
 
 func _process(delta: float) -> void:
 	t += delta
-	var turn := 28.0 * smoothstep(1.6, 2.1, t) * (1.0 - smoothstep(3.2, 3.7, t))   # one quick turn and back
+	var turn := 28.0 * smoothstep(1.6, 2.1, t) * (1.0 - smoothstep(3.2, 3.7, t)) if cues.is_empty() and action == "idle" else 0.0   # one quick turn and back
 	root.rotation_degrees.y = turn
 	_rot_global("J_Bip_C_Hips", Vector3.UP, 3.0 * sin(t * 1.3))
 	_rot_global("J_Bip_C_Spine", Vector3.UP, 3.0 * sin(t * 1.3))
 	_rot_global("J_Bip_C_Chest", Vector3.RIGHT, 1.5 * sin(t * 2.4))
 	_rot_global("J_Bip_C_Neck", Vector3.UP, 3.0 * sin(t * 1.3))
 	_rot_global("J_Bip_C_Head", Vector3.FORWARD, 4.0 * sin(t * 0.9))
-	_rot_global("J_Bip_L_UpperArm", Vector3.FORWARD, 62.0 + 3.0 * sin(t * 1.3))
-	_rot_global("J_Bip_R_UpperArm", Vector3.FORWARD, -62.0 + 3.0 * sin(t * 1.3))
+	if action == "walk": _walk(t)
+	elif action == "wave": _wave(t)
+	else:
+		_rot_global("J_Bip_L_UpperArm", Vector3.FORWARD, 62.0 + 3.0 * sin(t * 1.3))
+		_rot_global("J_Bip_R_UpperArm", Vector3.FORWARD, -62.0 + 3.0 * sin(t * 1.3))
 	_apply_constraints()
+	var blink := 1.0 - smoothstep(0.0, 0.07, absf(fmod(t, 3.1) - 2.9))      # a 0.14 s blink every 3.1 s
+	var joy := (smoothstep(1.4, 1.9, t) * (1.0 - smoothstep(3.6, 4.2, t)) if action == "idle" else smoothstep(0.6, 1.0, t) if action == "wave" else 0.0) if cues.is_empty() else 0.0
+	_expr("happy", joy); _expr("blink", blink)
+	if not cues.is_empty():
+		var shape := "X"
+		for c in cues:
+			if t - VOICE_START >= c.start and t - VOICE_START < c.end: shape = c.value
+		for v in mouth:                                                     # ease toward the cue's shape, ~60 ms
+			mouth[v] = lerpf(mouth[v], VISEMES[shape].get(v, 0.0), clampf(delta * 16.0, 0.0, 1.0)); _expr(v, mouth[v])
+	_apply_expressions()
 	var hb := (skel.global_transform.basis * skel.get_bone_global_pose(skel.find_bone("J_Bip_C_Head")).basis * head_rest.inverse()).orthonormalized()
 	for m in face_mats:
 		m.set_shader_parameter("face_forward", hb * Vector3(0, 0, 1)); m.set_shader_parameter("face_left", hb * Vector3(1, 0, 0))
+
+
+func _expr(preset: String, w: float) -> void:
+	if expressions.has(preset): expr_w[preset] = w
+
+
+func _apply_expressions() -> void:
+	# VRM 1.0 update order: binary expressions snap at 0.5; an active expression's overrideBlink/overrideMouth
+	# ("block" zeroes, "blend" scales by 1 - weight) damps the blink and mouth groups; binds sum per blend shape.
+	var w := {}
+	for p in expr_w: w[p] = (1.0 if expr_w[p] > 0.5 else 0.0) if expressions[p].binary else expr_w[p]
+	var damp := {"blink": 1.0, "mouth": 1.0}
+	for p in w:
+		for g in ["blink", "mouth"]:
+			var mode: String = expressions[p].get("override_" + g, "none")
+			if mode == "block" and w[p] > 0.0: damp[g] = 0.0
+			elif mode == "blend": damp[g] = minf(damp[g], 1.0 - w[p])
+	var acc := {}
+	for p in w:
+		var k: float = damp["blink"] if p in BLINKS else damp["mouth"] if p in MOUTHS else 1.0
+		for r in expressions[p].resolved:
+			var key := "%d:%d" % [r[0].get_instance_id(), r[1]]
+			acc[key] = acc.get(key, 0.0) + w[p] * k * r[2]
+	for tg in expr_targets:
+		tg[0].set_blend_shape_value(tg[1], clampf(acc.get("%d:%d" % [tg[0].get_instance_id(), tg[1]], 0.0), 0.0, 1.0))
 
 
 func _find(n: Node, pred: Callable) -> Node:

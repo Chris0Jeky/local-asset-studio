@@ -3,7 +3,7 @@
 Used by `vrm_toon_bpy.py` (Blender 5.4 toon materials), `vrm_posmap_bpy.py` (per-texel position maps) and the
 Godot proof in `tools/godot-toon/`. See docs/ANIME-TOON-KIT.md.
 
-  python scripts/vrm_toon.py springs MODEL.vrm OUT.json      chains, colliders and node constraints for the Godot proof
+  python scripts/vrm_toon.py springs MODEL.vrm OUT.json      chains, colliders, node constraints and expressions for the Godot proof
   python scripts/vrm_toon.py face-sdf FACE.npz OUT.png       SDF face map from a face position map (needs numpy, Pillow)
 """
 from __future__ import annotations
@@ -134,11 +134,28 @@ def vrm_constraints(doc: dict) -> list:
     return out
 
 
+def vrm_expressions(doc: dict) -> dict:
+    """VRMC_vrm expressions (presets and custom) as morph-target binds by node name, index and target name."""
+    names = [n.get('name', f'node{i}') for i, n in enumerate(doc.get('nodes', []))]
+    meshes = doc.get('meshes', []); ex = doc.get('extensions', {}).get('VRMC_vrm', {}).get('expressions', {}); out = {}
+    for group in ('preset', 'custom'):
+        for key, e in ex.get(group, {}).items():
+            binds = []
+            for b in e.get('morphTargetBinds', []):
+                node = doc['nodes'][b['node']]; targets = meshes[node['mesh']].get('extras', {}).get('targetNames', []) if 'mesh' in node else []
+                binds.append({'node': names[b['node']], 'node_index': b['node'], 'index': b['index'], 'weight': b.get('weight', 1.0),
+                              'name': targets[b['index']] if b['index'] < len(targets) else None})
+            if binds: out[key] = {'binds': binds, 'binary': e.get('isBinary', False),
+                                  'override_blink': e.get('overrideBlink', 'none'), 'override_mouth': e.get('overrideMouth', 'none')}
+    return out
+
+
 def main(argv) -> int:
     if len(argv) == 3 and argv[0] == 'springs':
         doc = read_glb_json(Path(argv[1])); out = vrm_springs(doc); out['constraints'] = vrm_constraints(doc)
+        out['expressions'] = vrm_expressions(doc)
         Path(argv[2]).write_text(json.dumps(out, indent=1), encoding='utf-8')
-        print(len(out['chains']), 'chains,', len(out['colliders']), 'colliders,', len(out['constraints']), 'constraints'); return 0
+        print(len(out['chains']), 'chains,', len(out['colliders']), 'colliders,', len(out['constraints']), 'constraints,', len(out['expressions']), 'expressions'); return 0
     if len(argv) == 3 and argv[0] == 'face-sdf':
         print(json.dumps(face_sdf_image(Path(argv[1]), Path(argv[2])))); return 0
     print(__doc__); return 2
