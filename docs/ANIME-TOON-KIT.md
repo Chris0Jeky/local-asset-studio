@@ -80,6 +80,12 @@ weight. Ordering looks only at sources, not at constrained ancestors (#1928). `v
 writes them into `springs.json`, together with the VRM's expressions (morph-target binds by node and target name);
 the idle plays a blink every 3.1 s and the `happy` expression through the turn.
 
+Lip sync: put a `voice.wav` and its Rhubarb Lip Sync cues (`rhubarb -f json -o cues.json --dialogFile line.txt
+voice.wav`) beside the model and the proof becomes a talking portrait. Rhubarb's mouth shapes map to the VRM visemes
+(B -> ih, C -> ee, D -> aa, E -> oh, F -> ou, G/H -> light ih/aa, A and X closed), eased over about 60 ms. Movie Maker
+writes the audio beside the frames (`f.wav`), so `ffmpeg -i f%08d.png -i f.wav` muxes the clip. Measured on a 7.65 s
+Kokoro line: Rhubarb 3.9 s for 45 cues.
+
 The toon shader writes `EMISSION = albedo x shade` and `DIFFUSE_LIGHT += light x lit x (1 - shade + rim)`. Its ambient
 source is disabled, so the result matches Blender's. `LIGHT_COLOR` already includes PI and is divided back out.
 

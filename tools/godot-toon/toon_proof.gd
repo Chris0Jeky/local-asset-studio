@@ -12,6 +12,12 @@ var face_mats: Array[ShaderMaterial] = []
 var head_rest: Basis
 var constraints := []
 var expressions := {}
+# Rhubarb mouth shapes -> VRM visemes (A closed lips, X rest): optional res://voice.wav + res://cues.json (rhubarb -f json)
+const VISEMES := {"A": {}, "B": {"ih": .35}, "C": {"ee": .6, "aa": .2}, "D": {"aa": 1.0}, "E": {"oh": .75},
+		"F": {"ou": .85}, "G": {"ih": .3}, "H": {"aa": .45}, "X": {}}
+const VOICE_START := 0.5
+var cues := []
+var mouth := {"aa": 0.0, "ih": 0.0, "ou": 0.0, "ee": 0.0, "oh": 0.0}
 var t := 0.0
 
 
@@ -23,8 +29,15 @@ func _ready() -> void:
 		_restyle(mi)
 	_springs()
 	head_rest = skel.get_bone_global_rest(skel.find_bone("J_Bip_C_Head")).basis
+	if FileAccess.file_exists("res://cues.json") and ResourceLoader.exists("res://voice.wav"):
+		cues = JSON.parse_string(FileAccess.get_file_as_string("res://cues.json")).mouthCues
+		var voice := AudioStreamPlayer.new(); voice.stream = load("res://voice.wav"); add_child(voice)
+		get_tree().create_timer(VOICE_START).timeout.connect(voice.play)
 	var cam := Camera3D.new(); add_child(cam)
-	cam.position = Vector3(0.9, 1.15, 2.6); cam.look_at(Vector3(0, 0.88, 0)); cam.fov = 35
+	if cues.is_empty():
+		cam.position = Vector3(0.9, 1.15, 2.6); cam.look_at(Vector3(0, 0.88, 0)); cam.fov = 35
+	else:                                                                   # talking portrait
+		cam.position = Vector3(0.32, 1.40, 1.05); cam.look_at(Vector3(0, 1.36, 0)); cam.fov = 28
 	var key := DirectionalLight3D.new(); add_child(key); key.shadow_enabled = true
 	key.rotation_degrees = Vector3(-40, 35, 0); key.light_color = Color(1, .97, .92); key.light_energy = 1.0
 	var rim := DirectionalLight3D.new(); add_child(rim); rim.rotation_degrees = Vector3(-20, 200, 0)
@@ -150,7 +163,7 @@ func _rot_global(bone: String, axis: Vector3, deg: float) -> void:
 
 func _process(delta: float) -> void:
 	t += delta
-	var turn := 28.0 * smoothstep(1.6, 2.1, t) * (1.0 - smoothstep(3.2, 3.7, t))   # one quick turn and back
+	var turn := 28.0 * smoothstep(1.6, 2.1, t) * (1.0 - smoothstep(3.2, 3.7, t)) if cues.is_empty() else 0.0   # one quick turn and back
 	root.rotation_degrees.y = turn
 	_rot_global("J_Bip_C_Hips", Vector3.UP, 3.0 * sin(t * 1.3))
 	_rot_global("J_Bip_C_Spine", Vector3.UP, 3.0 * sin(t * 1.3))
@@ -161,8 +174,14 @@ func _process(delta: float) -> void:
 	_rot_global("J_Bip_R_UpperArm", Vector3.FORWARD, -62.0 + 3.0 * sin(t * 1.3))
 	_apply_constraints()
 	var blink := 1.0 - smoothstep(0.0, 0.07, absf(fmod(t, 3.1) - 2.9))      # a 0.14 s blink every 3.1 s
-	var joy := smoothstep(1.4, 1.9, t) * (1.0 - smoothstep(3.6, 4.2, t))    # smiles through the turn
+	var joy := smoothstep(1.4, 1.9, t) * (1.0 - smoothstep(3.6, 4.2, t)) if cues.is_empty() else 0.0   # smiles through the turn
 	_expr("happy", joy); _expr("blink", blink * (1.0 - joy))
+	if not cues.is_empty():
+		var shape := "X"
+		for c in cues:
+			if t - VOICE_START >= c.start and t - VOICE_START < c.end: shape = c.value
+		for v in mouth:                                                     # ease toward the cue's shape, ~60 ms
+			mouth[v] = lerpf(mouth[v], VISEMES[shape].get(v, 0.0), clampf(delta * 16.0, 0.0, 1.0)); _expr(v, mouth[v])
 	var hb := (skel.global_transform.basis * skel.get_bone_global_pose(skel.find_bone("J_Bip_C_Head")).basis * head_rest.inverse()).orthonormalized()
 	for m in face_mats:
 		m.set_shader_parameter("face_forward", hb * Vector3(0, 0, 1)); m.set_shader_parameter("face_left", hb * Vector3(1, 0, 0))
