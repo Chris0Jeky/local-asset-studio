@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "units": "metres; Blender Z-up (x right, y back, z up); assets stand on z=0",
+  "generators": {
+    "room_kit": {
+      "description": "Anime-style open-front bedroom diorama: floor, three walls with a window, desk with lamp, bed, bookshelf, rug.",
+      "tri_budget": 20000,
+      "params": {
+        "width": {"type": "float", "min": 2.4, "max": 6.0, "default": 3.6, "doc": "interior width (x)"},
+        "depth": {"type": "float", "min": 2.4, "max": 6.0, "default": 3.4, "doc": "interior depth (y), open front at y=0"},
+        "height": {"type": "float", "min": 2.2, "max": 3.2, "default": 2.5, "doc": "wall height"},
+        "wall_thickness": {"type": "float", "min": 0.08, "max": 0.25, "default": 0.12},
+        "window_width": {"type": "float", "min": 0.5, "max": 2.4, "default": 1.2},
+        "window_height": {"type": "float", "min": 0.5, "max": 1.6, "default": 1.0},
+        "window_sill": {"type": "float", "min": 0.4, "max": 1.2, "default": 0.9, "doc": "sill height above the floor top"},
+        "window_offset": {"type": "float", "min": -2.0, "max": 2.0, "default": 0.0, "doc": "window centre x"},
+        "desk_width": {"type": "float", "min": 0.6, "max": 1.8, "default": 1.1, "doc": "desk along the back wall, left side"},
+        "desk_depth": {"type": "float", "min": 0.45, "max": 0.8, "default": 0.6},
+        "bed_width": {"type": "float", "min": 0.8, "max": 1.8, "default": 1.0, "doc": "bed along the right wall, head at the back"},
+        "bed_length": {"type": "float", "min": 1.8, "max": 2.3, "default": 2.0},
+        "shelf_count": {"type": "int", "min": 2, "max": 6, "default": 4, "doc": "bookshelf levels on the left wall, in front of the desk"},
+        "rug_radius": {"type": "float", "min": 0.4, "max": 1.5, "default": 0.9},
+        "detail": {"type": "int", "min": 4, "max": 48, "default": 16, "doc": "segments of round parts; LODs halve it"},
+        "seed": {"type": "int", "min": 0, "max": 9999, "default": 7},
+        "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false}
+      },
+      "constraints": [
+        {"terms": {"window_offset": 1, "window_width": 0.5, "width": -0.5}, "le": -0.2, "doc": "window clears the right wall by 0.2 m"},
+        {"terms": {"window_offset": -1, "window_width": 0.5, "width": -0.5}, "le": -0.2, "doc": "window clears the left wall by 0.2 m"},
+        {"terms": {"window_sill": 1, "window_height": 1, "height": -1}, "le": -0.25, "doc": "window top stays 0.25 m below the wall top"}
+      ],
+      "parts": {
+        "1": {"name": "floor", "group": "structure"},
+        "2": {"name": "wall_back", "group": "structure"},
+        "3": {"name": "wall_left", "group": "structure"},
+        "4": {"name": "wall_right", "group": "structure"},
+        "5": {"name": "window_frame", "group": "structure"},
+        "6": {"name": "window_glass", "group": "structure", "open": true, "collision": false, "solid": false},
+        "7": {"name": "desk", "group": "desk"},
+        "8": {"name": "desk_lamp", "group": "desk", "collision": false},
+        "9": {"name": "bed_frame", "group": "bed"},
+        "10": {"name": "mattress", "group": "bed"},
+        "11": {"name": "blanket", "group": "bed", "collision": false},
+        "12": {"name": "pillow", "group": "bed", "collision": false},
+        "13": {"name": "shelf", "group": "shelf"},
+        "14": {"name": "books", "group": "shelf", "collision": false},
+        "15": {"name": "rug", "group": "rug", "collision": false, "solid": false}
+      }
+    },
+    "prop": {
+      "description": "Stylised prop family selected by kind: 0 paper lantern (chochin), 1 wooden crate, 2 potted plant.",
+      "tri_budget": 4000,
+      "params": {
+        "kind": {"type": "int", "min": 0, "max": 2, "default": 0, "doc": "0 lantern, 1 crate, 2 plant"},
+        "height": {"type": "float", "min": 0.2, "max": 1.6, "default": 0.6},
+        "width": {"type": "float", "min": 0.15, "max": 1.0, "default": 0.4},
+        "detail": {"type": "int", "min": 4, "max": 48, "default": 16},
+        "seed": {"type": "int", "min": 0, "max": 9999, "default": 7},
+        "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false}
+      },
+      "constraints": [],
+      "parts": {
+        "1": {"name": "lantern_body", "group": "prop", "optional": true},
+        "2": {"name": "lantern_caps", "group": "prop", "optional": true},
+        "3": {"name": "lantern_hanger", "group": "prop", "optional": true, "collision": false},
+        "4": {"name": "crate_core", "group": "prop", "optional": true},
+        "5": {"name": "crate_frame", "group": "prop", "optional": true},
+        "6": {"name": "pot", "group": "prop", "optional": true, "anchor": true},
+        "7": {"name": "soil", "group": "prop", "optional": true, "collision": false},
+        "8": {"name": "foliage", "group": "prop", "optional": true}
+      }
+    },
+    "shrine": {
+      "description": "Modular shrine set piece on a 0.5 m grid: steps, platform, torii gate, optional pair of stone lanterns.",
+      "tri_budget": 12000,
+      "params": {
+        "gate_width": {"type": "float", "min": 1.6, "max": 5.0, "default": 2.6, "doc": "pillar centre spacing"},
+        "gate_height": {"type": "float", "min": 2.2, "max": 5.5, "default": 3.4},
+        "pillar_radius": {"type": "float", "min": 0.08, "max": 0.3, "default": 0.15},
+        "step_count": {"type": "int", "min": 0, "max": 8, "default": 3},
+        "step_rise": {"type": "float", "min": 0.1, "max": 0.22, "default": 0.16},
+        "step_run": {"type": "float", "min": 0.25, "max": 0.45, "default": 0.32},
+        "lanterns": {"type": "int", "min": 0, "max": 1, "default": 1, "doc": "1 adds a stone lantern pair"},
+        "detail": {"type": "int", "min": 4, "max": 48, "default": 16},
+        "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false}
+      },
+      "constraints": [],
+      "parts": {
+        "1": {"name": "platform", "group": "ground"},
+        "2": {"name": "steps", "group": "ground", "optional": true},
+        "3": {"name": "torii_pillars", "group": "torii"},
+        "4": {"name": "torii_beams", "group": "torii"},
+        "5": {"name": "pillar_bases", "group": "torii"},
+        "6": {"name": "stone_lanterns", "group": "lanterns", "optional": true}
+      }
+    }
+  }
+}
