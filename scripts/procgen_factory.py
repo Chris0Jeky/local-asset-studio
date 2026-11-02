@@ -32,7 +32,7 @@ TOL = 0.001          # 1 mm for exact box dimensions and pivots
 OVERLAP_SHRINK = 0.002
 UV_RES = 512
 # Pivot rule per generator: assets stand on z=0; rooms and shrines start at y=0 (open front / first step).
-FRONT_ANCHORED = {'room_kit', 'shrine', 'pier'}
+FRONT_ANCHORED = {'room_kit', 'shrine', 'pier', 'coastal_path'}
 
 
 def load_schema(path=SCHEMA_PATH):
@@ -102,6 +102,13 @@ def expected_bounds(generator, p, detail=None):
         top = p['water_level'] + p['deck_height']
         z = top + (2.6 + 0.12 if p['lamps'] else 1.0 if p['railing'] else 0.40 if p['bollards'] else 0.0)
         return [p['width'] + 6, p['length'] + 3, z], [0, 0, 0]
+    if generator == 'coastal_path':
+        # Land tops out between land_height and land_height + roughness (clamped noise); tufts add <= 0.33 m, posts 0.9 m.
+        land = p['land_height']
+        grass = p['grass_density'] >= 0.5
+        upper = land + max(p['roughness'] + (0.33 if grass else 0.0), 0.9 if p['fence'] else 0.0)
+        lower = land + (0.9 if p['fence'] else 0.0)
+        return [p['width'] + 6, p['length'], upper], [0, 0, 1 - lower / upper]
     raise EvidenceError(f'unknown generator {generator!r}')
 
 
