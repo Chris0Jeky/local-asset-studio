@@ -1,0 +1,3 @@
+# Hash-pinned evidence must retain identical checkout bytes on Windows and Unix.
+critic-observations/observations.jsonl text eol=lf
+archive/capture-contract-followup/source.patch.zlib binary
