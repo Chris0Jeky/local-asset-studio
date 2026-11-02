@@ -27,12 +27,15 @@ const ORDER := ["J_Bip_C_Spine", "J_Bip_C_Chest", "J_Bip_C_UpperChest", "J_Bip_C
 	"J_Bip_R_LowerLeg", "J_Bip_R_Foot"]
 const FEET := {"L": ["J_Bip_L_UpperLeg", "J_Bip_L_LowerLeg", "J_Bip_L_Foot"], "R": ["J_Bip_R_UpperLeg", "J_Bip_R_LowerLeg", "J_Bip_R_Foot"]}
 const STANCE := 0.015
+const STEP_DIST := 0.18                                             # re-step when the pose wants a planted foot this far away
+const STEP_TIME := 0.25
+const STEP_LIFT := 0.06
 const RUN_FROM := 1.7
 const RUN_FULL := 2.3
 
 var clips := {}; var stride := {}; var cycle := {}; var rest_dir := {}; var hips_i := -1; var hips_rest: Transform3D; var hips_y := 0.0
 var k := 1.0; var ankle_h := 0.1; var phase := 0.0; var run_w := 0.0; var moving := 0.0
-var ik: TwoBoneIK3D; var targets := {}; var poles := {}; var lock := {}; var exclude: Array[RID] = []
+var ik: TwoBoneIK3D; var targets := {}; var poles := {}; var lock := {}; var step := {}; var exclude: Array[RID] = []; var max_err := 0.0; var restep := true
 
 
 func setup(h, ignore: Array = []) -> void:
@@ -90,22 +93,32 @@ func drive(h, delta: float, velocity_xz: Vector3) -> void:
 			var m: Array = MAP[bone]; var d: Vector3 = (P[m[1]] - P[m[0]]).normalized()
 			h._rot_basis(bone, Basis(idle[bone].slerp(Quaternion(rest_dir[bone], d), moving)))
 		h._apply_constraints()
-	_feet(h)
+	_feet(h, delta)
 
 
-func _feet(h) -> void:
+func _feet(h, delta: float) -> void:
+	# A planted foot stays locked in the world. When the body turns or drifts so far that the pose wants that foot more
+	# than STEP_DIST away, it re-steps: lifts, arcs to where the pose wants it over STEP_TIME, and re-locks. One foot at a
+	# time, so turning in place and heading changes mid-walk become small steps instead of skating or twisted legs.
 	var skel: Skeleton3D = h.skel; var space: PhysicsDirectSpaceState3D = h.get_world_3d().direct_space_state
 	for side in FEET:
 		var p: Vector3 = skel.global_transform * skel.get_bone_global_pose(skel.find_bone(FEET[side][2])).origin
 		var lift: float = p.y - h.root.global_position.y
-		if lift < ankle_h + STANCE:
-			if not lock.has(side): lock[side] = Vector3(p.x, 0, p.z)
+		var home := Vector3(p.x, 0, p.z); var arc := 0.0
+		if step.has(side):
+			step[side].t += delta / STEP_TIME; var s: float = minf(step[side].t, 1.0)
+			lock[side] = step[side].from.lerp(home, smoothstep(0.0, 1.0, s)); arc = sin(PI * s) * STEP_LIFT
+			if s >= 1.0: step.erase(side); lock[side] = home
+		elif lift < ankle_h + STANCE:
+			if not lock.has(side): lock[side] = home
+			elif restep and lock[side].distance_to(home) > STEP_DIST and step.is_empty(): step[side] = {"from": lock[side], "t": 0.0}
+			if lock.has(side): max_err = maxf(max_err, lock[side].distance_to(home))   # how far the pose wants the planted foot
 		else: lock.erase(side)
 		var at: Vector3 = Vector3(lock[side].x, p.y, lock[side].z) if lock.has(side) else p    # ground under the planted spot
 		var q := PhysicsRayQueryParameters3D.create(at + Vector3(0, 0.8, 0), at + Vector3(0, -1.2, 0)); q.exclude = exclude
 		var hit := space.intersect_ray(q)
 		var g: float = hit.position.y if hit else h.root.global_position.y
-		var want := Vector3(at.x, g + (maxf(lift, ankle_h) if lock.has(side) else lift), at.z)
+		var want := Vector3(at.x, g + (maxf(lift, ankle_h) if lock.has(side) else lift) + arc, at.z)
 		targets[side].global_position = want
 		var knee: Vector3 = skel.global_transform * skel.get_bone_global_pose(skel.find_bone(FEET[side][1])).origin
 		poles[side].global_position = knee + h.root.global_transform.basis.z * 0.6
