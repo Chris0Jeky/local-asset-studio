@@ -1354,7 +1354,9 @@ class Studio:
         context = continuation.source_context(self, asset_id,privacy=privacy)
         raw = source.read_bytes()
         if hashlib.sha256(raw).hexdigest() != context["sha256"]: raise StudioError("Source changed during attachment; reopen the handoff.")
-        result = self.upload(asset["filename"], mimetypes.guess_type(str(source))[0] or "", raw,privacy=classification)
+        # Supported references must not depend on host MIME registration (notably WebP on Windows).
+        mime = {'.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp'}.get(source.suffix.lower(), '')
+        result = self.upload(asset["filename"], mime, raw,privacy=classification)
         result["parent_asset"] = asset_id
         result["context"] = context
         return result
