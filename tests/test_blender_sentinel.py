@@ -87,6 +87,13 @@ class StructuralTests(unittest.TestCase):
         self.assertTrue(sentinel._moments_differ(a, {**noisy, "count": 9999}))
         self.assertTrue(sentinel._moments_differ(a, {**noisy, "sum": [100.01, 0.0, 1.0]}))
 
+    def test_systematic_rounding_at_a_baked_offset_is_not_damage(self):
+        # Terra's case: 10,000 deltas of 0.1 recovered next to a 100-unit offset drift by ~1.5e-6 each.
+        a = {"count": 10000, "scale": 101.1, "sum": [1000.0], "products": [100.0]}
+        drifted = {**a, "sum": [1000.0 - 0.0155], "products": [100.0 - 0.0031]}
+        self.assertFalse(sentinel._moments_differ(a, drifted))
+        self.assertTrue(sentinel._moments_differ({**a, "scale": 1.0}, {**drifted, "scale": 1.0}))
+
     def test_unexpected_mesh_and_missing_source_image(self):
         source, roundtrip = copy.deepcopy(MANIFEST), copy.deepcopy(MANIFEST)
         source["images"][0]["missing"] = True

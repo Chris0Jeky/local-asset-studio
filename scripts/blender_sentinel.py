@@ -49,13 +49,19 @@ def _drift(a, b):
     return float("inf") if len(a) != len(b) else max((abs(x - y) for x, y in zip(a, b)), default=0.0)
 
 
+FLOAT32_ULP = 1.2e-7  # relative spacing of float32 values
+
+
 def _moments_differ(a, b):
-    """Point-set sums from the manifest; float32 noise grows with sqrt(count), a real change by its own size."""
+    """Point-set sums from the manifest. Random float32 noise grows with sqrt(count). Rounding at a baked-in offset
+    (skinned glTF meshes move the object offset into the vertices) is systematic, up to two ulps of the largest
+    coordinate per point. A real change moves the sums by its own size."""
     if a is None or b is None: return a is not b
     if a["count"] != b["count"]: return True
     if not a["count"]: return False
-    n = a["count"]
-    return any(abs(x - y) > 1e-6 * n ** 0.5 * (1 + abs(x) / n) for x, y in zip(_flat(a, "sum", "products"), _flat(b, "sum", "products")))
+    n, scale = a["count"], max(a.get("scale", 0.0), b.get("scale", 0.0))
+    return any(abs(x - y) > 1e-6 * n ** 0.5 * (1 + abs(x) / n) + 2 * n * FLOAT32_ULP * scale * (1 + scale)
+               for x, y in zip(_flat(a, "sum", "products"), _flat(b, "sum", "products")))
 
 
 def _visible_meshes(manifest):

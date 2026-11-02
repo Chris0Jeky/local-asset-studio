@@ -304,7 +304,8 @@ def _mesh(mesh):
                     "delta_bbox": {"min": vec(delta.min(0)), "max": vec(delta.max(0))} if len(delta) else None,
                     # basis is centred: a roundtrip may bake the object offset into mesh data (skinned glTF meshes do)
                     "moments": _moments(np.hstack([pairs[:, :3] - pairs[:, :3].astype(np.float64).mean(0),
-                                                   pairs[:, 3:].astype(np.float64) - pairs[:, :3]]))}
+                                                   pairs[:, 3:].astype(np.float64) - pairs[:, :3]]),
+                                        float(np.abs(pairs).max()) if len(pairs) else 0.0)}
 
         entry["shape_keys"] = {"use_relative": keys.use_relative, "reference": keys.reference_key.name, "keys": [
             {"name": block.name, "relative_key": block.relative_key.name, "value": rnd(block.value), "mute": block.mute,
@@ -393,14 +394,16 @@ def _action(action):
             "fcurves": sorted(curves, key=lambda c: (c["slot"] or "", c["data_path"], c["index"]))}
 
 
-def _moments(points):
+def _moments(points, scale=None):
     """Order-free summary of a point set: count, column sums and the upper triangle of the product sums. Sums, not
-    means, so one changed point moves them by its own change whatever the point count."""
+    means, so one changed point moves them by its own change whatever the point count. `scale` is the largest raw
+    float32 coordinate behind the points, which bounds their rounding error."""
     import numpy as np
     points = np.asarray(points, dtype=np.float64)
     if not len(points): return {"count": 0}
     products = points.T @ points
-    return {"count": int(len(points)), "sum": [round(float(v), 9) + 0.0 for v in points.sum(0)],
+    return {"count": int(len(points)), "scale": rnd(np.abs(points).max() if scale is None else scale),
+            "sum": [round(float(v), 9) + 0.0 for v in points.sum(0)],
             "products": [round(float(v), 9) + 0.0 for v in products[np.triu_indices(points.shape[1])]]}
 
 
@@ -425,7 +428,8 @@ def _deform_samples(scene, view_layer, poses):
             local = np.unique(_foreach(mesh.vertices, "co", 3, np.float32).reshape(-1, 3), axis=0)
             evaluated.to_mesh_clear()
             matrix = np.array(evaluated.matrix_world, dtype=np.float64)
-            samples[name]["moments"].append(_moments(local.astype(np.float64) @ matrix[:3, :3].T + matrix[:3, 3]))
+            world = local.astype(np.float64) @ matrix[:3, :3].T + matrix[:3, 3]
+            samples[name]["moments"].append(_moments(world, max(float(np.abs(local).max()), float(np.abs(world).max())) if len(local) else 0.0))
     scene.frame_set(current)
     return samples
 
