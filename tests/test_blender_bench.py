@@ -42,6 +42,14 @@ class SummariseTest(unittest.TestCase):
         self.assertIn("access violation", crashed["log_tail"])
         self.assertEqual(bb.summarise(None, 0, ["Traceback\n"], ".", warmup=2)["exit_code"], "no result")
 
+    def test_cold_and_warm_up_frames_stay_out_of_the_timed_slice(self):
+        res = {"times": [9.0, 8.0, 1.0, 2.0, 3.0], "setup_s": 0.1, "info": {}}
+        with tempfile.TemporaryDirectory() as d:
+            self.frames(d, [50, 10, 10, 10, 10])  # the cold frame differs; the warm-up and timed frames match
+            r = bb.summarise(res, 0, [], d, warmup=1)
+        self.assertEqual((r["cold_s"], r["warm_median_s"], r["warm_min_s"], r["warm_max_s"]), (9.0, 2.0, 1.0, 3.0))
+        self.assertEqual((r["repeat_max_abs_diff"], r["timed_hashes_identical"]), (0, True))
+
 
 if __name__ == "__main__":
     unittest.main()
