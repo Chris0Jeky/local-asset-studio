@@ -99,13 +99,15 @@ source is disabled, so the result matches Blender's. `LIGHT_COLOR` already inclu
 ## Grounded locomotion (mocap gait + foot IK)
 
 `python scripts/bvh_joints.py IN.bvh OUT.json` turns a BVH clip into per-frame joint world positions. Output is in metres,
-Y up, the figure's left on +X, and a travelling clip's path straightened onto +Z so loops don't drift.
+Y up, the figure's left on +X, and a travelling clip's path straightened onto +Z so loops don't drift. BVH files store
+joint position channels either as the whole translation or relative to OFFSET; `--positions=auto` guesses from each
+channel's median and prints its decision, and `--positions=absolute|relative` forces it.
 `tools/godot-toon/mocap_gait.gd` plays such clips on a VRoid-style skeleton, for a host built on `toon_proof.gd` that
 moves itself (a CharacterBody3D, a path follower):
 
 ```gdscript
 var gait = preload("res://mocap_gait.gd").new()
-func _ready() -> void: super(); gait.setup(self)
+func _ready() -> void: super(); gait.setup(self, [body])   # exclude the host's own capsule from the foot rays
 func _process(delta: float) -> void: super(delta); gait.drive(self, delta, Vector3(body.velocity.x, 0, body.velocity.z))
 ```
 

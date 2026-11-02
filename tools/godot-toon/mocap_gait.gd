@@ -3,7 +3,7 @@ extends RefCounted
 ## follower...). The cycle advances by distance travelled / clip stride, so feet match any speed; idle < 0.05 m/s, walk,
 ## run above ~2 m/s with a positional blend between. Feet plant on ray-cast ground with a stance lock (TwoBoneIK3D).
 ##   var gait = preload("res://mocap_gait.gd").new()
-##   func _ready(): super(); gait.setup(self)
+##   func _ready(): super(); gait.setup(self, [body])          # [body]: the host's own CharacterBody3D, if any
 ##   func _process(delta): super(delta); gait.drive(self, delta, Vector3(body.velocity.x, 0, body.velocity.z))
 ## Ray casts read the physics space directly: fine with the default single-threaded physics; with
 ## physics/common/run_on_separate_thread enabled, call drive() from _physics_process instead.
@@ -32,10 +32,13 @@ const RUN_FULL := 2.3
 
 var clips := {}; var stride := {}; var cycle := {}; var rest_dir := {}; var hips_i := -1; var hips_rest: Transform3D; var hips_y := 0.0
 var k := 1.0; var ankle_h := 0.1; var phase := 0.0; var run_w := 0.0; var moving := 0.0
-var ik: TwoBoneIK3D; var targets := {}; var poles := {}; var lock := {}
+var ik: TwoBoneIK3D; var targets := {}; var poles := {}; var lock := {}; var exclude: Array[RID] = []
 
 
-func setup(h) -> void:
+func setup(h, ignore: Array = []) -> void:
+	# ignore: the host's own physics bodies (its CharacterBody3D), so the foot rays don't land on its capsule
+	for b in ignore:
+		if b is CollisionObject3D: exclude.append(b.get_rid())
 	var skel: Skeleton3D = h.skel
 	for c in ["walk", "run"]:
 		clips[c] = JSON.parse_string(FileAccess.get_file_as_string("res://mocap/%s.json" % c))
@@ -71,6 +74,10 @@ func drive(h, delta: float, velocity_xz: Vector3) -> void:
 	run_w = clampf((speed - RUN_FROM) / (RUN_FULL - RUN_FROM), 0.0, 1.0)
 	phase = fposmod(phase + speed * delta / (lerpf(stride["walk"], stride["run"], run_w) * k), 1.0)   # one phase, blended stride
 	if moving > 0.0:
+		var idle := {}                                                    # host's pose (e.g. lowered idle arms) as world deltas,
+		for bone in ["J_Bip_C_Hips"] + ORDER:                               # captured before any write: the blend starts from it
+			var bi := skel.find_bone(bone)
+			idle[bone] = (skel.get_bone_global_pose(bi).basis * skel.get_bone_global_rest(bi).basis.inverse()).get_rotation_quaternion()
 		var pw := _sample("walk", phase); var pr := _sample("run", phase) if run_w > 0.0 else pw
 		var P := {}
 		for j in pw: P[j] = pw[j].lerp(pr[j], run_w)
@@ -78,10 +85,10 @@ func drive(h, delta: float, velocity_xz: Vector3) -> void:
 		var up: Vector3 = (P["Spine"] - P["Hips"]).normalized(); var side: Vector3 = (P["UpperLeg_L"] - P["UpperLeg_R"]).normalized()
 		var bs := Basis(side, up, side.cross(up).normalized()).orthonormalized()
 		var br := Basis(rest_dir["side"], rest_dir["up"], rest_dir["side"].cross(rest_dir["up"]).normalized()).orthonormalized()
-		h._rot_basis("J_Bip_C_Hips", Basis(Quaternion.IDENTITY.slerp((bs * br.inverse()).get_rotation_quaternion(), moving)))
+		h._rot_basis("J_Bip_C_Hips", Basis(idle["J_Bip_C_Hips"].slerp((bs * br.inverse()).get_rotation_quaternion(), moving)))
 		for bone in ORDER:
 			var m: Array = MAP[bone]; var d: Vector3 = (P[m[1]] - P[m[0]]).normalized()
-			h._rot_basis(bone, Basis(Quaternion.IDENTITY.slerp(Quaternion(rest_dir[bone], d), moving)))
+			h._rot_basis(bone, Basis(idle[bone].slerp(Quaternion(rest_dir[bone], d), moving)))
 		h._apply_constraints()
 	_feet(h)
 
@@ -95,7 +102,8 @@ func _feet(h) -> void:
 			if not lock.has(side): lock[side] = Vector3(p.x, 0, p.z)
 		else: lock.erase(side)
 		var at: Vector3 = Vector3(lock[side].x, p.y, lock[side].z) if lock.has(side) else p    # ground under the planted spot
-		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(at + Vector3(0, 0.8, 0), at + Vector3(0, -1.2, 0)))
+		var q := PhysicsRayQueryParameters3D.create(at + Vector3(0, 0.8, 0), at + Vector3(0, -1.2, 0)); q.exclude = exclude
+		var hit := space.intersect_ray(q)
 		var g: float = hit.position.y if hit else h.root.global_position.y
 		var want := Vector3(at.x, g + (maxf(lift, ankle_h) if lock.has(side) else lift), at.z)
 		targets[side].global_position = want

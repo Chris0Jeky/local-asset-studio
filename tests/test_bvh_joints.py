@@ -65,13 +65,13 @@ def frame(x, z, spine_x=0.0, leg_z=0.0):
 
 
 class BvhJointsTests(unittest.TestCase):
-    def convert(self, rows, turned=False):
+    def convert(self, rows, turned=False, positions="auto"):
         # turned: the whole figure rotated 180 degrees about Y (left on -X, toes on -Z), not mirrored
         text = re.sub(r"OFFSET (\S+) (\S+) (\S+)", lambda m: f"OFFSET {-float(m[1]):g} {m[2]} {-float(m[3]):g}", BVH) if turned else BVH
         with tempfile.TemporaryDirectory() as d:
             src, out = Path(d) / "c.bvh", Path(d) / "c.json"
             src.write_text(text + "\n".join(" ".join(str(v) for v in r) for r in rows) + "\n", encoding="utf-8")
-            bvh_joints.main(str(src), str(out)); return json.loads(out.read_text(encoding="utf-8"))
+            bvh_joints.main(str(src), str(out), 0.01, positions); return json.loads(out.read_text(encoding="utf-8"))
 
     def test_forward_kinematics_in_metres_facing_plus_z(self):
         f = self.convert([frame(0, 0)] * 3)["frames"][0]
@@ -84,6 +84,12 @@ class BvhJointsTests(unittest.TestCase):
         rel = [[r[0], 0.0, r[2]] + r[3:] for r in [frame(0, 0)] * 3]          # channels relative to OFFSET 0 90 0
         f = self.convert(rel)["frames"][0]
         self.assertEqual(f["Hips"], [0.0, 0.9, 0.0])                     # not placed at height zero
+
+    def test_absolute_clip_that_starts_crouched(self):
+        rows = [frame(0, 0)] * 3; rows = [[0, 40] + rows[0][2:]] + rows[1:]   # absolute channels, crouched first frame
+        self.assertAlmostEqual(self.convert(rows)["frames"][0]["Hips"][1], 0.4, places=4)        # the median decides
+        allcrouch = [[0, 40] + frame(0, 0)[2:]] * 3                          # crouched throughout: auto can't tell...
+        self.assertAlmostEqual(self.convert(allcrouch, positions="absolute")["frames"][0]["Hips"][1], 0.4, places=4)  # ...so force it
 
     def test_rotation_channels_rotate_children(self):
         f = self.convert([frame(0, 0, leg_z=90)] * 3)["frames"][0]   # Z +90 at the left hip swings the leg toward +X

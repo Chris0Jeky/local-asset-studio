@@ -1,4 +1,5 @@
-"""BVH -> per-frame joint world positions for a runtime direction-matching retarget. Args: IN.bvh OUT.json [scale]
+"""BVH -> per-frame joint world positions for a runtime direction-matching retarget.
+  python scripts/bvh_joints.py IN.bvh OUT.json [scale] [--positions=auto|absolute|relative]
 
 Positions come out in metres (scale default 0.01 for centimetre BVH), Y up, the figure turned about Y so that at frame 0
 its left side (UpperLeg_L - UpperLeg_R) points to +X and it faces +Z (Godot glTF convention, matching a VRM import).
@@ -35,15 +36,21 @@ def parse(path):
     return joints, data, dt
 
 
-def absolute_positions(joints, first_row):
+def absolute_positions(joints, data, mode="auto"):
     """Per joint: True when its position channels carry the whole local translation (Bandai Namco and many exporters),
-    False when they are relative to OFFSET (added to it). Decided on the offset's dominant axis at frame 0: absolute when
-    that channel sits nearer the offset than zero. A zero offset makes both conventions identical."""
+    False when they are relative to OFFSET (added to it). mode absolute/relative forces it; auto decides on the offset's
+    dominant axis using the channel's median over all frames (absolute when it sits nearer the offset than zero) and
+    prints each decision, because a clip that crouches or jumps throughout can still fool it. A zero offset makes both
+    conventions identical."""
     out = []; k = 0
     for j in joints:
-        pos = {ch[0]: first_row[k + i] for i, ch in enumerate(j["channels"]) if ch.endswith("position")}; k += len(j["channels"])
-        off = j["offset"]; a = max(range(3), key=lambda i: abs(off[i]))
-        out.append(bool(pos) and abs(off[a]) > 1e-6 and abs(pos.get("XYZ"[a], 0.0) - off[a]) < 0.5 * abs(off[a]))
+        idx = {ch[0]: k + i for i, ch in enumerate(j["channels"]) if ch.endswith("position")}; k += len(j["channels"])
+        off = j["offset"]; a = max(range(3), key=lambda i: abs(off[i])); axis = "XYZ"[a]
+        if not idx or abs(off[a]) <= 1e-6: out.append(False); continue
+        if mode != "auto": out.append(mode == "absolute"); continue
+        vals = sorted(r[idx[axis]] for r in data) if axis in idx else [0.0]; med = vals[len(vals) // 2]
+        absolute = abs(med - off[a]) < 0.5 * abs(off[a]); out.append(absolute)
+        print(f"positions {j['name']}: {'absolute' if absolute else 'relative'} (median {axis} {med:g} vs offset {off[a]:g}; override with --positions=)")
     return out
 
 
@@ -60,8 +67,8 @@ def world_positions(joints, row, absolute):
     return {j["name"]: [mats[n][0][3], mats[n][1][3], mats[n][2][3]] for n, j in enumerate(joints) if j["name"]}
 
 
-def main(src, out, scale=0.01):
-    joints, data, dt = parse(src); absolute = absolute_positions(joints, data[0])
+def main(src, out, scale=0.01, positions="auto"):
+    joints, data, dt = parse(src); absolute = absolute_positions(joints, data, positions)
     frames = [world_positions(joints, r, absolute) for r in data]
     l, r = frames[0]["UpperLeg_L"], frames[0]["UpperLeg_R"]
     yaw = math.atan2(l[2] - r[2], l[0] - r[0])                                  # turn left->right onto +X
@@ -78,4 +85,7 @@ def main(src, out, scale=0.01):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2], float(sys.argv[3]) if len(sys.argv) > 3 else 0.01)
+    flags = [a for a in sys.argv[1:] if a.startswith("--")]; args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    mode = next((f.split("=", 1)[1] for f in flags if f.startswith("--positions=")), "auto")
+    if mode not in ("auto", "absolute", "relative") or len(args) < 2: raise SystemExit(__doc__)
+    main(args[0], args[1], float(args[2]) if len(args) > 2 else 0.01, mode)
