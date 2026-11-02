@@ -127,6 +127,21 @@ class ParamsAndConstraints(unittest.TestCase):
         on, _ = factory.resolve_params(spec, {**flat, "stair": 1, "pools": 2})
         self.assertEqual(len(factory.check_constraints(spec, on)), 2)            # stair descent + basin across the width
 
+    def test_market_bounds_band_the_seeded_house_heights(self):
+        spec = SCHEMA["generators"]["market_street"]
+        p, _ = factory.resolve_params(spec, {"width": 6.0, "house_depth": 4.0, "length": 12.0, "house_height": 5.0, "roof_height": 1.0})
+        size, slack = factory.expected_bounds("market_street", p)
+        self.assertEqual(size[:2], [6.0 + 8.0 + 1.0, 12.0])                      # street, two house rows, 0.5 m paving each side
+        self.assertAlmostEqual(size[2], 0.1 + 1.15 * 6.0)                        # tallest seeded house, roof scaled with it
+        self.assertAlmostEqual(size[2] * (1 - slack[2]), 0.1 + 0.9 * 6.0)       # every house could draw the lowest scale
+
+    def test_market_stalls_need_room_in_front_of_the_stage(self):
+        spec = SCHEMA["generators"]["market_street"]
+        crowded, _ = factory.resolve_params(spec, {"length": 7.0, "stalls": 4, "stage": 1})
+        self.assertEqual(len(factory.check_constraints(spec, crowded)), 1)       # 4.4 m: a 0.88 m pitch for 4 alternating stalls
+        self.assertEqual(factory.check_constraints(spec, {**crowded, "stage": 0}), [])
+        self.assertEqual(factory.check_constraints(spec, {**crowded, "stalls": 0}), [])
+
     def test_lod_details_halve_with_floor(self):
         self.assertEqual(factory.lod_details(16), [16, 8, 4])
         self.assertEqual(factory.lod_details(6), [6, 4, 4])
