@@ -154,6 +154,14 @@ class GateEvaluation(unittest.TestCase):
         size, slack = factory.expected_bounds("prop", params, 6)
         self.assertLessEqual(size[1] * (1 - slack[1]), 0.75 * 0.316 + 1e-9)              # hexagon x 3 rings
 
+    def test_centring_tolerance_is_exact_for_even_segments(self):
+        params, _ = factory.resolve_params(SCHEMA["generators"]["prop"], {"kind": 0, "width": 0.4, "detail": 4})
+        m = crate_measurements(width=0.4)
+        for lod in m["lods"]: lod["bbox_min"][0] += 0.02; lod["bbox_max"][0] += 0.02   # shifted 2 cm on x
+        spec = SCHEMA["generators"]["prop"]
+        result = failed(factory.evaluate_gates("prop", spec, params, m))
+        self.assertIn("asset not centred on x", result.get("dimensions", []))
+
     def test_snap_matches_generator_just_above_a_grid_line(self):
         params, _ = factory.resolve_params(SCHEMA["generators"]["shrine"], {"gate_width": 2.6, "pillar_radius": 0.15501})
         self.assertEqual(factory.expected_bounds("shrine", params)[0][0], 5.0)

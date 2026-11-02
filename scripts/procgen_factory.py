@@ -165,9 +165,10 @@ def evaluate_gates(generator, spec, p, m):
     anchors = [part for part in parts if spec['parts'][str(part['id'])].get('anchor')]
     cmin = [min(part['bbox_min'][k] for part in anchors) for k in range(3)] if anchors else lod0['bbox_min']
     cmax = [max(part['bbox_max'][k] for part in anchors) for k in range(3)] if anchors else lod0['bbox_max']
-    # Round extents (or a round anchor) with odd segment counts sit off-centre by up to half their polygon slack.
-    rslack = 1 - math.cos(math.pi / p['detail']) * math.cos(math.pi / (2 * max(p['detail'] // 2, 3)))
-    ctol = [TOL + rslack * expected[k] / 2 if slack[k] or anchors else TOL for k in range(3)]
+    # A round extent (or round anchor) with an odd segment count has a vertex at +r but only r*cos(pi/d) at -r,
+    # so it sits off-centre on x by r*(1 - cos(pi/d))/2. Even counts and the y axis stay symmetric.
+    odd_round = p['detail'] % 2 and (slack[0] or anchors)
+    ctol = [TOL + (expected[0] / 4 * (1 - math.cos(math.pi / p['detail'])) if odd_round else 0), TOL]
     if abs(cmin[0] + cmax[0]) / 2 > ctol[0]: dims.append('asset not centred on x')
     if generator in FRONT_ANCHORED:
         if abs(lod0['bbox_min'][1]) > TOL: dims.append(f'front not at y=0 (min y {lod0["bbox_min"][1]:.4f})')
