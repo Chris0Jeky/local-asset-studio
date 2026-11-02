@@ -22,7 +22,8 @@ python scripts/render_critic.py check OUT/godot/*.png --reference OUT/blender/*.
 
 `views.json` is `{"background": [r, g, b] (linear), "views": [{"name", "res": [w, h], "target": [x, y, z], "yaw",
 "pitch", "dist", "fov" | "ortho"}]}`; both programs frame the same matrices. `godot.json` is `{"glb": "OUT/scene.glb",
-"compiled": "OUT", "out": "OUT/godot", "background": [...], "shadow_max_distance": 6}`. `--no-outline` turns off
+"compiled": "OUT", "out": "OUT/godot", "background": [...], "shadow_max_distance": 6}`, with optional `shadow_bias`,
+`shadow_normal_bias`, `msaa` and `taa` (on by default). `--no-outline` turns off
 inverted-hull Solidify modifiers in the Blender renders, because outlines are geometry, not material. Re-running
 only `toon_compile.py IR.json OUT` recompiles without Blender.
 
@@ -75,7 +76,36 @@ point for a VRM export, not a match.
 
 ## Measured
 
-PENDING
+2 November 2026, Blender 5.4.0 alpha 67c9bdddb88b, Godot 4.7.2, on Suzu with the kit's `ml` materials (16 of 16
+compile, none partial). The light-loop semantics were measured on an orthographic unit sphere under one sun (linear
+EXR):
+
+- Diffuse Light Evaluation Factor = clamped N.L (maximum error 0.0075).
+- Glossy Light Evaluation Factor = GGX D (alpha = roughness^2) x N.L, with no geometry term and no 1 / (4 N.V). The
+  relative RMS is 0.2 % at roughness 0.4; the best-fit scale is 0.99 at 0.4 and 0.94 at 0.22 (an undersampled peak).
+  A Smith geometry term cannot be told apart at these angles.
+
+Parity between Blender's EEVEE (64 samples, Standard view transform, outlines off) and Godot, inside the subject, in
+8-bit levels:
+
+| View | v1 mean | v2 mean | v2 share > 8 | v2 share > 24 |
+| --- | --- | --- | --- | --- |
+| body-front | 5.87 | 4.18 | 11.8 % | 4.4 % |
+| body-34 | 5.26 | 4.09 | 11.3 % | 3.7 % |
+| body-back | 8.54 | 7.31 | 38.5 % | 3.5 % |
+| face-front | 10.23 | 8.35 | 24.4 % | 9.1 % |
+| face-34 | 10.65 | 9.67 | 29.3 % | 12.0 % |
+| face-side | 10.34 | 8.35 | 24.2 % | 8.8 % |
+
+v1 used a glossy guess about 3x too low, which drew the hair highlight as rings, and Godot's noisy soft shadows,
+which the toon ramps stepped into dither. v2 adds the fitted glossy and TAA in the runner. What remains, by eye:
+
+- silhouette edges: Blender's 1.5 px reconstruction filter is softer than MSAA plus TAA;
+- cast shadows that Godot misses, such as the head on the apron and hair on the face (shadow bias, untested; see
+  `shadow_bias`);
+- slightly larger hair highlights in Godot.
+
+The shading bands, ramps, rim and highlight shapes match.
 
 ## Limits
 
