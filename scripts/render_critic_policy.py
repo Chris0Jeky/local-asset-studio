@@ -16,6 +16,7 @@ import sys
 
 SCHEMA = 'las.render-critic-review-hypothesis.v1'
 MAX_RECEIPT_BYTES = 2 * 1024 * 1024
+MAX_DEPTH = 64
 MAX_VIEWS = 256
 MAX_SIDE = 65536
 
@@ -70,7 +71,7 @@ def decide(receipt, min_fraction):
     to exceed the proposed fraction, so extra unchanged views cannot dilute it.
     Dimension mismatches always require review, even with a fraction of 1.
     """
-    _require(type(min_fraction) in (int, float) and math.isfinite(min_fraction) and 0 <= min_fraction <= 1,
+    _require(type(min_fraction) in (int, float) and 0 <= min_fraction <= 1 and math.isfinite(min_fraction),
              'fraction must be finite and between 0 and 1')
     raw = receipt.get('changed') if isinstance(receipt, dict) and type(receipt.get('changed')) is bool else None
     result = {'schema': SCHEMA, 'experimental': True, 'min_fraction': min_fraction, 'raw_changed': raw}
@@ -96,11 +97,30 @@ def _no_constant(value):
     raise ValueError(f'non-finite JSON constant: {value}')
 
 
+def _finite_float(value):
+    result = float(value)
+    _require(math.isfinite(result), 'non-finite JSON number')
+    return result
+
+
+def _bounded_structure(root):
+    pending = [(root, 0)]
+    while pending:
+        value, depth = pending.pop()
+        _require(depth <= MAX_DEPTH, 'JSON nesting exceeds 64 levels')
+        if isinstance(value, dict): pending.extend((v, depth + 1) for v in value.values())
+        elif isinstance(value, list): pending.extend((v, depth + 1) for v in value)
+
+
 def replay(receipt_path, out_path, min_fraction):
     """Read a bounded receipt, record its byte identity and create a new decision file exclusively."""
     with Path(receipt_path).open('rb') as stream: data = stream.read(MAX_RECEIPT_BYTES + 1)
     _require(len(data) <= MAX_RECEIPT_BYTES, 'receipt exceeds 2 MiB')
-    receipt = json.loads(data, object_pairs_hook=_unique_object, parse_constant=_no_constant)
+    try:
+        receipt = json.loads(data, object_pairs_hook=_unique_object, parse_constant=_no_constant, parse_float=_finite_float)
+    except RecursionError as exc:
+        raise ValueError('JSON nesting exceeds decoder limit') from exc
+    _bounded_structure(receipt)
     result = dict(decide(receipt, min_fraction), receipt_sha256=hashlib.sha256(data).hexdigest())
     with Path(out_path).open('x', encoding='utf-8', newline='\n') as stream:
         stream.write(json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + '\n')

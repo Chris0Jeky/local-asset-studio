@@ -89,7 +89,7 @@ def run(out_dir, sizes=SIZES):
     (root / 'index.html').write_text('<!doctype html><html lang="en"><meta charset="utf-8"><title>Render critic policy study</title>'
         '<h1>Owned pixel study — not native Blender calibration</h1>'
         '<p>Sparse26 is labelled nuisance by construction, not by measured renderer behaviour. Small patches are labelled defects. '
-        'A threshold that removes both is not a successful repair. These 24 related synthetic variants are not independent production trials. '
+        f'A threshold that removes both is not a successful repair. These {len(records)} related synthetic variants are not independent production trials. '
         'Preview shows the front view; raw receipts cover all four views. Alpha differences may be invisible against a matching background. '
         'Images are displayed at 192px; use the original files for pixel inspection. No policy is promoted.</p>'
         '<table><thead><tr><th>Case</th><th>Reference</th><th>Candidate</th><th>Hypotheses</th></tr></thead><tbody>'

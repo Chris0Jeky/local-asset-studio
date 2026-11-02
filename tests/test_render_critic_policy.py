@@ -135,6 +135,18 @@ class PolicyTests(unittest.TestCase):
             with self.assertRaises(ValueError): policy.replay(src, out, 0)
             self.assertFalse(out.exists())
 
+    def test_replay_refuses_overflowed_numbers_and_deep_json(self):
+        with tempfile.TemporaryDirectory() as d:
+            src, out = Path(d) / 'receipt.json', Path(d) / 'decision.json'
+            for value in ('{"ignored": 1e999}', '[' * 2000 + '0' + ']' * 2000):
+                src.write_text(value)
+                with self.subTest(value=value[:40]), self.assertRaises(ValueError):
+                    policy.replay(src, out, 0)
+                self.assertFalse(out.exists())
+
+    def test_fraction_with_enormous_integer_is_a_value_error(self):
+        with self.assertRaises(ValueError): policy.decide(receipt(), 10 ** 500)
+
     def test_cli_exit_status_is_machine_usable(self):
         with tempfile.TemporaryDirectory() as d:
             src = Path(d) / 'receipt.json'; src.write_text(json.dumps(receipt()))

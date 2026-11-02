@@ -38,6 +38,7 @@ class StudyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             root = Path(d) / 'study'; result = self.run_study(root, sizes=(96,))
             self.assertTrue((root / 'index.html').is_file())
+            self.assertIn('These 8 related synthetic variants', (root / 'index.html').read_text())
             self.assertTrue((root / 'summary.json').is_file())
             for artifact in result['artifacts']:
                 p = root / artifact['path']
