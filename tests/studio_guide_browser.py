@@ -198,14 +198,22 @@ def run(out):
                 if 'hashchange' in required:
                     check(phases.index('popstate')<phases.index('hashchange'),'popstate precedes hashchange: '+label)
                 check(snapshot['state']=='manual',label)
-            visit('compare','budget');history_probe()
-            page.get_by_role('button',name='Next step',exact=True).click();page.wait_for_url('**stage=inspect*')
-            page.evaluate('window.guideHistoryPhases=[]');page.go_back();page.wait_for_url('**stage=budget*')
-            history_wait('native Back restores the manual budget stage',['popstate'])
-            page.fill('#positive','Changed after history')
+            # #1939: the compare guide's inspect step reads the comparison on screen in Compare & review.
+            visit('compare','inspect');page.evaluate('productionId=null');page.click('#checkGuideStep')
+            page.wait_for_function("document.querySelector('#guideEvidence').dataset.state==='blocked'")
+            check('choose your comparison' in page.locator('#guideEvidence').inner_text(),'compare/inspect with no plan on screen asks for one, not a judgment')
+            page.evaluate("""productionPlans=[{id:'f'.repeat(32),kind:'comparison',name:'Guide probe',state:{status:'awaiting_review'},stages:[{label:'A',job:{status:'completed',outputs:[]}},{label:'B',job:{status:'completed',outputs:[]}}]}];productionId='f'.repeat(32)""")
+            page.click('#checkGuideStep');page.wait_for_function("document.querySelector('#guideEvidence').dataset.state==='met'")
+            check('All 2 candidates are made' in page.locator('#guideEvidence').inner_text(),'compare/inspect reads the plan on screen: all candidates made')
+            # Two adjacent manual stages (game-assets export -> engine); the compare guide's stages read plan evidence since #1939.
+            visit('game-assets','export');history_probe()
+            page.get_by_role('button',name='Next step',exact=True).click();page.wait_for_url('**stage=engine*')
+            page.evaluate('window.guideHistoryPhases=[]');page.go_back();page.wait_for_url('**stage=export*')
+            history_wait('native Back restores the manual export stage',['popstate'])
+            page.select_option('#assetType','image')
             check(page.locator('#guideEvidence').get_attribute('data-state')=='unknown','real edits still invalidate the restored manual stage')
-            page.evaluate('window.guideHistoryPhases=[]');page.go_forward();page.wait_for_url('**stage=inspect*')
-            history_wait('native Forward restores the manual inspection stage',['popstate'])
+            page.evaluate('window.guideHistoryPhases=[]');page.go_forward();page.wait_for_url('**stage=engine*')
+            history_wait('native Forward restores the manual engine stage',['popstate'])
             # Keep the query unchanged so Chromium emits the paired hashchange.
             # This uses the actual workbench navigation seam and native history, not fake events.
             page.evaluate("window.guideHistoryPhases=[];showView('create')")

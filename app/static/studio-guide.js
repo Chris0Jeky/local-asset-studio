@@ -169,6 +169,7 @@
           pending:mainPage && typeof referencePending !== 'undefined' ? referencePending > 0 : false},
         switching:mainPage && typeof backendSwitching !== 'undefined' ? backendSwitching : false,
         backend:mainPage && typeof backendActive !== 'undefined' ? backendActive : null,
+        comparison:mainPage && location.hash === '#production' && typeof productionPlans !== 'undefined' ? (plan => C.comparison(plan, plan && typeof planHumanTitle === 'function' ? planHumanTitle(plan) : ''))(productionPlans.find(p => p?.id === productionId)) : null,
         authoring:window.WorkflowStudio?.authoringStatus?.() || null,
         project:window.WorkflowProject?.snapshot?.() || null,
         selection:mainPage && typeof assetSelection !== 'undefined' ? assetSelection.size : 0,
@@ -191,7 +192,8 @@
       busy = true; clearTimeout(autoTimer); autoTimer = null; checkButton.disabled = true;
       const token = ++epoch, s = snapshot(), fingerprint = JSON.stringify(s);
       try {
-        if (!correctTool()) { display(C.unknown('Open this step’s tool before its evidence can be read.')); return; }
+        // Prepare moves to Compare & review with the new plan, so the planning step also reads it there.
+        if (!correctTool() && !(step.check === 'comparison_plan' && location.hash === '#production')) { display(C.unknown('Open this step’s tool before its evidence can be read.')); return; }
         if (step.check === 'readiness' && s.recipe) { s.backend_report = await get('/api/backends'); s.health = await get('/api/health'); }
         if (['output','review'].includes(step.check)) {
           if (!s.job_id) {

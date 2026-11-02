@@ -30,3 +30,16 @@ test('guide resolution opens a containing disclosure before resolving its target
 test('hidden and visibility-hidden targets remain untouched',()=>{const node={getClientRects:()=>[{}],closest:()=>null};const doc={getElementById:()=>node,defaultView:{getComputedStyle:()=>({visibility:'hidden'})}};assert.equal(C.visibleTarget({target:'#hidden'},doc),null);});
 test('routes cannot redirect outside the authored tools',()=>{const origin='http://127.0.0.1:8191';for(const value of ['https://untrusted.invalid/','javascript:alert(1)','/api/jobs','/?execute=true','http://user@127.0.0.1:8191/'])assert.throws(()=>C.route(value,origin));assert.equal(C.route('/workflow-studio.html#agents',origin).hash,'#agents');});
 test('configured runtime blocks dominate otherwise healthy readiness',()=>{const s=ready();s.recipe={...s.recipe,runtime_block:'Observed incompatible runtime'};assert.equal(state('readiness',s),'blocked');assert.match(C.evaluate('readiness',s).message,/Observed incompatible runtime/);delete s.health;assert.equal(state('readiness',s),'blocked');});
+test('#1939: compare stages read the comparison on screen, never assume one',()=>{
+  const plan=(status,done,review)=>C.comparison({id:'p',kind:'comparison',name:'n',state:{status,review},stages:['A','B','C'].map((label,i)=>({label,job:i<done?{status:'completed',outputs:[{asset_id:'a'+label}]}:{status:'running'}}))},'Lantern · cfg');
+  for(const check of ['comparison_plan','comparison_made','comparison_decided'])assert.equal(state(check,{}),'blocked',check+' with no plan on screen');
+  assert.equal(C.comparison({kind:'av',state:{status:'planned'}}),null,'a scene plan is not a comparison');
+  assert.equal(state('comparison_made',{comparison:C.comparison({kind:'comparison',state:{status:'awaiting_review'},stages:[]})}),'unknown','zero recorded candidates are never met');
+  assert.match(C.evaluate('comparison_plan',{comparison:plan('planned',0)}).message,/Lantern · cfg.*3 candidates.*Start comparison/);
+  for(const [status,done,review,made,decided] of [['planned',0,null,'blocked','blocked'],['running',1,null,'unknown','unknown'],['uncertain',1,null,'blocked','blocked'],
+    ['awaiting_review',3,null,'met','blocked'],['reviewed',3,{asset_id:'aB'},'met','met'],['reviewed',3,{status:'needs_work'},'met','met']]){
+    const c=plan(status,done,review);assert.equal(state('comparison_made',{comparison:c}),made,status);assert.equal(state('comparison_decided',{comparison:c}),decided,status);
+  }
+  assert.match(C.evaluate('comparison_decided',{comparison:plan('reviewed',3,{asset_id:'aB'})}).message,/Candidate B won.*not art acceptance/);
+  assert.match(C.evaluate('comparison_made',{comparison:plan('running',1)}).message,/1 of 3 done.*never start a second plan/);
+});
