@@ -9,7 +9,7 @@
             "BEZIER"
           ],
           "keys": 3,
-          "keys_hash": "dc3244a15ee5203ff39b1c1c7ba2013b90dbc4b67f6e16e18356498a51c4b4b6",
+          "keys_hash": "dcf540238f136fc04990750a7879623a5a81a53c35eba757f1ea536e2dfd077d",
           "slot": "OBRig"
         },
         {
@@ -19,7 +19,7 @@
             "BEZIER"
           ],
           "keys": 3,
-          "keys_hash": "cd1c9eb9886557f6909dc67c766f378adbe60e839908461769bccc0c2d116fb7",
+          "keys_hash": "1e6bc22dc854e3c4a28d504e1499c6bb3cd31b22834dd5ac357e35d055a9cac0",
           "slot": "OBRig"
         },
         {
@@ -29,7 +29,7 @@
             "BEZIER"
           ],
           "keys": 3,
-          "keys_hash": "dc3244a15ee5203ff39b1c1c7ba2013b90dbc4b67f6e16e18356498a51c4b4b6",
+          "keys_hash": "dcf540238f136fc04990750a7879623a5a81a53c35eba757f1ea536e2dfd077d",
           "slot": "OBRig"
         }
       ],
@@ -233,7 +233,7 @@
       "color_attributes": [],
       "edges": 48,
       "faces": 18,
-      "geometry_hash": "6e79b829a43b98e4b20b891befdc092d326333609bc3c26de1472fd8f6a32af2",
+      "geometry_hash": "64e6fb6daa32ed405b47704638f1145a80452f6c4a17ee085a95821e221939de",
       "loops": 96,
       "material_face_counts": [
         18
@@ -262,7 +262,7 @@
       "color_attributes": [],
       "edges": 12,
       "faces": 6,
-      "geometry_hash": "094eb68e1607c3f8c90935c1d16e5c33b79fd8ecb8aae142b3bccd4d1d45c3bc",
+      "geometry_hash": "e1d74c9432b99ede015a2f6d47e8ba50f876c46363cf28eee9093b0f06bcd041",
       "loops": 24,
       "material_face_counts": [
         6
@@ -291,7 +291,7 @@
       "color_attributes": [],
       "edges": 552,
       "faces": 288,
-      "geometry_hash": "b304fc7ee84c9aa91a1d1864920fa016d04f116510d8a5c6ba6e744555160048",
+      "geometry_hash": "c5614638e6478c56ec655ce3b6fe8dd9c48fbda6f5b33183d286288fae821f4e",
       "loops": 1104,
       "material_face_counts": [
         288
@@ -776,7 +776,7 @@
   },
   "runtime": {
     "executable": "C:/AI/blender-5.4.0-alpha+main.67c9bdddb88b-windows.amd64-release/blender.exe",
-    "wall_seconds": 0.683
+    "wall_seconds": 0.767
   },
   "scene": {
     "camera": null,
@@ -790,9 +790,9 @@
     "unit_system": "METRIC"
   },
   "schema": "las.blender-lab.v1",
-  "semantic_checksum": "4b3bb1af8cfd6b6531651270df8a8ab5fdfcc1b096d160730fc146b046209f98",
+  "semantic_checksum": "488d51313f6b0754416239af495e90dd26e8330218cfa10f326b466a4cad2d1a",
   "source": {
     "file": "lab-asset.blend",
-    "sha256": "317bcd14e0353edb6476eef01b37224ca75ca7bce9ead49be67d19de15f93228"
+    "sha256": "f91bba001e030f2c68cdccea7146411042b3bf8633f3c08f1058800b24100356"
   }
 }

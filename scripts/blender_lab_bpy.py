@@ -281,11 +281,12 @@ def _mesh(mesh):
     coords = _foreach(mesh.vertices, "co", 3, np.float32)
     loop_totals = _foreach(mesh.polygons, "loop_total", 1, np.int32)
     loop_verts = _foreach(mesh.loops, "vertex_index", 1, np.int32)
+    edge_verts = _foreach(mesh.edges, "vertices", 2, np.int32)
     material_index = _foreach(mesh.polygons, "material_index", 1, np.int32)
     pts = coords.reshape(-1, 3)
     entry = {"name": mesh.name, "vertices": len(mesh.vertices), "edges": len(mesh.edges), "faces": len(mesh.polygons),
              "loops": len(mesh.loops), "triangles": int(np.maximum(loop_totals - 2, 0).sum()),
-             "geometry_hash": _quantised_hash(coords, loop_totals, loop_verts),
+             "geometry_hash": _quantised_hash(coords, loop_totals, loop_verts, edge_verts),
              "bbox": {"min": vec(pts.min(0)), "max": vec(pts.max(0))} if len(pts) else None,
              "uv_maps": [uv.name for uv in mesh.uv_layers],
              "color_attributes": sorted(a.name for a in mesh.color_attributes),
@@ -359,11 +360,16 @@ def _armature(arm):
             "max_depth": max((b["depth"] for b in bones), default=0)}
 
 
+EASING = ("CONSTANT", "LINEAR", "BEZIER", "SINE", "QUAD", "CUBIC", "QUART", "QUINT", "EXPO", "CIRC", "BACK", "BOUNCE", "ELASTIC")
+
+
 def _fcurve(curve, slot=None):
     import numpy as np
     points = curve.keyframe_points
     return {"slot": slot, "data_path": curve.data_path, "index": curve.array_index, "keys": len(points),
-            "keys_hash": _quantised_hash(_foreach(points, "co", 2, np.float32)),
+            "keys_hash": _quantised_hash(_foreach(points, "co", 2, np.float32), _foreach(points, "handle_left", 2, np.float32),
+                                         _foreach(points, "handle_right", 2, np.float32),
+                                         [EASING.index(p.interpolation) if p.interpolation in EASING else -1 for p in points]),
             "interpolation": sorted({p.interpolation for p in points})}
 
 
