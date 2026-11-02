@@ -410,3 +410,31 @@ The active search finds all five defects the fixed views miss. Together, the two
 the manifest. The interior shape-key case clears the gate by a small margin at 96 px, so render it larger before
 relying on it. Evidence: `E:/local-asset-studio-labs/rnd-20261102/blender-worker/evidence/active-testing-2026-11-02/`.
 
+## Visual delta localisation
+
+The sentinel's `result.json` (and the worker's `reimport_validate` and each corpus baseline) carries `localisation`:
+statements about objects and materials instead of pixel counts. For each view:
+- The object-ID change mask names objects that are missing or hidden, appeared, revealed (were covered there before),
+  or whose geometry moved.
+- The material-ID mask names material swaps and the meshes under them, but only where the object ID did not change, so
+  occlusion is never reported as a swap.
+- A lit or clay change outside both ID masks (dilated 3 px for anti-aliasing) is attributed to the objects covering at
+  least 5% of it. It is reported only when it clears the pass's own warning bar, so shadows and bounce light beside an
+  ID change stay quiet.
+- Candidate pixels are named with the candidate's palette.
+
+Statements are deduplicated across views and ranked by how many views agree.
+
+Measured on 2 Nov 2026 on the known-bad corpus, identical on 4.5.13 and 5.4 alpha. Every render-visible defect is
+named on the right object:
+
+| Defect | Localisation |
+| --- | --- |
+| material-mismatch | `material BadgeGreen -> BodyTextured on Badge` (all 4 views) |
+| transform-offset | `geometry of Head moved or changed` |
+| omitted-mesh | `object Body is missing or hidden here`, `object Badge revealed (was covered here)` |
+| missing-texture, missing-uvs, mesh-hole | `shading changed on Body (lit pass; IDs unchanged)` |
+| duplicate-overlap | `shading changed on Badge (lit pass; IDs unchanged)` (a coincident duplicate shares IDs' screen space) |
+
+The five render-invisible defects produce no localisation. The manifest's structural failures name them.
+
