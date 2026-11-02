@@ -48,6 +48,23 @@ def mcp_args(blender, root, read_tree):
     return [str(HERE / "blender_mcp.py"), "--blender", str(blender), "--root", str(root), "--blend-root", str(read_tree)]
 
 
+def run_tree(command, *, input, cwd, env, timeout):
+    """Run an agent and, on timeout, kill its whole process tree (the Node wrapper's native child and its MCP worker
+    too) before returning, so nothing keeps running into scoring or cleanup."""
+    process = subprocess.Popen(command, cwd=cwd, env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                               text=True, encoding="utf-8", errors="replace")
+    try:
+        stdout, stderr = process.communicate(input, timeout=timeout)
+        return process.returncode, stdout, stderr
+    except subprocess.TimeoutExpired:
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/T", "/F", "/PID", str(process.pid)], capture_output=True)
+        else:
+            process.kill()
+        stdout, stderr = process.communicate(timeout=60)
+        raise subprocess.TimeoutExpired(command, timeout, stdout, stderr)
+
+
 def scrubbed_env(**extra):
     """The parent environment without anything secret-shaped (a review once printed env and leaked a token)."""
     return {**{k: v for k, v in os.environ.items() if not SECRET.search(k)}, **extra}
@@ -67,12 +84,12 @@ def run_claude(prompt, workdir, blender, root, read_tree, timeout):
     allowed = ",".join(f"mcp__las-blender__{t}" for t in TOOLS)
     command = [*CLAUDE, "-p", "--model", "claude-haiku-5-5", "--restricted", "--tools", "", "--mcp-config", str(config),
                "--strict-mcp-config", "--permission-mode", "dontAsk", "--allowedTools", allowed, "--output-format", "json"]
-    completed = subprocess.run(command, cwd=workdir, input=prompt, capture_output=True, text=True, encoding="utf-8",
-                               errors="replace", timeout=timeout, env=scrubbed_env())
-    (workdir / "agent.log").write_text(completed.stdout + "\n--- stderr ---\n" + completed.stderr, encoding="utf-8")
-    try: data = json.loads(completed.stdout)
-    except ValueError: return {"text": completed.stdout[-2000:], "turns": None, "cost_usd": None}
-    return {"text": data.get("result", ""), "turns": data.get("num_turns"), "cost_usd": data.get("total_cost_usd")}
+    code, stdout, stderr = run_tree(command, input=prompt, cwd=workdir, env=scrubbed_env(), timeout=timeout)
+    (workdir / "agent.log").write_text(stdout + "\n--- stderr ---\n" + stderr, encoding="utf-8")
+    try: data = json.loads(stdout)
+    except ValueError: return {"text": stdout[-2000:], "turns": None, "cost_usd": None, "returncode": code}
+    return {"text": data.get("result", ""), "turns": data.get("num_turns"), "cost_usd": data.get("total_cost_usd"),
+            "returncode": 1 if data.get("is_error") else code}
 
 
 def run_codex(prompt, workdir, blender, root, read_tree, timeout):
@@ -87,7 +104,11 @@ def run_codex(prompt, workdir, blender, root, read_tree, timeout):
         (home / "config.toml").write_text('approval_policy = "never"\n', encoding="utf-8")
         return _run_codex(prompt, workdir, blender, root, read_tree, timeout, scrubbed_env(CODEX_HOME=str(home)))
     finally:
-        shutil.rmtree(home, ignore_errors=True)
+        for _ in range(3):  # the credential copy must not outlive the run; a locked file gets a retry, then a loud failure
+            shutil.rmtree(home, ignore_errors=True)
+            if not home.exists(): break
+            time.sleep(2)
+        require(not home.exists(), f"could not remove the isolated CODEX_HOME with its auth copy: {home}")
 
 
 def _run_codex(prompt, workdir, blender, root, read_tree, timeout, env):
@@ -98,13 +119,12 @@ def _run_codex(prompt, workdir, blender, root, read_tree, timeout, env):
                "-c", f"mcp_servers.las_blender.command={json.dumps(sys.executable)}", "-c", f"mcp_servers.las_blender.args={args}",
                "-c", "mcp_servers.las_blender.startup_timeout_sec=60", "-c", "mcp_servers.las_blender.tool_timeout_sec=600",
                "-c", 'mcp_servers.las_blender.default_tools_approval_mode="approve"', "-"]
-    completed = subprocess.run(command, cwd=workdir, input=prompt, capture_output=True, text=True, encoding="utf-8",
-                               errors="replace", timeout=timeout, env=env)
-    log = completed.stdout + "\n--- stderr ---\n" + completed.stderr
+    code, stdout, stderr = run_tree(command, input=prompt, cwd=workdir, env=env, timeout=timeout)
+    log = stdout + "\n--- stderr ---\n" + stderr
     (workdir / "agent.log").write_text(log, encoding="utf-8")
     tool_calls = len(re.findall(r"mcp: las_blender/blender_\w+ started", log))
-    final = completed.stdout.strip().splitlines()
-    return {"text": "\n".join(final[-15:]), "turns": tool_calls or None, "cost_usd": None}
+    final = stdout.strip().splitlines()
+    return {"text": "\n".join(final[-15:]), "turns": tool_calls or None, "cost_usd": None, "returncode": code}
 
 
 def verdict(text):
@@ -116,15 +136,41 @@ def verdict(text):
     return None
 
 
+NON_SEMANTIC = {"schema", "kind", "blender", "source", "runtime", "semantic_checksum"}
+
+
+def flatten(value, path=""):
+    """Manifest leaves by path; list items that carry a name are keyed by it, so an added object shifts nothing."""
+    if isinstance(value, dict):
+        return {k: v for key, item in value.items() if not (path == "" and key in NON_SEMANTIC)
+                for k, v in flatten(item, f"{path}/{key}").items()}
+    if isinstance(value, list):
+        keyed = all(isinstance(item, dict) and "name" in item for item in value) and value
+        return {k: v for index, item in enumerate(value)
+                for k, v in flatten(item, f"{path}[{item['name'] if keyed else index}]").items()}
+    return {path: value}
+
+
+def property_changes(control, damaged, repaired):
+    """Collateral: properties that matched the control and no longer do. Imprecise: properties the damage touched
+    that the repair changed again without restoring."""
+    c, d, r = flatten(control), flatten(damaged), flatten(repaired)
+    paths = set(c) | set(d) | set(r)
+    collateral = sorted(p for p in paths if c.get(p) == d.get(p) and r.get(p) != c.get(p))
+    imprecise = sorted(p for p in paths if c.get(p) != d.get(p) and r.get(p) not in (c.get(p), d.get(p)))
+    return collateral, imprecise
+
+
 def score(exe, case, control_manifest, defective_manifest, root, workdir):
     before = sentinel.compare_manifests(control_manifest, defective_manifest)["failures"]
     repaired = root / "repaired.blend"
     if not repaired.is_file():
-        return {"saved": False, "exact": False, "remaining": before, "collateral": []}
+        return {"saved": False, "exact": False, "remaining": before, "collateral": [], "imprecise": []}
     manifest = lab.manifest(exe, repaired, workdir / "repaired-manifest.json")
     remaining = sentinel.compare_manifests(control_manifest, manifest)["failures"]
+    collateral, imprecise = property_changes(control_manifest, defective_manifest, manifest)
     return {"saved": True, "exact": manifest["semantic_checksum"] == control_manifest["semantic_checksum"],
-            "remaining": remaining, "collateral": sorted(set(remaining) - set(before))}
+            "remaining": remaining, "collateral": collateral, "imprecise": imprecise}
 
 
 INFRA = re.compile(r"ENOTFOUND|Can't reach the API server|workspace routing discovery failed|Reconnecting\.\.\. 5/5|request timed out")
@@ -133,6 +179,8 @@ INFRA = re.compile(r"ENOTFOUND|Can't reach the API server|workspace routing disc
 def outcome(case, result):
     repairable = case in REPAIRABLE
     if result.get("infrastructure_failure"): return "infrastructure failure (agent never ran to completion)"
+    if not result["saved"] and (result.get("returncode") not in (0, None) or result.get("verdict_ok") is False):
+        return "agent failure (no valid verdict)"  # a crash or garbled reply is never a decline
     if case == "control":
         return "no-op (correct)" if not result["saved"] else ("no-op saved (harmless)" if result["exact"] else "damaged the control")
     if result["collateral"]: return "harmful (collateral change)"
@@ -175,6 +223,8 @@ def run(blender_path, corpus_dir, out_dir, agent, cases=None, timeout=900):
         row = {"case": case, "agent": agent, "repairable_by_vocabulary": case in REPAIRABLE, "seconds": seconds,
                "steps": reply.get("turns"), "cost_usd": reply.get("cost_usd"), "agent_verdict": verdict(reply["text"]),
                "timeout": bool(reply.get("timeout")), **result}
+        row["returncode"] = reply.get("returncode")
+        row["verdict_ok"] = isinstance(row["agent_verdict"], dict) and isinstance(row["agent_verdict"].get("repaired"), bool)
         row["outcome"] = outcome(case, row)
         rows.append(row)
         (workdir / "row.json").write_text(json.dumps(row, indent=2, sort_keys=True), encoding="utf-8")

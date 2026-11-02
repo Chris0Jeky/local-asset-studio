@@ -54,7 +54,38 @@ class InfraAndCombineTests(unittest.TestCase):
         self.assertEqual((report["repairable_exact"], report["infrastructure_failures_retried"]), (1, 1))
 
 
+class FailureAndTreeTests(unittest.TestCase):
+    def test_a_crashed_or_garbled_agent_is_not_a_decline(self):
+        base = {"saved": False, "exact": False, "remaining": ["x"], "collateral": []}
+        self.assertEqual(bench.outcome("mesh-hole", {**base, "returncode": 1, "verdict_ok": True}), "agent failure (no valid verdict)")
+        self.assertEqual(bench.outcome("mesh-hole", {**base, "returncode": 0, "verdict_ok": False}), "agent failure (no valid verdict)")
+        self.assertEqual(bench.outcome("mesh-hole", {**base, "returncode": 0, "verdict_ok": True}), "declined (correct)")
+
+    def test_timeout_kills_the_whole_process_tree(self):
+        import subprocess, time
+        with tempfile.TemporaryDirectory() as tmp:
+            pid_file = Path(tmp) / "child.pid"
+            spawn = (f"import subprocess, sys, time; c = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)']); "
+                     f"open(r'{pid_file}', 'w').write(str(c.pid)); time.sleep(60)")
+            with self.assertRaises(subprocess.TimeoutExpired):
+                bench.run_tree([sys.executable, "-c", spawn], input="", cwd=tmp, env=None, timeout=3)
+            child = int(pid_file.read_text())
+            time.sleep(1)
+            alive = subprocess.run(["tasklist", "/FI", f"PID eq {child}"], capture_output=True, text=True).stdout if os.name == "nt" else ""
+            self.assertNotIn(str(child), alive)
+
+
 class ScoreTests(unittest.TestCase):
+    def test_new_damage_hidden_behind_an_existing_difference_is_collateral(self):
+        damaged = copy.deepcopy(MANIFEST); obj(damaged, "Head")["matrix_world"][2][3] += 0.12
+        repaired = copy.deepcopy(damaged); obj(repaired, "Head")["matrix_world"][0][1] = 0.5  # a rotation added on top
+        collateral, imprecise = bench.property_changes(MANIFEST, damaged, repaired)
+        self.assertEqual(collateral, ["/objects[Head]/matrix_world[0][1]"])
+        self.assertEqual(imprecise, [])
+        nearly = copy.deepcopy(damaged); obj(nearly, "Head")["matrix_world"][2][3] = MANIFEST["objects"][2]["matrix_world"][2][3] + 0.01
+        self.assertEqual(bench.property_changes(MANIFEST, damaged, nearly)[1], ["/objects[Head]/matrix_world[2][3]"])
+
+
     def test_collateral_is_a_new_difference_not_one_the_defect_already_had(self):
         defective = copy.deepcopy(MANIFEST); obj(defective, "Badge")["material_slots"][0]["material"] = "BodyTextured"
         repaired = copy.deepcopy(MANIFEST); obj(repaired, "Head")["material_slots"][0]["material"] = "BadgeGreen"
@@ -64,7 +95,7 @@ class ScoreTests(unittest.TestCase):
             with mock.patch.object(bench.lab, "manifest", return_value=repaired):
                 result = bench.score("exe", "material-mismatch", MANIFEST, defective, Path(tmp), Path(tmp))
         self.assertTrue(result["saved"]); self.assertFalse(result["exact"])
-        self.assertEqual(result["collateral"], ["Head: materials ['HeadRed'] -> ['BadgeGreen']"])
+        self.assertIn("/objects[Head]/material_slots[0]/material", result["collateral"])
 
     def test_unsaved_repair_keeps_the_defect_as_remaining(self):
         defective = copy.deepcopy(MANIFEST); obj(defective, "Body")["hide_render"] = True
