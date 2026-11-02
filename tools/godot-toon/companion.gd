@@ -61,7 +61,9 @@ func _ready() -> void:
 func _dress_set() -> void:
 	var set: Node3D = load("res://set.glb").instantiate(); add_child(set)
 	for mi in _all(set, func(n): return n is MeshInstance3D):
-		props[String(mi.name)] = mi.global_transform * mi.get_aabb().get_center()
+		var box: AABB = mi.global_transform * mi.get_aabb(); var up: Node = mi      # every named node up to the set root
+		while up != set.get_parent():                                                   # gets the merged bounds of its meshes
+			props[String(up.name)] = props[String(up.name)].merge(box) if props.has(String(up.name)) else box; up = up.get_parent()
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		for s in mi.mesh.get_surface_count():
 			var src = mi.get_active_material(s)
@@ -222,7 +224,7 @@ func _process(delta: float) -> void:
 	var tilt: float = {"curious": 10.0, "thinking": -6.0, "apologetic": 4.0}.get(mood, 0.0) * (0.0 if waiting else 1.0) + 9.0 * think
 	var bow: float = {"apologetic": 8.0}.get(mood, 0.0) + nod - 7.0 * think
 	# a sentence that names a set prop turns the head (up to 35 deg) and eyes toward it while it plays
-	var prop = props.get(speaking.get("look", ""), null) if talking_now() else null
+	var prop = props[speaking.look].get_center() if talking_now() and props.has(str(speaking.get("look", ""))) else null
 	look_w = lerpf(look_w, 1.0 if prop != null else 0.0, clampf(delta * 4.0, 0.0, 1.0))
 	if prop != null: look_at_prop = prop
 	var d := (skel.global_transform.basis.inverse() * (look_at_prop - skel.global_transform * skel.get_bone_global_pose(skel.find_bone("J_Bip_C_Head")).origin)).normalized()
