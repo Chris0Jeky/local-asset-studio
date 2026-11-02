@@ -27,18 +27,24 @@
   const cleanNote=note=>String(note??'').split(/\s+/).filter(Boolean).join(' ');
   function noteProblem(note){return cleanNote(note).length>NOTE_MAX?'Keep the note to '+NOTE_MAX+' characters.':'';}
   // The same privacy scope and creation destination as the parent: a repair never crosses between Regular and Private.
-  function request(asset,file,note){
+  function request(asset,file,note,workspace){
     const privacy=privacyOf(asset),text=cleanNote(note);
-    return {path:'/api/assets/import',options:{method:'POST',body:file,headers:{'Content-Type':'image/png',
+    return {path:'/api/assets/import?workspace_id='+encodeURIComponent(workspace),options:{method:'POST',body:file,headers:{'Content-Type':'image/png',
       'X-Filename':/^[\x20-\x7e]*$/.test(file.name)?file.name:'repaired.png','X-Studio-Privacy':privacy,'X-Studio-Creation-Privacy':privacy,
       'X-Parent-Asset':asset.id,...(text?{'X-Editor-Note':encodeURIComponent(text)}:{})}}};
   }
   // One import. The confirmed result is returned; whether the editor still shows this picture is decided later, by settle().
-  async function submit({asset,file,note,state,api}){
+  async function submit({asset,file,note,state,api,workspace,current,resolve}){
     const problem=blocked(asset,state())||fileProblem(file)||noteProblem(note);if(problem)throw Error(problem);
-    const {path,options}=request(asset,file,note),result=await api(path,options);
-    if(!result?.asset?.id||!Array.isArray(result.asset.lineage)||!result.asset.lineage.includes(asset.id))throw Error('The picture was imported but its link to this one was not confirmed. Check the family before importing again.');
-    return {id:result.asset.id,parent:asset.id};
+    const parent={...asset},changed='The picture or Workspace changed. Reopen the picture before importing its repair.';
+    if(!/^[0-9a-f]{32}$/.test(workspace)||parent.workspace_id!==workspace||!/^[0-9a-f]{64}$/.test(parent.sha256)||!current())throw Error(changed);
+    const observed=await resolve(parent.id);
+    if(!current()||!observed||observed.id!==parent.id||observed.workspace_id!==workspace||observed.sha256!==parent.sha256||privacyOf(observed)!==privacyOf(parent))throw Error(changed);
+    // The single-flight flag belongs to this import; a metadata save may have started during confirmation.
+    const pending=blocked(observed,{...state(),importing:false});if(pending)throw Error(pending);
+    const {path,options}=request(parent,file,note,workspace),result=await api(path,options);
+    if(!result?.asset?.id||!Array.isArray(result.asset.lineage)||!result.asset.lineage.includes(parent.id))throw Error('The picture was imported but its link to this one was not confirmed. Check the family before importing again.');
+    return {id:result.asset.id,parent:parent.id};
   }
   // After the library refresh (which can outlast the owner's navigation) the dialog is only updated if it still shows the parent; otherwise the page-level notice carries the news.
   async function settle(done,{refresh,current,show,notice}){
@@ -99,15 +105,17 @@
   new MutationObserver(()=>{q('#assetRepairOpen').hidden=true;q('#assetRepairFile').value='';q('#assetRepairNote').value='';say('');sync();}).observe(q('#assetDetailMedia'),{childList:true});
   q('#assetRepairImport').onclick=async()=>{
     const asset=activeAsset,id=asset?.id,epoch=assetDetailEpoch,workspace=assetState.workspace_id,file=q('#assetRepairFile').files[0],open=q('#assetRepairOpen');
+    const workspaceEpoch=assetWorkspaceEpoch,privacyEpoch=assetPrivacyEpoch,receiptEpoch=assetReceiptEpoch,scope=assetPrivacyScope(),sha=asset?.sha256,privacy=asset?.privacy??'regular';
+    const current=()=>assetDetailContextCurrent(id,epoch)&&assetState.workspace_id===workspace&&assetWorkspaceEpoch===workspaceEpoch&&assetPrivacyEpoch===privacyEpoch&&assetReceiptEpoch===receiptEpoch&&assetPrivacyScope()===scope&&activeAsset?.sha256===sha&&(activeAsset?.privacy??'regular')===privacy;
     open.hidden=true;
     try{
       // submit() checks the reasons synchronously before its first await, so the single-flight flag goes up only after it has started.
-      const run=R.submit({asset,file,note:q('#assetRepairNote').value,state,api});
+      const run=R.submit({asset,file,note:q('#assetRepairNote').value,state,api,workspace,current,
+        resolve:async parent=>await resolveAssetIDs([parent])?assetRecord(parent):null});
       importing=true;sync();say('Importing the repaired version… Nothing is generated.');
-      await R.settle(await run,{refresh:()=>refreshAssets(true),notice:message,
-        current:()=>assetDetailContextCurrent(id,epoch)&&assetState.workspace_id===workspace,
+      await R.settle(await run,{refresh:()=>refreshAssets(true),notice:message,current,
         show:(newId,text)=>{q('#assetRepairFile').value='';q('#assetRepairNote').value='';open.dataset.id=newId;open.hidden=false;say(text);}});
-    }catch(error){say(error.message,true);}
+    }catch(error){if(current())say(error.message,true);else message(error.message,true);}
     finally{importing=false;sync();}
   };
   q('#assetRepairOpen').onclick=async()=>{const id=q('#assetRepairOpen').dataset.id;if(id&&await openAsset(id)===false)say('The repaired picture could not be opened. Find it in the Library.',true);};

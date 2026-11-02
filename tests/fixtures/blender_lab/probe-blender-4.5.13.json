@@ -1,0 +1,662 @@
+{
+  "blender": {
+    "background": true,
+    "build_branch": "blender-v4.5-release",
+    "build_date": "2026-08-25",
+    "build_hash": "daeeeca98fb0",
+    "build_platform": "Windows",
+    "version": [
+      4,
+      5,
+      13
+    ],
+    "version_cycle": "release",
+    "version_string": "4.5.13 LTS"
+  },
+  "features": {
+    "action_api": {
+      "detail": {
+        "anim_utils_action_get_channelbag_for_slot": true,
+        "assigned_slot": true,
+        "channelbag_fcurves": 1,
+        "fcurve_ensure_for_datablock": true,
+        "keyframe_insert": true,
+        "layered": true,
+        "layers_property": true,
+        "legacy_fcurves": 1,
+        "legacy_fcurves_property": true,
+        "slots_property": true
+      },
+      "ok": true
+    },
+    "blender_projects": {
+      "detail": {
+        "context_attribute": false,
+        "ops_category": false,
+        "preferences_attributes": [],
+        "types": [
+          "FunctionNodeProjectPoint",
+          "UVProjectModifier",
+          "UVProjector"
+        ]
+      },
+      "ok": true
+    },
+    "cycles_devices": {
+      "detail": {
+        "compute_device_types": [
+          "NONE",
+          "CUDA",
+          "OPTIX",
+          "HIP",
+          "ONEAPI"
+        ],
+        "devices": {
+          "CUDA": [],
+          "HIP": [
+            {
+              "name": "AMD Radeon RX 9070 XT",
+              "type": "HIP"
+            },
+            {
+              "name": "13th Gen Intel Core i5-13600K",
+              "type": "CPU"
+            }
+          ],
+          "ONEAPI": [],
+          "OPTIX": []
+        },
+        "enabled": true,
+        "gpu_visible": [
+          "HIP"
+        ],
+        "hiprt_property": true
+      },
+      "ok": true
+    },
+    "gltf_export": {
+      "detail": {
+        "addon_version": [
+          4,
+          5,
+          51
+        ],
+        "option_count": 108,
+        "options": {
+          "at_collection_center": {
+            "type": "BOOLEAN"
+          },
+          "check_existing": {
+            "type": "BOOLEAN"
+          },
+          "collection": {
+            "type": "STRING"
+          },
+          "export_action_filter": {
+            "type": "BOOLEAN"
+          },
+          "export_active_vertex_color_when_no_material": {
+            "type": "BOOLEAN"
+          },
+          "export_all_influences": {
+            "type": "BOOLEAN"
+          },
+          "export_all_vertex_colors": {
+            "type": "BOOLEAN"
+          },
+          "export_anim_scene_split_object": {
+            "type": "BOOLEAN"
+          },
+          "export_anim_single_armature": {
+            "type": "BOOLEAN"
+          },
+          "export_anim_slide_to_zero": {
+            "type": "BOOLEAN"
+          },
+          "export_animation_mode": {
+            "items": [
+              "ACTIONS",
+              "ACTIVE_ACTIONS",
+              "BROADCAST",
+              "NLA_TRACKS",
+              "SCENE"
+            ],
+            "type": "ENUM"
+          },
+          "export_animations": {
+            "type": "BOOLEAN"
+          },
+          "export_apply": {
+            "type": "BOOLEAN"
+          },
+          "export_armature_object_remove": {
+            "type": "BOOLEAN"
+          },
+          "export_attributes": {
+            "type": "BOOLEAN"
+          },
+          "export_bake_animation": {
+            "type": "BOOLEAN"
+          },
+          "export_cameras": {
+            "type": "BOOLEAN"
+          },
+          "export_convert_animation_pointer": {
+            "type": "BOOLEAN"
+          },
+          "export_copyright": {
+            "type": "STRING"
+          },
+          "export_current_frame": {
+            "type": "BOOLEAN"
+          },
+          "export_def_bones": {
+            "type": "BOOLEAN"
+          },
+          "export_draco_color_quantization": {
+            "type": "INT"
+          },
+          "export_draco_generic_quantization": {
+            "type": "INT"
+          },
+          "export_draco_mesh_compression_enable": {
+            "type": "BOOLEAN"
+          },
+          "export_draco_mesh_compression_level": {
+            "type": "INT"
+          },
+          "export_draco_normal_quantization": {
+            "type": "INT"
+          },
+          "export_draco_position_quantization": {
+            "type": "INT"
+          },
+          "export_draco_texcoord_quantization": {
+            "type": "INT"
+          },
+          "export_extra_animations": {
+            "type": "BOOLEAN"
+          },
+          "export_extras": {
+            "type": "BOOLEAN"
+          },
+          "export_force_sampling": {
+            "type": "BOOLEAN"
+          },
+          "export_format": {
+            "items": [],
+            "type": "ENUM"
+          },
+          "export_frame_range": {
+            "type": "BOOLEAN"
+          },
+          "export_frame_step": {
+            "type": "INT"
+          },
+          "export_gltfpack_kn": {
+            "type": "BOOLEAN"
+          },
+          "export_gltfpack_noq": {
+            "type": "BOOLEAN"
+          },
+          "export_gltfpack_sa": {
+            "type": "BOOLEAN"
+          },
+          "export_gltfpack_si": {
+            "type": "FLOAT"
+          },
+          "export_gltfpack_slb": {
+            "type": "BOOLEAN"
+          },
+          "export_gltfpack_tc": {
+            "type": "BOOLEAN"
+          },
+          "export_gltfpack_tq": {
+            "type": "INT"
+          },
+          "export_gltfpack_vc": {
+            "type": "INT"
+          },
+          "export_gltfpack_vn": {
+            "type": "INT"
+          },
+          "export_gltfpack_vp": {
+            "type": "INT"
+          },
+          "export_gltfpack_vpi": {
+            "items": [
+              "Floating-point",
+              "Integer",
+              "Normalized"
+            ],
+            "type": "ENUM"
+          },
+          "export_gltfpack_vt": {
+            "type": "INT"
+          },
+          "export_gn_mesh": {
+            "type": "BOOLEAN"
+          },
+          "export_gpu_instances": {
+            "type": "BOOLEAN"
+          },
+          "export_hierarchy_flatten_bones": {
+            "type": "BOOLEAN"
+          },
+          "export_hierarchy_flatten_objs": {
+            "type": "BOOLEAN"
+          },
+          "export_hierarchy_full_collections": {
+            "type": "BOOLEAN"
+          },
+          "export_image_add_webp": {
+            "type": "BOOLEAN"
+          },
+          "export_image_format": {
+            "items": [
+              "AUTO",
+              "JPEG",
+              "NONE",
+              "WEBP"
+            ],
+            "type": "ENUM"
+          },
+          "export_image_quality": {
+            "type": "INT"
+          },
+          "export_image_webp_fallback": {
+            "type": "BOOLEAN"
+          },
+          "export_import_convert_lighting_mode": {
+            "items": [
+              "COMPAT",
+              "RAW",
+              "SPEC"
+            ],
+            "type": "ENUM"
+          },
+          "export_influence_nb": {
+            "type": "INT"
+          },
+          "export_jpeg_quality": {
+            "type": "INT"
+          },
+          "export_keep_originals": {
+            "type": "BOOLEAN"
+          },
+          "export_leaf_bone": {
+            "type": "BOOLEAN"
+          },
+          "export_lights": {
+            "type": "BOOLEAN"
+          },
+          "export_loglevel": {
+            "type": "INT"
+          },
+          "export_materials": {
+            "items": [
+              "EXPORT",
+              "NONE",
+              "PLACEHOLDER",
+              "VIEWPORT"
+            ],
+            "type": "ENUM"
+          },
+          "export_merge_animation": {
+            "items": [
+              "ACTION",
+              "NLA_TRACK",
+              "NONE"
+            ],
+            "type": "ENUM"
+          },
+          "export_morph": {
+            "type": "BOOLEAN"
+          },
+          "export_morph_animation": {
+            "type": "BOOLEAN"
+          },
+          "export_morph_normal": {
+            "type": "BOOLEAN"
+          },
+          "export_morph_reset_sk_data": {
+            "type": "BOOLEAN"
+          },
+          "export_morph_tangent": {
+            "type": "BOOLEAN"
+          },
+          "export_negative_frame": {
+            "items": [
+              "CROP",
+              "SLIDE"
+            ],
+            "type": "ENUM"
+          },
+          "export_nla_strips": {
+            "type": "BOOLEAN"
+          },
+          "export_nla_strips_merged_animation_name": {
+            "type": "STRING"
+          },
+          "export_normals": {
+            "type": "BOOLEAN"
+          },
+          "export_optimize_animation_keep_anim_armature": {
+            "type": "BOOLEAN"
+          },
+          "export_optimize_animation_keep_anim_object": {
+            "type": "BOOLEAN"
+          },
+          "export_optimize_animation_size": {
+            "type": "BOOLEAN"
+          },
+          "export_optimize_disable_viewport": {
+            "type": "BOOLEAN"
+          },
+          "export_original_specular": {
+            "type": "BOOLEAN"
+          },
+          "export_pointer_animation": {
+            "type": "BOOLEAN"
+          },
+          "export_reset_pose_bones": {
+            "type": "BOOLEAN"
+          },
+          "export_rest_position_armature": {
+            "type": "BOOLEAN"
+          },
+          "export_sampling_interpolation_fallback": {
+            "items": [
+              "LINEAR",
+              "STEP"
+            ],
+            "type": "ENUM"
+          },
+          "export_shared_accessors": {
+            "type": "BOOLEAN"
+          },
+          "export_skins": {
+            "type": "BOOLEAN"
+          },
+          "export_tangents": {
+            "type": "BOOLEAN"
+          },
+          "export_texcoords": {
+            "type": "BOOLEAN"
+          },
+          "export_texture_dir": {
+            "type": "STRING"
+          },
+          "export_try_omit_sparse_sk": {
+            "type": "BOOLEAN"
+          },
+          "export_try_sparse_sk": {
+            "type": "BOOLEAN"
+          },
+          "export_unused_images": {
+            "type": "BOOLEAN"
+          },
+          "export_unused_textures": {
+            "type": "BOOLEAN"
+          },
+          "export_use_gltfpack": {
+            "type": "BOOLEAN"
+          },
+          "export_vertex_color": {
+            "items": [
+              "ACTIVE",
+              "MATERIAL",
+              "NAME",
+              "NONE"
+            ],
+            "type": "ENUM"
+          },
+          "export_vertex_color_name": {
+            "type": "STRING"
+          },
+          "export_yup": {
+            "type": "BOOLEAN"
+          },
+          "filepath": {
+            "type": "STRING"
+          },
+          "filter_glob": {
+            "type": "STRING"
+          },
+          "gltf_export_id": {
+            "type": "STRING"
+          },
+          "ui_tab": {
+            "items": [
+              "ANIMATION",
+              "GENERAL",
+              "MESHES",
+              "OBJECTS"
+            ],
+            "type": "ENUM"
+          },
+          "use_active_collection": {
+            "type": "BOOLEAN"
+          },
+          "use_active_collection_with_nested": {
+            "type": "BOOLEAN"
+          },
+          "use_active_scene": {
+            "type": "BOOLEAN"
+          },
+          "use_mesh_edges": {
+            "type": "BOOLEAN"
+          },
+          "use_mesh_vertices": {
+            "type": "BOOLEAN"
+          },
+          "use_renderable": {
+            "type": "BOOLEAN"
+          },
+          "use_selection": {
+            "type": "BOOLEAN"
+          },
+          "use_visible": {
+            "type": "BOOLEAN"
+          },
+          "will_save_settings": {
+            "type": "BOOLEAN"
+          }
+        }
+      },
+      "ok": true
+    },
+    "gpu_backend": {
+      "detail": {
+        "active_backend_error": "SystemError: GPU functions for drawing are not available in background mode",
+        "gpu_init_function": false,
+        "preferences_gpu_backend": "OPENGL",
+        "preferences_gpu_backend_items": [
+          "METAL",
+          "OPENGL",
+          "VULKAN"
+        ]
+      },
+      "ok": true
+    },
+    "point_cloud_and_splat_import": {
+      "detail": {
+        "import_operators": {
+          "import_mesh": [],
+          "import_scene": [],
+          "wm": [
+            "alembic_import",
+            "collada_import",
+            "drop_import_file",
+            "fbx_import",
+            "grease_pencil_import_svg",
+            "obj_import",
+            "ply_import",
+            "stl_import",
+            "usd_import"
+          ]
+        },
+        "pointcloud_datablock": {
+          "attributes": [],
+          "points": 0
+        },
+        "pointcloud_object_type": true,
+        "splat_like": [
+          "ply_import"
+        ]
+      },
+      "ok": true
+    },
+    "shader_nodes": {
+      "detail": {
+        "all": [
+          "ShaderNode",
+          "ShaderNodeAddShader",
+          "ShaderNodeAmbientOcclusion",
+          "ShaderNodeAttribute",
+          "ShaderNodeBackground",
+          "ShaderNodeBevel",
+          "ShaderNodeBlackbody",
+          "ShaderNodeBrightContrast",
+          "ShaderNodeBsdfAnisotropic",
+          "ShaderNodeBsdfDiffuse",
+          "ShaderNodeBsdfGlass",
+          "ShaderNodeBsdfHair",
+          "ShaderNodeBsdfHairPrincipled",
+          "ShaderNodeBsdfMetallic",
+          "ShaderNodeBsdfPrincipled",
+          "ShaderNodeBsdfRayPortal",
+          "ShaderNodeBsdfRefraction",
+          "ShaderNodeBsdfSheen",
+          "ShaderNodeBsdfToon",
+          "ShaderNodeBsdfTranslucent",
+          "ShaderNodeBsdfTransparent",
+          "ShaderNodeBump",
+          "ShaderNodeCameraData",
+          "ShaderNodeClamp",
+          "ShaderNodeCombineColor",
+          "ShaderNodeCombineHSV",
+          "ShaderNodeCombineRGB",
+          "ShaderNodeCombineXYZ",
+          "ShaderNodeCustomGroup",
+          "ShaderNodeDisplacement",
+          "ShaderNodeEeveeSpecular",
+          "ShaderNodeEmission",
+          "ShaderNodeFloatCurve",
+          "ShaderNodeFresnel",
+          "ShaderNodeGamma",
+          "ShaderNodeGroup",
+          "ShaderNodeHairInfo",
+          "ShaderNodeHoldout",
+          "ShaderNodeHueSaturation",
+          "ShaderNodeInvert",
+          "ShaderNodeLayerWeight",
+          "ShaderNodeLightFalloff",
+          "ShaderNodeLightPath",
+          "ShaderNodeMapRange",
+          "ShaderNodeMapping",
+          "ShaderNodeMath",
+          "ShaderNodeMix",
+          "ShaderNodeMixRGB",
+          "ShaderNodeMixShader",
+          "ShaderNodeNewGeometry",
+          "ShaderNodeNormal",
+          "ShaderNodeNormalMap",
+          "ShaderNodeObjectInfo",
+          "ShaderNodeOutputAOV",
+          "ShaderNodeOutputLight",
+          "ShaderNodeOutputLineStyle",
+          "ShaderNodeOutputMaterial",
+          "ShaderNodeOutputWorld",
+          "ShaderNodeParticleInfo",
+          "ShaderNodePointInfo",
+          "ShaderNodeRGB",
+          "ShaderNodeRGBCurve",
+          "ShaderNodeRGBToBW",
+          "ShaderNodeScript",
+          "ShaderNodeSeparateColor",
+          "ShaderNodeSeparateHSV",
+          "ShaderNodeSeparateRGB",
+          "ShaderNodeSeparateXYZ",
+          "ShaderNodeShaderToRGB",
+          "ShaderNodeSqueeze",
+          "ShaderNodeSubsurfaceScattering",
+          "ShaderNodeTangent",
+          "ShaderNodeTexBrick",
+          "ShaderNodeTexChecker",
+          "ShaderNodeTexCoord",
+          "ShaderNodeTexEnvironment",
+          "ShaderNodeTexGabor",
+          "ShaderNodeTexGradient",
+          "ShaderNodeTexIES",
+          "ShaderNodeTexImage",
+          "ShaderNodeTexMagic",
+          "ShaderNodeTexNoise",
+          "ShaderNodeTexPointDensity",
+          "ShaderNodeTexSky",
+          "ShaderNodeTexVoronoi",
+          "ShaderNodeTexWave",
+          "ShaderNodeTexWhiteNoise",
+          "ShaderNodeUVAlongStroke",
+          "ShaderNodeUVMap",
+          "ShaderNodeValToRGB",
+          "ShaderNodeValue",
+          "ShaderNodeVectorCurve",
+          "ShaderNodeVectorDisplacement",
+          "ShaderNodeVectorMath",
+          "ShaderNodeVectorRotate",
+          "ShaderNodeVectorTransform",
+          "ShaderNodeVertexColor",
+          "ShaderNodeVolumeAbsorption",
+          "ShaderNodeVolumeCoefficients",
+          "ShaderNodeVolumeInfo",
+          "ShaderNodeVolumePrincipled",
+          "ShaderNodeVolumeScatter",
+          "ShaderNodeWavelength",
+          "ShaderNodeWireframe"
+        ],
+        "count": 104,
+        "lighting_or_npr_candidates": {
+          "ShaderNodeBsdfToon": {
+            "inputs": [
+              "Color",
+              "Size",
+              "Smooth",
+              "Normal",
+              "Weight"
+            ],
+            "outputs": [
+              "BSDF"
+            ]
+          },
+          "ShaderNodeShaderToRGB": {
+            "inputs": [
+              "Shader"
+            ],
+            "outputs": [
+              "Color",
+              "Alpha"
+            ]
+          }
+        }
+      },
+      "ok": true
+    }
+  },
+  "kind": "capability-probe",
+  "python": {
+    "implementation": "CPython",
+    "version": "3.11.15"
+  },
+  "render_engines": [
+    "BLENDER_EEVEE_NEXT",
+    "BLENDER_WORKBENCH",
+    "CYCLES"
+  ],
+  "runtime": {
+    "executable": "C:/AI/blender-4.5.13-windows-x64/blender.exe",
+    "sha256": "339c3879999f619ffeb3ff4b53966853153e2e2547d79048ed2886f1826d1306",
+    "wall_seconds": 0.67
+  },
+  "schema": "las.blender-lab.v1"
+}

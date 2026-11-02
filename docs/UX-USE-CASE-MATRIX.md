@@ -13,6 +13,15 @@ Plan comparison. Each step only scrolls to or opens what is already on the page.
 | `first-image-from-brief` | 5 clicks, 10 steps taken, 349 instruction words | 5 clicks, 10 steps taken (unchanged), 368 words (+19, the strip); the strip reads *2 Describe* before the brief and *4 Generate* with "Now: press Generate image" after it | `tests/studio_use_cases.py --case first-image-from-brief`; fails without `editor-steps.js` |
 
 Not changed: the recipe picker, the run dock, the folds (Fine-tune the recipe, Recipe details, Readiness) and Recent runs.
+## Workspace: Review next keys on the first screen, 2 November 2026 (#1919)
+
+The owner had to scroll to find what the review buttons do. In a Review next queue the panel (Keep K, Needs work W,
+Not this X, Skip S, Previous, Next, Leave queue, and the key legend) now leads the details column instead of sitting
+under the next-step tools and the sticky Save bar. The single-picture verdict row (#1725) keeps its place.
+
+| Journey | Before | After | Proof |
+| --- | --- | --- | --- |
+| `library-review-next-by-keyboard` | 1 click, 3 keys, 6 steps; keys below the fold at 1366x768 | 1 click, 3 keys, 7 steps (one added read: keys visible unscrolled at 1366x768 and 1920x1080), 0 dead ends; PASS | `tests/studio_use_cases.py --case library-review-next-by-keyboard`; fails with the panel in its old place |
 
 ## Make: a look on another model environment (MOSS-Image), 1 November 2026 (`moss-look-1019`)
 
