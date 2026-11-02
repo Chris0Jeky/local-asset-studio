@@ -1,5 +1,14 @@
 # UX use-case matrix
 
+## Review desk Grid: three engines by two seeds at a glance, 2 November 2026 (#1204)
+
+The Grid itself shipped in #1691, #1695 and #1700, and Combine's Grid in #1720. This adds the journey #1204 asked for, run
+against the real Review desk store over synthetic retained images (no generation).
+
+| Journey | Held fixed | Measured result |
+| --- | --- | --- |
+| `review-desk-grid` (new) | Three recorded engines by two recorded seeds, blind | 5 clicks, 1 key (K), 10 steps, 0 dead ends; PASS. The column headers and all six cells share one 1440x900 screen below the fixed bar; no engine name or seed appears in the Grid text, alt, title or aria labels before Reveal; K on a cell saves a `keep` in the desk; at 390x844 every cell fits the width and the page scrolls down with no sideways overflow |
+
 ## Compare & review: a comparison names its stage and what each button does, 2 November 2026 (#1921)
 
 The owner reached three candidates from a guided workflow but "didn't know what was happening at any stage". A

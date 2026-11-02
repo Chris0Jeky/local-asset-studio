@@ -406,22 +406,25 @@ def build_handler():
     # tests/review_http_fixture.py does, so the desk, its blind aliases and its assessment saves are the shipped ones.
     desk = {}
 
-    def open_desk():
-        """A fresh study with three candidates (three recorded engines, one seed: the shape that offers the Grid) listed as awaiting review."""
+    def open_desk(seeds=(712031,)):
+        """A fresh study with three recorded engines by `seeds` (one seed by default: three candidates), listed as awaiting review.
+        Both shapes offer the Grid; #1204's journey uses two seeds for a 3 x 2 grid."""
         from review_fixture import FixtureStudio, seed
         from production import fingerprint
         if desk: desk['holder'].cleanup(); fixture.PLANS[:] = [plan for plan in fixture.PLANS if plan['id'] != desk['id']]
         holder = tempfile.TemporaryDirectory(prefix='studio-use-case-review-', ignore_cleanup_errors=True)
-        studio = FixtureStudio(Path(holder.name)); identifier = seed(studio, count=3); project = studio.production._get(identifier)
-        for stage, engine in zip(project['plan']['stages'], ('engine-copper', 'engine-indigo', 'engine-jade')): stage.update(engine=engine, seed=712031, label='Do not derive topology from this label')
+        coordinates = [(engine, value) for engine in ('engine-copper', 'engine-indigo', 'engine-jade') for value in seeds]
+        studio = FixtureStudio(Path(holder.name)); identifier = seed(studio, count=len(coordinates)); project = studio.production._get(identifier)
+        for stage, (engine, value) in zip(project['plan']['stages'], coordinates): stage.update(engine=engine, seed=value, label='Do not derive topology from this label')
+        aliases = 'ABCDEF'[:len(coordinates)]
         project['plan']['sha256'] = fingerprint({k: v for k, v in project['plan'].items() if k != 'sha256'})
         with studio.production.connect() as db: db.execute('UPDATE projects SET plan=? WHERE id=?', (json.dumps(project['plan']), identifier))
         (studio.production.root / identifier / 'plan.json').write_text(json.dumps(project['plan']))
         desk.update(id=identifier, studio=studio, holder=holder)
-        fixture.PLANS.insert(0, dict(id=identifier, name='Lantern keeper · three candidates', kind='comparison', axis='engine', values=['A', 'B', 'C'],
+        fixture.PLANS.insert(0, dict(id=identifier, name='Lantern keeper · %d candidates' % len(aliases), kind='comparison', axis='engine', values=list(aliases),
                                      # Candidate outputs, as a real finished comparison lists them: the Review link needs them (#1735).
-                                     stages=[{'label': alias, 'job': {'status': 'completed', 'outputs': [{'asset_id': 'desk-' + alias.lower(), 'media_type': 'image'}]}} for alias in 'ABC'],
-                                     state={'status': 'awaiting_review', 'message': 'Synthetic finished comparison; no model ran.'}, budget={'allowance': 3, 'reserved': 3}))
+                                     stages=[{'label': alias, 'job': {'status': 'completed', 'outputs': [{'asset_id': 'desk-' + alias.lower(), 'media_type': 'image'}]}} for alias in aliases],
+                                     state={'status': 'awaiting_review', 'message': 'Synthetic finished comparison; no model ran.'}, budget={'allowance': len(aliases), 'reserved': len(aliases)}))
         return identifier
     SYNTHETIC.update(open_desk=open_desk, fixture=fixture, desk=desk)
 
@@ -2272,6 +2275,58 @@ def _review_desk(c):
               and (c.live or (stored.get('finalized') and stored.get('selected') == winner and marked == 'not_assessed' and constraints() == 'pass')))
         return ok, 'assessed %s; winner %s (constraints %s before the press); desk reads %r; Export review evidence enabled %s' % (marks, winner, marked, state['phase'], state['exportable'])
 
+
+@driver('review-desk-grid')
+def _review_desk_grid(c):
+    """#1204: a 3-engine x 2-seed comparison in the Review desk's Grid. Every cell fits one 1440x900 screen, nothing names an
+    engine or a seed before Reveal (text, alt, title, aria), K on a selected cell saves the same assessment as Pair, and at 390x844
+    every cell fits the width and the page scrolls with no sideways overflow. Live mode stops at Prepare review."""
+    with restoring_fixture():
+        study = None if c.live else SYNTHETIC['open_desk'](seeds=(712031, 915047))
+        c.boot('#production')
+        c.act('#productionList', 'read', note='%d studies listed' % c.wait_for_studies())
+        study = c.pick(study, '#productionList [data-project]', 'finished comparison awaiting review with candidate pictures',
+                       keep="(p => !!p && p.kind === 'comparison' && ['awaiting_review', 'reviewed'].includes((p.state || {}).status)"
+                            " && (p.stages || []).some(s => ((s.job || {}).outputs || []).some(o => o.asset_id)))"
+                            "(productionPlans.find(p => p.id === id))")
+        c.act('#productionList [data-project="%s"]' % study, note='the finished comparison')
+        c.act('a[href="/review.html?project=%s"]' % study, navigation=True, wait=900, note='open the review desk')
+        c.stop_before(c.act('#open', note='prepare the blind review'), 'stopped before Prepare review: that snapshots the retained pictures')
+        c.page.wait_for_function('!document.querySelector("#desk").hidden', timeout=8000)
+        c.act('#presentationGrid', note='switch to Grid')
+        c.page.wait_for_function("!document.querySelector('#gridPanel').hidden && document.querySelectorAll('#gridTable [data-grid-candidate]').length === 6", timeout=8000)
+        before = c.page.viewport_size
+        c.page.set_viewport_size({'width': 1440, 'height': 900})
+        # The table sits just below the fixed global bar; its column headers and every cell must then share the screen.
+        fit = c.page.evaluate("""() => { const table = document.querySelector('#gridTable'), bar = document.querySelector('.studio-globalbar');
+            const top = bar && getComputedStyle(bar).position === 'fixed' ? bar.getBoundingClientRect().bottom : 0;
+            table.scrollIntoView({block: 'start'}); scrollBy(0, -top - 8);
+            const cells = [...table.querySelectorAll('tbody td')], boxes = [...table.querySelectorAll('thead th'), ...cells].map(b => b.getBoundingClientRect());
+            // Each cell holds exactly one candidate and has a real size: six buttons crowded into one cell would fail here.
+            const occupied = cells.length === 6 && cells.every(td => td.querySelectorAll('[data-grid-candidate]').length === 1 && td.getBoundingClientRect().height > 40);
+            return {rows: table.querySelectorAll('tbody tr').length, columns: table.querySelectorAll('thead th').length - 1,
+                    inside: occupied && boxes.every(r => r.top >= top && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth)}; }""")
+        c.observe('all six cells, three engines by two seeds, on one 1440x900 screen', fit == {'rows': 3, 'columns': 2, 'inside': True}, 'grid %s' % fit)
+        hidden = c.page.evaluate("""() => { const panel = document.querySelector('#gridPanel'), words = [panel.innerText];
+            for (const n of panel.querySelectorAll('*')) for (const a of ['alt', 'title', 'aria-label']) if (n.getAttribute(a)) words.push(n.getAttribute(a));
+            return !/engine-(copper|indigo|jade)|712031|915047/.test(words.join(' ')); }""")
+        c.observe('no engine name or seed anywhere in the Grid before Reveal', hidden, 'provenance hidden=%s' % hidden)
+        c.page.set_viewport_size(before)
+        first = c.page.evaluate("document.querySelector('#gridTable [data-grid-candidate]').dataset.gridCandidate")
+        c.act('#gridTable [data-grid-candidate="%s"]' % first, note='select the first cell')
+        c.key('k', note='K keeps the selected cell')
+        c.page.wait_for_function("document.querySelector('#desk').getAttribute('aria-busy') === 'false' && [...document.querySelectorAll('#progress .progress-row span')].filter(s => s.textContent !== 'Not reviewed').length === 1", timeout=8000)
+        stored = {} if c.live else SYNTHETIC['desk']['studio'].production.reviews.inspect(SYNTHETIC['desk']['id'])
+        decision = None if c.live else next((k['assessment'].get('verdict') for k in stored['candidates'] if k['alias'] == first), None)
+        c.page.set_viewport_size({'width': 390, 'height': 844})
+        narrow = c.page.evaluate("""() => { const box = document.querySelector('#gridPanel .grid-scroll').getBoundingClientRect();
+            const cells = [...document.querySelectorAll('#gridTable tbody td')].map(b => b.getBoundingClientRect());
+            // Not clipped by the Grid's own scroll box or the screen, and the page itself scrolls down.
+            return {page: document.documentElement.scrollWidth <= innerWidth, fits: cells.length === 6 && cells.every(r => r.width > 40 && r.left >= Math.max(0, box.left) && r.right <= Math.min(innerWidth, box.right)), scrolls: document.documentElement.scrollHeight > innerHeight}; }""")
+        c.observe('at 390x844 every cell fits the width and the page scrolls down without sideways overflow', narrow == {'page': True, 'fits': True, 'scrolls': True}, 'narrow %s' % narrow)
+        c.page.set_viewport_size(before)
+        ok = fit == {'rows': 3, 'columns': 2, 'inside': True} and hidden and (c.live or decision == 'keep') and narrow == {'page': True, 'fits': True, 'scrolls': True}
+        return ok, 'grid %s; provenance hidden %s; K on Candidate %s saved %r; narrow %s' % (fit, hidden, first, decision, narrow)
 
 @driver('library-review-next-by-keyboard')
 def _library_review_next(c):
