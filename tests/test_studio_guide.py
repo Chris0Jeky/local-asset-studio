@@ -25,7 +25,7 @@ class GuideManifestTests(unittest.TestCase):
         manifest=guides(); self.assertEqual(manifest['version'],2)
         self.assertFalse(manifest['generation_submitted']); self.assertEqual(len(manifest['guides']),7)
         sources='\n'.join(p.read_text(encoding='utf-8') for p in (ROOT/'app/static').glob('*') if p.suffix in ('.js','.html'))
-        checks={'manual','recipe','reference_recipe','prompt','references','readiness','output','review','selection','schema','graph_check','saved'}
+        checks={'manual','recipe','reference_recipe','prompt','references','readiness','output','review','selection','schema','graph_check','saved','comparison_plan','comparison_made','comparison_decided'}
         for guide in manifest['guides']:
             ids=[s['id'] for s in guide['steps']]; self.assertEqual(len(ids),len(set(ids)))
             for step in guide['steps']:

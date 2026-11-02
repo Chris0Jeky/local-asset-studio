@@ -18,17 +18,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from procgen_factory import SNAP_EPS, uv_degenerate, uv_overlap_texels  # noqa: E402
 
 ROLES = ('wall', 'floor', 'wood', 'wood_dark', 'linen', 'fabric', 'fabric_alt', 'glass', 'paper', 'metal', 'stone',
-         'vermilion', 'black', 'foliage', 'soil', 'terracotta', 'accent', 'rug')
+         'vermilion', 'black', 'foliage', 'soil', 'terracotta', 'accent', 'rug', 'water')
 # Flat toon-friendly base colours per palette (linear RGB): 0 day, 1 dusk, 2 sakura, 3 autumn.
 PALETTES = [
     [(.86, .80, .70), (.42, .26, .15), (.62, .42, .25), (.28, .16, .09), (.92, .92, .9), (.30, .50, .80), (.90, .70, .75), (.60, .80, .92), (.96, .88, .66),
-     (.25, .25, .27), (.55, .55, .53), (.80, .12, .05), (.05, .05, .06), (.20, .50, .18), (.18, .11, .06), (.70, .30, .16), (.95, .65, .15), (.45, .62, .78)],
+     (.25, .25, .27), (.55, .55, .53), (.80, .12, .05), (.05, .05, .06), (.20, .50, .18), (.18, .11, .06), (.70, .30, .16), (.95, .65, .15), (.45, .62, .78), (.16, .45, .62)],
     [(.42, .44, .60), (.22, .16, .20), (.38, .28, .30), (.14, .10, .14), (.70, .72, .82), (.20, .25, .50), (.55, .40, .65), (.40, .55, .80), (.98, .78, .45),
-     (.18, .18, .22), (.40, .40, .48), (.70, .15, .20), (.04, .04, .07), (.12, .30, .25), (.10, .07, .07), (.50, .25, .22), (.95, .55, .25), (.30, .30, .55)],
+     (.18, .18, .22), (.40, .40, .48), (.70, .15, .20), (.04, .04, .07), (.12, .30, .25), (.10, .07, .07), (.50, .25, .22), (.95, .55, .25), (.30, .30, .55), (.10, .18, .38)],
     [(.95, .86, .88), (.60, .42, .38), (.80, .62, .55), (.42, .28, .26), (.98, .95, .96), (.92, .55, .68), (.98, .80, .85), (.75, .88, .95), (.99, .92, .90),
-     (.35, .32, .36), (.70, .66, .68), (.90, .30, .38), (.10, .07, .09), (.45, .65, .40), (.22, .14, .12), (.80, .45, .40), (.98, .70, .78), (.85, .60, .72)],
+     (.35, .32, .36), (.70, .66, .68), (.90, .30, .38), (.10, .07, .09), (.45, .65, .40), (.22, .14, .12), (.80, .45, .40), (.98, .70, .78), (.85, .60, .72), (.40, .62, .78)],
     [(.88, .78, .62), (.48, .28, .14), (.70, .45, .22), (.34, .18, .08), (.95, .90, .82), (.62, .30, .12), (.85, .62, .30), (.70, .80, .82), (.98, .85, .60),
-     (.30, .26, .22), (.58, .54, .48), (.85, .28, .06), (.08, .06, .05), (.65, .45, .10), (.20, .12, .06), (.75, .35, .15), (.90, .50, .08), (.70, .40, .20)],
+     (.30, .26, .22), (.58, .54, .48), (.85, .28, .06), (.08, .06, .05), (.65, .45, .10), (.20, .12, .06), (.75, .35, .15), (.90, .50, .08), (.70, .40, .20), (.22, .40, .48)],
 ]
 
 
@@ -48,7 +48,10 @@ class S:
 
 
 FOLD = {'ADD': lambda a, b: a + b, 'SUBTRACT': lambda a, b: a - b, 'MULTIPLY': lambda a, b: a * b,
-        'DIVIDE': lambda a, b: a / b, 'MAXIMUM': max, 'CEIL': lambda a, b: math.ceil(a)}
+        'DIVIDE': lambda a, b: a / b, 'MAXIMUM': max, 'MINIMUM': min, 'CEIL': lambda a, b: math.ceil(a),
+        'SINE': lambda a, b: math.sin(a), 'COSINE': lambda a, b: math.cos(a), 'FLOORED_MODULO': lambda a, b: a % b,
+        'POWER': lambda a, b: a ** b, 'ARCTAN2': math.atan2, 'TANGENT': lambda a, b: math.tan(a),
+        'FLOOR': lambda a, b: math.floor(a)}
 
 
 def _enabled(sockets, name=None):
@@ -79,6 +82,42 @@ class B:
 
     def max(self, a, b): return self.math('MAXIMUM', a, b)
     def ceil(self, a): return self.math('CEIL', a)
+    def sin(self, a): return self.math('SINE', a)
+    def cos(self, a): return self.math('COSINE', a)
+    def sqrt(self, a): return self.math('POWER', a, 0.5)
+
+    def compare(self, op, a, b):
+        n = self.node('FunctionNodeCompare', {'data_type': 'FLOAT', 'operation': op})
+        self.set(_enabled(n.inputs, 'A')[0], a); self.set(_enabled(n.inputs, 'B')[0], b)
+        return n.outputs['Result']
+
+    def both(self, a, b):
+        n = self.node('FunctionNodeBooleanMath', {'operation': 'AND'}); self.set(n.inputs[0], a); self.set(n.inputs[1], b)
+        return n.outputs[0]
+
+    def transform(self, geo, loc=(0, 0, 0), rot_z=0.0):
+        t = self.node('GeometryNodeTransform', Geometry=geo, Translation=self.vec(*loc))
+        self.set(_enabled(t.inputs, 'Rotation')[0], self.vec(0.0, 0.0, rot_z))     # constant or a socket expression
+        return t.outputs[0]
+
+    def polar(self, count, radius, angle0, step, z0=0.0, dz=0.0):
+        """Points i = 0..count-1 at angle0 + i*step on a circle, rising dz per point; returns (points, angle field)."""
+        i = self.index(); angle = angle0 + i * step
+        pos = self.vec(radius * self.cos(angle), radius * self.sin(angle), z0 + i * dz)
+        return self.node('GeometryNodeSetPosition', Geometry=self.line(count, (0, 0, 0), (0, 0, 0)), Position=pos).outputs[0], angle
+
+    def taper(self, geo, rm):
+        """Scale y by (rm + x) / rm so a radial panel's width tracks the arc: ring panels meet edge to edge."""
+        pos = self.node('ShaderNodeSeparateXYZ', Vector=self.node('GeometryNodeInputPosition').outputs[0]).outputs
+        x, y, z = (S(self, o) for o in pos)
+        return self.node('GeometryNodeSetPosition', Geometry=geo, Position=self.vec(x, y * (rm + x) / rm, z)).outputs[0]
+
+    def instance_at(self, points, geo, rot_z, selection=None):
+        """Instance geo on points rotated about z by a field (radial boxes stay radial), optional selection."""
+        n = self.node('GeometryNodeInstanceOnPoints', Points=points, Instance=geo)
+        self.set(_enabled(n.inputs, 'Rotation')[0], self.vec(0.0, 0.0, rot_z))
+        if selection is not None: self.set(_enabled(n.inputs, 'Selection')[0], selection)
+        return self.node('GeometryNodeRealizeInstances', Geometry=n.outputs[0]).outputs[0]
 
     def vec(self, x, y, z):
         if not any(isinstance(v, S) for v in (x, y, z)): return (x, y, z)
@@ -152,14 +191,15 @@ class B:
 
 def room_kit(b, P):
     W, D, H, T, F = P['width'], P['depth'], P['height'], P['wall_thickness'], 0.06
+    # Walls stand on the floor slab: overlapping coplanar faces of two objects give ambiguous depth/ID labels.
     g = [b.box((-W / 2 - T, 0, 0), (W / 2 + T, D + T, F), 1, 'floor'),
-         b.box((-W / 2 - T, 0, 0), (-W / 2, D + T, H), 3, 'wall'),
-         b.box((W / 2, 0, 0), (W / 2 + T, D + T, H), 4, 'wall')]
+         b.box((-W / 2 - T, 0, F), (-W / 2, D + T, H), 3, 'wall'),
+         b.box((W / 2, 0, F), (W / 2 + T, D + T, H), 4, 'wall')]
     wx, ww = P['window_offset'], P['window_width']
     x0, x1 = wx - ww / 2, wx + ww / 2
     z0 = F + P['window_sill']; z1 = z0 + P['window_height']
-    for lo, hi in (((-W / 2, D, 0), (x0, D + T, H)), ((x1, D, 0), (W / 2, D + T, H)),
-                   ((x0, D, 0), (x1, D + T, z0)), ((x0, D, z1), (x1, D + T, H))):
+    for lo, hi in (((-W / 2, D, F), (x0, D + T, H)), ((x1, D, F), (W / 2, D + T, H)),
+                   ((x0, D, F), (x1, D + T, z0)), ((x0, D, z1), (x1, D + T, H))):
         g.append(b.box(lo, hi, 2, 'wall'))
     ft = 0.05
     for lo, hi in (((x0, D, z0), (x0 + ft, D + T, z1)), ((x1 - ft, D, z0), (x1, D + T, z1)),
@@ -184,14 +224,57 @@ def room_kit(b, P):
           b.box((bx0 + 0.02, by0 + 0.02, F + 0.46), (bx1 - 0.02, by0 + 0.62 * P['bed_length'], F + 0.5), 11, 'fabric'),
           b.sphere(((bx0 + bx1) / 2, by1 - 0.3, F + 0.52), (P['bed_width'] * 0.32, 0.17, 0.06), 12, 'fabric_alt')]
     # Bookshelf on the left wall in front of the desk; seeded book heights.
-    n = P['shelf_count']; sx0 = -W / 2; sy1 = dy0 - 0.08; sy0 = sy1 - 0.8; hh = n * 0.35 + 0.02; sc = (sy0 + sy1) / 2
-    g += [b.box((sx0, sy0, F), (sx0 + 0.3, sy0 + 0.02, F + hh), 13, 'wood'),
-          b.box((sx0, sy1 - 0.02, F), (sx0 + 0.3, sy1, F + hh), 13, 'wood'),
-          b.instance(b.line(n + 1, (sx0 + 0.15, sc, F), (0, 0, 0.35)), b.box((-0.15, -0.38, 0), (0.15, 0.38, 0.02), 13, 'wood'))]
-    row = b.instance(b.line(8, (0, -0.3, 0), (0, 0.085, 0)), b.box((-0.1, -0.018, 0), (0.1, 0.018, 1.0), 14, 'accent'),
-                     scale=b.vec(1.0, 1.0, b.random(0.18, 0.3, P['seed'])))
-    g.append(b.instance(b.line(n, (sx0 + 0.15, sc, F + 0.02), (0, 0, 0.35)), row))
+    g.append(b.transform(bookshelf(b, P['shelf_count'], P['seed'], 13, 14), (-W / 2, dy0 - 0.88, F)))
     g.append(b.cyl(P['rug_radius'], 0.01, (0, D * 0.45, F), 15, 'rug'))
+    return b.join(*g)
+
+
+def bookshelf(b, n, seed, shelf_part, books_part):
+    """Room-kit bookshelf in local space: back against x=0, 0.3 deep (+x), 0.8 wide (y 0..0.8), standing on z=0."""
+    hh = n * 0.35 + 0.02
+    g = [b.box((0, 0, 0), (0.3, 0.02, hh), shelf_part, 'wood'), b.box((0, 0.78, 0), (0.3, 0.8, hh), shelf_part, 'wood'),
+         b.instance(b.line(n + 1, (0.15, 0.4, 0), (0, 0, 0.35)), b.box((-0.15, -0.38, 0), (0.15, 0.38, 0.02), shelf_part, 'wood'))]
+    row = b.instance(b.line(8, (0, -0.3, 0), (0, 0.085, 0)), b.box((-0.1, -0.018, 0), (0.1, 0.018, 1.0), books_part, 'accent'),
+                     scale=b.vec(1.0, 1.0, b.random(0.18, 0.3, seed)))
+    g.append(b.instance(b.line(n, (0.15, 0.4, 0.02), (0, 0, 0.35)), row))
+    return b.join(*g)
+
+
+def lighthouse_room(b, P):
+    """Round lighthouse map room: ring wall of radial panels with windows, spiral steps on the wall, central map table."""
+    R_, T, H, F, n = P['radius'], P['wall_thickness'], P['height'], 0.06, P['panels']
+    step = 2 * math.pi / n
+    # Flat panels meeting on radial planes are 2 r tan(pi/n) wide at radius r; taper() scales the width with r.
+    w = 2 * (R_ + T / 2) * b.math('TANGENT', math.pi / n)
+    # The floor is the wall's own outer n-gon (apothem R+T, a face centred on each panel), so no wall overhangs it at any LOD.
+    g = [b.transform(b.cyl((R_ + T) / b.cos(math.pi / n), F, (0, 0, 0), 1, 'floor', segs=n), (0, 0, 0), -math.pi / 2 - math.pi / n)]
+    pts, angle = b.polar(n, R_ + T / 2, -math.pi / 2, step)         # panel 0 faces the front (-y)
+    i = b.index()
+    window = b.compare('LESS_THAN', b.math('FLOORED_MODULO', i, P['window_every']), 0.5)
+    keep = b.compare('GREATER_THAN', i, P['cutaway'] * 2.5 - 0.5)  # cutaway=1 removes panels 0..2 and n-2..n-1 at the front
+    keep = b.both(keep, b.compare('LESS_THAN', i, n - P['cutaway'] * 2.5))
+    solid = b.both(keep, b.compare('GREATER_THAN', b.math('FLOORED_MODULO', i, P['window_every']), 0.5))
+    z0, z1 = F + P['window_sill'], F + P['window_sill'] + P['window_height']
+    panel = lambda lo, hi: b.taper(b.box((-T / 2, -w / 2, lo), (T / 2, w / 2, hi), 2, 'wall'), R_ + T / 2)
+    g += [b.instance_at(pts, panel(F, H), angle, solid),
+          b.instance_at(pts, b.join(panel(F, z0), panel(z1, H)), angle, b.both(keep, window)),
+          b.instance_at(pts, b.box((-0.02, -w / 2 + 0.03, z0), (0.02, w / 2 - 0.03, z1), 9, 'glass'), angle, b.both(keep, window))]
+    # Spiral steps cantilevered from the wall on the left, rising toward a hatch.
+    rise = (H - F) / (P['stair_steps'] + 1)
+    # First step starts past the chart shelf's corner as seen from the centre (0.65 m off-axis at radius R - 0.9).
+    start = math.pi / 2 + b.math('ARCTAN2', 0.65, R_ - 0.9) + 0.12
+    spts, sangle = b.polar(P['stair_steps'], R_ - 0.4, start, 0.22, F + rise, rise)
+    g.append(b.instance_at(spts, b.box((-0.4, -0.2, -0.05), (0.4, 0.2, 0.0), 3, 'wood_dark'), sangle))
+    # Central map table with an unrolled chart, a stool, and a rug under them.
+    tr = P['table_radius']
+    g += [b.cyl(tr, 0.05, (0, 0, F + 0.72), 4, 'wood'), b.cyl(0.08, 0.72, (0, 0, F), 4, 'wood_dark'),
+          b.cyl(0.35, 0.03, (0, 0, F), 4, 'wood_dark'),
+          b.box((-0.6 * tr, -0.4 * tr, F + 0.77), (0.6 * tr, 0.4 * tr, F + 0.775), 5, 'paper'),
+          b.cyl(0.18, 0.04, (tr + 0.35, 0, F + 0.42), 6, 'wood'), b.cyl(0.04, 0.42, (tr + 0.35, 0, F), 6, 'wood_dark'),
+          b.cyl(tr + 0.55, 0.01, (0, 0, F), 8, 'rug')]
+    # Room-kit bookshelf of charts at the back, turned to face the room, clear of the panel AABBs.
+    back = R_ * b.cos(1.5 * step) - 0.05                           # inside every panel's axis-aligned box
+    g.append(b.transform(bookshelf(b, P['shelf_count'], P['seed'], 7, 10), (-0.4, back, F), -math.pi / 2))
     return b.join(*g)
 
 
@@ -213,9 +296,10 @@ def prop(b, P):
     scatter = b.set_position(b.line(5, (0, 0, 0), (0, 0, 0)),
                              b.random(b.vec(-0.2 * w, -0.2 * w, pot_h + 0.6 * rz), b.vec(0.2 * w, 0.2 * w, h - 1.2 * rz), P['seed'], 'FLOAT_VECTOR'))
     rx = b.random(0.2 * w, 0.27 * w, P['seed'] + 1)
-    plant = b.join(b.cyl(0.3 * w, pot_h, (0, 0, 0), 6, 'terracotta', top=0.4 * w),
+    # The cone stops under the rim and the soil sits on the rim, so no visible faces of two parts coincide.
+    plant = b.join(b.cyl(0.3 * w, pot_h - 0.05 * h, (0, 0, 0), 6, 'terracotta', top=0.4 * w),
                    b.cyl(0.43 * w, 0.05 * h, (0, 0, pot_h - 0.05 * h), 6, 'terracotta'),
-                   b.cyl(0.37 * w, 0.02 * h, (0, 0, pot_h - 0.03 * h), 7, 'soil'),
+                   b.cyl(0.37 * w, 0.01 * h, (0, 0, pot_h), 7, 'soil'),
                    b.sphere((0, 0, h - rz), (0.28 * w, 0.28 * w, rz), 8, 'foliage'),
                    b.instance(scatter, b.sphere((0, 0, 0), (1, 1, 1), 8, 'foliage'), scale=b.vec(rx, rx, rz)))
     return b.index_switch(P['kind'], [lantern, b.join(*crate), plant])
@@ -250,7 +334,44 @@ def shrine(b, P):
     return b.join(*g)
 
 
-GENERATORS = {'room_kit': room_kit, 'prop': prop, 'shrine': shrine}
+def pier(b, P):
+    """Harbour pier on a seabed at z=0: piles, stringers and planks, optional railing, lamp posts and bollards, water plane.
+    The shore end sits at y=0 and the pier runs out along +y."""
+    L, W, wl, pr = P['length'], P['width'], P['water_level'], P['pile_radius']
+    top = wl + P['deck_height']                                    # deck surface
+    n_piles = b.math('FLOOR', L / P['pile_spacing']) + 1
+    inset = b.max(0.2, pr + 0.02)                                  # piles stay inside the deck ends, whatever their radius
+    sp = (L - 2 * inset) / (n_piles - 1)
+    g = []
+    for sx in (-1, 1):
+        x = sx * (W / 2 - 0.15)
+        g.append(b.instance(b.line(n_piles, (x, inset, 0), (0, sp, 0)), b.cyl(pr, top - 0.24, (0, 0, 0), 1, 'wood_dark')))
+        g.append(b.box((x - 0.08, 0, top - 0.24), (x + 0.08, L, top - 0.06), 2, 'wood_dark'))          # stringer
+    planks = b.math('FLOOR', L / 0.2)
+    g.append(b.instance(b.line(planks, (0, L / planks / 2, top - 0.06), (0, L / planks, 0)),
+                        b.box((-W / 2, -L / planks / 2 + 0.01, 0), (W / 2, L / planks / 2 - 0.01, 0.06), 3, 'wood')))
+    # Railing: posts every ~1.5 m on both sides with a top rail, standing on the deck.
+    posts = b.math('FLOOR', L / 1.5) + 1
+    rail = []
+    for sx in (-1, 1):
+        x = sx * (W / 2 - 0.05)
+        rail += [b.instance(b.line(posts, (x, 0.05, top), (0, (L - 0.1) / (posts - 1), 0)), b.box((-0.04, -0.04, 0), (0.04, 0.04, 0.95), 4, 'wood_dark')),
+                 b.box((x - 0.05, 0.01, top + 0.95), (x + 0.05, L - 0.01, top + 1.0), 4, 'wood')]
+    g.append(b.switch(P['railing'], b.join(*rail)))
+    # Lamp posts down the left side and mooring bollards down the right, evenly spaced along the deck.
+    lamp = b.join(b.cyl(0.05, 2.3, (0, 0, 0), 5, 'black'), b.box((-0.13, -0.13, 2.3), (0.13, 0.13, 2.6), 5, 'paper'),
+                  b.cyl(0.2, 0.12, (0, 0, 2.6), 5, 'black', top=0.02, segs=4, rot=(0, 0, math.pi / 4)))
+    nl = P['lamps']
+    g.append(b.instance(b.line(nl, (-W / 2 + 0.35, L / (nl + 1), top), (0, L / (nl + 1), 0)), lamp))
+    nb = P['bollards']
+    bollard = b.join(b.cyl(0.11, 0.35, (0, 0, 0), 6, 'black'), b.cyl(0.15, 0.05, (0, 0, 0.35), 6, 'black'))
+    g.append(b.instance(b.line(nb, (W / 2 - 0.35, L / (nb + 1), top), (0, L / (nb + 1), 0)), bollard))
+    # Water: an open plane (two-sided surface, not a solid) 3 m beyond the pier on each side and the far end.
+    g.append(b.grid(W + 6, L + 3, (0, (L + 3) / 2, wl), (0, 0, 0), 7, 'water'))
+    return b.join(*g)
+
+
+GENERATORS = {'room_kit': room_kit, 'prop': prop, 'shrine': shrine, 'lighthouse_room': lighthouse_room, 'pier': pier}
 
 
 def make_materials(palette):
