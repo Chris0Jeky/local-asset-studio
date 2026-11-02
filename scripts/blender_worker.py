@@ -149,7 +149,8 @@ def bench(blender_path, blend, out_dir, calls=30, edit_object=None):
     report = {"blender": str(lab.executable(blender_path)), "blend": blend.name, "calls": calls, "plan": plan}
     (target / "probe").mkdir()
     scene = fresh_call(blender_path, target / "probe", blend, "describe_scene")
-    edited = next(o for o in scene["objects"] if o["name"] == edit_object)
+    edited = next((o for o in scene["objects"] if o["name"] == edit_object), None)
+    require(edited is not None, f"--edit-object {edit_object!r} is not in the scene")
     require(edited["parent"] is None or all(row == [float(i == j) for j in range(4)] for i, row in
             enumerate(next(o for o in scene["objects"] if o["name"] == edited["parent"])["matrix_world"])),
             "bench edits need an object whose parent sits at identity")
