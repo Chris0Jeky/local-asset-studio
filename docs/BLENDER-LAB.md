@@ -355,3 +355,21 @@ A bundle is `evidence.json` in the `studio.dcc-evidence/v1` format, holding:
   comes back `within_declared_tolerance`.
 - The corpus `transform-offset` variant comes back `different`, with the exact structural path
   `/objects/Head/matrix_world`.
+
+## Independent second visual signal
+
+When `scripts/render_critic.py` (frontier-lab's render critic, #1956) is importable, the sentinel, the worker's
+`reimport_validate` and the corpus baseline also run it in reference mode on the four lit views. Without
+`--critic-server` that means its pixel gate only: more than 8 levels on at least 20 px. With `--critic-server`, its
+vision model also names what changed.
+
+The result is recorded as `second_signal`, with `agrees_with_primary`. A change that only the critic sees becomes a
+visual warning. A change that only the primary diff sees is just recorded, because the primary diff also covers the
+clay and ID passes. When the critic is absent the signal reads `{"available": false}`, and the primary diff never
+depends on it.
+
+Measured on 2 Nov 2026 with #1956's critic:
+- On the known-bad corpus, the two signals agree on 13 of 13 entries on both 4.5.13 and 5.4 alpha. The seven
+  render-visible defects change 1,820 to 26,587 px. The control and the five render-invisible defects change 0 px.
+- On sentinel roundtrips (5.4), the critic agrees on the control (0 px), missing texture (26,628 px), omitted mesh,
+  material mismatch, and shape-key damage (0 px, a manifest-only defect).
