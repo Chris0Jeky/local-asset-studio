@@ -520,6 +520,7 @@
           -0.03
         ]
       },
+      "closed": true,
       "color_attributes": [],
       "edges": 48,
       "faces": 18,
@@ -550,6 +551,7 @@
           -0.375
         ]
       },
+      "closed": true,
       "color_attributes": [],
       "edges": 12,
       "faces": 6,
@@ -580,6 +582,7 @@
           -0.32
         ]
       },
+      "closed": true,
       "color_attributes": [],
       "edges": 552,
       "faces": 288,
@@ -1796,7 +1799,7 @@
   },
   "runtime": {
     "executable": "C:/AI/blender-4.5.13-windows-x64/blender.exe",
-    "wall_seconds": 0.617
+    "wall_seconds": 0.735
   },
   "scene": {
     "camera": null,
@@ -1810,9 +1813,9 @@
     "unit_system": "METRIC"
   },
   "schema": "las.blender-lab.v1",
-  "semantic_checksum": "e842b51f0efb6daa8dbb430293f2d67a182fddfc18340daeb7696b0b6a981b0a",
+  "semantic_checksum": "25705eb9bb505075252912ca5643343a3a2ac71951ad6f943cec3af14ee17f65",
   "source": {
     "file": "lab-asset.blend",
-    "sha256": "5aec5d325654ee1c11570dec941c031aa61e766e2d568b041326c023987bb497"
+    "sha256": "3e28a5984dd55706d5a7affb4c7e4e3af8301659edc8a6118299418f3cc20e85"
   }
 }

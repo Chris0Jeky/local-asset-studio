@@ -286,6 +286,19 @@ def _signed_volume(mesh, points):
     return rnd(np.einsum("ij,ij->i", tris[:, 0], np.cross(tris[:, 1], tris[:, 2])).sum() / 6.0)
 
 
+def _closed(mesh, points):
+    """Every triangle edge shared by exactly two triangles once vertices with bit-identical positions are welded, so
+    the seam splits of a GLB roundtrip do not make a closed surface look open."""
+    import numpy as np
+    mesh.calc_loop_triangles()
+    if not len(mesh.loop_triangles) or not len(points): return False
+    _, weld = np.unique(points, axis=0, return_inverse=True)
+    tris = weld.reshape(-1)[_foreach(mesh.loop_triangles, "vertices", 3, np.int32).reshape(-1, 3)]
+    edges = np.sort(np.concatenate([tris[:, [0, 1]], tris[:, [1, 2]], tris[:, [2, 0]]]), axis=1)
+    _, counts = np.unique(edges, axis=0, return_counts=True)
+    return bool((counts == 2).all())
+
+
 def _mesh(mesh):
     import numpy as np
     coords = _foreach(mesh.vertices, "co", 3, np.float32)
@@ -298,6 +311,7 @@ def _mesh(mesh):
              "loops": len(mesh.loops), "triangles": int(np.maximum(loop_totals - 2, 0).sum()),
              "geometry_hash": _quantised_hash(coords, loop_totals, loop_verts, edge_verts),
              "signed_volume": _signed_volume(mesh, pts),
+             "closed": _closed(mesh, coords.reshape(-1, 3)),
              "bbox": {"min": vec(pts.min(0)), "max": vec(pts.max(0))} if len(pts) else None,
              "uv_maps": [uv.name for uv in mesh.uv_layers],
              "color_attributes": sorted(a.name for a in mesh.color_attributes),

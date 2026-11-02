@@ -238,6 +238,7 @@
           -0.5
         ]
       },
+      "closed": true,
       "color_attributes": [],
       "edges": 108,
       "faces": 54,
@@ -268,6 +269,7 @@
           0.0
         ]
       },
+      "closed": true,
       "color_attributes": [],
       "edges": 108,
       "faces": 54,
@@ -298,6 +300,7 @@
           -0.825
         ]
       },
+      "closed": true,
       "color_attributes": [],
       "edges": 12,
       "faces": 6,
@@ -328,6 +331,7 @@
           -0.192
         ]
       },
+      "closed": true,
       "color_attributes": [],
       "edges": 36,
       "faces": 14,
@@ -358,6 +362,7 @@
           -0.192
         ]
       },
+      "closed": true,
       "color_attributes": [],
       "edges": 36,
       "faces": 14,
@@ -2461,7 +2466,7 @@
   "pose_samples": {},
   "runtime": {
     "executable": "C:/AI/blender-5.4.0-alpha+main.67c9bdddb88b-windows.amd64-release/blender.exe",
-    "wall_seconds": 0.62
+    "wall_seconds": 0.662
   },
   "scene": {
     "camera": "InspectionCamera",
@@ -2475,9 +2480,9 @@
     "unit_system": "METRIC"
   },
   "schema": "las.blender-lab.v1",
-  "semantic_checksum": "f4ee2053d12c8495ef9b9434a31db117db12f9ddfc7d2e69cf7e6fcecd7603d6",
+  "semantic_checksum": "95e16d6a168dba13c1f7d21c0b3e884d777a2ee059ef2c038f73fd2e51adb80e",
   "source": {
     "file": "chest.blend",
-    "sha256": "b3ab4780aa2da5911d3ae52341e863f1c986621ffdae708358ad86bca9b7eb4b"
+    "sha256": "10c1cbba82522783407f43208c38a3009c8737ba8f3d84e65aebd58f89bec05e"
   }
 }
