@@ -9,7 +9,8 @@ The answer is constrained to a JSON schema: a list of at most four defects, each
 one short evidence phrase (an empty list means no defect). A list keeps output short: generation dominates the cost on a
 local GPU. `check` prints that JSON; `eval` runs it over a `scripts/critic_defect_scene.py` set and `score` reports precision and
 recall per category. Trust only categories whose measured precision held; see docs/research/LOCAL-RENDER-CRITIC.md.
-Stdlib only; the model server is the HTTP service (OpenAI-compatible `/v1/chat/completions`).
+The HTTP client is stdlib; reference pixel comparison also uses Pillow. The model server exposes
+OpenAI-compatible `/v1/chat/completions`.
 """
 import argparse, base64, json, re, subprocess, sys, time, urllib.request
 from pathlib import Path
@@ -51,7 +52,7 @@ def _image(path):
 
 
 def _label(path):
-    m = re.search(r"view_([a-z]+)", Path(path).stem); return m.group(1) if m else Path(path).stem
+    m = re.fullmatch(r"view_([a-z]+)", Path(path).stem); return m.group(1) if m else Path(path).stem
 
 
 def messages(images, rubric, reference=()):
@@ -79,19 +80,62 @@ def messages(images, rubric, reference=()):
 DIFF_LEVEL, DIFF_MIN_PX = 8, 20
 
 
-def pixel_diff(images, reference, level=DIFF_LEVEL):
-    """Per view (matched by label): pixels whose largest channel difference exceeds `level`, and their bounding box."""
+class ReferenceEvidenceError(ValueError):
+    """The supplied reference evidence cannot support a pixel comparison."""
+
+
+def _view_map(paths, role):
+    mapped = {}
+    for path in paths:
+        label = _label(path)
+        if label in mapped: raise ReferenceEvidenceError(f"duplicate {role} view label: {label}")
+        mapped[label] = path
+    if not mapped: raise ReferenceEvidenceError(f"no {role} views")
+    return mapped
+
+
+def _rgba8(image):
+    """Reject lossy sample conversion before decoding. This is decoded-value QA, not colour-managed comparison."""
+    if getattr(image, "n_frames", 1) != 1: raise ReferenceEvidenceError("multi-frame evidence is not supported")
+    if image.mode not in ("1", "L", "LA", "P", "RGB", "RGBA"):
+        raise ReferenceEvidenceError(f"unsupported evidence mode {image.mode}; use an explicitly converted 8-bit copy")
+    if image.format == "PNG":
+        # PNG RGB16/RGBA16 is exposed as RGB/RGBA by Pillow, so checking image.mode alone loses low bits.
+        position = image.fp.tell()
+        try:
+            image.fp.seek(0); header = image.fp.read(29)
+        finally: image.fp.seek(position)
+        if header[:16] != b"\x89PNG\r\n\x1a\n\x00\x00\x00\x0dIHDR" or len(header) != 29:
+            raise ReferenceEvidenceError("noncanonical PNG header")
+        if header[24] not in (1, 2, 4, 8):
+            raise ReferenceEvidenceError("high-bit PNG evidence is not supported; retain the original and convert a copy explicitly")
+    return image.convert("RGBA")
+
+
+def _pixel_observations(images, reference, level):
     from PIL import Image, ImageChops
-    refs = {_label(p): p for p in reference}; out = {}
-    for p in images:
-        if _label(p) not in refs: continue
-        with Image.open(p) as a, Image.open(refs[_label(p)]) as b:
-            if a.size != b.size:  # ImageChops compares only the overlap; a size change is itself a change
-                out[_label(p)] = {"changed_px": a.width * a.height, "bbox": (0, 0) + a.size, "size_mismatch": [a.size, b.size]}; continue
-            d = ImageChops.difference(a.convert("RGB"), b.convert("RGB"))
-        r, g, bl = d.split(); m = ImageChops.lighter(ImageChops.lighter(r, g), bl).point(lambda x: 255 if x > level else 0)
-        out[_label(p)] = {"changed_px": m.histogram()[255], "bbox": m.getbbox()}
-    return out
+    if type(level) is not int or not 0 <= level <= 255: raise ValueError("pixel level must be an integer from 0 to 255")
+    candidates, refs = _view_map(images, "candidate"), _view_map(reference, "reference")
+    if candidates.keys() != refs.keys():
+        raise ReferenceEvidenceError(f"view sets differ: candidate missing {sorted(refs.keys() - candidates.keys())}; "
+                                     f"reference missing {sorted(candidates.keys() - refs.keys())}")
+    out, sizes = {}, {}
+    for label, p in candidates.items():
+        with Image.open(p) as a_raw, Image.open(refs[label]) as b_raw:
+            a, b = _rgba8(a_raw), _rgba8(b_raw)
+        sizes[label] = {"candidate": list(a.size), "reference": list(b.size)}
+        if a.size != b.size:  # ImageChops compares only the overlap; never clear a size mismatch.
+            out[label] = {"changed_px": a.width * a.height, "bbox": (0, 0) + a.size, "size_mismatch": [a.size, b.size]}; continue
+        channels = ImageChops.difference(a, b).split(); peak = channels[0]
+        for channel in channels[1:]: peak = ImageChops.lighter(peak, channel)
+        mask = peak.point(lambda x: 255 if x > level else 0)
+        out[label] = {"changed_px": mask.histogram()[255], "bbox": mask.getbbox()}
+    return out, sizes
+
+
+def pixel_diff(images, reference, level=DIFF_LEVEL):
+    """Complete, unique label-matched RGBA8 evidence; unsupported precision/animation is an error, not a match."""
+    return _pixel_observations(images, reference, level)[0]
 
 
 def check(images, rubric=RUBRIC, reference=(), server=DEFAULT_SERVER, timeout=600, max_tokens=1500, diff_only=False):
@@ -99,13 +143,20 @@ def check(images, rubric=RUBRIC, reference=(), server=DEFAULT_SERVER, timeout=60
     unchanged candidate never reaches the model, which removes its false alarms on clean renders. (diff_only=None is
     the internal 'gate passed' call.)"""
     if not images: raise ValueError("no candidate views")
+    if diff_only is True and not reference: raise ValueError("diff_only requires reference views")
     if reference and diff_only is not None:
-        diff = pixel_diff(images, reference)
-        # A candidate view with no reference view cannot be cleared by the diff, so it goes to the model (fail open).
-        changed = (sum(v["changed_px"] for v in diff.values()) >= DIFF_MIN_PX or len(diff) < len(images)
+        policy = {"level": DIFF_LEVEL, "min_pixels": DIFF_MIN_PX, "channels": "decoded-RGBA8", "colour_management": "none"}
+        try:
+            diff, sizes = _pixel_observations(images, reference, DIFF_LEVEL)
+        except ReferenceEvidenceError as exc:
+            # Existing bool consumers remain conservative; scorer/evaluate recognise error rows, never clean negatives.
+            return {"defects": [], "pixel_diff": {}, "view_sizes": {}, "changed": True, "model": None,
+                    "evidence_complete": False, "error": str(exc), "pixel_policy": policy}
+        changed = (sum(v["changed_px"] for v in diff.values()) >= DIFF_MIN_PX
                    or any("size_mismatch" in v for v in diff.values()))
-        if diff_only or not changed: return {"defects": [], "pixel_diff": diff, "changed": changed, "model": None}
-        return dict(check(images, rubric, reference, server, timeout, max_tokens, diff_only=None), pixel_diff=diff, changed=True)
+        receipt = {"pixel_diff": diff, "view_sizes": sizes, "changed": changed, "evidence_complete": True, "pixel_policy": policy}
+        if diff_only or not changed: return dict(receipt, defects=[], model=None)
+        return dict(check(images, rubric, reference, server, timeout, max_tokens, diff_only=None), **receipt)
     body = {"messages": messages(images, rubric, reference), "temperature": 0, "max_tokens": max_tokens, "cache_prompt": True,
             "chat_template_kwargs": {"enable_thinking": False},
             "response_format": {"type": "json_schema", "json_schema": {"name": "critique", "schema": schema(rubric)}}}
