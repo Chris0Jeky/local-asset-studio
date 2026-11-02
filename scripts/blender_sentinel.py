@@ -91,6 +91,8 @@ def compare_manifests(source, roundtrip):
             failures.append(f"visible mesh {name} is missing after the roundtrip"); continue
         other = rt_meshes[name]
         before, after = src_data.get(obj["data"], {}), rt_data.get(other["data"], {})
+        if len(before.get("uv_maps", [])) != len(after.get("uv_maps", [])):  # glTF keeps UV set count, not names
+            failures.append(f"{name}: UV maps {len(before.get('uv_maps', []))} -> {len(after.get('uv_maps', []))}")
         if before.get("triangles") != after.get("triangles"):
             failures.append(f"{name}: triangles {before.get('triangles')} -> {after.get('triangles')}")
         if before.get("closed") and after.get("closed") is False:

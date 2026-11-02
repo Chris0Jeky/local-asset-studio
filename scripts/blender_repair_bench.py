@@ -14,6 +14,7 @@ import json
 import os
 from pathlib import Path
 import re
+import statistics
 import subprocess
 import sys
 import time
@@ -37,7 +38,7 @@ PROMPT = """You repair a Blender asset using ONLY the las-blender MCP tools. Nev
 Damaged file: "{case}". Known-good reference: "{reference}". Use these names exactly as given (they are in the read tree).
 1. blender_open the damaged file, blender_describe_scene, then blender_open it again with allow_edit listing the object names you may need to change.
 2. blender_compare_to with reference "{reference}": read matches_reference, structural_differences and localisation.
-3. Fix only with blender_apply_edit (ops: location, rotation_euler, scale, hide_render, material {{slot, material}}, shape_key {{key, value}}), passing expect_checksum = the latest current_checksum (or describe_scene's semantic_checksum).
+3. Fix only with blender_apply_edit (ops: location, rotation_euler, scale, hide_render, material {{slot, material}}, shape_key {{key, value}}, delete true to remove an object that should not exist), passing expect_checksum = the latest current_checksum (or describe_scene's semantic_checksum).
 4. After each edit run blender_compare_to again. Stop when matches_reference is true or when no allowed op can fix what remains.
 5. If you changed anything that helps, blender_save_copy with path "repaired.blend".
 Damage such as missing UVs, mesh holes, flipped normals, broken weights, damaged shape-key data or a missing image file cannot be fixed with these ops: say so and do not save.
@@ -268,6 +269,21 @@ def combine(run_dirs, out_path):
     return report
 
 
+def aggregate(report_paths):
+    """Totals over several per-asset reports: repair rate on repairable cases, declines, collateral, failures."""
+    reports = {Path(path).parent.name: json.loads(Path(path).read_text(encoding="utf-8")) for path in report_paths}
+    require(len(reports) == len(report_paths), "each report must be a different asset")
+    require(len({report["agent"] for report in reports.values()}) == 1, "reports from different agents")
+    rows = [dict(row, asset=asset) for asset, report in reports.items() for row in report["rows"]]
+    repairable = [r for r in rows if r["repairable_by_vocabulary"]]
+    tally = {}
+    for row in rows: tally[row["outcome"]] = tally.get(row["outcome"], 0) + 1
+    return {"cases": len(rows), "outcomes": tally,
+            "repairable_exact": sum(r["exact"] for r in repairable), "repairable_total": len(repairable),
+            "collateral_cases": sorted(f"{r['asset']}/{r['case']}" for r in rows if r["collateral"]),
+            "median_seconds": statistics.median(r["seconds"] for r in rows) if rows else None}
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -275,9 +291,13 @@ def main(argv=None):
     bench.add_argument("--blender", required=True); bench.add_argument("--corpus-dir", required=True)
     bench.add_argument("--out-dir", required=True); bench.add_argument("--agent", required=True, choices=("claude-haiku", "codex-sol"))
     bench.add_argument("--cases")
+    totals = commands.add_parser("aggregate")
+    totals.add_argument("--reports", nargs="+", required=True)
     merge = commands.add_parser("combine")
     merge.add_argument("--runs", nargs="+", required=True); merge.add_argument("--out", required=True)
     args = parser.parse_args(argv)
+    if args.command == "aggregate":
+        print(json.dumps(aggregate(args.reports), indent=2)); return 0
     if args.command == "combine":
         report = combine(args.runs, args.out)
         print(json.dumps({k: report[k] for k in ("outcomes", "repairable_exact", "repairable_total", "collateral_cases",
