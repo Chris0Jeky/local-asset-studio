@@ -292,6 +292,20 @@ To score a critic, have it read `evidence/<id>/renders` and answer clean or defe
 Compare its answers with `expected`. A render-only critic cannot be blamed for the manifest-only five. Local builds
 are in `E:/local-asset-studio-labs/rnd-20261102/blender-worker/corpus/known-bad-v1b-*`. Lab media stays out of Git.
 
+## GPU cost and the Studio GPU lease
+
+Every evidence render records per-pass `timings`. The sentinel's `result.json` adds `gpu_cost`: GPU seconds
+(Workbench and EEVEE passes, and Cycles only on a GPU device), CPU seconds, and a class that is `heavy` above 30 GPU
+seconds, the R&D programme's lease threshold, and `light` otherwise. Measured on 2 Nov 2026, the default sentinel run
+on the lab asset takes about 1.9 s on the GPU (Workbench) and 0.7 s on the CPU (Cycles), so it is light and needs no
+lease.
+
+For heavy work, `--studio-lease http://127.0.0.1:8191` holds the Studio's own GPU lease (`POST /api/gpu-lease`,
+holder `blender-lab-<random>`, one per run, with a TTL covering both processes at their timeouts) around both Blender processes and releases it afterwards, on failure paths too. If the grant response is lost, the run releases its own holder before raising. Only loopback http URLs are accepted.
+The Studio grants the lease only when its own work and ComfyUI queues are idle, and then pauses its ComfyUI. If the
+lease is refused, the run raises before any Blender process starts. The lease is never taken by default. It was
+tested against a local fake Studio only, not taken live, because other lanes share ComfyUI tonight.
+
 ## Which tool for what
 
 Two stacks were built in parallel on 2 Nov 2026: this lab, and the offline DCC evidence work from #1911. They now
