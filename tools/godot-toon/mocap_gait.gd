@@ -5,6 +5,8 @@ extends RefCounted
 ##   var gait = preload("res://mocap_gait.gd").new()
 ##   func _ready(): super(); gait.setup(self)
 ##   func _process(delta): super(delta); gait.drive(self, delta, Vector3(body.velocity.x, 0, body.velocity.z))
+## Ray casts read the physics space directly: fine with the default single-threaded physics; with
+## physics/common/run_on_separate_thread enabled, call drive() from _physics_process instead.
 ## Needs res://mocap/walk.json and run.json (`python scripts/bvh_joints.py IN.bvh OUT.json`; not in Git). Tested with Bandai Namco Research
 ## Motiondataset 1 clips (CC BY-NC 4.0: attribution, non-commercial; record the licence of whatever mocap you use).
 
@@ -29,7 +31,7 @@ const RUN_FROM := 1.7
 const RUN_FULL := 2.3
 
 var clips := {}; var stride := {}; var cycle := {}; var rest_dir := {}; var hips_i := -1; var hips_rest: Transform3D; var hips_y := 0.0
-var k := 1.0; var ankle_h := 0.1; var dist := 0.0; var run_w := 0.0; var moving := 0.0
+var k := 1.0; var ankle_h := 0.1; var phase := 0.0; var run_w := 0.0; var moving := 0.0
 var ik: TwoBoneIK3D; var targets := {}; var poles := {}; var lock := {}
 
 
@@ -53,10 +55,10 @@ func setup(h) -> void:
 		ik.set_target_node(i, ik.get_path_to(t)); ik.set_pole_node(i, ik.get_path_to(p)); i += 1
 
 
-func _sample(c: String, dist_m: float) -> Dictionary:
-	# Positions at the cycle phase reached after dist_m metres, hips' horizontal travel removed (the host moves the body).
+func _sample(c: String, ph: float) -> Dictionary:
+	# Positions at normalised cycle phase ph (0..1), hips' horizontal travel removed (the host moves the body).
 	var fr: Array = clips[c].frames; var n := fr.size()
-	var u := fposmod(dist_m / (stride[c] * k), 1.0) * (n - 1); var i := int(u); var w := u - i
+	var u := fposmod(ph, 1.0) * (n - 1); var i := int(u); var w := u - i
 	var a: Dictionary = fr[i]; var b: Dictionary = fr[min(i + 1, n - 1)]; var out := {}
 	var hips := Vector3(a["Hips"][0], 0, a["Hips"][2]).lerp(Vector3(b["Hips"][0], 0, b["Hips"][2]), w)
 	for j in a: out[j] = Vector3(a[j][0], a[j][1], a[j][2]).lerp(Vector3(b[j][0], b[j][1], b[j][2]), w) - hips
@@ -67,9 +69,9 @@ func drive(h, delta: float, velocity_xz: Vector3) -> void:
 	var skel: Skeleton3D = h.skel; var speed := velocity_xz.length()
 	moving = move_toward(moving, 1.0 if speed > 0.05 else 0.0, delta * 4.0)            # ease in and out of idle
 	run_w = clampf((speed - RUN_FROM) / (RUN_FULL - RUN_FROM), 0.0, 1.0)
-	dist += speed * delta
+	phase = fposmod(phase + speed * delta / (lerpf(stride["walk"], stride["run"], run_w) * k), 1.0)   # one phase, blended stride
 	if moving > 0.0:
-		var pw := _sample("walk", dist); var pr := _sample("run", dist * stride["walk"] / stride["run"]) if run_w > 0.0 else pw
+		var pw := _sample("walk", phase); var pr := _sample("run", phase) if run_w > 0.0 else pw
 		var P := {}
 		for j in pw: P[j] = pw[j].lerp(pr[j], run_w)
 		skel.set_bone_pose_position(hips_i, hips_rest.origin + Vector3(0, (P["Hips"].y * k - hips_y) * moving, 0))
@@ -88,13 +90,14 @@ func _feet(h) -> void:
 	var skel: Skeleton3D = h.skel; var space: PhysicsDirectSpaceState3D = h.get_world_3d().direct_space_state
 	for side in FEET:
 		var p: Vector3 = skel.global_transform * skel.get_bone_global_pose(skel.find_bone(FEET[side][2])).origin
-		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(p + Vector3(0, 0.8, 0), p + Vector3(0, -1.2, 0)))
-		var g: float = hit.position.y if hit else h.root.global_position.y
-		var lift: float = p.y - h.root.global_position.y; var want := Vector3(p.x, g + lift, p.z)
+		var lift: float = p.y - h.root.global_position.y
 		if lift < ankle_h + STANCE:
 			if not lock.has(side): lock[side] = Vector3(p.x, 0, p.z)
-			want = Vector3(lock[side].x, g + maxf(lift, ankle_h), lock[side].z)
 		else: lock.erase(side)
+		var at: Vector3 = Vector3(lock[side].x, p.y, lock[side].z) if lock.has(side) else p    # ground under the planted spot
+		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(at + Vector3(0, 0.8, 0), at + Vector3(0, -1.2, 0)))
+		var g: float = hit.position.y if hit else h.root.global_position.y
+		var want := Vector3(at.x, g + (maxf(lift, ankle_h) if lock.has(side) else lift), at.z)
 		targets[side].global_position = want
 		var knee: Vector3 = skel.global_transform * skel.get_bone_global_pose(skel.find_bone(FEET[side][1])).origin
 		poles[side].global_position = knee + h.root.global_transform.basis.z * 0.6

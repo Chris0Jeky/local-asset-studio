@@ -80,6 +80,11 @@ class BvhJointsTests(unittest.TestCase):
         self.assertEqual(f["UpperLeg_L"], [0.1, 0.9, 0.0])           # left side on +X
         self.assertEqual(f["Toes_L"], [0.1, 0.1, 0.1])                # toes forward on +Z
 
+    def test_relative_root_translation_adds_to_the_offset(self):
+        rel = [[r[0], 0.0, r[2]] + r[3:] for r in [frame(0, 0)] * 3]          # channels relative to OFFSET 0 90 0
+        f = self.convert(rel)["frames"][0]
+        self.assertEqual(f["Hips"], [0.0, 0.9, 0.0])                     # not placed at height zero
+
     def test_rotation_channels_rotate_children(self):
         f = self.convert([frame(0, 0, leg_z=90)] * 3)["frames"][0]   # Z +90 at the left hip swings the leg toward +X
         self.assertAlmostEqual(f["Foot_L"][0], 0.9, places=4); self.assertAlmostEqual(f["Foot_L"][1], 0.9, places=4)

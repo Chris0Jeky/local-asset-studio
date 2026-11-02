@@ -35,13 +35,25 @@ def parse(path):
     return joints, data, dt
 
 
-def world_positions(joints, row):
-    mats = []; k = 0
+def absolute_positions(joints, first_row):
+    """Per joint: True when its position channels carry the whole local translation (Bandai Namco and many exporters),
+    False when they are relative to OFFSET (added to it). Decided on the offset's dominant axis at frame 0: absolute when
+    that channel sits nearer the offset than zero. A zero offset makes both conventions identical."""
+    out = []; k = 0
     for j in joints:
+        pos = {ch[0]: first_row[k + i] for i, ch in enumerate(j["channels"]) if ch.endswith("position")}; k += len(j["channels"])
+        off = j["offset"]; a = max(range(3), key=lambda i: abs(off[i]))
+        out.append(bool(pos) and abs(off[a]) > 1e-6 and abs(pos.get("XYZ"[a], 0.0) - off[a]) < 0.5 * abs(off[a]))
+    return out
+
+
+def world_positions(joints, row, absolute):
+    mats = []; k = 0
+    for n, j in enumerate(joints):
         t = list(j["offset"]); r = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
         for ch in j["channels"]:
             v = row[k]; k += 1
-            if ch.endswith("position"): t["XYZ".index(ch[0])] = v
+            if ch.endswith("position"): t["XYZ".index(ch[0])] = v if absolute[n] else j["offset"]["XYZ".index(ch[0])] + v
             else: r = mat_mul(r, rot(ch[0], v))
         m = mat_mul([[1, 0, 0, t[0]], [0, 1, 0, t[1]], [0, 0, 1, t[2]], [0, 0, 0, 1]], r)
         mats.append(m if j["parent"] is None else mat_mul(mats[j["parent"]], m))
@@ -49,7 +61,8 @@ def world_positions(joints, row):
 
 
 def main(src, out, scale=0.01):
-    joints, data, dt = parse(src); frames = [world_positions(joints, r) for r in data]
+    joints, data, dt = parse(src); absolute = absolute_positions(joints, data[0])
+    frames = [world_positions(joints, r, absolute) for r in data]
     l, r = frames[0]["UpperLeg_L"], frames[0]["UpperLeg_R"]
     yaw = math.atan2(l[2] - r[2], l[0] - r[0])                                  # turn left->right onto +X
     c, s = math.cos(yaw), math.sin(yaw)

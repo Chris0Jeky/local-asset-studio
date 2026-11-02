@@ -121,7 +121,7 @@ It expects `res://mocap/walk.json` and `run.json`. Mocap data is not in Git; rec
 
 Measured on 2 Nov 2026 on a VRoid model with Bandai Namco Research Motiondataset 1 clips (CC BY-NC 4.0). The test moved
 the body like a game controller: idle, a 1.1 m/s walk, a 2.6 m/s run, then a stop. Mean stance-phase foot slide fell from
-2.26 m/s with the old in-place procedural walk to 0.038 m/s with the gait (p95 from 4.21 to 0.046). The retarget is
+2.26 m/s with the old in-place procedural walk to 0.017 m/s with the gait (p95 from 4.21 to 0.003; the mean carries a few rare spikes). The retarget is
 swing-only: limbs get no twist, and the hands and head keep the idle pose.
 
 ## Limits
