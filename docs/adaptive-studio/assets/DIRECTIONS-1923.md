@@ -56,7 +56,8 @@ step and later exists as a toon 3D model (VRM/GLB) for a living guide.
 
 **Idea.** The Studio is a lamplit painter's atelier at night, run by **Maestra Ilse**, an original 34-year-old painter
 (auburn hair pinned up with a brush, green eyes, beauty mark, oxblood corset vest over a paint-stained linen shirt), with
-a small black cat. Built on the look the owner's Versus presses favoured: MOSS-Image with the mikkoani and Impasto 2.5D
+a small black cat. Built on MOSS-Image with the mikkoani and Impasto 2.5D adapters, the look the session brief reported the owner's
+Versus presses favoured; the repository records no ranking for it (the "Kromoss vs MOSS" contest is unsettled)
 adapters.
 
 | | |
@@ -83,7 +84,7 @@ brief wanted, but with personality.
 | Line and paint | 1980s OVA cel: hard two-tone shadows, airbrushed highlights, film grain, slight VHS softness |
 | Mood | Energetic, nostalgic, cool; the 2 a.m. animation studio |
 | Recurring | Kiko, Bit, the loft, light tables, the elevated train in the rain |
-| Local route | Round 1 used `wai` (WAI Illustrious, tags `retro artstyle, 1980s (style), anime screencap`), because `krea-portrait-gguf` failed validation: its `krea2_turbo-Q5_K_M.gguf` was archived to the H: drive on 27 Oct to free C: (#1953), and WAI is the agreed route for now. Krea 2 Turbo + the official retro-anime adapter (`krea-portrait` / `krea-environment`, trigger "purple retro anime style") is the alternative once the file is back; `wan22-i2v` for a short ambient loop |
+| Local route | Round 1 used `wai` (WAI Illustrious, tags `retro artstyle, 1980s (style), anime screencap`), because `krea-portrait-gguf` failed validation: its `krea2_turbo-Q5_K_M.gguf` was archived to the H: drive on 27 Oct to free C: (#1953), and WAI is the interim route the R&D coordinator chose on 2 Nov (not an owner decision). Krea 2 Turbo + the official retro-anime adapter (`krea-portrait` / `krea-environment`, trigger "purple retro anime style") is the alternative once the file is back; `wan22-i2v` for a short ambient loop |
 | Terms (WAI route) | WAI: HF mirror agreement verified; creator authentication and original commercial terms unresolved (`presets/catalog.json`) |
 | Terms (recorded, not cleared) | Krea 2 Community Licence with output/commercial restrictions ([LICENCE-EVIDENCE-1512.md](LICENCE-EVIDENCE-1512.md#krea-2)) |
 | Do | Tie every picture to the Night Shift loft so it continues the accepted environment; let Bit carry small states |
