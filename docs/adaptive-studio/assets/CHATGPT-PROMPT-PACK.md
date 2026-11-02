@@ -1,5 +1,10 @@
 # ChatGPT prompt pack, waves 1 and 2
 
+**Not to be run (owner, 2 November 2026, #1923).** The owner rejected this wave as "very bland and neutral, which isn't
+in the spirit of what this project is". Its prompts stay here as a record and for `intake.py`, which hashes prompt
+sections. The replacement is local-first and character-led: [DIRECTIONS-1923.md](DIRECTIONS-1923.md), pending the owner's
+choice of direction.
+
 Ready-to-paste prompts for every `chatgpt-image` request in waves W1 and W2 of [PRODUCTION-PLAN.md](PRODUCTION-PLAN.md).
 Each prompt is written for ChatGPT's built-in image generation (the route the owner calls "Image 2.5"). This pack does not
 name a model ID: if ChatGPT shows which image model it used, note it when you hand the file back; otherwise it stays unknown.

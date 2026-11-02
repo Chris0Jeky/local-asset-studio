@@ -1,5 +1,26 @@
 # Current state — 2 November 2026
 
+## 2026-11-02 — An original anime character from design to Godot (waifu-lab, R&D night)
+
+An original SFW character, Suzu, went from a written design to a rigged, toon-shaded model in Blender 5.4 and Godot
+4.7. Media stayed outside Git (`E:/local-asset-studio-labs/rnd-20261102/waifu-lab`).
+
+- **2D design.** Direct ComfyUI graph runs:
+  - 8 concepts from `anima-portrait` (832x1216, 30 steps; about 100 s per batch of 4). The first prompt b06c05e2 drew a navy skirt.
+  - 3 front/side/back sheets from the `character-sheet-klein-9b` graph: 137 s after a model switch, then 93 s and 90 s.
+  - Seven concepts and all three sheets are queued in Versus.
+- **3D route.** Every image-to-3D route checked (StdGEN, CharacterGen, AniGen, TRELLIS.2, UniRig, SkinTokens) needs CUDA or Linux. The pixiv VRM1 sample (VRM 1.0 licence, modification allowed) was customised by script instead:
+  - textures repainted through per-texel position maps;
+  - bob cut, pleated skirt with 10 spring chains, braid and ribbon with a spring chain;
+  - ahoge, strap, compass and satchel.
+- **Toon.** [The toon kit](docs/ANIME-TOON-KIT.md) on the 5.4 Material Lighting nodes. An 8-angle key-light sweep compared it with Shader-to-RGB: the two look alike on cloth and hair, and the SDF face shadow is cleaner on the face.
+- **Export.** The VRM 1.0 and GLB passed glTF-Validator 2.0.0-dev.3.10 with 0 errors.
+- **Runtime.** Godot 4.7.2 ran a 150-frame clip: 34 spring chains, 13 colliders, 14 node constraints, a blink and a smile.
+  - A 9 s talking portrait: a Kokoro 82M line (7.65 s of audio in 5.7 s on CPU) and 45 Rhubarb cues (3.9 s) drove the VRM visemes.
+  - Procedural wave and walk actions.
+
+Generated and agent-inspected for defects only. Owner taste, art acceptance and licence clearance stay open.
+
 ## 2026-11-02 — Narration observes an owned state replacement once
 
 A retained narration read now permits one full fresh observation when its live
