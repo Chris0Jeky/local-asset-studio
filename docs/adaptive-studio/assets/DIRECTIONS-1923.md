@@ -22,14 +22,15 @@ presets on the same five slots so they can be compared side by side in Versus. N
 
 | Slot | Catalogue row it fills | What the picture shows (all three directions) | Canvas |
 | --- | --- | --- | --- |
-| Welcome | `guide-welcome` (onboarding, first run) | The guide at the workshop door, welcoming you in; calm wall on the left for text | 1536×1024 |
-| Create | `workflow-create` | The guide's first stroke on a blank sheet, light rising from it like an idea | 1536×1024 |
-| Combine | `workflow-combine` | The guide pinning three different pictures around one blank canvas, linked to it | 1536×1024 |
-| Empty | `state-blank` (friendly empty library; the owner allowed pictures for friendly empty states on 27 Sep) | The guide in an empty gallery, holding up an empty frame to you | 1536×1024 |
-| Canon | `reference-identity` | The guide's full-body reference on a plain background | 1024×1536 |
+| Welcome | `guide-welcome` (onboarding, first run) | The guide at the workshop door, welcoming you in; calm wall on the left for text | landscape |
+| Create | `workflow-create` | The guide's first stroke on a blank sheet, light rising from it like an idea | landscape |
+| Combine | `workflow-combine` | The guide pinning three different pictures around one blank canvas, linked to it | landscape |
+| Empty | `state-blank` (friendly empty library; the owner allowed pictures for friendly empty states on 27 Sep) | The guide in an empty gallery, holding up an empty frame to you | landscape |
+| Canon | `reference-identity` | The guide's full-body reference on a plain background | portrait |
 
-The recipes, seeds, prompt IDs and output hashes are in the lab log (`art-direction/runs.jsonl` in the R&D night folder),
-not in Git; the pictures stay local.
+Landscape is 1536×1024, except A's two redos and all of C (1216×832); portrait is 1024×1536 for A and B and 832×1216
+for C (see the round 1 receipts below). The full recipes and seeds are in the lab log (`art-direction/runs.jsonl` in the R&D night
+folder), not in Git; the pictures stay local.
 
 ---
 
@@ -82,12 +83,45 @@ brief wanted, but with personality.
 | Line and paint | 1980s OVA cel: hard two-tone shadows, airbrushed highlights, film grain, slight VHS softness |
 | Mood | Energetic, nostalgic, cool; the 2 a.m. animation studio |
 | Recurring | Kiko, Bit, the loft, light tables, the elevated train in the rain |
-| Local route | `krea-portrait-gguf` / `krea-environment` (Krea 2 Turbo + the official retro-anime adapter, trigger "purple retro anime style"); `wan22-i2v` for a short ambient loop |
+| Local route | Round 1 used `wai` (WAI Illustrious, tags `retro artstyle, 1980s (style), anime screencap`), because `krea-portrait-gguf` failed validation: its `krea2_turbo-Q5_K_M.gguf` is missing on disk. Krea 2 Turbo + the official retro-anime adapter (`krea-portrait` / `krea-environment`, trigger "purple retro anime style") is the alternative once the file is back; `wan22-i2v` for a short ambient loop |
+| Terms (WAI route) | WAI: HF mirror agreement verified; creator authentication and original commercial terms unresolved (`presets/catalog.json`) |
 | Terms (recorded, not cleared) | Krea 2 Community Licence with output/commercial restrictions ([LICENCE-EVIDENCE-1512.md](LICENCE-EVIDENCE-1512.md#krea-2)) |
 | Do | Tie every picture to the Night Shift loft so it continues the accepted environment; let Bit carry small states |
 | Don't | Imitate a named 80s show or its characters; readable screens or signage; neon borders across UI text |
 
 ---
+
+## Round 1 receipts (2 November 2026)
+
+Fifteen Studio jobs through `POST /api/jobs` on 8191, one seed per slot (192301-192305), plus two redos. Generated and
+agent-inspected for defects only (extra figures, letters, missed brief); no taste judgement and no acceptance. The
+directions are in Versus as **"Studio art directions (#1923)"** (comparisons only within one slot, five groups named
+"Most in the spirit of the project - <slot>") and **"Studio art directions (#1923): whole sets"** (one board per direction).
+
+| Direction / slot | Preset | Seconds | Studio job | Prompt ID | Output sha256 | Agent defect check |
+| --- | --- | ---: | --- | --- | --- | --- |
+| A welcome (1536×1024) | `anima-portrait` | 156.9 | `42586edc` | `dcbcd8ec-2c5b-4920-b71a-5041283444cd` | `fa8cf0ec6ccc…` | Two Suzus: excluded |
+| A welcome v2 (1216×832) | `anima-portrait` | 108.4 | `2d844e85` | `95267ae8-27c2-4408-af54-fb26cfe51c2d` | `16b3a9e1d9a2…` | Clean |
+| A create (1536×1024) | `anima-portrait` | 76.3 | `d9c41851` | `28fbf062-8b07-4904-b435-50fd27a4d337` | `eefa26696edc…` | Clean |
+| A combine (1536×1024) | `anima-portrait` | 76.2 | `1abcd6a8` | `f8a68fca-e066-4d9c-a9a6-0d7ea976a391` | `141341455bbd…` | Two Suzus: excluded |
+| A combine v2 (1216×832) | `anima-portrait` | 68.3 | `aa5913e9` | `d3c0dc47-d152-4f69-81c5-777cf7b93b8c` | `35bfefca5bb4…` | Clean |
+| A empty (1536×1024) | `anima-portrait` | 80.3 | `39686e4f` | `12351ffd-5aae-4e44-9820-a86465efd3e1` | `84691681ad7b…` | Clean |
+| A canon (1024×1536) | `anima-portrait` | 76.3 | `0144f81f` | `1779c510-ab64-4de3-8238-0a1709e643bd` | `e6a1f8a54621…` | Clean |
+| B welcome | `moss-t2i` | 96.3 | `8eb80491` | `a0c74cd8-fce5-4ad4-abea-b824e4ffa08f` | `e0d86e5fa21d…` | Clean; the left third is a flat empty wall |
+| B create | `moss-t2i` | 108.4 | `ee7caf04` | `a5b9074e-edfb-4ba1-bd4d-4498a83b8c84` | `3e11884fc96e…` | Clean |
+| B combine | `moss-t2i` | 64.4 | `004e1597` | `0c269cfb-c13b-4edf-8e37-9f659cfb7aaa` | `23e966252ce2…` | Gold ribbons into the canvas; the three source paintings are not distinct (weak brief match) |
+| B empty | `moss-t2i` | 60.3 | `d51dccd5` | `129ec013-6f05-4fdd-a0d5-0ad4c1d3132a` | `fa56e284054e…` | Clean |
+| B canon | `moss-t2i` | 60.3 | `dd18b3ad` | `a361bde7-667f-41a2-8cd9-8679a4d204e5` | `76612998fa79…` | Clean |
+| C welcome | `wai` | 302.8 | `d250025f` | `fd9d3f2c-d583-4be9-9a06-accaeb35e67e` | `c17795891e13…` | Legible kana on a neon sign and a shirt print (letters: fixable) |
+| C create | `wai` | 104.3 | `980fe311` | `cf8a846a-2dc3-4998-8946-2c44af11fc4a` | `1e598c40cc32…` | Clean |
+| C combine | `wai` | 52.2 | `5b0db8f8` | `37190e5b-acec-4a9e-a00b-42dfb40b50ab` | `f1a7d1903c69…` | Missed the brief: no corkboard of three drawings |
+| C empty | `wai` | 60.2 | `07915750` | `5d01b00a-c34f-4645-97b6-a9c107f42767` | `cb8055f5a005…` | Clean |
+| C canon | `wai` | 56.2 | `f4facb27` | `3a3cf972-fc47-42c5-a755-5942c5d16934` | `40c9cc82085c…` | Clean |
+
+B ran on the isolated MOSS backend in one shared window (switched to `moss` at 06:48, back to `primary` at 06:56; 8188
+answered `/system_stats` afterwards). A at 1536 wide drew the character twice in two of five slots, which matches the
+waifu-lab lane's earlier Anima two-figure result; 1216×832 with duplicate negatives fixed both. Not verified: other seeds,
+any identity score for Suzu across slots, crops at delivery sizes, and whether the text-safe areas survive the real slots.
 
 ## Replacement prompt plan
 
