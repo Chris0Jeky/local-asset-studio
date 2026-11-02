@@ -79,7 +79,9 @@ def compare_manifests(source, roundtrip):
     rt_images = {i["name"]: i for i in roundtrip["images"]}
     for obj in source["objects"]:
         if obj["name"] not in src_meshes and obj["type"] != "ARMATURE":
-            exclusions.append(f"{obj['name']} ({obj['type']}{', hidden' if obj['hide_render'] or not obj['visible'] else ''}) is not exported by the LAS settings")
+            reason = ("is not exported by the LAS settings" if obj["type"] in ("LIGHT", "CAMERA") or obj["type"] == "MESH"
+                      else "is not compared (only visible meshes and armatures are)")
+            exclusions.append(f"{obj['name']} ({obj['type']}{', hidden' if obj['hide_render'] or not obj['visible'] else ''}) {reason}")
     for image in source["images"]:
         if image["missing"]: failures.append(f"source image {image['name']} is missing ({image['file']})")
     used = set()

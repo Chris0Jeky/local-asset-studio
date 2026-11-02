@@ -251,7 +251,16 @@ armature. Measured on 2 Nov 2026:
   exclusions.
 
 The chest exposed a gap: object-level animation was not sampled, so a flattened or truncated lid animation passed.
-`object_samples` now hold world matrices at 5 frames over each animated object's action range. The sentinel compares
+`object_samples` now hold world matrices at every frame of the moving action's range (thinned to at most 121). The
+moving action is the object's own or an ancestor's, so a mesh carried by an animated parent Empty is covered. Skinned
+meshes are skipped here: glTF stores them in armature space, and `deform_samples` cover their world-space motion.
+
+With several glTF animations, Blender's importer activates only one clip and leaves the rest as NLA strips. Each
+build picks a different first clip. The reimport step activates each object's first strip, mutes that track and
+reports it under `import_activated_clips` in `roundtrip.json`. Two genuine export losses showed up while testing this:
+- A skinned mesh parented to an animated Empty loses the Empty's motion, because glTF re-parents skinned meshes under
+  their armature. The sentinel reports it.
+- Clips other than the active one are not played when the GLB is reopened in Blender as-is. The sentinel compares
 them for exported objects and skips excluded helpers. Seeded on the chest, on both builds:
 - `bone-twist-lost`, which flattens rotation curves, fails with `ChestLid: object transform differs at frame 16`.
 - `truncated-animation` fails with `ChestLid: object animation frames [1, 16, 30, 45, 60] -> [1, 8, 16, 23, 30]`.

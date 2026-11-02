@@ -100,8 +100,12 @@ class StructuralTests(unittest.TestCase):
         flattened = copy.deepcopy(chest)
         lid = flattened["object_samples"]["ChestLid"]
         lid["matrices"] = [lid["matrices"][0]] * len(lid["matrices"])
-        self.assertEqual(sentinel.compare_manifests(chest, flattened)["failures"], ["ChestLid: object transform differs at frame 16"])
-        truncated = copy.deepcopy(chest); truncated["object_samples"]["ChestLid"]["frames"] = [1, 8, 16, 23, 30]
+        failures = sentinel.compare_manifests(chest, flattened)["failures"]
+        self.assertEqual(len(failures), 1); self.assertTrue(failures[0].startswith("ChestLid: object transform differs at frame"))
+        brief = copy.deepcopy(chest)  # one mid-range frame flattened: dense sampling still sees it
+        lid = brief["object_samples"]["ChestLid"]; lid["matrices"][7] = lid["matrices"][0]
+        self.assertEqual(sentinel.compare_manifests(chest, brief)["failures"], [f"ChestLid: object transform differs at frame {lid['frames'][7]}"])
+        truncated = copy.deepcopy(chest); truncated["object_samples"]["ChestLid"]["frames"] = list(range(1, 31))
         self.assertIn("ChestLid: object animation frames", sentinel.compare_manifests(chest, truncated)["failures"][0])
 
     def test_hidden_helper_animation_carries_no_export_obligation(self):

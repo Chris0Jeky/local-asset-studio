@@ -441,15 +441,21 @@ def _deform_samples(scene, view_layer, poses):
     return samples
 
 
-def _object_samples(scene, count=5):
-    """World matrices of every object with its own action, at evenly spaced frames over that action's range, so
-    lost or truncated object-level animation (a hinged lid, a door) shows without an armature."""
+def _object_samples(scene, cap=121):
+    """World matrices of every object moved by its own or an ancestor's action, at every frame of that action's range
+    (evenly thinned to `cap`), so lost, truncated or briefly flattened object-level animation shows without an
+    armature, including a mesh carried by an animated parent Empty."""
     samples, current = {}, scene.frame_current
-    animated = [o for o in scene.objects if o.animation_data and o.animation_data.action]
-    for obj in sorted(animated, key=lambda o: o.name):
-        low, high = obj.animation_data.action.frame_range
-        samples[obj.name] = {"frames": sorted({int(round(low + (high - low) * i / (count - 1))) for i in range(count)}),
-                             "matrices": []}
+    for obj in sorted(scene.objects, key=lambda o: o.name):
+        if any(m.type == "ARMATURE" and m.object for m in getattr(obj, "modifiers", [])):
+            continue  # skinned: glTF stores it in armature space; deform_samples cover its world-space motion
+        mover = obj
+        while mover is not None and not (mover.animation_data and mover.animation_data.action): mover = mover.parent
+        if mover is None: continue
+        low, high = (int(round(v)) for v in mover.animation_data.action.frame_range)
+        count = min(cap, high - low + 1)
+        frames = sorted({int(round(low + (high - low) * i / max(count - 1, 1))) for i in range(count)})
+        samples[obj.name] = {"frames": frames, "matrices": [], "driven_by": mover.name}
     for frame in sorted({f for sample in samples.values() for f in sample["frames"]}):
         scene.frame_set(frame)
         for name, sample in samples.items():
@@ -786,9 +792,23 @@ def export_glb(path):
 
 
 def import_glb(path):
+    """Import into a factory-empty scene. With several glTF animations the importer activates only one and leaves the
+    rest as NLA strips, so an object animated by another clip would look static; activate its first strip (and mute
+    that track) and report every such step. Engines read all clips; this is not forgiving a loss."""
     import bpy
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.gltf(filepath=str(path))
+    activated = []
+    for obj in sorted(bpy.context.scene.objects, key=lambda o: o.name):
+        anim = obj.animation_data
+        if anim is None or anim.action is not None: continue
+        strips = [(track, strip) for track in anim.nla_tracks for strip in track.strips if strip.action]
+        if not strips: continue
+        track, strip = strips[0]
+        anim.action = strip.action
+        track.mute = True
+        activated.append({"object": obj.name, "action": strip.action.name})
+    return activated
 
 
 # ---- typed persistent worker ----------------------------------------------------------------------------------------
@@ -980,7 +1000,7 @@ def _evidence(args):
     import os
     os.makedirs(args.out_dir, exist_ok=True)
     if args.export and not args.blend: raise ValueError("--export needs --blend")
-    open_blend(args.blend) if args.blend else import_glb(args.glb)
+    activated = open_blend(args.blend) if args.blend else import_glb(args.glb)
     label = os.path.basename(args.blend or args.glb)
 
     def write(name, value):
@@ -992,6 +1012,7 @@ def _evidence(args):
     evidence = render_evidence(os.path.join(args.out_dir, "renders"), spec)
     write("evidence.json", evidence)
     result = {"kind": "evidence", "source": label, "evidence": "evidence.json", "manifest": "manifest.json"}
+    if args.glb: result["import_activated_clips"] = activated
     if args.export:
         open_blend(args.blend)  # export from the untouched file, not from the evidence-rigged scene
         result["seeded_defect"] = seed_defect(args.seed_defect) if args.seed_defect else None
