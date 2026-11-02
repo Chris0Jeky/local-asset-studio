@@ -173,4 +173,13 @@ run(`productionPlans=[${JSON.stringify(plan('h','comparison','rendering_now',1))
 assert.equal(ids($('#productionList').innerHTML),'h','Open statuses are read from StudioUX when it is present');
 delete context.StudioUX;run(`productionPlans=[];setPlanFilter({type:'all',status:'active'});`);
 
+// #1921 · A comparison names its stage and the next decision from recorded state only.
+const staged=(status,done,review)=>run(`planStageLine(${JSON.stringify({state:{status,review},stages:['A','B','C'].map((label,i)=>({label,job:i<done?{status:'completed',outputs:[{asset_id:'x'+label}]}:{status:'running'}}))})})`);
+const current=html=>(html.match(/aria-current="step">([^<]+)</)||[])[1];
+for(const [status,done,review,step,words] of [['planned',0,null,'1 · Plan','never starts on its own'],['running',1,null,'2 · Make the candidates','1 of 3 done'],
+  ['awaiting_review',3,null,'3 · Compare','All 3 candidates are made'],['reviewed',3,{asset_id:'xB'},'4 · Decide','Candidate B won'],
+  ['reviewed',3,{status:'needs_work'},'4 · Decide','none was right yet'],['interrupted',2,null,'2 · Make the candidates','Stopped with 2 of 3']]){
+  const html=staged(status,done,review);assert.equal(current(html),step,status);assert.ok(html.includes(words),status+': '+html);
+}
+
 console.log('Experiments planner cards state each fact once; plan names, empty state and comparison arithmetic read clearly.');
