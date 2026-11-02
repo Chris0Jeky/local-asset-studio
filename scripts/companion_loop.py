@@ -21,8 +21,10 @@ EMOTIONS = ("happy", "curious", "thinking", "apologetic")
 TAG = re.compile(r"\[\s*(%s)\s*\]" % "|".join(EMOTIONS), re.I)
 REMEMBER = re.compile(r"\[\s*remember\s*:\s*([^\]]*)\]", re.I)
 END = re.compile(r"[.!?\u2026]+[\"')\u201d\u2019]*(?=\s)")
+CLAUSE = re.compile(r"[,;:\u2014](?=\s)")
 SPEED = {"happy": 1.04, "curious": 1.0, "thinking": 0.96, "apologetic": 0.94}
-MIN_CHARS = 14                                                              # shorter pieces wait for the next sentence
+MIN_CHARS = 10                                                              # shorter pieces wait for the next sentence
+FIRST_CLAUSE = 24              # the first piece may end at a comma once this long: Kokoro's time grows with length
 KEEP_LEAD, KEEP_TAIL = 0.04, 0.22                                           # seconds of silence kept around each sentence
 FRAME = 600 / 24000                                                         # one Kokoro duration unit (hop 600 at 24 kHz)
 VISEME_LEAD = 0.05             # pred_dur cues trail the audio envelope by 40-60 ms (6/6 bench sentences): shift them earlier
@@ -51,19 +53,28 @@ def phoneme_cues(phonemes, durations, offset=0.0):
 
 class Splitter:
     """Feed streamed text; get back finished sentences with the mood in force and any [remember: ...] facts.
-    Never cuts inside an open [tag]; a piece shorter than MIN_CHARS is held and joined to the next one."""
+    Never cuts inside an open [tag]; a piece shorter than MIN_CHARS is held and joined to the next one. Until the first
+    piece is out, a clause of FIRST_CLAUSE characters ending at a comma also counts, so the first audio starts sooner."""
 
     def __init__(self, emotion="happy"):
-        self.buf, self.held, self.emotion, self.facts = "", "", emotion, []
+        self.buf, self.held, self.emotion, self.facts, self.first = "", "", emotion, [], True
+
+    def _cut(self):
+        closed = lambda m: self.buf.count("[", 0, m.end()) <= self.buf.count("]", 0, m.end())
+        ends = [m for m in END.finditer(self.buf) if closed(m)]
+        if self.first:
+            ends += [m for m in CLAUSE.finditer(self.buf) if closed(m) and len(TAG.sub("", self.held + self.buf[:m.end()]).strip()) >= FIRST_CLAUSE]
+        return min(ends, key=lambda m: m.end(), default=None)
 
     def feed(self, text):
         self.buf += text; out = []
         while True:
-            m = next((m for m in END.finditer(self.buf) if self.buf.count("[", 0, m.end()) <= self.buf.count("]", 0, m.end())), None)
+            m = self._cut()
             if not m: break
             piece, self.buf = self.buf[:m.end()], self.buf[m.end():]
             s = self._clean(piece)
             if s: out += self._hold(s)
+            if out: self.first = False
         return out
 
     def flush(self):

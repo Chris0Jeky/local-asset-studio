@@ -59,6 +59,11 @@ class SplitterTest(unittest.TestCase):
         self.assertEqual(s.feed("And cake] *waves* See you at the pier tomorrow! "), [("Sure. See you at the pier tomorrow!", "happy")])
         self.assertEqual(s.facts, ["likes tea. And cake"])
 
+    def test_first_piece_may_end_at_a_long_enough_clause(self):
+        out, _ = self.feed_all("[happy] Oh, hello there, it is so lovely to see you, really. Come in, sit down.")
+        self.assertEqual(out, [("Oh, hello there, it is so lovely to see you,", "happy"),   # "Oh," / "Oh, hello there," too short
+                               ("really. Come in, sit down.", "happy")])                    # later commas never cut
+
     def test_flush_emits_a_short_tail(self):
         out, _ = self.feed_all("[thinking] Hmm")
         self.assertEqual(out, [("Hmm", "thinking")])
@@ -101,7 +106,7 @@ class BrainTest(unittest.TestCase):
         (self.tmp / "memory.json").write_text(json.dumps({"self": ["You map tide pools."]}), encoding="utf-8")
 
     def test_sentences_stream_before_done_and_facts_persist(self):
-        srv, url, seen = stub_llm([{"content": "[happy] Hello, Ana! Nice to meet you. "}, {"content": "[curious] Do you sail? [remember: friend is Ana]"}])
+        srv, url, seen = stub_llm([{"content": "[happy] Hello there, Ana! Nice to meet you. "}, {"content": "[curious] Do you sail? [remember: friend is Ana]"}])
         voice, events = FakeVoice(), []
         try:
             brain = cl.Brain(url, voice, self.tmp, self.tmp / "persona.md", self.tmp / "memory.json")
@@ -109,9 +114,10 @@ class BrainTest(unittest.TestCase):
             brain.respond("Again", events.append)
         finally: srv.shutdown(); srv.server_close()
         kinds = [e["type"] for e in events if e["type"] != "token"]
-        self.assertEqual(kinds[:3], ["sentence", "sentence", "done"])
-        first = [e for e in events if e["type"] == "sentence"][:2]
-        self.assertEqual([(e["text"], e["emotion"]) for e in first], [("Hello, Ana! Nice to meet you.", "happy"), ("Do you sail?", "curious")])
+        self.assertEqual(kinds[:4], ["sentence", "sentence", "sentence", "done"])
+        first = [e for e in events if e["type"] == "sentence"][:3]
+        self.assertEqual([(e["text"], e["emotion"]) for e in first],
+                         [("Hello there, Ana!", "happy"), ("Nice to meet you.", "happy"), ("Do you sail?", "curious")])
         self.assertEqual(first[0]["cues"][0]["value"], "D"); self.assertEqual(voice.lipsynced, [])   # Kokoro cues, no Rhubarb
         self.assertEqual(first[0]["lead_s"], 0.01); self.assertEqual(first[0]["audio_s"], 0.11)
         self.assertEqual(voice.said[0][1], cl.SPEED["happy"])
