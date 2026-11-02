@@ -86,7 +86,8 @@
         const choice=[...document.querySelectorAll('#uxSourceAssets [data-ux-pull]')].find(b=>b.dataset.uxPull===asset.id);
         (choice||search).focus({preventScroll:true});
       }});
-    const comparisonContext=()=>{const s=state();return {workspace:s.workspace,stamp:JSON.stringify([s.assetId,activeAsset?.sha256,s.assetEpoch,s.workspaceEpoch,s.privacyEpoch,s.receiptEpoch,s.privacy])};};
+    const comparisonContext=()=>{const s=state(),session=JSON.stringify([s.assetId,activeAsset?.sha256,activeAsset?.privacy,activeAsset?.trashed_at,activeAsset?.media_type,s.assetEpoch,s.workspaceEpoch,s.privacyEpoch,s.privacy]);
+      return {workspace:s.workspace,session,receipt:s.receiptEpoch,detail:s.assetEpoch,stamp:JSON.stringify([session,s.receiptEpoch])};};
     const family=F.install({...adapter,read:api,say:message,asset:()=>activeAsset,comparisonContext,
       lookup:id=>assetRecord(id),resolve:ids=>resolveAssetIDs(ids),
       confirm:globalThis.confirm.bind(globalThis),
@@ -98,6 +99,10 @@
       if(key===last)return;last=key;
       if(key)void family.opened();else family.clear();
     }
+    document.addEventListener('studio:asset-detail-saved',event=>{
+      const refresh=family.refreshAfterSave(event.detail);
+      if(refresh){last=JSON.stringify(comparisonContext());void refresh;}else observeDetail();
+    });
     // Presentation observers watch only the existing dialog's session projection and gallery.
     // They neither intercept legacy functions nor add a polling loop or authoritative state.
     const details=new MutationObserver(observeDetail);

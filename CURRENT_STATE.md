@@ -1,5 +1,22 @@
 # Current state — 2 November 2026
 
+## 2026-11-02 — Deliberate source comparison survives child metadata saves
+
+Confirmed single-child detail saves now notify the existing comparison view to
+revalidate its deliberately chosen pair. Images stay withheld until fresh family
+and selected-ID observations confirm both identities, hashes and privacy. Newer
+receipts, choices, navigation or scope changes invalidate older replies, and a
+completion cannot take focus away from newer Notes typing. Workspace still owns
+metadata writes, drafts and recovery. The comparison heading also reserves room
+for the dialog close button.
+
+All 55 comparison Node contracts, three family wrappers, 28 detail contracts and
+the frontend handoffs pass. The expanded browser journey covers saved-pair/focus
+continuity, held reads, changed source evidence and close-button spacing; its
+exact-head hosted result belongs to the follow-up PR. Refs #1875. The earlier
+comparison head `5e06c25` passed all 37 original browser checks with unchanged
+parent bytes and no generation; that report is baseline evidence for this follow-up.
+
 ## 2026-11-02 — Imported repair sources follow displayed image orientation
 
 Marked repair, seamless tiles and parallax now use the same displayed coordinates
