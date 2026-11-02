@@ -1,0 +1,81 @@
+{
+  "base_commit": "686411437a9c3264434851c4624ff8a2cf3b0621",
+  "causal_red": {
+    "saved_replay": {
+      "failures": 17,
+      "tests": 17
+    },
+    "sentinel": {
+      "errors": 2,
+      "failures": 11,
+      "tests": 13
+    }
+  },
+  "local_checkout": "supplied ZIP 9fa5083 plus exact connector-verified relevant files, NOT a full current-main clone",
+  "native_issue_1970": "open; no new production threshold selected",
+  "not_executed": [
+    "native Blender",
+    "AMD/Windows qualification",
+    "model inference",
+    "private-character edits",
+    "browser acceptance",
+    "local complete-current-main suite"
+  ],
+  "python": "3.13.5",
+  "recorded_at_utc": "2026-11-02T13:45:51.105087+00:00",
+  "review": "self-review; hosted exact-head CI and independent review are separate gates",
+  "runs": [
+    {
+      "command": "python -Werror::ResourceWarning -m unittest discover -s tests -p \"test_render_critic*.py\" -v",
+      "log_sha256": "072cd7b526bc6443b7d406a95e875165631c040f684daa08dc27c60b4543995f",
+      "result": "passed",
+      "scope": "real critic/policy/fixture tests",
+      "seconds": 4.286,
+      "tests": 69
+    },
+    {
+      "command": "local focused bootstrap -> test_blender_critic_receipt.py",
+      "log_sha256": "443fffc69765fd648f8956b65fb4a1bf2a07b759ee544f0a380d076c3c645a1c",
+      "result": "passed",
+      "scope": "Blender dispatch module stubbed locally; real sentinel/critic/Pillow functions",
+      "seconds": 0.027,
+      "tests": 13
+    },
+    {
+      "command": "python -Werror::ResourceWarning -m unittest discover -s tests -p \"test_critic_research_archive.py\" -v",
+      "log_sha256": "772fd72f29b963465736828d5aac63e00f5e8882bf435c65b1e0bbe49ab21901",
+      "result": "passed",
+      "scope": "lossless source archive verification",
+      "seconds": 0.001,
+      "tests": 1
+    }
+  ],
+  "schema": "las.critic-continuation-verification.v1",
+  "source": {
+    "scripts/blender_sentinel.py": {
+      "git_blob": "b595342cd2ba5394a002e084ff99df381cd0c36d",
+      "sha256": "fbcd7216598330b50cf175421d8557202694c315f5d6f30728592822b639eb38"
+    },
+    "scripts/render_critic.py": {
+      "git_blob": "f4a69077628eab2f00346bebc63bea648de783da",
+      "sha256": "28856c1e7ec49d9cade1ca5943ad8250548c53afabb7e9e7da18ee70e2e51891"
+    },
+    "scripts/render_critic_policy.py": {
+      "git_blob": "d9392f11ea70ff6406fcfa2ff4dd0bd22f8285c0",
+      "sha256": "041cc92d1b97ce9165ce5dc6a6ff0da4c1297856f5a05b97b7579990b9236aa2"
+    },
+    "scripts/render_critic_study.py": {
+      "git_blob": "d30129e870462049dc9fb3993a34585459ee6bc2",
+      "sha256": "c33c4a99a8daf72993bf0ed7724ce298ec561325bfacf4edf3f7aa1a0dd14925"
+    }
+  },
+  "total_tests": 83,
+  "validation": {
+    "lora_names": 167,
+    "pinned_assets": 194,
+    "preset_graphs": 98,
+    "result": "passed",
+    "scope": "local snapshot Git payload/catalog check only",
+    "tracked_paths": 4757
+  }
+}

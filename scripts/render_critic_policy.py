@@ -112,7 +112,37 @@ def _bounded_structure(root):
         elif isinstance(value, list): pending.extend((v, depth + 1) for v in value)
 
 
-def replay(receipt_path, out_path, min_fraction):
+def select_observation(document, input_kind='receipt'):
+    """Explicit input contract; never infer a format or follow a document's asset paths.
+
+    A sentinel summary is usable only alongside its complete raw observation. Its
+    overall `pass` and primary warnings are not a pixel-policy decision.
+    """
+    _require(input_kind in ('receipt', 'sentinel'), 'input_kind must be receipt or sentinel')
+    if input_kind == 'receipt': return document
+    try:
+        _require(isinstance(document, dict) and document.get('schema') == 'las.asset-parity-sentinel.v1',
+                 'expected a las.asset-parity-sentinel.v1 document')
+        signal = document.get('second_signal')
+        _require(isinstance(signal, dict) and signal.get('available') is True,
+                 'sentinel critic observation is unavailable')
+        _require('error' not in signal and signal.get('evidence_complete', True) is True,
+                 'sentinel critic observation is incomplete or failed')
+        _require(signal.get('tool') == 'render_critic' and signal.get('mode') in ('pixel gate', 'pixel gate + vision model'),
+                 'unsupported sentinel second-signal tool or mode')
+        observation = signal.get('observation')
+        _require(isinstance(observation, dict), 'sentinel lacks the complete critic observation; do not infer dimensions')
+        views = _observe(observation)
+        _require(type(signal.get('changed')) is bool and signal['changed'] == observation['changed']
+                 and type(signal.get('changed_px')) is int
+                 and signal['changed_px'] == sum(v['changed_px'] for v in views.values()),
+                 'sentinel summary contradicts its critic observation')
+        return observation
+    except ValueError as exc:
+        return {'evidence_complete': False, 'error': str(exc)}
+
+
+def replay(receipt_path, out_path, min_fraction, input_kind='receipt'):
     """Read a bounded receipt, record its byte identity and create a new decision file exclusively."""
     with Path(receipt_path).open('rb') as stream: data = stream.read(MAX_RECEIPT_BYTES + 1)
     _require(len(data) <= MAX_RECEIPT_BYTES, 'receipt exceeds 2 MiB')
@@ -121,7 +151,12 @@ def replay(receipt_path, out_path, min_fraction):
     except RecursionError as exc:
         raise ValueError('JSON nesting exceeds decoder limit') from exc
     _bounded_structure(receipt)
-    result = dict(decide(receipt, min_fraction), receipt_sha256=hashlib.sha256(data).hexdigest())
+    observation = select_observation(receipt, input_kind)
+    result = dict(decide(observation, min_fraction),
+                  receipt_sha256=hashlib.sha256(data).hexdigest(), input_kind=input_kind,
+                  observation_pointer='/second_signal/observation' if input_kind == 'sentinel' else '')
+    if input_kind == 'sentinel' and 'error' in observation:
+        result['error'] = str(observation['error'])[:300]
     with Path(out_path).open('x', encoding='utf-8', newline='\n') as stream:
         stream.write(json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + '\n')
     return result
@@ -133,9 +168,11 @@ def main(argv=None):
     replay_parser = commands.add_parser('replay')
     replay_parser.add_argument('receipt'); replay_parser.add_argument('--fraction', type=float, required=True)
     replay_parser.add_argument('--out', required=True)
+    replay_parser.add_argument('--input-kind', choices=('receipt', 'sentinel'), default='receipt',
+                               help='explicitly select a raw critic receipt or a saved sentinel result.json')
     args = parser.parse_args(argv)
     try:
-        result = replay(args.receipt, args.out, args.fraction)
+        result = replay(args.receipt, args.out, args.fraction, args.input_kind)
     except (OSError, ValueError) as exc:
         print(json.dumps({'error': str(exc)}), file=sys.stderr); return 2
     print(json.dumps(result, indent=2, sort_keys=True))

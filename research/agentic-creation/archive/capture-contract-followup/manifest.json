@@ -1,0 +1,19 @@
+{
+  "compressed_bytes": 15508,
+  "compressed_sha256": "dcd61778df9d97ada1037c076bac4aef37590f04e3a0cb68a49d40b7182b22c8",
+  "compression": "zlib",
+  "files": [
+    "docs/DCC-CAPTURE-CONTRACT.md",
+    "docs/superpowers/plans/2026-11-02-dcc-capture-contract.md",
+    "docs/superpowers/specs/2026-11-02-dcc-capture-contract.md",
+    "research/agentic-creation/capture-profiles/owned-prop-v1.json",
+    "studio_workflow/dcc_capture_contract.py",
+    "tests/test_dcc_capture_contract.py"
+  ],
+  "original_bytes": 55893,
+  "original_comparator_head": "9c4987cc50d5cbc4a071b51c3e51a1362db7a1b9",
+  "original_filename": "las-capture-contract-followup.patch",
+  "original_sha256": "ae6a13b5dfbc8a762593376e3444b6f0a769d8ab2640b6623389e9924542ea5f",
+  "schema": "las.archived-source-patch.v1",
+  "status": "preserved_not_integrated"
+}
