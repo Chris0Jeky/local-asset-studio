@@ -39,7 +39,8 @@ class ProtocolTests(unittest.TestCase):
             self.assertEqual(rpc(server, "initialize")["result"]["capabilities"], {"tools": {}})
             names = {tool["name"] for tool in rpc(server, "tools/list")["result"]["tools"]}
         self.assertEqual(names, {"blender_ping", "blender_caps", "blender_open", "blender_describe_scene", "blender_render_views",
-                                 "blender_save_copy", "blender_export", "blender_apply_edit", "blender_reimport_validate"})
+                                 "blender_save_copy", "blender_export", "blender_apply_edit", "blender_reimport_validate",
+                                 "blender_compare_to"})
         self.assertFalse(any(word in name for name in names for word in ("python", "exec", "eval", "script")))
 
     def test_calls_route_to_the_worker_and_errors_become_tool_errors(self):
@@ -66,6 +67,9 @@ class ProtocolTests(unittest.TestCase):
             for bad in ("../outside.blend", str(Path(tmp) / "out" / "x.blend")):
                 reply = rpc(server, "tools/call", {"name": "blender_open", "arguments": {"blend": bad}})
                 self.assertTrue(reply["result"]["isError"], bad)
+            (Path(tmp) / "assets" / "a.blend").write_bytes(b"")
+            missing = rpc(server, "tools/call", {"name": "blender_open", "arguments": {"blend": "absent.blend"}})
+            self.assertTrue(missing["result"]["isError"])
             ok = rpc(server, "tools/call", {"name": "blender_open", "arguments": {"blend": "a.blend"}})
             self.assertEqual(json.loads(ok["result"]["content"][0]["text"])["blend"], str((Path(tmp) / "assets" / "a.blend").resolve()))
             self.assertEqual([c for c, _ in server.worker.calls], ["open"])
