@@ -13,6 +13,8 @@ on:
       - 'app/static/studio-navigation.css'
       - 'app/static/style.css'
       - 'tests/*spoken*'
+      - 'tests/browser_failure_diagnostics.py'
+      - 'tests/test_browser_failure_diagnostics.py'
       - '.github/workflows/spoken-brief-studio.yml'
 permissions:
   contents: read
