@@ -30,6 +30,13 @@ class PruneTest(unittest.TestCase):
             self.assertEqual(n, 3); self.assertEqual(names, NAMES)
             self.assertEqual([round(data[i], 6) for i in (0, 3, 4)], [0.1, 0.0, 0.0])  # DC kept, higher bands zeroed
             self.assertIn("comment Exported from Brush", head)  # the rest of the header survives
+            tiny = disc[:]; tiny[6:9] = [-25.0, -30.0, -30.0]; tiny[5] = -1000.0  # e^5 needle, extreme logit
+            ply(src, [disc, tiny]); self.assertEqual(splat_prune.prune(src, Path(d) / "e.ply", max_needle=50), {"in": 2, "out": 1})
+            self.assertEqual(splat_prune.prune(src, Path(d) / "f.ply", min_opacity=0.1), {"in": 2, "out": 1})
+            Path(src).write_bytes(Path(src).read_bytes()[:-4])  # truncated payload
+            with self.assertRaises(ValueError): splat_prune.prune(src, Path(d) / "g.ply")
+            Path(src).write_bytes(Path(src).read_bytes().replace(b"end_header", b"element face 0\nend_header"))
+            with self.assertRaises(ValueError): splat_prune.read(src)  # a second element is refused
 
 
 if __name__ == "__main__":

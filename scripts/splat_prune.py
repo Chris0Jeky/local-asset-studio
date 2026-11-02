@@ -15,10 +15,12 @@ def read(path):
     raw = open(path, "rb").read(); end = raw.index(b"end_header\n") + len(b"end_header\n"); head = raw[:end].decode()
     lines = head.splitlines()
     if "format binary_little_endian 1.0" not in lines: raise ValueError("only binary little-endian PLY is supported")
-    n = int(next(l.split()[2] for l in lines if l.startswith("element vertex")))
-    props = [l.split() for l in lines if l.startswith("property")]
+    elements = [l.split() for l in lines if l.startswith("element")]
+    if [e[1] for e in elements] != ["vertex"]: raise ValueError("only a single 'vertex' element is supported")
+    n = int(elements[0][2]); props = [l.split() for l in lines if l.startswith("property")]
     if any(p[1] != "float" for p in props): raise ValueError("only all-float vertex properties are supported")
-    data = array("f"); data.frombytes(raw[end:end + n * 4 * len(props)])
+    if len(raw) - end != n * 4 * len(props): raise ValueError(f"payload is {len(raw) - end} bytes, header declares {n * 4 * len(props)}")
+    data = array("f"); data.frombytes(raw[end:])
     if sys.byteorder != "little": data.byteswap()
     return head, [p[2] for p in props], n, data
 
@@ -33,12 +35,14 @@ def write(path, head, rows, width):
 def prune(src, dst, min_opacity=0.0, max_needle=0.0, dc_only=False):
     head, names, n, d = read(src); w = len(names); col = {k: i for i, k in enumerate(names)}
     rest = [i for k, i in col.items() if k.startswith("f_rest_")]; kept = array("f")
+    # Compare in logit / log space: exact, and no exp overflow for extreme stored values.
+    min_logit = (-math.inf if min_opacity <= 0 else math.inf if min_opacity >= 1 else math.log(min_opacity / (1 - min_opacity)))
+    max_log_ratio = math.log(max_needle) if max_needle else math.inf
     for r in range(n):
         row = d[r * w:(r + 1) * w]
-        if 1 / (1 + math.exp(-row[col["opacity"]])) < min_opacity: continue
-        if max_needle:
-            axes = sorted(math.exp(row[col[k]]) for k in ("scale_0", "scale_1", "scale_2"))
-            if axes[2] > max_needle * max(axes[1], 1e-12): continue
+        if row[col["opacity"]] < min_logit: continue
+        logs = sorted(row[col[k]] for k in ("scale_0", "scale_1", "scale_2"))
+        if logs[2] - logs[1] > max_log_ratio: continue
         if dc_only:
             for i in rest: row[i] = 0.0
         kept.extend(row)

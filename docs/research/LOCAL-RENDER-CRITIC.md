@@ -164,8 +164,8 @@ pixel and model results therefore measure "weight explosion plus pose change", n
 ## Not verified
 
 - The model on the held-out test set.
-- Any model other than the GSQ Qwen. The planned shoot-out was cut short by about 170 KB/s Wi-Fi: Gemma 4 12B arrived
-  corrupt, and Gemma 4 26B-A4B and a standard Qwen K-quant were not downloaded.
+- Models beyond the GSQ Qwen and Gemma 4 12B (see "Second model"). About 170 KB/s Wi-Fi ruled out Gemma 4 26B-A4B and a
+  standard Qwen K-quant that night.
 - Real renders.
 - Higher image-token budgets (`--image-min-tokens`).
 - Vulkan accuracy, which should match ROCm since the weights are the same but was not run.
