@@ -5,9 +5,10 @@
 
 Each run starts a fresh Blender, builds a deterministic generated scene (or opens `--blend`), renders once cold (kernel
 load/compile, BVH and shader compilation included), then `--warmup` untimed and `--repeats` timed renders, and appends
-one JSON line: per-render seconds, median/min/max, peak process RSS and private bytes, peak dedicated VRAM over the
-pre-run baseline (Windows `GPU Adapter Memory` counter, so the GPU must be otherwise idle), and the sha256 of every
-output's decoded pixels. `--table bench.jsonl` prints a Markdown summary. Cycles devices: CPU, HIP (HIP RT off), HIPRT (HIP RT on).
+one JSON line: per-render seconds, median/min/max, peak process RSS and private bytes (sampled every 0.25 s), the
+sampled peak of dedicated VRAM over the pre-run baseline (Windows `GPU Adapter Memory`, one query per ~1.5 s, so the
+GPU must be otherwise idle), the sha256 of every output's decoded pixels and the timed repeats' drift. Frames go to a
+per-run folder; a run counts only if Blender printed its result and exited 0 within `--timeout`. `--table bench.jsonl` prints a Markdown summary. Cycles devices: CPU, HIP (HIP RT off), HIPRT (HIP RT on).
 """
 import argparse, hashlib, json, os, statistics, subprocess, sys, threading, time
 from pathlib import Path
@@ -72,6 +73,7 @@ def inner(cfg):
     if cfg["blend"]: bpy.ops.wm.open_mainfile(filepath=cfg["blend"]); sc = bpy.context.scene
     else: sc = build_scene(cfg["engine"], cfg["res"], cfg["samples"])
     info = configure(sc, cfg["engine"], cfg["device"], cfg["samples"]); setup_s = time.perf_counter() - t0
+    sc.render.image_settings.file_format = "PNG"  # an opened --blend keeps its own format; the host reads r??.png
     out = Path(cfg["out_dir"]); out.mkdir(parents=True, exist_ok=True); times = []
     for i in range(1 + cfg["warmup"] + cfg["repeats"]):
         sc.render.filepath = str(out / f"r{i:02d}.png"); t = time.perf_counter()
@@ -91,55 +93,77 @@ def vram_bytes():
     except Exception: return None
 
 
-class Peaks(threading.Thread):
+class Peaks:
+    """Sample process-tree memory every 0.25 s and adapter VRAM on its own thread (one typeperf query takes ~1.5 s)."""
     def __init__(self, pid):
-        super().__init__(daemon=True); self.pid, self.stop, self.rss, self.private, self.vram = pid, threading.Event(), 0, 0, 0
-    def run(self):
+        self.pid, self.stop, self.rss, self.private, self.vram = pid, threading.Event(), 0, 0, 0
+        self.threads = [threading.Thread(target=f, daemon=True) for f in (self._memory, self._vram)]
+        for t in self.threads: t.start()
+    def _memory(self):
         import psutil
-        p = psutil.Process(self.pid); n = 0
+        try: p = psutil.Process(self.pid)
+        except Exception: return
         while not self.stop.is_set():
             try:
-                procs = [p] + p.children(recursive=True)
-                m = [q.memory_info() for q in procs]
+                m = [q.memory_info() for q in [p] + p.children(recursive=True)]
                 self.rss = max(self.rss, sum(x.rss for x in m)); self.private = max(self.private, sum(getattr(x, "private", 0) for x in m))
             except Exception: pass
-            if n % 8 == 0: v = vram_bytes(); self.vram = max(self.vram, v or 0)
-            n += 1; self.stop.wait(0.25)
+            self.stop.wait(0.25)
+    def _vram(self):
+        while not self.stop.is_set(): self.vram = max(self.vram, vram_bytes() or 0)
+    def close(self):
+        self.stop.set()
+        for t in self.threads: t.join(30)
+
+
+def summarise(res, returncode, lines, out_dir, warmup):
+    """Record fields for one finished Blender process; a run counts only with a result line AND exit code 0."""
+    if not res or returncode != 0:
+        return {"exit_code": "no result" if returncode == 0 else returncode, "log_tail": "".join(lines[-25:])}
+    # Hash decoded pixels: PNG metadata carries the render time and date, so file bytes differ on identical images.
+    from PIL import Image, ImageChops
+    imgs = [Image.open(Path(out_dir) / f"r{i:02d}.png").convert("RGBA") for i in range(len(res["times"]))]
+    hashes = [hashlib.sha256(im.tobytes()).hexdigest() for im in imgs]; first = 1 + warmup; timed = res["times"][first:]
+    # GPU path tracing is not bit-deterministic between renders, so also record how far timed repeats drift (0-255).
+    drift = max(max(b[1] for b in ImageChops.difference(imgs[first], im).getextrema()) for im in imgs[first:])
+    return dict(res, hashes=hashes, repeat_max_abs_diff=drift, cold_s=res["times"][0], warm_median_s=round(statistics.median(timed), 4),
+                warm_min_s=min(timed), warm_max_s=max(timed), timed_hashes_identical=len(set(hashes[first:])) == 1)
+
+
+def kill_tree(proc):
+    import psutil
+    try:
+        for c in psutil.Process(proc.pid).children(recursive=True): c.kill()
+    except Exception: pass
+    proc.kill()
 
 
 def run(a):
+    stamp = time.strftime("%Y%m%d-%H%M%S")  # every run gets its own frames, so earlier records stay reproducible
     cfg = {"engine": a.engine, "device": a.device, "samples": a.samples or (128 if a.engine == "cycles" else 64),
            "res": [a.width, a.height], "warmup": a.warmup, "repeats": a.repeats, "blend": a.blend,
-           "out_dir": str(Path(a.out).with_suffix("") / f"{Path(a.blender).parent.name}-{a.engine}-{a.device or a.gpu_backend}")}
+           "out_dir": str(Path(a.out).with_suffix("") / f"{Path(a.blender).parent.name}-{a.engine}-{a.device or a.gpu_backend}-{stamp}")}
     argv = [a.blender, "--factory-startup", "-b"] + (["--gpu-backend", a.gpu_backend] if a.gpu_backend else []) + \
            ["--python", __file__, "--", INNER_FLAG, json.dumps(cfg)]
     base = vram_bytes(); t = time.perf_counter()
     proc = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, text=True)
-    peaks = Peaks(proc.pid); peaks.start(); lines = proc.stdout.readlines(); proc.wait(); peaks.stop.set(); peaks.join()
+    peaks = Peaks(proc.pid)
+    try: out, _ = proc.communicate(timeout=a.timeout); timed_out = False
+    except subprocess.TimeoutExpired: kill_tree(proc); out, _ = proc.communicate(); timed_out = True
+    peaks.close(); lines = out.splitlines(keepends=True)
     rec = {"blender_exe": a.blender, "engine": a.engine, "device": a.device, "gpu_backend": a.gpu_backend, "config": cfg,
            "exit_code": proc.returncode, "process_wall_s": round(time.perf_counter() - t, 2),
            "peak_rss_mb": round(peaks.rss / 2**20), "peak_private_mb": round(peaks.private / 2**20),
            "vram_baseline_mb": round(base / 2**20) if base else None, "vram_peak_mb": round(peaks.vram / 2**20) if peaks.vram else None,
            "vram_peak_over_baseline_mb": round((peaks.vram - base) / 2**20) if base and peaks.vram else None,
-           "started": time.strftime("%Y-%m-%d %H:%M:%S")}
-    res = next((json.loads(l.split(" ", 1)[1]) for l in lines if l.startswith("BENCH_RESULT ")), None)
-    if res:
-        # Hash decoded pixels: PNG metadata carries the render time and date, so file bytes differ on identical images.
-        from PIL import Image
-        from PIL import ImageChops
-        imgs = [Image.open(Path(cfg["out_dir"]) / f"r{i:02d}.png").convert("RGBA") for i in range(len(res["times"]))]
-        res["hashes"] = [hashlib.sha256(im.tobytes()).hexdigest() for im in imgs]
-        # GPU path tracing is not bit-deterministic between renders, so also record how far repeats drift (0-255).
-        res["repeat_max_abs_diff"] = max(max(b[1] for b in ImageChops.difference(imgs[1 + a.warmup], im).getextrema()) for im in imgs[1 + a.warmup:])
-        timed = res["times"][1 + a.warmup:]
-        rec.update(res, cold_s=res["times"][0], warm_median_s=round(statistics.median(timed), 4), warm_min_s=min(timed),
-                   warm_max_s=max(timed), timed_hashes_identical=len(set(res["hashes"][1 + a.warmup:])) == 1)
-    elif proc.returncode == 0: rec["exit_code"] = "no result"  # Blender exits 0 after a Python exception
-    else: rec["log_tail"] = "".join(lines[-25:])
+           "started": stamp}
+    res = None if timed_out else next((json.loads(l.split(" ", 1)[1]) for l in lines if l.startswith("BENCH_RESULT ")), None)
+    rec.update(summarise(res, proc.returncode, lines, cfg["out_dir"], a.warmup))
+    if timed_out: rec["exit_code"] = f"timeout {a.timeout}s"
     with open(a.out, "a", encoding="utf-8") as f: f.write(json.dumps(rec) + "\n")
     print(json.dumps({k: rec.get(k) for k in ("engine", "device", "gpu_backend", "exit_code", "cold_s", "warm_median_s",
                                                 "peak_private_mb", "vram_peak_over_baseline_mb", "blender")}))
-    return 0 if res else 1
+    return 0 if "times" in rec else 1
 
 
 def table(path):
@@ -161,6 +185,7 @@ def main():
     ap.add_argument("--samples", type=int); ap.add_argument("--width", type=int, default=1280); ap.add_argument("--height", type=int, default=720)
     ap.add_argument("--warmup", type=int, default=2); ap.add_argument("--repeats", type=int, default=5)
     ap.add_argument("--blend"); ap.add_argument("--out", default="bench.jsonl")
+    ap.add_argument("--timeout", type=int, default=1800, help="seconds before the Blender process tree is killed")
     a = ap.parse_args()
     if a.table: return table(a.table)
     if not a.blender: ap.error("--blender is required")
