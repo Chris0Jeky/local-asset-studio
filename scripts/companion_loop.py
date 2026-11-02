@@ -162,19 +162,45 @@ class Voice:
 
 STOP = set("a an the and or but so to of in on at for with from into by as is are was were be been am i me my you your "
            "she her he his they them their it its this that has have had will would can could just very really about some "
-           "all not new friend friends user".split())
+           "all not new friend friends user don doesn didn isn aren wasn weren won couldn wouldn haven hasn".split())
 RELATION = set("name named called likes like loves love enjoys enjoy favourite favorite wants want plans plan works work "
                "lives live feels feel prefers prefer".split())
 
 
+NEGATION = re.compile(r"\b(not|no|never|nothing|nobody|cannot)\b|n't\b")
+OWNED = re.compile(r"\b(?:my|his|her|their|our)\s+([a-z]+)")
+
+
+def _stem(w): return re.sub(r"(ing|ed|es|s)$", "", w)[:5] if len(w) > 4 else w
+
+
 def grounded(fact, said):
-    """True when every content word of a [remember: fact] was said by the user (5-letter prefixes match, so moved and
-    moving, harbour and harbor agree). Relation words ('name', 'likes', ...) need no support; anything else the model
-    adds, such as a colour the user never mentioned, rejects the fact."""
-    words = lambda t: [w for w in re.findall(r"[a-z0-9]+", re.sub(r"'s\b", "", t.lower())) if w not in STOP and len(w) > 1]
-    heard = {w[:5] for w in words(" ".join(said))}
-    content = [w for w in words(fact) if w not in RELATION]
-    return bool(content) and all(w[:5] in heard for w in content)
+    """True when one message the user typed supports a [remember: fact]: it holds every content word of the fact
+    (suffixes stripped, so moved/moving and harbour/harbor agree), has the same negation ("I don't love cats" never
+    grounds "loves cats"), and whatever it says belongs to someone ("my sister", "his job") is in the fact too, so a
+    friend's preference is not filed as the user's. Relation words ('name', 'likes', ...) need no support. Lexical:
+    synonyms are rejected (the safe side)."""
+    low = lambda t: re.sub(r"'s\b", "", t.lower())
+    words = lambda t: [w for w in re.findall(r"[a-z0-9]+", low(t)) if w not in STOP and len(w) > 1]
+    content = {_stem(w) for w in words(fact) if w not in RELATION}
+    every = {_stem(w) for w in re.findall(r"[a-z0-9]+", low(fact))}
+    neg = bool(NEGATION.search(low(fact)))
+    for m in said:
+        heard = {_stem(w) for w in words(m)}
+        if content and content <= heard and bool(NEGATION.search(low(m))) == neg \
+                and all(_stem(o) in every for o in OWNED.findall(low(m))): return True
+    return False
+
+
+def lock_memory(path):
+    """Hold an exclusive OS lock on <memory>.lock for this process's life (released when it exits), so a second
+    sidecar cannot load the same memory and overwrite the first one's updates."""
+    f = open(str(path) + ".lock", "a+"); f.seek(0)
+    try:
+        if os.name == "nt": import msvcrt; msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+        else: import fcntl; fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError: f.close(); raise SystemExit(f"{path} is in use by another companion sidecar")
+    return f
 
 
 class Brain:
@@ -243,7 +269,7 @@ class Brain:
         self.memory["friend"] += [f for f in kept if f not in self.memory["friend"]]
         self.memory["recent"] = self.history[-6:]
         try:                                                                # persistence failing must not swallow done
-            tmp = self.memory_path.with_name(self.memory_path.name + ".tmp")   # never truncate the only copy
+            tmp = self.memory_path.with_name(f"{self.memory_path.name}.{os.getpid()}.tmp")   # never truncate the only copy
             tmp.write_text(json.dumps(self.memory, indent=2) + "\n", encoding="utf-8"); os.replace(tmp, self.memory_path)
         except OSError as e: stamps["save_error"] = repr(e)
         done = {"type": "done", "turn": turn, "user": text, "reply": reply, "emotion": split.emotion, "facts": kept,
@@ -258,6 +284,7 @@ class Brain:
 
 def serve(args):
     run = Path(args.runs).resolve() / time.strftime("%Y%m%d-%H%M%S"); run.mkdir(parents=True)
+    held = lock_memory(args.memory)                                       # stays open: the lock lives as long as we do
     scene = json.loads(Path(args.scene).read_text(encoding="utf-8")) if args.scene else ()
     brain = Brain(args.llm, Voice(run, args.kokoro, args.rhubarb), run, args.persona, args.memory, visemes=args.visemes, scene=scene)
     lock = threading.Lock()

@@ -206,6 +206,24 @@ class GroundedFactTest(unittest.TestCase):
         self.assertFalse(cl.grounded("Ana wears blue socks", ["Thanks, Suzu. I should go now. See you tomorrow!"]))
         self.assertFalse(cl.grounded("her name is", ["I'm Ana."]))                                          # nothing to support
 
+    def test_negation_and_someone_elses_things_do_not_ground(self):   # Terra r1 on #1989
+        self.assertFalse(cl.grounded("loves cats", ["I do not love cats"]))
+        self.assertFalse(cl.grounded("loves cats", ["I don't love cats."]))
+        self.assertTrue(cl.grounded("doesn't like spiders", ["I don't like spiders at all"]))
+        self.assertFalse(cl.grounded("likes dogs", ["My friend likes dogs."]))
+        self.assertTrue(cl.grounded("her sister likes dogs", ["My sister likes dogs."]))
+
+    def test_inflections_match(self):
+        self.assertTrue(cl.grounded("moved to Paris", ["I am moving to Paris."]))
+
+    def test_a_second_sidecar_cannot_take_the_same_memory(self):
+        mem = Path(tempfile.mkdtemp()) / "memory.json"; mem.write_text("{}", encoding="utf-8")
+        held = cl.lock_memory(mem)
+        try:
+            with self.assertRaises(SystemExit): cl.lock_memory(mem)
+        finally: held.close()
+        cl.lock_memory(mem).close()                                                                      # free again once released
+
 
 class MemoryAndSceneTest(unittest.TestCase):
     def setUp(self):
