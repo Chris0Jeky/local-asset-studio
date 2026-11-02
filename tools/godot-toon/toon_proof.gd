@@ -36,7 +36,7 @@ var t := 0.0
 
 func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
-		if a.begins_with("--action="): action = a.trim_prefix("--action=")
+		if standalone and a.begins_with("--action="): action = a.trim_prefix("--action=")   # a host sets each actor's own
 	root = load(model_path).instantiate()
 	add_child(root)
 	skel = _find(root, func(n): return n is Skeleton3D)
@@ -248,6 +248,11 @@ func _process(delta: float) -> void:
 		for v in mouth:                                                     # ease toward the cue's shape, ~60 ms
 			mouth[v] = lerpf(mouth[v], VISEMES[shape].get(v, 0.0), clampf(delta * 16.0, 0.0, 1.0)); _expr(v, mouth[v])
 	_apply_expressions()
+	_face_dirs()
+
+
+func _face_dirs() -> void:
+	# The SDF face shadow reads the head's current facing: call again after any later change to the head pose.
 	var hb := (skel.global_transform.basis * skel.get_bone_global_pose(skel.find_bone("J_Bip_C_Head")).basis * head_rest.inverse()).orthonormalized()
 	for m in face_mats:
 		m.set_shader_parameter("face_forward", hb * Vector3(0, 0, 1)); m.set_shader_parameter("face_left", hb * Vector3(1, 0, 0))
