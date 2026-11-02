@@ -84,8 +84,8 @@ class ParamsAndConstraints(unittest.TestCase):
         size, slack = factory.expected_bounds("lighthouse_room", params)
         rt = 2.2
         self.assertAlmostEqual(size[2], params["height"])
-        self.assertGreater(size[0] / 2, rt)                                        # tapered panel corners stick out past rt
-        self.assertLessEqual(size[0] * (1 - slack[0]), 2 * rt * math.cos(math.pi / 12) + 1e-9)   # floor polygon is inside the band
+        self.assertAlmostEqual(size[0] / 2, rt / math.cos(math.pi / 12))          # n-gon vertices (panel corners, floor)
+        self.assertAlmostEqual(size[0] * (1 - slack[0]), 2 * rt)                   # n-gon faces at the apothem
         self.assertEqual(slack[0], slack[1])
 
     def test_lod_details_halve_with_floor(self):

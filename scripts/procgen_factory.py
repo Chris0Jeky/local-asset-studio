@@ -94,11 +94,10 @@ def expected_bounds(generator, p, detail=None):
         n = p['step_count']
         return [width, n * p['step_run'] + 3.0, (n + 1) * p['step_rise'] + p['gate_height']], [0, 0, 0]
     if generator == 'lighthouse_room':
-        # Tapered radial panels reach at most their outer corners (half-width = arc/2 at rt) and at least the floor polygon.
-        rt = p['radius'] + p['wall_thickness']
-        corner = math.hypot(rt, math.pi * rt / p['panels'])
-        s = 1 - min(math.cos(math.pi / p['panels']), math.cos(math.pi / detail)) * rt / corner
-        return [2 * corner, 2 * corner, p['height']], [s, s, 0]
+        # Floor and wall share one outer regular n-gon (apothem rt): extent is between 2*rt and 2*rt/cos(pi/n).
+        c = math.cos(math.pi / p['panels'])
+        corner = (p['radius'] + p['wall_thickness']) / c
+        return [2 * corner, 2 * corner, p['height']], [1 - c, 1 - c, 0]
     raise EvidenceError(f'unknown generator {generator!r}')
 
 
@@ -175,6 +174,8 @@ def evaluate_gates(generator, spec, p, m):
     # so it sits off-centre on x by r*(1 - cos(pi/d))/2. Even counts and the y axis stay symmetric.
     odd_round = p['detail'] % 2 and (slack[0] or anchors)
     ctol = [TOL + (expected[0] / 4 * (1 - math.cos(math.pi / p['detail'])) if odd_round else 0), TOL]
+    if generator == 'lighthouse_room' and p['panels'] % 2:
+        ctol[1] += expected[1] / 4 * slack[1]           # odd n-gon: a face at the front, a vertex at the back
     if abs(cmin[0] + cmax[0]) / 2 > ctol[0]: dims.append('asset not centred on x')
     if generator in FRONT_ANCHORED:
         if abs(lod0['bbox_min'][1]) > TOL: dims.append(f'front not at y=0 (min y {lod0["bbox_min"][1]:.4f})')

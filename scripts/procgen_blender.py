@@ -50,7 +50,7 @@ class S:
 FOLD = {'ADD': lambda a, b: a + b, 'SUBTRACT': lambda a, b: a - b, 'MULTIPLY': lambda a, b: a * b,
         'DIVIDE': lambda a, b: a / b, 'MAXIMUM': max, 'MINIMUM': min, 'CEIL': lambda a, b: math.ceil(a),
         'SINE': lambda a, b: math.sin(a), 'COSINE': lambda a, b: math.cos(a), 'FLOORED_MODULO': lambda a, b: a % b,
-        'POWER': lambda a, b: a ** b, 'ARCTAN2': math.atan2}
+        'POWER': lambda a, b: a ** b, 'ARCTAN2': math.atan2, 'TANGENT': lambda a, b: math.tan(a)}
 
 
 def _enabled(sockets, name=None):
@@ -96,7 +96,7 @@ class B:
 
     def transform(self, geo, loc=(0, 0, 0), rot_z=0.0):
         t = self.node('GeometryNodeTransform', Geometry=geo, Translation=self.vec(*loc))
-        _enabled(t.inputs, 'Rotation')[0].default_value = (0, 0, rot_z)
+        self.set(_enabled(t.inputs, 'Rotation')[0], self.vec(0.0, 0.0, rot_z))     # constant or a socket expression
         return t.outputs[0]
 
     def polar(self, count, radius, angle0, step, z0=0.0, dz=0.0):
@@ -243,12 +243,14 @@ def lighthouse_room(b, P):
     """Round lighthouse map room: ring wall of radial panels with windows, spiral steps on the wall, central map table."""
     R_, T, H, F, n = P['radius'], P['wall_thickness'], P['height'], 0.06, P['panels']
     step = 2 * math.pi / n
-    w = 2 * math.pi * (R_ + T / 2) / n                              # arc at the panel centre line; taper() follows the arc
-    g = [b.cyl(R_ + T, F, (0, 0, 0), 1, 'floor')]
+    # Flat panels meeting on radial planes are 2 r tan(pi/n) wide at radius r; taper() scales the width with r.
+    w = 2 * (R_ + T / 2) * b.math('TANGENT', math.pi / n)
+    # The floor is the wall's own outer n-gon (apothem R+T, a face centred on each panel), so no wall overhangs it at any LOD.
+    g = [b.transform(b.cyl((R_ + T) / b.cos(math.pi / n), F, (0, 0, 0), 1, 'floor', segs=n), (0, 0, 0), -math.pi / 2 - math.pi / n)]
     pts, angle = b.polar(n, R_ + T / 2, -math.pi / 2, step)         # panel 0 faces the front (-y)
     i = b.index()
     window = b.compare('LESS_THAN', b.math('FLOORED_MODULO', i, P['window_every']), 0.5)
-    keep = b.compare('GREATER_THAN', i, P['cutaway'] * 2.5)        # cutaway removes panels 0..2 and n-2..n-1 at the front
+    keep = b.compare('GREATER_THAN', i, P['cutaway'] * 2.5 - 0.5)  # cutaway=1 removes panels 0..2 and n-2..n-1 at the front
     keep = b.both(keep, b.compare('LESS_THAN', i, n - P['cutaway'] * 2.5))
     solid = b.both(keep, b.compare('GREATER_THAN', b.math('FLOORED_MODULO', i, P['window_every']), 0.5))
     z0, z1 = F + P['window_sill'], F + P['window_sill'] + P['window_height']
