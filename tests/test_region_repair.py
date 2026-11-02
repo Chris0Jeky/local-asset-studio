@@ -4,11 +4,14 @@ import hashlib
 import importlib.util
 import io
 import json
+import random
 import shutil
+import struct
 import sys
 import tempfile
 import threading
 import unittest
+import zlib
 from http.client import HTTPConnection
 from pathlib import Path
 from unittest.mock import patch
@@ -37,6 +40,16 @@ def picture(size=(96, 64)):
 
 def png(image):
     stream = io.BytesIO(); image.save(stream, "PNG"); return stream.getvalue()
+
+
+def png16(colour_type):
+    """A valid 96 x 64 PNG with midpoint 16-bit samples, including truecolour Pillow decodes as RGB8."""
+    def chunk(kind, data):
+        return struct.pack('>I', len(data)) + kind + data + struct.pack('>I', zlib.crc32(kind + data))
+    channels = {0: 1, 2: 3, 6: 4}[colour_type]
+    rows = (b'\0' + b'\x80\x00' * (96 * channels)) * 64
+    return (b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', 96, 64, 16, colour_type, 0, 0, 0))
+            + chunk(b'IDAT', zlib.compress(rows)) + chunk(b'IEND', b''))
 
 
 class FakeStudio(server.Studio):
@@ -85,9 +98,118 @@ class PrepareTests(unittest.TestCase):
         self.assertEqual((prepared["width"], prepared["height"], prepared["context"]["asset_id"]), (96, 64, asset["id"]))
 
     def test_a_palette_or_grey_source_keeps_its_picture_as_rgb(self):
-        grey = picture().convert("L"); asset = self.source(grey)
-        prepared = region_repair.prepare(self.studio, {"asset_id": asset["id"], "preset_id": REPAIR["id"], "boxes": [[0, 0, 8, 8]]})
-        with Image.open(self.root / "experiments/uploads" / prepared["file"]) as image: self.assertEqual(image.convert("RGB").tobytes(), grey.convert("RGB").tobytes())
+        for source in (picture().convert("L"), picture().quantize(colors=16)):
+            with self.subTest(mode=source.mode):
+                asset = self.source(source)
+                prepared = region_repair.prepare(self.studio, {"asset_id": asset["id"], "preset_id": REPAIR["id"], "boxes": [[0, 0, 8, 8]]})
+                with Image.open(self.root / "experiments/uploads" / prepared["file"]) as image:
+                    self.assertEqual(image.convert("RGB").tobytes(), source.convert("RGB").tobytes())
+
+    def test_jpeg_png_and_webp_boxes_use_display_oriented_pixels(self):
+        for format, mime in (("JPEG", "image/jpeg"), ("PNG", "image/png"), ("WEBP", "image/webp")):
+            with self.subTest(format=format):
+                stream = io.BytesIO(); exif = Image.Exif(); exif[274] = 6
+                picture().save(stream, format, exif=exif, lossless=True); raw = stream.getvalue()
+                asset = self.studio.import_image("rotated." + format.lower(), mime, raw)["asset"]
+                with Image.open(io.BytesIO(raw)) as encoded:
+                    expected = encoded.convert("RGB").transpose(Image.Transpose.ROTATE_270)
+                # This box is inside the displayed 64 x 96 picture, outside the encoded 96 x 64 axes.
+                boxes = [[48, 80, 56, 88]]
+                prepared = region_repair.prepare(self.studio, {"asset_id": asset["id"], "preset_id": REPAIR["id"], "boxes": boxes})
+                self.assertEqual(prepared["plan"]["size"], [64, 96])
+                self.assertEqual((prepared["context"]["width"], prepared["context"]["height"]), (64, 96))
+                with Image.open(self.root / "experiments/uploads" / prepared["file"]) as result:
+                    self.assertEqual(result.size, (64, 96))
+                    self.assertEqual(result.convert("RGB").tobytes(), expected.tobytes())
+                    self.assertEqual(result.getchannel("A").tobytes(), bytes(0 if 48 <= x < 56 and 80 <= y < 88 else 255 for y in range(96) for x in range(64)))
+                    self.assertIn(result.getexif().get(274), (None, 1), "the prepared mask must not rotate a second time")
+                self.assertEqual(prepared["plan"]["source_sha256"], hashlib.sha256(raw).hexdigest())
+                self.assertEqual(self.studio.assets.file(asset["id"]).read_bytes(), raw)
+                self.assertFalse(prepared["generation_submitted"])
+        self.assertEqual(self.studio.requests, [])
+
+    def test_overlapping_boxes_are_counted_once_for_the_large_region_refusal(self):
+        asset = self.source()
+        # The boxes sum to 100%, but their union is 56/96 of the source and is permitted.
+        boxes = [[0, 0, 48, 64], [8, 0, 56, 64]]
+        prepared = region_repair.prepare(self.studio, {"asset_id": asset["id"], "preset_id": REPAIR["id"], "boxes": boxes})
+        with Image.open(self.root / "experiments/uploads" / prepared["file"]) as result:
+            self.assertEqual(result.getchannel("A").tobytes(), (bytes(56) + bytes([255]) * 40) * 64)
+        before = self.uploads()
+        with self.assertRaisesRegex(ValueError, "covers 67%"):
+            region_repair.prepare(self.studio, {"asset_id": asset["id"], "preset_id": REPAIR["id"], "boxes": [[0, 0, 48, 64], [16, 0, 64, 64]]})
+        self.assertEqual(self.uploads(), before)
+        self.assertEqual(self.studio.requests, [])
+
+    def test_existing_transparency_does_not_expand_the_owners_mask(self):
+        source = picture().convert("RGBA"); source.putalpha(Image.frombytes("L", source.size, bytes([0, 1, 128, 255]) * (96 * 64 // 4)))
+        asset = self.source(source)
+        prepared = region_repair.prepare(self.studio, {"asset_id": asset["id"], "preset_id": REPAIR["id"], "boxes": [[8, 8, 24, 24]]})
+        with Image.open(self.root / "experiments/uploads" / prepared["file"]) as result:
+            self.assertEqual(result.convert("RGB").tobytes(), picture().tobytes(), "hidden RGB is retained")
+            self.assertEqual(result.getchannel("A").tobytes(), bytes(0 if 8 <= x < 24 and 8 <= y < 24 else 255 for y in range(64) for x in range(96)))
+
+    def test_16_bit_png_requires_explicit_conversion_before_repair(self):
+        for colour_type in (0, 2, 6):
+            with self.subTest(colour_type=colour_type):
+                raw = png16(colour_type)
+                asset = self.studio.import_image("16-bit.png", "image/png", raw)["asset"]
+                before = self.uploads()
+                with self.assertRaisesRegex(ValueError, "16-bit.*8-bit RGB"):
+                    region_repair.prepare(self.studio, {"asset_id": asset["id"], "preset_id": REPAIR["id"], "boxes": [[8, 8, 24, 24]]})
+                self.assertEqual(self.uploads(), before)
+                self.assertEqual(self.studio.assets.file(asset["id"]).read_bytes(), raw)
+        self.assertEqual(self.studio.requests, [])
+
+    def test_noncanonical_png_headers_refuse_before_repair_conversion(self):
+        def chunk(kind, data):
+            return struct.pack('>I', len(data)) + kind + data + struct.pack('>I', zlib.crc32(kind + data))
+        for colour_type in (0, 2, 6):
+            original = png16(colour_type)
+            eight_bit = bytearray(original[16:29]); eight_bit[8] = 8
+            for layout, prefix in (('metadata before IHDR', chunk(b'tEXt', b'note\0leading metadata')),
+                                   ('duplicate IHDR', chunk(b'IHDR', eight_bit))):
+                with self.subTest(colour_type=colour_type, layout=layout):
+                    # Pillow accepts both layouts and decodes the later 16-bit IHDR,
+                    # while byte 24 belongs to metadata or the earlier 8-bit header.
+                    raw = original[:8] + prefix + original[8:]
+                    asset = self.studio.import_image('ambiguous-16-bit.png', 'image/png', raw)['asset']
+                    before = self.uploads()
+                    with self.assertRaisesRegex(ValueError, 'PNG.*header.*8-bit RGB'):
+                        region_repair.prepare(self.studio, {'asset_id': asset['id'], 'preset_id': REPAIR['id'], 'boxes': [[8, 8, 24, 24]]})
+                    self.assertEqual(self.uploads(), before)
+                    self.assertEqual(self.studio.assets.file(asset['id']).read_bytes(), raw)
+        self.assertEqual(self.studio.requests, [])
+
+    def test_cmyk_jpeg_converts_to_rgb_in_display_coordinates(self):
+        source = Image.new("CMYK", (96, 64))
+        for box, colour in (((0, 0, 48, 32), (0, 255, 255, 0)), ((48, 0, 96, 32), (255, 0, 255, 0)),
+                            ((0, 32, 48, 64), (255, 255, 0, 0)), ((48, 32, 96, 64), (0, 0, 0, 255))):
+            source.paste(colour, box)
+        stream = io.BytesIO(); exif = Image.Exif(); exif[274] = 6
+        source.save(stream, "JPEG", quality=100, exif=exif); raw = stream.getvalue()
+        asset = self.studio.import_image("cmyk.jpg", "image/jpeg", raw)["asset"]
+        prepared = region_repair.prepare(self.studio, {"asset_id": asset["id"], "preset_id": REPAIR["id"], "boxes": [[8, 8, 16, 16]]})
+        with Image.open(self.root / "experiments/uploads" / prepared["file"]) as result:
+            self.assertEqual((result.mode, result.size), ("RGBA", (64, 96)))
+            self.assertEqual([result.getpixel(point) for point in ((16, 24), (48, 24), (16, 72), (48, 72))],
+                             [(0, 0, 255, 255), (255, 0, 0, 255), (0, 0, 0, 255), (0, 255, 0, 255)])
+        self.assertEqual(prepared["plan"]["source_sha256"], hashlib.sha256(raw).hexdigest())
+        self.assertEqual(self.studio.assets.file(asset["id"]).read_bytes(), raw)
+
+    def test_large_composed_png_has_a_repair_specific_refusal(self):
+        # A small-enough JPEG can expand beyond the 20 MiB upload limit when its RGB gains mask alpha.
+        source = Image.frombytes("RGB", (3072, 2304), random.Random(1861).randbytes(3072 * 2304 * 3))
+        stream = io.BytesIO(); source.save(stream, "JPEG", quality=90); raw = stream.getvalue()
+        self.assertLess(len(raw), 20 * 1024 * 1024)
+        asset = self.studio.import_image("large.jpg", "image/jpeg", raw)["asset"]
+        before = self.uploads(); jobs = set(self.studio.jobs)
+        with self.assertRaisesRegex(ValueError, "prepared repair PNG.*20 MiB.*[Rr]esize a copy"):
+            region_repair.prepare(self.studio, {"asset_id": asset["id"], "preset_id": REPAIR["id"], "boxes": [[8, 8, 24, 24]]})
+        self.assertEqual(self.uploads(), before)
+        self.assertEqual(set(self.studio.jobs), jobs)
+        self.assertEqual(self.studio.assets.file(asset["id"]).read_bytes(), raw)
+        self.assertEqual(self.studio.requests, [])
 
     def test_refusals_upload_nothing(self):
         asset = self.source(); private = self.source(privacy="private"); odd = self.source(Image.new("RGB", (90, 64)))
@@ -119,10 +241,14 @@ class PrepareTests(unittest.TestCase):
         self.assertEqual(self.studio.requests, [])
 
     def test_a_private_source_prepares_a_private_upload(self):
-        private = self.source(privacy="private")
+        stream = io.BytesIO(); exif = Image.Exif(); exif[274] = 6
+        picture().save(stream, 'PNG', exif=exif); raw = stream.getvalue()
+        private = self.studio.import_image('private.png', 'image/png', raw, privacy='private')['asset']
         prepared = region_repair.prepare(self.studio, {"asset_id": private["id"], "preset_id": REPAIR["id"], "boxes": [[0, 0, 16, 16]]}, privacy="all", creation_privacy="private")
         self.assertTrue((self.root / "experiments/private/uploads" / prepared["file"]).is_file())
         self.assertFalse((self.root / "experiments/uploads" / prepared["file"]).exists())
+        self.assertEqual(prepared['plan']['size'], [64, 96])
+        self.assertEqual(self.studio.assets.file(private['id'], privacy='all').read_bytes(), raw)
 
     def test_the_prepared_file_passes_the_mask_check_and_generate_binds_it(self):
         asset = self.source()

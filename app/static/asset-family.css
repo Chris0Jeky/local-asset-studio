@@ -48,7 +48,7 @@
 #assetNativeExports code,#assetNativeExports a{overflow-wrap:anywhere;white-space:normal}
 
 .asset-source-comparison{grid-column:1/-1;min-width:0;border-bottom:1px solid var(--line,#334155);padding-bottom:1rem}
-.asset-source-comparison[hidden]{display:none}.asset-source-heading{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.75rem}
+.asset-source-comparison[hidden]{display:none}.asset-source-heading{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.75rem;padding-inline-end:2.75rem}
 .asset-source-heading h3{margin:0}.asset-source-choices{display:flex;flex-wrap:wrap;gap:.5rem}.asset-source-choices button{white-space:normal;overflow-wrap:anywhere;min-height:2.75rem}
 .asset-source-choices [aria-pressed="true"]{border:2px solid var(--accent);font-weight:700}
 .asset-source-images{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.asset-source-images figure{margin:0;min-width:0;display:grid;gap:.4rem;align-content:start}
