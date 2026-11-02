@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 from PIL import Image
 
@@ -176,6 +177,38 @@ class VisualTests(unittest.TestCase):
             noisy = lambda b: b.paste((235, 20, 20, 255), (8, 8, 40, 40))
             record = sentinel.compare_image(*self._pair(tmp, noisy), "lit")
         self.assertEqual((record["changed_fraction"], record["warn"]), (0.0, False))
+
+
+class SecondSignalTests(unittest.TestCase):
+    def test_absent_critic_is_reported_unavailable(self):
+        with mock.patch.dict(sys.modules, {"render_critic": None}):
+            self.assertEqual(sentinel.critic_signal(Path("a"), Path("b")), {"available": False})
+        self.assertIsNone(sentinel.second_opinion({"available": False}, []))
+
+    def test_critic_runs_on_lit_views_in_reference_mode(self):
+        calls = []
+        def check(images, reference=(), diff_only=False, **kwargs):
+            calls.append((images, reference, diff_only))
+            return {"changed": True, "pixel_diff": {"front.lit": {"changed_px": 40}, "back.lit": {"changed_px": 2}}, "defects": []}
+        with mock.patch.dict(sys.modules, {"render_critic": mock.Mock(check=check)}):
+            result = sentinel.critic_signal(Path("ref"), Path("cand"))
+        images, reference, diff_only = calls[0]
+        self.assertTrue(diff_only)
+        self.assertEqual([Path(p).name for p in images], [f"{v}.lit.png" for v in sentinel.lab.bpy_side.VIEWS])
+        self.assertEqual(Path(reference[0]).parent, Path("ref"))
+        self.assertEqual((result["changed"], result["changed_px"], result["mode"]), (True, 42, "pixel gate"))
+
+    def test_a_failing_critic_is_reported_not_raised(self):
+        def check(*args, **kwargs): raise OSError("model server unreachable")
+        with mock.patch.dict(sys.modules, {"render_critic": mock.Mock(check=check)}):
+            result = sentinel.critic_signal(Path("ref"), Path("cand"), server="http://127.0.0.1:8290")
+        self.assertEqual(result["available"], False); self.assertIn("unreachable", result["error"])
+
+    def test_a_change_only_the_critic_sees_becomes_a_warning(self):
+        warnings = []
+        self.assertFalse(sentinel.second_opinion({"available": True, "changed": True, "changed_px": 99}, warnings))
+        self.assertIn("independent render critic", warnings[0])
+        self.assertTrue(sentinel.second_opinion({"available": True, "changed": False, "changed_px": 0}, []))
 
 
 class ContractTests(unittest.TestCase):

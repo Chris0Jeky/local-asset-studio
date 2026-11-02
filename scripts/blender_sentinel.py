@@ -260,7 +260,35 @@ def compare_renders(source_dir, roundtrip_dir, evidence, out_dir):
     return views, warnings
 
 
-def roundtrip_and_compare(exe, target, timeout=600):
+def critic_signal(reference_dir, candidate_dir, server=None):
+    """Independent second visual signal: frontier-lab's render critic (`scripts/render_critic.py`, #1956) in reference
+    mode on the four lit views. Its pixel gate only, unless a vision-model server is given to name what changed.
+    Reported as unavailable when the critic is not installed; the primary diff never depends on it."""
+    try:
+        import render_critic
+    except ImportError:
+        return {"available": False}
+    names = [f"{view}.lit.png" for view in lab.bpy_side.VIEWS]
+    options = {"diff_only": server is None, **({"server": server} if server else {})}
+    try:
+        result = render_critic.check([str(candidate_dir / n) for n in names], reference=[str(reference_dir / n) for n in names], **options)
+    except Exception as exc:  # a failing critic (unreachable model server, bad image) never discards the primary result
+        return {"available": False, "error": f"{type(exc).__name__}: {exc}"[:300]}
+    return {"available": True, "tool": "render_critic", "mode": "pixel gate" if server is None else "pixel gate + vision model",
+            "changed": bool(result["changed"]), "changed_px": sum(v["changed_px"] for v in result["pixel_diff"].values()),
+            "defects": result.get("defects", [])}
+
+
+def second_opinion(critic, warnings):
+    """Agreement between the primary diff and the critic; a change only the critic sees becomes a visual warning."""
+    if not critic.get("available"): return None
+    agree = critic["changed"] == bool(warnings)
+    if critic["changed"] and not warnings:
+        warnings.append(f"independent render critic sees a change the primary diff did not ({critic['changed_px']} px over the lit views)")
+    return agree
+
+
+def roundtrip_and_compare(exe, target, timeout=600, critic_server=None):
     """Given <target>/source/{manifest,evidence}.json, renders and <target>/export.glb: reimport in a NEW Blender
     process with the source cameras and compare both sides."""
     load = lambda path: json.loads(path.read_text(encoding="utf-8"))
@@ -277,10 +305,12 @@ def roundtrip_and_compare(exe, target, timeout=600):
                 f"Missing render {name}")
     structure = compare_manifests(src_manifest, rt_manifest)
     views, warnings = compare_renders(target / "source" / "renders", target / "roundtrip" / "renders", evidence, target / "diff")
-    return src_manifest, rt_manifest, evidence, structure, views, warnings, seconds
+    critic = critic_signal(target / "source" / "renders", target / "roundtrip" / "renders", critic_server)
+    critic["agrees_with_primary"] = second_opinion(critic, warnings)
+    return src_manifest, rt_manifest, evidence, structure, views, warnings, seconds, critic
 
 
-def sentinel(blender_path, blend_path, out_dir, seed_defect=None, timeout=600, studio_lease=None):
+def sentinel(blender_path, blend_path, out_dir, seed_defect=None, timeout=600, studio_lease=None, critic_server=None):
     exe = lab.executable(blender_path)
     blend = Path(blend_path).expanduser().resolve()
     require(blend.is_file() and blend.suffix.lower() == ".blend", "blend must be an existing .blend file")
@@ -299,7 +329,8 @@ def sentinel(blender_path, blend_path, out_dir, seed_defect=None, timeout=600, s
         require(lab.file_sha(blend) == before, "Source .blend changed during the sentinel run")
         require(glb.is_file() and glb.stat().st_size > 0, "GLB export is missing")
         source_record = json.loads((target / "source.json").read_text(encoding="utf-8"))
-        src_manifest, rt_manifest, evidence, structure, views, warnings, seconds_roundtrip = roundtrip_and_compare(exe, target, timeout)
+        src_manifest, rt_manifest, evidence, structure, views, warnings, seconds_roundtrip, critic = roundtrip_and_compare(
+            exe, target, timeout, critic_server)
     rt_evidence = json.loads((target / "roundtrip" / "evidence.json").read_text(encoding="utf-8"))
     result = {
         "schema": "las.asset-parity-sentinel.v1", "pass": not structure["failures"] and not warnings,
@@ -312,7 +343,7 @@ def sentinel(blender_path, blend_path, out_dir, seed_defect=None, timeout=600, s
         "roundtrip": {"semantic_checksum": rt_manifest["semantic_checksum"], "counts": rt_manifest["counts"],
                       "seconds": seconds_roundtrip, "process": "new Blender process, factory-empty scene, glTF import"},
         "cameras": evidence["camera_spec"], "render": {k: evidence[k] for k in ("size", "lit", "id_passes", "view_transform")},
-        "gpu_cost": lab.gpu_cost(evidence, rt_evidence),
+        "gpu_cost": lab.gpu_cost(evidence, rt_evidence), "second_signal": critic,
         "studio_lease": None if lease is None else {"holder": lease.holder, "granted": bool(grant and grant.get("granted")),
                                                     "released": bool(getattr(lease, "released", {}).get("released"))},
         "structural_failures": structure["failures"], "format_losses": structure["format_losses"],
@@ -335,9 +366,11 @@ def main(argv=None):
     parser.add_argument("--studio-lease", metavar="URL",
                         help="hold the Studio GPU lease (pauses its ComfyUI) for the run, e.g. http://127.0.0.1:8191; "
                              "only for heavy GPU work, see result.gpu_cost")
+    parser.add_argument("--critic-server", metavar="URL", help="vision-model server for the render critic's labels (pixel gate only without it)")
     args = parser.parse_args(argv)
     try:
-        result = sentinel(args.blender, args.blend, args.out_dir, args.seed_defect, studio_lease=args.studio_lease)
+        result = sentinel(args.blender, args.blend, args.out_dir, args.seed_defect, studio_lease=args.studio_lease,
+                          critic_server=args.critic_server)
     except (lab.BlenderLabError, OSError, ValueError) as exc:
         print(json.dumps({"error": str(exc)}), file=sys.stderr)
         return 2

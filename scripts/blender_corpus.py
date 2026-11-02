@@ -57,13 +57,17 @@ def build(blender_path, out_dir, timeout=600):
         structure = sentinel.compare_manifests(control_manifest, load(entry, "manifest.json"))
         views, warnings = sentinel.compare_renders(target / "evidence" / "control" / "renders", target / "evidence" / entry / "renders",
                                                    control_evidence, target / "diff" / entry)
+        critic = sentinel.critic_signal(target / "evidence" / "control" / "renders", target / "evidence" / entry / "renders")
+        primary_visual = bool(warnings)
+        critic["agrees_with_primary"] = sentinel.second_opinion(critic, list(warnings))  # baseline stays the primary verdict
         entries.append({
             "id": entry, "blend": blend.relative_to(target).as_posix(), "sha256": lab.file_sha(blend),
             "expected": "clean" if entry == "control" else "defective", "label": labels[entry],
             "description": lab.bpy_side.CORPUS_DEFECTS.get(entry, "unchanged generated lab asset"),
             "renders": f"evidence/{entry}/renders", "manifest": f"evidence/{entry}/manifest.json",
             "baseline": {"structural_failures": structure["failures"], "visual_warnings": warnings,
-                         "caught_by_manifest": bool(structure["failures"]), "caught_by_renders": bool(warnings),
+                         "caught_by_manifest": bool(structure["failures"]), "caught_by_renders": primary_visual,
+                         "critic": critic,
                          "caught": bool(structure["failures"] or warnings)}})
     defective = [e for e in entries if e["expected"] == "defective"]
     corpus = {"schema": SCHEMA, "blender": control_manifest["blender"], "cameras": "cameras.json",
@@ -72,7 +76,12 @@ def build(blender_path, out_dir, timeout=600):
                           "caught_by_manifest_only": sorted(e["id"] for e in defective if e["baseline"]["caught_by_manifest"] and not e["baseline"]["caught_by_renders"]),
                           "caught_by_renders_only": sorted(e["id"] for e in defective if e["baseline"]["caught_by_renders"] and not e["baseline"]["caught_by_manifest"]),
                           "missed": sorted(e["id"] for e in defective if not e["baseline"]["caught"]),
-                          "control_clean": not next(e for e in entries if e["id"] == "control")["baseline"]["caught"]},
+                          "control_clean": not next(e for e in entries if e["id"] == "control")["baseline"]["caught"],
+                          "critic": None if not all(e["baseline"]["critic"].get("available") for e in entries) else {
+                              "agreement": sum(bool(e["baseline"]["critic"]["agrees_with_primary"]) for e in entries),
+                              "entries": len(entries),
+                              "caught_by_critic": sorted(e["id"] for e in defective if e["baseline"]["critic"]["changed"]),
+                              "disagreements": sorted(e["id"] for e in entries if not e["baseline"]["critic"]["agrees_with_primary"])}},
               "scoring": "A critic reads evidence/<id>/renders and answers clean or defective (optionally which object). Score it "
                          "against `expected`; compare its misses with baseline.missed. Labels are generated ground truth, not taste."}
     _json(target / "corpus.json", corpus)

@@ -95,14 +95,15 @@ class BlenderWorker:
         evidence = self.call("render_views", out_dir=f"{out_dir}/source/renders")
         (target / "source" / "evidence.json").write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         export = self.call("export", path=f"{out_dir}/export.glb")
-        _, rt_manifest, _, structure, views, warnings, seconds = sentinel.roundtrip_and_compare(self.exe, target, timeout)
+        _, rt_manifest, _, structure, views, warnings, seconds, critic = sentinel.roundtrip_and_compare(self.exe, target, timeout)
         result = {"schema": "las.asset-parity-sentinel.v1", "pass": not structure["failures"] and not warnings,
                   "source": {"semantic_checksum": source_manifest["semantic_checksum"], "counts": source_manifest["counts"]},
                   "export": {"settings": export["settings"], "glb_sha256": lab.file_sha(target / "export.glb")},
                   "roundtrip": {"semantic_checksum": rt_manifest["semantic_checksum"], "seconds": seconds,
                                 "process": "new Blender process, factory-empty scene, glTF import"},
                   "structural_failures": structure["failures"], "format_losses": structure["format_losses"],
-                  "expected_exclusions": structure["expected_exclusions"], "visual_warnings": warnings, "views": views}
+                  "expected_exclusions": structure["expected_exclusions"], "visual_warnings": warnings, "views": views,
+                  "second_signal": critic}
         (target / "result.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         return result
 
