@@ -7,6 +7,7 @@ proves wiring, not model semantics, identity retention or pixel preservation.
 from __future__ import annotations
 
 import hashlib
+import io
 import re
 from pathlib import Path
 
@@ -401,6 +402,37 @@ def _text(graph, bindings):
     return values[0] if len(set(values)) == 1 else None
 
 
+def _png_sample_depth(raw):
+    """Read one canonical IHDR without decompressing chunks or trusting Pillow's permissive header layout."""
+    refusal = "This PNG has an unsupported header layout. Convert a copy to an 8-bit RGB PNG before editing it."
+    if raw[8:16] != b'\x00\x00\x00\rIHDR': raise ValueError(refusal)
+    position = 8
+    while position + 12 <= len(raw):
+        length = int.from_bytes(raw[position:position + 4], 'big')
+        kind = raw[position + 4:position + 8]
+        end = position + length + 12
+        if end > len(raw) or (kind == b'IHDR' and position != 8): raise ValueError(refusal)
+        if kind == b'IEND':
+            if length: raise ValueError(refusal)
+            return raw[24]
+        position = end
+    raise ValueError(refusal)
+
+
+def source_rgb(raw):
+    """Display-oriented RGB for editing from already hash-checked source bytes; the original stays untouched."""
+    from PIL import ImageOps  # Static continuation/recipe validation must remain Pillow-free.
+    from studio_workflow.image_limits import open_bounded
+    with open_bounded(io.BytesIO(raw)) as decoded:
+        # Pillow exposes 16-bit truecolour PNG as RGB8 already, so inspect the IHDR
+        # sample depth after requiring one canonical header, not just the decoded
+        # mode. Grey16 would otherwise clip values above 255 during convert('RGB').
+        if decoded.format == 'PNG' and _png_sample_depth(raw) == 16:
+            raise ValueError("This 16-bit source needs explicit conversion. Convert a copy to an 8-bit RGB image before editing it.")
+        with ImageOps.exif_transpose(decoded) as oriented:
+            return oriented.convert('RGB')
+
+
 def source_context(studio, asset_id, *, privacy='regular'):
     asset = studio.assets.get(asset_id,privacy=privacy)
     if asset.get("trashed_at") or asset.get("media_type") != "image":
@@ -421,13 +453,14 @@ def source_context(studio, asset_id, *, privacy='regular'):
     origin = "submitted-output" if positive is not None else "unavailable"
     warning = "" if positive is not None else "No unambiguous submitted prompt is retained for this output. Describe the desired result; the recipe example will not be used."
     role = prompt_role(graph, True) if isinstance(graph, dict) else "unknown"
-    from PIL import Image
+    from studio_workflow.image_limits import open_bounded
     try:
-        with Image.open(path) as image:
+        with open_bounded(path) as image:
             width, height = image.size
-            # Source coordinates follow the displayed/engine-oriented pixels. Read the
-            # header only here; the source digest still covers the untouched file.
-            if image.format == 'JPEG' and image.getexif().get(274) in (5, 6, 7, 8): width, height = height, width
+            # Source coordinates follow the displayed/engine-oriented pixels in every
+            # supported format. Header EXIF needs no raster; Pillow may load a PNG to
+            # find metadata after IDAT. The digest still covers the untouched file.
+            if image.getexif().get(274) in (5, 6, 7, 8): width, height = height, width
     except (OSError, SyntaxError) as exc: # DecompressionBombError stays a safety refusal for its callers
         raise ValueError("Source image is damaged, restore the original asset.") from exc
     return {

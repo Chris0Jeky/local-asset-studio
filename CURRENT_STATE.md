@@ -1,5 +1,21 @@
 # Current state — 2 November 2026
 
+## 2026-11-02 — Imported repair sources follow displayed image orientation
+
+Marked repair, seamless tiles and parallax now use the same displayed coordinates
+for JPEG, PNG and WebP EXIF orientations. Source files and their hashes remain
+unchanged. Repair preparation names an oversized composed PNG before any upload,
+and editing refuses 16-bit or ambiguous-header PNGs with guidance to convert a
+copy to 8-bit RGB. Both source readers enforce the strict pixel limit before decode.
+Raw import remains available; this is not a colour-management or generation claim.
+
+The focused source and route group passed 169 tests with no skips, including all
+eight transforms, late PNG EXIF, private preparation, mask union/alpha behavior,
+CMYK conversion and the encoded-size boundary. Pillow-free static validation
+passed. [Causal evidence and limits](docs/reconciliation/2026-11-02-region-repair-sources.md)
+record the exact source contract; integrated hosted qualification remains pending.
+Refs #1861. Owner art acceptance and native generated-output quality remain open.
+
 ## 2026-11-02 — Contract discovery parses each runner once
 
 The frontend-contract wiring gate now shares one parsed runner snapshot across
