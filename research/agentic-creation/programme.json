@@ -1,0 +1,939 @@
+{
+  "format": "studio.agentic-creation-programme/v1",
+  "as_of": "2026-11-02",
+  "automatic_execution": false,
+  "source_policy": "Preserve raw reports privately. Claims, runtime observations, design hypotheses and acceptance are separate.",
+  "sources": [
+    {
+      "id": "report-a",
+      "kind": "provided_report",
+      "evidence": "reported_not_reverified",
+      "location": "private archive: blender-amd"
+    },
+    {
+      "id": "report-b",
+      "kind": "provided_report",
+      "evidence": "reported_not_reverified",
+      "location": "private archive: agentic-creation"
+    },
+    {
+      "id": "repo",
+      "kind": "repository_observation",
+      "evidence": "source_inspected",
+      "location": "main 84b66fba0da1b70be895caf8ec3831cb0a9055bd; archive 9fa5083a88bebb6b678c880e37abe5745885ba18"
+    },
+    {
+      "id": "blender-cli",
+      "kind": "primary_document",
+      "evidence": "documentation_observed_not_runtime_tested",
+      "url": "https://docs.blender.org/manual/en/5.4/advanced/command_line/arguments.html"
+    },
+    {
+      "id": "blender-mesh",
+      "kind": "primary_document",
+      "evidence": "documentation_observed_not_runtime_tested",
+      "url": "https://docs.blender.org/api/5.4/bpy.types.Mesh.html"
+    },
+    {
+      "id": "blender-actions",
+      "kind": "primary_document",
+      "evidence": "documentation_observed_not_runtime_tested",
+      "url": "https://docs.blender.org/api/main/bpy.types.ActionKeyframeStrip.html"
+    },
+    {
+      "id": "amd-ai",
+      "kind": "primary_document",
+      "evidence": "owner_document_observed_not_installed",
+      "url": "https://www.amd.com/en/products/software/rocm/rocm-ai.html"
+    },
+    {
+      "id": "blender-gltf",
+      "kind": "primary_document",
+      "evidence": "research_reference_not_rechecked_in_implementation",
+      "url": "https://docs.blender.org/manual/en/latest/addons/import_export/scene_gltf2.html"
+    },
+    {
+      "id": "godot-import",
+      "kind": "primary_document",
+      "evidence": "research_reference_not_rechecked_in_implementation",
+      "url": "https://docs.godotengine.org/en/stable/tutorials/assets_pipeline/importing_3d_scenes/index.html"
+    }
+  ],
+  "environments": [
+    {
+      "id": "las",
+      "role": "Orchestrator and offline evidence tools",
+      "policy": "Existing Python dependencies only; no framework replacement."
+    },
+    {
+      "id": "blender-anchor",
+      "role": "Installed comparison lane",
+      "owner_reported_version": "4.5.13 LTS",
+      "policy": "Explicit configured executable; no automatic upgrade."
+    },
+    {
+      "id": "blender-research",
+      "role": "Installed alpha observation lane",
+      "owner_reported_version": "5.4.0 Alpha 67c9bdddb88b",
+      "policy": "Probe exact APIs; no canonical-file migration."
+    },
+    {
+      "id": "inference",
+      "role": "Existing ComfyUI environment",
+      "owner_reported_version": "Python 3.12 / PyTorch 2.9.1+ROCm 7.2.1",
+      "policy": "Separate from Blender Python 3.13.13; no package cross-installation."
+    },
+    {
+      "id": "optional-workers",
+      "role": "Linux/WSL/NVIDIA/cloud studies",
+      "policy": "Not configured, not authorized by this programme, never inferred native Windows support."
+    }
+  ],
+  "existing_owners": {
+    "mcp": "studio_workflow/mcp_server.py",
+    "qualification": "studio_workflow/qualification.py",
+    "resource_admission": "app/resource_admission.py",
+    "resource_measurement": "app/resource_probe.py",
+    "resource_receipts": "app/resource_receipts.py",
+    "native_jobs": "app/articulated.py",
+    "native_adapter": "scripts/articulated_prop.py",
+    "provenance": "app/workspace.py",
+    "prior_atlas": "research/frontier/catalog.json"
+  },
+  "reconciliations": [
+    {
+      "id": "existing-infrastructure",
+      "reports": "Recommend adding scheduling/MCP/qualification primitives.",
+      "decision": "Those owners already exist. Add adapters/evidence without a competing scheduler or protocol server.",
+      "basis": "repository_observation"
+    },
+    {
+      "id": "amd-product-name",
+      "reports": "Report A verifies ROCm.AI/AMD Skills; report B cannot verify them.",
+      "decision": "Current AMD owner page documents ROCm.AI and AMD Skills. This establishes identity, not installation or local compatibility.",
+      "basis": "amd-ai"
+    },
+    {
+      "id": "version-lanes",
+      "reports": "One report recommends additional maintained runtimes; the other preserves installed pins.",
+      "decision": "Preserve installed anchors. Qualify any additional lane only for a measured need.",
+      "basis": "engineering_decision"
+    },
+    {
+      "id": "worker-order",
+      "reports": "Persistent worker and narrow MCP facade are both proposed as first additions.",
+      "decision": "Evidence first; benchmark startup overhead and recovery before persistent state. Existing MCP remains transport owner.",
+      "basis": "engineering_decision"
+    },
+    {
+      "id": "art-authority",
+      "reports": "Constrained inverse fitting is proposed as frontier character work.",
+      "decision": "Research does not override project artistic policy. A prohibited score-led workflow stays inactive; synthetic studies are separate.",
+      "basis": "project_policy"
+    },
+    {
+      "id": "source-completeness",
+      "reports": "Marketing/version claims do not establish installed execution.",
+      "decision": "Imported citations remain reported references; observed APIs and native receipts are separate evidence stages.",
+      "basis": "engineering_decision"
+    }
+  ],
+  "experiments": [
+    {
+      "id": "scene-baseline",
+      "title": "Research intake and read-only scene baseline",
+      "status": "native_pending",
+      "question": "Can an agent distinguish source claims, installed capabilities and observed asset state without mutating the scene?",
+      "hypothesis": "Hashed base-geometry/rig/material/action observations will expose silent changes that count-only checks miss.",
+      "inputs": [
+        "Two completed research exports kept private",
+        "Approved disposable BLEND copy",
+        "Explicit config/local.json Blender executable"
+      ],
+      "prerequisites": [
+        "Existing LAS Python; no Torch import",
+        "Pinned installed Blender; never infer alpha API from release label",
+        "Native load-memory admission before the first process"
+      ],
+      "budget": {
+        "wall_hours": 3,
+        "max_jobs": 2,
+        "gpu": "none",
+        "enforcement": "Planning caps only; existing LAS admission and execution owners must enforce actual runs."
+      },
+      "steps": [
+        "Import reports and verify archive integrity",
+        "Pin source, executable and probe bytes with plan-probe",
+        "Admit one read-only job through the native owner, with 120-second timeout and retained logs",
+        "Repeat on the same copy, then the existing compatibility anchor where that file format is supported",
+        "Compare semantic observations; do not open alpha-saved authoring sources in an older runtime"
+      ],
+      "artifacts": [
+        "source.json and original/report Markdown",
+        "sources.json and integrity manifest",
+        "probe intent",
+        "scene.json",
+        "stdout/stderr and admission receipt"
+      ],
+      "success": [
+        "Exact intake round-trip",
+        "Repeated identical recorded semantic content",
+        "Seeded same-count connectivity change detected",
+        "No source hash change"
+      ],
+      "stop": "Stop on budget/API failure or source mismatch; never replace a missing observation with zero counts.",
+      "next_decision": "Qualify the probe on a simple owned prop first; only then admit a private character copy.",
+      "sources": [
+        "report-a",
+        "report-b",
+        "repo",
+        "blender-cli",
+        "blender-mesh",
+        "blender-actions"
+      ]
+    },
+    {
+      "id": "controlled-view-parity",
+      "title": "Controlled source/candidate/export view evidence",
+      "status": "planned",
+      "question": "Can silent export losses be localized without trusting one attractive render?",
+      "hypothesis": "Identical camera/light/render contracts plus source and reimport images catch deliberately omitted geometry, texture loss and material drift.",
+      "inputs": [
+        "Owned articulated prop fixture",
+        "Approved export inclusion/exclusion profile",
+        "Six canonical cameras plus two hold-outs"
+      ],
+      "prerequisites": [
+        "Scene probe qualified on selected runtime",
+        "Existing articulated/native-export owner",
+        "New evidence renderer and target-specific object mapping; not implemented by offline comparator"
+      ],
+      "budget": {
+        "wall_hours": 4,
+        "max_jobs": 8,
+        "gpu": "exclusive",
+        "enforcement": "Planning caps only; existing LAS admission and execution owners must enforce actual runs."
+      },
+      "steps": [
+        "Freeze rig, resolution, lighting, frame and color management",
+        "Render source and unchanged rerun to measure noise",
+        "Export with existing settings; reimport into a fresh process",
+        "Restore the external validation rig and render the same views",
+        "Seed omitted part, missing texture and shader-color changes in disposable copies",
+        "Compare and attribute differences, retaining intentional exclusions explicitly"
+      ],
+      "artifacts": [
+        "BLEND copies and GLB",
+        "Capture contract with full matrices/settings",
+        "Per-view PNGs, scene observations, SHA-256 manifest",
+        "Raw comparison JSON and human review"
+      ],
+      "success": [
+        "All three seeded defects detected",
+        "Unchanged rerun lies within preregistered tolerance",
+        "Hold-outs present; unknown differences remain visible"
+      ],
+      "stop": "Stop if matching requires resizing, changing cameras or widening thresholds after seeing a failure.",
+      "next_decision": "Promote technical gates only after repeatability; keep aesthetic acceptance independent.",
+      "sources": [
+        "report-a",
+        "report-b"
+      ]
+    },
+    {
+      "id": "locked-region-2d",
+      "title": "Fine-grained 2D edit and editable-source roundtrip",
+      "status": "planned",
+      "question": "Can agents change an intended region while preserving everything else and all editable layers?",
+      "hypothesis": "Exact protected-region comparison plus native layer reopening is more dependable than whole-image similarity scores.",
+      "inputs": [
+        "Owned layered Krita source copy",
+        "Artist-defined edit and protected masks",
+        "Small fixed set of repaint proposals"
+      ],
+      "prerequisites": [
+        "Existing Krita/native-copy workflow",
+        "Existing ComfyUI environment only if generation is separately admitted",
+        "Mask-aware comparison adapter; scalar full-frame comparator alone is insufficient"
+      ],
+      "budget": {
+        "wall_hours": 3,
+        "max_jobs": 3,
+        "gpu": "exclusive_if_generating",
+        "enforcement": "Planning caps only; existing LAS admission and execution owners must enforce actual runs."
+      },
+      "steps": [
+        "Hash original layered source and record layer/mask/offset inventory",
+        "Apply one explicit masked edit or imported proposal in a copy",
+        "Reopen in Krita and export at the same native resolution",
+        "Require exact protected pixels and unchanged protected-layer inventories",
+        "Review the edited region at full size and intended presentation size"
+      ],
+      "artifacts": [
+        "Original and candidate source hashes",
+        "Masks",
+        "Layer inventory",
+        "Before/after PNGs",
+        "Native reopen receipt"
+      ],
+      "success": [
+        "Zero changes outside the authorized mask",
+        "Editable layers survive reopen",
+        "Human approves the changed region"
+      ],
+      "stop": "Stop on layer flattening, hidden protected-pixel changes or a missing source mask.",
+      "next_decision": "Expose a narrow mask-scoped edit command, never a general overwrite action.",
+      "sources": [
+        "report-a",
+        "report-b"
+      ]
+    },
+    {
+      "id": "projection-uv-closure",
+      "title": "Projection-to-UV portability closure",
+      "status": "planned",
+      "question": "Can a selected projected paint layer survive the actual runtime export?",
+      "hypothesis": "A bounded UV bake with coverage/seam evidence can separate unobserved surfaces from shader translation loss.",
+      "inputs": [
+        "One approved material/mesh copy",
+        "Existing projection and UV set",
+        "Owned reference paint"
+      ],
+      "prerequisites": [
+        "Selected Blender already installed",
+        "Portable target shader profile chosen",
+        "View parity capture implemented"
+      ],
+      "budget": {
+        "wall_hours": 4,
+        "max_jobs": 4,
+        "gpu": "exclusive",
+        "enforcement": "Planning caps only; existing LAS admission and execution owners must enforce actual runs."
+      },
+      "steps": [
+        "Inventory projection dependencies without modifying source",
+        "Bake one channel at 1024 square initially",
+        "Retain visibility/coverage and seam masks",
+        "Use image-based material on experiment copy only",
+        "Export/reimport and compare canonical plus hold-out views"
+      ],
+      "artifacts": [
+        "UV maps and bake settings",
+        "Coverage mask",
+        "Texture files",
+        "Roundtrip GLB",
+        "Controlled render pairs"
+      ],
+      "success": [
+        "All intended visible regions covered or explicitly classified as unseen",
+        "No unexplained export dropout",
+        "No new seams accepted by a global average metric"
+      ],
+      "stop": "Stop if a view-dependent effect cannot be baked faithfully; split authoring and runtime effects instead.",
+      "next_decision": "Accept a portable material derivative or document a deliberate engine-specific implementation.",
+      "sources": [
+        "report-a",
+        "report-b"
+      ]
+    },
+    {
+      "id": "amd-controlled-matrix",
+      "title": "Pinned AMD workload benchmark",
+      "status": "planned",
+      "question": "Which existing runtime/backend improves a real workload without a quality or memory regression?",
+      "hypothesis": "Warm/cold-separated timing and memory receipts are sufficient to choose lanes without globally upgrading software.",
+      "inputs": [
+        "Owned representative Blender scene",
+        "Existing ComfyUI graph and fixed model pins",
+        "Driver/runtime identifiers"
+      ],
+      "prerequisites": [
+        "Exact existing Blender and Python environments",
+        "Existing resource admission/probe/receipts",
+        "A working telemetry source or explicit unavailable markers"
+      ],
+      "budget": {
+        "wall_hours": 6,
+        "max_jobs": 32,
+        "gpu": "exclusive",
+        "enforcement": "Planning caps only; existing LAS admission and execution owners must enforce actual runs."
+      },
+      "steps": [
+        "Choose at most four cases; keep GPU inference and Blender mutually scheduled through existing admission",
+        "Measure cold startup separately",
+        "For each case run three warm-ups and five measured repeats with identical seeds/settings",
+        "Capture wall time, peak observed memory, warnings and output evidence",
+        "Report median, spread and p95 only where sample count justifies interpretation"
+      ],
+      "artifacts": [
+        "Case matrix",
+        "All raw per-run receipts",
+        "Environment fingerprints",
+        "Images and comparisons",
+        "Summary with missing telemetry fields"
+      ],
+      "success": [
+        "Repeatable workload-specific signal above run-to-run noise",
+        "No visual/functional regression",
+        "Memory measurements available or explicitly unknown"
+      ],
+      "stop": "Stop on out-of-memory, driver instability or conflicting live GPU work; never call a tiny probe a benchmark.",
+      "next_decision": "Change only a workload profile with demonstrated benefit; do not upgrade drivers/ROCm by default.",
+      "sources": [
+        "report-a",
+        "report-b"
+      ]
+    },
+    {
+      "id": "persistent-worker-latency",
+      "title": "Persistent worker necessity and recovery test",
+      "status": "planned",
+      "question": "Is process startup a material bottleneck after useful asset work is included?",
+      "hypothesis": "A persistent typed worker is worthwhile only when reduced overhead outweighs state and recovery complexity.",
+      "inputs": [
+        "Qualified read-only probe",
+        "Thirty bounded inspection operations",
+        "Two unrelated owned fixtures"
+      ],
+      "prerequisites": [
+        "Existing headless owner as baseline",
+        "No new MCP server",
+        "Persistent process remains an isolated prototype"
+      ],
+      "budget": {
+        "wall_hours": 6,
+        "max_jobs": 32,
+        "gpu": "none",
+        "enforcement": "Planning caps only; existing LAS admission and execution owners must enforce actual runs."
+      },
+      "steps": [
+        "Time fresh-process inspect calls and a proposed minimal persistent transport",
+        "Alternate assets A/B/A; verify semantic snapshots",
+        "Inject process crash, stale request and timeout",
+        "Measure useful work, startup overhead and recovery separately"
+      ],
+      "artifacts": [
+        "Latency distribution",
+        "A/B/A scene hashes",
+        "Crash/timeout receipts",
+        "Decision record"
+      ],
+      "success": [
+        "At least 30 percent end-to-end improvement on the selected iteration workload",
+        "No A/B state leakage",
+        "Deterministic fallback to a fresh process"
+      ],
+      "stop": "Stop if only empty ping improves, source state leaks or recovery loses job identity.",
+      "next_decision": "Build typed worker only after evidence; adapt the existing MCP surface rather than adding a second server.",
+      "sources": [
+        "report-a",
+        "report-b"
+      ]
+    },
+    {
+      "id": "procedural-asset-factory",
+      "title": "Procedural prop and defect benchmark factory",
+      "status": "planned",
+      "question": "Can editable procedural assets provide both useful outputs and a ground-truth agent test corpus?",
+      "hypothesis": "Parameter-constrained generation with seeded topology/UV/material defects yields more useful automation evidence than text-to-3D demos.",
+      "inputs": [
+        "Owned articulated prop recipe",
+        "Ten parameter variants",
+        "Defect and hold-out labels"
+      ],
+      "prerequisites": [
+        "Existing authored-prop adapter",
+        "Scene observation and controlled-view path",
+        "No external models or asset services"
+      ],
+      "budget": {
+        "wall_hours": 8,
+        "max_jobs": 24,
+        "gpu": "exclusive",
+        "enforcement": "Planning caps only; existing LAS admission and execution owners must enforce actual runs."
+      },
+      "steps": [
+        "Generate a small parameter sweep with source provenance",
+        "Seed one defect per copy including same-count connectivity changes",
+        "Measure detection and repair by category",
+        "Produce one LOD derivative with silhouette checks",
+        "Import one accepted technical candidate into an explicit target profile"
+      ],
+      "artifacts": [
+        "Editable source and parameter manifests",
+        "Defect labels",
+        "Exports and LODs",
+        "Agent detection/repair metrics",
+        "Cleanup/intervention accounting"
+      ],
+      "success": [
+        "Known defects detected without pristine fixtures falsely failing",
+        "Source remains editable",
+        "Measured intervention lower than manual repetitive delivery"
+      ],
+      "stop": "Stop if benchmark shortcuts expose labels to the agent or procedural variety lacks downstream usefulness.",
+      "next_decision": "Expand a useful asset class; do not generalize to autonomous hero-character modelling.",
+      "sources": [
+        "report-a",
+        "report-b"
+      ]
+    },
+    {
+      "id": "critic-calibration",
+      "title": "Local visual critic calibration and counterfactuals",
+      "status": "research_only",
+      "question": "Can an available local model identify technical defects without overriding artistic decisions?",
+      "hypothesis": "Narrow region-specific questions, human labels and hidden hold-outs outperform a single global quality score.",
+      "inputs": [
+        "Fifty labeled owned render pairs",
+        "Ten unseen camera/pose pairs",
+        "Counterfactual one-variable edits"
+      ],
+      "prerequisites": [
+        "Separately pinned existing multimodal runtime/model or explicitly approved provider",
+        "No subscription/API availability assumption",
+        "GPU admission shared with rendering"
+      ],
+      "budget": {
+        "wall_hours": 12,
+        "max_jobs": 60,
+        "gpu": "exclusive",
+        "enforcement": "Planning caps only; existing LAS admission and execution owners must enforce actual runs."
+      },
+      "steps": [
+        "Record category, region, confidence and evidence for every prediction",
+        "Split tuning/hold-out assets, not merely adjacent frames",
+        "Test monotonic response to texture loss, occlusion and topology defects",
+        "Compare category precision/recall and calibration against human labels"
+      ],
+      "artifacts": [
+        "Model/runtime pins",
+        "Fixed prompts",
+        "Raw responses",
+        "Confusion matrices by category",
+        "Rejected/uncertain judgments"
+      ],
+      "success": [
+        "Useful held-out technical defect precision/recall",
+        "No promotion from aesthetic score",
+        "Counterfactual failures remain visible"
+      ],
+      "stop": "Stop using any category with poor calibration or identity drift; do not increase authority to compensate.",
+      "next_decision": "Admit only validated advisory categories; human acceptance remains external.",
+      "sources": [
+        "report-a",
+        "report-b"
+      ]
+    },
+    {
+      "id": "bounded-corrective-study",
+      "title": "Synthetic constrained corrective-shape study",
+      "status": "research_only",
+      "question": "Can a small permitted deformation basis improve held-out stress poses?",
+      "hypothesis": "A 10-parameter, topology-preserving solver on an owned synthetic rig can test whether inverse fitting is useful without unconstrained sculpting.",
+      "inputs": [
+        "Owned synthetic rig, not a private character lead",
+        "Declared allowable deformation basis",
+        "Six training and four held-out poses"
+      ],
+      "prerequisites": [
+        "Topology/UV identity checks",
+        "Explicit geometry loss and displacement bound",
+        "Separate project authorization; do not run in a workspace that prohibits score-led sculpting"
+      ],
+      "budget": {
+        "wall_hours": 24,
+        "max_jobs": 40,
+        "gpu": "exclusive",
+        "enforcement": "Planning caps only; existing LAS admission and execution owners must enforce actual runs."
+      },
+      "steps": [
+        "Define constraints and displacement caps before optimization",
+        "Use bounded derivative-free search before CUDA-dependent tooling",
+        "Evaluate contact/silhouette/volume on training and held-out poses",
+        "Retain every candidate and failure",
+        "Convert only an accepted result into an ordinary authored corrective"
+      ],
+      "artifacts": [
+        "Basis and bounds",
+        "Candidate deltas",
+        "Loss traces",
+        "Pose renders",
+        "Topology hashes",
+        "Human decisions"
+      ],
+      "success": [
+        "Held-out geometric improvement without identity/topology drift",
+        "Manual artist finds the corrective useful",
+        "No runtime solver dependency required to use output"
+      ],
+      "stop": "Stop on training-view-only improvement, implausible compensation, licensing ambiguity or project-policy conflict.",
+      "next_decision": "Continue as a synthetic research track or discard; private artistic workflows require a new explicit decision.",
+      "sources": [
+        "report-a",
+        "report-b"
+      ]
+    },
+    {
+      "id": "hybrid-reference-stage",
+      "title": "Hybrid mesh/neural reference stage",
+      "status": "research_only",
+      "question": "Does a reconstructed representation improve a concrete authoring task over ordinary image references?",
+      "hypothesis": "A small rights-clean splat or reconstructed object can help camera alignment and proxy geometry even when the deliverable remains an editable mesh.",
+      "inputs": [
+        "Self-owned or permissively licensed small capture",
+        "Image-plane baseline",
+        "Proxy mesh and known cameras"
+      ],
+      "prerequisites": [
+        "Exact installed feature probe for import/render support",
+        "External reconstruction is separately scoped; no CUDA-on-AMD assumption",
+        "No new paid/cloud route by default"
+      ],
+      "budget": {
+        "wall_hours": 16,
+        "max_jobs": 12,
+        "gpu": "exclusive",
+        "enforcement": "Planning caps only; existing LAS admission and execution owners must enforce actual runs."
+      },
+      "steps": [
+        "Record representation provenance and exact importer capability",
+        "Align proxy geometry using image references as control",
+        "Repeat with the neural representation",
+        "Compare alignment effort, occlusion errors, memory and editability",
+        "Keep Blender authoring, importing and rendering roles distinct"
+      ],
+      "artifacts": [
+        "Input/source permissions",
+        "Importer/runtime fingerprints",
+        "Proxy mesh",
+        "Matched-view captures",
+        "Time/error comparison"
+      ],
+      "success": [
+        "At least one useful task beats image-plane baseline",
+        "Occlusion and performance limitations characterized",
+        "Editable mesh deliverable survives the workflow"
+      ],
+      "stop": "Stop when unstable import or CUDA-only reconstruction dominates the benefit; never silently rent a GPU.",
+      "next_decision": "Retain as a specialized reference worker or reject without migrating the main authoring runtime.",
+      "sources": [
+        "report-a",
+        "report-b"
+      ]
+    }
+  ],
+  "opportunities": [
+    {
+      "id": "asset-evidence",
+      "title": "2D/3D evidence, semantic inventory and baseline comparison",
+      "readiness": "usable_now",
+      "value": 5,
+      "effort": 2,
+      "resource_cost": 1,
+      "novelty": 3,
+      "useful_result_confidence": "high",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "Offline comparator/intake implemented; native captures still require qualification."
+    },
+    {
+      "id": "masked-layer-edits",
+      "title": "Layer/mask scoped illustration edits",
+      "readiness": "bounded_project",
+      "value": 5,
+      "effort": 2,
+      "resource_cost": 2,
+      "novelty": 3,
+      "useful_result_confidence": "high",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "Existing Krita and repair lineage; layer survival must be checked natively."
+    },
+    {
+      "id": "vector-parameter-edits",
+      "title": "SVG/vector parameter edits and accessible natural-language controls",
+      "readiness": "bounded_project",
+      "value": 4,
+      "effort": 2,
+      "resource_cost": 1,
+      "novelty": 3,
+      "useful_result_confidence": "high",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "Editable source and exact constraints are easier to audit than raster-only outputs."
+    },
+    {
+      "id": "texture-material-library",
+      "title": "Texture/material provenance library and bake coverage",
+      "readiness": "bounded_project",
+      "value": 5,
+      "effort": 3,
+      "resource_cost": 2,
+      "novelty": 3,
+      "useful_result_confidence": "high",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "Use existing provenance/model/library owners; output terms remain separate."
+    },
+    {
+      "id": "procedural-props",
+      "title": "Procedural props/environments and editable variations",
+      "readiness": "bounded_project",
+      "value": 5,
+      "effort": 3,
+      "resource_cost": 2,
+      "novelty": 3,
+      "useful_result_confidence": "high",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "Existing authored native adapter supplies an owned ground-truth fixture."
+    },
+    {
+      "id": "lod-cleanup",
+      "title": "Asset hygiene, LODs and target-specific validation",
+      "readiness": "bounded_project",
+      "value": 4,
+      "effort": 3,
+      "resource_cost": 2,
+      "novelty": 2,
+      "useful_result_confidence": "high",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "Geometric error must be measured in held-out silhouettes, not polygon counts alone."
+    },
+    {
+      "id": "shader-translation",
+      "title": "Authoring-to-runtime material compiler",
+      "readiness": "bounded_project",
+      "value": 5,
+      "effort": 4,
+      "resource_cost": 2,
+      "novelty": 4,
+      "useful_result_confidence": "medium",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "Standard exports do not preserve arbitrary shader graphs; author explicit target profiles."
+    },
+    {
+      "id": "rig-morph-qa",
+      "title": "Rig/morph hierarchy, weights and stress-pose QA",
+      "readiness": "bounded_project",
+      "value": 5,
+      "effort": 3,
+      "resource_cost": 2,
+      "novelty": 4,
+      "useful_result_confidence": "high",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "Keep stored rig identity separate from evaluated deformation."
+    },
+    {
+      "id": "animation-contact",
+      "title": "Retargeting, curve cleanup, hand/foot contact checks",
+      "readiness": "bounded_project",
+      "value": 5,
+      "effort": 4,
+      "resource_cost": 2,
+      "novelty": 4,
+      "useful_result_confidence": "medium",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "Use feasible pose bounds and contact labels; still renders cannot certify motion."
+    },
+    {
+      "id": "hair-cloth-secondary",
+      "title": "Editable hair guides/cards, cloth and secondary motion",
+      "readiness": "bounded_project",
+      "value": 5,
+      "effort": 4,
+      "resource_cost": 3,
+      "novelty": 3,
+      "useful_result_confidence": "medium",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "Authoring representation and exported derivative need separate contracts."
+    },
+    {
+      "id": "camera-storyboards",
+      "title": "Camera planning, storyboards, animatics and product variants",
+      "readiness": "bounded_project",
+      "value": 4,
+      "effort": 2,
+      "resource_cost": 2,
+      "novelty": 3,
+      "useful_result_confidence": "high",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "Controlled cameras can serve both presentation and adversarial testing."
+    },
+    {
+      "id": "audio-motion",
+      "title": "Audio-reactive graphics and motion design",
+      "readiness": "bounded_project",
+      "value": 3,
+      "effort": 2,
+      "resource_cost": 2,
+      "novelty": 3,
+      "useful_result_confidence": "medium",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "Probe installed nodes; prerecorded authorized audio only, no automatic microphone."
+    },
+    {
+      "id": "companion-acting",
+      "title": "Gaze, speech/viseme and gesture libraries",
+      "readiness": "bounded_project",
+      "value": 5,
+      "effort": 4,
+      "resource_cost": 2,
+      "novelty": 4,
+      "useful_result_confidence": "medium",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "Runtime target and expression contracts first; no tracking activation inferred."
+    },
+    {
+      "id": "synthetic-labels",
+      "title": "Synthetic data with pose/depth/normal/segmentation labels",
+      "readiness": "bounded_project",
+      "value": 4,
+      "effort": 3,
+      "resource_cost": 2,
+      "novelty": 4,
+      "useful_result_confidence": "high",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "Blender is the ground-truth renderer, not a general learned simulator."
+    },
+    {
+      "id": "dcc-fault-corpus",
+      "title": "Known-bad asset corpus and adversarial view search",
+      "readiness": "bounded_project",
+      "value": 5,
+      "effort": 3,
+      "resource_cost": 2,
+      "novelty": 5,
+      "useful_result_confidence": "high",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "Measures agents against hidden failures instead of polished marketing examples."
+    },
+    {
+      "id": "photogrammetry",
+      "title": "Photogrammetry and reconstruction cleanup",
+      "readiness": "research",
+      "value": 3,
+      "effort": 4,
+      "resource_cost": 3,
+      "novelty": 3,
+      "useful_result_confidence": "medium",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "Observed reality does not supply stylized hero topology or unrestricted source rights."
+    },
+    {
+      "id": "hybrid-splats",
+      "title": "Hybrid mesh/splat stages and 4D representation studies",
+      "readiness": "research",
+      "value": 3,
+      "effort": 4,
+      "resource_cost": 4,
+      "novelty": 5,
+      "useful_result_confidence": "medium",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "Import/render support is not splat training or useful mesh editability."
+    },
+    {
+      "id": "inverse-graphics",
+      "title": "Constrained inverse graphics and corrective fitting",
+      "readiness": "research",
+      "value": 4,
+      "effort": 5,
+      "resource_cost": 4,
+      "novelty": 5,
+      "useful_result_confidence": "low",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "Synthetic-only until project policy and held-out validation authorize transfer."
+    },
+    {
+      "id": "external-3d-donors",
+      "title": "External generated 3D donors with cleanup accounting",
+      "readiness": "research",
+      "value": 3,
+      "effort": 4,
+      "resource_cost": 5,
+      "novelty": 4,
+      "useful_result_confidence": "low",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "CUDA/custom kernels and model terms require a separately approved worker."
+    },
+    {
+      "id": "simulation-robotics",
+      "title": "Simulation, robotics and digital-twin observations",
+      "readiness": "research",
+      "value": 3,
+      "effort": 5,
+      "resource_cost": 4,
+      "novelty": 4,
+      "useful_result_confidence": "low",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "Blender may author/label assets; simulator dynamics and sensor validation are separate."
+    },
+    {
+      "id": "scientific-visuals",
+      "title": "Scientific visualization and reproducible diagrams",
+      "readiness": "bounded_project",
+      "value": 4,
+      "effort": 3,
+      "resource_cost": 1,
+      "novelty": 3,
+      "useful_result_confidence": "high",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "Bind data/units/color scales to sources; pretty output is not numerical validation."
+    },
+    {
+      "id": "printable-designs",
+      "title": "Printability, dimensions and CAD handoff",
+      "readiness": "bounded_project",
+      "value": 4,
+      "effort": 3,
+      "resource_cost": 1,
+      "novelty": 3,
+      "useful_result_confidence": "medium",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "Thickness/manifold/unit checks help, but do not establish fabrication safety."
+    },
+    {
+      "id": "full-local-training",
+      "title": "Large 3D foundation-model training on this workstation",
+      "readiness": "not_recommended",
+      "value": 1,
+      "effort": 5,
+      "resource_cost": 5,
+      "novelty": 4,
+      "useful_result_confidence": "low",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "16 GB VRAM and native Windows ecosystem constraints make this an unsuitable baseline."
+    },
+    {
+      "id": "live2d-separate",
+      "title": "Independent 2D character embodiment",
+      "readiness": "parked",
+      "value": 3,
+      "effort": 4,
+      "resource_cost": 2,
+      "novelty": 3,
+      "useful_result_confidence": "medium",
+      "estimate_basis": "Planning judgment, not an empirical probability",
+      "benefit_and_limit": "A separate option; never automatically revive a paused project route."
+    }
+  ],
+  "phases": {
+    "first_48_hours": [
+      "Archive and verify both reports",
+      "Qualify scene-baseline on owned prop, then an approved private copy",
+      "Implement capture contract/renderer and seed export failures",
+      "Select one 2D masked-edit or UV-closure slice"
+    ],
+    "two_weeks": [
+      "Bind admitted native probe/capture jobs to existing MCP tools",
+      "Complete source-export-reimport evidence on an owned prop",
+      "Measure one AMD workload matrix without upgrades",
+      "Add stress-pose and protected-mask gates",
+      "Decide worker persistence from measured overhead"
+    ],
+    "research_backlog": [
+      "Critic calibration and counterfactual tests",
+      "Material target profiles and hair derivatives",
+      "Animation/contact and expression libraries",
+      "Synthetic data and DCC fault corpus",
+      "Hybrid neural reference study",
+      "Policy-permitted synthetic corrective study"
+    ]
+  }
+}

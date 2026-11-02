@@ -187,11 +187,22 @@ def compare_image(source_path, roundtrip_path, diff_path, pass_name, palette=Non
     return record
 
 
+def _evidence_files(evidence, label):
+    """Accept only the complete fixed capture contract, before joining any receipt-provided paths."""
+    expected = {f"{view}.{pass_name}.png" for view in lab.bpy_side.VIEWS for pass_name in lab.bpy_side.PASSES}
+    files = evidence.get("files") if isinstance(evidence, dict) else None
+    require(isinstance(files, list) and len(files) == len(expected)
+            and all(isinstance(name, str) for name in files) and set(files) == expected,
+            f"{label} must contain the complete unique evidence set (four views x four passes)")
+    return sorted(expected)
+
+
 def compare_renders(source_dir, roundtrip_dir, evidence, out_dir):
+    files = _evidence_files(evidence, "Source")
     out_dir.mkdir(parents=True, exist_ok=True)
     palettes = {"object_id": evidence["palette"]["object"], "material_id": evidence["palette"]["material"]}
     views, warnings = {}, []
-    for name in evidence["files"]:
+    for name in files:
         view, pass_name, _ = name.split(".")
         record = compare_image(source_dir / name, roundtrip_dir / name, out_dir / f"{view}.{pass_name}.diff.png",
                                pass_name, palettes.get(pass_name))
@@ -208,14 +219,14 @@ def roundtrip_and_compare(exe, target, timeout=600):
     process with the source cameras and compare both sides."""
     load = lambda path: json.loads(path.read_text(encoding="utf-8"))
     evidence = load(target / "source" / "evidence.json")
+    files = _evidence_files(evidence, "Source")
     cameras = target / "cameras.json"
     cameras.write_text(json.dumps(evidence["camera_spec"], indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
     seconds = lab.run(exe, ["evidence", "--glb", target / "export.glb", "--out-dir", target / "roundtrip", "--out",
                             target / "roundtrip.json", "--cameras", cameras], target / "roundtrip.log.json", timeout)
     src_manifest, rt_manifest = load(target / "source" / "manifest.json"), load(target / "roundtrip" / "manifest.json")
-    rt_evidence = load(target / "roundtrip" / "evidence.json")
-    require(sorted(rt_evidence["files"]) == sorted(evidence["files"]), "Roundtrip did not render the same evidence set")
-    for name in evidence["files"]:
+    _evidence_files(load(target / "roundtrip" / "evidence.json"), "Roundtrip")
+    for name in files:
         require((target / "source" / "renders" / name).is_file() and (target / "roundtrip" / "renders" / name).is_file(),
                 f"Missing render {name}")
     structure = compare_manifests(src_manifest, rt_manifest)
@@ -256,6 +267,8 @@ def sentinel(blender_path, blend_path, out_dir, seed_defect=None, timeout=600):
         "artifacts": [{"path": p.relative_to(target).as_posix(), "sha256": lab.file_sha(p), "bytes": p.stat().st_size}
                       for p in sorted(target.rglob("*")) if p.is_file()],
     }
+    # Recheck after both workers, image comparison and artifact hashing, immediately before publication.
+    require(lab.file_sha(blend) == before, "Source .blend changed during the sentinel run")
     (target / "result.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
     return result
 

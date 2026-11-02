@@ -1,3 +1,4 @@
+import io
 import json
 import os
 from pathlib import Path
@@ -49,6 +50,44 @@ class CommandTests(unittest.TestCase):
             with mock.patch.object(lab, "command_for", return_value=[sys.executable, "-c", "import time; time.sleep(5)"]):
                 with self.assertRaises(lab.BlenderLabError): lab.run(sys.executable, [], log, timeout=0.5)
             self.assertEqual(json.loads(log.read_text(encoding="utf-8"))["returncode"], "timeout")
+
+    def test_executable_disappearing_after_validation_keeps_a_launch_receipt(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            exe = root / "blender.exe"; exe.write_bytes(b"Disposable launch fixture")
+            out = root / "probe.json"; log = root / "probe.log.json"
+            command_for = lab.command_for
+            def disappeared(blender_path, *args):
+                command = command_for(blender_path, *args)
+                Path(blender_path).unlink()  # Real OS launch failure after executable() accepted it.
+                return command
+            with mock.patch.object(lab, "command_for", side_effect=disappeared) as build, mock.patch.object(sys, "stderr", io.StringIO()) as errors:
+                code = lab.main(["probe", "--blender", str(exe), "--out", str(out)])
+            self.assertEqual(code, 2); build.assert_called_once()
+            receipt = json.loads(log.read_text(encoding="utf-8"))
+            self.assertEqual(receipt["argv"], command_for(exe, "probe", "--out", out))
+            self.assertEqual(receipt["returncode"], "os-error")
+            self.assertTrue(receipt["error"].startswith("FileNotFoundError:"))
+            self.assertIsNone(receipt["stdout"]); self.assertIsNone(receipt["stderr"])
+            self.assertGreaterEqual(receipt["seconds"], 0)
+            self.assertIn("did not return a result", json.loads(errors.getvalue())["error"])
+            self.assertFalse(out.exists())
+            saved = log.read_bytes(); exe.write_bytes(b"Disposable replacement fixture")
+            with mock.patch.object(lab.subprocess, "run") as child:
+                with self.assertRaises(FileExistsError): lab.probe(exe, out)
+            child.assert_not_called(); self.assertEqual(log.read_bytes(), saved)
+
+    def test_permission_failure_keeps_a_bounded_error_without_retry(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            log = Path(tmp) / "denied.log.json"
+            with mock.patch.object(lab.subprocess, "run", side_effect=PermissionError("denied " * 1000)) as child:
+                with self.assertRaisesRegex(lab.BlenderLabError, "did not return a result"):
+                    lab.run(sys.executable, ["probe"], log)
+            child.assert_called_once()
+            receipt = json.loads(log.read_text(encoding="utf-8"))
+            self.assertEqual(receipt["returncode"], "os-error")
+            self.assertTrue(receipt["error"].startswith("PermissionError:"))
+            self.assertLessEqual(len(receipt["error"]), 1000)
 
     def test_blender_side_script_compiles(self):
         compile(lab.BPY_SCRIPT.read_text(encoding="utf-8"), str(lab.BPY_SCRIPT), "exec")

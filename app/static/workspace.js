@@ -313,7 +313,7 @@ async function performAssetSave(operation, observe=false) {
   try{requireAssetScope(operation.command.workspace_id);}catch(error){assetDetailStatus(error.message,true);return false;}
   if(!retainAssetDraft())return false;
   const {id,epoch,command,body}=operation,controller=new AbortController();
-  const request={},workspaceEpoch=assetWorkspaceEpoch,headers=assetPrivacyHeaders();
+  const request={},workspaceEpoch=assetWorkspaceEpoch,headers=assetPrivacyHeaders(),focus=document.activeElement;
   assetDetailRequest=request;
   const ownsRequest=()=>assetDetailRequest===request;
   const ownsEditor=()=>assetDetailContextCurrent(id,epoch) && assetDetailPending===operation && activeAsset.workspace_id===command.workspace_id;
@@ -329,7 +329,7 @@ async function performAssetSave(operation, observe=false) {
     if(observe && result?.status==='unknown' && result.request_id===command.request_id){assetDetailStatus('Save still not confirmed. No receipt exists yet; the earlier request may still complete. No retry was sent.',true);return false;}
     validateAssetReceipt(result,command);
     applyAssetSaveReceipt(operation,result);
-    syncAssetAfterSave(operation,result);
+    syncAssetAfterSave(operation,result,focus);
     return true;
   } catch(error) {
     if(!current())return false;
@@ -369,10 +369,13 @@ async function performAssetSave(operation, observe=false) {
   }
 }
 // A confirmed single save updates the loaded record in place. A whole workspace refetch is not evidence of anything more.
-function syncAssetAfterSave(operation,result) {
+function syncAssetAfterSave(operation,result,focus) {
   const updated=applyAssetReceipt(operation.command,result);
   if(['trash','archive'].includes(operation.kind))renderAssets();else updateAssetCard(operation.id);
   if(!updated)void refreshAssets(true);
+  // Presentation may recheck a deliberate source pair; this receipt still invalidates every held read.
+  if(operation.kind==='details'&&operation.command.action==='edit'&&operation.command.ids.length===1&&operation.command.ids[0]===operation.id&&!assetDetailPending&&!assetDetailConflict)
+    document.dispatchEvent?.(new CustomEvent('studio:asset-detail-saved',{detail:{asset_id:operation.id,workspace_id:operation.command.workspace_id,detail_epoch:operation.epoch,receipt_epoch:assetReceiptEpoch,focus}}));
 }
 function applyAssetSaveReceipt(operation,result) {
   const unchanged=JSON.stringify(assetDetailValues())===JSON.stringify(operation.snapshot);
@@ -1624,7 +1627,7 @@ const migrationBlockers={
   pending_stage_upload:'A production comparison stage that has not started still needs a reference picture this move would copy, and that picture must stay Regular for it.',
   production_unreadable:'Scene projects or production plans could not all be read, so the copies they keep of these runs and pictures are unknown.',
   scope_partial:'This preview did not cover both privacy views; plan again under All.'};
-const migrationKinds={run:['run','runs'],run_file:['run file','run files'],asset:['output','outputs'],upload:['uploaded reference copy','uploaded reference copies'],thumbnail:['thumbnail','thumbnails'],collection:['collection','collections'],lineage_child:['related item that stays where it is','related items that stay where they are'],receipt:['past receipt that stays','past receipts that stay'],scene_copy:['scene project copy that stays Regular','scene project copies that stay Regular'],production_plan:['production plan that keeps a recipe','production plans that keep a recipe']};
+const migrationKinds={run:['run','runs'],run_file:['run file','run files'],asset:['output','outputs'],upload:['uploaded reference copy','uploaded reference copies'],thumbnail:['thumbnail','thumbnails'],collection:['collection','collections'],lineage_child:['related item that stays where it is','related items that stay where they are'],receipt:['past receipt that stays','past receipts that stay'],acceptance:['acceptance record that stays','acceptance records that stay'],scene_copy:['scene project copy that stays Regular','scene project copies that stay Regular'],production_plan:['production plan that keeps a recipe','production plans that keep a recipe']};
 const migrationApplyErrors={
   migration_blocked:['This move is blocked now, so nothing was moved. Preview again to see why.','preview'],
   migration_stale:['Something changed since the preview, so nothing was moved. Preview again.','preview'],
