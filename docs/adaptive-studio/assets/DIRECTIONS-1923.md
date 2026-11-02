@@ -123,6 +123,25 @@ answered `/system_stats` afterwards). A at 1536 wide drew the character twice in
 waifu-lab lane's earlier Anima two-figure result; 1216×832 with duplicate negatives fixed both. Not verified: other seeds,
 any identity score for Suzu across slots, crops at delivery sizes, and whether the text-safe areas survive the real slots.
 
+## Round 2: one variable, Suzu in each style (2 November 2026)
+
+Direction A's guide and scenes held fixed, the style swapped: Suzu on the Welcome and Create slots in B's paint
+(`moss-t2i` + mikkoani 0.9 + Impasto 0.25, 1248×832, MOSS's nearest authored size) and in C's retro look (`wai` with C's
+tags and negatives, 1216×832), same seeds as round 1. It answers "keep this character, change the style" (option d of the
+owner's decision). Versus: **"Studio art directions (#1923): Suzu in each style"**, two slot groups with round 1's A
+pictures as the third item.
+
+| Job | Preset | Seconds | Studio job | Prompt ID | Output sha256 | Agent defect check |
+| --- | --- | ---: | --- | --- | --- | --- |
+| Suzu welcome, retro | `wai` | 32.4 | `e4655f26` | `4d19f853-d8f4-4f5f-8b4d-0f600d2ae245` | `9f6d6bedc89c…` | Costume drift: cream jacket with a red sailor collar instead of navy; night scene from the retro tags |
+| Suzu create, retro | `wai` | 12.1 | `c119357a` | `230cdab8-944d-4252-b73f-5d5d7e9a95ef` | `e33d969811af…` | Same costume drift; otherwise clean |
+| Suzu welcome, paint | `moss-t2i` | 72.3 | `8f04bb55` | `d4613250-7ca8-4ff2-8e74-e19111863192` | `786416806222…` | Clean; costume kept; the left third is again a flat empty wall |
+| Suzu create, paint | `moss-t2i` | 44.4 | `0535d7e1` | `8f0e7049-7ea0-454d-9a00-c4cdbfde7137` | `00c3c0086f69…` | Clean; costume kept |
+
+The first MOSS attempt was refused before queuing ("Choose an authored resolution pair from this recipe") at 1216×832; no
+job was created. Not verified: more seeds, and whether WAI keeps the navy jacket with a stronger colour tag or the colour
+lock.
+
 ## Replacement prompt plan
 
 Once the owner picks a direction, the illustration rows are made **locally first**. The rejected
