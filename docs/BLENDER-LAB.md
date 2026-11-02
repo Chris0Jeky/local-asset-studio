@@ -415,9 +415,12 @@ The sentinel's `result.json` (and the worker's `reimport_validate` and each corp
 statements about objects and materials instead of pixel counts. For each view:
 - The object-ID change mask names objects that are missing or hidden, appeared, revealed (were covered there before),
   or whose geometry moved.
-- The material-ID mask names material swaps and the meshes under them.
-- A lit or clay change that the ID passes do not explain is attributed to the objects covering at least 5% of the
-  changed pixels, in either render.
+- The material-ID mask names material swaps and the meshes under them, but only where the object ID did not change, so
+  occlusion is never reported as a swap.
+- A lit or clay change outside both ID masks (dilated 3 px for anti-aliasing) is attributed to the objects covering at
+  least 5% of it. It is reported only when it clears the pass's own warning bar, so shadows and bounce light beside an
+  ID change stay quiet.
+- Candidate pixels are named with the candidate's palette.
 
 Statements are deduplicated across views and ranked by how many views agree.
 
@@ -428,7 +431,7 @@ named on the right object:
 | --- | --- |
 | material-mismatch | `material BadgeGreen -> BodyTextured on Badge` (all 4 views) |
 | transform-offset | `geometry of Head moved or changed` |
-| omitted-mesh | `object Body is missing or hidden here`, plus the consequences: `Badge revealed (was covered here)` |
+| omitted-mesh | `object Body is missing or hidden here`, `object Badge revealed (was covered here)` |
 | missing-texture, missing-uvs, mesh-hole | `shading changed on Body (lit pass; IDs unchanged)` |
 | duplicate-overlap | `shading changed on Badge (lit pass; IDs unchanged)` (a coincident duplicate shares IDs' screen space) |
 

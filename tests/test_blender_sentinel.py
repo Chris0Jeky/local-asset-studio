@@ -209,13 +209,26 @@ class LocaliseTests(unittest.TestCase):
                                     [((120, 60, 20, 255), (0, 0, 40, 64)), ((120, 60, 20, 255), (40, 20, 60, 40))]), {"lit", "material_id"})
         self.assertEqual(statements, ["material Brass -> Wood on Badge"])
 
+    def test_empty_palette_names_nothing_instead_of_crashing(self):
+        mask = Image.new("L", (4, 4), 255)
+        self.assertEqual(sentinel._shares(Image.new("RGBA", (4, 4), (10, 20, 30, 255)), mask, {}), [])
+
+    def test_occlusion_is_not_a_swap_and_an_independent_shading_change_survives(self):
+        # Badge vanishes (revealing Body's wood behind it) and, separately, Body's lit shading changes.
+        statements = self.run_case(([("Body", (0, 0, 60, 64))], [("Wood", (0, 0, 60, 64))],
+                                    [((255, 255, 255, 255), (0, 0, 20, 64)), ((120, 60, 20, 255), (20, 0, 60, 64))]),
+                                   {"lit", "object_id", "material_id"})
+        self.assertIn("object Badge is missing or hidden here", statements)
+        self.assertFalse(any(s.startswith("material ") for s in statements), statements)
+        self.assertIn("shading changed on Body (lit pass; IDs unchanged there)", statements)
+
     def test_missing_object_and_lit_only_change(self):
         missing = self.run_case(([("Body", (0, 0, 40, 64))], [("Wood", (0, 0, 40, 64))], [((120, 60, 20, 255), (0, 0, 40, 64))]),
                                 {"lit", "object_id", "material_id"})
         self.assertIn("object Badge is missing or hidden here", missing)
         shading = self.run_case(([("Body", (0, 0, 40, 64)), ("Badge", (40, 20, 60, 40))], [("Wood", (0, 0, 40, 64)), ("Brass", (40, 20, 60, 40))],
                                  [((255, 255, 255, 255), (0, 0, 40, 64)), ((200, 160, 40, 255), (40, 20, 60, 40))]), {"lit"})
-        self.assertEqual(shading, ["shading changed on Body (lit pass; IDs unchanged)"])
+        self.assertEqual(shading, ["shading changed on Body (lit pass; IDs unchanged there)"])
 
 
 class SecondSignalTests(unittest.TestCase):

@@ -267,6 +267,7 @@ def _shares(image, mask, palette, minimum=0.05):
     total = mask.histogram()[255]
     if not total: return []
     targets = {name: [_srgb(c) for c in colour] for name, colour in palette.items()}
+    if not targets: return []  # a scene with no materials (or objects) has nothing to name
     counts = {}
     for count, pixel in masked.getcolors(image.width * image.height) or []:
         if pixel[3] < 128: continue
@@ -283,12 +284,14 @@ def _change_mask(a, b, level):
     return peak.point(lambda v: 255 if v > level else 0)
 
 
-def localise(views, reference_dir, candidate_dir, evidence):
-    """Turn changed pixels into statements about objects and materials. The ID passes name what vanished, appeared,
-    moved or swapped; a lit or clay change the ID passes do not explain is attributed to the objects covering at least
-    5% of the changed pixels in either render."""
-    from PIL import Image
-    objects, materials = evidence["palette"]["object"], evidence["palette"]["material"]
+def localise(views, reference_dir, candidate_dir, evidence, candidate_evidence=None, min_px=20):
+    """Turn changed pixels into statements about objects and materials. The object-ID mask names what vanished,
+    appeared, was revealed or moved; a material swap is claimed only where the object ID did not change (so occlusion
+    is not a swap); lit and clay changes outside both ID masks are attributed to the objects covering them. Reference
+    pixels are read with the reference palette, candidate pixels with the candidate's own."""
+    from PIL import Image, ImageChops
+    ref_pal = evidence["palette"]
+    cand_pal = (candidate_evidence or evidence)["palette"]
     found = {}
 
     def note(text, view):
@@ -298,34 +301,39 @@ def localise(views, reference_dir, candidate_dir, evidence):
     def load(root, view, pass_name):
         with Image.open(Path(root) / f"{view}.{pass_name}.png") as image: return image.convert("RGBA")
 
+    count = lambda mask: mask.histogram()[255]
     for view, passes in sorted(views.items()):
         ref_obj, cand_obj = load(reference_dir, view, "object_id"), load(candidate_dir, view, "object_id")
-        on = lambda mask: ", ".join(sorted(set(_shares(ref_obj, mask, objects)) | set(_shares(cand_obj, mask, objects)))) or "unknown mesh"
-        explained = False
+        on = lambda mask: ", ".join(sorted(set(_shares(ref_obj, mask, ref_pal["object"])) | set(_shares(cand_obj, mask, cand_pal["object"])))) or "unknown mesh"
+        obj_mask = _change_mask(ref_obj, cand_obj, THRESHOLDS["object_id"]["pixel"])
+        explained = obj_mask
         if (passes.get("object_id") or {}).get("warn"):
-            mask = _change_mask(ref_obj, cand_obj, THRESHOLDS["object_id"]["pixel"])
-            before, after = set(_shares(ref_obj, mask, objects)), set(_shares(cand_obj, mask, objects))
+            before, after = set(_shares(ref_obj, obj_mask, ref_pal["object"])), set(_shares(cand_obj, obj_mask, cand_pal["object"]))
+            visible_before = set(_shares(ref_obj, Image.new("L", ref_obj.size, 255), ref_pal["object"], minimum=0.0))
             for name in sorted(before - after): note(f"object {name} is missing or hidden here", view)
-            full = Image.new("L", ref_obj.size, 255)
-            visible_before = set(_shares(ref_obj, full, objects, minimum=0.0))
             for name in sorted(after - before):
                 note(f"object {name} revealed (was covered here)" if name in visible_before else f"object {name} appeared", view)
             if before & after: note(f"geometry of {', '.join(sorted(before & after))} moved or changed", view)
-            explained = True
         if (passes.get("material_id") or {}).get("warn"):
             ref_mat, cand_mat = load(reference_dir, view, "material_id"), load(candidate_dir, view, "material_id")
-            mask = _change_mask(ref_mat, cand_mat, THRESHOLDS["material_id"]["pixel"])
-            before, after = set(_shares(ref_mat, mask, materials)), set(_shares(cand_mat, mask, materials))
-            lost, gained = sorted(before - after), sorted(after - before)
-            if lost and gained: note(f"material {', '.join(lost)} -> {', '.join(gained)} on {on(mask)}", view)
-            elif lost: note(f"material {', '.join(lost)} no longer visible on {on(mask)}", view)
-            elif gained: note(f"material {', '.join(gained)} newly visible on {on(mask)}", view)
-            explained = True
-        if explained: continue
+            mat_mask = _change_mask(ref_mat, cand_mat, THRESHOLDS["material_id"]["pixel"])
+            same_object = ImageChops.subtract(mat_mask, obj_mask)  # a swap is a material change on an unchanged object
+            explained = ImageChops.lighter(explained, mat_mask)
+            if count(same_object) >= min_px:
+                before, after = set(_shares(ref_mat, same_object, ref_pal["material"])), set(_shares(cand_mat, same_object, cand_pal["material"]))
+                lost, gained = sorted(before - after), sorted(after - before)
+                if lost and gained: note(f"material {', '.join(lost)} -> {', '.join(gained)} on {on(same_object)}", view)
+                elif lost: note(f"material {', '.join(lost)} no longer visible on {on(same_object)}", view)
+                elif gained: note(f"material {', '.join(gained)} newly visible on {on(same_object)}", view)
+        from PIL import ImageFilter
+        halo = explained.filter(ImageFilter.MaxFilter(7))  # anti-aliased edges around an ID change belong to it
         for pass_name in ("lit", "clay"):
             if not (passes.get(pass_name) or {}).get("warn"): continue
             mask = _change_mask(load(reference_dir, view, pass_name), load(candidate_dir, view, pass_name), THRESHOLDS[pass_name]["pixel"])
-            note(f"{'shading' if pass_name == 'lit' else 'surface shape'} changed on {on(mask)} ({pass_name} pass; IDs unchanged)", view)
+            residual = ImageChops.subtract(mask, halo)  # independent of what the ID passes already explain
+            # The residual must itself clear the pass's warning bar, so shadows and bounce light beside an ID change stay quiet.
+            if count(residual) >= max(min_px, THRESHOLDS[pass_name]["fraction"] * mask.width * mask.height) and on(residual) != "unknown mesh":
+                note(f"{'shading' if pass_name == 'lit' else 'surface shape'} changed on {on(residual)} ({pass_name} pass; IDs unchanged there)", view)
     return sorted(found.values(), key=lambda e: (-len(e["views"]), e["statement"]))
 
 
@@ -374,7 +382,8 @@ def roundtrip_and_compare(exe, target, timeout=600, critic_server=None):
                 f"Missing render {name}")
     structure = compare_manifests(src_manifest, rt_manifest)
     views, warnings = compare_renders(target / "source" / "renders", target / "roundtrip" / "renders", evidence, target / "diff")
-    structure["localisation"] = localise(views, target / "source" / "renders", target / "roundtrip" / "renders", evidence)
+    structure["localisation"] = localise(views, target / "source" / "renders", target / "roundtrip" / "renders", evidence,
+                                         load(target / "roundtrip" / "evidence.json"))
     critic = critic_signal(target / "source" / "renders", target / "roundtrip" / "renders", critic_server)
     critic["agrees_with_primary"] = second_opinion(critic, warnings)
     return src_manifest, rt_manifest, evidence, structure, views, warnings, seconds, critic

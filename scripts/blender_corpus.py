@@ -58,7 +58,7 @@ def build(blender_path, out_dir, timeout=600):
         views, warnings = sentinel.compare_renders(target / "evidence" / "control" / "renders", target / "evidence" / entry / "renders",
                                                    control_evidence, target / "diff" / entry)
         localisation = sentinel.localise(views, target / "evidence" / "control" / "renders", target / "evidence" / entry / "renders",
-                                         control_evidence)
+                                         control_evidence, load(entry, "evidence.json"))
         critic = sentinel.critic_signal(target / "evidence" / "control" / "renders", target / "evidence" / entry / "renders")
         primary_visual = bool(warnings)
         critic["agrees_with_primary"] = sentinel.second_opinion(critic, list(warnings))  # baseline stays the primary verdict
