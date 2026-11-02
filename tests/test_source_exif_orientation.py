@@ -1,11 +1,12 @@
-"""#1234: display-oriented source coordinates without rewriting original evidence.
+"""#1234/#1861: display-oriented source coordinates without rewriting original evidence.
 
-Synthetic JPEGs, SQLite workspace imports and graph preparation only. No engine
+Synthetic JPEGs, PNGs and WebPs, SQLite workspace imports and graph preparation only. No engine
 request, model download, background worker or generation is permitted here.
 """
 import copy
 import hashlib
 import io
+import itertools
 import json
 from pathlib import Path
 import shutil
@@ -30,9 +31,11 @@ TRANSFORMS = {
     6: Image.Transpose.ROTATE_270, 7: Image.Transpose.TRANSVERSE,
     8: Image.Transpose.ROTATE_90,
 }
+FORMATS = ('JPEG', 'PNG', 'WEBP')
+MIMES = {'JPEG': 'image/jpeg', 'PNG': 'image/png', 'WEBP': 'image/webp'}
 
 
-def fixture_jpeg(orientation, size=(640, 512)):
+def fixture_image(orientation, size=(640, 512), format='JPEG'):
     image = Image.new('RGB', size, (30, 40, 50))
     draw = ImageDraw.Draw(image)
     width, height = size
@@ -48,7 +51,7 @@ def fixture_jpeg(orientation, size=(640, 512)):
     if orientation is not None:
         exif[274] = orientation
     out = io.BytesIO()
-    image.save(out, 'JPEG', quality=95, exif=exif)
+    image.save(out, format, quality=95, lossless=True, exif=exif)
     raw = out.getvalue()
     with Image.open(io.BytesIO(raw)) as decoded:
         pixels = decoded.convert('RGB')
@@ -76,49 +79,71 @@ class SourceOrientationTests(unittest.TestCase):
     def tearDown(self):
         self.assertEqual(self.studio.requests, [], 'Orientation must never submit generation or contact an engine')
 
-    def source(self, orientation, size=(640, 512)):
-        raw, expected = fixture_jpeg(orientation, size)
-        asset = self.studio.import_image('orientation.jpg', 'image/jpeg', raw)['asset']
+    def source(self, orientation, size=(640, 512), format='JPEG'):
+        raw, expected = fixture_image(orientation, size, format)
+        asset = self.studio.import_image('orientation.' + format.lower(), MIMES[format], raw)['asset']
         return asset, raw, expected
 
     def test_context_reports_display_dimensions_for_all_eight_orientations(self):
-        for orientation in range(1, 9):
-            with self.subTest(orientation=orientation):
-                asset, raw, expected = self.source(orientation)
+        for format, orientation in itertools.product(FORMATS, range(1, 9)):
+            with self.subTest(format=format, orientation=orientation):
+                asset, raw, expected = self.source(orientation, format=format)
                 context = continuation.source_context(self.studio, asset['id'])
                 self.assertEqual((context['width'], context['height']), expected.size)
                 self.assertEqual(context['sha256'], hashlib.sha256(raw).hexdigest())
 
-    def test_png_context_stays_header_only_and_non_jpeg_preparation_is_preserved(self):
-        for orientation in (None, 6):
-            with self.subTest(orientation=orientation):
-                image = Image.new('RGB', (640, 512), (30, 40, 50))
-                ImageDraw.Draw(image).rectangle((31, 67, 113, 151), fill=(240, 230, 210))
-                buffer = io.BytesIO()
-                options = {}
-                if orientation is not None:
-                    exif = Image.Exif(); exif[274] = orientation; options['exif'] = exif
-                image.save(buffer, 'PNG', **options)
-                raw = buffer.getvalue()
-                asset = self.studio.import_image('header-only.png', 'image/png', raw)['asset']
-                with patch('PIL.PngImagePlugin.PngImageFile.load', side_effect=AssertionError('Source readiness must not inflate a PNG raster')):
+    def test_header_exif_dimensions_need_no_pixel_decode(self):
+        loaders = {'JPEG': 'JpegImagePlugin.JpegImageFile', 'PNG': 'PngImagePlugin.PngImageFile', 'WEBP': 'WebPImagePlugin.WebPImageFile'}
+        for format in FORMATS:
+            with self.subTest(format=format):
+                asset, raw, expected = self.source(6, format=format)
+                with patch('PIL.' + loaders[format] + '.load', side_effect=AssertionError('Header EXIF must not inflate a raster')):
                     context = continuation.source_context(self.studio, asset['id'])
-                self.assertEqual((context['width'], context['height']), image.size)
+                self.assertEqual((context['width'], context['height']), expected.size)
                 self.assertEqual(context['sha256'], hashlib.sha256(raw).hexdigest())
-                for reader in (parallax._source, tiles._source):
-                    with self.subTest(reader=reader.__module__):
-                        _, actual = reader(self.studio, asset['id'])
-                        try:
-                            self.assertEqual(actual.size, image.size)
-                            self.assertEqual(actual.tobytes(), image.tobytes())
-                        finally:
-                            actual.close()
+
+    def test_png_pixel_limit_refuses_before_metadata_or_rgb_decode(self):
+        stream = io.BytesIO(); Image.new('RGB', (96, 64)).save(stream, 'PNG'); raw = stream.getvalue()
+        asset = self.studio.import_image('no-exif.png', 'image/png', raw)['asset']
+        readers = (('context', lambda: continuation.source_context(self.studio, asset['id'])),
+                   ('RGB', lambda: continuation.source_rgb(raw)))
+        for name, read in readers:
+            with self.subTest(reader=name), patch.object(Image, 'MAX_IMAGE_PIXELS', 4000), self.assertWarns(Image.DecompressionBombWarning):
+                # 6144 pixels is in Pillow's warning-only range. Neither PNG getexif()
+                # nor the editing conversion may inflate it past the strict limit.
+                with patch('PIL.PngImagePlugin.PngImageFile.load', side_effect=AssertionError('Oversized PNG must not inflate a raster')) as decode:
+                    with self.assertRaises(Image.DecompressionBombError):
+                        read()
+                    decode.assert_not_called()
+        self.assertEqual(self.studio.assets.file(asset['id']).read_bytes(), raw)
+
+    def test_png_exif_after_image_data_uses_the_same_display_coordinates(self):
+        raw, expected = fixture_image(6, format='PNG')
+        chunks, position = [], 8
+        while position < len(raw):
+            length = int.from_bytes(raw[position:position + 4], 'big')
+            chunks.append(raw[position:position + length + 12]); position += length + 12
+        exif = next(chunk for chunk in chunks if chunk[4:8] == b'eXIf')
+        # A legal eXIf chunk can follow IDAT; retain its original CRC and all pixels.
+        raw = raw[:8] + b''.join(chunk for chunk in chunks if chunk[4:8] not in (b'eXIf', b'IEND')) + exif + chunks[-1]
+        asset = self.studio.import_image('late-exif.png', 'image/png', raw)['asset']
+        context = continuation.source_context(self.studio, asset['id'])
+        self.assertEqual((context['width'], context['height']), expected.size)
+        for reader in (parallax._source, tiles._source):
+            with self.subTest(reader=reader.__module__):
+                _, actual = reader(self.studio, asset['id'])
+                with actual:
+                    self.assertEqual(actual.size, expected.size)
+                    self.assertEqual(actual.tobytes(), expected.tobytes())
+                    self.assertIn(actual.getexif().get(274), (None, 1))
+        self.assertEqual(context['sha256'], hashlib.sha256(raw).hexdigest())
+        self.assertEqual(self.studio.assets.file(asset['id']).read_bytes(), raw)
 
     def test_both_loaders_decode_all_eight_pixel_transforms(self):
-        for orientation in range(1, 9):
-            asset, raw, expected = self.source(orientation)
+        for format, orientation in itertools.product(FORMATS, range(1, 9)):
+            asset, raw, expected = self.source(orientation, format=format)
             for route in (parallax, tiles):
-                with self.subTest(orientation=orientation, route=route.__name__):
+                with self.subTest(format=format, orientation=orientation, route=route.__name__):
                     context, actual = route._source(self.studio, asset['id'])
                     self.assertEqual(actual.size, expected.size)
                     self.assertEqual(actual.tobytes(), expected.tobytes())
@@ -127,9 +152,9 @@ class SourceOrientationTests(unittest.TestCase):
                     self.assertEqual(self.studio.assets.file(asset['id']).read_bytes(), raw)
 
     def test_untagged_sources_keep_their_pixels_and_dimensions(self):
-        asset, raw, expected = self.source(None)
-        for route in (parallax, tiles):
-            with self.subTest(route=route.__name__):
+        for format, route in itertools.product(FORMATS, (parallax, tiles)):
+            with self.subTest(format=format, route=route.__name__):
+                asset, raw, expected = self.source(None, format=format)
                 context, actual = route._source(self.studio, asset['id'])
                 self.assertEqual(actual.tobytes(), expected.tobytes())
                 self.assertEqual((context['width'], context['height']), expected.size)
@@ -137,15 +162,23 @@ class SourceOrientationTests(unittest.TestCase):
 
     def test_tampered_source_bytes_are_still_refused(self):
         asset, _, _ = self.source(6)
-        self.studio.assets.file(asset['id']).write_bytes(fixture_jpeg(8)[0])
+        self.studio.assets.file(asset['id']).write_bytes(fixture_image(8)[0])
         for route in (parallax, tiles):
             with self.subTest(route=route.__name__), self.assertRaisesRegex(ValueError, 'Source bytes changed'):
                 route._source(self.studio, asset['id'])
 
+    def test_16_bit_sources_need_explicit_conversion_in_both_loaders(self):
+        stream = io.BytesIO(); Image.new('I;16', (640, 512), 32768).save(stream, 'PNG'); raw = stream.getvalue()
+        asset = self.studio.import_image('16-bit.png', 'image/png', raw)['asset']
+        for route in (parallax, tiles):
+            with self.subTest(route=route.__name__), self.assertRaisesRegex(ValueError, '16-bit.*8-bit RGB'):
+                route._source(self.studio, asset['id'])
+        self.assertEqual(self.studio.assets.file(asset['id']).read_bytes(), raw)
+
     def test_parallax_status_and_prepare_agree_on_display_coordinates(self):
-        for orientation in range(1, 9):
-            with self.subTest(orientation=orientation):
-                asset, raw, expected = self.source(orientation)
+        for format, orientation in itertools.product(FORMATS, range(1, 9)):
+            with self.subTest(format=format, orientation=orientation):
+                asset, raw, expected = self.source(orientation, format=format)
                 width, height = expected.size
                 status = parallax.source_status(self.studio, asset['id'])
                 self.assertTrue(status['eligible'])
@@ -183,9 +216,9 @@ class SourceOrientationTests(unittest.TestCase):
             self.studio.prepare(payload)
 
     def test_tile_cross_uses_visible_pixels_and_removes_orientation_metadata(self):
-        for orientation in range(1, 9):
-            with self.subTest(orientation=orientation):
-                asset, raw, expected = self.source(orientation, size=(512, 512))
+        for format, orientation in itertools.product(FORMATS, range(1, 9)):
+            with self.subTest(format=format, orientation=orientation):
+                asset, raw, expected = self.source(orientation, size=(512, 512), format=format)
                 prepared = tiles.prepare(self.studio, {'asset_id': asset['id'], 'band_px': 112})
                 upload = self.studio.experiments / 'uploads' / prepared['file']
                 with Image.open(upload) as actual:

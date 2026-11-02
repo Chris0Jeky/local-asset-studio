@@ -3,6 +3,8 @@ import copy
 import hashlib
 import json
 import sqlite3
+import subprocess
+import sys
 import tempfile
 import threading
 import unittest
@@ -64,8 +66,57 @@ class RunMigrationPlanTests(unittest.TestCase):
     def kinds(self, plan, kind):
         return [item for item in plan['items'] if item['kind'] == kind]
 
+    def acceptance(self, asset_id, identifier, **changes):
+        row = dict(id=identifier, asset_id=asset_id, sha256=self.studio.assets.get(asset_id, privacy='all')['sha256'],
+                   use='Portrait crop', note='Fictional owner note', reviewer='local-user', accepted_at=1.0,
+                   withdrawn_at=None, brief_id=None, slot=None, criteria=None)
+        row.update(changes)
+        with self.studio.assets.connection() as db:
+            db.execute('INSERT INTO asset_acceptances ('+','.join(row)+') VALUES ('+','.join('?'*len(row))+')', list(row.values()))
+        return row
+
     def codes(self, plan):
         return {blocker['code'] for blocker in plan['blockers']}
+
+    def test_acceptance_dependencies_cover_siblings_and_withdrawn_records_in_each_scope_without_writes(self):
+        for classification, destination in (('regular', 'private'), ('private', 'regular')):
+            with self.subTest(classification=classification):
+                job = self.completed(2, privacy=classification); ids = [o['asset_id'] for o in job['outputs']]
+                unrelated = self.completed(1, privacy=destination)['outputs'][0]['asset_id']
+                request = dict(asset_ids=[ids[0]], destination=destination)
+                before_records = self.plan(headers={'X-Studio-Privacy': classification}, **request)
+                live = self.acceptance(ids[0], 'live-'+job['id'])
+                withdrawn = self.acceptance(ids[1], 'withdrawn-'+job['id'], use='Scene brief slot', withdrawn_at=2.0,
+                                            brief_id='brief-'+job['id'], slot='portrait', criteria='Keep the silhouette')
+                hidden = self.acceptance(unrelated, 'hidden-'+job['id'], note='PRIVATE-ACCEPTANCE-NOTE')
+                before = self.tree()
+                scoped = self.plan(headers={'X-Studio-Privacy': classification}, **request)
+                all_scope = self.plan(headers={'X-Studio-Privacy': 'all'}, **request)
+                records = self.kinds(scoped, 'acceptance')
+                self.assertEqual([(r['id'], r['asset_id'], r['classification'], r['name'], r['status']) for r in records],
+                                 [(live['id'], ids[0], classification, 'Portrait crop', 'accepted'),
+                                  (withdrawn['id'], ids[1], classification, 'Scene brief slot', 'withdrawn')])
+                self.assertEqual(records, self.kinds(all_scope, 'acceptance'))
+                for record in records: self.assertRegex(record['revision'], '^[0-9a-f]{64}$')
+                self.assertEqual(scoped['byte_estimate'], before_records['byte_estimate'])
+                self.assertNotIn(hidden['id'], json.dumps(scoped)); self.assertNotIn(hidden['note'], json.dumps(scoped))
+                self.assertEqual(self.tree(), before)
+
+    def test_acceptance_membership_and_record_contents_bind_the_plan_without_asset_revision_changes(self):
+        job = self.completed(1); asset_id = job['outputs'][0]['asset_id']
+        request = dict(headers={'X-Studio-Privacy': 'all'}, job_ids=[job['id']])
+        previous = self.plan(**request)['plan_sha256']
+        record = self.acceptance(asset_id, 'acceptance-'+job['id'])
+        current = self.plan(**request)['plan_sha256']; self.assertNotEqual(previous, current); previous = current
+        for column, value in (('withdrawn_at', 2.0), ('withdrawn_at', None), ('use', 'Portrait icon'), ('note', 'Revised note'),
+                              ('accepted_at', 3.0), ('reviewer', 'recorded-owner'), ('brief_id', 'brief-fixture'),
+                              ('slot', 'portrait'), ('criteria', 'Keep the eyes'), ('sha256', 'a'*64)):
+            with self.subTest(column=column, value=value):
+                with self.studio.assets.connection() as db: db.execute('UPDATE asset_acceptances SET '+column+'=? WHERE id=?', (value, record['id']))
+                current = self.plan(**request)['plan_sha256']; self.assertNotEqual(previous, current); previous = current
+        with self.studio.assets.connection() as db: db.execute('DELETE FROM asset_acceptances WHERE id=?', (record['id'],))
+        self.assertNotEqual(previous, self.plan(**request)['plan_sha256'])
+        self.assertEqual(self.studio.assets.get(asset_id)['metadata_revision'], 0)
 
     def test_multi_output_closure_covers_run_siblings_thumbs_uploads_collections_children_and_external_copies(self):
         job = self.completed(3)
@@ -320,6 +371,51 @@ class RunMigrationPlanTests(unittest.TestCase):
                 self.assertIsNone(run_migration._others(self.studio, {job['id']}))  # uploads: every one stays
         finally: holder.execute('ROLLBACK')
         self.assertNotIn('production_unreadable', self.codes(self.plan(job_ids=[job['id']])))  # released: the same plan reads cleanly
+
+    def test_a_hot_projects_journal_blocks_planning_without_recovering_or_changing_evidence(self):
+        import run_migration
+        job = self.completed(1)
+        retained = {'kind': 'comparison', 'stages': [], 'padding': 'A'*(128*1024)}
+        pid = self.project(retained); path = self.studio.experiments/'projects'/'projects.sqlite3'
+        with self.studio.production.connect() as db:
+            self.assertEqual(db.execute('PRAGMA journal_mode=DELETE').fetchone()[0], 'delete')
+        committed = path.read_bytes()
+        # Spill real changed pages, then exit without commit/close. A two-page cache
+        # and a bounded 128 KiB overwrite leave SQLite's own hot rollback journal.
+        script = """import json, os, sqlite3, sys
+db = sqlite3.connect(sys.argv[1], timeout=1, isolation_level=None)
+db.execute('PRAGMA synchronous=FULL')
+db.execute('PRAGMA cache_size=2')
+db.execute('PRAGMA cache_spill=ON')
+db.execute('BEGIN IMMEDIATE')
+plan = json.loads(db.execute('SELECT plan FROM projects WHERE id=?', (sys.argv[2],)).fetchone()[0])
+plan['padding'] = 'B'*len(plan['padding'])
+db.execute('UPDATE projects SET plan=? WHERE id=?', (json.dumps(plan), sys.argv[2]))
+os._exit(73)
+"""
+        child = subprocess.run([sys.executable, '-c', script, str(path), pid], capture_output=True, text=True, timeout=10)
+        self.assertEqual(child.returncode, 73, child.stdout+child.stderr)
+        journal = path.with_name(path.name+'-journal')
+        hot_database, hot_journal = path.read_bytes(), journal.read_bytes()
+        self.assertNotEqual(hot_database, committed, 'The interrupted writer must spill uncommitted pages to disk')
+        self.assertGreater(len(hot_journal), 512)
+        reader = sqlite3.connect(path.resolve().as_uri()+'?mode=ro', uri=True, timeout=1)
+        try:
+            with self.assertRaises(sqlite3.OperationalError) as caught: reader.execute('SELECT plan FROM projects').fetchall()
+            self.assertEqual(caught.exception.sqlite_errorcode, sqlite3.SQLITE_READONLY_ROLLBACK)
+        finally: reader.close()
+        self.assertIsNone(run_migration._production(self.studio))
+        plan = self.plan(headers={'X-Studio-Privacy': 'all'}, job_ids=[job['id']])
+        self.assertEqual(self.codes(plan), {'production_unreadable'}); self.assertFalse(plan['applicable'])
+        self.assertEqual(self.kinds(plan, 'production_plan') + self.kinds(plan, 'scene_copy'), [])
+        self.assertIsNone(run_migration._others(self.studio, {job['id']}))  # unknown consumers: keep every upload
+        self.assertEqual(path.read_bytes(), hot_database); self.assertEqual(journal.read_bytes(), hot_journal)
+        # Only this explicit writable fixture check recovers; it proves the journal
+        # restores the committed row, rather than merely containing corrupt bytes.
+        with self.studio.production.connect() as db:
+            self.assertEqual(json.loads(db.execute('SELECT plan FROM projects WHERE id=?', (pid,)).fetchone()[0]), retained)
+        self.assertFalse(journal.exists())
+        self.assertNotIn('production_unreadable', self.codes(self.plan(job_ids=[job['id']])))
 
     def test_input_bounds_and_validation(self):
         job = self.completed(1); good = {'workspace_id': self.workspace_id, 'destination': 'private', 'job_ids': [job['id']]}

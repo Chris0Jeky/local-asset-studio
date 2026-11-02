@@ -34,6 +34,40 @@ do not use reset/restore to discard unrelated runtime changes. Restart the owned
 ComfyUI process after applying or reversing the patch. New generation results and
 remaining limitations are recorded in [CURRENT_STATE.md](../CURRENT_STATE.md).
 
+### Startup warning for a reverted or changed patch
+
+On a fresh desktop launch, `Start Studio.cmd` / `scripts/Start-Studio.ps1` checks the
+top-level JSON patch records against source files in the configured `comfy_root`,
+before its existing runtime admission and service-start steps. Matching patched
+bytes stay quiet. Matching original bytes warn that the patch is **not applied**;
+an unexpected hash, missing target, or unreadable target has a separate warning.
+Each target warning names its patch record and relative source path. An invalid
+or unreadable record also warns, without printing its contents or exception text.
+
+When the launcher must detach from a Windows job object, its hidden child saves
+patch warnings to a unique `.runtime/start-studio-patch-warnings-<id>.log` for
+that invocation. The visible parent relays that file after the child finishes,
+alongside the existing, separate detached-failure log. A quiet launch cannot
+repeat an earlier invocation's warnings. Only the warning messages are retained;
+the child launcher's output is not piped. A warning-log failure remains diagnostic
+and does not change startup admission.
+
+This observes files on disk; it does not establish what an already-running
+ComfyUI process imported. It never applies a patch or changes launch defaults,
+and a warning does not block startup. The already-running Studio shortcut and a
+direct `python app/server.py` launch do not run this desktop check. To recheck at
+any time without starting a service, run from this Studio checkout:
+
+```powershell
+$config = Get-Content -LiteralPath config/local.json -Raw | ConvertFrom-Json
+& $config.python -s scripts/check-runtime-patches.py --comfy-root $config.comfy_root
+```
+
+The check reads at most 32 records (16 KiB each) and 4 MiB per target; exceeding a
+bound warns that the observation is incomplete. A target must remain inside the
+configured ComfyUI root. Inspect any warning using the revision/hash and patch
+instructions above before deciding whether a manual repair is appropriate.
+
 ## Runtime additions, 12 September 2026 (packages and launcher flag, no ComfyUI source edited)
 
 Installed into `python_embeded` with `pip install "comfyui_manager==4.2.2" "python-socketio[client]>=5.8,<6"`.

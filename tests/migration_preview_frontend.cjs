@@ -65,6 +65,17 @@ test('Preview sends one read-only planner request under the All header and rende
   assert.match(s.el('#migrationStatus').textContent,/Preview ready: 9 items, no blockers\. Nothing was changed\./);
   assert.equal(s.writes.length,1,'no other POST is ever made');
 });
+test('Acceptance records are named in both migration previews and the retention explanation stays visible',async()=>{
+  for(const [classification,destination,count] of [['regular','private',1],['private','regular',2]]){
+    const s=configured([classification,classification]);select(s,['a','b']);const done=s.el('#previewMigration').onclick();
+    s.writes[0].resolve(plan({destination,items:Array.from({length:count},(_,i)=>({kind:'acceptance',id:'acceptance-'+i,classification})),
+      item_count:count,remaining_copies:'Acceptance uses, notes and scene-brief criteria stay in the Workspace database, hidden while Private and visible again when Regular.'}));
+    await done;
+    const html=s.el('#migrationBody').innerHTML;
+    assert.match(html,new RegExp('<li>'+count+' acceptance record'+(count===1?' that stays':'s that stay')+'</li>'));
+    assert.match(html,/notes and scene-brief criteria stay in the Workspace database/);assert.match(html,/hidden while Private and visible again when Regular/);
+  }
+});
 test('Every blocker code is explained in one sentence and server text is escaped',async()=>{
   const codes=['missing_run','run_storage_alias','unsupported_operation','run_not_settled','already_in_destination','missing_run_record','run_too_large','missing_sibling','missing_reference','privacy_mismatch','missing_snapshot','snapshot_changed','collection_mixed','receipts_overflow','scope_partial'];
   const s=configured();select(s,['a']);const done=s.el('#previewMigration').onclick();

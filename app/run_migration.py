@@ -36,8 +36,10 @@ OUTSIDE = ('external_copy', 'scene_copy', 'production_plan')  # Bytes that stay 
 FIELDS = {'workspace_id', 'destination', 'asset_ids', 'job_ids'}
 SCOPE_PARTIAL = ('Related items in another privacy classification are not inspected under this scope. '
                  'Plan again with privacy=all before any apply.')
+ACCEPTANCE_RETENTION = ('Acceptance uses, notes and any scene-brief criteria stay in the Workspace database, '
+                        'hidden while the asset is Private and visible again when it returns to Regular.')
 REMAINING = ('Scene project input copies and production plans that name these runs or assets are listed in the plan and stay regular. '
-             'ComfyUI history, earlier exports, browser downloads and backups may keep further copies; migration neither finds nor erases them.')
+             + ACCEPTANCE_RETENTION + ' ComfyUI history, earlier exports, browser downloads and backups may keep further copies; migration neither finds nor erases them.')
 
 
 def _ids(payload, field):
@@ -63,6 +65,11 @@ def _file(item_kind, path, label, classification, **extra):
     extra.pop('guard')()
     stat = path.stat()
     return dict(kind=item_kind, id=label, classification=classification, bytes=stat.st_size, sha256=digest_file(path), **extra)
+
+
+def _acceptance_revision(row):
+    """Acceptance writes have no asset metadata revision; bind the full retained record, including withdrawal and brief criteria."""
+    return hashlib.sha256(json.dumps(dict(row), sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode()).hexdigest()
 
 
 def plan(studio, payload, scope):
@@ -161,6 +168,11 @@ def plan(studio, payload, scope):
                 shared = db.execute('SELECT COUNT(*) FROM assets WHERE sha256=? AND privacy=? AND job_id<>?', (row['sha256'], row['privacy'], run_id)).fetchone()[0]
                 if shared: item['consequence'] = 'Other assets in this classification share the snapshot; the source copy stays'
                 add(item)
+                for acceptance in db.execute('SELECT * FROM asset_acceptances WHERE asset_id=? ORDER BY id', (row['id'],)):
+                    guard()
+                    add(dict(kind='acceptance', id=acceptance['id'], asset_id=row['id'], classification=row['privacy'], name=acceptance['use'],
+                             sha256=acceptance['sha256'], revision=_acceptance_revision(acceptance),
+                             status='withdrawn' if acceptance['withdrawn_at'] is not None else 'accepted', consequence=ACCEPTANCE_RETENTION))
                 folder = root/'thumbs'
                 if folder.is_dir() and not folder.is_symlink():
                     for thumb in sorted(folder.glob(row['sha256']+'-*.webp')):
@@ -418,6 +430,7 @@ def _apply(studio, request, request_id, plan_sha256, fingerprint):
                    collection_ids=sorted(i['id'] for i in items if i['kind'] == 'collection'),
                    asset_revisions={i['id']: [i['revision'], i['sha256'], i['path']] for i in items if i['kind'] == 'asset'},
                    collection_revisions={i['id']: i['revision'] for i in items if i['kind'] == 'collection'},
+                   acceptance_revisions={i['id']: i['revision'] for i in items if i['kind'] == 'acceptance'},
                    copies=sorted(copies.values(), key=lambda c: c['target']), thumbnails=sorted(i['id'] for i in items if i['kind'] == 'thumbnail'),
                    keep_uploads='all' if others is None else sorted(c['source'] for c in copies.values() if c['kind'] == 'upload' and _upload_base(c['source']) in others),
                    external_copies=sorted(i['id'] for i in items if i['kind'] in OUTSIDE), placements=None, remaining=[], created_at=time.time())
@@ -488,6 +501,12 @@ def _publish(studio, journal):
         rows = {r['id']: r for r in db.execute('SELECT id,privacy,metadata_revision,sha256,path FROM assets WHERE job_id IN ('+marks+')', journal['job_ids'])}
         if set(rows) != set(asset_ids) or any(r['privacy'] != origin or [r['metadata_revision'], r['sha256'], ASSET_ROOT[origin]+Path(r['path']).as_posix()] != journal['asset_revisions'][k] for k, r in rows.items()):
             raise WorkspaceError('An asset in this plan changed; nothing was published', status=409, code='migration_stale')
+        acceptances = dict(journal['acceptance_revisions'])
+        for asset_id in asset_ids:
+            for row in db.execute('SELECT * FROM asset_acceptances WHERE asset_id=?', (asset_id,)):
+                if acceptances.pop(row['id'], None) != _acceptance_revision(row):
+                    raise WorkspaceError('An acceptance in this plan changed; nothing was published', status=409, code='migration_stale')
+        if acceptances: raise WorkspaceError('An acceptance in this plan changed; nothing was published', status=409, code='migration_stale')
         for key, revision in journal['collection_revisions'].items():
             row = db.execute('SELECT privacy,revision FROM collections WHERE id=?', (key,)).fetchone()
             members = {r[0] for r in db.execute('SELECT asset_id FROM collection_assets WHERE collection_id=?', (key,))}  # Adding a member bumps only that asset.
