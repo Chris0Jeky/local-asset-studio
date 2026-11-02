@@ -8,6 +8,10 @@ number, before anything edits a scene.
 - `scripts/blender_lab.py` is the host CLI: it validates the executable path, starts it with a fixed argv and a timeout,
   and keeps argv, exit code, stdout and stderr in `<out>.log.json`.
 
+An `OSError`, including an executable disappearing before launch, leaves a receipt with `returncode: "os-error"`,
+elapsed time and an `error` containing the exception type and message (at most 1,000 characters). The CLI exits
+with status 2 and does not retry. Existing receipts remain protected from replacement.
+
 ## Capability probe
 
 ```bash
@@ -128,6 +132,32 @@ sphere, so diagonal views are not cropped.
 The importer adds a hidden `Icosphere` bone-shape object in a `glTF_not_exported` collection. The sentinel ignores it
 because it is not visible. Thresholds are in `blender_sentinel.THRESHOLDS`. They come from this control, so a
 smooth-shaded asset or one with custom normals needs its own control run before the thresholds can be trusted on it.
+
+### Review corrections and offline evidence (2 Nov 2026)
+
+The evidence renderer now sets the intended frame before evaluating mesh bounds. Source captures use
+`frame_start`; roundtrip captures reuse the source camera specification and its frame. Render Region and Crop to
+Render Region are disabled for every pass. These changes affect the temporary evidence scene, preserving authored
+camera data and the original source bytes.
+
+The host requires exactly one PNG for each of the four declared views and four passes in both evidence receipts.
+It validates that complete set before joining receipt filenames to output paths, refusing missing, duplicate or
+foreign names. It rechecks the source SHA-256 after both processes, image comparisons and artifact hashing,
+immediately before writing `result.json`. A refusal retains partial artifacts and does not publish a passing receipt.
+
+Verification against the reviewed `ac65a7e5c9c7de9925bd0a32c87207dacb92e727` base:
+
+- Renderer fixtures reproduced evaluation at saved frame 37 instead of evidence frame 3, and inherited crop flags
+  across all 16 passes. Both failed before the correction; supplied-camera and authored-data controls passed.
+- Full host fixtures reproduced a passing receipt after a concurrent source save during the second worker or final
+  artifact hashing, and a pass with zero image comparisons when both receipts listed no files. Those cases now refuse;
+  a complete synthetic control still compares all 16 PNG pairs and preserves its source. Missing, duplicate and
+  foreign names are also covered, with partial artifacts retained on refusal.
+- With `LAS_BLENDER_LAB_EXE` unset, `python -m unittest discover -s tests -p "test_blender_*.py" -v` discovered 41 tests:
+  38 passed and the three native Blender tests skipped. Renderer inputs use API-shaped scene fixtures; host checks
+  use synthetic worker receipts and real PNG comparisons. No native Blender execution occurred in this review.
+
+The earlier native measurements and the remaining rotation and shape-key limits above retain their original scope.
 
 ## Typed persistent worker
 

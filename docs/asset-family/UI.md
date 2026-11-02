@@ -8,11 +8,19 @@ The UI preserves missing and trashed steps, explicit multi-parent attribution, c
 
 `asset-family-adapter.js` uses the existing public `StudioSetupDraft` API. It never intercepts or replaces legacy `openAsset`, `renderJobs`, `selectPreset` or `applySaved` functions. Two bounded presentation observers decorate the existing dialog session and gallery; there is no polling loop or second asset/draft store.
 
+For source comparison, the existing Workspace save owner sends `studio:asset-detail-saved` only after a confirmed single-child details receipt with no remaining conflict or pending command. The receipt epoch still advances, invalidating older reads. The adapter can retain an already displayed deliberate pair across that receipt, withhold its images, and recheck the fresh family plus both selected IDs against the previous identity/hash/privacy observations. Navigation, privacy changes, a newer choice or receipt, and failed validation suppress older completions. Comparison does not write metadata or own draft/recovery state. The existing save status remains authoritative; comparison completion preserves current focus and only returns a disabled Save control's displaced focus when focus is still on the document body.
+
 Recall reads the selected output, checks the original baseline through `/api/recipe-check`, and asks explicitly before replacing the local Create draft. The selected output's actual seed and resolved wording are applied as a one-output draft through `StudioSetupDraft.adopt`. The existing owner validates supported controls, reference slots, graph identity and backend before adoption. No backend switch, source copy or generation is implicit. **Generate remains a separate press.**
 
 The pending read/check retains the Workspace, Create stamp, Asset session/epoch, metadata fields and pending-save state. A later edit, foreign response or closed/replaced dialog invalidates adoption. Busy actions and unsaved/unconfirmed asset metadata refuse without discarding the editor. Current continuation, tile, parallax and exposed pose workflows require explicitly leaving that workflow before recall, rather than guessing whether their specialized state can be discarded.
 
 **Use as reference** invokes the existing Pull-from-library button handler. Its current recipe, slot choice, loading guard and source-copy consent remain authoritative. The selected asset is searched and focused after the read only if the Workspace and Create stamp still match. Opening the picker copies no file; the user presses its existing attachment choice.
+
+## Opening the Library during startup
+
+The Library can finish loading before the recipe catalog and Atelier reads initialize Create. Family strips, child lists and result ancestry read the existing Workspace observation without capturing Create controls. Their Workspace and stale-response checks still apply. Recall and reference actions explicitly refuse until a real selected recipe exists; they do not manufacture an empty setup stamp, copy a source or adopt a draft while initialization is incomplete.
+
+Five causal Node regressions failed before this guard and now pass alongside the original 20 adapter contracts. The repair-import browser fixture also holds the catalog and Atelier responses, opens an actual visible Library card, reads its family and children, checks early action refusals, and then releases initialization before continuing the normal import journey. That new browser coverage requires its own exact-head hosted result; local Node and fixture preflight checks are not a browser pass.
 
 ## Qualification
 

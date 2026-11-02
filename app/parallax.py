@@ -34,7 +34,7 @@ from collections import deque
 from contextlib import ExitStack
 from pathlib import Path
 
-from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageOps, ImageStat
+from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageStat
 from studio_workflow.privacy import is_regular, require_regular_creation
 
 import continuation
@@ -470,11 +470,7 @@ def _source(studio, asset_id):
     context = continuation.source_context(studio, asset_id)
     raw = studio.assets.file(asset_id).read_bytes()
     if hashlib.sha256(raw).hexdigest() != context["sha256"]: raise ValueError("Source bytes changed. Restore the original asset before splitting it.")
-    # Match the displayed picture and the engine loader without rewriting source bytes.
-    with Image.open(io.BytesIO(raw)) as decoded:
-        if decoded.format != 'JPEG': return context, decoded.convert('RGB')
-        with ImageOps.exif_transpose(decoded) as oriented:
-            return context, oriented.convert("RGB")
+    return context, continuation.source_rgb(raw)
 
 
 def source_status(studio, asset_id):

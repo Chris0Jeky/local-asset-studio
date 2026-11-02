@@ -651,8 +651,10 @@ def render_evidence(out_dir, spec=None, size=256, samples=16):
     import os
     import bpy
     scene, view_layer = bpy.context.scene, bpy.context.view_layer
-    spec = spec or camera_spec(scene, view_layer)
-    scene.frame_set(spec["frame"])
+    # Evaluate bounds in the same pose that will be rendered, regardless of the saved frame.
+    scene.frame_set(spec["frame"] if spec is not None else scene.frame_start)
+    if spec is None:
+        spec = camera_spec(scene, view_layer)
     for obj in scene.objects:  # authored lights would differ after a GLB roundtrip that excludes lights
         if obj.type == "LIGHT": obj.hide_render = True
     cameras = _rig(scene, spec)
@@ -662,6 +664,7 @@ def render_evidence(out_dir, spec=None, size=256, samples=16):
     render = scene.render
     render.resolution_x = render.resolution_y = size
     render.resolution_percentage = 100
+    render.use_border = render.use_crop_to_border = False
     render.film_transparent = True
     render.image_settings.file_format, render.image_settings.color_mode = "PNG", "RGBA"
     scene.view_settings.view_transform, scene.view_settings.look = "Standard", "None"

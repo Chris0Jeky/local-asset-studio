@@ -9,6 +9,11 @@ ROOT = Path(__file__).resolve().parents[1]
 
 @unittest.skipUnless(shutil.which('node'), 'Node is required for frontend contracts')
 class AssetFamilyFrontendTests(unittest.TestCase):
+    def test_recorded_source_comparison_boundaries(self):
+        result = subprocess.run(['node', '--test', 'tests/asset_source_compare.cjs'], cwd=ROOT,
+                                text=True, capture_output=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_recall_identity_seed_and_stale_response_contracts(self):
         result = subprocess.run(['node', 'tests/test_asset_family_ui.cjs'], cwd=ROOT,
                                 text=True, capture_output=True, timeout=30)

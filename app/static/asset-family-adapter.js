@@ -6,12 +6,15 @@
   'use strict';
   const need=(condition,message)=>{if(!condition)throw Error(message);};
   function create(options){
+    const ready=()=>need(options.ready?.()!==false,'Create setup is still loading. Try again when a recipe is ready. Your work was kept.');
     function context(){
+      ready();
       const state=options.state();
       return {workspace:state.workspace,stamp:JSON.stringify([options.owner.stamp(),state.assetId,state.assetEpoch,
         state.workspaceEpoch,state.fields,state.pending,state.conflict,state.metadataBusy,state.specialized])};
     }
     function idle(){
+      ready();
       const state=options.state();
       need(!state.dirty&&!state.pending&&!state.conflict&&!state.metadataBusy,
         'Finish the current edit or pending asset save first. Your work was kept.');
@@ -60,11 +63,11 @@
   function boot(){
     const F=globalThis.StudioAssetFamily,owner=globalThis.StudioSetupDraft,q=s=>document.querySelector(s);
     if(!F||!owner||!q('#assetDialog')||q('#assetFamily'))return;
-    const state=()=>({workspace:assetState.workspace_id,workspaceEpoch:assetWorkspaceEpoch,
+    const state=()=>({workspace:assetState.workspace_id,workspaceEpoch:assetWorkspaceEpoch,privacyEpoch:assetPrivacyEpoch,receiptEpoch:assetReceiptEpoch,privacy:assetPrivacyScope(),
       assetId:q('#assetDialog').open?activeAsset?.id:null,assetEpoch:assetDetailEpoch,fields:assetDetailValues(),
       dirty:assetDetailDirty(),pending:!!assetDetailPending,conflict:!!assetDetailConflict,metadataBusy:assetDetailBusy,
       specialized:!!continuationState||!!tileState||!!parallaxState||q('#uxPoseEditor')?.hidden===false});
-    const adapter=StudioFamilyAdapter.create({owner,state,presets:()=>catalog?.presets||[],backend:()=>backendActive,
+    const adapter=StudioFamilyAdapter.create({owner,state,ready:()=>!!selected?.id,presets:()=>catalog?.presets||[],backend:()=>backendActive,
       asset:id=>typeof assetRecord==='function'?assetRecord(id):assetState.assets.find(a=>a.id===id),
       resolve:ids=>typeof resolveAssetIDs==='function'?resolveAssetIDs(ids):Promise.resolve(false),
       finish:(mode,target,seed)=>{
@@ -86,21 +89,28 @@
         const choice=[...document.querySelectorAll('#uxSourceAssets [data-ux-pull]')].find(b=>b.dataset.uxPull===asset.id);
         (choice||search).focus({preventScroll:true});
       }});
-    const family=F.install({...adapter,read:api,say:message,asset:()=>activeAsset,
+    const comparisonContext=()=>{const s=state(),session=JSON.stringify([s.assetId,activeAsset?.sha256,activeAsset?.privacy,activeAsset?.trashed_at,activeAsset?.media_type,s.assetEpoch,s.workspaceEpoch,s.privacyEpoch,s.privacy]);
+      return {workspace:s.workspace,session,receipt:s.receiptEpoch,detail:s.assetEpoch,stamp:JSON.stringify([session,s.receiptEpoch])};};
+    const family=F.install({...adapter,read:api,say:message,asset:()=>activeAsset,comparisonContext,
+      lookup:id=>assetRecord(id),resolve:ids=>resolveAssetIDs(ids),
       confirm:globalThis.confirm.bind(globalThis),
       check:(recipe,signal)=>api('/api/recipe-check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(recipe),signal}),
       open:async id=>{if(!await openAsset(id))message('The asset could not be opened. Your current editor was kept.',true);}});
     let last=null;
     function observeDetail(){
-      const now=state(),key=q('#assetDialog').open?JSON.stringify([now.workspace,now.assetId,now.assetEpoch]):null;
+      const key=q('#assetDialog').open?JSON.stringify(comparisonContext()):null;
       if(key===last)return;last=key;
       if(key)void family.opened();else family.clear();
     }
+    document.addEventListener('studio:asset-detail-saved',event=>{
+      const refresh=family.refreshAfterSave(event.detail);
+      if(refresh){last=JSON.stringify(comparisonContext());void refresh;}else observeDetail();
+    });
     // Presentation observers watch only the existing dialog's session projection and gallery.
     // They neither intercept legacy functions nor add a polling loop or authoritative state.
     const details=new MutationObserver(observeDetail);
-    details.observe(q('#assetDialog'),{attributes:true,attributeFilter:['open']});
-    details.observe(q('#assetDetailMedia'),{childList:true});
+    details.observe(q('#assetDialog'),{attributes:true,attributeFilter:['open'],childList:true,subtree:true});
+    for(const event of ['studio:privacy-change','studio:workspace-change'])document.addEventListener(event,()=>{last=null;family.clear();observeDetail();});
     const results=new MutationObserver(()=>family.decorateResults());
     results.observe(q('#gallery'),{childList:true,subtree:true});
     globalThis.addEventListener('pagehide',()=>family.clear());

@@ -33,3 +33,7 @@ The planner emits a **proposed experiment**, not API requests. The default is tw
 `local_verified: false` means this pass performed no model inference; it does not erase earlier evidence in `CURRENT_STATE.md`. Baseline is a recommended comparison role. Candidate is worth investigating. Experimental means additional implementation uncertainty. Watchlist is research rather than a promised installation. Unresolved means the source could not be inspected. Commercial suitability is assessed separately against exact terms and the intended use.
 
 No model weights, third-party workflow bytes, gated downloads, paid services or generated art are bundled. Entries intentionally retain upstream links rather than redistributing unreviewed code or images. Runtime integration, source pinning and creative acceptance remain explicit follow-up work.
+
+## Agentic DCC evidence programme (2 November 2026)
+
+The additive [agentic-creation programme](../agentic-creation/README.md) reconciles two later research reports with LAS's existing owners. It adds lossless private report intake, a content-pinned read-only Blender probe intent, offline scene/image regression checks, ten experiment cards and a 24-area opportunity map. Native capture, GLB visual parity and live MCP integration remain explicitly staged rather than implied by research findings.
