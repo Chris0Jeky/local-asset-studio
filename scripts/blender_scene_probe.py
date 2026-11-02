@@ -1,11 +1,11 @@
 """Bounded read-only base-scene inventory; stdlib only in Blender's own Python.
 
-Run only via an explicitly selected Blender executable and disabled autoexec.
+The exact `studio.dcc-scene/v1` collector. Its one entry point is `blender_lab_bpy.py scene-v1` (host:
+`python scripts/blender_lab.py scene-v1`), so every Blender run shares one argv, log and timeout contract.
 This does not render, evaluate deformations, save a BLEND or establish parity.
 """
 from __future__ import annotations
 
-import argparse
 import hashlib
 import json
 import math
@@ -223,28 +223,22 @@ def collect(bpy):
             'remaining_scalar_budget': budget.remaining}
 
 
-def main():
+def observe(bpy, source, out):
+    """Open the source copy without scripts and write its exact observation to a new file."""
     required = {'--background', '--factory-startup', '--disable-autoexec'}
     if not required <= set(sys.argv) or '--enable-autoexec' in sys.argv:
         raise ValueError('Use the fixed background/factory-startup/disable-autoexec invocation')
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--source', required=True, type=Path)
-    parser.add_argument('--out', required=True, type=Path)
-    args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
-    if args.source.is_symlink() or not args.source.is_file() or args.source.suffix.lower() != '.blend':
+    source, out = Path(source), Path(out)
+    if source.is_symlink() or not source.is_file() or source.suffix.lower() != '.blend':
         raise ValueError('Expected an existing .blend source copy')
-    if args.out.exists() or args.out.is_symlink() or not args.out.parent.is_dir():
+    if out.exists() or out.is_symlink() or not out.parent.is_dir():
         raise ValueError('Output must be new and have an existing parent')
-    import bpy  # Never imported into LAS or ComfyUI's Python environment.
-    bpy.ops.wm.open_mainfile(filepath=str(args.source.resolve()))
+    bpy.ops.wm.open_mainfile(filepath=str(source.resolve()), load_ui=False, use_scripts=False)
     observation = collect(bpy)
     raw = json.dumps(observation, ensure_ascii=False, sort_keys=True, allow_nan=False).encode('utf-8')
     if len(raw) > 1048576:
         raise ValueError('Observation exceeds 1 MiB; no truncated success is written')
-    with args.out.open('xb') as stream:
+    with out.open('xb') as stream:
         stream.write(raw)
-    print('DCC_SCENE_OBSERVATION_WRITTEN', str(args.out))
-
-
-if __name__ == '__main__':
-    main()
+    print('DCC_SCENE_OBSERVATION_WRITTEN', str(out))
+    return observation
