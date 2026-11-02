@@ -1225,7 +1225,7 @@
       "id": "library-review-next-by-keyboard",
       "goal": "Go through the pictures still waiting for review one after another from the Library, deciding each with a key.",
       "starting_view": "assets",
-      "success_condition": "Review next walks three unreviewed pictures, K, W and X each save a decision and move on, and the Library then says nothing is left to review.",
+      "success_condition": "Review next shows the K, W, X and S meanings without scrolling, then walks three unreviewed pictures: K, W and X save a decision and move on, and the Library says nothing is left to review.",
       "wrong_turn": false,
       "steps": [
         {
@@ -1235,6 +1235,10 @@
         {
           "intent": "press Review next",
           "expect": "the first unreviewed picture opens with its place in the queue"
+        },
+        {
+          "intent": "read what the review keys do before deciding",
+          "expect": "K, W, X and S and their meanings are visible without scrolling and clear of the close button"
         },
         {
           "intent": "keep the first picture with the K key",

@@ -39,6 +39,10 @@ jobs:
         run: bash scripts/ci-install-chromium.sh
       - name: Measure every use case against the local fixture (never ComfyUI)
         run: python -u tests/studio_use_cases.py
+      - name: Review key meanings on the first laptop screen
+        run: python -u tests/studio_use_cases.py --case library-review-next-by-keyboard --viewport 1366x768 --out .runtime/review-keys-1366x768.json --screenshots .runtime/review-keys-1366x768
+      - name: Review key meanings on the first desktop screen
+        run: python -u tests/studio_use_cases.py --case library-review-next-by-keyboard --viewport 1920x1080 --out .runtime/review-keys-1920x1080.json --screenshots .runtime/review-keys-1920x1080
       - name: Pose replacement and stale-response browser regressions
         run: python -u tests/pose_editor_handoff_browser.py
       - uses: actions/upload-artifact@v4
@@ -47,6 +51,7 @@ jobs:
           name: ux-use-case-evidence
           path: |
             .runtime/ux-use-cases/
+            .runtime/review-keys-*
             .runtime/pose-handoff-browser/
             research/ux/use-case-matrix.json
           if-no-files-found: ignore

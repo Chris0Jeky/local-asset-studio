@@ -2262,6 +2262,28 @@ def _review_desk(c):
         return ok, 'assessed %s; winner %s (constraints %s before the press); desk reads %r; Export review evidence enabled %s' % (marks, winner, marked, state['phase'], state['exportable'])
 
 
+PROBE_REVIEW_KEYS = """() => {
+  const guide = document.querySelector('#assetQueueKeys'), dialog = document.querySelector('#assetDialog');
+  const rect = node => {const r = node?.getBoundingClientRect(); return r ? {left:r.left, top:r.top, right:r.right, bottom:r.bottom, width:r.width, height:r.height} : null;};
+  const viewport = {left:0, top:0, right:innerWidth, bottom:innerHeight};
+  const inside = (r, area) => !!r && !!area && r.width > 0 && r.height > 0 && r.left >= area.left && r.top >= area.top && r.right <= area.right && r.bottom <= area.bottom;
+  const close = rect(document.querySelector('#closeAssetDialog')), bounds = rect(guide), frame = rect(dialog);
+  const overlap = (a, b) => !!a && !!b && a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+  const shown = node => !!node && !node.closest('[hidden]') && getComputedStyle(node).visibility === 'visible' && Number(getComputedStyle(node).opacity) > 0;
+  const labels = [...(guide?.querySelectorAll('span') || [])].map(node => {
+    const box = rect(node), key = node.querySelector('kbd')?.textContent.trim();
+    return {key, text:node.textContent.replace(/\\s+/g, ' ').trim(), bounds:box,
+      visible:shown(node) && inside(box, viewport) && inside(box, frame) && node.contains(document.elementFromPoint((box.left+box.right)/2, (box.top+box.bottom)/2))};
+  });
+  const meanings = ['K Keep', 'W Needs work', 'X Not this', 'S Skip without saving'];
+  const noOverlap = !!bounds && !!close && !overlap(bounds, close);
+  return {viewport:{width:innerWidth, height:innerHeight}, dialog:frame, guide:bounds, close, labels,
+    scroll_top:dialog?.scrollTop, no_close_overlap:noOverlap,
+    ok:!!dialog?.open && shown(guide) && dialog.scrollTop === 0 && inside(bounds, viewport) && inside(bounds, frame) && noOverlap &&
+      labels.length === meanings.length && labels.every((label, i) => label.visible && label.text === meanings[i])};
+}"""
+
+
 @driver('library-review-next-by-keyboard')
 def _library_review_next(c):
     """#1729: Library > Review next with three unreviewed pictures, decided with K, W and X; each decision saves and moves on, and the
@@ -2276,6 +2298,15 @@ def _library_review_next(c):
         if c.live and not c.page.locator('#reviewNext').is_enabled(): raise LiveCaseSkip('no unreviewed picture in the Library', 'missing')
         c.act('#reviewNext', navigation=True, note='press Review next')
         c.page.wait_for_function("!!document.querySelector('#assetDialog[open]') && typeof assetQueue !== 'undefined' && !!assetQueue && !assetDetailBusy", timeout=8000)
+        # Read geometry before any key or locator action can scroll the dialog. The hosted lane also
+        # starts this actual-page journey at 1366x768 and 1920x1080 (#1919), keeping both first screens.
+        c.page.wait_for_function("document.fonts.status === 'loaded'")
+        guide = c.page.evaluate(PROBE_REVIEW_KEYS)
+        (c.dir / 'review-keys-first-screen.json').write_text(json.dumps(guide, indent=2) + '\n', encoding='utf-8')
+        c.observe('K / W / X / S meanings on the first screen', guide['ok'],
+                  detail='viewport %s; scroll top %s; close overlap %s; labels %s' %
+                  (guide['viewport'], guide['scroll_top'], not guide['no_close_overlap'], [(x['text'], x['visible']) for x in guide['labels']]))
+        if not guide['ok']: return False, 'Review key meanings are missing, clipped, scrolled away or overlap Close; see review-keys-first-screen.json.'
         total = c.page.evaluate('assetQueue.ids.length')
         decisions = (('k', 'selected'), ('w', 'needs_work'), ('x', 'rejected'))
         for number, (key, review) in enumerate(decisions, 1):
@@ -2285,7 +2316,7 @@ def _library_review_next(c):
         c.act('#reviewNext', 'read', note='the next step: nothing is left to review')
         left = c.page.evaluate("({button: document.querySelector('#reviewNext').textContent, off: document.querySelector('#reviewNext').disabled, text: document.body.innerText.includes('Review queue finished')})")
         reviews = {a['id']: a['review'] for a in fixture.ASSETS if a['id'] in ('asset-0', 'asset-3', 'asset-5')} if fixture else {}
-        ok = total == 3 and left['off'] and left['button'] == 'Nothing to review' and (not fixture or reviews == {'asset-0': 'selected', 'asset-3': 'needs_work', 'asset-5': 'rejected'})
+        ok = total == 3 and left['off'] and left['button'] == 'Nothing to review' and c.page.locator('#assetQueueKeys').is_hidden() and (not fixture or reviews == {'asset-0': 'selected', 'asset-3': 'needs_work', 'asset-5': 'rejected'})
         return ok, '%d in the queue; reviews saved %s; Review next reads %r; queue finished %s' % (total, reviews, left['button'], left['text'])
 
 
@@ -2347,6 +2378,8 @@ def main(argv=None):
     parser.add_argument('--chromium', help='Chromium executable path.')
     parser.add_argument('--island-default', action='store_true', help='Fixture only: simulate default island loading on ordinary URLs.')
     parser.add_argument('--zoom', type=int, choices=(100, 200), default=100, help='Browser-zoom equivalent CSS viewport and pixel density.')
+    parser.add_argument('--viewport', choices=('1536x1060', '1366x768', '1920x1080'), default='1536x1060',
+                        help='Screen size before applying --zoom; the default measurement is unchanged.')
     args = parser.parse_args(argv)
     if args.base_url and args.island_default:
         parser.error('--island-default is fixture-only; it cannot change a live Studio')
@@ -2377,6 +2410,8 @@ def main(argv=None):
         origin = 'http://127.0.0.1:' + str(server.server_port)
 
     rows, errors, unexpected, allowed = [], [], [], {}
+    width, height = map(int, args.viewport.split('x'))
+    scale = args.zoom // 100
     started = time.time()
     try:
         with sync_playwright() as playwright:
@@ -2384,8 +2419,7 @@ def main(argv=None):
                                                  executable_path=args.chromium or os.environ.get('CHROMIUM_PATH') or shutil.which('chromium') or None)
             for spec in cases:
                 # One context per case: browser storage (drafts, filters, guide steps) must not leak between cases.
-                scale = args.zoom // 100
-                context = browser.new_context(viewport={'width': 1536 // scale, 'height': 1060 // scale}, device_scale_factor=scale, reduced_motion='reduce')
+                context = browser.new_context(viewport={'width': width // scale, 'height': height // scale}, device_scale_factor=scale, reduced_motion='reduce')
                 if args.island_default:
                     from ui_island_browser import install_candidate_default
                     install_candidate_default(context, origin)
@@ -2413,6 +2447,7 @@ def main(argv=None):
     matrix = {'version': 1, 'refs': data.get('refs'), 'mode': 'live-readonly' if live else 'fixture',
               'origin': origin if live else 'fixture server', 'seconds': round(time.time() - started, 1),
               'presentation': 'candidate-island-default' if args.island_default else 'normal', 'zoom_equivalent_percent': args.zoom,
+              'viewport': {'width': width // scale, 'height': height // scale},
               'cases': len(rows), **outcome_counts(rows),
               'generation_submissions': len(submitted), 'generation_submissions_allowed': allowed, 'posts_observed': len(OBSERVED_POSTS),
               'post_routes': sorted(set(OBSERVED_POSTS)), 'page_errors': errors,

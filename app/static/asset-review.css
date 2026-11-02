@@ -28,6 +28,12 @@
 .asset-group-source button{font-size:10px;padding:5px 8px}
 .asset-group-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:18px;align-items:start}
 
+/* Queue-only meanings lead the first screen; reserve the close button's corner. */
+.asset-queue-keys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;margin:0 44px 14px 0;padding:10px 12px;border:1px solid #7da14c66;border-radius:10px;background:#2a342633;font-size:12px;line-height:1.5}
+.asset-queue-keys[hidden]{display:none}
+.asset-queue-keys>span{white-space:nowrap}
+.asset-queue-keys kbd{font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:3px;padding:0 4px;margin-right:4px}
+.asset-queue-keys small{flex-basis:100%;font-size:12px;color:var(--muted)}
 .asset-queue{border:1px solid #7da14c66;background:#2a342633;border-radius:10px;padding:10px 12px;margin-bottom:14px}
 .asset-queue-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:11px}
 .asset-queue-head span{color:var(--accent);font-variant-numeric:tabular-nums}

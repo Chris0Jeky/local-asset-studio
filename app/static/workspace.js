@@ -828,6 +828,7 @@ function renderAssetSelection() {
 }
 function renderAssetQueue() {
   const panel=$('#assetQueue');
+  $('#assetQueueKeys').hidden=!assetQueue;
   // Outside the queue the same panel carries a verdict-only row for the open picture (#1725): saved mark pressed, same buttons and K/W/X keys, no advance.
   const solo=!assetQueue&&!!activeAsset&&!!assetDetailBaseline;
   panel.hidden=!assetQueue&&!solo;

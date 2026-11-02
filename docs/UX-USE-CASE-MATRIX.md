@@ -1,5 +1,34 @@
 # UX use-case matrix
 
+## Review next: key meanings on the first screen — 2 November 2026 (#1919)
+
+The owner had to scroll to find what the review buttons do. Review next now puts a compact,
+read-only guide above the picture and details: **K Keep**, **W Needs work**, **X Not this** and
+**S Skip without saving**. It also says that K/W/X save the current edits and advance, while
+typing remains ordinary text entry. The guide appears only during a queue and reserves the
+close button's corner. The existing review buttons, keyboard handler, save receipt checks,
+focus order and privacy behavior are unchanged.
+
+The existing `library-review-next-by-keyboard` journey now reads the guide before any review
+key or scrolling action. Its browser assertion checks all four meanings, each label's bounds
+within the viewport and dialog, visibility at its center, zero dialog scroll, and no overlap
+with Close. It still verifies the three K/W/X saves and completed queue. The use-case registry
+remains 30 journeys; this adds one read step to the existing journey.
+
+The UX workflow keeps its ordinary full journey run and adds this same journey at **1366×768**
+and **1920×1080**, with separate reports, screenshots and `review-keys-first-screen.json`
+geometry receipts. The default viewport and all existing gate, install and timeout settings
+remain unchanged. Those hosted runs and visual inspection of both captures are still required;
+there is no local Chromium result for this change.
+
+Local focused verification: the new queue-guide regression failed before the change and all
+36 metadata frontend cases pass after it. The frontend handoff, metadata and use-case modules
+ran 113 tests: 112 passed and the existing Chromium-dependent disclosure check skipped because
+the browser is unavailable. The new cases cover leaving, closing and changing privacy, plus
+S advancing without saving and remaining inert while typing. Repository validation passes.
+This is interface evidence; it does not change owner art acceptance or the separate editor,
+Workflow lab and asset-direction follow-ups in #1920, #1921 and #1923.
+
 ## Make: a look on another model environment (MOSS-Image), 1 November 2026 (`moss-look-1019`)
 
 MOSS-Image runs on its own ComfyUI (#1575, port 8198). Before this, a MOSS recipe was reachable only through the Full editor,

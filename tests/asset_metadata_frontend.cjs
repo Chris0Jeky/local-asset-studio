@@ -99,6 +99,32 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
     assert.equal(s.run('activeAsset.id'),'a');assert.match(s.el('#assetQueue').innerHTML,/2 of 2/);
     assert.equal(s.run("assetState.assets.find(a=>a.id==='b').review"),'needs_work');
   });
+  await check('The first-screen key guide belongs only to an active review queue',async()=>{
+    const s=library();s.run('startReviewQueue()');
+    assert.equal(s.el('#assetQueueKeys').hidden,false,'entering Review next reveals its key meanings');
+    assert.equal(s.writes.length,0,'reading the guide records no review');
+    await s.clickClosest('[data-queue-exit]',{});
+    assert.equal(s.el('#assetQueueKeys').hidden,true,'S is not advertised for an ordinary open picture');
+    assert.equal(s.el('#assetDialog').open,true);assert.equal(s.run('activeAsset.id'),'b');
+    assert.equal(s.writes.length,0);
+  });
+  await check('The guide agrees with S: typing is inert, skipping advances without saving',async()=>{
+    const s=library();s.run('startReviewQueue()');
+    const key=tagName=>s.dispatch('keydown',{key:'s',target:{tagName},preventDefault(){}});
+    await key('INPUT');assert.equal(s.run('assetQueue.index'),0);assert.equal(s.writes.length,0);
+    await key('BUTTON');assert.equal(s.run('assetQueue.index'),1);assert.equal(s.run('activeAsset.id'),'a');
+    assert.equal(s.el('#assetQueueKeys').hidden,false);assert.equal(s.writes.length,0);
+    await key('BUTTON');assert.equal(s.el('#assetDialog').open,false);assert.equal(s.el('#assetQueueKeys').hidden,true);
+    assert.equal(s.writes.length,0);assert.equal(s.run("assetState.assets.every(a=>a.review==='unreviewed')"),true);
+  });
+  await check('Closing or changing privacy retires the queue key guide without a write',async()=>{
+    const s=library();s.run('startReviewQueue()');s.el('#closeAssetDialog').onclick();
+    assert.equal(s.el('#assetQueueKeys').hidden,true);
+    s.run('startReviewQueue()');assert.equal(s.el('#assetQueueKeys').hidden,false);
+    await s.dispatch('studio:privacy-change',{detail:{scope:'private',previousScope:'regular'}});
+    assert.equal(s.el('#assetQueueKeys').hidden,true);assert.equal(s.el('#assetDialog').open,false);
+    assert.equal(s.run('assetQueue'),null);assert.equal(s.writes.length,0);
+  });
   await check('An unconfirmed queue decision never advances past its evidence',async()=>{
     const s=library();s.run('startReviewQueue()');
     const p=s.run("assetQueueDecide('selected')");s.writes[0].reject(Error('response lost'));await p;
