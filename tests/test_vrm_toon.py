@@ -109,5 +109,24 @@ class SpringTests(unittest.TestCase):
         with self.assertRaises(ValueError): vrm_toon.vrm_springs({"nodes": [], "extensions": {"VRM": {}}})
 
 
+class ConstraintTests(unittest.TestCase):
+    def test_aim_roll_and_rotation_constraints_by_name(self):
+        doc = {"nodes": [{"name": "J_Bip_L_LowerArm"},
+                         {"name": "J_Aim_L_TopsUpperArm", "extensions": {"VRMC_node_constraint": {"constraint": {"aim": {"source": 0, "aimAxis": "PositiveY", "weight": 1.0}}}}},
+                         {"name": "J_Roll_L_Elbow", "extensions": {"VRMC_node_constraint": {"constraint": {"roll": {"source": 0, "rollAxis": "X", "weight": .5}}}}},
+                         {"name": "Copy", "extensions": {"VRMC_node_constraint": {"constraint": {"rotation": {"source": 0}}}}}]}
+        self.assertEqual(vrm_toon.vrm_constraints(doc), [
+            {"bone": "J_Aim_L_TopsUpperArm", "type": "aim", "source": "J_Bip_L_LowerArm", "weight": 1.0, "axis": [0, 1, 0]},
+            {"bone": "J_Roll_L_Elbow", "type": "roll", "source": "J_Bip_L_LowerArm", "weight": .5, "axis": [1, 0, 0]},
+            {"bone": "Copy", "type": "rotation", "source": "J_Bip_L_LowerArm", "weight": 1.0, "axis": None}])
+
+    def test_springs_cli_carries_constraints(self):
+        doc = json.loads(json.dumps(SPRING_DOC)); doc["nodes"][2]["extensions"] = {"VRMC_node_constraint": {"constraint": {"aim": {"source": 1, "aimAxis": "NegativeZ"}}}}
+        with tempfile.TemporaryDirectory() as d:
+            src, dst = Path(d) / "m.vrm", Path(d) / "s.json"; src.write_bytes(glb(doc))
+            self.assertEqual(vrm_toon.main(["springs", str(src), str(dst)]), 0)
+            self.assertEqual(json.loads(dst.read_text(encoding="utf-8"))["constraints"][0]["axis"], [0, 0, -1])
+
+
 if __name__ == "__main__":
     unittest.main()
