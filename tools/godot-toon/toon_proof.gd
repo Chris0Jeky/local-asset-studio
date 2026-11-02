@@ -12,6 +12,10 @@ var face_mats: Array[ShaderMaterial] = []
 var head_rest: Basis
 var constraints := []
 var expressions := {}
+var expr_w := {}                                                             # this frame's requested expression weights
+var expr_targets := []                                                       # every [mesh, blend shape] an expression drives
+const BLINKS := ["blink", "blinkLeft", "blinkRight"]
+const MOUTHS := ["aa", "ih", "ou", "ee", "oh"]
 # Rhubarb mouth shapes -> VRM visemes (A closed lips, X rest): optional res://voice.wav + res://cues.json (rhubarb -f json)
 const VISEMES := {"A": {}, "B": {"ih": .35}, "C": {"ee": .6, "aa": .2}, "D": {"aa": 1.0}, "E": {"oh": .75},
 		"F": {"ou": .85}, "G": {"ih": .3}, "H": {"aa": .45}, "X": {}}
@@ -32,6 +36,9 @@ func _ready() -> void:
 		_restyle(mi)
 	_springs()
 	head_rest = skel.get_bone_global_rest(skel.find_bone("J_Bip_C_Head")).basis
+	if FileAccess.file_exists("res://cues.json") and not ResourceLoader.exists("res://voice.wav"):
+		push_warning("TOON cues.json found but voice.wav is not imported: run godot --headless --import first")
+		print("TOON lip sync off: voice.wav not imported")
 	if FileAccess.file_exists("res://cues.json") and ResourceLoader.exists("res://voice.wav"):
 		cues = JSON.parse_string(FileAccess.get_file_as_string("res://cues.json")).mouthCues
 		var voice := AudioStreamPlayer.new(); voice.stream = load("res://voice.wav"); add_child(voice)
@@ -87,6 +94,16 @@ func _springs() -> void:
 	var data = JSON.parse_string(FileAccess.get_file_as_string("res://springs.json"))
 	constraints = _dependency_order(data.get("constraints", []))
 	expressions = data.get("expressions", {})
+	for p in expressions:                                                     # resolve each bind to [mesh, blend shape] once
+		var resolved := []
+		for b in expressions[p].binds:
+			var mi := root.find_child(b.node, true, false) as MeshInstance3D
+			if mi == null: continue
+			var i := mi.find_blend_shape_by_name(b.name) if b.name else int(b.index)
+			if i < 0: continue
+			resolved.append([mi, i, float(b.weight)])
+			if not expr_targets.any(func(x): return x[0] == mi and x[1] == i): expr_targets.append([mi, i])
+		expressions[p]["resolved"] = resolved
 	var sim := SpringBoneSimulator3D.new(); skel.add_child(sim)
 	var cols: Array[SpringBoneCollision3D] = []
 	for c in data.colliders:
@@ -213,26 +230,42 @@ func _process(delta: float) -> void:
 	_apply_constraints()
 	var blink := 1.0 - smoothstep(0.0, 0.07, absf(fmod(t, 3.1) - 2.9))      # a 0.14 s blink every 3.1 s
 	var joy := (smoothstep(1.4, 1.9, t) * (1.0 - smoothstep(3.6, 4.2, t)) if action == "idle" else smoothstep(0.6, 1.0, t) if action == "wave" else 0.0) if cues.is_empty() else 0.0
-	_expr("happy", joy); _expr("blink", blink * (1.0 - joy))
+	_expr("happy", joy); _expr("blink", blink)
 	if not cues.is_empty():
 		var shape := "X"
 		for c in cues:
 			if t - VOICE_START >= c.start and t - VOICE_START < c.end: shape = c.value
 		for v in mouth:                                                     # ease toward the cue's shape, ~60 ms
 			mouth[v] = lerpf(mouth[v], VISEMES[shape].get(v, 0.0), clampf(delta * 16.0, 0.0, 1.0)); _expr(v, mouth[v])
+	_apply_expressions()
 	var hb := (skel.global_transform.basis * skel.get_bone_global_pose(skel.find_bone("J_Bip_C_Head")).basis * head_rest.inverse()).orthonormalized()
 	for m in face_mats:
 		m.set_shader_parameter("face_forward", hb * Vector3(0, 0, 1)); m.set_shader_parameter("face_left", hb * Vector3(1, 0, 0))
 
 
 func _expr(preset: String, w: float) -> void:
-	# Drive a VRM expression's morph-target binds; Godot names blend shapes after glTF targetNames.
-	if not expressions.has(preset): return
-	for b in expressions[preset].binds:
-		var mi := root.find_child(b.node, true, false) as MeshInstance3D
-		if mi == null: continue
-		var i := mi.find_blend_shape_by_name(b.name) if b.name else int(b.index)
-		if i >= 0: mi.set_blend_shape_value(i, clampf(w * b.weight, 0.0, 1.0))
+	if expressions.has(preset): expr_w[preset] = w
+
+
+func _apply_expressions() -> void:
+	# VRM 1.0 update order: binary expressions snap at 0.5; an active expression's overrideBlink/overrideMouth
+	# ("block" zeroes, "blend" scales by 1 - weight) damps the blink and mouth groups; binds sum per blend shape.
+	var w := {}
+	for p in expr_w: w[p] = (1.0 if expr_w[p] > 0.5 else 0.0) if expressions[p].binary else expr_w[p]
+	var damp := {"blink": 1.0, "mouth": 1.0}
+	for p in w:
+		for g in ["blink", "mouth"]:
+			var mode: String = expressions[p].get("override_" + g, "none")
+			if mode == "block" and w[p] > 0.0: damp[g] = 0.0
+			elif mode == "blend": damp[g] = minf(damp[g], 1.0 - w[p])
+	var acc := {}
+	for p in w:
+		var k: float = damp["blink"] if p in BLINKS else damp["mouth"] if p in MOUTHS else 1.0
+		for r in expressions[p].resolved:
+			var key := "%d:%d" % [r[0].get_instance_id(), r[1]]
+			acc[key] = acc.get(key, 0.0) + w[p] * k * r[2]
+	for tg in expr_targets:
+		tg[0].set_blend_shape_value(tg[1], clampf(acc.get("%d:%d" % [tg[0].get_instance_id(), tg[1]], 0.0), 0.0, 1.0))
 
 
 func _find(n: Node, pred: Callable) -> Node:

@@ -78,14 +78,17 @@ source bone; rotation applies the source's rotation from its rest; roll carries 
 rest frame and keeps only the twist about the axis, as in the specification's reference code. Each is blended by
 weight. Ordering looks only at sources, not at constrained ancestors (#1928). `vrm_toon.py springs`
 writes them into `springs.json`, together with the VRM's expressions (morph-target binds by node and target name);
-the idle plays a blink every 3.1 s and the `happy` expression through the turn.
+the idle plays a blink every 3.1 s and the `happy` expression through the turn. Expressions follow the VRM 1.0 update
+order: binary ones snap at 0.5, `overrideBlink`/`overrideMouth` damp the blink and mouth groups, and binds sum per
+blend shape before they are applied.
 
 Actions: `godot --path . -- --action=wave` raises the right arm and waves the forearm with the `happy` expression;
 `--action=walk` plays an in-place procedural walk (1.1 s cycle, side camera) whose skirt and hair motion comes from the
 springs. Both are procedural, not retargeted motion capture.
 
 Lip sync: put a `voice.wav` and its Rhubarb Lip Sync cues (`rhubarb -f json -o cues.json --dialogFile line.txt
-voice.wav`) beside the model and the proof becomes a talking portrait. Rhubarb's mouth shapes map to the VRM visemes
+voice.wav`) beside the model, rerun `godot --headless --import` so the WAV is imported (the proof warns and stays silent
+otherwise), and it becomes a talking portrait. Rhubarb's mouth shapes map to the VRM visemes
 (B -> ih, C -> ee, D -> aa, E -> oh, F -> ou, G/H -> light ih/aa, A and X closed), eased over about 60 ms. Movie Maker
 writes the audio beside the frames (`f.wav`), so `ffmpeg -i f%08d.png -i f.wav` muxes the clip. Measured on a 7.65 s
 Kokoro line: Rhubarb 3.9 s for 45 cues.

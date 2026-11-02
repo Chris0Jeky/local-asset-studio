@@ -134,12 +134,14 @@ class ExpressionTests(unittest.TestCase):
                "meshes": [{"extras": {"targetNames": ["Fcl_ALL_Neutral", "Fcl_ALL_Joy", "Fcl_EYE_Close"]}}],
                "extensions": {"VRMC_vrm": {"expressions": {
                    "preset": {"blink": {"morphTargetBinds": [{"node": 1, "index": 2, "weight": 1.0}]},
-                              "happy": {"isBinary": True, "morphTargetBinds": [{"node": 1, "index": 1}]},
+                              "happy": {"isBinary": True, "overrideBlink": "blend", "morphTargetBinds": [{"node": 1, "index": 1}]},
                               "lookUp": {"morphTargetBinds": []}},
                    "custom": {"wink": {"morphTargetBinds": [{"node": 1, "index": 9, "weight": .5}]}}}}}}
         out = vrm_toon.vrm_expressions(doc)
-        self.assertEqual(out["blink"], {"binds": [{"node": "Face", "index": 2, "weight": 1.0, "name": "Fcl_EYE_Close"}], "binary": False})
+        self.assertEqual(out["blink"], {"binds": [{"node": "Face", "node_index": 1, "index": 2, "weight": 1.0, "name": "Fcl_EYE_Close"}],
+                                        "binary": False, "override_blink": "none", "override_mouth": "none"})
         self.assertTrue(out["happy"]["binary"]); self.assertEqual(out["happy"]["binds"][0]["weight"], 1.0)
+        self.assertEqual(out["happy"]["override_blink"], "blend")
         self.assertNotIn("lookUp", out)                                  # bone-driven, no morph binds
         self.assertIsNone(out["wink"]["binds"][0]["name"])               # index past the names list keeps the index only
 

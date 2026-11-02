@@ -143,9 +143,10 @@ def vrm_expressions(doc: dict) -> dict:
             binds = []
             for b in e.get('morphTargetBinds', []):
                 node = doc['nodes'][b['node']]; targets = meshes[node['mesh']].get('extras', {}).get('targetNames', []) if 'mesh' in node else []
-                binds.append({'node': names[b['node']], 'index': b['index'], 'weight': b.get('weight', 1.0),
+                binds.append({'node': names[b['node']], 'node_index': b['node'], 'index': b['index'], 'weight': b.get('weight', 1.0),
                               'name': targets[b['index']] if b['index'] < len(targets) else None})
-            if binds: out[key] = {'binds': binds, 'binary': e.get('isBinary', False)}
+            if binds: out[key] = {'binds': binds, 'binary': e.get('isBinary', False),
+                                  'override_blink': e.get('overrideBlink', 'none'), 'override_mouth': e.get('overrideMouth', 'none')}
     return out
 
 
