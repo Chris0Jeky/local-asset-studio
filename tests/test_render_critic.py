@@ -61,6 +61,14 @@ class PixelGateTest(unittest.TestCase):
         self.assertEqual((quiet["changed"], quiet["defects"], quiet["pixel_diff"]["front"]["changed_px"]), (False, [], 0))
         self.assertEqual((diff["changed"], diff["pixel_diff"]["front"]), (True, {"changed_px": 36, "bbox": (4, 4, 10, 10)}))
 
+    def test_view_missing_from_reference_is_not_cleared(self):
+        from PIL import Image
+        with tempfile.TemporaryDirectory() as d:
+            for name in ("view_front.png", "view_back.png"): Image.new("RGB", (8, 8)).save(Path(d) / name)
+            r = rc.check([Path(d) / "view_front.png", Path(d) / "view_back.png"], reference=[Path(d) / "view_front.png"],
+                         server="http://127.0.0.1:9", diff_only=True)
+        self.assertTrue(r["changed"])
+
 
 class RequestTest(unittest.TestCase):
     def test_schema_constrains_types_and_regions(self):

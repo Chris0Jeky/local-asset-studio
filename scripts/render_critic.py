@@ -96,7 +96,9 @@ def check(images, rubric=RUBRIC, reference=(), server=DEFAULT_SERVER, timeout=60
     unchanged candidate never reaches the model, which removes its false alarms on clean renders. (diff_only=None is
     the internal 'gate passed' call.)"""
     if reference and diff_only is not None:
-        diff = pixel_diff(images, reference); changed = sum(v["changed_px"] for v in diff.values()) >= DIFF_MIN_PX
+        diff = pixel_diff(images, reference)
+        # A candidate view with no reference view cannot be cleared by the diff, so it goes to the model (fail open).
+        changed = sum(v["changed_px"] for v in diff.values()) >= DIFF_MIN_PX or len(diff) < len(images)
         if diff_only or not changed: return {"defects": [], "pixel_diff": diff, "changed": changed, "model": None}
         return dict(check(images, rubric, reference, server, timeout, max_tokens, diff_only=None), pixel_diff=diff, changed=True)
     body = {"messages": messages(images, rubric, reference), "temperature": 0, "max_tokens": max_tokens, "cache_prompt": True,
@@ -121,7 +123,7 @@ def evaluate(set_dir, out, rubric=RUBRIC, reference_root=None, server=DEFAULT_SE
     clean renders from another Blender build and reference_root at the original set. Appends JSON lines to `out` and
     skips sample ids already in it, so an interrupted run resumes."""
     out = Path(out); done = set()
-    if out.exists(): done = {json.loads(l)["id"] for l in out.read_text(encoding="utf-8").splitlines() if l.strip()}
+    if out.exists(): done = {r["id"] for r in map(json.loads, filter(str.strip, out.read_text(encoding="utf-8").splitlines())) if "error" not in r}
     samples = sorted(p.parent for p in Path(set_dir).glob("*/truth.json"))
     n = 0
     for d in samples:
@@ -176,7 +178,7 @@ def score(rows, rubric=RUBRIC, threshold=0.0):
             s["tp" if pred and actual else "fp" if pred else "fn" if actual else "tn"] += 1
             if pred and actual:
                 reg = v.get("region", "none"); s["region_ok"] += region_family(reg) in accepted_regions(t)
-                if t.get("side") and reg.startswith(("left_", "right_")):
+                if t.get("side"):  # a region without a side (e.g. face for an eye) counts as a side miss
                     s["side_n"] += 1; s["side_ok"] += reg.startswith("left_" if t["side"] == "L" else "right_")
     for s in list(stats.values()) + [detect]:
         s["precision"] = round(s["tp"] / (s["tp"] + s["fp"]), 3) if s["tp"] + s["fp"] else None
@@ -210,7 +212,7 @@ def main(argv=None):
     if a.cmd == "check": print(json.dumps(check(a.images, rubric, a.reference, a.server, diff_only=a.diff_only), indent=1))
     elif a.cmd == "eval": evaluate(a.set_dir, a.out, rubric, a.reference_root, a.server, a.limit)
     elif a.cmd == "score":
-        rows = [json.loads(l) for l in Path(a.results).read_text(encoding="utf-8").splitlines() if l.strip()]
+        rows = list({r["id"]: r for r in map(json.loads, filter(str.strip, Path(a.results).read_text(encoding="utf-8").splitlines()))}.values())  # last row per sample: resumed retries replace errors
         summary = score(rows, threshold=a.threshold); print(table(summary))
         print(json.dumps({k: v for k, v in summary.items() if k not in ("categories", "detection")}))
     elif a.cmd == "serve":
