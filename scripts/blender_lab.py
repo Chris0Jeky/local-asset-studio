@@ -52,7 +52,9 @@ def executable(blender_path):
 
 
 def command_for(blender_path, *args):
-    return [str(blender_path), "--background", "--factory-startup", "--disable-autoexec", "--python", str(BPY_SCRIPT),
+    # --python-exit-code 1: a Python exception inside Blender must not leave a receipt with exit code 0.
+    return [str(blender_path), "--background", "--factory-startup", "--disable-autoexec", "--python-exit-code", "1",
+            "--python", str(BPY_SCRIPT),
             "--", *map(str, args)]
 
 
@@ -127,9 +129,11 @@ def make_fixture(blender_path, out_dir, timeout=300):
 def scene_v1(blender_path, blend_path, out_path, timeout=120):
     """Exact `studio.dcc-scene/v1` observation for `studio_workflow.dcc_evidence.compare_scenes`."""
     exe = executable(blender_path)
-    blend = Path(blend_path).expanduser().resolve()
+    # The collector refuses symlinks; check the caller's paths before resolving would hide them.
+    raw_blend, raw_out = Path(blend_path).expanduser(), Path(out_path).expanduser()
+    require(not raw_blend.is_symlink() and not raw_out.is_symlink(), "blend and out must not be symlinks")
+    blend, out = raw_blend.resolve(), raw_out.resolve()
     require(blend.is_file() and blend.suffix.lower() == ".blend", "blend must be an existing .blend file")
-    out = Path(out_path).expanduser().resolve()
     require(not out.exists(), "out must be a new file")
     before = file_sha(blend)
     run(exe, ["scene-v1", "--blend", blend, "--out", out], out.with_name(out.stem + ".log.json"), timeout)

@@ -72,9 +72,12 @@ Findings from building a deterministic asset:
 Two stacks were built in parallel on 2 Nov 2026: this lab, and the offline DCC evidence work from #1911. They now
 have one owner per seam and no parallel copies.
 
+Status on 2 Nov 2026: the probe, manifest and `scene-v1` are on `main`. The sentinel, worker and MCP façade are in
+open PRs #1916, #1924, #1931 and #1936.
+
 | Seam | Canonical tool | Use it for |
 | --- | --- | --- |
-| Starting Blender | `scripts/blender_lab.py` → `blender_lab_bpy.py` (fixed argv, log, timeout) | every native run, including the exact observation below |
+| Starting Blender | `blender_lab_bpy.py`, through the host runner `scripts/blender_lab.py` (fixed argv, log, timeout) or a `probe_intent` plan of the same argv | every native run, including the exact observation below |
 | Capability qualification | `blender_lab.py probe` | feature tests per build, never version checks |
 | Exact scene observation (`studio.dcc-scene/v1`) | `blender_lab.py scene-v1`, which runs the stdlib-only collector `scripts/blender_scene_probe.py` | strict same-build change detection: unchanged reruns, before/after an edit; float-exact, UV coordinates, weights, material links |
 | Strict comparison and evidence receipts | `studio_workflow/dcc_evidence.py` (`compare_scenes`, `compare_bundles`, `probe_intent`) | exact equality and hardened PNG/receipt validation; no tolerance or GLB forgiveness |

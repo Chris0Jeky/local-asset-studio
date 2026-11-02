@@ -23,9 +23,9 @@ def load(path): return json.loads(path.read_text(encoding="utf-8"))
 class CommandTests(unittest.TestCase):
     def test_fixed_argv_never_loads_user_startup_or_autoexec(self):
         command = lab.command_for("C:/blender.exe", "probe", "--out", "x.json")
-        self.assertEqual(command[:6], ["C:/blender.exe", "--background", "--factory-startup", "--disable-autoexec",
-                                       "--python", str(lab.BPY_SCRIPT)])
-        self.assertEqual(command[6:], ["--", "probe", "--out", "x.json"])
+        self.assertEqual(command[:8], ["C:/blender.exe", "--background", "--factory-startup", "--disable-autoexec",
+                                       "--python-exit-code", "1", "--python", str(lab.BPY_SCRIPT)])
+        self.assertEqual(command[8:], ["--", "probe", "--out", "x.json"])
 
     def test_executable_must_be_absolute_existing_blender(self):
         with self.assertRaises(lab.BlenderLabError): lab.executable("blender.exe")
