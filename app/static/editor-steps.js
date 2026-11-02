@@ -12,10 +12,10 @@
     running:'Generating. The picture lands in Recent runs at the bottom; you can keep editing meanwhile.',
     next:'Your picture is in Recent runs. Keep it with K, press Continue with this on it to edit or restyle it, or change the words and generate again. Plan comparison tests settings side by side.'};
   function render(){
-    const recipe=typeof selected!=='undefined'?selected:null,words=!!document.querySelector('#positive')?.value.trim(),running=typeof activeJobId!=='undefined'&&!!activeJobId;
+    const recipe=typeof selected!=='undefined'?selected:null,prompted=!!recipe?.positive,words=!prompted||!!document.querySelector('#positive')?.value.trim(),running=typeof activeJobId!=='undefined'&&!!activeJobId;
     const takes=!!recipe?.reference||!!recipe?.reference_slots?.length,attached=!takes||typeof referencesReady!=='function'||referencesReady();
     const now=!recipe?'recipe':!words?'describe':!attached?'sources':running?'running':result?'next':'generate';
-    const steps=[['recipe','Recipe',!!recipe],['describe','Describe',words],['sources',!takes?'Your picture · not needed':attached?'Your picture':'Your picture · needed',attached],
+    const steps=[['recipe','Recipe',!!recipe],['describe',recipe&&!prompted?'Describe · not needed':'Describe',words],['sources',!takes?'Your picture · not needed':attached?'Your picture':'Your picture · needed',attached],
       ['generate',running?'Generating…':'Generate',!!result&&!running],['next','Next',false]];
     const html='<ol>'+steps.map(([id,name,done],i)=>{const current=id===now||(id==='generate'&&now==='running');
       return '<li'+(current?' aria-current="step"':'')+(done?' data-done':'')+'><button type="button" data-editor-step="'+id+'">'+(done?'✓':(i+1))+' '+name+'</button></li>';}).join('')+'</ol><p role="status">'+NOW[now]+'</p>';
