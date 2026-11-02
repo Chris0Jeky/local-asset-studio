@@ -105,6 +105,7 @@ func _feet(h, delta: float) -> void:
 		var p: Vector3 = skel.global_transform * skel.get_bone_global_pose(skel.find_bone(FEET[side][2])).origin
 		var lift: float = p.y - h.root.global_position.y
 		var home := Vector3(p.x, 0, p.z); var arc := 0.0
+		if step.has(side) and lift >= ankle_h + STANCE: step.erase(side)   # the walk lifted this foot: its own swing takes over
 		if step.has(side):
 			step[side].t += delta / STEP_TIME; var s: float = minf(step[side].t, 1.0)
 			lock[side] = step[side].from.lerp(home, smoothstep(0.0, 1.0, s)); arc = sin(PI * s) * STEP_LIFT

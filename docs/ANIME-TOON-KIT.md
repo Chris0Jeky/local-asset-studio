@@ -128,8 +128,10 @@ Measured on 2 Nov 2026 on a VRoid model with Bandai Namco Research Motiondataset
 the body like a game controller: idle, a 1.1 m/s walk, a 2.6 m/s run, then a stop. Mean stance-phase foot slide fell from
 2.26 m/s with the old in-place procedural walk to 0.017 m/s with the gait (p95 from 4.21 to 0.003; the mean carries a few rare spikes).
 On a turning route (curves at up to 40 degrees per second, then a 180-degree turn in place), re-stepping cut the largest
-distance between a planted foot and where the pose wanted it from 0.336 m to 0.180 m; stance slide went from 0.013 to
-0.014 m/s. The retarget is
+distance between a planted foot and where the pose wanted it from 0.335 m to 0.186 m; mean stance slide went from 0.068
+to 0.072 m/s. Those are re-measurements made after two machine restarts, headless at a fixed 30 fps. On the straight route
+the same test now gives 0.081 m/s for both the re-stepping version and the earlier one, so the 0.017 m/s above did not
+reproduce; the cause was not found. The retarget is
 swing-only: limbs get no twist, and the hands and head keep the idle pose.
 
 ## Limits
