@@ -3,6 +3,7 @@
 shader_type spatial;
 render_mode diffuse_lambert, specular_disabled, cull_disabled;
 uniform sampler2D albedo_tex : source_color, filter_linear_mipmap, repeat_enable;
+uniform vec4 albedo_color : source_color = vec4(1.0);   // glTF baseColorFactor (VRoid stores outfit tints here)
 uniform vec3 shade_tint = vec3(0.62, 0.62, 0.78);
 uniform float threshold = 0.18;
 uniform float softness = 0.03;
@@ -14,7 +15,7 @@ uniform vec3 face_forward = vec3(0.0, 0.0, 1.0);
 uniform vec3 face_left = vec3(1.0, 0.0, 0.0);
 
 void fragment() {
-	vec4 c = texture(albedo_tex, UV);
+	vec4 c = texture(albedo_tex, UV) * albedo_color;
 	ALBEDO = c.rgb;
 	ALPHA = c.a;
 	ALPHA_SCISSOR_THRESHOLD = 0.5;

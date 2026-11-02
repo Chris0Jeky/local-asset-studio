@@ -25,6 +25,14 @@ def base_image(m):
         if n.type == "TEX_IMAGE" and n.image and not any(k in n.image.name for k in ("nml", "spe", "outline")): return n.image
 
 
+def base_factor(m):
+    """MToon/glTF baseColorFactor: the VRM add-on's property, else its output node's Lit Color (add-on not enabled)."""
+    try: return tuple(m.vrm_addon_extension.mtoon1.pbr_metallic_roughness.base_color_factor)
+    except AttributeError: pass
+    n = m.node_tree.nodes.get("Mtoon1Material.Mtoon1Output")
+    return tuple(n.inputs["Lit Color"].default_value) if n and "Lit Color" in n.inputs else (1.0, 1.0, 1.0, 1.0)
+
+
 class G:
     """Tiny node-graph helper: G(m).n(type, **inputs) creates a node and links/sets inputs by socket name or index."""
     def __init__(s, m):
@@ -49,8 +57,9 @@ class G:
 
 
 def build(m, k, sdf):
-    im = base_image(m); g = G(m)
+    im = base_image(m); f = base_factor(m); g = G(m)                                        # read before G clears the nodes
     tex = g.n("ShaderNodeTexImage", props={"image": im}); col, alpha = tex.outputs["Color"], tex.outputs["Alpha"]
+    if f[:3] != (1.0, 1.0, 1.0): col = g.mix("MULTIPLY", col, (*f[:3], 1))
     if k == "unlit":
         return g.finish(g.n("ShaderNodeEmission", Color=col, Strength=1.0).outputs[0], alpha)
     shade = (*SHADE[k], 1)

@@ -82,6 +82,7 @@ func _restyle(mi: MeshInstance3D) -> void:
 		else:
 			m.shader = load("res://toon.gdshader")
 			m.set_shader_parameter("shade_tint", SHADE[kind])
+			if src is BaseMaterial3D: m.set_shader_parameter("albedo_color", src.albedo_color)
 			if kind == "hair": m.set_shader_parameter("spec_amount", .45)
 			if kind == "face":
 				m.set_shader_parameter("face_sdf", true); m.set_shader_parameter("sdf_tex", load(sdf_path)); face_mats.append(m)
