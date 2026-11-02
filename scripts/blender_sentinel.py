@@ -260,6 +260,75 @@ def compare_renders(source_dir, roundtrip_dir, evidence, out_dir):
     return views, warnings
 
 
+def _shares(image, mask, palette, minimum=0.05):
+    """Names whose ID colour covers at least `minimum` of the masked pixels."""
+    from PIL import Image
+    masked = Image.composite(image, Image.new("RGBA", image.size, (0, 0, 0, 0)), mask)
+    total = mask.histogram()[255]
+    if not total: return []
+    targets = {name: [_srgb(c) for c in colour] for name, colour in palette.items()}
+    counts = {}
+    for count, pixel in masked.getcolors(image.width * image.height) or []:
+        if pixel[3] < 128: continue
+        name, colour = min(targets.items(), key=lambda item: sum(abs(a - b) for a, b in zip(item[1], pixel[:3])))
+        if sum(abs(a - b) for a, b in zip(colour, pixel[:3])) <= 9: counts[name] = counts.get(name, 0) + count
+    return sorted(name for name, count in counts.items() if count >= minimum * total)
+
+
+def _change_mask(a, b, level):
+    from PIL import ImageChops
+    channels = ImageChops.difference(a, b).split()
+    peak = channels[0]
+    for channel in channels[1:]: peak = ImageChops.lighter(peak, channel)
+    return peak.point(lambda v: 255 if v > level else 0)
+
+
+def localise(views, reference_dir, candidate_dir, evidence):
+    """Turn changed pixels into statements about objects and materials. The ID passes name what vanished, appeared,
+    moved or swapped; a lit or clay change the ID passes do not explain is attributed to the objects covering at least
+    5% of the changed pixels in either render."""
+    from PIL import Image
+    objects, materials = evidence["palette"]["object"], evidence["palette"]["material"]
+    found = {}
+
+    def note(text, view):
+        entry = found.setdefault(text, {"statement": text, "views": []})
+        if view not in entry["views"]: entry["views"].append(view)
+
+    def load(root, view, pass_name):
+        with Image.open(Path(root) / f"{view}.{pass_name}.png") as image: return image.convert("RGBA")
+
+    for view, passes in sorted(views.items()):
+        ref_obj, cand_obj = load(reference_dir, view, "object_id"), load(candidate_dir, view, "object_id")
+        on = lambda mask: ", ".join(sorted(set(_shares(ref_obj, mask, objects)) | set(_shares(cand_obj, mask, objects)))) or "unknown mesh"
+        explained = False
+        if (passes.get("object_id") or {}).get("warn"):
+            mask = _change_mask(ref_obj, cand_obj, THRESHOLDS["object_id"]["pixel"])
+            before, after = set(_shares(ref_obj, mask, objects)), set(_shares(cand_obj, mask, objects))
+            for name in sorted(before - after): note(f"object {name} is missing or hidden here", view)
+            full = Image.new("L", ref_obj.size, 255)
+            visible_before = set(_shares(ref_obj, full, objects, minimum=0.0))
+            for name in sorted(after - before):
+                note(f"object {name} revealed (was covered here)" if name in visible_before else f"object {name} appeared", view)
+            if before & after: note(f"geometry of {', '.join(sorted(before & after))} moved or changed", view)
+            explained = True
+        if (passes.get("material_id") or {}).get("warn"):
+            ref_mat, cand_mat = load(reference_dir, view, "material_id"), load(candidate_dir, view, "material_id")
+            mask = _change_mask(ref_mat, cand_mat, THRESHOLDS["material_id"]["pixel"])
+            before, after = set(_shares(ref_mat, mask, materials)), set(_shares(cand_mat, mask, materials))
+            lost, gained = sorted(before - after), sorted(after - before)
+            if lost and gained: note(f"material {', '.join(lost)} -> {', '.join(gained)} on {on(mask)}", view)
+            elif lost: note(f"material {', '.join(lost)} no longer visible on {on(mask)}", view)
+            elif gained: note(f"material {', '.join(gained)} newly visible on {on(mask)}", view)
+            explained = True
+        if explained: continue
+        for pass_name in ("lit", "clay"):
+            if not (passes.get(pass_name) or {}).get("warn"): continue
+            mask = _change_mask(load(reference_dir, view, pass_name), load(candidate_dir, view, pass_name), THRESHOLDS[pass_name]["pixel"])
+            note(f"{'shading' if pass_name == 'lit' else 'surface shape'} changed on {on(mask)} ({pass_name} pass; IDs unchanged)", view)
+    return sorted(found.values(), key=lambda e: (-len(e["views"]), e["statement"]))
+
+
 def critic_signal(reference_dir, candidate_dir, server=None):
     """Independent second visual signal: frontier-lab's render critic (`scripts/render_critic.py`, #1956) in reference
     mode on the four lit views. Its pixel gate only, unless a vision-model server is given to name what changed.
@@ -305,6 +374,7 @@ def roundtrip_and_compare(exe, target, timeout=600, critic_server=None):
                 f"Missing render {name}")
     structure = compare_manifests(src_manifest, rt_manifest)
     views, warnings = compare_renders(target / "source" / "renders", target / "roundtrip" / "renders", evidence, target / "diff")
+    structure["localisation"] = localise(views, target / "source" / "renders", target / "roundtrip" / "renders", evidence)
     critic = critic_signal(target / "source" / "renders", target / "roundtrip" / "renders", critic_server)
     critic["agrees_with_primary"] = second_opinion(critic, warnings)
     return src_manifest, rt_manifest, evidence, structure, views, warnings, seconds, critic
@@ -348,6 +418,7 @@ def sentinel(blender_path, blend_path, out_dir, seed_defect=None, timeout=600, s
                                                     "released": bool(getattr(lease, "released", {}).get("released"))},
         "structural_failures": structure["failures"], "format_losses": structure["format_losses"],
         "expected_exclusions": structure["expected_exclusions"], "visual_warnings": warnings, "views": views,
+        "localisation": structure["localisation"],
         "artifacts": [{"path": p.relative_to(target).as_posix(), "sha256": lab.file_sha(p), "bytes": p.stat().st_size}
                       for p in sorted(target.rglob("*")) if p.is_file()],
     }

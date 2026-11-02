@@ -179,6 +179,45 @@ class VisualTests(unittest.TestCase):
         self.assertEqual((record["changed_fraction"], record["warn"]), (0.0, False))
 
 
+class LocaliseTests(unittest.TestCase):
+    OBJECTS = {"Body": [0.2, 0.5, 0.8], "Badge": [0.8, 0.3, 0.2]}
+    MATERIALS = {"Wood": [0.3, 0.7, 0.3], "Brass": [0.7, 0.6, 0.2]}
+
+    def paint(self, folder, view, pass_name, boxes):
+        image = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
+        palette = self.OBJECTS if pass_name == "object_id" else self.MATERIALS if pass_name == "material_id" else None
+        for name, box in boxes:
+            colour = tuple(sentinel._srgb(c) for c in palette[name]) + (255,) if palette else name
+            image.paste(colour, box)
+        image.save(Path(folder) / f"{view}.{pass_name}.png")
+
+    def scene(self, folder, objects, materials, lit):
+        self.paint(folder, "front", "object_id", objects); self.paint(folder, "front", "material_id", materials)
+        self.paint(folder, "front", "lit", lit); self.paint(folder, "front", "clay", [((90, 90, 90, 255), (0, 0, 64, 64))])
+
+    def run_case(self, candidate, warn):
+        with tempfile.TemporaryDirectory() as ref, tempfile.TemporaryDirectory() as cand:
+            self.scene(ref, [("Body", (0, 0, 40, 64)), ("Badge", (40, 20, 60, 40))], [("Wood", (0, 0, 40, 64)), ("Brass", (40, 20, 60, 40))],
+                       [((120, 60, 20, 255), (0, 0, 40, 64)), ((200, 160, 40, 255), (40, 20, 60, 40))])
+            self.scene(cand, *candidate)
+            views = {"front": {p: {"warn": p in warn} for p in ("lit", "clay", "object_id", "material_id")}}
+            evidence = {"palette": {"object": self.OBJECTS, "material": self.MATERIALS}}
+            return [e["statement"] for e in sentinel.localise(views, Path(ref), Path(cand), evidence)]
+
+    def test_material_swap_names_material_and_mesh(self):
+        statements = self.run_case(([("Body", (0, 0, 40, 64)), ("Badge", (40, 20, 60, 40))], [("Wood", (0, 0, 40, 64)), ("Wood", (40, 20, 60, 40))],
+                                    [((120, 60, 20, 255), (0, 0, 40, 64)), ((120, 60, 20, 255), (40, 20, 60, 40))]), {"lit", "material_id"})
+        self.assertEqual(statements, ["material Brass -> Wood on Badge"])
+
+    def test_missing_object_and_lit_only_change(self):
+        missing = self.run_case(([("Body", (0, 0, 40, 64))], [("Wood", (0, 0, 40, 64))], [((120, 60, 20, 255), (0, 0, 40, 64))]),
+                                {"lit", "object_id", "material_id"})
+        self.assertIn("object Badge is missing or hidden here", missing)
+        shading = self.run_case(([("Body", (0, 0, 40, 64)), ("Badge", (40, 20, 60, 40))], [("Wood", (0, 0, 40, 64)), ("Brass", (40, 20, 60, 40))],
+                                 [((255, 255, 255, 255), (0, 0, 40, 64)), ((200, 160, 40, 255), (40, 20, 60, 40))]), {"lit"})
+        self.assertEqual(shading, ["shading changed on Body (lit pass; IDs unchanged)"])
+
+
 class SecondSignalTests(unittest.TestCase):
     def test_absent_critic_is_reported_unavailable(self):
         with mock.patch.dict(sys.modules, {"render_critic": None}):

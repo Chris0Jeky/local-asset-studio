@@ -57,6 +57,8 @@ def build(blender_path, out_dir, timeout=600):
         structure = sentinel.compare_manifests(control_manifest, load(entry, "manifest.json"))
         views, warnings = sentinel.compare_renders(target / "evidence" / "control" / "renders", target / "evidence" / entry / "renders",
                                                    control_evidence, target / "diff" / entry)
+        localisation = sentinel.localise(views, target / "evidence" / "control" / "renders", target / "evidence" / entry / "renders",
+                                         control_evidence)
         critic = sentinel.critic_signal(target / "evidence" / "control" / "renders", target / "evidence" / entry / "renders")
         primary_visual = bool(warnings)
         critic["agrees_with_primary"] = sentinel.second_opinion(critic, list(warnings))  # baseline stays the primary verdict
@@ -67,7 +69,7 @@ def build(blender_path, out_dir, timeout=600):
             "renders": f"evidence/{entry}/renders", "manifest": f"evidence/{entry}/manifest.json",
             "baseline": {"structural_failures": structure["failures"], "visual_warnings": warnings,
                          "caught_by_manifest": bool(structure["failures"]), "caught_by_renders": primary_visual,
-                         "critic": critic,
+                         "critic": critic, "localisation": [l["statement"] for l in localisation],
                          "caught": bool(structure["failures"] or warnings)}})
     defective = [e for e in entries if e["expected"] == "defective"]
     corpus = {"schema": SCHEMA, "blender": control_manifest["blender"], "cameras": "cameras.json",

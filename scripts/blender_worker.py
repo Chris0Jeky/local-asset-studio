@@ -103,7 +103,7 @@ class BlenderWorker:
                                 "process": "new Blender process, factory-empty scene, glTF import"},
                   "structural_failures": structure["failures"], "format_losses": structure["format_losses"],
                   "expected_exclusions": structure["expected_exclusions"], "visual_warnings": warnings, "views": views,
-                  "second_signal": critic}
+                  "second_signal": critic, "localisation": structure.get("localisation", [])}
         (target / "result.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         return result
 
