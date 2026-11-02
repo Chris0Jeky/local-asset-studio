@@ -179,7 +179,8 @@
       if(options.asset()?.media_type==='image'){const b=button('Compare with source','familyCompare',id);b.id='assetCompareSource';b.disabled=true;box.append(b);}return box;}
     async function opened(){
       const asset=options.asset();if(!dialog.open||!asset)return;
-      clear();currentId=asset.id;const serial=epoch,scope=options.context(asset.id).workspace,observed=JSON.stringify(options.comparisonContext()),own=new AbortController();controller=own;
+      // Recorded Library reads do not capture the independently initializing Create owner.
+      clear();currentId=asset.id;const serial=epoch,scope=options.comparisonContext().workspace,observed=JSON.stringify(options.comparisonContext()),own=new AbortController();controller=own;
       panel.innerHTML='<h3>Family &amp; reuse</h3><div id="assetFamilyTree"></div><div id="assetFamilyChildren"></div>';
       q('#assetFamilyActions')?.replaceChildren(actions(asset.id));
       const status=q('#assetFamilyStatus');if(status)status.textContent='Reading the recorded family…';
@@ -187,7 +188,7 @@
       const timer=setTimeout(()=>own.abort(),15000);
       try{
         const report=validate(await options.read('/api/assets/family/'+asset.id+'?workspace_id='+scope,{signal:own.signal}),asset.id,scope);
-        if(serial!==epoch||!dialog.open||options.context(asset.id).workspace!==scope||observed!==JSON.stringify(options.comparisonContext()))return;
+        if(serial!==epoch||!dialog.open||options.comparisonContext().workspace!==scope||observed!==JSON.stringify(options.comparisonContext()))return;
         q('#assetFamilyTree').innerHTML=treeMarkup(report);q('#assetLineage').hidden=true;
         q('#assetFamilyStatus').textContent='Recorded steps, oldest first. Missing or put-away steps stay visible. No generation submitted.';
         if(q('#assetCompareSource'))try{
@@ -208,10 +209,10 @@
         if(b.dataset.familyRecall){await recall.prepare(currentId,b.dataset.familyRecall);return;}
         if(b.dataset.familyReference){await options.reference(b.dataset.familyReference);return;}
         if(b.dataset.familyChildren){
-          const id=currentId,serial=epoch,scope=options.context(id).workspace;b.disabled=true;b.setAttribute('aria-busy','true');
+          const id=currentId,serial=epoch,scope=options.comparisonContext().workspace;b.disabled=true;b.setAttribute('aria-busy','true');
           try{
             const report=validate(await options.read('/api/assets/family/'+id+'?workspace_id='+scope+'&children=true',{signal:AbortSignal.timeout(15000)}),id,scope);
-            if(serial!==epoch||!dialog.open||options.context(id).workspace!==scope)return;
+            if(serial!==epoch||!dialog.open||options.comparisonContext().workspace!==scope)return;
             need(Array.isArray(report.children),'Child results are unavailable');
             const box=q('#assetFamilyChildren');box.innerHTML='<h4>Child assets</h4>'+(report.children.length?report.children.map(n=>'<button type="button" data-family-open="'+esc(n.id)+'">'+esc(n.title)+(n.state==='trashed'?' · In Trash':'')+'</button>').join(''):'<p>No child assets found.</p>')+
               (report.children_truncated?'<p>Child search is limited: at most 20 results among the newest 5,000 assets; unreadable lineage is omitted.</p>':'');
@@ -230,12 +231,12 @@
         const content=d.createElement('div');box.append(content);card.append(box);
         box.addEventListener('toggle',async()=>{
           if(!box.open)return;
-          const scope=options.context(id).workspace;if(box.dataset.loaded&&box.dataset.scope===scope)return;
+          const scope=options.comparisonContext().workspace;if(box.dataset.loaded&&box.dataset.scope===scope)return;
           box.dataset.scope=scope;box.dataset.loaded='loading';content.textContent='Reading the recorded family…';
           try{
             const report=validate(await options.read('/api/assets/family/'+id+'?workspace_id='+scope,{signal:AbortSignal.timeout(15000)}),id,scope);
             if(!box.isConnected)return;
-            if(options.context(id).workspace!==scope){content.textContent='Workspace changed; close and reopen this family.';delete box.dataset.loaded;return;}
+            if(options.comparisonContext().workspace!==scope){content.textContent='Workspace changed; close and reopen this family.';delete box.dataset.loaded;return;}
             content.innerHTML=treeMarkup(report);content.append(button('Open asset and recall options','familyOpen',id));box.dataset.loaded='true';
           }catch(e){if(box.isConnected){content.textContent='Family unavailable: '+e.message;delete box.dataset.loaded;}}
         });
