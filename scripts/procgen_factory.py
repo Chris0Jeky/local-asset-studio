@@ -32,7 +32,7 @@ TOL = 0.001          # 1 mm for exact box dimensions and pivots
 OVERLAP_SHRINK = 0.002
 UV_RES = 512
 # Pivot rule per generator: assets stand on z=0; rooms and shrines start at y=0 (open front / first step).
-FRONT_ANCHORED = {'room_kit', 'shrine'}
+FRONT_ANCHORED = {'room_kit', 'shrine', 'pier'}
 
 
 def load_schema(path=SCHEMA_PATH):
@@ -93,6 +93,15 @@ def expected_bounds(generator, p, detail=None):
         width = _snap_up(max(kasagi, gw + 2 * pr) + 1.0)
         n = p['step_count']
         return [width, n * p['step_run'] + 3.0, (n + 1) * p['step_rise'] + p['gate_height']], [0, 0, 0]
+    if generator == 'lighthouse_room':
+        # Floor and wall share one outer regular n-gon (apothem rt): extent is between 2*rt and 2*rt/cos(pi/n).
+        c = math.cos(math.pi / p['panels'])
+        corner = (p['radius'] + p['wall_thickness']) / c
+        return [2 * corner, 2 * corner, p['height']], [1 - c, 1 - c, 0]
+    if generator == 'pier':
+        top = p['water_level'] + p['deck_height']
+        z = top + (2.6 + 0.12 if p['lamps'] else 1.0 if p['railing'] else 0.40 if p['bollards'] else 0.0)
+        return [p['width'] + 6, p['length'] + 3, z], [0, 0, 0]
     raise EvidenceError(f'unknown generator {generator!r}')
 
 
@@ -169,6 +178,8 @@ def evaluate_gates(generator, spec, p, m):
     # so it sits off-centre on x by r*(1 - cos(pi/d))/2. Even counts and the y axis stay symmetric.
     odd_round = p['detail'] % 2 and (slack[0] or anchors)
     ctol = [TOL + (expected[0] / 4 * (1 - math.cos(math.pi / p['detail'])) if odd_round else 0), TOL]
+    if generator == 'lighthouse_room' and p['panels'] % 2:
+        ctol[1] += expected[1] / 4 * slack[1]           # odd n-gon: a face at the front, a vertex at the back
     if abs(cmin[0] + cmax[0]) / 2 > ctol[0]: dims.append('asset not centred on x')
     if generator in FRONT_ANCHORED:
         if abs(lod0['bbox_min'][1]) > TOL: dims.append(f'front not at y=0 (min y {lod0["bbox_min"][1]:.4f})')
@@ -267,27 +278,32 @@ def build(generator, params, output, blender, godot=None, node=None, render=Fals
                    'output': str(out), 'render': render, 'collision_suffix': COLLISION_SUFFIX, 'uv_res': UV_RES}
         write_json(out / 'request.json', request)
         blender = Path(blender)
-        run_command([str(blender), '-b', '--factory-startup', '--python-exit-code', '1', '-P', str(BLENDER_SCRIPT),
-                     '--', str(out / 'request.json')], out, 'blender', timeout)
-        m = read_json(out / 'measurements.json')
-        report['blender'] = m['blender']
-        report['gates'] += evaluate_gates(generator, spec, p, m)
-        report['outputs'] = {lod['glb']: file_sha(out / lod['glb']) for lod in m['lods']}
-        report['outputs']['asset.blend'] = file_sha(out / 'asset.blend')
-        if render and (out / 'contact_sheet.png').is_file(): report['outputs']['contact_sheet.png'] = file_sha(out / 'contact_sheet.png')
-        khronos = []
-        for lod in m['lods']:
-            directory = out / ('khronos-' + Path(lod['glb']).stem)
-            directory.mkdir()
-            try: validate_glb(out / lod['glb'], node, directory, 60)
-            except EvidenceError as exc: khronos.append(f'{lod["glb"]}: {exc}')
-        report['gates'].append(_gate('khronos', khronos))
-        if godot:
-            collision_parts = len(m['collision_objects'])
-            try: report['gates'].append(godot_gate(_probe_godot(Path(godot), out / m['lods'][0]['glb'], out, 120), collision_parts,
-                                                   m['lods'][0]['bbox_min'], m['lods'][0]['bbox_max'], m['collision_boxes']))
-            except EvidenceError as exc: report['gates'].append(_gate('godot_import', [str(exc)]))
-        else: report['gates'].append({**_gate('godot_import', []), 'passed': None, 'skipped': 'no Godot executable given'})
+        try:
+            run_command([str(blender), '-b', '--factory-startup', '--python-exit-code', '1', '-P', str(BLENDER_SCRIPT),
+                         '--', str(out / 'request.json')], out, 'blender', timeout)
+            m = read_json(out / 'measurements.json')
+            report['blender'] = m['blender']
+            report['gates'] += evaluate_gates(generator, spec, p, m)
+            report['outputs'] = {lod['glb']: file_sha(out / lod['glb']) for lod in m['lods']}
+            report['outputs']['asset.blend'] = file_sha(out / 'asset.blend')
+            if render and (out / 'contact_sheet.png').is_file(): report['outputs']['contact_sheet.png'] = file_sha(out / 'contact_sheet.png')
+            khronos = []
+            for lod in m['lods']:
+                directory = out / ('khronos-' + Path(lod['glb']).stem)
+                directory.mkdir()
+                try: validate_glb(out / lod['glb'], node, directory, 60)
+                except EvidenceError as exc: khronos.append(f'{lod["glb"]}: {exc}')
+            report['gates'].append(_gate('khronos', khronos))
+            if godot:
+                collision_parts = len(m['collision_objects'])
+                try: report['gates'].append(godot_gate(_probe_godot(Path(godot), out / m['lods'][0]['glb'], out, 120), collision_parts,
+                                                       m['lods'][0]['bbox_min'], m['lods'][0]['bbox_max'], m['collision_boxes']))
+                except EvidenceError as exc: report['gates'].append(_gate('godot_import', [str(exc)]))
+            else: report['gates'].append({**_gate('godot_import', []), 'passed': None, 'skipped': 'no Godot executable given'})
+        except (EvidenceError, OSError, ValueError, KeyError, TypeError) as exc:
+            # A Blender crash, timeout or partial output is a failed build with retained logs, never a missing report.
+            report['gates'] = [g for g in report['gates'] if g['gate'] in ('params', 'constraints')]
+            report['gates'].append(_gate('blender', [f'{type(exc).__name__}: {exc}'], logs=['blender-stdout.log', 'blender-stderr.log']))
         results = [g['passed'] for g in report['gates']]
         report['state'] = 'failed' if False in results else 'incomplete' if None in results else 'passed'
     report['failed_gates'] = [g['gate'] for g in report['gates'] if g['passed'] is False]

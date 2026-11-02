@@ -321,6 +321,7 @@ open PRs #1916, #1924, #1931 and #1936.
 | Exact scene observation (`studio.dcc-scene/v1`) | `blender_lab.py scene-v1`, which runs the stdlib-only collector `scripts/blender_scene_probe.py` | strict same-build change detection: unchanged reruns, before/after an edit; float-exact, UV coordinates, weights, material links |
 | Strict comparison and evidence receipts | `studio_workflow/dcc_evidence.py` (`compare_scenes`, `compare_bundles`, `probe_intent`) | exact equality and hardened PNG/receipt validation; no tolerance or GLB forgiveness |
 | Strict capture bundle (`studio.dcc-evidence/v1`) | `blender_lab.py dcc-bundle` (scene-v1 plus the 16 fixed-camera renders, copied and hashed) | input to `compare_bundles`; pass the first bundle's `cameras.json` to the second |
+
 | Planning summary and cross-build identity | `blender_lab.py manifest` (`semantic_checksum`) | what an agent may edit; the same scene on 4.5 and 5.4; worker preconditions |
 | GLB export → reimport parity (plan Task 3) | `scripts/blender_sentinel.py` | target-aware structure (format losses, expected exclusions), tolerant renders with region boxes |
 | Persistent session and agent façade | `scripts/blender_worker.py`, `scripts/blender_mcp.py` | many typed calls without per-call start-up |
@@ -436,3 +437,4 @@ named on the right object:
 | duplicate-overlap | `shading changed on Badge (lit pass; IDs unchanged)` (a coincident duplicate shares IDs' screen space) |
 
 The five render-invisible defects produce no localisation. The manifest's structural failures name them.
+
