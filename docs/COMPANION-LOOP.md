@@ -24,17 +24,22 @@ The persona is a Markdown system prompt. The reply must start with a mood tag (`
 
 **Memory survives restarts.** `memory.json` holds `{"self": [...], "friend": [...], "recent": [...]}`. `self` is the
 character's own background (written by you, from the character bible; the model never adds to it). `friend` collects
-`[remember: fact]` tags, but only **grounded** ones: every content word of the fact must appear in what the user typed in
-the last four turns (5-letter prefixes, so "moved"/"moving" and "harbour"/"harbor" match; relation words such as "name"
-or "likes" need no support), at most two per turn. Anything else lands in the turn's `rejected_facts` and is never
-stored. On the 2 November A/B this kept "Ana just moved to the harbour town" and "nervous about starting a new job" and
-rejected "her favourite colour is blue" (the character's own answer) and "wears blue socks" (invented). `recent` keeps the
-last six messages, so a restarted sidecar picks the conversation up where it stopped.
+`[remember: fact]` tags, but only **grounded** ones. One message the user typed in the last four turns must hold every
+content word of the fact (suffixes stripped, so "moved"/"moving" and "harbour"/"harbor" match; relation words such as
+"name" or "likes" need no support). It must have the same negation, so "I don't love cats" never grounds "loves cats".
+Anything it says belongs to someone ("my sister", "his job") must be in the fact too, so a friend's taste is not filed
+as the user's. At most two facts per turn. Anything else lands in the turn's `rejected_facts` and is never stored. On
+the 2 November A/B this kept "Ana just moved to the harbour town" and "nervous about starting a new job", and rejected
+"her favourite colour is blue" (the character's own answer) and "wears blue socks" (invented). The check is lexical: a
+fact that uses synonyms is rejected (the safe side). `recent` keeps the last six messages, so a restarted sidecar picks
+the conversation up where it stopped. The sidecar holds an exclusive lock on `<memory>.lock` while it runs, so two
+sidecars cannot overwrite each other's memory.
 
 **Scene awareness.** `--scene` takes `[{"id": "<set node name>", "say": "how she would describe it", "aliases": [...]}]`.
-The descriptions go into the system prompt; a sentence that names an alias carries `"look": "<id>"`, and Godot turns her
-head (up to 35°) and eyes to that node's centre in `set.glb` while the sentence plays. A prop behind her gets a glance
-toward the side of the screen where it shows.
+The descriptions go into the system prompt, so treat `scene.json` like the persona: it is prompt text, and a file from
+someone else can steer her. A sentence that names an alias carries `"look": "<id>"`. Godot then turns her head (up to
+35°) and eyes to the merged bounds of that node's meshes in `set.glb` while the sentence plays. A prop behind her gets a
+glance toward the side of the screen where it shows.
 
 Godot reads an optional `res://set.glb` (toon-dressed) and `res://companion.json` (name, position, yaw, camera).
 `--demo=lines.txt` types each line and waits for the reply; `--log=turns.jsonl` records per-turn timings. Under
