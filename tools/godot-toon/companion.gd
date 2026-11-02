@@ -32,6 +32,7 @@ var demo_state := "idle"; var demo_at := 0.0; var demo_typed := 0
 var movie := false; var wall0 := 0
 var cam: Camera3D
 var eye_rest := {}
+var mouth_log := PackedStringArray(["t,talking,open"])     # Movie Maker runs: frame n is audio time n / fps
 
 
 func _ready() -> void:
@@ -40,7 +41,7 @@ func _ready() -> void:
 		if a.begins_with("--demo="): demo = Array(FileAccess.get_file_as_string(a.trim_prefix("--demo=")).strip_edges().split("\n"))
 		elif a.begins_with("--log="): log_path = a.trim_prefix("--log=")
 		elif a.begins_with("--port="): port = int(a.trim_prefix("--port="))
-	movie = OS.get_cmdline_args().has("--write-movie"); wall0 = Time.get_ticks_usec()
+	movie = Engine.get_write_movie_path() != ""; wall0 = Time.get_ticks_usec()
 	if FileAccess.file_exists("res://companion.json"): cfg.merge(JSON.parse_string(FileAccess.get_file_as_string("res://companion.json")), true)
 	if ResourceLoader.exists("res://set.glb"): _dress_set()
 	cam = _find(self, func(n): return n is Camera3D)
@@ -167,10 +168,11 @@ func _finish_turn() -> void:
 
 
 func _demo(delta: float) -> void:
-	if demo.is_empty() or tcp.get_status() != StreamPeerTCP.STATUS_CONNECTED: return
+	if demo_state == "off" or tcp.get_status() != StreamPeerTCP.STATUS_CONNECTED: return
 	match demo_state:
 		"idle":
-			if t > 2.0: demo_state = "type"; demo_at = t; demo_typed = 0
+			if demo.is_empty(): demo_state = "off"
+			elif t > 2.0: demo_state = "type"; demo_at = t; demo_typed = 0
 		"type":
 			var line: String = demo[0]
 			var want := int((t - demo_at) / 0.045)
@@ -182,7 +184,7 @@ func _demo(delta: float) -> void:
 				if demo.is_empty(): demo_state = "end"; demo_at = t
 				else: demo_state = "type"; demo_at = t; demo_typed = 0
 		"end":
-			if t - demo_at > 1.5: get_tree().quit()
+			if t - demo_at > 1.5: _quit()
 
 
 func _mouth_pos() -> float:
@@ -229,6 +231,7 @@ func _process(delta: float) -> void:
 	for v in mouth:
 		mouth[v] = lerpf(mouth[v], VISEMES[shape].get(v, 0.0), clampf(delta * 18.0, 0.0, 1.0)); _expr(v, mouth[v])
 	_apply_expressions()
+	if movie: mouth_log.append("%.4f,%d,%.4f" % [t, int(talking), mouth.aa + 0.8 * mouth.oh + 0.6 * (mouth.ou + mouth.ee) + 0.4 * mouth.ih])
 	var hb := (skel.global_transform.basis * skel.get_bone_global_pose(skel.find_bone("J_Bip_C_Head")).basis * head_rest.inverse()).orthonormalized()
 	for m in face_mats:
 		m.set_shader_parameter("face_forward", hb * Vector3(0, 0, 1)); m.set_shader_parameter("face_left", hb * Vector3(1, 0, 0))
@@ -256,3 +259,9 @@ func _prompt() -> String: return "Say something to %s, then press Enter" % cfg.n
 
 
 func _v(a: Array) -> Vector3: return Vector3(a[0], a[1], a[2])
+
+
+func _quit() -> void:
+	if movie:
+		var f := FileAccess.open(log_path.get_basename() + "-mouth.csv", FileAccess.WRITE); f.store_string("\n".join(mouth_log) + "\n"); f.close()
+	get_tree().quit()
