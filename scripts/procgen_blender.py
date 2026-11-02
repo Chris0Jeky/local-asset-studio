@@ -487,9 +487,11 @@ def tide_pools(b, P):
         # basins, so a basin floor is always 0.25 m down and holds water.
         noise = b.noise01(b.vec(x, y, P['seed'] * 0.71), 0.8) * b.clamp01((y - y0) / 0.8) * (1 - dip)
         z = sh + P['roughness'] * noise - 0.25 * dip
-        # The shelf rises out of the seabed over 0.8 m at its sides and far end, but never under the stair's landing.
+        # The shelf rises out of the seabed over 0.8 m at its sides and far end, but never under the stair's landing. The
+        # landing reaches 0.45 m past the stair sides, more than one grid cell (< 0.4 m), so the vertices bracketing the
+        # stair edge are both untapered.
         side = b.clamp01((W / 2 - b.math('ABSOLUTE', x)) / 0.8)
-        landing = P['stair'] * b.compare('LESS_THAN', b.math('ABSOLUTE', x), sw + 0.2) * b.compare('LESS_THAN', y, y0 + 0.8)
+        landing = P['stair'] * b.compare('LESS_THAN', b.math('ABSOLUTE', x), sw + 0.45) * b.compare('LESS_THAN', y, y0 + 0.8)
         return z * b.max(side, landing) * b.clamp01((y0 + L - y) / 0.8), dip
     # Grid: density follows detail, but never coarser than 0.4 m, so every pool (radius >= 0.3 m) holds wet vertices at
     # every LOD.
