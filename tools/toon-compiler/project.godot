@@ -1,0 +1,9 @@
+config_version=5
+
+[application]
+config/name="toon compiler parity"
+
+[rendering]
+renderer/rendering_method="forward_plus"
+lights_and_shadows/directional_shadow/size=8192
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality=5
