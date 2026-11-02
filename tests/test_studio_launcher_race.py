@@ -81,7 +81,8 @@ class LauncherRaceTests(unittest.TestCase):
             root = Path(temporary)
             for folder in ('scripts', 'app', 'config', 'examples/references', 'comfy/input', '.runtime'):
                 (root / folder).mkdir(parents=True, exist_ok=True)
-            for relative in ('scripts/Start-Studio.ps1', 'scripts/studio-gpu-lease-gate.py', 'app/gpu_lease.py'):
+            for relative in ('scripts/Start-Studio.ps1', 'scripts/studio-gpu-lease-gate.py',
+                             'scripts/check-runtime-patches.py', 'app/gpu_lease.py'):
                 shutil.copyfile(ROOT / relative, root / relative)
             (root / 'comfy/launcher.ps1').write_text('# inert', encoding='utf-8')
             (root / 'config/local.json').write_text(json.dumps({'python': sys.executable,

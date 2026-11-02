@@ -120,13 +120,13 @@ def runner_text(path):
     return executable_text(path.read_text(encoding='utf-8', errors='strict'), path.suffix == '.py')
 
 
-def runners(exclude_self=True):
+def runner_snapshot():
     found = {}
     for rel in tracked_paths():
         python = rel.endswith('.py') and rel.startswith(RUNNER_ROOTS)
         workflow = (rel.startswith(WORKFLOW_ROOT)
                     and (rel.endswith('.yml') or rel.endswith('.yaml')))
-        if not (python or workflow) or (rel == SELF and exclude_self):
+        if not (python or workflow):
             continue
         path = ROOT / rel
         if not path.is_file():
@@ -135,20 +135,32 @@ def runners(exclude_self=True):
     return found
 
 
+def runners(exclude_self=True, *, snapshot=None):
+    parsed = runner_snapshot() if snapshot is None else snapshot
+    return {rel: text for rel, text in parsed.items() if rel != SELF or not exclude_self}
+
+
 def names(text):
     """Every `.cjs` basename present on executable text, matched on a path boundary."""
     return {match.group(1) for match in re.finditer(r'(?:^|[^\w.\-])([\w.\-]+\.cjs)', text, re.M)}
 
 
 class ContractDiscoveryTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # These assertions inspect one checkout; parse its runner corpus once.
+        # Contract inventory checks still read the live index, including scratch refusal.
+        cls.runner_snapshot = runner_snapshot()
+        cls.addClassCleanup(delattr, cls, 'runner_snapshot')
+
     def test_the_scan_actually_finds_contracts_and_runners(self):
-        found, ran = contracts(), runners()
+        found, ran = contracts(), runners(snapshot=self.runner_snapshot)
         self.assertGreaterEqual(
             len(found), CONTRACT_FLOOR,
             f'only {len(found)} tracked .cjs contracts discovered under {CONTRACT_ROOTS}',
         )
         self.assertGreaterEqual(len(ran), 1, 'no tracked runner files discovered')
-        self.assertIn(SELF, runners(exclude_self=False),
+        self.assertIn(SELF, runners(exclude_self=False, snapshot=self.runner_snapshot),
                       'the self-exclusion no longer matches this file, so it silently excludes nothing')
         self.assertNotIn(SELF, ran, 'the discovery module must not vouch for its own sentinels')
         for sentinel in SENTINELS:
@@ -163,7 +175,7 @@ class ContractDiscoveryTests(unittest.TestCase):
         self.assertEqual(clashes, {}, f'duplicate .cjs basenames make wiring ambiguous: {clashes}')
 
     def test_every_cjs_contract_is_named_by_a_python_module_or_ci_lane(self):
-        executed = set().union(*(names(text) for text in runners().values()))
+        executed = set().union(*(names(text) for text in runners(snapshot=self.runner_snapshot).values()))
         orphans = [rel for rel, path in contracts().items() if path.name not in executed]
         self.assertEqual(
             orphans, [],

@@ -1,4 +1,4 @@
-param([switch]$NoBrowser, [switch]$Detached)
+param([switch]$NoBrowser, [switch]$Detached, [string]$PatchWarningLog)
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path $PSScriptRoot -Parent
 # Start-Process children stay in the caller's Windows job object. Grok Build runs every command in a job with
@@ -13,10 +13,11 @@ if (-not $Detached) {
         $logRoot = Join-Path $repoRoot '.runtime'
         New-Item -ItemType Directory -Path $logRoot -Force | Out-Null
         $detachLog = Join-Path $logRoot ('start-studio-detached-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.log')
+        $detachedWarningLog = Join-Path $logRoot ('start-studio-patch-warnings-' + [guid]::NewGuid().ToString('N') + '.log')
         $switches = if ($NoBrowser) { ' -NoBrowser' } else { '' }
         # No output redirection here: capturing the copy's output would pipe the nested ComfyUI launcher, whose Start-Process child
         # inherits that pipe and holds it open, so the copy would never return (seen from a Grok command, 23 September 2026).
-        $command = "try { & '" + $PSCommandPath.Replace("'", "''") + "'" + $switches + " -Detached } catch { `$_ | Out-String | Set-Content -LiteralPath '" + $detachLog.Replace("'", "''") + "'; exit 1 }; exit 0"
+        $command = "try { & '" + $PSCommandPath.Replace("'", "''") + "'" + $switches + " -Detached -PatchWarningLog '" + $detachedWarningLog.Replace("'", "''") + "' } catch { `$_ | Out-String | Set-Content -LiteralPath '" + $detachLog.Replace("'", "''") + "'; exit 1 }; exit 0"
         $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($command))
         $startup = New-CimInstance -ClassName Win32_ProcessStartup -ClientOnly -Property @{ ShowWindow = [uint16]0 }
         $created = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = "powershell.exe -NoProfile -ExecutionPolicy Bypass -EncodedCommand $encoded"; CurrentDirectory = $repoRoot; ProcessStartupInformation = $startup }
@@ -24,6 +25,9 @@ if (-not $Detached) {
         $child = Get-Process -Id $created.ProcessId -ErrorAction SilentlyContinue
         # The copy's own waits end within about 5 minutes (ComfyUI 240 s, Studio 30 s); do not block a caller forever past that.
         if ($child) { $null = $child.Handle; if (-not $child.WaitForExit(600000)) { throw "The detached launcher (PID $($child.Id)) is still running after 10 minutes. See $detachLog and the logs in $logRoot." } }
+        try {
+            if (Test-Path -LiteralPath $detachedWarningLog) { Get-Content -LiteralPath $detachedWarningLog -Encoding UTF8 | ForEach-Object { Write-Warning $_ } }
+        } catch { Write-Warning "Could not read ComfyUI runtime patch warnings. Inspect $detachedWarningLog." }
         if (Test-Path -LiteralPath $detachLog) { Get-Content -LiteralPath $detachLog | ForEach-Object { Write-Host $_ } }
         $ready = $false
         try { $identity = Invoke-RestMethod 'http://127.0.0.1:8191/api/identity' -TimeoutSec 3; $ready = $identity.app -eq 'local-asset-studio' -and $identity.workspace -eq $repoRoot } catch { }
@@ -48,6 +52,22 @@ if ($existingStudio.app -eq 'local-asset-studio') {
 }
 if (-not (Test-Path -LiteralPath $studioConfig.python)) { throw 'Python not found. Update config/local.json with this computer''s runtime paths.' }
 if (-not (Test-Path -LiteralPath $studioConfig.comfy_root)) { throw 'ComfyUI not found. Update config/local.json.' }
+# The hidden child retains just these warnings; its launcher output must never be piped.
+function Write-StudioRuntimePatchWarning {
+    param([string]$Message)
+    if ($PatchWarningLog) {
+        try { Add-Content -LiteralPath $PatchWarningLog -Value $Message -Encoding UTF8 }
+        catch { Write-Warning 'Could not retain ComfyUI runtime patch warnings for the detached launcher.' }
+    }
+    Write-Warning $Message
+}
+# Hash observations only: patch drift warns without changing startup admission or runtime files.
+try {
+    & $studioConfig.python -s (Join-Path $repoRoot 'scripts\check-runtime-patches.py') --root $repoRoot --comfy-root $studioConfig.comfy_root | ForEach-Object { Write-StudioRuntimePatchWarning $_ }
+    if ($LASTEXITCODE -ne 0) { Write-StudioRuntimePatchWarning 'ComfyUI runtime patch status could not be checked. Inspect runtime-patches/README.md.' }
+} catch {
+    Write-StudioRuntimePatchWarning 'ComfyUI runtime patch status could not be checked. Inspect runtime-patches/README.md.'
+}
 # The persisted Studio lease is authoritative even before its HTTP service is up.
 # Unknown state blocks both starts; a held lease skips ComfyUI but keeps lease release reachable.
 function Test-StudioGpuLeaseAvailable {

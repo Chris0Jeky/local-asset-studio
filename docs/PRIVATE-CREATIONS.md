@@ -189,7 +189,13 @@ The response lists every affected item with its kind, ID, classification, bytes,
 sha256 and revision: the run (`state.json` hash and status), each run-folder file,
 every output asset, snapshot thumbnails, staged upload copies and sidecars (from `references`
 and the `reference`/`last_reference` controls),
-collections, lineage children and historical command receipts. It also lists
+collections, lineage children, historical command receipts and acceptance records
+(`acceptance`, including withdrawn records). Each acceptance names its picture,
+use and current accepted/withdrawn state; its revision digest binds the full saved
+record, including the note and any scene-brief criteria. Those words remain in the
+Workspace database. Acceptance is hidden while the picture is Private and becomes
+visible again when it returns to Regular; moving never withdraws or restores it.
+It also lists
 ComfyUI output/input originals that will remain (`external_copy`), copies that
 scene projects made of a planned output in their own `inputs/` folder
 (`scene_copy`, served as Regular after the move) and production plans that keep a
@@ -269,7 +275,10 @@ to `uploads/`, `private/thumbs/` retired like `workspace/thumbs/`).
    the field, as a Regular save writes it); every other run file stays byte-identical. The
    run folder and files go into their destination homes. An upload's sidecar is copied
    byte-for-byte, so a Private upload moved to Regular keeps its original `privacy` note. Then one Workspace transaction rechecks every asset and
-   collection revision, and that every collection member belongs to the move. It reclassifies them (revisions +1) and records the commit
+   collection revision, every acceptance record and its membership, and that every collection member belongs to the move.
+   A changed acceptance after the preview or during copying refuses publication as
+   `migration_stale`; review a fresh preview. The transaction leaves acceptances
+   unchanged, reclassifies assets and collections (revisions +1), and records the commit
    marker. Last, the in-memory job changes classification.
 4. **complete** or **cleanup-needed**: the source run folder is first renamed into
    the journal folder, so the source view never sees a partial run. Then the copied files
@@ -330,7 +339,9 @@ The receipt reports `recovery.from_stage` and the stage it
 reached. Recovery never cancels, resubmits or clears uncertainty. A run that is not
 settled is refused at apply time.
 
-IDs, output order, hashes, recipes, lineage, collections and receipts are kept.
+IDs, output order, hashes, recipes, lineage, collections, receipts and acceptance
+records are kept. Acceptance uses, notes, withdrawal state and scene-brief criteria
+stay byte-for-byte in the Workspace database in both directions.
 ComfyUI's own output/input copies (`external_copy`), scene project input copies
 (`scene_copy`) and production plans (`production_plan`) are not touched; the receipt
 lists them in `external_copies`. They stay Regular: a scene source stays readable
