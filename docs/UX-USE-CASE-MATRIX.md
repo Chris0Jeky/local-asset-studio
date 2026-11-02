@@ -16,6 +16,19 @@ makes nothing new.
 
 Not changed: the guide coach panel (it still does not advance by itself when a plan starts), the review desk, the plan
 list.
+## Full editor: a step strip that says where you are and what comes next, 2 November 2026 (#1920)
+
+The owner got a good first picture in the Full editor but felt lost beyond it. The editor card now opens with five
+short steps (Recipe, Describe, Your picture, Generate, Next) with the current one marked and done ones ticked, and one
+sentence saying what to do now. After a run started in this tab finishes with a picture, Next becomes current and the
+sentence names the moves: keep it with K, Continue with this to edit or restyle, change the words and generate again,
+Plan comparison. Each step only scrolls to or opens what is already on the page.
+
+| Journey | Before | After | Proof |
+| --- | --- | --- | --- |
+| `first-image-from-brief` | 5 clicks, 10 steps taken, 349 instruction words | 5 clicks, 10 steps taken (unchanged), 368 words (+19, the strip); the strip reads *2 Describe* before the brief and *4 Generate* with "Now: press Generate image" after it | `tests/studio_use_cases.py --case first-image-from-brief`; fails without `editor-steps.js` |
+
+Not changed: the recipe picker, the run dock, the folds (Fine-tune the recipe, Recipe details, Readiness) and Recent runs.
 ## Workspace: Review next keys on the first screen, 2 November 2026 (#1919)
 
 The owner had to scroll to find what the review buttons do. In a Review next queue the panel (Keep K, Needs work W,

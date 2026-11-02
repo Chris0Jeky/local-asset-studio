@@ -7,6 +7,11 @@ HUMAN_TODO items stay open until the owner speaks, and link here when an agent v
 
 Newest first. Tick a line when you have reviewed it; write "reverse" next to it to have an agent undo it.
 
+## 2026-11-02: five-minute tour fixes (#1919, #1920, #1921)
+
+- [ ] **Review next keys lead the details column during a queue** (#1919, PR #1930). The single-picture verdict row keeps its place under the next-step tools. Reverse: drop the `anchor.after(panel)` line in `renderAssetQueue()`.
+- [ ] **Full editor opens with a five-step strip and a "Now:" sentence** (#1920). Recipe · Describe · Your picture (optional / not needed) · Generate · Next; after a picture the sentence names keep with K, Continue with this, generate again and Plan comparison. Cost judged acceptable: about 83 px at 1366x768 pushes the prompt box down by that much (step 2 jumps to it). Reverse: remove the `editor-steps.js` script tag; shorten the sentences if they read as too much.
+
 ## 2026-11-01: MOSS-Image in Make (`moss-look-1019`)
 
 Rebuilt fresh on current main after the owner chose "Rebuild it fresh" (the 19 Oct draft on `ux2/make-moss` was not merged). HUMAN_TODO `moss-look-1019` stays open until the owner ticks it.
