@@ -405,7 +405,9 @@ def coastal_path(b, P):
         t = b.clamp01((x - edge(y)) / P['cliff_drop'])
         t = t * t * (3 - 2 * t)
         return h * (1 - t), flat, t
-    vx = b.math('FLOOR', P['detail'] * W / 6) + 2; vy = b.math('FLOOR', P['detail'] * L / 6) + 2
+    # Across the strip the grid never gets coarser than half the path width, so every LOD keeps labelled path faces.
+    vx = b.max(b.math('FLOOR', P['detail'] * W / 6) + 2, b.ceil(2 * W / P['path_width']) + 2)
+    vy = b.math('FLOOR', P['detail'] * L / 6) + 2
     grid = b.node('GeometryNodeMeshGrid', Size_X=W, Size_Y=L, Vertices_X=vx, Vertices_Y=vy)
     ground = b.place(grid, 1, 'foliage', (0, L / 2, 0))
     x, y, _ = b.position()
@@ -423,7 +425,7 @@ def coastal_path(b, P):
     g.append(b.switch(P['fence'], b.instance(line, post)))
     # Grass tufts: seeded positions independent of the grid (same count at every LOD), dropped where they would land on
     # the path or the cliff, then ray cast down onto this LOD's actual ground so they sit exactly on its surface.
-    density = P['grass_density'] * b.compare('GREATER_THAN', P['grass_density'], 0.49)
+    density = P['grass_density'] * b.compare('GREATER_EQUAL', P['grass_density'], 0.5)   # same threshold as the schema's `when`
     x_hi = P['cliff_x'] - P['meander'] - 0.1                          # inland of the edge's furthest swing
     count = b.math('FLOOR', density * (L - 0.3) * b.max(x_hi + W / 2 - 0.15, 0.0))
     tx = b.random(-W / 2 + 0.15, x_hi, P['seed'] + 6); ty = b.random(0.15, L - 0.15, P['seed'] + 7)
