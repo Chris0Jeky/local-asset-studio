@@ -148,8 +148,13 @@ notes. The existing Keep / Needs work / Not this and Save controls still write o
 the current version. Comparison does not edit images, generate, launch an editor,
 verify media bytes or certify art or licensing. Close comparison to return to the
 ordinary preview; changing picture, Workspace or privacy clears comparison media.
-A confirmed metadata save also refreshes this observation; reopen comparison and
-choose the source again to continue inspecting it (#1875).
+After Keep / Needs work / Not this or Save details confirms a child-only metadata
+save, an already chosen pair stays selected while its images are briefly withheld.
+The recorded family and both selected IDs are read again; the images return only
+when their identities, recorded hashes and privacy still match. Missing, trashed,
+changed or unavailable pictures clear the comparison. An unfinished source choice
+is not resumed automatically. The existing editor keeps newer typing and save
+recovery; delayed comparison reads do not take focus from Notes.
 
 **Make seamless** and **Make parallax layers** prepare a source for Create.
 Generate stays unavailable while either preparation is pending. Closing the

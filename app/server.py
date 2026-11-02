@@ -1372,8 +1372,12 @@ class Studio:
         if asset.get('privacy','regular')!=privacy: raise StudioError('A private picture and a regular one are never linked; import the repair under the same privacy')
         return asset['id']
 
-    def import_image(self, filename, content_type, body, *, privacy='regular', parent=None, note=None, scope=None):
+    def import_image(self, filename, content_type, body, *, privacy='regular', parent=None, note=None, scope=None, expected_workspace_id=None):
         classification=privacy_scope.normalize(privacy)
+        if expected_workspace_id is not None:
+            # HTTP repairs bind the opened picture's Workspace after the body is read,
+            # before upload() can copy bytes. Trusted internal imports remain unscoped.
+            with self.assets.connection() as db: self.assets._check_scope(db,expected_workspace_id)
         parents=[self.repair_parent(parent,content_type,privacy=classification,scope=scope or classification)] if parent is not None else []
         note=' '.join(note.split()) if parents and isinstance(note,str) else ''  # a note belongs to a repair; a plain import records none
         if len(note)>280 or not note.isprintable(): raise StudioError('Keep the editor note to 280 plain characters')
@@ -3331,10 +3335,16 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == '/api/backends/resolve-switch': return self._json(200, self.studio.backends.resolve_switch_record(self._body_object()))
             if self.path == '/api/runtime-recovery/retry': return self._json(202, self.studio.runtime_recovery.reset())
             if self.path == '/api/articulated': return self._json(201,self.studio.production.articulated(self._body_json()))
-            if self.path == '/api/assets/import':
+            if urlparse(self.path).path == '/api/assets/import':
                 body=self._read_body(20*1024*1024)
+                repair={}
+                if self.headers.get('X-Parent-Asset') is not None:
+                    workspace=self._asset_query_scope()
+                    if workspace is None: raise WorkspaceError('Supply the current Workspace identity before importing a repair')
+                    repair={'parent':self.headers['X-Parent-Asset'],'note':editor_note(self.headers.get('X-Editor-Note','')),
+                            'scope':scope,'expected_workspace_id':workspace}
                 try: return self._json(201,self.studio.import_image(self.headers.get('X-Filename','reference'),self.headers.get('Content-Type',''),body,privacy=privacy_scope.creation_for_handler(self),
-                                                                    **({'parent':self.headers['X-Parent-Asset'],'note':editor_note(self.headers.get('X-Editor-Note','')),'scope':scope} if self.headers.get('X-Parent-Asset') is not None else {})))
+                                                                    **repair))
                 except sqlite3.Error:
                     return self._json(503, {"error": "Asset storage could not confirm this request. Check its receipt before retrying the exact command.",
                                             "code": "asset_storage_unconfirmed"})

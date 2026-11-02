@@ -156,11 +156,22 @@ def exercise(out, browser_executable=None):
                     page.locator('#assetCompareSource').click()
                     check(page.locator('#assetSourceImages img').count() == 0, 'Opening comparison chooses no source')
                     page.locator('[data-family-source="'+identifier+'"]').click()
+                    pair_ready()
+
+                def pair_ready():
                     page.wait_for_function('document.querySelectorAll("#assetSourceImages img").length===2&&[...document.querySelectorAll("#assetSourceImages img")].every(i=>i.complete&&i.naturalWidth)')
 
                 def capture(name):
                     page.locator('#assetSourceTitle').focus()
+                    check(page.evaluate('''()=>{const a=document.querySelector('[data-family-compare-close]').getBoundingClientRect(),b=document.querySelector('#closeAssetDialog').getBoundingClientRect();return a.right<=b.left||b.right<=a.left||a.bottom<=b.top||b.bottom<=a.top;}'''), name+' comparison close and dialog close do not overlap')
                     page.screenshot(path=str(out/(name+'.png')), full_page=False, animations='disabled')
+
+                def preserved(label, focus):
+                    pair_ready()
+                    check(page.locator('[data-family-source="'+ids['parent']+'"]').get_attribute('aria-pressed') == 'true'
+                          and ids['child'] in page.locator('#assetSourceImages img').nth(0).get_attribute('src')
+                          and ids['parent'] in page.locator('#assetSourceImages img').nth(1).get_attribute('src'), label+' retains the deliberately chosen child/source pair')
+                    check(page.locator(focus).evaluate('(e)=>e===document.activeElement'), label+' retains deliberate focus')
 
                 try:
                     page.goto(origin+'/#assets', wait_until='domcontentloaded')
@@ -204,20 +215,84 @@ def exercise(out, browser_executable=None):
                     check(page.locator('#assetNotes').input_value().endswith(' kwx') and studio.assets.get(ids['child'])['review'] == 'unreviewed', 'K/W/X typing after a held response stays in Notes and does not review')
                     check('/api/assets/update' not in requests, 'Opening, choosing and closing comparison perform no metadata writes')
                     controls['allow_review'] = True
-                    page.locator('#assetSourceTitle').focus()
-                    page.keyboard.press('k')
+                    for key, review, label in (('k', 'selected', 'Keep'), ('w', 'needs_work', 'Needs work'), ('x', 'rejected', 'Not this')):
+                        page.locator('#assetSourceTitle').focus()
+                        page.keyboard.press(key)
+                        page.wait_for_function('(review)=>!assetDetailBusy&&activeAsset.review===review', arg=review)
+                        check(studio.assets.get(ids['child'])['review'] == review, label+' shortcut persists only the child review')
+                        preserved(label+' shortcut', '#assetSourceTitle')
+                    page.locator('[data-queue-review="selected"]').click()
                     page.wait_for_function('!assetDetailBusy&&activeAsset.review==="selected"')
-                    check(studio.assets.get(ids['child'])['review'] == 'selected', 'Existing Keep shortcut persists the child review')
+                    preserved('Keep button', '[data-queue-review="selected"]')
                     page.locator('#assetNotes').fill('Saved child notes after comparison')
                     page.locator('#saveAssetDetails').click()
                     page.wait_for_function('!assetDetailBusy&&!assetDetailDirty()')
-                    controls['allow_review'] = False
                     check(studio.assets.get(ids['child'])['notes'] == 'Saved child notes after comparison', 'Existing Save persists only the child notes')
+                    preserved('Save details', '#saveAssetDetails')
+                    capture('comparison-after-save')
+
+                    controls['entered'].clear(); controls['release'].clear(); controls['hold'] = True
+                    page.locator('#assetNotes').fill('Saved snapshot before held revalidation')
+                    page.locator('#saveAssetDetails').click()
+                    assert controls['entered'].wait(5), 'Saved comparison did not reach selected-ID revalidation'
+                    page.wait_for_function('!assetDetailBusy&&!assetDetailDirty()')
+                    check(page.locator('#assetSourceComparison').is_visible() and page.locator('#assetSourceImages img').count() == 0
+                          and page.locator('[data-family-source="'+ids['parent']+'"]').get_attribute('aria-pressed') == 'true', 'Receipt withholds images while revalidating the retained choice')
+                    page.locator('#assetNotes').fill('Newer typing during comparison revalidation')
+                    page.keyboard.type(' kwx')
+                    controls['release'].set()
+                    preserved('Delayed save revalidation', '#assetNotes')
+                    page.keyboard.type(' kwx')
+                    check(page.locator('#assetNotes').input_value() == 'Newer typing during comparison revalidation kwx kwx'
+                          and page.evaluate('assetDetailDirty()') and studio.assets.get(ids['child'])['notes'] == 'Saved snapshot before held revalidation'
+                          and studio.assets.get(ids['child'])['review'] == 'selected' and requests.count('/api/assets/update') == 6,
+                          'Typing during and after revalidation stays in Notes as an unsaved draft, without review shortcuts or extra writes')
+                    page.locator('#assetNotes').fill('Saved snapshot before held revalidation')
+
+                    controls['entered'].clear(); controls['release'].clear(); controls['hold'] = True
+                    page.locator('#assetTitle').fill('Earlier saved title')
+                    page.locator('#saveAssetDetails').click()
+                    assert controls['entered'].wait(5), 'Earlier receipt revalidation did not reach hold'
+                    page.wait_for_function('!assetDetailBusy&&!assetDetailDirty()')
+                    page.locator('#assetTitle').fill('Newest saved title')
+                    page.locator('#saveAssetDetails').click()
+                    page.wait_for_function('!assetDetailBusy&&!assetDetailDirty()')
+                    preserved('Newer receipt before old reply', '#saveAssetDetails')
+                    with page.expect_response(lambda response: response.url.endswith('/api/assets/selection')) as older_reply:
+                        controls['release'].set()
+                    older_reply.value.finished()
+                    page.wait_for_timeout(150)
+                    check(page.locator('#assetSourceImages figcaption').nth(0).inner_text() == 'Current version · Newest saved title'
+                          and page.locator('#assetTitle').input_value() == 'Newest saved title' and requests.count('/api/assets/update') == 8,
+                          'Old selected-ID response cannot replace the pair or metadata confirmed by a newer receipt')
+                    preserved('Old reply after newer receipt', '#saveAssetDetails')
+                    controls['allow_review'] = False
                     page.locator('#closeAssetDialog').click()
                     page.reload(wait_until='domcontentloaded')
                     ready()
                     open_asset(ids['child'])
-                    check(page.locator('#assetReview').input_value() == 'selected' and page.locator('#assetNotes').input_value() == 'Saved child notes after comparison', 'Review and notes survive reopening')
+                    check(page.locator('#assetReview').input_value() == 'selected' and page.locator('#assetNotes').input_value() == 'Saved snapshot before held revalidation'
+                          and page.locator('#assetTitle').input_value() == 'Newest saved title', 'Saved review and metadata survive reopening; newer unsaved typing was never silently written')
+
+                    source_before = studio.assets.get(ids['other'])
+                    for column, value, label in (('sha256', 'e'*64, 'source hash'), ('trashed_at', 1, 'source Trash'), ('privacy', 'private', 'source privacy')):
+                        open_asset(ids['multiple'])
+                        compare(ids['other'])
+                        try:
+                            with studio.assets.connection() as db:
+                                db.execute('UPDATE assets SET '+column+'=? WHERE id=?', (value, ids['other']))
+                            controls['allow_review'] = True
+                            page.locator('#assetNotes').fill('Child save after '+label+' changed')
+                            page.locator('#saveAssetDetails').click()
+                            page.wait_for_function('!assetDetailBusy&&!assetDetailDirty()')
+                            page.wait_for_function('document.querySelector("#assetSourceComparison").hidden')
+                            check(page.locator('#assetSourceComparison img').count() == 0 and page.locator('#assetFamilyStatus').inner_text().startswith('Comparison cleared:'), 'Fresh '+label+' invalidation clears the comparison after a child save')
+                        finally:
+                            controls['allow_review'] = False
+                            with studio.assets.connection() as db:
+                                db.execute('UPDATE assets SET '+column+'=? WHERE id=?', (source_before.get(column), ids['other']))
+                        open_asset(ids['child'])
+                    check(studio.assets.get(ids['other']) == source_before and studio.assets.get(ids['multiple'])['notes'] == 'Child save after source privacy changed', 'Invalidation checks preserve the source record and save only child metadata')
 
                     open_asset(ids['multiple'])
                     compare(ids['other'])
@@ -288,7 +363,7 @@ def exercise(out, browser_executable=None):
             http.shutdown(); http.server_close(); thread.join(5)
         check(not errors, 'No JavaScript page errors')
         check(studio.assets.get(ids['parent']) == original and hashlib.sha256(studio.assets.file(ids['parent']).read_bytes()).hexdigest() == digest, 'Parent record and bytes remain unchanged')
-        check(requests.count('/api/assets/update') == 2, 'Exactly two deliberate child metadata commands; no generation or native work')
+        check(requests.count('/api/assets/update') == 11, 'Exactly eleven deliberate child metadata commands; no generation or native work')
         report = {'checks': checks, 'page_errors': errors, 'post_routes': requests, 'generation_submitted': False,
                   'parent_sha256': digest, 'parent_unchanged': True, 'native_zoom_verified': False, 'screen_reader_verified': False}
         (out/'report.json').write_text(json.dumps(report, indent=2)+'\n')
