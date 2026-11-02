@@ -2277,6 +2277,18 @@ def _library_review_next(c):
         c.act('#reviewNext', navigation=True, note='press Review next')
         c.page.wait_for_function("!!document.querySelector('#assetDialog[open]') && typeof assetQueue !== 'undefined' && !!assetQueue && !assetDetailBusy", timeout=8000)
         total = c.page.evaluate('assetQueue.ids.length')
+        # #1919: the keys and what they do are on the first screen of the queue at laptop and desktop sizes, unscrolled.
+        seen, before = {}, c.page.viewport_size
+        for width, height in ((1366, 768), (1920, 1080)):
+            c.page.set_viewport_size({'width': width, 'height': height})
+            c.page.evaluate("document.querySelector('#assetDialog').scrollTop = 0")
+            c.page.wait_for_timeout(150)
+            seen['%dx%d' % (width, height)] = c.page.evaluate("""() => ['[data-queue-review="selected"]', '[data-queue-review="needs_work"]', '[data-queue-review="rejected"]', '[data-queue-skip]', '.asset-queue-legend'].every(s => {
+                const el = document.querySelector('#assetQueue ' + s), r = el && el.getBoundingClientRect(), d = document.querySelector('#assetDialog').getBoundingClientRect();
+                return !!r && r.height > 0 && r.top >= Math.max(0, d.top) && r.bottom <= Math.min(innerHeight, d.bottom); })""")
+            with contextlib.suppress(Exception): evidence_screenshot(c.page, path=str(c.dir / ('queue-keys-%dx%d.png' % (width, height))))
+        c.page.set_viewport_size(before)
+        c.observe('K, W, X and S with their legend show unscrolled at 1366x768 and 1920x1080', all(seen.values()), 'visible: %s' % seen)
         decisions = (('k', 'selected'), ('w', 'needs_work'), ('x', 'rejected'))
         for number, (key, review) in enumerate(decisions, 1):
             record = c.key(key, note='%s decides picture %d of %d' % (key.upper(), number, total))
@@ -2285,7 +2297,7 @@ def _library_review_next(c):
         c.act('#reviewNext', 'read', note='the next step: nothing is left to review')
         left = c.page.evaluate("({button: document.querySelector('#reviewNext').textContent, off: document.querySelector('#reviewNext').disabled, text: document.body.innerText.includes('Review queue finished')})")
         reviews = {a['id']: a['review'] for a in fixture.ASSETS if a['id'] in ('asset-0', 'asset-3', 'asset-5')} if fixture else {}
-        ok = total == 3 and left['off'] and left['button'] == 'Nothing to review' and (not fixture or reviews == {'asset-0': 'selected', 'asset-3': 'needs_work', 'asset-5': 'rejected'})
+        ok = total == 3 and all(seen.values()) and left['off'] and left['button'] == 'Nothing to review' and (not fixture or reviews == {'asset-0': 'selected', 'asset-3': 'needs_work', 'asset-5': 'rejected'})
         return ok, '%d in the queue; reviews saved %s; Review next reads %r; queue finished %s' % (total, reviews, left['button'], left['text'])
 
 
