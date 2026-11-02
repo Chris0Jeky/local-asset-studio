@@ -394,6 +394,11 @@ class Scene(unittest.TestCase):
         self.assertTrue(close([-cam[r][2] for r in range(3)], [0, 1, 0]))
         self.assertTrue(close(tc.godot_transform(cam)[2], [0, 0, 1]))  # Godot camera's +Z points back at the viewer side
 
+    def test_top_down_camera(self):
+        cam = tc.look_at([0, 0, 1], 0, 90, 5)
+        self.assertTrue(close([-cam[r][2] for r in range(3)], [0, 0, -1]))
+        self.assertFalse(any(math.isnan(c) for row in cam for c in row))
+
     def test_camera_sizes_follow_the_wider_side(self):
         c = tc.cameras([{"name": "a", "res": [600, 800], "target": [0, 0, 1], "dist": 5, "ortho": 2.0},
                         {"name": "b", "res": [800, 400], "target": [0, 0, 1], "dist": 5, "fov": 60}])
@@ -403,7 +408,8 @@ class Scene(unittest.TestCase):
     def test_lights_carry_blender_power(self):
         out = tc.lights([{"name": "Key", "type": "SUN", "color": [1, .9, .8], "energy": 3.0, "angle": math.radians(2),
                           "matrix": [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]}, {"name": "A", "type": "AREA", "color": [1, 1, 1], "matrix": []}])
-        self.assertEqual(len(out), 1)
+        self.assertEqual(len(out), 2)
+        self.assertIn("skipped", out[1])
         self.assertEqual((out[0]["type"], out[0]["blender_energy"]), ("directional", 3.0))
         self.assertAlmostEqual(out[0]["energy"], 3.0 / math.pi)        # Light Info Power of a 3 W/m2 sun
         self.assertAlmostEqual(out[0]["angular_distance"], 2.0)
@@ -425,11 +431,12 @@ class MToon(unittest.TestCase):
 
 class Files(unittest.TestCase):
     def test_compile_ir_writes_everything(self):
-        ir = {"materials": {"Cloth": kit_cloth(B()), "Bad/Name": B().mat(None)}, "images": IMAGES,
+        ir = {"materials": {"Cloth": kit_cloth(B()), "Bad/Name": B().mat(None), "Bad Name": B().mat(None)}, "images": IMAGES,
               "lights": [], "cameras": [{"name": "front", "res": [64, 64], "target": [0, 0, 1], "dist": 3, "fov": 40}]}
         with tempfile.TemporaryDirectory() as d:
             doc = tc.compile_ir(ir, Path(d))
-            self.assertEqual(doc["summary"]["ok"], 2)
+            self.assertEqual(doc["summary"]["ok"], 3)
+            self.assertEqual(doc["materials"]["Bad Name"]["file"], "shaders/Bad_Name_1.gdshader")
             self.assertTrue((Path(d) / "shaders" / "Cloth.gdshader").is_file())
             self.assertEqual(doc["materials"]["Bad/Name"]["file"], "shaders/Bad_Name.gdshader")
             for f in ("report.json", "mtoon.json", "lights.json", "cameras.json"):

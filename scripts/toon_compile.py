@@ -666,7 +666,7 @@ def look_at(target, yaw, pitch, dist):
     f = [target[i] - eye[i] for i in range(3)]
     fl = math.sqrt(sum(c * c for c in f))
     f = [c / fl for c in f]
-    up = [0.0, 0.0, 1.0]
+    up = [0.0, 0.0, 1.0] if abs(f[2]) < 0.999 else [0.0, 1.0, 0.0]  # straight down or up: no Z-up reference
     r = [f[1] * up[2] - f[2] * up[1], f[2] * up[0] - f[0] * up[2], f[0] * up[1] - f[1] * up[0]]
     rl = math.sqrt(sum(c * c for c in r))
     r = [c / rl for c in r]
@@ -697,6 +697,7 @@ def lights(ir_lights: list) -> list:
     out = []
     for L in ir_lights:
         if L["type"] not in ("SUN", "POINT"):
+            out.append({"name": L["name"], "skipped": f"{L['type']} light: no measured Light Info Power convention"})
             continue
         out.append({"name": L["name"], "type": "directional" if L["type"] == "SUN" else "omni", "transform": godot_transform(L["matrix"]),
                     "color": L["color"][:3], "energy": L.get("energy", 1.0) / (math.pi if L["type"] == "SUN" else 4 * math.pi ** 2), "shadow": L.get("shadow", True),
@@ -707,7 +708,7 @@ def lights(ir_lights: list) -> list:
 def compile_ir(ir: dict, out_dir: Path) -> dict:
     out_dir = Path(out_dir)
     (out_dir / "shaders").mkdir(parents=True, exist_ok=True)
-    report, mt = {}, {}
+    report, mt, files = {}, {}, set()
     groups, images = ir.get("groups", {}), ir.get("images", {})
     for name, mat in ir["materials"].items():
         try:
@@ -715,7 +716,10 @@ def compile_ir(ir: dict, out_dir: Path) -> dict:
         except Unsupported as e:
             r = {"status": "unsupported", "unsupported": [str(e)], "warnings": []}
         if "shader" in r:
-            fn = f"{safe_name(name)}.gdshader"
+            stem = safe_name(name)
+            fn = next(f"{stem}{'' if i == 0 else f'_{i}'}.gdshader" for i in range(len(files) + 1)
+                      if f"{stem}{'' if i == 0 else f'_{i}'}.gdshader" not in files)  # names that sanitise alike
+            files.add(fn)
             (out_dir / "shaders" / fn).write_text(r.pop("shader"), encoding="utf-8")
             r["file"] = f"shaders/{fn}"
         report[name] = r

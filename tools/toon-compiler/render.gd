@@ -35,6 +35,10 @@ func _initialize() -> void:
 	cfg = read_json(OS.get_cmdline_user_args()[0])
 	var dir: String = cfg["compiled"]
 	var report: Dictionary = read_json(dir + "/report.json")
+	if not FileAccess.file_exists(dir + "/cameras.json"):
+		push_error("no cameras.json: compile with views (toon_compile_bpy.py --cameras)")
+		quit(2)
+		return
 	cams = read_json(dir + "/cameras.json")
 	view = SubViewport.new()
 	view.render_target_update_mode = SubViewport.UPDATE_ALWAYS
@@ -71,6 +75,9 @@ func _initialize() -> void:
 			node.set_surface_override_material(i, shaders[mname])
 	print("TOONC godot: ", shaders.size(), " compiled materials, kept imported: ", missing.keys())
 	for L in read_json(dir + "/lights.json"):
+		if L.has("skipped"):
+			print("TOONC godot: light skipped: ", L["name"], " (", L["skipped"], ")")
+			continue
 		var l: Light3D
 		if L["type"] == "directional":
 			l = DirectionalLight3D.new()
