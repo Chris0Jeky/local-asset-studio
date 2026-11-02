@@ -49,6 +49,21 @@ def _drift(a, b):
     return float("inf") if len(a) != len(b) else max((abs(x - y) for x, y in zip(a, b)), default=0.0)
 
 
+FLOAT32_ULP = 1.2e-7  # relative spacing of float32 values
+
+
+def _moments_differ(a, b):
+    """Point-set sums from the manifest. Random float32 noise grows with sqrt(count). Rounding at a baked-in offset
+    (skinned glTF meshes move the object offset into the vertices) is systematic, up to two ulps of the largest
+    coordinate per point. A real change moves the sums by its own size."""
+    if a is None or b is None: return a is not b
+    if a["count"] != b["count"]: return True
+    if not a["count"]: return False
+    n, scale = a["count"], max(a.get("scale", 0.0), b.get("scale", 0.0))
+    return any(abs(x - y) > 1e-6 * n ** 0.5 * (1 + abs(x) / n) + 2 * n * FLOAT32_ULP * scale * (1 + scale)
+               for x, y in zip(_flat(a, "sum", "products"), _flat(b, "sum", "products")))
+
+
 def _visible_meshes(manifest):
     return {o["name"]: o for o in manifest["objects"] if o["type"] == "MESH" and o["visible"] and not o["hide_render"]}
 
@@ -82,7 +97,8 @@ def compare_manifests(source, roundtrip):
         if list(keys(before)) != list(keys(after)): failures.append(f"{name}: shape keys {list(keys(before))} -> {list(keys(after))}")
         for key_name, key in keys(before).items():
             other_key = keys(after).get(key_name)
-            if other_key and _drift(_flat(key, "delta_max", "delta_bbox"), _flat(other_key, "delta_max", "delta_bbox")) > SHAPE_TOLERANCE:
+            if other_key and (_drift(_flat(key, "delta_max", "delta_bbox"), _flat(other_key, "delta_max", "delta_bbox")) > SHAPE_TOLERANCE
+                              or _moments_differ(key.get("moments"), other_key.get("moments"))):
                 failures.append(f"{name}: shape key {key_name} deformation changed (max delta {key.get('delta_max')} -> {other_key.get('delta_max')})")
         for modifier in obj["modifiers"]:
             if modifier["type"] != "ARMATURE":
@@ -113,6 +129,15 @@ def compare_manifests(source, roundtrip):
     for action in source["actions"]:
         if action["name"] not in rt_actions: failures.append(f"action {action['name']} is missing after the roundtrip")
         else: losses.append(f"action {action['name']}: keys are resampled per frame (export_force_sampling)")
+    rt_deform = roundtrip.get("deform_samples", {})
+    for name, sample in sorted(source.get("deform_samples", {}).items()):
+        other = rt_deform.get(name)
+        if other is None: continue  # a missing visible mesh is already a failure
+        if other["frames"] != sample["frames"]:
+            failures.append(f"{name}: deform frames {sample['frames']} -> {other['frames']}"); continue
+        for frame, a, b in zip(sample["frames"], sample["moments"], other["moments"]):
+            if _moments_differ(a, b):
+                failures.append(f"{name}: deformed shape differs at frame {frame}"); break
     rt_poses = roundtrip.get("pose_samples", {})
     for name, sample in sorted(source.get("pose_samples", {}).items()):
         other = rt_poses.get(name)

@@ -297,9 +297,15 @@ def _mesh(mesh):
         reference = _foreach(keys.reference_key.data, "co", 3, np.float32).reshape(-1, 3)
 
         def deltas(block):  # split-invariant summary: survives the vertex duplication a GLB roundtrip introduces
-            delta = _foreach(block.data, "co", 3, np.float32).reshape(-1, 3) - reference
+            co = _foreach(block.data, "co", 3, np.float32).reshape(-1, 3)
+            delta = co - reference
+            pairs = np.unique(np.hstack([reference, co]), axis=0)  # seam duplicates are bit-identical rows
             return {"delta_max": rnd(np.linalg.norm(delta, axis=1).max()) if len(delta) else 0.0,
-                    "delta_bbox": {"min": vec(delta.min(0)), "max": vec(delta.max(0))} if len(delta) else None}
+                    "delta_bbox": {"min": vec(delta.min(0)), "max": vec(delta.max(0))} if len(delta) else None,
+                    # basis is centred: a roundtrip may bake the object offset into mesh data (skinned glTF meshes do)
+                    "moments": _moments(np.hstack([pairs[:, :3] - pairs[:, :3].astype(np.float64).mean(0),
+                                                   pairs[:, 3:].astype(np.float64) - pairs[:, :3]]),
+                                        float(np.abs(pairs).max()) if len(pairs) else 0.0)}
 
         entry["shape_keys"] = {"use_relative": keys.use_relative, "reference": keys.reference_key.name, "keys": [
             {"name": block.name, "relative_key": block.relative_key.name, "value": rnd(block.value), "mute": block.mute,
@@ -388,6 +394,53 @@ def _action(action):
             "fcurves": sorted(curves, key=lambda c: (c["slot"] or "", c["data_path"], c["index"]))}
 
 
+def _moments(points, scale=None):
+    """Order-free summary of a point set: count, column sums and the upper triangle of the product sums. Sums, not
+    means, so one changed point moves them by its own change whatever the point count. `scale` is the largest raw
+    float32 coordinate behind the points, which bounds their rounding error."""
+    import numpy as np
+    points = np.asarray(points, dtype=np.float64)
+    if not len(points): return {"count": 0}
+    products = points.T @ points
+    return {"count": int(len(points)), "scale": rnd(np.abs(points).max() if scale is None else scale),
+            "sum": [round(float(v), 9) + 0.0 for v in points.sum(0)],
+            "products": [round(float(v), 9) + 0.0 for v in products[np.triu_indices(points.shape[1])]]}
+
+
+def _deform_samples(scene, view_layer, poses):
+    """Moments of each visible mesh's unique evaluated world positions at its rig's sampled frames. A GLB roundtrip
+    duplicates seam vertices with bit-identical positions and weights, so deduplicating exact float32 rows makes this
+    split-invariant, and lost bone rotation (which leaves bone heads in place) still moves the deformed points."""
+    import bpy
+    import numpy as np
+    current, plan = scene.frame_current, {}
+    for obj in sorted(_evidence_meshes(scene, view_layer), key=lambda o: o.name):
+        rig = next((m.object for m in obj.modifiers if m.type == "ARMATURE" and m.object), None)
+        plan[obj.name] = (poses.get(rig.name, {}).get("frames") if rig else None) or [scene.frame_start]
+    samples = {name: {"frames": frames, "moments": []} for name, frames in plan.items()}
+    # Sample what the LAS export writes: skinning only. It does not apply other modifiers (they are reported as
+    # format losses), so evaluating them here would flag a clean roundtrip. Viewport flags are restored afterwards.
+    toggled = [(m, m.show_viewport) for name in plan for m in scene.objects[name].modifiers]
+    for modifier, _ in toggled: modifier.show_viewport = modifier.type == "ARMATURE"
+    try:
+        for frame in sorted({f for frames in plan.values() for f in frames}):
+            scene.frame_set(frame)
+            depsgraph = bpy.context.evaluated_depsgraph_get()
+            for name, frames in plan.items():
+                if frame not in frames: continue
+                evaluated = scene.objects[name].evaluated_get(depsgraph)
+                mesh = evaluated.to_mesh()
+                local = np.unique(_foreach(mesh.vertices, "co", 3, np.float32).reshape(-1, 3), axis=0)
+                evaluated.to_mesh_clear()
+                matrix = np.array(evaluated.matrix_world, dtype=np.float64)
+                world = local.astype(np.float64) @ matrix[:3, :3].T + matrix[:3, 3]
+                samples[name]["moments"].append(_moments(world, max(float(np.abs(local).max()), float(np.abs(world).max())) if len(local) else 0.0))
+    finally:
+        for modifier, shown in toggled: modifier.show_viewport = shown
+        scene.frame_set(current)
+    return samples
+
+
 def _pose_samples(scene, count=5):
     """World-space bone heads at evenly spaced frames over the action's range (rest frame without an action):
     evaluated motion that survives the curve resampling and channel renames of a GLB roundtrip, so lost or truncated
@@ -433,6 +486,7 @@ def manifest(source_label=None):
                           for l in data.lights if l.users), key=lambda l: l["name"]),
         "pose_samples": _pose_samples(scene),
     }
+    result["deform_samples"] = _deform_samples(scene, view_layer, result["pose_samples"])
     result["counts"] = {key: len(result[key]) for key in ("objects", "meshes", "materials", "images", "armatures", "actions")}
     result["counts"]["triangles"] = sum(m["triangles"] for m in result["meshes"])
     result["counts"]["missing_images"] = sum(1 for i in result["images"] if i["missing"])
@@ -545,7 +599,8 @@ PASSES = ("lit", "clay", "object_id", "material_id")
 LAS_GLTF_SETTINGS = {"export_format": "GLB", "export_materials": "EXPORT", "export_cameras": False, "export_lights": False,
                      "export_animations": True, "export_frame_range": True, "export_force_sampling": True,
                      "use_renderable": True}
-SEEDED_DEFECTS = ("missing-texture", "omitted-mesh", "material-mismatch", "truncated-animation", "shape-key-damage")
+SEEDED_DEFECTS = ("missing-texture", "omitted-mesh", "material-mismatch", "truncated-animation", "shape-key-damage",
+                  "bone-twist-lost", "shape-key-interior-damage")
 
 
 def id_colour(name):
@@ -677,6 +732,24 @@ def seed_defect(kind):
         block = mesh.shape_keys.key_blocks[-1]
         for point, base in zip(block.data, mesh.shape_keys.reference_key.data): point.co = base.co + (point.co - base.co) * 0.5
         return {"kind": kind, "mesh": mesh.name, "key": block.name}
+    if kind == "bone-twist-lost":  # flatten rotation curves but keep their keys and range: bone heads do not move
+        action = sorted((a for a in bpy.data.actions if a.users), key=lambda a: a.name)[0]
+        curves = [c for layer in action.layers for strip in layer.strips for slot in action.slots
+                  for c in (strip.channelbag(slot).fcurves if strip.channelbag(slot) else [])]
+        flattened = []
+        for curve in curves:
+            if "rotation" not in curve.data_path: continue
+            rest = curve.keyframe_points[0].co[1]
+            for point in curve.keyframe_points: point.co[1] = point.handle_left[1] = point.handle_right[1] = rest
+            flattened.append(f"{curve.data_path}[{curve.array_index}]")
+        return {"kind": kind, "action": action.name, "flattened": flattened}
+    if kind == "shape-key-interior-damage":  # zero one non-extreme vertex delta: extrema and max delta are unchanged
+        mesh = sorted((m for m in bpy.data.meshes if m.users and m.shape_keys), key=lambda m: m.name)[0]
+        block, base = mesh.shape_keys.key_blocks[-1], mesh.shape_keys.reference_key.data
+        moved = sorted((((p.co - b.co).length, i) for i, (p, b) in enumerate(zip(block.data, base)) if (p.co - b.co).length > 1e-6))
+        index = moved[len(moved) // 2][1]
+        block.data[index].co = base[index].co
+        return {"kind": kind, "mesh": mesh.name, "key": block.name, "vertex": index}
     if kind == "omitted-mesh":
         meshes[0].hide_render = True
         return {"kind": kind, "object": meshes[0].name}

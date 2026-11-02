@@ -69,6 +69,31 @@ class StructuralTests(unittest.TestCase):
         moved["pose_samples"]["Rig"]["bones"]["Neck"][2][0] += 0.01
         self.assertEqual(sentinel.compare_manifests(MANIFEST, moved)["failures"], ["armature Rig: bone Neck moved at frame 12"])
 
+    def test_lost_twist_shows_in_deformed_moments_even_when_bone_heads_stay(self):
+        roundtrip = copy.deepcopy(MANIFEST)
+        roundtrip["deform_samples"]["Body"]["moments"][2] = copy.deepcopy(MANIFEST["deform_samples"]["Body"]["moments"][0])
+        self.assertEqual(sentinel.compare_manifests(MANIFEST, roundtrip)["failures"], ["Body: deformed shape differs at frame 12"])
+
+    def test_one_interior_shape_key_vertex_changes_the_sums(self):
+        roundtrip = copy.deepcopy(MANIFEST)
+        key = next(m for m in roundtrip["meshes"] if m["name"] == "Head")["shape_keys"]["keys"][1]
+        key["moments"]["sum"][5] += 0.01  # one vertex's z delta moved by 1 cm; extrema unchanged
+        self.assertEqual(len(sentinel.compare_manifests(MANIFEST, roundtrip)["failures"]), 1)
+
+    def test_moment_tolerance_absorbs_float32_noise(self):
+        a = {"count": 10000, "sum": [100.0, 0.0, 1.0], "products": [5.0]}
+        noisy = {"count": 10000, "sum": [100.00005, 0.00005, 1.00005], "products": [5.00005]}
+        self.assertFalse(sentinel._moments_differ(a, noisy))
+        self.assertTrue(sentinel._moments_differ(a, {**noisy, "count": 9999}))
+        self.assertTrue(sentinel._moments_differ(a, {**noisy, "sum": [100.01, 0.0, 1.0]}))
+
+    def test_systematic_rounding_at_a_baked_offset_is_not_damage(self):
+        # Terra's case: 10,000 deltas of 0.1 recovered next to a 100-unit offset drift by ~1.5e-6 each.
+        a = {"count": 10000, "scale": 101.1, "sum": [1000.0], "products": [100.0]}
+        drifted = {**a, "sum": [1000.0 - 0.0155], "products": [100.0 - 0.0031]}
+        self.assertFalse(sentinel._moments_differ(a, drifted))
+        self.assertTrue(sentinel._moments_differ({**a, "scale": 1.0}, {**drifted, "scale": 1.0}))
+
     def test_unexpected_mesh_and_missing_source_image(self):
         source, roundtrip = copy.deepcopy(MANIFEST), copy.deepcopy(MANIFEST)
         source["images"][0]["missing"] = True
@@ -143,6 +168,7 @@ class LiveSentinelTests(unittest.TestCase):
                 self.assertTrue(result["structural_failures"], defect)
                 # Animation and shape-key damage are invisible at the evidence frame; only the manifest catches them.
                 self.assertEqual(bool(result["visual_warnings"]), defect in ("missing-texture", "omitted-mesh", "material-mismatch"), defect)
+            self.assertEqual(len(sentinel.lab.bpy_side.SEEDED_DEFECTS), 7)
 
 
 if __name__ == "__main__":

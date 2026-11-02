@@ -106,9 +106,23 @@ Measured on 2 Nov 2026 with the generated lab asset, CPU only, about 7 s per run
 | D truncated animation (scene end halved, so `export_frame_range` clips the action) | fail: sampled frames `[1, 7, 12, 18, 24]` → `[1, 4, 6, 9, 12]`, no visual warning | same |
 | E shape-key damage (deltas halved) | fail: `Squash` max delta 0.096 → 0.048, no visual warning | same |
 
-Known gaps, tracked in #1918: `pose_samples` holds bone heads only, so a twist or a leaf-bone rotation is not caught
-(the lab fixture's own sway is a twist). Shape-key checks hold extrema only, so damage to non-extreme vertex deltas
-passes. A sentinel pass is evidence about what it measures, not acceptance.
+Exact-dedupe moments (#1918) close two further gaps. A GLB roundtrip duplicates seam vertices with bit-identical
+float32 values, so the manifest deduplicates exact rows and keeps order-free sums: count, column sums and product
+sums, at 9 decimals.
+- `deform_samples` hold the sums of each visible mesh's unique evaluated world positions at its rig's sampled frames,
+  which catches lost rotation that leaves bone heads in place.
+- Each shape key holds the sums of unique `[centred basis, delta]` rows, which catches one damaged interior vertex.
+
+Sums rather than means mean one changed point moves them by its own size, whatever the vertex count. The tolerance is
+`1e-6·√n·(1 + |x|/n)` for float32 noise. Seeded proof on both builds:
+
+| Run | 4.5.13 | 5.4 alpha |
+| --- | --- | --- |
+| F lost twist (rotation keys flattened, keys and range kept) | fail: `Body`, `Badge` deformed shape differs at frame 7; no visual warning | same |
+| G interior shape-key damage (one median vertex delta zeroed) | fail: `Squash` deformation changed, while max delta stays 0.096; no visual warning | same |
+
+The control still passes, and the manifest checksum is still identical across both builds. A sentinel pass is
+evidence about what it measures, not acceptance.
 
 D and E pass every render. Only the manifest catches them. It records `pose_samples` (world-space bone heads at 5
 frames over each action's range; no tails, because glTF stores none) and split-invariant shape-key
