@@ -1,4 +1,5 @@
 from pathlib import Path
+import ast
 import sys
 import tempfile
 from types import SimpleNamespace
@@ -11,6 +12,19 @@ import articulated_prop as prop
 
 
 class ArticulatedPropContractTests(unittest.TestCase):
+    def test_material_sets_render_shader_inputs(self):
+        inputs = {name: SimpleNamespace(default_value=None) for name in ("Base Color", "Metallic", "Roughness")}
+        material = SimpleNamespace(node_tree=SimpleNamespace(nodes={"Principled BSDF": SimpleNamespace(inputs=inputs)}))
+        bpy = SimpleNamespace(data=SimpleNamespace(materials=SimpleNamespace(new=lambda name: material)))
+        function = next(node for node in ast.parse(prop._script()).body if isinstance(node, ast.FunctionDef) and node.name == "material")
+        namespace = {"bpy": bpy}
+        exec(compile(ast.Module(body=[function], type_ignores=[]), "material", "exec"), namespace)
+        self.assertIs(namespace["material"]("Wood", (0.3, 0.1, 0.02), 0.8), material)
+        self.assertEqual(inputs["Base Color"].default_value, (0.3, 0.1, 0.02, 1.0))
+        self.assertEqual(inputs["Metallic"].default_value, 0.8)
+        self.assertEqual(inputs["Roughness"].default_value, 0.42)
+        self.assertTrue(material.use_nodes)
+
     def test_lid_interpolation_uses_the_assigned_datablock_curve(self):
         points = [SimpleNamespace(interpolation="BEZIER") for _ in range(4)]
         curve = SimpleNamespace(keyframe_points=points)

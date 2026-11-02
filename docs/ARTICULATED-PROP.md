@@ -3,7 +3,9 @@
 Blender 4.5.13 LTS and 5.4.0 Alpha (`67c9bdddb88b`) both completed the adapter's
 BLEND, animated GLB/reimport and four-view render check on 2 November 2026 (128px,
 two CPU samples). The lid uses its assigned datablock's F-Curve; Blender 5.x
-removed the legacy `Action.fcurves` collection. Set `config/local.json`'s `blender`
+removed the legacy `Action.fcurves` collection. Materials explicitly set their
+Principled shader inputs so Blender 5.x retains their colour and metal finish.
+Set `config/local.json`'s `blender`
 to the exact executable to select a version. These checks establish this adapter's
 compatibility, not general alpha stability or art acceptance.
 
