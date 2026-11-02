@@ -32,6 +32,10 @@ HELPERS = {
     # channel of LIGHT_COLOR / PI and Color the rest: exact when the colour's brightest channel is 1, products always.
     "light_rgb": "vec3 light_rgb(vec3 c) {\n\treturn c / max(max(c.x, max(c.y, c.z)), 1e-8);\n}",
     "light_power": "float light_power(vec3 c) {\n\treturn max(c.x, max(c.y, c.z));\n}",
+    # Blender safe power: a negative base keeps its sign for an odd integer exponent, 0 for a non-integer one.
+    "safe_pow": ("float safe_pow(float a, float b) {\n\tfloat r = pow(abs(a), b);\n\tfloat e = floor(b + 0.5);\n"
+                 "\tfloat isint = 1.0 - step(1e-6, abs(b - e));\n\tfloat odd = e - 2.0 * floor(e * 0.5);\n"
+                 "\treturn mix(r, r * isint * (1.0 - 2.0 * odd), 1.0 - step(0.0, a));\n}"),
     "lin01": "float lin01(float v, float a, float b) {\n\treturn clamp(safe_div(v - a, b - a), 0.0, 1.0);\n}",
     "fresnel_cos": ("float fresnel_cos(float cosi, float eta) {\n\tfloat c = abs(cosi);\n\tfloat g = eta * eta - 1.0 + c * c;\n"
                     "\tfloat ok = step(1e-30, g);\n\tg = sqrt(max(g, 1e-30));\n\tfloat a = (g - c) / (g + c);\n"
@@ -47,7 +51,7 @@ HELPER_DEPS = {"lin01": ["safe_div"]}
 
 MATH = {  # Blender Math node -> GLSL; a, b, c are the three inputs. Blender's "safe" variants are kept.
     "ADD": "{a} + {b}", "SUBTRACT": "{a} - {b}", "MULTIPLY": "{a} * {b}", "DIVIDE": "safe_div({a}, {b})",
-    "MULTIPLY_ADD": "{a} * {b} + {c}", "POWER": "pow(abs({a}), {b})", "LOGARITHM": "safe_div(log(max({a}, 1e-30)), log(max({b}, 1e-30)))",
+    "MULTIPLY_ADD": "{a} * {b} + {c}", "POWER": "safe_pow({a}, {b})", "LOGARITHM": "safe_div(log(max({a}, 1e-30)), log(max({b}, 1e-30)))",
     "SQRT": "sqrt(max({a}, 0.0))", "INVERSE_SQRT": "inversesqrt(max({a}, 1e-30))", "ABSOLUTE": "abs({a})",
     "EXPONENT": "exp({a})", "MINIMUM": "min({a}, {b})", "MAXIMUM": "max({a}, {b})",
     "LESS_THAN": "1.0 - step({b}, {a})", "GREATER_THAN": "1.0 - step({a}, {b})", "SIGN": "sign({a})",
@@ -255,8 +259,9 @@ class Compiler:
                 raise Unsupported(f"{n['name']}: Math {op}")
             ins = [k for k in n["inputs"]]
             a, b, c = (I(ins[i]) if i < len(ins) else "0.0" for i in range(3))
-            if "safe_div" in MATH[op]:
-                self.helper("safe_div")
+            for h in ("safe_div", "safe_pow"):
+                if h in MATH[op]:
+                    self.helper(h)
             code = MATH[op].format(a=a, b=b, c=c)
             return f"clamp({code}, 0.0, 1.0)" if p.get("use_clamp") else code
         if t == "VECT_MATH":
@@ -529,8 +534,9 @@ class Compiler:
                 self.varyings[wl] = ("float", w)
             lmul = (lambda c: c) if wl is None else (lambda c: f"({c}) * {wl}")  # noqa: E731
             for kind, light, color in (("diffuse", "Diffuse Light", "Diffuse Color"), ("specular", "Glossy Light", "Glossy Color")):
-                if find_socket(n["inputs"], light) is None or not self.linked(n, light):
-                    continue  # an unlinked light input contributes its constant to every light: none of the kit's graphs do
+                sock = find_socket(n["inputs"], light)
+                if sock is None or (not self.linked(n, light) and not any(sock.get("default", [0.0])[:3])):
+                    continue  # an unlinked constant still adds itself once per light; only black adds nothing
                 terms[kind].append(lmul(f"{self.input(n, light, 'light', 'RGBA')} * {self.input(n, color, 'light', 'RGBA')}"))
             if self.linked(n, "Transmission Light"):
                 self.unsupported.append(f"{n['name']}: Transmission Light")

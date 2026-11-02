@@ -41,6 +41,7 @@ func _initialize() -> void:
 		quit(2)
 		return
 	cams = read_json(dir + "/cameras.json")
+	DirAccess.make_dir_recursive_absolute(cfg["out"])
 	view = SubViewport.new()
 	view.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	view.msaa_3d = int(cfg.get("msaa", Viewport.MSAA_4X))
@@ -114,7 +115,11 @@ func _process(_delta: float) -> bool:
 		settle -= 1
 		return false
 	if index >= 0:
-		view.get_texture().get_image().save_png(cfg["out"] + "/" + cams[index]["name"] + ".png")
+		var png: String = cfg["out"] + "/" + cams[index]["name"] + ".png"
+		if view.get_texture().get_image().save_png(png) != OK:
+			push_error("could not write " + png)
+			quit(3)
+			return true
 	index += 1
 	if index >= cams.size():
 		print("TOONC godot rendered ", cams.size())

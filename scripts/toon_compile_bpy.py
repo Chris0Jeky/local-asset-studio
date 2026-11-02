@@ -90,12 +90,19 @@ def tree(nt, groups, images):
     return {"nodes": nodes}
 
 
-def save_image(im, folder):
+def save_image(im, folder, used):
     folder.mkdir(parents=True, exist_ok=True)
     src = bpy.path.abspath(im.filepath) if im.filepath else ""
-    ext = Path(src).suffix.lower() if src else ""
-    dst = folder / (toon_compile.safe_name(Path(im.name).stem) + (ext if ext in (".png", ".jpg", ".jpeg") else ".png"))
-    if not im.packed_file and src and os.path.isfile(src) and ext in (".png", ".jpg", ".jpeg"):
+    copyable = Path(src).suffix.lower() in (".png", ".jpg", ".jpeg") if src else False
+    ext = Path(src).suffix.lower() if copyable else ".png"
+    stem = base = toon_compile.safe_name(Path(im.name).stem)
+    k = 0
+    while (stem + ext).lower() in used:  # distinct images can sanitise to one name
+        k += 1
+        stem = f"{base}_{k}"
+    used.add((stem + ext).lower())
+    dst = folder / (stem + ext)
+    if not im.packed_file and copyable and os.path.isfile(src):
         shutil.copyfile(src, dst)  # exact bytes
     else:
         im.save(filepath=str(dst))  # packed or generated: Blender writes its buffer
@@ -120,9 +127,9 @@ def main():
         g.update(output=outn.name if outn else None, backface_culling=bool(m.use_backface_culling),
                  blend=getattr(m, "surface_render_method", "DITHERED"))
         ir_mats[m.name] = g
-    imgs = {}
-    for im in images:
-        imgs[im.name] = {"file": "textures/" + save_image(im, out / "textures"), "colorspace": im.colorspace_settings.name,
+    imgs, used = {}, set()
+    for im in sorted(images, key=lambda i: i.name):
+        imgs[im.name] = {"file": "textures/" + save_image(im, out / "textures", used), "colorspace": im.colorspace_settings.name,
                          "size": list(im.size)}
     for g in list(ir_mats.values()) + list(groups.values()):  # image interpolation/extension live on the node
         for n in g["nodes"].values():

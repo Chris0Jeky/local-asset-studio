@@ -300,7 +300,8 @@ class Nodes(unittest.TestCase):
     def test_math_is_blender_safe(self):
         for op, a, c, want in (("DIVIDE", 1.0, 0.0, 0.0), ("SQRT", -4.0, 0, 0.0), ("ARCCOSINE", 2.0, 0, 0.0),
                                ("GREATER_THAN", 2.0, 1.0, 1.0), ("GREATER_THAN", 1.0, 1.0, 0.0), ("LESS_THAN", 0.5, 1.0, 1.0),
-                               ("MODULO", -3.0, 2.0, -1.0), ("FLOORED_MODULO", -3.0, 2.0, 1.0)):
+                               ("MODULO", -3.0, 2.0, -1.0), ("FLOORED_MODULO", -3.0, 2.0, 1.0),
+                               ("POWER", -2.0, 3.0, -8.0), ("POWER", -2.0, 2.0, 4.0), ("POWER", -2.0, 0.5, 0.0), ("POWER", 2.0, 0.5, 2 ** 0.5)):
             b = B()
             self.assertAlmostEqual(self.eval(self.emit(b, math_(b, op, a, c)))[0], want, 5, op)
 
@@ -366,6 +367,13 @@ class Nodes(unittest.TestCase):
             r = compile_one(b.mat(acc))
             got = run(r["shader"], (0, -1, 0), [((0, -1, 0), (2.0, 1.0, 0.5), 1.0)])[0]
             self.assertTrue(close(got, want), f"{out}: {got}")
+
+    def test_unlinked_light_constant_adds_per_light(self):
+        b = B()
+        acc = b.out(b.node("LIGHT_ACCUMULATION", {"Diffuse Light": [1, 1, 1, 1], "Diffuse Color": [0.8, 0.3, 0.1, 1]}, {"BSDF": "SHADER"}), "BSDF")
+        r = compile_one(b.mat(acc))
+        sun = ((0, -1, 0), (1.0, 1.0, 1.0), 1.0)
+        self.assertTrue(close(run(r["shader"], (0, -1, 0), [sun, sun])[0], [1.6, 0.6, 0.2]), r["shader"])
 
     def test_glossy_factor(self):
         # Fitted to Blender 5.4: GGX D (alpha = rough^2) x N.L. Normal on the half vector: D = 1 / (pi alpha^2).
