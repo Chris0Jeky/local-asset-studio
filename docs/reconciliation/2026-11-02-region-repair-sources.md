@@ -114,6 +114,57 @@ After the independent-review corrections, the same focused set passed
 **169 tests in 134.429 seconds**, with no skips or failures. The validator again
 passed with site packages disabled, including 4,737 tracked paths checked.
 
+## Windows attachment qualification
+
+At PR #1909 head `440b9ba8fbb39334f4641ea81deaa097b0d3072c`, the
+[Windows source-contracts job](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/41387957454/job/125092873228)
+reported eight errors: every WebP orientation in parallax preparation reached
+`Studio.asset_reference` and was refused by the upload MIME gate. The checked
+tree was `1c619347e606d30fe4b6be0c27e3f4939728ef71`. Pixel transforms and context
+dimensions passed. Python's strict default MIME table can lack `.webp`; Linux
+system MIME files commonly provide the registration that this Windows host
+lacked. A local reproduction using `mimetypes.MimeTypes(filenames=())` with its
+strict WebP entry removed caused the same refusal for valid, small WebPs.
+
+`Studio.asset_reference` now maps the already supported `.png`, `.jpg`, `.jpeg`
+and `.webp` suffixes directly to their image MIME types, using the lowercase
+snapshot suffix. The existing upload owner still checks the MIME allowlist,
+magic bytes, decoded format, encoded size and decoded pixel limit. Source hash,
+privacy and trash checks precede attachment as before. Raw imports and source
+snapshots are unchanged.
+
+The causal regression in `test_asset_reference_size_gate.py` uses the real
+isolated stdlib MIME lookup with strict WebP registration absent. It failed for
+both regular and private sources before the fix. All six methods then passed,
+including unchanged original/staged WebP bytes and hashes, oriented context
+dimensions, private attachment placement and disclosure refusals, a registered
+`.JPEG` source, mismatched/unsupported suffix refusals, damaged content and the
+existing stat-before-read size gates. An initial damaged-content expectation
+was corrected to the existing earlier source-context refusal before the causal
+red run; production behavior there is unchanged.
+
+A focused run with strict WebP registration absent throughout passed **81 tests
+in 62.589 seconds**, with no skips or failures: reference gates, source EXIF
+orientation, parallax, continuation, continuation source binding, creation
+privacy and the server upload-magic check. `python -S scripts/validate-repo.py`
+also passed with site packages disabled: 98 graphs/bindings, 194 pinned assets,
+167 LoRA names and 4,737 tracked paths.
+
+The same head's
+[Windows Archive job](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/41387957453/job/125092873716)
+passed all 49 Python checks, then exhausted the unchanged four-minute Chromium
+installation step. Media Foundation setup took approximately 224 seconds;
+browser downloads completed just before the deadline and the action timed out
+at `04:29:43.152Z`. The native browser test was skipped, so this run supplies no
+Archive browser assertion result. The
+[passing maintenance baseline](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/41387345778/job/125091037805)
+at `784c6a34e870a11d9808164079df8efbcf1cbcde` used the same Windows runner image
+`20261021.278.1` and unchanged installation command: Media Foundation took
+approximately 183 seconds and installation approximately 196 seconds, after
+which the browser test passed. The timeout remains recorded; no budget,
+installation behavior or gate was weakened. The follow-up code head requires
+fresh hosted qualification.
+
 ## Limits
 
 These checks establish CPU source coordinates, conversion/refusal behavior,
