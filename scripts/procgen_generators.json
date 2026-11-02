@@ -93,6 +93,70 @@
         "5": {"name": "pillar_bases", "group": "torii"},
         "6": {"name": "stone_lanterns", "group": "lanterns", "when": {"lanterns": [1, 1]}}
       }
+    },
+    "lighthouse_room": {
+      "description": "Round lighthouse map room (Suzu's story): ring wall of radial panels with windows, spiral steps on the wall, central map table with a chart, a stool and the room-kit bookshelf of charts. cutaway=1 opens the front for diorama cameras.",
+      "tri_budget": 20000,
+      "params": {
+        "radius": {"type": "float", "min": 1.8, "max": 4.0, "default": 2.5, "doc": "interior radius"},
+        "wall_thickness": {"type": "float", "min": 0.15, "max": 0.4, "default": 0.25},
+        "height": {"type": "float", "min": 2.4, "max": 4.0, "default": 3.0, "doc": "wall height"},
+        "panels": {"type": "int", "min": 12, "max": 32, "default": 20, "doc": "radial wall panels around the ring"},
+        "window_every": {"type": "int", "min": 2, "max": 6, "default": 3, "doc": "every Nth panel is a window; panel 0 faces the front (-y)"},
+        "window_sill": {"type": "float", "min": 0.5, "max": 1.2, "default": 0.9},
+        "window_height": {"type": "float", "min": 0.5, "max": 1.4, "default": 1.1},
+        "table_radius": {"type": "float", "min": 0.4, "max": 1.2, "default": 0.7, "doc": "central map table"},
+        "stair_steps": {"type": "int", "min": 0, "max": 10, "default": 8, "doc": "spiral steps on the left wall, centred 0.4 m from it"},
+        "shelf_count": {"type": "int", "min": 2, "max": 5, "default": 4, "doc": "chart shelf levels at the back"},
+        "cutaway": {"type": "int", "min": 0, "max": 1, "default": 1, "doc": "1 removes the five front panels"},
+        "detail": {"type": "int", "min": 4, "max": 48, "default": 24},
+        "seed": {"type": "int", "min": 0, "max": 9999, "default": 7},
+        "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false, "doc": "flat toon palette: 0 day, 1 dusk, 2 sakura, 3 autumn"}
+      },
+      "constraints": [
+        {"terms": {"window_sill": 1, "window_height": 1, "height": -1}, "le": -0.3, "doc": "window top stays 0.3 m below the wall top"},
+        {"terms": {"table_radius": 1, "radius": -1}, "le": -1.1, "doc": "map table clears the spiral steps"},
+        {"terms": {"shelf_count": 0.35, "height": -1}, "le": -0.3, "doc": "chart shelf fits under the wall top"}
+      ],
+      "parts": {
+        "1": {"name": "floor", "group": "structure", "anchor": true},
+        "2": {"name": "wall", "group": "structure"},
+        "3": {"name": "spiral_steps", "group": "structure", "when": {"stair_steps": [1, 10]}},
+        "4": {"name": "map_table", "group": "table"},
+        "5": {"name": "chart", "group": "table", "collision": false},
+        "6": {"name": "stool", "group": "table"},
+        "7": {"name": "chart_shelf", "group": "shelf"},
+        "8": {"name": "rug", "group": "rug", "collision": false, "solid": false},
+        "9": {"name": "window_glass", "group": "structure", "collision": false},
+        "10": {"name": "charts", "group": "shelf", "collision": false}
+      }
+    },
+    "pier": {
+      "description": "Harbour pier set piece on a seabed at z=0 (Suzu's harbour): piles, stringers and planks, optional railing, lamp posts on the left, mooring bollards on the right, open water plane. Shore end at y=0, runs out along +y.",
+      "tri_budget": 30000,
+      "params": {
+        "length": {"type": "float", "min": 4.0, "max": 20.0, "default": 10.0},
+        "width": {"type": "float", "min": 1.5, "max": 4.0, "default": 2.6},
+        "water_level": {"type": "float", "min": 0.3, "max": 2.0, "default": 0.8, "doc": "water surface height above the seabed"},
+        "deck_height": {"type": "float", "min": 0.5, "max": 2.0, "default": 0.9, "doc": "deck surface above the water"},
+        "pile_spacing": {"type": "float", "min": 1.2, "max": 4.0, "default": 2.0, "doc": "pile pairs every ~this many metres"},
+        "pile_radius": {"type": "float", "min": 0.08, "max": 0.25, "default": 0.14},
+        "railing": {"type": "int", "min": 0, "max": 1, "default": 1},
+        "lamps": {"type": "int", "min": 0, "max": 4, "default": 2, "doc": "lamp posts on the left edge"},
+        "bollards": {"type": "int", "min": 0, "max": 6, "default": 3, "doc": "mooring bollards on the right edge"},
+        "detail": {"type": "int", "min": 4, "max": 48, "default": 16},
+        "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false, "doc": "flat toon palette: 0 day, 1 dusk, 2 sakura, 3 autumn"}
+      },
+      "constraints": [],
+      "parts": {
+        "1": {"name": "piles", "group": "pier"},
+        "2": {"name": "stringers", "group": "pier"},
+        "3": {"name": "deck", "group": "pier"},
+        "4": {"name": "railing", "group": "pier", "when": {"railing": [1, 1]}},
+        "5": {"name": "lamp_posts", "group": "lamps", "when": {"lamps": [1, 4]}},
+        "6": {"name": "bollards", "group": "bollards", "when": {"bollards": [1, 6]}},
+        "7": {"name": "water", "group": "water", "open": true, "collision": false, "solid": false}
+      }
     }
   }
 }

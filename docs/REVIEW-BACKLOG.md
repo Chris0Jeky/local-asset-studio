@@ -11,6 +11,8 @@ Newest first. Tick a line when you have reviewed it; write "reverse" next to it 
 
 - [ ] **Review next keys lead the details column during a queue** (#1919, PR #1930). The single-picture verdict row keeps its place under the next-step tools. Reverse: drop the `anchor.after(panel)` line in `renderAssetQueue()`.
 - [ ] **Full editor opens with a five-step strip and a "Now:" sentence** (#1920). Recipe · Describe · Your picture (optional / not needed) · Generate · Next; after a picture the sentence names keep with K, Continue with this, generate again and Plan comparison. Cost judged acceptable: about 83 px at 1366x768 pushes the prompt box down by that much (step 2 jumps to it). Reverse: remove the `editor-steps.js` script tag; shorten the sentences if they read as too much.
+- [ ] **Compare & review shows each comparison's stage** (#1921, PR #1940). Plan · Make the candidates · Compare · Decide, with one sentence per state. A line says Keep / Needs work only mark the picture in the Library, and that the chips are your own yes/no notes. Needs another pass says it ends the comparison without a winner. Reverse: remove `planStageLine(p)` and the two copy lines in `app/static/production.js`.
+- [ ] **The compare guide reads the plan on screen but does not advance by itself** (#1939, PR #1944). Budget, inspect and decision now say *Observed* / *Needs attention* from the rendered comparison; moving to the next step stays your press, per the guide's rule "Next records navigation only". Reverse: ask for auto-advance on *Observed*.
 
 ## 2026-11-01: MOSS-Image in Make (`moss-look-1019`)
 

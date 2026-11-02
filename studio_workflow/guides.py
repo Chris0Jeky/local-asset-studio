@@ -11,7 +11,7 @@ STAGES = {
                     ('readiness', 'readiness'), ('output', 'output'), ('review', 'review')],
     'reference-edit': [('mechanism', 'reference_recipe'), ('sources', 'references'), ('wording', 'prompt'),
                        ('readiness', 'readiness'), ('output', 'output'), ('review', 'review')],
-    'compare': [('baseline', 'recipe'), ('budget', 'manual'), ('inspect', 'manual'), ('decision', 'manual')],
+    'compare': [('baseline', 'recipe'), ('budget', 'comparison_plan'), ('inspect', 'comparison_made'), ('decision', 'comparison_decided')],
     'scene': [('sources', 'selection'), ('scene', 'manual'), ('voice', 'manual'), ('review', 'manual')],
     'game-assets': [('target', 'manual'), ('sources', 'selection'), ('export', 'manual'), ('engine', 'manual')],
     'workflow': [('nodes', 'schema'), ('connections', 'manual'), ('check', 'graph_check'), ('save', 'saved'), ('run', 'manual')],
@@ -47,7 +47,7 @@ def guides():
         dict(id='compare', title='Find better settings', summary='One question → bounded comparison → keep a winner.', steps=[
             step('Set the baseline', 'Choose the recipe, references and brief you will test against in Create. Vary one thing later, not model, prompt and sampler together.', '/#create', '#selectedPreset'),
             step('Plan a bounded comparison', 'Open Plan comparison, pick one setting and its candidate values, then set the run allowance and time limit. Preparing is not starting.', '/#create', '#planComparison'),
-            step('Start and inspect the plan', 'Open Runs & review, read the stages, then start the plan yourself. Reconcile an uncertain submission; never retry it blindly.', '/#production', '#productionDetail'),
+            step('Start and inspect the plan', 'Open Compare & review, read the stages, then start the plan yourself. Reconcile an uncertain submission; never retry it blindly.', '/#production', '#productionDetail'),
             step('Choose a winner', 'Compare the candidates and record why one is useful. A repair is a deliberate new branch with its own budget, not an automatic rerun.', '/#production', '#productionDetail'),
         ]),
         dict(id='scene', title='Assemble a scene or dialogue', summary='Accepted assets → scene editor → preview → native handoff.', steps=[

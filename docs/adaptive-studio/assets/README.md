@@ -25,7 +25,8 @@ The reader is standard-library Python, reads only this directory and prints text
 | [DELIVERY-SPEC.md](DELIVERY-SPEC.md) | File/rendition/loop/layer contracts and acceptance |
 | [SESSION-HANDOFF.md](SESSION-HANDOFF.md) | Copy/paste next-session instruction and provider/tool routes |
 | [PRODUCTION-PLAN.md](PRODUCTION-PLAN.md) | Kit review, one route per request, waves and the GPU-lab queue |
-| [CHATGPT-PROMPT-PACK.md](CHATGPT-PROMPT-PACK.md) | Ready-to-paste ChatGPT prompts for the wave 1-2 `chatgpt-image` requests, and how results come back |
+| [DIRECTIONS-1923.md](DIRECTIONS-1923.md) | Three characterful art directions made with the Studio's presets, round 1 receipts and the local-first replacement prompt plan (owner's choice pending, #1923) |
+| [CHATGPT-PROMPT-PACK.md](CHATGPT-PROMPT-PACK.md) | Rejected on 2 Nov 2026, not to be run: ChatGPT prompts for the wave 1-2 `chatgpt-image` requests, and how results come back |
 | [receipt-template.json](receipt-template.json) | Empty receipt template; actual source/output fields are deliberately null |
 | [brief.py](brief.py) | Read-only brief assembly and inventory checks |
 | [test_brief.py](test_brief.py) | Offline inventory, dependency, CLI, planned-state, plan-routing and prompt-pack tests |
