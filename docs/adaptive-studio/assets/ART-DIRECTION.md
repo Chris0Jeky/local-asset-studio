@@ -1,8 +1,9 @@
 # Art direction and world continuity
 
 **Draft update for #1923, 2 November 2026 (the direction choice is the owner's).** The owner rejected the neutral
-illustration wave: "we're not just creating neutral assets". The Studio's own illustrations are now characterful anime with
-a recurring original cast, made with the Studio's own presets first. Three candidate directions (Suzu's Harbour Studio,
+illustration wave: "we're not just creating neutral assets". This draft proposes that the Studio's own illustrations become
+characterful anime with a recurring original cast, made with the Studio's own presets first; the owner may still pick a
+mix or ask for another round. Three candidate directions (Suzu's Harbour Studio,
 Impasto Atelier, Night Shift '89) are briefed in [DIRECTIONS-1923.md](DIRECTIONS-1923.md) and wait for the owner's pick in
 the Versus contest "Studio art directions (#1923)". Until then, "the guide" and "the canon" below mean the chosen
 direction's character; the environment worlds and the composition contract are unchanged.

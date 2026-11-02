@@ -48,7 +48,7 @@ step and later exists as a toon 3D model (VRM/GLB) for a living guide.
 | Mood | Cheerful, curious, warm; slice-of-life |
 | Recurring | Suzu (side braid with red ribbon, ahoge, brass compass, rolled map), the map room, the lighthouse beyond the window |
 | Local route | `anima-portrait` (Anima Aesthetic 1.1) with the bible's prompt core; `character-sheet-klein-9b` for turnarounds; `anima-ref-adapter-turbo` to carry identity from an approved canon |
-| Terms (recorded, not cleared) | Anima weights and the ref adapter: CircleStone Labs Non-Commercial (`presets/catalog.json`); fine for this private tool, a blocker for any commercial release of the art |
+| Terms (recorded, not cleared) | Anima base weights and the ref adapter: CircleStone Labs Non-Commercial licence on the weights; outputs have separate terms (section 2(e) allows any purpose), and whether a commercial pipeline is a Non-Commercial Purpose stays open ([ANIMA-LICENCE-POSITION.md](../../ANIMA-LICENCE-POSITION.md)) |
 | Do | Let her act out the step; keep her silhouette readable at thumbnail size; reuse the same props |
 | Don't | Chibi or childlike proportions; fan-service; let her sit over controls or bounce for attention; text on maps |
 
@@ -141,7 +141,9 @@ Once the owner picks a direction, the illustration rows are made **locally first
    made from the canon with `restyle-klein` / Klein edit for expression changes.
 6. **ChatGPT only where it adds something:** (a) a clean vector-like sticker version of the guide for SVG states and the
    favicon, (b) a layout fix where a local model cannot keep a text-safe area, with the approved local picture uploaded.
-   Results come back through `intake.py receipts --provider chatgpt` as before.
+   Record each such prompt and its uploaded anchors in a new section before using it. Do not run `intake.py receipts
+   --provider chatgpt` for these: for an existing asset ID it hashes the rejected pack's section, which would name the
+   wrong prompt. Intake needs a new prompt source first.
 
 Each made picture keeps its Studio job, prompt ID, recipe and hash. Generated, inspected and accepted stay separate words:
 nothing becomes accepted art until the owner says so.
