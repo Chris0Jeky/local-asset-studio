@@ -102,7 +102,7 @@ def search(blender_path, before, after, out_dir, size=96, top=3, timeout=900, be
     best = ranked[0]
     def sensitivity(dimension):  # best disagreement when that dimension is held at its default
         default = {"frame": configs[0]["frame"], "shape_keys": 0.0, "backface_culling": False}[dimension]
-        return max((r["changed_px"] for r in scored if r["config"][dimension] == default), default=0)
+        return max((r["changed_px"] for r in scored + refined if r["config"][dimension] == default), default=0)
     result = {"before": Path(before).name, "after": Path(after).name, "camera_spec": spec, "size": size,
               "grid_renders": len(configs), "refine_renders": len(neighbours), "max_changed_px": best["changed_px"],
               "best": best["config"], "detected": best["changed_px"] >= MIN_PX, "gate": {"level": LEVEL, "min_px": MIN_PX},
