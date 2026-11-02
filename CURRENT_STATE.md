@@ -1,5 +1,15 @@
 # Current state — 2 November 2026
 
+## 2026-11-02 — Contract discovery parses each runner once
+
+The frontend-contract wiring gate now shares one parsed runner snapshot across
+its class assertions and releases it at class cleanup. All ten checks, the live
+Git contract inventory and the comment/docstring/workflow matching rules remain.
+On the same 953-file corpus, actual parser calls fell from 2857 to 953 with an
+identical parsed-corpus digest; the ten tests pass without skips. No full-suite
+budget or lifetime/leak guard changed. [Evidence and timing limits](docs/verification/2026-11-02-contract-discovery-efficiency.md).
+Refs #1904 and #1882; final hosted qualification remains pending.
+
 ## 2026-11-02 — Explicit patch warnings, complete migration previews and stable Spoken Brief access
 
 The desktop launcher reports recorded ComfyUI patch drift without applying a
