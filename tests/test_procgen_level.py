@@ -35,6 +35,16 @@ class LevelChecks(unittest.TestCase):
         good = {"pieces": [{"name": "coast", "generator": "coastal_path", "position": [0, 0, 0], "yaw_deg": 0}]}
         self.assertEqual(level.check_level(good, SCHEMA), [])
 
+    def test_placements_are_validated_like_pieces(self):
+        pieces = [{"name": "market", "generator": "market_street"}]
+        good = {"pieces": pieces, "placements": [{"name": "hana", "position": [0, 12.6, 0.6], "yaw_deg": 180}, {"name": "kiri", "position": [1, 2, 3]}]}
+        self.assertEqual(level.check_level(good, SCHEMA), [])
+        bad = {"pieces": pieces, "placements": [{"name": "hana", "position": [0, 0]}, {"name": "hana", "position": [0, 0, 0], "yaw_deg": "x"},
+                                                {"name": "Kiri", "position": [0, 0, 0]}]}
+        errors = level.check_level(bad, SCHEMA)
+        self.assertEqual(len(errors), 4, errors)                                         # position, duplicate, yaw, name
+        self.assertEqual(level.check_level({"pieces": pieces, "placements": {}}, SCHEMA), ['"placements" must be a list'])
+
     def test_invalid_level_writes_nothing(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "level.json"; path.write_text(json.dumps({"pieces": []}), encoding="utf-8")

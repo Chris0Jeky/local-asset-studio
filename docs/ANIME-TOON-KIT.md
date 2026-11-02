@@ -53,7 +53,8 @@ Per light, in `ml`: lit = smoothstep around 0.18 of Factor x Shadow Raycast; rim
 replaces N.L with the SDF test: the light's direction in object space gives its angle from the face's forward axis,
 and a texel is lit while that angle (as a fraction of pi) is below its threshold in the SDF map, choosing the R or G
 channel by the side the light is on. An emission term carries base x shade colour, so a fully lit texel shows exactly
-its base colour.
+its base colour. The material's glTF base colour factor multiplies the base texture in Blender and Godot alike:
+VRoid Studio stores outfit colour tints there rather than in the texture.
 
 Verdict from an 8-angle key-light sweep on the same model: cloth and hair look alike in both styles. The face is where
 `ml` wins: a clean half-face split at side light and no blotches at front light, where classic N.L leaves patches by
@@ -92,6 +93,14 @@ otherwise), and it becomes a talking portrait. Rhubarb's mouth shapes map to the
 (B -> ih, C -> ee, D -> aa, E -> oh, F -> ou, G/H -> light ih/aa, A and X closed), eased over about 60 ms. Movie Maker
 writes the audio beside the frames (`f.wav`), so `ffmpeg -i f%08d.png -i f.wav` muxes the clip. Measured on a 7.65 s
 Kokoro line: Rhubarb 3.9 s for 45 cues.
+
+Several characters in one scene: each is a `toon_proof.gd` (or `actor.gd`) node whose `model_path`, `springs_path`,
+`sdf_path`, `voice_path`, `cues_path` and `voice_start` are set before it enters the tree, with `standalone = false` so
+it skips the camera, lights and environment that the host scene owns. A dialogue gives each actor one voice track (its
+lines at their timeline offsets, silence elsewhere) and that track's Rhubarb cues; Movie Maker mixes the players into
+`f.wav`. `actor.gd` adds a head-yaw schedule (`look`: `[[time_s, yaw_deg], ...]`) so speaker and listener can turn to
+each other. Set `action = "listen"` on an actor to skip the idle's one quick turn. Checked 2 Nov headless on a
+two-character, four-line exchange (Suzu and Kiri, 21.2 s): both VRMs load with their own springs (34 and 23 chains) and cues.
 
 The toon shader writes `EMISSION = albedo x shade` and `DIFFUSE_LIGHT += light x lit x (1 - shade + rim)`. Its ambient
 source is disabled, so the result matches Blender's. `LIGHT_COLOR` already includes PI and is divided back out.

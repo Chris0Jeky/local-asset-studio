@@ -1,7 +1,9 @@
 """Assemble procgen factory pieces into one Godot level: level JSON -> gated pieces + a runnable Godot project.
 
 level.json: {"pieces": [{"name": "coast", "generator": "coastal_path", "params": {...},
-                         "position": [x, y, z], "yaw_deg": 0.0}, ...]}   (Blender metres and degrees, Z up)
+                         "position": [x, y, z], "yaw_deg": 0.0}, ...],
+             "placements": [{"name": "hana", "position": [x, y, z], "yaw_deg": 180.0}, ...]}   (Blender metres and degrees, Z up)
+Placements (optional) are named spots for characters; the level adds a Marker3D "spawn_<name>" at each.
 Each piece is built by procgen_factory (every gate; Godot optional). The project copies each LOD0 GLB, writes
 level.json for procgen_level.gd, and adds trimesh collision for ground parts the factory leaves to the engine (group
 "ground" with collision false, e.g. coastal terrain and path). A headless Godot run then reports the assembled level.
@@ -50,6 +52,18 @@ def check_level(level, schema):
         if not (isinstance(pos, list) and len(pos) == 3 and all(_coord(v) for v in pos)):
             errors.append(f'piece {name}: position must be three numbers within +-{MAX_COORD:g} m')
         if not _coord(yaw): errors.append(f'piece {name}: yaw_deg must be a number within +-{MAX_COORD:g}')
+    spots = level.get('placements', [])
+    if not isinstance(spots, list): return errors + ['"placements" must be a list']
+    seen = set()
+    for i, spot in enumerate(spots):
+        name = spot.get('name') if isinstance(spot, dict) else None
+        if not isinstance(name, str) or not factory.NAME_RE.fullmatch(name): errors.append(f'placement {i}: name must fully match {factory.NAME_RE.pattern}'); continue
+        if name in seen: errors.append(f'placement {name}: duplicate name')
+        seen.add(name)
+        pos, yaw = spot.get('position'), spot.get('yaw_deg', 0.0)
+        if not (isinstance(pos, list) and len(pos) == 3 and all(_coord(v) for v in pos)):
+            errors.append(f'placement {name}: position must be three numbers within +-{MAX_COORD:g} m')
+        if not _coord(yaw): errors.append(f'placement {name}: yaw_deg must be a number within +-{MAX_COORD:g}')
     return errors
 
 
@@ -69,6 +83,7 @@ def assemble(level_path, output, blender, godot=None, node=None, timeout=180):
         manifest['pieces'].append({'name': piece['name'], 'generator': piece['generator'], 'glb': glb, 'sha256': file_sha(project / glb),
                                    'position': piece.get('position', [0, 0, 0]), 'yaw_deg': piece.get('yaw_deg', 0.0),
                                    'trimesh_parts': trimesh_parts(schema['generators'][piece['generator']]), 'piece_state': report['state']})
+    manifest['placements'] = [{'name': s['name'], 'position': s['position'], 'yaw_deg': s.get('yaw_deg', 0.0)} for s in level.get('placements', [])]
     write_json(project / 'level.json', manifest)
     (project / 'project.godot').write_text(PROJECT, encoding='utf-8')
     (project / 'level.tscn').write_text(SCENE, encoding='utf-8')
@@ -80,8 +95,9 @@ def assemble(level_path, output, blender, godot=None, node=None, timeout=180):
         if len(lines) != 1: raise EvidenceError('Godot printed no level report; see godot-level-stdout.log')
         manifest['godot'] = json.loads(lines[0][len('LEVEL_REPORT '):])
         want = sum(1 for p in manifest['pieces'] for _ in p['trimesh_parts'])
-        if manifest['godot']['pieces'] != len(manifest['pieces']) or manifest['godot']['engine_trimesh'] != want:
-            raise EvidenceError(f'Godot level mismatch: {manifest["godot"]}, want {len(manifest["pieces"])} pieces and {want} engine trimesh collisions')
+        if (manifest['godot']['pieces'], manifest['godot']['engine_trimesh'], manifest['godot']['placements']) != (len(manifest['pieces']), want, len(manifest['placements'])):
+            raise EvidenceError(f'Godot level mismatch: {manifest["godot"]}, want {len(manifest["pieces"])} pieces, {want} engine trimesh '
+                                f'collisions and {len(manifest["placements"])} placements')
     write_json(out / 'level-report.json', manifest)
     return manifest
 

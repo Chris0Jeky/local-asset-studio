@@ -493,6 +493,67 @@ What this shows and does not show:
 - It does not show performance on real assets, on damage that needs new operations (UVs, topology, weights, image
   relinking), or with a wider vocabulary.
 
+### Realistic repair benchmark (2 Nov 2026)
+
+```bash
+python scripts/blender_corpus.py build --blender <blender.exe> --out-dir <new> --source <asset.blend>
+python scripts/blender_repair_bench.py aggregate --reports <run>/repair-bench.json ...
+```
+
+`--source` builds the corpus from a real `.blend` instead of the generated lab asset. Blender opens the asset and
+saves a copy with relative paths remapped, so textures and libraries still resolve; the original is only read. Defects target objects by role, and the offset scales with the target. A defect that
+does not apply to the asset is recorded in `not_applicable` instead of failing the build: for example, no armature
+or no shape keys. `blender_apply_edit` gained `delete`, behind the same allow-list and precondition checksum, so a
+duplicate can now be removed instead of hidden. Deletion is refused for an object that other objects or scenes depend on (children, constraint or modifier targets, the scene camera). `compare_manifests` now also fails a lost UV map.
+
+Corpora: the LAS articulated chest plus six procgen-lab factory outputs (prop-0-1, prop-2-1, room-default-1, the
+room-kit crate and plant, shrine-default-1). That is 7 assets and 57 cases: 7 or 8 defects each, plus the control.
+The deterministic baseline caught every seeded defect on every asset, and every control was clean. Both agents ran
+under the confined harness, one asset at a time.
+
+| Outcome | Haiku 5.5 | Sol 6.1 | Toy corpus (each agent) |
+| --- | --- | --- | --- |
+| Exact repair, repairable cases | **18/28** | **22/28** | 3/4 |
+| duplicate-overlap (now via `delete`) | 7/7 exact | 7/7 exact | structurally clean (no delete then) |
+| omitted-mesh | 7/7 exact | 7/7 exact | exact |
+| transform-offset | 3 exact, 1 structurally clean, 1 harmful, 2 declined | **7/7 exact** | exact |
+| material-mismatch | 1 exact, 5 structurally clean, 1 declined | 1 exact, 6 structurally clean | exact |
+| Correct declines (out of vocabulary) | **22/22** | **22/22** | 8/8 |
+| Controls left untouched | 7/7 | 7/7 | 1/1 |
+| Collateral change | **1**: prop-2-1 transform-offset | **none** | none |
+| Median time per case | 29 s | 36 s | 26 s / 24 s |
+| Model cost, whole run | $0.252 | not reported by Codex | $0.045 / not reported |
+
+What the misses are:
+- **material-mismatch, "structurally clean" on 6 of 7 assets for both agents.** This comes from how the defect is
+  seeded, not from the agents. Seeding creates an orphan `Material` datablock (8 materials become 9). The agent
+  restores the right slot, but the vocabulary cannot purge the orphan, so the checksum still differs. Only the chest,
+  which already had a `Material`, can be repaired exactly. Next step: seed with an existing material, or count
+  orphan purge as part of the defect.
+- **Haiku transform-offset.**
+  - prop-2-1 is the one harmful case: Haiku rounded the target's x and y location, and that showed up in the
+    object's deform moments.
+  - On room-default-1 it declined because `blender_describe_scene` output on the big room went over the reply limit,
+    so it could not read the reference transforms.
+  - On room-kit-plant it fixed the offset but then declined because of float-level residue.
+  - Sol read the values through `blender_compare_to` and repaired all seven exactly.
+- Declines and controls are perfect for both agents on real assets, the same as on the toy corpus.
+
+Against the toy corpus, real assets kept the declines and collateral discipline. They exposed two façade limits
+(describe output size, no orphan purge) and one seeding artefact. They also separated the agents on precise
+transform work: Sol was exact on all seven, Haiku on three.
+
+Not shown: damage that needs new operations (weights, shape keys, UVs, topology, images), assets with armatures
+other than the chest, and repeat runs for variance. Each agent ran each case once.
+
+Evidence is under `E:/local-asset-studio-labs/rnd-20261102/blender-worker/`:
+- `corpus/realistic-v2/<asset>/` holds the corpora: `corpus.json`, variants and evidence renders.
+- `evidence/realistic-repair-2026-11-02/` holds the runs:
+  - `claude-haiku/<asset>/` and `codex-sol/<asset>/` hold the per-case `row.json`, `agent.log` and saved repairs.
+  - `final-sol/` holds the reports used above, after merging reruns. Sol's chest is
+    `codex-sol/articulated-chest-combined`, built from the original run plus the rerun of its 5 network-failed cases.
+  - Sol's interrupted partial folders (`prop-2-1`, `room-default-1`) were superseded by their `-b` reruns and are
+    not counted.
 
 ## Check this export (Studio job)
 

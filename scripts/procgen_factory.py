@@ -32,7 +32,7 @@ TOL = 0.001          # 1 mm for exact box dimensions and pivots
 OVERLAP_SHRINK = 0.002
 UV_RES = 512
 # Pivot rule per generator: assets stand on z=0; rooms and shrines start at y=0 (open front / first step).
-FRONT_ANCHORED = {'room_kit', 'shrine', 'pier', 'coastal_path', 'tide_pools'}
+FRONT_ANCHORED = {'room_kit', 'shrine', 'pier', 'coastal_path', 'tide_pools', 'market_street'}
 
 
 def load_schema(path=SCHEMA_PATH):
@@ -122,6 +122,11 @@ def expected_bounds(generator, p, detail=None):
         upper = max(p['stair_top'] if p['stair'] else 0.0, rock)
         lower = max(p['stair_top'] if p['stair'] else 0.0, p['shelf_height'] - 0.25)
         return [p['width'] + 6, y0 + p['length'] + 3, upper], [0, 0, 1 - lower / upper]
+    if generator == 'market_street':
+        # The paved slab (0.1 m) spans the street, both house rows and 0.5 m; the tallest thing is a house whose seeded
+        # 0.9..1.15x height scales its roof too, and which house draws the top depends on the seed.
+        top = p['house_height'] + p['roof_height']
+        return [p['width'] + 2 * p['house_depth'] + 1.0, p['length'], 0.1 + 1.15 * top], [0, 0, 1 - (0.1 + 0.9 * top) / (0.1 + 1.15 * top)]
     raise EvidenceError(f'unknown generator {generator!r}')
 
 
