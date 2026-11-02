@@ -53,7 +53,8 @@ Per light, in `ml`: lit = smoothstep around 0.18 of Factor x Shadow Raycast; rim
 replaces N.L with the SDF test: the light's direction in object space gives its angle from the face's forward axis,
 and a texel is lit while that angle (as a fraction of pi) is below its threshold in the SDF map, choosing the R or G
 channel by the side the light is on. An emission term carries base x shade colour, so a fully lit texel shows exactly
-its base colour.
+its base colour. The material's glTF base colour factor multiplies the base texture in Blender and Godot alike:
+VRoid Studio stores outfit colour tints there rather than in the texture.
 
 Verdict from an 8-angle key-light sweep on the same model: cloth and hair look alike in both styles. The face is where
 `ml` wins: a clean half-face split at side light and no blotches at front light, where classic N.L leaves patches by
