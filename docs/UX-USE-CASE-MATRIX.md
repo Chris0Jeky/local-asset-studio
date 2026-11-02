@@ -1,5 +1,21 @@
 # UX use-case matrix
 
+## Compare & review: a comparison names its stage and what each button does, 2 November 2026 (#1921)
+
+The owner reached three candidates from a guided workflow but "didn't know what was happening at any stage". A
+comparison plan now shows four stages (Plan, Make the candidates, Compare, Decide) with the current one marked, and one
+plain sentence for its state: planned and waiting for Start; making the candidates, N of M done; all made, compare
+them (Review opens the desk, or Quick pick); decided, with the winner or "none was right yet". One line under the
+blind toggle says Keep / Needs work only mark the picture in the Library, and that the chips are the owner's own yes/no
+notes ("style 1/1" = 1 yes of 1 answered). Needs another pass now says it ends the comparison without a winner and
+makes nothing new.
+
+| Journey | Before | After | Proof |
+| --- | --- | --- | --- |
+| `review-and-keep-winner` | stages and button meanings not shown | same clicks; reads *3 · Compare* with "candidates are made … Review opens the side-by-side desk" before the choice and *4 · Decide*, "Decided: Candidate …" after it | `tests/studio_use_cases.py --case review-and-keep-winner`; fails on main's `production.js` |
+
+Not changed: the guide coach panel (it still does not advance by itself when a plan starts), the review desk, the plan
+list.
 ## Full editor: a step strip that says where you are and what comes next, 2 November 2026 (#1920)
 
 The owner got a good first picture in the Full editor but felt lost beyond it. The editor card now opens with five
