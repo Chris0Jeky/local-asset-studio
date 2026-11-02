@@ -79,7 +79,9 @@ def compare_manifests(source, roundtrip):
     rt_images = {i["name"]: i for i in roundtrip["images"]}
     for obj in source["objects"]:
         if obj["name"] not in src_meshes and obj["type"] != "ARMATURE":
-            exclusions.append(f"{obj['name']} ({obj['type']}{', hidden' if obj['hide_render'] or not obj['visible'] else ''}) is not exported by the LAS settings")
+            reason = ("is not exported by the LAS settings" if obj["type"] in ("LIGHT", "CAMERA") or obj["type"] == "MESH"
+                      else "is not compared (only visible meshes and armatures are)")
+            exclusions.append(f"{obj['name']} ({obj['type']}{', hidden' if obj['hide_render'] or not obj['visible'] else ''}) {reason}")
     for image in source["images"]:
         if image["missing"]: failures.append(f"source image {image['name']} is missing ({image['file']})")
     used = set()
@@ -138,6 +140,15 @@ def compare_manifests(source, roundtrip):
         for frame, a, b in zip(sample["frames"], sample["moments"], other["moments"]):
             if _moments_differ(a, b):
                 failures.append(f"{name}: deformed shape differs at frame {frame}"); break
+    rt_objects, exported = roundtrip.get("object_samples", {}), set(src_meshes) | {a["name"] for a in source["objects"] if a["type"] == "ARMATURE"}
+    for name, sample in sorted(source.get("object_samples", {}).items()):
+        if name not in exported: continue  # excluded helpers carry no export obligation
+        other = rt_objects.get(name)
+        if other is None or other["frames"] != sample["frames"]:
+            failures.append(f"{name}: object animation frames {sample['frames']} -> {other and other['frames']}"); continue
+        for frame, a, b in zip(sample["frames"], sample["matrices"], other["matrices"]):
+            if _drift(a, b) > POSE_TOLERANCE:
+                failures.append(f"{name}: object transform differs at frame {frame}"); break
     rt_poses = roundtrip.get("pose_samples", {})
     for name, sample in sorted(source.get("pose_samples", {}).items()):
         other = rt_poses.get(name)

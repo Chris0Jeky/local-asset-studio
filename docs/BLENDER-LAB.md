@@ -240,6 +240,32 @@ Measured on 2 Nov 2026 with 5.4 alpha:
   (not allow-listed). It then ran `blender_reimport_validate`, which passed with no failures (8 turns, $0.018).
 - Codex GPT-6.1 Sol read the same semantic checksum through the same server.
 
+## Real LAS asset: the articulated chest
+
+`scripts/articulated_prop.py` builds a LAS-authored asset: a chest whose lid is animated at object level, with no
+armature. Measured on 2 Nov 2026:
+- Its manifest checksum is identical whether 4.5.13 or 5.4 alpha builds the chest, and whether either reads it. The
+  live test `test_live_articulated_chest_keeps_its_cross_build_checksum` pins it against
+  `tests/fixtures/blender_lab/manifest-articulated-chest.json`.
+- The sentinel passes on both builds. The hidden `CollisionProxy`, the lights and the camera are reported as expected
+  exclusions.
+
+The chest exposed a gap: object-level animation was not sampled, so a flattened or truncated lid animation passed.
+`object_samples` now hold world matrices at every frame of the moving action's range (thinned to at most 121). The
+moving action is the object's own or an ancestor's, so a mesh carried by an animated parent Empty is covered. Skinned
+meshes are skipped here: glTF stores them in armature space, and `deform_samples` cover their world-space motion.
+
+With several glTF animations, Blender's importer activates only one clip and leaves the rest as NLA strips. Each
+build picks a different first clip. The reimport step activates each object's first strip, mutes that track and
+reports it under `import_activated_clips` in `roundtrip.json`. Two genuine export losses showed up while testing this:
+- A skinned mesh parented to an animated Empty loses the Empty's motion, because glTF re-parents skinned meshes under
+  their armature. The sentinel reports it.
+- Clips other than the active one are not played when the GLB is reopened in Blender as-is. The sentinel compares
+them for exported objects and skips excluded helpers. Seeded on the chest, on both builds:
+- `bone-twist-lost`, which flattens rotation curves, fails with `ChestLid: object transform differs at frame 16`.
+- `truncated-animation` fails with `ChestLid: object animation frames [1, 16, 30, 45, 60] -> [1, 8, 16, 23, 30]`.
+- Neither produces a visual warning.
+
 ## Which tool for what
 
 Two stacks were built in parallel on 2 Nov 2026: this lab, and the offline DCC evidence work from #1911. They now
