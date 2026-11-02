@@ -22,6 +22,8 @@ class ScoreTest(unittest.TestCase):
         self.assertEqual((s["omitted_mesh"]["region_ok"], s["omitted_mesh"]["side_ok"], s["omitted_mesh"]["side_n"]), (1, 1, 1))
         # A confidence threshold drops the low-confidence clean false alarm only.
         self.assertEqual(rc.score(rows, threshold=0.5)["categories"]["asymmetry"]["fp"], 1)
+        self.assertEqual(rc.score(rows)["detection"], {"tp": 1, "fp": 1, "fn": 0, "tn": 0, "precision": 0.5, "recall": 1.0})
+        self.assertIn("any defect", rc.table(rc.score(rows)))
 
     def test_duplicate_reports_keep_the_most_confident(self):
         r = row("asymmetry", {}, part="arm.L", side="L")

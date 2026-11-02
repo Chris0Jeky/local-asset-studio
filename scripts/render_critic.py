@@ -20,15 +20,18 @@ RUBRIC = {
     "missing_texture": "A surface shows the bright magenta/pink 'missing texture' colour, or a flat placeholder where a "
                        "pattern or image texture belongs.",
     "omitted_mesh": "A part that should exist is absent: e.g. a missing hand, eye, arm, leg or head (compare with its "
-                    "mirror partner and with the other views).",
+                    "mirror partner and with the other views). Stylised models are deliberately simple: details absent "
+                    "on both sides by design (no nose, no mouth) are not omissions.",
     "material_swap": "Materials are on the wrong parts: e.g. skin colour on clothing, a shirt pattern on the head or "
                      "legs, trouser colour on skin.",
-    "flipped_normals": "A part looks inside-out: hollow, unnaturally black or dark, or showing its inner back surface "
-                       "instead of its outside.",
+    "flipped_normals": "A part looks inside-out: rendered solid black or hollow while similar parts are lit normally, "
+                       "or showing its inner back surface instead of its outside.",
     "broken_weights": "Geometry is stretched into spikes, shards or smeared ribbons, as when skinning weights are wrong "
                       "and vertices follow the wrong bone.",
-    "white_material": "A part renders plain flat white where it should have colour or texture (a failed shader).",
-    "asymmetry": "A left/right paired part (arm, leg, hand, eye) clearly differs in size or length from its partner.",
+    "white_material": "A part renders plain flat white with no texture or colour, unlike the rest of the model (a failed "
+                      "shader).",
+    "asymmetry": "Both parts of a left/right pair (arm, leg, hand, eye) exist but one is clearly bigger, smaller, longer "
+                 "or shorter than its partner. A missing partner is omitted_mesh; a different pose or angle is fine.",
     "backside_hole": "A hole in the surface through which the background or the inside of the model shows.",
 }
 REGIONS = ("none", "head", "face", "torso", "left_arm", "right_arm", "left_hand", "right_hand", "left_leg", "right_leg",
@@ -55,7 +58,8 @@ def messages(images, rubric, reference=()):
     checklist = "\n".join(f"- {k}: {v}" for k, v in rubric.items())
     task = ("You are a strict technical QA checker for 3D renders. Judge technical defects only, never style or taste. "
             "The views show one 3D model; 'left'/'right' views and regions mean the model's own left and right "
-            "(in the front view the model's left is on the image right).\n")
+            "(in the front view the model's left is on the image right). Each view shows a different side, so a "
+            "feature seen from one side only (a face, a chest emblem) is normal.\n")
     content = []
     if reference:
         task += ("The REFERENCE views are an approved render of the same model. Report a defect only if it is in the "
@@ -132,7 +136,7 @@ def score(rows, rubric=RUBRIC, threshold=0.0):
     A seeded sample is positive only for its own category; every other category on it, and all on clean samples, are
     negatives, so cross-category false alarms count against precision."""
     stats = {k: {"tp": 0, "fp": 0, "fn": 0, "tn": 0, "region_ok": 0, "side_ok": 0, "side_n": 0} for k in rubric}
-    errors = 0
+    detect = {"tp": 0, "fp": 0, "fn": 0, "tn": 0}; errors = 0
     for r in rows:
         if "error" in r: errors += 1; continue
         t = r["truth"]
@@ -140,6 +144,8 @@ def score(rows, rubric=RUBRIC, threshold=0.0):
         for d in r["defects"]:  # keep the most confident report per type
             c = float(d.get("confidence", 1))
             if c >= threshold and c >= float(found.get(d["type"], {}).get("confidence", -1)): found[d["type"]] = d
+        flagged, defective = bool(found), t["category"] != "clean"  # sample level: anything wrong, whatever the label
+        detect["tp" if flagged and defective else "fp" if flagged else "fn" if defective else "tn"] += 1
         for k in rubric:
             v = found.get(k, {}); pred = bool(v)
             actual = t["category"] == k; s = stats[k]
@@ -148,10 +154,10 @@ def score(rows, rubric=RUBRIC, threshold=0.0):
                 reg = v.get("region", "none"); s["region_ok"] += region_family(reg) in accepted_regions(t)
                 if t.get("side") and reg.startswith(("left_", "right_")):
                     s["side_n"] += 1; s["side_ok"] += reg.startswith("left_" if t["side"] == "L" else "right_")
-    for s in stats.values():
+    for s in list(stats.values()) + [detect]:
         s["precision"] = round(s["tp"] / (s["tp"] + s["fp"]), 3) if s["tp"] + s["fp"] else None
         s["recall"] = round(s["tp"] / (s["tp"] + s["fn"]), 3) if s["tp"] + s["fn"] else None
-    return {"categories": stats, "samples": len(rows), "errors": errors, "threshold": threshold}
+    return {"categories": stats, "detection": detect, "samples": len(rows), "errors": errors, "threshold": threshold}
 
 
 def table(summary):
@@ -159,6 +165,8 @@ def table(summary):
     for k, s in summary["categories"].items():
         lines.append(f"| {k} | {s['tp']} | {s['fp']} | {s['fn']} | {s['precision']} | {s['recall']} | "
                      f"{s['region_ok']}/{s['tp']} | {s['side_ok']}/{s['side_n']} |")
+    d = summary["detection"]
+    lines.append(f"| **any defect (sample level)** | {d['tp']} | {d['fp']} | {d['fn']} | {d['precision']} | {d['recall']} | | |")
     return "\n".join(lines)
 
 
@@ -178,7 +186,8 @@ def main(argv=None):
     elif a.cmd == "eval": evaluate(a.set_dir, a.out, rubric, a.reference_root, a.server, a.limit)
     elif a.cmd == "score":
         rows = [json.loads(l) for l in Path(a.results).read_text(encoding="utf-8").splitlines() if l.strip()]
-        summary = score(rows, threshold=a.threshold); print(table(summary)); print(json.dumps({k: v for k, v in summary.items() if k != "categories"}))
+        summary = score(rows, threshold=a.threshold); print(table(summary))
+        print(json.dumps({k: v for k, v in summary.items() if k not in ("categories", "detection")}))
     elif a.cmd == "serve":
         # Loopback only, one slot (requests are sequential), every layer on ONE named device: the Vulkan build also sees
         # the Intel iGPU and by default splits layers across both, which ran generation at ~1 token/s here.
