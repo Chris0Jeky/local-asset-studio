@@ -371,16 +371,25 @@ def critic_signal(reference_dir, candidate_dir, server=None):
     options = {"diff_only": server is None, **({"server": server} if server else {})}
     try:
         result = render_critic.check([str(candidate_dir / n) for n in names], reference=[str(reference_dir / n) for n in names], **options)
+        require(isinstance(result, dict), "Invalid render critic result")
+        if "error" in result or result.get("evidence_complete", True) is not True:
+            return {"available": False, "evidence_complete": False, "observation": result,
+                    "error": str(result.get("error") or "Render critic evidence is incomplete")[:300]}
+        require(type(result.get("changed")) is bool and isinstance(result.get("pixel_diff"), dict),
+                "Invalid render critic verdict")
+        counts = [v.get("changed_px") if isinstance(v, dict) else None for v in result["pixel_diff"].values()]
+        require(counts and all(type(n) is int and n >= 0 for n in counts), "Invalid render critic pixel counts")
+        return {"available": True, "tool": "render_critic", "mode": "pixel gate" if server is None else "pixel gate + vision model",
+                "changed": result["changed"], "changed_px": sum(counts), "defects": result.get("defects", []),
+                "observation": result}
     except Exception as exc:  # a failing critic (unreachable model server, bad image) never discards the primary result
         return {"available": False, "error": f"{type(exc).__name__}: {exc}"[:300]}
-    return {"available": True, "tool": "render_critic", "mode": "pixel gate" if server is None else "pixel gate + vision model",
-            "changed": bool(result["changed"]), "changed_px": sum(v["changed_px"] for v in result["pixel_diff"].values()),
-            "defects": result.get("defects", [])}
 
 
 def second_opinion(critic, warnings):
     """Agreement between the primary diff and the critic; a change only the critic sees becomes a visual warning."""
-    if not critic.get("available"): return None
+    if (critic.get("available") is not True or "error" in critic
+            or critic.get("evidence_complete", True) is not True): return None
     agree = critic["changed"] == bool(warnings)
     if critic["changed"] and not warnings:
         warnings.append(f"independent render critic sees a change the primary diff did not ({critic['changed_px']} px over the lit views)")

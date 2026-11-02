@@ -78,3 +78,11 @@ For real retained native captures, use the existing `render_critic.py check ... 
 - [NIST exact binomial confidence limits](https://itl.nist.gov/div898/software/dataplot/refman2/auxillar/exacbino.htm), checked 2 November 2026: small counts need appropriate uncertainty analysis. No confidence interval is assigned to this deliberately correlated fixture set.
 
 These are implementation references and experimental reasoning, not a re-verification of every earlier research report's hardware or product claim.
+
+## Saved-observation continuation
+
+The [follow-up on truthful critic availability and saved-result replay](CRITIC-OBSERVATION-CONTINUATION-2026-11-02.md)
+fixes #1977 without changing this experiment's thresholds. Its
+[repository-retained observations](../../research/agentic-creation/critic-observations/README.md)
+make every synthetic decision reproducible from Git. New sentinel results carry
+complete observations; use the explicit `--input-kind sentinel` replay mode.

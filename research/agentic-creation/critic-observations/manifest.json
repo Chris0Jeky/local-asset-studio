@@ -1,0 +1,52 @@
+{
+  "base_commit": "686411437a9c3264434851c4624ff8a2cf3b0621",
+  "captured_at_utc": "2026-11-02T13:39:36.100982+00:00",
+  "cases": 24,
+  "evidence_kind": "owned_synthetic_pixels",
+  "floors": [
+    0,
+    0.001,
+    0.004
+  ],
+  "generated_artifacts": 157,
+  "generated_artifacts_manifest_sha256": "5b47006dcf65226999e6f7e12cbdfc1caff9e962d51beae1470e10ee1e09d407",
+  "limits": [
+    "Related synthetic cases are not independent production trials.",
+    "Sparse26 is nuisance by construction, not measured Cycles noise.",
+    "No native Blender, model inference, AMD, art, licence or runtime acceptance."
+  ],
+  "native_execution": false,
+  "observations_sha256": "e2405dce5327cf0fb89a49930d0c9e8b90bca88fca7a6c568ae73a30c087c622",
+  "pillow": "12.3.0",
+  "production_policy_changed": false,
+  "python": "3.13.5",
+  "schema": "las.critic-observation-study.v1",
+  "source_sha256": {
+    "render_critic.py": "28856c1e7ec49d9cade1ca5943ad8250548c53afabb7e9e7da18ee70e2e51891",
+    "render_critic_policy.py": "041cc92d1b97ce9165ce5dc6a6ff0da4c1297856f5a05b97b7579990b9236aa2",
+    "render_critic_study.py": "c33c4a99a8daf72993bf0ed7724ce298ec561325bfacf4edf3f7aa1a0dd14925"
+  },
+  "synthetic_confusion": {
+    "0": {
+      "fn": 0,
+      "fp": 3,
+      "incomplete": 0,
+      "tn": 6,
+      "tp": 15
+    },
+    "0.001": {
+      "fn": 3,
+      "fp": 0,
+      "incomplete": 0,
+      "tn": 9,
+      "tp": 12
+    },
+    "0.004": {
+      "fn": 5,
+      "fp": 0,
+      "incomplete": 0,
+      "tn": 9,
+      "tp": 10
+    }
+  }
+}
