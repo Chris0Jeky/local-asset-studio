@@ -120,10 +120,18 @@ It expects `res://mocap/walk.json` and `run.json`. Mocap data is not in Git; rec
 - **Feet.** `TwoBoneIK3D` targets come from downward rays onto the level's colliders, and a foot stays locked where it
   planted while its ankle is within 1.5 cm of rest height. Measure foot sliding after the modifiers have run (the
   skeleton's `skeleton_updated` signal); a pose read in `_process` is from before the IK.
+- **Re-stepping.** When the body turns or drifts so far that the pose wants a planted foot more than 18 cm away, that
+  foot lifts 6 cm, arcs to where the pose wants it over 0.25 s and re-locks, one foot at a time. Turning in place and
+  heading changes mid-walk become small steps instead of a twisted leg. Set `gait.restep = false` to turn it off.
 
 Measured on 2 Nov 2026 on a VRoid model with Bandai Namco Research Motiondataset 1 clips (CC BY-NC 4.0). The test moved
 the body like a game controller: idle, a 1.1 m/s walk, a 2.6 m/s run, then a stop. Mean stance-phase foot slide fell from
-2.26 m/s with the old in-place procedural walk to 0.017 m/s with the gait (p95 from 4.21 to 0.003; the mean carries a few rare spikes). The retarget is
+2.26 m/s with the old in-place procedural walk to 0.017 m/s with the gait (p95 from 4.21 to 0.003; the mean carries a few rare spikes).
+On a turning route (curves at up to 40 degrees per second, then a 180-degree turn in place), re-stepping cut the largest
+distance between a planted foot and where the pose wanted it from 0.335 m to 0.186 m; mean stance slide went from 0.068
+to 0.072 m/s. Those are re-measurements made after two machine restarts, headless at a fixed 30 fps. On the straight route
+the same test now gives 0.081 m/s for both the re-stepping version and the earlier one, so the 0.017 m/s above did not
+reproduce; the cause was not found. The retarget is
 swing-only: limbs get no twist, and the hands and head keep the idle pose.
 
 ## Limits
