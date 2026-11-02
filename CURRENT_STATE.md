@@ -1,5 +1,27 @@
 # Current state — 2 November 2026
 
+## 2026-11-02 — Explicit patch warnings, complete migration previews and stable Spoken Brief access
+
+The desktop launcher reports recorded ComfyUI patch drift without applying a
+patch or changing runtime admission. Privacy-migration previews now name retained
+picture acceptances and bind their full records through publication; a changed
+acceptance invalidates the preview, and the acceptance itself remains untouched.
+An actual hot SQLite journal fixture proves that planning preserves recovery
+evidence while refusing unreadable project dependencies.
+
+Spoken Brief access refreshes now update both Preview and Discover, and obsolete
+capability/discovery replies cannot replace the latest state. The source-preview
+symlink test now exercises distinct aliases instead of skipping an existing-path
+error. Preview wording scopes its no-generation/no-save statement to that operation.
+
+Focused source, real-SQLite/HTTP and Node regressions passed on synthetic fixtures;
+the complete Spoken Brief group passed 280 tests with one Windows-junction skip.
+Windows launcher and browser qualification belong to the exact-head PR checks.
+[Scope, causal evidence and limits](docs/verification/2026-11-02-reliability.md).
+Refs #1905, #1900, #1799, #1877, #1879 and #1880. No personal runtime was patched,
+no personal media was migrated, and no generation or owner art acceptance is claimed.
+The parked #1883/#1884 source-introduction work and HUMAN_TODO.md choices remain open.
+
 ## 2026-11-02 — Blender alpha compatibility
 
 The articulated-prop adapter now uses the assigned lid datablock's F-Curve API.
