@@ -103,8 +103,13 @@ def exercise(out, browser_executable=None):
                     context = browser.new_context(viewport={'width': 1440, 'height': 1000}, reduced_motion='reduce')
                     try:
                         page = context.new_page(); page.set_default_timeout(10000); page.on('pageerror', page_error)
+
+                        def ready(scope):
+                            # Family observations also read the Create owner's stamp; Workspace can load first.
+                            page.wait_for_function('(scope)=>window.StudioSetupDraft&&backendActive==="primary"&&catalog?.presets?.some(p=>p.id==="anima-portrait")&&selected?.id&&assetActivePrivacy===scope&&!!assetState.workspace_id&&assetPaging&&!assetRefreshing', arg=scope)
+
                         page.goto(origin+'/#assets', wait_until='domcontentloaded')
-                        page.wait_for_function('!!catalog&&!!assetState.workspace_id&&!assetRefreshing')
+                        ready('regular')
 
                         def open_parent(identifier):
                             if page.locator('#assetDialog').evaluate('(el)=>el.open'):
@@ -180,7 +185,7 @@ def exercise(out, browser_executable=None):
                         studio._request = lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError('Model request forbidden'))
                         handler.studio = studio
                         page.reload(wait_until='domcontentloaded')
-                        page.wait_for_function('assetActivePrivacy==="private"&&!!assetState.workspace_id&&!assetRefreshing')
+                        ready('private')
                         page.evaluate('(id)=>openAsset(id)', children[-1])
                         page.wait_for_function('document.querySelectorAll("#assetFamily [data-family-step]").length===2')
                         check(page.locator('#assetFamily [data-family-step]').evaluate_all('(els)=>els.map(e=>e.dataset.familyStep)') == [private, children[-1]],
