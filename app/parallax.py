@@ -34,7 +34,7 @@ from collections import deque
 from contextlib import ExitStack
 from pathlib import Path
 
-from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageOps, ImageStat
+from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageStat
 from studio_workflow.privacy import is_regular, require_regular_creation
 
 import continuation
@@ -165,11 +165,12 @@ def _cost(patch, other, x, y, patch_sum):
     """Normalised edge mismatch, 0 (same edges) to 1 (no shared edge): SAD over the two windows' edge mass, so a window moved
     onto an empty area (the isolate's white) scores as the worst match, not the best one."""
     window = other.crop((x, y, x + patch.size[0], y + patch.size[1]))
-    return sum(ImageStat.Stat(ImageChops.difference(patch, window)).sum) / (patch_sum + sum(ImageStat.Stat(window).sum) + 1)
+    # edge_map yields 8-bit L images: byte totals are exact without building a histogram for every candidate.
+    return sum(ImageChops.difference(patch, window).tobytes()) / (patch_sum + sum(window.tobytes()) + 1)
 
 
 def _search(patch, other, x, y, centre, radius):
-    width, height = patch.size; costs = {}; patch_sum = sum(ImageStat.Stat(patch).sum)
+    width, height = patch.size; costs = {}; patch_sum = sum(patch.tobytes())
     for dy in range(centre[1] - radius, centre[1] + radius + 1):
         for dx in range(centre[0] - radius, centre[0] + radius + 1):
             if 0 <= x + dx and 0 <= y + dy and x + dx + width <= other.size[0] and y + dy + height <= other.size[1]: costs[(dx, dy)] = _cost(patch, other, x + dx, y + dy, patch_sum)
@@ -470,11 +471,7 @@ def _source(studio, asset_id):
     context = continuation.source_context(studio, asset_id)
     raw = studio.assets.file(asset_id).read_bytes()
     if hashlib.sha256(raw).hexdigest() != context["sha256"]: raise ValueError("Source bytes changed. Restore the original asset before splitting it.")
-    # Match the displayed picture and the engine loader without rewriting source bytes.
-    with Image.open(io.BytesIO(raw)) as decoded:
-        if decoded.format != 'JPEG': return context, decoded.convert('RGB')
-        with ImageOps.exif_transpose(decoded) as oriented:
-            return context, oriented.convert("RGB")
+    return context, continuation.source_rgb(raw)
 
 
 def source_status(studio, asset_id):

@@ -43,7 +43,7 @@
   function createComparison(options){
     let epoch=0;
     const cancel=()=>{epoch++;};
-    async function choose(report,parent){
+    async function choose(report,parent,expected){
       const child=options.asset(),context=options.context(),stamp=JSON.stringify(context),serial=++epoch;
       need(child&&identity(child.id)&&HASH.test(child.sha256),'The current picture is unavailable.');
       const id=child.id,sha=child.sha256,privacy=child.privacy===undefined?'regular':child.privacy;
@@ -64,6 +64,8 @@
         };
         const now=image(id),original=image(parent);
         need(now.sha256===sha,'The current picture changed. Reopen it before comparing.');
+        if(expected)for(const [fresh,prior] of [[now,expected.child],[original,expected.source]])
+          need(prior&&['id','workspace_id','sha256','privacy'].every(key=>fresh[key]===prior[key]),'A recorded comparison picture changed. Choose the source again after reviewing it.');
         return {child:now,source:original,current};
       }catch(error){if(!current())return null;throw error;}
     }
@@ -102,7 +104,7 @@
     const d=options.document||document,q=s=>d.querySelector(s),dialog=q('#assetDialog');if(!dialog)return null;
     const panel=d.createElement('section');panel.id='assetFamily';panel.className='asset-family';q('#assetLineage').after(panel);
     const comparisonPanel=d.createElement('section');comparisonPanel.id='assetSourceComparison';comparisonPanel.className='asset-source-comparison';comparisonPanel.hidden=true;q('#assetDetailMedia').before(comparisonPanel);
-    let epoch=0,controller=null,currentId=null,comparisonReport=null,comparisonScope=null;
+    let epoch=0,controller=null,currentId=null,comparisonReport=null,comparisonScope=null,shownPair=null,shownSession=null,choiceEpoch=0;
     const button=(label,attribute,value)=>{const b=d.createElement('button');b.type='button';b.textContent=label;b.dataset[attribute]=value;return b;};
     function say(message,error=false){const line=q('#assetFamilyStatus');if(line){line.textContent=message;line.classList.toggle('error',error);}options.say(message,error);}
     // The status line and next-step buttons sit above the form, where the picture's actions are; the family strip stays below.
@@ -110,7 +112,7 @@
     const comparison=createComparison({...options,context:options.comparisonContext});
     function clearComparison(focus=false){
       const current=dialog.open&&comparisonScope===JSON.stringify(options.comparisonContext());
-      comparison.cancel();comparisonPanel.replaceChildren();comparisonPanel.hidden=true;dialog.classList.remove('asset-source-mode');
+      choiceEpoch++;shownPair=null;shownSession=null;comparison.cancel();comparisonPanel.replaceChildren();comparisonPanel.hidden=true;dialog.classList.remove('asset-source-mode');
       if(focus&&current)q('#assetCompareSource')?.focus();
     }
     function showComparison(){
@@ -123,21 +125,53 @@
       q('#assetSourceTitle').focus();
     }
     async function chooseSource(parent){
+      choiceEpoch++;shownPair=null;shownSession=null;
       q('#assetSourceImages').replaceChildren();q('#assetSourceStatus').textContent='Reading the recorded pictures…';
       for(const b of comparisonPanel.querySelectorAll('[data-family-source]'))b.setAttribute('aria-pressed',String(b.dataset.familySource===parent));
       const pair=await comparison.choose(comparisonReport,parent);if(!pair)return;
+      paintPair(pair);
+    }
+    function paintPair(pair){
       const box=q('#assetSourceImages'),line=q('#assetSourceStatus');
       const current=()=>pair.current()&&dialog.open&&!comparisonPanel.hidden&&box===q('#assetSourceImages');
       if(!current())return;
+      shownPair=pair;shownSession=options.comparisonContext().session;
       line.textContent='Saved pictures, shown without alignment. Keep, Needs work, Not this and Save apply only to the current version.';
       const sizes=[];
       for(const [index,a,label] of [[0,pair.child,'Current version'],[1,pair.source,'Recorded source']]){
         const figure=d.createElement('figure'),image=d.createElement('img'),caption=d.createElement('figcaption'),size=d.createElement('small');
         caption.textContent=label+' · '+a.title;image.alt=label+': '+a.title;image.decoding='async';
         image.addEventListener('load',()=>{if(!current())return;sizes[index]=image.naturalWidth+' × '+image.naturalHeight;size.textContent=sizes[index]+' px';if(sizes.length===2&&sizes[0]&&sizes[1]&&sizes[0]!==sizes[1])line.textContent='Different image dimensions. Both fit the same display size; they are not pixel-aligned. Review and Save apply only to the current version.';});
-        image.addEventListener('error',()=>{if(!current())return;comparison.cancel();box.replaceChildren();line.textContent='A picture could not be loaded. Nothing was changed. Choose a source again to retry.';});
+        image.addEventListener('error',()=>{if(!current())return;shownPair=null;shownSession=null;comparison.cancel();box.replaceChildren();line.textContent='A picture could not be loaded. Nothing was changed. Choose a source again to retry.';});
         figure.append(image,caption,size);box.append(figure);image.src=a.url;
       }
+    }
+    function refreshAfterSave(receipt){
+      const context=options.comparisonContext();
+      if(!dialog.open||comparisonPanel.hidden||!shownPair||shownSession!==context.session||receipt?.asset_id!==currentId||
+        receipt.workspace_id!==context.workspace||receipt.detail_epoch!==context.detail||receipt.receipt_epoch!==context.receipt)return false;
+      const expected=shownPair,serial=++epoch,choice=++choiceEpoch,observed=JSON.stringify(context),own=new AbortController();
+      controller?.abort();controller=own;recall.cancel();comparison.cancel();comparisonScope=observed;
+      // Keep the controls and their focus, but withhold stale pictures until the saved pair is rechecked.
+      q('#assetSourceImages').replaceChildren();q('#assetSourceStatus').textContent='Checking the saved comparison pictures…';
+      const current=()=>serial===epoch&&choice===choiceEpoch&&dialog.open&&!comparisonPanel.hidden&&observed===JSON.stringify(options.comparisonContext());
+      const timer=setTimeout(()=>own.abort(),15000);
+      return (async()=>{
+        try{
+          const report=validate(await options.read('/api/assets/family/'+currentId+'?workspace_id='+context.workspace,{signal:own.signal}),currentId,context.workspace);
+          if(!current())return null;
+          comparisonReport=report;q('#assetFamilyTree').innerHTML=treeMarkup(report);
+          const pair=await comparison.choose(report,expected.source.id,expected);
+          if(!current()||!pair)return null;
+          paintPair(pair);
+          const focus=receipt.focus;
+          if(d.activeElement===d.body&&focus?.isConnected&&!focus.disabled&&dialog.contains(focus))focus.focus({preventScroll:true});
+          return pair;
+        }catch(error){
+          if(!current())return null;
+          clearComparison(comparisonPanel.contains(d.activeElement));say('Comparison cleared: '+error.message,true);return null;
+        }finally{clearTimeout(timer);if(controller===own)controller=null;}
+      })();
     }
     function clear(){epoch++;controller?.abort();controller=null;recall.cancel();clearComparison();comparisonReport=null;comparisonScope=null;currentId=null;panel.replaceChildren();q('#assetLineage').hidden=false;
       q('#assetFamilyActions')?.replaceChildren();const line=q('#assetFamilyStatus');if(line){line.textContent='';line.classList.remove('error');}}
@@ -145,7 +179,8 @@
       if(options.asset()?.media_type==='image'){const b=button('Compare with source','familyCompare',id);b.id='assetCompareSource';b.disabled=true;box.append(b);}return box;}
     async function opened(){
       const asset=options.asset();if(!dialog.open||!asset)return;
-      clear();currentId=asset.id;const serial=epoch,scope=options.context(asset.id).workspace,observed=JSON.stringify(options.comparisonContext()),own=new AbortController();controller=own;
+      // Recorded Library reads do not capture the independently initializing Create owner.
+      clear();currentId=asset.id;const serial=epoch,scope=options.comparisonContext().workspace,observed=JSON.stringify(options.comparisonContext()),own=new AbortController();controller=own;
       panel.innerHTML='<h3>Family &amp; reuse</h3><div id="assetFamilyTree"></div><div id="assetFamilyChildren"></div>';
       q('#assetFamilyActions')?.replaceChildren(actions(asset.id));
       const status=q('#assetFamilyStatus');if(status)status.textContent='Reading the recorded family…';
@@ -153,7 +188,7 @@
       const timer=setTimeout(()=>own.abort(),15000);
       try{
         const report=validate(await options.read('/api/assets/family/'+asset.id+'?workspace_id='+scope,{signal:own.signal}),asset.id,scope);
-        if(serial!==epoch||!dialog.open||options.context(asset.id).workspace!==scope||observed!==JSON.stringify(options.comparisonContext()))return;
+        if(serial!==epoch||!dialog.open||options.comparisonContext().workspace!==scope||observed!==JSON.stringify(options.comparisonContext()))return;
         q('#assetFamilyTree').innerHTML=treeMarkup(report);q('#assetLineage').hidden=true;
         q('#assetFamilyStatus').textContent='Recorded steps, oldest first. Missing or put-away steps stay visible. No generation submitted.';
         if(q('#assetCompareSource'))try{
@@ -174,10 +209,10 @@
         if(b.dataset.familyRecall){await recall.prepare(currentId,b.dataset.familyRecall);return;}
         if(b.dataset.familyReference){await options.reference(b.dataset.familyReference);return;}
         if(b.dataset.familyChildren){
-          const id=currentId,serial=epoch,scope=options.context(id).workspace;b.disabled=true;b.setAttribute('aria-busy','true');
+          const id=currentId,serial=epoch,scope=options.comparisonContext().workspace;b.disabled=true;b.setAttribute('aria-busy','true');
           try{
             const report=validate(await options.read('/api/assets/family/'+id+'?workspace_id='+scope+'&children=true',{signal:AbortSignal.timeout(15000)}),id,scope);
-            if(serial!==epoch||!dialog.open||options.context(id).workspace!==scope)return;
+            if(serial!==epoch||!dialog.open||options.comparisonContext().workspace!==scope)return;
             need(Array.isArray(report.children),'Child results are unavailable');
             const box=q('#assetFamilyChildren');box.innerHTML='<h4>Child assets</h4>'+(report.children.length?report.children.map(n=>'<button type="button" data-family-open="'+esc(n.id)+'">'+esc(n.title)+(n.state==='trashed'?' · In Trash':'')+'</button>').join(''):'<p>No child assets found.</p>')+
               (report.children_truncated?'<p>Child search is limited: at most 20 results among the newest 5,000 assets; unreadable lineage is omitted.</p>':'');
@@ -196,19 +231,19 @@
         const content=d.createElement('div');box.append(content);card.append(box);
         box.addEventListener('toggle',async()=>{
           if(!box.open)return;
-          const scope=options.context(id).workspace;if(box.dataset.loaded&&box.dataset.scope===scope)return;
+          const scope=options.comparisonContext().workspace;if(box.dataset.loaded&&box.dataset.scope===scope)return;
           box.dataset.scope=scope;box.dataset.loaded='loading';content.textContent='Reading the recorded family…';
           try{
             const report=validate(await options.read('/api/assets/family/'+id+'?workspace_id='+scope,{signal:AbortSignal.timeout(15000)}),id,scope);
             if(!box.isConnected)return;
-            if(options.context(id).workspace!==scope){content.textContent='Workspace changed; close and reopen this family.';delete box.dataset.loaded;return;}
+            if(options.comparisonContext().workspace!==scope){content.textContent='Workspace changed; close and reopen this family.';delete box.dataset.loaded;return;}
             content.innerHTML=treeMarkup(report);content.append(button('Open asset and recall options','familyOpen',id));box.dataset.loaded='true';
           }catch(e){if(box.isConnected){content.textContent='Family unavailable: '+e.message;delete box.dataset.loaded;}}
         });
         box.addEventListener('click',e=>{const b=e.target.closest('[data-family-open]');if(b){e.preventDefault();options.open(b.dataset.familyOpen);}});
       }
     }
-    return {opened,decorateResults,clear,recall};
+    return {opened,decorateResults,clear,recall,refreshAfterSave};
   }
   return {validate,treeMarkup,newSeed,directSources,createComparison,createRecall,install};
 });

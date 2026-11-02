@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'app/static/asset-family*'
+      - 'app/static/asset-repair.js'
+      - 'app/server.py'
       - 'app/static/index.html'
       - 'app/static/app.js'
       - 'app/static/workspace.js'
@@ -17,6 +19,9 @@ on:
       - 'tests/asset_family_layout.py'
       - 'tests/asset_source_compare.cjs'
       - 'tests/asset_source_compare_browser.py'
+      - 'tests/asset_repair_import_browser.py'
+      - 'tests/test_import_repaired_version.py'
+      - 'tests/test_asset_repair.cjs'
       - 'scripts/ci-install-chromium.sh'
       - 'tests/test_ci_browser_dependencies.py'
       - '.github/workflows/asset-family-browser.yml'
@@ -64,6 +69,9 @@ jobs:
       - name: Recorded source comparison and child-only review
         if: runner.os == 'Linux'
         run: python tests/asset_source_compare_browser.py --out .runtime/asset-family/source-comparison
+      - name: Repaired PNG import preserves Workspace identity
+        if: runner.os == 'Linux'
+        run: python tests/asset_repair_import_browser.py --out .runtime/asset-family/repair-import
       - uses: actions/upload-artifact@v4
         if: always()
         with:

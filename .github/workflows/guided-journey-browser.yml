@@ -18,6 +18,8 @@ on:
       - 'tests/studio_browser_smoke.py'
       - 'tests/test_studio_guide.py'
       - 'tests/test_studio_guide_diagnostics.py'
+      - 'tests/browser_failure_diagnostics.py'
+      - 'tests/test_browser_failure_diagnostics.py'
       - 'scripts/ci-install-chromium.sh'
       - 'tests/test_ci_browser_dependencies.py'
       - '.github/workflows/guided-journey-browser.yml'

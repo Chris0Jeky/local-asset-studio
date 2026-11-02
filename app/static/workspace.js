@@ -313,7 +313,7 @@ async function performAssetSave(operation, observe=false) {
   try{requireAssetScope(operation.command.workspace_id);}catch(error){assetDetailStatus(error.message,true);return false;}
   if(!retainAssetDraft())return false;
   const {id,epoch,command,body}=operation,controller=new AbortController();
-  const request={},workspaceEpoch=assetWorkspaceEpoch,headers=assetPrivacyHeaders();
+  const request={},workspaceEpoch=assetWorkspaceEpoch,headers=assetPrivacyHeaders(),focus=document.activeElement;
   assetDetailRequest=request;
   const ownsRequest=()=>assetDetailRequest===request;
   const ownsEditor=()=>assetDetailContextCurrent(id,epoch) && assetDetailPending===operation && activeAsset.workspace_id===command.workspace_id;
@@ -329,7 +329,7 @@ async function performAssetSave(operation, observe=false) {
     if(observe && result?.status==='unknown' && result.request_id===command.request_id){assetDetailStatus('Save still not confirmed. No receipt exists yet; the earlier request may still complete. No retry was sent.',true);return false;}
     validateAssetReceipt(result,command);
     applyAssetSaveReceipt(operation,result);
-    syncAssetAfterSave(operation,result);
+    syncAssetAfterSave(operation,result,focus);
     return true;
   } catch(error) {
     if(!current())return false;
@@ -369,10 +369,13 @@ async function performAssetSave(operation, observe=false) {
   }
 }
 // A confirmed single save updates the loaded record in place. A whole workspace refetch is not evidence of anything more.
-function syncAssetAfterSave(operation,result) {
+function syncAssetAfterSave(operation,result,focus) {
   const updated=applyAssetReceipt(operation.command,result);
   if(['trash','archive'].includes(operation.kind))renderAssets();else updateAssetCard(operation.id);
   if(!updated)void refreshAssets(true);
+  // Presentation may recheck a deliberate source pair; this receipt still invalidates every held read.
+  if(operation.kind==='details'&&operation.command.action==='edit'&&operation.command.ids.length===1&&operation.command.ids[0]===operation.id&&!assetDetailPending&&!assetDetailConflict)
+    document.dispatchEvent?.(new CustomEvent('studio:asset-detail-saved',{detail:{asset_id:operation.id,workspace_id:operation.command.workspace_id,detail_epoch:operation.epoch,receipt_epoch:assetReceiptEpoch,focus}}));
 }
 function applyAssetSaveReceipt(operation,result) {
   const unchanged=JSON.stringify(assetDetailValues())===JSON.stringify(operation.snapshot);
