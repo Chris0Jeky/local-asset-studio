@@ -218,6 +218,11 @@ class GroundedFactTest(unittest.TestCase):
         self.assertTrue(cl.grounded("doesn't like cats", ["I like dogs but I don't like cats"]))
         self.assertFalse(cl.grounded("friend likes dogs and has a sister", ["My sister likes dogs."]))
 
+    def test_numbers_must_match_exactly(self):   # Codex P2 on #1989
+        self.assertFalse(cl.grounded("friend has 3 cats", ["I have 2 cats."]))
+        self.assertFalse(cl.grounded("born in 19850", ["I was born in 19851"]))
+        self.assertTrue(cl.grounded("friend has 3 cats", ["I have 3 cats."]))
+
     def test_inflections_match(self):
         self.assertTrue(cl.grounded("moved to Paris", ["I am moving to Paris."]))
 

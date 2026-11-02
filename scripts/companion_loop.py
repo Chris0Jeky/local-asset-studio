@@ -172,7 +172,7 @@ OWNED = re.compile(r"\b(?:my|his|her|their|our)\s+([a-z]+)")
 CLAUSE_BREAK = re.compile(r"[.!?;,]+|\b(?:but|and|although|though|while|whereas)\b")
 
 
-def _stem(w): return re.sub(r"(ing|ed|es|s)$", "", w)[:5] if len(w) > 4 else w
+def _stem(w): return re.sub(r"(ing|ed|es|s)$", "", w)[:5] if len(w) > 4 and not w.isdigit() else w   # numbers stay exact
 
 
 def grounded(fact, said):
@@ -182,7 +182,7 @@ def grounded(fact, said):
     and whose owners ("my sister", "his job") are named in that same fact clause, so a sister's taste is not filed as
     the user's. Relation words ('name', 'likes', ...) need no support. Lexical: synonyms are rejected (the safe side)."""
     low = lambda t: re.sub(r"'s\b", "", t.lower())
-    words = lambda t: [w for w in re.findall(r"[a-z0-9]+", low(t)) if w not in STOP and len(w) > 1]
+    words = lambda t: [w for w in re.findall(r"[a-z0-9]+", low(t)) if w not in STOP and (len(w) > 1 or w.isdigit())]
     clauses = lambda t: [(c, {_stem(w) for w in re.findall(r"[a-z0-9]+", c)}, bool(NEGATION.search(c)), {_stem(o) for o in OWNED.findall(c)})
                          for c in CLAUSE_BREAK.split(low(t)) if c.strip()]
     content = {_stem(w) for w in words(fact) if w not in RELATION}
