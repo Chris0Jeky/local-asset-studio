@@ -1041,8 +1041,17 @@ def _main(argv):
     evidence_parser.add_argument("--export")
     evidence_parser.add_argument("--seed-defect", choices=SEEDED_DEFECTS)
     commands.add_parser("serve").add_argument("--root", required=True)
+    scene_parser = commands.add_parser("scene-v1")  # exact studio.dcc-scene/v1 observation (blender_scene_probe)
+    scene_parser.add_argument("--blend", required=True)
+    scene_parser.add_argument("--out", required=True)
     args = parser.parse_args(argv)
     if args.command == "serve": return serve(args.root)
+    if args.command == "scene-v1":
+        import os
+        import bpy
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import blender_scene_probe
+        return blender_scene_probe.observe(bpy, args.blend, args.out)  # writes its own exclusive output
     if args.command == "probe": result = probe()
     elif args.command == "manifest":
         import os

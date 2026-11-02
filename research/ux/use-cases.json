@@ -1237,6 +1237,10 @@
           "expect": "the first unreviewed picture opens with its place in the queue"
         },
         {
+          "intent": "read what each review key does without scrolling",
+          "expect": "Keep K, Needs work W, Not this X and Skip S with their legend show on the first screen at 1366x768 and 1920x1080"
+        },
+        {
           "intent": "keep the first picture with the K key",
           "expect": "the review is saved and the next picture opens"
         },
