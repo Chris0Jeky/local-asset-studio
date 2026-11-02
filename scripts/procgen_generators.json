@@ -157,6 +157,43 @@
         "6": {"name": "bollards", "group": "bollards", "when": {"bollards": [1, 6]}},
         "7": {"name": "water", "group": "water", "open": true, "collision": false, "solid": false}
       }
+    },
+    "coastal_path": {
+      "description": "Coastal path terrain strip (Suzu's cliff walk): noisy grass land on -x, a meandering cliff edge dropping to a beach at z=0 on +x, a flattened path labelled as its own part, fence posts on its cliff side, grass tufts, beach rocks and an open sea plane. Runs along +y from y=0.",
+      "tri_budget": 40000,
+      "params": {
+        "length": {"type": "float", "min": 6.0, "max": 30.0, "default": 12.0},
+        "width": {"type": "float", "min": 5.0, "max": 14.0, "default": 8.0},
+        "land_height": {"type": "float", "min": 0.6, "max": 4.0, "default": 2.0, "doc": "cliff-top land height above the beach"},
+        "roughness": {"type": "float", "min": 0.0, "max": 0.6, "default": 0.25, "doc": "extra noise height on the land"},
+        "cliff_x": {"type": "float", "min": -2.0, "max": 3.0, "default": 0.6, "doc": "mean x of the cliff edge"},
+        "cliff_drop": {"type": "float", "min": 0.5, "max": 3.0, "default": 1.2, "doc": "horizontal run of the cliff face"},
+        "meander": {"type": "float", "min": 0.0, "max": 1.5, "default": 0.6, "doc": "sideways swing of the edge and path (9 m wavelength)"},
+        "path_width": {"type": "float", "min": 0.8, "max": 2.0, "default": 1.2},
+        "path_inset": {"type": "float", "min": 0.8, "max": 3.0, "default": 1.4, "doc": "path centre distance inland of the cliff edge"},
+        "fence": {"type": "int", "min": 0, "max": 1, "default": 1},
+        "fence_spacing": {"type": "float", "min": 1.0, "max": 3.0, "default": 1.8},
+        "grass_density": {"type": "float", "min": 0.0, "max": 8.0, "default": 3.0, "doc": "tufts per square metre; below 0.5 means none"},
+        "rocks": {"type": "int", "min": 0, "max": 8, "default": 4},
+        "sea_level": {"type": "float", "min": 0.1, "max": 0.6, "default": 0.3},
+        "detail": {"type": "int", "min": 4, "max": 48, "default": 16, "doc": "terrain grid density and tuft segments; LODs halve it"},
+        "seed": {"type": "int", "min": 0, "max": 9999, "default": 7},
+        "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false, "doc": "flat toon palette: 0 day, 1 dusk, 2 sakura, 3 autumn"}
+      },
+      "constraints": [
+        {"terms": {"cliff_x": 1, "meander": 1, "cliff_drop": 1, "width": -0.5}, "le": -1.5, "doc": "a beach at least 1.5 m wide stays inside the strip (rocks need it)"},
+        {"terms": {"cliff_x": -1, "meander": 1, "path_inset": 1, "path_width": 0.5, "width": -0.5}, "le": -0.3, "doc": "the path stays 0.3 m inside the inland edge"},
+        {"terms": {"path_width": 0.5, "path_inset": -1}, "le": -0.4, "doc": "the path's blend band ends before the cliff edge"},
+        {"terms": {"sea_level": 1, "land_height": -1}, "le": -0.3, "doc": "the land stays 0.3 m above the sea"}
+      ],
+      "parts": {
+        "1": {"name": "terrain", "group": "ground", "open": true, "collision": false, "solid": false},
+        "2": {"name": "path", "group": "ground", "open": true, "collision": false, "solid": false},
+        "3": {"name": "fence_posts", "group": "fence", "when": {"fence": [1, 1]}},
+        "4": {"name": "grass", "group": "grass", "collision": false, "solid": false, "when": {"grass_density": [0.5, 8.0]}},
+        "5": {"name": "rocks", "group": "rocks", "when": {"rocks": [1, 8]}},
+        "6": {"name": "sea", "group": "water", "open": true, "collision": false, "solid": false}
+      }
     }
   }
 }

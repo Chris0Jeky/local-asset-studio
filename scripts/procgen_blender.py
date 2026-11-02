@@ -51,7 +51,7 @@ FOLD = {'ADD': lambda a, b: a + b, 'SUBTRACT': lambda a, b: a - b, 'MULTIPLY': l
         'DIVIDE': lambda a, b: a / b, 'MAXIMUM': max, 'MINIMUM': min, 'CEIL': lambda a, b: math.ceil(a),
         'SINE': lambda a, b: math.sin(a), 'COSINE': lambda a, b: math.cos(a), 'FLOORED_MODULO': lambda a, b: a % b,
         'POWER': lambda a, b: a ** b, 'ARCTAN2': math.atan2, 'TANGENT': lambda a, b: math.tan(a),
-        'FLOOR': lambda a, b: math.floor(a)}
+        'FLOOR': lambda a, b: math.floor(a), 'ABSOLUTE': lambda a, b: abs(a)}
 
 
 def _enabled(sockets, name=None):
@@ -111,6 +111,22 @@ class B:
         pos = self.node('ShaderNodeSeparateXYZ', Vector=self.node('GeometryNodeInputPosition').outputs[0]).outputs
         x, y, z = (S(self, o) for o in pos)
         return self.node('GeometryNodeSetPosition', Geometry=geo, Position=self.vec(x, y * (rm + x) / rm, z)).outputs[0]
+
+    def clamp01(self, a): return self.math('MINIMUM', self.math('MAXIMUM', a, 0.0), 1.0)
+
+    def position(self):
+        pos = self.node('ShaderNodeSeparateXYZ', Vector=self.node('GeometryNodeInputPosition').outputs[0]).outputs
+        return tuple(S(self, o) for o in pos)
+
+    def noise01(self, vec, scale):
+        n = self.node('ShaderNodeTexNoise', Vector=vec, Scale=scale)
+        return self.clamp01(S(self, _enabled(n.outputs)[0]))
+
+    def relabel(self, geo, part, role, selection):
+        """Re-tag selected faces with another part id and material (one surface, two labelled parts)."""
+        n = self.node('GeometryNodeStoreNamedAttribute', {'data_type': 'INT', 'domain': 'FACE'}, Geometry=geo, Selection=selection, Name='part_id')
+        self.set(_enabled(n.inputs, 'Value')[0], part)
+        return self.node('GeometryNodeSetMaterial', Geometry=n.outputs[0], Selection=selection, Material=self.m[role]).outputs[0]
 
     def instance_at(self, points, geo, rot_z, selection=None):
         """Instance geo on points rotated about z by a field (radial boxes stay radial), optional selection."""
@@ -371,7 +387,75 @@ def pier(b, P):
     return b.join(*g)
 
 
-GENERATORS = {'room_kit': room_kit, 'prop': prop, 'shrine': shrine, 'lighthouse_room': lighthouse_room, 'pier': pier}
+def coastal_path(b, P):
+    """Coastal path strip: noisy grass land on -x, a meandering cliff edge dropping to a beach at z=0 on +x, a flattened
+    path inland of the edge (its faces labelled as their own part), fence posts on the path's cliff side, grass tufts,
+    beach rocks and an open sea plane. Runs along +y from y=0."""
+    L, W, land, F_ = P['length'], P['width'], P['land_height'], 0.05
+    wave = 2 * math.pi / 9.0
+    edge = lambda y: P['cliff_x'] + P['meander'] * b.sin(y * wave + P['seed'])
+    pw = P['path_width'] / 2
+    def height(x, y):
+        """Land + clamped noise, path flattened to land - 0.05, then a smoothstep cliff down to the z=0 beach."""
+        terrain = land + P['roughness'] * b.noise01(b.vec(x, y, P['seed'] * 1.37), 0.35)
+        dx = x - (edge(y) - P['path_inset'])
+        d = b.math('ABSOLUTE', dx)
+        flat = 1 - b.clamp01((d - pw) / 0.4)
+        h = terrain + (land - F_ - terrain) * flat
+        t = b.clamp01((x - edge(y)) / P['cliff_drop'])
+        t = t * t * (3 - 2 * t)
+        return h * (1 - t), flat, t
+    # Across the strip the grid never gets coarser than half the path width, so every LOD keeps labelled path faces.
+    vx = b.max(b.math('FLOOR', P['detail'] * W / 6) + 2, b.ceil(2 * W / P['path_width']) + 2)
+    vy = b.math('FLOOR', P['detail'] * L / 6) + 2
+    grid = b.node('GeometryNodeMeshGrid', Size_X=W, Size_Y=L, Vertices_X=vx, Vertices_Y=vy)
+    ground = b.place(grid, 1, 'foliage', (0, L / 2, 0))
+    x, y, _ = b.position()
+    h, flat, t = height(x, y)
+    ground = b.node('GeometryNodeSetPosition', Geometry=ground, Offset=b.vec(0.0, 0.0, h)).outputs[0]
+    ground = b.relabel(ground, 2, 'soil', b.compare('GREATER_THAN', flat, 0.5))          # the path, for segmentation
+    ground = b.node('GeometryNodeSetMaterial', Geometry=ground, Selection=b.compare('GREATER_THAN', t, 0.6), Material=b.m['stone']).outputs[0]
+    g = [ground]
+    # Fence posts on the cliff side of the path, standing on its flat band.
+    sp = P['fence_spacing']; n = b.math('FLOOR', (L - 0.6) / sp) + 1
+    line = b.line(n, (0, 0.3, 0), (0, sp, 0))
+    py = b.position()[1]
+    px_post = edge(py) - P['path_inset'] + pw - 0.12
+    # Ray cast onto this LOD's ground: a coarse grid interpolates below the ideal flat path height.
+    hit = b.node('GeometryNodeRaycast', Target_Geometry=ground, Source_Position=b.vec(px_post, py, land + 5.0), Ray_Direction=(0.0, 0.0, -1.0), Ray_Length=50.0)
+    line = b.node('GeometryNodeSetPosition', Geometry=line, Position=hit.outputs['Hit Position']).outputs[0]
+    post = b.join(b.box((-0.05, -0.05, 0), (0.05, 0.05, 0.9), 3, 'wood_dark'), b.box((-0.07, -0.07, 0.9), (0.07, 0.07, 0.95), 3, 'wood'))
+    g.append(b.switch(P['fence'], b.instance(line, post)))
+    # Grass tufts: seeded positions independent of the grid (same count at every LOD), dropped where they would land on
+    # the path or the cliff, then ray cast down onto this LOD's actual ground so they sit exactly on its surface.
+    density = P['grass_density'] * b.compare('GREATER_EQUAL', P['grass_density'], 0.5)   # same threshold as the schema's `when`
+    x_hi = P['cliff_x'] - P['meander'] - 0.1                          # inland of the edge's furthest swing
+    count = b.math('FLOOR', density * (L - 0.3) * b.max(x_hi + W / 2 - 0.15, 0.0))
+    tx = b.random(-W / 2 + 0.15, x_hi, P['seed'] + 6); ty = b.random(0.15, L - 0.15, P['seed'] + 7)
+    pts = b.node('GeometryNodeSetPosition', Geometry=b.line(count, (0, 0, 0), (0, 0, 0)), Position=b.vec(tx, ty, 0.0)).outputs[0]
+    px, py2, _ = b.position()
+    _, pflat, pt = height(px, py2)
+    drop = b.node('FunctionNodeBooleanMath', {'operation': 'OR'})
+    b.set(drop.inputs[0], b.compare('GREATER_THAN', pflat, 0.05)); b.set(drop.inputs[1], b.compare('GREATER_THAN', pt, 0.02))
+    pts = b.node('GeometryNodeDeleteGeometry', {'domain': 'POINT'}, Geometry=pts, Selection=drop.outputs[0]).outputs[0]
+    ray = b.node('GeometryNodeRaycast', Target_Geometry=ground, Source_Position=b.vec(px, py2, land + 5.0), Ray_Direction=(0.0, 0.0, -1.0), Ray_Length=50.0)
+    pts = b.node('GeometryNodeSetPosition', Geometry=pts, Position=ray.outputs['Hit Position']).outputs[0]
+    tuft = b.cyl(0.06, 0.25, (0, 0, 0), 4, 'foliage', top=0.0, segs=b.max(b.detail / 4, 3.0))
+    scale = b.random(0.7, 1.3, P['seed'] + 2)
+    g.append(b.instance(pts, tuft, scale=b.vec(scale, scale, scale)))
+    # Beach rocks: flattened spheres resting on z=0 beyond the cliff foot.
+    ry = b.random(0.6, L - 0.6, P['seed'] + 3)
+    rlen = b.random(0.25, 0.55, P['seed'] + 4)
+    rocks = b.line(P['rocks'], (0, 0, 0), (0, 0, 0))
+    rx = b.math('MINIMUM', edge(ry) + P['cliff_drop'] + 0.3 + b.random(0.0, 0.8, P['seed'] + 5), W / 2 - rlen - 0.02)   # stay on the strip
+    rocks = b.node('GeometryNodeSetPosition', Geometry=rocks, Position=b.vec(rx, ry, 0.45 * rlen)).outputs[0]
+    g.append(b.instance(rocks, b.sphere((0, 0, 0), (1, 1, 1), 5, 'stone'), scale=b.vec(rlen, 0.8 * rlen, 0.45 * rlen)))
+    g.append(b.grid(W + 6, L, (0, L / 2, P['sea_level']), (0, 0, 0), 6, 'water'))
+    return b.join(*g)
+
+
+GENERATORS = {'room_kit': room_kit, 'prop': prop, 'shrine': shrine, 'lighthouse_room': lighthouse_room, 'pier': pier,
+              'coastal_path': coastal_path}
 
 
 def make_materials(palette):
