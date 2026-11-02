@@ -10,7 +10,7 @@ from .core import ArchiveAccess, AccessError, _key, digest, fields
 from spoken_brief_archive import checked_json, inspect_run
 from spoken_brief_compile import batch_segments, canonical_digest, run_directory
 from spoken_brief_exports import _claim, _json_bytes, _new_file
-from spoken_brief_inbox import _capture, _lineage
+from spoken_brief_inbox import CaptureChanged, _capture, _lineage
 from spoken_brief_runtime import run
 from spoken_brief_transport import initial_state, prepare_directory, validate_state, write_json
 from voice_profile import require_executable
@@ -42,27 +42,44 @@ class Narrations:
         return value
 
     def _load(self, key, root_id, *, include_state=True):
-        access = self.access(); digest(root_id)
-        if access.status()['source_root_id'] != root_id: raise AccessError('Source root changed; refresh source access', 409)
-        with access._directory(key) as directory:
-            record = checked_json(directory / 'studio-start.json')[0]
-            manifest = checked_json(directory / 'manifest.json')[0]
-            state = checked_json(directory / 'state.json')[0] if include_state else None
-            try:
-                fields(record, ('schema_version', 'kind', 'root_id', 'source_key', 'manifest_sha256', 'preview_sha256', 'started_at'))
-                if (record['schema_version'] != 1 or record['kind'] != 'spoken-brief' or record['root_id'] != root_id
-                        or record['manifest_sha256'] != manifest['manifest_sha256']
-                        or canonical_digest({k: v for k, v in manifest.items() if k != 'manifest_sha256'}) != manifest['manifest_sha256']):
-                    raise AccessError('Retained narration identity differs', 409)
-                source = Path(manifest['source']['path'])
-                _key(source.relative_to(access._root()).as_posix())
-                if run_directory(source, manifest['manifest_sha256']) != directory:
-                    raise AccessError('Narration directory differs from its manifest', 409)
-                digest(record['preview_sha256'])
-                if include_state: validate_state(state, manifest, batch_segments(manifest['segments']))
-            except (KeyError, TypeError, ValueError) as exc:
-                raise AccessError('Invalid retained narration: ' + str(exc), 409) from exc
-            return directory, record, manifest, state
+        for attempt in range(2):
+            access = self.access(); digest(root_id)
+            if access.status()['source_root_id'] != root_id: raise AccessError('Source root changed; refresh source access', 409)
+            with access._directory(key) as directory:
+                if attempt == 0:
+                    owner = self.threads.get((root_id, key))
+                    owned = bool(include_state and owner and owner.is_alive())
+                record = checked_json(directory / 'studio-start.json')[0]
+                manifest = checked_json(directory / 'manifest.json')[0]
+                state_path = directory / 'state.json'
+                try:
+                    state = checked_json(state_path)[0] if include_state else None
+                except CaptureChanged as error:
+                    current_owner = self.threads.get((root_id, key))
+                    if (attempt or not owned or error.path != state_path
+                            or (current_owner is not None and current_owner is not owner)):
+                        raise
+                    current = tuple(_lineage(state_path))
+                    if current[:-1] != error.lineage[:-1] or current[-1][1:] == error.lineage[-1][1:]:
+                        raise
+                    # An owned run's state was replaced without changing its parents.
+                    # The coordinator may have finished. Recheck the entire observation once.
+                    continue
+                try:
+                    fields(record, ('schema_version', 'kind', 'root_id', 'source_key', 'manifest_sha256', 'preview_sha256', 'started_at'))
+                    if (record['schema_version'] != 1 or record['kind'] != 'spoken-brief' or record['root_id'] != root_id
+                            or record['manifest_sha256'] != manifest['manifest_sha256']
+                            or canonical_digest({k: v for k, v in manifest.items() if k != 'manifest_sha256'}) != manifest['manifest_sha256']):
+                        raise AccessError('Retained narration identity differs', 409)
+                    source = Path(manifest['source']['path'])
+                    _key(source.relative_to(access._root()).as_posix())
+                    if run_directory(source, manifest['manifest_sha256']) != directory:
+                        raise AccessError('Narration directory differs from its manifest', 409)
+                    digest(record['preview_sha256'])
+                    if include_state: validate_state(state, manifest, batch_segments(manifest['segments']))
+                except (KeyError, TypeError, ValueError) as exc:
+                    raise AccessError('Invalid retained narration: ' + str(exc), 409) from exc
+                return directory, record, manifest, state
 
     def inspect(self, key, root_id):
         directory, record, manifest, state = self._load(key, root_id)

@@ -13,6 +13,7 @@ from browser_ports import browser_server
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
+from urllib.parse import parse_qs, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT), str(ROOT / 'app'), str(ROOT / 'scripts')]
@@ -571,6 +572,36 @@ class NarrationBrowserTests(unittest.TestCase):
         self.assertIn('narration=', self.page.url)
         self.page.reload(); self.wait_status('completed')
         self.assertEqual(len(self.posts()), 2); self.assertFalse(self.errors, self.errors)
+
+    def test_lost_reply_reload_observes_coordinator_finishing_during_state_capture(self):
+        entered, release = threading.Event(), threading.Event(); self.addCleanup(release.set)
+        def held_create(project):
+            entered.set()
+            if not release.wait(5): raise AssertionError('Test did not release its synthetic create response')
+        self.f.after_create = held_create
+        self.preview()
+        def lose_reply(route): route.fetch(); route.abort()
+        self.page.route('**/api/spoken-briefs/narration/start', lose_reply)
+        self.page.locator('#startNarration').click()
+        self.page.wait_for_function("document.querySelector('#narrationStatus').textContent.includes('no create or Start was retried')")
+        self.assertTrue(entered.wait(3))
+        address = parse_qs(urlsplit(self.page.url).query)
+        key, root_id = address['narration'][0], address['sourceRoot'][0]
+        manager = self.f.server.spoken_narrations; thread = manager.threads[(root_id, key)]
+        def complete(path):
+            release.set(); thread.join(5)
+            self.assertFalse(thread.is_alive()); self.assertFalse(manager.threads)
+        try:
+            with self.f.change_during_capture(key, complete) as reads:
+                self.page.reload(); self.wait_status('completed')
+            self.assertEqual(len(reads), 2)
+            observations = [row for row in self.failure_diagnostics.snapshot()['responses']
+                if row['method'] == 'GET' and urlsplit(row['url']).path == '/api/spoken-briefs/narration']
+            self.assertEqual([row['status'] for row in observations], [200])
+            self.assertEqual([path for path, _ in self.posts()], ['/api/voice-baseline',
+                '/api/production/00000000000000000000000000000001/start'])
+            self.assertFalse(self.errors, self.errors)
+        finally: release.set()
 
     def test_delayed_progress_cannot_replace_a_new_source_selection(self):
         self.preview(); self.page.locator('#startNarration').click(); self.wait_status('completed')

@@ -57,3 +57,45 @@ no server queue, MIME, script-order or timeout change is justified by these
 artifacts. The unrelated image-source MIME correction does not address script
 loading. #1901 remains open until the remaining acceptance is supported.
 Owner runtime, art, licence and HUMAN_TODO acceptance remain separate and open.
+
+## Bounded narration observation fix
+
+The shared byte reader still refuses both existing changed-snapshot conditions
+with the same messages and validation order. Its refusal now carries a typed
+`SpokenBriefError` subclass and the original path lineage. Only narration's
+`state.json` read uses that type to consider one fresh observation, and only when:
+
+- the matching coordinator was live at the start of the observation;
+- that coordinator still owns the run, or has just finished;
+- every parent directory retains its identity; and
+- the state file's device/inode identity changed, as with the coordinator's
+  ordinary atomic writer.
+
+The fresh observation repeats root, directory, admission record, manifest and
+state validation. A second replacement is still a refusal. In-place edits,
+other files, absent ownership, malformed content, changed root/hash identities
+and linked parents do not receive a broader retry. No bytes from the rejected
+snapshot are accepted; no sleep, client timeout, producer create or Start retry
+was added.
+
+Two actual HTTP regressions failed on the previous source with HTTP 400 and pass
+with this change. They cover a continuing coordinator and a coordinator that
+finishes during the read. A third passing regression covers replacement after
+the handle read. The complete 23-test narration module preserves exactly one
+create and one Start for completed runs, and proves no added POST during each
+refused observation. A persistent replacement exhausts exactly two read attempts;
+root, record, manifest and state hash changes, malformed JSON, parent reparse,
+in-place edits, wrong-file edits and unowned replacements all remain refusals.
+
+The targeted capture, runtime, HTTP, frontend, platform, archive and provenance
+groups ran 129 tests: 128 passed, with one existing Linux skip for the native
+Windows junction case. Red/green receipts are retained in the working evidence
+under `.runtime/narration-observation/`. Syntax/diff validation also passed.
+The added actual-page journey loses the browser's Start reply, reloads during
+the controlled terminal state replacement, and requires completed progress,
+HTTP 200 and exactly the original two producer POSTs. Its hosted Chromium result
+is still pending; the local environment has no usable browser binary.
+
+This fixes a reproduced observation defect without claiming that the original
+Spoken Brief failure is retrospectively proven. #1901 remains open for the
+unresolved Windows script-load cause and hosted qualification.

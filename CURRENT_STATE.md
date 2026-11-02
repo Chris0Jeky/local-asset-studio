@@ -1,5 +1,18 @@
 # Current state — 2 November 2026
 
+## 2026-11-02 — Narration observes an owned state replacement once
+
+A retained narration read now permits one full fresh observation when its live
+coordinator replaces only `state.json`. Ownership is captured before reading, so
+the terminal write can still be observed after the coordinator exits. Snapshot,
+root, parent, record, manifest and state checks remain; repeated replacement,
+in-place edits, malformed content and unsafe identities still refuse. Create
+and Start are never repeated. The targeted group ran 129 tests with 128 passes
+and one existing native-Windows-junction skip. The added actual-page race awaits
+hosted Chromium qualification. [Causal evidence and historical limits](docs/verification/2026-11-02-browser-lane-failures.md)
+keep #1901 and its unresolved Windows script-load cause open. No owner runtime,
+art or HUMAN_TODO acceptance is inferred.
+
 ## 2026-11-02 — Browser lane failures retain transport evidence
 
 The private-creation and Spoken Brief fixtures now retain bounded failed request,
