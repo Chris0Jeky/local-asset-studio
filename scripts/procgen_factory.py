@@ -271,11 +271,6 @@ def build(generator, params, output, blender, godot=None, node=None, render=Fals
             run_command([str(blender), '-b', '--factory-startup', '--python-exit-code', '1', '-P', str(BLENDER_SCRIPT),
                          '--', str(out / 'request.json')], out, 'blender', timeout)
             m = read_json(out / 'measurements.json')
-        except (EvidenceError, OSError, ValueError) as exc:
-            # A Blender crash or timeout is a failed build with retained logs, never a missing report.
-            report['gates'].append(_gate('blender', [str(exc)], logs=['blender-stdout.log', 'blender-stderr.log']))
-            m = None
-        if m is not None:
             report['blender'] = m['blender']
             report['gates'] += evaluate_gates(generator, spec, p, m)
             report['outputs'] = {lod['glb']: file_sha(out / lod['glb']) for lod in m['lods']}
@@ -294,6 +289,10 @@ def build(generator, params, output, blender, godot=None, node=None, render=Fals
                                                        m['lods'][0]['bbox_min'], m['lods'][0]['bbox_max'], m['collision_boxes']))
                 except EvidenceError as exc: report['gates'].append(_gate('godot_import', [str(exc)]))
             else: report['gates'].append({**_gate('godot_import', []), 'passed': None, 'skipped': 'no Godot executable given'})
+        except (EvidenceError, OSError, ValueError, KeyError, TypeError) as exc:
+            # A Blender crash, timeout or partial output is a failed build with retained logs, never a missing report.
+            report['gates'] = [g for g in report['gates'] if g['gate'] in ('params', 'constraints')]
+            report['gates'].append(_gate('blender', [f'{type(exc).__name__}: {exc}'], logs=['blender-stdout.log', 'blender-stderr.log']))
         results = [g['passed'] for g in report['gates']]
         report['state'] = 'failed' if False in results else 'incomplete' if None in results else 'passed'
     report['failed_gates'] = [g['gate'] for g in report['gates'] if g['passed'] is False]

@@ -100,7 +100,6 @@ class GateEvaluation(unittest.TestCase):
             "naming": lambda m: m["collision_objects"].pop(),
             "gn_interface": lambda m: m["gn_bounds"].update(height=[0.2, 9.0]),
             "parts_present": lambda m: m.update(unknown_part_ids=[42]),
-            "lod_chain": lambda m: m["lods"][1].update(bbox_min=[98.8, 98.8, 99.0], bbox_max=[99.2, 99.2, 99.6]),
             "interpenetration": None,
         }
         cases = list(cases.items()) + [
@@ -110,6 +109,7 @@ class GateEvaluation(unittest.TestCase):
             ("manifold", lambda m: m["lods"][1]["parts"][1].update(nonmanifold_edges=2)),      # lower LODs are gated too
             ("uv", lambda m: m["parts"][0].update(uv1_degenerate=3)),
             ("naming", lambda m: m.update(collision_boxes=1)),
+            ("lod_chain", lambda m: m["lods"][1].update(bbox_min=[98.8, 98.8, 99.0], bbox_max=[99.2, 99.2, 99.6])),   # LOD moved
         ]
         for gate, seed in cases:
             m = crate_measurements()
@@ -198,6 +198,23 @@ class BuildRejection(unittest.TestCase):
             self.assertEqual(report["failed_gates"], ["blender"])
             self.assertEqual(json.loads((out / "report.json").read_text(encoding="utf-8"))["failed_gates"], ["blender"])
             self.assertTrue((out / "blender-stderr.log").exists())
+
+    def test_partial_blender_output_still_writes_a_failed_report(self):
+        with tempfile.TemporaryDirectory() as directory:
+            out = Path(directory) / "run"
+            measured = Path(directory) / "measurements.json"; measured.write_text(json.dumps(crate_measurements()), encoding="utf-8")
+            fake = Path(directory) / "fake_blender.py"     # exits 0 but its measurements name GLBs it never wrote
+            fake.write_text("import json, shutil, sys\nfrom pathlib import Path\n"
+                            "req = json.loads(Path(sys.argv[-1]).read_text())\n"
+                            f"shutil.copyfile({str(measured)!r}, Path(req['output'], 'measurements.json'))\n", encoding="utf-8")
+            launcher = Path(directory) / ("blender.cmd" if os.name == "nt" else "blender")
+            launcher.write_text(f'@"{sys.executable}" "{fake}" %*\n' if os.name == "nt"
+                                else f'#!/bin/sh\nexec "{sys.executable}" "{fake}" "$@"\n', encoding="utf-8")
+            launcher.chmod(0o755)
+            report = factory.build("prop", {"kind": 1}, out, blender=launcher)
+            self.assertEqual(report["state"], "failed")
+            self.assertIn("blender", report["failed_gates"])
+            self.assertTrue((out / "report.json").exists())
 
     def test_output_directory_must_be_new(self):
         with tempfile.TemporaryDirectory() as directory:
