@@ -23,15 +23,16 @@ def crate_measurements(width=0.4, height=0.6):
         return {"id": pid, "name": name, "triangles": 12, "boundary_edges": 0, "nonmanifold_edges": 0,
                 "inconsistent_edges": 0, "degenerate_faces": 0, "islands": [lo + hi], "bbox_min": lo, "bbox_max": hi,
                 "origin": [(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, lo[2]], "uv0_present": True, "uv0_finite": True,
-                "uv1_present": True, "uv1_in_unit": True, "uv1_overlap_texels": 0}
+                "uv1_present": True, "uv1_in_unit": True, "uv1_overlap_texels": 0, "uv1_degenerate": 0}
     lo, hi = [-half, -half, 0.0], [half, half, height]
-    lod = lambda detail, tris: {"detail": detail, "glb": f"asset_LOD{len(str(detail))}.glb", "bbox_min": lo, "bbox_max": hi, "triangles": tris}
+    parts = lambda: [part(4, "crate_core", [-half + 0.02, -half + 0.02, 0.02], [half - 0.02, half - 0.02, height - 0.02]),
+                     part(5, "crate_frame", lo, hi)]
+    lod = lambda detail, tris: {"detail": detail, "glb": f"asset_LOD{detail}.glb", "bbox_min": list(lo), "bbox_max": list(hi),
+                                "triangles": tris, "parts": parts()}
     return {"blender": {"version": "test", "hash": "0"},
             "gn_bounds": {k: [r["min"], r["max"]] for k, r in spec["params"].items() if r.get("gn", True)},
-            "lods": [lod(16, 300), lod(8, 300), lod(4, 300)],
-            "parts": [part(4, "crate_core", [-half + 0.02, -half + 0.02, 0.02], [half - 0.02, half - 0.02, height - 0.02]),
-                      part(5, "crate_frame", lo, hi)],
-            "collision_objects": ["crate_core-convcolonly", "crate_frame-convcolonly"], "unknown_part_ids": []}
+            "lods": [lod(16, 300), lod(8, 300), lod(4, 300)], "parts": parts(),
+            "collision_objects": ["crate_core-colonly", "crate_frame-colonly"], "collision_boxes": 2, "unknown_part_ids": []}
 
 
 def crate_params(**overrides):
@@ -99,9 +100,18 @@ class GateEvaluation(unittest.TestCase):
             "naming": lambda m: m["collision_objects"].pop(),
             "gn_interface": lambda m: m["gn_bounds"].update(height=[0.2, 9.0]),
             "parts_present": lambda m: m.update(unknown_part_ids=[42]),
+            "lod_chain": lambda m: m["lods"][1].update(bbox_min=[98.8, 98.8, 99.0], bbox_max=[99.2, 99.2, 99.6]),
             "interpenetration": None,
         }
-        for gate, seed in cases.items():
+        cases = list(cases.items()) + [
+            ("parts_present", lambda m: m["parts"].pop(0)),                                    # crate without its core
+            ("parts_present", lambda m: m["lods"][2]["parts"].pop(0)),                         # LOD2 lost a part
+            ("parts_present", lambda m: m["parts"].append({**m["parts"][0], "id": 1, "name": "lantern_body"})),
+            ("manifold", lambda m: m["lods"][1]["parts"][1].update(nonmanifold_edges=2)),      # lower LODs are gated too
+            ("uv", lambda m: m["parts"][0].update(uv1_degenerate=3)),
+            ("naming", lambda m: m.update(collision_boxes=1)),
+        ]
+        for gate, seed in cases:
             m = crate_measurements()
             if gate == "interpenetration":
                 # The core belongs to another group in this seeded schema: overlapping islands must be reported.
@@ -109,7 +119,8 @@ class GateEvaluation(unittest.TestCase):
                 result = failed(factory.evaluate_gates("prop", spec, crate_params(), m))
             else:
                 seed(m); result = failed(self.gates(m))
-            self.assertEqual(list(result), [gate], (gate, result))
+            self.assertIn(gate, result, (gate, result))
+            self.assertLessEqual(set(result), {gate, "naming"}, (gate, result))   # a missing part also drops its collision
 
     def test_dimensions_catch_wrong_size_and_floating_asset(self):
         m = crate_measurements(width=0.4, height=0.6)
@@ -129,10 +140,23 @@ class GateEvaluation(unittest.TestCase):
         self.assertEqual(factory.island_overlaps([a, ("g2", "b", [0.9, 0, 0], [2, 1, 1])]), ["a x b"])
 
     def test_godot_gate_swaps_axes_and_counts_collision(self):
-        report = {"state": "loaded", "collision_shapes": 2, "static_bodies": 2, "mesh_aabb_size": [1.0, 3.0, 2.0]}
-        self.assertTrue(factory.godot_gate(report, 2, [0, 0, 0], [1, 2, 3])["passed"])
-        self.assertFalse(factory.godot_gate({**report, "collision_shapes": 1}, 2, [0, 0, 0], [1, 2, 3])["passed"])
-        self.assertFalse(factory.godot_gate(report, 2, [0, 0, 0], [1, 3, 2])["passed"])
+        report = {"state": "loaded", "collision_shapes": 2, "static_bodies": 2, "collision_triangles": 36, "mesh_aabb_size": [1.0, 3.0, 2.0]}
+        self.assertTrue(factory.godot_gate(report, 2, [0, 0, 0], [1, 2, 3], 3)["passed"])
+        self.assertFalse(factory.godot_gate({**report, "collision_shapes": 1}, 2, [0, 0, 0], [1, 2, 3], 3)["passed"])
+        self.assertFalse(factory.godot_gate(report, 2, [0, 0, 0], [1, 3, 2], 3)["passed"])
+        # A single hull over two islands (e.g. both torii pillars) would close the passage: 12 triangles, not 24.
+        self.assertFalse(factory.godot_gate({**report, "collision_triangles": 12}, 2, [0, 0, 0], [1, 2, 3], 3)["passed"])
+
+    def test_odd_detail_lantern_slack_covers_ring_and_segment_loss(self):
+        params, _ = factory.resolve_params(SCHEMA["generators"]["prop"], {"kind": 0, "width": 0.316, "height": 1.0, "detail": 19})
+        size, slack = factory.expected_bounds("prop", params)
+        self.assertLessEqual(size[0] * (1 - slack[0]) - factory.TOL, 0.3091)   # measured live at detail 19
+        size, slack = factory.expected_bounds("prop", params, 6)
+        self.assertLessEqual(size[1] * (1 - slack[1]), 0.75 * 0.316 + 1e-9)              # hexagon x 3 rings
+
+    def test_snap_matches_generator_just_above_a_grid_line(self):
+        params, _ = factory.resolve_params(SCHEMA["generators"]["shrine"], {"gate_width": 2.6, "pillar_radius": 0.15501})
+        self.assertEqual(factory.expected_bounds("shrine", params)[0][0], 5.0)
 
 
 @unittest.skipUnless(HAS_NUMPY, "numpy not installed (Blender bundles it)")
@@ -143,6 +167,9 @@ class UvOverlap(unittest.TestCase):
         self.assertEqual(factory.uv_overlap_texels([lower, upper], 64), 0)
         self.assertEqual(factory.uv_overlap_texels([lower, [[0.6, 0.6], [0.9, 0.6], [0.6, 0.9]]], 64), 0)
         self.assertGreater(factory.uv_overlap_texels([lower, lower], 64), 50)
+
+    def test_degenerate_uv_triangles_are_counted(self):
+        self.assertEqual(factory.uv_degenerate([[[0.1, 0.1], [0.2, 0.2], [0.3, 0.3]], [[0, 0], [1, 0], [0, 1]]]), 1)
 
 
 class BuildRejection(unittest.TestCase):

@@ -24,7 +24,8 @@ BLENDER_SCRIPT = Path(__file__).with_name('procgen_blender.py')
 GODOT_PROBE = Path(__file__).with_name('procgen_godot_probe.gd')
 LOCAL_CONFIG = ROOT / 'config/local.json'
 NAME_RE = re.compile(r'^[a-z][a-z0-9_]{0,62}$')
-COLLISION_SUFFIX = '-convcolonly'
+COLLISION_SUFFIX = '-colonly'   # Godot: static trimesh body; one box per island keeps openings open
+SNAP_EPS = 1e-4                 # shared with procgen_blender.shrine so both sides snap identically
 LOD_LEVELS = 3
 MIN_DETAIL = 4
 TOL = 0.001          # 1 mm for exact box dimensions and pivots
@@ -71,13 +72,14 @@ def check_constraints(spec, p):
 
 
 def _snap_up(value, step=0.5):
-    return math.ceil(value / step - 1e-9) * step
+    return math.ceil(value / step - SNAP_EPS) * step
 
 
 def expected_bounds(generator, p, detail=None):
     """Expected asset bbox size (x, y, z) and per-axis slack fraction for polygonised round extents."""
     detail = p['detail'] if detail is None else detail
-    round_slack = 1 - math.cos(math.pi / detail)
+    # A UV sphere loses extent both around (segments) and along (rings, no equator vertex when odd).
+    round_slack = 1 - math.cos(math.pi / detail) * math.cos(math.pi / (2 * max(detail // 2, 3)))
     if generator == 'room_kit':
         return [p['width'] + 2 * p['wall_thickness'], p['depth'] + p['wall_thickness'], p['height']], [0, 0, 0]
     if generator == 'prop':
@@ -92,6 +94,11 @@ def expected_bounds(generator, p, detail=None):
         n = p['step_count']
         return [width, n * p['step_run'] + 3.0, (n + 1) * p['step_rise'] + p['gate_height']], [0, 0, 0]
     raise EvidenceError(f'unknown generator {generator!r}')
+
+
+def uv_degenerate(tris, eps=1e-12):
+    """UV triangles with (near) zero area: they bake nothing and hide overlaps from the raster test."""
+    return sum(1 for (ax, ay), (bx, by), (cx, cy) in tris if abs((bx - ax) * (cy - ay) - (cx - ax) * (by - ay)) < eps)
 
 
 def uv_overlap_texels(tris, res=UV_RES):
@@ -129,17 +136,25 @@ def _gate(name, failures, **detail):
     return {'gate': name, 'passed': not failures, 'failures': failures[:20], **detail}
 
 
+def _expected_part(rule, p):
+    return all(lo <= p[key] <= hi for key, (lo, hi) in rule.get('when', {}).items())
+
+
 def evaluate_gates(generator, spec, p, m):
     """All mesh/naming/LOD gates from Blender measurements m (see procgen_blender.measure)."""
     gates, parts = [], m['parts']
     want = {k: [r['min'], r['max']] for k, r in spec['params'].items() if r.get('gn', True)}
     gates.append(_gate('gn_interface', [f'{k}: GN bounds {m["gn_bounds"].get(k)} != schema {v}'
                                         for k, v in want.items() if m['gn_bounds'].get(k) != v]))
-    present = {part['id'] for part in parts}
-    gates.append(_gate('parts_present',
-                       [f'missing part {spec["parts"][k]["name"]}' for k in spec['parts']
-                        if int(k) not in present and not spec['parts'][k].get('optional')]
-                       + [f'unknown part id {i}' for i in m.get('unknown_part_ids', [])]))
+    levels = [('LOD0', parts)] + [(f'LOD{i}', lod['parts']) for i, lod in enumerate(m['lods'][1:], 1)]
+    presence = [f'unknown part id {i}' for i in m.get('unknown_part_ids', [])]
+    for level, level_parts in levels:
+        present = {part['id'] for part in level_parts}
+        for key, rule in spec['parts'].items():
+            wanted = _expected_part(rule, p)
+            if wanted and int(key) not in present: presence.append(f'{level}: missing part {rule["name"]}')
+            if not wanted and int(key) in present: presence.append(f'{level}: unexpected part {rule["name"]} for these params')
+    gates.append(_gate('parts_present', presence))
     lod0 = m['lods'][0]
     size = [b - a for a, b in zip(lod0['bbox_min'], lod0['bbox_max'])]
     expected, slack = expected_bounds(generator, p)
@@ -150,23 +165,27 @@ def evaluate_gates(generator, spec, p, m):
     anchors = [part for part in parts if spec['parts'][str(part['id'])].get('anchor')]
     cmin = [min(part['bbox_min'][k] for part in anchors) for k in range(3)] if anchors else lod0['bbox_min']
     cmax = [max(part['bbox_max'][k] for part in anchors) for k in range(3)] if anchors else lod0['bbox_max']
-    if abs(cmin[0] + cmax[0]) / 2 > TOL: dims.append('asset not centred on x')
+    # Round extents (or a round anchor) with odd segment counts sit off-centre by up to half their polygon slack.
+    rslack = 1 - math.cos(math.pi / p['detail']) * math.cos(math.pi / (2 * max(p['detail'] // 2, 3)))
+    ctol = [TOL + rslack * expected[k] / 2 if slack[k] or anchors else TOL for k in range(3)]
+    if abs(cmin[0] + cmax[0]) / 2 > ctol[0]: dims.append('asset not centred on x')
     if generator in FRONT_ANCHORED:
         if abs(lod0['bbox_min'][1]) > TOL: dims.append(f'front not at y=0 (min y {lod0["bbox_min"][1]:.4f})')
-    elif abs(cmin[1] + cmax[1]) / 2 > TOL: dims.append('asset not centred on y')
+    elif abs(cmin[1] + cmax[1]) / 2 > ctol[1]: dims.append('asset not centred on y')
     gates.append(_gate('dimensions', dims, measured=[round(v, 4) for v in size], expected=[round(v, 4) for v in expected]))
-    manifold = []
-    for part in parts:
-        rule = spec['parts'][str(part['id'])]
-        for key in ('nonmanifold_edges', 'inconsistent_edges', 'degenerate_faces') + (() if rule.get('open') else ('boundary_edges',)):
-            if part[key]: manifold.append(f'{part["name"]}: {part[key]} {key}')
+    manifold, uv = [], []
+    for level, level_parts in levels:
+        for part in level_parts:
+            rule, name = spec['parts'][str(part['id'])], f'{level} {part["name"]}'
+            for key in ('nonmanifold_edges', 'inconsistent_edges', 'degenerate_faces') + (() if rule.get('open') else ('boundary_edges',)):
+                if part[key]: manifold.append(f'{name}: {part[key]} {key}')
+            if not part['uv0_present'] or not part['uv0_finite']: uv.append(f'{name}: UVMap missing or non-finite')
+            if not part['uv1_present'] or not part['uv1_in_unit']: uv.append(f'{name}: UVLightmap missing or outside 0..1')
+            else:
+                if part['uv1_overlap_texels']: uv.append(f'{name}: {part["uv1_overlap_texels"]} overlapping lightmap texels')
+                if part['uv1_degenerate']: uv.append(f'{name}: {part["uv1_degenerate"]} zero-area lightmap triangles')
     gates.append(_gate('manifold', manifold))
-    uv = []
-    for part in parts:
-        if not part['uv0_present'] or not part['uv0_finite']: uv.append(f'{part["name"]}: UVMap missing or non-finite')
-        if not part['uv1_present'] or not part['uv1_in_unit']: uv.append(f'{part["name"]}: UVLightmap missing or outside 0..1')
-        elif part['uv1_overlap_texels']: uv.append(f'{part["name"]}: {part["uv1_overlap_texels"]} overlapping lightmap texels')
-    gates.append(_gate('uv', uv, note='UVMap may overlap (palette/tiling); UVLightmap must not.'))
+    gates.append(_gate('uv', uv, note=f'UVMap may overlap (palette/tiling); UVLightmap must not ({UV_RES}^2 texel centres).'))
     tris = [lod['triangles'] for lod in m['lods']]
     gates.append(_gate('triangle_budget', [f'LOD0 {tris[0]} triangles > budget {spec["tri_budget"]}'] if tris[0] > spec['tri_budget'] else [],
                        triangles=tris[0], budget=spec['tri_budget']))
@@ -176,11 +195,15 @@ def evaluate_gates(generator, spec, p, m):
         lsize = [b - a for a, b in zip(lod['bbox_min'], lod['bbox_max'])]
         exp, sl = expected_bounds(generator, p, lod['detail'])
         if any(not exp[k] * (1 - sl[k]) - TOL <= lsize[k] <= exp[k] + TOL for k in range(3)): chain.append(f'LOD{i} bbox drifted: {lsize}')
+        moved = sorted({'xyz'[k] for k in range(3) for key in ('bbox_min', 'bbox_max') if abs(lod[key][k] - lod0[key][k]) > TOL + sl[k] * exp[k]})
+        if moved: chain.append(f'LOD{i} bbox moved against LOD0 on axes {moved}')
     gates.append(_gate('lod_chain', chain, triangles=tris, details=[lod['detail'] for lod in m['lods']]))
     names = [part['name'] for part in parts]
     naming = [f'bad name {n!r}' for n in names if not NAME_RE.match(n)]
     naming += [f'duplicate name {n!r}' for n in set(names) if names.count(n) > 1]
     want_col = sorted(part['name'] + COLLISION_SUFFIX for part in parts if spec['parts'][str(part['id'])].get('collision', True))
+    want_islands = sum(len(part['islands']) for part in parts if spec['parts'][str(part['id'])].get('collision', True))
+    if m['collision_boxes'] != want_islands: naming.append(f'{m["collision_boxes"]} collision boxes, want one per solid island ({want_islands})')
     if sorted(m['collision_objects']) != want_col: naming.append(f'collision objects {sorted(m["collision_objects"])} != {want_col}')
     gates.append(_gate('naming', naming))
     pivots = []
@@ -209,11 +232,14 @@ def _probe_godot(godot, glb, directory, timeout):
     return json.loads(lines[0][len('PROCGEN_REPORT '):])
 
 
-def godot_gate(report, collision_parts, bbox_min, bbox_max):
+def godot_gate(report, collision_parts, bbox_min, bbox_max, collision_boxes):
     failures = []
     if report.get('state') != 'loaded': failures.append(f'Godot could not load the GLB: {report.get("error")}')
     else:
         if report['collision_shapes'] != collision_parts: failures.append(f'{report["collision_shapes"]} collision shapes, want {collision_parts}')
+        # Trimesh shapes keep every island box (12 triangles each), so openings between islands stay open.
+        if report.get('collision_triangles') != 12 * collision_boxes:
+            failures.append(f'{report.get("collision_triangles")} collision triangles, want {12 * collision_boxes} (12 per island box)')
         if report['static_bodies'] != collision_parts: failures.append(f'{report["static_bodies"]} static bodies, want {collision_parts}')
         # glTF is +Y up: Blender (x, y, z) arrives in Godot as (x, z, -y).
         want = [bbox_max[0] - bbox_min[0], bbox_max[2] - bbox_min[2], bbox_max[1] - bbox_min[1]]
@@ -257,12 +283,14 @@ def build(generator, params, output, blender, godot=None, node=None, render=Fals
         report['gates'].append(_gate('khronos', khronos))
         if godot:
             collision_parts = len(m['collision_objects'])
-            try: report['gates'].append(godot_gate(_probe_godot(Path(godot), out / m['lods'][0]['glb'], out, 120),
-                                                   collision_parts, m['lods'][0]['bbox_min'], m['lods'][0]['bbox_max']))
+            try: report['gates'].append(godot_gate(_probe_godot(Path(godot), out / m['lods'][0]['glb'], out, 120), collision_parts,
+                                                   m['lods'][0]['bbox_min'], m['lods'][0]['bbox_max'], m['collision_boxes']))
             except EvidenceError as exc: report['gates'].append(_gate('godot_import', [str(exc)]))
-        else: report['gates'].append(_gate('godot_import', [], skipped='no Godot executable given'))
-        report['state'] = 'passed' if all(g['passed'] for g in report['gates']) else 'failed'
-    report['failed_gates'] = [g['gate'] for g in report['gates'] if not g['passed']]
+        else: report['gates'].append({**_gate('godot_import', []), 'passed': None, 'skipped': 'no Godot executable given'})
+        results = [g['passed'] for g in report['gates']]
+        report['state'] = 'failed' if False in results else 'incomplete' if None in results else 'passed'
+    report['failed_gates'] = [g['gate'] for g in report['gates'] if g['passed'] is False]
+    report['skipped_gates'] = [g['gate'] for g in report['gates'] if g['passed'] is None]
     report['wall_seconds'] = round(time.monotonic() - started, 2)
     report['not_verified'] = ['art direction and taste', 'shading in a real toon pipeline', 'licence or rights (all geometry is generated)']
     write_json(out / 'report.json', report)
@@ -292,10 +320,10 @@ def main(argv=None):
     godot = None if args.no_godot else _config('godot', args.godot)
     report = build(request.get('generator'), request.get('params', {}), args.output, blender, godot,
                    _config('node', args.node), args.render)
-    print(json.dumps({'state': report['state'], 'failed_gates': report['failed_gates'],
-                      'failures': {g['gate']: g['failures'] for g in report['gates'] if not g['passed']},
+    print(json.dumps({'state': report['state'], 'failed_gates': report['failed_gates'], 'skipped_gates': report['skipped_gates'],
+                      'failures': {g['gate']: g['failures'] for g in report['gates'] if g['passed'] is False},
                       'report': str(Path(args.output) / 'report.json')}, indent=2))
-    return 0 if report['state'] == 'passed' else 1
+    return {'passed': 0, 'incomplete': 3}.get(report['state'], 1)
 
 
 if __name__ == '__main__':

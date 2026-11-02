@@ -26,6 +26,7 @@ func _initialize():
 		var meshes = 0
 		var bodies = 0
 		var shapes = 0
+		var collision_triangles = 0
 		var aabb = AABB()
 		for node in _walk(inst):
 			if node is MeshInstance3D:
@@ -36,7 +37,9 @@ func _initialize():
 				bodies += 1
 			elif node is CollisionShape3D and node.shape != null:
 				shapes += 1
-		out = {"state": "loaded", "meshes": meshes, "static_bodies": bodies, "collision_shapes": shapes,
+				if node.shape is ConcavePolygonShape3D:
+					collision_triangles += node.shape.get_faces().size() / 3
+		out = {"state": "loaded", "meshes": meshes, "static_bodies": bodies, "collision_shapes": shapes, "collision_triangles": collision_triangles,
 			"mesh_aabb_size": [aabb.size.x, aabb.size.y, aabb.size.z],
 			"mesh_aabb_position": [aabb.position.x, aabb.position.y, aabb.position.z]}
 	print("PROCGEN_REPORT " + JSON.stringify(out))

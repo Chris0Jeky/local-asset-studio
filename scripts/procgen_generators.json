@@ -13,16 +13,16 @@
         "window_width": {"type": "float", "min": 0.5, "max": 2.4, "default": 1.2},
         "window_height": {"type": "float", "min": 0.5, "max": 1.6, "default": 1.0},
         "window_sill": {"type": "float", "min": 0.4, "max": 1.2, "default": 0.9, "doc": "sill height above the floor top"},
-        "window_offset": {"type": "float", "min": -2.0, "max": 2.0, "default": 0.0, "doc": "window centre x"},
-        "desk_width": {"type": "float", "min": 0.6, "max": 1.8, "default": 1.1, "doc": "desk along the back wall, left side"},
+        "window_offset": {"type": "float", "min": -2.0, "max": 2.0, "default": 0.0, "doc": "window centre x (negative = left seen from the open front)"},
+        "desk_width": {"type": "float", "min": 0.6, "max": 1.8, "default": 1.1, "doc": "desk against the back wall from x = -width/2 + 0.05; must not reach the bed"},
         "desk_depth": {"type": "float", "min": 0.45, "max": 0.8, "default": 0.6},
-        "bed_width": {"type": "float", "min": 0.8, "max": 1.8, "default": 1.0, "doc": "bed along the right wall, head at the back"},
-        "bed_length": {"type": "float", "min": 1.8, "max": 2.3, "default": 2.0},
+        "bed_width": {"type": "float", "min": 0.8, "max": 1.8, "default": 1.0, "doc": "bed frame width against the right wall (x up to width/2 - 0.02), head at the back; mattress is 0.06 narrower"},
+        "bed_length": {"type": "float", "min": 1.8, "max": 2.3, "default": 2.0, "doc": "must fit depth - 0.02"},
         "shelf_count": {"type": "int", "min": 2, "max": 6, "default": 4, "doc": "bookshelf levels on the left wall, in front of the desk"},
-        "rug_radius": {"type": "float", "min": 0.4, "max": 1.5, "default": 0.9},
+        "rug_radius": {"type": "float", "min": 0.4, "max": 1.5, "default": 0.9, "doc": "round rug centred at (0, 0.45 * depth); must stay inside the floor"},
         "detail": {"type": "int", "min": 4, "max": 48, "default": 16, "doc": "segments of round parts; LODs halve it"},
         "seed": {"type": "int", "min": 0, "max": 9999, "default": 7},
-        "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false}
+        "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false, "doc": "flat toon palette: 0 day, 1 dusk, 2 sakura, 3 autumn"}
       },
       "constraints": [
         {"terms": {"window_offset": 1, "window_width": 0.5, "width": -0.5}, "le": -0.2, "doc": "window clears the right wall by 0.2 m"},
@@ -56,18 +56,18 @@
         "width": {"type": "float", "min": 0.15, "max": 1.0, "default": 0.4},
         "detail": {"type": "int", "min": 4, "max": 48, "default": 16},
         "seed": {"type": "int", "min": 0, "max": 9999, "default": 7},
-        "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false}
+        "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false, "doc": "flat toon palette: 0 day, 1 dusk, 2 sakura, 3 autumn"}
       },
       "constraints": [],
       "parts": {
-        "1": {"name": "lantern_body", "group": "prop", "optional": true},
-        "2": {"name": "lantern_caps", "group": "prop", "optional": true},
-        "3": {"name": "lantern_hanger", "group": "prop", "optional": true, "collision": false},
-        "4": {"name": "crate_core", "group": "prop", "optional": true},
-        "5": {"name": "crate_frame", "group": "prop", "optional": true},
-        "6": {"name": "pot", "group": "prop", "optional": true, "anchor": true},
-        "7": {"name": "soil", "group": "prop", "optional": true, "collision": false},
-        "8": {"name": "foliage", "group": "prop", "optional": true}
+        "1": {"name": "lantern_body", "group": "prop", "when": {"kind": [0, 0]}},
+        "2": {"name": "lantern_caps", "group": "prop", "when": {"kind": [0, 0]}},
+        "3": {"name": "lantern_hanger", "group": "prop", "when": {"kind": [0, 0]}, "collision": false},
+        "4": {"name": "crate_core", "group": "prop", "when": {"kind": [1, 1]}},
+        "5": {"name": "crate_frame", "group": "prop", "when": {"kind": [1, 1]}},
+        "6": {"name": "pot", "group": "prop", "when": {"kind": [2, 2]}, "anchor": true},
+        "7": {"name": "soil", "group": "prop", "when": {"kind": [2, 2]}, "collision": false},
+        "8": {"name": "foliage", "group": "prop", "when": {"kind": [2, 2]}}
       }
     },
     "shrine": {
@@ -82,16 +82,16 @@
         "step_run": {"type": "float", "min": 0.25, "max": 0.45, "default": 0.32},
         "lanterns": {"type": "int", "min": 0, "max": 1, "default": 1, "doc": "1 adds a stone lantern pair"},
         "detail": {"type": "int", "min": 4, "max": 48, "default": 16},
-        "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false}
+        "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false, "doc": "flat toon palette: 0 day, 1 dusk, 2 sakura, 3 autumn"}
       },
       "constraints": [],
       "parts": {
         "1": {"name": "platform", "group": "ground"},
-        "2": {"name": "steps", "group": "ground", "optional": true},
+        "2": {"name": "steps", "group": "ground", "when": {"step_count": [1, 8]}},
         "3": {"name": "torii_pillars", "group": "torii"},
         "4": {"name": "torii_beams", "group": "torii"},
         "5": {"name": "pillar_bases", "group": "torii"},
-        "6": {"name": "stone_lanterns", "group": "lanterns", "optional": true}
+        "6": {"name": "stone_lanterns", "group": "lanterns", "when": {"lanterns": [1, 1]}}
       }
     }
   }

@@ -15,7 +15,7 @@ from mathutils import Matrix, Vector
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from procgen_factory import uv_overlap_texels  # noqa: E402
+from procgen_factory import SNAP_EPS, uv_degenerate, uv_overlap_texels  # noqa: E402
 
 ROLES = ('wall', 'floor', 'wood', 'wood_dark', 'linen', 'fabric', 'fabric_alt', 'glass', 'paper', 'metal', 'stone',
          'vermilion', 'black', 'foliage', 'soil', 'terracotta', 'accent', 'rug')
@@ -224,7 +224,7 @@ def prop(b, P):
 def shrine(b, P):
     gw, gh, pr, n, rise, run = (P[k] for k in ('gate_width', 'gate_height', 'pillar_radius', 'step_count', 'step_rise', 'step_run'))
     kasagi = 1.3 * gw + 4 * pr
-    pw = b.ceil((b.max(kasagi, gw + 2 * pr) + 1.0) / 0.5 - 1e-4) * 0.5
+    pw = b.ceil((b.max(kasagi, gw + 2 * pr) + 1.0) / 0.5 - SNAP_EPS) * 0.5
     y0, ph, pd = n * run, (n + 1) * rise, 3.0
     g = [b.box((-pw / 2, y0, 0), (pw / 2, y0 + pd, ph), 1, 'stone'),
          b.instance(b.line(n, (0, 0, 0), (0, run, 0)), b.box((-pw / 2, 0, 0), (pw / 2, run, rise), 2, 'stone'),
@@ -358,11 +358,13 @@ def stats(obj):
     result['uv0_finite'] = bool(uv0 is not None and np.isfinite(uvs(uv0)).all())
     result['uv1_present'] = uv1 is not None
     result['uv1_in_unit'] = bool(uv1 is not None and ((uvs(uv1) >= -1e-6) & (uvs(uv1) <= 1 + 1e-6)).all())
-    result['uv1_overlap_texels'] = -1
+    result['uv1_overlap_texels'] = result['uv1_degenerate'] = -1
     if uv1 is not None:
         me.calc_loop_triangles()
         loops = np.empty(len(me.loop_triangles) * 3, dtype=np.int64); me.loop_triangles.foreach_get('loops', loops)
-        result['uv1_overlap_texels'] = uv_overlap_texels(uvs(uv1)[loops].reshape(-1, 3, 2), REQUEST['uv_res'])
+        tris = uvs(uv1)[loops].reshape(-1, 3, 2)
+        result['uv1_overlap_texels'] = uv_overlap_texels(tris, REQUEST['uv_res'])
+        result['uv1_degenerate'] = uv_degenerate(tris.tolist())
     return result
 
 
@@ -371,10 +373,15 @@ def bbox(objs):
     return pts.min(0).tolist(), pts.max(0).tolist()
 
 
-def collision_box(obj, suffix, collection, root):
-    co = np.array([tuple(v.co) for v in obj.data.vertices]); lo, hi = co.min(0), co.max(0)
-    verts = [(x, y, z) for x in (lo[0], hi[0]) for y in (lo[1], hi[1]) for z in (lo[2], hi[2])]
-    faces = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
+def collision_boxes(obj, islands, suffix, collection, root):
+    """One box per disconnected solid (island), so the gaps between pillars or around a window stay open."""
+    origin, verts, faces = np.array(obj.location), [], []
+    quads = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
+    for island in islands:
+        lo, hi = np.array(island[:3]) - origin, np.array(island[3:]) - origin
+        base = len(verts)
+        verts += [(x, y, z) for x in (lo[0], hi[0]) for y in (lo[1], hi[1]) for z in (lo[2], hi[2])]
+        faces += [tuple(base + i for i in q) for q in quads]
     me = bpy.data.meshes.new(obj.name + suffix); me.from_pydata(verts, [], faces); me.update()
     col = bpy.data.objects.new(obj.name + suffix, me); col.location = obj.location; col.parent = root
     collection.objects.link(col)
@@ -428,7 +435,7 @@ def main(request):
     gen.hide_render = True
     measurements = {'blender': {'version': bpy.app.version_string, 'hash': bpy.app.build_hash.decode()},
                     'gn_bounds': {k: [round(i.min_value, 6), round(i.max_value, 6)] for k, i in gn_inputs(tree).items()},
-                    'lods': [], 'parts': [], 'collision_objects': [], 'unknown_part_ids': []}
+                    'lods': [], 'parts': [], 'collision_objects': [], 'collision_boxes': 0, 'unknown_part_ids': []}
     lod0_objs = []
     for level, detail in enumerate(request['lod_details']):
         suffix = '' if level == 0 else f'_lod{level}'
@@ -439,17 +446,19 @@ def main(request):
         objs = [obj for _, obj in parts]
         lo, hi = bbox(objs)
         export = list(objs) + [root]
+        level_parts = [{'id': pid, 'name': obj.name, **stats(obj)} for pid, obj in parts]
         if level == 0:
             lod0_objs = objs
             measurements['unknown_part_ids'] = unknown
-            for pid, obj in parts:
-                measurements['parts'].append({'id': pid, 'name': obj.name, **stats(obj)})
+            measurements['parts'] = level_parts
+            for (pid, obj), part in zip(parts, level_parts):
                 if spec['parts'][str(pid)].get('collision', True):
-                    export.append(collision_box(obj, request['collision_suffix'], collection, root))
+                    export.append(collision_boxes(obj, part['islands'], request['collision_suffix'], collection, root))
                     measurements['collision_objects'].append(export[-1].name)
+                    measurements['collision_boxes'] += len(part['islands'])
         glb = f'asset_LOD{level}.glb'
         export_glb(export, out / glb)
-        measurements['lods'].append({'detail': detail, 'glb': glb, 'bbox_min': lo, 'bbox_max': hi,
+        measurements['lods'].append({'detail': detail, 'glb': glb, 'bbox_min': lo, 'bbox_max': hi, 'parts': level_parts if level else [],
                                      'triangles': sum(sum(len(p.vertices) - 2 for p in o.data.polygons) for o in objs)})
     evaluate(gen, tree, params, params['detail'])
     if request['render']: contact_sheet(lod0_objs, measurements['lods'][0]['bbox_min'], measurements['lods'][0]['bbox_max'], out)
