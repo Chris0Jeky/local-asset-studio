@@ -117,9 +117,16 @@ def exercise(out, browser_executable=None):
     checks, errors, requests = [], [], []
 
     def check(condition, label):
-        assert condition, label
+        if not condition:
+            (out/'failure.json').write_text(json.dumps({'error': label, 'checks': checks, 'page_errors': errors, 'post_routes': requests}, indent=2)+'\n')
+            raise AssertionError(label+('\n'+'\n'.join(errors) if errors else ''))
         checks.append(label)
         print('PASS: '+label, flush=True)
+
+    def page_error(error):
+        details = error.stack or str(error)
+        errors.append(details)
+        print('PAGE ERROR: '+details, flush=True)
 
     with tempfile.TemporaryDirectory() as tmp:
         studio, ids, original, digest = build_fixture(tmp)
@@ -134,7 +141,7 @@ def exercise(out, browser_executable=None):
                 context = browser.new_context(viewport={'width': 1440, 'height': 1000}, reduced_motion='reduce')
                 page = context.new_page()
                 page.set_default_timeout(10000)
-                page.on('pageerror', lambda error: errors.append(error.stack or str(error)))
+                page.on('pageerror', page_error)
                 page.on('dialog', lambda dialog: dialog.dismiss())
 
                 def ready():
@@ -248,7 +255,7 @@ def exercise(out, browser_executable=None):
                         elif change == 'navigate':
                             open_asset(ids['other'])
                         elif change == 'workspace':
-                            page.evaluate('''()=>{const previous=assetState.workspace_id;assetState.workspace_id='f'.repeat(32);assetWorkspaceEpoch++;document.dispatchEvent(new Event('studio:workspace-change'));assetState.workspace_id=previous;assetWorkspaceEpoch++;document.dispatchEvent(new Event('studio:workspace-change'));}''')
+                            page.evaluate('''()=>{const previous=assetState.workspace_id;assetState.workspace_id='f'.repeat(32);observeAssetWorkspaceIdentity();assetState.workspace_id=previous;observeAssetWorkspaceIdentity();}''')
                         else:
                             page.evaluate('StudioPrivacy.setScope("all");StudioPrivacy.setScope("regular")')
                         controls['release'].set()
@@ -269,7 +276,7 @@ def exercise(out, browser_executable=None):
                     page.wait_for_function('document.querySelector("#assetSourceComparison").hidden')
                     check(page.locator('#assetSourceComparison img').count() == 0, 'Leaving private view removes comparison media')
                 except Exception as error:
-                    (out/'failure.json').write_text(json.dumps({'error': str(error), 'checks': checks, 'page_errors': errors}, indent=2)+'\n')
+                    (out/'failure.json').write_text(json.dumps({'error': str(error), 'checks': checks, 'page_errors': errors, 'post_routes': requests}, indent=2)+'\n')
                     page.screenshot(path=str(out/'failure.png'), full_page=False, timeout=5000)
                     raise
                 finally:

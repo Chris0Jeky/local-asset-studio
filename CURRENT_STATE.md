@@ -104,6 +104,14 @@ workflow now runs the complete comparison fixture and retains its wide, narrow,
 CSS-200, failure and report artifacts. That hosted result and the integrated full
 suite remain pending; the earlier partial browser evidence is not upgraded.
 
+Hosted run `41385708468` at `a954ec3` then passed all 34 comparison interaction
+assertions and retained wide, narrow and CSS-200 captures, but failed the final
+page-error check. Its error details were not retained. The fixture's bare Workspace
+events reproduce a TypeError in the existing Continue listener; the fixture now
+uses the production identity observer for both A-B-A transitions. Failed checks
+retain their errors and request log, and page-error stacks are printed. These
+changes pass focused fault probes; the complete hosted result remains pending.
+
 ## 2026-10-31 — Deliberately restore an older shared setup
 
 Workspace history now offers **Review restore** for an older revision. It checks the
