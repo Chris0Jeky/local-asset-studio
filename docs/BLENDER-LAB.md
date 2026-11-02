@@ -159,3 +159,8 @@ The state-leak checks are:
 - the datablock counts are unchanged.
 
 Fixed start-up cost dominates fresh calls; on 5.4 alpha it is about 1.3 s.
+
+A rerun after the review fixes (state check now also covers frame, engine, camera, world, resolution and view
+transform) ran while another lane held the GPU for a 27B VLM. It measured 4.07 s vs 32.0 s (7.9×) on 4.5, where one
+cold first render took 2.5 s, and 3.02 s vs 54.0 s (17.9×) on 5.4. The leak checks passed on both. Read the speed-up as
+8–26× depending on machine load.
