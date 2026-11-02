@@ -1,7 +1,10 @@
 from pathlib import Path
+import ast
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest.mock import Mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -9,6 +12,31 @@ import articulated_prop as prop
 
 
 class ArticulatedPropContractTests(unittest.TestCase):
+    def test_material_sets_render_shader_inputs(self):
+        inputs = {name: SimpleNamespace(default_value=None) for name in ("Base Color", "Metallic", "Roughness")}
+        material = SimpleNamespace(node_tree=SimpleNamespace(nodes={"Principled BSDF": SimpleNamespace(inputs=inputs)}))
+        bpy = SimpleNamespace(data=SimpleNamespace(materials=SimpleNamespace(new=lambda name: material)))
+        function = next(node for node in ast.parse(prop._script()).body if isinstance(node, ast.FunctionDef) and node.name == "material")
+        namespace = {"bpy": bpy}
+        exec(compile(ast.Module(body=[function], type_ignores=[]), "material", "exec"), namespace)
+        self.assertIs(namespace["material"]("Wood", (0.3, 0.1, 0.02), 0.8), material)
+        self.assertEqual(inputs["Base Color"].default_value, (0.3, 0.1, 0.02, 1.0))
+        self.assertEqual(inputs["Metallic"].default_value, 0.8)
+        self.assertEqual(inputs["Roughness"].default_value, 0.42)
+        self.assertTrue(material.use_nodes)
+
+    def test_lid_interpolation_uses_the_assigned_datablock_curve(self):
+        points = [SimpleNamespace(interpolation="BEZIER") for _ in range(4)]
+        curve = SimpleNamespace(keyframe_points=points)
+        action = SimpleNamespace(fcurve_ensure_for_datablock=Mock(return_value=curve))
+        lid = SimpleNamespace(animation_data=SimpleNamespace(action=action))
+        script = prop._script()
+        animation = script[script.index('action = lid.animation_data.action'):script.index('bpy.ops.object.camera_add()')]
+        exec(animation, {"lid": lid})
+        action.fcurve_ensure_for_datablock.assert_called_once_with(lid, "rotation_euler", index=0)
+        self.assertEqual(action.name, "ChestLidOpenHoldClose")
+        self.assertEqual([point.interpolation for point in points], ["LINEAR"] * 4)
+
     def test_describe_and_generated_script_keep_fixed_safety_contract(self):
         self.assertEqual(prop.describe()["fixed_argv"][:3], ["--background", "--factory-startup", "--disable-autoexec"])
         script = prop._script()

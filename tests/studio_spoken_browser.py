@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import shutil
 import sys
+import tempfile
 import threading
 from browser_ports import browser_server
 from types import SimpleNamespace
@@ -55,6 +56,7 @@ class SpokenBrowserTests(unittest.TestCase):
         self.addCleanup(self.context.close)
         self.page = self.context.new_page(); self.errors = []
         self.page.on('pageerror', lambda e: self.errors.append(str(e)))
+        self.addCleanup(self.save_diagnostics)
         self.page.route('**/api/catalog', lambda route: route.fulfill(json={'presets': []}))
         self.page.route('**/api/looks', lambda route: route.fulfill(json={'looks': []}))
         self.origin = f'http://127.0.0.1:{self.server.server_port}'
@@ -64,6 +66,13 @@ class SpokenBrowserTests(unittest.TestCase):
 
     def stop_server(self):
         self.server.shutdown(); self.server.server_close(); self.thread.join(5)
+
+    def save_diagnostics(self):
+        output = os.environ.get('SPOKEN_BROWSER_SCREENSHOT')
+        if output:
+            target = Path(output).with_name(self._testMethodName + '.json')
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(json.dumps({'page_errors': self.errors, 'traffic': self.traffic}, indent=2), encoding='utf-8')
 
     def inspect(self):
         self.page.locator('#discover').click()
@@ -80,6 +89,83 @@ class SpokenBrowserTests(unittest.TestCase):
         posts = [path for method, path in self.traffic if method == 'POST']
         self.assertTrue(all(path.startswith(('/api/spoken-briefs/bookmark?', '/api/spoken-briefs/review?')) for path in posts), posts)
         self.assertFalse(self.errors, self.errors)
+
+    def test_source_preview_real_compiler_keyboard_and_narrow_snapshot(self):
+        from spoken_brief_compile import compile_source, batch_segments
+        pack = self.f.source.parent / 'lantern-pack'; pack.mkdir()
+        source = pack / 'COMPRESSED.md'
+        source.write_bytes(b'---\r\nfictional: true\r\n---\r\n# Lantern keeper\r\n\r\nKeep the lantern blue.\r\n\r\n## Next scene\r\n\r\nLeave a light in the window.\r\n\r\n```\r\nomitted_code()\r\n```\r\n<!-- hidden note -->\r\n')
+        expected = compile_source(source)
+        def snapshot():
+            return {p.relative_to(self.f.source.parent): p.read_bytes() for p in self.f.source.parent.rglob('*') if p.is_file()}
+        before = snapshot()
+        for width in (1280, 390):
+            self.page.set_viewport_size({'width': width, 'height': 900})
+            self.page.goto(self.origin + '/spoken-briefs.html')
+            self.page.wait_for_function("!document.querySelector('#previewSource').disabled")
+            count = len([path for _, path in self.traffic if '/source-preview?' in path])
+            self.page.locator('#sourceKey').fill('lantern-pack')
+            self.assertEqual(count, len([path for _, path in self.traffic if '/source-preview?' in path]))
+            with self.page.expect_response(lambda r: '/source-preview?' in r.url) as response:
+                self.page.locator('#previewSource').focus(); self.page.keyboard.press('Enter')
+            self.page.locator('#sourcePreview').wait_for(state='visible')
+            self.assertEqual(expected, response.value.json()['manifest'])
+            self.assertEqual([s['text'] for s in expected['segments']], self.page.locator('#sourceSegments p').all_text_contents())
+            self.assertIn(f"{len(batch_segments(expected['segments']))} batches", self.page.locator('#sourceCounts').inner_text())
+            self.assertIn('code blocks: 1', self.page.locator('#sourceOmissions').inner_text())
+            self.assertIn(expected['source']['sha256'], self.page.locator('#sourceIdentity').inner_text())
+            self.assertLessEqual(self.page.evaluate('document.documentElement.scrollWidth'), width)
+            self.assertEqual(0, self.page.locator('#sourcePreview script, #sourcePreview img').count())
+            output = os.environ.get('SPOKEN_BROWSER_SCREENSHOT')
+            if output:
+                target = Path(output).with_name(f'spoken-source-{width}.png')
+                evidence_screenshot(self.page, path=str(target), full_page=True)
+                self.assertTrue(target.is_file(), 'Required preview capture must actually exist')
+        self.assertEqual(before, snapshot())
+        self.inspect(); self.load_audio()
+        self.page.locator('#reason').fill('Fictional listening note remains a draft.')
+        self.page.locator('#sourceKey').fill('absent.md')
+        self.page.locator('#previewSource').click()
+        self.page.wait_for_function("document.querySelector('#sourceStatus').textContent.includes('absent.md')")
+        self.assertTrue(self.page.locator('#sourcePreview').is_hidden())
+        self.assertTrue(self.page.locator('#archivePanel').is_visible())
+        self.assertEqual('Fictional listening note remains a draft.', self.page.locator('#reason').input_value())
+        self.assertTrue(self.page.locator('#player').evaluate('(a)=>a.paused'))
+        self.assertEqual(before, snapshot())
+        self.assertFalse(any(method == 'POST' for method, _ in self.traffic))
+        self.assert_no_inference()
+
+    def test_source_preview_delayed_response_cannot_replace_selection_or_root_refresh(self):
+        from studio_spoken.core import ArchiveAccess
+        original = ArchiveAccess.source_preview
+        self.page.evaluate("""() => {
+          window.previewSettled = 0;
+          const original = SpokenReview.SourcePreviewSession.prototype.preview;
+          SpokenReview.SourcePreviewSession.prototype.preview = async function (...args) {
+            try { return await original.apply(this, args); } finally { window.previewSettled++; }
+          };
+        }""")
+        for completed, action in enumerate(('selection', 'root'), 1):
+            entered, release = threading.Event(), threading.Event()
+            def delayed(access, *args):
+                value = original(access, *args); entered.set()
+                if not release.wait(8): raise AssertionError('Owned preview was not released')
+                return value
+            with patch.object(ArchiveAccess, 'source_preview', delayed):
+                try:
+                    self.page.locator('#sourceKey').fill('.')
+                    self.page.locator('#previewSource').click(); self.assertTrue(entered.wait(3))
+                    if action == 'selection':
+                        self.page.locator('#sourceKey').fill('different.md')
+                    else:
+                        self.page.locator('#refreshSource').click()
+                        self.page.wait_for_function("!document.querySelector('#previewSource').disabled")
+                    with self.page.expect_response(lambda r: '/source-preview?' in r.url): release.set()
+                    self.page.wait_for_function('(count)=>window.previewSettled === count', arg=completed)
+                    self.assertTrue(self.page.locator('#sourcePreview').is_hidden())
+                finally: release.set()
+        self.assertFalse(any(method == 'POST' for method, _ in self.traffic))
+        self.assert_no_inference()
 
     def test_voice_main_links_to_listening_after_shell_replaces_topbar(self):
         self.page.route('**/api/voice-baseline', lambda route: route.fulfill(
@@ -369,6 +455,117 @@ class SpokenBrowserTests(unittest.TestCase):
                 self.assertIn('480 samples', self.page.locator('#savedPosition').inner_text())
             finally: release.set()
         self.assert_no_inference()
+
+
+class NarrationBrowserTests(unittest.TestCase):
+    setUpClass = classmethod(SpokenBrowserTests.setUpClass.__func__)
+    tearDownClass = classmethod(SpokenBrowserTests.tearDownClass.__func__)
+
+    def setUp(self):
+        from test_spoken_brief_narration import NarrationFixture
+        class BrowserFixture(NarrationFixture):
+            def handler(self): return super().handler(server_module.Handler, extend_handler)
+        temporary = tempfile.TemporaryDirectory(); self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name).resolve(); self.source = self.root / 'COMPRESSED.md'
+        self.source.write_text('# Lantern handoff\n\nKeep the lantern blue.\n\n```\nomitted_code()\n```\n', encoding='utf-8')
+        self.f = BrowserFixture(self.root); self.addCleanup(self.f.close)
+        self.context = self.browser.new_context(viewport={'width': 1280, 'height': 900})
+        self.addCleanup(self.context.close); self.page = self.context.new_page(); self.errors = []
+        self.page.on('pageerror', lambda e: self.errors.append(str(e)))
+        self.page.route('**/api/catalog', lambda route: route.fulfill(json={'presets': []}))
+        self.page.route('**/api/looks', lambda route: route.fulfill(json={'looks': []}))
+        self.page.set_default_timeout(10000)
+        self.page.goto(self.f.base_url + '/spoken-briefs.html')
+        self.page.wait_for_function("!document.querySelector('#previewSource').disabled")
+        self.addCleanup(self.diagnostics)
+
+    def diagnostics(self):
+        output = os.environ.get('SPOKEN_BROWSER_SCREENSHOT')
+        if output:
+            path = Path(output).with_name(self._testMethodName + '.json'); path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps({'page_errors': self.errors, 'traffic': self.f.traffic,
+                'producer_requests': self.f.requests}, indent=2), encoding='utf-8')
+
+    def posts(self): return [(path, body) for method, path, _, body in self.f.requests if method == 'POST']
+
+    def preview(self):
+        self.page.locator('#previewSource').click(); self.page.locator('#sourcePreview').wait_for(state='visible')
+        self.assertFalse(self.posts()); self.assertFalse((self.root / '_spoken').exists())
+
+    def wait_status(self, value):
+        self.page.wait_for_function('(value)=>document.querySelector("#narrationStatus").textContent.startsWith(value)', arg=value)
+
+    def test_preview_start_progress_verified_playback_download_keyboard_and_390px(self):
+        for width in (1280, 390):
+            self.page.set_viewport_size({'width': width, 'height': 900})
+            if width == 1280:
+                self.preview(); self.page.locator('#startNarration').focus(); self.page.keyboard.press('Enter')
+            self.wait_status('completed'); self.assertEqual(len(self.posts()), 2)
+            self.assertEqual(self.page.locator('#narrationBatches a').count(), 1)
+            self.assertIn('_spoken', self.page.locator('#sourceDestination').inner_text())
+            self.page.locator('#listenNarration').click(); self.page.locator('#archivePanel').wait_for(state='visible')
+            with self.page.expect_download() as download:
+                self.page.locator('#downloadAudio').click()
+            self.assertTrue(Path(download.value.path()).read_bytes().startswith(b'RIFF'))
+            self.page.locator('#player').evaluate('(a)=>a.play()')
+            self.page.wait_for_function('document.querySelector("#player").readyState>=1')
+            self.page.locator('#player').evaluate('(a)=>a.pause()')
+            self.assertTrue(self.page.evaluate('document.documentElement.scrollWidth <= innerWidth'))
+            self.page.locator('#refreshNarration').focus()
+            output = os.environ.get('SPOKEN_BROWSER_SCREENSHOT')
+            if output: evidence_screenshot(self.page, path=Path(output).with_name(f'first-narration-{width}.png'), full_page=True)
+        before = self.posts(); self.page.reload(); self.wait_status('completed'); self.assertEqual(self.posts(), before)
+        self.assertFalse(self.errors, self.errors)
+
+    def test_restart_after_lost_start_reply_preserves_partial_then_recovers_without_posts(self):
+        from studio_spoken.narration import Narrations
+        self.source.write_text('\n\n'.join(f'Fictional section {i} remains in order.' for i in range(9)), encoding='utf-8')
+        self.f.lose_start = 2; self.preview(); self.page.locator('#startNarration').click()
+        self.wait_status('uncertain'); before = self.posts(); self.assertEqual(len(before), 4)
+        self.assertIn('completed', self.page.locator('#narrationBatches').inner_text())
+        for thread in list(self.f.server.spoken_narrations.threads.values()): thread.join(5)
+        self.f.server.spoken_narrations = Narrations(lambda: self.f.server.RequestHandlerClass.studio.config, self.f.base_url)
+        self.page.reload(); self.wait_status('uncertain'); self.assertEqual(self.posts(), before)
+        self.page.locator('#recoverNarration').click(); self.wait_status('completed')
+        self.assertEqual(self.posts(), before); self.assertEqual(self.page.locator('#narrationBatches a').count(), 2)
+        self.assertFalse(self.errors, self.errors)
+
+    def test_lost_create_and_planned_child_stay_uncertain_without_replacement(self):
+        self.f.lose_create = True; self.preview(); self.page.locator('#startNarration').click()
+        self.wait_status('uncertain'); before = self.posts(); self.assertEqual(len(before), 1)
+        self.page.reload(); self.wait_status('uncertain')
+        self.page.locator('#recoverNarration').click(); self.wait_status('uncertain')
+        for thread in list(self.f.server.spoken_narrations.threads.values()): thread.join(5)
+        self.page.locator('#refreshNarration').click(); self.wait_status('uncertain')
+        self.assertEqual(self.posts(), before); self.assertTrue(self.page.locator('#listenNarration').is_disabled())
+        self.assertFalse(self.errors, self.errors)
+
+    def test_lost_browser_start_reply_reload_only_observes_retained_run(self):
+        self.preview()
+        def lose(route):
+            route.fetch(); route.abort()
+        self.page.route('**/api/spoken-briefs/narration/start', lose)
+        self.page.locator('#startNarration').click()
+        self.page.wait_for_function("document.querySelector('#narrationStatus').textContent.includes('no create or Start was retried')")
+        self.assertIn('narration=', self.page.url)
+        self.page.reload(); self.wait_status('completed')
+        self.assertEqual(len(self.posts()), 2); self.assertFalse(self.errors, self.errors)
+
+    def test_delayed_progress_cannot_replace_a_new_source_selection(self):
+        self.preview(); self.page.locator('#startNarration').click(); self.wait_status('completed')
+        entered = threading.Event(); release = threading.Event()
+        manager = self.f.server.spoken_narrations; inspect = manager.inspect
+        def delayed(*args):
+            value = inspect(*args); entered.set(); release.wait(5); return value
+        with patch.object(manager, 'inspect', side_effect=delayed):
+            try:
+                self.page.locator('#refreshNarration').click(); self.assertTrue(entered.wait(3))
+                self.page.locator('#sourceKey').fill('another-handoff'); release.set()
+                self.page.wait_for_timeout(150)
+                self.assertTrue(self.page.locator('#narrationPanel').is_hidden())
+                self.assertTrue(self.page.locator('#startNarration').is_disabled())
+            finally: release.set()
+        self.assertEqual(len(self.posts()), 2); self.assertFalse(self.errors, self.errors)
 
 
 if __name__ == '__main__': unittest.main(verbosity=2)

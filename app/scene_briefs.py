@@ -91,11 +91,34 @@ def read(store, identifier):
     return card
 
 
+def acceptance_target(store, db, ask, asset_id):
+    """#1832: what an owner's press on a slot accepts, checked inside accept()'s transaction against the SAVED card and its current candidate (never a draft).
+    Returns (use, brief_id, slot, criteria): the criteria are the wording shown, so a later edit cannot rewrite what was accepted against."""
+    need(isinstance(ask, dict) and set(ask) == {'id','slot','expected_revision'} and isinstance(ask['id'], str) and ask['slot'] in SLOTS, 'Name the saved brief, slot and revision')
+    row = db.execute("SELECT * FROM cards WHERE id=? AND kind='brief'", (ask['id'],)).fetchone()
+    need(row is not None, 'Brief not found', status=404, code='brief_not_found')
+    try: card = store._card(row)
+    except (ValueError, TypeError) as exc: raise WorkspaceError('Brief data is unreadable; nothing was recorded', code='brief_unreadable') from exc
+    body = shape(card['body']); store._check_scope(db, body['workspace_id'])
+    need(not card['trashed_at'] and type(ask['expected_revision']) is int and ask['expected_revision'] == card['revision'],
+         'The brief changed. Reload it and accept again; nothing was recorded.', status=409, code='card_revision_conflict')
+    slot = body['slots'][ask['slot']]; ref = slot['selected']
+    need(ref is not None and ref['asset_id'] == asset_id, 'This picture is not the saved candidate for that slot. Save the brief, then accept; nothing was recorded.',
+         status=409, code='brief_source_stale')
+    source(db, ref, SLOTS[ask['slot']], body['collection_id'])   # same bytes, revision, type and collection as the saved snapshot; not trashed or archived
+    return card['name'][:60] + ' · ' + ask['slot'], card['id'], ask['slot'], slot['criteria']
+
+
 def inspect(studio, identifier, scope='regular'):
     regular(scope); store = studio.assets; card = read(store, identifier)
-    states = {}
+    states = {}; accepted = {key: [] for key in SLOTS}
     with store.connection() as db:
         collection = card['body']['collection_id']
+        # #1832: owner acceptances for this brief's slots, newest first, withdrawn and replaced-candidate rows kept as history; `current` = live and for the saved candidate's bytes.
+        for r in db.execute("SELECT * FROM asset_acceptances WHERE brief_id=? ORDER BY accepted_at DESC,id", (card['id'],)):
+            ref = card['body']['slots'].get(r['slot'], {}).get('selected')
+            accepted.setdefault(r['slot'], []).append({**{k: r[k] for k in ('id','asset_id','sha256','note','criteria','accepted_at','withdrawn_at')},
+                'current': r['withdrawn_at'] is None and bool(ref) and ref['asset_id'] == r['asset_id'] and ref['sha256'] == r['sha256']})
         collection_ok = not collection or bool(db.execute("SELECT 1 FROM collections WHERE id=? AND privacy='regular'", (collection,)).fetchone())
         for key, slot in card['body']['slots'].items():
             ref = slot['selected']
@@ -107,7 +130,7 @@ def inspect(studio, identifier, scope='regular'):
                 states[key] = {'state':'selected', 'title':asset['title'] or asset['filename'], 'filename':asset['filename']}
             except (WorkspaceError, OSError):
                 states[key] = {'state':'unavailable', 'reason':'The saved candidate changed or is unavailable. Its snapshot is retained.'}
-    return {'card':card, 'candidates':states, 'collection_available':collection_ok}
+    return {'card':card, 'candidates':states, 'collection_available':collection_ok, 'acceptances':accepted}
 
 
 def listing(studio, scope='regular'):

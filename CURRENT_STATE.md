@@ -1,4 +1,78 @@
-# Current state — 31 October 2026
+# Current state — 2 November 2026
+
+## 2026-11-02 — Blender alpha compatibility
+
+The articulated-prop adapter now uses the assigned lid datablock's F-Curve API.
+Blender 5.4.0 Alpha (`67c9bdddb88b`) reproduced an `Action.fcurves` AttributeError
+before the fix. The corrected adapter completed on both that build and 4.5.13 LTS:
+BLEND save, animated GLB export/reimport, metadata and four inspected 128px CPU
+views. Render inspection also caught white materials on 5.4; setting the Principled
+shader inputs preserves the authored colours. Both regressions fail on the old code;
+all ten articulated tests pass. Final local receipts are in
+`C:/AI/blender-agentic/20261102/las-final-{5.4,4.5}`;
+the original failed attempt remains in `.runtime/blender-alpha-20261102/articulated`.
+This is compatibility evidence for the authored chest, not art acceptance.
+
+## 2026-11-01 — Character sheets, locked repaints, measured identity, and a batch client
+
+Two presets are generated through the Studio and agent-inspected; neither is art-accepted. `character-sheet-klein-9b`
+turns one picture into a front, side and back sheet (job `842dcb86`, 104.5 s). `union-repaint-wai` repaints a picture held
+to its own depth and line art (job `49c9f6f4`, 120.8 s): shapes held, eye colour did not. The Studio gained *Reference
+strength* on `anima-ref-adapter`, and a Studio run at 2.0 came out pixel-identical to the direct graph.
+
+`scripts/identity_score.py` measures CCIP identity. A 21-render sweep of `ref_guidance` and a second model are in
+[the adapter's evidence](experiments/curated/anima-ref-adapter/README.md). `scripts/view_batch.py` runs one preset over a
+folder of named pictures, with predictable names and a manifest. On the real Studio it completed three jobs; the fourth is the uncertain job below.
+Proof receipts: [sheet and repaint](experiments/curated/sheet-and-repaint-20261101/README.md).
+
+**Host limit found:** after several model families in a row, ComfyUI held 30 GB, free RAM reached zero and Windows sockets
+failed with error 10055. Job `49323960` ended uncertain, prompt `8b0d63fa`, and was not resubmitted. `POST /free` recovered
+14 GB within minutes, and the same work passed one family at a time with a free between. Nothing frees models automatically between
+families yet (#1893), and the commit gate does not cover `union-repaint-wai`, whose canvas is below 1 MP.
+
+Mesh work moved to a separate private tool, agent-sculpt, not in this repository. Engine verdict and the frontier queue:
+[try-queue](docs/research/WAIFU-TECH-TRY-QUEUE-2026-11-01.md). The fresh `C:/AI/agent-tools/identity` venv reproduced a sweep score
+exactly (0.2064). Anima Turbo v1.1 now has its own preset, `anima-ref-adapter-turbo`: 4.6 s against 27 s with identity level at strength 1.0
+([receipts](experiments/curated/anima-ref-adapter/README.md#anima-turbo-v11)); not judged by the owner. Later that evening: the repaint gained a colour lock after the owner rejected its eye drift
+([receipts](experiments/curated/sheet-and-repaint-20261101/README.md#colour-lock)), Kromoss ran its saved comparison
+([results](docs/MOSS-IMAGE.md)), Anima Role Ref KV ran level with the adapter, and #1832's Library half merged. Art verdicts are pending. Restored from the archive drive by hand for these runs: Klein 9B Q6 GGUF and its text
+encoder.
+
+## 2026-10-31 — Start and recover a previewed Spoken Brief
+
+The existing Spoken Briefs page now offers explicit **Start narration** after its
+confined compiler preview. A durable run record binds source/profile/root and
+producer configuration, then admits the existing CLI coordinator through the
+Production Voice worker. Progress retains exact child IDs and plan/producer
+provenance; completed WAVs use the existing archive verifier, player and download.
+
+Duplicate Start returns retained state. Reload and Refresh only read; explicit
+Recover observes existing children and may assemble verified completed audio,
+without another Create or Start. Unknown creation, attempted Start, missing
+children and stale claims remain blocked for inspection. Source changes after a
+successful Create retain the acknowledged child ID before blocking further work.
+The broader #638/#635 acceptance remains open, as recorded in
+[`CLI-PREVIEW.md`](docs/spoken-briefs/CLI-PREVIEW.md#studio-first-narration).
+
+Focused loopback fixtures reproduce the previously missing Start route and cover
+success, duplicate admission, lost replies, partial recovery, changed source/
+profile/producer, root changes and reparse refusal. They use fictional text and
+synthetic PCM. Actual browser/full-gate results belong to the qualification receipt;
+this source entry makes no native speech, GPU, voice-quality or owner-acceptance claim.
+
+## 2026-10-31 — Preview a local handoff in Spoken Briefs
+
+Spoken Briefs now has an explicit **Preview narration** action for a relative pack
+or Markdown path inside `spoken_briefs.archive_root`. It uses the existing compiler
+and default control profile, showing source hash, ordered narration, omission
+counts and exact segment/batch counts. No duration estimate or run-readiness claim
+is made. Changing selection or refreshing source access clears the snapshot and
+invalidates delayed reads. The retained player and listening review remain separate.
+
+This is a confined, read-only source preview: no preparation, queue, inference,
+archive write or voice acceptance. First-generation orchestration and the broader
+Spoken Briefs project remain open under #638/#635. See
+[`CLI-PREVIEW.md`](docs/spoken-briefs/CLI-PREVIEW.md#studio-source-preview).
 
 ## 2026-10-31 — Compare a repaired picture with its recorded source
 
@@ -18,6 +92,17 @@ Feature browser captures, hosted full-suite/all-30 journeys and final qualificat
 are pending at this checkpoint. Refs #1837 and #243; no broader closure. #1832
 acceptance and HUMAN_TODO remain unchanged. No live generation, paid runtime,
 native editor, model licensing or artistic acceptance is claimed.
+
+2 November integration: the comparison changes reconcile cleanly with main
+`84b66fba0da1b70be895caf8ec3831cb0a9055bd`. The 17 family observations,
+eight repair-import checks, three family frontend wrappers, detail contract wrapper
+and 29 frontend handoffs pass, as does repository validation. The disposable
+125-asset fixture reopens with the parent unchanged and repair unreviewed. Local
+browser execution was unavailable because Chromium installation failed before
+launch; no browser assertion or capture is claimed. The existing Linux family
+workflow now runs the complete comparison fixture and retains its wide, narrow,
+CSS-200, failure and report artifacts. That hosted result and the integrated full
+suite remain pending; the earlier partial browser evidence is not upgraded.
 
 ## 2026-10-31 — Deliberately restore an older shared setup
 
@@ -191,6 +276,19 @@ preserved outside Git in the flagship-capacity `studio-comparison-grid` delivery
 PR #1695 records the evidence. Refs #1204; remaining pair surfaces and registry
 integration are separate. No live generation, art, licensing or assistive-
 technology acceptance is claimed. [HUMAN_TODO.md](HUMAN_TODO.md) remains unchanged.
+
+
+## 2026-11-01 - Anima Reference Adapter preset (PR #1885)
+
+Preset `anima-ref-adapter` runs Anima base v1.0 with the Anima Reference Adapter v2 r64 LoRA through the
+`ComfyUI-Anima-Ref-Adapter` custom node (pinned 99c222e), one reference picture and a scene-only prompt. Studio job
+`953363be-06cc-49a2-84fb-9c7cbe3171ac` (prompt `03573334-76e7-48e0-97f0-4698fbc4ebc0`) completed in 40.0 s and its
+output is pixel-identical to a direct graph run with the same seed. The agent-inspected image keeps the reference's
+hair, clip, eye colour and outfit. Generated and agent-inspected only: not art acceptance, not licence clearance.
+The adapter weights are CircleStone Non-Commercial v1.2; the existing `anima-base-v1-0` pin records different civitai
+terms, which is left as is and listed in HUMAN_TODO for the owner. Receipts and the untested list:
+[experiments/curated/anima-ref-adapter/README.md](experiments/curated/anima-ref-adapter/README.md). The preset needs the
+custom node, installed in the primary ComfyUI and not part of this repository.
 
 ## 2026-10-29 — Ordinary comparisons in Review desk Grid (qualification pending)
 

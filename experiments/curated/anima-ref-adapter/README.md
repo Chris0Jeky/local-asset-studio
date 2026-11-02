@@ -1,0 +1,187 @@
+# Anima Reference Adapter, first proof (1 November 2026)
+
+Preset `anima-ref-adapter`: one reference picture, a scene-only prompt, Anima base v1.0 with the v2 r64 adapter
+LoRA through the `ComfyUI-Anima-Ref-Adapter` custom node. Graph: `workflows/api/anima-ref-adapter-api.json`.
+
+## Setup (what was run)
+
+| item | value |
+| --- | --- |
+| ComfyUI | primary, 0.35.0, AMD RX 9070 XT, `--reserve-vram 0.6`, shared with other sessions |
+| Custom node | `ArcAnima/ComfyUI-Anima-Ref-Adapter` at commit `99c222e1c2da472f4b514583b2dbd1b5afb4bdd9` (Apache-2.0) |
+| Base model | `anima-base-v1.0.safetensors`, sha256 `bd43b7cf…a006e` (matches Hugging Face `circlestone-labs/Anima` at `f973fc41`) |
+| Adapter | `anima_ref_adapter_v2_r64.safetensors`, sha256 `71dda607…cb81b` (HF `ElectronGirl/anima-ref-adapter` at `b729afd0`); licence CircleStone Non-Commercial v1.2 |
+| Reference | `docs/showcase/pilot_girl.jpg` from the node repo (sha256 `62d1190f…a963a2`), the author's showcase sheet, used for local tests only |
+| Settings | 832×1216, 30 steps, er_sde, simple, cfg 4.5, APG correction, seed 20261029, one image |
+
+## Receipts
+
+| run | route | ref_guidance | prompt ID | time | output sha256 |
+| --- | --- | --- | --- | --- | --- |
+| A | direct ComfyUI graph (probe script) | 4.5 | `7cab5525-a761-45a2-9f6b-447dfbd76c38` | 45.1 s | `ee7a4ca4…ffda5` |
+| B | direct ComfyUI graph (probe script) | 1.0 | `0efcb7c1-0dcf-49e6-a218-1d486a93b648` | 40.1 s | `b7d947b6…216a52` |
+
+Earlier attempt (no output, not a run): the first submission returned HTTP 400 because the base checkpoint was not yet
+installed; the first Studio submission returned HTTP 400 `Unsupported sampler` because the preset had no `choices`
+block. Both fixed before the runs recorded here.
+
+## What was inspected
+
+- Run A keeps the reference's long blonde hair, the red hair clip, the pink eyes and the black-and-white maid-style
+  outfit. The cafe window, a cup in hand and a seated pose match the prompt.
+- Run B keeps the hair and outfit in broad strokes, but the eyes are purple rather than pink, the clip is thinner,
+  and the pose drifts. So `ref_guidance` changes the output in the direction of the reference.
+- This is a visual judgement by one agent. It is not a measured identity score, and no second seed was run.
+- Run B used `ref_guidance` 1.0 through the direct graph. The preset does not bind `ref_guidance`, so the Studio cannot
+  reproduce run B; only the direct graph can. A follow-up would expose it as a control.
+  Correction, 1 November 2026: PR #1888 binds `ref_guidance` as the *Reference strength* control, so the Studio can now
+  reproduce run B. The runs above stay as recorded.
+
+## Not verified
+
+- Identity similarity measured numerically, across seeds, or against other references.
+- Speed and quality while another process (Blender, a peer's ComfyUI jobs) shares the GPU. Timings above were taken on
+  the shared machine but not under contention measurement.
+- Compatibility with ComfyUI versions other than 0.35.0 and Torch ROCm as installed here.
+- Two-reference (`two characters`) and asymmetric (`arch: asym`) adapters, which the preset does not expose.
+
+## Licence and terms
+
+The adapter weights are under CircleStone Labs Non-Commercial License v1.2, read 1 November 2026 at commit `b729afd0`.
+LoRA weights are Derivatives; outputs are not, and section 2(e) lets outputs be used for any purpose. Whether a
+commercial project's pipeline counts as a Non-Commercial Purpose (section 1(c)) is an open owner question, recorded in
+HUMAN_TODO as `anima-ref-terms-1101`. This is advisory, not legal advice.
+The existing `anima-base-v1-0` pin has an empty licence field and civitai terms for the same file. A separate PR should
+fill it from the CircleStone licence; this PR does not change it.
+
+## Status
+
+Runs A and B were generated through a direct ComfyUI graph and inspected by eye. They are not a Studio job receipt.
+
+## Studio receipt (preset proof)
+
+| item | value |
+| --- | --- |
+| Studio job | `953363be-06cc-49a2-84fb-9c7cbe3171ac`, preset `anima-ref-adapter`, status `completed`, message `Complete` |
+| Prompt ID | `03573334-76e7-48e0-97f0-4698fbc4ebc0` |
+| Asset | `d27bf566929e5df2bb04d14788ff6681` (output `anima_ref_adapter/image_00001_.png`) |
+| Time | 40.0 s |
+| Output sha256 | `466e578a…bb3c1d` (PNG metadata differs from run A; pixels are identical) |
+| Pixel check | identical to run A (`probe_cafe_00001_.png`): difference bounding box empty |
+| Controls | same reference (`anima-ref-probe.jpg` upload, original sha256 `62d1190f…a963a2`), seed 20261029, 832×1216, 30 steps, cfg 4.5, er_sde, simple |
+
+The preset is `verified: true` on this receipt. That means one Studio job completed and an agent inspected it. It is
+not art acceptance and not a licence clearance; the catalog's `verified` flag means the same across presets.
+
+Tests: `python -m unittest discover -s tests -p test_server.py` ran 176 tests, all OK. `validate-repo.py` passes
+(95 preset graphs, 190 pinned assets). `validate-live.py --preset anima-ref-adapter` passed against the live schema.
+
+## Seed stability (Studio batch, 1 November 2026)
+
+Same reference, prompt, settings and `ref_guidance` 4.5, submitted as one Studio job with `batch_count` 3.
+
+| item | value |
+| --- | --- |
+| Studio job | `dc95441f-c219-4e38-8e77-afdb6e526d9f`, status `completed`, 125.1 s for three images |
+| Seeds and prompt IDs | 20261029 `e43f8c49-8e5f-48ba-8f1f-e47611bbf625`; 20261030 `59784e4d-f2b0-4f19-8430-1ade0e0400a3`; 20261031 `780a8a67-3b15-4046-9e31-5943f8f20213` |
+| Output files | `anima_ref_adapter/image_00002_.png`, `image_00003_.png`, `image_00004_.png` |
+| Studio note | GPU memory overflowed about 1.7 GB into system RAM during the run, which slows the steps it touches |
+
+Inspected by an agent: all three keep the reference's pink eyes, red hair clip, long blonde hair, the black-and-white
+maid-style outfit, and the cafe setting. Cup, pose and background vary across seeds. Seed 20261029 is the same seed as the
+earlier Studio job `953363be`, so the first picture is expected to repeat it.
+
+Not verified: a numeric identity score, other references, and whether the overflow changes the output beyond timing.
+
+## Reference strength sweep, measured (1 November 2026)
+
+Same reference, cafe prompt and settings as run A, through the direct graph: seven `ref_guidance` values on three seeds
+(20261029, 20261030, 20261031), 21 images at 26 to 45 s each. Lower CCIP distance is closer. Scored with
+`scripts/identity_score.py`; CCIP's published same-character threshold is 0.178.
+
+| `ref_guidance` | seed 29 | seed 30 | seed 31 | mean |
+| --- | --- | --- | --- | --- |
+| 0.0 | 0.2507 | 0.2030 | 0.3274 | 0.2604 |
+| 1.0 | 0.2152 | 0.2050 | 0.2125 | 0.2109 |
+| 2.0 | 0.2118 | 0.1933 | 0.2083 | 0.2045 |
+| 3.0 | 0.2064 | 0.1854 | 0.1929 | 0.1949 |
+| 4.5 | 0.2006 | 0.1913 | 0.1988 | 0.1969 |
+| 6.0 | 0.1943 | 0.1869 | 0.2241 | 0.2018 |
+| 8.0 | 0.1883 | 0.1883 | 0.1871 | 0.1879 |
+
+First and last prompt IDs: `674cff70-07bf-4697-8a2d-5b8efd59c3a5` (0.0, seed 29) and `047897e8-b4d9-4496-a4ac-f1dac4d742ce` (8.0, seed 31). The full
+list is in the session's `sweep_rg.jsonl`, not in Git. Outputs are local under `output/lab-1101/rg/`; the reference is the
+node author's showcase sheet, so the renders are not committed.
+
+What the numbers say:
+
+- Any strength is far better and far steadier than 0.0, whose spread across seeds is 0.12 against 0.03 or less above 1.0
+  on most rows. The largest gain is from 0.0 to 1.0.
+- Above 3.0 the mean barely moves, and 6.0 has one outlier. Three seeds cannot separate 3.0, 4.5 and 8.0.
+- No setting reaches the same-character threshold against this reference. The reference is a whole sheet, not a single
+  portrait, so this may understate the match. No unrelated character was scored for calibration.
+
+What an agent saw on the contact sheet, with no owner judgement: the reference's pink eyes arrive at about 2.0. At 6.0 and
+above hair turns over-curled with stray yellow strands and contrast climbs. 2.0 to 4.5 looks like the working range, which
+keeps the shipped default of 4.5 and suggests the *Gentle reference (1.0)* variant trades eye colour for a softer finish.
+
+Not verified: other references, a single-portrait reference, any calibration against unrelated characters, and the Studio
+route for values other than 4.5.
+
+Correction beside the Studio note above: since PR #1888 the Studio can set this value; these runs did not use it.
+
+## Reference strength through the Studio, and on Aesthetic 1.1 (1 November 2026)
+
+Studio job `3b8d66fd-f155-4ca8-b7b1-dc54a845dc2b`, prompt `2f5cda6c-a3d9-42b4-8345-45e1db740906`, `ref_guidance` 2.0, seed
+20261030: output pixel-identical to the sweep's direct render for those values, CCIP 0.1933 both ways. So the *Reference
+strength* control reaches the node. The batch client recorded no timing for this job.
+
+The adapter was trained on Anima Base. It also runs on Anima Aesthetic 1.1, the model the Studio's looks use, by changing
+only the UNet file. Direct graph, same reference and seeds:
+
+| `ref_guidance` | seed 29 | seed 30 | seed 31 | mean | Base mean |
+| --- | --- | --- | --- | --- | --- |
+| 3.0 | 0.1917 | 0.1899 | 0.1971 | 0.1929 | 0.1949 |
+| 4.5 | 0.2004 | 0.1904 | 0.1912 | 0.1940 | 0.1969 |
+
+Prompts `d8af3bdc-829d-4699-8f40-61f170233d63` to `61e8405b-e7c8-4c41-88bc-46e19af1f71e`, 36 to 53 s. Aesthetic 1.1 matches
+Base within noise on three seeds, and an agent saw the character hold with a cleaner finish. Nothing here shows it is better.
+No preset uses this yet.
+
+## Anima Turbo v1.1
+
+Preset `anima-ref-adapter-turbo`: `anima-turbo-v1.1.safetensors` (sha256 `fba11953…f7eb`, Hugging Face at `f973fc41`) with the
+same adapter, cfg 1, er_sde, simple. Direct graph, same reference and seeds, 4.6 s to 10.6 s a picture once loaded:
+
+| `ref_guidance` | steps | seed 29 | seed 30 | seed 31 | mean | time | Base mean at 30 steps |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1.0 | 8 | 0.2080 | 0.2121 | 0.2072 | 0.2091 | 4.6 s | 0.2109 |
+| 1.0 | 12 | 0.2151 | 0.2071 | 0.2092 | 0.2105 | 6.1 s | 0.2109 |
+| 3.0 | 8 | 0.2178 | 0.2135 | 0.2222 | 0.2178 | 7.6 s | 0.1949 |
+| 3.0 | 12 | 0.2141 | 0.2091 | 0.2035 | 0.2089 | 10.6 s | 0.1949 |
+
+Prompts `a1010183-…` to `40e26a1f-9c7e-430a-96da-3b8393fca0e0`. Lower CCIP is closer, and all of these sit above the 0.178 same-character
+threshold, as Base does. At strength 1.0 Turbo matches Base within noise at about a sixth of Base's 27 s (25.7 to 27.1 s in the sweep above). Raising the strength
+to 3.0 costs time and gains nothing: an agent saw teal and yellow colour fringes in the hair on that row, and a halo on one image,
+so the preset stays at 1.0. Three seeds and one reference, so this is a direction, not a ranking.
+
+Through the Studio (preview on the PR branch): job `b8fef553-10b4-4695-976a-67fd906ad5b9`, prompt
+`83393a50-dd8d-4a67-8dca-7fad2f195b99`, 6.3 s, pixel-identical to the direct seed 30 run. Not tested: other references, other
+samplers, or Base's best strength against Turbo's on a harder pose. Not judged by the owner.
+
+## Anima Role Ref KV head to head
+
+`anima-role-ref-kv-v1.0.safetensors` (sha256 `102dcc38…124bb`, Hugging Face `AnticPan/Anima-Role-Ref-KV` at `259a0dce`) through its own
+node, which needs no strength and runs its own sampler, with the same reference, prompt and seeds as the sweeps above. The node's code was
+read before install: no network, no subprocess, safe weight loading.
+
+| model | steps, cfg | seed 29 | seed 30 | seed 31 | mean | time | adapter's best mean |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Base v1.0 | 28, 4 | 0.2114 | 0.1998 | 0.1933 | 0.2015 | 27 s | 0.1949 |
+| Aesthetic v1.1 | 28, 4 | 0.2114 | 0.1897 | 0.1858 | 0.1956 | 27 s | 0.1929 |
+| Turbo v1.1 | 8, 1 | 0.2109 | 0.2045 | 0.2018 | 0.2057 | 10.6 s | 0.2091 |
+
+Every prompt ID, score, setting and the exact graph are in [role-ref-kv-runs.json](role-ref-kv-runs.json). It runs on this card and also on Turbo, which its card does not claim. The gaps from the adapter
+are within noise on three seeds, so identity scores do not separate the two methods, and all sit above the 0.178 threshold. The owner
+said the adapter was "very close" with "some drifts", and the two methods are set up for the owner's own head-to-head. An agent saw the
+character and outfit hold on all nine. No preset uses Role Ref KV yet.

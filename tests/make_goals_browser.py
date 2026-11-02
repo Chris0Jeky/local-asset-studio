@@ -26,6 +26,8 @@ PAGES = re.compile(r'/api/assets/page(\?|$)')  # the Make picker reads this rout
 UPLOAD = 'f' * 32 + '_look.jpg'
 SLOW = []  # non-empty: the source context answers slowly, so the page can be changed while Generate runs
 CHARACTERS = []  # character cards saved through POST /api/characters, listed as app/characters.py lists them
+BACKEND = ['primary']  # the active model environment /api/backends reports; POST /api/backends/switch changes it (MOSS-Image, 1 Nov)
+SWITCHES = []
 ROUGH = []  # non-empty: /api/estimate answers as it does with no comparable run on this PC (confidence none, a generic guess)
 FAIL_LABEL = []  # a Make job whose label ends with one of these is refused, as a Studio refusal mid-compare would be
 
@@ -33,6 +35,13 @@ FAIL_LABEL = []  # a Make job whose label ends with one of these is refused, as 
 class Handler(fixture.Handler):
     def do_GET(self):
         if SLOW and self.path.endswith('/context'): time.sleep(0.8)
+        if self.path == '/api/backends':
+            return self.json({'active': BACKEND[0], 'busy': False, 'operation': None, 'profiles': [dict(id=i, name=n, active=BACKEND[0] == i, online=True, installed=True) for i, n in (('primary', 'Main library'), ('moss', 'MOSS-Image · isolated'))]})
+        if self.path == '/api/catalog':   # Studio.catalog: a recipe on another backend carries "Switch to <name> to use this recipe."
+            data = json.loads(json.dumps(fixture.CATALOG))
+            for p in data['presets']:
+                if (p.get('backend_id') or 'primary') != BACKEND[0]: p['runtime_block'] = 'Switch to %s to use this recipe.' % ('MOSS-Image · isolated' if p.get('backend_id') == 'moss' else 'Main library' if (p.get('backend_id') or 'primary') == 'primary' else p['backend_id'])
+            return self.json(data)
         if self.path == '/api/looks': return self.json({'looks': SHIPPED, 'seed_errors': [], 'generation_submitted': False})
         if self.path == '/api/characters': return self.json({'characters': CHARACTERS, 'generation_submitted': False})
         if self.path.startswith('/api/assets/') and self.path.endswith('/thumb'):  # thumbnails for the screenshots
@@ -50,6 +59,8 @@ class Handler(fixture.Handler):
             self.rfile.read(length); fixture.POSTS.append({'path': self.path, 'data': {'filename': self.headers.get('X-Filename'), 'type': self.headers.get('Content-Type')}})
             asset = dict(fixture.ASSETS[0], id='asset-imported-%d' % len(fixture.ASSETS), title=self.headers.get('X-Filename'), filename=self.headers.get('X-Filename'), created_at=1789229999, review='unreviewed')
             fixture.ASSETS.insert(0, asset); return self.json({'asset': asset}, 201)
+        if self.path == '/api/backends/switch':
+            data = json.loads(self.rfile.read(length)); SWITCHES.append(data); BACKEND[0] = data['id']; return self.json({'accepted': True}, 202)
         if ROUGH and self.path == '/api/estimate':
             fixture.POSTS.append({'path': self.path, 'data': json.loads(self.rfile.read(length))})
             return self.json({'available': True, 'estimate_seconds': 218.8, 'range_seconds': [88, 348], 'confidence': 'none', 'sample_count': 0, 'matched_samples': 0})
@@ -140,11 +151,11 @@ def run(shots):
         def pick_look(look_id):
             if page.locator('[data-make-change]').count(): page.locator('[data-make-change]').click()
             page.locator('[data-make-look="%s"]' % look_id).click(); page.wait_for_selector('#makeScene')
-        CHARACTERS = ['look-oneobsession-anima-v20-showcase', 'look-pearly-anima-mix-v10-showcase', 'look-anima-pearly-petiflow', 'look-anifox-ringeko', 'look-wai-fantasy-portrait', 'look-anima-fantasy-portrait', 'look-animagine-fantasy-portrait']
+        CHARACTERS = ['look-oneobsession-anima-v20-showcase', 'look-pearly-anima-mix-v10-showcase', 'look-moss-detailed-anime', 'look-anima-pearly-petiflow', 'look-anifox-ringeko', 'look-wai-fantasy-portrait', 'look-anima-fantasy-portrait', 'look-animagine-fantasy-portrait']
         assert looks_of('character') == CHARACTERS, 'proven first, rejects after them, no oil-paint look under Anime character'
         shot('looks-character', '.make-looks')
         badged = page.eval_on_selector_all('.make-look', 'n=>n.filter(e=>e.querySelector(".make-tested")).map(e=>e.querySelector("[data-make-look]").dataset.makeLook)')
-        assert badged == ['look-oneobsession-anima-v20-showcase', 'look-pearly-anima-mix-v10-showcase', 'look-anima-pearly-petiflow'], badged  # kept in most test pictures (rounds 1-2); AniFox kept 0 of 2 new seeds
+        assert badged == ['look-oneobsession-anima-v20-showcase', 'look-pearly-anima-mix-v10-showcase', 'look-moss-detailed-anime', 'look-anima-pearly-petiflow'], badged  # kept in most test pictures (rounds 1-2); AniFox kept 0 of 2 new seeds
         assert page.locator('.make-tested').first.inner_text() == 'Tested well' and '12 of 12' in page.locator('.make-tested').first.get_attribute('title')
         # A look picked low in the gallery leaves "Describe your picture" in view below the fixed bar, and every goal chip
         # wraps on screen (audit N8).
@@ -536,7 +547,7 @@ def run(shots):
         page.locator('[data-make-goal="character"]').click(); page.wait_for_selector('[data-make-look]')
         if page.locator('[data-make-change]').count(): page.locator('[data-make-change]').click()
         page.locator('[data-make-compare]').first.click()
-        ids = page.eval_on_selector_all('[data-make-look]', 'n=>n.map(e=>e.dataset.makeLook)')
+        ids = [i for i in page.eval_on_selector_all('[data-make-look]', 'n=>n.map(e=>e.dataset.makeLook)') if i != 'look-moss-detailed-anime']  # another environment
         for look in ids[:4]: page.locator('[data-make-look="%s"]' % look).click()
         assert page.locator('[data-make-look][aria-checked=true]').count() == 3 and 'at most' in page.locator('#makeStatus').inner_text()
         # From the second look on, the scene box comes into view with the keyboard in it (audit v3 N4); unchoosing keeps focus on the card.
@@ -549,7 +560,7 @@ def run(shots):
         page.wait_for_function('document.querySelector("#makeEstimate").textContent.includes("3 pictures")')
         # Codex P2 on #1574: with no comparable run here every look uses its lab median, and the words never claim earlier runs.
         ROUGH.append(1); page.locator('[data-make-look="%s"]' % third).click(); page.locator('[data-make-look="%s"]' % third).click()
-        page.wait_for_function('document.querySelector("#makeEstimate").textContent.endsWith(", from the 16 Oct look lab on this PC.")')
+        page.wait_for_function('document.querySelector("#makeEstimate").textContent.endsWith(", from the look lab on this PC.")')
         assert 'earlier runs' not in page.locator('#makeEstimate').inner_text(); ROUGH.clear()
         page.locator('[data-make-look="%s"]' % third).click(); page.locator('[data-make-look="%s"]' % third).click()
         page.wait_for_function('document.querySelector("#makeEstimate").textContent.endsWith(", from earlier runs on this PC.")')
@@ -771,6 +782,28 @@ def run(shots):
         page.wait_for_selector('[data-make-pose-change]'); assert 'pose ref.jpg' in page.locator('#makeComposer').inner_text()
         before = len(fixture.POSTS); page.set_input_files('[data-make-import-file="makePosePictures"]', files=[{'name': 'notes.txt', 'mimeType': 'text/plain', 'buffer': b'x'}]) if page.locator('[data-make-import-file="makePosePictures"]').count() else None
         assert len(fixture.POSTS) == before, 'a non-picture file is refused before any request'
+        # MOSS-Image (1 Nov): a look on another model environment says where it runs and offers the switch as one press; Generate stays
+        # disabled until that environment is running; the switch itself sends no job and nothing switches on load or on choosing the look.
+        page.goto(origin + '/#make'); page.wait_for_selector('[data-make-goal]'); page.wait_for_function('typeof backendActive!=="undefined"&&backendActive==="primary"')
+        page.locator('[data-make-goal="character"]').click(); page.wait_for_selector('[data-make-look],[data-make-change]')
+        if page.locator('[data-make-change]').count(): page.locator('[data-make-change]').click()
+        moss = page.locator('.make-look:has([data-make-look="look-moss-detailed-anime"])')
+        assert 'Runs in MOSS-Image · isolated, not the running Main library.' in moss.inner_text() and moss.locator('[data-make-switch="moss"]').inner_text() == 'Switch to MOSS-Image · isolated', moss.inner_text()
+        assert 'Stops Main library. About a minute. Nothing is generated.' in moss.inner_text() and 'MOSS-Image model' in moss.inner_text() and 'Medium · ~75 s' in moss.inner_text()
+        assert not page.locator('.make-look:has([data-make-look="look-pearly-anima-mix-v10-showcase"]) [data-make-switch]').count()
+        page.locator('[data-make-look="look-moss-detailed-anime"]').click(); page.wait_for_selector('#makeScene'); page.locator('#makeScene').fill('a knight in plate armour')
+        assert page.locator('#makeGenerate').is_disabled() and page.locator('#makeWhy [data-make-switch="moss"]').count() == 1
+        assert page.locator('#makeDraft').count() == 1 and not page.locator('#makeFine').count(), 'MOSS: 20/30/50 steps tied in the lab, so no Fine'
+        assert SWITCHES == [], 'choosing the look must not switch'
+        page.locator('#makeCount').select_option('1'); page.locator('#makeShape').select_option('square')
+        sent = len(jobs()); page.locator('#makeWhy [data-make-switch="moss"]').click()
+        page.wait_for_function('document.querySelector("#makeStatus")?.textContent.includes("MOSS-Image · isolated is running")', timeout=15000)
+        assert SWITCHES == [{'id': 'moss'}] and len(jobs()) == sent, (SWITCHES, len(jobs()) - sent)
+        assert page.locator('#makeCount').input_value() == '1' and page.locator('#makeShape').input_value() == 'square', 'the redraw after the switch keeps How many and Shape (Codex P2 on #1898)'
+        assert not page.locator('#makeGenerate').is_disabled() and not page.locator('#makeWhy [data-make-switch]').count()
+        page.locator('[data-make-change]').click()   # back on the gallery, the Main library looks now offer the way back
+        assert page.locator('.make-look:has([data-make-look="look-pearly-anima-mix-v10-showcase"]) [data-make-switch="primary"]').count() == 1
+        page.locator('[data-make-keep-look]').click(); BACKEND[0] = 'primary'
         history = browser.new_page(); history.on('pageerror', lambda e: errors.append(str(e)))
         def read_run(route):
             id = route.request.url.rsplit('/', 1)[-1]; reads.append(id); route.fulfill(json=records[id])

@@ -1,0 +1,212 @@
+{
+  "note": "Direct ComfyUI runs on the primary backend, 1 November 2026. The graph is the base run; each run changes only node 1 unet_name, node 5 seed, steps and cfg, and the save prefix. CCIP comes from scripts/identity_score.py against the reference.",
+  "node": {
+    "source": "https://huggingface.co/AnticPan/Anima-Role-Ref-KV/tree/259a0dce876ed70fc8835b888139756e23fb8a9f/comfyui",
+    "revision": "259a0dce876ed70fc8835b888139756e23fb8a9f",
+    "license": "GPL-3.0"
+  },
+  "graph": {
+    "1": {
+      "class_type": "UNETLoader",
+      "inputs": {
+        "unet_name": "anima-base-v1.0.safetensors",
+        "weight_dtype": "default"
+      }
+    },
+    "2": {
+      "class_type": "CLIPLoader",
+      "inputs": {
+        "clip_name": "qwen_3_06b_base.safetensors",
+        "type": "stable_diffusion",
+        "device": "default"
+      }
+    },
+    "3": {
+      "class_type": "VAELoader",
+      "inputs": {
+        "vae_name": "qwen_image_vae.safetensors"
+      }
+    },
+    "4": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "docs/showcase/pilot_girl.jpg from the node repo, sha256 62d1190f…a963a2"
+      }
+    },
+    "6": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "masterpiece, best quality, score_7, safe, 1girl, solo, cowboy shot, sitting, cafe, holding cup, smile, looking at viewer, indoors, window, day",
+        "clip": [
+          "2",
+          0
+        ]
+      }
+    },
+    "7": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "worst quality, low quality, score_1, score_2, score_3, artist name, blurry, jpeg artifacts, chromatic aberration",
+        "clip": [
+          "2",
+          0
+        ]
+      }
+    },
+    "5": {
+      "class_type": "AnimaRoleRefKV",
+      "inputs": {
+        "model": [
+          "1",
+          0
+        ],
+        "vae": [
+          "3",
+          0
+        ],
+        "positive": [
+          "6",
+          0
+        ],
+        "negative": [
+          "7",
+          0
+        ],
+        "reference": [
+          "4",
+          0
+        ],
+        "adapter": "anima-role-ref-kv-v1.0.safetensors",
+        "seed": 20261029,
+        "width": 832,
+        "height": 1216,
+        "steps": 28,
+        "cfg": 4.0
+      }
+    },
+    "10": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "5",
+          0
+        ],
+        "vae": [
+          "3",
+          0
+        ]
+      }
+    },
+    "11": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "10",
+          0
+        ],
+        "filename_prefix": "lab-1101/rolekv/base_s20261029"
+      }
+    }
+  },
+  "runs": [
+    {
+      "prompt_id": "753308ee-4388-4aaf-8df1-d3a5b9001460",
+      "unet_name": "anima-base-v1.0.safetensors",
+      "seed": 20261029,
+      "steps": 28,
+      "cfg": 4.0,
+      "seconds": 42.4,
+      "status": "success",
+      "ccip": 0.2114,
+      "output": "lab-1101/rolekv/base_s20261029_00001_.png"
+    },
+    {
+      "prompt_id": "5bd2e762-8fb4-4b39-90d2-31a4a3fce834",
+      "unet_name": "anima-base-v1.0.safetensors",
+      "seed": 20261030,
+      "steps": 28,
+      "cfg": 4.0,
+      "seconds": 27.2,
+      "status": "success",
+      "ccip": 0.1998,
+      "output": "lab-1101/rolekv/base_s20261030_00001_.png"
+    },
+    {
+      "prompt_id": "1d8a3232-66cb-4086-9746-64e47ff8a177",
+      "unet_name": "anima-base-v1.0.safetensors",
+      "seed": 20261031,
+      "steps": 28,
+      "cfg": 4.0,
+      "seconds": 27.3,
+      "status": "success",
+      "ccip": 0.1933,
+      "output": "lab-1101/rolekv/base_s20261031_00001_.png"
+    },
+    {
+      "prompt_id": "af788fc9-0bf0-4953-8080-f6b4d1072ce3",
+      "unet_name": "anima-aesthetic-v1.1.safetensors",
+      "seed": 20261029,
+      "steps": 28,
+      "cfg": 4.0,
+      "seconds": 37.7,
+      "status": "success",
+      "ccip": 0.2114,
+      "output": "lab-1101/rolekv/aesthetic_s20261029_00001_.png"
+    },
+    {
+      "prompt_id": "a48d775d-e3ba-4e3e-be87-3fefe9db01ff",
+      "unet_name": "anima-aesthetic-v1.1.safetensors",
+      "seed": 20261030,
+      "steps": 28,
+      "cfg": 4.0,
+      "seconds": 27.3,
+      "status": "success",
+      "ccip": 0.1897,
+      "output": "lab-1101/rolekv/aesthetic_s20261030_00001_.png"
+    },
+    {
+      "prompt_id": "75b981ef-08ea-4806-a8f1-4e93165ecfa9",
+      "unet_name": "anima-aesthetic-v1.1.safetensors",
+      "seed": 20261031,
+      "steps": 28,
+      "cfg": 4.0,
+      "seconds": 27.3,
+      "status": "success",
+      "ccip": 0.1858,
+      "output": "lab-1101/rolekv/aesthetic_s20261031_00001_.png"
+    },
+    {
+      "prompt_id": "1da05d77-cb9a-420e-8135-00e77029da94",
+      "unet_name": "anima-turbo-v1.1.safetensors",
+      "seed": 20261029,
+      "steps": 8,
+      "cfg": 1.0,
+      "seconds": 19.7,
+      "status": "success",
+      "ccip": 0.2109,
+      "output": "lab-1101/rolekv/turbo_s20261029_00001_.png"
+    },
+    {
+      "prompt_id": "f7b1d376-1f30-4b52-91e0-c4a1add043ed",
+      "unet_name": "anima-turbo-v1.1.safetensors",
+      "seed": 20261030,
+      "steps": 8,
+      "cfg": 1.0,
+      "seconds": 10.6,
+      "status": "success",
+      "ccip": 0.2045,
+      "output": "lab-1101/rolekv/turbo_s20261030_00001_.png"
+    },
+    {
+      "prompt_id": "71fab1e4-13c6-47fe-a653-538ed6d65936",
+      "unet_name": "anima-turbo-v1.1.safetensors",
+      "seed": 20261031,
+      "steps": 8,
+      "cfg": 1.0,
+      "seconds": 10.6,
+      "status": "success",
+      "ccip": 0.2018,
+      "output": "lab-1101/rolekv/turbo_s20261031_00001_.png"
+    }
+  ]
+}

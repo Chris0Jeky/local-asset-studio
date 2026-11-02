@@ -1,5 +1,17 @@
 # UX use-case matrix
 
+## Make: a look on another model environment (MOSS-Image), 1 November 2026 (`moss-look-1019`)
+
+MOSS-Image runs on its own ComfyUI (#1575, port 8198). Before this, a MOSS recipe was reachable only through the Full editor,
+after switching in Models & setup. Now its look sits third in Make's Anime character goal, says where it runs, and offers the
+switch beside the disabled Generate. Nothing switches until that press, and a switch never starts a generation.
+
+| Journey | Before | After | Proof |
+| --- | --- | --- | --- |
+| A MOSS-Image anime picture from Make, Main library running | not in Make (Models & setup: open the Model environment fold, choose MOSS, Switch environment; then Full editor: find the recipe, write the prompt, Generate) | 3 clicks + words (the look, Switch to MOSS-Image · isolated, Generate) | `tests/make_goals_browser.py` MOSS segment: choosing the look sends no switch; one `/api/backends/switch`, no job until Generate |
+
+Fixture screens only; no MOSS picture was generated for this change.
+
 ## Repair a marked region — 30 October 2026 (#1857, first slice)
 
 Choosing a masked-repair recipe (`anime-masked-repair`, `sdxl-inpaint-fix`) in *Continue with this* no longer dead-ends on

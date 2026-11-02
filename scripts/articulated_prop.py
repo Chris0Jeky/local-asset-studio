@@ -133,6 +133,11 @@ def material(name, color, metallic=0.0):
     result.diffuse_color = (*color, 1.0)
     result.metallic = metallic
     result.roughness = 0.42
+    result.use_nodes = True
+    shader = result.node_tree.nodes["Principled BSDF"]
+    shader.inputs["Base Color"].default_value = result.diffuse_color
+    shader.inputs["Metallic"].default_value = result.metallic
+    shader.inputs["Roughness"].default_value = result.roughness
     return result
 
 
@@ -197,9 +202,8 @@ for frame, angle in ((config["keyframes"]["closed"], 0), (config["keyframes"]["o
     lid.keyframe_insert(data_path="rotation_euler", index=0, frame=frame)
 action = lid.animation_data.action
 action.name = "ChestLidOpenHoldClose"
-for curve in action.fcurves:
-    for point in curve.keyframe_points:
-        point.interpolation = "LINEAR"
+for point in action.fcurve_ensure_for_datablock(lid, "rotation_euler", index=0).keyframe_points:
+    point.interpolation = "LINEAR"
 
 bpy.ops.object.camera_add()
 camera = bpy.context.object
