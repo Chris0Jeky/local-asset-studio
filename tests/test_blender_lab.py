@@ -97,6 +97,52 @@ class ProbeFixtureTests(unittest.TestCase):
             self.assertLessEqual(las_options, set(load(path)["features"]["gltf_export"]["detail"]["options"]), path.name)
 
 
+MANIFEST_45 = FIXTURES / "manifest-lab-asset-4.5.13.json"
+MANIFEST_54 = FIXTURES / "manifest-lab-asset-5.4.0-alpha-67c9bdddb88b.json"
+
+
+class ManifestTests(unittest.TestCase):
+    def test_rounding_folds_negative_zero_and_canonical_json_is_order_free(self):
+        self.assertEqual(json.dumps(lab.bpy_side.rnd(-0.000001)), "0.0")
+        self.assertEqual(lab.bpy_side.canonical({"b": 1, "a": [2.5]}), lab.bpy_side.canonical({"a": [2.5], "b": 1}))
+
+    def test_checksum_ignores_identity_and_location_but_not_content(self):
+        manifest = load(MANIFEST_45)
+        base = lab.bpy_side.semantic_checksum(manifest)
+        moved = {**manifest, "blender": {"version_string": "other"}, "source": {"file": "elsewhere.blend"}, "runtime": {}}
+        self.assertEqual(lab.bpy_side.semantic_checksum(moved), base)
+        edited = json.loads(json.dumps(manifest)); edited["materials"][0]["principled"]["roughness"] = 0.61
+        self.assertNotEqual(lab.bpy_side.semantic_checksum(edited), base)
+
+    def test_fixtures_verify_and_agree_across_builds(self):
+        old, new = load(MANIFEST_45), load(MANIFEST_54)
+        for manifest in (old, new):
+            stripped = {k: v for k, v in manifest.items() if k != "runtime"}
+            self.assertEqual(lab.bpy_side.semantic_checksum(stripped), manifest["semantic_checksum"])
+        self.assertEqual(old["semantic_checksum"], new["semantic_checksum"])
+        self.assertNotEqual(old["blender"]["build_hash"], new["blender"]["build_hash"])
+
+    def test_lab_asset_manifest_content(self):
+        manifest = load(MANIFEST_54)
+        self.assertEqual(manifest["counts"], {"actions": 1, "armatures": 1, "images": 1, "materials": 3, "meshes": 3,
+                                              "missing_images": 0, "objects": 4, "triangles": 600})
+        rig = manifest["armatures"][0]
+        self.assertEqual(([b["name"] for b in rig["bones"]], rig["roots"], rig["max_depth"]), (["Neck", "Root", "Spine"], ["Root"], 2))
+        body = next(o for o in manifest["objects"] if o["name"] == "Body")
+        self.assertEqual((body["parent"], body["vertex_weights"]["unnormalised_vertices"], body["modifiers"][0]["object"]), ("Rig", 0, "Rig"))
+        action = manifest["actions"][0]
+        self.assertEqual((action["name"], action["slots"][0]["identifier"], len(action["fcurves"])), ("LabSway", "OBRig", 3))
+        self.assertEqual(next(m for m in manifest["materials"] if m["name"] == "BodyTextured")["images"], ["lab-checker"])
+        head = next(m for m in manifest["meshes"] if m["name"] == "Head")
+        self.assertEqual([k["name"] for k in head["shape_keys"]["keys"]], ["Basis", "Squash"])
+
+    def test_manifest_requires_a_blend_source(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            exe = Path(tmp) / "blender.exe"; exe.write_bytes(b"")
+            with self.assertRaises(lab.BlenderLabError): lab.manifest(exe, Path(tmp) / "missing.blend", Path(tmp) / "m.json")
+            with self.assertRaises(lab.BlenderLabError): lab.manifest(exe, exe, Path(tmp) / "m.json")
+
+
 @unittest.skipUnless(LIVE_BLENDER, "set LAS_BLENDER_LAB_EXE to a Blender executable for the live probe")
 class LiveProbeTests(unittest.TestCase):
     def test_live_probe(self):
@@ -104,6 +150,14 @@ class LiveProbeTests(unittest.TestCase):
             result = lab.probe(LIVE_BLENDER, Path(tmp) / "probe.json")
         self.assertEqual({k for k, v in result["features"].items() if not v["ok"]}, set())
         self.assertTrue(result["blender"]["background"])
+
+    def test_live_fixture_manifest_is_deterministic_and_leaves_source_untouched(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            blend = lab.make_fixture(LIVE_BLENDER, Path(tmp) / "asset")
+            before = lab.file_sha(blend)
+            result = lab.manifest(LIVE_BLENDER, blend, Path(tmp) / "manifest.json")
+            self.assertEqual(lab.file_sha(blend), before)
+        self.assertEqual(result["semantic_checksum"], load(MANIFEST_45)["semantic_checksum"])
 
 
 if __name__ == "__main__":

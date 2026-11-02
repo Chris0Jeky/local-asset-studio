@@ -36,3 +36,29 @@ Committed results are in `tests/fixtures/blender_lab/`. They were measured on 2 
 
 Live check: `LAS_BLENDER_LAB_EXE=<blender.exe> python -m unittest discover -s tests -p "test_blender_lab.py"`. Without
 that variable, only the offline tests run against the fixtures.
+
+## Scene manifest
+
+```bash
+python scripts/blender_lab.py make-fixture --blender <blender.exe> --out-dir <new-dir>
+python scripts/blender_lab.py manifest --blender <blender.exe> --blend <new-dir>/lab-asset.blend --out manifest.json
+```
+
+The manifest is a task-oriented summary for planning and parity. It is not a dump of Blender. It covers objects
+(parent, collections, world matrix and bounding box, visibility, material slots, modifiers, constraints, vertex-group
+weight statistics, animation action and slot), meshes (counts, triangles, ordered geometry hash, UV maps,
+per-slot face counts, shape keys with data hashes), materials (node-type histogram, Principled inputs, image
+dependencies), images (file basename, size, packed or missing), armatures (bone graph with depth), actions
+(slots and F-curves through channelbags, with the legacy API only where the build still has it), cameras and lights.
+
+The source is opened with `use_scripts=False` and never saved. The host checks that the `.blend` bytes are unchanged.
+
+`semantic_checksum` is SHA-256 over canonical JSON (sorted keys, floats rounded to 5 decimals, `-0.0` folded). It
+excludes `schema`, `kind`, `blender`, `source` and `runtime`, so the same scene keeps its checksum across builds and
+folders. Measured: the lab asset gives one checksum whether 4.5.13 or 5.4 alpha builds it, and whether either reads it.
+It is not a hash of `.blend` bytes: those differ between builds and between saves.
+
+Findings from building a deterministic asset:
+- `primitive_uv_sphere_add` on 4.5.13 emits the same coordinates with faces in a different order on each run. The
+  ordered geometry hash flags this correctly, so the lab asset builds its sphere from explicit data.
+- `shape_key_add` creates keys at value 0.0 on 4.5 and 1.0 on 5.4 alpha. Set values explicitly.
