@@ -4,6 +4,7 @@ Pure Python (stdlib). The graph comes from `toon_compile_bpy.py`, which dumps ma
 docs/TOON-COMPILER.md for the IR, the light convention and the parity proof.
 
   python scripts/toon_compile.py IR.json OUT_DIR       writes OUT_DIR/shaders/*.gdshader, report.json, mtoon.json, lights.json
+  python scripts/toon_compile.py parity REF_DIR CAND_DIR OUT_DIR ["[r, g, b]"]   per-view difference inside the subject
 
 How a graph maps: every node downstream of Light Evaluation, Light Info or Shadow Raycast is evaluated per light,
 exactly like Godot's light(); the rest runs once in fragment() and reaches light() through varyings. Light
@@ -728,8 +729,45 @@ def compile_ir(ir: dict, out_dir: Path) -> dict:
     return doc
 
 
+def parity(ref_dir: Path, cand_dir: Path, out_dir: Path, background) -> dict:
+    """Per view: inside the subject (pixels that differ from the background in either image), the mean absolute
+    difference (0-255, largest channel) and the share over 8 and over 24 levels; writes a x4 heatmap per view."""
+    from PIL import Image, ImageChops
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    bg = tuple(round(255 * (12.92 * c if c <= 0.0031308 else 1.055 * c ** (1 / 2.4) - 0.055)) for c in background)
+    res = {}
+    for ref in sorted(Path(ref_dir).glob("*.png")):
+        cand = Path(cand_dir) / ref.name
+        if not cand.is_file():
+            res[ref.stem] = {"missing": str(cand)}
+            continue
+        with Image.open(ref) as a, Image.open(cand) as b:
+            a, b = a.convert("RGB"), b.convert("RGB")
+            if a.size != b.size:
+                res[ref.stem] = {"size_mismatch": [a.size, b.size]}
+                continue
+            plate = Image.new("RGB", a.size, bg)
+            subj = [max(px) > 6 for px in zip(*(ch.getdata() for ch in ImageChops.difference(a, plate).split()))]
+            subj = [s or max(px) > 6 for s, px in zip(subj, zip(*(ch.getdata() for ch in ImageChops.difference(b, plate).split())))]
+            d = [max(px) for px in zip(*(ch.getdata() for ch in ImageChops.difference(a, b).split()))]
+        inside = [v for v, s in zip(d, subj) if s]
+        n = max(1, len(inside))
+        res[ref.stem] = {"subject_px": len(inside), "mean_abs": round(sum(inside) / n, 2),
+                         "over8": round(sum(v > 8 for v in inside) / n, 4), "over24": round(sum(v > 24 for v in inside) / n, 4)}
+        heat = Image.new("L", a.size)
+        heat.putdata([min(255, v * 4) for v in d])
+        heat.save(out_dir / f"{ref.stem}-diff.png")
+    (out_dir / "parity.json").write_text(json.dumps(res, indent=1), encoding="utf-8")
+    return res
+
+
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
+    if argv[:1] == ["parity"] and len(argv) in (4, 5):
+        bg = json.loads(argv[4]) if len(argv) == 5 else [0.0, 0.0, 0.0]
+        print(json.dumps(parity(Path(argv[1]), Path(argv[2]), Path(argv[3]), bg), indent=1))
+        return
     if len(argv) != 2:
         raise SystemExit(__doc__)
     doc = compile_ir(json.loads(Path(argv[0]).read_text(encoding="utf-8")), Path(argv[1]))

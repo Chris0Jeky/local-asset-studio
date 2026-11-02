@@ -425,5 +425,27 @@ class Files(unittest.TestCase):
                 self.assertTrue((Path(d) / f).is_file(), f)
 
 
+class Parity(unittest.TestCase):
+    def test_measures_inside_the_subject_only(self):
+        from PIL import Image
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            (d / "ref").mkdir()
+            (d / "cand").mkdir()
+            ref = Image.new("RGB", (10, 10), (0, 0, 0))
+            ref.paste((100, 100, 100), (0, 0, 5, 10))         # subject: left half
+            cand = ref.copy()
+            cand.paste((130, 100, 100), (0, 0, 5, 5))         # a quarter of the image differs by 30
+            ref.save(d / "ref" / "v.png")
+            cand.save(d / "cand" / "v.png")
+            Image.new("RGB", (4, 4)).save(d / "ref" / "w.png")
+            r = tc.parity(d / "ref", d / "cand", d / "out", [0, 0, 0])
+            self.assertEqual(r["v"]["subject_px"], 50)
+            self.assertAlmostEqual(r["v"]["mean_abs"], 15.0)
+            self.assertEqual((r["v"]["over8"], r["v"]["over24"]), (0.5, 0.5))
+            self.assertIn("missing", r["w"])
+            self.assertTrue((d / "out" / "v-diff.png").is_file())
+
+
 if __name__ == "__main__":
     unittest.main()
