@@ -1,6 +1,7 @@
 import copy
 import importlib.util
 import json
+import math
 import os
 from pathlib import Path
 import sys
@@ -78,6 +79,23 @@ class ParamsAndConstraints(unittest.TestCase):
         self.assertAlmostEqual(size[1], 3 * 0.32 + 3.0)
         self.assertEqual(slack, [0, 0, 0])
 
+    def test_lighthouse_bounds_cover_panel_corners_and_floor_polygon(self):
+        params, _ = factory.resolve_params(SCHEMA["generators"]["lighthouse_room"], {"radius": 2.0, "wall_thickness": 0.2, "panels": 12, "detail": 5})
+        size, slack = factory.expected_bounds("lighthouse_room", params)
+        rt = 2.2
+        self.assertAlmostEqual(size[2], params["height"])
+        self.assertAlmostEqual(size[0] / 2, rt / math.cos(math.pi / 12))          # n-gon vertices (panel corners, floor)
+        self.assertAlmostEqual(size[0] * (1 - slack[0]), 2 * rt)                   # n-gon faces at the apothem
+        self.assertEqual(slack[0], slack[1])
+
+    def test_pier_bounds_follow_the_tallest_fixture(self):
+        spec = SCHEMA["generators"]["pier"]
+        lamps, _ = factory.resolve_params(spec, {"length": 8.0, "width": 2.0, "water_level": 0.5, "deck_height": 1.0, "lamps": 2})
+        bare, _ = factory.resolve_params(spec, {"water_level": 0.5, "deck_height": 1.0, "lamps": 0, "railing": 0, "bollards": 0})
+        self.assertEqual(factory.expected_bounds("pier", lamps)[0][:2], [8.0, 11.0])        # water plane: +6 wide, +3 long
+        self.assertAlmostEqual(factory.expected_bounds("pier", lamps)[0][2], 1.5 + 2.72)     # lamp roof top
+        self.assertAlmostEqual(factory.expected_bounds("pier", bare)[0][2], 1.5)             # bare deck surface
+
     def test_lod_details_halve_with_floor(self):
         self.assertEqual(factory.lod_details(16), [16, 8, 4])
         self.assertEqual(factory.lod_details(6), [6, 4, 4])
@@ -100,7 +118,6 @@ class GateEvaluation(unittest.TestCase):
             "naming": lambda m: m["collision_objects"].pop(),
             "gn_interface": lambda m: m["gn_bounds"].update(height=[0.2, 9.0]),
             "parts_present": lambda m: m.update(unknown_part_ids=[42]),
-            "lod_chain": lambda m: m["lods"][1].update(bbox_min=[98.8, 98.8, 99.0], bbox_max=[99.2, 99.2, 99.6]),
             "interpenetration": None,
         }
         cases = list(cases.items()) + [
@@ -110,6 +127,7 @@ class GateEvaluation(unittest.TestCase):
             ("manifold", lambda m: m["lods"][1]["parts"][1].update(nonmanifold_edges=2)),      # lower LODs are gated too
             ("uv", lambda m: m["parts"][0].update(uv1_degenerate=3)),
             ("naming", lambda m: m.update(collision_boxes=1)),
+            ("lod_chain", lambda m: m["lods"][1].update(bbox_min=[98.8, 98.8, 99.0], bbox_max=[99.2, 99.2, 99.6])),   # LOD moved
         ]
         for gate, seed in cases:
             m = crate_measurements()
@@ -189,6 +207,32 @@ class BuildRejection(unittest.TestCase):
             self.assertEqual(report["failed_gates"], ["constraints"])
             self.assertEqual(json.loads((out / "report.json").read_text(encoding="utf-8"))["state"], "rejected")
             self.assertFalse((out / "request.json").exists())
+
+    def test_blender_failure_still_writes_a_failed_report(self):
+        with tempfile.TemporaryDirectory() as directory:
+            out = Path(directory) / "run"
+            report = factory.build("prop", {}, out, blender=sys.executable)   # "-b" is not a Python flag: exits non-zero
+            self.assertEqual(report["state"], "failed")
+            self.assertEqual(report["failed_gates"], ["blender"])
+            self.assertEqual(json.loads((out / "report.json").read_text(encoding="utf-8"))["failed_gates"], ["blender"])
+            self.assertTrue((out / "blender-stderr.log").exists())
+
+    def test_partial_blender_output_still_writes_a_failed_report(self):
+        with tempfile.TemporaryDirectory() as directory:
+            out = Path(directory) / "run"
+            measured = Path(directory) / "measurements.json"; measured.write_text(json.dumps(crate_measurements()), encoding="utf-8")
+            fake = Path(directory) / "fake_blender.py"     # exits 0 but its measurements name GLBs it never wrote
+            fake.write_text("import json, shutil, sys\nfrom pathlib import Path\n"
+                            "req = json.loads(Path(sys.argv[-1]).read_text())\n"
+                            f"shutil.copyfile({str(measured)!r}, Path(req['output'], 'measurements.json'))\n", encoding="utf-8")
+            launcher = Path(directory) / ("blender.cmd" if os.name == "nt" else "blender")
+            launcher.write_text(f'@"{sys.executable}" "{fake}" %*\n' if os.name == "nt"
+                                else f'#!/bin/sh\nexec "{sys.executable}" "{fake}" "$@"\n', encoding="utf-8")
+            launcher.chmod(0o755)
+            report = factory.build("prop", {"kind": 1}, out, blender=launcher)
+            self.assertEqual(report["state"], "failed")
+            self.assertIn("blender", report["failed_gates"])
+            self.assertTrue((out / "report.json").exists())
 
     def test_output_directory_must_be_new(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -1105,6 +1105,10 @@ def _review(c):
                         " && (p.stages || []).some(s => ((s.job || {}).outputs || []).some(o => o.asset_id)))"
                         "(productionPlans.find(p => p.id === id))")
     c.act('#productionList [data-project="%s"]' % study, note='the finished comparison')
+    # #1921: the comparison names its stage and the next decision in plain words, and says what the buttons do.
+    stage = "(() => [document.querySelector('#productionDetail .plan-stages [aria-current=step]')?.textContent, document.querySelector('#productionDetail .plan-stage-now')?.textContent, document.querySelector('#productionDetail .plan-candidate-help')?.textContent])()"
+    current, now, help_ = c.page.evaluate(stage)
+    assert current == '3 · Compare' and 'candidates are made' in now and 'Review opens' in now and 'does not decide' in (help_ or ''), (current, now, help_)
     c.act('#blindComparison', note='reveal candidate settings')
     c.act('#productionDetail [data-candidate-open]', note='open a candidate at full size')
     if c.live:
@@ -1119,6 +1123,8 @@ def _review(c):
                   'stopped before recording the winner: that writes the study review')
     c.page.wait_for_timeout(600)
     recorded = 'reviewed' in (c.page.locator('#productionDetail').inner_text().lower() if c.page.locator('#productionDetail').count() else '')
+    if recorded and not c.live:
+        current, now, _ = c.page.evaluate(stage); assert current == '4 · Decide' and now.startswith('Decided: Candidate '), (current, now)
     c.act('#productionDetail', 'read', note='choice recorded=%s' % recorded)
     return recorded, 'study state shows reviewed=%s' % recorded
 
