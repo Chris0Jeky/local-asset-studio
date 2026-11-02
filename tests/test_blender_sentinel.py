@@ -198,6 +198,12 @@ class SecondSignalTests(unittest.TestCase):
         self.assertEqual(Path(reference[0]).parent, Path("ref"))
         self.assertEqual((result["changed"], result["changed_px"], result["mode"]), (True, 42, "pixel gate"))
 
+    def test_a_failing_critic_is_reported_not_raised(self):
+        def check(*args, **kwargs): raise OSError("model server unreachable")
+        with mock.patch.dict(sys.modules, {"render_critic": mock.Mock(check=check)}):
+            result = sentinel.critic_signal(Path("ref"), Path("cand"), server="http://127.0.0.1:8290")
+        self.assertEqual(result["available"], False); self.assertIn("unreachable", result["error"])
+
     def test_a_change_only_the_critic_sees_becomes_a_warning(self):
         warnings = []
         self.assertFalse(sentinel.second_opinion({"available": True, "changed": True, "changed_px": 99}, warnings))

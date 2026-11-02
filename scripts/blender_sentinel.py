@@ -270,7 +270,10 @@ def critic_signal(reference_dir, candidate_dir, server=None):
         return {"available": False}
     names = [f"{view}.lit.png" for view in lab.bpy_side.VIEWS]
     options = {"diff_only": server is None, **({"server": server} if server else {})}
-    result = render_critic.check([str(candidate_dir / n) for n in names], reference=[str(reference_dir / n) for n in names], **options)
+    try:
+        result = render_critic.check([str(candidate_dir / n) for n in names], reference=[str(reference_dir / n) for n in names], **options)
+    except Exception as exc:  # a failing critic (unreachable model server, bad image) never discards the primary result
+        return {"available": False, "error": f"{type(exc).__name__}: {exc}"[:300]}
     return {"available": True, "tool": "render_critic", "mode": "pixel gate" if server is None else "pixel gate + vision model",
             "changed": bool(result["changed"]), "changed_px": sum(v["changed_px"] for v in result["pixel_diff"].values()),
             "defects": result.get("defects", [])}
