@@ -101,11 +101,11 @@ class ParamsAndConstraints(unittest.TestCase):
         fenced, _ = factory.resolve_params(spec, {"land_height": 2.0, "roughness": 0.2, "fence": 1, "grass_density": 3.0})
         bare, _ = factory.resolve_params(spec, {"land_height": 2.0, "roughness": 0.2, "fence": 0, "grass_density": 0.0})
         size, slack = factory.expected_bounds("coastal_path", fenced)
-        self.assertAlmostEqual(size[2], 2.9)                         # fence posts (0.9) beat noise + tufts (0.53)
-        self.assertAlmostEqual(size[2] * (1 - slack[2]), 2.9)
+        self.assertAlmostEqual(size[2], 3.15)                        # post on the highest ground (2.2) + 0.95 beats tufts
+        self.assertAlmostEqual(size[2] * (1 - slack[2]), 1.95)       # floor: the flattened path
         size, slack = factory.expected_bounds("coastal_path", bare)
         self.assertAlmostEqual(size[2], 2.2)                         # noise ceiling only
-        self.assertAlmostEqual(size[2] * (1 - slack[2]), 2.0)        # never below the land
+        self.assertAlmostEqual(size[2] * (1 - slack[2]), 1.95)       # a narrow strip may be all path blend
 
     def test_lod_details_halve_with_floor(self):
         self.assertEqual(factory.lod_details(16), [16, 8, 4])

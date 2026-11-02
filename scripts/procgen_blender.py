@@ -420,7 +420,10 @@ def coastal_path(b, P):
     sp = P['fence_spacing']; n = b.math('FLOOR', (L - 0.6) / sp) + 1
     line = b.line(n, (0, 0.3, 0), (0, sp, 0))
     py = b.position()[1]
-    line = b.node('GeometryNodeSetPosition', Geometry=line, Position=b.vec(edge(py) - P['path_inset'] + pw - 0.12, py, land - F_)).outputs[0]
+    px_post = edge(py) - P['path_inset'] + pw - 0.12
+    # Ray cast onto this LOD's ground: a coarse grid interpolates below the ideal flat path height.
+    hit = b.node('GeometryNodeRaycast', Target_Geometry=ground, Source_Position=b.vec(px_post, py, land + 5.0), Ray_Direction=(0.0, 0.0, -1.0), Ray_Length=50.0)
+    line = b.node('GeometryNodeSetPosition', Geometry=line, Position=hit.outputs['Hit Position']).outputs[0]
     post = b.join(b.box((-0.05, -0.05, 0), (0.05, 0.05, 0.9), 3, 'wood_dark'), b.box((-0.07, -0.07, 0.9), (0.07, 0.07, 0.95), 3, 'wood'))
     g.append(b.switch(P['fence'], b.instance(line, post)))
     # Grass tufts: seeded positions independent of the grid (same count at every LOD), dropped where they would land on
@@ -444,7 +447,7 @@ def coastal_path(b, P):
     ry = b.random(0.6, L - 0.6, P['seed'] + 3)
     rlen = b.random(0.25, 0.55, P['seed'] + 4)
     rocks = b.line(P['rocks'], (0, 0, 0), (0, 0, 0))
-    rx = edge(ry) + P['cliff_drop'] + 0.3 + b.random(0.0, 0.8, P['seed'] + 5)
+    rx = b.math('MINIMUM', edge(ry) + P['cliff_drop'] + 0.3 + b.random(0.0, 0.8, P['seed'] + 5), W / 2 - rlen - 0.02)   # stay on the strip
     rocks = b.node('GeometryNodeSetPosition', Geometry=rocks, Position=b.vec(rx, ry, 0.45 * rlen)).outputs[0]
     g.append(b.instance(rocks, b.sphere((0, 0, 0), (1, 1, 1), 5, 'stone'), scale=b.vec(rlen, 0.8 * rlen, 0.45 * rlen)))
     g.append(b.grid(W + 6, L, (0, L / 2, P['sea_level']), (0, 0, 0), 6, 'water'))

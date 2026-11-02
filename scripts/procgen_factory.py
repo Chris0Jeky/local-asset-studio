@@ -103,12 +103,13 @@ def expected_bounds(generator, p, detail=None):
         z = top + (2.6 + 0.12 if p['lamps'] else 1.0 if p['railing'] else 0.40 if p['bollards'] else 0.0)
         return [p['width'] + 6, p['length'] + 3, z], [0, 0, 0]
     if generator == 'coastal_path':
-        # Land tops out between land_height and land_height + roughness (clamped noise); tufts add <= 0.33 m, posts 0.9 m.
+        # Top: noise ceiling + tufts (<= 0.33 m) or fence tops (posts ray cast to the ground, 0.95 m tall), whichever is
+        # higher. Floor: the flattened path at land - 0.05, which always has vertices (a narrow strip may have no other land).
         land = p['land_height']
         grass = p['grass_density'] >= 0.5
-        upper = land + max(p['roughness'] + (0.33 if grass else 0.0), 0.9 if p['fence'] else 0.0)
-        lower = land + (0.9 if p['fence'] else 0.0)
-        return [p['width'] + 6, p['length'], upper], [0, 0, 1 - lower / upper]
+        # A ray cast post base is interpolated ground: anywhere up to the highest vertex (land + roughness).
+        upper = land + p['roughness'] + max(0.33 if grass else 0.0, 0.95 if p['fence'] else 0.0)
+        return [p['width'] + 6, p['length'], upper], [0, 0, 1 - (land - 0.05) / upper]
     raise EvidenceError(f'unknown generator {generator!r}')
 
 
