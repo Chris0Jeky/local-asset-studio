@@ -63,8 +63,7 @@ def configure(sc, engine, device, samples):
     sc.render.engine = "BLENDER_EEVEE_NEXT" if "BLENDER_EEVEE_NEXT" in ids else "BLENDER_EEVEE"
     sc.eevee.taa_render_samples = samples
     if hasattr(sc.eevee, "use_raytracing"): sc.eevee.use_raytracing = True
-    import gpu
-    return {"gpu_backend": gpu.platform.backend_type_get(), "gpu_device": gpu.platform.renderer_get()}
+    return {}  # gpu.platform is unavailable in background mode; confirm the backend once with --debug-gpu
 
 
 def inner(cfg):
@@ -127,11 +126,15 @@ def run(a):
     if res:
         # Hash decoded pixels: PNG metadata carries the render time and date, so file bytes differ on identical images.
         from PIL import Image
-        res["hashes"] = [hashlib.sha256(Image.open(Path(cfg["out_dir"]) / f"r{i:02d}.png").convert("RGBA").tobytes()).hexdigest()
-                         for i in range(len(res["times"]))]
+        from PIL import ImageChops
+        imgs = [Image.open(Path(cfg["out_dir"]) / f"r{i:02d}.png").convert("RGBA") for i in range(len(res["times"]))]
+        res["hashes"] = [hashlib.sha256(im.tobytes()).hexdigest() for im in imgs]
+        # GPU path tracing is not bit-deterministic between renders, so also record how far repeats drift (0-255).
+        res["repeat_max_abs_diff"] = max(max(b[1] for b in ImageChops.difference(imgs[1 + a.warmup], im).getextrema()) for im in imgs[1 + a.warmup:])
         timed = res["times"][1 + a.warmup:]
         rec.update(res, cold_s=res["times"][0], warm_median_s=round(statistics.median(timed), 4), warm_min_s=min(timed),
                    warm_max_s=max(timed), timed_hashes_identical=len(set(res["hashes"][1 + a.warmup:])) == 1)
+    elif proc.returncode == 0: rec["exit_code"] = "no result"  # Blender exits 0 after a Python exception
     else: rec["log_tail"] = "".join(lines[-25:])
     with open(a.out, "a", encoding="utf-8") as f: f.write(json.dumps(rec) + "\n")
     print(json.dumps({k: rec.get(k) for k in ("engine", "device", "gpu_backend", "exit_code", "cold_s", "warm_median_s",
@@ -141,13 +144,13 @@ def run(a):
 
 def table(path):
     rows = [json.loads(l) for l in Path(path).read_text(encoding="utf-8").splitlines() if l.strip()]
-    print("| Blender | engine | device/backend | cold s | warm median s (min–max) | setup s | peak private MB | VRAM +MB | timed hashes equal | last hash |")
-    print("|---|---|---|---:|---:|---:|---:|---:|---|---|")
+    print("| Blender | engine | device/backend | cold s | warm median s (min-max) | setup s | peak private MB | VRAM +MB | repeat max diff | last hash |")
+    print("|---|---|---|---:|---:|---:|---:|---:|---:|---|")
     for r in rows:
         if "times" not in r: print(f"| {Path(r['blender_exe']).parent.name} | {r['engine']} | {r['device'] or r['gpu_backend']} | failed (exit {r['exit_code']}) | | | | | | |"); continue
-        print(f"| {r['blender']} | {r['engine']} | {r['device'] or (r['info'].get('gpu_backend'))} | {r['cold_s']} | "
-              f"{r['warm_median_s']} ({r['warm_min_s']}–{r['warm_max_s']}) | {r['setup_s']} | {r['peak_private_mb']} | "
-              f"{r['vram_peak_over_baseline_mb']} | {r['timed_hashes_identical']} | {r['hashes'][-1][:12]} |")
+        print(f"| {r['blender']} | {r['engine']} | {r['device'] or r['gpu_backend']} | {r['cold_s']} | "
+              f"{r['warm_median_s']} ({r['warm_min_s']}-{r['warm_max_s']}) | {r['setup_s']} | {r['peak_private_mb']} | "
+              f"{r['vram_peak_over_baseline_mb']} | {r.get('repeat_max_abs_diff', 0 if r['timed_hashes_identical'] else '?')} | {r['hashes'][-1][:12]} |")
 
 
 def main():
