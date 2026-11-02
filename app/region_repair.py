@@ -61,7 +61,10 @@ def prepare(studio, payload, privacy="regular", creation_privacy="regular"):
     marked = picture.getchannel("A").histogram()[0]
     if marked >= MAX_SHARE * width * height:
         raise ValueError("The marked region covers %d%% of the picture. Masked repair fixes a part; for a whole-picture change use an image-to-image recipe." % round(100 * marked / (width * height)))
-    upload = studio.upload("repair-mask", "image/png", tiles.png_bytes(picture), privacy=classification)
+    raw = tiles.png_bytes(picture)
+    if len(raw) > 20 * 1024 * 1024:
+        raise ValueError("The prepared repair PNG is %.1f MiB at %d × %d, over the 20 MiB reference limit. Resize a copy of the source, import it, and mark the region again." % (len(raw) / (1024 * 1024), width, height))
+    upload = studio.upload("repair-mask", "image/png", raw, privacy=classification)
     plan = {"version": VERSION, "preset_id": preset["id"], "source_asset_id": context["asset_id"], "source_sha256": context["sha256"],
             "mask_file": upload["file"], "mask_sha256": upload["sha256"], "boxes": boxes, "size": [width, height]}
     return {"plan": plan, "file": upload["file"], "sha256": upload["sha256"], "width": width, "height": height, "preset_id": preset["id"],

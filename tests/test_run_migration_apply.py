@@ -28,6 +28,7 @@ def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 class RunMigrationApplyTests(unittest.TestCase):
     setUp, close, tree = Base['setUp'], Base['close'], Base['tree']
     project, comparison, scene = Base['project'], Base['comparison'], Base['scene']
+    acceptance = Base['acceptance']
 
     def completed(self, outputs=3, seed=None, privacy='regular'):
         """Base.completed, but each run's pictures are distinct unless a seed asks for identical bytes."""
@@ -166,6 +167,62 @@ class RunMigrationApplyTests(unittest.TestCase):
         status, out = self.post(APPLY, self.body(s, plan))
         self.assertEqual((status, out['code']), (409, 'migration_stale'), out); self.assertNotIn('plan_sha256', out)
         self.assertEqual(self.tree(), before); self.assertEqual(self.studio.jobs[s['jid']].get('privacy', 'regular'), 'regular')
+
+    def test_acceptance_records_remain_unchanged_and_reappear_after_a_private_round_trip(self):
+        s = self.scenario()
+        records = [self.acceptance(s['ids'][0], 'live-'+s['jid']),
+                   self.acceptance(s['ids'][2], 'withdrawn-'+s['jid'], use='Brief portrait', withdrawn_at=2.0,
+                                   brief_id='brief-fixture', slot='portrait', criteria='Keep the silhouette')]
+        public = [self.studio.assets.acceptances(record['asset_id']) for record in records]
+        self.assertEqual(len([i for i in self.plan(s)['items'] if i['kind'] == 'acceptance']), 2)
+        self.assertEqual(self.post(APPLY, self.body(s, self.plan(s)))[0], 200)
+        for scope in ('regular', 'private', 'all'):
+            with self.assertRaises(fixture.server.WorkspaceError): self.studio.assets.acceptances(s['ids'][0], privacy=scope)
+        with self.studio.assets.connection() as db:
+            self.assertEqual([dict(row) for row in db.execute('SELECT * FROM asset_acceptances ORDER BY id')], records)
+        status, plan = self.post('/api/assets/migration-plan', {'workspace_id': self.workspace_id, 'destination': 'regular', 'job_ids': [s['jid']]})
+        self.assertEqual(status, 200); self.assertEqual([i['id'] for i in plan['items'] if i['kind'] == 'acceptance'], [r['id'] for r in records])
+        self.assertEqual(self.post(APPLY, self.back_body(s))[0], 200)
+        self.assertEqual([self.studio.assets.acceptances(record['asset_id']) for record in records], public)
+        with self.studio.assets.connection() as db:
+            self.assertEqual([dict(row) for row in db.execute('SELECT * FROM asset_acceptances ORDER BY id')], records)
+
+    def change_acceptance(self, s, action):
+        identifier = 'acceptance-'+s['jid']
+        if action == 'insert': self.acceptance(s['ids'][0], identifier); return
+        with self.studio.assets.connection() as db:
+            if action == 'delete': db.execute('DELETE FROM asset_acceptances WHERE id=?', (identifier,))
+            else: db.execute('UPDATE asset_acceptances SET withdrawn_at=? WHERE id=?', (2.0 if action == 'withdraw' else None, identifier))
+
+    def test_acceptance_changes_before_apply_refuse_a_stale_plan_without_writes_in_both_directions(self):
+        for classification in ('regular', 'private'):
+            for action in ('insert', 'withdraw', 'restore', 'delete'):
+                with self.subTest(classification=classification, action=action):
+                    s = self.scenario() if classification == 'regular' else self.private_scenario()
+                    if action != 'insert': self.acceptance(s['ids'][0], 'acceptance-'+s['jid'], withdrawn_at=2.0 if action == 'restore' else None)
+                    body = self.body(s, self.plan(s)) if classification == 'regular' else self.back_body(s)
+                    self.change_acceptance(s, action); before = self.tree()
+                    status, out = self.post(APPLY, body)
+                    self.assertEqual((status, out.get('code')), (409, 'migration_stale'), out)
+                    self.assertEqual(self.tree(), before)
+
+    def test_acceptance_changes_during_copy_refuse_publication_in_both_directions(self):
+        for classification in ('regular', 'private'):
+            for action in ('insert', 'withdraw', 'restore', 'delete'):
+                with self.subTest(classification=classification, action=action):
+                    s = self.scenario() if classification == 'regular' else self.private_scenario()
+                    if action != 'insert': self.acceptance(s['ids'][0], 'acceptance-'+s['jid'], withdrawn_at=2.0 if action == 'restore' else None)
+                    body = self.body(s, self.plan(s)) if classification == 'regular' else self.back_body(s)
+                    def changed(stage):
+                        if stage == 'verified': self.change_acceptance(s, action)
+                    with patch.object(run_migration, '_checkpoint', changed): status, out = self.post(APPLY, body)
+                    self.assertEqual((status, out.get('code'), out['stage'], out['published']), (409, 'migration_stale', 'rolled-back', False), out)
+                    if classification == 'regular': self.assert_regular(s, self.studio)
+                    else: self.assert_still_private(s, self.studio)
+                    with self.studio.assets.connection() as db:
+                        row = db.execute('SELECT withdrawn_at FROM asset_acceptances WHERE id=?', ('acceptance-'+s['jid'],)).fetchone()
+                    if action == 'delete': self.assertIsNone(row)
+                    else: self.assertEqual(row['withdrawn_at'], 2.0 if action == 'withdraw' else None)
 
     def test_blockers_direction_and_scope_are_refused_without_changes(self):
         s = self.scenario(); plan = self.plan(s)
@@ -686,7 +743,7 @@ class RunMigrationApplyTests(unittest.TestCase):
                 s = self.scenario(); body = self.body(s, self.plan(s))
                 with self.crash_at(crash), self.assertRaises(Crash): run_migration.apply(self.studio, body, 'all')
                 path = self.studio.experiments/'private/migrations'/(body['request_id']+'.json'); old = self.journal(s)
-                self.assertEqual(old.pop('source'), 'regular'); path.write_text(json.dumps(old))  # exactly the pre-change shape: no source field
+                self.assertEqual(old.pop('source'), 'regular'); old.pop('acceptance_revisions'); path.write_text(json.dumps(old))  # before either field existed
                 restarted = self.studio = self.restart()
                 self.assertEqual(restarted.migration_recovery, [{'request_id': body['request_id'], 'from_stage': 'verified', 'stage': stage}])
                 if stage == 'complete': self.assert_moved(s, restarted)

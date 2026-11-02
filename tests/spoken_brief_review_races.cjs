@@ -86,10 +86,12 @@ function pageHarness() {
     focus() { this.focused=true; }
   }
   const root=path.join(__dirname,'../app/static');
-  for(const [,tag,id] of fs.readFileSync(path.join(root,'spoken-briefs.html'),'utf8').matchAll(/<(\w+)[^>]*\bid="([^"]+)"/g)) {
-    const element=new Element(tag); element.id=id;
+  for(const [,tag,id,attributes] of fs.readFileSync(path.join(root,'spoken-briefs.html'),'utf8').matchAll(/<(\w+)[^>]*\bid="([^"]+)"([^>]*)>/g)) {
+    const element=new Element(tag); element.id=id; element.disabled=/\bdisabled\b/.test(attributes);
   }
-  const context=vm.createContext({console,URL,URLSearchParams,TextDecoder,Uint8Array,
+  const location={href:'http://127.0.0.1:8191/spoken-briefs.html'};
+  const context=vm.createContext({console,URL,URLSearchParams,TextDecoder,Uint8Array,setTimeout,clearTimeout,location,
+    history:{replaceState:(_state,_title,address)=>{location.href=String(address);}},
     document:{baseURI:'http://127.0.0.1:8191/spoken-briefs.html',getElementById:id=>elements.get(id),createElement:tag=>new Element(tag)},
     fetch:(target,options)=>new Promise((resolve,reject)=>{
       const u=new URL(target,'http://127.0.0.1:8191');
@@ -108,9 +110,76 @@ function pageHarness() {
   return {el,requests,inspected,loaded};
 }
 async function page() {
-  const h=pageHarness(); h.requests[0].resolve({enabled:true});
+  const h=pageHarness(); h.requests[0].resolve({enabled:true,source_root_id:hash});
   await new Promise(resolve=>setImmediate(resolve)); await h.inspected(); return h;
 }
+const settled=()=>new Promise(resolve=>setImmediate(resolve));
+for(const startupFirst of [true,false]) {
+  test(`latest source access enables archive discovery in either response order (startupFirst=${startupFirst})`,async()=>{
+    const h=pageHarness(), startup=h.requests[0];
+    h.el('refreshSource').onclick(); const current=h.requests[1];
+    if(startupFirst) {
+      startup.resolve({enabled:false,source_root_id:null}); await settled();
+      assert.equal(h.el('discover').disabled,true,'Stale startup must not publish capability state');
+    }
+    current.resolve({enabled:true,source_root_id:audioHash}); await settled();
+    assert.equal(h.el('previewSource').disabled,false);
+    assert.equal(h.el('discover').disabled,false);
+    assert.match(h.el('configuration').textContent,/Archive access enabled/);
+    if(!startupFirst) { startup.resolve({enabled:false,source_root_id:null}); await settled(); }
+    assert.equal(h.el('discover').disabled,false,'Late startup must not overwrite the current refresh');
+    assert.match(h.el('configuration').textContent,/Archive access enabled/);
+    assert.equal(h.requests.length,2,'Access refresh must not discover archives or start narration');
+    assert.ok(h.requests.every(request=>request.body===undefined));
+    const discovery=h.el('discover').onclick();
+    assert.equal(h.requests.at(-1).route,'/archives');
+    h.requests.at(-1).resolve({archives:[],refusals:[],truncated:false}); await discovery;
+    assert.match(h.el('status').textContent,/Discovery complete/);
+  });
+  test(`obsolete access failures cannot hide a successful refresh (startupFirst=${startupFirst})`,async()=>{
+    const h=pageHarness(), startup=h.requests[0];
+    h.el('refreshSource').onclick(); const current=h.requests[1];
+    if(startupFirst) { startup.reject(Error('Old connection failed')); await settled(); }
+    current.resolve({enabled:true,source_root_id:hash}); await settled();
+    if(!startupFirst) { startup.reject(Error('Old connection failed')); await settled(); }
+    assert.equal(h.el('discover').disabled,false);
+    assert.match(h.el('configuration').textContent,/Archive access enabled/);
+    assert.ok(h.requests.every(request=>request.body===undefined));
+  });
+}
+for(const outcome of ['disabled','unavailable']) {
+  test(`a current ${outcome} access refresh disables discovery and preview`,async()=>{
+    const h=pageHarness(); h.requests[0].resolve({enabled:true,source_root_id:hash}); await settled();
+    assert.equal(h.el('discover').disabled,false);
+    h.el('refreshSource').onclick();
+    assert.equal(h.el('discover').disabled,true,'Previous access must not remain actionable during refresh');
+    if(outcome==='disabled') h.requests[1].resolve({enabled:false,source_root_id:null});
+    else h.requests[1].reject(Error('Connection failed'));
+    await settled();
+    assert.equal(h.el('previewSource').disabled,true); assert.equal(h.el('discover').disabled,true);
+    assert.match(h.el('configuration').textContent,new RegExp(outcome,'i'));
+    assert.ok(h.requests.every(request=>request.body===undefined));
+  });
+}
+test('an older archive discovery cannot re-enable access after a disabled refresh',async()=>{
+  const h=pageHarness(); h.requests[0].resolve({enabled:true,source_root_id:hash}); await settled();
+  const discovery=h.el('discover').onclick(), oldRead=h.requests.at(-1);
+  h.el('refreshSource').onclick(); h.requests.at(-1).resolve({enabled:false,source_root_id:null}); await settled();
+  oldRead.resolve({archives:[{key:'old-root/archive'}],refusals:[],truncated:false}); await discovery;
+  assert.equal(h.el('discover').disabled,true);
+  assert.equal(h.el('archiveList').children.length,0,'An old discovery does not publish into new access state');
+});
+test('an obsolete discovery failure cannot replace newer successful discovery feedback',async()=>{
+  const h=pageHarness(); h.requests[0].resolve({enabled:true,source_root_id:hash}); await settled();
+  const first=h.el('discover').onclick(), oldRead=h.requests.at(-1);
+  h.el('refreshSource').onclick(); h.requests.at(-1).resolve({enabled:true,source_root_id:audioHash}); await settled();
+  const second=h.el('discover').onclick();
+  h.requests.at(-1).resolve({archives:[{key:'current-root/archive'}],refusals:[],truncated:false}); await second;
+  oldRead.reject(Error('Old discovery failed')); await first;
+  assert.match(h.el('status').textContent,/Discovery complete/);
+  assert.equal(h.el('discover').disabled,false);
+  assert.equal(h.el('archiveList').value,'current-root/archive');
+});
 test('bookmark refuses unsettled audio without sending a mutation',async()=>{
   const h=await page(), before=h.requests.length;
   const attempt=h.el('savePosition').onclick();

@@ -1,5 +1,82 @@
 # Current state — 2 November 2026
 
+## 2026-11-02 — Deliberate source comparison survives child metadata saves
+
+Confirmed single-child detail saves now notify the existing comparison view to
+revalidate its deliberately chosen pair. Images stay withheld until fresh family
+and selected-ID observations confirm both identities, hashes and privacy. Newer
+receipts, choices, navigation or scope changes invalidate older replies, and a
+completion cannot take focus away from newer Notes typing. Workspace still owns
+metadata writes, drafts and recovery. The comparison heading also reserves room
+for the dialog close button.
+
+All 55 comparison Node contracts, three family wrappers, 28 detail contracts and
+the frontend handoffs pass. The expanded browser journey covers saved-pair/focus
+continuity, held reads, changed source evidence and close-button spacing; its
+exact-head hosted result belongs to the follow-up PR. Refs #1875. The earlier
+comparison head `5e06c25` passed all 37 original browser checks with unchanged
+parent bytes and no generation; that report is baseline evidence for this follow-up.
+
+## 2026-11-02 — Repaired PNG imports bind the opened Workspace
+
+Parented HTTP imports now require the captured Workspace identity and validate
+it after body reading, before any upload or registration. The page confirms the
+parent and refuses a stale Workspace/privacy/detail/hash observation before
+sending the PNG. Ordinary imports and trusted internal Krita calls retain their
+existing API. The focused 73-test group, five import/upload tests, five browser
+installer tests and eight real HTTP checks passed; the Node wrapper runs sixteen
+causal cases. [Evidence and pending hosted browser qualification](docs/verification/2026-11-02-repaired-import-workspace.md).
+Refs #1837; its other stated remainder, #243, #1832 and HUMAN_TODO choices remain
+open. No generation, native-app, art or licensing acceptance is inferred.
+
+## 2026-11-02 — Imported repair sources follow displayed image orientation
+
+Marked repair, seamless tiles and parallax now use the same displayed coordinates
+for JPEG, PNG and WebP EXIF orientations. Source files and their hashes remain
+unchanged. Repair preparation names an oversized composed PNG before any upload,
+and editing refuses 16-bit or ambiguous-header PNGs with guidance to convert a
+copy to 8-bit RGB. Both source readers enforce the strict pixel limit before decode.
+Raw import remains available; this is not a colour-management or generation claim.
+
+The focused source and route group passed 169 tests with no skips, including all
+eight transforms, late PNG EXIF, private preparation, mask union/alpha behavior,
+CMYK conversion and the encoded-size boundary. Pillow-free static validation
+passed. [Causal evidence and limits](docs/reconciliation/2026-11-02-region-repair-sources.md)
+record the exact source contract; integrated hosted qualification remains pending.
+Refs #1861. Owner art acceptance and native generated-output quality remain open.
+
+## 2026-11-02 — Contract discovery parses each runner once
+
+The frontend-contract wiring gate now shares one parsed runner snapshot across
+its class assertions and releases it at class cleanup. All ten checks, the live
+Git contract inventory and the comment/docstring/workflow matching rules remain.
+On the same 953-file corpus, actual parser calls fell from 2857 to 953 with an
+identical parsed-corpus digest; the ten tests pass without skips. No full-suite
+budget or lifetime/leak guard changed. [Evidence and timing limits](docs/verification/2026-11-02-contract-discovery-efficiency.md).
+Refs #1904 and #1882; final hosted qualification remains pending.
+
+## 2026-11-02 — Explicit patch warnings, complete migration previews and stable Spoken Brief access
+
+The desktop launcher reports recorded ComfyUI patch drift without applying a
+patch or changing runtime admission. Privacy-migration previews now name retained
+picture acceptances and bind their full records through publication; a changed
+acceptance invalidates the preview, and the acceptance itself remains untouched.
+An actual hot SQLite journal fixture proves that planning preserves recovery
+evidence while refusing unreadable project dependencies.
+
+Spoken Brief access refreshes now update both Preview and Discover, and obsolete
+capability/discovery replies cannot replace the latest state. The source-preview
+symlink test now exercises distinct aliases instead of skipping an existing-path
+error. Preview wording scopes its no-generation/no-save statement to that operation.
+
+Focused source, real-SQLite/HTTP and Node regressions passed on synthetic fixtures;
+the complete Spoken Brief group passed 280 tests with one Windows-junction skip.
+Windows launcher and browser qualification belong to the exact-head PR checks.
+[Scope, causal evidence and limits](docs/verification/2026-11-02-reliability.md).
+Refs #1905, #1900, #1799, #1877, #1879 and #1880. No personal runtime was patched,
+no personal media was migrated, and no generation or owner art acceptance is claimed.
+The parked #1883/#1884 source-introduction work and HUMAN_TODO.md choices remain open.
+
 ## 2026-11-02 — Blender alpha compatibility
 
 The articulated-prop adapter now uses the assigned lid datablock's F-Curve API.
@@ -73,6 +150,44 @@ This is a confined, read-only source preview: no preparation, queue, inference,
 archive write or voice acceptance. First-generation orchestration and the broader
 Spoken Briefs project remain open under #638/#635. See
 [`CLI-PREVIEW.md`](docs/spoken-briefs/CLI-PREVIEW.md#studio-source-preview).
+
+## 2026-10-31 — Compare a repaired picture with its recorded source
+
+Library detail now offers **Compare with source**, with explicit direct-parent
+choice and equally sized, contained Current version / Recorded source previews.
+Off-page sources use the existing bounded selected-ID observation. Missing,
+trashed, non-image, mixed-privacy and incomplete evidence stays unavailable.
+The family adapter binds reads and focus to the child hash and detail, Workspace
+and privacy epochs; changes and errors clear comparison media. The existing
+Workspace editor remains the sole metadata, review and dirty-draft owner.
+
+Source checkpoint: 54 focused Node contracts pass, including source selection,
+media identity, late-response refusals and preserving Notes focus during delayed
+comparison display. The real 125-asset SQLite fixture reopens
+its repair and constructs its HTTP handler without starting a socket or browser.
+Feature browser captures, hosted full-suite/all-30 journeys and final qualification
+are pending at this checkpoint. Refs #1837 and #243; no broader closure. #1832
+acceptance and HUMAN_TODO remain unchanged. No live generation, paid runtime,
+native editor, model licensing or artistic acceptance is claimed.
+
+2 November integration: the comparison changes reconcile cleanly with main
+`84b66fba0da1b70be895caf8ec3831cb0a9055bd`. The 17 family observations,
+eight repair-import checks, three family frontend wrappers, detail contract wrapper
+and 29 frontend handoffs pass, as does repository validation. The disposable
+125-asset fixture reopens with the parent unchanged and repair unreviewed. Local
+browser execution was unavailable because Chromium installation failed before
+launch; no browser assertion or capture is claimed. The existing Linux family
+workflow now runs the complete comparison fixture and retains its wide, narrow,
+CSS-200, failure and report artifacts. That hosted result and the integrated full
+suite remain pending; the earlier partial browser evidence is not upgraded.
+
+Hosted run `41385708468` at `a954ec3` then passed all 34 comparison interaction
+assertions and retained wide, narrow and CSS-200 captures, but failed the final
+page-error check. Its error details were not retained. The fixture's bare Workspace
+events reproduce a TypeError in the existing Continue listener; the fixture now
+uses the production identity observer for both A-B-A transitions. Failed checks
+retain their errors and request log, and page-error stacks are printed. These
+changes pass focused fault probes; the complete hosted result remains pending.
 
 ## 2026-10-31 — Deliberately restore an older shared setup
 

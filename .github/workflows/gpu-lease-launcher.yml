@@ -4,16 +4,20 @@ on:
     paths:
       - 'scripts/Start-Studio.ps1'
       - 'scripts/studio-gpu-lease-gate.py'
+      - 'scripts/check-runtime-patches.py'
       - 'app/gpu_lease.py'
       - 'tests/test_gpu_lease_launcher.py'
+      - 'tests/test_runtime_patch_warning.py'
       - '.github/workflows/gpu-lease-launcher.yml'
   push:
     branches: [main]
     paths:
       - 'scripts/Start-Studio.ps1'
       - 'scripts/studio-gpu-lease-gate.py'
+      - 'scripts/check-runtime-patches.py'
       - 'app/gpu_lease.py'
       - 'tests/test_gpu_lease_launcher.py'
+      - 'tests/test_runtime_patch_warning.py'
       - '.github/workflows/gpu-lease-launcher.yml'
 permissions:
   contents: read
@@ -33,3 +37,5 @@ jobs:
         run: Get-Command powershell.exe -ErrorAction Stop
       - name: Read-only gate and inert launcher contract
         run: python -m unittest discover -s tests -p test_gpu_lease_launcher.py -v
+      - name: Read-only runtime patch warnings and detached relay
+        run: python -m unittest discover -s tests -p test_runtime_patch_warning.py -v

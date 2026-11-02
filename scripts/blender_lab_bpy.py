@@ -1,0 +1,529 @@
+"""Blender-side half of the Blender lab: runs inside `blender --background`, never in the Studio's Python.
+
+Capabilities are detected by feature tests (RNA properties, registered types, operators, or by doing the thing),
+never by comparing version numbers. `bpy` is imported lazily so the pure helpers stay importable offline.
+
+    blender --background --factory-startup --disable-autoexec --python blender_lab_bpy.py -- probe --out <file>
+"""
+import json
+import sys
+
+SCHEMA = "las.blender-lab.v1"
+
+
+def _enum_ids(rna_type, prop):
+    try: return sorted(item.identifier for item in rna_type.bl_rna.properties[prop].enum_items)
+    except (KeyError, AttributeError): return None
+
+
+def _attempt(fn):
+    """Run one feature test; a failure is a recorded result, never a crash."""
+    try: return {"ok": True, "detail": fn()}
+    except Exception as exc: return {"ok": False, "error": f"{type(exc).__name__}: {exc}"[:300]}
+
+
+def _action_api():
+    import bpy
+    rna = bpy.types.Action.bl_rna.properties
+    result = {"legacy_fcurves_property": "fcurves" in rna, "slots_property": "slots" in rna, "layers_property": "layers" in rna}
+    mesh = bpy.data.meshes.new("_las_probe")
+    obj = bpy.data.objects.new("_las_probe", mesh)
+    bpy.context.scene.collection.objects.link(obj)
+    try:
+        obj.keyframe_insert("location", index=0, frame=1)
+        action = obj.animation_data.action
+        result["keyframe_insert"] = True
+        result["assigned_slot"] = getattr(obj.animation_data, "action_slot", None) is not None
+        if "layers" in rna and len(action.layers):
+            strip = action.layers[0].strips[0]
+            bag = strip.channelbag(obj.animation_data.action_slot)
+            result["channelbag_fcurves"] = len(bag.fcurves)
+        if "fcurves" in rna:
+            result["legacy_fcurves"] = len(action.fcurves)
+        result["fcurve_ensure_for_datablock"] = hasattr(action, "fcurve_ensure_for_datablock")
+        bpy.data.actions.remove(action)
+    finally:
+        bpy.data.objects.remove(obj)
+        bpy.data.meshes.remove(mesh)
+    try:
+        from bpy_extras import anim_utils
+        result["anim_utils_action_get_channelbag_for_slot"] = hasattr(anim_utils, "action_get_channelbag_for_slot")
+    except ImportError:
+        result["anim_utils_action_get_channelbag_for_slot"] = False
+    result["layered"] = bool(result.get("slots_property") and result.get("channelbag_fcurves"))
+    return result
+
+
+def _shader_nodes():
+    import bpy
+    names = sorted(name for name in dir(bpy.types)
+                   if isinstance(getattr(bpy.types, name), type) and issubclass(getattr(bpy.types, name), bpy.types.ShaderNode))
+    interesting = [name for name in names if any(key in name for key in ("Light", "Toon", "ShaderToRGB", "Npr", "NPR"))
+                   and name not in ("ShaderNodeLightPath", "ShaderNodeLightFalloff", "ShaderNodeOutputLight")]
+    material = bpy.data.materials.new("_las_probe")
+    material.use_nodes = True
+    instantiable = {}
+    try:
+        for name in interesting:
+            try:
+                node = material.node_tree.nodes.new(name)
+                instantiable[name] = {"inputs": [s.name for s in node.inputs], "outputs": [s.name for s in node.outputs]}
+            except RuntimeError as exc:
+                instantiable[name] = {"error": str(exc)[:200]}
+    finally:
+        bpy.data.materials.remove(material)
+    return {"count": len(names), "all": names, "lighting_or_npr_candidates": instantiable}
+
+
+def _projects():
+    import bpy
+    return {"types": sorted(name for name in dir(bpy.types) if "Project" in name),
+            "ops_category": "project" in dir(bpy.ops), "context_attribute": hasattr(bpy.context, "project"),
+            "preferences_attributes": sorted(name for name in dir(bpy.context.preferences) if "project" in name.lower())}
+
+
+def _point_clouds():
+    import bpy
+    imports = {}
+    for category in ("wm", "import_scene", "import_mesh"):
+        ops = getattr(bpy.ops, category, None)
+        if ops is None: continue
+        imports[category] = sorted(name for name in dir(ops) if "import" in name or name.endswith("_in"))
+    flat = [name for names in imports.values() for name in names]
+    datablock = None
+    if hasattr(bpy.data, "pointclouds"):
+        cloud = bpy.data.pointclouds.new("_las_probe")
+        datablock = {"points": len(cloud.points), "attributes": sorted(a.name for a in cloud.attributes)}
+        bpy.data.pointclouds.remove(cloud)
+    return {"import_operators": imports,
+            "splat_like": sorted(name for name in flat if any(key in name for key in ("splat", "gauss", "ply", "spz", "point"))),
+            "pointcloud_datablock": datablock, "pointcloud_object_type": "POINTCLOUD" in (_enum_ids(bpy.types.Object, "type") or [])}
+
+
+def _gltf_export():
+    import addon_utils
+    import bpy
+    props = bpy.ops.export_scene.gltf.get_rna_type().properties
+    options = {}
+    for prop in props:
+        if prop.identifier == "rna_type": continue
+        entry = {"type": prop.type}
+        if prop.type == "ENUM": entry["items"] = sorted(item.identifier for item in prop.enum_items)
+        options[prop.identifier] = entry
+    version = None
+    for module in addon_utils.modules():
+        if module.__name__ == "io_scene_gltf2": version = list(module.bl_info.get("version", ()))
+    return {"addon_version": version, "option_count": len(options), "options": options}
+
+
+def _gpu():
+    import bpy
+    result = {"preferences_gpu_backend": getattr(bpy.context.preferences.system, "gpu_backend", None),
+              "preferences_gpu_backend_items": _enum_ids(bpy.types.PreferencesSystem, "gpu_backend")}
+    try:
+        import gpu
+        result["gpu_init_function"] = hasattr(gpu, "init")
+        if hasattr(gpu, "init"): gpu.init()
+        result["active_backend"] = gpu.platform.backend_type_get()
+        result["vendor"] = gpu.platform.vendor_get()
+        result["renderer"] = gpu.platform.renderer_get()
+        result["version"] = gpu.platform.version_get()
+    except Exception as exc:
+        result["active_backend_error"] = f"{type(exc).__name__}: {exc}"[:200]
+    return result
+
+
+def _cycles():
+    import bpy
+    addon = bpy.context.preferences.addons.get("cycles")
+    if addon is None: return {"enabled": False}
+    prefs = addon.preferences
+    types = [item[0] for item in prefs.get_device_types(bpy.context)]
+    devices = {}
+    for kind in types:
+        if kind == "NONE": continue
+        try: devices[kind] = [{"name": d.name, "type": d.type} for d in prefs.get_devices_for_type(kind)]
+        except Exception as exc: devices[kind] = {"error": str(exc)[:200]}
+    return {"enabled": True, "compute_device_types": types, "devices": devices,
+            "hiprt_property": hasattr(prefs, "use_hiprt"),
+            "gpu_visible": sorted(kind for kind, found in devices.items() if isinstance(found, list) and any(d["type"] != "CPU" for d in found))}
+
+
+def _render_engines():
+    """Engines are a dynamic enum: try assigning each known or registered identifier."""
+    import bpy
+    render = bpy.context.scene.render
+    candidates = set(_enum_ids(bpy.types.RenderSettings, "engine") or [])
+    candidates |= {"BLENDER_WORKBENCH", "BLENDER_EEVEE", "BLENDER_EEVEE_NEXT", "CYCLES"}
+    candidates |= {getattr(cls, "bl_idname", None) for cls in bpy.types.RenderEngine.__subclasses__()} - {None}
+    found, original = [], render.engine
+    for name in sorted(candidates):
+        try: render.engine = name; found.append(name)
+        except TypeError: pass
+    render.engine = original
+    return found
+
+
+def probe():
+    import platform
+    import bpy
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    app = bpy.app
+    return {
+        "schema": SCHEMA, "kind": "capability-probe",
+        "blender": {"version": list(app.version), "version_string": app.version_string, "version_cycle": app.version_cycle,
+                    "build_hash": app.build_hash.decode(), "build_branch": app.build_branch.decode(),
+                    "build_date": app.build_date.decode(), "build_platform": app.build_platform.decode(),
+                    "background": app.background},
+        "python": {"version": platform.python_version(), "implementation": platform.python_implementation()},
+        "render_engines": _render_engines(),
+        "features": {
+            "action_api": _attempt(_action_api),
+            "shader_nodes": _attempt(_shader_nodes),
+            "blender_projects": _attempt(_projects),
+            "point_cloud_and_splat_import": _attempt(_point_clouds),
+            "gltf_export": _attempt(_gltf_export),
+            "gpu_backend": _attempt(_gpu),
+            "cycles_devices": _attempt(_cycles),
+        },
+    }
+
+
+# ---- scene manifest -------------------------------------------------------------------------------------------------
+
+DIGITS = 5
+# Identity and file locations are recorded but kept out of the semantic checksum: the same scene opened in another
+# Blender build or from another folder keeps its checksum.
+NON_SEMANTIC = ("schema", "kind", "blender", "source", "runtime", "semantic_checksum")
+
+
+def rnd(value):
+    value = round(float(value), DIGITS)
+    return 0.0 if value == 0 else value  # folds -0.0
+
+
+def vec(values): return [rnd(v) for v in values]
+
+
+def canonical(value):
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
+
+
+def semantic_checksum(manifest):
+    import hashlib
+    return hashlib.sha256(canonical({k: v for k, v in manifest.items() if k not in NON_SEMANTIC}).encode()).hexdigest()
+
+
+def _quantised_hash(*arrays):
+    """Order-sensitive hash; floats are quantised to DIGITS so float noise below that does not count."""
+    import hashlib
+    import numpy as np
+    digest = hashlib.sha256()
+    for array in arrays:
+        data = np.asarray(array)
+        if data.dtype.kind == "f": data = np.rint(data.astype(np.float64) * 10 ** DIGITS)
+        digest.update(np.ascontiguousarray(data, dtype="<i8").tobytes())
+    return digest.hexdigest()
+
+
+def _foreach(collection, attr, width, dtype):
+    import numpy as np
+    out = np.empty(len(collection) * width, dtype=dtype)
+    collection.foreach_get(attr, out)
+    return out
+
+
+def _socket(node, name):
+    socket = node.inputs.get(name)
+    if socket is None: return None
+    if socket.is_linked: return "linked:" + socket.links[0].from_node.bl_idname
+    value = socket.default_value
+    return vec(value) if hasattr(value, "__len__") else rnd(value)
+
+
+def _walk_nodes(tree, seen):
+    for node in tree.nodes:
+        yield node
+        group = getattr(node, "node_tree", None)
+        if group is not None and group.name not in seen:
+            seen.add(group.name)
+            yield from _walk_nodes(group, seen)
+
+
+def _material(mat):
+    entry = {"name": mat.name, "diffuse_color": vec(mat.diffuse_color), "node_types": {}, "images": [], "principled": None}
+    tree = mat.node_tree if getattr(mat, "use_nodes", True) else None
+    if tree is not None:
+        types, images = {}, set()
+        for node in _walk_nodes(tree, set()):
+            types[node.bl_idname] = types.get(node.bl_idname, 0) + 1
+            if node.bl_idname == "ShaderNodeTexImage" and node.image is not None: images.add(node.image.name)
+            if node.bl_idname == "ShaderNodeBsdfPrincipled" and entry["principled"] is None:
+                entry["principled"] = {name.lower().replace(" ", "_"): _socket(node, name)
+                                       for name in ("Base Color", "Metallic", "Roughness", "Alpha")}
+        entry["node_types"], entry["images"] = types, sorted(images)
+    return entry
+
+
+def _image(image):
+    import os
+    import bpy
+    path = bpy.path.abspath(image.filepath_raw, library=image.library) if image.filepath_raw else ""
+    packed = image.packed_file is not None
+    size = list(image.size)  # reading size loads the buffer; a missing file stays 0x0
+    return {"name": image.name, "source": image.source, "file": os.path.basename(path.replace("\\", "/")) or None,
+            "packed": packed, "size": size, "colorspace": image.colorspace_settings.name,
+            "missing": image.source == "FILE" and (size == [0, 0] or (not packed and not os.path.isfile(path)))}
+
+
+def _mesh(mesh):
+    import numpy as np
+    coords = _foreach(mesh.vertices, "co", 3, np.float32)
+    loop_totals = _foreach(mesh.polygons, "loop_total", 1, np.int32)
+    loop_verts = _foreach(mesh.loops, "vertex_index", 1, np.int32)
+    material_index = _foreach(mesh.polygons, "material_index", 1, np.int32)
+    pts = coords.reshape(-1, 3)
+    entry = {"name": mesh.name, "vertices": len(mesh.vertices), "edges": len(mesh.edges), "faces": len(mesh.polygons),
+             "loops": len(mesh.loops), "triangles": int(np.maximum(loop_totals - 2, 0).sum()),
+             "geometry_hash": _quantised_hash(coords, loop_totals, loop_verts),
+             "bbox": {"min": vec(pts.min(0)), "max": vec(pts.max(0))} if len(pts) else None,
+             "uv_maps": [uv.name for uv in mesh.uv_layers],
+             "color_attributes": sorted(a.name for a in mesh.color_attributes),
+             "material_face_counts": [int(c) for c in np.bincount(material_index, minlength=max(len(mesh.materials), 1))],
+             "shape_keys": None}
+    keys = mesh.shape_keys
+    if keys is not None:
+        entry["shape_keys"] = {"use_relative": keys.use_relative, "reference": keys.reference_key.name, "keys": [
+            {"name": block.name, "relative_key": block.relative_key.name, "value": rnd(block.value), "mute": block.mute,
+             "vertex_group": block.vertex_group or None, "range": [rnd(block.slider_min), rnd(block.slider_max)],
+             "data_hash": _quantised_hash(_foreach(block.data, "co", 3, np.float32))} for block in keys.key_blocks]}
+    return entry
+
+
+def _vertex_weights(obj):
+    groups = {group.index: group.name for group in obj.vertex_groups}
+    if not groups or obj.type != "MESH": return None
+    stats = {name: {"vertices": 0, "max": 0.0} for name in groups.values()}
+    influences, unnormalised = {}, 0
+    for vertex in obj.data.vertices:
+        weights = [(groups[g.group], g.weight) for g in vertex.groups if g.group in groups and g.weight > 0]
+        influences[len(weights)] = influences.get(len(weights), 0) + 1
+        if weights and abs(sum(w for _, w in weights) - 1.0) > 1e-3: unnormalised += 1
+        for name, weight in weights:
+            stats[name]["vertices"] += 1; stats[name]["max"] = max(stats[name]["max"], weight)
+    for value in stats.values(): value["max"] = rnd(value["max"])
+    return {"groups": stats, "influence_histogram": {str(k): v for k, v in sorted(influences.items())},
+            "max_influences": max(influences, default=0), "unweighted_vertices": influences.get(0, 0),
+            "unnormalised_vertices": unnormalised}
+
+
+def _object(obj, view_layer):
+    from mathutils import Vector
+    corners = [obj.matrix_world @ Vector(c) for c in obj.bound_box] if obj.type in {"MESH", "CURVE", "SURFACE", "FONT", "META", "ARMATURE"} else []
+    anim = obj.animation_data
+    slot = getattr(anim, "action_slot", None) if anim else None
+    return {"name": obj.name, "type": obj.type, "data": obj.data.name if obj.data else None,
+            "parent": obj.parent.name if obj.parent else None, "parent_type": obj.parent_type,
+            "parent_bone": obj.parent_bone or None, "collections": sorted(c.name for c in obj.users_collection),
+            "matrix_world": [vec(row) for row in obj.matrix_world],
+            "world_bbox": {"min": vec(min(c[i] for c in corners) for i in range(3)),
+                           "max": vec(max(c[i] for c in corners) for i in range(3))} if corners else None,
+            "hide_render": obj.hide_render, "visible": obj.visible_get(view_layer=view_layer),
+            "material_slots": [{"material": s.material.name if s.material else None, "link": s.link} for s in obj.material_slots],
+            "modifiers": [{"name": m.name, "type": m.type, "show_render": m.show_render, "show_viewport": m.show_viewport,
+                           "object": m.object.name if getattr(m, "object", None) else None} for m in obj.modifiers],
+            "constraints": [{"name": c.name, "type": c.type, "mute": c.mute} for c in obj.constraints],
+            "vertex_groups": [g.name for g in obj.vertex_groups], "vertex_weights": _vertex_weights(obj),
+            "animation": {"action": anim.action.name if anim.action else None,
+                          "slot": slot.identifier if slot is not None else None} if anim else None}
+
+
+def _armature(arm):
+    bones = []
+    for bone in arm.bones:
+        depth, parent = 0, bone.parent
+        while parent is not None: depth += 1; parent = parent.parent
+        bones.append({"name": bone.name, "parent": bone.parent.name if bone.parent else None, "depth": depth,
+                      "head": vec(bone.head_local), "tail": vec(bone.tail_local), "deform": bone.use_deform,
+                      "connected": bone.use_connect})
+    return {"name": arm.name, "bones": sorted(bones, key=lambda b: b["name"]), "bone_count": len(bones),
+            "roots": sorted(b["name"] for b in bones if b["parent"] is None),
+            "max_depth": max((b["depth"] for b in bones), default=0)}
+
+
+def _fcurve(curve, slot=None):
+    import numpy as np
+    points = curve.keyframe_points
+    return {"slot": slot, "data_path": curve.data_path, "index": curve.array_index, "keys": len(points),
+            "keys_hash": _quantised_hash(_foreach(points, "co", 2, np.float32)),
+            "interpolation": sorted({p.interpolation for p in points})}
+
+
+def _action(action):
+    curves, slots = [], None
+    if hasattr(action, "slots"):
+        slots = [{"identifier": s.identifier, "target_id_type": s.target_id_type} for s in action.slots]
+        for layer in getattr(action, "layers", []):
+            for strip in layer.strips:
+                for slot in action.slots:
+                    bag = strip.channelbag(slot)
+                    if bag is not None: curves += [_fcurve(c, slot.identifier) for c in bag.fcurves]
+    if not curves and "fcurves" in action.bl_rna.properties:  # legacy actions on builds that still expose them
+        curves = [_fcurve(c) for c in action.fcurves]
+    return {"name": action.name, "frame_range": vec(action.frame_range), "slots": slots,
+            "fcurves": sorted(curves, key=lambda c: (c["slot"] or "", c["data_path"], c["index"]))}
+
+
+def manifest(source_label=None):
+    """Task-oriented summary of the open scene for planning and parity; not a serialisation of Blender."""
+    import bpy
+    scene, view_layer, data = bpy.context.scene, bpy.context.view_layer, bpy.data
+    result = {
+        "schema": SCHEMA, "kind": "scene-manifest",
+        "blender": {"version_string": bpy.app.version_string, "build_hash": bpy.app.build_hash.decode()},
+        "source": {"file": source_label},
+        "scene": {"name": scene.name, "frame_range": [scene.frame_start, scene.frame_end],
+                  "fps": rnd(scene.render.fps / scene.render.fps_base), "camera": scene.camera.name if scene.camera else None,
+                  "unit_system": scene.unit_settings.system, "unit_scale": rnd(scene.unit_settings.scale_length)},
+        "objects": sorted((_object(o, view_layer) for o in scene.objects), key=lambda o: o["name"]),
+        "collections": sorted(({"name": c.name, "objects": sorted(o.name for o in c.objects),
+                                "children": sorted(ch.name for ch in c.children), "hide_render": c.hide_render}
+                               for c in data.collections), key=lambda c: c["name"]),
+        "meshes": sorted((_mesh(m) for m in data.meshes if m.users), key=lambda m: m["name"]),
+        "materials": sorted((_material(m) for m in data.materials if m.users), key=lambda m: m["name"]),
+        "images": sorted((_image(i) for i in data.images if i.users and i.type == "IMAGE"), key=lambda i: i["name"]),
+        "armatures": sorted((_armature(a) for a in data.armatures if a.users), key=lambda a: a["name"]),
+        "actions": sorted((_action(a) for a in data.actions if a.users), key=lambda a: a["name"]),
+        "cameras": sorted(({"name": c.name, "type": c.type, "lens": rnd(c.lens), "ortho_scale": rnd(c.ortho_scale)}
+                           for c in data.cameras if c.users), key=lambda c: c["name"]),
+        "lights": sorted(({"name": l.name, "type": l.type, "energy": rnd(l.energy), "color": vec(l.color)}
+                          for l in data.lights if l.users), key=lambda l: l["name"]),
+    }
+    result["counts"] = {key: len(result[key]) for key in ("objects", "meshes", "materials", "images", "armatures", "actions")}
+    result["counts"]["triangles"] = sum(m["triangles"] for m in result["meshes"])
+    result["counts"]["missing_images"] = sum(1 for i in result["images"] if i["missing"])
+    result["semantic_checksum"] = semantic_checksum(result)
+    return result
+
+
+def open_blend(path):
+    import bpy
+    bpy.ops.wm.open_mainfile(filepath=str(path), load_ui=False, use_scripts=False)
+
+
+def make_fixture(out_dir):
+    """Build the deterministic lab asset (textured body, coloured head and badge, 3-bone rig with weights, a shape key,
+    an action) as <out_dir>/lab-asset.blend plus its external texture. Generated, never a real character."""
+    import math
+    import os
+    import bpy
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    os.makedirs(out_dir, exist_ok=True)
+    image = bpy.data.images.new("lab-checker", 64, 64)
+    pixels = []
+    for y in range(64):
+        for x in range(64):
+            pixels += [0.9, 0.75, 0.2, 1.0] if (x // 8 + y // 8) % 2 else [0.1, 0.35, 0.8, 1.0]
+    image.pixels.foreach_set(pixels)
+    image.filepath_raw = os.path.join(out_dir, "lab-checker.png")
+    image.file_format = "PNG"
+    image.save()
+
+    def material(name, color=None, texture=None):
+        mat = bpy.data.materials.new(name)
+        mat.use_nodes = True
+        bsdf = next(n for n in mat.node_tree.nodes if n.bl_idname == "ShaderNodeBsdfPrincipled")
+        bsdf.inputs["Roughness"].default_value = 0.6
+        if color is not None:
+            bsdf.inputs["Base Color"].default_value = (*color, 1.0); mat.diffuse_color = (*color, 1.0)
+        if texture is not None:
+            node = mat.node_tree.nodes.new("ShaderNodeTexImage"); node.image = texture
+            mat.node_tree.links.new(node.outputs["Color"], bsdf.inputs["Base Color"])
+        return mat
+
+    def add(name, op, mat, **kwargs):
+        op(**kwargs)
+        obj = bpy.context.object
+        obj.name = obj.data.name = name
+        obj.data.materials.append(mat)
+        return obj
+
+    body = add("Body", bpy.ops.mesh.primitive_cube_add, material("BodyTextured", texture=image), size=1.0, location=(0, 0, 0.75))
+    body.scale = (0.6, 0.35, 0.75); bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    # Explicit sphere: primitive_uv_sphere_add emits faces in a run-dependent order on 4.5.13.
+    seg, rings, radius = 24, 12, 0.32
+    verts = [(0, 0, radius)] + [(radius * math.sin(math.pi * r / rings) * math.cos(2 * math.pi * s / seg),
+                                  radius * math.sin(math.pi * r / rings) * math.sin(2 * math.pi * s / seg),
+                                  radius * math.cos(math.pi * r / rings)) for r in range(1, rings) for s in range(seg)]
+    verts.append((0, 0, -radius))
+    ring = lambda r, s: 1 + (r - 1) * seg + s % seg
+    faces = [(0, ring(1, s), ring(1, s + 1)) for s in range(seg)]
+    faces += [(ring(r, s), ring(r + 1, s), ring(r + 1, s + 1), ring(r, s + 1)) for r in range(1, rings - 1) for s in range(seg)]
+    faces += [(len(verts) - 1, ring(rings - 1, s + 1), ring(rings - 1, s)) for s in range(seg)]
+    head_mesh = bpy.data.meshes.new("Head")
+    head_mesh.from_pydata(verts, [], faces)
+    head = bpy.data.objects.new("Head", head_mesh)
+    bpy.context.scene.collection.objects.link(head)
+    head.location = (0, 0, 1.85)
+    head_mesh.materials.append(material("HeadRed", color=(0.8, 0.08, 0.06)))
+    badge = add("Badge", bpy.ops.mesh.primitive_cylinder_add, material("BadgeGreen", color=(0.1, 0.7, 0.2)),
+                radius=0.14, depth=0.06, vertices=16, location=(0.22, -0.37, 1.05), rotation=(math.pi / 2, 0, 0))
+    basis = head.shape_key_add(name="Basis")
+    squash = head.shape_key_add(name="Squash")
+    for point in squash.data: point.co.z *= 0.7
+    basis.value = squash.value = 0.0  # new-key default differs: 0.0 on 4.5, 1.0 on 5.4 alpha
+    bpy.ops.object.armature_add(location=(0, 0, 0))
+    rig = bpy.context.object
+    rig.name = rig.data.name = "Rig"
+    bpy.ops.object.mode_set(mode="EDIT")
+    bones = rig.data.edit_bones
+    root = bones[0]; root.name = "Root"; root.head, root.tail = (0, 0, 0), (0, 0, 0.75)
+    spine = bones.new("Spine"); spine.head, spine.tail, spine.parent, spine.use_connect = (0, 0, 0.75), (0, 0, 1.5), root, True
+    neck = bones.new("Neck"); neck.head, neck.tail, neck.parent, neck.use_connect = (0, 0, 1.5), (0, 0, 1.85), spine, True
+    bpy.ops.object.mode_set(mode="OBJECT")
+    for obj, groups in ((body, ("Root", "Spine")), (head, ("Neck",)), (badge, ("Spine",))):
+        obj.parent = rig
+        obj.modifiers.new("Armature", "ARMATURE").object = rig
+        made = [obj.vertex_groups.new(name=name) for name in groups]
+        for vertex in obj.data.vertices:
+            if len(made) == 1: made[0].add([vertex.index], 1.0, "REPLACE"); continue
+            upper = min(max((obj.matrix_world @ vertex.co).z / 1.5, 0.0), 1.0)
+            made[0].add([vertex.index], 1.0 - upper, "REPLACE"); made[1].add([vertex.index], upper, "REPLACE")
+    pose = rig.pose.bones["Spine"]
+    pose.rotation_mode = "XYZ"
+    for frame, angle in ((1, 0.0), (12, 0.2), (24, 0.0)):
+        pose.rotation_euler = (0, angle, 0)
+        pose.keyframe_insert("rotation_euler", frame=frame)
+    rig.animation_data.action.name = "LabSway"
+    scene = bpy.context.scene
+    scene.frame_start, scene.frame_end = 1, 24
+    scene.frame_set(1)
+    path = os.path.join(out_dir, "lab-asset.blend")
+    bpy.ops.wm.save_as_mainfile(filepath=path, relative_remap=True)
+    return path
+
+
+def _main(argv):
+    import argparse
+    parser = argparse.ArgumentParser(prog="blender_lab_bpy")
+    commands = parser.add_subparsers(dest="command", required=True)
+    commands.add_parser("probe").add_argument("--out", required=True)
+    manifest_parser = commands.add_parser("manifest")
+    manifest_parser.add_argument("--blend", required=True)
+    manifest_parser.add_argument("--out", required=True)
+    fixture_parser = commands.add_parser("make-fixture")
+    fixture_parser.add_argument("--out-dir", required=True)
+    fixture_parser.add_argument("--out", required=True)
+    args = parser.parse_args(argv)
+    if args.command == "probe": result = probe()
+    elif args.command == "manifest":
+        import os
+        open_blend(args.blend); result = manifest(os.path.basename(args.blend))
+    else: result = {"kind": "fixture", "blend": make_fixture(args.out_dir)}
+    with open(args.out, "w", encoding="utf-8", newline="\n") as stream:
+        json.dump(result, stream, indent=2, sort_keys=True)
+        stream.write("\n")
+
+
+if __name__ == "__main__":
+    _main(sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else [])
