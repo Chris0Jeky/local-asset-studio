@@ -133,15 +133,17 @@
       if (!value) return;
       $('previewSource').disabled = !value.enabled;
       $('discover').disabled = !value.enabled;
-      $('configuration').textContent = value.enabled ? 'Archive access enabled. Discovery and all saves are explicit.'
-        : 'Archive access is disabled. Set spoken_briefs.archive_root to an absolute local directory in config/local.json, then restart Studio.';
-      $('sourceStatus').textContent = value.enabled ? 'No source has been read. Choose Preview narration when ready.' : 'Source preview is disabled until an archive root is configured.';
+      // No archive root: one setup card replaces the dead panels.
+      $('configuration').textContent = value.enabled ? 'Archive access enabled.' : '';
+      $('setupCard').hidden = value.enabled; $('sourcePanel').hidden = $('archiveLayout').hidden = !value.enabled;
+      $('sourceStatus').textContent = 'No source has been read. Choose Preview narration when ready.';
       return value;
     } catch (error) {
       clearSource(error.message); $('discover').disabled = true; $('configuration').textContent = error.message;
       status('Archive access unavailable. Other Studio tools are unchanged.'); throw error;
     }
   }
+  $('copySetup').onclick = async () => { try { await navigator.clipboard.writeText($('setupSnippet').textContent); $('copyStatus').textContent = 'Copied.'; } catch (_) { $('copyStatus').textContent = 'Copy failed. Select the text instead.'; } };
   $('refreshSource').onclick = () => { clearNarration(); refreshSource().catch(() => {}); };
   let playerBinding=null, pendingSeek=null, loop=null, chosenReview=null, discoveryTicket=0, discardDraft=false, reviewBaseline=null;
   const status = text => { $('status').textContent=text; };
@@ -350,7 +352,6 @@
   };
   refreshSource().then(value=>{
     if (!value) return;
-    status('No archive has been opened. Narration starts only with the explicit Start action.');
     const address=new URL(location.href), key=address.searchParams.get('narration'), root=address.searchParams.get('sourceRoot');
     if(key && root===value.source_root_id) followNarration(key,root);
   }).catch(()=>{});
