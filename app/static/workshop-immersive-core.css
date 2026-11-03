@@ -287,7 +287,7 @@ body.workshop-active[data-workshop-skin="retro-anime"] .eyebrow {color:#f1a4d5}
      Generate wraps under the readiness line instead of squeezing it. */
   .workshop:not([data-workshop-layout="immersive"]) .wk-run-dock {left:var(--wk-dock-left,calc(var(--sidebar,224px) + 28px));right:var(--wk-dock-right,28px);max-width:none;margin:0;display:flex;flex-wrap:wrap;align-items:center;column-gap:20px}
   .workshop:not([data-workshop-layout="immersive"]) .wk-run-dock>.wk-dock-info {flex:1 1 300px}
-  .workshop:not([data-workshop-layout="immersive"]) .wk-dock-info>strong {max-height:4.7em}
+  .workshop:not([data-workshop-layout="immersive"]) .wk-dock-info>strong {max-height:none;overflow:visible}
   .workshop:not([data-workshop-layout="immersive"]) .wk-run-dock>.actions {flex:0 0 auto;margin-left:auto}
   .workshop:not([data-workshop-layout="immersive"]) .wk-run-dock>:not(.wk-dock-info,.actions) {flex:1 1 100%}
   .workshop:not([data-workshop-layout="immersive"]) .wk-results {grid-area:results!important;max-width:none!important;position:sticky;top:84px;align-self:start}
