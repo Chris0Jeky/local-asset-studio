@@ -425,7 +425,7 @@
     guidanceWhy.append(el('summary', '', 'Why this?'));
     const guidanceReason = el('p', '', 'Based on existing UI observations. No job is submitted.');
     guidanceWhy.append(guidanceReason);
-    const guidanceSecondary = el('p', 'wk-guidance-secondary', 'Presentation never changes execution authority.');
+    const guidanceSecondary = el('p', 'wk-guidance-secondary', '');
     guidance.append(guidanceTitle, guidanceDescription, guidanceAction, guidanceWhy, guidanceSecondary);
     editor.after(guidance);
 
@@ -555,7 +555,7 @@
       // A demoted readiness intent still carries the specific blocker in .description; dropping it left the
       // rail with a generic "Resolve the next blocker" while the real message sat only in the dock (#610 item 4).
       const secondary = currentView.secondaryActions.map(action => action.title + ' · ' + action.description).join(' — ');
-      text(guidanceSecondary, secondary || 'Presentation never changes execution authority.');
+      text(guidanceSecondary, secondary); guidanceSecondary.hidden = !secondary;
       // Read-only owner notification for optional islands (#907): a frozen view plus the recipe identity, once per stamp.
       const recipe = bridge.recipe?.();
       presentationSnapshot = Object.freeze({view:currentView, recipe:recipe ? Object.freeze({id:String(recipe.id || ''), name:String(recipe.name || recipe.id || '')}) : null});

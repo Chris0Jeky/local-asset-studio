@@ -171,6 +171,8 @@
   after('renderJobs',()=>{for(const card of q('#gallery').querySelectorAll('.imageCard')){const actions=[...card.querySelectorAll('.reference-output')];if(!actions.length)continue;const first=actions.shift();first.textContent='Continue with this →';first.classList.add('primary');actions.forEach(button=>button.remove());}});
   function syncCreate(){if(!selected)return;q('#uxRecipeLabel').textContent=selected.name;referenceHeading.hidden=false;q('#uxSourceNote').hidden=false;q('#uxFindReferenceRecipes').hidden=takesSource();syncReady();}
   let readinessMarkup='',readinessChecking=false;
+  // The environment's display name as Models & setup lists it, never its raw id.
+  const envName=id=>q('#backendChoice option[value="'+id+'"]')?.textContent.replace(/ · online$/,'')||id;
   const readinessLabels={recipes:'Choose a recipe',models:'Open Models & setup',dependencies:'Show required files',references:'Show the empty slot',parameters:'Review motion settings',continuation:'Show the source panel','source-back':'Put the source back',wording:'Write the description',fills:'Fill in the wording',second:'Decide about this picture',source:'Choose your picture','pose-position':'Review joint coordinates','pose-size':'Show the pose editor'};
   // A continuation blocker names a control; the button beside it performs or shows that repair, nothing more.
   const continuationActions={source:'source-back',inputs:'references',board:'references',wording:'wording'};
@@ -203,7 +205,8 @@
     syncContinuation();syncFills();syncCombinePair();syncPoseEditor();
     const {items,required}=readinessItems();
     q('#generate').disabled=items.length>0;
-    const markup=items.map(item=>'<div class="ux-blocker" data-readiness-code="'+item.code+'"><p>'+escape(item.message)+'</p>'+(readinessLabels[item.action]?'<button type="button" data-ux-resolve="'+item.action+'">'+readinessLabels[item.action]+'</button>':'')+'</div>').join('');
+    const label=action=>action==='switch'?'Switch to '+envName(selected?.backend_id||'primary'):readinessLabels[action];
+    const markup=items.map(item=>'<div class="ux-blocker" data-readiness-code="'+item.code+'"><p>'+escape(item.message)+'</p>'+(label(item.action)?'<button type="button" data-ux-resolve="'+item.action+'">'+escape(label(item.action))+'</button>':'')+'</div>').join('');
     // Polling identical evidence must not replace a focused action or announce the same status again.
     if(markup!==readinessMarkup){readinessMarkup=markup;q('#uxBlockers').innerHTML=markup;}
     const summary=items.length?items.length+' condition'+(items.length===1?' needs':'s need')+' attention. Your draft remains editable.':'No blockers reported by the current checks. Generate still validates the request on the server.';
@@ -241,6 +244,15 @@
     if(action==='source')target=q(selected?.last_reference?'#lastReference':'#reference');
     if(action==='second')target=q('#uxSecondPicture');
     if(action==='source-back'){void reattachSource();return;}
+    // The wrong-environment blocker's repair is the explicit switch itself, the same Switch button Models & setup has; it never generates.
+    if(action==='switch'){const to=selected?.backend_id||'primary',name=envName(to),choice=q('#backendChoice'),go=q('#switchBackend'),say=text=>{q('#uxReadinessActionStatus').textContent=text;message(text);};
+      if(!choice||!go||go.disabled)return say('A local operation is running. Try the switch again when it finishes.');
+      choice.value=to;if(choice.value!==to)return say(name+' is not installed. Models & setup lists what it needs.');
+      go.click();say('Switching to '+name+'… About a minute. Nothing is generated; Generate comes back when it is ready.');
+      // A refused switch (for example while Studio work runs) keeps the old environment; its reason is in Models & setup's status, so bring it here.
+      const watch=setInterval(()=>{if(typeof backendSwitching!=='undefined'&&backendSwitching)return;clearInterval(watch);
+        say(backendActive===to?name+' is running. Press Generate when ready.':'The switch did not happen: '+(q('#backendStatus')?.textContent.trim()||'see Models & setup.'));},1000);
+      return;}
     if(action==='continuation')target=selected?.positive&&!q('#positive').value.trim()?q('#positive'):q('#uxContinuation');
     if(!focusReadinessTarget(target))q('#uxReadinessActionStatus').textContent='That control is not available in the current view. Recheck the recipe before continuing.';
     else q('#uxReadinessActionStatus').textContent='Shown for review. No settings, attachments or execution permissions were changed.';

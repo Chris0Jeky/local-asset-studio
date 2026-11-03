@@ -21,7 +21,14 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
     const cases=[{}, {online:false}, {online:null}, {schemaAvailable:false}, {workerAlive:false}, {referencesReady:false}, {missing:['file']}, {backend:'other'}, {switching:true}, {busy:true}, {preset:null}, {preset:{runtime_block:'manual runtime gate'}}];
     for(const item of cases){const input={preset:{id:'A'},online:true,schemaAvailable:true,...item};assert.equal(typeof U.readinessItems,'function');const items=U.readinessItems(input);assert.deepEqual(U.readiness(input),{ready:items.length===0,blockers:items.map(i=>i.message)});assert.ok(items.every(i=>/^[a-z-]+$/.test(i.code)));}
   });
-  await test('actions offer navigation, never install/switch/generate dispatch',()=>{
+  await test('a wrong-environment recipe is one blocker whose repair is the explicit switch (MOSS, 2 Nov 2026)',()=>{
+    const preset={id:'moss-t2i',backend_id:'moss',runtime_block:'Switch to MOSS-Image · isolated to use this recipe.'};
+    assert.deepEqual(U.readinessItems({preset,online:true,schemaAvailable:true,backend:'primary'}),[{code:'backend',message:preset.runtime_block,action:'switch'}]);
+    assert.deepEqual(U.readinessItems({preset:{id:'moss-t2i',backend_id:'moss'},online:true,schemaAvailable:true,backend:'primary'}),[{code:'backend',message:'Switch to the moss environment to use this recipe.',action:'switch'}]);
+    assert.deepEqual(U.readinessItems({preset:{id:'A',runtime_block:'manual runtime gate'},online:true,schemaAvailable:true}),[{code:'runtime',message:'manual runtime gate',action:'dependencies'}]);
+  });
+  // The one non-navigation action is the labelled environment switch, which never generates; nothing installs or generates.
+  await test('actions offer navigation, never install/generate dispatch',()=>{
     assert.equal(typeof U.readinessItems,'function');const items=U.readinessItems({preset:null,online:null,schemaAvailable:false,workerAlive:false,referencesReady:false,missing:['x'],switching:true,busy:true});
     const allow=new Set(['recipes','models','dependencies','references',null]);assert.ok(items.every(i=>allow.has(i.action??null)));assert.equal(items.find(i=>i.code==='busy').action,null);assert.equal(items.find(i=>i.code==='references').action,'references');
   });

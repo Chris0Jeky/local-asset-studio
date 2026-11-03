@@ -75,8 +75,10 @@
     if(online==null)add('health','ComfyUI readiness is not yet confirmed. Check Models & setup if the health response stays unavailable.','models');
     else if(!online)add('offline','ComfyUI is offline. Start it with the Studio launcher.','models');
     else if(!schemaAvailable)add('schema','Node readiness is not available yet.','dependencies');
-    if(preset?.runtime_block)add('runtime',preset.runtime_block,'dependencies');
-    if(backend&&preset&&(preset.backend_id||'primary')!==backend)add('backend','Switch explicitly to '+(preset.backend_id||'primary')+' in Models & setup.','models');
+    // The server words a wrong-environment recipe "Switch to <name> to use this recipe."; that and the live mismatch are one cause, so one blocker whose repair is the switch.
+    const envBlock=/^Switch to .+ to use this recipe\.$/.test(preset?.runtime_block||'');
+    if(preset?.runtime_block)add(envBlock?'backend':'runtime',preset.runtime_block,envBlock?'switch':'dependencies');
+    if(!envBlock&&backend&&preset&&(preset.backend_id||'primary')!==backend)add('backend','Switch to the '+(preset.backend_id||'primary')+' environment to use this recipe.','switch');
     if(missing.length)add('models','Missing requirements: '+missing.join(', '),'dependencies');
     if(!referencesReady)add('references','Attach every required reference before starting.','references');
     return items;
