@@ -126,6 +126,13 @@ class Production:
             project=self._get(identifier);project['state'].update(fields)
             self._state(identifier,project['state']);return project
 
+    def _environment_block(self, plan, verb):
+        """(refusal, environment id) when a comparison was prepared in a model environment other than the running one."""
+        url=(plan.get('bundle') or {}).get('comfy_url') if plan['kind']=='comparison' else None
+        if url is None or url==self.studio.comfy_url:return None
+        profile=next((p for p in getattr(getattr(self.studio,'backends',None),'profiles',{}).values() if p['url']==url),None)
+        return ('Switch to '+profile['name'] if profile else 'Switch to this experiment\'s environment')+' before '+verb+' it', profile['id'] if profile else None
+
     def public(self, project, full=False):
         plan=project['plan'];state=copy.deepcopy(project['state'])
         if plan['kind']=='comparison':
@@ -149,6 +156,9 @@ class Production:
                       plan_sha256=plan['sha256'],budget=budget,stages=stages,state=state,
                        recipe=plan.get('recipe'),axis=plan.get('axis'),values=plan.get('values'),
                        variants=plan.get('variants'),knowledge_sha256=plan.get('knowledge_sha256'),combine=plan.get('combine'),export_kind=plan.get('export_kind'))
+        # The Start/Resume refusal, shown beside the buttons with its repair (a Switch button in production.js) instead of after the press.
+        block=self._environment_block(plan,'starting' if state['status']=='planned' else 'resuming') if state['status'] in ('planned','interrupted','uncertain','stopped') else None
+        if block:result.update(runtime_block=block[0],backend_id=block[1])
         result['can_reconcile_tracking']=state['status'] in ('interrupted','uncertain','stopped') and bool(self._tracking_terminal_records(project))
         mixed=self._mixed_batch_jobs(project)
         ownership_error=self._mixed_batch_ownership_error(project,mixed)
@@ -643,8 +653,8 @@ class Production:
         with self.studio.lock:
             if getattr(getattr(self.studio, 'backends', None), 'busy', False): raise ValueError('Wait for the backend switch to finish')
             project = self._get(identifier)
-            if project['plan']['kind'] == 'comparison' and project['plan']['bundle']['comfy_url'] != self.studio.comfy_url:
-                raise ValueError('Switch to this experiment\'s backend before starting it')
+            block=self._environment_block(project['plan'], 'starting')
+            if block:raise ValueError(block[0])
             return self._start(identifier)
 
     def _start(self, identifier):
@@ -702,8 +712,8 @@ class Production:
             self.studio.require_worker()
             if getattr(getattr(self.studio, 'backends', None), 'busy', False): raise ValueError('Wait for the backend switch to finish')
             project=self._get(identifier)
-            if project['plan']['kind'] == 'comparison' and project['plan']['bundle']['comfy_url'] != self.studio.comfy_url:
-                raise ValueError('Switch to this experiment\'s backend before resuming it')
+            block=self._environment_block(project['plan'], 'resuming')
+            if block:raise ValueError(block[0])
             if project['state']['status'] not in ('interrupted','uncertain','stopped'):raise ValueError('Only interrupted experiments can resume')
             stop_tokens=[]
             for attempt in project['state'].get('attempts',{}).values():
