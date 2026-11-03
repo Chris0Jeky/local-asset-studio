@@ -64,12 +64,18 @@ class PrivacyLayout(unittest.TestCase):
         self.assertLessEqual(bar['y'] + bar['height'], header['y'] + header['height'])
 
     def test_history_filter_only_on_listing_views_without_changing_scope(self):
-        self.page.evaluate("StudioPrivacy.setScope('all')")
-        saved = self.page.evaluate("sessionStorage.getItem('studio.privacy.session.v1')")
-        for name in ('assets', 'make', 'production', 'models', 'create', 'learn', 'briefs', 'home'):
-            with self.subTest(view=name):
+        views = ('assets', 'make', 'production', 'models', 'create', 'learn', 'briefs', 'home')
+        for name in views:
+            with self.subTest(view=name, scope='regular'):
                 self.view(name)
                 self.assertEqual(self.page.locator('.privacy-views').is_visible(), name in ('assets', 'production'))
+        # A scope other than the session's own stays visible everywhere, so a hidden filter never hides a private list or job.
+        self.page.evaluate("StudioPrivacy.setScope('all')")
+        saved = self.page.evaluate("sessionStorage.getItem('studio.privacy.session.v1')")
+        for name in views:
+            with self.subTest(view=name, scope='all'):
+                self.view(name)
+                self.assertTrue(self.page.locator('.privacy-views').is_visible())
                 if name in ('assets', 'production'):
                     self.assertEqual(self.page.locator('#' + name + 'View .privacy-views').count(), 1)
                     self.assertEqual(self.page.locator('#' + name + 'View .view-heading + .privacy-views').count(), 1)

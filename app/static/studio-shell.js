@@ -56,7 +56,7 @@
     if(document.body.classList.contains('studio-nav-open')&&!sidebar.contains(event.target)&&event.target!==$('#studioNavToggle'))closeNav();
   });
   function setView(id){
-    const privacyViews=$('.privacy-views');if(privacyViews){privacyViews.hidden=!['assets','production'].includes(id);if(!privacyViews.hidden)$('#'+id+'View .view-heading')?.after(privacyViews);}
+    const privacyViews=$('.privacy-views');if(privacyViews){const listing=['assets','production'].includes(id);privacyViews.dataset.listing=String(listing);if(listing)$('#'+id+'View .view-heading')?.after(privacyViews);else $('.privacy-bar details')?.before(privacyViews);window.StudioPrivacy?.render?.();}
     // The workbench inserts Overview after shell setup; keep diagnostics outside hidden views.
     if(workerNotice&&main.firstElementChild!==workerNotice)main.prepend(workerNotice);
     const quick=$('#studioQuickCreate');quick.classList.toggle('active',id==='make');if(id==='make')quick.setAttribute('aria-current','page');else quick.removeAttribute('aria-current');

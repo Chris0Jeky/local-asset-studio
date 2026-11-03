@@ -24,6 +24,9 @@
       session.checked = creation() === 'private';
       session.parentElement.title = 'New creations are ' + creation();
     }
+    // Off the listing views the filter hides only while it shows the session's own scope; a changed one stays visible (PR #2003 review).
+    const group = document.querySelector('.privacy-views');
+    if (group) group.hidden = group.dataset.listing !== 'true' && view === (sessionPrivate ? 'private' : 'regular');
     document.querySelectorAll('[data-privacy-scope]').forEach(button => {
       button.setAttribute('aria-pressed', String(button.dataset.privacyScope === view));
       button.classList.toggle('active', button.dataset.privacyScope === view);
@@ -108,7 +111,7 @@
     url.searchParams.set('privacy','private');
     return url.pathname + url.search + url.hash;
   }
-  window.StudioPrivacy = {creation, scope:()=>view, capture, submitted, setSession, setCreation, setScope,
+  window.StudioPrivacy = {creation, scope:()=>view, render, capture, submitted, setSession, setCreation, setScope,
     storageKey, storage, allows, headers, fetch:scopedFetch, mediaUrl};
   function wire() {
     document.querySelector('#privateSession')?.addEventListener('change', event => setSession(event.target.checked));
