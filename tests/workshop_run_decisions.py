@@ -64,9 +64,10 @@ class RunDecisions(entry.EntryPoints):
         dock = self.page.locator('.wk-run-dock')
         self.assertEqual(dock.get_attribute('role'), 'group')
         self.assertEqual(dock.get_attribute('aria-label'), 'Generation controls')
-        tools = self.page.locator('.wk-run-tools')
-        self.assertEqual(tools.get_attribute('role'), 'group')
-        self.assertEqual(tools.get_attribute('aria-label'), 'Plan and vary this run')
+        # QA 3 Nov (create-15): the dock is Generate, Variations, the estimate and the reason; New seed and Plan comparison live in Settings.
+        self.assertEqual(self.page.locator('.wk-run-tools').count(), 0)
+        for identity in ('randomSeed', 'planComparison'):
+            self.assertTrue(self.page.locator('#'+identity).evaluate('(n)=>!n.closest(".wk-run-dock") && !!n.closest("#workshopSettings")'), identity)
         self.page.set_viewport_size({'width': 760, 'height': 500})
         self.page.evaluate("document.querySelector('#status').textContent='A run message that stays available while typing.'")
         self.page.focus('#positive')
@@ -115,7 +116,7 @@ class RunDecisions(entry.EntryPoints):
                 self.assertEqual(self.page.locator('#workshopSetupReview').count(), 0)
                 review = self.page.locator('#workshopReview')
                 self.assertEqual(review.inner_text(), 'What’s missing?')
-                self.assertEqual(self.page.locator('#workshopChecks > summary').inner_text(), 'Readiness & run details · needs attention')
+                self.assertEqual(self.page.locator('#workshopChecks > summary').text_content(), 'Readiness & run details · needs attention')
                 review.click()
                 self.assertTrue(self.page.locator('#workshopChecks').evaluate('n=>n.open'))
                 if source == 'blocker':
@@ -127,14 +128,14 @@ class RunDecisions(entry.EntryPoints):
                 self.assertTrue(review.is_hidden())
                 self.assertEqual(self.page.locator('#workshopReadiness').get_attribute('tabindex'), '-1')
                 self.assertTrue(self.page.locator('#workshopReadiness').evaluate('n=>n===document.activeElement'))
-                self.assertEqual(self.page.locator('#workshopChecks > summary').inner_text(), 'Readiness & run details')
+                self.assertEqual(self.page.locator('#workshopChecks > summary').text_content(), 'Readiness & run details')
                 self.assertEqual(self.page.evaluate('submitted'), 0)
 
     def test_phone_dock_is_compact_with_keyboard_reachable_tools(self):
         self.load_workshop()
         self.page.evaluate("document.querySelector('#estimateValue').textContent='~42s'")
         self.make_idle()
-        tools = ('batch', 'randomSeed', 'planComparison')
+        tools = ('batch',)
         desktop = self.page.locator('.wk-run-dock').bounding_box()
         shots = entry.ROOT / '.runtime/phone-dock-1495'; shots.mkdir(parents=True, exist_ok=True)
         for motion in ('no-preference', 'reduce'):
@@ -172,8 +173,6 @@ class RunDecisions(entry.EntryPoints):
                         self.assertTrue(control.evaluate('(n)=>n===document.activeElement'), identity)
                         self.assertTrue(control.evaluate('(n)=>n.labels?.length>0 || n.textContent.trim().length>0'), identity)
                     self.page.select_option('#batch', '2')
-                    self.page.click('#randomSeed'); self.page.click('#planComparison')
-                    self.assertEqual(self.page.locator('[data-key=seed]').input_value(), '43')
                     if layout == 'focus' and motion == 'no-preference': evidence_screenshot(self.page, path=str(shots / 'open.png'))
                     for scroll in (0, 10000):
                         self.page.evaluate('(y)=>scrollTo(0,y)', scroll)
@@ -182,7 +181,7 @@ class RunDecisions(entry.EntryPoints):
                         self.assertLessEqual(box['y']+box['height'], 844)
                     # Escape inside the open panel closes it and returns focus to its summary.
                     self.page.evaluate("window.escBubbled=0;document.addEventListener('keydown',e=>{if(e.key==='Escape')escBubbled++},{once:true})")
-                    self.page.locator('#randomSeed').focus(); self.page.keyboard.press('Escape')
+                    self.page.locator('#batch').focus(); self.page.keyboard.press('Escape')
                     self.assertEqual(self.page.evaluate('escBubbled'), 0, 'Escape that closes Run tools stops there')
                     self.page.evaluate("document.dispatchEvent(new KeyboardEvent('keydown',{key:'x'}))")
                     self.assertFalse(self.page.locator('#workshopRunTools').evaluate('(n)=>n.open'))
@@ -196,10 +195,10 @@ class RunDecisions(entry.EntryPoints):
                 self.assertTrue(self.page.locator('#'+identity).is_visible(), identity)
                 self.assertTrue(self.page.locator('#'+identity).evaluate('(n)=>!n.closest("#workshopRunTools")'), identity)
             # Narrowing to a phone while a run tool has focus opens Run tools around it instead of stranding focus (Muse a11y-dock2).
-            self.page.locator('#randomSeed').focus()
+            self.page.locator('#batch').focus()
             self.page.set_viewport_size({'width': 390, 'height': 844})
             self.page.wait_for_function('!document.querySelector("#workshopRunTools").hidden')
-            self.assertTrue(self.page.locator('#randomSeed').evaluate('(n)=>n===document.activeElement'), 'focus stays on the moved run tool')
+            self.assertTrue(self.page.locator('#batch').evaluate('(n)=>n===document.activeElement'), 'focus stays on the moved run tool')
             self.assertTrue(self.page.locator('#workshopRunTools').evaluate('(n)=>n.open'))
             self.page.keyboard.press('Escape'); self.page.evaluate('document.activeElement?.blur()')
             self.page.set_viewport_size({'width': 1440, 'height': 900})
@@ -309,7 +308,10 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
                 for identity in ('generate', 'batch', 'randomSeed', 'planComparison'):
                     self.assertEqual(self.page.locator('#'+identity).count(), 1)
                     self.assertTrue(self.page.locator('#'+identity).evaluate('(n)=>n===runOriginals[n.id]'))
-                    self.assertTrue(self.page.locator('#'+identity).is_visible(), identity)
+                # New seed sits beside the seed under Settings > Fine-tune; Plan comparison closes Settings (QA create-15).
+                for panel in ('#workshopSettings', '#workshopParameters'): self.page.locator(panel).evaluate('(n)=>n.open=true')
+                for identity in ('generate', 'batch', 'randomSeed', 'planComparison'): self.assertTrue(self.page.locator('#'+identity).is_visible(), identity)
+                self.assertTrue(self.page.locator('#randomSeed').evaluate('(n)=>n.closest("fieldset")?.contains(document.querySelector("[data-key=seed]"))'))
                 self.assertFalse(self.page.locator('#workshopChecks').evaluate('(n)=>n.open'))
                 self.page.click('#randomSeed')
                 self.assertEqual(self.page.locator('[data-key=seed]').input_value(), '43')
@@ -328,7 +330,7 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
             for layout in ('focus', 'studio', 'immersive'):
                 with self.subTest(width=width, height=height, layout=layout):
                     self.page.select_option('#workshopLayout', layout, force=True)
-                    for identity in ('generate', 'randomSeed', 'planComparison', 'workshopEta'):
+                    for identity in ('generate', 'workshopEta'):
                         self.assertTrue(self.page.locator('#'+identity).is_visible(), identity)
                         box = self.page.locator('#'+identity).bounding_box()
                         self.assertGreaterEqual(box['x'], 0, identity)
@@ -374,9 +376,6 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
                         if width <= 600 and not quiet: self.assertTrue(self.page.locator('#workshopReadiness').is_visible() and self.page.locator('#status').is_visible())
                         elif height <= 700: self.assertLess(result['dock'], before, 'a short dock compacts while typing')
                         self.page.evaluate("document.activeElement?.blur()")
-                        if width <= 600: self.page.locator('#workshopRunTools > summary').click()
-                        self.assertTrue(self.page.locator('#planComparison').is_visible())
-                        if width <= 600: self.page.locator('#workshopRunTools > summary').click()
         self.assertEqual(self.page.evaluate('submitted'), 0)
 
     def test_dock_padding_does_not_click_a_covered_page_control(self):
@@ -404,6 +403,8 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
         self.load_workshop()
         self.page.set_viewport_size({'width': 640, 'height': 360})
         self.page.select_option('#workshopLayout', 'focus', force=True)
+        # QA 3 Nov: New seed and Plan comparison left the dock, so a long estimate (hidden while typing) supplies the height the compact dock sheds.
+        self.page.evaluate("document.querySelector('#estimateValue').textContent='about 42 s, '.repeat(14);document.querySelector('#createView').__workshop.sync()")
         self.page.evaluate("document.activeElement?.blur()")
         full = self.page.evaluate("""()=>[...document.querySelectorAll('.wk-run-dock :is(button,select,input)')].filter(n=>n.offsetParent)
           .map(n=>{const r=n.getBoundingClientRect();return {top:r.top,left:r.left,width:r.width}})""")
@@ -440,6 +441,8 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
         self.load_workshop(touch=True)
         self.page.set_viewport_size({'width': 640, 'height': 360})
         self.page.select_option('#workshopLayout', 'focus', force=True)
+        # QA 3 Nov: New seed and Plan comparison left the dock, so a long estimate (hidden while typing) supplies the height the compact dock sheds.
+        self.page.evaluate("document.querySelector('#estimateValue').textContent='about 42 s, '.repeat(14);document.querySelector('#createView').__workshop.sync()")
         self.page.evaluate("document.activeElement?.blur()")
         full = self.page.evaluate("""()=>[...document.querySelectorAll('.wk-run-dock :is(button,select,input)')].filter(n=>n.offsetParent)
           .map(n=>{const r=n.getBoundingClientRect();return {top:r.top,left:r.left,width:r.width}})""")
@@ -473,9 +476,8 @@ document.getElementById('planComparison').onclick=()=>comparisonPlans++;
           '<div class="ux-blocker" data-readiness-code="references"><p>Attach every required reference before starting.</p><button type="button" data-ux-resolve="references">Show the empty slot</button></div>'+
           '<div class="ux-blocker" data-readiness-code="parameters"><p>Width must be a multiple of 8.</p><button type="button" data-ux-resolve="parameters">Review motion settings</button></div>'""")
         self.page.wait_for_function("document.querySelectorAll('#workshopBlockerList li').length===3")
-        dock = self.page.locator('#workshopReadiness').inner_text()
-        self.assertIn('Connect your local model environment', dock)
-        self.assertIn('+2 more', dock)
+        # One line counts them; the list under it carries each message once (QA create-3).
+        self.assertEqual(self.page.locator('#workshopReadiness').inner_text(), '3 things to fix before generating')
         self.assertFalse(self.page.locator('#workshopChecks').evaluate('(n)=>n.open'))
         for width, height in ((1440, 900), (390, 844)):
             with self.subTest(width=width):
