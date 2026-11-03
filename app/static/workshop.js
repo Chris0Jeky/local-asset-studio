@@ -312,10 +312,12 @@
     const draftBar = q('#uxDraftBar'), draftButtons = draftBar?.querySelector(':scope > div');
     let draftOptions;
     if (draftButtons) { draftOptions = disclosure('workshopDraftOptions', 'Draft options', [draftButtons]); draftBar.append(draftOptions); }
+    // One Settings disclosure under the prompt holds everything that is not the words, the picture or Generate (QA 3 Nov).
+    const settings = disclosure('workshopSettings', 'Settings', [draftBar]);
 
     const review = disclosure('workshopChecks', 'Readiness & run details', [runBox]);
     const reviewSummary = review.querySelector('summary');
-    editor.append(parameters, inspection, review);
+    editor.append(settings, parameters, inspection, review);
     // The storage notice stays outside the closed Appearance popover, so a choice that will not persist is always visible.
     setupRail.append(preferenceNotice);
     const dock = el('div', 'wk-run-dock'); dock.setAttribute('role','group'); dock.setAttribute('aria-label','Generation controls');
@@ -623,7 +625,8 @@
       text(eta, etaText); text(setupEta, etaText);
       text(reviewSummary, blocked ? 'Readiness & run details · needs attention' : 'Readiness & run details');
       const pending = ['uxRestoreDraft','uxKeepDraft'].some(id => q('#'+id) && !q('#'+id).hidden);
-      if (draftOptions && pending && !recoveryPending) draftOptions.open = true;
+      // A draft waiting to be restored is an event: open the panel that holds its buttons.
+      if (draftOptions && pending && !recoveryPending) { draftOptions.open = true; settings.open = true; }
       recoveryPending = pending;
       const outputs = q('#gallery')?.querySelectorAll('.imageCard').length || 0;
       text(results.querySelector('summary'), 'Recent runs'+(outputs ? ' · '+outputs+' output'+(outputs === 1 ? '' : 's') : ''));
