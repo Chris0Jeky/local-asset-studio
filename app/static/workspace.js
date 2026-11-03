@@ -83,7 +83,7 @@ const assetFormIds = {title:'assetTitle',tags:'assetTags',review:'assetReview',n
 let assetRecovery = assetJournalFor();
 let assetRetainedDetail = null, assetRecoveryError = '', assetRecoveryLoadError = '', assetRetainedSelection = null, assetDialogOpener = null;
 // Queue, grouping and reason chips are projections over the same saved review states; the server schema is unchanged.
-let assetGroupMode = 'none', assetSearchTimer = null, assetQueue = null, assetBulkReviewBusy = false,assetBulkRequest=null;
+let assetGroupMode = 'day', assetSearchTimer = null, assetQueue = null, assetBulkReviewBusy = false,assetBulkRequest=null;
 const assetGroupModes = ['recipe','day','run'], assetGroupStorageKey = 'studio.assets.group';
 // Source is a view preference like grouping: an asset with a run label (set by API callers, never by Create) is an agent run (#939).
 // Paged queries default to Mine independently of the rows already loaded.
@@ -682,6 +682,17 @@ function visibleAssets() {
   const sort=$('#assetSort').value;
   return list.sort((a,b)=>sort==='title'?a.title.localeCompare(b.title):sort==='oldest'?a.created_at-b.created_at:b.created_at-a.created_at);
 }
+// Local calendar words for a created_at: "Today", "Yesterday", else "31 Oct" (weekday for headers, year when not this year).
+function assetDayName(when, weekday=false, now=new Date()) {
+  const midnight=d=>new Date(d.getFullYear(),d.getMonth(),d.getDate()),ago=Math.round((midnight(now)-midnight(when))/864e5);
+  if(ago===0)return 'Today';if(ago===1)return 'Yesterday';
+  return (weekday?['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][when.getDay()]+' ':'')+when.getDate()+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][when.getMonth()]+(when.getFullYear()!==now.getFullYear()?' '+when.getFullYear():'');
+}
+function assetWhen(at) {
+  const sec=Number(at);if(!Number.isFinite(sec)||sec<=0)return '';
+  const when=new Date(sec*1000),name=assetDayName(when),pad=n=>String(n).padStart(2,'0');
+  return name==='Today'||name==='Yesterday'?name+' '+pad(when.getHours())+':'+pad(when.getMinutes()):name;
+}
 // Pure projection: the same assets and mode always give the same sections, in first-seen order.
 function assetGroupOf(asset, mode) {
   if(mode==='recipe')return {key:'recipe:'+(asset.preset_name||''),label:asset.preset_name||'No recipe recorded'};
@@ -691,7 +702,7 @@ function assetGroupOf(asset, mode) {
     if(!Number.isFinite(at))return {key:'day:',label:'No date recorded'};
     const when=new Date(at*1000),pad=n=>String(n).padStart(2,'0');
     const day=when.getFullYear()+'-'+pad(when.getMonth()+1)+'-'+pad(when.getDate());
-    return {key:'day:'+day,label:day};
+    return {key:'day:'+day,label:assetDayName(when,true)};
   }
   return {key:'',label:''};
 }
@@ -776,7 +787,7 @@ function assetPreview(asset, detail=false) {
   if(asset.media_type==='audio')return detail?'<audio controls aria-label="Play '+alt+'" src="'+url+'"></audio>':'<span class="asset-type-placeholder"><span aria-hidden="true">♫</span><small>Audio</small></span>';
   return detail?'<model-viewer camera-controls touch-action="pan-y" environment-image="neutral" src="'+url+'" alt="'+alt+'"></model-viewer>':'<span class="asset-type-placeholder"><span aria-hidden="true">◇</span><small>3D model</small></span>';
 }
-function assetCardHTML(a) {const display=assetCardTitle(a);return '<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'" data-asset-card="'+esc(a.id)+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(display)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(display)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(display)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(display)+'</button>'+(assetSubtitle(a)?'<small class="asset-card-prompt" title="'+esc(assetSubtitle(a))+'">'+esc(assetSubtitle(a))+'</small>':'')+'<div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(assetReviewLabels[a.review]||a.review)+'</span></div><div class="asset-tags">'+(a.archived_at!=null?'<span>Archived</span>':'')+(assetIsAgentRun(a)?'<span class="asset-run-label" title="Agent run label">'+esc(a.run_label)+'</span>':'')+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>';}
+function assetCardHTML(a) {const display=assetCardTitle(a);return '<article class="asset-card '+(assetSelection.has(a.id)?'is-selected':'')+'" data-asset-card="'+esc(a.id)+'"><div class="asset-card-preview"><button class="asset-open" data-asset-open="'+a.id+'" aria-label="Open '+esc(display)+'">'+assetPreview(a)+'</button><label class="asset-check"><input type="checkbox" data-asset-check="'+a.id+'" '+(assetSelection.has(a.id)?'checked':'')+' aria-label="Select '+esc(display)+'"></label><button class="asset-star '+(a.favorite?'starred':'')+'" data-asset-favorite="'+a.id+'" aria-label="'+(a.favorite?'Unfavorite':'Favorite')+' '+esc(display)+'">'+(a.favorite?'★':'☆')+'</button><span class="asset-kind">'+esc(a.media_type)+'</span></div><button class="asset-card-title" data-asset-open="'+a.id+'">'+esc(display)+'</button>'+(assetSubtitle(a)?'<small class="asset-card-prompt" title="'+esc(assetSubtitle(a))+'">'+esc(assetSubtitle(a))+'</small>':'')+'<div class="asset-card-meta"><span>'+esc(a.preset_name)+'</span><span class="review-'+a.review+'">'+esc(assetReviewLabels[a.review]||a.review)+'</span>'+(assetWhen(a.created_at)?'<span class="asset-card-when" title="'+esc(new Date(a.created_at*1000).toLocaleString())+'">'+esc(assetWhen(a.created_at))+'</span>':'')+'</div><div class="asset-tags">'+(a.archived_at!=null?'<span>Archived</span>':'')+(assetIsAgentRun(a)?'<span class="asset-run-label" title="Agent run label">'+esc(a.run_label)+'</span>':'')+a.tags.slice(0,4).map(t=>'<span>'+esc(t)+'</span>').join('')+'</div></article>';}
 function renderAssets() {
   renderAssetNamedViews();
   observeAssetWorkspaceIdentity();
@@ -1605,7 +1616,7 @@ function loadAssetRecoveryJournal(){
 }
 loadAssetRecoveryJournal();
 // Grouping is a local view preference only; losing it never loses an asset or a review.
-try{const stored=assetPreferenceStorage().getItem(assetGroupStorageKey);if(assetGroupModes.includes(stored)){assetGroupMode=stored;$('#assetGroup').value=stored;}}catch(error){}
+try{const stored=assetPreferenceStorage().getItem(assetGroupStorageKey);if(stored==='none'||assetGroupModes.includes(stored)){assetGroupMode=stored;$('#assetGroup').value=stored;}}catch(error){}
 try{const stored=assetPreferenceStorage().getItem(assetSourceStorageKey);if(assetSourceModes.includes(stored))assetSourceMode=stored;}catch(error){}
 restoreAssetView();
 renderAssetReasons();renderLibraryRecovery();

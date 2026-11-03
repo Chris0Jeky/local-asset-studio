@@ -88,6 +88,18 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
     assert.deepEqual(s.run("assetGroupOf({},'day').label"),'No date recorded');
     assert.deepEqual(s.run("assetGroupOf({job_id:''},'run').label"),'No run recorded');
   });
+  await check('Cards carry a short local date and the Library opens grouped by day, newest first',()=>{
+    const s=setup({autoOpen:false}),at=d=>Math.floor(d.getTime()/1000),noon=new Date();noon.setHours(12,0,0,0);
+    const yesterday=new Date(noon);yesterday.setDate(yesterday.getDate()-1);
+    assert.equal(s.run('assetGroupMode'),'day');
+    assert.equal(s.run(`assetWhen(${at(noon)})`),'Today 12:00');
+    assert.equal(s.run(`assetWhen(${at(yesterday)})`),'Yesterday 12:00');
+    assert.match(s.run(`assetWhen(${at(new Date(2020,9,31,9,15))})`),/^31 Oct 2020$/);
+    assert.equal(s.run('assetWhen(0)'),'');
+    assert.equal(s.run(`assetGroupOf({created_at:${at(noon)}},'day').label`),'Today');
+    assert.equal(s.run(`assetGroupOf({created_at:${at(yesterday)}},'day').label`),'Yesterday');
+    assert.match(s.run(`assetCardHTML({id:'a',title:'t',tags:[],review:'unreviewed',media_type:'image',preset_name:'R',created_at:${at(yesterday)}})`),/<span class="asset-card-when"[^>]*>Yesterday 12:00<\/span>/);
+  });
   await check('A queue decision uses the ordinary edit save and then advances',async()=>{
     const s=library();
     assert.match(s.el('#reviewNext').textContent,/2 unreviewed/);
