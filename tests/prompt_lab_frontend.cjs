@@ -68,7 +68,7 @@ async function startup(ok) {
     assert.equal(element('profile').children.length, PROFILES.length, 'Successful response populates target profiles');
     assert.equal(element('profile').children[0].value, 'sdxl-prose-v1');
     assert.match(element('profile-summary').textContent, /reference images/, 'The chosen profile explains itself before anything is typed');
-    assert.equal(element('status').textContent, 'No generation submitted.');
+    assert.equal(element('status').textContent, '');
     assert.match(element('state').textContent, /Built/);
     assert.match(element('fields').textContent, /observatory keeper/);
     assert.match(element('identity').textContent, /bbbbbbbbbbbb/, 'The brief fingerprint is shown in readable form');
@@ -282,7 +282,7 @@ async function corruptDraftIsIgnored() {
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(first.element('brief').value, '', 'A corrupt stored value is ignored');
   assert.equal(storage.getItem('studio.promptLab.draft'), null, 'A corrupt value is cleared');
-  assert.match(first.element('status').textContent, /No generation submitted/);
+  assert.equal(first.element('status').textContent, '');
   storage.setItem('studio.promptLab.draft', JSON.stringify({version: 999, intent: {brief: 'x', task: 'image'}}));
   const second = harness({storage, compile: compiled()});
   await new Promise(resolve => setImmediate(resolve));

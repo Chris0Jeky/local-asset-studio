@@ -28,6 +28,13 @@
     el('ra-new').disabled=busy||!settled||!!held;
     el('ra-recover').disabled=busy||!!handle||!el('ra-recent').value;
     el('ra-hold').hidden=!held;
+    // No helper and no saved operation: one setup line instead of five dead buttons. Every other disabled button says why in its title.
+    el('ra-controls').hidden=!!caps&&!caps.enabled&&!handle;el('ra-operation').hidden=!handle;
+    const why=(id,reason)=>{const n=el(id);n.title=n.disabled?reason:'';};
+    why('ra-start',!files.length?'Choose one to four pictures first.':handle?'An analysis is already saved. Start a new one first.':storageError?'Recovery storage is unavailable.':caps?.busy?'Another analysis still holds the helper.':'Working…');
+    why('ra-check','No saved analysis to check yet.');why('ra-use','Needs a finished analysis.');why('ra-cancel','Only a queued analysis can be cancelled.');
+    why('ra-new',held?'Release the resource hold first.':'Finish or cancel the current analysis first.');why('ra-retire','Only for a saved ID with no visible operation.');
+    why('ra-release','Needs a settled analysis that holds resources.');why('ra-recover','Choose a recent operation first.');
   }
   async function request(route,body){
     const controller=typeof AbortController==='function'?new AbortController():null;
@@ -57,7 +64,7 @@
     try{
       const value=await request('capabilities');
       if(value?.format!=='studio.reference-jobs/v1'||typeof value.enabled!=='boolean'||typeof value.workspace_id!=='string')throw Error('Invalid analysis capabilities.');
-      caps=value;el('ra-config').textContent=(value.model?value.model+' — ':'')+value.message;
+      caps=value;const setup=!value.enabled&&/^Configure an installed/.test(value.message);el('ra-setup').hidden=!setup;el('ra-config').textContent=setup?'Needs a local reference helper.':(value.model?value.model+' — ':'')+value.message;
       el('ra-recent').replaceChildren(node('option','Choose a recent operation'));el('ra-recent').children[0].value='';
       for(const row of value.recent||[]){const option=node('option',row.status+' · '+row.request_id);option.value=row.request_id;el('ra-recent').append(option);}
       if(handle&&handle.workspace_id!==value.workspace_id)say('The saved operation belongs to another Workspace. Return to that Workspace to inspect it; nothing was resubmitted.');
@@ -135,7 +142,7 @@
   window.addEventListener('beforeunload',()=>clearTimeout(timer));
   try{
     const raw=sessionStorage.getItem(key);
-    if(raw!==null){if(raw.length>1024)throw Error('Recovery handle too large');handle=JSON.parse(raw);if(!validHandle(handle))throw Error('Invalid saved recovery handle');el('ra-identity').textContent=handle.request_id;}
+    if(raw!==null){if(raw.length>1024)throw Error('Recovery handle too large');handle=JSON.parse(raw);if(!validHandle(handle))throw Error('Invalid saved recovery handle');el('ra-identity').textContent=handle.request_id;{const fold=el('referenceFold');if(fold)fold.open=true;}}
   }catch(_){handle=null;storageError=true;say('Local recovery storage is unavailable or malformed. Inspect a recent server operation; no analysis will be sent automatically.');}
   controls();capabilities().then(()=>{if(handle&&caps?.workspace_id===handle.workspace_id)check();});
 })();

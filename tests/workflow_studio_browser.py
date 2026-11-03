@@ -173,7 +173,7 @@ def main():
                 if args.screenshots:
                     args.screenshots.mkdir(parents=True, exist_ok=True)
                     evidence_screenshot(page, path=str(args.screenshots / 'workflow-guides.png'), full_page=False)
-                page.locator('#loadNodes').click(); page.wait_for_function("document.querySelector('#nodeCount').textContent.includes('5 installed')")
+                page.wait_for_function("document.querySelector('#nodeCount').textContent.includes('5 installed')")  # the catalog loads on open
                 page.locator('#presetChoice').select_option('example'); page.locator('#loadPreset').click()
                 page.wait_for_function("document.querySelector('#documentStats').textContent.includes('3 nodes')")
                 page.locator('#compileWorkflow').click(); page.wait_for_function("!document.querySelector('#exportGraph').disabled")

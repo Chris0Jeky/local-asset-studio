@@ -83,7 +83,7 @@ def run(output):
                         MODEL_ENTERED.clear();MODEL_RELEASE.clear()
                         if width==390:DROP.set()
                         before=POSTS.count('/api/prompt/reference-jobs/create')
-                        page.goto(f'http://127.0.0.1:{server.server_port}/prompt-lab.html')
+                        page.goto(f'http://127.0.0.1:{server.server_port}/prompt-lab.html');page.locator('#referenceFold > summary').click()
                         expect(page.locator('#ra-config')).to_contain_text(fixtures.MODEL)
                         page.locator('#ra-files').set_input_files(originals)
                         page.locator('#brief').fill('Same traveller, use that pose')

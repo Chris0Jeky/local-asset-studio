@@ -157,7 +157,8 @@ for(const outcome of ['disabled','unavailable']) {
     else h.requests[1].reject(Error('Connection failed'));
     await settled();
     assert.equal(h.el('previewSource').disabled,true); assert.equal(h.el('discover').disabled,true);
-    assert.match(h.el('configuration').textContent,new RegExp(outcome,'i'));
+    if(outcome==='disabled') { assert.equal(h.el('setupCard').hidden,false,'one setup card'); assert.equal(h.el('sourcePanel').hidden,true); assert.equal(h.el('archiveLayout').hidden,true); }
+    else assert.match(h.el('configuration').textContent,/unavailable/i);
     assert.ok(h.requests.every(request=>request.body===undefined));
   });
 }

@@ -114,6 +114,10 @@
     $('#retrySharedWorkflow').disabled = !state.pending || state.busy;
     $('#loadWorkflowHistory').disabled = !state.binding || state.busy;
     $('#restoreSharedWorkflow').disabled = blocked || !state.binding || !!state.binding.conflict || !history.value || historyOwner !== state.binding.id;
+    const why = (id, reason) => { const n = $('#' + id); n.title = n.disabled ? reason : ''; }, held = 'A save is pending. Retry or check it first.', open = 'Open a recipe or an empty workflow first.';
+    why('saveSharedWorkflow', blocked ? held : !has ? open : state.binding?.conflict ? 'Resolve the conflict first.' : 'No changes to save.'); why('copySharedWorkflow', blocked ? held : open);
+    why('openSharedWorkflow', held); why('retrySharedWorkflow', 'No unconfirmed save to retry.'); why('loadWorkflowHistory', 'Save to Workspace first.');
+    why('restoreSharedWorkflow', blocked ? held : !state.binding ? 'Save to Workspace first.' : state.binding.conflict ? 'Resolve the conflict first.' : 'Load history and pick a revision first.');
   }
   history.onchange = sync;
   document.addEventListener('workflow:replace', () => { stepsDropTyped = true; readToken++; if (!applying && state) { state.detach(); foldError = 0; foldOpenedFor = ''; fold.open = false; history.replaceChildren(el('option', 'Load revision history', {value: ''})); say('Local draft loaded. Save a new Workspace copy, or open a saved workflow to edit its revisions.'); } });
