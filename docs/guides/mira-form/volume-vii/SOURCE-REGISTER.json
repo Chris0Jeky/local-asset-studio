@@ -1,0 +1,498 @@
+{
+  "title": "MIRA / FORM VII \u2014 primary anatomy and official software source register",
+  "retrieved_at": "2026-11-03",
+  "sources": [
+    {
+      "id": "A01",
+      "title": "Variations in pelvic dimensions: An anatomical and computed tomography study",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/30203862/",
+      "year": 2018,
+      "source_type": "primary human anatomy and CT study",
+      "study_design": "35 cadavers and 100 adult pelvic CT scans from a Scottish sample.",
+      "claim_supported": "Anterior-pelvic-plane width, height and their ratio varied within the sampled adults.",
+      "limitations": "An anatomical reference plane is not the outer hip silhouette. This regional sample does not supply universal female proportions.",
+      "production_use": "Separate pelvic-frame width/height from the thigh envelope; mark the actual modeled endpoints.",
+      "retrieved_at": "2026-11-03",
+      "access_scope": "Primary abstract reviewed through the research index; no full-text access assumed.",
+      "doi": "10.1002/ca.23273",
+      "scope": "Anterior-pelvic-plane width, height and their ratio varied within the sampled adults. Limits: An anatomical reference plane is not the outer hip silhouette. This regional sample does not supply universal female proportions."
+    },
+    {
+      "id": "A02",
+      "title": "In vivo moment arm lengths for hip extensor muscles at different angles of hip flexion",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/3988782/",
+      "year": 1985,
+      "source_type": "primary anatomy/CT and geometric modeling study",
+      "study_design": "10 autopsy specimens and CT data from 20 patients; simplified muscle lines across hip angles.",
+      "claim_supported": "Estimated hip-extensor moment arms changed with hip flexion, differently for gluteus maximus, hamstrings and adductor magnus.",
+      "limitations": "Moment arm is a mechanical lever measurement, not muscle length, activation, skin deformation or glute projection.",
+      "production_use": "Show a fixed hip center and rotating femur; explain why the supporting geometry changes in a hinge.",
+      "retrieved_at": "2026-11-03",
+      "access_scope": "Primary abstract reviewed through the research index; no full-text access assumed.",
+      "doi": "10.1016/0021-9290(85)90005-3",
+      "scope": "Estimated hip-extensor moment arms changed with hip flexion, differently for gluteus maximus, hamstrings and adductor magnus. Limits: Moment arm is a mechanical lever measurement, not muscle length, activation, skin deformation or glute projection."
+    },
+    {
+      "id": "A03",
+      "title": "Why adductor magnus muscle is large: the function based on muscle morphology in cadavers",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/22537037/",
+      "year": 2014,
+      "source_type": "primary cadaveric architecture study",
+      "study_design": "10 embalmed cadaveric muscles, separated into four architectural portions; published online in 2012, issue in 2014.",
+      "claim_supported": "The adductor magnus contained portions with different architectural characteristics; treating it as one uniform strap loses structural information.",
+      "limitations": "Functional roles were inferred from architecture. Cadaveric portions are not externally visible surface partitions or exclusive lines on skin.",
+      "production_use": "Use a broad proximal-to-distal medial/posterior fan beneath the envelope, while keeping the exposed outer form continuous.",
+      "retrieved_at": "2026-11-03",
+      "access_scope": "Primary abstract reviewed through the research index; no full-text access assumed.",
+      "doi": "10.1111/j.1600-0838.2012.01466.x",
+      "scope": "The adductor magnus contained portions with different architectural characteristics; treating it as one uniform strap loses structural information. Limits: Functional roles were inferred from architecture. Cadaveric portions are not externally visible surface partitions or exclusive lines on skin."
+    },
+    {
+      "id": "A04",
+      "title": "Elastography Study of Hamstring Behaviors during Passive Stretching",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/26418862/",
+      "year": 2015,
+      "source_type": "primary in vivo ultrasound elastography experiment",
+      "study_design": "18 healthy men; passive knee extension at three hip-flexion positions.",
+      "claim_supported": "Hamstring shear-modulus measurements depended on hip position and differed among the measured muscles during passive extension.",
+      "limitations": "A small male-only sample and an imaging measure; it does not establish a universal contour, safe stretch prescription, or a skin-stiffness value.",
+      "production_use": "Compare straight- and bent-knee poses at the same hip angle. Preserve the pelvic frame and distinguish hamstring response from glute shape.",
+      "retrieved_at": "2026-11-03",
+      "access_scope": "Primary abstract reviewed through the research index; no full-text access assumed.",
+      "full_text_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4587804/",
+      "doi": "10.1371/journal.pone.0139272",
+      "scope": "Hamstring shear-modulus measurements depended on hip position and differed among the measured muscles during passive extension. Limits: A small male-only sample and an imaging measure; it does not establish a universal contour, safe stretch prescription, or a skin-stiffness value."
+    },
+    {
+      "id": "A05",
+      "title": "The difference in passive tension applied to the muscles composing the hamstrings - Comparison among muscles using ultrasound shear wave elastography",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/27317500/",
+      "year": 2016,
+      "source_type": "primary in vivo ultrasound elastography experiment",
+      "study_design": "15 healthy men; fixed trunk/femur and knee settings with three pelvic orientations.",
+      "claim_supported": "Measured hamstring shear modulus differed with pelvic orientation in the tested configuration.",
+      "limitations": "The study used passive supine positioning. It cannot directly predict an active standing pose or identify tissue state from a silhouette.",
+      "production_use": "Keep pelvic tilt as a separate control; do not hide it inside a 'leg raise' slider or relabel it as added glute volume.",
+      "retrieved_at": "2026-11-03",
+      "access_scope": "Primary abstract reviewed through the research index; no full-text access assumed.",
+      "doi": "10.1016/j.math.2016.03.012",
+      "scope": "Measured hamstring shear modulus differed with pelvic orientation in the tested configuration. Limits: The study used passive supine positioning. It cannot directly predict an active standing pose or identify tissue state from a silhouette."
+    },
+    {
+      "id": "A06",
+      "title": "Gross anatomical study of the subcutaneous structures that create the three-dimensional shape of the buttocks",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/36519643/",
+      "year": 2023,
+      "source_type": "primary cadaveric regional anatomy study",
+      "study_design": "37 formalin-fixed cadavers aged 60\u201390 and one soft-fixed specimen; subsets used for dissection, sections and fat-thickness measures.",
+      "claim_supported": "Subcutaneous tissue thickness and fibrous organization contribute to regional buttock form in addition to the underlying muscular anatomy.",
+      "limitations": "Older cadaveric anatomy does not quantify the share of between-person silhouette variation explained by each contributor or calibrate living deformation.",
+      "production_use": "Retain frame, muscular support and superficial-envelope controls separately, including compact envelopes.",
+      "retrieved_at": "2026-11-03",
+      "access_scope": "Primary abstract reviewed through the research index; no full-text access assumed.",
+      "doi": "10.1002/ca.23988",
+      "scope": "Subcutaneous tissue thickness and fibrous organization contribute to regional buttock form in addition to the underlying muscular anatomy. Limits: Older cadaveric anatomy does not quantify the share of between-person silhouette variation explained by each contributor or calibrate living deformation."
+    },
+    {
+      "id": "A07",
+      "title": "Gluteal Fold: Cadaveric Dissection of the Superficial Fascial System in the Buttock and Anatomy-Based Gluteal Liposculpture",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/37220258/",
+      "year": 2024,
+      "source_type": "primary cadaveric dissection study",
+      "study_design": "20 fresh female buttock/thigh regions examined in sagittal and horizontal dissections.",
+      "claim_supported": "The described medial fold had dense connective anchoring, fading toward a smoother lateral buttock-to-thigh transition.",
+      "limitations": "This is a regional anatomical pattern, not proof of a fixed crease path or depth in every pose and person.",
+      "production_use": "Teach a fold with a changing strength and a lateral fade; avoid tracing a complete circular seam around the buttock.",
+      "retrieved_at": "2026-11-03",
+      "access_scope": "Primary abstract reviewed through the research index; no full-text access assumed.",
+      "doi": "10.1097/PRS.0000000000010723",
+      "scope": "The described medial fold had dense connective anchoring, fading toward a smoother lateral buttock-to-thigh transition. Limits: This is a regional anatomical pattern, not proof of a fixed crease path or depth in every pose and person."
+    },
+    {
+      "id": "A08",
+      "title": "Deformation of the gluteal soft tissues during sitting",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/26032324/",
+      "year": 2015,
+      "source_type": "primary in vivo positional MRI study",
+      "study_design": "6 subjects imaged in weight-bearing and non-weight-bearing sitting configurations.",
+      "claim_supported": "Gluteal muscle and fat deformation included substantial three-dimensional redistribution rather than only vertical compression beneath the ischium.",
+      "limitations": "Small sample under seat loading; findings are not a calibration for light fingertip contact, standing hip flexion or every body size.",
+      "production_use": "Show contact flattening plus neighboring and distal redistribution, retaining the pelvis as the supporting frame.",
+      "retrieved_at": "2026-11-03",
+      "access_scope": "Primary abstract reviewed through the research index; no full-text access assumed.",
+      "doi": "10.1016/j.clinbiomech.2015.05.008",
+      "scope": "Gluteal muscle and fat deformation included substantial three-dimensional redistribution rather than only vertical compression beneath the ischium. Limits: Small sample under seat loading; findings are not a calibration for light fingertip contact, standing hip flexion or every body size."
+    },
+    {
+      "id": "A09",
+      "title": "Regional morphology of the transversus abdominis and obliquus internus and externus abdominis muscles",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/15698694/",
+      "year": 2005,
+      "source_type": "primary cadaveric abdominal-wall anatomy study",
+      "study_design": "Bilateral dissection of 26 embalmed cadavers, comparing upper/middle/lower muscle regions.",
+      "claim_supported": "Abdominal fascicle orientation, thickness and length varied regionally; lower portions do not all follow the same simple horizontal/diagonal arrows.",
+      "limitations": "Architecture informs a structural drawing but does not directly predict the visible skin outline or activation.",
+      "production_use": "Build separate upper, middle and lower lateral-wall sections and authored fiber-direction overlays.",
+      "retrieved_at": "2026-11-03",
+      "access_scope": "Primary abstract reviewed through the research index; no full-text access assumed.",
+      "doi": "10.1016/j.clinbiomech.2004.11.007",
+      "scope": "Abdominal fascicle orientation, thickness and length varied regionally; lower portions do not all follow the same simple horizontal/diagonal arrows. Limits: Architecture informs a structural drawing but does not directly predict the visible skin outline or activation."
+    },
+    {
+      "id": "A10",
+      "title": "Architectural Analysis of Human Abdominal Wall Muscles: Implications for Mechanical Function",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3017737/",
+      "year": 2011,
+      "source_type": "primary cadaveric architecture and mechanical modeling study",
+      "study_design": "11 elderly donors; muscle measurements plus modeled length-dependent function.",
+      "claim_supported": "Rectus abdominis and the three lateral abdominal layers had different architectures and modeled responses across trunk motion.",
+      "limitations": "Elderly fixed tissue and a mechanical model; do not transfer its numerical values to a young adult character or treat it as surface-motion capture.",
+      "production_use": "Contrast the central longitudinal construction with a layered lateral wall; use bend and twist as different tests.",
+      "retrieved_at": "2026-11-03",
+      "access_scope": "Open primary full text reviewed.",
+      "doi": "10.1097/BRS.0b013e3181d12ed7",
+      "scope": "Rectus abdominis and the three lateral abdominal layers had different architectures and modeled responses across trunk motion. Limits: Elderly fixed tissue and a mechanical model; do not transfer its numerical values to a young adult character or treat it as surface-motion capture."
+    },
+    {
+      "id": "A11",
+      "title": "Anatomical Variation of Abdominal Wall Musculature: An Objective Assessment Using Cross-Sectional Imaging",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/38974808/",
+      "year": 2024,
+      "source_type": "primary retrospective adult CT study",
+      "study_design": "50 CT scans of normal adult abdominal walls; measurements at three defined trunk heights.",
+      "claim_supported": "The medial boundaries of lateral muscles and the widths of their aponeurotic regions varied by individual and measurement height.",
+      "limitations": "Supine CT describes internal geometry. It does not prove that a particular muscle/aponeurosis footprint produces one unique external tummy silhouette.",
+      "production_use": "Give the user actual structural variants beyond abs: different muscle-to-sheet transitions beneath the same outer envelope, then separately authored contour interpretations.",
+      "retrieved_at": "2026-11-03",
+      "access_scope": "Primary abstract reviewed through the research index; no full-text access assumed.",
+      "full_text_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11224142/",
+      "doi": "10.3389/jaws.2024.13114",
+      "scope": "The medial boundaries of lateral muscles and the widths of their aponeurotic regions varied by individual and measurement height. Limits: Supine CT describes internal geometry. It does not prove that a particular muscle/aponeurosis footprint produces one unique external tummy silhouette."
+    },
+    {
+      "id": "A12",
+      "title": "Collagen fibers in linea alba and rectus sheaths. I. General scheme and morphological aspects",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/11181006/",
+      "year": 2001,
+      "source_type": "primary cadaveric microscopy/anatomy study",
+      "study_design": "12 cadavers; regional sections analyzed with confocal microscopy.",
+      "claim_supported": "The linea alba and rectus sheaths form an organized three-dimensional collagen network with regionally different fiber orientations.",
+      "limitations": "Microscopic fiber organization does not supply visible groove depth or numerical stiffness for a sculpt.",
+      "production_use": "Depict the central connection and wrapping sheath as supporting sheets, then restore a continuous overlying surface.",
+      "retrieved_at": "2026-11-03",
+      "access_scope": "Primary abstract reviewed through the research index; no full-text access assumed.",
+      "doi": "10.1006/jsre.2000.6070",
+      "scope": "The linea alba and rectus sheaths form an organized three-dimensional collagen network with regionally different fiber orientations. Limits: Microscopic fiber organization does not supply visible groove depth or numerical stiffness for a sculpt."
+    },
+    {
+      "id": "A13",
+      "title": "Ultrasound Evaluation of Muscle Thickness Changes in the External Oblique, Internal Oblique, and Transversus Abdominis Muscles Considering the Influence of Posture and Muscle Contraction",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4175243/",
+      "year": 2014,
+      "source_type": "primary in vivo ultrasound experiment",
+      "study_design": "21 healthy young men, neutral/rotated trunk positions and resting/resisted conditions.",
+      "claim_supported": "Lateral-wall muscle thickness measurements changed with trunk orientation and the tested contraction condition.",
+      "limitations": "A measured thickness change is not a one-to-one proxy for visible contour or force. Male-only sample; the intervention was not a deformation atlas.",
+      "production_use": "Separate a rotation-only comparison from a deliberately braced interpretation; keep the skin envelope explanation qualitative.",
+      "retrieved_at": "2026-11-03",
+      "access_scope": "Primary full text available through research-search retrieval; direct PMC open intermittently presented a bot-check page.",
+      "scope": "Lateral-wall muscle thickness measurements changed with trunk orientation and the tested contraction condition. Limits: A measured thickness change is not a one-to-one proxy for visible contour or force. Male-only sample; the intervention was not a deformation atlas."
+    },
+    {
+      "id": "A14",
+      "title": "In vivo ultrasound assessment of respiratory function of abdominal muscles in normal subjects",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/9493674/",
+      "year": 1998,
+      "source_type": "primary in vivo ultrasound/pressure experiment",
+      "study_design": "6 healthy men; abdominal-layer thickness and pressure assessed in respiratory and rotation maneuvers.",
+      "claim_supported": "Abdominal layers did not change thickness identically across breathing maneuvers and trunk rotation.",
+      "limitations": "Small male sample with specific maneuvers. Do not turn the results into a universal inhalation silhouette or breathing instruction.",
+      "production_use": "Use a small dedicated breathing-state comparison with fixed pose/camera; label surface movement as an authored illustration.",
+      "retrieved_at": "2026-11-03",
+      "access_scope": "Primary abstract reviewed through the research index; no full-text access assumed.",
+      "institutional_abstract_url": "https://flore.unifi.it/handle/2158/793984",
+      "scope": "Abdominal layers did not change thickness identically across breathing maneuvers and trunk rotation. Limits: Small male sample with specific maneuvers. Do not turn the results into a universal inhalation silhouette or breathing instruction."
+    },
+    {
+      "id": "A15",
+      "title": "Influence of inward pressure of the transducer on lateral abdominal muscle thickness during ultrasound imaging",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/22517245/",
+      "year": 2012,
+      "source_type": "primary in vivo indentation/ultrasound experiment",
+      "study_design": "30 healthy male volunteers; four controlled probe-loading conditions.",
+      "claim_supported": "Probe pressure changed measured lateral abdominal muscle thickness, showing that the measuring contact itself can deform the region.",
+      "limitations": "Ultrasound-probe results are not a universal finger-force recipe, skin indentation map or stiffness label.",
+      "production_use": "Fix indenter geometry and contact location in a press comparison; distinguish imposed displacement from measured force.",
+      "retrieved_at": "2026-11-03",
+      "access_scope": "Primary abstract reviewed through the research index; no full-text access assumed.",
+      "doi": "10.2519/jospt.2012.4064",
+      "scope": "Probe pressure changed measured lateral abdominal muscle thickness, showing that the measuring contact itself can deform the region. Limits: Ultrasound-probe results are not a universal finger-force recipe, skin indentation map or stiffness label."
+    },
+    {
+      "id": "A16",
+      "title": "Reference data on thickness and mechanics of tissue layers and anthropometry of musculoskeletal extremities",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/30251995/",
+      "year": 2018,
+      "source_type": "primary in vivo instrumented-ultrasound dataset",
+      "study_design": "100 participants; unloaded layer measurements at 48 regions and indentation measurements at 8 regions.",
+      "claim_supported": "Skin, fat and muscle form layered extremity structures whose thickness and indentation response were measured at multiple sites.",
+      "limitations": "Regional and subject-specific data do not justify assigning one 'softness' to all thighs or inferring composition from appearance.",
+      "production_use": "Author a section below the contact: superficial layer, muscular layer and supporting depth, with the stylized outer surface above.",
+      "retrieved_at": "2026-11-03",
+      "access_scope": "Primary abstract reviewed through the research index; no full-text access assumed.",
+      "full_text_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6154283/",
+      "scope": "Skin, fat and muscle form layered extremity structures whose thickness and indentation response were measured at multiple sites. Limits: Regional and subject-specific data do not justify assigning one 'softness' to all thighs or inferring composition from appearance."
+    },
+    {
+      "id": "A17",
+      "title": "In vivo mechanical response of thigh soft tissues under compression: A two-layer model allows an improved representation of the local tissue kinematics",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/38810544/",
+      "year": 2024,
+      "source_type": "primary retrospective experiment-based finite-element comparison",
+      "study_design": "7-volunteer dataset reanalyzed with one- and two-layer models.",
+      "claim_supported": "Including separate fat and muscle layers improved the modeled local indentation kinematics compared with the tested homogeneous model.",
+      "limitations": "Model-dependent inverse estimates from a small sample. Its coefficients are not transferable Blender settings or validated values for other regions.",
+      "production_use": "Compare a uniform dent with an authored layered/contact-aware correction, explicitly marked schematic.",
+      "retrieved_at": "2026-11-03",
+      "access_scope": "Primary abstract reviewed through the research index; no full-text access assumed.",
+      "doi": "10.1016/j.jmbbm.2024.106584",
+      "scope": "Including separate fat and muscle layers improved the modeled local indentation kinematics compared with the tested homogeneous model. Limits: Model-dependent inverse estimates from a small sample. Its coefficients are not transferable Blender settings or validated values for other regions."
+    },
+    {
+      "id": "A18",
+      "title": "Morphological Parameters of the Hip Joint and Its Relation to Gender, Joint Side and Age\u2014A CT-Based Study",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9332566/",
+      "year": 2022,
+      "source_type": "primary retrospective adult CT anatomy study",
+      "study_design": "1,576 hip joints from 788 adults; acetabular and proximal-femoral geometric measures.",
+      "claim_supported": "Several distinct geometric measures describe the hip; pelvis orientation, acetabular geometry and femoral geometry should not be collapsed into one width variable.",
+      "limitations": "Clinical CT cohort with many older adults; these measures do not determine an external thigh gap or an attractive body class.",
+      "production_use": "Keep femur direction and pelvis breadth separately inspectable in the inner-thigh frame diagram.",
+      "retrieved_at": "2026-11-03",
+      "access_scope": "Primary full text and indexed primary abstract reviewed.",
+      "doi": "10.3390/diagnostics12081774",
+      "scope": "Several distinct geometric measures describe the hip; pelvis orientation, acetabular geometry and femoral geometry should not be collapsed into one width variable. Limits: Clinical CT cohort with many older adults; these measures do not determine an external thigh gap or an attractive body class."
+    },
+    {
+      "id": "A19",
+      "title": "Mechanical behavior of human breast tissues: ex vivo and in silico characterization",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13035888/",
+      "year": 2026,
+      "source_type": "primary ex vivo indentation and inverse finite-element experiment",
+      "study_design": "33 specimens from 8 reduction-surgery patients; lower-outer-quadrant samples, cylindrical indentation and inverse modeling.",
+      "claim_supported": "The tested breast samples displayed a nonlinear indentation response; fitted material behavior depended on the experimental/modeling conditions.",
+      "limitations": "Excised specimens omit intact skin/root constraints, whole-breast gravity and living tissue state. The sample cannot calibrate compact-breast or fingertip behavior generally.",
+      "production_use": "Use the study to justify explicit assumptions and limits, not to import its modulus as a universal softness value.",
+      "retrieved_at": "2026-11-03",
+      "access_scope": "Open primary full text reviewed through research retrieval.",
+      "doi": "10.1007/s10237-026-02045-x",
+      "scope": "The tested breast samples displayed a nonlinear indentation response; fitted material behavior depended on the experimental/modeling conditions. Limits: Excised specimens omit intact skin/root constraints, whole-breast gravity and living tissue state. The sample cannot calibrate compact-breast or fingertip behavior generally."
+    },
+    {
+      "id": "A20",
+      "title": "Anatomy of the Female Breast \u2014 SEER Training",
+      "url": "https://training.seer.cancer.gov/breast/anatomy.html",
+      "year": null,
+      "source_type": "official National Cancer Institute anatomical teaching resource",
+      "study_design": "Official anatomy summary, not a controlled deformation experiment.",
+      "claim_supported": "Breast volume includes glandular and fatty structures, with ligamentous attachment at the chest wall over pectoralis major.",
+      "limitations": "Does not define cup sizes, surface shape families, pose corrections or physical material constants.",
+      "production_use": "Preserve the chest-wall context and attachment footprint in small, compact and fuller neutral form studies.",
+      "retrieved_at": "2026-11-03",
+      "access_scope": "Official page text reviewed.",
+      "scope": "Breast volume includes glandular and fatty structures, with ligamentous attachment at the chest wall over pectoralis major. Limits: Does not define cup sizes, surface shape families, pose corrections or physical material constants."
+    },
+    {
+      "id": "B7-01",
+      "title": "Relative shape-key panel",
+      "url": "https://docs.blender.org/manual/en/5.4/animation/shape_keys/shape_keys_panel.html",
+      "publisher": "Blender Foundation",
+      "version": "5.4",
+      "retrieval": "official search-indexed primary text",
+      "supported_fact": "Relative keys store displacement from a reference key; weights combine those offsets.",
+      "application": "The lab freezes source topology before creating keys and exports the same per-vertex offsets.",
+      "source_type": "official Blender 5.4 documentation",
+      "scope": "Relative keys store displacement from a reference key; weights combine those offsets. The lab freezes source topology before creating keys and exports the same per-vertex offsets.",
+      "aliases": [
+        "https://docs.blender.org/manual/uk/5.4/animation/shape_keys/shape_keys_panel.html"
+      ]
+    },
+    {
+      "id": "B7-02",
+      "title": "Armature parenting and vertex-group weighting",
+      "url": "https://docs.blender.org/manual/en/5.4/animation/armatures/skinning/parenting.html",
+      "publisher": "Blender Foundation",
+      "version": "5.4",
+      "retrieval": "official search-indexed primary text",
+      "supported_fact": "Armature deformation can use vertex groups; weights can be assigned or corrected manually.",
+      "application": "The five-bone rig uses explicit normalized vertex groups and independent pelvis, thigh and shin transforms.",
+      "source_type": "official Blender 5.4 documentation",
+      "scope": "Armature deformation can use vertex groups; weights can be assigned or corrected manually. The five-bone rig uses explicit normalized vertex groups and independent pelvis, thigh and shin transforms."
+    },
+    {
+      "id": "B7-03",
+      "title": "Corrective Smooth modifier API",
+      "url": "https://docs.blender.org/api/5.4/bpy.types.CorrectiveSmoothModifier.html",
+      "publisher": "Blender Foundation",
+      "version": "5.4",
+      "retrieval": "official search-indexed primary text",
+      "supported_fact": "The API exposes factor, iterations, original/rest-source choices and smoothing options.",
+      "application": "The executed alpha uses CORRECTIVE_SMOOTH with ORCO rest source; exact saved values are checked in the native build and receipts.",
+      "source_type": "official Blender 5.4 documentation",
+      "scope": "The API exposes factor, iterations, original/rest-source choices and smoothing options. The executed alpha uses CORRECTIVE_SMOOTH with ORCO rest source; exact saved values are checked in the native build and receipts."
+    },
+    {
+      "id": "B7-04",
+      "title": "Corrective Smooth modifier manual",
+      "url": "https://docs.blender.org/manual/pt/5.4/modeling/modifiers/deform/corrective_smooth.html",
+      "publisher": "Blender Foundation",
+      "version": "5.4",
+      "retrieval": "official search-indexed primary text",
+      "supported_fact": "Corrective smoothing reduces deformation distortion using rest-space information.",
+      "application": "It supports a corrective workflow but does not establish biomechanical realism or conserved total enclosed volume.",
+      "source_type": "official Blender 5.4 documentation",
+      "scope": "Corrective smoothing reduces deformation distortion using rest-space information. It supports a corrective workflow but does not establish biomechanical realism or conserved total enclosed volume.",
+      "aliases": [
+        "https://docs.blender.org/manual/ko/5.4/modeling/modifiers/deform/corrective_smooth.html"
+      ]
+    },
+    {
+      "id": "B7-05",
+      "title": "Armature modifier",
+      "url": "https://docs.blender.org/manual/uk/5.4/modeling/modifiers/deform/armature.html",
+      "publisher": "Blender Foundation",
+      "version": "5.4",
+      "retrieval": "official search-indexed primary text",
+      "supported_fact": "The armature modifier exposes vertex-group deformation and a Preserve Volume option.",
+      "application": "The setting is enabled; total closed-surface volume is independently measured and is not assumed to be conserved.",
+      "source_type": "official Blender 5.4 documentation",
+      "scope": "The armature modifier exposes vertex-group deformation and a Preserve Volume option. The setting is enabled; total closed-surface volume is independently measured and is not assumed to be conserved.",
+      "aliases": [
+        "https://docs.blender.org/manual/ko/5.4/modeling/modifiers/deform/armature.html"
+      ]
+    },
+    {
+      "id": "B7-06",
+      "title": "Subdivision Surface modifier",
+      "url": "https://docs.blender.org/manual/en/5.4/modeling/modifiers/generate/subdivision_surface.html",
+      "publisher": "Blender Foundation",
+      "version": "5.4",
+      "retrieval": "official search-indexed primary text",
+      "supported_fact": "Subdivision refines and smooths a mesh.",
+      "application": "Level-one display subdivision is kept separate from the evaluated source cage exported to the interactive reader.",
+      "source_type": "official Blender 5.4 documentation",
+      "scope": "Subdivision refines and smooths a mesh. Level-one display subdivision is kept separate from the evaluated source cage exported to the interactive reader."
+    },
+    {
+      "id": "S01",
+      "title": "Blender 5.4 daily build listing",
+      "url": "https://builder.blender.org/download/daily/",
+      "kind": "official software documentation",
+      "scope": "Official daily distribution and build identity. Download checksum and executed version are separately recorded in the native receipts.",
+      "retrieval": {
+        "status": "Current official primary index text rechecked 2026-11-03",
+        "ref_ids": [
+          "turn115search5"
+        ]
+      },
+      "does_not_establish": [
+        "Biological realism or production-ready topology."
+      ],
+      "provenance": "Research record carried forward from preserved Volume VI; current applicable operations rechecked on 3 November 2026."
+    },
+    {
+      "id": "S02",
+      "title": "Blender 5.4 \u2014 Shape-key workflow",
+      "url": "https://docs.blender.org/manual/uk/5.4/animation/shape_keys/workflow.html",
+      "kind": "official software documentation",
+      "scope": "Shape keys retain positions of existing mesh vertices. Freeze topology before adding the comparison keys.",
+      "retrieval": {
+        "status": "Current official primary index text rechecked 2026-11-03",
+        "ref_ids": [
+          "turn115search2"
+        ]
+      },
+      "does_not_establish": [
+        "Biological realism or production-ready topology."
+      ],
+      "aliases": [
+        "https://docs.blender.org/manual/ko/5.4/animation/shape_keys/workflow.html"
+      ],
+      "provenance": "Research record carried forward from preserved Volume VI; current applicable operations rechecked on 3 November 2026."
+    },
+    {
+      "id": "S05",
+      "title": "Blender 5.4 \u2014 Retopology and remeshing",
+      "url": "https://docs.blender.org/manual/pt/5.4/modeling/meshes/retopology.html",
+      "kind": "official software documentation",
+      "scope": "Remeshing rebuilds the surface topology; it differs from topology deliberately arranged for animation deformation.",
+      "retrieval": {
+        "status": "Official daily builder or indexed 5.4 documentation; see blender-version.md for direct access limits"
+      },
+      "does_not_establish": [
+        "Biological realism or production-ready topology."
+      ],
+      "provenance": "Research record carried forward from preserved Volume VI; current applicable operations rechecked on 3 November 2026."
+    },
+    {
+      "id": "S06",
+      "title": "Blender 5.4 \u2014 Grab sculpt brush",
+      "url": "https://docs.blender.org/manual/en/5.4/sculpt_paint/sculpting/brushes/grab.html",
+      "kind": "official software documentation",
+      "scope": "Broad vertex displacement is used to change silhouette; specific brush behavior is checked against official documentation where retrievable.",
+      "retrieval": {
+        "status": "Current official primary index text rechecked 2026-11-03",
+        "ref_ids": [
+          "turn115search0"
+        ]
+      },
+      "does_not_establish": [
+        "Biological realism or production-ready topology."
+      ],
+      "provenance": "Research record carried forward from preserved Volume VI; current applicable operations rechecked on 3 November 2026."
+    },
+    {
+      "id": "S07",
+      "title": "Blender 5.4 \u2014 Proportional Editing",
+      "url": "https://docs.blender.org/manual/en/5.4/editors/3dview/controls/proportional_editing.html",
+      "kind": "official software documentation",
+      "scope": "Transforms selected and nearby unselected elements with an adjustable influence radius and falloff. Connected Only limits propagation by mesh connectivity.",
+      "retrieval": {
+        "status": "Current official 5.4 indexed primary text retrieved 2026-11-03",
+        "ref_ids": [
+          "turn115search1"
+        ]
+      },
+      "provenance": "Research record carried forward from preserved Volume VI; current applicable operations rechecked on 3 November 2026.",
+      "aliases": [
+        "https://docs.blender.org/manual/en/5.3/editors/3dview/controls/proportional_editing.html"
+      ]
+    },
+    {
+      "id": "S08",
+      "title": "Blender 5.4 \u2014 Sculpting brush introduction",
+      "url": "https://docs.blender.org/manual/en/5.4/sculpt_paint/sculpting/introduction/brush.html",
+      "kind": "official software documentation",
+      "scope": "Broad functions of the standard sculpt brushes. Brush choice supports a specific geometric edit rather than prescribing a body shape.",
+      "retrieval": {
+        "status": "Current official primary index text rechecked 2026-11-03",
+        "ref_ids": [
+          "turn115search6"
+        ]
+      },
+      "provenance": "Research record carried forward from preserved Volume VI; current applicable operations rechecked on 3 November 2026."
+    }
+  ],
+  "source_count": 32,
+  "source_policy": "19 primary human research sources and 1 official anatomical resource; no tertiary wellness or art claims used as anatomical proof.",
+  "editorial_rules": [
+    "Do not infer activation, tissue composition, health, stiffness or attractiveness from a silhouette.",
+    "Keep hip angle, knee angle, pelvis orientation, camera and contact conditions explicit.",
+    "An imposed indentation depth is not a measured applied force or a calibrated stiffness.",
+    "Do not present compact/full form descriptors as biological categories or age indicators.",
+    "Primary-source findings from male volunteers, elderly cadavers, surgical samples or small cohorts retain those limits.",
+    "Do not infer that muscles explain most between-person glute silhouette variance.",
+    "Abdominal internal arrangement does not uniquely determine external shape; separate evidence from an artistic surface interpretation."
+  ],
+  "access_note": "Primary abstracts and available full texts are distinguished per entry. Some direct Blender manual opens returned 402; indexed official text and actual installed alpha execution were used. No access restriction was bypassed."
+}

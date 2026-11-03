@@ -1,0 +1,93 @@
+{
+  "title": "MIRA / FORM VII \u2014 Pose, Contact & Compact Forms",
+  "volume": 7,
+  "release_date": "2026-11-03",
+  "status": "linked_release_handoff",
+  "artifacts": {
+    "pdf": {
+      "url": "https://chatgpt.com/library?file_id=libfile_481b03f536388191a75b28657f0f1de5&account_id=personal",
+      "bytes": 38228679,
+      "sha256": "fb1119ec2fd7f7780f975492634a19f98bcec8b6838a166da4588e65a5a42b45"
+    },
+    "reader": {
+      "url": "https://chatgpt.com/library?file_id=libfile_953e109adbe48191b0c74e7df645f71b&account_id=personal",
+      "bytes": 102581731,
+      "sha256": "7d0496b3c4254441cca1643b63a8fef2ed5662173f5ab0ee08dbf55292039e28"
+    },
+    "desk": {
+      "url": "https://chatgpt.com/library?file_id=libfile_32c91237268881919e2fcc6d3df0ab5a&account_id=personal",
+      "bytes": 11748679,
+      "sha256": "b6607a2ed74c32b58e841301898bb62cc052cb8dfd57297091e83a30350907fc"
+    },
+    "archive": {
+      "url": "https://chatgpt.com/library?file_id=libfile_ee994af6821c8191b66528318f56119b&account_id=personal",
+      "bytes": 336384061,
+      "sha256": "ed7f6532b933e086ae8904d53ddcc2600b356b66e740fd63f8d558daca09f865"
+    }
+  },
+  "coverage": {
+    "pdf_pages": 126,
+    "completed_studies": 48,
+    "pending_studies": 0,
+    "generated_reference_sheets": 48
+  },
+  "fixed_counts": {
+    "instructional_queue": 48,
+    "reviewed_reference_panels": 202,
+    "editable_diagrams": 48,
+    "authored_diagram_panels": 164,
+    "derived_diagram_pngs": 48,
+    "causal_blender_actions": 240,
+    "generation_requests": 64,
+    "successful_generated_returns": 60,
+    "retired_generated_returns": 12,
+    "rejected_no_image_attempts": 4,
+    "native_cases": 43,
+    "new_native_renders": 74,
+    "prior_native_render_images_reused": 0,
+    "prior_teaching_images_reused": 0,
+    "prior_neutral_cages_reused": 3,
+    "new_extended_pose_cages": 1,
+    "canonical_source_urls": 32,
+    "reader_browser_checks": 111,
+    "desk_browser_checks": 90,
+    "pdf_automated_checks": 1048,
+    "reference_categories": {
+      "body_concept": 42,
+      "material_coupon": 5,
+      "articulated_joint": 1
+    },
+    "body_reference_requests_rejected_and_substituted": [
+      "d18",
+      "d21",
+      "d25",
+      "d26"
+    ]
+  },
+  "native": {
+    "version": "5.4.0 Alpha",
+    "build_hash": "50d477803fa8",
+    "scene_sha256": "1c878b851f1afffcf5097c8f48c6e3006d8fd7697a63094ebe548ae070331f86",
+    "mesh_export_sha256": "8e115775053b07d8c15f82a614f4e25a5f10f2a412ca33ee4cab3e11587272b0"
+  },
+  "included_diagrams": [
+    {
+      "path": "diagrams/d03.svg",
+      "source_path": "assets/diagrams/d03.svg",
+      "sha256": "28355603f0fecb1fbe89c0bd55c8833f8555fee40e10104336346295b9abbf27"
+    },
+    {
+      "path": "diagrams/d27.svg",
+      "source_path": "assets/diagrams/d27.svg",
+      "sha256": "be2eaa7465e50659680ddadb2a43a72f0a6c840fe53d51197e6820ab61dd85b6"
+    },
+    {
+      "path": "diagrams/d43.svg",
+      "source_path": "assets/diagrams/d43.svg",
+      "sha256": "93eb2d077209eb856f03e4e7e27cc83a312b26120c73f5847db3ab58bf90ab4a"
+    }
+  ],
+  "source_register_sha256": "f85dc4d668204ce8bdb64531710de37403604a897fe727934b773ab13d910ec7",
+  "scope": "Owner-facing documentation and durable artifact links. Agent technical/teaching review is recorded; owner art acceptance and licensing clearance are not inferred.",
+  "repo_changes": "New documentation seam only; complete binaries and large interactive HTML are in the linked archive."
+}
