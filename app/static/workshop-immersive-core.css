@@ -265,21 +265,22 @@ body.workshop-active[data-workshop-skin="retro-anime"] .eyebrow {color:#f1a4d5}
 
 /* Immersive Studio: three rails, one draft, existing controls. */
 @media(min-width:1280px) {
-  .studio-main #createView.workshop[data-workshop-layout="studio"] {
+  /* Focus and Studio: the recipe band and Appearance share the first row; inputs left, results right (the hidden page title takes no row). */
+  .studio-main #createView.workshop:not([data-workshop-layout="immersive"]) {
     grid-template-columns:minmax(430px,1.08fr) minmax(320px,.92fr);
     grid-template-areas:
-      "heading heading"
-      "setup setup"
-      "editor results"
-      "problems problems";
-    gap:22px 26px;
+      "setup toolbar"
+      "editor results";
+    gap:18px 26px;
   }
-  .studio-main #createView.workshop[data-workshop-layout="studio"]:not([data-workshop-ambience="none"]) {
-    grid-template-areas:"heading heading" "hero hero" "setup setup" "editor results" "problems problems";
+  .studio-main #createView.workshop:not([data-workshop-layout="immersive"]):not([data-workshop-ambience="none"]) {
+    grid-template-areas:"hero hero" "setup toolbar" "editor results";
   }
-  .workshop[data-workshop-layout="studio"] .wk-setup-rail {max-width:none}
-  .workshop[data-workshop-layout="studio"] .editor {grid-area:editor!important;max-width:none!important}
-  .workshop[data-workshop-layout="studio"] .wk-results {grid-area:results!important;max-width:none!important;position:sticky;top:84px}
+  .studio-main #createView.workshop:not([data-workshop-layout="immersive"]) > .wk-appearance,
+  .studio-main #createView.workshop:not([data-workshop-layout="immersive"]):has(#uxTransfer:not([hidden])) > .wk-appearance {grid-area:toolbar}
+  .workshop:not([data-workshop-layout="immersive"]) .wk-setup-rail {max-width:none}
+  .workshop:not([data-workshop-layout="immersive"]) .editor {grid-area:editor!important;max-width:none!important}
+  .workshop:not([data-workshop-layout="immersive"]) .wk-results {grid-area:results!important;max-width:none!important;position:sticky;top:84px;align-self:start}
 
   .studio-main #createView.workshop[data-workshop-layout="immersive"] {
     grid-template-columns:minmax(230px,var(--wk-rail-width)) minmax(480px,1fr) minmax(260px,var(--wk-guide-width));

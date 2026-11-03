@@ -231,17 +231,17 @@ body.workshop-active #workshopRecipeDialog .setup {position:static;padding:0;max
 .workshop .wk-picker-status:empty{display:none}
 .workshop .wk-picker-status{padding:12px;border-left:3px solid var(--accent);color:var(--text)}
 
-/* Layout is independent from the skin. Both presentations keep one live editor. */
+/* From 1280 px the results sit in a sticky column beside the inputs in Focus and Studio, so a run lands next to Generate (create-1, create-9). */
 @media(min-width:1280px) {
-  .studio-main #createView.workshop[data-workshop-layout="studio"] {grid-template-columns:minmax(430px,1.08fr) minmax(320px,.92fr);gap:22px 26px}
-  .studio-main .workshop[data-workshop-layout="studio"] .editor {grid-column:1;grid-row:3;max-width:none;padding:26px}
-  .workshop[data-workshop-layout="studio"] .wk-results {grid-column:2;grid-row:3;position:sticky;top:84px;max-width:none;border:1px solid var(--line);border-radius:16px;background:var(--panel);overflow:hidden}
-  .workshop[data-workshop-layout="studio"] .wk-results>summary {border:0;border-bottom:1px solid var(--line);border-radius:0;padding:19px 20px}
-  .workshop[data-workshop-layout="studio"] .gallery-panel {padding:16px;margin:0}
-  .workshop[data-workshop-layout="studio"] #gallery {max-height:calc(100dvh - var(--workshop-dock-space) - 259px);min-height:240px}
-  .workshop[data-workshop-layout="studio"] .galleryEmpty {min-height:360px;font-size:21px}
-  .workshop[data-workshop-layout="studio"] .imageCard img {width:100%;max-height:480px}
-  .workshop[data-workshop-layout="studio"] .gallery-panel>.muted {font-size:11px;line-height:1.65;margin:0 0 14px}
+  .studio-main #createView.workshop:not([data-workshop-layout="immersive"]) {grid-template-columns:minmax(430px,1.08fr) minmax(320px,.92fr);gap:22px 26px}
+  .studio-main .workshop:not([data-workshop-layout="immersive"]) .editor {max-width:none;padding:26px}
+  .workshop:not([data-workshop-layout="immersive"]) .wk-results {position:sticky;top:84px;max-width:none;border:1px solid var(--line);border-radius:16px;background:var(--panel);overflow:hidden}
+  .workshop:not([data-workshop-layout="immersive"]) .wk-results>summary {border:0;border-bottom:1px solid var(--line);border-radius:0;padding:19px 20px}
+  .workshop:not([data-workshop-layout="immersive"]) .gallery-panel {padding:16px;margin:0}
+  .workshop:not([data-workshop-layout="immersive"]) #gallery {max-height:calc(100dvh - var(--workshop-dock-space) - 259px);min-height:240px}
+  .workshop:not([data-workshop-layout="immersive"]) .galleryEmpty {min-height:360px;font-size:21px}
+  .workshop:not([data-workshop-layout="immersive"]) .imageCard img {width:100%;max-height:480px}
+  .workshop:not([data-workshop-layout="immersive"]) .gallery-panel>.muted {font-size:11px;line-height:1.65;margin:0 0 14px}
 }
 body.workshop-active[data-workshop-skin="arcade"] {
   --bg:#101321;--panel:#181d30;--panel2:#242b42;--line:#3d4863;

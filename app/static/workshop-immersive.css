@@ -63,22 +63,18 @@
 }
 
 @media (min-width:1280px) {
-  .studio-main #createView.workshop[data-workshop-layout="studio"]:has(> #uxTransfer:not([hidden])) {
+  .studio-main #createView.workshop:not([data-workshop-layout="immersive"]):has(> #uxTransfer:not([hidden])) {
     grid-template-areas:
-      "heading heading"
       "transfer transfer"
-      "setup setup"
-      "editor results"
-      "problems problems";
+      "setup toolbar"
+      "editor results";
   }
-  .studio-main #createView.workshop[data-workshop-layout="studio"]:not([data-workshop-ambience="none"]):has(> #uxTransfer:not([hidden])) {
+  .studio-main #createView.workshop:not([data-workshop-layout="immersive"]):not([data-workshop-ambience="none"]):has(> #uxTransfer:not([hidden])) {
     grid-template-areas:
-      "heading heading"
       "transfer transfer"
       "hero hero"
-      "setup setup"
-      "editor results"
-      "problems problems";
+      "setup toolbar"
+      "editor results";
   }
   .studio-main #createView.workshop[data-workshop-layout="immersive"]:has(> #uxTransfer:not([hidden])) {
     grid-template-areas:

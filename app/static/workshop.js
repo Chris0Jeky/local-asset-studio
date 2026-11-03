@@ -413,8 +413,9 @@
     w.setInterval(tickElapsed, 1000); tickElapsed(); const jobList = q('#gallery'); if (jobList) new w.MutationObserver(tickElapsed).observe(jobList, {childList:true});
     const gallery = q('#createView .gallery-panel');
     const problemsHost = el('div'); problemsHost.id = 'jobProblemsHost';
-    const results = disclosure('workshopResults', 'Recent runs', [gallery]); results.classList.add('wk-results');
-    create.append(problemsHost, results);
+    // Problems belong with the runs they describe, inside the results column (create-9); it starts open in every layout (create-1).
+    const results = disclosure('workshopResults', 'Recent runs', [problemsHost, gallery]); results.classList.add('wk-results'); results.open = true;
+    create.append(results);
     problemsHost.onclick = q('#gallery')?.onclick;
     q('#generate').addEventListener('click', () => { if (!q('#generate').disabled) results.open = true; }, true);
 
@@ -503,7 +504,6 @@
       for (const [value, skinButton] of skinButtons) {
         const active = value === state.skin; skinButton.setAttribute('aria-pressed', String(active)); skinButton.classList.toggle('active', active);
       }
-      results.open = state.layout === 'studio' || state.layout === 'immersive';
       text(heroTitle, state.ambience === 'quiet-morning' ? 'Make room for the next idea.' : 'Turn your ideas into something real.');
       text(heroText, state.ambience === 'quiet-morning'
         ? 'The same private workspace, with a quieter morning atmosphere.'
