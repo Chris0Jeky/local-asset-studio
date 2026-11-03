@@ -30,7 +30,7 @@ Each constraint names its source. A design that breaks one of these cannot be bu
 
 | # | Constraint | Consequence | Source |
 | --- | --- | --- | --- |
-| K15 | **Executed ≠ accepted ≠ licensed.** A completed render is not art acceptance; a Keeper mark is the owner's selection, not licence clearance | No "approved", "✓ ready to ship" or star rating derived from completion; licence notes shown as facts per model ("FLUX non-commercial", "excludes UK use") | CLAUDE.md pitfalls; STATUS.md |
+| K15 | **Executed ≠ accepted ≠ licensed.** A completed render is not art acceptance; a Keeper mark is the owner's selection, not licence clearance | No "approved", "✓ ready to ship" or star rating derived from completion; licence notes shown as facts per model ("FLUX non-commercial") | CLAUDE.md pitfalls; STATUS.md |
 | K16 | **Agents never judge art or open explicit content.** The library contains agent-lab outputs, some adult | Designs and prototypes use placeholder art; review UI must never auto-classify or auto-accept | adult-content judging policy (memory); HUMAN_TODO |
 | K17 | Review decisions save one asset at a time with a revision guard; the queue advances only after a confirmed save; conflicts are shown, never overwritten | Review mode shows "saving…" per decision and handles "changed elsewhere" | `workspace.js`, `/api/assets/update` |
 | K18 | Recovery of unconfirmed writes: exact request retained, "Check status" before "Retry exact request"; newer typing is never sent with the old request | Keep an unconfirmed-save state in the component set (can be compact) | `workspace.js`, collection/prompt-project recovery |

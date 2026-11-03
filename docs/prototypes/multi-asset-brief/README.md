@@ -67,7 +67,7 @@ Source baseline: `3392d27bf0fa8ce5305bcc2c3a88009a33d87114` (28 October 2026).
 | Generated video | Catalog preset `h3-preview` | Blocked readiness, with the existing isolated environment named | No runtime/model/resource observation; no fabricated ready state |
 | Existing audio / voice | Workspace audio records; `POST /api/voice-baseline`, `{name, speaker_id, lines:[{id,text}]}` | Existing audio replacement; missing-bundle state for the Kokoro planner | Pinned versions, FFmpeg, disk and performance checks; ambience generation is not offered by the voice route |
 | 3D draft | Catalog `trellis-rgba`; existing `3d` Workspace records | Reuse a GLB fixture; missing RGBA and runtime readiness | Validate the uploaded reference and backend; inspect topology/scale/materials/import |
-| Restricted 3D | Catalog `hunyuan-draft`; `CLAUDE.md` restriction | Unsupported for this UK scenario | The prototype does not reinterpret or clear the recorded restriction |
+| Restricted 3D | Catalog `hunyuan-draft`; its recorded licence terms | Shown with its recorded terms; the owner decides | The prototype does not reinterpret or clear the recorded terms |
 
 Fixtures preserve real observation fields but have fictional IDs, hashes, sizes,
 timestamps and readiness. `media_bytes_verified` and `generation_submitted` are

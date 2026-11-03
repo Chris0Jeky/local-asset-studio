@@ -88,9 +88,9 @@ export const routes = {
   trellis: {name: 'Prepare a 3D draft', owner: 'TRELLIS.2 · transparent reference', state: 'blocked', presetId: 'trellis-rgba',
     description: 'The catalogue accepts a transparent reference. No suitable reference has been attached and runtime readiness is unknown.',
     prerequisites: ['Attach and validate an RGBA source', 'Observe environment, model and memory readiness']},
-  hunyuan: {name: 'Hunyuan3D 2.1', owner: 'Catalogue restriction', state: 'unsupported', presetId: 'hunyuan-draft',
-    description: 'The repository records a UK exclusion for this route. It is unavailable in this UK scenario.',
-    prerequisites: ['Choose an eligible route or reuse an existing draft; rights remain a separate check']}
+  hunyuan: {name: 'Hunyuan3D 2.1', owner: 'Recorded licence terms', state: 'blocked', presetId: 'hunyuan-draft',
+    description: 'The catalogue records the licence terms for this route. Whether to use it is a decision for the owner.',
+    prerequisites: ['Owner decision on the recorded terms; rights remain a separate check']}
 };
 export function resultAsset(slotId) {
   const slot = slots.find(s => s.id === slotId);
