@@ -218,8 +218,7 @@ choose", text list) with paragraph descriptions and no thumbnails.
 Deliver one picker: task lens filter (Create, Edit, Combine, Restyle, Pose, Animate, 3D) + search + family/modality
 filters; recipe cards with an example thumbnail (and a no-thumbnail variant), input shape icons (words, 1-3 pictures,
 pose skeleton), "about N s on this PC" or "no timing yet", readiness (ready / needs files / needs another
-environment, each with its reason), verified mark, a one-line licence note where relevant ("non-commercial",
-"excludes UK use"). Selecting a recipe when a draft exists shows a difference review: keeps your brief / replaces
+environment, each with its reason), verified mark, a one-line licence note where relevant ("non-commercial"). Selecting a recipe when a draft exists shows a difference review: keeps your brief / replaces
 settings / drops picture 2 / needs a pose picture; Cancel restores draft and focus. Keyboard: "/" search, arrows,
 Enter choose, Esc close. Frames: grid, filtered, empty result, difference review, 390x844.
 ```
