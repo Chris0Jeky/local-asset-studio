@@ -94,7 +94,7 @@ async def run(out):
             async def refresh():
                 await page.locator('[data-continue-refresh]').click();await expect(page.locator('[data-continue-refresh]')).to_be_enabled()
             async def scope(value):
-                await page.locator('[data-privacy-scope="'+value+'"]').click()
+                await page.evaluate("value=>StudioPrivacy.setScope(value)",value)
                 await expect(page.locator('#makeContinue')).not_to_have_attribute('open','')
             await page.goto(origin+'/#make',timeout=25000)
             await expect(page.locator('#makeContinue>summary')).to_be_visible()

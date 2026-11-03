@@ -129,6 +129,12 @@ function keepProductionDraft(el){if(!el?.id||!productionDetailPlan||!['TEXTAREA'
   if(productionDrafts.plan!==productionDetailPlan)productionDrafts={plan:productionDetailPlan,fields:{}};productionDrafts.fields[el.id]=el.value;}
 // `sent` maps field ids to the values an action sent; text typed while it was in flight is kept.
 function dropProductionDrafts(sent){if(!sent){productionDrafts={plan:null,fields:{}};return;}for(const [id,value] of Object.entries(sent))if(productionDrafts.fields[id]===value)delete productionDrafts.fields[id];}
+// A plan runs in the model environment it was prepared in. The refusal sits beside Start and Resume with its repair; the press is the person's choice and never generates.
+function planEnvironment(p){
+  if(!p.runtime_block)return'';
+  const name=typeof StudioEnvironment!=='undefined'&&p.backend_id?StudioEnvironment.nameOf(p.backend_id):'';
+  return'<p class="callout" role="status">'+(name?'Runs in '+esc(name)+', not the running environment.'+StudioEnvironment.markup(p.backend_id,name):esc(p.runtime_block))+'</p>';
+}
 function writeProductionDetail(plan,html){
   const detail=$('#productionDetail'),active=typeof document!=='undefined'?document.activeElement:null;
   if(productionDrafts.plan!==plan)dropProductionDrafts();
@@ -175,8 +181,8 @@ function renderProduction(){
     return;
   }
   const terminalReconciliation=p.can_reconcile_tracking===true||p.can_reconcile_batch===true,active=['queued','running','observing'].includes(p.state.status),trackingRecoveryPending=!terminalReconciliation&&(p.stages||[]).some(s=>{const d=s.job?.tracking_disposition;return (d?.status==='stopped'||d?.history?.some(event=>event.status==='stopped'))&&s.job?.status!=='completed';}),resumable=(p.kind==='voice'?p.voice_resume?.eligible===true:['interrupted','uncertain','stopped'].includes(p.state.status));
-  const resume=resumable?'<button data-project-action="resume" '+(trackingRecoveryPending?'disabled':'')+'>'+(terminalReconciliation?'Reconcile outcome only':p.kind==='voice'?'Resume unstarted take':'Reconcile and resume')+'</button>':'';
-  let html='<div class="section-title"><div><span class="eyebrow">'+esc(p.kind)+'</span><h2 title="'+esc(p.name)+'">'+esc(planHumanTitle(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p>'+(terminalReconciliation?'<p class="callout">Record the retained failed/partial outcome or local batch disposition. No retry or later stage will start; repairs require an explicit branch.</p>':'')+(trackingRecoveryPending?'<p class="muted">Resume is unavailable until the retained prompt observation reaches a terminal record. Its execution record and reservation remain available for inspection.</p>':'')+'<div class="production-actions">'+(p.state.status==='planned'?'<button class="primary" data-project-action="start">Start '+(p.kind==='comparison'?'comparison':p.kind==='voice'?'voice take':'export')+'</button>':'')+(active?'<button data-project-action="stop">Stop after current stage</button>':'')+resume+(p.kind==='comparison'&&!p.combine?'<button data-project-action="branch">Branch this study</button>':'')+(p.kind==='comparison'&&blindComparison?'<small class="muted">Full plan hidden while comparing blind. Reveal settings to download it.</small>':'<a href="/api/production/'+p.id+'/files/plan.json?download" download>Full plan</a>')+'</div>';
+  const resume=resumable?'<button data-project-action="resume" '+(trackingRecoveryPending||p.runtime_block&&!terminalReconciliation?'disabled':'')+'>'+(terminalReconciliation?'Reconcile outcome only':p.kind==='voice'?'Resume unstarted take':'Reconcile and resume')+'</button>':'';
+  let html='<div class="section-title"><div><span class="eyebrow">'+esc(p.kind)+'</span><h2 title="'+esc(p.name)+'">'+esc(planHumanTitle(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p>'+(terminalReconciliation?'<p class="callout">Record the retained failed/partial outcome or local batch disposition. No retry or later stage will start; repairs require an explicit branch.</p>':'')+(trackingRecoveryPending?'<p class="muted">Resume is unavailable until the retained prompt observation reaches a terminal record. Its execution record and reservation remain available for inspection.</p>':'')+'<div class="production-actions">'+(p.state.status==='planned'?'<button class="primary" data-project-action="start"'+(p.runtime_block?' disabled':'')+'>Start '+(p.kind==='comparison'?'comparison':p.kind==='voice'?'voice take':'export')+'</button>':'')+(active?'<button data-project-action="stop">Stop after current stage</button>':'')+resume+(p.kind==='comparison'&&!p.combine?'<button data-project-action="branch">Branch this study</button>':'')+(p.kind==='comparison'&&blindComparison?'<small class="muted">Full plan hidden while comparing blind. Reveal settings to download it.</small>':'<a href="/api/production/'+p.id+'/files/plan.json?download" download>Full plan</a>')+'</div>'+planEnvironment(p);
   if(p.kind==='comparison'){
     html+=planStageLine(p);
     const clock=p.state.time_budget;
@@ -457,7 +463,8 @@ async function startPreparedPlan(p){
   if(productionActionPending){productionMessage('Wait for the current action to finish. Nothing was sent.');return;}
   productionActionPending=true;try{await productionPlanAction(p,'start');}catch(err){productionMessage(err.message,true);}finally{productionActionPending=false;}
 }
-$('#productionDetail').onclick=async e=>{if(e.target.closest('[data-plan-comparison]')){$('#newExperiment').click();return;}const actionButton=e.target.closest('[data-project-action]'),action=actionButton?.dataset.projectAction,coordinatorAction=['start','stop','resume','extend-time'].includes(action);
+$('#productionDetail').onclick=async e=>{if(e.target.closest('[data-plan-comparison]')){$('#newExperiment').click();return;}
+  const swap=e.target.closest('[data-env-switch]');if(swap){StudioEnvironment.switchTo(swap.dataset.envSwitch,swap.dataset.envName,productionMessage,()=>refreshProduction(true));return;}const actionButton=e.target.closest('[data-project-action]'),action=actionButton?.dataset.projectAction,coordinatorAction=['start','stop','resume','extend-time'].includes(action);
   if(coordinatorAction&&productionActionPending){productionMessage('Wait for the current action to finish. Nothing was sent.');return;}
   if(coordinatorAction){productionActionPending=true;actionButton.disabled=true;}
   try{

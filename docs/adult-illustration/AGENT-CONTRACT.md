@@ -64,8 +64,8 @@ Explicit owner/runtime authority is still required for:
 - No real, identifiable person is a subject: a request naming, describing or referencing a real person's likeness
   (including a photograph of one) refuses. Fictional characters, including named franchise characters, are not real
   people (owner decision q-29, 23 September 2026).
-- Licence and territory terms recorded for a model or adapter (for example Hunyuan3D 2.1 and HY-Motion 1.0 excluding the
-  UK, NoobAI excluding commercial products) travel with every output that used it; the programme records them and never
+- Licence and territory terms recorded for a model or adapter (for example NoobAI's
+  clause excluding commercial products) travel with every output that used it; the programme records them and never
   infers clearance.
 - Explicitness is declared per route, not capped programme-wide (owner decision q-29, 23 September 2026).
 - An unsupported control remains unsupported.

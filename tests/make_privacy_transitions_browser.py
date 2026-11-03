@@ -83,7 +83,7 @@ class MakePrivacyTransitions(unittest.TestCase):
 
     def migration(self,kind,mode):
         selector,raw=self.draft(kind);self.storage_fault(mode)
-        self.page.select_option('#creationPrivacy','private');self.ready()
+        self.page.evaluate("StudioPrivacy.setCreation('private')");self.ready()
         with self.subTest(contract='visible wording retained'):
             self.assertEqual(self.page.locator(selector).input_value(),TEXT)
         with self.subTest(contract='prior recovery retained'):
@@ -97,7 +97,7 @@ class MakePrivacyTransitions(unittest.TestCase):
         if kind=='picture':
             with self.subTest(contract='source retained'):
                 self.assertEqual(self.page.locator('#makeComposer [data-ux-handoff]').get_attribute('data-ux-handoff'),'asset-1')
-        self.page.locator('[data-privacy-scope=all]').click();self.ready()
+        self.page.evaluate("StudioPrivacy.setScope('all')");self.ready()
         with self.subTest(contract='scope-only transition keeps unsaved wording'):
             self.assertEqual(self.page.locator(selector).input_value(),TEXT)
         self.page.evaluate('()=>{Storage.prototype.setItem=window.originalSetItem;}')
@@ -115,7 +115,7 @@ class MakePrivacyTransitions(unittest.TestCase):
 
     def test_successful_migration_retires_only_owned_regular_recovery(self):
         selector,_=self.draft('picture')
-        self.page.select_option('#creationPrivacy','private');self.ready()
+        self.page.evaluate("StudioPrivacy.setCreation('private')");self.ready()
         self.assertEqual(self.page.locator(selector).input_value(),TEXT)
         self.assertIsNone(self.page.evaluate('(key)=>sessionStorage.getItem(key)',DRAFT))
         self.assertIn(TEXT,self.page.evaluate('(key)=>sessionStorage.getItem(key)',DRAFT+'.private'))
@@ -128,10 +128,10 @@ class MakePrivacyTransitions(unittest.TestCase):
             if(this===sessionStorage&&key.startsWith('studio.make.scene.')&&key.endsWith('.private'))throw new DOMException('Synthetic scene quota','QuotaExceededError');
             return sceneSetItem.call(this,key,value);
           };}""")
-        self.page.select_option('#creationPrivacy','private');self.ready()
+        self.page.evaluate("StudioPrivacy.setCreation('private')");self.ready()
         self.assertEqual(self.page.locator(selector).input_value(),TEXT)
         self.page.locator(selector).fill(TEXT+' Still editing.')
-        self.page.locator('[data-privacy-scope=all]').click();self.ready()
+        self.page.evaluate("StudioPrivacy.setScope('all')");self.ready()
         self.assertEqual(self.page.locator(selector).input_value(),TEXT+' Still editing.')
         self.assertIn(TEXT+' Still editing.',self.page.evaluate('(key)=>sessionStorage.getItem(key)',DRAFT+'.private'))
 
@@ -150,7 +150,7 @@ class MakePrivacyTransitions(unittest.TestCase):
     def test_private_finder_does_not_replace_regular_preferences(self):
         self.draft('scene')
         regular=self.page.evaluate("localStorage.getItem('studio.make')")
-        self.page.select_option('#creationPrivacy','private');self.ready();self.finder()
+        self.page.evaluate("StudioPrivacy.setCreation('private')");self.ready();self.finder()
         self.assertEqual(self.page.evaluate("localStorage.getItem('studio.make')"),regular)
         self.assertNotIn(TEXT,self.page.evaluate('JSON.stringify(localStorage)'))
         self.assertEqual(self.page.evaluate('StudioPrivacy.creation()'),'private')

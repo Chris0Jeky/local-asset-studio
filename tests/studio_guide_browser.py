@@ -173,7 +173,7 @@ def run(out):
             page.once('dialog',lambda d:d.accept());page.click('#chooseGuideRecipe');page.wait_for_function('selected.id === "qwen-1ref"')
             page.wait_for_function('document.querySelector("#guideEvidence").dataset.state === "met"',timeout=15000)
             check(page.evaluate('selected.id')=='qwen-1ref','the coach selects the recommended recipe through the existing Create picker')
-            visit('workflow','check');page.click('#loadNodes');page.wait_for_function('!!WorkflowStudio.schema()')
+            visit('workflow','check');page.wait_for_function('!!WorkflowStudio.schema()')
             page.evaluate('(doc)=>WorkflowStudio.load(doc)',DOC);page.click('#compileWorkflow');page.wait_for_function('WorkflowStudio.authoringStatus().checked_valid === true')
             page.click('#checkGuideStep');check(page.locator('#guideEvidence').get_attribute('data-state')=='met','guide reads the existing current connection-check receipt')
             page.evaluate("{const d=WorkflowStudio.snapshot();d.nodes['1'].inputs.text='Changed';WorkflowStudio.change(d);}")

@@ -169,7 +169,7 @@ def run(output, app_root):
             evidence_screenshot(page, path=str(output/'all-recovery-shelf.png'))
             close_shelf(page)
             # Collection text has a separate typed journal and must follow its target.
-            page.locator('#creationPrivacy').select_option('private')
+            page.evaluate("StudioPrivacy.setCreation('private')")
             page.locator('#newCollection').click()
             page.locator('#collectionName').fill(COLLECTION)
             page.locator('#collectionDescription').fill(COLLECTION+' description')

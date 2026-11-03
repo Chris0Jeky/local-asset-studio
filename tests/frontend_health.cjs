@@ -41,6 +41,11 @@ const respondHealth = async payload => {
   let pending = vm.runInContext('health()', context); await Promise.resolve();
   await respondHealth({online: true, schema_available: true, missing_models: {}}); await pending;
   assert.deepEqual(state(), {online: true, workerAlive: true, schemaAvailable: true, healthError: false, disabled: false, text: 'ComfyUI connected', className: 'pill ready', recovery: 'Runtime recovery is disabled.', retryHidden: true}, 'online health response enables a ready preset');
+  // The pill names the running model environment and follows a switch (manage-2); an unnamed one keeps the plain wording.
+  element('#activeBackend').textContent = 'MOSS-Image · isolated'; vm.runInContext('updateReady();', context);
+  assert.equal(healthText, 'MOSS-Image · isolated · connected', 'the pill names the running environment');
+  element('#activeBackend').textContent = ''; vm.runInContext('updateReady();', context);
+  assert.equal(healthText, 'ComfyUI connected');
   const connectedWrites = healthWrites;
   vm.runInContext('updateReady();updateReady();', context);
   assert.equal(healthWrites, connectedWrites, 'unchanged readiness must not rewrite a live status');

@@ -458,7 +458,7 @@ function switchHarness(status='One model environment at a time. Switching never 
   const context={escape:s=>String(s).replace(/&/g,'&amp;'),byId:id=>id==='moss-t2i'?moss:null,tunedPreset:()=>moss,backendActive:'primary',backendSwitching:false,say:t=>said.push(t),CSS:{escape:String},state:{compare:false},
     render(){renders.push(1);fresh();},estimate(){estimates.push(1);},q:sel=>nodes[sel]||null,view:{querySelectorAll:()=>[nodes['[data-make-option="x"]']]},
     document:{querySelector:s=>s==='#backendChoice'?choice:s==='#switchBackend'?go:s==='#backendStatus'?{textContent:status}:options[/value="(\w+)"/.exec(s)?.[1]]||null},setInterval:fn=>{intervals.push(fn);return 1;},clearInterval(t){cleared.push(t);}};
-  const api=vm.runInNewContext(between('  const blockerMarkup=','  // Tune this look')+';({blockerMarkup,switchEnvironment})',context);
+  const api=vm.runInNewContext(between('  const blockerMarkup=','  // Tune this look')+';({blockerMarkup,switchEnvironment,cardWhy,envBanner})',context);
   return {api,context,moss,said,clicks,intervals,cleared,renders,estimates,choice,go,nodes};
 }
 test('a look on another model environment offers an explicit switch; the press clicks the environment switch once and never generates (moss-look-1019)',()=>{
@@ -467,6 +467,12 @@ test('a look on another model environment offers an explicit switch; the press c
   assert.match(html,/^Runs in MOSS-Image · isolated, not the running Main library\./);assert.match(html,/data-make-switch="moss"[^>]*>Switch to MOSS-Image · isolated</);assert.match(html,/Stops Main library\. About a minute\. Nothing is generated\./);
   assert.doesNotMatch(api.blockerMarkup({},'Needs 1 model file first: open Models & setup.','moss-t2i'),/data-make-switch/,'only the environment refusal offers a switch');
   assert.doesNotMatch(api.blockerMarkup({},'Switch to MOSS-Image · isolated to use this recipe. And more.','moss-t2i'),/data-make-switch/,'a reworded refusal is not guessed at');
+  // One banner above the gallery carries the switch; a card keeps only the "Runs in X" tag (QA create-12).
+  const card=api.cardWhy({},moss.runtime_block,'moss-t2i');assert.equal(card,'Runs in MOSS-Image · isolated');assert.doesNotMatch(card,/data-make-switch/);
+  assert.match(api.cardWhy({},'Needs 1 model file first: open Models & setup.','moss-t2i'),/Models &amp; setup<\/a>|Models &amp; setup/,'a non-environment reason keeps its words');
+  const banner=api.envBanner([[moss,moss.runtime_block],[moss,moss.runtime_block],[null,'Needs 1 model file first: open Models & setup.']]);
+  assert.match(banner,/^<p class="make-env-banner"[^>]*><b>2 looks run in MOSS-Image · isolated, not the running Main library\.<\/b>/);assert.equal(banner.match(/data-make-switch=/g).length,1,'one switch for every look that needs it');
+  assert.equal(api.envBanner([[null,'Needs 1 model file first: open Models & setup.']]),'','no banner when no look needs another environment');
   assert.deepEqual(clicks,[],'building the markup switches nothing');
   go.disabled=true;api.switchEnvironment('moss');assert.deepEqual(clicks,[]);assert.match(said.at(-1),/operation is running/);
   go.disabled=false;api.switchEnvironment('moss');assert.deepEqual(clicks,['moss'],'one click on the environment switch');assert.match(said.at(-1),/Switching to MOSS-Image · isolated… Nothing is generated/);

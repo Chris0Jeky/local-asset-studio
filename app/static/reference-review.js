@@ -86,6 +86,7 @@
     });
   }
   function showReport(){
+    const fold=el('referenceFold');if(fold)fold.open=true;
     el('rr-review').hidden=false;el('rr-summary').textContent=report.answer.summary;el('rr-questions').replaceChildren();
     for(const text of report.answer.assumptions)el('rr-questions').append(n('p','Assumption: '+text));
     for(const text of report.answer.questions)el('rr-questions').append(n('p','Unanswered: '+text));

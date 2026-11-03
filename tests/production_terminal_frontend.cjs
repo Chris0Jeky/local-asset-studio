@@ -15,6 +15,9 @@ const render=value=>vm.runInContext(`productionPlans=[${JSON.stringify(value)}];
     render({...project,stages:[{...project.stages[0],job:{...project.stages[0].job,status}}]});
     assert.match($('#productionDetail').innerHTML,/<button data-project-action="resume" >Reconcile outcome only<\/button>/);
     assert.match($('#productionDetail').innerHTML,/No retry or later stage/);
+    // Recording an outcome needs no environment: the server reconciles before its environment check (PR #2004 review).
+    render({...project,runtime_block:'Switch to MOSS-Image · isolated before starting it.',stages:[{...project.stages[0],job:{...project.stages[0].job,status}}]});
+    assert.match($('#productionDetail').innerHTML,/<button data-project-action="resume" >Reconcile outcome only<\/button>/);
     assert.equal(requests.length,0,'Rendering never reconciles or generates');
   }
   const button={dataset:{projectAction:'resume'},disabled:false},event={target:{closest:s=>s==='[data-project-action]'?button:null}};

@@ -78,7 +78,7 @@
     const hadFocus = document.activeElement === $('#loadNodes'); $('#wfAllTools .wf-toolbar')?.append($('#loadNodes'));
     if (hadFocus) { const state = $('#schemaState'); state.tabIndex = -1; state.focus({preventScroll: true}); }
     nodeCatalog(); render();
-    status(doc && doc.schema_sha256 !== schema.schema_sha256 ? 'Node definitions changed. Review the draft and explicitly accept the refreshed schema; compilation remains blocked until then.' : 'Installed nodes loaded. No model job was submitted.');
+    status(doc && doc.schema_sha256 !== schema.schema_sha256 ? 'Node definitions changed. Review the draft and explicitly accept the refreshed schema; compilation remains blocked until then.' : 'Installed nodes loaded. Open a recipe or an empty workflow to start.');
   }
   function position(id, index) { return doc.positions[id] || [30 + (index % 3) * 285, 28 + Math.floor(index / 3) * 130]; }
   const NODE_W = 245, NODE_H = 82, ZOOM_MIN = 0.4, ZOOM_MAX = 2.5, PAD = 44;
@@ -301,6 +301,11 @@
     $('#documentStats').textContent = doc ? `${Object.keys(doc.nodes).length} nodes · revision ${doc.revision}` : 'No draft';
     if (!checked) $('#workflowDiagnostics').replaceChildren();
     diagram(); renderNodeList(); renderInspector();
+    // A disabled control names the step it waits on (title), refreshed with every render.
+    const why = (id, reason) => { const n = $('#' + id); if (n) n.title = n.disabled ? reason : ''; }, start = 'Open a recipe or an empty workflow first.';
+    why('undoWorkflow', 'Nothing to undo.'); why('redoWorkflow', 'Nothing to redo.'); why('compileWorkflow', !doc ? start : 'Load the installed nodes first.');
+    why('rebaseWorkflow', !doc ? start : !schema ? 'Load the installed nodes first.' : 'The draft already matches the loaded nodes.'); why('saveWorkflow', start);
+    why('exportGraph', !doc ? start : 'Check connections first, and fix any issues.'); why('canvasFit', 'Add a node first.'); why('canvasReset', 'Add a node first.');
     document.dispatchEvent(new Event('workflow:render'));
   }
   async function goals() {
@@ -308,8 +313,8 @@
     data.guides.forEach((guide, index) => {
       const card = el('article', null, {class: 'wf-goal'}); card.append(el('small', `PATH ${String(index + 1).padStart(2, '0')} · ${guide.steps.length} STEPS`), el('h3', guide.title), el('p', guide.summary));
       function href(step) { const url = new URL(guide.steps[step].route, document.baseURI); url.searchParams.set('guide', guide.id); url.searchParams.set('step', String(step)); if (guide.steps[step].id) url.searchParams.set('stage', guide.steps[step].id); return url.pathname + url.search + url.hash; }
-      card.append(el('a', 'Start guided path →', {href: href(0)}));
-      try { const saved = JSON.parse(localStorage.getItem('studio.guide.' + guide.id)); const resume = saved?.stage ? guide.steps.findIndex(s => s.id === saved.stage) : saved?.step; if (Number.isInteger(resume) && resume > 0 && resume < guide.steps.length) card.append(el('a', `Resume at step ${resume + 1} →`, {href: href(resume)})); } catch (_) {}
+      card.append(el('a', 'Start guided path →', {href: href(0), 'aria-label': 'Start guided path: ' + guide.title}));
+      try { const saved = JSON.parse(localStorage.getItem('studio.guide.' + guide.id)); const resume = saved?.stage ? guide.steps.findIndex(s => s.id === saved.stage) : saved?.step; if (Number.isInteger(resume) && resume > 0 && resume < guide.steps.length) card.append(el('a', `Resume at step ${resume + 1} →`, {href: href(resume), 'aria-label': `Resume ${guide.title} at step ${resume + 1}`})); } catch (_) {}
       host.append(card);
     });
   }
@@ -348,6 +353,8 @@
       fieldEditor(host, id, node, spec);
     }
   });
+  // Opening the page reads the cached node catalog (a read-only GET); a failure leaves the Refresh button to retry.
+  loadSchema().catch(error => status('Installed nodes unavailable: ' + error.message + ' Use Refresh nodes to retry.'));
   goals().catch(error => { $('#goalCards').textContent = 'Guides unavailable: ' + error.message; });
   fetch('/api/catalog').then(r => { if (!r.ok) throw Error('Recipe catalog unavailable'); return r.json(); }).then(data => { for (const preset of data.presets || []) $('#presetChoice').append(el('option', preset.name || preset.id, {value: preset.id})); }).catch(error => status(error.message));
 })();

@@ -24,16 +24,17 @@ function updateDraftControls(){
   const notice=$('#avDraftNotice');if(notice)notice.innerHTML=draftNotice();
   const dirty=hasDrafts(),busy=avMutationBusy,shots=avDocument?.project?.shots||[],index=avSelection?.section==='shots'?shots.findIndex(clip=>clip.id===avSelection.id):-1;
   for(const button of document.querySelectorAll('#avContent button')){
-    const d=button.dataset;let disabled=busy;
-    if(d.renderAction==='render')disabled||=dirty||!avDocument?.capabilities?.render_ready;
-    else if(d.renderAction==='export'||Object.hasOwn(d,'remove')||Object.hasOwn(d,'restore')||Object.hasOwn(d,'split'))disabled||=dirty;
-    else if(d.add)disabled||=dirty||!sectionSources(d.add).length;
-    else if(d.move)disabled||=dirty||index<0||(Number(d.move)<0?index===0:index===shots.length-1);
-    button.disabled=disabled;
+    // Each disabled button carries its reason in its title.
+    const d=button.dataset;let disabled=busy,why=busy?'Working…':'';const block=(cond,text)=>{if(cond&&!disabled){disabled=true;why=text;}},save='Save or discard your clip changes first.';
+    if(d.renderAction==='render'){block(dirty,save);block(!avDocument?.capabilities?.render_ready,capabilityText(avDocument?.capabilities));}
+    else if(d.renderAction==='export'||Object.hasOwn(d,'remove')||Object.hasOwn(d,'restore')||Object.hasOwn(d,'split'))block(dirty,save);
+    else if(d.add){block(dirty,save);block(!sectionSources(d.add).length,'No unused sources of this kind in your Library.');}
+    else if(d.move){block(dirty,save);block(index<0,'Select a shot first.');block(Number(d.move)<0?index===0:index===shots.length-1,Number(d.move)<0?'Already first.':'Already last.');}
+    button.disabled=disabled;button.title=disabled?why:'';
   }
   for(const input of document.querySelectorAll('[data-field]'))input.disabled=busy;
-  for(const selector of ['#newScene','#reloadScene','#refreshScenes']){const button=$(selector);if(button)button.disabled=busy||(selector==='#newScene'&&dirty);}
-  for(const button of document.querySelectorAll('[data-project]'))button.disabled=busy||dirty;
+  for(const selector of ['#newScene','#reloadScene','#refreshScenes']){const button=$(selector);if(button){button.disabled=busy||(selector==='#newScene'&&dirty);button.title=button.disabled?(busy?'Working…':'Save or discard your clip changes first.'):'';}}
+  for(const button of document.querySelectorAll('[data-project]')){button.disabled=busy||dirty;button.title=button.disabled?(busy?'Working…':'Save or discard your clip changes first.'):'';}
 }
 function beginOperation(){if(avMutationBusy)return false;avMutationBusy=true;avReadEpoch++;updateDraftControls();return true;}
 function endOperation(){avMutationBusy=false;updateDraftControls();}
@@ -53,7 +54,7 @@ function renderProjects(){
 }
 function updatePolledStatus(document){const project=avProjects.find(item=>item.id===document.id);if(project){project.status=document.status;project.render_stale=!!document.render?.stale;renderProjects();}const status=$('#avDocumentStatus');if(status)status.textContent='Revision '+avDocument.revision+' · '+(avDocument.status||'saved');}
 function capabilityText(capabilities){if(!capabilities)return '';
-  const missing=capabilities.missing_tools||[];return capabilities.render_ready?'Rendering is ready locally.':missing.length?'Render unavailable: '+missing.join(', ')+'.':'Render readiness is unavailable.';
+  const missing=capabilities.missing_tools||[];return capabilities.render_ready?'':missing.length?'Render unavailable: '+missing.join(', ')+'.':'Render readiness is unavailable.';
 }
 async function refreshProjects(preferred=null){
   const epoch=avReadEpoch,data=await avApi('/api/av');if(epoch!==avReadEpoch)return;avProjects=data.projects||[];$('#avCapabilities').textContent=capabilityText(data.capabilities);
@@ -150,7 +151,7 @@ $('#avContent').onclick=async event=>{
   if(event.target.closest('#documentReload')){await loadScene(avId);return;}
   if(event.target.closest('[data-discard-drafts]')){clearDrafts();renderDocument();avMessage('Discarded unsaved clip changes.');return;}
   const save=event.target.closest('[data-save]');if(save){const [section,id]=save.dataset.save.split(':');avSelection={section,id};await mutate({action:'edit',section,clip_id:id,changes:collectChanges(section,id)},()=>clearDraft(section,id));return;}
-  const remove=event.target.closest('[data-remove]');if(remove){const [section,id]=remove.dataset.remove.split(':');avSelection={section,id};await mutate({action:'remove',section,clip_id:id},()=>clearDraft(section,id));return;}
+  const remove=event.target.closest('[data-remove]');if(remove){const [section,id]=remove.dataset.remove.split(':');avSelection={section,id};if(!requireSavedDocument('removing a clip')||!confirm('Remove this clip from the scene? Restore an earlier revision from Revision history to bring it back.'))return;await mutate({action:'remove',section,clip_id:id},()=>clearDraft(section,id));return;}
   const add=event.target.closest('[data-add]');if(add){const section=add.dataset.add,source=$('[data-add-source="'+section+'"]').value;await mutate({action:'add',section,asset_key:source});return;}
   const move=event.target.closest('[data-move]');if(move&&avSelection?.section==='shots'){const clips=avDocument.project.shots,index=clips.findIndex(clip=>clip.id===avSelection.id);await mutate({action:'move',clip_id:avSelection.id,index:index+Number(move.dataset.move)});return;}
   if(event.target.closest('[data-split]')){const [section,id]=$('#splitClip').value.split(':'),at=integer($('#splitAt').value,'Split position');avSelection={section,id};await mutate({action:'split',section,clip_id:id,at});return;}

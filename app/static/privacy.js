@@ -8,7 +8,8 @@
     const saved = JSON.parse(sessionStorage.getItem(stateKey) || 'null');
     if (saved && typeof saved.sessionPrivate === 'boolean' && ['regular','private','all'].includes(saved.view)) {
       sessionPrivate = saved.sessionPrivate; view = saved.view;
-      if (['regular','private'].includes(saved.override)) override = saved.override;
+      // Only a private override survives a reload: with no per-creation control, a saved 'regular' one would hide behind a checked Private toggle.
+      if (saved.override === 'private') override = saved.override;
     }
   } catch (_) { /* A blocked preference store does not change safe defaults. */ }
   const creation = () => override || (sessionPrivate ? 'private' : 'regular');
@@ -17,17 +18,19 @@
     return value;
   }
   function render() {
-    const session = document.querySelector('#privateSession'), draft = document.querySelector('#creationPrivacy');
-    if (session) session.checked = sessionPrivate;
-    if (draft) draft.value = override || 'session';
+    const session = document.querySelector('#privateSession');
+    if (session) {
+      // The toggle shows what the next creation is; unchecking it clears a private override through setSession.
+      session.checked = creation() === 'private';
+      session.parentElement.title = 'New creations are ' + creation();
+    }
+    // Off the listing views the filter hides only while it shows the session's own scope; a changed one stays visible (PR #2003 review).
+    const group = document.querySelector('.privacy-views');
+    if (group) group.hidden = group.dataset.listing !== 'true' && view === (sessionPrivate ? 'private' : 'regular');
     document.querySelectorAll('[data-privacy-scope]').forEach(button => {
       button.setAttribute('aria-pressed', String(button.dataset.privacyScope === view));
       button.classList.toggle('active', button.dataset.privacyScope === view);
     });
-    const status = document.querySelector('#privacyStatus');
-    if (status) status.textContent = creation() === 'private'
-      ? 'This creation is private. It stays out of Regular history and Library.'
-      : 'This creation is regular.';
   }
   function change(reason, update) {
     const previousCreation = creation(), previousScope = view;
@@ -108,11 +111,10 @@
     url.searchParams.set('privacy','private');
     return url.pathname + url.search + url.hash;
   }
-  window.StudioPrivacy = {creation, scope:()=>view, capture, submitted, setSession, setCreation, setScope,
+  window.StudioPrivacy = {creation, scope:()=>view, render, capture, submitted, setSession, setCreation, setScope,
     storageKey, storage, allows, headers, fetch:scopedFetch, mediaUrl};
   function wire() {
     document.querySelector('#privateSession')?.addEventListener('change', event => setSession(event.target.checked));
-    document.querySelector('#creationPrivacy')?.addEventListener('change', event => setCreation(event.target.value));
     document.querySelectorAll('[data-privacy-scope]').forEach(button => button.addEventListener('click', () => setScope(button.dataset.privacyScope)));
     render();
   }

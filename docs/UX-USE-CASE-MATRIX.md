@@ -22,6 +22,22 @@ y=670 to y=280. Fixture tour, before (origin/main 2f83d6a2) and after:
 All 31 fixture journeys pass, 0 generation submissions beyond the named allowance. The word count rises where a journey
 now reads the open results column; no instruction was added.
 
+## Compact privacy control, 3 November 2026 (QA privacy slice)
+
+The session's `Private` toggle now sits in the header, with its status in a tooltip and the existing
+explanation behind `About`. Narrow screens use a 32 px row. The history filter appears below the
+Library and Compare headings only; changing views preserves its saved scope. The global creation
+override select is removed; its public API and storage semantics remain available.
+
+The final synthetic fixture tour passed **31/31 journeys**, with zero page errors. Step, click, key,
+wait, page-switch and dead-end counts matched the earlier run. For
+`guided-edit-or-preserve-character`, the final visible instruction-word count fell from **571 to 527**.
+The test still visits all six stages and submits no generation. The tour's one synthetic job remains
+confined to `make-generate-then-keep`; no live Studio or model was used.
+
+The privacy layout checks also passed at 320, 390, 900, 1100 and 1440 px, including keyboard access to
+the disclosure and retained filter scope after reload. These are browser checks, not human acceptance.
+
 ## Review desk Grid: three engines by two seeds at a glance, 2 November 2026 (#1204)
 
 The Grid itself shipped in #1691, #1695 and #1700, and Combine's Grid in #1720. This adds the journey #1204 asked for, run
