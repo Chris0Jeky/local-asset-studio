@@ -56,7 +56,7 @@ def run(output):
                         def ready(page):
                             page.goto(base+'/prompt-lab.html');expect(page.locator('#pp-create')).to_be_enabled()
                             expect(page.locator('#savedBriefsFold')).not_to_have_attribute('open','')
-                            assert page.locator('main > :first-child').get_attribute('id')=='reference-analyze'
+                            assert page.locator('main > :first-child').evaluate("(e)=>!!e.querySelector('#brief')");expect(page.locator('#referenceFold')).not_to_have_attribute('open','')
                             assert page.locator('#savedBriefsFold').evaluate("(e)=>!!(document.getElementById('brief').compareDocumentPosition(e)&Node.DOCUMENT_POSITION_FOLLOWING)")
                             page.screenshot(path=str(output/f'first-screen-{width}.png'))
                             page.locator('#savedBriefsFold > summary').click()
