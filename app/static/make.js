@@ -145,6 +145,11 @@
         say('Did not switch to '+name+': '+(why&&!/^One model environment at a time/.test(why)?why:'the Studio refused. Models & setup shows why.')+' Nothing was generated.');}
       else if(Date.now()-started>240000){clearInterval(switchWatch);say('The switch to '+name+' has not finished. Models & setup shows its progress.');}},1000);}
 
+  // One banner above the gallery names each other environment the listed looks run in and carries the one switch; a card keeps only a "Runs in X" tag.
+  const cardWhy=(look,text,id=tunedPreset(look)?.id||look.body.preset_id)=>{const p=byId(id);return switchMarkup(p,text)?'Runs in '+escape(envTarget(p)):blockerMarkup(look,text,id);};
+  function envBanner(rows){const by=new Map();for(const [p,text] of rows)if(switchMarkup(p,text)){const e=by.get(envOf(p))||{p,text,n:0};e.n++;by.set(envOf(p),e);}
+    return[...by.values()].map(({p,text,n})=>'<p class="make-env-banner" role="status"><b>'+n+' look'+(n>1?'s':'')+' run'+(n>1?'':'s')+' in '+escape(envTarget(p))+(running()?', not the running '+escape(envName(running())):'')+'.</b>'+switchMarkup(p,text)+'</p>').join('');}
+
   // Tune this look (owner ask, 16 Oct 2026): see and change the look's model, adapters, steps, negative and seed without the
   // full editor. Folded shut by default. Tuning only changes the controls Generate sends: the server's allow-list, adapter
   // inventory and ranges still decide, and nothing here submits. A tune belongs to its look and travels with each run.
@@ -299,7 +304,7 @@
     const look=current();if(!look)return;if(redraw){renderTune();renderSweep();return;}
     keepTune(look);sweepPaint();const sum=q('#makeTuneSum'),why=lookWhy(look),button=q('#makeGenerate');if(sum)sum.textContent=tuneSummary(look,state.tune[look.id])||asMade(look);
     const draftBox=q('#makeDraftBox');if(draftBox)draftBox.innerHTML=draftMarkup(look);
-    if(button&&!state.busy){button.disabled=!!why;button.title=why;}const said=q('#makeWhy');if(said){said.innerHTML=why?blockerMarkup(look,why,whyPreset(look)):'';said.dataset.why=why;}estimate();
+    if(button&&!state.busy){button.disabled=!!why;button.title=why;}const said=q('#makeWhy');if(said){said.innerHTML=why?blockerMarkup(look,why,whyPreset(look)):'';said.dataset.why=(why||'')+'|'+(typeof backendActive!=='undefined'&&backendActive||'');}estimate();
   }
   function tuneInput(target){
     const look=current();if(!look)return false;const t=tuneOf(look),row=s=>t.rows.find(r=>r.slot===s);
@@ -473,7 +478,9 @@
   placeStatus();
   // A look picture that is missing on this PC (local-only examples) shows the blank mark, not a broken image. Only look pictures:
   // a chosen picture of yours (.make-picked) keeps its <img>, so a slow or failed thumbnail never removes it.
-  view.addEventListener('error',e=>{if(e.target.matches?.('.make-look img,.make-chosen:not(.make-picked)>img')){const blank=document.createElement('span');blank.className='make-look-blank';blank.setAttribute('aria-hidden','true');blank.textContent='✦';e.target.replaceWith(blank);}},true);
+  view.addEventListener('error',e=>{if(e.target.matches?.('.make-look img,.make-chosen:not(.make-picked)>img')){const card=e.target.matches('.make-look img'),blank=document.createElement('span');blank.className='make-look-blank';if(card)blank.innerHTML=blankMarkup('The preview picture did not load.');else{blank.setAttribute('aria-hidden','true');blank.textContent='✦';}e.target.replaceWith(blank);}},true);
+  // A look card with no picture says why; the small chosen-look strip keeps the bare mark.
+  const blankMarkup=why=>'<span aria-hidden="true">✦</span><small>'+why+'</small>';
   function renderGoals(){
     q('#makeGoals').innerHTML=GOALS.map((g,i)=>(i===5?'<div class="make-goal-group" role="group" aria-labelledby="makePictureGoals"><span class="make-goal-break" id="makePictureGoals">From a picture you have</span>':'')+'<button type="button" role="radio" tabindex="'+(g.id===state.goal?'0':'-1')+'" aria-checked="'+(g.id===state.goal)+'" data-make-goal="'+g.id+'"><b>'+escape(g.name)+'</b><small>'+escape(g.hint)+'</small></button>').join('')+'</div>';
   }
@@ -490,12 +497,13 @@
     const compare=state.compare;if(compare)state.compareLooks=state.compareLooks.filter(id=>list.some(l=>l.id===id));
     const on=l=>compare?state.compareLooks.includes(l.id):l.id===state.look;
     const cards=list.map(l=>{const p=presetFor(l),thumb=thumbOf(l),why=compare?blocker(l,p):blocker(l);return '<article class="make-look'+(on(l)?' active':'')+'"><button type="button" class="make-look-select" data-make-look="'+escape(l.id)+'" role="'+(compare?'checkbox':'radio')+'" tabindex="'+(compare||l.id===(state.look||list[0]?.id)?'0':'-1')+'" aria-checked="'+on(l)+'">'
-      +(thumb?'<img src="'+escape(thumb)+'" alt="" loading="lazy">':'<span class="make-look-blank" aria-hidden="true">✦</span>')
-      +'<span class="make-look-text"><b>'+escape(l.name)+'</b>'+recipeLine(l)+pace(l)+tested(l)+recordSlot(l)+licence(p)+bestFor(l)+(tried(l)?'<small>Run on this PC before</small>':'')+'</span></button>'+(why?'<small class="make-warn make-look-text">'+blockerMarkup(l,why)+'</small>':'')+'</article>';}).join('');
+      +(thumb?'<img src="'+escape(thumb)+'" alt="" loading="lazy">':'<span class="make-look-blank">'+blankMarkup('No preview picture yet: nobody has run this look here.')+'</span>')
+      +'<span class="make-look-text"><b>'+escape(l.name)+'</b>'+recipeLine(l)+pace(l)+tested(l)+recordSlot(l)+licence(p)+bestFor(l)+(tried(l)?'<small>Run on this PC before</small>':'')+'</span></button>'+(why?'<small class="make-warn make-look-text">'+cardWhy(l,why,compare?p?.id:undefined)+'</small>':'')+'</article>';}).join('');
+    const banner=envBanner(list.map(l=>{const p=compare?presetFor(l):tunedPreset(l);return[p,blocker(l,p)];}));
     const chosen=current();
     if(chosen&&!state.picking&&!compare){const p=presetFor(chosen),thumb=thumbOf(chosen);
       body.innerHTML='<div class="make-chosen">'+(thumb?'<img src="'+escape(thumb)+'" alt="">':'<span class="make-look-blank" aria-hidden="true">✦</span>')+'<div><small>Look</small><b>'+escape(chosen.name)+'</b>'+recipeLine(chosen)+pace(chosen)+tested(chosen)+recordSlot(chosen)+licence(p)+bestFor(chosen)+'</div><button type="button" data-make-change>Change look</button></div><div id="makeComposer"></div>';}
-    else body.innerHTML='<div class="make-step"><span>1</span><h2>'+(compare?'Choose two or three looks to compare':'Choose a look')+'</h2>'+(chosen&&!compare?'<button type="button" class="make-link" data-make-keep-look>Stay with '+escape(chosen.name)+'</button>':'')+(list.length>1?'<button type="button" class="make-link" data-make-compare aria-pressed="'+compare+'">'+(compare?'Back to one look':'Compare looks')+'</button>':'')+'</div><div class="make-looks" role="'+(compare?'group':'radiogroup')+'" aria-label="'+(compare?'Looks to compare':'Look')+'">'+cards+'</div><div id="makeComposer"></div>';
+    else body.innerHTML='<div class="make-step"><span>1</span><h2>'+(compare?'Choose two or three looks to compare':'Choose a look')+'</h2>'+(chosen||compare?'':'<small class="make-step-hint">Pick one, then describe your picture. Each picture is a real run on this PC; yours will differ.</small>')+(chosen&&!compare?'<button type="button" class="make-link" data-make-keep-look>Stay with '+escape(chosen.name)+'</button>':'')+(list.length>1?'<button type="button" class="make-link" data-make-compare aria-pressed="'+compare+'">'+(compare?'Back to one look':'Compare looks')+'</button>':'')+'</div>'+banner+'<div class="make-looks" role="'+(compare?'group':'radiogroup')+'" aria-label="'+(compare?'Looks to compare':'Look')+'">'+cards+'</div><div id="makeComposer"></div>';
     renderComposer();layout();
   }
   // A look names its model and LoRA count on its card (owner, 19 Oct: someone choosing a model should see which look uses which).
@@ -510,7 +518,7 @@
   const shapeDefault=look=>('width' in look.body.controls||presetFor(look)?.width)&&SHAPE_FOR[state.goal]||'design';
   function renderComposer(){
     const box=q('#makeComposer'),look=current();if(!box)return;if(state.compare){renderCompareComposer();return;}
-    if(!look){box.innerHTML='<p class="make-hint">Choose a look above. Each picture is one real run of that look on this PC; yours will differ.</p>';placeStatus();return;}
+    if(!look){box.innerHTML='';placeStatus();return;}
     // A slow look starts at one picture: four Krea pictures are about forty minutes, which nobody should get by default.
     const p=presetFor(look),why=blocker(look),example=look.body.scene_example||'',options=look.body.options||[],slow=speed(look)[0]==='slow';
     box.innerHTML='<div class="make-step"><span>2</span><h2>Describe your picture</h2></div><div class="make-composer"><div class="make-compose-main">'
@@ -602,16 +610,16 @@
   const rough=e=>e?.confidence==='none',basis=e=>rough(e)?', a rough guess: nothing like it has run on this PC yet.':', from earlier runs on this PC.';
   function syncOperation(){
     placeStatus();statusEl.textContent=state.status;
-    const g=goal(),why=g.intent?goalBlocker(g,goalRoute(g)):state.compare?compareBlocker():current()&&lookWhy(current());
+    const g=goal(),why=g.intent?goalNow(g,goalRoute(g)):state.compare?compareBlocker():current()&&lookWhy(current());
     const generate=q('#makeGenerate'),editor=q('#makeEditor');if(generate)generate.disabled=state.busy||!!why;if(editor)editor.disabled=state.busy;
     // The blocker line stays in the page as a status region; it is rewritten only when the reason changes, so it is announced once.
     if(generate){if(why)generate.setAttribute('aria-describedby','makeWhy');else generate.removeAttribute('aria-describedby');}
-    const said=q('#makeWhy');if(said&&said.dataset.why!==(why||'')){said.dataset.why=why||'';said.innerHTML=!why?'':g.intent?goalWhy(goalRoute(g),why):state.compare?escape(why):blockerMarkup(current(),why,whyPreset(current()));}
+    const said=q('#makeWhy'),key=(why||'')+'|'+(typeof backendActive!=='undefined'&&backendActive||'');if(said&&said.dataset.why!==key){said.dataset.why=key;said.innerHTML=!why?'':g.intent?goalWhy(goalRoute(g),why):state.compare?escape(why):blockerMarkup(current(),why,whyPreset(current()));}
   }
   const say=text=>{state.status=text;state.missing='';syncOperation();};
   // A refusal that names a missing answer clears itself once the answer is given (audit N10: a stale "Choose the pose first").
   function sayMissing(text){say(text);state.missing=text;}
-  function settleMissing(){if(!state.missing||state.status!==state.missing)return;const g=goal(),m=g.intent?goalMissing(g,goalRoute(g),state.form):q('#makeScene')?.value.trim()?null:[0,SCENE_FIRST];if(m?.[1]!==state.missing)say('');}
+  function settleMissing(){syncOperation();if(!state.missing||state.status!==state.missing)return;const g=goal(),m=g.intent?goalMissing(g,goalRoute(g),state.form):q('#makeScene')?.value.trim()?null:[0,SCENE_FIRST];if(m?.[1]!==state.missing)say('');}
   // After a press the new card comes into view: on a phone it sits below the Generate bar (audit N2).
   const showRun=id=>q('[data-run="'+CSS.escape(id)+'"]')?.scrollIntoView({block:'nearest'});
   async function generate(){
@@ -960,6 +968,8 @@
     if(!ready())return'Recipes are still loading.';if(!p)return'No recipe on this PC can do this yet.';if(p.runtime_block)return p.runtime_block;
     const m=missingFor(p);return m.length?'Needs '+m.length+' model file'+(m.length>1?'s':'')+' first: open Models & setup.':'';
   }
+  // Generate is disabled, with this reason beside it, whenever pressing it would only answer "fill in X first".
+  const goalNow=(g,p)=>goalBlocker(g,p)||(g.intent==='repair'||!ready()||!p?'':goalMissing(g,p,state.form)?.[1])||'';
   const goalWhy=(p,text)=>escape(text).replace('Models &amp; setup','<a href="/#models?need='+escape(encodeURIComponent(p?.id||''))+'">Models &amp; setup</a>');
   function fillFields(g,p){return p?SC().fills(p,p.continuation_prompt).map((f,i)=>{const m=SC().fillMeaning(f.placeholder);
     if(g.intent==='restyle')return{key:'colours',label:'Colours to keep (optional)',hint:'black hair, a red robe with gold trim',placeholder:f.placeholder,optional:true};
@@ -1083,7 +1093,7 @@
     return '<svg viewBox="0 0 100 150" aria-hidden="true">'+P.LIMBS.map(([a,b])=>{const s=at(a),e=at(b);return s&&e?'<line x1="'+s[0]+'" y1="'+s[1]+'" x2="'+e[0]+'" y2="'+e[1]+'" stroke="'+P.COLORS[b]+'"/>':'';}).join('')+'</svg>';}
   function renderGoalComposer(g){
     const box=q('#makeComposer'),a=state.pick;if(!box||!a)return;
-    const p=goalRoute(g),why=goalBlocker(g,p),f=state.form,fields=fillFields(g,p),focus=box.contains(document.activeElement)?document.activeElement.id:'';
+    const p=goalRoute(g),why=goalNow(g,p),f=state.form,fields=fillFields(g,p),focus=box.contains(document.activeElement)?document.activeElement.id:'';
     const field=(key,label,hint,rows=2,max=600)=>'<label class="make-field" for="makeF-'+key+'">'+escape(label)+'</label><textarea id="makeF-'+key+'" data-make-field="'+key+'" rows="'+rows+'" maxlength="'+max+'" placeholder="'+escape(hint)+'">'+escape(f[key]??'')+'</textarea>';
     const fill=x=>field(x.key,x.label,x.hint);
     let main='',side='';

@@ -260,7 +260,9 @@ def run(shots):
         assert page.locator('#makePictures [data-make-pick]').count() == 1, 'search narrows the grid'
         page.locator('[data-make-pick="asset-1"]').click(); page.wait_for_selector('#makeStyleLooks')
         assert page.locator('[data-make-style="look-preset-realvis"]').count() == 1
-        sent = generate(); assert not sent and 'Choose the look' in page.locator('#makeStatus').inner_text(), 'no look, no job'
+        assert page.locator('#makeGenerate').is_disabled() and 'Choose the look' in page.locator('#makeWhy').inner_text(), 'no look, Generate disabled with its reason'
+        before = len(jobs()); page.locator('#makeF-colours').press('Control+Enter'); page.wait_for_function('document.querySelector("#makeStatus").textContent.includes("Choose the look")')
+        assert len(jobs()) == before, 'no look, no job'
         # The missing answer is marked on the choices, not on their fieldset.
         assert page.locator('#makeStyleLooks').get_attribute('aria-invalid') is None and page.locator('[data-make-style]').first.get_attribute('aria-invalid') == 'true'
         page.locator('label:has([data-make-style="look-preset-realvis"])').click(); shot('goal-restyle')
@@ -289,10 +291,13 @@ def run(shots):
         assert 'character picture' in text.lower() and 'pose' in text.lower() and '[' not in text and 'e.g.' not in text and 'Ellen' not in text, text
         page.wait_for_selector('[data-make-pose-pick="asset-2"]')
         assert page.locator('[data-make-pose-pick="asset-1"]').count() == 0, 'the character picture (asset-1) is not offered as its own pose (19 Oct)'
-        assert not generate() and 'Choose the pose first' in page.locator('#makeStatus').inner_text(), 'no pose, no job'
+        # QA create-11: Generate that would only answer "fill in X first" is disabled, with the reason beside it, instead of looking ready.
+        assert page.locator('#makeGenerate').is_disabled() and 'Choose the pose first' in page.locator('#makeWhy').inner_text(), 'no pose, no Generate'
         page.locator('[data-make-pose-pick="asset-2"]').click()
-        assert 'Choose the pose first' not in page.locator('#makeStatus').inner_text(), 'the pose reminder clears once the pose is chosen (audit N10)'
-        sent = generate(); assert not sent and page.locator('#makeF-who').get_attribute('aria-invalid') == 'true', 'empty fields block before any request'
+        assert 'Choose the pose first' not in page.locator('#makeWhy').inner_text(), 'the pose reason clears once the pose is chosen (audit N10)'
+        assert page.locator('#makeGenerate').is_disabled() and 'fill this in first' in page.locator('#makeWhy').inner_text(), 'empty fields keep Generate disabled'
+        before = len(jobs()); page.locator('#makeF-who').press('Control+Enter'); page.wait_for_function('document.querySelector("[aria-invalid=true]")')
+        assert len(jobs()) == before and page.locator('#makeF-who').get_attribute('aria-invalid') == 'true', 'the keyboard shortcut still marks the empty field and sends nothing'
         for key, words in (('who', 'the lantern keeper, a young elf'), ('clothes', 'a green cloak'), ('pose', 'arms crossed')):
             if page.locator('#makeF-' + key).count(): page.locator('#makeF-' + key).fill(words)
         shot('goal-combine-picture')
@@ -528,7 +533,9 @@ def run(shots):
         # Animate: motion words and a length with its duration.
         goal('animate'); options = page.locator('#makeClip option').all_inner_texts()
         assert len(options) == 2 and all(' s' in o for o in options), options
-        assert not generate() and page.locator('#makeF-motion').get_attribute('aria-invalid') == 'true'
+        assert page.locator('#makeGenerate').is_disabled() and 'Say how it should move first' in page.locator('#makeWhy').inner_text()
+        before = len(jobs()); page.locator('#makeF-motion').press('Control+Enter'); page.wait_for_function('document.querySelector("#makeF-motion").getAttribute("aria-invalid")==="true"')
+        assert len(jobs()) == before
         page.locator('#makeF-motion').fill('she turns her head and smiles'); shot('goal-animate')
         job = generate()[0]; assert job['preset_id'] == 'wan22-i2v' and job['controls']['positive'] == 'she turns her head and smiles' and job['controls']['mode'] == 'quick-diagnostic' and job['controls']['frames'] == 17, job
         clicks['animate'] = 3
@@ -788,10 +795,12 @@ def run(shots):
         page.locator('[data-make-goal="character"]').click(); page.wait_for_selector('[data-make-look],[data-make-change]')
         if page.locator('[data-make-change]').count(): page.locator('[data-make-change]').click()
         moss = page.locator('.make-look:has([data-make-look="look-moss-detailed-anime"])')
-        assert 'Runs in MOSS-Image · isolated, not the running Main library.' in moss.inner_text() and moss.locator('[data-make-switch="moss"]').inner_text() == 'Switch to MOSS-Image · isolated', moss.inner_text()
-        assert 'Stops Main library. About a minute. Nothing is generated.' in moss.inner_text() and 'MOSS-Image model' in moss.inner_text() and 'Medium · ~75 s' in moss.inner_text()
+        # QA create-12: one environment banner above the gallery carries the switch; a card keeps a "Runs in X" tag only.
+        banner = page.locator('.make-env-banner'); assert banner.count() == 1 and page.locator('.make-looks [data-make-switch]').count() == 0, 'one banner, no switch on a card'
+        assert 'looks run in MOSS-Image · isolated, not the running Main library.' in banner.inner_text() and banner.locator('[data-make-switch="moss"]').inner_text() == 'Switch to MOSS-Image · isolated', banner.inner_text()
+        assert 'Stops Main library. About a minute. Nothing is generated.' in banner.inner_text() and 'Runs in MOSS-Image · isolated' in moss.inner_text() and 'MOSS-Image model' in moss.inner_text() and 'Medium · ~75 s' in moss.inner_text()
         kromoss = page.locator('.make-look:has([data-make-look="look-kromoss-dmd2-mikko"])')  # owner's Versus contest 2 pick (PR #1926)
-        assert 'Runs in MOSS-Image · isolated' in kromoss.inner_text() and kromoss.locator('[data-make-switch="moss"]').count() == 1 and 'Fast · ~12 s' in kromoss.inner_text(), kromoss.inner_text()
+        assert 'Runs in MOSS-Image · isolated' in kromoss.inner_text() and kromoss.locator('[data-make-switch]').count() == 0 and 'Fast · ~12 s' in kromoss.inner_text(), kromoss.inner_text()
         assert not page.locator('.make-look:has([data-make-look="look-pearly-anima-mix-v10-showcase"]) [data-make-switch]').count()
         page.locator('[data-make-look="look-moss-detailed-anime"]').click(); page.wait_for_selector('#makeScene'); page.locator('#makeScene').fill('a knight in plate armour')
         assert page.locator('#makeGenerate').is_disabled() and page.locator('#makeWhy [data-make-switch="moss"]').count() == 1
@@ -804,7 +813,7 @@ def run(shots):
         assert page.locator('#makeCount').input_value() == '1' and page.locator('#makeShape').input_value() == 'square', 'the redraw after the switch keeps How many and Shape (Codex P2 on #1898)'
         assert not page.locator('#makeGenerate').is_disabled() and not page.locator('#makeWhy [data-make-switch]').count()
         page.locator('[data-make-change]').click()   # back on the gallery, the Main library looks now offer the way back
-        assert page.locator('.make-look:has([data-make-look="look-pearly-anima-mix-v10-showcase"]) [data-make-switch="primary"]').count() == 1
+        assert page.locator('.make-env-banner [data-make-switch="primary"]').count() == 1 and page.locator('.make-looks [data-make-switch]').count() == 0, 'the way back is the one banner too'
         page.locator('[data-make-keep-look]').click(); BACKEND[0] = 'primary'
         history = browser.new_page(); history.on('pageerror', lambda e: errors.append(str(e)))
         def read_run(route):
