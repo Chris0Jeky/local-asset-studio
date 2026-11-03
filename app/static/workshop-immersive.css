@@ -67,14 +67,18 @@
     grid-template-areas:
       "transfer transfer"
       "setup toolbar"
+      "editor problems"
       "editor results";
+    grid-template-rows:auto auto auto 1fr;
   }
   .studio-main #createView.workshop:not([data-workshop-layout="immersive"]):not([data-workshop-ambience="none"]):has(> #uxTransfer:not([hidden])) {
     grid-template-areas:
       "transfer transfer"
       "hero hero"
       "setup toolbar"
+      "editor problems"
       "editor results";
+    grid-template-rows:auto auto auto auto 1fr;
   }
   .studio-main #createView.workshop[data-workshop-layout="immersive"]:has(> #uxTransfer:not([hidden])) {
     grid-template-areas:

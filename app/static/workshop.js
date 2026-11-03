@@ -416,9 +416,10 @@
     w.setInterval(tickElapsed, 1000); tickElapsed(); const jobList = q('#gallery'); if (jobList) new w.MutationObserver(tickElapsed).observe(jobList, {childList:true});
     const gallery = q('#createView .gallery-panel');
     const problemsHost = el('div'); problemsHost.id = 'jobProblemsHost';
-    // Problems belong with the runs they describe, inside the results column (create-9); it starts open in every layout (create-1).
-    const results = disclosure('workshopResults', 'Recent runs', [problemsHost, gallery]); results.classList.add('wk-results'); results.open = true;
-    create.append(results);
+    // Recent runs starts open in every layout (create-1). Problems stay outside it, so closing it never hides a recovery,
+    // and sit at the top of the results column from 1280 px (create-9).
+    const results = disclosure('workshopResults', 'Recent runs', [gallery]); results.classList.add('wk-results'); results.open = true;
+    create.append(problemsHost, results);
     problemsHost.onclick = q('#gallery')?.onclick;
     q('#generate').addEventListener('click', () => { if (!q('#generate').disabled) results.open = true; }, true);
 
