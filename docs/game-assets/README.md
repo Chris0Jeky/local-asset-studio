@@ -22,7 +22,7 @@ Machine entry points: [eight routes](../../research/game-assets/routes.json), [2
 | Procedural QA demo generator | Produces tiny frame/layer fixtures, an atlas and an ORA. These are test graphics, not generative character artwork. |
 | Production routes and capability map | Agent instructions with dependencies and acceptance criteria, not eight completed autonomous production systems. |
 
-No new model weights, live GPU jobs, paid services, downloaded third-party workflows, editor installations or commercial-license acceptances are part of this pass. Models listed in research are not automatically cleared for use. In particular, the standard **HY-Motion 1.0 and Hunyuan3D 2.1 grants exclude UK usage**; see the findings and exact source terms.
+No new model weights, live GPU jobs, paid services, downloaded third-party workflows, editor installations or commercial-license acceptances are part of this pass. Models listed in research are not automatically cleared for use. Their exact source terms are in the findings.
 
 ## Try the tools
 
