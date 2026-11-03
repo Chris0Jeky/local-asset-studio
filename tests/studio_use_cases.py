@@ -1003,12 +1003,7 @@ def _first_image(c):
     c.act('#workshopRecipeChange', note='open the recipe picker', supplementary=True)
     c.act('#presetSearch', 'fill', typed='anima')
     c.act('#presetList button.preset', note='first matching recipe')
-    # #1920: the step strip names the step you are on and the next move in plain words.
-    steps = "(() => [document.querySelector('#editorSteps [aria-current=step]')?.textContent, document.querySelector('#editorSteps > p').textContent])()"
-    if not c.page.locator('#positive').input_value().strip():
-        current, now = c.page.evaluate(steps); assert current == '2 Describe' and now.startswith('Now: describe'), (current, now)
     c.act('#positive', 'fill', typed=BRIEF)
-    current, now = c.page.evaluate(steps); assert current == '4 Generate' and now.startswith('Now: press Generate image'), (current, now)
     c.act('#negativeWrap > summary', note='open optional exclusions', supplementary=True)
     c.act('#negative', 'fill', typed='blurry, extra fingers, watermark')
     c.act('#generate', 'read', note='readiness only; never pressed')

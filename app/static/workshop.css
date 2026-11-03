@@ -27,8 +27,8 @@ body.workshop-active .error {color:var(--danger)}
 body.workshop-active .ux-notice {background:var(--wk-soft);color:var(--text);border-color:var(--accent);position:relative;top:auto}
 .studio-main #createView.workshop {display:grid;grid-template-columns:minmax(0,1fr);gap:22px;align-items:start;min-width:0}
 #createView.workshop[hidden] {display:none!important}
-.workshop .ux-create-heading {margin:0;gap:20px;grid-column:1/-1}
-.workshop .ux-create-heading h1 {font-size:clamp(28px,3vw,38px);letter-spacing:-.045em;margin:8px 0 3px;line-height:1.16;font-weight:500}
+/* The page title stays for screen readers only: the first screen starts with the recipe and the prompt (QA 3 Nov, create-7). */
+.workshop .ux-create-heading {position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .workshop .ux-stage-track {display:none}
 .workshop .eyebrow {font-size:10px;font-weight:650;letter-spacing:.18em}
 .workshop .wk-toolbar {grid-column:1/-1;display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding-bottom:20px;border-bottom:1px solid var(--line);min-width:0}
