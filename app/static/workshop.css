@@ -136,7 +136,7 @@ body.workshop-active .ux-notice {background:var(--wk-soft);color:var(--text);bor
 .workshop .wk-run-dock #status:empty {display:none}
 .workshop .wk-run-dock #status.error {color:var(--danger)}
 /* While a text field has focus, a narrow or short dock keeps only what running needs; a very short one keeps Variations, Generate and run messages. */
-@media(max-width:600px),(max-height:700px) {.workshop .wk-run-dock.wk-typing :is(.wk-run-tools,.wk-dock-info>span) {display:none}}
+@media(max-width:600px),(max-height:700px) {.workshop .wk-run-dock.wk-typing .wk-dock-info>span {display:none}}
 @media(max-height:500px) {.workshop .wk-run-dock.wk-typing {padding:8px 12px;bottom:6px}.workshop .wk-run-dock.wk-typing .wk-dock-info {display:none}}
 .workshop :is(input,button,select,textarea,summary) {scroll-margin-block:110px calc(var(--workshop-dock-space) + 20px)}
 body.workshop-active #workshopRecipeDialog {width:min(960px,calc(100vw - 40px));max-height:90dvh;padding:28px;margin:auto;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:20px;box-shadow:var(--wk-shadow);overflow:auto}
@@ -267,15 +267,11 @@ body.workshop-active[data-workshop-skin="arcade"] :is(.eyebrow,.wk-recipe small)
   body.workshop-active[data-workshop-skin] .ux-create-heading {background-image:none}
 }
 
-/* Secondary decisions stay reachable without competing with Generate. */
-.workshop .wk-run-tools {grid-column:1/-1;grid-row:2;display:flex;flex-wrap:wrap;gap:6px;align-items:center;border-top:1px solid var(--line);padding-top:6px}
-.workshop .wk-run-tools button {font-size:11px;min-height:36px;padding:5px 10px;background:transparent}
-@media(max-width:600px){.workshop .wk-run-tools{grid-row:3}.workshop .wk-run-dock .actions{grid-row:2}}
-@media(min-width:1100px){
-  .workshop .wk-run-dock {grid-template-columns:minmax(0,1fr) auto auto}
-  .workshop .wk-run-dock .actions {grid-column:3;grid-row:1}
-  .workshop .wk-run-tools {grid-column:2;grid-row:1;border-top:0;border-left:1px solid var(--line);padding:0 0 0 12px;max-width:300px}
-}
+/* The dock holds only what running needs; New seed and Plan comparison live in Settings (create-15). */
+@media(max-width:600px){.workshop .wk-run-dock .actions{grid-row:2}}
+@media(min-width:1100px){.workshop .wk-run-dock .actions {grid-column:2;grid-row:1}}
+.workshop .wk-plan-comparison {margin:12px 0 0;font-size:11px}
+.workshop .wk-control-group #randomSeed {justify-self:start;font-size:11px;min-height:36px;padding:5px 12px}
 .workshop #workshopRunTools {margin:0;padding:0;border:0}
 @media(max-width:600px) {
   .workshop .wk-run-dock {grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:8px 10px}
@@ -285,7 +281,6 @@ body.workshop-active[data-workshop-skin="arcade"] :is(.eyebrow,.wk-recipe small)
   .workshop #workshopRunTools>summary {display:list-item;min-height:44px;align-content:center;padding:6px;font-size:11px;cursor:pointer}
   .workshop .wk-phone-panel {position:absolute;bottom:calc(100% + 8px);left:0;right:0;display:grid;gap:10px;max-height:calc(100dvh - 160px);overflow:auto;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--panel);box-shadow:var(--wk-shadow)}
   .workshop .wk-phone-panel>label {display:flex;align-items:center;gap:10px;margin:0;font-size:11px}
-  .workshop .wk-phone-panel .wk-run-tools {grid-row:auto;grid-column:auto}
   /* Why Generate is off, a message, Cancel and the run summary stay in the dock; the readiness line also stays visible when ready. */
   .workshop .wk-run-dock>.wk-dock-info {grid-column:1/-1;grid-row:auto}
   .workshop .wk-run-dock .wk-dock-info {gap:0 6px}.workshop .wk-run-dock .wk-dock-info>button {grid-row:1;min-height:32px;padding:2px 8px}

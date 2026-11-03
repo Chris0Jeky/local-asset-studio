@@ -356,10 +356,10 @@
     create.addEventListener('focusout', e => { if (!typing(e.target)) return; if (pressing) relaxPending = true; else dock.classList.remove('wk-typing'); });
     create.addEventListener('focusin', e => { if (typing(e.target)) { dock.classList.add('wk-typing'); clearOfDock(e.target, 2); } });
     const estimate = q('#timeEstimate'); if (estimate) runBox.append(estimate);
-    const runTools = el('div', 'wk-run-tools'); runTools.setAttribute('role', 'group'); runTools.setAttribute('aria-label', 'Plan and vary this run');
+    // The dock is Generate, Variations, the estimate and the reason (create-15): New seed sits beside the seed field
+    // (groupControls), Plan comparison at the end of Settings, since it starts a Compare & review study.
     const compare = q('#planComparison'), newSeed = q('#randomSeed');
-    for (const tool of [newSeed, compare]) if (tool) runTools.append(tool);
-    actions.after(runTools);
+    if (newSeed) parameters.append(newSeed);
     const phonePanel = el('div', 'wk-phone-panel'), phoneTools = disclosure('workshopRunTools', 'Run tools', [phonePanel]);
     const batchLabel = q('#batch')?.closest('label'), phoneWidth = w.matchMedia('(max-width:600px)');
     // Phones fold only the secondary tools away; the blocker, status line, Cancel and run summary stay in view, because they say why Generate is off or what a run did.
@@ -369,10 +369,10 @@
       // Move the original controls, preserving their handlers; wide screens keep the original grid.
       const held = d.activeElement && dock.contains(d.activeElement) ? d.activeElement : null;
       if (phoneWidth.matches) {
-        dock.prepend(eta); actions.after(dockInfo); if (batchLabel) phonePanel.append(batchLabel); phonePanel.append(runTools);
+        dock.prepend(eta); actions.after(dockInfo); if (batchLabel) phonePanel.append(batchLabel);
       } else {
         dockInfo.insertBefore(eta, reviewButton); dock.prepend(dockInfo); if (batchLabel) actions.prepend(batchLabel);
-        actions.after(runTools); phoneTools.open = false;
+        phoneTools.open = false;
       }
       phoneTools.hidden = !phoneWidth.matches;
       // A focused run tool that just moved into the panel keeps focus only if the panel is open.
@@ -385,6 +385,7 @@
     if (caption && !caption.querySelector('button,input,select,textarea')) caption.hidden = true;
     const saved = q('#createView .saved');
     const savedDetails = disclosure('workshopSaved', 'Saved setups', [saved]); settings.append(savedDetails);
+    if (compare) { compare.classList.add('wk-plan-comparison'); settings.append(compare); }
     // A started run says when it started and how long it has taken so far (handoff 03). Only started_at is observed,
     // so there is no progress bar and no guessed finish (K13); the job's own message stays as it is.
     const clock = seconds => { const s = Math.max(0, Math.floor(seconds)); return s < 60 ? s+' s' : Math.floor(s/60)+' min '+String(s%60).padStart(2,'0')+' s'; };
@@ -490,6 +491,8 @@
         groups.get(name).append(label);
       }
       for (const name of ['Seed','Canvas & duration','Sampling','Model & guidance']) if (groups.has(name)) controls.append(groups.get(name));
+      // A re-rendered control list drops the button with the old labels; the same element (and its handler) goes back beside the seed.
+      if (newSeed && groups.has('Seed')) groups.get('Seed').append(newSeed);
       // Reparenting the existing field must not blur an editor restored by its owner.
       if (focused && d.activeElement === d.body) focused.focus({preventScroll:true});
     }
