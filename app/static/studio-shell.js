@@ -32,10 +32,11 @@
   const skip=document.createElement('a');skip.className='studio-skip';skip.href='#'+main.id;skip.textContent='Skip to workspace';skip.onclick=e=>{e.preventDefault();main.focus();};
   const skipMore=$('#skipReview');document.body.prepend(skip,...(skipMore?[skipMore]:[]),sidebar,header);
   sidebar.querySelectorAll('[data-nav-group]').forEach(details=>{const key='studio.nav.'+details.dataset.navGroup;try{details.open=localStorage.getItem(key)==='true';}catch{}details.addEventListener('toggle',()=>{try{localStorage.setItem(key,String(details.open));}catch{}});});
-  const health=$('#health');if(health)$('#studioConnection').append(health);
+  // The pill names the running model environment (app.js updateReady) and links to the panel that switches it.
+  const health=$('#health');if(health){const link=document.createElement('a');link.className='studio-env-link';link.href='/#models';link.title='Model environment: open Models & setup';link.append(health);$('#studioConnection').append(link);}
   const privacy=$('.privacy-bar');if(privacy)header.insertBefore(privacy,$('#studioConnection'));
   document.querySelectorAll('.topbar').forEach(el=>el.remove());
-  const runtime=$('.runtime-bar');if(runtime&&$('#modelsView')){const details=document.createElement('details');details.className='environment-panel';details.innerHTML='<summary>Model environment <small id="envSummary">Switching is always explicit</small></summary>';details.append(runtime);$('#modelsView').prepend(details);}
+  const runtime=$('.runtime-bar');if(runtime&&$('#modelsView')){const details=document.createElement('details');details.className='environment-panel';details.open=true;details.innerHTML='<summary>Model environment <small id="envSummary">Switching is always explicit</small></summary>';details.append(runtime);$('#modelsView').prepend(details);}
   const dialog=document.createElement('dialog');dialog.id='studioCommandDialog';dialog.className='studio-dialog command-dialog';dialog.setAttribute('aria-labelledby','studioCommandTitle');dialog.innerHTML='<div class="dialog-heading"><div><span class="eyebrow">GO SOMEWHERE</span><h2 id="studioCommandTitle">Find your next tool</h2></div><button data-command-close aria-label="Close tool finder">✕</button></div><label for="studioCommandSearch">Search tools, goals and looks</label><input id="studioCommandSearch" type="search" autocomplete="off" placeholder="Try references, review, scene, models…"><div id="studioCommandResults" class="command-results"></div><p class="muted">Navigation only. Nothing here starts generation or installs a model.</p>';document.body.append(dialog);
   const workerNotice=$('#workerFailure');if(workerNotice)workerNotice.classList.add('callout','error');
   let opener=null;

@@ -84,6 +84,35 @@ $('#switchBackend').onclick=async()=>{
   try{await post('/api/backends/switch',{id:$('#backendChoice').value});await refreshBackends();}
   catch(e){if(attempt!==backendSwitchEpoch)return;const read=backendReadEpoch+1;await refreshBackends();if(attempt===backendSwitchEpoch&&read===backendReadEpoch)$('#backendStatus').textContent=e.message;}
 };
+// The one switch control for a surface that refuses work because its recipe runs in another model environment (Make and the editor still carry their own copies).
+// The press is the person's explicit choice, the same as Models & setup (Switch environment); a switch never generates.
+// A classic script's top-level const is not a globalThis property; asset-family.js reads it from there (PR #2004 review).
+const StudioEnvironment=globalThis.StudioEnvironment=(()=>{
+  const profiles=()=>[...document.querySelectorAll('#backendChoice option')].map(o=>({id:o.value,name:o.textContent.replace(/ · online$/,'')}));
+  const nameOf=id=>profiles().find(p=>p.id===id)?.name||id;
+  // The server names the target by display name: "Switch to X to use this recipe." or "Switch to X before starting it."
+  const target=text=>{const m=/^Switch to (.+?)(?: to use this (?:recipe|plan)| before (?:starting|resuming) it)?\.?$/.exec(String(text||'').trim());return m&&profiles().find(p=>p.name===m[1])||null;};
+  const markup=(id,name=nameOf(id))=>'<span class="env-switch"><button type="button" class="make-env-switch" data-env-switch="'+esc(id)+'" data-env-name="'+esc(name)+'">Switch to '+esc(name)+'</button> <small class="muted">Stops '+esc(backendActive?nameOf(backendActive):'the running environment')+'. About a minute. Nothing is generated.</small></span>';
+  // The refusal text as a button plus its cost, or null when the text is not a wrong-environment refusal.
+  const control=text=>{const to=target(text);if(!to)return null;const box=document.createElement('span');box.innerHTML=markup(to.id,to.name);return box;};
+  let watch=null;
+  // report(message,isError) is the surface's own status line; done() runs after the switch settles on the target.
+  function switchTo(to,name,report,done){
+    const choice=$('#backendChoice'),go=$('#switchBackend');
+    if(!backendActive)return report('Still reading the model environments. Try again in a moment.',true);
+    if(!choice||!go||go.disabled)return report('A local operation is running. Try the switch again when it finishes.',true);
+    choice.value=to;if(choice.value!==to)return report(name+' is not installed. Models & setup lists what it needs.',true);
+    const from=backendActive,started=Date.now();go.click();report('Switching to '+name+'… Nothing is generated.');clearInterval(watch);
+    watch=setInterval(()=>{
+      if(!backendSwitching&&backendActive===to){clearInterval(watch);report(name+' is running. Nothing was generated. Try again.');done?.();}
+      // The server refused (for example while Studio work is queued or running): refreshBackends has put its reason in #backendStatus and kept the old environment.
+      else if(!backendSwitching){clearInterval(watch);choice.value=backendActive||from;const why=$('#backendStatus').textContent.trim();
+        report('Did not switch to '+name+': '+(why&&!/^One model environment at a time/.test(why)?why:'the Studio refused. Models & setup shows why.')+' Nothing was generated.',true);}
+      else if(Date.now()-started>240000){clearInterval(watch);report('The switch to '+name+' has not finished. Models & setup shows its progress.',true);}
+    },1000);
+  }
+  return {nameOf,target,markup,control,switchTo};
+})();
 $('#retryRecovery').onclick=async()=>{try{await post('/api/runtime-recovery/retry',{});await refreshBackends();}catch(e){$('#recoveryStatus').textContent=e.message;}};
 $('#backendStudiosClosed').onchange=updateBackendResolution;$('#backendRuntimesInspected').onchange=updateBackendResolution;
 $('#resolveBackendSwitch').onclick=async()=>{

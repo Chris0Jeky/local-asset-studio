@@ -173,7 +173,8 @@ function updateReady() {
   const mode = selected?.i2v_modes?.find(spec => spec.id === $('#i2vMode')?.value), note = $('#i2vModeNote');
   if (note && mode) note.textContent = [modeBlock, mode.description, mode.warning].filter(Boolean).join(' ');
   $('#generate').disabled = submitting || (typeof backendSwitching !== 'undefined' && backendSwitching) || (typeof backendWorkBlocker !== 'undefined' && !!backendWorkBlocker) || !online || !workerAlive || !schemaAvailable || !selected || !!selected.runtime_block || !!modeBlock || missing.length > 0 || (typeof referencesReady==='function'&&!referencesReady()) || continuationBlockers().length > 0;
-  const healthText = online === null ? healthError ? 'Readiness unavailable' : 'Checking ComfyUI…' : !workerAlive ? 'Studio worker unavailable' : !online ? 'ComfyUI offline' : !schemaAvailable ? 'Checking node readiness' : missing.length ? 'Recipe needs models' : 'ComfyUI connected';
+  const env = ($('#activeBackend')?.textContent || '').trim(); // the running model environment (backends.js writes it); the pill names it
+  const healthText = online === null ? healthError ? 'Readiness unavailable' : 'Checking ComfyUI…' : !workerAlive ? 'Studio worker unavailable' : !online ? 'ComfyUI offline' : !schemaAvailable ? 'Checking node readiness' : missing.length ? 'Recipe needs models' : env ? env + ' · connected' : 'ComfyUI connected';
   if ($('#health').textContent !== healthText) $('#health').textContent = healthText;
   $('#health').className = 'pill ' + (online && workerAlive && schemaAvailable && !missing.length ? 'ready' : online === null && !healthError ? '' : 'offline');
   scheduleTimeEstimate();

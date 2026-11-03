@@ -95,6 +95,14 @@ class GalleryHandoffTests(unittest.TestCase):
         self.assertIn('Read poller app integration passed', result.stdout, result.stdout + result.stderr)
 
     @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
+    def test_one_shared_environment_switch_in_the_library_dialog_and_compare(self):
+        result = subprocess.run(
+            [shutil.which('node'), '--test', str(Path(__file__).with_name('environment_switch_frontend.cjs'))],
+            capture_output=True, text=True, timeout=30,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    @unittest.skipUnless(shutil.which('node'), 'Node.js is required for frontend behavior checks')
     def test_readiness_status_distinguishes_pending_offline_and_failure(self):
         result = subprocess.run(
             [shutil.which('node'), str(Path(__file__).with_name('frontend_health.cjs'))],
