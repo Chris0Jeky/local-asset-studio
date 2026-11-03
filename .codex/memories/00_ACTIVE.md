@@ -16,7 +16,7 @@ This file is a pointer, not a record. Executed evidence lives in `../../CURRENT_
   is not a work location.
 - Never auto-submit generation; never repeat an uncertain submission; keep prompt IDs.
 - Generated, accepted and licensed are three separate states. Licence terms are recorded as facts; the owner
-  decides what applies to them, never an agent (3 Nov 2026).
+  decides what applies to them, never an agent (3 Nov 2026). NoobAI excludes commercial products.
 - Models, ComfyUI, `config/local.json`, `experiments/runs|uploads|workspace|projects/` and `.runtime/`
   stay outside Git.
 

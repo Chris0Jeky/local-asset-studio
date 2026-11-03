@@ -11,7 +11,7 @@ Read `AGENTS.md`, `CURRENT_STATE.md` and `docs/game-assets/README.md`. Preserve 
 
 Read `research/game-assets/routes.json`, `capabilities.json` and `sources.json`. These are capability descriptions, not proof of local installations. Choose among reference-image, character-2d-frames, character-2d-cutout, rendered-sprites, prop-3d, character-3d, tiles-materials and vfx-ui-pack. Explain the meaningful tradeoff briefly. Use the user's already approved choices; do not ask the same question again.
 
-Inspect installed CLI programs, application APIs and approved MCP bridges. Prefer native deterministic APIs and files where sufficient. Treat full Python/eval bridges as privileged code execution. Do not install unreviewed downloaded code into the working Torch/ROCm runtime. Record exact component terms as facts; what applies to the owner is the owner's decision (3 Nov 2026), never an agent's.
+Inspect installed CLI programs, application APIs and approved MCP bridges. Prefer native deterministic APIs and files where sufficient. Treat full Python/eval bridges as privileged code execution. Do not install unreviewed downloaded code into the working Torch/ROCm runtime. Record exact component terms as facts; what applies to the owner is the owner's decision (3 Nov 2026), never an agent's. Never work around a licence term; bring it to the owner.
 
 ## Convert the request into a brief
 
