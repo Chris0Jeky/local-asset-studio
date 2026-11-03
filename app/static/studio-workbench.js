@@ -246,6 +246,7 @@
     if(action==='source-back'){void reattachSource();return;}
     // The wrong-environment blocker's repair is the explicit switch itself, the same Switch button Models & setup has; it never generates.
     if(action==='switch'){const to=selected?.backend_id||'primary',name=envName(to),choice=q('#backendChoice'),go=q('#switchBackend'),say=text=>{q('#uxReadinessActionStatus').textContent=text;message(text);};
+      if(!choice?.options.length)return say('Still reading the model environments. Try again in a moment.');
       if(!choice||!go||go.disabled)return say('A local operation is running. Try the switch again when it finishes.');
       choice.value=to;if(choice.value!==to)return say(name+' is not installed. Models & setup lists what it needs.');
       go.click();say('Switching to '+name+'… About a minute. Nothing is generated; Generate comes back when it is ready.');
