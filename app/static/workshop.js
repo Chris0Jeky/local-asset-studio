@@ -305,8 +305,9 @@
     parameters.open = false;
     const paramSummary = parameters.querySelector('summary');
     paramSummary.replaceChildren(el('span', '', 'Fine-tune the recipe'));
-    const promptHint = el('small', 'wk-prompt-hint', 'Describe the result you want. Tune the recipe when you need to.');
-    q('#positiveLabel')?.classList.add('sr-only'); q('#positiveWrap').append(promptHint);
+    q('#positiveLabel')?.classList.add('sr-only');
+    // The words come straight after their heading; Use a look folds in under them, above the negative prompt (wireframe, create-3).
+    const look = q('#lookBlock'); if (look) q('#negativeWrap')?.before(look);
     q('#positive').rows = 5;
     const draftBar = q('#uxDraftBar'), draftButtons = draftBar?.querySelector(':scope > div');
     let draftOptions;
@@ -326,7 +327,8 @@
     const dockInfo = el('div', 'wk-dock-info'), readiness = el('strong'), eta = el('span');
     readiness.id = 'workshopReadiness'; readiness.tabIndex = -1; eta.id = 'workshopEta';
     const reviewButton = button('workshopReview', 'What’s missing?', () => reveal(review));
-    dockInfo.append(readiness, eta, reviewButton);
+    // Every blocker's repair sits beside Generate, under the one readiness line (journeys-3); the band keeps only the recipe.
+    dockInfo.append(readiness, blockerList, eta, reviewButton);
     const status = q('#status'); if (status) status.tabIndex = 0; dock.append(dockInfo, actions); if (status) dock.append(status); create.append(dock);
     // A text field you enter is never left under the fixed dock; a narrow or short dock also compacts while you type (workshop.css).
     const typing = n => !!n?.matches?.('textarea,input:not([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset],[type=file],[type=color],[type=image])') && !dock.contains(n);
@@ -613,12 +615,15 @@
       text(paramHint, [summary, seed].filter(Boolean).join(' · '));
       text(quickTune, 'Tune settings');
       const blocked = q('#generate').disabled, first = q('#uxBlockers .ux-blocker p')?.textContent;
-      const readinessText = blocked ? first || 'Review readiness before generating.' : 'No blockers reported';
       const blockers = blocked ? [...d.querySelectorAll('#uxBlockers .ux-blocker')].filter(n => n.querySelector('p')?.textContent) : [];
+      // One cause, one line: several blockers are counted here and listed once below it; an environment switch says what it costs.
+      const switchFix = blocked && blockers.length === 1 && !!blockers[0].querySelector('[data-ux-resolve="switch"]');
+      const readinessText = !blocked ? 'No blockers reported' : blockers.length > 1 ? blockers.length+' things to fix before generating'
+        : (first || 'Review readiness before generating.') + (switchFix ? ' Switching takes about a minute; nothing is generated.' : '');
       reviewButton.hidden = !blocked;
       dockInfo.classList.toggle('wk-clear', !blocked);
-      text(readiness, readinessText + (blockers.length > 1 ? ' (+'+(blockers.length-1)+' more)' : ''));
-      text(setupReadiness, blockers.length > 1 ? blockers.length+' things to fix before generating' : readinessText);
+      text(readiness, readinessText);
+      text(setupReadiness, readinessText);
       setupReadiness.hidden = blockers.length === 1;
       renderBlockers(blockers);
       const time = q('#estimateValue')?.textContent;
