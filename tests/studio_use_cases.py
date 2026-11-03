@@ -1016,8 +1016,8 @@ def _one_reference(c):
     c.boot('#create')
     c.act('#workshopRecipeChange', note='open the recipe picker', supplementary=True)
     c.act('#presetList [data-id="anima-portrait"]', note='a text-only illustration recipe')
-    c.act('#uxPullAsset', note='deliberate wrong turn: text-only recipe has no reference slot')
-    c.act('#uxSourceNote', 'read', note='what the screen says after the wrong turn')   # the no-slot explanation and its Show reference recipes button live here; the picker never opens
+    # QA 3 Nov (create-14): a text-only recipe renders no sources block, so the old wrong turn (Pull from library on it) is gone.
+    assert not c.page.locator('#uxPullAsset').is_visible() and not c.page.locator('#uxSourceNote').is_visible()
     c.act('#workshopRecipeChange', note='open the recipe picker', supplementary=True)
     c.act('#presetSearch', 'fill', typed='Atelier')
     c.act('#presetList [data-id="qwen-1ref"]', note='the one-reference Qwen Atelier recipe')

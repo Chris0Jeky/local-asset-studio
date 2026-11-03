@@ -66,8 +66,10 @@ def main():
         page.locator('.wk-modebar a').first.click()
         assert page.locator('#demoNotice').is_visible()
         before=page.locator('#status').inner_text()
-        assert page.locator('#workshopGuidanceAction').get_attribute('data-intent')=='open-results'
+        # QA 3 Nov (create-6): ready means Go to Generate (focus only), even with outputs in Recent runs.
+        assert page.locator('#workshopGuidanceAction').get_attribute('data-rail')=='focus-generate'
         page.click('#workshopGuidanceAction')
+        assert page.locator('#generate').evaluate('(el)=>el===document.activeElement')
         assert page.locator('#workshopResults').evaluate('(el)=>el.open')
         assert page.locator('#status').inner_text()==before
         page.set_viewport_size({'width':390,'height':844})

@@ -228,9 +228,12 @@ def main():
         assert page.locator('#generate').evaluate('(el)=>el===document.activeElement')
         assert page.evaluate('submitted') == blocked_submission_count
         page.evaluate("document.getElementById('gallery').innerHTML='<article class=\"imageCard\">result</article>'")
-        page.wait_for_function("document.querySelector('#workshopGuidanceAction').dataset.intent==='open-results'")
+        # QA 3 Nov (create-6): a ready recipe says Generate even when outputs exist; the old "open results" came first.
+        page.wait_for_timeout(100)
+        assert page.locator('#workshopGuidanceAction').get_attribute('data-rail') == 'focus-generate'
+        assert page.locator('#workshopGuidanceTitle').inner_text() == 'Ready. Press Generate.'
         page.locator('#workshopGuidanceAction').click()
-        assert page.locator('#workshopResults').evaluate('(el)=>el.open')
+        assert page.locator('#generate').evaluate('(el)=>el===document.activeElement')
         assert page.evaluate('submitted') == blocked_submission_count
         checks.append({'name': 'contextual guidance only reveals/focuses existing controls'})
 

@@ -126,7 +126,7 @@
     }
     function updatePreference(key, value) {
       state = preferences({...state, [key]:value});
-      applyPresentation(); persistPresentation(); sync();
+      applyPresentation(); persistPresentation(); sync(); dockEdges();
     }
     function choice(id, label, options, key) {
       const wrap = el('label', 'wk-select-control', label), select = el('select'); select.id = id;
@@ -435,7 +435,7 @@
     let guidanceRepair = null;
     const guidanceAction = button('workshopGuidanceAction', 'Review readiness', () => {
       if (guidanceRepair) forwardRepair(guidanceRepair.code, guidanceRepair.message);
-      else if (guidanceAction.dataset.intent === 'focus-generate') focusExisting(q('#generate'));
+      else if (guidanceAction.dataset.rail === 'focus-generate') focusExisting(q('#generate'));
       else if (currentView) dispatchIntent(currentView.primaryAction);
     });
     const guidanceWhy = el('details', 'wk-guidance-why'); guidanceWhy.id = 'workshopGuidanceWhy';
@@ -571,11 +571,13 @@
       guidanceAction.disabled = !!repair?.disabled;
       if (guidanceRepair) {
         text(guidanceTitle, guidanceRepair.message); text(guidanceDescription, ''); text(guidanceAction, repair.textContent);
-        guidanceAction.dataset.intent = 'readiness-repair'; text(guidanceReason, 'Generate stays off until this is fixed. This button only does that repair; it generates nothing.');
+        guidanceAction.dataset.rail = 'readiness-repair'; text(guidanceReason, 'Generate stays off until this is fixed. This button only does that repair; it generates nothing.');
       } else if (!blocked) {
         text(guidanceTitle, 'Ready. Press Generate.'); text(guidanceDescription, ''); text(guidanceAction, 'Go to Generate');
-        guidanceAction.dataset.intent = 'focus-generate'; text(guidanceReason, 'Every check passed. This button moves to Generate; it does not press it.');
+        guidanceAction.dataset.rail = 'focus-generate'; text(guidanceReason, 'Every check passed. This button moves to Generate; it does not press it.');
       }
+      else delete guidanceAction.dataset.rail;
+      // data-intent stays the projection's (the UI island mirrors it); data-rail names what this button does instead.
       guidanceDescription.hidden = !guidanceDescription.textContent;
       // A demoted readiness intent still carries the specific blocker in .description; dropping it left the
       // rail with a generic "Resolve the next blocker" while the real message sat only in the dock (#610 item 4).
