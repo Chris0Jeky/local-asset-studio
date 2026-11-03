@@ -24,9 +24,9 @@ Use for `app/backends.py`, `app/model_library.py`, `scripts/Start-Studio.ps1`, `
   `.gguf`, `.pth`, `.pt` and `.onnx` are pin-only (presence and size reported, installer refuses), and a
   pin with no curated origin leaves `url` empty and says why in `terms`. Provenance is not authentication:
   matching hashes do not prove the creator or grant commercial rights.
-- Licence and territory terms are recorded as facts with a dated source link. Known gates: Hunyuan3D
-  2.1 and HY-Motion 1.0 exclude UK use; NoobAI excludes commercial products; H3 needs an eligible
-  territory. Do not infer one provider's confirmation covers another.
+- Licence terms, territory clauses included, are recorded as facts with a source link. Never turn them into
+  rules about where the owner lives or what applies to them; bring them to the owner, who decides (3 Nov 2026).
+  Do not infer one provider's confirmation covers another.
 - Never change paging, driver or system settings to make a loader work; record the failure instead.
 
 ## Workflow

@@ -15,8 +15,8 @@ This file is a pointer, not a record. Executed evidence lives in `../../CURRENT_
 - One writer in this checkout. The stale second checkout under the user's `source/` folder (at PR #7)
   is not a work location.
 - Never auto-submit generation; never repeat an uncertain submission; keep prompt IDs.
-- Generated, accepted and licensed are three separate states. Hunyuan3D 2.1 and HY-Motion 1.0 exclude
-  UK use; NoobAI excludes commercial products.
+- Generated, accepted and licensed are three separate states. Licence terms are recorded as facts; the owner
+  decides what applies to them, never an agent (3 Nov 2026).
 - Models, ComfyUI, `config/local.json`, `experiments/runs|uploads|workspace|projects/` and `.runtime/`
   stay outside Git.
 

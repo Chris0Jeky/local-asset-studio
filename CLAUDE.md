@@ -74,8 +74,8 @@ is a separate offline planner and receipt checker: plans are hash-identified and
 
 - Never auto-submit a generation on page load; never re-submit a job whose outcome is uncertain. Keep the
   prompt ID and the full recipe; a lost prompt ID is evidence lost, not a reason to run again.
-- A completed render is neither art acceptance nor licence clearance. Hunyuan3D 2.1 and HY-Motion 1.0 exclude
-  UK use; NoobAI excludes commercial products; WAI hashes do not authenticate its creator. Record, never infer.
+- A completed render is neither art acceptance nor licence clearance. Licence terms are facts to record, never rules
+  about where the owner lives or what applies to them: the owner decides (3 Nov 2026). Record, never infer.
 - Never edit installed ComfyUI or upgrade packages in the shared Torch/ROCm runtime; local patches go to `runtime-patches/`
   with before/after hashes. Backend switches are explicit, never package upgrades; comfy-mcp's update/install/download/launch/stop tools are read-only use only (`docs/AGENT-TOOLING.md`).
 - Form values serialize as strings: validate with `number()` (Decimal, finite, range) — a `100 ms` bug shipped once.
