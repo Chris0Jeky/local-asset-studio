@@ -106,7 +106,8 @@
     const comparisonPanel=d.createElement('section');comparisonPanel.id='assetSourceComparison';comparisonPanel.className='asset-source-comparison';comparisonPanel.hidden=true;q('#assetDetailMedia').before(comparisonPanel);
     let epoch=0,controller=null,currentId=null,comparisonReport=null,comparisonScope=null,shownPair=null,shownSession=null,choiceEpoch=0;
     const button=(label,attribute,value)=>{const b=d.createElement('button');b.type='button';b.textContent=label;b.dataset[attribute]=value;return b;};
-    function say(message,error=false){const line=q('#assetFamilyStatus');if(line){line.textContent=message;line.classList.toggle('error',error);}options.say(message,error);}
+    // A refusal that only needs another model environment carries its own Switch button (backends.js); the press is the person's choice and never generates.
+    function say(message,error=false){const line=q('#assetFamilyStatus');if(line){line.textContent=message;line.classList.toggle('error',error);const swap=error&&globalThis.StudioEnvironment?.control(message);if(swap)line.append(' ',swap);}options.say(message,error);}
     // The status line and next-step buttons sit above the form, where the picture's actions are; the family strip stays below.
     const recall=createRecall({...options,context:id=>options.context(id),say});
     const comparison=createComparison({...options,context:options.comparisonContext});
@@ -202,6 +203,7 @@
     const onClick=async event=>{
       const b=event.target.closest('button');if(!b||b.disabled)return;const actionEpoch=epoch;
       try{
+        if(b.dataset.envSwitch){globalThis.StudioEnvironment.switchTo(b.dataset.envSwitch,b.dataset.envName,(message,failed)=>{if(actionEpoch===epoch&&dialog.open)say(message,failed);});return;}
         if(b.dataset.familyCompare){showComparison();return;}
         if(b.hasAttribute('data-family-compare-close')){clearComparison(true);return;}
         if(b.dataset.familySource){try{await chooseSource(b.dataset.familySource);}catch(error){if(actionEpoch===epoch&&!comparisonPanel.hidden){q('#assetSourceImages').replaceChildren();q('#assetSourceStatus').textContent=error.message;}}return;}
@@ -220,7 +222,7 @@
         }
       }catch(e){if(actionEpoch===epoch&&dialog.open)say(e.message,true);}
     };
-    panel.addEventListener('click',onClick);comparisonPanel.addEventListener('click',onClick);q('#assetFamilyActions')?.addEventListener('click',onClick);
+    panel.addEventListener('click',onClick);comparisonPanel.addEventListener('click',onClick);q('#assetFamilyActions')?.addEventListener('click',onClick);q('#assetFamilyStatus')?.addEventListener('click',onClick);
     dialog.addEventListener('close',()=>{if(!dialog.open)clear();});
     function decorateResults(){
       for(const card of d.querySelectorAll('#gallery .imageCard')){
