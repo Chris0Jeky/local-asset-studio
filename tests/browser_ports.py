@@ -42,11 +42,19 @@ def evidence_screenshot(page, **options):
     except ImportError:  # contract tests drive stub pages on runners without Playwright
         class ScreenshotTimeout(Exception): pass
     def skipped(error): print(f'evidence screenshot skipped: {error}', flush=True)
+    # A live response can redraw the element between locate and capture; evidence is optional, the assertions already ran.
+    detached = lambda error: 'not attached to the DOM' in str(error)
     try: result = page.screenshot(**options, timeout=30000, animations='disabled')
     except ScreenshotTimeout as error:
+        skipped(error); return None
+    except Exception as error:
+        if not detached(error): raise
         skipped(error); return None
     if not isawaitable(result): return result
     async def capture():
         try: return await result
         except ScreenshotTimeout as error: skipped(error); return None
+        except Exception as error:
+            if not detached(error): raise
+            skipped(error); return None
     return capture()
