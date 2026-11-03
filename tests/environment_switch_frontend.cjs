@@ -23,6 +23,8 @@ function environments(){
 
 test('the shared helper renders a labelled button with its cost, and reports success and refusals without generating',()=>{
   const f=environments(),reports=[];let done=0;
+  // asset-family.js reads globalThis.StudioEnvironment: a bare top-level const would leave it undefined in the page.
+  assert.equal(vm.runInContext('globalThis.StudioEnvironment',f.context),f.env);
   const html=f.env.markup('moss');
   assert.match(html,/<button type="button"[^>]*data-env-switch="moss"[^>]*>Switch to MOSS-Image · isolated<\/button>/);
   assert.match(html,/Stops Main library\. About a minute\. Nothing is generated\./);

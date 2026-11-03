@@ -86,7 +86,8 @@ $('#switchBackend').onclick=async()=>{
 };
 // The one switch control for a surface that refuses work because its recipe runs in another model environment (Make and the editor still carry their own copies).
 // The press is the person's explicit choice, the same as Models & setup (Switch environment); a switch never generates.
-const StudioEnvironment=(()=>{
+// A classic script's top-level const is not a globalThis property; asset-family.js reads it from there (PR #2004 review).
+const StudioEnvironment=globalThis.StudioEnvironment=(()=>{
   const profiles=()=>[...document.querySelectorAll('#backendChoice option')].map(o=>({id:o.value,name:o.textContent.replace(/ · online$/,'')}));
   const nameOf=id=>profiles().find(p=>p.id===id)?.name||id;
   // The server names the target by display name: "Switch to X to use this recipe." or "Switch to X before starting it."
