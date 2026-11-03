@@ -283,6 +283,13 @@ body.workshop-active[data-workshop-skin="retro-anime"] .eyebrow {color:#f1a4d5}
   .studio-main #createView.workshop:not([data-workshop-layout="immersive"]):has(#uxTransfer:not([hidden])) > .wk-appearance {grid-area:toolbar}
   .workshop:not([data-workshop-layout="immersive"]) .wk-setup-rail {max-width:none}
   .workshop:not([data-workshop-layout="immersive"]) .editor {grid-area:editor!important;max-width:none!important}
+  /* The dock spans the inputs column only (workshop.js sets the edges), so a result is never under it; on a narrow column
+     Generate wraps under the readiness line instead of squeezing it. */
+  .workshop:not([data-workshop-layout="immersive"]) .wk-run-dock {left:var(--wk-dock-left,calc(var(--sidebar,224px) + 28px));right:var(--wk-dock-right,28px);max-width:none;margin:0;display:flex;flex-wrap:wrap;align-items:center;column-gap:20px}
+  .workshop:not([data-workshop-layout="immersive"]) .wk-run-dock>.wk-dock-info {flex:1 1 300px}
+  .workshop:not([data-workshop-layout="immersive"]) .wk-dock-info>strong {max-height:4.7em}
+  .workshop:not([data-workshop-layout="immersive"]) .wk-run-dock>.actions {flex:0 0 auto;margin-left:auto}
+  .workshop:not([data-workshop-layout="immersive"]) .wk-run-dock>:not(.wk-dock-info,.actions) {flex:1 1 100%}
   .workshop:not([data-workshop-layout="immersive"]) .wk-results {grid-area:results!important;max-width:none!important;position:sticky;top:84px;align-self:start}
 
   .studio-main #createView.workshop[data-workshop-layout="immersive"] {
@@ -321,8 +328,10 @@ body.workshop-active[data-workshop-skin="retro-anime"] .eyebrow {color:#f1a4d5}
   .workshop[data-workshop-layout="immersive"] .wk-rail-heading h2 {font-size:17px;margin:4px 0 0}
   .workshop[data-workshop-layout="immersive"] .wk-recipe {display:grid;grid-template-columns:42px 1fr;gap:10px}
   .workshop[data-workshop-layout="immersive"] .wk-recipe>button {grid-column:1/-1;width:100%}
-  .workshop[data-workshop-layout="immersive"] .wk-quick-tune {border:1px solid var(--line);border-radius:9px;padding:10px!important;min-height:42px!important}
-  .workshop[data-workshop-layout="immersive"] .wk-setup-status {padding:14px;border:1px solid var(--line);border-radius:11px;background:var(--wk-input)}
+  /* QA 3 Nov: Tune settings reads as a link and the estimate as plain text, not as two empty-looking input boxes. */
+  .workshop[data-workshop-layout="immersive"] .wk-quick-tune {color:var(--accent);text-decoration:underline;text-underline-offset:4px;font-size:12px;min-height:24px}
+  .workshop[data-workshop-layout="immersive"] .wk-setup-status {padding:0}
+  .workshop[data-workshop-layout="immersive"] .wk-setup-status span {font-size:11px}
   .workshop[data-workshop-layout="immersive"] .wk-setup-review {width:100%}
   .workshop[data-workshop-layout="immersive"] .editor {
     grid-area:editor!important;

@@ -388,6 +388,9 @@
     const saved = q('#createView .saved');
     const savedDetails = disclosure('workshopSaved', 'Saved setups', [saved]); settings.append(savedDetails);
     if (compare) { compare.classList.add('wk-plan-comparison'); settings.append(compare); }
+    // Text-only recipes show no sources block; the way to a picture recipe is one small link here (create-14).
+    const findReferences = q('#uxFindReferenceRecipes');
+    if (findReferences) { findReferences.classList.add('wk-settings-link'); findReferences.textContent = 'Start from a picture instead: show reference recipes'; settings.append(findReferences); }
     // A started run says when it started and how long it has taken so far (handoff 03). Only started_at is observed,
     // so there is no progress bar and no guessed finish (K13); the job's own message stays as it is.
     const clock = seconds => { const s = Math.max(0, Math.floor(seconds)); return s < 60 ? s+' s' : Math.floor(s/60)+' min '+String(s%60).padStart(2,'0')+' s'; };
@@ -427,8 +430,13 @@
     guidance.append(el('span', 'eyebrow', 'ONE NEXT ACTION'));
     const guidanceTitle = el('h2', '', 'Review readiness'); guidanceTitle.id = 'workshopGuidanceTitle';
     const guidanceDescription = el('p', '', 'Use the current readiness evidence before running.'); guidanceDescription.id = 'workshopGuidanceDescription';
+    // The rail's one action (QA 3 Nov): the first blocker's own repair, forwarded exactly as the dock's list does; Go to Generate
+    // (focus only) when ready; else the projected intent. It never submits.
+    let guidanceRepair = null;
     const guidanceAction = button('workshopGuidanceAction', 'Review readiness', () => {
-      if (currentView) dispatchIntent(currentView.primaryAction);
+      if (guidanceRepair) forwardRepair(guidanceRepair.code, guidanceRepair.message);
+      else if (guidanceAction.dataset.intent === 'focus-generate') focusExisting(q('#generate'));
+      else if (currentView) dispatchIntent(currentView.primaryAction);
     });
     const guidanceWhy = el('details', 'wk-guidance-why'); guidanceWhy.id = 'workshopGuidanceWhy';
     guidanceWhy.append(el('summary', '', 'Why this?'));
@@ -558,6 +566,17 @@
       text(guidanceAction, primary.label);
       guidanceAction.dataset.intent = primary.id;
       text(guidanceReason, primary.reason);
+      const lead = blocked ? d.querySelector('#uxBlockers .ux-blocker') : null, repair = lead?.querySelector('[data-ux-resolve]');
+      guidanceRepair = repair ? {code:lead.dataset.readinessCode || '', message:lead.querySelector('p')?.textContent || ''} : null;
+      guidanceAction.disabled = !!repair?.disabled;
+      if (guidanceRepair) {
+        text(guidanceTitle, guidanceRepair.message); text(guidanceDescription, ''); text(guidanceAction, repair.textContent);
+        guidanceAction.dataset.intent = 'readiness-repair'; text(guidanceReason, 'Generate stays off until this is fixed. This button only does that repair; it generates nothing.');
+      } else if (!blocked) {
+        text(guidanceTitle, 'Ready. Press Generate.'); text(guidanceDescription, ''); text(guidanceAction, 'Go to Generate');
+        guidanceAction.dataset.intent = 'focus-generate'; text(guidanceReason, 'Every check passed. This button moves to Generate; it does not press it.');
+      }
+      guidanceDescription.hidden = !guidanceDescription.textContent;
       // A demoted readiness intent still carries the specific blocker in .description; dropping it left the
       // rail with a generic "Resolve the next blocker" while the real message sat only in the dock (#610 item 4).
       const secondary = currentView.secondaryActions.map(action => action.title + ' · ' + action.description).join(' — ');
@@ -567,6 +586,8 @@
       presentationSnapshot = Object.freeze({view:currentView, recipe:recipe ? Object.freeze({id:String(recipe.id || ''), name:String(recipe.name || recipe.id || '')}) : null});
       if (announcedStamp !== currentView.contextStamp) { announcedStamp = currentView.contextStamp; create.dispatchEvent(new w.CustomEvent('studio:presentation', {detail:presentationSnapshot})); }
     }
+    // The only click a presentation control forwards: the existing readiness repair for that blocker, which owns focus and repair.
+    function forwardRepair(code, message) { [...d.querySelectorAll('#uxBlockers .ux-blocker')].find(n => (n.dataset.readinessCode || '') === code && n.querySelector('p')?.textContent === message)?.querySelector('[data-ux-resolve]')?.click(); }
     let blockerSignature = '';
     function renderBlockers(blockers) {
       const rows = blockers.map(n => { const fix = n.querySelector('[data-ux-resolve]'); return [n.dataset.readinessCode || '', n.querySelector('p').textContent, fix?.textContent || '', !!fix?.disabled]; });
@@ -578,9 +599,7 @@
         if (label) {
           const fix = el('button', '', label); fix.type = 'button'; fix.disabled = disabled;
           // Forwards to the original readiness button, which owns focus and repair; nothing is decided here.
-          fix.addEventListener('click', () => [...d.querySelectorAll('#uxBlockers .ux-blocker')]
-            .find(n => (n.dataset.readinessCode || '') === code && n.querySelector('p')?.textContent === message)
-            ?.querySelector('[data-ux-resolve]')?.click());
+          fix.addEventListener('click', () => forwardRepair(code, message));
           item.append(fix);
         }
         return item;
@@ -659,18 +678,21 @@
     observer.observe(create, {attributes:true, attributeFilter:['hidden']});
     observer.observe(q('#generate'), {attributes:true, attributeFilter:['disabled']});
     if (estimate) observer.observe(estimate, {attributes:true, attributeFilter:['hidden']});
+    // Where results sit beside the inputs (CSS, from 1280 px), the dock spans only the inputs column, so it never covers a result.
+    const dockEdges = () => { if (create.hidden) return; const r = editor.getBoundingClientRect(); if (!r.width) return;
+      d.body.style.setProperty('--wk-dock-left', Math.round(r.left)+'px'); d.body.style.setProperty('--wk-dock-right', Math.max(0, Math.round(d.documentElement.clientWidth - r.right))+'px'); };
     const resize = typeof w.ResizeObserver === 'function' ? new w.ResizeObserver(() => {
       if (create.hidden) return;
-      d.body.style.setProperty('--workshop-dock-space', Math.ceil(dock.getBoundingClientRect().height + 24)+'px');
+      d.body.style.setProperty('--workshop-dock-space', Math.ceil(dock.getBoundingClientRect().height + 24)+'px'); dockEdges();
     }) : null;
-    resize?.observe(dock);
+    resize?.observe(dock); resize?.observe(editor); w.addEventListener('resize', dockEdges);
     create.__workshop = {
       reveal, sync, openRecipes, finishRecipeSelection, preferences:()=>({...state}),
       presentationView:() => currentView,
       presentationSnapshot:() => presentationSnapshot,
       dispatchIntent
     };
-    applyPresentation(); sync();
+    applyPresentation(); sync(); dockEdges();
     // A recipe-goal deep link is an explicit request to open discovery.
     if (new w.URLSearchParams(w.location.search).has('recipe_goal')) openRecipes();
     return create.__workshop;

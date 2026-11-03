@@ -69,7 +69,13 @@ test('immersive presentation exposes local ambience, visual skin and read-only g
   const js = fs.readFileSync(path.join(__dirname, '../app/static/workshop.js'), 'utf8');
   for (const marker of ['workshopAmbience','workshopSkinChoice','wk-immersive-hero','wk-setup-rail','wk-guidance','workshopGuidanceAction'])
     assert.ok(js.includes(marker), marker+' missing');
+  // QA 3 Nov (was: the rail button never clicks anything): the rail may forward only to an existing readiness repair,
+  // through the one forwarder the dock's blocker list uses, and never submits (the rule PR #1999 applied to the switch).
   assert.doesNotMatch(js, /workshopGuidanceAction[^\n]+click\(\)/);
+  assert.match(js, /function forwardRepair\(code, message\) \{ \[\.\.\.d\.querySelectorAll\('#uxBlockers \.ux-blocker'\)\][^\n]*\?\.querySelector\('\[data-ux-resolve\]'\)\?\.click\(\); \}/);
+  assert.equal((js.match(/\.click\(\)/g) || []).length, 1, 'forwardRepair is the only programmatic click in workshop.js');
+  assert.match(js, /if \(guidanceRepair\) forwardRepair\(guidanceRepair\.code, guidanceRepair\.message\);/);
+  assert.doesNotMatch(js, /#generate['"]\)[^\n]*\.click\(/, 'nothing presses Generate');
 });
 
 test('appearance is a closed popover in the title row; the recipe chip and prompt come first (#772)', () => {
