@@ -102,7 +102,9 @@ def main():
         assert page.evaluate("!!document.querySelector('#controls > label:has(#i2vMode)')")
         assert page.evaluate("document.getElementById('jobProblemsHost') && !document.getElementById('workshopResults').contains(document.getElementById('jobProblemsHost'))")
         page.evaluate("document.getElementById('jobProblemsHost').innerHTML='<details id=\"jobProblems\"><summary>Problems</summary><button id=\"observeFix\">Check known batch receipts</button></details>'")
-        assert not page.locator('#workshopResults').evaluate('(el)=>el.open')
+        # QA 3 Nov (create-1): Recent runs starts open in every layout; Problems stay outside it and visible when it is closed.
+        assert page.locator('#workshopResults').evaluate('(el)=>el.open')
+        page.locator('#workshopResults').evaluate('(el)=>el.open=false')
         assert page.locator('#jobProblems > summary').is_visible()
         page.locator('#jobProblems > summary').click()
         assert page.locator('#observeFix').is_visible()

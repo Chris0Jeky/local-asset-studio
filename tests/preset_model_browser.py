@@ -60,6 +60,7 @@ def run(output):
                     page.evaluate("showView('create');selectPreset('anima-portrait')")
                     page.wait_for_selector('#dependencies [data-install="curated"]', state='attached')
                     page.wait_for_selector('#workshopInspect', state='attached')
+                    page.evaluate("document.querySelector('#workshopSettings').open=true")  # QA 3 Nov: Recipe details sits inside Settings
                     page.locator('#workshopInspect > summary').click()
                     page.evaluate("document.querySelector('#dependencies').closest('details').open=true")
                     panel = page.locator('#dependencies')

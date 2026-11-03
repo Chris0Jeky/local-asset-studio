@@ -312,8 +312,7 @@ def run(screenshots):
             page.wait_for_function('document.querySelector("#workshopEta")?.textContent.includes("42")')
             check('42' in page.locator('#workshopEta').inner_text(),'interactive time estimate is shown in the run dock')
             check(page.locator('#createView').get_attribute('data-workshop-layout')=='focus','Focus is the default presentation')
-            check(not page.locator('#workshopResults').evaluate('(el)=>el.open'),'recent runs are secondary in Focus')
-            page.click('#workshopResults > summary')
+            check(page.locator('#workshopResults').evaluate('(el)=>el.open'),'recent runs start open beside the inputs (QA create-1)')
             before_estimates=len([post for post in POSTS if post['path']=='/api/estimate']);page.fill('#positive','A timing estimate interaction');page.wait_for_timeout(350)
             check(len([post for post in POSTS if post['path']=='/api/estimate'])>before_estimates,'time estimate refreshes after a control change')
             failed=page.locator('#jobProblemsHost .jobStatus').filter(has_text='Memory allocation failed')
@@ -347,7 +346,7 @@ def run(screenshots):
             if screenshots:
                 page.evaluate('window.scrollTo(0,0)');evidence_screenshot(page, path=str(screenshots/'create-desktop.png'),full_page=True)
             page.reload();page.wait_for_function('!!selected && schemaAvailable');page.wait_for_timeout(300);page.evaluate("selectPreset('qwen-1ref')");page.wait_for_selector('#uxRestoreDraft:not([hidden])');check(page.evaluate('JSON.parse(localStorage.getItem("studio-draft-v1:ux-test-workspace:qwen-1ref")).recipe.controls.positive')=='A saved workflow draft','boot does not overwrite saved draft');page.click('#uxRestoreDraft');page.wait_for_function('document.querySelector("#positive").value === "A saved workflow draft"');check(page.evaluate('parentAssets[0]')=='asset-0','restore retains source lineage')
-            page.evaluate("openAsset('asset-1');jobs[0].outputs[0].asset_id=undefined;document.querySelector('#assetDialog').close()");before_posts=len(POSTS);before_parents=page.evaluate('JSON.stringify(parentAssets)');page.click('#workshopResults > summary');page.click('#gallery .reference-output');check(not page.locator('#uxHandoff').is_visible(),'missing gallery identity refuses handoff');check(writes(before_posts)==[] and page.evaluate('JSON.stringify(parentAssets)')==before_parents,'missing gallery identity makes no reference or lineage write')
+            page.evaluate("openAsset('asset-1');jobs[0].outputs[0].asset_id=undefined;document.querySelector('#assetDialog').close()");before_posts=len(POSTS);before_parents=page.evaluate('JSON.stringify(parentAssets)');page.click('#gallery .reference-output');check(not page.locator('#uxHandoff').is_visible(),'missing gallery identity refuses handoff');check(writes(before_posts)==[] and page.evaluate('JSON.stringify(parentAssets)')==before_parents,'missing gallery identity makes no reference or lineage write')
             page.evaluate("jobs[0].outputs[0].asset_id='asset-0'");page.click('#gallery .reference-output');check('Lantern' in page.locator('#uxHandoffSource').inner_text(),'gallery handoff uses its output identity over active asset');page.click('[data-ux-close="uxHandoff"]');page.evaluate("openAsset('asset-1')");page.click('[data-ux-handoff="asset-1"]');check('Forest' in page.locator('#uxHandoffSource').inner_text(),'asset-detail handoff retains its active asset identity');page.click('[data-ux-close="uxHandoff"]');page.evaluate("document.querySelector('#assetDialog').close()")
             page.evaluate("openAsset('asset-1');document.querySelector('#assetDialog').close();const button=document.createElement('button');button.dataset.handoff='reference';document.body.append(button)");page.click('[data-handoff="reference"]');check('Forest' in page.locator('#uxHandoffSource').inner_text(),'legacy handoff treats its value as a destination, not an asset identity');page.click('[data-ux-close="uxHandoff"]')
             ASSETS.append(dict(ASSETS[0],id='asset-late',title='Late gallery output'));page.evaluate("jobs[0].outputs[0].asset_id='asset-late'");page.click('#gallery .reference-output');page.wait_for_function("document.querySelector('#uxHandoff').open");check('Late gallery output' in page.locator('#uxHandoffSource').inner_text(),'late gallery output refreshes its exact asset identity');page.click('[data-ux-close="uxHandoff"]')
@@ -456,8 +455,8 @@ def run(screenshots):
                 looks=v.evaluate(hit,'details.ux-looks > summary')
                 if not looks:print(f'NOTE: details.ux-looks > summary is not in the DOM at {width}x{height}',flush=True)
                 for box in looks:check(box['w']>=24 and box['h']>=24,f"{box['name']} pointer target is {box['w']:.1f}x{box['h']:.1f} at {width}x{height}")
-                # On phones Plan a comparison lives in the run dock's Run tools disclosure (#1495).
-                if not v.locator('#planComparison').is_visible():v.click('#workshopRunTools > summary')
+                # QA 3 Nov (create-15): Plan comparison closes the Settings disclosure on every width.
+                if not v.locator('#planComparison').is_visible():v.click('#workshopSettings > summary')
                 v.click('#planComparison');v.wait_for_selector('#experimentDialog[open]')
                 for control in ('#prepareExperiment','#cancelExperiment'):check(v.evaluate(reachable,[control,'#experimentDialog']),f'{control} is on screen when Plan a comparison opens at {width}x{height}')
                 v.keyboard.press('Escape');v.evaluate("showView('assets');openAsset('asset-1')");v.wait_for_selector('#assetDialog[open]');v.wait_for_timeout(200)

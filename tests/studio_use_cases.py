@@ -256,6 +256,7 @@ LOCAL_CONTROLS = {
     '#negativeWrap > summary': 'opens the optional exclusions disclosure',
     '#workshopReview': 'reveals the run checks',
     '#workshopResults > summary': 'opens the recent-runs disclosure',
+    '#workshopSettings > summary': 'opens the Settings disclosure (size, seed, readiness, saved setups, Plan comparison)',
     '#gallery .reference-output': 'opens Continue with this; reads the output\'s source context (GET)',
     '#gallery .reference-output[data-job][data-index]': 'opens Continue with this; reads the output\'s source context (GET)',
     '#uxHandoffIntents [data-ux-destination]': 'chooses a route inside the handoff dialog',
@@ -1077,6 +1078,7 @@ def _compare(c):
     c.act('#presetList [data-id="anima-portrait"]', note='the baseline recipe')
     c.act('#positive', 'fill', typed=BRIEF)
     c.page.locator('#positive').press('Tab')  # finish typing so the short viewport reveals secondary run tools
+    c.act('#workshopSettings > summary', note='Plan comparison closes Settings (QA 3 Nov, create-15)', supplementary=True)
     c.stop_before(c.act('#planComparison'), 'stopped at Plan comparison: live mode never opens the planner a study is prepared from')
     c.act('#experimentAxis', 'select', typed='cfg')
     c.act('#experimentValues', 'read', note='proposed candidate values')
@@ -1216,7 +1218,7 @@ def _combine(c, lead=None):
     """The owner's 14 Sep 2026 attempt: 'the pose of the second image' typed into a one-picture recipe gave the same picture."""
     c.boot('#create')
     c.page.wait_for_timeout(600)
-    c.act('#workshopResults > summary', note='open recent runs', supplementary=True)
+    # QA 3 Nov (create-1): Recent runs starts open beside the inputs; no click opens it.
     c.act(c.pick_output(), note='continue with a recent output')
     c.act('#uxHandoffIntents [data-ux-destination="combine"]', note='the route that combines two pictures')
     if lead:
@@ -1323,7 +1325,7 @@ def _draw_pose(c):
     import studio_browser_smoke as fixture
     c.boot('#create')
     c.page.wait_for_timeout(600)
-    c.act('#workshopResults > summary', note='open recent runs', supplementary=True)
+    # QA 3 Nov (create-1): Recent runs starts open beside the inputs; no click opens it.
     c.act(c.pick_output(), note='continue with a recent output')
     c.act('#uxHandoffIntents [data-ux-destination="combine"]', note='the route that combines two pictures')
     c.need_destination('combine-klein-9b-skeleton')
@@ -1607,7 +1609,7 @@ def _vary(c):
         c.boot('#create')
         c.page.on('dialog', agree)  # #1213: Vary asks before replacing a staged picture or the owner's wording; the journey agrees
         c.page.wait_for_timeout(600)
-        c.act('#workshopResults > summary', note='open recent runs', supplementary=True)
+        # QA 3 Nov (create-1): Recent runs starts open beside the inputs; no click opens it.
         keeper = '#gallery [data-ux-vary="subtle"]' + ('' if c.live else '[data-job="vary-krea-keeper"]')
         c.act('#gallery .ux-vary', 'read', note='the Vary controls and what they will do')
         c.stop_before(c.act(keeper, note='prepares the img2img round'), 'stopped before preparing: Vary attaches a copy of the picture')

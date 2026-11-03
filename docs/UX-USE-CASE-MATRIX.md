@@ -1,5 +1,27 @@
 # UX use-case matrix
 
+## Full editor: usable without scrolling, 3 November 2026 (QA pass, branch `claude/qa-editor`)
+
+The owner: "when we click on editor, the user shouldn't scroll down to use the editor." The page title (screen-reader
+only now) and the five-step strip (#1920, deleted) left the first screen; the draft notice, Fine-tune, Recipe details,
+Readiness, Saved setups and Plan comparison sit in one Settings disclosure; recipes that take a picture ask for it above
+the words; from 1280 px Recent runs is an open, sticky column beside the inputs; New seed sits beside the seed; the dock
+holds Generate, Variations, the estimate and one readiness line with its repairs. At 1920x1080 the prompt moved from
+y=670 to y=280. Fixture tour, before (origin/main 2f83d6a2) and after:
+
+| Journey | Before | After |
+| --- | --- | --- |
+| `first-image-from-brief` | 10 steps, 5 clicks, 390 words | 10 steps, 5 clicks, 374 words (the strip's sentence is gone) |
+| `compare-settings-from-recipe` | 9 steps, 5 clicks, 203 words | 10 steps, 6 clicks (open Settings, then Plan comparison), 187 words |
+| `combine-same-pair-second-engine` | 31 steps, 16 clicks, 254 words | 30 steps, 15 clicks (Recent runs is already open), 445 words (the open results column is read) |
+| `combine-several-engines-one-plan` | 25 steps, 11 clicks, 254 words | 24 steps, 10 clicks, 434 words |
+| `combine-runs-grid` | 23 steps, 11 clicks, 254 words | 22 steps, 10 clicks, 445 words |
+| `draw-a-pose-for-combine` | 13 steps, 9 clicks, 236 words | 12 steps, 8 clicks, 468 words |
+| `vary-a-keeper` | 12 steps, 5 clicks, 415 words | 11 steps, 4 clicks, 357 words |
+
+All 31 fixture journeys pass, 0 generation submissions beyond the named allowance. The word count rises where a journey
+now reads the open results column; no instruction was added.
+
 ## Review desk Grid: three engines by two seeds at a glance, 2 November 2026 (#1204)
 
 The Grid itself shipped in #1691, #1695 and #1700, and Combine's Grid in #1720. This adds the journey #1204 asked for, run
