@@ -305,7 +305,6 @@
     parameters.open = false;
     const paramSummary = parameters.querySelector('summary');
     paramSummary.replaceChildren(el('span', '', 'Fine-tune the recipe'));
-    const paramHint = el('small', 'wk-parameter-summary'); paramSummary.append(paramHint);
     const promptHint = el('small', 'wk-prompt-hint', 'Describe the result you want. Tune the recipe when you need to.');
     q('#positiveLabel')?.classList.add('sr-only'); q('#positiveWrap').append(promptHint);
     q('#positive').rows = 5;
@@ -313,11 +312,14 @@
     let draftOptions;
     if (draftButtons) { draftOptions = disclosure('workshopDraftOptions', 'Draft options', [draftButtons]); draftBar.append(draftOptions); }
     // One Settings disclosure under the prompt holds everything that is not the words, the picture or Generate (QA 3 Nov).
+    // Fine-tune, Recipe details, Readiness and Saved setups are its sub-sections and open independently (create-8).
     const settings = disclosure('workshopSettings', 'Settings', [draftBar]);
+    const settingsSummary = settings.querySelector('summary'); settingsSummary.replaceChildren(el('span', '', 'Settings'));
+    const paramHint = el('small', 'wk-parameter-summary'); settingsSummary.append(paramHint);
 
     const review = disclosure('workshopChecks', 'Readiness & run details', [runBox]);
     const reviewSummary = review.querySelector('summary');
-    editor.append(settings, parameters, inspection, review);
+    settings.append(parameters, inspection, review); editor.append(settings);
     // The storage notice stays outside the closed Appearance popover, so a choice that will not persist is always visible.
     setupRail.append(preferenceNotice);
     const dock = el('div', 'wk-run-dock'); dock.setAttribute('role','group'); dock.setAttribute('aria-label','Generation controls');
@@ -382,7 +384,7 @@
     const caption = [...editor.children].find(n => n.classList.contains('section-title'));
     if (caption && !caption.querySelector('button,input,select,textarea')) caption.hidden = true;
     const saved = q('#createView .saved');
-    const savedDetails = disclosure('workshopSaved', 'Saved setups', [saved]); editor.append(savedDetails);
+    const savedDetails = disclosure('workshopSaved', 'Saved setups', [saved]); settings.append(savedDetails);
     // A started run says when it started and how long it has taken so far (handoff 03). Only started_at is observed,
     // so there is no progress bar and no guessed finish (K13); the job's own message stays as it is.
     const clock = seconds => { const s = Math.max(0, Math.floor(seconds)); return s < 60 ? s+' s' : Math.floor(s/60)+' min '+String(s%60).padStart(2,'0')+' s'; };
@@ -471,11 +473,7 @@
       }
     });
     function dispatchIntent(intent) { return actionAdapter.dispatch(intent); }
-    // Only one secondary workbench disclosure at a time. Negative prompt and required sources are independent.
-    for (const panel of [parameters, inspection, review, savedDetails]) panel.addEventListener('toggle', () => {
-      if (panel === parameters) quickTune.setAttribute('aria-expanded', String(parameters.open));
-      if (panel.open) for (const other of [parameters, inspection, review, savedDetails]) if (other !== panel) other.open = false;
-    });
+    parameters.addEventListener('toggle', () => quickTune.setAttribute('aria-expanded', String(parameters.open)));
     function groupControls() {
       const controls = q('#controls'); if (!controls) return;
       const labels = [...controls.children].filter(n => n.tagName === 'LABEL'); if (!labels.length) return;
@@ -610,7 +608,7 @@
       const adapters = [...d.querySelectorAll('#loraSlots .lora-slot')].filter(slot => Number(slot.querySelector('input[data-key]')?.value) > 0).length;
       const summary = [dims, steps, adapters ? adapters+' active adapter'+(adapters === 1 ? '' : 's') : 'No active adapters'].filter(Boolean).join(' · ');
       text(paramHint, [summary, seed].filter(Boolean).join(' · '));
-      text(quickTune, summary+'   ·   Tune settings ↗');
+      text(quickTune, 'Tune settings');
       const blocked = q('#generate').disabled, first = q('#uxBlockers .ux-blocker p')?.textContent;
       const readinessText = blocked ? first || 'Review readiness before generating.' : 'No blockers reported';
       const blockers = blocked ? [...d.querySelectorAll('#uxBlockers .ux-blocker')].filter(n => n.querySelector('p')?.textContent) : [];
