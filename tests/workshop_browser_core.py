@@ -102,7 +102,9 @@ def main():
         assert page.evaluate("!!document.querySelector('#controls > label:has(#i2vMode)')")
         assert page.evaluate("document.getElementById('jobProblemsHost') && !document.getElementById('workshopResults').contains(document.getElementById('jobProblemsHost'))")
         page.evaluate("document.getElementById('jobProblemsHost').innerHTML='<details id=\"jobProblems\"><summary>Problems</summary><button id=\"observeFix\">Check known batch receipts</button></details>'")
-        assert not page.locator('#workshopResults').evaluate('(el)=>el.open')
+        # QA 3 Nov (create-1): Recent runs starts open in every layout; Problems stay outside it and visible when it is closed.
+        assert page.locator('#workshopResults').evaluate('(el)=>el.open')
+        page.locator('#workshopResults').evaluate('(el)=>el.open=false')
         assert page.locator('#jobProblems > summary').is_visible()
         page.locator('#jobProblems > summary').click()
         assert page.locator('#observeFix').is_visible()
@@ -226,9 +228,12 @@ def main():
         assert page.locator('#generate').evaluate('(el)=>el===document.activeElement')
         assert page.evaluate('submitted') == blocked_submission_count
         page.evaluate("document.getElementById('gallery').innerHTML='<article class=\"imageCard\">result</article>'")
-        page.wait_for_function("document.querySelector('#workshopGuidanceAction').dataset.intent==='open-results'")
+        # QA 3 Nov (create-6): a ready recipe says Generate even when outputs exist; the old "open results" came first.
+        page.wait_for_timeout(100)
+        assert page.locator('#workshopGuidanceAction').get_attribute('data-rail') == 'focus-generate'
+        assert page.locator('#workshopGuidanceTitle').inner_text() == 'Ready. Press Generate.'
         page.locator('#workshopGuidanceAction').click()
-        assert page.locator('#workshopResults').evaluate('(el)=>el.open')
+        assert page.locator('#generate').evaluate('(el)=>el===document.activeElement')
         assert page.evaluate('submitted') == blocked_submission_count
         checks.append({'name': 'contextual guidance only reveals/focuses existing controls'})
 

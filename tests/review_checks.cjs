@@ -20,7 +20,7 @@ test('Create recipe cards count only owner answers on loaded images of that reci
   let html=$('#presetList').innerHTML;
   assert.match(html,/Loaded checks: face 1\/2 · hands 0\/1/);
   assert.match(html,/Loaded checks: depth 1\/1/);
-  assert.match(html,/Loaded checks: none/);
+  assert.match(html,/>Not reviewed yet</,'a recipe with no answers says so in plain words (QA journeys-4)');
   assert.equal((html.match(/preset-check-count/g)||[]).length,3,'video cards have no image checks');
   vm.runInContext("assetState.assets[0].tags=['check:face=no'];renderPresets()",context);
   html=$('#presetList').innerHTML;assert.match(html,/Loaded checks: face 0\/2/);assert.doesNotMatch(html,/hands 0\/1/);

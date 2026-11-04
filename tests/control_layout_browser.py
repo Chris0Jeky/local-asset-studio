@@ -37,7 +37,7 @@ async def run(args):
                     await page.evaluate("showView('create'); selectPreset('wan22-i2v')")
                     await page.wait_for_function("document.querySelector('#i2vMode')?.value === 'quick-diagnostic'")
                     if not await page.locator('#i2vMode').is_visible():
-                        await page.locator('#i2vMode').locator('xpath=ancestor::details[1]/summary').click()
+                        await page.evaluate("for(let d=document.querySelector('#i2vMode');d;d=d.parentElement)if(d.tagName==='DETAILS')d.open=true")
                     await page.locator('[data-key=seed]').fill('20260913')
                     textarea_height = await page.locator('#positive').evaluate('(e) => e.getBoundingClientRect().height')
                     for mode in ('quick-diagnostic', 'quality', 'canonical-upstream'):

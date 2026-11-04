@@ -34,7 +34,7 @@ def run(output):
                     page.wait_for_function("document.querySelector('#i2vMode')?.value === 'quick-diagnostic'")
                     assert page.locator('#generate').is_enabled()
                     if not page.locator('#i2vMode').is_visible():
-                        page.locator('#i2vMode').locator('xpath=ancestor::details[1]/summary').click()
+                        page.evaluate("for(let d=document.querySelector('#i2vMode');d;d=d.parentElement)if(d.tagName==='DETAILS')d.open=true")
                     for mode in ('quality', 'canonical-upstream'):
                         page.locator('#i2vMode').select_option(mode)
                         assert page.locator('#generate').is_disabled()
@@ -60,7 +60,7 @@ def run(output):
                     assert 'Held:' not in page.locator('#i2vModeNote').text_content()
                     # On phones the batch count lives in the run dock's "Run tools" disclosure (#1495).
                     if not page.locator('#batch').is_visible():
-                        page.locator('#batch').locator('xpath=ancestor::details[1]/summary').click()
+                        page.evaluate("for(let d=document.querySelector('#batch');d;d=d.parentElement)if(d.tagName==='DETAILS')d.open=true")
                     page.locator('#batch').select_option('3')
                     assert page.locator('#generate').is_enabled()  # Serial outputs are not latent batches.
                     page.locator('[data-key="frames"]').fill('')

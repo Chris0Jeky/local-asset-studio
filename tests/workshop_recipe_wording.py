@@ -241,7 +241,8 @@ class RecipeWording(unittest.TestCase):
         self.switch('sdxl')
         self.page.locator('#uxWordingUndoBack').wait_for(state='visible')
         seed = self.page.locator('#controls [data-key="seed"]')
-        seed.evaluate('(n)=>n.closest("details")&&(n.closest("details").open=true)')
+        # QA 3 Nov: Fine-tune now sits inside Settings, so open every enclosing disclosure.
+        seed.evaluate('(n)=>{for(let d=n.closest("details");d;d=d.parentElement.closest("details"))d.open=true}')
         seed.fill('4242')
         self.assertTrue(self.page.locator('#uxWordingUndo').is_hidden(), 'going back would discard that edit')
 

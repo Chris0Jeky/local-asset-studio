@@ -166,7 +166,7 @@ async function check(name,fn){await fn();count++;console.log('PASS',name);}
     const save=s.el('#saveAssetDetails').onclick();s.accept(0);assert.equal(await save,true);
     assert.match(s.el('#presetList').innerHTML,/Loaded checks: face 1\/1/,'the confirmed answer is counted after repaint; the off-page resolved picture stays excluded');
     s.run("assetResolved.set('a',{id:'a',state:'missing',asset:null});renderPresets()");
-    assert.match(s.el('#presetList').innerHTML,/Loaded checks: none/,'a resolved missing record does not reuse its stale page answers');
+    assert.match(s.el('#presetList').innerHTML,/>Not reviewed yet</,'a resolved missing record does not reuse its stale page answers');
   });
   await check('Bulk review saves each selected asset once and lists every failure',async()=>{
     const s=library();s.run("assetSelection=new Set(['a','b']);renderAssets()");

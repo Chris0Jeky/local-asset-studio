@@ -55,7 +55,8 @@ def run(output):
                 page.evaluate("showView('create')")
                 page.wait_for_selector('#jobProblems')
                 assert page.locator('#createView').get_attribute('data-workshop-layout')=='focus'
-                assert not page.locator('#workshopResults').evaluate('(el)=>el.open'), 'Focus must not hide recovery behind Recent runs'
+                # QA 3 Nov: Recent runs starts open; recovery must still be reachable with it closed.
+                page.locator('#workshopResults').evaluate('(el)=>el.open=false')
                 assert page.evaluate("!document.querySelector('#workshopResults').contains(document.querySelector('#jobProblems'))")
                 page.locator('#jobProblems > summary').click()
                 box=page.locator('.mixedBatchControls');box.locator('summary').click()

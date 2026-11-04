@@ -30,7 +30,7 @@
   const recipeTools=element('div','ux-intent-tools','<label for="uxIntent">Start with a task<select id="uxIntent"><option value="all">Every recipe</option>'+U.INTENTS.map(i=>'<option value="'+i.id+'">'+i.name+'</option>').join('')+'</select></label><p id="uxIntentHint" class="muted">Choose by outcome, then inspect the exact recipe.</p>');q('#presetSearch').closest('label').before(recipeTools);
   const setup=q('#createView .setup'),drawer=element('details','ux-recipe-drawer');drawer.open=window.innerWidth>850;drawer.innerHTML='<summary>Recipe library <small id="uxRecipeLabel">Choose a starting point</small></summary>';while(setup.firstChild)drawer.append(setup.firstChild);setup.append(drawer);
   const drafts=element('div','ux-draft-bar');drafts.id='uxDraftBar';drafts.innerHTML='<span id="uxDraftStatus">Your unsaved draft is kept in this browser. Save a setup to keep it in your workspace.</span><div><button id="uxRestoreDraft" hidden>Restore draft</button><button id="uxDiscardDraft" hidden>Discard saved draft</button><button id="uxExportDraft">Export draft</button><button id="uxImportDraftButton">Import draft</button><input id="uxImportDraft" type="file" accept="application/json,.json" hidden><button id="uxKeepDraft" hidden>Keep this tab</button></div>';editor.prepend(drafts);
-  q('#positiveWrap').before(element('div','ux-section-heading','<span>01</span><h3>Describe the result</h3><a href="/prompt-lab.html">Open Prompt Lab ↗</a>'));
+  q('#positiveWrap').before(Object.assign(element('div','ux-section-heading','<span>01</span><h3>Describe the result</h3><a href="/prompt-lab.html">Open Prompt Lab ↗</a>'),{id:'uxPromptHeading'}));
   // A recipe's bracketed fills (who, the pose, the clothes) are short fields that write the prepared wording for you; the
   // paragraph stays visible and editable underneath, and a hand edit stops the fields from rewriting it (#422 slice A).
   const fillsBlock=element('div','ux-fills');fillsBlock.id='uxFills';fillsBlock.hidden=true;q('#positiveWrap').before(fillsBlock);
@@ -67,8 +67,8 @@
   fillsBlock.addEventListener('click',e=>{if(e.target.closest('#uxRebuildFills'))assembleFills();});
   const referenceHeading=element('div','ux-section-heading','<span>02</span><h3>Bring in your sources</h3><button id="uxFindReferenceRecipes" hidden>Show reference recipes</button><button id="uxPullAsset">Pull from library</button>');q('#roleReferences').before(referenceHeading);
   const sourceNote=element('p','ux-source-note');sourceNote.id='uxSourceNote';referenceHeading.after(sourceNote);
-  // A wrong turn must say something. The sources section stays on screen for every recipe; on a
-  // text-only one it is inert and carries this line, which is also the button's described reason (#278 friction 1).
+  // A text-only recipe renders no sources section (QA 3 Nov, create-14); Settings keeps one "start from a picture" link.
+  // The line stays as the hidden note's text, the reason Pull from library would give (#278 friction 1).
   const NO_SOURCE_SLOT='This recipe takes no reference image. Choose a reference recipe (Qwen Atelier 1–3 references, Krea refine) to keep a source.';
   const takesSource=()=>!!selected?.reference||!!selected?.reference_slots?.length;
   q('#uxPullAsset').setAttribute('aria-describedby','uxSourceNote');
@@ -169,7 +169,11 @@
   const originalUploadRoleFile=uploadRoleFile;uploadRoleFile=async function(...args){const epoch=referenceEpoch,applied=await originalUploadRoleFile(...args);if(applied&&epoch===referenceEpoch){draftDirty=true;saveDraft();}return applied;};
   // Collapse six overlapping output actions into one reviewed, compatible handoff.
   after('renderJobs',()=>{for(const card of q('#gallery').querySelectorAll('.imageCard')){const actions=[...card.querySelectorAll('.reference-output')];if(!actions.length)continue;const first=actions.shift();first.textContent='Continue with this →';first.classList.add('primary');actions.forEach(button=>button.remove());}});
-  function syncCreate(){if(!selected)return;q('#uxRecipeLabel').textContent=selected.name;referenceHeading.hidden=false;q('#uxSourceNote').hidden=false;q('#uxFindReferenceRecipes').hidden=takesSource();syncReady();}
+  // A recipe that takes a picture asks for it first, above the words; a text-only one keeps the sources block after the prompt.
+  function placeSources(){const nodes=[referenceHeading,q('#uxSourceNote'),q('#roleReferences'),q('#createView .references'),q('#uxSecondPicture')].filter(Boolean),prompt=q('#uxPromptHeading'),anchor=q('#negativeWrap');if(!prompt||!anchor)return;
+    const first=takesSource(),above=!!(referenceHeading.compareDocumentPosition(prompt)&Node.DOCUMENT_POSITION_FOLLOWING);if(first===above)return;
+    const focused=nodes.some(n=>n.contains(document.activeElement))?document.activeElement:null;if(first)prompt.before(...nodes);else anchor.after(...nodes);focused?.focus({preventScroll:true});}
+  function syncCreate(){if(!selected)return;q('#uxRecipeLabel').textContent=selected.name;referenceHeading.hidden=!takesSource();q('#uxSourceNote').hidden=!takesSource();q('#uxFindReferenceRecipes').hidden=takesSource();placeSources();syncReady();}
   let readinessMarkup='',readinessChecking=false;
   // The environment's display name as Models & setup lists it, never its raw id.
   const envName=id=>q('#backendChoice option[value="'+id+'"]')?.textContent.replace(/ · online$/,'')||id;

@@ -126,7 +126,7 @@
     }
     function updatePreference(key, value) {
       state = preferences({...state, [key]:value});
-      applyPresentation(); persistPresentation(); sync();
+      applyPresentation(); persistPresentation(); sync(); dockEdges();
     }
     function choice(id, label, options, key) {
       const wrap = el('label', 'wk-select-control', label), select = el('select'); select.id = id;
@@ -305,24 +305,30 @@
     parameters.open = false;
     const paramSummary = parameters.querySelector('summary');
     paramSummary.replaceChildren(el('span', '', 'Fine-tune the recipe'));
-    const paramHint = el('small', 'wk-parameter-summary'); paramSummary.append(paramHint);
-    const promptHint = el('small', 'wk-prompt-hint', 'Describe the result you want. Tune the recipe when you need to.');
-    q('#positiveLabel')?.classList.add('sr-only'); q('#positiveWrap').append(promptHint);
+    q('#positiveLabel')?.classList.add('sr-only');
+    // The words come straight after their heading; Use a look folds in under them, above the negative prompt (wireframe, create-3).
+    const look = q('#lookBlock'); if (look) q('#negativeWrap')?.before(look);
     q('#positive').rows = 5;
     const draftBar = q('#uxDraftBar'), draftButtons = draftBar?.querySelector(':scope > div');
     let draftOptions;
     if (draftButtons) { draftOptions = disclosure('workshopDraftOptions', 'Draft options', [draftButtons]); draftBar.append(draftOptions); }
+    // One Settings disclosure under the prompt holds everything that is not the words, the picture or Generate (QA 3 Nov).
+    // Fine-tune, Recipe details, Readiness and Saved setups are its sub-sections and open independently (create-8).
+    const settings = disclosure('workshopSettings', 'Settings', [draftBar]);
+    const settingsSummary = settings.querySelector('summary'); settingsSummary.replaceChildren(el('span', '', 'Settings'));
+    const paramHint = el('small', 'wk-parameter-summary'); settingsSummary.append(paramHint);
 
     const review = disclosure('workshopChecks', 'Readiness & run details', [runBox]);
     const reviewSummary = review.querySelector('summary');
-    editor.append(parameters, inspection, review);
+    settings.append(parameters, inspection, review); editor.append(settings);
     // The storage notice stays outside the closed Appearance popover, so a choice that will not persist is always visible.
     setupRail.append(preferenceNotice);
     const dock = el('div', 'wk-run-dock'); dock.setAttribute('role','group'); dock.setAttribute('aria-label','Generation controls');
     const dockInfo = el('div', 'wk-dock-info'), readiness = el('strong'), eta = el('span');
     readiness.id = 'workshopReadiness'; readiness.tabIndex = -1; eta.id = 'workshopEta';
     const reviewButton = button('workshopReview', 'What’s missing?', () => reveal(review));
-    dockInfo.append(readiness, eta, reviewButton);
+    // Every blocker's repair sits beside Generate, under the one readiness line (journeys-3); the band keeps only the recipe.
+    dockInfo.append(readiness, blockerList, eta, reviewButton);
     const status = q('#status'); if (status) status.tabIndex = 0; dock.append(dockInfo, actions); if (status) dock.append(status); create.append(dock);
     // A text field you enter is never left under the fixed dock; a narrow or short dock also compacts while you type (workshop.css).
     const typing = n => !!n?.matches?.('textarea,input:not([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset],[type=file],[type=color],[type=image])') && !dock.contains(n);
@@ -352,10 +358,10 @@
     create.addEventListener('focusout', e => { if (!typing(e.target)) return; if (pressing) relaxPending = true; else dock.classList.remove('wk-typing'); });
     create.addEventListener('focusin', e => { if (typing(e.target)) { dock.classList.add('wk-typing'); clearOfDock(e.target, 2); } });
     const estimate = q('#timeEstimate'); if (estimate) runBox.append(estimate);
-    const runTools = el('div', 'wk-run-tools'); runTools.setAttribute('role', 'group'); runTools.setAttribute('aria-label', 'Plan and vary this run');
+    // The dock is Generate, Variations, the estimate and the reason (create-15): New seed sits beside the seed field
+    // (groupControls), Plan comparison at the end of Settings, since it starts a Compare & review study.
     const compare = q('#planComparison'), newSeed = q('#randomSeed');
-    for (const tool of [newSeed, compare]) if (tool) runTools.append(tool);
-    actions.after(runTools);
+    if (newSeed) parameters.append(newSeed);
     const phonePanel = el('div', 'wk-phone-panel'), phoneTools = disclosure('workshopRunTools', 'Run tools', [phonePanel]);
     const batchLabel = q('#batch')?.closest('label'), phoneWidth = w.matchMedia('(max-width:600px)');
     // Phones fold only the secondary tools away; the blocker, status line, Cancel and run summary stay in view, because they say why Generate is off or what a run did.
@@ -365,10 +371,10 @@
       // Move the original controls, preserving their handlers; wide screens keep the original grid.
       const held = d.activeElement && dock.contains(d.activeElement) ? d.activeElement : null;
       if (phoneWidth.matches) {
-        dock.prepend(eta); actions.after(dockInfo); if (batchLabel) phonePanel.append(batchLabel); phonePanel.append(runTools);
+        dock.prepend(eta); actions.after(dockInfo); if (batchLabel) phonePanel.append(batchLabel);
       } else {
         dockInfo.insertBefore(eta, reviewButton); dock.prepend(dockInfo); if (batchLabel) actions.prepend(batchLabel);
-        actions.after(runTools); phoneTools.open = false;
+        phoneTools.open = false;
       }
       phoneTools.hidden = !phoneWidth.matches;
       // A focused run tool that just moved into the panel keeps focus only if the panel is open.
@@ -380,7 +386,11 @@
     const caption = [...editor.children].find(n => n.classList.contains('section-title'));
     if (caption && !caption.querySelector('button,input,select,textarea')) caption.hidden = true;
     const saved = q('#createView .saved');
-    const savedDetails = disclosure('workshopSaved', 'Saved setups', [saved]); editor.append(savedDetails);
+    const savedDetails = disclosure('workshopSaved', 'Saved setups', [saved]); settings.append(savedDetails);
+    if (compare) { compare.classList.add('wk-plan-comparison'); settings.append(compare); }
+    // Text-only recipes show no sources block; the way to a picture recipe is one small link here (create-14).
+    const findReferences = q('#uxFindReferenceRecipes');
+    if (findReferences) { findReferences.classList.add('wk-settings-link'); findReferences.textContent = 'Start from a picture instead: show reference recipes'; settings.append(findReferences); }
     // A started run says when it started and how long it has taken so far (handoff 03). Only started_at is observed,
     // so there is no progress bar and no guessed finish (K13); the job's own message stays as it is.
     const clock = seconds => { const s = Math.max(0, Math.floor(seconds)); return s < 60 ? s+' s' : Math.floor(s/60)+' min '+String(s%60).padStart(2,'0')+' s'; };
@@ -409,7 +419,9 @@
     w.setInterval(tickElapsed, 1000); tickElapsed(); const jobList = q('#gallery'); if (jobList) new w.MutationObserver(tickElapsed).observe(jobList, {childList:true});
     const gallery = q('#createView .gallery-panel');
     const problemsHost = el('div'); problemsHost.id = 'jobProblemsHost';
-    const results = disclosure('workshopResults', 'Recent runs', [gallery]); results.classList.add('wk-results');
+    // Recent runs starts open in every layout (create-1). Problems stay outside it, so closing it never hides a recovery,
+    // and sit at the top of the results column from 1280 px (create-9).
+    const results = disclosure('workshopResults', 'Recent runs', [gallery]); results.classList.add('wk-results'); results.open = true;
     create.append(problemsHost, results);
     problemsHost.onclick = q('#gallery')?.onclick;
     q('#generate').addEventListener('click', () => { if (!q('#generate').disabled) results.open = true; }, true);
@@ -418,8 +430,13 @@
     guidance.append(el('span', 'eyebrow', 'ONE NEXT ACTION'));
     const guidanceTitle = el('h2', '', 'Review readiness'); guidanceTitle.id = 'workshopGuidanceTitle';
     const guidanceDescription = el('p', '', 'Use the current readiness evidence before running.'); guidanceDescription.id = 'workshopGuidanceDescription';
+    // The rail's one action (QA 3 Nov): the first blocker's own repair, forwarded exactly as the dock's list does; Go to Generate
+    // (focus only) when ready; else the projected intent. It never submits.
+    let guidanceRepair = null;
     const guidanceAction = button('workshopGuidanceAction', 'Review readiness', () => {
-      if (currentView) dispatchIntent(currentView.primaryAction);
+      if (guidanceRepair) forwardRepair(guidanceRepair.code, guidanceRepair.message);
+      else if (guidanceAction.dataset.rail === 'focus-generate') focusExisting(q('#generate'));
+      else if (currentView) dispatchIntent(currentView.primaryAction);
     });
     const guidanceWhy = el('details', 'wk-guidance-why'); guidanceWhy.id = 'workshopGuidanceWhy';
     guidanceWhy.append(el('summary', '', 'Why this?'));
@@ -469,11 +486,7 @@
       }
     });
     function dispatchIntent(intent) { return actionAdapter.dispatch(intent); }
-    // Only one secondary workbench disclosure at a time. Negative prompt and required sources are independent.
-    for (const panel of [parameters, inspection, review, savedDetails]) panel.addEventListener('toggle', () => {
-      if (panel === parameters) quickTune.setAttribute('aria-expanded', String(parameters.open));
-      if (panel.open) for (const other of [parameters, inspection, review, savedDetails]) if (other !== panel) other.open = false;
-    });
+    parameters.addEventListener('toggle', () => quickTune.setAttribute('aria-expanded', String(parameters.open)));
     function groupControls() {
       const controls = q('#controls'); if (!controls) return;
       const labels = [...controls.children].filter(n => n.tagName === 'LABEL'); if (!labels.length) return;
@@ -489,6 +502,8 @@
         groups.get(name).append(label);
       }
       for (const name of ['Seed','Canvas & duration','Sampling','Model & guidance']) if (groups.has(name)) controls.append(groups.get(name));
+      // A re-rendered control list drops the button with the old labels; the same element (and its handler) goes back beside the seed.
+      if (newSeed && groups.has('Seed')) groups.get('Seed').append(newSeed);
       // Reparenting the existing field must not blur an editor restored by its owner.
       if (focused && d.activeElement === d.body) focused.focus({preventScroll:true});
     }
@@ -503,7 +518,6 @@
       for (const [value, skinButton] of skinButtons) {
         const active = value === state.skin; skinButton.setAttribute('aria-pressed', String(active)); skinButton.classList.toggle('active', active);
       }
-      results.open = state.layout === 'studio' || state.layout === 'immersive';
       text(heroTitle, state.ambience === 'quiet-morning' ? 'Make room for the next idea.' : 'Turn your ideas into something real.');
       text(heroText, state.ambience === 'quiet-morning'
         ? 'The same private workspace, with a quieter morning atmosphere.'
@@ -552,6 +566,19 @@
       text(guidanceAction, primary.label);
       guidanceAction.dataset.intent = primary.id;
       text(guidanceReason, primary.reason);
+      const lead = blocked ? d.querySelector('#uxBlockers .ux-blocker') : null, repair = lead?.querySelector('[data-ux-resolve]');
+      guidanceRepair = repair ? {code:lead.dataset.readinessCode || '', message:lead.querySelector('p')?.textContent || ''} : null;
+      guidanceAction.disabled = !!repair?.disabled;
+      if (guidanceRepair) {
+        text(guidanceTitle, guidanceRepair.message); text(guidanceDescription, ''); text(guidanceAction, repair.textContent);
+        guidanceAction.dataset.rail = 'readiness-repair'; text(guidanceReason, 'Generate stays off until this is fixed. This button only does that repair; it generates nothing.');
+      } else if (!blocked) {
+        text(guidanceTitle, 'Ready. Press Generate.'); text(guidanceDescription, ''); text(guidanceAction, 'Go to Generate');
+        guidanceAction.dataset.rail = 'focus-generate'; text(guidanceReason, 'Every check passed. This button moves to Generate; it does not press it.');
+      }
+      else delete guidanceAction.dataset.rail;
+      // data-intent stays the projection's (the UI island mirrors it); data-rail names what this button does instead.
+      guidanceDescription.hidden = !guidanceDescription.textContent;
       // A demoted readiness intent still carries the specific blocker in .description; dropping it left the
       // rail with a generic "Resolve the next blocker" while the real message sat only in the dock (#610 item 4).
       const secondary = currentView.secondaryActions.map(action => action.title + ' · ' + action.description).join(' — ');
@@ -561,6 +588,8 @@
       presentationSnapshot = Object.freeze({view:currentView, recipe:recipe ? Object.freeze({id:String(recipe.id || ''), name:String(recipe.name || recipe.id || '')}) : null});
       if (announcedStamp !== currentView.contextStamp) { announcedStamp = currentView.contextStamp; create.dispatchEvent(new w.CustomEvent('studio:presentation', {detail:presentationSnapshot})); }
     }
+    // The only click a presentation control forwards: the existing readiness repair for that blocker, which owns focus and repair.
+    function forwardRepair(code, message) { [...d.querySelectorAll('#uxBlockers .ux-blocker')].find(n => (n.dataset.readinessCode || '') === code && n.querySelector('p')?.textContent === message)?.querySelector('[data-ux-resolve]')?.click(); }
     let blockerSignature = '';
     function renderBlockers(blockers) {
       const rows = blockers.map(n => { const fix = n.querySelector('[data-ux-resolve]'); return [n.dataset.readinessCode || '', n.querySelector('p').textContent, fix?.textContent || '', !!fix?.disabled]; });
@@ -572,9 +601,7 @@
         if (label) {
           const fix = el('button', '', label); fix.type = 'button'; fix.disabled = disabled;
           // Forwards to the original readiness button, which owns focus and repair; nothing is decided here.
-          fix.addEventListener('click', () => [...d.querySelectorAll('#uxBlockers .ux-blocker')]
-            .find(n => (n.dataset.readinessCode || '') === code && n.querySelector('p')?.textContent === message)
-            ?.querySelector('[data-ux-resolve]')?.click());
+          fix.addEventListener('click', () => forwardRepair(code, message));
           item.append(fix);
         }
         return item;
@@ -608,14 +635,17 @@
       const adapters = [...d.querySelectorAll('#loraSlots .lora-slot')].filter(slot => Number(slot.querySelector('input[data-key]')?.value) > 0).length;
       const summary = [dims, steps, adapters ? adapters+' active adapter'+(adapters === 1 ? '' : 's') : 'No active adapters'].filter(Boolean).join(' · ');
       text(paramHint, [summary, seed].filter(Boolean).join(' · '));
-      text(quickTune, summary+'   ·   Tune settings ↗');
+      text(quickTune, 'Tune settings');
       const blocked = q('#generate').disabled, first = q('#uxBlockers .ux-blocker p')?.textContent;
-      const readinessText = blocked ? first || 'Review readiness before generating.' : 'No blockers reported';
       const blockers = blocked ? [...d.querySelectorAll('#uxBlockers .ux-blocker')].filter(n => n.querySelector('p')?.textContent) : [];
+      // One cause, one line: several blockers are counted here and listed once below it; an environment switch says what it costs.
+      const switchFix = blocked && blockers.length === 1 && !!blockers[0].querySelector('[data-ux-resolve="switch"]');
+      const readinessText = !blocked ? 'No blockers reported' : blockers.length > 1 ? blockers.length+' things to fix before generating'
+        : (first || 'Review readiness before generating.') + (switchFix ? ' Switching takes about a minute; nothing is generated.' : '');
       reviewButton.hidden = !blocked;
       dockInfo.classList.toggle('wk-clear', !blocked);
-      text(readiness, readinessText + (blockers.length > 1 ? ' (+'+(blockers.length-1)+' more)' : ''));
-      text(setupReadiness, blockers.length > 1 ? blockers.length+' things to fix before generating' : readinessText);
+      text(readiness, readinessText);
+      text(setupReadiness, readinessText);
       setupReadiness.hidden = blockers.length === 1;
       renderBlockers(blockers);
       const time = q('#estimateValue')?.textContent;
@@ -623,7 +653,8 @@
       text(eta, etaText); text(setupEta, etaText);
       text(reviewSummary, blocked ? 'Readiness & run details · needs attention' : 'Readiness & run details');
       const pending = ['uxRestoreDraft','uxKeepDraft'].some(id => q('#'+id) && !q('#'+id).hidden);
-      if (draftOptions && pending && !recoveryPending) draftOptions.open = true;
+      // A draft waiting to be restored is an event: open the panel that holds its buttons.
+      if (draftOptions && pending && !recoveryPending) { draftOptions.open = true; settings.open = true; }
       recoveryPending = pending;
       const outputs = q('#gallery')?.querySelectorAll('.imageCard').length || 0;
       text(results.querySelector('summary'), 'Recent runs'+(outputs ? ' · '+outputs+' output'+(outputs === 1 ? '' : 's') : ''));
@@ -649,18 +680,21 @@
     observer.observe(create, {attributes:true, attributeFilter:['hidden']});
     observer.observe(q('#generate'), {attributes:true, attributeFilter:['disabled']});
     if (estimate) observer.observe(estimate, {attributes:true, attributeFilter:['hidden']});
+    // Where results sit beside the inputs (CSS, from 1280 px), the dock spans only the inputs column, so it never covers a result.
+    const dockEdges = () => { if (create.hidden) return; const r = editor.getBoundingClientRect(); if (!r.width) return;
+      d.body.style.setProperty('--wk-dock-left', Math.round(r.left)+'px'); d.body.style.setProperty('--wk-dock-right', Math.max(0, Math.round(d.documentElement.clientWidth - r.right))+'px'); };
     const resize = typeof w.ResizeObserver === 'function' ? new w.ResizeObserver(() => {
       if (create.hidden) return;
-      d.body.style.setProperty('--workshop-dock-space', Math.ceil(dock.getBoundingClientRect().height + 24)+'px');
+      d.body.style.setProperty('--workshop-dock-space', Math.ceil(dock.getBoundingClientRect().height + 24)+'px'); dockEdges();
     }) : null;
-    resize?.observe(dock);
+    resize?.observe(dock); resize?.observe(editor); w.addEventListener('resize', dockEdges);
     create.__workshop = {
       reveal, sync, openRecipes, finishRecipeSelection, preferences:()=>({...state}),
       presentationView:() => currentView,
       presentationSnapshot:() => presentationSnapshot,
       dispatchIntent
     };
-    applyPresentation(); sync();
+    applyPresentation(); sync(); dockEdges();
     // A recipe-goal deep link is an explicit request to open discovery.
     if (new w.URLSearchParams(w.location.search).has('recipe_goal')) openRecipes();
     return create.__workshop;

@@ -125,7 +125,8 @@ function presetGroup(p) {
   const group = INTENT_GROUP[intent] || (modality === 'video' ? 'video' : modality === '3d' ? '3d' : p.reference ? 'edit' : null);
   if (group) return group;
   const words = [p.id, p.name, p.category, p.collection].join(' ');
-  return /pixel|sprite|prop\b|game/i.test(words) ? 'game' : /photo|realvis|realis|product|banner/i.test(words) ? 'photo' : /environment|scene|landscape|background|abstract/i.test(words) ? 'scene' : 'character';
+  // products?\b, not product: the "production-workspace" collection put MOSS, HiDream and Qwen 2.1 anime recipes under Photo (QA journeys-4).
+  return /pixel|sprite|prop\b|game/i.test(words) ? 'game' : /photo|realvis|realis|products?\b|banner/i.test(words) ? 'photo' : /environment|scene|landscape|background|abstract/i.test(words) ? 'scene' : 'character';
 }
 // First sentence without decision/issue asides; the full text stays in the editor's recipe card.
 function plainLine(text) {
@@ -161,7 +162,7 @@ function renderPresets() {
     return '<button class="preset ' + (selected?.id === p.id ? 'chosen' : '') + '" data-id="' + esc(p.id) + '" title="' + esc(p.description || '') + '" aria-describedby="preset-description-' + esc(p.id) + '">' + (thumb ? '<img class="preset-thumb" src="' + esc(thumb) + '" alt="" loading="lazy">' : '') + '<b>' + esc(p.name) + '</b><span id="preset-description-' + esc(p.id) + '">' + esc(p.description || '') + '</span><div class="recipe-meta"><span>' + esc(p.family || p.category) + '</span>'
       + (pace ? '<em class="badge pace ' + pace[0] + '" title="' + esc(pace[2]) + '">' + esc(pace[1]) + '</em>' : '')
       + (missing.length ? '<em class="badge need" title="' + esc(missing.join(', ')) + '">Needs download</em>' : '') + pinBadge
-      + (checks !== null ? '<span class="preset-check-count muted" title="Owner answers from pictures on the loaded Library page">Loaded checks: ' + esc(checks || 'none') + '</span>' : '') + '</div></button>';
+      + (checks !== null ? '<span class="preset-check-count muted" title="Owner answers from pictures on the loaded Library page">' + (checks ? 'Loaded checks: ' + esc(checks) : 'Not reviewed yet') + '</span>' : '') + '</div></button>';
   };
   $('#presetList').innerHTML = PICKER_GROUPS.map(([id, label]) => [id, label, list.filter(p => presetGroup(p) === id)]).filter(g => g[2].length)
     .map(([id, label, items]) => '<section class="preset-group" data-group="' + id + '"><h3>' + esc(label) + '</h3><div class="preset-group-items">' + items.map(card).join('') + '</div></section>').join('') || '<p class="muted">No recipes match. Try another collection or search.</p>';
@@ -477,7 +478,8 @@ function selectPreset(id, reset=true, transition=false, blankPrompt=false) {
   if(typeof StudioLooks!=='undefined')StudioLooks.clearApplication();
   selected=blankPrompt?{...next,defaults:{...next.defaults,positive:'',negative:''}}:next; recipeChanged();
   if(reset) clearReference(); $('#batch').value=1; renderPresets(); renderSelected(); recipeChanged(); // Refresh targets against the rendered recipe, after early invalidation.
-  message(selected.runtime_block || 'Recipe loaded. Change a setting or choose a variation, then generate when ready.',!!selected.runtime_block);
+  // The status line is for events; a blocked recipe's reason is the readiness line beside Generate (QA create-4).
+  message('');
 }
 async function refreshHealth() {
   try {

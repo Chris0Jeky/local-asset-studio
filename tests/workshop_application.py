@@ -41,10 +41,9 @@ def main():
             page.wait_for_function('document.querySelector("#workshopEta").textContent.includes("42")')
             page.wait_for_timeout(200)
             height = page.evaluate('document.documentElement.scrollHeight')
-            # Focus keeps Recent runs closed; the collapsed Problems summary stays in the first viewport.
-            # +100 px since #1920: the editor's step strip and its margin (about 91 px at 1440 wide) are deliberate guidance.
+            # QA 3 Nov (create-1): Recent runs starts open beside the inputs; the collapsed Problems summary stays in the first viewport.
             assert height < 1800, height
-            assert not page.locator('#workshopResults').evaluate('(el)=>el.open')
+            assert page.locator('#workshopResults').evaluate('(el)=>el.open')
             assert page.evaluate("document.getElementById('jobProblemsHost') && !document.getElementById('workshopResults').contains(document.getElementById('jobProblemsHost'))")
             for selector in ['#positive','#generate','#workshopRecipeChange']:
                 box = page.locator(selector).bounding_box()

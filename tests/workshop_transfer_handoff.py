@@ -122,9 +122,11 @@ def main():
                         next_surface = rects['hero'] if ambience == 'night-shift' else rects['setup']
                         assert next_surface['visible'], rects
                         assert rects['transfer']['bottom'] <= next_surface['top'] + 1, rects
-                        # #772: the closed Appearance control shares the title's row, above the handoff.
+                        # #772: the closed Appearance control shares the title's row, above the handoff; from 1280 px (QA 3 Nov)
+                        # the title is screen-reader only and Appearance shares the recipe band's row, under the handoff.
                         assert rects['appearance']['visible'], rects
-                        assert rects['appearance']['bottom'] <= rects['transfer']['top'] + 1, rects
+                        if width >= 1280: assert rects['appearance']['top'] >= rects['transfer']['bottom'] - 1 and rects['appearance']['bottom'] <= rects['editor']['top'] + 1, rects
+                        else: assert rects['appearance']['bottom'] <= rects['transfer']['top'] + 1, rects
                         assert rects['appearance']['right'] <= rects['create']['right'] + 1, rects
                     else:
                         assert not rects['heading']['visible'], rects

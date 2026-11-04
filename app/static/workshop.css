@@ -27,8 +27,8 @@ body.workshop-active .error {color:var(--danger)}
 body.workshop-active .ux-notice {background:var(--wk-soft);color:var(--text);border-color:var(--accent);position:relative;top:auto}
 .studio-main #createView.workshop {display:grid;grid-template-columns:minmax(0,1fr);gap:22px;align-items:start;min-width:0}
 #createView.workshop[hidden] {display:none!important}
-.workshop .ux-create-heading {margin:0;gap:20px;grid-column:1/-1}
-.workshop .ux-create-heading h1 {font-size:clamp(28px,3vw,38px);letter-spacing:-.045em;margin:8px 0 3px;line-height:1.16;font-weight:500}
+/* The page title stays for screen readers only: the first screen starts with the recipe and the prompt (QA 3 Nov, create-7). */
+.workshop .ux-create-heading {position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .workshop .ux-stage-track {display:none}
 .workshop .eyebrow {font-size:10px;font-weight:650;letter-spacing:.18em}
 .workshop .wk-toolbar {grid-column:1/-1;display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding-bottom:20px;border-bottom:1px solid var(--line);min-width:0}
@@ -45,7 +45,7 @@ body.workshop-active .ux-notice {background:var(--wk-soft);color:var(--text);bor
 .workshop .wk-quick-tune:hover:not(:disabled) {background:transparent;color:var(--text);text-decoration:underline;text-underline-offset:4px}
 .wk-preference-notice {flex-basis:100%;font-size:11px;margin:0;color:var(--muted)}
 .wk-preference-notice:empty {display:none}
-.studio-main .workshop .editor {width:100%;max-width:880px;min-width:0;justify-self:center;padding:28px 32px;background:var(--panel);border:1px solid var(--line);border-radius:var(--wk-radius);box-shadow:0 8px 30px #0001}
+.studio-main .workshop .editor {width:100%;max-width:880px;min-width:0;justify-self:center;padding:22px 32px 28px;background:var(--panel);border:1px solid var(--line);border-radius:var(--wk-radius);box-shadow:0 8px 30px #0001}
 .workshop .ux-draft-bar {display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:0 0 18px;margin:0 0 12px;background:transparent;border:0;border-bottom:1px solid var(--line);font-size:11px;color:var(--muted)}
 .workshop #workshopDraftOptions {padding:0;border:0;margin:0}
 .workshop #workshopDraftOptions summary {font-size:11px;min-height:32px;padding:6px}
@@ -59,7 +59,7 @@ body.workshop-active .ux-notice {background:var(--wk-soft);color:var(--text);bor
 .workshop #positiveWrap {margin:0;display:block}
 .workshop #positive {font-size:16px;line-height:1.75;padding:21px 22px;min-height:170px;max-height:55vh;resize:vertical;letter-spacing:.005em;border-color:var(--wk-field-line);border-radius:12px;background:var(--wk-input);margin:0}
 .workshop #positive:focus {border-color:var(--accent)}
-.wk-prompt-hint {display:block;font-size:11px;line-height:1.6;margin:10px 0 18px}
+.workshop #uxPromptHeading {margin-top:0}
 .ux-wording-undo {display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:-8px 0 16px;padding:10px 12px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;background:var(--wk-soft);font-size:12px;line-height:1.45}
 .ux-wording-undo>span {flex:1 1 260px;min-width:0}.ux-wording-undo button {font-size:11px;min-height:36px;padding:6px 12px}
 .workshop #negativeWrap {background:none;border:0;border-top:1px solid var(--line);padding:12px 0;margin:0 0 18px}
@@ -74,7 +74,9 @@ body.workshop-active .ux-notice {background:var(--wk-soft);color:var(--text);bor
 .workshop .lora-hint button {padding:3px 10px;min-height:0;font-size:11px;margin:4px 6px 0 0}
 .workshop .ux-parameters,.workshop .wk-disclosure {border:0;border-top:1px solid var(--line);border-radius:0;padding:14px 0;margin:0;background:transparent;min-width:0}
 .workshop :is(.ux-parameters,.wk-disclosure)>summary {color:var(--text);font-size:12px;font-weight:550;padding:8px 0;min-height:36px;cursor:pointer;overflow-wrap:anywhere}
-.workshop .ux-parameters>summary small {display:block;color:var(--muted);font-size:11px;font-weight:400;margin:7px 0 0 16px;line-height:1.6}
+.workshop :is(.ux-parameters,#workshopSettings)>summary small {display:block;color:var(--muted);font-size:11px;font-weight:400;margin:7px 0 0 16px;line-height:1.6}
+.workshop #workshopSettings>summary {font-size:13px}
+.workshop #workshopSettings>:not(summary) {margin-left:16px}
 .workshop .wk-parameter-extras {display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:14px 0 20px}
 .workshop .wk-parameter-extras #variants {display:flex;flex-wrap:wrap;gap:8px}
 .workshop #controls {display:grid;grid-template-columns:1fr;gap:20px;margin:0 0 20px}
@@ -117,7 +119,10 @@ body.workshop-active .ux-notice {background:var(--wk-soft);color:var(--text);bor
 .wk-dock-info {display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:2px 12px;min-width:0}
 .wk-dock-info>strong {font-size:12px;line-height:1.55;font-weight:500;max-height:3.1em;overflow:auto;overflow-wrap:anywhere;color:var(--text)}
 .wk-dock-info>span {font-size:11px;color:var(--muted);grid-column:1}
-.wk-dock-info>button {grid-row:1/3;grid-column:2;font-size:11px;border-color:transparent;background:transparent;white-space:nowrap}
+.wk-dock-info>button {grid-row:1/span 3;grid-column:2;font-size:11px;border-color:transparent;background:transparent;white-space:nowrap}
+.wk-dock-info>.wk-blocker-list {grid-column:1;max-height:6.6em;overflow:auto}
+/* Focus and Studio: the recipe band carries the recipe and Tune settings only; readiness and the estimate live in the dock (create-3). */
+.workshop:not([data-workshop-layout="immersive"]) .wk-setup-status {display:none}
 .workshop .wk-run-dock .actions {margin:0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;min-width:0}
 .workshop .wk-run-dock .actions label {display:flex;align-items:center;gap:10px;flex-direction:row;font-size:11px;color:var(--muted);min-width:0;max-width:none;margin:0}
 .wk-blocker-list {margin:3px 0 2px;padding:0;list-style:none;display:grid;gap:4px;font-size:11px;line-height:1.4;font-weight:400}
@@ -134,7 +139,7 @@ body.workshop-active .ux-notice {background:var(--wk-soft);color:var(--text);bor
 .workshop .wk-run-dock #status:empty {display:none}
 .workshop .wk-run-dock #status.error {color:var(--danger)}
 /* While a text field has focus, a narrow or short dock keeps only what running needs; a very short one keeps Variations, Generate and run messages. */
-@media(max-width:600px),(max-height:700px) {.workshop .wk-run-dock.wk-typing :is(.wk-run-tools,.wk-dock-info>span) {display:none}}
+@media(max-width:600px),(max-height:700px) {.workshop .wk-run-dock.wk-typing .wk-dock-info>span {display:none}}
 @media(max-height:500px) {.workshop .wk-run-dock.wk-typing {padding:8px 12px;bottom:6px}.workshop .wk-run-dock.wk-typing .wk-dock-info {display:none}}
 .workshop :is(input,button,select,textarea,summary) {scroll-margin-block:110px calc(var(--workshop-dock-space) + 20px)}
 body.workshop-active #workshopRecipeDialog {width:min(960px,calc(100vw - 40px));max-height:90dvh;padding:28px;margin:auto;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:20px;box-shadow:var(--wk-shadow);overflow:auto}
@@ -229,17 +234,17 @@ body.workshop-active #workshopRecipeDialog .setup {position:static;padding:0;max
 .workshop .wk-picker-status:empty{display:none}
 .workshop .wk-picker-status{padding:12px;border-left:3px solid var(--accent);color:var(--text)}
 
-/* Layout is independent from the skin. Both presentations keep one live editor. */
+/* From 1280 px the results sit in a sticky column beside the inputs in Focus and Studio, so a run lands next to Generate (create-1, create-9). */
 @media(min-width:1280px) {
-  .studio-main #createView.workshop[data-workshop-layout="studio"] {grid-template-columns:minmax(430px,1.08fr) minmax(320px,.92fr);gap:22px 26px}
-  .studio-main .workshop[data-workshop-layout="studio"] .editor {grid-column:1;grid-row:3;max-width:none;padding:26px}
-  .workshop[data-workshop-layout="studio"] .wk-results {grid-column:2;grid-row:3;position:sticky;top:84px;max-width:none;border:1px solid var(--line);border-radius:16px;background:var(--panel);overflow:hidden}
-  .workshop[data-workshop-layout="studio"] .wk-results>summary {border:0;border-bottom:1px solid var(--line);border-radius:0;padding:19px 20px}
-  .workshop[data-workshop-layout="studio"] .gallery-panel {padding:16px;margin:0}
-  .workshop[data-workshop-layout="studio"] #gallery {max-height:calc(100dvh - var(--workshop-dock-space) - 259px);min-height:240px}
-  .workshop[data-workshop-layout="studio"] .galleryEmpty {min-height:360px;font-size:21px}
-  .workshop[data-workshop-layout="studio"] .imageCard img {width:100%;max-height:480px}
-  .workshop[data-workshop-layout="studio"] .gallery-panel>.muted {font-size:11px;line-height:1.65;margin:0 0 14px}
+  .studio-main #createView.workshop:not([data-workshop-layout="immersive"]) {grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:22px 26px}
+  .studio-main .workshop:not([data-workshop-layout="immersive"]) .editor {max-width:none;padding:20px 26px 26px}
+  .workshop:not([data-workshop-layout="immersive"]) .wk-results {position:sticky;top:84px;max-width:none;border:1px solid var(--line);border-radius:16px;background:var(--panel);overflow:hidden}
+  .workshop:not([data-workshop-layout="immersive"]) .wk-results>summary {border:0;border-bottom:1px solid var(--line);border-radius:0;padding:19px 20px}
+  .workshop:not([data-workshop-layout="immersive"]) .gallery-panel {padding:16px;margin:0}
+  .workshop:not([data-workshop-layout="immersive"]) #gallery {max-height:calc(100dvh - var(--workshop-dock-space) - 259px);min-height:240px}
+  .workshop:not([data-workshop-layout="immersive"]) .galleryEmpty {min-height:360px;font-size:21px}
+  .workshop:not([data-workshop-layout="immersive"]) .imageCard img {width:100%;max-height:480px}
+  .workshop:not([data-workshop-layout="immersive"]) .gallery-panel>.muted {font-size:11px;line-height:1.65;margin:0 0 14px}
 }
 body.workshop-active[data-workshop-skin="arcade"] {
   --bg:#101321;--panel:#181d30;--panel2:#242b42;--line:#3d4863;
@@ -265,15 +270,13 @@ body.workshop-active[data-workshop-skin="arcade"] :is(.eyebrow,.wk-recipe small)
   body.workshop-active[data-workshop-skin] .ux-create-heading {background-image:none}
 }
 
-/* Secondary decisions stay reachable without competing with Generate. */
-.workshop .wk-run-tools {grid-column:1/-1;grid-row:2;display:flex;flex-wrap:wrap;gap:6px;align-items:center;border-top:1px solid var(--line);padding-top:6px}
-.workshop .wk-run-tools button {font-size:11px;min-height:36px;padding:5px 10px;background:transparent}
-@media(max-width:600px){.workshop .wk-run-tools{grid-row:3}.workshop .wk-run-dock .actions{grid-row:2}}
-@media(min-width:1100px){
-  .workshop .wk-run-dock {grid-template-columns:minmax(0,1fr) auto auto}
-  .workshop .wk-run-dock .actions {grid-column:3;grid-row:1}
-  .workshop .wk-run-tools {grid-column:2;grid-row:1;border-top:0;border-left:1px solid var(--line);padding:0 0 0 12px;max-width:300px}
-}
+/* The dock holds only what running needs; New seed and Plan comparison live in Settings (create-15). */
+@media(max-width:600px){.workshop .wk-run-dock .actions{grid-row:2}}
+@media(min-width:1100px){.workshop .wk-run-dock .actions {grid-column:2;grid-row:1}}
+.workshop .wk-plan-comparison {margin:12px 0 0;font-size:11px}
+.workshop .wk-settings-link {display:block;margin:10px 0 0;padding:0;min-height:24px;border:0;background:transparent;color:var(--accent);font-size:11px;text-decoration:underline;text-underline-offset:4px;text-align:left}
+.workshop .wk-settings-link[hidden] {display:none}
+.workshop .wk-control-group #randomSeed {justify-self:start;font-size:11px;min-height:36px;padding:5px 12px}
 .workshop #workshopRunTools {margin:0;padding:0;border:0}
 @media(max-width:600px) {
   .workshop .wk-run-dock {grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:8px 10px}
@@ -283,7 +286,6 @@ body.workshop-active[data-workshop-skin="arcade"] :is(.eyebrow,.wk-recipe small)
   .workshop #workshopRunTools>summary {display:list-item;min-height:44px;align-content:center;padding:6px;font-size:11px;cursor:pointer}
   .workshop .wk-phone-panel {position:absolute;bottom:calc(100% + 8px);left:0;right:0;display:grid;gap:10px;max-height:calc(100dvh - 160px);overflow:auto;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--panel);box-shadow:var(--wk-shadow)}
   .workshop .wk-phone-panel>label {display:flex;align-items:center;gap:10px;margin:0;font-size:11px}
-  .workshop .wk-phone-panel .wk-run-tools {grid-row:auto;grid-column:auto}
   /* Why Generate is off, a message, Cancel and the run summary stay in the dock; the readiness line also stays visible when ready. */
   .workshop .wk-run-dock>.wk-dock-info {grid-column:1/-1;grid-row:auto}
   .workshop .wk-run-dock .wk-dock-info {gap:0 6px}.workshop .wk-run-dock .wk-dock-info>button {grid-row:1;min-height:32px;padding:2px 8px}

@@ -92,6 +92,7 @@ async def run(args):
                 await page.wait_for_function("document.querySelector('#uxNotice').textContent.includes('availability could not be checked') || document.querySelector('#uxNotice').textContent.includes('Draft restored')")
             async def open_saved(page):
                 await page.wait_for_selector('#workshopSaved', state='attached')
+                await page.evaluate("document.querySelector('#workshopSettings')?.setAttribute('open','')")  # QA 3 Nov: Saved setups is a Settings sub-section
                 if not await page.locator('#workshopSaved').evaluate('n=>n.open'):
                     await page.click('#workshopSaved > summary')
             async def save(page, name):
