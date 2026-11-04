@@ -99,7 +99,7 @@ def sdxl_in_place(page, origin, out, check, drawings, posts):
     # #844: the attached guide is a picture of one canvas; a new Width holds Generate until the guide is drawn again.
     drawn = page.evaluate('[referenceRecords[0].width,referenceRecords[0].height]')
     resized = drawn[0] - 192 if drawn[0] > 512 else drawn[0] + 192
-    page.evaluate("document.querySelector('[data-key=\"width\"]').closest('details').open=true")  # Width lives under the folded parameters.
+    page.evaluate("for(let d=document.querySelector('[data-key=\"width\"]');d;d=d.parentElement)if(d.tagName==='DETAILS')d.open=true")  # Width lives under Settings > Fine-tune (QA 3 Nov): open every folded ancestor.
     page.locator('[data-key="width"]').fill(str(resized))
     page.wait_for_function('!!document.querySelector(\'[data-readiness-code="pose-size"]\')')
     check(page.locator('#generate').is_disabled(), 'A changed Width holds Generate on the stale guide')
@@ -119,7 +119,7 @@ REPLACE_GUIDE = "guide=>{referenceRecords[0]=Object.assign({},referenceRecords[0
 
 
 def set_width(page, value):
-    page.evaluate("document.querySelector('[data-key=\"width\"]').closest('details').open=true")  # Width lives under the folded parameters.
+    page.evaluate("for(let d=document.querySelector('[data-key=\"width\"]');d;d=d.parentElement)if(d.tagName==='DETAILS')d.open=true")  # Width lives under Settings > Fine-tune (QA 3 Nov): open every folded ancestor.
     page.locator('[data-key="width"]').fill(str(value))
 
 

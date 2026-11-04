@@ -267,7 +267,7 @@ body.workshop-active[data-workshop-skin="retro-anime"] .eyebrow {color:#f1a4d5}
 @media(min-width:1280px) {
   /* Focus and Studio: the recipe band and Appearance share the first row; inputs left, results right (the hidden page title takes no row). */
   .studio-main #createView.workshop:not([data-workshop-layout="immersive"]) {
-    grid-template-columns:minmax(430px,1.08fr) minmax(320px,.92fr);
+    grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);
     grid-template-areas:
       "setup toolbar"
       "editor problems"

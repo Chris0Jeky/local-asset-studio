@@ -236,7 +236,7 @@ body.workshop-active #workshopRecipeDialog .setup {position:static;padding:0;max
 
 /* From 1280 px the results sit in a sticky column beside the inputs in Focus and Studio, so a run lands next to Generate (create-1, create-9). */
 @media(min-width:1280px) {
-  .studio-main #createView.workshop:not([data-workshop-layout="immersive"]) {grid-template-columns:minmax(430px,1.08fr) minmax(320px,.92fr);gap:22px 26px}
+  .studio-main #createView.workshop:not([data-workshop-layout="immersive"]) {grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:22px 26px}
   .studio-main .workshop:not([data-workshop-layout="immersive"]) .editor {max-width:none;padding:20px 26px 26px}
   .workshop:not([data-workshop-layout="immersive"]) .wk-results {position:sticky;top:84px;max-width:none;border:1px solid var(--line);border-radius:16px;background:var(--panel);overflow:hidden}
   .workshop:not([data-workshop-layout="immersive"]) .wk-results>summary {border:0;border-bottom:1px solid var(--line);border-radius:0;padding:19px 20px}

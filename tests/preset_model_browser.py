@@ -62,7 +62,7 @@ def run(output):
                     page.wait_for_selector('#workshopInspect', state='attached')
                     page.evaluate("document.querySelector('#workshopSettings').open=true")  # QA 3 Nov: Recipe details sits inside Settings
                     page.locator('#workshopInspect > summary').click()
-                    page.evaluate("document.querySelector('#dependencies').closest('details').open=true")
+                    page.evaluate("for(let d=document.querySelector('#dependencies');d;d=d.parentElement)if(d.tagName==='DETAILS')d.open=true")
                     panel = page.locator('#dependencies')
                     assert panel.locator('[data-install]').count() == 1
                     assert panel.locator('[data-install="manual-patch"]').count() == 0
@@ -83,7 +83,7 @@ def run(output):
                     page.evaluate('health()'); page.wait_for_function("document.querySelector('#health').textContent==='Recipe needs models'")
                     assert page.locator('#generate').is_disabled()
                     # Open the real dependency disclosure, then keyboard-focus its only valid install.
-                    page.evaluate("document.querySelector('#dependencies').closest('details').open=true")
+                    page.evaluate("for(let d=document.querySelector('#dependencies');d;d=d.parentElement)if(d.tagName==='DETAILS')d.open=true")
                     page.locator('#dependencies [data-install="curated"]').focus()
                     assert page.locator('#dependencies [data-install="curated"]').evaluate('(el)=>document.activeElement===el')
                     evidence_screenshot(page.locator('#dependencies'), path=str(output/f'dependencies-{width}.png'))
