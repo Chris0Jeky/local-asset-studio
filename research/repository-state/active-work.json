@@ -1,20 +1,41 @@
 {
   "schema_version": 1,
-  "captured_at": "2026-11-05T04:18:51Z",
+  "captured_at": "2026-11-05T19:32:51Z",
   "repository": {
-    "head_sha": "d9eb214b03a5ef50f1558e12b5ad7f06ea9d4938",
+    "head_sha": "f9e4187e9062553ca35f4b8eb9d099838457a604",
     "default_branch": "main",
-    "facts_sha": "5f2ff0bd4c1213cec6754be4a3cade759e9b5672",
+    "facts_sha": "15b0337f2f8a9d10edee688af9f55ccbc1c8adb6",
     "catalog_blob_sha": "a9b0d600dc3812a2ef7ea198550a5fba6631aab0",
-    "human_todo_blob_sha": "3964b6669543b0438492588a8f07aae443857d2d"
+    "human_todo_blob_sha": "f771832974d0d583eaa9ed31707d58ec1a69ded3"
   },
   "pull_requests": [],
   "issues": [
+    {
+      "number": 1948,
+      "title": "Procgen factory: smooth-shading parameter for round parts",
+      "type": "slice",
+      "readiness": "ready",
+      "blocked_by": []
+    },
     {
       "number": 2009,
       "title": "Studio QA pass 3 Nov: remaining ranked findings after #1999–#2006",
       "type": "epic",
       "readiness": "ready",
+      "blocked_by": []
+    },
+    {
+      "number": 1983,
+      "title": "Repair corpus: qualify material-retention fix and rerun realistic-v2 material-mismatch",
+      "type": "defect",
+      "readiness": "owner-run",
+      "blocked_by": []
+    },
+    {
+      "number": 2026,
+      "title": "Qualify Procedural assets through Studio on Blender 5.4 and Godot",
+      "type": "slice",
+      "readiness": "owner-run",
       "blocked_by": []
     },
     {
@@ -64,6 +85,7 @@
     }
   ],
   "next_ready": [
+    1948,
     2009
   ]
 }

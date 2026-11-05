@@ -1,10 +1,82 @@
 # Current state — 5 November 2026
 
-## 2026-11-05 — Navigation, editing feedback, Models and Blender evidence
+## 2026-11-05 — Procedural tools and recovery (second pass)
+
+This pass connects eight existing procedural generators to the Studio and repairs
+native-data retention and interrupted publication. The [second-pass verification
+record](docs/verification/2026-11-05-procedural-recovery-closeout.md) keeps the
+component heads, hosted receipts, retained failures and native limits together.
+Seven code PRs are merged: #2022, #2023, #2024, #2025, #2027, #2028 and #2030.
+The bounded issues #1949, #1928, #2021, #1952, #1987 and #2029 are closed.
+
+- **Procedural assets (#2025):** `room_kit`, `prop`, `shrine`, `lighthouse_room`,
+  `pier`, `coastal_path`, `tide_pools` and `market_street` share the explicit
+  **Prepare asset → Production Start → Library** flow. Preparation saves a plan;
+  **Start build** uses the existing queue and heavy-work lease. Checked outputs
+  reach the regular Library. Level assembly, labelled datasets and separate
+  SDK/MCP wrappers remain outside this integration.
+- **Recovery:** publication failures preserve known Library asset IDs and leave
+  work uncertain. Reconciliation rechecks retained evidence and completes
+  registration idempotently without repeating a native attempt. Failed native
+  attempts remain terminal. Failed setup reads preserve typed generator settings.
+  Independent review reproduced both gaps before correction; actual-SQLite and
+  shipped-handler regressions now cover them.
+- **Triangle reports (#2022):** reports distinguish render triangles, collision
+  proxy triangles and their LOD0 GLB total. Each island box contributes 12
+  triangles, including multiple boxes inside one collision object. The budget
+  still applies to render meshes only; this does not qualify smooth shading.
+- **Shared material maps (#2024):** every mesh using a material contributes to
+  its position map, with deterministic handling of overlapping UVs. Separate
+  materials remain separate even when they use one image. Offline raster tests
+  ran on Linux and Windows; native Blender qualification remains open.
+- **Spring settings (#2027):** the Godot binding preserves ordered per-joint
+  settings, authored center space and world gravity. Existing `springs.json`
+  files must be regenerated. The corrected synthetic Godot 4.5 probe passed on
+  Linux and Windows, including actual center-relative simulator steps. This is
+  not a new avatar render or Godot 4.7.2 visual-parity result.
+- **Corpus materials (#2023):** material-mismatch seeding retains only the
+  displaced original, leaving unrelated unused materials unused and preserving
+  transient sentinel behavior. The native save/reopen/repair probe and a fresh
+  realistic-v2 benchmark remain open under #1983; old variants and rates are
+  unchanged.
+- **Browser qualification (#2025/#2028):** the UX lane uses bounded Chromium setup;
+  Parallax gains bounded startup/request/server diagnostics, and the Spoken Brief
+  fixture corrects its worker-start and recovery-observation race. Readiness
+  assertions remain intact. The recorded Windows loader failure and duplicate
+  Spoken Brief failure remain evidence; #1901/#1029 are not claimed fixed.
+- **Library readability (#2030):** scope counts can wrap below whole labels and
+  selected toolbar filters retain their native widths. Both hosted platforms pass
+  39 Archive checks at 1440, 768 and 390 pixels. All eight screenshots were
+  inspected; Favorites and Active & archived are readable. Broader #2009 findings
+  remain open.
+
+**Final combined code qualification:** tested checkout
+`15b0337f2f8a9d10edee688af9f55ccbc1c8adb6` and actual code merge
+`f9e4187e9062553ca35f4b8eb9d099838457a604` have identical tree
+`c40f63b261dec75d26d9ef17bcf0998a7d8bf63e`.
+[Check studio 42092084866](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/42092084866)
+finished at 19:31:12 UTC: **7,270 tests, 7,152 passed, 118 skipped, zero
+failures/errors**, with clean suite-lifetime shutdown. All 11 workflows on
+#2030's final head passed. The generated repository capture at **19:32:51 UTC**
+records that main and no open PRs before this documentation closeout; its
+measurement receipts name the tested checkout rather than a later docs commit.
+The first-pass 04:18:51 UTC capture below remains historical evidence.
+
+The next ready shading slice is **#1948**, requiring exported-normal proof.
+**#2009** remains ready for bounded Review-action wording work after reproducing
+the remaining ambiguity. Native follow-ups **#2026** (all eight generators through
+the configured Blender 5.4/Godot Studio path, including interrupted publication)
+and **#1983** (material retention and regenerated corpus cases) remain open.
+Browser fixture images do not establish generated-geometry quality. No owner
+workstation build, new art acceptance or HUMAN_TODO answer is claimed. The #1923
+illustration wave stays paused; parallax usability and the island default-switch
+decision remain open as recorded in [HUMAN_TODO.md](HUMAN_TODO.md).
+
+## 2026-11-05 — Earlier engineering delivery: navigation, editing feedback, Models and Blender evidence
 
 Merged delivery in this pass is recorded in the [5 November integration
 record](docs/verification/2026-11-05-integration-closeout.md), with the exact PR
-heads, merge commits and component qualification. The current observed main is
+heads, merge commits and component qualification. The observed main for that pass was
 `d9eb214b03a5ef50f1558e12b5ad7f06ea9d4938` after the Models selector-scope correction.
 
 - #2011 exposes Full editor, Comparisons and Review desk, adds finder intent
@@ -39,12 +111,12 @@ heads, merge commits and component qualification. The current observed main is
 - #2007 adds the MIRA / FORM VII course handoff and pinned artifact identities.
   Owner-scoped downloads and retained native receipts keep their stated limits.
 
-The final combined code passed [Check studio run 41964696908](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/41964696908):
+That pass's final combined code passed [Check studio run 41964696908](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/41964696908):
 7,218 tests, including 113 skips, with zero failures/errors and clean lifetime
 shutdown. Actual tested checkout `5f2ff0bd4c1213cec6754be4a3cade759e9b5672` and
 the main merge above share tree `939557b9d6968b5ee22987681245bb004bf0adeb`.
-The measurement receipts use the tested checkout; the work capture separately
-records main and its queue at 04:18:51 UTC. All 23 final-head workflows passed;
+The first-pass measurement receipts used the tested checkout; its work capture
+separately recorded main and the queue at 04:18:51 UTC. All 23 final-head workflows passed;
 native browser proof is Ubuntu, with contracts on Ubuntu and Windows. Earlier
 component results retain their own source identities and limits.
 
@@ -52,8 +124,8 @@ The owner's replacement q-7 tour was completed and closed on 2 November; its
 findings remain tracked separately. The original asset wave stays paused for
 #1923, parallax usability remains an open owner review, and the island default
 switch remains a separate open decision. Existing art acceptances and owner
-answers remain exactly as recorded in [HUMAN_TODO.md](HUMAN_TODO.md). The selected
-next #2009 slice is to reproduce
+answers remain exactly as recorded in [HUMAN_TODO.md](HUMAN_TODO.md). At that earlier
+closeout, the selected next #2009 slice was to reproduce
 remaining ambiguity in Review action names before changing them. No new model
 execution, owner acceptance or runtime deployment is claimed here.
 

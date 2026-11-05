@@ -182,9 +182,10 @@ python tests/procedural_browser.py
 The **UX use cases** workflow runs the Chromium driver and uploads
 `.runtime/procedural-browser/` screenshots and its report. Its native files are
 synthetic test fixtures, so those screenshots prove the page and Library
-handoff only. This implementation session had no Blender, Godot or usable
-local Chromium runtime. Native Blender 5.4 runs across all eight generators,
-actual Godot evidence and human visual review remain open under **#2021**.
+handoff only. The development container had no Blender, Godot or usable Chromium
+runtime; browser qualification used hosted artifacts. Native Blender 5.4 runs
+across all eight generators, Godot import evidence for those generated assets
+and human visual review remain open under **#2026**.
 
 Level assembly (`procgen_level.py`), labelled datasets (`procgen_dataset.py`)
 and toon spring-bone proofs are separate existing tools and are not wired into

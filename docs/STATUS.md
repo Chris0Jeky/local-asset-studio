@@ -1,10 +1,56 @@
 # Status by goal — 5 November 2026
 
-## Current engineering delivery — 5 November 2026
+## Current engineering delivery — 5 November 2026, second pass
 
-The current pass improves finding the right editor and review action, keeps editing
-feedback tied to the operation that produced it, and ties Blender checks to complete
-views and distinct assets. The table covers the merged work in this pass;
+The second pass connects the eight existing procedural generators to explicit
+Studio plans and Library results, preserves recoverable native output, and fixes
+several data-export assumptions. The [second-pass verification
+record](verification/2026-11-05-procedural-recovery-closeout.md) records the evidence
+and its limits. Seven code PRs are merged: #2022, #2023, #2024, #2025, #2027,
+#2028 and #2030. The bounded issues #1949, #1928, #2021, #1952, #1987 and #2029
+are closed.
+
+| Area | Behavior in the reviewed code | Remaining boundary |
+| --- | --- | --- |
+| Procedural assets (#2025) | All eight generators follow **Prepare asset → Production Start → Library** using the shared queue and heavy-work lease. Preparation alone never builds; checked GLBs and optional inspection sheets reach the normal Library. | #2026 retains configured Blender 5.4/Godot runs for all eight generators and inspection of real outputs. Level assembly, labelled datasets and SDK/MCP wrappers remain separate. |
+| Uncertain publication and setup drafts (#2025) | Known Library asset IDs survive later publication failures. Reconciliation validates retained output and finishes registration idempotently without repeating a native attempt; failed setup reads preserve typed settings. | Actual-SQLite, page-handler and synthetic browser checks cover software behavior. Interrupted publication on the native workstation still belongs to #2026. |
+| Triangle reporting (#2022) | Reports separate render triangles, 12 triangles per collision island box, and the total exported LOD0 GLB count. The existing render-only budget decision is unchanged. | #1948 still requires smooth-shading work and exported-normal proof. Triangle arithmetic does not establish shading quality. |
+| Shared material position maps (#2024) | Meshes using one material accumulate into one map with deterministic UV-overlap handling; materials sharing an image remain separate. | Linux/Windows tests exercise the production rasterizer on synthetic geometry. Native Blender qualification remains open. |
+| Per-joint springs (#2027) | Ordered joint settings, authored center space and world gravity reach the Godot binding. **Regenerate old `springs.json` files**; the host refuses the old approximation. | Synthetic Godot 4.5 probes passed on Linux and Windows, including simulator steps. A new avatar render and Godot 4.7.2 physical/visual parity remain unproved. |
+| Corpus material retention (#2023) | Material-mismatch seeding retains only the displaced original; unrelated unused materials stay unused, and transient sentinel behavior is preserved. | #1983 remains open for native save/reopen/repair, regenerated realistic-v2 variants and the benchmark rerun. Historical rates are unchanged. |
+| Browser CI and fixtures (#2025/#2028) | Bounded Chromium setup, retained Parallax startup/request/server diagnostics and corrected Spoken Brief worker/recovery synchronization support qualification without removing readiness assertions. The final browser candidate passed all seven applicable workflows, including Windows and Linux Archive, narration and privacy checks. | Historical failures remain recorded; #1901/#1029 are not claimed fixed. Synthetic media do not prove native geometry or owner acceptance. |
+| Library labels (#2030) | Whole scope words and selected filter values remain readable at 1440, 768 and 390 pixels. Windows and Linux each pass all 39 Archive checks; all eight screenshots were inspected. | The bounded correction preserves page-scoped counts and existing Archive behavior. Broader #2009 work stays open. |
+
+### Final combined code qualification
+
+The hosted full suite passed **7,270 tests: 7,152 passed, 118 skipped, zero
+failures/errors**, with clean suite-lifetime shutdown. All 11 workflows on #2030's
+final head passed. [Check studio 42092084866](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/42092084866)
+tested checkout `15b0337f2f8a9d10edee688af9f55ccbc1c8adb6`; actual code merge
+`f9e4187e9062553ca35f4b8eb9d099838457a604` has the same tree,
+`c40f63b261dec75d26d9ef17bcf0998a7d8bf63e`. The repository capture at **19:32:51 UTC**
+records that main and no open PRs before the documentation closeout. Test and
+validation receipts remain bound to the code checkout actually measured. The
+first-pass 04:18:51 UTC receipt below is historical and does not qualify this tree.
+
+### Current next work
+
+**#1948 is the next ready shading slice:** preserve the geometry/export contract
+and prove the normals in the exported asset. **#2009 remains ready for bounded UI
+review:** reproduce remaining Review-action ambiguity before changing names or
+handoffs. The earlier #2009-first ordering below records the first pass only.
+
+**#2026 and #1983 remain open native follow-ups.** Neither software qualification
+nor the synthetic Godot/browser fixtures replace those workstation runs. The
+paused #1923 illustration wave, parallax usability review and island default-switch
+decision remain as recorded in [HUMAN_TODO.md](../HUMAN_TODO.md); this pass adds no
+owner acceptance or answer.
+
+## Earlier engineering delivery — 5 November 2026, first pass
+
+The earlier pass improved finding the right editor and review action, kept editing
+feedback tied to the operation that produced it, and tied Blender checks to complete
+views and distinct assets. The table covers the merged work in that pass;
 the older goal estimates below remain dated assessments, not new measurements.
 [The integration record](verification/2026-11-05-integration-closeout.md) binds each
 delivery to its reviewed head, merge and verification. [CURRENT_STATE.md](../CURRENT_STATE.md)
@@ -24,18 +70,18 @@ names the time and revision of its separate work capture.
 | Toon materials | [#2014](https://github.com/Chris0Jeky/local-asset-studio/pull/2014) preserves each texture node's sampler choices, explicitly refuses unsupported modes, and keeps the imported material when a shader is partial or unavailable. | #1993/#1994 are complete. Linux/Windows Godot 4.5 checks prove material-application policy, not Godot 4.7.2 visual parity or a new Blender render. |
 | MIRA / FORM VII handoff | [#2007](https://github.com/Chris0Jeky/local-asset-studio/pull/2007) adds a repository entry point to the pose/contact course, study index, editable diagrams and pinned download identities. | The full media and native scenes remain in owner-scoped downloads. The handoff does not imply public download access, new native execution or owner art acceptance. |
 
-### Combined code qualification
+### Earlier combined code qualification
 
-The final combined code passed the hosted full suite: **7,218 tests, 7,105 passed,
+The first pass's final combined code passed the hosted full suite: **7,218 tests, 7,105 passed,
 113 skipped, zero failures/errors**, with clean suite-lifetime shutdown. All 23
 workflows on #2019's final head passed. The full/native-tested checkout and actual
 merged main have identical trees; the [integration record](verification/2026-11-05-integration-closeout.md)
 retains their distinct commit identities and the scoped browser evidence. The
-generated capture records the queue at **04:18:51 UTC on 5 November**, while its
-measurement receipts name the actual tested checkout. No duplicate main-push run
+earlier generated capture recorded the queue at **04:18:51 UTC on 5 November**, while its
+measurement receipts named the actual tested checkout. No duplicate main-push run
 was needed to re-measure that identical code tree.
 
-## Next bounded work
+### Next bounded work recorded in the first 5 November pass
 
 The **Models clarity slice within #2009** is merged. Its
 [source-level reproduction](https://github.com/Chris0Jeky/local-asset-studio/issues/2009#issuecomment-6648410059)
@@ -46,14 +92,14 @@ card, and gives download/check actions plain wording. Its native desktop and pho
 captures have been inspected, and the selector-scope follow-up is merged. The rest of
 #2009 stays open.
 
-The selected next slice remains within **#2009: remaining
+At that closeout, the selected next slice was **#2009: remaining
 Review action names** (manage-4/sol-6). First reproduce any remaining ambiguity
 between Library's **Review next**, inline **Choose here** (formerly Quick pick),
 and the project winner/Review desk handoff, then explain their actual jobs while
 preserving navigation, shortcuts and selection. #2011 already exposed Review desk
 and the project-specific winner entry; #2013 changed the inline label. Broader Review
-decision models and sidebar redesign remain open. The capture records #2009 as
-ready for this bounded next step, without treating the whole epic as implementation-ready.
+decision models and sidebar redesign remain open. That earlier capture records
+#2009 as ready for this bounded next step, without treating the whole epic as implementation-ready.
 
 Library scale measurements (#177) and recovery accessibility (#393) remain parked
 context, not a renewed October priority order. Resource admission #178 remains
