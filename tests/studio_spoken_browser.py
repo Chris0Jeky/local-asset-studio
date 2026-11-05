@@ -569,7 +569,7 @@ class NarrationBrowserTests(unittest.TestCase):
         self.f.lose_start = 2; self.preview(); self.page.locator('#startNarration').click()
         self.wait_status('uncertain'); before = self.posts(); self.assertEqual(len(before), 4)
         self.assertIn('completed', self.page.locator('#narrationBatches').inner_text())
-        for thread in list(self.f.server.spoken_narrations.threads.values()): thread.join(5)
+        self.f.wait_for_narrations()
         self.f.server.spoken_narrations = Narrations(lambda: self.f.server.RequestHandlerClass.studio.config, self.f.base_url)
         self.page.reload(); self.wait_status('uncertain'); self.assertEqual(self.posts(), before)
         self.page.locator('#recoverNarration').click(); self.wait_status('completed')
@@ -580,8 +580,11 @@ class NarrationBrowserTests(unittest.TestCase):
         self.f.lose_create = True; self.preview(); self.page.locator('#startNarration').click()
         self.wait_status('uncertain'); before = self.posts(); self.assertEqual(len(before), 1)
         self.page.reload(); self.wait_status('uncertain')
-        self.page.locator('#recoverNarration').click(); self.wait_status('uncertain')
-        for thread in list(self.f.server.spoken_narrations.threads.values()): thread.join(5)
+        with self.page.expect_response(lambda reply: reply.request.method == 'POST'
+                and urlsplit(reply.url).path == '/api/spoken-briefs/narration/recover') as recovered:
+            self.page.locator('#recoverNarration').click()
+        self.assertEqual(recovered.value.status, 202)
+        self.wait_status('uncertain'); self.f.wait_for_narrations()
         self.page.locator('#refreshNarration').click(); self.wait_status('uncertain')
         self.assertEqual(self.posts(), before); self.assertTrue(self.page.locator('#listenNarration').is_disabled())
         self.assertFalse(self.errors, self.errors)

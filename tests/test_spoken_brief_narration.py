@@ -10,6 +10,7 @@ import sys
 import tempfile
 import socket
 import threading
+import time
 from types import SimpleNamespace
 import unittest
 from urllib.parse import urlencode
@@ -54,10 +55,28 @@ class NarrationFixture(Fixture):
         return Handler
 
     def close(self):
+        try: self.wait_for_narrations()
+        finally: super().close()
+
+    def wait_for_narrations(self, timeout=5):
         manager = getattr(self.server, 'spoken_narrations', None)
-        if manager:
-            for thread in list(manager.threads.values()): thread.join(5)
-        super().close()
+        if manager is None: return
+        deadline = time.monotonic() + timeout
+        while True:
+            # Admission publishes the Thread before starting it while holding this lock.
+            if not manager.lock.acquire(timeout=max(0, deadline-time.monotonic())):
+                raise AssertionError('Narration coordinator startup did not settle within the fixture deadline')
+            try: threads = list(manager.threads.values())
+            finally: manager.lock.release()
+            if not threads: return
+            for thread in threads:
+                remaining = deadline-time.monotonic()
+                if remaining <= 0:
+                    raise AssertionError('Coordinator did not finish its bounded fixture')
+                # Worker cleanup also needs manager.lock; never join while holding it.
+                thread.join(remaining)
+                if thread.is_alive(): raise AssertionError('Coordinator did not finish its bounded fixture')
+            # Observe the registry again under its lock, including a newer owner.
 
     def request(self, route, query=None, body=None):
         connection = http.client.HTTPConnection('127.0.0.1', self.server.server_port, timeout=5)
@@ -116,8 +135,7 @@ class NarrationTests(unittest.TestCase):
             'preview_sha256': value['preview_sha256']})
 
     def settled(self, key):
-        for thread in list(self.f.server.spoken_narrations.threads.values()):
-            thread.join(5); self.assertFalse(thread.is_alive(), 'Coordinator did not finish its bounded fixture')
+        self.f.wait_for_narrations()
         code, value = self.f.request('/narration', {'key': key, 'root_id': self.root_id})
         self.assertEqual(code, 200, value)
         return value
@@ -359,6 +377,59 @@ class NarrationTests(unittest.TestCase):
         self.assertTrue(self.start(preview)[1]['reused'])
         self.assertEqual(self.recover(value)['status'], 'uncertain'); self.assertEqual(len(self.posts()), 1)
 
+    def test_fixture_waits_for_published_observer_start_and_unlocked_cleanup(self):
+        self.f.lose_create = True
+        value = self.settled(self.start()[1]['key']); before = self.posts()
+        manager = self.f.server.spoken_narrations; original_lock = manager.lock
+        starting, release, observed, locking, done = (threading.Event() for _ in range(5))
+        replies, errors, published = [], [], []
+        original_start = threading.Thread.start
+        def held_start(thread):
+            if thread.name == 'spoken-brief-observer':
+                published.append(thread); starting.set()
+                if not release.wait(5): raise AssertionError('Test did not release observer startup')
+            return original_start(thread)
+        def recover():
+            try:
+                replies.append(self.f.request('/narration/recover', body={
+                    'key': value['key'], 'root_id': self.root_id, 'manifest_sha256': value['manifest_sha256']}))
+            except BaseException as error: errors.append(error)
+        def wait():
+            try: self.f.wait_for_narrations()
+            except BaseException as error: errors.append(error)
+            finally: done.set(); observed.set()
+        caller = threading.Thread(target=recover, name='fixture-recovery-caller')
+        waiter = threading.Thread(target=wait, name='fixture-narration-waiter')
+        class ObservedLock:
+            def acquire(inner, *args, **kwargs):
+                if threading.current_thread() is waiter: locking.set(); observed.set()
+                return original_lock.acquire(*args, **kwargs)
+            def release(inner): return original_lock.release()
+            def __enter__(inner): inner.acquire(); return inner
+            def __exit__(inner, *_): inner.release()
+        manager.lock = ObservedLock()
+        try:
+            with patch.object(threading.Thread, 'start', held_start):
+                caller.start(); self.assertTrue(starting.wait(3))
+                self.assertIs(manager.threads[(self.root_id, value['key'])], published[0])
+                self.assertFalse(published[0].is_alive())
+                waiter.start(); self.assertTrue(observed.wait(3))
+                self.assertTrue(locking.is_set(), errors)
+                self.assertFalse(done.is_set(), 'Wait returned before the published observer was started')
+                release.set(); caller.join(5); waiter.join(5)
+            self.assertFalse(caller.is_alive()); self.assertFalse(waiter.is_alive())
+            self.assertFalse(errors, errors); self.assertEqual(replies[0][0], 202, replies)
+            self.assertFalse(manager.threads, 'Joining must let the observer acquire its cleanup lock')
+            self.assertEqual(self.settled(value['key'])['status'], 'uncertain')
+            self.assertEqual(self.posts(), before, 'Recovery must not create or start a replacement')
+        finally:
+            release.set()
+            if caller.ident is not None: caller.join(5)
+            if waiter.ident is not None: waiter.join(5)
+            for thread in published:
+                if thread.ident is not None: thread.join(5)
+            manager.lock = original_lock
+
     def test_lost_start_reply_can_observe_completed_child_without_posting_again(self):
         self.f.lose_start = 1
         value = self.settled(self.start()[1]['key'])
@@ -441,10 +512,35 @@ class NarrationTests(unittest.TestCase):
         config = self.f.server.RequestHandlerClass.studio.config
         self.f.after_create = lambda project: config.update(spoken_briefs={'archive_root': str(other)})
         _, admission = self.start(preview)
-        for thread in list(self.f.server.spoken_narrations.threads.values()): thread.join(5)
+        self.f.wait_for_narrations()
         state = json.loads((self.root / admission['key'] / 'state.json').read_text())
         self.assertEqual(state['batches'][0]['project_id'], next(iter(self.f.projects)))
         self.assertEqual(len(self.posts()), 1); self.assertFalse(list(other.iterdir()))
+
+
+class NarrationFixtureWaitTests(unittest.TestCase):
+    def fixture(self, manager):
+        fixture = NarrationFixture.__new__(NarrationFixture)
+        fixture.server = SimpleNamespace(spoken_narrations=manager)
+        return fixture
+
+    def test_startup_lock_wait_is_bounded(self):
+        manager = SimpleNamespace(lock=threading.Lock(), threads={})
+        with manager.lock:
+            with self.assertRaisesRegex(AssertionError, 'startup did not settle'):
+                self.fixture(manager).wait_for_narrations(timeout=0)
+
+    def test_live_observer_at_deadline_fails_instead_of_returning_early(self):
+        entered, release = threading.Event(), threading.Event()
+        def observe(): entered.set(); release.wait(5)
+        thread = threading.Thread(target=observe); thread.start()
+        try:
+            self.assertTrue(entered.wait(3))
+            manager = SimpleNamespace(lock=threading.Lock(), threads={'retained': thread})
+            with self.assertRaisesRegex(AssertionError, 'did not finish'):
+                self.fixture(manager).wait_for_narrations(timeout=0)
+        finally: release.set(); thread.join(5)
+        self.assertFalse(thread.is_alive())
 
 
 if __name__ == '__main__': unittest.main()
