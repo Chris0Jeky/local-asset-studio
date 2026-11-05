@@ -96,6 +96,8 @@ class RecipeWording(unittest.TestCase):
                 self.assertTrue(link.is_visible())
                 self.assertTrue(link.evaluate('(node)=>!!node.closest(".wk-recipe")'))
                 self.assertEqual(link.inner_text(), 'Start from a picture instead')
+                self.assertTrue(link.evaluate('(node)=>{const box=node.getBoundingClientRect();return box.left>=0&&box.right<=innerWidth}'))
+                self.assertTrue(self.page.evaluate('document.documentElement.scrollWidth<=innerWidth'), 'the source link must wrap inside the recipe chip')
                 link.click()
                 self.assertTrue(self.page.evaluate('!!selected.reference || !!selected.reference_slots?.length'))
                 self.assertTrue(link.is_hidden())

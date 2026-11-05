@@ -50,3 +50,17 @@ Existing CI-executed drivers were extended:
 - `tests/create_readiness_browser.py` (Guided journey browser): successful and unavailable-target repair results stay visible with Settings closed, keep one polite live region, and retain timeout feedback in the 390 × 500 compact typing dock. The compact check also asserts the feedback rectangle is entirely within the viewport.
 
 The parent review owns the full test suite, repository validation, PR publication and merge. #2008 is implemented locally; final disposition depends on that review and hosted browser results.
+
+## Hosted driver correction
+
+PR #2012 head `d094894ee7651e23fb76560f11e4ed9c322d0d36` ran in [Guided journey run 41948461879, job 126986400188](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/41948461879/job/126986400188). All four new checks passed: visible repair results with Settings closed, one polite live region, timeout feedback while typing, and feedback geometry inside the 390 × 500 viewport. No JavaScript exceptions were reported.
+
+The driver failed because the new compact-typing scenario restored viewport size but left Settings closed and focus in the prompt before the existing rendered-summary check (`READY-18`). Its completion gate also still expected 29 checks, and the additions reused the original shared-adoption check IDs. The correction restores viewport, disclosure and focus state in `finally`, keeps the original unblocked-summary and enabled-Generate assertions, and records their observed state if they fail. Additions now use `READY-30` through `READY-33`; completion requires exactly the unique `READY-01` through `READY-33` set, with unknown and duplicate IDs rejected when recorded.
+
+Local Python compilation, an AST inventory of all 33 unique check IDs, and `git diff --check` pass. The corrected hosted run remains pending; this observation is not a full browser-pass claim.
+
+## Hosted picture-link correction
+
+[Workshop UI run 41948462005, job 126986400702](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/41948462005/job/126986400702) exposed a real placement error: the link was inside the duplicate static recipe label, and `workshop-immersive.css` hides `.workshop .wk-recipe > div` in every layout. Both 1440px and 390px visibility assertions failed, and the retained-board transition correctly refused to click the hidden link.
+
+The original link now sits directly in the visible recipe chip, outside that hidden label. A scoped flex rule gives it a separate wrapping row only when the link is present. Its handler, selected-recipe focus logic, native visibility assertions and ordinary clicks remain intact. The browser regression additionally requires the link to fit the viewport width without horizontal page overflow. Local targeted Node checks remain **69 passed**, JavaScript syntax and Python compilation pass, and `git diff --check` passes. Hosted confirmation of the corrected placement remains pending.

@@ -391,9 +391,9 @@
     const saved = q('#createView .saved');
     const savedDetails = disclosure('workshopSaved', 'Saved setups', [saved]); settings.append(savedDetails);
     if (compare) { compare.classList.add('wk-plan-comparison'); settings.append(compare); }
-    // Text-only recipes show no sources block; keep their way to a picture recipe beside the active recipe.
+    // The static recipeInfo label is hidden by every layout; the source link belongs to the visible chip itself.
     const findReferences = q('#uxFindReferenceRecipes');
-    if (findReferences) { findReferences.classList.add('wk-settings-link'); findReferences.textContent = 'Start from a picture instead'; recipeInfo.append(findReferences); }
+    if (findReferences) { findReferences.classList.add('wk-settings-link'); findReferences.textContent = 'Start from a picture instead'; recipeChip.append(findReferences); }
     // A started run says when it started and how long it has taken so far (handoff 03). Only started_at is observed,
     // so there is no progress bar and no guessed finish (K13); the job's own message stays as it is.
     const clock = seconds => { const s = Math.max(0, Math.floor(seconds)); return s < 60 ? s+' s' : Math.floor(s/60)+' min '+String(s%60).padStart(2,'0')+' s'; };
