@@ -42,6 +42,15 @@ and where to pick each thread up again. The visual brief is the private artifact
 | Characterful art direction | Three directions for the Studio's own illustrations, Suzu guide poses, harbour-short posters; the choice is the owner's (Versus, inbox `las-art-direction-1923`) | #1955, #1964, #1923 |
 | MIRA (private repo) | 4.5 vs 5.4 regression (only Bevel edges differ), paint → UV bake, proxy normals (25° → 3°), Material-Lighting toon, rig/morph gauntlet, hair colliders | mira-companion #55, #56, #57 |
 
+### Factory triangle reports — 5 November follow-up
+
+New factory reports make the LOD0 triangle count explicit in the `triangle_budget` gate. `triangles` is the render-mesh
+count checked against `budget`; `collision_triangles` counts the collision proxies; `glb_triangles` is their sum for
+`asset_LOD0.glb`. Each disconnected piece with collision enabled gets a 12-triangle box, so one collision object may
+contain several boxes. A brief that caps the whole exported GLB should use `glb_triangles`; passing the render budget alone does not
+meet that stricter cap. Older reports may not have these additional fields. This reporting change does not alter the
+generated geometry, collision policy or budget threshold (#1949).
+
 ## What failed or stays open
 
 - No local critic can judge without a reference. The no-reference VLM flags clean renders, and the pairwise likeness test

@@ -154,6 +154,38 @@ class GateEvaluation(unittest.TestCase):
     def test_clean_crate_passes_every_mesh_gate(self):
         self.assertEqual(failed(self.gates(crate_measurements())), {})
 
+    def test_triangle_budget_reports_lod0_total_but_limits_render_meshes_only(self):
+        for render_tris, total_tris, passed in ((300, 324, True), (4000, 4024, True), (4001, 4025, False)):
+            with self.subTest(render_triangles=render_tris):
+                m = crate_measurements(); m["lods"][0]["triangles"] = render_tris
+                gate = next(g for g in self.gates(m) if g["gate"] == "triangle_budget")
+                self.assertEqual(gate["triangles"], render_tris)
+                self.assertEqual(gate["budget"], 4000)
+                self.assertEqual(gate["passed"], passed)
+                self.assertEqual(gate.get("collision_triangles"), 24)
+                self.assertEqual(gate.get("glb_triangles"), total_tris)
+
+    def test_triangle_budget_counts_island_boxes_not_collision_objects(self):
+        m = crate_measurements()
+        # Two disconnected frame pieces are one collision object with two boxes.
+        m["parts"][1]["islands"] = [[-0.2, -0.2, 0.0, -0.1, 0.2, 0.6], [0.1, -0.2, 0.0, 0.2, 0.2, 0.6]]
+        m["collision_boxes"] = 3
+        gates = self.gates(m)
+        self.assertEqual(failed(gates), {})
+        gate = next(g for g in gates if g["gate"] == "triangle_budget")
+        self.assertEqual(gate.get("collision_triangles"), 36)
+        self.assertEqual(gate.get("glb_triangles"), 336)
+
+    def test_triangle_budget_without_collision_proxies_reports_render_total(self):
+        spec = copy.deepcopy(SCHEMA["generators"]["prop"])
+        for part in spec["parts"].values(): part["collision"] = False
+        m = crate_measurements(); m.update(collision_objects=[], collision_boxes=0)
+        gates = factory.evaluate_gates("prop", spec, crate_params(), m)
+        self.assertEqual(failed(gates), {})
+        gate = next(g for g in gates if g["gate"] == "triangle_budget")
+        self.assertEqual(gate.get("collision_triangles"), 0)
+        self.assertEqual(gate.get("glb_triangles"), 300)
+
     def test_seeded_defects_each_fail_their_own_gate(self):
         cases = {
             "manifold": lambda m: m["parts"][0].update(boundary_edges=4),
