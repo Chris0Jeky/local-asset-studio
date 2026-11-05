@@ -70,7 +70,8 @@ python scripts/blender_lab.py probe --blender C:/AI/blender-4.5.13-windows-x64/b
 It records version, build hash, Python, render engines (found by assigning each candidate), GPU backend, and Cycles
 device visibility. It also runs feature tests for the action API, which keyframes a temporary object, Material
 Lighting and NPR shader nodes, which are instantiated, the Blender Projects API, point-cloud and splat import
-operators, and the full glTF exporter option list. A failing test is recorded, not raised.
+operators, and the full glTF exporter option list. Python feature-test exceptions are recorded. This explicit probe
+requests GPU initialization/device discovery; native driver/library aborts cannot be caught as Python exceptions.
 
 Committed results are in `tests/fixtures/blender_lab/`. They were measured on 2 Nov 2026 on the RX 9070 XT:
 
@@ -217,7 +218,7 @@ Blender's own output is ignored. The vocabulary is closed:
 | Command | Effect |
 | --- | --- |
 | `ping` | pid, uptime, call count, datablock counts |
-| `caps` | the capability probe, taken at start-up |
+| `caps` | startup capabilities; GPU backend/Cycles device checks remain unmeasured (`ok: null`, `state: not-probed`) |
 | `open {blend, allow_edit}` | opens a `.blend` without scripts and sets this session's editable objects |
 | `describe_scene` | the scene manifest |
 | `render_views {out_dir, size, samples, cameras}` | the sentinel evidence set; the scene is snapshotted and reloaded, so nothing leaks |
@@ -227,6 +228,12 @@ Blender's own output is ignored. The vocabulary is closed:
 
 Every write goes to a new path inside the worker root. No command evaluates caller-supplied code. A refused request
 leaves the worker running. `fresh_call` is the one-process-per-call fallback.
+
+Worker startup does not initialize a graphics context or enumerate Cycles devices. Read/describe/material/save
+operations therefore do not require a working graphics backend merely to start the worker. `caps` records those
+device checks as unknown with a reason; it does not assert support or lack of support. The separate explicit
+`blender_lab.py probe` command still performs the device checks. Requested rendering continues to call Blender's
+native renderer with the selected engine/device and propagates its errors; startup metadata cannot qualify a render.
 
 ```bash
 python scripts/blender_worker.py bench --blender <blender.exe> --blend <asset.blend> --out-dir <new-dir> --calls 30
