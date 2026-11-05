@@ -104,13 +104,13 @@ func configure(model: Node3D, data: Dictionary) -> Dictionary:
 		simulator.set_enable_all_child_collisions(i, false)
 		simulator.set_collision_count(i, chain.colliders.size())
 		for k in chain.colliders.size(): simulator.set_collision_path(i, k, simulator.get_path_to(colliders[int(chain.colliders[k])]))
-	_process_modification(0.0)
+	_process_modification_with_delta(0.0)
 	if not failure.is_empty(): return _discard(failure)
 	simulator.active = true; simulator.reset()
 	return {"ok": true, "chains": plans.size(), "colliders": colliders.size()}
 
 
-func _process_modification(_delta: float) -> void:
+func _process_modification_with_delta(_delta: float) -> void:
 	if not is_instance_valid(simulator): return
 	var skeleton := get_skeleton()
 	for i in bindings.size():
