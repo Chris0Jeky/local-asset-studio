@@ -160,6 +160,14 @@ Example typed intent (numbers and booleans are JSON values, not strings):
 
 Omitted parameters use the schema's defaults. `render` defaults to `true` and
 `verify_engine` defaults to `false` in the Studio adapter. The existing
+Every generator exposes `smooth` as an integer switch: `0` retains the original
+flat style (the default); `1` interpolates normals across spheres and the sides
+of cylinders and cones. Round caps, boxes and planar grids keep hard normals.
+For the potted plant, use `kind=2, smooth=1` to soften foliage lighting without
+raising `detail` or spending more triangles. Smooth normals do not change the
+polygon silhouette; use `detail` when the outline itself needs more segments.
+The schema supplies this setting and its help to both the app and `describe`.
+
 `python scripts/procgen_factory.py describe` and factory CLI remain available;
 direct CLI builds do not automatically create Studio plans or Library records.
 Dedicated SDK/MCP wrappers are not part of this slice.

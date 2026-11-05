@@ -59,6 +59,17 @@ class ProceduralStudioTests(unittest.TestCase):
         self.assertEqual(self.studio.production.list(),[]);self.assertEqual(self.studio.jobs,{})
         self.assertTrue(self.studio.queue.empty());build.assert_not_called()
 
+    def test_smooth_control_flows_from_schema_through_catalog_validation_and_preparation(self):
+        status,catalog = self.request('/api/procedural');self.assertEqual(status,200)
+        for generator in catalog['generators'].values():
+            self.assertEqual(generator['params']['smooth']['default'],0)
+            self.assertIn('round',generator['params']['smooth']['doc'])
+        intent = self.intent(params={'kind':2,'smooth':1})
+        status,checked = self.request('/api/procedural/validate',intent);self.assertEqual(status,200)
+        self.assertEqual(checked['intent']['params']['smooth'],1)
+        status,project = self.request('/api/procedural',intent);self.assertEqual(status,201)
+        self.assertTrue(self.studio.queue.empty())
+
     def test_prepare_and_start_are_distinct_requests_on_the_existing_coordinator(self):
         with patch.object(procedural.factory,'build') as build:
             status,project = self.request('/api/procedural',self.intent())

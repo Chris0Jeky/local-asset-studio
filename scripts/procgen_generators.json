@@ -20,6 +20,7 @@
         "bed_length": {"type": "float", "min": 1.8, "max": 2.3, "default": 2.0, "doc": "must fit depth - 0.02"},
         "shelf_count": {"type": "int", "min": 2, "max": 6, "default": 4, "doc": "bookshelf levels on the left wall, in front of the desk"},
         "rug_radius": {"type": "float", "min": 0.4, "max": 1.5, "default": 0.9, "doc": "round rug centred at (0, 0.45 * depth); must stay inside the floor"},
+        "smooth": {"type": "int", "min": 0, "max": 1, "default": 0, "doc": "0 flat shading (original style); 1 smooth normals on round surfaces; box edges and round caps stay hard. Does not add triangles or change silhouette."},
         "detail": {"type": "int", "min": 4, "max": 48, "default": 16, "doc": "segments of round parts; LODs halve it"},
         "seed": {"type": "int", "min": 0, "max": 9999, "default": 7},
         "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false, "doc": "flat toon palette: 0 day, 1 dusk, 2 sakura, 3 autumn"}
@@ -54,6 +55,7 @@
         "kind": {"type": "int", "min": 0, "max": 2, "default": 0, "doc": "0 lantern, 1 crate, 2 plant"},
         "height": {"type": "float", "min": 0.2, "max": 1.6, "default": 0.6},
         "width": {"type": "float", "min": 0.15, "max": 1.0, "default": 0.4},
+        "smooth": {"type": "int", "min": 0, "max": 1, "default": 0, "doc": "0 flat shading (original style); 1 smooth normals on round surfaces; box edges and round caps stay hard. Does not add triangles or change silhouette."},
         "detail": {"type": "int", "min": 4, "max": 48, "default": 16},
         "seed": {"type": "int", "min": 0, "max": 9999, "default": 7},
         "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false, "doc": "flat toon palette: 0 day, 1 dusk, 2 sakura, 3 autumn"}
@@ -81,6 +83,7 @@
         "step_rise": {"type": "float", "min": 0.1, "max": 0.22, "default": 0.16},
         "step_run": {"type": "float", "min": 0.25, "max": 0.45, "default": 0.32},
         "lanterns": {"type": "int", "min": 0, "max": 1, "default": 1, "doc": "1 adds a stone lantern pair"},
+        "smooth": {"type": "int", "min": 0, "max": 1, "default": 0, "doc": "0 flat shading (original style); 1 smooth normals on round surfaces; box edges and round caps stay hard. Does not add triangles or change silhouette."},
         "detail": {"type": "int", "min": 4, "max": 48, "default": 16},
         "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false, "doc": "flat toon palette: 0 day, 1 dusk, 2 sakura, 3 autumn"}
       },
@@ -109,6 +112,7 @@
         "stair_steps": {"type": "int", "min": 0, "max": 10, "default": 8, "doc": "spiral steps on the left wall, centred 0.4 m from it"},
         "shelf_count": {"type": "int", "min": 2, "max": 5, "default": 4, "doc": "chart shelf levels at the back"},
         "cutaway": {"type": "int", "min": 0, "max": 1, "default": 1, "doc": "1 removes the five front panels"},
+        "smooth": {"type": "int", "min": 0, "max": 1, "default": 0, "doc": "0 flat shading (original style); 1 smooth normals on round surfaces; box edges and round caps stay hard. Does not add triangles or change silhouette."},
         "detail": {"type": "int", "min": 4, "max": 48, "default": 24},
         "seed": {"type": "int", "min": 0, "max": 9999, "default": 7},
         "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false, "doc": "flat toon palette: 0 day, 1 dusk, 2 sakura, 3 autumn"}
@@ -144,6 +148,7 @@
         "railing": {"type": "int", "min": 0, "max": 1, "default": 1},
         "lamps": {"type": "int", "min": 0, "max": 4, "default": 2, "doc": "lamp posts on the left edge"},
         "bollards": {"type": "int", "min": 0, "max": 6, "default": 3, "doc": "mooring bollards on the right edge"},
+        "smooth": {"type": "int", "min": 0, "max": 1, "default": 0, "doc": "0 flat shading (original style); 1 smooth normals on round surfaces; box edges and round caps stay hard. Does not add triangles or change silhouette."},
         "detail": {"type": "int", "min": 4, "max": 48, "default": 16},
         "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false, "doc": "flat toon palette: 0 day, 1 dusk, 2 sakura, 3 autumn"}
       },
@@ -176,6 +181,7 @@
         "grass_density": {"type": "float", "min": 0.0, "max": 8.0, "default": 3.0, "doc": "tufts per square metre; below 0.5 means none"},
         "rocks": {"type": "int", "min": 0, "max": 8, "default": 4},
         "sea_level": {"type": "float", "min": 0.1, "max": 0.6, "default": 0.3},
+        "smooth": {"type": "int", "min": 0, "max": 1, "default": 0, "doc": "0 flat shading (original style); 1 smooth normals on round surfaces; box edges and round caps stay hard. Does not add triangles or change silhouette."},
         "detail": {"type": "int", "min": 4, "max": 48, "default": 16, "doc": "terrain grid density and tuft segments; LODs halve it"},
         "seed": {"type": "int", "min": 0, "max": 9999, "default": 7},
         "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false, "doc": "flat toon palette: 0 day, 1 dusk, 2 sakura, 3 autumn"}
@@ -212,6 +218,7 @@
         "stair": {"type": "int", "min": 0, "max": 1, "default": 1, "doc": "1 adds the stair down from stair_top"},
         "stair_top": {"type": "float", "min": 0.8, "max": 3.0, "default": 1.95, "doc": "stair top height (the coastal path sits at land_height - 0.05)"},
         "stair_width": {"type": "float", "min": 0.8, "max": 2.0, "default": 1.4},
+        "smooth": {"type": "int", "min": 0, "max": 1, "default": 0, "doc": "0 flat shading (original style); 1 smooth normals on round surfaces; box edges and round caps stay hard. Does not add triangles or change silhouette."},
         "detail": {"type": "int", "min": 4, "max": 48, "default": 16, "doc": "shelf grid density and round segments; LODs halve it"},
         "seed": {"type": "int", "min": 0, "max": 9999, "default": 7},
         "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false, "doc": "flat toon palette: 0 day, 1 dusk, 2 sakura, 3 autumn"}
@@ -246,6 +253,7 @@
         "lantern_rows": {"type": "int", "min": 0, "max": 8, "default": 4, "doc": "lantern strings across the street"},
         "lantern_height": {"type": "float", "min": 3.0, "max": 4.0, "default": 3.2, "doc": "lantern cord height above the street"},
         "stage": {"type": "int", "min": 0, "max": 1, "default": 1, "doc": "Hana's stage at the far end"},
+        "smooth": {"type": "int", "min": 0, "max": 1, "default": 0, "doc": "0 flat shading (original style); 1 smooth normals on round surfaces; box edges and round caps stay hard. Does not add triangles or change silhouette."},
         "detail": {"type": "int", "min": 4, "max": 48, "default": 16},
         "seed": {"type": "int", "min": 0, "max": 9999, "default": 3},
         "palette": {"type": "int", "min": 0, "max": 3, "default": 0, "gn": false, "doc": "flat toon palette: 0 day, 1 dusk, 2 sakura, 3 autumn"}
