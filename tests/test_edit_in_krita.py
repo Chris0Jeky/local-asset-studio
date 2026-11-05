@@ -18,8 +18,8 @@ from test_server import server, png, PRESET, GRAPH
 import krita_edit
 
 
-def repaired():
-    stream = io.BytesIO(); Image.new('RGB', (8, 12), 'orange').save(stream, 'PNG'); return stream.getvalue()
+def repaired(color='orange'):
+    stream = io.BytesIO(); Image.new('RGB', (8, 12), color).save(stream, 'PNG'); return stream.getvalue()
 
 
 def jpeg():
@@ -133,10 +133,73 @@ class EditInKritaTests(unittest.TestCase):
         self.assertEqual(second['status'], 'imported'); self.assertNotEqual(second['asset']['id'], first['asset']['id'])
         self.assertEqual(second['asset']['lineage'], [self.parent['id']])
 
+    def test_reverting_to_any_imported_save_after_restart_does_not_duplicate_it(self):
+        session = self.start(); working = Path(session['working_path'])
+        working.write_bytes(repaired()); first = self.back(session['id'])
+        working.write_bytes(repaired('green')); self.assertEqual(self.back(session['id'])['status'], 'imported')
+        restarted = server.Studio(self.root)
+        working.write_bytes(repaired()); before = self.tree()
+        result = self.back(session['id'], studio=restarted)
+        self.assertEqual(result['status'], 'already_imported')
+        self.assertEqual(result['asset_id'], first['asset']['id'])
+        self.assertEqual(self.tree(), before)
+
+    def test_legacy_last_import_is_preserved_when_history_is_first_created(self):
+        session = self.start(); working = Path(session['working_path'])
+        working.write_bytes(repaired()); first = self.back(session['id'])
+        record = working.with_suffix('.json'); saved = json.loads(record.read_text())
+        saved.pop('brought_back_history', None); record.write_text(json.dumps(saved))
+        working.write_bytes(repaired('green')); self.assertEqual(self.back(session['id'])['status'], 'imported')
+        working.write_bytes(repaired()); before = self.tree()
+        result = self.back(session['id'])
+        self.assertEqual(result['status'], 'already_imported')
+        self.assertEqual(result['asset_id'], first['asset']['id'])
+        self.assertEqual(self.tree(), before)
+
+    def test_an_incomplete_png_is_refused_before_import_and_can_be_retried(self):
+        session = self.start(); working = Path(session['working_path']); working.write_bytes(repaired()[:-8])
+        before = self.tree()
+        with patch.object(self.studio, 'import_image', wraps=self.studio.import_image) as importer:
+            with self.assertRaisesRegex(krita_edit.KritaEditError, 'PNG.*finish saving'): self.back(session['id'])
+            importer.assert_not_called()
+        self.assertEqual(self.tree(), before)
+        working.write_bytes(repaired()); self.assertEqual(self.back(session['id'])['status'], 'imported')
+
+    def test_missing_iend_crc_bytes_are_refused_until_the_png_save_is_complete(self):
+        session = self.start(); working = Path(session['working_path'])
+        for missing in range(1, 5):
+            working.write_bytes(repaired()[:-missing]); before = self.tree()
+            with self.subTest(missing=missing):
+                with self.assertRaisesRegex(krita_edit.KritaEditError, 'PNG.*finish saving'): self.back(session['id'])
+                self.assertEqual(self.tree(), before)
+        working.write_bytes(repaired()); self.assertEqual(self.back(session['id'])['status'], 'imported')
+        before = self.tree(); self.assertEqual(self.back(session['id'])['status'], 'already_imported')
+        self.assertEqual(self.tree(), before)
+
+    def test_a_working_png_replaced_while_reading_is_refused_without_import(self):
+        session = self.start(); working = Path(session['working_path']); working.write_bytes(repaired())
+        before = self.tree(); original_open = Path.open
+        class ReplacedRead:
+            def __init__(self, stream): self.stream = stream
+            def __enter__(self): self.stream.__enter__(); return self
+            def __exit__(self, *args): return self.stream.__exit__(*args)
+            def fileno(self): return self.stream.fileno()
+            def read(self, *args):
+                raw = self.stream.read(*args)
+                replacement = working.with_suffix('.saving'); replacement.write_bytes(raw); replacement.replace(working)
+                return raw
+        def replacing_open(path, *args, **kwargs):
+            stream = original_open(path, *args, **kwargs)
+            return ReplacedRead(stream) if path == working and args and args[0] == 'rb' else stream
+        with patch.object(Path, 'open', replacing_open):
+            with self.assertRaisesRegex(krita_edit.KritaEditError, 'saving'): self.back(session['id'])
+        self.assertEqual(self.tree(), before)
+        self.assertEqual(self.back(session['id'])['status'], 'imported')
+
     def test_a_bad_save_is_refused_and_not_remembered(self):
         session = self.start(); working = Path(session['working_path']); working.write_bytes(b'\x89PNG\r\n\x1a\ntruncated')
         before = self.tree()
-        with self.assertRaises(server.StudioError): self.back()
+        with self.assertRaisesRegex(krita_edit.KritaEditError, 'PNG.*finish saving'): self.back()
         self.assertEqual(self.tree(), before)
         working.write_bytes(repaired()); self.assertEqual(self.back()['status'], 'imported')
 
@@ -199,6 +262,22 @@ class EditInKritaHTTPTests(unittest.TestCase):
                 status, back = self.call('POST', path + '/bring-back', {}, privacy)
                 self.assertEqual((status, back['status'], back['asset']['lineage'], back['asset']['review']), (200, 'imported', [asset['id']], 'unreviewed'), back)
                 self.assertEqual(self.call('POST', path + '/bring-back', {}, privacy)[1]['status'], 'already_imported')
+
+    def test_malformed_session_is_a_400_and_writes_nothing(self):
+        for asset, privacy in ((self.parent, None), (self.private, 'private')):
+            path = '/api/assets/%s/edit-in-krita' % asset['id']
+            status, session = self.call('POST', path, {}, privacy); self.assertEqual(status, 201)
+            record = Path(session['working_path']).with_suffix('.json'); original = json.loads(record.read_text())
+            for field, value in (('source_sha256', None), ('source_sha256', 'bad'), ('brought_back', {'sha256': 'bad'}),
+                                 ('brought_back_history', {}), ('brought_back_history', [{'sha256': 'bad'}])):
+                saved = dict(original)
+                if value is None: saved.pop(field)
+                else: saved[field] = value
+                record.write_text(json.dumps(saved)); before = self.tree()
+                with self.subTest(privacy=privacy, field=field, value=value):
+                    status, result = self.call('POST', path + '/bring-back', {'session': session['id']}, privacy)
+                    self.assertEqual(status, 400, result); self.assertIn('session is unavailable', result['error'])
+                    self.assertEqual(self.tree(), before)
 
     def test_refusals_over_http_write_nothing(self):
         before = self.tree()

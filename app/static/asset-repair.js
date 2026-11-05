@@ -77,7 +77,7 @@
   async function kritaBringBack({asset,session,state,api}){
     const problem=kritaBlocked(asset,null,state(),false);if(problem)throw Error(problem);
     const {path,options}=kritaRequest(asset,'back',session),result=await api(path,options);
-    if(result?.status==='unchanged')return {status:'unchanged',text:'Nothing changed since Krita was opened. Save in Krita first (File, Save), then bring it back. Nothing was imported.'};
+    if(result?.status==='unchanged')return {status:'unchanged',text:'The working PNG has not changed. If you saved as .kra or another format, keep that editable file. Export a PNG over the working PNG that Studio opened. Let saving finish, then bring it back. A PNG saved elsewhere can be chosen under Import repaired version. Nothing was imported.'+(typeof result.session?.working_path==='string'?' Working PNG: '+result.session.working_path:'')};
     if(result?.status==='already_imported'&&result.asset_id)return {status:'already_imported',id:result.asset_id,text:'That saved version was already brought back. Nothing was imported again.'};
     if(result?.status==='imported'&&result.asset?.id&&Array.isArray(result.asset.lineage)&&result.asset.lineage.includes(asset.id))return {status:'imported',id:result.asset.id,parent:asset.id};
     throw Error('The answer from the Studio was not recognised. Check the family before bringing the edit back again.');
@@ -146,7 +146,7 @@
   q('#assetKritaOpen').onclick=()=>kritaRun(async({asset,id,current})=>{
     const run=R.kritaStart({asset,krita,state:kstate,api});kritaSay('Opening the picture in Krita… Nothing is generated.');
     const session=await run;sessions.set(id,session.id);
-    const text='Krita is opening a copy of this picture. Edit and save it there (File, Save), then press Bring back from Krita. This picture is unchanged.';
+    const text='Krita is opening a working PNG copy. Edit and save that PNG, then press Bring back from Krita. If you save an editable .kra, also export a PNG over the working file Studio opened. A PNG saved elsewhere can be chosen under Import repaired version. This picture is unchanged.'+(typeof session.working_path==='string'?' Working PNG: '+session.working_path:'');
     if(current())kritaSay(text);else message(text);
   });
   q('#assetKritaBack').onclick=()=>kritaRun(async({asset,id,current})=>{
