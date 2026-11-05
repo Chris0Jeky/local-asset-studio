@@ -1,7 +1,7 @@
 """GET /api/jobs answers an unchanged read from cached bytes, before any projection or serialization (#1767).
 
-The cache key is (jobs-view revision, privacy scope). Every job mutation bumps the revision; while a job is active, or the worker is busy,
-nothing is cached at all, because the worker edits jobs in place."""
+The cache validates the collection identity as well as (jobs-view revision, privacy scope). Every announced job mutation bumps the
+revision; while a job is active, or the worker is busy, nothing is cached at all, because the worker edits jobs in place."""
 import copy
 import hashlib
 import json
@@ -207,6 +207,50 @@ class JobsConditionalReadTests(unittest.TestCase):
         self.studio.jobs_view_store(new_token, b'new', '"new"'); self.studio.jobs_view_store(old_token, b'old', '"old"')   # the slow builder finishes last
         self.assertEqual(list(self.studio._jobs_views), [new_token[0]])
         self.assertEqual(self.studio._jobs_views[new_token[0]][:2], (b'new', '"new"'))
+
+    def test_replacing_jobs_at_the_same_revision_invalidates_every_scope(self):
+        self.studio.jobs = server.JobsView(self.studio.jobs)   # constructor-loaded views start at revision zero
+        warm = {scope: self.get(scope) for scope in ('regular', 'private', 'all')}
+        self.studio.jobs = server.JobsView()   # also revision zero; none of the old rows exist anymore
+        for scope, (_, _, headers) in warm.items():
+            with self.subTest(scope):
+                status, body, fresh = self.get(scope, headers['etag'])
+                self.assertEqual(status, 200); self.assertEqual(json.loads(body), [])
+                self.assert_served_without_work(fresh['etag'], scope)
+        self.assertLessEqual(len(self.studio._jobs_views), 3)
+
+    def test_a_delayed_http_builder_cannot_replace_a_newer_cached_answer(self):
+        for mutation in ('revision', 'replacement'):
+            with self.subTest(mutation):
+                old_job = copy.deepcopy(self.job('done-a')); old_job['message'] = 'before the barrier'
+                self.studio.jobs = server.JobsView({old_job['id']: old_job})
+                entered = threading.Event(); release = threading.Event(); replies = []; errors = []
+                original = server.Studio.public
+                def blocked(studio, job):
+                    row = original(studio, job)
+                    if job is old_job:
+                        entered.set()
+                        if not release.wait(5): raise RuntimeError('old jobs builder was never released')
+                    return row
+                def request():
+                    try: replies.append(self.get())
+                    except BaseException as exc: errors.append(exc)
+                with patch.object(server.Studio, 'public', blocked):
+                    reader = threading.Thread(target=request); reader.start()
+                    try:
+                        self.assertTrue(entered.wait(5), 'old builder never reached projection')
+                        with self.studio.lock:
+                            new_job = copy.deepcopy(old_job); new_job['message'] = 'after the barrier'
+                            if mutation == 'replacement': self.studio.jobs = server.JobsView({new_job['id']: new_job})
+                            else: self.studio.jobs[new_job['id']] = new_job
+                        status, body, headers = self.get()
+                        self.assertEqual(status, 200); self.assertIn('after the barrier', body.decode())
+                    finally:
+                        release.set(); reader.join(5)
+                self.assertFalse(reader.is_alive()); self.assertEqual(errors, [])
+                self.assertEqual(replies[0][0], 200); self.assertIn('before the barrier', replies[0][1].decode())
+                self.assert_served_without_work(headers['etag'])
+                self.assertEqual(self.get()[1], body)
 
     def test_save_bumps_again_after_the_write_and_when_it_fails(self):
         seen = []; original = self.studio._write_json_atomic
