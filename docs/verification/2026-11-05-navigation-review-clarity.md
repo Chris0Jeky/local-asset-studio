@@ -68,11 +68,35 @@ is pending hosted exact-head CI: this environment has no usable Chromium binary.
 The Spoken Briefs browser driver expects the updated navigation label too. No
 visual pass is claimed.
 
-The same driver now captures the source-preview JSON immediately after the
-keyboard action, before waiting for its rendered DOM. This addresses the known
-response-body eviction race in #1941 without changing the application or removing
-the manifest comparison. Native Chromium on both hosted platforms remains the
-validation gate for that test-only repair.
+## Spoken Brief response capture follow-up — #1941
+
+The first repair moved the source-preview JSON read immediately after the
+keyboard action. Linux run `41949695932`, job `126990441648`, still failed at that
+earlier call with `Network.getResponseBody: No data found for resource with given
+identifier`; Windows passed. The log confirms that moving the read did not remove
+the dependency on Chromium's response-body store. It does not establish exactly
+why that body became unavailable.
+
+The test now forwards the original source-preview request with Playwright's
+`route.fetch`, retains the real server response bytes, and delivers the same
+status, headers and bytes with `route.fulfill`. Redirect following and retries
+are explicitly zero. Each keyboard action must produce exactly one retained
+receipt and one server GET. The complete compiler manifest must match both that
+receipt and the manifest rendered in the page; the segment, omission, hash,
+narrow-layout, screenshot and unchanged-archive assertions remain in place.
+
+This follows the documented [Route fetch/fulfill contract](https://playwright.dev/python/docs/api/class-route#route-fetch)
+and [APIResponse body lifetime](https://playwright.dev/python/docs/api/class-apiresponse#api-response-dispose).
+The response is disposed after delivery; the test owns the captured bytes.
+Application code and the compiler are unchanged.
+
+Local verification passed: 22 Spoken HTTP tests, two frontend contract tests,
+Python compilation and `git diff --check`. A browser-free Playwright APIRequest
+probe also fetched the real source-preview HTTP fixture, retained its bytes
+across APIResponse disposal, matched the compiler manifest and confirmed the
+archive stayed unchanged with `generation_submitted` false. Native Chromium on
+both hosted platforms remains the validation gate for the browser route and
+keyboard journey; no local browser pass is claimed.
 
 ## Remaining #2009 work
 
