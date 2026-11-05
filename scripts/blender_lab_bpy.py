@@ -766,8 +766,8 @@ def render_evidence(out_dir, spec=None, size=256, samples=16):
             "view_transform": "Standard"}
 
 
-def seed_defect(kind):
-    """Deliberately break the in-memory scene after the source evidence and before export (sentinel self-test only)."""
+def seed_defect(kind, *, retain_original_material=False):
+    """Break the in-memory scene; corpus variants retain the displaced material for a later repair."""
     import bpy
     scene, view_layer = bpy.context.scene, bpy.context.view_layer
     if kind not in SEEDED_DEFECTS: raise ValueError(f"Unknown seeded defect {kind}")
@@ -813,6 +813,8 @@ def seed_defect(kind):
     target, slot = next((o, i) for o in sorted(meshes, key=lambda o: o.name) for i, s in enumerate(o.material_slots) if s.material)
     current = target.material_slots[slot].material
     other = next(m for m in sorted(bpy.data.materials, key=lambda m: m.name) if m != current and m.users)
+    # Select before retaining anything: fake users make unused datablocks count as present in manifest().
+    if retain_original_material: current.use_fake_user = True
     target.material_slots[slot].material = other
     return {"kind": kind, "object": target.name, "slot": slot, "from": current.name, "to": other.name}
 
@@ -1075,10 +1077,8 @@ def corpus_defect(kind):
     visible = _evidence_meshes(scene, view_layer)
     faces = lambda o: len(o.data.polygons)
     closed = [o for o in visible if faces(o) >= 4 and _closed(o.data, _foreach(o.data.vertices, "co", 3, __import__("numpy").float32).reshape(-1, 3))]
-    if kind == "material-mismatch":  # a real wrong-material bug leaves the right material in the file
-        for material in bpy.data.materials: material.use_fake_user = True
     if kind in SEEDED_DEFECTS:
-        try: return seed_defect(kind)
+        try: return seed_defect(kind, retain_original_material=kind == "material-mismatch")
         except (IndexError, StopIteration, KeyError, AttributeError) as exc: raise NotApplicable(f"{kind}: {exc}") from exc
     if kind == "flipped-normals":
         target = _pick("Head", closed, faces, largest=True)

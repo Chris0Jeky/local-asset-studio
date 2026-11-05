@@ -33,6 +33,14 @@ pageable object summaries for larger scenes. See [Scene description replies](#sc
 [verification note](verification/2026-11-05-blender-scene-summary.md). The 2 November benchmark above is historical;
 no live repair benchmark was rerun for this facade change.
 
+**5 November update for #1983:** corpus material seeding now retains only the material displaced from the target
+slot. The existing alternate is chosen before any retention flag changes; unrelated unused materials stay unused.
+Current code already swapped an existing material: marking **every** material as `use_fake_user` was promoting an
+orphan into the manifest and the alternate candidates. Offline regressions reproduce that mechanism and pass with
+the bounded fix. Native save/reopen qualification and the realistic-v2 benchmark rerun remain outstanding; the
+historical repair rates below have not been recalculated. See the
+[material-retention verification note](verification/2026-11-05-corpus-material-retention.md).
+
 ### Checking assets bound for Unreal Engine 5
 
 The sentinel checks a `.blend` by exporting a GLB with `LAS_GLTF_SETTINGS`, reimporting it in a fresh Blender and
@@ -636,6 +644,9 @@ What the misses are:
   restores the right slot, but the vocabulary cannot purge the orphan, so the checksum still differs. Only the chest,
   which already had a `Material`, can be repaired exactly. Next step: seed with an existing material, or count
   orphan purge as part of the defect.
+  **5 November correction to this original diagnosis:** the current seeder already selects an existing material.
+  Blanket fake-user retention promotes an unused datablock into the manifest, even without creating one. The new
+  targeted-retention fix addresses that reproduced path; the six historical cases still need a fresh native rerun.
 - **Haiku transform-offset.**
   - prop-2-1 is the one harmful case: Haiku rounded the target's x and y location, and that showed up in the
     object's deform moments.
