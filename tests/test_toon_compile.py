@@ -1,5 +1,7 @@
 """Toon material compiler: graphs are built here, compiled to Godot shader text, and the shader is then executed by a
 small GLSL-subset interpreter, so the tests check values (the kit's analytic cel formula), not just text."""
+import json
+from itertools import product
 import math
 from pathlib import Path
 import re
@@ -106,12 +108,12 @@ def g(v):  # Blender world -> Godot world (the camera is the identity, so view s
     return V(v[0], v[2], -v[1])
 
 
-def run(text, normal, lights, view=(0, -1, 0), uv=(0.25, 0.5), tex=None, front=True):
+def run(text, normal, lights, view=(0, -1, 0), uv=(0.25, 0.5), tex=None, front=True, sample=None):
     """Execute fragment() then light() once per light; returns (final colour, alpha). Vectors are Blender world."""
     env, frag, light = load_shader(text)
     st = dict(env, NORMAL=g(normal), VIEW=g(view), UV=V(*uv), INV_VIEW_MATRIX=I3, MODEL_MATRIX=I3, FRONT_FACING=front,
               ALBEDO=V(0, 0, 0), EMISSION=V(0, 0, 0), ALPHA=1.0, VERTEX=V(0, 0, 0))
-    st["texture"] = lambda s, p: (tex or (lambda u: V(.8, .6, .4, 1)))(p)
+    st["texture"] = sample or (lambda s, p: (tex or (lambda u: V(.8, .6, .4, 1)))(p))
     for line in frag:
         exec(line, st)
     diffuse, spec = V(0, 0, 0), V(0, 0, 0)
@@ -453,6 +455,111 @@ class MToon(unittest.TestCase):
         self.assertAlmostEqual((0.62 + lift) ** p, 0.05, 3)
 
 
+class Samplers(unittest.TestCase):
+    def texture(self, b, vector=None, **props):
+        return b.node("TEX_IMAGE", {"Vector": ("VECTOR", vector or [0, 0, 0])},
+                      {"Color": "RGBA", "Alpha": "VALUE"}, image="base.png", **props)
+
+    def emission(self, b, color):
+        return b.mat(b.out(b.node("EMISSION", {"Color": ("RGBA", color), "Strength": 1.0}, {"Emission": "SHADER"}), "Emission"))
+
+    def declarations(self, shader):
+        return {name: set(hints.split(", ")) for name, hints in re.findall(r"^uniform sampler2D (\w+) : ([^;]+);$", shader, re.M)}
+
+    def test_shared_image_uses_independent_samplers_and_samples_including_groups(self):
+        images = {"base.png": {**IMAGES["base.png"], "interpolation": "Linear", "extension": "EXTEND"}}
+        first_hints = {"source_color", "filter_nearest_mipmap", "repeat_enable"}
+        variants = (("Linear", "EXTEND", {"source_color", "filter_linear_mipmap", "repeat_disable"}),
+                    ("Closest", "EXTEND", {"source_color", "filter_nearest_mipmap", "repeat_disable"}),
+                    ("Linear", "REPEAT", {"source_color", "filter_linear_mipmap", "repeat_enable"}))
+        for grouped, (interpolation, extension, second_hints) in product((False, True), variants):
+            with self.subTest(grouped=grouped, interpolation=interpolation, extension=extension):
+                b, groups = B(), {}
+                owner = B() if grouped else b
+                nearest = self.texture(owner, interpolation="Closest", extension="REPEAT")
+                if grouped:
+                    owner.node("GROUP_OUTPUT", {"Color": owner.out(nearest, "Color")})
+                    groups["Sampler"] = {"nodes": owner.nodes}
+                    group = b.node("GROUP", {}, {"Color": "RGBA"}); b.nodes[group]["tree"] = "Sampler"
+                    first = b.out(group, "Color")
+                else:
+                    first = b.out(nearest, "Color")
+                other = self.texture(b, interpolation=interpolation, extension=extension)
+                mat = self.emission(b, mix(b, "ADD", first, b.out(other, "Color")))
+                result = compile_one(mat, images, groups)
+                self.assertEqual(result["status"], "ok", result)
+                declarations = self.declarations(result["shader"])
+                self.assertEqual(len(declarations), 2)
+                self.assertEqual(set(result["uniforms"].values()), {"base.png"})
+                self.assertEqual({frozenset(v) for v in declarations.values()}, {
+                    frozenset(first_hints), frozenset(second_hints)})
+                sampled = []
+                def sample(name, uv):
+                    sampled.append(name)
+                    return V(.8, 0, 0, .25) if declarations[name] == first_hints else V(0, .6, 0, .75)
+                color, _ = run(result["shader"], (0, -1, 0), [], sample=sample)
+                self.assertTrue(close(color, [.8, .6, 0]), color)
+                self.assertEqual(len(set(sampled)), 2)  # distinct uniforms alone do not prove the sample memo is distinct
+                with tempfile.TemporaryDirectory() as tmp:
+                    tc.compile_ir({"materials": {"m": mat}, "groups": groups, "images": images}, Path(tmp))
+                    saved = json.loads((Path(tmp) / "report.json").read_text())
+                self.assertEqual(saved["materials"]["m"]["uniforms"], result["uniforms"])
+
+    def test_identical_settings_reuse_one_sample(self):
+        b = B()
+        a = self.texture(b, interpolation="Closest", extension="EXTEND")
+        c = self.texture(b, interpolation="Closest", extension="EXTEND")
+        result = compile_one(self.emission(b, mix(b, "ADD", b.out(a, "Color"), b.out(c, "Color"))))
+        calls = []
+        def sample(name, uv):
+            calls.append((name, uv)); return V(.2, .3, .4, 1)
+        color, _ = run(result["shader"], (0, -1, 0), [], sample=sample)
+        self.assertTrue(close(color, [.4, .6, .8]))
+        self.assertEqual((len(result["uniforms"]), len(calls)), (1, 1))
+
+    def test_shared_sampler_keeps_different_uv_samples_separate(self):
+        b, textures = B(), []
+        for uv in ([.1, .2, 0, 1], [.7, .6, 0, 1]):
+            value = b.node("RGB", {}, {"Color": "RGBA"}); b.nodes[value]["outputs"]["Color"]["default"] = uv
+            textures.append(self.texture(b, b.out(value, "Color")))
+        result = compile_one(self.emission(b, mix(b, "ADD", *[b.out(t, "Color") for t in textures])))
+        calls = []
+        def sample(name, uv):
+            calls.append((name, uv)); return V(uv.x, uv.y, 0, 1)
+        color, _ = run(result["shader"], (0, -1, 0), [], sample=sample)
+        self.assertTrue(close(color, [.8, 1.2, 0]), color)
+        self.assertEqual((len(result["uniforms"]), len(calls)), (1, 2))
+
+    def test_color_and_alpha_share_one_sample(self):
+        b = B(); texture = self.texture(b, interpolation="Closest", extension="REPEAT")
+        result = compile_one(self.emission(b, mix(b, "ADD", b.out(texture, "Color"), b.out(texture, "Alpha"))))
+        calls = []
+        def sample(name, uv):
+            calls.append(name); return V(.8, .6, .4, .25)
+        color, _ = run(result["shader"], (0, -1, 0), [], sample=sample)
+        self.assertTrue(close(color, [1.05, .85, .65]))
+        self.assertEqual(len(calls), 1)
+
+    def test_missing_node_settings_keep_legacy_image_fallback_and_defaults(self):
+        for extra, expected in (({}, {"filter_linear_mipmap", "repeat_enable"}),
+                                ({"interpolation": "Closest", "extension": "EXTEND"}, {"filter_nearest_mipmap", "repeat_disable"})):
+            with self.subTest(extra=extra):
+                b = B(); texture = self.texture(b)
+                result = compile_one(self.emission(b, b.out(texture, "Color")), {"base.png": {**IMAGES["base.png"], **extra}})
+                self.assertEqual(next(iter(self.declarations(result["shader"]).values())), expected | {"source_color"})
+
+    def test_unimplemented_or_invalid_sampler_modes_are_named_and_refused(self):
+        for prop, value in (("interpolation", "Cubic"), ("interpolation", "Smart"), ("interpolation", None),
+                            ("extension", "CLIP"), ("extension", "MIRROR"), ("extension", "unknown")):
+            with self.subTest(prop=prop, value=value):
+                b = B(); texture = self.texture(b, **{prop: value})
+                result = compile_one(self.emission(b, b.out(texture, "Color")))
+                self.assertEqual(result["status"], "unsupported", result)
+                self.assertNotIn("shader", result)
+                self.assertIn(texture, result["unsupported"][0])
+                self.assertIn(str(value), result["unsupported"][0])
+
+
 class Files(unittest.TestCase):
     def test_compile_ir_writes_everything(self):
         ir = {"materials": {"Cloth": kit_cloth(B()), "Bad/Name": B().mat(None), "Bad Name": B().mat(None)}, "images": IMAGES,
@@ -465,6 +572,26 @@ class Files(unittest.TestCase):
             self.assertEqual(doc["materials"]["Bad/Name"]["file"], "shaders/Bad_Name.gdshader")
             for f in ("report.json", "mtoon.json", "lights.json", "cameras.json"):
                 self.assertTrue((Path(d) / f).is_file(), f)
+
+    def test_transmission_is_partial_for_links_or_nonblack_defaults_and_keeps_inspection_artifact(self):
+        materials = {}
+        for name, value in (("linked", None), ("constant", [.2, 0, 0, 1]), ("black", [0, 0, 0, 1])):
+            b = B()
+            if name == "linked":
+                rgb = b.node("RGB", {}, {"Color": "RGBA"}); b.nodes[rgb]["outputs"]["Color"]["default"] = [.2, 0, 0, 1]
+                value = b.out(rgb, "Color")
+            acc = b.node("LIGHT_ACCUMULATION", {"Diffuse Light": [1, 1, 1, 1], "Diffuse Color": [1, 1, 1, 1],
+                         "Transmission Light": ("RGBA", value)}, {"BSDF": "SHADER"})
+            materials[name] = b.mat(b.out(acc, "BSDF"))
+        with tempfile.TemporaryDirectory() as tmp:
+            report = tc.compile_ir({"materials": materials}, Path(tmp))
+            self.assertEqual(report["summary"], {"ok": 1, "partial": 2, "unsupported": 0})
+            for name in ("linked", "constant"):
+                material = report["materials"][name]
+                self.assertEqual(material["status"], "partial")
+                self.assertIn("Transmission Light", material["unsupported"][0])
+                self.assertTrue((Path(tmp) / material["file"]).is_file())
+            self.assertEqual(report["materials"]["black"]["status"], "ok")
 
 
 class Parity(unittest.TestCase):

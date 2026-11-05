@@ -131,10 +131,6 @@ def main():
     for im in sorted(images, key=lambda i: i.name):
         imgs[im.name] = {"file": "textures/" + save_image(im, out / "textures", used), "colorspace": im.colorspace_settings.name,
                          "size": list(im.size)}
-    for g in list(ir_mats.values()) + list(groups.values()):  # image interpolation/extension live on the node
-        for n in g["nodes"].values():
-            if n["type"] == "TEX_IMAGE" and n["props"].get("image") in imgs:
-                imgs[n["props"]["image"]].update(interpolation=n["props"].get("interpolation"), extension=n["props"].get("extension"))
     lights = [{"name": o.name, "type": o.data.type, "color": list(o.data.color), "energy": o.data.energy,
                "angle": getattr(o.data, "angle", 0.0), "shadow": o.data.use_shadow, "matrix": [list(r) for r in o.matrix_world]}
               for o in sc.objects if o.type == "LIGHT" and not o.hide_render]
