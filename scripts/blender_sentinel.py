@@ -377,6 +377,10 @@ def critic_signal(reference_dir, candidate_dir, server=None):
                     "error": str(result.get("error") or "Render critic evidence is incomplete")[:300]}
         require(type(result.get("changed")) is bool and isinstance(result.get("pixel_diff"), dict),
                 "Invalid render critic verdict")
+        expected_views = {Path(name).stem for name in names}
+        if set(result["pixel_diff"]) != expected_views:
+            return {"available": False, "evidence_complete": False, "observation": result,
+                    "error": "Render critic views do not match all requested lit views"}
         counts = [v.get("changed_px") if isinstance(v, dict) else None for v in result["pixel_diff"].values()]
         require(counts and all(type(n) is int and n >= 0 for n in counts), "Invalid render critic pixel counts")
         return {"available": True, "tool": "render_critic", "mode": "pixel gate" if server is None else "pixel gate + vision model",

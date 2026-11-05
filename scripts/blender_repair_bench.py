@@ -14,6 +14,7 @@ import json
 import os
 from pathlib import Path
 import re
+import signal
 import statistics
 import subprocess
 import sys
@@ -50,10 +51,9 @@ def mcp_args(blender, root, read_tree):
 
 
 def run_tree(command, *, input, cwd, env, timeout):
-    """Run an agent and, on timeout, kill its whole process tree (the Node wrapper's native child and its MCP worker
-    too) before returning, so nothing keeps running into scoring or cleanup."""
+    """Run an agent; on timeout kill its owned process group (Windows: process tree), including inherited pipe holders."""
     process = subprocess.Popen(command, cwd=cwd, env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                               text=True, encoding="utf-8", errors="replace")
+                               text=True, encoding="utf-8", errors="replace", start_new_session=os.name != "nt")
     try:
         stdout, stderr = process.communicate(input, timeout=timeout)
         return process.returncode, stdout, stderr
@@ -61,7 +61,8 @@ def run_tree(command, *, input, cwd, env, timeout):
         if os.name == "nt":
             subprocess.run(["taskkill", "/T", "/F", "/PID", str(process.pid)], capture_output=True)
         else:
-            process.kill()
+            try: os.killpg(process.pid, signal.SIGKILL)  # start_new_session makes this exactly the group we own
+            except ProcessLookupError: pass
         stdout, stderr = process.communicate(timeout=60)
         raise subprocess.TimeoutExpired(command, timeout, stdout, stderr)
 
@@ -191,6 +192,33 @@ def outcome(case, result):
     return "declined (correct)" if not repairable else "declined (repairable)"
 
 
+def control_identity(manifest):
+    """The verified control's semantic content, independent of .blend filenames and run directories."""
+    require(isinstance(manifest, dict) and manifest.get("kind") == "scene-manifest", "invalid control manifest")
+    checksum = manifest.get("semantic_checksum")
+    require(isinstance(checksum, str) and re.fullmatch(r"[0-9a-fA-F]{64}", checksum), "control manifest has an invalid checksum")
+    require(lab.bpy_side.semantic_checksum(manifest) == checksum.lower(), "control manifest checksum does not verify")
+    return checksum.lower()
+
+
+def report_identity(report, path):
+    """Legacy migration reads only the adjacent control manifest, never report-provided corpus or run paths."""
+    require(isinstance(report, dict), f"invalid benchmark report: {path}")
+    identity = None
+    if "asset_identity" in report:
+        identity = report["asset_identity"]
+        require(isinstance(identity, str) and re.fullmatch(r"[0-9a-fA-F]{64}", identity), f"invalid asset identity in {path}")
+        identity = identity.lower()
+    adjacent = Path(path).with_name("control-manifest.json")
+    if adjacent.is_file():
+        captured = control_identity(json.loads(adjacent.read_text(encoding="utf-8")))
+        require(identity in (None, captured), f"asset identity in {path} differs from its control manifest")
+        identity = captured
+    require(identity is not None, f"missing asset identity in {path}; restore its original control-manifest.json beside the report "
+                                 "or recombine the original runs; directory names and recorded paths are not asset identity")
+    return identity
+
+
 def run(blender_path, corpus_dir, out_dir, agent, cases=None, timeout=900):
     exe = lab.executable(blender_path)
     root = Path(corpus_dir).expanduser().resolve()
@@ -203,6 +231,7 @@ def run(blender_path, corpus_dir, out_dir, agent, cases=None, timeout=900):
     read_tree = (root / entries["control"]["blend"]).parent
     control_name = Path(entries["control"]["blend"]).name
     control_manifest = lab.manifest(exe, read_tree / control_name, target / "control-manifest.json")
+    identity = control_identity(control_manifest)
     rows = []
     for case in cases or sorted(entries):
         require(re.fullmatch(r"[a-z0-9][a-z0-9-]{0,63}", case) is not None and case in entries, f"unknown case {case}")
@@ -231,7 +260,8 @@ def run(blender_path, corpus_dir, out_dir, agent, cases=None, timeout=900):
         (workdir / "row.json").write_text(json.dumps(row, indent=2, sort_keys=True), encoding="utf-8")
     tally = {}
     for row in rows: tally[row["outcome"]] = tally.get(row["outcome"], 0) + 1
-    report = {"schema": "las.blender-repair-bench.v1", "agent": agent, "corpus": str(root), "rows": rows, "outcomes": tally,
+    report = {"schema": "las.blender-repair-bench.v1", "agent": agent, "asset_identity": identity,
+              "corpus": str(root), "rows": rows, "outcomes": tally,
               "repairable_exact": sum(r["exact"] for r in rows if r["repairable_by_vocabulary"]),
               "repairable_total": sum(r["repairable_by_vocabulary"] for r in rows),
               "collateral_cases": [r["case"] for r in rows if r["collateral"]],
@@ -243,9 +273,14 @@ def run(blender_path, corpus_dir, out_dir, agent, cases=None, timeout=900):
 def combine(run_dirs, out_path):
     """Merge a run with its reruns case by case: the latest attempt that was not an infrastructure failure wins, and
     every attempt stays counted so outages remain visible."""
-    rows, attempts, agent = {}, {}, None
+    require(run_dirs, "at least one run is required")
+    rows, attempts, agent, identity = {}, {}, None, None
     for run_dir in run_dirs:
-        report = json.loads((Path(run_dir) / "repair-bench.json").read_text(encoding="utf-8"))
+        path = Path(run_dir) / "repair-bench.json"
+        report = json.loads(path.read_text(encoding="utf-8"))
+        captured = report_identity(report, path)
+        require(identity in (None, captured), "runs from different assets cannot be combined")
+        identity = captured
         require(agent in (None, report["agent"]), "runs from different agents")
         agent = report["agent"]
         for row in report["rows"]:
@@ -260,7 +295,8 @@ def combine(run_dirs, out_path):
     merged = [dict(rows[case], attempts=attempts[case]) for case in sorted(rows)]
     tally = {}
     for row in merged: tally[row["outcome"]] = tally.get(row["outcome"], 0) + 1
-    report = {"schema": "las.blender-repair-bench.v1", "agent": agent, "runs": [str(r) for r in run_dirs], "rows": merged,
+    report = {"schema": "las.blender-repair-bench.v1", "agent": agent, "asset_identity": identity,
+              "runs": [str(r) for r in run_dirs], "rows": merged,
               "outcomes": tally, "repairable_exact": sum(r["exact"] for r in merged if r["repairable_by_vocabulary"]),
               "repairable_total": sum(r["repairable_by_vocabulary"] for r in merged),
               "collateral_cases": [r["case"] for r in merged if r["collateral"]],
@@ -271,10 +307,16 @@ def combine(run_dirs, out_path):
 
 def aggregate(report_paths):
     """Totals over several per-asset reports: repair rate on repairable cases, declines, collateral, failures."""
-    reports = {Path(path).parent.name: json.loads(Path(path).read_text(encoding="utf-8")) for path in report_paths}
-    require(len(reports) == len(report_paths), "each report must be a different asset")
-    require(len({report["agent"] for report in reports.values()}) == 1, "reports from different agents")
-    rows = [dict(row, asset=asset) for asset, report in reports.items() for row in report["rows"]]
+    require(report_paths, "at least one asset report is required")
+    reports = {}
+    for path in report_paths:
+        path = Path(path)
+        report = json.loads(path.read_text(encoding="utf-8"))
+        identity = report_identity(report, path)
+        require(identity not in reports, f"duplicate asset {identity}; combine its reruns before aggregation")
+        reports[identity] = (f"{path.parent.name}@{identity}", report)
+    require(len({report["agent"] for _, report in reports.values()}) == 1, "reports from different agents")
+    rows = [dict(row, asset=asset) for asset, report in reports.values() for row in report["rows"]]
     repairable = [r for r in rows if r["repairable_by_vocabulary"]]
     tally = {}
     for row in rows: tally[row["outcome"]] = tally.get(row["outcome"], 0) + 1

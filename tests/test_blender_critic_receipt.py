@@ -126,11 +126,14 @@ class CriticReceiptTests(unittest.TestCase):
             self.assertEqual(warnings, ['primary warning'])
 
     def test_legacy_success_remains_compatible_but_not_replayable(self):
-        legacy = {'changed': True, 'pixel_diff': {'front.lit': {'changed_px': 40}}, 'defects': []}
+        # Legacy lacks completeness/policy metadata, but still covers every requested view.
+        legacy = {'changed': True, 'pixel_diff': {
+            'front.lit': {'changed_px': 40}, 'three_quarter.lit': {'changed_px': 0},
+            'profile.lit': {'changed_px': 0}, 'back.lit': {'changed_px': 0}}, 'defects': []}
         with mock.patch.object(render_critic, 'check', return_value=copy.deepcopy(legacy)):
             signal = sentinel.critic_signal(self.ref, self.cand)
         self.assertTrue(signal['available']); self.assertEqual(signal['changed_px'], 40)
-        self.assertIn('observation', signal)
+        self.assertEqual(signal['observation'], legacy)
         self.assertEqual(policy.decide(signal['observation'], 0)['status'], 'incomplete')
 
     def test_critic_exception_is_bounded_and_primary_survives(self):

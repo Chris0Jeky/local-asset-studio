@@ -246,7 +246,8 @@ class SecondSignalTests(unittest.TestCase):
         calls = []
         def check(images, reference=(), diff_only=False, **kwargs):
             calls.append((images, reference, diff_only))
-            return {"changed": True, "pixel_diff": {"front.lit": {"changed_px": 40}, "back.lit": {"changed_px": 2}}, "defects": []}
+            return {"changed": True, "pixel_diff": {"front.lit": {"changed_px": 40}, "back.lit": {"changed_px": 2},
+                    "three_quarter.lit": {"changed_px": 0}, "profile.lit": {"changed_px": 0}}, "defects": []}
         with mock.patch.dict(sys.modules, {"render_critic": mock.Mock(check=check)}):
             result = sentinel.critic_signal(Path("ref"), Path("cand"))
         images, reference, diff_only = calls[0]
@@ -254,6 +255,36 @@ class SecondSignalTests(unittest.TestCase):
         self.assertEqual([Path(p).name for p in images], [f"{v}.lit.png" for v in sentinel.lab.bpy_side.VIEWS])
         self.assertEqual(Path(reference[0]).parent, Path("ref"))
         self.assertEqual((result["changed"], result["changed_px"], result["mode"]), (True, 42, "pixel gate"))
+
+    def test_partial_or_wrong_views_never_become_an_agreeing_second_signal(self):
+        complete = {"front.lit": {"changed_px": 0}, "three_quarter.lit": {"changed_px": 0},
+                    "profile.lit": {"changed_px": 0}, "back.lit": {"changed_px": 0}}
+        cases = [{"front.lit": {"changed_px": 0}},
+                 {**complete, "unrequested.lit": {"changed_px": 0}},
+                 {**{k: v for k, v in complete.items() if k != "back.lit"}, "wrong.lit": {"changed_px": 0}}]
+        for pixels in cases:
+            for flags in ({}, {"evidence_complete": True}):
+                observation = {"changed": False, "pixel_diff": pixels, "defects": [], **flags}
+                with self.subTest(views=list(pixels), flags=flags), mock.patch.dict(
+                        sys.modules, {"render_critic": mock.Mock(check=lambda *a, **k: observation)}):
+                    result = sentinel.critic_signal(Path("ref"), Path("cand"))
+                    self.assertIs(result["available"], False)
+                    self.assertIs(result.get("evidence_complete"), False)
+                    self.assertEqual(result.get("observation"), observation)
+                    self.assertIn("views", result["error"])
+                    warnings = []
+                    self.assertIsNone(sentinel.second_opinion(result, warnings))
+                    self.assertEqual(warnings, [])
+
+    def test_complete_legacy_views_remain_usable_without_a_completeness_flag(self):
+        observation = {"changed": False, "pixel_diff": {
+            "front.lit": {"changed_px": 0}, "three_quarter.lit": {"changed_px": 0},
+            "profile.lit": {"changed_px": 0}, "back.lit": {"changed_px": 0}}, "defects": []}
+        with mock.patch.dict(sys.modules, {"render_critic": mock.Mock(check=lambda *a, **k: observation)}):
+            result = sentinel.critic_signal(Path("ref"), Path("cand"))
+        self.assertIs(result["available"], True)
+        self.assertEqual(result["changed_px"], 0)
+        self.assertTrue(sentinel.second_opinion(result, []))
 
     def test_a_failing_critic_is_reported_not_raised(self):
         def check(*args, **kwargs): raise OSError("model server unreachable")

@@ -497,6 +497,22 @@ differences and localised visual changes. The host scores the saved `repaired.bl
 
 An outage is scored as an infrastructure failure, never as a decline, and `combine` keeps every attempt.
 
+Each new report records `asset_identity`: the verified control manifest's semantic SHA-256 checksum. `combine`
+requires the same identity and agent in every input and preserves the identity in its output. `aggregate` refuses
+the same identity twice, even when a report or its entire run directory was copied or renamed. Different assets
+may share a directory basename; collateral labels include `directory@<full-checksum>/case` so they stay distinct.
+
+For an older report without `asset_identity`, keep its original `control-manifest.json` immediately beside it.
+The reader verifies that manifest's checksum before using its identity. An explicit invalid identity, a conflicting
+adjacent manifest, or a legacy report without that manifest refuses with an error. Recreate an old combined report
+by running `combine` on the original run directories with their control manifests; the new combined report carries
+its identity and can then be moved by itself. Recorded `corpus` and `runs` paths are never followed to guess identity.
+
+On POSIX, the agent starts in a new session and timeout cleanup kills only that owned process group, including
+children holding its output pipes. Windows retains `taskkill /T /F` for the owned agent PID. The focused
+[identity and timeout evidence](verification/2026-11-05-benchmark-evidence-identity.md) covers the harness behavior;
+the historical native benchmark results below have not been rerun or re-aggregated.
+
 Both agents are confined to the façade. This was proved with a canary: shell, file write, file read and env access
 were all blocked, and only `blender_ping` worked.
 - **Claude** (Haiku 5.5): `--restricted --tools "" --strict-mcp-config --permission-mode dontAsk` and a scrubbed env.
