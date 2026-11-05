@@ -82,8 +82,34 @@ class Handler(fixture.Handler):
 
 
 def models_case(page, origin, output, width):
-    page.goto(origin+'/#models')
-    page.wait_for_function('modelLooks?.length===5 && !modelUseBusy')
+    healthy_backend = 'One model environment at a time. Switching never starts a generation.'
+    # Make the original startup race deterministic: the backend reply arrives
+    # before the catalog can select a recipe. Both requests still use real GETs.
+    page.goto('about:blank')
+    held_catalog = []
+    def hold_catalog(route):
+        held_catalog.append(route)
+    page.route('**/api/catalog', hold_catalog)
+    try:
+        page.goto(origin+'/#models', wait_until='domcontentloaded')
+        # All classic owners are now mounted. Re-read through the existing owner
+        # while selection is still held, even if its first reply beat looks.js.
+        page.evaluate('refreshBackends()')
+        page.wait_for_function("backendActive==='primary' && backendReadPending===null")
+        startup = page.evaluate('''()=>({selected:!!selected,
+          backend_status:document.querySelector('#backendStatus').textContent,
+          generate_disabled:document.querySelector('#generate').disabled,
+          look_payload:StudioLooks.applicationPayload(selected?.id)})''')
+        (output/f'models-startup-{width}.json').write_text(json.dumps(startup, indent=2)+'\n', encoding='utf-8')
+        evidence_screenshot(page, path=str(output/f'models-startup-{width}.png'))
+        assert held_catalog and not startup['selected'], startup
+        assert startup['backend_status'] == healthy_backend, startup
+        assert startup['generate_disabled'] and startup['look_payload'] == {}, startup
+    finally:
+        page.unroute('**/api/catalog', hold_catalog)
+        for route in held_catalog:
+            route.continue_()
+    page.wait_for_function('!!selected && schemaAvailable && !!window.StudioReadPoller && modelLooks?.length===5 && !modelUseBusy')
     overview = page.locator('#modelLooks')
     row = lambda name: overview.locator('.model-look').filter(has_text='Fixture look '+name)
     assert '1 of 5 looks ready now' in overview.inner_text()
@@ -105,16 +131,32 @@ def models_case(page, origin, output, width):
         if reveal:
             target.scroll_into_view_if_needed()
         bounds = target.evaluate('''node=>{const r=node.getBoundingClientRect(),x=(r.left+r.right)/2,y=(r.top+r.bottom)/2;
-          const occupied=Math.max(0,...[...document.querySelectorAll('.studio-globalbar,.studio-globalbar .privacy-bar,.models-toolbar')]
-            .filter(n=>n.getClientRects().length).map(n=>n.getBoundingClientRect().bottom));
+          const visible=n=>n.getClientRects().length && getComputedStyle(n).visibility!=='hidden';
+          const headerBottom=Math.max(0,...[...document.querySelectorAll('.studio-globalbar,.studio-globalbar .privacy-bar')]
+            .filter(visible).map(n=>n.getBoundingClientRect().bottom));
+          const label=document.querySelector('.models-toolbar label[for="curatedModelSearch"]'),l=label.getBoundingClientRect();
+          const toolbar=document.querySelector('.models-toolbar').getBoundingClientRect(),occupied=Math.max(headerBottom,toolbar.bottom);
           return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,width:innerWidth,height:innerHeight,
             occupied,hit:node.contains(document.elementFromPoint(x,y)),
-            topHit:node.contains(document.elementFromPoint(r.left+Math.min(10,r.width/2),r.top+2)),scrollWidth:document.documentElement.scrollWidth};}''')
+            topHit:node.contains(document.elementFromPoint(r.left+Math.min(10,r.width/2),r.top+2)),scrollWidth:document.documentElement.scrollWidth,
+            toolbar_label:{top:l.top,bottom:l.bottom,left:l.left,right:l.right,header_bottom:headerBottom,
+              hit:label.contains(document.elementFromPoint((l.left+l.right)/2,(l.top+l.bottom)/2)),
+              topHit:label.contains(document.elementFromPoint((l.left+l.right)/2,l.top+2))},
+            placeholders:[...document.querySelectorAll('#modelLooks .look-thumb')].filter(visible).map(n=>{
+              const b=n.getBoundingClientRect();return {width:b.width,height:b.height};}),
+            backend_status:document.querySelector('#backendStatus').textContent,
+            visible_errors:[...document.querySelectorAll('.error,[role="alert"],#workerFailure')].filter(visible)
+              .filter(n=>n.textContent.trim()).map(n=>({id:n.id,text:n.textContent.trim()}))};}''')
         (output/f'{name}-{width}.json').write_text(json.dumps(bounds, indent=2)+'\n', encoding='utf-8')
         evidence_screenshot(page, path=str(output/f'{name}-{width}.png'))
+        assert bounds['backend_status'] == healthy_backend and not bounds['visible_errors'], bounds
         assert bounds['occupied'] <= bounds['top'] < bounds['bottom'] <= bounds['height'], bounds
         assert 0 <= bounds['left'] < bounds['right'] <= bounds['width'], bounds
         assert bounds['hit'] and bounds['topHit'] and bounds['scrollWidth'] <= bounds['width'], bounds
+        label = bounds['toolbar_label']
+        assert label['header_bottom'] <= label['top'] < label['bottom'] <= bounds['height'], bounds
+        assert 0 <= label['left'] < label['right'] <= bounds['width'] and label['hit'] and label['topHit'], bounds
+        assert all(abs(box['width']-44) < .5 and abs(box['height']-44) < .5 for box in bounds['placeholders']), bounds
         return bounds
 
     def tab_to(target):
@@ -132,6 +174,7 @@ def models_case(page, origin, output, width):
     assert link.count() == 1
     tab_to(link)
     summary_bounds = capture(link, 'models-summary', reveal=False)
+    assert len(summary_bounds['placeholders']) == 1, summary_bounds
     page.keyboard.press('Enter')
     page.wait_for_function('document.querySelector("#modelLooks").hidden && !modelUseBusy')
     assert page.locator('#curatedModelTitle').inner_text().startswith('Files needed for ')
@@ -175,6 +218,7 @@ def models_case(page, origin, output, width):
     return {'width':width, 'known_file_detail_once':True, 'shared_action_once':True, 'unlisted_detail_retained':True,
             'unknown_and_failed_checks_explicit':True, 'native_file_links':True, 'filters_and_search':True,
             'manual_install_preserved':True, 'keyboard_navigation':True, 'keyboard_focus':True,
+            'startup_before_catalog_healthy':True, 'toolbar_label_uncovered':True, 'placeholders_44px':True, 'visible_errors':[],
             'summary_bounds':summary_bounds, 'action_bounds':action_bounds}
 
 
@@ -241,7 +285,7 @@ def run(output):
     root = Path(__file__).resolve().parents[1]
     receipt = {'fixture': 'real frontend with synthetic read APIs', 'cases': cases, 'models_cases':model_cases,
                'model_mutations':0, 'page_errors':[], 'source_sha256':{name:hashlib.sha256((root/name).read_bytes()).hexdigest()
-                 for name in ('app/static/app.js','app/static/index.html','app/static/style.css','tests/preset_model_browser.py')}}
+                 for name in ('app/static/app.js','app/static/index.html','app/static/style.css','app/static/looks.js','app/static/backends.js','tests/preset_model_browser.py')}}
     (output/'result.json').write_text(json.dumps(receipt, indent=2))
     print(json.dumps(receipt, indent=2))
 

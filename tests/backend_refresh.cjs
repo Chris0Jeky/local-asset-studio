@@ -16,6 +16,20 @@ function workReadinessFixture(){
   return f;
 }
 
+test('a fast startup backend read remains healthy before the catalog selects a recipe',async()=>{
+ const f=workReadinessFixture(),L=require('../app/static/looks.js'),app=fs.readFileSync(path.join(__dirname,'../app/static/app.js'),'utf8');
+ L.clearApplication();Object.assign(f.context,{StudioLooks:L,selected:null,catalog:null,tileState:null,parallaxState:null});
+ vm.runInContext("backendActive=null;"+cut(app,'function continuationBlockerItems(){','// Put the continuation source'),f.context);
+ const catalog=f.context.api('/api/catalog').then(next=>{f.context.catalog=next;f.context.selected=next.presets[0];f.context.updateReady();});
+ const heldCatalog=f.pending.at(-1),read=f.run();f.pending.at(-1).resolve(f.backend('old'));await read;
+ const healthy='One model environment at a time. Switching never starts a generation.';
+ assert.equal(f.context.selected,null);assert.equal(f.node('#backendStatus').textContent,healthy);
+ assert.equal(f.node('#generate').disabled,true);assert.match(f.node('#uxRunSummary').textContent,/Choose a recipe/);
+ heldCatalog.resolve({presets:[f.a,f.b]});await catalog;
+ assert.equal(f.context.selected,f.a);assert.equal(f.node('#backendStatus').textContent,healthy);
+ assert.equal(f.writes.length,0);
+});
+
 test('a work-only refusal blocks actual Create readiness while leaving the switch repair enabled',async()=>{
  const f=workReadinessFixture();f.context.updateReady();assert.equal(f.node('#generate').disabled,false);
  f.node('#positive').value='My current draft';f.node('[data-key="seed"]').value='';f.node('#positive').focus();

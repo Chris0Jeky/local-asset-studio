@@ -75,6 +75,54 @@ again passed all 30 frontend wrappers and 39 model tests. The repository
 validator passed: 98 preset graphs/bindings, 194 pinned assets, 4,892 tracked
 paths, 167 LoRA names, and 743 local-media entries with 102 references checked.
 
-Native Chromium and the full repository gate are pending
-hosted CI; no local browser proof is claimed. This change does not establish
+At this point native Chromium and the full repository gate were pending
+hosted CI; no local browser proof was claimed. This change does not establish
 owner workstation, artwork, licensing or broader Models redesign acceptance.
+
+## Hosted visual review and bounded corrections
+
+The first hosted browser assertions passed on remote head `d040de2`, but visual
+review of artifact `13385490475` rejected qualification. The retained
+`models-summary-390.png` and `models-needed-files-390.png` showed part of the
+search label behind the privacy row. The placeholder in the look summary grew
+to about 123 pixels wide. `models-unknown-file-390.png` also showed
+`Cannot read properties of null (reading 'controls')` in the environment status,
+despite an empty uncaught `page_errors` list. These captures remain failed visual
+evidence; the green assertions did not establish a clean page.
+
+The toolbar now follows `privacy.css`'s existing extra 32-pixel header row at
+widths up to 700 pixels. The look text flex rule excludes `.look-thumb`, leaving
+the placeholder's existing 44-by-44-pixel rule in control. Installer and focus
+owners are unchanged.
+
+The environment error was a production startup race. With no selected recipe,
+`application?.preset_id` and the requested recipe ID were both `undefined`;
+the equality passed and the Looks reader dereferenced a null application.
+The adjacent prepared-payload reader had the same absent-owner comparison.
+Both readers now require their corresponding owner object before comparing
+recipe IDs. The global preparation hold and matching failed-application blocker
+remain intact. No backend request or retry behavior changed.
+
+Before the guard change, the added `looks_frontend.cjs` case threw the exact
+null-`controls` error. The added `backend_refresh.cjs` case reproduced the same
+caught error in `#backendStatus` through the shipped backend/readiness path,
+with the catalog held and no recipe selected. Both now pass, including the
+healthy status after the catalog is released and zero writes.
+
+The browser driver now holds the original catalog GET, refreshes through the
+existing backend read owner after classic scripts mount, checks healthy startup
+status with Generate disabled, and forwards the held GET. Every Models journey capture
+records and asserts the actual search-label bounds and hit targets against the
+occupied header, including after native keyboard scrolling; summary captures
+also assert 44-by-44 placeholders. It checks the expected healthy backend status
+and visible error/alert panels as well as uncaught errors. Receipts now hash the
+Looks and backend owners too. The original dependency captures retain their
+content/control scope; they do not prove full-panel visibility above the run dock.
+
+Fresh local checks after these corrections: 19 direct Look checks, 13 preparation
+ownership checks, 48 backend refresh checks (also through their Python wrapper),
+all 30 frontend wrappers, and all 39 model-readiness tests passed. JavaScript
+syntax, Python driver compilation, `git diff --check`, and the repository
+validator passed with the same counts recorded above.
+Corrected native captures and the full gate remain pending hosted CI and visual
+review. No corrected native-browser pass is claimed locally.

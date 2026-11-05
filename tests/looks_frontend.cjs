@@ -8,6 +8,26 @@ const night={id:'look-night',name:'Night Shift (retro anime)',usable:true,trashe
   body:{preset_id:'zimage-fast',template:'Background of {scene}.',scene_example:'a corridor'},lineage:[{role:'anchor',key:'retro-anime-master-z2',sha256:'c'.repeat(64)}]};
 const away={...night,id:'look-away',name:'Old look',trashed_at:5,usable:false,unusable_reason:'This look is put away. Restore it to use it.'};
 const broken={...night,id:'look-broken',name:'Broken',usable:false,unusable_reason:'Its recipe (gone) is not in the recipe library.',body:{...night.body,preset_id:'gone'},preset_name:null};
+test('startup without a selected recipe has no Look hold or prepared payload',()=>{
+  L.clearApplication();
+  for(const id of [undefined,null,'','demo']){
+    assert.equal(L.applicationBlocker(id),'');
+    assert.deepEqual(L.applicationPayload(id),{});
+  }
+});
+test('unselected reads preserve the matching failed application and global preparation hold',()=>{
+  const hold={version:1,preset_id:'demo',controls:['sampler']};
+  try{
+    L.restoreApplication(hold,'demo');
+    assert.equal(L.applicationBlocker(undefined),'');assert.deepEqual(L.applicationPayload(undefined),{});
+    assert.match(L.applicationBlocker('demo'),/could not be applied: sampler/);
+    assert.deepEqual(L.applicationPayload('demo'),{look_application:hold});
+    const token=L.beginPreparation();
+    try{assert.match(L.applicationBlocker(undefined),/A Look is being prepared/);}
+    finally{assert.equal(L.finishPreparation(token),true);}
+    assert.match(L.applicationBlocker('demo'),/could not be applied: sampler/);
+  }finally{L.clearApplication();}
+});
 test('put-away looks are grouped apart; a look on another recipe says which recipe it uses',()=>{
   const g=L.groups([night,away,broken]);
   assert.deepEqual(g.active.map(l=>l.id),['look-night','look-broken']);assert.deepEqual(g.away.map(l=>l.id),['look-away']);
