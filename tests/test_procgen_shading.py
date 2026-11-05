@@ -31,13 +31,14 @@ class Nodes:
                   'GeometryNodeStoreNamedAttribute': ['Geometry', 'Name', 'Value'],
                   'GeometryNodeSetMaterial': ['Geometry', 'Material'],
                   'GeometryNodeTransform': ['Geometry', 'Translation', 'Scale', 'Rotation'],
-                  'GeometryNodeSetShadeSmooth': ['Geometry', 'Selection', 'Shade Smooth'],
+                  'GeometryNodeSetShadeSmooth': ['Mesh', 'Selection', 'Shade Smooth'],
                   'FunctionNodeBooleanMath': ['Boolean', 'Boolean'],
                   'ShaderNodeMath': ['Value', 'Value']}[kind]
         node = SimpleNamespace(kind=kind, bl_idname=kind, inputs=Sockets(inputs), outputs=Sockets(['Mesh', 'UV Map', 'Geometry', 'Top', 'Bottom', 'Boolean', 'Value']))
         # Real Blender's first output varies with node type.
         if kind not in ('GeometryNodeMeshCube', 'GeometryNodeMeshCylinder', 'GeometryNodeMeshCone', 'GeometryNodeMeshUVSphere', 'GeometryNodeMeshGrid'):
-            node.outputs = Sockets(['Boolean' if kind == 'FunctionNodeBooleanMath' else 'Value' if kind == 'ShaderNodeMath' else 'Geometry'])
+            node.outputs = Sockets(['Boolean' if kind == 'FunctionNodeBooleanMath' else 'Value' if kind == 'ShaderNodeMath'
+                                    else 'Mesh' if kind == 'GeometryNodeSetShadeSmooth' else 'Geometry'])
         self.items.append(node)
         return node
 
@@ -65,7 +66,7 @@ class GraphTests(unittest.TestCase):
         sphere, = [n for n in nodes if n.kind == 'GeometryNodeMeshUVSphere']
         self.assertEqual(shade.domain, 'FACE')
         self.assertIn((control, shade.inputs['Shade Smooth']), links)
-        self.assertIn((sphere.outputs['Mesh'], shade.inputs['Geometry']), links)
+        self.assertIn((sphere.outputs['Mesh'], shade.inputs['Mesh']), links)
         uv = next(n for n in nodes if n.kind == 'GeometryNodeStoreNamedAttribute')
         self.assertIn((shade.outputs[0], uv.inputs['Geometry']), links)
         self.assertIn((sphere.outputs['UV Map'], uv.inputs['Value']), links)

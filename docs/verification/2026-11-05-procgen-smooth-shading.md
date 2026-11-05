@@ -106,3 +106,22 @@ receipt on the actual candidate revision. No local native success or visual
 acceptance is claimed. Issue #1948 remains open until real exported-normal
 qualification succeeds. Existing owner decisions in `HUMAN_TODO.md` remain
 separate and were not changed by this slice.
+
+## First native run and socket correction
+
+Hosted run [42105583129](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/42105583129)
+verified the official archive checksum and Blender 5.4 alpha build `6f4fc760c138`,
+including bundled NumPy and the glTF exporter. The first production export then
+failed before creating a GLB: the builder addressed the Set Shade Smooth input
+as `Geometry`, but its displayed socket name is `Mesh`. The builder resolves
+displayed names, not the socket's internal identifier. The official
+[node reference](https://docs.blender.org/manual/en/latest/modeling/geometry_nodes/mesh/write/set_shade_smooth.html)
+also names the input and output `Mesh`.
+
+The correction uses `Mesh` and makes the recording fixture match that real
+interface on both sides. With the corrected fixture and the old production
+code, the sphere, cylinder and cone regressions all fail with the same
+`IndexError` observed in Blender. The corrected production code passes those
+tests. The original failed receipt, stdout/stderr and verified runtime identity
+remain in artifact `13452770402`; the subsequent candidate still requires a
+fresh native run. No failed run is replaced by a skipped or mock-only result.

@@ -148,7 +148,7 @@ class B:
     def place(self, n, part, role, loc=(0, 0, 0), rot=(0, 0, 0), scale=(1, 1, 1), round_surface=False):
         geo = n.outputs['Mesh']
         if round_surface:
-            shade = self.node('GeometryNodeSetShadeSmooth', {'domain': 'FACE'}, Geometry=geo, Shade_Smooth=self.smooth)
+            shade = self.node('GeometryNodeSetShadeSmooth', {'domain': 'FACE'}, Mesh=geo, Shade_Smooth=self.smooth)
             if n.bl_idname in ('GeometryNodeMeshCylinder', 'GeometryNodeMeshCone'):
                 caps = self.node('FunctionNodeBooleanMath', {'operation': 'OR'})
                 self.set(caps.inputs[0], n.outputs['Top']); self.set(caps.inputs[1], n.outputs['Bottom'])
