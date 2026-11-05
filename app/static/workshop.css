@@ -135,8 +135,8 @@ body.workshop-active .ux-notice {background:var(--wk-soft);color:var(--text);bor
 .workshop .wk-run-dock #batch {font-size:12px;width:110px;min-height:44px;padding:8px}
 .workshop .wk-run-dock #generate {font-size:14px;font-weight:650;min-height:48px;min-width:150px;padding:12px 24px;background:var(--accent);color:var(--wk-on-accent);border-color:var(--accent);border-radius:11px}
 .workshop .wk-run-dock #generate:disabled {opacity:.48}
-.workshop .wk-run-dock #status {grid-column:1/-1;font-size:11px;line-height:1.5;margin:0;max-height:3em;overflow:auto;color:var(--muted);overflow-wrap:anywhere}
-.workshop .wk-run-dock #status:empty {display:none}
+.workshop .wk-run-dock :is(#status,#uxReadinessActionStatus) {grid-column:1/-1;font-size:11px;line-height:1.5;margin:0;max-height:3em;overflow:auto;color:var(--muted);overflow-wrap:anywhere}
+.workshop .wk-run-dock :is(#status,#uxReadinessActionStatus):empty {display:none}
 .workshop .wk-run-dock #status.error {color:var(--danger)}
 /* While a text field has focus, a narrow or short dock keeps only what running needs; a very short one keeps Variations, Generate and run messages. */
 @media(max-width:600px),(max-height:700px) {.workshop .wk-run-dock.wk-typing .wk-dock-info>span {display:none}}

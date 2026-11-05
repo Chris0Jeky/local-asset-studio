@@ -116,7 +116,7 @@
     const currentMode = el('button', 'active', 'Generate'); currentMode.type = 'button'; currentMode.setAttribute('aria-current','page');
     currentMode.addEventListener('click', () => q('#positive')?.focus({preventScroll:true}));
     const route = (label, href) => { const link = el('a', '', label); link.href = href; return link; };
-    modebar.append(currentMode, route('Guided workflows','/workflow-studio.html'), route('Prompt Lab','/prompt-lab.html'), route('Asset library','/#assets'), route('Compare & review','/#production'));
+    modebar.append(currentMode, route('Guided workflows','/workflow-studio.html'), route('Prompt Lab','/prompt-lab.html'), route('Asset library','/#assets'), route('Comparisons','/#production'));
 
     const toolbar = el('div', 'wk-toolbar');
     const preferenceNotice = el('p', 'wk-preference-notice'); preferenceNotice.setAttribute('role','status');
@@ -254,6 +254,7 @@
       if (q('#positive').value !== String(recipe.defaults?.positive || '')
           || (q('#negative')?.value || '') !== String(recipe.defaults?.negative || '') || bridge.hasSources?.()) return true;
       for (const input of [...editor.querySelectorAll('input,select,textarea'), ...actions.querySelectorAll('input,select')]) {
+        if (input.closest('#workshopSaved')) continue;
         if (input.type === 'file') { if (input.files?.length) return true; continue; }
         if (input.closest('#uxDraftBar') || input.id === 'positive' || input.id === 'negative') continue;
         if (input.type === 'checkbox' || input.type === 'radio') { if (input.checked !== input.defaultChecked) return true; continue; }
@@ -329,7 +330,9 @@
     const reviewButton = button('workshopReview', 'What’s missing?', () => reveal(review));
     // Every blocker's repair sits beside Generate, under the one readiness line (journeys-3); the band keeps only the recipe.
     dockInfo.append(readiness, blockerList, eta, reviewButton);
-    const status = q('#status'); if (status) status.tabIndex = 0; dock.append(dockInfo, actions); if (status) dock.append(status); create.append(dock);
+    // Keep the owner's single live result beside Generate, including checks and repairs that leave Settings closed.
+    const actionStatus = q('#uxReadinessActionStatus'); if (actionStatus) actionStatus.tabIndex = 0;
+    const status = q('#status'); if (status) status.tabIndex = 0; dock.append(dockInfo, actions); if (actionStatus) dock.append(actionStatus); if (status) dock.append(status); create.append(dock);
     // A text field you enter is never left under the fixed dock; a narrow or short dock also compacts while you type (workshop.css).
     const typing = n => !!n?.matches?.('textarea,input:not([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset],[type=file],[type=color],[type=image])') && !dock.contains(n);
     // Measured after the compacted dock has laid out, and once more a frame later in case the page height settled.
@@ -359,7 +362,7 @@
     create.addEventListener('focusin', e => { if (typing(e.target)) { dock.classList.add('wk-typing'); clearOfDock(e.target, 2); } });
     const estimate = q('#timeEstimate'); if (estimate) runBox.append(estimate);
     // The dock is Generate, Variations, the estimate and the reason (create-15): New seed sits beside the seed field
-    // (groupControls), Plan comparison at the end of Settings, since it starts a Compare & review study.
+    // (groupControls), Plan comparison at the end of Settings, since it starts a study in Comparisons.
     const compare = q('#planComparison'), newSeed = q('#randomSeed');
     if (newSeed) parameters.append(newSeed);
     const phonePanel = el('div', 'wk-phone-panel'), phoneTools = disclosure('workshopRunTools', 'Run tools', [phonePanel]);
@@ -388,9 +391,9 @@
     const saved = q('#createView .saved');
     const savedDetails = disclosure('workshopSaved', 'Saved setups', [saved]); settings.append(savedDetails);
     if (compare) { compare.classList.add('wk-plan-comparison'); settings.append(compare); }
-    // Text-only recipes show no sources block; the way to a picture recipe is one small link here (create-14).
+    // Text-only recipes show no sources block; keep their way to a picture recipe beside the active recipe.
     const findReferences = q('#uxFindReferenceRecipes');
-    if (findReferences) { findReferences.classList.add('wk-settings-link'); findReferences.textContent = 'Start from a picture instead: show reference recipes'; settings.append(findReferences); }
+    if (findReferences) { findReferences.classList.add('wk-settings-link'); findReferences.textContent = 'Start from a picture instead'; recipeInfo.append(findReferences); }
     // A started run says when it started and how long it has taken so far (handoff 03). Only started_at is observed,
     // so there is no progress bar and no guessed finish (K13); the job's own message stays as it is.
     const clock = seconds => { const s = Math.max(0, Math.floor(seconds)); return s < 60 ? s+' s' : Math.floor(s/60)+' min '+String(s%60).padStart(2,'0')+' s'; };

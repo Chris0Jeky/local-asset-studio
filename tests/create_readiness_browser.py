@@ -70,13 +70,18 @@ async def run(args):
             await click_existing('[data-ux-resolve="references"]',True)
             check('READY-02','Keyboard action focuses Picture 1 input without opening/uploading a file',await page.evaluate("document.activeElement.dataset.refFile==='0'"))
             check('READY-03','Input navigation preserves wording, settings and attachments',await stamp()==before)
+            action_status=page.locator('#uxReadinessActionStatus')
+            await page.locator('#workshopSettings').evaluate('(node)=>node.open=false')
+            check('READY-28','Repair result stays visible beside Generate with Settings closed',await action_status.is_visible() and 'Shown for review' in await action_status.inner_text() and await action_status.evaluate('(node)=>!!node.closest(".wk-run-dock") && !node.closest("details")'))
+            check('READY-29','Repair result keeps one original polite live region',await action_status.count()==1 and await action_status.get_attribute('role')=='status' and await action_status.get_attribute('aria-live')=='polite')
             # A filled first slot redirects the same action to the next missing slot.
             await page.evaluate("Object.assign(referenceRecords[0],{file:'fixture-first.png',missing:false});renderReferenceSlots()")
             await click_existing('[data-ux-resolve="references"]')
             check('READY-04','Action resolves the next missing slot from current state',await page.evaluate("document.activeElement.dataset.refFile==='1'"))
             await page.evaluate("document.querySelector('#referenceCards').querySelector('[data-ref-file=\"1\"]').hidden=true")
             await click_existing('[data-ux-resolve="references"]')
-            check('READY-05','Unavailable target has visible feedback rather than guessed fallback',await page.locator('#uxReadinessActionStatus').count()>0 and 'not available' in await page.locator('#uxReadinessActionStatus').inner_text())
+            await page.locator('#workshopSettings').evaluate('(node)=>node.open=false')
+            check('READY-05','Unavailable target has visible feedback rather than guessed fallback',await action_status.is_visible() and 'not available' in await action_status.inner_text())
             await page.evaluate("document.querySelector('#referenceCards').querySelector('[data-ref-file=\"1\"]').hidden=false")
             state.health['missing_models']={'qwen-3ref':['checkpoints/missing.safetensors']}
             await page.evaluate('health()')
@@ -122,6 +127,13 @@ async def run(args):
             }""") if await page.locator('#uxRecheckReadiness').count() else None
             check('READY-26','Hung connection check releases its UI with an honest timeout',deadline and deadline['enabled'] and 'timed out' in deadline['text'])
             check('READY-27','Repeated activation while checking coalesces and never retries automatically',deadline and deadline['calls']==1)
+            await page.locator('#workshopSettings').evaluate('(node)=>node.open=false')
+            await page.set_viewport_size({'width':390,'height':500});await page.focus('#positive')
+            check('READY-30','Failed check remains visible in the compact typing dock with Settings closed',await action_status.is_visible() and 'timed out' in await action_status.inner_text())
+            await page.evaluate('()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))')
+            feedback_box=await action_status.bounding_box()
+            check('READY-31','Compact typing feedback fits inside the 390 by 500 viewport',feedback_box and feedback_box['width']>0 and feedback_box['height']>0 and feedback_box['x']>=0 and feedback_box['y']>=0 and feedback_box['x']+feedback_box['width']<=390 and feedback_box['y']+feedback_box['height']<=500)
+            await page.set_viewport_size({'width':1440,'height':1100})
             # Text-only recipe has no source blocker; ready is explicitly bounded, not artistic approval.
             await page.evaluate("selectPreset('anima-portrait');online=true;schemaAvailable=true;updateReady()")
             check('READY-18','Unblocked summary keeps server validation explicit',await summary.count()>0 and 'server' in await summary.inner_text() and not await page.locator('#generate').is_disabled())
