@@ -24,8 +24,8 @@ still mutated retention; and a scene with only one used material was incorrectly
 three pass after the fix. A fourth check keeps the transient sentinel behavior unchanged. These offline tests
 are not native Blender evidence.
 
-The focused `python -m unittest discover -s tests -p 'test_blender*.py' -v` run passed **174 tests, including 14
-native skips**, with zero failures or errors. Its first attempt could not import `psutil`; rerunning after the
+The focused `python -m unittest discover -s tests -p 'test_blender*.py' -v` suite ran **174 tests: 160 passed,
+14 native skips**, with zero failures or errors. Its first attempt could not import `psutil`; rerunning after the
 test host installed the repository-pinned `psutil==7.2.2` produced this result. Python compilation and
 `python scripts/validate-repo.py` also passed. The integration PR records the full-suite and hosted CI receipts.
 
@@ -42,7 +42,7 @@ $env:LAS_BLENDER_LAB_EXE = (Get-Content config/local.json | ConvertFrom-Json).bl
 python -m unittest discover -s tests -p test_blender_corpus.py -k material_swap_repair -v
 ```
 
-## Retained hosted qualification (pending execution)
+## Retained hosted qualification
 
 The separate **Native material retention (opt-in)** workflow requests this same
 synthetic native gate when a scoped PR body contains the exact text:
@@ -72,11 +72,12 @@ attempt. Runtime checksum/identity receipts and logs share the artifact. Upload 
 with `if: always()` and requests 30 days retention, subject to repository policy.
 The job has 10 minutes; the native test step has a 150-second outer process limit.
 
-No local Blender download or native run is implied by these changes. Hosted
-qualification remains pending after the retained failure below. The original runtime archive is not uploaded, daily
-builds expire within 90 days, and evidence retention does not preserve a replayable
-runtime indefinitely. No agent/API calls, render benchmark, original realistic-v2
-corpus recreation or repair-rate recalculation is part of this gate.
+No local Blender download or native run is implied by these changes. The
+passing hosted qualification and the earlier failed attempt are recorded below.
+The original runtime archive is not uploaded, daily builds expire within
+90 days, and evidence retention does not preserve a replayable runtime
+indefinitely. No agent/API calls, render benchmark, original realistic-v2 corpus
+recreation or repair-rate recalculation is part of this gate.
 
 ### First hosted attempt: startup graphics abort
 
@@ -85,7 +86,7 @@ job `127527637416`, tested head `427367f9af6774cfc45670ebcc594e0e29cd90e3`.
 The runtime bootstrap and identity checks passed. The material process exited
 **-6 (SIGABRT)** at probe stage `starting`, before creating its fixture. Retained
 stderr reports missing `libEGL.so.1`; stdout reports failure to initialize a
-Vulkan 1.1 instance. Its failure receipt/logs remain evidence; no material
+Vulkan 1.1 instance. Artifact `13452094190` retains its failure receipt/logs; no material
 retention or repair result was produced by that run.
 
 Worker initialization ran the full capability probe, including `gpu.init()` and
@@ -101,13 +102,68 @@ The explicit CLI capability probe still initializes GPU/device discovery;
 `gpu.init()` as background graphics initialization. A native abort cannot be
 caught by Python's feature-test exception handler. Requested rendering continues
 through Blender's real render operator and retains its runtime requirements and
-failure behavior. The correction needs a fresh hosted material run; offline
-fixtures establish call routing and failure propagation, not a native pass or
-render qualification.
+failure behavior. The correction passed 23 focused tests and critical
+independent review before the fresh hosted material run below. Offline fixtures
+establish call routing and failure propagation; the native result supplies the
+material proof, without render qualification.
+
+### Passing hosted native run
+
+[Run 42110231187, job 127535527882](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/42110231187/job/127535527882)
+passed with exact checkout `ee1cb2c26ac6a757860b1c9368840c08fa9965a9`, tree
+`a78258e0c3fecd8a060d1295ed304885c3a2105a`.
+[Artifact 13454425561](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/42110231187/artifacts/13454425561)
+was downloaded and verified against ZIP SHA-256
+`5acfe50e0c27fb8f477474cd7d856a477511f7e6d242f254b72db678525a531b`.
+All **14 retained output hashes** were independently rechecked, including the
+clean, damaged and repaired BLEND files, PNG, manifests, logs and capability
+receipt. The process returned zero, stderr was empty and the checkpoint reached
+`completed`.
+
+The fixture swaps Badge slot 0 from `BadgeGreen` to the existing
+`BodyTextured`, saves/reopens the damage and repairs it through
+`Worker.apply_edit`. Its original and repaired semantic checksum is
+`25705eb9bb505075252912ca5643343a3a2ac71951ad6f943cec3af14ee17f65`.
+The seeded and reopened damage both have checksum
+`8cf5b0506285ec3384d1eef45098a8f8a100dca3f5e3c1e6e6edd711c01c0409`,
+which differs from the original. All four material-membership lists agree:
+`BadgeGreen`, `BodyTextured` and `HeadRed`. Only displaced `BadgeGreen` gains
+fake-user retention; `A_UnusedMaterial` remains unretained and outside those
+lists. The equality is semantic scene identity, not byte equality between
+separately saved BLEND files.
+
+The official runtime identity is Blender **5.4 alpha**, build `6f4fc760c138`,
+bundled Python **3.13.13** and NumPy **2.3.4**, matching the
+[shading qualification](2026-11-05-procgen-smooth-shading.md). The worker's
+`gpu_backend` and `cycles_devices` receipts both explicitly record `ok: null`
+and `state: not-probed`, with reasons. This pass establishes save/reopen/repair
+and material retention without initializing those devices. It establishes
+neither GPU availability nor rendered appearance. The earlier startup abort
+remains failed evidence.
+
+
+### Merge and software qualification
+
+[#2037](https://github.com/Chris0Jeky/local-asset-studio/pull/2037) merged as
+`96ab62a2a4bca43b721e68d8b8a87d8093b89c23`. Its reviewed/native head, full-suite
+checkout `aa1dca1ceec48d33114f06a926ae4f7e1a552a4d` and actual main merge share
+tree `a78258e0c3fecd8a060d1295ed304885c3a2105a`.
+[Full run 42109976829, job 127535031112](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/42109976829/job/127535031112)
+finished at **2026-11-05T21:26:45.027Z** on Ubuntu 24.04/Python 3.12.16:
+**7,321 tests, 7,202 passed, 119 skipped, zero failures/errors, 995.880 seconds**,
+with clean lifetime shutdown. Validation at **21:26:45.199Z** passed 98 graphs,
+194 pinned assets, 4,929 tracked paths and 167 LoRA names.
+
+The four applicable workflow families passed: full suite, Archive, Privacy and
+the actual requested native material run above. Later opt-out native jobs
+skipped and supply no native proof. Connected Codex review found no findings;
+there were no inline or submitted reviews. This software/merge qualification
+retains the synthetic scope and does not close #1983.
 
 ## Remaining acceptance
 
-- Execute the native regression with the configured Blender build and retain its result.
+- The hosted synthetic native gate has passed; repeat qualification through the
+  configured Windows runtime remains a separate workstation requirement.
 - Rebuild affected material-mismatch variants in a new corpus directory from the original realistic-v2 controls;
   an already saved variant can still contain the historical orphan and is not repaired by changing the seeder.
 - Rerun the material-mismatch repair cases on the workstation, one asset at a time under the existing heavy-work
