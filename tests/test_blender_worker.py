@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 import tempfile
 import time
+from types import SimpleNamespace
 import unittest
 from unittest import mock
 
@@ -114,6 +115,48 @@ class VocabularyTests(unittest.TestCase):
         self.assertEqual(len(plan), 30)
         self.assertEqual(plan.count("apply_edit"), plan.count("apply_edit_revert"))
         self.assertIn("render_views", plan)
+
+
+class StartupProbeTests(unittest.TestCase):
+    class NativeGraphicsAbort(BaseException): pass  # _attempt cannot catch a native process abort either
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name); scratch = self.root / 'scratch'; scratch.mkdir()
+        app = SimpleNamespace(version=(5, 4, 0), version_string='5.4.0 Alpha', version_cycle='alpha',
+                              build_hash=b'fixture', build_branch=b'main', build_date=b'2026-11-05',
+                              build_platform=b'Linux', background=True)
+        bpy = SimpleNamespace(app=app, ops=SimpleNamespace(wm=SimpleNamespace(read_factory_settings=mock.Mock())),
+                              context=SimpleNamespace(preferences=SimpleNamespace(system=SimpleNamespace(gpu_backend='VULKAN'))),
+                              types=SimpleNamespace(PreferencesSystem=object()))
+        self.gpu = SimpleNamespace(init=mock.Mock(side_effect=self.NativeGraphicsAbort('no graphics runtime')),
+                                   platform=SimpleNamespace(**{name: mock.Mock(return_value='fixture') for name in
+                                                              ('backend_type_get', 'vendor_get', 'renderer_get', 'version_get')}))
+        patches = [mock.patch.dict(sys.modules, {'bpy': bpy, 'gpu': self.gpu}),
+                   mock.patch.object(tempfile, 'mkdtemp', return_value=str(scratch)),
+                   mock.patch.object(bpy_side, '_enum_ids', return_value=[])]
+        for name in ('_action_api', '_shader_nodes', '_projects', '_point_clouds', '_gltf_export', '_render_engines'):
+            patches.append(mock.patch.object(bpy_side, name, return_value={'fixture': True}))
+        for patcher in patches: patcher.start(); self.addCleanup(patcher.stop)
+        self.cycles = mock.patch.object(bpy_side, '_cycles', side_effect=self.NativeGraphicsAbort('device enumeration'))
+        self.cycles_mock = self.cycles.start(); self.addCleanup(self.cycles.stop)
+
+    def test_worker_startup_never_initializes_or_queries_gpu_and_reports_unknown(self):
+        worker = bpy_side.Worker(str(self.root))
+        self.gpu.init.assert_not_called(); self.cycles_mock.assert_not_called()
+        self.gpu.platform.backend_type_get.assert_not_called()
+        for name in ('gpu_backend', 'cycles_devices'):
+            feature = worker.caps()['features'][name]
+            self.assertIsNone(feature['ok']); self.assertEqual(feature['state'], 'not-probed')
+            self.assertIn('not requested', feature['reason'])
+
+    def test_explicit_probe_still_initializes_graphics_and_enumerates_devices(self):
+        self.gpu.init.side_effect = None
+        self.cycles_mock.side_effect = None; self.cycles_mock.return_value = {'gpu_visible': []}
+        result = bpy_side.probe()
+        self.gpu.init.assert_called_once_with(); self.cycles_mock.assert_called_once_with()
+        self.assertTrue(result['features']['gpu_backend']['ok'])
+        self.assertTrue(result['features']['cycles_devices']['ok'])
 
 
 @unittest.skipUnless(LIVE_BLENDER, "set LAS_BLENDER_LAB_EXE to a Blender executable for the live worker")
