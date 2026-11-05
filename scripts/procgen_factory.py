@@ -224,8 +224,11 @@ def evaluate_gates(generator, spec, p, m):
     gates.append(_gate('manifold', manifold))
     gates.append(_gate('uv', uv, note=f'UVMap may overlap (palette/tiling); UVLightmap must not ({UV_RES}^2 texel centres).'))
     tris = [lod['triangles'] for lod in m['lods']]
+    collision_tris = 12 * m['collision_boxes']       # six quads per island box; one object can contain several boxes
     gates.append(_gate('triangle_budget', [f'LOD0 {tris[0]} triangles > budget {spec["tri_budget"]}'] if tris[0] > spec['tri_budget'] else [],
-                       triangles=tris[0], budget=spec['tri_budget']))
+                       triangles=tris[0], budget=spec['tri_budget'], collision_triangles=collision_tris,
+                       glb_triangles=tris[0] + collision_tris,
+                       note='The budget covers LOD0 render meshes only; glb_triangles also includes collision proxies (12 triangles per island box).'))
     chain = [] if len(tris) == LOD_LEVELS else [f'{len(tris)} LODs, want {LOD_LEVELS}']
     chain += [f'LOD{i + 1} {tris[i + 1]} > LOD{i} {tris[i]}' for i in range(len(tris) - 1) if tris[i + 1] > tris[i]]
     for i, lod in enumerate(m['lods'][1:], 1):
