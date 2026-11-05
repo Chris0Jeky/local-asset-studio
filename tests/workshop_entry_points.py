@@ -198,11 +198,41 @@ class EntryPoints(unittest.TestCase):
     def test_compact_menu_focuses_the_active_link_inside_a_folded_group(self):
         # #1412 review: the active page's group may have been folded by the user; opening the menu must still land on it.
         self.page.set_viewport_size({'width': 390, 'height': 844})
-        self.page.set_content(shell_html(False))
-        self.page.evaluate("StudioShell.setView('create'); document.querySelector('[data-studio-route=\"create\"]').closest('details').open = false")
-        self.page.click('#studioNavToggle')
-        self.assertEqual(self.page.evaluate("document.activeElement.dataset.studioRoute"), 'create')
-        self.assertTrue(self.page.evaluate("document.querySelector('[data-studio-route=\"create\"]').closest('details').open"))
+        for workflow in (False, True):
+            with self.subTest(workflow=workflow):
+                self.page.set_content(shell_html(workflow))
+                self.page.evaluate("StudioShell.setView('workflows'); document.querySelector('[data-studio-route=\"workflows\"]').closest('details').open = false")
+                toggle = self.page.locator('#studioNavToggle')
+                toggle.focus(); self.page.keyboard.press('Enter')
+                active = self.page.locator('[data-studio-route="workflows"]')
+                self.assertEqual(active.get_attribute('aria-current'), 'page')
+                self.assertTrue(active.is_visible())
+                self.assertTrue(active.evaluate('(node)=>node===document.activeElement'))
+                self.assertTrue(active.evaluate('(node)=>node.closest("details").open'))
+                self.assertEqual(toggle.get_attribute('aria-expanded'), 'true')
+                self.page.keyboard.press('Escape')
+                self.assertTrue(toggle.evaluate('(node)=>node===document.activeElement'))
+                self.assertTrue(self.page.locator('#studioSidebar').evaluate('(node)=>node.inert'))
+
+    def test_compact_menu_focuses_full_editor_without_opening_a_group(self):
+        # #2009: Full editor is primary navigation; the compact menu still focuses the current page.
+        self.page.set_viewport_size({'width': 390, 'height': 844})
+        for workflow in (False, True):
+            with self.subTest(workflow=workflow):
+                self.page.set_content(shell_html(workflow))
+                self.page.evaluate("StudioShell.setView('create'); document.querySelectorAll('[data-nav-group]').forEach(node=>node.open=false)")
+                toggle = self.page.locator('#studioNavToggle')
+                toggle.focus(); self.page.keyboard.press('Enter')
+                active = self.page.locator('[data-studio-route="create"]')
+                self.assertEqual(active.get_attribute('aria-current'), 'page')
+                self.assertEqual(active.get_attribute('href'), '/#create')
+                self.assertTrue(active.is_visible())
+                self.assertTrue(active.evaluate('(node)=>node===document.activeElement && !node.closest("details")'))
+                self.assertEqual(self.page.locator('[data-nav-group][open]').count(), 0)
+                self.assertEqual(toggle.get_attribute('aria-expanded'), 'true')
+                self.page.keyboard.press('Escape')
+                self.assertTrue(toggle.evaluate('(node)=>node===document.activeElement'))
+                self.assertTrue(self.page.locator('#studioSidebar').evaluate('(node)=>node.inert'))
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

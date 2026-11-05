@@ -68,6 +68,12 @@ is pending hosted exact-head CI: this environment has no usable Chromium binary.
 The Spoken Briefs browser driver expects the updated navigation label too. No
 visual pass is claimed.
 
+The same driver now captures the source-preview JSON immediately after the
+keyboard action, before waiting for its rendered DOM. This addresses the known
+response-body eviction race in #1941 without changing the application or removing
+the manifest comparison. Native Chromium on both hosted platforms remains the
+validation gate for that test-only repair.
+
 ## Remaining #2009 work
 
 This pass does not merge Workflow builder and Workflow guide, redesign the whole
@@ -76,3 +82,30 @@ production controls around the pictures. Candidate pictures already render
 outside a disclosure; the new browser assertion protects that behavior, but
 above-the-fold visual ordering still needs browser assessment. Broader #2009
 acceptance remains open.
+
+## Hosted browser test alignment
+
+The first hosted Workshop UI run reached an outdated test fixture assumption:
+`test_compact_menu_focuses_the_active_link_inside_a_folded_group` tried to close
+Full editor's parent `details` after Full editor intentionally became primary
+navigation. The keyboard contract now uses Workflow builder, which remains in
+Advanced. Both shell styles must open its containing group, focus its active
+link, return focus on Escape, and restore the sidebar's inert state. A separate
+test asserts the same focus behavior for Full editor while every group stays
+closed.
+
+The main Studio browser driver now expects the expanded primary navigation,
+checks Full editor's bookmarked route without opening Advanced, retains the
+Workflow guide's folded bookmark check, and reaches mobile Full editor directly.
+The read-poller driver also reaches Full editor directly. These changes update
+navigation assumptions only; focus and collapse guarantees remain tested.
+
+Cross-review also found the workbench startup adapter replacing the authored
+comparison heading with older wording. Its redundant heading assignment is
+removed, and the comparison browser journey now checks the actual rendered h2
+after startup, alongside the purpose and next action.
+
+Local validation for this follow-up: Python compilation of all four modified
+browser drivers, the 62 Studio UX Node checks, the production clarity Node checks,
+the workbench JavaScript syntax check, and `git diff --check` passed.
+Execution of the browser cases remains pending hosted exact-head CI.

@@ -79,7 +79,6 @@
   q('#generate').setAttribute('aria-describedby','uxRunSummary uxReadinessSummary uxBlockers');q('.dependencies').open=false;
   q('.gallery-panel .section-title h2').textContent='Recent runs';q('.gallery-panel .muted').textContent='Keep, flag or reject each result here (K, W, X on a focused card), or continue with it.';
   q('#assetsView .view-heading h2').textContent='A library, not a dead end.';
-  q('#productionView .view-heading h2').textContent='Run with a question. Leave with a decision.';
   q('#assetScopes').insertAdjacentHTML('beforeend','<button data-scope="unreviewed">Awaiting review</button>');
   const originalVisibleAssets=visibleAssets;visibleAssets=function(){const assets=originalVisibleAssets();return assetScope==='unreviewed'?assets.filter(a=>!a.review||a.review==='unreviewed'):assets;};
   // The legacy app and its tools call showView; this is the single navigation seam.

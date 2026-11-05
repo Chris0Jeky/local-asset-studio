@@ -119,8 +119,9 @@ class SpokenBrowserTests(unittest.TestCase):
             self.assertEqual(count, len([path for _, path in self.traffic if '/source-preview?' in path]))
             with self.page.expect_response(lambda r: '/source-preview?' in r.url) as response:
                 self.page.locator('#previewSource').focus(); self.page.keyboard.press('Enter')
+                body = response.value.json()  # Capture the network evidence before waiting on the rendered DOM (#1941).
             self.page.locator('#sourcePreview').wait_for(state='visible')
-            self.assertEqual(expected, response.value.json()['manifest'])
+            self.assertEqual(expected, body['manifest'])
             self.assertEqual([s['text'] for s in expected['segments']], self.page.locator('#sourceSegments p').all_text_contents())
             self.assertIn(f"{len(batch_segments(expected['segments']))} batches", self.page.locator('#sourceCounts').inner_text())
             self.assertIn('code blocks: 1', self.page.locator('#sourceOmissions').inner_text())

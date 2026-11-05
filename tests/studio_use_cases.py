@@ -1121,6 +1121,7 @@ def _review(c):
     assert current == '3 · Compare' and 'candidates are made' in now and 'Pick a winner beside this plan opens Review desk' in now and 'does not decide' in (help_ or ''), (current, now, help_)
     heading = c.page.locator('#productionView .view-heading')
     assert heading.is_visible() and 'Pick a winner opens Review desk' in heading.inner_text()
+    assert heading.locator('h2').inner_text() == 'Compare candidates. Pick a winner.', 'startup adapters must retain the authored comparison heading'
     assert c.page.locator('#productionDetail .candidate img').first.is_visible(), 'finished candidates do not require opening a disclosure'
     c.act('#blindComparison', note='reveal candidate settings')
     c.act('#productionDetail [data-candidate-open]', note='open a candidate at full size')
