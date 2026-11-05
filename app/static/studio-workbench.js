@@ -872,7 +872,7 @@
       if(varyUnapplied?.stamp===stamp)varyUnapplied={...varyUnapplied,stamp:JSON.stringify(renamed)};
       continuationState=renamed;continuationSource=result.context;secondPicture=null;secondPanel.hidden=true;
       attachContinuationSource(result,false);pendingInputs.delete(StudioContinuation.sourceInput(selected.continuation_capability)==='last_reference'?'lastReference':'reference');
-      draftDirty=true;saveDraft();syncCreate();say(StudioContinuation.sourceLabel(selected)+' holds the source again. No generation submitted.');
+      draftDirty=true;saveDraft();syncCreate();say('Original picture restored to '+StudioContinuation.sourceLabel(selected)+'. No new generation was started.');
     }catch(error){if(current())say(error.message);else if((!pickerBusyOwner||pickerBusyOwner===busyOwner)&&status.textContent===checking)status.textContent='The task changed while checking the source. Nothing was attached.';}
     finally{if(pickerBusyOwner===busyOwner){pickerBusyOwner=null;pickerBusy=false;syncReady();}}
   }

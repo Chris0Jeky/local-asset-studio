@@ -475,7 +475,7 @@ test('#2008: source repair reports checking then its verified result in the same
   const h = sourceRepairHarness(), run = h.context.run();
   assert.equal(h.status.textContent, 'Putting the source back. No generation is requested.');
   h.finish(); await run;
-  assert.equal(h.status.textContent, 'Source picture holds the source again. No generation submitted.');
+  assert.equal(h.status.textContent, 'Original picture restored to Source picture. No new generation was started.');
   assert.equal(h.runStatus.textContent, '', 'a repair result must not be repeated by the run-status live region');
   assert.deepEqual(h.notices, [], 'the dedicated live region owns this feedback without a duplicate announcement');
   assert.deepEqual(h.attached, ['restored.png']);
@@ -518,7 +518,7 @@ for (const rejected of [false, true]) {
     assert.equal(h.context.pickerBusy, true);
     assert.deepEqual(h.attached, [], 'the stale response never attaches its source');
     h.finish(1); await second;
-    assert.equal(h.status.textContent, 'Source picture holds the source again. No generation submitted.');
+    assert.equal(h.status.textContent, 'Original picture restored to Source picture. No new generation was started.');
     assert.deepEqual(h.attached, ['restored.png']);
     assert.equal(h.context.pickerBusy, false);
   });

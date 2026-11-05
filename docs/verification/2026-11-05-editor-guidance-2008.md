@@ -64,3 +64,24 @@ Local Python compilation, an AST inventory of all 33 unique check IDs, and `git 
 [Workshop UI run 41948462005, job 126986400702](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/41948462005/job/126986400702) exposed a real placement error: the link was inside the duplicate static recipe label, and `workshop-immersive.css` hides `.workshop .wk-recipe > div` in every layout. Both 1440px and 390px visibility assertions failed, and the retained-board transition correctly refused to click the hidden link.
 
 The original link now sits directly in the visible recipe chip, outside that hidden label. A scoped flex rule gives it a separate wrapping row only when the link is present. Its handler, selected-recipe focus logic, native visibility assertions and ordinary clicks remain intact. The browser regression additionally requires the link to fit the viewport width without horizontal page overflow. Local targeted Node checks remain **69 passed**, JavaScript syntax and Python compilation pass, and `git diff --check` passes. Hosted confirmation of the corrected placement remains pending.
+
+## 5 November 2026 — privacy regression follows the dedicated repair status
+
+Private creation boundaries job `126990745765` for PR #2012 head `501db7a3cca3c039b88471f0cdae33f6cc291d7a` failed the unchanged-source-owner assertion in `creation_privacy_async.cjs`. The same assertion failed locally: the copy and save succeeded, but the test still required the former global announcement instead of the dedicated repair status.
+
+The regression now requires the exact successful source-repair text in `uxReadinessActionStatus`, no duplicate global announcement, and preservation of the adjacent run status. Existing stale/privacy guards remain asserted. They now also verify that delayed private failures and acknowledgments preserve newer regular repair and run feedback. A current-private failure case covers the dedicated error message, a single request, no attachment/save effects, and proper busy-owner release. That regression alignment changed tests only; the final copy correction below also updates one production message. Inspection of the other source-repair and environment-switch tests found no remaining expectation of the moved global announcement.
+
+Verification:
+
+- `node --test tests/*privacy*.cjs`: **45 passed**, including all six privacy frontend files.
+- `python -m unittest discover -s tests -p 'test_*privacy_frontend.py' -v`: **2 passed**, including the discovery wrappers used by CI.
+- `node --test tests/workbench*.cjs tests/vary_prepare_latch.cjs tests/frontend_health.cjs tests/workshop_contracts.cjs`: **117 passed**.
+- `node --check tests/creation_privacy_async.cjs` and `git diff --check`: passed.
+
+The hosted privacy rerun on this test correction remains pending.
+
+## 5 November 2026 — concrete picture-restoration feedback
+
+The successful repair now says **“Original picture restored to [field label]. No new generation was started.”** The label still comes from the existing continuation policy, which names the actual Reference, Picture 1 or declared pose-picture input. “Picture” is accurate: `asset_reference` and continuation `source_context` accept image assets only, and continuation claims accept PNG/JPG/WebP reference files, including for image-to-video or image-to-3D destinations.
+
+Updated the three exact success-message assertions. The readiness browser driver, including the authoritative `501db7a3cca3c039b88471f0cdae33f6cc291d7a` version, has no success-text match to update. The affected suites passed again: **45 privacy frontend tests**, **2 Python CI wrappers**, and **117 workbench/Vary/health/workshop tests**. JavaScript syntax and diff checks pass. This is a small copy correction plus regression alignment; attachment, privacy and execution behavior are unchanged.
