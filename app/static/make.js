@@ -94,7 +94,12 @@
     return SLOTS.filter(k=>Number(c[k])>0&&(typeof c[k+'_name']==='string'&&c[k+'_name']||p&&!bound(k+'_name'))).map(k=>({key:k,name:c[k+'_name']||'the recipe’s own LoRA',strength:Number(c[k])}));};
   // A look saved from Tune (#1847) records its goal-listed root in lineage (tuned_root); it is listed right after that root, in the root's goal.
   const tunedFrom=l=>(l?.lineage||[]).find(e=>typeof e?.tuned_root==='string')||null;
-  const lookList=()=>{const g=goal();if(!g?.looks||!state.looks)return[];return g.looks.flatMap(id=>[state.looks.find(l=>l.id===id),...state.looks.filter(l=>tunedFrom(l)?.tuned_root===id)]).filter(l=>l&&!l.trashed_at);};
+  // Display only: a base picture is not an anchor or a reference for the new tune. thumbOf keeps that separate meaning.
+  const displayPreviewOf=look=>{const own=thumbOf(look);if(own)return{url:own,baseName:''};
+    const root=state.looks?.find(l=>l.id===tunedFrom(look)?.tuned_root&&!l.trashed_at),url=root&&thumbOf(root);
+    return{url:url||null,baseName:url?root.name:''};};
+  const tunedLookOrder=(a,b)=>String(a.name).localeCompare(String(b.name),undefined,{sensitivity:'base'})||String(a.id).localeCompare(String(b.id));
+  const lookList=()=>{const g=goal();if(!g?.looks||!state.looks)return[];return g.looks.flatMap(id=>[state.looks.find(l=>l.id===id),...state.looks.filter(l=>tunedFrom(l)?.tuned_root===id).sort(tunedLookOrder)]).filter(l=>l&&!l.trashed_at);};
   const current=()=>state.looks?.find(l=>l.id===state.look&&!l.trashed_at)||null;
   // Honest speed (#1448): median seconds per picture measured in the 16 Oct look lab (docs/looks/LOOK-LAB-2026-10-16.md, R1 table,
   // "Median s/image": load, encode, sample and decode on this PC; two pictures each, cold and warm mixed). Update from the doc, not by hand.
@@ -372,7 +377,7 @@
     const template=c.positive,negative=bound(tp,'negative')?t.negative??look.body.negative:'';delete c.positive;delete c.negative;
     return{preset_id:tp.id,template,controls:c,...(negative?{negative}:{}),...(look.body.options?.length?{options:look.body.options}:{}),...(look.body.scene_example?{scene_example:look.body.scene_example}:{}),...(notes?{notes}:{})};
   }
-  let savingLook=false;
+  let savingLook=false,saveLookUiEpoch=0;
   async function saveTunedLook(look,name,notes){
     if(savingLook)return null;
     const captured=requestPrivacy(),epoch=privacyEpoch,clean=String(name||'').trim();
@@ -394,13 +399,19 @@
   }
   async function saveLookUi(action){
     const look=current(),form=q('#makeSaveForm'),open=q('#makeSaveOpen');if(!look||!form)return;
-    if(action!=='go'){form.hidden=action==='cancel';open.setAttribute('aria-expanded',String(!form.hidden));q('#makeSaveMsg').textContent='';(form.hidden?open:q('#makeSaveName')).focus();return;}
-    const go=q('#makeSaveGo'),show=text=>{const msg=q('#makeSaveMsg');if(msg)msg.textContent=text;else say(text);};
-    go.disabled=true;q('#makeSaveMsg').textContent='';
-    try{const saved=await saveTunedLook(look,q('#makeSaveName').value,q('#makeSaveNotes').value);
-      if(saved){const name=q('#makeSaveName');if(name){name.value='';q('#makeSaveNotes').value='';q('#makeSaveForm').hidden=true;q('#makeSaveOpen').setAttribute('aria-expanded','false');}
-        say('Saved \u201c'+saved.name+'\u201d in your Workspace. Choose it under Change look in '+goal().name+' next time. Nothing was generated.'+(saved.notices||[]).map(n=>' '+n).join(''));}}
-    catch(error){show(error.message);}
+    if(action!=='go'){saveLookUiEpoch++;form.hidden=action==='cancel';open.setAttribute('aria-expanded',String(!form.hidden));q('#makeSaveMsg').textContent='';(form.hidden?open:q('#makeSaveName')).focus();return;}
+    if(savingLook)return;
+    const go=q('#makeSaveGo'),name=q('#makeSaveName'),notes=q('#makeSaveNotes'),msg=q('#makeSaveMsg');
+    const submittedName=name.value,submittedNotes=notes.value,goalId=state.goal,goalName=goal().name,epoch=privacyEpoch,presentation=++saveLookUiEpoch;
+    const ownsForm=()=>presentation===saveLookUiEpoch&&epoch===privacyEpoch&&state.goal===goalId&&current()?.id===look.id&&form.isConnected&&q('#makeSaveForm')===form;
+    go.disabled=true;msg.textContent='';
+    try{const saved=await saveTunedLook(look,submittedName,submittedNotes);
+      if(saved&&ownsForm()){
+        const result='Saved \u201c'+saved.name+'\u201d. Choose it under Change look in '+goalName+' next time. Saving a look does not generate a picture.'+(saved.notices||[]).map(n=>' '+n).join('');
+        if(name.value===submittedName&&notes.value===submittedNotes){name.value='';notes.value='';form.hidden=true;open.setAttribute('aria-expanded','false');msg.textContent=result;}
+        else msg.textContent=result+' Your edited name and notes are still here.';
+      }}
+    catch(error){if(ownsForm())msg.textContent=error.message;}
     finally{if(go.isConnected)go.disabled=false;}
   }
 
@@ -496,13 +507,13 @@
     // Compare looks (#16) turns the gallery into checkboxes: two or three looks, one scene, one picture each.
     const compare=state.compare;if(compare)state.compareLooks=state.compareLooks.filter(id=>list.some(l=>l.id===id));
     const on=l=>compare?state.compareLooks.includes(l.id):l.id===state.look;
-    const cards=list.map(l=>{const p=presetFor(l),thumb=thumbOf(l),why=compare?blocker(l,p):blocker(l);return '<article class="make-look'+(on(l)?' active':'')+'"><button type="button" class="make-look-select" data-make-look="'+escape(l.id)+'" role="'+(compare?'checkbox':'radio')+'" tabindex="'+(compare||l.id===(state.look||list[0]?.id)?'0':'-1')+'" aria-checked="'+on(l)+'">'
+    const cards=list.map(l=>{const p=presetFor(l),preview=displayPreviewOf(l),thumb=preview.url,why=compare?blocker(l,p):blocker(l);return '<article class="make-look'+(on(l)?' active':'')+'"><button type="button" class="make-look-select" data-make-look="'+escape(l.id)+'" role="'+(compare?'checkbox':'radio')+'" tabindex="'+(compare||l.id===(state.look||list[0]?.id)?'0':'-1')+'" aria-checked="'+on(l)+'">'
       +(thumb?'<img src="'+escape(thumb)+'" alt="" loading="lazy">':'<span class="make-look-blank">'+blankMarkup('No preview picture yet: nobody has run this look here.')+'</span>')
-      +'<span class="make-look-text"><b>'+escape(l.name)+'</b>'+recipeLine(l)+pace(l)+tested(l)+recordSlot(l)+licence(p)+bestFor(l)+(tried(l)?'<small>Run on this PC before</small>':'')+'</span></button>'+(why?'<small class="make-warn make-look-text">'+cardWhy(l,why,compare?p?.id:undefined)+'</small>':'')+'</article>';}).join('');
+      +'<span class="make-look-text"><b>'+escape(l.name)+'</b>'+(preview.baseName?'<small class="make-preview-note">Base look preview; tuned settings may look different.</small>':'')+recipeLine(l)+pace(l)+tested(l)+recordSlot(l)+licence(p)+bestFor(l)+(tried(l)?'<small>Run on this PC before</small>':'')+'</span></button>'+(why?'<small class="make-warn make-look-text">'+cardWhy(l,why,compare?p?.id:undefined)+'</small>':'')+'</article>';}).join('');
     const banner=envBanner(list.map(l=>{const p=compare?presetFor(l):tunedPreset(l);return[p,blocker(l,p)];}));
     const chosen=current();
-    if(chosen&&!state.picking&&!compare){const p=presetFor(chosen),thumb=thumbOf(chosen);
-      body.innerHTML='<div class="make-chosen">'+(thumb?'<img src="'+escape(thumb)+'" alt="">':'<span class="make-look-blank" aria-hidden="true">✦</span>')+'<div><small>Look</small><b>'+escape(chosen.name)+'</b>'+recipeLine(chosen)+pace(chosen)+tested(chosen)+recordSlot(chosen)+licence(p)+bestFor(chosen)+'</div><button type="button" data-make-change>Change look</button></div><div id="makeComposer"></div>';}
+    if(chosen&&!state.picking&&!compare){const p=presetFor(chosen),preview=displayPreviewOf(chosen),thumb=preview.url;
+      body.innerHTML='<div class="make-chosen">'+(thumb?'<img src="'+escape(thumb)+'" alt="">':'<span class="make-look-blank" aria-hidden="true">✦</span>')+'<div><small>Look</small><b>'+escape(chosen.name)+'</b>'+(preview.baseName?'<small class="make-preview-note">Base look preview; tuned settings may look different.</small>':'')+recipeLine(chosen)+pace(chosen)+tested(chosen)+recordSlot(chosen)+licence(p)+bestFor(chosen)+'</div><button type="button" data-make-change>Change look</button></div><div id="makeComposer"></div>';}
     else body.innerHTML='<div class="make-step"><span>1</span><h2>'+(compare?'Choose two or three looks to compare':'Choose a look')+'</h2>'+(chosen||compare?'':'<small class="make-step-hint">Pick one, then describe your picture. Each picture is a real run on this PC; yours will differ.</small>')+(chosen&&!compare?'<button type="button" class="make-link" data-make-keep-look>Stay with '+escape(chosen.name)+'</button>':'')+(list.length>1?'<button type="button" class="make-link" data-make-compare aria-pressed="'+compare+'">'+(compare?'Back to one look':'Compare looks')+'</button>':'')+'</div>'+banner+'<div class="make-looks" role="'+(compare?'group':'radiogroup')+'" aria-label="'+(compare?'Looks to compare':'Look')+'">'+cards+'</div><div id="makeComposer"></div>';
     renderComposer();layout();
   }
@@ -530,7 +541,7 @@
       +'<div class="make-save"><button type="button" class="make-link" id="makeSaveOpen" data-make-save="open" aria-expanded="false" aria-controls="makeSaveForm">Save as a new look\u2026</button>'
       +'<div id="makeSaveForm" class="make-character-form" hidden><label>Name<input id="makeSaveName" maxlength="120" autocomplete="off" aria-describedby="makeSaveHint"></label><label>Notes <small>optional</small><textarea id="makeSaveNotes" rows="2" maxlength="1000"></textarea></label>'
       +'<div class="make-row"><button type="button" id="makeSaveGo" data-make-save="go">Save look</button><button type="button" class="make-link" data-make-save="cancel">Cancel</button></div>'
-      +'<small id="makeSaveHint" class="muted">Keeps the model, LoRAs and settings as tuned here, with the look\u2019s own wording and its scene slot. Your scene words are not saved. Nothing is generated.</small><p id="makeSaveMsg" class="make-warn" role="status"></p></div></div></details>'
+      +'<small id="makeSaveHint" class="muted">Keeps the tuned model, LoRAs, steps, sampler and negative wording, with the look\u2019s scene slot. A locked seed number is kept as a starting value; turn off “Different pictures each time” again to lock it. Shape and option selections start at their defaults. Your scene words are not saved. Nothing is generated.</small></div><p id="makeSaveMsg" class="make-warn" role="status"></p></div></details>'
       +'<details class="make-tune" id="makeSweep"'+(sweepOf(look).open?' open':'')+'><summary>Compare one setting <small id="makeSweepSum"></small></summary><div id="makeSweepBody"></div></details>'
       +'</div><div class="make-compose-side">'
       +'<div class="make-pair"><label>Shape<select id="makeShape">'+Object.entries(SHAPES).map(([k,v])=>'<option value="'+k+'"'+(k===shapeDefault(look)?' selected':'')+'>'+v+(k==='design'?' · '+escape(look.body.controls.width||'')+'×'+escape(look.body.controls.height||''):'')+'</option>').join('')+'</select></label>'
