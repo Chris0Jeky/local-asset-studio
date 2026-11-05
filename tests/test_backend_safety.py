@@ -348,7 +348,7 @@ class BackendSafetyTests(unittest.TestCase):
         self.assertFalse(self.manager.matches_configured_process(p,p['python'],argv+['--install-root','/other'],p['root']))
     def test_a_protected_python_is_skipped_only_when_provably_not_ours(self):
         import psutil
-        p=self.manager.profiles['primary']; me=psutil.Process().username()
+        p=self.manager.profiles['primary']; me='FIXTURE\\Chris'
         def proc(owner,exe):
             denied=psutil.AccessDenied(4242)
             def value(v):
@@ -366,10 +366,35 @@ class BackendSafetyTests(unittest.TestCase):
                (proc(psutil.AccessDenied(4242),''),False),                       # a blank executable proves nothing
                (proc(psutil.AccessDenied(4242),'Registry'),False)]               # neither does a relative one
         for process,skipped in cases:
-            with self.subTest(skipped=skipped),patch.object(psutil,'process_iter',return_value=[process]):
+            with self.subTest(skipped=skipped),patch.object(psutil,'process_iter',return_value=[process]), \
+                 patch.object(psutil,'Process',return_value=SimpleNamespace(username=lambda:me)):
                 if skipped:self.assertEqual(self.manager.configured_processes(p),[])
                 else:
                     with self.assertRaisesRegex(ValueError,'could not be verified'):self.manager.configured_processes(p)
+    def test_unknown_studio_identity_needs_independent_executable_proof(self):
+        import psutil
+        profile=self.manager.profiles['primary']; denied=psutil.AccessDenied(4242)
+        def value(item):
+            if isinstance(item,Exception):raise item
+            return item
+        own_cases=[('constructor gone',psutil.NoSuchProcess(os.getpid()),None),
+                   ('lookup gone',None,psutil.NoSuchProcess(os.getpid())),
+                   ('constructor denied',psutil.AccessDenied(os.getpid()),None),
+                   ('lookup denied',None,psutil.AccessDenied(os.getpid())),
+                   ('lookup error',None,OSError('identity unavailable')),
+                   ('blank',None,''),('whitespace',None,'  '),('not a username',None,None)]
+        for label,constructor_error,own_name in own_cases:
+            for exe,foreign in [(profile['python'],False),(denied,False),(str(self.root/'other/python.exe'),True)]:
+                candidate=SimpleNamespace(pid=4242,name=lambda:'python.exe',username=lambda:'Chris',
+                                          exe=lambda exe=exe:value(exe),cmdline=lambda:value(denied),cwd=lambda:value(denied))
+                own=SimpleNamespace(username=lambda own_name=own_name:value(own_name))
+                with self.subTest(identity=label,exe=exe),patch.object(psutil,'Process',return_value=own,side_effect=constructor_error), \
+                     patch.object(psutil,'process_iter',return_value=[candidate]):
+                    self.assertEqual(self.manager.foreign_python(profile,candidate),foreign)
+                    if foreign:self.assertEqual(self.manager.configured_processes(profile),[])
+                    else:
+                        with self.assertRaisesRegex(ValueError,'could not be verified'):self.manager.configured_processes(profile)
+
     def test_inaccessible_listener_is_not_absent(self):
         import psutil
         listener=SimpleNamespace(status='LISTEN',laddr=SimpleNamespace(port=8188,ip='127.0.0.1'),pid=555)

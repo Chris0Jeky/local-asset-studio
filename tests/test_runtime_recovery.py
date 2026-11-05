@@ -3,16 +3,18 @@ from __future__ import annotations
 
 import errno
 import json
+import os
 import sys
 import tempfile
 import unittest
 from pathlib import Path
-from types import SimpleNamespace
+from types import MethodType, SimpleNamespace
 from unittest.mock import patch
 from urllib.error import URLError
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "app"))
 from runtime_recovery import REFUSAL_PROBE_TIMEOUT, RuntimeRecovery
+from backends import BackendManager
 
 
 PROFILE = {"id": "primary", "name": "Main", "url": "http://127.0.0.1:8188"}
@@ -76,6 +78,25 @@ class RuntimeRecoveryTests(unittest.TestCase):
         self.studio.backends.request = windows_request
         self.recovery.tick()
         self.assertEqual(self.studio.backends.launches,1)
+
+    def test_unreadable_studio_identity_cannot_hide_a_live_protected_launcher(self):
+        import psutil
+        manager=self.studio.backends
+        profile=dict(PROFILE,python=str(self.studio.root/'python.exe'))
+        manager.profiles={'primary':profile}
+        manager.configured_processes=MethodType(BackendManager.configured_processes,manager)
+        manager.foreign_python=BackendManager.foreign_python
+        manager.matches_configured_process=BackendManager.matches_configured_process
+        def denied():raise psutil.AccessDenied(4242)
+        candidate=SimpleNamespace(pid=4242,name=lambda:'python.exe',username=lambda:'Chris',
+                                  exe=lambda:profile['python'],cmdline=denied,cwd=denied)
+        with patch('psutil.process_iter',return_value=[candidate]), \
+             patch('psutil.Process',side_effect=psutil.NoSuchProcess(os.getpid())):
+            self.recovery.tick();self.recovery.tick()
+        self.assertEqual(self.recovery.snapshot()['status'],'foreign-or-ambiguous-listener')
+        self.assertEqual(manager.launches,0)
+        self.assertEqual(self.recovery.snapshot()['attempts'],0)
+        self.assertEqual(set(manager.routes),{'/system_stats'})
 
     def test_non_refused_timeout_never_authorizes_a_launch(self):
         self.studio.backends.error=URLError(TimeoutError('read timed out'))

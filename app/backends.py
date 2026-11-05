@@ -363,9 +363,13 @@ class BackendManager:
         import psutil
         try:
             owner=process.username()
-            if isinstance(owner,str) and owner and owner.casefold()!=psutil.Process().username().casefold():return True
         except psutil.NoSuchProcess:return True
-        except (psutil.AccessDenied,OSError):pass
+        except (psutil.AccessDenied,OSError):owner=None
+        if isinstance(owner,str) and owner.strip():
+            # Failure to inspect Studio is not evidence that the candidate exited.
+            try:own=psutil.Process().username()
+            except (psutil.NoSuchProcess,psutil.AccessDenied,OSError):own=None
+            if isinstance(own,str) and own.strip() and owner.casefold()!=own.casefold():return True
         try:
             exe=process.exe()
             # A blank or relative answer proves nothing: it would resolve against the Studio's own directory.
