@@ -29,9 +29,38 @@ from test_server import server as production
 ROOT=Path(__file__).resolve().parents[1]
 
 
+async def library_readability(page):
+    """Measure painted words and native select sizing, independent of layout rules."""
+    return await page.evaluate(r'''() => {
+        const scope_labels=[...document.querySelectorAll('#assetScopes [data-scope]')].map(button=>{
+            const label=button.querySelector('span'),text=label.firstChild,box=button.getBoundingClientRect();
+            const words=[...text.textContent.matchAll(/\S+/g)].map(word=>{
+                const range=document.createRange();range.setStart(text,word.index);range.setEnd(text,word.index+word[0].length);
+                const rects=[...range.getClientRects()].filter(r=>r.width>0&&r.height>0);
+                return {word:word[0],lines:rects.length,contained:rects.every(r=>r.left>=box.left-.5&&r.right<=box.right+.5&&r.top>=box.top-.5&&r.bottom<=box.bottom+.5)};
+            });
+            return {scope:button.dataset.scope,label:label.textContent,count:button.querySelector('small').textContent,
+                    readable:words.length>0&&words.every(w=>w.lines===1&&w.contained),words};
+        });
+        const filters=['assetSource','assetType','assetArchiveFilter','assetSort','assetGroup'].map(id=>{
+            const select=document.getElementById(id),style=getComputedStyle(select),label=select.selectedOptions[0].textContent;
+            // A detached-from-layout native control includes this platform's arrow
+            // and padding; no assumed arrow width or stylesheet string is asserted.
+            const probe=document.createElement('select');probe.setAttribute('aria-hidden','true');probe.tabIndex=-1;
+            probe.style.cssText='all:initial;position:fixed;left:-10000px;visibility:hidden;pointer-events:none;width:max-content;min-width:0;max-width:none';
+            for(const name of ['font','letter-spacing','padding','border','box-sizing','appearance','text-transform','text-indent'])probe.style.setProperty(name,style.getPropertyValue(name));
+            probe.add(new Option(label,'selected',true,true));document.body.append(probe);
+            const required=probe.getBoundingClientRect().width;probe.remove();
+            const actual=select.getBoundingClientRect().width;
+            return {id,label,actual,required,readable:required>0&&actual+.5>=required};
+        });
+        return {width:innerWidth,scope_labels,filters};
+    }''')
+
+
 async def run(args):
     args.out.mkdir(parents=True,exist_ok=True)
-    checks=[];errors=[];server_errors=[];disconnects=[];requests=[];receipts=[];loss={'next':False}
+    checks=[];errors=[];server_errors=[];disconnects=[];requests=[];receipts=[];layouts=[];loss={'next':False}
     def check(name,passed):
         checks.append({'name':name,'passed':bool(passed)});print(name,bool(passed),flush=True)
         assert passed,name
@@ -177,13 +206,19 @@ async def run(args):
             await page.select_option('#assetArchiveFilter','all');await ready(ids)
             await page.wait_for_function('assetPageRecords().length===4 && !assetRefreshing')
             check('Regular all-archive view still excludes private IDs',await page.locator('#assetGrid [data-asset-card="'+private+'"]').count()==0)
-            for width in (1440,390):
+            await page.evaluate('document.fonts.ready')
+            for width in (1440,768,390):
                 await page.set_viewport_size({'width':width,'height':1000})
                 # Let the shell's resize handler and the resulting layout both settle.
                 await page.evaluate('()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))')
                 await page.locator('#assetArchiveFilter').focus()
                 check(str(width)+'px Archive control is visible and keyboard reachable',await page.locator('#assetArchiveFilter').is_visible() and await page.locator('#assetArchiveFilter').evaluate('(el)=>el===document.activeElement'))
                 check(str(width)+'px Library has no horizontal overflow',await page.evaluate('document.documentElement.scrollWidth')<=width)
+                layout=await library_readability(page);layouts.append(layout)
+                check(str(width)+'px Library scope words stay whole inside their buttons',
+                      any(row['scope']=='favorite' for row in layout['scope_labels']) and all(row['readable'] for row in layout['scope_labels']))
+                check(str(width)+'px Library counts retain their page scope',all(row['count'].endswith(' on this page') for row in layout['scope_labels']))
+                check(str(width)+'px selected fixed filter labels fit their native controls',all(row['readable'] for row in layout['filters']))
                 # Focus may scroll the page; anchor fixed shell elements before full-page capture.
                 await page.evaluate('()=>{window.scrollTo(0,0);return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))}')
                 await page.screenshot(path=str(args.out/('archive-'+str(width)+'.png')),full_page=True)
@@ -196,9 +231,10 @@ async def run(args):
         if browser:await browser.close()
         http.shutdown();http.server_close();thread.join(3);temp.cleanup()
         sources=('app/workspace.py','studio_workflow/asset_reads.py','app/static/workspace.js','app/static/index.html',
+                 'app/static/style.css','app/static/studio.css','app/static/asset-review.css',
                  'app/static/asset-recovery.js','app/static/asset-recovery-shelf.js','app/static/asset-recovery-lifecycle.js')
         (args.out/'receipt.json').write_text(json.dumps({'native_origin':not args.inert,'checks':checks,'page_errors':errors,
-            'server_errors':server_errors,'client_disconnects':disconnects,'requests':requests,'commands':receipts,
+            'server_errors':server_errors,'client_disconnects':disconnects,'requests':requests,'commands':receipts,'layouts':layouts,
             'sources':{p:hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in sources},
             'limits':'Synthetic startup catalog/media; production asset routes and SQLite. No model generation or owner acceptance.'},indent=2)+'\n',encoding='utf-8')
 
