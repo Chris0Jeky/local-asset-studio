@@ -995,12 +995,22 @@ def _first_image(c):
     c.page.keyboard.press('Home')
     assert c.page.locator('[data-make-goal="character"]').evaluate('(e) => e === document.activeElement')
     c.act('#makeGoals', 'read', note='Make starting points')
-    if not c.page.locator('[data-nav-group="Advanced"] summary').is_visible():
+    if not c.page.locator('[data-studio-route="create"]').is_visible():
         c.act('#studioNavToggle', note='open navigation at the narrower zoom viewport', supplementary=True)
-    c.act('[data-nav-group="Advanced"] summary', note='open advanced tools', supplementary=True)
+    for route, label, href in [('create', 'Full editor', '/#create'), ('production', 'Comparisons', '/#production'), ('review', 'Review desk', '/review.html')]:
+        link = c.page.locator('[data-studio-route="%s"]' % route)
+        assert link.is_visible() and link.inner_text().strip().endswith(label), 'the next tool is visible without opening Advanced'
+        assert link.get_attribute('href') == href and link.evaluate('(e) => !e.closest("details")')
     c.act('[data-studio-route="create"]', navigation=True)
     assert c.page.locator('[data-studio-route="create"]').get_attribute('aria-current') == 'page'
     assert c.page.locator('[data-studio-route="make"]').get_attribute('aria-current') is None
+    # The same intent words work from the desktop shell and its narrow navigation layout.
+    for query, href in [('switch', '/#models'), ('history', '/#assets'), ('winner', '/review.html')]:
+        c.act('#studioJump', note='find a tool by its job', supplementary=True)
+        c.act('#studioCommandSearch', 'fill', typed=query, supplementary=True)
+        assert c.page.locator('#studioCommandResults a').first.get_attribute('href') == href
+        c.page.keyboard.press('Escape')
+        assert c.page.locator('#studioJump').evaluate('(e) => e === document.activeElement'), 'finder returns keyboard focus'
     c.act('#workshopRecipeChange', note='open the recipe picker', supplementary=True)
     c.act('#presetSearch', 'fill', typed='anima')
     c.act('#presetList button.preset', note='first matching recipe')
@@ -1108,7 +1118,10 @@ def _review(c):
     # #1921: the comparison names its stage and the next decision in plain words, and says what the buttons do.
     stage = "(() => [document.querySelector('#productionDetail .plan-stages [aria-current=step]')?.textContent, document.querySelector('#productionDetail .plan-stage-now')?.textContent, document.querySelector('#productionDetail .plan-candidate-help')?.textContent])()"
     current, now, help_ = c.page.evaluate(stage)
-    assert current == '3 · Compare' and 'candidates are made' in now and 'Review opens' in now and 'does not decide' in (help_ or ''), (current, now, help_)
+    assert current == '3 · Compare' and 'candidates are made' in now and 'Pick a winner beside this plan opens Review desk' in now and 'does not decide' in (help_ or ''), (current, now, help_)
+    heading = c.page.locator('#productionView .view-heading')
+    assert heading.is_visible() and 'Pick a winner opens Review desk' in heading.inner_text()
+    assert c.page.locator('#productionDetail .candidate img').first.is_visible(), 'finished candidates do not require opening a disclosure'
     c.act('#blindComparison', note='reveal candidate settings')
     c.act('#productionDetail [data-candidate-open]', note='open a candidate at full size')
     if c.live:
@@ -2237,8 +2250,11 @@ def _review_desk(c):
                             " && (p.stages || []).some(s => ((s.job || {}).outputs || []).some(o => o.asset_id)))"
                             "(productionPlans.find(p => p.id === id))")
         c.act('#productionList [data-project="%s"]' % study, note='the finished comparison')
-        # This study's own Review link: the list carries one per awaiting study (#1735), so the first match may be another study.
+        # This study's own link carries its project; the global Review desk link intentionally has no project.
+        link = c.page.locator('a[href="/review.html?project=%s"]' % study)
+        assert link.inner_text() in ['Pick a winner', 'Open review desk']
         c.act('a[href="/review.html?project=%s"]' % study, navigation=True, wait=900, note='open the review desk')
+        assert c.page.locator('[data-studio-route="review"]').get_attribute('aria-current') == 'page'
         c.stop_before(c.act('#open', note='prepare the blind review'), 'stopped before Prepare review: that snapshots the retained pictures')
         c.page.wait_for_function('!document.querySelector("#desk").hidden', timeout=8000)
         reviewed = lambda n: c.page.wait_for_function("n => document.querySelector('#desk').getAttribute('aria-busy') === 'false' && "

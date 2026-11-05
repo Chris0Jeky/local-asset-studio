@@ -23,6 +23,27 @@ test('finder goal names, hints and look membership match Make',()=>{
   const goals=(file,name)=>vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../app/static',file),'utf8').match(new RegExp('const '+name+'=(\\[[\\s\\S]*?\\n  \\]);'))[1]);
   assert.equal(JSON.stringify(goals('studio-shell.js','makeGoals')),JSON.stringify(goals('make.js','GOALS')));
 });
+test('editor, comparisons and Review desk are visible navigation; intent words reach distinct routes (#2009)',()=>{
+  const shell=fs.readFileSync(path.join(__dirname,'../app/static/studio-shell.js'),'utf8');
+  const links=vm.runInNewContext(shell.match(/const links=(\[.*?\]);/)[1]);
+  const keywords=vm.runInNewContext('('+shell.match(/const keywords=(\{.*?\});/)[1]+')');
+  const sidebar={};
+  vm.runInNewContext(shell.slice(shell.indexOf('  sidebar.innerHTML='),shell.indexOf('  const header=')),{sidebar,links});
+  const visible=sidebar.innerHTML.split('<details')[0];
+  for(const [id,label,href] of [['create','Full editor','/#create'],['production','Comparisons','/#production'],['review','Review desk','/review.html']]){
+    assert.ok(visible.includes('href="'+href+'" data-studio-route="'+id+'"'),label+' is outside a collapsed group');
+    assert.ok(visible.includes('<span>'+label+'</span>'));
+  }
+  const input={value:''},results={};
+  const context={$:s=>s==='#studioCommandSearch'?input:results,makeGoals:[],synonyms:{},keywords,looks:[],presets:[],links,escape:s=>s};
+  const commands=shell.slice(shell.indexOf('  function commands(){'),shell.indexOf('  async function loadLooks()'));
+  vm.runInNewContext(commands,context);
+  for(const [query,href,label] of [['switch','/#models','Models & setup'],['history','/#assets','Library'],['workspace','/#assets','Library'],['winner','/review.html','Review desk'],['pick a winner','/review.html','Review desk'],['review','/review.html','Review desk']]){
+    input.value=query;vm.runInNewContext('commands()',context);
+    assert.ok(results.innerHTML.startsWith('<a href="'+href+'"><b>'+label+'</b>'),query+' reaches the intended tool first');
+    if(href==='/review.html')assert.doesNotMatch(results.innerHTML,/href="\/#assets"|data-make-goal/,'choosing a winner does not route into the Library queue or generate');
+  }
+});
 test('finder indexes preset model and family metadata and offers Tune without generation',()=>{
   const shell=fs.readFileSync(path.join(__dirname,'../app/static/studio-shell.js'),'utf8');
   const commands=shell.slice(shell.indexOf('  function commands(){'),shell.indexOf('  async function loadLooks()'));

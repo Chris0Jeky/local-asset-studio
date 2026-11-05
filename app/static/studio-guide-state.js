@@ -80,10 +80,10 @@
       if (decisions.includes('unreviewed')) return blocked(decisions.filter(x => x !== 'unreviewed').length + ' of ' + decisions.length + ' output reviews recorded. Review the remaining outputs yourself.');
       return met('Review decisions recorded: ' + decisions.join(', ') + '. Recording a rejection also completes review; the guide never approves artwork.');
     }
-    // #1939: the compare guide reads the comparison on screen in Compare & review, never the newest plan by assumption.
+    // #1939: the compare guide reads the comparison on screen in Comparisons, never the newest plan by assumption.
     if (['comparison_plan','comparison_made','comparison_decided'].includes(check)) {
       const c = s.comparison;
-      if (!object(c)) return blocked(check === 'comparison_plan' ? 'Press Plan comparison, choose one setting and its values, then Prepare. Compare & review opens with the plan; preparing starts nothing.' : 'Open Compare & review and choose your comparison under Your plans.');
+      if (!object(c)) return blocked(check === 'comparison_plan' ? 'Press Plan comparison, choose one setting and its values, then Prepare. Comparisons opens with the plan; preparing starts nothing.' : 'Open Comparisons and choose your comparison under Your plans.');
       const name = (c.title ? '“' + c.title + '”' : 'The comparison on screen') + ', ' + c.total + ' candidates';
       if (check === 'comparison_plan') return met(name + ', is prepared. Check it is yours; it starts only when you press Start comparison.');
       if (!c.total) return unknown(name + ': no candidates are recorded for this plan. Inspect its message before relying on it.');

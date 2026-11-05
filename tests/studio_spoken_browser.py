@@ -206,7 +206,7 @@ class SpokenBrowserTests(unittest.TestCase):
                     nav = page.get_by_role('navigation', name='Studio views')
                     self.assertEqual('page', nav.get_by_role('link', name='Spoken Briefs', exact=True).get_attribute('aria-current'))
                     self.assertEqual('/voice.html', nav.get_by_role('link', name='Voice takes', exact=True).get_attribute('href'))
-                    link = nav.get_by_role('link', name='Compare & review', exact=True)
+                    link = nav.get_by_role('link', name='Comparisons', exact=True)
                     self.assertEqual('/#production', link.get_attribute('href'))
                     link.focus()
                     with page.expect_navigation() as navigation:
