@@ -1106,7 +1106,8 @@ async function modelSummaryClarity() {
 }
 
 async function modelStatusFilter() {
-  const {element, context, run} = sandbox({}, {});
+  const {element, context, run, reads, requests} = sandbox({}, {});
+  element('#modelCards').querySelector = () => null;
   context.localStorage = (store => ({getItem: k => store.has(k) ? store.get(k) : null, setItem(k, v) {store.set(k, String(v));}, removeItem(k) {store.delete(k);}}))(new Map());
   assert.equal(run('typeof restoreModelStatus'), 'function', 'Models list has a status filter to restore; without it every weight renders with no way to surface what needs action');
   const assets = [
@@ -1174,6 +1175,25 @@ async function modelStatusFilter() {
   element('#modelStatus').value = 'installed';
   await element('#modelStatus').onchange();
   assert.equal(context.localStorage.getItem('studio.models.status'), 'installed', 'The choice is stored under studio.models.status');
+  // Required-file routes bypass the status filter for cards, but the same control
+  // still filters Files on disk. Its visible/accessibility label must name that scope.
+  element('#modelStatusScope').textContent = 'Show';
+  run(`modelReqs.set('plain',[{file:'checkpoints/missing.safetensors',asset_id:'a-missing',present:false},
+    {file:'checkpoints/unverified.safetensors',asset_id:'a-unverified',present:true,pin_mismatch:{}}]);`);
+  const readCount=reads.length,writeCount=requests.length;
+  for(const [hash,search,needed] of [['#models','',false],['#models?need=plain','',true],['#models','?need=plain&keep=1',true],['#create','?need=plain&keep=1',false],['#models','',false]]){
+    Object.assign(context.location,{hash,search});run('renderCuratedModels();renderInventory()');
+    assert.equal(element('#modelStatusScope').textContent,needed?'Files on disk below':'Show','The label follows the actual required-file scope');
+    assert.equal(element('#modelStatus').value,'installed');
+    assert.equal(context.localStorage.getItem('studio.models.status'),'installed','Changing scope preserves the saved choice');
+    assert.deepEqual([...element('#modelCards').innerHTML.matchAll(/data-install="([^"]+)"/g)].map(m=>m[1]).sort(),
+      needed?['a-missing','a-unverified']:['a-verified'],'Required missing/unchecked cards stay visible; ordinary Installed still narrows cards');
+    assert.match(element('#inventory').innerHTML,/checkpoints\/verified\.safetensors/);
+    assert.doesNotMatch(element('#inventory').innerHTML,/unverified\.safetensors/,'Files on disk keeps the selected Installed filter');
+    assert.deepEqual({hash:context.location.hash,search:context.location.search},{hash,search},'Presentation does not rewrite the route');
+  }
+  assert.equal(reads.length,readCount,'Rendering the scope adds no reads');
+  assert.equal(requests.length,writeCount,'Rendering the scope adds no writes');
   element('#modelStatus').value = 'all';
   run('restoreModelStatus()');
   assert.equal(element('#modelStatus').value, 'installed', 'The stored choice is restored on load');

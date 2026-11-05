@@ -129,7 +129,7 @@ def models_case(page, origin, output, width):
     assert '20 GiB reserved' not in page.locator('#modelsView').inner_text()
     assert '7.00 GiB' in page.locator('#storage').inner_text()
 
-    def capture(target, name, reveal=True):
+    def capture(target, name, reveal=True, status_scope='Show'):
         if reveal:
             target.scroll_into_view_if_needed()
         bounds = target.evaluate('''node=>{const r=node.getBoundingClientRect(),x=(r.left+r.right)/2,y=(r.top+r.bottom)/2;
@@ -138,12 +138,18 @@ def models_case(page, origin, output, width):
             .filter(visible).map(n=>n.getBoundingClientRect().bottom));
           const label=document.querySelector('.models-toolbar label[for="curatedModelSearch"]'),l=label.getBoundingClientRect();
           const toolbar=document.querySelector('.models-toolbar').getBoundingClientRect(),occupied=Math.max(headerBottom,toolbar.bottom);
+          const scope=document.querySelector('#modelStatusScope'),filter=document.querySelector('#modelStatus');
+          const box=node=>{const b=node.getBoundingClientRect();return {top:b.top,bottom:b.bottom,left:b.left,right:b.right,
+            hit:node.contains(document.elementFromPoint((b.left+b.right)/2,(b.top+b.bottom)/2)),
+            topHit:node.contains(document.elementFromPoint(b.left+Math.min(10,b.width/2),b.top+2))};};
           return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,width:innerWidth,height:innerHeight,
             occupied,hit:node.contains(document.elementFromPoint(x,y)),
             topHit:node.contains(document.elementFromPoint(r.left+Math.min(10,r.width/2),r.top+2)),scrollWidth:document.documentElement.scrollWidth,
             toolbar_label:{top:l.top,bottom:l.bottom,left:l.left,right:l.right,header_bottom:headerBottom,
               hit:label.contains(document.elementFromPoint((l.left+l.right)/2,(l.top+l.bottom)/2)),
               topHit:label.contains(document.elementFromPoint((l.left+l.right)/2,l.top+2))},
+            status_filter:{label:scope.textContent,value:filter.value,disabled:filter.disabled,
+              label_bounds:box(scope),control_bounds:box(filter)},
             placeholders:[...document.querySelectorAll('#modelLooks .look-thumb')].filter(visible).map(n=>{
               const b=n.getBoundingClientRect();return {width:b.width,height:b.height};}),
             backend_status:document.querySelector('#backendStatus').textContent,
@@ -158,6 +164,12 @@ def models_case(page, origin, output, width):
         label = bounds['toolbar_label']
         assert label['header_bottom'] <= label['top'] < label['bottom'] <= bounds['height'], bounds
         assert 0 <= label['left'] < label['right'] <= bounds['width'] and label['hit'] and label['topHit'], bounds
+        status = bounds['status_filter']
+        assert status['label'] == status_scope and not status['disabled'], bounds
+        assert page.get_by_role('combobox', name=status_scope, exact=True).get_attribute('id') == 'modelStatus'
+        for box in (status['label_bounds'], status['control_bounds']):
+            assert label['header_bottom'] <= box['top'] < box['bottom'] <= bounds['height'], bounds
+            assert 0 <= box['left'] < box['right'] <= bounds['width'] and box['hit'] and box['topHit'], bounds
         assert all(abs(box['width']-44) < .5 and abs(box['height']-44) < .5 for box in bounds['placeholders']), bounds
         return bounds
 
@@ -191,37 +203,57 @@ def models_case(page, origin, output, width):
     page.locator('#curatedModelSearch').click()
     tab_to(install)
     assert install.evaluate('node=>document.activeElement===node')
-    action_bounds = capture(install, 'models-needed-files', reveal=False)
+    action_bounds = capture(install, 'models-needed-files', reveal=False, status_scope='Files on disk below')
 
     def show_all():
         page.locator('#modelCards [data-models-all]').click()
         page.wait_for_function('!document.querySelector("#modelLooks").hidden && !modelUseBusy')
         assert page.locator('#curatedModelSearch').input_value() == ''
         assert page.locator('#modelStatus').input_value() == 'all'
+        assert page.get_by_role('combobox', name='Show', exact=True).get_attribute('id') == 'modelStatus'
+        assert page.evaluate("localStorage.getItem('studio.models.status')") == 'all'
 
     show_all()
     page.locator('#modelStatus').select_option('installed')
     page.wait_for_function('document.querySelectorAll("#modelCards .model-card").length===1 && document.querySelector("#modelCards [data-install=ready]")')
     assert page.locator('#modelCards .model-card').count() == 1
     assert page.locator('#modelCards [data-install="ready"]').count() == 1
-    row('B').get_by_role('link', name='View files').click()
+    page.locator('#curatedModelSearch').click()
+    tab_to(row('B').get_by_role('link', name='View files'))
+    page.keyboard.press('Enter')
     page.wait_for_function('document.querySelector("#modelLooks").hidden && !modelUseBusy')
     assert page.locator('#modelCards .model-card').count() == 2
+    assert page.locator('#modelCards [data-install="shared"]').count() == 1
+    assert page.locator('#modelStatus').input_value() == 'installed'
+    assert page.evaluate("localStorage.getItem('studio.models.status')") == 'installed'
     verify = page.locator('#modelCards [data-install="changed"]')
     assert verify.is_visible() and verify.inner_text() == 'Verify'
-    capture(verify, 'models-changed-file')
+    capture(verify, 'models-changed-file', status_scope='Files on disk below')
+    page.go_back()
+    page.wait_for_function('''location.hash==='#models' && !document.querySelector('#modelLooks').hidden && !modelUseBusy
+      && document.querySelectorAll('#modelCards .model-card').length===1 && document.querySelector('#modelCards [data-install=ready]')''')
+    assert page.locator('#modelStatus').input_value() == 'installed'
+    assert page.evaluate("localStorage.getItem('studio.models.status')") == 'installed'
+    returned = row('B').get_by_role('link', name='View files')
+    page.locator('#curatedModelSearch').click()
+    tab_to(returned)
+    return_bounds = capture(returned, 'models-filter-return', reveal=False)
+    page.keyboard.press('Enter')
+    page.wait_for_function('document.querySelector("#modelLooks").hidden && !modelUseBusy')
     show_all()
     row('unknown').get_by_role('link', name='View files').click()
     page.wait_for_function('document.querySelector("#modelLooks").hidden && !modelUseBusy')
     assert page.locator('#modelCards [data-install]').count() == 0
     assert 'unknown-location.safetensors: file not checked' in page.locator('#modelCards').inner_text()
     assert 'Model folder unknown; inspect its source.' in page.locator('#modelCards').inner_text()
-    capture(page.locator('#modelCards .model-other-files'), 'models-unknown-file')
+    capture(page.locator('#modelCards .model-other-files'), 'models-unknown-file', status_scope='Files on disk below')
     return {'width':width, 'known_file_detail_once':True, 'shared_action_once':True, 'unlisted_detail_retained':True,
             'unknown_and_failed_checks_explicit':True, 'native_file_links':True, 'filters_and_search':True,
             'manual_install_preserved':True, 'keyboard_navigation':True, 'keyboard_focus':True,
             'startup_before_catalog_healthy':True, 'toolbar_label_uncovered':True, 'placeholders_44px':True, 'visible_errors':[],
-            'summary_bounds':summary_bounds, 'action_bounds':action_bounds}
+            'status_scope_visible_and_accessible':True, 'back_preserves_installed_and_restores_scope':True,
+            'show_everything_resets_filters':True,
+            'summary_bounds':summary_bounds, 'action_bounds':action_bounds, 'return_bounds':return_bounds}
 
 
 def run(output):

@@ -119,6 +119,7 @@ If **Generate** is disabled and the reason says "Needs 2 model files first: open
 - After copying a file, press **Refresh inventory** and check the card reads as present. **Verify** hashes the file and compares it with its pinned checksum.
 - Only `.safetensors` files can be installed or verified here. A file of another format, such as a GGUF, reads **Present · pin only** once copied in, and its button stays disabled as **Manual file**. The UI cannot hash it, so it never reads "SHA-256 verified"; compare its checksum with the pin in `models/library.json` yourself.
 - The top of **Models & setup** lists **What you can make**: ready looks, missing-file counts, changed files that need checking, and checks that have not finished or could not complete. **View files** opens that look's file details and actions. Shared files have one action card; unlisted files retain their names and explanations in the filtered view.
+- In **Files needed for**, the status menu is labelled **Files on disk below**: it filters that lower list without hiding required cards. Browser **Back** keeps the status choice; **Show everything** clears the top search and selects **Everything**.
 - A failed file check does not count as ready. Use **Refresh inventory** to retry; failed checks wait two minutes between attempts. The storage panel shows the actual free-space reserve.
 
 A matching hash proves the bytes match the pinned file. It does not prove who made it or that you may use it commercially.
