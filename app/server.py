@@ -1699,16 +1699,16 @@ class Studio:
             if (not isinstance(jobs, JobsView) or self._worker_busy or self.cancel_requests or not self.queue.empty()
                     or any(j.get("status") in self.ACTIVE_JOB_STATUSES for j in list(jobs.values()))): return None, None
             now = time.monotonic(); key = (jobs.rev, scope); hit = self._jobs_views.get(key)
-            return (key, now), (hit if hit and now - hit[2] < JOBS_VIEW_MAX_AGE else None)
+            return (key, now, jobs), (hit if hit and hit[3] is jobs and now - hit[2] < JOBS_VIEW_MAX_AGE else None)
 
     def jobs_view_store(self, token, raw, etag):
-        """Keep bytes built after `jobs_view_lookup` under its pre-build revision: a mutation during the build leaves them unreachable."""
+        """Keep bytes under their pre-build collection and revision: a mutation or replacement leaves them unreachable."""
         if token is None: return
-        key, started = token
+        key, started, jobs = token
         with self.lock:
-            if key[0] != getattr(self.jobs, 'rev', None): return   # a slow builder at an old revision must not evict the newer entries
-            for old in [k for k in self._jobs_views if k[0] != key[0]]: del self._jobs_views[old]
-            self._jobs_views[key] = (raw, etag, started)
+            if jobs is not self.jobs or key[0] != jobs.rev: return   # a slow builder must not evict newer entries, even after replacement at the same revision
+            for old in [k for k, entry in self._jobs_views.items() if k[0] != key[0] or entry[3] is not jobs]: del self._jobs_views[old]
+            self._jobs_views[key] = (raw, etag, started, jobs)   # retain identity, avoiding recycled id() values and copied JobsView attributes
 
     def _save(self, job, durable=False):
         _bump_jobs(self)   # before too: several callers (voice_baseline, production, tiles) edit a settled job without studio.lock, then save
