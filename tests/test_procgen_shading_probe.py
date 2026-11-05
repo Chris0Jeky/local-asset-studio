@@ -71,6 +71,40 @@ class ExportedNormals(unittest.TestCase):
             self.assertTrue((output / 'prop-0-smooth-0/request.json').is_file())
             self.assertTrue((output / 'prop-0-smooth-0/plan.json').is_file())
 
+    def test_completed_cases_and_later_failure_keep_immutable_receipts(self):
+        # Exercise real evidence writes across several cases; native geometry is covered by the opt-in gate.
+        for fail_at in (None, 3):
+            with self.subTest(fail_at=fail_at), tempfile.TemporaryDirectory() as directory:
+                output = Path(directory) / 'qualification'; calls = []
+                def run(command, folder, name, timeout):
+                    calls.append(folder)
+                    if len(calls) == fail_at: raise EvidenceError('third native export failed')
+                    probe.write_json(folder / 'measurements.json', {'blender': {'fixture': True}})
+                    for level in range(3): (folder / f'asset_LOD{level}.glb').write_bytes(glb_bytes(*model()))
+                def triangles(path):
+                    request = probe.read_json(path.parent / 'request.json')
+                    kind, smooth = request['params']['kind'], request['params']['smooth']
+                    level = int(path.stem[-1]); suffix = '' if level == 0 else f'_lod{level}'
+                    positions = ((0, 0, 0), (1, 0, 0), (1, 1, 0))
+                    normals = ((1, 0, 0), (.6, 0, .8), (0, 0, 1)) if smooth and kind != 1 else ((0, 0, 1),) * 3
+                    side = list(zip(positions, normals))
+                    cap = [((0, 0, 0), (0, 1, 0)), ((1, 0, 0), (0, 1, 0)), ((0, 0, 1), (0, 1, 0))]
+                    if kind == 1: return {'crate' + suffix: [side]}
+                    body, caps = ('lantern_body', 'lantern_caps') if kind == 0 else ('foliage', 'pot')
+                    return {body + suffix: [side], caps + suffix: [side, cap]}
+                with patch.object(probe, 'run_command', side_effect=run), \
+                     patch.object(probe.factory, 'evaluate_gates', return_value=[{'passed': True}]), \
+                     patch.object(probe, 'read_triangles', side_effect=triangles):
+                    receipt = probe.qualify(Path(directory) / 'fixture-blender', output)
+                count = 6 if fail_at is None else 2
+                self.assertEqual(receipt['state'], 'passed' if fail_at is None else 'failed')
+                self.assertEqual(len(receipt['cases']), count)
+                self.assertEqual(probe.read_json(output / 'receipt.json'), receipt)
+                self.assertEqual(len(list(output.glob('prop-*/shading.json'))), count)
+                for row in receipt['cases']:
+                    self.assertEqual(probe.read_json(output / f"prop-{row['kind']}-smooth-{row['smooth']}" / 'shading.json'), row)
+                if fail_at is not None: self.assertIn('third native export failed', receipt['failures'][0])
+
     def test_geometry_key_retains_topology_and_ignores_export_vertex_order(self):
         triangle = [((0, 0, 0), (0, 0, 1)), ((1, 0, 0), (0, 0, 1)), ((0, 1, 0), (0, 0, 1))]
         self.assertEqual(probe.geometry_key([triangle]), probe.geometry_key([triangle[1:] + triangle[:1]]))

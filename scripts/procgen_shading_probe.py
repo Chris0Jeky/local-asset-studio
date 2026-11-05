@@ -132,7 +132,7 @@ def qualify(blender, output, timeout=180):
                         cap_name = ('lantern_caps' if kind == 0 else 'pot') + suffix
                         require_capped_round_shading(summaries[cap_name], cap_name)
                 receipt['cases'].append(row); pair.append(exports)
-                write_json(out / 'receipt.json', receipt)
+                write_json(directory / 'shading.json', row)
             for level, (flat, smooth) in enumerate(zip(*pair)):
                 require(flat.keys() == smooth.keys(), 'Shading changed exported part names')
                 for name in flat:

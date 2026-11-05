@@ -27,7 +27,7 @@ schema lacked `smooth` and the Blender entry point executed at import. The
 entry point now uses a normal `__main__` guard, allowing the production builder
 to be imported with inert Blender sockets for graph tests.
 
-- `python -m unittest discover -s tests -p 'test_procgen*.py'`: **53 tests,
+- `python -m unittest discover -s tests -p 'test_procgen*.py'`: **54 tests,
   4 skipped**. The skips are explicit optional native/engine tests, including
   the new shading qualification; no Blender was available locally.
 - `python -m unittest discover -s tests -p 'test_procedural*.py'`: **30 tests
@@ -125,3 +125,18 @@ code, the sphere, cylinder and cone regressions all fail with the same
 tests. The original failed receipt, stdout/stderr and verified runtime identity
 remain in artifact `13452770402`; the subsequent candidate still requires a
 fresh native run. No failed run is replaced by a skipped or mock-only result.
+
+The [second native run](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/42106126054)
+completed both lantern Blender invocations and reached the per-case receipt
+write. It then exposed a probe error: `engine_validation.write_json` deliberately
+creates immutable files, while the probe tried to reuse the aggregate receipt
+path after each case and again at finalization. Artifact `13451882092` retains
+the original partial receipt and six lantern GLBs; it is a failed qualification.
+
+Each completed case now gets its own immutable `shading.json`; the final
+aggregate `receipt.json` is created once. A regression executes the real evidence
+writes with synthetic geometry for both a six-case success and an export failure
+after two completed cases. Both scenarios reproduced the native `FileExistsError`
+before correction. After correction, all case receipts remain readable, the
+final state and case count are correct, and a later failure preserves its reason.
+This tests receipt handling only; it does not replace native normal validation.
