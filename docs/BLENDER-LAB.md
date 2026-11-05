@@ -28,6 +28,11 @@ with status 2 and does not retry. Existing receipts remain protected from replac
   `E:/local-asset-studio-labs/rnd-20261102/blender-worker/TRACKER.md`. A kept articulated chest (`chest.blend`,
   `chest.glb`) is at `.../blender-worker/assets-keep/chest54/`.
 
+**5 November update for #1984:** the MCP scene description now keeps small full replies and uses bounded,
+pageable object summaries for larger scenes. See [Scene description replies](#scene-description-replies) and the
+[verification note](verification/2026-11-05-blender-scene-summary.md). The 2 November benchmark above is historical;
+no live repair benchmark was rerun for this facade change.
+
 ### Checking assets bound for Unreal Engine 5
 
 The sentinel checks a `.blend` by exporting a GLB with `LAS_GLTF_SETTINGS`, reimporting it in a fresh Blender and
@@ -247,9 +252,9 @@ cold first render took 2.5 s, and 3.02 s vs 54.0 s (17.9×) on 5.4. The leak che
 
 ## MCP façade (stdio)
 
-`scripts/blender_mcp.py` is a narrow MCP server: JSON-RPC over stdio with no new dependency. Its nine tools map one to
-one onto the worker's typed commands: `blender_ping`, `blender_caps`, `blender_open`, `blender_describe_scene`,
-`blender_render_views`, `blender_save_copy`, `blender_export`, `blender_apply_edit` and `blender_reimport_validate`.
+`scripts/blender_mcp.py` is a narrow MCP server: JSON-RPC over stdio with no new dependency. Its tools route typed
+worker commands: `blender_ping`, `blender_caps`, `blender_open`, `blender_describe_scene`, `blender_render_views`,
+`blender_save_copy`, `blender_export`, `blender_apply_edit`, `blender_compare_to` and `blender_reimport_validate`.
 There is no tool for arbitrary Python. The Blender executable, the write root and the read tree for `.blend` files are
 fixed at launch; `blender_open` refuses paths outside `--blend-root`. The worker starts on the first call and restarts
 after a crash or kill.
@@ -275,6 +280,55 @@ Measured on 2 Nov 2026 with 5.4 alpha:
 - Claude Haiku 5.5 opened the lab asset, described it, moved `Badge`, and was refused when it tried to hide `Head`
   (not allow-listed). It then ran `blender_reimport_validate`, which passed with no failures (8 turns, $0.018).
 - Codex GPT-6.1 Sol read the same semantic checksum through the same server.
+
+### Scene description replies
+
+`blender_describe_scene` accepts these optional arguments:
+
+| Argument | Default | Meaning |
+| --- | --- | --- |
+| `mode` | `"auto"` | `auto` returns the original full manifest when it fits and no filter/cursor was supplied; `summary` requests the object summary directly. |
+| `objects` | All objects | 1–100 unique, exact, case-sensitive object names, each 1–256 characters. This requests the summary schema, even when the selection is small. No patterns or Unicode normalization. |
+| `cursor` | First page | The opaque `page.next_cursor` from a previous summary; repeat the same `objects` selection if it was filtered. |
+| `max_bytes` | `32768` | Integer from 4,096 to 65,536: UTF-8 byte limit of the **serialized MCP tool result**, including `content`, `isError`, and escaped text. |
+
+For example, `{"objects": ["Badge"], "max_bytes": 8192}` reads a bounded summary for exactly `Badge`.
+Unknown requested names produce a tool error with the missing-name count; no partial selection is silently accepted.
+Explicit `mode: "auto"` or a `max_bytes`-only request keeps the same full-manifest behavior as the defaults.
+
+The byte limit applies to the complete tool `result` using the server's JSON encoding, equivalent to
+`len(json.dumps(reply["result"]).encode("utf-8"))`. It includes nested JSON quoting and Unicode escaping; it is not
+a character count of the manifest or its text field. The outer JSON-RPC envelope, caller-owned request ID and stdio
+newline are outside this limit. IDs are echoed unchanged. Tool errors are also bounded by the serialized result
+limit. The facade never cuts serialized JSON to make it fit.
+
+Filtered, explicitly summarized, oversized or continued replies use `schema: "las.blender-scene-summary.v1"` and
+`kind: "scene-summary"`. Each object row preserves `name`, `type`, `parent`, `parent_type`, `parent_bone`,
+`matrix_world`, `hide_render`, and `visible`. These are **world-space matrices at the manifest's existing precision**,
+not local `location`, `rotation_euler` or `scale` values for `blender_apply_edit`; parenting and constraints matter.
+The summary retains the full scene's metadata, counts and original `semantic_checksum`, labeled
+`checksum_scope: "full-scene"`. Do not recompute an edit precondition from the projection.
+
+`omitted_sections` names excluded manifest sections and counts their top-level list/map entries (or `null` for a
+scalar). `omitted_object_fields` names the detail fields excluded from the selected objects. The `page` record
+distinguishes `objects_total`, `objects_selected`, `objects_excluded_by_filter`, `offset`, `returned`, and
+`remaining`. Those counts describe whole objects; no row is cut halfway through.
+
+Rows are ordered by exact object name. Follow `page.next_cursor` until it is `null`; each token advances past only
+the rows actually returned. Continuations stay summaries even if the last page or a larger allowed budget would
+fit a full manifest. A cursor binds the full-scene checksum and exact name selection. If the scene changes, start
+again without the cursor; a different selection also requires a new first page. The opaque token is at most 512
+ASCII characters and does not contain the selected-name list. There is no session cache or additional worker state.
+
+If even the next complete summary row or required metadata cannot fit the chosen budget, the facade returns a
+bounded error without skipping an object or issuing a non-progressing cursor. Choose a larger allowed budget or a
+different exact selection. An empty scene returns an empty terminal summary normally.
+
+Filtering and paging happen after the worker's unchanged `describe_scene` command. They bound what the agent
+receives, not the cost of constructing or transferring the full native manifest. The facade options never reach
+Blender; native manifests, semantic checksums and edit preconditions keep their existing meaning. The focused
+offline regressions use recorded manifests and synthetic large scenes; they do not establish a new live repair
+success rate.
 
 ## Real LAS asset: the articulated chest
 
