@@ -93,27 +93,66 @@ def read_glb_json(path: Path) -> dict:
 
 
 def vrm_springs(doc: dict) -> dict:
-    """VRMC_springBone chains (root, end, first-joint settings, collider indices from their groups) and colliders.
+    """VRM 1.0 spring chains, each authored joint, world-space gravity and optional center.
 
-    Per-joint settings beyond the first joint, gravityDir and center are not carried over."""
-    names = [n.get('name', f'node{i}') for i, n in enumerate(doc.get('nodes', []))]
+    Legacy first-joint summaries stay readable, but the runtime uses joint_settings. Names must identify a
+    unique imported node: guessing an unnamed/duplicate node could bind settings to a different bone."""
     sb = doc.get('extensions', {}).get('VRMC_springBone')
     if not sb: raise ValueError('no VRMC_springBone extension (VRM 1.0 required)')
+    names = [n.get('name') for n in doc.get('nodes', [])]
+
+    def index(value, size, label):
+        if type(value) is not int or not 0 <= value < size: raise ValueError(f'{label}: invalid index {value!r}')
+        return value
+
+    def node_name(value, label):
+        name = names[index(value, len(names), label)]
+        if not isinstance(name, str) or not name or names.count(name) != 1:
+            raise ValueError(f'{label}: node {value} needs a unique nonempty name for the Godot proof')
+        return name
+
+    def number(value, label, minimum=None, maximum=None):
+        if type(value) not in (int, float) or not math.isfinite(value): raise ValueError(f'{label}: expected finite number')
+        if minimum is not None and value < minimum or maximum is not None and value > maximum:
+            raise ValueError(f'{label}: value out of range')
+        return value
+
+    def vector(value, label):
+        if not isinstance(value, list) or len(value) != 3: raise ValueError(f'{label}: expected three coordinates')
+        return [number(v, label) for v in value]
+
     colliders = []                                              # schema defaults: offset/tail [0,0,0], radius 0
-    for c in sb.get('colliders', []):
-        shape = c['shape']; kind = 'sphere' if 'sphere' in shape else 'capsule'; s = shape[kind]
-        colliders.append({'bone': names[c['node']], 'type': kind, 'offset': s.get('offset', [0, 0, 0]),
-                          'tail': s.get('tail', [0, 0, 0]) if kind == 'capsule' else None, 'radius': s.get('radius', 0.0)})
+    for i, c in enumerate(sb.get('colliders', [])):
+        label = f'collider {i}'; shape = c.get('shape', {})
+        kinds = [k for k in ('sphere', 'capsule') if k in shape]
+        if len(kinds) != 1: raise ValueError(f'{label}: expected one sphere or capsule shape')
+        kind = kinds[0]; s = shape[kind]
+        colliders.append({'bone': node_name(c.get('node'), label), 'type': kind,
+                          'offset': vector(s.get('offset', [0, 0, 0]), label),
+                          'tail': vector(s.get('tail', [0, 0, 0]), label) if kind == 'capsule' else None,
+                          'radius': number(s.get('radius', 0.0), label, 0)})
     groups = [g.get('colliders', []) for g in sb.get('colliderGroups', [])]
     chains = []
-    for s in sb.get('springs', []):
-        joints = s.get('joints', [])
-        if len(joints) < 2: continue
+    for i, s in enumerate(sb.get('springs', [])):
+        label = f'spring {i}'; joints = []
+        for j, joint in enumerate(s.get('joints', [])):
+            at = f'{label} joint {j}'
+            joints.append({'node': joint.get('node'), 'bone': node_name(joint.get('node'), at),
+                           'stiffness': number(joint.get('stiffness', 1.0), at, 0),
+                           'drag': number(joint.get('dragForce', .5), at, 0, 1),
+                           'gravity': number(joint.get('gravityPower', 0.0), at, 0),
+                           'gravity_direction': vector(joint.get('gravityDir', [0.0, -1.0, 0.0]), at),
+                           'radius': number(joint.get('hitRadius', 0.0), at, 0)})
+        if len(joints) < 2: continue                            # no segment to simulate (unchanged)
+        if len({j['node'] for j in joints}) != len(joints): raise ValueError(f'{label}: repeated joint node')
+        center = None if 'center' not in s else {'node': s['center'], 'name': node_name(s['center'], f'{label} center')}
+        collisions = {index(c, len(colliders), f'{label} collider')
+                      for g in s.get('colliderGroups', []) for c in groups[index(g, len(groups), f'{label} group')]}
         first = joints[0]
-        chains.append({'name': s.get('name', ''), 'root': names[first['node']], 'end': names[joints[-1]['node']],
-                       'joints': len(joints), 'stiffness': first.get('stiffness', 1.0), 'drag': first.get('dragForce', .5),
-                       'gravity': first.get('gravityPower', 0.0), 'radius': first.get('hitRadius', 0.0),
-                       'colliders': sorted({c for g in s.get('colliderGroups', []) for c in groups[g]})})
+        chains.append({'name': s.get('name', ''), 'root': first['bone'], 'end': joints[-1]['bone'],
+                       'joints': len(joints), 'stiffness': first['stiffness'], 'drag': first['drag'],
+                       'gravity': first['gravity'], 'radius': first['radius'], 'colliders': sorted(collisions),
+                       'joint_settings': joints, 'center': center})
     return {'chains': chains, 'colliders': colliders}
 
 

@@ -10,6 +10,11 @@ on:
       - 'tools/toon-compiler/**'
       - 'tests/test_toon_compile*.py'
       - 'tests/toon_material_policy_probe.gd'
+      - 'scripts/vrm_toon.py'
+      - 'tools/godot-toon/**'
+      - 'tests/test_vrm*springs*.py'
+      - 'tests/test_vrm_toon.py'
+      - 'tests/vrm_springs_probe.gd'
       - 'tools/gltf-validation/**'
       - 'tests/*engine*.py'
       - '.github/workflows/engine-evidence.yml'
@@ -24,6 +29,11 @@ on:
       - 'tools/toon-compiler/**'
       - 'tests/test_toon_compile*.py'
       - 'tests/toon_material_policy_probe.gd'
+      - 'scripts/vrm_toon.py'
+      - 'tools/godot-toon/**'
+      - 'tests/test_vrm*springs*.py'
+      - 'tests/test_vrm_toon.py'
+      - 'tests/vrm_springs_probe.gd'
       - 'tools/gltf-validation/**'
       - 'tests/*engine*.py'
       - '.github/workflows/engine-evidence.yml'
@@ -55,6 +65,7 @@ jobs:
       - run: python -m unittest discover -s tests -p test_engine_evidence.py -v
       - run: python -m unittest discover -s tests -p test_engine_live.py -v
       - run: python -m unittest discover -s tests -p 'test_toon_compile*.py' -v
+      - run: python -m unittest discover -s tests -p 'test_vrm*springs*.py' -v
       - uses: actions/upload-artifact@v4
         if: always()
         with:
