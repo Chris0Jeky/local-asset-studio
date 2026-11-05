@@ -210,15 +210,15 @@ Make covers a look, its tune, the shape and the count. Open the Full editor when
 - sampler, scheduler, CFG or denoise by hand;
 - more adapter slots than the look shows, or a recipe that is not a look;
 - a reference board (identity, pose or style pictures);
-- **Plan comparison** for a budgeted, blind comparison (see **Compare & review**);
+- **Plan comparison** for a budgeted, blind comparison (see **Comparisons**);
 - the recipe's graph under **Under the hood**, or **Open ComfyUI**.
 
 Two ways in:
 
 - **Open in the full editor instead**, under Generate in Make. It prepares the same request Generate would send, with your words filled in, and shows it. It does not generate. Press **Generate** there, or Ctrl+Enter.
-- Sidebar: **Advanced**, then **Full editor**. The Advanced group is folded until you open it.
+- Sidebar: choose **Full editor** directly. It is visible alongside Make and Library.
 
-Use **Make** in the sidebar to come back. **Compare & review** (also under Advanced) is for budgeted plans, not for Make's **Compare looks**.
+Use **Make** in the sidebar to come back. **Comparisons**, also visible in the sidebar, holds budgeted plans. Open a finished image comparison to see its pictures, then use **Pick a winner** for the side-by-side Review desk or **Choose here** under a candidate. The budget and branch controls are below the pictures in **Plan & execution details**. Make's **Compare looks** remains the quick way to compare looks at one seed.
 
 ## 7. Troubleshooting
 

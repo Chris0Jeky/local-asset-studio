@@ -269,7 +269,7 @@ test('Review desk Choose as winner',async t=>{
   });
 });
 
-// #1730: render and click the real Compare & review page, with only the existing API and Library hooks stubbed.
+// Render and click the real Comparisons page, with only the existing API and Library hooks stubbed.
 function comparisonPage(){
   const elements=new Map(),requests=[],opened=[];let current,refusal=null,libraryReads=0;
   const $=selector=>{if(!elements.has(selector))elements.set(selector,{innerHTML:'',value:'',textContent:'',classList:{toggle(){}}});return elements.get(selector);};
@@ -278,19 +278,101 @@ function comparisonPage(){
     post:async(url,data)=>{requests.push({url,data:JSON.parse(JSON.stringify(data))});if(refusal)throw Error(refusal);current.state={...current.state,status:'reviewed',review:{status:data.asset_id?'selected':'needs_work',...data}};return current;},
     refreshAssets:async()=>{libraryReads++;},openAsset:id=>opened.push(id)});
   vm.runInContext(fs.readFileSync(require.resolve('../app/static/production.js'),'utf8'),context);
-  const plan={id:project,name:'Study',kind:'comparison',state:{status:'awaiting_review',message:'Finished'},budget:{reserved:2,allowance:2},values:[1,2],
+  const plan={id:project,name:'Study',kind:'comparison',state:{status:'awaiting_review',message:'Comparison finished. Review candidates and record your choice.'},budget:{reserved:2,allowance:2},values:[1,2],
     stages:['A','B'].map(label=>({label,job:{status:'completed',outputs:[{asset_id:'asset-'+label,media_type:'image'}]}}))};
-  const render=(value=plan)=>{current=structuredClone(value);context.fixture=current;vm.runInContext('productionPlans=[fixture];productionId=fixture.id;renderProduction();',context);};
+  const render=(value=plan,selected=value.id)=>{current=structuredClone(value);context.fixture=current;context.selectedPlan=selected;vm.runInContext('productionPlans=[fixture];productionId=selectedPlan;renderProduction();',context);};
   const click=(selector,dataset)=>$('#productionDetail').onclick({target:{closest:s=>s===selector?{dataset}:null}});
-  return {$,plan,render,click,requests,opened,refuse:message=>{refusal=message;},libraryReads:()=>libraryReads};
+  return {$,plan,render,click,requests,opened,refuse:message=>{refusal=message;},libraryReads:()=>libraryReads,
+    viewport:width=>{context.window={matchMedia:query=>({matches:width<=Number(/max-width:\s*(\d+)px/.exec(query)?.[1]||0)})};}};
 }
 test('awaiting study has one primary Pick a winner link to its existing desk',()=>{
   const page=comparisonPage();page.render();
   const html=page.$('#productionList').innerHTML+page.$('#productionDetail').innerHTML;
   assert.equal((html.match(/href="\/review\.html\?project=/g)||[]).length,1);
   assert.match(html,new RegExp('<a class="primary [^"]*" href="/review.html\\?project='+project+'">Pick a winner</a>'));
+  assert.doesNotMatch(page.$('#productionList').innerHTML,/href="\/review\.html\?project=/,'the selected plan has no duplicate list entry');
+  assert.match(page.$('#productionDetail').innerHTML,/class="comparison-review-entry"[\s\S]*?>Pick a winner<\/a>/,'the entry belongs beside its pictures');
   assert.doesNotMatch(html,/Review now|Open review desk/);
   assert.equal(page.requests.length,0,'rendering never sends a request');
+});
+test('an unselected awaiting comparison keeps its contextual review entry in the list',()=>{
+  const page=comparisonPage();page.render(page.plan,null);
+  assert.match(page.$('#productionList').innerHTML,new RegExp('href="/review.html\\?project='+project+'">Pick a winner</a>'));
+  assert.doesNotMatch(page.$('#productionDetail').innerHTML,/href="\/review\.html\?project=/);
+  assert.equal(page.requests.length,0);
+});
+test('explicit narrow selection clears the header and its overflowing privacy row; rerender never scrolls',()=>{
+  const page=comparisonPage();page.render();page.viewport(390);
+  let margin=0,focus=0,scrolls=0,privacyBottom=90;
+  Object.assign(page.$('#productionPlanTitle'),{style:{setProperty:(name,value)=>{assert.equal(name,'scroll-margin-top');margin=parseFloat(value);}},focus:()=>focus++,scrollIntoView:()=>scrolls++});
+  page.$('.studio-globalbar').getBoundingClientRect=()=>({bottom:58});
+  page.$('.studio-globalbar .privacy-bar').getBoundingClientRect=()=>({bottom:privacyBottom});
+  const select=()=>page.$('#productionList').onclick({target:{closest:selector=>selector==='[data-project]'?{dataset:{project}}:null}});
+  select();assert.ok(margin>privacyBottom,'The heading must clear the privacy row outside the header box');
+  assert.equal(focus,1);assert.equal(scrolls,1);
+  privacyBottom=120;select();assert.ok(margin>privacyBottom,'Selection measures the current row instead of a fixed allowance');
+  page.render();assert.equal(focus,2);assert.equal(scrolls,2,'Refreshing the same plan never replays selection scrolling');
+  page.viewport(1440);select();assert.equal(scrolls,2,'Wide selection retains the side-by-side layout without a scroll handoff');
+  page.viewport(390);page.render({...page.plan,state:{status:'failed',message:'Inspect the retained failure.'}});select();
+  assert.equal(scrolls,2,'Execution states retain their existing focus behavior');
+  assert.equal(page.requests.length,0);
+});
+test('finished pictures and review entry precede folded budget, time and branch controls',()=>{
+  const page=comparisonPage();page.plan.state.time_budget={measured_seconds:120,unmeasured_seconds:0,limit_seconds:600,remaining_seconds:480};page.render();
+  const html=page.$('#productionDetail').innerHTML,fold=html.indexOf('<details id="comparisonPlanDetails"');
+  assert.ok(fold>html.indexOf('<div class="candidate-grid">'));
+  const first=html.slice(0,fold),details=html.slice(fold);
+  assert.match(first,/2 image candidates ready/);
+  assert.match(first,/href="\/review\.html\?project=/);
+  assert.match(first,/id="blindComparison"/);
+  assert.match(first,/data-candidate-open="asset-A"/);
+  assert.doesNotMatch(first,/data-project-action="branch"|Time allowance:|graph runs reserved/);
+  assert.doesNotMatch(first,/Comparison finished\. Review candidates and record your choice\./);
+  assert.match(details,/<summary id="comparisonPlanDetailsToggle">Plan &amp; execution details<\/summary>/);
+  assert.match(details,/data-project-action="branch"/);
+  assert.match(details,/Time allowance: 2\.0 min measured/);
+  assert.match(details,/2 of 2 graph runs reserved/);
+  assert.match(details,/Comparison finished\. Review candidates and record your choice\./);
+  assert.doesNotMatch(details,/<details id="comparisonPlanDetails"[^>]*\bopen\b/);
+  assert.match(first,/aria-label="Mark Candidate A in Library"/);
+  assert.equal(page.requests.length,0);
+});
+test('active, failed, uncertain and reconciliation guidance stays ahead of retained pictures',()=>{
+  const page=comparisonPage();
+  for(const [status,control] of [['planned','start'],['running','stop'],['uncertain','resume'],['failed','branch']]){
+    page.render({...page.plan,state:{status,message:'Important execution guidance'}});
+    const html=page.$('#productionDetail').innerHTML,grid=html.indexOf('<div class="candidate-grid">');
+    assert.doesNotMatch(html,/comparison-ready|comparisonPlanDetails/);
+    assert.ok(html.indexOf('Important execution guidance')<grid);
+    assert.ok(html.indexOf('data-project-action="'+control+'"')<grid);
+  }
+  page.render({...page.plan,can_reconcile_tracking:true});
+  assert.doesNotMatch(page.$('#productionDetail').innerHTML,/comparisonPlanDetails/);
+  assert.match(page.$('#productionDetail').innerHTML,/Record the retained failed\/partial outcome/);
+  assert.equal(page.requests.length,0);
+});
+test('finished comparison runtime and time-accounting errors remain visible above its pictures',()=>{
+  const page=comparisonPage();page.render({...page.plan,runtime_block:'The required model environment is unavailable.',state:{...page.plan.state,time_budget_error:'Time record needs inspection.'}});
+  const html=page.$('#productionDetail').innerHTML,first=html.slice(0,html.indexOf('<div class="candidate-grid">'));
+  assert.match(first,/The required model environment is unavailable/);
+  assert.match(first,/<p role="alert">Time record needs inspection\.<\/p>/);
+  assert.equal(page.requests.length,0);
+});
+test('a contact-sheet failure and unfamiliar completion messages stay visible above saved pictures',()=>{
+  const page=comparisonPage();
+  for(const message of ['Comparison finished. The contact sheet could not be built (OSError); review the candidates directly and record your choice.','Unexpected completion note: <inspect>']){
+    page.render({...page.plan,state:{...page.plan.state,artifacts:[],message}});
+    const html=page.$('#productionDetail').innerHTML,first=html.slice(0,html.indexOf('<div class="candidate-grid">')),details=html.slice(html.indexOf('<details id="comparisonPlanDetails"'));
+    assert.match(first,/<p class="callout">(?:Comparison finished\. The contact sheet could not be built|Unexpected completion note: &lt;inspect&gt;)/);
+    assert.doesNotMatch(details,/The contact sheet could not be built|Unexpected completion note/,'the exceptional message is shown once, outside the fold');
+  }
+  assert.equal(page.requests.length,0);
+});
+test('a retained tracking warning is not folded even if the comparison status says ready',()=>{
+  const page=comparisonPage();page.plan.stages[0].job.status='observing';page.plan.stages[0].job.tracking_disposition={status:'stopped'};page.render();
+  const html=page.$('#productionDetail').innerHTML,first=html.slice(0,html.indexOf('<div class="candidate-grid">'));
+  assert.match(first,/Resume is unavailable until the retained prompt observation reaches a terminal record/);
+  assert.equal(page.requests.length,0);
 });
 test('Pick a winner is hidden with zero candidates, including stages with no saved asset',()=>{
   const page=comparisonPage();
@@ -299,12 +381,15 @@ test('Pick a winner is hidden with zero candidates, including stages with no sav
     assert.doesNotMatch(page.$('#productionList').innerHTML+page.$('#productionDetail').innerHTML,/href="\/review\.html\?project=/);
   }
 });
-test('Quick pick folds Choose and submits the unchanged review command',async()=>{
+test('Choose here folds the explicit winner action and submits the unchanged review command',async()=>{
   const page=comparisonPage();page.render();
   const html=page.$('#productionDetail').innerHTML;
-  const picks=[...html.matchAll(/<details[^>]*><summary>Quick pick<\/summary>([\s\S]*?)<\/details>/g)];
+  const picks=[...html.matchAll(/<details class="candidate-quick-pick"[^>]*><summary data-candidate-pick-toggle="[^"]+">Choose here<\/summary>([\s\S]*?)<\/details>/g)];
   assert.equal(picks.length,2);
-  for(const [i,label] of ['A','B'].entries())assert.match(picks[i][1],new RegExp('data-choose-candidate="asset-'+label+'">Choose '+label+'</button>'));
+  for(const [i,label] of ['A','B'].entries()){
+    assert.match(picks[i][1],/Records this comparison’s winner\./);
+    assert.match(picks[i][1],new RegExp('data-choose-candidate="asset-'+label+'">Choose '+label+' as winner</button>'));
+  }
   assert.equal((html.match(/data-choose-candidate=/g)||[]).length,2,'no unfolded duplicate Choose controls');
   page.$('#productionNotes').value='Keep the silhouette & light';
   await page.click('[data-choose-candidate]',{chooseCandidate:'asset-B'});
@@ -317,10 +402,12 @@ test('successful quick pick shows an escaped winner and Library action at the ch
   await page.click('[data-choose-candidate]',{chooseCandidate:'asset-A'});
   let html=page.$('#productionDetail').innerHTML;
   const articles=[...html.matchAll(/<article class="candidate">([\s\S]*?)<\/article>/g)].map(m=>m[1]);
-  assert.match(articles[0],/<details[^>]* open><summary>Quick pick<\/summary>[\s\S]*?<p[^>]*role="status"[^>]*>Winner: A &lt;b&gt;&quot;&amp; \u00b7 <button[^>]*data-candidate-open="asset-A"[^>]*>Open in Library<\/button><\/p>[\s\S]*?<\/details>/);
+  assert.match(articles[0],/<details[^>]* open><summary data-candidate-pick-toggle="asset-A">Choose here<\/summary>[\s\S]*?<p[^>]*role="status"[^>]*>Winner: A &lt;b&gt;&quot;&amp; \u00b7 <button[^>]*data-candidate-open="asset-A"[^>]*>Open in Library<\/button><\/p>[\s\S]*?<\/details>/);
   assert.doesNotMatch(articles[0],/Winner: A <b>/);
   assert.doesNotMatch(articles[1],/Winner:/,'the result belongs to the chosen candidate');
   assert.equal((html.match(/Winner:/g)||[]).length,1);
+  assert.match(html,/<p class="plan-outcome">Decided: Candidate A &lt;b&gt;&quot;&amp; won\.<\/p>/);
+  assert.equal((html.match(/href="\/review\.html\?project=/g)||[]).length,1);
   page.render({...page.plan,state:{status:'reviewed',message:'Saved',review:{asset_id:'asset-A',status:'selected'}}});
   assert.match(page.$('#productionDetail').innerHTML,/Winner: A &lt;b&gt;&quot;&amp;/,'the saved result survives another render');
   await page.click('[data-candidate-open]',{candidateOpen:'asset-A'});
@@ -332,5 +419,5 @@ test('refused inline pick has no winner, and desk reviews keep legacy picks hidd
   assert.doesNotMatch(page.$('#productionDetail').innerHTML,/Winner:/);
   assert.equal(page.$('#productionMessage').textContent,'Save refused');
   page.render({...page.plan,state:{status:'reviewed',message:'Desk',review:{desk_url:'/review.html',asset_id:'asset-A'}}});
-  assert.doesNotMatch(page.$('#productionDetail').innerHTML,/Quick pick|data-choose-candidate|id="productionNotes"/);
+  assert.doesNotMatch(page.$('#productionDetail').innerHTML,/Choose here|data-choose-candidate|id="productionNotes"/);
 });

@@ -7,19 +7,23 @@ const document={activeElement:null};
 // A form field as innerHTML would build it: the rendered value, a caret and focus.
 function field(tagName,id,type,value){
   // Browsers report a null caret for number inputs and throw on setSelectionRange.
-  const caret=type==='number'?null:value.length;
+  const caret=['number','details','summary','button'].includes(type)?null:value.length;
   const node={tagName,id,type,value,selectionStart:caret,selectionEnd:caret,selectionDirection:'none',scrollTop:0,validity:{badInput:false},
     focus(){document.activeElement=node;},blur(){if(document.activeElement===node)document.activeElement=null;},
     setSelectionRange(start,end,direction='none'){if(type==='number')throw Error('InvalidStateError');node.selectionStart=start;node.selectionEnd=end;node.selectionDirection=direction;}};
   return node;
 }
+const dataKey=key=>key.replace(/-([a-z])/g,(_,letter)=>letter.toUpperCase());
+const matches=(node,selector)=>{if(selector.startsWith('#'))return node.id===selector.slice(1);if(selector.startsWith('.'))return (node.attrs?.class||'').split(' ').includes(selector.slice(1));const attr=/^\[([^=\]]+)(?:="([^"]*)")?\]$/.exec(selector);return !!attr&&Object.hasOwn(node.attrs||{},attr[1])&&(attr[2]===undefined||node.attrs[attr[1]]===attr[2]);};
 // Only the detail panel parses its markup; every other selector is a plain record, as in the sibling harnesses.
 const detail={_html:'',fields:[],classList:{toggle(){}},
   get innerHTML(){return this._html;},
   set innerHTML(html){this._html=html;if(this.fields.includes(document.activeElement))document.activeElement=null;this.fields=[];
     for(const m of html.matchAll(/<textarea id="([^"]+)"[^>]*>([\s\S]*?)<\/textarea>/g))this.fields.push(field('TEXTAREA',m[1],'textarea',unescape(m[2])));
-    for(const m of html.matchAll(/<input id="([^"]+)"([^>]*)>/g)){const type=/type="([^"]+)"/.exec(m[2])?.[1]||'text',value=/value="([^"]*)"/.exec(m[2])?.[1]||'';this.fields.push(field('INPUT',m[1],type,unescape(value)));}},
-  querySelector(selector){return this.fields.find(f=>'#'+f.id===selector)||null;},
+    for(const m of html.matchAll(/<input id="([^"]+)"([^>]*)>/g)){const type=/type="([^"]+)"/.exec(m[2])?.[1]||'text',value=/value="([^"]*)"/.exec(m[2])?.[1]||'';this.fields.push(field('INPUT',m[1],type,unescape(value)));}
+    for(const m of html.matchAll(/<(details|summary|button)\b([^>]*)>/g)){const attrs=Object.fromEntries([...m[2].matchAll(/([\w-]+)="([^"]*)"/g)].map(a=>[a[1],unescape(a[2])])),node=field(m[1].toUpperCase(),attrs.id||'',m[1],'');node.attrs=attrs;node.dataset=Object.fromEntries(Object.entries(attrs).filter(([key])=>key.startsWith('data-')).map(([key,value])=>[dataKey(key.slice(5)),value]));if(m[1]==='details')node.open=/\bopen\b/.test(m[2]);this.fields.push(node);}},
+  querySelector(selector){return this.querySelectorAll(selector)[0]||null;},
+  querySelectorAll(selector){return this.fields.filter(node=>selector.split(',').some(part=>matches(node,part)));},
   contains(node){return this.fields.includes(node);}};
 const elements=new Map([['#productionDetail',detail]]);
 const $=selector=>{const live=detail.querySelector(selector);if(live)return live;
@@ -34,7 +38,7 @@ vm.runInContext(fs.readFileSync(path.join(__dirname,'../app/static/production.js
 const run=source=>vm.runInContext(source,context);
 
 const at=Date.now()/1000;
-const review={id:'a'.repeat(32),name:'Lantern study',kind:'comparison',axis:'seed',values:[1,2],created_at:at,budget:{reserved:2,allowance:4},stages:[],
+const review={id:'a'.repeat(32),name:'Lantern study',kind:'comparison',axis:'seed',values:[1,2],created_at:at,budget:{reserved:2,allowance:4},stages:['A','B'].map(label=>({label,job:{status:'completed',outputs:[{asset_id:'asset-'+label,media_type:'image'}]}})),
   state:{status:'awaiting_review',message:'Two candidates are ready.',review:{notes:'Saved earlier'},artifacts:[]}};
 const clock={id:'c'.repeat(32),name:'Stopped study',kind:'comparison',axis:'seed',values:[1,2],created_at:at,budget:{reserved:2,allowance:4},stages:[],
   state:{status:'stopped',message:'Time allowance exhausted',time_budget:{revision:3,measured_seconds:60,unmeasured_seconds:0,remaining_seconds:0,limit_seconds:600,active:false},artifacts:[]}};
@@ -60,6 +64,47 @@ const poll=async plans=>{served=plans;await run('refreshProduction()');};
   await $('#refreshProduction').onclick();
   assert.equal($('#productionNotes').value,'Candidate B keeps the lantern glow','Refresh must not replace the note being typed');
   assert.equal(document.activeElement,$('#productionNotes'));
+
+  // Secondary plan controls stay open, and their summary keeps keyboard focus, across a changed poll.
+  assert.equal($('#comparisonPlanDetails').open,false);
+  $('#comparisonPlanDetails').open=true;$('#comparisonPlanDetailsToggle').focus();
+  await poll([{...review,state:{...review.state,message:'Details updated.'}},clock]);
+  assert.equal($('#comparisonPlanDetails').open,true,'Polling must not close controls the owner opened');
+  assert.equal(document.activeElement,$('#comparisonPlanDetailsToggle'),'The rebuilt summary keeps keyboard focus');
+  assert.equal($('#productionNotes').value,'Candidate B keeps the lantern glow');
+  $('#comparisonPlanDetails').open=false;
+  await poll([{...review,state:{...review.state,message:'Details updated again.'}},clock]);
+  assert.equal($('#comparisonPlanDetails').open,false,'A closed disclosure stays closed');
+
+  // Choose here is a per-picture disclosure. A changed poll must retain its open panel and summary focus.
+  const firstPick=()=>detail.querySelector('.candidate-quick-pick'),firstPickSummary=()=>detail.fields[detail.fields.indexOf(firstPick())+1];
+  assert.equal(firstPick().open,false);
+  firstPick().open=true;firstPickSummary().focus();
+  await poll([{...review,state:{...review.state,message:'Pick details updated.'}},clock]);
+  assert.equal(firstPick().open,true,'Polling must keep Choose here open before any winner is recorded');
+  assert.equal(document.activeElement,firstPickSummary(),'Choose here summary focus survives the rebuilt detail');
+  const pick=asset=>detail.querySelector('[data-candidate-pick="'+asset+'"]'),pickToggle=asset=>detail.querySelector('[data-candidate-pick-toggle="'+asset+'"]'),choose=asset=>detail.querySelector('[data-choose-candidate="'+asset+'"]');
+  await poll([{...review,stages:[...review.stages].reverse()},clock]);
+  assert.equal(firstPick().dataset.candidatePick,'asset-B','The candidate order really changed');
+  assert.equal(pick('asset-A').open,true,'Open state follows the asset, not its position');
+  assert.equal(pick('asset-B').open,false,'Another asset does not inherit the open state');
+  assert.equal(document.activeElement,pickToggle('asset-A'),'Summary focus also follows the asset');
+  choose('asset-A').focus();await poll([review,clock]);
+  assert.equal(pick('asset-A').open,true);
+  assert.equal(document.activeElement,choose('asset-A'),'Focus on the winner button stays inside its open disclosure');
+  pick('asset-A').open=false;pickToggle('asset-A').focus();
+  await poll([{...review,state:{...review.state,message:'The owner closed Choose here.'}},clock]);
+  assert.equal(pick('asset-A').open,false,'A disclosure the owner closed remains closed');
+  assert.equal(document.activeElement,pickToggle('asset-A'));
+
+  // A desk-owned review removes inline choices. Returning eligible markup must not revive old disclosure state.
+  pick('asset-A').open=true;pickToggle('asset-A').focus();
+  await poll([{...review,state:{...review.state,review:{...review.state.review,desk_url:'/review.html?project='+review.id}}},clock]);
+  assert.equal(detail.querySelectorAll('[data-candidate-pick]').length,0);
+  assert.equal(document.activeElement,null,'Removed inline summaries cannot retain focus');
+  await poll([review,clock]);
+  assert.equal(pick('asset-A').open,false,'Desk ownership cleared the prior open state');
+  assert.equal(requests.length,0,'Disclosure and focus restoration never writes a decision');
 
   // 3 · Filters (#965) re-render the list and the detail; the note stays and Show all still hands focus to Status.
   run("setPlanFilter({type:'comparison'})");
@@ -108,9 +153,12 @@ const poll=async plans=>{served=plans;await run('refreshProduction()');};
   run('productionId='+JSON.stringify(review.id)+';renderProduction();');
   assert.equal($('#productionNotes').value,'Saved earlier','The note typed before another plan was opened is not carried back');
   type('productionNotes','Draft for the other plan');
+  pick('asset-A').open=true;pickToggle('asset-A').focus();
   $('#productionList').onclick(click({'data-project':{project:clock.id}}));
   $('#productionList').onclick(click({'data-project':{project:review.id}}));
   assert.equal($('#productionNotes').value,'Saved earlier','Opening another plan drops the unsent note');
+  assert.equal(pick('asset-A').open,false,'Opening another plan drops Choose here open state');
+  assert.notEqual(document.activeElement,pickToggle('asset-A'),'Opening another plan does not restore old summary focus');
 
   // 7 · A failed save keeps the note; a successful one drops it.
   type('productionNotes','Needs a cleaner silhouette');
