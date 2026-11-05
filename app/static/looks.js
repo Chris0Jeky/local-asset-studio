@@ -88,8 +88,8 @@
     if(look!=null&&!preparedLook)throw Error('Invalid prepared look.');
     if(preparedLook)preparedLook={preset_id:presetId,look:preparedLook};
   }
-  function applicationPayload(presetId){return {...(application?.preset_id===presetId?{look_application:normalizeApplication(application,presetId)}:{}),...(preparedLook?.preset_id===presetId?{look:normalizeLook(preparedLook.look)}:{})};}
-  function applicationBlocker(presetId){if(preparation)return 'A Look is being prepared. Wait for it to finish before generating or saving a setup.';return application?.preset_id===presetId?'This Look could not be applied: '+application.controls.join(', ')+'. Recipe defaults are shown; no Look settings were applied. Reprepare with supported settings or reset the recipe without the look. Nothing was generated.':'';}
+  function applicationPayload(presetId){return {...(application&&application.preset_id===presetId?{look_application:normalizeApplication(application,presetId)}:{}),...(preparedLook&&preparedLook.preset_id===presetId?{look:normalizeLook(preparedLook.look)}:{})};}
+  function applicationBlocker(presetId){if(preparation)return 'A Look is being prepared. Wait for it to finish before generating or saving a setup.';return application&&application.preset_id===presetId?'This Look could not be applied: '+application.controls.join(', ')+'. Recipe defaults are shown; no Look settings were applied. Reprepare with supported settings or reset the recipe without the look. Nothing was generated.':'';}
   return{SLOT,slotCount,recipeProblem,groups,optionLabel,prepareBlocker,saveBlocker,saveControls,summary,optionRows,optionsPayload,readyMessage,applyControls,normalizeLook,normalizeApplication,clearApplication,restoreApplication,applicationPayload,applicationBlocker,beginPreparation,finishPreparation};
 });
 

@@ -943,10 +943,13 @@ async function modelShopCards() {
   const enc = card('enc');
   assert.match(enc, /example\.com/); assert.match(enc, /Copy it in by hand\./); assert.match(enc, /data-install="enc" disabled/);
   assert.doesNotMatch(card('shared'), /model-get/, 'a present file needs no acquisition block');
-  // Looks: which can be used now and which need files, each missing file named.
+  // Looks summarize impact; the file cards own known filenames and installation actions.
   const looks = element('#modelLooks').innerHTML;
   assert.match(looks, /1 of 2 looks ready now · 1 needs a download/);
-  assert.match(looks, /Needs a download<\/h4>[\s\S]*Look A[\s\S]*Needs: base\.safetensors, enc\.safetensors[\s\S]*2 files to get[\s\S]*Ready now<\/h4>[\s\S]*Look B/);
+  assert.match(looks, /Needs a download<\/h4>[\s\S]*Look A[\s\S]*2 missing files[\s\S]*View files[\s\S]*Ready now<\/h4>[\s\S]*Look B/);
+  assert.doesNotMatch(looks, /base\.safetensors|enc\.safetensors/, 'known dependency detail appears only in its file card');
+  assert.equal((looks.match(/href="\/#models\?need=p1"/g)||[]).length, 1, 'one file-detail link per affected look');
+  assert.equal((element('#modelCards').innerHTML.match(/data-install="base"/g)||[]).length, 1, 'one action card for the shared file');
   assert.match(looks, /href="\/#models\?need=p1"/);
   // The top search filters looks and cards, and also matches a file by the look that uses it.
   element('#curatedModelSearch').value = 'look b';
@@ -967,24 +970,25 @@ async function modelShopCards() {
   assert.match(element('#modelLooks').innerHTML, /Ready now<\/h4>[\s\S]*Look B/);
   run(`modelReqs.set('p2',[{file:'checkpoints/base.safetensors',asset_id:'base',present:true,pin_mismatch:{note:'Content differs'}}]);renderCuratedModels()`);
   const lookB = () => element('#modelLooks').innerHTML.split('<li class="model-look needs">').find(row => row.includes('<b>Look B</b>')).split('</li>')[0];
-  assert.match(lookB(), /File changed since it was pinned: base\.safetensors/);
-  assert.match(lookB(), /href="\/#models\?need=p2">Check files/);
+  assert.match(lookB(), /1 changed file to check/);
+  assert.match(lookB(), /href="\/#models\?need=p2">View files/);
+  assert.doesNotMatch(lookB(), /base\.safetensors/);
   assert.doesNotMatch(lookB(), /Needs:|files? to get/);
   assert.match(element('#modelLooks').innerHTML, /2 need attention[\s\S]*Needs attention<\/h4>/);
   assert.doesNotMatch(element('#modelLooks').innerHTML, /Ready now<\/h4>[\s\S]*Look B/);
   run(`modelLooks[1].body.controls={lora_name:'base.safetensors'};renderCuratedModels()`);
-  assert.match(lookB(), /File changed since it was pinned: base\.safetensors/);
+  assert.match(lookB(), /1 changed file to check/);
   assert.doesNotMatch(lookB(), /files? to get/);
   run(`modelLooks[1].body.controls={}`);
   run(`modelReqs.set('p2',[{file:'checkpoints/base.safetensors',asset_id:'base',present:true,pin_mismatch:{}},{file:'vae/shared.safetensors',asset_id:'shared',present:true,pin_mismatch:{}}]);renderCuratedModels()`);
-  assert.match(lookB(), /File changed since it was pinned: base\.safetensors, shared\.safetensors/);
+  assert.match(lookB(), /2 changed files to check/);
   assert.doesNotMatch(lookB(), /files? to get/);
   run(`modelReqs.set('p2',[{file:'checkpoints/base.safetensors',asset_id:'base',present:true,pin_mismatch:{}},{file:'text_encoders/enc.safetensors',asset_id:'enc',present:false}]);renderCuratedModels()`);
-  assert.match(lookB(), /Needs: enc\.safetensors; changed: base\.safetensors/);
-  assert.match(lookB(), /href="\/#models\?need=p2">1 file to get/);
+  assert.match(lookB(), /1 missing file · 1 changed file to check/);
+  assert.match(lookB(), /href="\/#models\?need=p2">View files/);
   assert.doesNotMatch(lookB(), /2 files to get/);
   run(`modelReqs.set('p2',[{file:'checkpoints/changed<&.safetensors',present:true,pin_mismatch:{}}]);renderCuratedModels()`);
-  assert.match(lookB(), /File changed since it was pinned: changed&lt;&amp;\.safetensors/);
+  assert.match(lookB(), /1 changed file to check[\s\S]*changed&lt;&amp;\.safetensors[\s\S]*not listed in the model library/);
   // Its link lands on the changed file's card: the need view lists pin mismatches, not only absent files (Codex P2 on #1565).
   run(`pinMismatchByPreset={p2:['vae/shared.safetensors']};location.hash='#models?need=p2';renderCuratedModels()`);
   assert.match(element('#modelCards').innerHTML, /shared model/, 'a present file that fails its pin is shown in the need view');
@@ -994,7 +998,7 @@ async function modelShopCards() {
   assert.match(element('#modelCards').innerHTML, /shared model/, 'an inspected pin mismatch is shown in the need view without health data');
   run(`location.hash='#models';renderCuratedModels()`);
   run(`modelReqs.set('p2',[{file:'vae/shared.safetensors',asset_id:'shared'}]);renderCuratedModels()`);
-  assert.match(element('#modelLooks').innerHTML, /Needs a download<\/h4>[\s\S]*Look B/, 'an unresolved requirement blocks, as the server does');
+  assert.match(element('#modelLooks').innerHTML, /Needs attention<\/h4>[\s\S]*Look B[\s\S]*1 file not checked/, 'an unresolved requirement stays explicit and never reads as ready or a confirmed download');
   // An adapter named in a look but listed nowhere (library or disk) is missing, not silently ignored; one on disk is fine.
   run(`modelReqs.set('p2',[{file:'vae/shared.safetensors',asset_id:'shared',present:true}]);modelLooks[1].body.controls={lora_name:'ghost.safetensors'};renderCuratedModels()`);
   assert.match(element('#modelLooks').innerHTML, /Needs a download<\/h4>[\s\S]*Look B[\s\S]*ghost\.safetensors/);
@@ -1049,6 +1053,56 @@ async function modelShopCards() {
     },
   ].map(check => check()));
   assert.equal(regressions.filter(r => r.status === 'rejected').map(r => r.reason.message).join('\n'), '', 'model shop regression contracts');
+}
+
+async function modelSummaryClarity() {
+  const {element, run, requests} = sandbox({}, {});
+  element('#modelCards').querySelector = () => null;
+  const assets = [{id:'shared',name:'Shared model',file:'checkpoints/shared.safetensors',present:false,installable:true},
+    {id:'changed',name:'Changed model',file:'loras/changed.safetensors',present:true,installable:true}]
+    .map(a=>({family:'Fixture',bytes:8,verified:false,download:{},...a}));
+  const missing = {file:assets[0].file,asset_id:'shared',present:false};
+  run(`library=${JSON.stringify({assets,inventory:[{file:'loras/on-disk.safetensors',bytes:8}],model_root:'C:/models'})};atelierRecipes=[];
+    modelLooks=[{id:'a',kind:'look',name:'Look A',body:{preset_id:'p1'}},{id:'b',kind:'look',name:'Look B',body:{preset_id:'p2',controls:{lora_name:'unlisted<&.safetensors'}}}];
+    modelReqs=new Map([['p1',[${JSON.stringify(missing)}]],['p2',[${JSON.stringify(missing)},{file:'loras/changed.safetensors',asset_id:'changed',present:true,pin_mismatch:{}}]]]);
+    missingByPreset={};pinMismatchByPreset={};location.hash='#models';renderCuratedModels();`);
+  const overview = element('#modelLooks').innerHTML;
+  assert.doesNotMatch(overview, /shared\.safetensors|changed\.safetensors/, 'shared known filenames are not repeated for every look');
+  assert.match(overview, /Look B[\s\S]*2 missing files · 1 changed file to check[\s\S]*unlisted&lt;&amp;\.safetensors[\s\S]*not listed in the model library/);
+  assert.equal((overview.match(/>View files →<\/a>/g)||[]).length, 2);
+  for (const id of ['shared','changed']) assert.equal((element('#modelCards').innerHTML.match(new RegExp('data-install="'+id+'"','g'))||[]).length, 1);
+  element('#modelStatus').value = 'installed';
+  run(`location.hash='#models?need=p2';renderCuratedModels()`);
+  const detail = element('#modelCards').innerHTML;
+  assert.equal(element('#modelLooks').hidden, true);
+  assert.match(detail, /data-install="shared"/);assert.match(detail, /data-install="changed"/);
+  assert.match(detail, /unlisted&lt;&amp;\.safetensors/);assert.doesNotMatch(detail, /data-install="unlisted/);
+  assert.equal((detail.match(/unlisted&lt;&amp;\.safetensors/g)||[]).length, 1, 'unlisted detail is retained once when the overview is hidden');
+  assert.doesNotMatch(detail, /<details/, 'needed verification actions are visible on arrival');
+  assert.match(detail, /Verify reads the file and compares it/);
+  element('#curatedModelSearch').value = 'unlisted';run('renderCuratedModels()');
+  assert.match(element('#modelCards').innerHTML, /unlisted&lt;&amp;/);assert.doesNotMatch(element('#modelCards').innerHTML, /data-install=/);
+  element('#curatedModelSearch').value = 'no match';run('renderCuratedModels()');
+  assert.doesNotMatch(element('#modelCards').innerHTML, /unlisted&lt;&amp;/);
+  element('#curatedModelSearch').value = '';element('#modelStatus').value = 'all';
+  run(`location.hash='#models';modelLooks[1].body.controls={};modelReqs.set('p2',[{file:'unknown<&.safetensors',present:null,note:'Model folder unknown; inspect <source>.'}]);renderCuratedModels()`);
+  assert.match(element('#modelLooks').innerHTML, /1 file not checked[\s\S]*unknown&lt;&amp;\.safetensors[\s\S]*Model folder unknown; inspect &lt;source&gt;/);
+  run(`location.hash='#models?need=p2';renderCuratedModels()`);
+  assert.match(element('#modelCards').innerHTML, /unknown&lt;&amp;\.safetensors[\s\S]*file not checked/);
+  assert.doesNotMatch(element('#modelCards').innerHTML, /data-install=/);
+  run(`location.hash='#models';modelReqs.set('p2',null);renderCuratedModels()`);
+  assert.match(element('#modelLooks').innerHTML, /Could not check files[\s\S]*Look B[\s\S]*File check unavailable/);
+  run(`modelReqs.set('p1',null);modelReqRetry.set('p1',Date.now()-1);modelReqRetry.set('p2',Date.now()-1);renderCuratedModels()`);
+  assert.match(element('#modelLooks').innerHTML, /0 of 2 looks ready now[\s\S]*2 could not be checked/, 'failed checks still count as looks, never as ready');
+  assert.doesNotMatch(element('#modelLooks').innerHTML, /0 of 0|again in two minutes/, 'an elapsed cooldown must not promise a new two-minute wait');
+  assert.match(element('#modelLooks').innerHTML, /Use Refresh inventory to retry/);
+  run(`modelReqs.delete('p2');renderCuratedModels()`);
+  assert.match(element('#modelLooks').innerHTML, /Look B[\s\S]*Checking its files/);
+  assert.match(element('#modelLooks').innerHTML, /0 of 2 looks ready now/);
+  assert.equal(requests.length, 0, 'summary, search and file navigation never install or generate');
+  const page = fs.readFileSync(path.join(__dirname,'../app/static/index.html'),'utf8');
+  assert.match(page, /Download missing files, or check files already on disk\./);
+  assert.doesNotMatch(page, /Explicit downloads · SHA-256 verification · 20 GiB reserved/);
 }
 
 async function modelStatusFilter() {
@@ -1942,6 +1996,7 @@ async function parallaxLateRepliesKeepCreateEdits() {
   await aFailedStartupStageDoesNotStopTheRest();
   await linkedModelFolderIsOneRow();
   await modelShopCards();
+  await modelSummaryClarity();
   await malformedPinOffersNoPath();
   await modelStatusFilter();
   await windowsInventoryStatusMatchesCaseAndSeparators();

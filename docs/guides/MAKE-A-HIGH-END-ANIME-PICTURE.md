@@ -115,10 +115,11 @@ If **Generate** is disabled and the reason says "Needs 2 model files first: open
 
 - Each card shows the file, its size, where it comes from, its licence text, and a state such as "SHA-256 verified" or "Not installed".
 - If the Studio can install the file, the button reads **Install** with the size. Press it once. Progress shows on the card.
-- If it cannot, the card says **Manual install only**, shows the source link and the folder to put the file in, and has **Copy folder** and **Copy file path**. Download it yourself and copy it in. The card for the adapter you added in Tune appears the same way.
+- If it cannot, the card says **Manual install only**, shows the source link and the folder to put the file in, and has **Copy folder** and **Copy file path**. Download it yourself and copy it in. An adapter added in Tune has the same card when it is listed in the model library. An unlisted adapter stays named in the missing-file explanation, without an Install button.
 - After copying a file, press **Refresh inventory** and check the card reads as present. **Verify** hashes the file and compares it with its pinned checksum.
 - Only `.safetensors` files can be installed or verified here. A file of another format, such as a GGUF, reads **Present · pin only** once copied in, and its button stays disabled as **Manual file**. The UI cannot hash it, so it never reads "SHA-256 verified"; compare its checksum with the pin in `models/library.json` yourself.
-- The top of **Models & setup** also lists **What you can make**: which looks are ready now and which need a download.
+- The top of **Models & setup** lists **What you can make**: ready looks, missing-file counts, changed files that need checking, and checks that have not finished or could not complete. **View files** opens that look's file details and actions. Shared files have one action card; unlisted files retain their names and explanations in the filtered view.
+- A failed file check does not count as ready. Use **Refresh inventory** to retry; failed checks wait two minutes between attempts. The storage panel shows the actual free-space reserve.
 
 A matching hash proves the bytes match the pinned file. It does not prove who made it or that you may use it commercially.
 
