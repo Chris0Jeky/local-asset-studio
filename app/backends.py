@@ -350,9 +350,32 @@ class BackendManager:
                 if self.matches_configured_process(profile,process.exe(),process.cmdline(),process.cwd()):matches.append(process)
             except psutil.NoSuchProcess:continue
             except psutil.AccessDenied as exc:
-                # A protected Python process can be our launcher before it has bound its port.
+                # A protected Python process can be our launcher before it has bound its port, unless it provably is not.
+                if self.foreign_python(profile,process):continue
                 raise ValueError('A candidate configured Python process could not be verified; no recovery launch was authorized') from exc
         return matches
+
+    @staticmethod
+    def foreign_python(profile, process):
+        """True only when a protected Python process is provably not our launcher: another user owns it (the Studio
+        launches as its own user), or its executable is not the configured Python. 5 Nov 2026: Python processes of a
+        Codex sandbox user denied their command lines, and every recovery restart was refused with 409."""
+        import psutil
+        try:
+            owner=process.username()
+        except psutil.NoSuchProcess:return True
+        except (psutil.AccessDenied,OSError):owner=None
+        if isinstance(owner,str) and owner.strip():
+            # Failure to inspect Studio is not evidence that the candidate exited.
+            try:own=psutil.Process().username()
+            except (psutil.NoSuchProcess,psutil.AccessDenied,OSError):own=None
+            if isinstance(own,str) and own.strip() and owner.casefold()!=own.casefold():return True
+        try:
+            exe=process.exe()
+            # A blank or relative answer proves nothing: it would resolve against the Studio's own directory.
+            return isinstance(exe,str) and os.path.isabs(exe) and Path(exe).resolve()!=Path(profile['python']).resolve()
+        except psutil.NoSuchProcess:return True
+        except (psutil.AccessDenied,OSError,ValueError):return False
 
     @staticmethod
     def windows_process_name(pid):

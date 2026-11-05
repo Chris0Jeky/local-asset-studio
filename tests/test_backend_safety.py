@@ -3,6 +3,7 @@ import errno
 from http.server import BaseHTTPRequestHandler
 from http_test_server import ThreadingHTTPServer
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -345,6 +346,55 @@ class BackendSafetyTests(unittest.TestCase):
         p=self.manager.profiles['hidream'];argv=[p['python'],p['entry'],'--install-root','..']
         self.assertTrue(self.manager.matches_configured_process(p,p['python'],argv,p['root']))
         self.assertFalse(self.manager.matches_configured_process(p,p['python'],argv+['--install-root','/other'],p['root']))
+    def test_a_protected_python_is_skipped_only_when_provably_not_ours(self):
+        import psutil
+        p=self.manager.profiles['primary']; me='FIXTURE\\Chris'
+        def proc(owner,exe):
+            denied=psutil.AccessDenied(4242)
+            def value(v):
+                if isinstance(v,Exception):raise v
+                return v
+            return SimpleNamespace(pid=4242,name=lambda:Path(p['python']).name,username=lambda:value(owner),exe=lambda:value(exe),
+                                   cmdline=lambda:(_ for _ in ()).throw(denied),cwd=lambda:(_ for _ in ()).throw(denied))
+        cases=[(proc('OTHERPC\\CodexSandboxOffline',p['python']),True),   # another user's process: never our launcher
+               (proc(psutil.AccessDenied(4242),os.path.abspath('elsewhere/python.exe')),True),  # owner unreadable, another executable
+               (proc(me,os.path.abspath('elsewhere/python.exe')),True),                 # ours, but another executable
+               (proc(me,p['python']),False),                               # ours, the configured Python: could be the launcher
+               (proc(psutil.AccessDenied(4242),psutil.AccessDenied(4242)),False),  # nothing provable
+               (proc(psutil.NoSuchProcess(4242),p['python']),True),              # gone: not a live launcher
+               (proc(me.upper(),p['python']),False),                             # our own user in other case: refused
+               (proc(psutil.AccessDenied(4242),''),False),                       # a blank executable proves nothing
+               (proc(psutil.AccessDenied(4242),'Registry'),False)]               # neither does a relative one
+        for process,skipped in cases:
+            with self.subTest(skipped=skipped),patch.object(psutil,'process_iter',return_value=[process]), \
+                 patch.object(psutil,'Process',return_value=SimpleNamespace(username=lambda:me)):
+                if skipped:self.assertEqual(self.manager.configured_processes(p),[])
+                else:
+                    with self.assertRaisesRegex(ValueError,'could not be verified'):self.manager.configured_processes(p)
+    def test_unknown_studio_identity_needs_independent_executable_proof(self):
+        import psutil
+        profile=self.manager.profiles['primary']; denied=psutil.AccessDenied(4242)
+        def value(item):
+            if isinstance(item,Exception):raise item
+            return item
+        own_cases=[('constructor gone',psutil.NoSuchProcess(os.getpid()),None),
+                   ('lookup gone',None,psutil.NoSuchProcess(os.getpid())),
+                   ('constructor denied',psutil.AccessDenied(os.getpid()),None),
+                   ('lookup denied',None,psutil.AccessDenied(os.getpid())),
+                   ('lookup error',None,OSError('identity unavailable')),
+                   ('blank',None,''),('whitespace',None,'  '),('not a username',None,None)]
+        for label,constructor_error,own_name in own_cases:
+            for exe,foreign in [(profile['python'],False),(denied,False),(str(self.root/'other/python.exe'),True)]:
+                candidate=SimpleNamespace(pid=4242,name=lambda:'python.exe',username=lambda:'Chris',
+                                          exe=lambda exe=exe:value(exe),cmdline=lambda:value(denied),cwd=lambda:value(denied))
+                own=SimpleNamespace(username=lambda own_name=own_name:value(own_name))
+                with self.subTest(identity=label,exe=exe),patch.object(psutil,'Process',return_value=own,side_effect=constructor_error), \
+                     patch.object(psutil,'process_iter',return_value=[candidate]):
+                    self.assertEqual(self.manager.foreign_python(profile,candidate),foreign)
+                    if foreign:self.assertEqual(self.manager.configured_processes(profile),[])
+                    else:
+                        with self.assertRaisesRegex(ValueError,'could not be verified'):self.manager.configured_processes(profile)
+
     def test_inaccessible_listener_is_not_absent(self):
         import psutil
         listener=SimpleNamespace(status='LISTEN',laddr=SimpleNamespace(port=8188,ip='127.0.0.1'),pid=555)
