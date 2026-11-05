@@ -5,8 +5,10 @@ extends Node3D
 ## one quick body turn so skirt and hair visibly swing, plus a blink and a smile from the VRM's expressions. Material roles follow `vrm_toon.material_role`.
 
 const SHADE := {"skin": Vector3(.93, .76, .74), "face": Vector3(.93, .76, .74), "hair": Vector3(.50, .64, .74), "cloth": Vector3(.62, .62, .78)}
+const SpringConfig = preload("res://vrm_spring_config.gd")
 
 var skel: Skeleton3D
+var spring_config: SpringConfig
 var root: Node3D
 var face_mats: Array[ShaderMaterial] = []
 var head_rest: Basis
@@ -103,6 +105,8 @@ func _role(name: String) -> String:
 
 func _springs() -> void:
 	var data = JSON.parse_string(FileAccess.get_file_as_string(springs_path))
+	if not data is Dictionary:
+		push_error("TOON springs.json is not a JSON object"); return
 	constraints = _dependency_order(data.get("constraints", []))
 	expressions = data.get("expressions", {})
 	for p in expressions:                                                     # resolve each bind to [mesh, blend shape] once
@@ -115,29 +119,12 @@ func _springs() -> void:
 			resolved.append([mi, i, float(b.weight)])
 			if not expr_targets.any(func(x): return x[0] == mi and x[1] == i): expr_targets.append([mi, i])
 		expressions[p]["resolved"] = resolved
-	var sim := SpringBoneSimulator3D.new(); skel.add_child(sim)
-	var cols: Array[SpringBoneCollision3D] = []
-	for c in data.colliders:
-		var col: SpringBoneCollision3D
-		var off := Vector3(c.offset[0], c.offset[1], c.offset[2])
-		if c.type == "sphere":
-			col = SpringBoneCollisionSphere3D.new(); col.radius = c.radius; col.position_offset = off
-		else:
-			var tail := Vector3(c.tail[0], c.tail[1], c.tail[2]); var axis := tail - off
-			col = SpringBoneCollisionCapsule3D.new(); col.radius = c.radius; col.height = axis.length() + 2.0 * c.radius
-			col.position_offset = (off + tail) * 0.5
-			if axis.length() > 1e-5: col.rotation_offset = Quaternion(Vector3.UP, axis.normalized())
-		col.bone_name = c.bone
-		sim.add_child(col); cols.append(col)
-	sim.set_setting_count(data.chains.size())
-	for i in data.chains.size():
-		var ch = data.chains[i]
-		sim.set_root_bone_name(i, ch.root); sim.set_end_bone_name(i, ch.end)
-		sim.set_stiffness(i, ch.stiffness); sim.set_drag(i, ch.drag); sim.set_gravity(i, ch.gravity); sim.set_radius(i, ch.radius)
-		sim.set_enable_all_child_collisions(i, false)                 # only the colliders in this spring's VRM groups
-		sim.set_collision_count(i, ch.colliders.size())
-		for k in ch.colliders.size(): sim.set_collision_path(i, k, sim.get_path_to(cols[int(ch.colliders[k])]))
-	print("TOON springs=", sim.get_setting_count(), " colliders=", data.colliders.size(), " constraints=", constraints.size())
+	spring_config = SpringConfig.new(); skel.add_child(spring_config)
+	var result: Dictionary = spring_config.configure(root, data)
+	if not result.ok:
+		push_error("TOON springs refused: " + str(result.error))
+		spring_config.queue_free(); spring_config = null; return
+	print("TOON springs=", result.chains, " colliders=", result.colliders, " constraints=", constraints.size())
 
 
 func _dependency_order(list: Array) -> Array:
