@@ -124,6 +124,27 @@ bar, alongside the existing review-link and picture thresholds. Polling still
 does not scroll, and no request or decision handler changes. Final-head hosted
 screenshots remain required to qualify this correction.
 
+The next head, `5add3233bfb181b4af763ca456c2bfa30a9f7664`, also passed UX run
+`41953122984` (job `127001508659`, artifact `13382137342`, ZIP SHA-256
+`bb1ecaff6743651a6edb2022954ee0f75c3d9f842b2974c7968f836cfdbf7ca3`). Its phone
+screenshots still show the first heading line behind the privacy row. Source
+inspection explains the false agreement between the app and the assertion:
+`privacy.css` places that row absolutely at `top:100%` with a 32px height below
+700px, outside the global bar's own rectangle. The screenshot helper does not
+scroll; the action already settles for 250ms and captures a screenshot before
+the layout check. Both sets of earlier screenshots remain before evidence.
+
+Selection now uses the greater bottom of the header and its privacy row. A Node
+regression first failed against the header-only implementation, then passed for
+the combined bounds; it also checks changing row height, explicit selection,
+no rerender scroll, wide layouts and execution-state exclusions. The browser
+driver independently hit-tests the top corners and lower centre of the heading
+with `elementFromPoint`, so a shared mistaken rectangle cannot conceal overlap.
+Each viewport writes a geometry JSON receipt beside its screenshot before
+assertions, including both overlay boxes, heading hits and image visibility.
+The existing review-entry, picture, focus-retention and no-write checks remain.
+This correction still requires its own exact-head hosted qualification.
+
 ## Remaining acceptance
 
 Refs #2009. This slice addresses completed-image ordering, the duplicated

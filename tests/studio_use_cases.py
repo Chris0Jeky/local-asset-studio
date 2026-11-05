@@ -1121,19 +1121,28 @@ def comparison_picture_layout(c, study):
             c.page.evaluate('window.scrollTo(0, 0)')
             c.act('#productionList [data-project="%s"]' % study, note='open finished pictures at %d by %d' % (width, height), supplementary=True)
             c.page.wait_for_function("[...document.querySelectorAll('#productionDetail .candidate img')].every(img=>img.complete && img.naturalWidth>0)")
+            evidence_screenshot(c.page, path=str(c.dir / ('pictures-%dx%d.png' % (width, height))))
             geometry = c.page.evaluate("""() => {
-              const bar=document.querySelector('.studio-globalbar').getBoundingClientRect(),top=Math.max(0,bar.bottom);
+              const overlays=[...document.querySelectorAll('.studio-globalbar, .studio-globalbar .privacy-bar')].map(node=>{
+                const r=node.getBoundingClientRect();return {element:node.className,left:r.left,right:r.right,top:r.top,bottom:r.bottom};
+              }),top=Math.max(0,...overlays.map(r=>r.bottom));
               const inspect=node=>{const r=node.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,
                 visibleHeight:Math.max(0,Math.min(r.bottom,innerHeight)-Math.max(r.top,top)),height:r.height};};
-              return {top,width:innerWidth,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,
-                heading:inspect(document.querySelector('#productionPlanTitle')),
+              const title=document.querySelector('#productionPlanTitle'),heading=inspect(title);
+              const headingHits=[[heading.left+2,heading.top+2],[heading.right-2,heading.top+2],[(heading.left+heading.right)/2,heading.bottom-2]].map(([x,y])=>{
+                const hit=document.elementFromPoint(x,y);return {x,y,withinHeading:!!hit&&title.contains(hit),hit:hit?hit.tagName+'#'+hit.id+'.'+hit.className:null};
+              });
+              return {top,overlays,width:innerWidth,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,
+                heading,headingHits,
                 entry:inspect(document.querySelector('.comparison-review-entry a')),
                 images:[...document.querySelectorAll('#productionDetail .candidate img')].map(inspect)};
             }""")
+            (c.dir / ('pictures-%dx%d.json' % (width, height))).write_text(json.dumps(geometry, indent=2) + '\n', encoding='utf-8')
             entry = geometry['entry']
             heading = geometry['heading']
             assert heading['top'] >= geometry['top'] - 1 and heading['bottom'] <= height + 1, geometry
             assert heading['left'] >= -1 and heading['right'] <= width + 1, geometry
+            assert all(point['withinHeading'] for point in geometry['headingHits']), geometry
             assert entry['top'] >= geometry['top'] - 1 and entry['bottom'] <= height + 1, geometry
             assert entry['left'] >= -1 and entry['right'] <= width + 1, geometry
             visible_images = geometry['images'][:2 if width > 850 else 1]
@@ -1146,7 +1155,6 @@ def comparison_picture_layout(c, study):
             assert not c.page.locator('#comparisonPlanDetails').evaluate('(node)=>node.open')
             if width <= 1000:
                 assert c.page.locator('#productionPlanTitle').evaluate('(node)=>node===document.activeElement')
-            evidence_screenshot(c.page, path=str(c.dir / ('pictures-%dx%d.png' % (width, height))))
 
         # A refresh preserves both the folded controls and a later unsent note; it never replays the selection scroll.
         c.page.locator('#comparisonPlanDetailsToggle').focus(); c.page.keyboard.press('Enter')

@@ -282,7 +282,8 @@ function comparisonPage(){
     stages:['A','B'].map(label=>({label,job:{status:'completed',outputs:[{asset_id:'asset-'+label,media_type:'image'}]}}))};
   const render=(value=plan,selected=value.id)=>{current=structuredClone(value);context.fixture=current;context.selectedPlan=selected;vm.runInContext('productionPlans=[fixture];productionId=selectedPlan;renderProduction();',context);};
   const click=(selector,dataset)=>$('#productionDetail').onclick({target:{closest:s=>s===selector?{dataset}:null}});
-  return {$,plan,render,click,requests,opened,refuse:message=>{refusal=message;},libraryReads:()=>libraryReads};
+  return {$,plan,render,click,requests,opened,refuse:message=>{refusal=message;},libraryReads:()=>libraryReads,
+    viewport:width=>{context.window={matchMedia:query=>({matches:width<=Number(/max-width:\s*(\d+)px/.exec(query)?.[1]||0)})};}};
 }
 test('awaiting study has one primary Pick a winner link to its existing desk',()=>{
   const page=comparisonPage();page.render();
@@ -298,6 +299,22 @@ test('an unselected awaiting comparison keeps its contextual review entry in the
   const page=comparisonPage();page.render(page.plan,null);
   assert.match(page.$('#productionList').innerHTML,new RegExp('href="/review.html\\?project='+project+'">Pick a winner</a>'));
   assert.doesNotMatch(page.$('#productionDetail').innerHTML,/href="\/review\.html\?project=/);
+  assert.equal(page.requests.length,0);
+});
+test('explicit narrow selection clears the header and its overflowing privacy row; rerender never scrolls',()=>{
+  const page=comparisonPage();page.render();page.viewport(390);
+  let margin=0,focus=0,scrolls=0,privacyBottom=90;
+  Object.assign(page.$('#productionPlanTitle'),{style:{setProperty:(name,value)=>{assert.equal(name,'scroll-margin-top');margin=parseFloat(value);}},focus:()=>focus++,scrollIntoView:()=>scrolls++});
+  page.$('.studio-globalbar').getBoundingClientRect=()=>({bottom:58});
+  page.$('.studio-globalbar .privacy-bar').getBoundingClientRect=()=>({bottom:privacyBottom});
+  const select=()=>page.$('#productionList').onclick({target:{closest:selector=>selector==='[data-project]'?{dataset:{project}}:null}});
+  select();assert.ok(margin>privacyBottom,'The heading must clear the privacy row outside the header box');
+  assert.equal(focus,1);assert.equal(scrolls,1);
+  privacyBottom=120;select();assert.ok(margin>privacyBottom,'Selection measures the current row instead of a fixed allowance');
+  page.render();assert.equal(focus,2);assert.equal(scrolls,2,'Refreshing the same plan never replays selection scrolling');
+  page.viewport(1440);select();assert.equal(scrolls,2,'Wide selection retains the side-by-side layout without a scroll handoff');
+  page.viewport(390);page.render({...page.plan,state:{status:'failed',message:'Inspect the retained failure.'}});select();
+  assert.equal(scrolls,2,'Execution states retain their existing focus behavior');
   assert.equal(page.requests.length,0);
 });
 test('finished pictures and review entry precede folded budget, time and branch controls',()=>{

@@ -432,9 +432,10 @@ if($('#planType'))$('#planType').onchange=()=>setPlanFilter({type:$('#planType')
 if($('#planStatus'))$('#planStatus').onchange=()=>setPlanFilter({status:$('#planStatus').value});
 $('#productionList').onclick=e=>{if(e.target.closest('[data-production-plan]')){planFromEmptyState();return;}if(e.target.closest('[data-plan-show-all]')){setPlanFilter({type:'all',status:'all'},true);return;}const p=e.target.closest('[data-project]');if(p){productionId=p.dataset.project;renderProduction();
   // Selecting a finished plan on a narrow screen opens its pictures below the list. Polling never moves focus or scroll.
-  if(planPicturesFirst(productionPlans.find(plan=>plan.id===productionId))&&typeof window!=='undefined'&&window.matchMedia?.('(max-width:1000px)').matches){const title=$('#productionPlanTitle'),bar=$('.studio-globalbar');
-    // The compact global bar can wrap to two rows; its measured bottom keeps the focused heading fully visible.
-    title?.style?.setProperty?.('scroll-margin-top',(Math.max(0,bar?.getBoundingClientRect?.().bottom||0)+8)+'px');
+  if(planPicturesFirst(productionPlans.find(plan=>plan.id===productionId))&&typeof window!=='undefined'&&window.matchMedia?.('(max-width:1000px)').matches){const title=$('#productionPlanTitle');
+    // Compact privacy controls sit outside the header's box; include their own bottom before placing focus below it.
+    const bottom=Math.max(0,...['.studio-globalbar','.studio-globalbar .privacy-bar'].map(selector=>$(selector)?.getBoundingClientRect?.().bottom||0));
+    title?.style?.setProperty?.('scroll-margin-top',(bottom+8)+'px');
     title?.focus?.({preventScroll:true});title?.scrollIntoView?.({block:'start',behavior:'instant'});
   }
 }};
