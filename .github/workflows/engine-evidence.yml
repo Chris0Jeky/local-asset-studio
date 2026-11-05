@@ -6,6 +6,10 @@ on:
       - 'scripts/godot_probe.gd'
       - 'scripts/godot_project.godot'
       - 'scripts/engine_validation.py'
+      - 'scripts/toon_compile*.py'
+      - 'tools/toon-compiler/**'
+      - 'tests/test_toon_compile*.py'
+      - 'tests/toon_material_policy_probe.gd'
       - 'tools/gltf-validation/**'
       - 'tests/*engine*.py'
       - '.github/workflows/engine-evidence.yml'
@@ -16,6 +20,10 @@ on:
       - 'scripts/godot_probe.gd'
       - 'scripts/godot_project.godot'
       - 'scripts/engine_validation.py'
+      - 'scripts/toon_compile*.py'
+      - 'tools/toon-compiler/**'
+      - 'tests/test_toon_compile*.py'
+      - 'tests/toon_material_policy_probe.gd'
       - 'tools/gltf-validation/**'
       - 'tests/*engine*.py'
       - '.github/workflows/engine-evidence.yml'
@@ -46,6 +54,7 @@ jobs:
       - run: python tests/install_engine_test_runtime.py
       - run: python -m unittest discover -s tests -p test_engine_evidence.py -v
       - run: python -m unittest discover -s tests -p test_engine_live.py -v
+      - run: python -m unittest discover -s tests -p 'test_toon_compile*.py' -v
       - uses: actions/upload-artifact@v4
         if: always()
         with:

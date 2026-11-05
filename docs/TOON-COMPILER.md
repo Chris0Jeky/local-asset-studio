@@ -2,14 +2,14 @@
 
 Built on 2 November 2026 (R&D night, mira-lab lane) so that a toon look authored once in Blender's light loop reaches
 Godot and VRM without hand-porting. It translates the node graph itself, not a fixed shader with parameters, so any
-graph made of the supported nodes compiles; anything else is refused by name. Tested on the anime toon kit's `ml`
+graph made of the supported nodes compiles; unsupported features are named in the report. Tested on the anime toon kit's `ml`
 materials on Suzu (`docs/ANIME-TOON-KIT.md`); parity is measured, not claimed (below).
 
 | Tool | Runs in | Does |
 | --- | --- | --- |
 | `scripts/toon_compile_bpy.py` | Blender 5.4 | Dumps every material on visible meshes as JSON IR, saves its textures, compiles; optionally renders parity views in EEVEE and exports the GLB for Godot. Never saves the .blend |
 | `scripts/toon_compile.py` | Python 3.12+, stdlib (`parity` needs Pillow) | IR to Godot spatial shaders, VRM MToon 1.0 parameters, the Godot light rig and cameras; `parity` measures two render sets |
-| `tools/toon-compiler/render.gd` | Godot 4.7.2 | Loads the GLB at runtime, applies the compiled shaders, lights and cameras, writes one PNG per camera |
+| `tools/toon-compiler/render.gd` | Godot 4.7.2 | Loads the GLB at runtime, applies only `ok` compiled materials, lights and cameras, writes one PNG per camera |
 
 ## Run it
 
@@ -48,8 +48,27 @@ Supported nodes: Math, Vector Math (common ops), Map Range (float: linear, stepp
 MixRGB (mix, add, subtract, multiply, screen, difference, darken, lighten), RGB to BW, Separate/Combine XYZ and Color
 (RGB), Clamp, Invert, Color Ramp (constant, linear), Layer Weight, Fresnel, Geometry (normal, incoming, backfacing,
 position), Texture Coordinate and UV Map (render UV), Image Texture, Vector Transform (world/object), Value, RGB,
-groups, reroutes, muted nodes, and the four Material Lighting nodes. Everything else is reported in `report.json`
-with the node's name; such a material gets no shader.
+groups, reroutes, muted nodes, and the four Material Lighting nodes. An unsupported node or sampler mode is reported
+in `report.json` with the node's name and produces no shader. A graph with a known unsupported lighting contribution
+can produce a `partial` shader for inspection; the Godot runner keeps the imported material for that graph.
+
+### Image samplers and material selection
+
+Image Texture interpolation and extension belong to each node. Uniforms are keyed by image, interpolation and
+extension; sampling also keeps UVs and shader stage distinct. Nodes using the same image with identical settings
+can share a uniform and sample, while different settings produce separate uniforms. The image file is still
+exported once, and `report.json` retains the existing `uniform name -> image name` mapping. Old IR that lacks a
+node setting falls back to its image-level setting, then to Blender's `Linear` / `REPEAT` defaults.
+
+The supported interpolation modes are `Closest` and `Linear`; supported extension modes are `REPEAT` and `EXTEND`.
+`Cubic`, `Smart`, `CLIP`, `MIRROR`, and invalid values are explicitly refused instead of being approximated with a
+different sampler. Re-exporting with Blender preserves these node properties without copying them onto images.
+
+The Godot runner replaces a material only when its report status is exactly `ok` and the compiled shader file is
+readable and nonblank. `partial`, `unsupported`, unknown or missing status, and unavailable shaders leave the
+imported material in place. Stdout records each retained material's reason and any unsupported-feature list. A
+linked or nonblack constant `Transmission Light` contribution makes a material `partial`; its shader file remains
+available for inspection. A black unlinked value contributes nothing and does not mark the material partial.
 
 ### Light convention
 
@@ -106,6 +125,24 @@ which the toon ramps stepped into dither. v2 adds the fitted glossy and TAA in t
 - slightly larger hair highlights in Godot.
 
 The shading bands, ramps, rim and highlight shapes match.
+
+## Regression checks
+
+`python -m unittest discover -s tests -p 'test_toon_compile*.py' -v` runs the offline compiler suite and the opt-in
+native material-policy test. The offline tests execute generated shaders with sampler-aware callbacks, including
+shared images across groups, each independently changed sampler setting, UV separation, and Color/Alpha reuse.
+They also verify that partial transmission artifacts and the uniform-to-image report mapping survive serialization.
+
+The native test requires an explicit `STUDIO_TEST_GODOT` executable. Without it the test is skipped. The existing
+Native engine evidence workflow runs it on Linux and Windows with **Godot 4.5**, imports the original CPU-authored
+`FixturePaint` GLB, and calls the production material-selection guard. It checks that rejected records preserve
+the actual imported material, that only valid `ok` records replace it, and that unavailable or blank shader files
+retain the original. When `STUDIO_ENGINE_EVIDENCE` is set, its `toon-material-policy/` folder retains the fixture,
+project, source hashes and command, exit result, stdout/stderr, and a JSON receipt with the Godot version and each
+case's material-selection checks. These are import and selection-policy checks, not GPU render or shader parity checks.
+They do not rerun or extend the Godot **4.7.2** visual measurements above. See the
+[5 November verification note](verification/2026-11-05-toon-material-integrity.md) for this change's local results
+and pending native evidence.
 
 ## Limits
 

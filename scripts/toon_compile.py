@@ -453,13 +453,21 @@ class Compiler:
         return f"normalize({res})" if kind == "NORMAL" else res
 
     def texture(self, n, out, stage):
-        img = n.get("props", {}).get("image")
+        props = n.get("props", {})
+        img = props.get("image")
         if not img or img not in self.images:
             return "vec3(1.0, 0.0, 1.0)" if out == "Color" else "1.0"  # Blender's missing-texture magenta
         info = self.images[img]
-        uni = self.uniforms.setdefault(img, f"tex_{safe_name(img)}_{len(self.uniforms)}")
+        interpolation = props.get("interpolation", info.get("interpolation", "Linear"))
+        extension = props.get("extension", info.get("extension", "REPEAT"))
+        if interpolation not in ("Closest", "Linear"):
+            raise Unsupported(f"{n['name']}: Image Texture interpolation {interpolation!r}")
+        if extension not in ("REPEAT", "EXTEND"):
+            raise Unsupported(f"{n['name']}: Image Texture extension {extension!r}")
+        sampler = (img, interpolation, extension)
+        uni = self.uniforms.setdefault(sampler, f"tex_{safe_name(img)}_{len(self.uniforms)}")
         uv = self.input(n, "Vector", stage, "VECTOR") if self.linked(n, "Vector") else "vec3(UV.x, 1.0 - UV.y, 0.0)"
-        key = ("tex", img, uv, stage)
+        key = ("tex", uni, uv, stage)
         if key not in self.memo:
             self.memo[key] = self.emit_vec4(stage, f"texture({uni}, vec2(({uv}).x, 1.0 - ({uv}).y))")
         s = self.memo[key]
@@ -538,7 +546,8 @@ class Compiler:
                 if sock is None or (not self.linked(n, light) and not any(sock.get("default", [0.0])[:3])):
                     continue  # an unlinked constant still adds itself once per light; only black adds nothing
                 terms[kind].append(lmul(f"{self.input(n, light, 'light', 'RGBA')} * {self.input(n, color, 'light', 'RGBA')}"))
-            if self.linked(n, "Transmission Light"):
+            transmission = find_socket(n["inputs"], "Transmission Light")
+            if transmission is not None and (self.linked(n, "Transmission Light") or any(transmission.get("default", [0.0])[:3])):
                 self.unsupported.append(f"{n['name']}: Transmission Light")
             terms["opaque"].append(w or "1.0")
 
@@ -565,11 +574,11 @@ class Compiler:
                 frag.append("ALPHA_SCISSOR_THRESHOLD = 0.5;")  # Blender's dithered surfaces read as a hard cut-out
         out = [f"// Compiled by scripts/toon_compile.py from Blender material {self.name!r}. Do not edit; recompile.",
                "shader_type spatial;", f"render_mode {', '.join(modes)};", ""]
-        for img, uni in self.uniforms.items():
+        for (img, interpolation, extension), uni in self.uniforms.items():
             info = self.images[img]
             hints = ["source_color"] if info.get("colorspace", "sRGB") not in ("Non-Color", "Linear Rec.709", "Raw") else []
-            hints.append("filter_nearest_mipmap" if info.get("interpolation") == "Closest" else "filter_linear_mipmap")
-            hints.append("repeat_enable" if info.get("extension", "REPEAT") == "REPEAT" else "repeat_disable")
+            hints.append("filter_nearest_mipmap" if interpolation == "Closest" else "filter_linear_mipmap")
+            hints.append("repeat_enable" if extension == "REPEAT" else "repeat_disable")
             out.append(f"uniform sampler2D {uni} : {', '.join(hints)};")
         out += [f"varying {typ} {var};" for var, (typ, _) in self.varyings.items()]
         out += [""] + [HELPERS[h] + "\n" for h in HELPERS if h in self.helpers]
@@ -582,7 +591,7 @@ class Compiler:
                 body.append(f"SPECULAR_LIGHT += {' + '.join(terms['specular'])};")
             out += ["", "void light() {"] + ["\t" + s for s in body] + ["}"]
         status = "partial" if self.unsupported else "ok"
-        return {"status": status, "shader": "\n".join(out) + "\n", "uniforms": {u: i for i, u in self.uniforms.items()},
+        return {"status": status, "shader": "\n".join(out) + "\n", "uniforms": {u: sampler[0] for sampler, u in self.uniforms.items()},
                 "lit": lit, "varyings": len(self.varyings), "warnings": self.warnings, "unsupported": self.unsupported}
 
 

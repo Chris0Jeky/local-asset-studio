@@ -2,8 +2,8 @@
 #   godot --path tools/toon-compiler --script res://render.gd -- <config.json>
 # config: {"glb", "compiled" (a toon_compile output dir), "out", "background" (linear RGB), "shadow_max_distance",
 # "shadow_bias", "shadow_normal_bias" (Godot defaults if absent), "msaa", "taa" (default true: accumulates the soft-shadow noise that Blender's samples average out)}. Writes
-# <out>/<camera>.png per camera in <compiled>/cameras.json. Surfaces without a compiled shader keep their imported
-# material and are listed on stdout.
+# <out>/<camera>.png per camera in <compiled>/cameras.json. Only status=ok shaders replace imported materials;
+# partial, unsupported and missing records keep the imported material and are listed with reasons on stdout.
 extends SceneTree
 
 var cfg: Dictionary
@@ -13,6 +13,33 @@ var settle := 0
 var view: SubViewport
 var cam: Camera3D
 var textures := {}
+
+
+static func load_compiled_shader(path: String) -> Shader:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return null
+	var code := file.get_as_text()
+	if code.strip_edges().is_empty():
+		return null
+	var shader := Shader.new()
+	shader.code = code
+	return shader
+
+
+static func apply_compiled_material(node: MeshInstance3D, surface: int, record: Variant, material_factory: Callable) -> Dictionary:
+	if not (record is Dictionary):
+		return {"applied": false, "reason": "no compiler record"}
+	if record.get("status", "") != "ok":
+		return {"applied": false, "reason": "compiler status " + str(record.get("status", "missing")),
+			"unsupported": record.get("unsupported", [])}
+	if typeof(record.get("file")) != TYPE_STRING or record["file"].is_empty():
+		return {"applied": false, "reason": "no compiled shader file"}
+	var material = material_factory.call()
+	if not (material is Material):
+		return {"applied": false, "reason": "compiled material unavailable"}
+	node.set_surface_override_material(surface, material)
+	return {"applied": true}
 
 
 func xform(t: Array) -> Transform3D:
@@ -64,19 +91,21 @@ func _initialize() -> void:
 			var src: Material = node.mesh.surface_get_material(i)
 			var mname := src.resource_name if src else ""
 			var r = report["materials"].get(mname)
-			if r == null or not r.has("file"):
-				missing[mname] = true
-				continue
-			if not shaders.has(mname):
-				var sh := Shader.new()
-				sh.code = FileAccess.get_file_as_string(dir + "/" + r["file"])
-				var m := ShaderMaterial.new()
-				m.shader = sh
-				for uni in r["uniforms"]:
-					m.set_shader_parameter(uni, texture(dir + "/" + report["images"][r["uniforms"][uni]]["file"]))
-				shaders[mname] = m
-			node.set_surface_override_material(i, shaders[mname])
-	print("TOONC godot: ", shaders.size(), " compiled materials, kept imported: ", missing.keys())
+			var make_material := func() -> Material:
+				if not shaders.has(mname):
+					var sh := load_compiled_shader(dir + "/" + r["file"])
+					if sh == null:
+						return null
+					var m := ShaderMaterial.new()
+					m.shader = sh
+					for uni in r["uniforms"]:
+						m.set_shader_parameter(uni, texture(dir + "/" + report["images"][r["uniforms"][uni]]["file"]))
+					shaders[mname] = m
+				return shaders[mname]
+			var decision := apply_compiled_material(node as MeshInstance3D, i, r, make_material)
+			if not decision["applied"]:
+				missing[mname] = decision
+	print("TOONC godot: ", shaders.size(), " compiled materials, kept imported: ", missing)
 	for L in read_json(dir + "/lights.json"):
 		if L.has("skipped"):
 			print("TOONC godot: light skipped: ", L["name"], " (", L["skipped"], ")")
