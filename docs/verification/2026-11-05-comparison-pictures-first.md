@@ -62,7 +62,7 @@ browser helper checks summary/button focus and open/closed state at 390 × 500.
 
 ## Executed local verification
 
-Passed after the final code changes:
+Passed for the implementation, with the later hosted-qualification follow-up recorded below:
 
 - `node tests/review_frontend.cjs` — 41 tests. Covers the single contextual
   entry, picture/control ordering, visible exceptional messages, execution
@@ -100,6 +100,29 @@ These browser assertions have not run locally: this environment has no usable
 Chromium binary. Exact-head hosted browser results and their screenshots remain
 the visual validation gate. The coordinator owns the full-suite and publishing
 steps; this note makes no full-suite or visual-success claim.
+
+### Hosted qualification and focused-heading correction
+
+Published comparison head `3988095eddaf61937e23ce072ec4cee57daa6311` passed UX run
+`41951702592`, job `126996913209`: 31/31 use cases, zero page errors, and the later
+295 pose-handoff assertions. The artifact `13381890411` identifies that exact
+head; its downloaded ZIP matches SHA-256
+`f5d2eb54cee2bd4e28001fadf505d77a9452798b30ee41437507e25ff152ccb7`.
+
+All four `pictures-<width>x<height>.png` captures were inspected. Desktop and
+tablet show the review entry with both candidates. The 390 × 844 view shows the
+first picture and its controls; the 390 × 500 view retains the entry and useful
+first-picture area. Both phone captures also show a defect the geometry test had
+missed: the focused plan heading starts underneath the wrapped, two-row global
+bar. Those captures remain before evidence, not visual acceptance of this fix.
+
+Explicit narrow-screen selection now measures the actual global-bar bottom and
+leaves an 8px gap above the focused heading. The ready outcome is shorter because
+the adjacent **Pick a winner** button already states the next action. Every
+viewport now asserts that the full heading is inside the visible area below the
+bar, alongside the existing review-link and picture thresholds. Polling still
+does not scroll, and no request or decision handler changes. Final-head hosted
+screenshots remain required to qualify this correction.
 
 ## Remaining acceptance
 

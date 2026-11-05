@@ -1126,10 +1126,14 @@ def comparison_picture_layout(c, study):
               const inspect=node=>{const r=node.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,
                 visibleHeight:Math.max(0,Math.min(r.bottom,innerHeight)-Math.max(r.top,top)),height:r.height};};
               return {top,width:innerWidth,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,
+                heading:inspect(document.querySelector('#productionPlanTitle')),
                 entry:inspect(document.querySelector('.comparison-review-entry a')),
                 images:[...document.querySelectorAll('#productionDetail .candidate img')].map(inspect)};
             }""")
             entry = geometry['entry']
+            heading = geometry['heading']
+            assert heading['top'] >= geometry['top'] - 1 and heading['bottom'] <= height + 1, geometry
+            assert heading['left'] >= -1 and heading['right'] <= width + 1, geometry
             assert entry['top'] >= geometry['top'] - 1 and entry['bottom'] <= height + 1, geometry
             assert entry['left'] >= -1 and entry['right'] <= width + 1, geometry
             visible_images = geometry['images'][:2 if width > 850 else 1]

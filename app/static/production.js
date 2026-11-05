@@ -80,7 +80,7 @@ function restorePlanFilter(){try{planFilter=cleanPlanFilter(JSON.parse(localStor
 // Finished image comparisons lead with their pictures. Other states retain the execution controls and warnings first.
 function planPicturesFirst(p){return p?.kind==='comparison'&&['awaiting_review','reviewed'].includes(p.state?.status)&&p.can_reconcile_tracking!==true&&p.can_reconcile_batch!==true&&(p.stages||[]).some(s=>(s.job?.outputs||[]).some(o=>o.asset_id&&o.media_type==='image'));}
 function planPictureOutcome(p){
-  if(p.state.status==='awaiting_review'){const count=(p.stages||[]).reduce((n,s)=>n+(s.job?.outputs||[]).filter(o=>o.asset_id&&o.media_type==='image').length,0);return count+' image candidate'+(count===1?'':'s')+' ready. Compare the pictures, then choose a winner.';}
+  if(p.state.status==='awaiting_review'){const count=(p.stages||[]).reduce((n,s)=>n+(s.job?.outputs||[]).filter(o=>o.asset_id&&o.media_type==='image').length,0);return count+' image candidate'+(count===1?'':'s')+' ready.';}
   const chosen=p.state.review?.asset_id,winner=chosen&&(p.stages||[]).find(s=>(s.job?.outputs||[]).some(o=>o.asset_id===chosen));
   return winner?'Decided: Candidate '+winner.label+' won.':chosen?'A winner is recorded for this comparison.':'Reviewed without a winner.';
 }
@@ -432,7 +432,11 @@ if($('#planType'))$('#planType').onchange=()=>setPlanFilter({type:$('#planType')
 if($('#planStatus'))$('#planStatus').onchange=()=>setPlanFilter({status:$('#planStatus').value});
 $('#productionList').onclick=e=>{if(e.target.closest('[data-production-plan]')){planFromEmptyState();return;}if(e.target.closest('[data-plan-show-all]')){setPlanFilter({type:'all',status:'all'},true);return;}const p=e.target.closest('[data-project]');if(p){productionId=p.dataset.project;renderProduction();
   // Selecting a finished plan on a narrow screen opens its pictures below the list. Polling never moves focus or scroll.
-  if(planPicturesFirst(productionPlans.find(plan=>plan.id===productionId))&&typeof window!=='undefined'&&window.matchMedia?.('(max-width:1000px)').matches){const title=$('#productionPlanTitle');title?.focus?.({preventScroll:true});title?.scrollIntoView?.({block:'start',behavior:'instant'});}
+  if(planPicturesFirst(productionPlans.find(plan=>plan.id===productionId))&&typeof window!=='undefined'&&window.matchMedia?.('(max-width:1000px)').matches){const title=$('#productionPlanTitle'),bar=$('.studio-globalbar');
+    // The compact global bar can wrap to two rows; its measured bottom keeps the focused heading fully visible.
+    title?.style?.setProperty?.('scroll-margin-top',(Math.max(0,bar?.getBoundingClientRect?.().bottom||0)+8)+'px');
+    title?.focus?.({preventScroll:true});title?.scrollIntoView?.({block:'start',behavior:'instant'});
+  }
 }};
 $('#productionDetail').oninput=e=>keepProductionDraft(e.target);
 $('#productionDetail').onchange=e=>{if(e.target.id==='blindComparison'){blindComparison=e.target.checked;renderProduction();}};
