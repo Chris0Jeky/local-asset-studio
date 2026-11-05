@@ -38,7 +38,7 @@ function server(options={}){
   return {fetch,calls};
 }
 function page(srv,state={workspace_id:WS,draft_id:ID,revision:HEAD},operations={}){
-  const doc={ids:new Map(),activeElement:null,listeners:{},querySelector(s){return this.ids.get(s.slice(1))||null;},addEventListener(k,f){this.listeners[k]=f;},createElement(t){return new El(t,this);}};
+  const doc={ids:new Map(),activeElement:null,listeners:{},querySelector(s){return this.ids.get(s.slice(1))||null;},addEventListener(k,f){(this.listeners[k]??=[]).push(f);},dispatch(type){for(const f of this.listeners[type]||[])f({});},createElement(t){return new El(t,this);}};
   const panel=new El('section',doc);panel.id='sharedSetupPanel';
   const counts={adopt:0,capture:0,stamp:0,storage:0},frozen=JSON.stringify(state);
   const w={document:doc,AbortController,setTimeout,clearTimeout,fetch:srv.fetch,
@@ -55,7 +55,7 @@ function page(srv,state={workspace_id:WS,draft_id:ID,revision:HEAD},operations={
 test('opening lists the newest bounded page and follows the explicit continuation twice',async()=>{
   const srv=server(),p=page(srv);await p.open();
   assert.equal(srv.calls.length,1);assert.equal(srv.calls[0].path,'/api/workflow-studio/setup-drafts/'+ID+'/history?workspace_id='+WS+'&limit=20');
-  assert.equal(p.rows().length,20);assert.match(p.rows()[0].textContent,/Revision 45 \(current head\)/);assert.match(p.rows()[19].textContent,/Revision 26/);
+  assert.equal(p.rows().length,20);assert.match(p.rows()[0].textContent,/Revision 45 \(latest loaded revision\)/);assert.match(p.rows()[19].textContent,/Revision 26/);
   assert.match(p.rows()[0].textContent,/Changed from revision 44: draft\./);assert.match(p.rows()[1].textContent,/No draft, preset, backend, graph or input-count difference from revision 43/);
   assert.match(p.rows()[4].textContent,/Changed from revision 40: draft, input files 1 to 2\./);assert.match(p.rows()[14].textContent,/Changed from revision 30: draft, preset early-preset to late-preset\./);
   assert.equal(p.$('setupHistoryOlder').hidden,false);assert.match(p.status(),/Showing 20 of 45 revisions, newest first/);
@@ -68,7 +68,7 @@ test('opening lists the newest bounded page and follows the explicit continuatio
 });
 test('each row starts with its recorded save time as a time element, or says none was recorded',async()=>{
   const srv=server(),p=page(srv);await p.open();const row=p.rows()[0],first=row.children[0],at=new Date((1760000000+45*3600)*1000);
-  assert.equal(first.tag,'time');assert.equal(first.textContent,at.toLocaleString());assert.equal(first.attrs.datetime,at.toISOString());assert.match(row.textContent,/^[^R]+Revision 45 \(current head\)/,'the time precedes the label');
+  assert.equal(first.tag,'time');assert.equal(first.textContent,at.toLocaleString());assert.equal(first.attrs.datetime,at.toISOString());assert.match(row.textContent,/^[^R]+Revision 45 \(latest loaded revision\)/,'the time precedes the label');
   const none=p.rows()[1];assert.equal(none.children[0].tag,'div');assert.equal(none.children[0].textContent,'Save time not recorded');assert.equal(none.children[0].attrs.datetime,undefined);
   assert.equal(srv.calls.length,1,'the time comes from the same single read');
 });
@@ -166,7 +166,7 @@ test('cancel returns keyboard focus to the selected row and a second confirmatio
   f.review().click();await settle();let release;f.hold(new Promise(r=>release=r));p.$('setupHistoryRestoreConfirm').click();p.$('setupHistoryRestoreConfirm').click();assert.equal(f.writes.length,1);release();await settle();
 });
 test('closing, refreshing or changing privacy/Workspace during a restore read cannot expose a late confirm action',async()=>{
-  for(const cancel of [p=>{p.details.open=false;p.details.fire('toggle');},p=>p.$('setupHistoryRefresh').click(),p=>p.doc.listeners['studio:privacy-change']({}),p=>p.doc.listeners['studio:workspace-change']({})]){
+  for(const cancel of [p=>{p.details.open=false;p.details.fire('toggle');},p=>p.$('setupHistoryRefresh').click(),p=>p.doc.dispatch('studio:privacy-change'),p=>p.doc.dispatch('studio:workspace-change')]){
     const f=restoration(),{p}=f;await p.open();let release;f.hold(new Promise(r=>release=r));f.review().click();await settle();cancel(p);release();await settle();
     assert.equal(p.$('setupHistoryRestore').hidden,true);assert.equal(f.writes.length,0);
   }

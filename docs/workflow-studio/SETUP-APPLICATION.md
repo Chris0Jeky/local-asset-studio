@@ -37,6 +37,25 @@ is not durable source storage, and this feature does not claim to preserve its
 bytes across reload. Settled existing attachments are checked in both the upload
 folder and active backend input folder before a checkpoint can be committed.
 
+### Return to an older revision
+
+Open **Workspace history** inside **Shared setup & recovery**. The list identifies
+its latest loaded revision; use **Refresh history** to read newer saves. Select
+**Review restore** beside an older revision, inspect the comparison, then choose
+**Save my current draft and restore revision N**. This first saves your complete
+current draft, then saves the selected setup as another new revision and loads it
+into the editor. Existing revisions remain available and Generate stays separate.
+
+After a confirmed restore, the status names both new revisions and the list refreshes
+automatically. If that read fails or is canceled, the completed restore remains saved;
+the status identifies the older list and offers **Refresh history**. A failed refresh
+does not repeat the restore. If the restore itself has an unknown result, use
+**Inspect original request** instead of repeating the command.
+
+Editing the draft, applying another saved setup, changing privacy or Workspace, or
+closing the review invalidates its approval. Typing a name under **Saved setups** or
+selecting an import that has not been applied leaves the reviewed draft unchanged.
+
 ## Commands shared with agents
 
 The service uses `/api/workflow-studio/setup-drafts`. All writes are explicit
