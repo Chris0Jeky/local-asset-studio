@@ -14,6 +14,8 @@ on:
       - 'tests/test_parallax_finish_worker.py'
       - 'tests/studio_browser_smoke.py'
       - 'tests/asset_detail_browser.py'
+      - 'tests/browser_failure_diagnostics.py'
+      - 'tests/test_browser_failure_diagnostics.py'
       - '.github/workflows/parallax-stage-recovery.yml'
 permissions:
   contents: read
@@ -47,6 +49,7 @@ jobs:
       - run: python -m playwright install --with-deps chromium
       - run: python -m unittest discover -s tests -p test_parallax_stage_recovery.py -v
       - run: python -m unittest discover -s tests -p test_parallax_finish_worker.py -v
+      - run: python -m unittest discover -s tests -p test_browser_failure_diagnostics.py -v
       - run: python tests/parallax_stage_recovery_browser.py --out .runtime/parallax-stage-recovery
       - uses: actions/upload-artifact@v4
         if: always()

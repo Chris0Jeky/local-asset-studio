@@ -1,4 +1,5 @@
-"""Failures retain transport identity without request payloads or longer waits."""
+"""Failures retain transport identity without payloads or longer readiness waits."""
+import asyncio
 from types import SimpleNamespace
 import unittest
 
@@ -74,6 +75,47 @@ class BrowserFailureDiagnosticTests(unittest.TestCase):
         self.assertIs(caught.exception, original)
         self.assertEqual(evidence.snapshot()['page_states'], [{'page': 'reload',
             'url': 'http://127.0.0.1:8191/?key=<redacted>', 'capture_error_type': 'RuntimeError'}])
+
+
+class AsyncBrowserFailureDiagnosticTests(unittest.IsolatedAsyncioTestCase):
+    async def test_async_startup_capture_awaits_the_renderer_and_redacts_the_url(self):
+        class AsyncPage(Page):
+            url = 'http://127.0.0.1:8191/?key=private-words#private-fragment'
+            async def evaluate(self, _):
+                return {'ready_state': 'complete', 'catalog_defined': False,
+                        'selector_defined': False, 'escape_defined': False}
+        page = AsyncPage(); evidence = BrowserFailureDiagnostics(); evidence.watch(page, '390px reload')
+        await evidence.capture_page_async(page)
+        self.assertEqual(evidence.snapshot()['page_states'], [{'page': '390px reload',
+            'url': 'http://127.0.0.1:8191/?key=<redacted>', 'ready_state': 'complete',
+            'catalog_defined': False, 'selector_defined': False, 'escape_defined': False}])
+
+    async def test_async_renderer_failure_preserves_the_original_failure(self):
+        class ClosedPage(Page):
+            url = 'http://127.0.0.1:8191/?key=private-words'
+            async def evaluate(self, _): raise RuntimeError('renderer unavailable: private-words')
+        page = ClosedPage(); evidence = BrowserFailureDiagnostics(); evidence.watch(page, '390px reload')
+        original = AssertionError('original readiness failure')
+        with self.assertRaises(AssertionError) as caught:
+            try: raise original
+            finally: await evidence.capture_page_async(page)
+        self.assertIs(caught.exception, original)
+        self.assertEqual(evidence.snapshot()['page_states'], [{'page': '390px reload',
+            'url': 'http://127.0.0.1:8191/?key=<redacted>', 'capture_error_type': 'RuntimeError'}])
+
+    async def test_async_capture_of_a_stalled_renderer_is_bounded_and_cleans_up(self):
+        cancelled = []
+        class StalledPage(Page):
+            url = 'http://127.0.0.1:8191/#create'
+            async def evaluate(self, _):
+                try: await asyncio.Future()
+                finally: cancelled.append(True)
+        page = StalledPage(); evidence = BrowserFailureDiagnostics(); evidence.watch(page, '390px reload')
+        evidence._capture_timeout = .01
+        await evidence.capture_page_async(page)
+        self.assertEqual(cancelled, [True])
+        self.assertEqual(evidence.snapshot()['page_states'], [{'page': '390px reload',
+            'url': 'http://127.0.0.1:8191/', 'capture_error_type': 'TimeoutError'}])
 
 
 if __name__ == '__main__': unittest.main()

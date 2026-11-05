@@ -42,6 +42,8 @@ jobs:
         run: python -m unittest discover -s tests -p "test_spoken_brief_frontend.py" -v
       - name: Real HTTP contract
         run: python -m unittest discover -s tests -p "test_spoken_brief_http.py" -v
+      - name: Narration coordinator and fixture ownership
+        run: python -m unittest discover -s tests -p "test_spoken_brief_narration.py" -v
       - name: Native Chromium on the actual composed Studio handler
         run: python tests/studio_spoken_browser.py
         env:

@@ -8,6 +8,7 @@ import threading
 from pathlib import Path
 
 from playwright.async_api import async_playwright
+from browser_failure_diagnostics import BrowserFailureDiagnostics
 import studio_browser_smoke as fixture
 from asset_detail_browser import inert_page
 import parallax
@@ -112,16 +113,25 @@ async def run(args):
                    status='uncertain', message='Synthetic uncertain sibling, not a model run',
                    prompt_ids=[], has_pending_submission=True, controls={}, outputs=[], parallax=dict(PLAN, stage='isolate'))
     fixture.JOBS[:] = [job, sibling]
-    server = fixture.browser_server(Handler)
+    diagnostics = BrowserFailureDiagnostics()
+    class DiagnosticHandler(Handler):
+        def handle_one_request(self):
+            try: return super().handle_one_request()
+            except Exception as error:
+                diagnostics.server_error(self, error)
+                raise
+    server = fixture.browser_server(DiagnosticHandler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     errors, checks, completed = [], [], False
     try:
         async with async_playwright() as pw:
             browser = await pw.chromium.launch(executable_path=shutil.which('chromium'), headless=True, args=['--no-sandbox'])
+            page = None
             try:
                 for width in (1440, 390):
                     page = await browser.new_page(viewport={'width': width, 'height': 1100})
+                    diagnostics.watch(page, f'{width}px')
                     dialogs = []
                     async def on_dialog(dialog):
                         dialogs.append(dialog.message)
@@ -205,11 +215,14 @@ async def run(args):
                     assert await page.evaluate('parallaxState.stage') == 'isolate'
                     checks.append(f'{width}px deferred response preserves newer wording and selected stage')
                     await cpu_split_statuses(page, job, sibling, width, checks, args.out)
+                    await diagnostics.capture_page_async(page)
                     await page.close()
+                    page = None
                 assert not errors, errors
                 assert not any(row['path'] == '/api/jobs' for row in fixture.POSTS), fixture.POSTS
                 completed = True
             finally:
+                if page is not None: await diagnostics.capture_page_async(page)
                 await browser.close()
     finally:
         server.shutdown()
@@ -219,6 +232,7 @@ async def run(args):
         report = {'mode': 'inert transport/storage' if args.inert else 'native HTTP', 'checks': checks,
                   'errors': errors, 'stage_requests': CALLS, 'completed': completed,
                   'split_requests': FINISH_CALLS,
+                  'failure_diagnostics': diagnostics.snapshot(),
                   'generation_submitted': any(row['path'] == '/api/jobs' for row in fixture.POSTS)}
         (args.out/'report.json').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
     print(json.dumps(report, indent=2))

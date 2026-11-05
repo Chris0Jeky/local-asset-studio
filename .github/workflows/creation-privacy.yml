@@ -63,10 +63,26 @@ jobs:
         if: runner.os == 'Linux'
         timeout-minutes: 4
         run: bash scripts/ci-install-chromium.sh
+      - name: Identify the pinned Windows browser version
+        if: runner.os == 'Windows'
+        id: playwright-version
+        shell: pwsh
+        run: python -c "from importlib.metadata import version; print('version=' + version('playwright'))" >> $env:GITHUB_OUTPUT
+      - name: Cache Windows Chromium for the installed Playwright version
+        if: runner.os == 'Windows'
+        uses: actions/cache@v4
+        timeout-minutes: 2
+        continue-on-error: true
+        with:
+          path: ~/AppData/Local/ms-playwright
+          key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ steps.playwright-version.outputs.version }}-chromium-shell-v1
       - name: Install Chromium on Windows
         if: runner.os == 'Windows'
-        timeout-minutes: 4
-        run: python -m playwright install --with-deps chromium
+        # All four Windows journeys use the default headless shell. Always run
+        # installation, including cache hits, so a missing browser cannot pass.
+        # Cache failures fall through to this bounded cold-download path.
+        timeout-minutes: 6
+        run: python -m playwright install --with-deps --only-shell chromium
       - name: Browser callback installation contracts
         run: python -m unittest discover -s tests -p test_browser_fixture_callbacks.py -v
       - name: Privacy toolbar geometry and keyboard access
