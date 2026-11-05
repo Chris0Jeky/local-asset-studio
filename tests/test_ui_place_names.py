@@ -28,14 +28,14 @@ class PlaceNames(unittest.TestCase):
 
     def test_page_labels_match_the_sidebar(self):
         shell = (STATIC / 'studio-shell.js').read_text(encoding='utf-8')
-        for label in ('Library', 'Compare &amp; review' if 'Compare &amp; review' in shell else 'Compare & review'):
+        for label in ('Library', 'Comparisons', 'Review desk'):
             self.assertIn(label, shell)
         index = (STATIC / 'index.html').read_text(encoding='utf-8')
         library = index[index.index('id="assetsView"'):index.index('id="assetScopes"')]
         self.assertIn('<h3>Library</h3>', library)
         runs = index[index.index('id="productionView"'):]
-        self.assertRegex(runs[:400], r'class="eyebrow">COMPARE &(amp;)? REVIEW<')
-        self.assertIn('<a href="/#production">Compare &amp; review</a>', (STATIC / 'review.html').read_text(encoding='utf-8'))  # the Review desk's empty state links back
+        self.assertRegex(runs[:400], r'class="eyebrow">COMPARISONS &(amp;)? EXPORTS<')
+        self.assertIn('<a href="/#production">Comparisons</a>', (STATIC / 'review.html').read_text(encoding='utf-8'))  # the Review desk's empty state links back
 
 
 if __name__ == '__main__':

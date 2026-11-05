@@ -69,7 +69,9 @@ def run(output):
                 assert COUNTS['/api/jobs'] > before['/api/jobs']
                 evidence['cases'].append({'hidden_automatic_gets': 0, 'visible_resume_reads': True})
 
-                page.locator('[data-nav-group="Advanced"] summary').click(); page.locator('[data-studio-route="create"]').click(); page.wait_for_timeout(750)
+                create = page.locator('[data-studio-route="create"]')
+                assert create.is_visible() and create.evaluate('(node)=>!node.closest("details")')
+                create.click(); page.wait_for_timeout(750)
                 production_before = COUNTS['/api/production']; page.wait_for_timeout(400)
                 assert COUNTS['/api/production'] == production_before
                 page.keyboard.press('Control+k'); page.locator('#studioCommandSearch').fill('Overview'); page.locator('#studioCommandResults a').click(); page.wait_for_timeout(800)

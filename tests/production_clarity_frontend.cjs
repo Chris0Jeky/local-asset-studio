@@ -83,7 +83,12 @@ assert.equal($('#productionDetail').innerHTML,emptyDetail,'An empty filtered lis
 run("productionPlans=[];setPlanFilter({type:'all'});");
 const review=fs.readFileSync(path.join(__dirname,'../app/static/review.html'),'utf8');
 assert.match(review,/<span id="phase" class="badge">No comparison open<\/span>/);
-assert.match(review,/in <a href="\/#production">Compare &amp; review<\/a>, choose Review on a comparison awaiting review/);
+assert.match(review,/in <a href="\/#production">Comparisons<\/a>, then press <b>Pick a winner<\/b> beside that plan/);
+const productionHeading=index.slice(index.indexOf('<div id="productionView"'),index.indexOf('<details id="productionIntro"'));
+assert.match(productionHeading,/Compare candidates\. Pick a winner\./);
+assert.match(productionHeading,/Pick a winner opens Review desk/,'The purpose and next action are visible without opening help');
+assert.match(productionHeading,/<a href="\/#create">Full editor<\/a>/,'The recipe starting point stays a navigation handoff');
+assert.match(index,/<details id="productionIntro" class="production-intro"><summary>What the plan statuses mean<\/summary>/);
 
 // 6 · The live summary states the arithmetic and refuses a budget below the candidates.
 $('#experimentRecipe').textContent='Anima portrait';$('#experimentAxis').value='steps';

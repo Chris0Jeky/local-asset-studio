@@ -244,7 +244,7 @@ def run(screenshots):
             page=context.new_page(); errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
             page.goto(origin);page.wait_for_selector('#makeGoals [data-make-goal]')
             check(page.locator('#makeView').is_visible() and not page.locator('#homeView').is_visible(),'Make is the default view')
-            check(page.locator('#studioSidebar nav > a').all_text_contents()==['✦Make','▤Scene briefs','▦Library','◇Models & setup'],'Workspace includes Scene briefs alongside Make, Library and Models & setup')
+            check(page.locator('#studioSidebar nav > a').all_text_contents()==['✦Make','▤Scene briefs','▦Library','⚙Full editor','⇄Comparisons','✓Review desk','◇Models & setup'],'Workspace exposes Full editor, Comparisons and Review desk alongside Make, Scene briefs, Library and Models & setup')
             check(page.locator('#studioSidebar [data-studio-route="home"]').count()==0,'Overview is absent from the sidebar')
             for section in ['Advanced','More tools']:
                 group=page.locator(f'[data-nav-group="{section}"]');summary=group.locator('summary')
@@ -253,10 +253,14 @@ def run(screenshots):
                 page.reload();page.wait_for_selector('#makeGoals [data-make-goal]');check(group.evaluate('(el)=>el.open'),section+' remembers keyboard expansion across reload')
                 summary.focus();page.keyboard.press('Space');page.wait_for_function('(section)=>localStorage.getItem("studio.nav."+section)==="false"',arg=section)
                 page.reload();page.wait_for_selector('#makeGoals [data-make-goal]');check(not group.evaluate('(el)=>el.open'),section+' remembers keyboard collapse across reload')
-            for route,section in [('create','Advanced'),('learn','More tools')]:
+            for route,section in [('learn','More tools')]:
                 page.goto(origin+'/#'+route);page.wait_for_selector(f'[data-studio-route="{route}"][aria-current="page"]')
                 check(page.locator(f'[data-nav-group="{section}"]').evaluate('(el)=>el.open'),section+' opens for its bookmarked route')
                 page.evaluate("showView('make')");page.locator(f'[data-nav-group="{section}"] summary').click()
+                page.wait_for_function('(section)=>localStorage.getItem("studio.nav."+section)==="false"',arg=section)
+            page.goto(origin+'/#create');page.wait_for_selector('[data-studio-route="create"][aria-current="page"]')
+            check(page.locator('[data-studio-route="create"]').is_visible() and page.locator('[data-studio-route="create"]').evaluate('(node)=>!node.closest("details")'),'Full editor bookmark is visible without expanding a navigation group')
+            check(not page.locator('[data-nav-group="Advanced"]').evaluate('(node)=>node.open'),'Full editor bookmark leaves Advanced collapsed')
             page.wait_for_function('!!selected && schemaAvailable')
             check(page.locator('#createView h1').inner_text()=='Full editor — every setting for one recipe','Full editor heading explains its purpose')
             check(page.locator('#positive').input_value()=='','Full editor starts with an empty prompt')
@@ -272,7 +276,8 @@ def run(screenshots):
                 else:
                     page.fill('#studioCommandSearch',query);page.keyboard.press('ArrowDown');page.keyboard.press('Enter');page.wait_for_selector('#modelsView',state='visible')
             page.keyboard.press('Control+k');page.fill('#studioCommandSearch','no-such-place')
-            check('Try anime, upscale, pose' in page.locator('#studioCommandResults').inner_text(),'empty finder suggests real queries');page.keyboard.press('Escape')
+            no_match=page.locator('#studioCommandResults')
+            check(no_match.locator('a').count()==0 and 'No match.' in no_match.inner_text() and all(word in no_match.inner_text() for word in ['anime','upscale','history','winner','switch']),'unmatched finder suggests supported queries');page.keyboard.press('Escape')
             finder=browser.new_page();finder.route('**/api/looks',lambda route:route.fulfill(json=json.loads((ROOT/'presets/looks.json').read_text(encoding='utf-8'))))
             finder.goto(origin+'/#make');finder.wait_for_selector('#makeGoals [data-make-goal]')
             for query,goal in [('fix face','repair'),('fix hands','repair'),('3d','mesh'),('video','animate'),('style','restyle')]:
@@ -430,7 +435,9 @@ def run(screenshots):
             check(page.locator('#studioQuickCreate').get_attribute('aria-current')=='page','mobile Make is highlighted only on Make');page.evaluate("showView('home')")
             if screenshots:evidence_screenshot(page, path=str(screenshots/'overview-mobile.png'),full_page=True)
             page.locator('[data-nav-group="Advanced"]').evaluate('(el)=>el.open=false')
-            page.click('#studioNavToggle');check(page.locator('#studioNavToggle').get_attribute('aria-expanded')=='true','mobile navigation is expandable');page.click('[data-nav-group="Advanced"] summary');page.click('[data-studio-route="create"]');check(page.locator('#studioNavToggle').get_attribute('aria-expanded')=='false','navigation closes after route change');check(page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),'mobile create has no horizontal overflow')
+            page.click('#studioNavToggle');check(page.locator('#studioNavToggle').get_attribute('aria-expanded')=='true','mobile navigation is expandable')
+            check(page.locator('[data-studio-route="create"]').is_visible() and not page.locator('[data-nav-group="Advanced"]').evaluate('(node)=>node.open'),'mobile Full editor is visible while Advanced stays collapsed')
+            page.click('[data-studio-route="create"]');check(page.locator('#studioNavToggle').get_attribute('aria-expanded')=='false','navigation closes after route change');check(page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),'mobile create has no horizontal overflow')
             if screenshots:evidence_screenshot(page, path=str(screenshots/'create-mobile.png'),full_page=True)
             for route in ['assets','production','models','learn']:
                 page.evaluate(f"showView('{route}')");page.wait_for_timeout(100);check(page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),f'mobile {route} has no horizontal overflow')

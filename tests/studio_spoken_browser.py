@@ -110,6 +110,20 @@ class SpokenBrowserTests(unittest.TestCase):
         def snapshot():
             return {p.relative_to(self.f.source.parent): p.read_bytes() for p in self.f.source.parent.rglob('*') if p.is_file()}
         before = snapshot()
+        preview_url = self.origin + '/api/spoken-briefs/source-preview?'
+        receipts = []
+        def capture_preview(route):
+            # #1941: retain the real server bytes before delivery, without asking Chromium's
+            # transient Network.getResponseBody store for a second copy. Forward exactly once.
+            reply = route.fetch(max_redirects=0, max_retries=0, timeout=8000)
+            try:
+                raw = reply.body()
+                receipts.append({'url': route.request.url, 'status': reply.status, 'body': raw})
+                route.fulfill(response=reply, body=raw)
+            finally:
+                reply.dispose()
+        self.page.route(preview_url + '*', capture_preview)
+        self.addCleanup(self.page.unroute, preview_url + '*', capture_preview)
         for width in (1280, 390):
             self.page.set_viewport_size({'width': width, 'height': 900})
             self.page.goto(self.origin + '/spoken-briefs.html')
@@ -117,10 +131,20 @@ class SpokenBrowserTests(unittest.TestCase):
             count = len([path for _, path in self.traffic if '/source-preview?' in path])
             self.page.locator('#sourceKey').fill('lantern-pack')
             self.assertEqual(count, len([path for _, path in self.traffic if '/source-preview?' in path]))
-            with self.page.expect_response(lambda r: '/source-preview?' in r.url) as response:
+            captured = len(receipts)
+            with self.page.expect_response(lambda r: r.url.startswith(preview_url)) as response:
                 self.page.locator('#previewSource').focus(); self.page.keyboard.press('Enter')
+            self.assertEqual(captured + 1, len(receipts), 'One keyboard preview must produce one retained API receipt')
+            receipt = receipts[-1]
+            self.assertEqual(response.value.url, receipt['url'])
+            self.assertEqual(200, response.value.status)
+            self.assertEqual(200, receipt['status'])
+            self.assertEqual(count + 1, len([path for _, path in self.traffic if '/source-preview?' in path]), 'The capture must not repeat the compiler request')
+            self.assertIn(('GET', receipt['url'].removeprefix(self.origin)), self.traffic)
+            body = json.loads(receipt['body'])
             self.page.locator('#sourcePreview').wait_for(state='visible')
-            self.assertEqual(expected, response.value.json()['manifest'])
+            self.assertEqual(expected, body['manifest'])
+            self.assertEqual(body['manifest'], json.loads(self.page.locator('#sourceManifest').text_content()))
             self.assertEqual([s['text'] for s in expected['segments']], self.page.locator('#sourceSegments p').all_text_contents())
             self.assertIn(f"{len(batch_segments(expected['segments']))} batches", self.page.locator('#sourceCounts').inner_text())
             self.assertIn('code blocks: 1', self.page.locator('#sourceOmissions').inner_text())
@@ -206,7 +230,7 @@ class SpokenBrowserTests(unittest.TestCase):
                     nav = page.get_by_role('navigation', name='Studio views')
                     self.assertEqual('page', nav.get_by_role('link', name='Spoken Briefs', exact=True).get_attribute('aria-current'))
                     self.assertEqual('/voice.html', nav.get_by_role('link', name='Voice takes', exact=True).get_attribute('href'))
-                    link = nav.get_by_role('link', name='Compare & review', exact=True)
+                    link = nav.get_by_role('link', name='Comparisons', exact=True)
                     self.assertEqual('/#production', link.get_attribute('href'))
                     link.focus()
                     with page.expect_navigation() as navigation:

@@ -78,7 +78,7 @@ function setPlanFilter(next,focus=false){planFilter=cleanPlanFilter({...planFilt
   if(focus)$('#planStatus')?.focus?.();}
 function restorePlanFilter(){try{planFilter=cleanPlanFilter(JSON.parse(localStorage.getItem(PLAN_FILTER_KEY)||'{}'));}catch(err){}syncPlanFilter();}
 // One review entry per awaiting study, once there is a saved candidate to review.
-function planReviewNow(p){return p?.state?.status==='awaiting_review'&&(p.stages||[]).some(s=>(s.job?.outputs||[]).some(o=>o.asset_id))?'<a class="primary artifact-download plan-review-now" href="/review.html?project='+p.id+'">Review</a>':'';}
+function planReviewNow(p){return p?.state?.status==='awaiting_review'&&(p.stages||[]).some(s=>(s.job?.outputs||[]).some(o=>o.asset_id))?'<a class="primary artifact-download plan-review-now" href="/review.html?project='+p.id+'">Pick a winner</a>':'';}
 function planButton(p){const machine=planMachineDetail(p);return '<button class="production-plan '+(p.id===productionId?'chosen':'')+'" data-project="'+p.id+'" title="'+esc(p.name)+'"><b>'+esc(planHumanTitle(p))+'</b><small>'+esc(String(p.state?.status||'').replaceAll('_',' '))+' · '+(p.kind==='comparison'?(p.stages||[]).length+' candidates':p.kind==='av'?'scene':p.kind==='voice'?'voice take':'native export')+(p.put_away?' · put away':'')+'</small>'+(machine?'<small class="plan-machine">'+esc(machine)+'</small>':'')+'</button>'+planReviewNow(p);}
 // #940: the owner can put a settled plan away. Only its put_away marker changes (server-side Production.put_away);
 // nothing is started, stopped, retried or deleted, and a later status change brings it back on its own.
@@ -95,7 +95,7 @@ function planStageLine(p){
   const desk=!!p.state?.review?.desk_url,again=p.combine?'':' Branch this study to try again from here.';
   const [at,text]=status==='planned'?[0,'Planned; nothing is made yet. Start makes '+total+' candidates, each with the change this plan tests. It never starts on its own.']
     :PLAN_RUNNING.includes(status)?[1,'Making the candidates: '+made+' of '+total+' done. You can leave this page; it carries on and the pictures appear here.']
-    :status==='awaiting_review'?[2,(total===2?'Both':'All '+total)+' candidates are made. '+(desk?'You started this choice in the review desk; press Review to finish it there.':'Compare them: Review opens the side-by-side desk, or use Quick pick under a picture. If none is right, press Needs another pass.')]
+    :status==='awaiting_review'?[2,(total===2?'Both':'All '+total)+' candidates are made. '+(desk?'You started this choice in Review desk; press Pick a winner beside this plan to finish it there.':'Pick a winner beside this plan opens Review desk for a side-by-side comparison. Quick pick under a picture chooses a winner here. If none is right, press Needs another pass.')]
     :status==='reviewed'?[3,(winner?'Decided: Candidate '+winner.label+' won.':'Decided: none was right yet. Nothing new was made.')+again]
     :status==='uncertain'?[1,'Outcome uncertain: '+made+' of '+total+' candidates are recorded and a submission may still be running. Read the message above first; nothing is retried on its own.']
     :[1,'Stopped with '+made+' of '+total+' candidates made; the message above says why. Nothing is retried on its own.'];
@@ -175,7 +175,7 @@ function exportCheckCard(p){
 }
 function renderProduction(){
   renderPlanList();
-  const p=productionPlans.find(p=>p.id===productionId);if(!p){const groups=planGroups(productionPlans);writeProductionDetail(null,groups.recent.length+groups.older.length?'<p>Choose a plan on the left. Plans are budgeted, blind comparisons; quick side-by-sides live in Make.</p><p>Native sprite atlases, layered images and Godot projects start from selected Workspace assets.</p>':'<p>No plans yet. <button type="button" data-plan-comparison><b>Plan a comparison</b></button> runs one change across a few candidates and reviews them blind. For a quick side-by-side, use <a href="/#make"><b>Compare looks</b> in Make</a>.</p>');return;}
+  const p=productionPlans.find(p=>p.id===productionId);if(!p){const groups=planGroups(productionPlans);writeProductionDetail(null,groups.recent.length+groups.older.length?'<p>Choose a plan on the left. Plans are budgeted, blind comparisons; quick side-by-sides live in Make.</p><p>Native sprite atlases, layered images and Godot projects start from selected Library assets.</p>':'<p>No plans yet. <button type="button" data-plan-comparison><b>Plan a comparison</b></button> runs one change across a few candidates and reviews them blind. For a quick side-by-side, use <a href="/#make"><b>Compare looks</b> in Make</a>.</p>');return;}
   if(p.kind==='av'){
     writeProductionDetail(p.id,'<div class="section-title"><div><span class="eyebrow">SCENE</span><h2 title="'+esc(p.name)+'">'+esc(planHumanTitle(p))+'</h2></div><span class="badge">'+esc(p.state.status.replaceAll('_',' '))+'</span></div><p>'+esc(p.state.message)+'</p><p><a class="primary artifact-download" href="/av.html?project='+encodeURIComponent(p.id)+'">Open Scene editor</a> <span class="muted">Edit sources and timing, then render explicitly from the Scene editor.</span></p>'+planPutAway(p));
     return;
@@ -391,7 +391,7 @@ function planFromEmptyState(){
   if(typeof selected!=='undefined'&&selected)$('#planComparison')?.click?.();
   else productionMessage('Choose a recipe in Full editor first, then press Plan comparison.');
 }
-// The orientation block stays closed so the plans show first; remembering the
+// Status definitions stay closed so the plans show first; remembering the
 // choice is a per-browser convenience, and a storage that refuses to answer must
 // never stop the view from rendering.
 const PRODUCTION_INTRO_KEY='studio.production.intro';

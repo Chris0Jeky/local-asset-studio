@@ -284,15 +284,15 @@ function comparisonPage(){
   const click=(selector,dataset)=>$('#productionDetail').onclick({target:{closest:s=>s===selector?{dataset}:null}});
   return {$,plan,render,click,requests,opened,refuse:message=>{refusal=message;},libraryReads:()=>libraryReads};
 }
-test('awaiting study has one primary Review link to its existing desk',()=>{
+test('awaiting study has one primary Pick a winner link to its existing desk',()=>{
   const page=comparisonPage();page.render();
   const html=page.$('#productionList').innerHTML+page.$('#productionDetail').innerHTML;
   assert.equal((html.match(/href="\/review\.html\?project=/g)||[]).length,1);
-  assert.match(html,new RegExp('<a class="primary [^"]*" href="/review.html\\?project='+project+'">Review</a>'));
+  assert.match(html,new RegExp('<a class="primary [^"]*" href="/review.html\\?project='+project+'">Pick a winner</a>'));
   assert.doesNotMatch(html,/Review now|Open review desk/);
   assert.equal(page.requests.length,0,'rendering never sends a request');
 });
-test('Review is hidden with zero candidates, including stages with no saved asset',()=>{
+test('Pick a winner is hidden with zero candidates, including stages with no saved asset',()=>{
   const page=comparisonPage();
   for(const stages of [[],[{label:'A'}],[{label:'A',job:{status:'failed',outputs:[]}}],[{label:'A',job:{outputs:[{media_type:'image'}]}}]]){
     page.render({...page.plan,stages});
