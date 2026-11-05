@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc"><title id="title">Straight versus bent knees</title><desc id="desc">Authored construction schematic. All numerical shape and pose choices are artistic exercises.</desc>
+<defs><marker id="tip" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0 0 L6 3 L0 6" fill="none" stroke="context-stroke" stroke-width="1.2"/></marker><marker id="tail" markerWidth="8" markerHeight="8" refX="0" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M6 0 L0 3 L6 6" fill="none" stroke="context-stroke" stroke-width="1.2"/></marker></defs>
+<rect x="0" y="0" width="1600" height="900" rx="0" fill="#f4f1e9" stroke="none" stroke-width="1.5"/>
+<text x="40" y="42" font-family="DejaVu Sans,sans-serif" font-size="16" fill="#087f89" font-weight="700" text-anchor="start">MIRA / FORM   VOLUME VII   D03 / GLUTE POSES</text>
+<text x="40" y="91" font-family="DejaVu Sans,sans-serif" font-size="34" fill="#18313d" font-weight="700" text-anchor="start">Straight versus bent knees</text>
+<text x="40" y="132" font-family="DejaVu Sans,sans-serif" font-size="21" fill="#5a6b78" font-weight="400" text-anchor="start">What changes behind the hip when knee angle changes at a comparable hip bend?</text>
+<rect x="40.0" y="163" width="490.6666666666667" height="610" rx="14" fill="#fffefa" stroke="#d8dfe2" stroke-width="1.5"/>
+<g transform="translate(40.0 163) scale(1) rotate(0)">
+<text x="20" y="35" font-family="DejaVu Sans,sans-serif" font-size="22" fill="#18313d" font-weight="700" text-anchor="start">A Hip held / knee straight</text>
+<path d="M20 70 L470.6666666666667 70" stroke="#d8dfe2" fill="none" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<g transform="translate(220 181) scale(0.72) rotate(0)">
+<path d="M75.66 -129.40 C62.30 -132.87 31.61 -110.54 16.26 -103.94 C0.92 -97.35 -46.38 -92.31 -55.86 -72.83 C-65.34 -53.36 -68.60 31.17 -65.00 63.00 C-61.40 94.83 -28.97 174.67 -25.00 200.00 C-21.03 225.33 -32.17 262.11 -31.00 280.08 C-29.83 298.05 -20.37 345.38 -15.00 354.00 C-9.63 362.62 10.92 362.62 15.00 354.00 C19.08 345.38 18.83 298.05 20.00 280.08 C21.17 262.11 22.78 224.28 25.00 200.00 C27.22 175.72 37.96 91.37 39.00 72.00 C40.04 52.63 27.44 45.31 33.94 33.94 C40.45 22.57 83.45 -12.83 94.75 -25.46 C106.05 -38.08 133.04 -62.12 130.81 -74.25 C128.59 -86.37 89.02 -125.94 75.66 -129.40 Z" stroke="#18313d" fill="#d4dce8" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M-61.34 8.67 C-59.57 14.55 -53.44 34.93 -50.72 43.98 C-48.00 53.04 -45.95 59.83 -45.00 63.00" stroke="#087f89" fill="none" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<g transform="translate(0 0) scale(1) rotate(45)">
+<ellipse cx="0" cy="-39" rx="49" ry="62" fill="none" stroke="#5274a2" stroke-width="1.7" stroke-dasharray="5 5"/>
+<path d="M-49 -60 L49 -60" stroke="#5274a2" fill="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M0 -110 L0 80" stroke="#5274a2" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" opacity="1" stroke-dasharray="5 6"/>
+</g>
+<path d="M0 0 L1.2246467991473532e-14 200.0" stroke="#5274a2" fill="none" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M1.2246467991473532e-14 200.0 L2.1676248344908153e-14 354.0" stroke="#5274a2" fill="none" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<ellipse cx="0" cy="0" rx="5" ry="5" fill="#5274a2" stroke="#5274a2" stroke-width="1"/>
+<ellipse cx="1.2246467991473532e-14" cy="200.0" rx="5" ry="5" fill="#5274a2" stroke="#5274a2" stroke-width="1"/>
+<ellipse cx="2.1676248344908153e-14" cy="354.0" rx="5" ry="5" fill="#5274a2" stroke="#5274a2" stroke-width="1"/>
+<path d="M-30.40559159102154 30.405591591021544 A43 43 0 0 0 2.6329906181668092e-15 43.0" stroke="#cd665a" fill="none" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<text x="-112" y="-166" font-family="DejaVu Sans,sans-serif" font-size="23" fill="#5274a2" font-weight="700" text-anchor="start">p=45°  h=45°  k=0°</text>
+</g>
+<text x="31" y="457" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">Hip angle uses pelvis, not trunk.</text>
+<path d="M20 492 L470.6666666666667 492" stroke="#d8dfe2" fill="none" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<text x="20" y="516" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">p = 45°, h = 45°, k = 0°. The blue femur remains</text>
+<text x="20" y="537" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">vertical; the pelvic frame is pitched forward.</text>
+</g>
+<rect x="554.6666666666667" y="163" width="490.6666666666667" height="610" rx="14" fill="#fffefa" stroke="#d8dfe2" stroke-width="1.5"/>
+<g transform="translate(554.6666666666667 163) scale(1) rotate(0)">
+<text x="20" y="35" font-family="DejaVu Sans,sans-serif" font-size="22" fill="#18313d" font-weight="700" text-anchor="start">B Change the knee only</text>
+<path d="M20 70 L470.6666666666667 70" stroke="#d8dfe2" fill="none" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<g transform="translate(254 181) scale(0.72) rotate(0)">
+<path d="M75.66 -129.40 C62.30 -132.87 31.61 -110.54 16.26 -103.94 C0.92 -97.35 -46.38 -92.31 -55.86 -72.83 C-65.34 -53.36 -68.60 31.17 -65.00 63.00 C-61.40 94.83 -22.86 181.62 -25.00 200.00 C-27.14 218.38 -70.57 211.67 -83.38 220.54 C-96.18 229.41 -130.77 266.70 -134.75 276.04 C-138.74 285.39 -126.95 302.22 -117.55 300.62 C-108.14 299.02 -70.76 274.05 -54.13 262.32 C-37.50 250.58 14.14 222.20 25.00 200.00 C35.86 177.80 37.96 91.37 39.00 72.00 C40.04 52.63 27.44 45.31 33.94 33.94 C40.45 22.57 83.45 -12.83 94.75 -25.46 C106.05 -38.08 133.04 -62.12 130.81 -74.25 C128.59 -86.37 89.02 -125.94 75.66 -129.40 Z" stroke="#18313d" fill="#d4dce8" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M-61.34 8.67 C-59.57 14.55 -53.44 34.93 -50.72 43.98 C-48.00 53.04 -45.95 59.83 -45.00 63.00" stroke="#087f89" fill="none" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<g transform="translate(0 0) scale(1) rotate(45)">
+<ellipse cx="0" cy="-39" rx="49" ry="62" fill="none" stroke="#5274a2" stroke-width="1.7" stroke-dasharray="5 5"/>
+<path d="M-49 -60 L49 -60" stroke="#5274a2" fill="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M0 -110 L0 80" stroke="#5274a2" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" opacity="1" stroke-dasharray="5 6"/>
+</g>
+<path d="M0 0 L1.2246467991473532e-14 200.0" stroke="#5274a2" fill="none" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M1.2246467991473532e-14 200.0 L-126.14941482050475 288.3307711980611" stroke="#5274a2" fill="none" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<ellipse cx="0" cy="0" rx="5" ry="5" fill="#5274a2" stroke="#5274a2" stroke-width="1"/>
+<ellipse cx="1.2246467991473532e-14" cy="200.0" rx="5" ry="5" fill="#5274a2" stroke="#5274a2" stroke-width="1"/>
+<ellipse cx="-126.14941482050475" cy="288.3307711980611" rx="5" ry="5" fill="#5274a2" stroke="#5274a2" stroke-width="1"/>
+<path d="M-30.40559159102154 30.405591591021544 A43 43 0 0 0 2.6329906181668092e-15 43.0" stroke="#cd665a" fill="none" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M1.4450832229938766e-14 236.0 A36 36 0 0 1 -29.489473594403698 220.64875170863766" stroke="#cd665a" fill="none" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<text x="-112" y="-166" font-family="DejaVu Sans,sans-serif" font-size="23" fill="#5274a2" font-weight="700" text-anchor="start">p=45°  h=45°  k=55°</text>
+</g>
+<path d="M148 410 L123 372" fill="none" stroke="#cd665a" stroke-width="3" marker-end="url(#tip)"/>
+<text x="31" y="457" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">Knee rotation is a separate edit.</text>
+<path d="M20 492 L470.6666666666667 492" stroke="#d8dfe2" fill="none" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<text x="20" y="516" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">p = 45°, h = 45°, k = 55°. Rotate the shin about the</text>
+<text x="20" y="537" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">same knee center; do not add posterior mass.</text>
+</g>
+<rect x="1069.3333333333335" y="163" width="490.6666666666667" height="610" rx="14" fill="#fffefa" stroke="#d8dfe2" stroke-width="1.5"/>
+<g transform="translate(1069.3333333333335 163) scale(1) rotate(0)">
+<text x="20" y="35" font-family="DejaVu Sans,sans-serif" font-size="22" fill="#18313d" font-weight="700" text-anchor="start">C Repair the interpretation</text>
+<path d="M20 70 L470.6666666666667 70" stroke="#d8dfe2" fill="none" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<g transform="translate(264 186) scale(0.67) rotate(0)">
+<path d="M75.66 -129.40 C62.30 -132.87 34.99 -107.16 16.26 -103.94 C-2.46 -100.73 -75.37 -121.30 -84.85 -101.82 C-94.33 -82.35 -71.98 27.79 -65.00 63.00 C-58.02 98.21 -22.86 181.62 -25.00 200.00 C-27.14 218.38 -70.57 211.67 -83.38 220.54 C-96.18 229.41 -130.77 266.70 -134.75 276.04 C-138.74 285.39 -126.95 302.22 -117.55 300.62 C-108.14 299.02 -70.76 274.05 -54.13 262.32 C-37.50 250.58 14.14 222.20 25.00 200.00 C35.86 177.80 37.96 91.37 39.00 72.00 C40.04 52.63 27.44 45.31 33.94 33.94 C40.45 22.57 83.45 -12.83 94.75 -25.46 C106.05 -38.08 133.04 -62.12 130.81 -74.25 C128.59 -86.37 89.02 -125.94 75.66 -129.40 Z" stroke="#cd665a" fill="none" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M-72.94 -2.93 C-69.91 4.21 -59.44 28.94 -54.78 39.92 C-50.12 50.91 -46.63 59.15 -45.00 63.00" stroke="#087f89" fill="none" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+</g>
+<g transform="translate(264 186) scale(0.67) rotate(0)">
+<path d="M75.66 -129.40 C62.30 -132.87 31.61 -110.54 16.26 -103.94 C0.92 -97.35 -46.38 -92.31 -55.86 -72.83 C-65.34 -53.36 -68.60 31.17 -65.00 63.00 C-61.40 94.83 -22.86 181.62 -25.00 200.00 C-27.14 218.38 -70.57 211.67 -83.38 220.54 C-96.18 229.41 -130.77 266.70 -134.75 276.04 C-138.74 285.39 -126.95 302.22 -117.55 300.62 C-108.14 299.02 -70.76 274.05 -54.13 262.32 C-37.50 250.58 14.14 222.20 25.00 200.00 C35.86 177.80 37.96 91.37 39.00 72.00 C40.04 52.63 27.44 45.31 33.94 33.94 C40.45 22.57 83.45 -12.83 94.75 -25.46 C106.05 -38.08 133.04 -62.12 130.81 -74.25 C128.59 -86.37 89.02 -125.94 75.66 -129.40 Z" stroke="#087f89" fill="none" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M-61.34 8.67 C-59.57 14.55 -53.44 34.93 -50.72 43.98 C-48.00 53.04 -45.95 59.83 -45.00 63.00" stroke="#087f89" fill="none" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<g transform="translate(0 0) scale(1) rotate(45)">
+<ellipse cx="0" cy="-39" rx="49" ry="62" fill="none" stroke="#5274a2" stroke-width="1.7" stroke-dasharray="5 5"/>
+<path d="M-49 -60 L49 -60" stroke="#5274a2" fill="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M0 -110 L0 80" stroke="#5274a2" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" opacity="1" stroke-dasharray="5 6"/>
+</g>
+<path d="M0 0 L1.2246467991473532e-14 200.0" stroke="#5274a2" fill="none" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M1.2246467991473532e-14 200.0 L-126.14941482050475 288.3307711980611" stroke="#5274a2" fill="none" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<ellipse cx="0" cy="0" rx="5" ry="5" fill="#5274a2" stroke="#5274a2" stroke-width="1"/>
+<ellipse cx="1.2246467991473532e-14" cy="200.0" rx="5" ry="5" fill="#5274a2" stroke="#5274a2" stroke-width="1"/>
+<ellipse cx="-126.14941482050475" cy="288.3307711980611" rx="5" ry="5" fill="#5274a2" stroke="#5274a2" stroke-width="1"/>
+<path d="M-30.40559159102154 30.405591591021544 A43 43 0 0 0 2.6329906181668092e-15 43.0" stroke="#cd665a" fill="none" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M1.4450832229938766e-14 236.0 A36 36 0 0 1 -29.489473594403698 220.64875170863766" stroke="#cd665a" fill="none" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+</g>
+<text x="28" y="439" font-family="DejaVu Sans,sans-serif" font-size="18" fill="#18313d" font-weight="700" text-anchor="start">No knee-to-glute size rule.</text>
+<text x="28" y="465" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">Hamstring evidence ≠ skin prediction.</text>
+<path d="M20 492 L470.6666666666667 492" stroke="#d8dfe2" fill="none" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<text x="20" y="516" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">Coral: the glute root was over-inflated. Teal:</text>
+<text x="20" y="537" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">preserve its envelope; refine the rear-thigh return</text>
+<text x="20" y="558" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">locally.</text>
+</g>
+<path d="M40 806 L72 806" stroke="#087f89" fill="none" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<text x="82" y="812" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">rest / connected repair</text>
+<path d="M545 806 L577 806" stroke="#cd665a" fill="none" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<text x="587" y="812" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">edited control / failure</text>
+<path d="M1058 806 L1090 806" stroke="#5274a2" fill="none" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<text x="1100" y="812" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">support / measured guide</text>
+<text x="40" y="849" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#18313d" font-weight="400" text-anchor="start">Q = baseline hip-center to knee-center distance; pelvis pitch, hip flexion and knee flexion are independent.</text>
+<text x="40" y="878" font-family="DejaVu Sans,sans-serif" font-size="16" fill="#5a6b78" font-weight="400" text-anchor="start">Editable studio schematic • Numerical controls are artistic choices • Not a scan, native Blender render or calibrated tissue simulation</text>
+</svg>

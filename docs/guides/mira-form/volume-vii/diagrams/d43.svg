@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc"><title id="title">Small roots with different projection</title><desc id="desc">Authored construction schematic. All numerical shape and pose choices are artistic exercises.</desc>
+<defs><marker id="tip" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0 0 L6 3 L0 6" fill="none" stroke="context-stroke" stroke-width="1.2"/></marker><marker id="tail" markerWidth="8" markerHeight="8" refX="0" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M6 0 L0 3 L6 6" fill="none" stroke="context-stroke" stroke-width="1.2"/></marker></defs>
+<rect x="0" y="0" width="1600" height="900" rx="0" fill="#f4f1e9" stroke="none" stroke-width="1.5"/>
+<text x="40" y="42" font-family="DejaVu Sans,sans-serif" font-size="16" fill="#087f89" font-weight="700" text-anchor="start">MIRA / FORM   VOLUME VII   D43 / COMPACT CHEST</text>
+<text x="40" y="91" font-family="DejaVu Sans,sans-serif" font-size="34" fill="#18313d" font-weight="700" text-anchor="start">Small roots with different projection</text>
+<text x="40" y="132" font-family="DejaVu Sans,sans-serif" font-size="21" fill="#5a6b78" font-weight="400" text-anchor="start">How can a small attached chest be broad/shallow or narrow/projected?</text>
+<rect x="40.0" y="163" width="490.6666666666667" height="610" rx="14" fill="#fffefa" stroke="#d8dfe2" stroke-width="1.5"/>
+<g transform="translate(40.0 163) scale(1) rotate(0)">
+<text x="20" y="35" font-family="DejaVu Sans,sans-serif" font-size="22" fill="#18313d" font-weight="700" text-anchor="start">A Broad / shallow root</text>
+<path d="M20 70 L470.6666666666667 70" stroke="#d8dfe2" fill="none" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<g transform="translate(153 181) scale(0.82) rotate(0)">
+<path d="M-27 -63 L-32 -37 Q-90 -34 -124 20 L-137 66 L-112 78 Q-99 42 -85 26 Q-89 103 -72 179 L-59 247 L59 247 L72 179 Q89 103 85 26 Q99 42 112 78 L137 66 L124 20 Q90 -34 32 -37 L27 -63 Z" stroke="#18313d" fill="#d4dce8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M-87 -10 Q-47 0 -9 -13 M87 -10 Q47 0 9 -13" stroke="#5a6b78" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M0 -8 L0 185" stroke="#5274a2" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" opacity="1" stroke-dasharray="5 5"/>
+<path d="M-22.00 41.80 C-25.26 31.51 -50.49 29.80 -59.10 33.80 C-67.71 37.80 -99.20 68.06 -101.50 78.68 C-103.80 89.30 -88.15 126.37 -80.30 131.80 C-72.45 137.23 -35.32 138.55 -29.00 128.80 C-22.68 119.05 -18.74 52.09 -22.00 41.80 Z" stroke="#087f89" fill="#c0d9d9" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M22.00 41.80 C25.26 31.51 50.49 29.80 59.10 33.80 C67.71 37.80 99.20 68.06 101.50 78.68 C103.80 89.30 88.15 126.37 80.30 131.80 C72.45 137.23 35.32 138.55 29.00 128.80 C22.68 119.05 18.74 52.09 22.00 41.80 Z" stroke="#087f89" fill="#c0d9d9" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+</g>
+<g transform="translate(370 184) scale(0.85) rotate(0)">
+<path d="M-74 -79 Q-18 -73 -12 -40 Q7 -6 0 15 Q-9 82 0 133 Q7 171 -5 214 L-77 214 Q-86 127 -83 51 Q-87 -7 -74 -79 Z" stroke="#18313d" fill="#d4dce8" stroke-width="2.7" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M0 -12 C3.542 2.333333333333334 5.823047999999999 16.666666666666664 10.626 31.0 C15.428951999999999 45.333333333333336 33.0 59.666666666666664 33 74 C33.0 83.66666666666667 25.1513625 93.33333333333333 19.8825 103.0 C14.6136375 112.66666666666667 6.6275 122.33333333333333 0 132 Z" stroke="#087f89" fill="#c0d9d9" stroke-width="2.7" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M0 -12 L0 132" stroke="#5274a2" fill="none" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" opacity="1" stroke-dasharray="4 5"/>
+<ellipse cx="0" cy="-12" rx="4" ry="4" fill="#5274a2" stroke="#5274a2" stroke-width="1"/>
+<ellipse cx="0" cy="132" rx="4" ry="4" fill="#5274a2" stroke="#5274a2" stroke-width="1"/>
+<path d="M-70 -12 Q-37 -19 0 -7 M-73 62 Q-37 55 -6 68 M-70 121 Q-37 115 0 127" stroke="#5a6b78" fill="none" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round" opacity="1" stroke-dasharray="4 5"/>
+</g>
+<text x="27" y="456" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">Adult rib context stays readable.</text>
+<path d="M20 492 L470.6666666666667 492" stroke="#d8dfe2" fill="none" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<text x="20" y="516" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">A broad front footprint and shallow profile belong to</text>
+<text x="20" y="537" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">the same compact envelope. C fixes the upper/lower</text>
+<text x="20" y="558" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">wall interval.</text>
+</g>
+<rect x="554.6666666666667" y="163" width="490.6666666666667" height="610" rx="14" fill="#fffefa" stroke="#d8dfe2" stroke-width="1.5"/>
+<g transform="translate(554.6666666666667 163) scale(1) rotate(0)">
+<text x="20" y="35" font-family="DejaVu Sans,sans-serif" font-size="22" fill="#18313d" font-weight="700" text-anchor="start">B Narrow / more projected</text>
+<path d="M20 70 L470.6666666666667 70" stroke="#d8dfe2" fill="none" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<g transform="translate(153 181) scale(0.82) rotate(0)">
+<path d="M-27 -63 L-32 -37 Q-90 -34 -124 20 L-137 66 L-112 78 Q-99 42 -85 26 Q-89 103 -72 179 L-59 247 L59 247 L72 179 Q89 103 85 26 Q99 42 112 78 L137 66 L124 20 Q90 -34 32 -37 L27 -63 Z" stroke="#18313d" fill="#d4dce8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M-87 -10 Q-47 0 -9 -13 M87 -10 Q47 0 9 -13" stroke="#5a6b78" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M0 -8 L0 185" stroke="#5274a2" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" opacity="1" stroke-dasharray="5 5"/>
+<path d="M-22.00 41.80 C-23.59 31.51 -38.66 29.80 -43.70 33.80 C-48.74 37.80 -67.16 68.06 -68.50 78.68 C-69.84 89.30 -60.38 126.37 -56.10 131.80 C-51.82 137.23 -32.69 138.55 -29.00 128.80 C-25.31 119.05 -20.41 52.09 -22.00 41.80 Z" stroke="#087f89" fill="#c0d9d9" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M22.00 41.80 C23.59 31.51 38.66 29.80 43.70 33.80 C48.74 37.80 67.16 68.06 68.50 78.68 C69.84 89.30 60.38 126.37 56.10 131.80 C51.82 137.23 32.69 138.55 29.00 128.80 C25.31 119.05 20.41 52.09 22.00 41.80 Z" stroke="#087f89" fill="#c0d9d9" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+</g>
+<g transform="translate(370 184) scale(0.85) rotate(0)">
+<path d="M-74 -79 Q-18 -73 -12 -40 Q7 -6 0 15 Q-9 82 0 133 Q7 171 -5 214 L-77 214 Q-86 127 -83 51 Q-87 -7 -74 -79 Z" stroke="#18313d" fill="#d4dce8" stroke-width="2.7" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M0 -12 C6.225333333333334 2.333333333333334 10.234448000000002 16.666666666666664 18.676000000000002 31.0 C27.117552000000003 45.333333333333336 58.0 59.666666666666664 58 74 C58.0 83.66666666666667 44.205425000000005 93.33333333333333 34.945 103.0 C25.684575 112.66666666666667 11.648333333333333 122.33333333333333 0 132 Z" stroke="#087f89" fill="#c0d9d9" stroke-width="2.7" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M0 -12 L0 132" stroke="#5274a2" fill="none" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" opacity="1" stroke-dasharray="4 5"/>
+<ellipse cx="0" cy="-12" rx="4" ry="4" fill="#5274a2" stroke="#5274a2" stroke-width="1"/>
+<ellipse cx="0" cy="132" rx="4" ry="4" fill="#5274a2" stroke="#5274a2" stroke-width="1"/>
+<path d="M-70 -12 Q-37 -19 0 -7 M-73 62 Q-37 55 -6 68 M-70 121 Q-37 115 0 127" stroke="#5a6b78" fill="none" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round" opacity="1" stroke-dasharray="4 5"/>
+</g>
+<text x="27" y="456" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">Adult rib context stays readable.</text>
+<path d="M20 492 L470.6666666666667 492" stroke="#d8dfe2" fill="none" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<text x="20" y="516" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">A narrower front footprint can project more while</text>
+<text x="20" y="537" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">remaining small overall. Do not resize the adult rib</text>
+<text x="20" y="558" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">cage.</text>
+</g>
+<rect x="1069.3333333333335" y="163" width="490.6666666666667" height="610" rx="14" fill="#fffefa" stroke="#d8dfe2" stroke-width="1.5"/>
+<g transform="translate(1069.3333333333335 163) scale(1) rotate(0)">
+<text x="20" y="35" font-family="DejaVu Sans,sans-serif" font-size="22" fill="#18313d" font-weight="700" text-anchor="start">C Repair an attached marble</text>
+<path d="M20 70 L470.6666666666667 70" stroke="#d8dfe2" fill="none" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<g transform="translate(153 181) scale(0.82) rotate(0)">
+<path d="M-27 -63 L-32 -37 Q-90 -34 -124 20 L-137 66 L-112 78 Q-99 42 -85 26 Q-89 103 -72 179 L-59 247 L59 247 L72 179 Q89 103 85 26 Q99 42 112 78 L137 66 L124 20 Q90 -34 32 -37 L27 -63 Z" stroke="#18313d" fill="#d4dce8" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M-87 -10 Q-47 0 -9 -13 M87 -10 Q47 0 9 -13" stroke="#5a6b78" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M0 -8 L0 185" stroke="#5274a2" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" opacity="1" stroke-dasharray="5 5"/>
+<path d="M-22.00 41.80 C-23.59 31.51 -38.66 29.80 -43.70 33.80 C-48.74 37.80 -67.16 68.06 -68.50 78.68 C-69.84 89.30 -60.38 126.37 -56.10 131.80 C-51.82 137.23 -32.69 138.55 -29.00 128.80 C-25.31 119.05 -20.41 52.09 -22.00 41.80 Z" stroke="#087f89" fill="#c0d9d9" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M22.00 41.80 C23.59 31.51 38.66 29.80 43.70 33.80 C48.74 37.80 67.16 68.06 68.50 78.68 C69.84 89.30 60.38 126.37 56.10 131.80 C51.82 137.23 32.69 138.55 29.00 128.80 C25.31 119.05 20.41 52.09 22.00 41.80 Z" stroke="#087f89" fill="#c0d9d9" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+</g>
+<g transform="translate(370 184) scale(0.85) rotate(0)">
+<path d="M-74 -79 Q-18 -73 -12 -40 Q7 -6 0 15 Q-9 82 0 133 Q7 171 -5 214 L-77 214 Q-86 127 -83 51 Q-87 -7 -74 -79 Z" stroke="#18313d" fill="#d4dce8" stroke-width="2.7" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M0 -12 C6.225333333333334 2.333333333333334 10.234448000000002 16.666666666666664 18.676000000000002 31.0 C27.117552000000003 45.333333333333336 58.0 59.666666666666664 58 74 C58.0 83.66666666666667 44.205425000000005 93.33333333333333 34.945 103.0 C25.684575 112.66666666666667 11.648333333333333 122.33333333333333 0 132 Z" stroke="#087f89" fill="#c0d9d9" stroke-width="2.7" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<path d="M0 -12 L0 132" stroke="#5274a2" fill="none" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" opacity="1" stroke-dasharray="4 5"/>
+<ellipse cx="0" cy="-12" rx="4" ry="4" fill="#5274a2" stroke="#5274a2" stroke-width="1"/>
+<ellipse cx="0" cy="132" rx="4" ry="4" fill="#5274a2" stroke="#5274a2" stroke-width="1"/>
+<path d="M-70 -12 Q-37 -19 0 -7 M-73 62 Q-37 55 -6 68 M-70 121 Q-37 115 0 127" stroke="#5a6b78" fill="none" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round" opacity="1" stroke-dasharray="4 5"/>
+</g>
+<ellipse cx="424" cy="247" rx="41" ry="41" fill="none" stroke="#cd665a" stroke-width="2.7" stroke-dasharray="5 5"/>
+<path d="M447 340 L413 290" fill="none" stroke="#cd665a" stroke-width="3" marker-end="url(#tip)"/>
+<text x="27" y="456" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">Adult rib context stays readable.</text>
+<path d="M20 492 L470.6666666666667 492" stroke="#d8dfe2" fill="none" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<text x="20" y="516" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">Coral indicates a separate sphere. Teal retains a</text>
+<text x="20" y="537" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">broad attached return into the supporting wall.</text>
+</g>
+<path d="M40 806 L72 806" stroke="#087f89" fill="none" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<text x="82" y="812" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">rest / connected repair</text>
+<path d="M545 806 L577 806" stroke="#cd665a" fill="none" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<text x="587" y="812" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">edited control / failure</text>
+<path d="M1058 806 L1090 806" stroke="#5274a2" fill="none" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" opacity="1"/>
+<text x="1100" y="812" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#5a6b78" font-weight="400" text-anchor="start">support / measured guide</text>
+<text x="40" y="849" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#18313d" font-weight="400" text-anchor="start">C = baseline upper-root to lower-root distance on the neutral rib wall; root width and projection stay separate.</text>
+<text x="40" y="878" font-family="DejaVu Sans,sans-serif" font-size="16" fill="#5a6b78" font-weight="400" text-anchor="start">Editable studio schematic • Numerical controls are artistic choices • Not a scan, native Blender render or calibrated tissue simulation</text>
+</svg>
