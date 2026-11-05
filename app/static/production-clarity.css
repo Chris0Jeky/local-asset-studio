@@ -1,6 +1,6 @@
-/* Runs & review clarity: orientation, empty state, planner arithmetic and the
-   per-candidate review row. Loaded after style.css and studio.css, so it only
-   adds rules for the new elements and never restyles existing ones. */
+/* Production orientation, planner arithmetic and candidate review layout.
+   Loaded after style.css and studio.css; finished-image changes stay scoped
+   to their comparison-ready section. */
 .production-intro{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:14px 18px;margin:0 0 18px}
 .production-intro>summary{cursor:pointer;font-weight:650;letter-spacing:.01em;color:var(--text)}
 .production-intro>summary::marker{color:var(--accent)}
@@ -43,8 +43,20 @@
 .planner-advanced>summary{cursor:pointer;font-size:12px;color:var(--muted)}
 .planner-advanced[open]>summary{color:var(--text)}
 .planner-advanced .production-actions{margin:12px 0 0}
-.candidate-review{display:flex;gap:8px;margin:8px 0 0}
+.candidate-review{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 0}
+.candidate-review-label{flex-basis:100%;font-size:11px;color:var(--muted)}
 .candidate-review button{flex:1 1 auto;padding:6px 10px;font-size:12px}
+#productionMessage:empty{display:none}
+#productionPlanTitle{scroll-margin-top:calc(var(--top,58px) + 16px)}
+.comparison-review-entry{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 14px}
+.comparison-review-entry .plan-outcome{margin:0;font-size:13px;line-height:1.5}
+.comparison-review-entry .artifact-download{flex:none;margin:0;text-align:center}
+.comparison-ready .candidate-grid{margin-top:12px}
+.comparison-ready .candidate img{max-height:min(420px,45vh)}
+.comparison-plan-details{margin-top:20px;border-top:1px solid var(--line);padding-top:14px}
+.comparison-plan-details>summary{cursor:pointer;font-weight:650}
+.comparison-plan-details>summary:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+@media(max-width:560px){.comparison-review-entry{align-items:stretch;flex-direction:column}.comparison-review-entry .artifact-download{align-self:flex-start}}
 #characterImportInputs{border:1px solid var(--line);border-radius:10px;min-width:0;padding:12px}
 #characterImportDialog{width:min(740px,calc(100vw - 32px));max-width:calc(100vw - 32px)}
 #characterImportInputs .controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}

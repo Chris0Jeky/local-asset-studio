@@ -247,7 +247,7 @@ DENY_ATTRS = ('data-project-action', 'data-choose-candidate', 'data-candidate-re
 # app/static on 22 Sep 2026; a control that starts writing must leave this list.
 LOCAL_CONTROLS = {
     '#lookBlock > summary': 'opens the saved-looks disclosure',
-    '#productionDetail .candidate-quick-pick summary': 'opens the Quick pick disclosure in this page; nothing is sent',
+    '#productionDetail .candidate-quick-pick summary': 'opens the Choose here disclosure in this page; nothing is sent',
     '#lookSelect': 'chooses a saved look in this page; nothing is sent',
     '#lookOptions [data-look-option]': "ticks one of the look's optional lines in this page; nothing is sent",
     '#workshopRecipeChange': 'opens the recipe picker',
@@ -371,7 +371,7 @@ def build_handler():
     # One extra comparison plan: the smoke fixture's plans carry no stages, and reviewing a
     # finished comparison is one of the owner's journeys. Additive; the smoke data is untouched.
     keeper = dict(id='c' * 32, name='Lantern keeper · finished comparison', kind='comparison',
-                  state={'status': 'awaiting_review', 'message': 'Synthetic finished comparison; no model ran.'},
+                  state={'status': 'awaiting_review', 'message': 'Comparison finished. Review candidates and record your choice.'},
                   axis='cfg', values=[3.5, 5.0], budget={'allowance': 4, 'reserved': 2},
                   stages=[{'label': 'A', 'operation': 'generate', 'attempt': {'job_id': 'fixture-job'},
                            'job': dict(fixture.JOBS[0], id='candidate-a', elapsed_seconds=12.0,
@@ -1104,6 +1104,80 @@ def _compare(c):
     return bool(fresh), detail
 
 
+def comparison_picture_layout(c, study):
+    """The finished-image fixture must put useful preview area and its review entry on screen, not merely in the DOM."""
+    original_viewport = c.page.viewport_size
+    writes = []
+
+    def record(request):
+        path = urlsplit(request.url).path
+        if request.method not in ('GET', 'HEAD') and (path.startswith('/api/production') or path.startswith('/api/jobs')):
+            writes.append((request.method, path))
+
+    c.page.on('request', record)
+    try:
+        for width, height in ((1440, 900), (900, 700), (390, 844), (390, 500)):
+            c.page.set_viewport_size({'width': width, 'height': height})
+            c.page.evaluate('window.scrollTo(0, 0)')
+            c.act('#productionList [data-project="%s"]' % study, note='open finished pictures at %d by %d' % (width, height), supplementary=True)
+            c.page.wait_for_function("[...document.querySelectorAll('#productionDetail .candidate img')].every(img=>img.complete && img.naturalWidth>0)")
+            geometry = c.page.evaluate("""() => {
+              const bar=document.querySelector('.studio-globalbar').getBoundingClientRect(),top=Math.max(0,bar.bottom);
+              const inspect=node=>{const r=node.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,
+                visibleHeight:Math.max(0,Math.min(r.bottom,innerHeight)-Math.max(r.top,top)),height:r.height};};
+              return {top,width:innerWidth,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,
+                entry:inspect(document.querySelector('.comparison-review-entry a')),
+                images:[...document.querySelectorAll('#productionDetail .candidate img')].map(inspect)};
+            }""")
+            entry = geometry['entry']
+            assert entry['top'] >= geometry['top'] - 1 and entry['bottom'] <= height + 1, geometry
+            assert entry['left'] >= -1 and entry['right'] <= width + 1, geometry
+            visible_images = geometry['images'][:2 if width > 850 else 1]
+            assert len(visible_images) == (2 if width > 850 else 1), geometry
+            for preview in visible_images:
+                assert preview['height'] >= 120 and preview['visibleHeight'] >= preview['height'] * .5, geometry
+                assert preview['left'] >= -1 and preview['right'] <= width + 1, geometry
+            assert geometry['scrollWidth'] <= width, geometry
+            assert c.page.locator('a[href="/review.html?project=%s"]' % study).count() == 1
+            assert not c.page.locator('#comparisonPlanDetails').evaluate('(node)=>node.open')
+            if width <= 1000:
+                assert c.page.locator('#productionPlanTitle').evaluate('(node)=>node===document.activeElement')
+            evidence_screenshot(c.page, path=str(c.dir / ('pictures-%dx%d.png' % (width, height))))
+
+        # A refresh preserves both the folded controls and a later unsent note; it never replays the selection scroll.
+        c.page.locator('#comparisonPlanDetailsToggle').focus(); c.page.keyboard.press('Enter')
+        assert c.page.locator('#comparisonPlanDetails').evaluate('(node)=>node.open')
+        scroll = c.page.evaluate('scrollY')
+        c.page.evaluate('renderProduction()')
+        assert c.page.locator('#comparisonPlanDetails').evaluate('(node)=>node.open')
+        assert c.page.locator('#comparisonPlanDetailsToggle').evaluate('(node)=>node===document.activeElement')
+        assert abs(c.page.evaluate('scrollY') - scroll) <= 1, 'refresh must not repeat the narrow-screen selection scroll'
+        c.page.locator('#productionNotes').fill('Unsent layout-check note')
+        c.page.evaluate('renderProduction()')
+        assert c.page.locator('#productionNotes').input_value() == 'Unsent layout-check note'
+        assert c.page.locator('#productionNotes').evaluate('(node)=>node===document.activeElement')
+        c.page.locator('#comparisonPlanDetailsToggle').focus(); c.page.keyboard.press('Enter')
+        assert not c.page.locator('#comparisonPlanDetails').evaluate('(node)=>node.open')
+        pick = c.page.locator('#productionDetail [data-candidate-pick]').first
+        toggle = pick.locator('summary')
+        toggle.focus(); c.page.keyboard.press('Enter')
+        assert pick.evaluate('(node)=>node.open')
+        c.page.evaluate('renderProduction()')
+        assert pick.evaluate('(node)=>node.open')
+        assert toggle.evaluate('(node)=>node===document.activeElement'), 'Choose here must keep summary focus through refresh'
+        choose = pick.locator('[data-choose-candidate]')
+        choose.focus(); c.page.evaluate('renderProduction()')
+        assert pick.evaluate('(node)=>node.open') and choose.is_visible()
+        assert choose.evaluate('(node)=>node===document.activeElement'), 'refresh must keep the focused choice button visible'
+        toggle.focus(); c.page.keyboard.press('Enter'); c.page.evaluate('renderProduction()')
+        assert not pick.evaluate('(node)=>node.open')
+        assert toggle.evaluate('(node)=>node===document.activeElement')
+        assert writes == [], 'opening pictures and plan details must not record a decision or start generation: %r' % writes
+    finally:
+        c.page.remove_listener('request', record)
+        c.page.set_viewport_size(original_viewport)
+
+
 @driver('review-and-keep-winner')
 def _review(c):
     c.boot('#production')
@@ -1112,17 +1186,19 @@ def _review(c):
     study = c.pick('c' * 32, '#productionList [data-project]', 'finished comparison awaiting review with candidate pictures',
                    keep="(p => !!p && p.kind === 'comparison' && ['awaiting_review', 'reviewed'].includes((p.state || {}).status)"
                         " && !((p.state || {}).review || {}).desk_url"
-                        " && (p.stages || []).some(s => ((s.job || {}).outputs || []).some(o => o.asset_id)))"
+                        " && (p.stages || []).some(s => ((s.job || {}).outputs || []).some(o => o.asset_id && o.media_type === 'image')))"
                         "(productionPlans.find(p => p.id === id))")
     c.act('#productionList [data-project="%s"]' % study, note='the finished comparison')
     # #1921: the comparison names its stage and the next decision in plain words, and says what the buttons do.
     stage = "(() => [document.querySelector('#productionDetail .plan-stages [aria-current=step]')?.textContent, document.querySelector('#productionDetail .plan-stage-now')?.textContent, document.querySelector('#productionDetail .plan-candidate-help')?.textContent])()"
     current, now, help_ = c.page.evaluate(stage)
-    assert current == '3 · Compare' and 'candidates are made' in now and 'Pick a winner beside this plan opens Review desk' in now and 'does not decide' in (help_ or ''), (current, now, help_)
+    assert current == '3 · Compare' and 'candidates are made' in now and 'Pick a winner opens Review desk' in now and 'does not decide' in (help_ or ''), (current, now, help_)
     heading = c.page.locator('#productionView .view-heading')
     assert heading.is_visible() and 'Pick a winner opens Review desk' in heading.inner_text()
     assert heading.locator('h2').inner_text() == 'Compare candidates. Pick a winner.', 'startup adapters must retain the authored comparison heading'
     assert c.page.locator('#productionDetail .candidate img').first.is_visible(), 'finished candidates do not require opening a disclosure'
+    if not c.live:
+        comparison_picture_layout(c, study)
     c.act('#blindComparison', note='reveal candidate settings')
     c.act('#productionDetail [data-candidate-open]', note='open a candidate at full size')
     if c.live:
@@ -1132,7 +1208,7 @@ def _review(c):
         try: c.page.click('#closeAssetDialog', timeout=3000); c.page.wait_for_timeout(300)
         except Exception: pass
     c.act('#productionNotes', 'fill', typed='Candidate A keeps the silhouette and the lantern glow; B loses the face.')
-    c.act('#productionDetail .candidate-quick-pick summary', note='open Quick pick (the review desk is the primary path, #1730)')
+    c.act('#productionDetail .candidate-quick-pick summary', note='open Choose here to record this comparison’s winner')
     c.stop_before(c.act('#productionDetail [data-choose-candidate]', note='keep the winner'),
                   'stopped before recording the winner: that writes the study review')
     c.page.wait_for_timeout(600)

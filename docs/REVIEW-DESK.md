@@ -12,12 +12,25 @@ through the PR test merge against current main; this branch does not replace the
 
 ## Use it
 
-In **Compare & review**, open a finished image comparison and choose **Open review
-desk**. A failed comparison with retained images can also be inspected. The page
-is `/review.html?project=<32-character project ID>` on the normal Studio port.
+Choose **Comparisons** in the sidebar, open a finished image comparison and press
+**Pick a winner** beside its pictures. After a decision, the same entry reads
+**Open review desk**. A failed comparison with retained images can also be
+inspected through **Open review desk**. The page is
+`/review.html?project=<32-character project ID>` on the normal Studio port.
 Opening the page reads saved state; **Prepare review** is a separate explicit
 CPU/file operation. It snapshots the retained sources, randomizes stable aliases
 and writes bounded previews without embedded prompts or filenames.
+
+The sidebar and tool finder also have a **Review desk** entry. It opens without
+choosing a comparison and explains how to open the plan you want.
+
+On the Comparisons page, finished pictures come before **Plan & execution
+details**, which holds the budget, time record, branch control and plan download.
+To decide on that page, open **Choose here** under a picture and press **Choose A
+as winner** (or the candidate's own letter). This records the comparison's winner
+with your **Comparison notes**. **Mark in Library** changes that asset's Library
+mark; it does not choose the comparison's winner. Once a decision uses Review
+desk, continue it there.
 
 Compare any two candidates side by side, or toggle left/right in the same area.
 Use Whole image, Centre detail, Upper half, or numeric keyboard-accessible crop
