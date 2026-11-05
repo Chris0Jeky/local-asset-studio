@@ -45,7 +45,8 @@ order; it does not disambiguate overlapping UVs for painting.
 `python -m unittest discover -s tests -p test_vrm_posmap.py -v` runs the production rasterizer and NPZ writer on
 synthetic two-mesh geometry when NumPy is installed. The three cases cover shared coverage/world transforms,
 overlap ordering and separate materials using one source image. This is offline raster evidence; native Blender
-qualification remains open. The other spring, constraint and expression work in #1928 is unchanged.
+qualification remains open. The spring follow-on below has separate engine checks; constraint and expression
+limitations remain separate from the position-map fix.
 
 ## Blender 5.4 Material Lighting nodes, measured
 
@@ -88,6 +89,45 @@ automatic map was within 2.8/255 on average of a hand-tuned one.
 radius, plus sphere and capsule collision children. Fed from the VRM, the 33 chains and 13 colliders of the test model
 loaded with no add-on. Collider offsets are read in VRM node space, which is why the proof imports the VRM file
 itself rather than a separate Blender glTF export, whose bone frames can differ.
+
+### Per-joint settings and center space — 5 November update
+
+Regenerate `springs.json` with the command above when updating the kit. The JSON now carries an ordered
+`joint_settings` list for every simulated chain: bone name and source node index, stiffness, drag, gravity
+power/direction and hit radius. Each joint gets its own VRM defaults; a missing tip setting does not inherit the
+root's value. The existing first-joint summary fields remain for readers of older JSON, while the updated Godot
+host refuses an old sidecar with a regeneration message instead of silently using that approximation.
+
+An absent `center` means world space. An authored center retains its node index and unique name. The engine
+binding resolves that name to either an ancestor skeleton bone or an ancestor scene node. A small
+`SkeletonModifier3D` runs immediately before the spring simulator, after the host's pose and constraint changes:
+it follows the bone center with a node transform and converts the authored world gravity into center coordinates.
+This also covers hosts that pose the actor after `toon_proof._process`, including the dialogue and mocap helpers.
+Zero gravity vectors remain zero force; nonunit direction vectors retain their force magnitude.
+
+The reference is the [VRM 1.0 spring specification](https://github.com/vrm-c/vrm-specification/blob/master/specification/VRMC_springBone-1.0/README.md):
+inertia may use center space while gravity remains in world space. Godot's
+[per-joint API](https://docs.godotengine.org/en/4.5/classes/class_springbonesimulator3d.html)
+provides the setters, and its
+[4.5 implementation](https://github.com/godotengine/godot/blob/4.5-stable/scene/3d/spring_bone_simulator_3d.cpp)
+integrates the configured gravity vector in the selected simulation space. The adapter uses a node center so the
+transform is explicitly center-world inverse times skeleton-world, rather than assuming a bone-space convention.
+
+The binding checks the complete imported joint sequence before enabling the simulator. Missing or ambiguous
+names, missing colliders, reordered joints, and centers that depend on another simulated chain are refused with a
+diagnostic. VRM allows omitted intermediate joints, but Godot expands a root/end pair through every intermediate
+bone; such sparse chains are explicitly unsupported here. Single-joint chains still have no segment to simulate
+and are omitted as before. Constraint ordering, expression mapping and arbitrary GLB import name remapping are
+outside this change.
+
+`python -m unittest discover -s tests -p test_vrm_toon.py -v` checks the exporter without native tools.
+`test_vrm_springs_native.py` is an opt-in headless Godot probe, also included in the Linux/Windows **Native engine
+evidence** lane. It calls the production host binding on a synthetic skeleton, reads back every individual
+setting after deferred updates, checks gravity after rotation, observes actual modifier steps for translated and
+rotated bone/node centers, and checks the explicit refusal cases. It retains source hashes, execution logs and a
+JSON receipt under `engine-evidence/vrm-springs/` in CI. Without `STUDIO_TEST_GODOT`, it reports a skip. The pinned
+CI engine is Godot 4.5; this check is not a new Godot 4.7.2 avatar render or physical/visual parity qualification.
+The 2 November model counts and observations above remain historical evidence.
 
 Godot's glTF import ignores `VRMC_node_constraint`. VRoid bases drive their sleeve, shoulder and twist helper bones
 with aim and roll constraints (14 on the test model), so with the arms lowered the sleeves stayed horizontal. The proof
@@ -163,8 +203,10 @@ swing-only: limbs get no twist, and the hands and head keep the idle pose.
 ## Limits
 
 - One model, one Blender alpha build, one Godot version. The VRM add-on cap raise is a local patch, not upstream support.
-- Springs carry each chain's first-joint settings and its collider groups; per-joint settings, `gravityDir` and
-  `center` are not exported yet, and position maps assume one mesh per material.
+- Springs now carry each authored joint's settings, world gravity and center, with explicit binding checks as
+  described above. Sparse chains and arbitrary imported-name remapping remain unsupported; native avatar
+  motion/appearance qualification is still separate from the synthetic engine probe. Position maps now merge
+  shared-material mesh coverage, with the overlap policy and native Blender limit described above.
 - Shadow Raycast noise shows as speckle on large self-shadowed cloth areas.
 - The SDF map assumes a VRoid-like face facing -Y with Z up in the position map.
 - Validator: the exported VRM and GLB passed glTF-Validator 2.0.0-dev.3.10 with 0 errors. The VRM had 19 warnings, 15 of them

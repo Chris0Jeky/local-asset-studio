@@ -171,6 +171,42 @@ def native_job(identifier, plan):
             'message':'Building the prepared procedural asset; no ComfyUI prompt is submitted.'}
 
 
+def _output_records(plan):
+    return [{'filename':name,'media_type':'3d' if name.endswith('.glb') else 'image',
+             'native_path':'procedural/'+name,'source':{'operation':OPERATION,'generator':plan['intent']['generator']}}
+            for name in plan['outputs'] if name!='asset.blend']
+
+
+def _retained_outputs(job, *records):
+    """Only known Library identities may survive an incomplete/failed inspection.
+
+    Registration is ordered, so retained outputs form a prefix with their original
+    indexes. Unregistered native paths must not appear as playable job outputs.
+    """
+    records=[record for record in records if isinstance(record,dict) and record.get('id')==job['id']
+             and record.get('native_recipe')==job['native_recipe']]
+    outputs=[]
+    for index,output in enumerate(_output_records(job['native_recipe'])):
+        for record in records:
+            known=record.get('outputs',[])
+            if not isinstance(known,list) or index>=len(known):continue
+            saved=known[index]
+            if (isinstance(saved,dict) and all(saved.get(k)==output[k] for k in ('filename','native_path','media_type'))
+                    and isinstance(saved.get('asset_id'),str) and re.fullmatch('[a-f0-9]{32}',saved['asset_id'])):
+                output['asset_id']=saved['asset_id'];break
+        if 'asset_id' not in output:break
+        outputs.append(output)
+    return outputs
+
+
+def _retain_job_evidence(job, record):
+    if not isinstance(record,dict) or record.get('id')!=job['id'] or record.get('native_recipe')!=job['native_recipe']:return
+    job['outputs']=_retained_outputs(job,job,record)
+    for key in ('created_at','publication_error','receipt_error'):
+        if key in record:job[key]=copy.deepcopy(record[key])
+    if record.get('failure_files'):job['failure_files']=True
+
+
 def _artifact(identifier, directory, relative, role):
     path = _file(directory,relative)
     return {'path':relative,'url':f'/api/production/{identifier}/files/{relative}','role':role,
@@ -234,9 +270,8 @@ def _checked_report(directory, plan):
 
 def _publish(studio, identifier, directory, plan, job):
     report = _checked_report(directory,plan)
-    outputs = [{'filename':name,'media_type':'3d' if name.endswith('.glb') else 'image',
-                'native_path':'procedural/'+name,'source':{'operation':OPERATION,'generator':plan['intent']['generator']}}
-               for name in plan['outputs'] if name!='asset.blend']
+    outputs = _output_records(plan)
+    for index,known in enumerate(_retained_outputs(job,job)):outputs[index]['asset_id']=known['asset_id']
     pack = directory / 'export.zip'
     files = [*('procedural/'+name for name in plan['outputs']),'procedural/report.json','recipe.json']
     require(sum(_file(directory,name).stat().st_size for name in files)<=MAX_PACK_BYTES, 'Procedural source pack exceeds 512 MiB')
@@ -259,6 +294,7 @@ def _publish(studio, identifier, directory, plan, job):
         asset = studio.assets.register(job,index,_file(directory,output['native_path']))
         require(asset is not None, 'Procedural output could not be registered in the Library')
         output['asset_id'] = asset
+        _write(directory / 'procedural-job.json',job) # Checkpoint each idempotent Library registration.
     job.update(status='completed',publication_status='published',finished_at=time.time(),
                message='Procedural asset built. '+('All requested technical checks passed; inspect the result in your engine.'
                     if report['state']=='passed' else 'Godot import was not checked; technical verification is incomplete.'))
@@ -274,11 +310,30 @@ def _publish(studio, identifier, directory, plan, job):
             'limitations':['Technical checks are not art acceptance.','This is a procedural asset, not a physics simulation.']}
 
 
+def _record_failure(directory, job):
+    try:_write(directory / 'procedural-job.json',job)
+    except (OSError,ValueError) as exc:
+        # The original attempt marker remains; Production persists these known
+        # output identities in the separate run record even if this receipt failed.
+        job['receipt_error']=str(exc)[:500]
+
+
 def _failed(identifier, directory, job, exc, status='failed'):
-    job.update(status=status,publication_status='unpublished',outputs=[],finished_at=time.time(),message=str(exc)[:500])
+    published=_retained_outputs(job,job)
+    if job.get('publication_status') in ('publishing','published') and not job.get('failure_files'):
+        # Native checks and the source pack passed before registration began.
+        # An insertion/receipt failure is recoverable publication, not native failure.
+        job.update(status='uncertain',publication_status='incomplete',outputs=published,finished_at=time.time(),
+                   publication_error=str(exc)[:500],
+                   message='Library publication is incomplete. Known asset identities are retained. Reconcile and resume to inspect the files and finish publication without rerunning Blender. '+str(exc)[:250])
+        _record_failure(directory,job)
+        return {'job':job,'artifacts':_diagnostics(identifier,directory),'verification':None,
+                'limitations':['Native work is not repeated. Reconciliation rechecks retained files before idempotently publishing any remaining outputs.']}
+    job.update(status=status,publication_status='incomplete' if published else 'unpublished',outputs=published,
+               finished_at=time.time(),message=str(exc)[:500])
     if status=='failed':job['failure_files'] = True
     # Inspection errors must not erase the original failure/completion evidence.
-    if status=='failed':_write(directory / 'procedural-job.json',job)
+    if status=='failed':_record_failure(directory,job)
     return {'job':job,'artifacts':_diagnostics(identifier,directory),'verification':None,
             'limitations':['The owned attempt and diagnostics are retained. Prepare a new plan to retry; this attempt is never rerun.']}
 
@@ -303,11 +358,12 @@ def recover(studio, identifier, plan):
     """Only completed, matching retained files can be published; no native tool is invoked."""
     plan = _validate_plan(studio,plan,live=False)
     directory = _directory(studio,identifier);job = native_job(identifier,plan)
+    _retain_job_evidence(job,getattr(studio,'jobs',{}).get(job['id']))
     try:
         receipt = engine.read_json(_file(directory,'procedural-job.json',4*1024**2))
         require(receipt.get('id')==job['id'] and receipt.get('native_recipe')==plan, 'Procedural attempt identity changed')
-        require(receipt.get('status')!='failed' and not receipt.get('failure_files'), 'The retained procedural attempt records a failure')
+        _retain_job_evidence(job,receipt)
+        require(receipt.get('status')!='failed' and not job.get('failure_files'), 'The retained procedural attempt records a failure')
         require(engine.read_json(_file(directory,'recipe.json',4*1024**2))==plan, 'Procedural recipe differs from its prepared plan')
-        job['created_at'] = receipt['created_at']
         return _publish(studio,identifier,directory,plan,job)
     except Exception as exc:return _failed(identifier,directory,job,exc,status='uncertain')

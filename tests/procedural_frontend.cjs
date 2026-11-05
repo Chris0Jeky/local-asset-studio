@@ -9,10 +9,26 @@ function page(ready=false){
   const elements=new Map(),calls=[],$=selector=>{if(!elements.has(selector))elements.set(selector,element());return elements.get(selector);};
   $('#proceduralName').value='Test crate';$('#proceduralRender').checked=true;
   const catalog={generators:schema.generators,units:schema.units,runtime:{ready,missing:ready?[]:['Set Blender in config/local.json'],godot_available:ready,note:'Blender 5.4 is required; checks configured files only.'}};
-  let post=async()=>response({id:'a'.repeat(32),name:'Test crate',kind:'procedural',state:{status:'planned'}});
-  const context=vm.createContext({document:{querySelector:$},fetch:async(url,options={})=>{calls.push({url,...options});return options.method==='POST'?post(url,options):response(catalog);}});
+  let post=async()=>response({id:'a'.repeat(32),name:'Test crate',kind:'procedural',state:{status:'planned'}}),get=async()=>response(catalog);
+  const context=vm.createContext({document:{querySelector:$},fetch:async(url,options={})=>{calls.push({url,...options});return options.method==='POST'?post(url,options):get(url);}});
   vm.runInContext(code,context);
-  return {$,calls,context,catalog,setPost:fn=>post=fn};
+  return {$,calls,context,catalog,setPost:fn=>post=fn,setGet:fn=>get=fn};
+}
+async function setupRecovery(){
+  const p=page(true);await settle();const {$,calls}=p;
+  $('#proceduralGenerator').value='prop';$('#proceduralGenerator').onchange();
+  $('#proceduralParam-kind').value='1';$('#proceduralParam-width').value='0.73';
+  $('#proceduralName').value='Keep the typed crate';$('#proceduralRender').checked=false;$('#proceduralGodot').checked=true;
+  p.setGet(async()=>{throw Error('setup response lost');});
+  for(let i=0;i<2;i++){
+    await $('#proceduralRefresh').onclick();assert.equal($('#proceduralPrepare').disabled,true,'Failed setup check cannot authorize preparation');
+    assert.equal($('#proceduralParam-kind').value,'1');assert.equal($('#proceduralParam-width').value,'0.73');
+  }
+  p.setGet(async()=>response(p.catalog));await $('#proceduralRefresh').onclick();
+  assert.equal($('#proceduralGenerator').value,'prop');assert.equal($('#proceduralParam-kind').value,'1');
+  assert.equal($('#proceduralParam-width').value,'0.73','A successful setup retry keeps the last typed parameters');
+  assert.equal($('#proceduralName').value,'Keep the typed crate');assert.equal($('#proceduralRender').checked,false);assert.equal($('#proceduralGodot').checked,true);
+  assert.equal($('#proceduralPrepare').disabled,false);assert.ok(calls.every(call=>call.method===undefined),'Setup recovery sends only GET requests');
 }
 async function preparation(){
   const p=page();await settle();const {$,calls,context}=p;
@@ -57,4 +73,4 @@ function production(){
   assert.equal(vm.runInContext(`planKindNoun(${JSON.stringify(p)})`,context),'Procedural asset');
   const shell=fs.readFileSync(path.join(root,'app/static/studio-shell.js'),'utf8');assert.match(shell,/'procedural','Procedural assets'/);assert.match(shell,/location\.pathname\.includes\('procedural\.html'\)/);
 }
-(async()=>{await preparation();production();console.log('Procedural discovery, typed settings, explicit preparation, recovery and result contracts passed.');})().catch(error=>{console.error(error);process.exitCode=1;});
+(async()=>{await preparation();await setupRecovery();production();console.log('Procedural discovery, typed settings, explicit preparation, recovery and result contracts passed.');})().catch(error=>{console.error(error);process.exitCode=1;});

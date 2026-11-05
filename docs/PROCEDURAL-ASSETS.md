@@ -100,8 +100,17 @@ does not kill an independently installed application.
 ## Interrupted or failed builds
 
 Each project owns one native attempt. Its plan, job identity and exclusive
-attempt receipt are persisted before the factory starts. A failed build keeps
-its files and logs; preparing a new plan is the explicit way to retry.
+attempt receipt are persisted before the factory starts. A native execution or
+check failure keeps its files and logs; preparing a new plan is the explicit
+way to retry that build.
+
+A Library insertion or publication-receipt error instead leaves the project
+**uncertain**, with every known registered asset ID retained. Registration is
+checkpointed one output at a time. **Reconcile and resume** rechecks the retained
+files and completes publication idempotently; it does not rebuild the asset or
+duplicate a Library record. If the native receipt cannot be updated, the
+separate job record retains the known IDs. A later failed file inspection keeps
+those prior Library identities and refuses to publish the remaining outputs.
 
 After a restart, **Reconcile and resume** inspects retained receipts and output
 hashes. It never invokes the factory again if the attempt marker or output
@@ -115,6 +124,10 @@ If the preparation response is lost, inspect Comparisons before preparing
 again. The page suppresses rapid duplicate clicks and makes no automatic
 retry. An uncertain preparation can leave a planned project, but it cannot
 start native work.
+
+A failed **Check setup** request disables preparation until setup can be read
+again. Your selected generator and typed settings survive that failure and the
+next successful setup check.
 
 ## HTTP and CLI
 

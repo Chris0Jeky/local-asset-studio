@@ -59,7 +59,13 @@ jobs:
           path: |
             .runtime/ux-use-cases/
             .runtime/pose-handoff-browser/
-            .runtime/procedural-browser/
             research/ux/use-case-matrix.json
+          if-no-files-found: ignore
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: procedural-browser-evidence
+          path: .runtime/procedural-browser/
           if-no-files-found: ignore
           retention-days: 7

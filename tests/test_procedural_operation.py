@@ -181,9 +181,12 @@ class ProceduralOperationTests(unittest.TestCase):
         with patch.object(procedural.factory,'build') as build:recovered = procedural.recover(self.studio,self.project,plan)
         self.assertEqual(recovered['job']['status'],'uncertain');build.assert_not_called()
 
-    def test_repeated_recovery_preserves_a_recorded_publication_failure(self):
+    def test_repeated_recovery_preserves_a_recorded_native_failure(self):
         plan = self.plan()
-        with patch.object(procedural.factory,'build',side_effect=fake_build),patch.object(self.studio.assets,'register',side_effect=OSError('storage unavailable')):
+        def native_failure(*args,**kwargs):
+            fake_build(*args,**kwargs)
+            raise OSError('native process failed after writing outputs')
+        with patch.object(procedural.factory,'build',side_effect=native_failure):
             failed = procedural.run(self.studio,self.project,plan)
         self.assertEqual(failed['job']['status'],'failed')
         original = (self.directory() / 'procedural-job.json').read_bytes()

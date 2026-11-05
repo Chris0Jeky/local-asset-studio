@@ -146,5 +146,78 @@ class ProceduralStudioTests(unittest.TestCase):
         build.assert_not_called();self.assertEqual(self.studio.production.get(identifier)['state']['status'],'completed')
         self.assertEqual(self.studio.requests,[])
 
+    def test_partial_library_publication_resumes_idempotently_after_restart(self):
+        project=self.studio.production.procedural(self.intent());identifier=project['id']
+        self.studio.production.start(identifier);self.studio.queue.get_nowait()
+        register=self.studio.assets.register
+        def fail_second(job,index,source):
+            if index==1:raise OSError('second Library insert unavailable')
+            return register(job,index,source)
+        with patch.object(procedural.factory,'build',side_effect=fake_build) as build,patch.object(self.studio.assets,'register',side_effect=fail_second):
+            self.studio.production.run(identifier)
+        self.assertEqual(build.call_count,1)
+        result=self.studio.production.get(identifier);job_id=result['state']['attempts']['0']['job_id'];job=self.studio.jobs[job_id]
+        self.assertEqual(result['state']['status'],'uncertain');self.assertFalse(job.get('failure_files'))
+        published=self.studio.assets.snapshot()['assets'];self.assertEqual(len(published),1)
+        first_id=published[0]['id'];self.assertEqual([o['asset_id'] for o in job['outputs']],[first_id])
+        self.assertEqual(job['outputs'][0]['filename'],'asset_LOD0.glb')
+        receipt=json.loads((self.studio.production.root/identifier/'procedural-job.json').read_bytes())
+        self.assertEqual(receipt['outputs'][0]['asset_id'],first_id);self.assertFalse(receipt.get('failure_files'))
+        with patch.object(threading.Thread,'start',lambda *_:None):restarted=FakeStudio(self.root,[])
+        self.assertEqual(len(restarted.assets.snapshot()['assets']),1,'Startup must not publish the remaining native paths')
+        self.assertEqual(restarted.jobs[job_id]['outputs'][0]['asset_id'],first_id)
+        restarted.production.resume(identifier)
+        with patch.object(procedural.factory,'build') as build:restarted.production.run(identifier)
+        build.assert_not_called();self.assertEqual(restarted.production.get(identifier)['state']['status'],'completed')
+        outputs=restarted.jobs[job_id]['outputs'];self.assertEqual(len(outputs),4);self.assertEqual(outputs[0]['asset_id'],first_id)
+        self.assertEqual(len(restarted.assets.snapshot()['assets']),4);self.assertEqual(len({o['asset_id'] for o in outputs}),4)
+        self.assertEqual(restarted.requests,[])
+
+    def test_final_publication_receipt_failure_keeps_every_library_identity(self):
+        project=self.studio.production.procedural(self.intent());identifier=project['id']
+        self.studio.production.start(identifier);self.studio.queue.get_nowait();write=procedural._write
+        def fail_final(path,value):
+            write(path,value)
+            if value.get('publication_status')=='published':raise OSError('final receipt barrier unavailable')
+        with patch.object(procedural.factory,'build',side_effect=fake_build),patch.object(procedural,'_write',side_effect=fail_final):
+            self.studio.production.run(identifier)
+        result=self.studio.production.get(identifier);job_id=result['state']['attempts']['0']['job_id'];job=self.studio.jobs[job_id]
+        self.assertEqual(result['state']['status'],'uncertain');self.assertFalse(job.get('failure_files'))
+        ids=[o['asset_id'] for o in job['outputs']];self.assertEqual(len(ids),4)
+        self.assertEqual({a['id'] for a in self.studio.assets.snapshot()['assets']},set(ids))
+        self.studio.production.resume(identifier)
+        with patch.object(procedural.factory,'build') as build:self.studio.production.run(identifier)
+        build.assert_not_called();self.assertEqual(self.studio.production.get(identifier)['state']['status'],'completed')
+        self.assertEqual([o['asset_id'] for o in self.studio.jobs[job_id]['outputs']],ids)
+        self.assertEqual(len(self.studio.assets.snapshot()['assets']),4)
+
+    def test_lost_publication_receipt_and_bad_retained_output_keep_prior_library_evidence(self):
+        project=self.studio.production.procedural(self.intent());identifier=project['id']
+        self.studio.production.start(identifier);self.studio.queue.get_nowait();write=procedural._write
+        def fail_after_first_insert(path,value):
+            if self.studio.assets.snapshot()['assets']:raise OSError('receipt storage unavailable after first insert')
+            return write(path,value)
+        with patch.object(procedural.factory,'build',side_effect=fake_build),patch.object(procedural,'_write',side_effect=fail_after_first_insert):
+            self.studio.production.run(identifier)
+        result=self.studio.production.get(identifier);job_id=result['state']['attempts']['0']['job_id']
+        self.assertEqual(result['state']['status'],'uncertain');self.assertEqual(len(self.studio.jobs[job_id]['outputs']),1)
+        first_id=self.studio.jobs[job_id]['outputs'][0]['asset_id'];self.assertEqual(len(self.studio.assets.snapshot()['assets']),1)
+        directory=self.studio.production.root/identifier;receipt=(directory/'procedural-job.json').read_bytes()
+        target=directory/'procedural/asset_LOD1.glb';original=target.read_bytes();target.write_bytes(b'changed after partial publication')
+        with patch.object(threading.Thread,'start',lambda *_:None):restarted=FakeStudio(self.root,[])
+        restarted.production.resume(identifier)
+        with patch.object(procedural.factory,'build') as build,patch.object(restarted.assets,'register',wraps=restarted.assets.register) as register:
+            restarted.production.run(identifier)
+        build.assert_not_called();register.assert_not_called()
+        self.assertEqual(restarted.production.get(identifier)['state']['status'],'uncertain')
+        self.assertEqual([o['asset_id'] for o in restarted.jobs[job_id]['outputs']],[first_id])
+        self.assertEqual(len(restarted.assets.snapshot()['assets']),1)
+        self.assertEqual((directory/'procedural-job.json').read_bytes(),receipt,'Revalidation cannot overwrite retained publication evidence')
+        target.write_bytes(original);restarted.production.resume(identifier)
+        with patch.object(procedural.factory,'build') as build:restarted.production.run(identifier)
+        build.assert_not_called();self.assertEqual(restarted.production.get(identifier)['state']['status'],'completed')
+        self.assertEqual(restarted.jobs[job_id]['outputs'][0]['asset_id'],first_id)
+        self.assertEqual(len(restarted.assets.snapshot()['assets']),4)
+
 
 if __name__=='__main__':unittest.main()

@@ -18,6 +18,21 @@ ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'.runtime/procedural-browser'
 
 
+def settle_layout(page, width):
+    page.wait_for_function('width=>innerWidth===width',arg=width,timeout=5000)
+    page.evaluate('''() => new Promise((resolve,reject) => {
+        const deadline=setTimeout(()=>reject(Error('Viewport layout did not settle')),5000);
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{clearTimeout(deadline);resolve();}));
+    })''')
+
+
+def capture_full_page(page, name):
+    page.evaluate('scrollTo(0,0)')
+    page.wait_for_function('scrollY===0',timeout=5000)
+    settle_layout(page,page.viewport_size['width'])
+    evidence_screenshot(page,path=str(OUT/name),full_page=True)
+
+
 def main():
     from playwright.sync_api import sync_playwright
     OUT.mkdir(parents=True,exist_ok=True)
@@ -56,7 +71,7 @@ def main():
                     check(page.locator('#proceduralPrepare').is_disabled(),'Missing runtime disables preparation')
                     check('Blender 5.4' in page.locator('#proceduralRuntime').inner_text(),'Required runtime and readiness limits are visible')
                     check(build.call_count==0 and not report['posts'],'Opening the page does not prepare or execute anything')
-                    evidence_screenshot(page,path=str(OUT/'missing-runtime-desktop.png'),full_page=True)
+                    capture_full_page(page,'missing-runtime-desktop.png')
                     page.locator('#proceduralName').fill('Fixture crate')
                     for generator,spec in procedural.catalog(studio)['generators'].items():
                         page.locator('#proceduralGenerator').select_option(generator)
@@ -69,19 +84,21 @@ def main():
                     page.locator('#proceduralCheck').click();page.wait_for_function('document.querySelector("#proceduralStatus").textContent.includes("Settings are valid")')
                     check(build.call_count==0,'Parameter validation does not execute the factory')
                     page.set_viewport_size({'width':390,'height':844})
+                    settle_layout(page,390)
                     check(page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'Form fits a 390 px viewport')
-                    evidence_screenshot(page,path=str(OUT/'settings-mobile.png'),full_page=True)
+                    capture_full_page(page,'settings-mobile.png')
+                    evidence_screenshot(page,path=str(OUT/'settings-mobile-viewport.png'))
                     studio.config=configured
                     page.locator('#proceduralRefresh').click();page.wait_for_function('!document.querySelector("#proceduralPrepare").disabled')
                     check(page.locator('#proceduralParam-kind').input_value()=='1','Setup refresh preserves the typed draft')
                     page.locator('#proceduralPrepare').click();page.wait_for_selector('#proceduralPrepared a.primary')
                     project=studio.production.list()[0];identifier=project['id']
                     check(project['state']['status']=='planned' and studio.queue.empty() and build.call_count==0,'Preparing materializes one plan without execution')
-                    evidence_screenshot(page,path=str(OUT/'prepared-mobile.png'),full_page=True)
+                    capture_full_page(page,'prepared-mobile.png')
                     page.set_viewport_size({'width':1440,'height':1050});page.locator('#proceduralPrepared a.primary').click()
                     page.wait_for_selector('[data-project-action="start"]')
                     check(page.locator('[data-project-action="start"]').inner_text()=='Start build','The linked coordinator names the explicit action')
-                    evidence_screenshot(page,path=str(OUT/'plan-desktop.png'),full_page=True)
+                    capture_full_page(page,'plan-desktop.png')
                     page.locator('[data-project-action="start"]').click();page.wait_for_function('document.querySelector("#productionDetail").textContent.includes("queued")')
                     check(studio.queue.get_nowait()==('production',identifier),'Start uses the existing Production queue')
                     studio.production.run(identifier) # Deterministic fixture worker tick; factory remains patched.
@@ -89,7 +106,7 @@ def main():
                     check(build.call_count==1,'Exactly one explicitly started factory invocation')
                     check('Godot import was not checked' in page.locator('#productionDetail').inner_text(),'Successful software flow still shows incomplete engine verification')
                     check(page.locator('.native-model').get_attribute('autoplay') is None,'Static procedural asset is not presented as an animated chest')
-                    evidence_screenshot(page,path=str(OUT/'completed-fixture-desktop.png'),full_page=True)
+                    capture_full_page(page,'completed-fixture-desktop.png')
                     page.locator('[data-candidate-open]').click();page.wait_for_selector('#assetDialog[open]')
                     check(page.locator('#assetTitle').input_value().startswith('Fixture crate'),'Completed model opens its real Library record')
                     check(len(studio.assets.snapshot()['assets'])==4,'Three LODs and the inspection sheet are registered')

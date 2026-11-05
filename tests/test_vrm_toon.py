@@ -1,3 +1,4 @@
+import copy
 import json
 import math
 from pathlib import Path
@@ -17,7 +18,8 @@ def glb(doc):
 
 
 SPRING_DOC = {
-    "nodes": [{"name": "J_Bip_C_Hips"}, {"name": "Skirt0_1"}, {"name": "Skirt0_2"}, {"name": "Skirt0_end"}, {"name": "J_Bip_L_UpperLeg"}],
+    "nodes": [{"name": "J_Bip_C_Hips", "children": [1, 4]}, {"name": "Skirt0_1", "children": [2]},
+              {"name": "Skirt0_2", "children": [3]}, {"name": "Skirt0_end"}, {"name": "J_Bip_L_UpperLeg"}],
     "extensions": {"VRMC_springBone": {
         "colliders": [{"node": 4, "shape": {"capsule": {"offset": [0, 0, 0], "tail": [0, -.3, 0], "radius": .077}}},
                       {"node": 0, "shape": {"sphere": {"offset": [0, .05, 0], "radius": .11}}},
@@ -81,10 +83,66 @@ class LandmarkTests(unittest.TestCase):
 
 
 class SpringTests(unittest.TestCase):
+    def test_each_joint_keeps_its_own_settings_and_center_node_zero(self):
+        doc = copy.deepcopy(SPRING_DOC)
+        spring = doc["extensions"]["VRMC_springBone"]["springs"][0]
+        spring["center"] = 0
+        spring["joints"][0]["gravityDir"] = [1, 0, 0]
+        spring["joints"][1].update(stiffness=.15, dragForce=.8, gravityPower=.2, gravityDir=[0, 0, -1], hitRadius=.004)
+        chain = vrm_toon.vrm_springs(doc)["chains"][0]
+        self.assertEqual(chain["center"], {"node": 0, "name": "J_Bip_C_Hips"})
+        self.assertEqual(chain["joint_settings"], [
+            {"node": 1, "bone": "Skirt0_1", "stiffness": .9, "drag": .25, "gravity": .05,
+             "gravity_direction": [1, 0, 0], "radius": .02},
+            {"node": 2, "bone": "Skirt0_2", "stiffness": .15, "drag": .8, "gravity": .2,
+             "gravity_direction": [0, 0, -1], "radius": .004},
+            {"node": 3, "bone": "Skirt0_end", "stiffness": 1.0, "drag": .5, "gravity": 0.0,
+             "gravity_direction": [0.0, -1.0, 0.0], "radius": 0.0}])
+
+    def test_defaults_are_per_joint_and_absent_center_means_world(self):
+        chain = vrm_toon.vrm_springs(SPRING_DOC)["chains"][0]
+        self.assertIsNone(chain["center"])
+        self.assertEqual([j["stiffness"] for j in chain["joint_settings"]], [.9, 1., 1.])
+        self.assertEqual([j["drag"] for j in chain["joint_settings"]], [.25, .5, .5])
+
+    def test_zero_and_nonunit_gravity_vectors_are_preserved(self):
+        doc = copy.deepcopy(SPRING_DOC)
+        joints = doc["extensions"]["VRMC_springBone"]["springs"][0]["joints"]
+        joints[0]["gravityDir"] = [0, 0, 0]
+        joints[1]["gravityDir"] = [0, -2, 0]
+        out = vrm_toon.vrm_springs(doc)["chains"][0]["joint_settings"]
+        self.assertEqual(out[0]["gravity_direction"], [0, 0, 0])
+        self.assertEqual(out[1]["gravity_direction"], [0, -2, 0])
+
+    def test_refuses_missing_ambiguous_and_out_of_range_named_references(self):
+        for case in ("negative-joint", "missing-joint", "bool-joint", "unnamed-joint", "duplicate-name",
+                     "missing-center", "missing-collider", "missing-group", "group-collider"):
+            doc = copy.deepcopy(SPRING_DOC); sb = doc["extensions"]["VRMC_springBone"]
+            if case == "negative-joint": sb["springs"][0]["joints"][1]["node"] = -1
+            elif case == "missing-joint": sb["springs"][0]["joints"][1]["node"] = 99
+            elif case == "bool-joint": sb["springs"][0]["joints"][1]["node"] = True
+            elif case == "unnamed-joint": del doc["nodes"][2]["name"]
+            elif case == "duplicate-name": doc["nodes"][4]["name"] = "Skirt0_2"
+            elif case == "missing-center": sb["springs"][0]["center"] = 99
+            elif case == "missing-collider": sb["colliders"][0]["node"] = 99
+            elif case == "missing-group": sb["springs"][0]["colliderGroups"] = [99]
+            else: sb["colliderGroups"][0]["colliders"] = [99]
+            with self.subTest(case=case), self.assertRaises(ValueError): vrm_toon.vrm_springs(doc)
+
+    def test_refuses_nonfinite_out_of_range_and_malformed_joint_settings(self):
+        for key, value in (("stiffness", -1), ("stiffness", float("nan")), ("dragForce", 1.1),
+                           ("gravityPower", float("inf")), ("hitRadius", True),
+                           ("gravityDir", [0, -1]), ("gravityDir", [0, float("inf"), 0])):
+            doc = copy.deepcopy(SPRING_DOC)
+            doc["extensions"]["VRMC_springBone"]["springs"][0]["joints"][1][key] = value
+            with self.subTest(key=key, value=value), self.assertRaises(ValueError): vrm_toon.vrm_springs(doc)
+
     def test_chains_and_colliders_come_out_by_bone_name(self):
         out = vrm_toon.vrm_springs(SPRING_DOC)
-        self.assertEqual(out["chains"], [{"name": "Skirt0", "root": "Skirt0_1", "end": "Skirt0_end", "joints": 3,
-                                          "stiffness": .9, "drag": .25, "gravity": .05, "radius": .02, "colliders": [0, 1]}])
+        self.assertEqual(len(out["chains"]), 1)
+        summary = {k: v for k, v in out["chains"][0].items() if k not in ("joint_settings", "center")}
+        self.assertEqual(summary, {"name": "Skirt0", "root": "Skirt0_1", "end": "Skirt0_end", "joints": 3,
+                                   "stiffness": .9, "drag": .25, "gravity": .05, "radius": .02, "colliders": [0, 1]})
         self.assertEqual(out["colliders"][0], {"bone": "J_Bip_L_UpperLeg", "type": "capsule", "offset": [0, 0, 0], "tail": [0, -.3, 0], "radius": .077})
         self.assertEqual(out["colliders"][1]["type"], "sphere"); self.assertIsNone(out["colliders"][1]["tail"])
         self.assertEqual(out["colliders"][2], {"bone": "J_Bip_C_Hips", "type": "capsule", "offset": [0, 0, 0], "tail": [0, 0, 0], "radius": 0.0})

@@ -46,11 +46,12 @@
     return data;
   }
   async function refresh(){
-    if(busy)return;busy=true;sync();
+    if(busy)return;
+    if(current&&catalog)drafts[current]=values();
+    busy=true;sync();
     try{
       const data=await request('/api/procedural');
       if(!data||typeof data.generators!=='object'||!Object.keys(data.generators).length||typeof data.runtime?.ready!=='boolean'||!Array.isArray(data.runtime.missing))throw Error('Procedural catalog unavailable.');
-      if(current&&catalog)drafts[current]=values();
       const selected=current;current=null;catalog=data;
       $('#proceduralGenerator').innerHTML=Object.entries(catalog.generators).map(([key,spec])=>'<option value="'+esc(key)+'">'+esc(spec.label||label(key))+'</option>').join('');
       $('#proceduralGenerator').value=selected&&catalog.generators[selected]?selected:Object.keys(catalog.generators)[0];renderGenerator();
