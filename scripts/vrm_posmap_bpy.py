@@ -5,20 +5,31 @@
 Writes OUTDIR/<material>.npz (pos: (H, W, 3) float32 world metres, rows top-down like the image; mask: (H, W) bool)
 and OUTDIR/<material>__src.png, a copy of the base texture. Paint a VRM's textures by 3D rules with these maps
 ("below the waist", "front of the torso") without reading its UV layout, or feed the face map to
-`vrm_toon.py face-sdf`. Uses the rest-pose mesh; normal, specular and outline textures are skipped."""
+`vrm_toon.py face-sdf`. Uses the rest-pose mesh; normal, specular and outline textures are skipped.
+Meshes sharing a material contribute to one map. For overlapping UVs, later object names win (then material-slot
+and loop-triangle order within an object); one texel cannot represent several world positions."""
 import bpy, sys, os, numpy as np
 out = sys.argv[sys.argv.index("--") + 1]; os.makedirs(out, exist_ok=True)
 def img_of(mat):
     if not mat or not mat.node_tree: return None
     for n in mat.node_tree.nodes:
         if n.type == "TEX_IMAGE" and n.image and "nml" not in n.image.name and "spe" not in n.image.name and "outline" not in n.image.name: return n.image
-for ob in [o for o in bpy.context.scene.objects if o.type == "MESH"]:
-    me = ob.data; me.calc_loop_triangles(); uv = me.uv_layers.active.data; mw = np.array(ob.matrix_world)
-    co = np.array([v.co for v in me.vertices]); co = co @ mw[:3, :3].T + mw[:3, 3]
-    for mi, mat in enumerate(me.materials):
+groups = {}
+for ob in sorted((o for o in bpy.context.scene.objects if o.type == "MESH"), key=lambda o: o.name):
+    for mi, mat in enumerate(ob.data.materials):
         im = img_of(mat)
         if im is None: continue
-        W, H = im.size; pos = np.zeros((H, W, 3), np.float32); mask = np.zeros((H, W), bool)
+        # Capture source paths before saving any image: several materials may share one image datablock.
+        if mat.name not in groups:
+            groups[mat.name] = {'image': im, 'path': bpy.path.abspath(im.filepath) if im.filepath else '', 'parts': []}
+        groups[mat.name]['parts'].append((ob, mi))
+for name, group in sorted(groups.items()):
+    # Bake one material at a time instead of retaining a map for every texture.
+    im = group['image']; W, H = im.size
+    pos = np.zeros((H, W, 3), np.float32); mask = np.zeros((H, W), bool); measured = []
+    for ob, mi in group['parts']:
+        me = ob.data; me.calc_loop_triangles(); uv = me.uv_layers.active.data; mw = np.array(ob.matrix_world)
+        co = np.array([v.co for v in me.vertices]); co = co @ mw[:3, :3].T + mw[:3, 3]
         tris = [t for t in me.loop_triangles if t.material_index == mi]
         for t in tris:
             p = np.array([uv[l].uv for l in t.loops]) * [W, H]; P = co[list(t.vertices)]
@@ -34,6 +45,7 @@ for ob in [o for o in bpy.context.scene.objects if o.type == "MESH"]:
             q = l0[..., None]*P[0] + l1[..., None]*P[1] + l2[..., None]*P[2]
             yy, xx = (ys[m] - .5).astype(int), (xs[m] - .5).astype(int)
             pos[yy, xx] = q[m]; mask[yy, xx] = True
-        np.savez_compressed(f"{out}/{mat.name}.npz", pos=pos[::-1], mask=mask[::-1], image=im.name, path=bpy.path.abspath(im.filepath) if im.filepath else "")
-        im.filepath_raw = f"{out}/{mat.name}__src.png"; im.file_format = "PNG"; im.save()
-        print("POSMAP", ob.name, mat.name, W, H, len(tris), int(mask.sum()))
+        measured.append((ob.name, len(tris), int(mask.sum())))
+    np.savez_compressed(f"{out}/{name}.npz", pos=pos[::-1], mask=mask[::-1], image=im.name, path=group['path'])
+    im.filepath_raw = f"{out}/{name}__src.png"; im.file_format = "PNG"; im.save()
+    for ob_name, count, covered in measured: print("POSMAP", ob_name, name, W, H, count, covered)
