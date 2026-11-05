@@ -30,6 +30,23 @@ The kit's inputs are gitignored there.
 an isolated profile (`BLENDER_USER_RESOURCES=<dir> blender --command extension install-file -r user_default --enable`),
 imported and exported VRM 1.0 cleanly on 5.4.0 alpha 67c9bdddb88b. That is one build and two models, not a support claim.
 
+### Position maps shared across meshes
+
+Since 5 November 2026, every mesh using the same material contributes to that material's position map. Disjoint UV
+regions are accumulated and the `.npz` and source `.png` are written once per material. The `pos`, `mask`, `image`
+and `path` fields, world-space coordinates and top-down image rows are unchanged. Materials remain separate even
+when they share a source image, and each map keeps the original source path. Baking processes one material at a
+time so it does not retain buffers for every texture at once.
+
+A texel can hold only one position. If UV regions overlap, the last object in ascending name order wins; within
+one object, later material slots and loop triangles win. This makes the result independent of scene iteration
+order; it does not disambiguate overlapping UVs for painting.
+
+`python -m unittest discover -s tests -p test_vrm_posmap.py -v` runs the production rasterizer and NPZ writer on
+synthetic two-mesh geometry when NumPy is installed. The three cases cover shared coverage/world transforms,
+overlap ordering and separate materials using one source image. This is offline raster evidence; native Blender
+qualification remains open. The other spring, constraint and expression work in #1928 is unchanged.
+
 ## Blender 5.4 Material Lighting nodes, measured
 
 Probed on spheres with a white sun and a red point light, EEVEE, build 67c9bdddb88b:

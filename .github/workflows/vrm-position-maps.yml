@@ -1,0 +1,38 @@
+name: VRM position maps
+on:
+  pull_request:
+    paths:
+      - 'scripts/vrm_posmap_bpy.py'
+      - 'tests/test_vrm_posmap.py'
+      - '.github/workflows/vrm-position-maps.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/vrm_posmap_bpy.py'
+      - 'tests/test_vrm_posmap.py'
+      - '.github/workflows/vrm-position-maps.yml'
+permissions:
+  contents: read
+concurrency:
+  group: vrm-position-maps-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  rasterizer:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install raster test dependencies outside Blender
+        run: python -m pip install numpy==2.3.5 -r research/game-assets/requirements-media.txt
+      - name: Exercise production rasterization and NPZ output with synthetic meshes
+        run: python -m unittest discover -s tests -p test_vrm_posmap.py -v
