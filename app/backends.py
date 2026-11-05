@@ -366,7 +366,10 @@ class BackendManager:
             if isinstance(owner,str) and owner and owner.casefold()!=psutil.Process().username().casefold():return True
         except psutil.NoSuchProcess:return True
         except (psutil.AccessDenied,OSError):pass
-        try:return Path(process.exe()).resolve()!=Path(profile['python']).resolve()
+        try:
+            exe=process.exe()
+            # A blank or relative answer proves nothing: it would resolve against the Studio's own directory.
+            return isinstance(exe,str) and os.path.isabs(exe) and Path(exe).resolve()!=Path(profile['python']).resolve()
         except psutil.NoSuchProcess:return True
         except (psutil.AccessDenied,OSError,ValueError):return False
 

@@ -359,7 +359,11 @@ class BackendSafetyTests(unittest.TestCase):
                (proc(psutil.AccessDenied(4242),'C:/Python314/python.exe'),True),  # owner unreadable, another executable
                (proc(me,'C:/Python314/python.exe'),True),                 # ours, but another executable
                (proc(me,p['python']),False),                               # ours, the configured Python: could be the launcher
-               (proc(psutil.AccessDenied(4242),psutil.AccessDenied(4242)),False)]  # nothing provable
+               (proc(psutil.AccessDenied(4242),psutil.AccessDenied(4242)),False),  # nothing provable
+               (proc(psutil.NoSuchProcess(4242),p['python']),True),              # gone: not a live launcher
+               (proc(me.upper(),p['python']),False),                             # our own user in other case: refused
+               (proc(psutil.AccessDenied(4242),''),False),                       # a blank executable proves nothing
+               (proc(psutil.AccessDenied(4242),'Registry'),False)]               # neither does a relative one
         for process,skipped in cases:
             with self.subTest(skipped=skipped),patch.object(psutil,'process_iter',return_value=[process]):
                 if skipped:self.assertEqual(self.manager.configured_processes(p),[])
