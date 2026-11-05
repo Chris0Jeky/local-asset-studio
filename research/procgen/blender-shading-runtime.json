@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "version": [5, 4, 0],
+  "release_cycle": "alpha",
+  "build_hash": "6f4fc760c138",
+  "platform": "linux",
+  "architecture": "x86_64",
+  "listed_build_time": "2026-11-05 02:41 (official listing)",
+  "archive_url": "https://cdn.builder.blender.org/download/daily/blender-5.4.0-alpha%2Bmain.6f4fc760c138-linux.x86_64-release.tar.xz",
+  "checksum_url": "https://cdn.builder.blender.org/download/daily/blender-5.4.0-alpha%2Bmain.6f4fc760c138-linux.x86_64-release.tar.xz.sha256",
+  "listing_url": "https://builder.blender.org/download/daily/",
+  "api_url": "https://builder.blender.org/download/daily/?format=json&v=2",
+  "retention_reference": "https://developer.blender.org/docs/handbook/tooling/buildbot/#archived-builds",
+  "note": "Explicit temporary qualification selection; archived daily builds expire within 90 days. The official checksum is fetched and retained by the hosted run, not asserted to have been read locally."
+}

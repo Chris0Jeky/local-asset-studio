@@ -61,7 +61,7 @@ def _enabled(sockets, name=None):
 class B:
     """Geometry Nodes builder. Every primitive stores UVMap + part_id and a material before it is placed."""
     def __init__(self, tree, materials, detail):
-        self.t, self.m, self.detail = tree, materials, detail
+        self.t, self.m, self.detail, self.smooth = tree, materials, detail, 0
 
     def set(self, socket, value):
         if isinstance(value, S): self.t.links.new(value.s, socket)
@@ -145,8 +145,17 @@ class B:
         self.set(_enabled(n.inputs, 'Value')[0], value)
         return n.outputs[0]
 
-    def place(self, n, part, role, loc=(0, 0, 0), rot=(0, 0, 0), scale=(1, 1, 1)):
-        geo = self.store(n.outputs['Mesh'], 'UVMap', 'FLOAT2', 'CORNER', n.outputs['UV Map'])
+    def place(self, n, part, role, loc=(0, 0, 0), rot=(0, 0, 0), scale=(1, 1, 1), round_surface=False):
+        geo = n.outputs['Mesh']
+        if round_surface:
+            shade = self.node('GeometryNodeSetShadeSmooth', {'domain': 'FACE'}, Mesh=geo, Shade_Smooth=self.smooth)
+            if n.bl_idname in ('GeometryNodeMeshCylinder', 'GeometryNodeMeshCone'):
+                caps = self.node('FunctionNodeBooleanMath', {'operation': 'OR'})
+                self.set(caps.inputs[0], n.outputs['Top']); self.set(caps.inputs[1], n.outputs['Bottom'])
+                sides = self.node('FunctionNodeBooleanMath', {'operation': 'NOT'})
+                self.set(sides.inputs[0], caps.outputs[0]); self.set(shade.inputs['Selection'], sides.outputs[0])
+            geo = shade.outputs[0]
+        geo = self.store(geo, 'UVMap', 'FLOAT2', 'CORNER', n.outputs['UV Map'])
         geo = self.store(geo, 'part_id', 'INT', 'FACE', part)
         geo = self.node('GeometryNodeSetMaterial', Geometry=geo, Material=self.m[role]).outputs[0]
         t = self.node('GeometryNodeTransform', Geometry=geo, Translation=self.vec(*loc), Scale=self.vec(*scale))
@@ -162,11 +171,11 @@ class B:
         if top is None: n = self.node('GeometryNodeMeshCylinder', Vertices=segs, Radius=r, Depth=depth)
         else: n = self.node('GeometryNodeMeshCone', Vertices=segs, Radius_Bottom=r, Radius_Top=top, Depth=depth)
         # GN Cylinder is centred on its origin; GN Cone already spans 0..depth.
-        return self.place(n, part, role, (base[0], base[1], base[2] + (depth / 2 if top is None else 0)), rot)
+        return self.place(n, part, role, (base[0], base[1], base[2] + (depth / 2 if top is None else 0)), rot, round_surface=True)
 
     def sphere(self, centre, radii, part, role):
         n = self.node('GeometryNodeMeshUVSphere', Segments=self.detail, Rings=self.max(self.detail / 2, 3.0), Radius=1.0)
-        return self.place(n, part, role, centre, scale=radii)
+        return self.place(n, part, role, centre, scale=radii, round_surface=True)
 
     def grid(self, sx, sy, centre, rot, part, role):
         return self.place(self.node('GeometryNodeMeshGrid', Size_X=sx, Size_Y=sy, Vertices_X=2, Vertices_Y=2), part, role, centre, rot)
@@ -624,6 +633,7 @@ def build_tree(generator, spec, materials):
     params = {s.name: s for s in gi.outputs if s.name}
     b = B(tree, materials, None)
     b.detail = S(b, params['detail'])
+    b.smooth = S(b, params['smooth'])
     tree.links.new(GENERATORS[generator](b, {k: S(b, v) for k, v in params.items()}), go.inputs['Geometry'])
     return tree
 
@@ -814,5 +824,6 @@ def main(request):
     (out / 'measurements.json').write_text(json.dumps(measurements, indent=1), encoding='utf-8')
 
 
-REQUEST = json.loads(Path(sys.argv[sys.argv.index('--') + 1]).read_text(encoding='utf-8'))
-main(REQUEST)
+if __name__ == '__main__':
+    REQUEST = json.loads(Path(sys.argv[sys.argv.index('--') + 1]).read_text(encoding='utf-8'))
+    main(REQUEST)
