@@ -101,6 +101,14 @@ Open **Model, LoRAs and settings** under the words box. It is folded by default.
 - **Seed**: locked only when **Different pictures each time** is unticked (section 4).
 - **Back to the look as made** clears every change at once.
 
+### Save a tune for another scene
+
+Inside **Model, LoRAs and settings**, choose **Save as a new look…**, give it a name and optional notes, then press **Save look**. It keeps the tuned model, LoRAs and their combined strengths, steps, sampler and **Leave out** wording, with the original look's scene slot. Your current scene words are not saved, and saving generates no picture. Find the new look under **Change look** in the same goal, alphabetically among the tunes beside its base look.
+
+Shape and option selections start at their defaults when you choose the saved look. A locked seed number is kept as a starting value, but **Different pictures each time** starts on: untick it again to reuse that seed. Use **Edit and re-run** on a finished run when you want its complete scene, shape and locked seed back.
+
+A new tune can show its base look's picture with the visible label **Base look preview; tuned settings may look different.** That picture illustrates the base look; it is not a render of your tuned settings and does not become a reference image for the new look. If the base picture is unavailable, the card keeps a placeholder.
+
 ### When something needs a download: Models & setup
 
 If **Generate** is disabled and the reason says "Needs 2 model files first: open Models & setup", press that link. It opens **Models & setup** filtered to "Files needed for" that recipe.
