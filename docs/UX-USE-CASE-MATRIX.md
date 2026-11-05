@@ -1,5 +1,28 @@
 # UX use-case matrix
 
+## Review action scope and guide wording — 5 November 2026 (#2009)
+
+Reproduction on the current UI confirmed that **Pick a winner** already opens the
+plan’s Review desk and **Choose here** already discloses its explicit winner button.
+The remaining ambiguity was Library **Review next**: only its unreviewed count
+explained the queue before opening it, despite adjacent bulk checkbox controls.
+The guide also still named the removed **Review** and **Quick pick** actions.
+
+Visible Library help now states the per-asset marks and current filtered-page scope,
+and is associated with Review next through `aria-describedby`. The queue names its
+Library purpose. The guide describes the two existing comparison actions by their
+current names and jobs; action behavior and destinations are unchanged.
+
+| Existing journey / contract | Added qualification | Evidence and limits |
+| --- | --- | --- |
+| `library-review-next-by-keyboard` | Four unreviewed assets, one checkbox selected, then a search leaves three. Enter opens all three filtered assets without saving; K/W/X save those marks while the hidden fourth stays unreviewed and selection stays intact. Existing unscrolled keyboard checks remain. | Hosted UX lane captures help at 1440×900, 768×1024 and 390×844; queue at the existing 1366×768/1920×1080 and new tablet/phone sizes. Local native Chromium unavailable; hosted run and visual review required. |
+| `asset_library_contracts.cjs` | Shipped Library projection queues two filtered assets despite a one-asset checkbox selection, preserving that selection and sending no save. | Focused Node contract; supplements browser qualification. |
+| `studio_guide_state.cjs` | Awaiting comparison instructions name Pick a winner → Review desk and Choose here → explicit winner button → record choice. Once the desk owns the choice, only its existing return action is offered. | Regression fails on the old shipped guide message. Existing comparison state and decision assertions remain. |
+
+Broader #2009 workflow, naming, accessibility and shell findings remain open.
+This slice does not qualify owner art, workstation behavior or generated geometry.
+
+
 ## Full editor: usable without scrolling, 3 November 2026 (QA pass, branch `claude/qa-editor`)
 
 The owner: "when we click on editor, the user shouldn't scroll down to use the editor." The page title (screen-reader

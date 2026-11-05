@@ -27,7 +27,7 @@ async function test(name,fn){await fn();count++;console.log('PASS',name);}
     const s=open();s.run("assetQueue={ids:['a','b'],index:0,transition:{}};renderAssetQueue()");
     const html=s.el('#assetQueue').innerHTML;
     assert.equal((html.match(/data-queue-review="selected"/g)||[]).length,1);assert.equal((html.match(/data-queue-review=/g)||[]).length,3);
-    assert.match(html,/Review queue<\/b><span role="status" aria-live="polite">1 of 2/);assert.match(html,/data-queue-skip/);assert.doesNotMatch(html,/aria-pressed/);
+    assert.match(html,/Library review queue<\/b><span role="status" aria-live="polite">1 of 2/);assert.match(html,/data-queue-skip/);assert.doesNotMatch(html,/aria-pressed/);
     s.run('assetQueue=null;renderAssetQueue()');assert.match(s.el('#assetQueue').innerHTML,/aria-pressed/,'leaving the queue hands the panel back to the verdict row');
   });
   await test('K, W and X save the mark with the queue request shape and stay on the picture',async()=>{

@@ -28,6 +28,15 @@ async function test(name,fn){try{await fn();passed++;console.log('PASS',name);}c
     s.el('#assetsView').hidden=false;s.run("for(const asset of assetState.assets)asset.review='selected';renderAssets()");assert.equal(skip.hidden,true);
     s.run("assetState.assets[0].review='unreviewed';renderAssets()");assert.equal(skip.hidden,false);
   });
+  await test('Review queue follows the filtered page independently of bulk checkbox selection',()=>{
+    const s=library();s.run("assetSelection=new Set(['a0']);assetState.assets[0].tags=['queue-scope'];assetState.assets[2].tags=['queue-scope'];renderAssets()");
+    assert.equal(s.el('#reviewNext').textContent,'Review next (3 unreviewed)');
+    s.el('#assetSearch').value='queue-scope';s.run('renderAssets();startReviewQueue()');
+    assert.equal(s.run('JSON.stringify(assetQueue.ids)'),'["a2","a0"]');
+    assert.equal(s.run('JSON.stringify([...assetSelection])'),'["a0"]');
+    assert.equal(s.el('#reviewNext').textContent,'Review next (2 unreviewed)');
+    assert.equal(s.writes.length,0,'opening the queue records no decision');
+  });
   await test('Hidden selection is counted without silently changing its IDs',()=>{
     const s=library();s.run("assetSelection=new Set(['a0','a1']);");s.el('#assetSearch').value='Asset 0';s.run('renderAssets()');
     assert.match(s.el('#assetSelectionSummary').textContent,/1 visible.*1 outside/i);assert.equal(s.run('assetSelection.size'),2);
