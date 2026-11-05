@@ -76,6 +76,13 @@ validation gate for that test-only repair.
 
 ## Remaining #2009 work
 
+The next hosted Workshop run reached the main-shell smoke journey and found one
+remaining old-copy expectation: its unmatched-search hint still required
+"anime, upscale, pose". The driver now checks that no result link is offered and
+that the actual hint names the supported anime, upscale, history, winner and
+switch queries. Earlier keyboard, disclosure, application and layout steps in
+that run passed. The corrected exact-head run remains the merge gate.
+
 This pass does not merge Workflow builder and Workflow guide, redesign the whole
 sidebar, unify Quick pick with Review desk's decision model, or restructure all
 production controls around the pictures. Candidate pictures already render

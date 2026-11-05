@@ -276,7 +276,8 @@ def run(screenshots):
                 else:
                     page.fill('#studioCommandSearch',query);page.keyboard.press('ArrowDown');page.keyboard.press('Enter');page.wait_for_selector('#modelsView',state='visible')
             page.keyboard.press('Control+k');page.fill('#studioCommandSearch','no-such-place')
-            check('Try anime, upscale, pose' in page.locator('#studioCommandResults').inner_text(),'empty finder suggests real queries');page.keyboard.press('Escape')
+            no_match=page.locator('#studioCommandResults')
+            check(no_match.locator('a').count()==0 and 'No match.' in no_match.inner_text() and all(word in no_match.inner_text() for word in ['anime','upscale','history','winner','switch']),'unmatched finder suggests supported queries');page.keyboard.press('Escape')
             finder=browser.new_page();finder.route('**/api/looks',lambda route:route.fulfill(json=json.loads((ROOT/'presets/looks.json').read_text(encoding='utf-8'))))
             finder.goto(origin+'/#make');finder.wait_for_selector('#makeGoals [data-make-goal]')
             for query,goal in [('fix face','repair'),('fix hands','repair'),('3d','mesh'),('video','animate'),('style','restyle')]:
