@@ -60,10 +60,27 @@ jobs:
         if: runner.os == 'Linux'
         timeout-minutes: 4
         run: bash scripts/ci-install-chromium.sh
+      - name: Identify the pinned Windows browser version
+        if: runner.os == 'Windows'
+        id: playwright-version
+        shell: pwsh
+        run: python -c "from importlib.metadata import version; print('version=' + version('playwright'))" >> $env:GITHUB_OUTPUT
+      - name: Cache Windows Chromium for the installed Playwright version
+        if: runner.os == 'Windows'
+        uses: actions/cache@v4
+        timeout-minutes: 2
+        continue-on-error: true
+        with:
+          path: ~/AppData/Local/ms-playwright
+          key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ steps.playwright-version.outputs.version }}-chromium-shell-v1
       - name: Install Chromium on Windows
         if: runner.os == 'Windows'
-        timeout-minutes: 4
-        run: python -m playwright install --with-deps chromium
+        # Run 42106959456 spent 237 seconds enabling Media Foundation, then
+        # exhausted the old four-minute limit while extracting Chromium.
+        # The journey uses the default headless shell, as in creation-privacy.
+        # Always install, including cache hits; a missing browser must fail.
+        timeout-minutes: 6
+        run: python -m playwright install --with-deps --only-shell chromium
       - name: Native Archive, lost-response recovery and scoped Library
         run: python tests/asset_archive_browser.py --out .runtime/asset-archive
       - uses: actions/upload-artifact@v4
