@@ -151,6 +151,12 @@ them. Please try, in your own words: (1) Prompt Lab with a reference or an avoid
 recipe and read the summary line; (4) Asset library → Review next, with K / W / X / S; (5) the node builder's canvas
 and a prompt field. Say what still feels wrong. Nothing here is a creative or licensing approval.
 
+**5 November status clarification:** the replacement `ux-tour-1101` was completed
+and closed by the owner on **2 November 2026**, as recorded below with the owner's
+words and follow-up issues. The request above is historical; q-7/the tour is no
+longer an outstanding action. The broader usability findings remain tracked work,
+and completing the tour does not imply blanket UX or art approval.
+
 ## Recorded owner decisions
 
 - **Kromoss Make look (2 November 2026, guided walkthrough 2 November 2026, map `map:v1:a61c2ac65c251565ab590b6600ccb53f04d92d2954b9db935ec0718f9e8bc17f`):** Versus contest 2 put Kromoss in every top place, and Kromoss with the DMD2+Mikko adapters beat no adapter (98%). Asked whether to make it a one-press look in Make, the owner chose "Yes, make the look". An agent adds it as a reviewed PR.
