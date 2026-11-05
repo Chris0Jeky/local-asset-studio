@@ -345,6 +345,26 @@ class BackendSafetyTests(unittest.TestCase):
         p=self.manager.profiles['hidream'];argv=[p['python'],p['entry'],'--install-root','..']
         self.assertTrue(self.manager.matches_configured_process(p,p['python'],argv,p['root']))
         self.assertFalse(self.manager.matches_configured_process(p,p['python'],argv+['--install-root','/other'],p['root']))
+    def test_a_protected_python_is_skipped_only_when_provably_not_ours(self):
+        import psutil
+        p=self.manager.profiles['primary']; me=psutil.Process().username()
+        def proc(owner,exe):
+            denied=psutil.AccessDenied(4242)
+            def value(v):
+                if isinstance(v,Exception):raise v
+                return v
+            return SimpleNamespace(pid=4242,name=lambda:Path(p['python']).name,username=lambda:value(owner),exe=lambda:value(exe),
+                                   cmdline=lambda:(_ for _ in ()).throw(denied),cwd=lambda:(_ for _ in ()).throw(denied))
+        cases=[(proc('OTHERPC\\CodexSandboxOffline',p['python']),True),   # another user's process: never our launcher
+               (proc(psutil.AccessDenied(4242),'C:/Python314/python.exe'),True),  # owner unreadable, another executable
+               (proc(me,'C:/Python314/python.exe'),True),                 # ours, but another executable
+               (proc(me,p['python']),False),                               # ours, the configured Python: could be the launcher
+               (proc(psutil.AccessDenied(4242),psutil.AccessDenied(4242)),False)]  # nothing provable
+        for process,skipped in cases:
+            with self.subTest(skipped=skipped),patch.object(psutil,'process_iter',return_value=[process]):
+                if skipped:self.assertEqual(self.manager.configured_processes(p),[])
+                else:
+                    with self.assertRaisesRegex(ValueError,'could not be verified'):self.manager.configured_processes(p)
     def test_inaccessible_listener_is_not_absent(self):
         import psutil
         listener=SimpleNamespace(status='LISTEN',laddr=SimpleNamespace(port=8188,ip='127.0.0.1'),pid=555)
