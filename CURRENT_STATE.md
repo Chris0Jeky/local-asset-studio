@@ -1,5 +1,92 @@
 # Current state — 5 November 2026
 
+## 2026-11-05 — Runtime recovery, Review guidance and native follow-through (third pass)
+
+This pass repairs protected-process classification, makes Library review scope
+explicit, qualifies procedural round-part normals and native material retention,
+and hardens Jobs caching, Krita bring-back and Windows Archive setup. The
+[third-pass verification record](docs/verification/2026-11-05-maintenance-closeout.md)
+retains the seven merged components, exact tested and merged identities,
+retained failures and remaining native limits. Code PRs #2032–#2038 are merged.
+Bounded issues
+#1948 and #1808 are closed; #1983, #2026, #1864 and broader #2009 remain open.
+
+- **Recovery (#2032):** failure to read the Studio's own process identity cannot
+  discard a live protected candidate. Twenty-four classifier fault combinations
+  and actual RuntimeRecovery ticks cover the decision; ambiguous recovery cases
+  refuse with zero launches/attempts. Earlier Windows read-only observations remain separate;
+  actual workstation recovery restart on the corrected code was not run.
+- **Review guidance (#2033):** Review next names its current filtered-page scope
+  and unreviewed count. Bulk checkboxes remain independent. The native browser
+  journey reviewed exactly three filtered assets with K/W/X, preserved selection
+  and left the hidden fourth unreviewed. All 31 UX cases passed; seven
+  desktop/tablet/phone screenshots were inspected. Broader #2009 work stays open.
+- **Smooth shading (#2034):** all eight schemas expose `smooth=0..1`, defaulting
+  to the original faceted style. The actual Blender 5.4 alpha gate built
+  lantern/crate/plant flat and smooth at three LODs: 18 GLBs passed normal,
+  hard-cap, side-interpolation and paired-geometry invariance gates. All hashes
+  and normal summaries were rechecked. #1948 is closed; #2026 still needs all
+  eight generators through the configured Studio/Windows/Godot path.
+- **Jobs cache (#2035):** cache entries retain actual collection identity as well
+  as revision. Same-revision replacement and delayed old HTTP builders cannot
+  return or republish an old collection's response. #1808 is closed following
+  full-suite, concurrent HTTP and mutation qualification.
+- **Krita bring-back (#2036):** bounded stable PNG reads require a complete IEND
+  chunk and CRC, image verification and pixel decoding. Changed/replaced or
+  incomplete files refuse without session/import writes. Saved byte hashes
+  survive restart and A → B → A reuse. #1864 remains open for a safe retention
+  policy and the configured native Save As/export/bring-back journey.
+- **Native material retention (#2037):** the actual synthetic
+  Blender seed/save/reopen/typed-repair/save/reopen gate passed exact head
+  `ee1cb2c26ac6a757860b1c9368840c08fa9965a9`. All 14 output hashes were
+  rechecked. Original/repaired semantic checksums and material membership agree;
+  damage survives reopen and only the displaced original gains fake-user
+  retention. Worker startup now leaves GPU/Cycles discovery explicitly unprobed
+  after the first hosted attempt exposed a real graphics-init SIGABRT. The
+  failed artifact remains retained. #1983's configured-Windows corpus rebuild
+  and agent benchmark remain open; no repair rate or render result is inferred.
+  Actual merge `96ab62a2a4bca43b721e68d8b8a87d8093b89c23` shares tree
+  `a78258e0c3fecd8a060d1295ed304885c3a2105a` with the reviewed/native head
+  and tested checkout `aa1dca1ceec48d33114f06a926ae4f7e1a552a4d`. The full
+  suite passed 7,321 tests: 7,202 passed, 119 skipped, zero failures/errors,
+  995.880 seconds and clean lifetime shutdown.
+- **Archive setup (#2038):** the final browser lane passed all
+  39 checks on both Windows and Linux at head
+  `5d7b66cf3ebcab319c82eae5478606b7afe11a1f`, tree
+  `b480bec71897fa24c23ce8fe07b43a3f7c8a4e05`, with no page/handler exceptions or
+  unrelated mutations.
+  The workflow caches the headless shell and uses a bounded six-minute setup.
+  Windows still ran installation for about 171 seconds despite its cache hit;
+  the earlier four-minute setup failure and passing unchanged-head retry remain
+  distinct evidence. The earlier child run also hit its cache; cold-cache
+  fallback is unproven. Broader user-facing issue #1306 remains open.
+
+**Final combined code qualification:** reviewed #2038 head
+`5d7b66cf3ebcab319c82eae5478606b7afe11a1f`, actual full-suite checkout
+`802f7c57f098229cb953c103452472c75bbdf8d2` and actual main merge
+`881185ad8825ce13c5b37299a2b255146a5c1a6d` share tree
+`b480bec71897fa24c23ce8fe07b43a3f7c8a4e05`.
+[Check studio 42110786216, job 127538098520](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/42110786216/job/127538098520)
+finished at **21:33:02.586 UTC**: **7,321 tests, 7,202 passed, 119 skipped,
+zero failures/errors, 1,032.068 seconds**, with clean lifetime shutdown and all
+five atexit callbacks returned. Validation at **21:33:02.767 UTC** passed
+98 graphs, 194 pins, 4,929 tracked paths and 167 LoRA names. Both applicable
+workflow families passed; independent and connected Codex reviews were clear.
+The measurement receipts name that actual CI checkout, rather than this later
+documentation branch.
+
+The post-merge repository capture at **2026-11-05T21:34:33Z** records actual main
+`881185ad8825ce13c5b37299a2b255146a5c1a6d` and no open PRs before publication of
+this documentation closeout. Closed #1948 is removed from the selected queue;
+the authored next-ready selection is **#2009**, for one reproduced bounded
+Review/UX slice. #1983/#2026 retain configured-native work, #1864 retains safe
+retention/native GUI work, #177/#393/#395/#123 remain parked, #178 stays blocked
+by open #77/#89, and #313 retains its owner-run acceptance. The prior second-pass
+capture and receipts below remain historical evidence.
+No owner application, new generation, art acceptance or HUMAN_TODO answer is
+claimed. The #1923 illustration wave stays paused; parallax usability and the
+island default-switch decision remain open in [HUMAN_TODO.md](HUMAN_TODO.md).
+
 ## 2026-11-05 — Procedural tools and recovery (second pass)
 
 This pass connects eight existing procedural generators to the Studio and repairs

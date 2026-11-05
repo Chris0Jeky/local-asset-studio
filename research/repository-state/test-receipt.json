@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "source_sha": "15b0337f2f8a9d10edee688af9f55ccbc1c8adb6",
-  "run_at": "2026-11-05T19:31:12Z",
+  "source_sha": "802f7c57f098229cb953c103452472c75bbdf8d2",
+  "run_at": "2026-11-05T21:33:02Z",
   "command": "python tests/check_full_suite_lifetime.py",
-  "total": 7270,
-  "passed": 7152,
-  "skipped": 118,
+  "total": 7321,
+  "passed": 7202,
+  "skipped": 119,
   "failures": 0,
   "errors": 0,
-  "environment": "GitHub Actions Ubuntu 24.04 / CPython 3.12.16; PR #2030, run 42092084866, job 127472467030; 1200s child-lifetime budget; clean shutdown"
+  "environment": "GitHub Actions Ubuntu 24.04 / CPython 3.12.16; PR #2038, run 42110786216, job 127538098520; 1200s child-lifetime budget; clean shutdown; all five atexit callbacks returned"
 }

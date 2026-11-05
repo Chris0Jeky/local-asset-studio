@@ -81,7 +81,7 @@ with a flat cone side, smooth cylindrical rim and hard cap produces exactly
 incorrectly passed it; the strengthened gate rejects it for pot and lantern-cap
 names, including lower LOD names. Smoothing the cone side makes the same geometry
 pass. Empty meshes, missing caps and missing sides also fail. This is offline
-gate evidence; actual Blender execution remains required below.
+gate evidence; the actual Blender qualification is recorded below.
 
 The new output directory retains the initial plan; exact source revision/tree,
 dirty status and implementation hashes; each request/command and bounded
@@ -101,11 +101,11 @@ Set `PROCGEN_REQUIRE_SHADING_NATIVE=1` in a required native lane to turn missing
 runtime configuration into a hard failure instead of a skip. Ordinary offline
 runs explicitly skip the native gate.
 
-**Remaining acceptance:** execute the native gate and inspect its retained
-receipt on the actual candidate revision. No local native success or visual
-acceptance is claimed. Issue #1948 remains open until real exported-normal
-qualification succeeds. Existing owner decisions in `HUMAN_TODO.md` remain
-separate and were not changed by this slice.
+The hosted native gate has now passed and its exported geometry and normals
+were inspected, as recorded below. No local native run or visual acceptance is
+claimed. The qualified change merged as #2034 and issue #1948 is closed; broader
+configured Studio/Windows/Godot qualification remains in #2026. Existing owner
+decisions in `HUMAN_TODO.md` remain separate and were not changed by this slice.
 
 ## First native run and socket correction
 
@@ -123,8 +123,9 @@ interface on both sides. With the corrected fixture and the old production
 code, the sphere, cylinder and cone regressions all fail with the same
 `IndexError` observed in Blender. The corrected production code passes those
 tests. The original failed receipt, stdout/stderr and verified runtime identity
-remain in artifact `13452770402`; the subsequent candidate still requires a
-fresh native run. No failed run is replaced by a skipped or mock-only result.
+remain in artifact `13452770402`. The later passing native run is recorded
+separately below; this failed attempt is not replaced by a skipped or mock-only
+result.
 
 The [second native run](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/42106126054)
 completed both lantern Blender invocations and reached the per-case receipt
@@ -140,3 +141,59 @@ after two completed cases. Both scenarios reproduced the native `FileExistsError
 before correction. After correction, all case receipts remain readable, the
 final state and case count are correct, and a later failure preserves its reason.
 This tests receipt handling only; it does not replace native normal validation.
+
+
+## Passing native qualification
+
+[Native run 42106959396, job 127524187967](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/42106959396/job/127524187967)
+passed with a direct, clean checkout of reviewed candidate
+`195cf046269e08165a2ddfca0f36c02005ecb259`, tree
+`5121753668bed0ccf15e71773f1ee2990a24a31f`. It executed all six production
+builds: prop variants 0, 1 and 2, each with flat and smooth shading, exporting
+three LODs per build for **18 GLBs**. The receipt passed the normal, hard-cap,
+side-interpolation and paired-geometry invariance gates described above.
+
+[Artifact 13451428157](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/42106959396/artifacts/13451428157)
+was downloaded and its ZIP SHA-256 checked against
+`4a1ce5286c0b6d3b0cb37cd633e7a0a4f6589d633f45a5ecd5ab432a176e876d`.
+All 18 GLB hashes and normal measurements were independently rechecked after
+download. This is exported-mesh evidence from the production generator, in
+addition to the offline graph and probe regressions.
+
+The retained runtime is Blender **5.4 alpha**, build `6f4fc760c138`, with bundled
+Python **3.13.13** and NumPy **2.3.4**. Its official archive SHA-256 is
+`d1bc2e2d0b5bb8ff0b74ab805f5aa5c514668636ea7e70fd4dda4eb0583dd4c0`;
+the executable SHA-256 is
+`4e1feb831f57332f89a8b33c4cf9b0a505c1bc2d79fc46b7734a046304d9a1d9`.
+The archive verification and runtime identity are part of the retained receipt.
+
+This gate qualifies the sampled prop primitives, their realized geometry and
+exported LOD normals. It does not qualify all eight generators through the
+configured Studio on the owner's Windows installation, a Godot import, a render,
+Khronos validation or artistic acceptance. Those wider native-path requirements
+remain open in #2026. The two failed attempts above remain failed evidence.
+
+
+## Merge and full-suite qualification
+
+[#2034](https://github.com/Chris0Jeky/local-asset-studio/pull/2034) merged as
+`3bfb7da4adb775ff83e6b371c8bf1650dc944408`. Its reviewed head and native checkout
+above, actual merge and full-suite synthetic checkout
+`0473eccac4d6d3d9b8104e69ac31b01cc272515a` all resolve to tree
+`5121753668bed0ccf15e71773f1ee2990a24a31f`. The synthetic checkout's parent
+`235a180cff327d42b8d7e9f65c96a3623dc47b04` has the same tree as the actual merged
+parent `daebc630b2fa5b770faa3c8f7a909ae03fa96d19`.
+
+[Full run 42106959107, job 127524419082](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/42106959107/job/127524419082)
+finished at **2026-11-05T21:07:15.309Z**: **7,298 tests, 7,179 passed, 119 explicitly
+skipped, zero failures/errors, 1,013.837 seconds**. The validator at
+21:07:15.489Z passed 98 graphs, 194 pinned assets, 4,925 tracked paths and
+167 LoRA names. All applicable required workflows passed; independent and
+connected Codex reviews were clear. The original Archive infrastructure attempt
+hit its setup budget; its retry in run `42106959456` passed the unchanged head.
+Native repeat run `42108415535` also passed. The body-opt-out job in run
+`42108777479` skipped and supplies no native evidence.
+
+Issue #1948 is closed following this merge. The wider configured
+Studio/Windows/Godot qualification in #2026 remains open, and the two failed
+native attempts above remain retained.
