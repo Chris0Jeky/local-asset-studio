@@ -11,7 +11,7 @@ from pathlib import Path
 import re
 import uuid
 
-KINDS = frozenset(('comparison', 'native', 'articulated'))
+KINDS = frozenset(('comparison', 'native', 'articulated', 'procedural'))
 PLAN_LIMIT = 16 * 1024**2
 MARKER = '.incomplete-create'
 

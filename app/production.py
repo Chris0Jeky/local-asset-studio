@@ -169,6 +169,7 @@ class Production:
         if plan.get('kind')=='voice':
             from voice_baseline import resume_eligibility
             result['voice_resume']=resume_eligibility(self,project)
+        if plan.get('kind')=='procedural':result['procedural']=copy.deepcopy(plan['operation_plan']['intent'])
         owner=put_away_state(project['state']) # stored state: the copy above has presentation-only message prefixes
         result['put_away']=owner;result['put_away_at']=state['put_away'].get('at') if owner else None
         result['can_put_away']=not owner and state['status'] not in PLAN_LIVE_STATUSES
@@ -575,6 +576,37 @@ class Production:
         self._mutate(identifier,parity_check=result)
         return self.get(identifier)
 
+    def procedural(self, payload):
+        from procedural import prepare
+        operation=prepare(self.studio,payload);identifier=uuid.uuid4().hex
+        plan={'version':1,'kind':'procedural','name':operation['intent']['name'],'operation_plan':operation,'stages':[],'created_at':time.time()}
+        plan['sha256']=fingerprint(plan)
+        state={'status':'planned','message':'Procedural asset prepared. Start explicitly to build the pinned Blender source, three GLBs and optional inspection sheet.',
+               'attempts':{},'artifacts':[],'stop_requested':False,'review':{'status':'unreviewed'}}
+        with self.lock,self.connect() as db:
+            db.execute('INSERT INTO budgets(id,allowance) VALUES (?,0)',(identifier,))
+            self._insert_materialized(db,identifier,identifier,plan,state)
+        project_storage.complete(self.root,identifier,plan)
+        return self.get(identifier)
+
+    def _run_procedural(self, identifier, plan):
+        if self._get(identifier)['state'].get('stop_requested'):
+            self._mutate(identifier,status='stopped',message='Stopped before procedural execution');return
+        import procedural
+        directory=self.root/identifier
+        if procedural.attempt_exists(directory):
+            result=procedural.recover(self.studio,identifier,plan['operation_plan'])
+        else:
+            pending=procedural.native_job(identifier,plan['operation_plan'])
+            (self.studio.runs/pending['id']).mkdir(exist_ok=True);self.studio.jobs[pending['id']]=pending;self.studio._save(pending)
+            self._attempt(identifier,0,job_id=pending['id'],operation=pending['operation'],status='running')
+            result=procedural.run(self.studio,identifier,plan['operation_plan'])
+        job=result['job']
+        (self.studio.runs/job['id']).mkdir(exist_ok=True);self.studio.jobs[job['id']]=job;self.studio._save(job)
+        self._attempt(identifier,0,job_id=job['id'],operation=job['operation'],status=job['status'])
+        self._mutate(identifier,status=job['status'],message=job['message'],artifacts=result['artifacts'],
+                     procedural_verification=result['verification'],limitations=result['limitations'],finished_at=time.time())
+
     def voice_baseline(self, payload):
         from voice_baseline import prepare
         return prepare(self,payload)
@@ -908,6 +940,7 @@ class Production:
             return run(self,identifier,plan)
         if plan['kind']=='native':return self._run_native(identifier,plan)
         if plan['kind']=='articulated':return self._run_articulated(identifier,plan)
+        if plan['kind']=='procedural':return self._run_procedural(identifier,plan)
 
     def _run_comparison(self, identifier, plan, charge):
         self.studio.check_production_bundle(plan['bundle'])
@@ -1044,7 +1077,7 @@ class Production:
         allowed={a['path'] for a in project['state'].get('artifacts',[])}|{'plan.json','comparison.json'}
         if project['state'].get('parity_check',{}).get('status')=='completed':allowed.add('parity-check/sentinel/result.json') # the export-check report
         if relative not in allowed:raise ValueError('This file is not a published experiment artifact')
-        if project['plan']['kind']=='voice' and relative!='plan.json':
+        if project['plan']['kind'] in ('voice','procedural') and relative!='plan.json':
             artifact=next((a for a in project['state'].get('artifacts',[]) if a['path']==relative),None)
-            if not artifact or self._file_hash(path)!=artifact['sha256']:raise ValueError('Voice artifact changed')
+            if not artifact or self._file_hash(path)!=artifact['sha256']:raise ValueError(project['plan']['kind'].title()+' artifact changed')
         return path

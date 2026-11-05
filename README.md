@@ -221,6 +221,7 @@ Secrets are not read from this file. The Civitai token comes only from the `CIVI
 - **Generation backends:** ComfyUI (primary and isolated environments), with pinned custom nodes and model files outside the repo.
 - **UI:** plain JavaScript and HTML in `app/static/`, a vendored model-viewer, and Vue 3 islands built with Vite 8 and TypeScript 6 in `frontend/`.
 - **Native tools:** Krita, Godot 4.7, Blender, ffmpeg. Each is optional and configured by path.
+- **Procedural assets:** eight existing Blender generators now prepare explicit Studio build plans and publish GLBs to the Library. This workflow requires Blender 5.4; see [setup, checks and current limits](docs/PROCEDURAL-ASSETS.md).
 - **Verification:** `unittest` for the Python suite, Vitest for the frontend islands, Playwright for browser flows, and GitHub Actions for CI.
 
 ## Preset families
@@ -296,4 +297,5 @@ Open work is tracked in [GitHub issues](https://github.com/Chris0Jeky/local-asse
 - [Status by goal](docs/STATUS.md) and [current state](CURRENT_STATE.md)
 - [Owner choices and open actions](HUMAN_TODO.md)
 - [Workspace](docs/WORKSPACE.md), [Reference Atelier](docs/REFERENCE-ATELIER.md), [Experiments and native finishing](docs/EXPERIMENTS.md), [Workflow Lab](docs/WORKFLOW-LAB.md) and [Native exports](docs/NATIVE-EXPORTS.md)
+- [Procedural assets: rooms, props and coastal scenery](docs/PROCEDURAL-ASSETS.md)
 - [Operations](docs/OPERATIONS.md) and the full [documentation index](docs/README.md)
