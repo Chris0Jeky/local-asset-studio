@@ -23,6 +23,7 @@ def main():
     checkpoint("starting")
     try:
         worker = lab.Worker(str(out))
+        (out / "worker-capabilities.json").write_text(json.dumps(worker.caps(), indent=2) + "\n", encoding="utf-8")
         clean = lab.make_fixture(str(out / "assets"))
         checkpoint("fixture-created")
         worker.open(clean, allow_edit=["Badge"])

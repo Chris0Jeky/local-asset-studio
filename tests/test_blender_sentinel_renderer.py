@@ -74,6 +74,12 @@ class EvidenceScene:
 
 
 class EvidenceRendererTests(unittest.TestCase):
+    def test_requested_native_render_failure_is_not_replaced_with_capability_success(self):
+        fixture = EvidenceScene()
+        def unavailable(write_still): raise RuntimeError('requested render device unavailable')
+        fixture.bpy.ops.render.render = unavailable
+        with self.assertRaisesRegex(RuntimeError, 'render device unavailable'): fixture.render()
+
     def test_bounds_use_the_evidence_frame_not_the_saved_frame(self):
         fixture = EvidenceScene()
         evidence = fixture.render()

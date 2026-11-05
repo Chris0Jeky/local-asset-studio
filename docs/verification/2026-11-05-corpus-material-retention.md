@@ -73,10 +73,37 @@ with `if: always()` and requests 30 days retention, subject to repository policy
 The job has 10 minutes; the native test step has a 150-second outer process limit.
 
 No local Blender download or native run is implied by these changes. Hosted
-qualification is pending. The original runtime archive is not uploaded, daily
+qualification remains pending after the retained failure below. The original runtime archive is not uploaded, daily
 builds expire within 90 days, and evidence retention does not preserve a replayable
 runtime indefinitely. No agent/API calls, render benchmark, original realistic-v2
 corpus recreation or repair-rate recalculation is part of this gate.
+
+### First hosted attempt: startup graphics abort
+
+[Native run 42107944259](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/42107944259),
+job `127527637416`, tested head `427367f9af6774cfc45670ebcc594e0e29cd90e3`.
+The runtime bootstrap and identity checks passed. The material process exited
+**-6 (SIGABRT)** at probe stage `starting`, before creating its fixture. Retained
+stderr reports missing `libEGL.so.1`; stdout reports failure to initialize a
+Vulkan 1.1 instance. Its failure receipt/logs remain evidence; no material
+retention or repair result was produced by that run.
+
+Worker initialization ran the full capability probe, including `gpu.init()` and
+Cycles device discovery, before any read or material operation. The bounded
+correction makes worker startup leave those two device checks unmeasured, with
+`ok: null`, `state: not-probed` and an explicit reason. It does not infer GPU
+availability or unavailability, install graphics dependencies, or bypass
+`Worker.apply_edit`, material membership or native checksum assertions. The
+material artifact now includes `worker-capabilities.json` for inspection.
+
+The explicit CLI capability probe still initializes GPU/device discovery;
+[Blender's 5.4 GPU API](https://docs.blender.org/api/5.4/gpu.html) documents
+`gpu.init()` as background graphics initialization. A native abort cannot be
+caught by Python's feature-test exception handler. Requested rendering continues
+through Blender's real render operator and retains its runtime requirements and
+failure behavior. The correction needs a fresh hosted material run; offline
+fixtures establish call routing and failure propagation, not a native pass or
+render qualification.
 
 ## Remaining acceptance
 

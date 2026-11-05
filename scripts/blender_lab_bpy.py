@@ -164,7 +164,8 @@ def _render_engines():
     return found
 
 
-def probe():
+def probe(*, initialize_gpu=True):
+    """Explicit probes test devices; worker startup leaves device availability unmeasured."""
     import platform
     import bpy
     bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -183,8 +184,10 @@ def probe():
             "blender_projects": _attempt(_projects),
             "point_cloud_and_splat_import": _attempt(_point_clouds),
             "gltf_export": _attempt(_gltf_export),
-            "gpu_backend": _attempt(_gpu),
-            "cycles_devices": _attempt(_cycles),
+            "gpu_backend": (_attempt(_gpu) if initialize_gpu else
+                            {"ok": None, "state": "not-probed", "reason": "GPU initialization not requested for worker startup"}),
+            "cycles_devices": (_attempt(_cycles) if initialize_gpu else
+                               {"ok": None, "state": "not-probed", "reason": "GPU device enumeration not requested for worker startup"}),
         },
     }
 
@@ -877,7 +880,7 @@ class Worker:
         _need(os.path.isdir(self.root), "root must be an existing directory")
         self.scratch = tempfile.mkdtemp(prefix="las-worker-")
         self.started, self.calls, self.source, self.allowed = time.time(), 0, None, set()
-        self.capabilities = probe()  # resets to factory-empty, so it runs before any file is opened
+        self.capabilities = probe(initialize_gpu=False)  # read/edit startup needs no graphics context; resets to factory-empty
 
     def _out(self, value, suffix=None, directory=False):
         import os

@@ -41,6 +41,18 @@ def rpc(server, method, params=None, ident=1):
 
 
 class ProtocolTests(unittest.TestCase):
+    def test_caps_preserves_unmeasured_device_state_without_claiming_support(self):
+        unknown = {'ok': None, 'state': 'not-probed', 'reason': 'GPU initialization not requested for worker startup'}
+        class StartupWorker(FakeWorker):
+            def call(self, command, **args): return {'features': {'gpu_backend': unknown, 'cycles_devices': unknown}}
+        with tempfile.TemporaryDirectory() as tmp:
+            server = facade(tmp, StartupWorker())
+            reply = rpc(server, 'tools/call', {'name': 'blender_caps', 'arguments': {}})
+        result = json.loads(reply['result']['content'][0]['text'])
+        self.assertFalse(reply['result']['isError'])
+        self.assertEqual(result['features']['gpu_backend'], unknown)
+        self.assertIsNone(result['features']['cycles_devices']['ok'])
+
     def test_initialize_and_tool_list_expose_only_typed_commands(self):
         with tempfile.TemporaryDirectory() as tmp:
             server = facade(tmp)

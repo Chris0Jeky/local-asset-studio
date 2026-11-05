@@ -31,7 +31,7 @@ SCENE_FIELDS = ("name", "type", "parent", "parent_type", "parent_bone", "matrix_
 SHA = re.compile(r"[a-f0-9]{64}")
 TOOLS = {
     "blender_ping": ("Worker liveness, call count, datablock counts and scene state.", OBJ({})),
-    "blender_caps": ("Capability probe of the configured Blender (feature tests, not version checks).", OBJ({})),
+    "blender_caps": ("Startup feature snapshot; GPU backend and Cycles device visibility are not probed. Use the explicit Blender lab CLI probe to test devices.", OBJ({})),
     "blender_open": ("Open a .blend under the configured read tree without scripts; allow_edit lists the objects apply_edit may change.",
                      OBJ({"blend": {"type": "string"}, "allow_edit": {"type": "array", "items": {"type": "string"}}}, ["blend"])),
     "blender_describe_scene": ("Typed scene manifest; small auto replies stay complete, otherwise a bounded object summary with "
