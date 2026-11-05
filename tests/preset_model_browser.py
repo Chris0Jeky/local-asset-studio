@@ -106,9 +106,11 @@ def models_case(page, origin, output, width):
         assert startup['backend_status'] == healthy_backend, startup
         assert startup['generate_disabled'] and startup['look_payload'] == {}, startup
     finally:
+        # Settle held requests before removing their interceptor; unroute may
+        # otherwise release them itself, making a later continue_ a second owner.
+        while held_catalog:
+            held_catalog.pop(0).continue_()
         page.unroute('**/api/catalog', hold_catalog)
-        for route in held_catalog:
-            route.continue_()
     page.wait_for_function('!!selected && schemaAvailable && !!window.StudioReadPoller && modelLooks?.length===5 && !modelUseBusy')
     overview = page.locator('#modelLooks')
     row = lambda name: overview.locator('.model-look').filter(has_text='Fixture look '+name)

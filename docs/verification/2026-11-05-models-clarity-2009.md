@@ -126,3 +126,20 @@ syntax, Python driver compilation, `git diff --check`, and the repository
 validator passed with the same counts recorded above.
 Corrected native captures and the full gate remain pending hosted CI and visual
 review. No corrected native-browser pass is claimed locally.
+
+### Catalog-route cleanup correction
+
+On published correction head `8b2b6e62911b6f2a7c85ffd048484787f58c517c`, hosted
+run `41961317964`, job `127028096370`, reached the startup assertions successfully:
+the retained 1440-pixel JSON records no selected recipe, the expected healthy
+backend status, Generate disabled, and an empty Look payload. Artifact
+`13385995666` retains that JSON and screenshot. Cleanup then failed with
+`Route.continue_: Route is already handled!` after removing the catalog
+interceptor before explicitly continuing its held requests.
+
+The fixture now drains its held catalog requests before removing the interceptor,
+matching the existing held-request pattern in `make_polish_browser.py`. Production
+code and all startup, content, keyboard, layout and no-mutation assertions remain
+unchanged. Python compilation and `git diff --check` passed. This failed run did
+not reach the corrected Models journey geometry; fresh hosted screenshots remain
+required, and the startup-only receipt is not a complete visual pass.
