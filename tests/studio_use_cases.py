@@ -2436,15 +2436,45 @@ def _library_review_next(c):
     queue ends. Live mode stops before the first decision."""
     with restoring_fixture():
         fixture = SYNTHETIC.get('fixture')
-        if fixture:  # exactly three pictures wait for review, whatever an earlier case did to the shared pictures
-            for asset in fixture.ASSETS: asset['review'] = 'unreviewed' if asset['id'] in ('asset-0', 'asset-3', 'asset-5') else 'selected'
+        if fixture:  # four unreviewed pictures; the filter leaves exactly three in the queue
+            for asset in fixture.ASSETS:
+                asset['review'] = 'unreviewed' if asset['id'] in ('asset-0', 'asset-1', 'asset-3', 'asset-5') else 'selected'
+                if asset['id'] in ('asset-0', 'asset-3', 'asset-5'): asset['tags'].append('queue-scope')
         c.boot('#assets')
         c.page.wait_for_timeout(600)
         c.act('#assetGrid', 'read', note='saved pictures listed')
         if c.live and not c.page.locator('#reviewNext').is_enabled(): raise LiveCaseSkip('no unreviewed picture in the Library', 'missing')
-        c.act('#reviewNext', navigation=True, note='press Review next')
+        if not c.live:
+            # #2009: the queue follows the filtered page, independently of the bulk checkboxes.
+            posts_before = len(fixture.POSTS)
+            assert c.page.locator('#reviewNext').inner_text() == 'Review next (4 unreviewed)'
+            c.act('[data-asset-check="asset-0"]', 'check', note='select one asset for bulk actions', supplementary=True)
+            c.act('#assetSearch', 'fill', typed='queue-scope', note='filter the page to three unreviewed assets', supplementary=True)
+            c.page.wait_for_function("document.querySelector('#reviewNext').textContent === 'Review next (3 unreviewed)'", timeout=8000)
+            assert c.page.locator('#reviewNext').inner_text() == 'Review next (3 unreviewed)'
+            assert c.page.evaluate('[...assetSelection]') == ['asset-0']
+            assert c.page.locator('#reviewNext').get_attribute('aria-describedby') == 'assetReviewHelp'
+            help_ = c.page.locator('#assetReviewHelp')
+            assert all(part in help_.inner_text() for part in ('Keep', 'Needs work', 'Not this', 'shown on this page', 'filters', 'checkbox'))
+            original = c.page.viewport_size
+            try:
+                for width, height in ((1440, 900), (768, 1024), (390, 844)):
+                    c.page.set_viewport_size({'width': width, 'height': height})
+                    help_.scroll_into_view_if_needed()
+                    assert help_.is_visible()
+                    assert c.page.evaluate("() => { const r=document.querySelector('#assetReviewHelp').getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight && document.documentElement.scrollWidth <= innerWidth; }")
+                    evidence_screenshot(c.page, path=str(c.dir / ('review-help-%dx%d.png' % (width, height))))
+            finally:
+                c.page.set_viewport_size(original)
+            assert len(fixture.POSTS) == posts_before, 'selecting and filtering must not save a review'
+        if c.live: c.act('#reviewNext', navigation=True, note='press Review next')
+        else: c.act('#reviewNext', 'press', typed='Enter', navigation=True, note='open Review next with the keyboard')
         c.page.wait_for_function("!!document.querySelector('#assetDialog[open]') && typeof assetQueue !== 'undefined' && !!assetQueue && !assetDetailBusy", timeout=8000)
         total = c.page.evaluate('assetQueue.ids.length')
+        if not c.live:
+            assert c.page.evaluate('assetQueue.ids') == ['asset-0', 'asset-3', 'asset-5']
+            assert c.page.evaluate('[...assetSelection]') == ['asset-0']
+            assert len(fixture.POSTS) == posts_before, 'opening the queue must not save a review'
         # #1919: the keys and what they do are on the first screen of the queue at laptop and desktop sizes, unscrolled.
         seen, before = {}, c.page.viewport_size
         for width, height in ((1366, 768), (1920, 1080)):
@@ -2455,6 +2485,13 @@ def _library_review_next(c):
                 const el = document.querySelector('#assetQueue ' + s), r = el && el.getBoundingClientRect(), d = document.querySelector('#assetDialog').getBoundingClientRect();
                 return !!r && r.height > 0 && r.top >= Math.max(0, d.top) && r.bottom <= Math.min(innerHeight, d.bottom); })""")
             with contextlib.suppress(Exception): evidence_screenshot(c.page, path=str(c.dir / ('queue-keys-%dx%d.png' % (width, height))))
+        if not c.live:
+            for width, height in ((768, 1024), (390, 844)):
+                c.page.set_viewport_size({'width': width, 'height': height})
+                c.page.evaluate("document.querySelector('#assetDialog').scrollTop = 0")
+                assert c.page.locator('#assetQueue').is_visible()
+                assert c.page.locator('#assetQueue').get_by_text('Library review queue', exact=True).is_visible()
+                evidence_screenshot(c.page, path=str(c.dir / ('queue-purpose-%dx%d.png' % (width, height))))
         c.page.set_viewport_size(before)
         c.observe('K, W, X and S with their legend show unscrolled at 1366x768 and 1920x1080', all(seen.values()), 'visible: %s' % seen)
         decisions = (('k', 'selected'), ('w', 'needs_work'), ('x', 'rejected'))
@@ -2465,6 +2502,12 @@ def _library_review_next(c):
         c.act('#reviewNext', 'read', note='the next step: nothing is left to review')
         left = c.page.evaluate("({button: document.querySelector('#reviewNext').textContent, off: document.querySelector('#reviewNext').disabled, text: document.body.innerText.includes('Review queue finished')})")
         reviews = {a['id']: a['review'] for a in fixture.ASSETS if a['id'] in ('asset-0', 'asset-3', 'asset-5')} if fixture else {}
+        if fixture:
+            assert next(a for a in fixture.ASSETS if a['id'] == 'asset-1')['review'] == 'unreviewed'
+            assert c.page.evaluate('[...assetSelection]') == ['asset-0']
+            writes = fixture.POSTS[posts_before:]
+            assert [entry['path'] for entry in writes] == ['/api/assets/update'] * 3, writes
+            assert [(entry['data']['ids'], entry['data']['review']) for entry in writes] == [(['asset-0'], 'selected'), (['asset-3'], 'needs_work'), (['asset-5'], 'rejected')], writes
         ok = total == 3 and all(seen.values()) and left['off'] and left['button'] == 'Nothing to review' and (not fixture or reviews == {'asset-0': 'selected', 'asset-3': 'needs_work', 'asset-5': 'rejected'})
         return ok, '%d in the queue; reviews saved %s; Review next reads %r; queue finished %s' % (total, reviews, left['button'], left['text'])
 

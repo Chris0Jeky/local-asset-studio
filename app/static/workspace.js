@@ -853,9 +853,9 @@ function renderAssetQueue() {
     return;
   }
   if(!assetQueue){panel.innerHTML='';return;}
-  panel.innerHTML='<div class="asset-queue-head"><b>Review queue</b><span role="status" aria-live="polite">'+(assetQueue.index+1)+' of '+assetQueue.ids.length+'</span></div>'+
+  panel.innerHTML='<div class="asset-queue-head"><b>Library review queue</b><span role="status" aria-live="polite">'+(assetQueue.index+1)+' of '+assetQueue.ids.length+'</span></div>'+
     '<div class="asset-queue-actions"><button type="button" data-queue-review="selected">Keep <kbd>K</kbd></button><button type="button" data-queue-review="needs_work">Needs work <kbd>W</kbd></button><button type="button" data-queue-review="rejected">Not this <kbd>X</kbd></button><button type="button" data-queue-skip>Skip <kbd>S</kbd></button><button type="button" data-queue-step="-1">← Previous</button><button type="button" data-queue-step="1">Next →</button><button type="button" data-queue-exit>Leave queue</button></div>'+
-    '<small class="asset-queue-legend">K Keep · W Needs work · X Not this · S skip without saving · 1-5 quick checks · ← / → move. Typing in a field is never a shortcut. Each decision saves through Save details and then advances.</small>';
+    '<small class="asset-queue-legend">K Keep · W Needs work · X Not this · S skip without saving · 1-5 quick checks · ← / → move. Typing in a field is never a shortcut. Each decision saves this asset’s Library mark and advances.</small>';
 }
 function startReviewQueue() {
   const pending=assetUnreviewed(visibleAssets()).slice().sort((a,b)=>(b.created_at||0)-(a.created_at||0));

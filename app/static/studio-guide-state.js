@@ -92,7 +92,8 @@
       if (['queued','submitting','running','waiting','observing','rendering'].includes(c.status)) return unknown('Making the candidates: ' + c.made + ' of ' + c.total + ' done. Re-check when it finishes; never start a second plan to retry.');
       if (!['awaiting_review','reviewed'].includes(c.status)) return blocked(name + ' stopped (' + c.status.replaceAll('_',' ') + ') with ' + c.made + ' made. Read its message; nothing is retried on its own.');
       if (check === 'comparison_made') return met('All ' + c.total + ' candidates are made. Compare them at full size before choosing; a finished run is not art acceptance.');
-      return blocked('Choose a winner with Review or Quick pick, or press Needs another pass.');
+      if (c.desk) return blocked('Pick a winner opens Review desk to finish the choice you started there.');
+      return blocked('Pick a winner opens Review desk to compare candidates side by side. Choose here under a picture opens its winner button; that button records the choice here. Needs another pass ends it without a winner.');
     }
     return unknown('This step has no evidence adapter yet. Continue manually without a completion claim.');
   }
@@ -151,7 +152,7 @@
     if (!object(p) || p.kind !== 'comparison' || !object(p.state)) return null;
     const stages = Array.isArray(p.stages) ? p.stages : [], chosen = p.state.review?.asset_id;
     const winner = chosen ? stages.find(s => (s?.job?.outputs || []).some(o => o?.asset_id === chosen)) : null;
-    return {id:String(p.id || ''), title:String(title || p.name || '').slice(0, 120), status:String(p.state.status || ''), total:stages.length,
+    return {id:String(p.id || ''), title:String(title || p.name || '').slice(0, 120), status:String(p.state.status || ''), total:stages.length, desk:!!p.state.review?.desk_url,
       made:stages.filter(s => s?.job?.status === 'completed').length, winner:winner ? String(winner.label || '') : '',
       // A finalized review desk records the choice even on a failed plan, whose execution status stays 'failed'.
       decided:p.state.status === 'reviewed' || ['selected','needs_work'].includes(p.state.review?.status)};

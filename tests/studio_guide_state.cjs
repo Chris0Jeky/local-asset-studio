@@ -44,4 +44,11 @@ test('#1939: compare stages read the comparison on screen, never assume one',()=
   assert.match(C.evaluate('comparison_made',{comparison:plan('running',1)}).message,/1 of 3 done.*never start a second plan/);
   assert.equal(state('comparison_decided',{comparison:plan('failed',2,{status:'selected',asset_id:'aB'})}),'met','a finalized desk choice on a failed plan is decided');
   assert.equal(state('comparison_decided',{comparison:plan('awaiting_review',3,{status:'in_progress'})}),'blocked','a desk review in progress is not a decision');
+  const pending=C.evaluate('comparison_decided',{comparison:plan('awaiting_review',3)}).message;
+  assert.match(pending,/Pick a winner opens Review desk/);
+  assert.match(pending,/Choose here.*opens.*winner button.*records the choice here/);
+  assert.doesNotMatch(pending,/Quick pick|with Review or/);
+  const inDesk=C.evaluate('comparison_decided',{comparison:plan('awaiting_review',3,{status:'in_progress',desk_url:'/review.html?project=p'})}).message;
+  assert.match(inDesk,/Pick a winner.*Review desk/);
+  assert.doesNotMatch(inDesk,/Choose here|Needs another pass/,'the desk owns this choice, so inline winner controls are absent');
 });

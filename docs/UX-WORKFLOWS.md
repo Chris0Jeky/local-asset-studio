@@ -4,6 +4,21 @@ Implemented 12 September 2026 against main `2b911092e889687cd5d247da106f9de0c834
 Reconciled with merged PR #79 at `451a68199d855d8dd860c575ae7b115b7b9dcbf8`.
 This is a working presentation-layer rework, not a new executor, GPU benchmark, or redesign mockup.
 
+## Current review actions — 5 November 2026 (#2009)
+
+These actions have separate jobs. The existing labels and save paths are retained:
+
+| Action | What opens or changes | Scope |
+| --- | --- | --- |
+| Library **Review next** | Opens the Library asset dialog and its queue. Keep, Needs work and Not this save each asset’s Library mark; a confirmed save advances. | Unreviewed assets shown on the current filtered page, independent of the bulk checkbox selection. Visible help beside the toolbar also describes the button for assistive technology. |
+| Comparisons **Pick a winner** | Opens **Review desk** for the named plan; following the link records no choice. | That comparison’s saved candidates, with the existing blind review and explicit final decision. Review desk remains directly available in the navigation and finder. |
+| Candidate **Choose here** | Opens an inline disclosure containing **Choose [candidate] as winner**. Only that explicit button records the comparison’s winner. | That comparison, independently of the candidate’s Library mark. |
+
+The comparison guide names **Pick a winner** and **Choose here** with those jobs.
+Once the choice has started in Review desk, the guide directs back to the desk,
+matching the absence of inline choice controls.
+**Needs another pass** ends the comparison without a winner or a new generation.
+
 ## The problem this changes
 
 The existing Studio had working specialist tools but exposed their implementation boundaries to the
