@@ -42,6 +42,42 @@ $env:LAS_BLENDER_LAB_EXE = (Get-Content config/local.json | ConvertFrom-Json).bl
 python -m unittest discover -s tests -p test_blender_corpus.py -k material_swap_repair -v
 ```
 
+## Retained hosted qualification (pending execution)
+
+The separate **Native material retention (opt-in)** workflow requests this same
+synthetic native gate when a scoped PR body contains the exact text:
+
+```text
+Native Blender material retention qualification: requested
+```
+
+It handles PR open/update/reopen/body edits and manual dispatch, uses ordinary
+`pull_request` with `contents: read`, checks out the exact PR head and uses no
+secrets or persisted checkout credentials. Unmarked PRs skip the job. The shared
+[explicit runtime bootstrap](../PROCEDURAL-NATIVE-CI.md) verifies the official
+archive checksum before extraction and requires Blender 5.4/build `6f4fc760c138`.
+The existing shading workflow and shared bootstrap/identity helpers are unchanged.
+
+The job sets `LAS_BLENDER_LAB_EXE`, `LAS_REQUIRE_MATERIAL_NATIVE=1` and
+`LAS_MATERIAL_EVIDENCE` to a new evidence directory. Missing native configuration,
+reused output, a nonzero exit, timeout, missing artifacts or failed material/checksum
+assertions cannot pass. A post-test check requires the actual passed receipt, so a
+skipped or undiscovered test cannot satisfy the requested qualification.
+
+The artifact retains source commit/tree and file hashes, argv and the 120-second
+process budget, stdout/stderr/exit status, stage checkpoints and manifests,
+`material-repair.json`, clean/damaged/repaired BLEND files, generated PNG and output
+hashes. A failed attempt keeps its available evidence; it never overwrites an old
+attempt. Runtime checksum/identity receipts and logs share the artifact. Upload runs
+with `if: always()` and requests 30 days retention, subject to repository policy.
+The job has 10 minutes; the native test step has a 150-second outer process limit.
+
+No local Blender download or native run is implied by these changes. Hosted
+qualification is pending. The original runtime archive is not uploaded, daily
+builds expire within 90 days, and evidence retention does not preserve a replayable
+runtime indefinitely. No agent/API calls, render benchmark, original realistic-v2
+corpus recreation or repair-rate recalculation is part of this gate.
+
 ## Remaining acceptance
 
 - Execute the native regression with the configured Blender build and retain its result.

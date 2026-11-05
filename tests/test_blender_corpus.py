@@ -1,7 +1,5 @@
-import json
 import os
 from pathlib import Path
-import subprocess
 import sys
 import tempfile
 from types import SimpleNamespace
@@ -11,8 +9,11 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import blender_corpus as corpus
+import blender_material_qualification as material_qualification
 
 LIVE_BLENDER = os.environ.get("LAS_BLENDER_LAB_EXE")
+if os.environ.get("LAS_REQUIRE_MATERIAL_NATIVE") == "1" and not LIVE_BLENDER:
+    raise RuntimeError("Required material qualification lacks explicit LAS_BLENDER_LAB_EXE executable")
 
 
 class CorpusContractTests(unittest.TestCase):
@@ -109,22 +110,13 @@ class CorpusMaterialTests(unittest.TestCase):
 @unittest.skipUnless(LIVE_BLENDER, "set LAS_BLENDER_LAB_EXE to a Blender executable for the live corpus build")
 class LiveCorpusTests(unittest.TestCase):
     def test_material_swap_repair_preserves_native_checksum_after_reopen(self):
-        exe = corpus.lab.executable(LIVE_BLENDER)
-        with tempfile.TemporaryDirectory() as tmp:
-            command = [str(exe), "--background", "--factory-startup", "--disable-autoexec", "--python-exit-code", "1",
-                       "--python", str(ROOT / "tests" / "blender_corpus_material_probe.py"), "--", tmp]
-            result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120)
-            self.assertEqual(result.returncode, 0, result.stderr[-4000:] + result.stdout[-4000:])
-            receipt = json.loads((Path(tmp) / "material-repair.json").read_text(encoding="utf-8"))
-        self.assertEqual(receipt["label"]["to"], "BodyTextured")
-        self.assertTrue(receipt["retention"]["BadgeGreen"])
-        self.assertFalse(receipt["retention"]["A_UnusedMaterial"])
-        self.assertFalse(receipt["retention"]["BodyTextured"])
-        for stage in ("seeded", "reopened", "repaired"):
-            self.assertEqual(receipt["materials"][stage], receipt["materials"]["before"], stage)
-        self.assertNotEqual(receipt["checksums"]["seeded"], receipt["checksums"]["before"])
-        self.assertEqual(receipt["checksums"]["reopened"], receipt["checksums"]["seeded"])
-        self.assertEqual(receipt["checksums"]["repaired"], receipt["checksums"]["before"])
+        if os.environ.get("LAS_MATERIAL_EVIDENCE"):
+            output = Path(os.environ["LAS_MATERIAL_EVIDENCE"])
+        else:
+            temporary = tempfile.TemporaryDirectory(); self.addCleanup(temporary.cleanup)
+            output = Path(temporary.name) / "material"
+        receipt = material_qualification.qualify(LIVE_BLENDER, output)
+        self.assertEqual(receipt["state"], "passed", receipt.get("error"))
 
     def test_a_real_asset_source_records_inapplicable_defects(self):
         import articulated_prop

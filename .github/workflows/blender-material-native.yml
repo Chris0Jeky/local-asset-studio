@@ -1,0 +1,82 @@
+name: Native material retention (opt-in)
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+    paths:
+      - 'scripts/blender_lab*.py'
+      - 'scripts/blender_material_qualification.py'
+      - 'scripts/ci_blender_*.py'
+      - 'tests/blender_corpus_material_probe.py'
+      - 'tests/test_blender_corpus.py'
+      - 'tests/test_blender_material_qualification.py'
+      - 'tests/test_ci_blender_runtime.py'
+      - 'research/procgen/blender-shading-runtime.json'
+      - 'docs/verification/2026-11-05-corpus-material-retention.md'
+      - '.github/workflows/blender-material-native.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: blender-material-native-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  native:
+    if: >-
+      github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.body, 'Native Blender material retention qualification: requested')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Record exact source and check offline execution faults
+        env:
+          EXPECTED_SOURCE: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/material-native-evidence"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SOURCE"
+          git show -s --format='commit %H%ntree %T%nparents %P' > "$RUNNER_TEMP/material-native-evidence/source.txt"
+          python -m unittest discover -s tests -p test_ci_blender_runtime.py -v
+          python -m unittest discover -s tests -p test_blender_material_qualification.py -v
+      - name: Fetch and verify the shared explicit official runtime
+        id: runtime
+        timeout-minutes: 4
+        run: >-
+          python scripts/ci_blender_runtime.py
+          --descriptor research/procgen/blender-shading-runtime.json
+          --work "$RUNNER_TEMP/material-blender-runtime"
+          --evidence "$RUNNER_TEMP/material-native-evidence"
+      - name: Require exact Blender build and retain bundled runtime identity
+        timeout-minutes: 2
+        env:
+          BLENDER_EXE: ${{ steps.runtime.outputs.binary }}
+        run: |
+          set -o pipefail
+          timeout --kill-after=10s 90s "$BLENDER_EXE" --background --factory-startup --disable-autoexec --offline-mode --python-exit-code 1 --python scripts/ci_blender_identity.py -- research/procgen/blender-shading-runtime.json "$RUNNER_TEMP/material-native-evidence/runtime.json" 2>&1 | tee "$RUNNER_TEMP/material-native-evidence/runtime.log"
+      - name: Require synthetic native seed-save-reopen-repair qualification
+        timeout-minutes: 3
+        env:
+          LAS_BLENDER_LAB_EXE: ${{ steps.runtime.outputs.binary }}
+          LAS_REQUIRE_MATERIAL_NATIVE: '1'
+          LAS_MATERIAL_EVIDENCE: ${{ runner.temp }}/material-native-evidence/material
+        run: |
+          set -o pipefail
+          timeout --kill-after=10s 150s python -m unittest discover -s tests -p test_blender_corpus.py -k material_swap_repair -v 2>&1 | tee "$RUNNER_TEMP/material-native-evidence/qualification.log"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          receipt = json.loads((Path(os.environ['LAS_MATERIAL_EVIDENCE']) / 'receipt.json').read_text())
+          if receipt['state'] != 'passed' or receipt['returncode'] != 0:
+              raise SystemExit('Requested material qualification lacks a passed native receipt')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: blender-material-native-${{ github.event.pull_request.head.sha || github.sha }}
+          path: ${{ runner.temp }}/material-native-evidence/
+          if-no-files-found: error
+          retention-days: 30
