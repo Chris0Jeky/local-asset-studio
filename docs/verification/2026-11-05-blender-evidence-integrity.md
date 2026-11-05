@@ -43,6 +43,33 @@ issue #1970 remains open.
 
 ## Repair benchmark accounting (#1986)
 
-Implementation and exact results are recorded below when the content-identity
-change is integrated. No benchmark was rerun on the owner's workstation during
-this session, and historical repair-rate claims are not rewritten.
+Each run and combined report now retains the verified control manifest's semantic
+checksum. Combination requires one asset and one agent. Aggregation rejects a
+second report for the same content even if its directory was renamed, and keeps
+distinct assets that happen to use the same directory name. Legacy reports can
+recover identity only from their verified adjacent control manifest; a missing
+identity produces a repair instruction instead of a directory-based guess.
+
+The benchmark's POSIX timeout now terminates its owned process group, including
+children holding output pipes. A real-process regression verifies both bounded
+return and the exact child's exit. See
+[the benchmark receipt](2026-11-05-benchmark-evidence-identity.md) for the red/green
+results, migration rules and platform limits.
+
+No benchmark was rerun on the owner's workstation during this session, and
+historical repair-rate claims are not rewritten.
+
+## Full-suite environment limit
+
+The unchanged uploaded baseline ran 7,183 tests locally with seven failures,
+64 errors and 75 skips. The failures and errors were in process-owner and backend
+admission tests. A separate minimal probe reproduced the environment mismatch:
+`os.getpid()` returned 5 while `psutil.Process()` immediately raised
+`NoSuchProcess(pid=5)`. This container's process and `/proc` views do not agree.
+Production process-ownership checks were not weakened to accommodate it.
+
+The local full-suite run is therefore not a passing receipt. Exact-head GitHub
+Actions supplies the full-suite and hosted-platform gates; those run links and
+outcomes are recorded in the PR after completion. The benchmark child-exit test
+uses a Linux pidfd captured while that child is alive, so its local assertion
+does not depend on the incompatible `/proc` view.
