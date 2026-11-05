@@ -73,3 +73,43 @@ Actions supplies the full-suite and hosted-platform gates; those run links and
 outcomes are recorded in the PR after completion. The benchmark child-exit test
 uses a Linux pidfd captured while that child is alive, so its local assertion
 does not depend on the incompatible `/proc` view.
+
+## Hosted full-suite fixture correction
+
+The first integrated [Check studio run](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/41947912963/job/126984796004)
+for PR #2010 head `fb1787a104cb279e72ce34849a0a9571943a2fe2` checked out merge
+`e7c49caf94da3dd9c8e830bc47995ba6edc3feba`, tree
+`2d8f13020d01b99bd68b8fb7bb21a801f465eee9`. It ran 7,197 tests in 958.495 seconds:
+7,084 passed, 112 skipped and one failed. Shutdown reported no retained non-daemon
+thread or active child process. The repository-validator step was skipped after
+the suite failure; this run is not a passing merge gate.
+
+The failure was
+`test_blender_critic_receipt.CriticReceiptTests.test_legacy_success_remains_compatible_but_not_replayable`.
+Its positive legacy fixture contained only `front.lit`, so the new completeness
+check correctly refused it. The fixture now supplies all four requested labels,
+keeping the front count at 40 and the other counts at zero. The test asserts that
+the original observation is retained unchanged and still cannot be replayed as a
+policy decision because the legacy metadata is missing. Production completeness
+checks are unchanged. Partial legacy refusal is already covered by
+`SecondSignalTests.test_partial_or_wrong_views_never_become_an_agreeing_second_signal`.
+
+The failure was reproduced locally before correcting the fixture. Afterward:
+
+- `python -m unittest discover -s tests -p 'test_blender_critic*.py'`:
+  13 tests passed.
+- `python -m unittest discover -s tests -p 'test_blender_sentinel*.py'`:
+  41 tests, one native Blender skip, no failures.
+- `python -m unittest discover -s tests -p 'test_render_critic*.py'`:
+  85 tests passed.
+- `python -m unittest discover -s tests -p 'test_blender_repair_bench.py'`:
+  24 tests, two native Blender skips, no failures.
+- Repository validation passed 98 graph/binding checks, 194 pinned assets and
+  4,874 tracked paths; `git diff --check` passed.
+
+The initial head's Privacy and Archive workflows passed on Windows and Ubuntu.
+A fresh exact-head full-suite result is still required after this correction;
+the targeted results do not replace it. No native Blender execution, historical
+benchmark rerun, owner art acceptance or licensing decision is inferred. Studio
+art direction/replacement of the paused asset wave (#1923), parallax usability
+(#1219), and the island default-switch decision remain open.
