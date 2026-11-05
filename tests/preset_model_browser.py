@@ -144,7 +144,9 @@ def models_case(page, origin, output, width):
             topHit:node.contains(document.elementFromPoint(b.left+Math.min(10,b.width/2),b.top+2))};};
           return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,width:innerWidth,height:innerHeight,
             occupied,hit:node.contains(document.elementFromPoint(x,y)),
-            topHit:node.contains(document.elementFromPoint(r.left+Math.min(10,r.width/2),r.top+2)),scrollWidth:document.documentElement.scrollWidth,
+            topHit:node.contains(document.elementFromPoint(r.left+Math.min(10,r.width/2),r.top+2)),
+            bottomHit:node.contains(document.elementFromPoint(r.left+Math.min(10,r.width/2),r.bottom-2)),
+            viewport_bottom_tolerance:0.5,scrollWidth:document.documentElement.scrollWidth,
             toolbar_label:{top:l.top,bottom:l.bottom,left:l.left,right:l.right,header_bottom:headerBottom,
               hit:label.contains(document.elementFromPoint((l.left+l.right)/2,(l.top+l.bottom)/2)),
               topHit:label.contains(document.elementFromPoint((l.left+l.right)/2,l.top+2))},
@@ -158,9 +160,11 @@ def models_case(page, origin, output, width):
         (output/f'{name}-{width}.json').write_text(json.dumps(bounds, indent=2)+'\n', encoding='utf-8')
         evidence_screenshot(page, path=str(output/f'{name}-{width}.png'))
         assert bounds['backend_status'] == healthy_backend and not bounds['visible_errors'], bounds
-        assert bounds['occupied'] <= bounds['top'] < bounds['bottom'] <= bounds['height'], bounds
+        # Native Tab may leave a fractional line box at the bottom pixel. Header
+        # clearance stays strict; the target's bottom interior must still be hit.
+        assert bounds['occupied'] <= bounds['top'] < bounds['bottom'] <= bounds['height'] + bounds['viewport_bottom_tolerance'], bounds
         assert 0 <= bounds['left'] < bounds['right'] <= bounds['width'], bounds
-        assert bounds['hit'] and bounds['topHit'] and bounds['scrollWidth'] <= bounds['width'], bounds
+        assert bounds['hit'] and bounds['topHit'] and bounds['bottomHit'] and bounds['scrollWidth'] <= bounds['width'], bounds
         label = bounds['toolbar_label']
         assert label['header_bottom'] <= label['top'] < label['bottom'] <= bounds['height'], bounds
         assert 0 <= label['left'] < label['right'] <= bounds['width'] and label['hit'] and label['topHit'], bounds

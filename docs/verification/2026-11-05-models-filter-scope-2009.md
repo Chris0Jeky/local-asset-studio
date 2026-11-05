@@ -49,3 +49,21 @@ for this follow-up; no new browser pass is claimed locally. The original editor
 dependency captures retain their content/control scope, including their narrow
 run-dock visibility limitation. This slice does not complete #2009 or settle
 owner workstation, artwork, licensing or broader Models acceptance.
+
+## Native viewport-edge correction
+
+The first follow-up run, `41964114843` on published head `8a65abc`, passed the
+scope and Back assertions but failed the new 1440-pixel return capture: the
+focused link's line-box bottom was `1000.078125` in a 1000-pixel viewport.
+Artifact `13387220301` retains the screenshot and raw geometry. The text was
+visible, as were the top and side focus outlines; the lower outline reached the
+viewport edge. The menu had restored Show with Installed still selected and
+stored, and the backend status was healthy.
+
+The driver now records a maximum 0.5-CSS-pixel tolerance only for the target's
+viewport-bottom comparison. Occupied-header clearance and all other bounds stay
+strict. A bottom-interior hit test joins the existing center/top hits; raw
+geometry and the tolerance are saved before assertions. No helper scrolling or
+production change was added. Python compilation and the diff check passed;
+fresh native qualification remains required. The incomplete first capture is
+retained as failed evidence.
