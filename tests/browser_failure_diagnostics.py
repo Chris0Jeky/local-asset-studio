@@ -1,8 +1,21 @@
-"""Bounded transport evidence for synthetic browser fixtures; no retries or waits."""
+"""Bounded transport evidence for synthetic browser fixtures; no request retries."""
+import asyncio
 from collections import deque
 import re
 import threading
 from urllib.parse import urlsplit
+
+
+_STARTUP_STATE = """() => {
+  const text = document.querySelector('#narrationStatus')?.textContent || '';
+  const kinds = ['completed', 'running', 'uncertain', 'prepared', 'partial', 'blocked',
+    'Reading retained narration', 'File changed while opening:', 'File changed while reading:',
+    'Source root changed', 'Configured source root changed', 'Invalid retained narration',
+    'Retained narration identity differs', 'API unavailable'];
+  return {ready_state: document.readyState, catalog_defined: typeof catalog !== 'undefined',
+    selector_defined: typeof $ !== 'undefined', escape_defined: typeof esc !== 'undefined',
+    narration_status: kinds.find(kind => text.startsWith(kind)) || (text ? 'unclassified' : 'empty')};
+}"""
 
 
 def url_identity(value):
@@ -26,6 +39,8 @@ def failure_text(value):
 
 class BrowserFailureDiagnostics:
     """Retain failures separately so successful request churn cannot displace them."""
+    _capture_timeout = 2
+
     def __init__(self):
         self._lock = threading.Lock()
         self._rows = {key: deque(maxlen=limit) for key, limit in (
@@ -64,16 +79,17 @@ class BrowserFailureDiagnostics:
         value = {'page': self._pages.get(page, 'unknown')}
         try:
             value['url'] = url_identity(page.url)
-            value.update(page.evaluate("""() => {
-              const text = document.querySelector('#narrationStatus')?.textContent || '';
-              const kinds = ['completed', 'running', 'uncertain', 'prepared', 'partial', 'blocked',
-                'Reading retained narration', 'File changed while opening:', 'File changed while reading:',
-                'Source root changed', 'Configured source root changed', 'Invalid retained narration',
-                'Retained narration identity differs', 'API unavailable'];
-              return {ready_state: document.readyState, catalog_defined: typeof catalog !== 'undefined',
-                selector_defined: typeof $ !== 'undefined', escape_defined: typeof esc !== 'undefined',
-                narration_status: kinds.find(kind => text.startsWith(kind)) || (text ? 'unclassified' : 'empty')};
-            }"""))
+            value.update(page.evaluate(_STARTUP_STATE))
+        except Exception as error:
+            value['capture_error_type'] = type(error).__name__
+        self._record('page_states', value)
+
+    async def capture_page_async(self, page):
+        """Async Playwright equivalent; a failed renderer cannot replace the test failure."""
+        value = {'page': self._pages.get(page, 'unknown')}
+        try:
+            value['url'] = url_identity(page.url)
+            value.update(await asyncio.wait_for(page.evaluate(_STARTUP_STATE), self._capture_timeout))
         except Exception as error:
             value['capture_error_type'] = type(error).__name__
         self._record('page_states', value)
