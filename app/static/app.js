@@ -812,6 +812,7 @@ function modelFailureMarkup(d){
 }
 function renderCuratedModels(){
   if(!library)return;const params=new URLSearchParams(location.hash.split('?')[1]||''),need=StudioUX.normalizeView(location.hash)==='models'?(params.get('need')||new URLSearchParams(location.search).get('need')):null;
+  $('#modelStatusScope').textContent=need?'Files on disk below':'Show';
   const preset=(catalog?.presets||[]).find(p=>p.id===need),missing=Object.hasOwn(missingByPreset,need)&&Array.isArray(missingByPreset[need])?missingByPreset[need]:[],pins=[...(Object.hasOwn(pinMismatchByPreset,need)&&Array.isArray(pinMismatchByPreset[need])?pinMismatchByPreset[need]:[]),...(modelReqs.get(need)||[]).filter(r=>r.pin_mismatch).map(r=>r.file)],query=$('#curatedModelSearch').value.toLowerCase(),windows=libraryRootIsWindows(library.model_root);
   const busy=library.assets.some(a=>['queued','downloading','verifying'].includes(a.download?.status)&&Date.now()/1000-a.download.updated_at<180);
   const {use,states}=modelUsage(library.assets,windows),listed=(list,limit)=>list.slice(0,limit).map(x=>esc(x.name)).join(', ')+(list.length>limit?' +'+(list.length-limit)+' more':'');
