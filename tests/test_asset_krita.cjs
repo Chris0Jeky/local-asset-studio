@@ -37,6 +37,7 @@ test('start makes no request when blocked and confirms the session it is given',
 test('bring back: unchanged imports nothing, a repeat is not imported again, an import needs its link',async()=>{
   const parent=asset(),child='b'.repeat(32),run=reply=>R.kritaBringBack({asset:parent,session:'s',state:idle,api:async()=>reply});
   const unchanged=await run({status:'unchanged'});assert.equal(unchanged.status,'unchanged');assert.match(unchanged.text,/Nothing was imported/);assert.equal(unchanged.id,undefined);
+  assert.match(unchanged.text,/working PNG/);assert.match(unchanged.text,/Export/);assert.match(unchanged.text,/\.kra/);assert.match(unchanged.text,/Import repaired version/);assert.doesNotMatch(unchanged.text,/Nothing changed since Krita/);
   const repeat=await run({status:'already_imported',asset_id:child});assert.deepEqual([repeat.status,repeat.id],['already_imported',child]);
   assert.deepEqual(await run({status:'imported',asset:{id:child,lineage:[parent.id]}}),{status:'imported',id:child,parent:parent.id});
   for(const bad of [{status:'imported',asset:{id:child,lineage:[]}},{status:'imported',asset:{id:child}},{status:'imported'},{status:'what'},null])
@@ -46,6 +47,12 @@ test('bring back: unchanged imports nothing, a repeat is not imported again, an 
   await assert.rejects(R.kritaBringBack({asset:asset({trashed_at:1}),session:'s',state:idle,api:async()=>{calls++;}}),/Bin/);
   assert.equal(calls,0);
   await assert.rejects(R.kritaBringBack({asset:parent,state:idle,api:async()=>{throw Error('Open this picture in Krita first');}}),/Open this picture/);
+});
+
+test('unchanged guidance identifies the exact PNG when an editable sibling was saved',async()=>{
+  const working='/edits/picture/session.png',reply={status:'unchanged',session:{working_path:working}};
+  const done=await R.kritaBringBack({asset:asset(),state:idle,api:async()=>reply});
+  assert.ok(done.text.includes(working));assert.match(done.text,/\.kra/);assert.match(done.text,/Import repaired version/);
 });
 
 test('an answer for a picture the owner has left goes to the page notice, not the dialog',()=>{
