@@ -204,7 +204,7 @@ SDK tests when that tools dependency is absent; the dedicated lane requires it.
 
 `app/static/setup-history.js` adds a "Workspace history" disclosure inside the
 "Shared setup & recovery" panel (the only browser surface that holds a Workspace and draft
-identity; the legacy named "Saved setups" are browser-local and have no revisions). Opening it
+identity; named "Saved setups" use their separate store and have no shared revision history). Opening it
 issues GETs through the routes above: the newest 20 summaries, then explicit "Load older
 revisions" with the observed `expected_head`, and a two-revision comparison. Responses are
 validated (format, Workspace and draft identity, read-only flags, contiguous order, exact
@@ -214,6 +214,7 @@ body and makes no storage or Create-draft call. Explicit restoration delegates t
 setup application controller, as described below; opening history never starts a command.
 Each row starts with a `<time datetime>` element showing the revision's recorded save time in local time
 (`Save time not recorded` when the summary has none), then identities and neighbour-to-neighbour differences.
+The newest row is labelled `latest loaded revision`: it describes the loaded list, not a live head observation.
 Contract: `tests/setup_history_client.cjs`; real routes: `tests/setup_apply_browser.py`.
 
 ### Deliberate historical restore
@@ -237,6 +238,21 @@ draft remains in history and the editor is preserved. A lost reply retains its e
 result. Reopening the browser retains that journal. A restore committed after an editor change
 stays in history; loading it remains a separate explicit action. Closing or canceling a review
 does not erase a checkpoint, a committed restoration or a pending request.
+
+After verified commits and guarded editor adoption, the controller returns the exact
+checkpoint and restored revision identities. History performs one GET through its existing
+read owner and requires a head at least as new as that restored revision; another writer may
+have appended newer revisions. It never retries a command or loads a newer writer's draft.
+The synchronous recipe events from this exact adoption do not cancel its own review; external
+edits and privacy/Workspace changes still do. Saved setup names and unapplied import selections
+are excluded from draft-change events; actually applying a setup invalidates the review.
+
+The follow-up read has its own cancelable lifetime after the review is cleared. Closing the
+panel, changing context or selection, or starting another read prevents its late result or
+error from replacing the newer UI. Failure and cancellation leave the confirmed restore intact,
+identify the older loaded snapshot and offer **Refresh history**. See
+[the #1874 verification note](../verification/2026-11-05-history-restore-1874.md) for source-level
+proof and the separate hosted browser requirement.
 
 Contracts: `tests/setup_history_restore_client.cjs`, `tests/setup_history_client.cjs` and the
 real SQLite cases in `tests/test_recipe_shortlist_apply.py`. The actual HTTP/SQLite journey is

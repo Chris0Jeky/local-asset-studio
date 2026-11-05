@@ -6,7 +6,7 @@
   function same(a,b){if(a===b)return true;if(!a||!b||typeof a!=='object'||typeof b!=='object'||Array.isArray(a)!==Array.isArray(b))return false;const keys=Object.keys(a);return keys.length===Object.keys(b).length&&keys.every(k=>Object.hasOwn(b,k)&&same(a[k],b[k]));}
   const settled=d=>d&&Array.isArray(d.pendingInputs)&&d.pendingInputs.length===0;
   class Controller{
-    constructor(options){Object.assign(this,options);this.key=KEY;this.running=false;this.active=true;this.restoreEpoch=0;this.seen=null;this.state={version:1,pending:null};this.problem='';
+    constructor(options){Object.assign(this,options);this.key=KEY;this.running=false;this.active=true;this.restoreEpoch=0;this.historyAdoption=null;this.seen=null;this.state={version:1,pending:null};this.problem='';
       try{this.seen=this.storage.getItem(KEY);if(this.seen){need(this.seen.length<=3*1048576,'The retained setup session is too large. Export it before clearing it.');const s=JSON.parse(this.seen);need(s&&s.version===1&&typeof s==='object','The retained setup session is unreadable. Export it before clearing it.');this.state=s;}}catch(e){this.problem=e.message;}
     }
     notify(message,error=false){this.emit({message,error,busy:this.running,state:clone(this.state)});}
@@ -54,7 +54,7 @@
       r.current=()=>this.current(stamp,matches)&&this.restoreEpoch===epoch&&same(context,this.context?.())&&this.state.workspace_id===r.workspace_id&&this.state.draft_id===r.draft_id;
       await this.checkedRestore(r,r.head_revision);need(r.current(),'Create or the restore context changed. Review the restore again.');return r;
     }
-    async restoreHistory(r){return this.work(async()=>{let checkpoint;
+    async restoreHistory(r){let outcome=null;await this.work(async()=>{let checkpoint;
       try{
         this.usable();need(r&&typeof r.current==='function'&&r.current()&&r.seen===this.seen,'Create, history or the recovery session changed. Review the restore again.');
         await this.checkedRestore(r,r.head_revision);need(r.current()&&r.seen===this.seen,'Create or the restore context changed before checkpointing. Nothing was saved.');
@@ -65,9 +65,14 @@
           if(value.status==='committed')need(value.record_sha256===r.record_sha256,'The restored record differs from the reviewed revision. Inspect the original request.');
         });
         need(restored.status==='committed',restored.message||'Restoration was not confirmed. Inspect the original request.');
-        if(this.adopt(restored,r.stamp,r.current))this.notify('Current draft saved as revision '+checkpoint.revision+'; revision '+r.revision+' restored as new revision '+restored.revision+'. No generation or source staging was requested.');
+        // Only this synchronous adoption owns its recipe events. External edits while awaiting a reply still cancel the review.
+        this.historyAdoption=r;
+        try{if(this.adopt(restored,r.stamp,r.current)){
+          outcome={workspace_id:restored.workspace_id,draft_id:restored.draft_id,source_revision:r.revision,checkpoint_revision:checkpoint.revision,restored_revision:restored.revision};
+          this.notify('Your current draft was saved as revision '+checkpoint.revision+'. Revision '+r.revision+' was restored to the editor as new revision '+restored.revision+'. No generation or source copying was started.');
+        }}finally{this.historyAdoption=null;}
       }catch(e){if(checkpoint?.status==='committed')throw Error('Your current draft is saved as revision '+checkpoint.revision+'. '+e.message);throw e;}
-    });}
+    });return outcome;}
     async abandon(){return this.work(async()=>{const q=this.state.pending;need(q&&q.draft_id&&q.expected_revision,'Inspect the unresolved checkpoint before detaching this session.');const command={action:'abandon',workspace_id:q.workspace_id,request_id:this.uuid(),draft_id:q.draft_id,expected_revision:q.expected_revision,operation_id:q.request_id};
       // Preserve the original journal until the separate abandonment result is checked.
       this.save({...this.state,abandoned_request:q});const result=await this.send(command);this.notify(result.message||'Pending operation released. Possible staged files and original receipts were retained.');});}
@@ -114,7 +119,7 @@
     panel.append(el('p','Apply copies inputs; Generate remains separate. Session exports contain private prompts and reference metadata.'));
     if(controller.seen||controller.problem)controller.notify(controller.problem||'A shared setup session was retained. Inspect any pending request before loading a revision.',!!controller.problem);
     w.StudioSetupApply.offer=(report,matches)=>{const b=el('button','Apply reviewed setup');b.id='applyReviewedSetup';b.type='button';b.onclick=async()=>{if(controller.running)return;try{need(options.hashText||w.crypto?.subtle,'Browser integrity checks are unavailable.');need(matches(),'Build a current proposal before applying.');if(!w.confirm('Checkpoint the current Create draft, copy the reviewed references to this backend, and replace Create with the complete proposed setup? No generation will start.'))return;b.disabled=true;const previous=controller.state.last?.request_id;await controller.apply(report,matches);if(controller.state.last?.request_id!==previous&&controller.state.loadedRevision===controller.state.revision&&controller.state.last?.action==='apply'&&controller.state.last?.status==='committed'){d.querySelector('#setupProposalDialog')?.close();d.querySelector('#createView')?.__workshop?.finishRecipeSelection(status);status.focus();}}catch(e){controller.notify(e.message,true);}finally{b.disabled=false;}};const box=el('div'),inline=el('p');inline.id='setupApplyStatus';inline.setAttribute('role','status');box.append(b,inline);return box;};
-    for(const type of ['input','change','studio:recipe'])d.addEventListener(type,e=>{if(type==='studio:recipe'||e.target.closest?.('#createView')){controller.invalidateRestore();if(!controller.running&&controller.state.loadedDraft&&!same(controller.state.loadedDraft,controller.draft.capture()))controller.notify('Create contains local edits. The shared revision is unchanged. Undo will not overwrite these edits.');}});
+    for(const type of ['input','change','studio:recipe'])d.addEventListener(type,e=>{if(type!=='studio:recipe'&&e.target.closest?.('#workshopSaved'))return;if(type==='studio:recipe'||e.target.closest?.('#createView')){controller.invalidateRestore();if(!controller.running&&controller.state.loadedDraft&&!same(controller.state.loadedDraft,controller.draft.capture()))controller.notify('Create contains local edits. The shared revision is unchanged. Undo will not overwrite these edits.');}});
     for(const type of ['studio:workspace-change','studio:privacy-change'])d.addEventListener(type,()=>controller.invalidateRestore());
     w.addEventListener('pagehide',()=>controller.dispose());w.StudioSetupApply.controller=controller;
   }
