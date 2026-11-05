@@ -3,6 +3,7 @@ import errno
 from http.server import BaseHTTPRequestHandler
 from http_test_server import ThreadingHTTPServer
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -356,8 +357,8 @@ class BackendSafetyTests(unittest.TestCase):
             return SimpleNamespace(pid=4242,name=lambda:Path(p['python']).name,username=lambda:value(owner),exe=lambda:value(exe),
                                    cmdline=lambda:(_ for _ in ()).throw(denied),cwd=lambda:(_ for _ in ()).throw(denied))
         cases=[(proc('OTHERPC\\CodexSandboxOffline',p['python']),True),   # another user's process: never our launcher
-               (proc(psutil.AccessDenied(4242),'C:/Python314/python.exe'),True),  # owner unreadable, another executable
-               (proc(me,'C:/Python314/python.exe'),True),                 # ours, but another executable
+               (proc(psutil.AccessDenied(4242),os.path.abspath('elsewhere/python.exe')),True),  # owner unreadable, another executable
+               (proc(me,os.path.abspath('elsewhere/python.exe')),True),                 # ours, but another executable
                (proc(me,p['python']),False),                               # ours, the configured Python: could be the launcher
                (proc(psutil.AccessDenied(4242),psutil.AccessDenied(4242)),False),  # nothing provable
                (proc(psutil.NoSuchProcess(4242),p['python']),True),              # gone: not a live launcher
