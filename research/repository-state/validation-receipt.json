@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "source_sha": "ce1cfe367277905c0e4104fbfa2d9a524bbbdf4d",
-  "run_at": "2026-10-26T21:50:36Z",
+  "source_sha": "5f2ff0bd4c1213cec6754be4a3cade759e9b5672",
+  "run_at": "2026-11-05T04:15:56Z",
   "result": "pass",
-  "graphs": 94,
-  "pins": 189,
-  "tracked_paths": 4568,
-  "loras": 164
+  "graphs": 98,
+  "pins": 194,
+  "tracked_paths": 4893,
+  "loras": 167
 }

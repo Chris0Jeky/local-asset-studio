@@ -1,4 +1,61 @@
-# Current state — 2 November 2026
+# Current state — 5 November 2026
+
+## 2026-11-05 — Navigation, editing feedback, Models and Blender evidence
+
+Merged delivery in this pass is recorded in the [5 November integration
+record](docs/verification/2026-11-05-integration-closeout.md), with the exact PR
+heads, merge commits and component qualification. The current observed main is
+`d9eb214b03a5ef50f1558e12b5ad7f06ea9d4938` after the Models selector-scope correction.
+
+- #2011 exposes Full editor, Comparisons and Review desk, adds finder intent
+  aliases and clarifies the winner handoff. #2012 separates Saved setups metadata
+  from recipe edits and keeps picture-start and source-repair feedback visible.
+- #2013 puts finished comparison pictures and their decision first, preserving
+  disclosure, focus and note state through refreshes. Its exact-head screenshots
+  were inspected at four viewport sizes, including the two phone layouts.
+- #2015 refreshes History once after verified restore/adoption and preserves the
+  committed outcome when the read fails or is cancelled. Its 69 native browser
+  checks and inspected 1440px/390px views accompany the passing component suite.
+- #2017 keeps delayed Make save replies tied to their original card and privacy
+  context, retains later edits and generation status, and gives saved tunes stable
+  ordering and a qualified base-look preview. Both browser platforms pass, with
+  16 screenshots and eight preview geometry receipts inspected.
+- #2018 separates look-impact counts from per-file actions, preserves unlisted
+  requirements, and corrects the startup owner error and phone layout exposed by
+  visual review. Its final full suite and all 12 browser captures qualify the
+  merged tree; the two earlier failed attempts remain in the integration record.
+- #2019 labels the selector **Files on disk below** when a look's required cards
+  remain visible; ordinary browsing keeps **Show**. Actual Back preserves the
+  selected value and preference. All 14 final browser screenshots were inspected;
+  the bounded fractional-pixel tolerance and earlier failed capture remain explicit.
+- #2010 requires complete requested critic views and content-identified benchmark
+  assets. Its POSIX timeout cleanup stays inside the launched process group.
+- #2016 bounds the serialized Blender MCP tool result, with compatible small
+  manifests and explicit summary pages for larger scenes. Request IDs, the native
+  worker's canonical manifest and its full-scene checksum remain unchanged.
+- #2014 keeps texture-node sampler identity and preserves imported materials for
+  partial/unavailable shaders. Native Linux/Windows Godot 4.5 probes pass all 15
+  material-policy cases; this is not new Godot 4.7.2 visual-parity evidence.
+- #2007 adds the MIRA / FORM VII course handoff and pinned artifact identities.
+  Owner-scoped downloads and retained native receipts keep their stated limits.
+
+The final combined code passed [Check studio run 41964696908](https://github.com/Chris0Jeky/local-asset-studio/actions/runs/41964696908):
+7,218 tests, including 113 skips, with zero failures/errors and clean lifetime
+shutdown. Actual tested checkout `5f2ff0bd4c1213cec6754be4a3cade759e9b5672` and
+the main merge above share tree `939557b9d6968b5ee22987681245bb004bf0adeb`.
+The measurement receipts use the tested checkout; the work capture separately
+records main and its queue at 04:18:51 UTC. All 23 final-head workflows passed;
+native browser proof is Ubuntu, with contracts on Ubuntu and Windows. Earlier
+component results retain their own source identities and limits.
+
+The owner's replacement q-7 tour was completed and closed on 2 November; its
+findings remain tracked separately. The original asset wave stays paused for
+#1923, parallax usability remains an open owner review, and the island default
+switch remains a separate open decision. Existing art acceptances and owner
+answers remain exactly as recorded in [HUMAN_TODO.md](HUMAN_TODO.md). The selected
+next #2009 slice is to reproduce
+remaining ambiguity in Review action names before changing them. No new model
+execution, owner acceptance or runtime deployment is claimed here.
 
 ## 2026-11-02 — R&D programme "Harbour Night" closed out (coordinator)
 

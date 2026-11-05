@@ -1,27 +1,34 @@
 {
   "schema_version": 1,
-  "captured_at": "2026-10-26T21:54:28Z",
+  "captured_at": "2026-11-05T04:18:51Z",
   "repository": {
-    "head_sha": "928df102faa524958892830bc8f63819318fab92",
+    "head_sha": "d9eb214b03a5ef50f1558e12b5ad7f06ea9d4938",
     "default_branch": "main",
-    "facts_sha": "ce1cfe367277905c0e4104fbfa2d9a524bbbdf4d",
-    "catalog_blob_sha": "34f36407b906c0bd1999eddeae20b0ca0028d496",
-    "human_todo_blob_sha": "a49eb11df3ebbca2a51217964efd60fc4cd538e1"
+    "facts_sha": "5f2ff0bd4c1213cec6754be4a3cade759e9b5672",
+    "catalog_blob_sha": "a9b0d600dc3812a2ef7ea198550a5fba6631aab0",
+    "human_todo_blob_sha": "3964b6669543b0438492588a8f07aae443857d2d"
   },
   "pull_requests": [],
   "issues": [
     {
+      "number": 2009,
+      "title": "Studio QA pass 3 Nov: remaining ranked findings after #1999–#2006",
+      "type": "epic",
+      "readiness": "ready",
+      "blocked_by": []
+    },
+    {
       "number": 177,
       "title": "Bound gallery media, job history and inventory work as the workspace grows",
       "type": "slice",
-      "readiness": "ready",
+      "readiness": "parked",
       "blocked_by": []
     },
     {
       "number": 393,
       "title": "Complete asset-recovery lifecycle and accessibility behavior",
       "type": "slice",
-      "readiness": "ready",
+      "readiness": "parked",
       "blocked_by": []
     },
     {
@@ -42,13 +49,6 @@
       "blocked_by": []
     },
     {
-      "number": 315,
-      "title": "Adopt a repository operating model: issue taxonomy, WIP limits and generated state",
-      "type": "slice",
-      "readiness": "review",
-      "blocked_by": []
-    },
-    {
       "number": 395,
       "title": "Add bounded reviewed-setup history, forks and import/export UX",
       "type": "epic",
@@ -64,7 +64,6 @@
     }
   ],
   "next_ready": [
-    177,
-    393
+    2009
   ]
 }

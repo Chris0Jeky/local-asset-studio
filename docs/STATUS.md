@@ -1,6 +1,88 @@
-# Status by goal — 26 October 2026
+# Status by goal — 5 November 2026
 
-## Private creation qualification — 28 October 2026
+## Current engineering delivery — 5 November 2026
+
+The current pass improves finding the right editor and review action, keeps editing
+feedback tied to the operation that produced it, and ties Blender checks to complete
+views and distinct assets. The table covers the merged work in this pass;
+the older goal estimates below remain dated assessments, not new measurements.
+[The integration record](verification/2026-11-05-integration-closeout.md) binds each
+delivery to its reviewed head, merge and verification. [CURRENT_STATE.md](../CURRENT_STATE.md)
+remains the execution ledger, and the [repository snapshot](generated/REPOSITORY-STATE.md)
+names the time and revision of its separate work capture.
+
+| Area | Delivered behavior | Remaining boundary |
+| --- | --- | --- |
+| Navigation and review | [#2011](https://github.com/Chris0Jeky/local-asset-studio/pull/2011) makes Full editor, Comparisons and Review desk visible in primary navigation, adds useful finder aliases, and names the project-specific action **Pick a winner**. | Broader organization and terminology in #2009 remain open. The Spoken Brief browser capture correction also completes #1941; it does not change the compiler. |
+| Full editor | [#2012](https://github.com/Chris0Jeky/local-asset-studio/pull/2012) keeps Saved setups name/import management from dirtying the active recipe, puts the picture-start link beneath the recipe name, and keeps repair progress and results beside Generate. | #2008 is complete. Broader Full editor and Workflow lab understanding in [#1920](https://github.com/Chris0Jeky/local-asset-studio/issues/1920#issuecomment-6648934504)/[#1921](https://github.com/Chris0Jeky/local-asset-studio/issues/1921#issuecomment-6648934759) remains open. |
+| Finished comparisons | [#2013](https://github.com/Chris0Jeky/local-asset-studio/pull/2013) puts pictures and the winner decision ahead of secondary execution details. Refreshes preserve open details, keyboard focus and unsent notes; narrow-screen headings remain visible. | This completes a bounded part of #2009, not its broader decision-model or workflow-organization questions. |
+| Setup History | [#2015](https://github.com/Chris0Jeky/local-asset-studio/pull/2015) refreshes the loaded history once after a verified restore, preserves the committed success if that read fails, and labels the **latest loaded revision** honestly. | #1874 is complete. Broader History work in #395 remains open; a refresh cannot repeat a restore or generate anything. |
+| Make saved looks | [#2017](https://github.com/Chris0Jeky/local-asset-studio/pull/2017) ties save feedback to the originating card and privacy context, preserves later typing and generation status, sorts tunes consistently, and labels a borrowed base-look preview. | #1867 is complete. The guide explains which settings are retained. Browser fixtures prove presentation ownership with crafted save replies; generated-picture quality and owner art acceptance remain separate. |
+| Models file clarity | [#2018](https://github.com/Chris0Jeky/local-asset-studio/pull/2018) separates look-impact counts from per-file actions, keeps unlisted requirements visible, and corrects the startup owner error and phone layout found during visual review. [#2019](https://github.com/Chris0Jeky/local-asset-studio/pull/2019) names the selector's **Files on disk below** scope without changing its filtering or saved preference. | The bounded manage-9 slice and selector-scope follow-up are complete; #2009 remains open. Native browser evidence uses synthetic read data without installation or generation. |
+| Blender QA evidence | [#2010](https://github.com/Chris0Jeky/local-asset-studio/pull/2010) requires every requested critic view, identifies benchmark assets by their verified content, rejects duplicate assets across folders, and bounds an agent timeout even when a child holds its output pipe. | #1985/#1986 are complete. No historical benchmark is silently re-scored; native threshold qualification in [#1970](https://github.com/Chris0Jeky/local-asset-studio/issues/1970) remains open. |
+| Blender agent scene reads | [#2016](https://github.com/Chris0Jeky/local-asset-studio/pull/2016) keeps small full manifests compatible and provides bounded summary pages, exact-name selection and scene-bound continuation for large replies. | #1984 is complete. The default 32 KiB cap covers the serialized tool result; JSON-RPC envelope/ID bytes and native worker construction costs are outside it. No improved repair rate is claimed. |
+| Toon materials | [#2014](https://github.com/Chris0Jeky/local-asset-studio/pull/2014) preserves each texture node's sampler choices, explicitly refuses unsupported modes, and keeps the imported material when a shader is partial or unavailable. | #1993/#1994 are complete. Linux/Windows Godot 4.5 checks prove material-application policy, not Godot 4.7.2 visual parity or a new Blender render. |
+| MIRA / FORM VII handoff | [#2007](https://github.com/Chris0Jeky/local-asset-studio/pull/2007) adds a repository entry point to the pose/contact course, study index, editable diagrams and pinned download identities. | The full media and native scenes remain in owner-scoped downloads. The handoff does not imply public download access, new native execution or owner art acceptance. |
+
+### Combined code qualification
+
+The final combined code passed the hosted full suite: **7,218 tests, 7,105 passed,
+113 skipped, zero failures/errors**, with clean suite-lifetime shutdown. All 23
+workflows on #2019's final head passed. The full/native-tested checkout and actual
+merged main have identical trees; the [integration record](verification/2026-11-05-integration-closeout.md)
+retains their distinct commit identities and the scoped browser evidence. The
+generated capture records the queue at **04:18:51 UTC on 5 November**, while its
+measurement receipts name the actual tested checkout. No duplicate main-push run
+was needed to re-measure that identical code tree.
+
+## Next bounded work
+
+The **Models clarity slice within #2009** is merged. Its
+[source-level reproduction](https://github.com/Chris0Jeky/local-asset-studio/issues/2009#issuecomment-6648410059)
+found repeated filenames across look-impact summaries and per-file actions, with
+one install control per asset and zero POSTs. The delivered change separates impact
+from action, preserves details for unlisted adapters that have no curated file
+card, and gives download/check actions plain wording. Its native desktop and phone
+captures have been inspected, and the selector-scope follow-up is merged. The rest of
+#2009 stays open.
+
+The selected next slice remains within **#2009: remaining
+Review action names** (manage-4/sol-6). First reproduce any remaining ambiguity
+between Library's **Review next**, inline **Choose here** (formerly Quick pick),
+and the project winner/Review desk handoff, then explain their actual jobs while
+preserving navigation, shortcuts and selection. #2011 already exposed Review desk
+and the project-specific winner entry; #2013 changed the inline label. Broader Review
+decision models and sidebar redesign remain open. The capture records #2009 as
+ready for this bounded next step, without treating the whole epic as implementation-ready.
+
+Library scale measurements (#177) and recovery accessibility (#393) remain parked
+context, not a renewed October priority order. Resource admission #178 remains
+blocked by #77/#89; the accepted-asset convergence work #313 remains owner-run;
+broader History #395 and agent parity #123 remain parked beyond this selected slice.
+The bounded [active-work capture](../research/repository-state/active-work.json)
+records the observed queue and selected context, rather than the entire backlog.
+
+## Owner decisions and existing answers
+
+The old **q-7** request was replaced by **ux-tour-1101**, and the owner completed
+and closed that tour on **2 November**. Its reported usability problems remain
+tracked work; the tour itself is not an outstanding owner action.
+
+[HUMAN_TODO.md](../HUMAN_TODO.md) retains the recorded answers and their scope.
+The original illustration wave stays **paused; do not run it** while art direction
+and a replacement wave remain open under #1923. The owner review of parallax
+usability (`parallax-layers-1219`) remains open although implementation issue #1219
+is closed. The separate island default-switch decision remains open although its
+preparation issue #1207 is closed. This engineering pass adds no new art acceptance
+or owner decision and does not reopen answers already recorded there.
+
+## Historical delivery records — 26–28 October 2026
+
+These records retain the state and pending qualification reported on their dates.
+Their next-work ordering and owner-action references are historical; the current
+sections above supersede them. The original evidence and counts are unchanged.
+
+### Private creation qualification — 28 October 2026
 
 The existing private-session implementation is in PR #1677, tracked by #1673.
 The continuation fixes two request-disclosure paths, failure-safe Make draft
@@ -9,7 +91,7 @@ causes. See [qualification evidence](verification/2026-10-28-private-creation-qu
 Fresh final-head CI remains the merge gate; local renderer/contract passes are not
 claimed as configured-host rendering, human UX acceptance or archive completion.
 
-## Current engineering delivery
+### Engineering delivery recorded on 26 October 2026
 
 This section records the current repository work. The September percentages and workstation asset counts below are a historical assessment, not a fresh measurement. The dated ledger in [CURRENT_STATE.md](../CURRENT_STATE.md) and the [repository snapshot](generated/REPOSITORY-STATE.md) retain the source revisions and verification receipts. Completed implementation, successful model execution and owner art acceptance remain separate.
 
@@ -26,7 +108,7 @@ This section records the current repository work. The September percentages and 
 
 The final integration record is [26 October closeout](verification/2026-10-26-integration-closeout.md). It records merged revisions, exact-tree CI and retained failures; this page is the product-level view.
 
-## Next bounded work
+### Next bounded work recorded on 26 October 2026
 
 - **#177:** measure Library browser/SQLite resource costs on the stated catalogue sizes, with explicit memory, media and latency budgets. Paging correctness does not establish performance acceptance.
 - **#393:** finish the remaining keyboard, disappearing-opener, collection-focus, browser-menu zoom and screen-reader matrix. The shelf's native 200% zoom proof is narrower than this complete matrix.
@@ -185,7 +267,12 @@ media records: `experiments/curated/nsfw-lab-*`. Agent tooling: [AGENT-TOOLING.m
 - #942 (CLOSED by PR #998; 25 Sep): the lab passes no longer sit atop `CURRENT_STATE.md`; see [LEDGER.md](../experiments/curated/nsfw-lab-20260923/LEDGER.md), whose correction shows the p40–p92 header times are not execution evidence.
 - #772: the open UX QA tracker for the Studio journeys and Create layouts.
 
-## Open owner items
+## Historical owner-item summary — September 2026
+
+The paragraph below is retained from the September assessment; it is not the
+current owner queue. The [current owner-decision section](#owner-decisions-and-existing-answers)
+and [HUMAN_TODO.md](../HUMAN_TODO.md) record the later answers, including the tour's
+completion on 2 November.
 
 Open in [HUMAN_TODO.md](../HUMAN_TODO.md): q-7 (first-hand pass over the UX wave) and q-28 (a)–(d) if the owner wants to weigh in. Answered 27 September: q-25 and the asset plan. Answered 23 September: q-27, q-28 (e), q-30, q-31, q-32 (its optional art judgement of the LoRA smoke winners stays open), the three
 Adaptive Studio choices; q-29 on 20 and 23 September; the ZZZ age-guide intake on 24 September. No output is licence-cleared:
