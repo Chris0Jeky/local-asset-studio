@@ -184,7 +184,10 @@ async def run(args):
                 await page.locator('#assetArchiveFilter').focus()
                 check(str(width)+'px Archive control is visible and keyboard reachable',await page.locator('#assetArchiveFilter').is_visible() and await page.locator('#assetArchiveFilter').evaluate('(el)=>el===document.activeElement'))
                 check(str(width)+'px Library has no horizontal overflow',await page.evaluate('document.documentElement.scrollWidth')<=width)
+                # Focus may scroll the page; anchor fixed shell elements before full-page capture.
+                await page.evaluate('()=>{window.scrollTo(0,0);return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))}')
                 await page.screenshot(path=str(args.out/('archive-'+str(width)+'.png')),full_page=True)
+                if width==390:await page.screenshot(path=str(args.out/'archive-390-viewport.png'))
             check('Original files and collection memberships remain unchanged',source.read_bytes()==original and all(store.file(i,privacy='all')==path and path.read_bytes()==original for i,path in paths.items()) and memberships()==initial_memberships)
             check('No generation or unrelated mutation was requested',all(r['path'].split('?')[0] in ('/api/assets/update','/api/assets/selection','/api/estimate','/api/references/check') for r in requests if r['method']=='POST'))
             check('No page exceptions',not errors);check('No unexpected handler errors',not server_errors)
